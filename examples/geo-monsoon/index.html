@@ -3,9 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="course-id" content="geo-monsoon">
+<meta name="course-node" content="monsoon-system">
+<meta name="course-subject" content="geography">
+<meta name="course-title" content="全球季风系统">
+<meta name="course-prereqs" content="atmospheric-circulation,sea-land-thermal">
+<meta name="course-next" content="climate-types">
+<meta name="course-version" content="5.2">
 <title>全球季风系统 · 地理教学课件</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Leaflet CSS: 中国CDN回退链 -->
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/leaflet/1.9.4/leaflet.min.css" onerror="this.onerror=null;this.href='https://registry.npmmirror.com/leaflet/1.9.4/files/dist/leaflet.css'"/>
+<!-- Leaflet JS: 多CDN回退加载 -->
+<script>
+(function loadLeaflet(urls, idx) {
+  if (idx >= urls.length) { console.error('❌ Leaflet 加载失败'); return; }
+  var s = document.createElement('script');
+  s.src = urls[idx];
+  s.onload = function() { console.log('✅ Leaflet loaded from', urls[idx]); };
+  s.onerror = function() { console.warn('⚠️ Leaflet CDN failed:', urls[idx]); loadLeaflet(urls, idx + 1); };
+  document.head.appendChild(s);
+})([
+  'https://cdn.bootcdn.net/ajax/libs/leaflet/1.9.4/leaflet.min.js',
+  'https://registry.npmmirror.com/leaflet/1.9.4/files/dist/leaflet.js',
+  'https://cdn.staticfile.net/leaflet/1.9.4/leaflet.min.js',
+  'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+], 0);
+</script>
 <style>
 :root{--bg:#0f172a;--bg2:#1e293b;--bg3:#334155;--primary:#3b82f6;--secondary:#8b5cf6;--accent:#f59e0b;--success:#10b981;--danger:#ef4444;--pink:#ec4899;--cyan:#06b6d4;--text:#f8fafc;--dim:#94a3b8;--dimmer:#64748b;--card:rgba(30,41,59,.7);--border:rgba(148,163,184,.15)}
 *{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
@@ -41,11 +65,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
 .season-btn.active{border-color:var(--cyan);background:rgba(6,182,212,.12);color:var(--cyan)}.season-btn.summer-active{border-color:var(--danger);background:rgba(239,68,68,.12);color:var(--danger)}
 .timeline-item{display:flex;gap:16px;margin-bottom:18px;position:relative;padding-left:8px}.timeline-dot{width:12px;height:12px;border-radius:50%;margin-top:6px;flex-shrink:0}.timeline-content{flex:1}.timeline-content h5{font-size:15px;margin-bottom:4px}.timeline-content p{font-size:14px;color:var(--dimmer)}
 footer{text-align:center;padding:40px 0;color:var(--dimmer);font-size:13px;border-top:1px solid var(--border);margin-top:60px}
+/* === 语音讲解 & 字幕系统 === */
+.tts-player{position:fixed;bottom:0;left:0;right:0;z-index:1001;background:rgba(15,23,42,.95);backdrop-filter:blur(20px);border-top:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:12px;transform:translateY(100%);transition:transform .3s ease}
+.tts-player.show{transform:translateY(0)}
+.tts-play-btn{width:40px;height:40px;border-radius:50%;border:2px solid var(--accent);background:transparent;color:var(--accent);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.tts-play-btn:hover{background:rgba(245,158,11,.15)}
+.tts-play-btn.playing{border-color:var(--danger);color:var(--danger)}
+.tts-progress{flex:1;height:4px;background:var(--bg3);border-radius:2px;cursor:pointer;position:relative}
+.tts-progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--danger));border-radius:2px;width:0%;transition:width .3s}
+.tts-info{display:flex;flex-direction:column;gap:2px;min-width:120px}
+.tts-seg-title{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+.tts-seg-time{font-size:11px;color:var(--dimmer)}
+.tts-toggle{position:fixed;bottom:16px;right:16px;z-index:1000;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--danger));border:none;color:#fff;font-size:22px;cursor:pointer;box-shadow:0 4px 16px rgba(245,158,11,.3);transition:all .2s;display:flex;align-items:center;justify-content:center}
+.tts-toggle:hover{transform:scale(1.1)}
+.tts-toggle.active{bottom:70px}
+.subtitle-bar{position:fixed;bottom:64px;left:50%;transform:translateX(-50%);z-index:1000;text-align:center;pointer-events:none;opacity:0;transition:opacity .3s}
+.subtitle-bar.show{opacity:1}
+.subtitle-zh{font-size:18px;color:#f8fafc;font-weight:600;text-shadow:0 2px 8px rgba(0,0,0,.8);line-height:1.6;background:rgba(0,0,0,.5);padding:6px 18px;border-radius:10px;display:inline-block;max-width:80vw}
+.subtitle-en{font-size:14px;color:#94a3b8;text-shadow:0 2px 6px rgba(0,0,0,.7);margin-top:4px}
 </style>
 </head>
 <body>
 <nav class="nav"><span class="nav-brand">🌍 教我学 TeachAny</span>
-<a href="#hero">首页</a><a href="#goals">目标</a><a href="#pretest">前测</a>
+<a href="#hero">首页</a><a href="#goals">目标</a><a href="#knowledge-graph">图谱</a><a href="#pretest">前测</a>
 <a href="#what">什么是季风</a><a href="#cause">成因分析</a><a href="#zones">三大季风区</a>
 <a href="#east-asia">东亚</a><a href="#south-asia">南亚</a><a href="#compare">对比</a>
 <a href="#application">应用</a><a href="#posttest">后测</a></nav>
@@ -60,6 +102,107 @@ footer{text-align:center;padding:40px 0;color:var(--dimmer);font-size:13px;borde
 <div class="card obj-card"><div class="icon">🗺️</div><h4>掌握三大季风区</h4><p>能在世界地图上标出东亚、南亚、澳大利亚季风区的位置和风向特征</p></div>
 <div class="card obj-card"><div class="icon">🔗</div><h4>解释成因异同</h4><p>能区分东亚与南亚季风的成因差异（海陆差 vs 海陆差+气压带移动+地转偏向）</p></div>
 </div></section>
+
+<!-- ===== 知识图谱 ===== -->
+<div class="section" id="knowledge-graph">
+  <h2 class="section-title">🗺️ 知识图谱</h2>
+  <svg class="kg-svg" viewBox="0 0 1100 580" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:1100px;margin:0 auto;display:block;overflow:visible;">
+    <defs>
+      <marker id="kg-arrow-cyan" viewBox="0 0 10 6" refX="10" refY="3" markerWidth="8" markerHeight="6" orient="auto"><path d="M0,0 L10,3 L0,6Z" fill="#06b6d4"/></marker>
+      <marker id="kg-arrow-gold" viewBox="0 0 10 6" refX="10" refY="3" markerWidth="8" markerHeight="6" orient="auto"><path d="M0,0 L10,3 L0,6Z" fill="#f59e0b"/></marker>
+      <marker id="kg-arrow-blue" viewBox="0 0 10 6" refX="10" refY="3" markerWidth="8" markerHeight="6" orient="auto"><path d="M0,0 L10,3 L0,6Z" fill="#3b82f6"/></marker>
+      <marker id="kg-arrow-green" viewBox="0 0 10 6" refX="10" refY="3" markerWidth="8" markerHeight="6" orient="auto"><path d="M0,0 L10,3 L0,6Z" fill="#10b981"/></marker>
+      <marker id="kg-arrow-pink" viewBox="0 0 10 6" refX="10" refY="3" markerWidth="8" markerHeight="6" orient="auto"><path d="M0,0 L10,3 L0,6Z" fill="#ec4899"/></marker>
+      <filter id="kg-glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+
+    <!-- 列标题 -->
+    <text x="110" y="32" fill="#64748b" font-size="14" text-anchor="middle" font-weight="600">前序知识</text>
+    <text x="550" y="32" fill="#f59e0b" font-size="14" text-anchor="middle" font-weight="600">核心知识</text>
+    <text x="960" y="32" fill="#64748b" font-size="14" text-anchor="middle" font-weight="600">后续知识</text>
+
+    <!-- ===== 前序节点 ===== -->
+    <rect x="20" y="60" width="180" height="44" rx="10" fill="rgba(6,182,212,0.12)" stroke="#06b6d4" stroke-width="1.5"/>
+    <text x="110" y="87" fill="#06b6d4" font-size="14" text-anchor="middle" font-weight="600">大气受热过程</text>
+
+    <rect x="20" y="130" width="180" height="44" rx="10" fill="rgba(6,182,212,0.12)" stroke="#06b6d4" stroke-width="1.5"/>
+    <text x="110" y="157" fill="#06b6d4" font-size="14" text-anchor="middle" font-weight="600">热力环流原理</text>
+
+    <rect x="20" y="200" width="180" height="44" rx="10" fill="rgba(6,182,212,0.12)" stroke="#06b6d4" stroke-width="1.5"/>
+    <text x="110" y="227" fill="#06b6d4" font-size="14" text-anchor="middle" font-weight="600">气压带与风带</text>
+
+    <rect x="20" y="270" width="180" height="44" rx="10" fill="rgba(6,182,212,0.12)" stroke="#06b6d4" stroke-width="1.5"/>
+    <text x="110" y="297" fill="#06b6d4" font-size="14" text-anchor="middle" font-weight="600">海陆热力性质差异</text>
+
+    <rect x="20" y="340" width="180" height="44" rx="10" fill="rgba(6,182,212,0.12)" stroke="#06b6d4" stroke-width="1.5"/>
+    <text x="110" y="367" fill="#06b6d4" font-size="14" text-anchor="middle" font-weight="600">地转偏向力</text>
+
+    <!-- ===== 核心节点 ===== -->
+    <rect x="390" y="55" width="320" height="52" rx="12" fill="rgba(245,158,11,0.18)" stroke="#f59e0b" stroke-width="2.5" filter="url(#kg-glow)"/>
+    <text x="550" y="86" fill="#f59e0b" font-size="17" text-anchor="middle" font-weight="700">全球季风系统</text>
+
+    <rect x="410" y="140" width="280" height="42" rx="10" fill="rgba(59,130,246,0.12)" stroke="#3b82f6" stroke-width="1.5"/>
+    <text x="550" y="166" fill="#3b82f6" font-size="14" text-anchor="middle" font-weight="600">季风定义与本质</text>
+
+    <rect x="410" y="210" width="280" height="42" rx="10" fill="rgba(59,130,246,0.12)" stroke="#3b82f6" stroke-width="1.5"/>
+    <text x="550" y="236" fill="#3b82f6" font-size="14" text-anchor="middle" font-weight="600">东亚季风（海陆差单因素）</text>
+
+    <rect x="410" y="280" width="280" height="42" rx="10" fill="rgba(59,130,246,0.12)" stroke="#3b82f6" stroke-width="1.5"/>
+    <text x="550" y="306" fill="#3b82f6" font-size="14" text-anchor="middle" font-weight="600">南亚季风（三重叠加成因）</text>
+
+    <rect x="410" y="350" width="280" height="42" rx="10" fill="rgba(59,130,246,0.12)" stroke="#3b82f6" stroke-width="1.5"/>
+    <text x="550" y="376" fill="#3b82f6" font-size="14" text-anchor="middle" font-weight="600">澳大利亚季风区</text>
+
+    <rect x="410" y="420" width="280" height="42" rx="10" fill="rgba(59,130,246,0.12)" stroke="#3b82f6" stroke-width="1.5"/>
+    <text x="550" y="446" fill="#3b82f6" font-size="14" text-anchor="middle" font-weight="600">东亚 vs 南亚对比分析</text>
+
+    <rect x="410" y="490" width="280" height="42" rx="10" fill="rgba(59,130,246,0.12)" stroke="#3b82f6" stroke-width="1.5"/>
+    <text x="550" y="516" fill="#3b82f6" font-size="14" text-anchor="middle" font-weight="600">季风与人类活动</text>
+
+    <!-- ===== 后续节点 ===== -->
+    <rect x="860" y="60" width="220" height="44" rx="10" fill="rgba(16,185,129,0.12)" stroke="#10b981" stroke-width="1.5"/>
+    <text x="970" y="87" fill="#10b981" font-size="14" text-anchor="middle" font-weight="600">气候类型分类</text>
+
+    <rect x="860" y="130" width="220" height="44" rx="10" fill="rgba(16,185,129,0.12)" stroke="#10b981" stroke-width="1.5"/>
+    <text x="970" y="157" fill="#10b981" font-size="14" text-anchor="middle" font-weight="600">中国气候与降水分布</text>
+
+    <rect x="860" y="200" width="220" height="44" rx="10" fill="rgba(16,185,129,0.12)" stroke="#10b981" stroke-width="1.5"/>
+    <text x="970" y="227" fill="#10b981" font-size="14" text-anchor="middle" font-weight="600">厄尔尼诺与拉尼娜</text>
+
+    <rect x="860" y="270" width="220" height="44" rx="10" fill="rgba(16,185,129,0.12)" stroke="#10b981" stroke-width="1.5"/>
+    <text x="970" y="297" fill="#10b981" font-size="14" text-anchor="middle" font-weight="600">农业地理与粮食安全</text>
+
+    <rect x="860" y="340" width="220" height="44" rx="10" fill="rgba(16,185,129,0.12)" stroke="#10b981" stroke-width="1.5"/>
+    <text x="970" y="367" fill="#10b981" font-size="14" text-anchor="middle" font-weight="600">城市规划与环境</text>
+
+    <!-- ===== 连线：前序 → 核心 ===== -->
+    <line x1="200" y1="82" x2="390" y2="81" stroke="#06b6d4" stroke-width="1.2" marker-end="url(#kg-arrow-cyan)" opacity="0.6"/>
+    <line x1="200" y1="152" x2="390" y2="81" stroke="#06b6d4" stroke-width="1.2" marker-end="url(#kg-arrow-cyan)" opacity="0.6"/>
+    <line x1="200" y1="222" x2="410" y2="161" stroke="#06b6d4" stroke-width="1.2" marker-end="url(#kg-arrow-cyan)" opacity="0.6"/>
+    <line x1="200" y1="292" x2="410" y2="231" stroke="#06b6d4" stroke-width="1.2" marker-end="url(#kg-arrow-cyan)" opacity="0.6"/>
+    <line x1="200" y1="292" x2="410" y2="301" stroke="#06b6d4" stroke-width="1.2" marker-end="url(#kg-arrow-cyan)" opacity="0.6"/>
+    <line x1="200" y1="362" x2="410" y2="301" stroke="#06b6d4" stroke-width="1.2" marker-end="url(#kg-arrow-cyan)" opacity="0.6"/>
+
+    <!-- 连线：核心内部 -->
+    <line x1="550" y1="107" x2="550" y2="140" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#kg-arrow-gold)" opacity="0.5"/>
+    <line x1="550" y1="182" x2="550" y2="210" stroke="#3b82f6" stroke-width="1.2" marker-end="url(#kg-arrow-blue)" opacity="0.5"/>
+    <line x1="550" y1="252" x2="550" y2="280" stroke="#3b82f6" stroke-width="1.2" marker-end="url(#kg-arrow-blue)" opacity="0.5"/>
+    <line x1="550" y1="322" x2="550" y2="350" stroke="#3b82f6" stroke-width="1.2" marker-end="url(#kg-arrow-blue)" opacity="0.5"/>
+    <line x1="660" y1="252" x2="660" y2="420" stroke="#ec4899" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#kg-arrow-pink)" opacity="0.4"/>
+    <line x1="440" y1="252" x2="440" y2="420" stroke="#ec4899" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#kg-arrow-pink)" opacity="0.4"/>
+    <line x1="550" y1="462" x2="550" y2="490" stroke="#3b82f6" stroke-width="1.2" marker-end="url(#kg-arrow-blue)" opacity="0.5"/>
+
+    <!-- 连线：核心 → 后续 -->
+    <line x1="710" y1="81" x2="860" y2="82" stroke="#10b981" stroke-width="1.2" marker-end="url(#kg-arrow-green)" opacity="0.6"/>
+    <line x1="690" y1="231" x2="860" y2="152" stroke="#10b981" stroke-width="1.2" marker-end="url(#kg-arrow-green)" opacity="0.6"/>
+    <line x1="690" y1="446" x2="860" y2="222" stroke="#10b981" stroke-width="1.2" marker-end="url(#kg-arrow-green)" opacity="0.6"/>
+    <line x1="690" y1="511" x2="860" y2="292" stroke="#10b981" stroke-width="1.2" marker-end="url(#kg-arrow-green)" opacity="0.6"/>
+    <line x1="690" y1="511" x2="860" y2="362" stroke="#10b981" stroke-width="1.2" marker-end="url(#kg-arrow-green)" opacity="0.6"/>
+  </svg>
+  <p style="font-size:13px;color:var(--dimmer);text-align:center;margin-top:12px">
+    <span style="color:#06b6d4">●</span> 前序知识 → <span style="color:#f59e0b">●</span> 核心知识 → <span style="color:#10b981">●</span> 后续知识 &nbsp;|&nbsp; <span style="color:#ec4899">- -</span> 对比关系
+  </p>
+</div>
 
 <section class="section" id="pretest"><div class="section-title">🔍 前测（3题）</div>
 <div class="card"><h3>❶ 夏天摸水泥地和草地，哪个更烫？</h3>
@@ -288,8 +431,27 @@ footer{text-align:center;padding:40px 0;color:var(--dimmer);font-size:13px;borde
 <tr><td>澳大利亚</td><td>季节与北半球<strong>相反</strong></td><td>北夏=澳冬</td></tr>
 <tr><td>季风vs信风</td><td>季风=季节反转；信风=常年稳定</td><td>可重叠</td></tr>
 </table></div>
-<footer><p>教我学 TeachAny v3.0 · 全球季风系统 · 地理教学课件</p></footer>
+<footer><p>教我学 TeachAny v5.2 · 全球季风系统 · 地理教学课件</p></footer>
 </div><!-- end container -->
+
+<!-- === TTS 语音讲解播放器 === -->
+<button class="tts-toggle" id="ttsToggle" onclick="toggleTTSPlayer()" title="语音讲解">🎙</button>
+<div class="subtitle-bar" id="subtitleBar">
+  <div class="subtitle-zh" id="subtitleZh"></div>
+  <div class="subtitle-en" id="subtitleEn"></div>
+</div>
+<div class="tts-player" id="ttsPlayer">
+  <button class="tts-play-btn" id="ttsPlayBtn" onclick="toggleTTSPlay()">▶</button>
+  <div class="tts-progress" id="ttsProgressBar" onclick="seekTTS(event)">
+    <div class="tts-progress-fill" id="ttsProgressFill"></div>
+  </div>
+  <div class="tts-info">
+    <div class="tts-seg-title" id="ttsSegTitle">准备就绪</div>
+    <div class="tts-seg-time" id="ttsSegTime">--:-- / --:--</div>
+  </div>
+  <button style="background:transparent;border:1px solid var(--border);color:var(--dim);padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;white-space:nowrap" onclick="prevTTSSeg()">⏮ 上一段</button>
+  <button style="background:transparent;border:1px solid var(--border);color:var(--dim);padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;white-space:nowrap" onclick="nextTTSSeg()">下一段 ⏭</button>
+</div>
 
 <script>
 let ansd={}; let pSc=0; const pT=5;
@@ -297,14 +459,20 @@ function checkQuiz(el){const q=el.dataset.q,a=el.dataset.ans;
 el.parentElement.querySelectorAll('.quiz-feedback').forEach(s=>s.classList.remove('show'));
 el.parentElement.querySelectorAll('.quiz-option').forEach(o=>o.classList.remove('correct','wrong'));
 const fb=document.getElementById(`fb-${q}-${a}`);
-if(fb&&(fb.innerHTML.includes('正确')||fb.innerHTML.includes('最佳')))el.classList.add('correct');else el.classList.add('wrong');
+const isCorrect = fb&&(fb.innerHTML.includes('正确')||fb.innerHTML.includes('最佳'));
+if(isCorrect)el.classList.add('correct');else el.classList.add('wrong');
 if(fb)fb.classList.add('show');
+// 间隔重复记录
+TeachAnySR.record(q, isCorrect);
 }
 function checkPQ(el){const q=el.dataset.q;if(ansd[q])return;ansd[q]=true;const a=el.dataset.ans;
 el.parentElement.querySelectorAll('.quiz-option').forEach(o=>o.classList.remove('correct','wrong'));
 const fb=document.getElementById(`fb-${q}-${a}`);
-if(fb&&(fb.innerHTML.includes('正确')||fb.innerHTML.includes('最佳'))){el.classList.add('correct');pSc++}else el.classList.add('wrong');
+const isCorrect = fb&&(fb.innerHTML.includes('正确')||fb.innerHTML.includes('最佳'));
+if(isCorrect){el.classList.add('correct');pSc++}else el.classList.add('wrong');
 if(fb)fb.classList.add('show');
+// 间隔重复记录
+TeachAnySR.record(q, isCorrect);
 const d=Object.keys(ansd).length;
 document.getElementById('postProgress').style.width=(d/pT*100)+'%';
 if(d===pT){setTimeout(()=>{
@@ -312,29 +480,63 @@ const sc=document.getElementById('scCard');sc.style.display='block';
 document.getElementById('scNum').textContent=`${pSc}/${pT}`;
 document.getElementById('scComment').textContent=pSc>=4?'🎉 出色！':pSc>=2?'👍 还不错':'💪 复习三重成因和对比表';
 sc.scrollIntoView({behavior:'smooth'});
+// 学习系统回调
+onModuleComplete('posttest', pSc, pT);
 },600);
 }}
 
-/* ========== Leaflet 真实地图 ========== */
+/* ========== Leaflet 真实地图（等待CDN加载） ========== */
 let curS='summer';
-const map=L.map('monsoonMap',{zoomControl:true,scrollWheelZoom:true}).setView([18,85],3);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
-  attribution:'&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/">OSM</a>',
-  subdomains:'abcd',maxZoom:18
-}).addTo(map);
+let map, zoneLayer, arrowLayer, labelLayer;
 
-// 赤道线
-L.polyline([[0,-180],[0,180]],{color:'#f59e0b',weight:1.5,dashArray:'8,6',opacity:0.5}).addTo(map)
-  .bindTooltip('赤道',{permanent:true,direction:'right',offset:[6,0],className:'eq-tip'});
+function initMap() {
+  if (typeof L === 'undefined') { setTimeout(initMap, 200); return; }
+  map = L.map('monsoonMap',{zoomControl:true,scrollWheelZoom:true}).setView([18,85],3);
 
-// 季风区多边形坐标
-const eastAsiaCoords=[[50,100],[50,135],[40,140],[25,125],[20,105],[25,100],[35,95]];
-const southAsiaCoords=[[30,65],[30,100],[20,108],[5,100],[5,70],[10,65],[20,60]];
-const ausCoords=[[-10,120],[-10,145],[-20,148],[-25,140],[-22,120],[-15,115]];
+  // 中国友好瓦片提供商回退链
+  var tileProviders = [
+    { url:'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', opts:{subdomains:'1234',maxZoom:18,attribution:'&copy; 高德地图'} },
+    { url:'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', opts:{subdomains:'abcd',maxZoom:18,attribution:'&copy; CARTO &copy; OSM'} },
+    { url:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', opts:{subdomains:'abc',maxZoom:18,attribution:'&copy; OSM'} }
+  ];
 
-let zoneLayer=L.layerGroup().addTo(map);
-let arrowLayer=L.layerGroup().addTo(map);
-let labelLayer=L.layerGroup().addTo(map);
+  function tryTile(idx) {
+    if (idx >= tileProviders.length) return;
+    var p = tileProviders[idx];
+    var layer = L.tileLayer(p.url, p.opts);
+    layer.on('tileerror', function() {
+      console.warn('⚠️ 瓦片加载失败，尝试下一个:', p.url);
+      map.removeLayer(layer);
+      tryTile(idx + 1);
+    });
+    layer.addTo(map);
+  }
+  tryTile(0);
+
+  // 赤道线
+  L.polyline([[0,-180],[0,180]],{color:'#f59e0b',weight:1.5,dashArray:'8,6',opacity:0.5}).addTo(map)
+    .bindTooltip('赤道',{permanent:true,direction:'right',offset:[6,0],className:'eq-tip'});
+
+  // 季风区多边形坐标
+  var eastAsiaCoords=[[50,100],[50,135],[40,140],[25,125],[20,105],[25,100],[35,95]];
+  var southAsiaCoords=[[30,65],[30,100],[20,108],[5,100],[5,70],[10,65],[20,60]];
+  var ausCoords=[[-10,120],[-10,145],[-20,148],[-25,140],[-22,120],[-15,115]];
+
+  zoneLayer=L.layerGroup().addTo(map);
+  arrowLayer=L.layerGroup().addTo(map);
+  labelLayer=L.layerGroup().addTo(map);
+
+  // 把原有 setSeason 的内部变量改为引用这些坐标
+  window._monsoonCoords = { eastAsiaCoords, southAsiaCoords, ausCoords };
+  setSeason('summer');
+}
+
+// 等待DOM和Leaflet都就绪
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initMap);
+} else {
+  initMap();
+}
 
 function makeArrowIcon(angle,color){
   return L.divIcon({
@@ -366,6 +568,10 @@ function setSeason(s){
 
   zoneLayer.clearLayers();arrowLayer.clearLayers();labelLayer.clearLayers();
   const isS=s==='summer';
+  const c = window._monsoonCoords || {};
+  const eastAsiaCoords = c.eastAsiaCoords || [];
+  const southAsiaCoords = c.southAsiaCoords || [];
+  const ausCoords = c.ausCoords || [];
 
   // 三大季风区多边形
   L.polygon(eastAsiaCoords,{color:isS?'#ef4444':'#3b82f6',fillColor:isS?'#ef4444':'#3b82f6',fillOpacity:0.15,weight:2}).addTo(zoneLayer)
@@ -416,8 +622,6 @@ function setSeason(s){
   addLabel(18,78,'南亚季风区',saColor);
   addLabel(-16,132,'澳北季风区',auColor);
 }
-setSeason('summer');
-
 /* ========== 拖拽游戏 ========== */
 const dragItems=document.querySelectorAll('#dragSource .drag-item');
 const chainZone=document.getElementById('chainZone');
@@ -508,6 +712,168 @@ function resetChain(){
   const fb=document.getElementById('chainFeedback');
   fb.classList.remove('show');fb.innerHTML='';
 }
+
+/* ========== TeachAny 学习系统集成 (v5.2) ========== */
+const COURSE_ID = 'geo-monsoon';
+
+// 进度持久化
+const TeachAnyProgress = {
+  key: `teachany_progress_${COURSE_ID}`,
+  get() { try { return JSON.parse(localStorage.getItem(this.key)) || {}; } catch(e) { return {}; } },
+  set(data) { try { localStorage.setItem(this.key, JSON.stringify({...this.get(), ...data, lastAccess: Date.now()})); } catch(e){} },
+  getModuleScore(mod) { return (this.get().modules || {})[mod] || 0; },
+  setModuleScore(mod, score) { const d = this.get(); d.modules = d.modules || {}; d.modules[mod] = Math.max(d.modules[mod] || 0, score); this.set(d); }
+};
+
+// 间隔重复
+const TeachAnySR = {
+  key: `teachany_sr_${COURSE_ID}`,
+  get() { try { return JSON.parse(localStorage.getItem(this.key)) || {}; } catch(e) { return {}; } },
+  record(qid, correct) {
+    const d = this.get();
+    d[qid] = d[qid] || { ease: 2.5, interval: 1, reps: 0 };
+    const card = d[qid];
+    if (correct) { card.reps++; card.interval = Math.round(card.interval * card.ease); card.ease = Math.max(1.3, card.ease + 0.1); }
+    else { card.reps = 0; card.interval = 1; card.ease = Math.max(1.3, card.ease - 0.2); }
+    card.nextReview = Date.now() + card.interval * 86400000;
+    localStorage.setItem(this.key, JSON.stringify(d));
+  }
+};
+
+// 成就系统
+const TeachAnyAchievements = {
+  key: `teachany_ach_${COURSE_ID}`,
+  get() { try { return JSON.parse(localStorage.getItem(this.key)) || []; } catch(e) { return []; } },
+  unlock(id, title) {
+    const achs = this.get();
+    if (achs.find(a => a.id === id)) return;
+    achs.push({ id, title, time: Date.now() });
+    localStorage.setItem(this.key, JSON.stringify(achs));
+    this.showToast(title);
+  },
+  showToast(title) {
+    const toast = document.createElement('div');
+    toast.innerHTML = `<div style="position:fixed;top:80px;right:20px;z-index:9999;background:linear-gradient(135deg,rgba(245,158,11,.9),rgba(239,68,68,.8));color:#fff;padding:14px 22px;border-radius:12px;font-size:15px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.3);animation:fadeIn .3s ease;display:flex;align-items:center;gap:8px">🏆 ${title}</div>`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+};
+
+// 模块完成回调
+function onModuleComplete(moduleId, score, total) {
+  const pct = Math.round(score / total * 100);
+  TeachAnyProgress.setModuleScore(moduleId, pct);
+  // 成就检测
+  if (moduleId === 'pretest' && pct === 100) TeachAnyAchievements.unlock('pretest-perfect', '前测满分！基础扎实');
+  if (moduleId === 'posttest' && pct >= 80) TeachAnyAchievements.unlock('posttest-pass', '后测优秀！季风专家');
+  if (moduleId === 'posttest' && pct === 100) TeachAnyAchievements.unlock('posttest-perfect', '后测满分！完美通关');
+  if (moduleId === 'drag-chain' && pct === 100) TeachAnyAchievements.unlock('drag-master', '拖拽大师：三重成因全找到');
+  console.log(`[TeachAny] Module "${moduleId}" completed: ${score}/${total} (${pct}%)`);
+}
+
+/* ========== TTS 语音讲解引擎 ========== */
+const TTS_BASE = 'tts/monsoon-full/';
+const ttsNarration = [
+  { id:'intro', section:'hero', mp3: TTS_BASE+'seg01-intro_zh.mp3', zh:'欢迎学习全球季风系统。为什么夏天吹东南风、冬天吹西北风？今天我们从海陆热力差异出发，一起探索全球大气环流的奥秘。', en:'Welcome to the Global Monsoon System course.' },
+  { id:'goals', section:'goals', mp3: TTS_BASE+'seg02-goals_zh.mp3', zh:'本节课有三个目标：第一，理解季风的本质——大范围盛行风向随季节显著变化；第二，掌握三大季风区的位置和风向特征；第三，能区分东亚与南亚季风的成因差异。', en:'This lesson has three objectives.' },
+  { id:'pretest', section:'pretest', mp3: TTS_BASE+'seg03-pretest_zh.mp3', zh:'先做三道前测题，检查你的前序知识。第一题考的是比热容概念，第二题考风的形成原理，第三题考中国的风向规律。准备好了吗？', en:'Let\'s start with three pre-test questions.' },
+  { id:'what-monsoon', section:'what', mp3: TTS_BASE+'seg04-definition_zh.mp3', zh:'什么是季风？你知道夏天中国东南沿海常下雨，冬天北方干冷。这种冬夏完全不同的天气模式，就叫季风气候。季风的定义是：大范围内盛行风向随季节显著变化的风。关键词：风向随季节变化、大范围、显著。', en:'What is a monsoon? It is a seasonal reversal of wind direction over large areas.' },
+  { id:'map-intro', section:'what', mp3: TTS_BASE+'seg05-map_zh.mp3', zh:'请看交互地图。全球有三大季风区：东亚季风区是世界最大的季风区，覆盖中国东部、朝鲜半岛和日本；南亚季风区是季风最盛的地区，包括印度半岛和中南半岛；澳大利亚季风区在南半球，季节和北半球相反。你可以切换夏季和冬季，观察风向变化。', en:'Look at the interactive map showing the three major monsoon regions.' },
+  { id:'cause-heat', section:'cause', mp3: TTS_BASE+'seg06-cause-heat_zh.mp3', zh:'为什么高压低压的位置会随季节互换？核心是海陆热力性质差异。陆地比热容小，升温快降温也快；海洋比热容大，升温慢降温也慢。这个差异是季风形成的根本原因。', en:'The key is the difference in heat capacity between land and ocean.' },
+  { id:'cause-summer', section:'cause', mp3: TTS_BASE+'seg07-cause-summer_zh.mp3', zh:'夏天太阳直射点北移，陆地迅速升温形成低压中心，也就是亚洲低压。海洋保持较低温度形成高压中心，也就是太平洋副高。风从海洋高压吹向陆地低压，带来温暖湿润的夏季风。暖湿气流遇地形抬升，凝结成雨，雨季到来。', en:'In summer, land heats up forming low pressure, ocean stays cool forming high pressure.' },
+  { id:'cause-winter', section:'cause', mp3: TTS_BASE+'seg08-cause-winter_zh.mp3', zh:'冬天正好镜像翻转。陆地迅速冷却形成高压，也就是蒙古西伯利亚高压。海洋降温慢，相对低压。风从陆地吹向海洋，带来寒冷干燥的冬季风。结果就是旱季。', en:'In winter, the pattern reverses - land cools forming high pressure.' },
+  { id:'east-asia', section:'east-asia', mp3: TTS_BASE+'seg09-east-asia_zh.mp3', zh:'东亚季风是最经典的案例。夏季吹东南风，温暖湿润，带来高温多雨的雨季。冬季吹西北风，寒冷干燥，带来低温少雨的旱季。成因相对简单，主要是海陆热力差异这个单一因素。太平洋是最大的大洋，欧亚大陆是最大的大陆，温差极致。', en:'The East Asian Monsoon is the classic example with SE winds in summer and NW winds in winter.' },
+  { id:'south-asia', section:'south-asia', mp3: TTS_BASE+'seg10-south-asia_zh.mp3', zh:'南亚季风是全球最强盛也最复杂的。夏季吹西南风，冬季吹东北风。雨季降水占全年降水的百分之八十以上。它的独特之处在于三重叠加成因：第一，海陆热力差异是基础；第二，气压带风带季节移动使南半球的东南信风越过赤道；第三，地转偏向力使其右偏成为西南风。', en:'The South Asian Monsoon is the strongest, driven by three overlapping factors.' },
+  { id:'compare', section:'compare', mp3: TTS_BASE+'seg11-compare_zh.mp3', zh:'对比东亚和南亚季风。东亚夏季东南风、冬季西北风，成因是单一的海陆差。南亚夏季西南风、冬季东北风，成因是三重叠加。南亚季风强度全球最强。', en:'Comparing East Asia and South Asia monsoons: single cause vs triple overlap.' },
+  { id:'application', section:'application', mp3: TTS_BASE+'seg12-application_zh.mp3', zh:'季风与人类生活密切相关。中国农业靠天吃饭，雨热同期是关键。印度全国百分之七十以上降水来自西南季风，正常年丰收，异常年灾害。厄尔尼诺现象会削弱西太平洋季风导致干旱。城市规划中工业区要放在季风下风向，减少污染。', en:'Monsoons are closely related to agriculture, urban planning, and climate events.' },
+  { id:'posttest', section:'posttest', mp3: TTS_BASE+'seg13-posttest_zh.mp3', zh:'现在进入后测。五道题检验你对季风系统的理解。注意题目涉及根本成因、风向识别、东亚南亚对比、厄尔尼诺影响和城市规划应用。加油！', en:'Now let\'s take the post-test. Five questions to check your understanding.' },
+  { id:'summary', section:'', mp3: TTS_BASE+'seg14-summary_zh.mp3', zh:'课程总结。季风的定义是大范围盛行风向随季节显著变化。根本成因是海陆热力性质差异。东亚季风夏季东南冬季西北，成因单一。南亚季风夏季西南冬季东北，三重叠加是全球最强。澳大利亚季风区季节与北半球相反。希望你掌握了这些核心知识。下次课我们学习气候类型分类。', en:'Course summary: monsoons are seasonal wind reversals driven by land-sea thermal differences.' }
+];
+
+let ttsAudio = null;
+let ttsCurrentIdx = 0;
+let ttsPlaying = false;
+let ttsPlayerVisible = false;
+
+function toggleTTSPlayer() {
+  ttsPlayerVisible = !ttsPlayerVisible;
+  document.getElementById('ttsPlayer').classList.toggle('show', ttsPlayerVisible);
+  document.getElementById('ttsToggle').classList.toggle('active', ttsPlayerVisible);
+  if (ttsPlayerVisible) document.body.style.paddingBottom = '64px';
+  else document.body.style.paddingBottom = '';
+}
+
+function toggleTTSPlay() {
+  if (ttsPlaying) { pauseTTS(); }
+  else { playTTS(ttsCurrentIdx); }
+}
+
+function playTTS(idx) {
+  if (idx < 0 || idx >= ttsNarration.length) return;
+  if (ttsAudio) { ttsAudio.pause(); ttsAudio.removeAttribute('src'); ttsAudio = null; }
+  ttsCurrentIdx = idx;
+  const seg = ttsNarration[idx];
+
+  ttsAudio = new Audio(seg.mp3);
+  ttsAudio.preload = 'auto';
+
+  ttsPlaying = true;
+  document.getElementById('ttsPlayBtn').textContent = '⏸';
+  document.getElementById('ttsPlayBtn').classList.add('playing');
+  document.getElementById('ttsSegTitle').textContent = seg.zh.slice(0, 30) + (seg.zh.length > 30 ? '...' : '');
+  document.getElementById('ttsProgressFill').style.width = ((idx + 0.5) / ttsNarration.length * 100) + '%';
+
+  // 显示字幕
+  document.getElementById('subtitleBar').classList.add('show');
+  document.getElementById('subtitleZh').textContent = seg.zh;
+  document.getElementById('subtitleEn').textContent = seg.en;
+
+  // 滚动到对应章节
+  if (seg.section) {
+    const secEl = document.getElementById(seg.section);
+    if (secEl) secEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  ttsAudio.onended = function() {
+    document.getElementById('ttsProgressFill').style.width = ((idx + 1) / ttsNarration.length * 100) + '%';
+    if (idx + 1 < ttsNarration.length) {
+      setTimeout(() => playTTS(idx + 1), 500);
+    } else {
+      ttsPlaying = false;
+      document.getElementById('ttsPlayBtn').textContent = '▶';
+      document.getElementById('ttsPlayBtn').classList.remove('playing');
+      document.getElementById('subtitleBar').classList.remove('show');
+      document.getElementById('ttsSegTitle').textContent = '讲解完成 ✅';
+    }
+  };
+  ttsAudio.onerror = function() {
+    console.warn('⚠️ 音频加载失败:', seg.mp3, '跳到下一段');
+    if (idx + 1 < ttsNarration.length) setTimeout(() => playTTS(idx + 1), 300);
+    else { ttsPlaying = false; document.getElementById('ttsPlayBtn').textContent = '▶'; }
+  };
+  ttsAudio.play().catch(e => console.warn('播放被阻止:', e));
+}
+
+function pauseTTS() {
+  if (ttsAudio) { ttsAudio.pause(); }
+  ttsPlaying = false;
+  document.getElementById('ttsPlayBtn').textContent = '▶';
+  document.getElementById('ttsPlayBtn').classList.remove('playing');
+  document.getElementById('subtitleBar').classList.remove('show');
+}
+
+function prevTTSSeg() { pauseTTS(); playTTS(Math.max(0, ttsCurrentIdx - 1)); }
+function nextTTSSeg() { pauseTTS(); playTTS(Math.min(ttsNarration.length - 1, ttsCurrentIdx + 1)); }
+function seekTTS(e) {
+  const bar = document.getElementById('ttsProgressBar');
+  const pct = (e.clientX - bar.getBoundingClientRect().left) / bar.offsetWidth;
+  const idx = Math.floor(pct * ttsNarration.length);
+  pauseTTS();
+  playTTS(Math.max(0, Math.min(idx, ttsNarration.length - 1)));
+}
+
+// 预加载前3段音频
+ttsNarration.slice(0, 3).forEach(seg => { const a = new Audio(); a.preload = 'auto'; a.src = seg.mp3; });
 </script>
 </body>
 </html>
