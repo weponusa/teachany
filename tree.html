@@ -66,20 +66,21 @@ body {
 /* Subject Tabs */
 .subject-tabs {
   display: flex;
-  gap: 8px;
-  padding: 12px 24px;
+  gap: 6px;
+  padding: 10px 24px;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
   overflow-x: auto;
+  flex-wrap: wrap;
 }
 .subject-tab {
-  padding: 6px 16px;
-  border-radius: 20px;
+  padding: 5px 12px;
+  border-radius: 16px;
   border: 1px solid var(--border);
   background: transparent;
   color: var(--dim);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
   white-space: nowrap;
   transition: all 0.2s;
 }
@@ -88,6 +89,13 @@ body {
   background: var(--primary);
   border-color: var(--primary);
   color: white;
+}
+.stage-label {
+  padding: 5px 8px;
+  font-size: 11px;
+  color: var(--dimmer);
+  font-weight: 600;
+  align-self: center;
 }
 
 /* SVG Canvas */
@@ -278,22 +286,48 @@ svg { width: 100%; height: 100%; }
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 <script>
 const TREES = [
+  // 小学
+  { file: 'data/trees/chinese-elementary.json', emoji: '📖', label: '小学语文' },
+  { file: 'data/trees/math-elementary.json', emoji: '🔢', label: '小学数学' },
+  { file: 'data/trees/english-elementary.json', emoji: '🔤', label: '小学英语' },
+  // 初中
+  { file: 'data/trees/chinese-middle.json', emoji: '📝', label: '初中语文' },
   { file: 'data/trees/math-middle.json', emoji: '📐', label: '初中数学' },
+  { file: 'data/trees/english-middle.json', emoji: '🅰️', label: '初中英语' },
   { file: 'data/trees/physics-middle.json', emoji: '⚡', label: '初中物理' },
+  { file: 'data/trees/chemistry-middle.json', emoji: '🧪', label: '初中化学' },
+  { file: 'data/trees/biology-middle.json', emoji: '🌱', label: '初中生物' },
+  { file: 'data/trees/geography-middle.json', emoji: '🗺️', label: '初中地理' },
+  { file: 'data/trees/history-middle.json', emoji: '📜', label: '初中历史' },
+  // 高中
+  { file: 'data/trees/chinese-high.json', emoji: '📚', label: '高中语文' },
+  { file: 'data/trees/math-high.json', emoji: '∑', label: '高中数学' },
+  { file: 'data/trees/english-high.json', emoji: '🌐', label: '高中英语' },
+  { file: 'data/trees/physics-high.json', emoji: '⚛️', label: '高中物理' },
+  { file: 'data/trees/chemistry-high.json', emoji: '⚗️', label: '高中化学' },
   { file: 'data/trees/biology-high.json', emoji: '🧬', label: '高中生物' },
   { file: 'data/trees/geography-high.json', emoji: '🌍', label: '高中地理' },
-  { file: 'data/trees/chinese-elementary.json', emoji: '📖', label: '小学语文' }
+  { file: 'data/trees/history-high.json', emoji: '🏛️', label: '高中历史' }
 ];
 
 let currentTree = null;
 let simulation = null;
 
-// Build subject tabs
+// Build subject tabs with stage labels
 const tabsEl = document.getElementById('subjectTabs');
+const stageBreaks = [0, 3, 11]; // indices where new stage starts
+const stageNames = ['小学', '初中', '高中'];
 TREES.forEach((t, i) => {
+  const stageIdx = stageBreaks.indexOf(i);
+  if (stageIdx !== -1) {
+    const label = document.createElement('span');
+    label.className = 'stage-label';
+    label.textContent = stageNames[stageIdx];
+    tabsEl.appendChild(label);
+  }
   const btn = document.createElement('button');
   btn.className = 'subject-tab' + (i === 0 ? ' active' : '');
-  btn.textContent = t.emoji + ' ' + t.label;
+  btn.textContent = t.emoji + ' ' + t.label.replace(/小学|初中|高中/, '');
   btn.onclick = () => loadTree(i);
   tabsEl.appendChild(btn);
 });
