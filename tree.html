@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TeachAny 知识树 · Knowledge Tree</title>
+<style>
+:root {
+  --bg: #0f172a;
+  --bg2: #1e293b;
+  --card: rgba(30, 41, 59, 0.85);
+  --border: rgba(148, 163, 184, 0.15);
+  --text: #f8fafc;
+  --dim: #94a3b8;
+  --dimmer: #64748b;
+  --primary: #3b82f6;
+  --secondary: #8b5cf6;
+  --accent: #f59e0b;
+  --success: #10b981;
+  --danger: #ef4444;
+  --cyan: #06b6d4;
+  --pink: #ec4899;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'PingFang SC', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* Top Bar */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  z-index: 10;
+}
+.top-bar h1 {
+  font-size: 20px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.nav-links { display: flex; gap: 8px; }
+.nav-links a {
+  color: var(--dim);
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+.nav-links a:hover, .nav-links a.active {
+  color: var(--text);
+  background: rgba(59,130,246,0.15);
+}
+
+/* Subject Tabs */
+.subject-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+.subject-tab {
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--dim);
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.subject-tab:hover { border-color: var(--primary); color: var(--text); }
+.subject-tab.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+/* SVG Canvas */
+#tree-container {
+  width: 100%;
+  height: calc(100vh - 100px);
+  position: relative;
+}
+svg { width: 100%; height: 100%; }
+
+/* Nodes */
+.node-group { cursor: pointer; }
+.node-circle {
+  stroke-width: 2.5;
+  transition: all 0.3s;
+}
+.node-group:hover .node-circle {
+  stroke-width: 4;
+  filter: drop-shadow(0 0 12px rgba(59,130,246,0.5));
+}
+.node-label {
+  font-size: 12px;
+  font-family: 'PingFang SC', sans-serif;
+  fill: var(--text);
+  text-anchor: middle;
+  pointer-events: none;
+}
+.node-grade {
+  font-size: 10px;
+  fill: var(--dimmer);
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+/* Links */
+.link {
+  stroke: rgba(148,163,184,0.2);
+  stroke-width: 1.5;
+  fill: none;
+}
+.link-prerequisite { stroke: rgba(148,163,184,0.3); stroke-width: 2; }
+.link-extends { stroke: rgba(139,92,246,0.25); stroke-dasharray: 6 3; }
+.link-parallel { stroke: rgba(245,158,11,0.2); stroke-dasharray: 3 3; }
+
+/* Tooltip */
+.tooltip {
+  position: absolute;
+  background: var(--card);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  max-width: 280px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 100;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.tooltip.visible { opacity: 1; }
+.tooltip h3 { font-size: 15px; margin-bottom: 6px; }
+.tooltip .meta { font-size: 12px; color: var(--dim); margin-bottom: 8px; }
+.tooltip .status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.tooltip .badge-active { background: rgba(16,185,129,0.2); color: var(--success); }
+.tooltip .badge-gap { background: rgba(239,68,68,0.2); color: var(--danger); }
+.tooltip .prereqs { font-size: 12px; color: var(--dim); margin-top: 6px; }
+.tooltip .course-link {
+  display: block;
+  margin-top: 10px;
+  padding: 6px 12px;
+  background: var(--primary);
+  color: white;
+  border-radius: 6px;
+  text-align: center;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  pointer-events: auto;
+}
+.tooltip .course-link:hover { filter: brightness(1.15); }
+.tooltip .gap-msg {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: rgba(239,68,68,0.1);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--danger);
+}
+
+/* Legend */
+.legend {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background: var(--card);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 12px;
+  z-index: 10;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+}
+.legend-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid;
+  flex-shrink: 0;
+}
+.legend-line {
+  width: 24px;
+  height: 2px;
+  flex-shrink: 0;
+}
+
+/* Stats bar */
+.stats-bar {
+  position: absolute;
+  top: 12px;
+  right: 20px;
+  display: flex;
+  gap: 16px;
+  z-index: 10;
+}
+.stat-chip {
+  background: var(--card);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+.stat-chip strong { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <h1>🌳 TeachAny 知识树</h1>
+  <div class="nav-links">
+    <a href="index.html">📋 Gallery</a>
+    <a href="tree.html" class="active">🌳 知识树</a>
+    <a href="path.html">🛤️ 学习路径</a>
+  </div>
+</div>
+
+<div class="subject-tabs" id="subjectTabs"></div>
+
+<div id="tree-container">
+  <svg id="treeSvg"></svg>
+  <div class="tooltip" id="tooltip"></div>
+
+  <div class="stats-bar" id="statsBar"></div>
+
+  <div class="legend">
+    <div style="font-weight:600;margin-bottom:6px;">图例</div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:rgba(16,185,129,0.3);border-color:#10b981;"></div>
+      <span>有课件</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:transparent;border-color:#64748b;border-style:dashed;"></div>
+      <span>待创建（知识空洞）</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-line" style="background:#94a3b8;"></div>
+      <span>前置知识</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-line" style="background:#8b5cf6;background:repeating-linear-gradient(90deg,#8b5cf6 0,#8b5cf6 6px,transparent 6px,transparent 9px);"></div>
+      <span>延伸拓展</span>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script>
+const TREES = [
+  { file: 'data/trees/math-middle.json', emoji: '📐', label: '初中数学' },
+  { file: 'data/trees/physics-middle.json', emoji: '⚡', label: '初中物理' },
+  { file: 'data/trees/biology-high.json', emoji: '🧬', label: '高中生物' },
+  { file: 'data/trees/geography-high.json', emoji: '🌍', label: '高中地理' },
+  { file: 'data/trees/chinese-elementary.json', emoji: '📖', label: '小学语文' }
+];
+
+let currentTree = null;
+let simulation = null;
+
+// Build subject tabs
+const tabsEl = document.getElementById('subjectTabs');
+TREES.forEach((t, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'subject-tab' + (i === 0 ? ' active' : '');
+  btn.textContent = t.emoji + ' ' + t.label;
+  btn.onclick = () => loadTree(i);
+  tabsEl.appendChild(btn);
+});
+
+async function loadTree(index) {
+  // Update tab active state
+  document.querySelectorAll('.subject-tab').forEach((t, i) => {
+    t.classList.toggle('active', i === index);
+  });
+
+  const resp = await fetch(TREES[index].file);
+  currentTree = await resp.json();
+  renderTree(currentTree);
+}
+
+function renderTree(tree) {
+  const svg = d3.select('#treeSvg');
+  svg.selectAll('*').remove();
+
+  const container = document.getElementById('tree-container');
+  const W = container.clientWidth;
+  const H = container.clientHeight;
+
+  // Build nodes and links from tree data
+  const nodes = [];
+  const links = [];
+  const nodeMap = {};
+
+  tree.domains.forEach(domain => {
+    domain.nodes.forEach(node => {
+      const n = {
+        id: node.id,
+        name: node.name,
+        grade: node.grade,
+        domain: domain.name,
+        domainColor: domain.color,
+        status: node.status,
+        courses: node.courses || [],
+        prerequisites: node.prerequisites || [],
+        extends: node.extends || [],
+        parallel: node.parallel || []
+      };
+      nodes.push(n);
+      nodeMap[node.id] = n;
+    });
+  });
+
+  // Create links
+  nodes.forEach(n => {
+    n.prerequisites.forEach(pid => {
+      if (nodeMap[pid]) {
+        links.push({ source: pid, target: n.id, type: 'prerequisite' });
+      }
+    });
+    n.extends.forEach(eid => {
+      if (nodeMap[eid]) {
+        links.push({ source: n.id, target: eid, type: 'extends' });
+      }
+    });
+    n.parallel.forEach(pid => {
+      if (nodeMap[pid]) {
+        // avoid duplicate parallel links
+        const exists = links.find(l =>
+          l.type === 'parallel' &&
+          ((l.source === n.id && l.target === pid) || (l.source === pid && l.target === n.id))
+        );
+        if (!exists) links.push({ source: n.id, target: pid, type: 'parallel' });
+      }
+    });
+  });
+
+  // Stats
+  const totalNodes = nodes.length;
+  const activeNodes = nodes.filter(n => n.status === 'active').length;
+  const gapNodes = totalNodes - activeNodes;
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-chip">节点 <strong>${totalNodes}</strong></div>
+    <div class="stat-chip">有课件 <strong>${activeNodes}</strong></div>
+    <div class="stat-chip">待创建 <strong style="color:var(--danger);">${gapNodes}</strong></div>
+    <div class="stat-chip">覆盖率 <strong>${Math.round(activeNodes/totalNodes*100)}%</strong></div>
+  `;
+
+  // D3 force simulation
+  const g = svg.append('g');
+
+  // Zoom
+  const zoom = d3.zoom()
+    .scaleExtent([0.3, 3])
+    .on('zoom', e => g.attr('transform', e.transform));
+  svg.call(zoom);
+
+  // Arrow markers
+  const defs = svg.append('defs');
+  defs.append('marker')
+    .attr('id', 'arrow-prereq')
+    .attr('viewBox', '0 -5 10 10')
+    .attr('refX', 28).attr('refY', 0)
+    .attr('markerWidth', 6).attr('markerHeight', 6)
+    .attr('orient', 'auto')
+    .append('path').attr('d', 'M0,-5L10,0L0,5')
+    .attr('fill', 'rgba(148,163,184,0.4)');
+
+  // Links
+  const linkSel = g.selectAll('.link')
+    .data(links)
+    .enter().append('line')
+    .attr('class', d => 'link link-' + d.type)
+    .attr('marker-end', d => d.type === 'prerequisite' ? 'url(#arrow-prereq)' : '');
+
+  // Node groups
+  const nodeSel = g.selectAll('.node-group')
+    .data(nodes, d => d.id)
+    .enter().append('g')
+    .attr('class', 'node-group')
+    .call(d3.drag()
+      .on('start', dragStart)
+      .on('drag', dragging)
+      .on('end', dragEnd))
+    .on('mouseenter', showTooltip)
+    .on('mousemove', moveTooltip)
+    .on('mouseleave', hideTooltip)
+    .on('click', onNodeClick);
+
+  // Circle
+  nodeSel.append('circle')
+    .attr('class', 'node-circle')
+    .attr('r', d => d.status === 'active' ? 22 : 18)
+    .attr('fill', d => d.status === 'active'
+      ? hexToRgba(d.domainColor, 0.25)
+      : 'rgba(30,41,59,0.6)')
+    .attr('stroke', d => d.status === 'active' ? d.domainColor : '#64748b')
+    .attr('stroke-dasharray', d => d.status === 'gap' ? '4 3' : 'none');
+
+  // Status icon
+  nodeSel.append('text')
+    .attr('text-anchor', 'middle')
+    .attr('dy', '0.35em')
+    .attr('font-size', '14px')
+    .text(d => d.status === 'active' ? '✅' : '📝');
+
+  // Label
+  nodeSel.append('text')
+    .attr('class', 'node-label')
+    .attr('dy', 38)
+    .text(d => d.name);
+
+  // Grade
+  nodeSel.append('text')
+    .attr('class', 'node-grade')
+    .attr('dy', 52)
+    .text(d => d.grade + '年级');
+
+  // Simulation
+  simulation = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links).id(d => d.id).distance(120).strength(0.6))
+    .force('charge', d3.forceManyBody().strength(-400))
+    .force('center', d3.forceCenter(W / 2, H / 2))
+    .force('collision', d3.forceCollide().radius(50))
+    .force('x', d3.forceX(W / 2).strength(0.05))
+    .force('y', d3.forceY(H / 2).strength(0.05))
+    .on('tick', () => {
+      linkSel
+        .attr('x1', d => d.source.x)
+        .attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x)
+        .attr('y2', d => d.target.y);
+      nodeSel.attr('transform', d => `translate(${d.x},${d.y})`);
+    });
+
+  // Initial zoom to fit
+  setTimeout(() => {
+    svg.call(zoom.transform, d3.zoomIdentity.translate(0, 0).scale(0.9));
+  }, 500);
+}
+
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1,3), 16);
+  const g = parseInt(hex.slice(3,5), 16);
+  const b = parseInt(hex.slice(5,7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// Drag handlers
+function dragStart(event, d) {
+  if (!event.active) simulation.alphaTarget(0.3).restart();
+  d.fx = d.x; d.fy = d.y;
+}
+function dragging(event, d) { d.fx = event.x; d.fy = event.y; }
+function dragEnd(event, d) {
+  if (!event.active) simulation.alphaTarget(0);
+  d.fx = null; d.fy = null;
+}
+
+// Tooltip
+const tooltip = document.getElementById('tooltip');
+
+function showTooltip(event, d) {
+  let html = `<h3>${d.name}</h3>`;
+  html += `<div class="meta">${d.domain} · ${d.grade}年级</div>`;
+  html += d.status === 'active'
+    ? `<span class="status-badge badge-active">✅ 有课件</span>`
+    : `<span class="status-badge badge-gap">📝 待创建</span>`;
+
+  if (d.prerequisites.length) {
+    html += `<div class="prereqs">前置知识：${d.prerequisites.join('、')}</div>`;
+  }
+
+  if (d.status === 'active' && d.courses.length) {
+    html += `<a class="course-link" href="${d.courses[0]}/index.html" target="_blank">🎯 进入课件</a>`;
+  } else if (d.status === 'gap') {
+    html += `<div class="gap-msg">💡 这个知识点还没有课件，用 TeachAny 创建一个吧！</div>`;
+  }
+
+  tooltip.innerHTML = html;
+  tooltip.classList.add('visible');
+}
+
+function moveTooltip(event) {
+  const rect = document.getElementById('tree-container').getBoundingClientRect();
+  let x = event.clientX - rect.left + 16;
+  let y = event.clientY - rect.top + 16;
+  if (x + 290 > rect.width) x = event.clientX - rect.left - 296;
+  if (y + 200 > rect.height) y = event.clientY - rect.top - 200;
+  tooltip.style.left = x + 'px';
+  tooltip.style.top = y + 'px';
+}
+
+function hideTooltip() { tooltip.classList.remove('visible'); }
+
+function onNodeClick(event, d) {
+  if (d.status === 'active' && d.courses.length) {
+    window.open(d.courses[0] + '/index.html', '_blank');
+  }
+}
+
+// Load initial tree
+loadTree(0);
+</script>
+</body>
+</html>
