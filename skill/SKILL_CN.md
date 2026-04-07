@@ -1198,7 +1198,97 @@ npm run build:all                       # 渲染所有集数为 MP4
 
 ---
 
-**技能版本**：v5.3  
+## 十七、课件打包与分发
+
+TeachAny 课件可以打包为 `.teachany` 文件（标准 ZIP 格式），方便导入、分享和管理。
+
+### 17.1 课件包结构
+
+```text
+my-course.teachany          ← ZIP 压缩，扩展名 .teachany
+├── manifest.json           ← 必须：课件元信息
+├── index.html              ← 必须：主课件文件
+├── index_en.html           ← 可选：英文版课件
+├── README.md               ← 可选：课件说明
+├── thumbnail.png           ← 可选：缩略图（推荐 600×400）
+└── assets/                 ← 可选：音视频等资源
+```
+
+### 17.2 manifest.json 必填字段
+
+```jsonc
+{
+  "name": "一次函数与正比例函数",     // 课件中文名
+  "subject": "math",                   // 学科 ID
+  "grade": 8,                          // 适用年级（1-12）
+  "author": "weponusa",                // 作者
+  "version": "1.0.0",                  // 版本号
+  "node_id": "linear-function",        // 对应知识树节点 ID（可选但推荐）
+  "domain": "function",                // 所属领域（可选）
+  "prerequisites": ["proportional-function"],  // 前置知识（可选）
+  "emoji": "📏",                        // 展示 emoji
+  "difficulty": 3,                      // 难度 1-5
+  "teachany_spec": "1.0"               // 规范版本
+}
+```
+
+完整 Schema 详见 `docs/courseware-package.md`。
+
+### 17.3 打包命令
+
+课件生成完成后，执行以下命令打包：
+
+```bash
+# 自动从 index.html meta 标签生成 manifest.json 并打包
+node scripts/pack-courseware.cjs ./examples/math-linear-function
+
+# 指定输出目录
+node scripts/pack-courseware.cjs ./examples/math-linear-function ./dist
+```
+
+如果目录中已有 `manifest.json`，脚本会直接使用；否则会从 `index.html` 的 `<meta name="teachany-*">` 标签自动生成。
+
+### 17.4 AI 生成课件后的标准流程
+
+在 Phase 3（制作内容）完成后，增加 **Phase 3.5 — 打包**：
+
+```text
+Phase 3.5：打包课件
+1. 确认 index.html 包含完整的 teachany-* meta 标签
+2. 运行 node scripts/pack-courseware.js <课件目录>
+3. 验证生成的 .teachany 包
+4. 告知用户：可将此文件拖入 TeachAny Gallery 或知识树页面导入
+```
+
+### 17.5 HTML meta 标签（已有规范，此处汇总）
+
+每个课件的 `index.html` 必须包含以下 meta 标签：
+
+```html
+<meta name="teachany-node" content="linear-function">
+<meta name="teachany-subject" content="math">
+<meta name="teachany-domain" content="function">
+<meta name="teachany-grade" content="8">
+<meta name="teachany-prerequisites" content="proportional-function">
+<meta name="teachany-difficulty" content="3">
+<meta name="teachany-version" content="2.0">
+<meta name="teachany-author" content="weponusa">
+```
+
+这些标签既用于知识树关联，也用于自动生成 `manifest.json`。
+
+### 17.6 导入方式
+
+用户可在两个入口导入课件包：
+
+1. **Gallery 页面**：点击「➕ 添加我的课件」按钮，拖入或选择 `.teachany` 文件
+2. **知识树页面**：点击"待创建"节点，弹出上传入口，课件自动关联到该知识节点
+
+导入后课件存储在浏览器 localStorage 中（纯前端，无需后端），在 Gallery 中以「我的课件」标识展示。
+
+---
+
+**技能版本**：v5.4  
 **更新日期**：2026-04-07  
 **变更摘要**：
 - v1.0：数理课件版
@@ -1206,3 +1296,4 @@ npm run build:all                       # 渲染所有集数为 MP4
 - v3.0：补 Bloom 完整表、课型分类、脚手架策略、Mayer 原则、五镜头选择指引、3 学科完整示例、视觉设计细则、Phase 4 审查清单
 - v4.0：新增视频与音频制作流水线（Remotion 自动安装、Edge TTS 集成、双语字幕系统、语言配置）、Token 与成本估算
 - v5.3：新增例题配图硬性规范（Section 13）——涉及空间/几何/图形推理的例题和练习必须配图；详见英文版 SKILL.md Section 18.8 完整实现指南。
+- v5.4：新增课件打包与分发（Section 17）——定义 .teachany 课件包格式、打包脚本、Gallery/知识树导入功能。

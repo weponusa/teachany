@@ -155,7 +155,7 @@ svg { width: 100%; height: 100%; }
   z-index: 100;
   box-shadow: 0 8px 32px rgba(0,0,0,0.4);
 }
-.tooltip.visible { opacity: 1; }
+.tooltip.visible { opacity: 1; pointer-events: auto; }
 .tooltip h3 { font-size: 15px; margin-bottom: 6px; }
 .tooltip .meta { font-size: 12px; color: var(--dim); margin-bottom: 8px; }
 .tooltip .status-badge {
@@ -269,6 +269,10 @@ svg { width: 100%; height: 100%; }
       <span>有课件</span>
     </div>
     <div class="legend-item">
+      <div class="legend-dot" style="background:rgba(245,158,11,0.15);border-color:#f59e0b;"></div>
+      <span>我的课件</span>
+    </div>
+    <div class="legend-item">
       <div class="legend-dot" style="background:transparent;border-color:#64748b;border-style:dashed;"></div>
       <span>待创建（知识空洞）</span>
     </div>
@@ -283,7 +287,8 @@ svg { width: 100%; height: 100%; }
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous"></script>
+<script src="./scripts/courseware-importer.js"></script>
 <script>
 const TREES = [
   // 小学
@@ -399,15 +404,22 @@ function renderTree(tree) {
     });
   });
 
+  // Check user-uploaded courses (必须在 Stats 之前，避免 TDZ 错误)
+  const userCourses = window.TeachAnyImporter ? TeachAnyImporter.getUserCourses() : [];
+  const userNodeIds = new Set(userCourses.map(c => c.manifest.node_id).filter(Boolean));
+
   // Stats
   const totalNodes = nodes.length;
   const activeNodes = nodes.filter(n => n.status === 'active').length;
-  const gapNodes = totalNodes - activeNodes;
+  const userNodes = nodes.filter(n => n.status === 'gap' && userNodeIds.has(n.id)).length;
+  const gapNodes = totalNodes - activeNodes - userNodes;
+  const coveredNodes = activeNodes + userNodes;
   document.getElementById('statsBar').innerHTML = `
     <div class="stat-chip">节点 <strong>${totalNodes}</strong></div>
     <div class="stat-chip">有课件 <strong>${activeNodes}</strong></div>
+    ${userNodes > 0 ? `<div class="stat-chip">我的课件 <strong style="color:#fbbf24;">${userNodes}</strong></div>` : ''}
     <div class="stat-chip">待创建 <strong style="color:var(--danger);">${gapNodes}</strong></div>
-    <div class="stat-chip">覆盖率 <strong>${Math.round(activeNodes/totalNodes*100)}%</strong></div>
+    <div class="stat-chip">覆盖率 <strong>${Math.round(coveredNodes/totalNodes*100)}%</strong></div>
   `;
 
   // D3 force simulation
@@ -454,19 +466,32 @@ function renderTree(tree) {
   // Circle
   nodeSel.append('circle')
     .attr('class', 'node-circle')
-    .attr('r', d => d.status === 'active' ? 22 : 18)
-    .attr('fill', d => d.status === 'active'
-      ? hexToRgba(d.domainColor, 0.25)
-      : 'rgba(30,41,59,0.6)')
-    .attr('stroke', d => d.status === 'active' ? d.domainColor : '#64748b')
-    .attr('stroke-dasharray', d => d.status === 'gap' ? '4 3' : 'none');
+    .attr('r', d => (d.status === 'active' || userNodeIds.has(d.id)) ? 22 : 18)
+    .attr('fill', d => {
+      if (d.status === 'active') return hexToRgba(d.domainColor, 0.25);
+      if (userNodeIds.has(d.id)) return hexToRgba(d.domainColor, 0.15);
+      return 'rgba(30,41,59,0.6)';
+    })
+    .attr('stroke', d => {
+      if (d.status === 'active') return d.domainColor;
+      if (userNodeIds.has(d.id)) return d.domainColor;
+      return '#64748b';
+    })
+    .attr('stroke-dasharray', d => {
+      if (d.status === 'gap' && !userNodeIds.has(d.id)) return '4 3';
+      return 'none';
+    });
 
   // Status icon
   nodeSel.append('text')
     .attr('text-anchor', 'middle')
     .attr('dy', '0.35em')
     .attr('font-size', '14px')
-    .text(d => d.status === 'active' ? '✅' : '📝');
+    .text(d => {
+      if (d.status === 'active') return '✅';
+      if (userNodeIds.has(d.id)) return '📂';
+      return '📝';
+    });
 
   // Label
   nodeSel.append('text')
@@ -524,12 +549,29 @@ function dragEnd(event, d) {
 // Tooltip
 const tooltip = document.getElementById('tooltip');
 
+// ── Tooltip 交互（固定定位 + 延迟隐藏，确保按钮可点击）──
+
+let tooltipLocked = false;   // tooltip 被锁定（用户鼠标在 tooltip 上）
+let activeNodeData = null;   // 当前显示 tooltip 的节点数据
+
 function showTooltip(event, d) {
+  clearTimeout(tooltip._hideTimer);
+  activeNodeData = d;
+
   let html = `<h3>${d.name}</h3>`;
   html += `<div class="meta">${d.domain} · ${d.grade}年级</div>`;
-  html += d.status === 'active'
-    ? `<span class="status-badge badge-active">✅ 有课件</span>`
-    : `<span class="status-badge badge-gap">📝 待创建</span>`;
+
+  // 检查用户是否已上传该节点的课件
+  const userCourses = window.TeachAnyImporter ? TeachAnyImporter.getUserCourses() : [];
+  const userCourse = userCourses.find(c => c.manifest.node_id === d.id);
+
+  if (d.status === 'active' && d.courses.length) {
+    html += `<span class="status-badge badge-active">✅ 有课件</span>`;
+  } else if (userCourse) {
+    html += `<span class="status-badge badge-active">📂 我的课件</span>`;
+  } else {
+    html += `<span class="status-badge badge-gap">📝 待创建</span>`;
+  }
 
   if (d.prerequisites.length) {
     html += `<div class="prereqs">前置知识：${d.prerequisites.join('、')}</div>`;
@@ -537,34 +579,105 @@ function showTooltip(event, d) {
 
   if (d.status === 'active' && d.courses.length) {
     html += `<a class="course-link" href="${d.courses[0]}/index.html" target="_blank">🎯 进入课件</a>`;
-  } else if (d.status === 'gap') {
-    html += `<div class="gap-msg">💡 这个知识点还没有课件，用 TeachAny 创建一个吧！</div>`;
+  } else if (userCourse) {
+    html += `<a class="course-link" href="${userCourse.htmlDataUrl || '#'}" target="_blank">📂 打开我的课件</a>`;
   }
 
   tooltip.innerHTML = html;
+
+  // 为 gap 节点（且无用户课件）添加上传按钮
+  if (d.status === 'gap' && !userCourse && window.TeachAnyImporter) {
+    TeachAnyImporter.addTreeUploadButton(d, tooltip);
+  }
+
+  // 定位：紧贴节点右侧（无间隙），这样鼠标从节点移到 tooltip 不会经过空白区域
+  positionTooltipAtNode(event, d);
+
   tooltip.classList.add('visible');
 }
 
-function moveTooltip(event) {
-  const rect = document.getElementById('tree-container').getBoundingClientRect();
-  let x = event.clientX - rect.left + 16;
-  let y = event.clientY - rect.top + 16;
-  if (x + 290 > rect.width) x = event.clientX - rect.left - 296;
-  if (y + 200 > rect.height) y = event.clientY - rect.top - 200;
+function positionTooltipAtNode(event, d) {
+  const container = document.getElementById('tree-container');
+  const rect = container.getBoundingClientRect();
+  const svgEl = document.getElementById('treeSvg');
+  const gEl = svgEl.querySelector('g');
+  const ctm = gEl ? gEl.getCTM() : null;
+
+  let x, y;
+  if (ctm && d.x != null && d.y != null) {
+    // 将节点的模拟坐标经由 SVG CTM 变换为屏幕坐标，再转为容器内相对坐标
+    const screenX = ctm.a * d.x + ctm.c * d.y + ctm.e;
+    const screenY = ctm.b * d.x + ctm.d * d.y + ctm.f;
+    x = screenX - rect.left + 28;  // 紧贴节点右侧
+    y = screenY - rect.top - 20;
+  } else {
+    // fallback：用鼠标位置
+    x = event.clientX - rect.left + 12;
+    y = event.clientY - rect.top - 20;
+  }
+
+  // 边界修正
+  const tw = 290; // tooltip 大致宽度
+  const th = 200; // tooltip 大致高度
+  if (x + tw > rect.width) x = x - tw - 56; // 翻到节点左侧
+  if (y + th > rect.height) y = rect.height - th - 10;
+  if (y < 10) y = 10;
+
   tooltip.style.left = x + 'px';
   tooltip.style.top = y + 'px';
 }
 
-function hideTooltip() { tooltip.classList.remove('visible'); }
+function moveTooltip(event) {
+  // 不再跟随鼠标移动——tooltip 固定在节点旁边
+  // 仅在 tooltip 尚未显示时定位（已由 showTooltip 处理）
+}
+
+function hideTooltip() {
+  // 如果 tooltip 被锁定（鼠标在 tooltip 上），不隐藏
+  if (tooltipLocked) return;
+
+  clearTimeout(tooltip._hideTimer);
+  tooltip._hideTimer = setTimeout(() => {
+    // 再次检查：用户是否已经把鼠标移到 tooltip 上
+    if (!tooltipLocked && !tooltip.matches(':hover')) {
+      tooltip.classList.remove('visible');
+      activeNodeData = null;
+    }
+  }, 350); // 350ms 延迟，给用户充足时间移到 tooltip
+}
+
+// tooltip 鼠标进入/离开
+tooltip.addEventListener('mouseenter', function() {
+  tooltipLocked = true;
+  clearTimeout(this._hideTimer);
+});
+tooltip.addEventListener('mouseleave', function() {
+  tooltipLocked = false;
+  activeNodeData = null;
+  this.classList.remove('visible');
+});
 
 function onNodeClick(event, d) {
   if (d.status === 'active' && d.courses.length) {
     window.open(d.courses[0] + '/index.html', '_blank');
+  } else if (d.status === 'gap') {
+    // 检查用户是否已上传该节点的课件
+    const userCourses = window.TeachAnyImporter ? TeachAnyImporter.getUserCourses() : [];
+    const userCourse = userCourses.find(c => c.manifest.node_id === d.id);
+    if (userCourse && userCourse.htmlDataUrl) {
+      window.open(userCourse.htmlDataUrl, '_blank');
+    }
   }
 }
 
 // Load initial tree
 loadTree(0);
+
+// 课件导入回调：重新渲染当前知识树
+window.teachanyOnCourseImported = function(nodeId) {
+  const activeIdx = Array.from(document.querySelectorAll('.subject-tab')).findIndex(t => t.classList.contains('active'));
+  if (activeIdx >= 0) loadTree(activeIdx);
+};
 </script>
 </body>
 </html>
