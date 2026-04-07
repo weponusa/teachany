@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TeachAny 学习路径 · Learning Path</title>
+<style>
+:root {
+  --bg: #0f172a;
+  --bg2: #1e293b;
+  --card: rgba(30, 41, 59, 0.7);
+  --border: rgba(148, 163, 184, 0.15);
+  --text: #f8fafc;
+  --dim: #94a3b8;
+  --dimmer: #64748b;
+  --primary: #3b82f6;
+  --secondary: #8b5cf6;
+  --accent: #f59e0b;
+  --success: #10b981;
+  --danger: #ef4444;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'PingFang SC', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+/* Top Bar */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+}
+.top-bar h1 {
+  font-size: 20px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.nav-links { display: flex; gap: 8px; }
+.nav-links a {
+  color: var(--dim);
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+.nav-links a:hover, .nav-links a.active {
+  color: var(--text);
+  background: rgba(59,130,246,0.15);
+}
+
+/* Main */
+.container { max-width: 800px; margin: 0 auto; padding: 40px 24px; }
+
+.hero-section {
+  text-align: center;
+  margin-bottom: 40px;
+}
+.hero-section h2 {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+.hero-section p {
+  color: var(--dim);
+  font-size: 16px;
+}
+
+/* Selector */
+.selector-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+.selector-row select, .selector-row button {
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  color: var(--text);
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.selector-row select { flex: 1; min-width: 180px; }
+.selector-row select:focus { outline: none; border-color: var(--primary); }
+.selector-row button {
+  background: var(--primary);
+  border-color: var(--primary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.selector-row button:hover { filter: brightness(1.15); }
+
+/* Path */
+.path-container { position: relative; }
+
+.path-step {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 0;
+  position: relative;
+  padding-left: 40px;
+  padding-bottom: 24px;
+}
+.path-step::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--border);
+}
+.path-step:last-child::before { display: none; }
+
+.step-dot {
+  position: absolute;
+  left: 6px;
+  top: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2.5px solid var(--dimmer);
+  background: var(--bg);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+.step-dot.completed {
+  border-color: var(--success);
+  background: rgba(16,185,129,0.2);
+}
+.step-dot.active-course {
+  border-color: var(--primary);
+  background: rgba(59,130,246,0.2);
+}
+.step-dot.gap {
+  border-color: var(--dimmer);
+  border-style: dashed;
+}
+
+.step-card {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  transition: all 0.3s;
+}
+.step-card:hover { border-color: rgba(59,130,246,0.3); transform: translateX(4px); }
+.step-card.completed-card { opacity: 0.6; }
+.step-card h3 { font-size: 16px; margin-bottom: 4px; }
+.step-card .step-meta {
+  font-size: 13px;
+  color: var(--dim);
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.step-card .step-status {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.status-completed { background: rgba(16,185,129,0.2); color: var(--success); }
+.status-available { background: rgba(59,130,246,0.2); color: var(--primary); }
+.status-gap { background: rgba(100,116,139,0.2); color: var(--dimmer); }
+.status-locked { background: rgba(239,68,68,0.1); color: rgba(239,68,68,0.6); }
+
+.step-link {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 5px 14px;
+  background: var(--primary);
+  color: white;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+}
+.step-link:hover { filter: brightness(1.15); }
+
+/* Progress bar */
+.progress-section { margin-bottom: 32px; }
+.progress-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: var(--bg2);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--primary), var(--success));
+  transition: width 0.5s ease;
+}
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--dim);
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--dimmer);
+}
+.empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <h1>🛤️ TeachAny 学习路径</h1>
+  <div class="nav-links">
+    <a href="index.html">📋 Gallery</a>
+    <a href="tree.html">🌳 知识树</a>
+    <a href="path.html" class="active">🛤️ 学习路径</a>
+  </div>
+</div>
+
+<div class="container">
+  <div class="hero-section">
+    <h2>选择你的学习目标</h2>
+    <p>系统会根据知识图谱自动规划最优学习路径，跳过你已掌握的知识点</p>
+  </div>
+
+  <div class="selector-row">
+    <select id="subjectSelect">
+      <option value="">选择学科...</option>
+    </select>
+    <select id="nodeSelect" disabled>
+      <option value="">选择目标知识点...</option>
+    </select>
+    <button onclick="generatePath()">🚀 生成路径</button>
+  </div>
+
+  <div id="pathResult"></div>
+</div>
+
+<script>
+const TREES = [
+  { file: 'data/trees/math-middle.json', emoji: '📐', label: '初中数学' },
+  { file: 'data/trees/physics-middle.json', emoji: '⚡', label: '初中物理' },
+  { file: 'data/trees/biology-high.json', emoji: '🧬', label: '高中生物' },
+  { file: 'data/trees/geography-high.json', emoji: '🌍', label: '高中地理' },
+  { file: 'data/trees/chinese-elementary.json', emoji: '📖', label: '小学语文' }
+];
+
+let treeCache = {};
+let allNodes = {};
+
+// Init subject selector
+const subjectSel = document.getElementById('subjectSelect');
+const nodeSel = document.getElementById('nodeSelect');
+
+TREES.forEach((t, i) => {
+  const opt = document.createElement('option');
+  opt.value = i;
+  opt.textContent = t.emoji + ' ' + t.label;
+  subjectSel.appendChild(opt);
+});
+
+subjectSel.onchange = async () => {
+  const idx = subjectSel.value;
+  if (idx === '') { nodeSel.disabled = true; return; }
+
+  if (!treeCache[idx]) {
+    const resp = await fetch(TREES[idx].file);
+    treeCache[idx] = await resp.json();
+  }
+
+  const tree = treeCache[idx];
+  allNodes = {};
+  nodeSel.innerHTML = '<option value="">选择目标知识点...</option>';
+
+  tree.domains.forEach(domain => {
+    const group = document.createElement('optgroup');
+    group.label = domain.name;
+    domain.nodes.forEach(node => {
+      allNodes[node.id] = { ...node, domain: domain.name, domainColor: domain.color };
+      const opt = document.createElement('option');
+      opt.value = node.id;
+      opt.textContent = node.name + (node.status === 'active' ? ' ✅' : ' 📝');
+      group.appendChild(opt);
+    });
+    nodeSel.appendChild(group);
+  });
+
+  nodeSel.disabled = false;
+};
+
+// Get student progress from localStorage
+function getProgress() {
+  try {
+    return JSON.parse(localStorage.getItem('teachany_progress') || '{}');
+  } catch { return {}; }
+}
+
+// Topological sort: resolve all prerequisites recursively
+function resolvePrereqs(targetId) {
+  const visited = new Set();
+  const order = [];
+
+  function dfs(id) {
+    if (visited.has(id)) return;
+    visited.add(id);
+    const node = allNodes[id];
+    if (!node) return;
+    (node.prerequisites || []).forEach(pid => dfs(pid));
+    order.push(id);
+  }
+
+  dfs(targetId);
+  return order;
+}
+
+function generatePath() {
+  const targetId = nodeSel.value;
+  if (!targetId) {
+    document.getElementById('pathResult').innerHTML =
+      '<div class="empty-state"><div class="icon">🎯</div><p>请先选择学科和目标知识点</p></div>';
+    return;
+  }
+
+  const path = resolvePrereqs(targetId);
+  const progress = getProgress();
+
+  // Count stats
+  const completedCount = path.filter(id => progress[id]?.completed).length;
+  const totalCount = path.length;
+  const percent = totalCount ? Math.round(completedCount / totalCount * 100) : 0;
+
+  let html = '';
+
+  // Progress bar
+  html += `
+    <div class="progress-section">
+      <div class="progress-label">
+        <span>学习进度</span>
+        <span>${completedCount} / ${totalCount} 完成 (${percent}%)</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" style="width:${percent}%"></div>
+      </div>
+    </div>
+  `;
+
+  // Path steps
+  html += '<div class="path-container">';
+
+  path.forEach((id, i) => {
+    const node = allNodes[id];
+    if (!node) return;
+    const isCompleted = progress[id]?.completed;
+    const hasCourse = node.status === 'active' && node.courses?.length > 0;
+    const isTarget = id === targetId;
+
+    let statusClass, statusText, dotClass;
+    if (isCompleted) {
+      statusClass = 'status-completed';
+      statusText = '✅ 已掌握' + (progress[id].post_test_score ? ` (${progress[id].post_test_score}分)` : '');
+      dotClass = 'completed';
+    } else if (hasCourse) {
+      statusClass = 'status-available';
+      statusText = '📖 有课件，可学习';
+      dotClass = 'active-course';
+    } else {
+      statusClass = 'status-gap';
+      statusText = '📝 待创建课件';
+      dotClass = 'gap';
+    }
+
+    html += `
+      <div class="path-step">
+        <div class="step-dot ${dotClass}">${i + 1}</div>
+        <div class="step-card ${isCompleted ? 'completed-card' : ''}">
+          <h3>${isTarget ? '🎯 ' : ''}${node.name}</h3>
+          <div class="step-meta">
+            <span>${node.domain}</span>
+            <span>${node.grade}年级</span>
+            ${node.prerequisites?.length ? '<span>前置：' + node.prerequisites.join('、') + '</span>' : ''}
+          </div>
+          <span class="step-status ${statusClass}">${statusText}</span>
+          ${hasCourse && !isCompleted ? `<a class="step-link" href="${node.courses[0]}/index.html" target="_blank">开始学习 →</a>` : ''}
+        </div>
+      </div>
+    `;
+  });
+
+  html += '</div>';
+
+  document.getElementById('pathResult').innerHTML = html;
+}
+
+// Show empty state on load
+document.getElementById('pathResult').innerHTML =
+  '<div class="empty-state"><div class="icon">🛤️</div><p>选择学科和目标知识点，自动生成学习路径<br><br>系统会根据知识图谱的前置关系<br>帮你规划从零到目标的最优路线</p></div>';
+</script>
+</body>
+</html>
