@@ -5,8 +5,8 @@
 <h1 align="center">🎓 TeachAny（教我学）</h1>
 
 <p align="center">
-  <strong>AI 时代的教学设计操作系统</strong><br>
-  将任何 K12 知识点变成有互动、有反馈、有教学设计的学习体验——只需几分钟。
+  <strong>每个学校、每个教师、每个家长，都能零成本、零门槛定制属于每个孩子的可汗学院。</strong><br>
+  用 AI 将任何 K-12 知识点变成有互动、有反馈、有教学设计的学习体验——只需几分钟。
 </p>
 
 <p align="center">
