@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全球季风系统 · 地理教学课件</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root{--bg:#0f172a;--bg2:#1e293b;--bg3:#334155;--primary:#3b82f6;--secondary:#8b5cf6;--accent:#f59e0b;--success:#10b981;--danger:#ef4444;--pink:#ec4899;--cyan:#06b6d4;--text:#f8fafc;--dim:#94a3b8;--dimmer:#64748b;--card:rgba(30,41,59,.7);--border:rgba(148,163,184,.15)}
+*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.75}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,23,42,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:60px;gap:4px;overflow-x:auto}
+.nav-brand{font-size:18px;font-weight:700;color:var(--accent);margin-right:20px;white-space:nowrap}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 12px;border-radius:8px;font-size:13px;transition:all .2s;white-space:nowrap}.nav a:hover,.nav a.active{color:var(--text);background:rgba(255,255,255,.08)}
+.container{max-width:1100px;margin:0 auto;padding:80px 24px 60px}
+.hero{text-align:center;padding:40px 0 30px}
+.hero h1{font-size:44px;font-weight:800;background:linear-gradient(135deg,var(--cyan),var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;letter-spacing:1px}
+.hero .subtitle{font-size:18px;color:var(--dim);margin-bottom:16px}
+.hero .meta{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}.hero .meta span{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:5px 16px;font-size:13px;color:var(--dim)}
+.section{margin:46px 0}
+.section-title{font-size:26px;font-weight:700;margin-bottom:20px;padding-left:16px;border-left:4px solid var(--accent)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:26px;margin-bottom:20px;backdrop-filter:blur(10px);transition:transform .2s,box-shadow .2s}.card:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,.3)}
+.card h3{font-size:19px;margin-bottom:12px;display:flex;align-items:center;gap:8px}.card h3 .emoji{font-size:22px}.card p,.card li{font-size:15.5px;line-height:1.8;color:var(--dim)}.card ul,.card ol{padding-left:22px;margin-top:8px}.card li{margin-bottom:5px}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px}.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+.obj-card{text-align:center;padding:28px 18px}.obj-card .icon{font-size:38px;margin-bottom:10px}.obj-card h4{font-size:17px;margin-bottom:6px}.obj-card p{font-size:13.5px;color:var(--dim)}
+.highlight{color:var(--accent);font-weight:700}
+.tag{display:inline-block;padding:3px 11px;border-radius:20px;font-size:12px;font-weight:600}
+.tag-blue{background:rgba(59,130,246,.15);color:#60a5fa}.tag-purple{background:rgba(139,92,246,.15);color:#a78bfa}.tag-yellow{background:rgba(245,158,11,.15);color:#fbbf24}.tag-green{background:rgba(16,185,129,.15);color:#34d399}.tag-red{background:rgba(239,68,68,.15);color:#f87171}.tag-cyan{background:rgba(6,182,212,.15);color:#22d3ee}.tag-pink{background:rgba(236,72,153,.15);color:#f472b6}
+.quiz-option{display:block;padding:14px 18px;margin:8px 0;border-radius:12px;background:rgba(30,41,59,.5);border:1px solid var(--border);cursor:pointer;transition:all .25s;font-size:15px;color:var(--text)}.quiz-option:hover{background:rgba(59,130,246,.12);border-color:var(--primary)}.quiz-option.correct{background:rgba(16,185,129,.15);border-color:var(--success)}.quiz-option.wrong{background:rgba(239,68,68,.15);border-color:var(--danger)}
+.quiz-feedback{padding:12px 16px;border-radius:10px;margin-top:10px;font-size:14.5px;display:none}.quiz-feedback.show{display:block;animation:fadeIn .3s ease}@keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.canvas-container{width:100%;max-width:650px;margin:16px auto;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:rgba(15,23,42,.7)}canvas{display:block;width:100%;height:auto}
+.insight-box{background:linear-gradient(135deg,rgba(139,92,246,.1),rgba(59,130,246,.08));border-left:4px solid var(--secondary);padding:18px 22px;border-radius:0 12px 12px 0;margin:16px 0}.insight-box h4{color:var(--secondary);font-size:16px;margin-bottom:8px}.insight-box p{color:var(--text);font-size:15px}
+.compare-table{width:100%;border-collapse:collapse;margin:16px 0}.compare-table th,.compare-table td{padding:11px 13px;text-align:left;border-bottom:1px solid var(--border);font-size:14.5px}.compare-table th{color:var(--primary);font-weight:600;background:rgba(59,130,246,.06)}.compare-table tr:hover td{background:rgba(255,255,255,.03)}
+.progress-bar{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin:12px 0}.progress-fill{height:100%;border-radius:3px;transition:width .4s ease;background:linear-gradient(90deg,var(--cyan),var(--primary))}
+.score-card{text-align:center;padding:24px;background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(6,182,212,.06));border-radius:16px;margin:20px 0}.score-num{font-size:48px;font-weight:800;background:linear-gradient(135deg,var(--success),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.drag-item{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:10px;margin:5px;font-size:14px;background:rgba(30,41,59,.7);border:1px solid var(--border);cursor:grab;user-select:none;transition:all .2s}.drag-item.dragging{opacity:.5;transform:scale(.97)}
+.drop-zone{min-height:70px;border:2px dashed var(--border);border-radius:12px;padding:12px;margin:10px 0;display:flex;flex-wrap:wrap;gap:6px;transition:all .2s;align-items:center}.drop-zone.active{border-color:var(--primary);background:rgba(59,130,246,.05)}
+.season-toggle{display:flex;gap:8px;margin:14px 0;flex-wrap:wrap;justify-content:center}
+.season-btn{padding:10px 24px;border-radius:30px;border:2px solid var(--border);background:transparent;color:var(--dim);font-size:15px;font-weight:600;cursor:pointer;transition:all .25s}
+.season-btn.active{border-color:var(--cyan);background:rgba(6,182,212,.12);color:var(--cyan)}.season-btn.summer-active{border-color:var(--danger);background:rgba(239,68,68,.12);color:var(--danger)}
+.timeline-item{display:flex;gap:16px;margin-bottom:18px;position:relative;padding-left:8px}.timeline-dot{width:12px;height:12px;border-radius:50%;margin-top:6px;flex-shrink:0}.timeline-content{flex:1}.timeline-content h5{font-size:15px;margin-bottom:4px}.timeline-content p{font-size:14px;color:var(--dimmer)}
+footer{text-align:center;padding:40px 0;color:var(--dimmer);font-size:13px;border-top:1px solid var(--border);margin-top:60px}
+</style>
+</head>
+<body>
+<nav class="nav"><span class="nav-brand">🌍 教我学 TeachAny</span>
+<a href="#hero">首页</a><a href="#goals">目标</a><a href="#pretest">前测</a>
+<a href="#what">什么是季风</a><a href="#cause">成因分析</a><a href="#zones">三大季风区</a>
+<a href="#east-asia">东亚</a><a href="#south-asia">南亚</a><a href="#compare">对比</a>
+<a href="#application">应用</a><a href="#posttest">后测</a></nav>
+<div class="container">
+
+<section class="hero" id="hero"><h1>全球季风系统</h1>
+<p class="subtitle">为什么夏天吹东南风、冬天吹西北风？——从海陆热力差异到全球大气环流</p>
+<div class="meta"><span>📚 高中地理</span><span>⏱️ 35-45min</span><span>🎯 新授课</span></div></section>
+
+<section class="section" id="goals"><div class="section-title">📋 目标</div><div class="grid-3">
+<div class="card obj-card"><div class="icon">💨</div><h4>理解季风本质</h4><p>知道季风是大范围盛行风向随季节显著变化的风，由海陆热力差异驱动</p></div>
+<div class="card obj-card"><div class="icon">🗺️</div><h4>掌握三大季风区</h4><p>能在世界地图上标出东亚、南亚、澳大利亚季风区的位置和风向特征</p></div>
+<div class="card obj-card"><div class="icon">🔗</div><h4>解释成因异同</h4><p>能区分东亚与南亚季风的成因差异（海陆差 vs 海陆差+气压带移动+地转偏向）</p></div>
+</div></section>
+
+<section class="section" id="pretest"><div class="section-title">🔍 前测（3题）</div>
+<div class="card"><h3>❶ 夏天摸水泥地和草地，哪个更烫？</h3>
+<div class="quiz-option" data-q="pre1" data-ans="A" onclick="checkQuiz(this)">A. 水泥地——比热容小，升温快</div>
+<div class="quiz-option" data-q="pre1" data-ans="B" onclick="checkQuiz(this)">B. 草地——草吸收了更多阳光</div>
+<div class="quiz-option" data-q="pre1" data-ans="C" onclick="checkQuiz(this)">C. 差不多</div>
+<div class="quiz-feedback" id="fb-pre1-A"><span class="tag tag-green">✅ 正确！</span> 这就是<strong>"海陆热力性质差异"</strong>的微观版本。</div>
+<div class="quiz-feedback" id="fb-pre1-B"><span class="tag tag-red">❌</span> 根本原因是比热容不同。</div>
+<div class="quiz-feedback" id="fb-pre1-C"><span class="tag tag-red">❌</span> 不一样的。</div></div>
+
+<div class="card"><h3>❷ 风怎么形成？</h3>
+<div class="quiz-option" data-q="pre2" data-ans="A" onclick="checkQuiz(this)">A. 空气从高压流向低压</div>
+<div class="quiz-option" data-q="pre2" data-ans="B" onclick="checkQuiz(this)">B. 地球自转效应</div>
+<div class="quiz-option" data-q="pre2" data-ans="C" onclick="checkQuiz(this)">C. 太阳辐射直接推动</div>
+<div class="quiz-feedback" id="fb-pre2-A"><span class="tag tag-green">✅ 正确！</span> 驱动力是水平气压梯度力。</div>
+<div class="quiz-feedback" id="fb-pre2-B"><span class="tag tag-yellow">⚠️ 部分</span> 科氏力影响风向但不形成风。</div>
+<div class="quiz-feedback" id="fb-pre2-C"><span class="tag tag-red">❌</span> 直接驱动的是气压差。</div></div>
+
+<div class="card"><h3>❸ 中国大部分地区？</h3>
+<div class="quiz-option" data-q="pre3" data-ans="A" onclick="checkQuiz(this)">A. 全年同一方向</div>
+<div class="quiz-option" data-q="pre3" data-ans="B" onclick="checkQuiz(this)">B. 冬夏风向相反</div>
+<div class="quiz-option" data-q="pre3" data-ans="C" onclick="checkQuiz(this)">C. 完全随机</div>
+<div class="quiz-feedback" id="fb-pre3-A"><span class="tag tag-red">❌</span> 全年同向就不叫"季风"了。</div>
+<div class="quiz-feedback" id="fb-pre3-B"><span class="tag tag-green">✅ 正确！</span> 夏季偏南（暖湿），冬季偏北（干冷）。</div>
+<div class="quiz-feedback" id="fb-pre3-C"><span class="tag tag-red">❌</span> 季风区有明显的季节规律。</div></div></section>
+
+<!-- 模块一 -->
+<section class="section" id="what"><div class="section-title">💨 模块一：什么是季风？</div>
+<div class="insight-box"><h4>🤔 从生活体验开始</h4>
+<p><strong>[And]</strong> 你知道夏天中国东南沿海常下雨，冬天北方干冷。<br>
+<strong>[But]</strong> 这种"冬夏完全不同的天气模式"只在地球上特定区域发生。<br>
+<strong>[Therefore]</strong> 这些区域叫<strong>"季风气候区"</strong>——风向和降水随季节剧烈变化。</p></div>
+
+<div class="card"><h3>📖 定义</h3>
+<table class="compare-table"><tr><th>术语</th><th>含义</th></tr>
+<tr><td><strong>季风 Monsoon</strong></td><td>大范围内盛行风向随季节显著变化的现象（通常冬夏方向相反）</td></tr>
+<tr><td><strong>季风气候</strong></td><td>由季风主导：<strong>雨热同期、旱雨分明</strong></td></tr></table>
+<p style="margin-top:10px;text-align:center;padding:10px;background:rgba(245,158,11,.07);border-radius:10px;font-size:17px">关键词：<span class="highlight">风向随季节变化 + 大范围 + 显著</span></p></div>
+
+<!-- Leaflet 真实地图 -->
+<div class="card"><h3>🗺️ 全球三大季风区 · 交互地图</h3>
+<div class="season-toggle" style="margin-bottom:10px">
+<button class="season-btn summer-active" id="btnSum" onclick="setSeason('summer')">☀️ 夏季（7月）</button>
+<button class="season-btn" id="btnWin" onclick="setSeason('winter')">❄️ 冬季（1月）</button>
+</div>
+<div id="monsoonMap" style="width:100%;height:420px;border-radius:12px;overflow:hidden;border:1px solid var(--border)"></div>
+<p style="font-size:13px;color:var(--dimmer);text-align:center;margin-top:8px">↑ 可拖动/缩放地图 · 点击季风区查看详情 · 切换季节观察风向变化</p>
+</div>
+
+<div class="grid-3">
+<div class="card" style="padding:20px;text-align:center;border-left:4px solid var(--danger)"><h4 style="color:var(--danger)">🇨🇳 东亚季风区</h4><p style="font-size:13.5px">中国东部、朝鲜半岛、日本<br>世界最大季风区</p></div>
+<div class="card" style="padding:20px;text-align:center;border-left:4px solid var(--pink)"><h4 style="color:var(--pink)">🇮🇳 南亚季风区</h4><p style="font-size:13.5px">印度半岛、中南半岛、菲律宾<br>季风最盛地区</p></div>
+<div class="card" style="padding:20px;text-align:center;border-left:4px solid var(--success)"><h4 style="color:var(--success)">🇦🇺 澳大利亚季风区</h4><p style="font-size:13.5px">澳大利亚北部<br>季节与北半球相反</p></div>
+</div></section>
+
+<!-- 模块二：成因 -->
+<section class="section" id="cause"><div class="section-title">🔬 模块二：成因 —— 深层理解</div>
+<div class="insight-box"><h4>🤔 核心问题</h4><p>既然风从高压吹向低压，为什么高压低压的位置会随季节<strong>互换</strong>？</p></div>
+
+<div class="card"><h3>🔍 第一步：陆地vs海洋 谁升温快？</h3>
+<div style="display:flex;gap:20px;margin:14px 0;flex-wrap:wrap;justify-content:center;align-items:center">
+<div style="text-align:center;padding:18px;background:rgba(239,68,68,.07);border-radius:12px;min-width:180px">
+<div style="font-size:36px;margin-bottom:6px">🏜️</div><div style="font-size:16px;font-weight:700;color:var(--danger)">陆地</div>
+<div style="font-size:13px;color:var(--dim);margin-top:4px">比热容 <strong>小</strong><br>升温快 ↓ 降温也快</div></div>
+<div style="font-size:28px;color:var(--dimmer)">↔️</div>
+<div style="text-align:center;padding:18px;background:rgba(59,130,246,.07);border-radius:12px;min-width:180px">
+<div style="font-size:36px;margin-bottom:6px">🌊</div><div style="font-size:16px;font-weight:700;color:var(--primary)">海洋</div>
+<div style="font-size:13px;color:var(--dim);margin-top:4px">比热容 <strong>大</strong><br>升温慢 ↓ 降温也慢</div></div>
+</div></div>
+
+<div class="card"><h3>🔧 第二步：夏季过程</h3>
+<div class="timeline-item"><div class="timeline-dot" style="background:var(--danger)"></div><div class="timeline-content"><h5>☀️ 太阳直射点北移</h5><p>陆地快速升温 → <strong>低压中心</strong>（亚洲低压）</p></div></div>
+<div class="timeline-item"><div class="timeline-dot" style="background:var(--primary)"></div><div class="timeline-content"><h5>🌊 海洋升温慢</h5><p>海洋保持较低温度 → <strong>高压中心</strong>（太平洋副高）</p></div></div>
+<div class="timeline-item"><div class="timeline-dot" style="background:var(--success)"></div><div class="timeline-content"><h5>💨 风从海→陆</h5><p>空气从海洋高压→陆地低压 → <strong>夏季风</strong>：温暖湿润</p></div></div>
+<div class="timeline-item"><div class="timeline-dot" style="background:var(--cyan)"></div><div class="timeline-content"><h5>🌧️ 雨季到来</h5><p>暖湿气流遇地形抬升 → 凝结成雨 → <strong>雨季</strong></p></div></div>
+</div>
+
+<div class="card"><h3>❄️ 第三步：冬季镜像翻转</h3>
+<ul><li>陆地迅速冷却 → <strong>高压</strong>（蒙古-西伯利亚高压）</li>
+<li>海洋降温慢 → 相对<strong>低压</strong></li>
+<li>风从陆→海 → <strong>冬季风</strong>：寒冷干燥</li>
+<li>结果 → <strong>旱季</strong></li></ul></div>
+
+<!-- ConcepTest -->
+<div class="card"><h3>💡 辨析：关于季风，哪项<strong>错误</strong>？</h3>
+<div class="quiz-option" data-q="cp1" data-ans="A" onclick="checkQuiz(this)">A. 季风风向随季节变化，信风常年稳定</div>
+<div class="quiz-option" data-q="cp1" data-ans="B" onclick="checkQuiz(this)">B. 季风由海陆差异造成，信风由副高辐散造成</div>
+<div class="quiz-option" data-q="cp1" data-ans="C" onclick="checkQuiz(this)">C. 季风区和信风区完全不重叠</div>
+<div class="quiz-feedback" id="fb-cp1-A"><span class="tag tag-green">✅ 正确区分！</span> 季风=季节性反转；信风=常年稳定。</div>
+<div class="quiz-feedback" id="fb-cp1-B"><span class="tag tag-green">✅ 也对！</span></div>
+<div class="quiz-feedback" id="fb-cp1-C"><span class="tag tag-yellow">这就是错误项 ✓</span> 实际上可重叠！如印度洋北部。</div>
+</div></section>
+
+<!-- 模块三 -->
+<section class="section" id="zones"><div class="section-title">🌏 模块三：三大季风区</div></section>
+
+<!-- 东亚 -->
+<section class="section" id="east-asia"><div class="card" style="background:linear-gradient(135deg,rgba(239,68,68,.04),rgba(59,130,246,.03))">
+<h3>🇨🇳 东亚季风 —— 最经典案例</h3>
+<table class="compare-table"><tr><th></th><th>夏季</th><th>冬季</th></tr>
+<tr><td><strong>风向</strong></td><td><span class="tag tag-danger">东南风 SE</span></td><td><span class="tag tag-blue">西北风 NW</span></td></tr>
+<tr><td><strong>性质</strong></td><td>温暖湿润</td><td>寒冷干燥</td></tr>
+<tr><td><strong>影响</strong></td><td>高温多雨（雨季）</td><td>低温少雨（旱季）</td></tr>
+<tr><td><strong>成因</strong></td><td colspan="2" style="text-align:center"><strong>海陆热力差异</strong>（单因）</td></tr></table>
+<div class="insight-box"><h4>🧠 为什么东亚最"纯粹"？</h4>
+<p>成因相对简单——主要是海陆热力差异。太平洋最大大洋+欧亚大陆=温差极致。</p></div>
+</div></section>
+
+<!-- 南亚 -->
+<section class="section" id="south-asia"><div class="card" style="background:linear-gradient(135deg,rgba(236,72,153,.04),rgba(139,92,246,.03))">
+<h3>🇮🇳 南亚季风 —— 最强盛最复杂</h3>
+<table class="compare-table"><tr><th></th><th>夏季</th><th>冬季</th></tr>
+<tr><td><strong>风向</strong></td><td><span class="tag tag-pink">西南风 SW</span></td><td><span class="tag tag-purple">东北风 NE</span></td></tr>
+<tr><td><strong>特色</strong></td><td colspan="2">雨季占全年降水80%+</td></tr></table>
+<div class="card" style="background:rgba(236,72,153,.05);margin-top:14px">
+<h4>⚠️ 南亚西南风的<strong>"三重叠加"</strong>成因</h4>
+<p style="color:var(--dim);font-size:14px;margin:8px 0">下面5个选项中，有3个是南亚夏季西南风的成因。把正确的拖入下方确认框：</p>
+<div id="dragSource" style="display:flex;flex-wrap:wrap;gap:8px;margin:14px 0">
+<div class="drag-item" draggable="true" data-id="d1" data-correct="1">① 海陆热力差异</div>
+<div class="drag-item" draggable="true" data-id="d2" data-correct="1">② 气压带风带季节移动（SE信风越赤道右偏→SW风）</div>
+<div class="drag-item" draggable="true" data-id="d3" data-correct="1">③ 地转偏向力持续作用</div>
+<div class="drag-item" draggable="true" data-id="d4" data-correct="0">④ 喜马拉雅山脉阻挡冬季风（影响冬季风，非SW成因）</div>
+<div class="drag-item" draggable="true" data-id="d5" data-correct="0">⑤ 厄尔尼诺现象（年际变化，非常态成因）</div>
+</div>
+<p style="color:var(--accent);font-size:15px;font-weight:600;margin-bottom:6px">👇 拖到这里（需要3个）</p>
+<div id="chainZone" style="min-height:80px;padding:14px;background:rgba(30,41,59,.4);border-radius:12px;border:2px dashed var(--primary);display:flex;flex-wrap:wrap;gap:8px;align-items:center;transition:all .2s">
+<span id="dropPlaceholder" style="color:var(--dimmer);font-size:13px">将选项拖入此区域...</span>
+</div>
+<div style="display:flex;gap:10px;margin-top:12px;align-items:center">
+<button style="padding:8px 20px;border-radius:8px;border:1px solid var(--primary);background:transparent;color:var(--primary);cursor:pointer;font-size:14px;font-weight:600" onclick="checkChain()">✅ 检查答案</button>
+<button style="padding:8px 20px;border-radius:8px;border:1px solid var(--dimmer);background:transparent;color:var(--dimmer);cursor:pointer;font-size:14px" onclick="resetChain()">🔄 重置</button>
+</div>
+<div id="chainFeedback" class="quiz-feedback"></div>
+</div></div></section>
+
+<!-- 澳大利亚 -->
+<section class="section"><div class="card" style="background:linear-gradient(135deg,rgba(16,185,129,.04),rgba(6,182,212,.03))">
+<h3>🇦🇺 澳大利亚季风 —— "反着来"</h3>
+<table class="compare-table"><tr><th></th><th>北半球夏季</th><th>北半球冬季</th></tr>
+<tr><td><strong>澳洲季节</strong></td><td>冬季（干季）</td><td>夏季（湿季）</td></tr>
+<tr><td><strong>风向</strong></td><td><span class="tag tag-blue">东南风</span></td><td><span class="tag tag-green">西北风</span></td></tr>
+</table>
+<p style="margin-top:10px;padding:10px;background:rgba(245,158,11,.07);border-radius:8px;font-size:14.5px"><span class="highlight">记忆</span>：站在赤道——北半球过夏时南半球在过冬。中国在吹SE湿季风时，澳洲在吹干冬季风。</p>
+</div></section>
+
+<!-- 对比 -->
+<section class="section" id="compare"><div class="section-title">⚖️ 核心：东亚 vs 南亚</div>
+<div class="card"><table class="compare-table"><tr><th>维度</th><th>东亚</th><th>南亚</th></tr>
+<tr><td><strong>夏风</strong></td><td><span class="tag tag-danger">SE</span></td><td><span class="tag tag-pink">SW</span></td></tr>
+<tr><td><strong>冬风</strong></td><td><span class="tag tag-blue">NW</span></td><td><span class="tag tag-purple">NE</span></td></tr>
+<tr><td><strong>成因</strong></td><td>海陆差（单因）</td><td>海陆差+气压带移动+地转偏向（多因叠加）</td></tr>
+<tr><td><strong>强度</strong></td><td>强</td><td><span class="highlight">全球最强</span></td></tr>
+</table></div></section>
+
+<!-- 应用 -->
+<section class="section" id="application"><div class="section-title">🌍 综合应用</div><div class="grid-2">
+<div class="card"><h3>🌾 中国农业："靠天吃饭"</h3>
+<ul style="font-size:14px"><li><strong>春播</strong>：气温回升+SE季风登陆</li><li><strong>夏长</strong>：高温+雨热同期</li><li><strong>秋收</strong>：季风撤退</li></ul>
+<p style="color:var(--danger)"><span class="highlight">风险</span>：夏季风异常→干旱或洪涝。每年盼季风正常来。</p></div>
+<div class="card"><h3>🌊 印度：季风即命运</h3>
+<ul style="font-size:14px"><li>全国70%+降水来自<strong>西南季风</strong></li><li>正常年=丰收；异常年=灾害</li></ul>
+<p>印度气象局每年发布<strong>季风预报</strong>。"Monsoon economy"。</p></div>
+<div class="card"><h3>🌀 厄尔尼诺与季风</h3>
+<ul style="font-size:14px"><li>厄尔尼诺（东太平洋增温）→沃克环流减弱</li><li>→ 西太平洋对流减弱 → 季风减弱</li><li>→ 东南亚/印度/澳北降水偏少 → 干旱风险</li><li>反之拉尼娜年伴随更强季风 → 洪涝</li></ul></div>
+<div class="card"><h3>🏙️ 城市规划中的季风考量</h3>
+<ul style="font-size:14px"><li>工业区：放季风下风向</li><li>建筑朝向：利用SE风自然通风</li><li>防洪：按暴雨标准设计</li><li>机场跑道：沿盛行风向</li></ul></div>
+</div></section>
+
+<!-- 后测 -->
+<section class="section" id="posttest"><div class="section-title">📝 后测（5题）</div>
+<div class="progress-bar"><div class="progress-fill" id="postProgress" style="width:0%"></div></div>
+
+<div class="card"><h3>❶ 季风形成的根本原因？</h3>
+<div class="quiz-option post-q" data-q="p1" data-ans="A" onclick="checkPQ(this)">A. 海陆热力性质差异</div>
+<div class="quiz-option post-q" data-q="p1" data-ans="B" onclick="checkPQ(this)">B. 地球公转轨道变化</div>
+<div class="quiz-option post-q" data-q="p1" data-ans="C" onclick="checkPQ(this)">C. 地形起伏造成的局部环流</div>
+<div class="quiz-feedback" id="fb-p1-A"><span class="tag tag-green">✅ 正确！</span></div>
+<div class="quiz-feedback" id="fb-p1-B"><span class="tag tag-red">❌</span> 公转间接作用但不直接形成。</div>
+<div class="quiz-feedback" id="fb-p1-C"><span class="tag tag-red">❌</span> 地形影响分布不形成。</div></div>
+
+<div class="card"><h3>❷ 中国东部夏季风？</h3>
+<div class="quiz-option post-q" data-q="p2" data-ans="A" onclick="checkPQ(this)">A. 西北风，来自蒙古</div>
+<div class="quiz-option post-q" data-q="p2" data-ans="B" onclick="checkPQ(this)">B. 东南风，来自太平洋</div>
+<div class="quiz-option post-q" data-q="p2" data-ans="C" onclick="checkPQ(this)">C. 东北风</div>
+<div class="quiz-feedback" id="fb-p2-A"><span class="tag tag-red">❌ 这是冬季风</span></div>
+<div class="quiz-feedback" id="fb-p2-B"><span class="tag tag-green">✅ 正确！</span></div>
+<div class="quiz-feedback" id="fb-p2-C"><span class="tag tag-red">❌</span></div></div>
+
+<div class="card"><h3>❸ 南亚 vs 东亚最大的区别？</h3>
+<div class="quiz-option post-q" data-q="p3" data-ans="A" onclick="checkPQ(this)">A. 没区别，都是海陆差</div>
+<div class="quiz-option post-q" data-q="p3" data-ans="B" onclick="checkPQ(this)">B. 南亚还叠加了气压带移动+地转偏向</div>
+<div class="quiz-option post-q" data-q="p3" data-ans="C" onclick="checkPQ(this)">C. 主要是地形</div>
+<div class="quiz-feedback" id="fb-p3-A"><span class="tag tag-red">❌</span></div>
+<div class="quiz-feedback" id="fb-p3-B"><span class="tag tag-green">✅ 最佳！</span> 三重叠加造就全球最强。</div>
+<div class="quiz-feedback" id="fb-p3-C"><span class="tag tag-red">❌</span></div></div>
+
+<div class="card"><h3>❹ 厄尔尼诺时？</h3>
+<div class="quiz-option post-q" data-q="p4" data-ans="A" onclick="checkPQ(this)">A. 季风增强</div>
+<div class="quiz-option post-q" data-q="p4" data-ans="B" onclick="checkPQ(this)">B. 西太平洋季风减弱</div>
+<div class="quiz-option post-q" data-q="p4" data-ans="C" onclick="checkPQ(this)">C. 无关</div>
+<div class="quiz-feedback" id="fb-p4-A"><span class="tag tag-red">❌ 反了</span></div>
+<div class="quiz-feedback" id="fb-p4-B"><span class="tag tag-green">✅ 正确！</span></div>
+<div class="quiz-feedback" id="fb-p4-C"><span class="tag tag-red">❌ ENSO是最显著年际信号</span></div></div>
+
+<div class="card"><h3>❺ 工业区放哪里？</h3>
+<div class="quiz-option post-q" data-q="p5" data-ans="A" onclick="checkPQ(this)">A. 冬季风下方向，减少污染</div>
+<div class="quiz-option post-q" data-q="p5" data-ans="B" onclick="checkPQ(this)">B. 东南方向，近海交通好</div>
+<div class="quiz-option post-q" data-q="p5" data-ans="C" onclick="checkPQ(this)">C. 城市中心</div>
+<div class="quiz-feedback" id="fb-p5-A"><span class="tag tag-green">✅ 思路正确！</span> 冬季NW风下风向可最大限度减少污染。</div>
+<div class="quiz-feedback" id="fb-p5-B"><span class="tag tag-yellow">部分合理</span> 未考虑环境。</div>
+<div class="quiz-feedback" id="fb-p5-C"><span class="tag tag-red">❌ 违反环境规划原则</span></div></div>
+
+<div class="score-card" id="scCard" style="display:none">
+<div class="score-num" id="scNum">0/5</div><div class="score-label">后测成绩</div>
+<p id="scComment" style="margin-top:10px;color:var(--dim);font-size:14px"></p>
+</div>
+</section>
+
+<section class="section"><div class="section-title">📌 小结</div>
+<div class="card" style="background:linear-gradient(135deg,rgba(6,182,212,.05),rgba(59,130,246,.04))">
+<table class="compare-table"><tr><th>知识点</th><th>核心结论</th><th>易错提醒</th></tr>
+<tr><td>定义</td><td>大范围盛行风向随季节显著变化</td><td>"显著"≠ 微弱</td></tr>
+<tr><td>根本成因</td><td>海陆热力性质差异</td><td>非地形/公转本身</td></tr>
+<tr><td>东亚</td><td>夏SE冬NW | 单因</td><td>世界最大主体</td></tr>
+<tr><td>南亚</td><td>夏SW冬NE | 三重叠加</td><td>全球最强</td></tr>
+<tr><td>澳大利亚</td><td>季节与北半球<strong>相反</strong></td><td>北夏=澳冬</td></tr>
+<tr><td>季风vs信风</td><td>季风=季节反转；信风=常年稳定</td><td>可重叠</td></tr>
+</table></div>
+<footer><p>教我学 TeachAny v3.0 · 全球季风系统 · 地理教学课件</p></footer>
+</div><!-- end container -->
+
+<script>
+let ansd={}; let pSc=0; const pT=5;
+function checkQuiz(el){const q=el.dataset.q,a=el.dataset.ans;
+el.parentElement.querySelectorAll('.quiz-feedback').forEach(s=>s.classList.remove('show'));
+el.parentElement.querySelectorAll('.quiz-option').forEach(o=>o.classList.remove('correct','wrong'));
+const fb=document.getElementById(`fb-${q}-${a}`);
+if(fb&&(fb.innerHTML.includes('正确')||fb.innerHTML.includes('最佳')))el.classList.add('correct');else el.classList.add('wrong');
+if(fb)fb.classList.add('show');
+}
+function checkPQ(el){const q=el.dataset.q;if(ansd[q])return;ansd[q]=true;const a=el.dataset.ans;
+el.parentElement.querySelectorAll('.quiz-option').forEach(o=>o.classList.remove('correct','wrong'));
+const fb=document.getElementById(`fb-${q}-${a}`);
+if(fb&&(fb.innerHTML.includes('正确')||fb.innerHTML.includes('最佳'))){el.classList.add('correct');pSc++}else el.classList.add('wrong');
+if(fb)fb.classList.add('show');
+const d=Object.keys(ansd).length;
+document.getElementById('postProgress').style.width=(d/pT*100)+'%';
+if(d===pT){setTimeout(()=>{
+const sc=document.getElementById('scCard');sc.style.display='block';
+document.getElementById('scNum').textContent=`${pSc}/${pT}`;
+document.getElementById('scComment').textContent=pSc>=4?'🎉 出色！':pSc>=2?'👍 还不错':'💪 复习三重成因和对比表';
+sc.scrollIntoView({behavior:'smooth'});
+},600);
+}}
+
+/* ========== Leaflet 真实地图 ========== */
+let curS='summer';
+const map=L.map('monsoonMap',{zoomControl:true,scrollWheelZoom:true}).setView([18,85],3);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+  attribution:'&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/">OSM</a>',
+  subdomains:'abcd',maxZoom:18
+}).addTo(map);
+
+// 赤道线
+L.polyline([[0,-180],[0,180]],{color:'#f59e0b',weight:1.5,dashArray:'8,6',opacity:0.5}).addTo(map)
+  .bindTooltip('赤道',{permanent:true,direction:'right',offset:[6,0],className:'eq-tip'});
+
+// 季风区多边形坐标
+const eastAsiaCoords=[[50,100],[50,135],[40,140],[25,125],[20,105],[25,100],[35,95]];
+const southAsiaCoords=[[30,65],[30,100],[20,108],[5,100],[5,70],[10,65],[20,60]];
+const ausCoords=[[-10,120],[-10,145],[-20,148],[-25,140],[-22,120],[-15,115]];
+
+let zoneLayer=L.layerGroup().addTo(map);
+let arrowLayer=L.layerGroup().addTo(map);
+let labelLayer=L.layerGroup().addTo(map);
+
+function makeArrowIcon(angle,color){
+  return L.divIcon({
+    className:'wind-arrow',
+    html:`<svg width="28" height="28" viewBox="0 0 28 28" style="transform:rotate(${angle}deg)">
+      <line x1="14" y1="24" x2="14" y2="6" stroke="${color}" stroke-width="2.5" stroke-linecap="round"/>
+      <polygon points="14,2 8,10 20,10" fill="${color}"/>
+    </svg>`,
+    iconSize:[28,28],iconAnchor:[14,14]
+  });
+}
+
+function addLabel(lat,lng,text,color){
+  const icon=L.divIcon({
+    className:'map-label',
+    html:`<div style="color:${color};font-size:12px;font-weight:700;white-space:nowrap;text-shadow:0 0 6px rgba(0,0,0,.8),0 0 3px rgba(0,0,0,.6)">${text}</div>`,
+    iconSize:[120,20],iconAnchor:[60,10]
+  });
+  L.marker([lat,lng],{icon,interactive:false}).addTo(labelLayer);
+}
+
+function setSeason(s){
+  curS=s;
+  document.getElementById('btnSum').classList.toggle('summer-active',s==='summer');
+  document.getElementById('btnWin').classList.toggle('active',s==='winter');
+  document.getElementById('btnSum').classList.remove('active');
+  if(s==='summer')document.getElementById('btnSum').classList.add('summer-active');
+  else document.getElementById('btnWin').classList.add('active');
+
+  zoneLayer.clearLayers();arrowLayer.clearLayers();labelLayer.clearLayers();
+  const isS=s==='summer';
+
+  // 三大季风区多边形
+  L.polygon(eastAsiaCoords,{color:isS?'#ef4444':'#3b82f6',fillColor:isS?'#ef4444':'#3b82f6',fillOpacity:0.15,weight:2}).addTo(zoneLayer)
+    .bindPopup(`<b style="color:${isS?'#ef4444':'#3b82f6'}">🇨🇳 东亚季风区</b><br>风向：${isS?'东南风(SE) 暖湿':'西北风(NW) 干冷'}<br>成因：海陆热力差异`);
+  L.polygon(southAsiaCoords,{color:isS?'#ec4899':'#8b5cf6',fillColor:isS?'#ec4899':'#8b5cf6',fillOpacity:0.15,weight:2}).addTo(zoneLayer)
+    .bindPopup(`<b style="color:${isS?'#ec4899':'#8b5cf6'}">🇮🇳 南亚季风区</b><br>风向：${isS?'西南风(SW) 暖湿':'东北风(NE) 干冷'}<br>成因：海陆差+气压带移动+地转偏向`);
+  L.polygon(ausCoords,{color:isS?'#64748b':'#10b981',fillColor:isS?'#64748b':'#10b981',fillOpacity:0.15,weight:2}).addTo(zoneLayer)
+    .bindPopup(`<b style="color:${isS?'#64748b':'#10b981'}">🇦🇺 澳大利亚季风区</b><br>${isS?'北半球夏=澳洲冬(干季) 东南风':'北半球冬=澳洲夏(湿季) 西北风'}`);
+
+  // 风向箭头
+  const eaArrows=isS?[
+    {lat:45,lng:130,a:135},{lat:40,lng:120,a:140},{lat:35,lng:115,a:135},
+    {lat:30,lng:118,a:130},{lat:28,lng:125,a:125},{lat:25,lng:112,a:140}
+  ]:[
+    {lat:28,lng:108,a:315},{lat:32,lng:112,a:320},{lat:35,lng:120,a:315},
+    {lat:40,lng:125,a:310},{lat:38,lng:130,a:305},{lat:30,lng:115,a:320}
+  ];
+  const saArrows=isS?[
+    {lat:20,lng:70,a:225},{lat:18,lng:78,a:220},{lat:15,lng:85,a:225},
+    {lat:12,lng:75,a:230},{lat:10,lng:90,a:220},{lat:22,lng:95,a:230}
+  ]:[
+    {lat:22,lng:80,a:45},{lat:18,lng:88,a:40},{lat:15,lng:78,a:50},
+    {lat:12,lng:85,a:45},{lat:20,lng:95,a:40}
+  ];
+  const auArrows=isS?[
+    {lat:-14,lng:128,a:315},{lat:-16,lng:135,a:310},{lat:-12,lng:138,a:320}
+  ]:[
+    {lat:-14,lng:128,a:135},{lat:-16,lng:135,a:130},{lat:-12,lng:138,a:140}
+  ];
+
+  const eaColor=isS?'#ef4444':'#3b82f6';
+  const saColor=isS?'#ec4899':'#8b5cf6';
+  const auColor=isS?'#64748b':'#10b981';
+
+  eaArrows.forEach(p=>L.marker([p.lat,p.lng],{icon:makeArrowIcon(p.a,eaColor),interactive:false}).addTo(arrowLayer));
+  saArrows.forEach(p=>L.marker([p.lat,p.lng],{icon:makeArrowIcon(p.a,saColor),interactive:false}).addTo(arrowLayer));
+  auArrows.forEach(p=>L.marker([p.lat,p.lng],{icon:makeArrowIcon(p.a,auColor),interactive:false}).addTo(arrowLayer));
+
+  // 气压系统标签
+  if(isS){
+    addLabel(40,85,'亚洲低压(印度低压)','#ef4444');
+    addLabel(30,150,'太平洋副高','#3b82f6');
+  }else{
+    addLabel(48,95,'蒙古-西伯利亚高压','#3b82f6');
+    addLabel(25,150,'阿留申低压','#ef4444');
+  }
+  addLabel(35,115,'东亚季风区',eaColor);
+  addLabel(18,78,'南亚季风区',saColor);
+  addLabel(-16,132,'澳北季风区',auColor);
+}
+setSeason('summer');
+
+/* ========== 拖拽游戏 ========== */
+const dragItems=document.querySelectorAll('#dragSource .drag-item');
+const chainZone=document.getElementById('chainZone');
+const placeholder=document.getElementById('dropPlaceholder');
+let draggedEl=null;
+
+dragItems.forEach(it=>{
+  it.addEventListener('dragstart',e=>{
+    draggedEl=it;
+    e.dataTransfer.setData('text/plain',it.dataset.id);
+    it.classList.add('dragging');
+    setTimeout(()=>it.style.opacity='0.4',0);
+  });
+  it.addEventListener('dragend',()=>{
+    it.classList.remove('dragging');
+    it.style.opacity='1';
+    draggedEl=null;
+  });
+});
+
+chainZone.addEventListener('dragover',e=>{
+  e.preventDefault();
+  chainZone.classList.add('active');
+  chainZone.style.borderColor='var(--cyan)';
+  chainZone.style.background='rgba(6,182,212,.08)';
+});
+chainZone.addEventListener('dragleave',()=>{
+  chainZone.classList.remove('active');
+  chainZone.style.borderColor='var(--primary)';
+  chainZone.style.background='rgba(30,41,59,.4)';
+});
+chainZone.addEventListener('drop',e=>{
+  e.preventDefault();
+  chainZone.classList.remove('active');
+  chainZone.style.borderColor='var(--primary)';
+  chainZone.style.background='rgba(30,41,59,.4)';
+  const id=e.dataTransfer.getData('text/plain');
+  // 避免重复放入
+  if(chainZone.querySelector(`[data-id="${id}"]`))return;
+  if(placeholder)placeholder.style.display='none';
+  const src=document.querySelector(`#dragSource [data-id="${id}"]`);
+  if(!src)return;
+  const clone=document.createElement('div');
+  clone.className='drag-item';
+  clone.textContent=src.textContent;
+  clone.dataset.id=src.dataset.id;
+  clone.dataset.correct=src.dataset.correct;
+  clone.draggable=false;
+  clone.style.cursor='pointer';
+  clone.title='点击移除';
+  clone.addEventListener('click',()=>{
+    clone.remove();
+    src.style.opacity='1';src.style.pointerEvents='auto';
+    if(!chainZone.querySelector('.drag-item')&&placeholder)placeholder.style.display='';
+  });
+  chainZone.appendChild(clone);
+  src.style.opacity='0.3';src.style.pointerEvents='none';
+});
+
+function checkChain(){
+  const dropped=chainZone.querySelectorAll('.drag-item');
+  const fb=document.getElementById('chainFeedback');
+  fb.classList.add('show');
+  let correctCount=0,wrongCount=0;
+  dropped.forEach(d=>{
+    if(d.dataset.correct==='1'){correctCount++;d.style.borderColor='var(--success)';d.style.background='rgba(16,185,129,.12)';}
+    else{wrongCount++;d.style.borderColor='var(--danger)';d.style.background='rgba(239,68,68,.12)';}
+  });
+  if(correctCount===3&&wrongCount===0){
+    fb.innerHTML='<span class="tag tag-green">✅ 完全正确！</span> 三重成因都找到了：海陆热力差异是基础，气压带风带季节移动使SE信风越过赤道，地转偏向力使其右偏成SW风。';
+    fb.style.background='rgba(16,185,129,.1)';
+  }else if(correctCount>0&&wrongCount===0){
+    fb.innerHTML=`<span class="tag tag-yellow">⚠️ ${correctCount}/3</span> 找对了${correctCount}个，还差${3-correctCount}个正确选项。`;
+    fb.style.background='rgba(245,158,11,.1)';
+  }else if(wrongCount>0){
+    fb.innerHTML=`<span class="tag tag-red">❌ 有${wrongCount}个错误选项</span> 红色边框的是错误项，请点击移除后重新选择。正确答案是"三重叠加"成因。`;
+    fb.style.background='rgba(239,68,68,.08)';
+  }else{
+    fb.innerHTML='<span class="tag tag-yellow">请先拖入选项</span>';
+    fb.style.background='rgba(245,158,11,.1)';
+  }
+}
+
+function resetChain(){
+  chainZone.querySelectorAll('.drag-item').forEach(d=>d.remove());
+  if(placeholder)placeholder.style.display='';
+  dragItems.forEach(it=>{it.style.opacity='1';it.style.pointerEvents='auto';});
+  const fb=document.getElementById('chainFeedback');
+  fb.classList.remove('show');fb.innerHTML='';
+}
+</script>
+</body>
+</html>

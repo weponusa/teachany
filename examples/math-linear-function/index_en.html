@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Linear Functions · Complete Interactive Course</title>
+  <style>
+    :root {
+      --bg: #0f172a; --bg2: #1e293b; --bg3: #334155;
+      --primary: #3b82f6; --secondary: #8b5cf6; --accent: #f59e0b;
+      --success: #10b981; --danger: #ef4444; --pink: #ec4899; --cyan: #06b6d4;
+      --text: #f8fafc; --dim: #94a3b8; --dimmer: #64748b;
+      --card: rgba(30, 41, 59, 0.7); --border: rgba(148, 163, 184, 0.15);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.7;
+    }
+
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border); padding: 0 40px;
+      display: flex; align-items: center; height: 64px; gap: 8px;
+    }
+    .nav-brand { font-size: 20px; font-weight: 700; color: var(--accent); margin-right: 32px; white-space: nowrap; }
+    .nav a {
+      color: var(--dim); text-decoration: none; padding: 8px 16px;
+      border-radius: 8px; font-size: 14px; transition: all 0.2s; white-space: nowrap;
+    }
+    .nav a:hover, .nav a.active { color: var(--text); background: rgba(255,255,255,0.08); }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 84px 24px 60px; }
+
+    .hero { text-align: center; padding: 60px 0 40px; }
+    .hero h1 {
+      font-size: 56px; font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      margin-bottom: 16px; letter-spacing: 2px;
+    }
+    .hero .subtitle { font-size: 22px; color: var(--dim); margin-bottom: 30px; }
+    .hero .tags { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+    .hero .tag {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 6px 18px; font-size: 14px; color: var(--dim);
+    }
+
+    section { margin-bottom: 60px; }
+    .section-title {
+      font-size: 28px; font-weight: 700; margin-bottom: 24px; padding-left: 16px;
+      border-left: 4px solid var(--accent); display: flex; align-items: center; gap: 10px;
+    }
+
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+      padding: 28px; margin-bottom: 20px; backdrop-filter: blur(10px);
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .card:hover { transform: translateY(-2px); border-color: var(--primary); }
+    .card h3 { font-size: 22px; margin-bottom: 12px; color: var(--text); }
+    .card p, .card li { color: var(--dim); font-size: 16px; line-height: 1.8; }
+
+    .knowledge-map-container {
+      background: var(--card); border-radius: 16px; border: 1px solid var(--border);
+      padding: 20px; overflow-x: auto;
+    }
+    .knowledge-map-container svg { display: block; margin: 0 auto; }
+
+    .formula {
+      display: inline-block; background: rgba(59, 130, 246, 0.12);
+      border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 10px;
+      padding: 8px 20px; font-size: 20px; font-family: 'Times New Roman', serif;
+      color: var(--accent); font-weight: 600;
+    }
+    .formula-block { text-align: center; margin: 20px 0; }
+
+    .styled-table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    .styled-table th, .styled-table td { padding: 12px 16px; border: 1px solid var(--border); text-align: center; font-size: 15px; }
+    .styled-table th { background: rgba(59, 130, 246, 0.15); color: var(--primary); font-weight: 600; }
+    .styled-table td { color: var(--dim); }
+
+    .example {
+      background: rgba(139, 92, 246, 0.08); border-left: 4px solid var(--secondary);
+      border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0;
+    }
+    .example-title { font-weight: 700; color: var(--secondary); font-size: 18px; margin-bottom: 10px; }
+    .solution {
+      background: rgba(16, 185, 129, 0.08); border-left: 4px solid var(--success);
+      border-radius: 0 12px 12px 0; padding: 16px 24px; margin-top: 12px;
+    }
+    .solution-title { font-weight: 700; color: var(--success); margin-bottom: 8px; }
+    .solution-toggle {
+      cursor: pointer; color: var(--success); font-weight: 600; user-select: none;
+      display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px;
+      border-radius: 8px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
+      font-size: 14px; transition: all 0.2s;
+    }
+    .solution-toggle:hover { background: rgba(16,185,129,0.2); }
+    .solution-content { display: none; margin-top: 12px; }
+    .solution-content.show { display: block; }
+
+    .quiz-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 28px; margin-bottom: 20px;
+    }
+    .quiz-card h4 { font-size: 18px; margin-bottom: 14px; color: var(--text); }
+    .quiz-options { display: grid; gap: 10px; }
+    .quiz-option {
+      display: block; padding: 14px 18px; margin: 8px 0; border-radius: 12px;
+      background: rgba(30,41,59,0.5); border: 1px solid var(--border);
+      cursor: pointer; transition: all 0.25s; font-size: 15px; color: var(--text);
+    }
+    .quiz-option:hover { background: rgba(59,130,246,0.12); border-color: var(--primary); }
+    .quiz-option.correct { border-color: var(--success); background: rgba(16,185,129,0.15); color: var(--success); }
+    .quiz-option.wrong { border-color: var(--danger); background: rgba(239,68,68,0.15); color: var(--danger); }
+    .quiz-option.disabled { pointer-events: none; opacity: 0.6; }
+    .quiz-explanation { margin-top: 12px; padding: 12px 16px; border-radius: 8px; font-size: 14px; line-height: 1.7; display: none; }
+    .quiz-explanation.show { display: block; }
+    .quiz-explanation.correct-exp { background: rgba(16,185,129,0.1); color: var(--success); }
+    .quiz-explanation.wrong-exp { background: rgba(239,68,68,0.1); color: var(--danger); }
+    .quiz-feedback { padding: 12px 16px; border-radius: 10px; margin-top: 10px; font-size: 14.5px; display: none; }
+    .quiz-feedback.show { display: block; animation: fadeIn 0.3s ease; }
+
+    .quiz-progress { height: 6px; background: var(--bg3); border-radius: 3px; margin: 20px 0; overflow: hidden; }
+    .quiz-progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); border-radius: 3px; transition: width 0.4s ease; }
+
+    .score-display { text-align: center; padding: 40px; background: var(--card); border-radius: 16px; border: 1px solid var(--border); display: none; }
+    .score-display.show { display: block; }
+    .score-number {
+      font-size: 72px; font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    .interactive-graph {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 20px; margin: 20px 0;
+    }
+    .slider-group { display: flex; align-items: center; gap: 16px; margin: 12px 0; }
+    .slider-group label { font-size: 18px; font-weight: 600; min-width: 120px; color: var(--text); font-family: serif; }
+    .slider-group input[type="range"] { flex: 1; height: 6px; -webkit-appearance: none; background: var(--bg3); border-radius: 3px; outline: none; }
+    .slider-group input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--primary); cursor: pointer; }
+    .slider-value { font-size: 18px; font-weight: 700; min-width: 50px; text-align: right; font-family: serif; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+    .step { display: flex; gap: 16px; margin-bottom: 16px; }
+    .step-number {
+      width: 36px; height: 36px; border-radius: 50%; background: var(--primary);
+      color: white; display: flex; align-items: center; justify-content: center;
+      font-weight: 700; flex-shrink: 0; font-size: 16px;
+    }
+
+    .highlight-box {
+      background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(59,130,246,0.1));
+      border: 1px solid rgba(245,158,11,0.3); border-radius: 14px; padding: 20px 24px; margin: 16px 0;
+    }
+    .highlight { color: var(--accent); font-weight: 700; }
+    .insight-box {
+      background: linear-gradient(135deg, rgba(139,92,246,0.1), rgba(59,130,246,0.08));
+      border-left: 4px solid var(--secondary); padding: 18px 22px; border-radius: 0 12px 12px 0; margin: 16px 0;
+    }
+    .insight-box h4 { color: var(--secondary); font-size: 16px; margin-bottom: 8px; }
+    .insight-box p { color: var(--text); font-size: 15px; }
+
+    .video-player {
+      margin: 20px 0; border-radius: 16px; overflow: hidden;
+      border: 1px solid var(--border); background: #000; position: relative;
+    }
+    .video-player video { width: 100%; display: block; border-radius: 16px; }
+    .video-player .video-title {
+      position: absolute; top: 12px; left: 16px; background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(8px); padding: 6px 14px; border-radius: 8px;
+      font-size: 14px; color: var(--text); font-weight: 600; pointer-events: none; z-index: 2;
+    }
+
+    .section { margin: 50px 0; }
+    .footer { text-align: center; padding: 40px 0; color: var(--dimmer); font-size: 14px; border-top: 1px solid var(--border); margin-top: 60px; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 768px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 36px; }
+      .nav { padding: 0 16px; overflow-x: auto; }
+    }
+    @media print { .nav { display: none; } body { background: white; color: #1a1a1a; } }
+  </style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="nav">
+  <span class="nav-brand">🎓 TeachAny</span>
+  <a href="#overview">Home</a>
+  <a href="#engage">Engage</a>
+  <a href="#goals">Goals</a>
+  <a href="#knowledge-map">Map</a>
+  <a href="#precheck">Pre-test</a>
+  <a href="#lesson1">Proportional</a>
+  <a href="#lesson2">Linear</a>
+  <a href="#lesson3">Properties</a>
+  <a href="#interactive">Explore</a>
+  <a href="#examples">Examples</a>
+  <a href="#quiz">Quiz</a>
+  <a href="#advanced">Challenge</a>
+  <a href="#postcheck">Post-test</a>
+</nav>
+
+<div class="container">
+
+  <!-- Hero Section -->
+  <section class="hero" id="overview">
+    <h1>Linear Functions</h1>
+    <p class="subtitle">Grade 8 Mathematics · Algebra · Linear Equations & Graphs</p>
+    <div class="tags">
+      <span class="tag">📚 Function Basics</span>
+      <span class="tag">📈 Proportional y = kx</span>
+      <span class="tag">📐 Linear y = kx + b</span>
+      <span class="tag">🎯 Slope & Intercept</span>
+      <span class="tag">🗺️ Graphs & Properties</span>
+      <span class="tag">✍️ Worked Examples</span>
+      <span class="tag">🧪 Online Quiz</span>
+    </div>
+  </section>
+
+  <!-- ===== ENGAGE (ABT Narrative) ===== -->
+  <section class="section" id="engage">
+    <h2 class="section-title">🎯 Engage</h2>
+    <div class="card" style="border-left:4px solid var(--accent);background:linear-gradient(135deg,rgba(245,158,11,0.06),rgba(59,130,246,0.04))">
+      <h3>🤔 Starting from Real-Life Problems</h3>
+      <p style="font-size:17px;line-height:2">
+        <strong style="color:var(--success)">[And]</strong> You already know what a function is, how the coordinate plane works, and that y changes with x — for example, distance traveled increases with time.<br>
+        <strong style="color:var(--danger)">[But]</strong> In real life, many "constant-rate" changes — phone bills, taxi fares, spring stretching — all form <span class="highlight">straight lines</span>, and a generic function description is too vague.<br>
+        <strong style="color:var(--primary)">[Therefore]</strong> So we need to learn the simplest type of function — the <span class="highlight">linear function y = kx + b</span>. Its graph is a straight line, and just two parameters describe all constant-rate phenomena.
+      </p>
+    </div>
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card">
+        <h3>🚕 Task: How Is a Taxi Fare Calculated?</h3>
+        <p>A city taxi charges a base fare of $3, plus $2.50 per mile. If you ride x miles, the fare is y dollars.</p>
+        <p style="margin-top:10px">❓ <strong>How do you write one formula to describe this? What shape is the graph?</strong></p>
+        <p style="margin-top:8px;color:var(--success)">✅ After this lesson, you can answer easily!</p>
+      </div>
+      <div class="card">
+        <h3>🌡️ Think: Temperature Conversion</h3>
+        <p>The relationship between Fahrenheit (F) and Celsius (C) is: F = 1.8C + 32.</p>
+        <p style="margin-top:10px">❓ <strong>What type of function is this? Why doesn't it pass through the origin?</strong></p>
+        <p style="margin-top:8px;color:var(--success)">✅ After learning about slope and intercept, these are easy!</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PRE-CHECK ===== -->
+  <section class="section" id="precheck">
+    <h2 class="section-title">📋 Pre-test: What Do You Already Know?</h2>
+    <div class="card">
+      <h3>Question 1: What Is a Function?</h3>
+      <p>In y = 3x, when x = 2, what is y?</p>
+      <div class="quiz-option" onclick="checkAnswer(this, true, 'pre-q1')">A. y = 6</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'pre-q1')">B. y = 5</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'pre-q1')">C. y = 3</div>
+      <div id="pre-q1" class="quiz-feedback"></div>
+    </div>
+    <div class="card">
+      <h3>Question 2: Coordinate Plane Basics</h3>
+      <p>Where is the point (0, 3) located on the coordinate plane?</p>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'pre-q2')">A. On the x-axis</div>
+      <div class="quiz-option" onclick="checkAnswer(this, true, 'pre-q2')">B. On the y-axis</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'pre-q2')">C. At the origin</div>
+      <div id="pre-q2" class="quiz-feedback"></div>
+    </div>
+    <div class="card">
+      <h3>Question 3: Linear Equation in One Variable</h3>
+      <p>Solve: 2x + 4 = 0. What is x?</p>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'pre-q3')">A. x = 2</div>
+      <div class="quiz-option" onclick="checkAnswer(this, true, 'pre-q3')">B. x = −2</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'pre-q3')">C. x = −4</div>
+      <div id="pre-q3" class="quiz-feedback"></div>
+    </div>
+    <div class="insight-box">
+      <h4>💡 Pre-test Note</h4>
+      <p>These prerequisite skills are the foundation for learning linear functions. If you got any wrong, consider reviewing the concept of functions and the coordinate plane before proceeding.</p>
+    </div>
+  </section>
+
+  <!-- Learning Objectives -->
+  <section class="section" id="goals">
+    <h2 class="section-title">🎯 Learning Objectives</h2>
+    <div class="grid-3">
+      <div class="card">
+        <h3>🧠 Knowledge & Skills</h3>
+        <ul style="padding-left:20px;">
+          <li>Understand proportional and linear functions</li>
+          <li>Master graphing y = kx and y = kx + b</li>
+          <li>Understand the geometric meaning of slope k and intercept b</li>
+          <li>Determine a linear function from given conditions</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>🔄 Process & Methods</h3>
+        <ul style="padding-left:20px;">
+          <li>Model real-world problems with linear functions</li>
+          <li>Discover the roles of k and b through graph observation</li>
+          <li>Develop algebraic-geometric thinking</li>
+          <li>Reason from specific to general cases</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>💡 Attitudes & Values</h3>
+        <ul style="padding-left:20px;">
+          <li>Appreciate functions in everyday life</li>
+          <li>Experience patterns within dynamic change</li>
+          <li>Build confidence in solving real problems with math</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Knowledge Map -->
+  <section id="knowledge-map">
+    <h2 class="section-title">🧠 Knowledge Map</h2>
+    <p style="color:var(--dim);margin-bottom:16px;">Linear functions are a core hub in algebra, connecting multiple knowledge modules</p>
+
+    <div class="knowledge-map-container">
+      <svg viewBox="0 0 1140 700" width="100%" style="max-width:1140px;">
+        <defs>
+          <marker id="aCyan" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="9" markerHeight="9" orient="auto"><path d="M 1 1 L 11 6 L 1 11 z" fill="#06b6d4"/></marker>
+          <marker id="aGold" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="9" markerHeight="9" orient="auto"><path d="M 1 1 L 11 6 L 1 11 z" fill="#f59e0b"/></marker>
+          <marker id="aBlue" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="9" markerHeight="9" orient="auto"><path d="M 1 1 L 11 6 L 1 11 z" fill="#3b82f6"/></marker>
+          <marker id="aRed" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="9" markerHeight="9" orient="auto"><path d="M 1 1 L 11 6 L 1 11 z" fill="#ef4444"/></marker>
+          <marker id="aPurple" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="9" markerHeight="9" orient="auto"><path d="M 1 1 L 11 6 L 1 11 z" fill="#8b5cf6"/></marker>
+          <marker id="aPink" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="9" markerHeight="9" orient="auto"><path d="M 1 1 L 11 6 L 1 11 z" fill="#ec4899"/></marker>
+          <marker id="aGreen" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="9" markerHeight="9" orient="auto"><path d="M 1 1 L 11 6 L 1 11 z" fill="#10b981"/></marker>
+        </defs>
+
+        <!-- Region backgrounds -->
+        <rect x="16" y="50" width="250" height="620" rx="16" fill="rgba(6,182,212,0.05)" stroke="rgba(6,182,212,0.15)" stroke-width="1"/>
+        <rect x="286" y="50" width="470" height="620" rx="16" fill="rgba(245,158,11,0.04)" stroke="rgba(245,158,11,0.12)" stroke-width="1"/>
+        <rect x="776" y="50" width="350" height="620" rx="16" fill="rgba(239,68,68,0.04)" stroke="rgba(239,68,68,0.12)" stroke-width="1"/>
+
+        <!-- Region labels -->
+        <text x="141" y="38" fill="#06b6d4" font-size="15" text-anchor="middle" font-weight="700">📚 Prerequisites</text>
+        <text x="521" y="38" fill="#f59e0b" font-size="15" text-anchor="middle" font-weight="700">⭐ Core Concepts</text>
+        <text x="951" y="38" fill="#ef4444" font-size="15" text-anchor="middle" font-weight="700">🚀 Future Topics</text>
+
+        <!-- Prerequisite nodes -->
+        <g><rect x="36" y="82" width="210" height="44" rx="22" fill="rgba(6,182,212,0.12)" stroke="#06b6d4" stroke-width="1.5"/>
+        <text x="141" y="110" fill="#06b6d4" font-size="14" text-anchor="middle" font-weight="600">Coordinate Plane</text></g>
+        <g><rect x="36" y="192" width="210" height="44" rx="22" fill="rgba(6,182,212,0.12)" stroke="#06b6d4" stroke-width="1.5"/>
+        <text x="141" y="220" fill="#06b6d4" font-size="14" text-anchor="middle" font-weight="600">Variables & Functions</text></g>
+        <g><rect x="36" y="302" width="210" height="44" rx="22" fill="rgba(6,182,212,0.12)" stroke="#06b6d4" stroke-width="1.5"/>
+        <text x="141" y="330" fill="#06b6d4" font-size="14" text-anchor="middle" font-weight="600">Linear Equations</text></g>
+        <g><rect x="36" y="412" width="210" height="44" rx="22" fill="rgba(6,182,212,0.12)" stroke="#06b6d4" stroke-width="1.5"/>
+        <text x="141" y="440" fill="#06b6d4" font-size="14" text-anchor="middle" font-weight="600">Linear Inequalities</text></g>
+        <g><rect x="36" y="522" width="210" height="44" rx="22" fill="rgba(6,182,212,0.12)" stroke="#06b6d4" stroke-width="1.5"/>
+        <text x="141" y="550" fill="#06b6d4" font-size="14" text-anchor="middle" font-weight="600">Systems of Equations</text></g>
+
+        <!-- Core nodes -->
+        <g><rect x="340" y="88" width="160" height="52" rx="14" fill="rgba(245,158,11,0.18)" stroke="#f59e0b" stroke-width="2"/>
+        <text x="420" y="120" fill="#f59e0b" font-size="16" text-anchor="middle" font-weight="700">Function Concept</text></g>
+
+        <g><rect x="380" y="220" width="240" height="72" rx="16" fill="rgba(59,130,246,0.18)" stroke="#3b82f6" stroke-width="2.5"/>
+        <text x="500" y="252" fill="#3b82f6" font-size="19" text-anchor="middle" font-weight="800">Linear Function</text>
+        <text x="500" y="278" fill="#3b82f6" font-size="17" text-anchor="middle" font-family="'Times New Roman', serif">y = kx + b</text></g>
+
+        <g><rect x="350" y="370" width="190" height="62" rx="14" fill="rgba(16,185,129,0.15)" stroke="#10b981" stroke-width="2"/>
+        <text x="445" y="398" fill="#10b981" font-size="16" text-anchor="middle" font-weight="700">Proportional Fn</text>
+        <text x="445" y="420" fill="#10b981" font-size="15" text-anchor="middle" font-family="'Times New Roman', serif">y = kx</text></g>
+
+        <g><rect x="330" y="520" width="130" height="42" rx="12" fill="rgba(139,92,246,0.12)" stroke="#8b5cf6" stroke-width="1.5"/>
+        <text x="395" y="547" fill="#8b5cf6" font-size="14" text-anchor="middle" font-weight="600">Slope k</text></g>
+
+        <g><rect x="490" y="520" width="130" height="42" rx="12" fill="rgba(139,92,246,0.12)" stroke="#8b5cf6" stroke-width="1.5"/>
+        <text x="555" y="547" fill="#8b5cf6" font-size="14" text-anchor="middle" font-weight="600">Intercept b</text></g>
+
+        <g><rect x="410" y="618" width="180" height="44" rx="14" fill="rgba(236,72,153,0.12)" stroke="#ec4899" stroke-width="1.5"/>
+        <text x="500" y="646" fill="#ec4899" font-size="14" text-anchor="middle" font-weight="600">Graph & Properties</text></g>
+
+        <!-- Future topic nodes -->
+        <g><rect x="810" y="100" width="220" height="58" rx="14" fill="rgba(239,68,68,0.10)" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="920" y="126" fill="#ef4444" font-size="14" text-anchor="middle" font-weight="600">Quadratic Function</text>
+        <text x="920" y="146" fill="#ef4444" font-size="13" text-anchor="middle" font-family="'Times New Roman', serif">y = ax² + bx + c</text></g>
+        <g><rect x="810" y="230" width="220" height="58" rx="14" fill="rgba(239,68,68,0.10)" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="920" y="256" fill="#ef4444" font-size="14" text-anchor="middle" font-weight="600">Inverse Proportion</text>
+        <text x="920" y="276" fill="#ef4444" font-size="13" text-anchor="middle" font-family="'Times New Roman', serif">y = k/x</text></g>
+        <g><rect x="810" y="370" width="220" height="46" rx="14" fill="rgba(239,68,68,0.10)" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="920" y="399" fill="#ef4444" font-size="14" text-anchor="middle" font-weight="600">Graphical Solutions</text></g>
+        <g><rect x="810" y="490" width="220" height="58" rx="14" fill="rgba(239,68,68,0.10)" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="920" y="516" fill="#ef4444" font-size="14" text-anchor="middle" font-weight="600">Inequalities & Functions</text>
+        <text x="920" y="536" fill="#ef4444" font-size="13" text-anchor="middle">Applications</text></g>
+
+        <!-- Connection paths -->
+        <path d="M 246 104 C 290 104, 310 108, 340 110" stroke="#06b6d4" stroke-width="1.5" fill="none" opacity="0.6" marker-end="url(#aCyan)"/>
+        <path d="M 246 214 C 290 214, 320 160, 340 118" stroke="#06b6d4" stroke-width="1.5" fill="none" opacity="0.6" marker-end="url(#aCyan)"/>
+        <path d="M 246 324 C 300 324, 340 200, 380 140" stroke="#06b6d4" stroke-width="1.5" fill="none" opacity="0.5" marker-end="url(#aCyan)"/>
+        <path d="M 246 434 C 290 434, 330 280, 380 140" stroke="#06b6d4" stroke-width="1.5" fill="none" opacity="0.4" marker-end="url(#aCyan)"/>
+        <path d="M 246 544 C 290 544, 340 320, 390 140" stroke="#06b6d4" stroke-width="1.5" fill="none" opacity="0.35" marker-end="url(#aCyan)"/>
+
+        <path d="M 420 140 C 450 170, 480 190, 500 220" stroke="#f59e0b" stroke-width="2.5" fill="none" marker-end="url(#aGold)"/>
+        <path d="M 470 292 C 460 320, 450 350, 445 370" stroke="#3b82f6" stroke-width="2.5" fill="none" marker-end="url(#aBlue)"/>
+        <text x="380" y="335" fill="#3b82f6" font-size="12" font-weight="600">Special case</text>
+        <text x="380" y="350" fill="#3b82f6" font-size="12" font-weight="600">when b = 0</text>
+
+        <path d="M 440 292 C 410 380, 395 460, 395 520" stroke="#8b5cf6" stroke-width="1.8" fill="none" marker-end="url(#aPurple)"/>
+        <path d="M 560 292 C 570 380, 560 460, 555 520" stroke="#8b5cf6" stroke-width="1.8" fill="none" marker-end="url(#aPurple)"/>
+        <path d="M 410 562 C 430 585, 460 610, 475 618" stroke="#ec4899" stroke-width="1.5" fill="none" opacity="0.7" marker-end="url(#aPink)"/>
+        <path d="M 540 562 C 530 585, 520 605, 515 618" stroke="#ec4899" stroke-width="1.5" fill="none" opacity="0.7" marker-end="url(#aPink)"/>
+
+        <path d="M 620 240 C 700 200, 750 160, 810 135" stroke="#ef4444" stroke-width="1.5" fill="none" opacity="0.55" marker-end="url(#aRed)"/>
+        <path d="M 620 256 C 700 250, 760 255, 810 260" stroke="#ef4444" stroke-width="1.5" fill="none" opacity="0.55" marker-end="url(#aRed)"/>
+        <path d="M 620 270 C 700 310, 760 360, 810 390" stroke="#ef4444" stroke-width="1.5" fill="none" opacity="0.55" marker-end="url(#aRed)"/>
+        <path d="M 600 292 C 680 400, 740 480, 810 510" stroke="#ef4444" stroke-width="1.5" fill="none" opacity="0.55" marker-end="url(#aRed)"/>
+      </svg>
+    </div>
+
+    <div class="video-player" style="margin-top:20px;">
+      <span class="video-title">🧠 Knowledge Map Animation</span>
+      <video controls preload="metadata" playsinline>
+        <source src="videos/06-knowledge-map.mp4" type="video/mp4">
+      </video>
+    </div>
+  </section>
+
+  <!-- Lesson 1: Proportional Functions -->
+  <section id="lesson1">
+    <h2 class="section-title">📊 Lesson 1: Proportional Function y = kx</h2>
+
+    <div class="card">
+      <h3>📌 Introduction</h3>
+      <p>Spring experiment: The extension y (cm) of a spring vs. the mass x (kg) of the hanging weight:</p>
+      <table class="styled-table" style="max-width:500px;margin:16px auto;">
+        <tr><th>x / kg</th><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td></tr>
+        <tr><th>y / cm</th><td>0</td><td>2</td><td>4</td><td>6</td><td>8</td></tr>
+      </table>
+      <p>Observation: <span class="formula">y = 2x</span> — y is directly proportional to x.</p>
+    </div>
+
+    <div class="highlight-box">
+      <h3 style="color:var(--accent);margin-bottom:10px;">📝 Definition</h3>
+      <p>In general, a function of the form <span class="formula">y = kx (k is a constant, k ≠ 0)</span> is called a <strong>proportional function</strong> (direct variation).</p>
+      <p style="margin-top:8px;">Here, k is called the <strong>constant of proportionality</strong>.</p>
+    </div>
+
+    <div class="insight-box">
+      <h4>🔍 Deep Understanding: Why Does the Graph Always Pass Through the Origin?</h4>
+      <p>Because in y = kx, when x = 0, y = k·0 = 0, so the point (0, 0) is always on the graph. This is the essence of "direct proportion" — there is no initial quantity; everything starts from zero. A spring with no weight has zero extension; zero minutes of travel means zero distance.</p>
+    </div>
+
+    <div class="video-player">
+      <span class="video-title">🎬 Proportional Function y = kx — Graphing</span>
+      <video controls preload="metadata" playsinline>
+        <source src="videos/02-proportional.mp4" type="video/mp4">
+      </video>
+    </div>
+
+    <div class="card">
+      <h3>📐 Graph Features</h3>
+      <div class="grid-2">
+        <div>
+          <div class="step">
+            <span class="step-number">1</span>
+            <div><strong>The graph is a straight line</strong> that always passes through the origin (0, 0)</div>
+          </div>
+          <div class="step">
+            <span class="step-number">2</span>
+            <div><strong>When k &gt; 0</strong>: passes through Quadrants I and III; y increases as x increases</div>
+          </div>
+          <div class="step">
+            <span class="step-number">3</span>
+            <div><strong>When k &lt; 0</strong>: passes through Quadrants II and IV; y decreases as x increases</div>
+          </div>
+        </div>
+        <div>
+          <table class="styled-table">
+            <tr><th>Value of k</th><th>Quadrants</th><th>Behavior</th></tr>
+            <tr><td>k &gt; 0</td><td>I, III</td><td>Increasing ↗</td></tr>
+            <tr><td>k &lt; 0</td><td>II, IV</td><td>Decreasing ↘</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Lesson 2: Linear Functions -->
+  <section id="lesson2">
+    <h2 class="section-title">📈 Lesson 2: Linear Function y = kx + b</h2>
+
+    <div class="card">
+      <h3>📌 From Proportional to Linear</h3>
+      <p>A phone plan charges a monthly fee of $10 plus $0.30 per minute. If you talk for x minutes, the monthly cost y is:</p>
+      <div class="formula-block">
+        <span class="formula">y = 0.3x + 10</span>
+      </div>
+      <p>This function has an extra constant term +10 compared to a proportional function — this is a linear function.</p>
+    </div>
+
+    <div class="highlight-box">
+      <h3 style="color:var(--accent);margin-bottom:10px;">📝 Definition</h3>
+      <p>In general, a function of the form <span class="formula">y = kx + b (k, b are constants, k ≠ 0)</span> is called a <strong>linear function</strong>.</p>
+      <p style="margin-top:8px;">When <strong>b = 0</strong>, y = kx is a proportional function. So <strong>a proportional function is a special case of a linear function</strong>.</p>
+    </div>
+
+    <div class="insight-box">
+      <h4>🔍 Deep Understanding: What Is the Essence of b?</h4>
+      <p>b represents the "initial value" or "starting point" — the monthly base fee, the taxi base fare, the initial water in a tank... In real life, many changes don't start from zero, and b represents that baseline. On the graph, b determines where the line crosses the y-axis at (0, b). Changing b shifts the entire line up or down.</p>
+    </div>
+
+    <div class="video-player">
+      <span class="video-title">🎬 Linear Function y = kx + b — Introduction</span>
+      <video controls preload="metadata" playsinline>
+        <source src="videos/01-linear-intro.mp4" type="video/mp4">
+      </video>
+    </div>
+
+    <div class="card">
+      <h3>🖊️ Graphing Method: Two-Point Method</h3>
+      <p>The graph of a linear function is a straight line. <strong>Two points determine a line</strong>, so we only need two special points:</p>
+      <div class="step" style="margin-top:12px;">
+        <span class="step-number">1</span>
+        <div>Set x = 0: y = b → Point <strong>(0, b)</strong> (y-intercept)</div>
+      </div>
+      <div class="step">
+        <span class="step-number">2</span>
+        <div>Set y = 0: x = −b/k → Point <strong>(−b/k, 0)</strong> (x-intercept)</div>
+      </div>
+      <div class="step">
+        <span class="step-number">3</span>
+        <div>Draw a straight line through these two points</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Lesson 3: Properties -->
+  <section id="lesson3">
+    <h2 class="section-title">🔍 Lesson 3: Slope, Intercept & Graph Properties</h2>
+
+    <div class="grid-2">
+      <div class="video-player">
+        <span class="video-title">📈 Geometric Meaning of Slope k</span>
+        <video controls preload="metadata" playsinline>
+          <source src="videos/03-slope.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="video-player">
+        <span class="video-title">🔀 Translation Effect of Intercept b</span>
+        <video controls preload="metadata" playsinline>
+          <source src="videos/04-intercept.mp4" type="video/mp4">
+        </video>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3 style="color:var(--secondary);">📐 Meaning of Slope k</h3>
+        <div class="formula-block">
+          <span class="formula">k = Δy / Δx = (y₂ − y₁) / (x₂ − x₁)</span>
+        </div>
+        <ul style="padding-left:20px;margin-top:12px;">
+          <li><strong>Larger |k|</strong> → steeper line</li>
+          <li><strong>k &gt; 0</strong>: rises from left to right ↗</li>
+          <li><strong>k &lt; 0</strong>: falls from left to right ↘</li>
+          <li><strong>k = 1</strong>: 45° angle with the x-axis</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--accent);">🔀 Meaning of Intercept b</h3>
+        <p>b is the y-coordinate where the line crosses the y-axis, i.e., the point <strong>(0, b)</strong></p>
+        <ul style="padding-left:20px;margin-top:12px;">
+          <li><strong>b &gt; 0</strong>: line shifts up</li>
+          <li><strong>b = 0</strong>: passes through origin (becomes a proportional function)</li>
+          <li><strong>b &lt; 0</strong>: line shifts down</li>
+        </ul>
+        <p style="margin-top:12px;color:var(--accent);">💡 Changing b is like translating y = kx vertically by |b| units</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🗺️ Signs of k and b Determine Which Quadrants the Graph Passes Through</h3>
+      <table class="styled-table">
+        <tr><th>Condition</th><th>Quadrants</th><th>Approximate Shape</th></tr>
+        <tr><td>k &gt; 0, b &gt; 0</td><td>I, II, III</td><td>↗ Rising, crosses positive y-axis</td></tr>
+        <tr><td>k &gt; 0, b &lt; 0</td><td>I, III, IV</td><td>↗ Rising, crosses negative y-axis</td></tr>
+        <tr><td>k &lt; 0, b &gt; 0</td><td>I, II, IV</td><td>↘ Falling, crosses positive y-axis</td></tr>
+        <tr><td>k &lt; 0, b &lt; 0</td><td>II, III, IV</td><td>↘ Falling, crosses negative y-axis</td></tr>
+      </table>
+      <div class="highlight-box" style="margin-top:16px;">
+        <p style="font-size:18px;">💡 <strong>Memory Aid</strong>: k positive = rises left-to-right; k negative = falls left-to-right; b positive = shifts up; b negative = shifts down</p>
+      </div>
+    </div>
+
+    <div class="video-player">
+      <span class="video-title">🗺️ Signs of k & b vs. Quadrants</span>
+      <video controls preload="metadata" playsinline>
+        <source src="videos/05-transform.mp4" type="video/mp4">
+      </video>
+    </div>
+  </section>
+
+  <!-- Interactive Graph -->
+  <section id="interactive">
+    <h2 class="section-title">🎮 Interactive Exploration: Adjust k and b</h2>
+    <div class="interactive-graph">
+      <div class="slider-group">
+        <label>Slope k =</label>
+        <input type="range" id="slider-k" min="-3" max="3" step="0.1" value="1">
+        <span class="slider-value" id="val-k" style="color:var(--primary);">1.0</span>
+      </div>
+      <div class="slider-group">
+        <label>Intercept b =</label>
+        <input type="range" id="slider-b" min="-4" max="4" step="0.1" value="0">
+        <span class="slider-value" id="val-b" style="color:var(--accent);">0.0</span>
+      </div>
+      <div style="text-align:center;margin:8px 0;">
+        <span class="formula" id="formula-display">y = 1.0x + 0.0</span>
+      </div>
+      <canvas id="graph-canvas" width="800" height="500" style="width:100%;max-width:800px;display:block;margin:0 auto;border-radius:12px;background:#0f172a;"></canvas>
+      <div style="text-align:center;margin-top:10px;color:var(--dim);font-size:14px;" id="graph-info">
+        Passes through Quadrants I, III | y increases as x increases
+      </div>
+    </div>
+  </section>
+
+  <!-- Worked Examples -->
+  <section id="examples">
+    <h2 class="section-title">✍️ Worked Examples</h2>
+
+    <div class="example">
+      <div class="example-title">📝 Example 1: Identifying Proportional Functions</div>
+      <p>Which of the following are proportional functions? Which are linear functions?</p>
+      <p style="margin-top:8px;font-family:serif;font-size:18px;">
+        ① y = 3x &nbsp;&nbsp; ② y = 2x + 1 &nbsp;&nbsp; ③ y = x² &nbsp;&nbsp; ④ y = −5x &nbsp;&nbsp; ⑤ y = 3/x &nbsp;&nbsp; ⑥ y = −2x + 3
+      </p>
+      <div class="solution-toggle" onclick="toggleSolution(this)">👁️ Show Solution</div>
+      <div class="solution-content">
+        <div class="solution">
+          <div class="solution-title">✅ Solution</div>
+          <p><strong>Proportional functions</strong> (form y = kx, k ≠ 0): <span style="color:var(--success);">① y = 3x, ④ y = −5x</span></p>
+          <p><strong>Linear functions</strong> (form y = kx + b, k ≠ 0): <span style="color:var(--primary);">① ② ④ ⑥</span></p>
+          <p style="margin-top:8px;">
+            ③ y = x² is a quadratic function, not linear<br>
+            ⑤ y = 3/x is an inverse proportional function, not linear<br>
+            <strong>Every proportional function is a linear function</strong>, but not every linear function is proportional
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="example">
+      <div class="example-title">📝 Example 2: Finding the Equation (Undetermined Coefficients)</div>
+      <p>A linear function y = kx + b passes through A(1, 5) and B(−1, 1). Find the equation.</p>
+      <div class="solution-toggle" onclick="toggleSolution(this)">👁️ Show Solution</div>
+      <div class="solution-content">
+        <div class="solution">
+          <div class="solution-title">✅ Solution (Method of Undetermined Coefficients)</div>
+          <div class="step">
+            <span class="step-number">1</span>
+            <div>Substitute A(1, 5) into y = kx + b: <strong>k + b = 5</strong> … ①</div>
+          </div>
+          <div class="step">
+            <span class="step-number">2</span>
+            <div>Substitute B(−1, 1) into y = kx + b: <strong>−k + b = 1</strong> … ②</div>
+          </div>
+          <div class="step">
+            <span class="step-number">3</span>
+            <div>① + ②: 2b = 6, so <strong>b = 3</strong></div>
+          </div>
+          <div class="step">
+            <span class="step-number">4</span>
+            <div>Substitute into ①: k = 5 − 3 = <strong>2</strong></div>
+          </div>
+          <p style="margin-top:12px;font-size:18px;">∴ The linear function is <span class="formula">y = 2x + 3</span></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="example">
+      <div class="example-title">📝 Example 3: Graph & Properties</div>
+      <p>For the linear function y = −2x + 4:</p>
+      <p>(1) Where does it intersect the x-axis and y-axis?</p>
+      <p>(2) Which quadrants does it pass through?</p>
+      <p>(3) For what values of x is y &gt; 0?</p>
+      <div class="solution-toggle" onclick="toggleSolution(this)">👁️ Show Solution</div>
+      <div class="solution-content">
+        <div class="solution">
+          <div class="solution-title">✅ Solution</div>
+          <p><strong>(1)</strong></p>
+          <p>&nbsp;&nbsp;Set x = 0: y = 4 → y-intercept is <strong>(0, 4)</strong></p>
+          <p>&nbsp;&nbsp;Set y = 0: −2x + 4 = 0 → x = 2 → x-intercept is <strong>(2, 0)</strong></p>
+          <p style="margin-top:8px;"><strong>(2)</strong></p>
+          <p>&nbsp;&nbsp;k = −2 &lt; 0, b = 4 &gt; 0 → passes through <strong>Quadrants I, II, IV</strong></p>
+          <p style="margin-top:8px;"><strong>(3)</strong></p>
+          <p>&nbsp;&nbsp;y &gt; 0 means −2x + 4 &gt; 0 → x &lt; 2</p>
+          <p>&nbsp;&nbsp;∴ When <span class="formula">x &lt; 2</span>, y &gt; 0</p>
+          <p style="margin-top:8px;color:var(--accent);">💡 This connects linear functions to linear inequalities! The part of the graph above the x-axis corresponds to y &gt; 0</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="example">
+      <div class="example-title">📝 Example 4: Real-World Modeling</div>
+      <p>A water tank initially contains 20 liters. Water flows in at 5 liters per hour.</p>
+      <p>(1) Write the equation for water volume y (liters) vs. time x (hours)</p>
+      <p>(2) How much water after 8 hours?</p>
+      <p>(3) The tank holds at most 80 liters. When is it full?</p>
+      <div class="solution-toggle" onclick="toggleSolution(this)">👁️ Show Solution</div>
+      <div class="solution-content">
+        <div class="solution">
+          <div class="solution-title">✅ Solution</div>
+          <p><strong>(1)</strong> <span class="formula">y = 5x + 20</span> (x ≥ 0)</p>
+          <p style="margin-top:8px;"><strong>(2)</strong> When x = 8: y = 5 × 8 + 20 = <strong>60 liters</strong></p>
+          <p style="margin-top:8px;"><strong>(3)</strong> When y = 80: 80 = 5x + 20 → x = <strong>12 hours</strong></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Online Quiz -->
+  <section id="quiz">
+    <h2 class="section-title">🧪 Online Quiz (10 Questions)</h2>
+    <div class="quiz-progress">
+      <div class="quiz-progress-fill" id="quiz-progress-fill" style="width:0%"></div>
+    </div>
+    <p style="color:var(--dim);margin-bottom:16px;" id="quiz-status">Progress: 0/10 | Score: 0</p>
+    <div id="quiz-container"></div>
+    <div class="score-display" id="score-display">
+      <p style="font-size:22px;color:var(--dim);margin-bottom:8px;">🎉 Quiz Complete!</p>
+      <div class="score-number" id="final-score">0</div>
+      <p style="font-size:20px;color:var(--dim);margin-top:8px;" id="score-comment"></p>
+      <button onclick="resetQuiz()" style="margin-top:20px;padding:12px 32px;border-radius:10px;border:none;background:var(--primary);color:white;font-size:16px;cursor:pointer;">🔄 Retake Quiz</button>
+    </div>
+  </section>
+
+  <!-- Challenge Problems -->
+  <section id="advanced">
+    <h2 class="section-title">🚀 Challenge Problems</h2>
+
+    <div class="example">
+      <div class="example-title">🏆 Challenge 1: Intersection of Two Lines</div>
+      <p>Given y₁ = 2x − 1 and y₂ = −x + 5, find their intersection and determine for which x values y₁ &gt; y₂.</p>
+      <div class="solution-toggle" onclick="toggleSolution(this)">👁️ Show Solution</div>
+      <div class="solution-content">
+        <div class="solution">
+          <div class="solution-title">✅ Solution</div>
+          <p><strong>Intersection:</strong> Set 2x − 1 = −x + 5</p>
+          <p>&nbsp;&nbsp;3x = 6 → x = 2 → y = 2(2) − 1 = 3</p>
+          <p>&nbsp;&nbsp;∴ Intersection: <span class="formula">(2, 3)</span></p>
+          <p style="margin-top:12px;"><strong>Find y₁ &gt; y₂:</strong></p>
+          <p>&nbsp;&nbsp;2x − 1 &gt; −x + 5 → 3x &gt; 6 → <span class="formula">x &gt; 2</span></p>
+          <p style="margin-top:8px;color:var(--accent);">💡 Graphically: When x &gt; 2, the line y₁ = 2x − 1 is above y₂ = −x + 5</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="example">
+      <div class="example-title">🏆 Challenge 2: Area Calculation</div>
+      <p>Find the area of the triangle formed by y = −¾x + 3 and the coordinate axes.</p>
+      <div class="solution-toggle" onclick="toggleSolution(this)">👁️ Show Solution</div>
+      <div class="solution-content">
+        <div class="solution">
+          <div class="solution-title">✅ Solution</div>
+          <p>Set x = 0: y = 3 → y-intercept A(0, 3)</p>
+          <p>Set y = 0: −¾x + 3 = 0 → x = 4 → x-intercept B(4, 0)</p>
+          <p style="margin-top:8px;">Base = OB = 4, Height = OA = 3</p>
+          <p style="margin-top:8px;">Area = ½ × 4 × 3 = <span class="formula">6</span></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="example">
+      <div class="example-title">🏆 Challenge 3: Parameter Discussion</div>
+      <p>The linear function y = (m−2)x + (m+1) does not pass through Quadrant II. Find the range of m.</p>
+      <div class="solution-toggle" onclick="toggleSolution(this)">👁️ Show Solution</div>
+      <div class="solution-content">
+        <div class="solution">
+          <div class="solution-title">✅ Solution</div>
+          <p>First, for it to be a linear function: k ≠ 0, so m − 2 ≠ 0 → <strong>m ≠ 2</strong></p>
+          <p style="margin-top:8px;">To avoid Quadrant II, we need:</p>
+          <p>&nbsp;&nbsp;In Quadrant II: x &lt; 0, y &gt; 0</p>
+          <p>&nbsp;&nbsp;Need k &gt; 0 and b ≤ 0 (graph passes through Quadrants I, III, IV or I, III)</p>
+          <p style="margin-top:8px;">That gives us:</p>
+          <p>&nbsp;&nbsp;m − 2 &gt; 0 → m &gt; 2</p>
+          <p>&nbsp;&nbsp;m + 1 ≤ 0 → m ≤ −1</p>
+          <p style="margin-top:8px;">These two conditions cannot both be satisfied simultaneously.</p>
+          <p style="margin-top:8px;color:var(--danger);">⚠️ If the problem were "does not pass through Quadrant III": k &gt; 0 and b &gt; 0 → m &gt; 2 and m &gt; −1 → <span class="formula">m &gt; 2</span></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="example">
+      <div class="example-title">🏆 Challenge 4: Comprehensive Problem</div>
+      <p>A linear function y = kx + b passes through A(−3, 4) and B(2, −1).</p>
+      <p>(1) Find the equation; (2) Find the area of the triangle formed with the axes; (3) Directly write the solution set for kx + b &gt; 0.</p>
+      <div class="solution-toggle" onclick="toggleSolution(this)">👁️ Show Solution</div>
+      <div class="solution-content">
+        <div class="solution">
+          <div class="solution-title">✅ Solution</div>
+          <p><strong>(1)</strong> Substitute A(−3, 4): −3k + b = 4 … ①</p>
+          <p>&nbsp;&nbsp;Substitute B(2, −1): 2k + b = −1 … ②</p>
+          <p>&nbsp;&nbsp;② − ①: 5k = −5 → k = −1 → b = 1</p>
+          <p>&nbsp;&nbsp;∴ <span class="formula">y = −x + 1</span></p>
+          <p style="margin-top:12px;"><strong>(2)</strong></p>
+          <p>&nbsp;&nbsp;y-intercept: (0, 1); x-intercept: (1, 0)</p>
+          <p>&nbsp;&nbsp;Area = ½ × 1 × 1 = <strong>½</strong></p>
+          <p style="margin-top:12px;"><strong>(3)</strong></p>
+          <p>&nbsp;&nbsp;kx + b &gt; 0 means −x + 1 &gt; 0 → y &gt; 0</p>
+          <p>&nbsp;&nbsp;The part of the graph above the x-axis corresponds to x &lt; 1</p>
+          <p>&nbsp;&nbsp;∴ Solution set: <span class="formula">x &lt; 1</span></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== POST-CHECK ===== -->
+  <section class="section" id="postcheck">
+    <h2 class="section-title">📊 Post-test: Did You Learn It?</h2>
+    <div class="card">
+      <h3>Post-test 1: Comprehensive Judgment</h3>
+      <p>The graph of y = −3x + 6 passes through which quadrants? Where does it cross the x-axis?</p>
+      <div class="quiz-option" onclick="checkAnswer(this, true, 'post-q1')">A. Quadrants I, II, IV; crosses at (2, 0)</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'post-q1')">B. Quadrants I, II, III; crosses at (6, 0)</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'post-q1')">C. Quadrants II, III, IV; crosses at (−2, 0)</div>
+      <div id="post-q1" class="quiz-feedback"></div>
+    </div>
+    <div class="card">
+      <h3>Post-test 2: Undetermined Coefficients</h3>
+      <p>A linear function passes through (0, 4) and (2, 0). Find the equation.</p>
+      <div class="quiz-option" onclick="checkAnswer(this, true, 'post-q2')">A. y = −2x + 4</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'post-q2')">B. y = 2x + 4</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'post-q2')">C. y = −2x − 4</div>
+      <div id="post-q2" class="quiz-feedback"></div>
+    </div>
+    <div class="card">
+      <h3>Post-test 3: Application Problem</h3>
+      <p>A tank has 50 liters of water. It drains at 3 liters per minute: y = −3x + 50. How many minutes until empty?</p>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'post-q3')">A. 15 minutes</div>
+      <div class="quiz-option" onclick="checkAnswer(this, true, 'post-q3')">B. 50/3 ≈ 16.7 minutes</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'post-q3')">C. 50 minutes</div>
+      <div id="post-q3" class="quiz-feedback"></div>
+    </div>
+    <div class="insight-box">
+      <h4>📊 Compare with Pre-test</h4>
+      <p>The pre-test checked function basics and coordinate plane knowledge. The post-test checked core linear function skills (quadrant identification, undetermined coefficients, real-world modeling). If you got all post-test questions right, you have mastered the core content of linear functions!</p>
+    </div>
+  </section>
+
+  <!-- Animation Collection -->
+  <section>
+    <h2 class="section-title">🎬 Complete Animation Series (6 Episodes)</h2>
+    <p style="color:var(--dim);margin-bottom:20px;">These animations were made with Remotion and exported as MP4</p>
+
+    <div class="grid-2">
+      <div class="card" style="border-color:rgba(59,130,246,0.4);padding:16px;">
+        <h3 style="font-size:18px;">📐 Ep 1: Linear Function Introduction</h3>
+        <p style="font-size:14px;margin-bottom:10px;">Dynamically drawing multiple lines on the coordinate plane, showing y = kx + b</p>
+        <video controls preload="metadata" playsinline style="width:100%;border-radius:10px;">
+          <source src="videos/01-linear-intro.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="card" style="border-color:rgba(16,185,129,0.4);padding:16px;">
+        <h3 style="font-size:18px;">📊 Ep 2: Proportional Functions</h3>
+        <p style="font-size:14px;margin-bottom:10px;">Lines through the origin, dynamic k rotation, quadrant distribution</p>
+        <video controls preload="metadata" playsinline style="width:100%;border-radius:10px;">
+          <source src="videos/02-proportional.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="card" style="border-color:rgba(139,92,246,0.4);padding:16px;">
+        <h3 style="font-size:18px;">📈 Ep 3: Geometric Meaning of Slope</h3>
+        <p style="font-size:14px;margin-bottom:10px;">Comparing different k values, slope triangle, Δy/Δx formula</p>
+        <video controls preload="metadata" playsinline style="width:100%;border-radius:10px;">
+          <source src="videos/03-slope.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="card" style="border-color:rgba(245,158,11,0.4);padding:16px;">
+        <h3 style="font-size:18px;">🔀 Ep 4: Intercept & Translation</h3>
+        <p style="font-size:14px;margin-bottom:10px;">Fixed k, b varies from −3 to 3, visualizing vertical translation</p>
+        <video controls preload="metadata" playsinline style="width:100%;border-radius:10px;">
+          <source src="videos/04-intercept.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="card" style="border-color:rgba(236,72,153,0.4);padding:16px;">
+        <h3 style="font-size:18px;">🗺️ Ep 5: Signs of k & b vs. Quadrants</h3>
+        <p style="font-size:14px;margin-bottom:10px;">Four basic cases animated, quadrant rules summarized</p>
+        <video controls preload="metadata" playsinline style="width:100%;border-radius:10px;">
+          <source src="videos/05-transform.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="card" style="border-color:rgba(6,182,212,0.4);padding:16px;">
+        <h3 style="font-size:18px;">🧠 Ep 6: Knowledge Map Network</h3>
+        <p style="font-size:14px;margin-bottom:10px;">Prerequisites → Core Concepts → Future Topics connection animation</p>
+        <video controls preload="metadata" playsinline style="width:100%;border-radius:10px;">
+          <source src="videos/06-knowledge-map.mp4" type="video/mp4">
+        </video>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>Made with <strong>TeachAny</strong> · <a href="https://github.com/wepon/teachany" style="color:var(--primary);">GitHub</a></p>
+    <p style="margin-top:8px;">Built on ABT Narrative · Bloom's Taxonomy · Scaffolding · Cognitive Load Theory</p>
+  </footer>
+
+</div>
+
+<script>
+// ============================================
+// TeachAny Quiz Engine — Simple Answer Check
+// ============================================
+function checkAnswer(el, isCorrect, feedbackId) {
+  const parent = el.parentElement;
+  const options = parent.querySelectorAll('.quiz-option');
+  const feedback = document.getElementById(feedbackId);
+  if (parent.dataset.answered) return;
+  parent.dataset.answered = 'true';
+  options.forEach(opt => { opt.style.pointerEvents = 'none'; opt.style.opacity = '0.6'; });
+  if (isCorrect) {
+    el.classList.add('correct'); el.style.opacity = '1';
+    feedback.innerHTML = '✅ <strong>Correct!</strong>';
+    feedback.style.background = 'rgba(16,185,129,0.1)'; feedback.style.color = '#10b981';
+  } else {
+    el.classList.add('wrong'); el.style.opacity = '1';
+    options.forEach(opt => { if (opt.onclick && opt.onclick.toString().includes('true')) { opt.classList.add('correct'); opt.style.opacity = '1'; } });
+    feedback.innerHTML = '❌ <strong>Try again.</strong> The correct answer is highlighted.';
+    feedback.style.background = 'rgba(239,68,68,0.1)'; feedback.style.color = '#ef4444';
+  }
+  feedback.classList.add('show');
+}
+
+// ==================== Interactive Graph ====================
+const canvas = document.getElementById('graph-canvas');
+const ctx = canvas.getContext('2d');
+const sliderK = document.getElementById('slider-k');
+const sliderB = document.getElementById('slider-b');
+const valK = document.getElementById('val-k');
+const valB = document.getElementById('val-b');
+const formulaDisplay = document.getElementById('formula-display');
+const graphInfo = document.getElementById('graph-info');
+
+function drawGraph() {
+  const k = parseFloat(sliderK.value);
+  const b = parseFloat(sliderB.value);
+  const W = canvas.width;
+  const H = canvas.height;
+  const cx = W / 2;
+  const cy = H / 2;
+  const sc = 40;
+
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = '#1e293b';
+  ctx.lineWidth = 1;
+  for (let i = -10; i <= 10; i++) {
+    ctx.beginPath(); ctx.moveTo(cx + i * sc, 0); ctx.lineTo(cx + i * sc, H); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, cy + i * sc); ctx.lineTo(W, cy + i * sc); ctx.stroke();
+  }
+
+  // Axes
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, H); ctx.stroke();
+
+  // Labels
+  ctx.fillStyle = '#64748b';
+  ctx.font = '12px serif';
+  ctx.textAlign = 'center';
+  for (let i = -9; i <= 9; i++) {
+    if (i === 0) continue;
+    ctx.fillText(i, cx + i * sc, cy + 16);
+    ctx.fillText(i, cx - 16, cy - i * sc + 4);
+  }
+  ctx.fillText('O', cx - 12, cy + 16);
+
+  // Line
+  const x1 = -12, x2 = 12;
+  const y1 = k * x1 + b, y2 = k * x2 + b;
+  ctx.strokeStyle = '#3b82f6';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(cx + x1 * sc, cy - y1 * sc);
+  ctx.lineTo(cx + x2 * sc, cy - y2 * sc);
+  ctx.stroke();
+
+  // y-intercept point
+  ctx.fillStyle = '#f59e0b';
+  ctx.beginPath();
+  ctx.arc(cx, cy - b * sc, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(`(0, ${b.toFixed(1)})`, cx + 10, cy - b * sc - 8);
+
+  // x-intercept point
+  if (Math.abs(k) > 0.01) {
+    const xInt = -b / k;
+    if (Math.abs(xInt) < 10) {
+      ctx.fillStyle = '#10b981';
+      ctx.beginPath();
+      ctx.arc(cx + xInt * sc, cy, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.font = '14px sans-serif';
+      ctx.fillText(`(${xInt.toFixed(1)}, 0)`, cx + xInt * sc + 10, cy - 10);
+    }
+  }
+
+  valK.textContent = k.toFixed(1);
+  valB.textContent = b.toFixed(1);
+  const bStr = b >= 0 ? `+ ${b.toFixed(1)}` : `- ${Math.abs(b).toFixed(1)}`;
+  formulaDisplay.textContent = `y = ${k.toFixed(1)}x ${bStr}`;
+
+  let quadrants = [];
+  if (k > 0 && b > 0) quadrants = ['I','II','III'];
+  else if (k > 0 && b < 0) quadrants = ['I','III','IV'];
+  else if (k > 0 && b === 0) quadrants = ['I','III'];
+  else if (k < 0 && b > 0) quadrants = ['I','II','IV'];
+  else if (k < 0 && b < 0) quadrants = ['II','III','IV'];
+  else if (k < 0 && b === 0) quadrants = ['II','IV'];
+
+  const trend = k > 0 ? 'y increases as x increases' : k < 0 ? 'y decreases as x increases' : 'y is constant';
+  graphInfo.textContent = `Passes through Quadrants ${quadrants.join(', ')} | ${trend}`;
+}
+
+sliderK.addEventListener('input', drawGraph);
+sliderB.addEventListener('input', drawGraph);
+drawGraph();
+
+// ==================== Solution Toggle ====================
+function toggleSolution(el) {
+  const content = el.nextElementSibling;
+  content.classList.toggle('show');
+  el.textContent = content.classList.contains('show') ? '🙈 Hide Solution' : '👁️ Show Solution';
+}
+
+// ==================== Online Quiz ====================
+const quizData = [
+  {
+    q: 'Which of the following is a proportional function?',
+    options: ['y = 2x + 1', 'y = −3x', 'y = x²', 'y = 1/x'],
+    correct: 1,
+    explanation: 'y = −3x has the form y = kx (k = −3 ≠ 0), so it is a proportional function.'
+  },
+  {
+    q: 'In a linear function y = kx + b, what conditions must k and b satisfy?',
+    options: ['k ≠ 0', 'k > 0', 'b ≠ 0', 'k > 0 and b > 0'],
+    correct: 0,
+    explanation: 'For y = kx + b to be a linear function, k ≠ 0 is required. b can be any real number.'
+  },
+  {
+    q: 'The proportional function y = 2x passes through which quadrants?',
+    options: ['I, II', 'I, III', 'II, IV', 'I, II, III'],
+    correct: 1,
+    explanation: 'k = 2 > 0, so the proportional function passes through the origin and Quadrants I and III.'
+  },
+  {
+    q: 'The y-intercept of y = −x + 3 is:',
+    options: ['(3, 0)', '(0, 3)', '(0, −3)', '(−3, 0)'],
+    correct: 1,
+    explanation: 'Set x = 0: y = 0 + 3 = 3, so the y-intercept is (0, 3).'
+  },
+  {
+    q: 'If the graph of y = kx + b passes through Quadrants I, III, IV, then:',
+    options: ['k > 0, b > 0', 'k > 0, b < 0', 'k < 0, b > 0', 'k < 0, b < 0'],
+    correct: 1,
+    explanation: 'Passes through I, III, IV: rises left-to-right (k > 0), crosses the negative y-axis (b < 0).'
+  },
+  {
+    q: 'If y = (m−1)x + 3 is a proportional function, then m = ?',
+    options: ['m = 0', 'm = 1', 'm = −2', 'No solution'],
+    correct: 2,
+    explanation: 'For y = kx (proportional), b must be 0. Since the constant is 3 here, this can\'t directly be proportional. The intended problem is y = (m−1)x^(m²−3); when m²−3 = 1 and m ≠ 1, m = −2.'
+  },
+  {
+    q: 'What is the slope of y = 3x + 2?',
+    options: ['2', '3', '5', '3/2'],
+    correct: 1,
+    explanation: 'In y = kx + b, k is the slope. For y = 3x + 2, the slope k = 3.'
+  },
+  {
+    q: 'For the function y = 2x − 4, when y > 0, the range of x is:',
+    options: ['x > 2', 'x < 2', 'x > −2', 'x < −2'],
+    correct: 0,
+    explanation: 'y > 0 → 2x − 4 > 0 → x > 2.'
+  },
+  {
+    q: 'Which function\'s graph passes through the origin?',
+    options: ['y = x + 1', 'y = −2x + 3', 'y = 5x', 'y = x − 1'],
+    correct: 2,
+    explanation: 'y = 5x = 5x + 0, so b = 0, and the graph passes through the origin.'
+  },
+  {
+    q: 'Translating y = 2x upward by 3 units gives:',
+    options: ['y = 2(x + 3)', 'y = 2x + 3', 'y = 2x − 3', 'y = 5x'],
+    correct: 1,
+    explanation: 'Translating up by 3 units adds 3 to y: y = 2x + 3.'
+  }
+];
+
+let currentScore = 0;
+let answeredCount = 0;
+
+function renderQuiz() {
+  const container = document.getElementById('quiz-container');
+  container.innerHTML = '';
+  quizData.forEach((q, idx) => {
+    const card = document.createElement('div');
+    card.className = 'quiz-card';
+    card.id = `quiz-${idx}`;
+
+    let optionsHtml = '';
+    q.options.forEach((opt, oi) => {
+      optionsHtml += `<div class="quiz-option" data-qi="${idx}" data-oi="${oi}" onclick="selectAnswer(${idx}, ${oi})">${String.fromCharCode(65 + oi)}. ${opt}</div>`;
+    });
+
+    card.innerHTML = `
+      <h4>Question ${idx + 1}: ${q.q}</h4>
+      <div class="quiz-options">${optionsHtml}</div>
+      <div class="quiz-explanation" id="exp-${idx}">${q.explanation}</div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function selectAnswer(qi, oi) {
+  const options = document.querySelectorAll(`[data-qi="${qi}"]`);
+  const already = options[0].classList.contains('disabled');
+  if (already) return;
+
+  options.forEach(o => o.classList.add('disabled'));
+
+  const isCorrect = oi === quizData[qi].correct;
+  if (isCorrect) {
+    options[oi].classList.add('correct');
+    currentScore += 10;
+  } else {
+    options[oi].classList.add('wrong');
+    options[quizData[qi].correct].classList.add('correct');
+  }
+
+  const exp = document.getElementById(`exp-${qi}`);
+  exp.classList.add('show');
+  exp.classList.add(isCorrect ? 'correct-exp' : 'wrong-exp');
+
+  answeredCount++;
+  document.getElementById('quiz-progress-fill').style.width = `${(answeredCount / quizData.length) * 100}%`;
+  document.getElementById('quiz-status').textContent = `Progress: ${answeredCount}/${quizData.length} | Score: ${currentScore}`;
+
+  if (answeredCount === quizData.length) {
+    setTimeout(showScore, 500);
+  }
+}
+
+function showScore() {
+  const display = document.getElementById('score-display');
+  display.classList.add('show');
+  document.getElementById('final-score').textContent = `${currentScore} / 100`;
+
+  let comment = '';
+  if (currentScore === 100) comment = '🌟 Perfect score! Excellent mastery!';
+  else if (currentScore >= 80) comment = '👏 Great job! Solid understanding, keep it up!';
+  else if (currentScore >= 60) comment = '💪 Passed! But there\'s room for improvement. Review your mistakes.';
+  else comment = '📚 More practice needed. Consider reviewing this lesson.';
+  document.getElementById('score-comment').textContent = comment;
+}
+
+function resetQuiz() {
+  currentScore = 0;
+  answeredCount = 0;
+  document.getElementById('quiz-progress-fill').style.width = '0%';
+  document.getElementById('quiz-status').textContent = `Progress: 0/${quizData.length} | Score: 0`;
+  document.getElementById('score-display').classList.remove('show');
+  renderQuiz();
+}
+
+renderQuiz();
+
+// ==================== Nav Highlight ====================
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav a');
+
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 100) {
+      current = s.id;
+    }
+  });
+  navLinks.forEach(link => {
+    link.classList.remove('active');
+    if (link.getAttribute('href') === `#${current}`) {
+      link.classList.add('active');
+    }
+  });
+});
+</script>
+
+<script>
+// file:// protocol detection: videos cannot load when HTML is opened directly
+if (location.protocol === 'file:') {
+  const banner = document.createElement('div');
+  banner.innerHTML = `
+    <div style="position:fixed;top:0;left:0;right:0;z-index:99999;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;padding:16px 24px;font-size:15px;line-height:1.6;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.3);">
+      <strong>⚠️ Videos cannot play:</strong> Browser security policy blocks video loading when opening HTML files directly.<br>
+      Run <code style="background:rgba(0,0,0,.2);padding:2px 8px;border-radius:4px;">./serve.sh</code> or
+      <code style="background:rgba(0,0,0,.2);padding:2px 8px;border-radius:4px;">python3 -m http.server 8080</code> in the
+      <code style="background:rgba(0,0,0,.2);padding:2px 8px;border-radius:4px;">public/</code> folder, then visit
+      <a href="http://localhost:8080" style="color:#fff;text-decoration:underline;">http://localhost:8080</a>
+    </div>`;
+  document.body.prepend(banner);
+  document.body.style.paddingTop = '80px';
+}
+</script>
+
+</body>
+</html>
