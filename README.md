@@ -5,8 +5,8 @@
 <h1 align="center">🎓 TeachAny</h1>
 
 <p align="center">
-  <strong>The Instructional Design OS for AI-Powered Teaching</strong><br>
-  Turn any K-12 topic into an interactive, evidence-based learning experience — in minutes.
+  <strong>Every school, every teacher, every parent — build your own Khan Academy for every child, at zero cost.</strong><br>
+  Turn any K-12 topic into an interactive, evidence-based learning experience — in minutes, with AI.
 </p>
 
 <p align="center">
