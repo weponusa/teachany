@@ -1,0 +1,68 @@
+name: Validate Courseware
+
+on:
+  push:
+    branches: [main]
+    paths: ['examples/**']
+  pull_request:
+    branches: [main]
+    paths: ['examples/**']
+
+jobs:
+  validate-html:
+    runs-on: ubuntu-latest
+    name: Validate HTML Files
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check HTML files exist
+        run: |
+          echo "Checking example courses..."
+          for dir in examples/*/; do
+            if [ -f "${dir}index.html" ]; then
+              echo "✅ Found: ${dir}index.html"
+            elif [ "$dir" = "examples/_template/" ]; then
+              echo "✅ Template: ${dir}index.html"
+            else
+              echo "⚠️ Missing index.html in: $dir"
+            fi
+          done
+
+      - name: Validate HTML syntax
+        run: |
+          npm install -g htmlhint
+          for file in examples/*/index.html; do
+            echo "Validating: $file"
+            htmlhint "$file" --config '{"tagname-lowercase": true, "attr-lowercase": true, "doctype-first": true}' || true
+          done
+
+      - name: Check for required sections
+        run: |
+          echo "Checking required TeachAny sections..."
+          for file in examples/*/index.html; do
+            [ "$file" = "examples/_template/index.html" ] && continue
+            echo "--- $file ---"
+
+            # Check for learning objectives
+            if grep -qi "学习目标\|Learning Objective\|goals" "$file"; then
+              echo "  ✅ Learning Objectives found"
+            else
+              echo "  ⚠️ Learning Objectives might be missing"
+            fi
+
+            # Check for quiz/practice
+            if grep -qi "quiz\|练习\|practice\|测" "$file"; then
+              echo "  ✅ Assessment/Quiz found"
+            else
+              echo "  ⚠️ Assessment/Quiz might be missing"
+            fi
+
+            # Check for TeachAny design system colors
+            if grep -q "#0f172a\|--bg:" "$file"; then
+              echo "  ✅ TeachAny design system detected"
+            else
+              echo "  ⚠️ May not use TeachAny design system"
+            fi
+          done
