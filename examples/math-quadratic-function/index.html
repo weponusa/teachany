@@ -3,6 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="course-id" content="math-quadratic-function">
+  <meta name="course-node" content="quadratic-function">
+  <meta name="course-subject" content="math">
+  <meta name="course-title" content="二次函数 y=ax²+bx+c">
+  <meta name="course-prereqs" content="linear-function,quadratic-equation,factoring,completing-square,coordinate-system">
+  <meta name="course-next" content="quadratic-inequality,conic-sections">
+  <meta name="course-version" content="5.2">
   <title>二次函数 y=ax²+bx+c · 九年级上册完整教学课件</title>
   <style>
     :root {
@@ -94,6 +101,24 @@
       .container { padding: 70px 16px 40px; }
       .grid-2, .grid-3 { grid-template-columns: 1fr; }
     }
+    /* === 语音讲解 & 字幕系统 === */
+    .tts-player{position:fixed;bottom:0;left:0;right:0;z-index:1001;background:rgba(15,23,42,.95);backdrop-filter:blur(20px);border-top:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:12px;transform:translateY(100%);transition:transform .3s ease}
+    .tts-player.show{transform:translateY(0)}
+    .tts-play-btn{width:40px;height:40px;border-radius:50%;border:2px solid var(--accent);background:transparent;color:var(--accent);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+    .tts-play-btn:hover{background:rgba(245,158,11,.15)}
+    .tts-play-btn.playing{border-color:var(--danger);color:var(--danger)}
+    .tts-progress{flex:1;height:4px;background:var(--bg3);border-radius:2px;cursor:pointer;position:relative}
+    .tts-progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--secondary));border-radius:2px;width:0%;transition:width .3s}
+    .tts-info{display:flex;flex-direction:column;gap:2px;min-width:120px}
+    .tts-seg-title{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+    .tts-seg-time{font-size:11px;color:var(--dimmer)}
+    .tts-toggle{position:fixed;bottom:16px;right:16px;z-index:1000;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--secondary));border:none;color:#fff;font-size:22px;cursor:pointer;box-shadow:0 4px 16px rgba(139,92,246,.3);transition:all .2s;display:flex;align-items:center;justify-content:center}
+    .tts-toggle:hover{transform:scale(1.1)}
+    .tts-toggle.active{bottom:70px}
+    .subtitle-bar{position:fixed;bottom:64px;left:50%;transform:translateX(-50%);z-index:1000;text-align:center;pointer-events:none;opacity:0;transition:opacity .3s}
+    .subtitle-bar.show{opacity:1}
+    .subtitle-zh{font-size:18px;color:#f8fafc;font-weight:600;text-shadow:0 2px 8px rgba(0,0,0,.8);line-height:1.6;background:rgba(0,0,0,.5);padding:6px 18px;border-radius:10px;display:inline-block;max-width:80vw}
+    .subtitle-en{font-size:14px;color:#94a3b8;text-shadow:0 2px 6px rgba(0,0,0,.7);margin-top:4px}
   </style>
 </head>
 <body>
@@ -1003,11 +1028,30 @@
 </div>
 
 <div class="footer">
-  <p>📐 二次函数 · 九年级上册教学课件 | 教我学 TeachAny v3.0</p>
-  <p>ABT叙事 + ConcepTest + 脚手架分级 + Canvas 互动 + 错因诊断 | 人教版2024 · 课标2022</p>
+  <p>📐 二次函数 · 九年级上册教学课件 | 教我学 TeachAny v5.2</p>
+  <p>ABT叙事 + ConcepTest + 脚手架分级 + Canvas 互动 + 错因诊断 + 语音讲解 | 人教版2024 · 课标2022</p>
 </div>
 
 </div><!-- end container -->
+
+<!-- === TTS 语音讲解播放器 === -->
+<button class="tts-toggle" id="ttsToggle" onclick="toggleTTSPlayer()" title="语音讲解">🎙</button>
+<div class="subtitle-bar" id="subtitleBar">
+  <div class="subtitle-zh" id="subtitleZh"></div>
+  <div class="subtitle-en" id="subtitleEn"></div>
+</div>
+<div class="tts-player" id="ttsPlayer">
+  <button class="tts-play-btn" id="ttsPlayBtn" onclick="toggleTTSPlay()">▶</button>
+  <div class="tts-progress" id="ttsProgressBar" onclick="seekTTS(event)">
+    <div class="tts-progress-fill" id="ttsProgressFill"></div>
+  </div>
+  <div class="tts-info">
+    <div class="tts-seg-title" id="ttsSegTitle">准备就绪</div>
+    <div class="tts-seg-time" id="ttsSegTime">--:-- / --:--</div>
+  </div>
+  <button style="background:transparent;border:1px solid var(--border);color:var(--dim);padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;white-space:nowrap" onclick="prevTTSSeg()">⏮ 上一段</button>
+  <button style="background:transparent;border:1px solid var(--border);color:var(--dim);padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;white-space:nowrap" onclick="nextTTSSeg()">下一段 ⏭</button>
+</div>
 
 <script>
 // ========== ConcepTest 反馈系统 ==========
@@ -1107,6 +1151,7 @@ function checkLevel1() {
   if (correct === total) {
     fb.style.background = 'rgba(16,185,129,0.08)';
     fb.innerHTML = '<span style="color:var(--success);font-weight:700">🎉 全对！</span> y = (x+3)² - 7，顶点 (-3, -7)。配方流程已经掌握了。';
+    onModuleComplete('scaffold-l1', correct, total);
   } else {
     fb.style.background = 'rgba(239,68,68,0.08)';
     const unique = [...new Set(details)];
@@ -1143,6 +1188,8 @@ function checkPretest() {
   el.innerHTML = `<div style="font-size:20px;font-weight:700;color:${pct>=67?'var(--success)':'var(--danger)'}">
     前测得分：${score}/${total}（${pct}%）</div>
     <div style="margin-top:4px;color:var(--dim);font-size:14px">${pct>=67?'✅ 前序知识掌握良好，可以开始学习！':'⚠️ 建议先复习一次函数、配方法和一元二次方程再继续。薄弱点已标红。'}</div>${html}`;
+  // 学习系统回调
+  onModuleComplete('pretest', score, total);
 }
 
 // ========== 后测（增强错因诊断） ==========
@@ -1224,6 +1271,8 @@ function submitQuiz() {
   el.style.border = `1px solid ${gradeColor}40`;
   el.innerHTML = `<div style="font-size:24px;font-weight:700;color:${gradeColor}">
     测验成绩：${score}/${total}（${pct}%）— ${grade}</div>${bloomNote}${html}`;
+  // 学习系统回调
+  onModuleComplete('posttest', score, total);
 }
 
 // ========== 解析展开 ==========
@@ -1233,11 +1282,21 @@ function toggleSolution(btn) {
   btn.textContent = sol.classList.contains('show') ? '收起解析' : '查看解析';
 }
 
-// ========== 互动画图 ==========
+// ========== 互动画图（HiDPI 支持） ==========
 function initGraph() {
   const canvas = document.getElementById('graphCanvas');
   const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height;
+  
+  // HiDPI Canvas 设置
+  const dpr = window.devicePixelRatio || 1;
+  const displayW = 800, displayH = 600;
+  canvas.width = displayW * dpr;
+  canvas.height = displayH * dpr;
+  canvas.style.width = displayW + 'px';
+  canvas.style.height = displayH + 'px';
+  ctx.scale(dpr, dpr);
+  
+  const W = displayW, H = displayH;
   const cx = W / 2, cy = H / 2;
   const sc = 40;
 
@@ -1372,6 +1431,167 @@ document.addEventListener('DOMContentLoaded', () => {
   initGraph();
   initNav();
 });
+</script>
+
+<script>
+// ========== TeachAny 学习系统集成 (v5.2) ==========
+const COURSE_ID = 'math-quadratic-function';
+
+const TeachAnyProgress = {
+  key: `teachany_progress_${COURSE_ID}`,
+  get() { try { return JSON.parse(localStorage.getItem(this.key)) || {}; } catch(e) { return {}; } },
+  set(data) { try { localStorage.setItem(this.key, JSON.stringify({...this.get(), ...data, lastAccess: Date.now()})); } catch(e){} },
+  getModuleScore(mod) { return (this.get().modules || {})[mod] || 0; },
+  setModuleScore(mod, score) { const d = this.get(); d.modules = d.modules || {}; d.modules[mod] = Math.max(d.modules[mod] || 0, score); this.set(d); }
+};
+
+const TeachAnySR = {
+  key: `teachany_sr_${COURSE_ID}`,
+  get() { try { return JSON.parse(localStorage.getItem(this.key)) || {}; } catch(e) { return {}; } },
+  record(qid, correct) {
+    const d = this.get();
+    d[qid] = d[qid] || { ease: 2.5, interval: 1, reps: 0 };
+    const card = d[qid];
+    if (correct) { card.reps++; card.interval = Math.round(card.interval * card.ease); card.ease = Math.max(1.3, card.ease + 0.1); }
+    else { card.reps = 0; card.interval = 1; card.ease = Math.max(1.3, card.ease - 0.2); }
+    card.nextReview = Date.now() + card.interval * 86400000;
+    localStorage.setItem(this.key, JSON.stringify(d));
+  }
+};
+
+const TeachAnyAchievements = {
+  key: `teachany_ach_${COURSE_ID}`,
+  get() { try { return JSON.parse(localStorage.getItem(this.key)) || []; } catch(e) { return []; } },
+  unlock(id, title) {
+    const achs = this.get();
+    if (achs.find(a => a.id === id)) return;
+    achs.push({ id, title, time: Date.now() });
+    localStorage.setItem(this.key, JSON.stringify(achs));
+    this.showToast(title);
+  },
+  showToast(title) {
+    const toast = document.createElement('div');
+    toast.innerHTML = `<div style="position:fixed;top:80px;right:20px;z-index:9999;background:linear-gradient(135deg,rgba(139,92,246,.9),rgba(59,130,246,.8));color:#fff;padding:14px 22px;border-radius:12px;font-size:15px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.3);display:flex;align-items:center;gap:8px">🏆 ${title}</div>`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+};
+
+function onModuleComplete(moduleId, score, total) {
+  const pct = Math.round(score / total * 100);
+  TeachAnyProgress.setModuleScore(moduleId, pct);
+  if (moduleId === 'pretest' && pct === 100) TeachAnyAchievements.unlock('pretest-perfect', '前测满分！基础扎实');
+  if (moduleId === 'posttest' && pct >= 80) TeachAnyAchievements.unlock('posttest-pass', '后测优秀！二次函数达人');
+  if (moduleId === 'posttest' && pct === 100) TeachAnyAchievements.unlock('posttest-perfect', '后测满分！完美通关');
+  if (moduleId === 'scaffold-l1' && pct === 100) TeachAnyAchievements.unlock('scaffold-master', 'Level 1 全对！配方法已掌握');
+  console.log(`[TeachAny] Module "${moduleId}" completed: ${score}/${total} (${pct}%)`);
+}
+
+// ========== TTS 语音讲解引擎（Edge TTS MP3） ==========
+const TTS_BASE = 'tts/quadratic-function/';
+const ttsNarration = [
+  { id:'engage', section:'engage', mp3: TTS_BASE+'engage_zh.mp3', zh:'大家好，今天我们来学习二次函数。你已经学会了一次函数，能画直线、求斜率。但现实世界中很多轨迹是弯的，比如篮球投篮的弧线、喷泉的水柱。所以我们需要一种新函数，二次函数，它的图象是一条优美的抛物线。', en:'Today we learn about quadratic functions - curves that describe real-world phenomena.' },
+  { id:'task', section:'engage', mp3: TTS_BASE+'task_zh.mp3', zh:'先看一个任务：一个篮球从手中抛出，高度h等于负5t的平方加20t。这里的t的平方让函数图象从直线变成了抛物线。学完今天的课，你就能用配方法一秒算出最高点是20米，在t等于2秒时到达。', en:'A basketball thrown up follows h = -5t² + 20t. We\'ll learn to find the maximum height.' },
+  { id:'objectives', section:'objectives', mp3: TTS_BASE+'objectives_zh.mp3', zh:'教学目标有三个：知识与技能方面，理解二次函数概念，掌握图象与性质，会用顶点式求最值；过程与方法方面，学会配方法将一般式化为顶点式；情感与价值方面，体会数形结合思想。', en:'Three learning objectives: understand concepts, master vertex form, appreciate modeling.' },
+  { id:'lesson1', section:'lesson1', mp3: TTS_BASE+'lesson1_zh.mp3', zh:'课时一：二次函数的概念。一般地，形如y等于ax的平方加bx加c，其中a不等于0的函数，叫做x的二次函数。注意三个参数：a是二次项系数，必须不等于0，这是关键条件；b是一次项系数，可以为0；c是常数项，可以为0。', en:'Lesson 1: Definition - y = ax² + bx + c where a ≠ 0.' },
+  { id:'lesson1-trap', section:'lesson1', mp3: TTS_BASE+'lesson1-trap_zh.mp3', zh:'易错点来了。判断二次函数时必须确保a不等于0。例如y等于括号m减1的x平方加x，是二次函数的条件是m不等于1。另外，必须先化简再判断。比如y等于括号x加1的平方减x的平方，展开后x平方项被消掉了，其实是一次函数。', en:'Key trap: always verify a ≠ 0, and simplify before judging.' },
+  { id:'lesson2', section:'lesson2', mp3: TTS_BASE+'lesson2_zh.mp3', zh:'课时二：y等于ax平方的图象。它是一条抛物线。当a大于0时开口向上，顶点在原点，对称轴是y轴。当a小于0时开口向下。a的绝对值越大，开口越窄；a的绝对值越小，开口越宽。', en:'Lesson 2: The graph of y = ax² is a parabola with vertex at the origin.' },
+  { id:'lesson3', section:'lesson3', mp3: TTS_BASE+'lesson3_zh.mp3', zh:'课时三：配方法与顶点式。为什么要配方？因为面对一般式，你看不出顶点在哪、对称轴是什么、最值是多少。但配方后变成顶点式y等于a括号x减h的平方加k，一切一目了然。', en:'Lesson 3: Completing the square transforms general form to vertex form.' },
+  { id:'lesson3-steps', section:'lesson3', mp3: TTS_BASE+'lesson3-steps_zh.mp3', zh:'配方法四步：以y等于2x平方减8x加5为例。第一步提系数。第二步凑平方，一次项系数负4除以2等于负2，负2的平方等于4。第三步写平方。第四步算常数。最终y等于2括号x减2的平方减3。顶点是2逗号负3。口诀：提、凑、写、算。', en:'Four steps of completing the square: extract, complete, write, compute.' },
+  { id:'lesson3-errors', section:'lesson3', mp3: TTS_BASE+'lesson3-errors_zh.mp3', zh:'配方法常见错误：第一，忘记提系数直接配方；第二，配方时加减号搞混；第三，把x减h中的h符号搞反，x减2对应h等于2而不是负2。', en:'Common mistakes in completing the square.' },
+  { id:'lesson4', section:'lesson4', mp3: TTS_BASE+'lesson4_zh.mp3', zh:'课时四：图象的平移变换。平移口诀：左加右减、上加下减。h大于0向右移，h小于0向左移；k大于0向上移，k小于0向下移。', en:'Lesson 4: Translation rules - left-add, right-subtract; up-add, down-subtract.' },
+  { id:'lesson5', section:'lesson5', mp3: TTS_BASE+'lesson5_zh.mp3', zh:'课时五：与一元二次方程的关系。三位一体：方程的根等于函数的零点等于图象与x轴的交点。判别式delta决定交点个数。', en:'Lesson 5: Roots of equation = zeros of function = x-intercepts.' },
+  { id:'interactive', section:'interactive', mp3: TTS_BASE+'interactive_zh.mp3', zh:'现在进入互动探究。调节参数a、h、k的滑块，观察抛物线的变化。注意观察开口方向、顶点位置和对称轴。', en:'Now explore the interactive graph by adjusting the sliders.' },
+  { id:'examples', section:'examples', mp3: TTS_BASE+'examples_zh.mp3', zh:'接下来是典型例题。四道题覆盖判断、配方、平移和实际应用。请先独立思考再看答案。', en:'Four example problems covering judgment, vertex form, translation, and application.' },
+  { id:'scaffold', section:'scaffold', mp3: TTS_BASE+'scaffold_zh.mp3', zh:'分级练习采用脚手架策略。从有模板引导的Level 1，到只给提示的Level 2，再到完全独立的Level 3。逐步撤除辅助。', en:'Scaffolded exercises from guided to independent.' },
+  { id:'posttest', section:'postcheck', mp3: TTS_BASE+'posttest_zh.mp3', zh:'后测来了，10道题覆盖全部知识点。每道错题都有精准的错因诊断。加油！', en:'Post-test: 10 comprehensive questions with error diagnosis.' },
+  { id:'summary', section:'summary', mp3: TTS_BASE+'summary_zh.mp3', zh:'课程总结。二次函数定义y等于ax平方加bx加c，a不等于0。配方法口诀提凑写算。顶点式揭示顶点、对称轴和最值。平移口诀左加右减、上加下减。判别式连接方程与图象。希望你掌握了这些核心知识。', en:'Summary of all key concepts in quadratic functions.' }
+];
+
+let ttsAudio = null;
+let ttsCurrentIdx = 0;
+let ttsPlaying = false;
+let ttsPlayerVisible = false;
+
+function toggleTTSPlayer() {
+  ttsPlayerVisible = !ttsPlayerVisible;
+  document.getElementById('ttsPlayer').classList.toggle('show', ttsPlayerVisible);
+  document.getElementById('ttsToggle').classList.toggle('active', ttsPlayerVisible);
+  if (ttsPlayerVisible) document.body.style.paddingBottom = '64px';
+  else document.body.style.paddingBottom = '';
+}
+
+function toggleTTSPlay() {
+  if (ttsPlaying) { pauseTTS(); }
+  else { playTTS(ttsCurrentIdx); }
+}
+
+function playTTS(idx) {
+  if (idx < 0 || idx >= ttsNarration.length) return;
+  if (ttsAudio) { ttsAudio.pause(); ttsAudio.removeAttribute('src'); ttsAudio = null; }
+  ttsCurrentIdx = idx;
+  const seg = ttsNarration[idx];
+
+  ttsAudio = new Audio(seg.mp3);
+  ttsAudio.preload = 'auto';
+
+  ttsPlaying = true;
+  document.getElementById('ttsPlayBtn').textContent = '⏸';
+  document.getElementById('ttsPlayBtn').classList.add('playing');
+  document.getElementById('ttsSegTitle').textContent = seg.zh.slice(0, 30) + (seg.zh.length > 30 ? '...' : '');
+  document.getElementById('ttsProgressFill').style.width = ((idx + 0.5) / ttsNarration.length * 100) + '%';
+
+  // 显示字幕
+  document.getElementById('subtitleBar').classList.add('show');
+  document.getElementById('subtitleZh').textContent = seg.zh;
+  document.getElementById('subtitleEn').textContent = seg.en;
+
+  // 滚动到对应章节
+  if (seg.section) {
+    const secEl = document.getElementById(seg.section);
+    if (secEl) secEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  ttsAudio.onended = function() {
+    document.getElementById('ttsProgressFill').style.width = ((idx + 1) / ttsNarration.length * 100) + '%';
+    if (idx + 1 < ttsNarration.length) {
+      setTimeout(() => playTTS(idx + 1), 500);
+    } else {
+      ttsPlaying = false;
+      document.getElementById('ttsPlayBtn').textContent = '▶';
+      document.getElementById('ttsPlayBtn').classList.remove('playing');
+      document.getElementById('subtitleBar').classList.remove('show');
+      document.getElementById('ttsSegTitle').textContent = '讲解完成 ✅';
+    }
+  };
+  ttsAudio.onerror = function() {
+    console.warn('⚠️ 音频加载失败:', seg.mp3, '跳到下一段');
+    if (idx + 1 < ttsNarration.length) setTimeout(() => playTTS(idx + 1), 300);
+    else { ttsPlaying = false; document.getElementById('ttsPlayBtn').textContent = '▶'; }
+  };
+  ttsAudio.play().catch(e => console.warn('播放被阻止:', e));
+}
+
+function pauseTTS() {
+  if (ttsAudio) { ttsAudio.pause(); }
+  ttsPlaying = false;
+  document.getElementById('ttsPlayBtn').textContent = '▶';
+  document.getElementById('ttsPlayBtn').classList.remove('playing');
+  document.getElementById('subtitleBar').classList.remove('show');
+}
+
+function prevTTSSeg() { pauseTTS(); playTTS(Math.max(0, ttsCurrentIdx - 1)); }
+function nextTTSSeg() { pauseTTS(); playTTS(Math.min(ttsNarration.length - 1, ttsCurrentIdx + 1)); }
+function seekTTS(e) {
+  const bar = document.getElementById('ttsProgressBar');
+  const pct = (e.clientX - bar.getBoundingClientRect().left) / bar.offsetWidth;
+  const idx = Math.floor(pct * ttsNarration.length);
+  pauseTTS();
+  playTTS(Math.max(0, Math.min(idx, ttsNarration.length - 1)));
+}
+
+// 预加载前3段音频
+ttsNarration.slice(0, 3).forEach(seg => { const a = new Audio(); a.preload = 'auto'; a.src = seg.mp3; });
 </script>
 
 <script>
