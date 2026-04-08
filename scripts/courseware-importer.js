@@ -246,7 +246,21 @@ function saveCourseIndex(courses) {
 }
 
 function getUserCourses() {
-  return readCourseIndex();
+  const all = readCourseIndex();
+  // 同一 node_id 只保留最新一份（按 importedAt 倒序，取第一个）
+  const seen = new Set();
+  const deduped = [];
+  // 先按时间倒序排列，确保最新的在前
+  all.sort((a, b) => (b.importedAt || '').localeCompare(a.importedAt || ''));
+  for (const course of all) {
+    const nodeId = course.manifest?.node_id;
+    if (nodeId) {
+      if (seen.has(nodeId)) continue; // 同 node_id 已有更新的，跳过
+      seen.add(nodeId);
+    }
+    deduped.push(course);
+  }
+  return deduped;
 }
 
 /* ─── IndexedDB ──────────────────────────────── */
