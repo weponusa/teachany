@@ -270,6 +270,7 @@ body {
 </div>
 
 <script src="./scripts/courseware-importer.js"></script>
+<script src="./scripts/community-loader.js"></script>
 <script>
 const TREES = [
   { file: 'data/trees/chinese-elementary.json', emoji: '📖', label: '小学语文' },
@@ -391,6 +392,11 @@ function getUserCourse(nodeId) {
 function getUserCourseCount(nodeId) {
   if (!window.TeachAnyImporter) return 0;
   return TeachAnyImporter.findUserCoursesByNodeId(nodeId).length;
+}
+
+function getCommunityCount(nodeId) {
+  if (!window.TeachAnyCommunity) return 0;
+  return TeachAnyCommunity.getCommunityCoursesByNodeId(nodeId).length;
 }
 
 function getLaunchUrl(node, userCourse) {
@@ -547,6 +553,8 @@ function generatePath() {
     const isTarget = id === targetId;
     const hasOfficialCourse = node.status === 'active' && node.courses?.length > 0;
     const communityCount = getUserCourseCount(id);
+    const sharedCount = getCommunityCount(id);
+    const totalCommunity = communityCount + sharedCount;
 
     let statusClass = 'status-gap';
     let statusText = '📝 待创建课件';
@@ -592,7 +600,7 @@ function generatePath() {
           <div class="step-meta">
             <span>${escapeHtml(node.domain)}</span>
             <span>${escapeHtml(node.grade)}年级</span>
-            <span>${userCourse ? `社区课件${communityCount > 1 ? ' ×' + communityCount : ''}` : (hasOfficialCourse ? '官方课件' : '缺少课件')}${likeInfo}</span>
+            <span>${userCourse ? `社区课件${communityCount > 1 ? ' ×' + communityCount : ''}` : (hasOfficialCourse ? '官方课件' : (sharedCount > 0 ? '🌐 社区共享 ×' + sharedCount : '缺少课件'))}${likeInfo}</span>
             ${node.prerequisites?.length ? `<span>前置：${escapeHtml(node.prerequisites.join('、'))}</span>` : ''}
           </div>
           <span class="step-status ${statusClass}">${statusText}</span>
@@ -607,6 +615,11 @@ function generatePath() {
 }
 
 renderEmptyState('选择学科和目标知识点，自动生成学习路径<br><br>系统会结合知识前置关系、官方课件、我的课件和已保存进度，帮你规划最优学习路线');
+
+// 预取社区课件索引（后台异步）
+if (window.TeachAnyCommunity) {
+  TeachAnyCommunity.fetchCommunityIndex().catch(() => {});
+}
 </script>
 </body>
 </html>

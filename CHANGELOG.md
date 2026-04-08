@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.3.0] - 2026-04-08
+
+### ✨ Added — Community Courseware Sharing & Review
+
+- **Community directory structure**: `community/index.json` (approved courseware registry), `community/pending/` (staging area for PR submissions), `community/README.md` (contribution guide & review criteria)
+- **Community loader module** (`scripts/community-loader.js`):
+  - `fetchCommunityIndex()` — fetch & cache `community/index.json` from GitHub (30-min TTL, offline fallback)
+  - `getCommunityCoursesByNodeId(nodeId)` / `getTopCommunityCourses(nodeId, limit)` — query community coursewares by node
+  - `downloadAndImportCommunity(course)` — download `.teachany` package from GitHub Releases and import locally
+  - `submitToCommunity({token, course})` — auto-create Fork + Branch + PR via GitHub API
+  - `createShareDialog({course})` — "Share to Community" modal with GitHub Token input and progress feedback
+  - `renderCommunityCoursesInTooltip(nodeId, el)` — render community courseware list in Knowledge Tree tooltip
+  - `renderCommunityGalleryCards(grid)` — render community courseware cards in Gallery
+- **Knowledge Tree integration**: tooltip now shows both local user coursewares and community shared coursewares (🌐 icon), with download buttons for community courses
+- **Gallery integration**: community coursewares appear as dedicated cards with 🌐 badge, download button, and author info; each user courseware card now has a "🌐 Share" button
+- **Learning Path integration**: steps now show community shared courseware count alongside local count
+- **GitHub Actions CI/CD**:
+  - `community-review.yml` — validates PR submissions (JSON schema, required fields, node_id existence, subject validation), auto-adds labels
+  - `community-publish.yml` — on merge, auto-updates `community/index.json` and commits via bot
+- **Legend update**: Knowledge Tree legend now includes "社区共享" (Community Shared) indicator
+
+### 🔄 Changed
+- All three pages (`index.html`, `tree.html`, `path.html`) now load `community-loader.js` and pre-fetch community index on page load
+- Gallery `filterCourses()` now also applies to community courseware cards
+- `courseware-importer.js` — user courseware cards now include a "🌐 Share" button that opens the community share dialog
+
 ## [1.2.0] - 2026-04-08
 
 ### ✨ Added — Community Courseware & Likes

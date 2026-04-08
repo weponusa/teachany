@@ -16,6 +16,14 @@ Thank you for your interest in contributing to TeachAny! We welcome contribution
 3. Use the TeachAny Skill to generate an interactive courseware
 4. Submit a PR with your course in the `examples/` directory
 
+**Or share via the Community system:**
+1. Import your courseware in the Gallery (click ➕)
+2. Click the 🌐 **Share** button on your courseware card
+3. Enter your GitHub Token — a PR is auto-created
+4. Maintainer reviews and merges → your courseware becomes available to everyone!
+
+See [community/README.md](community/README.md) for full submission guidelines and review criteria.
+
 **Course Submission Checklist:**
 - [ ] Single-file HTML, works in any browser
 - [ ] Follows the [Design System](docs/design-system.md) color scheme
@@ -77,6 +85,14 @@ Thank you for your interest in contributing to TeachAny! We welcome contribution
 2. 参考 [快速上手指南](docs/getting-started.md)
 3. 使用 TeachAny Skill 生成互动课件
 4. 将课件提交到 `examples/` 目录的 PR
+
+**或通过社区共享系统分享：**
+1. 在 Gallery 中导入你的课件（点击 ➕）
+2. 点击课件卡片上的 🌐 **分享** 按钮
+3. 输入 GitHub Token — 系统会自动创建 PR
+4. 维护者审核合并后，你的课件将对所有用户可见！
+
+详见 [community/README.md](community/README.md) 了解完整的提交规范和审核标准。
 
 **课件提交清单：**
 - [ ] 单文件 HTML，任何浏览器可用
