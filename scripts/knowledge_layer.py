@@ -57,6 +57,18 @@ def load_json(path: Path) -> Dict[str, Any]:
         return json.load(fh)
 
 
+def coerce_item_list(payload: Optional[Any], key: str) -> List[Dict[str, Any]]:
+    if payload is None:
+        return []
+    if isinstance(payload, list):
+        return [item for item in payload if isinstance(item, dict)]
+    if isinstance(payload, dict):
+        value = payload.get(key, [])
+        if isinstance(value, list):
+            return [item for item in value if isinstance(item, dict)]
+    return []
+
+
 def iter_domain_dirs(data_dir: Path) -> Iterable[Tuple[str, Path]]:
     for subject_dir in sorted(p for p in data_dir.iterdir() if p.is_dir()):
         for domain_dir in sorted(p for p in subject_dir.iterdir() if p.is_dir()):
@@ -205,32 +217,30 @@ def compact_node_summary(
 ) -> Dict[str, Any]:
     node_id = node.get("id")
     error_items = []
-    if bundle.errors:
-        for item in bundle.errors.get("errors", []):
-            if item.get("node_id") == node_id:
-                error_items.append(
-                    {
-                        "id": item.get("id"),
-                        "type": item.get("type"),
-                        "description": item.get("description"),
-                        "diagnosis": item.get("diagnosis"),
-                        "trigger": item.get("trigger"),
-                        "frequency": item.get("frequency"),
-                    }
-                )
+    for item in coerce_item_list(bundle.errors, "errors"):
+        if item.get("node_id") == node_id:
+            error_items.append(
+                {
+                    "id": item.get("id"),
+                    "type": item.get("type"),
+                    "description": item.get("description"),
+                    "diagnosis": item.get("diagnosis"),
+                    "trigger": item.get("trigger"),
+                    "frequency": item.get("frequency"),
+                }
+            )
     exercise_items = []
-    if bundle.exercises:
-        for item in bundle.exercises.get("exercises", []):
-            if item.get("node_id") == node_id:
-                exercise_items.append(
-                    {
-                        "id": item.get("id"),
-                        "bloom_level": item.get("bloom_level"),
-                        "difficulty": item.get("difficulty"),
-                        "type": item.get("type"),
-                        "stem": item.get("stem"),
-                    }
-                )
+    for item in coerce_item_list(bundle.exercises, "exercises"):
+        if item.get("node_id") == node_id:
+            exercise_items.append(
+                {
+                    "id": item.get("id"),
+                    "bloom_level": item.get("bloom_level"),
+                    "difficulty": item.get("difficulty"),
+                    "type": item.get("type"),
+                    "stem": item.get("stem"),
+                }
+            )
     return {
         "subject": bundle.subject,
         "domain": bundle.domain,
@@ -377,7 +387,7 @@ def audit_bundles(bundles: List[DomainBundle], subject: Optional[str] = None) ->
                 })
 
         if has_errors:
-            for item in bundle.errors.get("errors", []):
+            for item in coerce_item_list(bundle.errors, "errors"):
                 node_id = item.get("node_id")
                 if node_id not in node_index:
                     issues.append({
@@ -389,8 +399,8 @@ def audit_bundles(bundles: List[DomainBundle], subject: Optional[str] = None) ->
                     })
 
         if has_exercises:
-            local_error_ids = {item.get("id") for item in (bundle.errors or {}).get("errors", [])}
-            for item in bundle.exercises.get("exercises", []):
+            local_error_ids = {item.get("id") for item in coerce_item_list(bundle.errors, "errors")}
+            for item in coerce_item_list(bundle.exercises, "exercises"):
                 node_id = item.get("node_id")
                 if node_id not in node_index:
                     issues.append({

@@ -4,6 +4,40 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.1.0] - 2026-04-08
+
+### ✨ Added
+- Added standard `.teachany` courseware packaging spec in `docs/courseware-package.md`
+- Added browser-side importer in `scripts/courseware-importer.js` with support for `.teachany`, `.zip`, and single-file `.html`
+- Added `imported-course.html` viewer for opening imported courseware through a controlled iframe flow
+- Added courseware packaging script `scripts/pack-courseware.cjs`
+- Added missing media pipeline utilities promised by the TeachAny skill:
+  - `scripts/generate-tts.py`
+  - `scripts/generate-srt.py`
+  - `scripts/render-all.js`
+  - `generate-sfx.js`
+
+### 🔄 Changed
+- Upgraded imported course storage from `localStorage + htmlDataUrl` to `localStorage` index + `IndexedDB` payloads
+- Updated `tree.html` to open imported courseware through the new viewer page
+- Updated `path.html` to recognize:
+  - official courseware
+  - user-imported courseware
+  - legacy node-level progress (`teachany_progress`)
+  - per-course progress (`teachany_progress_{courseId}`)
+- Unified knowledge-layer tooling so `scripts/knowledge_layer.py` and `audit.cjs` both accept:
+  - top-level array `_errors.json` / `_exercises.json`
+  - legacy wrapped `{ "errors": [...] }` / `{ "exercises": [...] }`
+- Updated `data/schema.md` to document array-top-level as the canonical format
+- Unified repository links to `weponusa/teachany`
+- Redirected `gallery/index.html` to the root `index.html` to avoid page drift
+- Updated README badges and course lists from 5 to 7 sample courses
+
+### 🐛 Fixed
+- Fixed ZIP import fallback so missing `manifest.json` no longer incorrectly treats the ZIP itself as HTML text
+- Fixed imported course opening flow so multi-file packages can be restored instead of storing only `index.html`
+- Fixed skill doc/code drift by adding the missing scripts that had already been documented
+
 ## [1.0.0] - 2026-04-06
 
 ### 🎉 Initial Release
@@ -41,6 +75,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 | Version | Date | Changes |
 |:--------|:-----|:--------|
+| v5.4 | 2026-04-07 | Added `.teachany` courseware packaging, browser import flow, and Gallery/knowledge-tree upload entry |
+| v4.0 | 2026-04-06 | Added Remotion / Edge TTS / subtitle pipeline specification and cost estimation |
 | v3.0 | 2026-04-06 | Added Bloom table, lesson types, scaffolding, Mayer principles, Five-Lens guide, 3-subject examples, design specs, Phase 4 checklist |
 | v2.0 | 2026-03 | Split into universal foundation + subject adaptation layer |
 | v1.0 | 2026-02 | Initial math/science courseware edition |
