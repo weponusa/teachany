@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.2.0] - 2026-04-08
+
+### ✨ Added — Community Courseware & Likes
+- **Multi-courseware per node**: The same knowledge node can now have multiple user-uploaded coursewares (removed node_id deduplication, each import generates a unique ID with timestamp suffix)
+- **Like system** (`localStorage` + `sessionStorage`):
+  - `likeCourse(id)` / `unlikeCourse(id)` / `toggleLike(id)` — increment/decrement/toggle likes
+  - `getCourseLikes(id)` — read like count
+  - `isLikedInSession(id)` — check if liked in current session
+  - Likes stored in `teachany_course_likes` key, session state in `sessionStorage`
+- **Sorted community courseware list**: `findUserCoursesByNodeId(nodeId)` returns all coursewares for a node sorted by likes descending; `getTopCoursesByNodeId(nodeId, limit=5)` returns top N
+- **Knowledge tree tooltip**: Shows ranked community courseware list (up to 5) with inline like buttons and direct launch links per course
+- **Learning path**: Displays community courseware count and like info for each step; always opens the highest-liked courseware
+- **Gallery cards**: Each user courseware card now shows a ❤️ like button with live count
+
+### 🔄 Changed
+- `addUserCourse()` no longer deduplicates by `node_id` — multiple coursewares for the same node coexist
+- `buildCourseId()` accepts optional `forceUnique` flag to append timestamp-based suffix
+- `findUserCourseByNodeId()` now returns the highest-liked courseware (backward-compatible)
+- `addTreeUploadButton()` rewritten: shows ranked courseware list + upload button regardless of node status
+- `removeUserCourse()` now also cleans up associated like data
+- Expanded `window.TeachAnyImporter` exports with 7 new APIs
+
 ## [1.1.0] - 2026-04-08
 
 ### ✨ Added
