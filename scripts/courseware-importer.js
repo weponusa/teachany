@@ -1168,6 +1168,14 @@ function renderUserCourses(grid) {
             <span class="like-icon">${isLiked ? '❤️' : '🤍'}</span>
             <span class="like-count">${likeCount}</span>
           </button>
+          <button class="ta-export-btn" data-course-id="${escapeHtml(course.id)}" title="导出为 .teachany 文件（包含所有资源）" style="
+            display:inline-flex;align-items:center;gap:3px;
+            padding:4px 8px;border-radius:16px;
+            background:rgba(59,130,246,0.1);color:#60a5fa;
+            border:1px solid rgba(59,130,246,0.15);
+            cursor:pointer;font-size:12px;font-weight:600;
+            transition:all 0.2s;white-space:nowrap;
+          ">📦 导出</button>
           <button class="ta-share-community-btn" data-course-id="${escapeHtml(course.id)}" title="分享到社区" style="
             display:inline-flex;align-items:center;gap:3px;
             padding:4px 8px;border-radius:16px;
@@ -1215,6 +1223,29 @@ function renderUserCourses(grid) {
           TeachAnyCommunity.createShareDialog({ course: fullRecord });
         } else {
           alert('社区共享模块未加载，请刷新页面重试');
+        }
+      };
+    }
+
+    const exportBtn = card.querySelector('.ta-export-btn');
+    if (exportBtn) {
+      exportBtn.onclick = async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const originalText = exportBtn.textContent;
+        try {
+          exportBtn.textContent = '⏳ 打包中...';
+          exportBtn.disabled = true;
+
+          await exportCourseAsTeachany(course.id);
+
+          exportBtn.textContent = '✅ 已导出';
+          setTimeout(() => { exportBtn.textContent = originalText; }, 2000);
+        } catch (err) {
+          exportBtn.textContent = '❌ 失败';
+          console.error('[TeachAny] 导出失败:', err);
+          setTimeout(() => { exportBtn.textContent = originalText; }, 2000);
         }
       };
     }
@@ -1313,7 +1344,90 @@ function addTreeUploadButton(nodeData, tooltipEl) {
   tooltipEl.appendChild(uploadBtn);
 }
 
-/* ─── 导出 ───────────────────────────────────── */
+/* ─── 导出为 .teachany（ZIP 打包下载）───────── */
+
+/**
+ * 将本地课件从 IndexedDB 重新打包为 .teachany 文件并触发浏览器下载
+ * @param {string} courseId - 课件 ID
+ * @returns {Promise<void>}
+ */
+async function exportCourseAsTeachany(courseId) {
+  // 确保 JSZip 已加载
+  await ensureJSZip();
+
+  const record = await getUserCourseRecord(courseId);
+  if (!record || !record.files || !record.files.length) {
+    throw new Error('未找到该课件的完整数据，可能已被删除');
+  }
+
+  const manifest = record.manifest || {};
+  const zip = new JSZip();
+
+  // 将每个文件写入 ZIP
+  for (const file of record.files) {
+    const filePath = normalizePath(file.path);
+    if (!filePath) continue;
+    const blob = file.blob instanceof Blob ? file.blob : new Blob([file.blob], { type: guessMimeType(filePath) });
+    zip.file(filePath, blob);
+  }
+
+  // 写入/更新 manifest.json
+  const existingManifest = record.files.find((f) => normalizePath(f.path) === 'manifest.json');
+  if (!existingManifest) {
+    zip.file(
+      'manifest.json',
+      JSON.stringify(manifest, null, 2),
+      { type: 'application/json' }
+    );
+  }
+
+  // 生成 ZIP blob 并触发下载
+  const name = slugify(manifest.name || courseId) + '.teachany';
+  const zipBlob = await zip.generateAsync({ type: 'blob' });
+  downloadBlob(zipBlob, name);
+}
+
+/**
+ * 触发浏览器文件下载
+ */
+function downloadBlob(blob, fileName) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+    link.remove();
+  }, 1000);
+}
+
+/**
+ * 获取课件完整大小估算（用于显示）
+ * @param {string} courseId
+ * @returns {Promise<number>} 大小（字节）
+ */
+async function getCourseFileSize(courseId) {
+  try {
+    const record = await getCoursePayload(courseId);
+    if (!record?.files) return 0;
+    let total = 0;
+    for (const f of record.files || []) {
+      total += f.blob?.size || 0;
+    }
+    return total;
+  } catch {
+    return 0;
+  }
+}
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
 window.TeachAnyImporter = {
   parseTeachanyPackage,
   getUserCourses,
@@ -1333,6 +1447,13 @@ window.TeachAnyImporter = {
   toggleLike,
   isLikedInSession,
   mountImportedCourseViewer,
+
+  // 导出功能
+  exportCourseAsTeachany,
+  getCourseFileSize,
+  formatFileSize,
+  downloadBlob,
+
   SUBJECT_META,
   MAX_COURSES_PER_NODE,
 };
