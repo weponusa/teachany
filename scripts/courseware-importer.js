@@ -437,7 +437,7 @@ async function parseTeachanyPackage(file) {
 /* ─── 数据持久化 API ─────────────────────────── */
 async function addUserCourse(course) {
   const courses = getUserCourses();
-  // 始终生成唯一 ID，允许同 node_id 多课件共存
+  // 始终生成唯一 ID（时间戳确保唯一）
   const id = buildCourseId(course.manifest, course.fileName, true);
 
   const payload = {
@@ -465,8 +465,24 @@ async function addUserCourse(course) {
     likes: 0,
   };
 
-  // 不再按 node_id 去重：仅按 id 去重（避免重复 import 同一包）
-  const nextCourses = courses.filter((item) => item.id !== id);
+  // 同一 node_id 只保留最新一份：删除旧课件（索引 + IndexedDB + 点赞数据）
+  const nodeId = course.manifest?.node_id;
+  let removedIds = [];
+  if (nodeId) {
+    const oldCourses = courses.filter((item) => item.manifest?.node_id === nodeId);
+    for (const old of oldCourses) {
+      removedIds.push(old.id);
+      try { await deleteCoursePayload(old.id); } catch { /* ignore */ }
+      const likes = readLikes();
+      delete likes[old.id];
+      saveLikes(likes);
+    }
+  }
+
+  // 去除旧的同 node_id 课件 + 当前 id 的旧记录（防止重复 import 同一包）
+  const nextCourses = courses.filter(
+    (item) => item.id !== id && !removedIds.includes(item.id)
+  );
   nextCourses.push(entry);
   nextCourses.sort((a, b) => (b.importedAt || '').localeCompare(a.importedAt || ''));
   saveCourseIndex(nextCourses);
