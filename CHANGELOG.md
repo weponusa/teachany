@@ -13,12 +13,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - `fetchCommunityIndex()` — fetch & cache `community/index.json` from GitHub (30-min TTL, offline fallback)
   - `getCommunityCoursesByNodeId(nodeId)` / `getTopCommunityCourses(nodeId, limit)` — query community coursewares by node
   - `downloadAndImportCommunity(course)` — download `.teachany` package from GitHub Releases and import locally
-  - `submitToCommunity({token, course})` — auto-create Fork + Branch + PR via GitHub API
+  - `submitToCommunity({token, course})` — auto-create Fork + Branch + PR via GitHub API, uploads complete `.teachany` package (with audio/video) alongside metadata JSON
   - `createShareDialog({course})` — "Share to Community" modal with GitHub Token input and progress feedback
   - `renderCommunityCoursesInTooltip(nodeId, el)` — render community courseware list in Knowledge Tree tooltip
   - `renderCommunityGalleryCards(grid)` — render community courseware cards in Gallery
+- **Export as .teachany** (`courseware-importer.js`):
+  - `exportCourseAsTeachany(id)` — re-package local IndexedDB courseware into a downloadable .teachany ZIP file (includes ALL assets: audio, video, images)
+  - Gallery user courseware cards now have a **📦 Export** button for downloading the complete package
 - **Knowledge Tree integration**: tooltip now shows both local user coursewares and community shared coursewares (🌐 icon), with download buttons for community courses
-- **Gallery integration**: community coursewares appear as dedicated cards with 🌐 badge, download button, and author info; each user courseware card now has a "🌐 Share" button
+- **Gallery integration**: community coursewares appear as dedicated cards with 🌐 badge, download button, and author info; each user courseware card now has a "🌐 Share" button and a "📦 Export" button
 - **Learning Path integration**: steps now show community shared courseware count alongside local count
 - **GitHub Actions CI/CD**:
   - `community-review.yml` — validates PR submissions (JSON schema, required fields, node_id existence, subject validation), auto-adds labels
@@ -28,7 +31,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### 🔄 Changed
 - All three pages (`index.html`, `tree.html`, `path.html`) now load `community-loader.js` and pre-fetch community index on page load
 - Gallery `filterCourses()` now also applies to community courseware cards
-- `courseware-importer.js` — user courseware cards now include a "🌐 Share" button that opens the community share dialog
+- `courseware-importer.js` — user courseware cards now include a "🌐 Share" button and a "📦 Export" button
+- `submitToCommunity()` now packages and uploads the full `.teachany` file (including all media) with the PR; files < 8MB go via Contents API, larger ones via Release draft + local download fallback that opens the community share dialog
 
 ## [1.2.0] - 2026-04-08
 
