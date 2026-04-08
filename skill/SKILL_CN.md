@@ -1255,7 +1255,7 @@ node scripts/pack-courseware.cjs ./examples/math-linear-function ./dist
 ```text
 Phase 3.5：打包课件
 1. 确认 index.html 包含完整的 teachany-* meta 标签
-2. 运行 node scripts/pack-courseware.js <课件目录>
+2. 运行 node scripts/pack-courseware.cjs <课件目录>
 3. 验证生成的 .teachany 包
 4. 告知用户：可将此文件拖入 TeachAny Gallery 或知识树页面导入
 ```
