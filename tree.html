@@ -273,6 +273,10 @@ svg { width: 100%; height: 100%; }
       <span>我的课件</span>
     </div>
     <div class="legend-item">
+      <div class="legend-dot" style="background:rgba(16,185,129,0.15);border-color:#10b981;border-style:double;"></div>
+      <span>社区共享</span>
+    </div>
+    <div class="legend-item">
       <div class="legend-dot" style="background:transparent;border-color:#64748b;border-style:dashed;"></div>
       <span>待创建（知识空洞）</span>
     </div>
@@ -289,6 +293,7 @@ svg { width: 100%; height: 100%; }
 
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous"></script>
 <script src="./scripts/courseware-importer.js"></script>
+<script src="./scripts/community-loader.js"></script>
 <script>
 const TREES = [
   // 小学
@@ -571,10 +576,16 @@ function showTooltip(event, d) {
   const userCourses = window.TeachAnyImporter ? TeachAnyImporter.getTopCoursesByNodeId(d.id) : [];
   const hasUserCourses = userCourses.length > 0;
 
+  // 检查社区共享课件
+  const communityCourses = window.TeachAnyCommunity ? TeachAnyCommunity.getTopCommunityCourses(d.id, 5) : [];
+  const hasCommunity = communityCourses.length > 0;
+
   if (d.status === 'active' && d.courses.length) {
     html += `<span class="status-badge badge-active">✅ 有课件</span>`;
   } else if (hasUserCourses) {
     html += `<span class="status-badge badge-active">📂 社区课件 ×${userCourses.length}</span>`;
+  } else if (hasCommunity) {
+    html += `<span class="status-badge badge-active">🌐 社区共享 ×${communityCourses.length}</span>`;
   } else {
     html += `<span class="status-badge badge-gap">📝 待创建</span>`;
   }
@@ -592,6 +603,11 @@ function showTooltip(event, d) {
   // 为有用户课件的节点或 gap 节点添加社区课件列表 + 上传按钮
   if (window.TeachAnyImporter && (hasUserCourses || d.status === 'gap')) {
     TeachAnyImporter.addTreeUploadButton(d, tooltip);
+  }
+
+  // 渲染社区共享课件列表（来自 community/index.json）
+  if (window.TeachAnyCommunity && hasCommunity) {
+    TeachAnyCommunity.renderCommunityCoursesInTooltip(d.id, tooltip);
   }
 
   // 定位：紧贴节点右侧（无间隙），这样鼠标从节点移到 tooltip 不会经过空白区域
@@ -675,6 +691,11 @@ function onNodeClick(event, d) {
 
 // Load initial tree
 loadTree(0);
+
+// 预取社区课件索引（后台异步，不阻塞首屏）
+if (window.TeachAnyCommunity) {
+  TeachAnyCommunity.fetchCommunityIndex().catch(() => {});
+}
 
 // 课件导入回调：重新渲染当前知识树
 window.teachanyOnCourseImported = function(nodeId) {

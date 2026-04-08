@@ -1168,6 +1168,14 @@ function renderUserCourses(grid) {
             <span class="like-icon">${isLiked ? '❤️' : '🤍'}</span>
             <span class="like-count">${likeCount}</span>
           </button>
+          <button class="ta-share-community-btn" data-course-id="${escapeHtml(course.id)}" title="分享到社区" style="
+            display:inline-flex;align-items:center;gap:3px;
+            padding:4px 8px;border-radius:16px;
+            background:rgba(16,185,129,0.1);color:#34d399;
+            border:1px solid rgba(16,185,129,0.15);
+            cursor:pointer;font-size:12px;font-weight:600;
+            transition:all 0.2s;white-space:nowrap;
+          ">🌐 分享</button>
           <span class="card-action">体验 →</span>
         </div>
       </div>
@@ -1191,6 +1199,25 @@ function renderUserCourses(grid) {
       likeBtn.querySelector('.like-count').textContent = result.count;
       likeBtn.classList.toggle('liked', result.liked);
     };
+
+    const shareBtn = card.querySelector('.ta-share-community-btn');
+    if (shareBtn) {
+      shareBtn.onclick = async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        // 获取完整课件记录（含 files）
+        const fullRecord = await getUserCourseRecord(course.id);
+        if (!fullRecord) {
+          alert('无法加载课件数据，请重试');
+          return;
+        }
+        if (window.TeachAnyCommunity) {
+          TeachAnyCommunity.createShareDialog({ course: fullRecord });
+        } else {
+          alert('社区共享模块未加载，请刷新页面重试');
+        }
+      };
+    }
 
     if (addCard) {
       grid.insertBefore(card, addCard);
