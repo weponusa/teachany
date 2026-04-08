@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我的课件 · TeachAny</title>
+<style>
+:root {
+  --bg: #0f172a;
+  --bg2: #1e293b;
+  --card: rgba(30, 41, 59, 0.82);
+  --border: rgba(148, 163, 184, 0.18);
+  --text: #f8fafc;
+  --dim: #94a3b8;
+  --primary: #3b82f6;
+  --secondary: #8b5cf6;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'PingFang SC', sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top right, rgba(59,130,246,0.16), transparent 32%),
+    radial-gradient(circle at bottom left, rgba(139,92,246,0.14), transparent 30%),
+    var(--bg);
+}
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(15,23,42,0.92);
+  backdrop-filter: blur(10px);
+}
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.brand h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.brand p {
+  margin: 0;
+  color: var(--dim);
+  font-size: 13px;
+}
+.nav-links {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.nav-links a {
+  color: var(--dim);
+  text-decoration: none;
+  padding: 7px 14px;
+  border-radius: 8px;
+  background: rgba(148,163,184,0.08);
+  transition: all 0.2s;
+  font-size: 14px;
+}
+.nav-links a:hover {
+  color: var(--text);
+  background: rgba(59,130,246,0.18);
+}
+.main {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: calc(100vh - 73px);
+}
+.viewer-card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 24px 48px rgba(0,0,0,0.28);
+}
+.viewer-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.viewer-head h2 {
+  margin: 0;
+  font-size: 22px;
+}
+.viewer-head .meta {
+  color: var(--dim);
+  font-size: 13px;
+  margin-top: 4px;
+}
+.status {
+  min-height: 20px;
+  color: #cbd5e1;
+  font-size: 14px;
+}
+.status.error {
+  color: #fca5a5;
+}
+.frame-shell {
+  flex: 1;
+  min-height: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(148,163,184,0.12);
+  background: rgba(255,255,255,0.04);
+}
+.empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--dim);
+  padding: 32px;
+}
+@media (max-width: 768px) {
+  .top-bar,
+  .viewer-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .main {
+    padding: 16px;
+  }
+}
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <div class="brand">
+    <h1>📂 我的课件</h1>
+    <p>TeachAny 受控查看页：从本地浏览器安全恢复完整课件包</p>
+  </div>
+  <div class="nav-links">
+    <a href="index.html">📋 Gallery</a>
+    <a href="tree.html">🌳 知识树</a>
+    <a href="path.html">🛤️ 学习路径</a>
+  </div>
+</div>
+
+<div class="main">
+  <div class="viewer-card">
+    <div class="viewer-head">
+      <div>
+        <h2 id="courseTitle">正在加载课件...</h2>
+        <div class="meta" id="courseMeta"></div>
+      </div>
+    </div>
+    <div class="status" id="viewerStatus">正在读取本地课件包...</div>
+    <div class="frame-shell" id="frameShell">
+      <div class="empty">正在准备课件资源，请稍候…</div>
+    </div>
+  </div>
+</div>
+
+<script src="./scripts/courseware-importer.js"></script>
+<script>
+(async function () {
+  const frameShell = document.getElementById('frameShell');
+  const titleEl = document.getElementById('courseTitle');
+  const metaEl = document.getElementById('courseMeta');
+  const statusEl = document.getElementById('viewerStatus');
+
+  try {
+    await TeachAnyImporter.mountImportedCourseViewer(frameShell, {
+      titleEl,
+      metaEl,
+      loadingEl: statusEl,
+    });
+  } catch (error) {
+    statusEl.classList.add('error');
+    statusEl.textContent = `加载失败：${error.message}`;
+    frameShell.innerHTML = '<div class="empty">未能恢复该课件。它可能已被删除，或浏览器已清空本地存储。</div>';
+  }
+})();
+</script>
+</body>
+</html>

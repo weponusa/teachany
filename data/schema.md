@@ -63,60 +63,54 @@
 
 ## 2. 易错点库 `_errors.json`
 
+**当前仓库的标准格式是数组顶层**。为兼容早期脚本，也允许使用 `{ "errors": [...] }` 包裹形式，但新数据请统一写成数组。
+
 ```jsonc
-{
-  "subject": "math",
-  "domain": "functions",
-  "version": "1.0",
-  "errors": [
-    {
-      "id": "err-slope-sign",
-      "node_id": "linear-function",       // 关联的知识点
-      "grade": "8",
-      "type": "conceptual",               // conceptual | procedural | careless
-      "description": "斜率 k 正负与图像升降搞反",
-      "wrong_answer": "k=-2 的图像从左到右上升",
-      "correct_answer": "k=-2 的图像从左到右下降",
-      "diagnosis": "k 的正负决定方向：k>0 上升，k<0 下降。你可以把 k 想象成「坡度」——正数是上坡，负数是下坡。",
-      "frequency": "high",                // high | medium | low
-      "trigger": "学生混淆 k 的值和 b 的值的作用"
-    }
-  ]
-}
+[
+  {
+    "id": "err-slope-sign",
+    "node_id": "linear-function",       // 关联的知识点
+    "grade": "8",
+    "type": "conceptual",               // conceptual | procedural | careless
+    "description": "斜率 k 正负与图像升降搞反",
+    "wrong_answer": "k=-2 的图像从左到右上升",
+    "correct_answer": "k=-2 的图像从左到右下降",
+    "diagnosis": "k 的正负决定方向：k>0 上升，k<0 下降。你可以把 k 想象成「坡度」——正数是上坡，负数是下坡。",
+    "frequency": "high",                // high | medium | low
+    "trigger": "学生混淆 k 的值和 b 的值的作用"
+  }
+]
 ```
 
 ## 3. 题库 `_exercises.json`
 
+**当前仓库的标准格式是数组顶层**。为兼容早期脚本，也允许使用 `{ "exercises": [...] }` 包裹形式，但新数据请统一写成数组。
+
 ```jsonc
-{
-  "subject": "math",
-  "domain": "functions",
-  "version": "1.0",
-  "exercises": [
-    {
-      "id": "ex-linear-001",
-      "node_id": "linear-function",
-      "bloom_level": "remember",          // remember | understand | apply | analyze | evaluate | create
-      "difficulty": 1,                     // 1-5
-      "type": "single_choice",            // single_choice | multi_choice | fill_blank | open_ended | drag_sort | matching
-      "stem": "下面哪个是一次函数？",
-      "options": [
-        { "label": "A", "text": "y = 2x + 3", "correct": true },
-        { "label": "B", "text": "y = x²", "correct": false, "error_id": "err-confuse-quadratic" },
-        { "label": "C", "text": "y = 3/x", "correct": false, "error_id": "err-confuse-inverse" },
-        { "label": "D", "text": "y = 5", "correct": false, "error_id": "err-constant-not-linear" }
-      ],
-      "feedback_correct": "对！y=2x+3 中 k=2≠0，是一次函数。",
-      "feedback_wrong": {
-        "B": "y=x² 是二次函数，自变量 x 的指数是 2，不是 1。",
-        "C": "y=3/x 是反比例函数，x 在分母上。",
-        "D": "y=5 是常数函数，没有含 x 的项，相当于 k=0。"
-      },
-      "source": "原创",
-      "tags": ["一次函数", "判断"]
-    }
-  ]
-}
+[
+  {
+    "id": "ex-linear-001",
+    "node_id": "linear-function",
+    "bloom_level": "remember",          // remember | understand | apply | analyze | evaluate | create
+    "difficulty": 1,                     // 1-5
+    "type": "single_choice",            // single_choice | multi_choice | fill_blank | open_ended | drag_sort | matching
+    "stem": "下面哪个是一次函数？",
+    "options": [
+      { "label": "A", "text": "y = 2x + 3", "correct": true },
+      { "label": "B", "text": "y = x²", "correct": false, "error_id": "err-confuse-quadratic" },
+      { "label": "C", "text": "y = 3/x", "correct": false, "error_id": "err-confuse-inverse" },
+      { "label": "D", "text": "y = 5", "correct": false, "error_id": "err-constant-not-linear" }
+    ],
+    "feedback_correct": "对！y=2x+3 中 k=2≠0，是一次函数。",
+    "feedback_wrong": {
+      "B": "y=x² 是二次函数，自变量 x 的指数是 2，不是 1。",
+      "C": "y=3/x 是反比例函数，x 在分母上。",
+      "D": "y=5 是常数函数，没有含 x 的项，相当于 k=0。"
+    },
+    "source": "原创",
+    "tags": ["一次函数", "判断"]
+  }
+]
 ```
 
 ## 4. 文件命名约定
