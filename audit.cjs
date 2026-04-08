@@ -8,6 +8,18 @@ const fs = require('fs');
 const path = require('path');
 
 const DATA_DIR = path.join(__dirname, 'data');
+
+/**
+ * 归一化列表数据：兼容数组顶层 [...] 和对象包裹 { key: [...] } 两种格式
+ */
+function normalizeItems(payload, key) {
+  if (Array.isArray(payload)) return payload;
+  if (payload && typeof payload === 'object' && Array.isArray(payload[key])) {
+    return payload[key];
+  }
+  return null;
+}
+
 let totalErrors = 0;
 let totalWarnings = 0;
 let domainCount = 0;
@@ -82,8 +94,9 @@ for (const subject of subjects) {
       continue;
     }
 
-    if (!Array.isArray(errors)) {
-      console.error(`❌ [${domainLabel}] _errors.json 应为数组`);
+    errors = normalizeItems(errors, 'errors');
+    if (!errors) {
+      console.error(`❌ [${domainLabel}] _errors.json 应为数组，或包含 errors 数组字段`);
       totalErrors++;
       continue;
     }
@@ -139,8 +152,9 @@ for (const subject of subjects) {
       continue;
     }
 
-    if (!Array.isArray(exercises)) {
-      console.error(`❌ [${domainLabel}] _exercises.json 应为数组`);
+    exercises = normalizeItems(exercises, 'exercises');
+    if (!exercises) {
+      console.error(`❌ [${domainLabel}] _exercises.json 应为数组，或包含 exercises 数组字段`);
       totalErrors++;
       continue;
     }

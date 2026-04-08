@@ -20,7 +20,8 @@
 │  GitHub Discussions   ← Rating & reviews         │
 │  GitHub Actions       ← CI validation            │
 │  GitHub Pages         ← Free hosting             │
-│  localStorage         ← Student progress         │
+│  localStorage         ← Progress + course index  │
+│  IndexedDB            ← Imported course packages │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -154,10 +155,10 @@ A GitHub Action runs nightly (or on-demand) to:
 ### 5.1 Algorithm
 
 1. User selects a **target node** (e.g., "二次函数")
-2. JavaScript loads `data/trees/math.json`
+2. JavaScript loads the corresponding tree registry in `data/trees/` (for example `math-middle.json`)
 3. Recursively resolve `prerequisites` (topological sort)
-4. Filter out nodes already completed (from localStorage)
-5. Display ordered learning path
+4. Merge legacy node progress + per-course progress from `localStorage`
+5. Display ordered learning path, including official and user-imported courseware
 
 ### 5.2 Progress Tracking (localStorage)
 
@@ -222,8 +223,8 @@ Nodes in the tree with `courses: []` are **gaps**.
 
 The tree visualization shows them as:
 - **Dashed border** nodes
-- Tooltip: "This topic needs a course! Click to contribute."
-- Links to a pre-filled issue template
+- Tooltip with upload action for standard `.teachany` / `.zip` packages
+- If a user uploads a course for that node, the node is rendered as **My Course** without requiring any backend
 
 ---
 

@@ -1,37 +1,39 @@
 /**
  * TeachAny 课件导入器（纯前端）
- * 
- * 功能：
- *   1. 解析 .teachany 课件包（ZIP 格式，含 manifest.json + index.html）
- *   2. 使用 localStorage 持久化用户导入的课件列表
- *   3. 提供拖拽上传 UI 组件
- *   4. 支持从 Gallery 和知识树两个入口导入
- * 
- * 依赖：
- *   - 使用浏览器原生 API（File, FileReader, Blob）
- *   - 使用 JSZip（通过 CDN 动态加载）解压 ZIP
- *   - 零后端依赖，全部运行在浏览器端
+ *
+ * 升级点：
+ * 1. 统一支持 .teachany / .zip / .html
+ * 2. localStorage 仅保存元数据索引，完整课件包存入 IndexedDB
+ * 3. 支持多文件课件包（含 assets/）
+ * 4. 通过受控 viewer 页打开用户课件，避免直接 data URL 打开
  */
 
 /* ─── 常量 ───────────────────────────────────── */
-const STORAGE_KEY = 'teachany_user_courses';
+const STORAGE_KEY = 'teachany_user_courses_index';
+const LEGACY_STORAGE_KEY = 'teachany_user_courses';
+const DB_NAME = 'teachany-courseware-db';
+const DB_VERSION = 1;
+const STORE_NAME = 'coursewares';
 const JSZIP_CDN = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const VIEWER_PAGE = 'imported-course.html';
 
 const SUBJECT_META = {
-  math:      { name: '数学', emoji: '📐', tagColor: 'blue' },
-  physics:   { name: '物理', emoji: '⚡', tagColor: 'yellow' },
+  math: { name: '数学', emoji: '📐', tagColor: 'blue' },
+  physics: { name: '物理', emoji: '⚡', tagColor: 'yellow' },
   chemistry: { name: '化学', emoji: '🧪', tagColor: 'green' },
-  biology:   { name: '生物', emoji: '🧬', tagColor: 'pink' },
+  biology: { name: '生物', emoji: '🧬', tagColor: 'pink' },
   geography: { name: '地理', emoji: '🌍', tagColor: 'cyan' },
-  history:   { name: '历史', emoji: '📜', tagColor: 'yellow' },
-  chinese:   { name: '语文', emoji: '📖', tagColor: 'pink' },
-  english:   { name: '英语', emoji: '🌐', tagColor: 'blue' },
-  it:        { name: '信息技术', emoji: '💻', tagColor: 'green' },
+  history: { name: '历史', emoji: '📜', tagColor: 'yellow' },
+  chinese: { name: '语文', emoji: '📖', tagColor: 'pink' },
+  english: { name: '英语', emoji: '🌐', tagColor: 'blue' },
+  it: { name: '信息技术', emoji: '💻', tagColor: 'green' },
+  'info-tech': { name: '信息技术', emoji: '💻', tagColor: 'green' },
 };
 
 /* ─── JSZip 加载器 ───────────────────────────── */
 let jsZipLoaded = false;
+let dbOpenPromise = null;
 
 function ensureJSZip() {
   return new Promise((resolve, reject) => {
@@ -42,158 +44,653 @@ function ensureJSZip() {
     }
     const s = document.createElement('script');
     s.src = JSZIP_CDN;
-    s.onload = () => { jsZipLoaded = true; resolve(); };
+    s.onload = () => {
+      jsZipLoaded = true;
+      resolve();
+    };
     s.onerror = () => reject(new Error('JSZip 加载失败'));
     document.head.appendChild(s);
   });
 }
 
-/* ─── localStorage CRUD ──────────────────────── */
-function getUserCourses() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-  } catch { return []; }
+/* ─── 通用工具 ───────────────────────────────── */
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
-function saveUserCourses(courses) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(courses));
+function slugify(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80) || 'course';
 }
 
-function addUserCourse(course) {
-  const courses = getUserCourses();
-  // 去重（按 manifest.node_id 或 name）
-  const key = course.manifest.node_id || course.manifest.name;
-  const idx = courses.findIndex(c => (c.manifest.node_id || c.manifest.name) === key);
-  if (idx >= 0) {
-    courses[idx] = course; // 更新
-  } else {
-    courses.push(course);
+function normalizePath(path) {
+  return String(path || '')
+    .replace(/\\/g, '/')
+    .replace(/^\.\//, '')
+    .replace(/^\//, '')
+    .replace(/\/+/g, '/')
+    .trim();
+}
+
+function getDirname(path) {
+  const normalized = normalizePath(path);
+  const idx = normalized.lastIndexOf('/');
+  return idx === -1 ? '' : normalized.slice(0, idx);
+}
+
+function joinPathSegments(segments) {
+  return normalizePath(segments.filter(Boolean).join('/'));
+}
+
+function resolveRelativePath(basePath, relativePath) {
+  const clean = normalizePath(relativePath);
+  if (!clean) return '';
+  if (clean.startsWith('../') || clean.startsWith('./')) {
+    const parts = getDirname(basePath).split('/').filter(Boolean);
+    clean.split('/').forEach((part) => {
+      if (!part || part === '.') return;
+      if (part === '..') {
+        parts.pop();
+      } else {
+        parts.push(part);
+      }
+    });
+    return joinPathSegments(parts);
   }
-  saveUserCourses(courses);
-  return courses;
+  return clean;
 }
 
-function removeUserCourse(id) {
-  const courses = getUserCourses().filter(c => (c.manifest.node_id || c.manifest.name) !== id);
-  saveUserCourses(courses);
-  return courses;
+function stripQueryAndHash(value) {
+  return String(value || '').split('#')[0].split('?')[0];
+}
+
+function isExternalUrl(url) {
+  return /^(?:[a-z]+:)?\/\//i.test(url) || /^(?:data|blob|mailto|tel|javascript):/i.test(url);
+}
+
+function isHashUrl(url) {
+  return String(url || '').startsWith('#');
+}
+
+function isHtmlFileName(name) {
+  return /\.html?$/i.test(name || '');
+}
+
+function guessMimeType(path) {
+  const ext = normalizePath(path).split('.').pop()?.toLowerCase();
+  switch (ext) {
+    case 'html':
+    case 'htm': return 'text/html';
+    case 'css': return 'text/css';
+    case 'js': return 'application/javascript';
+    case 'json': return 'application/json';
+    case 'svg': return 'image/svg+xml';
+    case 'png': return 'image/png';
+    case 'jpg':
+    case 'jpeg': return 'image/jpeg';
+    case 'gif': return 'image/gif';
+    case 'webp': return 'image/webp';
+    case 'mp3': return 'audio/mpeg';
+    case 'wav': return 'audio/wav';
+    case 'mp4': return 'video/mp4';
+    case 'webm': return 'video/webm';
+    case 'ogg': return 'audio/ogg';
+    case 'woff': return 'font/woff';
+    case 'woff2': return 'font/woff2';
+    case 'ttf': return 'font/ttf';
+    default: return 'application/octet-stream';
+  }
+}
+
+function getSubjectInfo(subject) {
+  return SUBJECT_META[subject] || { name: subject || '未知学科', emoji: '📚', tagColor: 'blue' };
+}
+
+function buildCourseId(manifest, fileName) {
+  const subject = slugify(manifest?.subject || 'course');
+  const nodeId = slugify(manifest?.node_id || '');
+  const name = slugify(manifest?.name || fileName || 'course');
+  return nodeId ? `${subject}-${nodeId}` : `${subject}-${name}`;
+}
+
+function buildCourseKey(course) {
+  return course?.manifest?.node_id || course?.id || course?.manifest?.name || course?.fileName;
+}
+
+function buildViewerUrl(id) {
+  return `${VIEWER_PAGE}?id=${encodeURIComponent(id)}`;
+}
+
+function getLegacyCourses() {
+  try {
+    const value = JSON.parse(localStorage.getItem(LEGACY_STORAGE_KEY) || '[]');
+    return Array.isArray(value)
+      ? value.map((item) => ({
+          ...item,
+          id: item.id || buildCourseId(item.manifest || {}, item.fileName),
+          storage: item.storage || 'legacy',
+        }))
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+/* ─── localStorage 索引 CRUD ─────────────────── */
+function readCourseIndex() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    if (Array.isArray(raw) && raw.length > 0) {
+      return raw.map((item) => ({
+        ...item,
+        id: item.id || buildCourseId(item.manifest || {}, item.fileName),
+        storage: item.storage || 'idb',
+      }));
+    }
+  } catch {
+    // ignore
+  }
+  return getLegacyCourses();
+}
+
+function saveCourseIndex(courses) {
+  const lightweight = courses.map((course) => ({
+    id: course.id,
+    manifest: course.manifest,
+    importedAt: course.importedAt,
+    fileName: course.fileName,
+    storage: course.storage || 'idb',
+    viewerUrl: course.viewerUrl || buildViewerUrl(course.id),
+    packageType: course.packageType || 'package',
+  }));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(lightweight));
+}
+
+function getUserCourses() {
+  return readCourseIndex();
+}
+
+/* ─── IndexedDB ──────────────────────────────── */
+function openCourseDb() {
+  if (dbOpenPromise) return dbOpenPromise;
+
+  dbOpenPromise = new Promise((resolve, reject) => {
+    if (!window.indexedDB) {
+      reject(new Error('当前浏览器不支持 IndexedDB，无法保存完整课件包'));
+      return;
+    }
+
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+      }
+    };
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error || new Error('IndexedDB 打开失败'));
+  });
+
+  return dbOpenPromise;
+}
+
+async function withStore(mode, runner) {
+  const db = await openCourseDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, mode);
+    const store = tx.objectStore(STORE_NAME);
+    const request = runner(store);
+
+    tx.oncomplete = () => resolve(request?.result);
+    tx.onerror = () => reject(tx.error || request?.error || new Error('IndexedDB 事务失败'));
+    tx.onabort = () => reject(tx.error || request?.error || new Error('IndexedDB 事务中止'));
+  });
+}
+
+async function putCoursePayload(payload) {
+  return withStore('readwrite', (store) => store.put(payload));
+}
+
+async function getCoursePayload(id) {
+  const db = await openCourseDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const store = tx.objectStore(STORE_NAME);
+    const request = store.get(id);
+    request.onsuccess = () => resolve(request.result || null);
+    request.onerror = () => reject(request.error || new Error('读取课件失败'));
+  });
+}
+
+async function deleteCoursePayload(id) {
+  return withStore('readwrite', (store) => store.delete(id));
 }
 
 /* ─── 课件包解析 ─────────────────────────────── */
-
-/**
- * 解析 .teachany 文件
- * @param {File} file - 用户选择的文件
- * @returns {Promise<{manifest: Object, htmlBlob: Blob, htmlUrl: string}>}
- */
-async function parseTeachanyPackage(file) {
-  // 验证文件大小
-  if (file.size > MAX_FILE_SIZE) {
-    throw new Error(`文件过大（${(file.size / 1024 / 1024).toFixed(1)}MB），最大支持 50MB`);
-  }
-
-  // 验证扩展名
-  const ext = file.name.split('.').pop().toLowerCase();
-  if (ext !== 'teachany' && ext !== 'zip') {
-    throw new Error('请上传 .teachany 或 .zip 格式的课件包');
-  }
-
-  await ensureJSZip();
-
-  const arrayBuffer = await file.arrayBuffer();
-  const zip = await JSZip.loadAsync(arrayBuffer);
-
-  // 检查 manifest.json
-  const manifestFile = zip.file('manifest.json');
-  if (!manifestFile) {
-    // 尝试直接解析为 HTML（兼容直接上传 index.html 的情况）
-    return await parseSingleHTML(file);
-  }
-
-  const manifestText = await manifestFile.async('string');
-  let manifest;
-  try {
-    manifest = JSON.parse(manifestText);
-  } catch {
-    throw new Error('manifest.json 格式错误');
-  }
-
-  // 验证必填字段
+function validateManifest(manifest) {
   const errors = [];
-  if (!manifest.name) errors.push('缺少 name');
-  if (!manifest.subject) errors.push('缺少 subject');
-  if (!manifest.grade) errors.push('缺少 grade');
-  if (errors.length > 0) {
-    throw new Error(`manifest.json 验证失败: ${errors.join(', ')}`);
+  if (!manifest?.name) errors.push('缺少 name');
+  if (!manifest?.subject) errors.push('缺少 subject');
+  if (manifest?.grade === undefined || manifest?.grade === null || manifest?.grade === '') errors.push('缺少 grade');
+  if (errors.length) {
+    throw new Error(`manifest.json 验证失败：${errors.join('，')}`);
   }
-
-  // 提取 index.html
-  const indexFile = zip.file('index.html');
-  if (!indexFile) {
-    throw new Error('课件包中缺少 index.html');
-  }
-
-  const htmlBlob = await indexFile.async('blob');
-  const htmlUrl = URL.createObjectURL(new Blob([htmlBlob], { type: 'text/html' }));
-
-  return {
-    manifest,
-    htmlBlob,
-    htmlUrl,
-    fileName: file.name,
-    importedAt: new Date().toISOString(),
-  };
 }
 
-/**
- * 解析单个 HTML 文件（兼容模式）
- */
-async function parseSingleHTML(file) {
-  const text = await file.text();
-
-  // 从 meta 标签提取信息
-  const getMeta = (name) => {
-    const m = text.match(new RegExp(`<meta\\s+name="${name}"\\s+content="([^"]*)"`, 'i'));
-    return m ? m[1] : '';
-  };
-
-  const titleMatch = text.match(/<title>([^<]+)<\/title>/i);
-  const title = titleMatch ? titleMatch[1].split('·')[0].trim() : file.name.replace('.html', '');
-
+function extractMetaFromHtmlText(text, fallbackName = '未命名课件') {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(text, 'text/html');
+  const getMeta = (name) => doc.querySelector(`meta[name="${name}"]`)?.getAttribute('content')?.trim() || '';
+  const titleText = doc.querySelector('title')?.textContent?.trim() || fallbackName;
+  const title = titleText.split('·')[0].trim() || fallbackName;
   const subject = getMeta('teachany-subject') || 'math';
-  const manifest = {
+  const gradeValue = getMeta('teachany-grade');
+  const grade = Number.parseInt(gradeValue, 10);
+
+  return {
     name: title,
-    name_en: '',
-    subject: subject,
-    grade: parseInt(getMeta('teachany-grade')) || 8,
+    name_en: getMeta('teachany-name-en') || '',
+    subject,
+    grade: Number.isFinite(grade) ? grade : 8,
     author: getMeta('teachany-author') || 'unknown',
     version: getMeta('teachany-version') || '1.0.0',
     node_id: getMeta('teachany-node') || '',
     domain: getMeta('teachany-domain') || '',
-    prerequisites: getMeta('teachany-prerequisites') ? getMeta('teachany-prerequisites').split(',').map(s => s.trim()) : [],
-    emoji: SUBJECT_META[subject]?.emoji || '📚',
-    difficulty: parseInt(getMeta('teachany-difficulty')) || 3,
-    tags: [SUBJECT_META[subject]?.name || subject, `Grade ${getMeta('teachany-grade') || '?'}`],
-    teachany_spec: '1.0',
-  };
-
-  const htmlBlob = new Blob([text], { type: 'text/html' });
-  const htmlUrl = URL.createObjectURL(htmlBlob);
-
-  return {
-    manifest,
-    htmlBlob,
-    htmlUrl,
-    fileName: file.name,
-    importedAt: new Date().toISOString(),
+    prerequisites: (getMeta('teachany-prerequisites') || '')
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean),
+    emoji: getMeta('teachany-emoji') || getSubjectInfo(subject).emoji || '📚',
+    difficulty: Number.parseInt(getMeta('teachany-difficulty') || '3', 10) || 3,
+    description: getMeta('description') || '',
+    tags: [getSubjectInfo(subject).name || subject, `Grade ${Number.isFinite(grade) ? grade : '?'}`],
+    teachany_spec: getMeta('teachany-spec') || '1.0',
   };
 }
 
-/* ─── UI 组件：导入弹窗 ─────────────────────── */
+async function parseSingleHTML(file) {
+  const text = await file.text();
+  const manifest = extractMetaFromHtmlText(text, file.name.replace(/\.html?$/i, ''));
+  validateManifest(manifest);
+
+  return {
+    id: buildCourseId(manifest, file.name),
+    manifest,
+    files: [{ path: 'index.html', blob: new Blob([text], { type: 'text/html' }) }],
+    fileName: file.name,
+    importedAt: new Date().toISOString(),
+    packageType: 'single-html',
+  };
+}
+
+async function parseZipPackage(file) {
+  await ensureJSZip();
+
+  const arrayBuffer = await file.arrayBuffer();
+  const zip = await JSZip.loadAsync(arrayBuffer);
+  const files = [];
+
+  for (const [rawPath, entry] of Object.entries(zip.files)) {
+    if (entry.dir) continue;
+    const path = normalizePath(rawPath);
+    const blob = await entry.async('blob');
+    files.push({
+      path,
+      blob: blob.type ? blob : new Blob([blob], { type: guessMimeType(path) }),
+    });
+  }
+
+  const manifestEntry = files.find((item) => normalizePath(item.path) === 'manifest.json');
+  const indexEntry = files.find((item) => normalizePath(item.path) === 'index.html');
+
+  if (!indexEntry) {
+    throw new Error('课件包中缺少 index.html');
+  }
+
+  const indexText = await indexEntry.blob.text();
+  let manifest;
+
+  if (manifestEntry) {
+    try {
+      manifest = JSON.parse(await manifestEntry.blob.text());
+    } catch {
+      throw new Error('manifest.json 格式错误');
+    }
+  } else {
+    manifest = extractMetaFromHtmlText(indexText, file.name.replace(/\.(teachany|zip)$/i, ''));
+  }
+
+  validateManifest(manifest);
+
+  return {
+    id: buildCourseId(manifest, file.name),
+    manifest,
+    files,
+    fileName: file.name,
+    importedAt: new Date().toISOString(),
+    packageType: 'archive',
+  };
+}
 
 /**
- * 注入导入弹窗 CSS
+ * 解析课件文件
+ * @param {File} file
+ * @returns {Promise<{id:string, manifest:Object, files:Array<{path:string, blob:Blob}>, fileName:string, importedAt:string, packageType:string}>}
  */
+async function parseTeachanyPackage(file) {
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error(`文件过大（${(file.size / 1024 / 1024).toFixed(1)}MB），最大支持 50MB`);
+  }
+
+  const ext = file.name.split('.').pop()?.toLowerCase();
+  if (ext === 'html' || ext === 'htm') {
+    return parseSingleHTML(file);
+  }
+  if (ext !== 'teachany' && ext !== 'zip') {
+    throw new Error('请上传 .teachany、.zip 或 .html 格式的课件');
+  }
+
+  return parseZipPackage(file);
+}
+
+/* ─── 数据持久化 API ─────────────────────────── */
+async function addUserCourse(course) {
+  const courses = getUserCourses();
+  const key = buildCourseKey(course);
+  const existing = courses.find((item) => buildCourseKey(item) === key);
+  const id = course.id || existing?.id || buildCourseId(course.manifest, course.fileName);
+
+  const payload = {
+    id,
+    manifest: course.manifest,
+    importedAt: course.importedAt,
+    fileName: course.fileName,
+    packageType: course.packageType || 'archive',
+    files: (course.files || []).map((item) => ({
+      path: normalizePath(item.path),
+      blob: item.blob instanceof Blob ? item.blob : new Blob([item.blob], { type: guessMimeType(item.path) }),
+    })),
+  };
+
+  await putCoursePayload(payload);
+
+  const entry = {
+    id,
+    manifest: course.manifest,
+    importedAt: course.importedAt,
+    fileName: course.fileName,
+    storage: 'idb',
+    viewerUrl: buildViewerUrl(id),
+    packageType: course.packageType || 'archive',
+  };
+
+  const nextCourses = courses.filter((item) => buildCourseKey(item) !== key && item.id !== id);
+  if (existing && existing.storage === 'idb' && existing.id && existing.id !== id) {
+    try {
+      await deleteCoursePayload(existing.id);
+    } catch {
+      // ignore cleanup failure
+    }
+  }
+  nextCourses.push(entry);
+  nextCourses.sort((a, b) => (b.importedAt || '').localeCompare(a.importedAt || ''));
+  saveCourseIndex(nextCourses);
+  return entry;
+}
+
+async function getUserCourseRecord(id) {
+  const payload = await getCoursePayload(id);
+  if (payload) return payload;
+
+  const legacy = getLegacyCourses().find((item) => item.id === id || buildCourseKey(item) === id);
+  if (!legacy) return null;
+
+  if (legacy.htmlDataUrl) {
+    const response = await fetch(legacy.htmlDataUrl);
+    const blob = await response.blob();
+    return {
+      id: legacy.id,
+      manifest: legacy.manifest,
+      importedAt: legacy.importedAt,
+      fileName: legacy.fileName,
+      packageType: 'legacy-html',
+      files: [{ path: 'index.html', blob }],
+    };
+  }
+
+  return null;
+}
+
+async function removeUserCourse(id) {
+  const courses = getUserCourses();
+  const target = courses.find((item) => item.id === id || buildCourseKey(item) === id);
+  const normalizedId = target?.id || id;
+
+  const nextCourses = courses.filter((item) => item.id !== normalizedId && buildCourseKey(item) !== id);
+  saveCourseIndex(nextCourses.filter((item) => item.storage !== 'legacy'));
+
+  const legacy = getLegacyCourses().filter((item) => item.id !== normalizedId && buildCourseKey(item) !== id);
+  localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(legacy));
+
+  if (target?.storage === 'idb' || !target) {
+    try {
+      await deleteCoursePayload(normalizedId);
+    } catch {
+      // ignore
+    }
+  }
+
+  return getUserCourses();
+}
+
+function getCourseLaunchUrl(course) {
+  if (!course) return '#';
+  if (course.storage === 'legacy' && course.htmlDataUrl) return course.htmlDataUrl;
+  if (course.viewerUrl) return course.viewerUrl;
+  if (course.id) return buildViewerUrl(course.id);
+  return '#';
+}
+
+function findUserCourseByNodeId(nodeId) {
+  return getUserCourses().find((item) => item.manifest?.node_id === nodeId) || null;
+}
+
+/* ─── Viewer：把完整课件包渲染到 iframe ───────── */
+function resolveMappedPath(basePath, targetPath, fileMap) {
+  if (!targetPath || isExternalUrl(targetPath) || isHashUrl(targetPath)) return null;
+
+  const stripped = stripQueryAndHash(targetPath);
+  const candidates = [
+    normalizePath(stripped),
+    resolveRelativePath(basePath, stripped),
+  ].filter(Boolean);
+
+  return candidates.find((candidate) => fileMap.has(candidate)) || null;
+}
+
+function rewriteCssUrls(cssText, basePath, fileMap) {
+  return String(cssText || '').replace(/url\(([^)]+)\)/gi, (match, rawValue) => {
+    const value = String(rawValue || '').trim().replace(/^['"]|['"]$/g, '');
+    if (!value || isExternalUrl(value) || isHashUrl(value)) return match;
+    const mappedPath = resolveMappedPath(basePath, value, fileMap);
+    if (!mappedPath) return match;
+    return `url("${fileMap.get(mappedPath).url}")`;
+  });
+}
+
+function rewriteInlineStyleAttributes(root, basePath, fileMap) {
+  root.querySelectorAll('[style]').forEach((node) => {
+    const styleValue = node.getAttribute('style');
+    if (!styleValue) return;
+    node.setAttribute('style', rewriteCssUrls(styleValue, basePath, fileMap));
+  });
+}
+
+async function inlineLinkedStyles(doc, htmlPath, fileMap) {
+  const links = Array.from(doc.querySelectorAll('link[rel="stylesheet"][href]'));
+  for (const link of links) {
+    const href = link.getAttribute('href');
+    const mappedPath = resolveMappedPath(htmlPath, href, fileMap);
+    if (!mappedPath) continue;
+    const entry = fileMap.get(mappedPath);
+    const cssText = await entry.blob.text();
+    const style = doc.createElement('style');
+    style.textContent = rewriteCssUrls(cssText, mappedPath, fileMap);
+    link.replaceWith(style);
+  }
+}
+
+function rewriteUrlAttributes(doc, htmlPath, fileMap) {
+  const attrSelectors = [
+    ['img[src]', 'src'],
+    ['audio[src]', 'src'],
+    ['video[src]', 'src'],
+    ['video[poster]', 'poster'],
+    ['source[src]', 'src'],
+    ['script[src]', 'src'],
+    ['a[href]', 'href'],
+    ['iframe[src]', 'src'],
+  ];
+
+  attrSelectors.forEach(([selector, attr]) => {
+    doc.querySelectorAll(selector).forEach((node) => {
+      const value = node.getAttribute(attr);
+      if (!value || isExternalUrl(value) || isHashUrl(value)) return;
+      const mappedPath = resolveMappedPath(htmlPath, value, fileMap);
+      if (mappedPath) {
+        node.setAttribute(attr, fileMap.get(mappedPath).url);
+      }
+    });
+  });
+}
+
+function rewriteStyleTags(doc, htmlPath, fileMap) {
+  doc.querySelectorAll('style').forEach((styleNode) => {
+    styleNode.textContent = rewriteCssUrls(styleNode.textContent, htmlPath, fileMap);
+  });
+}
+
+function injectViewerGuard(doc, manifest) {
+  const head = doc.head || doc.documentElement;
+
+  if (!doc.querySelector('meta[charset]')) {
+    const charset = doc.createElement('meta');
+    charset.setAttribute('charset', 'UTF-8');
+    head.prepend(charset);
+  }
+
+  const marker = doc.createElement('meta');
+  marker.name = 'teachany-imported-viewer';
+  marker.content = manifest?.name || 'TeachAny';
+  head.appendChild(marker);
+}
+
+async function buildRenderableCourseHtml(courseRecord) {
+  const files = (courseRecord?.files || []).map((item) => ({
+    path: normalizePath(item.path),
+    blob: item.blob instanceof Blob ? item.blob : new Blob([item.blob], { type: guessMimeType(item.path) }),
+  }));
+
+  if (!files.length) {
+    throw new Error('课件包内容为空');
+  }
+
+  const fileMap = new Map();
+  const revokeUrls = [];
+
+  files.forEach((item) => {
+    const normalizedPath = normalizePath(item.path);
+    const blob = item.blob;
+    const url = URL.createObjectURL(blob);
+    revokeUrls.push(url);
+    fileMap.set(normalizedPath, { path: normalizedPath, blob, url });
+  });
+
+  const htmlEntry =
+    fileMap.get('index.html') ||
+    Array.from(fileMap.values()).find((item) => isHtmlFileName(item.path));
+
+  if (!htmlEntry) {
+    revokeUrls.forEach((url) => URL.revokeObjectURL(url));
+    throw new Error('课件包中缺少可打开的 HTML 文件');
+  }
+
+  const htmlText = await htmlEntry.blob.text();
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlText, 'text/html');
+
+  await inlineLinkedStyles(doc, htmlEntry.path, fileMap);
+  rewriteStyleTags(doc, htmlEntry.path, fileMap);
+  rewriteInlineStyleAttributes(doc, htmlEntry.path, fileMap);
+  rewriteUrlAttributes(doc, htmlEntry.path, fileMap);
+  injectViewerGuard(doc, courseRecord.manifest);
+
+  const html = `<!DOCTYPE html>\n${doc.documentElement.outerHTML}`;
+  return { html, revokeUrls };
+}
+
+async function mountImportedCourseViewer(container, options = {}) {
+  const params = new URLSearchParams(window.location.search);
+  const courseId = params.get('id');
+  if (!courseId) {
+    throw new Error('缺少课程 ID');
+  }
+
+  const record = await getUserCourseRecord(courseId);
+  if (!record) {
+    throw new Error('未找到该课件，可能已被删除');
+  }
+
+  const titleEl = options.titleEl || null;
+  const metaEl = options.metaEl || null;
+  const loadingEl = options.loadingEl || null;
+
+  if (loadingEl) loadingEl.textContent = '正在重建课件资源...';
+  if (titleEl) titleEl.textContent = record.manifest?.name || '我的课件';
+  if (metaEl) {
+    const subjectInfo = getSubjectInfo(record.manifest?.subject);
+    const metaText = [subjectInfo.name, record.manifest?.grade ? `${record.manifest.grade}年级` : '', record.fileName || '']
+      .filter(Boolean)
+      .join(' · ');
+    metaEl.textContent = metaText;
+  }
+  document.title = `${record.manifest?.name || '我的课件'} · TeachAny`;
+
+  const { html, revokeUrls } = await buildRenderableCourseHtml(record);
+  const iframe = document.createElement('iframe');
+  iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+  iframe.setAttribute('referrerpolicy', 'no-referrer');
+  iframe.style.width = '100%';
+  iframe.style.height = '100%';
+  iframe.style.border = 'none';
+  iframe.style.borderRadius = '14px';
+  iframe.style.background = '#fff';
+  iframe.srcdoc = html;
+
+  container.innerHTML = '';
+  container.appendChild(iframe);
+
+  const cleanup = () => revokeUrls.forEach((url) => URL.revokeObjectURL(url));
+  window.addEventListener('beforeunload', cleanup, { once: true });
+  iframe.addEventListener('load', () => {
+    if (loadingEl) loadingEl.textContent = '';
+  }, { once: true });
+
+  return { iframe, record };
+}
+
+/* ─── UI 组件：导入弹窗 ─────────────────────── */
 function injectImporterStyles() {
   if (document.getElementById('teachany-importer-styles')) return;
   const style = document.createElement('style');
@@ -257,14 +754,16 @@ function injectImporterStyles() {
     .ta-import-actions {
       display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;
     }
-    .ta-btn { padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+    .ta-btn {
+      padding: 8px 20px; border-radius: 8px; font-size: 14px;
+      font-weight: 600; cursor: pointer; border: none; transition: all 0.2s;
+    }
     .ta-btn-secondary { background: rgba(148,163,184,0.15); color: #94a3b8; }
     .ta-btn-secondary:hover { background: rgba(148,163,184,0.25); color: #f8fafc; }
     .ta-btn-primary { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; }
     .ta-btn-primary:hover { filter: brightness(1.1); transform: scale(1.02); }
     .ta-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-    /* 导入成功后的课件预览卡片 */
     .ta-preview-card {
       margin-top: 16px; padding: 16px; border-radius: 12px;
       background: rgba(30,41,59,0.7); border: 1px solid rgba(148,163,184,0.15);
@@ -273,7 +772,6 @@ function injectImporterStyles() {
     .ta-preview-card .meta { font-size: 13px; color: #94a3b8; }
     .ta-preview-card .meta span { margin-right: 12px; }
 
-    /* Gallery 页面的「添加课件」卡片 */
     .course-card-add {
       background: transparent !important;
       border: 2px dashed rgba(59,130,246,0.3) !important;
@@ -292,7 +790,6 @@ function injectImporterStyles() {
     .course-card-add .add-label { font-size: 16px; font-weight: 600; color: #3b82f6; }
     .course-card-add .add-hint { font-size: 13px; color: #64748b; margin-top: 8px; }
 
-    /* 用户课件卡片标识 */
     .user-badge {
       display: inline-block; padding: 2px 8px; border-radius: 10px;
       font-size: 11px; font-weight: 600;
@@ -300,7 +797,6 @@ function injectImporterStyles() {
       margin-left: 8px;
     }
 
-    /* 删除按钮 */
     .card-delete-btn {
       position: absolute; top: 12px; right: 12px;
       width: 28px; height: 28px; border-radius: 50%;
@@ -308,6 +804,7 @@ function injectImporterStyles() {
       border: none; cursor: pointer; font-size: 14px;
       display: flex; align-items: center; justify-content: center;
       opacity: 0; transition: opacity 0.2s;
+      z-index: 2;
     }
     .course-card:hover .card-delete-btn { opacity: 1; }
     .card-delete-btn:hover { background: rgba(239,68,68,0.3); }
@@ -315,12 +812,6 @@ function injectImporterStyles() {
   document.head.appendChild(style);
 }
 
-/**
- * 创建导入弹窗
- * @param {Object} options
- * @param {string} options.targetNodeId - 知识树目标节点 ID（从知识树导入时使用）
- * @param {Function} options.onImported - 导入成功回调
- */
 function createImportDialog(options = {}) {
   injectImporterStyles();
 
@@ -331,14 +822,14 @@ function createImportDialog(options = {}) {
       <h2>📦 导入课件</h2>
       <p class="subtitle">
         ${options.targetNodeId
-          ? `为「${options.targetNodeName || options.targetNodeId}」节点上传课件`
-          : '拖入 .teachany 课件包或单个 index.html 文件'}
+          ? `为「${escapeHtml(options.targetNodeName || options.targetNodeId)}」节点上传课件`
+          : '拖入 .teachany/.zip 课件包，或直接导入单个 HTML 文件'}
       </p>
       <div class="ta-dropzone" id="taDropzone">
         <div class="icon">📂</div>
         <div class="label">拖入文件或点击选择</div>
-        <div class="hint">支持 .teachany 包 或 .html 单文件</div>
-        <input type="file" accept=".teachany,.zip,.html" style="display:none" id="taFileInput">
+        <div class="hint">支持 .teachany、.zip、.html</div>
+        <input type="file" accept=".teachany,.zip,.html,.htm" style="display:none" id="taFileInput">
       </div>
       <div class="ta-import-status" id="taStatus"></div>
       <div id="taPreview"></div>
@@ -361,196 +852,178 @@ function createImportDialog(options = {}) {
 
   let parsedCourse = null;
 
-  // 关闭弹窗
   function close() {
     overlay.classList.remove('visible');
     setTimeout(() => overlay.remove(), 300);
   }
 
-  cancelBtn.onclick = close;
-  overlay.onclick = (e) => { if (e.target === overlay) close(); };
+  function renderPreview(course) {
+    const manifest = course.manifest;
+    const subjectInfo = getSubjectInfo(manifest.subject);
+    preview.innerHTML = `
+      <div class="ta-preview-card">
+        <h3>${escapeHtml(manifest.emoji || subjectInfo.emoji)} ${escapeHtml(manifest.name)}</h3>
+        <div class="meta">
+          <span>📚 ${escapeHtml(subjectInfo.name)}</span>
+          <span>🎓 ${escapeHtml(manifest.grade)}年级</span>
+          ${manifest.node_id ? `<span>🌳 ${escapeHtml(manifest.node_id)}</span>` : ''}
+          ${manifest.difficulty ? `<span>⭐ 难度 ${escapeHtml(manifest.difficulty)}</span>` : ''}
+          <span>📦 ${course.files?.length || 0} 个文件</span>
+        </div>
+      </div>
+    `;
+  }
 
-  // 拖拽
-  dropzone.ondragover = (e) => { e.preventDefault(); dropzone.classList.add('dragover'); };
-  dropzone.ondragleave = () => dropzone.classList.remove('dragover');
-  dropzone.ondrop = async (e) => {
-    e.preventDefault();
-    dropzone.classList.remove('dragover');
-    const file = e.dataTransfer.files[0];
-    if (file) await handleFile(file);
-  };
-
-  // 点击选择
-  dropzone.onclick = () => fileInput.click();
-  fileInput.onchange = async () => {
-    if (fileInput.files[0]) await handleFile(fileInput.files[0]);
-  };
-
-  // 处理文件
   async function handleFile(file) {
     status.className = 'ta-import-status loading';
-    status.textContent = '⏳ 正在解析课件包...';
+    status.textContent = '⏳ 正在解析课件...';
     preview.innerHTML = '';
     confirmBtn.disabled = true;
 
     try {
       parsedCourse = await parseTeachanyPackage(file);
-
-      // 如果从知识树导入，自动关联节点
       if (options.targetNodeId) {
         parsedCourse.manifest.node_id = options.targetNodeId;
+        parsedCourse.id = buildCourseId(parsedCourse.manifest, parsedCourse.fileName);
       }
-
-      const m = parsedCourse.manifest;
-      const subjectInfo = SUBJECT_META[m.subject] || { name: m.subject, emoji: '📚' };
-
       status.className = 'ta-import-status success';
       status.textContent = '✅ 课件解析成功';
-
-      preview.innerHTML = `
-        <div class="ta-preview-card">
-          <h3>${m.emoji || subjectInfo.emoji} ${m.name}</h3>
-          <div class="meta">
-            <span>📚 ${subjectInfo.name}</span>
-            <span>🎓 ${m.grade}年级</span>
-            ${m.node_id ? `<span>🌳 ${m.node_id}</span>` : ''}
-            ${m.difficulty ? `<span>⭐ 难度 ${m.difficulty}</span>` : ''}
-          </div>
-        </div>
-      `;
-
+      renderPreview(parsedCourse);
       confirmBtn.disabled = false;
-
     } catch (err) {
+      parsedCourse = null;
       status.className = 'ta-import-status error';
       status.textContent = `❌ ${err.message}`;
-      parsedCourse = null;
     }
   }
 
-  // 确认导入
-  confirmBtn.onclick = () => {
+  cancelBtn.onclick = close;
+  overlay.onclick = (event) => {
+    if (event.target === overlay) close();
+  };
+
+  dropzone.ondragover = (event) => {
+    event.preventDefault();
+    dropzone.classList.add('dragover');
+  };
+  dropzone.ondragleave = () => dropzone.classList.remove('dragover');
+  dropzone.ondrop = async (event) => {
+    event.preventDefault();
+    dropzone.classList.remove('dragover');
+    const file = event.dataTransfer.files?.[0];
+    if (file) await handleFile(file);
+  };
+
+  dropzone.onclick = () => fileInput.click();
+  fileInput.onchange = async () => {
+    if (fileInput.files?.[0]) await handleFile(fileInput.files[0]);
+  };
+
+  confirmBtn.onclick = async () => {
     if (!parsedCourse) return;
 
-    // 保存课件 HTML 到 localStorage（Base64 编码）
-    const reader = new FileReader();
-    reader.onload = () => {
-      const courseEntry = {
-        manifest: parsedCourse.manifest,
-        htmlDataUrl: reader.result,
-        importedAt: parsedCourse.importedAt,
-        fileName: parsedCourse.fileName,
-      };
+    confirmBtn.disabled = true;
+    status.className = 'ta-import-status loading';
+    status.textContent = '💾 正在保存课件包...';
 
-      addUserCourse(courseEntry);
-
+    try {
+      const courseEntry = await addUserCourse(parsedCourse);
       status.className = 'ta-import-status success';
-      status.textContent = '🎉 导入成功！刷新页面即可看到新课件。';
-      confirmBtn.disabled = true;
+      status.textContent = '🎉 导入成功！现在就可以在 Gallery、知识树和学习路径中打开。';
 
       if (options.onImported) {
         options.onImported(courseEntry);
       }
 
-      // 1.5 秒后关闭
-      setTimeout(close, 1500);
-    };
-    reader.readAsDataURL(parsedCourse.htmlBlob);
+      setTimeout(close, 1200);
+    } catch (err) {
+      status.className = 'ta-import-status error';
+      status.textContent = `❌ ${err.message}`;
+      confirmBtn.disabled = false;
+    }
   };
 
   return { close };
 }
 
 /* ─── Gallery 集成 ───────────────────────────── */
-
-/**
- * 在 Gallery 课件网格中插入「添加课件」卡片和用户课件卡片
- * @param {string} gridSelector - 课件网格的 CSS 选择器
- */
 function initGalleryImporter(gridSelector) {
   injectImporterStyles();
   const grid = document.querySelector(gridSelector);
   if (!grid) return;
 
-  // 1. 插入「添加课件」卡片
-  const addCard = document.createElement('div');
-  addCard.className = 'course-card course-card-add';
-  addCard.innerHTML = `
-    <div class="add-content">
-      <div class="add-icon">➕</div>
-      <div class="add-label">添加我的课件</div>
-      <div class="add-hint">导入 .teachany 包或 HTML 文件</div>
-    </div>
-  `;
-  addCard.onclick = () => {
-    createImportDialog({
-      onImported: () => {
-        renderUserCourses(grid);
-      },
-    });
-  };
-  grid.appendChild(addCard);
+  if (!grid.querySelector('.course-card-add')) {
+    const addCard = document.createElement('div');
+    addCard.className = 'course-card course-card-add';
+    addCard.innerHTML = `
+      <div class="add-content">
+        <div class="add-icon">➕</div>
+        <div class="add-label">添加我的课件</div>
+        <div class="add-hint">导入 .teachany、.zip 或 HTML 文件</div>
+      </div>
+    `;
+    addCard.onclick = () => {
+      createImportDialog({
+        onImported: () => renderUserCourses(grid),
+      });
+    };
+    grid.appendChild(addCard);
+  }
 
-  // 2. 渲染已有的用户课件
   renderUserCourses(grid);
 }
 
-/**
- * 渲染用户课件卡片
- */
 function renderUserCourses(grid) {
-  // 移除旧的用户课件卡片
-  grid.querySelectorAll('.user-course-card').forEach(el => el.remove());
+  grid.querySelectorAll('.user-course-card').forEach((el) => el.remove());
 
   const courses = getUserCourses();
   const addCard = grid.querySelector('.course-card-add');
 
-  courses.forEach(course => {
-    const m = course.manifest;
-    const subjectInfo = SUBJECT_META[m.subject] || { name: m.subject, emoji: '📚' };
-    const tags = m.tags || [subjectInfo.name, `Grade ${m.grade}`];
+  courses.forEach((course) => {
+    const manifest = course.manifest || {};
+    const subjectInfo = getSubjectInfo(manifest.subject);
+    const tags = manifest.tags || [subjectInfo.name, `Grade ${manifest.grade || '?'}`];
 
     const card = document.createElement('a');
     card.className = 'course-card user-course-card';
-    card.href = course.htmlDataUrl || '#';
+    card.href = getCourseLaunchUrl(course);
     card.target = '_blank';
-    card.dataset.subject = m.subject;
+    card.rel = 'noopener noreferrer';
+    card.dataset.subject = manifest.subject || 'custom';
     card.style.position = 'relative';
+
+    const colors = ['tag-blue', 'tag-purple', 'tag-green', 'tag-yellow', 'tag-pink', 'tag-cyan'];
+    const tagsHtml = tags
+      .map((tag, index) => `<span class="tag ${colors[index % colors.length]}">${escapeHtml(tag)}</span>`)
+      .join('');
 
     card.innerHTML = `
       <button class="card-delete-btn" title="删除课件">✕</button>
       <div class="card-header">
-        <div class="card-emoji">${m.emoji || subjectInfo.emoji}</div>
-        <h3 class="card-title">${m.name} <span class="user-badge">我的课件</span></h3>
-        <p class="card-desc">${m.description || m.name_en || ''}</p>
-        <div class="card-tags">
-          ${tags.map((t, i) => {
-            const colors = ['tag-blue', 'tag-purple', 'tag-green', 'tag-yellow', 'tag-pink', 'tag-cyan'];
-            return `<span class="tag ${colors[i % colors.length]}">${t}</span>`;
-          }).join('')}
-        </div>
+        <div class="card-emoji">${escapeHtml(manifest.emoji || subjectInfo.emoji)}</div>
+        <h3 class="card-title">${escapeHtml(manifest.name || '未命名课件')} <span class="user-badge">我的课件</span></h3>
+        <p class="card-desc">${escapeHtml(manifest.description || manifest.name_en || '用户导入课件')}</p>
+        <div class="card-tags">${tagsHtml}</div>
       </div>
       <div class="card-footer">
         <div class="card-meta">
-          ${m.lines ? `<span>📝 ${m.lines} lines</span>` : ''}
-          ${m.duration ? `<span>⏱️ ~${m.duration}</span>` : ''}
-          <span>📅 ${course.importedAt ? course.importedAt.slice(0, 10) : ''}</span>
+          ${manifest.duration ? `<span>⏱️ ~${escapeHtml(manifest.duration)}</span>` : ''}
+          <span>📅 ${escapeHtml((course.importedAt || '').slice(0, 10))}</span>
+          <span>🗂️ ${escapeHtml(course.packageType === 'single-html' ? 'HTML' : '完整包')}</span>
         </div>
         <span class="card-action">体验 →</span>
       </div>
     `;
 
-    // 删除按钮
-    card.querySelector('.card-delete-btn').onclick = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (confirm(`确定删除「${m.name}」吗？`)) {
-        removeUserCourse(m.node_id || m.name);
-        renderUserCourses(grid);
-      }
+    const deleteBtn = card.querySelector('.card-delete-btn');
+    deleteBtn.onclick = async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!confirm(`确定删除「${manifest.name || '未命名课件'}」吗？`)) return;
+      await removeUserCourse(course.id || buildCourseKey(course));
+      renderUserCourses(grid);
     };
 
-    // 插入到「添加」卡片之前
     if (addCard) {
       grid.insertBefore(card, addCard);
     } else {
@@ -560,35 +1033,25 @@ function renderUserCourses(grid) {
 }
 
 /* ─── 知识树集成 ──────────────────────────────── */
-
-/**
- * 为知识树的 tooltip 添加上传按钮
- * @param {Object} nodeData - 知识树节点数据
- * @param {HTMLElement} tooltipEl - tooltip DOM 元素
- */
 function addTreeUploadButton(nodeData, tooltipEl) {
   if (nodeData.status !== 'gap') return;
 
-  // 检查用户是否已上传该节点的课件
-  const courses = getUserCourses();
-  const existing = courses.find(c => c.manifest.node_id === nodeData.id);
+  const existing = findUserCourseByNodeId(nodeData.id);
 
   if (existing) {
-    // 已有用户课件，显示打开链接
     const link = document.createElement('a');
     link.className = 'course-link';
-    link.href = existing.htmlDataUrl || '#';
+    link.href = getCourseLaunchUrl(existing);
     link.target = '_blank';
+    link.rel = 'noopener noreferrer';
     link.textContent = '📂 打开我的课件';
     link.style.pointerEvents = 'auto';
     link.style.marginTop = '8px';
     link.style.display = 'block';
     tooltipEl.appendChild(link);
-
     return;
   }
 
-  // 添加上传按钮
   const uploadBtn = document.createElement('button');
   uploadBtn.style.cssText = `
     display: block; width: 100%; margin-top: 10px; padding: 8px 12px;
@@ -600,13 +1063,12 @@ function addTreeUploadButton(nodeData, tooltipEl) {
   uploadBtn.textContent = '📦 上传课件';
   uploadBtn.onmouseenter = () => { uploadBtn.style.filter = 'brightness(1.15)'; };
   uploadBtn.onmouseleave = () => { uploadBtn.style.filter = ''; };
-  uploadBtn.onclick = (e) => {
-    e.stopPropagation();
+  uploadBtn.onclick = (event) => {
+    event.stopPropagation();
     createImportDialog({
       targetNodeId: nodeData.id,
       targetNodeName: nodeData.name,
       onImported: () => {
-        // 导入后可以触发知识树重新渲染
         if (typeof window.teachanyOnCourseImported === 'function') {
           window.teachanyOnCourseImported(nodeData.id);
         }
@@ -619,17 +1081,16 @@ function addTreeUploadButton(nodeData, tooltipEl) {
 
 /* ─── 导出 ───────────────────────────────────── */
 window.TeachAnyImporter = {
-  // 核心 API
   parseTeachanyPackage,
   getUserCourses,
   addUserCourse,
   removeUserCourse,
-
-  // UI 组件
   createImportDialog,
   initGalleryImporter,
   addTreeUploadButton,
-
-  // 常量
+  getCourseLaunchUrl,
+  getUserCourseRecord,
+  findUserCourseByNodeId,
+  mountImportedCourseViewer,
   SUBJECT_META,
 };

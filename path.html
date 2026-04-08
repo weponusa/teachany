@@ -149,6 +149,14 @@ body {
   border-color: var(--primary);
   background: rgba(59,130,246,0.2);
 }
+.step-dot.user-course {
+  border-color: var(--accent);
+  background: rgba(245,158,11,0.18);
+}
+.step-dot.in-progress {
+  border-color: #a78bfa;
+  background: rgba(139,92,246,0.22);
+}
 .step-dot.gap {
   border-color: var(--dimmer);
   border-style: dashed;
@@ -181,6 +189,8 @@ body {
 }
 .status-completed { background: rgba(16,185,129,0.2); color: var(--success); }
 .status-available { background: rgba(59,130,246,0.2); color: var(--primary); }
+.status-user { background: rgba(245,158,11,0.18); color: var(--accent); }
+.status-progress { background: rgba(139,92,246,0.18); color: #c4b5fd; }
 .status-gap { background: rgba(100,116,139,0.2); color: var(--dimmer); }
 .status-locked { background: rgba(239,68,68,0.1); color: rgba(239,68,68,0.6); }
 
@@ -259,13 +269,12 @@ body {
   <div id="pathResult"></div>
 </div>
 
+<script src="./scripts/courseware-importer.js"></script>
 <script>
 const TREES = [
-  // 小学
   { file: 'data/trees/chinese-elementary.json', emoji: '📖', label: '小学语文' },
   { file: 'data/trees/math-elementary.json', emoji: '🔢', label: '小学数学' },
   { file: 'data/trees/english-elementary.json', emoji: '🔤', label: '小学英语' },
-  // 初中
   { file: 'data/trees/chinese-middle.json', emoji: '📝', label: '初中语文' },
   { file: 'data/trees/math-middle.json', emoji: '📐', label: '初中数学' },
   { file: 'data/trees/english-middle.json', emoji: '🅰️', label: '初中英语' },
@@ -274,7 +283,6 @@ const TREES = [
   { file: 'data/trees/biology-middle.json', emoji: '🌱', label: '初中生物' },
   { file: 'data/trees/geography-middle.json', emoji: '🗺️', label: '初中地理' },
   { file: 'data/trees/history-middle.json', emoji: '📜', label: '初中历史' },
-  // 高中
   { file: 'data/trees/chinese-high.json', emoji: '📚', label: '高中语文' },
   { file: 'data/trees/math-high.json', emoji: '∑', label: '高中数学' },
   { file: 'data/trees/english-high.json', emoji: '🌐', label: '高中英语' },
@@ -285,57 +293,147 @@ const TREES = [
   { file: 'data/trees/history-high.json', emoji: '🏛️', label: '高中历史' }
 ];
 
+const LEGACY_PROGRESS_KEY = 'teachany_progress';
+const PER_COURSE_PROGRESS_PREFIX = 'teachany_progress_';
+
 let treeCache = {};
 let allNodes = {};
 
-// Init subject selector
 const subjectSel = document.getElementById('subjectSelect');
 const nodeSel = document.getElementById('nodeSelect');
+const pathResultEl = document.getElementById('pathResult');
 
-TREES.forEach((t, i) => {
-  const opt = document.createElement('option');
-  opt.value = i;
-  opt.textContent = t.emoji + ' ' + t.label;
-  subjectSel.appendChild(opt);
-});
-
-subjectSel.onchange = async () => {
-  const idx = subjectSel.value;
-  if (idx === '') { nodeSel.disabled = true; return; }
-
-  if (!treeCache[idx]) {
-    const resp = await fetch(TREES[idx].file);
-    treeCache[idx] = await resp.json();
-  }
-
-  const tree = treeCache[idx];
-  allNodes = {};
-  nodeSel.innerHTML = '<option value="">选择目标知识点...</option>';
-
-  tree.domains.forEach(domain => {
-    const group = document.createElement('optgroup');
-    group.label = domain.name;
-    domain.nodes.forEach(node => {
-      allNodes[node.id] = { ...node, domain: domain.name, domainColor: domain.color };
-      const opt = document.createElement('option');
-      opt.value = node.id;
-      opt.textContent = node.name + (node.status === 'active' ? ' ✅' : ' 📝');
-      group.appendChild(opt);
-    });
-    nodeSel.appendChild(group);
-  });
-
-  nodeSel.disabled = false;
-};
-
-// Get student progress from localStorage
-function getProgress() {
-  try {
-    return JSON.parse(localStorage.getItem('teachany_progress') || '{}');
-  } catch { return {}; }
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
-// Topological sort: resolve all prerequisites recursively
+function safeParseJSON(value, fallback) {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return fallback;
+  }
+}
+
+function getLegacyProgress() {
+  return safeParseJSON(localStorage.getItem(LEGACY_PROGRESS_KEY) || '{}', {});
+}
+
+function getPerCourseProgressMap() {
+  const progressMap = {};
+  for (let i = 0; i < localStorage.length; i += 1) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith(PER_COURSE_PROGRESS_PREFIX)) continue;
+    progressMap[key.slice(PER_COURSE_PROGRESS_PREFIX.length)] = safeParseJSON(localStorage.getItem(key) || '{}', {});
+  }
+  return progressMap;
+}
+
+function buildProgressContext() {
+  return {
+    legacy: getLegacyProgress(),
+    perCourse: getPerCourseProgressMap(),
+  };
+}
+
+function summarizeCourseProgress(progressData) {
+  if (!progressData || typeof progressData !== 'object') {
+    return { percent: 0, completed: false, score: null };
+  }
+
+  if (progressData.completed === true) {
+    const score = Number.isFinite(progressData.post_test_score)
+      ? progressData.post_test_score
+      : (Number.isFinite(progressData.score) ? progressData.score : null);
+    return { percent: 100, completed: true, score };
+  }
+
+  if (Number.isFinite(progressData.completionPercent)) {
+    const percent = Math.max(0, Math.min(100, Math.round(progressData.completionPercent)));
+    return {
+      percent,
+      completed: percent >= 100,
+      score: Number.isFinite(progressData.score) ? progressData.score : percent,
+    };
+  }
+
+  const moduleScores = Object.values(progressData.modules || {})
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value));
+
+  if (moduleScores.length > 0) {
+    const percent = Math.round(moduleScores.reduce((sum, value) => sum + value, 0) / moduleScores.length);
+    return {
+      percent,
+      completed: percent >= 80,
+      score: percent,
+    };
+  }
+
+  return { percent: 0, completed: false, score: null };
+}
+
+function deriveOfficialCourseId(node) {
+  const raw = node?.courses?.[0] || '';
+  const parts = String(raw).split('/').filter(Boolean);
+  return parts[parts.length - 1] || '';
+}
+
+function getUserCourse(nodeId) {
+  return window.TeachAnyImporter ? TeachAnyImporter.findUserCourseByNodeId(nodeId) : null;
+}
+
+function getLaunchUrl(node, userCourse) {
+  if (userCourse && window.TeachAnyImporter) {
+    return TeachAnyImporter.getCourseLaunchUrl(userCourse);
+  }
+  if (node.status === 'active' && node.courses?.length > 0) {
+    return `${node.courses[0]}/index.html`;
+  }
+  return '';
+}
+
+function getNodeProgress(node, userCourse, progressContext) {
+  const legacyEntry = progressContext.legacy?.[node.id];
+  if (legacyEntry && typeof legacyEntry === 'object') {
+    const score = Number.isFinite(legacyEntry.post_test_score)
+      ? legacyEntry.post_test_score
+      : (Number.isFinite(legacyEntry.score) ? legacyEntry.score : null);
+    return {
+      percent: legacyEntry.completed ? 100 : 0,
+      completed: !!legacyEntry.completed,
+      score,
+    };
+  }
+
+  const candidates = [
+    deriveOfficialCourseId(node),
+    userCourse?.id,
+    userCourse?.manifest?.node_id,
+    node.id,
+  ].filter(Boolean);
+
+  const snapshots = candidates
+    .map((courseId) => ({ courseId, ...summarizeCourseProgress(progressContext.perCourse?.[courseId]) }))
+    .filter((item) => item.completed || item.percent > 0);
+
+  if (!snapshots.length) {
+    return { percent: 0, completed: false, score: null };
+  }
+
+  snapshots.sort((a, b) => {
+    if (a.completed !== b.completed) return a.completed ? -1 : 1;
+    return b.percent - a.percent;
+  });
+
+  return snapshots[0];
+}
+
 function resolvePrereqs(targetId) {
   const visited = new Set();
   const order = [];
@@ -345,7 +443,7 @@ function resolvePrereqs(targetId) {
     visited.add(id);
     const node = allNodes[id];
     if (!node) return;
-    (node.prerequisites || []).forEach(pid => dfs(pid));
+    (node.prerequisites || []).forEach((pid) => dfs(pid));
     order.push(id);
   }
 
@@ -353,26 +451,79 @@ function resolvePrereqs(targetId) {
   return order;
 }
 
-function generatePath() {
-  const targetId = nodeSel.value;
-  if (!targetId) {
-    document.getElementById('pathResult').innerHTML =
-      '<div class="empty-state"><div class="icon">🎯</div><p>请先选择学科和目标知识点</p></div>';
+function renderEmptyState(message) {
+  pathResultEl.innerHTML = `<div class="empty-state"><div class="icon">🛤️</div><p>${message}</p></div>`;
+}
+
+TREES.forEach((tree, index) => {
+  const option = document.createElement('option');
+  option.value = index;
+  option.textContent = `${tree.emoji} ${tree.label}`;
+  subjectSel.appendChild(option);
+});
+
+subjectSel.onchange = async () => {
+  const idx = subjectSel.value;
+  if (idx === '') {
+    nodeSel.disabled = true;
+    nodeSel.innerHTML = '<option value="">选择目标知识点...</option>';
     return;
   }
 
-  const path = resolvePrereqs(targetId);
-  const progress = getProgress();
+  if (!treeCache[idx]) {
+    const response = await fetch(TREES[idx].file);
+    treeCache[idx] = await response.json();
+  }
 
-  // Count stats
-  const completedCount = path.filter(id => progress[id]?.completed).length;
+  const tree = treeCache[idx];
+  allNodes = {};
+  nodeSel.innerHTML = '<option value="">选择目标知识点...</option>';
+
+  tree.domains.forEach((domain) => {
+    const group = document.createElement('optgroup');
+    group.label = domain.name;
+
+    domain.nodes.forEach((node) => {
+      const mergedNode = { ...node, domain: domain.name, domainColor: domain.color };
+      allNodes[node.id] = mergedNode;
+
+      const userCourse = getUserCourse(node.id);
+      const option = document.createElement('option');
+      option.value = node.id;
+      option.textContent = `${node.name}${userCourse ? ' 📂' : (node.status === 'active' ? ' ✅' : ' 📝')}`;
+      group.appendChild(option);
+    });
+
+    nodeSel.appendChild(group);
+  });
+
+  nodeSel.disabled = false;
+};
+
+function generatePath() {
+  const targetId = nodeSel.value;
+  if (!targetId) {
+    renderEmptyState('选择学科和目标知识点后，系统会按前置依赖自动生成路线');
+    return;
+  }
+
+  const progressContext = buildProgressContext();
+  const path = resolvePrereqs(targetId)
+    .map((id) => {
+      const node = allNodes[id];
+      if (!node) return null;
+      const userCourse = getUserCourse(id);
+      const launchUrl = getLaunchUrl(node, userCourse);
+      const progress = getNodeProgress(node, userCourse, progressContext);
+      return { id, node, userCourse, launchUrl, progress };
+    })
+    .filter(Boolean);
+
+  const completedCount = path.filter((item) => item.progress.completed).length;
   const totalCount = path.length;
-  const percent = totalCount ? Math.round(completedCount / totalCount * 100) : 0;
+  const percent = totalCount ? Math.round((completedCount / totalCount) * 100) : 0;
 
-  let html = '';
-
-  // Progress bar
-  html += `
+  let html = `
     <div class="progress-section">
       <div class="progress-label">
         <span>学习进度</span>
@@ -384,56 +535,65 @@ function generatePath() {
     </div>
   `;
 
-  // Path steps
   html += '<div class="path-container">';
 
-  path.forEach((id, i) => {
-    const node = allNodes[id];
-    if (!node) return;
-    const isCompleted = progress[id]?.completed;
-    const hasCourse = node.status === 'active' && node.courses?.length > 0;
+  path.forEach((entry, index) => {
+    const { id, node, userCourse, launchUrl, progress } = entry;
     const isTarget = id === targetId;
+    const hasOfficialCourse = node.status === 'active' && node.courses?.length > 0;
 
-    let statusClass, statusText, dotClass;
-    if (isCompleted) {
+    let statusClass = 'status-gap';
+    let statusText = '📝 待创建课件';
+    let dotClass = 'gap';
+    let actionHtml = '<a class="step-link" href="tree.html" target="_blank" rel="noopener noreferrer" style="background:rgba(148,163,184,0.16);color:#e2e8f0;">去知识树补课件 →</a>';
+
+    if (progress.completed) {
       statusClass = 'status-completed';
-      statusText = '✅ 已掌握' + (progress[id].post_test_score ? ` (${progress[id].post_test_score}分)` : '');
+      statusText = `✅ 已掌握${progress.score != null ? ` (${progress.score}分)` : ''}`;
       dotClass = 'completed';
-    } else if (hasCourse) {
+      actionHtml = launchUrl
+        ? `<a class="step-link" href="${escapeHtml(launchUrl)}" target="_blank" rel="noopener noreferrer">复习课件 →</a>`
+        : '';
+    } else if (launchUrl && progress.percent > 0) {
+      statusClass = 'status-progress';
+      statusText = `📈 学习中 ${progress.percent}%`;
+      dotClass = 'in-progress';
+      actionHtml = `<a class="step-link" href="${escapeHtml(launchUrl)}" target="_blank" rel="noopener noreferrer">继续学习 →</a>`;
+    } else if (userCourse) {
+      statusClass = 'status-user';
+      statusText = '📂 我的课件，已可学习';
+      dotClass = 'user-course';
+      actionHtml = `<a class="step-link" href="${escapeHtml(launchUrl)}" target="_blank" rel="noopener noreferrer">打开我的课件 →</a>`;
+    } else if (hasOfficialCourse) {
       statusClass = 'status-available';
-      statusText = '📖 有课件，可学习';
+      statusText = '📖 官方课件，可学习';
       dotClass = 'active-course';
-    } else {
-      statusClass = 'status-gap';
-      statusText = '📝 待创建课件';
-      dotClass = 'gap';
+      actionHtml = `<a class="step-link" href="${escapeHtml(launchUrl)}" target="_blank" rel="noopener noreferrer">开始学习 →</a>`;
     }
 
     html += `
       <div class="path-step">
-        <div class="step-dot ${dotClass}">${i + 1}</div>
-        <div class="step-card ${isCompleted ? 'completed-card' : ''}">
-          <h3>${isTarget ? '🎯 ' : ''}${node.name}</h3>
+        <div class="step-dot ${dotClass}">${index + 1}</div>
+        <div class="step-card ${progress.completed ? 'completed-card' : ''}">
+          <h3>${isTarget ? '🎯 ' : ''}${escapeHtml(node.name)}</h3>
           <div class="step-meta">
-            <span>${node.domain}</span>
-            <span>${node.grade}年级</span>
-            ${node.prerequisites?.length ? '<span>前置：' + node.prerequisites.join('、') + '</span>' : ''}
+            <span>${escapeHtml(node.domain)}</span>
+            <span>${escapeHtml(node.grade)}年级</span>
+            <span>${userCourse ? '我的课件' : (hasOfficialCourse ? '官方课件' : '缺少课件')}</span>
+            ${node.prerequisites?.length ? `<span>前置：${escapeHtml(node.prerequisites.join('、'))}</span>` : ''}
           </div>
           <span class="step-status ${statusClass}">${statusText}</span>
-          ${hasCourse && !isCompleted ? `<a class="step-link" href="${node.courses[0]}/index.html" target="_blank">开始学习 →</a>` : ''}
+          ${actionHtml}
         </div>
       </div>
     `;
   });
 
   html += '</div>';
-
-  document.getElementById('pathResult').innerHTML = html;
+  pathResultEl.innerHTML = html;
 }
 
-// Show empty state on load
-document.getElementById('pathResult').innerHTML =
-  '<div class="empty-state"><div class="icon">🛤️</div><p>选择学科和目标知识点，自动生成学习路径<br><br>系统会根据知识图谱的前置关系<br>帮你规划从零到目标的最优路线</p></div>';
+renderEmptyState('选择学科和目标知识点，自动生成学习路径<br><br>系统会结合知识前置关系、官方课件、我的课件和已保存进度，帮你规划最优学习路线');
 </script>
 </body>
 </html>

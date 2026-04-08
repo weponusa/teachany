@@ -11,13 +11,13 @@
 
 <p align="center">
   <a href="#-quick-start"><img src="https://img.shields.io/badge/Quick_Start-30s-brightgreen?style=flat-square" alt="Quick Start"></a>
-  <a href="#-live-gallery"><img src="https://img.shields.io/badge/Live_Gallery-5_courses-blue?style=flat-square" alt="Gallery"></a>
+  <a href="#-live-gallery"><img src="https://img.shields.io/badge/Live_Gallery-7_courses-blue?style=flat-square" alt="Gallery"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" alt="MIT License"></a>
   <a href="README_CN.md"><img src="https://img.shields.io/badge/中文文档-点击查看-red?style=flat-square" alt="Chinese README"></a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/wepon/teachany/blob/main/README_CN.md">简体中文</a> ·
+  <a href="https://github.com/weponusa/teachany/blob/main/README_CN.md">简体中文</a> ·
   <a href="#-live-gallery">Live Gallery</a> ·
   <a href="docs/getting-started.md">Getting Started</a> ·
   <a href="docs/methodology.md">Methodology</a> ·
@@ -106,9 +106,11 @@ Click any course below to experience it live:
 |:-------|:--------|:------|:-------------|:------|
 | [📐 Quadratic Functions](examples/math-quadratic-function/) | Math | Grade 9 | Canvas graphing, vertex dragging, step-by-step derivation | 1,300+ |
 | [📏 Linear Functions](examples/math-linear-function/) | Math | Grade 8 | Slope/intercept sliders, real-time graph | 1,100+ |
+| [📚 Congruent Triangles](examples/math-congruent-triangles/) | Math | Grade 8 | SVG geometry diagrams, theorem comparison, proof scaffolding | 1,200+ |
 | [🧬 Meiosis & Fertilization](examples/bio-meiosis/) | Biology | Grade 10 | Cell division simulation, chromosome drag-and-drop | 1,400+ |
 | [🌍 Global Monsoon Systems](examples/geo-monsoon/) | Geography | Grade 10 | Leaflet map, wind pattern visualization, region comparison | 1,200+ |
 | [💧 Liquid Pressure & Buoyancy](examples/phy-pressure-buoyancy/) | Physics | Grade 8 | Experiment simulation, parameter adjustment | 1,000+ |
+| [🔤 Compound Vowels](examples/chn-compound-vowel/) | Chinese | Grade 1 | Phonics audio, mouth-shape cues, guided pronunciation practice | 800+ |
 
 > All courses are **single-file HTML** — no build step, no dependencies. Open in any browser.
 

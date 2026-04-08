@@ -51,7 +51,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/wepon/teachany.git
+git clone https://github.com/weponusa/teachany.git
 cd teachany
 
 # Copy the template
@@ -153,7 +153,7 @@ Before publishing, verify:
 
 ```bash
 # 克隆仓库
-git clone https://github.com/wepon/teachany.git
+git clone https://github.com/weponusa/teachany.git
 cd teachany
 
 # 复制模板
