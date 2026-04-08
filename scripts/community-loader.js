@@ -281,8 +281,8 @@ async function submitToCommunity(options) {
       throw new Error(`创建分支失败: ${createBranch.status}`);
     }
 
-    // Step 4: Create submission metadata file
-    if (onProgress) onProgress('uploading', '正在上传课件元数据...');
+    // Step 4: Create submission metadata file + optional .teachany package
+    if (onProgress) onProgress('uploading', '正在打包课件并上传...');
 
     const submissionMeta = {
       id: courseId,
@@ -303,7 +303,8 @@ async function submitToCommunity(options) {
       unescape(encodeURIComponent(JSON.stringify(submissionMeta, null, 2)))
     );
 
-    const createFile = await fetch(
+    // 上传元数据 JSON
+    let createFile = await fetch(
       `${GITHUB_API_BASE}/repos/${forkFullName}/contents/${filePath}`,
       {
         method: 'PUT',
@@ -315,7 +316,123 @@ async function submitToCommunity(options) {
         }),
       }
     );
-    if (!createFile.ok) throw new Error(`上传文件失败: ${createFile.status}`);
+    if (!createFile.ok) throw new Error(`上传元数据失败: ${createFile.status}`);
+
+    // Step 4b: 尝试将完整课件包也上传到 PR（作为 .teachany 文件）
+    if (course.files && course.files.length > 0) {
+      try {
+        // 动态加载 JSZip
+        if (typeof JSZip === 'undefined') {
+          await new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
+            s.onload = resolve;
+            s.onerror = reject;
+            document.head.appendChild(s);
+          });
+        }
+
+        const zip = new JSZip();
+        for (const f of course.files) {
+          const fp = normalizePath(f.path);
+          if (!fp) continue;
+          const blob = f.blob instanceof Blob ? f.blob : new Blob([f.blob], { type: guessMimeType(fp) });
+          zip.file(fp, blob);
+        }
+        // 确保 manifest.json 存在
+        if (!course.files.some((f) => normalizePath(f.path) === 'manifest.json')) {
+          zip.file('manifest.json', JSON.stringify(course.manifest, null, 2));
+        }
+
+        const teachanyBlob = await zip.generateAsync({ type: 'arraybuffer' });
+        const totalBytes = teachanyBlob.byteLength;
+
+        if (totalBytes < 8 * 1024 * 1024) {
+          // 小于 8MB：直接用 GitHub Contents API 上传（base64 编码后约 1.33 倍）
+          if (onProgress) onProgress('uploading', `正在上传完整课件包 (${(totalBytes / 1024 / 1024).toFixed(1)} MB)...`);
+
+          const binString = String.fromCharCode(...new Uint8Array(teachanyBlob));
+          const pkgBase64 = btoa(binString);
+          const pkgPath = `community/pending/${courseId}.teachany`;
+
+          const createPkg = await fetch(
+            `${GITHUB_API_BASE}/repos/${forkFullName}/contents/${pkgPath}`,
+            {
+              method: 'PUT',
+              headers,
+              body: JSON.stringify({
+                message: `[Community] Attach .teachany package: ${course.manifest.name}`,
+                content: pkgBase64,
+                branch: branchName,
+              }),
+            }
+          );
+          if (!createPkg.ok) {
+            console.warn(`[TeachAny Community] 课件包上传失败（${totalBytes} 字节），仅保留元数据`);
+          } else {
+            console.log(`[TeachAny Community] ✅ 完整课件包已上传 (${totalBytes} 字节)`);
+          }
+        } else {
+          // 大于 8MB：提示用户手动附加文件
+          if (onProgress) onProgress('large_file', `课件包较大(${(totalBytes / 1024 / 1024).toFixed(1)} MB)，请在 PR 页面手动附加 .teachany 文件`);
+
+          // 尝试用 Release draft 方式上传（支持大文件）
+          try {
+            // 先导出为本地下载，让用户手动附加
+            const url = URL.createObjectURL(new Blob([teachanyBlob]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${courseId}.teachany`;
+            document.body.appendChild(link);
+            link.click();
+            setTimeout(() => { URL.revokeObjectURL(url); link.remove(); }, 2000);
+
+            // 同时创建一个 Release draft 来存储大文件
+            const releaseResp = await fetch(
+              `${GITHUB_API_BASE}/repos/${forkFullName}/releases`,
+              {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                  tag_name: `community-pending-${Date.now()}`,
+                  target_commitish: branchName,
+                  name: `Courseware: ${course.manifest.name}`,
+                  body: `## Pending Courseware\n\nPlease download and review before merging.\n\nNode ID: ${nodeId}\nSubject: ${course.manifest.subject}\nGrade: ${course.manifest.grade}\n\n**Note**: This is a draft release for large courseware packages.`,
+                  draft: true,
+                }),
+              }
+            );
+
+            if (releaseResp.ok) {
+              const releaseData = await releaseResp.json();
+              const formData = new FormData();
+              formData.append('label', courseId + '.teachany');
+              formData.append('data', new Blob([teachanyBlob]));
+
+              const uploadResp = await fetch(
+                `${GITHUB_API_BASE}/repos/${forkFullName}/releases/${releaseData.id}/assets?name=${encodeURIComponent(courseId)}.teachany`,
+                {
+                  method: 'POST',
+                  headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' },
+                  body: formData,
+                }
+              );
+
+              if (uploadResp.ok) {
+                console.log('[TeachAny Community] ✅ 大课件包已通过 Release 上传');
+              } else {
+                console.warn('[TeachAny Community] Release 上传失败，已触发本地下载');
+              }
+            }
+          } catch (e) {
+            console.warn('[TeachAny Community] 大文件处理异常:', e.message);
+          }
+        }
+      } catch (zipErr) {
+        console.warn('[TeachAny Community] 打包课件时出错:', zipErr.message);
+        // 不阻断流程，至少元数据已上传
+      }
+    }
 
     // Step 5: Create PR
     if (onProgress) onProgress('pr', '正在创建 Pull Request...');
@@ -327,7 +444,16 @@ async function submitToCommunity(options) {
       `- **Subject**: ${course.manifest.subject}`,
       `- **Grade**: ${course.manifest.grade}`,
       `- **Node ID**: ${nodeId}`,
-      `- **Files**: ${course.files?.length || 1}`,
+      `- **Files**: ${course.files?.length || 1} (includes audio, video, and other assets)`,
+      '',
+      '### Files in this PR:',
+      '- `community/pending/' + courseId + '.json` — courseware metadata',
+      '- `community/pending/' + courseId + '.teachany` — complete package (if < 8MB)',
+      '',
+      '**Review steps**:',
+      '1. Check the metadata JSON for required fields',
+      '2. Download the `.teachany` package if attached',
+      '3. Open in browser and verify: audio/video playback, interactive elements work correctly',
       '',
       message || 'Auto-submitted via TeachAny Community Share feature.',
       '',
