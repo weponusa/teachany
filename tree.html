@@ -406,7 +406,13 @@ function renderTree(tree) {
 
   // Check user-uploaded courses (必须在 Stats 之前，避免 TDZ 错误)
   const userCourses = window.TeachAnyImporter ? TeachAnyImporter.getUserCourses() : [];
-  const userNodeIds = new Set(userCourses.map(c => c.manifest.node_id).filter(Boolean));
+  const userNodeIds = new Set(userCourses.map(c => c.manifest?.node_id).filter(Boolean));
+  // 统计每个 node_id 下的课件数量
+  const nodeCourseCounts = {};
+  userCourses.forEach(c => {
+    const nid = c.manifest?.node_id;
+    if (nid) nodeCourseCounts[nid] = (nodeCourseCounts[nid] || 0) + 1;
+  });
 
   // Stats
   const totalNodes = nodes.length;
@@ -561,14 +567,14 @@ function showTooltip(event, d) {
   let html = `<h3>${d.name}</h3>`;
   html += `<div class="meta">${d.domain} · ${d.grade}年级</div>`;
 
-  // 检查用户是否已上传该节点的课件
-  const userCourses = window.TeachAnyImporter ? TeachAnyImporter.getUserCourses() : [];
-  const userCourse = userCourses.find(c => c.manifest.node_id === d.id);
+  // 检查用户是否已上传该节点的课件（可能多个）
+  const userCourses = window.TeachAnyImporter ? TeachAnyImporter.getTopCoursesByNodeId(d.id) : [];
+  const hasUserCourses = userCourses.length > 0;
 
   if (d.status === 'active' && d.courses.length) {
     html += `<span class="status-badge badge-active">✅ 有课件</span>`;
-  } else if (userCourse) {
-    html += `<span class="status-badge badge-active">📂 我的课件</span>`;
+  } else if (hasUserCourses) {
+    html += `<span class="status-badge badge-active">📂 社区课件 ×${userCourses.length}</span>`;
   } else {
     html += `<span class="status-badge badge-gap">📝 待创建</span>`;
   }
@@ -579,14 +585,12 @@ function showTooltip(event, d) {
 
   if (d.status === 'active' && d.courses.length) {
     html += `<a class="course-link" href="${d.courses[0]}/index.html" target="_blank">🎯 进入课件</a>`;
-  } else if (userCourse) {
-    html += `<a class="course-link" href="${TeachAnyImporter.getCourseLaunchUrl(userCourse)}" target="_blank" rel="noopener noreferrer">📂 打开我的课件</a>`;
   }
 
   tooltip.innerHTML = html;
 
-  // 为 gap 节点（且无用户课件）添加上传按钮
-  if (d.status === 'gap' && !userCourse && window.TeachAnyImporter) {
+  // 为有用户课件的节点或 gap 节点添加社区课件列表 + 上传按钮
+  if (window.TeachAnyImporter && (hasUserCourses || d.status === 'gap')) {
     TeachAnyImporter.addTreeUploadButton(d, tooltip);
   }
 
@@ -660,12 +664,11 @@ tooltip.addEventListener('mouseleave', function() {
 function onNodeClick(event, d) {
   if (d.status === 'active' && d.courses.length) {
     window.open(d.courses[0] + '/index.html', '_blank');
-  } else if (d.status === 'gap') {
-    // 检查用户是否已上传该节点的课件
-    const userCourses = window.TeachAnyImporter ? TeachAnyImporter.getUserCourses() : [];
-    const userCourse = userCourses.find(c => c.manifest.node_id === d.id);
-    if (userCourse) {
-      window.open(TeachAnyImporter.getCourseLaunchUrl(userCourse), '_blank', 'noopener');
+  } else {
+    // 打开最高赞的用户课件（如有）
+    const topCourse = window.TeachAnyImporter ? TeachAnyImporter.findUserCourseByNodeId(d.id) : null;
+    if (topCourse) {
+      window.open(TeachAnyImporter.getCourseLaunchUrl(topCourse), '_blank', 'noopener');
     }
   }
 }

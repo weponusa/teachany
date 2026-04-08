@@ -388,6 +388,11 @@ function getUserCourse(nodeId) {
   return window.TeachAnyImporter ? TeachAnyImporter.findUserCourseByNodeId(nodeId) : null;
 }
 
+function getUserCourseCount(nodeId) {
+  if (!window.TeachAnyImporter) return 0;
+  return TeachAnyImporter.findUserCoursesByNodeId(nodeId).length;
+}
+
 function getLaunchUrl(node, userCourse) {
   if (userCourse && window.TeachAnyImporter) {
     return TeachAnyImporter.getCourseLaunchUrl(userCourse);
@@ -541,6 +546,7 @@ function generatePath() {
     const { id, node, userCourse, launchUrl, progress } = entry;
     const isTarget = id === targetId;
     const hasOfficialCourse = node.status === 'active' && node.courses?.length > 0;
+    const communityCount = getUserCourseCount(id);
 
     let statusClass = 'status-gap';
     let statusText = '📝 待创建课件';
@@ -561,15 +567,22 @@ function generatePath() {
       actionHtml = `<a class="step-link" href="${escapeHtml(launchUrl)}" target="_blank" rel="noopener noreferrer">继续学习 →</a>`;
     } else if (userCourse) {
       statusClass = 'status-user';
-      statusText = '📂 我的课件，已可学习';
+      statusText = communityCount > 1
+        ? `📂 社区课件 ×${communityCount}（显示最高赞）`
+        : '📂 我的课件，已可学习';
       dotClass = 'user-course';
-      actionHtml = `<a class="step-link" href="${escapeHtml(launchUrl)}" target="_blank" rel="noopener noreferrer">打开我的课件 →</a>`;
+      actionHtml = `<a class="step-link" href="${escapeHtml(launchUrl)}" target="_blank" rel="noopener noreferrer">打开课件 →</a>`;
     } else if (hasOfficialCourse) {
       statusClass = 'status-available';
       statusText = '📖 官方课件，可学习';
       dotClass = 'active-course';
       actionHtml = `<a class="step-link" href="${escapeHtml(launchUrl)}" target="_blank" rel="noopener noreferrer">开始学习 →</a>`;
     }
+
+    // 点赞数显示（仅用户课件）
+    const likeInfo = userCourse && window.TeachAnyImporter
+      ? ` · ❤️ ${TeachAnyImporter.getCourseLikes(userCourse.id)}`
+      : '';
 
     html += `
       <div class="path-step">
@@ -579,7 +592,7 @@ function generatePath() {
           <div class="step-meta">
             <span>${escapeHtml(node.domain)}</span>
             <span>${escapeHtml(node.grade)}年级</span>
-            <span>${userCourse ? '我的课件' : (hasOfficialCourse ? '官方课件' : '缺少课件')}</span>
+            <span>${userCourse ? `社区课件${communityCount > 1 ? ' ×' + communityCount : ''}` : (hasOfficialCourse ? '官方课件' : '缺少课件')}${likeInfo}</span>
             ${node.prerequisites?.length ? `<span>前置：${escapeHtml(node.prerequisites.join('、'))}</span>` : ''}
           </div>
           <span class="step-status ${statusClass}">${statusText}</span>

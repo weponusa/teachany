@@ -11,12 +11,14 @@
 /* ─── 常量 ───────────────────────────────────── */
 const STORAGE_KEY = 'teachany_user_courses_index';
 const LEGACY_STORAGE_KEY = 'teachany_user_courses';
+const LIKES_STORAGE_KEY = 'teachany_course_likes';
 const DB_NAME = 'teachany-courseware-db';
 const DB_VERSION = 1;
 const STORE_NAME = 'coursewares';
 const JSZIP_CDN = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const VIEWER_PAGE = 'imported-course.html';
+const MAX_COURSES_PER_NODE = 5;
 
 const SUBJECT_META = {
   math: { name: '数学', emoji: '📐', tagColor: 'blue' },
@@ -177,11 +179,17 @@ function getSubjectInfo(subject) {
   return SUBJECT_META[subject] || { name: subject || '未知学科', emoji: '📚', tagColor: 'blue' };
 }
 
-function buildCourseId(manifest, fileName) {
+function buildCourseId(manifest, fileName, forceUnique = false) {
   const subject = slugify(manifest?.subject || 'course');
   const nodeId = slugify(manifest?.node_id || '');
   const name = slugify(manifest?.name || fileName || 'course');
-  return nodeId ? `${subject}-${nodeId}` : `${subject}-${name}`;
+  const base = nodeId ? `${subject}-${nodeId}` : `${subject}-${name}`;
+  if (forceUnique) {
+    // 追加时间戳短码确保唯一性（允许同 node_id 多课件共存）
+    const ts = Date.now().toString(36);
+    return `${base}-${ts}`;
+  }
+  return base;
 }
 
 function buildCourseKey(course) {
@@ -429,9 +437,8 @@ async function parseTeachanyPackage(file) {
 /* ─── 数据持久化 API ─────────────────────────── */
 async function addUserCourse(course) {
   const courses = getUserCourses();
-  const key = buildCourseKey(course);
-  const existing = courses.find((item) => buildCourseKey(item) === key);
-  const id = course.id || existing?.id || buildCourseId(course.manifest, course.fileName);
+  // 始终生成唯一 ID，允许同 node_id 多课件共存
+  const id = buildCourseId(course.manifest, course.fileName, true);
 
   const payload = {
     id,
@@ -455,19 +462,22 @@ async function addUserCourse(course) {
     storage: 'idb',
     viewerUrl: buildViewerUrl(id),
     packageType: course.packageType || 'archive',
+    likes: 0,
   };
 
-  const nextCourses = courses.filter((item) => buildCourseKey(item) !== key && item.id !== id);
-  if (existing && existing.storage === 'idb' && existing.id && existing.id !== id) {
-    try {
-      await deleteCoursePayload(existing.id);
-    } catch {
-      // ignore cleanup failure
-    }
-  }
+  // 不再按 node_id 去重：仅按 id 去重（避免重复 import 同一包）
+  const nextCourses = courses.filter((item) => item.id !== id);
   nextCourses.push(entry);
   nextCourses.sort((a, b) => (b.importedAt || '').localeCompare(a.importedAt || ''));
   saveCourseIndex(nextCourses);
+
+  // 初始化点赞数为 0
+  const likes = readLikes();
+  if (likes[id] === undefined) {
+    likes[id] = 0;
+    saveLikes(likes);
+  }
+
   return entry;
 }
 
@@ -513,6 +523,11 @@ async function removeUserCourse(id) {
     }
   }
 
+  // 清理点赞数据
+  const likes = readLikes();
+  delete likes[normalizedId];
+  saveLikes(likes);
+
   return getUserCourses();
 }
 
@@ -525,7 +540,70 @@ function getCourseLaunchUrl(course) {
 }
 
 function findUserCourseByNodeId(nodeId) {
-  return getUserCourses().find((item) => item.manifest?.node_id === nodeId) || null;
+  // 向后兼容：返回该节点点赞最高的课件（如有多个）
+  const all = findUserCoursesByNodeId(nodeId);
+  return all.length > 0 ? all[0] : null;
+}
+
+function findUserCoursesByNodeId(nodeId) {
+  if (!nodeId) return [];
+  const courses = getUserCourses().filter((item) => item.manifest?.node_id === nodeId);
+  // 按点赞数降序排列
+  const likes = readLikes();
+  courses.sort((a, b) => (likes[b.id] || 0) - (likes[a.id] || 0));
+  return courses;
+}
+
+function getTopCoursesByNodeId(nodeId, limit) {
+  const max = typeof limit === 'number' ? limit : MAX_COURSES_PER_NODE;
+  return findUserCoursesByNodeId(nodeId).slice(0, max);
+}
+
+/* ─── 点赞系统（纯前端 localStorage）─────────── */
+function readLikes() {
+  try {
+    return JSON.parse(localStorage.getItem(LIKES_STORAGE_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function saveLikes(likes) {
+  localStorage.setItem(LIKES_STORAGE_KEY, JSON.stringify(likes));
+}
+
+function getCourseLikes(courseId) {
+  return readLikes()[courseId] || 0;
+}
+
+function likeCourse(courseId) {
+  const likes = readLikes();
+  likes[courseId] = (likes[courseId] || 0) + 1;
+  saveLikes(likes);
+  return likes[courseId];
+}
+
+function unlikeCourse(courseId) {
+  const likes = readLikes();
+  likes[courseId] = Math.max(0, (likes[courseId] || 0) - 1);
+  saveLikes(likes);
+  return likes[courseId];
+}
+
+function toggleLike(courseId) {
+  // 简易切换：使用 sessionStorage 记录本次会话已赞的课件
+  const likedKey = `teachany_liked_${courseId}`;
+  const alreadyLiked = sessionStorage.getItem(likedKey) === '1';
+  if (alreadyLiked) {
+    sessionStorage.removeItem(likedKey);
+    return { liked: false, count: unlikeCourse(courseId) };
+  }
+  sessionStorage.setItem(likedKey, '1');
+  return { liked: true, count: likeCourse(courseId) };
+}
+
+function isLikedInSession(courseId) {
+  return sessionStorage.getItem(`teachany_liked_${courseId}`) === '1';
 }
 
 /* ─── Viewer：把完整课件包渲染到 iframe ───────── */
@@ -829,6 +907,56 @@ function injectImporterStyles() {
     }
     .course-card:hover .card-delete-btn { opacity: 1; }
     .card-delete-btn:hover { background: rgba(239,68,68,0.3); }
+
+    .ta-like-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; border-radius: 16px;
+      background: rgba(148,163,184,0.1); color: #94a3b8;
+      border: 1px solid rgba(148,163,184,0.15);
+      cursor: pointer; font-size: 13px;
+      transition: all 0.2s; white-space: nowrap;
+    }
+    .ta-like-btn:hover {
+      background: rgba(239,68,68,0.12);
+      border-color: rgba(239,68,68,0.3);
+      color: #fca5a5;
+    }
+    .ta-like-btn.liked {
+      background: rgba(239,68,68,0.15);
+      border-color: rgba(239,68,68,0.3);
+      color: #f87171;
+    }
+    .ta-like-btn .like-icon { font-size: 14px; }
+    .ta-like-btn .like-count { font-weight: 600; font-size: 12px; }
+
+    .ta-community-list {
+      margin-top: 10px; display: flex; flex-direction: column; gap: 6px;
+    }
+    .ta-community-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 10px; border-radius: 8px;
+      background: rgba(30,41,59,0.5); border: 1px solid rgba(148,163,184,0.1);
+      transition: all 0.2s; cursor: pointer;
+      text-decoration: none; color: inherit;
+      pointer-events: auto;
+    }
+    .ta-community-item:hover {
+      border-color: rgba(59,130,246,0.3);
+      background: rgba(59,130,246,0.08);
+    }
+    .ta-community-item .item-name {
+      font-size: 12px; font-weight: 600; color: #f8fafc;
+      flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .ta-community-item .item-likes {
+      font-size: 11px; color: #fca5a5; margin-left: 8px; white-space: nowrap;
+    }
+    .ta-community-item .item-rank {
+      font-size: 11px; color: #64748b; margin-right: 6px; font-weight: 700; min-width: 16px;
+    }
+    .ta-community-title {
+      font-size: 12px; color: #94a3b8; font-weight: 600; margin-top: 10px; margin-bottom: 4px;
+    }
   `;
   document.head.appendChild(style);
 }
@@ -999,11 +1127,14 @@ function renderUserCourses(grid) {
 
   const courses = getUserCourses();
   const addCard = grid.querySelector('.course-card-add');
+  const likes = readLikes();
 
   courses.forEach((course) => {
     const manifest = course.manifest || {};
     const subjectInfo = getSubjectInfo(manifest.subject);
     const tags = manifest.tags || [subjectInfo.name, `Grade ${manifest.grade || '?'}`];
+    const likeCount = likes[course.id] || 0;
+    const isLiked = isLikedInSession(course.id);
 
     const card = document.createElement('a');
     card.className = 'course-card user-course-card';
@@ -1032,7 +1163,13 @@ function renderUserCourses(grid) {
           <span>📅 ${escapeHtml((course.importedAt || '').slice(0, 10))}</span>
           <span>🗂️ ${escapeHtml(course.packageType === 'single-html' ? 'HTML' : '完整包')}</span>
         </div>
-        <span class="card-action">体验 →</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button class="ta-like-btn${isLiked ? ' liked' : ''}" data-course-id="${escapeHtml(course.id)}" title="点赞">
+            <span class="like-icon">${isLiked ? '❤️' : '🤍'}</span>
+            <span class="like-count">${likeCount}</span>
+          </button>
+          <span class="card-action">体验 →</span>
+        </div>
       </div>
     `;
 
@@ -1045,6 +1182,16 @@ function renderUserCourses(grid) {
       renderUserCourses(grid);
     };
 
+    const likeBtn = card.querySelector('.ta-like-btn');
+    likeBtn.onclick = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const result = toggleLike(course.id);
+      likeBtn.querySelector('.like-icon').textContent = result.liked ? '❤️' : '🤍';
+      likeBtn.querySelector('.like-count').textContent = result.count;
+      likeBtn.classList.toggle('liked', result.liked);
+    };
+
     if (addCard) {
       grid.insertBefore(card, addCard);
     } else {
@@ -1055,24 +1202,63 @@ function renderUserCourses(grid) {
 
 /* ─── 知识树集成 ──────────────────────────────── */
 function addTreeUploadButton(nodeData, tooltipEl) {
-  if (nodeData.status !== 'gap') return;
+  const nodeId = nodeData.id;
+  const topCourses = getTopCoursesByNodeId(nodeId);
+  const hasUserCourses = topCourses.length > 0;
 
-  const existing = findUserCourseByNodeId(nodeData.id);
+  // 展示社区课件列表（按赞排序，最多 5 个）
+  if (hasUserCourses) {
+    const titleEl = document.createElement('div');
+    titleEl.className = 'ta-community-title';
+    titleEl.textContent = `📂 社区课件（${topCourses.length}）`;
+    tooltipEl.appendChild(titleEl);
 
-  if (existing) {
-    const link = document.createElement('a');
-    link.className = 'course-link';
-    link.href = getCourseLaunchUrl(existing);
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    link.textContent = '📂 打开我的课件';
-    link.style.pointerEvents = 'auto';
-    link.style.marginTop = '8px';
-    link.style.display = 'block';
-    tooltipEl.appendChild(link);
-    return;
+    const listEl = document.createElement('div');
+    listEl.className = 'ta-community-list';
+    const likes = readLikes();
+
+    topCourses.forEach((course, index) => {
+      const manifest = course.manifest || {};
+      const likeCount = likes[course.id] || 0;
+      const isLiked = isLikedInSession(course.id);
+      const launchUrl = getCourseLaunchUrl(course);
+
+      const item = document.createElement('div');
+      item.className = 'ta-community-item';
+
+      item.innerHTML = `
+        <span class="item-rank">${index + 1}</span>
+        <a class="item-name" href="${escapeHtml(launchUrl)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(manifest.name || '课件')}">${escapeHtml(manifest.name || '未命名课件')}</a>
+        <button class="ta-like-btn${isLiked ? ' liked' : ''}" data-course-id="${escapeHtml(course.id)}" style="padding:2px 6px;font-size:11px;">
+          <span class="like-icon">${isLiked ? '❤️' : '🤍'}</span>
+          <span class="like-count">${likeCount}</span>
+        </button>
+      `;
+
+      // 点赞按钮事件
+      const likeBtn = item.querySelector('.ta-like-btn');
+      likeBtn.onclick = (event) => {
+        event.stopPropagation();
+        event.preventDefault();
+        const result = toggleLike(course.id);
+        likeBtn.querySelector('.like-icon').textContent = result.liked ? '❤️' : '🤍';
+        likeBtn.querySelector('.like-count').textContent = result.count;
+        likeBtn.classList.toggle('liked', result.liked);
+      };
+
+      // 课件名称链接事件（阻止冒泡以免触发节点点击）
+      const nameLink = item.querySelector('.item-name');
+      nameLink.onclick = (event) => {
+        event.stopPropagation();
+      };
+
+      listEl.appendChild(item);
+    });
+
+    tooltipEl.appendChild(listEl);
   }
 
+  // 上传按钮始终显示（即使已有课件，用户仍可继续上传新版本）
   const uploadBtn = document.createElement('button');
   uploadBtn.style.cssText = `
     display: block; width: 100%; margin-top: 10px; padding: 8px 12px;
@@ -1081,7 +1267,7 @@ function addTreeUploadButton(nodeData, tooltipEl) {
     font-size: 13px; font-weight: 600; cursor: pointer;
     pointer-events: auto; transition: all 0.2s;
   `;
-  uploadBtn.textContent = '📦 上传课件';
+  uploadBtn.textContent = hasUserCourses ? '➕ 上传新课件' : '📦 上传课件';
   uploadBtn.onmouseenter = () => { uploadBtn.style.filter = 'brightness(1.15)'; };
   uploadBtn.onmouseleave = () => { uploadBtn.style.filter = ''; };
   uploadBtn.onclick = (event) => {
@@ -1112,6 +1298,14 @@ window.TeachAnyImporter = {
   getCourseLaunchUrl,
   getUserCourseRecord,
   findUserCourseByNodeId,
+  findUserCoursesByNodeId,
+  getTopCoursesByNodeId,
+  getCourseLikes,
+  likeCourse,
+  unlikeCourse,
+  toggleLike,
+  isLikedInSession,
   mountImportedCourseViewer,
   SUBJECT_META,
+  MAX_COURSES_PER_NODE,
 };
