@@ -94,19 +94,19 @@ function joinPathSegments(segments) {
 function resolveRelativePath(basePath, relativePath) {
   const clean = normalizePath(relativePath);
   if (!clean) return '';
-  if (clean.startsWith('../') || clean.startsWith('./')) {
-    const parts = getDirname(basePath).split('/').filter(Boolean);
-    clean.split('/').forEach((part) => {
-      if (!part || part === '.') return;
-      if (part === '..') {
-        parts.pop();
-      } else {
-        parts.push(part);
-      }
-    });
-    return joinPathSegments(parts);
-  }
-  return clean;
+  // 绝对路径或协议路径直接返回
+  if (/^[a-z]+:/i.test(clean)) return clean;
+  // 所有相对路径（包括不带 ./ 前缀的）都基于 basePath 目录解析
+  const parts = getDirname(basePath).split('/').filter(Boolean);
+  clean.split('/').forEach((part) => {
+    if (!part || part === '.') return;
+    if (part === '..') {
+      parts.pop();
+    } else {
+      parts.push(part);
+    }
+  });
+  return joinPathSegments(parts);
 }
 
 function stripQueryAndHash(value) {
@@ -668,15 +668,22 @@ async function mountImportedCourseViewer(container, options = {}) {
   document.title = `${record.manifest?.name || '我的课件'} · TeachAny`;
 
   const { html, revokeUrls } = await buildRenderableCourseHtml(record);
+
+  // 关键：用 blob URL 而非 srcdoc 加载。
+  // srcdoc 运行在 about:srcdoc origin，无法访问父页面创建的 blob: ObjectURL。
+  // 将 HTML 自身也包装成 blob URL，这样 HTML 和它引用的资源 ObjectURL 处于同一 origin。
+  const htmlBlob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const htmlBlobUrl = URL.createObjectURL(htmlBlob);
+  revokeUrls.push(htmlBlobUrl);
+
   const iframe = document.createElement('iframe');
-  iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
   iframe.setAttribute('referrerpolicy', 'no-referrer');
   iframe.style.width = '100%';
   iframe.style.height = '100%';
   iframe.style.border = 'none';
   iframe.style.borderRadius = '14px';
   iframe.style.background = '#fff';
-  iframe.srcdoc = html;
+  iframe.src = htmlBlobUrl;
 
   container.innerHTML = '';
   container.appendChild(iframe);
