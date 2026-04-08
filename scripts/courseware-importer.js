@@ -125,6 +125,28 @@ function isHtmlFileName(name) {
   return /\.html?$/i.test(name || '');
 }
 
+function blobToDataUrl(blob, mimeType) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      // FileReader.readAsDataURL 生成的结果自带正确的 data:mime;base64, 前缀
+      // 但如果 blob.type 为空，可能得到 data:application/octet-stream;base64,...
+      // 为确保 MIME 正确，必要时手动替换前缀
+      let result = reader.result;
+      if (mimeType && result) {
+        const prefix = result.split(',')[0];
+        const expectedPrefix = `data:${mimeType};base64`;
+        if (prefix !== expectedPrefix) {
+          result = expectedPrefix + ',' + result.split(',')[1];
+        }
+      }
+      resolve(result);
+    };
+    reader.onerror = () => reject(reader.error || new Error('Blob 转 data URL 失败'));
+    reader.readAsDataURL(blob);
+  });
+}
+
 function guessMimeType(path) {
   const ext = normalizePath(path).split('.').pop()?.toLowerCase();
   switch (ext) {
@@ -606,23 +628,22 @@ async function buildRenderableCourseHtml(courseRecord) {
     throw new Error('课件包内容为空');
   }
 
+  // 将所有资源文件转为 data URL（base64），避免 ObjectURL 在 srcdoc 中不可访问
+  // 以及避免 blob URL 被浏览器当作下载
   const fileMap = new Map();
-  const revokeUrls = [];
 
-  files.forEach((item) => {
+  for (const item of files) {
     const normalizedPath = normalizePath(item.path);
     const blob = item.blob;
-    const url = URL.createObjectURL(blob);
-    revokeUrls.push(url);
-    fileMap.set(normalizedPath, { path: normalizedPath, blob, url });
-  });
+    const dataUrl = await blobToDataUrl(blob, guessMimeType(normalizedPath));
+    fileMap.set(normalizedPath, { path: normalizedPath, blob, url: dataUrl });
+  }
 
   const htmlEntry =
     fileMap.get('index.html') ||
     Array.from(fileMap.values()).find((item) => isHtmlFileName(item.path));
 
   if (!htmlEntry) {
-    revokeUrls.forEach((url) => URL.revokeObjectURL(url));
     throw new Error('课件包中缺少可打开的 HTML 文件');
   }
 
@@ -637,7 +658,7 @@ async function buildRenderableCourseHtml(courseRecord) {
   injectViewerGuard(doc, courseRecord.manifest);
 
   const html = `<!DOCTYPE html>\n${doc.documentElement.outerHTML}`;
-  return { html, revokeUrls };
+  return { html };
 }
 
 async function mountImportedCourseViewer(container, options = {}) {
@@ -667,29 +688,22 @@ async function mountImportedCourseViewer(container, options = {}) {
   }
   document.title = `${record.manifest?.name || '我的课件'} · TeachAny`;
 
-  const { html, revokeUrls } = await buildRenderableCourseHtml(record);
-
-  // 关键：用 blob URL 而非 srcdoc 加载。
-  // srcdoc 运行在 about:srcdoc origin，无法访问父页面创建的 blob: ObjectURL。
-  // 将 HTML 自身也包装成 blob URL，这样 HTML 和它引用的资源 ObjectURL 处于同一 origin。
-  const htmlBlob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const htmlBlobUrl = URL.createObjectURL(htmlBlob);
-  revokeUrls.push(htmlBlobUrl);
+  const { html } = await buildRenderableCourseHtml(record);
 
   const iframe = document.createElement('iframe');
+  iframe.setAttribute('sandbox', 'allow-scripts');
   iframe.setAttribute('referrerpolicy', 'no-referrer');
   iframe.style.width = '100%';
   iframe.style.height = '100%';
   iframe.style.border = 'none';
   iframe.style.borderRadius = '14px';
   iframe.style.background = '#fff';
-  iframe.src = htmlBlobUrl;
+  // 使用 srcdoc 加载：所有资源已内联为 data URL，无跨 origin 问题
+  iframe.srcdoc = html;
 
   container.innerHTML = '';
   container.appendChild(iframe);
 
-  const cleanup = () => revokeUrls.forEach((url) => URL.revokeObjectURL(url));
-  window.addEventListener('beforeunload', cleanup, { once: true });
   iframe.addEventListener('load', () => {
     if (loadingEl) loadingEl.textContent = '';
   }, { once: true });
