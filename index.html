@@ -576,6 +576,7 @@ footer a { color: var(--primary); text-decoration: none; }
 </footer>
 
 <script src="./scripts/courseware-importer.js"></script>
+<script src="./scripts/community-loader.js"></script>
 <script>
 function filterCourses(subject) {
   const cards = document.querySelectorAll('.course-card');
@@ -593,10 +594,22 @@ function filterCourses(subject) {
   });
 }
 
-// 初始化课件导入器
-document.addEventListener('DOMContentLoaded', function() {
+// 初始化课件导入器 + 社区课件
+document.addEventListener('DOMContentLoaded', async function() {
+  const grid = document.querySelector('#courseGrid');
+
   if (window.TeachAnyImporter) {
     TeachAnyImporter.initGalleryImporter('#courseGrid');
+  }
+
+  // 异步加载社区课件索引并渲染社区课件卡片
+  if (window.TeachAnyCommunity && grid) {
+    try {
+      const index = await TeachAnyCommunity.fetchCommunityIndex();
+      TeachAnyCommunity.renderCommunityGalleryCards(grid, index);
+    } catch (err) {
+      console.warn('[TeachAny] 社区课件加载失败:', err.message);
+    }
   }
 });
 </script>
