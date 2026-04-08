@@ -1263,39 +1263,29 @@ function addTreeUploadButton(nodeData, tooltipEl) {
   const topCourses = getTopCoursesByNodeId(nodeId);
   const hasUserCourses = topCourses.length > 0;
 
-  // 展示我的课件列表（按时间倒序，最多 5 个）
+  // 展示我的课件摘要（仅显示最新一条，不逐一列举）
   if (hasUserCourses) {
-    const titleEl = document.createElement('div');
-    titleEl.className = 'ta-community-title';
-    titleEl.textContent = `📂 我的课件（${topCourses.length}）`;
-    tooltipEl.appendChild(titleEl);
+    const summaryEl = document.createElement('div');
+    summaryEl.className = 'ta-community-title';
+    const latest = topCourses[0];
+    const manifest = latest?.manifest || {};
+    const launchUrl = getCourseLaunchUrl(latest);
+    const importedDate = (latest?.importedAt || '').slice(0, 10);
 
-    const listEl = document.createElement('div');
-    listEl.className = 'ta-community-list';
-
-    topCourses.forEach((course) => {
-      const manifest = course.manifest || {};
-      const launchUrl = getCourseLaunchUrl(course);
-      const importedDate = (course.importedAt || '').slice(0, 10);
-
-      const item = document.createElement('div');
-      item.className = 'ta-community-item';
-
-      item.innerHTML = `
-        <a class="item-name" href="${escapeHtml(launchUrl)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(manifest.name || '课件')}">${escapeHtml(manifest.name || '未命名课件')}</a>
-        <span style="font-size:11px;color:#64748b;white-space:nowrap;">${importedDate}</span>
-      `;
-
-      // 课件名称链接事件（阻止冒泡以免触发节点点击）
-      const nameLink = item.querySelector('.item-name');
-      nameLink.onclick = (event) => {
-        event.stopPropagation();
-      };
-
-      listEl.appendChild(item);
+    summaryEl.innerHTML = `
+      📂 已有 ${topCourses.length} 个课件
+      <span style="color:#64748b;font-weight:normal;margin-left:4px;">
+        · 最新：<a href="${escapeHtml(launchUrl)}" target="_blank" rel="noopener noreferrer"
+          style="color:#60a5fa;text-decoration:none;" data-ta-stop-prop>${escapeHtml(manifest.name || '未命名')}</a>
+        <span style="color:#475569;">(${importedDate})</span>
+      </span>
+    `;
+    // 阻止冒泡
+    const stopLinks = summaryEl.querySelectorAll('[data-ta-stop-prop]');
+    stopLinks.forEach((link) => {
+      link.onclick = (event) => { event.stopPropagation(); };
     });
-
-    tooltipEl.appendChild(listEl);
+    tooltipEl.appendChild(summaryEl);
   }
 
   // 上传按钮始终显示（即使已有课件，用户仍可继续上传新版本）
