@@ -448,6 +448,144 @@ async function parseTeachanyPackage(file) {
   return parseZipPackage(file);
 }
 
+/* ─── 文件夹课件解析 ──────────────────────────── */
+
+/**
+ * 从文件夹的 FileList 中解析课件包（index.html + 所有资源文件）
+ * @param {FileList|Array<File>} fileList - 来自 input[webkitdirectory] 或拖拽的文件列表
+ * @returns {Promise<Object>} 解析后的课件对象
+ */
+async function parseFolderFiles(fileList) {
+  const filesArray = Array.from(fileList);
+  if (!filesArray.length) throw new Error('文件夹为空');
+
+  // 找到共同的根目录前缀（去掉顶层文件夹名）
+  const firstRelPath = filesArray[0].webkitRelativePath || filesArray[0].name;
+  const rootPrefix = firstRelPath.split('/')[0]; // 顶层文件夹名
+
+  const files = [];
+  let indexFile = null;
+  let manifestFile = null;
+  let totalSize = 0;
+
+  for (const file of filesArray) {
+    const rawPath = file.webkitRelativePath || file.name;
+    // 去掉顶层文件夹前缀，得到相对路径
+    let relativePath = rawPath;
+    if (rootPrefix && rawPath.startsWith(rootPrefix + '/')) {
+      relativePath = rawPath.slice(rootPrefix.length + 1);
+    }
+    relativePath = normalizePath(relativePath);
+    if (!relativePath) continue;
+
+    // 跳过隐藏文件和常见无用文件
+    if (relativePath.startsWith('.') || relativePath.includes('/.') ||
+        relativePath === 'Thumbs.db' || relativePath === '.DS_Store' ||
+        relativePath.startsWith('__MACOSX')) continue;
+
+    totalSize += file.size;
+    if (totalSize > MAX_FILE_SIZE) {
+      throw new Error(`文件夹总大小超过 ${MAX_FILE_SIZE / 1024 / 1024}MB 限制`);
+    }
+
+    const blob = new Blob([file], { type: file.type || guessMimeType(relativePath) });
+    files.push({ path: relativePath, blob });
+
+    if (relativePath === 'index.html' || relativePath === 'index.htm') {
+      indexFile = { path: relativePath, blob, file };
+    }
+    if (relativePath === 'manifest.json') {
+      manifestFile = { path: relativePath, blob, file };
+    }
+  }
+
+  if (!indexFile) {
+    throw new Error('文件夹中缺少 index.html，请确认选择了正确的课件文件夹');
+  }
+
+  // 解析 manifest
+  let manifest;
+  if (manifestFile) {
+    try {
+      const text = await manifestFile.file.text();
+      manifest = JSON.parse(text);
+    } catch {
+      throw new Error('manifest.json 格式错误');
+    }
+  } else {
+    const htmlText = await indexFile.file.text();
+    manifest = extractMetaFromHtmlText(htmlText, rootPrefix || '课件');
+  }
+
+  validateManifest(manifest);
+
+  // 统计资源类型
+  const mediaFiles = files.filter(f =>
+    /\.(mp3|mp4|wav|ogg|webm|m4a|aac|flac|avi|mov)$/i.test(f.path)
+  );
+  const imageFiles = files.filter(f =>
+    /\.(png|jpg|jpeg|gif|webp|svg|ico)$/i.test(f.path)
+  );
+
+  console.log(`[TeachAny] 文件夹解析完成: ${files.length} 个文件 (${mediaFiles.length} 个音视频, ${imageFiles.length} 个图片)`);
+
+  return {
+    id: buildCourseId(manifest, rootPrefix),
+    manifest,
+    files,
+    fileName: rootPrefix || 'folder-course',
+    importedAt: new Date().toISOString(),
+    packageType: 'folder',
+  };
+}
+
+/**
+ * 从拖拽的 DataTransferItemList 中递归读取文件夹所有文件
+ * @param {DataTransferItemList} items
+ * @returns {Promise<File[]>}
+ */
+async function readDroppedFolder(items) {
+  const files = [];
+
+  async function readEntry(entry, parentPath) {
+    if (entry.isFile) {
+      const file = await new Promise((resolve, reject) => entry.file(resolve, reject));
+      // 给 file 附上相对路径（模拟 webkitRelativePath）
+      Object.defineProperty(file, 'webkitRelativePath', {
+        value: parentPath ? parentPath + '/' + file.name : file.name,
+        writable: false,
+      });
+      files.push(file);
+    } else if (entry.isDirectory) {
+      const dirReader = entry.createReader();
+      const entries = await new Promise((resolve, reject) => {
+        const allEntries = [];
+        function readBatch() {
+          dirReader.readEntries((batch) => {
+            if (batch.length === 0) { resolve(allEntries); return; }
+            allEntries.push(...batch);
+            readBatch(); // 递归读取直到空（Chrome 每次最多 100 个）
+          }, reject);
+        }
+        readBatch();
+      });
+      const dirPath = parentPath ? parentPath + '/' + entry.name : entry.name;
+      for (const child of entries) {
+        await readEntry(child, dirPath);
+      }
+    }
+  }
+
+  for (let i = 0; i < items.length; i++) {
+    const entry = items[i].webkitGetAsEntry?.() || items[i].getAsEntry?.();
+    if (entry) {
+      await readEntry(entry, '');
+    }
+  }
+
+  return files;
+}
+
 /* ─── 数据持久化 API ─────────────────────────── */
 async function addUserCourse(course) {
   const courses = getUserCourses();
@@ -1001,13 +1139,18 @@ function createImportDialog(options = {}) {
       <p class="subtitle">
         ${options.targetNodeId
           ? `为「${escapeHtml(options.targetNodeName || options.targetNodeId)}」节点上传课件`
-          : '拖入 .teachany/.zip 课件包，或直接导入单个 HTML 文件'}
+          : '上传课件包或课件文件夹（含音视频等资源）'}
       </p>
       <div class="ta-dropzone" id="taDropzone">
         <div class="icon">📂</div>
-        <div class="label">拖入文件或点击选择</div>
-        <div class="hint">支持 .teachany、.zip、.html</div>
+        <div class="label">拖入文件/文件夹，或点击下方按钮选择</div>
+        <div class="hint">支持 .teachany、.zip、.html，或整个课件文件夹（含音视频资源）</div>
         <input type="file" accept=".teachany,.zip,.html,.htm" style="display:none" id="taFileInput">
+        <input type="file" webkitdirectory style="display:none" id="taFolderInput">
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="ta-btn ta-btn-secondary" id="taPickFile" style="flex:1;">📄 选择文件</button>
+        <button class="ta-btn ta-btn-primary" id="taPickFolder" style="flex:1;background:linear-gradient(135deg,#10b981,#06b6d4);">📁 选择文件夹（推荐）</button>
       </div>
       <div class="ta-import-status" id="taStatus"></div>
       <div id="taPreview"></div>
@@ -1023,10 +1166,13 @@ function createImportDialog(options = {}) {
 
   const dropzone = overlay.querySelector('#taDropzone');
   const fileInput = overlay.querySelector('#taFileInput');
+  const folderInput = overlay.querySelector('#taFolderInput');
   const status = overlay.querySelector('#taStatus');
   const preview = overlay.querySelector('#taPreview');
   const cancelBtn = overlay.querySelector('#taCancelBtn');
   const confirmBtn = overlay.querySelector('#taConfirmBtn');
+  const pickFileBtn = overlay.querySelector('#taPickFile');
+  const pickFolderBtn = overlay.querySelector('#taPickFolder');
 
   let parsedCourse = null;
 
@@ -1038,6 +1184,11 @@ function createImportDialog(options = {}) {
   function renderPreview(course) {
     const manifest = course.manifest;
     const subjectInfo = getSubjectInfo(manifest.subject);
+    const allFiles = course.files || [];
+    const mediaFiles = allFiles.filter(f => /\.(mp3|mp4|wav|ogg|webm|m4a|aac|mov)$/i.test(f.path));
+    const imageFiles = allFiles.filter(f => /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(f.path));
+    const totalSize = allFiles.reduce((sum, f) => sum + (f.blob?.size || 0), 0);
+
     preview.innerHTML = `
       <div class="ta-preview-card">
         <h3>${escapeHtml(manifest.emoji || subjectInfo.emoji)} ${escapeHtml(manifest.name)}</h3>
@@ -1045,9 +1196,16 @@ function createImportDialog(options = {}) {
           <span>📚 ${escapeHtml(subjectInfo.name)}</span>
           <span>🎓 ${escapeHtml(manifest.grade)}年级</span>
           ${manifest.node_id ? `<span>🌳 ${escapeHtml(manifest.node_id)}</span>` : ''}
-          ${manifest.difficulty ? `<span>⭐ 难度 ${escapeHtml(manifest.difficulty)}</span>` : ''}
-          <span>📦 ${course.files?.length || 0} 个文件</span>
+          <span>📦 ${allFiles.length} 个文件</span>
+          ${mediaFiles.length ? `<span>🎬 ${mediaFiles.length} 个音视频</span>` : ''}
+          ${imageFiles.length ? `<span>🖼️ ${imageFiles.length} 个图片</span>` : ''}
+          <span>💾 ${formatFileSize(totalSize)}</span>
         </div>
+        ${course.packageType === 'single-html' && !mediaFiles.length ? `
+          <div style="margin-top:8px;padding:6px 10px;border-radius:6px;background:rgba(245,158,11,0.1);font-size:12px;color:#fbbf24;">
+            ⚠️ 单 HTML 文件不包含音视频资源。如需保留音视频，请用「选择文件夹」上传整个课件目录。
+          </div>
+        ` : ''}
       </div>
     `;
   }
@@ -1075,11 +1233,35 @@ function createImportDialog(options = {}) {
     }
   }
 
+  async function handleFolder(fileList) {
+    status.className = 'ta-import-status loading';
+    status.textContent = '⏳ 正在扫描文件夹...';
+    preview.innerHTML = '';
+    confirmBtn.disabled = true;
+
+    try {
+      parsedCourse = await parseFolderFiles(fileList);
+      if (options.targetNodeId) {
+        parsedCourse.manifest.node_id = options.targetNodeId;
+        parsedCourse.id = buildCourseId(parsedCourse.manifest, parsedCourse.fileName);
+      }
+      status.className = 'ta-import-status success';
+      status.textContent = `✅ 课件解析成功（共 ${parsedCourse.files.length} 个文件）`;
+      renderPreview(parsedCourse);
+      confirmBtn.disabled = false;
+    } catch (err) {
+      parsedCourse = null;
+      status.className = 'ta-import-status error';
+      status.textContent = `❌ ${err.message}`;
+    }
+  }
+
   cancelBtn.onclick = close;
   overlay.onclick = (event) => {
     if (event.target === overlay) close();
   };
 
+  // 拖拽支持（文件 + 文件夹）
   dropzone.ondragover = (event) => {
     event.preventDefault();
     dropzone.classList.add('dragover');
@@ -1088,13 +1270,44 @@ function createImportDialog(options = {}) {
   dropzone.ondrop = async (event) => {
     event.preventDefault();
     dropzone.classList.remove('dragover');
+
+    // 检查是否拖入了文件夹
+    const items = event.dataTransfer.items;
+    if (items && items.length > 0) {
+      const firstEntry = items[0].webkitGetAsEntry?.() || items[0].getAsEntry?.();
+      if (firstEntry && firstEntry.isDirectory) {
+        // 拖入的是文件夹：递归读取所有文件
+        status.className = 'ta-import-status loading';
+        status.textContent = '⏳ 正在读取文件夹...';
+        try {
+          const files = await readDroppedFolder(items);
+          await handleFolder(files);
+        } catch (err) {
+          status.className = 'ta-import-status error';
+          status.textContent = `❌ 读取文件夹失败: ${err.message}`;
+        }
+        return;
+      }
+    }
+
+    // 普通文件拖入
     const file = event.dataTransfer.files?.[0];
     if (file) await handleFile(file);
   };
 
-  dropzone.onclick = () => fileInput.click();
+  // 点击拖拽区域不再直接打开文件选择器（有两个按钮了）
+  dropzone.onclick = () => {};
+
+  // 选择文件按钮
+  pickFileBtn.onclick = (e) => { e.stopPropagation(); fileInput.click(); };
   fileInput.onchange = async () => {
     if (fileInput.files?.[0]) await handleFile(fileInput.files[0]);
+  };
+
+  // 选择文件夹按钮
+  pickFolderBtn.onclick = (e) => { e.stopPropagation(); folderInput.click(); };
+  folderInput.onchange = async () => {
+    if (folderInput.files?.length) await handleFolder(folderInput.files);
   };
 
   confirmBtn.onclick = async () => {
@@ -1432,6 +1645,8 @@ function formatFileSize(bytes) {
 
 window.TeachAnyImporter = {
   parseTeachanyPackage,
+  parseFolderFiles,
+  readDroppedFolder,
   getUserCourses,
   addUserCourse,
   removeUserCourse,
