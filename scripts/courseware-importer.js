@@ -548,9 +548,8 @@ function findUserCourseByNodeId(nodeId) {
 function findUserCoursesByNodeId(nodeId) {
   if (!nodeId) return [];
   const courses = getUserCourses().filter((item) => item.manifest?.node_id === nodeId);
-  // 按点赞数降序排列
-  const likes = readLikes();
-  courses.sort((a, b) => (likes[b.id] || 0) - (likes[a.id] || 0));
+  // 按导入时间倒序排列（最新在前）
+  courses.sort((a, b) => (b.importedAt || '').localeCompare(a.importedAt || ''));
   return courses;
 }
 
@@ -1264,45 +1263,28 @@ function addTreeUploadButton(nodeData, tooltipEl) {
   const topCourses = getTopCoursesByNodeId(nodeId);
   const hasUserCourses = topCourses.length > 0;
 
-  // 展示社区课件列表（按赞排序，最多 5 个）
+  // 展示我的课件列表（按时间倒序，最多 5 个）
   if (hasUserCourses) {
     const titleEl = document.createElement('div');
     titleEl.className = 'ta-community-title';
-    titleEl.textContent = `📂 社区课件（${topCourses.length}）`;
+    titleEl.textContent = `📂 我的课件（${topCourses.length}）`;
     tooltipEl.appendChild(titleEl);
 
     const listEl = document.createElement('div');
     listEl.className = 'ta-community-list';
-    const likes = readLikes();
 
-    topCourses.forEach((course, index) => {
+    topCourses.forEach((course) => {
       const manifest = course.manifest || {};
-      const likeCount = likes[course.id] || 0;
-      const isLiked = isLikedInSession(course.id);
       const launchUrl = getCourseLaunchUrl(course);
+      const importedDate = (course.importedAt || '').slice(0, 10);
 
       const item = document.createElement('div');
       item.className = 'ta-community-item';
 
       item.innerHTML = `
-        <span class="item-rank">${index + 1}</span>
         <a class="item-name" href="${escapeHtml(launchUrl)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(manifest.name || '课件')}">${escapeHtml(manifest.name || '未命名课件')}</a>
-        <button class="ta-like-btn${isLiked ? ' liked' : ''}" data-course-id="${escapeHtml(course.id)}" style="padding:2px 6px;font-size:11px;">
-          <span class="like-icon">${isLiked ? '❤️' : '🤍'}</span>
-          <span class="like-count">${likeCount}</span>
-        </button>
+        <span style="font-size:11px;color:#64748b;white-space:nowrap;">${importedDate}</span>
       `;
-
-      // 点赞按钮事件
-      const likeBtn = item.querySelector('.ta-like-btn');
-      likeBtn.onclick = (event) => {
-        event.stopPropagation();
-        event.preventDefault();
-        const result = toggleLike(course.id);
-        likeBtn.querySelector('.like-icon').textContent = result.liked ? '❤️' : '🤍';
-        likeBtn.querySelector('.like-count').textContent = result.count;
-        likeBtn.classList.toggle('liked', result.liked);
-      };
 
       // 课件名称链接事件（阻止冒泡以免触发节点点击）
       const nameLink = item.querySelector('.item-name');
