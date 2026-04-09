@@ -110,6 +110,8 @@ Click any course below to experience it live:
 | [🧬 Meiosis & Fertilization](examples/bio-meiosis/) | Biology | Grade 10 | Cell division simulation, chromosome drag-and-drop | 1,400+ |
 | [🌍 Global Monsoon Systems](examples/geo-monsoon/) | Geography | Grade 10 | Leaflet map, wind pattern visualization, region comparison | 1,200+ |
 | [💧 Liquid Pressure & Buoyancy](examples/phy-pressure-buoyancy/) | Physics | Grade 8 | Experiment simulation, parameter adjustment | 1,000+ |
+| [🌿 Photosynthesis](examples/bio-photosynthesis/) | Biology | Grade 7 | Canvas animation, drag-and-drop equation, TTS narration | 1,950+ |
+| [⚡ Ohm's Law](examples/phy-ohms-law/) | Physics | Grade 9 | Virtual circuit lab, V-I graphing, formula derivation, TTS narration | 2,630+ |
 | [🔤 Compound Vowels](examples/chn-compound-vowel/) | Chinese | Grade 1 | Phonics audio, mouth-shape cues, guided pronunciation practice | 800+ |
 
 > All courses are **single-file HTML** — no build step, no dependencies. Open in any browser.
