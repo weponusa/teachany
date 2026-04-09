@@ -1,0 +1,246 @@
+name: Community Courseware Review
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ['community/pending/**']
+
+jobs:
+  validate-submission:
+    runs-on: ubuntu-latest
+    name: Validate Community Submission
+    permissions:
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate submission files
+        id: validate
+        run: |
+          echo "🔍 Checking community courseware submissions..."
+          ERRORS=0
+          WARNINGS=0
+          SUMMARY=""
+
+          for file in community/pending/*.json; do
+            [ "$file" = "community/pending/*.json" ] && continue
+            [ "$(basename $file)" = ".gitkeep" ] && continue
+
+            BASENAME=$(basename "$file" .json)
+            echo ""
+            echo "--- Validating: $file ---"
+
+            # Check valid JSON
+            if ! python3 -c "import json; json.load(open('$file'))"; then
+              echo "  ❌ Invalid JSON"
+              ERRORS=$((ERRORS + 1))
+              SUMMARY="${SUMMARY}\n❌ \`${BASENAME}\`: Invalid JSON format"
+              continue
+            fi
+
+            # Check required fields
+            MISSING_FIELDS=""
+            for field in id node_id name subject grade; do
+              VALUE=$(python3 -c "import json; d=json.load(open('$file')); print(d.get('$field', ''))")
+              if [ -z "$VALUE" ]; then
+                echo "  ❌ Missing required field: $field"
+                MISSING_FIELDS="${MISSING_FIELDS} ${field}"
+                ERRORS=$((ERRORS + 1))
+              else
+                echo "  ✅ $field: $VALUE"
+              fi
+            done
+
+            if [ -n "$MISSING_FIELDS" ]; then
+              SUMMARY="${SUMMARY}\n❌ \`${BASENAME}\`: Missing fields:${MISSING_FIELDS}"
+              continue
+            fi
+
+            # Extract metadata
+            COURSE_ID=$(python3 -c "import json; print(json.load(open('$file')).get('id', ''))")
+            NODE_ID=$(python3 -c "import json; print(json.load(open('$file')).get('node_id', ''))")
+            COURSE_NAME=$(python3 -c "import json; print(json.load(open('$file')).get('name', ''))")
+            SUBJECT=$(python3 -c "import json; print(json.load(open('$file')).get('subject', ''))")
+            GRADE=$(python3 -c "import json; print(json.load(open('$file')).get('grade', ''))")
+            AUTHOR=$(python3 -c "import json; print(json.load(open('$file')).get('author', ''))")
+            VERSION=$(python3 -c "import json; print(json.load(open('$file')).get('version', '1.0.0'))")
+
+            # Validate course ID format (only lowercase letters, digits, hyphens)
+            if ! echo "$COURSE_ID" | grep -qE '^[a-z0-9][a-z0-9-]*[a-z0-9]$'; then
+              echo "  ❌ Invalid course ID format (must be lowercase alphanumeric with hyphens)"
+              ERRORS=$((ERRORS + 1))
+              SUMMARY="${SUMMARY}\n❌ \`${BASENAME}\`: Invalid course ID format"
+            fi
+
+            # Check node_id exists in knowledge trees
+            FOUND_TREE=""
+            if [ -n "$NODE_ID" ]; then
+              FOUND_TREE=$(grep -rl "\"id\": \"$NODE_ID\"" data/trees/ 2>/dev/null | head -1)
+              if [ -n "$FOUND_TREE" ]; then
+                echo "  ✅ node_id '$NODE_ID' found in: $FOUND_TREE"
+              else
+                echo "  ⚠️ node_id '$NODE_ID' not found in any knowledge tree (may be new)"
+                WARNINGS=$((WARNINGS + 1))
+              fi
+            fi
+
+            # Check subject is valid
+            case "$SUBJECT" in
+              math|physics|chemistry|biology|geography|history|chinese|english|it|info-tech)
+                echo "  ✅ subject '$SUBJECT' is valid"
+                ;;
+              *)
+                echo "  ⚠️ subject '$SUBJECT' may not be recognized"
+                WARNINGS=$((WARNINGS + 1))
+                ;;
+            esac
+
+            # Check if .teachany package exists
+            TEACHANY_FILE="community/pending/${BASENAME}.teachany"
+            PACKAGE_STATUS="❌ Not found"
+            PACKAGE_SIZE=""
+            if [ -f "$TEACHANY_FILE" ]; then
+              FILE_SIZE=$(stat -f%z "$TEACHANY_FILE" 2>/dev/null || stat -c%s "$TEACHANY_FILE" 2>/dev/null || echo "0")
+              FILE_SIZE_MB=$(echo "scale=2; $FILE_SIZE / 1048576" | bc 2>/dev/null || echo "?")
+              PACKAGE_STATUS="✅ Found (${FILE_SIZE_MB} MB)"
+              PACKAGE_SIZE="$FILE_SIZE_MB"
+
+              # Check file size limit (50MB)
+              if [ "$FILE_SIZE" -gt 52428800 ] 2>/dev/null; then
+                echo "  ❌ .teachany package exceeds 50MB limit"
+                ERRORS=$((ERRORS + 1))
+                PACKAGE_STATUS="❌ Exceeds 50MB limit (${FILE_SIZE_MB} MB)"
+              fi
+            else
+              echo "  ⚠️ No .teachany package found (may be uploaded via Release)"
+              WARNINGS=$((WARNINGS + 1))
+            fi
+
+            # Check for duplicate in existing community index
+            DUPLICATE="No"
+            if python3 -c "
+          import json
+          idx = json.load(open('community/index.json'))
+          ids = [c['id'] for c in idx.get('courses', [])]
+          exit(0 if '$COURSE_ID' not in ids else 1)
+          " 2>/dev/null; then
+              echo "  ✅ No duplicate in community index"
+            else
+              echo "  ⚠️ Course ID '$COURSE_ID' already exists in community index"
+              WARNINGS=$((WARNINGS + 1))
+              DUPLICATE="Yes"
+            fi
+
+            # Build summary
+            NODE_STATUS="✅ 匹配"
+            [ -z "$FOUND_TREE" ] && NODE_STATUS="⚠️ 未找到"
+            SUMMARY="${SUMMARY}\n### 📦 \`${COURSE_NAME}\` (\`${COURSE_ID}\`)"
+            SUMMARY="${SUMMARY}\n| 字段 | 值 |"
+            SUMMARY="${SUMMARY}\n|:---|:---|"
+            SUMMARY="${SUMMARY}\n| 学科 | ${SUBJECT} |"
+            SUMMARY="${SUMMARY}\n| 年级 | ${GRADE} |"
+            SUMMARY="${SUMMARY}\n| 知识节点 | \`${NODE_ID}\` ${NODE_STATUS} |"
+            SUMMARY="${SUMMARY}\n| 作者 | @${AUTHOR} |"
+            SUMMARY="${SUMMARY}\n| 版本 | ${VERSION} |"
+            SUMMARY="${SUMMARY}\n| 课件包 | ${PACKAGE_STATUS} |"
+            SUMMARY="${SUMMARY}\n| 已存在 | ${DUPLICATE} |"
+          done
+
+          # Save outputs
+          echo "errors=$ERRORS" >> $GITHUB_OUTPUT
+          echo "warnings=$WARNINGS" >> $GITHUB_OUTPUT
+
+          # Save summary to file (multi-line safe)
+          printf "%b" "$SUMMARY" > /tmp/review_summary.txt
+
+          echo ""
+          if [ $ERRORS -gt 0 ]; then
+            echo "❌ Found $ERRORS error(s), $WARNINGS warning(s)."
+            exit 1
+          else
+            echo "✅ All submissions validated! ($WARNINGS warning(s))"
+          fi
+
+      - name: Post review summary as PR comment
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const { owner, repo } = context.repo;
+            const prNumber = context.payload.pull_request.number;
+            const errors = '${{ steps.validate.outputs.errors }}' || '0';
+            const warnings = '${{ steps.validate.outputs.warnings }}' || '0';
+
+            let summary = '';
+            try {
+              summary = fs.readFileSync('/tmp/review_summary.txt', 'utf8');
+            } catch { summary = '（无法读取摘要）'; }
+
+            const statusIcon = errors !== '0' ? '❌' : (warnings !== '0' ? '⚠️' : '✅');
+            const statusText = errors !== '0'
+              ? `发现 ${errors} 个错误，请修复后重新提交`
+              : (warnings !== '0' ? `通过校验，但有 ${warnings} 个警告` : '全部校验通过');
+
+            const body = [
+              `## 🔍 社区课件自动审核报告`,
+              '',
+              `**状态**: ${statusIcon} ${statusText}`,
+              '',
+              summary,
+              '',
+              '---',
+              '',
+              '### 📋 管理员审核操作',
+              '',
+              '审核通过后，请根据需要为此 PR 打上以下标签之一：',
+              '',
+              '| 标签 | 含义 |',
+              '|:---|:---|',
+              '| `approved` | ✅ 通过审核，加入社区课件索引 |',
+              '| `promote-to-official` | 🌟 提升为官方课件（解包到 examples/） |',
+              '| `replace-official` | 🔄 替换已有官方课件（需在 PR 描述中注明 `replaces: examples/xxx`） |',
+              '| `revision-needed` | ✏️ 需要作者修改后重新提交 |',
+              '',
+              '然后 **合并 PR** 即可触发对应的自动化流程。',
+              '',
+              '---',
+              '*🤖 此评论由 TeachAny Community Review Bot 自动生成*',
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner, repo,
+              issue_number: prNumber,
+              body,
+            });
+
+      - name: Add review labels
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const prNumber = context.payload.pull_request.number;
+
+            // Ensure labels exist
+            const labelsToCreate = [
+              { name: 'community-courseware', color: '0075ca', description: 'Community courseware submission' },
+              { name: 'needs-review', color: 'e4e669', description: 'Awaiting admin review' },
+            ];
+
+            for (const label of labelsToCreate) {
+              try {
+                await github.rest.issues.createLabel({ owner, repo, ...label });
+              } catch {
+                // Label already exists, ignore
+              }
+            }
+
+            await github.rest.issues.addLabels({
+              owner, repo,
+              issue_number: prNumber,
+              labels: ['community-courseware', 'needs-review'],
+            });
