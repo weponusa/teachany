@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="#-quick-start"><img src="https://img.shields.io/badge/Quick_Start-30s-brightgreen?style=flat-square" alt="Quick Start"></a>
-  <a href="#-live-gallery"><img src="https://img.shields.io/badge/Live_Gallery-7_courses-blue?style=flat-square" alt="Gallery"></a>
+  <a href="#-live-gallery"><img src="https://img.shields.io/badge/Live_Gallery-9_courses-blue?style=flat-square" alt="Gallery"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" alt="MIT License"></a>
   <a href="README_CN.md"><img src="https://img.shields.io/badge/中文文档-点击查看-red?style=flat-square" alt="Chinese README"></a>
 </p>
