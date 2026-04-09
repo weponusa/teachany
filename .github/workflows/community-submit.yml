@@ -1,0 +1,159 @@
+name: Community Courseware Submit
+
+# 通过 repository_dispatch 事件触发
+# 前端使用一个最小权限的 Fine-grained Token 发送事件
+on:
+  repository_dispatch:
+    types: [community-submit]
+
+jobs:
+  create-submission-pr:
+    runs-on: ubuntu-latest
+    name: Create Submission PR
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Process submission
+        id: process
+        env:
+          PAYLOAD: ${{ toJSON(github.event.client_payload) }}
+        run: |
+          echo "📦 Processing community submission..."
+
+          # 解析 payload
+          NODE_ID=$(echo "$PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('node_id',''))")
+          NAME=$(echo "$PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('name',''))")
+          SUBJECT=$(echo "$PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('subject','course'))")
+          GRADE=$(echo "$PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('grade',''))")
+          AUTHOR=$(echo "$PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('author','匿名用户'))")
+          DESCRIPTION=$(echo "$PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('description',''))")
+          VERSION=$(echo "$PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('version','1.0.0'))")
+          FILE_COUNT=$(echo "$PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('file_count',1))")
+          TAGS=$(echo "$PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print(json.dumps(d.get('tags',[])))")
+          USER_MSG=$(echo "$PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('user_message',''))")
+          PACKAGE_B64=$(echo "$PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('packageBase64',''))")
+
+          # 验证必填字段
+          if [ -z "$NODE_ID" ] || [ -z "$NAME" ]; then
+            echo "❌ Missing required fields: node_id or name"
+            exit 1
+          fi
+
+          # 生成唯一 ID
+          TS=$(python3 -c "import time; print(hex(int(time.time()))[2:])")
+          COURSE_ID="${SUBJECT}-${NODE_ID}-${TS}"
+          BRANCH_NAME="community/${COURSE_ID}"
+
+          echo "course_id=${COURSE_ID}" >> "$GITHUB_OUTPUT"
+          echo "branch_name=${BRANCH_NAME}" >> "$GITHUB_OUTPUT"
+          echo "name=${NAME}" >> "$GITHUB_OUTPUT"
+          echo "node_id=${NODE_ID}" >> "$GITHUB_OUTPUT"
+          echo "subject=${SUBJECT}" >> "$GITHUB_OUTPUT"
+          echo "grade=${GRADE}" >> "$GITHUB_OUTPUT"
+          echo "author=${AUTHOR}" >> "$GITHUB_OUTPUT"
+
+          # 创建分支
+          git checkout -b "${BRANCH_NAME}"
+
+          # 创建元数据 JSON
+          mkdir -p community/pending
+          python3 -c "
+          import json, datetime
+          meta = {
+            'id': '${COURSE_ID}',
+            'node_id': '${NODE_ID}',
+            'name': $(python3 -c "import sys,json; d=json.load(sys.stdin); print(json.dumps(d.get('name','')))" <<< "$PAYLOAD"),
+            'name_en': $(python3 -c "import sys,json; d=json.load(sys.stdin); print(json.dumps(d.get('name_en','')))" <<< "$PAYLOAD"),
+            'subject': '${SUBJECT}',
+            'grade': '${GRADE}',
+            'author': $(python3 -c "import sys,json; d=json.load(sys.stdin); print(json.dumps(d.get('author','匿名用户')))" <<< "$PAYLOAD"),
+            'description': $(python3 -c "import sys,json; d=json.load(sys.stdin); print(json.dumps(d.get('description','')))" <<< "$PAYLOAD"),
+            'version': '${VERSION}',
+            'submitted_at': datetime.datetime.utcnow().isoformat() + 'Z',
+            'file_count': int('${FILE_COUNT}'),
+            'tags': ${TAGS},
+            'user_message': $(python3 -c "import sys,json; d=json.load(sys.stdin); print(json.dumps(d.get('user_message','')))" <<< "$PAYLOAD"),
+          }
+          with open('community/pending/${COURSE_ID}.json', 'w') as f:
+            json.dump(meta, f, ensure_ascii=False, indent=2)
+          "
+
+          echo "✅ Metadata JSON created"
+
+          # 如果有课件包（base64），解码并保存
+          if [ -n "$PACKAGE_B64" ] && [ "$PACKAGE_B64" != "" ]; then
+            echo "$PACKAGE_B64" | python3 -c "
+          import sys, base64
+          data = sys.stdin.read().strip()
+          if data:
+            decoded = base64.b64decode(data)
+            with open('community/pending/${COURSE_ID}.teachany', 'wb') as f:
+              f.write(decoded)
+            print(f'✅ Package saved ({len(decoded)} bytes)')
+          else:
+            print('⚠️ No package data')
+          "
+          fi
+
+          echo "✅ All files ready"
+
+      - name: Commit and push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="${{ steps.process.outputs.branch_name }}"
+          COURSE_ID="${{ steps.process.outputs.course_id }}"
+          NAME="${{ steps.process.outputs.name }}"
+
+          git config user.name "TeachAny Community Bot"
+          git config user.email "teachany-bot@users.noreply.github.com"
+
+          git add community/pending/
+          git commit -m "[Community] Submit courseware: ${NAME}"
+          git push origin "${BRANCH}"
+
+          echo "✅ Branch pushed: ${BRANCH}"
+
+      - name: Create Pull Request
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="${{ steps.process.outputs.branch_name }}"
+          COURSE_ID="${{ steps.process.outputs.course_id }}"
+          NAME="${{ steps.process.outputs.name }}"
+          NODE_ID="${{ steps.process.outputs.node_id }}"
+          SUBJECT="${{ steps.process.outputs.subject }}"
+          GRADE="${{ steps.process.outputs.grade }}"
+          AUTHOR="${{ steps.process.outputs.author }}"
+
+          # 检查是否存在 .teachany 文件
+          PKG_LINE="- _(package not attached)_"
+          if [ -f "community/pending/${COURSE_ID}.teachany" ]; then
+            PKG_LINE="- \`community/pending/${COURSE_ID}.teachany\` — complete package"
+          fi
+
+          PR_BODY="## Community Courseware Submission
+
+          - **Name**: ${NAME}
+          - **Subject**: ${SUBJECT}
+          - **Grade**: ${GRADE}
+          - **Node ID**: ${NODE_ID}
+          - **Author**: ${AUTHOR}
+
+          ### Files in this PR:
+          - \`community/pending/${COURSE_ID}.json\` — courseware metadata
+          ${PKG_LINE}
+
+          ---
+          *Submitted via TeachAny Community (automated by GitHub Actions).*"
+
+          gh pr create \
+            --title "[Community] 📚 ${NAME} (${NODE_ID})" \
+            --body "${PR_BODY}" \
+            --head "${BRANCH}" \
+            --base main
