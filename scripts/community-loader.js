@@ -17,6 +17,12 @@ const COMMUNITY_CACHE_TTL = 30 * 60 * 1000; // 30 分钟缓存
 const COMMUNITY_DOWNLOADED_KEY = 'teachany_community_downloaded';
 const GITHUB_API_BASE = 'https://api.github.com';
 
+// GitHub Actions repository_dispatch 方案
+// 此 token 仅有触发 workflow dispatch 的最小权限（Fine-grained PAT，仅 metadata:read + contents:read&write）
+// 所有敏感操作（创建分支、提交文件、创建 PR）都在 GitHub Actions 内部用 GITHUB_TOKEN 完成
+// ⚠️ 部署前必须替换为你自己创建的 Fine-grained Token
+const COMMUNITY_DISPATCH_TOKEN = 'REPLACE_WITH_YOUR_FINE_GRAINED_TOKEN';
+
 /* ─── 辅助工具 ──────────────────────────────── */
 function communityEscapeHtml(value) {
   return String(value ?? '')
@@ -486,6 +492,132 @@ async function submitToCommunity(options) {
   }
 }
 
+/* ─── 通过 Worker 代理提交到社区（用户无需 GitHub Token）── */
+
+/**
+ * 通过 Cloudflare Worker 代理提交课件到社区
+ * 用户无需 GitHub Token，Worker 使用内置 bot token 操作。
+ *
+ * @param {Object} options
+ * @param {Object} options.course - 已解析的课件（含 files 和 manifest）
+ * @param {string} [options.message] - 用户留言
+ * @param {string} [options.author] - 作者署名
+ * @param {Function} [options.onProgress] - 进度回调
+ * @returns {Promise<{submitted: boolean, repoUrl: string}>}
+ */
+async function submitViaDispatch(options) {
+  const { course, message, author, onProgress } = options;
+
+  if (!course?.manifest?.node_id) throw new Error('课件缺少 node_id 元数据');
+  if (!course?.manifest?.name) throw new Error('课件缺少 name 元数据');
+  if (COMMUNITY_DISPATCH_TOKEN === 'REPLACE_WITH_YOUR_FINE_GRAINED_TOKEN') {
+    throw new Error('社区提交功能尚未配置，请联系管理员设置 COMMUNITY_DISPATCH_TOKEN');
+  }
+
+  const manifest = course.manifest;
+
+  // 构建 payload（GitHub dispatch 事件的 client_payload）
+  const payload = {
+    node_id: manifest.node_id,
+    name: manifest.name,
+    name_en: manifest.name_en || '',
+    subject: manifest.subject,
+    grade: manifest.grade,
+    author: author || '匿名用户',
+    description: manifest.description || '',
+    version: manifest.version || '1.0.0',
+    file_count: course.files?.length || 1,
+    tags: manifest.tags || [],
+    user_message: message || '',
+  };
+
+  // 打包课件为 .teachany（zip），base64 嵌入 payload
+  if (course.files && course.files.length > 0) {
+    try {
+      if (onProgress) onProgress('packing', '正在打包课件...');
+
+      // 动态加载 JSZip
+      if (typeof JSZip === 'undefined') {
+        await new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
+          s.onload = resolve;
+          s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      }
+
+      const zip = new JSZip();
+      for (const f of course.files) {
+        const fp = normalizePath(f.path);
+        if (!fp) continue;
+        const blob = f.blob instanceof Blob ? f.blob : new Blob([f.blob], { type: guessMimeType(fp) });
+        zip.file(fp, blob);
+      }
+      if (!course.files.some((f) => normalizePath(f.path) === 'manifest.json')) {
+        zip.file('manifest.json', JSON.stringify(manifest, null, 2));
+      }
+
+      const arrayBuffer = await zip.generateAsync({ type: 'arraybuffer' });
+      const totalBytes = arrayBuffer.byteLength;
+
+      // GitHub dispatch payload 限制约 65KB JSON 字符串
+      // base64 后会膨胀 ~1.33x，所以原始文件 < 40KB 才嵌入
+      if (totalBytes < 40 * 1024) {
+        if (onProgress) onProgress('encoding', '正在编码课件包...');
+        const binString = String.fromCharCode(...new Uint8Array(arrayBuffer));
+        payload.packageBase64 = btoa(binString);
+      } else {
+        // 大文件：触发浏览器下载，让用户手动附加到 PR
+        if (onProgress) onProgress('large_file', `课件包 ${(totalBytes / 1024 / 1024).toFixed(1)} MB，将单独下载`);
+        const url = URL.createObjectURL(new Blob([arrayBuffer]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${manifest.node_id}.teachany`;
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => { URL.revokeObjectURL(url); link.remove(); }, 2000);
+      }
+    } catch (zipErr) {
+      console.warn('[TeachAny Community] 打包课件时出错:', zipErr.message);
+    }
+  }
+
+  // 触发 GitHub Actions workflow
+  if (onProgress) onProgress('dispatching', '正在提交到社区...');
+
+  const resp = await fetch(`${GITHUB_API_BASE}/repos/${COMMUNITY_REPO}/dispatches`, {
+    method: 'POST',
+    headers: {
+      Authorization: `token ${COMMUNITY_DISPATCH_TOKEN}`,
+      Accept: 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      event_type: 'community-submit',
+      client_payload: payload,
+    }),
+  });
+
+  // repository_dispatch 成功返回 204 No Content
+  if (resp.status === 204) {
+    return {
+      submitted: true,
+      repoUrl: `https://github.com/${COMMUNITY_REPO}/actions`,
+    };
+  }
+
+  // 错误处理
+  const errText = await resp.text().catch(() => '');
+  if (resp.status === 404) {
+    throw new Error('提交失败：仓库不存在或 Token 无权限');
+  } else if (resp.status === 422) {
+    throw new Error('提交失败：请求数据格式错误');
+  } else {
+    throw new Error(`提交失败: HTTP ${resp.status} ${errText}`);
+  }
+}
+
 /* ─── UI 组件：提交到社区弹窗 ──────────────── */
 function injectCommunityStyles() {
   if (document.getElementById('teachany-community-styles')) return;
@@ -612,9 +744,8 @@ function createShareDialog(options = {}) {
       <p class="subtitle">将你的课件「${communityEscapeHtml(manifest.name || '未命名')}」分享给所有 TeachAny 用户</p>
 
       <div class="ta-share-field">
-        <label>GitHub Token</label>
-        <input type="password" id="taShareToken" placeholder="ghp_xxxx..." autocomplete="off">
-        <div class="hint">需要 repo 权限。<a href="https://github.com/settings/tokens/new?scopes=repo&description=TeachAny+Community" target="_blank" rel="noopener" style="color:#60a5fa;">点击创建 Token</a></div>
+        <label>你的署名（可选）</label>
+        <input type="text" id="taShareAuthor" placeholder="显示在社区中的作者名，留空则匿名" autocomplete="off" maxlength="40">
       </div>
 
       <div class="ta-share-field">
@@ -644,15 +775,15 @@ function createShareDialog(options = {}) {
   document.body.appendChild(overlay);
   requestAnimationFrame(() => overlay.classList.add('visible'));
 
-  const tokenInput = overlay.querySelector('#taShareToken');
+  const authorInput = overlay.querySelector('#taShareAuthor');
   const msgInput = overlay.querySelector('#taShareMsg');
   const status = overlay.querySelector('#taShareStatus');
   const cancelBtn = overlay.querySelector('#taShareCancel');
   const submitBtn = overlay.querySelector('#taShareSubmit');
 
-  // 记忆上次使用的 token（非明文，sessionStorage）
-  const savedToken = sessionStorage.getItem('teachany_gh_token') || '';
-  if (savedToken) tokenInput.value = savedToken;
+  // 记忆上次使用的署名
+  const savedAuthor = localStorage.getItem('teachany_share_author') || '';
+  if (savedAuthor) authorInput.value = savedAuthor;
 
   function close() {
     overlay.classList.remove('visible');
@@ -663,13 +794,6 @@ function createShareDialog(options = {}) {
   overlay.onclick = (e) => { if (e.target === overlay) close(); };
 
   submitBtn.onclick = async () => {
-    const token = tokenInput.value.trim();
-    if (!token) {
-      status.className = 'ta-share-status error';
-      status.textContent = '❌ 请输入 GitHub Token';
-      return;
-    }
-
     // 校验 node_id
     if (!manifest.node_id) {
       status.className = 'ta-share-status error';
@@ -678,13 +802,18 @@ function createShareDialog(options = {}) {
     }
 
     submitBtn.disabled = true;
-    sessionStorage.setItem('teachany_gh_token', token);
+    submitBtn.textContent = '⏳ 提交中...';
+
+    const authorName = authorInput.value.trim();
+    if (authorName) {
+      localStorage.setItem('teachany_share_author', authorName);
+    }
 
     try {
-      const result = await submitToCommunity({
-        token,
+      const result = await submitViaDispatch({
         course,
         message: msgInput.value.trim(),
+        author: authorName || '匿名用户',
         onProgress: (stage, msg) => {
           status.className = 'ta-share-status loading';
           status.textContent = `⏳ ${msg}`;
@@ -692,14 +821,16 @@ function createShareDialog(options = {}) {
       });
 
       status.className = 'ta-share-status success';
-      status.innerHTML = `🎉 提交成功！<a href="${communityEscapeHtml(result.prUrl)}" target="_blank" rel="noopener" style="color:#34d399;font-weight:600;">查看 PR #${result.prNumber}</a>`;
+      status.innerHTML = `🎉 提交成功！课件已进入审核队列。<br><a href="${communityEscapeHtml(result.repoUrl)}" target="_blank" rel="noopener" style="color:#34d399;font-weight:600;">查看审核进度</a>`;
 
       if (options.onShared) options.onShared(result);
-      setTimeout(close, 3000);
+      submitBtn.textContent = '✅ 已提交';
+      setTimeout(close, 4000);
     } catch (err) {
       status.className = 'ta-share-status error';
       status.textContent = `❌ ${err.message}`;
       submitBtn.disabled = false;
+      submitBtn.textContent = '🚀 提交到社区';
     }
   };
 
@@ -877,6 +1008,7 @@ window.TeachAnyCommunity = {
   isCommunityDownloaded,
   downloadAndImportCommunity,
   submitToCommunity,
+  submitViaDispatch,
   createShareDialog,
   renderCommunityCoursesInTooltip,
   renderCommunityGalleryCards,
