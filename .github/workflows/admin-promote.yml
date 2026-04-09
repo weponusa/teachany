@@ -1,0 +1,377 @@
+name: Admin Promote Courseware
+
+# Triggered when a PR with promote/replace labels is merged
+on:
+  pull_request:
+    branches: [main]
+    types: [closed]
+
+jobs:
+  promote:
+    # Only run if PR was merged AND has the promote or replace label
+    if: >
+      github.event.pull_request.merged == true &&
+      (
+        contains(github.event.pull_request.labels.*.name, 'promote-to-official') ||
+        contains(github.event.pull_request.labels.*.name, 'replace-official')
+      )
+    runs-on: ubuntu-latest
+    name: Promote Community Courseware to Official
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Detect promotion type
+        id: detect
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map(l => l.name);
+            const isPromote = labels.includes('promote-to-official');
+            const isReplace = labels.includes('replace-official');
+
+            // Parse PR body for "replaces: examples/xxx"
+            const body = context.payload.pull_request.body || '';
+            const replacesMatch = body.match(/replaces:\s*(examples\/[\w-]+)/i);
+            const replacesTarget = replacesMatch ? replacesMatch[1] : '';
+
+            core.setOutput('is_promote', isPromote.toString());
+            core.setOutput('is_replace', isReplace.toString());
+            core.setOutput('replaces_target', replacesTarget);
+
+            console.log(`Promote: ${isPromote}, Replace: ${isReplace}, Target: ${replacesTarget}`);
+
+      - name: Find and process submission
+        id: process
+        run: |
+          python3 << 'PYEOF'
+          import json
+          import os
+          import glob
+          import shutil
+          import zipfile
+          import re
+          import sys
+          from datetime import datetime, timezone
+
+          IS_REPLACE = "${{ steps.detect.outputs.is_replace }}" == "true"
+          REPLACES_TARGET = "${{ steps.detect.outputs.replaces_target }}"
+
+          # ── Step 1: Find the newest pending JSON ──
+          pending_files = sorted(glob.glob('community/pending/*.json'))
+          pending_files = [f for f in pending_files if os.path.basename(f) != '.gitkeep']
+
+          if not pending_files:
+              print("❌ No pending JSON files found")
+              sys.exit(1)
+
+          # Use the most recently modified file
+          submission_file = max(pending_files, key=os.path.getmtime)
+          course_id = os.path.basename(submission_file).replace('.json', '')
+
+          print(f"📦 Processing: {submission_file}")
+          with open(submission_file, 'r') as f:
+              meta = json.load(f)
+
+          node_id = meta.get('node_id', '')
+          subject = meta.get('subject', '')
+          name_slug = meta.get('id', course_id)
+          course_name = meta.get('name', '')
+          grade = meta.get('grade', 0)
+
+          # Build the official example directory name
+          example_dir = f"examples/{name_slug}"
+
+          # ── Step 2: Check for .teachany package ──
+          teachany_file = submission_file.replace('.json', '.teachany')
+          has_package = os.path.exists(teachany_file)
+
+          if not has_package:
+              print(f"⚠️ No .teachany package found at {teachany_file}")
+              print("   Creating minimal example directory from metadata only...")
+              os.makedirs(example_dir, exist_ok=True)
+
+              # Create a placeholder README
+              readme = f"# {course_name}\n\n"
+              readme += f"- **Subject**: {subject}\n"
+              readme += f"- **Grade**: {grade}\n"
+              readme += f"- **Node ID**: {node_id}\n\n"
+              readme += "⚠️ This courseware was promoted from community submission.\n"
+              readme += "The .teachany package was not included in the PR. "
+              readme += "Please download it from the GitHub Release and extract here.\n"
+
+              with open(f"{example_dir}/README.md", 'w') as f:
+                  f.write(readme)
+          else:
+              print(f"📂 Extracting .teachany package to {example_dir}")
+
+              # If replacing, back up old courseware first
+              if IS_REPLACE and REPLACES_TARGET and os.path.exists(REPLACES_TARGET):
+                  backup_dir = f"community/archive/{os.path.basename(REPLACES_TARGET)}_{datetime.now().strftime('%Y%m%d')}"
+                  print(f"💾 Backing up {REPLACES_TARGET} → {backup_dir}")
+                  shutil.copytree(REPLACES_TARGET, backup_dir)
+                  shutil.rmtree(REPLACES_TARGET)
+                  print(f"   ✅ Old courseware backed up and removed")
+
+              # Extract .teachany (it's a ZIP file)
+              os.makedirs(example_dir, exist_ok=True)
+
+              # Allowed file extensions for security
+              ALLOWED_EXTENSIONS = {
+                  '.html', '.htm', '.js', '.css', '.json',
+                  '.mp3', '.mp4', '.ogg', '.wav', '.webm',
+                  '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp',
+                  '.srt', '.vtt', '.txt', '.md',
+                  '.woff', '.woff2', '.ttf', '.eot',
+                  '.py',  # for TTS generation scripts
+              }
+
+              try:
+                  with zipfile.ZipFile(teachany_file, 'r') as zf:
+                      extracted = 0
+                      skipped = 0
+                      for info in zf.infolist():
+                          # Security: skip directory traversal attempts
+                          if '..' in info.filename or info.filename.startswith('/'):
+                              print(f"   ⚠️ Skipping unsafe path: {info.filename}")
+                              skipped += 1
+                              continue
+
+                          # Check extension whitelist
+                          _, ext = os.path.splitext(info.filename.lower())
+                          if ext and ext not in ALLOWED_EXTENSIONS:
+                              print(f"   ⚠️ Skipping disallowed file type: {info.filename}")
+                              skipped += 1
+                              continue
+
+                          # Extract
+                          target_path = os.path.join(example_dir, info.filename)
+                          os.makedirs(os.path.dirname(target_path), exist_ok=True)
+
+                          if not info.is_dir():
+                              with zf.open(info) as src, open(target_path, 'wb') as dst:
+                                  dst.write(src.read())
+                              extracted += 1
+
+                      print(f"   ✅ Extracted {extracted} files ({skipped} skipped)")
+
+              except zipfile.BadZipFile:
+                  print(f"   ❌ Invalid .teachany file (not a valid ZIP)")
+                  sys.exit(1)
+
+          # ── Step 3: Update knowledge tree ──
+          print(f"\n🌳 Updating knowledge tree for node_id: {node_id}")
+          tree_updated = False
+
+          for tree_file in sorted(glob.glob('data/trees/*.json')):
+              try:
+                  with open(tree_file, 'r') as f:
+                      tree = json.load(f)
+
+                  modified = False
+                  for domain in tree.get('domains', []):
+                      for node in domain.get('nodes', []):
+                          if node.get('id') == node_id:
+                              course_path = example_dir  # e.g. "examples/math-linear-func"
+
+                              # If replacing, also remove old course path
+                              if IS_REPLACE and REPLACES_TARGET:
+                                  old_courses = node.get('courses', [])
+                                  node['courses'] = [c for c in old_courses if c != REPLACES_TARGET]
+                                  if REPLACES_TARGET in old_courses:
+                                      print(f"   🔄 Removed old reference: {REPLACES_TARGET}")
+
+                              # Add new course path if not already present
+                              courses = node.get('courses', [])
+                              if course_path not in courses:
+                                  courses.append(course_path)
+                                  node['courses'] = courses
+                                  modified = True
+                                  print(f"   ✅ Added '{course_path}' to node '{node_id}'")
+
+                              # Update status to active
+                              if node.get('status') == 'gap':
+                                  node['status'] = 'active'
+                                  modified = True
+                                  print(f"   ✅ Node status: gap → active")
+
+                  if modified:
+                      with open(tree_file, 'w') as f:
+                          json.dump(tree, f, ensure_ascii=False, indent=2)
+                      tree_updated = True
+                      print(f"   📝 Updated: {tree_file}")
+
+              except Exception as e:
+                  print(f"   ⚠️ Error processing {tree_file}: {e}")
+
+          if not tree_updated:
+              print(f"   ⚠️ node_id '{node_id}' not found in any knowledge tree")
+
+          # ── Step 4: Update ratings.json ──
+          print(f"\n⭐ Updating ratings.json")
+          ratings_path = 'data/ratings.json'
+          try:
+              with open(ratings_path, 'r') as f:
+                  ratings = json.load(f)
+
+              if name_slug not in ratings.get('courses', {}):
+                  ratings['courses'][name_slug] = {
+                      "rating": 0,
+                      "votes": 0,
+                      "badge": "seed",
+                      "discussion_url": ""
+                  }
+                  ratings['_updated'] = datetime.now().strftime('%Y-%m-%d')
+
+                  with open(ratings_path, 'w') as f:
+                      json.dump(ratings, f, ensure_ascii=False, indent=4)
+                  print(f"   ✅ Added rating entry for '{name_slug}'")
+              else:
+                  print(f"   ℹ️ Rating entry already exists for '{name_slug}'")
+          except Exception as e:
+              print(f"   ⚠️ Error updating ratings: {e}")
+
+          # Also update skillhub-package copy if it exists
+          skillhub_ratings = 'skillhub-package/references/data/ratings.json'
+          if os.path.exists(skillhub_ratings):
+              try:
+                  shutil.copy2(ratings_path, skillhub_ratings)
+                  print(f"   ✅ Synced to {skillhub_ratings}")
+              except Exception as e:
+                  print(f"   ⚠️ Error syncing skillhub ratings: {e}")
+
+          # ── Step 5: Remove from community/pending ──
+          print(f"\n🧹 Cleaning up pending files")
+          for ext in ['.json', '.teachany']:
+              pending_path = f"community/pending/{course_id}{ext}"
+              if os.path.exists(pending_path):
+                  os.remove(pending_path)
+                  print(f"   ✅ Removed: {pending_path}")
+
+          # ── Step 6: Remove from community/index.json if it was added ──
+          try:
+              with open('community/index.json', 'r') as f:
+                  cidx = json.load(f)
+
+              original_len = len(cidx.get('courses', []))
+              cidx['courses'] = [c for c in cidx.get('courses', []) if c.get('id') != course_id]
+              if len(cidx['courses']) < original_len:
+                  cidx['updated_at'] = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+                  with open('community/index.json', 'w') as f:
+                      json.dump(cidx, f, ensure_ascii=False, indent=2)
+                  print(f"   ✅ Removed from community index (promoted to official)")
+          except Exception as e:
+              print(f"   ⚠️ Error cleaning community index: {e}")
+
+          # ── Summary ──
+          print(f"\n{'='*50}")
+          print(f"🎉 Promotion complete!")
+          print(f"   Course: {course_name} ({course_id})")
+          print(f"   Location: {example_dir}")
+          print(f"   Node: {node_id}")
+          if IS_REPLACE:
+              print(f"   Replaced: {REPLACES_TARGET}")
+          print(f"{'='*50}")
+
+          # Save example_dir for later steps
+          with open('/tmp/example_dir.txt', 'w') as f:
+              f.write(example_dir)
+          with open('/tmp/course_name.txt', 'w') as f:
+              f.write(course_name)
+          PYEOF
+
+      - name: Commit promoted courseware
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          EXAMPLE_DIR=$(cat /tmp/example_dir.txt 2>/dev/null || echo "")
+          COURSE_NAME=$(cat /tmp/course_name.txt 2>/dev/null || echo "community courseware")
+
+          git add -A
+          git diff --cached --quiet || git commit -m "[bot] Promote '${COURSE_NAME}' to official courseware
+
+          - Extracted to ${EXAMPLE_DIR}
+          - Updated knowledge tree
+          - Updated ratings.json
+          - Cleaned up community/pending/"
+          git push
+
+      - name: Post success comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const { owner, repo } = context.repo;
+            const prNumber = context.payload.pull_request.number;
+
+            let exampleDir = '';
+            let courseName = '';
+            try {
+              exampleDir = fs.readFileSync('/tmp/example_dir.txt', 'utf8').trim();
+              courseName = fs.readFileSync('/tmp/course_name.txt', 'utf8').trim();
+            } catch {}
+
+            const isReplace = '${{ steps.detect.outputs.is_replace }}' === 'true';
+            const replacesTarget = '${{ steps.detect.outputs.replaces_target }}';
+
+            let body = `## 🎉 课件已成功提升为官方课件！\n\n`;
+            body += `- **课件**: ${courseName}\n`;
+            body += `- **位置**: \`${exampleDir}\`\n`;
+
+            if (isReplace && replacesTarget) {
+              body += `- **替换**: \`${replacesTarget}\`（已备份至 \`community/archive/\`）\n`;
+            }
+
+            body += `\n### 自动完成的操作：\n`;
+            body += `- ✅ .teachany 包已解压到 \`${exampleDir}\`\n`;
+            body += `- ✅ 知识树节点已更新（status → active, courses 已添加）\n`;
+            body += `- ✅ ratings.json 已添加评分条目\n`;
+            body += `- ✅ community/pending/ 已清理\n`;
+            body += `\n### ⚠️ 仍需手动操作：\n`;
+            body += `- [ ] 在 \`index.html\` 中添加 Gallery 课件卡片\n`;
+            body += `- [ ] 更新 \`README.md\` 和 \`README_CN.md\` 的 Gallery 表格\n`;
+            body += `- [ ] 验证知识树显示是否正确\n`;
+            body += `\n---\n*🤖 此评论由 TeachAny Admin Promote Bot 自动生成*`;
+
+            await github.rest.issues.createComment({
+              owner, repo,
+              issue_number: prNumber,
+              body,
+            });
+
+            // Remove needs-review label, add promoted label
+            try {
+              await github.rest.issues.removeLabel({
+                owner, repo,
+                issue_number: prNumber,
+                name: 'needs-review',
+              });
+            } catch {}
+
+            try {
+              await github.rest.issues.createLabel({
+                owner, repo,
+                name: 'promoted',
+                color: '6f42c1',
+                description: 'Promoted to official courseware',
+              });
+            } catch {}
+
+            await github.rest.issues.addLabels({
+              owner, repo,
+              issue_number: prNumber,
+              labels: ['promoted'],
+            });

@@ -1,0 +1,144 @@
+name: Publish Community Courseware
+
+on:
+  push:
+    branches: [main]
+    paths: ['community/pending/**']
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    name: Update Community Index
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Find new submissions
+        id: find_new
+        run: |
+          # Get newly added JSON files in community/pending/
+          NEW_FILES=$(git diff --name-only --diff-filter=A HEAD~1 HEAD -- 'community/pending/*.json' | grep -v '.gitkeep' || true)
+
+          if [ -z "$NEW_FILES" ]; then
+            echo "No new community submissions found."
+            echo "has_new=false" >> $GITHUB_OUTPUT
+          else
+            echo "Found new submissions:"
+            echo "$NEW_FILES"
+            echo "has_new=true" >> $GITHUB_OUTPUT
+            echo "files<<EOF" >> $GITHUB_OUTPUT
+            echo "$NEW_FILES" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update community index
+        if: steps.find_new.outputs.has_new == 'true'
+        run: |
+          python3 << 'PYEOF'
+          import json
+          import os
+          import glob
+          from datetime import datetime, timezone
+
+          # Read current index
+          index_path = 'community/index.json'
+          with open(index_path, 'r') as f:
+              index = json.load(f)
+
+          existing_ids = {c['id'] for c in index.get('courses', [])}
+
+          # Read all pending submissions
+          new_count = 0
+          new_courses = []
+          for filepath in sorted(glob.glob('community/pending/*.json')):
+              if os.path.basename(filepath) == '.gitkeep':
+                  continue
+              try:
+                  with open(filepath, 'r') as f:
+                      submission = json.load(f)
+
+                  course_id = submission.get('id', '')
+                  if not course_id or course_id in existing_ids:
+                      continue
+
+                  # Build index entry
+                  entry = {
+                      'id': course_id,
+                      'node_id': submission.get('node_id', ''),
+                      'name': submission.get('name', ''),
+                      'name_en': submission.get('name_en', ''),
+                      'subject': submission.get('subject', ''),
+                      'grade': submission.get('grade', 0),
+                      'author': submission.get('author', ''),
+                      'author_url': f"https://github.com/{submission.get('author', '')}",
+                      'description': submission.get('description', ''),
+                      'download_url': submission.get('download_url', ''),
+                      'approved_at': datetime.now(timezone.utc).strftime('%Y-%m-%d'),
+                      'version': submission.get('version', '1.0.0'),
+                      'file_size': submission.get('file_size', 0),
+                      'likes': 0,
+                  }
+
+                  # Check for .teachany package and build download_url if not set
+                  teachany_file = filepath.replace('.json', '.teachany')
+                  if not entry['download_url'] and os.path.exists(teachany_file):
+                      entry['download_url'] = f"https://github.com/weponusa/teachany/raw/main/community/pending/{os.path.basename(teachany_file)}"
+                      entry['file_size'] = os.path.getsize(teachany_file)
+
+                  index['courses'].append(entry)
+                  existing_ids.add(course_id)
+                  new_count += 1
+                  new_courses.append(entry)
+                  print(f"  ✅ Added: {course_id} ({submission.get('name', '')})")
+
+              except Exception as e:
+                  print(f"  ⚠️ Skipping {filepath}: {e}")
+
+          if new_count > 0:
+              index['updated_at'] = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+              with open(index_path, 'w') as f:
+                  json.dump(index, f, ensure_ascii=False, indent=2)
+              print(f"\n✅ Added {new_count} new course(s) to community index")
+
+              # Also update knowledge tree nodes: add community course references
+              for course in new_courses:
+                  node_id = course.get('node_id', '')
+                  if not node_id:
+                      continue
+
+                  # Search all tree files for this node
+                  for tree_file in sorted(glob.glob('data/trees/*.json')):
+                      try:
+                          with open(tree_file, 'r') as f:
+                              tree = json.load(f)
+
+                          modified = False
+                          for domain in tree.get('domains', []):
+                              for node in domain.get('nodes', []):
+                                  if node.get('id') == node_id:
+                                      # We don't modify the tree for community courses
+                                      # (only promote-to-official does that)
+                                      # But we log it for visibility
+                                      print(f"  📍 Node '{node_id}' found in {tree_file} "
+                                            f"(status: {node.get('status')}, "
+                                            f"courses: {len(node.get('courses', []))})")
+                      except Exception as e:
+                          print(f"  ⚠️ Error reading {tree_file}: {e}")
+
+          else:
+              print("\nNo new courses to add")
+          PYEOF
+
+      - name: Commit updated index
+        if: steps.find_new.outputs.has_new == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add community/index.json
+          git diff --cached --quiet || git commit -m "[bot] Update community courseware index"
+          git push
