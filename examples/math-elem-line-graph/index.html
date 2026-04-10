@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>折线统计图 · TeachAny 互动课件</title>
+<meta name="teachany-node" content="line-graph">
+<meta name="teachany-subject" content="math">
+<meta name="teachany-domain" content="statistics-probability-primary">
+<meta name="teachany-grade" content="4">
+<meta name="teachany-difficulty" content="2">
+<meta name="teachany-version" content="1.0">
+<meta name="teachany-author" content="weponusa">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+:root{--bg:#fffbf0;--bg2:#fff7e6;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--danger:#ff6b6b;--purple:#cc5de8;--blue:#339af0;--orange:#ff922b;--text:#2b2b2b;--dim:#666;--dimmer:#999;--card:#ffffff;--border:rgba(0,0,0,0.06);}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans SC',-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:70px;}
+body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle at 10% 20%,rgba(255,107,107,0.06) 0%,transparent 50%),radial-gradient(circle at 90% 80%,rgba(78,205,196,0.06) 0%,transparent 50%);pointer-events:none;z-index:-1;}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;box-shadow:0 2px 20px rgba(255,146,43,0.1);}
+.nav-brand{font-size:20px;font-weight:900;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all 0.25s;white-space:nowrap;}
+.nav a:hover,.nav a.active{color:#fff;background:linear-gradient(135deg,var(--primary),var(--orange));transform:scale(1.05);}
+.container{max-width:960px;margin:0 auto;padding:80px 20px 60px;}
+.hero{text-align:center;padding:36px 0 30px;}
+.hero h1{font-size:42px;font-weight:900;line-height:1.3;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple),var(--blue));background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
+@keyframes rainbowShift{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}
+.hero .subtitle{font-size:18px;color:var(--dim);margin-bottom:16px;}
+.hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+.hero .meta span{background:#fff;border:2px solid var(--border);border-radius:24px;padding:6px 18px;font-size:14px;font-weight:700;color:var(--dim);box-shadow:0 2px 8px rgba(0,0,0,0.04);}
+.section{margin:40px 0;}
+.section-title{font-size:26px;font-weight:900;margin-bottom:18px;padding:10px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));display:inline-block;}
+.card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.04);transition:transform 0.25s,box-shadow 0.25s;}
+.card:hover{transform:translateY(-3px) scale(1.005);box-shadow:0 8px 30px rgba(255,107,107,0.12);}
+.card h3{font-size:20px;font-weight:900;margin-bottom:10px;}
+.card p,.card li{font-size:16px;line-height:1.9;color:var(--dim);}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;}
+.obj-card{text-align:center;padding:26px 16px;}
+.obj-card .icon{font-size:44px;margin-bottom:10px;display:inline-block;animation:bounce 2s ease infinite;}
+@keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
+.obj-card h4{font-size:17px;font-weight:900;margin-bottom:6px;}
+.obj-card p{font-size:14px;color:var(--dim);}
+.highlight{color:var(--primary);font-weight:900;}
+.quiz-option{display:block;padding:16px 20px;margin:10px 0;border-radius:16px;background:#fff;border:2.5px solid #e8e8e8;cursor:pointer;transition:all 0.25s;font-size:16px;font-weight:700;color:var(--text);}
+.quiz-option:hover{background:rgba(78,205,196,0.08);border-color:var(--secondary);transform:translateX(4px);}
+.quiz-option.correct{background:rgba(81,207,102,0.12);border-color:var(--success);color:#2b8a3e;}
+.quiz-option.wrong{background:rgba(255,107,107,0.1);border-color:var(--danger);color:#c92a2a;}
+.quiz-feedback{padding:14px 18px;border-radius:14px;margin-top:10px;font-size:15px;display:none;font-weight:700;}
+.quiz-feedback.show{display:block;animation:popIn 0.35s cubic-bezier(0.34,1.56,0.64,1);}
+@keyframes popIn{from{opacity:0;transform:scale(0.92);}to{opacity:1;transform:scale(1);}}
+.insight-box{background:linear-gradient(135deg,rgba(204,93,232,0.08),rgba(51,154,240,0.08));border-left:5px solid var(--purple);padding:18px 22px;border-radius:0 16px 16px 0;margin:16px 0;}
+.insight-box h4{color:var(--purple);font-size:17px;font-weight:900;margin-bottom:8px;}
+.insight-box p{color:var(--text);font-size:15.5px;}
+.sticker{display:inline-block;font-size:28px;animation:wiggle 3s ease-in-out infinite;}
+@keyframes wiggle{0%,100%{transform:rotate(0deg);}25%{transform:rotate(8deg);}75%{transform:rotate(-8deg);}}
+.star-reward{text-align:center;padding:20px;font-size:18px;font-weight:900;background:linear-gradient(135deg,rgba(255,230,109,0.2),rgba(255,146,43,0.1));border-radius:20px;margin-top:16px;}
+.star-reward .stars{font-size:36px;display:block;margin-bottom:8px;}
+footer{text-align:center;padding:36px 0;color:var(--dimmer);font-size:13px;border-top:3px dashed rgba(0,0,0,0.06);margin-top:50px;}
+/* SVG chart */
+.svg-chart{width:100%;max-width:600px;margin:0 auto;display:block;}
+.chart-container{background:#f8f9fa;border-radius:16px;padding:20px;margin:16px 0;text-align:center;}
+@media(max-width:600px){.hero h1{font-size:30px;}.section-title{font-size:22px;}.card{padding:18px;}}
+.audio-bar{position:fixed;bottom:0;left:0;right:0;z-index:500;background:rgba(255,107,107,0.95);backdrop-filter:blur(12px);border-top:2px solid rgba(255,255,255,0.3);padding:10px 24px;display:flex;align-items:center;gap:14px;}
+.audio-bar .ab-btn{width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;background:#fff;color:var(--primary);font-size:16px;display:flex;align-items:center;justify-content:center;}
+.audio-bar .ab-info{flex:1;min-width:0;}
+.audio-bar .ab-title{font-size:13px;font-weight:700;color:#fff;}
+.audio-bar .ab-progress-wrap{height:4px;background:rgba(255,255,255,0.3);border-radius:2px;margin-top:4px;cursor:pointer;}
+.audio-bar .ab-progress{height:100%;background:#fff;border-radius:2px;width:0%;}
+.audio-bar .ab-time{font-size:11px;color:rgba(255,255,255,0.8);margin-top:2px;}
+.audio-bar .ab-vol{width:60px;accent-color:#fff;}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <span class="nav-brand">🌈 教我学 TeachAny</span>
+  <a href="#hero">首页</a>
+  <a href="#goals">目标</a>
+  <a href="#module-1">模块1</a>
+  <a href="#module-2">模块2</a>
+  <a href="#module-3">练习</a>
+  <a href="#deep-understanding">深思</a>
+  <a href="#summary">总结</a>
+</nav>
+
+<div class="container">
+  <section class="hero" id="hero">
+    <h1>📈 折线统计图 <span class="sticker">✨</span></h1>
+    <p class="subtitle">用折线感受数据的变化趋势，是升还是降？</p>
+    <div class="meta">
+      <span>📚 数学</span>
+      <span>🎒 4年级</span>
+      <span>⏱️ 约 25 分钟</span>
+      <span>🎯 新授课</span>
+    </div>
+  </section>
+
+  <section class="section" id="goals">
+    <h2 class="section-title">🎯 学习目标</h2>
+    <div class="grid-3">
+      <div class="card obj-card">
+        <div class="icon">📈</div>
+        <h4>认识折线图</h4>
+        <p>能说出折线统计图的特点，知道它与条形图的区别</p>
+      </div>
+      <div class="card obj-card">
+        <div class="icon">🔎</div>
+        <h4>读懂趋势</h4>
+        <p>能从折线图中分析数据是上升、下降还是不变</p>
+      </div>
+      <div class="card obj-card">
+        <div class="icon">🤔</div>
+        <h4>选对图形</h4>
+        <p>能判断什么情况下用折线图比条形图更合适</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="module-1">
+    <h2 class="section-title">📖 模块一：认识折线统计图</h2>
+    <div class="card">
+      <h3>🌉 从条形图到折线图</h3>
+      <p><span class="highlight">我们已经会用条形图</span>比较各类数据的多少。</p>
+      <p><span class="highlight">但有个问题：</span>想知道气温一周如何变化，用条形图只能看每天的值，看不出变化的"路径"。</p>
+      <p><span class="highlight">所以折线图来了！</span>把每天的点连起来，折线的"起伏"就是数据变化的轨迹！</p>
+    </div>
+    <div class="card">
+      <h3>💡 折线图的样子</h3>
+      <p>折线统计图用<span class="highlight">折线的起伏</span>来表示数据的变化趋势。每个点代表一个数据，连起来的线越陡，变化越大！</p>
+      <div class="chart-container">
+        <p style="font-weight:900;margin-bottom:12px;">🌡️ 某城市一周气温变化（℃）</p>
+        <svg class="svg-chart" viewBox="0 0 500 220" xmlns="http://www.w3.org/2000/svg">
+          <!-- Grid lines -->
+          <line x1="60" y1="20" x2="60" y2="180" stroke="#ddd" stroke-width="1"/>
+          <line x1="60" y1="180" x2="480" y2="180" stroke="#ddd" stroke-width="1"/>
+          <line x1="60" y1="140" x2="480" y2="140" stroke="#eee" stroke-width="1" stroke-dasharray="4"/>
+          <line x1="60" y1="100" x2="480" y2="100" stroke="#eee" stroke-width="1" stroke-dasharray="4"/>
+          <line x1="60" y1="60" x2="480" y2="60" stroke="#eee" stroke-width="1" stroke-dasharray="4"/>
+          <!-- Y-axis labels -->
+          <text x="50" y="184" text-anchor="end" font-size="12" fill="#666">0</text>
+          <text x="50" y="144" text-anchor="end" font-size="12" fill="#666">10</text>
+          <text x="50" y="104" text-anchor="end" font-size="12" fill="#666">20</text>
+          <text x="50" y="64" text-anchor="end" font-size="12" fill="#666">30</text>
+          <!-- X-axis labels -->
+          <text x="100" y="198" text-anchor="middle" font-size="12" fill="#666">周一</text>
+          <text x="160" y="198" text-anchor="middle" font-size="12" fill="#666">周二</text>
+          <text x="220" y="198" text-anchor="middle" font-size="12" fill="#666">周三</text>
+          <text x="280" y="198" text-anchor="middle" font-size="12" fill="#666">周四</text>
+          <text x="340" y="198" text-anchor="middle" font-size="12" fill="#666">周五</text>
+          <text x="400" y="198" text-anchor="middle" font-size="12" fill="#666">周六</text>
+          <text x="460" y="198" text-anchor="middle" font-size="12" fill="#666">周日</text>
+          <!-- Data: 15,18,22,25,23,20,17 → y = 180-(val*4) -->
+          <polyline points="100,120 160,108 220,92 280,80 340,88 400,100 460,112" fill="none" stroke="#ff6b6b" stroke-width="3" stroke-linejoin="round"/>
+          <!-- Dots -->
+          <circle cx="100" cy="120" r="6" fill="#ff6b6b"/>
+          <circle cx="160" cy="108" r="6" fill="#ff6b6b"/>
+          <circle cx="220" cy="92" r="6" fill="#ff6b6b"/>
+          <circle cx="280" cy="80" r="6" fill="#ff6b6b"/>
+          <circle cx="340" cy="88" r="6" fill="#ff6b6b"/>
+          <circle cx="400" cy="100" r="6" fill="#ff6b6b"/>
+          <circle cx="460" cy="112" r="6" fill="#ff6b6b"/>
+          <!-- Value labels -->
+          <text x="100" y="112" text-anchor="middle" font-size="11" fill="#333" font-weight="bold">15</text>
+          <text x="160" y="100" text-anchor="middle" font-size="11" fill="#333" font-weight="bold">18</text>
+          <text x="220" y="84" text-anchor="middle" font-size="11" fill="#333" font-weight="bold">22</text>
+          <text x="280" y="72" text-anchor="middle" font-size="11" fill="#333" font-weight="bold">25</text>
+          <text x="340" y="80" text-anchor="middle" font-size="11" fill="#333" font-weight="bold">23</text>
+          <text x="400" y="92" text-anchor="middle" font-size="11" fill="#333" font-weight="bold">20</text>
+          <text x="460" y="104" text-anchor="middle" font-size="11" fill="#333" font-weight="bold">17</text>
+        </svg>
+      </div>
+      <p>从图中可以看出：<span class="highlight">气温从周一到周四一直在升高，周四最热（25℃），之后开始下降</span>。这就是折线图的魅力！</p>
+    </div>
+    <div class="insight-box">
+      <h4>🔍 想一想</h4>
+      <p>折线"向上"表示什么？折线"向下"表示什么？折线"水平"呢？（提示：对应数据增大、减小、不变）</p>
+    </div>
+    <div class="card">
+      <h3><span class="sticker">✏️</span> 马上试一试</h3>
+      <p>看上面的折线图，从周二到周三，气温变化了几度？是升高了还是降低了？</p>
+      <div class="quiz-option" onclick="checkAnswer(this, true, 'q1')">A. 升高了4℃（从18到22）</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'q1')">B. 降低了4℃（从22到18）</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'q1')">C. 没有变化</div>
+      <div id="q1" class="quiz-feedback"></div>
+    </div>
+  </section>
+
+  <section class="section" id="module-2">
+    <h2 class="section-title">📖 模块二：折线图 vs 条形图</h2>
+    <div class="card">
+      <h3>💡 怎么选择合适的统计图？</h3>
+      <div class="grid-2">
+        <div style="background:rgba(255,107,107,0.08);border-radius:16px;padding:16px;">
+          <p style="font-weight:900;font-size:17px;margin-bottom:8px;">📊 用条形图，当……</p>
+          <p>• 比较<span class="highlight">不同类别</span>的数量大小</p>
+          <p>• 比较各班人数、各科成绩</p>
+          <p>• 数据之间没有时间关系</p>
+        </div>
+        <div style="background:rgba(78,205,196,0.08);border-radius:16px;padding:16px;">
+          <p style="font-weight:900;font-size:17px;margin-bottom:8px;">📈 用折线图，当……</p>
+          <p>• 显示数据<span class="highlight">随时间的变化</span></p>
+          <p>• 气温变化、成绩增长</p>
+          <p>• 想看趋势（升/降/平）</p>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>💡 读折线图的3个关键</h3>
+      <ul style="padding-left:20px;line-height:2.2;">
+        <li><span class="highlight">最高点</span>：数据最大的那个时间点</li>
+        <li><span class="highlight">最低点</span>：数据最小的那个时间点</li>
+        <li><span class="highlight">趋势</span>：整体是上升、下降，还是先升后降？</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="sticker">✏️</span> 选择题</h3>
+      <p>要统计小明从1月到12月每个月的零花钱变化，应该用哪种统计图？</p>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'q2')">A. 条形统计图</div>
+      <div class="quiz-option" onclick="checkAnswer(this, true, 'q2')">B. 折线统计图</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'q2')">C. 两种都不合适</div>
+      <div id="q2" class="quiz-feedback"></div>
+    </div>
+  </section>
+
+  <section class="section" id="module-3">
+    <h2 class="section-title">🎯 闯关练习</h2>
+    <div class="card">
+      <h3>⭐ 第一关：判断趋势</h3>
+      <p>折线图中，折线从左向右一直向上倾斜，这说明数据在……</p>
+      <div class="quiz-option" onclick="checkAnswer(this, true, 'q3')">A. 持续增大（上升趋势）</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'q3')">B. 持续减小（下降趋势）</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'q3')">C. 保持不变（水平）</div>
+      <div id="q3" class="quiz-feedback"></div>
+    </div>
+    <div class="card">
+      <h3>⭐⭐ 第二关：读数分析</h3>
+      <p>小红5次数学测验成绩：75、80、85、82、90分。哪次成绩是最低的？整体趋势是？</p>
+      <div class="quiz-option" onclick="checkAnswer(this, true, 'q4')">A. 第1次最低（75分），整体呈上升趋势</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'q4')">B. 第4次最低（82分），整体下降</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'q4')">C. 第3次最高，无明显趋势</div>
+      <div id="q4" class="quiz-feedback"></div>
+    </div>
+    <div class="card">
+      <h3>⭐⭐⭐ 第三关：预测未来</h3>
+      <p>如果折线图显示某商店的月销售额连续6个月都在增长，第7个月最可能……</p>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'q5')">A. 一定急剧下降</div>
+      <div class="quiz-option" onclick="checkAnswer(this, true, 'q5')">B. 可能继续增长，但不能百分之百确定</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'q5')">C. 一定和第6个月相同</div>
+      <div id="q5" class="quiz-feedback"></div>
+    </div>
+    <div class="star-reward" id="star-reward" style="display:none;">
+      <span class="stars">🌟🌟🌟</span>太棒了！折线图分析小达人！
+    </div>
+  </section>
+
+  <section class="section" id="deep-understanding">
+    <h2 class="section-title">🔬 深层理解</h2>
+    <div class="insight-box">
+      <h4>🌍 折线图在生活中</h4>
+      <p>股票价格走势、体温变化记录、公司年度营收图……这些都是折线图！折线图告诉我们：数据不是孤立的，它在时间中"流动"。</p>
+    </div>
+    <div class="card">
+      <h3>💡 折线图的记忆口诀</h3>
+      <p>🎵 <span class="highlight">折线图看起伏，上升下降看趋势；最高最低是重点，时间变化它最厉！</span></p>
+    </div>
+  </section>
+
+  <section class="section" id="summary">
+    <h2 class="section-title">📝 课堂总结</h2>
+    <div class="card">
+      <h3>🎉 今天学了什么？</h3>
+      <ul style="padding-left:20px;line-height:2.2;">
+        <li>折线统计图用<span class="highlight">折线的起伏</span>表示数据变化趋势</li>
+        <li>折线向上→数据增大；向下→数据减小；水平→数据不变</li>
+        <li>适合表示<span class="highlight">随时间变化</span>的数据</li>
+        <li>读图关键：找最高点、最低点、判断整体趋势</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    <p>Made with <strong>教我学 TeachAny</strong> · <a href="https://github.com/weponusa/teachany" style="color:var(--primary);">GitHub</a></p>
+    <p style="margin-top:8px;">Built on ABT Narrative · Bloom's Taxonomy · Scaffolding · Cognitive Load Theory</p>
+  </footer>
+</div>
+
+<div class="audio-bar" id="audioBar">
+  <button class="ab-btn" id="abPrev">⏮</button>
+  <button class="ab-btn" id="abPlay">▶</button>
+  <button class="ab-btn" id="abNext">⏭</button>
+  <div class="ab-info">
+    <div class="ab-title" id="abTitle">折线统计图 - 课件讲解</div>
+    <div class="ab-progress-wrap" id="abProgressWrap"><div class="ab-progress" id="abProgress"></div></div>
+    <div class="ab-time" id="abTime">00:00 / 00:00</div>
+  </div>
+  <input type="range" class="ab-vol" id="abVol" min="0" max="1" step="0.05" value="0.8">
+</div>
+
+<script>
+const audioPlaylist=[{title:"第1段：开场介绍",src:"tts/s01.mp3"},{title:"第2段：折线图特点",src:"tts/s02.mp3"},{title:"第3段：读折线图",src:"tts/s03.mp3"},{title:"第4段：与条形图对比",src:"tts/s04.mp3"},{title:"第5段：实际应用",src:"tts/s05.mp3"},{title:"第6段：课堂总结",src:"tts/s06.mp3"}];
+let curIdx=0,audio=new Audio();
+const abPlay=document.getElementById('abPlay'),abTitle=document.getElementById('abTitle'),abProgress=document.getElementById('abProgress'),abTime=document.getElementById('abTime'),abVol=document.getElementById('abVol');
+function loadTrack(i){curIdx=i;audio.src=audioPlaylist[i].src;abTitle.textContent=audioPlaylist[i].title;audio.volume=parseFloat(abVol.value);audio.load();}
+function fmt(s){const m=Math.floor(s/60),sec=Math.floor(s%60);return`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;}
+audio.addEventListener('timeupdate',()=>{const p=audio.duration?audio.currentTime/audio.duration*100:0;abProgress.style.width=p+'%';abTime.textContent=`${fmt(audio.currentTime)} / ${fmt(audio.duration||0)}`;});
+audio.addEventListener('ended',()=>{if(curIdx<audioPlaylist.length-1){loadTrack(curIdx+1);audio.play();abPlay.textContent='⏸';}else{abPlay.textContent='▶';}});
+abPlay.addEventListener('click',()=>{if(audio.paused){if(!audio.src||audio.src===window.location.href)loadTrack(0);audio.play();abPlay.textContent='⏸';}else{audio.pause();abPlay.textContent='▶';}});
+document.getElementById('abPrev').addEventListener('click',()=>{if(curIdx>0){loadTrack(curIdx-1);audio.play();abPlay.textContent='⏸';}});
+document.getElementById('abNext').addEventListener('click',()=>{if(curIdx<audioPlaylist.length-1){loadTrack(curIdx+1);audio.play();abPlay.textContent='⏸';}});
+document.getElementById('abProgressWrap').addEventListener('click',e=>{if(audio.duration){const r=e.currentTarget.getBoundingClientRect();audio.currentTime=(e.clientX-r.left)/r.width*audio.duration;}});
+abVol.addEventListener('input',()=>{audio.volume=parseFloat(abVol.value);});
+let correctCount=0;
+function checkAnswer(el,isCorrect,feedbackId){const parent=el.parentElement;const options=parent.querySelectorAll('.quiz-option');const feedback=document.getElementById(feedbackId);if(parent.dataset.answered)return;parent.dataset.answered='true';options.forEach(opt=>{opt.style.pointerEvents='none';opt.style.opacity='0.6';});if(isCorrect){correctCount++;el.classList.add('correct');el.style.opacity='1';feedback.innerHTML='🎉 <strong>太棒了！答对啦！</strong>';feedback.style.background='rgba(81,207,102,0.12)';feedback.style.color='#2b8a3e';if(correctCount>=3)document.getElementById('star-reward').style.display='block';}else{el.classList.add('wrong');el.style.opacity='1';options.forEach(opt=>{if(opt.getAttribute('onclick')&&opt.getAttribute('onclick').includes('true')){opt.classList.add('correct');opt.style.opacity='1';}});feedback.innerHTML='💪 <strong>没关系，看看正确答案！</strong>';feedback.style.background='rgba(255,107,107,0.08)';feedback.style.color='#c92a2a';}feedback.classList.add('show');}
+</script>
+</body>
+</html>

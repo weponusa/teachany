@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>扇形统计图 · TeachAny 互动课件</title>
+<meta name="teachany-node" content="pie-chart">
+<meta name="teachany-subject" content="math">
+<meta name="teachany-domain" content="statistics-probability-primary">
+<meta name="teachany-grade" content="6">
+<meta name="teachany-difficulty" content="2">
+<meta name="teachany-version" content="1.0">
+<meta name="teachany-author" content="weponusa">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--danger:#ff6b6b;--purple:#cc5de8;--blue:#339af0;--orange:#ff922b;--text:#2b2b2b;--dim:#666;--dimmer:#999;--card:#ffffff;--border:rgba(0,0,0,0.06);}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans SC',-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:70px;}
+body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle at 10% 20%,rgba(255,107,107,0.06) 0%,transparent 50%),radial-gradient(circle at 90% 80%,rgba(78,205,196,0.06) 0%,transparent 50%);pointer-events:none;z-index:-1;}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;box-shadow:0 2px 20px rgba(255,146,43,0.1);}
+.nav-brand{font-size:20px;font-weight:900;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all 0.25s;white-space:nowrap;}
+.nav a:hover,.nav a.active{color:#fff;background:linear-gradient(135deg,var(--primary),var(--orange));transform:scale(1.05);}
+.container{max-width:960px;margin:0 auto;padding:80px 20px 60px;}
+.hero{text-align:center;padding:36px 0 30px;}
+.hero h1{font-size:42px;font-weight:900;line-height:1.3;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple),var(--blue));background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
+@keyframes rainbowShift{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}
+.hero .subtitle{font-size:18px;color:var(--dim);margin-bottom:16px;}
+.hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+.hero .meta span{background:#fff;border:2px solid var(--border);border-radius:24px;padding:6px 18px;font-size:14px;font-weight:700;color:var(--dim);}
+.section{margin:40px 0;}
+.section-title{font-size:26px;font-weight:900;margin-bottom:18px;padding:10px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));display:inline-block;}
+.card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.04);transition:transform 0.25s,box-shadow 0.25s;}
+.card:hover{transform:translateY(-3px) scale(1.005);box-shadow:0 8px 30px rgba(255,107,107,0.12);}
+.card h3{font-size:20px;font-weight:900;margin-bottom:10px;}
+.card p,.card li{font-size:16px;line-height:1.9;color:var(--dim);}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;}
+.obj-card{text-align:center;padding:26px 16px;}
+.obj-card .icon{font-size:44px;margin-bottom:10px;display:inline-block;animation:bounce 2s ease infinite;}
+@keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
+.obj-card h4{font-size:17px;font-weight:900;margin-bottom:6px;}
+.highlight{color:var(--primary);font-weight:900;}
+.quiz-option{display:block;padding:16px 20px;margin:10px 0;border-radius:16px;background:#fff;border:2.5px solid #e8e8e8;cursor:pointer;transition:all 0.25s;font-size:16px;font-weight:700;color:var(--text);}
+.quiz-option:hover{background:rgba(78,205,196,0.08);border-color:var(--secondary);transform:translateX(4px);}
+.quiz-option.correct{background:rgba(81,207,102,0.12);border-color:var(--success);color:#2b8a3e;}
+.quiz-option.wrong{background:rgba(255,107,107,0.1);border-color:var(--danger);color:#c92a2a;}
+.quiz-feedback{padding:14px 18px;border-radius:14px;margin-top:10px;font-size:15px;display:none;font-weight:700;}
+.quiz-feedback.show{display:block;animation:popIn 0.35s cubic-bezier(0.34,1.56,0.64,1);}
+@keyframes popIn{from{opacity:0;transform:scale(0.92);}to{opacity:1;transform:scale(1);}}
+.insight-box{background:linear-gradient(135deg,rgba(204,93,232,0.08),rgba(51,154,240,0.08));border-left:5px solid var(--purple);padding:18px 22px;border-radius:0 16px 16px 0;margin:16px 0;}
+.insight-box h4{color:var(--purple);font-size:17px;font-weight:900;margin-bottom:8px;}
+.sticker{display:inline-block;font-size:28px;animation:wiggle 3s ease-in-out infinite;}
+@keyframes wiggle{0%,100%{transform:rotate(0deg);}25%{transform:rotate(8deg);}75%{transform:rotate(-8deg);}}
+.star-reward{text-align:center;padding:20px;font-size:18px;font-weight:900;background:linear-gradient(135deg,rgba(255,230,109,0.2),rgba(255,146,43,0.1));border-radius:20px;margin-top:16px;}
+.star-reward .stars{font-size:36px;display:block;margin-bottom:8px;}
+footer{text-align:center;padding:36px 0;color:var(--dimmer);font-size:13px;border-top:3px dashed rgba(0,0,0,0.06);margin-top:50px;}
+.chart-container{background:#f8f9fa;border-radius:16px;padding:20px;margin:16px 0;text-align:center;}
+.pie-legend{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:16px;}
+.pie-legend-item{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700;}
+.pie-legend-dot{width:14px;height:14px;border-radius:50%;}
+.audio-bar{position:fixed;bottom:0;left:0;right:0;z-index:500;background:rgba(255,107,107,0.95);backdrop-filter:blur(12px);border-top:2px solid rgba(255,255,255,0.3);padding:10px 24px;display:flex;align-items:center;gap:14px;}
+.audio-bar .ab-btn{width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;background:#fff;color:var(--primary);font-size:16px;display:flex;align-items:center;justify-content:center;}
+.audio-bar .ab-info{flex:1;min-width:0;}
+.audio-bar .ab-title{font-size:13px;font-weight:700;color:#fff;}
+.audio-bar .ab-progress-wrap{height:4px;background:rgba(255,255,255,0.3);border-radius:2px;margin-top:4px;cursor:pointer;}
+.audio-bar .ab-progress{height:100%;background:#fff;border-radius:2px;width:0%;}
+.audio-bar .ab-time{font-size:11px;color:rgba(255,255,255,0.8);margin-top:2px;}
+.audio-bar .ab-vol{width:60px;accent-color:#fff;}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <span class="nav-brand">🌈 教我学 TeachAny</span>
+  <a href="#hero">首页</a>
+  <a href="#goals">目标</a>
+  <a href="#module-1">模块1</a>
+  <a href="#module-2">模块2</a>
+  <a href="#module-3">练习</a>
+  <a href="#deep-understanding">深思</a>
+  <a href="#summary">总结</a>
+</nav>
+
+<div class="container">
+  <section class="hero" id="hero">
+    <h1>🥧 扇形统计图 <span class="sticker">✨</span></h1>
+    <p class="subtitle">把"饼"切成扇形，看清各部分占总体多少！</p>
+    <div class="meta">
+      <span>📚 数学</span>
+      <span>🎒 6年级</span>
+      <span>⏱️ 约 30 分钟</span>
+      <span>🎯 新授课</span>
+    </div>
+  </section>
+
+  <section class="section" id="goals">
+    <h2 class="section-title">🎯 学习目标</h2>
+    <div class="grid-3">
+      <div class="card obj-card">
+        <div class="icon">🥧</div>
+        <h4>认识扇形图</h4>
+        <p>能说出扇形统计图的特点，了解扇形面积代表占比</p>
+      </div>
+      <div class="card obj-card">
+        <div class="icon">📊</div>
+        <h4>读懂百分比</h4>
+        <p>能从扇形图中读出各部分所占的百分比</p>
+      </div>
+      <div class="card obj-card">
+        <div class="icon">🔄</div>
+        <h4>三图比较</h4>
+        <p>能根据数据类型选择最合适的统计图</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="module-1">
+    <h2 class="section-title">📖 模块一：认识扇形统计图</h2>
+    <div class="card">
+      <h3>🌉 为什么需要扇形图？</h3>
+      <p><span class="highlight">我们已经学了</span>条形图比较大小，折线图看趋势。</p>
+      <p><span class="highlight">但如果想知道：</span>班里男生占全班的多少"份额"？用条形图只能看人数，看不出比例关系。</p>
+      <p><span class="highlight">所以扇形图来了！</span>把整体看成一个圆，每部分占据的"扇形面积"就代表它占总体的百分比。</p>
+    </div>
+    <div class="card">
+      <h3>💡 扇形图长什么样？</h3>
+      <p>扇形统计图用<span class="highlight">扇形面积的大小</span>来表示各部分占总体的百分比。整个圆代表100%，每个扇形代表一部分。</p>
+      <div class="chart-container">
+        <p style="font-weight:900;margin-bottom:12px;">🍕 班级课外活动时间分配（每周）</p>
+        <svg viewBox="0 0 300 300" width="220" height="220" xmlns="http://www.w3.org/2000/svg">
+          <!-- 读书 40% = 144° -->
+          <path d="M150,150 L150,30 A120,120 0 0,1 253.9,90 Z" fill="#ff6b6b" opacity="0.9"/>
+          <!-- 运动 30% = 108° -->
+          <path d="M150,150 L253.9,90 A120,120 0 0,1 253.9,210 Z" fill="#4ecdc4" opacity="0.9"/>
+          <!-- 绘画 20% = 72° -->
+          <path d="M150,150 L253.9,210 A120,120 0 0,1 113.1,256.4 Z" fill="#ffe66d" opacity="0.9"/>
+          <!-- 其他 10% = 36° -->
+          <path d="M150,150 L113.1,256.4 A120,120 0 0,1 150,30 Z" fill="#cc5de8" opacity="0.9"/>
+          <!-- Labels -->
+          <text x="195" y="110" text-anchor="middle" font-size="13" fill="white" font-weight="bold">读书</text>
+          <text x="195" y="124" text-anchor="middle" font-size="13" fill="white" font-weight="bold">40%</text>
+          <text x="230" y="175" text-anchor="middle" font-size="13" fill="white" font-weight="bold">运动30%</text>
+          <text x="160" y="248" text-anchor="middle" font-size="13" fill="#333" font-weight="bold">绘画20%</text>
+          <text x="95" y="195" text-anchor="middle" font-size="12" fill="white" font-weight="bold">其他10%</text>
+        </svg>
+        <div class="pie-legend">
+          <div class="pie-legend-item"><div class="pie-legend-dot" style="background:#ff6b6b;"></div>读书 40%</div>
+          <div class="pie-legend-item"><div class="pie-legend-dot" style="background:#4ecdc4;"></div>运动 30%</div>
+          <div class="pie-legend-item"><div class="pie-legend-dot" style="background:#ffe66d;"></div>绘画 20%</div>
+          <div class="pie-legend-item"><div class="pie-legend-dot" style="background:#cc5de8;"></div>其他 10%</div>
+        </div>
+      </div>
+      <p>看扇形图：<span class="highlight">扇形越大，占的比例越多</span>。各部分百分比加起来等于100%！</p>
+    </div>
+    <div class="insight-box">
+      <h4>🔍 想一想</h4>
+      <p>如果全班共40人，课外活动中用于读书的占40%，那有多少人在读书？（提示：40 × 40% = ?）</p>
+    </div>
+    <div class="card">
+      <h3><span class="sticker">✏️</span> 马上试一试</h3>
+      <p>从上面的扇形图来看，运动和绘画合计占总时间的多少？</p>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'q1')">A. 40%</div>
+      <div class="quiz-option" onclick="checkAnswer(this, true, 'q1')">B. 50%</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'q1')">C. 60%</div>
+      <div id="q1" class="quiz-feedback"></div>
+    </div>
+  </section>
+
+  <section class="section" id="module-2">
+    <h2 class="section-title">📖 模块二：三种统计图大比拼</h2>
+    <div class="card">
+      <h3>💡 三图各显神通</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:12px;">
+        <div style="background:rgba(255,107,107,0.08);border-radius:16px;padding:14px;text-align:center;">
+          <div style="font-size:32px;margin-bottom:8px;">📊</div>
+          <p style="font-weight:900;">条形图</p>
+          <p style="font-size:14px;color:var(--dim);">比较各类数量大小<br>看谁多谁少</p>
+        </div>
+        <div style="background:rgba(78,205,196,0.08);border-radius:16px;padding:14px;text-align:center;">
+          <div style="font-size:32px;margin-bottom:8px;">📈</div>
+          <p style="font-weight:900;">折线图</p>
+          <p style="font-size:14px;color:var(--dim);">显示时间变化趋势<br>看升降走势</p>
+        </div>
+        <div style="background:rgba(204,93,232,0.08);border-radius:16px;padding:14px;text-align:center;">
+          <div style="font-size:32px;margin-bottom:8px;">🥧</div>
+          <p style="font-weight:900;">扇形图</p>
+          <p style="font-size:14px;color:var(--dim);">显示各部分占总体比例<br>看份额大小</p>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>💡 扇形图的关键特点</h3>
+      <ul style="padding-left:20px;line-height:2.2;">
+        <li>整个圆 = <span class="highlight">100%（总体）</span></li>
+        <li>每个扇形的百分比相加 = <span class="highlight">100%</span></li>
+        <li>扇形越大，占比越多</li>
+        <li>适合表示"各部分与整体的关系"</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="sticker">✏️</span> 选图题</h3>
+      <p>调查全班同学最喜欢的学科，想看各学科学生人数占全班的比例，应选哪种图？</p>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'q2')">A. 折线统计图</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'q2')">B. 条形统计图</div>
+      <div class="quiz-option" onclick="checkAnswer(this, true, 'q2')">C. 扇形统计图</div>
+      <div id="q2" class="quiz-feedback"></div>
+    </div>
+  </section>
+
+  <section class="section" id="module-3">
+    <h2 class="section-title">🎯 闯关练习</h2>
+    <div class="card">
+      <h3>⭐ 第一关：基础认知</h3>
+      <p>扇形统计图中，所有扇形的百分比加起来等于……</p>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'q3')">A. 50%</div>
+      <div class="quiz-option" onclick="checkAnswer(this, true, 'q3')">B. 100%</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'q3')">C. 200%</div>
+      <div id="q3" class="quiz-feedback"></div>
+    </div>
+    <div class="card">
+      <h3>⭐⭐ 第二关：读图计算</h3>
+      <p>某家庭月收入10000元，其中食品占35%，教育占25%，储蓄占20%，其他占20%。<br>教育和储蓄合计花了多少元？</p>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'q4')">A. 3000元</div>
+      <div class="quiz-option" onclick="checkAnswer(this, true, 'q4')">B. 4500元</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'q4')">C. 5000元</div>
+      <div id="q4" class="quiz-feedback"></div>
+    </div>
+    <div class="card">
+      <h3>⭐⭐⭐ 第三关：综合应用</h3>
+      <p>小明做了一个扇形图，其中"语文"扇形占40%，"数学"占35%，"英语"占30%。这个扇形图……</p>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'q5')">A. 是正确的，三科加起来超过100%也没关系</div>
+      <div class="quiz-option" onclick="checkAnswer(this, true, 'q5')">B. 是错误的，40%+35%+30%=105%，超过了100%</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'q5')">C. 是正确的，每部分百分比独立不相关</div>
+      <div id="q5" class="quiz-feedback"></div>
+    </div>
+    <div class="star-reward" id="star-reward" style="display:none;">
+      <span class="stars">🌟🌟🌟</span>太棒了！扇形图分析达人！
+    </div>
+  </section>
+
+  <section class="section" id="deep-understanding">
+    <h2 class="section-title">🔬 深层理解</h2>
+    <div class="insight-box">
+      <h4>🌍 扇形图在生活中</h4>
+      <p>家庭支出分配、营养成分标签、国家GDP组成……扇形图无处不在！每次看到"饼图"，都能读出各部分占整体的比例。</p>
+    </div>
+    <div class="card">
+      <h3>💡 三图速记口诀</h3>
+      <p>🎵 <span class="highlight">条形比高低，折线看趋势；扇形看份额，三图各有义！</span></p>
+    </div>
+  </section>
+
+  <section class="section" id="summary">
+    <h2 class="section-title">📝 课堂总结</h2>
+    <div class="card">
+      <h3>🎉 今天学了什么？</h3>
+      <ul style="padding-left:20px;line-height:2.2;">
+        <li>扇形统计图用<span class="highlight">扇形面积</span>表示各部分占总体的百分比</li>
+        <li>整个圆 = 100%，各扇形百分比之和 = 100%</li>
+        <li>扇形越大，占比越大</li>
+        <li>三种统计图：条形（大小）、折线（趋势）、扇形（比例）</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    <p>Made with <strong>教我学 TeachAny</strong> · <a href="https://github.com/weponusa/teachany" style="color:var(--primary);">GitHub</a></p>
+    <p style="margin-top:8px;">Built on ABT Narrative · Bloom's Taxonomy · Scaffolding · Cognitive Load Theory</p>
+  </footer>
+</div>
+
+<div class="audio-bar">
+  <button class="ab-btn" id="abPrev">⏮</button>
+  <button class="ab-btn" id="abPlay">▶</button>
+  <button class="ab-btn" id="abNext">⏭</button>
+  <div class="ab-info">
+    <div class="ab-title" id="abTitle">扇形统计图 - 课件讲解</div>
+    <div class="ab-progress-wrap" id="abProgressWrap"><div class="ab-progress" id="abProgress"></div></div>
+    <div class="ab-time" id="abTime">00:00 / 00:00</div>
+  </div>
+  <input type="range" class="ab-vol" id="abVol" min="0" max="1" step="0.05" value="0.8">
+</div>
+
+<script>
+const audioPlaylist=[{title:"第1段：开场",src:"tts/s01.mp3"},{title:"第2段：扇形图介绍",src:"tts/s02.mp3"},{title:"第3段：读扇形图",src:"tts/s03.mp3"},{title:"第4段：三图比较",src:"tts/s04.mp3"},{title:"第5段：实际应用",src:"tts/s05.mp3"},{title:"第6段：总结",src:"tts/s06.mp3"}];
+let curIdx=0,audio=new Audio();
+const abPlay=document.getElementById('abPlay'),abTitle=document.getElementById('abTitle'),abProgress=document.getElementById('abProgress'),abTime=document.getElementById('abTime'),abVol=document.getElementById('abVol');
+function loadTrack(i){curIdx=i;audio.src=audioPlaylist[i].src;abTitle.textContent=audioPlaylist[i].title;audio.volume=parseFloat(abVol.value);audio.load();}
+function fmt(s){const m=Math.floor(s/60),sec=Math.floor(s%60);return`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;}
+audio.addEventListener('timeupdate',()=>{const p=audio.duration?audio.currentTime/audio.duration*100:0;abProgress.style.width=p+'%';abTime.textContent=`${fmt(audio.currentTime)} / ${fmt(audio.duration||0)}`;});
+audio.addEventListener('ended',()=>{if(curIdx<audioPlaylist.length-1){loadTrack(curIdx+1);audio.play();abPlay.textContent='⏸';}else{abPlay.textContent='▶';}});
+abPlay.addEventListener('click',()=>{if(audio.paused){if(!audio.src||audio.src===window.location.href)loadTrack(0);audio.play();abPlay.textContent='⏸';}else{audio.pause();abPlay.textContent='▶';}});
+document.getElementById('abPrev').addEventListener('click',()=>{if(curIdx>0){loadTrack(curIdx-1);audio.play();abPlay.textContent='⏸';}});
+document.getElementById('abNext').addEventListener('click',()=>{if(curIdx<audioPlaylist.length-1){loadTrack(curIdx+1);audio.play();abPlay.textContent='⏸';}});
+document.getElementById('abProgressWrap').addEventListener('click',e=>{if(audio.duration){const r=e.currentTarget.getBoundingClientRect();audio.currentTime=(e.clientX-r.left)/r.width*audio.duration;}});
+abVol.addEventListener('input',()=>{audio.volume=parseFloat(abVol.value);});
+let correctCount=0;
+function checkAnswer(el,isCorrect,feedbackId){const parent=el.parentElement;const options=parent.querySelectorAll('.quiz-option');const feedback=document.getElementById(feedbackId);if(parent.dataset.answered)return;parent.dataset.answered='true';options.forEach(opt=>{opt.style.pointerEvents='none';opt.style.opacity='0.6';});if(isCorrect){correctCount++;el.classList.add('correct');el.style.opacity='1';feedback.innerHTML='🎉 <strong>太棒了！答对啦！</strong>';feedback.style.background='rgba(81,207,102,0.12)';feedback.style.color='#2b8a3e';if(correctCount>=3)document.getElementById('star-reward').style.display='block';}else{el.classList.add('wrong');el.style.opacity='1';options.forEach(opt=>{if(opt.getAttribute('onclick')&&opt.getAttribute('onclick').includes('true')){opt.classList.add('correct');opt.style.opacity='1';}});feedback.innerHTML='💪 <strong>没关系，看看正确答案！</strong>';feedback.style.background='rgba(255,107,107,0.08)';feedback.style.color='#c92a2a';}feedback.classList.add('show');}
+</script>
+</body>
+</html>
