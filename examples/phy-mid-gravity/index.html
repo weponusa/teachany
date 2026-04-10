@@ -8,309 +8,445 @@
 <meta name="teachany-domain" content="mechanics">
 <meta name="teachany-grade" content="8">
 <meta name="teachany-difficulty" content="2">
-<meta name="teachany-version" content="1.0">
+<meta name="teachany-version" content="2.0">
 <meta name="teachany-author" content="weponusa">
 <title>重力 · 教学课件</title>
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
-:root{--bg:#f8fafc;--bg2:#f0f4f8;--bg3:#e2e8f0;--primary:#3b82f6;--secondary:#06b6d4;--accent:#f59e0b;--success:#22c55e;--danger:#ef4444;--purple:#8b5cf6;--teal:#14b8a6;--text:#1e293b;--dim:#64748b;--dimmer:#94a3b8;--card:#ffffff;--border:rgba(0,0,0,0.06);}
+:root{--bg:#f8fafc;--primary:#3b82f6;--secondary:#06b6d4;--accent:#f59e0b;--success:#10b981;--card:#fff;--danger:#ef4444;--text:#1e293b;--dim:#64748b;--border:rgba(0,0,0,0.08);}
 *{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
-body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.8;padding-bottom:70px;}
-body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(160deg,rgba(59,130,246,.03) 0%,rgba(6,182,212,.03) 50%,rgba(245,158,11,.02) 100%);pointer-events:none;z-index:-1;}
-.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:58px;gap:4px;overflow-x:auto;box-shadow:0 1px 12px rgba(0,0,0,.04);}
-.nav-brand{font-size:18px;font-weight:800;margin-right:18px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:10px;font-size:13.5px;font-weight:600;transition:all .2s;white-space:nowrap;}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.8;padding-bottom:80px;}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,.93);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:58px;gap:4px;overflow-x:auto;}
+.nav-brand{font-size:17px;font-weight:800;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 13px;border-radius:10px;font-size:13px;font-weight:600;transition:all .2s;white-space:nowrap;}
 .nav a:hover,.nav a.active{color:var(--primary);background:rgba(59,130,246,.08);}
-.container{max-width:1060px;margin:0 auto;padding:78px 24px 60px;}
-.hero{text-align:center;padding:40px 0 30px;}
-.hero h1{font-size:40px;font-weight:800;line-height:1.3;background:linear-gradient(135deg,var(--primary),var(--secondary),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;}
-.hero .subtitle{font-size:17px;color:var(--dim);margin-bottom:16px;}
+.container{max-width:1060px;margin:0 auto;padding:76px 24px 60px;}
+.hero{text-align:center;padding:36px 0 28px;}
+.hero h1{font-size:38px;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;}
+.hero .subtitle{font-size:16px;color:var(--dim);margin-bottom:14px;}
 .hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
-.hero .meta span{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:5px 16px;font-size:13px;font-weight:600;color:var(--dim);box-shadow:0 1px 4px rgba(0,0,0,.04);}
-.section{margin:44px 0;}
-.section-title{font-size:24px;font-weight:800;margin-bottom:18px;padding-left:16px;border-left:4px solid transparent;border-image:linear-gradient(to bottom,var(--primary),var(--secondary)) 1;}
-.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px 26px;margin-bottom:18px;box-shadow:0 2px 12px rgba(0,0,0,.04);transition:transform .2s,box-shadow .2s;}
-.card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(59,130,246,.08);}
-.card h3{font-size:18px;font-weight:700;margin-bottom:10px;}
-.card p,.card li{font-size:15.5px;line-height:1.85;color:var(--dim);}
-.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;}
-.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;}
-.obj-card{text-align:center;padding:26px 18px;border-top:3px solid transparent;}
-.obj-card:nth-child(1){border-top-color:var(--primary);}
-.obj-card:nth-child(2){border-top-color:var(--secondary);}
-.obj-card:nth-child(3){border-top-color:var(--accent);}
-.obj-card .icon{font-size:36px;margin-bottom:10px;}
-.obj-card h4{font-size:16px;font-weight:700;margin-bottom:6px;}
-.obj-card p{font-size:14px;color:var(--dim);}
+.hero .meta span{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:5px 14px;font-size:13px;font-weight:600;color:var(--dim);}
+.section{margin:40px 0;}
+.section-title{font-size:22px;font-weight:800;margin-bottom:16px;padding-left:14px;border-left:4px solid var(--primary);}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px 24px;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,0.04);}
+.card h3{font-size:17px;font-weight:700;margin-bottom:8px;}
+.card p,.card li{font-size:15px;line-height:1.85;color:var(--dim);}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;}
 .highlight{color:var(--primary);font-weight:700;}
-.quiz-option{display:block;padding:14px 18px;margin:8px 0;border-radius:12px;background:var(--bg);border:2px solid var(--border);cursor:pointer;transition:all .25s;font-size:15px;font-weight:600;color:var(--text);}
-.quiz-option:hover{background:rgba(59,130,246,.05);border-color:var(--primary);transform:translateX(3px);}
-.quiz-option.correct{background:rgba(34,197,94,.1);border-color:var(--success);color:#15803d;}
-.quiz-option.wrong{background:rgba(239,68,68,.08);border-color:var(--danger);color:#b91c1c;}
-.quiz-feedback{padding:12px 16px;border-radius:10px;margin-top:10px;font-size:14.5px;display:none;}
-.quiz-feedback.show{display:block;animation:slideUp .3s ease;}
-@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.insight-box{background:linear-gradient(135deg,rgba(6,182,212,.06),rgba(59,130,246,.06));border-left:4px solid var(--secondary);padding:18px 22px;border-radius:0 12px 12px 0;margin:16px 0;}
-.insight-box h4{color:var(--secondary);font-size:16px;font-weight:700;margin-bottom:8px;}
-.insight-box p{color:var(--text);font-size:15px;}
-.formula-box{background:linear-gradient(135deg,rgba(139,92,246,.08),rgba(59,130,246,.08));border:2px solid rgba(139,92,246,.2);border-radius:12px;padding:20px 24px;margin:16px 0;text-align:center;}
-.formula-box .formula{font-size:22px;font-weight:800;color:var(--purple);margin:8px 0;}
-.formula-box .hint{font-size:13px;color:var(--dim);margin-top:6px;}
-.svg-wrap{background:var(--bg2);border-radius:12px;padding:16px;margin:16px 0;text-align:center;}
-.tag{display:inline-block;background:rgba(59,130,246,.1);color:var(--primary);font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;margin:2px;}
-footer{text-align:center;padding:36px 0;color:var(--dimmer);font-size:13px;border-top:1px solid var(--border);margin-top:50px;}
-@media(max-width:600px){.hero h1{font-size:28px}.nav{height:52px}.section-title{font-size:21px}.card{padding:18px}}
-.audio-bar{position:fixed;bottom:0;left:0;right:0;z-index:500;background:rgba(59,130,246,0.95);backdrop-filter:blur(12px);border-top:2px solid rgba(255,255,255,0.3);padding:10px 24px;display:flex;align-items:center;gap:14px;}
-.audio-bar .ab-btn{width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;background:#fff;color:#3b82f6;font-size:16px;display:flex;align-items:center;justify-content:center;}
-.audio-bar .ab-info{flex:1;min-width:0;}
-.audio-bar .ab-title{font-size:13px;font-weight:700;color:#fff;}
-.audio-bar .ab-progress-wrap{height:4px;background:rgba(255,255,255,0.3);border-radius:2px;margin-top:4px;cursor:pointer;}
-.audio-bar .ab-progress{height:100%;background:#fff;border-radius:2px;width:0%;}
-.audio-bar .ab-time{font-size:11px;color:rgba(255,255,255,0.8);margin-top:2px;}
-.audio-bar .ab-vol{width:60px;accent-color:#fff;}
+.formula-box{background:rgba(59,130,246,.06);border-left:4px solid var(--primary);padding:14px 18px;border-radius:0 10px 10px 0;margin:12px 0;font-size:16px;font-weight:700;}
+.note{background:rgba(245,158,11,.07);border-left:4px solid var(--accent);padding:12px 16px;border-radius:0 10px 10px 0;margin:12px 0;font-size:14px;color:#92400e;}
+/* Life scene */
+#life-scene{background:linear-gradient(135deg,#0c0a1f,#1a1060);border-radius:18px;padding:28px;min-height:320px;overflow:hidden;}
+#life-scene h3{color:#fff;font-size:18px;margin-bottom:8px;}
+#life-scene p{color:rgba(255,255,255,.6);font-size:13px;margin-bottom:12px;}
+.apple-fall{animation:appleFall 3s ease-in infinite;}
+@keyframes appleFall{0%{transform:translateY(0);opacity:1;}70%{transform:translateY(160px);opacity:1;}80%{transform:translateY(170px);opacity:0;}100%{transform:translateY(0);opacity:0;}}
+.planet-orbit{animation:orbit 8s linear infinite;transform-origin:320px 110px;}
+@keyframes orbit{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+.weight-bounce{animation:weightBounce 2.5s ease-in-out infinite;}
+@keyframes weightBounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-12px);}}
+/* Lab */
+#interactive-lab{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px;margin-bottom:20px;}
+#interactive-lab h3{font-size:18px;font-weight:800;margin-bottom:18px;}
+.lab-controls{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+@media(max-width:640px){.lab-controls{grid-template-columns:1fr;}}
+.control-group{background:var(--bg);border-radius:12px;padding:16px;}
+.control-group label{font-size:13px;font-weight:700;color:var(--dim);display:block;margin-bottom:8px;}
+.control-group input[type=range]{width:100%;accent-color:var(--primary);cursor:pointer;}
+.control-group .value{font-size:22px;font-weight:800;color:var(--primary);margin-top:6px;}
+.lab-result{background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(6,182,212,.08));border-radius:14px;padding:20px;text-align:center;}
+.lab-result .formula{font-size:18px;font-weight:700;color:var(--primary);margin-bottom:8px;}
+.lab-result .detail{font-size:14px;color:var(--dim);}
+#knowledge-graph{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px;margin-bottom:20px;}
+#knowledge-graph h3{font-size:18px;font-weight:800;margin-bottom:6px;}
+#kg-svg{width:100%;height:380px;border-radius:12px;background:#f8fafc;}
+.kg-legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;}
+.kg-legend-item{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--dim);}
+.kg-legend-dot{width:12px;height:12px;border-radius:50%;}
+.quiz-option{display:block;padding:12px 16px;margin:7px 0;border-radius:11px;background:var(--bg);border:2px solid var(--border);cursor:pointer;transition:all .25s;font-size:14.5px;font-weight:600;color:var(--text);}
+.quiz-option:hover{background:rgba(59,130,246,.05);border-color:var(--primary);}
+.quiz-option.correct{background:rgba(16,185,129,.1);border-color:var(--success);color:#065f46;}
+.quiz-option.wrong{background:rgba(239,68,68,.08);border-color:var(--danger);color:#991b1b;}
+.quiz-feedback{padding:12px 16px;border-radius:10px;margin-top:8px;font-size:14px;display:none;background:rgba(59,130,246,.07);color:var(--primary);}
+.quiz-feedback.show{display:block;}
+table{width:100%;border-collapse:collapse;font-size:14.5px;}
+th{background:rgba(59,130,246,.07);padding:10px 14px;text-align:left;font-weight:700;border-bottom:2px solid var(--border);}
+td{padding:10px 14px;border-bottom:1px solid var(--border);}
 </style>
 </head>
 <body>
 <nav class="nav">
-  <span class="nav-brand">🎓 教我学 TeachAny</span>
-  <a href="#hero">首页</a>
-  <a href="#module-1">重力方向</a>
-  <a href="#module-2">G=mg</a>
-  <a href="#module-3">重心</a>
-  <a href="#deep-understanding">应用</a>
-  <a href="#summary">总结</a>
+  <div class="nav-brand">🌍 重力</div>
+  <a href="#life-scene" class="active">生活场景</a>
+  <a href="#content">核心内容</a>
+  <a href="#interactive-lab">互动实验</a>
+  <a href="#knowledge-graph">知识图谱</a>
+  <a href="#quiz">练习</a>
 </nav>
+
 <div class="container">
-  <section class="hero" id="hero">
+  <div class="hero">
     <h1>🌍 重力</h1>
-    <p class="subtitle">地球的吸引力 · 方向与大小</p>
+    <p class="subtitle">G = mg，地球引力与重心的科学</p>
     <div class="meta">
-      <span>⚡ 物理</span><span>🎓 8年级</span><span>⏱️ 约40分钟</span><span>🎯 新授课</span><span>📐 力学基础</span>
+      <span>📚 初中物理</span><span>🎓 八年级</span><span>⚙️ 力学</span><span>🍎 经典知识</span>
     </div>
-  </section>
-  <section class="section">
-    <h2 class="section-title">🎯 学习目标</h2>
-    <div class="grid-3">
-      <div class="card obj-card"><div class="icon">🌍</div><h4>理解重力</h4><p>说出重力的产生原因、方向和作用点</p></div>
-      <div class="card obj-card"><div class="icon">🔢</div><h4>会计算重力</h4><p>能用 G=mg 计算重力，理解 g≈10 N/kg</p></div>
-      <div class="card obj-card"><div class="icon">⚖️</div><h4>理解重心</h4><p>能判断规则形状物体的重心位置</p></div>
-    </div>
-  </section>
-
-  <section class="section" id="module-1">
-    <h2 class="section-title">📖 模块一：重力的产生与方向</h2>
-    <div class="card">
-      <h3>🌉 苹果为什么落地？</h3>
-      <p><span class="highlight">你已经知道……</span> 抛出去的石头最终会落地，天上的雨水会落下来——（And）</p>
-      <p><span class="highlight">但有个问题……</span> 是什么力让所有物体都"往下"掉？——（But）</p>
-      <p><span class="highlight">所以我们要学……</span> 地球吸引地面附近物体的力，叫做重力！——（Therefore）</p>
-    </div>
-    <div class="card">
-      <h3>💡 重力的三要素</h3>
-      <ul style="margin:8px 0 0 20px;">
-        <li><span class="highlight">施力物体</span>：地球</li>
-        <li><span class="highlight">方向</span>：竖直向下（不是垂直地面！）</li>
-        <li><span class="highlight">作用点</span>：重心</li>
-        <li>地面上任何地方重力方向都指向地心</li>
-      </ul>
-    </div>
-    <div class="svg-wrap">
-      <svg width="380" height="200" viewBox="0 0 380 200">
-        <rect x="0" y="0" width="380" height="200" fill="#f0f4f8" rx="8"/>
-        <!-- 地球 -->
-        <circle cx="190" cy="160" r="30" fill="#3b82f6" opacity="0.7"/>
-        <text x="190" y="165" text-anchor="middle" font-size="13" fill="white" font-weight="bold">地球</text>
-        <!-- 地面 -->
-        <ellipse cx="190" cy="130" rx="120" ry="8" fill="#94a3b8" opacity="0.5"/>
-        <!-- 斜面 -->
-        <path d="M80 130 L140 90" stroke="#64748b" stroke-width="2" stroke-dasharray="4,3"/>
-        <rect x="130" y="75" width="20" height="20" fill="#f59e0b" rx="3"/>
-        <!-- 斜面上重力竖直向下 -->
-        <line x1="140" y1="85" x2="140" y2="120" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arrowR)"/>
-        <defs><marker id="arrowR" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#ef4444"/></marker></defs>
-        <text x="155" y="108" font-size="12" fill="#ef4444" font-weight="bold">G 竖直向下</text>
-        <!-- 山顶 -->
-        <polygon points="280,130 310,70 340,130" fill="#94a3b8" opacity="0.6"/>
-        <circle cx="310" cy="65" r="6" fill="#fbbf24"/>
-        <line x1="310" y1="65" x2="310" y2="100" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arrowR2)"/>
-        <defs><marker id="arrowR2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#ef4444"/></marker></defs>
-        <text x="320" y="85" font-size="11" fill="#ef4444">竖直向下</text>
-        <text x="190" y="20" text-anchor="middle" font-size="13" fill="#3b82f6" font-weight="bold">无论在哪里，重力方向都是竖直向下！</text>
-      </svg>
-    </div>
-    <div class="card">
-      <h3>✏️ 马上练一题</h3>
-      <p>下列关于重力方向的说法，正确的是？</p>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m1q1')">A. 重力方向垂直于地面向下</div>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'m1q1')">B. 重力方向竖直向下（指向地心）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m1q1')">C. 斜坡上的物体，重力方向沿斜面向下</div>
-      <div id="m1q1" class="quiz-feedback"></div>
-    </div>
-  </section>
-
-  <section class="section" id="module-2">
-    <h2 class="section-title">📖 模块二：重力的大小——G=mg</h2>
-    <div class="card">
-      <h3>💡 重力公式</h3>
-      <div class="formula-box">
-        <div class="formula">G = mg</div>
-        <div class="hint">G = 重力（N）&nbsp;&nbsp; m = 质量（kg）&nbsp;&nbsp; g ≈ 10 N/kg（重力加速度）</div>
-      </div>
-      <ul style="margin:12px 0 0 20px;">
-        <li>g 的精确值约为 9.8 N/kg，初中一般取 10 N/kg</li>
-        <li>质量 1 kg 的物体，重力约 10 N</li>
-        <li>质量越大，重力越大（成正比）</li>
-        <li>同一物体在不同星球上，重力不同（g 不同），但质量不变</li>
-      </ul>
-    </div>
-    <div class="card">
-      <h3>✏️ 计算练习</h3>
-      <p>一个同学质量 50 kg，他在地球上的重力是多少 N？若月球上 g月≈1.6 N/kg，他在月球上的重力是多少？</p>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'m2q1')">A. 地球500N，月球80N</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m2q1')">B. 地球500N，月球500N（质量不变）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m2q1')">C. 地球50N，月球8N</div>
-      <div id="m2q1" class="quiz-feedback"></div>
-    </div>
-  </section>
-
-  <section class="section" id="module-3">
-    <h2 class="section-title">📖 模块三：重心</h2>
-    <div class="card">
-      <h3>💡 什么是重心？</h3>
-      <p><span class="highlight">重心</span>：重力的等效作用点，可以看作全部重力集中于此点。</p>
-      <ul style="margin:10px 0 0 20px;">
-        <li>均匀规则形状物体：重心在几何中心</li>
-        <li>正方形重心→中心，球形重心→球心，圆柱重心→轴线中点</li>
-        <li>不规则物体：用悬挂法找重心（两次悬挂交点）</li>
-        <li>重心不一定在物体上（环形重心在中心，中心是空的）</li>
-      </ul>
-    </div>
-    <div class="svg-wrap">
-      <svg width="400" height="140" viewBox="0 0 400 140">
-        <rect x="0" y="0" width="400" height="140" fill="#f0f4f8" rx="8"/>
-        <!-- 正方形 -->
-        <rect x="30" y="40" width="70" height="70" fill="rgba(59,130,246,0.2)" stroke="#3b82f6" stroke-width="2" rx="2"/>
-        <circle cx="65" cy="75" r="5" fill="#3b82f6"/>
-        <text x="65" y="25" text-anchor="middle" font-size="12" fill="#3b82f6" font-weight="bold">正方形→中心</text>
-        <!-- 三角形 -->
-        <polygon points="155,110 205,40 255,110" fill="rgba(6,182,212,0.2)" stroke="#06b6d4" stroke-width="2"/>
-        <circle cx="205" cy="87" r="5" fill="#06b6d4"/>
-        <text x="205" y="28" text-anchor="middle" font-size="12" fill="#06b6d4" font-weight="bold">三角形→1/3高处</text>
-        <!-- 环形 -->
-        <circle cx="330" cy="75" r="38" fill="none" stroke="#f59e0b" stroke-width="2"/>
-        <circle cx="330" cy="75" r="20" fill="rgba(245,158,11,0.1)" stroke="#f59e0b" stroke-width="1" stroke-dasharray="3,2"/>
-        <circle cx="330" cy="75" r="5" fill="#f59e0b"/>
-        <text x="330" y="25" text-anchor="middle" font-size="12" fill="#f59e0b" font-weight="bold">圆环→中心（空的！）</text>
-      </svg>
-    </div>
-    <div class="card">
-      <h3>✏️ 判断题</h3>
-      <p>一个均匀铁环，其重心在哪里？</p>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m3q1')">A. 铁环上某一处</div>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'m3q1')">B. 铁环的圆心处（不在铁环本身上）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m3q1')">C. 铁环的最低点</div>
-      <div id="m3q1" class="quiz-feedback"></div>
-    </div>
-  </section>
-
-  <section class="section" id="deep-understanding">
-    <h2 class="section-title">🔬 深入理解：重力的应用</h2>
-    <div class="card">
-      <h3>🏗️ 重锤线——建筑必备</h3>
-      <p>重锤线利用重力方向竖直向下的原理，用于检测墙壁是否竖直。建筑师和瓦工每天都在用它！</p>
-    </div>
-    <div class="insight-box">
-      <h4>🔍 迁移：为什么高个子运动员更难保持平衡？</h4>
-      <p>重心越高，物体越容易倾倒。高个子篮球运动员重心高，所以需要更宽的步距来保持平衡——这就是为什么他们走路步幅大！降低重心是提高稳定性的关键。</p>
-    </div>
-  </section>
-
-  <section class="section" id="summary">
-    <h2 class="section-title">📊 本课总结</h2>
-    <div class="card">
-      <h3>🗺️ 知识导图</h3>
-      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;">
-        <span class="tag">重力：地球吸引物体</span>
-        <span class="tag">方向：竖直向下</span>
-        <span class="tag">G = mg</span>
-        <span class="tag">g ≈ 10 N/kg</span>
-        <span class="tag">质量≠重力</span>
-        <span class="tag">重心：重力作用点</span>
-        <span class="tag">规则体重心在几何中心</span>
-      </div>
-    </div>
-    <div class="card">
-      <h3>✅ 自测清单</h3>
-      <ul style="margin-left:20px;">
-        <li>✅ 我能说出重力的产生、方向和作用点</li>
-        <li>✅ 我能用 G=mg 计算重力</li>
-        <li>✅ 我能区分质量和重力（月球对比）</li>
-        <li>✅ 我能判断规则形状的重心位置</li>
-        <li>✅ 我理解重锤线的工作原理</li>
-      </ul>
-    </div>
-  </section>
-<script>
-const correctMsgs={'m1q1':'重力方向是竖直向下，指向地心，而不是垂直于地面（在斜面上二者不同！）',
-'m2q1':'G地=50×10=500N，G月=50×1.6=80N。质量不变，但重力因g不同而不同。',
-'m3q1':'圆环均匀，重心在圆心处，圆心是空的，所以重心不在环上本身。'};
-const wrongMsgs={'m1q1':'注意：竖直向下≠垂直地面向下！在斜面上，这两者方向不同。重力永远指向地心。',
-'m2q1':'质量是物质的量，不随位置改变，所以月球上质量仍是50kg。但重力=mg，g变了所以重力变了。',
-'m3q1':'重心是重力的等效作用点，不一定在物体上。均匀圆环的重心恰好在中空的圆心位置。'};</script>
-  <footer>
-    <p>Made with <strong>教我学 TeachAny</strong> · <a href="https://github.com/weponusa/teachany" style="color:var(--primary);">GitHub</a></p>
-    <p style="margin-top:8px;">初中物理 · 力学基础 · 重力</p>
-  </footer>
-</div>
-
-<div class="audio-bar" id="audioBar">
-  <button class="ab-btn" id="abPlay" onclick="abToggle()">▶</button>
-  <button class="ab-btn" onclick="abPrev()" style="font-size:13px;">⏮</button>
-  <button class="ab-btn" onclick="abNext()" style="font-size:13px;">⏭</button>
-  <div class="ab-info">
-    <div class="ab-title" id="abTitle">重力 - 课程介绍</div>
-    <div class="ab-progress-wrap" id="abProgressWrap"><div class="ab-progress" id="abProgress"></div></div>
-    <div class="ab-time" id="abTime">0:00 / 0:00</div>
   </div>
-  <input type="range" class="ab-vol" id="abVol" min="0" max="1" step="0.05" value="0.8" oninput="abSetVol(this.value)">
+
+  <!-- 生活场景 -->
+  <div class="section" id="life-scene-section">
+    <div class="section-title">🎬 生活场景：从苹果落地到行星绕轨</div>
+    <div id="life-scene">
+      <h3>重力无处不在——从苹果落地到月球公转</h3>
+      <p>一切物体都受到地球的引力（重力），质量越大重力越大，方向始终竖直向下</p>
+      <svg viewBox="0 0 800 220" style="width:100%;height:200px;" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="gD" viewBox="0 -4 8 8" refX="7" refY="0" markerWidth="5" markerHeight="5" orient="auto">
+            <path d="M0,-4L8,0L0,4" fill="#f97316"/>
+          </marker>
+          <radialGradient id="earthGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#34d399"/>
+            <stop offset="100%" stop-color="#0891b2"/>
+          </radialGradient>
+          <radialGradient id="moonGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#e2e8f0"/>
+            <stop offset="100%" stop-color="#94a3b8"/>
+          </radialGradient>
+        </defs>
+        
+        <!-- Scene 1: Apple falling from tree -->
+        <g transform="translate(30,10)">
+          <text x="90" y="-2" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="700">🍎 苹果落地</text>
+          <!-- Tree -->
+          <rect x="80" y="110" width="20" height="70" fill="#92400e"/>
+          <circle cx="90" cy="80" r="50" fill="#16a34a" fill-opacity=".8"/>
+          <!-- Falling apple -->
+          <g class="apple-fall">
+            <circle cx="100" cy="30" r="12" fill="#ef4444"/>
+            <text x="100" y="35" text-anchor="middle" font-size="14">🍎</text>
+            <!-- Gravity arrow -->
+            <line x1="100" y1="45" x2="100" y2="80" stroke="#f97316" stroke-width="2.5" marker-end="url(#gD)"/>
+            <text x="108" y="65" fill="#f97316" font-size="10">G↓</text>
+          </g>
+          <!-- Ground -->
+          <line x1="20" y1="185" x2="165" y2="185" stroke="#94a3b8" stroke-width="2"/>
+        </g>
+        
+        <!-- Scene 2: Spring scale showing weight -->
+        <g transform="translate(230,20)" class="weight-bounce">
+          <text x="90" y="-5" text-anchor="middle" fill="#60a5fa" font-size="12" font-weight="700">弹簧秤测重力</text>
+          <!-- Spring scale -->
+          <rect x="70" y="0" width="40" height="120" fill="rgba(59,130,246,.15)" stroke="#3b82f6" stroke-width="1.5" rx="6"/>
+          <!-- Scale markings -->
+          <line x1="82" y1="25" x2="110" y2="25" stroke="#3b82f6" stroke-width="1.5"/>
+          <line x1="82" y1="45" x2="110" y2="45" stroke="#3b82f6" stroke-width="1.5"/>
+          <line x1="82" y1="65" x2="110" y2="65" stroke="#3b82f6" stroke-width="1.5"/>
+          <line x1="82" y1="85" x2="110" y2="85" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="113" y="29" fill="#3b82f6" font-size="10">5N</text>
+          <text x="113" y="49" fill="#3b82f6" font-size="10">4N</text>
+          <text x="113" y="69" fill="#3b82f6" font-size="10">3N</text>
+          <text x="113" y="89" fill="#3b82f6" font-size="10">2N</text>
+          <!-- Pointer -->
+          <line x1="82" y1="75" x2="82" y2="75" stroke="#ef4444" stroke-width="2"/>
+          <rect x="68" y="72" width="14" height="3" fill="#ef4444"/>
+          <!-- Hanging mass -->
+          <line x1="90" y1="120" x2="90" y2="145" stroke="#64748b" stroke-width="2"/>
+          <rect x="70" y="145" width="40" height="30" fill="#f59e0b" rx="4"/>
+          <text x="90" y="164" text-anchor="middle" fill="white" font-size="11" font-weight="700">0.3kg</text>
+          <!-- G calculation -->
+          <text x="90" y="195" text-anchor="middle" fill="#f59e0b" font-size="11">G=0.3×10=3N</text>
+        </g>
+        
+        <!-- Scene 3: Earth-Moon gravity -->
+        <g transform="translate(460,10)">
+          <text x="160" y="-2" text-anchor="middle" fill="#34d399" font-size="12" font-weight="700">地月引力系统</text>
+          <!-- Earth -->
+          <circle cx="150" cy="110" r="45" fill="url(#earthGrad)" opacity=".9"/>
+          <text x="150" y="115" text-anchor="middle" fill="white" font-size="12" font-weight="700">地球</text>
+          <!-- Orbit path -->
+          <ellipse cx="150" cy="110" rx="130" ry="80" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1.5" stroke-dasharray="6,4"/>
+          <!-- Moon on orbit -->
+          <g class="planet-orbit" style="transform-origin:610px 120px">
+            <circle cx="280" cy="110" r="20" fill="url(#moonGrad)" opacity=".9"/>
+            <text x="280" y="115" text-anchor="middle" fill="#1e293b" font-size="10" font-weight="700">月球</text>
+            <!-- Gravity arrow toward Earth -->
+            <line x1="260" y1="110" x2="200" y2="110" stroke="#f97316" stroke-width="2" marker-end="url(#gD)"/>
+          </g>
+          <text x="150" y="198" text-anchor="middle" fill="#94a3b8" font-size="11">重力提供向心力</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <!-- 核心内容 -->
+  <div class="section" id="content">
+    <div class="section-title">📖 核心内容</div>
+    
+    <div class="grid-2">
+      <div class="card">
+        <h3>🔭 重力的定义</h3>
+        <p>由于<span class="highlight">地球的吸引</span>而使物体受到的力叫做<span class="highlight">重力</span>。</p>
+        <ul style="padding-left:18px;margin-top:8px;">
+          <li>施力体：地球</li>
+          <li>受力体：地面附近的物体</li>
+          <li>方向：<strong>竖直向下</strong></li>
+          <li>作用点：重心（G）</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>📐 重力公式</h3>
+        <div class="formula-box">G = mg</div>
+        <p>G：重力（N）</p>
+        <p>m：质量（kg）</p>
+        <p>g：重力加速度（≈9.8 m/s² 或取10 m/s²）</p>
+        <div class="note">g值随纬度和高度变化：赤道g稍小，两极g稍大；高空g减小。初中取g=10m/s²</div>
+      </div>
+    </div>
+
+    <!-- SVG 重力方向 -->
+    <div class="card">
+      <h3>🧭 重力方向——竖直向下</h3>
+      <svg viewBox="0 0 700 200" style="width:100%;border-radius:10px;background:#f8fafc;border:1px solid var(--border);" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="gArr" viewBox="0 -5 10 10" refX="9" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,-5L10,0L0,5" fill="#f97316"/>
+          </marker>
+        </defs>
+        <!-- Earth circle -->
+        <circle cx="350" cy="100" r="65" fill="rgba(52,211,153,.15)" stroke="#34d399" stroke-width="2"/>
+        <text x="350" y="105" text-anchor="middle" fill="#34d399" font-size="14" font-weight="700">地球中心</text>
+        
+        <!-- Objects at various positions around earth -->
+        <!-- Top -->
+        <rect x="330" y="10" width="40" height="22" fill="rgba(59,130,246,.2)" stroke="#3b82f6" stroke-width="1.5" rx="3"/>
+        <text x="350" y="24" text-anchor="middle" fill="#3b82f6" font-size="10">物体</text>
+        <line x1="350" y1="32" x2="350" y2="55" stroke="#f97316" stroke-width="2.5" marker-end="url(#gArr)"/>
+        
+        <!-- Right -->
+        <rect x="452" y="88" width="40" height="22" fill="rgba(59,130,246,.2)" stroke="#3b82f6" stroke-width="1.5" rx="3"/>
+        <text x="472" y="102" text-anchor="middle" fill="#3b82f6" font-size="10">物体</text>
+        <line x1="452" y1="99" x2="430" y2="99" stroke="#f97316" stroke-width="2.5" marker-end="url(#gArr)"/>
+        
+        <!-- Bottom -->
+        <rect x="330" y="168" width="40" height="22" fill="rgba(59,130,246,.2)" stroke="#3b82f6" stroke-width="1.5" rx="3"/>
+        <text x="350" y="182" text-anchor="middle" fill="#3b82f6" font-size="10">物体</text>
+        <line x1="350" y1="168" x2="350" y2="148" stroke="#f97316" stroke-width="2.5" marker-end="url(#gArr)"/>
+        
+        <!-- Left -->
+        <rect x="208" y="88" width="40" height="22" fill="rgba(59,130,246,.2)" stroke="#3b82f6" stroke-width="1.5" rx="3"/>
+        <text x="228" y="102" text-anchor="middle" fill="#3b82f6" font-size="10">物体</text>
+        <line x1="248" y1="99" x2="270" y2="99" stroke="#f97316" stroke-width="2.5" marker-end="url(#gArr)"/>
+        
+        <!-- Labels -->
+        <text x="350" y="18" text-anchor="middle" fill="#1e293b" font-size="13" font-weight="700">重力方向始终指向地球中心（竖直向下）</text>
+        <text x="350" y="195" text-anchor="middle" fill="#64748b" font-size="12">无论物体在地球何处，重力方向都指向地心</text>
+      </svg>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>⚖️ 质量与重力的区别</h3>
+        <table>
+          <tr><th>比较</th><th>质量 m</th><th>重力 G</th></tr>
+          <tr><td>本质</td><td>物体所含物质的量</td><td>地球引力</td></tr>
+          <tr><td>单位</td><td>千克 (kg)</td><td>牛顿 (N)</td></tr>
+          <tr><td>与地点关系</td><td>不变（固定）</td><td>随g变化</td></tr>
+          <tr><td>测量工具</td><td>天平</td><td>弹簧秤</td></tr>
+          <tr><td>公式</td><td>m=G/g</td><td>G=mg</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3>🎯 重心的概念</h3>
+        <p><span class="highlight">重心</span>：物体各部分所受重力合力的作用点。</p>
+        <ul style="padding-left:18px;margin-top:8px;">
+          <li><strong>均匀规则物体</strong>：重心在几何中心</li>
+          <li><strong>不均匀物体</strong>：重心偏向质量集中一侧</li>
+          <li><strong>悬挂法</strong>：细线悬挂，平衡时细线延长线过重心</li>
+          <li>重心不一定在物体内部（如圆环）</li>
+        </ul>
+        <div class="note">重心越低，物体越稳定（稳定性判断）</div>
+      </div>
+    </div>
+
+    <div class="grid-3">
+      <div class="card" style="border-top:3px solid var(--primary);">
+        <div style="font-size:32px;text-align:center;">🏋️</div>
+        <h3 style="text-align:center;">月球上的重力</h3>
+        <p>月球g=1.6m/s²（约地球1/6），60kg人在月球上重力=60×1.6=96N</p>
+      </div>
+      <div class="card" style="border-top:3px solid var(--secondary);">
+        <div style="font-size:32px;text-align:center;">🪨</div>
+        <h3 style="text-align:center;">悬挂法找重心</h3>
+        <p>不规则薄板：悬挂两点，两条竖直线的交点就是重心位置</p>
+      </div>
+      <div class="card" style="border-top:3px solid var(--accent);">
+        <div style="font-size:32px;text-align:center;">🌐</div>
+        <h3 style="text-align:center;">重力与纬度</h3>
+        <p>赤道g≈9.78m/s²，极点g≈9.83m/s²，差异约0.5%，初中取g=10m/s²</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 互动实验台 -->
+  <div class="section" id="interactive-lab">
+    <div class="section-title">🧪 互动实验台：弹簧秤测重力</div>
+    <div id="interactive-lab">
+      <h3>🔬 调整物体质量，观察弹簧秤读数（重力）变化</h3>
+      <div class="lab-controls">
+        <div class="control-group">
+          <label>⚖️ 物体质量 m (kg): <span id="mLabel">5</span> kg</label>
+          <input type="range" id="mSlider" min="0.1" max="20" value="5" step="0.1" oninput="updateGravityLab()">
+          <div class="value" id="mVal">5 kg</div>
+        </div>
+        <div class="control-group">
+          <label>🌍 重力加速度 g (m/s²): <span id="gLabel">10</span></label>
+          <input type="range" id="gSlider" min="1.6" max="10" value="10" step="0.1" oninput="updateGravityLab()">
+          <div class="value" id="gVal">10 m/s² （地球）</div>
+        </div>
+      </div>
+      <div class="lab-result">
+        <div class="formula" id="gravFormula">G = mg = 5 × 10 = 50 N</div>
+        <div class="detail" id="gravDetail">弹簧秤示数：50 N，相当于地球表面标准重力</div>
+      </div>
+      <!-- Spring scale visual -->
+      <svg id="gravSvg" viewBox="0 0 400 200" style="width:100%;max-width:400px;display:block;margin:16px auto;border-radius:12px;background:#f8fafc;border:1px solid var(--border);">
+        <!-- Scale body -->
+        <rect x="160" y="20" width="80" height="140" fill="rgba(59,130,246,.1)" stroke="#3b82f6" stroke-width="2" rx="8"/>
+        <!-- Scale markings -->
+        <line x1="172" y1="40" x2="200" y2="40" stroke="#3b82f6" stroke-width="1"/>
+        <line x1="172" y1="60" x2="200" y2="60" stroke="#3b82f6" stroke-width="1"/>
+        <line x1="172" y1="80" x2="200" y2="80" stroke="#3b82f6" stroke-width="1"/>
+        <line x1="172" y1="100" x2="200" y2="100" stroke="#3b82f6" stroke-width="1"/>
+        <line x1="172" y1="120" x2="200" y2="120" stroke="#3b82f6" stroke-width="1"/>
+        <line x1="172" y1="140" x2="200" y2="140" stroke="#3b82f6" stroke-width="1"/>
+        <!-- Reading labels -->
+        <text x="205" y="44" fill="#3b82f6" font-size="10">100N</text>
+        <text x="205" y="64" fill="#3b82f6" font-size="10">80N</text>
+        <text x="205" y="84" fill="#3b82f6" font-size="10">60N</text>
+        <text x="205" y="104" fill="#3b82f6" font-size="10">40N</text>
+        <text x="205" y="124" fill="#3b82f6" font-size="10">20N</text>
+        <text x="205" y="144" fill="#3b82f6" font-size="10">0N</text>
+        <!-- Pointer (moves based on weight) -->
+        <rect id="scalePointer" x="158" y="100" width="14" height="3" fill="#ef4444"/>
+        <!-- Hook and weight -->
+        <line x1="200" y1="160" x2="200" y2="175" stroke="#64748b" stroke-width="2"/>
+        <rect id="weightBlock" x="175" y="175" width="50" height="22" fill="#f59e0b" rx="4"/>
+        <text id="weightLabel" x="200" y="190" text-anchor="middle" fill="white" font-size="11" font-weight="700">5kg</text>
+        <!-- Gravity arrow -->
+        <line id="gravArrow" x1="200" y1="197" x2="200" y2="190" stroke="#f97316" stroke-width="2.5" marker-end="url(#gArr)"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- 知识图谱 -->
+  <div class="section" id="knowledge-graph">
+    <div class="section-title">🕸️ 知识图谱</div>
+    <div id="knowledge-graph">
+      <h3>重力知识体系</h3>
+      <p>拖动节点探索知识关联</p>
+      <svg id="kg-svg"></svg>
+      <div class="kg-legend">
+        <div class="kg-legend-item"><div class="kg-legend-dot" style="background:#3b82f6;"></div>当前主题</div>
+        <div class="kg-legend-item"><div class="kg-legend-dot" style="background:#10b981;"></div>前置知识</div>
+        <div class="kg-legend-item"><div class="kg-legend-dot" style="background:#f97316;"></div>延伸学习</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 练习 -->
+  <div class="section" id="quiz">
+    <div class="section-title">📝 练习题</div>
+    <div class="card" id="q1">
+      <h3>题目 1</h3>
+      <p>一个质量为6kg的物体，在地球表面受到的重力为（g取10m/s²）：</p>
+      <div onclick="answerQ('q1','A')" class="quiz-option" data-q="q1" data-v="A">A. 6N</div>
+      <div onclick="answerQ('q1','B')" class="quiz-option" data-q="q1" data-v="B">B. 60N</div>
+      <div onclick="answerQ('q1','C')" class="quiz-option" data-q="q1" data-v="C">C. 600N</div>
+      <div onclick="answerQ('q1','D')" class="quiz-option" data-q="q1" data-v="D">D. 0.6N</div>
+      <div class="quiz-feedback" id="q1-fb">✅ 正确！G=mg=6×10=60N。注意质量单位kg，g取10m/s²，结果单位为牛顿N。</div>
+    </div>
+    <div class="card" id="q2">
+      <h3>题目 2</h3>
+      <p>关于重力方向，下列说法正确的是：</p>
+      <div onclick="answerQ('q2','A')" class="quiz-option" data-q="q2" data-v="A">A. 重力方向垂直于接触面向下</div>
+      <div onclick="answerQ('q2','B')" class="quiz-option" data-q="q2" data-v="B">B. 重力方向始终竖直向下</div>
+      <div onclick="answerQ('q2','C')" class="quiz-option" data-q="q2" data-v="C">C. 重力方向与运动方向相同</div>
+      <div onclick="answerQ('q2','D')" class="quiz-option" data-q="q2" data-v="D">D. 重力方向随物体位置变化</div>
+      <div class="quiz-feedback" id="q2-fb">✅ 正确！重力方向始终竖直向下（即指向地心的方向），与物体运动状态和接触面无关。这是重力的重要特征。</div>
+    </div>
+    <div class="card" id="q3">
+      <h3>题目 3</h3>
+      <p>把同一物体从地球移到月球，下列哪些量会发生变化？</p>
+      <div onclick="answerQ('q3','A')" class="quiz-option" data-q="q3" data-v="A">A. 质量变小，重力变小</div>
+      <div onclick="answerQ('q3','B')" class="quiz-option" data-q="q3" data-v="B">B. 质量不变，重力变小</div>
+      <div onclick="answerQ('q3','C')" class="quiz-option" data-q="q3" data-v="C">C. 质量变小，重力不变</div>
+      <div onclick="answerQ('q3','D')" class="quiz-option" data-q="q3" data-v="D">D. 质量和重力都不变</div>
+      <div class="quiz-feedback" id="q3-fb">✅ 正确！质量是物体本身含有物质的量，不随位置改变。月球g=1.6m/s²（约地球1/6），所以重力变小（约为地球的1/6），但质量不变。</div>
+    </div>
+  </div>
 </div>
+
 <script>
-const audioPlaylist=[
-  {title:"重力 - 课程介绍",src:"tts/s01.mp3"},
-  {title:"重力的方向",src:"tts/s02.mp3"},
-  {title:"G=mg公式",src:"tts/s03.mp3"},
-  {title:"重心的概念",src:"tts/s04.mp3"},
-  {title:"重力的应用",src:"tts/s05.mp3"},
-  {title:"本课总结",src:"tts/s06.mp3"}
-];
-let abIdx=0,abAudio=new Audio(),abPlaying=false;
-abAudio.volume=0.8;
-function abLoad(i){abIdx=i;abAudio.src=audioPlaylist[i].src;document.getElementById('abTitle').textContent=audioPlaylist[i].title;document.getElementById('abProgress').style.width='0%';document.getElementById('abTime').textContent='0:00 / 0:00';}
-function abToggle(){if(abPlaying){abAudio.pause();abPlaying=false;document.getElementById('abPlay').textContent='▶';}else{abAudio.play().catch(()=>{});abPlaying=true;document.getElementById('abPlay').textContent='⏸';}}
-function abPrev(){abLoad((abIdx-1+audioPlaylist.length)%audioPlaylist.length);if(abPlaying)abAudio.play().catch(()=>{});}
-function abNext(){abLoad((abIdx+1)%audioPlaylist.length);if(abPlaying)abAudio.play().catch(()=>{});}
-function abSetVol(v){abAudio.volume=v;}
-abAudio.addEventListener('timeupdate',()=>{if(!abAudio.duration)return;const pct=(abAudio.currentTime/abAudio.duration)*100;document.getElementById('abProgress').style.width=pct+'%';const fmt=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;document.getElementById('abTime').textContent=`${fmt(abAudio.currentTime)} / ${fmt(abAudio.duration)}`;}); 
-abAudio.addEventListener('ended',()=>{abNext();abAudio.play().catch(()=>{});});
-document.getElementById('abProgressWrap').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();abAudio.currentTime=((e.clientX-r.left)/r.width)*abAudio.duration;});
-abLoad(0);
-const sectionAudioMap={'hero':0,'module-1':1,'module-2':2,'module-3':3,'deep-understanding':4,'summary':5};
-const observer=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting&&sectionAudioMap[e.target.id]!==undefined){abLoad(sectionAudioMap[e.target.id]);}});},{threshold:0.5});
-Object.keys(sectionAudioMap).forEach(id=>{const el=document.getElementById(id);if(el)observer.observe(el);});
-function checkAnswer(el,isCorrect,feedbackId){
-  const parent=el.parentElement;if(parent.dataset.answered)return;parent.dataset.answered='true';
-  const opts=parent.querySelectorAll('.quiz-option');const fb=document.getElementById(feedbackId);
-  opts.forEach(o=>{o.style.pointerEvents='none';o.style.opacity='0.6';});
-  if(isCorrect){el.classList.add('correct');el.style.opacity='1';
-    fb.innerHTML='✅ <strong>正确！</strong>'+correctMsgs[feedbackId];
-    fb.style.background='rgba(34,197,94,0.1)';fb.style.color='#15803d';
-  }else{el.classList.add('wrong');el.style.opacity='1';
-    opts.forEach(o=>{if(o.onclick&&o.onclick.toString().includes('true')){o.classList.add('correct');o.style.opacity='1';}});
-    fb.innerHTML='❌ <strong>再想想。</strong>'+wrongMsgs[feedbackId];
-    fb.style.background='rgba(239,68,68,0.08)';fb.style.color='#b91c1c';
-  }
-  fb.classList.add('show');
+const correctAnswers={q1:'B',q2:'B',q3:'B'};
+function answerQ(qId,choice){
+  const opts=document.querySelectorAll(`[data-q="${qId}"]`);
+  opts.forEach(o=>{o.onclick=null;o.style.pointerEvents='none';if(o.dataset.v===correctAnswers[qId])o.classList.add('correct');else if(o.dataset.v===choice&&choice!==correctAnswers[qId])o.classList.add('wrong');});
+  const fb=document.getElementById(`${qId}-fb`);fb.classList.add('show');
+  if(choice!==correctAnswers[qId])fb.textContent=`❌ 错误。正确答案是 ${correctAnswers[qId]}。`+fb.textContent.replace('✅ 正确！','');
 }
+
+const planetLabels={1.6:'月球(g=1.6)',3.7:'火星(g=3.7)',9.8:'地球(g=9.8)',10:'地球(取10)'};
+
+function updateGravityLab(){
+  const m=parseFloat(document.getElementById('mSlider').value);
+  const g=parseFloat(document.getElementById('gSlider').value);
+  const G=(m*g).toFixed(1);
+  const planet=g<2?'月球':g<5?'火星':'地球';
+  
+  document.getElementById('mLabel').textContent=m.toFixed(1);
+  document.getElementById('gLabel').textContent=g.toFixed(1);
+  document.getElementById('mVal').textContent=`${m.toFixed(1)} kg`;
+  document.getElementById('gVal').textContent=`${g.toFixed(1)} m/s² （${planet}）`;
+  document.getElementById('gravFormula').textContent=`G = mg = ${m.toFixed(1)} × ${g.toFixed(1)} = ${G} N`;
+  document.getElementById('gravDetail').textContent=`弹簧秤示数：${G} N（${planet}表面）`;
+  
+  // Update pointer position (140=0N, 40=100N)
+  const maxG=200;
+  const pointerY=140-Math.min(100,parseFloat(G)/maxG*100);
+  document.getElementById('scalePointer').setAttribute('y',pointerY);
+  document.getElementById('weightLabel').textContent=`${m.toFixed(1)}kg`;
+}
+
+// D3 Knowledge Graph
+const colorMap={current:'#3b82f6',prereq:'#10b981',next:'#f97316'};
+const kgData={
+  nodes:[
+    {id:'重力',type:'current',size:26},{id:'G=mg',type:'current',size:20},
+    {id:'重心',type:'current',size:18},{id:'质量',type:'prereq',size:20},
+    {id:'力',type:'prereq',size:18},{id:'弹力',type:'prereq',size:14},
+    {id:'压强',type:'next',size:16},{id:'浮力',type:'next',size:18},
+    {id:'牛顿定律',type:'next',size:20},{id:'万有引力',type:'next',size:18},
+    {id:'摩擦力',type:'next',size:16},
+  ],
+  links:[
+    {source:'质量',target:'重力'},{source:'力',target:'重力'},
+    {source:'重力',target:'G=mg'},{source:'重力',target:'重心'},
+    {source:'重力',target:'压强'},{source:'重力',target:'浮力'},
+    {source:'重力',target:'牛顿定律'},{source:'牛顿定律',target:'万有引力'},
+    {source:'弹力',target:'重力'},{source:'重力',target:'摩擦力'},
+  ]
+};
+const svgEl=document.getElementById('kg-svg');const W=svgEl.clientWidth||700,H=380;
+const svg=d3.select('#kg-svg').attr('viewBox',`0 0 ${W} ${H}`).attr('preserveAspectRatio','xMidYMid meet');
+const sim=d3.forceSimulation(kgData.nodes).force('link',d3.forceLink(kgData.links).id(d=>d.id).distance(90)).force('charge',d3.forceManyBody().strength(-240)).force('center',d3.forceCenter(W/2,H/2)).force('collision',d3.forceCollide(38));
+svg.append('defs').append('marker').attr('id','kgA').attr('viewBox','0 -5 10 10').attr('refX',18).attr('refY',0).attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto').append('path').attr('d','M0,-5L10,0L0,5').attr('fill','#cbd5e1');
+const link=svg.append('g').selectAll('line').data(kgData.links).enter().append('line').attr('stroke','#cbd5e1').attr('stroke-width',1.5).attr('marker-end','url(#kgA)');
+const node=svg.append('g').selectAll('g').data(kgData.nodes).enter().append('g').call(d3.drag().on('start',(e,d)=>{if(!e.active)sim.alphaTarget(.3).restart();d.fx=d.x;d.fy=d.y;}).on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y;}).on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}));
+node.append('circle').attr('r',d=>d.size).attr('fill',d=>colorMap[d.type]).attr('fill-opacity',.85).attr('stroke','#fff').attr('stroke-width',2);
+node.append('text').attr('text-anchor','middle').attr('dy','0.35em').attr('font-size',d=>d.size>20?'13px':'11px').attr('font-weight','700').attr('fill','#fff').text(d=>d.id.length>4?d.id.slice(0,4):d.id);
+node.append('title').text(d=>d.id);
+sim.on('tick',()=>{link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);node.attr('transform',d=>`translate(${d.x},${d.y})`);});
 </script>
 </body>
 </html>

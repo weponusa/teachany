@@ -7,305 +7,437 @@
 <meta name="teachany-subject" content="physics">
 <meta name="teachany-domain" content="thermodynamics">
 <meta name="teachany-grade" content="9">
-<meta name="teachany-difficulty" content="2">
-<meta name="teachany-version" content="1.0">
+<meta name="teachany-difficulty" content="3">
+<meta name="teachany-version" content="2.0">
 <meta name="teachany-author" content="weponusa">
 <title>热量的计算 · 教学课件</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
-:root{--bg:#f8fafc;--bg2:#f0f4f8;--bg3:#e2e8f0;--primary:#3b82f6;--secondary:#06b6d4;--accent:#f59e0b;--success:#22c55e;--danger:#ef4444;--purple:#8b5cf6;--teal:#14b8a6;--text:#1e293b;--dim:#64748b;--dimmer:#94a3b8;--card:#ffffff;--border:rgba(0,0,0,0.06);}
+:root{--bg:#f8fafc;--primary:#3b82f6;--secondary:#06b6d4;--accent:#f59e0b;--success:#10b981;--card:#fff;--danger:#ef4444;--text:#1e293b;--dim:#64748b;--border:rgba(0,0,0,0.08);}
 *{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
-body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.8;padding-bottom:70px;}
-body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(160deg,rgba(59,130,246,0.03) 0%,rgba(6,182,212,0.03) 50%,rgba(245,158,11,0.02) 100%);pointer-events:none;z-index:-1;}
-.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:58px;gap:4px;overflow-x:auto;box-shadow:0 1px 12px rgba(0,0,0,0.04);}
-.nav-brand{font-size:18px;font-weight:800;margin-right:18px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:10px;font-size:13.5px;font-weight:600;transition:all 0.2s;white-space:nowrap;}
-.nav a:hover,.nav a.active{color:var(--primary);background:rgba(59,130,246,0.08);}
-.container{max-width:1060px;margin:0 auto;padding:78px 24px 60px;}
-.hero{text-align:center;padding:40px 0 30px;}
-.hero h1{font-size:40px;font-weight:800;line-height:1.3;background:linear-gradient(135deg,var(--primary),var(--secondary),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;}
-.hero .subtitle{font-size:17px;color:var(--dim);margin-bottom:16px;}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.8;padding-bottom:80px;}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,.93);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:58px;gap:4px;overflow-x:auto;}
+.nav-brand{font-size:17px;font-weight:800;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 13px;border-radius:10px;font-size:13px;font-weight:600;transition:all .2s;white-space:nowrap;}
+.nav a:hover,.nav a.active{color:var(--primary);background:rgba(59,130,246,.08);}
+.container{max-width:1060px;margin:0 auto;padding:76px 24px 60px;}
+.hero{text-align:center;padding:36px 0 28px;}
+.hero h1{font-size:38px;font-weight:800;background:linear-gradient(135deg,#f59e0b,#ef4444);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;}
+.hero .subtitle{font-size:16px;color:var(--dim);margin-bottom:14px;}
 .hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
-.hero .meta span{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:5px 16px;font-size:13px;font-weight:600;color:var(--dim);box-shadow:0 1px 4px rgba(0,0,0,0.04);}
-.section{margin:44px 0;}
-.section-title{font-size:24px;font-weight:800;margin-bottom:18px;padding-left:16px;border-left:4px solid transparent;border-image:linear-gradient(to bottom,var(--primary),var(--secondary)) 1;}
-.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px 26px;margin-bottom:18px;box-shadow:0 2px 12px rgba(0,0,0,0.04);transition:transform 0.2s,box-shadow 0.2s;}
-.card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(59,130,246,0.08);}
-.card h3{font-size:18px;font-weight:700;margin-bottom:10px;}
-.card p,.card li{font-size:15.5px;line-height:1.85;color:var(--dim);}
-.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;}
-.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;}
-.obj-card{text-align:center;padding:26px 18px;border-top:3px solid transparent;}
-.obj-card:nth-child(1){border-top-color:var(--primary);}
-.obj-card:nth-child(2){border-top-color:var(--secondary);}
-.obj-card:nth-child(3){border-top-color:var(--accent);}
-.obj-card .icon{font-size:36px;margin-bottom:10px;}
-.obj-card h4{font-size:16px;font-weight:700;margin-bottom:6px;}
-.obj-card p{font-size:14px;color:var(--dim);}
-.highlight{color:var(--primary);font-weight:700;}
-.quiz-option{display:block;padding:14px 18px;margin:8px 0;border-radius:12px;background:var(--bg);border:2px solid var(--border);cursor:pointer;transition:all 0.25s;font-size:15px;font-weight:600;color:var(--text);}
-.quiz-option:hover{background:rgba(59,130,246,0.05);border-color:var(--primary);transform:translateX(3px);}
-.quiz-option.correct{background:rgba(34,197,94,0.1);border-color:var(--success);color:#15803d;}
-.quiz-option.wrong{background:rgba(239,68,68,0.08);border-color:var(--danger);color:#b91c1c;}
-.quiz-feedback{padding:12px 16px;border-radius:10px;margin-top:10px;font-size:14.5px;display:none;}
-.quiz-feedback.show{display:block;animation:slideUp 0.3s ease;}
-@keyframes slideUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-.insight-box{background:linear-gradient(135deg,rgba(6,182,212,0.06),rgba(59,130,246,0.06));border-left:4px solid var(--secondary);padding:18px 22px;border-radius:0 12px 12px 0;margin:16px 0;}
-.insight-box h4{color:var(--secondary);font-size:16px;font-weight:700;margin-bottom:8px;}
-.insight-box p{color:var(--text);font-size:15px;}
-.formula-box{background:linear-gradient(135deg,#ede9fe,#dbeafe);border-radius:16px;padding:28px;text-align:center;margin:20px 0;}
-.formula-main{font-size:28px;font-weight:800;color:#3730a3;font-family:serif;letter-spacing:2px;margin-bottom:8px;}
-.solution-box{background:#f0fdf4;border-radius:12px;padding:16px;margin:10px 0;font-family:serif;}
-.solution-box p{color:#15803d;font-size:15px;margin-bottom:4px;}
-footer{text-align:center;padding:36px 0;color:var(--dimmer);font-size:13px;border-top:1px solid var(--border);margin-top:50px;}
-.audio-bar{position:fixed;bottom:0;left:0;right:0;z-index:500;background:rgba(59,130,246,0.95);backdrop-filter:blur(12px);border-top:2px solid rgba(255,255,255,0.3);padding:10px 24px;display:flex;align-items:center;gap:14px;}
-.audio-bar .ab-btn{width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;background:#fff;color:#3b82f6;font-size:16px;display:flex;align-items:center;justify-content:center;}
-.audio-bar .ab-info{flex:1;min-width:0;}
-.audio-bar .ab-title{font-size:13px;font-weight:700;color:#fff;}
-.audio-bar .ab-progress-wrap{height:4px;background:rgba(255,255,255,0.3);border-radius:2px;margin-top:4px;cursor:pointer;}
-.audio-bar .ab-progress{height:100%;background:#fff;border-radius:2px;width:0%;}
-.audio-bar .ab-time{font-size:11px;color:rgba(255,255,255,0.8);margin-top:2px;}
-.audio-bar .ab-vol{width:60px;accent-color:#fff;}
-@media(max-width:600px){.hero h1{font-size:28px;}.nav{height:52px;}.section-title{font-size:21px;}.card{padding:18px;}}
+.hero .meta span{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:5px 14px;font-size:13px;font-weight:600;color:var(--dim);}
+.section{margin:40px 0;}
+.section-title{font-size:22px;font-weight:800;margin-bottom:16px;padding-left:14px;border-left:4px solid var(--accent);}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px 24px;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,0.04);}
+.card h3{font-size:17px;font-weight:700;margin-bottom:8px;}
+.card p,.card li{font-size:15px;line-height:1.85;color:var(--dim);}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;}
+.highlight{color:var(--accent);font-weight:700;}
+.formula-box{background:rgba(245,158,11,.08);border-left:4px solid var(--accent);padding:14px 18px;border-radius:0 10px 10px 0;margin:12px 0;font-size:16px;font-weight:700;}
+.note{background:rgba(59,130,246,.06);border-left:4px solid var(--primary);padding:12px 16px;border-radius:0 10px 10px 0;margin:12px 0;font-size:14px;color:#1e40af;}
+/* Life scene */
+#life-scene{background:linear-gradient(135deg,#1c0a00,#7c2d12);border-radius:18px;padding:28px;min-height:320px;overflow:hidden;}
+#life-scene h3{color:#fff;font-size:18px;margin-bottom:8px;}
+#life-scene p{color:rgba(255,255,255,.6);font-size:13px;margin-bottom:12px;}
+.flame{animation:flameDance 0.8s ease-in-out infinite alternate;}
+@keyframes flameDance{0%{transform:scaleY(1) scaleX(1);}100%{transform:scaleY(1.15) scaleX(0.9);}}
+.bubbles circle{animation:bubbleRise 2s ease-in infinite;}
+@keyframes bubbleRise{0%{transform:translateY(0);opacity:.8;}100%{transform:translateY(-80px);opacity:0;}}
+.thermometer-rise{animation:thermoRise 3s ease-in-out infinite alternate;}
+@keyframes thermoRise{0%{height:30px;y:110px;}100%{height:70px;y:70px;}}
+/* Lab */
+#interactive-lab{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px;margin-bottom:20px;}
+#interactive-lab h3{font-size:18px;font-weight:800;margin-bottom:18px;}
+.lab-controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px;}
+@media(max-width:640px){.lab-controls{grid-template-columns:1fr;}}
+.control-group{background:var(--bg);border-radius:12px;padding:14px;}
+.control-group label{font-size:13px;font-weight:700;color:var(--dim);display:block;margin-bottom:8px;}
+.control-group input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer;}
+.control-group .value{font-size:18px;font-weight:800;color:var(--accent);margin-top:6px;}
+.lab-result{background:linear-gradient(135deg,rgba(245,158,11,.1),rgba(239,68,68,.08));border-radius:14px;padding:20px;text-align:center;}
+.lab-result .formula{font-size:18px;font-weight:700;color:var(--accent);margin-bottom:8px;}
+.lab-result .detail{font-size:14px;color:var(--dim);}
+#knowledge-graph{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px;margin-bottom:20px;}
+#knowledge-graph h3{font-size:18px;font-weight:800;margin-bottom:6px;}
+#kg-svg{width:100%;height:380px;border-radius:12px;background:#f8fafc;}
+.kg-legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;}
+.kg-legend-item{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--dim);}
+.kg-legend-dot{width:12px;height:12px;border-radius:50%;}
+.quiz-option{display:block;padding:12px 16px;margin:7px 0;border-radius:11px;background:var(--bg);border:2px solid var(--border);cursor:pointer;transition:all .25s;font-size:14.5px;font-weight:600;color:var(--text);}
+.quiz-option:hover{background:rgba(245,158,11,.06);border-color:var(--accent);}
+.quiz-option.correct{background:rgba(16,185,129,.1);border-color:var(--success);color:#065f46;}
+.quiz-option.wrong{background:rgba(239,68,68,.08);border-color:var(--danger);color:#991b1b;}
+.quiz-feedback{padding:12px 16px;border-radius:10px;margin-top:8px;font-size:14px;display:none;background:rgba(245,158,11,.07);color:#92400e;}
+.quiz-feedback.show{display:block;}
+table{width:100%;border-collapse:collapse;font-size:14.5px;}
+th{background:rgba(245,158,11,.08);padding:10px 14px;text-align:left;font-weight:700;border-bottom:2px solid var(--border);}
+td{padding:10px 14px;border-bottom:1px solid var(--border);}
 </style>
 </head>
 <body>
 <nav class="nav">
-  <span class="nav-brand">🎓 教我学 TeachAny</span>
-  <a href="#hero">首页</a>
-  <a href="#goals">目标</a>
-  <a href="#module-1">模块1</a>
-  <a href="#module-2">模块2</a>
-  <a href="#module-3">模块3</a>
-  <a href="#deep-understanding">深入</a>
-  <a href="#summary">总结</a>
+  <div class="nav-brand">🔥 热量的计算</div>
+  <a href="#life-scene" class="active">生活场景</a>
+  <a href="#content">核心内容</a>
+  <a href="#interactive-lab">互动实验</a>
+  <a href="#knowledge-graph">知识图谱</a>
+  <a href="#quiz">练习</a>
 </nav>
 
 <div class="container">
-  <section class="hero" id="hero">
-    <h1>🧮 热量的计算</h1>
-    <p class="subtitle">Q = cmΔt 的实战应用——燃料热值与热平衡方程</p>
+  <div class="hero">
+    <h1>🔥 热量的计算</h1>
+    <p class="subtitle">Q = cmΔt，比热容与热量计算</p>
     <div class="meta">
-      <span>⚗️ 初中物理</span>
-      <span>🎓 9年级上</span>
-      <span>⏱️ 约42分钟</span>
-      <span>🎯 新授课</span>
+      <span>📚 初中物理</span><span>🎓 九年级</span><span>🌡️ 热学</span><span>🔑 核心公式</span>
     </div>
-  </section>
-
-  <section class="section" id="goals">
-    <h2 class="section-title">🎯 学习目标</h2>
-    <div class="grid-3">
-      <div class="card obj-card">
-        <div class="icon">📌</div>
-        <h4>掌握热值</h4>
-        <p>能说出热值的定义并用 Q=mq 计算燃料完全燃烧放出的热量</p>
-      </div>
-      <div class="card obj-card">
-        <div class="icon">🔍</div>
-        <h4>建立热平衡方程</h4>
-        <p>能用热平衡方程（Q吸=Q放）解决混合物温度问题</p>
-      </div>
-      <div class="card obj-card">
-        <div class="icon">🚀</div>
-        <h4>综合计算</h4>
-        <p>能在实际情景中综合运用 Q=cmΔt 和 Q=mq 进行计算</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="module-1">
-    <h2 class="section-title">📖 模块一：热值——燃料的"能量密度"</h2>
-    <div class="card">
-      <h3>💡 热值的定义</h3>
-      <p><strong>热值（q）</strong>：1 千克某种燃料完全燃烧放出的热量。</p>
-      <p style="margin-top:10px;">单位：<strong>J/kg</strong>（固体/液体燃料）或 <strong>J/m³</strong>（气体燃料）</p>
-      <div class="formula-box">
-        <div class="formula-main">Q = m · q</div>
-        <div style="font-size:14px;color:#6366f1;margin-top:6px;">Q：燃料放出的热量（J）　m：燃料质量（kg）　q：热值（J/kg）</div>
-      </div>
-      <p style="margin-top:12px;">常见热值（近似值）：</p>
-      <ul style="margin:8px 0 0 20px;">
-        <li>天然气：约 3.6×10⁷ J/m³</li>
-        <li>煤：约 3×10⁷ J/kg</li>
-        <li>汽油：约 4.6×10⁷ J/kg</li>
-        <li>酒精：约 3×10⁷ J/kg</li>
-      </ul>
-    </div>
-    <div class="card">
-      <h3>📐 例题1：烧水需要多少天然气？</h3>
-      <p>用天然气（q = 3.6×10⁷ J/m³）把 5 kg 水从 20°C 烧到 100°C，若热效率为 60%，需要消耗多少天然气？</p>
-      <div class="solution-box">
-        <p>① 水吸收的热量：Q吸 = c×m×Δt = 4200×5×80 = 1.68×10⁶ J</p>
-        <p>② 实际燃烧放热：Q放 = Q吸 ÷ 效率 = 1.68×10⁶ ÷ 0.6 = 2.8×10⁶ J</p>
-        <p>③ 天然气体积：V = Q放 ÷ q = 2.8×10⁶ ÷ 3.6×10⁷ ≈ 0.078 m³ ≈ 78 L</p>
-      </div>
-    </div>
-    <div class="card">
-      <h3>✏️ 即时练习</h3>
-      <p>燃烧 2 kg 煤（q = 3×10⁷ J/kg）放出的热量为：</p>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m1q1')">A. 3×10⁷ J</div>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'m1q1')">B. 6×10⁷ J</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m1q1')">C. 1.5×10⁷ J</div>
-      <div id="m1q1" class="quiz-feedback"></div>
-    </div>
-  </section>
-
-  <section class="section" id="module-2">
-    <h2 class="section-title">📖 模块二：热平衡方程</h2>
-    <div class="card">
-      <h3>💡 热传递中的守恒</h3>
-      <p>两个温度不同的物体接触，热量从高温流向低温，直到<strong>温度相同（热平衡）</strong>。</p>
-      <p style="margin-top:10px;">根据能量守恒：</p>
-      <div class="formula-box">
-        <div class="formula-main">Q吸 = Q放</div>
-        <div style="font-size:14px;color:#6366f1;margin-top:6px;">c₁m₁(t - t₁) = c₂m₂(t₂ - t)</div>
-        <div style="font-size:13px;color:#6366f1;margin-top:4px;">t：末态共同温度　t₁：低温物体初温　t₂：高温物体初温</div>
-      </div>
-    </div>
-    <div class="card">
-      <h3>📐 例题2：混合水温</h3>
-      <p>将 2 kg、10°C 的冷水与 1 kg、70°C 的热水混合（不计热损失），求最终温度。</p>
-      <div class="solution-box">
-        <p>设末温为 t</p>
-        <p>Q吸 = c×2×(t - 10)　　（冷水吸热）</p>
-        <p>Q放 = c×1×(70 - t)　　（热水放热）</p>
-        <p>Q吸 = Q放：2(t-10) = 1(70-t)</p>
-        <p>2t - 20 = 70 - t　→　3t = 90　→　<strong>t = 30°C</strong></p>
-      </div>
-    </div>
-    <div class="insight-box">
-      <h4>🔍 注意事项</h4>
-      <p>①热平衡方程成立的前提：不向外散热（绝热混合）；②末温一定介于两者初温之间；③当两者比热容相同时，末温 = 加权平均温度 = (m₁t₁ + m₂t₂)/(m₁+m₂)。</p>
-    </div>
-    <div class="card">
-      <h3>✏️ 即时练习</h3>
-      <p>将 3 kg、20°C 的水与 1 kg、60°C 的水混合，最终温度为：</p>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m2q1')">A. 40°C（两者均值）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'m2q1')">B. 30°C（质量加权平均）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m2q1')">C. 25°C（偏向冷水）</div>
-      <div id="m2q1" class="quiz-feedback"></div>
-    </div>
-  </section>
-
-  <section class="section" id="module-3">
-    <h2 class="section-title">📖 模块三：热效率与综合计算</h2>
-    <div class="card">
-      <h3>💡 热效率</h3>
-      <p>实际中，燃料放出的热量不能被完全利用（有散热损失）。</p>
-      <div class="formula-box">
-        <div class="formula-main">η = Q有用 / Q总</div>
-        <div style="font-size:14px;color:#6366f1;margin-top:6px;">η：热效率（无量纲，常用百分数）　Q有用：被利用的热量　Q总：燃料完全燃烧放出的总热量</div>
-      </div>
-    </div>
-    <div class="card">
-      <h3>✏️ 综合计算练习</h3>
-      <p>一台燃气热水器，热效率为 85%。用它将 10 kg 水从 15°C 加热到 55°C，需要消耗多少立方米天然气（q = 3.6×10⁷ J/m³）？</p>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m3q1')">A. 约 0.0093 m³</div>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'m3q1')">B. 约 0.055 m³</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m3q1')">C. 约 0.013 m³</div>
-      <div id="m3q1" class="quiz-feedback"></div>
-    </div>
-  </section>
-
-  <section class="section" id="deep-understanding">
-    <h2 class="section-title">🔬 深层理解</h2>
-    <div class="card">
-      <h3>🌍 能量的珍贵性</h3>
-      <p>燃烧化石燃料会产生CO₂等温室气体，同时热效率损失意味着大量能量以废热形式散失。</p>
-      <ul style="margin:10px 0 0 20px;">
-        <li>提高热效率 = 节约燃料 = 减少污染</li>
-        <li>家用热水器热效率约85~95%；老式炉灶约30~40%</li>
-        <li>热泵技术（空调/热泵热水器）"效率"可超过100%（因为搬运了环境中的热量）</li>
-      </ul>
-    </div>
-  </section>
-
-  <section class="section" id="summary">
-    <h2 class="section-title">📊 课堂总结</h2>
-    <div class="card">
-      <h3>🗺️ 知识地图</h3>
-      <ul style="list-style:none;padding:0;">
-        <li>🔥 <strong>热值</strong>：Q = mq，q为每千克燃料完全燃烧放热</li>
-        <li>🌡️ <strong>热量</strong>：Q = cmΔt</li>
-        <li>⚖️ <strong>热平衡</strong>：Q吸 = Q放，c₁m₁Δt₁ = c₂m₂Δt₂</li>
-        <li>📊 <strong>热效率</strong>：η = Q有用/Q总</li>
-        <li>🔄 <strong>综合题步骤</strong>：求水吸热 → 除以效率得实际燃烧热 → 用热值求燃料量</li>
-      </ul>
-    </div>
-    <div class="card">
-      <h3>🎯 后测</h3>
-      <p>用煤（q=3×10⁷ J/kg）给学校浴室烧水，热效率为40%。要将100 kg水从20°C烧到50°C，需要多少千克煤？</p>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'postq1')">A. 约 0.042 kg</div>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'postq1')">B. 约 1.05 kg</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'postq1')">C. 约 0.42 kg</div>
-      <div id="postq1" class="quiz-feedback"></div>
-    </div>
-  </section>
-
-  <footer>
-    <p>Made with <strong>教我学 TeachAny</strong> · <a href="https://github.com/weponusa/teachany" style="color:var(--primary);">GitHub</a></p>
-    <p style="margin-top:8px;">Built on ABT Narrative · Bloom's Taxonomy · Scaffolding · Cognitive Load Theory</p>
-  </footer>
-</div>
-
-<div class="audio-bar">
-  <button class="ab-btn" id="abPrev">⏮</button>
-  <button class="ab-btn" id="abPlay">▶</button>
-  <button class="ab-btn" id="abNext">⏭</button>
-  <div class="ab-info">
-    <div class="ab-title" id="abTitle">🎵 课程讲解音频</div>
-    <div class="ab-progress-wrap" id="abProgressWrap"><div class="ab-progress" id="abProgress"></div></div>
-    <div class="ab-time" id="abTime">0:00 / 0:00</div>
   </div>
-  <input class="ab-vol" type="range" id="abVol" min="0" max="1" step="0.05" value="0.8">
+
+  <!-- 生活场景 -->
+  <div class="section" id="life-scene-section">
+    <div class="section-title">🎬 生活场景：烧水中的热量科学</div>
+    <div id="life-scene">
+      <h3>为什么烧水时，水量越多、升温越多，需要的热量越多？</h3>
+      <p>Q = cmΔt：热量与质量、温升、比热容三者成正比</p>
+      <svg viewBox="0 0 800 220" style="width:100%;height:200px;" xmlns="http://www.w3.org/2000/svg">
+        <!-- Kettle scene 1: small water -->
+        <g transform="translate(30,20)">
+          <text x="90" y="-2" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="700">小量水 m=0.5kg</text>
+          <!-- Kettle body -->
+          <path d="M40,60 Q40,20 90,20 Q140,20 140,60 L140,130 Q140,150 90,150 Q40,150 40,130 Z" fill="rgba(100,116,139,.3)" stroke="#64748b" stroke-width="2"/>
+          <!-- Water level (low) -->
+          <path d="M42,110 Q90,100 138,110 L138,130 Q138,148 90,148 Q42,148 42,130 Z" fill="rgba(59,130,246,.5)"/>
+          <text x="90" y="135" text-anchor="middle" fill="white" font-size="10">m=0.5kg</text>
+          <!-- Flame -->
+          <g class="flame" style="transform-origin:90px 160px">
+            <ellipse cx="70" cy="168" rx="12" ry="18" fill="#f97316" opacity=".9"/>
+            <ellipse cx="90" cy="162" rx="14" ry="22" fill="#ef4444" opacity=".9"/>
+            <ellipse cx="110" cy="168" rx="12" ry="18" fill="#f97316" opacity=".9"/>
+          </g>
+          <!-- Bubbles -->
+          <g class="bubbles">
+            <circle cx="70" cy="105" r="3" fill="rgba(255,255,255,.5)"><animate attributeName="cy" values="105;50" dur="1.5s" repeatCount="indefinite"/><animate attributeName="opacity" values=".5;0" dur="1.5s" repeatCount="indefinite"/></circle>
+            <circle cx="90" cy="100" r="4" fill="rgba(255,255,255,.5)"><animate attributeName="cy" values="100;45" dur="1.8s" repeatCount="indefinite" begin=".5s"/><animate attributeName="opacity" values=".5;0" dur="1.8s" repeatCount="indefinite" begin=".5s"/></circle>
+            <circle cx="110" cy="108" r="3" fill="rgba(255,255,255,.5)"><animate attributeName="cy" values="108;55" dur="1.2s" repeatCount="indefinite" begin="1s"/><animate attributeName="opacity" values=".5;0" dur="1.2s" repeatCount="indefinite" begin="1s"/></circle>
+          </g>
+          <text x="90" y="198" text-anchor="middle" fill="#fbbf24" font-size="11">Q=0.5×4200×Δt</text>
+        </g>
+
+        <!-- Kettle scene 2: large water -->
+        <g transform="translate(270,20)">
+          <text x="90" y="-2" text-anchor="middle" fill="#fb923c" font-size="12" font-weight="700">大量水 m=2kg</text>
+          <path d="M40,60 Q40,20 90,20 Q140,20 140,60 L140,130 Q140,150 90,150 Q40,150 40,130 Z" fill="rgba(100,116,139,.3)" stroke="#64748b" stroke-width="2"/>
+          <!-- Water level (high) -->
+          <path d="M42,60 Q90,55 138,60 L138,130 Q138,148 90,148 Q42,148 42,130 Z" fill="rgba(59,130,246,.5)"/>
+          <text x="90" y="100" text-anchor="middle" fill="white" font-size="10">m=2kg</text>
+          <g class="flame" style="transform-origin:90px 160px;animation-delay:.3s">
+            <ellipse cx="70" cy="168" rx="12" ry="18" fill="#f97316" opacity=".9"/>
+            <ellipse cx="90" cy="162" rx="14" ry="22" fill="#ef4444" opacity=".9"/>
+            <ellipse cx="110" cy="168" rx="12" ry="18" fill="#f97316" opacity=".9"/>
+          </g>
+          <text x="90" y="198" text-anchor="middle" fill="#fb923c" font-size="11">Q=2×4200×Δt（需4倍热量）</text>
+        </g>
+
+        <!-- Thermometer comparison -->
+        <g transform="translate(520,15)">
+          <text x="120" y="0" text-anchor="middle" fill="#34d399" font-size="12" font-weight="700">温度计：观察升温</text>
+          <!-- Thermometer 1: small delta T -->
+          <rect x="40" y="30" width="20" height="120" fill="rgba(100,116,139,.2)" stroke="#94a3b8" stroke-width="1.5" rx="10"/>
+          <rect x="44" y="110" width="12" height="36" fill="#3b82f6" rx="6">
+            <animate attributeName="height" values="36;80;36" dur="4s" repeatCount="indefinite"/>
+            <animate attributeName="y" values="110;66;110" dur="4s" repeatCount="indefinite"/>
+          </rect>
+          <text x="50" y="165" text-anchor="middle" fill="#3b82f6" font-size="10">Δt=20°C</text>
+          
+          <!-- Thermometer 2: large delta T -->
+          <rect x="100" y="30" width="20" height="120" fill="rgba(100,116,139,.2)" stroke="#94a3b8" stroke-width="1.5" rx="10"/>
+          <rect x="104" y="70" width="12" height="76" fill="#ef4444" rx="6">
+            <animate attributeName="height" values="76;100;76" dur="4s" repeatCount="indefinite"/>
+            <animate attributeName="y" values="70;46;70" dur="4s" repeatCount="indefinite"/>
+          </rect>
+          <text x="110" y="165" text-anchor="middle" fill="#ef4444" font-size="10">Δt=80°C</text>
+          
+          <!-- Labels -->
+          <text x="50" y="180" text-anchor="middle" fill="#94a3b8" font-size="9">Q₁小</text>
+          <text x="110" y="180" text-anchor="middle" fill="#94a3b8" font-size="9">Q₂大</text>
+          
+          <!-- Arrow showing Q proportional to Δt -->
+          <text x="160" y="100" fill="#fbbf24" font-size="11">Q∝Δt</text>
+          <text x="160" y="115" fill="#fbbf24" font-size="11">Q∝m</text>
+          <text x="160" y="130" fill="#fbbf24" font-size="11">Q∝c</text>
+        </g>
+
+        <text x="400" y="213" text-anchor="middle" fill="#94a3b8" font-size="12">Q = cmΔt（热量=比热容×质量×温度变化量）</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- 核心内容 -->
+  <div class="section" id="content">
+    <div class="section-title">📖 核心内容</div>
+    
+    <div class="card">
+      <h3>🔑 热量计算公式</h3>
+      <div class="formula-box">Q = cmΔt</div>
+      <div class="grid-3" style="margin-top:14px;">
+        <div style="background:rgba(245,158,11,.06);border-radius:12px;padding:14px;text-align:center;">
+          <div style="font-size:28px;">🌡️</div>
+          <p><strong style="color:var(--accent);">Q</strong></p>
+          <p style="font-size:13px;">热量，单位：焦耳(J)</p>
+        </div>
+        <div style="background:rgba(59,130,246,.06);border-radius:12px;padding:14px;text-align:center;">
+          <div style="font-size:28px;">💎</div>
+          <p><strong style="color:var(--primary);">c</strong></p>
+          <p style="font-size:13px;">比热容，J/(kg·℃)</p>
+        </div>
+        <div style="background:rgba(16,185,129,.06);border-radius:12px;padding:14px;text-align:center;">
+          <div style="font-size:28px;">⚖️</div>
+          <p><strong style="color:var(--success);">mΔt</strong></p>
+          <p style="font-size:13px;">质量(kg)×温变(℃)</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>🔬 比热容 c 的含义</h3>
+        <p><span class="highlight">比热容</span>：单位质量的某种物质温度升高1℃所吸收的热量。</p>
+        <p style="margin-top:8px;">物质固有属性，不随质量、温度变化。</p>
+        <div class="formula-box" style="font-size:14px;">水：c=4.2×10³ J/(kg·℃)<br>铜：c=3.9×10² J/(kg·℃)<br>铁：c=4.6×10² J/(kg·℃)</div>
+        <p style="font-size:13px;color:var(--dim);">水的比热容最大→升温慢降温慢→海边气候温和</p>
+      </div>
+      <div class="card">
+        <h3>📊 热量计算步骤</h3>
+        <div style="background:var(--bg);border-radius:12px;padding:14px;margin-top:8px;">
+          <p><strong>例题：</strong>将2kg水从20℃加热到70℃，需吸收多少热量？</p>
+          <p style="margin-top:8px;"><strong>解：</strong></p>
+          <p>已知：m=2kg，t₁=20℃，t₂=70℃</p>
+          <p>Δt=t₂-t₁=70-20=50℃</p>
+          <p>c水=4.2×10³ J/(kg·℃)</p>
+          <p><strong>Q=cmΔt=4.2×10³×2×50=4.2×10⁵J</strong></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 比热容SVG对比图 -->
+    <div class="card">
+      <h3>📈 相同质量和升温，不同物质吸热量对比</h3>
+      <svg viewBox="0 0 700 200" style="width:100%;border-radius:10px;background:#f8fafc;border:1px solid var(--border);" xmlns="http://www.w3.org/2000/svg">
+        <text x="350" y="20" text-anchor="middle" fill="#1e293b" font-size="13" font-weight="700">m=1kg，Δt=10℃时各物质吸收热量</text>
+        <!-- Axes -->
+        <line x1="80" y1="160" x2="680" y2="160" stroke="#e2e8f0" stroke-width="1.5"/>
+        <line x1="80" y1="40" x2="80" y2="160" stroke="#e2e8f0" stroke-width="1.5"/>
+        <!-- Bars -->
+        <!-- Water: 42000J -->
+        <rect x="110" y="45" width="60" height="115" fill="#3b82f6" fill-opacity=".8" rx="4"/>
+        <text x="140" y="40" text-anchor="middle" fill="#3b82f6" font-size="11" font-weight="700">42000J</text>
+        <text x="140" y="178" text-anchor="middle" fill="#3b82f6" font-size="12" font-weight="700">水</text>
+        <!-- Aluminum: 9000J -->
+        <rect x="220" y="133" width="60" height="27" fill="#f59e0b" fill-opacity=".8" rx="4"/>
+        <text x="250" y="128" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="700">9000J</text>
+        <text x="250" y="178" text-anchor="middle" fill="#f59e0b" font-size="12" font-weight="700">铝</text>
+        <!-- Iron: 4600J -->
+        <rect x="330" y="146" width="60" height="14" fill="#ef4444" fill-opacity=".8" rx="4"/>
+        <text x="360" y="142" text-anchor="middle" fill="#ef4444" font-size="11" font-weight="700">4600J</text>
+        <text x="360" y="178" text-anchor="middle" fill="#ef4444" font-size="12" font-weight="700">铁</text>
+        <!-- Copper: 3900J -->
+        <rect x="440" y="149" width="60" height="11" fill="#10b981" fill-opacity=".8" rx="4"/>
+        <text x="470" y="145" text-anchor="middle" fill="#10b981" font-size="11" font-weight="700">3900J</text>
+        <text x="470" y="178" text-anchor="middle" fill="#10b981" font-size="12" font-weight="700">铜</text>
+        <!-- Lead: 1280J -->
+        <rect x="550" y="156" width="60" height="4" fill="#8b5cf6" fill-opacity=".8" rx="2"/>
+        <text x="580" y="152" text-anchor="middle" fill="#8b5cf6" font-size="11" font-weight="700">1280J</text>
+        <text x="580" y="178" text-anchor="middle" fill="#8b5cf6" font-size="12" font-weight="700">铅</text>
+        
+        <!-- Y axis label -->
+        <text x="50" y="105" fill="#64748b" font-size="11" writing-mode="tb">热量Q(J)</text>
+      </svg>
+      <p style="font-size:13px;color:var(--dim);margin-top:8px;">水的比热容远大于金属，因此加热相同质量的水需要最多热量。</p>
+    </div>
+
+    <div class="card">
+      <h3>🌊 水的比热容大的应用</h3>
+      <div class="grid-3">
+        <div style="background:rgba(59,130,246,.06);border-radius:12px;padding:14px;text-align:center;">
+          <div style="font-size:28px;">🌊</div>
+          <h4 style="color:var(--primary);">海洋调节气候</h4>
+          <p style="font-size:13px;">海水升温慢降温慢，使沿海地区气候温和</p>
+        </div>
+        <div style="background:rgba(16,185,129,.06);border-radius:12px;padding:14px;text-align:center;">
+          <div style="font-size:28px;">🚗</div>
+          <h4 style="color:var(--success);">汽车冷却系统</h4>
+          <p style="font-size:13px;">用水作冷却液，能吸收大量热量保护发动机</p>
+        </div>
+        <div style="background:rgba(245,158,11,.06);border-radius:12px;padding:14px;text-align:center;">
+          <div style="font-size:28px;">🏠</div>
+          <h4 style="color:var(--accent);">暖气供热系统</h4>
+          <p style="font-size:13px;">热水暖气用水作介质，携带大量热量供暖</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 互动实验台 -->
+  <div class="section" id="interactive-lab">
+    <div class="section-title">🧪 互动实验台：热量计算器</div>
+    <div id="interactive-lab">
+      <h3>🔬 调整质量、温差和比热容，实时计算热量 Q=cmΔt</h3>
+      <div class="lab-controls">
+        <div class="control-group">
+          <label>⚖️ 质量 m (kg): <span id="mLabel">2</span></label>
+          <input type="range" id="mSlider" min="0.1" max="10" value="2" step="0.1" oninput="updateHeatLab()">
+          <div class="value" id="mVal">2 kg</div>
+        </div>
+        <div class="control-group">
+          <label>🌡️ 温度变化 Δt (℃): <span id="dtLabel">50</span></label>
+          <input type="range" id="dtSlider" min="1" max="200" value="50" step="1" oninput="updateHeatLab()">
+          <div class="value" id="dtVal">50 ℃</div>
+        </div>
+        <div class="control-group">
+          <label>💎 物质</label>
+          <select id="materialSelect" onchange="updateHeatLab()" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);font-size:14px;margin-top:8px;">
+            <option value="4200">水 (4200)</option>
+            <option value="900">铝 (900)</option>
+            <option value="460">铁 (460)</option>
+            <option value="390">铜 (390)</option>
+            <option value="2400">玻璃 (2400)</option>
+          </select>
+          <div class="value" id="cVal">c=4200 J/(kg·℃)</div>
+        </div>
+      </div>
+      <div class="lab-result">
+        <div class="formula" id="heatFormula">Q = 4200 × 2 × 50 = 420000 J = 420 kJ</div>
+        <div class="detail" id="heatDetail">加热2kg水升温50℃，需要420000焦耳热量</div>
+      </div>
+      <!-- Heat visual - temperature bar -->
+      <div style="margin-top:16px;background:var(--bg);border-radius:12px;padding:16px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+          <span style="font-size:13px;color:var(--dim);">热量大小示意：</span>
+        </div>
+        <div style="background:#e2e8f0;border-radius:8px;height:24px;overflow:hidden;">
+          <div id="heatBar" style="height:100%;background:linear-gradient(90deg,#f59e0b,#ef4444);border-radius:8px;transition:width .4s;width:50%;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;">
+            <span id="heatBarLabel" style="color:white;font-size:12px;font-weight:700;">420kJ</span>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin-top:4px;">
+          <span>0 J</span><span>最大估算</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 知识图谱 -->
+  <div class="section" id="knowledge-graph">
+    <div class="section-title">🕸️ 知识图谱</div>
+    <div id="knowledge-graph">
+      <h3>热量计算知识体系</h3>
+      <p>拖动节点探索知识关联</p>
+      <svg id="kg-svg"></svg>
+      <div class="kg-legend">
+        <div class="kg-legend-item"><div class="kg-legend-dot" style="background:#3b82f6;"></div>当前主题</div>
+        <div class="kg-legend-item"><div class="kg-legend-dot" style="background:#10b981;"></div>前置知识</div>
+        <div class="kg-legend-item"><div class="kg-legend-dot" style="background:#f97316;"></div>延伸学习</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 练习 -->
+  <div class="section" id="quiz">
+    <div class="section-title">📝 练习题</div>
+    <div class="card" id="q1">
+      <h3>题目 1</h3>
+      <p>将1kg水从10℃加热到60℃，水吸收的热量为（c水=4.2×10³J/(kg·℃)）：</p>
+      <div onclick="answerQ('q1','A')" class="quiz-option" data-q="q1" data-v="A">A. 4.2×10³J</div>
+      <div onclick="answerQ('q1','B')" class="quiz-option" data-q="q1" data-v="B">B. 2.1×10⁵J</div>
+      <div onclick="answerQ('q1','C')" class="quiz-option" data-q="q1" data-v="C">C. 2.52×10⁵J</div>
+      <div onclick="answerQ('q1','D')" class="quiz-option" data-q="q1" data-v="D">D. 4.2×10⁴J</div>
+      <div class="quiz-feedback" id="q1-fb">✅ 正确！Q=cmΔt=4.2×10³×1×(60-10)=4.2×10³×1×50=2.1×10⁵J=210000J。注意Δt=60-10=50℃。</div>
+    </div>
+    <div class="card" id="q2">
+      <h3>题目 2</h3>
+      <p>关于比热容，下列说法正确的是：</p>
+      <div onclick="answerQ('q2','A')" class="quiz-option" data-q="q2" data-v="A">A. 物体质量越大，比热容越大</div>
+      <div onclick="answerQ('q2','B')" class="quiz-option" data-q="q2" data-v="B">B. 比热容是物质的固有属性，与质量、温度无关</div>
+      <div onclick="answerQ('q2','C')" class="quiz-option" data-q="q2" data-v="C">C. 温度越高，比热容越大</div>
+      <div onclick="answerQ('q2','D')" class="quiz-option" data-q="q2" data-v="D">D. 液态水和冰的比热容相同</div>
+      <div class="quiz-feedback" id="q2-fb">✅ 正确！比热容是物质固有的热学性质，由物质种类决定，与质量多少和温度高低无关。不同状态（液态水和冰）比热容不同。</div>
+    </div>
+    <div class="card" id="q3">
+      <h3>题目 3</h3>
+      <p>沿海地区比内陆地区温差小，主要原因是：</p>
+      <div onclick="answerQ('q3','A')" class="quiz-option" data-q="q3" data-v="A">A. 沿海地区太阳辐射较弱</div>
+      <div onclick="answerQ('q3','B')" class="quiz-option" data-q="q3" data-v="B">B. 水的比热容大，升温和降温都较慢</div>
+      <div onclick="answerQ('q3','C')" class="quiz-option" data-q="q3" data-v="C">C. 海风的吹动降低了温度</div>
+      <div onclick="answerQ('q3','D')" class="quiz-option" data-q="q3" data-v="D">D. 沿海空气湿度大</div>
+      <div class="quiz-feedback" id="q3-fb">✅ 正确！水的比热容（4200 J/(kg·℃)）远大于沙石土（约800 J/(kg·℃)），海水吸热和散热都慢，使沿海气温变化幅度小，气候温和。</div>
+    </div>
+  </div>
 </div>
 
 <script>
-function checkAnswer(el,isCorrect,feedbackId){
-  const parent=el.parentElement;if(parent.dataset.answered)return;parent.dataset.answered='true';
-  const options=parent.querySelectorAll('.quiz-option');
-  options.forEach(opt=>{opt.style.pointerEvents='none';opt.style.opacity='0.6';});
-  const feedback=document.getElementById(feedbackId);
-  const msgs={
-    'm1q1':'Q = m×q = 2×3×10⁷ = 6×10⁷ J',
-    'm2q1':'t = (3×20 + 1×60)/(3+1) = (60+60)/4 = 120/4 = 30°C，质量大的冷水拉低了末温。',
-    'm3q1':'Q吸 = 4200×10×40 = 1.68×10⁶ J；Q总 = 1.68×10⁶/0.85 ≈ 1.976×10⁶ J；V = 1.976×10⁶/3.6×10⁷ ≈ 0.055 m³',
-    'postq1':'Q吸 = 4200×100×30 = 1.26×10⁷ J；Q总 = 1.26×10⁷/0.4 = 3.15×10⁷ J；m = 3.15×10⁷/3×10⁷ ≈ 1.05 kg'
-  };
-  if(isCorrect){
-    el.classList.add('correct');el.style.opacity='1';
-    feedback.innerHTML='✅ <strong>正确！</strong> 解题过程：'+msgs[feedbackId];
-    feedback.style.background='rgba(34,197,94,0.1)';feedback.style.color='#15803d';
-  } else {
-    el.classList.add('wrong');el.style.opacity='1';
-    options.forEach(opt=>{if(opt.onclick&&opt.onclick.toString().includes('true,')){opt.classList.add('correct');opt.style.opacity='1';}});
-    feedback.innerHTML='❌ <strong>再想想。</strong> 正确解法：'+msgs[feedbackId];
-    feedback.style.background='rgba(239,68,68,0.08)';feedback.style.color='#b91c1c';
-  }
-  feedback.classList.add('show');
+const correctAnswers={q1:'B',q2:'B',q3:'B'};
+function answerQ(qId,choice){
+  const opts=document.querySelectorAll(`[data-q="${qId}"]`);
+  opts.forEach(o=>{o.onclick=null;o.style.pointerEvents='none';if(o.dataset.v===correctAnswers[qId])o.classList.add('correct');else if(o.dataset.v===choice&&choice!==correctAnswers[qId])o.classList.add('wrong');});
+  const fb=document.getElementById(`${qId}-fb`);fb.classList.add('show');
+  if(choice!==correctAnswers[qId])fb.textContent=`❌ 错误。正确答案是 ${correctAnswers[qId]}。`+fb.textContent.replace('✅ 正确！','');
 }
-const tracks=[
-  {src:'tts/s01.mp3',title:'引言：计算烧水需要多少燃料'},
-  {src:'tts/s02.mp3',title:'热值的定义和公式Q=mq'},
-  {src:'tts/s03.mp3',title:'例题：天然气烧水计算'},
-  {src:'tts/s04.mp3',title:'热平衡方程的建立'},
-  {src:'tts/s05.mp3',title:'例题：混合水温计算'},
-  {src:'tts/s06.mp3',title:'热效率与综合计算'},
-  {src:'tts/s07.mp3',title:'课堂总结与解题步骤'},
-];
-let cur=0;const audio=new Audio();const abPlay=document.getElementById('abPlay');
-const abTitle=document.getElementById('abTitle');const abProgress=document.getElementById('abProgress');
-const abTime=document.getElementById('abTime');
-function loadTrack(i){cur=i;audio.src=tracks[i].src;abTitle.textContent='🎵 '+tracks[i].title;audio.load();}
-function fmt(s){const m=Math.floor(s/60),sec=Math.floor(s%60);return m+':'+(sec<10?'0':'')+sec;}
-audio.addEventListener('timeupdate',()=>{if(audio.duration){abProgress.style.width=(audio.currentTime/audio.duration*100)+'%';abTime.textContent=fmt(audio.currentTime)+' / '+fmt(audio.duration);}});
-audio.addEventListener('ended',()=>{if(cur<tracks.length-1){loadTrack(cur+1);audio.play();abPlay.textContent='⏸';}else{abPlay.textContent='▶';}});
-abPlay.addEventListener('click',()=>{if(audio.paused){audio.play();abPlay.textContent='⏸';}else{audio.pause();abPlay.textContent='▶';}});
-document.getElementById('abPrev').addEventListener('click',()=>{if(cur>0){loadTrack(cur-1);audio.play();abPlay.textContent='⏸';}});
-document.getElementById('abNext').addEventListener('click',()=>{if(cur<tracks.length-1){loadTrack(cur+1);audio.play();abPlay.textContent='⏸';}});
-document.getElementById('abProgressWrap').addEventListener('click',e=>{if(audio.duration){audio.currentTime=(e.offsetX/e.currentTarget.offsetWidth)*audio.duration;}});
-document.getElementById('abVol').addEventListener('input',e=>{audio.volume=e.target.value;});
-loadTrack(0);
+
+function updateHeatLab(){
+  const m=parseFloat(document.getElementById('mSlider').value);
+  const dt=parseInt(document.getElementById('dtSlider').value);
+  const c=parseInt(document.getElementById('materialSelect').value);
+  const Q=c*m*dt;
+  const Qk=(Q/1000).toFixed(1);
+  
+  document.getElementById('mLabel').textContent=m.toFixed(1);
+  document.getElementById('dtLabel').textContent=dt;
+  document.getElementById('mVal').textContent=`${m.toFixed(1)} kg`;
+  document.getElementById('dtVal').textContent=`${dt} ℃`;
+  document.getElementById('cVal').textContent=`c=${c} J/(kg·℃)`;
+  
+  const matNames={4200:'水',900:'铝',460:'铁',390:'铜',2400:'玻璃'};
+  const matName=matNames[c]||'物质';
+  
+  document.getElementById('heatFormula').textContent=`Q = ${c} × ${m.toFixed(1)} × ${dt} = ${Q.toFixed(0)} J = ${Qk} kJ`;
+  document.getElementById('heatDetail').textContent=`加热${m.toFixed(1)}kg${matName}升温${dt}℃，需要${Q.toFixed(0)}焦耳热量`;
+  
+  // Update bar
+  const maxQ=4200*10*200;
+  const pct=Math.min(95,Math.max(2,Q/maxQ*100));
+  document.getElementById('heatBar').style.width=pct+'%';
+  document.getElementById('heatBarLabel').textContent=Qk+'kJ';
+}
+
+// D3 Knowledge Graph
+const colorMap={current:'#3b82f6',prereq:'#10b981',next:'#f97316'};
+const kgData={
+  nodes:[
+    {id:'热量计算',type:'current',size:26},{id:'比热容',type:'current',size:22},
+    {id:'内能',type:'prereq',size:20},{id:'温度',type:'prereq',size:18},
+    {id:'热传递',type:'prereq',size:18},{id:'热平衡',type:'current',size:16},
+    {id:'热机效率',type:'next',size:18},{id:'能量守恒',type:'next',size:18},
+    {id:'热功当量',type:'next',size:14},{id:'相变热',type:'next',size:14},
+  ],
+  links:[
+    {source:'温度',target:'热量计算'},{source:'内能',target:'热量计算'},
+    {source:'热传递',target:'热量计算'},{source:'热量计算',target:'比热容'},
+    {source:'热量计算',target:'热平衡'},{source:'热量计算',target:'热机效率'},
+    {source:'热量计算',target:'能量守恒'},{source:'热量计算',target:'热功当量'},
+    {source:'比热容',target:'相变热'},
+  ]
+};
+const svgEl=document.getElementById('kg-svg');const W=svgEl.clientWidth||700,H=380;
+const svg=d3.select('#kg-svg').attr('viewBox',`0 0 ${W} ${H}`).attr('preserveAspectRatio','xMidYMid meet');
+const sim=d3.forceSimulation(kgData.nodes).force('link',d3.forceLink(kgData.links).id(d=>d.id).distance(90)).force('charge',d3.forceManyBody().strength(-240)).force('center',d3.forceCenter(W/2,H/2)).force('collision',d3.forceCollide(38));
+svg.append('defs').append('marker').attr('id','kgA').attr('viewBox','0 -5 10 10').attr('refX',18).attr('refY',0).attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto').append('path').attr('d','M0,-5L10,0L0,5').attr('fill','#cbd5e1');
+const link=svg.append('g').selectAll('line').data(kgData.links).enter().append('line').attr('stroke','#cbd5e1').attr('stroke-width',1.5).attr('marker-end','url(#kgA)');
+const node=svg.append('g').selectAll('g').data(kgData.nodes).enter().append('g').call(d3.drag().on('start',(e,d)=>{if(!e.active)sim.alphaTarget(.3).restart();d.fx=d.x;d.fy=d.y;}).on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y;}).on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}));
+node.append('circle').attr('r',d=>d.size).attr('fill',d=>colorMap[d.type]).attr('fill-opacity',.85).attr('stroke','#fff').attr('stroke-width',2);
+node.append('text').attr('text-anchor','middle').attr('dy','0.35em').attr('font-size',d=>d.size>20?'13px':'11px').attr('font-weight','700').attr('fill','#fff').text(d=>d.id.length>5?d.id.slice(0,4)+'…':d.id);
+node.append('title').text(d=>d.id);
+sim.on('tick',()=>{link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);node.attr('transform',d=>`translate(${d.x},${d.y})`);});
 </script>
 </body>
 </html>
