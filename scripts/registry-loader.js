@@ -19,7 +19,7 @@
 const REGISTRY_LOCAL_URL = './courseware-registry.json';
 const REGISTRY_REMOTE_URL = 'https://raw.githubusercontent.com/weponusa/teachany/main/courseware-registry.json';
 const REGISTRY_CACHE_KEY = 'teachany_registry_cache';
-const REGISTRY_CACHE_TTL = 30 * 60 * 1000; // 30 分钟
+const REGISTRY_CACHE_TTL = 5 * 60 * 1000; // 5 分钟（发布后快速生效）
 
 /* ─── 缓存 ───────────────────────────────────── */
 function readRegistryCache() {
@@ -51,7 +51,7 @@ async function fetchRegistry(forceRefresh = false) {
 
   // 先尝试本地文件
   try {
-    const resp = await fetch(REGISTRY_LOCAL_URL, { cache: 'no-cache' });
+    const resp = await fetch(REGISTRY_LOCAL_URL + '?v=' + Date.now(), { cache: 'no-store' });
     if (resp.ok) {
       const data = await resp.json();
       saveRegistryCache(data);
@@ -63,7 +63,7 @@ async function fetchRegistry(forceRefresh = false) {
 
   // 回退到 GitHub raw
   try {
-    const resp = await fetch(REGISTRY_REMOTE_URL, { cache: 'no-cache' });
+    const resp = await fetch(REGISTRY_REMOTE_URL + '?v=' + Date.now(), { cache: 'no-store' });
     if (resp.ok) {
       const data = await resp.json();
       saveRegistryCache(data);
