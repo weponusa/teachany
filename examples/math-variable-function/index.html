@@ -244,6 +244,34 @@
       .section { padding: 0 16px; margin: 24px auto; }
       .nav-bar { padding: 10px 12px; }
     }
+
+    /* ═══ 音频播放控制条 ═══ */
+    .audio-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 500;
+      background: rgba(15,23,42,0.95); backdrop-filter: blur(12px);
+      border-top: 1px solid rgba(59,130,246,0.3);
+      padding: 10px 24px; display: flex; align-items: center; gap: 14px;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+      transition: transform 0.3s;
+    }
+    .audio-bar.hidden { transform: translateY(100%); }
+    .audio-bar .ab-btn {
+      width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer;
+      background: var(--primary); color: #fff; font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; flex-shrink: 0;
+    }
+    .audio-bar .ab-btn:hover { background: #2563eb; transform: scale(1.1); }
+    .audio-bar .ab-info { flex: 1; min-width: 0; }
+    .audio-bar .ab-title { font-size: 13px; font-weight: 600; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .audio-bar .ab-progress-wrap { position: relative; height: 4px; background: rgba(255,255,255,0.15); border-radius: 2px; margin-top: 6px; cursor: pointer; }
+    .audio-bar .ab-progress { height: 100%; background: var(--primary); border-radius: 2px; width: 0%; transition: width 0.1s linear; }
+    .audio-bar .ab-time { font-size: 11px; color: #94a3b8; margin-top: 3px; }
+    .audio-bar .ab-toggle { font-size: 11px; color: #94a3b8; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: all 0.2s; flex-shrink: 0; }
+    .audio-bar .ab-toggle:hover { background: rgba(255,255,255,0.1); color: #f8fafc; }
+    .audio-bar .ab-vol { width: 60px; accent-color: var(--primary); flex-shrink: 0; }
+    /* 给 body 底部留空间 */
+    body { padding-bottom: 70px; }
   </style>
 </head>
 <body>
@@ -909,5 +937,119 @@
     ]
   }
   </script>
+
+  <!-- ═══ 音频播放控制条 ═══ -->
+  <div class="audio-bar" id="audioBar">
+    <button class="ab-btn" id="abPrev" title="上一段" onclick="audioNav(-1)">⏮</button>
+    <button class="ab-btn" id="abPlay" title="播放/暂停" onclick="audioToggle()">▶</button>
+    <button class="ab-btn" id="abNext" title="下一段" onclick="audioNav(1)">⏭</button>
+    <div class="ab-info">
+      <div class="ab-title" id="abTitle">🎧 变量与函数 · 语音导览</div>
+      <div class="ab-progress-wrap" id="abProgressWrap">
+        <div class="ab-progress" id="abProgress"></div>
+      </div>
+      <div class="ab-time" id="abTime">0:00 / 0:00 &nbsp;·&nbsp; <span id="abIndex">1/11</span></div>
+    </div>
+    <input type="range" class="ab-vol" id="abVol" min="0" max="1" step="0.05" value="0.85" title="音量" oninput="abAudio.volume=this.value">
+    <span class="ab-toggle" onclick="document.getElementById('audioBar').classList.toggle('hidden')" title="收起/展开">▼ 收起</span>
+  </div>
+
+  <script>
+  // ═══ 音频播放列表 ═══
+  const audioPlaylist = [
+    { id: 's01', sectionId: 'hero',              title: '课程导入' },
+    { id: 's02', sectionId: 'module-1',          title: '常量与变量（一）' },
+    { id: 's03', sectionId: 'module-1',          title: '常量与变量（二）' },
+    { id: 's04', sectionId: 'module-2',          title: '函数类比：自动售货机' },
+    { id: 's05', sectionId: 'module-2',          title: '函数的定义' },
+    { id: 's06', sectionId: 'module-2',          title: '自变量与因变量' },
+    { id: 's07', sectionId: 'module-3',          title: '三种表示法（一）解析式' },
+    { id: 's08', sectionId: 'module-3',          title: '三种表示法（二/三）列表与图像' },
+    { id: 's09', sectionId: 'deep-understanding', title: '深层理解（一）唯一性' },
+    { id: 's10', sectionId: 'deep-understanding', title: '深层理解（二）函数≠公式' },
+    { id: 's11', sectionId: 'summary',           title: '课程小结' },
+  ];
+
+  let abCurrent = 0;
+  const abAudio = new Audio();
+  abAudio.volume = 0.85;
+  let abAutoAdvance = true;
+
+  function abSrc(idx) {
+    return `./tts/${audioPlaylist[idx].id}.mp3`;
+  }
+
+  function abLoad(idx, autoplay = false) {
+    abCurrent = idx;
+    const item = audioPlaylist[idx];
+    abAudio.src = abSrc(idx);
+    document.getElementById('abTitle').textContent = `🎧 ${item.title}`;
+    document.getElementById('abIndex').textContent = `${idx + 1}/${audioPlaylist.length}`;
+    document.getElementById('abProgress').style.width = '0%';
+    document.getElementById('abTime').innerHTML = `0:00 / 0:00 &nbsp;·&nbsp; <span id="abIndex">${idx+1}/${audioPlaylist.length}</span>`;
+    document.getElementById('abPlay').textContent = '▶';
+    if (autoplay) { abAudio.load(); abAudio.play().catch(()=>{}); document.getElementById('abPlay').textContent = '⏸'; }
+    // 滚动到对应 section
+    const sec = document.getElementById(item.sectionId);
+    if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function audioToggle() {
+    if (abAudio.paused) {
+      if (!abAudio.src) abLoad(abCurrent, true);
+      else { abAudio.play().catch(()=>{}); document.getElementById('abPlay').textContent = '⏸'; }
+    } else {
+      abAudio.pause();
+      document.getElementById('abPlay').textContent = '▶';
+    }
+  }
+
+  function audioNav(dir) {
+    const next = abCurrent + dir;
+    if (next >= 0 && next < audioPlaylist.length) abLoad(next, true);
+  }
+
+  // 进度条
+  abAudio.addEventListener('timeupdate', () => {
+    if (!abAudio.duration) return;
+    const pct = (abAudio.currentTime / abAudio.duration) * 100;
+    document.getElementById('abProgress').style.width = pct + '%';
+    const fmt = t => `${Math.floor(t/60)}:${String(Math.floor(t%60)).padStart(2,'0')}`;
+    document.getElementById('abTime').innerHTML = `${fmt(abAudio.currentTime)} / ${fmt(abAudio.duration)} &nbsp;·&nbsp; <span id="abIndex">${abCurrent+1}/${audioPlaylist.length}</span>`;
+  });
+  document.getElementById('abProgressWrap').addEventListener('click', e => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    abAudio.currentTime = ((e.clientX - rect.left) / rect.width) * abAudio.duration;
+  });
+
+  // 自动播放下一段
+  abAudio.addEventListener('ended', () => {
+    document.getElementById('abPlay').textContent = '▶';
+    if (abAutoAdvance && abCurrent < audioPlaylist.length - 1) {
+      setTimeout(() => abLoad(abCurrent + 1, true), 800);
+    }
+  });
+
+  // IntersectionObserver：进入视口自动切换对应音频
+  const sectionIds = [...new Set(audioPlaylist.map(p => p.sectionId))];
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && abAudio.paused) {
+        const idx = audioPlaylist.findIndex(p => p.sectionId === entry.target.id);
+        if (idx !== -1 && idx !== abCurrent) {
+          abLoad(idx, false);  // 仅更新显示，不自动播放
+        }
+      }
+    });
+  }, { threshold: 0.4 });
+  sectionIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) observer.observe(el);
+  });
+
+  // 初始加载第一段（不自动播放）
+  abLoad(0, false);
+  </script>
+
 </body>
 </html>
