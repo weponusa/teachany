@@ -241,6 +241,21 @@ svg { width: 100%; height: 100%; }
   font-size: 13px;
 }
 .stat-chip strong { color: var(--accent); }
+.refresh-btn {
+  background: var(--card);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--accent);
+  font-weight: 600;
+}
+.refresh-btn:hover { background: var(--accent); color: #fff; }
+.refresh-btn.spinning { animation: spin 0.8s linear infinite; pointer-events: none; opacity: 0.6; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -295,6 +310,15 @@ svg { width: 100%; height: 100%; }
 <script src="./scripts/courseware-importer.js"></script>
 <script src="./scripts/community-loader.js"></script>
 <script>
+/* ─── 数据源配置 ─── */
+const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/weponusa/teachany/main/';
+const USE_RAW_URL = location.hostname.includes('github.io'); // GitHub Pages 用 Raw URL 绕过 CDN 缓存
+
+function treeUrl(relativePath) {
+  if (USE_RAW_URL) return GITHUB_RAW_BASE + relativePath;
+  return relativePath; // 本地开发用相对路径
+}
+
 const TREES = [
   // 小学
   { file: 'data/trees/chinese-elementary.json', emoji: '📖', label: '小学语文' },
@@ -348,7 +372,8 @@ async function loadTree(index) {
     t.classList.toggle('active', i === index);
   });
 
-  const resp = await fetch(TREES[index].file + '?v=' + Date.now(), { cache: 'no-store' });
+  const url = treeUrl(TREES[index].file) + '?v=' + Date.now();
+  const resp = await fetch(url, { cache: 'no-store' });
   currentTree = await resp.json();
   renderTree(currentTree);
 }
@@ -433,6 +458,7 @@ function renderTree(tree) {
     <div class="stat-chip">待创建 <strong style="color:var(--danger);">${gapNodes}</strong></div>
     <div class="stat-chip" style="font-size:11px;opacity:0.6;">更新于 ${new Date().toLocaleTimeString('zh-CN')}</div>
     <div class="stat-chip">覆盖率 <strong>${Math.round(coveredNodes/totalNodes*100)}%</strong></div>
+    <button class="refresh-btn" onclick="refreshCurrentTree()" title="刷新知识地图数据">🔄</button>
   `;
 
   // D3 force simulation
@@ -688,6 +714,18 @@ function onNodeClick(event, d) {
     if (topCourse) {
       window.open(TeachAnyImporter.getCourseLaunchUrl(topCourse), '_blank', 'noopener');
     }
+  }
+}
+
+// 刷新当前知识地图数据（手动触发，绕过一切缓存）
+async function refreshCurrentTree() {
+  const btn = document.querySelector('.refresh-btn');
+  if (btn) { btn.classList.add('spinning'); btn.disabled = true; }
+  try {
+    const activeIdx = Array.from(document.querySelectorAll('.subject-tab')).findIndex(t => t.classList.contains('active'));
+    if (activeIdx >= 0) await loadTree(activeIdx);
+  } finally {
+    if (btn) { btn.classList.remove('spinning'); btn.disabled = false; }
   }
 }
 

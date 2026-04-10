@@ -13,7 +13,7 @@
 const COMMUNITY_REPO = 'weponusa/teachany';
 const COMMUNITY_INDEX_URL = `https://raw.githubusercontent.com/${COMMUNITY_REPO}/main/community/index.json`;
 const COMMUNITY_CACHE_KEY = 'teachany_community_index';
-const COMMUNITY_CACHE_TTL = 30 * 60 * 1000; // 30 分钟缓存
+const COMMUNITY_CACHE_TTL = 5 * 60 * 1000; // 5 分钟缓存
 const COMMUNITY_DOWNLOADED_KEY = 'teachany_community_downloaded';
 const GITHUB_API_BASE = 'https://api.github.com';
 
@@ -85,8 +85,8 @@ async function fetchCommunityIndex(forceRefresh = false) {
   }
 
   try {
-    const response = await fetch(COMMUNITY_INDEX_URL, {
-      cache: 'no-cache',
+    const response = await fetch(COMMUNITY_INDEX_URL + '?v=' + Date.now(), {
+      cache: 'no-store',
       headers: { Accept: 'application/json' },
     });
 
