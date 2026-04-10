@@ -196,13 +196,13 @@
     .level-tag.l2 { background: #fef3c7; color: #92400e; }
     .level-tag.l3 { background: #fce7f3; color: #9d174d; }
 
-    /* ═══ 知识图谱 ═══ */
-    #kg-svg .kg-node { cursor: default; }
-    #kg-svg .kg-node.has-courseware { cursor: pointer; }
-    #kg-svg .kg-node.has-courseware:hover rect,
-    #kg-svg .kg-node.has-courseware:hover ellipse { filter: brightness(1.1); }
-    #kg-svg .kg-edge { stroke: #94a3b8; stroke-width: 1.5; fill: none; }
-    #kg-svg .kg-edge-arrow { fill: #94a3b8; }
+    /* ═══ 知识图谱（三列布局） ═══ */
+    #kg-svg .kg-node { cursor: default; transition: filter .2s; }
+    #kg-svg .kg-node.has-cw { cursor: pointer; }
+    #kg-svg .kg-node.has-cw:hover rect { filter: brightness(1.15); }
+    #kg-svg .kg-node.no-cw rect { stroke-dasharray: 6 3; }
+    #kg-svg .kg-edge { fill: none; stroke-width: 1.5; opacity: 0.55; }
+    #kg-svg .kg-chain { fill: none; stroke-width: 1.2; opacity: 0.5; }
 
     /* ═══ 音频播放器 ═══ */
     .audio-bar {
@@ -718,9 +718,9 @@
   <!-- ═══ 知识图谱 ═══ -->
   <section class="section" id="knowledge-graph">
     <h2 class="section-title">🗺️ 知识图谱</h2>
-    <p style="color:var(--text-secondary); margin-bottom:16px;">点击有课件的节点可跳转学习，虚线节点表示尚无课件。</p>
-    <div id="kg-container" style="width:100%; min-height:400px; border:1px solid var(--border); border-radius:12px; overflow:hidden; position:relative;">
-      <svg id="kg-svg" width="100%" height="100%" style="min-height:400px;"></svg>
+    <p style="color:var(--text-secondary); margin-bottom:16px;">三列视图：前序知识 → 核心子知识点 → 后续知识。实线节点可点击跳转，虚线表示暂无课件。</p>
+    <div id="kg-container" style="width:100%; min-height:500px; border:1px solid var(--border); border-radius:12px; overflow:hidden; position:relative;">
+      <svg id="kg-svg" width="100%" height="100%" style="min-height:500px;"></svg>
     </div>
   </section>
 
@@ -733,24 +733,34 @@
       { id: "seg04", sectionId: "module-4", title: "模块4：待定系数法", src: "./tts/seg04_zh.mp3", subtitle: "设→代→解→写，四步求解析式…" }
     ];
 
-    // ═══ 知识图谱数据 ═══
+    // ═══ 知识图谱数据（三列布局：前序 | 核心子知识点链 | 后续） ═══
     const knowledgeGraphData = {
       currentNode: "linear-function",
-      nodes: [
-        { id: "coordinate-system", label: "平面直角坐标系", hasCourseware: true, url: "#" },
-        { id: "proportional-function", label: "正比例函数", hasCourseware: true, url: "#" },
-        { id: "linear-equation", label: "一元一次方程", hasCourseware: false, url: "" },
-        { id: "linear-function", label: "一次函数", hasCourseware: true, url: "#" },
-        { id: "linear-function-equation", label: "一次函数与方程组", hasCourseware: false, url: "" },
-        { id: "quadratic-function", label: "二次函数", hasCourseware: true, url: "./math-quadratic-function/index.html" }
+      currentLabel: "一次函数 y=kx+b",
+
+      // 核心子知识点（对应课件教学模块）
+      coreSubTopics: [
+        { id: "sub-definition", label: "一次函数的定义 y=kx+b" },
+        { id: "sub-graph",      label: "两点法画图像" },
+        { id: "sub-kb",         label: "k和b的几何意义" },
+        { id: "sub-method",     label: "待定系数法" },
+        { id: "sub-equation",   label: "一次函数与方程组" },
+        { id: "sub-application",label: "实际应用建模" }
       ],
-      edges: [
-        { from: "coordinate-system", to: "proportional-function" },
-        { from: "coordinate-system", to: "linear-function" },
-        { from: "linear-equation", to: "linear-function" },
-        { from: "proportional-function", to: "linear-function" },
-        { from: "linear-function", to: "linear-function-equation" },
-        { from: "linear-function", to: "quadratic-function" }
+
+      // 前序知识（connectsTo 精准指向核心子知识点）
+      prerequisites: [
+        { id: "variable-and-function", label: "变量与函数",      hasCourseware: false, url: "", connectsTo: ["sub-definition"] },
+        { id: "coordinate-system",     label: "平面直角坐标系",  hasCourseware: false, url: "", connectsTo: ["sub-definition", "sub-graph"] },
+        { id: "proportional-function", label: "正比例函数",      hasCourseware: false, url: "", connectsTo: ["sub-definition", "sub-kb"] },
+        { id: "linear-equation",       label: "一元一次方程",    hasCourseware: false, url: "", connectsTo: ["sub-method", "sub-equation"] }
+      ],
+
+      // 后续知识（connectsFrom 精准指向核心子知识点）
+      nextTopics: [
+        { id: "linear-equation-system-graph", label: "一次函数与方程图解", hasCourseware: false, url: "", connectsFrom: ["sub-equation"] },
+        { id: "inverse-proportional-function", label: "反比例函数",       hasCourseware: false, url: "", connectsFrom: ["sub-kb"] },
+        { id: "quadratic-function",            label: "二次函数",         hasCourseware: true,  url: "../math-quadratic-function/index.html", connectsFrom: ["sub-application"] }
       ]
     };
 
@@ -993,75 +1003,212 @@
       document.getElementById(id).classList.add('show');
     }
 
-    // ═══ 知识图谱渲染 ═══
+    // ═══ 知识图谱渲染（三列布局：前序 | 核心子知识点链 | 后续） ═══
     (function renderKnowledgeGraph() {
       if (typeof knowledgeGraphData === 'undefined') return;
       const svg = document.getElementById('kg-svg');
       if (!svg) return;
-      const { currentNode, nodes, edges } = knowledgeGraphData;
-      const W = svg.clientWidth || 800, H = Math.max(400, nodes.length * 60);
+      const d = knowledgeGraphData;
+      const NS = 'http://www.w3.org/2000/svg';
+      const el = (tag) => document.createElementNS(NS, tag);
+
+      const C = {
+        pre: '#06b6d4', core: '#f59e0b', sub: '#3b82f6', next: '#10b981',
+        preBg: 'rgba(6,182,212,0.12)', coreBg: 'rgba(245,158,11,0.18)',
+        subBg: 'rgba(59,130,246,0.12)', nextBg: 'rgba(16,185,129,0.12)',
+        noCw: '#94a3b8', noCwBg: 'rgba(148,163,184,0.08)'
+      };
+
+      const preNodes = d.prerequisites || [];
+      const subNodes = d.coreSubTopics || [];
+      const nextNodes = d.nextTopics || [];
+      const maxRows = Math.max(preNodes.length, subNodes.length + 1, nextNodes.length);
+      const ROW_H = 70, PAD_TOP = 60, NODE_H = 44, NODE_RX = 10;
+      const W = 1100, H = Math.max(500, PAD_TOP + maxRows * ROW_H + 40);
+      const COL = { pre: 120, core: 550, next: 970 };
+      const NW = { pre: 190, core: 270, next: 220 };
+
       svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = '';
 
-      // Layout
-      const cols = Math.ceil(Math.sqrt(nodes.length));
-      const cellW = W / (cols + 1), cellH = H / (Math.ceil(nodes.length / cols) + 1);
-      nodes.forEach((n, i) => {
-        n._x = cellW * ((i % cols) + 1);
-        n._y = cellH * (Math.floor(i / cols) + 1);
+      // defs
+      const defs = el('defs');
+      ['pre','core','sub','next'].forEach(k => {
+        const marker = el('marker');
+        marker.setAttribute('id', `kg-arr-${k}`);
+        marker.setAttribute('viewBox', '0 0 10 6');
+        marker.setAttribute('refX', '10'); marker.setAttribute('refY', '3');
+        marker.setAttribute('markerWidth', '8'); marker.setAttribute('markerHeight', '6');
+        marker.setAttribute('orient', 'auto');
+        const p = el('path'); p.setAttribute('d', 'M0,0 L10,3 L0,6Z'); p.setAttribute('fill', C[k]);
+        marker.appendChild(p); defs.appendChild(marker);
       });
+      const filter = el('filter'); filter.setAttribute('id', 'kg-glow');
+      const blur = el('feGaussianBlur'); blur.setAttribute('stdDeviation', '3'); blur.setAttribute('result', 'blur');
+      const merge = el('feMerge');
+      const mn1 = el('feMergeNode'); mn1.setAttribute('in', 'blur');
+      const mn2 = el('feMergeNode'); mn2.setAttribute('in', 'SourceGraphic');
+      merge.appendChild(mn1); merge.appendChild(mn2);
+      filter.appendChild(blur); filter.appendChild(merge);
+      defs.appendChild(filter);
+      const noCwMarker = el('marker');
+      noCwMarker.setAttribute('id', 'kg-arr-nocw');
+      noCwMarker.setAttribute('viewBox', '0 0 10 6');
+      noCwMarker.setAttribute('refX', '10'); noCwMarker.setAttribute('refY', '3');
+      noCwMarker.setAttribute('markerWidth', '8'); noCwMarker.setAttribute('markerHeight', '6');
+      noCwMarker.setAttribute('orient', 'auto');
+      const np = el('path'); np.setAttribute('d', 'M0,0 L10,3 L0,6Z'); np.setAttribute('fill', C.noCw);
+      noCwMarker.appendChild(np); defs.appendChild(noCwMarker);
+      svg.appendChild(defs);
 
-      const nodeMap = Object.fromEntries(nodes.map(n => [n.id, n]));
+      // 列标题
+      function addTitle(x, y, text, color) {
+        const t = el('text');
+        t.setAttribute('x', x); t.setAttribute('y', y);
+        t.setAttribute('fill', color); t.setAttribute('font-size', '14');
+        t.setAttribute('text-anchor', 'middle'); t.setAttribute('font-weight', '600');
+        t.textContent = text; svg.appendChild(t);
+      }
+      addTitle(COL.pre, 30, '前序知识', '#64748b');
+      addTitle(COL.core, 30, '核心知识', C.core);
+      addTitle(COL.next, 30, '后续知识', '#64748b');
 
-      // Draw edges
-      edges.forEach(e => {
-        const from = nodeMap[e.from], to = nodeMap[e.to];
-        if (!from || !to) return;
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', from._x); line.setAttribute('y1', from._y);
-        line.setAttribute('x2', to._x); line.setAttribute('y2', to._y);
-        line.setAttribute('class', 'kg-edge');
-        if (e.from === currentNode || e.to === currentNode) line.style.stroke = '#3b82f6';
-        svg.appendChild(line);
-
-        // Arrow
-        const angle = Math.atan2(to._y - from._y, to._x - from._x);
-        const dist = Math.sqrt((to._x - from._x) ** 2 + (to._y - from._y) ** 2);
-        const arrowX = from._x + (dist - 40) * Math.cos(angle);
-        const arrowY = from._y + (dist - 40) * Math.sin(angle);
-        const arrowSize = 8;
-        const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-        arrow.setAttribute('points', `${arrowX},${arrowY} ${arrowX - arrowSize * Math.cos(angle - 0.4)},${arrowY - arrowSize * Math.sin(angle - 0.4)} ${arrowX - arrowSize * Math.cos(angle + 0.4)},${arrowY - arrowSize * Math.sin(angle + 0.4)}`);
-        arrow.setAttribute('class', 'kg-edge-arrow');
-        if (e.from === currentNode || e.to === currentNode) arrow.style.fill = '#3b82f6';
-        svg.appendChild(arrow);
-      });
-
-      // Draw nodes
-      const primary = '#3b82f6';
-      nodes.forEach(n => {
-        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        g.setAttribute('class', 'kg-node' + (n.hasCourseware ? ' has-courseware' : ''));
-        g.setAttribute('transform', `translate(${n._x}, ${n._y})`);
-        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        const isCurrent = n.id === currentNode;
-        rect.setAttribute('x', '-70'); rect.setAttribute('y', '-18');
-        rect.setAttribute('width', '140'); rect.setAttribute('height', '36');
-        rect.setAttribute('rx', '8');
-        rect.setAttribute('fill', isCurrent ? primary : (n.hasCourseware ? '#e0e7ff' : '#f8fafc'));
-        rect.setAttribute('stroke', n.hasCourseware ? primary : '#cbd5e1');
-        rect.setAttribute('stroke-width', isCurrent ? '2.5' : '1.5');
-        if (!n.hasCourseware) rect.setAttribute('stroke-dasharray', '6 3');
+      // 绘制节点
+      function drawNode(cx, cy, w, h, label, opts) {
+        const { fill, stroke, strokeW, fontSize, fontWeight, fontColor, rx, glow, dash, clickUrl } = Object.assign(
+          { fill: '#fff', stroke: '#ccc', strokeW: 1.5, fontSize: 14, fontWeight: '600', fontColor: '#333', rx: NODE_RX, glow: false, dash: false, clickUrl: '' }, opts);
+        const g = el('g');
+        g.setAttribute('class', 'kg-node' + (clickUrl ? ' has-cw' : (dash ? ' no-cw' : '')));
+        const rect = el('rect');
+        rect.setAttribute('x', cx - w/2); rect.setAttribute('y', cy - h/2);
+        rect.setAttribute('width', w); rect.setAttribute('height', h);
+        rect.setAttribute('rx', rx); rect.setAttribute('fill', fill);
+        rect.setAttribute('stroke', stroke); rect.setAttribute('stroke-width', strokeW);
+        if (dash) rect.setAttribute('stroke-dasharray', '6 3');
+        if (glow) rect.setAttribute('filter', 'url(#kg-glow)');
         g.appendChild(rect);
-        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        text.setAttribute('text-anchor', 'middle'); text.setAttribute('dy', '5');
-        text.setAttribute('font-size', '12'); text.setAttribute('fill', isCurrent ? '#fff' : '#334155');
-        text.textContent = n.label.length > 8 ? n.label.slice(0, 8) + '…' : n.label;
-        g.appendChild(text);
-        if (n.hasCourseware && !isCurrent) {
+        const txt = el('text');
+        txt.setAttribute('x', cx); txt.setAttribute('y', cy + 5);
+        txt.setAttribute('fill', fontColor); txt.setAttribute('font-size', fontSize);
+        txt.setAttribute('text-anchor', 'middle'); txt.setAttribute('font-weight', fontWeight);
+        txt.textContent = label.length > 14 ? label.slice(0, 14) + '…' : label;
+        g.appendChild(txt);
+        if (clickUrl) {
           g.style.cursor = 'pointer';
-          g.addEventListener('click', () => { window.open(n.url, '_blank'); });
+          g.addEventListener('click', () => window.open(clickUrl, '_blank'));
         }
         svg.appendChild(g);
+        return { cx, cy, left: cx - w/2, right: cx + w/2, top: cy - h/2, bottom: cy + h/2 };
+      }
+
+      // 贝塞尔曲线
+      function drawCurve(x1, y1, x2, y2, color, markerKey) {
+        const cpX = (x1 + x2) / 2;
+        const path = el('path');
+        path.setAttribute('d', `M${x1},${y1} C${cpX},${y1} ${cpX},${y2} ${x2},${y2}`);
+        path.setAttribute('fill', 'none'); path.setAttribute('stroke', color);
+        path.setAttribute('stroke-width', '1.5'); path.setAttribute('opacity', '0.55');
+        path.setAttribute('class', 'kg-edge');
+        path.setAttribute('marker-end', `url(#kg-arr-${markerKey})`);
+        svg.appendChild(path);
+      }
+
+      // 前序节点
+      const prePos = {};
+      preNodes.forEach((n, i) => {
+        const cy = PAD_TOP + i * ROW_H + NODE_H/2;
+        const hasCw = n.hasCourseware && n.url;
+        const isDash = !n.hasCourseware;
+        prePos[n.id] = drawNode(COL.pre, cy, NW.pre, NODE_H, n.label, {
+          fill: isDash ? C.noCwBg : C.preBg, stroke: isDash ? C.noCw : C.pre,
+          fontColor: isDash ? C.noCw : C.pre, dash: isDash, clickUrl: hasCw ? n.url : ''
+        });
+      });
+
+      // 核心主节点
+      const coreMainY = PAD_TOP + NODE_H/2;
+      const coreMain = drawNode(COL.core, coreMainY, NW.core + 10, NODE_H + 8, d.currentLabel || '当前课件', {
+        fill: C.coreBg, stroke: C.core, strokeW: 2.5,
+        fontSize: 17, fontWeight: '700', fontColor: C.core, rx: 12, glow: true
+      });
+
+      // 核心子节点链
+      const subPos = {};
+      subNodes.forEach((n, i) => {
+        const cy = PAD_TOP + (i + 1) * ROW_H + NODE_H/2;
+        subPos[n.id] = drawNode(COL.core, cy, NW.core, NODE_H - 2, n.label, {
+          fill: C.subBg, stroke: C.sub, fontColor: C.sub
+        });
+      });
+
+      // 核心内部链式连线
+      if (subNodes.length > 0) {
+        const firstSub = subPos[subNodes[0].id];
+        const chainLine = el('path');
+        chainLine.setAttribute('d', `M${COL.core},${coreMain.bottom} L${COL.core},${firstSub.top}`);
+        chainLine.setAttribute('fill', 'none'); chainLine.setAttribute('stroke', C.core);
+        chainLine.setAttribute('stroke-width', '1.5'); chainLine.setAttribute('opacity', '0.6');
+        chainLine.setAttribute('class', 'kg-chain');
+        chainLine.setAttribute('marker-end', `url(#kg-arr-core)`);
+        svg.appendChild(chainLine);
+      }
+      for (let i = 0; i < subNodes.length - 1; i++) {
+        const from = subPos[subNodes[i].id], to = subPos[subNodes[i+1].id];
+        const line = el('path');
+        line.setAttribute('d', `M${COL.core},${from.bottom} L${COL.core},${to.top}`);
+        line.setAttribute('fill', 'none'); line.setAttribute('stroke', C.sub);
+        line.setAttribute('stroke-width', '1.2'); line.setAttribute('opacity', '0.5');
+        line.setAttribute('class', 'kg-chain');
+        line.setAttribute('marker-end', `url(#kg-arr-sub)`);
+        svg.appendChild(line);
+      }
+
+      // 后续节点
+      const nextPos = {};
+      nextNodes.forEach((n, i) => {
+        const cy = PAD_TOP + i * ROW_H + NODE_H/2;
+        const hasCw = n.hasCourseware && n.url;
+        const isDash = !n.hasCourseware;
+        nextPos[n.id] = drawNode(COL.next, cy, NW.next, NODE_H, n.label, {
+          fill: isDash ? C.noCwBg : C.nextBg, stroke: isDash ? C.noCw : C.next,
+          fontColor: isDash ? C.noCw : C.next, dash: isDash, clickUrl: hasCw ? n.url : ''
+        });
+      });
+
+      // 前序 → 核心 精准连线
+      preNodes.forEach(n => {
+        const from = prePos[n.id];
+        if (!from) return;
+        const targets = n.connectsTo || [];
+        const isDash = !n.hasCourseware;
+        const edgeColor = isDash ? C.noCw : C.pre;
+        const markerKey = isDash ? 'nocw' : 'pre';
+        if (targets.length === 0) {
+          drawCurve(from.right, from.cy, coreMain.left, coreMain.cy, edgeColor, markerKey);
+        } else {
+          targets.forEach(tid => {
+            const to = subPos[tid] || coreMain;
+            drawCurve(from.right, from.cy, to.left, to.cy, edgeColor, markerKey);
+          });
+        }
+      });
+
+      // 核心 → 后续 精准连线
+      nextNodes.forEach(n => {
+        const to = nextPos[n.id];
+        if (!to) return;
+        const sources = n.connectsFrom || [];
+        const isDash = !n.hasCourseware;
+        const edgeColor = isDash ? C.noCw : C.next;
+        const markerKey = isDash ? 'nocw' : 'next';
+        if (sources.length === 0) {
+          drawCurve(coreMain.right, coreMain.cy, to.left, to.cy, edgeColor, markerKey);
+        } else {
+          sources.forEach(sid => {
+            const from = subPos[sid] || coreMain;
+            drawCurve(from.right, from.cy, to.left, to.cy, edgeColor, markerKey);
+          });
+        }
       });
     })();
 
