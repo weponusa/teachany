@@ -2,375 +2,667 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="teachany-node" content="thermometer">
-<meta name="teachany-subject" content="physics">
-<meta name="teachany-domain" content="thermodynamics">
-<meta name="teachany-grade" content="8">
-<meta name="teachany-difficulty" content="2">
-<meta name="teachany-version" content="1.0">
-<meta name="teachany-author" content="weponusa">
-<title>温度与温度计 · 教学课件</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>温度与温度计 - 初中物理8年级</title>
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 <style>
 :root {
-  --bg:#f8fafc;--bg2:#f0f4f8;--bg3:#e2e8f0;
-  --primary:#3b82f6;--secondary:#06b6d4;--accent:#f59e0b;
-  --success:#22c55e;--danger:#ef4444;--purple:#8b5cf6;--teal:#14b8a6;
-  --text:#1e293b;--dim:#64748b;--dimmer:#94a3b8;--card:#ffffff;--border:rgba(0,0,0,0.06);
+  --bg:#f8fafc;--primary:#3b82f6;--secondary:#06b6d4;--accent:#f59e0b;
+  --success:#10b981;--card:#fff;--danger:#ef4444;--warm:#f97316;
+  --text:#1e293b;--text2:#475569;--border:#e2e8f0;--shadow:0 4px 24px rgba(0,0,0,.08);
 }
-*{margin:0;padding:0;box-sizing:border-box;}
-html{scroll-behavior:smooth;}
-body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.8;padding-bottom:70px;}
-body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(160deg,rgba(59,130,246,0.03) 0%,rgba(6,182,212,0.03) 50%,rgba(245,158,11,0.02) 100%);pointer-events:none;z-index:-1;}
-.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:58px;gap:4px;overflow-x:auto;box-shadow:0 1px 12px rgba(0,0,0,0.04);}
-.nav-brand{font-size:18px;font-weight:800;margin-right:18px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:10px;font-size:13.5px;font-weight:600;transition:all 0.2s;white-space:nowrap;}
-.nav a:hover,.nav a.active{color:var(--primary);background:rgba(59,130,246,0.08);}
-.container{max-width:1060px;margin:0 auto;padding:78px 24px 60px;}
-.hero{text-align:center;padding:40px 0 30px;}
-.hero h1{font-size:40px;font-weight:800;line-height:1.3;background:linear-gradient(135deg,var(--primary),var(--secondary),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;}
-.hero .subtitle{font-size:17px;color:var(--dim);margin-bottom:16px;}
-.hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
-.hero .meta span{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:5px 16px;font-size:13px;font-weight:600;color:var(--dim);box-shadow:0 1px 4px rgba(0,0,0,0.04);}
-.section{margin:44px 0;}
-.section-title{font-size:24px;font-weight:800;margin-bottom:18px;padding-left:16px;border-left:4px solid transparent;border-image:linear-gradient(to bottom,var(--primary),var(--secondary)) 1;}
-.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px 26px;margin-bottom:18px;box-shadow:0 2px 12px rgba(0,0,0,0.04);transition:transform 0.2s,box-shadow 0.2s;}
-.card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(59,130,246,0.08);}
-.card h3{font-size:18px;font-weight:700;margin-bottom:10px;}
-.card p,.card li{font-size:15.5px;line-height:1.85;color:var(--dim);}
-.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;}
-.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;}
-.obj-card{text-align:center;padding:26px 18px;border-top:3px solid transparent;}
-.obj-card:nth-child(1){border-top-color:var(--primary);}
-.obj-card:nth-child(2){border-top-color:var(--secondary);}
-.obj-card:nth-child(3){border-top-color:var(--accent);}
-.obj-card .icon{font-size:36px;margin-bottom:10px;}
-.obj-card h4{font-size:16px;font-weight:700;margin-bottom:6px;}
-.obj-card p{font-size:14px;color:var(--dim);}
-.highlight{color:var(--primary);font-weight:700;}
-.quiz-option{display:block;padding:14px 18px;margin:8px 0;border-radius:12px;background:var(--bg);border:2px solid var(--border);cursor:pointer;transition:all 0.25s;font-size:15px;font-weight:600;color:var(--text);}
-.quiz-option:hover{background:rgba(59,130,246,0.05);border-color:var(--primary);transform:translateX(3px);}
-.quiz-option.correct{background:rgba(34,197,94,0.1);border-color:var(--success);color:#15803d;}
-.quiz-option.wrong{background:rgba(239,68,68,0.08);border-color:var(--danger);color:#b91c1c;}
-.quiz-feedback{padding:12px 16px;border-radius:10px;margin-top:10px;font-size:14.5px;display:none;}
-.quiz-feedback.show{display:block;animation:slideUp 0.3s ease;}
-@keyframes slideUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-.insight-box{background:linear-gradient(135deg,rgba(6,182,212,0.06),rgba(59,130,246,0.06));border-left:4px solid var(--secondary);padding:18px 22px;border-radius:0 12px 12px 0;margin:16px 0;}
-.insight-box h4{color:var(--secondary);font-size:16px;font-weight:700;margin-bottom:8px;}
-.insight-box p{color:var(--text);font-size:15px;}
-.thermo-visual{display:flex;justify-content:center;align-items:flex-end;gap:30px;padding:24px;background:linear-gradient(135deg,#e0f2fe,#dbeafe);border-radius:14px;margin:16px 0;}
-.thermo-item{text-align:center;}
-.thermo-tube{width:20px;border-radius:4px 4px 0 0;margin:0 auto 8px;background:linear-gradient(to top,#ef4444,#fbbf24);}
-.thermo-label{font-size:13px;font-weight:700;color:var(--text);}
-.thermo-temp{font-size:12px;color:var(--dim);}
-.scale-box{background:#f1f5f9;border-radius:12px;padding:16px;margin:12px 0;font-family:monospace;font-size:14px;}
-footer{text-align:center;padding:36px 0;color:var(--dimmer);font-size:13px;border-top:1px solid var(--border);margin-top:50px;}
-/* Audio Bar */
-.audio-bar{position:fixed;bottom:0;left:0;right:0;z-index:500;background:rgba(59,130,246,0.95);backdrop-filter:blur(12px);border-top:2px solid rgba(255,255,255,0.3);padding:10px 24px;display:flex;align-items:center;gap:14px;}
-.audio-bar .ab-btn{width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;background:#fff;color:#3b82f6;font-size:16px;display:flex;align-items:center;justify-content:center;}
-.audio-bar .ab-info{flex:1;min-width:0;}
-.audio-bar .ab-title{font-size:13px;font-weight:700;color:#fff;}
-.audio-bar .ab-progress-wrap{height:4px;background:rgba(255,255,255,0.3);border-radius:2px;margin-top:4px;cursor:pointer;}
-.audio-bar .ab-progress{height:100%;background:#fff;border-radius:2px;width:0%;}
-.audio-bar .ab-time{font-size:11px;color:rgba(255,255,255,0.8);margin-top:2px;}
-.audio-bar .ab-vol{width:60px;accent-color:#fff;}
-@media(max-width:600px){.hero h1{font-size:28px;}.nav{height:52px;}.section-title{font-size:21px;}.card{padding:18px;}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+header{background:linear-gradient(135deg,#c2410c 0%,#f97316 50%,#fbbf24 100%);color:#fff;padding:2rem;text-align:center;position:relative;overflow:hidden}
+header::after{content:'🌡️';position:absolute;right:2rem;top:50%;transform:translateY(-50%);font-size:4rem;opacity:.3}
+header h1{font-size:2.2rem;font-weight:800;text-shadow:0 2px 8px rgba(0,0,0,.3)}
+header p{font-size:1rem;opacity:.9;margin-top:.5rem}
+.badge{display:inline-block;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);border-radius:20px;padding:.2rem .8rem;font-size:.8rem;margin-top:.5rem}
+nav{background:#fff;border-bottom:2px solid var(--border);position:sticky;top:0;z-index:100;display:flex;justify-content:center;gap:.5rem;padding:.6rem 1rem;flex-wrap:wrap;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+nav a{text-decoration:none;color:var(--text2);padding:.4rem .9rem;border-radius:20px;font-size:.85rem;font-weight:500;transition:all .2s}
+nav a:hover,nav a.active{background:var(--warm);color:#fff}
+main{max-width:1100px;margin:0 auto;padding:2rem 1rem}
+section{margin-bottom:3rem}
+.section-title{font-size:1.5rem;font-weight:700;color:var(--text);margin-bottom:1.2rem;display:flex;align-items:center;gap:.5rem}
+.card{background:var(--card);border-radius:16px;padding:1.5rem;box-shadow:var(--shadow);border:1px solid var(--border)}
+
+/* ===== LIFE SCENE ===== */
+#life-scene{background:linear-gradient(135deg,#1e3a5f 0%,#0f172a 100%);border-radius:16px;padding:1.5rem;min-height:380px;overflow:hidden;position:relative}
+.scene-tabs{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap}
+.scene-tab{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:.4rem 1rem;border-radius:20px;cursor:pointer;font-size:.85rem;transition:all .2s}
+.scene-tab.active{background:var(--warm);border-color:var(--warm)}
+.scene-canvas{position:relative;width:100%;height:290px;border-radius:12px;overflow:hidden}
+
+/* ===== INTERACTIVE LAB ===== */
+#interactive-lab{padding:1.5rem}
+.temp-display{text-align:center;margin-bottom:1.5rem}
+.temp-big{font-size:3.5rem;font-weight:800;background:linear-gradient(135deg,var(--danger),var(--warm));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;transition:all .3s}
+.temp-unit-btns{display:flex;gap:.5rem;justify-content:center;margin-top:.5rem}
+.unit-btn{padding:.35rem .9rem;border-radius:20px;border:2px solid var(--border);background:#fff;cursor:pointer;font-weight:600;font-size:.9rem;transition:all .2s}
+.unit-btn.active{background:var(--warm);border-color:var(--warm);color:#fff}
+.lab-controls{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+@media(max-width:640px){.lab-controls{grid-template-columns:1fr}}
+.control-group{background:#f8fafc;border-radius:12px;padding:1rem;border:1px solid var(--border)}
+.control-group label{display:block;font-weight:600;font-size:.9rem;color:var(--text);margin-bottom:.5rem}
+.slider-row{display:flex;align-items:center;gap:.8rem}
+.slider-row input[type=range]{flex:1;accent-color:var(--warm)}
+.slider-val{min-width:55px;text-align:center;background:var(--warm);color:#fff;border-radius:8px;padding:.2rem .5rem;font-size:.85rem;font-weight:600}
+.thermometer-lab{display:flex;gap:2rem;align-items:flex-start;flex-wrap:wrap}
+.thermo-svg-wrap{flex:0 0 140px;background:#0f172a;border-radius:12px;padding:1rem;display:flex;justify-content:center}
+.thermo-info{flex:1;min-width:200px}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:1rem}
+.info-card{background:#f8fafc;border-radius:10px;padding:.8rem;text-align:center;border:1px solid var(--border)}
+.info-card .val{font-size:1.3rem;font-weight:700;color:var(--warm)}
+.info-card .lbl{font-size:.75rem;color:var(--text2)}
+.formula-box{background:linear-gradient(135deg,#fff7ed,#ffedd5);border:1px solid #fed7aa;border-radius:12px;padding:1rem}
+.formula-box h4{color:var(--warm);font-size:.9rem;margin-bottom:.5rem}
+.formula-box p{font-size:.875rem;color:#7c2d12}
+.season-btns{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap}
+.season-btn{padding:.4rem .9rem;border-radius:20px;border:2px solid var(--border);background:#fff;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s}
+.season-btn:hover{border-color:var(--warm)}
+.season-btn.active{background:var(--warn);border-color:var(--warm);color:var(--warm)}
+
+/* ===== SVG DEMO ===== */
+.thermo-types-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem}
+.thermo-type-card{background:var(--card);border-radius:12px;padding:1.2rem;border-top:4px solid var(--warm);box-shadow:var(--shadow);text-align:center}
+.thermo-type-card h3{font-size:.95rem;font-weight:700;margin-bottom:.5rem}
+.thermo-type-card p{font-size:.82rem;color:var(--text2);line-height:1.4}
+
+/* ===== KNOWLEDGE GRAPH ===== */
+#knowledge-graph{min-height:450px;background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:16px}
+#kg-svg{width:100%;height:440px}
+.kg-legend{display:flex;gap:1rem;justify-content:center;padding:.8rem;flex-wrap:wrap}
+.kg-legend-item{display:flex;align-items:center;gap:.4rem;color:#94a3b8;font-size:.8rem}
+.kg-dot{width:12px;height:12px;border-radius:50%}
+
+/* ===== CONCEPTS ===== */
+.concept-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem}
+.concept-card{background:var(--card);border-radius:12px;padding:1.2rem;border-left:4px solid var(--warm);box-shadow:var(--shadow)}
+.concept-card h3{font-size:1rem;font-weight:700;margin-bottom:.5rem}
+.concept-card p{font-size:.85rem;color:var(--text2);line-height:1.5}
+.concept-tag{display:inline-block;background:#fff7ed;color:#c2410c;border-radius:6px;padding:.15rem .5rem;font-size:.75rem;margin-top:.5rem;font-weight:600}
+
+/* ===== QUIZ ===== */
+.quiz-section{background:var(--card);border-radius:16px;padding:1.5rem;box-shadow:var(--shadow)}
+.quiz-q{margin-bottom:1.2rem;padding:1rem;border-radius:12px;background:#f8fafc;border:1px solid var(--border)}
+.quiz-q p{font-weight:600;margin-bottom:.7rem}
+.quiz-options{display:flex;flex-direction:column;gap:.4rem}
+.quiz-opt{background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:.5rem .8rem;cursor:pointer;font-size:.875rem;transition:all .2s}
+.quiz-opt:hover{border-color:var(--warm);background:#fff7ed}
+.quiz-opt.correct{border-color:var(--success);background:#d1fae5;color:#065f46}
+.quiz-opt.wrong{border-color:var(--danger);background:#fee2e2;color:#991b1b}
+.quiz-explain{margin-top:.6rem;font-size:.83rem;color:var(--text2);background:#f0fdf4;padding:.6rem;border-radius:8px;display:none}
+.quiz-btn{background:var(--warm);color:#fff;border:none;border-radius:10px;padding:.7rem 2rem;font-size:1rem;font-weight:600;cursor:pointer;margin-top:1rem}
+.score-box{background:linear-gradient(135deg,var(--warm),var(--accent));color:#fff;border-radius:12px;padding:1.2rem;text-align:center;display:none;margin-top:1rem}
+.score-box h3{font-size:1.5rem;font-weight:800}
+.tip-box{background:linear-gradient(135deg,#fff7ed,#ffedd5);border:1px solid #fed7aa;border-radius:12px;padding:1rem;margin-top:1rem}
+.tip-box p{font-size:.875rem;color:#7c2d12}
+footer{text-align:center;padding:2rem;color:var(--text2);font-size:.85rem;border-top:1px solid var(--border);margin-top:2rem}
+@keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+section{animation:fadeIn .5s ease both}
 </style>
 </head>
 <body>
-<nav class="nav">
-  <span class="nav-brand">🎓 教我学 TeachAny</span>
-  <a href="#hero">首页</a>
-  <a href="#goals">目标</a>
-  <a href="#module-1">模块1</a>
-  <a href="#module-2">模块2</a>
-  <a href="#module-3">模块3</a>
-  <a href="#deep-understanding">深入</a>
-  <a href="#summary">总结</a>
+
+<header>
+  <h1>🌡️ 温度与温度计</h1>
+  <p>探索温度的本质与测量原理</p>
+  <span class="badge">初中物理 · 8年级 · 热学单元</span>
+</header>
+
+<nav>
+  <a href="#life-scene" class="active">🎬 生活场景</a>
+  <a href="#interactive-lab">🧪 实验台</a>
+  <a href="#concepts">📖 概念</a>
+  <a href="#thermo-types">🔧 温度计种类</a>
+  <a href="#knowledge-graph">🕸️ 知识图谱</a>
+  <a href="#quiz">✅ 练习</a>
 </nav>
 
-<div class="container">
-  <!-- Hero -->
-  <section class="hero" id="hero">
-    <h1>🌡️ 温度与温度计</h1>
-    <p class="subtitle">用数字描述冷热——温度的本质与测量方法</p>
-    <div class="meta">
-      <span>⚗️ 初中物理</span>
-      <span>🎓 8年级上</span>
-      <span>⏱️ 约35分钟</span>
-      <span>🎯 新授课</span>
-    </div>
-  </section>
+<main>
 
-  <!-- 学习目标 -->
-  <section class="section" id="goals">
-    <h2 class="section-title">🎯 学习目标</h2>
-    <div class="grid-3">
-      <div class="card obj-card">
-        <div class="icon">📌</div>
-        <h4>描述温度</h4>
-        <p>能说出摄氏温度规定的两个基准点，并读写温度符号</p>
-      </div>
-      <div class="card obj-card">
-        <div class="icon">🔍</div>
-        <h4>解释原理</h4>
-        <p>能用热胀冷缩原理解释温度计测量温度的工作机制</p>
-      </div>
-      <div class="card obj-card">
-        <div class="icon">🚀</div>
-        <h4>正确使用</h4>
-        <p>能按规范步骤使用温度计，并避免3种常见操作错误</p>
-      </div>
+<!-- ===== LIFE SCENE ===== -->
+<section id="life-scene-section">
+  <div class="section-title"><span>🎬</span> 生活场景动画</div>
+  <div id="life-scene">
+    <div class="scene-tabs">
+      <button class="scene-tab active" onclick="switchScene('seasons',this)">🌤️ 季节温度变化</button>
+      <button class="scene-tab" onclick="switchScene('expansion',this)">🔬 热胀冷缩原理</button>
     </div>
-  </section>
-
-  <!-- 模块1: 温度的概念 -->
-  <section class="section" id="module-1">
-    <h2 class="section-title">📖 模块一：温度是什么？</h2>
-    <div class="card">
-      <h3>🌉 为什么要学温度？</h3>
-      <p><span class="highlight">你知道…</span> 夏天热、冬天冷，我们用"热"和"冷"描述感受。</p>
-      <p><span class="highlight">但问题来了…</span> "热"和"冷"只是主观感受，同一杯水，感冒的人摸着觉得烫，健康的人摸着觉得不烫——感觉不可靠！</p>
-      <p><span class="highlight">所以我们需要…</span> 一种客观、可量化的方式来描述物体的冷热程度——这就是<strong>温度</strong>。</p>
-    </div>
-    <div class="card">
-      <h3>💡 温度的定义</h3>
-      <p><strong>温度</strong>是表示物体<span class="highlight">冷热程度</span>的物理量。温度越高，物体越热；温度越低，物体越冷。</p>
-      <p style="margin-top:10px;">日常用<strong>摄氏温度（°C）</strong>，由瑞典科学家摄尔修斯制定：</p>
-      <ul style="margin:10px 0 0 20px;">
-        <li><strong>0°C</strong>：标准大气压下，冰水混合物的温度</li>
-        <li><strong>100°C</strong>：标准大气压下，沸水的温度</li>
-        <li>两点之间等分100份，每份为<strong>1摄氏度（1°C）</strong></li>
-      </ul>
-      <div class="thermo-visual">
-        <div class="thermo-item">
-          <div class="thermo-tube" style="height:20px;background:#60a5fa;"></div>
-          <div class="thermo-label">-10°C</div>
-          <div class="thermo-temp">冬天室外</div>
-        </div>
-        <div class="thermo-item">
-          <div class="thermo-tube" style="height:40px;"></div>
-          <div class="thermo-label">0°C</div>
-          <div class="thermo-temp">冰点</div>
-        </div>
-        <div class="thermo-item">
-          <div class="thermo-tube" style="height:70px;"></div>
-          <div class="thermo-label">37°C</div>
-          <div class="thermo-temp">体温</div>
-        </div>
-        <div class="thermo-item">
-          <div class="thermo-tube" style="height:100px;"></div>
-          <div class="thermo-label">100°C</div>
-          <div class="thermo-temp">沸点</div>
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <h3>✏️ 即时练习</h3>
-      <p>人体正常体温约为37°C，零下15摄氏度写作：</p>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m1q1')">A. -15°F</div>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'m1q1')">B. -15°C</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m1q1')">C. 15°C以下</div>
-      <div id="m1q1" class="quiz-feedback"></div>
-    </div>
-  </section>
-
-  <!-- 模块2: 温度计原理 -->
-  <section class="section" id="module-2">
-    <h2 class="section-title">📖 模块二：温度计的工作原理</h2>
-    <div class="card">
-      <h3>💡 热胀冷缩——温度计的核心原理</h3>
-      <p>大多数物质具有<strong>热胀冷缩</strong>的性质：温度升高时体积膨胀，温度降低时体积收缩。</p>
-      <p style="margin-top:10px;">常用液体温度计利用<span class="highlight">液柱高度变化</span>来显示温度：</p>
-      <ul style="margin:10px 0 0 20px;">
-        <li><strong>酒精温度计</strong>：测量范围 -80°C ~ 78°C（适合低温）</li>
-        <li><strong>水银温度计</strong>：测量范围 -38.8°C ~ 357°C（精度高）</li>
-        <li><strong>体温计</strong>：有细管"缩口"，离体后示数不变，需甩</li>
-      </ul>
-    </div>
-    <div class="insight-box">
-      <h4>🔍 深层理解：拆开温度计</h4>
-      <p>温度计由<strong>玻璃泡（感温部分）</strong>、<strong>细管（放大变化）</strong>、<strong>刻度（读数）</strong>组成。细管越细，同样的液体体积变化显示的液柱变化越大，读数越精确——这是精度设计的关键。</p>
-    </div>
-    <div class="card">
-      <h3>✏️ 温度计使用规范</h3>
-      <p>正确使用温度计要做到"三要三不要"：</p>
-      <ul style="margin:10px 0 0 20px;">
-        <li>✅ 要将玻璃泡<strong>完全浸入</strong>被测液体</li>
-        <li>✅ 要等液柱<strong>稳定后</strong>再读数</li>
-        <li>✅ 要<strong>平视</strong>刻度线（眼睛与液面齐平）</li>
-        <li>❌ 不要让玻璃泡接触容器底或壁</li>
-        <li>❌ 不要将温度计取出液体后再读数</li>
-        <li>❌ 不要超出量程使用</li>
-      </ul>
-    </div>
-    <div class="card">
-      <h3>✏️ 即时练习</h3>
-      <p>用温度计测水温时，下列操作正确的是：</p>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m2q1')">A. 将温度计取出水面后读数，更清楚</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m2q1')">B. 玻璃泡碰到容器底，使接触更充分</div>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'m2q1')">C. 温度计保持在水中，待液柱稳定后平视读数</div>
-      <div id="m2q1" class="quiz-feedback"></div>
-    </div>
-  </section>
-
-  <!-- 模块3: 温标 -->
-  <section class="section" id="module-3">
-    <h2 class="section-title">📖 模块三：热力学温标</h2>
-    <div class="card">
-      <h3>💡 绝对零度与开尔文温标</h3>
-      <p>科学上使用<strong>热力学温标（K）</strong>：理论最低温度称为<span class="highlight">绝对零度（0K）</span>，约为 -273.15°C。</p>
-      <p style="margin-top:10px;">换算关系：<strong>T（K）= t（°C）+ 273</strong></p>
-      <div class="scale-box">
-        <p>  0 K = -273°C   （绝对零度）</p>
-        <p>273 K =    0°C   （冰点）</p>
-        <p>310 K =   37°C   （人体体温）</p>
-        <p>373 K =  100°C   （水的沸点）</p>
-      </div>
-    </div>
-    <div class="card">
-      <h3>✏️ 即时练习</h3>
-      <p>铁的熔点约为1535°C，对应的热力学温度约为：</p>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m3q1')">A. 1262 K</div>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'m3q1')">B. 1808 K</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m3q1')">C. 1535 K</div>
-      <div id="m3q1" class="quiz-feedback"></div>
-    </div>
-  </section>
-
-  <!-- 深层理解 -->
-  <section class="section" id="deep-understanding">
-    <h2 class="section-title">🔬 深层理解</h2>
-    <div class="card">
-      <h3>🌍 生活中的温度</h3>
-      <div class="grid-2">
-        <div>
-          <h4 style="margin-bottom:8px;color:var(--primary);">🌡️ 常见温度参考值</h4>
-          <ul style="list-style:none;padding:0;">
-            <li>❄️ 液氮沸点：-196°C</li>
-            <li>🧊 冰的熔点：0°C</li>
-            <li>🌿 室温：约20~25°C</li>
-            <li>🧑 人体体温：37°C</li>
-            <li>☀️ 太阳表面：约6000°C</li>
-          </ul>
-        </div>
-        <div>
-          <h4 style="margin-bottom:8px;color:var(--secondary);">🔍 体温计的奥秘</h4>
-          <p style="font-size:14px;color:var(--dim);">体温计玻璃泡和细管之间有一段极细的<strong>缩口</strong>。测量时液体受热膨胀可通过缩口进入细管；取出后温度下降，液体收缩但无法通过缩口回流，所以读数保持不变。使用前需用力甩，将液柱甩回玻璃泡。</p>
+    <div class="scene-canvas">
+      <!-- Seasons Scene -->
+      <div id="scene-seasons" style="position:absolute;inset:0">
+        <svg id="seasons-svg" width="100%" height="290" viewBox="0 0 700 290" preserveAspectRatio="xMidYMid meet">
+          <!-- Sky background - changes with season -->
+          <rect id="sky-bg" x="0" y="0" width="700" height="290" fill="#87ceeb"/>
+          <!-- Ground -->
+          <rect id="ground" x="0" y="220" width="700" height="70" fill="#4ade80"/>
+          <!-- Sun/Snow clouds -->
+          <g id="weather-elements">
+            <!-- Sun -->
+            <circle id="sun" cx="580" cy="55" r="35" fill="#fbbf24" opacity="1">
+              <animate attributeName="r" values="32;38;32" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <g id="sun-rays">
+              <line x1="580" y1="10" x2="580" y2="0" stroke="#fbbf24" stroke-width="3"/>
+              <line x1="622" y1="18" x2="630" y2="10" stroke="#fbbf24" stroke-width="3"/>
+              <line x1="640" y1="55" x2="655" y2="55" stroke="#fbbf24" stroke-width="3"/>
+              <line x1="622" y1="92" x2="630" y2="100" stroke="#fbbf24" stroke-width="3"/>
+              <line x1="538" y1="18" x2="530" y2="10" stroke="#fbbf24" stroke-width="3"/>
+              <line x1="520" y1="55" x2="505" y2="55" stroke="#fbbf24" stroke-width="3"/>
+            </g>
+          </g>
+          <!-- Tree -->
+          <rect x="120" y="150" width="14" height="70" fill="#7c5028"/>
+          <ellipse id="tree-top" cx="127" cy="140" rx="40" ry="50" fill="#16a34a"/>
+          <!-- House -->
+          <rect x="300" y="150" width="100" height="70" fill="#f5f0e8" stroke="#d4c5a9" stroke-width="2"/>
+          <polygon points="300,150 400,150 350,110" fill="#dc2626"/>
+          <rect x="340" y="185" width="20" height="35" fill="#92400e"/>
+          <rect x="315" y="160" width="25" height="20" rx="2" fill="#bfdbfe"/>
+          <rect x="360" y="160" width="25" height="20" rx="2" fill="#bfdbfe"/>
+          <!-- Thermometer in scene -->
+          <g id="scene-thermo" transform="translate(30,40)">
+            <rect x="0" y="0" width="22" height="160" rx="11" fill="#e5e7eb" stroke="#94a3b8" stroke-width="2"/>
+            <rect x="5" y="0" width="12" height="160" rx="6" fill="#f3f4f6"/>
+            <!-- Liquid column - animated -->
+            <rect id="liquid-col" x="7" y="80" width="8" height="80" rx="4" fill="#ef4444">
+              <animate attributeName="y" values="80;30;80" dur="6s" repeatCount="indefinite" id="liquid-anim"/>
+              <animate attributeName="height" values="80;130;80" dur="6s" repeatCount="indefinite"/>
+            </rect>
+            <circle cx="11" cy="152" r="10" fill="#ef4444"/>
+            <!-- Scale marks -->
+            <line x1="0" y1="30" x2="10" y2="30" stroke="#94a3b8" stroke-width="1.5"/>
+            <text x="25" y="34" fill="#94a3b8" font-size="11">40°</text>
+            <line x1="0" y1="55" x2="10" y2="55" stroke="#94a3b8" stroke-width="1.5"/>
+            <text x="25" y="59" fill="#94a3b8" font-size="11">30°</text>
+            <line x1="0" y1="80" x2="10" y2="80" stroke="#94a3b8" stroke-width="1.5"/>
+            <text x="25" y="84" fill="#94a3b8" font-size="11">20°</text>
+            <line x1="0" y1="105" x2="10" y2="105" stroke="#94a3b8" stroke-width="1.5"/>
+            <text x="25" y="109" fill="#94a3b8" font-size="11">10°</text>
+            <line x1="0" y1="130" x2="10" y2="130" stroke="#94a3b8" stroke-width="1.5"/>
+            <text x="25" y="134" fill="#94a3b8" font-size="11">0°</text>
+          </g>
+          <!-- People -->
+          <g id="person" transform="translate(220,155)">
+            <circle cx="15" cy="0" r="12" fill="#fde68a" stroke="#d97706" stroke-width="1.5"/>
+            <rect id="person-body" x="5" y="12" width="20" height="30" rx="4" fill="#3b82f6"/>
+            <line x1="5" y1="20" x2="-8" y2="35" stroke="#fde68a" stroke-width="3" stroke-linecap="round"/>
+            <line x1="25" y1="20" x2="38" y2="35" stroke="#fde68a" stroke-width="3" stroke-linecap="round"/>
+            <line x1="10" y1="42" x2="8" y2="62" stroke="#374151" stroke-width="3" stroke-linecap="round"/>
+            <line x1="20" y1="42" x2="22" y2="62" stroke="#374151" stroke-width="3" stroke-linecap="round"/>
+          </g>
+          <!-- Season label -->
+          <text id="season-label" x="350" y="280" text-anchor="middle" fill="#1e293b" font-size="16" font-weight="bold">🌸 春季 20°C</text>
+        </svg>
+        <!-- Season buttons overlay -->
+        <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:.4rem">
+          <button onclick="setSeason('winter')" style="background:rgba(255,255,255,.9);border:2px solid #93c5fd;border-radius:12px;padding:.3rem .6rem;font-size:.78rem;cursor:pointer;font-weight:600">❄️ 冬</button>
+          <button onclick="setSeason('spring')" style="background:rgba(255,255,255,.9);border:2px solid #86efac;border-radius:12px;padding:.3rem .6rem;font-size:.78rem;cursor:pointer;font-weight:600">🌸 春</button>
+          <button onclick="setSeason('summer')" style="background:rgba(255,255,255,.9);border:2px solid #fca5a5;border-radius:12px;padding:.3rem .6rem;font-size:.78rem;cursor:pointer;font-weight:600">☀️ 夏</button>
+          <button onclick="setSeason('autumn')" style="background:rgba(255,255,255,.9);border:2px solid #fcd34d;border-radius:12px;padding:.3rem .6rem;font-size:.78rem;cursor:pointer;font-weight:600">🍂 秋</button>
         </div>
       </div>
-    </div>
-    <div class="insight-box">
-      <h4>💡 比较不同温度计</h4>
-      <p>酒精温度计：无毒，适合低温；水银温度计：精度高但有毒，需谨慎处理；电子温度计：数字显示，快速便捷，是未来趋势。选择哪种取决于测量目的和安全考量。</p>
-    </div>
-  </section>
 
-  <!-- 总结 -->
-  <section class="section" id="summary">
-    <h2 class="section-title">📊 课堂总结</h2>
-    <div class="card">
-      <h3>🗺️ 知识地图</h3>
-      <ul style="list-style:none;padding:0;">
-        <li>🌡️ <strong>温度</strong>：描述冷热程度的物理量</li>
-        <li>📏 <strong>摄氏温标</strong>：0°C（冰点）→ 100°C（沸点），等分100格</li>
-        <li>🔬 <strong>温度计原理</strong>：液体热胀冷缩，液柱高度显示温度</li>
-        <li>📐 <strong>使用规范</strong>：浸入、等稳、平视；不碰壁、不取出读数、不超量程</li>
-        <li>🔭 <strong>热力学温标</strong>：T(K) = t(°C) + 273，绝对零度 = -273°C</li>
-      </ul>
+      <!-- Thermal Expansion Scene -->
+      <div id="scene-expansion" style="position:absolute;inset:0;display:none">
+        <svg width="100%" height="290" viewBox="0 0 700 290">
+          <rect width="700" height="290" fill="#0f172a"/>
+          <!-- Title -->
+          <text x="350" y="30" text-anchor="middle" fill="#f59e0b" font-size="16" font-weight="bold">热胀冷缩：分子运动与体积变化</text>
+          <!-- Cold container -->
+          <g transform="translate(80,60)">
+            <rect width="200" height="160" rx="8" fill="rgba(147,197,253,0.15)" stroke="#3b82f6" stroke-width="2"/>
+            <text x="100" y="-8" text-anchor="middle" fill="#93c5fd" font-size="13" font-weight="bold">❄️ 低温</text>
+            <!-- Slow molecules -->
+            <circle cx="50" cy="50" r="8" fill="#60a5fa" opacity=".8"><animate attributeName="cx" values="50;55;50;45;50" dur="4s" repeatCount="indefinite"/><animate attributeName="cy" values="50;55;60;55;50" dur="4s" repeatCount="indefinite"/></circle>
+            <circle cx="100" cy="80" r="8" fill="#60a5fa" opacity=".8"><animate attributeName="cx" values="100;95;100;105;100" dur="5s" repeatCount="indefinite"/><animate attributeName="cy" values="80;85;80;75;80" dur="5s" repeatCount="indefinite"/></circle>
+            <circle cx="150" cy="50" r="8" fill="#60a5fa" opacity=".8"><animate attributeName="cx" values="150;145;150;155;150" dur="3.5s" repeatCount="indefinite"/><animate attributeName="cy" values="50;60;55;50;50" dur="3.5s" repeatCount="indefinite"/></circle>
+            <circle cx="60" cy="120" r="8" fill="#60a5fa" opacity=".8"><animate attributeName="cx" values="60;65;60;55;60" dur="4.5s" repeatCount="indefinite"/></circle>
+            <circle cx="130" cy="110" r="8" fill="#60a5fa" opacity=".8"><animate attributeName="cx" values="130;125;130;135;130" dur="3s" repeatCount="indefinite"/></circle>
+            <circle cx="80" cy="140" r="8" fill="#60a5fa" opacity=".8"><animate attributeName="cx" values="80;85;80" dur="6s" repeatCount="indefinite"/></circle>
+            <text x="100" y="178" text-anchor="middle" fill="#93c5fd" font-size="11">分子振动缓慢，间距小</text>
+          </g>
+          <!-- Hot container -->
+          <g transform="translate(420,40)">
+            <rect width="220" height="200" rx="8" fill="rgba(252,165,165,0.15)" stroke="#ef4444" stroke-width="2"/>
+            <text x="110" y="-8" text-anchor="middle" fill="#fca5a5" font-size="13" font-weight="bold">🔥 高温</text>
+            <!-- Fast molecules -->
+            <circle cx="55" cy="55" r="10" fill="#f87171" opacity=".9"><animate attributeName="cx" values="55;100;140;90;55" dur="1.5s" repeatCount="indefinite"/><animate attributeName="cy" values="55;100;60;150;55" dur="1.5s" repeatCount="indefinite"/></circle>
+            <circle cx="110" cy="100" r="10" fill="#f87171" opacity=".9"><animate attributeName="cx" values="110;50;170;110" dur="2s" repeatCount="indefinite"/><animate attributeName="cy" values="100;150;50;100" dur="2s" repeatCount="indefinite"/></circle>
+            <circle cx="165" cy="55" r="10" fill="#f87171" opacity=".9"><animate attributeName="cx" values="165;100;50;165" dur="1.8s" repeatCount="indefinite"/><animate attributeName="cy" values="55;160;80;55" dur="1.8s" repeatCount="indefinite"/></circle>
+            <circle cx="70" cy="150" r="10" fill="#f87171" opacity=".9"><animate attributeName="cx" values="70;160;110;70" dur="1.3s" repeatCount="indefinite"/><animate attributeName="cy" values="150;50;130;150" dur="1.3s" repeatCount="indefinite"/></circle>
+            <circle cx="140" cy="160" r="10" fill="#f87171" opacity=".9"><animate attributeName="cx" values="140;60;180;140" dur="1.6s" repeatCount="indefinite"/><animate attributeName="cy" values="160;100;40;160" dur="1.6s" repeatCount="indefinite"/></circle>
+            <text x="110" y="218" text-anchor="middle" fill="#fca5a5" font-size="11">分子运动剧烈，间距大，体积膨胀</text>
+          </g>
+          <!-- Arrow connecting them -->
+          <text x="350" y="145" text-anchor="middle" fill="#f59e0b" font-size="24">→</text>
+          <text x="350" y="165" text-anchor="middle" fill="#94a3b8" font-size="11">加热</text>
+          <text x="350" y="200" text-anchor="middle" fill="#f59e0b" font-size="20">←</text>
+          <text x="350" y="220" text-anchor="middle" fill="#94a3b8" font-size="11">冷却</text>
+        </svg>
+      </div>
     </div>
-    <div class="card">
-      <h3>🎯 后测</h3>
-      <p>用水银温度计测量一杯热水，示数为62°C。若改用酒精温度计（量程-80°C~78°C）测量同一杯水，下列说法正确的是：</p>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'postq1')">A. 酒精温度计示数也是62°C，两者无差别</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'postq1')">B. 酒精温度计示数更高，因为酒精比水银更灵敏</div>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'postq1')">C. 不能用该酒精温度计测量，因62°C超出其量程（最高78°C接近但需确认，实际62°C在量程内——但若热水更热超过78°C则无法使用）</div>
-      <div id="postq1" class="quiz-feedback"></div>
-    </div>
-  </section>
-
-  <footer>
-    <p>Made with <strong>教我学 TeachAny</strong> · <a href="https://github.com/weponusa/teachany" style="color:var(--primary);">GitHub</a></p>
-    <p style="margin-top:8px;">Built on ABT Narrative · Bloom's Taxonomy · Scaffolding · Cognitive Load Theory</p>
-  </footer>
-</div>
-
-<!-- Audio Bar -->
-<div class="audio-bar" id="audioBar">
-  <button class="ab-btn" id="abPrev" title="上一段">⏮</button>
-  <button class="ab-btn" id="abPlay" title="播放">▶</button>
-  <button class="ab-btn" id="abNext" title="下一段">⏭</button>
-  <div class="ab-info">
-    <div class="ab-title" id="abTitle">🎵 课程讲解音频</div>
-    <div class="ab-progress-wrap" id="abProgressWrap">
-      <div class="ab-progress" id="abProgress"></div>
-    </div>
-    <div class="ab-time" id="abTime">0:00 / 0:00</div>
   </div>
-  <input class="ab-vol" type="range" id="abVol" min="0" max="1" step="0.05" value="0.8" title="音量">
-</div>
+</section>
+
+<!-- ===== INTERACTIVE LAB ===== -->
+<section id="interactive-lab-wrap">
+  <div class="section-title"><span>🧪</span> 互动实验台 — 温度计</div>
+  <div id="interactive-lab" class="card">
+    <div class="temp-display">
+      <div class="temp-big" id="temp-display">25°C</div>
+      <div class="temp-unit-btns">
+        <button class="unit-btn active" id="btn-celsius" onclick="setUnit('C')">摄氏度 °C</button>
+        <button class="unit-btn" id="btn-fahrenheit" onclick="setUnit('F')">华氏度 °F</button>
+        <button class="unit-btn" id="btn-kelvin" onclick="setUnit('K')">开尔文 K</button>
+      </div>
+    </div>
+    <div class="lab-controls">
+      <div class="control-group">
+        <label>🌡️ 温度调节（摄氏度）：<span id="lbl-temp">25</span>°C</label>
+        <div class="slider-row">
+          <span style="font-size:.75rem;color:var(--text2)">-30°</span>
+          <input type="range" id="sl-temp" min="-30" max="110" value="25" oninput="updateThermo()">
+          <span style="font-size:.75rem;color:var(--text2)">110°</span>
+          <span class="slider-val" id="sv-temp">25°C</span>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>⚡ 换算结果</label>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.3rem">
+          <div style="background:#fff;border-radius:8px;padding:.4rem .8rem;border:1px solid #fde68a;text-align:center;flex:1">
+            <div style="font-size:1.1rem;font-weight:700;color:#ef4444" id="fahrenheit-val">77°F</div>
+            <div style="font-size:.75rem;color:var(--text2)">华氏度</div>
+          </div>
+          <div style="background:#fff;border-radius:8px;padding:.4rem .8rem;border:1px solid #bfdbfe;text-align:center;flex:1">
+            <div style="font-size:1.1rem;font-weight:700;color:#3b82f6" id="kelvin-val">298K</div>
+            <div style="font-size:.75rem;color:var(--text2)">开尔文</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="thermometer-lab">
+      <div class="thermo-svg-wrap">
+        <svg id="thermo-svg" viewBox="0 0 80 320" width="80" height="320">
+          <!-- Thermometer body -->
+          <rect x="25" y="10" width="30" height="260" rx="15" fill="#e5e7eb" stroke="#94a3b8" stroke-width="2"/>
+          <rect x="30" y="10" width="20" height="260" rx="10" fill="#f9fafb"/>
+          <!-- Liquid tube -->
+          <rect x="35" y="20" width="10" height="245" rx="5" fill="#f3f4f6"/>
+          <!-- Liquid column - dynamic -->
+          <rect id="lab-liquid" x="37" y="150" width="6" height="115" rx="3" fill="#ef4444" style="transition:all 0.5s ease"/>
+          <!-- Bulb -->
+          <circle cx="40" cy="285" r="18" fill="#ef4444"/>
+          <circle cx="40" cy="285" r="12" fill="#dc2626"/>
+          <!-- Scale marks -->
+          <line x1="25" y1="25" x2="35" y2="25" stroke="#6b7280" stroke-width="1.5"/>
+          <text x="56" y="29" fill="#6b7280" font-size="10">100</text>
+          <line x1="25" y1="50" x2="35" y2="50" stroke="#6b7280" stroke-width="1.5"/>
+          <text x="60" y="54" fill="#6b7280" font-size="10">80</text>
+          <line x1="25" y1="75" x2="35" y2="75" stroke="#6b7280" stroke-width="1.5"/>
+          <text x="60" y="79" fill="#6b7280" font-size="10">60</text>
+          <line x1="25" y1="100" x2="35" y2="100" stroke="#6b7280" stroke-width="1.5"/>
+          <text x="60" y="104" fill="#6b7280" font-size="10">40</text>
+          <line x1="25" y1="125" x2="35" y2="125" stroke="#6b7280" stroke-width="1.5"/>
+          <text x="60" y="129" fill="#6b7280" font-size="10">20</text>
+          <line x1="25" y1="150" x2="35" y2="150" stroke="#6b7280" stroke-width="1.5"/>
+          <text x="60" y="154" fill="#6b7280" font-size="10">0</text>
+          <line x1="25" y1="175" x2="35" y2="175" stroke="#6b7280" stroke-width="1.5"/>
+          <text x="55" y="179" fill="#6b7280" font-size="10">-20</text>
+          <line x1="25" y1="200" x2="35" y2="200" stroke="#6b7280" stroke-width="1.5"/>
+          <text x="55" y="204" fill="#6b7280" font-size="10">-40</text>
+          <!-- Pointer arrow -->
+          <polygon id="thermo-pointer" points="20,150 12,147 12,153" fill="#f59e0b"/>
+          <!-- Reading line -->
+          <line id="read-line" x1="12" y1="150" x2="56" y2="150" stroke="#f59e0b" stroke-width="1" stroke-dasharray="3 2" opacity="0.7"/>
+        </svg>
+      </div>
+      <div class="thermo-info">
+        <div class="info-grid">
+          <div class="info-card"><div class="val" id="info-celsius">25</div><div class="lbl">摄氏温度 (°C)</div></div>
+          <div class="info-card"><div class="val" id="info-fahrenheit">77</div><div class="lbl">华氏温度 (°F)</div></div>
+          <div class="info-card"><div class="val" id="info-kelvin">298</div><div class="lbl">热力学温度 (K)</div></div>
+          <div class="info-card"><div class="val" id="info-state">液态</div><div class="lbl">水的状态</div></div>
+        </div>
+        <div class="formula-box">
+          <h4>📐 温度换算公式</h4>
+          <p>• °F = 9/5 × °C + 32</p>
+          <p>• K = °C + 273.15</p>
+          <p>• °C = (°F − 32) × 5/9</p>
+          <p style="margin-top:.4rem;color:#d97706"><strong>关键值：</strong>水沸点 100°C = 212°F = 373K；水冰点 0°C = 32°F = 273K</p>
+        </div>
+      </div>
+    </div>
+    <div class="tip-box">
+      <p><strong>💡 温度计原理：</strong>基于液体（酒精或水银）<strong>热胀冷缩</strong>的性质。温度升高时，液柱膨胀上升；温度降低时，液柱收缩下降。读数时视线应与液柱顶端<strong>水平</strong>。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CONCEPTS ===== -->
+<section id="concepts">
+  <div class="section-title"><span>📖</span> 核心概念</div>
+  <div class="concept-grid">
+    <div class="concept-card">
+      <h3>🌡️ 温度</h3>
+      <p>表示物体冷热程度的物理量。从微观角度看，温度是<strong>分子平均动能</strong>的标志，温度越高，分子运动越剧烈。</p>
+      <span class="concept-tag">核心概念</span>
+    </div>
+    <div class="concept-card">
+      <h3>📏 摄氏温标</h3>
+      <p>以标准大气压下水的冰点（0°C）和沸点（100°C）为基准，分为100等份，每份为1摄氏度（°C）。</p>
+      <span class="concept-tag">温度单位</span>
+    </div>
+    <div class="concept-card">
+      <h3>🔬 热胀冷缩</h3>
+      <p>绝大多数物质在温度升高时体积增大、温度降低时体积减小的性质。水在4°C时密度最大，是例外。</p>
+      <span class="concept-tag">物理规律</span>
+    </div>
+    <div class="concept-card">
+      <h3>⚗️ 液体温度计</h3>
+      <p>利用液体热胀冷缩原理制成。<strong>酒精温度计</strong>：测量范围-80°C～75°C；<strong>水银温度计</strong>：-38.8°C～356.7°C。</p>
+      <span class="concept-tag">测量工具</span>
+    </div>
+    <div class="concept-card">
+      <h3>📖 正确使用方法</h3>
+      <p>①测体温时，先甩动体温计；②温度计不能离开被测物读数；③视线与液柱顶端<strong>水平</strong>（仰视偏低，俯视偏高）。</p>
+      <span class="concept-tag">实验技能</span>
+    </div>
+    <div class="concept-card">
+      <h3>❄️ 绝对零度</h3>
+      <p>热力学温标中的最低温度：0K = -273.15°C，理论上分子停止热运动的温度。实际上无法达到绝对零度。</p>
+      <span class="concept-tag">极限概念</span>
+    </div>
+  </div>
+</section>
+
+<!-- ===== THERMOMETER TYPES ===== -->
+<section id="thermo-types">
+  <div class="section-title"><span>🔧</span> 常见温度计种类</div>
+  <div class="thermo-types-grid">
+    <div class="thermo-type-card">
+      <div style="font-size:2.5rem;margin-bottom:.5rem">💊</div>
+      <h3>体温计</h3>
+      <p>测量范围：35~42°C<br>精度：0.1°C<br>有细颈，防止液体倒流，离开人体仍可读数</p>
+    </div>
+    <div class="thermo-type-card" style="border-top-color:var(--primary)">
+      <div style="font-size:2.5rem;margin-bottom:.5rem">🧪</div>
+      <h3>实验温度计</h3>
+      <p>测量范围：-20~100°C<br>精度：1°C<br>不能离开被测物读数，用于实验</p>
+    </div>
+    <div class="thermo-type-card" style="border-top-color:var(--secondary)">
+      <div style="font-size:2.5rem;margin-bottom:.5rem">🌡️</div>
+      <h3>寒暑表</h3>
+      <p>测量范围：-30~50°C<br>精度：1°C<br>使用酒精，测室温，挂在阴凉通风处</p>
+    </div>
+    <div class="thermo-type-card" style="border-top-color:var(--success)">
+      <div style="font-size:2.5rem;margin-bottom:.5rem">🏭</div>
+      <h3>工业温度计</h3>
+      <p>测量范围：依型号不同<br>包括热电偶、热电阻等多种类型</p>
+    </div>
+    <div class="thermo-type-card" style="border-top-color:#8b5cf6">
+      <div style="font-size:2.5rem;margin-bottom:.5rem">📡</div>
+      <h3>红外温度计</h3>
+      <p>非接触测量，快速便捷，通过测量物体辐射的红外线强度计算温度</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== KNOWLEDGE GRAPH ===== -->
+<section>
+  <div class="section-title"><span>🕸️</span> 知识图谱</div>
+  <div id="knowledge-graph">
+    <svg id="kg-svg"></svg>
+    <div class="kg-legend">
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#3b82f6"></div>当前知识点</div>
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#10b981"></div>前置知识</div>
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#f97316"></div>后续知识</div>
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#8b5cf6"></div>应用场景</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== QUIZ ===== -->
+<section id="quiz">
+  <div class="section-title"><span>✅</span> 课堂练习</div>
+  <div class="quiz-section">
+    <div class="quiz-q" id="q1">
+      <p>Q1：下列关于温度计使用方法，正确的是？</p>
+      <div class="quiz-options">
+        <div class="quiz-opt" onclick="checkAns(this,'q1',false)">A. 可以用体温计直接测量沸水温度</div>
+        <div class="quiz-opt" onclick="checkAns(this,'q1',false)">B. 读数时应将温度计从水中取出</div>
+        <div class="quiz-opt" onclick="checkAns(this,'q1',true)">C. 读数时视线应与液柱顶端水平</div>
+        <div class="quiz-opt" onclick="checkAns(this,'q1',false)">D. 温度计不能测量负温度</div>
+      </div>
+      <div class="quiz-explain">✅ 读数时视线必须与液柱顶端水平，仰视会读偏低，俯视会读偏高。体温计只能测35~42°C，不能测沸水；实验温度计不能离开被测物读数。</div>
+    </div>
+    <div class="quiz-q" id="q2">
+      <p>Q2：正常人体温为37°C，换算成华氏度是多少？</p>
+      <div class="quiz-options">
+        <div class="quiz-opt" onclick="checkAns(this,'q2',false)">A. 69.8°F</div>
+        <div class="quiz-opt" onclick="checkAns(this,'q2',true)">B. 98.6°F</div>
+        <div class="quiz-opt" onclick="checkAns(this,'q2',false)">C. 100°F</div>
+        <div class="quiz-opt" onclick="checkAns(this,'q2',false)">D. 109°F</div>
+      </div>
+      <div class="quiz-explain">✅ °F = 9/5 × 37 + 32 = 66.6 + 32 = 98.6°F。这就是美国体温正常值标注"98.6°F"的原因！</div>
+    </div>
+    <div class="quiz-q" id="q3">
+      <p>Q3：水银温度计比酒精温度计测量范围更广，主要是因为？</p>
+      <div class="quiz-options">
+        <div class="quiz-opt" onclick="checkAns(this,'q3',false)">A. 水银密度更大</div>
+        <div class="quiz-opt" onclick="checkAns(this,'q3',false)">B. 水银导热更快</div>
+        <div class="quiz-opt" onclick="checkAns(this,'q3',true)">C. 水银的沸点更高、凝固点更低（范围更宽）</div>
+        <div class="quiz-opt" onclick="checkAns(this,'q3',false)">D. 水银膨胀系数更大</div>
+      </div>
+      <div class="quiz-explain">✅ 水银沸点约357°C，凝固点约-39°C；酒精沸点约78°C，凝固点约-117°C。水银测高温优势明显，但不能测极低温；酒精可测极低温但不能测高温。</div>
+    </div>
+    <div class="quiz-q" id="q4">
+      <p>Q4：绝对零度（0K）等于摄氏温度多少度？</p>
+      <div class="quiz-options">
+        <div class="quiz-opt" onclick="checkAns(this,'q4',false)">A. 0°C</div>
+        <div class="quiz-opt" onclick="checkAns(this,'q4',false)">B. -100°C</div>
+        <div class="quiz-opt" onclick="checkAns(this,'q4',true)">C. -273.15°C</div>
+        <div class="quiz-opt" onclick="checkAns(this,'q4',false)">D. -373°C</div>
+      </div>
+      <div class="quiz-explain">✅ K = °C + 273.15，所以 0K = 0 - 273.15 = -273.15°C。这是理论上的最低温度，分子热运动停止的温度，实际上无法达到。</div>
+    </div>
+    <button class="quiz-btn" onclick="showScore()">提交答案</button>
+    <div class="score-box" id="score-box">
+      <h3 id="score-text">得分</h3>
+      <p id="score-sub"></p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p>TeachAny · 初中物理 · 温度与温度计 · 8年级热学</p>
+  <p style="margin-top:.3rem;font-size:.78rem">知识点：温度·摄氏温标·热胀冷缩·温度计使用·温度换算</p>
+</footer>
 
 <script>
-// Quiz Engine
-function checkAnswer(el, isCorrect, feedbackId) {
-  const parent = el.parentElement;
-  if (parent.dataset.answered) return;
-  parent.dataset.answered = 'true';
-  const options = parent.querySelectorAll('.quiz-option');
-  options.forEach(opt => { opt.style.pointerEvents='none'; opt.style.opacity='0.6'; });
-  const feedback = document.getElementById(feedbackId);
-  if (isCorrect) {
-    el.classList.add('correct'); el.style.opacity='1';
-    feedback.innerHTML = '✅ <strong>正确！</strong> 温度的书写规范：负温度用负号，单位是°C。';
-    feedback.style.background='rgba(34,197,94,0.1)'; feedback.style.color='#15803d';
-  } else {
-    el.classList.add('wrong'); el.style.opacity='1';
-    options.forEach(opt => { if(opt.onclick && opt.onclick.toString().includes('true,')) { opt.classList.add('correct'); opt.style.opacity='1'; }});
-    const msgs = {
-      'm1q1':'❌ 注意：°F 是华氏度，不是摄氏度。摄氏度用°C表示。',
-      'm2q1':'❌ 取出液体后液柱会因环境温度变化而改变，读数不准确；碰底会受容器热量影响。',
-      'm3q1':'❌ 换算公式：T(K) = t(°C) + 273 = 1535 + 273 = 1808 K。',
-      'postq1':'❌ 两支温度计测同一物体时示数相同（都反映该物体温度），但需确认量程是否足够。'
-    };
-    feedback.innerHTML = msgs[feedbackId] || '❌ <strong>再想想。</strong> 请选择正确选项。';
-    feedback.style.background='rgba(239,68,68,0.08)'; feedback.style.color='#b91c1c';
-  }
-  feedback.classList.add('show');
+// ===== SCENE SWITCH =====
+function switchScene(type, btn) {
+  document.querySelectorAll('.scene-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('scene-seasons').style.display = type === 'seasons' ? 'block' : 'none';
+  document.getElementById('scene-expansion').style.display = type === 'expansion' ? 'block' : 'none';
 }
 
-// Audio Player
-const tracks = [
-  {src:'tts/s01.mp3', title:'引言：为什么需要温度？'},
-  {src:'tts/s02.mp3', title:'摄氏温度的定义与规定'},
-  {src:'tts/s03.mp3', title:'温度计的工作原理'},
-  {src:'tts/s04.mp3', title:'常见温度计的种类'},
-  {src:'tts/s05.mp3', title:'正确使用温度计'},
-  {src:'tts/s06.mp3', title:'热力学温标'},
-  {src:'tts/s07.mp3', title:'课堂总结与回顾'},
-];
-let cur=0; const audio=new Audio(); const abPlay=document.getElementById('abPlay');
-const abTitle=document.getElementById('abTitle'); const abProgress=document.getElementById('abProgress');
-const abTime=document.getElementById('abTime'); const abVol=document.getElementById('abVol');
-function loadTrack(i){cur=i;audio.src=tracks[i].src;abTitle.textContent='🎵 '+tracks[i].title;audio.load();}
-function fmt(s){const m=Math.floor(s/60),sec=Math.floor(s%60);return m+':'+(sec<10?'0':'')+sec;}
-audio.addEventListener('timeupdate',()=>{
-  if(audio.duration){abProgress.style.width=(audio.currentTime/audio.duration*100)+'%';abTime.textContent=fmt(audio.currentTime)+' / '+fmt(audio.duration);}
-});
-audio.addEventListener('ended',()=>{if(cur<tracks.length-1){loadTrack(cur+1);audio.play();abPlay.textContent='⏸';}else{abPlay.textContent='▶';}});
-abPlay.addEventListener('click',()=>{if(audio.paused){audio.play();abPlay.textContent='⏸';}else{audio.pause();abPlay.textContent='▶';}});
-document.getElementById('abPrev').addEventListener('click',()=>{if(cur>0){loadTrack(cur-1);audio.play();abPlay.textContent='⏸';}});
-document.getElementById('abNext').addEventListener('click',()=>{if(cur<tracks.length-1){loadTrack(cur+1);audio.play();abPlay.textContent='⏸';}});
-document.getElementById('abProgressWrap').addEventListener('click',e=>{if(audio.duration){audio.currentTime=(e.offsetX/e.currentTarget.offsetWidth)*audio.duration;}});
-abVol.addEventListener('input',()=>{audio.volume=abVol.value;});
-loadTrack(0);
+// ===== SEASON ANIMATION =====
+const seasonConfig = {
+  winter: { sky:'#c7d2fe', ground:'#e0e7ff', temp:-5, label:'❄️ 冬季 -5°C', sunOp:0.3, treeColor:'#4b5563' },
+  spring: { sky:'#bfdbfe', ground:'#bbf7d0', temp:20, label:'🌸 春季 20°C', sunOp:0.8, treeColor:'#16a34a' },
+  summer: { sky:'#7dd3fc', ground:'#4ade80', temp:35, label:'☀️ 夏季 35°C', sunOp:1, treeColor:'#15803d' },
+  autumn: { sky:'#fde68a', ground:'#d97706', temp:15, label:'🍂 秋季 15°C', sunOp:0.7, treeColor:'#92400e' },
+};
 
-// Nav active state
-const sections=document.querySelectorAll('section[id]');
-window.addEventListener('scroll',()=>{
-  let cur='';
-  sections.forEach(s=>{if(window.scrollY>=s.offsetTop-80)cur=s.id;});
-  document.querySelectorAll('.nav a').forEach(a=>{a.classList.toggle('active',a.getAttribute('href')==='#'+cur);});
-});
+function setSeason(s) {
+  const cfg = seasonConfig[s];
+  const svg = document.getElementById('seasons-svg');
+  svg.querySelector('#sky-bg').setAttribute('fill', cfg.sky);
+  svg.querySelector('#ground').setAttribute('fill', cfg.ground);
+  svg.querySelector('#season-label').textContent = cfg.label;
+  svg.querySelector('#sun').setAttribute('opacity', cfg.sunOp);
+  svg.querySelector('#tree-top').setAttribute('fill', cfg.treeColor);
+  // Animate liquid column
+  const pct = (cfg.temp + 30) / 140; // -30 to 110 range
+  const colH = 200 * pct;
+  const colY = 265 - colH;
+  const liquid = svg.querySelector('#liquid-col');
+  // Remove animation to set static value
+  liquid.innerHTML = '';
+  liquid.setAttribute('y', Math.max(10, colY));
+  liquid.setAttribute('height', Math.min(255, colH));
+  // Set person clothing color
+  const bodyColor = s === 'winter' ? '#1e40af' : s === 'summer' ? '#fbbf24' : '#3b82f6';
+  const bodyEl = svg.querySelector('#person-body');
+  if (bodyEl) bodyEl.setAttribute('fill', bodyColor);
+  // Update lab temp
+  document.getElementById('sl-temp').value = cfg.temp;
+  updateThermo();
+}
+
+// ===== INTERACTIVE THERMOMETER =====
+let displayUnit = 'C';
+function setUnit(unit) {
+  displayUnit = unit;
+  document.getElementById('btn-celsius').classList.toggle('active', unit === 'C');
+  document.getElementById('btn-fahrenheit').classList.toggle('active', unit === 'F');
+  document.getElementById('btn-kelvin').classList.toggle('active', unit === 'K');
+  updateThermo();
+}
+
+function updateThermo() {
+  const celsius = +document.getElementById('sl-temp').value;
+  const fahrenheit = celsius * 9/5 + 32;
+  const kelvin = celsius + 273.15;
+
+  document.getElementById('lbl-temp').textContent = celsius;
+  document.getElementById('sv-temp').textContent = celsius + '°C';
+  document.getElementById('fahrenheit-val').textContent = fahrenheit.toFixed(1) + '°F';
+  document.getElementById('kelvin-val').textContent = kelvin.toFixed(1) + 'K';
+
+  // Display
+  let displayVal;
+  if (displayUnit === 'C') displayVal = celsius + '°C';
+  else if (displayUnit === 'F') displayVal = fahrenheit.toFixed(1) + '°F';
+  else displayVal = kelvin.toFixed(1) + 'K';
+  document.getElementById('temp-display').textContent = displayVal;
+
+  // Info cards
+  document.getElementById('info-celsius').textContent = celsius;
+  document.getElementById('info-fahrenheit').textContent = fahrenheit.toFixed(1);
+  document.getElementById('info-kelvin').textContent = kelvin.toFixed(1);
+  let state;
+  if (celsius <= 0) state = '固态(冰)';
+  else if (celsius >= 100) state = '气态(水蒸气)';
+  else state = '液态(水)';
+  document.getElementById('info-state').textContent = state;
+
+  // Update SVG thermometer
+  // Scale: -30°C → y=200, 110°C → y=25. Range = 140°C for 175px
+  const pxPerDeg = 175 / 140;
+  const zeroY = 150; // 0°C is at y=150
+  const liquidTop = zeroY - celsius * pxPerDeg;
+  const liquidH = 265 - liquidTop;
+  const liquid = document.getElementById('lab-liquid');
+  if (liquid) {
+    liquid.setAttribute('y', Math.max(20, liquidTop));
+    liquid.setAttribute('height', Math.max(0, Math.min(245, liquidH)));
+    // Color: blue for cold, red for hot
+    const r = Math.max(0, Math.min(255, Math.floor((celsius + 30) * 1.5)));
+    const b = 255 - r;
+    liquid.setAttribute('fill', `rgb(${r},50,${b})`);
+  }
+  // Pointer
+  const pointer = document.getElementById('thermo-pointer');
+  const readLine = document.getElementById('read-line');
+  const pY = Math.max(20, Math.min(260, zeroY - celsius * pxPerDeg));
+  if (pointer) { pointer.setAttribute('points', `20,${pY} 12,${pY-3} 12,${pY+3}`); }
+  if (readLine) { readLine.setAttribute('y1', pY); readLine.setAttribute('y2', pY); }
+}
+
+// ===== KNOWLEDGE GRAPH =====
+function initKnowledgeGraph() {
+  const width = document.getElementById('kg-svg').clientWidth || 700;
+  const height = 440;
+  const colorMap = {current:"#3b82f6", prereq:"#10b981", next:"#f97316", app:"#8b5cf6"};
+  const nodes = [
+    {id:"温度",type:"current",r:28},{id:"温度计",type:"current",r:24},
+    {id:"摄氏温标",type:"current",r:20},{id:"华氏温标",type:"current",r:18},
+    {id:"热力学温标",type:"current",r:18},{id:"热胀冷缩",type:"current",r:22},
+    {id:"分子动理论",type:"prereq",r:20},{id:"物质状态",type:"prereq",r:18},
+    {id:"相变",type:"next",r:20},{id:"热量",type:"next",r:20},
+    {id:"比热容",type:"next",r:18},{id:"内能",type:"next",r:20},
+    {id:"体温计",type:"app",r:16},{id:"寒暑表",type:"app",r:14},
+    {id:"工业测温",type:"app",r:14},{id:"气象预报",type:"app",r:14},
+    {id:"绝对零度",type:"current",r:18},
+  ];
+  const links = [
+    {source:"温度",target:"温度计"},{source:"温度",target:"摄氏温标"},
+    {source:"摄氏温标",target:"华氏温标"},{source:"摄氏温标",target:"热力学温标"},
+    {source:"热力学温标",target:"绝对零度"},{source:"温度",target:"热胀冷缩"},
+    {source:"分子动理论",target:"温度"},{source:"物质状态",target:"相变"},
+    {source:"温度",target:"相变"},{source:"温度",target:"热量"},
+    {source:"热量",target:"比热容"},{source:"温度",target:"内能"},
+    {source:"温度计",target:"体温计"},{source:"温度计",target:"寒暑表"},
+    {source:"温度计",target:"工业测温"},{source:"温度",target:"气象预报"},
+  ];
+
+  const svg = d3.select('#kg-svg').attr('width', width).attr('height', height);
+  svg.selectAll('*').remove();
+  const sim = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links).id(d=>d.id).distance(80))
+    .force('charge', d3.forceManyBody().strength(-200))
+    .force('center', d3.forceCenter(width/2, height/2))
+    .force('collision', d3.forceCollide().radius(d=>d.r+10));
+
+  const link = svg.append('g').selectAll('line').data(links).join('line')
+    .attr('stroke','#334155').attr('stroke-width',1.5).attr('stroke-opacity',.6);
+  const node = svg.append('g').selectAll('g').data(nodes).join('g')
+    .call(d3.drag()
+      .on('start',(e,d)=>{if(!e.active)sim.alphaTarget(.3).restart();d.fx=d.x;d.fy=d.y})
+      .on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y})
+      .on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null}));
+  node.append('circle').attr('r',d=>d.r)
+    .attr('fill',d=>colorMap[d.type]||'#64748b')
+    .attr('stroke','rgba(255,255,255,0.3)').attr('stroke-width',2).attr('opacity',.9);
+  node.append('text').text(d=>d.id)
+    .attr('text-anchor','middle').attr('dy','0.35em')
+    .attr('fill','#fff').attr('font-size',d=>d.r>16?'11':'9')
+    .attr('font-weight','600').attr('pointer-events','none');
+  sim.on('tick',()=>{
+    link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y)
+        .attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+    node.attr('transform',d=>`translate(${d.x},${d.y})`);
+  });
+}
+
+// ===== QUIZ =====
+const answers = {};
+function checkAns(el, qId, isCorrect) {
+  if (answers[qId]) return;
+  answers[qId] = true;
+  el.closest('.quiz-q').querySelectorAll('.quiz-opt').forEach(o => o.style.pointerEvents = 'none');
+  el.classList.add(isCorrect ? 'correct' : 'wrong');
+  const exp = el.closest('.quiz-q').querySelector('.quiz-explain');
+  if (exp) exp.style.display = 'block';
+}
+function showScore() {
+  let correct = document.querySelectorAll('.quiz-opt.correct').length;
+  const box = document.getElementById('score-box');
+  box.style.display = 'block';
+  document.getElementById('score-text').textContent = `得分：${correct}/4`;
+  const msgs = ['继续努力！','基础不错！','很棒！','完美！'];
+  document.getElementById('score-sub').textContent = msgs[Math.min(correct, 3)];
+}
+
+// Init
+window.addEventListener('load', () => { updateThermo(); initKnowledgeGraph(); });
+window.addEventListener('resize', initKnowledgeGraph);
 </script>
 </body>
 </html>
