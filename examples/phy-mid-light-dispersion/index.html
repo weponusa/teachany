@@ -8,372 +8,436 @@
 <meta name="teachany-domain" content="optics">
 <meta name="teachany-grade" content="8">
 <meta name="teachany-difficulty" content="2">
-<meta name="teachany-version" content="1.0">
+<meta name="teachany-version" content="2.0">
 <meta name="teachany-author" content="weponusa">
 <title>光的色散 · 教学课件</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
-:root{--bg:#f8fafc;--bg2:#f0f4f8;--bg3:#e2e8f0;--primary:#3b82f6;--secondary:#06b6d4;--accent:#f59e0b;--success:#22c55e;--danger:#ef4444;--purple:#8b5cf6;--teal:#14b8a6;--text:#1e293b;--dim:#64748b;--dimmer:#94a3b8;--card:#fff;--border:rgba(0,0,0,0.06);}
+:root{--bg:#f8fafc;--bg2:#f0f4f8;--primary:#3b82f6;--secondary:#06b6d4;--accent:#f59e0b;--success:#10b981;--danger:#ef4444;--purple:#8b5cf6;--text:#1e293b;--dim:#64748b;--card:#fff;--border:rgba(0,0,0,0.06);}
 *{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
 body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.8;padding-bottom:70px;}
-body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(160deg,rgba(59,130,246,0.03),rgba(6,182,212,0.03),rgba(245,158,11,0.02));pointer-events:none;z-index:-1;}
 .nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:58px;gap:4px;overflow-x:auto;box-shadow:0 1px 12px rgba(0,0,0,0.04);}
-.nav-brand{font-size:18px;font-weight:800;margin-right:18px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:10px;font-size:13.5px;font-weight:600;transition:all 0.2s;white-space:nowrap;}
-.nav a:hover,.nav a.active{color:var(--primary);background:rgba(59,130,246,0.08);}
+.nav-brand{font-size:18px;font-weight:800;margin-right:18px;white-space:nowrap;background:linear-gradient(135deg,#ef4444,#f59e0b,#10b981,#3b82f6,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:10px;font-size:13px;font-weight:600;transition:all 0.2s;white-space:nowrap;}
+.nav a:hover{color:var(--primary);background:rgba(59,130,246,0.08);}
 .container{max-width:1060px;margin:0 auto;padding:78px 24px 60px;}
 .hero{text-align:center;padding:40px 0 30px;}
-.hero h1{font-size:40px;font-weight:800;line-height:1.3;background:linear-gradient(135deg,#ef4444,#f59e0b,#22c55e,#3b82f6,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;}
-.hero .subtitle{font-size:17px;color:var(--dim);margin-bottom:16px;}
-.hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+.hero h1{font-size:38px;font-weight:800;background:linear-gradient(90deg,#ef4444,#f59e0b,#10b981,#3b82f6,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;}
+.hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:12px;}
 .hero .meta span{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:5px 16px;font-size:13px;font-weight:600;color:var(--dim);}
 .section{margin:44px 0;}
-.section-title{font-size:24px;font-weight:800;margin-bottom:18px;padding-left:16px;border-left:4px solid transparent;border-image:linear-gradient(to bottom,var(--primary),var(--secondary)) 1;}
-.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px 26px;margin-bottom:18px;box-shadow:0 2px 12px rgba(0,0,0,0.04);transition:transform 0.2s,box-shadow 0.2s;}
-.card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(59,130,246,0.08);}
+.section-title{font-size:24px;font-weight:800;margin-bottom:18px;padding-left:16px;border-left:4px solid var(--primary);}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px 26px;margin-bottom:18px;box-shadow:0 2px 12px rgba(0,0,0,0.04);}
 .card h3{font-size:18px;font-weight:700;margin-bottom:10px;}
-.card p,.card li{font-size:15.5px;line-height:1.85;color:var(--dim);}
-.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;}
-.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;}
-.obj-card{text-align:center;padding:26px 18px;border-top:3px solid transparent;}
-.obj-card:nth-child(1){border-top-color:var(--primary);}
-.obj-card:nth-child(2){border-top-color:var(--secondary);}
-.obj-card:nth-child(3){border-top-color:var(--accent);}
-.obj-card .icon{font-size:36px;margin-bottom:10px;}
-.obj-card h4{font-size:16px;font-weight:700;margin-bottom:6px;}
-.obj-card p{font-size:14px;color:var(--dim);}
+.card p,.card li{font-size:15px;line-height:1.85;color:var(--dim);}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;}
 .highlight{color:var(--primary);font-weight:700;}
-.quiz-option{display:block;padding:14px 18px;margin:8px 0;border-radius:12px;background:var(--bg);border:2px solid var(--border);cursor:pointer;transition:all 0.25s;font-size:15px;font-weight:600;color:var(--text);}
-.quiz-option:hover{background:rgba(59,130,246,0.05);border-color:var(--primary);transform:translateX(3px);}
-.quiz-option.correct{background:rgba(34,197,94,0.1);border-color:var(--success);color:#15803d;}
-.quiz-option.wrong{background:rgba(239,68,68,0.08);border-color:var(--danger);color:#b91c1c;}
-.quiz-feedback{padding:12px 16px;border-radius:10px;margin-top:10px;font-size:14.5px;display:none;}
-.quiz-feedback.show{display:block;animation:slideUp 0.3s ease;}
-@keyframes slideUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-.insight-box{background:linear-gradient(135deg,rgba(6,182,212,0.06),rgba(59,130,246,0.06));border-left:4px solid var(--secondary);padding:18px 22px;border-radius:0 12px 12px 0;margin:16px 0;}
-.insight-box h4{color:var(--secondary);font-size:16px;font-weight:700;margin-bottom:8px;}
-.insight-box p{color:var(--text);font-size:15px;margin-bottom:4px;}
-.rainbow-bar{height:32px;border-radius:8px;background:linear-gradient(to right,#ef4444,#f97316,#eab308,#22c55e,#3b82f6,#6366f1,#8b5cf6);margin:14px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
-.color-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
-.chip{padding:4px 14px;border-radius:20px;font-size:13px;font-weight:700;color:#fff;}
-.law-box{background:linear-gradient(135deg,rgba(59,130,246,0.08),rgba(20,184,166,0.08));border:2px solid rgba(59,130,246,0.2);border-radius:14px;padding:20px 24px;margin:16px 0;}
-.law-box h4{color:var(--primary);font-size:17px;font-weight:800;margin-bottom:10px;}
-.law-box p{font-size:15.5px;color:var(--text);margin-bottom:6px;}
-.audio-bar{position:fixed;bottom:0;left:0;right:0;z-index:500;background:rgba(59,130,246,0.95);backdrop-filter:blur(12px);border-top:2px solid rgba(255,255,255,0.3);padding:10px 24px;display:flex;align-items:center;gap:14px;}
-.audio-bar .ab-btn{width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;background:#fff;color:#3b82f6;font-size:16px;display:flex;align-items:center;justify-content:center;}
-.audio-bar .ab-info{flex:1;min-width:0;}
-.audio-bar .ab-title{font-size:13px;font-weight:700;color:#fff;}
-.audio-bar .ab-progress-wrap{height:4px;background:rgba(255,255,255,0.3);border-radius:2px;margin-top:4px;cursor:pointer;}
-.audio-bar .ab-progress{height:100%;background:#fff;border-radius:2px;width:0%;}
-.audio-bar .ab-time{font-size:11px;color:rgba(255,255,255,0.8);margin-top:2px;}
-.audio-bar .ab-vol{width:60px;accent-color:#fff;}
-footer{text-align:center;padding:36px 0;color:var(--dimmer);font-size:13px;border-top:1px solid var(--border);margin-top:50px;}
-@media(max-width:600px){.hero h1{font-size:28px;}.section-title{font-size:21px;}.card{padding:18px;}}
+/* 生活场景动画：棱镜彩虹 */
+@keyframes rainbowSpread{0%{width:0;opacity:0}100%{width:200px;opacity:1}}
+@keyframes prismGlow{0%,100%{filter:drop-shadow(0 0 4px rgba(255,255,255,0.3))}50%{filter:drop-shadow(0 0 12px rgba(255,255,255,0.8))}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes rainbowArc{0%{stroke-dashoffset:300}100%{stroke-dashoffset:0}}
+.rainbow-r{background:linear-gradient(90deg,transparent,#ef4444);height:5px;border-radius:3px;margin:1px 0;animation:rainbowSpread 2s ease-out infinite;}
+.rainbow-o{background:linear-gradient(90deg,transparent,#f97316);height:5px;border-radius:3px;margin:1px 0;animation:rainbowSpread 2s ease-out infinite 0.1s;}
+.rainbow-y{background:linear-gradient(90deg,transparent,#f59e0b);height:5px;border-radius:3px;margin:1px 0;animation:rainbowSpread 2s ease-out infinite 0.2s;}
+.rainbow-g{background:linear-gradient(90deg,transparent,#10b981);height:5px;border-radius:3px;margin:1px 0;animation:rainbowSpread 2s ease-out infinite 0.3s;}
+.rainbow-b{background:linear-gradient(90deg,transparent,#3b82f6);height:5px;border-radius:3px;margin:1px 0;animation:rainbowSpread 2s ease-out infinite 0.4s;}
+.rainbow-i{background:linear-gradient(90deg,transparent,#6366f1);height:5px;border-radius:3px;margin:1px 0;animation:rainbowSpread 2s ease-out infinite 0.5s;}
+.rainbow-v{background:linear-gradient(90deg,transparent,#8b5cf6);height:5px;border-radius:3px;margin:1px 0;animation:rainbowSpread 2s ease-out infinite 0.6s;}
+.prism-float{animation:prismGlow 2s ease-in-out infinite,float 3s ease-in-out infinite;}
+/* 互动实验台 */
+#interactive-lab{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;}
+.lab-controls{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.ctrl-group label{font-size:13px;font-weight:600;color:var(--dim);display:block;margin-bottom:6px;}
+.ctrl-group input[type=range]{width:100%;accent-color:var(--primary);}
+.ctrl-group .val{font-size:22px;font-weight:800;color:var(--primary);}
+.lab-result{background:var(--bg);border-radius:12px;padding:16px;text-align:center;font-size:15px;font-weight:600;color:var(--text);margin-bottom:16px;}
+/* 知识图谱 */
+#kg-svg{width:100%;height:360px;background:radial-gradient(ellipse at center,#fef3c7 0%,#f8fafc 70%);border-radius:12px;}
+.kg-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;}
+.kg-legend-item{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--dim);}
+.kg-dot{width:12px;height:12px;border-radius:50%;}
+/* 彩虹色条 */
+.spectrum-bar{height:40px;border-radius:8px;background:linear-gradient(90deg,#ef4444,#f97316,#f59e0b,#10b981,#3b82f6,#6366f1,#8b5cf6);margin:12px 0;}
+.color-list{display:flex;gap:0;border-radius:8px;overflow:hidden;margin:12px 0;}
+.color-item{flex:1;padding:8px 4px;text-align:center;font-size:12px;font-weight:700;color:#fff;}
+.quiz-option{display:block;padding:12px 18px;margin:8px 0;border-radius:10px;background:var(--bg);border:2px solid var(--border);cursor:pointer;transition:all 0.2s;font-size:14px;font-weight:600;}
+.quiz-option:hover{border-color:var(--primary);background:rgba(59,130,246,0.05);}
+.quiz-option.correct{background:rgba(16,185,129,0.1);border-color:var(--success);color:#065f46;}
+.quiz-option.wrong{background:rgba(239,68,68,0.08);border-color:var(--danger);color:#991b1b;}
+.quiz-feedback{padding:12px 16px;border-radius:10px;margin-top:10px;font-size:14px;display:none;}
+.quiz-feedback.show{display:block;}
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-top:1px solid var(--border);padding:12px 24px;display:flex;justify-content:center;gap:12px;}
+.btn{padding:10px 24px;border-radius:10px;border:none;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-outline{background:transparent;border:2px solid var(--border);color:var(--dim);}
+.formula-box{background:linear-gradient(135deg,rgba(59,130,246,0.05),rgba(6,182,212,0.05));border:1px solid rgba(59,130,246,0.15);border-radius:12px;padding:20px;text-align:center;margin:12px 0;}
+.formula{font-size:24px;font-weight:800;color:var(--primary);}
+.key-point{background:rgba(245,158,11,0.08);border-left:4px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 18px;margin:12px 0;font-size:14.5px;}
 </style>
 </head>
 <body>
 <nav class="nav">
-  <span class="nav-brand">🎓 教我学 TeachAny</span>
-  <a href="#hero">首页</a>
-  <a href="#goals">目标</a>
-  <a href="#module-1">色散实验</a>
-  <a href="#module-2">七色光</a>
-  <a href="#module-3">光的颜色</a>
-  <a href="#deep-understanding">彩虹原理</a>
-  <a href="#summary">总结</a>
+  <span class="nav-brand">🌈 光的色散</span>
+  <a href="#life-scene">生活场景</a>
+  <a href="#concepts">核心概念</a>
+  <a href="#interactive-lab">互动实验</a>
+  <a href="#knowledge-graph">知识图谱</a>
+  <a href="#quiz">测验</a>
 </nav>
 
 <div class="container">
-  <section class="hero" id="hero">
-    <h1>光的色散</h1>
-    <p class="subtitle">🌈 白光中藏着七种颜色——牛顿棱镜实验与彩虹的秘密</p>
+  <div class="hero">
+    <h1>🌈 光的色散</h1>
+    <p style="font-size:17px;color:var(--dim);margin-top:8px;">白光分解为七色光 · 棱镜实验 · 彩虹形成原理</p>
     <div class="meta">
-      <span>⚡ 物理</span>
-      <span>🎓 八年级上</span>
-      <span>⏱️ 约 30 分钟</span>
-      <span>🎯 新授课</span>
-      <span>📖 第4章 光现象</span>
+      <span>📚 初中物理</span><span>🎓 8年级</span><span>🔬 光学</span><span>🌈 趣味</span>
     </div>
-  </section>
+  </div>
 
-  <section class="section" id="goals">
-    <h2 class="section-title">🎯 学习目标</h2>
+  <!-- 生活场景动画 -->
+  <div class="section" id="life-scene">
+    <div class="section-title">🎬 生活场景：棱镜色散动画</div>
+    <div style="background:linear-gradient(135deg,#0f172a,#1a1a2e);border-radius:16px;padding:32px;position:relative;overflow:hidden;min-height:280px;display:flex;align-items:center;gap:40px;">
+      <!-- 白光光束 -->
+      <div style="position:relative;width:100px;">
+        <div style="color:rgba(255,255,255,0.9);font-size:13px;font-weight:600;margin-bottom:12px;text-align:center;">白光</div>
+        <div style="width:80px;height:40px;background:linear-gradient(90deg,rgba(255,255,255,0.1),rgba(255,255,255,0.8));border-radius:0 4px 4px 0;margin:0 auto;"></div>
+      </div>
+      <!-- 棱镜 -->
+      <div class="prism-float" style="flex-shrink:0;">
+        <svg width="80" height="100" viewBox="0 0 80 100">
+          <polygon points="40,5 75,90 5,90" fill="rgba(147,197,253,0.25)" stroke="#93c5fd" stroke-width="2"/>
+          <polygon points="40,5 75,90 5,90" fill="url(#prismGrad)" opacity="0.5"/>
+          <defs>
+            <linearGradient id="prismGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:0.3"/>
+              <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:0.3"/>
+            </linearGradient>
+          </defs>
+          <text x="40" y="62" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.6)">棱镜</text>
+        </svg>
+      </div>
+      <!-- 色散光束 -->
+      <div style="flex:1;">
+        <div style="color:rgba(255,255,255,0.7);font-size:13px;font-weight:600;margin-bottom:10px;">色散光谱</div>
+        <div class="rainbow-r"></div>
+        <div class="rainbow-o"></div>
+        <div class="rainbow-y"></div>
+        <div class="rainbow-g"></div>
+        <div class="rainbow-b"></div>
+        <div class="rainbow-i"></div>
+        <div class="rainbow-v"></div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:rgba(255,255,255,0.5);">
+          <span>红</span><span>橙</span><span>黄</span><span>绿</span><span>蓝</span><span>靛</span><span>紫</span>
+        </div>
+      </div>
+      <!-- 彩虹场景 -->
+      <div style="position:absolute;top:15px;right:20px;">
+        <svg width="100" height="80" viewBox="0 0 100 80">
+          <path d="M10,70 Q50,-10 90,70" fill="none" stroke="#ef4444" stroke-width="3" stroke-dasharray="200" stroke-dashoffset="200" style="animation:rainbowArc 2s ease-out infinite;"/>
+          <path d="M16,70 Q50,0 84,70" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="200" stroke-dashoffset="200" style="animation:rainbowArc 2s ease-out infinite 0.3s;"/>
+          <path d="M22,70 Q50,8 78,70" fill="none" stroke="#10b981" stroke-width="3" stroke-dasharray="200" stroke-dashoffset="200" style="animation:rainbowArc 2s ease-out infinite 0.6s;"/>
+          <path d="M28,70 Q50,16 72,70" fill="none" stroke="#3b82f6" stroke-width="3" stroke-dasharray="200" stroke-dashoffset="200" style="animation:rainbowArc 2s ease-out infinite 0.9s;"/>
+          <path d="M34,70 Q50,22 66,70" fill="none" stroke="#8b5cf6" stroke-width="3" stroke-dasharray="200" stroke-dashoffset="200" style="animation:rainbowArc 2s ease-out infinite 1.2s;"/>
+          <text x="50" y="78" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.5)">彩虹🌈</text>
+        </svg>
+      </div>
+      <div style="position:absolute;bottom:12px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,0.5);font-size:12px;text-align:center;">
+        💡 白光经棱镜折射，因不同色光折射率不同而分散成七色光谱
+      </div>
+    </div>
+  </div>
+
+  <!-- 核心概念 -->
+  <div class="section" id="concepts">
+    <div class="section-title">📐 核心概念</div>
+    <div class="card">
+      <h3>🌈 光的色散现象</h3>
+      <p>白光（太阳光）通过棱镜后被分解成<span class="highlight">红、橙、黄、绿、蓝、靛、紫</span>七种颜色的光，这种现象叫做光的<span class="highlight">色散</span>。</p>
+      <div class="spectrum-bar"></div>
+      <div class="color-list">
+        <div class="color-item" style="background:#ef4444;">红</div>
+        <div class="color-item" style="background:#f97316;">橙</div>
+        <div class="color-item" style="background:#f59e0b;">黄</div>
+        <div class="color-item" style="background:#10b981;">绿</div>
+        <div class="color-item" style="background:#3b82f6;">蓝</div>
+        <div class="color-item" style="background:#6366f1;">靛</div>
+        <div class="color-item" style="background:#8b5cf6;">紫</div>
+      </div>
+      <div class="key-point">⚡ 记忆口诀：<strong>"红橙黄绿蓝靛紫"</strong>（彩虹颜色从外到内，从红到紫）</div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>📡 折射率差异</h3>
+        <p>色散的原因：不同颜色的光在同一介质中的<span class="highlight">折射率不同</span>。</p>
+        <ul style="padding-left:18px;margin-top:8px;">
+          <li>紫光折射率最大，偏折最多</li>
+          <li>红光折射率最小，偏折最少</li>
+          <li>频率越高，折射率越大</li>
+        </ul>
+        <div class="formula-box">
+          <div style="font-size:16px;font-weight:700;color:var(--dim);">折射率：紫 &gt; 靛 &gt; 蓝 &gt; 绿 &gt; 黄 &gt; 橙 &gt; 红</div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>🌤️ 彩虹的形成</h3>
+        <p>雨后空气中悬浮着大量水珠，阳光照入水珠后发生<span class="highlight">折射、反射和折射</span>，形成彩虹。</p>
+        <div style="text-align:center;margin:12px 0;">
+          <svg width="200" height="100" viewBox="0 0 200 100">
+            <circle cx="100" cy="50" r="30" fill="rgba(147,197,253,0.2)" stroke="#93c5fd" stroke-width="1.5"/>
+            <line x1="30" y1="40" x2="78" y2="40" stroke="#fbbf24" stroke-width="2" marker-end="url(#arr-rainbow)"/>
+            <defs><marker id="arr-rainbow" markerWidth="6" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,6 2.5,0 5" fill="#fbbf24"/></marker></defs>
+            <text x="100" y="54" text-anchor="middle" font-size="10" fill="#64748b">水珠</text>
+            <line x1="78" y1="40" x2="90" y2="70" stroke="#ef4444" stroke-width="1.5"/>
+            <line x1="78" y1="40" x2="88" y2="72" stroke="#10b981" stroke-width="1.5"/>
+            <line x1="78" y1="40" x2="86" y2="74" stroke="#8b5cf6" stroke-width="1.5"/>
+            <text x="100" y="95" text-anchor="middle" font-size="10" fill="#64748b">色散后出射</text>
+          </svg>
+        </div>
+        <p style="font-size:13px;">红光在上，紫光在下（彩虹圆弧从外到内：红→紫）</p>
+      </div>
+    </div>
+
     <div class="grid-3">
-      <div class="card obj-card">
-        <div class="icon">🔬</div>
-        <h4>说出色散实验</h4>
-        <p>能描述牛顿棱镜实验：白光→棱镜→色散成彩色光带</p>
+      <div class="card">
+        <h3>🔴 红外线</h3>
+        <p>红光以外（频率低于红光）的不可见光。具有强烈的<span class="highlight">热效应</span>。</p>
+        <div class="key-point" style="font-size:13px;">应用：遥控器、热成像、理疗仪</div>
       </div>
-      <div class="card obj-card">
-        <div class="icon">🌈</div>
-        <h4>列举七色光顺序</h4>
-        <p>能按顺序说出可见光七色：红橙黄绿蓝靛紫</p>
+      <div class="card">
+        <h3>🟣 紫外线</h3>
+        <p>紫光以外（频率高于紫光）的不可见光。能使荧光物质<span class="highlight">发光</span>，有杀菌作用。</p>
+        <div class="key-point" style="font-size:13px;">应用：消毒、验钞机、防伪标记</div>
       </div>
-      <div class="card obj-card">
-        <div class="icon">☀️</div>
-        <h4>解释彩虹成因</h4>
-        <p>用光的色散原理解释雨后彩虹的形成</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="module-1">
-    <h2 class="section-title">📖 模块一：牛顿的棱镜实验</h2>
-    <div class="card">
-      <h3>🌉 引入：白光是什么颜色？</h3>
-      <p><span class="highlight">你已经知道……</span>我们看到白色阳光照亮了周围的一切，白光看起来没有颜色。</p>
-      <p><span class="highlight">但有个问题……</span>下雨后天空会出现彩虹，七种颜色从哪里来？肥皂泡的表面为什么会呈现出彩色？</p>
-      <p><span class="highlight">所以这节课要学……</span>白光其实是由多种颜色的光混合而成的，通过折射可以将它们分开——这就是<strong>光的色散</strong>。</p>
-    </div>
-
-    <div class="card">
-      <h3>📐 棱镜色散光路图</h3>
-      <svg viewBox="0 0 580 280" style="width:100%;max-width:580px;display:block;margin:16px auto;background:#0f172a;border-radius:12px;border:1px solid var(--border);" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <marker id="ds-aw" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="white"/></marker>
-          <marker id="ds-ar" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#ef4444"/></marker>
-          <marker id="ds-ao" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#f97316"/></marker>
-          <marker id="ds-ay" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#eab308"/></marker>
-          <marker id="ds-ag" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#22c55e"/></marker>
-          <marker id="ds-ab2" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#3b82f6"/></marker>
-          <marker id="ds-ai" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#6366f1"/></marker>
-          <marker id="ds-av" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#8b5cf6"/></marker>
-        </defs>
-        <!-- 棱镜形状（三角形） -->
-        <polygon points="260,50 360,220 160,220" fill="rgba(100,180,255,0.15)" stroke="#60a5fa" stroke-width="2"/>
-        <text x="230" y="175" font-size="12" fill="#93c5fd">玻璃棱镜</text>
-        <!-- 白光入射 -->
-        <line x1="50" y1="120" x2="207" y2="120" stroke="white" stroke-width="3" marker-end="url(#ds-aw)"/>
-        <text x="20" y="113" font-size="12" fill="white" font-weight="bold">白光</text>
-        <!-- 七色折射光线（从棱镜右侧射出） -->
-        <line x1="307" y1="120" x2="520" y2="70" stroke="#ef4444" stroke-width="2" marker-end="url(#ds-ar)"/>
-        <text x="525" y="74" font-size="11" fill="#ef4444" font-weight="bold">红</text>
-        <line x1="307" y1="120" x2="516" y2="88" stroke="#f97316" stroke-width="2" marker-end="url(#ds-ao)"/>
-        <text x="521" y="92" font-size="11" fill="#f97316" font-weight="bold">橙</text>
-        <line x1="307" y1="120" x2="512" y2="106" stroke="#eab308" stroke-width="2" marker-end="url(#ds-ay)"/>
-        <text x="517" y="110" font-size="11" fill="#eab308" font-weight="bold">黄</text>
-        <line x1="307" y1="120" x2="508" y2="124" stroke="#22c55e" stroke-width="2" marker-end="url(#ds-ag)"/>
-        <text x="513" y="128" font-size="11" fill="#22c55e" font-weight="bold">绿</text>
-        <line x1="307" y1="120" x2="504" y2="142" stroke="#3b82f6" stroke-width="2" marker-end="url(#ds-ab2)"/>
-        <text x="509" y="146" font-size="11" fill="#60a5fa" font-weight="bold">蓝</text>
-        <line x1="307" y1="120" x2="500" y2="160" stroke="#6366f1" stroke-width="2" marker-end="url(#ds-ai)"/>
-        <text x="505" y="164" font-size="11" fill="#818cf8" font-weight="bold">靛</text>
-        <line x1="307" y1="120" x2="496" y2="178" stroke="#8b5cf6" stroke-width="2" marker-end="url(#ds-av)"/>
-        <text x="501" y="182" font-size="11" fill="#a78bfa" font-weight="bold">紫</text>
-        <!-- 标注 -->
-        <text x="30" y="260" font-size="12" fill="#94a3b8">白光（复色光）经棱镜色散 → 七色单色光（红外偏折小，紫内偏折大）</text>
-      </svg>
-
-      <div class="rainbow-bar"></div>
-      <div class="color-chips">
-        <span class="chip" style="background:#ef4444;">红 Red</span>
-        <span class="chip" style="background:#f97316;">橙 Orange</span>
-        <span class="chip" style="background:#eab308;color:#1e293b;">黄 Yellow</span>
-        <span class="chip" style="background:#22c55e;">绿 Green</span>
-        <span class="chip" style="background:#3b82f6;">蓝 Blue</span>
-        <span class="chip" style="background:#6366f1;">靛 Indigo</span>
-        <span class="chip" style="background:#8b5cf6;">紫 Violet</span>
-      </div>
-
-      <div class="law-box" style="margin-top:14px;">
-        <h4>🔑 色散的关键结论</h4>
-        <p>① <strong>白光是复色光</strong>：由红、橙、黄、绿、蓝、靛、紫七种颜色的光混合而成</p>
-        <p>② <strong>不同颜色折射率不同</strong>：紫色偏折最大，红色偏折最小</p>
-        <p>③ <strong>色散可逆</strong>：将七色光再次混合可得到白光</p>
+      <div class="card">
+        <h3>🌈 光的合成</h3>
+        <p>三原色光（红、绿、蓝）按不同比例混合，可以合成各种颜色的光，三种等量混合得到白光。</p>
+        <div class="key-point" style="font-size:13px;">屏幕显示原理：RGB混色</div>
       </div>
     </div>
+  </div>
 
-    <div class="card">
-      <h3>✏️ 马上练一题</h3>
-      <p>白光通过三棱镜，折射偏转角最小的是：</p>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'m1-q1')">A. 红色光（红色折射率最小，偏折最小，出现在彩带最外侧）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m1-q1')">B. 紫色光（紫色折射率最大，偏折最大，在内侧）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m1-q1')">C. 绿色光（绿色在中间位置）</div>
-      <div id="m1-q1" class="quiz-feedback"></div>
-    </div>
-  </section>
-
-  <section class="section" id="module-2">
-    <h2 class="section-title">📖 模块二：可见光谱与七色光</h2>
-    <div class="card">
-      <h3>💡 七色光的特性</h3>
-      <p>可见光的波长范围约为400～760纳米（nm），波长不同，颜色不同，折射率也不同：</p>
-      <div style="overflow-x:auto;margin-top:14px;">
-        <table style="width:100%;border-collapse:collapse;font-size:14px;min-width:400px;">
-          <tr>
-            <th style="padding:8px 12px;text-align:center;background:rgba(59,130,246,0.1);color:var(--primary);">颜色</th>
-            <th style="padding:8px 12px;text-align:center;background:rgba(59,130,246,0.1);color:var(--primary);">相对波长</th>
-            <th style="padding:8px 12px;text-align:center;background:rgba(59,130,246,0.1);color:var(--primary);">折射率</th>
-            <th style="padding:8px 12px;text-align:center;background:rgba(59,130,246,0.1);color:var(--primary);">记忆</th>
-          </tr>
-          <tr><td style="padding:8px;text-align:center;color:#ef4444;font-weight:700;">红 🔴</td><td style="padding:8px;text-align:center;color:var(--dim);">最长</td><td style="padding:8px;text-align:center;color:var(--dim);">最小</td><td style="padding:8px;text-align:center;color:var(--dim);">外侧，偏折小</td></tr>
-          <tr style="background:rgba(0,0,0,0.01);"><td style="padding:8px;text-align:center;color:#f97316;font-weight:700;">橙 🟠</td><td style="padding:8px;text-align:center;color:var(--dim);">↑</td><td style="padding:8px;text-align:center;color:var(--dim);">↑</td><td style="padding:8px;text-align:center;color:var(--dim);">—</td></tr>
-          <tr><td style="padding:8px;text-align:center;color:#eab308;font-weight:700;">黄 🟡</td><td style="padding:8px;text-align:center;color:var(--dim);">↑</td><td style="padding:8px;text-align:center;color:var(--dim);">↑</td><td style="padding:8px;text-align:center;color:var(--dim);">—</td></tr>
-          <tr style="background:rgba(0,0,0,0.01);"><td style="padding:8px;text-align:center;color:#22c55e;font-weight:700;">绿 🟢</td><td style="padding:8px;text-align:center;color:var(--dim);">中</td><td style="padding:8px;text-align:center;color:var(--dim);">中</td><td style="padding:8px;text-align:center;color:var(--dim);">中间</td></tr>
-          <tr><td style="padding:8px;text-align:center;color:#3b82f6;font-weight:700;">蓝 🔵</td><td style="padding:8px;text-align:center;color:var(--dim);">↓</td><td style="padding:8px;text-align:center;color:var(--dim);">↓</td><td style="padding:8px;text-align:center;color:var(--dim);">—</td></tr>
-          <tr style="background:rgba(0,0,0,0.01);"><td style="padding:8px;text-align:center;color:#6366f1;font-weight:700;">靛 💙</td><td style="padding:8px;text-align:center;color:var(--dim);">↓</td><td style="padding:8px;text-align:center;color:var(--dim);">↓</td><td style="padding:8px;text-align:center;color:var(--dim);">—</td></tr>
-          <tr><td style="padding:8px;text-align:center;color:#8b5cf6;font-weight:700;">紫 🟣</td><td style="padding:8px;text-align:center;color:var(--dim);">最短</td><td style="padding:8px;text-align:center;color:var(--dim);">最大</td><td style="padding:8px;text-align:center;color:var(--dim);">内侧，偏折大</td></tr>
-        </table>
-      </div>
-      <div class="insight-box" style="margin-top:14px;">
-        <h4>🔑 记忆口诀</h4>
-        <p>七色光顺序：<strong>红橙黄绿蓝靛紫</strong>（像彩虹从外到内的顺序）</p>
-        <p>红色波长长，折射小，在彩带外侧；紫色波长短，折射大，在彩带内侧。</p>
-      </div>
-    </div>
-    <div class="card">
-      <h3>✏️ 判断</h3>
-      <p>将红、绿、蓝三种颜色的光混合，能得到白光吗？</p>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'m2-q1')">A. 能（红、绿、蓝是光的三原色，适当混合可以得到白光）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m2-q1')">B. 不能（需要全部七色才行）（实际上三原色混合即可得白光）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m2-q1')">C. 只能得到黄色（红+绿=黄，不加蓝时，但三原色混合是白色）</div>
-      <div id="m2-q1" class="quiz-feedback"></div>
-    </div>
-  </section>
-
-  <section class="section" id="module-3">
-    <h2 class="section-title">📖 模块三：光的颜色与物体颜色</h2>
-    <div class="card">
-      <h3>💡 为什么物体有颜色？</h3>
-      <div class="grid-2">
-        <div>
-          <p><strong>透明物体的颜色：</strong>取决于它能<span class="highlight">透过哪种颜色的光</span>。红色玻璃只透红光，吸收其他颜色；绿色玻璃只透绿光。</p>
+  <!-- 互动实验台 -->
+  <div class="section">
+    <div class="section-title">🧪 互动实验台：棱镜色散模拟</div>
+    <div id="interactive-lab" class="card">
+      <h3>🔬 调节棱镜角度和光线入射角，观察色散效果</h3>
+      <div class="lab-controls">
+        <div class="ctrl-group">
+          <label>棱镜顶角 α (°)</label>
+          <input type="range" id="prism-angle" min="20" max="70" value="45" step="1">
+          <div>α = <span class="val" id="pa-val">45</span>°</div>
         </div>
-        <div>
-          <p><strong>不透明物体的颜色：</strong>取决于它能<span class="highlight">反射哪种颜色的光</span>。红色苹果反射红光，吸收其他颜色；黑色物体吸收所有颜色，白色反射所有颜色。</p>
+        <div class="ctrl-group">
+          <label>入射角 θ (°)</label>
+          <input type="range" id="inc-angle" min="10" max="80" value="45" step="1">
+          <div>θ = <span class="val" id="ia-val">45</span>°</div>
         </div>
       </div>
-      <div class="insight-box" style="margin-top:12px;">
-        <h4>💡 特殊情况</h4>
-        <p>白色 = 反射所有可见光（不吸收任何颜色）</p>
-        <p>黑色 = 吸收所有可见光（不反射任何颜色）</p>
+      <div class="lab-result">
+        红光偏折角 δ<sub>红</sub> = <span id="red-dev" style="color:#ef4444;font-size:20px;">23.2</span>° &nbsp;&nbsp;
+        紫光偏折角 δ<sub>紫</sub> = <span id="violet-dev" style="color:#8b5cf6;font-size:20px;">25.8</span>° &nbsp;&nbsp;
+        色散角 Δδ = <span id="disp-angle" style="color:var(--accent);font-size:20px;">2.6</span>°
       </div>
-    </div>
-    <div class="card">
-      <h3>✏️ 马上练一题</h3>
-      <p>用红色光照射一张绿色的树叶，树叶看起来是什么颜色？</p>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'m3-q1')">A. 黑色（树叶只反射绿光，红光照射时全被吸收，没有光反射，呈黑色）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m3-q1')">B. 绿色（树叶颜色不会改变——但颜色由反射光决定，红光下无绿光可反射）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m3-q1')">C. 红色（树叶不反射红光）</div>
-      <div id="m3-q1" class="quiz-feedback"></div>
-    </div>
-  </section>
-
-  <section class="section" id="deep-understanding">
-    <h2 class="section-title">🔬 深层理解：彩虹的形成</h2>
-    <div class="card">
-      <h3>🌈 彩虹是怎么形成的？</h3>
-      <svg viewBox="0 0 520 240" style="width:100%;max-width:520px;display:block;margin:16px auto;background:#0f172a;border-radius:12px;border:1px solid var(--border);" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <marker id="rb-aw" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="white"/></marker>
-          <marker id="rb-ar" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#ef4444"/></marker>
-          <marker id="rb-av" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#8b5cf6"/></marker>
-        </defs>
-        <!-- 水滴 -->
-        <circle cx="270" cy="120" r="55" fill="rgba(6,182,212,0.25)" stroke="#06b6d4" stroke-width="2"/>
-        <text x="255" y="125" font-size="11" fill="#93c5fd">水滴</text>
-        <!-- 太阳光入射 -->
-        <line x1="40" y1="85" x2="220" y2="85" stroke="white" stroke-width="2" marker-end="url(#rb-aw)"/>
-        <text x="10" y="78" font-size="11" fill="white">太阳光</text>
-        <!-- 折射进水滴 -->
-        <!-- 内部全反射 -->
-        <!-- 折射出水滴 - 红色偏上 -->
-        <line x1="320" y1="80" x2="460" y2="60" stroke="#ef4444" stroke-width="2" marker-end="url(#rb-ar)"/>
-        <text x="462" y="64" font-size="11" fill="#ef4444">红</text>
-        <!-- 折射出水滴 - 紫色偏下 -->
-        <line x1="320" y1="145" x2="460" y2="175" stroke="#8b5cf6" stroke-width="2" marker-end="url(#rb-av)"/>
-        <text x="462" y="179" font-size="11" fill="#a78bfa">紫</text>
-        <!-- 标注步骤 -->
-        <text x="30" y="200" font-size="11" fill="#94a3b8">①折射入水滴 → ②内壁反射 → ③再次折射出水滴 → 色散分离</text>
-        <text x="30" y="220" font-size="11" fill="#94a3b8">彩虹：红色在外弧（角度42°），紫色在内弧（角度40°）</text>
+      <svg id="prism-lab-svg" viewBox="0 0 700 250" style="width:100%;height:250px;background:#0f172a;border-radius:12px;">
+        <!-- 棱镜 -->
+        <polygon id="lab-prism" points="350,30 480,210 220,210" fill="rgba(147,197,253,0.15)" stroke="#93c5fd" stroke-width="2"/>
+        <!-- 入射白光 -->
+        <line id="inc-beam" x1="100" y1="120" x2="285" y2="120" stroke="white" stroke-width="3"/>
+        <!-- 色散光束群 -->
+        <line id="beam-r" x1="285" y1="120" x2="600" y2="60" stroke="#ef4444" stroke-width="2" opacity="0.9"/>
+        <line id="beam-o" x1="285" y1="120" x2="600" y2="70" stroke="#f97316" stroke-width="2" opacity="0.9"/>
+        <line id="beam-y" x1="285" y1="120" x2="600" y2="80" stroke="#f59e0b" stroke-width="2" opacity="0.9"/>
+        <line id="beam-g" x1="285" y1="120" x2="600" y2="95" stroke="#10b981" stroke-width="2" opacity="0.9"/>
+        <line id="beam-b" x1="285" y1="120" x2="600" y2="110" stroke="#3b82f6" stroke-width="2" opacity="0.9"/>
+        <line id="beam-i" x1="285" y1="120" x2="600" y2="125" stroke="#6366f1" stroke-width="2" opacity="0.9"/>
+        <line id="beam-v" x1="285" y1="120" x2="600" y2="140" stroke="#8b5cf6" stroke-width="2" opacity="0.9"/>
+        <!-- 标签 -->
+        <text x="50" y="118" font-size="12" fill="white" opacity="0.7">白光入射</text>
+        <text x="610" y="65" font-size="11" fill="#ef4444">红</text>
+        <text x="610" y="145" font-size="11" fill="#8b5cf6">紫</text>
       </svg>
+      <p style="font-size:13px;color:var(--dim);margin-top:12px;">💡 棱镜顶角越大、折射率越高，色散效果越明显。紫光偏折角始终大于红光。</p>
+    </div>
+  </div>
 
-      <p style="font-size:15px;color:var(--dim);">雨后空气中悬浮大量小水滴。阳光进入水滴时折射（色散），在水滴内壁全反射，再从水滴射出时再次折射。由于不同颜色折射率不同，出射方向不同，我们便看到了分散的七色弧带——彩虹。红色在外（约42°），紫色在内（约40°）。</p>
-      <div class="insight-box" style="margin-top:12px;">
-        <h4>🌦️ 彩虹出现的条件</h4>
-        <p>• 背对阳光，面向雨幕（光从背后照来，水滴在前方）</p>
-        <p>• 太阳高度角不超过42°（中午很少见彩虹，傍晚容易见）</p>
-        <p>• 空气中有足够多的小水滴</p>
+  <!-- 知识图谱 -->
+  <div class="section">
+    <div class="section-title">🕸️ 知识图谱</div>
+    <div id="knowledge-graph" class="card">
+      <h3>📊 光的色散知识关联图</h3>
+      <svg id="kg-svg"></svg>
+      <div class="kg-legend">
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#3b82f6;"></div>当前主题</div>
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#10b981;"></div>前置知识</div>
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#f97316;"></div>后续拓展</div>
       </div>
     </div>
-    <div class="card">
-      <h3>🎯 综合练习</h3>
-      <p><strong>Level 1：</strong>彩虹中红色在弧的哪侧？</p>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'du-q1')">A. 外侧（红色折射偏折小，出射角度大，在弧外侧）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'du-q1')">B. 内侧（这是紫色的位置）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'du-q1')">C. 最内侧（最内侧是紫色）</div>
-      <div id="du-q1" class="quiz-feedback"></div>
-      <br>
-      <p style="margin-top:12px;"><strong>Level 2：</strong>白色T恤在只有绿色光源的暗室里呈什么颜色？</p>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'du-q2')">A. 绿色（白色反射所有颜色，只有绿光，就只能反射绿光，看起来绿色）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'du-q2')">B. 白色（需要各种颜色的光混合才能看到白色）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'du-q2')">C. 黑色（白色不吸收绿光，会反射绿光，不是黑色）</div>
-      <div id="du-q2" class="quiz-feedback"></div>
-    </div>
-  </section>
+  </div>
 
-  <section class="section" id="summary">
-    <h2 class="section-title">📊 本课总结</h2>
-    <div class="card">
-      <h3>🗺️ 知识地图</h3>
-      <div style="background:var(--bg2);border-radius:10px;padding:18px;font-size:15px;color:var(--text);">
-        <p>光的色散</p>
-        <p style="padding-left:20px;">├── 白光=复色光：红橙黄绿蓝靛紫混合</p>
-        <p style="padding-left:20px;">├── 色散：不同颜色折射率不同→分散</p>
-        <p style="padding-left:40px;">红色偏折最小（外侧）；紫色偏折最大（内侧）</p>
-        <p style="padding-left:20px;">├── 彩虹：水滴折射+内反射+再折射</p>
-        <p style="padding-left:20px;">└── 物体颜色：由反射（或透过）的光决定</p>
-      </div>
+  <!-- 测验 -->
+  <div class="section" id="quiz">
+    <div class="section-title">✍️ 课堂测验</div>
+    <div class="card" id="q1">
+      <h3>第1题</h3>
+      <p>白光通过棱镜发生色散后，偏折角最大的是：</p>
+      <button class="quiz-option" onclick="checkQ(this,'q1',false)">A. 红光</button>
+      <button class="quiz-option" onclick="checkQ(this,'q1',false)">B. 黄光</button>
+      <button class="quiz-option" onclick="checkQ(this,'q1',false)">C. 绿光</button>
+      <button class="quiz-option" onclick="checkQ(this,'q1',true)">D. 紫光</button>
+      <div class="quiz-feedback" id="fb-q1"></div>
     </div>
-    <div class="card">
-      <h3>🔮 后测</h3>
-      <p>白光通过棱镜发生色散，折射偏转角最大的颜色是：</p>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'sum-q1')">A. 紫色（折射率最大，偏折最大）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'sum-q1')">B. 红色（红色折射率最小，偏折最小）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'sum-q1')">C. 黄色（黄色在中间位置）</div>
-      <div id="sum-q1" class="quiz-feedback"></div>
+    <div class="card" id="q2">
+      <h3>第2题</h3>
+      <p>关于红外线，以下说法正确的是：</p>
+      <button class="quiz-option" onclick="checkQ(this,'q2',false)">A. 红外线能使荧光物质发光</button>
+      <button class="quiz-option" onclick="checkQ(this,'q2',true)">B. 红外线具有显著的热效应</button>
+      <button class="quiz-option" onclick="checkQ(this,'q2',false)">C. 红外线可杀菌消毒</button>
+      <button class="quiz-option" onclick="checkQ(this,'q2',false)">D. 红外线频率高于紫外线</button>
+      <div class="quiz-feedback" id="fb-q2"></div>
     </div>
-  </section>
-
-  <footer>
-    <p>Made with <strong>教我学 TeachAny</strong> · <a href="https://github.com/weponusa/teachany" style="color:var(--primary);">GitHub</a></p>
-    <p style="margin-top:8px;">Built on ABT Narrative · Bloom's Taxonomy · Scaffolding · Cognitive Load Theory</p>
-  </footer>
+    <div class="card" id="q3">
+      <h3>第3题</h3>
+      <p>彩虹中，从外弧到内弧，颜色顺序是：</p>
+      <button class="quiz-option" onclick="checkQ(this,'q3',true)">A. 红→橙→黄→绿→蓝→靛→紫</button>
+      <button class="quiz-option" onclick="checkQ(this,'q3',false)">B. 紫→靛→蓝→绿→黄→橙→红</button>
+      <button class="quiz-option" onclick="checkQ(this,'q3',false)">C. 红→黄→绿→蓝→紫</button>
+      <button class="quiz-option" onclick="checkQ(this,'q3',false)">D. 随机排列</button>
+      <div class="quiz-feedback" id="fb-q3"></div>
+    </div>
+  </div>
 </div>
 
-<div class="audio-bar">
-  <button class="ab-btn" id="abPrev">⏮</button>
-  <button class="ab-btn" id="abPlay">▶</button>
-  <button class="ab-btn" id="abNext">⏭</button>
-  <div class="ab-info">
-    <div class="ab-title" id="abTitle">🎵 光的色散 — 点击播放课程讲解</div>
-    <div class="ab-progress-wrap" id="abProgressWrap"><div class="ab-progress" id="abProgress"></div></div>
-    <div class="ab-time" id="abTime">00:00 / 00:00</div>
-  </div>
-  <input type="range" class="ab-vol" id="abVol" min="0" max="1" step="0.05" value="0.8">
+<div class="bottom-bar">
+  <button class="btn btn-outline" onclick="history.back()">← 返回</button>
+  <button class="btn btn-primary" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑ 返回顶部</button>
 </div>
 
 <script>
-function checkAnswer(el,isCorrect,feedbackId){
-  const parent=el.parentElement;const options=parent.querySelectorAll('.quiz-option');const feedback=document.getElementById(feedbackId);
-  if(parent.dataset.answered)return;parent.dataset.answered='true';
-  options.forEach(opt=>{opt.style.pointerEvents='none';opt.style.opacity='0.6';});
-  if(isCorrect){el.classList.add('correct');el.style.opacity='1';feedback.innerHTML='✅ <strong>正确！</strong>色散规律掌握得很好！';feedback.style.background='rgba(34,197,94,0.1)';feedback.style.color='#15803d';}
-  else{el.classList.add('wrong');el.style.opacity='1';options.forEach(opt=>{if(opt.onclick&&opt.onclick.toString().includes('true')){opt.classList.add('correct');opt.style.opacity='1';}});feedback.innerHTML='❌ <strong>再想想。</strong>红色偏折最小（外侧），紫色偏折最大（内侧）。';feedback.style.background='rgba(239,68,68,0.08)';feedback.style.color='#b91c1c';}
-  feedback.classList.add('show');
+// 棱镜色散互动实验
+const prismAngleSlider = document.getElementById('prism-angle');
+const incAngleSlider = document.getElementById('inc-angle');
+
+// 各色折射率（近似玻璃值）
+const n = {r:1.513, o:1.515, y:1.517, g:1.522, b:1.528, i:1.532, v:1.538};
+
+function calcDeviation(alpha_deg, theta_deg, n_val) {
+  const alpha = alpha_deg * Math.PI / 180;
+  const theta = theta_deg * Math.PI / 180;
+  // 折射定律：sin(r1) = sin(theta)/n
+  const sinR1 = Math.sin(theta) / n_val;
+  if (sinR1 > 1) return null;
+  const r1 = Math.asin(sinR1);
+  const r2 = alpha - r1;
+  if (r2 < 0 || r2 >= Math.PI/2) return null;
+  const sinTheta2 = n_val * Math.sin(r2);
+  if (sinTheta2 > 1) return null;
+  const theta2 = Math.asin(sinTheta2);
+  const delta = theta + theta2 - alpha;
+  return delta * 180 / Math.PI;
 }
-const tracks=[{title:'引入：白光是什么颜色',src:'tts/s01.mp3'},{title:'牛顿棱镜实验',src:'tts/s02.mp3'},{title:'七色光的顺序',src:'tts/s03.mp3'},{title:'物体颜色的原理',src:'tts/s04.mp3'},{title:'彩虹的形成原理',src:'tts/s05.mp3'},{title:'光谱与不可见光',src:'tts/s06.mp3'},{title:'总结与后测',src:'tts/s07.mp3'}];
-let cur=0;const audio=new Audio();
-const abPlay=document.getElementById('abPlay'),abTitle=document.getElementById('abTitle'),abProgress=document.getElementById('abProgress'),abTime=document.getElementById('abTime'),abVol=document.getElementById('abVol');
-function loadTrack(i){cur=i;audio.src=tracks[i].src;abTitle.textContent='🎵 '+tracks[i].title;}
-function fmt(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(Math.floor(s%60)).padStart(2,'0');}
-audio.addEventListener('timeupdate',()=>{if(audio.duration){abProgress.style.width=(audio.currentTime/audio.duration*100)+'%';abTime.textContent=fmt(audio.currentTime)+' / '+fmt(audio.duration);}});
-audio.addEventListener('ended',()=>{if(cur<tracks.length-1){loadTrack(cur+1);audio.play();}else abPlay.textContent='▶';});
-abPlay.addEventListener('click',()=>{if(audio.paused){audio.play();abPlay.textContent='⏸';}else{audio.pause();abPlay.textContent='▶';}});
-document.getElementById('abPrev').addEventListener('click',()=>{if(cur>0){loadTrack(cur-1);audio.play();abPlay.textContent='⏸';}});
-document.getElementById('abNext').addEventListener('click',()=>{if(cur<tracks.length-1){loadTrack(cur+1);audio.play();abPlay.textContent='⏸';}});
-document.getElementById('abProgressWrap').addEventListener('click',e=>{if(audio.duration){const r=e.currentTarget.getBoundingClientRect();audio.currentTime=(e.clientX-r.left)/r.width*audio.duration;}});
-abVol.addEventListener('input',()=>{audio.volume=abVol.value;});
-loadTrack(0);
+
+function updatePrism() {
+  const alpha = parseFloat(prismAngleSlider.value);
+  const theta = parseFloat(incAngleSlider.value);
+  document.getElementById('pa-val').textContent = alpha;
+  document.getElementById('ia-val').textContent = theta;
+
+  const dRed = calcDeviation(alpha, theta, n.r);
+  const dViolet = calcDeviation(alpha, theta, n.v);
+
+  if (dRed !== null && dViolet !== null) {
+    document.getElementById('red-dev').textContent = dRed.toFixed(1);
+    document.getElementById('violet-dev').textContent = dViolet.toFixed(1);
+    document.getElementById('disp-angle').textContent = (dViolet - dRed).toFixed(1);
+
+    // 更新SVG光束方向（简化可视化）
+    const spread = (dViolet - dRed);
+    const beams = ['beam-r','beam-o','beam-y','beam-g','beam-b','beam-i','beam-v'];
+    beams.forEach((id, i) => {
+      const frac = i / 6;
+      const yEnd = 60 + frac * (80 + spread * 3);
+      document.getElementById(id).setAttribute('y2', yEnd);
+    });
+  }
+}
+
+prismAngleSlider.addEventListener('input', updatePrism);
+incAngleSlider.addEventListener('input', updatePrism);
+
+// D3 知识图谱
+(function() {
+  const colorMap = {current:"#3b82f6", prereq:"#10b981", next:"#f97316"};
+  const nodes = [
+    {id:"光的色散", type:"current"},
+    {id:"光的折射", type:"prereq"},
+    {id:"光的传播", type:"prereq"},
+    {id:"折射率", type:"prereq"},
+    {id:"彩虹形成", type:"next"},
+    {id:"红外线", type:"next"},
+    {id:"紫外线", type:"next"},
+    {id:"光谱分析", type:"next"},
+    {id:"颜色混合", type:"next"},
+    {id:"棱镜实验", type:"current"},
+  ];
+  const links = [
+    {source:"光的折射",target:"光的色散"},
+    {source:"光的传播",target:"光的折射"},
+    {source:"折射率",target:"光的色散"},
+    {source:"光的色散",target:"彩虹形成"},
+    {source:"光的色散",target:"红外线"},
+    {source:"光的色散",target:"紫外线"},
+    {source:"光的色散",target:"光谱分析"},
+    {source:"光的色散",target:"颜色混合"},
+    {source:"棱镜实验",target:"光的色散"},
+  ];
+
+  const svgEl = document.getElementById('kg-svg');
+  const W = svgEl.clientWidth || 700;
+  const H = 360;
+  const svg = d3.select('#kg-svg').attr('viewBox',`0 0 ${W} ${H}`);
+  const sim = d3.forceSimulation(nodes)
+    .force('link',d3.forceLink(links).id(d=>d.id).distance(100))
+    .force('charge',d3.forceManyBody().strength(-280))
+    .force('center',d3.forceCenter(W/2,H/2))
+    .force('collision',d3.forceCollide(50));
+
+  svg.append('defs').append('marker').attr('id','arr').attr('viewBox','0 -4 8 8')
+    .attr('refX',18).attr('refY',0).attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto')
+    .append('path').attr('d','M0,-4L8,0L0,4').attr('fill','#94a3b8');
+
+  const link = svg.append('g').selectAll('line').data(links).enter().append('line')
+    .attr('stroke','#cbd5e1').attr('stroke-width',1.5).attr('marker-end','url(#arr)');
+
+  const node = svg.append('g').selectAll('g').data(nodes).enter().append('g').attr('class','node')
+    .call(d3.drag()
+      .on('start',(e,d)=>{if(!e.active)sim.alphaTarget(0.3).restart();d.fx=d.x;d.fy=d.y;})
+      .on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y;})
+      .on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}));
+
+  node.append('circle').attr('r',d=>d.type==='current'?28:20)
+    .attr('fill',d=>colorMap[d.type]).attr('opacity',0.85).attr('stroke','#fff').attr('stroke-width',2);
+
+  node.append('text').text(d=>d.id).attr('dy','0.35em').attr('text-anchor','middle')
+    .attr('fill','#fff').attr('font-size',d=>d.id.length>4?10:12).attr('font-weight','700');
+
+  sim.on('tick',()=>{
+    link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+    node.attr('transform',d=>`translate(${Math.max(30,Math.min(W-30,d.x))},${Math.max(30,Math.min(H-30,d.y))})`);
+  });
+})();
+
+function checkQ(btn,qid,isCorrect) {
+  const card = document.getElementById(qid);
+  card.querySelectorAll('.quiz-option').forEach(o=>o.style.pointerEvents='none');
+  const fb = document.getElementById('fb-'+qid);
+  if(isCorrect){btn.classList.add('correct');fb.style.background='rgba(16,185,129,0.1)';fb.style.color='#065f46';fb.textContent='✅ 正确！';}
+  else{btn.classList.add('wrong');fb.style.background='rgba(239,68,68,0.08)';fb.style.color='#991b1b';fb.textContent='❌ 错误，请复习相关内容。';}
+  fb.classList.add('show');
+}
 </script>
 </body>
 </html>
