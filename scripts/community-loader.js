@@ -841,7 +841,7 @@ function createShareDialog(options = {}) {
   return { close };
 }
 
-/* ─── 社区课件卡片渲染（用于知识树 tooltip）── */
+/* ─── 社区课件卡片渲染（用于知识地图 tooltip）── */
 
 /**
  * 在 tooltip 中渲染社区课件列表
@@ -895,7 +895,7 @@ function renderCommunityCoursesInTooltip(nodeId, containerEl, index) {
             onComplete: () => {
               dlBtn.textContent = '✅ 已下载';
               dlBtn.className = 'ta-download-btn downloaded';
-              // 刷新知识树
+              // 刷新知识地图
               if (typeof window.teachanyOnCourseImported === 'function') {
                 window.teachanyOnCourseImported(nodeId);
               }

@@ -16,7 +16,7 @@
 ┌──────────────────────────────────────────────────┐
 │  GitHub Actions: community-review.yml            │
 │  · 校验 JSON 必填字段                              │
-│  · 校验 node_id 是否存在于知识树                     │
+│  · 校验 node_id 是否存在于知识地图                     │
 │  · 自动打标签: community-courseware + needs-review  │
 └──────────────────────────────────────────────────┘
         ↓
@@ -29,7 +29,7 @@
 │  → 直接 Merge PR                                │
 │  → community-publish.yml 自动触发               │
 │  → 更新 community/index.json                    │
-│  → 课件出现在 Gallery 社区区 + 知识树弹窗          │
+│  → 课件出现在 Gallery 社区区 + 知识地图弹窗          │
 │                                                 │
 │  路径 B: 提升为官方课件                            │
 │  管理员打标签: promote-to-official               │
@@ -69,7 +69,7 @@
 
 - [ ] 课件在浏览器中正常打开
 - [ ] meta 标签完整且有效（subject、grade、node_id、author、version）
-- [ ] node_id 匹配已有知识树节点
+- [ ] node_id 匹配已有知识地图节点
 - [ ] 包含学习目标和至少 1 个测评
 - [ ] 音频/视频资源可正常播放
 - [ ] 互动元素功能正常
@@ -107,7 +107,7 @@ replaces: examples/math-old-course  (仅 replace 时填写)
 
 **功能**：
 1. 校验 JSON 必填字段（id, node_id, name, subject, grade）
-2. 校验 node_id 是否存在于 `data/trees/` 目录下的知识树 JSON 中
+2. 校验 node_id 是否存在于 `data/trees/` 目录下的知识地图 JSON 中
 3. 校验学科名称是否合法
 4. 若 .teachany 文件存在，检查文件大小
 5. 自动打标签：`community-courseware` + `needs-review`
@@ -147,7 +147,7 @@ community/pending/{id}.teachany ← 课件包（可选）
 community/index.json            ← 路径 A：社区课件（自动更新）
          ↓ (管理员打 promote 标签)
 examples/{subject}-{name}/      ← 路径 B：官方课件（自动解包）
-data/trees/{subject}-{level}.json ← 知识树节点自动更新
+data/trees/{subject}-{level}.json ← 知识地图节点自动更新
 data/ratings.json                ← 评分记录自动添加
 index.html                      ← Gallery 卡片（需手动或后续自动化）
 ```
@@ -171,7 +171,7 @@ The TeachAny Community Courseware Review Mechanism provides three approval paths
 | Path | Label | Result |
 |:---|:---|:---|
 | **A. Approve as Community** | `approved` | Added to `community/index.json`, visible in Gallery community section |
-| **B. Promote to Official** | `promote-to-official` | Extracted to `examples/`, knowledge tree + ratings updated |
+| **B. Promote to Official** | `promote-to-official` | Extracted to `examples/`, knowledge map + ratings updated |
 | **C. Replace Official** | `replace-official` | Replaces existing official courseware with the new submission |
 
 ### Workflow Summary
@@ -181,7 +181,7 @@ The TeachAny Community Courseware Review Mechanism provides three approval paths
 3. **Admin** reviews the PR, tests the courseware, and applies the appropriate label
 4. **Admin** merges the PR
 5. **community-publish.yml** updates `community/index.json` (Path A)
-6. **admin-promote.yml** extracts to `examples/`, updates knowledge tree, ratings (Path B/C)
+6. **admin-promote.yml** extracts to `examples/`, updates knowledge map, ratings (Path B/C)
 
 ### Label Reference
 

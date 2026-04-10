@@ -8,7 +8,7 @@
 
 ### Overview
 
-TeachAny Community Courseware allows anyone to share their interactive coursewares with all TeachAny users. Shared coursewares appear directly in the Knowledge Tree, Learning Path, and Gallery — alongside official courses.
+TeachAny Community Courseware allows anyone to share their interactive coursewares with all TeachAny users. Shared coursewares appear directly in the Knowledge Map, Learning Path, and Gallery — alongside official courses.
 
 ### How It Works
 
@@ -24,7 +24,7 @@ GitHub Actions validates metadata + adds labels
 Admin reviews the courseware and applies a label:
         │
         ├── "approved"             → Add to community index (community/index.json)
-        ├── "promote-to-official"  → Extract to examples/, update knowledge tree
+        ├── "promote-to-official"  → Extract to examples/, update knowledge map
         └── "replace-official"     → Replace existing official courseware
         ↓
 Admin merges the PR → automation handles the rest 🎉
@@ -36,7 +36,7 @@ Admin merges the PR → automation handles the rest 🎉
    - Single-file HTML or `.teachany` package
    - Must include: learning objectives, at least 1 knowledge module, at least 1 assessment
    - Must follow [TeachAny Design System](../docs/design-system.md)
-   - Must declare `<meta name="teachany-node">` matching a knowledge tree node ID
+   - Must declare `<meta name="teachany-node">` matching a knowledge map node ID
 
 2. **Metadata Requirements**
    Your courseware must include these HTML meta tags:
@@ -63,7 +63,7 @@ Admin merges the PR → automation handles the rest 🎉
 Maintainers will check:
 - [ ] Courseware opens correctly in browser
 - [ ] Required meta tags present and valid
-- [ ] `node_id` matches an existing knowledge tree node
+- [ ] `node_id` matches an existing knowledge map node
 - [ ] Contains learning objectives and assessment
 - [ ] No broken links or missing assets
 - [ ] Follows TeachAny design system colors
@@ -71,7 +71,7 @@ Maintainers will check:
 
 ### Multiple Coursewares Per Node
 
-Multiple users can submit coursewares for the same knowledge node. All approved coursewares coexist and are ranked by community likes. The top 5 per node are displayed in the Knowledge Tree tooltip.
+Multiple users can submit coursewares for the same knowledge node. All approved coursewares coexist and are ranked by community likes. The top 5 per node are displayed in the Knowledge Map tooltip.
 
 ### Admin Review Guide
 
@@ -95,7 +95,7 @@ Multiple users can submit coursewares for the same knowledge node. All approved 
 2. Add label: `approved`
 3. Merge the PR
 4. `community-publish.yml` automatically updates `community/index.json`
-5. Courseware appears in Gallery (community section) and Knowledge Tree tooltip
+5. Courseware appears in Gallery (community section) and Knowledge Map tooltip
 
 **Path B — Promote to Official Courseware:**
 1. Review the courseware quality (higher bar)
@@ -115,7 +115,7 @@ Multiple users can submit coursewares for the same knowledge node. All approved 
 4. `admin-promote.yml` automatically:
    - Backs up old courseware to `community/archive/`
    - Extracts new courseware to `examples/{course-id}/`
-   - Updates knowledge tree references
+   - Updates knowledge map references
 5. **Manual step**: Update Gallery card in `index.html`
 
 ---
@@ -124,7 +124,7 @@ Multiple users can submit coursewares for the same knowledge node. All approved 
 
 ### 概述
 
-TeachAny 社区课件共享允许任何人将自己制作的互动课件分享给所有 TeachAny 用户。共享的课件会直接出现在知识树、学习路径和 Gallery 中，与官方课件并列展示。
+TeachAny 社区课件共享允许任何人将自己制作的互动课件分享给所有 TeachAny 用户。共享的课件会直接出现在知识地图、学习路径和 Gallery 中，与官方课件并列展示。
 
 ### 工作流程
 
@@ -152,7 +152,7 @@ GitHub Actions 自动校验元数据 + 打标签
    - 单文件 HTML 或 `.teachany` 课件包
    - 必须包含：学习目标、至少 1 个知识模块、至少 1 个测评
    - 必须遵循 [TeachAny 设计系统](../docs/design-system.md)
-   - 必须声明 `<meta name="teachany-node">` 并匹配知识树节点 ID
+   - 必须声明 `<meta name="teachany-node">` 并匹配知识地图节点 ID
 
 2. **元数据要求**
    课件中必须包含以下 HTML meta 标签：
@@ -179,7 +179,7 @@ GitHub Actions 自动校验元数据 + 打标签
 维护者将检查：
 - [ ] 课件在浏览器中正常打开
 - [ ] 必需的 meta 标签存在且有效
-- [ ] `node_id` 匹配已有的知识树节点
+- [ ] `node_id` 匹配已有的知识地图节点
 - [ ] 包含学习目标和测评
 - [ ] 无损坏的链接或缺失的资源
 - [ ] 遵循 TeachAny 设计系统配色
@@ -187,7 +187,7 @@ GitHub Actions 自动校验元数据 + 打标签
 
 ### 同节点多课件
 
-多个用户可以为同一个知识节点提交课件。所有通过审核的课件共存，并按社区点赞数排名。知识树弹窗中显示每个节点前 5 名的课件。
+多个用户可以为同一个知识节点提交课件。所有通过审核的课件共存，并按社区点赞数排名。知识地图弹窗中显示每个节点前 5 名的课件。
 
 ### 管理员审核指南
 
@@ -211,7 +211,7 @@ GitHub Actions 自动校验元数据 + 打标签
 2. 打标签：`approved`
 3. 合并 PR
 4. `community-publish.yml` 自动更新 `community/index.json`
-5. 课件出现在 Gallery 社区区域和知识树弹窗中
+5. 课件出现在 Gallery 社区区域和知识地图弹窗中
 
 **路径 B — 提升为官方课件：**
 1. 审核课件质量（更高标准）
@@ -231,7 +231,7 @@ GitHub Actions 自动校验元数据 + 打标签
 4. `admin-promote.yml` 自动执行：
    - 将旧课件备份到 `community/archive/`
    - 解压新课件到 `examples/{课件ID}/`
-   - 更新知识树引用
+   - 更新知识地图引用
 5. **需手动**：更新 `index.html` 中的 Gallery 卡片
 
 ---
