@@ -5,226 +5,481 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="teachany-node" content="energy-conservation">
 <meta name="teachany-subject" content="physics">
-<meta name="teachany-domain" content="mechanics">
+<meta name="teachany-domain" content="energy">
 <meta name="teachany-grade" content="9">
 <meta name="teachany-difficulty" content="3">
-<meta name="teachany-version" content="1.0">
+<meta name="teachany-version" content="2.0">
 <meta name="teachany-author" content="weponusa">
-<title>能量守恒定律 · 教学课件</title>
+<title>能量守恒 · 教学课件</title>
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 <style>
-:root{--bg:#f8fafc;--bg2:#f0f4f8;--bg3:#e2e8f0;--primary:#3b82f6;--secondary:#06b6d4;--accent:#f59e0b;--success:#22c55e;--danger:#ef4444;--purple:#8b5cf6;--teal:#14b8a6;--text:#1e293b;--dim:#64748b;--dimmer:#94a3b8;--card:#ffffff;--border:rgba(0,0,0,0.06);}
+:root{--bg:#f8fafc;--bg2:#f0f4f8;--bg3:#e2e8f0;--primary:#3b82f6;--secondary:#06b6d4;--accent:#f59e0b;--success:#10b981;--danger:#ef4444;--purple:#8b5cf6;--teal:#14b8a6;--text:#1e293b;--dim:#64748b;--dimmer:#94a3b8;--card:#ffffff;--border:rgba(0,0,0,0.06);}
 *{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
 body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.8;padding-bottom:70px;}
-body::before{content:'';position:fixed;inset:0;background:linear-gradient(160deg,rgba(139,92,246,0.03) 0%,rgba(59,130,246,0.03) 50%,rgba(6,182,212,0.02) 100%);pointer-events:none;z-index:-1;}
-.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:58px;gap:4px;overflow-x:auto;box-shadow:0 1px 12px rgba(0,0,0,0.04);}
-.nav-brand{font-size:18px;font-weight:800;margin-right:18px;white-space:nowrap;background:linear-gradient(135deg,var(--purple),var(--primary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:10px;font-size:13.5px;font-weight:600;transition:all 0.2s;white-space:nowrap;}
-.nav a:hover{color:var(--purple);background:rgba(139,92,246,0.08);}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:58px;gap:4px;overflow-x:auto;}
+.nav-brand{font-size:18px;font-weight:800;margin-right:18px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:10px;font-size:13.5px;font-weight:600;transition:all .2s;white-space:nowrap;}
+.nav a:hover{color:var(--primary);background:rgba(59,130,246,.08);}
 .container{max-width:1060px;margin:0 auto;padding:78px 24px 60px;}
 .hero{text-align:center;padding:40px 0 30px;}
-.hero h1{font-size:40px;font-weight:800;line-height:1.3;background:linear-gradient(135deg,var(--purple),var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;}
+.hero h1{font-size:40px;font-weight:800;line-height:1.3;background:linear-gradient(135deg,var(--accent),var(--success),var(--primary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;}
 .hero .subtitle{font-size:17px;color:var(--dim);margin-bottom:16px;}
 .hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
 .hero .meta span{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:5px 16px;font-size:13px;font-weight:600;color:var(--dim);}
 .section{margin:44px 0;}
-.section-title{font-size:24px;font-weight:800;margin-bottom:18px;padding-left:16px;border-left:4px solid transparent;border-image:linear-gradient(to bottom,var(--purple),var(--primary)) 1;}
-.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px 26px;margin-bottom:18px;box-shadow:0 2px 12px rgba(0,0,0,0.04);transition:transform 0.2s,box-shadow 0.2s;}
-.card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(139,92,246,0.08);}
+.section-title{font-size:24px;font-weight:800;margin-bottom:18px;padding-left:16px;border-left:4px solid transparent;border-image:linear-gradient(to bottom,var(--accent),var(--success)) 1;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px 26px;margin-bottom:18px;box-shadow:0 2px 12px rgba(0,0,0,.04);transition:transform .2s,box-shadow .2s;}
+.card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(245,158,11,.08);}
 .card h3{font-size:18px;font-weight:700;margin-bottom:10px;}
 .card p,.card li{font-size:15.5px;line-height:1.85;color:var(--dim);}
 .grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;}
 .grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;}
 .obj-card{text-align:center;padding:26px 18px;border-top:3px solid transparent;}
-.obj-card:nth-child(1){border-top-color:var(--purple);}
-.obj-card:nth-child(2){border-top-color:var(--primary);}
-.obj-card:nth-child(3){border-top-color:var(--secondary);}
-.highlight{color:var(--purple);font-weight:700;}
-.quiz-option{display:block;padding:14px 18px;margin:8px 0;border-radius:12px;background:var(--bg);border:2px solid var(--border);cursor:pointer;transition:all 0.25s;font-size:15px;font-weight:600;color:var(--text);}
-.quiz-option:hover{background:rgba(139,92,246,0.05);border-color:var(--purple);transform:translateX(3px);}
-.quiz-option.correct{background:rgba(34,197,94,0.1);border-color:var(--success);color:#15803d;}
-.quiz-option.wrong{background:rgba(239,68,68,0.08);border-color:var(--danger);color:#b91c1c;}
+.obj-card:nth-child(1){border-top-color:var(--accent);}
+.obj-card:nth-child(2){border-top-color:var(--success);}
+.obj-card:nth-child(3){border-top-color:var(--primary);}
+.obj-card .icon{font-size:36px;margin-bottom:10px;}
+.highlight{color:var(--accent);font-weight:700;}
+.quiz-option{display:block;padding:14px 18px;margin:8px 0;border-radius:12px;background:var(--bg);border:2px solid var(--border);cursor:pointer;transition:all .25s;font-size:15px;font-weight:600;color:var(--text);}
+.quiz-option:hover{background:rgba(245,158,11,.05);border-color:var(--accent);}
+.quiz-option.correct{background:rgba(16,185,129,.1);border-color:var(--success);color:#065f46;}
+.quiz-option.wrong{background:rgba(239,68,68,.08);border-color:var(--danger);color:#b91c1c;}
 .quiz-feedback{padding:12px 16px;border-radius:10px;margin-top:10px;font-size:14.5px;display:none;}
-.quiz-feedback.show{display:block;animation:slideUp 0.3s ease;}
-@keyframes slideUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-.insight-box{background:linear-gradient(135deg,rgba(139,92,246,0.06),rgba(59,130,246,0.06));border-left:4px solid var(--purple);padding:18px 22px;border-radius:0 12px 12px 0;margin:16px 0;}
-.insight-box h4{color:var(--purple);font-size:16px;font-weight:700;margin-bottom:8px;}
-.formula-box{background:linear-gradient(135deg,rgba(139,92,246,0.1),rgba(59,130,246,0.06));border:2px solid rgba(139,92,246,0.25);border-radius:14px;padding:20px 24px;margin:16px 0;text-align:center;}
-.formula{font-size:22px;font-weight:800;color:var(--purple);letter-spacing:1px;}
-.formula-note{font-size:13px;color:var(--dim);margin-top:6px;}
-.energy-types{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:16px 0;}
-.energy-type{background:var(--bg2);border-radius:10px;padding:14px;text-align:center;border:2px solid var(--border);}
+.quiz-feedback.show{display:block;animation:slideUp .3s ease;}
+@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.formula-box{background:linear-gradient(135deg,rgba(245,158,11,.08),rgba(16,185,129,.08));border:2px solid rgba(245,158,11,.25);border-radius:12px;padding:20px 24px;margin:16px 0;text-align:center;}
+.formula-box .formula{font-size:22px;font-weight:800;color:var(--accent);margin:8px 0;}
+.formula-box .hint{font-size:13px;color:var(--dim);margin-top:6px;}
+.svg-wrap{background:var(--bg2);border-radius:12px;padding:16px;margin:16px 0;text-align:center;}
+.tag{display:inline-block;background:rgba(245,158,11,.1);color:var(--accent);font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;margin:2px;}
+.insight-box{background:linear-gradient(135deg,rgba(16,185,129,.06),rgba(245,158,11,.06));border-left:4px solid var(--success);padding:18px 22px;border-radius:0 12px 12px 0;margin:16px 0;}
+.insight-box h4{color:var(--success);font-size:16px;font-weight:700;margin-bottom:8px;}
 footer{text-align:center;padding:36px 0;color:var(--dimmer);font-size:13px;border-top:1px solid var(--border);margin-top:50px;}
-@media(max-width:600px){.hero h1{font-size:28px;}.section-title{font-size:21px;}.card{padding:18px;}}
-.audio-bar{position:fixed;bottom:0;left:0;right:0;z-index:500;background:rgba(139,92,246,0.95);backdrop-filter:blur(12px);border-top:2px solid rgba(255,255,255,0.3);padding:10px 24px;display:flex;align-items:center;gap:14px;}
-.audio-bar .ab-btn{width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;background:#fff;color:#8b5cf6;font-size:16px;display:flex;align-items:center;justify-content:center;}
+@media(max-width:600px){.hero h1{font-size:28px}.section-title{font-size:21px}.card{padding:18px}}
+.audio-bar{position:fixed;bottom:0;left:0;right:0;z-index:500;background:rgba(245,158,11,0.95);backdrop-filter:blur(12px);border-top:2px solid rgba(255,255,255,0.3);padding:10px 24px;display:flex;align-items:center;gap:14px;}
+.audio-bar .ab-btn{width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;background:#fff;color:#f59e0b;font-size:16px;display:flex;align-items:center;justify-content:center;}
 .audio-bar .ab-info{flex:1;min-width:0;}
 .audio-bar .ab-title{font-size:13px;font-weight:700;color:#fff;}
 .audio-bar .ab-progress-wrap{height:4px;background:rgba(255,255,255,0.3);border-radius:2px;margin-top:4px;cursor:pointer;}
 .audio-bar .ab-progress{height:100%;background:#fff;border-radius:2px;width:0%;}
 .audio-bar .ab-time{font-size:11px;color:rgba(255,255,255,0.8);margin-top:2px;}
 .audio-bar .ab-vol{width:60px;accent-color:#fff;}
+/* 生活场景 */
+#life-scene{background:linear-gradient(135deg,#0f172a,#1c1917);border-radius:16px;padding:24px;margin:20px 0;}
+#life-scene h3{font-size:20px;font-weight:800;color:#fcd34d;margin-bottom:16px;text-align:center;}
+/* 能量转化动画 */
+@keyframes energyFlow{0%{opacity:0;transform:scale(0.8)}50%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(0.8)}}
+@keyframes ballFall{0%{transform:translateY(0)}50%{transform:translateY(100px)}100%{transform:translateY(0)}}
+@keyframes solarPanel{0%,100%{fill:rgba(59,130,246,0.3)}50%{fill:rgba(59,130,246,0.8)}}
+/* 互动实验台 */
+#interactive-lab{background:linear-gradient(135deg,#fffbeb,#fef3c7);border-radius:16px;padding:28px;margin:20px 0;}
+#interactive-lab h3{font-size:20px;font-weight:800;color:var(--accent);margin-bottom:20px;text-align:center;}
+.lab-container{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.lab-panel{background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.06);}
+.lab-panel h4{font-size:16px;font-weight:700;color:var(--text);margin-bottom:14px;}
+@media(max-width:700px){.lab-container{grid-template-columns:1fr;}}
+/* 知识图谱 */
+#knowledge-graph{background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:16px;padding:28px;margin:20px 0;}
+#knowledge-graph h3{font-size:20px;font-weight:800;color:var(--primary);margin-bottom:16px;text-align:center;}
+#kg-svg{width:100%;border-radius:12px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.06);}
+.kg-legend{display:flex;gap:20px;justify-content:center;margin-top:12px;flex-wrap:wrap;}
+.kg-legend-item{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;}
+.kg-dot{width:12px;height:12px;border-radius:50%;}
 </style>
 </head>
 <body>
 <nav class="nav">
   <span class="nav-brand">🎓 教我学 TeachAny</span>
   <a href="#hero">首页</a>
-  <a href="#goals">目标</a>
-  <a href="#module-1">能量形式</a>
-  <a href="#module-2">守恒定律</a>
-  <a href="#module-3">应用</a>
-  <a href="#deep-understanding">深层</a>
+  <a href="#life-scene">生活场景</a>
+  <a href="#module-1">能量转化</a>
+  <a href="#module-2">能量守恒定律</a>
+  <a href="#module-3">效率计算</a>
+  <a href="#interactive-lab">互动实验</a>
+  <a href="#knowledge-graph">知识图谱</a>
   <a href="#summary">总结</a>
 </nav>
 <div class="container">
   <section class="hero" id="hero">
-    <h1>♾️ 能量守恒定律</h1>
-    <p class="subtitle">自然界最基本的定律——能量不会凭空创生，也不会凭空消灭</p>
+    <h1>⚡ 能量守恒定律</h1>
+    <p class="subtitle">能量转化 · 守恒定律 · 效率 · 永动机不存在</p>
     <div class="meta">
-      <span>🔬 物理</span><span>🎓 九年级</span><span>⏱️ 约 45 分钟</span><span>🎯 新授课</span><span>⭐ 难度3</span>
+      <span>⚡ 物理</span><span>🎓 9年级</span><span>⏱️ 约45分钟</span><span>🎯 核心原理</span><span>🌍 物理基石</span>
     </div>
   </section>
 
-  <section class="section" id="goals">
+  <section class="section">
     <h2 class="section-title">🎯 学习目标</h2>
     <div class="grid-3">
-      <div class="card obj-card"><div class="icon">🌐</div><h4>目标一：能量形式</h4><p>能列举常见的能量形式，理解能量的多样性</p></div>
-      <div class="card obj-card"><div class="icon">♾️</div><h4>目标二：守恒定律</h4><p>能陈述能量守恒定律，理解"转化"与"守恒"的区别</p></div>
-      <div class="card obj-card"><div class="icon">🚫</div><h4>目标三：永动机</h4><p>能解释为什么永动机不可能实现，运用守恒定律分析问题</p></div>
+      <div class="card obj-card"><div class="icon">🔄</div><h4>能量转化</h4><p>认识各种能量形式，理解不同形式能量之间的转化</p></div>
+      <div class="card obj-card"><div class="icon">⚖️</div><h4>守恒定律</h4><p>理解并掌握能量守恒定律，知道其普遍意义</p></div>
+      <div class="card obj-card"><div class="icon">📊</div><h4>效率计算</h4><p>理解能量转化效率的概念，会计算机械效率和电效率</p></div>
+    </div>
+  </section>
+
+  <!-- 生活场景动画 -->
+  <section class="section" id="life-scene">
+    <h2 class="section-title">🎬 生活场景动画</h2>
+    <div id="life-scene">
+      <h3>能量在各种形式间不断转化</h3>
+      <svg width="100%" height="280" viewBox="0 0 700 280" preserveAspectRatio="xMidYMid meet">
+        <!-- 能量链：太阳能→电能→机械能→热能 -->
+        <!-- 太阳 -->
+        <circle cx="70" cy="100" r="30" fill="#fbbf24" opacity="0.9">
+          <animate attributeName="r" values="28;32;28" dur="2s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite"/>
+        </circle>
+        <text x="70" y="105" text-anchor="middle" font-size="11" fill="white" font-weight="700">太阳能</text>
+        <!-- 箭头1 -->
+        <line x1="102" y1="100" x2="138" y2="100" stroke="#fbbf24" stroke-width="2.5" marker-end="url(#arE1)"/>
+        <defs><marker id="arE1" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#fbbf24"/></marker></defs>
+        <!-- 太阳能板 -->
+        <rect x="140" y="75" width="55" height="50" fill="rgba(59,130,246,0.4)" stroke="#3b82f6" stroke-width="2" rx="3">
+          <animate attributeName="fill" values="rgba(59,130,246,0.2);rgba(59,130,246,0.8);rgba(59,130,246,0.2)" dur="2s" repeatCount="indefinite"/>
+        </rect>
+        <text x="167" y="105" text-anchor="middle" font-size="11" fill="#93c5fd" font-weight="700">电能</text>
+        <!-- 箭头2 -->
+        <line x1="196" y1="100" x2="232" y2="100" stroke="#3b82f6" stroke-width="2.5" marker-end="url(#arE2)"/>
+        <defs><marker id="arE2" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#3b82f6"/></marker></defs>
+        <!-- 电动机 -->
+        <circle cx="255" cy="100" r="25" fill="rgba(16,185,129,0.2)" stroke="#10b981" stroke-width="2">
+          <animateTransform attributeName="transform" type="rotate" from="0 255 100" to="360 255 100" dur="2s" repeatCount="indefinite"/>
+        </circle>
+        <text x="255" y="104" text-anchor="middle" font-size="10" fill="#10b981" font-weight="700">机械能</text>
+        <!-- 箭头3 -->
+        <line x1="281" y1="100" x2="317" y2="100" stroke="#10b981" stroke-width="2.5" marker-end="url(#arE3)"/>
+        <defs><marker id="arE3" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#10b981"/></marker></defs>
+        <!-- 热量（摩擦） -->
+        <circle cx="340" cy="100" r="25" fill="rgba(239,68,68,0.2)" stroke="#ef4444" stroke-width="2"/>
+        <text x="340" y="97" text-anchor="middle" font-size="10" fill="#ef4444" font-weight="700">内能</text>
+        <text x="340" y="109" text-anchor="middle" font-size="10" fill="#ef4444">(热)</text>
+
+        <!-- 重力势能→动能→热 -->
+        <text x="520" y="20" text-anchor="middle" font-size="13" fill="#fcd34d" font-weight="700">重力势能↔动能 转化</text>
+        <!-- 小球（下落） -->
+        <circle cx="520" cy="50" r="12" fill="#f59e0b">
+          <animate attributeName="cy" values="50;160;50" dur="2s" ease="ease-in-out" repeatCount="indefinite"/>
+        </circle>
+        <!-- 地面 -->
+        <line x1="460" y1="175" x2="580" y2="175" stroke="#475569" stroke-width="2"/>
+        <!-- 势能→动能标注 -->
+        <text x="590" y="80" font-size="11" fill="#fcd34d">势能↑</text>
+        <text x="590" y="120" font-size="11" fill="#fcd34d">动能↓</text>
+        <text x="590" y="155" font-size="11" fill="#f97316">动能↑</text>
+        <text x="590" y="175" font-size="11" fill="#f97316">撞击→热</text>
+
+        <!-- 守恒方程 -->
+        <rect x="20" y="200" width="650" height="60" fill="rgba(245,158,11,0.08)" stroke="rgba(245,158,11,0.3)" stroke-width="1.5" rx="8"/>
+        <text x="345" y="222" text-anchor="middle" font-size="13" fill="#fcd34d" font-weight="700">能量守恒定律</text>
+        <text x="345" y="246" text-anchor="middle" font-size="15" fill="#fbbf24" font-weight="800">E总 = 常数 （能量既不消灭，也不创生，只能转化）</text>
+      </svg>
     </div>
   </section>
 
   <section class="section" id="module-1">
-    <h2 class="section-title">📖 模块一：能量的多种形式</h2>
+    <h2 class="section-title">📖 模块一：能量的各种形式</h2>
     <div class="card">
-      <h3>🌍 能量无处不在</h3>
-      <p><span class="highlight">你已经知道……</span>机械能包括动能和势能，可以相互转化。</p>
-      <p><span class="highlight">但有个问题……</span>摩擦会消耗机械能，那消失的能量去哪了？难道凭空消失？</p>
-      <p><span class="highlight">所以我们要学……</span>能量守恒——机械能转化成了热能，总量不变！</p>
+      <h3>🔋 能量的多种形式</h3>
+      <div class="grid-2">
+        <div>
+          <ul style="margin-left:16px;font-size:15px;">
+            <li>机械能 = 动能 + 势能</li>
+            <li>内能（热能）</li>
+            <li>电能</li>
+            <li>化学能</li>
+          </ul>
+        </div>
+        <div>
+          <ul style="margin-left:16px;font-size:15px;">
+            <li>光能（辐射能）</li>
+            <li>核能</li>
+            <li>声能</li>
+            <li>……</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="svg-wrap">
+      <svg width="500" height="180" viewBox="0 0 500 180">
+        <defs>
+          <marker id="arEn" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#f59e0b"/></marker>
+        </defs>
+        <rect width="500" height="180" fill="#f0f4f8" rx="10"/>
+        <!-- 能量转化网络 -->
+        <circle cx="250" cy="90" r="35" fill="rgba(245,158,11,0.2)" stroke="#f59e0b" stroke-width="2"/>
+        <text x="250" y="88" text-anchor="middle" font-size="11" fill="#92400e" font-weight="800">能量</text>
+        <text x="250" y="100" text-anchor="middle" font-size="10" fill="#92400e">守恒</text>
+        <!-- 各能量节点 -->
+        <circle cx="80" cy="50" r="22" fill="rgba(59,130,246,0.2)" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="80" y="54" text-anchor="middle" font-size="11" fill="#3b82f6" font-weight="700">电能</text>
+        <circle cx="420" cy="50" r="22" fill="rgba(16,185,129,0.2)" stroke="#10b981" stroke-width="1.5"/>
+        <text x="420" y="54" text-anchor="middle" font-size="11" fill="#10b981" font-weight="700">机械能</text>
+        <circle cx="80" cy="140" r="22" fill="rgba(239,68,68,0.2)" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="80" y="144" text-anchor="middle" font-size="11" fill="#ef4444" font-weight="700">热能</text>
+        <circle cx="420" cy="140" r="22" fill="rgba(139,92,246,0.2)" stroke="#8b5cf6" stroke-width="1.5"/>
+        <text x="420" y="144" text-anchor="middle" font-size="11" fill="#8b5cf6" font-weight="700">化学能</text>
+        <!-- 连接线 -->
+        <line x1="102" y1="57" x2="215" y2="75" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <line x1="398" y1="57" x2="285" y2="75" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <line x1="102" y1="133" x2="215" y2="105" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <line x1="398" y1="133" x2="285" y2="105" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <text x="250" y="170" text-anchor="middle" font-size="12" fill="#64748b">各种能量可以相互转化，总量守恒！</text>
+      </svg>
     </div>
     <div class="card">
-      <h3>💡 常见能量形式</h3>
-      <div class="energy-types">
-        <div class="energy-type"><div style="font-size:28px;">⚡</div><strong>电能</strong><p style="font-size:12px;color:var(--dim);">电流做功</p></div>
-        <div class="energy-type"><div style="font-size:28px;">🌡️</div><strong>热能</strong><p style="font-size:12px;color:var(--dim);">分子热运动</p></div>
-        <div class="energy-type"><div style="font-size:28px;">☀️</div><strong>光能</strong><p style="font-size:12px;color:var(--dim);">电磁波能量</p></div>
-        <div class="energy-type"><div style="font-size:28px;">⚗️</div><strong>化学能</strong><p style="font-size:12px;color:var(--dim);">化学键能</p></div>
-        <div class="energy-type"><div style="font-size:28px;">⚛️</div><strong>核能</strong><p style="font-size:12px;color:var(--dim);">原子核能</p></div>
-        <div class="energy-type"><div style="font-size:28px;">🎢</div><strong>机械能</strong><p style="font-size:12px;color:var(--dim);">动能+势能</p></div>
-      </div>
-      <p>这些能量形式可以相互<strong>转化</strong>，但转化前后的总量<strong>始终不变</strong>。</p>
+      <h3>✏️ 练习</h3>
+      <p>水力发电站中，能量的转化过程是？</p>
+      <div class="quiz-option" onclick="checkAnswer(this,true,'q1')">A. 重力势能 → 动能 → 电能</div>
+      <div class="quiz-option" onclick="checkAnswer(this,false,'q1')">B. 电能 → 机械能 → 重力势能</div>
+      <div class="quiz-option" onclick="checkAnswer(this,false,'q1')">C. 化学能 → 电能</div>
+      <div id="q1" class="quiz-feedback"></div>
     </div>
   </section>
 
   <section class="section" id="module-2">
     <h2 class="section-title">📖 模块二：能量守恒定律</h2>
     <div class="card">
-      <h3>⚖️ 能量守恒的表述</h3>
+      <h3>⚖️ 能量守恒定律</h3>
       <div class="formula-box">
-        <div class="formula">能量既不会凭空产生，也不会凭空消灭</div>
-        <div class="formula-note">它只能从一种形式转化为另一种形式，或从一个物体转移到另一个物体，转化或转移前后，能量的总量不变</div>
+        <div class="formula">E₁ + E₂ + ... = E'₁ + E'₂ + ... = 常数</div>
+        <div class="hint">能量既不能被消灭，也不能被凭空创造，只能从一种形式转化为另一种形式，或从一个物体转移到另一个物体，总量保持不变。</div>
       </div>
-      <div class="insight-box">
-        <h4>🔍 关键理解</h4>
-        <p>"消耗"的能量并没有消失，只是变成了其他形式！摩擦发热→热能，燃烧→光能和热能。宇宙中的总能量是个常数，从宇宙诞生到今天从未改变。</p>
-      </div>
+      <ul style="margin:12px 0 0 20px;">
+        <li>这是自然界最基本、最普遍的规律之一</li>
+        <li>人类对能量守恒的认识经历了几百年的积累</li>
+        <li>第一类永动机（不需要外部能源却能持续做功）<span class="highlight">不存在</span>！</li>
+        <li>有热机/电机的损耗，效率不可能100%</li>
+      </ul>
+    </div>
+    <div class="insight-box">
+      <h4>🚫 永动机为何不可能存在？</h4>
+      <p>如果永动机能"无中生有"地持续做功，必然违反能量守恒定律。历史上无数人尝试制造永动机，全部失败。能量守恒是物理学中最坚实的基础之一！</p>
     </div>
     <div class="card">
-      <h3>✏️ 能量转化分析</h3>
-      <p>电灯泡工作时，电能转化为什么能量？哪种是有用的？</p>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'m2q1')">A. 电能→光能（有用）+热能（无用），总量守恒</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m2q1')">B. 电能全部→光能，没有热能产生</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m2q1')">C. 电能消失了，因为灯亮后电费增加</div>
-      <div id="m2q1" class="quiz-feedback"></div>
+      <h3>✏️ 练习</h3>
+      <p>以下说法正确的是？</p>
+      <div class="quiz-option" onclick="checkAnswer(this,false,'q2')">A. 能量可以被消灭，所以节约能源很重要</div>
+      <div class="quiz-option" onclick="checkAnswer(this,true,'q2')">B. 能量总量守恒，但有用能量会转化为不易利用的形式（如废热），所以要节约能源</div>
+      <div class="quiz-option" onclick="checkAnswer(this,false,'q2')">C. 永动机只要设计精巧就能实现</div>
+      <div id="q2" class="quiz-feedback"></div>
     </div>
   </section>
 
   <section class="section" id="module-3">
-    <h2 class="section-title">📖 模块三：永动机为何不可能</h2>
+    <h2 class="section-title">📖 模块三：能量转化效率</h2>
     <div class="card">
-      <h3>🚫 第一类永动机</h3>
-      <p>第一类永动机：不需要外界提供能量，却能持续对外做功的机器。</p>
-      <div class="insight-box">
-        <h4>🔍 为什么不可能？</h4>
-        <p>对外做功需要消耗能量。如果没有能量输入，能量总量只会减少（因为摩擦等消耗），不可能持续对外做功。这违反了能量守恒定律——自然界最基本的定律！<br>
-        历史上无数工程师尝试制作永动机，无一成功，因为定律不允许。</p>
+      <h3>📊 效率的概念</h3>
+      <div class="formula-box">
+        <div class="formula">η = W有用 / W总 × 100%</div>
+        <div class="hint">有用功：达到目的的能量；总功：输入的总能量；η < 100%（因有损耗）</div>
+      </div>
+      <div class="grid-2">
+        <div>
+          <h4 style="font-size:15px;margin-bottom:8px;">常见效率范围：</h4>
+          <ul style="margin-left:16px;font-size:14px;color:var(--dim);">
+            <li>热机（汽车发动机）：约25-35%</li>
+            <li>火力发电：约30-40%</li>
+            <li>电动机：约80-95%</li>
+          </ul>
+        </div>
+        <div>
+          <ul style="margin-left:16px;font-size:14px;color:var(--dim);">
+            <li>LED灯：约40-50%</li>
+            <li>太阳能电池：约15-25%</li>
+            <li>人体肌肉：约25-30%</li>
+          </ul>
+        </div>
       </div>
     </div>
     <div class="card">
-      <h3>✏️ 判断</h3>
-      <p>某人声称发明了一台机器，每天输出1000焦的功，只需输入800焦的电能。这可能吗？</p>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m3q1')">A. 可能，说明这台机器效率超过100%</div>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'m3q1')">B. 不可能，输出能量不能超过输入能量（违反守恒定律）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m3q1')">C. 可能，也许还有其他能量来源没被发现</div>
-      <div id="m3q1" class="quiz-feedback"></div>
+      <h3>✏️ 效率计算</h3>
+      <p>一台电动机消耗电能10000J，其中有用功（机械能）为8500J，效率是？</p>
+      <div class="quiz-option" onclick="checkAnswer(this,true,'q3')">A. η = 85%</div>
+      <div class="quiz-option" onclick="checkAnswer(this,false,'q3')">B. η = 15%</div>
+      <div class="quiz-option" onclick="checkAnswer(this,false,'q3')">C. η = 100%</div>
+      <div id="q3" class="quiz-feedback"></div>
     </div>
   </section>
 
-  <section class="section" id="deep-understanding">
-    <h2 class="section-title">🔬 深层理解</h2>
-    <div class="grid-2">
-      <div class="card">
-        <h3>🌍 节能的真正含义</h3>
-        <p>"节能"并不是把能量消灭，而是减少能量从有用形式（如电能）转化为无用形式（如散热）的损耗。</p>
-        <p>高效LED灯：90%的电能→光能，10%→热能。<br>
-        白炽灯：只有10%的电能→光能，90%→热能！</p>
-      </div>
-      <div class="card">
-        <h3>⚛️ E = mc² 的深意</h3>
-        <p>爱因斯坦发现质量也是能量的一种形式，E = mc²。核反应中极小的质量亏损可以释放巨大的能量——这是核电站和核武器的原理。</p>
-        <div class="insight-box">
-          <h4>🔍 宇宙尺度的守恒</h4>
-          <p>能量守恒定律在整个宇宙中都成立——从亚原子粒子到整个星系，没有任何已知的例外！</p>
+  <!-- 互动实验台 -->
+  <section class="section" id="interactive-lab">
+    <h2 class="section-title">🧪 互动实验台</h2>
+    <div id="interactive-lab">
+      <h3>能量守恒与效率计算模拟</h3>
+      <div class="lab-container">
+        <div class="lab-panel">
+          <h4>⚽ 小球自由落体能量分析</h4>
+          <div style="margin:10px 0;">
+            <label style="font-size:13px;font-weight:600;color:var(--dim);display:block;margin-bottom:6px;">小球质量 m：<span id="ballM">1</span> kg</label>
+            <input type="range" min="0.1" max="10" step="0.1" value="1" style="width:100%;accent-color:var(--accent);" oninput="updateBall()">
+          </div>
+          <div style="margin:10px 0;">
+            <label style="font-size:13px;font-weight:600;color:var(--dim);display:block;margin-bottom:6px;">初始高度 h：<span id="ballH">10</span> m</label>
+            <input type="range" min="1" max="100" step="1" value="10" style="width:100%;accent-color:var(--accent);" oninput="updateBall()">
+          </div>
+          <div style="background:var(--bg2);border-radius:10px;padding:14px;margin-top:12px;">
+            <div style="display:flex;justify-content:space-between;padding:4px 0;">
+              <span style="font-size:13px;color:var(--dim);">重力势能 Ep=mgh</span>
+              <span style="font-size:15px;font-weight:800;color:var(--accent);" id="ballEp">98 J</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:4px 0;">
+              <span style="font-size:13px;color:var(--dim);">着地速度 v=√(2gh)</span>
+              <span style="font-size:15px;font-weight:800;color:var(--primary);" id="ballV">14.0 m/s</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:4px 0;">
+              <span style="font-size:13px;color:var(--dim);">着地动能 Ek=½mv²</span>
+              <span style="font-size:15px;font-weight:800;color:var(--success);" id="ballEk">98 J</span>
+            </div>
+          </div>
+          <div style="margin-top:10px;background:#f0fdf4;border-radius:8px;padding:10px;font-size:13px;font-weight:700;color:var(--success);text-align:center;">
+            ✅ Ep = Ek（能量守恒！）
+          </div>
+        </div>
+        <div class="lab-panel">
+          <h4>⚡ 能量效率分析器</h4>
+          <div style="margin:10px 0;">
+            <label style="font-size:13px;font-weight:600;color:var(--dim);display:block;margin-bottom:6px;">输入能量 W总：<span id="wIn">1000</span> J</label>
+            <input type="range" min="100" max="10000" step="100" value="1000" style="width:100%;accent-color:var(--success);" oninput="updateEfficiency()">
+          </div>
+          <div style="margin:10px 0;">
+            <label style="font-size:13px;font-weight:600;color:var(--dim);display:block;margin-bottom:6px;">效率 η：<span id="etaVal">80</span>%</label>
+            <input type="range" min="1" max="99" step="1" value="80" style="width:100%;accent-color:var(--success);" oninput="updateEfficiency()">
+          </div>
+          <div style="background:var(--bg2);border-radius:10px;padding:14px;margin-top:12px;">
+            <div style="display:flex;justify-content:space-between;padding:4px 0;">
+              <span style="font-size:13px;color:var(--dim);">有用功 W有用</span>
+              <span style="font-size:15px;font-weight:800;color:var(--success);" id="wUseful">800 J</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:4px 0;">
+              <span style="font-size:13px;color:var(--dim);">损耗（废热）</span>
+              <span style="font-size:15px;font-weight:800;color:var(--danger);" id="wLost">200 J</span>
+            </div>
+          </div>
+          <!-- 能量饼图可视化 -->
+          <div style="margin-top:14px;">
+            <div style="font-size:12px;color:var(--dim);margin-bottom:6px;">能量分配：</div>
+            <div style="height:28px;border-radius:14px;overflow:hidden;display:flex;">
+              <div id="usefulBar" style="background:var(--success);transition:width .4s;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;min-width:30px;width:80%;">有用功</div>
+              <div id="lostBar" style="background:var(--danger);transition:width .4s;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;min-width:20px;width:20%;">损耗</div>
+            </div>
+          </div>
+          <div style="margin-top:10px;font-size:12px;color:var(--dim);">
+            提高效率的方法：减小摩擦、减少热损耗、优化设计……
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="section" id="summary">
-    <h2 class="section-title">📊 课堂总结</h2>
-    <div class="card">
-      <h3>核心结论</h3>
-      <ul style="margin-left:20px;line-height:2.2;color:var(--dim);">
-        <li>能量有多种形式：动能、势能、热能、电能、化学能、核能等</li>
-        <li>能量守恒定律：能量总量不变，只能转化和转移</li>
-        <li>效率 &lt; 100%：总有一部分能量转化为热能等"无用"形式</li>
-        <li>永动机不可能：违反能量守恒定律</li>
-        <li>节能的本质：减少有用能量转化为无用形式的损耗</li>
-      </ul>
+  <!-- 知识图谱 -->
+  <section class="section" id="knowledge-graph">
+    <h2 class="section-title">🕸️ 知识图谱</h2>
+    <div id="knowledge-graph">
+      <h3>能量守恒知识网络</h3>
+      <svg id="kg-svg" height="360"></svg>
+      <div class="kg-legend">
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#3b82f6"></div><span>当前课题</span></div>
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#10b981"></div><span>前置知识</span></div>
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#f97316"></div><span>后续拓展</span></div>
+      </div>
     </div>
   </section>
 
+  <section class="section" id="summary">
+    <h2 class="section-title">📊 本课总结</h2>
+    <div class="card">
+      <h3>🗺️ 知识要点</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;">
+        <span class="tag">能量可以相互转化</span>
+        <span class="tag">总量守恒：不生不灭</span>
+        <span class="tag">永动机不存在</span>
+        <span class="tag">η = W有用/W总</span>
+        <span class="tag">节能=减少无用损耗</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>✅ 自测清单</h3>
+      <ul style="margin-left:20px;">
+        <li>✅ 我能列举各种形式的能量及其转化</li>
+        <li>✅ 我能用自己的话表述能量守恒定律</li>
+        <li>✅ 我理解永动机不可能存在的原因</li>
+        <li>✅ 我会计算能量转化效率</li>
+      </ul>
+    </div>
+  </section>
   <footer>
     <p>Made with <strong>教我学 TeachAny</strong> · <a href="https://github.com/weponusa/teachany" style="color:var(--primary);">GitHub</a></p>
-    <p style="margin-top:8px;">Built on ABT Narrative · Bloom's Taxonomy · Scaffolding · Cognitive Load Theory</p>
+    <p style="margin-top:8px;">初中物理 · 能量守恒</p>
   </footer>
 </div>
-
-<div class="audio-bar">
-  <button class="ab-btn" id="abPrev">⏮</button>
-  <button class="ab-btn" id="abPlay">▶</button>
-  <button class="ab-btn" id="abNext">⏭</button>
+<div class="audio-bar" id="audioBar">
+  <button class="ab-btn" id="abPlay" onclick="abToggle()">▶</button>
+  <button class="ab-btn" onclick="abPrev()" style="font-size:13px;">⏮</button>
+  <button class="ab-btn" onclick="abNext()" style="font-size:13px;">⏭</button>
   <div class="ab-info">
-    <div class="ab-title" id="abTitle">能量守恒 · 课程讲解</div>
+    <div class="ab-title" id="abTitle">能量守恒 - 课程介绍</div>
     <div class="ab-progress-wrap" id="abProgressWrap"><div class="ab-progress" id="abProgress"></div></div>
-    <div class="ab-time" id="abTime">00:00 / 00:00</div>
+    <div class="ab-time" id="abTime">0:00 / 0:00</div>
   </div>
-  <input class="ab-vol" type="range" min="0" max="1" step="0.05" value="0.85" id="abVol">
+  <input type="range" class="ab-vol" id="abVol" min="0" max="1" step="0.05" value="0.8" oninput="abSetVol(this.value)">
 </div>
 <script>
-function checkAnswer(el,isCorrect,feedbackId){const parent=el.parentElement;const options=parent.querySelectorAll('.quiz-option');const feedback=document.getElementById(feedbackId);if(parent.dataset.answered)return;parent.dataset.answered='true';options.forEach(opt=>{opt.style.pointerEvents='none';opt.style.opacity='0.6';});if(isCorrect){el.classList.add('correct');el.style.opacity='1';feedback.innerHTML='✅ <strong>正确！</strong>能量守恒定律是物理学最基本的定律。';feedback.style.background='rgba(34,197,94,0.1)';feedback.style.color='#15803d';}else{el.classList.add('wrong');el.style.opacity='1';options.forEach(opt=>{if(opt.getAttribute('onclick').includes('true')){opt.classList.add('correct');opt.style.opacity='1';}});feedback.innerHTML='❌ <strong>再想想。</strong>能量既不产生也不消灭，只会转化。';feedback.style.background='rgba(239,68,68,0.08)';feedback.style.color='#b91c1c';}feedback.classList.add('show');}
-const tracks=[{src:'tts/s01.mp3',title:'能量的多种形式'},{src:'tts/s02.mp3',title:'能量的转化'},{src:'tts/s03.mp3',title:'能量守恒定律'},{src:'tts/s04.mp3',title:'永动机不可能'},{src:'tts/s05.mp3',title:'效率与节能'},{src:'tts/s06.mp3',title:'E=mc²预告'},{src:'tts/s07.mp3',title:'课堂总结'}];
-let cur=0;const audio=new Audio();const abPlay=document.getElementById('abPlay');const abTitle=document.getElementById('abTitle');const abProgress=document.getElementById('abProgress');const abTime=document.getElementById('abTime');const abVol=document.getElementById('abVol');
-function loadTrack(i){cur=i;audio.src=tracks[i].src;abTitle.textContent=tracks[i].title;abProgress.style.width='0%';}
-function fmt(s){return`${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;}
-audio.addEventListener('timeupdate',()=>{if(audio.duration){abProgress.style.width=(audio.currentTime/audio.duration*100)+'%';abTime.textContent=fmt(audio.currentTime)+' / '+fmt(audio.duration);}});
-audio.addEventListener('ended',()=>{if(cur<tracks.length-1){loadTrack(cur+1);audio.play();abPlay.textContent='⏸';}else abPlay.textContent='▶';});
-abPlay.addEventListener('click',()=>{if(audio.paused){audio.play();abPlay.textContent='⏸';}else{audio.pause();abPlay.textContent='▶';}});
-document.getElementById('abPrev').addEventListener('click',()=>{if(cur>0){loadTrack(cur-1);audio.play();abPlay.textContent='⏸';}});
-document.getElementById('abNext').addEventListener('click',()=>{if(cur<tracks.length-1){loadTrack(cur+1);audio.play();abPlay.textContent='⏸';}});
-document.getElementById('abProgressWrap').addEventListener('click',e=>{if(audio.duration){audio.currentTime=e.offsetX/e.target.offsetWidth*audio.duration;}});
-abVol.addEventListener('input',()=>{audio.volume=abVol.value;});
-loadTrack(0);
+const correctMsgs={'q1':'正确！水力发电：水在高处有重力势能 → 下落时转化为动能 → 推动水轮机旋转 → 带动发电机产生电能。','q2':'正确！能量总量守恒，但有用能量会转化为废热等不易利用的形式。节约能源是为了减少这种"质量退化"，而不是因为能量会消失。','q3':'正确！η = 8500/10000 × 100% = 85%。'};
+const wrongMsgs={'q1':'水力发电利用水的势能：水从高处落下，势能→动能（水流速度增大）→发电机将动能转化为电能。','q2':'能量不会消灭！能量守恒是指总量不变。节约能源的意义在于：大量有用能量（电、机械）会变成低品质的废热，难以再次利用，因此要珍惜使用。','q3':'η = W有用/W总 = 8500/10000 = 0.85 = 85%。不是15%（那是损耗比例），也不是100%（有损耗）。'};
+function checkAnswer(el,isCorrect,feedbackId){
+  const parent=el.parentElement;if(parent.dataset.answered)return;parent.dataset.answered='true';
+  const opts=parent.querySelectorAll('.quiz-option');const fb=document.getElementById(feedbackId);
+  opts.forEach(o=>{o.style.pointerEvents='none';o.style.opacity='0.6';});
+  if(isCorrect){el.classList.add('correct');el.style.opacity='1';fb.innerHTML='✅ <strong>正确！</strong>'+correctMsgs[feedbackId];fb.style.background='rgba(16,185,129,0.1)';fb.style.color='#065f46';}
+  else{el.classList.add('wrong');el.style.opacity='1';opts.forEach(o=>{if(o.onclick&&o.onclick.toString().includes('true')){o.classList.add('correct');o.style.opacity='1';}});fb.innerHTML='❌ <strong>再想想。</strong>'+wrongMsgs[feedbackId];fb.style.background='rgba(239,68,68,0.08)';fb.style.color='#b91c1c';}
+  fb.classList.add('show');
+}
+function updateBall(){
+  const sliders=document.querySelectorAll('#interactive-lab .lab-panel:first-child input[type=range]');
+  const m=parseFloat(sliders[0].value),h=parseFloat(sliders[1].value);
+  document.getElementById('ballM').textContent=m.toFixed(1);
+  document.getElementById('ballH').textContent=h;
+  const g=9.8,Ep=m*g*h,v=Math.sqrt(2*g*h),Ek=0.5*m*v*v;
+  document.getElementById('ballEp').textContent=Ep.toFixed(1)+' J';
+  document.getElementById('ballV').textContent=v.toFixed(2)+' m/s';
+  document.getElementById('ballEk').textContent=Ek.toFixed(1)+' J';
+}
+function updateEfficiency(){
+  const sliders=document.querySelectorAll('#interactive-lab .lab-panel:last-child input[type=range]');
+  const W=parseFloat(sliders[0].value),eta=parseFloat(sliders[1].value);
+  document.getElementById('wIn').textContent=W;
+  document.getElementById('etaVal').textContent=eta;
+  const Wuse=W*eta/100,Wlost=W-Wuse;
+  document.getElementById('wUseful').textContent=Wuse.toFixed(1)+' J';
+  document.getElementById('wLost').textContent=Wlost.toFixed(1)+' J';
+  document.getElementById('usefulBar').style.width=eta+'%';
+  document.getElementById('lostBar').style.width=(100-eta)+'%';
+}
+(function(){
+  const nodes=[{id:'能量守恒',type:'current'},{id:'机械能',type:'prereq'},{id:'内能',type:'prereq'},{id:'电能',type:'prereq'},{id:'能量转化',type:'current'},{id:'永动机',type:'current'},{id:'效率',type:'current'},{id:'热力学定律',type:'next'},{id:'可再生能源',type:'next'},{id:'节能减排',type:'next'},{id:'核能',type:'next'}];
+  const links=[{source:'机械能',target:'能量守恒'},{source:'内能',target:'能量守恒'},{source:'电能',target:'能量守恒'},{source:'能量守恒',target:'能量转化'},{source:'能量守恒',target:'永动机'},{source:'能量守恒',target:'效率'},{source:'能量守恒',target:'热力学定律'},{source:'能量守恒',target:'可再生能源'},{source:'效率',target:'节能减排'},{source:'能量守恒',target:'核能'}];
+  const colorMap={current:'#3b82f6',prereq:'#10b981',next:'#f97316'};
+  const svgEl=document.getElementById('kg-svg');const W=svgEl.parentElement.clientWidth||700,H=360;
+  svgEl.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const svg=d3.select('#kg-svg');
+  const sim=d3.forceSimulation(nodes).force('link',d3.forceLink(links).id(d=>d.id).distance(95)).force('charge',d3.forceManyBody().strength(-280)).force('center',d3.forceCenter(W/2,H/2)).force('collision',d3.forceCollide(40));
+  const link=svg.append('g').selectAll('line').data(links).join('line').attr('stroke','#cbd5e1').attr('stroke-width',1.5);
+  const node=svg.append('g').selectAll('g').data(nodes).join('g').call(d3.drag().on('start',(e,d)=>{if(!e.active)sim.alphaTarget(0.3).restart();d.fx=d.x;d.fy=d.y;}).on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y;}).on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}));
+  node.append('circle').attr('r',d=>d.type==='current'?28:22).attr('fill',d=>colorMap[d.type]).attr('fill-opacity',0.15).attr('stroke',d=>colorMap[d.type]).attr('stroke-width',2);
+  node.append('text').text(d=>d.id).attr('text-anchor','middle').attr('dy','0.35em').attr('font-size',d=>d.id.length>4?10:12).attr('fill',d=>colorMap[d.type]).attr('font-weight','700');
+  sim.on('tick',()=>{link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);node.attr('transform',d=>`translate(${Math.max(30,Math.min(W-30,d.x))},${Math.max(30,Math.min(H-30,d.y))})`)});
+})();
+const audioPlaylist=[{title:"能量守恒 - 介绍",src:"tts/s01.mp3"},{title:"能量形式",src:"tts/s02.mp3"},{title:"守恒定律",src:"tts/s03.mp3"},{title:"效率计算",src:"tts/s04.mp3"},{title:"本课总结",src:"tts/s05.mp3"}];
+let abIdx=0,abAudio=new Audio(),abPlaying=false;abAudio.volume=0.8;
+function abLoad(i){abIdx=i;abAudio.src=audioPlaylist[i].src;document.getElementById('abTitle').textContent=audioPlaylist[i].title;document.getElementById('abProgress').style.width='0%';document.getElementById('abTime').textContent='0:00 / 0:00';}
+function abToggle(){if(abPlaying){abAudio.pause();abPlaying=false;document.getElementById('abPlay').textContent='▶';}else{abAudio.play().catch(()=>{});abPlaying=true;document.getElementById('abPlay').textContent='⏸';}}
+function abPrev(){abLoad((abIdx-1+audioPlaylist.length)%audioPlaylist.length);if(abPlaying)abAudio.play().catch(()=>{});}
+function abNext(){abLoad((abIdx+1)%audioPlaylist.length);if(abPlaying)abAudio.play().catch(()=>{});}
+function abSetVol(v){abAudio.volume=v;}
+abAudio.addEventListener('timeupdate',()=>{if(!abAudio.duration)return;const pct=(abAudio.currentTime/abAudio.duration)*100;document.getElementById('abProgress').style.width=pct+'%';const fmt=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;document.getElementById('abTime').textContent=`${fmt(abAudio.currentTime)} / ${fmt(abAudio.duration)}`;});
+abAudio.addEventListener('ended',()=>{abNext();abAudio.play().catch(()=>{});});
+document.getElementById('abProgressWrap').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();abAudio.currentTime=((e.clientX-r.left)/r.width)*abAudio.duration;});
+abLoad(0);
 </script>
 </body>
 </html>
