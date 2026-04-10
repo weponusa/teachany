@@ -501,7 +501,7 @@ function generateCourseware(nodeId) {
     <h2 class="section-title">🗺️ 知识图谱</h2>
     <p style="color:var(--dim);margin-bottom:16px;">三列视图：前序知识 → 核心子知识点 → 后续知识。实线节点可点击跳转，虚线表示暂无课件。</p>
     <div id="kg-container" style="width:100%;min-height:400px;border:1px solid var(--border);border-radius:12px;overflow:hidden;position:relative;">
-      <svg id="kg-svg" width="100%" height="100%" style="min-height:400px;background:rgba(15,23,42,0.5);border-radius:12px;"></svg>
+      <svg id="kg-svg" width="100%" height="100%" style="min-height:400px;background:#0f172a;border-radius:12px;"></svg>
     </div>
   </section>
 
@@ -562,12 +562,15 @@ function checkAnswer(el, isCorrect, feedbackId) {
   if (!svg || !d) return;
   const NS = 'http://www.w3.org/2000/svg';
   const el = tag => document.createElementNS(NS, tag);
-  const C = { pre: '#22d3ee', core: '#fbbf24', sub: '#60a5fa', next: '#34d399', preBg: 'rgba(6,182,212,0.25)', coreBg: 'rgba(245,158,11,0.35)', subBg: 'rgba(59,130,246,0.25)', nextBg: 'rgba(16,185,129,0.25)', noCw: '#94a3b8', noCwBg: 'rgba(148,163,184,0.15)' };
+  const C = { 
+    pre: '#22d3ee', core: '#fbbf24', sub: '#60a5fa', next: '#34d399', noCw: '#64748b',
+    preBg: '#0a2e3d', coreBg: '#2d1f06', subBg: '#0f1d3a', nextBg: '#0a2d1f', noCwBg: '#1a2233'
+  };
   const preN = d.prerequisites || [], subN = d.coreSubTopics || [], nextN = d.nextTopics || [];
   const maxR = Math.max(preN.length, subN.length + 1, nextN.length);
-  const RH = 65, PT = 55, NH = 40, RX = 10, W = 1000, H = Math.max(400, PT + maxR * RH + 30);
-  const CX = { pre: 110, core: 500, next: 890 };
-  const NW = { pre: 175, core: 250, next: 200 };
+  const RH = 62, PT = 55, NH = 40, RX = 8, W = 960, H = Math.max(400, PT + maxR * RH + 30);
+  const CX = { pre: 120, core: 480, next: 840 };
+  const NW = { pre: 190, core: 260, next: 210 };
   svg.setAttribute('viewBox', \`0 0 \${W} \${H}\`);
   svg.innerHTML = '';
   const defs = el('defs');
@@ -580,25 +583,31 @@ function checkAnswer(el, isCorrect, feedbackId) {
   mk2.setAttribute('refX','10'); mk2.setAttribute('refY','3'); mk2.setAttribute('markerWidth','8'); mk2.setAttribute('markerHeight','6'); mk2.setAttribute('orient','auto');
   const p2 = el('path'); p2.setAttribute('d','M0,0 L10,3 L0,6Z'); p2.setAttribute('fill',C.noCw); mk2.appendChild(p2); defs.appendChild(mk2);
   svg.appendChild(defs);
-  function addTitle(x,y,text,color) { const t=el('text'); t.setAttribute('x',x); t.setAttribute('y',y); t.setAttribute('fill',color); t.setAttribute('font-size','13'); t.setAttribute('text-anchor','middle'); t.setAttribute('font-weight','600'); t.textContent=text; svg.appendChild(t); }
+  function addTitle(x,y,text,color) { const t=el('text'); t.setAttribute('x',x); t.setAttribute('y',y); t.setAttribute('fill',color); t.setAttribute('font-size','14'); t.setAttribute('text-anchor','middle'); t.setAttribute('font-weight','700'); t.textContent=text; svg.appendChild(t); }
   addTitle(CX.pre,25,'前序知识','#94a3b8'); addTitle(CX.core,25,'核心知识',C.core); addTitle(CX.next,25,'后续知识','#94a3b8');
   function drawNode(cx,cy,w,h,label,opts) {
-    const o=Object.assign({fill:'rgba(30,41,59,0.85)',stroke:'#475569',strokeW:1.5,fontSize:13,fontWeight:'600',fontColor:'#e2e8f0',rx:RX,dash:false,clickUrl:''},opts);
-    const g=el('g'); const r=el('rect'); r.setAttribute('x',cx-w/2); r.setAttribute('y',cy-h/2); r.setAttribute('width',w); r.setAttribute('height',h);
-    r.setAttribute('rx',o.rx); r.setAttribute('fill',o.fill); r.setAttribute('stroke',o.stroke); r.setAttribute('stroke-width',o.strokeW);
+    const o=Object.assign({fill:'#1e293b',borderColor:'#475569',borderW:1.5,fontSize:12,fontWeight:'600',fontColor:'#e2e8f0',rx:RX,dash:false,clickUrl:'',accentW:3},opts);
+    const g=el('g');
+    // 卡片背景（不透明深色）
+    const r=el('rect'); r.setAttribute('x',cx-w/2); r.setAttribute('y',cy-h/2); r.setAttribute('width',w); r.setAttribute('height',h);
+    r.setAttribute('rx',o.rx); r.setAttribute('fill',o.fill); r.setAttribute('stroke',o.borderColor); r.setAttribute('stroke-width',o.borderW);
     if(o.dash) r.setAttribute('stroke-dasharray','6 3'); g.appendChild(r);
-    const t=el('text'); t.setAttribute('x',cx); t.setAttribute('y',cy+4); t.setAttribute('fill',o.fontColor); t.setAttribute('font-size',o.fontSize);
+    // 彩色左边框装饰条
+    const bar=el('rect'); bar.setAttribute('x',cx-w/2); bar.setAttribute('y',cy-h/2+4); bar.setAttribute('width',o.accentW); bar.setAttribute('height',h-8);
+    bar.setAttribute('rx','2'); bar.setAttribute('fill',o.borderColor); g.appendChild(bar);
+    // 文字（白色，保证可读性）
+    const t=el('text'); t.setAttribute('x',cx+2); t.setAttribute('y',cy+4); t.setAttribute('fill',o.fontColor); t.setAttribute('font-size',o.fontSize);
     t.setAttribute('text-anchor','middle'); t.setAttribute('font-weight',o.fontWeight); t.textContent=label.length>12?label.slice(0,12)+'…':label; g.appendChild(t);
     if(o.clickUrl) { g.style.cursor='pointer'; g.addEventListener('click',()=>window.open(o.clickUrl,'_blank')); }
     svg.appendChild(g); return {cx,cy,left:cx-w/2,right:cx+w/2,top:cy-h/2,bottom:cy+h/2};
   }
-  function drawCurve(x1,y1,x2,y2,color,mk) { const cp=(x1+x2)/2; const p=el('path'); p.setAttribute('d',\`M\${x1},\${y1} C\${cp},\${y1} \${cp},\${y2} \${x2},\${y2}\`); p.setAttribute('fill','none'); p.setAttribute('stroke',color); p.setAttribute('stroke-width','2'); p.setAttribute('opacity','0.7'); p.setAttribute('marker-end',\`url(#arr-\${mk})\`); svg.appendChild(p); }
-  const preP={}; preN.forEach((n,i)=>{ const cy=PT+i*RH+NH/2; preP[n.id]=drawNode(CX.pre,cy,NW.pre,NH,n.label,{fill:n.hasCourseware?C.preBg:C.noCwBg,stroke:n.hasCourseware?C.pre:C.noCw,fontColor:n.hasCourseware?C.pre:C.noCw,dash:!n.hasCourseware,clickUrl:n.url||''}); });
-  const coreY=PT+NH/2; const coreM=drawNode(CX.core,coreY,NW.core+10,NH+6,d.currentLabel,{fill:C.coreBg,stroke:C.core,strokeW:2.5,fontSize:16,fontWeight:'700',fontColor:C.core,rx:12});
-  const subP={}; subN.forEach((n,i)=>{ const cy=PT+(i+1)*RH+NH/2; subP[n.id]=drawNode(CX.core,cy,NW.core,NH-2,n.label,{fill:C.subBg,stroke:C.sub,fontColor:C.sub}); });
-  if(subN.length>0){ const l=el('line'); l.setAttribute('x1',CX.core); l.setAttribute('y1',coreM.bottom); l.setAttribute('x2',CX.core); l.setAttribute('y2',subP[subN[0].id].top); l.setAttribute('stroke',C.core); l.setAttribute('stroke-width','1.5'); l.setAttribute('opacity','0.6'); l.setAttribute('marker-end','url(#arr-core)'); svg.appendChild(l); }
-  for(let i=0;i<subN.length-1;i++){ const l=el('line'); l.setAttribute('x1',CX.core); l.setAttribute('y1',subP[subN[i].id].bottom); l.setAttribute('x2',CX.core); l.setAttribute('y2',subP[subN[i+1].id].top); l.setAttribute('stroke',C.sub); l.setAttribute('stroke-width','1.2'); l.setAttribute('opacity','0.5'); l.setAttribute('marker-end','url(#arr-sub)'); svg.appendChild(l); }
-  const nextP={}; nextN.forEach((n,i)=>{ const cy=PT+i*RH+NH/2; nextP[n.id]=drawNode(CX.next,cy,NW.next,NH,n.label,{fill:n.hasCourseware?C.nextBg:C.noCwBg,stroke:n.hasCourseware?C.next:C.noCw,fontColor:n.hasCourseware?C.next:C.noCw,dash:!n.hasCourseware,clickUrl:n.url||''}); });
+  function drawCurve(x1,y1,x2,y2,color,mk) { const cp=(x1+x2)/2; const p=el('path'); p.setAttribute('d',\`M\${x1},\${y1} C\${cp},\${y1} \${cp},\${y2} \${x2},\${y2}\`); p.setAttribute('fill','none'); p.setAttribute('stroke',color); p.setAttribute('stroke-width','1.8'); p.setAttribute('opacity','0.8'); p.setAttribute('marker-end',\`url(#arr-\${mk})\`); svg.appendChild(p); }
+  const preP={}; preN.forEach((n,i)=>{ const cy=PT+i*RH+NH/2; preP[n.id]=drawNode(CX.pre,cy,NW.pre,NH,n.label,{fill:n.hasCourseware?C.preBg:C.noCwBg,borderColor:n.hasCourseware?C.pre:C.noCw,fontColor:'#f1f5f9',dash:!n.hasCourseware,clickUrl:n.url||''}); });
+  const coreY=PT+NH/2; const coreM=drawNode(CX.core,coreY,NW.core+10,NH+6,d.currentLabel,{fill:C.coreBg,borderColor:C.core,borderW:2.5,fontSize:15,fontWeight:'700',fontColor:'#fef3c7',rx:10,accentW:4});
+  const subP={}; subN.forEach((n,i)=>{ const cy=PT+(i+1)*RH+NH/2; subP[n.id]=drawNode(CX.core,cy,NW.core,NH-2,n.label,{fill:C.subBg,borderColor:C.sub,fontColor:'#dbeafe'}); });
+  if(subN.length>0){ const l=el('line'); l.setAttribute('x1',CX.core); l.setAttribute('y1',coreM.bottom); l.setAttribute('x2',CX.core); l.setAttribute('y2',subP[subN[0].id].top); l.setAttribute('stroke',C.core); l.setAttribute('stroke-width','1.8'); l.setAttribute('opacity','0.7'); l.setAttribute('marker-end','url(#arr-core)'); svg.appendChild(l); }
+  for(let i=0;i<subN.length-1;i++){ const l=el('line'); l.setAttribute('x1',CX.core); l.setAttribute('y1',subP[subN[i].id].bottom); l.setAttribute('x2',CX.core); l.setAttribute('y2',subP[subN[i+1].id].top); l.setAttribute('stroke',C.sub); l.setAttribute('stroke-width','1.5'); l.setAttribute('opacity','0.6'); l.setAttribute('marker-end','url(#arr-sub)'); svg.appendChild(l); }
+  const nextP={}; nextN.forEach((n,i)=>{ const cy=PT+i*RH+NH/2; nextP[n.id]=drawNode(CX.next,cy,NW.next,NH,n.label,{fill:n.hasCourseware?C.nextBg:C.noCwBg,borderColor:n.hasCourseware?C.next:C.noCw,fontColor:'#f1f5f9',dash:!n.hasCourseware,clickUrl:n.url||''}); });
   preN.forEach(n=>{ const from=preP[n.id]; if(!from)return; const targets=n.connectsTo||[]; const isD=!n.hasCourseware; if(targets.length===0) drawCurve(from.right,from.cy,coreM.left,coreM.cy,isD?C.noCw:C.pre,isD?'nocw':'pre');
   else targets.forEach(tid=>{ const to=subP[tid]||coreM; drawCurve(from.right,from.cy,to.left,to.cy,isD?C.noCw:C.pre,isD?'nocw':'pre'); }); });
   nextN.forEach(n=>{ const to=nextP[n.id]; if(!to)return; const sources=n.connectsFrom||[]; const isD=!n.hasCourseware; if(sources.length===0) drawCurve(coreM.right,coreM.cy,to.left,to.cy,isD?C.noCw:C.next,isD?'nocw':'next');
