@@ -4,6 +4,8 @@
 Subcommands:
 - audit: inspect completeness/readiness of the knowledge layer
 - lookup: return compact graph-first topic context for courseware generation
+- find-node: find the best-matching tree node for a given node_id or name
+- link: link a courseware to its tree node (update status + courses path)
 
 No third-party dependencies.
 """
@@ -556,6 +558,299 @@ def print_lookup_human(matches: List[Dict[str, Any]], topic: str) -> None:
             print(f"  - exercises: {item['source_files']['exercises']}")
 
 
+# ═══════════════════════════════════════════════════════════════
+#  知识树节点查找与课件关联
+# ═══════════════════════════════════════════════════════════════
+
+TREES_DIR = ROOT / "data" / "trees"
+SKILLHUB_TREES_DIR = ROOT / "skillhub-package" / "references" / "data" / "trees"
+
+# node_id 别名映射表：课件 manifest 中使用的 node_id → 知识树中对应的节点 ID
+# 这个映射解决 _graph.json 中的 node_id 与 trees/*.json 中节点 ID 不一致的问题
+NODE_ID_ALIASES: Dict[str, List[str]] = {
+    "periodic-table": ["element-concept"],       # 元素周期表 → 元素与元素周期表
+    "atomic-structure": ["atom-structure"],       # 原子结构 → 原子的构成
+}
+
+
+def load_all_trees(trees_dir: Path = TREES_DIR) -> List[Dict[str, Any]]:
+    """加载所有知识树 JSON 文件"""
+    trees = []
+    if not trees_dir.exists():
+        return trees
+    for tree_file in sorted(trees_dir.glob("*.json")):
+        try:
+            tree = load_json(tree_file)
+            tree["_file_path"] = tree_file
+            tree["_file_name"] = tree_file.name
+            trees.append(tree)
+        except (json.JSONDecodeError, OSError):
+            continue
+    return trees
+
+
+def find_tree_node(
+    trees: List[Dict[str, Any]],
+    node_id: Optional[str] = None,
+    name: Optional[str] = None,
+    subject: Optional[str] = None,
+    grade: Optional[int] = None,
+) -> List[Dict[str, Any]]:
+    """在知识树中查找匹配的节点，返回带评分的匹配列表。
+
+    支持三种匹配方式（按优先级）：
+    1. 精确 node_id 匹配（含别名映射）
+    2. 名称模糊匹配
+    3. _graph.json 中的 node_id 与树节点 ID 交叉匹配
+    """
+    matches: List[Dict[str, Any]] = []
+    subject = resolve_subject(subject)
+
+    # 展开别名：如果 node_id 在别名表中，也搜索对应的树节点 ID
+    search_ids = [node_id] if node_id else []
+    if node_id and node_id in NODE_ID_ALIASES:
+        search_ids.extend(NODE_ID_ALIASES[node_id])
+
+    for tree in trees:
+        tree_subject = tree.get("subject", "")
+        tree_name = tree.get("name", "")
+        tree_file = tree.get("_file_name", "")
+
+        # 学科过滤
+        if subject and resolve_subject(tree_subject) != subject:
+            continue
+
+        for domain in tree.get("domains", []):
+            for node in domain.get("nodes", []):
+                tree_node_id = node.get("id", "")
+                node_name = node.get("name", "")
+                score = 0
+
+                # 1. 精确 node_id 匹配
+                if node_id and tree_node_id in search_ids:
+                    score += 500
+
+                # 2. 别名反向匹配：树节点 ID 在别名映射的目标列表中
+                if node_id:
+                    for alias_key, alias_targets in NODE_ID_ALIASES.items():
+                        if tree_node_id in alias_targets and alias_key == node_id:
+                            score += 480
+
+                # 3. 名称精确匹配
+                if name and normalize_text(name) == normalize_text(node_name):
+                    score += 300
+
+                # 4. 名称模糊匹配
+                if name:
+                    name_n = normalize_text(name)
+                    node_name_n = normalize_text(node_name)
+                    if name_n and name_n in node_name_n:
+                        score += 200
+                    if node_name_n and node_name_n in name_n:
+                        score += 150
+
+                # 5. node_id 与名称交叉匹配（如 periodic-table 在 "元素周期表" 中）
+                if node_id:
+                    node_id_n = normalize_text(node_id)
+                    node_name_n = normalize_text(node_name)
+                    if node_id_n and node_id_n in node_name_n:
+                        score += 100
+                    # 反向：名称关键词在 node_id 中
+                    for part in node_name_n.replace("与", " ").split():
+                        if len(part) >= 2 and part in node_id_n:
+                            score += 50
+
+                # 6. 年级匹配加分
+                if grade is not None and node.get("grade") == grade:
+                    score += 30
+
+                if score > 0:
+                    matches.append({
+                        "score": score,
+                        "tree_file": tree_file,
+                        "tree_subject": tree_subject,
+                        "tree_name": tree_name,
+                        "domain_id": domain.get("id", ""),
+                        "domain_name": domain.get("name", ""),
+                        "node_id": tree_node_id,
+                        "node_name": node_name,
+                        "node_grade": node.get("grade"),
+                        "node_status": node.get("status", "gap"),
+                        "node_courses": node.get("courses", []),
+                        "file_path": str(tree.get("_file_path", "")),
+                    })
+
+    matches.sort(key=lambda m: (-m["score"], m["tree_file"], m["node_id"]))
+    return matches
+
+
+def link_courseware_to_tree(
+    courseware_dir: str,
+    trees_dirs: Optional[List[Path]] = None,
+    dry_run: bool = False,
+) -> Dict[str, Any]:
+    """将课件自动关联到知识树节点。
+
+    读取课件的 manifest.json，通过 node_id/subject/grade/name 查找
+    对应的知识树节点，将 status 改为 active 并添加 courses 路径。
+    """
+    courseware_path = Path(courseware_dir)
+    if not courseware_path.exists():
+        return {"error": f"课件目录不存在: {courseware_dir}"}
+
+    manifest_path = courseware_path / "manifest.json"
+    if not manifest_path.exists():
+        return {"error": f"manifest.json 不存在: {manifest_path}"}
+
+    manifest = load_json(manifest_path)
+    node_id = manifest.get("node_id", "")
+    subject = manifest.get("subject", "")
+    grade = manifest.get("grade")
+    name = manifest.get("name", "")
+
+    # 课件相对路径（用于 courses 字段）
+    try:
+        course_rel = str(courseware_path.relative_to(ROOT))
+    except ValueError:
+        course_rel = courseware_dir
+
+    # 搜索所有 trees 目录
+    if trees_dirs is None:
+        trees_dirs = [TREES_DIR, SKILLHUB_TREES_DIR]
+
+    all_matches: List[Dict[str, Any]] = []
+    for trees_dir in trees_dirs:
+        if not trees_dir.exists():
+            continue
+        trees = load_all_trees(trees_dir)
+        matches = find_tree_node(
+            trees, node_id=node_id, name=name, subject=subject, grade=grade
+        )
+        for m in matches:
+            m["trees_dir"] = str(trees_dir)
+        all_matches.extend(matches)
+
+    if not all_matches:
+        return {
+            "error": "未找到匹配的知识树节点",
+            "search_params": {"node_id": node_id, "name": name, "subject": subject, "grade": grade},
+            "hint": "检查 manifest.json 中的 node_id 或 name 是否与知识树中的节点对应",
+        }
+
+    # 取最佳匹配
+    best = all_matches[0]
+    results: List[Dict[str, Any]] = []
+
+    # 更新所有匹配的树文件（同名文件在多个 trees_dir 中）
+    for match in all_matches:
+        if match["score"] < best["score"] * 0.5:
+            continue  # 跳过分数过低的匹配
+
+        tree_file = Path(match["file_path"])
+        if not tree_file.exists():
+            continue
+
+        tree = load_json(tree_file)
+        updated = False
+
+        for domain in tree.get("domains", []):
+            if domain.get("id") != match["domain_id"]:
+                continue
+            for node in domain.get("nodes", []):
+                if node.get("id") != match["node_id"]:
+                    continue
+
+                old_status = node.get("status", "gap")
+                old_courses = list(node.get("courses", []))
+
+                # 添加课件路径（避免重复）
+                if course_rel not in old_courses:
+                    old_courses.append(course_rel)
+
+                # 更新节点
+                node["status"] = "active"
+                node["courses"] = old_courses
+                updated = True
+
+                results.append({
+                    "tree_file": str(tree_file),
+                    "domain_id": match["domain_id"],
+                    "node_id": match["node_id"],
+                    "node_name": match["node_name"],
+                    "old_status": old_status,
+                    "new_status": "active",
+                    "old_courses": match["node_courses"],
+                    "new_courses": old_courses,
+                    "score": match["score"],
+                })
+                break
+
+        if updated and not dry_run:
+            # 写回文件
+            tree.pop("_file_path", None)
+            tree.pop("_file_name", None)
+            with tree_file.open("w", encoding="utf-8") as fh:
+                json.dump(tree, fh, ensure_ascii=False, indent=2)
+                fh.write("\n")
+
+    return {
+        "courseware": course_rel,
+        "manifest": {"node_id": node_id, "name": name, "subject": subject, "grade": grade},
+        "updated_nodes": results,
+        "dry_run": dry_run,
+    }
+
+
+def print_find_node_human(matches: List[Dict[str, Any]], query: str) -> None:
+    """人类可读的 find-node 输出"""
+    print(f"# Tree Node Search: {query}")
+    if not matches:
+        print("No matching nodes found.")
+        return
+    for idx, m in enumerate(matches, 1):
+        print()
+        print(f"## Match {idx} (score: {m['score']})")
+        print(f"- Tree: {m['tree_name']} ({m['tree_file']})")
+        print(f"- Domain: {m['domain_name']} ({m['domain_id']})")
+        print(f"- Node: {m['node_name']} (id={m['node_id']})")
+        print(f"- Grade: {m['node_grade']}")
+        print(f"- Status: {m['node_status']}")
+        if m["node_courses"]:
+            print(f"- Courses: {', '.join(m['node_courses'])}")
+        print(f"- File: {m['file_path']}")
+
+
+def print_link_human(result: Dict[str, Any]) -> None:
+    """人类可读的 link 输出"""
+    if "error" in result:
+        print(f"❌ {result['error']}")
+        if "hint" in result:
+            print(f"💡 {result['hint']}")
+        if "search_params" in result:
+            sp = result["search_params"]
+            print(f"   搜索参数: node_id={sp.get('node_id')}, name={sp.get('name')}, "
+                  f"subject={sp.get('subject')}, grade={sp.get('grade')}")
+        return
+
+    print(f"# Link Courseware: {result['courseware']}")
+    manifest = result["manifest"]
+    print(f"  Manifest: node_id={manifest['node_id']}, name={manifest['name']}, "
+          f"subject={manifest['subject']}, grade={manifest['grade']}")
+    if result.get("dry_run"):
+        print("  ⚠️ DRY RUN - no files modified")
+
+    for idx, node in enumerate(result.get("updated_nodes", []), 1):
+        print()
+        print(f"  [{idx}] {node['node_name']} (id={node['node_id']})")
+        print(f"      File: {node['tree_file']}")
+        print(f"      Status: {node['old_status']} → {node['new_status']}")
+        print(f"      Courses: {node['old_courses']} → {node['new_courses']}")
+        print(f"      Score: {node['score']}")
+
+    if not result.get("updated_nodes"):
+        print("  No nodes were updated.")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="TeachAny Knowledge Layer utilities")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -571,6 +866,19 @@ def build_parser() -> argparse.ArgumentParser:
     lookup.add_argument("--errors", type=int, default=3, help="Max error items per node")
     lookup.add_argument("--exercises", type=int, default=3, help="Max exercise items per node")
     lookup.add_argument("--json", action="store_true", help="Print JSON result")
+
+    find_node = sub.add_parser("find-node", help="Find the best-matching tree node for a node_id or name")
+    find_node.add_argument("--node-id", help="Node ID from manifest (e.g. periodic-table, linear-function)")
+    find_node.add_argument("--name", help="Topic name in Chinese (e.g. 元素周期表, 一次函数)")
+    find_node.add_argument("--subject", help="Subject filter (e.g. chemistry, math)")
+    find_node.add_argument("--grade", type=int, help="Grade level filter (e.g. 9)")
+    find_node.add_argument("--json", action="store_true", help="Print JSON result")
+
+    link = sub.add_parser("link", help="Link a courseware to its tree node (update status + courses)")
+    link.add_argument("courseware_dir", help="Path to the courseware directory (e.g. examples/chem-periodic-table)")
+    link.add_argument("--dry-run", action="store_true", help="Show what would be changed without modifying files")
+    link.add_argument("--json", action="store_true", help="Print JSON result")
+
     return parser
 
 
@@ -604,6 +912,50 @@ def main(argv: Optional[List[str]] = None) -> int:
             print(json.dumps(payload, ensure_ascii=False, indent=2))
         else:
             print_lookup_human(compact, args.topic)
+        return 0
+
+    if args.command == "find-node":
+        trees_dirs = [TREES_DIR, SKILLHUB_TREES_DIR]
+        all_matches: List[Dict[str, Any]] = []
+        for trees_dir in trees_dirs:
+            if not trees_dir.exists():
+                continue
+            trees = load_all_trees(trees_dir)
+            matches = find_tree_node(
+                trees,
+                node_id=args.node_id,
+                name=args.name,
+                subject=args.subject,
+                grade=args.grade,
+            )
+            for m in matches:
+                m["trees_dir"] = str(trees_dir)
+            all_matches.extend(matches)
+
+        # 去重：同一 tree_file + node_id 只保留最高分
+        seen: Dict[str, Dict[str, Any]] = {}
+        for m in all_matches:
+            key = f"{m['tree_file']}:{m['node_id']}"
+            if key not in seen or m["score"] > seen[key]["score"]:
+                seen[key] = m
+        deduped = sorted(seen.values(), key=lambda m: -m["score"])
+
+        if args.json:
+            print(json.dumps({"matches": deduped}, ensure_ascii=False, indent=2))
+        else:
+            query = args.node_id or args.name or ""
+            print_find_node_human(deduped, query)
+        return 0
+
+    if args.command == "link":
+        result = link_courseware_to_tree(
+            args.courseware_dir,
+            dry_run=args.dry_run,
+        )
+        if args.json:
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+        else:
+            print_link_human(result)
         return 0
 
     parser.error("Unknown command")

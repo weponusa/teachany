@@ -33,6 +33,18 @@ const SUBJECT_META = {
   'info-tech': { name: '信息技术', emoji: '💻', tagColor: 'green' },
 };
 
+/**
+ * node_id 别名映射表：
+ * 解决课件 manifest 中的 node_id 与知识树中节点 ID 不一致的问题。
+ * key = manifest 中的 node_id，value = 知识树中对应的节点 ID 数组。
+ *
+ * 当用户上传课件后，知识地图通过此映射找到正确的树节点来显示关联。
+ */
+const NODE_ID_ALIASES = {
+  'periodic-table': ['element-concept'],     // 元素周期表 → 元素与元素周期表（初中化学）
+  'atomic-structure': ['atom-structure'],    // 原子结构 → 原子的构成（初中化学）
+};
+
 /* ─── JSZip 加载器 ───────────────────────────── */
 let jsZipLoaded = false;
 let dbOpenPromise = null;
@@ -715,10 +727,84 @@ function findUserCourseByNodeId(nodeId) {
 
 function findUserCoursesByNodeId(nodeId) {
   if (!nodeId) return [];
-  const courses = getUserCourses().filter((item) => item.manifest?.node_id === nodeId);
+  // 先精确匹配
+  let courses = getUserCourses().filter((item) => item.manifest?.node_id === nodeId);
+  // 精确匹配无结果时，通过别名映射查找
+  if (courses.length === 0) {
+    // 检查别名正向映射：manifest node_id → tree node id
+    const aliases = NODE_ID_ALIASES[nodeId];
+    if (aliases) {
+      for (const alias of aliases) {
+        const found = getUserCourses().filter((item) => item.manifest?.node_id === alias);
+        courses = courses.concat(found);
+      }
+    }
+    // 检查别名反向映射：tree node id → manifest node_id
+    for (const [manifestId, treeIds] of Object.entries(NODE_ID_ALIASES)) {
+      if (treeIds.includes(nodeId)) {
+        const found = getUserCourses().filter((item) => item.manifest?.node_id === manifestId);
+        courses = courses.concat(found);
+      }
+    }
+  }
   // 按导入时间倒序排列（最新在前）
   courses.sort((a, b) => (b.importedAt || '').localeCompare(a.importedAt || ''));
   return courses;
+}
+
+/**
+ * 检查一个树节点 ID 是否对应用户上传的课件（支持别名映射）
+ * @param {string} treeNodeId - 知识树中的节点 ID
+ * @returns {boolean}
+ */
+function isUserCourseNode(treeNodeId) {
+  if (!treeNodeId) return false;
+  const userCourses = getUserCourses();
+  // 精确匹配
+  if (userCourses.some(c => c.manifest?.node_id === treeNodeId)) return true;
+  // 别名反向匹配：treeNodeId 在某个别名的目标列表中
+  for (const [manifestId, treeIds] of Object.entries(NODE_ID_ALIASES)) {
+    if (treeIds.includes(treeNodeId) && userCourses.some(c => c.manifest?.node_id === manifestId)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * 获取树节点 ID 对应的所有用户课件（支持别名映射）
+ * @param {string} treeNodeId - 知识树中的节点 ID
+ * @param {number} limit
+ * @returns {Array}
+ */
+function getTopCoursesForTreeNode(treeNodeId, limit) {
+  const max = typeof limit === 'number' ? limit : MAX_COURSES_PER_NODE;
+  const userCourses = getUserCourses();
+  let matched = [];
+
+  // 精确匹配
+  matched = userCourses.filter(c => c.manifest?.node_id === treeNodeId);
+
+  // 别名反向匹配
+  if (matched.length === 0) {
+    for (const [manifestId, treeIds] of Object.entries(NODE_ID_ALIASES)) {
+      if (treeIds.includes(treeNodeId)) {
+        const found = userCourses.filter(c => c.manifest?.node_id === manifestId);
+        matched = matched.concat(found);
+      }
+    }
+  }
+
+  // 去重
+  const seen = new Set();
+  const deduped = [];
+  for (const c of matched) {
+    if (!seen.has(c.id)) {
+      seen.add(c.id);
+      deduped.push(c);
+    }
+  }
+  return deduped.slice(0, max);
 }
 
 function getTopCoursesByNodeId(nodeId, limit) {
@@ -1658,6 +1744,8 @@ window.TeachAnyImporter = {
   findUserCourseByNodeId,
   findUserCoursesByNodeId,
   getTopCoursesByNodeId,
+  isUserCourseNode,
+  getTopCoursesForTreeNode,
   getCourseLikes,
   likeCourse,
   unlikeCourse,
@@ -1672,5 +1760,6 @@ window.TeachAnyImporter = {
   downloadBlob,
 
   SUBJECT_META,
+  NODE_ID_ALIASES,
   MAX_COURSES_PER_NODE,
 };

@@ -411,7 +411,8 @@ function renderTree(tree) {
 
   // Check user-uploaded courses (必须在 Stats 之前，避免 TDZ 错误)
   const userCourses = window.TeachAnyImporter ? TeachAnyImporter.getUserCourses() : [];
-  const userNodeIds = new Set(userCourses.map(c => c.manifest?.node_id).filter(Boolean));
+  // 使用 isUserCourseNode 支持别名映射匹配（解决 node_id 不一致问题）
+  const hasUserCourse = (nodeId) => window.TeachAnyImporter ? TeachAnyImporter.isUserCourseNode(nodeId) : false;
   // 统计每个 node_id 下的课件数量
   const nodeCourseCounts = {};
   userCourses.forEach(c => {
@@ -422,7 +423,7 @@ function renderTree(tree) {
   // Stats
   const totalNodes = nodes.length;
   const activeNodes = nodes.filter(n => n.status === 'active').length;
-  const userNodes = nodes.filter(n => n.status === 'gap' && userNodeIds.has(n.id)).length;
+  const userNodes = nodes.filter(n => n.status === 'gap' && hasUserCourse(n.id)).length;
   const gapNodes = totalNodes - activeNodes - userNodes;
   const coveredNodes = activeNodes + userNodes;
   document.getElementById('statsBar').innerHTML = `
@@ -477,19 +478,19 @@ function renderTree(tree) {
   // Circle
   nodeSel.append('circle')
     .attr('class', 'node-circle')
-    .attr('r', d => (d.status === 'active' || userNodeIds.has(d.id)) ? 22 : 18)
+    .attr('r', d => (d.status === 'active' || hasUserCourse(d.id)) ? 22 : 18)
     .attr('fill', d => {
       if (d.status === 'active') return hexToRgba(d.domainColor, 0.25);
-      if (userNodeIds.has(d.id)) return hexToRgba(d.domainColor, 0.15);
+      if (hasUserCourse(d.id)) return hexToRgba(d.domainColor, 0.15);
       return 'rgba(30,41,59,0.6)';
     })
     .attr('stroke', d => {
       if (d.status === 'active') return d.domainColor;
-      if (userNodeIds.has(d.id)) return d.domainColor;
+      if (hasUserCourse(d.id)) return d.domainColor;
       return '#64748b';
     })
     .attr('stroke-dasharray', d => {
-      if (d.status === 'gap' && !userNodeIds.has(d.id)) return '4 3';
+      if (d.status === 'gap' && !hasUserCourse(d.id)) return '4 3';
       return 'none';
     });
 
@@ -500,7 +501,7 @@ function renderTree(tree) {
     .attr('font-size', '14px')
     .text(d => {
       if (d.status === 'active') return '✅';
-      if (userNodeIds.has(d.id)) return '📂';
+      if (hasUserCourse(d.id)) return '📂';
       return '📝';
     });
 
@@ -573,7 +574,7 @@ function showTooltip(event, d) {
   html += `<div class="meta">${d.domain} · ${d.grade}年级</div>`;
 
   // 检查用户是否已上传该节点的课件（可能多个）
-  const userCourses = window.TeachAnyImporter ? TeachAnyImporter.getTopCoursesByNodeId(d.id) : [];
+  const userCourses = window.TeachAnyImporter ? TeachAnyImporter.getTopCoursesForTreeNode(d.id) : [];
   const hasUserCourses = userCourses.length > 0;
 
   // 检查社区共享课件
