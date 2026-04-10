@@ -3,239 +3,360 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>比和比例 · TeachAny 互动课件</title>
+<title>比和比例 · 教学课件</title>
 <meta name="teachany-node" content="ratio-proportion">
 <meta name="teachany-subject" content="math">
-<meta name="teachany-domain" content="algebra">
 <meta name="teachany-grade" content="6">
-<meta name="teachany-difficulty" content="3">
-<meta name="teachany-version" content="1.0">
-<meta name="teachany-author" content="weponusa">
+<meta name="teachany-version" content="2.0">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
-:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--purple:#cc5de8;--blue:#339af0;--orange:#ff922b;--text:#2b2b2b;--dim:#666;--card:#fff;--border:rgba(0,0,0,0.06);}
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--card:#fff;--text:#2b2b2b;--dim:#666;--border:rgba(0,0,0,0.06);}
 *{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
-body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;}
-body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle at 10% 20%,rgba(255,107,107,0.06) 0%,transparent 50%),radial-gradient(circle at 90% 80%,rgba(78,205,196,0.06) 0%,transparent 50%);pointer-events:none;z-index:-1;}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:80px;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 10% 20%,rgba(255,107,107,0.07) 0%,transparent 50%),radial-gradient(circle at 90% 80%,rgba(78,205,196,0.07) 0%,transparent 50%);pointer-events:none;z-index:-1;}
 .nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;}
-.nav-brand{font-size:20px;font-weight:900;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all 0.25s;white-space:nowrap;}
-.nav a:hover,.nav a.active{color:#fff;background:linear-gradient(135deg,var(--primary),var(--orange));}
+.nav-brand{font-size:20px;font-weight:900;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),#ff922b,#cc5de8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all 0.25s;}
+.nav a:hover{color:#fff;background:linear-gradient(135deg,var(--primary),#ff922b);}
 .container{max-width:960px;margin:0 auto;padding:80px 20px 60px;}
 .hero{text-align:center;padding:36px 0 30px;}
-.hero h1{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple),var(--blue));background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
+.hero h1{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--primary),#ff922b,#cc5de8,#339af0);background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
 @keyframes rainbowShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
 .hero .subtitle{font-size:18px;color:var(--dim);margin-bottom:16px;}
 .hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
 .hero .meta span{background:#fff;border:2px solid var(--border);border-radius:24px;padding:6px 18px;font-size:14px;font-weight:700;color:var(--dim);}
 .section{margin:40px 0;}
 .section-title{font-size:26px;font-weight:900;margin-bottom:18px;padding:10px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));display:inline-block;}
-.card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.04);transition:transform 0.25s;}
-.card:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(255,107,107,0.12);}
-.card h3{font-size:20px;font-weight:900;margin-bottom:10px;}
-.card p,.card li{font-size:16px;line-height:1.9;color:var(--dim);}
-.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;}
+.card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.04);}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;}
 .highlight{color:var(--primary);font-weight:900;}
-.quiz-option{display:block;padding:16px 20px;margin:10px 0;border-radius:16px;background:#fff;border:2.5px solid #e8e8e8;cursor:pointer;transition:all 0.25s;font-size:16px;font-weight:700;color:var(--text);width:100%;text-align:left;}
-.quiz-option:hover{background:rgba(78,205,196,0.08);border-color:var(--secondary);}
-.quiz-option.correct{background:rgba(81,207,102,0.12);border-color:var(--success);color:#2b8a3e;}
-.quiz-option.wrong{background:rgba(255,107,107,0.1);border-color:var(--danger);color:#c92a2a;}
-.quiz-feedback{padding:14px 18px;border-radius:14px;margin-top:10px;font-size:15px;display:none;font-weight:700;}
-.quiz-feedback.show{display:block;animation:popIn 0.35s cubic-bezier(0.34,1.56,0.64,1);}
-@keyframes popIn{from{opacity:0;transform:scale(0.92)}to{opacity:1;transform:scale(1)}}
-.insight-box{background:linear-gradient(135deg,rgba(204,93,232,0.08),rgba(51,154,240,0.08));border-left:5px solid var(--purple);padding:18px 22px;border-radius:0 16px 16px 0;margin:16px 0;}
-.insight-box h4{color:var(--purple);font-size:17px;font-weight:900;margin-bottom:8px;}
-.sticker{display:inline-block;font-size:28px;animation:wiggle 3s ease-in-out infinite;}
-@keyframes wiggle{0%,100%{transform:rotate(0deg)}25%{transform:rotate(8deg)}75%{transform:rotate(-8deg)}}
-.formula-box{background:linear-gradient(135deg,rgba(255,230,109,0.2),rgba(255,146,43,0.1));border-radius:16px;padding:20px;text-align:center;margin:16px 0;}
-.formula-box .formula{font-size:24px;font-weight:900;color:var(--primary);margin:8px 0;}
-.ratio-visual{display:flex;align-items:center;gap:8px;margin:12px 0;flex-wrap:wrap;}
-.ratio-block{height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:14px;}
-footer{text-align:center;padding:36px 0;color:#999;font-size:13px;border-top:3px dashed rgba(0,0,0,0.06);margin-top:50px;}
-.audio-bar{position:fixed;bottom:0;left:0;right:0;z-index:500;background:rgba(255,107,107,0.95);backdrop-filter:blur(12px);border-top:2px solid rgba(255,255,255,0.3);padding:10px 24px;display:flex;align-items:center;gap:14px;}
-.audio-bar .ab-btn{width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;background:#fff;color:var(--primary);font-size:16px;display:flex;align-items:center;justify-content:center;}
-.audio-bar .ab-info{flex:1;min-width:0;}
-.audio-bar .ab-title{font-size:13px;font-weight:700;color:#fff;}
-.audio-bar .ab-progress-wrap{height:4px;background:rgba(255,255,255,0.3);border-radius:2px;margin-top:4px;cursor:pointer;}
-.audio-bar .ab-progress{height:100%;background:#fff;border-radius:2px;width:0%;}
-.audio-bar .ab-time{font-size:11px;color:rgba(255,255,255,0.8);margin-top:2px;}
-.audio-bar .ab-vol{width:60px;accent-color:#fff;}
-body{padding-bottom:70px;}
+.formula-box{background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));border-radius:16px;padding:18px 22px;text-align:center;font-size:20px;font-weight:900;margin:12px 0;}
+.tip-box{background:rgba(255,230,109,0.25);border-left:4px solid var(--accent);border-radius:0 12px 12px 0;padding:12px 16px;margin:12px 0;font-size:15px;}
+/* LIFE SCENE */
+#life-scene{background:linear-gradient(135deg,#fff3e0,#fff8e1);border-radius:20px;padding:24px;min-height:280px;overflow:hidden;}
+.recipe-scene{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;}
+.recipe-card{background:#fff;border-radius:16px;padding:16px 20px;box-shadow:0 4px 12px rgba(0,0,0,0.08);flex:1;min-width:200px;}
+.recipe-title{font-size:16px;font-weight:900;color:#e65100;margin-bottom:10px;}
+.ingredient{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:14px;}
+.ing-bar{height:14px;border-radius:7px;background:var(--primary);transition:width 0.6s ease;}
+.cook-anim{display:flex;justify-content:center;align-items:center;flex-direction:column;gap:12px;padding:16px;}
+.pot{font-size:56px;animation:boil 1.2s ease infinite;}
+@keyframes boil{0%,100%{transform:scale(1)}50%{transform:scale(1.05) translateY(-3px)}}
+.steam{font-size:24px;animation:steam 1.5s ease infinite;}
+@keyframes steam{0%,100%{opacity:0;transform:translateY(0)}50%{opacity:1;transform:translateY(-8px)}}
+.ratio-display{background:rgba(255,107,107,0.1);border-radius:12px;padding:10px 16px;text-align:center;font-size:22px;font-weight:900;color:var(--primary);margin-top:10px;}
+/* LAB */
+#interactive-lab{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+.lab-tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.lab-tab{padding:8px 20px;border-radius:20px;border:2px solid var(--border);cursor:pointer;font-weight:700;font-size:14px;transition:all 0.25s;}
+.lab-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.lab-panel{display:none;}
+.lab-panel.active{display:block;animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.proportion-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0;}
+.prop-input{border:2px solid #ddd;border-radius:10px;padding:10px;text-align:center;font-size:20px;font-weight:900;width:100%;color:var(--text);}
+.prop-input.unknown{background:rgba(255,107,107,0.08);border-color:var(--primary);}
+.prop-eq{display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:var(--dim);}
+.map-scene{display:flex;flex-direction:column;gap:10px;margin:12px 0;}
+.map-box{background:linear-gradient(135deg,rgba(78,205,196,0.1),rgba(78,205,196,0.05));border-radius:12px;padding:14px;border:2px solid rgba(78,205,196,0.3);}
+/* KG */
+#knowledge-graph{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+#kg-svg-rp{width:100%;height:340px;}
+/* QUIZ */
+.quiz-section{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+.progress-bar-wrap{background:#f0f0f0;border-radius:10px;height:12px;margin-bottom:20px;overflow:hidden;}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:10px;transition:width 0.5s ease;}
+.quiz-step{display:none;}
+.quiz-step.active{display:block;animation:fadeSlide 0.4s ease;}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.quiz-q{font-size:20px;font-weight:900;margin-bottom:16px;}
+.quiz-option{display:block;padding:14px 20px;margin:8px 0;border-radius:14px;background:#fff;border:2.5px solid #e8e8e8;cursor:pointer;transition:all 0.25s;font-size:16px;font-weight:700;width:100%;text-align:left;}
+.quiz-option:hover{border-color:var(--secondary);}
+.quiz-option.correct{background:rgba(81,207,102,0.15);border-color:var(--success);color:#2b8a3e;}
+.quiz-option.wrong{background:rgba(255,107,107,0.1);border-color:var(--primary);color:#c92a2a;}
+.quiz-feedback{padding:12px 16px;border-radius:12px;margin-top:8px;font-size:15px;font-weight:700;display:none;}
+.quiz-feedback.show{display:block;}
+.quiz-feedback.ok{background:rgba(81,207,102,0.15);color:#2b8a3e;}
+.quiz-feedback.err{background:rgba(255,107,107,0.1);color:#c92a2a;}
+.next-btn{margin-top:14px;padding:12px 28px;background:linear-gradient(135deg,var(--primary),#ff922b);color:#fff;border:none;border-radius:20px;font-size:16px;font-weight:900;cursor:pointer;}
+.locked{opacity:0.35;pointer-events:none;}
+.step-indicator{display:flex;gap:8px;margin-bottom:16px;}
+.step-dot{width:12px;height:12px;border-radius:50%;background:#e0e0e0;transition:all 0.3s;}
+.step-dot.done{background:var(--success);}
+.step-dot.active{background:var(--primary);transform:scale(1.3);}
+table{width:100%;border-collapse:collapse;margin:12px 0;}
+th,td{border:2px solid #f0f0f0;padding:10px 14px;text-align:center;font-size:15px;}
+th{background:rgba(255,107,107,0.1);font-weight:900;}
 </style>
 </head>
 <body>
 <nav class="nav">
-  <span class="nav-brand">🌈 教我学 TeachAny</span>
-  <a href="#hero">首页</a>
-  <a href="#module-1">比的概念</a>
-  <a href="#module-2">比例</a>
-  <a href="#module-3">正反比例</a>
-  <a href="#deep-understanding">深入理解</a>
-  <a href="#summary">总结</a>
+  <div class="nav-brand">📚 TeachAny</div>
+  <a href="#life-scene-sec">🍳 生活场景</a>
+  <a href="#concepts">📖 概念</a>
+  <a href="#interactive-lab">🧪 实验台</a>
+  <a href="#knowledge-graph">🕸️ 知识图谱</a>
+  <a href="#quiz">📝 练习</a>
 </nav>
 <div class="container">
-  <section class="hero" id="hero">
-    <h1>比和比例 <span class="sticker">⚖️</span></h1>
-    <p class="subtitle">理解比的含义，掌握比例的基本性质，认识正比例和反比例</p>
+  <div class="hero">
+    <h1>比和比例</h1>
+    <div class="subtitle">从食谱到地图，比例关系无处不在！</div>
     <div class="meta">
-      <span>📐 小学数学</span><span>🎒 六年级</span><span>⏱️ 约 35 分钟</span><span>🎯 新授课</span>
+      <span>📚 小学数学</span><span>🎒 六年级下册</span><span>⭐ 难度：★★★</span><span>⏱️ 约50分钟</span>
     </div>
-  </section>
-
-  <section class="section" id="module-1">
-    <h2 class="section-title">📊 模块一：比的概念</h2>
-    <div class="card">
-      <h3>🌉 从分苹果引入比</h3>
-      <p><span class="highlight">生活场景：</span>妈妈买了 6 个红苹果和 4 个青苹果，红苹果和青苹果的数量有什么关系？</p>
-      <p><span class="highlight">我们可以说：</span>红苹果是青苹果的 6÷4 = 1.5 倍，也可以说：</p>
-      <p><span class="highlight">红苹果和青苹果的比是 6:4 = 3:2</span></p>
-    </div>
-    <div class="card">
-      <h3>💡 比的各部分名称</h3>
-      <div class="ratio-visual">
-        <div class="ratio-block" style="width:80px;background:#ff6b6b;">6</div>
-        <span style="font-size:24px;color:#888">:</span>
-        <div class="ratio-block" style="width:80px;background:#4ecdc4;">4</div>
-        <span style="font-size:16px;color:#888">= &nbsp;</span>
-        <div class="ratio-block" style="width:80px;background:#339af0;">1.5</div>
-      </div>
-      <p style="margin-top:12px">6 叫<span class="highlight">比的前项</span>，4 叫<span class="highlight">比的后项</span>，1.5 叫<span class="highlight">比值</span></p>
-      <p>比值 = 前项 ÷ 后项 = 6 ÷ 4 = <span class="highlight">1.5</span></p>
-      <p style="margin-top:8px;color:#888;font-size:14px">注意：比的后项不能为 0（不能用0做除数）</p>
-    </div>
-    <div class="card">
-      <h3>💡 比的化简（最简比）</h3>
-      <p>和分数化简一样，把比的前项和后项同时除以它们的最大公因数：</p>
-      <p style="margin-top:8px">6:4 → 同除以 2 → <span class="highlight">3:2</span>（最简比，前后项互质）</p>
-    </div>
-    <div class="card">
-      <h3><span class="sticker">✏️</span> 化简比</h3>
-      <p>把 12:8 化成最简比，结果是？</p>
-      <button class="quiz-option" onclick="checkAnswer(this,true,'q1')">A. 3:2（12和8的最大公因数是4，12÷4:8÷4 = 3:2）✓</button>
-      <button class="quiz-option" onclick="checkAnswer(this,false,'q1')">B. 6:4（只除以了2，还没到最简，6和4还有公因数2）</button>
-      <button class="quiz-option" onclick="checkAnswer(this,false,'q1')">C. 1.5（这是比值，不是最简比）</button>
-      <div id="q1" class="quiz-feedback"></div>
-    </div>
-  </section>
-
-  <section class="section" id="module-2">
-    <h2 class="section-title">🔄 模块二：比例</h2>
-    <div class="card">
-      <h3>💡 什么是比例？</h3>
-      <p>两个<span class="highlight">比值相等</span>的比组成的等式叫做<span class="highlight">比例</span>。</p>
-      <p>例：2:4 = 3:6（两边比值都是 0.5），写成比例：<span class="highlight">2:4 = 3:6</span></p>
-      <p>也可以写成分数形式：<strong>2/4 = 3/6</strong></p>
-    </div>
-    <div class="formula-box">
-      <p>比例的基本性质</p>
-      <div class="formula">a:b = c:d ⟺ ad = bc</div>
-      <p style="font-size:14px;color:#666">两外项之积 = 两内项之积（交叉相乘）</p>
-    </div>
-    <div class="card">
-      <h3>💡 用比例解方程</h3>
-      <p>例：2:x = 4:6，求 x</p>
-      <p>用基本性质：2 × 6 = x × 4，12 = 4x，x = 3</p>
-    </div>
-    <div class="card">
-      <h3><span class="sticker">✏️</span> 判断比例</h3>
-      <p>3:4 和 6:9 能组成比例吗？</p>
-      <button class="quiz-option" onclick="checkAnswer(this,false,'q2')">A. 能，因为两个都是整数的比</button>
-      <button class="quiz-option" onclick="checkAnswer(this,true,'q2')">B. 不能（3:4 的比值=0.75，6:9 的比值≈0.67，比值不相等，不能组成比例）✓</button>
-      <button class="quiz-option" onclick="checkAnswer(this,false,'q2')">C. 能，因为6=2×3，9=2×4.5</button>
-      <div id="q2" class="quiz-feedback"></div>
-    </div>
-  </section>
-
-  <section class="section" id="module-3">
-    <h2 class="section-title">📈 模块三：正比例和反比例</h2>
-    <div class="card">
-      <h3>💡 正比例关系</h3>
-      <p>如果 x 增大，y 也增大，且 y/x = k（常数），那么 x 和 y 成<span class="highlight">正比例</span>。</p>
-      <p>例：买苹果，价格不变，买的数量越多，花的钱越多：<strong>总价 = 单价 × 数量</strong>（单价不变时，总价与数量成正比例）</p>
-    </div>
-    <div class="card">
-      <h3>💡 反比例关系</h3>
-      <p>如果 x 增大，y 减小，且 x × y = k（常数），那么 x 和 y 成<span class="highlight">反比例</span>。</p>
-      <p>例：路程一定，速度越快，时间越短：<strong>速度 × 时间 = 路程</strong>（路程不变时，速度与时间成反比例）</p>
-    </div>
-    <div class="card">
-      <h3>⭐ 判断正反比例</h3>
-      <p>在路程一定时，速度和时间的关系是？</p>
-      <button class="quiz-option" onclick="checkAnswer(this,false,'q3')">A. 正比例（速度越大，时间越大——错，时间应该越小）</button>
-      <button class="quiz-option" onclick="checkAnswer(this,true,'q3')">B. 反比例（速度×时间=路程=常数，所以成反比例）✓</button>
-      <button class="quiz-option" onclick="checkAnswer(this,false,'q3')">C. 没有比例关系</button>
-      <div id="q3" class="quiz-feedback"></div>
-    </div>
-    <div class="card">
-      <h3>⭐⭐ 应用比例解题</h3>
-      <p>地图比例尺是 1:50000，地图上 3 cm 对应实际距离是多少米？</p>
-      <button class="quiz-option" onclick="checkAnswer(this,true,'q4')">A. 1500 m（1:50000 = 3:x，x = 3×50000 = 150000 cm = 1500 m）✓</button>
-      <button class="quiz-option" onclick="checkAnswer(this,false,'q4')">B. 150 m（单位换算错误，1 m = 100 cm，不是 10 cm）</button>
-      <button class="quiz-option" onclick="checkAnswer(this,false,'q4')">C. 500 m（算法有误）</button>
-      <div id="q4" class="quiz-feedback"></div>
-    </div>
-  </section>
-
-  <section class="section" id="deep-understanding">
-    <h2 class="section-title">🔬 深层理解</h2>
-    <div class="insight-box">
-      <h4>🔍 比、分数、除法的联系</h4>
-      <p>a:b、a/b、a÷b 表达的是同一个含义！a:b 和 a/b 的值都等于 a÷b。比是两个量之间关系的表达方式，分数是它的一种记法，除法是计算方式。</p>
-    </div>
-    <div class="card">
-      <h3>🌍 比和比例在生活中</h3>
-      <div class="grid-2">
-        <div><p>🗺️ <strong>地图比例尺</strong>：地图上距离:实际距离 = 比例尺（正比例关系）</p></div>
-        <div><p>📸 <strong>照片放大缩小</strong>：保持比例才不变形（宽:高 保持一致）</p></div>
-        <div><p>🍳 <strong>烹饪配比</strong>：按比例调配食材，如盐:糖 = 1:3</p></div>
-        <div><p>💰 <strong>汇率换算</strong>：人民币:美元的固定比值（正比例）</p></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="summary">
-    <h2 class="section-title">📝 课堂总结</h2>
-    <div class="card">
-      <h3>🎓 核心知识点</h3>
-      <ul style="padding-left:20px;line-height:2.3">
-        <li><strong>比</strong>：a:b，比值 = a÷b，后项不为0</li>
-        <li><strong>最简比</strong>：前后项的最大公因数为1</li>
-        <li><strong>比例</strong>：两个比值相等的等式，a:b = c:d</li>
-        <li><strong>比例基本性质</strong>：ad = bc（交叉相乘相等）</li>
-        <li><strong>正比例</strong>：y/x = k，y随x增大而增大</li>
-        <li><strong>反比例</strong>：xy = k，y随x增大而减小</li>
-      </ul>
-    </div>
-    <div style="text-align:center;padding:20px;background:linear-gradient(135deg,rgba(255,230,109,0.2),rgba(255,146,43,0.1));border-radius:20px;margin-top:16px;">
-      <span style="font-size:36px">🌟🌟🌟</span><p style="font-size:18px;font-weight:900;margin-top:8px">比和比例掌握了！代数旅程的重要一站！</p>
-    </div>
-  </section>
-  <footer><p>Made with <strong>教我学 TeachAny</strong> · <a href="https://github.com/weponusa/teachany" style="color:var(--primary)">GitHub</a></p></footer>
-</div>
-
-<div class="audio-bar">
-  <button class="ab-btn" id="abPlayBtn" onclick="togglePlay()">▶</button>
-  <div class="ab-info">
-    <div class="ab-title" id="abTitle">比和比例 · 课件语音</div>
-    <div class="ab-progress-wrap" onclick="seekAudio(event)"><div class="ab-progress" id="abProgress"></div></div>
-    <div class="ab-time" id="abTime">00:00 / 00:00</div>
   </div>
-  <input class="ab-vol" type="range" min="0" max="1" step="0.05" value="0.8" oninput="setVol(this.value)">
-  <button class="ab-btn" onclick="nextTrack()">⏭</button>
+
+  <!-- 生活场景 -->
+  <section class="section" id="life-scene-sec">
+    <div class="section-title">🍳 生活场景：按比例做蛋糕</div>
+    <div id="life-scene">
+      <p style="font-weight:700;font-size:16px;margin-bottom:16px;">👩‍🍳 蛋糕食谱中，面粉和糖的比是 3:1。调整份数，保持比例不变！</p>
+      <div class="recipe-scene">
+        <div class="recipe-card">
+          <div class="recipe-title">🎂 蛋糕食谱</div>
+          <div class="ingredient">
+            <span style="width:40px;font-size:14px;">🌾 面粉</span>
+            <div style="flex:1;background:#f0f0f0;border-radius:7px;height:14px;overflow:hidden;">
+              <div class="ing-bar" id="flourBar" style="width:75%;background:#ff922b;"></div>
+            </div>
+            <span id="flourAmt" style="font-weight:900;color:#ff922b;">300g</span>
+          </div>
+          <div class="ingredient">
+            <span style="width:40px;font-size:14px;">🍬 糖</span>
+            <div style="flex:1;background:#f0f0f0;border-radius:7px;height:14px;overflow:hidden;">
+              <div class="ing-bar" id="sugarBar" style="width:25%;background:#ff6b6b;"></div>
+            </div>
+            <span id="sugarAmt" style="font-weight:900;color:#ff6b6b;">100g</span>
+          </div>
+          <div style="margin-top:12px;font-weight:700;font-size:14px;color:var(--dim);">份数：</div>
+          <input type="range" min="1" max="6" value="1" style="width:100%;accent-color:var(--primary);margin:8px 0;" oninput="updateRecipe(this.value)" id="recipeSlider">
+          <div style="font-size:14px;font-weight:700;color:var(--dim);text-align:center;" id="recipeServings">1份</div>
+          <div class="ratio-display" id="ratioDisplay">面粉:糖 = 3:1 ✓</div>
+        </div>
+        <div class="cook-anim">
+          <div class="steam">💨</div>
+          <div class="pot">🫕</div>
+          <div style="font-size:14px;font-weight:700;color:var(--dim);">比例始终保持 3:1</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 核心概念 -->
+  <section class="section" id="concepts">
+    <div class="section-title">📖 核心概念</div>
+    <div class="grid-2">
+      <div class="card">
+        <h3>📏 什么是比？</h3>
+        <p><span class="highlight">比</span>表示两个数相除的关系，记作 a:b（a比b）。</p>
+        <div class="formula-box">a:b = a÷b（b≠0）</div>
+        <p>前项÷后项 = <span class="highlight">比值</span></p>
+        <div class="tip-box">💡 比可以写成分数形式：6:4 = 6/4 = 3/2</div>
+      </div>
+      <div class="card">
+        <h3>⚖️ 什么是比例？</h3>
+        <p><span class="highlight">比例</span>是两个比相等的等式。</p>
+        <div class="formula-box">a:b = c:d<br>即 a/b = c/d</div>
+        <p><span class="highlight">比例的基本性质</span>：外项之积 = 内项之积（交叉相乘）</p>
+        <div class="tip-box">💡 ad = bc（比例四项）</div>
+      </div>
+    </div>
+    <div class="grid-3">
+      <div class="card">
+        <h3>🗺️ 比例尺</h3>
+        <div class="formula-box">比例尺 = 图上距离 ÷ 实际距离</div>
+        <p>例：1:1000000 表示图上1cm = 实际10km</p>
+      </div>
+      <div class="card">
+        <h3>📈 正比例</h3>
+        <div class="formula-box">y/x = k（常数）</div>
+        <p>x增大，y也增大，比值不变。例：路程=速度×时间</p>
+      </div>
+      <div class="card">
+        <h3>📉 反比例</h3>
+        <div class="formula-box">x × y = k（常数）</div>
+        <p>x增大，y减小，积不变。例：速度×时间=路程</p>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📊 比与比例的区别</h3>
+      <table>
+        <tr><th></th><th>比</th><th>比例</th></tr>
+        <tr><td>定义</td><td>两数相除的关系</td><td>两个比相等的等式</td></tr>
+        <tr><td>形式</td><td>a:b 或 a/b</td><td>a:b = c:d</td></tr>
+        <tr><td>项数</td><td>2项</td><td>4项</td></tr>
+        <tr><td>性质</td><td>可化简</td><td>外项积=内项积</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- 互动实验台 -->
+  <section class="section" id="interactive-lab">
+    <div class="section-title">🧪 互动实验台</div>
+    <div id="interactive-lab">
+      <div class="lab-tabs">
+        <button class="lab-tab active" onclick="switchTab('tab-solve')">🔢 解比例</button>
+        <button class="lab-tab" onclick="switchTab('tab-map')">🗺️ 比例尺</button>
+      </div>
+      <div id="tab-solve" class="lab-panel active">
+        <div class="card">
+          <h3>🔢 解比例：求未知数 x</h3>
+          <p style="color:var(--dim);">已知三个数，用比例基本性质求 x</p>
+          <div style="margin:16px 0;">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;font-size:22px;font-weight:900;">
+              <input type="number" id="propA" value="3" style="width:70px;padding:8px;border:2px solid #ddd;border-radius:10px;text-align:center;font-size:22px;font-weight:900;">
+              <span>:</span>
+              <input type="number" id="propB" value="4" style="width:70px;padding:8px;border:2px solid #ddd;border-radius:10px;text-align:center;font-size:22px;font-weight:900;">
+              <span>=</span>
+              <input type="number" id="propC" value="6" style="width:70px;padding:8px;border:2px solid #ddd;border-radius:10px;text-align:center;font-size:22px;font-weight:900;">
+              <span>:</span>
+              <span style="width:70px;height:46px;border:2px solid var(--primary);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--primary);" id="xDisplay">x=?</span>
+            </div>
+          </div>
+          <button class="next-btn" onclick="solveProp()">🔍 求解 x</button>
+          <div class="formula-box" id="propSolution" style="margin-top:12px;">输入数值后点击求解</div>
+        </div>
+      </div>
+      <div id="tab-map" class="lab-panel">
+        <div class="card">
+          <h3>🗺️ 比例尺计算器</h3>
+          <div class="map-scene">
+            <div class="map-box">
+              <p style="font-weight:700;margin-bottom:8px;">输入已知量：</p>
+              <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+                <label style="font-weight:700;font-size:14px;">比例尺 1:</label>
+                <input type="number" id="mapScale" value="100000" style="width:120px;padding:8px;border:2px solid #ddd;border-radius:10px;font-size:16px;">
+                <label style="font-weight:700;font-size:14px;">图上距离(cm):</label>
+                <input type="number" id="mapImg" value="3" style="width:80px;padding:8px;border:2px solid #ddd;border-radius:10px;font-size:16px;">
+              </div>
+              <button class="next-btn" style="margin-top:12px;" onclick="calcMap()">📏 计算实际距离</button>
+            </div>
+            <div class="formula-box" id="mapResult">实际距离 = 图上距离 × 比例尺分母</div>
+          </div>
+          <div class="tip-box">💡 实际距离(cm) = 图上距离(cm) × 比例尺分母<br>再换算到米：÷100；换算到千米：÷100000</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 知识图谱 -->
+  <section class="section" id="knowledge-graph">
+    <div class="section-title">🕸️ 知识图谱</div>
+    <div id="knowledge-graph"><svg id="kg-svg-rp"></svg></div>
+  </section>
+
+  <!-- 练习 -->
+  <section class="section" id="quiz">
+    <div class="section-title">📝 闯关练习</div>
+    <div class="quiz-section">
+      <div class="step-indicator" id="stepIndicator"></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressBar" style="width:0%"></div></div>
+      <div class="quiz-step active" id="step1">
+        <div class="quiz-q">📏 第1关：6:9的比值是？</div>
+        <button class="quiz-option" onclick="checkQ(1,'A','B')">A. 9/6</button>
+        <button class="quiz-option" onclick="checkQ(1,'B','B')">B. 2/3</button>
+        <button class="quiz-option" onclick="checkQ(1,'C','B')">C. 1/3</button>
+        <div class="quiz-feedback" id="fb1"></div>
+        <button class="next-btn locked" id="next1" onclick="nextStep(2)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step2">
+        <div class="quiz-q">⚖️ 第2关：在比例 2:3=4:x 中，x=？</div>
+        <button class="quiz-option" onclick="checkQ(2,'A','C')">A. 5</button>
+        <button class="quiz-option" onclick="checkQ(2,'B','C')">B. 8</button>
+        <button class="quiz-option" onclick="checkQ(2,'C','C')">C. 6</button>
+        <div class="quiz-feedback" id="fb2"></div>
+        <button class="next-btn locked" id="next2" onclick="nextStep(3)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step3">
+        <div class="quiz-q">🗺️ 第3关：地图比例尺1:500000，图上3cm对应实际距离？</div>
+        <button class="quiz-option" onclick="checkQ(3,'A','B')">A. 5km</button>
+        <button class="quiz-option" onclick="checkQ(3,'B','B')">B. 15km</button>
+        <button class="quiz-option" onclick="checkQ(3,'C','B')">C. 1.5km</button>
+        <div class="quiz-feedback" id="fb3"></div>
+        <button class="next-btn locked" id="next3" onclick="nextStep(4)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step4">
+        <div class="quiz-q">📈 第4关：速度一定，路程和时间成什么关系？</div>
+        <button class="quiz-option" onclick="checkQ(4,'A','A')">A. 正比例关系</button>
+        <button class="quiz-option" onclick="checkQ(4,'B','A')">B. 反比例关系</button>
+        <button class="quiz-option" onclick="checkQ(4,'C','A')">C. 没有比例关系</button>
+        <div class="quiz-feedback" id="fb4"></div>
+        <button class="next-btn locked" id="next4" onclick="showFinal()">完成 🎉</button>
+      </div>
+      <div class="quiz-step locked" id="stepFinal">
+        <div style="text-align:center;padding:30px;">
+          <div style="font-size:64px;animation:bounce 1s ease infinite;">🏆</div>
+          <h2 style="font-size:28px;font-weight:900;color:var(--primary);margin:16px 0;">比例大师！</h2>
+          <p>比和比例完全掌握！</p>
+        </div>
+      </div>
+    </div>
+  </section>
 </div>
+
 <script>
-let correctCount=0;
-function checkAnswer(el,isCorrect,feedbackId){const parent=el.parentElement;if(parent.dataset.answered)return;parent.dataset.answered='true';const options=parent.querySelectorAll('.quiz-option');options.forEach(opt=>{opt.style.pointerEvents='none';opt.style.opacity='0.6';});const feedback=document.getElementById(feedbackId);if(isCorrect){correctCount++;el.classList.add('correct');el.style.opacity='1';feedback.innerHTML='🎉 <strong>答对啦！</strong> 比和比例理解得很透彻！';feedback.style.background='rgba(81,207,102,0.12)';feedback.style.color='#2b8a3e';}else{el.classList.add('wrong');el.style.opacity='1';options.forEach(opt=>{if(opt.onclick&&opt.onclick.toString().includes('true')){opt.classList.add('correct');opt.style.opacity='1';}});feedback.innerHTML='💪 <strong>再想想！</strong> 注意比值相等是组成比例的条件，先算两个比的比值再比较。';feedback.style.background='rgba(255,107,107,0.08)';feedback.style.color='#c92a2a';}feedback.classList.add('show');}
-const tracks=['tts/s01.mp3','tts/s02.mp3','tts/s03.mp3','tts/s04.mp3','tts/s05.mp3','tts/s06.mp3','tts/s07.mp3','tts/s08.mp3','tts/s09.mp3'];
-const trackNames=['开场介绍','比的概念','比的各部分','最简比','比例的定义','比例基本性质','正比例','反比例','课堂总结'];
-let currentTrack=0;const audio=new Audio();audio.src=tracks[0];audio.volume=0.8;
-function togglePlay(){if(audio.paused){audio.play();document.getElementById('abPlayBtn').textContent='⏸';}else{audio.pause();document.getElementById('abPlayBtn').textContent='▶';}}
-function nextTrack(){currentTrack=(currentTrack+1)%tracks.length;audio.src=tracks[currentTrack];document.getElementById('abTitle').textContent=trackNames[currentTrack];audio.play();document.getElementById('abPlayBtn').textContent='⏸';}
-function setVol(v){audio.volume=v;}
-function seekAudio(e){const rect=e.currentTarget.getBoundingClientRect();audio.currentTime=(e.clientX-rect.left)/rect.width*audio.duration;}
-function fmt(s){return isNaN(s)?'00:00':Math.floor(s/60).toString().padStart(2,'0')+':'+Math.floor(s%60).toString().padStart(2,'0');}
-audio.addEventListener('timeupdate',()=>{document.getElementById('abProgress').style.width=(audio.currentTime/audio.duration*100||0)+'%';document.getElementById('abTime').textContent=fmt(audio.currentTime)+' / '+fmt(audio.duration);});
-audio.addEventListener('ended',nextTrack);
+// RECIPE
+function updateRecipe(v){
+  const flour=300*+v,sugar=100*+v;
+  document.getElementById('flourAmt').textContent=flour+'g';
+  document.getElementById('sugarAmt').textContent=sugar+'g';
+  document.getElementById('flourBar').style.width=(flour/1800*100)+'%';
+  document.getElementById('sugarBar').style.width=(sugar/600*100)+'%';
+  document.getElementById('recipeServings').textContent=v+'份';
+  document.getElementById('ratioDisplay').textContent=`面粉:糖 = ${flour}:${sugar} = 3:1 ✓`;
+}
+
+// SOLVE PROPORTION
+function solveProp(){
+  const a=+document.getElementById('propA').value;
+  const b=+document.getElementById('propB').value;
+  const c=+document.getElementById('propC').value;
+  if(!a||!b||!c){document.getElementById('propSolution').textContent='请输入有效数值';return;}
+  const x=(b*c/a).toFixed(4).replace(/\.?0+$/,'');
+  document.getElementById('xDisplay').textContent='x='+x;
+  document.getElementById('propSolution').textContent=`解：${a}×x = ${b}×${c}\n${a}x = ${b*c}\nx = ${b*c}÷${a} = ${x}`;
+}
+
+// MAP
+function calcMap(){
+  const scale=+document.getElementById('mapScale').value;
+  const img=+document.getElementById('mapImg').value;
+  const realCm=img*scale;
+  const realKm=(realCm/100000).toFixed(2);
+  document.getElementById('mapResult').textContent=`实际距离 = ${img}cm × ${scale} = ${realCm}cm = ${realKm}km`;
+}
+
+function switchTab(id){
+  document.querySelectorAll('.lab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.lab-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');event.target.classList.add('active');
+}
+
+// KG
+function initKG(){
+  const colorMap={current:"#ff6b6b",prereq:"#51cf66",next:"#4ecdc4"};
+  const kgData={nodes:[{id:"cur",name:"比和比例",type:"current"},{id:"p1",name:"分数除法",type:"prereq"},{id:"p2",name:"百分数",type:"prereq"},{id:"n1",name:"比例尺",type:"next"},{id:"n2",name:"正反比例",type:"next"},{id:"n3",name:"统计",type:"next"}],links:[{source:"p1",target:"cur"},{source:"p2",target:"cur"},{source:"cur",target:"n1"},{source:"cur",target:"n2"},{source:"cur",target:"n3"}]};
+  const svg=d3.select("#kg-svg-rp");const w=svg.node().parentElement.clientWidth||700,h=340;svg.attr("viewBox",`0 0 ${w} ${h}`);
+  svg.append("defs").append("marker").attr("id","arr-rp").attr("viewBox","0 -5 10 10").attr("refX",22).attr("markerWidth",6).attr("markerHeight",6).attr("orient","auto").append("path").attr("d","M0,-5L10,0L0,5").attr("fill","#bbb");
+  const sim=d3.forceSimulation(kgData.nodes).force("link",d3.forceLink(kgData.links).id(d=>d.id).distance(120)).force("charge",d3.forceManyBody().strength(-320)).force("center",d3.forceCenter(w/2,h/2));
+  const link=svg.append("g").selectAll("line").data(kgData.links).join("line").attr("stroke","#ddd").attr("stroke-width",2).attr("marker-end","url(#arr-rp)");
+  const node=svg.append("g").selectAll("g").data(kgData.nodes).join("g").call(d3.drag().on("start",e=>{if(!e.active)sim.alphaTarget(0.3).restart();e.subject.fx=e.subject.x;e.subject.fy=e.subject.y;}).on("drag",e=>{e.subject.fx=e.x;e.subject.fy=e.y;}).on("end",e=>{if(!e.active)sim.alphaTarget(0);e.subject.fx=null;e.subject.fy=null;}));
+  node.append("circle").attr("r",36).attr("fill",d=>colorMap[d.type]).attr("opacity",0.9);
+  node.append("text").attr("text-anchor","middle").attr("dy","0.35em").attr("font-size","11px").attr("font-weight","bold").attr("fill","#fff").each(function(d){const words=d.name.length>6?[d.name.slice(0,6),d.name.slice(6)]:[d.name];words.forEach((w,i)=>d3.select(this).append("tspan").attr("x",0).attr("dy",i?14:-7).text(w));});
+  const leg=svg.append("g").attr("transform",`translate(${w-160},20)`);[["prereq","前置知识"],["current","本节课"],["next","后续内容"]].forEach(([t,l],i)=>{leg.append("circle").attr("cx",10).attr("cy",i*26).attr("r",8).attr("fill",colorMap[t]);leg.append("text").attr("x",24).attr("y",i*26+5).attr("font-size","12px").attr("fill","#555").text(l);});
+  sim.on("tick",()=>{link.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y).attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);node.attr("transform",d=>`translate(${d.x},${d.y})`);});
+}
+
+// QUIZ
+function initStepIndicator(){const ind=document.getElementById('stepIndicator');for(let i=1;i<=4;i++){const d=document.createElement('div');d.className='step-dot'+(i===1?' active':'');d.id='dot'+i;ind.appendChild(d);}}
+function checkQ(step,choice,correct){const opts=document.querySelectorAll(`#step${step} .quiz-option`);opts.forEach(o=>o.disabled=true);const idx={A:0,B:1,C:2};const fb=document.getElementById('fb'+step);if(choice===correct){opts[idx[choice]].classList.add('correct');fb.className='quiz-feedback show ok';fb.textContent='✅ 正确！';}else{opts[idx[choice]].classList.add('wrong');opts[idx[correct]].classList.add('correct');fb.className='quiz-feedback show err';fb.textContent='❌ 正确答案是 '+correct;}fb.style.display='block';document.getElementById('progressBar').style.width=(step/4*100)+'%';setTimeout(()=>document.getElementById('next'+step).classList.remove('locked'),choice===correct?0:1500);}
+function nextStep(n){document.getElementById('step'+(n-1)).classList.remove('active');const s=document.getElementById('step'+n);s.classList.remove('locked');s.classList.add('active');document.getElementById('dot'+(n-1)).classList.replace('active','done');const dn=document.getElementById('dot'+n);if(dn)dn.classList.add('active');}
+function showFinal(){document.getElementById('step4').classList.remove('active');document.getElementById('stepFinal').classList.remove('locked');document.getElementById('stepFinal').classList.add('active');document.getElementById('progressBar').style.width='100%';}
+
+window.onload=()=>{updateRecipe(1);initKG();initStepIndicator();};
 </script>
 </body>
 </html>
