@@ -1320,7 +1320,7 @@ function createImportDialog(options = {}) {
     try {
       const courseEntry = await addUserCourse(parsedCourse);
       status.className = 'ta-import-status success';
-      status.textContent = '🎉 导入成功！现在就可以在 Gallery、知识树和学习路径中打开。';
+      status.textContent = '🎉 导入成功！现在就可以在 Gallery、知识地图和学习路径中打开。';
 
       if (options.onImported) {
         options.onImported(courseEntry);
@@ -1500,7 +1500,7 @@ function renderUserCourses(grid) {
   });
 }
 
-/* ─── 知识树集成 ──────────────────────────────── */
+/* ─── 知识地图集成 ──────────────────────────────── */
 function addTreeUploadButton(nodeData, tooltipEl) {
   const nodeId = nodeData.id;
   const topCourses = getTopCoursesByNodeId(nodeId);

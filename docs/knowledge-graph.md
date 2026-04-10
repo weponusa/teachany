@@ -10,11 +10,11 @@
 ┌─────────────────────────────────────────────────┐
 │                   GitHub Repo                    │
 │                                                  │
-│  data/trees/*.json   ← Knowledge tree registry  │
+│  data/trees/*.json   ← Knowledge map registry  │
 │  examples/*/         ← Official courses          │
 │  community/*/        ← Community courses (PR)    │
 │  index.html          ← Gallery view              │
-│  tree.html           ← Knowledge tree viz (D3)   │
+│  tree.html           ← Knowledge map viz (D3)   │
 │  path.html           ← Learning path planner     │
 │                                                  │
 │  GitHub Discussions   ← Rating & reviews         │
@@ -29,7 +29,7 @@
 
 ---
 
-## 2. Knowledge Tree Structure
+## 2. Knowledge Map Structure
 
 ### 2.1 Three-Layer Hierarchy
 
@@ -203,7 +203,7 @@ Opens Pull Request
   ↓
 GitHub Actions CI checks:
   ✓ All required meta tags present
-  ✓ Node ID exists in knowledge-tree.json
+  ✓ Node ID exists in knowledge-map.json
   ✓ Prerequisites are valid node IDs
   ✓ Single HTML file, < 500KB (excl. media)
   ✓ No external JS dependencies (CDN allowed)
@@ -255,7 +255,7 @@ teachany-opensource/
 ├── examples/          ← Official courses (maintainer)
 ├── community/         ← Community courses (via PR)
 ├── index.html         ← Gallery view
-├── tree.html          ← Knowledge tree visualization
+├── tree.html          ← Knowledge map visualization
 ├── path.html          ← Learning path planner
 └── .github/
     └── workflows/
@@ -270,7 +270,7 @@ teachany-opensource/
 | Phase | Content | Effort |
 |:---|:---|:---|
 | **Phase 1** ✅ | Meta tag spec + math tree JSON + tag existing courses | Now |
-| **Phase 2** | tree.html (D3.js knowledge tree visualization) | 1 session |
+| **Phase 2** | tree.html (D3.js knowledge map visualization) | 1 session |
 | **Phase 3** | path.html (learning path planner + localStorage) | 1 session |
 | **Phase 4** | GitHub Actions: validate-course.yml (PR CI) | 1 session |
 | **Phase 5** | GitHub Actions: update-ratings.yml (Discussion → ratings.json) | 1 session |

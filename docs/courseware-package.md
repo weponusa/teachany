@@ -32,7 +32,7 @@ my-course.teachany          ← ZIP 压缩，扩展名 .teachany
   "version": "1.0.0",                      // 语义化版本号
 
   // === 知识图谱关联（可选但推荐）===
-  "node_id": "linear-function",            // 对应知识树节点 ID
+  "node_id": "linear-function",            // 对应知识地图节点 ID
   "domain": "function",                    // 所属领域 ID
   "prerequisites": [                        // 前置知识节点 ID
     "proportional-function",
@@ -130,7 +130,7 @@ TeachAny 的 `index.html` 已包含标准 meta 标签：
 4. ✅ `subject` 必须是合法的学科 ID
 5. ✅ `grade` 必须在 1-12 范围
 6. ✅ 单个包总大小不超过 50MB
-7. ⚠️ 若指定 `node_id`，校验是否与已有知识树节点匹配
+7. ⚠️ 若指定 `node_id`，校验是否与已有知识地图节点匹配
 
 ## 版本信息
 
