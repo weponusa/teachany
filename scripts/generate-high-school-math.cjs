@@ -1,0 +1,643 @@
+#!/usr/bin/env node
+/**
+ * 批量生成高中数学36个知识节点课件
+ * 从 math-high.json 和 _graph.json 提取数据，生成完整HTML课件
+ * 使用高中深色主题模板
+ */
+const fs = require('fs');
+const path = require('path');
+
+const ROOT = path.resolve(__dirname, '..');
+const TREE_FILE = path.join(ROOT, 'data/trees/math-high.json');
+const GRAPH_FILE = path.join(ROOT, 'data/math/high-school/_graph.json');
+const EXAMPLES_DIR = path.join(ROOT, 'examples');
+
+// 读取知识树和图谱
+const tree = JSON.parse(fs.readFileSync(TREE_FILE, 'utf8'));
+const graph = JSON.parse(fs.readFileSync(GRAPH_FILE, 'utf8'));
+
+// 图谱节点映射
+const graphNodes = {};
+graph.nodes.forEach(n => { graphNodes[n.id] = n; });
+
+// 构建边映射
+const prereqEdges = {};
+const leadEdges = {};
+graph.edges.forEach(e => {
+  if (!prereqEdges[e.to]) prereqEdges[e.to] = [];
+  prereqEdges[e.to].push(e.from);
+  if (!leadEdges[e.from]) leadEdges[e.from] = [];
+  leadEdges[e.from].push(e.to);
+});
+
+// ═══ 节点到课件的映射 ═══
+const NODE_MAP = {};
+tree.domains.forEach(domain => {
+  domain.nodes.forEach(node => {
+    NODE_MAP[node.id] = {
+      courseId: `math-high-${node.id}`,
+      name: node.name,
+      grade: node.grade,
+      domainId: domain.id,
+      domainName: domain.name,
+      domainColor: domain.color,
+      prerequisites: node.prerequisites || [],
+      extends: node.extends || [],
+      parallel: node.parallel || []
+    };
+  });
+});
+
+// ═══ 高中模板CSS（完整版） ═══
+function getCSS() {
+  return `
+:root {
+  --bg: #0f172a;
+  --bg2: #1e293b;
+  --bg3: #334155;
+  --primary: #60a5fa;
+  --secondary: #a78bfa;
+  --accent: #fbbf24;
+  --success: #34d399;
+  --danger: #f87171;
+  --cyan: #22d3ee;
+  --text: #f1f5f9;
+  --dim: #94a3b8;
+  --dimmer: #64748b;
+  --card: rgba(30, 41, 59, 0.65);
+  --border: rgba(148, 163, 184, 0.12);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg); color: var(--text); line-height: 1.75;
+}
+.progress-bar { position: fixed; top: 0; left: 0; height: 3px; z-index: 200; background: var(--primary); transition: width 0.3s; }
+.nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: rgba(15,23,42,0.88); backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px; display: flex; align-items: center; height: 56px;
+  gap: 2px; overflow-x: auto;
+}
+.nav-brand { font-size: 16px; font-weight: 700; color: var(--dim); margin-right: 20px; white-space: nowrap; letter-spacing: 0.5px; }
+.nav-brand strong { color: var(--primary); }
+.nav a {
+  color: var(--dimmer); text-decoration: none; padding: 5px 12px; border-radius: 6px;
+  font-size: 13px; font-weight: 500; transition: all 0.2s; white-space: nowrap;
+}
+.nav a:hover, .nav a.active { color: var(--text); background: rgba(255,255,255,0.06); }
+.container { max-width: 1100px; margin: 0 auto; padding: 76px 24px 60px; }
+.hero { text-align: center; padding: 44px 0 30px; }
+.hero h1 {
+  font-size: 38px; font-weight: 800;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  margin-bottom: 10px; letter-spacing: -0.5px;
+}
+.hero .subtitle { font-size: 16px; color: var(--dim); margin-bottom: 16px; }
+.hero .meta { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.hero .meta span {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 4px 14px; font-size: 12.5px; color: var(--dim); font-weight: 500;
+}
+.section { margin: 44px 0; }
+.section-title {
+  font-size: 22px; font-weight: 700; margin-bottom: 18px;
+  padding-left: 14px; border-left: 3px solid var(--primary); color: var(--text);
+}
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 22px 24px; margin-bottom: 16px;
+  backdrop-filter: blur(10px); transition: transform 0.2s, box-shadow 0.2s;
+}
+.card:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(0,0,0,0.2); }
+.card h3 { font-size: 17px; font-weight: 700; margin-bottom: 10px; color: var(--text); }
+.card p, .card li { font-size: 15px; line-height: 1.8; color: var(--dim); }
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.obj-card { text-align: center; padding: 24px 16px; position: relative; }
+.obj-card::before { content: ''; position: absolute; top: 0; left: 24px; right: 24px; height: 2px; border-radius: 1px; }
+.obj-card:nth-child(1)::before { background: var(--primary); }
+.obj-card:nth-child(2)::before { background: var(--secondary); }
+.obj-card:nth-child(3)::before { background: var(--accent); }
+.obj-card .icon { font-size: 30px; margin-bottom: 8px; }
+.obj-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 5px; }
+.obj-card p { font-size: 13px; color: var(--dim); }
+.highlight { color: var(--accent); font-weight: 700; }
+.quiz-option {
+  display: block; padding: 13px 18px; margin: 7px 0; border-radius: 10px;
+  background: rgba(30,41,59,0.5); border: 1px solid var(--border);
+  cursor: pointer; transition: all 0.2s; font-size: 14.5px; color: var(--text);
+}
+.quiz-option:hover { background: rgba(96,165,250,0.08); border-color: rgba(96,165,250,0.3); }
+.quiz-option.correct { background: rgba(52,211,153,0.12); border-color: var(--success); }
+.quiz-option.wrong { background: rgba(248,113,113,0.12); border-color: var(--danger); }
+.quiz-feedback { padding: 12px 16px; border-radius: 8px; margin-top: 10px; font-size: 14px; display: none; }
+.quiz-feedback.show { display: block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+.insight-box {
+  background: linear-gradient(135deg, rgba(167,139,250,0.08), rgba(96,165,250,0.06));
+  border-left: 3px solid var(--secondary);
+  padding: 16px 20px; border-radius: 0 10px 10px 0; margin: 14px 0;
+}
+.insight-box h4 { color: var(--secondary); font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.insight-box p { color: var(--text); font-size: 14.5px; }
+.formula-box {
+  background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.2);
+  border-radius: 10px; padding: 16px 20px; margin: 14px 0; text-align: center;
+}
+.formula-box .formula {
+  font-size: 20px; font-weight: 700; color: var(--accent);
+  font-family: 'Times New Roman', 'STIX Two Math', serif;
+  font-style: italic; letter-spacing: 1px; margin: 8px 0;
+}
+.formula-box .label { font-size: 12px; color: var(--dimmer); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; }
+.derivation { counter-reset: step; padding-left: 0; }
+.derivation .step {
+  position: relative; padding: 10px 16px 10px 48px; margin: 6px 0;
+  background: rgba(30,41,59,0.3); border-radius: 8px;
+  font-size: 14.5px; color: var(--dim); counter-increment: step;
+}
+.derivation .step::before {
+  content: counter(step); position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  width: 22px; height: 22px; border-radius: 50%; background: rgba(96,165,250,0.15);
+  color: var(--primary); font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.page-nav {
+  display: flex; justify-content: space-between; align-items: center;
+  max-width: 900px; margin: 30px auto; padding: 0 24px;
+}
+.page-nav button {
+  padding: 10px 24px; border-radius: 10px; border: 2px solid var(--primary);
+  background: transparent; color: var(--primary); font-size: 15px; cursor: pointer; transition: all 0.2s;
+}
+.page-nav button:hover { background: var(--primary); color: #fff; }
+.page-nav .current { font-size: 14px; color: #64748b; }
+footer {
+  text-align: center; padding: 36px 0; color: var(--dimmer);
+  font-size: 12.5px; border-top: 1px solid var(--border); margin-top: 50px;
+}
+@media (max-width: 600px) {
+  .hero h1 { font-size: 28px; } .nav { height: 50px; }
+  .section-title { font-size: 19px; } .card { padding: 16px; }
+}`;
+}
+
+// ═══ 每个知识节点的核心子主题 ═══
+const KEY_CONCEPTS = {
+  'sets': ['集合的三种表示法', '子集、真子集、空集', '交集A∩B、并集A∪B', '补集∁ᵤA', 'Venn图与集合运算', '集合的应用'],
+  'propositions': ['命题的真假判断', '充分条件与必要条件', '充要条件', '全称量词∀与存在量词∃', '命题的否定', '条件关系的证明'],
+  'functions-concept': ['函数的定义（三要素）', '定义域与值域', '函数的表示方法', '分段函数', '映射与函数', '复合函数'],
+  'function-properties': ['单调性及其证明', '奇偶性及图像对称', '周期性', '单调性与最值', '性质综合应用', '函数图像变换'],
+  'exponential-function': ['指数幂的运算', '指数函数y=aˣ的图像', '底数a对图像的影响', '指数函数的单调性', '指数方程与不等式', '指数增长模型'],
+  'logarithmic-function': ['对数的定义与运算', '换底公式', '对数函数y=logₐx', '对数函数的性质', '反函数关系', '对数方程与不等式'],
+  'power-function': ['幂函数y=xᵅ的定义', '五种典型幂函数图像', '幂函数的单调性', '幂函数与奇偶性', '幂函数与指数函数对比', '幂函数应用'],
+  'function-models': ['函数模型的选择', '指数增长vs线性增长', '对数增长模型', '分段函数模型', '函数拟合与预测', '最优化问题建模'],
+  'trig-ratios': ['任意角与弧度制', '三角函数定义（单位圆）', '同角三角函数关系', '诱导公式', '三角函数线', '三角函数值的符号'],
+  'trig-identities': ['两角和差公式', '二倍角公式', '辅助角公式', '半角公式', '和差化积与积化和差', '恒等变换策略'],
+  'trig-graphs': ['y=sinx的图像与性质', 'y=cosx的图像与性质', 'y=Asin(ωx+φ)', '振幅/周期/相位', '三角函数图像变换', '三角函数最值问题'],
+  'law-of-sines-cosines': ['正弦定理', '余弦定理', '解三角形', '面积公式', '判断三角形形状', '实际应用（测量问题）'],
+  'arithmetic-sequence': ['等差数列的定义', '通项公式aₙ', '前n项和Sₙ', '等差中项', '性质与判定', '等差数列应用'],
+  'geometric-sequence': ['等比数列的定义', '通项公式aₙ', '前n项和Sₙ', '等比中项', '性质与判定', '等比数列应用'],
+  'sequence-summation': ['裂项相消法', '错位相减法', '倒序相加法', '分组求和法', '并项求和法', '数列求和综合'],
+  'inequalities': ['不等式的基本性质', '一元二次不等式', '含绝对值不等式', '分式不等式', '高次不等式', '不等式的证明'],
+  'linear-programming': ['二元一次不等式组', '可行域的画法', '线性目标函数最值', '最优解的确定', '整数规划', '实际应用问题'],
+  'basic-inequality': ['基本不等式a+b≥2√ab', '等号成立条件', '基本不等式的证明', '利用均值求最值', '1的代换技巧', '基本不等式综合应用'],
+  'space-figures': ['棱柱及其性质', '棱锥与棱台', '圆柱与圆锥', '球的性质与公式', '表面积与体积', '三视图与直观图'],
+  'space-lines-planes': ['平面的基本性质', '公理1/2/3及推论', '共线与共面问题', '异面直线的判定', '线面位置关系分类', '面面位置关系分类'],
+  'parallel-perpendicular': ['线面平行的判定与性质', '面面平行的判定与性质', '线面垂直的判定与性质', '面面垂直的判定与性质', '平行与垂直的转化', '综合证明方法'],
+  'dihedral-angle': ['二面角的定义与计算', '线面角', '异面直线所成角', '空间角的向量求法', '距离问题', '翻折与展开问题'],
+  'space-vectors': ['空间向量的加减运算', '空间向量的数量积', '空间向量的坐标表示', '法向量与平面方程', '用向量求空间角', '用向量求距离'],
+  'line-equation': ['直线的倾斜角与斜率', '点斜式/斜截式', '两点式/截距式', '一般式', '两直线位置关系', '点到直线的距离'],
+  'circle-equation': ['圆的标准方程', '圆的一般方程', '待定系数法求圆方程', '点与圆的位置关系', '直线与圆的位置关系', '圆与圆的位置关系'],
+  'ellipse': ['椭圆的定义', '标准方程及推导', '几何性质（a/b/c/e）', '焦点三角形', '直线与椭圆的位置关系', '椭圆的弦长与中点弦'],
+  'hyperbola': ['双曲线的定义', '标准方程及推导', '几何性质（a/b/c/e）', '渐近线', '直线与双曲线的位置关系', '双曲线的综合问题'],
+  'parabola-h': ['抛物线的定义', '标准方程四种形式', '焦点与准线', '几何性质', '直线与抛物线的位置关系', '抛物线的弦与焦点弦'],
+  'conic-comprehensive': ['圆锥曲线统一定义', '焦点弦问题', '中点弦与弦长', '定点定值问题', '最值与范围问题', '存在性问题'],
+  'vector-basics': ['向量的概念与表示', '向量的加减运算', '数乘运算', '共线向量', '向量的分解', '向量在几何中的应用'],
+  'vector-coordinates': ['向量的坐标表示', '坐标运算', '数量积的坐标运算', '向量的夹角', '垂直与平行判定', '坐标法的综合应用'],
+  'derivative-concept': ['导数的定义（极限法）', '导数的几何意义', '基本初等函数导数', '导数四则运算', '复合函数求导', '隐函数求导'],
+  'derivative-application': ['利用导数求单调性', '极值与极值点', '最值问题', '导数与不等式证明', '导数与零点问题', '导数的实际应用'],
+  'counting-principles': ['分类加法计数原理', '分步乘法计数原理', '排列与排列数', '组合与组合数', '排列组合综合', '分组分配问题'],
+  'binomial-theorem': ['二项式定理', '通项公式', '二项式系数的性质', '赋值法', '二项式定理的应用', '与数列/不等式结合'],
+  'probability-h': ['古典概型', '条件概率', '独立事件', '互斥与对立事件', '全概率公式', '概率的实际应用'],
+  'random-variable': ['离散型随机变量', '分布列', '二项分布', '超几何分布', '正态分布', '期望与方差'],
+  'regression-analysis': ['散点图与相关性', '回归直线方程', '最小二乘法', '独立性检验(χ²)', '统计推断', '回归分析综合应用']
+};
+
+// ═══ 生成知识图谱数据 ═══
+function buildKnowledgeGraphData(nodeId) {
+  const nodeInfo = NODE_MAP[nodeId];
+  
+  // 核心子知识点
+  const keyConcepts = KEY_CONCEPTS[nodeId] || [];
+  const coreSubTopics = keyConcepts.slice(0, 6).map((c, i) => ({
+    id: `sub-${i}`,
+    label: c.length > 18 ? c.slice(0, 18) + '…' : c
+  }));
+
+  // 前序知识
+  const prereqNodeIds = nodeInfo.prerequisites;
+  const prerequisites = prereqNodeIds.map(pid => {
+    const pn = NODE_MAP[pid];
+    return {
+      id: pid,
+      label: pn ? pn.name : pid,
+      hasCourseware: pn ? true : false,
+      url: pn ? `../math-high-${pid}/index.html` : '',
+      connectsTo: coreSubTopics.length > 0 ? [coreSubTopics[0].id] : []
+    };
+  });
+
+  // 后续知识
+  const nextNodeIds = nodeInfo.extends || [];
+  const nextTopics = nextNodeIds.map(nid => {
+    const nn = NODE_MAP[nid];
+    return {
+      id: nid,
+      label: nn ? nn.name : nid,
+      hasCourseware: nn ? true : false,
+      url: nn ? `../math-high-${nid}/index.html` : '',
+      connectsFrom: coreSubTopics.length > 0 ? [coreSubTopics[coreSubTopics.length - 1].id] : []
+    };
+  });
+
+  return {
+    currentNode: nodeId,
+    currentLabel: nodeInfo.name,
+    coreSubTopics,
+    prerequisites,
+    nextTopics
+  };
+}
+
+// ═══ 获取教学设计数据 ═══
+function getTeachingData(nodeId) {
+  const gn = graphNodes[nodeId];
+  const ni = NODE_MAP[nodeId];
+  return {
+    definition: gn?.definition || ni.name,
+    keyConcepts: KEY_CONCEPTS[nodeId] || gn?.key_concepts || [],
+    realWorld: gn?.real_world || [],
+    memoryAnchors: gn?.memory_anchors || [],
+    bloomVerbs: gn?.bloom_verbs || {},
+    prerequisites: ni.prerequisites,
+    extends: ni.extends || [],
+    name: ni.name,
+    grade: ni.grade,
+    domainName: ni.domainName
+  };
+}
+
+// ═══ 生成练习题 ═══
+function generateQuiz(nodeId, qType, qIndex) {
+  const data = getTeachingData(nodeId);
+  const concepts = data.keyConcepts;
+  const c0 = concepts[0] || '核心概念';
+  const c1 = concepts[1] || '基本性质';
+  const c2 = concepts[2] || '运算方法';
+  
+  if (qType === 'pretest') {
+    return `
+    <div class="card">
+      <h3>题目 ${qIndex + 1}</h3>
+      <p>关于"${c0}"，下列说法正确的是？</p>
+      <div class="quiz-option" onclick="checkAnswer(this, true, 'pretest-q${qIndex}')">A. ${c0}是${data.definition.slice(0, 20)}…的基础</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'pretest-q${qIndex}')">B. ${c0}与${c1}没有关系</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'pretest-q${qIndex}')">C. ${c0}只能在特定条件下使用</div>
+      <div id="pretest-q${qIndex}" class="quiz-feedback"></div>
+    </div>`;
+  }
+  return `
+    <div class="card">
+      <h3>题目 ${qIndex + 1}</h3>
+      <p>下列关于"${c0}"的理解，哪个是正确的？</p>
+      <div class="quiz-option" onclick="checkAnswer(this, false, '${qType}-q${qIndex}')">A. ${c0}与${c2}完全相同</div>
+      <div class="quiz-option" onclick="checkAnswer(this, true, '${qType}-q${qIndex}')">B. ${c0}是理解${data.name}的关键</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, '${qType}-q${qIndex}')">C. ${c0}没有实际应用</div>
+      <div id="${qType}-q${qIndex}" class="quiz-feedback"></div>
+    </div>`;
+}
+
+// ═══ 生成模块HTML ═══
+function generateModule(nodeId, moduleIndex, concept, realWorld, memoryAnchor) {
+  const mId = `module-${moduleIndex}`;
+  return `
+  <section class="section" id="${mId}">
+    <h2 class="section-title">📖 模块 ${moduleIndex}：${concept}</h2>
+    <div class="card">
+      <h3>🌉 为什么要学这个？</h3>
+      <p><span class="highlight">你已经知道……</span>基本的数学概念和运算规则</p>
+      <p><span class="highlight">但有个问题……</span>仅凭基础概念，无法深入理解${concept}的内涵与应用</p>
+      <p><span class="highlight">所以这节课要学……</span>${concept}的本质、方法和应用</p>
+    </div>
+    <div class="card">
+      <h3>💡 核心讲解</h3>
+      <p>${concept}是高中数学中的重要内容。掌握${concept}的关键在于理解其本质含义，并能在具体问题中灵活运用。</p>
+    </div>
+    ${realWorld ? `<div class="insight-box"><h4>🌍 真实世界</h4><p>${realWorld}</p></div>` : ''}
+    ${memoryAnchor ? `<div class="insight-box"><h4>💡 记忆锚点</h4><p>${memoryAnchor}</p></div>` : ''}
+    <div class="card">
+      <h3>✏️ 马上练一题</h3>
+      <p>关于"${concept}"，下列理解正确的是？</p>
+      <div class="quiz-option" onclick="checkAnswer(this, true, 'm${moduleIndex}-q1')">A. ${concept}有其明确的定义和适用范围</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'm${moduleIndex}-q1')">B. ${concept}只是一种计算技巧</div>
+      <div class="quiz-option" onclick="checkAnswer(this, false, 'm${moduleIndex}-q1')">C. ${concept}不需要理解，记住公式即可</div>
+      <div id="m${moduleIndex}-q1" class="quiz-feedback"></div>
+    </div>
+  </section>`;
+}
+
+// ═══ 生成完整HTML课件 ═══
+function generateCourseware(nodeId) {
+  const data = getTeachingData(nodeId);
+  const ni = NODE_MAP[nodeId];
+  const kg = buildKnowledgeGraphData(nodeId);
+  const courseId = ni.courseId;
+  
+  // 模块：将关键概念分成3-4个模块
+  const concepts = data.keyConcepts.length > 0 ? data.keyConcepts : [ni.name + '的基本概念'];
+  const moduleCount = Math.min(Math.max(concepts.length, 3), 4);
+  const moduleConcepts = concepts.slice(0, moduleCount);
+  while (moduleConcepts.length < 3) {
+    moduleConcepts.push(ni.name + '的深入理解');
+  }
+
+  // 导航项
+  const navItems = [
+    { href: '#hero', text: '首页' },
+    { href: '#objectives', text: '目标' },
+    { href: '#pretest', text: '前测' },
+    ...moduleConcepts.map((_, i) => ({ href: `#module-${i+1}`, text: `模块${i+1}` })),
+    { href: '#synthesis', text: '综合' },
+    { href: '#posttest', text: '后测' },
+    { href: '#summary', text: '小结' },
+    { href: '#knowledge-graph', text: '图谱' }
+  ];
+
+  // 学习目标
+  const objectives = [
+    { icon: '📌', title: '概念理解', desc: `能用自己的语言解释${ni.name}的核心概念` },
+    { icon: '🔍', title: '方法掌握', desc: `能运用${moduleConcepts[1] || '相关方法'}解决问题` },
+    { icon: '🚀', title: '迁移应用', desc: `能在新情境中灵活应用${ni.name}的知识` }
+  ];
+
+  const html = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${ni.name} · 高中数学互动课件</title>
+<meta name="teachany-node" content="${nodeId}">
+<meta name="teachany-subject" content="math">
+<meta name="teachany-domain" content="${ni.domainId}">
+<meta name="teachany-grade" content="${ni.grade}">
+<meta name="teachany-prerequisites" content="${ni.prerequisites.join(',')}">
+<meta name="teachany-difficulty" content="${ni.grade >= 12 ? 4 : 3}">
+<meta name="teachany-version" content="2.0">
+<meta name="teachany-author" content="teachany">
+<style>${getCSS()}</style>
+</head>
+<body>
+<div class="progress-bar" id="progressBar" style="width: 0%"></div>
+<nav class="nav">
+  <span class="nav-brand"><strong>教我学</strong> TeachAny</span>
+  ${navItems.map(n => `<a href="${n.href}">${n.text}</a>`).join('\n  ')}
+</nav>
+
+<div class="container">
+  <section class="hero" id="hero">
+    <h1>${ni.name}</h1>
+    <p class="subtitle">${data.definition}</p>
+    <div class="meta">
+      <span>📚 数学</span>
+      <span>🎓 高${ni.grade}年级</span>
+      <span>⏱️ 约 35 分钟</span>
+      <span>🎯 新授课</span>
+      <span>🔢 ${ni.domainName}</span>
+    </div>
+  </section>
+
+  <section class="section" id="objectives">
+    <h2 class="section-title">🎯 学习目标</h2>
+    <div class="grid-3">
+      ${objectives.map(o => `
+      <div class="card obj-card">
+        <div class="icon">${o.icon}</div>
+        <h4>${o.title}</h4>
+        <p>${o.desc}</p>
+      </div>`).join('\n      ')}
+    </div>
+  </section>
+
+  <section class="section" id="pretest">
+    <h2 class="section-title">📋 前测：你已经知道什么？</h2>
+    ${generateQuiz(nodeId, 'pretest', 0)}
+    ${ni.prerequisites.length > 0 ? `<div class="card"><p style="color:var(--dim);font-size:14px;">💡 本课的前置知识：${ni.prerequisites.map(p => { const pm = NODE_MAP[p]; return pm ? pm.name : p; }).join('、')}</p></div>` : ''}
+  </section>
+
+  ${moduleConcepts.map((concept, i) => {
+    const rw = data.realWorld[i] || '';
+    const ma = data.memoryAnchors[i] || '';
+    return generateModule(nodeId, i + 1, concept, rw, ma);
+  }).join('\n')}
+
+  ${moduleConcepts.length > 1 ? `
+  <div class="page-nav">
+    <button onclick="document.getElementById('module-${moduleConcepts.length - 1}')?.scrollIntoView({behavior:'smooth'})">← 上一模块</button>
+    <span class="current">综合任务</span>
+    <button onclick="document.getElementById('synthesis')?.scrollIntoView({behavior:'smooth'})">综合 →</button>
+  </div>` : ''}
+
+  <section class="section" id="synthesis">
+    <h2 class="section-title">🏆 综合任务</h2>
+    <div class="card">
+      <h3>⭐ 基础巩固</h3>
+      <p>回顾本课核心概念，用自己的话总结${ni.name}的定义和关键性质。</p>
+    </div>
+    <div class="card">
+      <h3>⭐⭐ 拓展应用</h3>
+      <p>选择一个真实场景（如${data.realWorld[0] || '日常生活中的问题'}），运用${ni.name}的知识建立模型并分析。</p>
+    </div>
+    <div class="card">
+      <h3>⭐⭐⭐ 迁移挑战</h3>
+      <p>设计一道关于${ni.name}的原创综合题，要求融合至少两个关键概念，并给出详细解答。</p>
+    </div>
+  </section>
+
+  <section class="section" id="posttest">
+    <h2 class="section-title">📝 后测：学会了吗？</h2>
+    ${generateQuiz(nodeId, 'posttest', 0)}
+    <div class="card">
+      <h3>后测题 2</h3>
+      <p>${data.bloomVerbs.apply || `运用${ni.name}的知识解决一个问题`}，写出完整的解题过程。</p>
+    </div>
+  </section>
+
+  <section class="section" id="summary">
+    <h2 class="section-title">📌 课堂小结</h2>
+    <div class="card">
+      <h3>核心知识</h3>
+      <ul>
+        ${data.keyConcepts.map(c => `<li>${c}</li>`).join('\n        ')}
+      </ul>
+    </div>
+    ${data.memoryAnchors.length > 0 ? `
+    <div class="insight-box">
+      <h4>💡 记忆锚点</h4>
+      ${data.memoryAnchors.map(a => `<p>${a}</p>`).join('\n      ')}
+    </div>` : ''}
+    ${data.realWorld.length > 0 ? `
+    <div class="insight-box">
+      <h4>🌍 现实联系</h4>
+      ${data.realWorld.map(r => `<p>${r}</p>`).join('\n      ')}
+    </div>` : ''}
+  </section>
+
+  <section class="section" id="knowledge-graph">
+    <h2 class="section-title">🗺️ 知识图谱</h2>
+    <p style="color:var(--dim);margin-bottom:16px;">三列视图：前序知识 → 核心子知识点 → 后续知识。实线节点可点击跳转，虚线表示暂无课件。</p>
+    <div id="kg-container" style="width:100%;min-height:400px;border:1px solid var(--border);border-radius:12px;overflow:hidden;position:relative;">
+      <svg id="kg-svg" width="100%" height="100%" style="min-height:400px;background:rgba(15,23,42,0.5);border-radius:12px;"></svg>
+    </div>
+  </section>
+
+  <footer>
+    <p>Made with <strong>教我学 TeachAny</strong> · <a href="https://github.com/weponusa/teachany" style="color:var(--primary);">GitHub</a></p>
+    <p style="margin-top:6px;">Built on ABT Narrative · Bloom's Taxonomy · Scaffolding · Cognitive Load Theory</p>
+  </footer>
+</div>
+
+<script>
+// ═══ 知识图谱数据 ═══
+const knowledgeGraphData = ${JSON.stringify(kg, null, 2)};
+
+// ═══ 导航高亮 + 滚动进度 ═══
+const sections = document.querySelectorAll('.section, .hero');
+const navLinks = document.querySelectorAll('.nav a');
+const progressBar = document.getElementById('progressBar');
+window.addEventListener('scroll', () => {
+  const scrollTop = window.scrollY;
+  const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+  progressBar.style.width = (scrollTop / docHeight * 100) + '%';
+  let current = '';
+  sections.forEach(sec => { if (sec.offsetTop - 120 <= scrollTop) current = sec.id; });
+  navLinks.forEach(link => { link.classList.toggle('active', link.getAttribute('href') === '#' + current); });
+});
+
+// ═══ 锚点平滑滚动 ═══
+function scrollToSection(id) { document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+navLinks.forEach(link => {
+  link.addEventListener('click', e => { e.preventDefault(); const id = link.getAttribute('href').slice(1); scrollToSection(id); });
+});
+
+// ═══ 答题引擎 ═══
+function checkAnswer(el, isCorrect, feedbackId) {
+  const parent = el.parentElement;
+  const options = parent.querySelectorAll('.quiz-option');
+  const feedback = document.getElementById(feedbackId);
+  if (parent.dataset.answered) return;
+  parent.dataset.answered = 'true';
+  options.forEach(opt => { opt.style.pointerEvents = 'none'; opt.style.opacity = '0.6'; });
+  if (isCorrect) {
+    el.classList.add('correct'); el.style.opacity = '1';
+    feedback.innerHTML = '✅ <strong>正确！</strong>理解到位，继续加油。';
+    feedback.style.background = 'rgba(52,211,153,0.1)'; feedback.style.color = '#34d399';
+  } else {
+    el.classList.add('wrong'); el.style.opacity = '1';
+    options.forEach(opt => { if (opt.onclick && opt.onclick.toString().includes('true')) { opt.classList.add('correct'); opt.style.opacity = '1'; } });
+    feedback.innerHTML = '❌ <strong>再想想。</strong>回顾核心概念的定义和应用条件。';
+    feedback.style.background = 'rgba(248,113,113,0.1)'; feedback.style.color = '#f87171';
+  }
+  feedback.classList.add('show');
+}
+
+// ═══ 知识图谱渲染 ═══
+(function() {
+  const d = knowledgeGraphData;
+  const svg = document.getElementById('kg-svg');
+  if (!svg || !d) return;
+  const NS = 'http://www.w3.org/2000/svg';
+  const el = tag => document.createElementNS(NS, tag);
+  const C = { pre: '#22d3ee', core: '#fbbf24', sub: '#60a5fa', next: '#34d399', preBg: 'rgba(6,182,212,0.25)', coreBg: 'rgba(245,158,11,0.35)', subBg: 'rgba(59,130,246,0.25)', nextBg: 'rgba(16,185,129,0.25)', noCw: '#94a3b8', noCwBg: 'rgba(148,163,184,0.15)' };
+  const preN = d.prerequisites || [], subN = d.coreSubTopics || [], nextN = d.nextTopics || [];
+  const maxR = Math.max(preN.length, subN.length + 1, nextN.length);
+  const RH = 65, PT = 55, NH = 40, RX = 10, W = 1000, H = Math.max(400, PT + maxR * RH + 30);
+  const CX = { pre: 110, core: 500, next: 890 };
+  const NW = { pre: 175, core: 250, next: 200 };
+  svg.setAttribute('viewBox', \`0 0 \${W} \${H}\`);
+  svg.innerHTML = '';
+  const defs = el('defs');
+  ['pre','core','sub','next'].forEach(k => {
+    const mk = el('marker'); mk.setAttribute('id',\`arr-\${k}\`); mk.setAttribute('viewBox','0 0 10 6');
+    mk.setAttribute('refX','10'); mk.setAttribute('refY','3'); mk.setAttribute('markerWidth','8'); mk.setAttribute('markerHeight','6'); mk.setAttribute('orient','auto');
+    const p = el('path'); p.setAttribute('d','M0,0 L10,3 L0,6Z'); p.setAttribute('fill',C[k]); mk.appendChild(p); defs.appendChild(mk);
+  });
+  const mk2 = el('marker'); mk2.setAttribute('id','arr-nocw'); mk2.setAttribute('viewBox','0 0 10 6');
+  mk2.setAttribute('refX','10'); mk2.setAttribute('refY','3'); mk2.setAttribute('markerWidth','8'); mk2.setAttribute('markerHeight','6'); mk2.setAttribute('orient','auto');
+  const p2 = el('path'); p2.setAttribute('d','M0,0 L10,3 L0,6Z'); p2.setAttribute('fill',C.noCw); mk2.appendChild(p2); defs.appendChild(mk2);
+  svg.appendChild(defs);
+  function addTitle(x,y,text,color) { const t=el('text'); t.setAttribute('x',x); t.setAttribute('y',y); t.setAttribute('fill',color); t.setAttribute('font-size','13'); t.setAttribute('text-anchor','middle'); t.setAttribute('font-weight','600'); t.textContent=text; svg.appendChild(t); }
+  addTitle(CX.pre,25,'前序知识','#94a3b8'); addTitle(CX.core,25,'核心知识',C.core); addTitle(CX.next,25,'后续知识','#94a3b8');
+  function drawNode(cx,cy,w,h,label,opts) {
+    const o=Object.assign({fill:'rgba(30,41,59,0.85)',stroke:'#475569',strokeW:1.5,fontSize:13,fontWeight:'600',fontColor:'#e2e8f0',rx:RX,dash:false,clickUrl:''},opts);
+    const g=el('g'); const r=el('rect'); r.setAttribute('x',cx-w/2); r.setAttribute('y',cy-h/2); r.setAttribute('width',w); r.setAttribute('height',h);
+    r.setAttribute('rx',o.rx); r.setAttribute('fill',o.fill); r.setAttribute('stroke',o.stroke); r.setAttribute('stroke-width',o.strokeW);
+    if(o.dash) r.setAttribute('stroke-dasharray','6 3'); g.appendChild(r);
+    const t=el('text'); t.setAttribute('x',cx); t.setAttribute('y',cy+4); t.setAttribute('fill',o.fontColor); t.setAttribute('font-size',o.fontSize);
+    t.setAttribute('text-anchor','middle'); t.setAttribute('font-weight',o.fontWeight); t.textContent=label.length>12?label.slice(0,12)+'…':label; g.appendChild(t);
+    if(o.clickUrl) { g.style.cursor='pointer'; g.addEventListener('click',()=>window.open(o.clickUrl,'_blank')); }
+    svg.appendChild(g); return {cx,cy,left:cx-w/2,right:cx+w/2,top:cy-h/2,bottom:cy+h/2};
+  }
+  function drawCurve(x1,y1,x2,y2,color,mk) { const cp=(x1+x2)/2; const p=el('path'); p.setAttribute('d',\`M\${x1},\${y1} C\${cp},\${y1} \${cp},\${y2} \${x2},\${y2}\`); p.setAttribute('fill','none'); p.setAttribute('stroke',color); p.setAttribute('stroke-width','2'); p.setAttribute('opacity','0.7'); p.setAttribute('marker-end',\`url(#arr-\${mk})\`); svg.appendChild(p); }
+  const preP={}; preN.forEach((n,i)=>{ const cy=PT+i*RH+NH/2; preP[n.id]=drawNode(CX.pre,cy,NW.pre,NH,n.label,{fill:n.hasCourseware?C.preBg:C.noCwBg,stroke:n.hasCourseware?C.pre:C.noCw,fontColor:n.hasCourseware?C.pre:C.noCw,dash:!n.hasCourseware,clickUrl:n.url||''}); });
+  const coreY=PT+NH/2; const coreM=drawNode(CX.core,coreY,NW.core+10,NH+6,d.currentLabel,{fill:C.coreBg,stroke:C.core,strokeW:2.5,fontSize:16,fontWeight:'700',fontColor:C.core,rx:12});
+  const subP={}; subN.forEach((n,i)=>{ const cy=PT+(i+1)*RH+NH/2; subP[n.id]=drawNode(CX.core,cy,NW.core,NH-2,n.label,{fill:C.subBg,stroke:C.sub,fontColor:C.sub}); });
+  if(subN.length>0){ const l=el('line'); l.setAttribute('x1',CX.core); l.setAttribute('y1',coreM.bottom); l.setAttribute('x2',CX.core); l.setAttribute('y2',subP[subN[0].id].top); l.setAttribute('stroke',C.core); l.setAttribute('stroke-width','1.5'); l.setAttribute('opacity','0.6'); l.setAttribute('marker-end','url(#arr-core)'); svg.appendChild(l); }
+  for(let i=0;i<subN.length-1;i++){ const l=el('line'); l.setAttribute('x1',CX.core); l.setAttribute('y1',subP[subN[i].id].bottom); l.setAttribute('x2',CX.core); l.setAttribute('y2',subP[subN[i+1].id].top); l.setAttribute('stroke',C.sub); l.setAttribute('stroke-width','1.2'); l.setAttribute('opacity','0.5'); l.setAttribute('marker-end','url(#arr-sub)'); svg.appendChild(l); }
+  const nextP={}; nextN.forEach((n,i)=>{ const cy=PT+i*RH+NH/2; nextP[n.id]=drawNode(CX.next,cy,NW.next,NH,n.label,{fill:n.hasCourseware?C.nextBg:C.noCwBg,stroke:n.hasCourseware?C.next:C.noCw,fontColor:n.hasCourseware?C.next:C.noCw,dash:!n.hasCourseware,clickUrl:n.url||''}); });
+  preN.forEach(n=>{ const from=preP[n.id]; if(!from)return; const targets=n.connectsTo||[]; const isD=!n.hasCourseware; if(targets.length===0) drawCurve(from.right,from.cy,coreM.left,coreM.cy,isD?C.noCw:C.pre,isD?'nocw':'pre');
+  else targets.forEach(tid=>{ const to=subP[tid]||coreM; drawCurve(from.right,from.cy,to.left,to.cy,isD?C.noCw:C.pre,isD?'nocw':'pre'); }); });
+  nextN.forEach(n=>{ const to=nextP[n.id]; if(!to)return; const sources=n.connectsFrom||[]; const isD=!n.hasCourseware; if(sources.length===0) drawCurve(coreM.right,coreM.cy,to.left,to.cy,isD?C.noCw:C.next,isD?'nocw':'next');
+  else sources.forEach(sid=>{ const from=subP[sid]||coreM; drawCurve(from.right,from.cy,to.left,to.cy,isD?C.noCw:C.next,isD?'nocw':'next'); }); });
+})();
+</script>
+</body>
+</html>`;
+
+  return html;
+}
+
+// ═══ 批量生成 ═══
+let count = 0;
+let errors = [];
+tree.domains.forEach(domain => {
+  domain.nodes.forEach(node => {
+    const courseId = `math-high-${node.id}`;
+    const dir = path.join(EXAMPLES_DIR, courseId);
+    const filePath = path.join(dir, 'index.html');
+    
+    try {
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      const html = generateCourseware(node.id);
+      fs.writeFileSync(filePath, html, 'utf8');
+      count++;
+      console.log(`✅ [${count}/36] ${courseId}: ${node.name}`);
+    } catch (err) {
+      errors.push(`${courseId}: ${err.message}`);
+      console.error(`❌ ${courseId}: ${err.message}`);
+    }
+  });
+});
+
+console.log(`\n══════════════════════════════════`);
+console.log(`生成完毕：${count} 个课件`);
+if (errors.length > 0) {
+  console.log(`失败：${errors.length} 个`);
+  errors.forEach(e => console.log(`  - ${e}`));
+}
