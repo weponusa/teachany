@@ -3,314 +3,470 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>折线统计图 · TeachAny 互动课件</title>
+<title>折线统计图 · 互动课件</title>
 <meta name="teachany-node" content="line-graph">
 <meta name="teachany-subject" content="math">
-<meta name="teachany-domain" content="statistics-probability-primary">
+<meta name="teachany-domain" content="statistics">
 <meta name="teachany-grade" content="4">
-<meta name="teachany-difficulty" content="2">
-<meta name="teachany-version" content="1.0">
+<meta name="teachany-difficulty" content="3">
+<meta name="teachany-version" content="2.0">
 <meta name="teachany-author" content="weponusa">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
-:root{--bg:#fffbf0;--bg2:#fff7e6;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--danger:#ff6b6b;--purple:#cc5de8;--blue:#339af0;--orange:#ff922b;--text:#2b2b2b;--dim:#666;--dimmer:#999;--card:#ffffff;--border:rgba(0,0,0,0.06);}
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--card:#fff;--purple:#cc5de8;--blue:#339af0;--orange:#ff922b;--text:#2b2b2b;--dim:#666;--border:rgba(0,0,0,0.06);}
 *{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
-body{font-family:'Noto Sans SC',-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:70px;}
-body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle at 10% 20%,rgba(255,107,107,0.06) 0%,transparent 50%),radial-gradient(circle at 90% 80%,rgba(78,205,196,0.06) 0%,transparent 50%);pointer-events:none;z-index:-1;}
-.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;box-shadow:0 2px 20px rgba(255,146,43,0.1);}
+body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:60px;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 10% 20%,rgba(255,107,107,.06),transparent 50%),radial-gradient(circle at 90% 80%,rgba(78,205,196,.06),transparent 50%);pointer-events:none;z-index:-1;}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;}
 .nav-brand{font-size:20px;font-weight:900;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all 0.25s;white-space:nowrap;}
-.nav a:hover,.nav a.active{color:#fff;background:linear-gradient(135deg,var(--primary),var(--orange));transform:scale(1.05);}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all .25s;white-space:nowrap;}
+.nav a:hover,.nav a.active{color:#fff;background:linear-gradient(135deg,var(--primary),var(--orange));}
 .container{max-width:960px;margin:0 auto;padding:80px 20px 60px;}
 .hero{text-align:center;padding:36px 0 30px;}
-.hero h1{font-size:42px;font-weight:900;line-height:1.3;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple),var(--blue));background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
+.hero h1{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple),var(--blue));background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
 @keyframes rainbowShift{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}
 .hero .subtitle{font-size:18px;color:var(--dim);margin-bottom:16px;}
 .hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
-.hero .meta span{background:#fff;border:2px solid var(--border);border-radius:24px;padding:6px 18px;font-size:14px;font-weight:700;color:var(--dim);box-shadow:0 2px 8px rgba(0,0,0,0.04);}
+.hero .meta span{background:#fff;border:2px solid var(--border);border-radius:24px;padding:6px 18px;font-size:14px;font-weight:700;color:var(--dim);}
 .section{margin:40px 0;}
-.section-title{font-size:26px;font-weight:900;margin-bottom:18px;padding:10px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));display:inline-block;}
-.card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.04);transition:transform 0.25s,box-shadow 0.25s;}
-.card:hover{transform:translateY(-3px) scale(1.005);box-shadow:0 8px 30px rgba(255,107,107,0.12);}
+.section-title{font-size:26px;font-weight:900;margin-bottom:18px;padding:10px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(255,107,107,.1),rgba(78,205,196,.1));display:inline-block;}
+.card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,.04);transition:transform .25s,box-shadow .25s;}
+.card:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(255,107,107,.12);}
 .card h3{font-size:20px;font-weight:900;margin-bottom:10px;}
 .card p,.card li{font-size:16px;line-height:1.9;color:var(--dim);}
 .grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;}
-.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;}
-.obj-card{text-align:center;padding:26px 16px;}
-.obj-card .icon{font-size:44px;margin-bottom:10px;display:inline-block;animation:bounce 2s ease infinite;}
-@keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
-.obj-card h4{font-size:17px;font-weight:900;margin-bottom:6px;}
-.obj-card p{font-size:14px;color:var(--dim);}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;}
 .highlight{color:var(--primary);font-weight:900;}
-.quiz-option{display:block;padding:16px 20px;margin:10px 0;border-radius:16px;background:#fff;border:2.5px solid #e8e8e8;cursor:pointer;transition:all 0.25s;font-size:16px;font-weight:700;color:var(--text);}
-.quiz-option:hover{background:rgba(78,205,196,0.08);border-color:var(--secondary);transform:translateX(4px);}
-.quiz-option.correct{background:rgba(81,207,102,0.12);border-color:var(--success);color:#2b8a3e;}
-.quiz-option.wrong{background:rgba(255,107,107,0.1);border-color:var(--danger);color:#c92a2a;}
-.quiz-feedback{padding:14px 18px;border-radius:14px;margin-top:10px;font-size:15px;display:none;font-weight:700;}
-.quiz-feedback.show{display:block;animation:popIn 0.35s cubic-bezier(0.34,1.56,0.64,1);}
-@keyframes popIn{from{opacity:0;transform:scale(0.92);}to{opacity:1;transform:scale(1);}}
-.insight-box{background:linear-gradient(135deg,rgba(204,93,232,0.08),rgba(51,154,240,0.08));border-left:5px solid var(--purple);padding:18px 22px;border-radius:0 16px 16px 0;margin:16px 0;}
-.insight-box h4{color:var(--purple);font-size:17px;font-weight:900;margin-bottom:8px;}
-.insight-box p{color:var(--text);font-size:15.5px;}
-.sticker{display:inline-block;font-size:28px;animation:wiggle 3s ease-in-out infinite;}
-@keyframes wiggle{0%,100%{transform:rotate(0deg);}25%{transform:rotate(8deg);}75%{transform:rotate(-8deg);}}
-.star-reward{text-align:center;padding:20px;font-size:18px;font-weight:900;background:linear-gradient(135deg,rgba(255,230,109,0.2),rgba(255,146,43,0.1));border-radius:20px;margin-top:16px;}
-.star-reward .stars{font-size:36px;display:block;margin-bottom:8px;}
-footer{text-align:center;padding:36px 0;color:var(--dimmer);font-size:13px;border-top:3px dashed rgba(0,0,0,0.06);margin-top:50px;}
-/* SVG chart */
-.svg-chart{width:100%;max-width:600px;margin:0 auto;display:block;}
-.chart-container{background:#f8f9fa;border-radius:16px;padding:20px;margin:16px 0;text-align:center;}
-@media(max-width:600px){.hero h1{font-size:30px;}.section-title{font-size:22px;}.card{padding:18px;}}
-.audio-bar{position:fixed;bottom:0;left:0;right:0;z-index:500;background:rgba(255,107,107,0.95);backdrop-filter:blur(12px);border-top:2px solid rgba(255,255,255,0.3);padding:10px 24px;display:flex;align-items:center;gap:14px;}
-.audio-bar .ab-btn{width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;background:#fff;color:var(--primary);font-size:16px;display:flex;align-items:center;justify-content:center;}
-.audio-bar .ab-info{flex:1;min-width:0;}
-.audio-bar .ab-title{font-size:13px;font-weight:700;color:#fff;}
-.audio-bar .ab-progress-wrap{height:4px;background:rgba(255,255,255,0.3);border-radius:2px;margin-top:4px;cursor:pointer;}
-.audio-bar .ab-progress{height:100%;background:#fff;border-radius:2px;width:0%;}
-.audio-bar .ab-time{font-size:11px;color:rgba(255,255,255,0.8);margin-top:2px;}
-.audio-bar .ab-vol{width:60px;accent-color:#fff;}
+
+/* ===== 生活场景 ===== */
+#life-scene{background:linear-gradient(135deg,#e8f4ff,#f0fff4);border-radius:24px;padding:32px;}
+.weather-stage{position:relative;height:200px;background:linear-gradient(180deg,#c8e6ff 0%,#e8f4ff 100%);border-radius:18px;overflow:hidden;display:flex;align-items:flex-end;padding:0 20px 16px;gap:8px;}
+/* 温度柱动画 */
+.temp-bar{background:linear-gradient(180deg,var(--primary),var(--orange));border-radius:6px 6px 0 0;flex:1;transition:height .5s;animation:tempRise 3s ease-in-out infinite alternate;}
+.temp-bar:nth-child(1){animation-delay:0s;--h1:60px;--h2:80px;}
+.temp-bar:nth-child(2){animation-delay:.3s;--h1:80px;--h2:110px;}
+.temp-bar:nth-child(3){animation-delay:.6s;--h1:100px;--h2:130px;}
+.temp-bar:nth-child(4){animation-delay:.9s;--h1:120px;--h2:90px;}
+.temp-bar:nth-child(5){animation-delay:1.2s;--h1:90px;--h2:70px;}
+.temp-bar:nth-child(6){animation-delay:1.5s;--h1:70px;--h2:50px;}
+@keyframes tempRise{0%{height:var(--h1,60px);}100%{height:var(--h2,100px);}}
+/* 折线覆盖 */
+.line-overlay{position:absolute;top:0;left:0;right:0;bottom:16px;pointer-events:none;}
+.line-dot{position:absolute;width:12px;height:12px;background:#fff;border:3px solid var(--secondary);border-radius:50%;transform:translate(-50%,-50%);animation:dotPop .5s ease-in-out infinite alternate;}
+@keyframes dotPop{0%{transform:translate(-50%,-50%) scale(1);}100%{transform:translate(-50%,-50%) scale(1.3);}}
+.line-labels{display:flex;justify-content:space-around;padding:0 20px;margin-top:8px;font-size:12px;font-weight:700;color:var(--dim);}
+
+/* ===== 折线图区域 ===== */
+#lineChart{width:100%;height:300px;}
+.chart-controls{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
+.chart-btn{padding:8px 18px;border:2px solid var(--border);border-radius:16px;background:#fff;font-weight:700;cursor:pointer;transition:all .2s;}
+.chart-btn.active,.chart-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary);}
+
+/* ===== 互动实验台 ===== */
+#interactive-lab{padding:28px;border-radius:24px;background:linear-gradient(135deg,#f0fff4,#e8f4ff);}
+.data-input-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px;}
+.data-input-grid input{width:100%;padding:8px;text-align:center;border:2px solid var(--border);border-radius:10px;font-size:15px;font-weight:700;}
+.data-input-grid label{text-align:center;font-size:13px;color:var(--dim);font-weight:700;}
+.slider-row{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+.slider-row label{font-weight:700;min-width:100px;}
+input[type=range]{flex:1;min-width:120px;accent-color:var(--primary);}
+.slider-val{min-width:60px;font-weight:900;color:var(--primary);}
+
+/* 拖拽排序 */
+.sort-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+.sort-item{padding:12px 16px;background:#fff;border:2.5px solid var(--secondary);border-radius:12px;cursor:grab;font-weight:700;transition:all .2s;display:flex;align-items:center;gap:10px;}
+.sort-item:hover{transform:scale(1.02);background:rgba(78,205,196,.1);}
+.sort-item .handle{color:var(--dim);font-size:18px;}
+
+/* ===== 知识图谱 ===== */
+#knowledge-graph{background:#fff;border-radius:24px;padding:24px;}
+#kg-svg{width:100%;height:340px;display:block;}
+.kg-legend{display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;}
+.kg-legend-item{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;}
+.kg-dot{width:14px;height:14px;border-radius:50%;}
+
+/* ===== 互动题 ===== */
+.quiz-wrap{margin-top:10px;}
+.quiz-step{display:none;}
+.quiz-step.active{display:block;animation:fadeIn .4s;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.quiz-q{font-size:18px;font-weight:900;margin-bottom:18px;}
+.quiz-option{display:block;width:100%;padding:14px 20px;margin:8px 0;border-radius:16px;background:#fff;border:2.5px solid #e8e8e8;cursor:pointer;font-size:16px;font-weight:700;text-align:left;transition:all .25s;}
+.quiz-option:hover{background:rgba(78,205,196,.08);border-color:var(--secondary);}
+.quiz-option.correct{background:rgba(81,207,102,.12);border-color:var(--success);color:#2b8a3e;}
+.quiz-option.wrong{background:rgba(255,107,107,.1);border-color:var(--primary);color:#c92a2a;}
+.quiz-feedback{padding:12px 18px;border-radius:14px;margin-top:10px;font-size:15px;font-weight:700;display:none;}
+.quiz-feedback.show{display:block;animation:popIn .35s cubic-bezier(.34,1.56,.64,1);}
+@keyframes popIn{from{opacity:0;transform:scale(.92);}to{opacity:1;transform:scale(1);}}
+.quiz-feedback.ok{background:rgba(81,207,102,.15);color:#2b8a3e;}
+.quiz-feedback.err{background:rgba(255,107,107,.12);color:#c92a2a;}
+.quiz-next{margin-top:14px;padding:10px 28px;background:linear-gradient(135deg,var(--primary),var(--orange));color:#fff;border:none;border-radius:20px;font-size:16px;font-weight:900;cursor:pointer;display:none;}
+.progress-bar{height:8px;background:#f0f0f0;border-radius:4px;margin-bottom:18px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--orange));border-radius:4px;transition:width .4s;}
+.step-indicator{font-size:13px;color:var(--dim);margin-bottom:8px;font-weight:700;}
 </style>
 </head>
 <body>
 <nav class="nav">
-  <span class="nav-brand">🌈 教我学 TeachAny</span>
-  <a href="#hero">首页</a>
-  <a href="#goals">目标</a>
-  <a href="#module-1">模块1</a>
-  <a href="#module-2">模块2</a>
-  <a href="#module-3">练习</a>
-  <a href="#deep-understanding">深思</a>
-  <a href="#summary">总结</a>
+  <span class="nav-brand">📈 折线统计图</span>
+  <a href="#life-scene">生活场景</a>
+  <a href="#concepts">图表知识</a>
+  <a href="#interactive-lab">互动实验</a>
+  <a href="#knowledge-graph">知识图谱</a>
+  <a href="#quiz">互动练习</a>
 </nav>
 
 <div class="container">
-  <section class="hero" id="hero">
-    <h1>📈 折线统计图 <span class="sticker">✨</span></h1>
-    <p class="subtitle">用折线感受数据的变化趋势，是升还是降？</p>
+  <div class="hero">
+    <h1>📈 折线统计图</h1>
+    <p class="subtitle">认识折线图，读懂数据变化趋势，学会绘制与分析</p>
     <div class="meta">
-      <span>📚 数学</span>
-      <span>🎒 4年级</span>
-      <span>⏱️ 约 25 分钟</span>
-      <span>🎯 新授课</span>
+      <span>📚 四年级</span><span>📊 统计</span><span>⏱️ 45分钟</span><span>⭐⭐ 中等</span>
     </div>
-  </section>
-
-  <section class="section" id="goals">
-    <h2 class="section-title">🎯 学习目标</h2>
-    <div class="grid-3">
-      <div class="card obj-card">
-        <div class="icon">📈</div>
-        <h4>认识折线图</h4>
-        <p>能说出折线统计图的特点，知道它与条形图的区别</p>
-      </div>
-      <div class="card obj-card">
-        <div class="icon">🔎</div>
-        <h4>读懂趋势</h4>
-        <p>能从折线图中分析数据是上升、下降还是不变</p>
-      </div>
-      <div class="card obj-card">
-        <div class="icon">🤔</div>
-        <h4>选对图形</h4>
-        <p>能判断什么情况下用折线图比条形图更合适</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="module-1">
-    <h2 class="section-title">📖 模块一：认识折线统计图</h2>
-    <div class="card">
-      <h3>🌉 从条形图到折线图</h3>
-      <p><span class="highlight">我们已经会用条形图</span>比较各类数据的多少。</p>
-      <p><span class="highlight">但有个问题：</span>想知道气温一周如何变化，用条形图只能看每天的值，看不出变化的"路径"。</p>
-      <p><span class="highlight">所以折线图来了！</span>把每天的点连起来，折线的"起伏"就是数据变化的轨迹！</p>
-    </div>
-    <div class="card">
-      <h3>💡 折线图的样子</h3>
-      <p>折线统计图用<span class="highlight">折线的起伏</span>来表示数据的变化趋势。每个点代表一个数据，连起来的线越陡，变化越大！</p>
-      <div class="chart-container">
-        <p style="font-weight:900;margin-bottom:12px;">🌡️ 某城市一周气温变化（℃）</p>
-        <svg class="svg-chart" viewBox="0 0 500 220" xmlns="http://www.w3.org/2000/svg">
-          <!-- Grid lines -->
-          <line x1="60" y1="20" x2="60" y2="180" stroke="#ddd" stroke-width="1"/>
-          <line x1="60" y1="180" x2="480" y2="180" stroke="#ddd" stroke-width="1"/>
-          <line x1="60" y1="140" x2="480" y2="140" stroke="#eee" stroke-width="1" stroke-dasharray="4"/>
-          <line x1="60" y1="100" x2="480" y2="100" stroke="#eee" stroke-width="1" stroke-dasharray="4"/>
-          <line x1="60" y1="60" x2="480" y2="60" stroke="#eee" stroke-width="1" stroke-dasharray="4"/>
-          <!-- Y-axis labels -->
-          <text x="50" y="184" text-anchor="end" font-size="12" fill="#666">0</text>
-          <text x="50" y="144" text-anchor="end" font-size="12" fill="#666">10</text>
-          <text x="50" y="104" text-anchor="end" font-size="12" fill="#666">20</text>
-          <text x="50" y="64" text-anchor="end" font-size="12" fill="#666">30</text>
-          <!-- X-axis labels -->
-          <text x="100" y="198" text-anchor="middle" font-size="12" fill="#666">周一</text>
-          <text x="160" y="198" text-anchor="middle" font-size="12" fill="#666">周二</text>
-          <text x="220" y="198" text-anchor="middle" font-size="12" fill="#666">周三</text>
-          <text x="280" y="198" text-anchor="middle" font-size="12" fill="#666">周四</text>
-          <text x="340" y="198" text-anchor="middle" font-size="12" fill="#666">周五</text>
-          <text x="400" y="198" text-anchor="middle" font-size="12" fill="#666">周六</text>
-          <text x="460" y="198" text-anchor="middle" font-size="12" fill="#666">周日</text>
-          <!-- Data: 15,18,22,25,23,20,17 → y = 180-(val*4) -->
-          <polyline points="100,120 160,108 220,92 280,80 340,88 400,100 460,112" fill="none" stroke="#ff6b6b" stroke-width="3" stroke-linejoin="round"/>
-          <!-- Dots -->
-          <circle cx="100" cy="120" r="6" fill="#ff6b6b"/>
-          <circle cx="160" cy="108" r="6" fill="#ff6b6b"/>
-          <circle cx="220" cy="92" r="6" fill="#ff6b6b"/>
-          <circle cx="280" cy="80" r="6" fill="#ff6b6b"/>
-          <circle cx="340" cy="88" r="6" fill="#ff6b6b"/>
-          <circle cx="400" cy="100" r="6" fill="#ff6b6b"/>
-          <circle cx="460" cy="112" r="6" fill="#ff6b6b"/>
-          <!-- Value labels -->
-          <text x="100" y="112" text-anchor="middle" font-size="11" fill="#333" font-weight="bold">15</text>
-          <text x="160" y="100" text-anchor="middle" font-size="11" fill="#333" font-weight="bold">18</text>
-          <text x="220" y="84" text-anchor="middle" font-size="11" fill="#333" font-weight="bold">22</text>
-          <text x="280" y="72" text-anchor="middle" font-size="11" fill="#333" font-weight="bold">25</text>
-          <text x="340" y="80" text-anchor="middle" font-size="11" fill="#333" font-weight="bold">23</text>
-          <text x="400" y="92" text-anchor="middle" font-size="11" fill="#333" font-weight="bold">20</text>
-          <text x="460" y="104" text-anchor="middle" font-size="11" fill="#333" font-weight="bold">17</text>
-        </svg>
-      </div>
-      <p>从图中可以看出：<span class="highlight">气温从周一到周四一直在升高，周四最热（25℃），之后开始下降</span>。这就是折线图的魅力！</p>
-    </div>
-    <div class="insight-box">
-      <h4>🔍 想一想</h4>
-      <p>折线"向上"表示什么？折线"向下"表示什么？折线"水平"呢？（提示：对应数据增大、减小、不变）</p>
-    </div>
-    <div class="card">
-      <h3><span class="sticker">✏️</span> 马上试一试</h3>
-      <p>看上面的折线图，从周二到周三，气温变化了几度？是升高了还是降低了？</p>
-      <div class="quiz-option" onclick="checkAnswer(this, true, 'q1')">A. 升高了4℃（从18到22）</div>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q1')">B. 降低了4℃（从22到18）</div>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q1')">C. 没有变化</div>
-      <div id="q1" class="quiz-feedback"></div>
-    </div>
-  </section>
-
-  <section class="section" id="module-2">
-    <h2 class="section-title">📖 模块二：折线图 vs 条形图</h2>
-    <div class="card">
-      <h3>💡 怎么选择合适的统计图？</h3>
-      <div class="grid-2">
-        <div style="background:rgba(255,107,107,0.08);border-radius:16px;padding:16px;">
-          <p style="font-weight:900;font-size:17px;margin-bottom:8px;">📊 用条形图，当……</p>
-          <p>• 比较<span class="highlight">不同类别</span>的数量大小</p>
-          <p>• 比较各班人数、各科成绩</p>
-          <p>• 数据之间没有时间关系</p>
-        </div>
-        <div style="background:rgba(78,205,196,0.08);border-radius:16px;padding:16px;">
-          <p style="font-weight:900;font-size:17px;margin-bottom:8px;">📈 用折线图，当……</p>
-          <p>• 显示数据<span class="highlight">随时间的变化</span></p>
-          <p>• 气温变化、成绩增长</p>
-          <p>• 想看趋势（升/降/平）</p>
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <h3>💡 读折线图的3个关键</h3>
-      <ul style="padding-left:20px;line-height:2.2;">
-        <li><span class="highlight">最高点</span>：数据最大的那个时间点</li>
-        <li><span class="highlight">最低点</span>：数据最小的那个时间点</li>
-        <li><span class="highlight">趋势</span>：整体是上升、下降，还是先升后降？</li>
-      </ul>
-    </div>
-    <div class="card">
-      <h3><span class="sticker">✏️</span> 选择题</h3>
-      <p>要统计小明从1月到12月每个月的零花钱变化，应该用哪种统计图？</p>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q2')">A. 条形统计图</div>
-      <div class="quiz-option" onclick="checkAnswer(this, true, 'q2')">B. 折线统计图</div>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q2')">C. 两种都不合适</div>
-      <div id="q2" class="quiz-feedback"></div>
-    </div>
-  </section>
-
-  <section class="section" id="module-3">
-    <h2 class="section-title">🎯 闯关练习</h2>
-    <div class="card">
-      <h3>⭐ 第一关：判断趋势</h3>
-      <p>折线图中，折线从左向右一直向上倾斜，这说明数据在……</p>
-      <div class="quiz-option" onclick="checkAnswer(this, true, 'q3')">A. 持续增大（上升趋势）</div>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q3')">B. 持续减小（下降趋势）</div>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q3')">C. 保持不变（水平）</div>
-      <div id="q3" class="quiz-feedback"></div>
-    </div>
-    <div class="card">
-      <h3>⭐⭐ 第二关：读数分析</h3>
-      <p>小红5次数学测验成绩：75、80、85、82、90分。哪次成绩是最低的？整体趋势是？</p>
-      <div class="quiz-option" onclick="checkAnswer(this, true, 'q4')">A. 第1次最低（75分），整体呈上升趋势</div>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q4')">B. 第4次最低（82分），整体下降</div>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q4')">C. 第3次最高，无明显趋势</div>
-      <div id="q4" class="quiz-feedback"></div>
-    </div>
-    <div class="card">
-      <h3>⭐⭐⭐ 第三关：预测未来</h3>
-      <p>如果折线图显示某商店的月销售额连续6个月都在增长，第7个月最可能……</p>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q5')">A. 一定急剧下降</div>
-      <div class="quiz-option" onclick="checkAnswer(this, true, 'q5')">B. 可能继续增长，但不能百分之百确定</div>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q5')">C. 一定和第6个月相同</div>
-      <div id="q5" class="quiz-feedback"></div>
-    </div>
-    <div class="star-reward" id="star-reward" style="display:none;">
-      <span class="stars">🌟🌟🌟</span>太棒了！折线图分析小达人！
-    </div>
-  </section>
-
-  <section class="section" id="deep-understanding">
-    <h2 class="section-title">🔬 深层理解</h2>
-    <div class="insight-box">
-      <h4>🌍 折线图在生活中</h4>
-      <p>股票价格走势、体温变化记录、公司年度营收图……这些都是折线图！折线图告诉我们：数据不是孤立的，它在时间中"流动"。</p>
-    </div>
-    <div class="card">
-      <h3>💡 折线图的记忆口诀</h3>
-      <p>🎵 <span class="highlight">折线图看起伏，上升下降看趋势；最高最低是重点，时间变化它最厉！</span></p>
-    </div>
-  </section>
-
-  <section class="section" id="summary">
-    <h2 class="section-title">📝 课堂总结</h2>
-    <div class="card">
-      <h3>🎉 今天学了什么？</h3>
-      <ul style="padding-left:20px;line-height:2.2;">
-        <li>折线统计图用<span class="highlight">折线的起伏</span>表示数据变化趋势</li>
-        <li>折线向上→数据增大；向下→数据减小；水平→数据不变</li>
-        <li>适合表示<span class="highlight">随时间变化</span>的数据</li>
-        <li>读图关键：找最高点、最低点、判断整体趋势</li>
-      </ul>
-    </div>
-  </section>
-
-  <footer>
-    <p>Made with <strong>教我学 TeachAny</strong> · <a href="https://github.com/weponusa/teachany" style="color:var(--primary);">GitHub</a></p>
-    <p style="margin-top:8px;">Built on ABT Narrative · Bloom's Taxonomy · Scaffolding · Cognitive Load Theory</p>
-  </footer>
-</div>
-
-<div class="audio-bar" id="audioBar">
-  <button class="ab-btn" id="abPrev">⏮</button>
-  <button class="ab-btn" id="abPlay">▶</button>
-  <button class="ab-btn" id="abNext">⏭</button>
-  <div class="ab-info">
-    <div class="ab-title" id="abTitle">折线统计图 - 课件讲解</div>
-    <div class="ab-progress-wrap" id="abProgressWrap"><div class="ab-progress" id="abProgress"></div></div>
-    <div class="ab-time" id="abTime">00:00 / 00:00</div>
   </div>
-  <input type="range" class="ab-vol" id="abVol" min="0" max="1" step="0.05" value="0.8">
+
+  <!-- 生活场景动画 -->
+  <section class="section" id="life-scene">
+    <div class="section-title">🎬 生活场景：一周气温变化</div>
+    <div class="weather-stage">
+      <div class="temp-bar"></div>
+      <div class="temp-bar"></div>
+      <div class="temp-bar"></div>
+      <div class="temp-bar"></div>
+      <div class="temp-bar"></div>
+      <div class="temp-bar"></div>
+    </div>
+    <div class="line-labels">
+      <span>周一</span><span>周二</span><span>周三</span><span>周四</span><span>周五</span><span>周六</span>
+    </div>
+    <p style="text-align:center;margin-top:12px;color:var(--dim);font-size:15px;">🌡️ 看气温柱子的高低变化——这就是数据趋势！折线图让变化更清晰。</p>
+  </section>
+
+  <!-- 图表知识 -->
+  <section class="section" id="concepts">
+    <div class="section-title">📊 折线图的要素</div>
+    <div class="grid-2">
+      <div class="card">
+        <h3>📌 折线图 vs 条形图</h3>
+        <ul style="list-style:none;padding:0;">
+          <li style="padding:6px 0;border-bottom:1px solid #f0f0f0;">📊 <strong>条形图</strong>：比较各类别的多少</li>
+          <li style="padding:6px 0;border-bottom:1px solid #f0f0f0;">📈 <strong>折线图</strong>：展示数据随时间的<span class="highlight">变化趋势</span></li>
+          <li style="padding:6px 0;">✅ 折线图特别适合时间序列数据</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>🔍 如何读折线图</h3>
+        <ul style="list-style:none;padding:0;">
+          <li style="padding:6px 0;border-bottom:1px solid #f0f0f0;">📌 横轴（x轴）：通常是<span class="highlight">时间</span></li>
+          <li style="padding:6px 0;border-bottom:1px solid #f0f0f0;">📌 纵轴（y轴）：数据的<span class="highlight">数值</span></li>
+          <li style="padding:6px 0;border-bottom:1px solid #f0f0f0;">📌 线段<strong>上升</strong>→数据增大</li>
+          <li style="padding:6px 0;">📌 线段<strong>下降</strong>→数据减小</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>📈 示例：李明一周体温记录</h3>
+      <div class="chart-controls">
+        <button class="chart-btn active" onclick="setDataset('temp',this)">体温(°C)</button>
+        <button class="chart-btn" onclick="setDataset('score',this)">成绩(分)</button>
+        <button class="chart-btn" onclick="setDataset('steps',this)">步数(百步)</button>
+      </div>
+      <svg id="lineChart"></svg>
+    </div>
+  </section>
+
+  <!-- 互动实验台 -->
+  <section class="section" id="interactive-lab">
+    <div class="section-title">🧪 互动实验台</div>
+
+    <div class="card">
+      <h3>🖊️ 自己动手绘图</h3>
+      <p style="color:var(--dim);margin-bottom:16px;">修改下方6个月的数据，观察折线图变化：</p>
+      <div class="data-input-grid">
+        <label>1月</label><label>2月</label><label>3月</label><label>4月</label><label>5月</label><label>6月</label>
+        <input type="number" class="user-data" value="20" min="0" max="100">
+        <input type="number" class="user-data" value="35" min="0" max="100">
+        <input type="number" class="user-data" value="55" min="0" max="100">
+        <input type="number" class="user-data" value="42" min="0" max="100">
+        <input type="number" class="user-data" value="68" min="0" max="100">
+        <input type="number" class="user-data" value="80" min="0" max="100">
+      </div>
+      <svg id="userChart" style="width:100%;height:220px;background:#f9f9f9;border-radius:12px;"></svg>
+    </div>
+
+    <div class="card">
+      <h3>🎯 拖拽排序：哪个说法正确？</h3>
+      <p style="color:var(--dim);font-size:14px;margin-bottom:12px;">把"合适使用折线图"的场景拖到上方，不合适的放下方：</p>
+      <div style="padding:12px;background:rgba(81,207,102,.1);border-radius:12px;min-height:60px;border:2px dashed var(--success);margin-bottom:10px;" id="goodZone">
+        <div style="font-size:13px;color:var(--success);font-weight:700;margin-bottom:8px;">✅ 适合用折线图</div>
+      </div>
+      <div style="padding:12px;background:rgba(255,107,107,.08);border-radius:12px;min-height:60px;border:2px dashed var(--primary);" id="badZone">
+        <div style="font-size:13px;color:var(--primary);font-weight:700;margin-bottom:8px;">❌ 不适合用折线图</div>
+      </div>
+      <div class="sort-list" id="scenarioList">
+        <div class="sort-item" draggable="true" data-good="true">📅 记录一周每天的气温变化</div>
+        <div class="sort-item" draggable="true" data-good="false">🍎 比较苹果、橙子、香蕉哪个更重</div>
+        <div class="sort-item" draggable="true" data-good="true">📈 追踪一个月内身高增长</div>
+        <div class="sort-item" draggable="true" data-good="false">🏙️ 对比4个城市的人口多少</div>
+      </div>
+      <button onclick="resetScenarios()" style="margin-top:12px;padding:8px 22px;background:var(--secondary);color:#fff;border:none;border-radius:16px;font-weight:700;cursor:pointer;">🔄 重置</button>
+    </div>
+  </section>
+
+  <!-- 知识图谱 -->
+  <section class="section" id="knowledge-graph">
+    <div class="section-title">🕸️ 知识图谱</div>
+    <div class="card">
+      <svg id="kg-svg"></svg>
+      <div class="kg-legend">
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#51cf66"></div>前置知识</div>
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#ff6b6b"></div>当前主题</div>
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#4ecdc4"></div>后续学习</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 互动练习 -->
+  <section class="section" id="quiz">
+    <div class="section-title">✏️ 互动练习</div>
+    <div class="card quiz-wrap">
+      <div class="step-indicator" id="stepInd">第 1 题 / 共 5 题</div>
+      <div class="progress-bar"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
+
+      <div class="quiz-step active" id="q1">
+        <div class="quiz-q">1. 折线统计图最适合表示什么？</div>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 条形图更适合比较各类别的数量多少。')">各类别数量的多少</button>
+        <button class="quiz-option" onclick="answer(this,'correct','✅ 正确！折线图特别适合表示随时间变化的趋势。')">数量随时间的变化趋势</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 扇形图（饼图）更适合表示各部分的占比。')">各部分占总体的比例</button>
+        <div class="quiz-feedback" id="fb1"></div>
+        <button class="quiz-next" onclick="nextStep(1)">下一题 →</button>
+      </div>
+
+      <div class="quiz-step" id="q2">
+        <div class="quiz-q">2. 折线图中，线段上升说明数据怎么变化？</div>
+        <button class="quiz-option" onclick="answer(this,'correct','✅ 对！线段上升表示数据在增大。')">数据增大（变多）</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 线段下降才表示数据减小。')">数据减小（变少）</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 水平线段才表示数据不变。')">数据不变</button>
+        <div class="quiz-feedback" id="fb2"></div>
+        <button class="quiz-next" onclick="nextStep(2)">下一题 →</button>
+      </div>
+
+      <div class="quiz-step" id="q3">
+        <div class="quiz-q">3. 折线图中横轴（X轴）通常表示什么？</div>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 数值通常在纵轴（Y轴）上。')">数值大小</button>
+        <button class="quiz-option" onclick="answer(this,'correct','✅ 正确！横轴通常代表时间或顺序。')">时间或顺序</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 颜色不是折线图的轴信息。')">颜色分类</button>
+        <div class="quiz-feedback" id="fb3"></div>
+        <button class="quiz-next" onclick="nextStep(3)">下一题 →</button>
+      </div>
+
+      <div class="quiz-step" id="q4">
+        <div class="quiz-q">4. 一个学生6次测验成绩：70、75、80、78、85、90。这个数据的趋势是？</div>
+        <button class="quiz-option" onclick="answer(this,'correct','✅ 对！整体看成绩在上升，有学习进步。')">整体上升（进步）</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 成绩整体是在上升的，不是下降。')">整体下降（退步）</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 有时小幅波动但整体是上升趋势。')">完全没有变化</button>
+        <div class="quiz-feedback" id="fb4"></div>
+        <button class="quiz-next" onclick="nextStep(4)">下一题 →</button>
+      </div>
+
+      <div class="quiz-step" id="q5">
+        <div class="quiz-q">5. 以下哪种情况最适合用折线统计图？</div>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 比较班级人数多少更适合用条形图。')">比较三个班的学生人数多少</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 各学科成绩占比更适合用扇形图。')">显示各学科成绩占总分的百分比</button>
+        <button class="quiz-option" onclick="answer(this,'correct','✅ 正确！记录一年内气温的变化趋势，最适合折线图！')">记录一年12个月的平均气温变化</button>
+        <div class="quiz-feedback" id="fb5"></div>
+        <button class="quiz-next" onclick="showResult()">查看结果 🎉</button>
+      </div>
+
+      <div class="quiz-step" id="result">
+        <div style="text-align:center;padding:20px;">
+          <div style="font-size:64px;margin-bottom:16px;">📊</div>
+          <div style="font-size:24px;font-weight:900;color:var(--primary);" id="scoreText"></div>
+          <div style="margin-top:12px;color:var(--dim);">你已掌握折线统计图的基础知识！</div>
+          <button onclick="restartQuiz()" style="margin-top:20px;padding:12px 32px;background:linear-gradient(135deg,var(--primary),var(--orange));color:#fff;border:none;border-radius:20px;font-size:16px;font-weight:900;cursor:pointer;">🔄 再练一次</button>
+        </div>
+      </div>
+    </div>
+  </section>
 </div>
 
 <script>
-const audioPlaylist=[{title:"第1段：开场介绍",src:"tts/s01.mp3"},{title:"第2段：折线图特点",src:"tts/s02.mp3"},{title:"第3段：读折线图",src:"tts/s03.mp3"},{title:"第4段：与条形图对比",src:"tts/s04.mp3"},{title:"第5段：实际应用",src:"tts/s05.mp3"},{title:"第6段：课堂总结",src:"tts/s06.mp3"}];
-let curIdx=0,audio=new Audio();
-const abPlay=document.getElementById('abPlay'),abTitle=document.getElementById('abTitle'),abProgress=document.getElementById('abProgress'),abTime=document.getElementById('abTime'),abVol=document.getElementById('abVol');
-function loadTrack(i){curIdx=i;audio.src=audioPlaylist[i].src;abTitle.textContent=audioPlaylist[i].title;audio.volume=parseFloat(abVol.value);audio.load();}
-function fmt(s){const m=Math.floor(s/60),sec=Math.floor(s%60);return`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;}
-audio.addEventListener('timeupdate',()=>{const p=audio.duration?audio.currentTime/audio.duration*100:0;abProgress.style.width=p+'%';abTime.textContent=`${fmt(audio.currentTime)} / ${fmt(audio.duration||0)}`;});
-audio.addEventListener('ended',()=>{if(curIdx<audioPlaylist.length-1){loadTrack(curIdx+1);audio.play();abPlay.textContent='⏸';}else{abPlay.textContent='▶';}});
-abPlay.addEventListener('click',()=>{if(audio.paused){if(!audio.src||audio.src===window.location.href)loadTrack(0);audio.play();abPlay.textContent='⏸';}else{audio.pause();abPlay.textContent='▶';}});
-document.getElementById('abPrev').addEventListener('click',()=>{if(curIdx>0){loadTrack(curIdx-1);audio.play();abPlay.textContent='⏸';}});
-document.getElementById('abNext').addEventListener('click',()=>{if(curIdx<audioPlaylist.length-1){loadTrack(curIdx+1);audio.play();abPlay.textContent='⏸';}});
-document.getElementById('abProgressWrap').addEventListener('click',e=>{if(audio.duration){const r=e.currentTarget.getBoundingClientRect();audio.currentTime=(e.clientX-r.left)/r.width*audio.duration;}});
-abVol.addEventListener('input',()=>{audio.volume=parseFloat(abVol.value);});
-let correctCount=0;
-function checkAnswer(el,isCorrect,feedbackId){const parent=el.parentElement;const options=parent.querySelectorAll('.quiz-option');const feedback=document.getElementById(feedbackId);if(parent.dataset.answered)return;parent.dataset.answered='true';options.forEach(opt=>{opt.style.pointerEvents='none';opt.style.opacity='0.6';});if(isCorrect){correctCount++;el.classList.add('correct');el.style.opacity='1';feedback.innerHTML='🎉 <strong>太棒了！答对啦！</strong>';feedback.style.background='rgba(81,207,102,0.12)';feedback.style.color='#2b8a3e';if(correctCount>=3)document.getElementById('star-reward').style.display='block';}else{el.classList.add('wrong');el.style.opacity='1';options.forEach(opt=>{if(opt.getAttribute('onclick')&&opt.getAttribute('onclick').includes('true')){opt.classList.add('correct');opt.style.opacity='1';}});feedback.innerHTML='💪 <strong>没关系，看看正确答案！</strong>';feedback.style.background='rgba(255,107,107,0.08)';feedback.style.color='#c92a2a';}feedback.classList.add('show');}
+// ===== 折线图数据集 =====
+const datasets = {
+  temp: {
+    label:'体温(°C)',
+    data:[36.5,36.8,37.2,38.1,37.5,36.9,36.6],
+    labels:['周一','周二','周三','周四','周五','周六','周日'],
+    color:'#ff6b6b'
+  },
+  score: {
+    label:'成绩(分)',
+    data:[72,78,75,82,88,85,92],
+    labels:['1月','2月','3月','4月','5月','6月','7月'],
+    color:'#4ecdc4'
+  },
+  steps: {
+    label:'步数(百步)',
+    data:[60,45,80,90,55,100,75],
+    labels:['周一','周二','周三','周四','周五','周六','周日'],
+    color:'#cc5de8'
+  }
+};
+let currentDataset = 'temp';
+
+function drawLineChart(svgId, data, labels, color, minH=30, maxH=300, height=300) {
+  const container = document.getElementById(svgId).parentElement;
+  const W = container.offsetWidth - 48;
+  const H = height;
+  const pad = {top:20,right:20,bottom:30,left:40};
+  const iW = W - pad.left - pad.right;
+  const iH = H - pad.top - pad.bottom;
+  const svg = d3.select('#'+svgId).attr('viewBox',`0 0 ${W} ${H}`).attr('width',W).attr('height',H);
+  svg.selectAll('*').remove();
+  const minVal = Math.min(...data) - 5;
+  const maxVal = Math.max(...data) + 5;
+  const xScale = i => pad.left + i * (iW / (labels.length-1));
+  const yScale = v => pad.top + iH - (v - minVal) / (maxVal - minVal) * iH;
+  // Grid
+  const g = svg.append('g');
+  for(let i=0;i<=4;i++){
+    const y = pad.top + i*iH/4;
+    g.append('line').attr('x1',pad.left).attr('x2',pad.left+iW).attr('y1',y).attr('y2',y).attr('stroke','#eee').attr('stroke-width',1);
+    g.append('text').attr('x',pad.left-6).attr('y',y+4).attr('text-anchor','end').attr('font-size','10').attr('fill','#999').text((minVal+(maxVal-minVal)*(1-i/4)).toFixed(1));
+  }
+  // X labels
+  labels.forEach((l,i)=>{
+    g.append('text').attr('x',xScale(i)).attr('y',H-6).attr('text-anchor','middle').attr('font-size','11').attr('fill','#666').text(l);
+  });
+  // Line
+  const lineGen = d3.line().x((d,i)=>xScale(i)).y(d=>yScale(d)).curve(d3.curveMonotoneX);
+  g.append('path').datum(data).attr('fill','none').attr('stroke',color).attr('stroke-width',2.5).attr('d',lineGen);
+  // Area
+  const areaGen = d3.area().x((d,i)=>xScale(i)).y0(pad.top+iH).y1(d=>yScale(d)).curve(d3.curveMonotoneX);
+  g.append('path').datum(data).attr('fill',color).attr('fill-opacity',.1).attr('d',areaGen);
+  // Dots
+  data.forEach((v,i)=>{
+    g.append('circle').attr('cx',xScale(i)).attr('cy',yScale(v)).attr('r',5).attr('fill',color).attr('stroke','#fff').attr('stroke-width',2);
+    g.append('text').attr('x',xScale(i)).attr('y',yScale(v)-10).attr('text-anchor','middle').attr('font-size','11').attr('font-weight','700').attr('fill',color).text(v);
+  });
+}
+
+function setDataset(key, btn) {
+  currentDataset = key;
+  document.querySelectorAll('.chart-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const ds = datasets[key];
+  drawLineChart('lineChart', ds.data, ds.labels, ds.color, 0, 300, 300);
+}
+
+function updateUserChart() {
+  const inputs = document.querySelectorAll('.user-data');
+  const vals = Array.from(inputs).map(i=>parseInt(i.value)||0);
+  drawLineChart('userChart', vals, ['1月','2月','3月','4月','5月','6月'], '#ff922b', 0, 220, 220);
+}
+document.querySelectorAll('.user-data').forEach(i=>i.addEventListener('input',updateUserChart));
+
+// Initial charts
+setTimeout(()=>{
+  drawLineChart('lineChart', datasets.temp.data, datasets.temp.labels, datasets.temp.color, 0, 300, 300);
+  updateUserChart();
+}, 100);
+
+// ===== 拖拽场景 =====
+let draggingSc = null;
+document.querySelectorAll('.sort-item').forEach(item=>{
+  item.addEventListener('dragstart', ()=>{ draggingSc=item; });
+  item.addEventListener('dragend', ()=>{ draggingSc=null; });
+});
+['goodZone','badZone'].forEach(zoneId=>{
+  const zone = document.getElementById(zoneId);
+  zone.addEventListener('dragover', e=>e.preventDefault());
+  zone.addEventListener('drop', e=>{
+    e.preventDefault();
+    if(!draggingSc) return;
+    const isGood = zoneId === 'goodZone';
+    const dataGood = draggingSc.dataset.good === 'true';
+    if(isGood === dataGood) {
+      draggingSc.style.background = 'rgba(81,207,102,.2)';
+    } else {
+      draggingSc.style.background = 'rgba(255,107,107,.15)';
+    }
+    zone.appendChild(draggingSc);
+  });
+});
+function resetScenarios() {
+  const list = document.getElementById('scenarioList');
+  document.querySelectorAll('.sort-item').forEach(item=>{
+    item.style.background='';
+    list.appendChild(item);
+  });
+}
+
+// ===== D3 知识图谱 =====
+const kgData = {
+  nodes:[
+    {id:"bar",name:"条形图",type:"prereq"},
+    {id:"data-read",name:"读数据",type:"prereq"},
+    {id:"coord",name:"坐标系",type:"prereq"},
+    {id:"cur",name:"折线图",type:"current"},
+    {id:"trend",name:"数据分析",type:"next"},
+    {id:"multi",name:"复式折线图",type:"next"},
+    {id:"predict",name:"数据预测",type:"next"}
+  ],
+  links:[
+    {source:"bar",target:"cur"},
+    {source:"data-read",target:"cur"},
+    {source:"coord",target:"cur"},
+    {source:"cur",target:"trend"},
+    {source:"cur",target:"multi"},
+    {source:"cur",target:"predict"}
+  ]
+};
+const colorMap={current:"#ff6b6b",prereq:"#51cf66",next:"#4ecdc4"};
+const svgEl = document.getElementById('kg-svg');
+const W = (svgEl.parentElement.offsetWidth||600) - 48;
+const H = 340;
+svgEl.setAttribute('viewBox',`0 0 ${W} ${H}`);
+const kgSvg = d3.select('#kg-svg');
+kgSvg.append('defs').append('marker').attr('id','arrow').attr('viewBox','0 -5 10 10').attr('refX',22).attr('refY',0).attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto').append('path').attr('d','M0,-5L10,0L0,5').attr('fill','#aaa');
+const sim = d3.forceSimulation(kgData.nodes).force('link',d3.forceLink(kgData.links).id(d=>d.id).distance(110)).force('charge',d3.forceManyBody().strength(-280)).force('center',d3.forceCenter(W/2,H/2));
+const link = kgSvg.append('g').selectAll('line').data(kgData.links).join('line').attr('stroke','#ccc').attr('stroke-width',2).attr('marker-end','url(#arrow)');
+const node = kgSvg.append('g').selectAll('g').data(kgData.nodes).join('g').call(d3.drag().on('start',(e,d)=>{if(!e.active)sim.alphaTarget(.3).restart();d.fx=d.x;d.fy=d.y;}).on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y;}).on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}));
+node.append('circle').attr('r',28).attr('fill',d=>colorMap[d.type]).attr('stroke','#fff').attr('stroke-width',3).style('filter','drop-shadow(0 2px 6px rgba(0,0,0,.15))');
+node.append('text').attr('text-anchor','middle').attr('dy','0.35em').attr('font-size','12px').attr('font-weight','700').attr('fill','#fff').text(d=>d.name);
+sim.on('tick',()=>{link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);node.attr('transform',d=>`translate(${d.x},${d.y})`);});
+
+// ===== 互动题 =====
+let score=0,answered=[false,false,false,false,false];
+function answer(btn,type,msg){
+  const step=btn.closest('.quiz-step');const fb=step.querySelector('.quiz-feedback');const nxt=step.querySelector('.quiz-next');
+  if(step.querySelector('.correct')||step.querySelector('.wrong'))return;
+  btn.classList.add(type==='correct'?'correct':'wrong');
+  fb.textContent=msg;fb.className='quiz-feedback show '+(type==='correct'?'ok':'err');nxt.style.display='inline-block';
+  const idx=parseInt(step.id.replace('q',''))-1;
+  if(type==='correct'&&!answered[idx]){score++;answered[idx]=true;}
+}
+function nextStep(n){
+  document.getElementById('q'+n).classList.remove('active');
+  const next=document.getElementById('q'+(n+1));
+  if(next){next.classList.add('active');document.getElementById('stepInd').textContent=`第 ${n+1} 题 / 共 5 题`;document.getElementById('progFill').style.width=(n*20)+'%';}
+}
+function showResult(){
+  document.getElementById('q5').classList.remove('active');document.getElementById('result').classList.add('active');document.getElementById('progFill').style.width='100%';
+  const msgs=['继续加油！','还不错哦！','做得好！','非常棒！','满分！太厉害了！'];
+  document.getElementById('scoreText').textContent=`得了 ${score} / 5 分 — ${msgs[score]}`;
+}
+function restartQuiz(){
+  score=0;answered=[false,false,false,false,false];
+  document.querySelectorAll('.quiz-step').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.quiz-option').forEach(o=>o.classList.remove('correct','wrong'));
+  document.querySelectorAll('.quiz-feedback').forEach(f=>f.className='quiz-feedback');
+  document.querySelectorAll('.quiz-next').forEach(b=>b.style.display='none');
+  document.getElementById('q1').classList.add('active');
+  document.getElementById('stepInd').textContent='第 1 题 / 共 5 题';document.getElementById('progFill').style.width='0%';
+}
 </script>
 </body>
 </html>
