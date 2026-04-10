@@ -213,6 +213,8 @@ teachany/
 ├── LICENSE                      # MIT License
 ├── CONTRIBUTING.md              # Contribution guide (bilingual)
 ├── CHANGELOG.md                 # Version history
+├── index.html                   # Gallery homepage (dynamically loads courseware)
+├── courseware-registry.json     # 📋 Courseware registry (metadata index)
 │
 ├── skill/
 │   ├── SKILL.md                 # English Skill definition
@@ -231,29 +233,58 @@ teachany/
 │   ├── getting-started.md       # Step-by-step guide
 │   ├── design-system.md         # Visual design specification
 │   └── subject-guides/          # Per-subject usage guides
-│       ├── math.md
-│       ├── physics.md
-│       ├── biology.md
-│       ├── geography.md
-│       └── ...
 │
-├── examples/                    # Live courseware examples
+├── examples/                    # 📦 Courseware examples (for local preview)
 │   ├── math-quadratic-function/ # Quadratic functions (Math, Grade 9)
 │   ├── math-linear-function/    # Linear functions (Math, Grade 8)
+│   ├── math-congruent-triangles/# Congruent triangles (Math, Grade 8)
 │   ├── bio-meiosis/             # Meiosis (Biology, Grade 10)
+│   ├── bio-photosynthesis/      # Photosynthesis (Biology, Grade 7)
 │   ├── geo-monsoon/             # Monsoon systems (Geography, Grade 10)
+│   ├── phy-ohms-law/            # Ohm's Law (Physics, Grade 9)
 │   ├── phy-pressure-buoyancy/   # Pressure & buoyancy (Physics, Grade 8)
+│   ├── chn-compound-vowel/      # Compound vowels (Chinese, Grade 1)
 │   └── _template/               # Starter templates (elementary/middle/high)
 │
-├── gallery/                     # GitHub Pages gallery site
-│   └── index.html
+├── community/                   # 🌐 Community courseware index
+│   └── index.json
+│
+├── scripts/
+│   ├── registry-loader.js       # 🔄 Gallery dynamic loader (renders cards from registry)
+│   ├── courseware-importer.js   # 📥 Courseware importer (.teachany/.zip/.html)
+│   ├── community-loader.js     # 🌐 Community courseware loader
+│   ├── pack-courseware.cjs      # 📦 Courseware packing tool
+│   ├── publish-courseware.cjs   # 🚀 Publish to GitHub Releases + update registry
+│   ├── bootstrap-courseware.cjs # 🏆 Knowledge layer data extraction
+│   ├── validate-courseware.cjs  # ✅ 18-point courseware quality check
+│   └── knowledge_layer.py       # Audit + on-demand retrieval CLI
+│
+├── dist/                        # 📦 Build output (.gitignore'd)
 │
 └── .github/
     ├── ISSUE_TEMPLATE/
-    │   ├── new-course.md        # Request a new course
-    │   └── bug-report.md        # Report an issue
     └── workflows/
-        └── validate.yml         # HTML validation CI
+```
+
+### 📦 Courseware Storage Architecture
+
+TeachAny uses a **code-courseware separation** architecture:
+
+| Layer | Storage | Content | Size Budget |
+|:------|:--------|:--------|:------------|
+| **Code** | Git repo | Skill definitions, knowledge layer, scripts, templates | < 50 MB |
+| **Metadata** | `courseware-registry.json` | Course name, subject, grade, links | < 100 KB |
+| **Courseware** | GitHub Releases | `.teachany` packages (HTML + audio + video) | Unlimited |
+
+```bash
+# Dry-run: pack all courseware without uploading
+node scripts/publish-courseware.cjs --all --dry-run
+
+# Publish a single courseware to GitHub Releases
+GITHUB_TOKEN=ghp_xxx node scripts/publish-courseware.cjs ./examples/math-linear-function
+
+# Publish all courseware
+GITHUB_TOKEN=ghp_xxx node scripts/publish-courseware.cjs --all
 ```
 
 ---
