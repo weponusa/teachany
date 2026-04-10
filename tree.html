@@ -261,7 +261,7 @@ svg { width: 100%; height: 100%; }
 <body>
 
 <div class="top-bar">
-  <h1>🗺️ TeachAny 知识地图 · K-12 全学科</h1>
+  <h1>🗺️ TeachAny 知识地图 · K-12 全学科 <span style="font-size:11px;opacity:0.4;font-weight:400;">v20260411</span></h1>
   <div class="nav-links">
     <a href="index.html">📋 Gallery</a>
     <a href="tree.html" class="active">🗺️ 知识地图</a>
@@ -373,9 +373,25 @@ async function loadTree(index) {
   });
 
   const url = treeUrl(TREES[index].file) + '?v=' + Date.now();
-  const resp = await fetch(url, { cache: 'no-store' });
-  currentTree = await resp.json();
-  renderTree(currentTree);
+  try {
+    console.log('[KnowledgeMap] Loading:', url);
+    const resp = await fetch(url, { cache: 'no-store' });
+    if (!resp.ok) {
+      console.error('[KnowledgeMap] HTTP error:', resp.status, resp.statusText);
+      alert('知识地图数据加载失败: HTTP ' + resp.status);
+      return;
+    }
+    currentTree = await resp.json();
+    // 调试：统计 active 节点
+    const allNodes = currentTree.domains.flatMap(d => d.nodes);
+    const activeNodes = allNodes.filter(n => n.status === 'active' && n.courses && n.courses.length);
+    console.log(`[KnowledgeMap] ${TREES[index].label}: ${allNodes.length} nodes, ${activeNodes.length} active with courses`);
+    activeNodes.forEach(n => console.log(`  ✅ ${n.id}: ${n.courses}`));
+    renderTree(currentTree);
+  } catch (err) {
+    console.error('[KnowledgeMap] Failed to load tree:', err);
+    alert('知识地图加载错误: ' + err.message);
+  }
 }
 
 function renderTree(tree) {
