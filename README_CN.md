@@ -131,6 +131,18 @@ TeachAny 可以作为 **Skill** 嵌入 AI 编程助手（CodeBuddy、Cursor、Wi
    ```
 3. AI 将遵循 TeachAny 的方法论，生成一个完整的互动 HTML 课件
 
+### 方式 1b：管理员版 Skill（项目维护者专用）
+
+如果你是 TeachAny 仓库的维护者，想要生成并**发布**官方示范课件：
+
+1. 将 `admin-skillhub-package/SKILL.md` 复制到你的 AI 助手的 skill 目录
+2. 设置 `GITHUB_TOKEN` 环境变量
+3. 开始对话：
+   ```
+   帮我制作一个"勾股定理"（八年级数学）的示范课件并推送到官方 Gallery
+   ```
+4. AI 将自动完成：课件生成 → 质量校验 → 打包 → 发布到 GitHub Releases → Git 推送
+
 ### 方式二：从模板开始
 
 ```bash
@@ -201,6 +213,10 @@ teachany/
 ├── skill/
 │   ├── SKILL.md                 # 英文版 Skill 定义
 │   └── SKILL_CN.md              # 中文版 Skill 定义
+│
+├── admin-skillhub-package/
+│   ├── SKILL.md                 # 管理员版 Skill（生成+校验+打包+发布一条龙）
+│   └── README.md                # 管理员版 Skill 文档
 │
 ├── data/                        # 📚 知识层（Knowledge Layer）
 │   ├── README.md                # 知识层架构说明

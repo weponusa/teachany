@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.4.0] - 2026-04-10
+
+### ✨ Added — Admin Skill & Courseware Lifecycle Management
+
+- **TeachAny Admin Skill** (`admin-skillhub-package/SKILL.md`):
+  - New dedicated skill for project maintainers to generate, validate, pack, publish, and push courseware in one command
+  - 6-phase management pipeline: P0 Environment → P1 Generate → P2 Validate → P3 Pack → P4 Register → P5 Publish → P6 Push
+  - Quick command table mapping admin instructions to pipeline stages
+  - Batch operations: bulk validate, bulk pack, bulk publish all courseware
+  - Courseware ID naming conventions with subject prefix mapping
+  - Complete courseware-registry.json field calculation rules
+  - Git commit message templates for different operation types
+  - 10 hard rules for admin operations (ID uniqueness, meta completeness, token security, etc.)
+  - Troubleshooting guide with common errors and solutions
+  - Full end-to-end examples (create + push, batch republish, validate only)
+- **Updated README.md / README_CN.md**:
+  - Added `admin-skillhub-package/` to project structure tree
+  - Added "Admin Skill" quick start option (Option 1b) for project maintainers
+
+### 🔄 Changed
+- TeachAny base skill updated to v5.8 (WorkBuddy multi-agent + layout consistency + AI image/video generation)
+
 ## [1.3.0] - 2026-04-08
 
 ### ✨ Added — Community Courseware Sharing & Review
