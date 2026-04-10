@@ -3,262 +3,467 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>安全用电 · 教学课件</title>
 <meta name="teachany-node" content="electrical-safety">
 <meta name="teachany-subject" content="physics">
-<meta name="teachany-domain" content="electromagnetism">
+<meta name="teachany-domain" content="electricity">
 <meta name="teachany-grade" content="9">
-<meta name="teachany-difficulty" content="3">
-<meta name="teachany-version" content="1.0">
+<meta name="teachany-difficulty" content="2">
+<meta name="teachany-version" content="2.0">
 <meta name="teachany-author" content="weponusa">
+<title>安全用电 · 教学课件</title>
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 <style>
-:root{--bg:#f8fafc;--primary:#3b82f6;--secondary:#06b6d4;--accent:#f59e0b;--success:#22c55e;--danger:#ef4444;--teal:#14b8a6;--text:#1e293b;--dim:#64748b;--dimmer:#94a3b8;--card:#fff;--border:rgba(0,0,0,0.06);}
+:root{--bg:#f8fafc;--bg2:#f0f4f8;--bg3:#e2e8f0;--primary:#3b82f6;--secondary:#06b6d4;--accent:#f59e0b;--success:#10b981;--danger:#ef4444;--purple:#8b5cf6;--teal:#14b8a6;--text:#1e293b;--dim:#64748b;--dimmer:#94a3b8;--card:#ffffff;--border:rgba(0,0,0,0.06);}
 *{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
 body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.8;padding-bottom:70px;}
-.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:58px;gap:4px;overflow-x:auto;box-shadow:0 1px 12px rgba(0,0,0,0.04);}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:58px;gap:4px;overflow-x:auto;}
 .nav-brand{font-size:18px;font-weight:800;margin-right:18px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:10px;font-size:13.5px;font-weight:600;transition:all 0.2s;white-space:nowrap;}
-.nav a:hover{color:var(--primary);background:rgba(59,130,246,0.08);}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:10px;font-size:13.5px;font-weight:600;transition:all .2s;white-space:nowrap;}
+.nav a:hover{color:var(--primary);background:rgba(59,130,246,.08);}
 .container{max-width:1060px;margin:0 auto;padding:78px 24px 60px;}
 .hero{text-align:center;padding:40px 0 30px;}
-.hero h1{font-size:40px;font-weight:800;background:linear-gradient(135deg,var(--danger),#f97316,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;}
+.hero h1{font-size:40px;font-weight:800;line-height:1.3;background:linear-gradient(135deg,var(--danger),#f97316,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;}
 .hero .subtitle{font-size:17px;color:var(--dim);margin-bottom:16px;}
 .hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
 .hero .meta span{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:5px 16px;font-size:13px;font-weight:600;color:var(--dim);}
 .section{margin:44px 0;}
 .section-title{font-size:24px;font-weight:800;margin-bottom:18px;padding-left:16px;border-left:4px solid transparent;border-image:linear-gradient(to bottom,var(--danger),var(--accent)) 1;}
-.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px 26px;margin-bottom:18px;box-shadow:0 2px 12px rgba(0,0,0,0.04);}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px 26px;margin-bottom:18px;box-shadow:0 2px 12px rgba(0,0,0,.04);transition:transform .2s,box-shadow .2s;}
+.card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(239,68,68,.08);}
 .card h3{font-size:18px;font-weight:700;margin-bottom:10px;}
 .card p,.card li{font-size:15.5px;line-height:1.85;color:var(--dim);}
-.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;}
-.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px;}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;}
 .obj-card{text-align:center;padding:26px 18px;border-top:3px solid transparent;}
-.obj-card:nth-child(1){border-top-color:var(--danger)}.obj-card:nth-child(2){border-top-color:var(--accent)}.obj-card:nth-child(3){border-top-color:var(--success)}
-.obj-card .icon{font-size:36px;margin-bottom:10px;}.obj-card h4{font-size:16px;font-weight:700;margin-bottom:6px;}.obj-card p{font-size:14px;color:var(--dim);}
+.obj-card:nth-child(1){border-top-color:var(--danger);}
+.obj-card:nth-child(2){border-top-color:var(--accent);}
+.obj-card:nth-child(3){border-top-color:var(--success);}
+.obj-card .icon{font-size:36px;margin-bottom:10px;}
 .highlight{color:var(--danger);font-weight:700;}
-.quiz-option{display:block;padding:14px 18px;margin:8px 0;border-radius:12px;background:#f8fafc;border:2px solid var(--border);cursor:pointer;transition:all 0.25s;font-size:15px;font-weight:600;color:var(--text);}
-.quiz-option:hover{background:rgba(59,130,246,0.05);border-color:var(--primary);}
-.quiz-option.correct{background:rgba(34,197,94,0.1);border-color:var(--success);color:#15803d;}
-.quiz-option.wrong{background:rgba(239,68,68,0.08);border-color:var(--danger);color:#b91c1c;}
+.highlight-s{color:var(--success);font-weight:700;}
+.quiz-option{display:block;padding:14px 18px;margin:8px 0;border-radius:12px;background:var(--bg);border:2px solid var(--border);cursor:pointer;transition:all .25s;font-size:15px;font-weight:600;color:var(--text);}
+.quiz-option:hover{background:rgba(239,68,68,.05);border-color:var(--danger);}
+.quiz-option.correct{background:rgba(16,185,129,.1);border-color:var(--success);color:#065f46;}
+.quiz-option.wrong{background:rgba(239,68,68,.08);border-color:var(--danger);color:#b91c1c;}
 .quiz-feedback{padding:12px 16px;border-radius:10px;margin-top:10px;font-size:14.5px;display:none;}
-.quiz-feedback.show{display:block;animation:slideUp 0.3s ease;}
+.quiz-feedback.show{display:block;animation:slideUp .3s ease;}
 @keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.warning-box{background:rgba(239,68,68,0.06);border:2px solid rgba(239,68,68,0.2);border-radius:14px;padding:18px 22px;margin:16px 0;}
-.warning-box h4{color:var(--danger);font-size:16px;font-weight:700;margin-bottom:8px;}
-.warning-box p,.warning-box li{color:#7f1d1d;font-size:15px;}
-.safe-box{background:rgba(34,197,94,0.06);border:2px solid rgba(34,197,94,0.2);border-radius:14px;padding:18px 22px;margin:16px 0;}
-.safe-box h4{color:var(--success);font-size:16px;font-weight:700;margin-bottom:8px;}
-.safe-box p,.safe-box li{color:#14532d;font-size:15px;}
+.danger-box{background:linear-gradient(135deg,rgba(239,68,68,.06),rgba(249,115,22,.06));border-left:4px solid var(--danger);padding:18px 22px;border-radius:0 12px 12px 0;margin:16px 0;}
+.danger-box h4{color:var(--danger);font-size:16px;font-weight:700;margin-bottom:8px;}
+.svg-wrap{background:var(--bg2);border-radius:12px;padding:16px;margin:16px 0;text-align:center;}
+.tag{display:inline-block;background:rgba(239,68,68,.1);color:var(--danger);font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;margin:2px;}
 footer{text-align:center;padding:36px 0;color:var(--dimmer);font-size:13px;border-top:1px solid var(--border);margin-top:50px;}
-.audio-bar{position:fixed;bottom:0;left:0;right:0;z-index:500;background:rgba(59,130,246,0.95);backdrop-filter:blur(12px);border-top:2px solid rgba(255,255,255,0.3);padding:10px 24px;display:flex;align-items:center;gap:14px;}
-.audio-bar .ab-btn{width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;background:#fff;color:#3b82f6;font-size:16px;display:flex;align-items:center;justify-content:center;}
-.audio-bar .ab-info{flex:1;min-width:0;}.audio-bar .ab-title{font-size:13px;font-weight:700;color:#fff;}
+@media(max-width:600px){.hero h1{font-size:28px}.section-title{font-size:21px}.card{padding:18px}}
+.audio-bar{position:fixed;bottom:0;left:0;right:0;z-index:500;background:rgba(239,68,68,0.95);backdrop-filter:blur(12px);border-top:2px solid rgba(255,255,255,0.3);padding:10px 24px;display:flex;align-items:center;gap:14px;}
+.audio-bar .ab-btn{width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;background:#fff;color:#ef4444;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.audio-bar .ab-info{flex:1;min-width:0;}
+.audio-bar .ab-title{font-size:13px;font-weight:700;color:#fff;}
 .audio-bar .ab-progress-wrap{height:4px;background:rgba(255,255,255,0.3);border-radius:2px;margin-top:4px;cursor:pointer;}
 .audio-bar .ab-progress{height:100%;background:#fff;border-radius:2px;width:0%;}
 .audio-bar .ab-time{font-size:11px;color:rgba(255,255,255,0.8);margin-top:2px;}
 .audio-bar .ab-vol{width:60px;accent-color:#fff;}
+
+/* 生活场景动画 */
+#life-scene{background:linear-gradient(135deg,#1e293b,#0f172a);border-radius:16px;padding:24px;margin:20px 0;}
+#life-scene h3{font-size:20px;font-weight:800;color:#fca5a5;margin-bottom:16px;text-align:center;}
+/* 触电动画 */
+@keyframes electricShock{0%,100%{opacity:1;transform:translateX(0)}25%{transform:translateX(-3px);filter:brightness(2)}50%{transform:translateX(3px);filter:brightness(3)}75%{transform:translateX(-2px)}}
+/* 保险丝熔断 */
+@keyframes fuseBlown{0%{stroke:#f59e0b;stroke-width:2}40%{stroke:#ef4444;stroke-width:3}60%{stroke:#fbbf24;stroke-width:4}80%,100%{stroke:transparent;stroke-width:0}}
+/* 火花闪光 */
+@keyframes spark{0%,100%{opacity:0}50%{opacity:1}}
+
+/* 互动实验台 */
+#interactive-lab{background:linear-gradient(135deg,#fff5f5,#fef2f2);border-radius:16px;padding:28px;margin:20px 0;}
+#interactive-lab h3{font-size:20px;font-weight:800;color:var(--danger);margin-bottom:20px;text-align:center;}
+.lab-container{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.lab-panel{background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.06);}
+.lab-panel h4{font-size:16px;font-weight:700;color:var(--text);margin-bottom:14px;}
+@media(max-width:700px){.lab-container{grid-template-columns:1fr;}}
+/* 知识图谱 */
+#knowledge-graph{background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:16px;padding:28px;margin:20px 0;}
+#knowledge-graph h3{font-size:20px;font-weight:800;color:var(--primary);margin-bottom:16px;text-align:center;}
+#kg-svg{width:100%;border-radius:12px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.06);}
+.kg-legend{display:flex;gap:20px;justify-content:center;margin-top:12px;flex-wrap:wrap;}
+.kg-legend-item{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;}
+.kg-dot{width:12px;height:12px;border-radius:50%;}
 </style>
 </head>
 <body>
 <nav class="nav">
-  <span class="nav-brand">🎓 TeachAny</span>
-  <a href="#hero">首页</a><a href="#goals">目标</a><a href="#module-1">触电危险</a>
-  <a href="#module-2">保护装置</a><a href="#module-3">安全规则</a><a href="#deep-understanding">深层</a><a href="#summary">总结</a>
+  <span class="nav-brand">🎓 教我学 TeachAny</span>
+  <a href="#hero">首页</a>
+  <a href="#life-scene">危险场景</a>
+  <a href="#module-1">触电危害</a>
+  <a href="#module-2">保护装置</a>
+  <a href="#module-3">安全规范</a>
+  <a href="#interactive-lab">互动实验</a>
+  <a href="#knowledge-graph">知识图谱</a>
+  <a href="#summary">总结</a>
 </nav>
 <div class="container">
   <section class="hero" id="hero">
-    <h1>🛡️ 安全用电</h1>
-    <p class="subtitle">认识触电危险，掌握安全用电知识，保护自己和家人</p>
+    <h1>⚠️ 安全用电</h1>
+    <p class="subtitle">触电危害 · 保险丝 · 接地保护 · 安全规范</p>
     <div class="meta">
-      <span>⚡ 物理</span><span>🎓 9年级</span><span>⏱️ 约40分钟</span><span>🎯 安全教育</span><span>🚨 重点课</span>
+      <span>⚡ 物理</span><span>🎓 9年级</span><span>⏱️ 约35分钟</span><span>⚠️ 安全教育</span><span>🏠 生活必备</span>
     </div>
   </section>
 
-  <section class="section" id="goals">
+  <section class="section">
     <h2 class="section-title">🎯 学习目标</h2>
     <div class="grid-3">
-      <div class="card obj-card"><div class="icon">⚠️</div><h4>认识触电危险</h4><p>说出触电电流对人体的危害，识别高压危险标识</p></div>
-      <div class="card obj-card"><div class="icon">🔌</div><h4>保护装置</h4><p>解释保险丝、漏电保护器、三孔插座的工作原理和作用</p></div>
-      <div class="card obj-card"><div class="icon">✅</div><h4>安全规则</h4><p>说出安全用电的基本规则，知道遇到触电事故时的正确处理方法</p></div>
+      <div class="card obj-card"><div class="icon">⚡</div><h4>触电危害</h4><p>理解触电的原因和危险，知道安全电压标准</p></div>
+      <div class="card obj-card"><div class="icon">🔒</div><h4>保护装置</h4><p>了解保险丝、断路器、漏电保护器的工作原理</p></div>
+      <div class="card obj-card"><div class="icon">✅</div><h4>安全规范</h4><p>掌握安全用电的基本规范，能处理简单的用电安全问题</p></div>
+    </div>
+  </section>
+
+  <!-- 生活场景动画 -->
+  <section class="section" id="life-scene">
+    <h2 class="section-title">🎬 危险场景动画</h2>
+    <div id="life-scene">
+      <h3>⚠️ 触电危险 与 保险丝保护</h3>
+      <svg width="100%" height="280" viewBox="0 0 700 280" preserveAspectRatio="xMidYMid meet">
+        <!-- 触电场景（左） -->
+        <text x="170" y="20" text-anchor="middle" font-size="13" fill="#fca5a5" font-weight="700">触电危险场景</text>
+        <!-- 电线 -->
+        <line x1="20" y1="80" x2="200" y2="80" stroke="#f59e0b" stroke-width="4"/>
+        <!-- 人物 -->
+        <circle cx="170" cy="110" r="18" fill="#fbbf24" stroke="#f59e0b" stroke-width="2">
+          <animate attributeName="fill" values="#fbbf24;#ef4444;#fbbf24" dur="0.5s" repeatCount="indefinite"/>
+        </circle>
+        <text x="170" y="116" text-anchor="middle" font-size="14">😱</text>
+        <line x1="170" y1="128" x2="170" y2="180" stroke="#475569" stroke-width="3"/>
+        <line x1="170" y1="150" x2="145" y2="170" stroke="#475569" stroke-width="3"/>
+        <line x1="170" y1="150" x2="195" y2="145" stroke="#f59e0b" stroke-width="2">
+          <!-- 手碰电线 -->
+          <animate attributeName="x2" values="195;200;195" dur="0.5s" repeatCount="indefinite"/>
+        </line>
+        <line x1="170" y1="180" x2="155" y2="210" stroke="#475569" stroke-width="3"/>
+        <line x1="170" y1="180" x2="185" y2="210" stroke="#475569" stroke-width="3"/>
+        <!-- 大地 -->
+        <line x1="80" y1="220" x2="260" y2="220" stroke="#64748b" stroke-width="2"/>
+        <line x1="100" y1="228" x2="240" y2="228" stroke="#64748b" stroke-width="1.5"/>
+        <line x1="120" y1="235" x2="220" y2="235" stroke="#64748b" stroke-width="1"/>
+        <!-- 触电回路 -->
+        <line x1="170" y1="210" x2="170" y2="220" stroke="#ef4444" stroke-width="2" stroke-dasharray="3,2"/>
+        <!-- 电弧 -->
+        <text x="200" y="148" font-size="20" fill="#fbbf24">⚡</text>
+        <text x="220" y="165" font-size="14" fill="#fca5a5" font-weight="700">
+          <animate attributeName="opacity" values="1;0;1" dur="0.5s" repeatCount="indefinite"/>
+          危险！
+        </text>
+        <text x="170" y="255" text-anchor="middle" font-size="11" fill="#94a3b8">人体→大地形成回路→触电！</text>
+
+        <!-- 保险丝熔断（中） -->
+        <text x="400" y="20" text-anchor="middle" font-size="13" fill="#fca5a5" font-weight="700">保险丝保护原理</text>
+        <!-- 正常电路 -->
+        <line x1="300" y1="80" x2="380" y2="80" stroke="#10b981" stroke-width="3"/>
+        <!-- 保险丝 -->
+        <rect x="380" y="72" width="40" height="16" fill="rgba(245,158,11,0.2)" stroke="#f59e0b" stroke-width="2" rx="2"/>
+        <line x1="385" y1="80" x2="415" y2="80" stroke="#f59e0b" stroke-width="2" id="fuseWire"/>
+        <text x="400" y="65" text-anchor="middle" font-size="10" fill="#f59e0b" font-weight="700">保险丝</text>
+        <!-- 过大电流时 -->
+        <line x1="420" y1="80" x2="500" y2="80" stroke="#10b981" stroke-width="3"/>
+        <!-- 大电流标注 -->
+        <text x="460" y="70" text-anchor="middle" font-size="13" fill="#ef4444">⚡⚡⚡</text>
+        <text x="400" y="110" text-anchor="middle" font-size="11" fill="#94a3b8">过大电流产生大量热</text>
+        <text x="400" y="125" text-anchor="middle" font-size="11" fill="#f59e0b" font-weight="700">→ 保险丝熔断！电路断开</text>
+        <!-- 熔断模拟 -->
+        <line x1="385" y1="80" x2="399" y2="78" stroke="#ef4444" stroke-width="3" opacity="0.8">
+          <animate attributeName="opacity" values="0;1;0" dur="1.5s" repeatCount="indefinite"/>
+        </line>
+        <circle cx="400" cy="80" r="3" fill="#fbbf24">
+          <animate attributeName="opacity" values="0;1;0" dur="1.5s" repeatCount="indefinite"/>
+        </circle>
+        
+        <!-- 漏电保护器（右） -->
+        <text x="610" y="20" text-anchor="middle" font-size="13" fill="#86efac" font-weight="700">漏电保护器</text>
+        <rect x="550" y="60" width="120" height="100" fill="rgba(16,185,129,0.1)" stroke="#10b981" stroke-width="2" rx="8"/>
+        <text x="610" y="100" text-anchor="middle" font-size="12" fill="#10b981" font-weight="700">RCD</text>
+        <text x="610" y="118" text-anchor="middle" font-size="11" fill="#86efac">漏电保护器</text>
+        <text x="610" y="136" text-anchor="middle" font-size="10" fill="#64748b">检测到漏电</text>
+        <text x="610" y="150" text-anchor="middle" font-size="10" fill="#64748b">立即断电</text>
+        <text x="610" y="185" text-anchor="middle" font-size="11" fill="#86efac">≤30mA·0.1s 动作</text>
+        <text x="610" y="200" text-anchor="middle" font-size="11" fill="#86efac">保护人体安全！</text>
+      </svg>
     </div>
   </section>
 
   <section class="section" id="module-1">
-    <h2 class="section-title">📖 模块一：触电危险</h2>
+    <h2 class="section-title">📖 模块一：触电危害</h2>
     <div class="card">
-      <h3>🌉 电流为什么危险？</h3>
-      <p><span class="highlight">你已经知道……</span>220V的家用电能让灯泡发光，能让电机转动，能让热水壶烧开水。</p>
-      <p style="margin-top:8px"><span class="highlight">但有个问题……</span>同样是220V，为什么会电死人？电流通过人体会怎样？</p>
-      <p style="margin-top:8px"><span class="highlight">所以要学……</span>触电的物理原因和危害程度，以及如何有效预防触电。</p>
-    </div>
-    <div class="warning-box">
-      <h4>⚠️ 触电的危害——与电流大小有关</h4>
-      <ul style="padding-left:18px">
-        <li><strong>1mA以下</strong>：有轻微感觉，无危险</li>
-        <li><strong>10mA</strong>：肌肉痉挛，难以自主摆脱</li>
-        <li><strong>30mA</strong>：呼吸困难，生命危险</li>
-        <li><strong>100mA及以上</strong>：心脏停跳，极度危险</li>
+      <h3>⚡ 触电的危险性</h3>
+      <p>触电是由于<span class="highlight">电流通过人体</span>造成的伤害。</p>
+      <ul style="margin:12px 0 0 20px;">
+        <li><span class="highlight">安全电压</span>：不高于 <span class="highlight">36V</span>（人体干燥状态）</li>
+        <li>通过人体电流 ≥ 10mA：感到强烈麻木，不能自主脱离</li>
+        <li>通过人体电流 ≥ 50mA：有生命危险</li>
+        <li>通过人体电流 ≥ 100mA：心脏停跳，极度危险</li>
+        <li>家庭电路：220V，远超安全电压！</li>
       </ul>
-      <div style="background:rgba(239,68,68,0.1);border-radius:8px;padding:12px;margin-top:12px">
-        <strong>人体安全电压：不高于 36V</strong><br>
-        <span style="font-size:14px">干燥环境可到36V，潮湿环境只有12V。家用220V远超安全值！</span>
-      </div>
+    </div>
+    <div class="danger-box">
+      <h4>⚠️ 常见触电情形</h4>
+      <p>①单线触电：人体接触一根火线，通过大地形成回路（常见）<br>②双线触电：人体同时接触两根导线，直接形成回路（最危险）<br>③跨步电压触电：高压线落地时，附近地面存在电位差</p>
     </div>
     <div class="card">
-      <h3>💡 触电原因分析</h3>
-      <p>人体也是导体（电阻约1000Ω～100000Ω）。接触带电体→电流流过人体→根据I=U/R，220V÷1000Ω=<span style="color:var(--danger);font-weight:700">0.22A=220mA</span>，远超致命电流！</p>
-      <div class="grid-2" style="margin-top:14px">
-        <div style="background:rgba(239,68,68,0.06);border-radius:10px;padding:14px">
-          <strong style="color:var(--danger)">单相触电</strong>
-          <p style="font-size:13px;margin-top:6px">人体接触一根火线，电流经人体→大地→零线回路，形成回路，非常危险！</p>
-        </div>
-        <div style="background:rgba(245,158,11,0.06);border-radius:10px;padding:14px">
-          <strong style="color:var(--accent)">双相触电</strong>
-          <p style="font-size:13px;margin-top:6px">同时接触火线和零线，电流从人体通过，电压220V，极度危险！</p>
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <h3>✏️ 马上练一题</h3>
-      <p>人体接触220V电压，人体电阻约为1100Ω，通过人体的电流约为：</p>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'m1-q1')">A. 0.2A=200mA（I=U/R=220/1100≈0.2A，远超安全电流）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m1-q1')">B. 0.002A=2mA（在安全范围内）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m1-q1')">C. 220A（误算）</div>
-      <div id="m1-q1" class="quiz-feedback"></div>
+      <h3>✏️ 练习</h3>
+      <p>以下哪个电压是安全电压范围内的？</p>
+      <div class="quiz-option" onclick="checkAnswer(this,true,'q1')">A. 24V（低于36V，安全）</div>
+      <div class="quiz-option" onclick="checkAnswer(this,false,'q1')">B. 110V（超过安全电压）</div>
+      <div class="quiz-option" onclick="checkAnswer(this,false,'q1')">C. 220V（家庭电路，危险）</div>
+      <div id="q1" class="quiz-feedback"></div>
     </div>
   </section>
 
   <section class="section" id="module-2">
-    <h2 class="section-title">📖 模块二：安全保护装置</h2>
-    <div class="card">
-      <h3>💡 保险丝（熔断器）</h3>
-      <!-- 保险丝SVG示意 -->
-      <div style="display:flex;justify-content:center;margin:16px 0">
-        <svg width="200" height="60" viewBox="0 0 200 60">
-          <line x1="0" y1="30" x2="40" y2="30" stroke="#334155" stroke-width="3"/>
-          <rect x="40" y="15" width="120" height="30" fill="none" stroke="#64748b" stroke-width="2" rx="4" stroke-dasharray="4,2"/>
-          <line x1="40" y1="30" x2="160" y2="30" stroke="#ef4444" stroke-width="2.5"/>
-          <line x1="160" y1="30" x2="200" y2="30" stroke="#334155" stroke-width="3"/>
-          <text x="75" y="52" font-size="11" fill="#64748b">保险丝（低熔点合金）</text>
-        </svg>
+    <h2 class="section-title">📖 模块二：保护装置</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3>🔒 保险丝（熔断器）</h3>
+        <p>电阻大、熔点低的合金丝。当电路中电流超过额定值时，<span class="highlight">保险丝因过热熔断</span>，切断电路，保护用电器和导线。</p>
+        <p style="margin-top:8px;color:var(--danger);font-weight:600;">❌ 不能用铜丝、铁丝代替保险丝！</p>
       </div>
-      <p><strong>原理</strong>（焦耳定律应用）：过大电流 → Q=I²Rt急剧增加 → 温度超过熔点 → 熔断切断电路</p>
-      <p style="margin-top:8px"><strong>选择</strong>：保险丝额定电流要<em>略大于</em>正常工作电流，但<span style="color:var(--danger)">绝不能用铜丝或铁丝代替！</span></p>
+      <div class="card">
+        <h3>🔘 断路器（空气开关）</h3>
+        <p>可以自动断开过大电流的开关。比保险丝更可靠，可以复位重用，现代家庭广泛使用。</p>
+        <p style="margin-top:8px;color:var(--success);font-weight:600;">✅ 跳闸后可手动复位</p>
+      </div>
+      <div class="card">
+        <h3>🛡️ 漏电保护器（RCD）</h3>
+        <p>检测电路中<span class="highlight">火线和零线的电流差</span>。差值≥30mA时，在0.1秒内切断电路，有效防止人身触电。</p>
+      </div>
+      <div class="card">
+        <h3>🌍 接地保护</h3>
+        <p>将用电器外壳通过导线接入大地。万一外壳漏电，大电流经低阻接地导线流走，人碰外壳不会触电。</p>
+      </div>
     </div>
     <div class="card">
-      <h3>💡 三孔插座结构（地线的作用）</h3>
-      <!-- 三孔插座SVG -->
-      <div style="display:flex;justify-content:center;margin:16px 0">
-        <svg width="160" height="160" viewBox="0 0 160 160">
-          <!-- 插座外框 -->
-          <rect x="10" y="10" width="140" height="140" fill="#f8fafc" stroke="#334155" stroke-width="3" rx="12"/>
-          <!-- 地线孔（上，圆形） -->
-          <circle cx="80" cy="45" r="10" fill="#94a3b8" stroke="#334155" stroke-width="2"/>
-          <text x="95" y="49" font-size="11" fill="#22c55e" font-weight="700">地线</text>
-          <!-- 火线孔（左下） -->
-          <rect x="42" y="85" width="16" height="24" fill="#ef4444" rx="3"/>
-          <text x="22" y="103" font-size="11" fill="#ef4444" font-weight="700">火线L</text>
-          <!-- 零线孔（右下） -->
-          <rect x="102" y="85" width="16" height="24" fill="#3b82f6" rx="3"/>
-          <text x="120" y="103" font-size="11" fill="#3b82f6" font-weight="700">零线N</text>
-          <!-- 说明 -->
-          <text x="20" y="148" font-size="10" fill="#64748b">三孔：地线(上) 火线(左) 零线(右)</text>
-        </svg>
-      </div>
-      <p><strong>地线的作用</strong>：将用电器金属外壳连接大地。若内部短路，漏电电流经地线→大地→保险丝熔断，<strong>人体不会被电击</strong>。</p>
-    </div>
-    <div class="card">
-      <h3>💡 漏电保护器（空气开关）</h3>
-      <p>检测火线和零线电流差。正常：I火=I零；漏电：I火≠I零（差值流过人体/大地）。检测到差值超过阈值（约30mA）立即跳闸，<strong>比保险丝更快更灵敏</strong>。</p>
+      <h3>✏️ 练习</h3>
+      <p>以下哪种做法是安全的？</p>
+      <div class="quiz-option" onclick="checkAnswer(this,false,'q2')">A. 保险丝断了，用铜丝代替</div>
+      <div class="quiz-option" onclick="checkAnswer(this,true,'q2')">B. 发现有人触电，立即切断电源再施救</div>
+      <div class="quiz-option" onclick="checkAnswer(this,false,'q2')">C. 用湿手触摸开关</div>
+      <div id="q2" class="quiz-feedback"></div>
     </div>
   </section>
 
   <section class="section" id="module-3">
-    <h2 class="section-title">📖 模块三：安全用电规则</h2>
-    <div class="safe-box">
-      <h4>✅ 安全用电的基本规则</h4>
-      <ul style="padding-left:18px">
-        <li>不接触<strong>低压带电体</strong>，不靠近<strong>高压带电体</strong></li>
-        <li>不用湿手触摸开关、插座（水会降低人体电阻）</li>
-        <li>不私自乱接电线，不超负荷用电</li>
-        <li>发现电线破损，立即停用并通知维修</li>
-        <li>雷雨天气不在树下、电线杆旁避雨</li>
-        <li>家中一旦发生电气火灾，先切断电源再灭火</li>
-      </ul>
-    </div>
-    <div class="warning-box">
-      <h4>⚠️ 遇到触电事故的正确处理</h4>
-      <ul style="padding-left:18px">
-        <li><strong>立即切断电源</strong>（关闸）或用干燥木棒挑开电线</li>
-        <li><strong>绝不能用手直接拉触电者！</strong>（否则施救者也会触电）</li>
-        <li>触电者脱离电源后，立即进行心肺复苏</li>
-        <li>拨打120急救电话</li>
-      </ul>
+    <h2 class="section-title">📖 模块三：安全用电规范</h2>
+    <div class="grid-3">
+      <div class="card">
+        <h3>🏠 家庭电路</h3>
+        <ul style="margin-left:16px;font-size:14px;">
+          <li>火线（红/棕）：有电压</li>
+          <li>零线（蓝/黑）：接大地</li>
+          <li>地线（黄绿）：保护接地</li>
+          <li>开关接在火线上！</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>✋ 急救措施</h3>
+        <ol style="margin-left:16px;font-size:14px;">
+          <li>立即切断电源</li>
+          <li>不能直接拉触电者</li>
+          <li>用绝缘物拨开导线</li>
+          <li>呼叫急救120</li>
+          <li>必要时进行CPR</li>
+        </ol>
+      </div>
+      <div class="card">
+        <h3>🚫 禁止行为</h3>
+        <ul style="margin-left:16px;font-size:14px;color:var(--danger);">
+          <li>湿手操作电器</li>
+          <li>超载接用电器</li>
+          <li>私自乱拉电线</li>
+          <li>用铜铁代替保险丝</li>
+          <li>靠近高压电塔</li>
+        </ul>
+      </div>
     </div>
     <div class="card">
-      <h3>✏️ 马上练一题</h3>
-      <p>发现有人触电，正确的第一步是：</p>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m3-q1')">A. 立即用手拉开触电者</div>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'m3-q1')">B. 立即切断电源，或用干燥绝缘物体挑开电线</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m3-q1')">C. 大声呼救，等待他人帮助</div>
-      <div id="m3-q1" class="quiz-feedback"></div>
+      <h3>✏️ 综合练习</h3>
+      <p>家庭电路中，开关应该接在哪里？</p>
+      <div class="quiz-option" onclick="checkAnswer(this,true,'q3')">A. 接在火线与用电器之间</div>
+      <div class="quiz-option" onclick="checkAnswer(this,false,'q3')">B. 接在零线与用电器之间</div>
+      <div class="quiz-option" onclick="checkAnswer(this,false,'q3')">C. 接在任何位置都可以</div>
+      <div id="q3" class="quiz-feedback"></div>
     </div>
   </section>
 
-  <section class="section" id="deep-understanding">
-    <h2 class="section-title">🔬 深层理解</h2>
-    <div style="background:rgba(239,68,68,0.04);border:1px solid rgba(239,68,68,0.15);border-radius:14px;padding:18px">
-      <h4 style="color:var(--danger);margin-bottom:10px">🔍 为什么鸟站在高压线上不会被电死？</h4>
-      <p style="font-size:15px">触电需要形成<strong>电流回路</strong>。鸟两脚都站在同一根导线上，两脚之间电位差几乎为零（那段导线电阻极小），没有足够电压推动电流通过鸟体。人若一脚在地（接地），另一手碰高压线，就形成回路——触电！</p>
+  <!-- 互动实验台 -->
+  <section class="section" id="interactive-lab">
+    <h2 class="section-title">🧪 互动实验台</h2>
+    <div id="interactive-lab">
+      <h3>触电风险评估与保险丝选型</h3>
+      <div class="lab-container">
+        <div class="lab-panel">
+          <h4>⚡ 触电电流计算</h4>
+          <div style="margin:10px 0;">
+            <label style="font-size:13px;font-weight:600;color:var(--dim);display:block;margin-bottom:6px;">接触电压 U：<span id="tV">220</span> V</label>
+            <input type="range" min="1" max="380" step="1" value="220" style="width:100%;accent-color:var(--danger);" oninput="updateTouch()">
+          </div>
+          <div style="margin:10px 0;">
+            <label style="font-size:13px;font-weight:600;color:var(--dim);display:block;margin-bottom:6px;">人体电阻 R_人：<span id="tR">1000</span> Ω</label>
+            <input type="range" min="500" max="100000" step="500" value="1000" style="width:100%;accent-color:var(--danger);" oninput="updateTouch()">
+          </div>
+          <div style="background:#fff5f5;border-radius:10px;padding:14px;margin-top:12px;border:1px solid rgba(239,68,68,.2);">
+            <div style="font-size:13px;color:var(--dim);">流过人体的电流</div>
+            <div style="font-size:32px;font-weight:800;" id="touchCurrent" style="color:var(--danger);">220 mA</div>
+            <div style="font-size:13px;font-weight:700;margin-top:6px;" id="dangerLevel" style="color:var(--danger);">⚠️ 极度危险！</div>
+          </div>
+          <div style="margin-top:12px;height:20px;border-radius:10px;overflow:hidden;background:linear-gradient(90deg,#10b981,#f59e0b,#ef4444);">
+            <div id="dangerBar" style="height:100%;background:transparent;border-right:3px solid #1e293b;transition:width .3s;width:50%;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-top:3px;">
+            <span>安全</span><span>危险</span><span>极危</span>
+          </div>
+        </div>
+        <div class="lab-panel">
+          <h4>🔒 保险丝选型指南</h4>
+          <div style="margin:10px 0;">
+            <label style="font-size:13px;font-weight:600;color:var(--dim);display:block;margin-bottom:6px;">电路功率 P：<span id="fP">1000</span> W</label>
+            <input type="range" min="100" max="5000" step="100" value="1000" style="width:100%;accent-color:var(--accent);" oninput="updateFuse()">
+          </div>
+          <div style="margin:10px 0;">
+            <label style="font-size:13px;font-weight:600;color:var(--dim);display:block;margin-bottom:6px;">电路电压 U：<span id="fV">220</span> V</label>
+            <input type="range" min="110" max="380" step="10" value="220" style="width:100%;accent-color:var(--accent);" oninput="updateFuse()">
+          </div>
+          <div style="background:#fffbeb;border-radius:10px;padding:14px;margin-top:12px;border:1px solid rgba(245,158,11,.3);">
+            <div style="font-size:13px;color:var(--dim);">正常工作电流</div>
+            <div style="font-size:24px;font-weight:800;color:var(--accent);" id="normalCurrent">4.5 A</div>
+            <div style="font-size:13px;color:var(--dim);margin-top:8px;">推荐保险丝额定电流</div>
+            <div style="font-size:24px;font-weight:800;color:var(--primary);" id="fuseRating">6 A</div>
+            <div style="font-size:12px;color:var(--dim);margin-top:4px;">（应略大于正常电流，留有余量）</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 知识图谱 -->
+  <section class="section" id="knowledge-graph">
+    <h2 class="section-title">🕸️ 知识图谱</h2>
+    <div id="knowledge-graph">
+      <h3>安全用电知识网络</h3>
+      <svg id="kg-svg" height="360"></svg>
+      <div class="kg-legend">
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#3b82f6"></div><span>当前课题</span></div>
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#10b981"></div><span>前置知识</span></div>
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#f97316"></div><span>后续拓展</span></div>
+      </div>
     </div>
   </section>
 
   <section class="section" id="summary">
-    <h2 class="section-title">📊 学习总结</h2>
+    <h2 class="section-title">📊 本课总结</h2>
     <div class="card">
-      <h3>后测：安全判断</h3>
-      <p>下列用电行为中，安全的是：</p>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'post-q1')">A. 用铜丝代替保险丝，防止频繁断电</div>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'post-q1')">B. 家用电器使用三脚插头，将金属外壳接地</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'post-q1')">C. 用潮湿的手拔插头，动作快就不会触电</div>
-      <div id="post-q1" class="quiz-feedback"></div>
+      <h3>🗺️ 知识要点</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;">
+        <span class="tag">安全电压≤36V</span>
+        <span class="tag">50mA→生命危险</span>
+        <span class="tag">保险丝：限流保护</span>
+        <span class="tag">漏电保护器30mA动作</span>
+        <span class="tag">开关接火线</span>
+        <span class="tag">湿手不能操作电器</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>✅ 自测清单</h3>
+      <ul style="margin-left:20px;">
+        <li>✅ 我知道安全电压（≤36V）</li>
+        <li>✅ 我了解保险丝、断路器和漏电保护器的作用</li>
+        <li>✅ 我知道正确的触电急救方法</li>
+        <li>✅ 我能说出安全用电的注意事项</li>
+      </ul>
     </div>
   </section>
-  <footer><p>Made with <strong>教我学 TeachAny</strong> · <a href="https://github.com/weponusa/teachany" style="color:var(--primary)">GitHub</a></p></footer>
+  <footer>
+    <p>Made with <strong>教我学 TeachAny</strong> · <a href="https://github.com/weponusa/teachany" style="color:var(--primary);">GitHub</a></p>
+    <p style="margin-top:8px;">初中物理 · 电学 · 安全用电</p>
+  </footer>
 </div>
-<div class="audio-bar">
-  <button class="ab-btn" id="abPrev">⏮</button><button class="ab-btn" id="abPlay">▶</button><button class="ab-btn" id="abNext">⏭</button>
+<div class="audio-bar" id="audioBar">
+  <button class="ab-btn" id="abPlay" onclick="abToggle()">▶</button>
+  <button class="ab-btn" onclick="abPrev()" style="font-size:13px;">⏮</button>
+  <button class="ab-btn" onclick="abNext()" style="font-size:13px;">⏭</button>
   <div class="ab-info">
-    <div class="ab-title" id="abTitle">安全用电 · 第1段</div>
+    <div class="ab-title" id="abTitle">安全用电 - 课程介绍</div>
     <div class="ab-progress-wrap" id="abProgressWrap"><div class="ab-progress" id="abProgress"></div></div>
     <div class="ab-time" id="abTime">0:00 / 0:00</div>
   </div>
-  <input type="range" class="ab-vol" id="abVol" min="0" max="1" step="0.05" value="0.8">
+  <input type="range" class="ab-vol" id="abVol" min="0" max="1" step="0.05" value="0.8" oninput="abSetVol(this.value)">
 </div>
 <script>
+const correctMsgs={'q1':'正确！安全电压不超过36V，24V在安全范围内。家庭220V和工业110V均高于安全电压，需注意安全。','q2':'正确！发现有人触电，首先要切断电源（关总闸）再施救，绝不能直接用手拉触电者！','q3':'正确！开关必须接在火线上。若接在零线上，断开开关后灯虽然不亮，但用电器仍与火线相连，换灯泡等操作仍有触电风险！'};
+const wrongMsgs={'q1':'安全电压≤36V，只有24V是安全的。110V和220V均超过安全电压，直接接触有触电危险！','q2':'用铜丝代替保险丝极其危险！铜丝不会因过热熔断，过大电流会损坏电器甚至引发火灾。湿手操作电器也很危险。','q3':'开关一定要接在火线上！接在零线上的话，断开开关后灯虽然不亮，但灯头仍有高电压，维修时会触电！'};
 function checkAnswer(el,isCorrect,feedbackId){
-  const parent=el.parentElement;const options=parent.querySelectorAll('.quiz-option');const feedback=document.getElementById(feedbackId);
-  if(parent.dataset.answered)return;parent.dataset.answered='true';
-  options.forEach(opt=>{opt.style.pointerEvents='none';opt.style.opacity='0.6';});
-  if(isCorrect){el.classList.add('correct');el.style.opacity='1';feedback.innerHTML='✅ <strong>正确！</strong>安全用电意识很强！';feedback.style.background='rgba(34,197,94,0.1)';feedback.style.color='#15803d';}
-  else{el.classList.add('wrong');el.style.opacity='1';options.forEach(opt=>{if(opt.onclick&&opt.onclick.toString().includes('true')){opt.classList.add('correct');opt.style.opacity='1';}});feedback.innerHTML='❌ <strong>危险！</strong>这样做非常不安全，请牢记安全用电规则！';feedback.style.background='rgba(239,68,68,0.08)';feedback.style.color='#b91c1c';}
-  feedback.classList.add('show');
+  const parent=el.parentElement;if(parent.dataset.answered)return;parent.dataset.answered='true';
+  const opts=parent.querySelectorAll('.quiz-option');const fb=document.getElementById(feedbackId);
+  opts.forEach(o=>{o.style.pointerEvents='none';o.style.opacity='0.6';});
+  if(isCorrect){el.classList.add('correct');el.style.opacity='1';fb.innerHTML='✅ <strong>正确！</strong>'+correctMsgs[feedbackId];fb.style.background='rgba(16,185,129,0.1)';fb.style.color='#065f46';}
+  else{el.classList.add('wrong');el.style.opacity='1';opts.forEach(o=>{if(o.onclick&&o.onclick.toString().includes('true')){o.classList.add('correct');o.style.opacity='1';}});fb.innerHTML='❌ <strong>再想想。</strong>'+wrongMsgs[feedbackId];fb.style.background='rgba(239,68,68,0.08)';fb.style.color='#b91c1c';}
+  fb.classList.add('show');
 }
-const tracks=['s01','s02','s03','s04','s05','s06','s07','s08'];
-const titles=['引入：电的危险性','触电电流危害','单双相触电','保险丝原理','三孔插座结构','漏电保护器','安全用电规则','急救处理'];
-let cur=0;const audio=new Audio();
-const abPlay=document.getElementById('abPlay');const abTitle=document.getElementById('abTitle');const abProgress=document.getElementById('abProgress');const abTime=document.getElementById('abTime');
-function loadTrack(i){cur=i;audio.src=`tts/${tracks[i]}.mp3`;abTitle.textContent=`安全用电 · ${titles[i]}`;abProgress.style.width='0%';}
-function fmt(s){const m=Math.floor(s/60),sec=Math.floor(s%60);return`${m}:${sec<10?'0'+sec:sec}`;}
-loadTrack(0);
-abPlay.addEventListener('click',()=>{if(audio.paused){audio.play();abPlay.textContent='⏸';}else{audio.pause();abPlay.textContent='▶';}});
-document.getElementById('abPrev').addEventListener('click',()=>{loadTrack(Math.max(0,cur-1));audio.play();abPlay.textContent='⏸';});
-document.getElementById('abNext').addEventListener('click',()=>{loadTrack(Math.min(tracks.length-1,cur+1));audio.play();abPlay.textContent='⏸';});
-audio.addEventListener('timeupdate',()=>{if(audio.duration){abProgress.style.width=(audio.currentTime/audio.duration*100)+'%';abTime.textContent=fmt(audio.currentTime)+' / '+fmt(audio.duration);}});
-audio.addEventListener('ended',()=>{if(cur<tracks.length-1){loadTrack(cur+1);audio.play();}else{abPlay.textContent='▶';}});
-document.getElementById('abProgressWrap').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();audio.currentTime=(e.clientX-r.left)/r.width*audio.duration;});
-document.getElementById('abVol').addEventListener('input',e=>{audio.volume=e.target.value;});
-audio.volume=0.8;
+function updateTouch(){
+  const sliders=document.querySelectorAll('#interactive-lab .lab-panel:first-child input[type=range]');
+  const U=parseFloat(sliders[0].value),R=parseFloat(sliders[1].value);
+  document.getElementById('tV').textContent=U;
+  document.getElementById('tR').textContent=R;
+  const I_mA=(U/R)*1000;
+  document.getElementById('touchCurrent').textContent=I_mA.toFixed(1)+' mA';
+  const el=document.getElementById('touchCurrent');
+  let danger='',color='';
+  if(I_mA<1){danger='✅ 安全';color='#10b981';}
+  else if(I_mA<10){danger='⚠️ 轻微感觉';color='#f59e0b';}
+  else if(I_mA<50){danger='⚠️ 危险！不能自主脱离';color='#f97316';}
+  else if(I_mA<100){danger='🚨 生命危险！';color='#ef4444';}
+  else{danger='☠️ 极度危险！';color='#dc2626';}
+  document.getElementById('dangerLevel').textContent=danger;
+  document.getElementById('dangerLevel').style.color=color;
+  el.style.color=color;
+  const pct=Math.min(100,I_mA/2);
+  document.getElementById('dangerBar').style.width=pct+'%';
+}
+function updateFuse(){
+  const sliders=document.querySelectorAll('#interactive-lab .lab-panel:last-child input[type=range]');
+  const P=parseFloat(sliders[0].value),V=parseFloat(sliders[1].value);
+  document.getElementById('fP').textContent=P;
+  document.getElementById('fV').textContent=V;
+  const I=P/V;
+  document.getElementById('normalCurrent').textContent=I.toFixed(2)+' A';
+  // 推荐保险丝：取上一个标准规格
+  const standards=[1,2,3,5,6,10,15,20,32];
+  const rec=standards.find(s=>s>I*1.2)||32;
+  document.getElementById('fuseRating').textContent=rec+' A';
+}
+(function(){
+  const nodes=[{id:'安全用电',type:'current'},{id:'电流危害',type:'prereq'},{id:'短路',type:'prereq'},{id:'欧姆定律',type:'prereq'},{id:'保险丝',type:'current'},{id:'断路器',type:'current'},{id:'漏电保护器',type:'current'},{id:'接地保护',type:'current'},{id:'触电急救',type:'next'},{id:'消防安全',type:'next'},{id:'家庭电路',type:'next'}];
+  const links=[{source:'电流危害',target:'安全用电'},{source:'短路',target:'安全用电'},{source:'欧姆定律',target:'电流危害'},{source:'安全用电',target:'保险丝'},{source:'安全用电',target:'断路器'},{source:'安全用电',target:'漏电保护器'},{source:'安全用电',target:'接地保护'},{source:'安全用电',target:'触电急救'},{source:'安全用电',target:'消防安全'},{source:'安全用电',target:'家庭电路'}];
+  const colorMap={current:'#3b82f6',prereq:'#10b981',next:'#f97316'};
+  const svgEl=document.getElementById('kg-svg');const W=svgEl.parentElement.clientWidth||700,H=360;
+  svgEl.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const svg=d3.select('#kg-svg');
+  const sim=d3.forceSimulation(nodes).force('link',d3.forceLink(links).id(d=>d.id).distance(95)).force('charge',d3.forceManyBody().strength(-280)).force('center',d3.forceCenter(W/2,H/2)).force('collision',d3.forceCollide(40));
+  const link=svg.append('g').selectAll('line').data(links).join('line').attr('stroke','#cbd5e1').attr('stroke-width',1.5);
+  const node=svg.append('g').selectAll('g').data(nodes).join('g').call(d3.drag().on('start',(e,d)=>{if(!e.active)sim.alphaTarget(0.3).restart();d.fx=d.x;d.fy=d.y;}).on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y;}).on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}));
+  node.append('circle').attr('r',d=>d.type==='current'?28:22).attr('fill',d=>colorMap[d.type]).attr('fill-opacity',0.15).attr('stroke',d=>colorMap[d.type]).attr('stroke-width',2);
+  node.append('text').text(d=>d.id).attr('text-anchor','middle').attr('dy','0.35em').attr('font-size',d=>d.id.length>4?10:12).attr('fill',d=>colorMap[d.type]).attr('font-weight','700');
+  sim.on('tick',()=>{link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);node.attr('transform',d=>`translate(${Math.max(30,Math.min(W-30,d.x))},${Math.max(30,Math.min(H-30,d.y))})`)});
+})();
+const audioPlaylist=[{title:"安全用电 - 介绍",src:"tts/s01.mp3"},{title:"触电危害",src:"tts/s02.mp3"},{title:"保护装置",src:"tts/s03.mp3"},{title:"安全规范",src:"tts/s04.mp3"},{title:"本课总结",src:"tts/s05.mp3"}];
+let abIdx=0,abAudio=new Audio(),abPlaying=false;abAudio.volume=0.8;
+function abLoad(i){abIdx=i;abAudio.src=audioPlaylist[i].src;document.getElementById('abTitle').textContent=audioPlaylist[i].title;document.getElementById('abProgress').style.width='0%';document.getElementById('abTime').textContent='0:00 / 0:00';}
+function abToggle(){if(abPlaying){abAudio.pause();abPlaying=false;document.getElementById('abPlay').textContent='▶';}else{abAudio.play().catch(()=>{});abPlaying=true;document.getElementById('abPlay').textContent='⏸';}}
+function abPrev(){abLoad((abIdx-1+audioPlaylist.length)%audioPlaylist.length);if(abPlaying)abAudio.play().catch(()=>{});}
+function abNext(){abLoad((abIdx+1)%audioPlaylist.length);if(abPlaying)abAudio.play().catch(()=>{});}
+function abSetVol(v){abAudio.volume=v;}
+abAudio.addEventListener('timeupdate',()=>{if(!abAudio.duration)return;const pct=(abAudio.currentTime/abAudio.duration)*100;document.getElementById('abProgress').style.width=pct+'%';const fmt=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;document.getElementById('abTime').textContent=`${fmt(abAudio.currentTime)} / ${fmt(abAudio.duration)}`;});
+abAudio.addEventListener('ended',()=>{abNext();abAudio.play().catch(()=>{});});
+document.getElementById('abProgressWrap').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();abAudio.currentTime=((e.clientX-r.left)/r.width)*abAudio.duration;});
+abLoad(0);
 </script>
 </body>
 </html>
