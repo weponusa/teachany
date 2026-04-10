@@ -37,18 +37,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - `downloadAndImportCommunity(course)` — download `.teachany` package from GitHub Releases and import locally
   - `submitToCommunity({token, course})` — auto-create Fork + Branch + PR via GitHub API, uploads complete `.teachany` package (with audio/video) alongside metadata JSON
   - `createShareDialog({course})` — "Share to Community" modal with GitHub Token input and progress feedback
-  - `renderCommunityCoursesInTooltip(nodeId, el)` — render community courseware list in Knowledge Tree tooltip
+  - `renderCommunityCoursesInTooltip(nodeId, el)` — render community courseware list in Knowledge Map tooltip
   - `renderCommunityGalleryCards(grid)` — render community courseware cards in Gallery
 - **Export as .teachany** (`courseware-importer.js`):
   - `exportCourseAsTeachany(id)` — re-package local IndexedDB courseware into a downloadable .teachany ZIP file (includes ALL assets: audio, video, images)
   - Gallery user courseware cards now have a **📦 Export** button for downloading the complete package
-- **Knowledge Tree integration**: tooltip now shows both local user coursewares and community shared coursewares (🌐 icon), with download buttons for community courses
+- **Knowledge Map integration**: tooltip now shows both local user coursewares and community shared coursewares (🌐 icon), with download buttons for community courses
 - **Gallery integration**: community coursewares appear as dedicated cards with 🌐 badge, download button, and author info; each user courseware card now has a "🌐 Share" button and a "📦 Export" button
 - **Learning Path integration**: steps now show community shared courseware count alongside local count
 - **GitHub Actions CI/CD**:
   - `community-review.yml` — validates PR submissions (JSON schema, required fields, node_id existence, subject validation), auto-adds labels
   - `community-publish.yml` — on merge, auto-updates `community/index.json` and commits via bot
-- **Legend update**: Knowledge Tree legend now includes "社区共享" (Community Shared) indicator
+- **Legend update**: Knowledge Map legend now includes "社区共享" (Community Shared) indicator
 
 ### 🔄 Changed
 - All three pages (`index.html`, `tree.html`, `path.html`) now load `community-loader.js` and pre-fetch community index on page load
@@ -66,7 +66,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - `isLikedInSession(id)` — check if liked in current session
   - Likes stored in `teachany_course_likes` key, session state in `sessionStorage`
 - **Sorted community courseware list**: `findUserCoursesByNodeId(nodeId)` returns all coursewares for a node sorted by likes descending; `getTopCoursesByNodeId(nodeId, limit=5)` returns top N
-- **Knowledge tree tooltip**: Shows ranked community courseware list (up to 5) with inline like buttons and direct launch links per course
+- **Knowledge map tooltip**: Shows ranked community courseware list (up to 5) with inline like buttons and direct launch links per course
 - **Learning path**: Displays community courseware count and like info for each step; always opens the highest-liked courseware
 - **Gallery cards**: Each user courseware card now shows a ❤️ like button with live count
 
@@ -149,7 +149,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 | Version | Date | Changes |
 |:--------|:-----|:--------|
-| v5.4 | 2026-04-07 | Added `.teachany` courseware packaging, browser import flow, and Gallery/knowledge-tree upload entry |
+| v5.4 | 2026-04-07 | Added `.teachany` courseware packaging, browser import flow, and Gallery/knowledge-map upload entry |
 | v4.0 | 2026-04-06 | Added Remotion / Edge TTS / subtitle pipeline specification and cost estimation |
 | v3.0 | 2026-04-06 | Added Bloom table, lesson types, scaffolding, Mayer principles, Five-Lens guide, 3-subject examples, design specs, Phase 4 checklist |
 | v2.0 | 2026-03 | Split into universal foundation + subject adaptation layer |
