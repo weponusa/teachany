@@ -3,299 +3,443 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>扇形统计图 · TeachAny 互动课件</title>
+<title>扇形统计图 · 教学课件</title>
 <meta name="teachany-node" content="pie-chart">
 <meta name="teachany-subject" content="math">
-<meta name="teachany-domain" content="statistics-probability-primary">
 <meta name="teachany-grade" content="6">
-<meta name="teachany-difficulty" content="2">
-<meta name="teachany-version" content="1.0">
-<meta name="teachany-author" content="weponusa">
+<meta name="teachany-version" content="2.0">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
-:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--danger:#ff6b6b;--purple:#cc5de8;--blue:#339af0;--orange:#ff922b;--text:#2b2b2b;--dim:#666;--dimmer:#999;--card:#ffffff;--border:rgba(0,0,0,0.06);}
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--card:#fff;--text:#2b2b2b;--dim:#666;--border:rgba(0,0,0,0.06);}
 *{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
-body{font-family:'Noto Sans SC',-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:70px;}
-body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle at 10% 20%,rgba(255,107,107,0.06) 0%,transparent 50%),radial-gradient(circle at 90% 80%,rgba(78,205,196,0.06) 0%,transparent 50%);pointer-events:none;z-index:-1;}
-.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;box-shadow:0 2px 20px rgba(255,146,43,0.1);}
-.nav-brand{font-size:20px;font-weight:900;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all 0.25s;white-space:nowrap;}
-.nav a:hover,.nav a.active{color:#fff;background:linear-gradient(135deg,var(--primary),var(--orange));transform:scale(1.05);}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:80px;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 10% 20%,rgba(255,107,107,0.07) 0%,transparent 50%),radial-gradient(circle at 90% 80%,rgba(78,205,196,0.07) 0%,transparent 50%);pointer-events:none;z-index:-1;}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;}
+.nav-brand{font-size:20px;font-weight:900;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),#ff922b,#cc5de8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all 0.25s;}
+.nav a:hover{color:#fff;background:linear-gradient(135deg,var(--primary),#ff922b);}
 .container{max-width:960px;margin:0 auto;padding:80px 20px 60px;}
 .hero{text-align:center;padding:36px 0 30px;}
-.hero h1{font-size:42px;font-weight:900;line-height:1.3;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple),var(--blue));background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
-@keyframes rainbowShift{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}
+.hero h1{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--primary),#ff922b,#cc5de8,#339af0);background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
+@keyframes rainbowShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
 .hero .subtitle{font-size:18px;color:var(--dim);margin-bottom:16px;}
 .hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
 .hero .meta span{background:#fff;border:2px solid var(--border);border-radius:24px;padding:6px 18px;font-size:14px;font-weight:700;color:var(--dim);}
 .section{margin:40px 0;}
 .section-title{font-size:26px;font-weight:900;margin-bottom:18px;padding:10px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));display:inline-block;}
-.card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.04);transition:transform 0.25s,box-shadow 0.25s;}
-.card:hover{transform:translateY(-3px) scale(1.005);box-shadow:0 8px 30px rgba(255,107,107,0.12);}
-.card h3{font-size:20px;font-weight:900;margin-bottom:10px;}
-.card p,.card li{font-size:16px;line-height:1.9;color:var(--dim);}
+.card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.04);}
 .grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;}
-.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;}
-.obj-card{text-align:center;padding:26px 16px;}
-.obj-card .icon{font-size:44px;margin-bottom:10px;display:inline-block;animation:bounce 2s ease infinite;}
-@keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
-.obj-card h4{font-size:17px;font-weight:900;margin-bottom:6px;}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;}
 .highlight{color:var(--primary);font-weight:900;}
-.quiz-option{display:block;padding:16px 20px;margin:10px 0;border-radius:16px;background:#fff;border:2.5px solid #e8e8e8;cursor:pointer;transition:all 0.25s;font-size:16px;font-weight:700;color:var(--text);}
-.quiz-option:hover{background:rgba(78,205,196,0.08);border-color:var(--secondary);transform:translateX(4px);}
-.quiz-option.correct{background:rgba(81,207,102,0.12);border-color:var(--success);color:#2b8a3e;}
-.quiz-option.wrong{background:rgba(255,107,107,0.1);border-color:var(--danger);color:#c92a2a;}
-.quiz-feedback{padding:14px 18px;border-radius:14px;margin-top:10px;font-size:15px;display:none;font-weight:700;}
-.quiz-feedback.show{display:block;animation:popIn 0.35s cubic-bezier(0.34,1.56,0.64,1);}
-@keyframes popIn{from{opacity:0;transform:scale(0.92);}to{opacity:1;transform:scale(1);}}
-.insight-box{background:linear-gradient(135deg,rgba(204,93,232,0.08),rgba(51,154,240,0.08));border-left:5px solid var(--purple);padding:18px 22px;border-radius:0 16px 16px 0;margin:16px 0;}
-.insight-box h4{color:var(--purple);font-size:17px;font-weight:900;margin-bottom:8px;}
-.sticker{display:inline-block;font-size:28px;animation:wiggle 3s ease-in-out infinite;}
-@keyframes wiggle{0%,100%{transform:rotate(0deg);}25%{transform:rotate(8deg);}75%{transform:rotate(-8deg);}}
-.star-reward{text-align:center;padding:20px;font-size:18px;font-weight:900;background:linear-gradient(135deg,rgba(255,230,109,0.2),rgba(255,146,43,0.1));border-radius:20px;margin-top:16px;}
-.star-reward .stars{font-size:36px;display:block;margin-bottom:8px;}
-footer{text-align:center;padding:36px 0;color:var(--dimmer);font-size:13px;border-top:3px dashed rgba(0,0,0,0.06);margin-top:50px;}
-.chart-container{background:#f8f9fa;border-radius:16px;padding:20px;margin:16px 0;text-align:center;}
-.pie-legend{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:16px;}
-.pie-legend-item{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700;}
+.formula-box{background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));border-radius:16px;padding:18px 22px;text-align:center;font-size:20px;font-weight:900;margin:12px 0;}
+.tip-box{background:rgba(255,230,109,0.25);border-left:4px solid var(--accent);border-radius:0 12px 12px 0;padding:12px 16px;margin:12px 0;font-size:15px;}
+
+/* ===== LIFE SCENE: Spinning Pie ===== */
+#life-scene{background:linear-gradient(135deg,#fff8e1,#f3e5f5);border-radius:20px;padding:24px;overflow:hidden;position:relative;min-height:320px;}
+.pie-anim-wrap{display:flex;justify-content:center;align-items:center;gap:40px;flex-wrap:wrap;}
+#pieSvgAnim{overflow:visible;}
+.pie-slice{transition:transform 0.3s ease;transform-origin:center;cursor:pointer;}
+.pie-slice:hover{transform:scale(1.06);}
+@keyframes pieReveal{from{stroke-dashoffset:var(--full)}to{stroke-dashoffset:0}}
+.pie-info-box{background:#fff;border-radius:16px;padding:18px 22px;box-shadow:0 4px 16px rgba(0,0,0,0.08);min-width:180px;}
+.pie-info-title{font-size:16px;font-weight:900;margin-bottom:10px;color:#333;}
+.pie-legend-item{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:14px;font-weight:700;}
 .pie-legend-dot{width:14px;height:14px;border-radius:50%;}
-.audio-bar{position:fixed;bottom:0;left:0;right:0;z-index:500;background:rgba(255,107,107,0.95);backdrop-filter:blur(12px);border-top:2px solid rgba(255,255,255,0.3);padding:10px 24px;display:flex;align-items:center;gap:14px;}
-.audio-bar .ab-btn{width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;background:#fff;color:var(--primary);font-size:16px;display:flex;align-items:center;justify-content:center;}
-.audio-bar .ab-info{flex:1;min-width:0;}
-.audio-bar .ab-title{font-size:13px;font-weight:700;color:#fff;}
-.audio-bar .ab-progress-wrap{height:4px;background:rgba(255,255,255,0.3);border-radius:2px;margin-top:4px;cursor:pointer;}
-.audio-bar .ab-progress{height:100%;background:#fff;border-radius:2px;width:0%;}
-.audio-bar .ab-time{font-size:11px;color:rgba(255,255,255,0.8);margin-top:2px;}
-.audio-bar .ab-vol{width:60px;accent-color:#fff;}
+.pie-animate-btn{margin-top:14px;padding:10px 22px;background:linear-gradient(135deg,var(--primary),#ff922b);color:#fff;border:none;border-radius:16px;font-size:15px;font-weight:700;cursor:pointer;}
+
+/* ===== INTERACTIVE LAB ===== */
+#interactive-lab{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+.lab-tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.lab-tab{padding:8px 20px;border-radius:20px;border:2px solid var(--border);cursor:pointer;font-weight:700;font-size:14px;transition:all 0.25s;}
+.lab-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.lab-panel{display:none;}
+.lab-panel.active{display:block;animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.slider-group{margin:12px 0;}
+.slider-row{display:flex;align-items:center;gap:10px;margin:8px 0;}
+.slider-row label{width:80px;font-size:14px;font-weight:700;}
+.slider-row input[type=range]{flex:1;accent-color:var(--primary);}
+.slider-row .val{width:55px;font-weight:900;color:var(--primary);font-size:15px;}
+#dynPieCanvas{display:block;margin:0 auto;}
+.pie-result{text-align:center;font-size:16px;font-weight:700;margin:10px 0;color:var(--dim);}
+
+/* ===== KNOWLEDGE GRAPH ===== */
+#knowledge-graph{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+#kg-svg-pie{width:100%;height:340px;}
+
+/* ===== QUIZ ===== */
+.quiz-section{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+.progress-bar-wrap{background:#f0f0f0;border-radius:10px;height:12px;margin-bottom:20px;overflow:hidden;}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:10px;transition:width 0.5s ease;}
+.quiz-step{display:none;}
+.quiz-step.active{display:block;animation:fadeSlide 0.4s ease;}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.quiz-q{font-size:20px;font-weight:900;margin-bottom:16px;}
+.quiz-option{display:block;padding:14px 20px;margin:8px 0;border-radius:14px;background:#fff;border:2.5px solid #e8e8e8;cursor:pointer;transition:all 0.25s;font-size:16px;font-weight:700;width:100%;text-align:left;}
+.quiz-option:hover{border-color:var(--secondary);}
+.quiz-option.correct{background:rgba(81,207,102,0.15);border-color:var(--success);color:#2b8a3e;}
+.quiz-option.wrong{background:rgba(255,107,107,0.1);border-color:var(--primary);color:#c92a2a;}
+.quiz-feedback{padding:12px 16px;border-radius:12px;margin-top:8px;font-size:15px;font-weight:700;display:none;}
+.quiz-feedback.show{display:block;}
+.quiz-feedback.ok{background:rgba(81,207,102,0.15);color:#2b8a3e;}
+.quiz-feedback.err{background:rgba(255,107,107,0.1);color:#c92a2a;}
+.next-btn{margin-top:14px;padding:12px 28px;background:linear-gradient(135deg,var(--primary),#ff922b);color:#fff;border:none;border-radius:20px;font-size:16px;font-weight:900;cursor:pointer;}
+.locked{opacity:0.35;pointer-events:none;}
+.step-indicator{display:flex;gap:8px;margin-bottom:16px;}
+.step-dot{width:12px;height:12px;border-radius:50%;background:#e0e0e0;transition:all 0.3s;}
+.step-dot.done{background:var(--success);}
+.step-dot.active{background:var(--primary);transform:scale(1.3);}
+table{width:100%;border-collapse:collapse;margin:12px 0;}
+th,td{border:2px solid #f0f0f0;padding:10px 14px;text-align:center;font-size:15px;}
+th{background:rgba(255,107,107,0.1);font-weight:900;}
 </style>
 </head>
 <body>
 <nav class="nav">
-  <span class="nav-brand">🌈 教我学 TeachAny</span>
-  <a href="#hero">首页</a>
-  <a href="#goals">目标</a>
-  <a href="#module-1">模块1</a>
-  <a href="#module-2">模块2</a>
-  <a href="#module-3">练习</a>
-  <a href="#deep-understanding">深思</a>
-  <a href="#summary">总结</a>
+  <div class="nav-brand">📚 TeachAny</div>
+  <a href="#life-scene-sec">🥧 生活场景</a>
+  <a href="#concepts">📖 概念</a>
+  <a href="#interactive-lab">🧪 实验台</a>
+  <a href="#knowledge-graph">🕸️ 知识图谱</a>
+  <a href="#quiz">📝 练习</a>
 </nav>
-
 <div class="container">
-  <section class="hero" id="hero">
-    <h1>🥧 扇形统计图 <span class="sticker">✨</span></h1>
-    <p class="subtitle">把"饼"切成扇形，看清各部分占总体多少！</p>
+  <div class="hero">
+    <h1>扇形统计图</h1>
+    <div class="subtitle">用扇形展示比例关系，一图尽览全貌！</div>
     <div class="meta">
-      <span>📚 数学</span>
-      <span>🎒 6年级</span>
-      <span>⏱️ 约 30 分钟</span>
-      <span>🎯 新授课</span>
+      <span>📚 小学数学</span><span>🎒 六年级上册</span><span>⭐ 难度：★★★</span><span>⏱️ 约45分钟</span>
     </div>
-  </section>
-
-  <section class="section" id="goals">
-    <h2 class="section-title">🎯 学习目标</h2>
-    <div class="grid-3">
-      <div class="card obj-card">
-        <div class="icon">🥧</div>
-        <h4>认识扇形图</h4>
-        <p>能说出扇形统计图的特点，了解扇形面积代表占比</p>
-      </div>
-      <div class="card obj-card">
-        <div class="icon">📊</div>
-        <h4>读懂百分比</h4>
-        <p>能从扇形图中读出各部分所占的百分比</p>
-      </div>
-      <div class="card obj-card">
-        <div class="icon">🔄</div>
-        <h4>三图比较</h4>
-        <p>能根据数据类型选择最合适的统计图</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="module-1">
-    <h2 class="section-title">📖 模块一：认识扇形统计图</h2>
-    <div class="card">
-      <h3>🌉 为什么需要扇形图？</h3>
-      <p><span class="highlight">我们已经学了</span>条形图比较大小，折线图看趋势。</p>
-      <p><span class="highlight">但如果想知道：</span>班里男生占全班的多少"份额"？用条形图只能看人数，看不出比例关系。</p>
-      <p><span class="highlight">所以扇形图来了！</span>把整体看成一个圆，每部分占据的"扇形面积"就代表它占总体的百分比。</p>
-    </div>
-    <div class="card">
-      <h3>💡 扇形图长什么样？</h3>
-      <p>扇形统计图用<span class="highlight">扇形面积的大小</span>来表示各部分占总体的百分比。整个圆代表100%，每个扇形代表一部分。</p>
-      <div class="chart-container">
-        <p style="font-weight:900;margin-bottom:12px;">🍕 班级课外活动时间分配（每周）</p>
-        <svg viewBox="0 0 300 300" width="220" height="220" xmlns="http://www.w3.org/2000/svg">
-          <!-- 读书 40% = 144° -->
-          <path d="M150,150 L150,30 A120,120 0 0,1 253.9,90 Z" fill="#ff6b6b" opacity="0.9"/>
-          <!-- 运动 30% = 108° -->
-          <path d="M150,150 L253.9,90 A120,120 0 0,1 253.9,210 Z" fill="#4ecdc4" opacity="0.9"/>
-          <!-- 绘画 20% = 72° -->
-          <path d="M150,150 L253.9,210 A120,120 0 0,1 113.1,256.4 Z" fill="#ffe66d" opacity="0.9"/>
-          <!-- 其他 10% = 36° -->
-          <path d="M150,150 L113.1,256.4 A120,120 0 0,1 150,30 Z" fill="#cc5de8" opacity="0.9"/>
-          <!-- Labels -->
-          <text x="195" y="110" text-anchor="middle" font-size="13" fill="white" font-weight="bold">读书</text>
-          <text x="195" y="124" text-anchor="middle" font-size="13" fill="white" font-weight="bold">40%</text>
-          <text x="230" y="175" text-anchor="middle" font-size="13" fill="white" font-weight="bold">运动30%</text>
-          <text x="160" y="248" text-anchor="middle" font-size="13" fill="#333" font-weight="bold">绘画20%</text>
-          <text x="95" y="195" text-anchor="middle" font-size="12" fill="white" font-weight="bold">其他10%</text>
-        </svg>
-        <div class="pie-legend">
-          <div class="pie-legend-item"><div class="pie-legend-dot" style="background:#ff6b6b;"></div>读书 40%</div>
-          <div class="pie-legend-item"><div class="pie-legend-dot" style="background:#4ecdc4;"></div>运动 30%</div>
-          <div class="pie-legend-item"><div class="pie-legend-dot" style="background:#ffe66d;"></div>绘画 20%</div>
-          <div class="pie-legend-item"><div class="pie-legend-dot" style="background:#cc5de8;"></div>其他 10%</div>
-        </div>
-      </div>
-      <p>看扇形图：<span class="highlight">扇形越大，占的比例越多</span>。各部分百分比加起来等于100%！</p>
-    </div>
-    <div class="insight-box">
-      <h4>🔍 想一想</h4>
-      <p>如果全班共40人，课外活动中用于读书的占40%，那有多少人在读书？（提示：40 × 40% = ?）</p>
-    </div>
-    <div class="card">
-      <h3><span class="sticker">✏️</span> 马上试一试</h3>
-      <p>从上面的扇形图来看，运动和绘画合计占总时间的多少？</p>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q1')">A. 40%</div>
-      <div class="quiz-option" onclick="checkAnswer(this, true, 'q1')">B. 50%</div>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q1')">C. 60%</div>
-      <div id="q1" class="quiz-feedback"></div>
-    </div>
-  </section>
-
-  <section class="section" id="module-2">
-    <h2 class="section-title">📖 模块二：三种统计图大比拼</h2>
-    <div class="card">
-      <h3>💡 三图各显神通</h3>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:12px;">
-        <div style="background:rgba(255,107,107,0.08);border-radius:16px;padding:14px;text-align:center;">
-          <div style="font-size:32px;margin-bottom:8px;">📊</div>
-          <p style="font-weight:900;">条形图</p>
-          <p style="font-size:14px;color:var(--dim);">比较各类数量大小<br>看谁多谁少</p>
-        </div>
-        <div style="background:rgba(78,205,196,0.08);border-radius:16px;padding:14px;text-align:center;">
-          <div style="font-size:32px;margin-bottom:8px;">📈</div>
-          <p style="font-weight:900;">折线图</p>
-          <p style="font-size:14px;color:var(--dim);">显示时间变化趋势<br>看升降走势</p>
-        </div>
-        <div style="background:rgba(204,93,232,0.08);border-radius:16px;padding:14px;text-align:center;">
-          <div style="font-size:32px;margin-bottom:8px;">🥧</div>
-          <p style="font-weight:900;">扇形图</p>
-          <p style="font-size:14px;color:var(--dim);">显示各部分占总体比例<br>看份额大小</p>
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <h3>💡 扇形图的关键特点</h3>
-      <ul style="padding-left:20px;line-height:2.2;">
-        <li>整个圆 = <span class="highlight">100%（总体）</span></li>
-        <li>每个扇形的百分比相加 = <span class="highlight">100%</span></li>
-        <li>扇形越大，占比越多</li>
-        <li>适合表示"各部分与整体的关系"</li>
-      </ul>
-    </div>
-    <div class="card">
-      <h3><span class="sticker">✏️</span> 选图题</h3>
-      <p>调查全班同学最喜欢的学科，想看各学科学生人数占全班的比例，应选哪种图？</p>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q2')">A. 折线统计图</div>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q2')">B. 条形统计图</div>
-      <div class="quiz-option" onclick="checkAnswer(this, true, 'q2')">C. 扇形统计图</div>
-      <div id="q2" class="quiz-feedback"></div>
-    </div>
-  </section>
-
-  <section class="section" id="module-3">
-    <h2 class="section-title">🎯 闯关练习</h2>
-    <div class="card">
-      <h3>⭐ 第一关：基础认知</h3>
-      <p>扇形统计图中，所有扇形的百分比加起来等于……</p>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q3')">A. 50%</div>
-      <div class="quiz-option" onclick="checkAnswer(this, true, 'q3')">B. 100%</div>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q3')">C. 200%</div>
-      <div id="q3" class="quiz-feedback"></div>
-    </div>
-    <div class="card">
-      <h3>⭐⭐ 第二关：读图计算</h3>
-      <p>某家庭月收入10000元，其中食品占35%，教育占25%，储蓄占20%，其他占20%。<br>教育和储蓄合计花了多少元？</p>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q4')">A. 3000元</div>
-      <div class="quiz-option" onclick="checkAnswer(this, true, 'q4')">B. 4500元</div>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q4')">C. 5000元</div>
-      <div id="q4" class="quiz-feedback"></div>
-    </div>
-    <div class="card">
-      <h3>⭐⭐⭐ 第三关：综合应用</h3>
-      <p>小明做了一个扇形图，其中"语文"扇形占40%，"数学"占35%，"英语"占30%。这个扇形图……</p>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q5')">A. 是正确的，三科加起来超过100%也没关系</div>
-      <div class="quiz-option" onclick="checkAnswer(this, true, 'q5')">B. 是错误的，40%+35%+30%=105%，超过了100%</div>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q5')">C. 是正确的，每部分百分比独立不相关</div>
-      <div id="q5" class="quiz-feedback"></div>
-    </div>
-    <div class="star-reward" id="star-reward" style="display:none;">
-      <span class="stars">🌟🌟🌟</span>太棒了！扇形图分析达人！
-    </div>
-  </section>
-
-  <section class="section" id="deep-understanding">
-    <h2 class="section-title">🔬 深层理解</h2>
-    <div class="insight-box">
-      <h4>🌍 扇形图在生活中</h4>
-      <p>家庭支出分配、营养成分标签、国家GDP组成……扇形图无处不在！每次看到"饼图"，都能读出各部分占整体的比例。</p>
-    </div>
-    <div class="card">
-      <h3>💡 三图速记口诀</h3>
-      <p>🎵 <span class="highlight">条形比高低，折线看趋势；扇形看份额，三图各有义！</span></p>
-    </div>
-  </section>
-
-  <section class="section" id="summary">
-    <h2 class="section-title">📝 课堂总结</h2>
-    <div class="card">
-      <h3>🎉 今天学了什么？</h3>
-      <ul style="padding-left:20px;line-height:2.2;">
-        <li>扇形统计图用<span class="highlight">扇形面积</span>表示各部分占总体的百分比</li>
-        <li>整个圆 = 100%，各扇形百分比之和 = 100%</li>
-        <li>扇形越大，占比越大</li>
-        <li>三种统计图：条形（大小）、折线（趋势）、扇形（比例）</li>
-      </ul>
-    </div>
-  </section>
-
-  <footer>
-    <p>Made with <strong>教我学 TeachAny</strong> · <a href="https://github.com/weponusa/teachany" style="color:var(--primary);">GitHub</a></p>
-    <p style="margin-top:8px;">Built on ABT Narrative · Bloom's Taxonomy · Scaffolding · Cognitive Load Theory</p>
-  </footer>
-</div>
-
-<div class="audio-bar">
-  <button class="ab-btn" id="abPrev">⏮</button>
-  <button class="ab-btn" id="abPlay">▶</button>
-  <button class="ab-btn" id="abNext">⏭</button>
-  <div class="ab-info">
-    <div class="ab-title" id="abTitle">扇形统计图 - 课件讲解</div>
-    <div class="ab-progress-wrap" id="abProgressWrap"><div class="ab-progress" id="abProgress"></div></div>
-    <div class="ab-time" id="abTime">00:00 / 00:00</div>
   </div>
-  <input type="range" class="ab-vol" id="abVol" min="0" max="1" step="0.05" value="0.8">
+
+  <!-- 生活场景 -->
+  <section class="section" id="life-scene-sec">
+    <div class="section-title">🥧 生活场景：班级时间分配</div>
+    <div id="life-scene">
+      <p style="font-weight:700;font-size:16px;margin-bottom:16px;">📊 小明统计了一天的时间分配，扇形从 0° 开始逐渐展开！</p>
+      <div class="pie-anim-wrap">
+        <svg id="pieSvgAnim" width="220" height="220" viewBox="-110 -110 220 220"></svg>
+        <div class="pie-info-box">
+          <div class="pie-info-title">⏰ 一天时间分配</div>
+          <div id="pieLegendItems"></div>
+          <button class="pie-animate-btn" onclick="animatePie()">▶ 展开动画</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 核心概念 -->
+  <section class="section" id="concepts">
+    <div class="section-title">📖 核心概念</div>
+    <div class="grid-2">
+      <div class="card">
+        <h3>🥧 什么是扇形统计图？</h3>
+        <p><span class="highlight">扇形统计图</span>（饼图）用圆中各扇形的大小来表示各部分占总体的<span class="highlight">百分比</span>。</p>
+        <div class="formula-box">扇形圆心角 = 360° × 百分比</div>
+        <div class="tip-box">💡 所有扇形的百分比之和 = 100%，圆心角之和 = 360°</div>
+      </div>
+      <div class="card">
+        <h3>📌 扇形图的特点</h3>
+        <ul style="padding-left:20px;line-height:2.2;">
+          <li>清晰展示各部分<span class="highlight">占比</span></li>
+          <li>直观反映<span class="highlight">整体构成</span></li>
+          <li>适合表示<span class="highlight">分类占比</span>数据</li>
+          <li>所有扇形组成一个<span class="highlight">完整的圆</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="grid-3">
+      <div class="card">
+        <h3>🔢 圆心角计算</h3>
+        <div class="formula-box">圆心角 = 百分比 × 360°</div>
+        <p>例：30% → 0.3×360°=<span class="highlight">108°</span></p>
+      </div>
+      <div class="card">
+        <h3>📊 读取百分比</h3>
+        <div class="formula-box">百分比 = 圆心角 ÷ 360°</div>
+        <p>例：90° → 90÷360=<span class="highlight">25%</span></p>
+      </div>
+      <div class="card">
+        <h3>🔍 计算实际数量</h3>
+        <div class="formula-box">数量 = 总量 × 百分比</div>
+        <p>例：总200，40%→<span class="highlight">80</span></p>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📊 与其他统计图比较</h3>
+      <table>
+        <tr><th>统计图</th><th>展示重点</th><th>适用场景</th></tr>
+        <tr><td>扇形图</td><td>各部分占总体比例</td><td>成分/比例分析</td></tr>
+        <tr><td>条形图</td><td>各类别数量比较</td><td>数量大小对比</td></tr>
+        <tr><td>折线图</td><td>数量随时间变化趋势</td><td>变化趋势分析</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- 互动实验台 -->
+  <section class="section" id="interactive-lab">
+    <div class="section-title">🧪 互动实验台</div>
+    <div id="interactive-lab">
+      <div class="lab-tabs">
+        <button class="lab-tab active" onclick="switchTab('tab-dyn')">🎛️ 动态饼图</button>
+        <button class="lab-tab" onclick="switchTab('tab-calc')">🔢 圆心角计算</button>
+      </div>
+      <div id="tab-dyn" class="lab-panel active">
+        <div class="card">
+          <h3>🎛️ 调整各部分比例，实时生成饼图</h3>
+          <p style="color:var(--dim);margin-bottom:14px;">拖动滑块，合计需等于100%</p>
+          <div class="slider-group" id="dynSliders"></div>
+          <div class="pie-result" id="pieTotal">合计：100%</div>
+          <canvas id="dynPieCanvas" width="260" height="260"></canvas>
+        </div>
+      </div>
+      <div id="tab-calc" class="lab-panel">
+        <div class="card">
+          <h3>🔢 圆心角计算练习</h3>
+          <div style="margin:12px 0;">
+            <label style="font-weight:700;">输入百分比（1-100）：</label>
+            <input type="number" id="pctInput" min="1" max="100" value="25" style="margin:8px 0;padding:8px 12px;border:2px solid #ddd;border-radius:10px;font-size:16px;width:100px;" oninput="calcAngle()">
+            <span style="font-size:14px;color:var(--dim);">%</span>
+          </div>
+          <div class="formula-box" id="angleResult">25% → 圆心角 = 25 × 360° ÷ 100 = 90°</div>
+          <div id="angleVisual" style="display:flex;justify-content:center;margin:16px 0;"></div>
+          <div class="tip-box">💡 百分比越大，扇形面积越大，圆心角越大。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 知识图谱 -->
+  <section class="section" id="knowledge-graph">
+    <div class="section-title">🕸️ 知识图谱</div>
+    <div id="knowledge-graph">
+      <svg id="kg-svg-pie"></svg>
+    </div>
+  </section>
+
+  <!-- 练习 -->
+  <section class="section" id="quiz">
+    <div class="section-title">📝 闯关练习</div>
+    <div class="quiz-section">
+      <div class="step-indicator" id="stepIndicator"></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressBar" style="width:0%"></div></div>
+      <div class="quiz-step active" id="step1">
+        <div class="quiz-q">🥧 第1关：扇形统计图中，40%对应的圆心角是？</div>
+        <button class="quiz-option" onclick="checkQ(1,'A','B')">A. 40°</button>
+        <button class="quiz-option" onclick="checkQ(1,'B','B')">B. 144°</button>
+        <button class="quiz-option" onclick="checkQ(1,'C','B')">C. 160°</button>
+        <div class="quiz-feedback" id="fb1"></div>
+        <button class="next-btn locked" id="next1" onclick="nextStep(2)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step2">
+        <div class="quiz-q">📊 第2关：班级有40人，扇形图显示喜欢篮球的占25%，有多少人喜欢篮球？</div>
+        <button class="quiz-option" onclick="checkQ(2,'A','B')">A. 25人</button>
+        <button class="quiz-option" onclick="checkQ(2,'B','B')">B. 10人</button>
+        <button class="quiz-option" onclick="checkQ(2,'C','B')">C. 4人</button>
+        <div class="quiz-feedback" id="fb2"></div>
+        <button class="next-btn locked" id="next2" onclick="nextStep(3)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step3">
+        <div class="quiz-q">📌 第3关：一个扇形的圆心角是72°，对应的百分比是？</div>
+        <button class="quiz-option" onclick="checkQ(3,'A','A')">A. 20%</button>
+        <button class="quiz-option" onclick="checkQ(3,'B','A')">B. 25%</button>
+        <button class="quiz-option" onclick="checkQ(3,'C','A')">C. 30%</button>
+        <div class="quiz-feedback" id="fb3"></div>
+        <button class="next-btn locked" id="next3" onclick="nextStep(4)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step4">
+        <div class="quiz-q">🔍 第4关：扇形图中，哪种情况最适合用扇形统计图？</div>
+        <button class="quiz-option" onclick="checkQ(4,'A','B')">A. 各城市今年降雨量比较</button>
+        <button class="quiz-option" onclick="checkQ(4,'B','B')">B. 家庭月支出各类别占总支出比例</button>
+        <button class="quiz-option" onclick="checkQ(4,'C','B')">C. 某城市5年气温变化</button>
+        <div class="quiz-feedback" id="fb4"></div>
+        <button class="next-btn locked" id="next4" onclick="showFinal()">完成 🎉</button>
+      </div>
+      <div class="quiz-step locked" id="stepFinal">
+        <div style="text-align:center;padding:30px;">
+          <div style="font-size:64px;animation:bounce 1s ease infinite;">🏆</div>
+          <h2 style="font-size:28px;font-weight:900;color:var(--primary);margin:16px 0;">饼图大师！</h2>
+          <p style="font-size:18px;color:var(--dim);">扇形统计图已完全掌握！</p>
+        </div>
+      </div>
+    </div>
+  </section>
 </div>
 
 <script>
-const audioPlaylist=[{title:"第1段：开场",src:"tts/s01.mp3"},{title:"第2段：扇形图介绍",src:"tts/s02.mp3"},{title:"第3段：读扇形图",src:"tts/s03.mp3"},{title:"第4段：三图比较",src:"tts/s04.mp3"},{title:"第5段：实际应用",src:"tts/s05.mp3"},{title:"第6段：总结",src:"tts/s06.mp3"}];
-let curIdx=0,audio=new Audio();
-const abPlay=document.getElementById('abPlay'),abTitle=document.getElementById('abTitle'),abProgress=document.getElementById('abProgress'),abTime=document.getElementById('abTime'),abVol=document.getElementById('abVol');
-function loadTrack(i){curIdx=i;audio.src=audioPlaylist[i].src;abTitle.textContent=audioPlaylist[i].title;audio.volume=parseFloat(abVol.value);audio.load();}
-function fmt(s){const m=Math.floor(s/60),sec=Math.floor(s%60);return`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;}
-audio.addEventListener('timeupdate',()=>{const p=audio.duration?audio.currentTime/audio.duration*100:0;abProgress.style.width=p+'%';abTime.textContent=`${fmt(audio.currentTime)} / ${fmt(audio.duration||0)}`;});
-audio.addEventListener('ended',()=>{if(curIdx<audioPlaylist.length-1){loadTrack(curIdx+1);audio.play();abPlay.textContent='⏸';}else{abPlay.textContent='▶';}});
-abPlay.addEventListener('click',()=>{if(audio.paused){if(!audio.src||audio.src===window.location.href)loadTrack(0);audio.play();abPlay.textContent='⏸';}else{audio.pause();abPlay.textContent='▶';}});
-document.getElementById('abPrev').addEventListener('click',()=>{if(curIdx>0){loadTrack(curIdx-1);audio.play();abPlay.textContent='⏸';}});
-document.getElementById('abNext').addEventListener('click',()=>{if(curIdx<audioPlaylist.length-1){loadTrack(curIdx+1);audio.play();abPlay.textContent='⏸';}});
-document.getElementById('abProgressWrap').addEventListener('click',e=>{if(audio.duration){const r=e.currentTarget.getBoundingClientRect();audio.currentTime=(e.clientX-r.left)/r.width*audio.duration;}});
-abVol.addEventListener('input',()=>{audio.volume=parseFloat(abVol.value);});
-let correctCount=0;
-function checkAnswer(el,isCorrect,feedbackId){const parent=el.parentElement;const options=parent.querySelectorAll('.quiz-option');const feedback=document.getElementById(feedbackId);if(parent.dataset.answered)return;parent.dataset.answered='true';options.forEach(opt=>{opt.style.pointerEvents='none';opt.style.opacity='0.6';});if(isCorrect){correctCount++;el.classList.add('correct');el.style.opacity='1';feedback.innerHTML='🎉 <strong>太棒了！答对啦！</strong>';feedback.style.background='rgba(81,207,102,0.12)';feedback.style.color='#2b8a3e';if(correctCount>=3)document.getElementById('star-reward').style.display='block';}else{el.classList.add('wrong');el.style.opacity='1';options.forEach(opt=>{if(opt.getAttribute('onclick')&&opt.getAttribute('onclick').includes('true')){opt.classList.add('correct');opt.style.opacity='1';}});feedback.innerHTML='💪 <strong>没关系，看看正确答案！</strong>';feedback.style.background='rgba(255,107,107,0.08)';feedback.style.color='#c92a2a';}feedback.classList.add('show');}
+// ===== PIE ANIMATION =====
+const pieData=[
+  {label:'上课学习',pct:33,color:'#ff6b6b'},
+  {label:'睡眠',pct:33,color:'#4ecdc4'},
+  {label:'户外运动',pct:13,color:'#ffe66d'},
+  {label:'娱乐',pct:8,color:'#cc5de8'},
+  {label:'吃饭洗漱',pct:13,color:'#51cf66'}
+];
+function drawStaticPie(progress=1){
+  const svg=document.getElementById('pieSvgAnim');
+  svg.innerHTML='';
+  let start=0;
+  pieData.forEach(d=>{
+    const angle=2*Math.PI*d.pct/100*progress;
+    const end=start+angle;
+    const x1=Math.cos(start-Math.PI/2)*95, y1=Math.sin(start-Math.PI/2)*95;
+    const x2=Math.cos(end-Math.PI/2)*95, y2=Math.sin(end-Math.PI/2)*95;
+    const large=angle>Math.PI?1:0;
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+    const pathD=`M0,0 L${x1},${y1} A95,95,0,${large},1,${x2},${y2} Z`;
+    path.setAttribute('d',pathD);
+    path.setAttribute('fill',d.color);
+    path.setAttribute('stroke','#fff');
+    path.setAttribute('stroke-width','2');
+    path.setAttribute('class','pie-slice');
+    path.setAttribute('title',d.label);
+    svg.appendChild(path);
+    // Label
+    if(progress>=1 && d.pct>=8){
+      const midAngle=(start+end)/2-Math.PI/2;
+      const lx=Math.cos(midAngle)*58, ly=Math.sin(midAngle)*58;
+      const text=document.createElementNS('http://www.w3.org/2000/svg','text');
+      text.setAttribute('x',lx); text.setAttribute('y',ly);
+      text.setAttribute('text-anchor','middle'); text.setAttribute('dominant-baseline','middle');
+      text.setAttribute('font-size','10'); text.setAttribute('font-weight','bold'); text.setAttribute('fill','#fff');
+      text.textContent=d.pct+'%';
+      svg.appendChild(text);
+    }
+    start=end;
+  });
+}
+function animatePie(){
+  let progress=0;
+  const timer=setInterval(()=>{
+    progress=Math.min(progress+0.02,1);
+    drawStaticPie(progress);
+    if(progress>=1) clearInterval(timer);
+  },20);
+}
+function initPieLegend(){
+  const el=document.getElementById('pieLegendItems');
+  pieData.forEach(d=>{
+    el.innerHTML+=`<div class="pie-legend-item"><div class="pie-legend-dot" style="background:${d.color}"></div>${d.label} ${d.pct}%</div>`;
+  });
+}
+
+// ===== DYNAMIC PIE =====
+const dynData=[
+  {label:'学习',val:30,color:'#ff6b6b'},
+  {label:'运动',val:20,color:'#4ecdc4'},
+  {label:'娱乐',val:20,color:'#ffe66d'},
+  {label:'休息',val:30,color:'#cc5de8'}
+];
+function initDynSliders(){
+  const area=document.getElementById('dynSliders');
+  dynData.forEach((d,i)=>{
+    area.innerHTML+=`<div class="slider-row">
+      <label style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:50%;background:${d.color};display:inline-block;"></span>${d.label}</label>
+      <input type="range" min="0" max="100" value="${d.val}" id="dslider${i}" oninput="updateDynPie()" style="flex:1;accent-color:${d.color};">
+      <span class="val" id="dval${i}" style="color:${d.color};">${d.val}%</span>
+    </div>`;
+  });
+  drawDynPie();
+}
+function updateDynPie(){
+  let total=0;
+  dynData.forEach((d,i)=>{
+    d.val=+document.getElementById('dslider'+i).value;
+    document.getElementById('dval'+i).textContent=d.val+'%';
+    total+=d.val;
+  });
+  const pTotal=document.getElementById('pieTotal');
+  pTotal.textContent=`合计：${total}%`;
+  pTotal.style.color=total===100?'var(--success)':'var(--primary)';
+  drawDynPie();
+}
+function drawDynPie(){
+  const canvas=document.getElementById('dynPieCanvas');
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,260,260);
+  const total=dynData.reduce((a,d)=>a+d.val,0)||1;
+  let start=-Math.PI/2;
+  dynData.forEach(d=>{
+    const angle=2*Math.PI*d.val/total;
+    ctx.beginPath(); ctx.moveTo(130,130);
+    ctx.arc(130,130,100,start,start+angle);
+    ctx.closePath(); ctx.fillStyle=d.color; ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
+    if(d.val/total>0.05){
+      const mid=start+angle/2;
+      const lx=130+Math.cos(mid)*65, ly=130+Math.sin(mid)*65;
+      ctx.fillStyle='#fff'; ctx.font='bold 12px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(Math.round(d.val/total*100)+'%',lx,ly);
+    }
+    start+=angle;
+  });
+}
+
+// ===== ANGLE CALC =====
+function calcAngle(){
+  const pct=+document.getElementById('pctInput').value||0;
+  const angle=(pct*360/100).toFixed(1);
+  document.getElementById('angleResult').textContent=`${pct}% → 圆心角 = ${pct} × 360° ÷ 100 = ${angle}°`;
+  const area=document.getElementById('angleVisual');
+  area.innerHTML='';
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('width','120'); svg.setAttribute('height','120'); svg.setAttribute('viewBox','-60 -60 120 120');
+  const rad=pct/100*2*Math.PI;
+  const x=Math.cos(rad-Math.PI/2)*50, y=Math.sin(rad-Math.PI/2)*50;
+  const large=rad>Math.PI?1:0;
+  // Background circle
+  const bg=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  bg.setAttribute('r','50'); bg.setAttribute('fill','#f0f0f0');
+  svg.appendChild(bg);
+  // Slice
+  const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+  path.setAttribute('d',`M0,0 L0,-50 A50,50,0,${large},1,${x},${y} Z`);
+  path.setAttribute('fill','#ff6b6b'); path.setAttribute('opacity','0.9');
+  svg.appendChild(path);
+  area.appendChild(svg);
+}
+
+function switchTab(id){
+  document.querySelectorAll('.lab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.lab-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ===== KNOWLEDGE GRAPH =====
+function initKG(){
+  const colorMap={current:"#ff6b6b",prereq:"#51cf66",next:"#4ecdc4"};
+  const kgData={nodes:[{id:"cur",name:"扇形统计图",type:"current"},{id:"p1",name:"百分数",type:"prereq"},{id:"p2",name:"圆的认识",type:"prereq"},{id:"p3",name:"条形统计图",type:"prereq"},{id:"n1",name:"统计综合分析",type:"next"},{id:"n2",name:"数据可视化",type:"next"}],links:[{source:"p1",target:"cur"},{source:"p2",target:"cur"},{source:"p3",target:"cur"},{source:"cur",target:"n1"},{source:"cur",target:"n2"}]};
+  const svg=d3.select("#kg-svg-pie");
+  const w=svg.node().parentElement.clientWidth||700,h=340;
+  svg.attr("viewBox",`0 0 ${w} ${h}`);
+  svg.append("defs").append("marker").attr("id","arr-pie").attr("viewBox","0 -5 10 10").attr("refX",22).attr("markerWidth",6).attr("markerHeight",6).attr("orient","auto").append("path").attr("d","M0,-5L10,0L0,5").attr("fill","#bbb");
+  const sim=d3.forceSimulation(kgData.nodes).force("link",d3.forceLink(kgData.links).id(d=>d.id).distance(110)).force("charge",d3.forceManyBody().strength(-300)).force("center",d3.forceCenter(w/2,h/2));
+  const link=svg.append("g").selectAll("line").data(kgData.links).join("line").attr("stroke","#ddd").attr("stroke-width",2).attr("marker-end","url(#arr-pie)");
+  const node=svg.append("g").selectAll("g").data(kgData.nodes).join("g").call(d3.drag().on("start",e=>{if(!e.active)sim.alphaTarget(0.3).restart();e.subject.fx=e.subject.x;e.subject.fy=e.subject.y;}).on("drag",e=>{e.subject.fx=e.x;e.subject.fy=e.y;}).on("end",e=>{if(!e.active)sim.alphaTarget(0);e.subject.fx=null;e.subject.fy=null;}));
+  node.append("circle").attr("r",38).attr("fill",d=>colorMap[d.type]).attr("opacity",0.9);
+  node.append("text").attr("text-anchor","middle").attr("dy","0.35em").attr("font-size","11px").attr("font-weight","bold").attr("fill","#fff").each(function(d){const words=d.name.length>6?[d.name.slice(0,6),d.name.slice(6)]:[d.name];words.forEach((w,i)=>d3.select(this).append("tspan").attr("x",0).attr("dy",i?14:-7).text(w));});
+  const leg=svg.append("g").attr("transform",`translate(${w-160},20)`);
+  [["prereq","前置知识"],["current","本节课"],["next","后续内容"]].forEach(([t,l],i)=>{leg.append("circle").attr("cx",10).attr("cy",i*26).attr("r",8).attr("fill",colorMap[t]);leg.append("text").attr("x",24).attr("y",i*26+5).attr("font-size","12px").attr("fill","#555").text(l);});
+  sim.on("tick",()=>{link.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y).attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);node.attr("transform",d=>`translate(${d.x},${d.y})`);});
+}
+
+// ===== QUIZ =====
+function initStepIndicator(){const ind=document.getElementById('stepIndicator');for(let i=1;i<=4;i++){const d=document.createElement('div');d.className='step-dot'+(i===1?' active':'');d.id='dot'+i;ind.appendChild(d);}}
+function checkQ(step,choice,correct){
+  const opts=document.querySelectorAll(`#step${step} .quiz-option`);opts.forEach(o=>o.disabled=true);
+  const idx={A:0,B:1,C:2};const fb=document.getElementById('fb'+step);
+  if(choice===correct){opts[idx[choice]].classList.add('correct');fb.className='quiz-feedback show ok';fb.textContent='✅ 正确！';}
+  else{opts[idx[choice]].classList.add('wrong');opts[idx[correct]].classList.add('correct');fb.className='quiz-feedback show err';fb.textContent='❌ 正确答案是 '+correct;}
+  fb.style.display='block';
+  document.getElementById('progressBar').style.width=(step/4*100)+'%';
+  setTimeout(()=>document.getElementById('next'+step).classList.remove('locked'),choice===correct?0:1500);
+}
+function nextStep(n){document.getElementById('step'+(n-1)).classList.remove('active');const s=document.getElementById('step'+n);s.classList.remove('locked');s.classList.add('active');document.getElementById('dot'+(n-1)).classList.replace('active','done');const dn=document.getElementById('dot'+n);if(dn)dn.classList.add('active');}
+function showFinal(){document.getElementById('step4').classList.remove('active');document.getElementById('stepFinal').classList.remove('locked');document.getElementById('stepFinal').classList.add('active');document.getElementById('progressBar').style.width='100%';}
+
+window.onload=()=>{drawStaticPie();initPieLegend();initDynSliders();calcAngle();initKG();initStepIndicator();};
 </script>
 </body>
 </html>
