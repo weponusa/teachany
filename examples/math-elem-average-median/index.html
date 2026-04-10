@@ -3,27 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>平均数与中位数 · TeachAny 互动课件</title>
 <meta name="teachany-node" content="average-median">
 <meta name="teachany-subject" content="math">
 <meta name="teachany-domain" content="statistics-probability-primary">
 <meta name="teachany-grade" content="5">
 <meta name="teachany-difficulty" content="2">
-<meta name="teachany-version" content="1.0">
+<meta name="teachany-version" content="2.0">
 <meta name="teachany-author" content="weponusa">
+<title>平均数与中位数 · TeachAny 互动课件</title>
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
 :root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--danger:#ff6b6b;--purple:#cc5de8;--blue:#339af0;--orange:#ff922b;--text:#2b2b2b;--dim:#666;--dimmer:#999;--card:#ffffff;--border:rgba(0,0,0,0.06);}
 *{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
-body{font-family:'Noto Sans SC',-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:70px;}
+body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:70px;}
 body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle at 10% 20%,rgba(255,107,107,0.06) 0%,transparent 50%),radial-gradient(circle at 90% 80%,rgba(78,205,196,0.06) 0%,transparent 50%);pointer-events:none;z-index:-1;}
-.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;box-shadow:0 2px 20px rgba(255,146,43,0.1);}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;}
 .nav-brand{font-size:20px;font-weight:900;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all 0.25s;white-space:nowrap;}
-.nav a:hover,.nav a.active{color:#fff;background:linear-gradient(135deg,var(--primary),var(--orange));transform:scale(1.05);}
+.nav a:hover,.nav a.active{color:#fff;background:linear-gradient(135deg,var(--primary),var(--orange));}
 .container{max-width:960px;margin:0 auto;padding:80px 20px 60px;}
 .hero{text-align:center;padding:36px 0 30px;}
-.hero h1{font-size:42px;font-weight:900;line-height:1.3;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple),var(--blue));background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
+.hero h1{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple),var(--blue));background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
 @keyframes rainbowShift{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}
 .hero .subtitle{font-size:18px;color:var(--dim);margin-bottom:16px;}
 .hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
@@ -31,15 +32,10 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:
 .section{margin:40px 0;}
 .section-title{font-size:26px;font-weight:900;margin-bottom:18px;padding:10px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));display:inline-block;}
 .card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.04);transition:transform 0.25s,box-shadow 0.25s;}
-.card:hover{transform:translateY(-3px) scale(1.005);box-shadow:0 8px 30px rgba(255,107,107,0.12);}
+.card:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(255,107,107,0.12);}
 .card h3{font-size:20px;font-weight:900;margin-bottom:10px;}
 .card p,.card li{font-size:16px;line-height:1.9;color:var(--dim);}
-.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;}
-.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;}
-.obj-card{text-align:center;padding:26px 16px;}
-.obj-card .icon{font-size:44px;margin-bottom:10px;display:inline-block;animation:bounce 2s ease infinite;}
-@keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
-.obj-card h4{font-size:17px;font-weight:900;margin-bottom:6px;}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;}
 .highlight{color:var(--primary);font-weight:900;}
 .quiz-option{display:block;padding:16px 20px;margin:10px 0;border-radius:16px;background:#fff;border:2.5px solid #e8e8e8;cursor:pointer;transition:all 0.25s;font-size:16px;font-weight:700;color:var(--text);}
 .quiz-option:hover{background:rgba(78,205,196,0.08);border-color:var(--secondary);transform:translateX(4px);}
@@ -54,9 +50,69 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:
 @keyframes wiggle{0%,100%{transform:rotate(0deg);}25%{transform:rotate(8deg);}75%{transform:rotate(-8deg);}}
 .star-reward{text-align:center;padding:20px;font-size:18px;font-weight:900;background:linear-gradient(135deg,rgba(255,230,109,0.2),rgba(255,146,43,0.1));border-radius:20px;margin-top:16px;}
 .star-reward .stars{font-size:36px;display:block;margin-bottom:8px;}
+
+/* 生活场景 - 水桶均水动画 */
+#life-scene{background:linear-gradient(135deg,#e8f8ff,#fff9e6);border-radius:24px;padding:32px;margin:40px 0;overflow:hidden;}
+.bucket-row{display:flex;justify-content:center;align-items:flex-end;gap:20px;flex-wrap:wrap;margin:20px 0;}
+.bucket{width:60px;text-align:center;position:relative;}
+.bucket-body{background:linear-gradient(180deg,rgba(78,205,196,0.3),rgba(78,205,196,0.7));border:3px solid var(--secondary);border-radius:0 0 10px 10px;transition:height 0.8s ease;}
+.bucket-val{font-size:13px;font-weight:900;color:var(--primary);margin-top:4px;}
+.bucket-label{font-size:11px;color:var(--dim);}
+.avg-line{width:100%;height:3px;background:var(--primary);position:relative;margin:8px 0;}
+.avg-line::before{content:'平均线';position:absolute;right:-4px;top:-18px;font-size:11px;font-weight:700;color:var(--primary);}
+.stats-result{display:flex;justify-content:center;gap:24px;flex-wrap:wrap;margin-top:16px;}
+.stat-card{background:white;border-radius:14px;padding:14px 22px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.08);border:2px solid var(--border);min-width:140px;}
+.stat-card .stat-name{font-size:13px;color:var(--dim);margin-bottom:4px;}
+.stat-card .stat-val{font-size:28px;font-weight:900;color:var(--primary);}
+/* 柱状图动画 */
+.bar-chart{display:flex;align-items:flex-end;justify-content:center;gap:12px;height:140px;padding:0 20px;margin:20px 0;}
+.bar{width:44px;border-radius:8px 8px 0 0;position:relative;display:flex;align-items:flex-start;justify-content:center;transition:height 0.8s ease;animation:barGrow 1s ease forwards;}
+@keyframes barGrow{from{height:0;}to{height:var(--h);}}
+.bar-num{font-size:12px;font-weight:900;color:white;padding-top:4px;}
+.bar-label{font-size:11px;color:var(--dim);text-align:center;margin-top:4px;}
+/* 互动实验台 */
+#interactive-lab{background:linear-gradient(135deg,#fff0f5,#f0fff4);border-radius:24px;padding:32px;margin:40px 0;}
+.lab-title{font-size:26px;font-weight:900;text-align:center;margin-bottom:24px;}
+.slider-demo{background:#fff;border-radius:20px;padding:24px;margin-bottom:24px;box-shadow:0 4px 16px rgba(0,0,0,0.06);}
+.slider-demo h3{font-size:18px;font-weight:900;margin-bottom:16px;color:var(--primary);}
+.multi-slider{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:12px 0;}
+.score-slider{background:#f8f9fa;border-radius:12px;padding:12px;}
+.score-slider label{font-size:13px;font-weight:700;color:var(--dim);display:block;margin-bottom:6px;}
+.score-slider input{width:100%;accent-color:var(--primary);}
+.score-slider .sv{font-size:18px;font-weight:900;color:var(--primary);text-align:center;margin-top:4px;}
+.stats-display{background:linear-gradient(135deg,var(--primary),var(--orange));color:white;border-radius:16px;padding:20px;text-align:center;margin-top:16px;}
+.stats-display .s-row{display:flex;justify-content:center;gap:32px;flex-wrap:wrap;}
+.stats-display .s-item{text-align:center;}
+.stats-display .s-name{font-size:13px;opacity:0.9;}
+.stats-display .s-val{font-size:28px;font-weight:900;}
+.drag-section{background:#fff;border-radius:20px;padding:24px;box-shadow:0 4px 16px rgba(0,0,0,0.06);}
+.drag-section h3{font-size:18px;font-weight:900;margin-bottom:16px;color:var(--secondary);}
+.drag-zone{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;padding:16px;background:#f8f9fa;border-radius:12px;}
+.drag-item{padding:10px 18px;background:linear-gradient(135deg,var(--secondary),var(--blue));color:white;border-radius:12px;cursor:grab;font-size:14px;font-weight:900;user-select:none;transition:transform 0.2s;}
+.drag-item:hover{transform:scale(1.08);}
+.drop-zone{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;}
+.drop-target{min-height:60px;border:3px dashed #ccc;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--dim);transition:all 0.2s;padding:8px;text-align:center;}
+.drop-target.drag-over{border-color:var(--secondary);background:rgba(78,205,196,0.08);}
+.drop-target.correct{border-color:var(--success);background:rgba(81,207,102,0.15);color:#2b8a3e;font-weight:900;}
+.drop-target.wrong{border-color:var(--danger);background:rgba(255,107,107,0.1);}
+.drop-result{text-align:center;margin-top:12px;font-size:16px;font-weight:700;}
+/* 知识图谱 */
+#knowledge-graph{background:linear-gradient(135deg,#f0f4ff,#fff0fa);border-radius:24px;padding:32px;margin:40px 0;}
+#kg-svg{width:100%;height:340px;border-radius:16px;background:rgba(255,255,255,0.6);}
+.kg-legend{display:flex;justify-content:center;gap:24px;margin-top:12px;flex-wrap:wrap;}
+.kg-legend-item{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;}
+.kg-dot{width:14px;height:14px;border-radius:50%;}
+/* 多步骤题 */
+.step-quiz{background:#fff;border-radius:20px;padding:24px;border:2px solid var(--border);margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.04);}
+.step-header{display:flex;gap:8px;margin-bottom:12px;align-items:center;}
+.step-dot{width:28px;height:28px;border-radius:50%;background:#e8e8e8;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:var(--dim);flex-shrink:0;}
+.step-dot.active{background:var(--primary);color:white;}
+.step-dot.done{background:var(--success);color:white;}
+.step-panel{display:none;}
+.step-panel.show{display:block;animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.step-q{font-size:17px;font-weight:700;margin-bottom:12px;}
 footer{text-align:center;padding:36px 0;color:var(--dimmer);font-size:13px;border-top:3px dashed rgba(0,0,0,0.06);margin-top:50px;}
-.num-row{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;justify-content:center;}
-.num-box{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;border:2px solid var(--border);}
 .audio-bar{position:fixed;bottom:0;left:0;right:0;z-index:500;background:rgba(255,107,107,0.95);backdrop-filter:blur(12px);border-top:2px solid rgba(255,255,255,0.3);padding:10px 24px;display:flex;align-items:center;gap:14px;}
 .audio-bar .ab-btn{width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;background:#fff;color:var(--primary);font-size:16px;display:flex;align-items:center;justify-content:center;}
 .audio-bar .ab-info{flex:1;min-width:0;}
@@ -71,201 +127,251 @@ footer{text-align:center;padding:36px 0;color:var(--dimmer);font-size:13px;borde
 <nav class="nav">
   <span class="nav-brand">🌈 教我学 TeachAny</span>
   <a href="#hero">首页</a>
-  <a href="#goals">目标</a>
+  <a href="#life-scene">🎬 场景</a>
   <a href="#module-1">平均数</a>
+  <a href="#interactive-lab">🧪 实验台</a>
   <a href="#module-2">中位数</a>
-  <a href="#module-3">练习</a>
-  <a href="#deep-understanding">深思</a>
-  <a href="#summary">总结</a>
+  <a href="#knowledge-graph">🕸️ 图谱</a>
+  <a href="#module-3">如何选择</a>
+  <a href="#deep-understanding">深入</a>
+  <a href="#summary">小结</a>
 </nav>
-
 <div class="container">
+
   <section class="hero" id="hero">
-    <h1>📐 平均数与中位数 <span class="sticker">✨</span></h1>
-    <p class="subtitle">两个"代表选手"，谁能更好地描述数据？</p>
+    <h1>平均数与中位数 <span class="sticker">📊</span></h1>
+    <p class="subtitle">数据分析的两大武器，代表一组数据的"中心"！</p>
     <div class="meta">
-      <span>📚 数学</span>
-      <span>🎒 5年级</span>
-      <span>⏱️ 约 30 分钟</span>
-      <span>🎯 新授课</span>
+      <span>📚 数学</span><span>🎒 五年级</span><span>⏱️ 约 40 分钟</span><span>🎯 新授课</span>
     </div>
   </section>
 
   <section class="section" id="goals">
     <h2 class="section-title">🎯 学习目标</h2>
-    <div class="grid-3">
-      <div class="card obj-card">
-        <div class="icon">🔢</div>
-        <h4>会求平均数</h4>
-        <p>能用"总和÷个数"计算一组数据的平均数</p>
-      </div>
-      <div class="card obj-card">
-        <div class="icon">🎯</div>
-        <h4>会求中位数</h4>
-        <p>能将数据排序后，找到中间位置的中位数</p>
-      </div>
-      <div class="card obj-card">
-        <div class="icon">🤔</div>
-        <h4>会分析选择</h4>
-        <p>能判断哪种统计量更适合描述某组数据</p>
-      </div>
+    <div class="grid-2">
+      <div class="card"><div style="font-size:40px;margin-bottom:8px;">📊</div><h4>平均数</h4><p>理解平均数的含义，会计算一组数据的平均数</p></div>
+      <div class="card"><div style="font-size:40px;margin-bottom:8px;">🎯</div><h4>中位数</h4><p>理解中位数的含义，能在排序后找到中位数</p></div>
+      <div class="card"><div style="font-size:40px;margin-bottom:8px;">🔍</div><h4>比较选择</h4><p>在不同情境中判断用平均数还是中位数更合适</p></div>
+      <div class="card"><div style="font-size:40px;margin-bottom:8px;">💡</div><h4>数据分析</h4><p>用统计量分析实际问题，培养数据意识</p></div>
     </div>
   </section>
 
+  <!-- 生活场景动画 -->
+  <section id="life-scene">
+    <h2 class="section-title">🎬 水桶均分——平均数的由来！</h2>
+    <p style="text-align:center;color:var(--dim);margin-bottom:16px;">5个桶里的水不一样多，把水均分后每桶有多少？这就是<strong>平均数</strong>的思想！</p>
+    <div id="bucketRow" class="bucket-row"></div>
+    <div class="stats-result">
+      <div class="stat-card"><div class="stat-name">总水量</div><div class="stat-val" id="totalVal">-</div></div>
+      <div class="stat-card"><div class="stat-name">桶数</div><div class="stat-val">5</div></div>
+      <div class="stat-card"><div class="stat-name">平均每桶</div><div class="stat-val" id="avgVal" style="color:var(--orange)">-</div></div>
+    </div>
+    <div style="text-align:center;margin-top:16px;">
+      <button onclick="playBucketScene()" style="padding:12px 28px;border:none;border-radius:20px;background:linear-gradient(135deg,var(--primary),var(--orange));color:white;font-size:15px;font-weight:900;cursor:pointer;">▶ 播放均分动画</button>
+    </div>
+  </section>
+
+  <!-- 模块一：平均数 -->
   <section class="section" id="module-1">
     <h2 class="section-title">📖 模块一：平均数</h2>
     <div class="card">
-      <h3>🌉 什么是平均数？</h3>
-      <p><span class="highlight">我们已经会数数和加法</span>，能算出总数。</p>
-      <p><span class="highlight">但问题来了：</span>5个小朋友分饼干，各自有4、6、3、7、5块，怎么"公平分配"？</p>
-      <p><span class="highlight">平均数就是答案！</span>把所有数加起来，再除以个数，就是每人能分到的"平均份"。</p>
+      <h3>💡 平均数 = 总和 ÷ 个数</h3>
+      <p>班级5名同学的身高：140, 145, 148, 152, 155（cm）</p>
+      <p>平均身高 = (140+145+148+152+155) ÷ 5 = 740 ÷ 5 = <span class="highlight">148 cm</span></p>
+      <p>平均数的特点：受<strong>每个数据</strong>影响，尤其对极端值敏感</p>
     </div>
-    <div class="card">
-      <h3>💡 平均数的计算</h3>
-      <p><span class="highlight">公式：平均数 = 总和 ÷ 个数</span></p>
-      <div style="background:rgba(255,107,107,0.06);border-radius:16px;padding:20px;margin:12px 0;">
-        <p style="font-weight:900;margin-bottom:10px;">🍪 例题：5个小朋友的饼干数</p>
-        <div class="num-row">
-          <div class="num-box" style="background:rgba(255,107,107,0.1);">4</div>
-          <div class="num-box" style="background:rgba(78,205,196,0.1);">6</div>
-          <div class="num-box" style="background:rgba(255,230,109,0.2);">3</div>
-          <div class="num-box" style="background:rgba(255,146,43,0.1);">7</div>
-          <div class="num-box" style="background:rgba(204,93,232,0.1);">5</div>
-        </div>
-        <p style="margin-top:12px;">总和：4+6+3+7+5 = <span class="highlight">25</span></p>
-        <p>平均数：25 ÷ 5 = <span class="highlight">5</span></p>
-        <p style="font-size:14px;color:var(--dim);margin-top:8px;">✅ 每人平均5块饼干，这是"公平分配"的结果。</p>
+    <div class="step-quiz" id="sq1">
+      <div class="step-header">
+        <div class="step-dot active" id="s1d1">1</div>
+        <div class="step-dot" id="s1d2">2</div>
+        <div class="step-dot" id="s1d3">3</div>
+        <span style="font-size:14px;">计算平均数：4, 7, 8, 5, 6</span>
       </div>
-      <p>💡 <span class="highlight">平均数就像"削峰填谷"</span>——把多的匀给少的，最终大家一样多！</p>
-    </div>
-    <div class="insight-box">
-      <h4>🔍 想一想</h4>
-      <p>平均数5是否一定是数据中实际出现过的数？（上面例题中，确实有5，但这只是巧合！）如果是4、6、3、7、5→改成4、6、3、7、4，平均数还是5吗？</p>
-    </div>
-    <div class="card">
-      <h3><span class="sticker">✏️</span> 马上试一试</h3>
-      <p>小红4次数学考试成绩：80、85、75、92分。平均分是多少？</p>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q1')">A. 80分</div>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q1')">B. 82分</div>
-      <div class="quiz-option" onclick="checkAnswer(this, true, 'q1')">C. 83分</div>
-      <div id="q1" class="quiz-feedback"></div>
+      <div class="step-panel show" id="s1p1">
+        <p class="step-q">Step 1：先求总和 4+7+8+5+6 = ？</p>
+        <div class="quiz-option" onclick="stepAnswer(this,false,'s1p1','s1d1','s1p2','s1d2','s1f1')">28</div>
+        <div class="quiz-option" onclick="stepAnswer(this,true,'s1p1','s1d1','s1p2','s1d2','s1f1')">30 ✓（4+7+8+5+6=30）</div>
+        <div id="s1f1" class="quiz-feedback"></div>
+      </div>
+      <div class="step-panel" id="s1p2">
+        <p class="step-q">Step 2：共有几个数据？</p>
+        <div class="quiz-option" onclick="stepAnswer(this,false,'s1p2','s1d2','s1p3','s1d3','s1f2')">4个</div>
+        <div class="quiz-option" onclick="stepAnswer(this,true,'s1p2','s1d2','s1p3','s1d3','s1f2')">5个（4,7,8,5,6 共5个）✓</div>
+        <div id="s1f2" class="quiz-feedback"></div>
+      </div>
+      <div class="step-panel" id="s1p3">
+        <p class="step-q">Step 3：平均数 = 30 ÷ 5 = ？</p>
+        <div class="quiz-option" onclick="finalStep(this,true,'s1f3')">6 ✓</div>
+        <div class="quiz-option" onclick="finalStep(this,false,'s1f3')">7</div>
+        <div class="quiz-option" onclick="finalStep(this,false,'s1f3')">5</div>
+        <div id="s1f3" class="quiz-feedback"></div>
+      </div>
     </div>
   </section>
 
+  <!-- 互动实验台 -->
+  <section id="interactive-lab">
+    <div class="lab-title">🧪 互动实验台</div>
+    <div class="slider-demo">
+      <h3>🎚️ 统计计算器——实时计算平均数和中位数！</h3>
+      <p style="color:var(--dim);font-size:14px;margin-bottom:16px;">拖动5名同学的成绩滑块，看平均数和中位数如何变化！</p>
+      <div class="multi-slider">
+        <div class="score-slider"><label>甲的成绩</label><input type="range" id="sc1" min="50" max="100" value="72" oninput="updateStats()"><div class="sv" id="sv1">72</div></div>
+        <div class="score-slider"><label>乙的成绩</label><input type="range" id="sc2" min="50" max="100" value="85" oninput="updateStats()"><div class="sv" id="sv2">85</div></div>
+        <div class="score-slider"><label>丙的成绩</label><input type="range" id="sc3" min="50" max="100" value="68" oninput="updateStats()"><div class="sv" id="sv3">68</div></div>
+        <div class="score-slider"><label>丁的成绩</label><input type="range" id="sc4" min="50" max="100" value="91" oninput="updateStats()"><div class="sv" id="sv4">91</div></div>
+        <div class="score-slider"><label>戊的成绩</label><input type="range" id="sc5" min="50" max="100" value="79" oninput="updateStats()"><div class="sv" id="sv5">79</div></div>
+      </div>
+      <div class="stats-display">
+        <div class="s-row">
+          <div class="s-item"><div class="s-name">平均数</div><div class="s-val" id="avgDisp">79</div></div>
+          <div class="s-item"><div class="s-name">中位数</div><div class="s-val" id="medDisp">79</div></div>
+          <div class="s-item"><div class="s-name">排序后</div><div class="s-val" style="font-size:16px;" id="sortedDisp">68,72,79,85,91</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="drag-section">
+      <h3>🎯 拖拽配对：哪种情况用平均数，哪种用中位数？</h3>
+      <div class="drag-zone" id="statDZ">
+        <div class="drag-item" draggable="true" data-id="t1">平均数</div>
+        <div class="drag-item" draggable="true" data-id="t2">中位数</div>
+        <div class="drag-item" draggable="true" data-id="t3">平均数</div>
+        <div class="drag-item" draggable="true" data-id="t4">中位数</div>
+      </div>
+      <div class="drop-zone">
+        <div class="drop-target" data-accept="t1">数据均匀分布，<br>没有极端值</div>
+        <div class="drop-target" data-accept="t2">有极端大/小值，<br>数据不均匀</div>
+        <div class="drop-target" data-accept="t3">计算全班同学<br>平均成绩</div>
+        <div class="drop-target" data-accept="t4">分析收入水平<br>（有富豪存在）</div>
+      </div>
+      <div class="drop-result" id="statDR"></div>
+    </div>
+  </section>
+
+  <!-- 模块二：中位数 -->
   <section class="section" id="module-2">
     <h2 class="section-title">📖 模块二：中位数</h2>
     <div class="card">
-      <h3>💡 什么是中位数？</h3>
-      <p>中位数是将一组数据<span class="highlight">从小到大排列</span>后，位于正中间的那个数。</p>
-      <div style="background:rgba(78,205,196,0.06);border-radius:16px;padding:20px;margin:12px 0;">
-        <p style="font-weight:900;margin-bottom:10px;">🎯 例题：找中位数</p>
-        <p>原始数据：6, 2, 9, 3, 7</p>
-        <p>排序后：</p>
-        <div class="num-row">
-          <div class="num-box" style="background:rgba(78,205,196,0.1);">2</div>
-          <div class="num-box" style="background:rgba(78,205,196,0.1);">3</div>
-          <div class="num-box" style="background:#4ecdc4;color:white;">6</div>
-          <div class="num-box" style="background:rgba(78,205,196,0.1);">7</div>
-          <div class="num-box" style="background:rgba(78,205,196,0.1);">9</div>
-        </div>
-        <p style="margin-top:12px;">中间位置（第3个）= <span class="highlight">6，就是中位数！</span></p>
-      </div>
-      <p>⚠️ <span class="highlight">偶数个数据时：</span>取中间两个数的平均数。</p>
-      <p>如：2, 3, 6, 7 → 中位数 = (3+6)÷2 = <span class="highlight">4.5</span></p>
+      <h3>💡 中位数 = 排好序后，正中间的那个数</h3>
+      <p>奇数个数据：排序后，中间那个就是中位数</p>
+      <p>例：3, 5, <span class="highlight">7</span>, 9, 12 → 中位数 = <span class="highlight">7</span></p>
+      <p>偶数个数据：排序后，中间两个的平均数</p>
+      <p>例：3, 5, <span class="highlight">7, 9</span>, 12, 15 → 中位数 = (7+9)÷2 = <span class="highlight">8</span></p>
     </div>
-    <div class="card">
-      <h3>💡 平均数 vs 中位数</h3>
-      <div class="grid-2">
-        <div style="background:rgba(255,107,107,0.08);border-radius:16px;padding:16px;">
-          <p style="font-weight:900;margin-bottom:8px;">📊 平均数</p>
-          <p>• 受<span class="highlight">极端值影响大</span></p>
-          <p>• 一个特别大/小的值会拉偏平均数</p>
-          <p>• 反映数据的整体水平</p>
-        </div>
-        <div style="background:rgba(78,205,196,0.08);border-radius:16px;padding:16px;">
-          <p style="font-weight:900;margin-bottom:8px;">📍 中位数</p>
-          <p>• <span class="highlight">不受极端值影响</span></p>
-          <p>• 只关心"中间"那个位置</p>
-          <p>• 反映数据的中等水平</p>
-        </div>
-      </div>
-      <div style="background:rgba(255,230,109,0.2);border-radius:16px;padding:16px;margin-top:14px;">
-        <p style="font-weight:900;">🌟 经典案例：工资中位数</p>
-        <p>5人工资：3000、3500、4000、4200、50000（老板）</p>
-        <p>平均工资 = (3000+3500+4000+4200+50000)÷5 = <span class="highlight">12940元</span>（被老板拉高了！）</p>
-        <p>中位数 = <span class="highlight">4000元</span>（真正代表大多数人的水平）</p>
-      </div>
-    </div>
-    <div class="card">
-      <h3><span class="sticker">✏️</span> 找中位数</h3>
-      <p>数据：12, 8, 15, 6, 10，排序后中位数是多少？</p>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q2')">A. 8</div>
-      <div class="quiz-option" onclick="checkAnswer(this, true, 'q2')">B. 10</div>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q2')">C. 12</div>
-      <div id="q2" class="quiz-feedback"></div>
-    </div>
-  </section>
-
-  <section class="section" id="module-3">
-    <h2 class="section-title">🎯 闯关练习</h2>
-    <div class="card">
-      <h3>⭐ 第一关：计算平均数</h3>
-      <p>班里6名同学身高（cm）：150、152、148、160、155、153。平均身高是多少？</p>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q3')">A. 152 cm</div>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q3')">B. 153 cm</div>
-      <div class="quiz-option" onclick="checkAnswer(this, true, 'q3')">C. 153 cm（150+152+148+160+155+153=918，918÷6=153）</div>
-      <div id="q3" class="quiz-feedback"></div>
-    </div>
-    <div class="card">
-      <h3>⭐⭐ 第二关：极端值影响</h3>
-      <p>7人月收入：2000、2500、2800、3000、3200、3500、30000元。<br>用哪个统计量更能反映大多数人的收入水平？</p>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q4')">A. 平均数，因为它考虑了所有数据</div>
-      <div class="quiz-option" onclick="checkAnswer(this, true, 'q4')">B. 中位数，因为30000是极端值，会严重拉高平均数</div>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q4')">C. 两者都一样适合</div>
-      <div id="q4" class="quiz-feedback"></div>
-    </div>
-    <div class="card">
-      <h3>⭐⭐⭐ 第三关：偶数个数据的中位数</h3>
-      <p>数据：5、8、11、14、17、20，中位数是多少？</p>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q5')">A. 11</div>
-      <div class="quiz-option" onclick="checkAnswer(this, true, 'q5')">B. 12.5（第3和第4个数：(11+14)÷2）</div>
-      <div class="quiz-option" onclick="checkAnswer(this, false, 'q5')">C. 14</div>
-      <div id="q5" class="quiz-feedback"></div>
-    </div>
-    <div class="star-reward" id="star-reward" style="display:none;">
-      <span class="stars">🌟🌟🌟</span>太棒了！统计分析小达人！
-    </div>
-  </section>
-
-  <section class="section" id="deep-understanding">
-    <h2 class="section-title">🔬 深层理解</h2>
     <div class="insight-box">
-      <h4>🌍 平均水深的陷阱</h4>
-      <p>河流"平均水深1.2米"，小明身高1.3米，下水安全吗？不一定！可能有的地方只有0.5米，但有的地方深达3米，平均值掩盖了危险！</p>
+      <h4>🔍 中位数 vs 平均数</h4>
+      <p>月薪数据：1万,1万,1万,1万,10万 → 平均3万（被高薪拉高）| 中位数1万（更真实）</p>
+      <p>中位数<strong>不受极端值影响</strong>，更能代表大多数情况</p>
+    </div>
+    <div class="step-quiz" id="sq2">
+      <div class="step-header">
+        <div class="step-dot active" id="s2d1">1</div>
+        <div class="step-dot" id="s2d2">2</div>
+        <div class="step-dot" id="s2d3">3</div>
+        <span style="font-size:14px;">找中位数：6, 2, 8, 4, 10</span>
+      </div>
+      <div class="step-panel show" id="s2p1">
+        <p class="step-q">Step 1：先从小到大排序：2, _, 6, _, 10</p>
+        <div class="quiz-option" onclick="stepAnswer(this,true,'s2p1','s2d1','s2p2','s2d2','s2f1')">2, 4, 6, 8, 10 ✓</div>
+        <div class="quiz-option" onclick="stepAnswer(this,false,'s2p1','s2d1','s2p2','s2d2','s2f1')">2, 4, 6, 10, 8</div>
+        <div id="s2f1" class="quiz-feedback"></div>
+      </div>
+      <div class="step-panel" id="s2p2">
+        <p class="step-q">Step 2：共5个数，正中间是第几个数？</p>
+        <div class="quiz-option" onclick="stepAnswer(this,true,'s2p2','s2d2','s2p3','s2d3','s2f2')">第3个数 ✓（5÷2=2余1，取第3个）</div>
+        <div class="quiz-option" onclick="stepAnswer(this,false,'s2p2','s2d2','s2p3','s2d3','s2f2')">第2个数</div>
+        <div id="s2f2" class="quiz-feedback"></div>
+      </div>
+      <div class="step-panel" id="s2p3">
+        <p class="step-q">Step 3：排好序后第3个数是？这就是中位数！</p>
+        <div class="quiz-option" onclick="finalStep(this,false,'s2f3')">4</div>
+        <div class="quiz-option" onclick="finalStep(this,true,'s2f3')">6 ✓（2,4,【6】,8,10）</div>
+        <div class="quiz-option" onclick="finalStep(this,false,'s2f3')">8</div>
+        <div id="s2f3" class="quiz-feedback"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 知识图谱 -->
+  <section id="knowledge-graph">
+    <h2 class="section-title">🕸️ 知识图谱</h2>
+    <p style="text-align:center;color:var(--dim);font-size:14px;margin-bottom:20px;">点击节点查看 · 拖拽移动</p>
+    <svg id="kg-svg"></svg>
+    <div class="kg-legend">
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#339af0"></div>当前课题</div>
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#51cf66"></div>前置知识</div>
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#ff922b"></div>后续知识</div>
+    </div>
+  </section>
+
+  <!-- 模块三：如何选择 -->
+  <section class="section" id="module-3">
+    <h2 class="section-title">📖 模块三：什么时候用哪个？</h2>
+    <div class="card">
+      <h3>💡 选择原则</h3>
+      <p>✅ 用<span class="highlight">平均数</span>：数据分布均匀，没有特别大/小的极端值</p>
+      <p>✅ 用<span class="highlight">中位数</span>：有极端值存在，或数据分布不均匀</p>
+      <p>📌 例：反映一个班的学习水平 → 平均分（数据分布均匀）</p>
+      <p>📌 例：反映一个小区的收入水平 → 中位数（可能有极高收入影响平均值）</p>
+    </div>
+    <div class="step-quiz" id="sq3">
+      <div class="step-header">
+        <div class="step-dot active" id="s3d1">1</div>
+        <div class="step-dot" id="s3d2">2</div>
+        <div class="step-dot" id="s3d3">3</div>
+        <span style="font-size:14px;">选统计量分析问题</span>
+      </div>
+      <div class="step-panel show" id="s3p1">
+        <p class="step-q">Step 1：数据：1000, 1200, 1100, 1050, 8000（元/月薪），哪个数据很特殊？</p>
+        <div class="quiz-option" onclick="stepAnswer(this,true,'s3p1','s3d1','s3p2','s3d2','s3f1')">8000 远远大于其他，是极端值 ✓</div>
+        <div class="quiz-option" onclick="stepAnswer(this,false,'s3p1','s3d1','s3p2','s3d2','s3f1')">没有特殊的</div>
+        <div id="s3f1" class="quiz-feedback"></div>
+      </div>
+      <div class="step-panel" id="s3p2">
+        <p class="step-q">Step 2：有极端值，应该用平均数还是中位数代表这组数据？</p>
+        <div class="quiz-option" onclick="stepAnswer(this,false,'s3p2','s3d2','s3p3','s3d3','s3f2')">平均数（会被8000拉高，不代表大多数）</div>
+        <div class="quiz-option" onclick="stepAnswer(this,true,'s3p2','s3d2','s3p3','s3d3','s3f2')">中位数（不受极端值影响）✓</div>
+        <div id="s3f2" class="quiz-feedback"></div>
+      </div>
+      <div class="step-panel" id="s3p3">
+        <p class="step-q">Step 3：排序后：1000,1050,1100,1200,8000，中位数是多少？</p>
+        <div class="quiz-option" onclick="finalStep(this,true,'s3f3')">1100 ✓（第3个数）</div>
+        <div class="quiz-option" onclick="finalStep(this,false,'s3f3')">2470（这是平均数，被拉高了）</div>
+        <div id="s3f3" class="quiz-feedback"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 深层理解 -->
+  <section class="section" id="deep-understanding">
+    <h2 class="section-title">🧠 深层理解</h2>
+    <div class="card">
+      <h3>🌍 生活中的统计量</h3>
+      <p>🌡️ 一周温度：22,24,23,26,28,25,30 → 平均气温≈25.4°C</p>
+      <p>💰 二手房价：100,120,130,150,800（万）→ 中位数130更代表实际</p>
+      <p>🏃 体育成绩：成绩分布均匀 → 用平均数；有特别差的学生 → 用中位数</p>
     </div>
     <div class="card">
-      <h3>💡 口诀速记</h3>
-      <p>🎵 <span class="highlight">平均数看整体，中位数看中间；极端值来捣乱，中位数更可靠！</span></p>
+      <h3>⭐⭐⭐ 综合练习</h3>
+      <p>7名工人月薪（元）：2000,2500,2800,3000,3200,3500,15000。用哪个统计量更能代表这组数据？它是多少？</p>
+      <div class="quiz-option" onclick="checkAnswer(this,true,'dq1')">A. 中位数=3000元 ✓（排序后第4个，不受15000影响）</div>
+      <div class="quiz-option" onclick="checkAnswer(this,false,'dq1')">B. 平均数≈4571元（被15000拉高，不代表大多数）</div>
+      <div class="quiz-option" onclick="checkAnswer(this,false,'dq1')">C. 最小值=2000元</div>
+      <div id="dq1" class="quiz-feedback"></div>
     </div>
   </section>
 
   <section class="section" id="summary">
-    <h2 class="section-title">📝 课堂总结</h2>
+    <h2 class="section-title">📝 课程小结</h2>
     <div class="card">
-      <h3>🎉 今天学了什么？</h3>
-      <ul style="padding-left:20px;line-height:2.2;">
-        <li><span class="highlight">平均数</span> = 总和 ÷ 个数，反映整体水平</li>
-        <li><span class="highlight">中位数</span> = 排序后中间的数，反映中等水平</li>
-        <li>有极端值时，<span class="highlight">中位数更能代表多数人</span></li>
-        <li>偶数个数据的中位数 = 中间两数之和 ÷ 2</li>
-      </ul>
+      <h3>🌟 今天掌握了</h3>
+      <p>✅ <span class="highlight">平均数</span>：总和÷个数，受每个数影响</p>
+      <p>✅ <span class="highlight">中位数</span>：排序后正中间的数（偶数个取中间两数平均）</p>
+      <p>✅ <span class="highlight">选择原则</span>：数据均匀用平均数；有极端值用中位数</p>
     </div>
+    <div class="star-reward"><span class="stars">🌟🌟🌟</span>统计分析达人！数据不再难！📊✨</div>
   </section>
-
-  <footer>
-    <p>Made with <strong>教我学 TeachAny</strong> · <a href="https://github.com/weponusa/teachany" style="color:var(--primary);">GitHub</a></p>
-    <p style="margin-top:8px;">Built on ABT Narrative · Bloom's Taxonomy · Scaffolding · Cognitive Load Theory</p>
-  </footer>
+  <footer><p>Made with <strong>教我学 TeachAny</strong> · <a href="https://github.com/weponusa/teachany" style="color:var(--primary);">GitHub</a></p></footer>
 </div>
 
 <div class="audio-bar">
@@ -273,28 +379,88 @@ footer{text-align:center;padding:36px 0;color:var(--dimmer);font-size:13px;borde
   <button class="ab-btn" id="abPlay">▶</button>
   <button class="ab-btn" id="abNext">⏭</button>
   <div class="ab-info">
-    <div class="ab-title" id="abTitle">平均数与中位数 - 课件讲解</div>
+    <div class="ab-title" id="abTitle">🎵 平均数与中位数 · 第1段</div>
     <div class="ab-progress-wrap" id="abProgressWrap"><div class="ab-progress" id="abProgress"></div></div>
-    <div class="ab-time" id="abTime">00:00 / 00:00</div>
+    <div class="ab-time" id="abTime">0:00 / 0:00</div>
   </div>
-  <input type="range" class="ab-vol" id="abVol" min="0" max="1" step="0.05" value="0.8">
+  <input class="ab-vol" type="range" id="abVol" min="0" max="1" step="0.05" value="0.85">
 </div>
 
 <script>
-const audioPlaylist=[{title:"第1段：开场",src:"tts/s01.mp3"},{title:"第2段：平均数概念",src:"tts/s02.mp3"},{title:"第3段：平均数计算",src:"tts/s03.mp3"},{title:"第4段：中位数",src:"tts/s04.mp3"},{title:"第5段：两者比较",src:"tts/s05.mp3"},{title:"第6段：总结",src:"tts/s06.mp3"}];
-let curIdx=0,audio=new Audio();
-const abPlay=document.getElementById('abPlay'),abTitle=document.getElementById('abTitle'),abProgress=document.getElementById('abProgress'),abTime=document.getElementById('abTime'),abVol=document.getElementById('abVol');
-function loadTrack(i){curIdx=i;audio.src=audioPlaylist[i].src;abTitle.textContent=audioPlaylist[i].title;audio.volume=parseFloat(abVol.value);audio.load();}
-function fmt(s){const m=Math.floor(s/60),sec=Math.floor(s%60);return`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;}
-audio.addEventListener('timeupdate',()=>{const p=audio.duration?audio.currentTime/audio.duration*100:0;abProgress.style.width=p+'%';abTime.textContent=`${fmt(audio.currentTime)} / ${fmt(audio.duration||0)}`;});
-audio.addEventListener('ended',()=>{if(curIdx<audioPlaylist.length-1){loadTrack(curIdx+1);audio.play();abPlay.textContent='⏸';}else{abPlay.textContent='▶';}});
-abPlay.addEventListener('click',()=>{if(audio.paused){if(!audio.src||audio.src===window.location.href)loadTrack(0);audio.play();abPlay.textContent='⏸';}else{audio.pause();abPlay.textContent='▶';}});
-document.getElementById('abPrev').addEventListener('click',()=>{if(curIdx>0){loadTrack(curIdx-1);audio.play();abPlay.textContent='⏸';}});
-document.getElementById('abNext').addEventListener('click',()=>{if(curIdx<audioPlaylist.length-1){loadTrack(curIdx+1);audio.play();abPlay.textContent='⏸';}});
-document.getElementById('abProgressWrap').addEventListener('click',e=>{if(audio.duration){const r=e.currentTarget.getBoundingClientRect();audio.currentTime=(e.clientX-r.left)/r.width*audio.duration;}});
-abVol.addEventListener('input',()=>{audio.volume=parseFloat(abVol.value);});
-let correctCount=0;
-function checkAnswer(el,isCorrect,feedbackId){const parent=el.parentElement;const options=parent.querySelectorAll('.quiz-option');const feedback=document.getElementById(feedbackId);if(parent.dataset.answered)return;parent.dataset.answered='true';options.forEach(opt=>{opt.style.pointerEvents='none';opt.style.opacity='0.6';});if(isCorrect){correctCount++;el.classList.add('correct');el.style.opacity='1';feedback.innerHTML='🎉 <strong>太棒了！答对啦！</strong>';feedback.style.background='rgba(81,207,102,0.12)';feedback.style.color='#2b8a3e';if(correctCount>=3)document.getElementById('star-reward').style.display='block';}else{el.classList.add('wrong');el.style.opacity='1';options.forEach(opt=>{if(opt.getAttribute('onclick')&&opt.getAttribute('onclick').includes('true')){opt.classList.add('correct');opt.style.opacity='1';}});feedback.innerHTML='💪 <strong>没关系，看看正确答案！</strong>';feedback.style.background='rgba(255,107,107,0.08)';feedback.style.color='#c92a2a';}feedback.classList.add('show');}
+// 水桶动画
+const bucketData = [3, 7, 5, 8, 2];
+function playBucketScene(){
+  const row = document.getElementById('bucketRow');
+  row.innerHTML = '';
+  const total = bucketData.reduce((a,b)=>a+b,0);
+  const avg = total/bucketData.length;
+  const colors=['#ff6b6b','#4ecdc4','#ffe66d','#51cf66','#cc5de8'];
+  const names=['小明','小红','小华','小李','小王'];
+  bucketData.forEach((v,i)=>{
+    const b = document.createElement('div');
+    b.className='bucket';
+    b.innerHTML=`<div class="bucket-body" id="bc${i}" style="height:${v*12}px;background:${colors[i]};border:3px solid ${colors[i]};border-radius:0 0 10px 10px;transition:height 0.8s ease ${i*0.1}s;width:50px;"></div><div class="bucket-val">${v}桶</div><div class="bucket-label">${names[i]}</div>`;
+    row.appendChild(b);
+  });
+  document.getElementById('totalVal').textContent = total+'桶';
+  setTimeout(()=>{
+    bucketData.forEach((_,i)=>{document.getElementById('bc'+i).style.height=avg*12+'px';});
+    document.getElementById('avgVal').textContent = avg+'桶';
+  }, 1200);
+}
+playBucketScene();
+
+// 统计计算器
+function updateStats(){
+  const vals=[1,2,3,4,5].map(i=>parseInt(document.getElementById('sc'+i).value));
+  vals.forEach((v,i)=>document.getElementById('sv'+(i+1)).textContent=v);
+  const sum=vals.reduce((a,b)=>a+b,0);
+  const avg=(sum/vals.length).toFixed(1);
+  const sorted=[...vals].sort((a,b)=>a-b);
+  const mid=sorted[2];
+  document.getElementById('avgDisp').textContent=avg;
+  document.getElementById('medDisp').textContent=mid;
+  document.getElementById('sortedDisp').textContent=sorted.join(',');
+}
+updateStats();
+
+// 拖拽
+let statScore=0;
+document.querySelectorAll('#statDZ .drag-item').forEach(el=>{el.addEventListener('dragstart',e=>{e.dataTransfer.setData('text',el.dataset.id);el.style.opacity='0.5';});el.addEventListener('dragend',()=>el.style.opacity='1');});
+document.querySelectorAll('.drop-target').forEach(el=>{el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('drag-over');});el.addEventListener('dragleave',()=>el.classList.remove('drag-over'));el.addEventListener('drop',e=>{e.preventDefault();el.classList.remove('drag-over');if(el.classList.contains('correct')||el.classList.contains('wrong'))return;const id=e.dataTransfer.getData('text');const de=document.querySelector('[data-id="'+id+'"]');if(id===el.dataset.accept){el.classList.add('correct');if(de)de.style.opacity='0.4';statScore++;document.getElementById('statDR').innerHTML=statScore>=4?'🎊 全部正确！统计量选择掌握！':'✅ '+statScore+'/4 正确';}else{el.classList.add('wrong');setTimeout(()=>el.classList.remove('wrong'),800);document.getElementById('statDR').innerHTML='❌ 想想极端值的影响～';}});});
+
+// D3 知识图谱
+(function(){
+  const nodes=[{id:'cur',name:'平均数与中位数',type:'current'},{id:'p1',name:'折线统计图',type:'prereq'},{id:'p2',name:'条形统计图',type:'prereq'},{id:'n1',name:'众数',type:'next'},{id:'n2',name:'数据分析',type:'next'},{id:'n3',name:'概率初步',type:'next'}];
+  const links=[{source:'p1',target:'cur'},{source:'p2',target:'cur'},{source:'cur',target:'n1'},{source:'cur',target:'n2'},{source:'cur',target:'n3'}];
+  const cm={current:'#339af0',prereq:'#51cf66',next:'#ff922b'};
+  const svg=d3.select('#kg-svg');const w=document.getElementById('kg-svg').clientWidth||700,h=340;
+  svg.attr('viewBox',`0 0 ${w} ${h}`);
+  const sim=d3.forceSimulation(nodes).force('link',d3.forceLink(links).id(d=>d.id).distance(110)).force('charge',d3.forceManyBody().strength(-260)).force('center',d3.forceCenter(w/2,h/2)).force('collide',d3.forceCollide(42));
+  const g=svg.append('g');svg.call(d3.zoom().scaleExtent([0.5,2]).on('zoom',e=>g.attr('transform',e.transform)));
+  svg.append('defs').append('marker').attr('id','arr6').attr('viewBox','0 -5 10 10').attr('refX',20).attr('refY',0).attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto').append('path').attr('d','M0,-5L10,0L0,5').attr('fill','#ccc');
+  const lk=g.append('g').selectAll('line').data(links).enter().append('line').attr('stroke','#ccc').attr('stroke-width',2).attr('marker-end','url(#arr6)');
+  const ng=g.append('g').selectAll('g').data(nodes).enter().append('g').call(d3.drag().on('start',(e,d)=>{if(!e.active)sim.alphaTarget(0.3).restart();d.fx=d.x;d.fy=d.y;}).on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y;}).on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null;})).on('click',(e,d)=>{d3.selectAll('.kgt').remove();svg.append('text').attr('class','kgt').attr('x',d.x).attr('y',d.y-38).attr('text-anchor','middle').attr('font-size','13').attr('font-weight','700').attr('fill','#333').text(d.name);setTimeout(()=>d3.selectAll('.kgt').remove(),2000);});
+  ng.append('circle').attr('r',d=>d.type==='current'?32:24).attr('fill',d=>cm[d.type]).attr('stroke','white').attr('stroke-width',3);
+  ng.append('text').attr('text-anchor','middle').attr('dy','0.35em').attr('font-size','10').attr('font-weight','900').attr('fill','white').each(function(d){const ws=d.name.length>5?[d.name.slice(0,5),d.name.slice(5)]:[d.name];ws.forEach((w,i)=>d3.select(this).append('tspan').attr('x',0).attr('dy',i===0?`${-(ws.length-1)*0.6}em`:'1.2em').text(w));});
+  sim.on('tick',()=>{lk.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);ng.attr('transform',d=>`translate(${d.x},${d.y})`);});
+})();
+
+function stepAnswer(el,c,cp,cd,np,nd,fid){const par=el.closest('.step-panel');if(par.dataset.answered)return;par.dataset.answered='true';par.querySelectorAll('.quiz-option').forEach(o=>{o.style.pointerEvents='none';o.style.opacity='0.6';});const fb=document.getElementById(fid);if(c){el.classList.add('correct');el.style.opacity='1';fb.innerHTML='✅ 正确！';fb.style.background='rgba(81,207,102,0.12)';fb.style.color='#2b8a3e';fb.classList.add('show');const dd=document.getElementById(cd);dd.classList.remove('active');dd.classList.add('done');dd.textContent='✓';setTimeout(()=>{par.classList.remove('show');document.getElementById(np).classList.add('show');document.getElementById(nd).classList.add('active');},700);}else{el.classList.add('wrong');el.style.opacity='1';fb.innerHTML='💪 再想想！';fb.style.background='rgba(255,107,107,0.08)';fb.style.color='#c92a2a';fb.classList.add('show');setTimeout(()=>{par.dataset.answered='';par.querySelectorAll('.quiz-option').forEach(o=>{o.style.pointerEvents='';o.style.opacity='';o.classList.remove('wrong','correct');});fb.classList.remove('show');},800);}}
+function finalStep(el,c,fid){const par=el.closest('.step-panel');if(par.dataset.answered)return;par.dataset.answered='true';par.querySelectorAll('.quiz-option').forEach(o=>{o.style.pointerEvents='none';o.style.opacity='0.6';});const fb=document.getElementById(fid);if(c){el.classList.add('correct');el.style.opacity='1';fb.innerHTML='🎉 <strong>全对！</strong>';fb.style.background='rgba(81,207,102,0.12)';fb.style.color='#2b8a3e';}else{el.classList.add('wrong');el.style.opacity='1';par.querySelectorAll('.quiz-option').forEach(o=>{if(o.onclick&&o.onclick.toString().includes('true')){o.classList.add('correct');o.style.opacity='1';}});fb.innerHTML='💪 看看正确答案！';fb.style.background='rgba(255,107,107,0.08)';fb.style.color='#c92a2a';}fb.classList.add('show');}
+function checkAnswer(el,c,fid){const p=el.parentElement;if(p.dataset.answered)return;p.dataset.answered='true';p.querySelectorAll('.quiz-option').forEach(o=>{o.style.pointerEvents='none';o.style.opacity='0.6';});const fb=document.getElementById(fid);if(c){el.classList.add('correct');el.style.opacity='1';fb.innerHTML='🎉 正确！';fb.style.background='rgba(81,207,102,0.12)';fb.style.color='#2b8a3e';}else{el.classList.add('wrong');el.style.opacity='1';p.querySelectorAll('.quiz-option').forEach(o=>{if(o.onclick&&o.onclick.toString().includes('true')){o.classList.add('correct');o.style.opacity='1';}});fb.innerHTML='💪 注意极端值！';fb.style.background='rgba(255,107,107,0.08)';fb.style.color='#c92a2a';}fb.classList.add('show');}
+const audioPlaylist=[{src:'tts/s01.mp3',title:'水桶均分理解平均数'},{src:'tts/s02.mp3',title:'平均数的计算方法'},{src:'tts/s03.mp3',title:'中位数的含义和求法'},{src:'tts/s04.mp3',title:'平均数vs中位数怎么选'},{src:'tts/s05.mp3',title:'生活中的统计分析'},{src:'tts/s06.mp3',title:'课程小结'}];
+let curIdx=0;const audio=new Audio();
+const abPlay=document.getElementById('abPlay'),abPrev=document.getElementById('abPrev'),abNext=document.getElementById('abNext'),abTitle=document.getElementById('abTitle'),abProgress=document.getElementById('abProgress'),abProgressWrap=document.getElementById('abProgressWrap'),abTime=document.getElementById('abTime'),abVol=document.getElementById('abVol');
+function loadTrack(i){curIdx=i;audio.src=audioPlaylist[i].src;abTitle.textContent='🎵 '+audioPlaylist[i].title;abProgress.style.width='0%';}
+abPlay.addEventListener('click',()=>{if(audio.paused){audio.play();abPlay.textContent='⏸';}else{audio.pause();abPlay.textContent='▶';}});
+abPrev.addEventListener('click',()=>{if(curIdx>0){loadTrack(curIdx-1);audio.play();abPlay.textContent='⏸';}});
+abNext.addEventListener('click',()=>{if(curIdx<audioPlaylist.length-1){loadTrack(curIdx+1);audio.play();abPlay.textContent='⏸';}});
+audio.addEventListener('timeupdate',()=>{if(audio.duration)abProgress.style.width=(audio.currentTime/audio.duration*100)+'%';const f=t=>`${Math.floor(t/60)}:${String(Math.floor(t%60)).padStart(2,'0')}`;abTime.textContent=f(audio.currentTime)+' / '+f(audio.duration||0);});
+audio.addEventListener('ended',()=>{if(curIdx<audioPlaylist.length-1){loadTrack(curIdx+1);audio.play();}else abPlay.textContent='▶';});
+abProgressWrap.addEventListener('click',e=>{const r=abProgressWrap.getBoundingClientRect();audio.currentTime=(e.clientX-r.left)/r.width*(audio.duration||0);});
+abVol.addEventListener('input',()=>audio.volume=abVol.value);audio.volume=0.85;loadTrack(0);
+document.querySelectorAll('section[id]').forEach(s=>new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)document.querySelectorAll('.nav a').forEach(a=>{a.classList.remove('active');if(a.getAttribute('href')==='#'+e.target.id)a.classList.add('active');});});},{threshold:0.3}).observe(s));
 </script>
 </body>
 </html>
