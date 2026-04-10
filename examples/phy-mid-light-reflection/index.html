@@ -8,378 +8,415 @@
 <meta name="teachany-domain" content="optics">
 <meta name="teachany-grade" content="8">
 <meta name="teachany-difficulty" content="2">
-<meta name="teachany-version" content="1.0">
+<meta name="teachany-version" content="2.0">
 <meta name="teachany-author" content="weponusa">
 <title>光的反射 · 教学课件</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
-:root {
-  --bg:#f8fafc;--bg2:#f0f4f8;--bg3:#e2e8f0;
-  --primary:#3b82f6;--secondary:#06b6d4;--accent:#f59e0b;
-  --success:#22c55e;--danger:#ef4444;--purple:#8b5cf6;--teal:#14b8a6;
-  --text:#1e293b;--dim:#64748b;--dimmer:#94a3b8;--card:#ffffff;--border:rgba(0,0,0,0.06);
-}
-*{margin:0;padding:0;box-sizing:border-box;}
-html{scroll-behavior:smooth;}
+:root{--bg:#f8fafc;--primary:#3b82f6;--secondary:#06b6d4;--accent:#f59e0b;--success:#10b981;--danger:#ef4444;--purple:#8b5cf6;--text:#1e293b;--dim:#64748b;--card:#fff;--border:rgba(0,0,0,0.06);}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
 body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.8;padding-bottom:70px;}
-body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(160deg,rgba(59,130,246,0.03) 0%,rgba(6,182,212,0.03) 50%,rgba(245,158,11,0.02) 100%);pointer-events:none;z-index:-1;}
-.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:58px;gap:4px;overflow-x:auto;box-shadow:0 1px 12px rgba(0,0,0,0.04);}
-.nav-brand{font-size:18px;font-weight:800;margin-right:18px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:10px;font-size:13.5px;font-weight:600;transition:all 0.2s;white-space:nowrap;}
-.nav a:hover,.nav a.active{color:var(--primary);background:rgba(59,130,246,0.08);}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:58px;gap:4px;overflow-x:auto;}
+.nav-brand{font-size:18px;font-weight:800;margin-right:18px;white-space:nowrap;background:linear-gradient(135deg,var(--secondary),var(--primary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:10px;font-size:13px;font-weight:600;transition:all 0.2s;white-space:nowrap;}
+.nav a:hover{color:var(--primary);background:rgba(59,130,246,0.08);}
 .container{max-width:1060px;margin:0 auto;padding:78px 24px 60px;}
 .hero{text-align:center;padding:40px 0 30px;}
-.hero h1{font-size:40px;font-weight:800;line-height:1.3;background:linear-gradient(135deg,var(--primary),var(--secondary),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;}
-.hero .subtitle{font-size:17px;color:var(--dim);margin-bottom:16px;}
-.hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
-.hero .meta span{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:5px 16px;font-size:13px;font-weight:600;color:var(--dim);box-shadow:0 1px 4px rgba(0,0,0,0.04);}
+.hero h1{font-size:38px;font-weight:800;background:linear-gradient(135deg,var(--secondary),var(--primary),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;}
+.hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:12px;}
+.hero .meta span{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:5px 16px;font-size:13px;font-weight:600;color:var(--dim);}
 .section{margin:44px 0;}
-.section-title{font-size:24px;font-weight:800;margin-bottom:18px;padding-left:16px;border-left:4px solid transparent;border-image:linear-gradient(to bottom,var(--primary),var(--secondary)) 1;}
-.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px 26px;margin-bottom:18px;box-shadow:0 2px 12px rgba(0,0,0,0.04);transition:transform 0.2s,box-shadow 0.2s;}
-.card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(59,130,246,0.08);}
+.section-title{font-size:24px;font-weight:800;margin-bottom:18px;padding-left:16px;border-left:4px solid var(--primary);}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px 26px;margin-bottom:18px;box-shadow:0 2px 12px rgba(0,0,0,0.04);}
 .card h3{font-size:18px;font-weight:700;margin-bottom:10px;}
-.card p,.card li{font-size:15.5px;line-height:1.85;color:var(--dim);}
-.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;}
-.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;}
-.obj-card{text-align:center;padding:26px 18px;border-top:3px solid transparent;background-clip:padding-box;}
-.obj-card:nth-child(1){border-top-color:var(--primary);}
-.obj-card:nth-child(2){border-top-color:var(--secondary);}
-.obj-card:nth-child(3){border-top-color:var(--accent);}
-.obj-card .icon{font-size:36px;margin-bottom:10px;}
-.obj-card h4{font-size:16px;font-weight:700;margin-bottom:6px;}
-.obj-card p{font-size:14px;color:var(--dim);}
+.card p,.card li{font-size:15px;line-height:1.85;color:var(--dim);}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;}
 .highlight{color:var(--primary);font-weight:700;}
-.quiz-option{display:block;padding:14px 18px;margin:8px 0;border-radius:12px;background:var(--bg);border:2px solid var(--border);cursor:pointer;transition:all 0.25s;font-size:15px;font-weight:600;color:var(--text);}
-.quiz-option:hover{background:rgba(59,130,246,0.05);border-color:var(--primary);transform:translateX(3px);}
-.quiz-option.correct{background:rgba(34,197,94,0.1);border-color:var(--success);color:#15803d;}
-.quiz-option.wrong{background:rgba(239,68,68,0.08);border-color:var(--danger);color:#b91c1c;}
-.quiz-feedback{padding:12px 16px;border-radius:10px;margin-top:10px;font-size:14.5px;display:none;}
-.quiz-feedback.show{display:block;animation:slideUp 0.3s ease;}
-@keyframes slideUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-.insight-box{background:linear-gradient(135deg,rgba(6,182,212,0.06),rgba(59,130,246,0.06));border-left:4px solid var(--secondary);padding:18px 22px;border-radius:0 12px 12px 0;margin:16px 0;}
-.insight-box h4{color:var(--secondary);font-size:16px;font-weight:700;margin-bottom:8px;}
-.insight-box p{color:var(--text);font-size:15px;}
-.law-box{background:linear-gradient(135deg,rgba(59,130,246,0.08),rgba(20,184,166,0.08));border:2px solid rgba(59,130,246,0.2);border-radius:14px;padding:20px 24px;margin:16px 0;}
-.law-box h4{color:var(--primary);font-size:17px;font-weight:800;margin-bottom:10px;}
-.law-box p{font-size:15.5px;color:var(--text);margin-bottom:6px;}
-svg.optics-diagram{width:100%;max-width:520px;display:block;margin:16px auto;background:#f8faff;border-radius:12px;border:1px solid var(--border);}
-footer{text-align:center;padding:36px 0;color:var(--dimmer);font-size:13px;border-top:1px solid var(--border);margin-top:50px;}
-/* Audio Bar */
-.audio-bar{position:fixed;bottom:0;left:0;right:0;z-index:500;background:rgba(59,130,246,0.95);backdrop-filter:blur(12px);border-top:2px solid rgba(255,255,255,0.3);padding:10px 24px;display:flex;align-items:center;gap:14px;}
-.audio-bar .ab-btn{width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;background:#fff;color:#3b82f6;font-size:16px;display:flex;align-items:center;justify-content:center;}
-.audio-bar .ab-info{flex:1;min-width:0;}
-.audio-bar .ab-title{font-size:13px;font-weight:700;color:#fff;}
-.audio-bar .ab-progress-wrap{height:4px;background:rgba(255,255,255,0.3);border-radius:2px;margin-top:4px;cursor:pointer;}
-.audio-bar .ab-progress{height:100%;background:#fff;border-radius:2px;width:0%;}
-.audio-bar .ab-time{font-size:11px;color:rgba(255,255,255,0.8);margin-top:2px;}
-.audio-bar .ab-vol{width:60px;accent-color:#fff;}
-@media(max-width:600px){.hero h1{font-size:28px;}.nav{height:52px;}.section-title{font-size:21px;}.card{padding:18px;}}
+/* 生活场景：镜子反射 */
+@keyframes reflectBeam{0%{opacity:0;width:0}40%{opacity:1;width:120px}100%{opacity:1;width:120px}}
+@keyframes mirrorShine{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes waterRipple{0%{transform:scaleX(1) scaleY(1);opacity:0.6}50%{transform:scaleX(1.1) scaleY(0.9);opacity:0.8}100%{transform:scaleX(1) scaleY(1);opacity:0.6}}
+/* 互动实验台 */
+#interactive-lab{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;}
+.lab-controls{display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:20px;}
+.ctrl-group label{font-size:13px;font-weight:600;color:var(--dim);display:block;margin-bottom:6px;}
+.ctrl-group input[type=range]{width:100%;accent-color:var(--primary);}
+.ctrl-group .val{font-size:22px;font-weight:800;color:var(--primary);}
+.lab-result{background:var(--bg);border-radius:12px;padding:16px;text-align:center;font-size:16px;font-weight:700;color:var(--text);margin-bottom:16px;}
+#kg-svg{width:100%;height:360px;background:radial-gradient(ellipse at center,#eff6ff,#f8fafc);border-radius:12px;}
+.kg-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;}
+.kg-legend-item{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--dim);}
+.kg-dot{width:12px;height:12px;border-radius:50%;}
+.quiz-option{display:block;padding:12px 18px;margin:8px 0;border-radius:10px;background:var(--bg);border:2px solid var(--border);cursor:pointer;transition:all 0.2s;font-size:14px;font-weight:600;}
+.quiz-option:hover{border-color:var(--primary);background:rgba(59,130,246,0.05);}
+.quiz-option.correct{background:rgba(16,185,129,0.1);border-color:var(--success);color:#065f46;}
+.quiz-option.wrong{background:rgba(239,68,68,0.08);border-color:var(--danger);color:#991b1b;}
+.quiz-feedback{padding:12px 16px;border-radius:10px;margin-top:10px;font-size:14px;display:none;}
+.quiz-feedback.show{display:block;}
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-top:1px solid var(--border);padding:12px 24px;display:flex;justify-content:center;gap:12px;}
+.btn{padding:10px 24px;border-radius:10px;border:none;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-outline{background:transparent;border:2px solid var(--border);color:var(--dim);}
+.formula-box{background:linear-gradient(135deg,rgba(59,130,246,0.05),rgba(6,182,212,0.05));border:1px solid rgba(59,130,246,0.15);border-radius:12px;padding:20px;text-align:center;margin:12px 0;}
+.formula{font-size:24px;font-weight:800;color:var(--primary);}
+.key-point{background:rgba(245,158,11,0.08);border-left:4px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 18px;margin:12px 0;font-size:14.5px;}
 </style>
 </head>
 <body>
 <nav class="nav">
-  <span class="nav-brand">🎓 教我学 TeachAny</span>
-  <a href="#hero">首页</a>
-  <a href="#goals">目标</a>
-  <a href="#module-1">反射定律</a>
-  <a href="#module-2">两种反射</a>
-  <a href="#module-3">光路图</a>
-  <a href="#deep-understanding">深层理解</a>
-  <a href="#summary">总结</a>
+  <span class="nav-brand">🪞 光的反射</span>
+  <a href="#life-scene">生活场景</a>
+  <a href="#concepts">核心概念</a>
+  <a href="#interactive-lab">互动实验</a>
+  <a href="#knowledge-graph">知识图谱</a>
+  <a href="#quiz">测验</a>
 </nav>
 
 <div class="container">
-  <!-- Hero -->
-  <section class="hero" id="hero">
-    <h1>光的反射</h1>
-    <p class="subtitle">探索光如何"弹回来"——反射定律与镜面世界</p>
+  <div class="hero">
+    <h1>🪞 光的反射</h1>
+    <p style="font-size:17px;color:var(--dim);margin-top:8px;">反射定律 · 镜面反射与漫反射 · 平面镜成像</p>
     <div class="meta">
-      <span>⚡ 物理</span>
-      <span>🎓 八年级上</span>
-      <span>⏱️ 约 35 分钟</span>
-      <span>🎯 新授课</span>
-      <span>📖 第4章 光现象</span>
+      <span>📚 初中物理</span><span>🎓 8年级</span><span>🔬 光学</span><span>⭐ 重点</span>
     </div>
-  </section>
+  </div>
 
-  <!-- Goals -->
-  <section class="section" id="goals">
-    <h2 class="section-title">🎯 学习目标</h2>
-    <div class="grid-3">
-      <div class="card obj-card">
-        <div class="icon">📌</div>
-        <h4>陈述反射定律</h4>
-        <p>能说出反射定律的三句话：三线一面、法线居中、两角相等</p>
-      </div>
-      <div class="card obj-card">
-        <div class="icon">✏️</div>
-        <h4>画出反射光路图</h4>
-        <p>给定入射光线，能正确画出法线和反射光线，标注入射角与反射角</p>
-      </div>
-      <div class="card obj-card">
-        <div class="icon">🔍</div>
-        <h4>解释生活中的反射</h4>
-        <p>区分镜面反射与漫反射，解释黑板反光、路灯刺眼等现象</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- Module 1: 反射定律 -->
-  <section class="section" id="module-1">
-    <h2 class="section-title">📖 模块一：反射定律</h2>
-    <div class="card">
-      <h3>🌉 为什么要学反射？</h3>
-      <p><span class="highlight">你已经知道……</span>光在均匀介质中沿直线传播，我们能看见物体是因为光进入了眼睛。</p>
-      <p><span class="highlight">但有个问题……</span>你能看见课桌、黑板、月亮……它们自己并不发光，那光是怎么从它们身上到达你眼睛的？</p>
-      <p><span class="highlight">所以这节课要学……</span>光打到物体表面后"弹回来"的规律——<strong>反射定律</strong>，它解释了我们能"看见"世界的根本原因。</p>
-    </div>
-
-    <!-- SVG 光路图 -->
-    <div class="card">
-      <h3>📐 反射光路图</h3>
-      <svg class="optics-diagram" viewBox="0 0 520 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- 生活场景动画 -->
+  <div class="section" id="life-scene">
+    <div class="section-title">🎬 生活场景：镜面反射动画</div>
+    <div style="background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:16px;padding:30px;position:relative;overflow:hidden;min-height:300px;">
+      <div style="color:rgba(255,255,255,0.8);font-size:18px;font-weight:700;text-align:center;margin-bottom:20px;">🪞 光线遇到镜面发生反射</div>
+      <svg style="width:100%;height:220px;" viewBox="0 0 700 220">
         <!-- 镜面 -->
-        <line x1="60" y1="200" x2="460" y2="200" stroke="#94a3b8" stroke-width="3"/>
-        <text x="460" y="215" font-size="13" fill="#64748b">镜面</text>
-        <!-- 法线 (虚线) -->
-        <line x1="260" y1="60" x2="260" y2="270" stroke="#f59e0b" stroke-width="2" stroke-dasharray="8,5"/>
-        <text x="268" y="75" font-size="13" fill="#f59e0b" font-weight="bold">法线 N</text>
-        <!-- 入射光线 -->
-        <line x1="100" y1="80" x2="260" y2="200" stroke="#3b82f6" stroke-width="2.5" marker-end="url(#arrow-blue)"/>
-        <text x="110" y="110" font-size="13" fill="#3b82f6" font-weight="bold">入射光线</text>
-        <!-- 反射光线 -->
-        <line x1="260" y1="200" x2="420" y2="80" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arrow-red)"/>
-        <text x="360" y="110" font-size="13" fill="#ef4444" font-weight="bold">反射光线</text>
-        <!-- 入射角弧 -->
-        <path d="M 245 190 A 25 25 0 0 1 260 168" fill="none" stroke="#3b82f6" stroke-width="2"/>
-        <text x="218" y="172" font-size="12" fill="#3b82f6">θ₁</text>
-        <!-- 反射角弧 -->
-        <path d="M 260 168 A 25 25 0 0 1 277 190" fill="none" stroke="#ef4444" stroke-width="2"/>
-        <text x="270" y="168" font-size="12" fill="#ef4444">θ₂</text>
-        <!-- 等号标注 -->
-        <text x="230" y="250" font-size="14" fill="#1e293b" font-weight="bold">θ₁ = θ₂（入射角 = 反射角）</text>
-        <!-- 箭头定义 -->
-        <defs>
-          <marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-            <path d="M0,0 L0,6 L8,3 z" fill="#3b82f6"/>
-          </marker>
-          <marker id="arrow-red" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-            <path d="M0,0 L0,6 L8,3 z" fill="#ef4444"/>
-          </marker>
-        </defs>
+        <rect x="330" y="40" width="10" height="140" rx="3" fill="rgba(147,197,253,0.5)" stroke="#93c5fd" stroke-width="2"/>
+        <rect x="340" y="40" width="4" height="140" fill="rgba(255,255,255,0.1)"/>
+        <!-- 法线 -->
+        <line x1="335" y1="20" x2="335" y2="200" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-dasharray="5,4"/>
+        <text x="350" y="18" font-size="11" fill="rgba(255,255,255,0.5)">法线</text>
+        <!-- 入射光线（动画：从左上入射到镜面） -->
+        <line x1="100" y1="40" x2="332" y2="110" stroke="#fbbf24" stroke-width="2.5">
+          <animate attributeName="stroke-dashoffset" from="300" to="0" dur="2s" repeatCount="indefinite"/>
+          <animate attributeName="stroke-dasharray" from="300 300" to="0 300" dur="0s"/>
+        </line>
+        <line x1="100" y1="40" x2="332" y2="110" stroke="#fbbf24" stroke-width="2.5" stroke-dasharray="300" stroke-dashoffset="300" style="animation:rainbowArc 2s ease-out infinite;"/>
+        <!-- 反射光线（从镜面到右上） -->
+        <line x1="332" y1="110" x2="560" y2="40" stroke="#93c5fd" stroke-width="2.5" stroke-dasharray="300" stroke-dashoffset="300">
+          <animate attributeName="stroke-dashoffset" from="300" to="0" begin="0.8s" dur="1.5s" repeatCount="indefinite"/>
+        </line>
+        <!-- 角度标注 -->
+        <path d="M320,110 A20,20 0 0,1 332,92" fill="none" stroke="#fbbf24" stroke-width="1.5"/>
+        <text x="298" y="98" font-size="11" fill="#fbbf24">θ₁</text>
+        <path d="M332,92 A20,20 0 0,1 348,110" fill="none" stroke="#93c5fd" stroke-width="1.5"/>
+        <text x="350" y="98" font-size="11" fill="#93c5fd">θ₂</text>
+        <!-- 标签 -->
+        <text x="80" y="38" font-size="12" fill="#fbbf24">入射光线</text>
+        <text x="540" y="38" font-size="12" fill="#93c5fd">反射光线</text>
+        <text x="335" y="190" font-size="11" fill="rgba(255,255,255,0.5)">平面镜</text>
+        <!-- 法线角度说明 -->
+        <text x="150" y="160" font-size="13" fill="rgba(255,255,255,0.7)">入射角 θ₁ = 反射角 θ₂</text>
+        <!-- 水面倒影动画 -->
+        <ellipse cx="170" cy="200" rx="60" ry="8" fill="rgba(147,197,253,0.2)" stroke="#93c5fd" stroke-width="1" style="animation:waterRipple 2s ease-in-out infinite;"/>
+        <text x="170" y="216" font-size="10" fill="rgba(255,255,255,0.4)" text-anchor="middle">水面倒影（镜面反射）</text>
+        <!-- 粗糙表面（漫反射示意）-->
+        <rect x="490" y="150" width="160" height="4" fill="#6b7280"/>
+        <line x1="530" y1="100" x2="510" y2="150" stroke="#fbbf24" stroke-width="2"/>
+        <line x1="530" y1="100" x2="490" y2="140" stroke="#f97316" stroke-width="1.5" opacity="0.7"/>
+        <line x1="530" y1="100" x2="530" y2="148" stroke="#10b981" stroke-width="1.5" opacity="0.7"/>
+        <line x1="530" y1="100" x2="555" y2="142" stroke="#8b5cf6" stroke-width="1.5" opacity="0.7"/>
+        <line x1="530" y1="100" x2="580" y2="148" stroke="#ef4444" stroke-width="1.5" opacity="0.7"/>
+        <text x="540" y="170" font-size="10" fill="rgba(255,255,255,0.4)" text-anchor="middle">漫反射（粗糙面）</text>
       </svg>
-      <div class="law-box">
-        <h4>🔑 反射定律（三句话记牢）</h4>
-        <p>① <strong>三线一面</strong>：入射光线、反射光线、法线在同一平面内</p>
-        <p>② <strong>法线居中</strong>：入射光线和反射光线分居法线两侧</p>
-        <p>③ <strong>两角相等</strong>：反射角 = 入射角（注意：角从法线量起！）</p>
-      </div>
     </div>
+  </div>
 
+  <!-- 核心概念 -->
+  <div class="section" id="concepts">
+    <div class="section-title">📐 核心概念</div>
     <div class="card">
-      <h3>✏️ 马上练一题</h3>
-      <p>一束光线射到镜面上，入射角为 30°，则反射角为：</p>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'m1-q1')">A. 30°</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m1-q1')">B. 60°（入射角与法线的夹角是30°，有人误用90°-30°=60°）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m1-q1')">C. 90°（误以为反射角与镜面成90°）</div>
-      <div id="m1-q1" class="quiz-feedback"></div>
-    </div>
-  </section>
-
-  <!-- Module 2: 两种反射 -->
-  <section class="section" id="module-2">
-    <h2 class="section-title">📖 模块二：镜面反射与漫反射</h2>
-    <div class="card">
-      <h3>💡 两种反射的区别</h3>
-      <div class="grid-2">
+      <h3>📏 光的反射定律</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
         <div>
-          <p><strong>镜面反射：</strong>光射到光滑表面（如镜子、平静水面），平行入射的光线反射后仍平行，方向一致。<span class="highlight">刺眼！</span></p>
-          <svg viewBox="0 0 240 140" style="width:100%;max-width:240px;margin-top:8px;" xmlns="http://www.w3.org/2000/svg">
-            <line x1="20" y1="110" x2="220" y2="110" stroke="#94a3b8" stroke-width="2"/>
-            <line x1="40" y1="60" x2="80" y2="110" stroke="#3b82f6" stroke-width="2" marker-end="url(#ab1)"/>
-            <line x1="80" y1="110" x2="120" y2="60" stroke="#ef4444" stroke-width="2" marker-end="url(#ab2)"/>
-            <line x1="100" y1="60" x2="140" y2="110" stroke="#3b82f6" stroke-width="2" marker-end="url(#ab1)"/>
-            <line x1="140" y1="110" x2="180" y2="60" stroke="#ef4444" stroke-width="2" marker-end="url(#ab2)"/>
-            <text x="60" y="135" font-size="11" fill="#64748b">平行入射→平行反射</text>
-            <defs>
-              <marker id="ab1" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#3b82f6"/></marker>
-              <marker id="ab2" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#ef4444"/></marker>
-            </defs>
-          </svg>
+          <p>光射到物体表面时，被反射回来的现象叫<span class="highlight">光的反射</span>。</p>
+          <div class="formula-box" style="margin-top:12px;">
+            <div class="formula" style="font-size:20px;">入射角 = 反射角</div>
+            <div style="font-size:13px;color:var(--dim);margin-top:6px;">θ₁ = θ₂ （均从法线算起）</div>
+          </div>
+          <div class="key-point">
+            三线共面：入射光线、法线、反射光线在同一平面内；<br>
+            两线分居：入射光线和反射光线分居法线两侧；<br>
+            两角相等：入射角等于反射角。
+          </div>
         </div>
-        <div>
-          <p><strong>漫反射：</strong>光射到粗糙表面（如白纸、黑板），反射光线向四面八方散射。<span class="highlight">各方向都能看到！</span></p>
-          <svg viewBox="0 0 240 140" style="width:100%;max-width:240px;margin-top:8px;" xmlns="http://www.w3.org/2000/svg">
-            <line x1="20" y1="110" x2="220" y2="110" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4,3"/>
-            <line x1="60" y1="50" x2="110" y2="105" stroke="#3b82f6" stroke-width="2" marker-end="url(#ac1)"/>
-            <line x1="110" y1="105" x2="60" y2="60" stroke="#ef4444" stroke-width="1.5" marker-end="url(#ac2)"/>
-            <line x1="110" y1="105" x2="100" y2="50" stroke="#ef4444" stroke-width="1.5" marker-end="url(#ac2)"/>
-            <line x1="110" y1="105" x2="145" y2="55" stroke="#ef4444" stroke-width="1.5" marker-end="url(#ac2)"/>
-            <line x1="110" y1="105" x2="170" y2="70" stroke="#ef4444" stroke-width="1.5" marker-end="url(#ac2)"/>
-            <text x="60" y="135" font-size="11" fill="#64748b">入射→四面八方反射</text>
+        <div style="text-align:center;">
+          <svg width="100%" height="180" viewBox="0 0 280 180">
+            <!-- 反射面 -->
+            <rect x="40" y="120" width="200" height="6" rx="2" fill="#94a3b8"/>
+            <!-- 法线 -->
+            <line x1="140" y1="10" x2="140" y2="126" stroke="#64748b" stroke-width="1.5" stroke-dasharray="5,4"/>
+            <text x="148" y="20" font-size="11" fill="#64748b">法线N</text>
+            <!-- 入射光 -->
+            <line x1="30" y1="20" x2="140" y2="122" stroke="#f59e0b" stroke-width="2.5" marker-end="url(#ra1)"/>
             <defs>
-              <marker id="ac1" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#3b82f6"/></marker>
-              <marker id="ac2" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#ef4444"/></marker>
+              <marker id="ra1" markerWidth="6" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,6 2.5,0 5" fill="#f59e0b"/></marker>
+              <marker id="ra2" markerWidth="6" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,6 2.5,0 5" fill="#06b6d4"/></marker>
             </defs>
+            <!-- 反射光 -->
+            <line x1="140" y1="122" x2="250" y2="20" stroke="#06b6d4" stroke-width="2.5" marker-end="url(#ra2)"/>
+            <!-- 角度圆弧 -->
+            <path d="M125,122 A20,20 0 0,1 140,104" fill="none" stroke="#f59e0b" stroke-width="1.5"/>
+            <text x="102" y="110" font-size="12" fill="#f59e0b" font-weight="700">θ₁</text>
+            <path d="M140,104 A20,20 0 0,1 155,122" fill="none" stroke="#06b6d4" stroke-width="1.5"/>
+            <text x="153" y="110" font-size="12" fill="#06b6d4" font-weight="700">θ₂</text>
+            <!-- 标签 -->
+            <text x="30" y="15" font-size="11" fill="#f59e0b">入射光</text>
+            <text x="205" y="15" font-size="11" fill="#06b6d4">反射光</text>
+            <text x="140" y="160" text-anchor="middle" font-size="12" fill="#64748b" font-weight="700">θ₁ = θ₂</text>
           </svg>
         </div>
       </div>
-      <div class="insight-box" style="margin-top:14px;">
-        <h4>⚠️ 注意！</h4>
-        <p>漫反射中，每一条光线依然遵守反射定律！只是因为表面粗糙，各点法线方向不同，才使反射光线四散。</p>
-      </div>
     </div>
-    <div class="card">
-      <h3>✏️ 判断题</h3>
-      <p>雨后路面积水处看起来比旁边干燥路面更亮，这是因为：</p>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'m2-q1')">A. 积水路面光滑→镜面反射→射向眼睛的光多，显得更亮</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m2-q1')">B. 水能发光，所以更亮（水自身不发光）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'m2-q1')">C. 干燥路面发生漫反射，反射光多（漫反射看起来均匀，不是定向亮）</div>
-      <div id="m2-q1" class="quiz-feedback"></div>
-    </div>
-  </section>
 
-  <!-- Module 3: 光路图练习 -->
-  <section class="section" id="module-3">
-    <h2 class="section-title">📖 模块三：光路图的画法</h2>
-    <div class="card">
-      <h3>📝 三步画出反射光路</h3>
-      <ol style="color:var(--dim);font-size:15.5px;padding-left:20px;">
-        <li style="margin-bottom:8px;"><strong>Step 1：</strong>在入射点处画出<span class="highlight">法线</span>（垂直于反射面）</li>
-        <li style="margin-bottom:8px;"><strong>Step 2：</strong>量出<span class="highlight">入射角</span>（入射光线与法线的夹角）</li>
-        <li style="margin-bottom:8px;"><strong>Step 3：</strong>在法线另一侧作<span class="highlight">等角度</span>的反射光线，加箭头</li>
-      </ol>
-      <div class="insight-box">
-        <h4>🔑 记忆锚点</h4>
-        <p>反射定律三句话：「<strong>三线一面，法线中间，两角相等</strong>」——角度从法线量起，不要从镜面量！</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- Deep Understanding -->
-  <section class="section" id="deep-understanding">
-    <h2 class="section-title">🔬 深层理解</h2>
     <div class="grid-2">
       <div class="card">
-        <h3>🔄 光路可逆</h3>
-        <p>反射时，<span class="highlight">光路是可逆的</span>：如果光沿反射光线方向射入，它将沿原入射光线方向反射出去。<br>应用：夜间在后视镜中看到后方来车灯光——因为来车也能从镜中看到你。</p>
+        <h3>✨ 镜面反射</h3>
+        <p>平行光射到<span class="highlight">光滑表面</span>（如镜子、水面），反射后仍为平行光，反射光向同一方向射出。</p>
+        <div class="key-point">例：平面镜、平静水面、抛光金属</div>
+        <p style="margin-top:8px;">镜面反射使人"刺眼"，如强光直射。</p>
       </div>
       <div class="card">
-        <h3>🌍 生活联系</h3>
-        <ul style="color:var(--dim);font-size:15px;padding-left:18px;">
-          <li>照镜子→平面镜成像（镜面反射）</li>
-          <li>能从各方向看黑板上的字→漫反射</li>
-          <li>雨后路面反光刺眼→积水变光滑→镜面反射</li>
-          <li>月亮发光→反射太阳光（漫反射）</li>
-        </ul>
+        <h3>🌫️ 漫反射</h3>
+        <p>平行光射到<span class="highlight">粗糙表面</span>，反射后向四面八方散射，从各方向都能看到物体。</p>
+        <div class="key-point">例：白纸、墙壁、衣物——我们能看到周围物体主要靠漫反射</div>
+        <p style="margin-top:8px;">漫反射也遵循反射定律（对每条光线单独适用）。</p>
       </div>
     </div>
-    <div class="card">
-      <h3>🎯 综合练习</h3>
-      <p><strong>Level 1：</strong>光从某方向射到镜面，入射角是45°，求反射角，并说出反射光线与入射光线的夹角。</p>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'du-q1')">A. 反射角45°，两线夹角90°</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'du-q1')">B. 反射角45°，两线夹角45°（夹角应为2×45°=90°）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'du-q1')">C. 反射角90°（角从法线量，不是镜面）</div>
-      <div id="du-q1" class="quiz-feedback"></div>
-      <br>
-      <p style="margin-top:12px;"><strong>Level 2：</strong>下列哪种情况发生的是镜面反射？</p>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'du-q2')">A. 用白纸看书（白纸漫反射）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'du-q2')">B. 晴天平静湖面反光耀眼（光滑水面）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'du-q2')">C. 月光照亮黑夜（月亮表面粗糙，漫反射）</div>
-      <div id="du-q2" class="quiz-feedback"></div>
-    </div>
-  </section>
 
-  <!-- Summary -->
-  <section class="section" id="summary">
-    <h2 class="section-title">📊 本课总结</h2>
     <div class="card">
-      <h3>🗺️ 知识地图</h3>
-      <div style="background:var(--bg2);border-radius:10px;padding:18px;font-size:15px;color:var(--text);">
-        <p>光的反射</p>
-        <p style="padding-left:20px;">├── 反射定律：三线一面 · 法线居中 · 两角相等</p>
-        <p style="padding-left:20px;">├── 镜面反射：光滑表面 → 平行反射 → 定向强光</p>
-        <p style="padding-left:20px;">├── 漫反射：粗糙表面 → 四散反射 → 各方向可见</p>
-        <p style="padding-left:20px;">└── 光路可逆：入射与反射可互换</p>
+      <h3>🪞 平面镜成像</h3>
+      <div class="grid-2">
+        <div>
+          <p>平面镜利用光的反射成像，所成的像是<span class="highlight">虚像</span>。</p>
+          <ul style="padding-left:18px;margin-top:8px;font-size:14px;color:var(--dim);">
+            <li><strong>正立等大</strong>：像与物同样大小</li>
+            <li><strong>等距</strong>：物距 = 像距（到镜面）</li>
+            <li><strong>虚像</strong>：光线实际上不经过像的位置</li>
+            <li><strong>左右对称</strong>：像与物关于镜面对称</li>
+          </ul>
+          <div class="formula-box" style="margin-top:12px;">
+            <div class="formula" style="font-size:18px;">物距 = 像距</div>
+          </div>
+        </div>
+        <div style="text-align:center;">
+          <svg width="100%" height="160" viewBox="0 0 280 160">
+            <!-- 镜面 -->
+            <rect x="137" y="10" width="6" height="140" fill="rgba(147,197,253,0.4)" stroke="#3b82f6" stroke-width="2"/>
+            <!-- 物体（左侧蜡烛） -->
+            <line x1="60" y1="80" x2="60" y2="40" stroke="#f59e0b" stroke-width="3"/>
+            <polygon points="60,40 54,54 66,54" fill="#f59e0b"/>
+            <text x="60" y="98" text-anchor="middle" font-size="11" fill="#f59e0b">物</text>
+            <!-- 像（右侧虚线蜡烛） -->
+            <line x1="220" y1="80" x2="220" y2="40" stroke="#06b6d4" stroke-width="2" stroke-dasharray="5,3"/>
+            <polygon points="220,40 214,54 226,54" fill="none" stroke="#06b6d4" stroke-width="2"/>
+            <text x="220" y="98" text-anchor="middle" font-size="11" fill="#06b6d4">像(虚)</text>
+            <!-- 等距标注 -->
+            <line x1="60" y1="120" x2="140" y2="120" stroke="#94a3b8" stroke-width="1"/>
+            <line x1="140" y1="120" x2="220" y2="120" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3"/>
+            <text x="100" y="138" text-anchor="middle" font-size="11" fill="#94a3b8">物距 d</text>
+            <text x="180" y="138" text-anchor="middle" font-size="11" fill="#94a3b8">像距 d</text>
+            <!-- 反射光线 -->
+            <line x1="60" y1="40" x2="140" y2="75" stroke="rgba(245,158,11,0.5)" stroke-width="1.5" stroke-dasharray="4,3"/>
+          </svg>
+        </div>
       </div>
     </div>
-    <div class="card">
-      <h3>🔮 后测：学会了吗？</h3>
-      <p>一束光线射到平面镜上，反射光线与镜面的夹角是 40°，则入射角为：</p>
-      <div class="quiz-option" onclick="checkAnswer(this,true,'sum-q1')">A. 50°（反射角=入射角，反射角=90°-40°=50°）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'sum-q1')">B. 40°（混淆了与镜面夹角和与法线夹角）</div>
-      <div class="quiz-option" onclick="checkAnswer(this,false,'sum-q1')">C. 80°（错误的计算方式）</div>
-      <div id="sum-q1" class="quiz-feedback"></div>
-    </div>
-  </section>
+  </div>
 
-  <footer>
-    <p>Made with <strong>教我学 TeachAny</strong> · <a href="https://github.com/weponusa/teachany" style="color:var(--primary);">GitHub</a></p>
-    <p style="margin-top:8px;">Built on ABT Narrative · Bloom's Taxonomy · Scaffolding · Cognitive Load Theory</p>
-  </footer>
+  <!-- 互动实验台 -->
+  <div class="section">
+    <div class="section-title">🧪 互动实验台：反射角实时计算</div>
+    <div id="interactive-lab" class="card">
+      <h3>🔬 调节入射角，观察反射光线变化</h3>
+      <div class="lab-controls">
+        <div class="ctrl-group">
+          <label>入射角 θ₁ (°)（从法线算起）</label>
+          <input type="range" id="inc-angle" min="0" max="90" value="40" step="1">
+          <div>θ₁ = <span class="val" id="ia-val">40</span>°</div>
+        </div>
+      </div>
+      <div class="lab-result">
+        入射角 θ₁ = <span id="ia-display" style="color:var(--accent);font-size:22px;">40</span>° &nbsp;&nbsp;
+        反射角 θ₂ = <span id="ra-display" style="color:var(--primary);font-size:22px;">40</span>°
+        &nbsp;&nbsp; <span style="color:var(--success);">✓ θ₁ = θ₂</span>
+      </div>
+      <svg id="reflect-svg" viewBox="0 0 700 280" style="width:100%;height:260px;background:#f0f9ff;border-radius:12px;">
+        <defs>
+          <marker id="arr-inc" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#f59e0b"/></marker>
+          <marker id="arr-ref" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#3b82f6"/></marker>
+        </defs>
+        <!-- 反射面 -->
+        <rect x="50" y="200" width="600" height="8" rx="3" fill="#94a3b8"/>
+        <!-- 法线 -->
+        <line x1="350" y1="30" x2="350" y2="208" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4"/>
+        <text x="358" y="28" font-size="12" fill="#94a3b8">法线N</text>
+        <!-- 入射光线（动态） -->
+        <line id="ref-inc" x1="0" y1="0" x2="350" y2="200" stroke="#f59e0b" stroke-width="2.5" marker-end="url(#arr-inc)"/>
+        <!-- 反射光线（动态） -->
+        <line id="ref-refl" x1="350" y1="200" x2="700" y2="0" stroke="#3b82f6" stroke-width="2.5" marker-end="url(#arr-ref)"/>
+        <!-- 入射角弧 -->
+        <path id="arc-inc" d="" fill="none" stroke="#f59e0b" stroke-width="1.5"/>
+        <text id="label-inc" x="0" y="0" font-size="14" fill="#f59e0b" font-weight="700"></text>
+        <!-- 反射角弧 -->
+        <path id="arc-ref" d="" fill="none" stroke="#3b82f6" stroke-width="1.5"/>
+        <text id="label-ref" x="0" y="0" font-size="14" fill="#3b82f6" font-weight="700"></text>
+        <!-- 标签 -->
+        <text id="label-inc-ray" x="0" y="0" font-size="12" fill="#f59e0b">入射光线</text>
+        <text id="label-ref-ray" x="0" y="0" font-size="12" fill="#3b82f6">反射光线</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- 知识图谱 -->
+  <div class="section">
+    <div class="section-title">🕸️ 知识图谱</div>
+    <div id="knowledge-graph" class="card">
+      <h3>📊 光的反射知识关联图</h3>
+      <svg id="kg-svg"></svg>
+      <div class="kg-legend">
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#3b82f6;"></div>当前主题</div>
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#10b981;"></div>前置知识</div>
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#f97316;"></div>后续拓展</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 测验 -->
+  <div class="section" id="quiz">
+    <div class="section-title">✍️ 课堂测验</div>
+    <div class="card" id="q1">
+      <h3>第1题</h3>
+      <p>光线以30°的入射角射到平面镜上，反射角为：</p>
+      <button class="quiz-option" onclick="checkQ(this,'q1',false)">A. 60°</button>
+      <button class="quiz-option" onclick="checkQ(this,'q1',true)">B. 30°</button>
+      <button class="quiz-option" onclick="checkQ(this,'q1',false)">C. 15°</button>
+      <button class="quiz-option" onclick="checkQ(this,'q1',false)">D. 90°</button>
+      <div class="quiz-feedback" id="fb-q1"></div>
+    </div>
+    <div class="card" id="q2">
+      <h3>第2题</h3>
+      <p>平面镜所成的像是：</p>
+      <button class="quiz-option" onclick="checkQ(this,'q2',false)">A. 倒立实像</button>
+      <button class="quiz-option" onclick="checkQ(this,'q2',false)">B. 倒立虚像</button>
+      <button class="quiz-option" onclick="checkQ(this,'q2',true)">C. 正立虚像</button>
+      <button class="quiz-option" onclick="checkQ(this,'q2',false)">D. 正立实像</button>
+      <div class="quiz-feedback" id="fb-q2"></div>
+    </div>
+    <div class="card" id="q3">
+      <h3>第3题</h3>
+      <p>关于漫反射，下列说法正确的是：</p>
+      <button class="quiz-option" onclick="checkQ(this,'q3',false)">A. 漫反射不遵从反射定律</button>
+      <button class="quiz-option" onclick="checkQ(this,'q3',true)">B. 漫反射使我们能从各个方向看到物体</button>
+      <button class="quiz-option" onclick="checkQ(this,'q3',false)">C. 只有镜面反射才是反射</button>
+      <button class="quiz-option" onclick="checkQ(this,'q3',false)">D. 漫反射的入射角不等于反射角</button>
+      <div class="quiz-feedback" id="fb-q3"></div>
+    </div>
+  </div>
 </div>
 
-<!-- Audio Bar -->
-<div class="audio-bar" id="audioBar">
-  <button class="ab-btn" id="abPrev" title="上一段">⏮</button>
-  <button class="ab-btn" id="abPlay" title="播放">▶</button>
-  <button class="ab-btn" id="abNext" title="下一段">⏭</button>
-  <div class="ab-info">
-    <div class="ab-title" id="abTitle">🎵 光的反射 — 点击播放课程讲解</div>
-    <div class="ab-progress-wrap" id="abProgressWrap"><div class="ab-progress" id="abProgress"></div></div>
-    <div class="ab-time" id="abTime">00:00 / 00:00</div>
-  </div>
-  <input type="range" class="ab-vol" id="abVol" min="0" max="1" step="0.05" value="0.8" title="音量">
+<div class="bottom-bar">
+  <button class="btn btn-outline" onclick="history.back()">← 返回</button>
+  <button class="btn btn-primary" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑ 返回顶部</button>
 </div>
 
 <script>
-function checkAnswer(el,isCorrect,feedbackId){
-  const parent=el.parentElement;
-  const options=parent.querySelectorAll('.quiz-option');
-  const feedback=document.getElementById(feedbackId);
-  if(parent.dataset.answered)return;
-  parent.dataset.answered='true';
-  options.forEach(opt=>{opt.style.pointerEvents='none';opt.style.opacity='0.6';});
-  if(isCorrect){
-    el.classList.add('correct');el.style.opacity='1';
-    feedback.innerHTML='✅ <strong>正确！</strong>'+el.textContent.split('（')[0]+'——反射定律：反射角=入射角，角从法线量起。';
-    feedback.style.background='rgba(34,197,94,0.1)';feedback.style.color='#15803d';
-  }else{
-    el.classList.add('wrong');el.style.opacity='1';
-    options.forEach(opt=>{if(opt.onclick&&opt.onclick.toString().includes('true')){opt.classList.add('correct');opt.style.opacity='1';}});
-    feedback.innerHTML='❌ <strong>再想想。</strong>'+el.textContent.match(/（([^）]+)）$/)?.[1]||'注意反射定律：角从法线量起，反射角等于入射角。';
-    feedback.style.background='rgba(239,68,68,0.08)';feedback.style.color='#b91c1c';
-  }
-  feedback.classList.add('show');
+const incSlider = document.getElementById('inc-angle');
+
+function updateReflection() {
+  const theta = parseFloat(incSlider.value);
+  document.getElementById('ia-val').textContent = theta;
+  document.getElementById('ia-display').textContent = theta;
+  document.getElementById('ra-display').textContent = theta;
+
+  // 计算SVG光线坐标（以镜面中心350,200为原点）
+  const cx = 350, cy = 200, L = 180;
+  const rad = theta * Math.PI / 180;
+  // 入射光线终点在(cx,cy)，起点从左上方
+  const incX = cx - L * Math.sin(rad);
+  const incY = cy - L * Math.cos(rad);
+  // 反射光线起点在(cx,cy)，终点到右上方
+  const refX = cx + L * Math.sin(rad);
+  const refY = cy - L * Math.cos(rad);
+
+  document.getElementById('ref-inc').setAttribute('x1', incX);
+  document.getElementById('ref-inc').setAttribute('y1', incY);
+  document.getElementById('label-inc-ray').setAttribute('x', incX - 70);
+  document.getElementById('label-inc-ray').setAttribute('y', incY + 5);
+  document.getElementById('ref-refl').setAttribute('x2', refX);
+  document.getElementById('ref-refl').setAttribute('y2', refY);
+  document.getElementById('label-ref-ray').setAttribute('x', refX + 5);
+  document.getElementById('label-ref-ray').setAttribute('y', refY + 5);
+
+  // 角度弧（入射角弧）
+  const arcR = 50;
+  const arcIncX = cx - arcR * Math.sin(rad / 2);
+  const arcIncY = cy - arcR * Math.cos(rad / 2);
+  document.getElementById('arc-inc').setAttribute('d', `M ${cx} ${cy - arcR} A ${arcR} ${arcR} 0 0 0 ${cx - arcR * Math.sin(rad)} ${cy - arcR * Math.cos(rad)}`);
+  document.getElementById('label-inc').setAttribute('x', arcIncX - 25);
+  document.getElementById('label-inc').setAttribute('y', arcIncY);
+  document.getElementById('label-inc').textContent = theta + '°';
+
+  document.getElementById('arc-ref').setAttribute('d', `M ${cx + arcR * Math.sin(rad)} ${cy - arcR * Math.cos(rad)} A ${arcR} ${arcR} 0 0 0 ${cx} ${cy - arcR}`);
+  document.getElementById('label-ref').setAttribute('x', arcIncX + 18);
+  document.getElementById('label-ref').setAttribute('y', arcIncY);
+  document.getElementById('label-ref').textContent = theta + '°';
 }
 
-// Audio Player
-const tracks=[
-  {title:'引入：为什么能看见物体',src:'tts/s01.mp3'},
-  {title:'反射定律三句话',src:'tts/s02.mp3'},
-  {title:'如何画反射光路图',src:'tts/s03.mp3'},
-  {title:'镜面反射与漫反射',src:'tts/s04.mp3'},
-  {title:'生活中的反射现象',src:'tts/s05.mp3'},
-  {title:'深层理解：光路可逆',src:'tts/s06.mp3'},
-  {title:'本课总结与练习',src:'tts/s07.mp3'},
-];
-let cur=0;const audio=new Audio();
-const abPlay=document.getElementById('abPlay');
-const abTitle=document.getElementById('abTitle');
-const abProgress=document.getElementById('abProgress');
-const abTime=document.getElementById('abTime');
-const abVol=document.getElementById('abVol');
-function loadTrack(i){cur=i;audio.src=tracks[i].src;abTitle.textContent='🎵 '+tracks[i].title;}
-function fmt(s){const m=Math.floor(s/60);return String(m).padStart(2,'0')+':'+String(Math.floor(s%60)).padStart(2,'0');}
-audio.addEventListener('timeupdate',()=>{
-  if(audio.duration){abProgress.style.width=(audio.currentTime/audio.duration*100)+'%';abTime.textContent=fmt(audio.currentTime)+' / '+fmt(audio.duration);}
-});
-audio.addEventListener('ended',()=>{if(cur<tracks.length-1)loadTrack(cur+1),audio.play();else abPlay.textContent='▶';});
-abPlay.addEventListener('click',()=>{if(audio.paused){audio.play();abPlay.textContent='⏸';}else{audio.pause();abPlay.textContent='▶';}});
-document.getElementById('abPrev').addEventListener('click',()=>{if(cur>0){loadTrack(cur-1);audio.play();abPlay.textContent='⏸';}});
-document.getElementById('abNext').addEventListener('click',()=>{if(cur<tracks.length-1){loadTrack(cur+1);audio.play();abPlay.textContent='⏸';}});
-document.getElementById('abProgressWrap').addEventListener('click',e=>{if(audio.duration){const r=e.currentTarget.getBoundingClientRect();audio.currentTime=(e.clientX-r.left)/r.width*audio.duration;}});
-abVol.addEventListener('input',()=>{audio.volume=abVol.value;});
-loadTrack(0);
+incSlider.addEventListener('input', updateReflection);
+updateReflection();
+
+// D3 知识图谱
+(function(){
+  const colorMap={current:"#3b82f6",prereq:"#10b981",next:"#f97316"};
+  const nodes=[
+    {id:"光的反射",type:"current"},{id:"光的直线传播",type:"prereq"},{id:"反射定律",type:"current"},
+    {id:"镜面反射",type:"current"},{id:"漫反射",type:"current"},{id:"平面镜成像",type:"next"},
+    {id:"球面镜",type:"next"},{id:"光的折射",type:"next"},{id:"潜望镜",type:"next"},
+    {id:"全反射",type:"next"},
+  ];
+  const links=[
+    {source:"光的直线传播",target:"光的反射"},{source:"光的反射",target:"反射定律"},
+    {source:"反射定律",target:"镜面反射"},{source:"反射定律",target:"漫反射"},
+    {source:"平面镜成像",target:"光的反射"},{source:"光的反射",target:"平面镜成像"},
+    {source:"光的反射",target:"球面镜"},{source:"光的反射",target:"光的折射"},
+    {source:"平面镜成像",target:"潜望镜"},{source:"光的折射",target:"全反射"},
+  ];
+  const svgEl=document.getElementById('kg-svg');
+  const W=svgEl.clientWidth||700;const H=360;
+  const svg=d3.select('#kg-svg').attr('viewBox',`0 0 ${W} ${H}`);
+  const sim=d3.forceSimulation(nodes)
+    .force('link',d3.forceLink(links).id(d=>d.id).distance(100))
+    .force('charge',d3.forceManyBody().strength(-280))
+    .force('center',d3.forceCenter(W/2,H/2))
+    .force('collision',d3.forceCollide(52));
+  svg.append('defs').append('marker').attr('id','arr').attr('viewBox','0 -4 8 8').attr('refX',18).attr('refY',0).attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto').append('path').attr('d','M0,-4L8,0L0,4').attr('fill','#94a3b8');
+  const link=svg.append('g').selectAll('line').data(links).enter().append('line').attr('stroke','#cbd5e1').attr('stroke-width',1.5).attr('marker-end','url(#arr)');
+  const node=svg.append('g').selectAll('g').data(nodes).enter().append('g').attr('class','node')
+    .call(d3.drag().on('start',(e,d)=>{if(!e.active)sim.alphaTarget(0.3).restart();d.fx=d.x;d.fy=d.y;}).on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y;}).on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}));
+  node.append('circle').attr('r',d=>d.type==='current'?28:20).attr('fill',d=>colorMap[d.type]).attr('opacity',0.85).attr('stroke','#fff').attr('stroke-width',2);
+  node.append('text').text(d=>d.id).attr('dy','0.35em').attr('text-anchor','middle').attr('fill','#fff').attr('font-size',d=>d.id.length>5?10:12).attr('font-weight','700');
+  sim.on('tick',()=>{
+    link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+    node.attr('transform',d=>`translate(${Math.max(30,Math.min(W-30,d.x))},${Math.max(30,Math.min(H-30,d.y))})`);
+  });
+})();
+
+function checkQ(btn,qid,isCorrect){
+  document.getElementById(qid).querySelectorAll('.quiz-option').forEach(o=>o.style.pointerEvents='none');
+  const fb=document.getElementById('fb-'+qid);
+  if(isCorrect){btn.classList.add('correct');fb.style.background='rgba(16,185,129,0.1)';fb.style.color='#065f46';fb.textContent='✅ 正确！';}
+  else{btn.classList.add('wrong');fb.style.background='rgba(239,68,68,0.08)';fb.style.color='#991b1b';fb.textContent='❌ 错误，请复习相关内容。';}
+  fb.classList.add('show');
+}
 </script>
 </body>
 </html>
