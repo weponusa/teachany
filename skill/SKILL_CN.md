@@ -882,7 +882,32 @@ AI **默认在以下位置自动插入** AI 多模态互动区：
 > 
 > 用户刚安装完 CodeBuddy 和 TeachAny skill 就可能直接下达课件任务——**不要假设用户已经做过任何环境准备**。AI 必须自动完成以下全部步骤。
 
-#### 步骤 1：定位 Skill 数据目录
+#### 步骤 0（推荐首选）：一键启动 Bootstrap
+
+**v5.9 新增**：使用 `bootstrap-courseware.cjs` 脚本，一条命令完成知识层数据提取、domain 推断、上下文文件生成：
+
+```bash
+# 🏆 最推荐方式——一条命令搞定 Phase 0.5
+node scripts/bootstrap-courseware.cjs --topic "一次函数" --subject math --grade 8
+
+# 脚本会自动：
+# 1. 推断 domain（如 topic="一次函数" → domain="functions"）
+# 2. 在知识图谱中搜索匹配节点
+# 3. 提取易错点和题目
+# 4. 生成 output/_context.json（富上下文文件）
+# 5. 生成 meta 标签模板和 ABT 设计建议
+```
+
+**执行成功后**：直接 `read_file` 读取 `output/_context.json`，其中包含：
+- `graph_node`：知识图谱节点（定义、前置链、真实场景、记忆锚点、Bloom 动词）
+- `errors`：与该知识点关联的全部易错点（含诊断和频次）
+- `exercises`：可直接复用的题目
+- `template_hints`：ABT 引入建议、前测设计提示、Bloom 练习设计指引
+- `meta_tags`：可直接粘贴的 teachany-* meta 标签
+
+**Bootstrap 失败时**（如 Node.js 不可用），回退到下面的手动降级链。
+
+#### 步骤 1：定位 Skill 数据目录（手动降级链）
 
 TeachAny skill 安装后，知识图谱数据和脚本随 skill 包一起下载，位于 skill 的安装目录中。AI 必须先找到这些文件：
 
@@ -899,6 +924,7 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
 
 | 优先级 | 方式 | 条件 | 操作 |
 |:---|:---|:---|:---|
+| 🏆 | 执行 `bootstrap-courseware.cjs` | Node.js 可用 + 脚本存在 | **一键生成** `_context.json`，包含图谱+易错点+题目+模板提示，AI 直接 `read_file` 即可 |
 | 🥇 | 执行 `knowledge_layer.py` | Python 可用 + 脚本存在 | 直接执行，获取结构化摘要 |
 | 🥈 | 直接读取 JSON 文件 | 脚本执行失败，但 `data/` 目录存在 | 用 `read_file` 工具读取 `data/{subject}/{domain}/_graph.json` 等文件 |
 | 🥉 | Web 搜索补充 | 数据目录不存在或主题未覆盖 | **必须**使用 web_search 工具搜索"[学科] [知识点] 课标 前置知识 易错点 教学设计"，从搜索结果中提取定义、前置链、易错点等关键数据 |
@@ -1036,7 +1062,7 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
 【驱动模式】___（问题驱动/项目驱动/活动驱动/问题链驱动）
 【情境模式】___（角色任务/故事冲突/生活现象/文化传承）
 【学科模式】___ → 讲解框架：___ / 互动组件：___ / 评估题型：___
-【知识层数据】（来源：🥇脚本 / 🥈JSON / 🥉Web搜索 / 🥊模型知识）
+【知识层数据】（来源：🏆Bootstrap / 🥇脚本 / 🥈JSON / 🥉Web搜索 / 🥊模型知识）
   - definition：✅已获取 / ⚠️未命中
   - prerequisites：✅已获取 / ⚠️未命中
   - real_world：✅已获取（N条） / ⚠️未命中
@@ -1122,6 +1148,16 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
 ### ⛔ Completeness Gate：输出完整性审查
 
 > **课件内容写完后、交付给用户之前，必须逐条核验以下 10 项审查清单。每项标注 ✅ 通过或 ❌ 未通过+修复方案。**
+>
+> **v5.9 新增**：优先使用自动化校验脚本 `validate-courseware.cjs` 执行审查：
+>
+> ```bash
+> # 自动化审查（推荐）——一条命令完成 18 项校验
+> node scripts/validate-courseware.cjs ./examples/math-linear-function --fix-hints
+> ```
+>
+> 脚本会自动检查 ABT 引入、前后测、互动练习、诊断反馈、Bloom 覆盖、知识溯源、meta 标签等全部项目，输出通过/未通过报告和修复建议。
+> **如果脚本可用，以脚本校验结果为准**；如果脚本不可用，回退到下面的人工清单。
 
 ```
 ═══════════════════════════════════════════
@@ -2021,8 +2057,8 @@ Phase 3.5：打包课件（默认必选）
 
 ---
 
-**技能版本**：v5.8  
-**更新日期**：2026-04-09  
+**技能版本**：v5.9  
+**更新日期**：2026-04-10  
 **变更摘要**：
 - v1.0：数理课件版
 - v2.0：拆成通用底座+学科适配层
@@ -2034,3 +2070,4 @@ Phase 3.5：打包课件（默认必选）
 - v5.6：**L3 语音讲解从"显式触发"升级为"默认必选"**——L1 课件完成后自动安装 edge-tts 并生成语音文件，仅用户明确拒绝时跳过；新增三级降级策略（自动安装→保留脚本→保留 JSON）；Generation Gate L3 字段改为"默认执行"；Phase 3/4 流程重构强制 L3 执行；硬规则从 15 条扩充至 16 条。
 - v5.7：**全面升级"按需调用"为"默认执行"，保证课件基本质量**——(1) 知识图谱查阅新增🥉Web搜索降级层（脚本→JSON→Web搜索→模型知识四级降级链），禁止跳过搜索直接用模型知识；(2) AI多模态互动区从"可选增强"改为"适用场景默认插入"；(3) 课件打包（Phase 3.5）改为默认必选；(4) 双语课件（中英文）改为默认生成；(5) Completeness Gate 从14项扩充至17项（+双语+打包+知识溯源）；(6) 硬规则从16条扩充至19条（+Web搜索必经+打包默认+双语默认）；(7) 架构分层新增L4打包层。
 - v5.8：**L2 教学动画从"显式触发"升级为"默认必选"**——L1 课件完成后自动搭建 Remotion 环境并生成教学动画视频，仅用户明确拒绝时跳过；新增四级降级策略（npm失败→ffmpeg缺失→渲染超时→Node.js不可用，均保留源码+给出修复命令）；Generation Gate L2 字段改为"默认执行"；Phase 3.2/3/4 流程重构强制 L2 执行；Completeness Gate 从17项扩充至18项（+L2检查）；硬规则从19条扩充至20条（+L2默认必选）；架构分层 L1+L2+L3+L4 四层全部默认自动执行。
+- v5.9：**课件产出稳定性工程化升级**——(1) 新增 `bootstrap-courseware.cjs` 一键启动脚本，将 Phase 0.5 的"AI 自觉执行降级链"升级为"一条命令自动提取知识层数据"，生成 `_context.json` 富上下文文件，AI 只需 `read_file` 即可获取全部图谱+易错点+题目+设计提示；(2) 新增 `validate-courseware.cjs` 自动化校验脚本，将 Completeness Gate 18 项审查从"人工逐条核验"升级为"一条命令自动检测"，输出通过/未通过报告和修复建议；(3) 降级链升级为五级（🏆Bootstrap→🥇脚本→🥈JSON→🥉Web搜索→🥊模型知识）；(4) Generation Gate 知识层来源标注新增 🏆Bootstrap 选项。

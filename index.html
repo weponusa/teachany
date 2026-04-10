@@ -619,6 +619,7 @@ footer a { color: var(--primary); text-decoration: none; }
   <p style="margin-top:8px;">Built on ABT Narrative · Bloom's Taxonomy · ConcepTest · Cognitive Load Theory · Mayer's Principles · Scaffolding</p>
 </footer>
 
+<script src="./scripts/registry-loader.js"></script>
 <script src="./scripts/courseware-importer.js"></script>
 <script src="./scripts/community-loader.js"></script>
 <script>
@@ -638,15 +639,21 @@ function filterCourses(subject) {
   });
 }
 
-// 初始化课件导入器 + 社区课件
+// 初始化：Registry → 社区课件 → 用户课件导入器
 document.addEventListener('DOMContentLoaded', async function() {
   const grid = document.querySelector('#courseGrid');
 
+  // 1. 从 Registry 加载课件（替代硬编码卡片）
+  if (window.TeachAnyRegistry) {
+    await TeachAnyRegistry.initRegistryLoader('#courseGrid');
+  }
+
+  // 2. 初始化课件导入器（"添加我的课件"按钮）
   if (window.TeachAnyImporter) {
     TeachAnyImporter.initGalleryImporter('#courseGrid');
   }
 
-  // 异步加载社区课件索引并渲染社区课件卡片
+  // 3. 异步加载社区课件索引并渲染社区课件卡片
   if (window.TeachAnyCommunity && grid) {
     try {
       const index = await TeachAnyCommunity.fetchCommunityIndex();

@@ -170,6 +170,10 @@ def compute_node_score(topic: str, bundle: DomainBundle, node: Dict[str, Any]) -
         text_n = normalize_text(str(text))
         if topic_n and topic_n in text_n:
             score += 10
+    for cs in node.get("curriculum_standards", []):
+        cs_text = normalize_text(str(cs.get("content", "")))
+        if topic_n and topic_n in cs_text:
+            score += 8
     return score
 
 
@@ -259,6 +263,7 @@ def compact_node_summary(
             "real_world": node.get("real_world", []),
             "memory_anchors": node.get("memory_anchors", []),
             "bloom_verbs": node.get("bloom_verbs", {}),
+            "curriculum_standards": node.get("curriculum_standards", []),
         },
         "error_count": len(error_items),
         "exercise_count": len(exercise_items),
@@ -538,6 +543,11 @@ def print_lookup_human(matches: List[Dict[str, Any]], topic: str) -> None:
             print("- Real-world anchors: " + "；".join(node["real_world"]))
         if node["memory_anchors"]:
             print("- Memory anchors: " + "；".join(node["memory_anchors"]))
+        if node.get("curriculum_standards"):
+            print("- Curriculum standards:")
+            for cs in node["curriculum_standards"]:
+                cat = cs.get("category", "general")
+                print(f"  - [{cat}] {cs['content']}")
         print(f"- Errors available: {item['error_count']}")
         print(f"- Exercises available: {item['exercise_count']}")
         if item["errors"]:

@@ -195,6 +195,8 @@ teachany/
 ├── LICENSE                      # MIT 许可证
 ├── CONTRIBUTING.md              # 贡献指南（中英双语）
 ├── CHANGELOG.md                 # 版本记录
+├── index.html                   # Gallery 首页（动态加载课件列表）
+├── courseware-registry.json     # 📋 课件注册表（所有课件的元数据索引）
 │
 ├── skill/
 │   ├── SKILL.md                 # 英文版 Skill 定义
@@ -214,23 +216,69 @@ teachany/
 │   ├── design-system.md         # 视觉设计规范
 │   └── subject-guides/          # 各学科使用指南
 │
-├── examples/                    # 示例课件
+├── examples/                    # 📦 示例课件（本地预览用）
 │   ├── math-quadratic-function/ # 二次函数（数学，九年级）
 │   ├── math-linear-function/    # 一次函数（数学，八年级）
+│   ├── math-congruent-triangles/# 全等三角形（数学，八年级）
 │   ├── bio-meiosis/             # 减数分裂（生物，高一）
+│   ├── bio-photosynthesis/      # 光合作用（生物，七年级）
 │   ├── geo-monsoon/             # 季风系统（地理，高一）
+│   ├── phy-ohms-law/            # 欧姆定律（物理，九年级）
 │   ├── phy-pressure-buoyancy/   # 液体压强浮力（物理，八年级）
+│   ├── chn-compound-vowel/      # 复韵母乐园（语文，一年级）
 │   └── _template/               # 空白模板（小学/初中/高中三套）
 │
-├── gallery/                     # GitHub Pages 画廊站点
-│   └── index.html
+├── community/                   # 🌐 社区课件索引
+│   └── index.json               # 社区审核通过的课件列表
 │
-├── scripts/                     # 知识层工具
+├── scripts/
+│   ├── registry-loader.js       # 🔄 Gallery 动态加载器（从 registry 渲染课件卡片）
+│   ├── courseware-importer.js   # 📥 课件导入器（支持 .teachany/.zip/.html）
+│   ├── community-loader.js     # 🌐 社区课件加载器
+│   ├── pack-courseware.cjs      # 📦 课件打包工具
+│   ├── publish-courseware.cjs   # 🚀 课件发布工具（打包→上传 Releases→更新 registry）
+│   ├── bootstrap-courseware.cjs # 🏆 知识层数据一键提取
+│   ├── validate-courseware.cjs  # ✅ 课件质量 18 项自动校验
 │   └── knowledge_layer.py       # 审计 + 按需检索 CLI
+│
+├── dist/                        # 📦 打包输出（.gitignore，不入库）
 │
 └── .github/
     ├── ISSUE_TEMPLATE/
     └── workflows/
+```
+
+### 📦 课件存储架构
+
+TeachAny 采用**代码与课件分离**的存储架构：
+
+| 层级 | 存储位置 | 内容 | 大小预算 |
+|:-----|:---------|:-----|:---------|
+| **代码层** | Git 仓库 | Skill 定义、知识层数据、脚本、模板 | < 50 MB |
+| **元数据层** | `courseware-registry.json` | 课件名称、学科、年级、链接等 | < 100 KB |
+| **课件层** | GitHub Releases | `.teachany` 课件包（含 HTML + 音频 + 视频） | 不限 |
+
+```
+开发者工作流：
+  examples/ 本地开发 → pack-courseware.cjs 打包 → publish-courseware.cjs 发布到 Releases
+                                                     ↓
+Gallery 加载流程：                                    更新 registry
+  index.html → registry-loader.js 读取 registry → 渲染课件卡片
+                                                     ↓
+  用户点击卡片 → 本地 examples/ 预览 或 从 Releases 下载 .teachany 包
+```
+
+**发布课件到 GitHub Releases：**
+
+```bash
+# 打包单个课件（仅本地打包，不上传）
+node scripts/publish-courseware.cjs ./examples/math-linear-function --dry-run
+
+# 发布单个课件到 GitHub Releases
+GITHUB_TOKEN=ghp_xxx node scripts/publish-courseware.cjs ./examples/math-linear-function
+
+# 发布所有课件
+GITHUB_TOKEN=ghp_xxx node scripts/publish-courseware.cjs --all
 ```
 
 ---
