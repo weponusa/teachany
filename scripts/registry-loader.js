@@ -104,13 +104,59 @@ function getCourseUrl(course, basePath) {
   return null;
 }
 
+/* ─── 点赞系统（官方课件，纯前端 localStorage）─── */
+const REGISTRY_LIKES_KEY = 'teachany_registry_likes';
+
+function readRegistryLikes() {
+  try { return JSON.parse(localStorage.getItem(REGISTRY_LIKES_KEY) || '{}'); }
+  catch { return {}; }
+}
+function saveRegistryLikes(likes) {
+  try { localStorage.setItem(REGISTRY_LIKES_KEY, JSON.stringify(likes)); } catch {}
+}
+function getRegistryLikeCount(courseId) {
+  return readRegistryLikes()[courseId] || 0;
+}
+function toggleRegistryLike(courseId) {
+  const sessionKey = `teachany_reg_liked_${courseId}`;
+  const alreadyLiked = sessionStorage.getItem(sessionKey) === '1';
+  const likes = readRegistryLikes();
+  if (alreadyLiked) {
+    sessionStorage.removeItem(sessionKey);
+    likes[courseId] = Math.max(0, (likes[courseId] || 0) - 1);
+  } else {
+    sessionStorage.setItem(sessionKey, '1');
+    likes[courseId] = (likes[courseId] || 0) + 1;
+  }
+  saveRegistryLikes(likes);
+  return { liked: !alreadyLiked, count: likes[courseId] };
+}
+function isRegistryLikedInSession(courseId) {
+  return sessionStorage.getItem(`teachany_reg_liked_${courseId}`) === '1';
+}
+
+/* ─── 社区课件数量查询（兼容 community-loader.js）─── */
+function getCommunityCountForNode(nodeId) {
+  if (!window.TeachAnyCommunity) return 0;
+  try {
+    const courses = TeachAnyCommunity.getCommunityCoursesByNodeId
+      ? TeachAnyCommunity.getCommunityCoursesByNodeId(nodeId)
+      : (TeachAnyCommunity.getTopCommunityCourses
+        ? TeachAnyCommunity.getTopCommunityCourses(nodeId, 999)
+        : []);
+    return courses ? courses.length : 0;
+  } catch { return 0; }
+}
+
 /* ─── 渲染单个卡片 ───────────────────────────── */
 function renderCourseCard(course, basePath) {
   const url = getCourseUrl(course, basePath);
   const isLink = !!url;
 
-  // 标签
+  // 标签：只保留前 3 个 + 附加标签，简化卡片
+  const maxTags = 3;
   const tags = (course.tags || [])
+    .slice(0, maxTags)
     .map((tag, i) => {
       const colorClass = (course.tag_colors || [])[i] || 'tag-blue';
       return `<span class="tag ${colorClass}">${escapeHtml(tag)}</span>`;
@@ -123,10 +169,23 @@ function renderCourseCard(course, basePath) {
   if (course.has_video) extraBadges.push('<span class="tag tag-cyan">🎬 Video</span>');
   if (course.has_en) extraBadges.push('<span class="tag tag-green">🌐 EN</span>');
 
-  // meta 信息
+  // meta 信息（简化：只保留时长）
   const metaParts = [];
-  if (course.lines) metaParts.push(`<span>📝 ${escapeHtml(course.lines)} lines</span>`);
   if (course.duration) metaParts.push(`<span>⏱️ ${escapeHtml(course.duration)}</span>`);
+
+  // 社区课件数量
+  const communityCount = getCommunityCountForNode(course.node_id);
+  if (communityCount > 0) {
+    metaParts.push(`<span>🌐 社区 ×${communityCount}</span>`);
+  }
+
+  // 爱心点赞
+  const likeCount = getRegistryLikeCount(course.id);
+  const isLiked = isRegistryLikedInSession(course.id);
+  const likeHtml = `<button class="ta-like-btn${isLiked ? ' liked' : ''}" data-registry-like="${escapeHtml(course.id)}" onclick="event.preventDefault();event.stopPropagation();window._toggleRegistryLike(this)" title="点赞">
+    <span class="like-icon">${isLiked ? '❤️' : '🤍'}</span>
+    <span class="like-count">${likeCount}</span>
+  </button>`;
 
   // 操作按钮
   let actionHtml = '';
@@ -154,7 +213,10 @@ function renderCourseCard(course, basePath) {
         <div class="card-meta">
           ${metaParts.join('\n          ')}
         </div>
-        ${actionHtml}
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${likeHtml}
+          ${actionHtml}
+        </div>
       </div>
     </${tagName}>`;
 }
@@ -264,6 +326,16 @@ async function initRegistryLoader(gridSelector) {
   }
 }
 
+/* ─── 全局点赞事件处理 ────────────────────────── */
+window._toggleRegistryLike = function(btn) {
+  const courseId = btn.getAttribute('data-registry-like');
+  if (!courseId) return;
+  const result = toggleRegistryLike(courseId);
+  btn.classList.toggle('liked', result.liked);
+  btn.querySelector('.like-icon').textContent = result.liked ? '❤️' : '🤍';
+  btn.querySelector('.like-count').textContent = result.count;
+};
+
 /* ─── 导出 ───────────────────────────────────── */
 window.TeachAnyRegistry = {
   fetchRegistry,
@@ -271,6 +343,10 @@ window.TeachAnyRegistry = {
   renderCourseCard,
   initRegistryLoader,
   getCourseUrl,
+  getRegistryLikeCount,
+  toggleRegistryLike,
+  isRegistryLikedInSession,
+  getCommunityCountForNode,
   REGISTRY_LOCAL_URL,
   REGISTRY_REMOTE_URL,
 };
