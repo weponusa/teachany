@@ -210,7 +210,7 @@ function renderCourseCard(course, basePath) {
   const hrefAttr = isLink ? ` href="${escapeHtml(url)}"` : '';
   const level = gradeToLevelRegistry(course.grade);
 
-  return `<${tagName}${hrefAttr} class="course-card" data-subject="${escapeHtml(course.subject)}" data-course-id="${escapeHtml(course.id)}" data-grade="${course.grade || ''}" data-level="${level}">
+  return `<${tagName}${hrefAttr} class="course-card" data-subject="${escapeHtml(course.subject)}" data-course-id="${escapeHtml(course.id)}" data-grade="${course.grade || ''}" data-level="${level}" data-course-name="${escapeHtml(course.name)}" data-course-desc="${escapeHtml(course.description)}">
       <div class="card-header">
         <div class="card-emoji">${escapeHtml(course.emoji || '📚')}</div>
         <h3 class="card-title">${escapeHtml(course.name)}</h3>
