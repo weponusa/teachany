@@ -264,6 +264,28 @@ svg { width: 100%; height: 100%; }
 .refresh-btn:hover { background: var(--accent); color: #fff; }
 .refresh-btn.spinning { animation: spin 0.8s linear infinite; pointer-events: none; opacity: 0.6; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* Like Button */
+.ta-like-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 16px;
+  background: rgba(148,163,184,0.1); color: #94a3b8;
+  border: 1px solid rgba(148,163,184,0.15);
+  cursor: pointer; font-size: 13px;
+  transition: all 0.2s; white-space: nowrap;
+}
+.ta-like-btn:hover {
+  background: rgba(239,68,68,0.12);
+  border-color: rgba(239,68,68,0.3);
+  color: #fca5a5;
+}
+.ta-like-btn.liked {
+  background: rgba(239,68,68,0.15);
+  border-color: rgba(239,68,68,0.3);
+  color: #f87171;
+}
+.ta-like-btn .like-icon { font-size: 14px; }
+.ta-like-btn .like-count { font-weight: 600; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -315,6 +337,7 @@ svg { width: 100%; height: 100%; }
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous"></script>
+<script src="./scripts/registry-loader.js"></script>
 <script src="./scripts/courseware-importer.js"></script>
 <script src="./scripts/community-loader.js"></script>
 <script>
@@ -733,14 +756,44 @@ function showTooltip(event, d) {
   const communityCourses = window.TeachAnyCommunity ? TeachAnyCommunity.getTopCommunityCourses(d.id, 5) : [];
   const hasCommunity = communityCourses.length > 0;
 
+  // 状态徽章 + 统计信息
+  const statParts = [];
   if (d.status === 'active' && d.courses.length) {
     html += `<span class="status-badge badge-active">✅ 有课件</span>`;
+    statParts.push(`📋 官方 ×${d.courses.length}`);
   } else if (hasUserCourses) {
     html += `<span class="status-badge badge-active">📂 我的课件 ×${userCourses.length}</span>`;
   } else if (hasCommunity) {
-    html += `<span class="status-badge badge-active">🌐 社区共享 ×${communityCourses.length}</span>`;
+    html += `<span class="status-badge badge-active">🌐 社区共享</span>`;
   } else {
     html += `<span class="status-badge badge-gap">📝 待创建</span>`;
+  }
+
+  // 社区课件数量
+  if (hasCommunity) {
+    statParts.push(`🌐 社区 ×${communityCourses.length}`);
+  }
+  if (hasUserCourses) {
+    statParts.push(`📂 我的 ×${userCourses.length}`);
+  }
+
+  // 爱心数（合并官方+用户+社区的点赞数）
+  let totalLikes = 0;
+  if (window.TeachAnyRegistry) {
+    d.courses.forEach(c => {
+      const cid = typeof c === 'string' ? c.split('/').pop() : '';
+      totalLikes += TeachAnyRegistry.getRegistryLikeCount(cid);
+    });
+  }
+  if (window.TeachAnyImporter) {
+    userCourses.forEach(c => { totalLikes += TeachAnyImporter.getCourseLikes(c.id); });
+  }
+  if (totalLikes > 0) {
+    statParts.push(`❤️ ${totalLikes}`);
+  }
+
+  if (statParts.length > 0) {
+    html += `<div class="meta" style="margin-top:4px;">${statParts.join(' · ')}</div>`;
   }
 
   if (d.prerequisites.length) {
