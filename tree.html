@@ -341,7 +341,11 @@ async function fetchTreeJSON(relativePath) {
         const meta = await resp.json();
         // API 返回 base64 编码的内容
         if (meta.content) {
-          const decoded = atob(meta.content.replace(/\n/g, ''));
+          // atob 返回 Latin-1，需要用 TextDecoder 正确处理 UTF-8 中文
+          const binaryStr = atob(meta.content.replace(/\n/g, ''));
+          const bytes = new Uint8Array(binaryStr.length);
+          for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+          const decoded = new TextDecoder('utf-8').decode(bytes);
           console.log('[KnowledgeMap] ✅ via GitHub API (no cache delay)');
           return JSON.parse(decoded);
         }
