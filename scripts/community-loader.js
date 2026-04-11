@@ -946,11 +946,12 @@ function renderCommunityGalleryCards(grid, index) {
   courses.forEach((course) => {
     const level = gradeToLevel(course.grade);
     
-    // 社区课件也可以点击打开（使用 download_url）
-    const courseUrl = course.download_url || '';
+    // 社区课件可通过 local_path 或 download_url 打开
+    const localUrl = course.local_path ? `./examples/${course.local_path}/index.html` : '';
+    const courseUrl = localUrl || course.download_url || '';
     const isClickable = !!courseUrl;
     const tagName = isClickable ? 'a' : 'div';
-    const hrefAttr = isClickable ? ` href="${communityEscapeHtml(courseUrl)}" target="_blank" rel="noopener"` : '';
+    const hrefAttr = isClickable ? ` href="${communityEscapeHtml(courseUrl)}"${localUrl ? '' : ' target="_blank" rel="noopener"'}` : '';
     
     const card = document.createElement(tagName);
     card.className = 'course-card community-course-card';
@@ -971,10 +972,13 @@ function renderCommunityGalleryCards(grid, index) {
       .map((tag, i) => `<span class="tag ${colors[i % colors.length]}">${communityEscapeHtml(tag)}</span>`)
       .join('');
 
-    // 社区课件使用导出按钮（如果有 download_url）
-    const exportBtnHtml = course.download_url
-      ? `<button class="ta-export-btn" onclick="event.preventDefault();event.stopPropagation();window.open('${communityEscapeHtml(course.download_url)}','_blank')" title="导出离线课件包 Export">📦 导出</button>`
-      : '';
+    // 导出按钮：优先用 local_path 打包导出，退而求其次用 download_url 直接下载
+    let exportBtnHtml = '';
+    if (localUrl && window.TeachAnyExport) {
+      exportBtnHtml = `<button class="ta-export-btn" onclick="event.preventDefault();event.stopPropagation();window.TeachAnyExport.exportCourseware({url:'${communityEscapeHtml(localUrl)}',courseName:'${communityEscapeHtml(course.name)}',onProgress:(s,m)=>console.log(m)})" title="导出离线课件包 Export">📦 导出</button>`;
+    } else if (course.download_url) {
+      exportBtnHtml = `<button class="ta-export-btn" onclick="event.preventDefault();event.stopPropagation();window.open('${communityEscapeHtml(course.download_url)}','_blank')" title="导出离线课件包 Export">📦 导出</button>`;
+    }
 
     card.innerHTML = `
       <div class="card-header">
