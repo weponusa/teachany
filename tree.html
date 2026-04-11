@@ -898,13 +898,31 @@ tooltip.addEventListener('mouseleave', function() {
 });
 
 function onNodeClick(event, d) {
+  // 优先级：1. 官方课件 2. 社区星标最高课件 3. 用户上传课件
   if (d.status === 'active' && d.courses.length) {
+    // 1. 有官方课件,直接打开
     window.open(d.courses[0] + '/index.html', '_blank');
   } else {
-    // 打开最高赞的用户课件（如有）
-    const topCourse = window.TeachAnyImporter ? TeachAnyImporter.findUserCourseByNodeId(d.id) : null;
-    if (topCourse) {
-      window.open(TeachAnyImporter.getCourseLaunchUrl(topCourse), '_blank', 'noopener');
+    // 2. 尝试获取该节点的社区课件(按星标排序)
+    const communityCourses = window.TeachAnyCommunity 
+      ? TeachAnyCommunity.getTopCommunityCourses(d.id, 1) 
+      : [];
+    
+    if (communityCourses.length > 0) {
+      // 打开社区星标最高的课件
+      const topCourse = communityCourses[0];
+      if (topCourse.download_url) {
+        window.open(topCourse.download_url, '_blank');
+        return;
+      }
+    }
+    
+    // 3. 最后尝试用户上传的课件
+    const topUserCourse = window.TeachAnyImporter 
+      ? TeachAnyImporter.findUserCourseByNodeId(d.id) 
+      : null;
+    if (topUserCourse) {
+      window.open(TeachAnyImporter.getCourseLaunchUrl(topUserCourse), '_blank', 'noopener');
     }
   }
 }

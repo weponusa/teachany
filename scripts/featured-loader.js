@@ -265,6 +265,8 @@ function renderFeaturedCards(grid, featuredData, registryCourses) {
     card.dataset.courseId = course.id;
     card.dataset.grade = course.grade || '';
     card.dataset.level = level;
+    card.dataset.courseName = course.name || '';
+    card.dataset.courseDesc = course.description_zh || course.description || '';
 
     card.innerHTML = `
       <div class="card-header">
