@@ -21,6 +21,15 @@ const REGISTRY_REMOTE_URL = 'https://raw.githubusercontent.com/weponusa/teachany
 const REGISTRY_CACHE_KEY = 'teachany_registry_cache';
 const REGISTRY_CACHE_TTL = 5 * 60 * 1000; // 5 分钟（发布后快速生效）
 
+/* ─── 年级 → 学段映射 ───────────────────────── */
+function gradeToLevelRegistry(grade) {
+  const g = parseInt(grade);
+  if (g >= 1 && g <= 6) return 'elementary';
+  if (g >= 7 && g <= 9) return 'middle';
+  if (g >= 10 && g <= 12) return 'high';
+  return 'other';
+}
+
 /* ─── 缓存 ───────────────────────────────────── */
 function readRegistryCache() {
   try {
@@ -198,8 +207,9 @@ function renderCourseCard(course, basePath) {
   // 卡片容器
   const tagName = isLink ? 'a' : 'div';
   const hrefAttr = isLink ? ` href="${escapeHtml(url)}"` : '';
+  const level = gradeToLevelRegistry(course.grade);
 
-  return `<${tagName}${hrefAttr} class="course-card" data-subject="${escapeHtml(course.subject)}" data-course-id="${escapeHtml(course.id)}">
+  return `<${tagName}${hrefAttr} class="course-card" data-subject="${escapeHtml(course.subject)}" data-course-id="${escapeHtml(course.id)}" data-grade="${course.grade || ''}" data-level="${level}">
       <div class="card-header">
         <div class="card-emoji">${escapeHtml(course.emoji || '📚')}</div>
         <h3 class="card-title">${escapeHtml(course.name)}</h3>
@@ -273,24 +283,24 @@ function updateStats(registry) {
   });
 }
 
-/* ─── 增强筛选：支持 registry 加载的卡片 ─────── */
+/* ─── 增强筛选：兼容新的双维度筛选系统 ─────── */
 function enhanceFilter() {
-  // 覆盖全局 filterCourses 函数以支持动态加载的卡片
+  // 覆盖全局 filterCourses 函数以兼容旧调用
   window.filterCourses = function (subject) {
-    const cards = document.querySelectorAll('.course-card');
-    const btns = document.querySelectorAll('.filter-btn');
-
-    btns.forEach((btn) => btn.classList.remove('active'));
-    if (event && event.target) event.target.classList.add('active');
-
-    cards.forEach((card) => {
-      const cardSubject = card.dataset.subject;
-      if (subject === 'all' || cardSubject === subject) {
-        card.style.display = 'block';
-      } else {
-        card.style.display = 'none';
-      }
-    });
+    if (typeof window.filterGallery === 'function') {
+      filterGallery('subject', subject, event && event.target);
+    } else {
+      // 回退到基础筛选
+      const cards = document.querySelectorAll('.course-card');
+      cards.forEach((card) => {
+        const cardSubject = card.dataset.subject;
+        if (subject === 'all' || cardSubject === subject) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
   };
 }
 
@@ -347,6 +357,7 @@ window.TeachAnyRegistry = {
   toggleRegistryLike,
   isRegistryLikedInSession,
   getCommunityCountForNode,
+  gradeToLevelRegistry,
   REGISTRY_LOCAL_URL,
   REGISTRY_REMOTE_URL,
 };
