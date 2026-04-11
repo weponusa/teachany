@@ -196,12 +196,14 @@ function renderCourseCard(course, basePath) {
     <span class="like-count">${likeCount}</span>
   </button>`;
 
-  // 操作按钮
+  // 操作按钮：改为导出课件包
   let actionHtml = '';
   if (isLink) {
-    actionHtml = '<span class="card-action">Experience →</span>';
+    // 有本地路径：既可体验也可导出
+    const exportBtn = `<button class="ta-export-btn" onclick="event.preventDefault();event.stopPropagation();window.TeachAnyExport.exportCourseware({url:'${escapeHtml(url)}',courseName:'${escapeHtml(course.name)}',onProgress:(s,m)=>console.log(m)})" title="导出离线课件包">📦 导出</button>`;
+    actionHtml = `<span class="card-action">体验 →</span>${exportBtn}`;
   } else if (course.download_url) {
-    actionHtml = `<a class="card-action" href="${escapeHtml(course.download_url)}" onclick="event.stopPropagation()" style="text-decoration:none">⬇️ Download</a>`;
+    actionHtml = `<a class="ta-export-btn" href="${escapeHtml(course.download_url)}" onclick="event.stopPropagation()" style="text-decoration:none">📦 导出</a>`;
   }
 
   // 卡片容器

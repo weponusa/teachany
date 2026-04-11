@@ -944,7 +944,6 @@ function renderCommunityGalleryCards(grid, index) {
   const addCard = grid.querySelector('.course-card-add');
 
   courses.forEach((course) => {
-    const downloaded = isCommunityDownloaded(course.id);
     const level = gradeToLevel(course.grade);
     const card = document.createElement('div');
     card.className = 'course-card community-course-card';
@@ -958,6 +957,11 @@ function renderCommunityGalleryCards(grid, index) {
     const tagsHtml = tags
       .map((tag, i) => `<span class="tag ${colors[i % colors.length]}">${communityEscapeHtml(tag)}</span>`)
       .join('');
+
+    // 社区课件使用导出按钮（如果有 download_url）
+    const exportBtnHtml = course.download_url
+      ? `<a class="ta-export-btn" href="${communityEscapeHtml(course.download_url)}" onclick="event.stopPropagation()" style="text-decoration:none" title="导出离线课件包">📦 导出</a>`
+      : '';
 
     card.innerHTML = `
       <div class="card-header">
@@ -975,36 +979,9 @@ function renderCommunityGalleryCards(grid, index) {
           <span>❤️ ${course.likes || 0}</span>
           <span>📅 ${communityEscapeHtml((course.approved_at || '').slice(0, 10))}</span>
         </div>
-        <button class="ta-download-btn${downloaded ? ' downloaded' : ''}" data-community-id="${communityEscapeHtml(course.id)}">
-          ${downloaded ? '✅ 已下载' : '⬇️ 下载体验'}
-        </button>
+        ${exportBtnHtml}
       </div>
     `;
-
-    const dlBtn = card.querySelector('.ta-download-btn');
-    if (!downloaded) {
-      dlBtn.onclick = async (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        dlBtn.textContent = '⏳ 下载中...';
-        dlBtn.disabled = true;
-
-        try {
-          await downloadAndImportCommunity(course, {
-            onComplete: () => {
-              dlBtn.textContent = '✅ 已下载';
-              dlBtn.className = 'ta-download-btn downloaded';
-            },
-          });
-        } catch {
-          dlBtn.textContent = '❌ 失败';
-          setTimeout(() => {
-            dlBtn.textContent = '⬇️ 重试';
-            dlBtn.disabled = false;
-          }, 2000);
-        }
-      };
-    }
 
     if (addCard) {
       grid.insertBefore(card, addCard);
