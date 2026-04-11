@@ -945,12 +945,25 @@ function renderCommunityGalleryCards(grid, index) {
 
   courses.forEach((course) => {
     const level = gradeToLevel(course.grade);
-    const card = document.createElement('div');
+    
+    // 社区课件也可以点击打开（使用 download_url）
+    const courseUrl = course.download_url || '';
+    const isClickable = !!courseUrl;
+    const tagName = isClickable ? 'a' : 'div';
+    const hrefAttr = isClickable ? ` href="${communityEscapeHtml(courseUrl)}" target="_blank" rel="noopener"` : '';
+    
+    const card = document.createElement(tagName);
     card.className = 'course-card community-course-card';
     card.dataset.subject = course.subject || 'custom';
     card.dataset.grade = course.grade || '';
     card.dataset.level = level;
+    card.dataset.courseName = course.name || '';
+    card.dataset.courseDesc = course.description || '';
     card.style.position = 'relative';
+    if (isClickable) {
+      card.style.textDecoration = 'none';
+      card.style.color = 'inherit';
+    }
 
     const colors = ['tag-blue', 'tag-purple', 'tag-green', 'tag-yellow', 'tag-pink', 'tag-cyan'];
     const tags = [course.subject, `Grade ${course.grade || '?'}`];
@@ -960,7 +973,7 @@ function renderCommunityGalleryCards(grid, index) {
 
     // 社区课件使用导出按钮（如果有 download_url）
     const exportBtnHtml = course.download_url
-      ? `<a class="ta-export-btn" href="${communityEscapeHtml(course.download_url)}" onclick="event.stopPropagation()" style="text-decoration:none" title="导出离线课件包 Export">📦 导出</a>`
+      ? `<button class="ta-export-btn" onclick="event.preventDefault();event.stopPropagation();window.open('${communityEscapeHtml(course.download_url)}','_blank')" title="导出离线课件包 Export">📦 导出</button>`
       : '';
 
     card.innerHTML = `

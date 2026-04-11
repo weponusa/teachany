@@ -394,6 +394,63 @@ footer a { color: var(--primary); text-decoration: none; }
   color: #34d399;
 }
 
+/* ─── 搜索框 ─── */
+.search-box-wrapper {
+  max-width: 600px;
+  margin: 0 auto 24px;
+}
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--card-bg);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  padding: 0 16px;
+  transition: all 0.2s;
+}
+.search-box:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59,130,246,0.1);
+}
+.search-icon {
+  font-size: 20px;
+  margin-right: 8px;
+  user-select: none;
+}
+.search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 14px 0;
+  font-size: 15px;
+  color: var(--fg);
+}
+.search-input::placeholder {
+  color: var(--dimmer);
+}
+.search-clear {
+  background: transparent;
+  border: none;
+  color: var(--dimmer);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+  margin-left: 4px;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.search-clear:hover {
+  background: rgba(239,68,68,0.15);
+  color: #ef4444;
+}
+
 /* ─── 双维度筛选栏 ─── */
 .filter-bar-group {
   margin-bottom: 36px;
@@ -500,7 +557,22 @@ footer a { color: var(--primary); text-decoration: none; }
 
 <!-- Course Gallery -->
 <div class="container">
-  <!-- 双维度筛选栏：学段 + 学科 -->
+  <!-- 搜索框 · Search Box -->
+  <div class="search-box-wrapper">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input 
+        type="text" 
+        id="courseSearchInput" 
+        placeholder="搜索课件名称或描述 Search coursewares..." 
+        class="search-input"
+        oninput="searchCoursewares(this.value)"
+      />
+      <button class="search-clear" id="searchClearBtn" onclick="clearSearch()" style="display:none">✕</button>
+    </div>
+  </div>
+
+  <!-- 双维度筛选栏 · Filters -->
   <div class="filter-bar-group">
     <div class="filter-row" id="levelFilterRow">
       <span class="filter-row-label">学段</span>
@@ -609,20 +681,29 @@ function gradeToLevel(grade) {
 /* ─── 筛选状态 ─── */
 let activeLevel = 'all';
 let activeSubject = 'all';
+let activeSearchQuery = '';
 
-/* ─── 统一筛选函数 ─── */
-function filterGallery(dimension, value, btnEl) {
-  // 更新状态
-  if (dimension === 'level') {
-    activeLevel = value;
-    document.querySelectorAll('#levelFilterRow .filter-btn').forEach(b => b.classList.remove('active'));
-  } else {
-    activeSubject = value;
-    document.querySelectorAll('#subjectFilterRow .filter-btn').forEach(b => b.classList.remove('active'));
+/* ─── 搜索功能 ─── */
+function searchCoursewares(query) {
+  activeSearchQuery = query.toLowerCase().trim();
+  const clearBtn = document.getElementById('searchClearBtn');
+  if (clearBtn) {
+    clearBtn.style.display = activeSearchQuery ? 'flex' : 'none';
   }
-  if (btnEl) btnEl.classList.add('active');
+  applyFilters();
+}
 
-  // 同时筛选官方区和社区区的卡片
+function clearSearch() {
+  const input = document.getElementById('courseSearchInput');
+  if (input) input.value = '';
+  activeSearchQuery = '';
+  const clearBtn = document.getElementById('searchClearBtn');
+  if (clearBtn) clearBtn.style.display = 'none';
+  applyFilters();
+}
+
+/* ─── 统一应用所有筛选条件 ─── */
+function applyFilters() {
   ['officialGrid', 'communityGrid'].forEach(gridId => {
     const grid = document.getElementById(gridId);
     if (!grid) return;
@@ -630,7 +711,16 @@ function filterGallery(dimension, value, btnEl) {
     grid.querySelectorAll('.course-card').forEach(card => {
       const matchLevel = activeLevel === 'all' || card.dataset.level === activeLevel;
       const matchSubject = activeSubject === 'all' || card.dataset.subject === activeSubject;
-      if (matchLevel && matchSubject) {
+      
+      // 搜索匹配：课件名称或描述包含搜索词
+      let matchSearch = true;
+      if (activeSearchQuery) {
+        const name = (card.dataset.courseName || '').toLowerCase();
+        const desc = (card.dataset.courseDesc || '').toLowerCase();
+        matchSearch = name.includes(activeSearchQuery) || desc.includes(activeSearchQuery);
+      }
+      
+      if (matchLevel && matchSubject && matchSearch) {
         card.style.display = 'block';
         visible++;
       } else {
@@ -645,6 +735,22 @@ function filterGallery(dimension, value, btnEl) {
     if (countEl) countEl.textContent = `${visible} 个课件`;
     if (emptyEl) emptyEl.style.display = visible === 0 ? 'block' : 'none';
   });
+}
+
+/* ─── 统一筛选函数 ─── */
+function filterGallery(dimension, value, btnEl) {
+  // 更新状态
+  if (dimension === 'level') {
+    activeLevel = value;
+    document.querySelectorAll('#levelFilterRow .filter-btn').forEach(b => b.classList.remove('active'));
+  } else {
+    activeSubject = value;
+    document.querySelectorAll('#subjectFilterRow .filter-btn').forEach(b => b.classList.remove('active'));
+  }
+  if (btnEl) btnEl.classList.add('active');
+
+  // 应用所有筛选条件
+  applyFilters();
 }
 
 // 兼容旧 filterCourses 调用
