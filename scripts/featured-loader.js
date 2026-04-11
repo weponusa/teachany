@@ -252,6 +252,11 @@ function renderFeaturedCards(grid, featuredData, registryCourses) {
       <span class="like-count">${likeCount}</span>
     </button>`;
 
+    // 导出按钮（如果有 local_path）
+    const exportBtnHtml = url
+      ? `<button class="ta-export-btn" onclick="event.preventDefault();event.stopPropagation();window.TeachAnyExport.exportCourseware({url:'${featuredEscapeHtml(url)}',courseName:'${featuredEscapeHtml(course.name)}',onProgress:(s,m)=>console.log(m)})" title="导出离线课件包">📦 导出</button>`
+      : '';
+
     const tagName = url ? 'a' : 'div';
     const card = document.createElement(tagName);
     if (url) card.setAttribute('href', url);
@@ -281,7 +286,7 @@ function renderFeaturedCards(grid, featuredData, registryCourses) {
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
           ${likeHtml}
-          ${url ? '<span class="card-action">Experience →</span>' : ''}
+          ${exportBtnHtml}
         </div>
       </div>
     `;
