@@ -960,7 +960,7 @@ function renderCommunityGalleryCards(grid, index) {
 
     // 社区课件使用导出按钮（如果有 download_url）
     const exportBtnHtml = course.download_url
-      ? `<a class="ta-export-btn" href="${communityEscapeHtml(course.download_url)}" onclick="event.stopPropagation()" style="text-decoration:none" title="导出离线课件包">📦 导出</a>`
+      ? `<a class="ta-export-btn" href="${communityEscapeHtml(course.download_url)}" onclick="event.stopPropagation()" style="text-decoration:none" title="导出离线课件包 Export">📦 导出</a>`
       : '';
 
     card.innerHTML = `
