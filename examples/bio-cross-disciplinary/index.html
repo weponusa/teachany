@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="teachany-node" content="cross-disciplinary-practice">
+<meta name="teachany-subject" content="biology">
+<meta name="teachany-domain" content="cross-disciplinary">
+<meta name="teachany-grade" content="grade7">
+<meta name="teachany-prerequisites" content="biosphere,plant-reproduction,human-reproduction,cell-structure,food-chain">
+<meta name="teachany-difficulty" content="hard">
+<meta name="teachany-version" content="1.0.0">
+<meta name="teachany-author" content="TeachAny">
+<title>跨学科实践 · TeachAny</title>
+<style>
+:root{--primary:#7c3aed;--primary-light:#ede9fe;--primary-dark:#5b21b6;--accent:#f59e0b;--green:#16a34a;--blue:#0ea5e9;--red:#e11d48;--bg:#f8f7ff;--card:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--radius:12px;--shadow:0 2px 12px rgba(0,0,0,.08)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:80px}
+header{background:linear-gradient(135deg,#7c3aed,#4f46e5,#0ea5e9);color:#fff;padding:20px 24px 16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(124,58,237,.3)}
+header h1{font-size:1.3rem;font-weight:700;margin-bottom:2px}
+header p{font-size:.82rem;opacity:.85}
+.nav-tabs{display:flex;gap:4px;background:#fff2;border-radius:8px;padding:4px;margin-top:12px;overflow-x:auto}
+.nav-tab{flex:1;min-width:52px;padding:7px 4px;background:transparent;border:none;color:#fff;font-size:.78rem;cursor:pointer;border-radius:6px;transition:.2s;white-space:nowrap;text-align:center}
+.nav-tab.active{background:#fff;color:var(--primary);font-weight:600}
+.section{display:none;padding:16px;max-width:780px;margin:0 auto;animation:fadeIn .3s}
+.section.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.card{background:var(--card);border-radius:var(--radius);padding:18px;margin-bottom:16px;box-shadow:var(--shadow)}
+.card h2{font-size:1.05rem;font-weight:700;color:var(--primary);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.card h2::before{content:'';width:4px;height:1.1em;background:var(--primary);border-radius:2px;display:inline-block}
+.abt-hook{background:linear-gradient(135deg,var(--primary-light),#fff);border-left:4px solid var(--primary);padding:14px 16px;border-radius:0 var(--radius) var(--radius) 0;margin-bottom:14px;font-size:.92rem;line-height:1.7}
+.abt-but{background:#fef3c7;border-left:4px solid var(--accent);padding:12px 16px;border-radius:0 var(--radius) var(--radius) 0;margin-bottom:14px;font-size:.92rem;line-height:1.7}
+.abt-therefore{background:#f0fdf4;border-left:4px solid #16a34a;padding:12px 16px;border-radius:0 var(--radius) var(--radius) 0;font-size:.92rem;line-height:1.7}
+.label{display:inline-block;font-size:.7rem;font-weight:700;padding:2px 7px;border-radius:4px;margin-bottom:6px}
+.label-hook{background:var(--primary);color:#fff}
+.label-but{background:var(--accent);color:#fff}
+.label-therefore{background:#16a34a;color:#fff}
+canvas{display:block;width:100%;border-radius:8px;background:#f8f7ff;border:1px solid var(--border)}
+.ctrl-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;justify-content:center}
+.btn{padding:8px 16px;border:none;border-radius:8px;font-size:.85rem;cursor:pointer;transition:.2s;font-weight:500}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-outline{background:#fff;border:2px solid var(--primary);color:var(--primary)}
+.btn-outline:hover{background:var(--primary-light)}
+.btn-sm{padding:5px 10px;font-size:.78rem}
+.btn-green{background:var(--green);color:#fff}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-red{background:var(--red);color:#fff}
+.domain-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.domain-tab{padding:6px 12px;border:2px solid var(--border);border-radius:20px;font-size:.8rem;cursor:pointer;transition:.2s;background:#fff}
+.domain-tab:hover{border-color:var(--primary)}
+.domain-tab.active{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600}
+.concept-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.concept-card{border-radius:10px;padding:12px;cursor:pointer;transition:.2s;border:2px solid transparent}
+.concept-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.12)}
+.concept-card.cell{background:#fef3c7;border-color:#f59e0b}
+.concept-card.biosphere{background:#dcfce7;border-color:#16a34a}
+.concept-card.plant-repro{background:#fce7f3;border-color:#ec4899}
+.concept-card.human-body{background:#dbeafe;border-color:#3b82f6}
+.concept-card.cross{background:#ede9fe;border-color:#7c3aed}
+.concept-card h4{font-size:.85rem;font-weight:700;margin-bottom:4px}
+.concept-card p{font-size:.78rem;color:var(--muted);line-height:1.4}
+.concept-card .tag{display:inline-block;font-size:.68rem;padding:1px 6px;border-radius:4px;margin-top:4px;background:rgba(0,0,0,.08)}
+.project-card{background:#fff;border-radius:var(--radius);border:2px solid var(--border);padding:16px;margin-bottom:12px;transition:.2s}
+.project-card:hover{border-color:var(--primary);box-shadow:var(--shadow)}
+.project-card h3{font-size:.95rem;font-weight:700;color:var(--primary);margin-bottom:6px}
+.project-card p{font-size:.83rem;color:var(--muted);line-height:1.6;margin-bottom:8px}
+.project-card .disciplines{display:flex;flex-wrap:wrap;gap:4px}
+.disc-tag{font-size:.72rem;padding:2px 8px;border-radius:10px;font-weight:500}
+.disc-bio{background:#dcfce7;color:#166534}
+.disc-chem{background:#dbeafe;color:#1e40af}
+.disc-math{background:#fef3c7;color:#92400e}
+.disc-physics{background:#f3e8ff;color:#6b21a8}
+.disc-geo{background:#fce7f3;color:#9d174d}
+.disc-info{background:#e0f2fe;color:#0369a1}
+.drag-container{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+.drag-items{background:#f8f7ff;border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.drag-items h3{font-size:.82rem;font-weight:600;color:var(--muted);margin-bottom:4px}
+.drag-item{background:#fff;border:2px solid var(--border);border-radius:6px;padding:8px 12px;font-size:.83rem;cursor:grab;transition:.2s;user-select:none}
+.drag-item:hover{border-color:var(--primary);background:var(--primary-light)}
+.drag-item.dragging{opacity:.5;cursor:grabbing}
+.drop-zones{display:flex;flex-direction:column;gap:8px}
+.drop-zone{background:#fff;border:2px dashed var(--border);border-radius:8px;padding:12px;min-height:70px;transition:.2s}
+.drop-zone.drag-over{border-color:var(--primary);background:var(--primary-light)}
+.drop-zone.correct{border-color:#16a34a;background:#f0fdf4}
+.drop-zone.wrong{border-color:#ef4444;background:#fef2f2}
+.drop-zone h4{font-size:.78rem;font-weight:700;color:var(--primary);margin-bottom:6px}
+.drop-zone .dropped{display:flex;flex-wrap:wrap;gap:4px}
+.quiz-block{margin-bottom:18px}
+.quiz-q{font-size:.9rem;font-weight:600;margin-bottom:10px;line-height:1.5}
+.quiz-opts{display:flex;flex-direction:column;gap:7px}
+.quiz-opt{background:#f8f7ff;border:2px solid var(--border);border-radius:8px;padding:9px 14px;font-size:.85rem;cursor:pointer;transition:.2s;text-align:left}
+.quiz-opt:hover{border-color:var(--primary);background:var(--primary-light)}
+.quiz-opt.correct{border-color:#16a34a;background:#dcfce7;color:#166534;font-weight:600;pointer-events:none}
+.quiz-opt.wrong{border-color:#ef4444;background:#fee2e2;color:#991b1b;pointer-events:none}
+.quiz-explain{display:none;margin-top:10px;padding:10px 14px;background:#fffbeb;border-left:3px solid var(--accent);border-radius:0 8px 8px 0;font-size:.83rem;line-height:1.6;color:var(--text)}
+.kg-wrap{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:12px;margin-top:8px}
+.kg-col h3{font-size:.8rem;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid var(--border)}
+.kg-node{background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;font-size:.82rem;margin-bottom:7px;cursor:pointer;transition:.2s;line-height:1.4}
+.kg-node:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.kg-node.prereq{border-left:4px solid #94a3b8}
+.kg-node.current{border-left:4px solid var(--primary);background:var(--primary-light);font-weight:600}
+.kg-node.extend{border-left:4px solid var(--accent)}
+.kg-node .node-title{font-weight:600;margin-bottom:2px}
+.kg-node .node-desc{font-size:.75rem;color:var(--muted)}
+.audio-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border-top:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px;z-index:200;box-shadow:0 -2px 12px rgba(0,0,0,.08)}
+.audio-title{flex:1;font-size:.82rem;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.audio-btn{width:34px;height:34px;border-radius:50%;border:none;background:var(--primary);color:#fff;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;flex-shrink:0}
+.audio-btn:hover{background:var(--primary-dark)}
+.audio-progress{flex:2;height:4px;background:var(--border);border-radius:2px;cursor:pointer;position:relative;min-width:60px}
+.audio-progress-fill{height:100%;background:var(--primary);border-radius:2px;width:0%;transition:width .1s linear}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.summary-card{background:linear-gradient(135deg,var(--primary-light),#fff);border-radius:var(--radius);padding:16px;border:1px solid var(--primary-light)}
+.summary-card h3{font-size:.88rem;font-weight:700;color:var(--primary);margin-bottom:8px}
+.summary-card ul{padding-left:16px}
+.summary-card li{font-size:.82rem;line-height:1.6;color:var(--text);margin-bottom:3px}
+.mind-map{position:relative;width:100%;height:320px;overflow:hidden}
+.mm-node{position:absolute;border-radius:20px;padding:7px 14px;font-size:.8rem;font-weight:600;white-space:nowrap;transform:translate(-50%,-50%);text-align:center;cursor:pointer;transition:.25s;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.mm-node:hover{transform:translate(-50%,-50%) scale(1.08);}
+.mm-center{background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;font-size:.9rem;padding:12px 20px;z-index:5}
+.mm-domain{color:#fff;z-index:4}
+.mm-concept{background:#fff;border:2px solid var(--border);color:var(--text);font-weight:500;z-index:3}
+svg.mm-lines{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🔭 跨学科实践</h1>
+  <p>整合初一生物全年知识，连接数理化地各学科</p>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showTab('intro')">导入</button>
+    <button class="nav-tab" onclick="showTab('learn')">探究</button>
+    <button class="nav-tab" onclick="showTab('practice')">练习</button>
+    <button class="nav-tab" onclick="showTab('summary')">总结</button>
+    <button class="nav-tab" onclick="showTab('graph')">图谱</button>
+  </div>
+</header>
+
+<!-- ===== INTRO ===== -->
+<section class="section active" id="intro">
+  <div class="card">
+    <div class="label label-hook">Hook — 引入</div>
+    <div class="abt-hook">
+      🌍 生物学不是孤立的学科。当你研究植物光合作用，你需要化学；研究生态系统中的物质循环，你需要物理和地理；计算种群数量变化，你需要数学；探究环境数据，你需要信息技术……
+      <strong>学科之间如何互相支撑，共同解释自然现象？</strong>
+    </div>
+    <div class="label label-but">But — 矛盾</div>
+    <div class="abt-but">
+      🤔 初一生物涵盖了细胞、生物圈、植物繁殖、人体生命活动等多个领域，这些知识看似分散，但自然界中它们往往紧密相连。我们能否找到这些知识之间的联系，并运用多学科视角分析实际问题？
+    </div>
+    <div class="label label-therefore">Therefore — 目标</div>
+    <div class="abt-therefore">
+      🎯 本节将整合初一生物全部核心概念，通过跨学科项目案例，展示生物知识如何与数学、化学、地理、物理、信息技术相结合，提升综合分析与解决问题的能力。
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>初一生物知识全景图</h2>
+    <div class="domain-tabs" id="domainTabs">
+      <button class="domain-tab active" onclick="filterDomain('all')">全部</button>
+      <button class="domain-tab" onclick="filterDomain('cell')">🔬 细胞</button>
+      <button class="domain-tab" onclick="filterDomain('biosphere')">🌍 生物圈</button>
+      <button class="domain-tab" onclick="filterDomain('plant-repro')">🌸 植物生殖</button>
+      <button class="domain-tab" onclick="filterDomain('human-body')">👤 人体</button>
+    </div>
+    <div class="concept-grid" id="conceptGrid">
+      <div class="concept-card cell" data-domain="cell">
+        <h4>🔬 细胞结构</h4><p>生命的基本单位</p><span class="tag">生物+化学</span>
+      </div>
+      <div class="concept-card cell" data-domain="cell">
+        <h4>🧬 细胞分裂</h4><p>生长与繁殖的基础</p><span class="tag">生物+数学</span>
+      </div>
+      <div class="concept-card cell" data-domain="cell">
+        <h4>🔭 显微镜使用</h4><p>科学观察工具</p><span class="tag">生物+物理</span>
+      </div>
+      <div class="concept-card biosphere" data-domain="biosphere">
+        <h4>🌍 生物圈</h4><p>最大的生态系统</p><span class="tag">生物+地理</span>
+      </div>
+      <div class="concept-card biosphere" data-domain="biosphere">
+        <h4>🌿 生态因素</h4><p>生物与环境的关系</p><span class="tag">生物+地理</span>
+      </div>
+      <div class="concept-card biosphere" data-domain="biosphere">
+        <h4>🔗 食物链</h4><p>能量流动</p><span class="tag">生物+物理+数学</span>
+      </div>
+      <div class="concept-card biosphere" data-domain="biosphere">
+        <h4>🌱 生态系统</h4><p>生物与非生物环境</p><span class="tag">生物+化学</span>
+      </div>
+      <div class="concept-card plant-repro" data-domain="plant-repro">
+        <h4>🌸 花的结构</h4><p>被子植物繁殖器官</p><span class="tag">生物+化学</span>
+      </div>
+      <div class="concept-card plant-repro" data-domain="plant-repro">
+        <h4>🍎 果实种子</h4><p>双受精与种子形成</p><span class="tag">生物+数学</span>
+      </div>
+      <div class="concept-card plant-repro" data-domain="plant-repro">
+        <h4>🌿 植物类群</h4><p>藻苔蕨裸被</p><span class="tag">生物+地理+化学</span>
+      </div>
+      <div class="concept-card plant-repro" data-domain="plant-repro">
+        <h4>🌱 无性生殖</h4><p>扦插嫁接压条</p><span class="tag">生物+农业</span>
+      </div>
+      <div class="concept-card human-body" data-domain="human-body">
+        <h4>👶 人类生殖</h4><p>受精与胚胎发育</p><span class="tag">生物+化学</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== LEARN ===== -->
+<section class="section" id="learn">
+  <div class="card">
+    <h2>知识联系可视化</h2>
+    <canvas id="mindCanvas" height="320"></canvas>
+    <div class="ctrl-row">
+      <button class="btn btn-primary btn-sm" onclick="highlightDomain('cell')">🔬 细胞知识</button>
+      <button class="btn btn-green btn-sm" onclick="highlightDomain('eco')">🌿 生态知识</button>
+      <button class="btn btn-red btn-sm" onclick="highlightDomain('repro')">🌸 生殖知识</button>
+      <button class="btn btn-blue btn-sm" onclick="highlightDomain('all')">全部展示</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>跨学科项目案例</h2>
+    <div class="project-card">
+      <h3>🌱 项目1：校园生物多样性调查</h3>
+      <p>调查校园中的植物种类，统计不同类群数量，绘制分布图，分析与环境因素的关系。</p>
+      <div class="disciplines">
+        <span class="disc-tag disc-bio">生物·植物分类</span>
+        <span class="disc-tag disc-math">数学·统计分析</span>
+        <span class="disc-tag disc-geo">地理·环境因素</span>
+        <span class="disc-tag disc-info">信息·数据可视化</span>
+      </div>
+    </div>
+    <div class="project-card">
+      <h3>💧 项目2：水体富营养化探究</h3>
+      <p>检测水体中氮、磷含量，观察藻类生长情况，分析人类活动对水体生态系统的影响，提出治理方案。</p>
+      <div class="disciplines">
+        <span class="disc-tag disc-bio">生物·生态系统</span>
+        <span class="disc-tag disc-chem">化学·物质检测</span>
+        <span class="disc-tag disc-geo">地理·水资源</span>
+        <span class="disc-tag disc-math">数学·数据分析</span>
+      </div>
+    </div>
+    <div class="project-card">
+      <h3>☀️ 项目3：植物光合作用的影响因素</h3>
+      <p>控制光照强度、温度、CO₂浓度等变量，观测植物产氧量，绘制影响曲线，理解生态系统能量转化。</p>
+      <div class="disciplines">
+        <span class="disc-tag disc-bio">生物·光合作用</span>
+        <span class="disc-tag disc-chem">化学·气体分析</span>
+        <span class="disc-tag disc-physics">物理·光照与温度</span>
+        <span class="disc-tag disc-math">数学·函数图像</span>
+      </div>
+    </div>
+    <div class="project-card">
+      <h3>🔬 项目4：细胞分裂周期的数学模型</h3>
+      <p>利用数学函数描述细胞分裂的指数增长，预测细胞数量，理解肿瘤细胞无限分裂的危害。</p>
+      <div class="disciplines">
+        <span class="disc-tag disc-bio">生物·细胞分裂</span>
+        <span class="disc-tag disc-math">数学·指数函数</span>
+        <span class="disc-tag disc-info">信息·数据建模</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PRACTICE ===== -->
+<section class="section" id="practice">
+  <div class="card">
+    <h2>知识归类：跨学科连接</h2>
+    <p style="font-size:.83rem;color:var(--muted);margin-bottom:10px">将下列生物现象拖入对应的跨学科领域</p>
+    <div class="drag-container">
+      <div class="drag-items">
+        <h3>生物现象</h3>
+        <div class="drag-item" draggable="true" data-type="math" ondragstart="dragStart(event)">📊 种群数量指数增长</div>
+        <div class="drag-item" draggable="true" data-type="chem" ondragstart="dragStart(event)">⚗️ 光合作用产生O₂</div>
+        <div class="drag-item" draggable="true" data-type="geo" ondragstart="dragStart(event)">🌍 生态系统分布规律</div>
+        <div class="drag-item" draggable="true" data-type="physics" ondragstart="dragStart(event)">💡 光照影响植物生长</div>
+        <div class="drag-item" draggable="true" data-type="info" ondragstart="dragStart(event)">💻 基因序列数据分析</div>
+        <div class="drag-item" draggable="true" data-type="math" ondragstart="dragStart(event)">📐 叶片面积与光合速率</div>
+      </div>
+      <div class="drop-zones">
+        <div class="drop-zone" id="zone-math" ondragover="dragOver(event)" ondrop="drop(event,'math')">
+          <h4>📐 数学</h4>
+          <div class="dropped"></div>
+        </div>
+        <div class="drop-zone" id="zone-chem" ondragover="dragOver(event)" ondrop="drop(event,'chem')">
+          <h4>⚗️ 化学</h4>
+          <div class="dropped"></div>
+        </div>
+        <div class="drop-zone" id="zone-geo" ondragover="dragOver(event)" ondrop="drop(event,'geo')">
+          <h4>🌍 地理</h4>
+          <div class="dropped"></div>
+        </div>
+        <div class="drop-zone" id="zone-physics" ondragover="dragOver(event)" ondrop="drop(event,'physics')">
+          <h4>⚡ 物理</h4>
+          <div class="dropped"></div>
+        </div>
+        <div class="drop-zone" id="zone-info" ondragover="dragOver(event)" ondrop="drop(event,'info')">
+          <h4>💻 信息技术</h4>
+          <div class="dropped"></div>
+        </div>
+      </div>
+    </div>
+    <div class="ctrl-row">
+      <button class="btn btn-outline btn-sm" onclick="resetDrop()">↺ 重置</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>综合测验</h2>
+    <div class="quiz-block">
+      <p class="quiz-q">1. 研究一片森林生态系统中，蘑菇（真菌）在物质循环中的作用，需要哪些学科知识？（　）</p>
+      <div class="quiz-opts">
+        <button class="quiz-opt" onclick="answerQ(1,'A',this,'C')">A. 只需生物学知识</button>
+        <button class="quiz-opt" onclick="answerQ(1,'B',this,'C')">B. 生物学 + 数学</button>
+        <button class="quiz-opt" onclick="answerQ(1,'C',this,'C')">C. 生物学 + 化学（物质分解）+ 地理（生境）</button>
+        <button class="quiz-opt" onclick="answerQ(1,'D',this,'C')">D. 只需地理学知识</button>
+      </div>
+      <div class="quiz-explain" id="qe1">✅ 研究分解者在物质循环中的作用需要：生物学（分解者的角色、食物网）、化学（有机物分解为无机物的化学过程）、地理（生境特征、温湿度条件），是典型的跨学科问题。</div>
+    </div>
+    <div class="quiz-block">
+      <p class="quiz-q">2. 下面哪个问题是生物学与数学的最佳结合点？（　）</p>
+      <div class="quiz-opts">
+        <button class="quiz-opt" onclick="answerQ(2,'A',this,'B')">A. 植物细胞有无叶绿体</button>
+        <button class="quiz-opt" onclick="answerQ(2,'B',this,'B')">B. 一对兔子后代数量的变化规律（斐波那契数列）</button>
+        <button class="quiz-opt" onclick="answerQ(2,'C',this,'B')">C. 苔藓与蕨类植物的区别</button>
+        <button class="quiz-opt" onclick="answerQ(2,'D',this,'B')">D. 花的各部分结构名称</button>
+      </div>
+      <div class="quiz-explain" id="qe2">✅ 兔子后代数量的变化规律涉及著名的斐波那契数列，是生物繁殖与数学规律的完美结合。细胞结构是纯生物问题，植物分类与花的结构也主要是生物学问题。</div>
+    </div>
+    <div class="quiz-block">
+      <p class="quiz-q">3. 利用信息技术分析基因序列数据，研究物种亲缘关系，这种研究方法体现了哪种思维？（　）</p>
+      <div class="quiz-opts">
+        <button class="quiz-opt" onclick="answerQ(3,'A',this,'D')">A. 单一学科思维</button>
+        <button class="quiz-opt" onclick="answerQ(3,'B',this,'D')">B. 实验思维</button>
+        <button class="quiz-opt" onclick="answerQ(3,'C',this,'D')">C. 演绎推理</button>
+        <button class="quiz-opt" onclick="answerQ(3,'D',this,'D')">D. 跨学科综合思维</button>
+      </div>
+      <div class="quiz-explain" id="qe3">✅ 利用信息技术处理生物学数据（基因序列），研究生物学问题（亲缘关系），正是跨学科综合思维的典型体现——生物学问题借助信息技术手段解决，是现代生物信息学的核心方法。</div>
+    </div>
+    <div class="quiz-block">
+      <p class="quiz-q">4. 以下哪组问题最能体现"生物学+地理学"的跨学科融合？（　）</p>
+      <div class="quiz-opts">
+        <button class="quiz-opt" onclick="answerQ(4,'A',this,'C')">A. 细胞分裂 + 遗传变异</button>
+        <button class="quiz-opt" onclick="answerQ(4,'B',this,'C')">B. 光合作用 + 气体体积计算</button>
+        <button class="quiz-opt" onclick="answerQ(4,'C',this,'C')">C. 生物圈分布 + 气候带特征</button>
+        <button class="quiz-opt" onclick="answerQ(4,'D',this,'C')">D. 植物嫁接 + 扦插操作</button>
+      </div>
+      <div class="quiz-explain" id="qe4">✅ 生物圈中不同生态系统（热带雨林、极地苔原、荒漠等）的分布，与地理学中的气候带、纬度、地形等密切相关，是生物与地理交叉融合的典型问题。A是生物学内部，B是生物+化学/物理，D是纯生物操作。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SUMMARY ===== -->
+<section class="section" id="summary">
+  <div class="card">
+    <h2>初一生物核心体系回顾</h2>
+    <div class="summary-grid">
+      <div class="summary-card">
+        <h3>🔬 细胞基础</h3>
+        <ul>
+          <li>细胞是生命基本单位</li>
+          <li>细胞结构与功能</li>
+          <li>有丝分裂与生长</li>
+          <li>显微镜观察技能</li>
+        </ul>
+      </div>
+      <div class="summary-card">
+        <h3>🌍 生物圈</h3>
+        <ul>
+          <li>生物圈是最大生态系统</li>
+          <li>食物链与食物网</li>
+          <li>物质循环能量流动</li>
+          <li>生态因素与适应</li>
+        </ul>
+      </div>
+      <div class="summary-card">
+        <h3>🌸 植物生殖</h3>
+        <ul>
+          <li>五大植物类群</li>
+          <li>花果实种子形成</li>
+          <li>有性与无性生殖</li>
+          <li>种子萌发与发育</li>
+        </ul>
+      </div>
+      <div class="summary-card">
+        <h3>👤 人体</h3>
+        <ul>
+          <li>人类生殖基础</li>
+          <li>胚胎发育过程</li>
+          <li>青春期身心发育</li>
+          <li>健康生活方式</li>
+        </ul>
+      </div>
+      <div class="summary-card">
+        <h3>🔭 跨学科</h3>
+        <ul>
+          <li>生物+数学：种群模型</li>
+          <li>生物+化学：光合呼吸</li>
+          <li>生物+地理：生态分布</li>
+          <li>生物+信息：数据分析</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>学习方法总结</h2>
+    <div class="abt-therefore" style="font-size:.9rem">
+      🎯 <strong>跨学科思维核心原则：</strong><br><br>
+      ① <strong>系统思维</strong>：将生物体、生态系统视为整体，分析各部分的联系<br>
+      ② <strong>模型思维</strong>：用数学模型描述生物规律（指数增长、物质循环）<br>
+      ③ <strong>证据意识</strong>：用化学、物理方法获取数据，支持生物学结论<br>
+      ④ <strong>空间思维</strong>：结合地理空间分布，理解生物多样性的成因<br>
+      ⑤ <strong>技术意识</strong>：利用信息技术处理大数据，探索生命奥秘
+    </div>
+  </div>
+</section>
+
+<!-- ===== GRAPH ===== -->
+<section class="section" id="graph">
+  <div class="card">
+    <h2>知识图谱</h2>
+    <div class="kg-wrap">
+      <div class="kg-col">
+        <h3>前置知识</h3>
+        <div class="kg-node prereq">
+          <div class="node-title">🌍 生物圈</div>
+          <div class="node-desc">生态系统的知识体系</div>
+        </div>
+        <div class="kg-node prereq">
+          <div class="node-title">🌸 植物生殖</div>
+          <div class="node-desc">植物繁殖方式</div>
+        </div>
+        <div class="kg-node prereq">
+          <div class="node-title">👶 人类生殖</div>
+          <div class="node-desc">人体生命活动</div>
+        </div>
+        <div class="kg-node prereq">
+          <div class="node-title">🔬 细胞结构</div>
+          <div class="node-desc">生命的基础</div>
+        </div>
+        <div class="kg-node prereq">
+          <div class="node-title">🔗 食物链</div>
+          <div class="node-desc">能量流动规律</div>
+        </div>
+      </div>
+      <div class="kg-col">
+        <h3>当前节点</h3>
+        <div class="kg-node current">
+          <div class="node-title">🔭 跨学科实践</div>
+          <div class="node-desc">整合生物知识，连接多学科视角</div>
+        </div>
+      </div>
+      <div class="kg-col">
+        <h3>延伸学习</h3>
+        <div class="kg-node extend">
+          <div class="node-title">🧬 遗传与进化</div>
+          <div class="node-desc">初二生物核心内容</div>
+        </div>
+        <div class="kg-node extend">
+          <div class="node-title">🏥 健康与疾病</div>
+          <div class="node-desc">生物学在医学中的应用</div>
+        </div>
+        <div class="kg-node extend">
+          <div class="node-title">🌱 环境保护</div>
+          <div class="node-desc">生物多样性与可持续发展</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== AUDIO BAR ===== -->
+<div class="audio-bar" id="audioBar">
+  <button class="audio-btn" onclick="prevSeg()" title="上一段">⏮</button>
+  <button class="audio-btn" id="playBtn" onclick="togglePlay()">▶</button>
+  <button class="audio-btn" onclick="nextSeg()" title="下一段">⏭</button>
+  <div class="audio-title" id="audioTitle">跨学科实践导入</div>
+  <div class="audio-progress" id="audioProgress" onclick="seekAudio(event)">
+    <div class="audio-progress-fill" id="audioFill"></div>
+  </div>
+  <audio id="audioEl" onended="nextSeg()" ontimeupdate="updateProgress()"></audio>
+</div>
+
+<script>
+// ===== TAB =====
+function showTab(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const tabs=['intro','learn','practice','summary','graph'];
+  document.querySelectorAll('.nav-tab')[tabs.indexOf(id)].classList.add('active');
+}
+
+// ===== DOMAIN FILTER =====
+function filterDomain(d){
+  document.querySelectorAll('.domain-tab').forEach(t=>t.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.querySelectorAll('.concept-card').forEach(c=>{
+    c.style.display=(d==='all'||c.dataset.domain===d)?'block':'none';
+  });
+}
+
+// ===== QUIZ =====
+function answerQ(n,choice,el,correct){
+  const zone=el.parentElement;
+  if(zone.querySelector('.correct')) return;
+  zone.querySelectorAll('.quiz-opt').forEach(o=>o.style.pointerEvents='none');
+  if(choice===correct){el.classList.add('correct');}
+  else{el.classList.add('wrong');zone.querySelectorAll('.quiz-opt').forEach(o=>{if(o.textContent.trim().startsWith(correct)) o.classList.add('correct');});}
+  document.getElementById('qe'+n).style.display='block';
+}
+
+// ===== CANVAS MIND MAP =====
+const canvas=document.getElementById('mindCanvas');
+const ctx=canvas.getContext('2d');
+let highlightGroup='all';
+let animTick=0;
+
+const nodes=[
+  {id:'center',label:'初一生物',x:0.5,y:0.5,r:36,color:'#7c3aed',textColor:'#fff',group:'all'},
+  // domains
+  {id:'cell',label:'细胞基础',x:0.18,y:0.22,r:28,color:'#f59e0b',textColor:'#fff',group:'cell'},
+  {id:'eco',label:'生物圈',x:0.82,y:0.22,r:28,color:'#16a34a',textColor:'#fff',group:'eco'},
+  {id:'repro',label:'植物生殖',x:0.18,y:0.78,r:28,color:'#ec4899',textColor:'#fff',group:'repro'},
+  {id:'human',label:'人体',x:0.82,y:0.78,r:28,color:'#3b82f6',textColor:'#fff',group:'repro'},
+  // cross connections
+  {id:'math',label:'数学',x:0.5,y:0.12,r:20,color:'#fde68a',textColor:'#92400e',group:'cross'},
+  {id:'chem',label:'化学',x:0.88,y:0.5,r:20,color:'#bfdbfe',textColor:'#1e40af',group:'cross'},
+  {id:'geo',label:'地理',x:0.5,y:0.88,r:20,color:'#bbf7d0',textColor:'#166534',group:'cross'},
+  {id:'physics',label:'物理',x:0.12,y:0.5,r:20,color:'#f3e8ff',textColor:'#6b21a8',group:'cross'},
+];
+
+const edges=[
+  ['center','cell'],['center','eco'],['center','repro'],['center','human'],
+  ['center','math'],['center','chem'],['center','geo'],['center','physics'],
+  ['cell','math'],['cell','physics'],
+  ['eco','chem'],['eco','geo'],
+  ['repro','math'],['repro','chem'],
+  ['human','chem'],['human','math'],
+];
+
+function resizeCanvas(){
+  canvas.width=canvas.parentElement.clientWidth;
+  canvas.height=320;
+}
+
+function drawMind(){
+  const w=canvas.width,h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle='#f8f7ff';
+  ctx.fillRect(0,0,w,h);
+
+  // edges
+  edges.forEach(([a,b])=>{
+    const na=nodes.find(n=>n.id===a);
+    const nb=nodes.find(n=>n.id===b);
+    const ax=na.x*w,ay=na.y*h,bx=nb.x*w,by=nb.y*h;
+    const active=highlightGroup==='all'||na.group===highlightGroup||nb.group===highlightGroup;
+    ctx.strokeStyle=active?'rgba(124,58,237,0.3)':'rgba(200,200,220,0.2)';
+    ctx.lineWidth=active?2:1;
+    ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke();
+  });
+
+  // nodes
+  nodes.forEach(n=>{
+    const x=n.x*w,y=n.y*h;
+    const active=highlightGroup==='all'||n.group===highlightGroup||n.group==='all';
+    const alpha=active?1:0.25;
+    const scale=active?(1+0.04*Math.sin(animTick*0.05+n.x*10)):1;
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.scale(scale,scale);
+    ctx.globalAlpha=alpha;
+    ctx.fillStyle=n.color;
+    ctx.beginPath();ctx.arc(0,0,n.r,0,Math.PI*2);ctx.fill();
+    if(active){
+      ctx.strokeStyle='rgba(255,255,255,0.5)';ctx.lineWidth=2;
+      ctx.beginPath();ctx.arc(0,0,n.r,0,Math.PI*2);ctx.stroke();
+    }
+    ctx.fillStyle=n.textColor;
+    ctx.font=`bold ${n.r>25?13:11}px sans-serif`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(n.label,0,0);
+    ctx.restore();
+  });
+
+  animTick++;
+  requestAnimationFrame(drawMind);
+}
+
+function highlightDomain(g){
+  highlightGroup=g;
+}
+
+window.addEventListener('resize',resizeCanvas);
+resizeCanvas();
+drawMind();
+
+// ===== DRAG & DROP =====
+let dragData=null;
+function dragStart(e){
+  dragData={type:e.target.dataset.type,text:e.target.textContent,el:e.target};
+  e.target.classList.add('dragging');
+}
+function dragOver(e){e.preventDefault();e.currentTarget.classList.add('drag-over');}
+function drop(e,zone){
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if(!dragData) return;
+  const {type,text,el}=dragData;
+  dragData=null;
+  el.classList.remove('dragging');
+  const correct=type===zone;
+  const zoneEl=document.getElementById('zone-'+zone);
+  const item=document.createElement('div');
+  item.className='drag-item';
+  item.textContent=text;
+  item.style.fontSize='.75rem';item.style.padding='4px 8px';
+  if(correct){
+    item.style.borderColor='#16a34a';item.style.background='#dcfce7';
+    zoneEl.classList.add('correct');
+  } else {
+    item.style.borderColor='#ef4444';item.style.background='#fee2e2';
+    setTimeout(()=>{item.remove();zoneEl.classList.remove('wrong');},1200);
+    zoneEl.classList.add('wrong');
+    setTimeout(()=>zoneEl.classList.remove('wrong'),1200);
+  }
+  zoneEl.querySelector('.dropped').appendChild(item);
+  el.style.opacity='0.4';el.draggable=false;
+}
+function resetDrop(){
+  document.querySelectorAll('.drop-zone .dropped').forEach(d=>d.innerHTML='');
+  document.querySelectorAll('.drop-zone').forEach(z=>z.classList.remove('correct','wrong'));
+  document.querySelectorAll('.drag-items .drag-item').forEach(i=>{i.style.opacity='1';i.draggable=true;});
+}
+
+// ===== AUDIO =====
+const audioPlaylist=[
+  {id:'cross-disc-intro',title:'跨学科实践导入',text:'生物学与数学、化学、地理、物理、信息技术都有紧密联系，跨学科思维是现代科学研究的重要方式。'},
+  {id:'cross-disc-learn',title:'跨学科项目案例',text:'通过校园生物调查、水体污染、光合作用探究等真实项目，体验生物与其他学科的有机结合。'},
+  {id:'cross-disc-practice',title:'跨学科分类练习',text:'将各种生物现象与对应的相关学科联系起来，加深对跨学科思维的理解。'},
+  {id:'cross-disc-summary',title:'初一生物总结',text:'初一生物涵盖细胞、生物圈、植物生殖和人体等核心领域，与多个学科交叉融合，是探索生命奥秘的重要起点。'}
+];
+const audioEl=document.getElementById('audioEl');
+let curSeg=0;
+function loadSeg(i){
+  curSeg=i;
+  audioEl.src=`tts/${audioPlaylist[i].id}.mp3`;
+  audioEl.load();
+  document.getElementById('audioTitle').textContent=audioPlaylist[i].title;
+  document.getElementById('audioFill').style.width='0%';
+}
+function togglePlay(){
+  if(audioEl.paused){audioEl.play().catch(()=>{});document.getElementById('playBtn').textContent='⏸';}
+  else{audioEl.pause();document.getElementById('playBtn').textContent='▶';}
+}
+function prevSeg(){if(curSeg>0) loadSeg(curSeg-1);}
+function nextSeg(){if(curSeg<audioPlaylist.length-1) loadSeg(curSeg+1);}
+function seekAudio(e){
+  const rect=e.currentTarget.getBoundingClientRect();
+  const pct=(e.clientX-rect.left)/rect.width;
+  if(audioEl.duration) audioEl.currentTime=pct*audioEl.duration;
+}
+function updateProgress(){
+  if(audioEl.duration) document.getElementById('audioFill').style.width=(audioEl.currentTime/audioEl.duration*100)+'%';
+}
+audioEl.addEventListener('ended',()=>{document.getElementById('playBtn').textContent='▶';});
+loadSeg(0);
+
+const segMap={intro:0,learn:1,practice:2,summary:3};
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting&&segMap[e.target.id]!==undefined) loadSeg(segMap[e.target.id]);});
+},{threshold:.5});
+document.querySelectorAll('.section').forEach(s=>observer.observe(s));
+</script>
+</body>
+</html>
