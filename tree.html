@@ -319,12 +319,68 @@ svg { width: 100%; height: 100%; }
 <script src="./scripts/community-loader.js"></script>
 <script>
 /* ─── 数据源配置 ─── */
+const GITHUB_API_BASE = 'https://api.github.com/repos/weponusa/teachany/contents/';
 const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/weponusa/teachany/main/';
-const USE_RAW_URL = location.hostname.includes('github.io'); // GitHub Pages 用 Raw URL 绕过 CDN 缓存
+const IS_GITHUB_PAGES = location.hostname.includes('github.io');
 
-function treeUrl(relativePath) {
-  if (USE_RAW_URL) return GITHUB_RAW_BASE + relativePath;
-  return relativePath; // 本地开发用相对路径
+/**
+ * 从 GitHub 获取 JSON 文件（零缓存延迟策略）
+ * 优先级：GitHub API（无缓存） → raw URL（5分钟缓存） → Pages 相对路径
+ * GitHub API 返回 base64 编码内容，无 CDN 缓存，push 后立即可读
+ */
+async function fetchTreeJSON(relativePath) {
+  if (IS_GITHUB_PAGES) {
+    // 策略 1：GitHub Contents API — 零缓存延迟
+    try {
+      const apiUrl = GITHUB_API_BASE + relativePath + '?t=' + Date.now();
+      const resp = await fetch(apiUrl, {
+        cache: 'no-store',
+        headers: { 'Accept': 'application/vnd.github.v3+json' }
+      });
+      if (resp.ok) {
+        const meta = await resp.json();
+        // API 返回 base64 编码的内容
+        if (meta.content) {
+          const decoded = atob(meta.content.replace(/\n/g, ''));
+          console.log('[KnowledgeMap] ✅ via GitHub API (no cache delay)');
+          return JSON.parse(decoded);
+        }
+        // 文件过大时 API 不返回 content，回退到 download_url
+        if (meta.download_url) {
+          const rawResp = await fetch(meta.download_url, { cache: 'no-store' });
+          if (rawResp.ok) {
+            console.log('[KnowledgeMap] ✅ via API download_url');
+            return rawResp.json();
+          }
+        }
+      }
+      // API 限流（403）或其他错误，回退
+      console.warn('[KnowledgeMap] API fallback, status:', resp.status);
+    } catch (e) {
+      console.warn('[KnowledgeMap] API error, falling back:', e.message);
+    }
+
+    // 策略 2：raw.githubusercontent.com — 有 5 分钟 CDN 缓存
+    try {
+      const rawUrl = GITHUB_RAW_BASE + relativePath + '?v=' + Date.now();
+      const resp = await fetch(rawUrl, { cache: 'no-store' });
+      if (resp.ok) {
+        console.log('[KnowledgeMap] ⚠️ via raw URL (may have ~5min cache)');
+        return resp.json();
+      }
+    } catch (e) {
+      console.warn('[KnowledgeMap] raw URL error:', e.message);
+    }
+  }
+
+  // 策略 3：本地相对路径（本地开发 / 最终兜底）
+  const localUrl = relativePath + '?v=' + Date.now();
+  const resp = await fetch(localUrl, { cache: 'no-store' });
+  if (resp.ok) {
+    console.log('[KnowledgeMap] via local path');
+    return resp.json();
+  }
+  throw new Error('All fetch strategies failed for ' + relativePath);
 }
 
 const TREES = [
@@ -380,17 +436,10 @@ async function loadTree(index) {
     t.classList.toggle('active', i === index);
   });
 
-  const url = treeUrl(TREES[index].file) + '?v=' + Date.now();
   try {
-    console.log('[KnowledgeMap] Loading:', url);
-    const resp = await fetch(url, { cache: 'no-store' });
-    if (!resp.ok) {
-      console.error('[KnowledgeMap] HTTP error:', resp.status, resp.statusText);
-      alert('知识地图数据加载失败: HTTP ' + resp.status);
-      return;
-    }
-    currentTree = await resp.json();
-    // 调试：统计 active 节点
+    console.log(`[KnowledgeMap] Loading: ${TREES[index].label} (${TREES[index].file})`);
+    currentTree = await fetchTreeJSON(TREES[index].file);
+    // 统计 active 节点
     const allNodes = currentTree.domains.flatMap(d => d.nodes);
     const activeNodes = allNodes.filter(n => n.status === 'active' && n.courses && n.courses.length);
     console.log(`[KnowledgeMap] ${TREES[index].label}: ${allNodes.length} nodes, ${activeNodes.length} active with courses`);
@@ -398,7 +447,6 @@ async function loadTree(index) {
     renderTree(currentTree);
   } catch (err) {
     console.error('[KnowledgeMap] Failed to load tree:', err);
-    alert('知识地图加载错误: ' + err.message);
   }
 }
 
