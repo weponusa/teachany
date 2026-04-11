@@ -254,7 +254,7 @@ function renderFeaturedCards(grid, featuredData, registryCourses) {
 
     // 导出按钮（如果有 local_path）
     const exportBtnHtml = url
-      ? `<button class="ta-export-btn" onclick="event.preventDefault();event.stopPropagation();window.TeachAnyExport.exportCourseware({url:'${featuredEscapeHtml(url)}',courseName:'${featuredEscapeHtml(course.name)}',onProgress:(s,m)=>console.log(m)})" title="导出离线课件包">📦 导出</button>`
+      ? `<button class="ta-export-btn" onclick="event.preventDefault();event.stopPropagation();window.TeachAnyExport.exportCourseware({url:'${featuredEscapeHtml(url)}',courseName:'${featuredEscapeHtml(course.name)}',onProgress:(s,m)=>console.log(m)})" title="导出离线课件包 Export">📦 导出</button>`
       : '';
 
     const tagName = url ? 'a' : 'div';

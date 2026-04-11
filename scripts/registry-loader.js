@@ -196,14 +196,13 @@ function renderCourseCard(course, basePath) {
     <span class="like-count">${likeCount}</span>
   </button>`;
 
-  // 操作按钮：改为导出课件包
+  // 操作按钮：只保留导出按钮（卡片本身可点击）
   let actionHtml = '';
   if (isLink) {
-    // 有本地路径：既可体验也可导出
-    const exportBtn = `<button class="ta-export-btn" onclick="event.preventDefault();event.stopPropagation();window.TeachAnyExport.exportCourseware({url:'${escapeHtml(url)}',courseName:'${escapeHtml(course.name)}',onProgress:(s,m)=>console.log(m)})" title="导出离线课件包">📦 导出</button>`;
-    actionHtml = `<span class="card-action">体验 →</span>${exportBtn}`;
+    const exportBtn = `<button class="ta-export-btn" onclick="event.preventDefault();event.stopPropagation();window.TeachAnyExport.exportCourseware({url:'${escapeHtml(url)}',courseName:'${escapeHtml(course.name)}',onProgress:(s,m)=>console.log(m)})" title="导出离线课件包 Export">📦 导出</button>`;
+    actionHtml = exportBtn;
   } else if (course.download_url) {
-    actionHtml = `<a class="ta-export-btn" href="${escapeHtml(course.download_url)}" onclick="event.stopPropagation()" style="text-decoration:none">📦 导出</a>`;
+    actionHtml = `<a class="ta-export-btn" href="${escapeHtml(course.download_url)}" onclick="event.stopPropagation()" style="text-decoration:none" title="导出离线课件包 Export">📦 导出</a>`;
   }
 
   // 卡片容器
