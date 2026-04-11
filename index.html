@@ -326,6 +326,74 @@ footer a { color: var(--primary); text-decoration: none; }
 .ta-like-btn .like-icon { font-size: 14px; }
 .ta-like-btn .like-count { font-weight: 600; font-size: 12px; }
 
+/* Featured Section (星标推荐) */
+.featured-section {
+  max-width: 1200px;
+  margin: 0 auto 32px;
+  padding: 0 24px;
+}
+.featured-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+.featured-title {
+  font-size: 28px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #f59e0b, #ef4444, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8px;
+}
+.featured-subtitle {
+  font-size: 14px;
+  color: var(--dim);
+}
+.featured-stats {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.featured-stat {
+  font-size: 13px;
+  color: var(--dimmer);
+  padding: 4px 12px;
+  border-radius: 12px;
+  background: rgba(30,41,59,0.5);
+  border: 1px solid var(--border);
+}
+.featured-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+.featured-card {
+  position: relative;
+  border-left: 3px solid #f59e0b;
+}
+.featured-card.approved {
+  border-left-color: #10b981;
+}
+.featured-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.featured-badge.starred {
+  background: rgba(245,158,11,0.15);
+  color: #fbbf24;
+}
+.featured-badge.approved {
+  background: rgba(16,185,129,0.15);
+  color: #34d399;
+}
+
 @media (max-width: 768px) {
   .hero h1 { font-size: 36px; }
   .course-grid { grid-template-columns: 1fr; }
@@ -642,6 +710,7 @@ footer a { color: var(--primary); text-decoration: none; }
 </footer>
 
 <script src="./scripts/registry-loader.js"></script>
+<script src="./scripts/featured-loader.js"></script>
 <script src="./scripts/courseware-importer.js"></script>
 <script src="./scripts/community-loader.js"></script>
 <script>
@@ -661,7 +730,7 @@ function filterCourses(subject) {
   });
 }
 
-// 初始化：Registry → 社区课件 → 用户课件导入器
+// 初始化：Registry → 星标推荐 → 社区课件 → 用户课件导入器
 document.addEventListener('DOMContentLoaded', async function() {
   const grid = document.querySelector('#courseGrid');
 
@@ -670,12 +739,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     await TeachAnyRegistry.initRegistryLoader('#courseGrid');
   }
 
-  // 2. 初始化课件导入器（"添加我的课件"按钮）
+  // 2. 加载星标推荐课件（Featured Section）
+  if (window.TeachAnyFeatured) {
+    await TeachAnyFeatured.initFeaturedLoader('body');
+  }
+
+  // 3. 初始化课件导入器（"添加我的课件"按钮）
   if (window.TeachAnyImporter) {
     TeachAnyImporter.initGalleryImporter('#courseGrid');
   }
 
-  // 3. 异步加载社区课件索引并渲染社区课件卡片
+  // 4. 异步加载社区课件索引并渲染社区课件卡片
   if (window.TeachAnyCommunity && grid) {
     try {
       const index = await TeachAnyCommunity.fetchCommunityIndex();
