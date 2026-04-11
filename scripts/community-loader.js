@@ -933,13 +933,24 @@ function renderCommunityGalleryCards(grid, index) {
 
   injectCommunityStyles();
 
+  const gradeToLevel = function(g) {
+    g = parseInt(g);
+    if (g >= 1 && g <= 6) return 'elementary';
+    if (g >= 7 && g <= 9) return 'middle';
+    if (g >= 10 && g <= 12) return 'high';
+    return 'other';
+  };
+
   const addCard = grid.querySelector('.course-card-add');
 
   courses.forEach((course) => {
     const downloaded = isCommunityDownloaded(course.id);
+    const level = gradeToLevel(course.grade);
     const card = document.createElement('div');
     card.className = 'course-card community-course-card';
     card.dataset.subject = course.subject || 'custom';
+    card.dataset.grade = course.grade || '';
+    card.dataset.level = level;
     card.style.position = 'relative';
 
     const colors = ['tag-blue', 'tag-purple', 'tag-green', 'tag-yellow', 'tag-pink', 'tag-cyan'];

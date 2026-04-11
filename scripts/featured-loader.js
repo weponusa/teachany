@@ -160,16 +160,20 @@ function getFeaturedStatus(courseId, featuredData) {
   return item ? item.status : null;
 }
 
-/* ─── 渲染星标推荐区（Gallery） ───────────── */
+/* ─── 渲染星标推荐卡片到官方区 Grid ─────────── */
 
 /**
- * 在 Gallery 中渲染 Featured 推荐区
- * @param {HTMLElement} container - 插入位置的父容器
+ * 在指定 Grid 中渲染 Featured 课件卡片（不再创建独立 Section）
+ * Featured 课件直接混入官方区 Grid，带 ⭐ 标记
+ * @param {HTMLElement} grid - 目标 grid（通常是 #officialGrid）
  * @param {Object} featuredData - featured.json 数据
  * @param {Array} registryCourses - registry 课件列表
  */
-function renderFeaturedSection(container, featuredData, registryCourses) {
-  // 移除旧的 featured section
+function renderFeaturedCards(grid, featuredData, registryCourses) {
+  // 移除旧的 featured 卡片
+  grid.querySelectorAll('.featured-card').forEach(el => el.remove());
+
+  // 同时移除旧的独立 featured section（如果还残留）
   const oldSection = document.getElementById('featuredSection');
   if (oldSection) oldSection.remove();
 
@@ -184,12 +188,10 @@ function renderFeaturedSection(container, featuredData, registryCourses) {
   const featuredCourses = registryCourses.filter(c => statusMap[c.id]);
   if (!featuredCourses.length) return;
 
-  // 按学科分组
-  const bySubject = {};
-  featuredCourses.forEach(c => {
-    const subj = c.subject || 'other';
-    if (!bySubject[subj]) bySubject[subj] = [];
-    bySubject[subj].push(c);
+  // 排除已经在 registry 中渲染的卡片（避免重复）
+  const existingIds = new Set();
+  grid.querySelectorAll('.course-card[data-course-id]').forEach(el => {
+    existingIds.add(el.dataset.courseId);
   });
 
   // 学科 emoji 映射
@@ -199,38 +201,47 @@ function renderFeaturedSection(container, featuredData, registryCourses) {
     'info-tech': '💻'
   };
 
-  // 构建 HTML
-  const section = document.createElement('section');
-  section.id = 'featuredSection';
-  section.className = 'featured-section';
-  section.innerHTML = `
-    <div class="featured-header">
-      <h2 class="featured-title">⭐ 星标推荐 · 最新课件</h2>
-      <p class="featured-subtitle">由 TeachAny SKILL 批量生成并推送，管理员审核后将加入知识地图</p>
-      <div class="featured-stats">
-        <span class="featured-stat">📦 ${featuredCourses.length} 个课件</span>
-        <span class="featured-stat">📚 ${Object.keys(bySubject).length} 个学科</span>
-        <span class="featured-stat">⭐ ${featured.filter(f => f.status === 'starred').length} 待审核</span>
-        <span class="featured-stat">✅ ${featured.filter(f => f.status === 'approved').length} 已通过</span>
-      </div>
-    </div>
-    <div class="featured-grid" id="featuredGrid"></div>
-  `;
+  const gradeToLevel = window.TeachAnyRegistry?.gradeToLevelRegistry || function(g) {
+    g = parseInt(g);
+    if (g >= 1 && g <= 6) return 'elementary';
+    if (g >= 7 && g <= 9) return 'middle';
+    if (g >= 10 && g <= 12) return 'high';
+    return 'other';
+  };
 
-  const grid = section.querySelector('#featuredGrid');
-
-  // 渲染课件卡片（紧凑型）
+  // 为已存在的 registry 卡片添加 featured badge
   featuredCourses.forEach(course => {
     const status = statusMap[course.id];
     const isApproved = status?.status === 'approved';
+
+    if (existingIds.has(course.id)) {
+      // 卡片已存在：只添加 featured badge
+      const existingCard = grid.querySelector(`.course-card[data-course-id="${course.id}"]`);
+      if (existingCard) {
+        existingCard.classList.add('featured-card');
+        if (isApproved) existingCard.classList.add('approved');
+        // 在标题后插入 badge（如果还没有）
+        const titleEl = existingCard.querySelector('.card-title');
+        if (titleEl && !titleEl.querySelector('.featured-badge')) {
+          const badge = isApproved
+            ? '<span class="featured-badge approved">✅ 已审核</span>'
+            : '<span class="featured-badge starred">⭐ 星标推荐</span>';
+          titleEl.insertAdjacentHTML('beforeend', badge);
+        }
+      }
+      return;
+    }
+
+    // 新卡片：创建并插入到 grid 中
     const emoji = subjectEmoji[course.subject] || '📚';
     const url = course.local_path ? `./examples/${course.local_path}/index.html` : null;
+    const level = gradeToLevel(course.grade);
 
     const badge = isApproved
       ? '<span class="featured-badge approved">✅ 已审核</span>'
       : '<span class="featured-badge starred">⭐ 星标推荐</span>';
 
-    // 爱心点赞（复用 registry-loader 的点赞系统）
+    // 爱心点赞
     let likeCount = 0, isLiked = false;
     if (window.TeachAnyRegistry) {
       likeCount = TeachAnyRegistry.getRegistryLikeCount(course.id);
@@ -242,13 +253,13 @@ function renderFeaturedSection(container, featuredData, registryCourses) {
     </button>`;
 
     const tagName = url ? 'a' : 'div';
-    const hrefAttr = url ? ` href="${featuredEscapeHtml(url)}"` : '';
-
     const card = document.createElement(tagName);
     if (url) card.setAttribute('href', url);
     card.className = `course-card featured-card${isApproved ? ' approved' : ''}`;
     card.dataset.subject = course.subject || '';
     card.dataset.courseId = course.id;
+    card.dataset.grade = course.grade || '';
+    card.dataset.level = level;
 
     card.innerHTML = `
       <div class="card-header">
@@ -278,14 +289,7 @@ function renderFeaturedSection(container, featuredData, registryCourses) {
     grid.appendChild(card);
   });
 
-  // 插入到 .container 之前（在 filter-bar 和 courseGrid 之前）
-  const courseContainer = container.querySelector('.container') || container;
-  const filterBar = courseContainer.querySelector('.filter-bar');
-  if (filterBar) {
-    courseContainer.insertBefore(section, filterBar);
-  } else {
-    courseContainer.prepend(section);
-  }
+  console.log(`[TeachAny Featured] ✅ 渲染 ${featuredCourses.length} 个星标课件到官方区`);
 }
 
 /* ─── 知识地图增强：星标课件计数 ────────────── */
@@ -327,7 +331,7 @@ function getFeaturedStatsForNode(nodeId, featuredData, registryCourses) {
 }
 
 /* ─── 初始化 ─────────────────────────────────── */
-async function initFeaturedLoader(containerSelector) {
+async function initFeaturedLoader(gridSelector) {
   try {
     const [featuredData, registry] = await Promise.all([
       fetchFeatured(),
@@ -339,10 +343,14 @@ async function initFeaturedLoader(containerSelector) {
       return;
     }
 
-    const container = document.querySelector(containerSelector || 'body');
-    const registryCourses = registry?.courses || [];
+    const grid = document.querySelector(gridSelector || '#officialGrid');
+    if (!grid) {
+      console.warn('[TeachAny Featured] 未找到目标 Grid');
+      return;
+    }
 
-    renderFeaturedSection(container, featuredData, registryCourses);
+    const registryCourses = registry?.courses || [];
+    renderFeaturedCards(grid, featuredData, registryCourses);
 
     console.log(`[TeachAny Featured] ✅ 加载 ${featuredData.featured.length} 个星标推荐课件`);
   } catch (err) {
@@ -359,7 +367,7 @@ window.TeachAnyFeatured = {
   getApprovedCountForNode,
   isFeatured,
   getFeaturedStatus,
-  renderFeaturedSection,
+  renderFeaturedCards,
   getFeaturedStatsForNode,
   initFeaturedLoader,
   FEATURED_LOCAL_URL,
