@@ -43,6 +43,17 @@ const SUBJECT_META = {
 const NODE_ID_ALIASES = {
   'periodic-table': ['element-concept'],     // 元素周期表 → 元素与元素周期表（初中化学）
   'atomic-structure': ['atom-structure'],    // 原子结构 → 原子的构成（初中化学）
+  'ohms-law': ['ohm-law'],                  // 欧姆定律（旧拼写 → 新拼写）
+  'biosphere': ['biosphere-largest'],        // 生物圈（旧 → biology-middle 节点）
+  'cell-basics': ['cell-structure-m'],       // 细胞基础
+  'cell-division': ['cell-division-m'],      // 细胞分裂
+  'circulation': ['circulatory-system'],     // 循环系统
+  'cross-disciplinary': ['cross-disciplinary-practice'], // 跨学科
+  'human-digestive': ['digestion-system'],   // 消化系统
+  'plant-reproduction': ['flower-structure'], // 植物生殖
+  'plant-structure': ['leaf-structure'],     // 植物结构
+  'reproduction': ['human-reproduction'],    // 人的生殖
+  'urinary-nervous': ['excretory-system'],   // 泌尿/神经
 };
 
 /* ─── JSZip 加载器 ───────────────────────────── */

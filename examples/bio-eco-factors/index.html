@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="teachany-node" content="eco-factors">
+<meta name="teachany-subject" content="biology">
+<meta name="teachany-domain" content="biosphere">
+<meta name="teachany-grade" content="7">
+<meta name="teachany-prerequisites" content="biosphere-scope">
+<meta name="teachany-difficulty" content="2">
+<meta name="teachany-version" content="1.0.0">
+<meta name="teachany-author" content="weponusa">
+<title>生态因素 — 七年级生物互动课件</title>
+<style>
+:root{--primary:#16a34a;--primary-light:#dcfce7;--primary-dark:#15803d;--accent:#f59e0b;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--bg:#f8fafc;--card:#fff;--radius:12px;--shadow:0 2px 12px rgba(0,0,0,.08);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;}
+/* NAV */
+.nav{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;padding:0 24px;height:56px;}
+.nav-logo{font-weight:700;color:var(--primary);font-size:1.1rem;margin-right:auto;}
+.nav-tab{padding:6px 14px;border-radius:20px;cursor:pointer;font-size:.9rem;color:var(--muted);transition:.2s;}
+.nav-tab.active,.nav-tab:hover{background:var(--primary-light);color:var(--primary);font-weight:600;}
+/* HERO */
+.hero{background:linear-gradient(135deg,#16a34a 0%,#15803d 50%,#065f46 100%);color:#fff;padding:56px 24px 40px;text-align:center;}
+.hero h1{font-size:2.2rem;font-weight:800;margin-bottom:12px;}
+.hero p{font-size:1.1rem;opacity:.9;max-width:560px;margin:0 auto 20px;}
+.hero-badges{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+.badge{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:4px 14px;font-size:.85rem;}
+/* SECTIONS */
+.section{display:none;max-width:900px;margin:0 auto;padding:32px 24px;}
+.section.active{display:block;}
+h2{font-size:1.5rem;font-weight:700;color:var(--primary);margin-bottom:16px;}
+h3{font-size:1.15rem;font-weight:600;color:var(--primary-dark);margin:20px 0 8px;}
+p{margin-bottom:12px;color:var(--text);}
+/* CARDS */
+.card{background:var(--card);border-radius:var(--radius);padding:20px 24px;box-shadow:var(--shadow);margin-bottom:16px;border-left:4px solid var(--primary);}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:20px;}
+.card-item{background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);text-align:center;}
+.card-item .icon{font-size:2rem;margin-bottom:8px;}
+.card-item h4{font-size:1rem;font-weight:600;color:var(--primary-dark);margin-bottom:6px;}
+.card-item p{font-size:.9rem;color:var(--muted);margin:0;}
+/* ABT */
+.abt{background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-radius:var(--radius);padding:24px;margin-bottom:24px;border:1px solid #bbf7d0;}
+.abt-row{display:flex;gap:12px;margin-bottom:10px;align-items:flex-start;}
+.abt-label{background:var(--primary);color:#fff;border-radius:6px;padding:2px 10px;font-size:.8rem;font-weight:700;white-space:nowrap;margin-top:2px;}
+/* CANVAS */
+.canvas-wrap{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:24px;text-align:center;}
+.canvas-wrap canvas{border-radius:8px;max-width:100%;}
+.canvas-ctrl{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap;}
+.btn{padding:8px 18px;border:none;border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:600;transition:.2s;}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-primary:hover{background:var(--primary-dark);}
+.btn-outline{background:#fff;border:2px solid var(--primary);color:var(--primary);}
+.btn-outline:hover{background:var(--primary-light);}
+/* DRAG DROP */
+.dd-container{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:24px;}
+.dd-items{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;min-height:60px;padding:10px;background:var(--bg);border-radius:8px;border:2px dashed var(--border);}
+.dd-item{padding:8px 16px;background:var(--primary);color:#fff;border-radius:8px;cursor:grab;font-size:.9rem;font-weight:600;user-select:none;}
+.dd-item:active{cursor:grabbing;opacity:.7;}
+.dd-zones{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.dd-zone{min-height:80px;border:2px dashed var(--border);border-radius:8px;padding:10px;background:#fafafa;transition:.2s;}
+.dd-zone.over{border-color:var(--primary);background:var(--primary-light);}
+.dd-zone h5{font-size:.85rem;color:var(--muted);margin-bottom:8px;}
+.dd-feedback{margin-top:12px;padding:10px 16px;border-radius:8px;font-weight:600;display:none;}
+.dd-feedback.ok{background:#dcfce7;color:#16a34a;display:block;}
+.dd-feedback.err{background:#fee2e2;color:#dc2626;display:block;}
+/* QUIZ */
+.quiz-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;margin-bottom:20px;}
+.quiz-q{font-weight:600;margin-bottom:14px;font-size:1rem;}
+.quiz-opts{display:flex;flex-direction:column;gap:8px;}
+.quiz-opt{padding:10px 16px;border:2px solid var(--border);border-radius:8px;cursor:pointer;transition:.2s;font-size:.95rem;}
+.quiz-opt:hover{border-color:var(--primary);background:var(--primary-light);}
+.quiz-opt.correct{border-color:#16a34a;background:#dcfce7;color:#15803d;}
+.quiz-opt.wrong{border-color:#dc2626;background:#fee2e2;color:#dc2626;}
+.quiz-explain{margin-top:12px;padding:10px 14px;background:#f0fdf4;border-radius:8px;font-size:.9rem;color:#166534;display:none;border-left:3px solid var(--primary);}
+/* KNOWLEDGE GRAPH */
+.kg-wrap{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:16px;margin-top:16px;}
+.kg-col{display:flex;flex-direction:column;gap:10px;}
+.kg-col-title{font-size:.8rem;font-weight:700;color:var(--muted);text-align:center;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+.kg-node{padding:10px 14px;border-radius:10px;border:2px solid var(--border);background:#fff;font-size:.9rem;text-align:center;cursor:default;transition:.2s;}
+.kg-node:hover{border-color:var(--primary);box-shadow:0 2px 8px rgba(22,163,74,.15);}
+.kg-node.current{background:var(--primary);color:#fff;border-color:var(--primary);font-weight:700;box-shadow:0 4px 16px rgba(22,163,74,.3);}
+.kg-node.prereq{border-color:#93c5fd;background:#eff6ff;color:#1d4ed8;}
+.kg-node.extend{border-color:#fcd34d;background:#fffbeb;color:#92400e;}
+/* AUDIO BAR */
+.audio-bar{position:fixed;bottom:0;left:0;right:0;background:#1e293b;color:#fff;padding:10px 20px;z-index:200;transition:.3s;}
+.audio-bar.hidden{transform:translateY(100%);}
+.audio-subtitle{font-size:.82rem;color:#94a3b8;margin-bottom:6px;min-height:18px;text-align:center;}
+.audio-bar-inner{display:flex;align-items:center;gap:12px;max-width:900px;margin:0 auto;}
+.audio-seg-title{font-size:.9rem;font-weight:600;min-width:60px;}
+.audio-controls{display:flex;gap:6px;}
+.audio-btn{background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;}
+.audio-btn:hover{background:rgba(255,255,255,.2);}
+.audio-progress{flex:1;height:6px;background:rgba(255,255,255,.2);border-radius:3px;cursor:pointer;}
+.audio-progress-fill{height:100%;background:var(--primary);border-radius:3px;width:0%;transition:.1s;}
+.audio-time{font-size:.8rem;color:#94a3b8;min-width:80px;text-align:right;}
+/* SUMMARY */
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:20px;}
+.summary-item{background:var(--card);border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow);border-top:3px solid var(--primary);}
+.summary-item h4{color:var(--primary);font-size:1rem;margin-bottom:8px;}
+.summary-item ul{list-style:disc;padding-left:18px;font-size:.9rem;color:var(--muted);}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">🌿 生态因素</div>
+  <div class="nav-tab active" onclick="showTab('intro')">导入</div>
+  <div class="nav-tab" onclick="showTab('learn')">学习</div>
+  <div class="nav-tab" onclick="showTab('practice')">练习</div>
+  <div class="nav-tab" onclick="showTab('summary')">小结</div>
+  <div class="nav-tab" onclick="showTab('graph')">知识图谱</div>
+</nav>
+
+<div class="hero">
+  <h1>🌿 生态因素与生物适应</h1>
+  <p>探索光照、温度、水分如何影响生物生存，理解生物与环境的相互关系</p>
+  <div class="hero-badges">
+    <span class="badge">七年级生物</span>
+    <span class="badge">生物与生物圈</span>
+    <span class="badge">互动课件</span>
+  </div>
+</div>
+
+<!-- INTRO -->
+<section id="intro" class="section active">
+  <div class="abt">
+    <div class="abt-row"><span class="abt-label">背景</span><p>生物生活在自然界中，<strong>阳光、温度、水分、土壤</strong>等各种条件时刻影响着它们的生存与分布。</p></div>
+    <div class="abt-row"><span class="abt-label">转折</span><p>但是，同样的光照下，有的植物茁壮成长，有的却枯萎死亡。<strong>为什么不同生物对同一因素的反应差异这么大？</strong></p></div>
+    <div class="abt-row"><span class="abt-label">任务</span><p>通过本课学习，你将掌握<strong>非生物因素</strong>与<strong>生物因素</strong>的概念，理解生物对环境的适应，并学会分析生态因素对生物的影响。</p></div>
+  </div>
+  <div class="card-grid">
+    <div class="card-item"><div class="icon">☀️</div><h4>非生物因素</h4><p>光照、温度、水分、土壤等</p></div>
+    <div class="card-item"><div class="icon">🐾</div><h4>生物因素</h4><p>种内关系与种间关系</p></div>
+    <div class="card-item"><div class="icon">🌱</div><h4>生物适应</h4><p>长期进化形成的适应性</p></div>
+    <div class="card-item"><div class="icon">🔄</div><h4>相互影响</h4><p>生物与环境相互作用</p></div>
+  </div>
+  <div style="text-align:center;margin-top:8px;">
+    <button class="btn btn-primary" onclick="showTab('learn')">开始学习 →</button>
+  </div>
+</section>
+
+<!-- LEARN -->
+<section id="learn" class="section">
+  <h2>📚 核心知识讲解</h2>
+
+  <div class="card">
+    <h3>一、非生物因素</h3>
+    <p>非生物因素是指<strong>光照、温度、水分、空气、土壤</strong>等影响生物生活的非生命物质。</p>
+    <div class="card-grid">
+      <div class="card-item"><div class="icon">☀️</div><h4>光照</h4><p>植物光合作用的能量来源；影响动物繁殖节律</p></div>
+      <div class="card-item"><div class="icon">🌡️</div><h4>温度</h4><p>影响酶活性和代谢速率；决定生物分布范围</p></div>
+      <div class="card-item"><div class="icon">💧</div><h4>水分</h4><p>生命活动的物质基础；决定干旱/湿润区物种</p></div>
+      <div class="card-item"><div class="icon">🌍</div><h4>土壤</h4><p>提供无机盐和水分；影响植物根系发育</p></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>二、光照强度与植物生长（模拟实验）</h3>
+    <p>下方动画模拟了不同光照强度下植物的生长状态。观察阴生植物和阳生植物的差异。</p>
+  </div>
+
+  <div class="canvas-wrap">
+    <canvas id="cvs" width="720" height="320"></canvas>
+    <div class="canvas-ctrl">
+      <button class="btn btn-outline" onclick="setLight(0)">🌑 黑暗</button>
+      <button class="btn btn-outline" onclick="setLight(1)">🌤 弱光</button>
+      <button class="btn btn-primary" onclick="setLight(2)">☀️ 适光</button>
+      <button class="btn btn-outline" onclick="setLight(3)">🔥 强光</button>
+      <button class="btn btn-outline" onclick="animRunning?stopAnim():startAnim()">⏯ 动画</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>三、生物因素</h3>
+    <p>生物因素是指<strong>同种或不同种生物</strong>之间的相互作用关系。</p>
+    <div class="card-grid">
+      <div class="card-item"><div class="icon">🐺</div><h4>种内竞争</h4><p>同种个体争夺食物、空间（如狼群竞争）</p></div>
+      <div class="card-item"><div class="icon">🤝</div><h4>种内互助</h4><p>同种个体合作（如蜜蜂分工协作）</p></div>
+      <div class="card-item"><div class="icon">🦁🦌</div><h4>捕食关系</h4><p>一种生物以另一种为食（如狮子捕食羚羊）</p></div>
+      <div class="card-item"><div class="icon">🌺🐝</div><h4>互利共生</h4><p>两种生物互相受益（如花与蜜蜂）</p></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>四、生物对非生物因素的适应</h3>
+    <p>生物经过长期<strong>自然选择</strong>，形成了与环境相适应的形态结构和生活习性。</p>
+    <ul style="padding-left:20px;line-height:2;">
+      <li>🌵 <strong>仙人掌</strong>：叶退化为刺，茎肉质储水 → 适应干旱环境</li>
+      <li>🐻 <strong>北极熊</strong>：白色皮毛，厚脂肪层 → 适应寒冷低温</li>
+      <li>🐠 <strong>比目鱼</strong>：体色与海底沙地相似 → 适应光线和背景</li>
+      <li>🌿 <strong>阴生植物</strong>：叶片大、叶绿体多 → 适应弱光环境</li>
+    </ul>
+  </div>
+</section>
+
+<!-- PRACTICE -->
+<section id="practice" class="section">
+  <h2>🎮 互动练习</h2>
+
+  <div class="dd-container">
+    <h3 style="margin-top:0;">拖拽分类：生态因素</h3>
+    <p style="font-size:.9rem;color:var(--muted);margin-bottom:12px;">将下方因素拖入对应类别</p>
+    <div class="dd-items" id="ddItems">
+      <div class="dd-item" draggable="true" data-cat="abiotic" ondragstart="dragStart(event)">☀️ 光照</div>
+      <div class="dd-item" draggable="true" data-cat="abiotic" ondragstart="dragStart(event)">🌡️ 温度</div>
+      <div class="dd-item" draggable="true" data-cat="biotic" ondragstart="dragStart(event)">🐺 捕食</div>
+      <div class="dd-item" draggable="true" data-cat="abiotic" ondragstart="dragStart(event)">💧 水分</div>
+      <div class="dd-item" draggable="true" data-cat="biotic" ondragstart="dragStart(event)">🤝 共生</div>
+      <div class="dd-item" draggable="true" data-cat="abiotic" ondragstart="dragStart(event)">🌍 土壤</div>
+    </div>
+    <div class="dd-zones">
+      <div class="dd-zone" id="zone-abiotic" ondragover="dragOver(event)" ondrop="drop(event,'abiotic')">
+        <h5>🌡️ 非生物因素</h5>
+      </div>
+      <div class="dd-zone" id="zone-biotic" ondragover="dragOver(event)" ondrop="drop(event,'biotic')">
+        <h5>🐾 生物因素</h5>
+      </div>
+    </div>
+    <div class="dd-feedback" id="ddFeedback"></div>
+    <div style="margin-top:12px;display:flex;gap:8px;">
+      <button class="btn btn-primary" onclick="checkDrop()">✅ 检查答案</button>
+      <button class="btn btn-outline" onclick="resetDrop()">🔄 重置</button>
+    </div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-q">1. 下列属于非生物因素对生物影响的例子是：</div>
+    <div class="quiz-opts">
+      <div class="quiz-opt" onclick="answerQ(1,'A',this,'A')">A. 狼与兔之间的捕食关系</div>
+      <div class="quiz-opt" onclick="answerQ(1,'B',this,'A')">B. 冬季来临，候鸟向南迁徙（温度影响）</div>
+      <div class="quiz-opt" onclick="answerQ(1,'C',this,'A')">C. 蜜蜂在蜂巢中的分工协作</div>
+      <div class="quiz-opt" onclick="answerQ(1,'D',this,'A')">D. 大鱼吃小鱼</div>
+    </div>
+    <div class="quiz-explain" id="qe1">✅ <strong>B正确！</strong>温度是非生物因素，候鸟迁徙是温度变化对生物行为的影响。A是捕食关系（生物因素），C是种内互助（生物因素），D是捕食（生物因素）。</div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-q">2. 下列属于种间关系的是：</div>
+    <div class="quiz-opts">
+      <div class="quiz-opt" onclick="answerQ(2,'A',this,'C')">A. 同一棵树上的蚂蚱互相争食</div>
+      <div class="quiz-opt" onclick="answerQ(2,'B',this,'C')">B. 蜂群中工蜂为蜂王服务</div>
+      <div class="quiz-opt" onclick="answerQ(2,'C',this,'C')">C. 大豆根瘤中根瘤菌与大豆的共生</div>
+      <div class="quiz-opt" onclick="answerQ(2,'D',this,'C')">D. 雄孔雀展开尾屏吸引雌孔雀</div>
+    </div>
+    <div class="quiz-explain" id="qe2">✅ <strong>C正确！</strong>根瘤菌和大豆是不同物种，属于种间关系（互利共生）。A是同种蚂蚱（种内竞争），B是同种蜜蜂（种内互助），D是同种孔雀（种内关系）。</div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-q">3. 仙人掌的叶退化为刺，主要是适应了：</div>
+    <div class="quiz-opts">
+      <div class="quiz-opt" onclick="answerQ(3,'A',this,'B')">A. 强烈的光照</div>
+      <div class="quiz-opt" onclick="answerQ(3,'B',this,'B')">B. 干旱缺水的环境</div>
+      <div class="quiz-opt" onclick="answerQ(3,'C',this,'B')">C. 低温寒冷的环境</div>
+      <div class="quiz-opt" onclick="answerQ(3,'D',this,'B')">D. 土壤贫瘠的环境</div>
+    </div>
+    <div class="quiz-explain" id="qe3">✅ <strong>B正确！</strong>仙人掌叶变刺减少蒸腾失水，茎肉质储存水分，是对<strong>干旱缺水</strong>环境的适应。这是长期自然选择的结果。</div>
+  </div>
+</section>
+
+<!-- SUMMARY -->
+<section id="summary" class="section">
+  <h2>📋 本课小结</h2>
+  <div class="summary-grid">
+    <div class="summary-item">
+      <h4>非生物因素</h4>
+      <ul>
+        <li>光照、温度、水分</li>
+        <li>土壤、空气等</li>
+        <li>影响生物生存与分布</li>
+      </ul>
+    </div>
+    <div class="summary-item">
+      <h4>生物因素</h4>
+      <ul>
+        <li>种内关系：竞争、互助</li>
+        <li>种间关系：捕食、共生</li>
+        <li>寄生、竞争</li>
+      </ul>
+    </div>
+    <div class="summary-item">
+      <h4>生物适应</h4>
+      <ul>
+        <li>形态结构适应</li>
+        <li>生理功能适应</li>
+        <li>自然选择的结果</li>
+      </ul>
+    </div>
+    <div class="summary-item">
+      <h4>相互影响</h4>
+      <ul>
+        <li>环境影响生物</li>
+        <li>生物改变环境</li>
+        <li>协同进化</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);">
+    <h3 style="margin-top:0;">🧠 核心概念记忆</h3>
+    <p><strong>生态因素 = 非生物因素 + 生物因素</strong></p>
+    <p>非生物因素：光、温、水、土（助记："光温水土"）</p>
+    <p>生物因素：种内（同种间）+ 种间（不同种间）</p>
+    <p>生物对生态因素具有<strong>适应性</strong>，这是自然选择的结果。</p>
+  </div>
+  <div style="text-align:center;margin-top:20px;">
+    <button class="btn btn-primary" onclick="showTab('graph')">查看知识图谱 →</button>
+  </div>
+</section>
+
+<!-- GRAPH -->
+<section id="graph" class="section">
+  <h2>🗺️ 知识图谱</h2>
+  <p style="color:var(--muted);margin-bottom:16px;">当前节点在中间列高亮显示，左侧为前置知识，右侧为延伸学习</p>
+  <div class="kg-wrap">
+    <div class="kg-col">
+      <div class="kg-col-title">📚 前置知识</div>
+      <div class="kg-node prereq">生物与生物圈</div>
+      <div class="kg-node prereq">生物的特征</div>
+      <div class="kg-node prereq">生物圈的范围</div>
+    </div>
+    <div class="kg-col">
+      <div class="kg-col-title">🎯 当前学习</div>
+      <div class="kg-node current">🌿 生态因素</div>
+    </div>
+    <div class="kg-col">
+      <div class="kg-col-title">🚀 延伸学习</div>
+      <div class="kg-node extend">生态系统的组成</div>
+      <div class="kg-node extend">食物链与食物网</div>
+      <div class="kg-node extend">生物圈是最大生态系统</div>
+    </div>
+  </div>
+</section>
+
+<!-- AUDIO BAR -->
+<audio id="audioEl"></audio>
+<div class="audio-bar hidden" id="audioBar">
+  <div class="audio-subtitle" id="audioSubtitle"></div>
+  <div class="audio-bar-inner">
+    <div class="audio-seg-title" id="audioSegTitle">导入</div>
+    <div class="audio-controls">
+      <button class="audio-btn" onclick="prevSeg()">⏮</button>
+      <button class="audio-btn" onclick="togglePlay()" id="audioPlayBtn">▶</button>
+      <button class="audio-btn" onclick="nextSeg()">⏭</button>
+    </div>
+    <div class="audio-progress" id="audioProgress" onclick="seekAudio(event)">
+      <div class="audio-progress-fill" id="audioProgressFill"></div>
+    </div>
+    <div class="audio-time" id="audioTime">0:00 / 0:00</div>
+    <button class="audio-btn" onclick="hideAudioBar()">✕</button>
+  </div>
+</div>
+
+<script>
+// ── TABS ──
+function showTab(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const tabs=['intro','learn','practice','summary','graph'];
+  document.querySelectorAll('.nav-tab')[tabs.indexOf(id)].classList.add('active');
+}
+
+// ── CANVAS: Light vs Plant Growth ──
+const cvs = document.getElementById('cvs');
+const ctx = cvs.getContext('2d');
+let lightLevel = 2; // 0=dark,1=weak,2=optimal,3=strong
+let animRunning = false;
+let animFrame;
+let tick = 0;
+
+const plants = [
+  {name:'阴生植物\n(蕨类)',x:150,baseH:80,optimal:1,color:'#16a34a'},
+  {name:'阳生植物\n(向日葵)',x:380,baseH:80,optimal:2,color:'#eab308'},
+  {name:'耐旱植物\n(仙人掌)',x:590,baseH:60,optimal:2,color:'#84cc16'},
+];
+
+function plantHeight(plant, light){
+  const diff = Math.abs(light - plant.optimal);
+  const growth = [1.0, 0.7, 0.3, 0.05][diff] || 0.05;
+  return plant.baseH + 120 * growth;
+}
+
+function drawScene(){
+  ctx.clearRect(0,0,cvs.width,cvs.height);
+  // sky
+  const lightColors = ['#0f172a','#94a3b8','#bfdbfe','#fbbf24'];
+  const skyGrad = ctx.createLinearGradient(0,0,0,cvs.height);
+  skyGrad.addColorStop(0, lightColors[lightLevel]);
+  skyGrad.addColorStop(1,'#e8f5e9');
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0,0,cvs.width,cvs.height);
+
+  // ground
+  ctx.fillStyle='#7c5c3e';
+  ctx.fillRect(0,cvs.height-40,cvs.width,40);
+  ctx.fillStyle='#4ade80';
+  ctx.fillRect(0,cvs.height-44,cvs.width,8);
+
+  // sun / moon
+  if(lightLevel>0){
+    ctx.beginPath();
+    ctx.arc(cvs.width-60,50,30,0,Math.PI*2);
+    ctx.fillStyle = lightLevel===3?'#fbbf24':lightLevel===2?'#fde68a':'#e2e8f0';
+    ctx.fill();
+    if(lightLevel===3){
+      for(let i=0;i<8;i++){
+        const a=i*Math.PI/4, r1=34, r2=44;
+        ctx.beginPath();
+        ctx.moveTo(cvs.width-60+Math.cos(a)*r1,50+Math.sin(a)*r1);
+        ctx.lineTo(cvs.width-60+Math.cos(a)*r2,50+Math.sin(a)*r2);
+        ctx.strokeStyle='#fbbf24';ctx.lineWidth=3;ctx.stroke();
+      }
+    }
+  }
+
+  // light intensity label
+  const labels=['🌑 黑暗','🌤 弱光','☀️ 适光','🔥 强光'];
+  ctx.fillStyle='rgba(255,255,255,.8)';
+  ctx.fillRect(10,10,130,32);
+  ctx.fillStyle='#1e293b';ctx.font='bold 14px sans-serif';
+  ctx.fillText('光照强度: '+labels[lightLevel],16,31);
+
+  // draw each plant
+  plants.forEach(p=>{
+    const h = plantHeight(p, lightLevel);
+    const wobble = animRunning ? Math.sin(tick*0.05+p.x)*3 : 0;
+    // stem
+    ctx.beginPath();
+    ctx.moveTo(p.x+wobble, cvs.height-44);
+    ctx.lineTo(p.x+wobble, cvs.height-44-h);
+    ctx.strokeStyle=p.color;ctx.lineWidth=6;ctx.stroke();
+    // leaves
+    for(let lv=0;lv<3;lv++){
+      const ly = cvs.height-44-h*0.3*(lv+1);
+      ctx.beginPath();
+      ctx.ellipse(p.x+wobble+(lv%2===0?20:-20), ly, 20, 10, lv%2===0?0.5:-0.5, 0, Math.PI*2);
+      ctx.fillStyle=p.color+'cc';ctx.fill();
+    }
+    // crown
+    ctx.beginPath();
+    ctx.arc(p.x+wobble, cvs.height-44-h, 22, 0, Math.PI*2);
+    ctx.fillStyle=p.color;ctx.fill();
+    // name
+    ctx.fillStyle='#fff';ctx.font='bold 12px sans-serif';ctx.textAlign='center';
+    const lines = p.name.split('\n');
+    lines.forEach((l,i)=>ctx.fillText(l, p.x, cvs.height-20+i*16-lines.length*8));
+    // height label
+    ctx.fillStyle='#1e293b';ctx.font='12px sans-serif';
+    ctx.fillText(`高度: ${Math.round(h)}px`, p.x, cvs.height-44-h-28+wobble);
+    ctx.textAlign='left';
+  });
+}
+
+function setLight(l){ lightLevel=l; drawScene(); }
+function startAnim(){ animRunning=true; loop(); }
+function stopAnim(){ animRunning=false; cancelAnimationFrame(animFrame); }
+function loop(){ tick++; drawScene(); animFrame=requestAnimationFrame(loop); }
+drawScene();
+
+// ── DRAG & DROP ──
+let dragging=null;
+function dragStart(e){ dragging=e.target; e.dataTransfer.effectAllowed='move'; }
+function dragOver(e){ e.preventDefault(); e.currentTarget.classList.add('over'); }
+document.querySelectorAll('.dd-zone').forEach(z=>{
+  z.addEventListener('dragleave',()=>z.classList.remove('over'));
+});
+function drop(e, cat){
+  e.preventDefault();
+  e.currentTarget.classList.remove('over');
+  if(dragging){ e.currentTarget.appendChild(dragging); dragging=null; }
+}
+function checkDrop(){
+  const abZone=document.getElementById('zone-abiotic');
+  const biZone=document.getElementById('zone-biotic');
+  const fb=document.getElementById('ddFeedback');
+  let ok=true;
+  abZone.querySelectorAll('.dd-item').forEach(el=>{ if(el.dataset.cat!=='abiotic') ok=false; });
+  biZone.querySelectorAll('.dd-item').forEach(el=>{ if(el.dataset.cat!=='biotic') ok=false; });
+  if(abZone.children.length<2||biZone.children.length<2){ fb.className='dd-feedback err'; fb.textContent='⚠️ 请先把所有因素拖入对应类别！'; return; }
+  if(ok){ fb.className='dd-feedback ok'; fb.textContent='🎉 完全正确！光照、温度、水分、土壤是非生物因素；捕食、共生是生物因素。'; }
+  else { fb.className='dd-feedback err'; fb.textContent='❌ 有错误，请检查分类！非生物因素是无生命物质，生物因素是生物之间的关系。'; }
+}
+function resetDrop(){
+  const src=document.getElementById('ddItems');
+  document.querySelectorAll('.dd-item').forEach(el=>src.appendChild(el));
+  document.getElementById('ddFeedback').className='dd-feedback';
+}
+
+// ── QUIZ ──
+function answerQ(n, choice, el, correct){
+  const zone=el.parentElement;
+  if(zone.querySelector('.correct')) return;
+  zone.querySelectorAll('.quiz-opt').forEach(o=>o.style.pointerEvents='none');
+  if(choice===correct){ el.classList.add('correct'); }
+  else { el.classList.add('wrong'); zone.querySelectorAll('.quiz-opt').forEach(o=>{ if(o.textContent.startsWith(correct)) o.classList.add('correct'); }); }
+  document.getElementById('qe'+n).style.display='block';
+}
+
+// ── AUDIO ──
+const playlist=[
+  {id:'eco-intro',title:'导入',text:'生态因素是影响生物生活的各种环境条件'},
+  {id:'eco-abiotic',title:'非生物因素',text:'光照、温度、水分等非生命物质影响生物分布'},
+  {id:'eco-biotic',title:'生物因素',text:'生物之间的种内关系和种间关系'},
+  {id:'eco-adapt',title:'生物适应',text:'生物通过自然选择适应环境变化'},
+];
+const audioEl=document.getElementById('audioEl');
+let curSeg=0;
+function loadSeg(i){
+  curSeg=i;
+  audioEl.src=`tts/${playlist[i].id}.mp3`;
+  audioEl.load();
+  document.getElementById('audioSegTitle').textContent=playlist[i].title;
+  document.getElementById('audioSubtitle').textContent=playlist[i].text;
+  document.getElementById('audioBar').classList.remove('hidden');
+}
+function togglePlay(){
+  if(audioEl.paused){ audioEl.play(); document.getElementById('audioPlayBtn').textContent='⏸'; }
+  else { audioEl.pause(); document.getElementById('audioPlayBtn').textContent='▶'; }
+}
+function prevSeg(){ if(curSeg>0) loadSeg(curSeg-1); }
+function nextSeg(){ if(curSeg<playlist.length-1) loadSeg(curSeg+1); }
+function hideAudioBar(){ document.getElementById('audioBar').classList.add('hidden'); }
+function seekAudio(e){
+  const r=e.currentTarget.getBoundingClientRect();
+  audioEl.currentTime=(e.clientX-r.left)/r.width*audioEl.duration;
+}
+audioEl.addEventListener('timeupdate',()=>{
+  if(!audioEl.duration) return;
+  const pct=audioEl.currentTime/audioEl.duration*100;
+  document.getElementById('audioProgressFill').style.width=pct+'%';
+  const fmt=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+  document.getElementById('audioTime').textContent=`${fmt(audioEl.currentTime)} / ${fmt(audioEl.duration)}`;
+});
+audioEl.addEventListener('ended',()=>{ document.getElementById('audioPlayBtn').textContent='▶'; nextSeg(); });
+
+// IntersectionObserver auto-switch
+const segMap={'intro':0,'learn':1,'practice':2,'summary':3};
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{ if(e.isIntersecting&&segMap[e.target.id]!==undefined) loadSeg(segMap[e.target.id]); });
+},{threshold:.5});
+document.querySelectorAll('.section').forEach(s=>observer.observe(s));
+
+// knowledge graph data
+const knowledgeGraphData={
+  prerequisites:[{id:'biosphere',name:'生物与生物圈'},{id:'bio-chars',name:'生物的特征'},{id:'biosphere-scope',name:'生物圈的范围'}],
+  current:{id:'eco-factors',name:'生态因素',status:'active'},
+  extends:[{id:'biosphere-ecosystem',name:'生态系统的组成'},{id:'food-chain',name:'食物链与食物网'},{id:'biosphere-largest',name:'生物圈是最大生态系统'}]
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>细胞的生活与能量 — 七年级生物互动课件</title>
+
+  <!-- TeachAny meta -->
+  <meta name="teachany-node-id"       content="cell-life-activities"/>
+  <meta name="teachany-node-name"     content="细胞的生活与能量"/>
+  <meta name="teachany-domain"        content="cell-basis"/>
+  <meta name="teachany-grade"         content="7"/>
+  <meta name="teachany-subject"       content="biology"/>
+  <meta name="teachany-prerequisites" content="cell-structure-m"/>
+  <meta name="teachany-version"       content="1.0.0"/>
+  <meta name="teachany-lang"          content="zh-CN"/>
+  <meta name="teachany-author"        content="TeachAny"/>
+  <meta name="teachany-description"   content="探究细胞如何获取能量，物质如何穿越细胞膜，线粒体如何完成呼吸作用"/>
+  <meta name="teachany-audio-segments" content="10"/>
+  <meta name="teachany-interactions"  content="Canvas,DragDrop,Quiz,ErrorDiagnosis,KnowledgeGraph"/>
+
+  <style>
+    :root{
+      --primary:#7c3aed; --primary-dark:#6d28d9; --secondary:#0891b2;
+      --accent:#f59e0b; --card:#ffffff; --text:#1e293b; --text-light:#64748b;
+      --success:#22c55e; --error:#ef4444; --warning:#f59e0b; --border:#e2e8f0;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:#faf5ff;color:var(--text);min-height:100vh;}
+
+    .top-nav{position:sticky;top:0;z-index:100;background:#fff;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:4px;padding:0 12px;height:52px;overflow-x:auto;}
+    .top-nav .nav-logo{font-weight:700;color:var(--primary);font-size:1rem;white-space:nowrap;margin-right:8px;}
+    .nav-btn{flex-shrink:0;padding:6px 14px;border:none;background:transparent;border-radius:20px;font-size:.85rem;cursor:pointer;color:var(--text-light);transition:all .2s;}
+    .nav-btn:hover{background:#ede9fe;color:var(--primary-dark);}
+    .nav-btn.active{background:var(--primary);color:#fff;font-weight:600;}
+
+    .hero{background:linear-gradient(135deg,#7c3aed 0%,#4f46e5 50%,#0891b2 100%);color:#fff;padding:56px 24px 40px;text-align:center;}
+    .hero-badge{display:inline-block;background:rgba(255,255,255,.18);padding:4px 14px;border-radius:20px;font-size:.8rem;margin-bottom:14px;}
+    .hero h1{font-size:2rem;font-weight:800;margin-bottom:10px;}
+    .hero .hero-sub{font-size:1.05rem;opacity:.9;max-width:560px;margin:0 auto;}
+
+    .section{display:none;padding:28px 16px 60px;max-width:860px;margin:0 auto;}
+    .section.active{display:block;}
+
+    .card{background:var(--card);border-radius:14px;padding:22px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,.07);}
+    .card h2{font-size:1.25rem;color:var(--primary);margin-bottom:12px;}
+    .card h3{font-size:1rem;color:var(--text);margin-bottom:8px;font-weight:600;}
+
+    .abt-row{display:flex;gap:12px;flex-wrap:wrap;}
+    .abt-item{flex:1;min-width:180px;border-radius:10px;padding:16px;text-align:center;}
+    .abt-item .abt-tag{font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;}
+    .abt-item p{font-size:.9rem;line-height:1.55;}
+    .abt-and{background:#f5f3ff;}.abt-and .abt-tag{color:#5b21b6;}
+    .abt-but{background:#fef9c3;}.abt-but .abt-tag{color:#b45309;}
+    .abt-the{background:#ecfdf5;}.abt-the .abt-tag{color:#059669;}
+
+    .canvas-wrap{text-align:center;margin:10px 0;}
+    canvas{border-radius:12px;max-width:100%;}
+    .canvas-info{min-height:48px;background:#f5f3ff;border-radius:8px;padding:10px 14px;margin-top:8px;font-size:.88rem;color:var(--text);line-height:1.6;border-left:4px solid var(--primary);}
+    .canvas-hint{font-size:.8rem;color:var(--text-light);text-align:center;margin-top:6px;}
+
+    .transport-toggle{display:flex;gap:10px;justify-content:center;margin-bottom:14px;flex-wrap:wrap;}
+    .ttog-btn{padding:8px 20px;border-radius:20px;border:2px solid var(--primary);background:#fff;color:var(--primary);font-size:.88rem;cursor:pointer;transition:all .2s;font-weight:600;}
+    .ttog-btn.active{background:var(--primary);color:#fff;}
+
+    .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;}
+    @media(max-width:540px){.info-grid{grid-template-columns:1fr;}}
+    .info-card{border-radius:10px;padding:14px;}
+    .info-card h4{font-size:.9rem;font-weight:700;margin-bottom:5px;}
+    .info-card p{font-size:.82rem;color:var(--text-light);line-height:1.5;}
+    .ic-free{background:#f5f3ff;border-left:4px solid #7c3aed;}
+    .ic-carrier{background:#fffbeb;border-left:4px solid #f59e0b;}
+    .ic-active{background:#fef2f2;border-left:4px solid #ef4444;}
+
+    .process-steps{display:flex;flex-direction:column;gap:10px;}
+    .step{display:flex;align-items:flex-start;gap:12px;padding:12px;border-radius:10px;background:#f8fafc;}
+    .step-num{width:30px;height:30px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:.9rem;}
+    .step-content h4{font-size:.9rem;font-weight:700;margin-bottom:4px;}
+    .step-content p{font-size:.82rem;color:var(--text-light);line-height:1.5;}
+
+    .compare-table{width:100%;border-collapse:collapse;font-size:.9rem;margin-top:12px;}
+    .compare-table th{background:var(--primary);color:#fff;padding:10px 12px;text-align:left;}
+    .compare-table td{padding:9px 12px;border-bottom:1px solid var(--border);}
+    .compare-table tr:nth-child(even) td{background:#f5f3ff;}
+
+    .drag-pool{display:flex;flex-wrap:wrap;gap:8px;min-height:44px;padding:10px;background:#f8fafc;border-radius:10px;border:2px dashed var(--border);margin-bottom:14px;}
+    .drag-chip{padding:7px 14px;background:var(--primary);color:#fff;border-radius:20px;cursor:grab;font-size:.85rem;user-select:none;}
+    .drag-chip:active{opacity:.7;}
+    .drop-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:8px;}
+    @media(max-width:540px){.drop-row{grid-template-columns:1fr;}}
+    .drop-col{border-radius:12px;padding:12px;}
+    .drop-col h4{font-size:.88rem;font-weight:700;margin-bottom:8px;text-align:center;}
+    .drop-zone{min-height:48px;display:flex;flex-wrap:wrap;gap:6px;padding:6px;border-radius:8px;}
+    .drop-zone.drag-over{background:rgba(124,58,237,.12);}
+    .dc-free{background:#f5f3ff;border:2px dashed #7c3aed;}.dc-free h4{color:#5b21b6;}
+    .dc-carrier{background:#fffbeb;border:2px dashed #f59e0b;}.dc-carrier h4{color:#b45309;}
+    .dc-active{background:#fef2f2;border:2px dashed #ef4444;}.dc-active h4{color:#991b1b;}
+    .check-drag-btn,.reset-drag-btn{margin-top:10px;padding:9px 22px;border-radius:20px;border:none;font-size:.9rem;cursor:pointer;font-weight:600;}
+    .check-drag-btn{background:var(--primary);color:#fff;margin-right:8px;}
+    .reset-drag-btn{background:#f1f5f9;color:var(--text);}
+    .drag-result{margin-top:10px;font-size:.88rem;font-weight:600;min-height:24px;}
+    .drag-chip.correct{background:var(--success)!important;}
+    .drag-chip.wrong{background:var(--error)!important;}
+
+    .quiz-card{background:#fff;border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:0 2px 6px rgba(0,0,0,.07);}
+    .quiz-card .q-num{font-size:.8rem;font-weight:700;color:var(--primary);margin-bottom:6px;}
+    .quiz-card .q-text{font-size:.95rem;margin-bottom:14px;font-weight:600;}
+    .opt{padding:10px 14px;border-radius:8px;border:2px solid var(--border);margin-bottom:8px;cursor:pointer;font-size:.9rem;transition:all .18s;}
+    .opt:hover{border-color:var(--primary);background:#f5f3ff;}
+    .opt.selected-correct{background:#dcfce7;border-color:var(--success);pointer-events:none;}
+    .opt.selected-wrong{background:#fee2e2;border-color:var(--error);pointer-events:none;}
+    .opt.show-correct{background:#dcfce7;border-color:var(--success);pointer-events:none;}
+    .opt.disabled{pointer-events:none;opacity:.7;}
+    .error-diagnosis{display:none;margin-top:10px;padding:12px;background:#fffbeb;border-radius:8px;border-left:4px solid var(--warning);font-size:.85rem;line-height:1.6;}
+    .error-diagnosis.show{display:block;}
+
+    .score-circle{width:100px;height:100px;border-radius:50%;border:6px solid var(--primary);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 18px;background:#f5f3ff;}
+    .score-num{font-size:1.8rem;font-weight:800;color:var(--primary);line-height:1;}
+    .score-label{font-size:.7rem;color:var(--text-light);margin-top:2px;}
+    .summary-list{list-style:none;padding:0;}
+    .summary-list li{padding:8px 0;border-bottom:1px solid var(--border);font-size:.9rem;display:flex;gap:8px;}
+    .summary-list li::before{content:'✦';color:var(--primary);}
+
+    .kg-wrap{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+    @media(max-width:600px){.kg-wrap{grid-template-columns:1fr;}}
+    .kg-col-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;text-align:center;padding-bottom:6px;margin-bottom:8px;border-bottom:2px solid var(--border);}
+    .kg-node{border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:transform .15s;}
+    .kg-node:hover{transform:translateY(-2px);}
+    .kg-node.prereq{background:#fffbeb;border:2px solid #f59e0b;}
+    .kg-node.current{background:#f5f3ff;border:2px solid var(--primary);}
+    .kg-node.extends{background:#eef2ff;border:2px solid #6366f1;}
+    .kg-node-name{font-size:.9rem;font-weight:700;}
+    .kg-node-id{font-size:.72rem;color:var(--text-light);margin-top:2px;}
+
+    .audio-badge{position:fixed;bottom:20px;right:20px;z-index:200;background:var(--primary);color:#fff;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3rem;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.25);}
+    .audio-player{position:fixed;bottom:76px;right:20px;z-index:200;background:#fff;border-radius:16px;box-shadow:0 8px 28px rgba(0,0,0,.18);width:320px;display:none;overflow:hidden;}
+    .audio-player.open{display:block;}
+    .audio-player-inner{padding:14px 16px;}
+    .audio-segments{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;}
+    .seg-btn{padding:4px 10px;border-radius:12px;border:none;background:#f1f5f9;font-size:.78rem;cursor:pointer;color:var(--text-light);}
+    .seg-btn.active{background:var(--primary);color:#fff;font-weight:600;}
+    .audio-controls{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+    .ctrl-btn{width:36px;height:36px;border-radius:50%;border:none;background:#f1f5f9;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    #audioPlay{background:var(--primary);color:#fff;width:42px;height:42px;font-size:1.1rem;}
+    .audio-progress-bar{height:6px;background:#e2e8f0;border-radius:3px;cursor:pointer;}
+    .audio-progress-fill{height:100%;background:var(--primary);border-radius:3px;width:0%;}
+    .audio-time{font-size:.75rem;color:var(--text-light);text-align:right;margin-top:2px;}
+    .audio-subtitle{background:#f8fafc;border-top:1px solid var(--border);padding:10px 14px;min-height:44px;}
+    .audio-subtitle-text{font-size:.82rem;color:var(--text);line-height:1.55;}
+  </style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <span class="nav-logo">⚡ 细胞生活与能量</span>
+  <button class="nav-btn active" data-target="module1" onclick="goTo('module1')">导入</button>
+  <button class="nav-btn" data-target="module2" onclick="goTo('module2')">物质跨膜</button>
+  <button class="nav-btn" data-target="module3" onclick="goTo('module3')">细胞呼吸</button>
+  <button class="nav-btn" data-target="module4" onclick="goTo('module4')">能量流转</button>
+  <button class="nav-btn" data-target="module5" onclick="goTo('module5')">拖拽分类</button>
+  <button class="nav-btn" data-target="module6" onclick="goTo('module6')">巩固测验</button>
+  <button class="nav-btn" data-target="module7" onclick="goTo('module7')">小结</button>
+  <button class="nav-btn" data-target="module8" onclick="goTo('module8')">知识图谱</button>
+</nav>
+
+<div class="hero">
+  <div class="hero-badge">七年级生物 · 细胞基础</div>
+  <h1>细胞的生活与能量</h1>
+  <p class="hero-sub">细胞如何获取物质？能量从哪里来？深入了解细胞的日常"生活"</p>
+</div>
+
+<!-- MODULE 1: 导入 -->
+<div class="section active" id="module1">
+  <div class="card">
+    <h2>🌟 课程导入</h2>
+    <div class="abt-row">
+      <div class="abt-item abt-and">
+        <div class="abt-tag">And — 背景</div>
+        <p>细胞需要不断获取营养物质，排出废物，并将有机物中的化学能转化为生命活动所需的能量（ATP）。</p>
+      </div>
+      <div class="abt-item abt-but">
+        <div class="abt-tag">But — 冲突</div>
+        <p>物质不能随意穿越细胞膜——有的靠浓度差自由扩散，有的需要载体蛋白，有的还要消耗能量主动运输。</p>
+      </div>
+      <div class="abt-item abt-the">
+        <div class="abt-tag">Therefore — 目标</div>
+        <p>因此我们需要理解物质跨膜运输的三种方式，以及线粒体如何通过细胞呼吸为细胞提供能量。</p>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>📌 学习目标</h2>
+    <ul style="list-style:none;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <li style="padding:10px;background:#f5f3ff;border-radius:8px;font-size:.88rem;">✅ 区分自由扩散、协助扩散、主动运输</li>
+      <li style="padding:10px;background:#f5f3ff;border-radius:8px;font-size:.88rem;">✅ 说明细胞呼吸的场所和过程</li>
+      <li style="padding:10px;background:#f5f3ff;border-radius:8px;font-size:.88rem;">✅ 理解ATP是细胞能量货币</li>
+      <li style="padding:10px;background:#f5f3ff;border-radius:8px;font-size:.88rem;">✅ 比较有氧呼吸与无氧呼吸</li>
+    </ul>
+  </div>
+  <div style="text-align:center;margin-top:10px;">
+    <button onclick="goTo('module2')" style="padding:12px 30px;background:var(--primary);color:#fff;border:none;border-radius:24px;font-size:1rem;cursor:pointer;font-weight:700;">开始学习 →</button>
+  </div>
+</div>
+
+<!-- MODULE 2: 物质跨膜 -->
+<div class="section" id="module2">
+  <div class="card">
+    <h2>🔬 物质跨膜运输动画</h2>
+    <p style="font-size:.85rem;color:var(--text-light);margin-bottom:12px;">点击三种运输方式，观察膜上分子运动模拟</p>
+    <div class="transport-toggle">
+      <button class="ttog-btn active" id="btnFree" onclick="setTransport('free')">自由扩散</button>
+      <button class="ttog-btn" id="btnCarrier" onclick="setTransport('carrier')">协助扩散</button>
+      <button class="ttog-btn" id="btnActive" onclick="setTransport('active')">主动运输</button>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="transportCanvas" width="700" height="320"></canvas>
+    </div>
+    <div class="canvas-info" id="transportInfo">
+      <strong>自由扩散</strong>：物质顺浓度梯度（高→低）直接穿过磷脂双分子层，不需要载体，不消耗能量。如O₂、CO₂、水、乙醇的跨膜运输。
+    </div>
+    <div class="canvas-hint">动画持续运行 — 切换上方按钮查看不同方式</div>
+  </div>
+
+  <div class="card">
+    <h2>📊 三种运输方式对比</h2>
+    <table class="compare-table">
+      <thead>
+        <tr><th>运输方式</th><th>浓度方向</th><th>是否需要载体</th><th>是否消耗能量</th><th>典型物质</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>自由扩散</td><td>高→低</td><td>✗ 不需要</td><td>✗ 不消耗</td><td>O₂、CO₂、H₂O、乙醇</td></tr>
+        <tr><td>协助扩散</td><td>高→低</td><td>✔ 需要</td><td>✗ 不消耗</td><td>葡萄糖进入红细胞</td></tr>
+        <tr><td>主动运输</td><td>低→高</td><td>✔ 需要</td><td>✔ 消耗ATP</td><td>Na⁺/K⁺泵、矿质离子</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="text-align:center;margin-top:10px;">
+    <button onclick="goTo('module3')" style="padding:12px 30px;background:var(--primary);color:#fff;border:none;border-radius:24px;font-size:1rem;cursor:pointer;font-weight:700;">下一节：细胞呼吸 →</button>
+  </div>
+</div>
+
+<!-- MODULE 3: 细胞呼吸 -->
+<div class="section" id="module3">
+  <div class="card">
+    <h2>🔥 细胞呼吸（有氧呼吸为主）</h2>
+    <div class="process-steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h4>第一阶段：糖酵解（细胞质基质）</h4>
+          <p>葡萄糖（C₆H₁₂O₆）在细胞质基质中分解为2个丙酮酸（C₃H₄O₃），释放少量能量，生成少量ATP和NADH。</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h4>第二阶段：柠檬酸循环（线粒体基质）</h4>
+          <p>丙酮酸进入线粒体，在线粒体基质中与水反应彻底氧化，释放CO₂，生成NADH和少量ATP。</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h4>第三阶段：氧化磷酸化（线粒体内膜）</h4>
+          <p>NADH中的氢原子经电子传递链与O₂结合生成水，同时释放大量能量合成大量ATP（约34个）。</p>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:16px;background:#f5f3ff;border-radius:10px;padding:14px;text-align:center;">
+      <p style="font-size:1rem;font-weight:700;color:var(--primary);">总反应式（有氧呼吸）</p>
+      <p style="font-size:1.1rem;font-weight:700;margin-top:6px;">C₆H₁₂O₆ + 6H₂O + 6O₂ → 6CO₂ + 12H₂O + 大量能量（约38ATP）</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>⚗️ 无氧呼吸（发酵）</h2>
+    <div class="info-grid">
+      <div class="info-card ic-carrier">
+        <h4>🍞 酵母菌（酒精发酵）</h4>
+        <p>葡萄糖 → 酒精（乙醇）+ CO₂ + 少量能量<br>用于酿酒、面包发酵</p>
+      </div>
+      <div class="info-card ic-active">
+        <h4>💪 动物肌肉（乳酸发酵）</h4>
+        <p>葡萄糖 → 乳酸 + 少量能量<br>剧烈运动时O₂不足，肌肉无氧呼吸，积累乳酸导致酸痛</p>
+      </div>
+    </div>
+    <div style="margin-top:12px;background:#fef9c3;border-radius:10px;padding:12px;font-size:.88rem;">
+      ⚠️ 无氧呼吸只有第一阶段（糖酵解），发生在细胞质基质，不进入线粒体，释放能量远少于有氧呼吸（约2ATP）。
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:10px;">
+    <button onclick="goTo('module4')" style="padding:12px 30px;background:var(--primary);color:#fff;border:none;border-radius:24px;font-size:1rem;cursor:pointer;font-weight:700;">下一节：能量流转 →</button>
+  </div>
+</div>
+
+<!-- MODULE 4: 能量流转 -->
+<div class="section" id="module4">
+  <div class="card">
+    <h2>⚡ ATP — 细胞的能量货币</h2>
+    <div class="info-grid">
+      <div class="info-card ic-free">
+        <h4>🔋 ATP结构</h4>
+        <p>腺苷三磷酸（ATP）：A-P~P~P。高能磷酸键（~）断裂时释放能量，生成ADP和Pi。</p>
+      </div>
+      <div class="info-card ic-carrier">
+        <h4>🔄 ATP↔ADP循环</h4>
+        <p>ATP水解释放能量 → ADP + Pi（供能）<br>ADP + Pi + 能量 → ATP（储能，来自细胞呼吸或光合作用）</p>
+      </div>
+      <div class="info-card ic-active">
+        <h4>💡 ATP的用途</h4>
+        <p>肌肉收缩、主动运输、合成代谢、神经传导、发光发热——一切需要能量的生命活动都由ATP直接供能。</p>
+      </div>
+      <div class="info-card" style="background:#ecfdf5;border-left:4px solid #22c55e;">
+        <h4>🏭 能量来源</h4>
+        <p>动物细胞：细胞呼吸（线粒体）<br>植物细胞：细胞呼吸 + 光合作用（叶绿体）</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🗺️ 细胞能量流转路径</h2>
+    <div style="background:#f5f3ff;border-radius:12px;padding:20px;text-align:center;">
+      <div style="font-size:.95rem;line-height:2.5;font-weight:600;color:var(--primary);">
+        光能（植物）<br>
+        ↓ 叶绿体（光合作用）<br>
+        有机物（葡萄糖）中的化学能<br>
+        ↓ 线粒体（细胞呼吸）<br>
+        ATP中的活跃化学能<br>
+        ↓ 各生命活动<br>
+        热能（散失）
+      </div>
+    </div>
+    <p style="font-size:.85rem;color:var(--text-light);margin-top:10px;">注：有机物中储存的化学能是稳定化学能，需经细胞呼吸转化为ATP才能被细胞直接利用。</p>
+  </div>
+
+  <div style="text-align:center;margin-top:10px;">
+    <button onclick="goTo('module5')" style="padding:12px 30px;background:var(--primary);color:#fff;border:none;border-radius:24px;font-size:1rem;cursor:pointer;font-weight:700;">下一节：拖拽分类 →</button>
+  </div>
+</div>
+
+<!-- MODULE 5: 拖拽分类 -->
+<div class="section" id="module5">
+  <div class="card">
+    <h2>🧩 拖拽练习：物质跨膜方式分类</h2>
+    <p style="font-size:.85rem;color:var(--text-light);margin-bottom:12px;">将下列物质/过程拖入对应的运输方式列中</p>
+
+    <div class="drag-pool" id="dragPool">
+      <div class="drag-chip" draggable="true" data-id="O₂进入细胞">O₂进入细胞</div>
+      <div class="drag-chip" draggable="true" data-id="CO₂排出细胞">CO₂排出细胞</div>
+      <div class="drag-chip" draggable="true" data-id="葡萄糖进红细胞">葡萄糖进红细胞</div>
+      <div class="drag-chip" draggable="true" data-id="水分子渗透">水分子渗透</div>
+      <div class="drag-chip" draggable="true" data-id="Na⁺逆浓度进细胞">Na⁺逆浓度进细胞</div>
+      <div class="drag-chip" draggable="true" data-id="氨基酸吸收">氨基酸吸收</div>
+    </div>
+
+    <div class="drop-row">
+      <div class="drop-col dc-free">
+        <h4>自由扩散</h4>
+        <div class="drop-zone" id="dropFree" data-col="free"></div>
+      </div>
+      <div class="drop-col dc-carrier">
+        <h4>协助扩散</h4>
+        <div class="drop-zone" id="dropCarrier" data-col="carrier"></div>
+      </div>
+      <div class="drop-col dc-active">
+        <h4>主动运输</h4>
+        <div class="drop-zone" id="dropActive" data-col="active"></div>
+      </div>
+    </div>
+
+    <div>
+      <button class="check-drag-btn" onclick="checkDrag()">✔ 验证答案</button>
+      <button class="reset-drag-btn" onclick="resetDrag()">↺ 重置</button>
+    </div>
+    <div class="drag-result" id="dragResult"></div>
+  </div>
+
+  <div style="text-align:center;margin-top:10px;">
+    <button onclick="goTo('module6')" style="padding:12px 30px;background:var(--primary);color:#fff;border:none;border-radius:24px;font-size:1rem;cursor:pointer;font-weight:700;">下一节：巩固测验 →</button>
+  </div>
+</div>
+
+<!-- MODULE 6: 巩固测验 -->
+<div class="section" id="module6">
+  <h2 style="font-size:1.2rem;color:var(--primary);margin-bottom:16px;">✏️ 巩固测验</h2>
+
+  <div class="quiz-card" id="qcard1">
+    <div class="q-num">题目 1 / 3</div>
+    <div class="q-text">氧气（O₂）从红细胞释放到血液中，是通过哪种方式跨越细胞膜的？</div>
+    <div class="opt" onclick="selectOpt(this,'A','A',1)">A. 自由扩散（顺浓度，不需载体，不耗能）</div>
+    <div class="opt" onclick="selectOpt(this,'B','A',1)">B. 协助扩散（顺浓度，需要载体，不耗能）</div>
+    <div class="opt" onclick="selectOpt(this,'C','A',1)">C. 主动运输（逆浓度，需要载体，耗能）</div>
+    <div class="opt" onclick="selectOpt(this,'D','A',1)">D. 胞吞（内吞方式进入细胞）</div>
+    <div class="error-diagnosis" id="diag1">
+      <strong>🩺 错误分析：</strong><br>
+      • O₂是小的非极性分子，能直接溶于磷脂双分子层并穿越，属于<strong>自由扩散</strong>。<br>
+      • 协助扩散需要膜上载体蛋白，O₂不需要。<br>
+      • 主动运输需要消耗ATP，且逆浓度，O₂沿浓度梯度运输不需要耗能。<br>
+      • 正确答案 <strong>A. 自由扩散</strong>。
+    </div>
+  </div>
+
+  <div class="quiz-card" id="qcard2">
+    <div class="q-num">题目 2 / 3</div>
+    <div class="q-text">细胞呼吸第三阶段（氧化磷酸化）发生在哪个位置，产生最多ATP？</div>
+    <div class="opt" onclick="selectOpt(this,'A','C',2)">A. 细胞质基质</div>
+    <div class="opt" onclick="selectOpt(this,'B','C',2)">B. 线粒体基质</div>
+    <div class="opt" onclick="selectOpt(this,'C','C',2)">C. 线粒体内膜</div>
+    <div class="opt" onclick="selectOpt(this,'D','C',2)">D. 细胞核</div>
+    <div class="error-diagnosis" id="diag2">
+      <strong>🩺 错误分析：</strong><br>
+      • 选A：细胞质基质是第一阶段（糖酵解）的场所，只产生少量ATP。<br>
+      • 选B：线粒体基质是第二阶段（柠檬酸循环）场所，也只产生少量ATP。<br>
+      • 选C：<strong>线粒体内膜</strong>上有电子传递链，通过氧化磷酸化合成大量ATP（约34个）。<br>
+      • 正确答案 <strong>C. 线粒体内膜</strong>。
+    </div>
+  </div>
+
+  <div class="quiz-card" id="qcard3">
+    <div class="q-num">题目 3 / 3</div>
+    <div class="q-text">人在剧烈运动时肌肉酸痛，这是因为肌肉细胞进行了：</div>
+    <div class="opt" onclick="selectOpt(this,'A','B',3)">A. 有氧呼吸，产生了大量CO₂</div>
+    <div class="opt" onclick="selectOpt(this,'B','B',3)">B. 无氧呼吸，产生了乳酸积累</div>
+    <div class="opt" onclick="selectOpt(this,'C','B',3)">C. 有氧呼吸，消耗了大量水</div>
+    <div class="opt" onclick="selectOpt(this,'D','B',3)">D. 无氧呼吸，产生了酒精</div>
+    <div class="error-diagnosis" id="diag3">
+      <strong>🩺 错误分析：</strong><br>
+      • 剧烈运动时O₂供应不足，肌肉细胞转为<strong>无氧呼吸</strong>。<br>
+      • 动物细胞（含肌肉细胞）无氧呼吸产物是<strong>乳酸</strong>，不是酒精（酒精是酵母菌无氧呼吸产物）。<br>
+      • 乳酸积累在肌肉中导致酸性环境，引起肌肉酸痛感。<br>
+      • 正确答案 <strong>B. 无氧呼吸，产生乳酸</strong>。
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:10px;">
+    <button onclick="goTo('module7')" style="padding:12px 30px;background:var(--primary);color:#fff;border:none;border-radius:24px;font-size:1rem;cursor:pointer;font-weight:700;">查看小结 →</button>
+  </div>
+</div>
+
+<!-- MODULE 7: 小结 -->
+<div class="section" id="module7">
+  <div class="card" style="text-align:center;">
+    <h2>🏆 学习小结</h2>
+    <div class="score-circle">
+      <span class="score-num" id="scoreNum">0</span>
+      <span class="score-label">答题分</span>
+    </div>
+    <ul class="summary-list" style="text-align:left;">
+      <li>自由扩散：顺浓度，无载体，无能量（O₂、CO₂、H₂O）</li>
+      <li>协助扩散：顺浓度，需载体，无能量（葡萄糖进红细胞）</li>
+      <li>主动运输：逆浓度，需载体，消耗ATP（矿质离子、Na⁺/K⁺）</li>
+      <li>有氧呼吸：三阶段，最终产CO₂和H₂O，释放大量能量（≈38 ATP）</li>
+      <li>无氧呼吸：仅第一阶段，动物产乳酸，酵母菌产酒精+CO₂，能量少</li>
+      <li>ATP：细胞能量货币，高能磷酸键断裂释放能量，ADP+Pi+能量→ATP</li>
+      <li>线粒体：细胞呼吸的主要场所，内膜产生最多ATP</li>
+    </ul>
+  </div>
+  <div style="text-align:center;margin-top:10px;">
+    <button onclick="goTo('module8')" style="padding:12px 30px;background:var(--primary);color:#fff;border:none;border-radius:24px;font-size:1rem;cursor:pointer;font-weight:700;">查看知识图谱 →</button>
+  </div>
+</div>
+
+<!-- MODULE 8: 知识图谱 -->
+<div class="section" id="module8">
+  <div class="card">
+    <h2>🗺️ 知识图谱</h2>
+    <div class="kg-wrap">
+      <div>
+        <div class="kg-col-title" style="color:#b45309;">前置知识</div>
+        <div class="kg-node prereq">
+          <div class="kg-node-name">动植物细胞结构</div>
+          <div class="kg-node-id">cell-structure-m</div>
+        </div>
+      </div>
+      <div>
+        <div class="kg-col-title" style="color:#5b21b6;">当前学习</div>
+        <div class="kg-node current">
+          <div class="kg-node-name">细胞的生活与能量 ★</div>
+          <div class="kg-node-id">cell-life-activities</div>
+        </div>
+      </div>
+      <div>
+        <div class="kg-col-title" style="color:#6366f1;">后续延伸</div>
+        <div class="kg-node extends">
+          <div class="kg-node-name">细胞分裂与分化</div>
+          <div class="kg-node-id">cell-division-m</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="background:#f5f3ff;">
+    <h3>📚 学习建议</h3>
+    <p style="font-size:.88rem;line-height:1.7;">
+      理解了细胞的物质与能量代谢后，下一步学习<strong>细胞分裂与分化</strong>，
+      了解细胞如何通过有丝分裂复制遗传信息，以及如何从一种细胞分化为多种功能细胞。
+    </p>
+  </div>
+</div>
+
+<!-- HIDDEN AUDIO ELEMENTS -->
+<div style="display:none" aria-hidden="true">
+  <audio id="ta-audio-s01" src="tts/s01.mp3" preload="none"></audio>
+  <audio id="ta-audio-s02" src="tts/s02.mp3" preload="none"></audio>
+  <audio id="ta-audio-s03" src="tts/s03.mp3" preload="none"></audio>
+  <audio id="ta-audio-s04" src="tts/s04.mp3" preload="none"></audio>
+  <audio id="ta-audio-s05" src="tts/s05.mp3" preload="none"></audio>
+  <audio id="ta-audio-s06" src="tts/s06.mp3" preload="none"></audio>
+  <audio id="ta-audio-s07" src="tts/s07.mp3" preload="none"></audio>
+  <audio id="ta-audio-s08" src="tts/s08.mp3" preload="none"></audio>
+  <audio id="ta-audio-s09" src="tts/s09.mp3" preload="none"></audio>
+  <audio id="ta-audio-s10" src="tts/s10.mp3" preload="none"></audio>
+</div>
+
+<div class="audio-badge" onclick="toggleAudioPlayer()">🔊</div>
+<div class="audio-player" id="audioPlayerPanel">
+  <div class="audio-player-inner">
+    <div class="audio-segments" id="audioSegments"></div>
+    <div class="audio-controls">
+      <button class="ctrl-btn" onclick="prevSegment()">⏮</button>
+      <button class="ctrl-btn" id="audioPlay" onclick="togglePlayPause()">▶</button>
+      <button class="ctrl-btn" onclick="nextSegment()">⏭</button>
+    </div>
+    <div class="audio-progress-bar" id="audioProgressBar" onclick="seekAudio(event)">
+      <div class="audio-progress-fill" id="audioProgressFill"></div>
+    </div>
+    <div class="audio-time" id="audioTime">0:00 / 0:00</div>
+  </div>
+  <div class="audio-subtitle">
+    <div class="audio-subtitle-text" id="audioSubtitleText">点击片段标签开始播放讲解</div>
+  </div>
+</div>
+
+<script>
+const knowledgeGraphData = {
+  prerequisites: [{ id: 'cell-structure-m', name: '动植物细胞结构' }],
+  current: { id: 'cell-life-activities', name: '细胞的生活与能量' },
+  extends: [{ id: 'cell-division-m', name: '细胞分裂与分化' }]
+};
+
+const AUDIO_BASE = 'tts/';
+const SEGMENTS = [
+  { id: 's01', label: '导入', section: 'module1' },
+  { id: 's02', label: '跨膜概述', section: 'module2' },
+  { id: 's03', label: '自由扩散', section: 'module2' },
+  { id: 's04', label: '协助扩散', section: 'module2' },
+  { id: 's05', label: '主动运输', section: 'module2' },
+  { id: 's06', label: '有氧呼吸', section: 'module3' },
+  { id: 's07', label: '无氧呼吸', section: 'module3' },
+  { id: 's08', label: 'ATP能量', section: 'module4' },
+  { id: 's09', label: '练习要点', section: 'module5' },
+  { id: 's10', label: '总结', section: 'module7' }
+];
+const SEGMENT_TEXTS = {
+  s01: '大家好！上节课我们认识了细胞结构，今天我们来探究细胞是如何进行生命活动的——物质如何进出细胞，能量如何产生和利用。',
+  s02: '细胞时刻需要与外界交换物质，但并非所有物质都能随意穿越细胞膜。根据是否需要载体和是否消耗能量，跨膜运输分为三种方式。',
+  s03: '自由扩散：物质直接溶于磷脂双分子层，顺浓度梯度（从高到低）运动，无需载体蛋白，无需消耗能量。O₂、CO₂、H₂O、乙醇都以这种方式跨膜。',
+  s04: '协助扩散：需要借助膜上载体蛋白，但仍是顺浓度梯度，不消耗能量。葡萄糖进入红细胞就是典型的协助扩散。',
+  s05: '主动运输：逆浓度梯度（从低到高）运输，需要载体蛋白，还必须消耗ATP提供能量。矿质离子（如K⁺进入植物根细胞）属于主动运输。',
+  s06: '有氧呼吸分三阶段：细胞质中的糖酵解、线粒体基质中的柠檬酸循环、线粒体内膜上的氧化磷酸化。总方程：葡萄糖+6O₂+6H₂O→6CO₂+12H₂O+大量ATP。',
+  s07: '无氧呼吸只进行第一阶段（糖酵解），在细胞质中完成。动物肌肉无氧呼吸产生乳酸；酵母菌无氧呼吸（发酵）产生酒精和CO₂。释放能量远少于有氧呼吸。',
+  s08: 'ATP是细胞能量货币，腺苷三磷酸结构中有高能磷酸键。ATP水解释放能量供细胞活动；细胞呼吸或光合作用则将能量储存在ATP的高能磷酸键中。',
+  s09: '练习要点：区分三种跨膜方式的特征；记住有氧呼吸三个阶段的场所；理解无氧呼吸产物与生物类型的关系。',
+  s10: '本节课学习了细胞的物质运输（自由扩散、协助扩散、主动运输）和能量代谢（有氧呼吸、无氧呼吸、ATP循环）。这些是细胞生命活动的核心机制！'
+};
+
+let currentSegIdx = 0, isAudioPlayerVisible = false;
+const audioPlayer = new Audio();
+audioPlayer.addEventListener('timeupdate', onAudioTimeUpdate);
+audioPlayer.addEventListener('ended', onAudioEnded);
+
+function toggleAudioPlayer() {
+  const panel = document.getElementById('audioPlayerPanel');
+  isAudioPlayerVisible = !isAudioPlayerVisible;
+  panel.classList.toggle('open', isAudioPlayerVisible);
+  if (isAudioPlayerVisible) buildSegmentBtns();
+}
+function buildSegmentBtns() {
+  const wrap = document.getElementById('audioSegments');
+  wrap.innerHTML = '';
+  SEGMENTS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'seg-btn' + (i === currentSegIdx ? ' active' : '');
+    b.textContent = s.label;
+    b.onclick = () => { loadSegment(i); audioPlayer.play().catch(() => {}); updatePlayBtn('⏸'); };
+    wrap.appendChild(b);
+  });
+}
+function loadSegment(idx) {
+  currentSegIdx = idx;
+  const seg = SEGMENTS[idx];
+  const h = document.getElementById('ta-audio-' + seg.id);
+  audioPlayer.src = h ? h.src : (AUDIO_BASE + seg.id + '.mp3');
+  audioPlayer.load();
+  document.querySelectorAll('.seg-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+  document.getElementById('audioSubtitleText').textContent = SEGMENT_TEXTS[seg.id] || '';
+  document.getElementById('audioProgressFill').style.width = '0%';
+  document.getElementById('audioTime').textContent = '0:00 / 0:00';
+}
+function togglePlayPause() {
+  if (audioPlayer.paused) { if (!audioPlayer.src || audioPlayer.src.endsWith('/')) loadSegment(currentSegIdx); audioPlayer.play().catch(() => {}); updatePlayBtn('⏸'); }
+  else { audioPlayer.pause(); updatePlayBtn('▶'); }
+}
+function updatePlayBtn(icon) { document.getElementById('audioPlay').textContent = icon; }
+function prevSegment() { if (currentSegIdx > 0) { loadSegment(currentSegIdx - 1); audioPlayer.play().catch(() => {}); updatePlayBtn('⏸'); } }
+function nextSegment() { if (currentSegIdx < SEGMENTS.length - 1) { loadSegment(currentSegIdx + 1); audioPlayer.play().catch(() => {}); updatePlayBtn('⏸'); } }
+function onAudioTimeUpdate() {
+  if (!audioPlayer.duration) return;
+  const pct = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+  document.getElementById('audioProgressFill').style.width = pct + '%';
+  const fmt = t => { const m = Math.floor(t/60), s = Math.floor(t%60); return m+':'+(s<10?'0':'')+s; };
+  document.getElementById('audioTime').textContent = fmt(audioPlayer.currentTime) + ' / ' + fmt(audioPlayer.duration);
+}
+function onAudioEnded() {
+  updatePlayBtn('▶');
+  if (currentSegIdx < SEGMENTS.length - 1) setTimeout(() => { nextSegment(); }, 800);
+}
+function seekAudio(e) {
+  const bar = document.getElementById('audioProgressBar');
+  if (audioPlayer.duration) audioPlayer.currentTime = (e.offsetX / bar.offsetWidth) * audioPlayer.duration;
+}
+
+// NAVIGATION
+const sections = document.querySelectorAll('.section');
+const navBtns = document.querySelectorAll('.nav-btn');
+function goTo(id) {
+  sections.forEach(s => s.classList.remove('active'));
+  navBtns.forEach(b => b.classList.remove('active'));
+  const target = document.getElementById(id);
+  if (target) { target.classList.add('active'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  navBtns.forEach(b => { if (b.dataset.target === id) b.classList.add('active'); });
+  const segIdx = SEGMENTS.findIndex(s => s.section === id);
+  if (segIdx !== -1 && isAudioPlayerVisible) { loadSegment(segIdx); audioPlayer.play().catch(() => {}); updatePlayBtn('⏸'); }
+  if (id === 'module2') drawTransport();
+}
+
+// CANVAS: Transport animation
+const tCanvas = document.getElementById('transportCanvas');
+const tctx = tCanvas.getContext('2d');
+let transportMode = 'free';
+let animId = null;
+
+const TRANSPORT_INFO = {
+  free: '自由扩散：物质顺浓度梯度（高→低）直接穿过磷脂双分子层，不需要载体，不消耗能量。如O₂、CO₂、水、乙醇的跨膜运输。',
+  carrier: '协助扩散：物质顺浓度梯度（高→低）借助膜上载体蛋白穿越细胞膜，需要载体，但不消耗能量。如葡萄糖进入红细胞。',
+  active: '主动运输：物质逆浓度梯度（低→高）借助载体蛋白穿越细胞膜，需要载体蛋白，还需消耗ATP能量。如矿质离子、Na⁺/K⁺泵。'
+};
+
+// Particles for animation
+let particles = [];
+
+function initParticles() {
+  particles = [];
+  const W = tCanvas.width, H = tCanvas.height;
+  const memY = H / 2;
+  for (let i = 0; i < 18; i++) {
+    particles.push({
+      x: Math.random() * W,
+      y: transportMode === 'active' ? (memY + 20 + Math.random() * (H/2 - 40)) : (10 + Math.random() * (H/2 - 30)),
+      vx: (Math.random() - 0.5) * 1.5,
+      vy: transportMode === 'active' ? (-0.8 - Math.random() * 0.5) : (0.5 + Math.random() * 0.8),
+      r: 6 + Math.random() * 4,
+      alpha: 0.85,
+      crossed: false
+    });
+  }
+}
+
+function drawTransport() {
+  if (animId) cancelAnimationFrame(animId);
+  initParticles();
+
+  function frame() {
+    const W = tCanvas.width, H = tCanvas.height;
+    const memY = H / 2;
+    tctx.clearRect(0, 0, W, H);
+
+    // Background
+    tctx.fillStyle = '#f5f0ff'; tctx.fillRect(0, 0, W, memY - 15);
+    tctx.fillStyle = '#ecfdf5'; tctx.fillRect(0, memY + 15, W, H - memY - 15);
+
+    // Labels
+    tctx.fillStyle = '#5b21b6'; tctx.font = 'bold 13px sans-serif'; tctx.textAlign = 'left';
+    tctx.fillText('细胞外（高浓度端）', 10, 20);
+    tctx.fillStyle = '#065f46';
+    tctx.fillText('细胞内（低浓度端）', 10, H - 10);
+    if (transportMode === 'active') {
+      tctx.fillStyle = '#5b21b6'; tctx.fillText('细胞外（低浓度端）', 10, 20);
+      tctx.fillStyle = '#065f46'; tctx.fillText('细胞内（高浓度端）', 10, H - 10);
+    }
+
+    // Membrane (bilayer)
+    for (let i = 0; i < 2; i++) {
+      const y = memY - 10 + i * 20;
+      tctx.fillStyle = i === 0 ? '#c4b5fd' : '#a5f3fc';
+      tctx.fillRect(0, y, W, 10);
+    }
+    tctx.fillStyle = '#fff'; tctx.font = '12px sans-serif'; tctx.textAlign = 'center';
+    tctx.fillText('── 细胞膜（磷脂双分子层）──', W/2, memY + 4);
+
+    // Carrier proteins for carrier/active modes
+    if (transportMode !== 'free') {
+      const carriers = [W*0.25, W*0.5, W*0.75];
+      carriers.forEach(cx => {
+        tctx.beginPath();
+        tctx.ellipse(cx, memY, 12, 18, 0, 0, Math.PI*2);
+        tctx.fillStyle = transportMode === 'carrier' ? '#fbbf24' : '#f87171';
+        tctx.fill();
+        tctx.strokeStyle = transportMode === 'carrier' ? '#d97706' : '#dc2626';
+        tctx.lineWidth = 2; tctx.stroke();
+        tctx.fillStyle = '#fff'; tctx.font = 'bold 10px sans-serif'; tctx.textAlign = 'center';
+        tctx.fillText('载体', cx, memY + 4);
+        if (transportMode === 'active') {
+          tctx.fillStyle = '#dc2626'; tctx.font = 'bold 9px sans-serif';
+          tctx.fillText('ATP', cx, memY + 28);
+        }
+      });
+    }
+
+    // Update and draw particles
+    particles.forEach(p => {
+      if (!p.crossed) {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+        // Check if crossed membrane
+        if (transportMode === 'active') {
+          if (p.y < memY - 10) { p.crossed = true; p.vy = -p.vy * 0.5 + 0.3; }
+        } else {
+          if (p.y > memY + 10) { p.crossed = true; p.vy = 0.3 + Math.random() * 0.4; }
+        }
+      } else {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+        if (transportMode === 'active') {
+          if (p.y < 5) { p.y = memY + 15; p.vy = -0.8 - Math.random() * 0.5; p.crossed = false; }
+        } else {
+          if (p.y > H - 5) { p.y = 5; p.vy = 0.5 + Math.random() * 0.8; p.crossed = false; }
+        }
+      }
+
+      tctx.beginPath(); tctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      const colors = { free: '#7c3aed', carrier: '#f59e0b', active: '#ef4444' };
+      tctx.fillStyle = colors[transportMode] || '#7c3aed';
+      tctx.globalAlpha = 0.8; tctx.fill(); tctx.globalAlpha = 1;
+      tctx.strokeStyle = '#fff'; tctx.lineWidth = 1.5; tctx.stroke();
+    });
+
+    animId = requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+function setTransport(mode) {
+  transportMode = mode;
+  document.getElementById('btnFree').classList.toggle('active', mode === 'free');
+  document.getElementById('btnCarrier').classList.toggle('active', mode === 'carrier');
+  document.getElementById('btnActive').classList.toggle('active', mode === 'active');
+  document.getElementById('transportInfo').innerHTML = '<strong>' + {free:'自由扩散',carrier:'协助扩散',active:'主动运输'}[mode] + '</strong>：' + TRANSPORT_INFO[mode].split('：')[1];
+  drawTransport();
+}
+
+// Start animation on page load
+drawTransport();
+
+// DRAG AND DROP
+const DRAG_ANSWERS = {
+  'O₂进入细胞': 'free',
+  'CO₂排出细胞': 'free',
+  '葡萄糖进红细胞': 'carrier',
+  '水分子渗透': 'free',
+  'Na⁺逆浓度进细胞': 'active',
+  '氨基酸吸收': 'active'
+};
+let dragChip = null;
+document.addEventListener('dragstart', e => { if (e.target.classList.contains('drag-chip')) { dragChip = e.target; e.target.style.opacity='.5'; } });
+document.addEventListener('dragend', e => { if (e.target.classList.contains('drag-chip')) e.target.style.opacity=''; });
+document.querySelectorAll('.drop-zone').forEach(zone => {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); if (dragChip) { zone.appendChild(dragChip); dragChip = null; } });
+});
+document.getElementById('dragPool').addEventListener('dragover', e => e.preventDefault());
+document.getElementById('dragPool').addEventListener('drop', e => { e.preventDefault(); if (dragChip) { document.getElementById('dragPool').appendChild(dragChip); dragChip = null; } });
+
+function checkDrag() {
+  let correct = 0, total = 0;
+  ['dropFree','dropCarrier','dropActive'].forEach(zoneId => {
+    const zone = document.getElementById(zoneId);
+    const col = zone.dataset.col;
+    zone.querySelectorAll('.drag-chip').forEach(chip => {
+      total++;
+      if (DRAG_ANSWERS[chip.dataset.id] === col) { chip.classList.add('correct'); correct++; }
+      else chip.classList.add('wrong');
+    });
+  });
+  const res = document.getElementById('dragResult');
+  if (total === 0) { res.textContent = '⚠️ 请先拖放物质到分类列中！'; res.style.color='var(--warning)'; return; }
+  res.textContent = `✅ 分类完成！正确 ${correct} / ${total}。自由扩散→O₂/CO₂/H₂O；协助扩散→葡萄糖进红细胞；主动运输→Na⁺逆浓度/氨基酸吸收。`;
+  res.style.color = correct === total ? 'var(--success)' : 'var(--error)';
+}
+function resetDrag() {
+  const pool = document.getElementById('dragPool');
+  document.querySelectorAll('.drop-zone .drag-chip').forEach(chip => { chip.classList.remove('correct','wrong'); pool.appendChild(chip); });
+  document.getElementById('dragResult').textContent = '';
+}
+
+// QUIZ
+let scores = [0,0,0];
+function selectOpt(el, chosen, correct, qNum) {
+  const card = document.getElementById('qcard' + qNum);
+  card.querySelectorAll('.opt').forEach(o => o.classList.add('disabled'));
+  if (chosen === correct) { el.classList.add('selected-correct'); scores[qNum-1]=1; }
+  else {
+    el.classList.add('selected-wrong');
+    card.querySelectorAll('.opt').forEach(o => { if(o.textContent.trim()[0]===correct) o.classList.add('show-correct'); });
+    document.getElementById('diag'+qNum).classList.add('show');
+    scores[qNum-1]=0;
+  }
+  document.getElementById('scoreNum').textContent = scores.reduce((a,b)=>a+b,0) * 34;
+}
+</script>
+</body>
+</html>
