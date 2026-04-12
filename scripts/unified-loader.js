@@ -69,6 +69,22 @@ function setCachedRegistry(data) {
 }
 
 /* ─── 点赞系统 ──────────────────────────────── */
+const USER_LIKES_KEY = 'teachany_user_likes'; // 用户点赞记录 {courseId: true/false}
+
+function readUserLikes() {
+  try {
+    return JSON.parse(localStorage.getItem(USER_LIKES_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function saveUserLikes(userLikes) {
+  try {
+    localStorage.setItem(USER_LIKES_KEY, JSON.stringify(userLikes));
+  } catch {}
+}
+
 function readLikes() {
   try {
     return JSON.parse(localStorage.getItem(LIKES_KEY) || '{}');
@@ -87,19 +103,46 @@ function getLikeCount(courseId) {
   return readLikes()[courseId] || 0;
 }
 
+function hasUserLiked(courseId) {
+  return readUserLikes()[courseId] === true;
+}
+
 function toggleLike(courseId) {
+  const userLikes = readUserLikes();
   const likes = readLikes();
-  likes[courseId] = (likes[courseId] || 0) + 1;
+  
+  if (userLikes[courseId]) {
+    // 已点赞,取消点赞
+    userLikes[courseId] = false;
+    likes[courseId] = Math.max((likes[courseId] || 1) - 1, 0);
+  } else {
+    // 未点赞,添加点赞
+    userLikes[courseId] = true;
+    likes[courseId] = (likes[courseId] || 0) + 1;
+  }
+  
+  saveUserLikes(userLikes);
   saveLikes(likes);
-  return likes[courseId];
+  
+  return {
+    liked: userLikes[courseId],
+    count: likes[courseId]
+  };
 }
 
 window._toggleLike = function(button) {
   const courseId = button.dataset.like;
-  const newCount = toggleLike(courseId);
-  button.querySelector('.like-count').textContent = newCount;
-  button.classList.add('liked');
-  button.querySelector('.like-icon').textContent = '❤️';
+  const result = toggleLike(courseId);
+  
+  button.querySelector('.like-count').textContent = result.count;
+  
+  if (result.liked) {
+    button.classList.add('liked');
+    button.querySelector('.like-icon').textContent = '❤️';
+  } else {
+    button.classList.remove('liked');
+    button.querySelector('.like-icon').textContent = '🤍';
+  }
 };
 
 /* ─── 加载注册表 ─────────────────────────────── */
@@ -180,8 +223,11 @@ function renderCourseCard(course) {
 
   // 点赞
   const likeCount = getLikeCount(course.id);
-  const likeHtml = `<button class="ta-like-btn" data-like="${escapeHtml(course.id)}" onclick="event.preventDefault();event.stopPropagation();window._toggleLike(this)" title="点赞">
-    <span class="like-icon">🤍</span>
+  const userLiked = hasUserLiked(course.id);
+  const likedClass = userLiked ? 'liked' : '';
+  const likeIcon = userLiked ? '❤️' : '🤍';
+  const likeHtml = `<button class="ta-like-btn ${likedClass}" data-like="${escapeHtml(course.id)}" onclick="event.preventDefault();event.stopPropagation();window._toggleLike(this)" title="${userLiked ? '取消点赞' : '点赞'}">
+    <span class="like-icon">${likeIcon}</span>
     <span class="like-count">${likeCount}</span>
   </button>`;
 
