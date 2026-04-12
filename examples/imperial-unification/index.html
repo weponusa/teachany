@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>秦汉统一多民族国家 | TeachAny 历史课件</title>
+<meta name="teachany-node" content="imperial-unification">
+<meta name="teachany-subject" content="history">
+<meta name="teachany-domain" content="ancient-china">
+<meta name="teachany-grade" content="7">
+<meta name="teachany-difficulty" content="3">
+<meta name="teachany-version" content="2.0">
+<meta name="teachany-author" content="TeachAny">
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<style>
+:root {
+  --bg: #f8fafc;
+  --primary: #b91c1c;
+  --secondary: #92400e;
+  --accent: #d97706;
+  --success: #059669;
+  --card: #fff;
+  --danger: #ef4444;
+  --text: #1e293b;
+  --dim: #64748b;
+  --border: rgba(0,0,0,0.08);
+  --gold: #d4a017;
+  --bronze: #8B6914;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+.nav { position:fixed; top:0; left:0; right:0; z-index:1000; background:rgba(127,29,29,0.85); backdrop-filter:blur(16px); padding:0 24px; display:flex; align-items:center; height:56px; gap:8px; overflow-x:auto; }
+.nav-brand { font-weight:700; color:#fef2f2; font-size:15px; white-space:nowrap; margin-right:12px; }
+.nav a { color:rgba(254,242,242,0.7); text-decoration:none; font-size:13px; padding:6px 14px; border-radius:20px; white-space:nowrap; transition:all .25s; }
+.nav a:hover, .nav a.active { background:rgba(255,255,255,0.15); color:#fef2f2; }
+.container { max-width:1100px; margin:0 auto; padding:76px 20px 40px; }
+.hero { text-align:center; padding:60px 20px 48px; background:linear-gradient(135deg,#7f1d1d 0%,#92400e 50%,#78350f 100%); color:#fef2f2; border-radius:20px; margin-bottom:40px; position:relative; overflow:hidden; }
+.hero::before { content:''; position:absolute; top:0; left:0; right:0; bottom:0; background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0L60 30L30 60L0 30Z' fill='none' stroke='rgba(255,255,255,0.06)' stroke-width='1'/%3E%3C/svg%3E"); }
+.hero h1 { font-size:38px; font-weight:800; margin-bottom:12px; position:relative; text-shadow:0 2px 8px rgba(0,0,0,0.3); }
+.hero .subtitle { font-size:18px; opacity:0.9; margin-bottom:20px; position:relative; }
+.hero .meta { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; position:relative; }
+.hero .meta span { background:rgba(255,255,255,0.15); padding:4px 14px; border-radius:20px; font-size:13px; }
+.section { margin-bottom:40px; }
+.section-title { font-size:22px; font-weight:700; margin-bottom:20px; padding-left:16px; border-left:4px solid var(--primary); display:flex; align-items:center; gap:8px; }
+.card { background:var(--card); border-radius:14px; padding:28px; box-shadow:0 1px 3px rgba(0,0,0,0.06); margin-bottom:20px; border:1px solid var(--border); }
+.card h3 { font-size:18px; margin-bottom:12px; color:var(--primary); }
+.card p { margin-bottom:10px; color:#475569; }
+.highlight { color:var(--primary); font-weight:600; }
+.formula-box { background:linear-gradient(135deg,#fef3c7,#fde68a); padding:16px 20px; border-radius:10px; font-size:16px; text-align:center; margin:12px 0; font-weight:600; color:#78350f; border-left:4px solid var(--gold); }
+.note { background:#fef2f2; border-left:4px solid var(--primary); padding:12px 16px; border-radius:0 8px 8px 0; margin:12px 0; font-size:14px; color:#991b1b; }
+.timeline { position:relative; padding:20px 0; }
+.timeline::before { content:''; position:absolute; left:24px; top:0; bottom:0; width:3px; background:linear-gradient(to bottom,var(--primary),var(--accent),var(--success)); border-radius:2px; }
+.timeline-item { position:relative; padding-left:60px; margin-bottom:24px; }
+.timeline-dot { position:absolute; left:16px; top:4px; width:20px; height:20px; border-radius:50%; border:3px solid var(--primary); background:var(--card); z-index:1; }
+.timeline-item.han .timeline-dot { border-color:var(--accent); }
+.timeline-year { font-size:13px; color:var(--dim); font-weight:600; }
+.timeline-title { font-size:15px; font-weight:700; color:var(--text); }
+.timeline-desc { font-size:14px; color:#64748b; margin-top:2px; }
+/* Map */
+#map-container { width:100%; height:520px; border-radius:14px; overflow:hidden; position:relative; border:2px solid var(--border); }
+.map-legend { position:absolute; bottom:12px; left:12px; background:rgba(255,255,255,0.92); backdrop-filter:blur(8px); border-radius:10px; padding:12px 16px; font-size:12px; z-index:10; box-shadow:0 2px 8px rgba(0,0,0,0.12); }
+.map-legend-item { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+.map-legend-color { width:16px; height:12px; border-radius:3px; opacity:0.7; }
+.map-controls { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+.map-btn { padding:8px 16px; border:2px solid var(--border); background:var(--card); border-radius:8px; cursor:pointer; font-size:13px; transition:all .2s; font-weight:500; }
+.map-btn:hover, .map-btn.active { background:var(--primary); color:white; border-color:var(--primary); }
+/* Interactive Lab */
+.lab-controls { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px; margin:16px 0; }
+.control-group { background:#f1f5f9; padding:14px 16px; border-radius:10px; }
+.control-group label { display:block; font-size:13px; font-weight:600; color:var(--dim); margin-bottom:6px; }
+.control-group input[type=range] { width:100%; accent-color:var(--primary); }
+.control-group .value { font-size:22px; font-weight:700; color:var(--primary); margin-top:4px; }
+.lab-result { background:linear-gradient(135deg,#fef3c7,#fde68a); padding:16px 20px; border-radius:10px; margin-top:12px; text-align:center; }
+.lab-result .formula { font-size:16px; font-weight:600; color:#78350f; }
+.lab-result .detail { font-size:14px; color:#92400e; margin-top:4px; }
+canvas { width:100%; border-radius:10px; background:#f8fafc; display:block; }
+/* Knowledge Graph */
+#kg-svg { width:100%; height:400px; }
+.kg-legend { display:flex; gap:20px; justify-content:center; margin-top:12px; flex-wrap:wrap; }
+.kg-legend-item { display:flex; align-items:center; gap:6px; font-size:13px; }
+.kg-legend-dot { width:12px; height:12px; border-radius:50%; }
+/* Quiz */
+.quiz-card { background:var(--card); border-radius:14px; padding:24px; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,0.06); border:1px solid var(--border); }
+.quiz-q { font-weight:600; margin-bottom:14px; font-size:15px; }
+.quiz-option { padding:10px 16px; border:2px solid #e2e8f0; border-radius:10px; margin-bottom:8px; cursor:pointer; transition:all .2s; font-size:14px; }
+.quiz-option:hover { border-color:var(--primary); background:#fef2f2; }
+.quiz-option.correct { border-color:var(--success); background:#ecfdf5; color:#065f46; }
+.quiz-option.wrong { border-color:var(--danger); background:#fef2f2; color:#991b1b; }
+.quiz-feedback { margin-top:12px; padding:12px 16px; border-radius:10px; font-size:14px; display:none; line-height:1.6; }
+.quiz-feedback.show { display:block; }
+.quiz-feedback.correct { background:#ecfdf5; color:#065f46; }
+.quiz-feedback.wrong { background:#fef2f2; color:#991b1b; }
+/* Compare Table */
+.compare-table { width:100%; border-collapse:collapse; font-size:14px; }
+.compare-table th { background:var(--primary); color:white; padding:10px 14px; text-align:left; }
+.compare-table td { padding:10px 14px; border-bottom:1px solid #e2e8f0; }
+.compare-table tr:nth-child(even) td { background:#f8fafc; }
+/* TTS */
+.tts-btn { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; background:var(--primary); color:white; border:none; border-radius:20px; cursor:pointer; font-size:13px; transition:all .2s; }
+.tts-btn:hover { background:#991b1b; transform:scale(1.03); }
+.tts-btn.playing { background:var(--success); }
+/* Responsive */
+@media(max-width:768px) {
+  .hero h1 { font-size:26px; }
+  .container { padding:66px 12px 30px; }
+  .lab-controls { grid-template-columns:1fr; }
+  #map-container { height:380px; }
+  .nav { padding:0 12px; }
+}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-brand">🏛️ 秦汉大一统</div>
+  <a href="#life-scene-section" class="active">生活场景</a>
+  <a href="#content">核心内容</a>
+  <a href="#map-section">历史地图</a>
+  <a href="#interactive-lab">互动实验</a>
+  <a href="#knowledge-graph">知识图谱</a>
+  <a href="#quiz">练习</a>
+</nav>
+
+<div class="container">
+<!-- Hero -->
+<div class="hero">
+  <h1>🏛️ 秦汉统一多民族国家</h1>
+  <p class="subtitle">从统一六国到丝绸之路——大一统格局的建立与巩固</p>
+  <div class="meta">
+    <span>📚 历史</span>
+    <span>🎓 七年级上册</span>
+    <span>⚙️ 中国古代史</span>
+    <span>🔑 第3单元</span>
+  </div>
+</div>
+
+<!-- 🎬 生活场景 -->
+<div class="section" id="life-scene-section">
+  <div class="section-title">🎬 生活场景：统一标准的力量</div>
+
+  <div class="card">
+    <h3>场景一：假如今天每个省用不同的文字……</h3>
+    <p>想象一下：你在北京写的作业，到了上海老师看不懂；你在广州发的微信，四川的朋友完全读不出来。</p>
+    <svg viewBox="0 0 900 200" style="width:100%;height:auto;margin:16px 0">
+      <defs>
+        <linearGradient id="g1" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#7f1d1d"/>
+          <stop offset="100%" stop-color="#d97706"/>
+        </linearGradient>
+      </defs>
+      <!-- 不同文字的竹简 -->
+      <rect x="50" y="40" width="120" height="120" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+      <text x="110" y="80" text-anchor="middle" font-size="20" fill="#78350f">馬（齐）</text>
+      <text x="110" y="105" text-anchor="middle" font-size="14" fill="#92400e">齐国文字</text>
+      <text x="110" y="135" text-anchor="middle" font-size="28" fill="#78350f">𩣑</text>
+
+      <rect x="220" y="40" width="120" height="120" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+      <text x="280" y="80" text-anchor="middle" font-size="20" fill="#78350f">馬（楚）</text>
+      <text x="280" y="105" text-anchor="middle" font-size="14" fill="#92400e">楚国文字</text>
+      <text x="280" y="135" text-anchor="middle" font-size="28" fill="#78350f">𩡧</text>
+
+      <rect x="390" y="40" width="120" height="120" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+      <text x="450" y="80" text-anchor="middle" font-size="20" fill="#78350f">馬（燕）</text>
+      <text x="450" y="105" text-anchor="middle" font-size="14" fill="#92400e">燕国文字</text>
+      <text x="450" y="135" text-anchor="middle" font-size="28" fill="#78350f">𩡬</text>
+
+      <!-- 箭头 -->
+      <line x1="540" y1="100" x2="600" y2="100" stroke="url(#g1)" stroke-width="4" stroke-dasharray="8,4">
+        <animate attributeName="stroke-dashoffset" from="24" to="0" dur="1.5s" repeatCount="indefinite"/>
+      </line>
+      <polygon points="600,90 620,100 600,110" fill="#d97706"/>
+      <text x="580" y="80" text-anchor="middle" font-size="12" fill="#d97706">书同文</text>
+
+      <!-- 统一后 -->
+      <rect x="640" y="40" width="200" height="120" rx="8" fill="#fef2f2" stroke="#991b1b" stroke-width="3"/>
+      <text x="740" y="78" text-anchor="middle" font-size="20" fill="#991b1b" font-weight="bold">馬</text>
+      <text x="740" y="105" text-anchor="middle" font-size="14" fill="#991b1b">秦小篆（统一）</text>
+      <text x="740" y="135" text-anchor="middle" font-size="28" fill="#991b1b">馬</text>
+      <animateTransform xlink:href="#unified" attributeName="transform" type="scale" values="0.98;1.02;0.98" dur="2s" repeatCount="indefinite"/>
+    </svg>
+    <p>秦始皇统一文字前，七国各有各的写法，同一个「马」字就有七种写法。<b>「书同文」</b>让全国人终于可以看懂同一份文件了——这就是统一标准的力量。</p>
+  </div>
+
+  <div class="card">
+    <h3>场景二：高铁出省就换轨道？</h3>
+    <p>今天中国高铁能从北京直达广州，靠的是全国统一的铁轨标准。如果每个省的铁轨宽度不同，火车到了省界就得停下来换轨……</p>
+    <svg viewBox="0 0 900 180" style="width:100%;height:auto;margin:16px 0">
+      <!-- 不同宽度的车轨 -->
+      <line x1="60" y1="140" x2="220" y2="140" stroke="#d97706" stroke-width="6"/>
+      <line x1="60" y1="110" x2="220" y2="110" stroke="#d97706" stroke-width="6"/>
+      <text x="140" y="100" text-anchor="middle" font-size="12" fill="#92400e">齐国宽轨</text>
+
+      <line x1="250" y1="145" x2="410" y2="145" stroke="#059669" stroke-width="4"/>
+      <line x1="250" y1="105" x2="410" y2="105" stroke="#059669" stroke-width="4"/>
+      <text x="330" y="95" text-anchor="middle" font-size="12" fill="#059669">楚国窄轨</text>
+
+      <text x="460" y="130" text-anchor="middle" font-size="28" fill="#ef4444">✕</text>
+      <text x="460" y="160" text-anchor="middle" font-size="11" fill="#ef4444">无法通行！</text>
+
+      <!-- 箭头 -->
+      <line x1="510" y1="125" x2="580" y2="125" stroke="var(--primary)" stroke-width="3" stroke-dasharray="6,3">
+        <animate attributeName="stroke-dashoffset" from="18" to="0" dur="1s" repeatCount="indefinite"/>
+      </line>
+      <polygon points="580,118 596,125 580,132" fill="var(--primary)"/>
+      <text x="548" y="112" text-anchor="middle" font-size="11" fill="var(--primary)">车同轨</text>
+
+      <!-- 统一轨道 -->
+      <line x1="610" y1="135" x2="860" y2="135" stroke="#991b1b" stroke-width="5"/>
+      <line x1="610" y1="115" x2="860" y2="115" stroke="#991b1b" stroke-width="5"/>
+      <!-- 移动的车 -->
+      <rect x="620" y="105" width="50" height="40" rx="6" fill="#fef2f2" stroke="#991b1b" stroke-width="2">
+        <animateTransform attributeName="transform" type="translate" values="0,0;180,0;0,0" dur="4s" repeatCount="indefinite"/>
+      </rect>
+      <text x="645" y="130" text-anchor="middle" font-size="14">🚂</text>
+      <text x="735" y="100" text-anchor="middle" font-size="12" fill="#991b1b" font-weight="bold">秦统一车轨 → 全国畅通</text>
+    </svg>
+    <p>秦始皇的<b>「车同轨」</b>就是两千年前的「统一铁轨标准」。全国车轮间距统一为六尺，马车终于可以在全国畅通无阻。</p>
+  </div>
+
+  <div class="card">
+    <h3>场景三：丝绸之路——古代的「一带一路」</h3>
+    <p>今天你穿的棉T恤可能是东南亚生产的，用的香料来自印度，喝的咖啡产自巴西。这种全球贸易在两千年前就有了——<b>丝绸之路</b>。</p>
+    <svg viewBox="0 0 900 200" style="width:100%;height:auto;margin:16px 0">
+      <!-- 长安 -->
+      <circle cx="120" cy="100" r="30" fill="#fef2f2" stroke="#991b1b" stroke-width="3"/>
+      <text x="120" y="95" text-anchor="middle" font-size="14" fill="#991b1b" font-weight="bold">长安</text>
+      <text x="120" y="112" text-anchor="middle" font-size="10" fill="#991b1b">起点</text>
+
+      <!-- 路线 -->
+      <path d="M155,100 Q300,40 450,80 Q600,120 750,70" fill="none" stroke="#d97706" stroke-width="3" stroke-dasharray="10,5">
+        <animate attributeName="stroke-dashoffset" from="30" to="0" dur="2s" repeatCount="indefinite"/>
+      </path>
+
+      <!-- 中途站 -->
+      <circle cx="300" cy="60" r="14" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+      <text x="300" y="65" text-anchor="middle" font-size="10" fill="#78350f">敦煌</text>
+
+      <circle cx="450" cy="80" r="14" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+      <text x="450" y="85" text-anchor="middle" font-size="10" fill="#78350f">大宛</text>
+
+      <!-- 罗马 -->
+      <circle cx="750" cy="70" r="30" fill="#eff6ff" stroke="#3b82f6" stroke-width="3"/>
+      <text x="750" y="65" text-anchor="middle" font-size="14" fill="#1e40af" font-weight="bold">罗马</text>
+      <text x="750" y="82" text-anchor="middle" font-size="10" fill="#1e40af">终点</text>
+
+      <!-- 商品图标 -->
+      <text x="220" y="140" text-anchor="middle" font-size="11" fill="#78350f">→ 丝绸 🧵</text>
+      <text x="380" y="140" text-anchor="middle" font-size="11" fill="#78350f">→ 造纸术 📜</text>
+      <text x="600" y="140" text-anchor="middle" font-size="11" fill="#1e40af">← 佛教 🙏</text>
+      <text x="750" y="140" text-anchor="middle" font-size="11" fill="#1e40af">← 葡萄 🍇</text>
+
+      <!-- 骆驼商队 -->
+      <text x="380" y="50" font-size="26">🐪</text>
+      <animateTransform xlink:href="#camel" attributeName="transform" type="translate" values="0,0;40,0;0,0" dur="3s" repeatCount="indefinite"/>
+    </svg>
+    <p>汉武帝派<b>张骞出使西域</b>，开辟了从长安到罗马帝国的贸易通道。中国的丝绸、造纸术向西传播，佛教、葡萄、胡椒由西传入——这就是最早的「全球化」。</p>
+  </div>
+</div>
+
+<!-- 📖 核心内容 -->
+<div class="section" id="content">
+  <div class="section-title">📖 核心内容</div>
+
+  <div class="card">
+    <h3>一、秦朝的统一与制度创新（前221—前207年）</h3>
+    <button class="tts-btn" onclick="playTTS('s01')">🔊 听讲解</button>
+    <p style="margin-top:12px">公元前221年，<span class="highlight">秦王嬴政</span>先后灭掉韩、赵、魏、楚、燕、齐六国，建立了中国历史上第一个统一的中央集权国家——<span class="highlight">秦朝</span>，定都咸阳。</p>
+
+    <div class="formula-box">
+      秦始皇统一措施 = 政治（郡县制）+ 经济（统一度量衡、货币）+ 文化（书同文）+ 交通（车同轨）+ 军事（修长城）
+    </div>
+
+    <table class="compare-table" style="margin-top:16px">
+      <tr><th>维度</th><th>分封制（西周）</th><th>郡县制（秦朝）</th></tr>
+      <tr><td>地方长官</td><td>诸侯世袭</td><td>中央任免，不世袭</td></tr>
+      <tr><td>权力来源</td><td>血缘关系</td><td>中央政府任命</td></tr>
+      <tr><td>军事权</td><td>诸侯有独立军队</td><td>军队归中央调配</td></tr>
+      <tr><td>税收</td><td>诸侯自行征收</td><td>统一税制，上缴中央</td></tr>
+      <tr><td>效果</td><td>容易割据分裂</td><td>加强中央集权</td></tr>
+    </table>
+
+    <div class="note">
+      <b>⚠️ 易错点：</b>分封制和郡县制的核心区别不是名称不同，而是<b>官员是世袭还是由中央任命</b>。郡县制下地方官员由皇帝直接任免和考核，这是秦朝最重要的制度创新。
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>二、秦朝灭亡与楚汉争霸</h3>
+    <button class="tts-btn" onclick="playTTS('s02')">🔊 听讲解</button>
+    <p style="margin-top:12px">秦朝统一仅15年就灭亡了。原因是多方面的：</p>
+    <ul style="padding-left:24px;margin:10px 0;color:#475569">
+      <li><b>暴政</b>：严刑峻法、繁重徭役（修长城、阿房宫、骊山陵）</li>
+      <li><b>政策失误</b>：统一后未及时从战时体制转向和平建设</li>
+      <li><b>社会反抗</b>：陈胜吴广起义（前209年）——中国第一次大规模农民起义</li>
+    </ul>
+    <p>随后进入<span class="highlight">楚汉争霸</span>（前206—前202年），项羽与刘邦争夺天下，最终刘邦获胜，建立<span class="highlight">汉朝</span>。</p>
+    <div class="note">
+      <b>⚠️ 易错点：</b>不要把秦朝灭亡简单归结为「秦始皇太残暴」。历史事件的原因往往是多方面的，要从政治、经济、社会等多角度分析。
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>三、西汉的建立与文景之治</h3>
+    <button class="tts-btn" onclick="playTTS('s03')">🔊 听讲解</button>
+    <p style="margin-top:12px">公元前202年，<span class="highlight">刘邦</span>建立西汉，定都<span class="highlight">长安</span>。汉初百废待兴，统治者吸取秦朝灭亡教训，采取<b>休养生息</b>政策：</p>
+    <ul style="padding-left:24px;margin:10px 0;color:#475569">
+      <li>减轻赋税和徭役</li>
+      <li>释放奴婢、复员军人</li>
+      <li>推行「无为而治」的黄老之学</li>
+    </ul>
+    <p>经过高祖、惠帝、吕后、文帝、景帝数代人的努力，出现了<span class="highlight">「文景之治」</span>——国库充盈、百姓安居、社会稳定。</p>
+  </div>
+
+  <div class="card">
+    <h3>四、汉武帝的大一统（巅峰时期）</h3>
+    <button class="tts-btn" onclick="playTTS('s04')">🔊 听讲解</button>
+    <p style="margin-top:12px"><span class="highlight">汉武帝刘彻</span>（前141—前87年在位）在文景之治的基础上，将大一统推向顶峰：</p>
+
+    <div class="formula-box">
+      汉武帝三大策略：推恩令（削藩）+ 罢黜百家独尊儒术（思想统一）+ 开通丝绸之路（外交）
+    </div>
+
+    <table class="compare-table" style="margin-top:12px">
+      <tr><th>领域</th><th>措施</th><th>效果</th></tr>
+      <tr><td>政治</td><td>推恩令</td><td>削弱诸侯国，加强中央集权</td></tr>
+      <tr><td>思想</td><td>罢黜百家，独尊儒术</td><td>儒学成为官方正统，思想统一</td></tr>
+      <tr><td>经济</td><td>盐铁官营、统一铸币（五铢钱）</td><td>增加国家财政收入</td></tr>
+      <tr><td>军事</td><td>北击匈奴（卫青、霍去病）</td><td>解除北方边患威胁</td></tr>
+      <tr><td>外交</td><td>张骞出使西域</td><td>开辟丝绸之路</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>五、丝绸之路——文明交流之路</h3>
+    <button class="tts-btn" onclick="playTTS('s05')">🔊 听讲解</button>
+    <p style="margin-top:12px">公元前138年和前119年，汉武帝两次派<span class="highlight">张骞出使西域</span>，开辟了从长安经河西走廊、到中亚和欧洲的贸易通道——<span class="highlight">丝绸之路</span>。</p>
+    <div class="note">
+      <b>⚠️ 易错点：</b>丝绸之路不仅仅是「做生意的商路」。它还传播了宗教（佛教东传）、技术（造纸术、冶铁术）和文化（音乐、舞蹈）。要从<b>经济和文化双重角度</b>理解丝绸之路。
+    </div>
+  </div>
+
+  <!-- 时间线 -->
+  <div class="card">
+    <h3>📅 秦汉大事年表</h3>
+    <div class="timeline">
+      <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">前221年</div><div class="timeline-title">秦统一六国</div><div class="timeline-desc">秦王嬴政灭六国，建立秦朝，自称始皇帝</div></div>
+      <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">前221年起</div><div class="timeline-title">统一措施推行</div><div class="timeline-desc">书同文、车同轨、统一度量衡、修长城</div></div>
+      <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">前209年</div><div class="timeline-title">大泽乡起义</div><div class="timeline-desc">陈胜吴广发动起义，秦末农民战争爆发</div></div>
+      <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">前207年</div><div class="timeline-title">秦朝灭亡</div><div class="timeline-desc">巨鹿之战项羽大败秦军，秦王子婴投降</div></div>
+      <div class="timeline-item han"><div class="timeline-dot"></div><div class="timeline-year">前202年</div><div class="timeline-title">西汉建立</div><div class="timeline-desc">垓下之战后，刘邦称帝，定都长安</div></div>
+      <div class="timeline-item han"><div class="timeline-dot"></div><div class="timeline-year">前180—前141年</div><div class="timeline-title">文景之治</div><div class="timeline-desc">休养生息政策下的盛世</div></div>
+      <div class="timeline-item han"><div class="timeline-dot"></div><div class="timeline-year">前141—前87年</div><div class="timeline-title">汉武帝在位</div><div class="timeline-desc">推恩令、独尊儒术、北击匈奴、开通丝路</div></div>
+      <div class="timeline-item han"><div class="timeline-dot"></div><div class="timeline-year">前138年</div><div class="timeline-title">张骞首次出使西域</div><div class="timeline-desc">历时13年，开辟丝绸之路</div></div>
+      <div class="timeline-item han"><div class="timeline-dot"></div><div class="timeline-year">8年</div><div class="timeline-title">王莽篡汉</div><div class="timeline-desc">西汉灭亡，新朝建立</div></div>
+      <div class="timeline-item han"><div class="timeline-dot"></div><div class="timeline-year">25年</div><div class="timeline-title">东汉建立</div><div class="timeline-desc">刘秀称帝，定都洛阳，光武中兴</div></div>
+      <div class="timeline-item han"><div class="timeline-dot"></div><div class="timeline-year">220年</div><div class="timeline-title">东汉灭亡</div><div class="timeline-desc">曹丕篡汉，三国时代开始</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 🗺️ 历史地图 -->
+<div class="section" id="map-section">
+  <div class="section-title">🗺️ 秦汉疆域交互地图</div>
+  <div class="card">
+    <p style="margin-bottom:12px">点击按钮切换朝代疆域，拖动和缩放地图查看细节。地图标注了都城、重要战役和丝绸之路关键节点。</p>
+    <div id="map-container">
+      <div class="map-legend">
+        <div class="map-legend-item"><div class="map-legend-color" style="background:#991b1b"></div>秦朝疆域</div>
+        <div class="map-legend-item"><div class="map-legend-color" style="background:#d97706"></div>西汉疆域</div>
+        <div class="map-legend-item"><div class="map-legend-color" style="background:#059669"></div>东汉疆域</div>
+        <div class="map-legend-item"><div class="map-legend-color" style="background:red"></div>⭐ 都城</div>
+        <div class="map-legend-item"><div class="map-legend-color" style="background:#3b82f6;border-radius:50%"></div>⚔️ 战役</div>
+        <div class="map-legend-item"><div class="map-legend-color" style="background:#d97706;border-radius:50%"></div>🔶 关隘</div>
+      </div>
+    </div>
+    <div class="map-controls">
+      <button class="map-btn active" onclick="toggleDynasty('qin',this)">秦朝疆域</button>
+      <button class="map-btn" onclick="toggleDynasty('west-han',this)">西汉疆域</button>
+      <button class="map-btn" onclick="toggleDynasty('east-han',this)">东汉疆域</button>
+      <button class="map-btn" onclick="toggleLayer('battles',this)">⚔️ 战役</button>
+      <button class="map-btn" onclick="toggleLayer('capitals',this)">⭐ 都城</button>
+      <button class="map-btn" onclick="toggleLayer('passes',this)">🔶 关隘</button>
+    </div>
+  </div>
+</div>
+
+<!-- 🧪 互动实验台 -->
+<div class="section" id="interactive-lab">
+  <div class="section-title">🧪 互动实验台</div>
+
+  <div class="card">
+    <h3>🔬 实验一：从分裂到统一——疆域面积对比</h3>
+    <p>拖动滑块查看不同时期的国家疆域面积变化，感受「大一统」的规模。</p>
+    <canvas id="areaCanvas" width="800" height="320" style="margin:16px 0"></canvas>
+    <div class="lab-controls">
+      <div class="control-group">
+        <label>选择时期: <span id="periodLabel">秦朝</span></label>
+        <input type="range" id="periodSlider" min="0" max="4" step="1" value="0" oninput="updateAreaChart()">
+        <div class="value" id="periodVal">秦朝(前221年)</div>
+      </div>
+    </div>
+    <div class="lab-result">
+      <div class="formula" id="areaFormula">秦朝疆域面积 ≈ 340 万平方公里</div>
+      <div class="detail" id="areaDetail">结束战国七雄分裂，首次实现大一统</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🔬 实验二：政策对比模拟器</h3>
+    <p>调整不同治国策略的「力度值」，观察对国家的影响。体会秦朝的激进政策和汉初的温和政策带来的不同结果。</p>
+    <canvas id="policyCanvas" width="800" height="350" style="margin:16px 0"></canvas>
+    <div class="lab-controls">
+      <div class="control-group">
+        <label>赋税轻重: <span id="taxLabel">中等</span></label>
+        <input type="range" id="taxSlider" min="1" max="10" step="1" value="5" oninput="updatePolicy()">
+        <div class="value" id="taxVal">5</div>
+      </div>
+      <div class="control-group">
+        <label>徭役强度: <span id="laborLabel">中等</span></label>
+        <input type="range" id="laborSlider" min="1" max="10" step="1" value="5" oninput="updatePolicy()">
+        <div class="value" id="laborVal">5</div>
+      </div>
+      <div class="control-group">
+        <label>军事投入: <span id="militaryLabel">中等</span></label>
+        <input type="range" id="militarySlider" min="1" max="10" step="1" value="5" oninput="updatePolicy()">
+        <div class="value" id="militaryVal">5</div>
+      </div>
+    </div>
+    <div class="lab-result">
+      <div class="formula" id="policyFormula">综合国力评估：均衡型</div>
+      <div class="detail" id="policyDetail">赋税、徭役和军事投入适中，接近文景之治的温和路线</div>
+    </div>
+  </div>
+</div>
+
+<!-- 🗺️ 知识图谱 -->
+<div class="section" id="knowledge-graph">
+  <div class="section-title">🗺️ 知识图谱</div>
+  <div class="card">
+    <h3>秦汉大一统在知识体系中的位置</h3>
+    <p>本单元（秦汉大一统）承接先秦文明，开启了隋唐宋元的繁荣。拖动节点查看知识点关系。</p>
+    <svg id="kg-svg"></svg>
+    <div class="kg-legend">
+      <div class="kg-legend-item"><div class="kg-legend-dot" style="background:var(--success)"></div>前置知识</div>
+      <div class="kg-legend-item"><div class="kg-legend-dot" style="background:var(--primary)"></div>当前节点</div>
+      <div class="kg-legend-item"><div class="kg-legend-dot" style="background:var(--accent)"></div>后续知识</div>
+    </div>
+  </div>
+</div>
+
+<!-- ✏️ 巩固练习 -->
+<div class="section" id="quiz">
+  <div class="section-title">✏️ 巩固练习</div>
+
+  <div class="quiz-card" data-answer="C" data-qid="1">
+    <div class="quiz-q">1. 与分封制相比，秦朝郡县制最大的进步在于：</div>
+    <div class="quiz-option" data-opt="A">A. 扩大了管辖范围</div>
+    <div class="quiz-option" data-opt="B">B. 促进了经济发展</div>
+    <div class="quiz-option" data-opt="C">C. 地方官员由中央任免，不得世袭</div>
+    <div class="quiz-option" data-opt="D">D. 实现了思想统一</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-card" data-answer="B" data-qid="2">
+    <div class="quiz-q">2. 秦始皇统一六国后推行「书同文」，其最重要的历史意义是：</div>
+    <div class="quiz-option" data-opt="A">A. 使秦朝的法令更加严厉</div>
+    <div class="quiz-option" data-opt="B">B. 促进了各地区的文化交流和国家认同</div>
+    <div class="quiz-option" data-opt="C">C. 帮助秦始皇监控各地诸侯</div>
+    <div class="quiz-option" data-opt="D">D. 提高了秦朝军队的战斗力</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-card" data-answer="D" data-qid="3">
+    <div class="quiz-q">3. 关于秦朝灭亡的原因，以下分析最全面的是：</div>
+    <div class="quiz-option" data-opt="A">A. 完全是因为秦始皇太残暴</div>
+    <div class="quiz-option" data-opt="B">B. 因为六国百姓不适应统一</div>
+    <div class="quiz-option" data-opt="C">C. 因为陈胜吴广起义</div>
+    <div class="quiz-option" data-opt="D">D. 暴政、政策失误、社会反抗等多方面原因</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-card" data-answer="A" data-qid="4">
+    <div class="quiz-q">4. 汉初统治者采取「休养生息」政策的主要原因是：</div>
+    <div class="quiz-option" data-opt="A">A. 吸取秦朝因暴政导致灭亡的教训</div>
+    <div class="quiz-option" data-opt="B">B. 统治者个人性格温和</div>
+    <div class="quiz-option" data-opt="C">C. 当时没有外部威胁</div>
+    <div class="quiz-option" data-opt="D">D. 儒家思想的要求</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-card" data-answer="C" data-qid="5">
+    <div class="quiz-q">5. 汉武帝实行「推恩令」的目的是：</div>
+    <div class="quiz-option" data-opt="A">A. 奖励有功的大臣</div>
+    <div class="quiz-option" data-opt="B">B. 增加诸侯国的土地</div>
+    <div class="quiz-option" data-opt="C">C. 削弱诸侯国势力，加强中央集权</div>
+    <div class="quiz-option" data-opt="D">D. 推广儒家思想</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-card" data-answer="B" data-qid="6">
+    <div class="quiz-q">6. 关于丝绸之路，以下理解最准确的是：</div>
+    <div class="quiz-option" data-opt="A">A. 丝绸之路只是一条运送丝绸的商路</div>
+    <div class="quiz-option" data-opt="B">B. 丝绸之路是经济贸易与文化交流的双重通道</div>
+    <div class="quiz-option" data-opt="C">C. 丝绸之路只在汉武帝时期存在</div>
+    <div class="quiz-option" data-opt="D">D. 丝绸之路主要是军事征服的路线</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-card" data-answer="C" data-qid="7">
+    <div class="quiz-q">7. 「罢黜百家，独尊儒术」是谁的建议？被哪位皇帝采纳？</div>
+    <div class="quiz-option" data-opt="A">A. 李斯建议，秦始皇采纳</div>
+    <div class="quiz-option" data-opt="B">B. 诸葛亮建议，汉文帝采纳</div>
+    <div class="quiz-option" data-opt="C">C. 董仲舒建议，汉武帝采纳</div>
+    <div class="quiz-option" data-opt="D">D. 孔子建议，汉高祖采纳</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-card" data-answer="B" data-qid="8">
+    <div class="quiz-q">8. 以下哪组人物与「北击匈奴」直接相关？</div>
+    <div class="quiz-option" data-opt="A">A. 张骞、班超</div>
+    <div class="quiz-option" data-opt="B">B. 卫青、霍去病</div>
+    <div class="quiz-option" data-opt="C">C. 陈胜、吴广</div>
+    <div class="quiz-option" data-opt="D">D. 韩信、萧何</div>
+    <div class="quiz-feedback"></div>
+  </div>
+</div>
+
+</div><!-- container end -->
+
+<script>
+// ====== TTS 播放 ======
+let currentAudio = null;
+function playTTS(id) {
+  const btns = document.querySelectorAll('.tts-btn');
+  btns.forEach(b => b.classList.remove('playing'));
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  const audio = new Audio('tts/' + id + '.mp3');
+  audio.play().catch(()=>{});
+  currentAudio = audio;
+  event.target.classList.add('playing');
+  audio.onended = () => { event.target.classList.remove('playing'); currentAudio = null; };
+}
+
+// ====== HiDPI Canvas ======
+function setupHiDPI(canvas) {
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+  return ctx;
+}
+
+// ====== 实验一：疆域面积 ======
+const periodData = [
+  { name:'秦朝', year:'前221年', area:340, color:'#991b1b', desc:'结束战国七雄分裂，首次实现大一统' },
+  { name:'西汉初', year:'前202年', area:260, color:'#d97706', desc:'楚汉战争后，百废待兴，尚未恢复秦朝全部疆域' },
+  { name:'文景之治', year:'前141年', area:320, color:'#ea580c', desc:'休养生息政策下国力恢复，疆域基本恢复' },
+  { name:'汉武帝', year:'前100年', area:610, color:'#b45309', desc:'北击匈奴、开通西域，疆域达到汉朝最大' },
+  { name:'东汉', year:'105年', area:580, color:'#059669', desc:'光武中兴后基本恢复，设西域都护府' }
+];
+
+function updateAreaChart() {
+  const idx = parseInt(document.getElementById('periodSlider').value);
+  const d = periodData[idx];
+  document.getElementById('periodLabel').textContent = d.name;
+  document.getElementById('periodVal').textContent = d.name + '(' + d.year + ')';
+  document.getElementById('areaFormula').textContent = d.name + '疆域面积 ≈ ' + d.area + ' 万平方公里';
+  document.getElementById('areaDetail').textContent = d.desc;
+  drawAreaChart(idx);
+}
+
+function drawAreaChart(highlightIdx) {
+  const canvas = document.getElementById('areaCanvas');
+  const ctx = setupHiDPI(canvas);
+  const W = canvas.getBoundingClientRect().width;
+  const H = canvas.getBoundingClientRect().height;
+  ctx.clearRect(0,0,W,H);
+
+  const maxArea = 650;
+  const barW = (W - 120) / periodData.length - 20;
+  const startX = 80;
+
+  // Y axis
+  ctx.strokeStyle = '#e2e8f0';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 6; i++) {
+    const y = H - 50 - (i * (H-80) / 6);
+    ctx.beginPath(); ctx.moveTo(startX, y); ctx.lineTo(W-20, y); ctx.stroke();
+    ctx.fillStyle = '#94a3b8'; ctx.font = '11px sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText((i*100) + '万km²', startX-8, y+4);
+  }
+
+  periodData.forEach((d, i) => {
+    const x = startX + i * (barW + 20) + 10;
+    const barH = (d.area / maxArea) * (H - 80);
+    const y = H - 50 - barH;
+
+    // Bar
+    ctx.fillStyle = i === highlightIdx ? d.color : d.color + '44';
+    ctx.beginPath();
+    ctx.roundRect(x, y, barW, barH, [6,6,0,0]);
+    ctx.fill();
+
+    // Value
+    if (i === highlightIdx) {
+      ctx.fillStyle = d.color;
+      ctx.font = 'bold 14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(d.area + '万', x + barW/2, y - 8);
+    }
+
+    // Label
+    ctx.fillStyle = i === highlightIdx ? '#1e293b' : '#94a3b8';
+    ctx.font = (i === highlightIdx ? 'bold ' : '') + '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(d.name, x + barW/2, H - 30);
+    ctx.fillStyle = '#94a3b8'; ctx.font = '10px sans-serif';
+    ctx.fillText(d.year, x + barW/2, H - 16);
+  });
+}
+
+// ====== 实验二：政策模拟 ======
+function updatePolicy() {
+  const tax = parseInt(document.getElementById('taxSlider').value);
+  const labor = parseInt(document.getElementById('laborSlider').value);
+  const military = parseInt(document.getElementById('militarySlider').value);
+  const labels = ['极轻','很轻','轻','较轻','中等','较重','重','很重','极重','暴政级'];
+  document.getElementById('taxLabel').textContent = labels[tax-1];
+  document.getElementById('taxVal').textContent = tax;
+  document.getElementById('laborLabel').textContent = labels[labor-1];
+  document.getElementById('laborVal').textContent = labor;
+  document.getElementById('militaryLabel').textContent = labels[military-1];
+  document.getElementById('militaryVal').textContent = military;
+
+  const burden = tax + labor;
+  const power = military * 2 + tax;
+  const stability = Math.max(0, 100 - burden * 5 - Math.max(0, labor - 6) * 15);
+  const strength = Math.min(100, power * 4);
+
+  let type, detail;
+  if (burden >= 16) {
+    type = '⚠️ 暴政模式（类似秦末）'; detail = '赋税和徭役过重，百姓苦不堪言，距离农民起义不远了！秦朝就是这样灭亡的。';
+  } else if (burden <= 6 && military <= 3) {
+    type = '🕊️ 无为而治（类似汉初）'; detail = '轻徭薄赋，百姓安居乐业，但军事力量薄弱，面对匈奴只能和亲妥协。';
+  } else if (burden <= 10 && military >= 6) {
+    type = '⭐ 文治武功（类似汉武帝）'; detail = '赋税适度、军事强大，既能保障百姓生活，又能开疆拓土。这是汉武帝的路线！';
+  } else if (burden <= 8) {
+    type = '🌾 休养生息（类似文景之治）'; detail = '轻税减赋，国库逐渐充盈。文景之治正是这样积累了汉武帝北击匈奴的资本。';
+  } else {
+    type = '⚖️ 均衡型'; detail = '各项政策相对均衡，但缺乏明显特色。';
+  }
+  document.getElementById('policyFormula').textContent = '综合评估：' + type;
+  document.getElementById('policyDetail').textContent = detail;
+  drawPolicyChart(stability, strength);
+}
+
+function drawPolicyChart(stability, strength) {
+  const canvas = document.getElementById('policyCanvas');
+  const ctx = setupHiDPI(canvas);
+  const W = canvas.getBoundingClientRect().width;
+  const H = canvas.getBoundingClientRect().height;
+  ctx.clearRect(0,0,W,H);
+
+  // Draw radar-like comparison
+  const cx = W/2, cy = H/2 - 10;
+  const r = Math.min(W, H) * 0.32;
+
+  // Background circles
+  for (let i = 1; i <= 4; i++) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * i/4, 0, Math.PI*2);
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.stroke();
+  }
+
+  // Axes
+  const axes = [
+    { label:'社会稳定', angle: -Math.PI/2, val: stability },
+    { label:'军事实力', angle: Math.PI/6, val: strength },
+    { label:'经济发展', angle: Math.PI*5/6, val: Math.max(0, 100 - parseInt(document.getElementById('taxSlider').value)*8) }
+  ];
+
+  axes.forEach(a => {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(a.angle)*r, cy + Math.sin(a.angle)*r);
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.stroke();
+    ctx.fillStyle = '#475569';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.textAlign = 'center';
+    const lx = cx + Math.cos(a.angle)*(r+20);
+    const ly = cy + Math.sin(a.angle)*(r+20);
+    ctx.fillText(a.label, lx, ly);
+  });
+
+  // Data polygon
+  ctx.beginPath();
+  axes.forEach((a, i) => {
+    const pr = r * a.val / 100;
+    const px = cx + Math.cos(a.angle) * pr;
+    const py = cy + Math.sin(a.angle) * pr;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  });
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(185,28,28,0.15)';
+  ctx.fill();
+  ctx.strokeStyle = '#991b1b';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Data points
+  axes.forEach(a => {
+    const pr = r * a.val / 100;
+    const px = cx + Math.cos(a.angle) * pr;
+    const py = cy + Math.sin(a.angle) * pr;
+    ctx.beginPath();
+    ctx.arc(px, py, 5, 0, Math.PI*2);
+    ctx.fillStyle = '#991b1b';
+    ctx.fill();
+    ctx.fillStyle = '#991b1b';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText(a.val + '%', px + 12, py - 8);
+  });
+
+  // Reference: 历史政策标注
+  const refs = [
+    { name:'秦末', x: W-120, y:30, color:'#ef4444' },
+    { name:'汉初', x: W-120, y:55, color:'#d97706' },
+    { name:'文景之治', x: W-120, y:80, color:'#059669' },
+    { name:'汉武帝', x: W-120, y:105, color:'#991b1b' }
+  ];
+  ctx.font = '11px sans-serif';
+  refs.forEach(r => {
+    ctx.fillStyle = r.color;
+    ctx.beginPath(); ctx.arc(r.x, r.y, 4, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#475569';
+    ctx.textAlign = 'left';
+    ctx.fillText(r.name, r.x + 10, r.y + 4);
+  });
+}
+
+// ====== 地图初始化 ======
+let map;
+const dynastyColors = { 'qin':'#991b1b', 'west-han':'#d97706', 'east-han':'#059669' };
+const dynastyFiles = {
+  'qin': '../teachany-opensource/data/history/dynasties/qin-dynasty.geojson',
+  'west-han': '../teachany-opensource/data/history/dynasties/west-han-dynasty.geojson',
+  'east-han': '../teachany-opensource/data/history/dynasties/east-han-dynasty.geojson'
+};
+let activeDynasty = 'qin';
+let layerStates = { battles: false, capitals: false, passes: false };
+
+// Battle data (秦汉相关)
+const battles = [
+  { name:'长平之战', coords:[112.92, 35.80], year:'前260年', info:'秦 vs 赵，白起大败赵括，歼赵军40万' },
+  { name:'巨鹿之战', coords:[115.03, 37.37], year:'前207年', info:'项羽破釜沉舟，歼灭秦军主力' },
+  { name:'垓下之战', coords:[117.52, 33.67], year:'前202年', info:'四面楚歌，项羽自刎，汉朝建立' },
+  { name:'白登之围', coords:[113.61, 40.09], year:'前200年', info:'刘邦被围，开启汉初和亲政策' },
+  { name:'赤壁之战', coords:[113.88, 29.72], year:'208年', info:'孙刘联军火烧赤壁，三国鼎立形成' },
+  { name:'官渡之战', coords:[114.08, 34.90], year:'200年', info:'曹操以少胜多，统一北方关键战役' }
+];
+
+// Capital data
+const capitals = [
+  { name:'咸阳', coords:[108.71, 34.33], info:'秦朝都城（前350-前207）' },
+  { name:'长安', coords:[108.95, 34.27], info:'西汉都城（前202-8），丝绸之路起点' },
+  { name:'洛阳', coords:[112.45, 34.63], info:'东汉都城（25-220）' }
+];
+
+// Pass data
+const passes = [
+  { name:'函谷关', coords:[110.88, 34.52], info:'秦据关中，天下之险' },
+  { name:'潼关', coords:[110.25, 34.49], info:'关中东大门，百二秦关' },
+  { name:'玉门关', coords:[93.86, 40.35], info:'丝绸之路北线关口' },
+  { name:'阳关', coords:[94.06, 39.73], info:'丝绸之路南线关口' },
+  { name:'居庸关', coords:[116.00, 40.29], info:'北京北部屏障，长城关隘' },
+  { name:'雁门关', coords:[112.80, 39.17], info:'汉朝防御匈奴重要关隘' },
+  { name:'山海关', coords:[119.75, 40.00], info:'长城起点，天下第一关' }
+];
+
+function initMap() {
+  map = new maplibregl.Map({
+    container: 'map-container',
+    style: {
+      version: 8,
+      sources: {
+        'terrain-tiles': {
+          type: 'raster-dem',
+          tiles: ['../teachany-opensource/data/terrain-tiles/{z}/{x}/{y}.png'],
+          encoding: 'terrarium',
+          tileSize: 256,
+          minzoom: 4,
+          maxzoom: 6
+        }
+      },
+      layers: [
+        {
+          id: 'background',
+          type: 'background',
+          paint: { 'background-color': '#e8dcc8' }
+        },
+        {
+          id: 'hillshade',
+          type: 'hillshade',
+          source: 'terrain-tiles',
+          paint: {
+            'hillshade-exaggeration': 0.5,
+            'hillshade-shadow-color': '#5a4a3a',
+            'hillshade-highlight-color': '#f5f0e8',
+            'hillshade-illumination-direction': 315
+          }
+        }
+      ]
+    },
+    center: [108, 34],
+    zoom: 3.8,
+    maxZoom: 10,
+    minZoom: 3
+  });
+
+  map.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+  map.on('load', () => {
+    loadDynasty('qin');
+    addMarkers();
+  });
+}
+
+function loadDynasty(id) {
+  // Remove previous dynasty layer
+  if (map.getLayer('dynasty-fill')) map.removeLayer('dynasty-fill');
+  if (map.getLayer('dynasty-outline')) map.removeLayer('dynasty-outline');
+  if (map.getSource('dynasty')) map.removeSource('dynasty');
+
+  activeDynasty = id;
+  const color = dynastyColors[id];
+
+  fetch(dynastyFiles[id])
+    .then(r => r.json())
+    .then(data => {
+      map.addSource('dynasty', { type: 'geojson', data });
+      map.addLayer({
+        id: 'dynasty-fill',
+        type: 'fill',
+        source: 'dynasty',
+        paint: { 'fill-color': color, 'fill-opacity': 0.25 }
+      }, 'hillshade');
+      map.addLayer({
+        id: 'dynasty-outline',
+        type: 'line',
+        source: 'dynasty',
+        paint: { 'line-color': color, 'line-width': 2, 'line-opacity': 0.8 }
+      });
+    })
+    .catch(err => console.warn('Dynasty load error:', err));
+}
+
+function toggleDynasty(id, btn) {
+  document.querySelectorAll('.map-btn').forEach(b => {
+    if (['秦朝疆域','西汉疆域','东汉疆域'].includes(b.textContent)) b.classList.remove('active');
+  });
+  btn.classList.add('active');
+  loadDynasty(id);
+}
+
+let battleMarkers = [], capitalMarkers = [], passMarkers = [];
+
+function addMarkers() {
+  // Pre-create markers (hidden)
+  battles.forEach(b => {
+    const el = document.createElement('div');
+    el.style.cssText = 'width:20px;height:20px;background:#3b82f6;border:2px solid white;border-radius:50%;cursor:pointer;display:none;box-shadow:0 1px 4px rgba(0,0,0,0.3);';
+    el.innerHTML = '<span style="position:absolute;top:-2px;left:-1px;font-size:14px">⚔️</span>';
+    const marker = new maplibregl.Marker({ element: el })
+      .setLngLat(b.coords)
+      .setPopup(new maplibregl.Popup({ offset:15 }).setHTML(`<b>${b.name}</b><br>${b.year}<br><small>${b.info}</small>`))
+      .addTo(map);
+    battleMarkers.push({ marker, el });
+  });
+  capitals.forEach(c => {
+    const el = document.createElement('div');
+    el.style.cssText = 'width:24px;height:24px;background:#ef4444;border:2px solid white;border-radius:50%;cursor:pointer;display:none;box-shadow:0 1px 4px rgba(0,0,0,0.3);font-size:14px;text-align:center;line-height:20px;';
+    el.textContent = '⭐';
+    const marker = new maplibregl.Marker({ element: el })
+      .setLngLat(c.coords)
+      .setPopup(new maplibregl.Popup({ offset:15 }).setHTML(`<b>⭐ ${c.name}</b><br><small>${c.info}</small>`))
+      .addTo(map);
+    capitalMarkers.push({ marker, el });
+  });
+  passes.forEach(p => {
+    const el = document.createElement('div');
+    el.style.cssText = 'width:18px;height:18px;background:#d97706;border:2px solid white;border-radius:3px;cursor:pointer;display:none;box-shadow:0 1px 4px rgba(0,0,0,0.3);font-size:11px;text-align:center;line-height:14px;';
+    el.textContent = '🔶';
+    const marker = new maplibregl.Marker({ element: el })
+      .setLngLat(p.coords)
+      .setPopup(new maplibregl.Popup({ offset:15 }).setHTML(`<b>🔶 ${p.name}</b><br><small>${p.info}</small>`))
+      .addTo(map);
+    passMarkers.push({ marker, el });
+  });
+}
+
+function toggleLayer(type, btn) {
+  layerStates[type] = !layerStates[type];
+  btn.classList.toggle('active', layerStates[type]);
+  const markers = type === 'battles' ? battleMarkers : type === 'capitals' ? capitalMarkers : passMarkers;
+  markers.forEach(m => m.el.style.display = layerStates[type] ? 'block' : 'none');
+}
+
+// ====== Knowledge Graph (D3.js) ======
+function initKnowledgeGraph() {
+  const svg = d3.select('#kg-svg');
+  const width = svg.node().getBoundingClientRect().width;
+  const height = 400;
+  svg.attr('viewBox', `0 0 ${width} ${height}`);
+
+  const nodes = [
+    { id: 'early-civilizations', label: '中华文明的起源\n与早期国家', type: 'prev', x: width*0.15, y: height*0.5 },
+    { id: 'imperial-unification', label: '秦汉大一统', type: 'current', x: width*0.5, y: height*0.5 },
+    { id: 'tang-song-prosperity', label: '隋唐宋元的繁荣', type: 'next', x: width*0.85, y: height*0.35 },
+    { id: 'ancient-culture', label: '中国古代文化', type: 'next', x: width*0.85, y: height*0.65 }
+  ];
+
+  const links = [
+    { source: 'early-civilizations', target: 'imperial-unification', note: '先秦是秦汉统一的基础' },
+    { source: 'imperial-unification', target: 'tang-song-prosperity', note: '秦汉制度影响隋唐宋元' },
+    { source: 'imperial-unification', target: 'ancient-culture', note: '秦汉奠定文化格局' }
+  ];
+
+  const colorMap = { prev: '#059669', current: '#991b1b', next: '#d97706' };
+  const nodeMap = {};
+  nodes.forEach(n => nodeMap[n.id] = n);
+
+  // Links
+  svg.selectAll('.kg-link')
+    .data(links)
+    .join('line')
+    .attr('class','kg-link')
+    .attr('x1', d => nodeMap[d.source].x)
+    .attr('y1', d => nodeMap[d.source].y)
+    .attr('x2', d => nodeMap[d.target].x)
+    .attr('y2', d => nodeMap[d.target].y)
+    .attr('stroke','#cbd5e1')
+    .attr('stroke-width', 2)
+    .attr('stroke-dasharray','6,4');
+
+  // Link labels
+  svg.selectAll('.kg-link-label')
+    .data(links)
+    .join('text')
+    .attr('class','kg-link-label')
+    .attr('x', d => (nodeMap[d.source].x + nodeMap[d.target].x)/2)
+    .attr('y', d => (nodeMap[d.source].y + nodeMap[d.target].y)/2 - 8)
+    .attr('text-anchor','middle')
+    .attr('font-size','11px')
+    .attr('fill','#94a3b8')
+    .text(d => d.note);
+
+  // Arrows
+  svg.append('defs').selectAll('marker')
+    .data(['arrow'])
+    .join('marker')
+    .attr('id','arrow')
+    .attr('viewBox','0 0 10 10')
+    .attr('refX',28)
+    .attr('refY',5)
+    .attr('markerWidth',6)
+    .attr('markerHeight',6)
+    .attr('orient','auto')
+    .append('path')
+    .attr('d','M0,0 L10,5 L0,10 Z')
+    .attr('fill','#cbd5e1');
+
+  svg.selectAll('.kg-link').attr('marker-end','url(#arrow)');
+
+  // Nodes
+  const nodeGs = svg.selectAll('.kg-node')
+    .data(nodes)
+    .join('g')
+    .attr('class','kg-node')
+    .attr('transform', d => `translate(${d.x},${d.y})`)
+    .style('cursor','pointer');
+
+  nodeGs.append('circle')
+    .attr('r', d => d.type === 'current' ? 40 : 32)
+    .attr('fill', d => colorMap[d.type] + '20')
+    .attr('stroke', d => colorMap[d.type])
+    .attr('stroke-width', d => d.type === 'current' ? 3 : 2);
+
+  nodeGs.each(function(d) {
+    const g = d3.select(this);
+    const lines = d.label.split('\n');
+    lines.forEach((line, i) => {
+      g.append('text')
+        .attr('text-anchor','middle')
+        .attr('dy', lines.length === 1 ? '0.35em' : (i - (lines.length-1)/2) * 16 + 'px')
+        .attr('font-size', d.type === 'current' ? '13px' : '11px')
+        .attr('font-weight', d.type === 'current' ? 'bold' : 'normal')
+        .attr('fill', colorMap[d.type])
+        .text(line);
+    });
+  });
+
+  // Hover effect
+  nodeGs.on('mouseover', function(event, d) {
+    d3.select(this).select('circle')
+      .transition().duration(200)
+      .attr('r', d.type === 'current' ? 46 : 38)
+      .attr('fill', colorMap[d.type] + '35');
+  }).on('mouseout', function(event, d) {
+    d3.select(this).select('circle')
+      .transition().duration(200)
+      .attr('r', d.type === 'current' ? 40 : 32)
+      .attr('fill', colorMap[d.type] + '20');
+  });
+}
+
+// ====== Quiz System ======
+const quizFeedback = {
+  1: {
+    A: "❌ 管辖范围的大小不是制度优劣的核心区别。分封制下的周朝疆域也很辽阔。关键区别在于地方官员的产生方式。",
+    B: "❌ 经济发展与地方管理制度的关系不是直接对应的。郡县制的核心进步在于行政管理方面。",
+    C: "✅ 正确！郡县制最大的进步是地方官员由中央政府直接任命和考核，不能世袭，从而有效加强了中央对地方的控制。这是秦朝最重要的制度创新。",
+    D: "❌ 思想统一是通过「焚书坑儒」等措施实现的，不是郡县制的直接作用。郡县制解决的是行政管理问题。"
+  },
+  2: {
+    A: "❌ 书同文的目的不是加强法律惩罚。统一文字是文化层面的措施，不是法律手段。",
+    B: "✅ 正确！统一文字使得不同地区的人们可以使用相同的文字交流，极大地促进了文化传播、政令传达和国家认同感的形成。这是文化统一的基石。",
+    C: "❌ 书同文不是用来监控诸侯的。秦朝实行的是郡县制，已经取消了诸侯分封。",
+    D: "❌ 统一文字和军队战斗力没有直接关系。提高军队战斗力靠的是军事训练和装备。"
+  },
+  3: {
+    A: "❌ 这种观点过于简单化。历史事件的原因往往是多方面的，不能只归结为一个因素。",
+    B: "❌ 统一是历史趋势，百姓反对的不是统一本身，而是秦朝的暴政和过重的负担。",
+    C: "❌ 陈胜吴广起义是直接导火索，但根本原因是多方面的，包括暴政、政策失误等深层因素。",
+    D: "✅ 正确！秦朝灭亡是综合因素的结果：暴政（严刑峻法、繁重徭役）是重要原因，统一后未及时调整战时政策、六国旧势力反抗、统治集团内部矛盾等都是重要因素。分析历史问题要多角度思考。"
+  },
+  4: {
+    A: "✅ 正确！汉初统治者亲身经历了秦末战乱，深刻认识到暴政会导致王朝覆灭。因此采取「休养生息」政策，减轻赋税徭役，让百姓恢复生产。这是从历史中汲取教训的典范。",
+    B: "❌ 政策的制定不取决于个人性格，而是基于对当时社会状况的判断和对秦朝灭亡的深刻反思。",
+    C: "❌ 汉初面临严重的匈奴威胁，白登之围就是例证。正是因为国力不足才选择休养生息。",
+    D: "❌ 汉初推崇的是道家「黄老之学」的无为而治，不是儒家思想。独尊儒术是汉武帝时期的政策。"
+  },
+  5: {
+    A: "❌ 推恩令不是奖励措施。相反，它表面上是「恩赐」，实际上是一种巧妙的削弱策略。",
+    B: "❌ 恰恰相反！推恩令的结果是诸侯国的土地不断被分割变小，而不是增加。",
+    C: "✅ 正确！推恩令规定诸侯王的封地由其所有儿子平分（不再只由嫡长子继承），结果诸侯国越分越小，势力不断削弱。这是汉武帝的高明之处——用「施恩」的名义达到「削藩」的目的！",
+    D: "❌ 推广儒家思想的措施是「罢黜百家，独尊儒术」，不是推恩令。两者目标不同。"
+  },
+  6: {
+    A: "❌ 丝绸之路得名于丝绸贸易，但其功能远不止运送丝绸。它还传播了佛教、音乐、农作物等。",
+    B: "✅ 正确！丝绸之路既是贸易通道（丝绸、香料、宝石等商品往来），也是文化交流之路（佛教东传、造纸术西传、音乐舞蹈交流等）。要从经济和文化双重角度理解其深远意义。",
+    C: "❌ 丝绸之路在汉代开辟后一直延续了数百年，唐代达到鼎盛。它不仅限于汉武帝时期。",
+    D: "❌ 丝绸之路主要是和平的贸易和文化交流路线，不是军事征服的路线。张骞出使西域的目的是联络大月氏夹击匈奴，但最终意义在于开辟贸易文化通道。"
+  },
+  7: {
+    A: "❌ 李斯是秦朝丞相，他建议的是「焚书坑儒」（打压百家），不是「独尊儒术」。方向完全相反！",
+    B: "❌ 诸葛亮是三国时期的人物（比汉武帝晚了300多年），且汉文帝推崇的是道家黄老之学。",
+    C: "✅ 正确！西汉思想家董仲舒提出「罢黜百家，独尊儒术」的建议，被汉武帝采纳。从此儒学成为官方正统思想，影响了中国两千年的文化发展。",
+    D: "❌ 孔子是春秋时期的人，比汉朝早了数百年。汉高祖刘邦不重视儒学，甚至轻视儒生。"
+  },
+  8: {
+    A: "❌ 张骞负责出使西域（外交），班超负责经营西域（东汉）。他们与匈奴有关，但不是「北击匈奴」的军事将领。",
+    B: "✅ 正确！卫青和霍去病是汉武帝时期北击匈奴的两大名将。卫青七战七捷，霍去病封狼居胥，他们的军事胜利使汉朝解除了匈奴的威胁。",
+    C: "❌ 陈胜和吴广是秦末农民起义的领袖，与北击匈奴无关。他们的起义发生在秦朝末年。",
+    D: "❌ 韩信和萧何是楚汉战争时期的人物。韩信是军事天才，萧何是内政能手，但他们活动在汉朝建立之初，不是北击匈奴的将领。"
+  }
+};
+
+document.querySelectorAll('.quiz-card').forEach(card => {
+  const qid = card.dataset.qid;
+  const correctAns = card.dataset.answer;
+  const feedback = card.querySelector('.quiz-feedback');
+
+  card.querySelectorAll('.quiz-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      if (card.dataset.answered) return;
+      card.dataset.answered = 'true';
+      const selected = opt.dataset.opt;
+      const isCorrect = selected === correctAns;
+
+      card.querySelectorAll('.quiz-option').forEach(o => {
+        o.classList.remove('correct', 'wrong');
+        o.style.pointerEvents = 'none';
+        if (o.dataset.opt === correctAns) o.classList.add('correct');
+        else if (o.dataset.opt === selected && !isCorrect) o.classList.add('wrong');
+      });
+
+      feedback.innerHTML = quizFeedback[qid][selected];
+      feedback.className = 'quiz-feedback show ' + (isCorrect ? 'correct' : 'wrong');
+    });
+  });
+});
+
+// ====== Smooth Scroll ======
+document.querySelectorAll('.nav a').forEach(link => {
+  link.addEventListener('click', function(e) {
+    e.preventDefault();
+    document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
+    this.classList.add('active');
+    const target = document.querySelector(this.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior:'smooth', block:'start' });
+  });
+});
+
+// ====== Init ======
+window.addEventListener('DOMContentLoaded', () => {
+  initMap();
+  initKnowledgeGraph();
+  updateAreaChart();
+  updatePolicy();
+});
+</script>
+</body>
+</html>
