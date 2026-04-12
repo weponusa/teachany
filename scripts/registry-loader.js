@@ -104,12 +104,16 @@ function escapeHtml(value) {
 
 /* ─── 生成课件链接 ───────────────────────────── */
 function getCourseUrl(course, basePath) {
-  // 优先本地 examples 路径
+  // 1. 优先使用直接路径（source: "local" 且有 path 字段）
+  if (course.path) {
+    return `./${course.path}`;
+  }
+  // 2. 使用 examples 下的路径（source: "examples"）
   if (course.local_path) {
     const base = basePath || './examples';
     return `${base}/${course.local_path}/index.html`;
   }
-  // 如果有下载地址，返回 null（在 card 中用下载按钮替代）
+  // 3. 如果有下载地址，返回 null（在 card 中用下载按钮替代）
   return null;
 }
 

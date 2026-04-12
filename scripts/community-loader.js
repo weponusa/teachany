@@ -946,13 +946,8 @@ function renderCommunityGalleryCards(grid, index) {
   courses.forEach((course) => {
     const level = gradeToLevel(course.grade);
     
-    // 社区课件通过 download_url 下载 .teachany 包
-    const courseUrl = course.download_url || '';
-    const isClickable = !!courseUrl;
-    const tagName = isClickable ? 'a' : 'div';
-    const hrefAttr = isClickable ? ` href="${communityEscapeHtml(courseUrl)}" target="_blank" rel="noopener"` : '';
-    
-    const card = document.createElement(tagName);
+    // 社区课件不作为可点击链接，而是通过下载按钮获取 .teachany 包
+    const card = document.createElement('div');
     card.className = 'course-card community-course-card';
     card.dataset.subject = course.subject || 'custom';
     card.dataset.grade = course.grade || '';
@@ -960,10 +955,7 @@ function renderCommunityGalleryCards(grid, index) {
     card.dataset.courseName = course.name || '';
     card.dataset.courseDesc = course.description || '';
     card.style.position = 'relative';
-    if (isClickable) {
-      card.style.textDecoration = 'none';
-      card.style.color = 'inherit';
-    }
+    card.style.cursor = 'default';
 
     const colors = ['tag-blue', 'tag-purple', 'tag-green', 'tag-yellow', 'tag-pink', 'tag-cyan'];
     const tags = [course.subject, `Grade ${course.grade || '?'}`];
