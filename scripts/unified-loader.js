@@ -130,22 +130,45 @@ function renderCourseCard(course) {
   const courseName = course.name || '';
   const courseDesc = course.description_zh || course.description || '';
   
-  // 标签
-  const maxTags = 3;
-  const tags = (course.tags || [])
-    .slice(0, maxTags)
-    .map((tag, i) => {
-      const colors = ['tag-blue', 'tag-purple', 'tag-green', 'tag-yellow', 'tag-pink', 'tag-cyan'];
-      const colorClass = colors[i % colors.length];
-      return `<span class="tag ${colorClass}">${escapeHtml(tag)}</span>`;
-    })
-    .join('\n          ');
+  // 学科中文名映射
+  const subjectNames = {
+    'math': '数学',
+    'physics': '物理',
+    'chemistry': '化学',
+    'biology': '生物',
+    'geography': '地理',
+    'history': '历史',
+    'chinese': '语文',
+    'english': '英语'
+  };
+  
+  // 统一生成标签: 学科 + 年级
+  const tags = [];
+  
+  // 1. 学科标签 (统一中文)
+  if (course.subject) {
+    const subjectCN = subjectNames[course.subject] || course.subject;
+    tags.push(`<span class="tag tag-blue">${escapeHtml(subjectCN)}</span>`);
+  }
+  
+  // 2. 年级标签 (统一中文格式)
+  if (course.grade) {
+    const grade = parseInt(course.grade);
+    const gradeLabel = `${grade}年级`;
+    tags.push(`<span class="tag tag-purple">${gradeLabel}</span>`);
+  }
+  
+  // 3. 难度标签 (可选)
+  if (course.difficulty) {
+    const diffStars = '★'.repeat(course.difficulty) + '☆'.repeat(5 - course.difficulty);
+    tags.push(`<span class="tag tag-yellow">${diffStars}</span>`);
+  }
 
-  // 附加标签
+  // 附加功能标签
   const extraBadges = [];
-  if (course.has_tts) extraBadges.push('<span class="tag tag-yellow">🔊 TTS</span>');
+  if (course.has_tts) extraBadges.push('<span class="tag tag-green">🔊 TTS</span>');
   if (course.has_video) extraBadges.push('<span class="tag tag-cyan">🎬 Video</span>');
-  if (course.has_en) extraBadges.push('<span class="tag tag-green">🌐 EN</span>');
+  if (course.has_en) extraBadges.push('<span class="tag tag-pink">🌐 EN</span>');
   if (isOfficial) extraBadges.push('<span class="tag tag-red">⭐ 官方</span>');
 
   // Meta 信息
@@ -173,7 +196,7 @@ function renderCourseCard(course) {
         <h3 class="card-title">${escapeHtml(courseName)}</h3>
         <p class="card-desc">${escapeHtml(courseDesc)}</p>
         <div class="card-tags">
-          ${tags}
+          ${tags.join('\n          ')}
           ${extraBadges.join('\n          ')}
         </div>
       </div>
