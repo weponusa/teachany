@@ -263,7 +263,9 @@ function renderRegistryCourses(grid, registry) {
   });
 
   // 更新统计数字
-  updateStats(registry);
+  if (window.TeachAnyStats && typeof window.TeachAnyStats.registerOfficial === 'function') {
+    window.TeachAnyStats.registerOfficial(registry);
+  }
 }
 
 /* ─── 更新 Hero 统计数据 ─────────────────────── */
