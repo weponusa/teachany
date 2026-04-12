@@ -1,11 +1,16 @@
 /**
- * TeachAny 统一课件加载器 v3.0
+ * TeachAny 统一课件加载器 v3.1
  *
  * 功能：
  * 1. 从 registry.json 读取所有课件（官方+社区）
  * 2. 统一渲染到 Gallery，按 status 分组
  * 3. 支持筛选、搜索、点赞功能
  * 4. 本地缓存（localStorage + 过期机制）
+ *
+ * v3.1 修复：
+ * - 卡片添加 data-course-name / data-course-desc 以支持搜索
+ * - initGallery 加载完成后主动触发 applyFilters 解决异步时序问题
+ * - 清除旧缓存避免首次加载空白
  */
 
 /* ─── 常量 ───────────────────────────────────── */
@@ -38,9 +43,18 @@ function getCachedRegistry() {
     const cached = localStorage.getItem(CACHE_KEY);
     if (!cached) return null;
     const { data, timestamp } = JSON.parse(cached);
-    if (Date.now() - timestamp > CACHE_TTL) return null;
+    if (Date.now() - timestamp > CACHE_TTL) {
+      localStorage.removeItem(CACHE_KEY);
+      return null;
+    }
+    // 校验：缓存里必须有课件
+    if (!data || !data.courses || data.courses.length === 0) {
+      localStorage.removeItem(CACHE_KEY);
+      return null;
+    }
     return data;
   } catch {
+    localStorage.removeItem(CACHE_KEY);
     return null;
   }
 }
@@ -92,22 +106,29 @@ window._toggleLike = function(button) {
 async function loadRegistry() {
   // 1. 尝试缓存
   const cached = getCachedRegistry();
-  if (cached) return cached;
+  if (cached) {
+    console.log('[TeachAny] 使用缓存的注册表:', cached.courses.length, '个课件');
+    return cached;
+  }
 
   // 2. 从服务器加载
-  const response = await fetch(REGISTRY_URL);
+  console.log('[TeachAny] 从服务器加载 registry.json...');
+  const response = await fetch(REGISTRY_URL + '?t=' + Date.now()); // 加时间戳防缓存
   if (!response.ok) throw new Error(`Failed to load registry: ${response.status}`);
   
   const registry = await response.json();
+  console.log('[TeachAny] 加载成功:', registry.courses.length, '个课件');
   setCachedRegistry(registry);
   return registry;
 }
 
 /* ─── 渲染课件卡片 ───────────────────────────── */
 function renderCourseCard(course) {
-  const url = course.url || `${course.path}/index.html`;
+  const url = course.url || `./${course.path}/index.html`;
   const level = gradeToLevel(course.grade);
   const isOfficial = course.status === 'official';
+  const courseName = course.name || '';
+  const courseDesc = course.description_zh || course.description || '';
   
   // 标签
   const maxTags = 3;
@@ -143,14 +164,14 @@ function renderCourseCard(course) {
 
   // 导出按钮
   const exportBtn = window.TeachAnyExport 
-    ? `<button class="ta-export-btn" onclick="event.preventDefault();event.stopPropagation();window.TeachAnyExport.exportCourseware({url:'${escapeHtml(url)}',courseName:'${escapeHtml(course.name)}',onProgress:(s,m)=>console.log(m)})" title="导出离线课件包">📦 导出</button>`
+    ? `<button class="ta-export-btn" onclick="event.preventDefault();event.stopPropagation();window.TeachAnyExport.exportCourseware({url:'${escapeHtml(url)}',courseName:'${escapeHtml(courseName)}',onProgress:(s,m)=>console.log(m)})" title="导出离线课件包">📦 导出</button>`
     : '';
 
-  return `<a href="${escapeHtml(url)}" class="course-card" data-subject="${escapeHtml(course.subject)}" data-course-id="${escapeHtml(course.id)}" data-grade="${course.grade || ''}" data-level="${level}" data-status="${course.status || 'community'}">
+  return `<a href="${escapeHtml(url)}" class="course-card" data-subject="${escapeHtml(course.subject)}" data-course-id="${escapeHtml(course.id)}" data-grade="${course.grade || ''}" data-level="${level}" data-status="${course.status || 'community'}" data-course-name="${escapeHtml(courseName)}" data-course-desc="${escapeHtml(courseDesc)}">
       <div class="card-header">
         <div class="card-emoji">${escapeHtml(course.emoji || '📚')}</div>
-        <h3 class="card-title">${escapeHtml(course.name)}</h3>
-        <p class="card-desc">${escapeHtml(course.description || course.description_zh || '')}</p>
+        <h3 class="card-title">${escapeHtml(courseName)}</h3>
+        <p class="card-desc">${escapeHtml(courseDesc)}</p>
         <div class="card-tags">
           ${tags}
           ${extraBadges.join('\n          ')}
@@ -195,11 +216,13 @@ async function initGallery() {
     const official = registry.courses.filter(c => c.status === 'official');
     const community = registry.courses.filter(c => c.status === 'community');
 
+    console.log(`[TeachAny] 官方课件: ${official.length}, 社区课件: ${community.length}`);
+
     // 渲染官方课件
     const officialGrid = document.getElementById('officialGrid');
     if (officialGrid) {
       renderCourses(officialGrid, official);
-      console.log(`✓ Loaded ${official.length} official coursewares`);
+      console.log(`[TeachAny] ✓ 渲染 ${official.length} 个官方课件`);
     }
 
     // 渲染社区课件
@@ -207,7 +230,7 @@ async function initGallery() {
     if (communityGrid) {
       const addCard = communityGrid.querySelector('.course-card-add');
       renderCourses(communityGrid, community, addCard);
-      console.log(`✓ Loaded ${community.length} community coursewares`);
+      console.log(`[TeachAny] ✓ 渲染 ${community.length} 个社区课件`);
     }
 
     // 更新统计数字
@@ -217,8 +240,14 @@ async function initGallery() {
       community: community.length
     });
 
+    // ★ 关键修复：渲染完成后，主动触发一次筛选以更新计数和空状态
+    if (typeof applyFilters === 'function') {
+      applyFilters();
+      console.log('[TeachAny] ✓ 已触发 applyFilters');
+    }
+
   } catch (error) {
-    console.error('Failed to load coursewares:', error);
+    console.error('[TeachAny] Failed to load coursewares:', error);
   }
 }
 
@@ -244,6 +273,22 @@ window.TeachAnyUnifiedLoader = {
   toggleLike,
   clearCache: () => localStorage.removeItem(CACHE_KEY)
 };
+
+// 启动时清除可能的坏缓存
+(function() {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      const { data } = JSON.parse(cached);
+      if (!data || !data.courses || data.courses.length === 0) {
+        localStorage.removeItem(CACHE_KEY);
+        console.log('[TeachAny] 清除了空的缓存');
+      }
+    }
+  } catch {
+    localStorage.removeItem(CACHE_KEY);
+  }
+})();
 
 // 自动初始化
 if (document.readyState === 'loading') {
