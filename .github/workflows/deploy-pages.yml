@@ -29,11 +29,38 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      - name: Prepare deployment files
+        run: |
+          mkdir -p _site
+          
+          # 1. 复制网站核心文件
+          cp index.html _site/
+          cp manifest.json _site/
+          cp courseware-registry.json _site/
+          [ -f .nojekyll ] && cp .nojekyll _site/
+          [ -f README.md ] && cp README.md _site/
+          
+          # 2. 复制目录 (排除 dist 和 archive)
+          cp -r scripts _site/
+          cp -r styles _site/
+          cp -r examples _site/
+          
+          # 3. 选择性复制 data (排除超大地理数据)
+          mkdir -p _site/data
+          # 复制所有小于5MB的json文件
+          find data -name "*.json" -size -5M -exec sh -c 'mkdir -p "_site/$(dirname "{}")" && cp "{}" "_site/{}"' \;
+          # 复制所有Python脚本和Markdown文档
+          find data \( -name "*.py" -o -name "*.md" \) | while read f; do
+            mkdir -p "_site/$(dirname "$f")"
+            cp "$f" "_site/$f"
+          done
+          
+          echo "📦 Deployment package prepared (excluding dist/ and large geodata)"
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload entire repository (静态站点,无需构建)
-          path: '.'
+          path: '_site'
 
       - name: Deploy to GitHub Pages
         id: deployment
