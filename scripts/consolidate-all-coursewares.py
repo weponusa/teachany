@@ -100,6 +100,10 @@ for course_dir in sorted(EXAMPLES_DIR.iterdir()):
             if 'title' in manifest and 'name' not in manifest:
                 manifest['name'] = manifest['title']
             
+            # 兼容 node/node_id 字段
+            if 'node' in manifest and not manifest.get('node_id'):
+                manifest['node_id'] = manifest['node']
+            
             # 如果没有 status 字段,默认为 community
             if 'status' not in manifest:
                 manifest['status'] = 'community'
