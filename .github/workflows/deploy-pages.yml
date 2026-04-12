@@ -40,22 +40,25 @@ jobs:
           [ -f .nojekyll ] && cp .nojekyll _site/
           [ -f README.md ] && cp README.md _site/
           
-          # 2. 复制目录 (排除 dist 和 archive)
-          cp -r scripts _site/
-          cp -r styles _site/
-          cp -r examples _site/
+          # 2. 复制必需目录
+          [ -d scripts ] && cp -r scripts _site/
+          [ -d styles ] && cp -r styles _site/
+          [ -d examples ] && cp -r examples _site/
+          [ -d gallery ] && cp -r gallery _site/
+          [ -d docs ] && cp -r docs _site/
           
-          # 3. 选择性复制 data (排除超大地理数据)
+          # 3. 选择性复制 data (排除超大地理数据文件>5MB)
           mkdir -p _site/data
-          # 复制所有小于5MB的json文件
-          find data -name "*.json" -size -5M -exec sh -c 'mkdir -p "_site/$(dirname "{}")" && cp "{}" "_site/{}"' \;
-          # 复制所有Python脚本和Markdown文档
+          find data -name "*.json" -size -5M | while read f; do
+            mkdir -p "_site/$(dirname "$f")"
+            cp "$f" "_site/$f"
+          done
           find data \( -name "*.py" -o -name "*.md" \) | while read f; do
             mkdir -p "_site/$(dirname "$f")"
             cp "$f" "_site/$f"
           done
           
-          echo "📦 Deployment package prepared (excluding dist/ and large geodata)"
+          echo "📦 Deployment package prepared (excluding dist/ and large geodata files)"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
