@@ -33,22 +33,25 @@ jobs:
         run: |
           mkdir -p _site
           
-          # 1. 复制网站核心文件
-          cp index.html _site/
+          # 1. 复制所有根目录 HTML 页面（index/tree/path/imported-course 等）
+          cp *.html _site/ 2>/dev/null || true
+          
+          # 2. 复制网站配置文件
           cp manifest.json _site/
           cp courseware-registry.json _site/
           [ -f .nojekyll ] && cp .nojekyll _site/
           [ -f README.md ] && cp README.md _site/
           
-          # 2. 复制必需目录
+          # 3. 复制必需目录
           [ -d scripts ] && cp -r scripts _site/
           [ -d styles ] && cp -r styles _site/
           [ -d examples ] && cp -r examples _site/
           [ -d gallery ] && cp -r gallery _site/
           [ -d docs ] && cp -r docs _site/
           [ -d community ] && cp -r community _site/
+          [ -d screenshots ] && cp -r screenshots _site/
           
-          # 3. 选择性复制 data (排除超大地理数据文件>5MB)
+          # 4. 选择性复制 data (排除超大地理数据文件>5MB)
           mkdir -p _site/data
           find data -name "*.json" -size -5M | while read f; do
             mkdir -p "_site/$(dirname "$f")"
@@ -60,6 +63,8 @@ jobs:
           done
           
           echo "📦 Deployment package prepared (excluding dist/ and large geodata files)"
+          echo "📄 HTML pages: $(ls _site/*.html 2>/dev/null | wc -l)"
+          echo "📊 Data files: $(find _site/data -type f 2>/dev/null | wc -l)"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
