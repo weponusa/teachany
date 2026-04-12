@@ -3087,8 +3087,8 @@ Phase 3.5：打包课件（默认必选）
 
 ---
 
-**技能版本**：v5.10  
-**更新日期**：2026-04-10  
+**技能版本**：v5.12  
+**更新日期**：2026-04-12  
 **变更摘要**：
 - v1.0：数理课件版
 - v2.0：拆成通用底座+学科适配层
@@ -3102,6 +3102,9 @@ Phase 3.5：打包课件（默认必选）
 - v5.8：**WorkBuddy 多 Agent 协作 + 版式一致性 + AI 主动生图/生视频**——(1) 新增 Section 10.2.1 HTML 骨架模板（强制使用，含完整 HTML 代码模板、必选/可选 section 标注、导航/进度条/翻页按钮）；(2) 新增 Section 10.2.2 统一导航规范（强制 Sticky 顶部导航+前后翻页，禁止 Tab 切换/多页 HTML/侧边栏导航）；(3) 新增 Section 10.4.1 AI 主动生图规范（AI 在生成课件时主动调用 image_gen 生成文科配图，含 6 类触发条件、prompt 策略、降级方案）；(4) 新增 Section 10.4.2 AI 主动生视频规范（理科实验过程/地理变化/生物过程等场景的视频生成策略）；(5) 新增 Section 10.5 WorkBuddy 多 Agent 协作流水线（定义 5 个 Agent 角色分工、并行执行架构图、task 调用 prompt 模板、三级降级策略）；(6) Generation Gate 新增 4 个字段（模块数量/HTML骨架/AI主动生图/Agent协作模式）；(7) Completeness Gate 从 17 项扩充至 20 项（+版式一致性+AI主动生图+Agent协作记录）；(8) 硬规则从 20 条扩充至 23 条（+HTML骨架模板+文科配图+多Agent并行）；(9) Phase 3 L1 制作指令新增 HTML 骨架模板、多 Agent 协作、AI 主动生图的引用。
 - v5.9：**知识图谱可视化 + 视频/音频播放器强制规范 + Remotion 中文字体修复**——(1) 新增 Section 10.2.3 知识图谱可视化规范（HTML 骨架新增必选 `#knowledge-graph` section，SVG 交互式图谱，节点从 `_graph.json` 提取，当前节点高亮、有课件节点可点击跳转、无课件节点虚线框）；(2) 新增 Section 10.2.4 视频播放器规范（强制使用 `<video controls preload="metadata" playsinline>` + `.video-player` 容器，禁止仅用 JS 动态创建视频）；(3) 新增 Section 10.2.5 音频播放器规范（HTML 骨架内置完整音频播放引擎——FAB 按钮+弹出式播放面板+段落列表+控制条+字幕显示，禁止只添加隐藏 `<audio>` 标签）；(4) L2 环境自动搭建新增步骤 2.5「安装中文字体」（Linux 下安装 fonts-noto-cjk）；(5) SubtitleTrack.tsx fontFamily 新增 `'Noto Sans SC'`、`'Noto Sans CJK SC'` 降级字体；(6) Generation Gate 新增 3 个字段（知识图谱数据/视频嵌入/音频播放器）；(7) Completeness Gate 从 20 项扩充至 24 项（+知识图谱可视化+视频标签+音频播放器UI+Remotion中文字体）；(8) 硬规则从 23 条扩充至 27 条（+知识图谱必选+视频必须用video标签+音频必须有播放器UI+Remotion必须安装中文字体）。
 - v5.10：**音频滚动自动播放 + 视频优先交互演示 + 默认仅中文**——(1) 音频播放器从 FAB+弹出面板+手动选段 改为 IntersectionObserver 滚动自动播放+底部悬浮控制条（播放/暂停+进度条+5档调速+字幕），`audioPlaylist` 每个条目新增 `sectionId` 字段关联对应 HTML section；(2) 视频嵌入新增"优先交互演示"原则（CSS/JS/Canvas/SVG 交互动画 > Remotion > 静态视频），视频必须嵌入到对应知识模块的 section 内部而非集中放置；(3) 双语课件从"默认生成"改为"默认仅中文"，用户明确要求时才生成英文版；Agent B 从"默认执行"改为"用户要求时执行"；(4) 同步更新 Generation Gate、Completeness Gate、硬规则 #19/#25/#26、Agent 协作架构图、Phase 3/4 流程。
+- v5.11：**历史/地理课件DEM地形+态势动画强制规范**——(1) 新增 Section 18.4《历史/地理课件高级可视化规范》，强制要求三层架构（DEM地形底图 + 历史疆域GeoJSON + 态势动画）；(2) 新增三种动画设计模式（时间轴播放/交互式探索/对比模式）；(3) 新增历史疆域GeoJSON与战役数据标准字段；(4) 新增库选择决策树（Cesium真3D / Maplibre地形 / ECharts GL伪3D）；(5) Phase 4 审查新增 8 项检查（DEM地形/疆域准确性/动画流畅度/时间轴完整性/地标准确性/音频同步/交互响应/移动端适配），历史/地理课件验收标准≥85分。
+- v5.12：**⭐ 强制使用开源数据源，禁止手工标注**——(1) 新增 Section 18.4.3《数据规范》，强制使用权威开源数据集（CHGIS V6、Natural Earth）替代低精度手工标注；(2) 新增 7 类标准数据源清单（河流水系/历史行政区划/现代行政边界/湖泊/历史城市/DEM地形/海岸线）；(3) 新增数据处理流程（ogr2ogr 格式转换 + mapshaper 几何简化）；(4) 新增 GeoJSON metadata 标准字段（dataSource/sourceUrl/chgisId），强制数据溯源；(5) 新增 Section 18.4.7《数据预处理工具链》，包含 CHGIS/Natural Earth 数据下载指南、在线工具（Mapshaper Web、GeoJSON.io）；(6) 验收标准新增"数据源准确性"检查项（15%权重），要求河流/城市/边界必须来自开源数据集；(7) 18.4.4 强制必选元素新增"河流水系"与"数据溯源"两项；(8) 所有示例代码更新为从预处理 GeoJSON 文件加载，禁止嵌入手工标注坐标。
+
 
 ---
 
@@ -3177,7 +3180,451 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 ❌ **Google Maps**：需要付费 API Key
 ❌ **高德/百度地图**：需要申请 Key
 
-### 18.4 参考文档
+---
+
+### 18.4 历史/地理课件高级可视化规范（v5.11 新增）⭐
+
+**适用场景**：
+- 历史疆域演变（秦统一六国、元朝疆域、明清海禁等）
+- 地理地形分析（青藏高原、长江流域、"胡焕庸线"等）
+- 历史战役复盘（长平之战、淝水之战、赤壁之战等）
+- 地缘政治分析（丝绸之路、大运河、海上贸易等）
+
+#### 18.4.1 强制三层架构（必选）
+
+**第一层：DEM 地形底图**（必选）
+
+历史/地理课件必须使用真实 DEM 数据作为底图,不得使用纯色背景或简化示意图。
+
+**🌟 标准方案(v5.11 推荐):MapLibre GL + AWS Terrain Tiles**
+
+```javascript
+// ✅ 完全开源 + 免费 + 无需 Token + 全球 DEM 覆盖
+const map = new maplibregl.Map({
+  container: 'map',
+  style: {
+    version: 8,
+    sources: {
+      'osm': {
+        type: 'raster',
+        tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+        tileSize: 256
+      }
+    },
+    layers: [
+      { id: 'background', type: 'background', paint: { 'background-color': '#e8dcc7' } },
+      { id: 'osm', type: 'raster', source: 'osm', paint: { 'raster-opacity': 0.3 } }
+    ]
+  },
+  center: [110, 35],
+  zoom: 5,
+  pitch: 60, // 倾斜角度
+  antialias: true
+});
+
+map.on('load', () => {
+  // 添加 AWS 开放地形数据(Terrarium RGB 格式,30m 精度)
+  map.addSource('terrain', {
+    type: 'raster-dem',
+    tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+    encoding: 'terrarium',
+    tileSize: 256,
+    maxzoom: 15
+  });
+  
+  // 启用 3D 地形(夸张倍数 2.5x 适合历史教学)
+  map.setTerrain({ source: 'terrain', exaggeration: 2.5 });
+  
+  // 添加山体阴影(hillshade)增强立体感
+  map.addLayer({
+    id: 'hillshade',
+    type: 'hillshade',
+    source: 'terrain',
+    paint: {
+      'hillshade-exaggeration': 0.8,
+      'hillshade-shadow-color': '#5a3d2b',
+      'hillshade-highlight-color': '#f5e6d3',
+      'hillshade-illumination-direction': 135
+    }
+  });
+});
+```
+
+**技术规格**:
+- 地形数据源: AWS Terrain Tiles (Terrarium 格式)
+- 精度: 30 米 DEM (0.1 米高程精度)
+- 覆盖范围: 全球
+- 许可证: 公共领域 (AWS Open Data)
+- 依赖库: MapLibre GL JS 3.x (MIT 许可证)
+
+**备选方案**(仅在标准方案不可用时使用):
+
+```javascript
+// 方案 B:Cesium(专业级真 3D,需 Token,适合天文/航天主题)
+const viewer = new Cesium.Viewer('map', {
+  terrainProvider: Cesium.createWorldTerrain()
+});
+
+// 方案 C:ECharts GL(轻量级伪 3D,适合低配置设备)
+chart.setOption({
+  geo3D: {
+    map: 'china',
+    regionHeight: 3,
+    shading: 'realistic'
+  }
+});
+```
+
+**第二层：历史疆域 GeoJSON 叠加**（必选）
+```javascript
+// 使用 data/geography/historical-china/ 预置数据
+fetch('../data/geography/historical-china/qin-221bc.geojson')
+  .then(res => res.json())
+  .then(boundary => {
+    chart.setOption({
+      series: [{
+        type: 'map',
+        map: 'qin',
+        data: boundary.features.map(f => ({
+          name: f.properties.name,
+          itemStyle: {
+            areaColor: 'rgba(106,27,154,0.3)',
+            borderColor: '#6a1b9a',
+            borderWidth: 2
+          }
+        }))
+      }]
+    });
+  });
+```
+
+**第三层：态势动画**（必选）
+```javascript
+// 时间轴 + 进攻路线 + 战役标记
+const campaigns = [
+  { year: -230, from: [108.9,34.3], to: [113.8,34.2], target: '韩' },
+  { year: -228, from: [108.9,34.3], to: [114.5,36.6], target: '赵' },
+  // ...
+];
+
+chart.setOption({
+  timeline: {
+    axisType: 'category',
+    autoPlay: true,
+    playInterval: 2000,
+    data: campaigns.map(c => `公元${c.year}年`)
+  },
+  options: campaigns.map(c => ({
+    series: [{
+      type: 'lines',
+      coordinateSystem: 'geo',
+      effect: {
+        show: true,
+        trailLength: 0.3,
+        symbol: 'arrow',
+        symbolSize: 8
+      },
+      lineStyle: { width: 2, curveness: 0.2 },
+      data: [{ coords: [c.from, c.to] }]
+    }]
+  }))
+});
+```
+
+#### 18.4.2 三种动画设计模式
+
+**A. 时间轴播放模式**（适合历史进程）
+- 自动播放 + 可暂停
+- 底部时间轴控制器
+- 音频同步（推荐）
+
+```javascript
+// 语音与动画同步
+audioPlayer.addEventListener('timeupdate', () => {
+  const progress = audioPlayer.currentTime / audioPlayer.duration;
+  const index = Math.floor(progress * campaigns.length);
+  chart.dispatchAction({ type: 'timelineChange', currentIndex: index });
+});
+```
+
+**B. 交互式探索模式**（适合地理地形）
+- 点击地标 → 详情弹窗
+- 3D 视角旋转/倾斜
+- 高度夸张系数可调
+
+**C. 对比模式**（适合疆域演变）
+- 左右分屏：战国七雄 vs 秦统一后
+- 滑动滑块查看变化
+- 或时间轴切换
+
+#### 18.4.3 数据规范
+
+**⚠️ 强制使用开源数据源（禁止手工标注）**
+
+历史/地理课件中的所有地理要素（河流、城市、战役地点等）必须来自权威开源数据集,严禁低精度手工标注。
+
+**🌟 标准数据源清单（v5.11 必选）**:
+
+| 数据类型 | 数据源 | 下载地址 | 格式 | 覆盖范围 | 许可证 |
+|:---|:---|:---|:---|:---|:---|
+| **河流水系** | Natural Earth Rivers | https://github.com/martynafford/natural-earth-geojson<br/>文件: `10m/physical/ne_10m_rivers_lake_centerlines.json` | GeoJSON | 全球主要河流 | Public Domain |
+| **历史行政区划** | CHGIS V6 | https://dataverse.harvard.edu/dataverse/chgis_v6<br/>复旦大学: https://yugong.fudan.edu.cn/CHGIS/ | Shapefile → GeoJSON | 中国历朝历代<br/>(-221~1911) | Free for academic use |
+| **现代行政边界** | Natural Earth Admin | https://github.com/martynafford/natural-earth-geojson<br/>文件: `10m/cultural/ne_10m_admin_0_countries.json` | GeoJSON | 全球国家边界 | Public Domain |
+| **湖泊** | Natural Earth Lakes | https://github.com/martynafford/natural-earth-geojson<br/>文件: `10m/physical/ne_10m_lakes.json` | GeoJSON | 全球主要湖泊 | Public Domain |
+| **历史城市** | CHGIS Place Names | https://chgis.fas.harvard.edu/<br/>数据库: Time Series Datasets | Shapefile<br/>CSV | 中国历代<br/>城市/县治 | Free for academic use |
+| **DEM 地形** | AWS Terrain Tiles | https://registry.opendata.aws/terrain-tiles/<br/>Tile URL: `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png` | Terrarium RGB | 全球 30m 精度 | Public Domain |
+| **海岸线** | Natural Earth Coastline | https://github.com/martynafford/natural-earth-geojson<br/>文件: `10m/physical/ne_10m_coastline.json` | GeoJSON | 全球 | Public Domain |
+
+**🔧 数据处理流程**:
+
+1. **下载原始数据**（Shapefile 或 GeoJSON）
+2. **转换为标准 GeoJSON**（如果是 Shapefile）:
+   ```bash
+   # 使用 ogr2ogr (GDAL)
+   ogr2ogr -f GeoJSON output.json input.shp
+   ```
+3. **简化坐标**（降低文件大小，不损失精度）:
+   ```bash
+   # 使用 mapshaper
+   mapshaper input.json -simplify 0.1% -o output-simplified.json
+   ```
+4. **存储到项目中**:
+   ```
+   data/
+   ├─ geography/
+   │  ├─ rivers/
+   │  │  └─ ne_10m_rivers_china.json
+   │  ├─ lakes/
+   │  │  └─ ne_10m_lakes_china.json
+   │  └─ historical-china/
+   │     ├─ qin-221bc.geojson (from CHGIS)
+   │     ├─ han-206bc.geojson
+   │     └─ tang-618ad.geojson
+   └─ history/
+      ├─ cities/
+      │  └─ chgis-cities-qin.json
+      └─ battles/
+         └─ warring-states-battles.json (人工整理 + CHGIS 地名校准)
+   ```
+
+**历史疆域 GeoJSON 标准**：
+```jsonc
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "dynasty": "qin",
+    "year": -221,
+    "capital": [108.9, 34.3],
+    "dataSource": "CHGIS V6",
+    "sourceUrl": "https://dataverse.harvard.edu/dataset.xhtml?persistentId=...",
+    "processedBy": "TeachAny",
+    "processedDate": "2026-04-12"
+  },
+  "features": [{
+    "properties": {
+      "name": "关中郡",
+      "type": "prefecture",
+      "area": 45000,
+      "chgisId": "v6_1820_county_pgn.123" // 保留原始数据 ID
+    },
+    "geometry": { "type": "Polygon", "coordinates": [[...]] }
+  }]
+}
+```
+
+**战役/城市标记数据标准**：
+```jsonc
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "title": "秦灭六国战役地点",
+    "period": "前230年-前221年",
+    "dataSource": "CHGIS V6 地名数据库 + 史记战国策",
+    "coordinateSource": "CHGIS Place Names"
+  },
+  "features": [{
+    "type": "Feature",
+    "properties": {
+      "name": "长平之战",
+      "chineseName": "长平之战",
+      "date": "-260-05",
+      "belligerents": ["秦", "赵"],
+      "result": "秦胜",
+      "casualties": { "qin": 50000, "zhao": 450000 },
+      "terrainFactor": "太行山地形限制赵军机动",
+      "modernLocation": "山西省晋城市高平市",
+      "chgisId": "v6_place_5678", // CHGIS 地名 ID
+      "elevation": 950
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [112.92, 35.80] // 来自 CHGIS，非手工标注
+    }
+  }]
+}
+```
+
+**❌ 禁止的做法**:
+```javascript
+// ❌ 错误：手工标注坐标（精度低，无出处）
+const rivers = [
+  { name: "黄河", path: [[110, 35], [112, 36], ...] } // 禁止！
+];
+
+// ❌ 错误：使用闭源 API（无法离线使用）
+fetch('https://api.某商业地图.com/rivers?key=xxx')
+
+// ❌ 错误：直接嵌入大量 GeoJSON 到 HTML（文件巨大）
+<script>const data = {"type":"FeatureCollection","features":[...]}</script>
+```
+
+**✅ 正确的做法**:
+```javascript
+// ✅ 正确：从预处理的 Natural Earth 数据加载
+fetch('/data/geography/rivers/ne_10m_rivers_china.json')
+  .then(res => res.json())
+  .then(rivers => {
+    map.addSource('rivers', {
+      type: 'geojson',
+      data: rivers
+    });
+    map.addLayer({
+      id: 'rivers',
+      type: 'line',
+      source: 'rivers',
+      paint: {
+        'line-color': '#1976d2',
+        'line-width': ['get', 'strokeweig'] // 使用 Natural Earth 自带的线宽属性
+      }
+    });
+  });
+```
+
+#### 18.4.4 强制必选元素（历史/地理课件专用）
+
+✅ **DEM 地形底图**：必须使用 3D 或伪 3D 地形（MapLibre GL + AWS Terrain Tiles）  
+✅ **历史疆域叠加**：必须使用预置 GeoJSON（来自 CHGIS V6 或 Natural Earth）  
+✅ **态势动画**：战争主题必须包含时间轴自动播放  
+✅ **地标标注**：至少 5 个关键地点（坐标来自 CHGIS 或 Natural Earth）  
+✅ **河流水系**：使用 Natural Earth Rivers 数据（禁止手工标注）  
+✅ **交互控制**：缩放/平移/视角旋转或时间轴控制  
+✅ **语音同步**：动画进度与音频时间轴同步（推荐）  
+✅ **数据溯源**：每个 GeoJSON 文件必须在 metadata 中注明 dataSource 和 sourceUrl
+
+#### 18.4.5 库选择决策树
+
+```
+历史/地理课件
+├─ 需要真实 3D 地球？
+│  ├─ 是 → Cesium.js
+│  └─ 否 → 继续
+├─ 需要地形起伏可视化？
+│  ├─ 是 → Maplibre GL + Terrain-RGB
+│  └─ 否 → 继续
+├─ 性能要求高？
+│  ├─ 是 → ECharts GL（推荐）⭐
+│  └─ 否 → 任选上述方案
+```
+
+#### 18.4.6 验收标准（Phase 4 新增）
+
+| 检查项 | 标准 | 权重 |
+|:---|:---|:---:|
+| **DEM 地形是否启用** | 必须有明显山脉起伏，terrain exaggeration ≥ 2.0 | 20% |
+| **数据源准确性** | 河流/城市/边界必须来自 CHGIS/Natural Earth，禁止手工标注 | 15% |
+| **历史疆域准确性** | 边界与史料一致（±5% 误差） | 15% |
+| **态势动画流畅度** | ≥30 FPS | 10% |
+| **时间轴完整性** | 关键事件全覆盖 | 10% |
+| **地标坐标准确性** | 误差 <10km，坐标来自 CHGIS 数据库 | 10% |
+| **音频动画同步** | 偏差 <500ms | 5% |
+| **交互响应速度** | 延迟 <100ms | 5% |
+| **移动端适配** | 触摸流畅 | 5% |
+| **数据溯源** | GeoJSON 文件必须包含 metadata.dataSource 字段 | 5% |
+
+**总分 ≥85 分通过。**
+
+#### 18.4.7 数据预处理工具链（推荐）
+
+**目标**：将 Shapefile/大 GeoJSON 转换为课件可用的小文件。
+
+**工具组合**：
+1. **ogr2ogr** (GDAL) - 格式转换
+2. **mapshaper** - 几何简化
+3. **tippecanoe** (可选) - 矢量切片（大数据集）
+
+**示例工作流**：
+
+```bash
+# Step 1: 从 CHGIS 下载秦朝行政区划 Shapefile
+# 假设下载文件: chgis_v6_221bc_counties.shp
+
+# Step 2: 转换为 GeoJSON
+ogr2ogr -f GeoJSON \
+  -t_srs EPSG:4326 \
+  qin-221bc-raw.geojson \
+  chgis_v6_221bc_counties.shp
+
+# Step 3: 简化几何形状（减少 90% 点数，视觉差异 <1px）
+mapshaper qin-221bc-raw.geojson \
+  -simplify 0.1% keep-shapes \
+  -o qin-221bc.geojson
+
+# Step 4: 提取中国区域河流（从 Natural Earth 全球数据）
+mapshaper ne_10m_rivers_lake_centerlines.json \
+  -filter 'SOV_A3 === "CHN"' \
+  -o ne_10m_rivers_china.json
+
+# Step 5: 验证文件大小
+ls -lh qin-221bc.geojson
+# 期望结果: < 500 KB (简化后)
+```
+
+**在线工具（无需安装）**：
+- **Mapshaper Web**: https://mapshaper.org/
+  - 可直接在浏览器中上传 Shapefile 并导出 GeoJSON
+  - 可视化简化效果预览
+- **GeoJSON.io**: https://geojson.io/
+  - 查看/编辑 GeoJSON
+  - 绘制简单几何形状
+
+**CHGIS 数据下载指南**：
+
+1. 访问 https://dataverse.harvard.edu/dataverse/chgis_v6
+2. 选择时间切片（例如: `CHGIS V6 Qin (221 BC)`）
+3. 下载 Shapefile 压缩包
+4. 解压后使用 ogr2ogr 转换
+5. 保存到 `data/geography/historical-china/` 目录
+
+**Natural Earth 数据下载指南**：
+
+1. 访问 https://github.com/martynafford/natural-earth-geojson
+2. 直接下载 GeoJSON 文件（无需转换）:
+   ```bash
+   # 河流
+   curl -O https://raw.githubusercontent.com/martynafford/natural-earth-geojson/master/10m/physical/ne_10m_rivers_lake_centerlines.json
+   
+   # 湖泊
+   curl -O https://raw.githubusercontent.com/martynafford/natural-earth-geojson/master/10m/physical/ne_10m_lakes.json
+   
+   # 国家边界
+   curl -O https://raw.githubusercontent.com/martynafford/natural-earth-geojson/master/10m/cultural/ne_10m_admin_0_countries.json
+   ```
+3. 如需按国家过滤,使用 mapshaper 的 `-filter` 命令
+
+**常见问题**：
+
+Q: CHGIS 数据太大怎么办?  
+A: 使用 mapshaper 简化到 0.05%-0.1%,或者按需裁剪特定区域。
+
+Q: 如何处理历史战役地点（CHGIS 没有）?  
+A: 从 CHGIS Place Names 数据库中查找对应古代地名坐标,手工整理到 battles.json,但必须标注 `chgisId` 字段作为溯源。
+
+Q: 如何验证坐标准确性?  
+A: 在 https://geojson.io/ 中查看,对比现代卫星地图和历史地图集（如《中国历史地图集》）。
+
+---
+
+### 18.5 参考文档
 
 - 详细使用指南：`skill/map-resources-guide.md`
 - 地形集成规范：`skill/terrain-3d-integration.md`
