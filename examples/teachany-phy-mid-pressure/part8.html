@@ -1,0 +1,198 @@
+// ═══ Canvas HiDPI ═══
+function setupHiDPI(canvas,w,h){const dpr=window.devicePixelRatio||1;canvas.width=w*dpr;canvas.height=h*dpr;canvas.style.width=w+'px';canvas.style.height=h+'px';const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);return ctx}
+
+// ═══ Exp1: Ice Rescue ═══
+function drawExp1(){
+  const c=document.getElementById('exp1Canvas');if(!c)return;
+  const ctx=setupHiDPI(c,700,380),W=700,H=380;
+  const mode=parseFloat(document.getElementById('exp1Mode').value);
+  const t=mode/100;
+  document.getElementById('exp1Modeval').textContent=t<0.5?'站立':'趴下';
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0f172a';ctx.fillRect(0,0,W,H);
+  // Ice
+  const iceY=260;
+  const iceG=ctx.createLinearGradient(0,iceY,0,iceY+80);iceG.addColorStop(0,'rgba(147,197,253,0.3)');iceG.addColorStop(1,'rgba(59,130,246,0.1)');
+  ctx.fillStyle=iceG;ctx.fillRect(0,iceY,W,120);
+  ctx.strokeStyle='rgba(147,197,253,0.6)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,iceY);ctx.lineTo(W,iceY);ctx.stroke();
+  // Cracks
+  ctx.strokeStyle='rgba(147,197,253,0.25)';ctx.lineWidth=1;
+  [[100,iceY,130,iceY+25],[200,iceY,175,iceY+20],[500,iceY,535,iceY+22],[420,iceY,440,iceY+30]].forEach(([x1,y1,x2,y2])=>{ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke()});
+  // Water under ice
+  ctx.fillStyle='rgba(6,182,212,0.08)';ctx.fillRect(0,iceY+15,W,105);
+  // Person
+  const px=350,standW=40,standH=110,lieW=170,lieH=28;
+  const bodyW=standW+(lieW-standW)*t,bodyH=standH+(lieH-standH)*t;
+  const bodyX=px-bodyW/2,bodyY=iceY-bodyH;
+  const bG=ctx.createLinearGradient(bodyX,bodyY,bodyX,iceY);bG.addColorStop(0,'rgba(245,158,11,0.8)');bG.addColorStop(1,'rgba(234,88,12,0.6)');
+  ctx.fillStyle=bG;ctx.beginPath();ctx.roundRect(bodyX,bodyY,bodyW,bodyH,8);ctx.fill();
+  // Head
+  const headR=14-t*4,headX=t<0.5?px:bodyX+bodyW-18,headY=bodyY-headR-2;
+  ctx.beginPath();ctx.arc(headX,headY,headR,0,Math.PI*2);ctx.fillStyle='rgba(251,191,36,0.9)';ctx.fill();
+  ctx.fillStyle='#0f172a';ctx.font=(11-t*3)+'px sans-serif';ctx.textAlign='center';ctx.fillText(t<0.5?'😰':'😊',headX,headY+4);
+  // Pressure calc
+  const G=600,S_s=0.05,S_l=0.6,S=S_s+(S_l-S_s)*t,pressure=Math.round(G/S);
+  // Ice deformation
+  const deform=Math.min(18,pressure/800);
+  ctx.beginPath();ctx.moveTo(bodyX-15,iceY);ctx.quadraticCurveTo(px,iceY+deform,bodyX+bodyW+15,iceY);
+  ctx.strokeStyle=deform>8?'#ef4444':'#10b981';ctx.lineWidth=3;ctx.stroke();
+  // Contact area
+  ctx.strokeStyle='rgba(245,158,11,0.5)';ctx.setLineDash([4,4]);ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(bodyX,iceY+6);ctx.lineTo(bodyX+bodyW,iceY+6);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#f59e0b';ctx.font='13px sans-serif';ctx.textAlign='center';
+  ctx.fillText('S ≈ '+S.toFixed(2)+' m²',px,iceY+22);
+  // Force arrow
+  ctx.strokeStyle='#ef4444';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(px,bodyY-28);ctx.lineTo(px,bodyY-5);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(px-4,bodyY-11);ctx.lineTo(px,bodyY-5);ctx.lineTo(px+4,bodyY-11);ctx.fillStyle='#ef4444';ctx.fill();
+  ctx.fillStyle='#ef4444';ctx.font='bold 15px sans-serif';ctx.fillText('G = 600 N',px,bodyY-36);
+  // Danger indicator
+  const danger=deform>8;
+  ctx.fillStyle=danger?'#ef4444':'#10b981';ctx.font='bold 16px sans-serif';
+  ctx.fillText(danger?'⚠️ 冰面危险！':'✅ 冰面安全',px,40);
+  // Labels
+  ctx.fillStyle='#94a3b8';ctx.font='13px sans-serif';ctx.fillText('❄️ 冰面',60,iceY-8);ctx.fillText('🌊 水',60,iceY+60);
+  document.getElementById('exp1Result').textContent=(t<0.5?'站立':'趴下')+'：S≈'+S.toFixed(2)+' m²，p≈'+pressure.toLocaleString()+' Pa'+(danger?' — ⚠️ 冰面危险':' — ✅ 安全');
+}
+document.getElementById('exp1Mode')?.addEventListener('input',drawExp1);
+
+// ═══ Exp2: Deep Sea Pressure ═══
+function drawExp2(){
+  const c=document.getElementById('exp2Canvas');if(!c)return;
+  const ctx=setupHiDPI(c,700,420),W=700,H=420;
+  const h=parseFloat(document.getElementById('exp2H').value);
+  const rho=parseInt(document.getElementById('exp2Liquid').value);
+  document.getElementById('exp2Hval').textContent=h.toFixed(1);
+  const p=Math.round(rho*9.8*h);
+  document.getElementById('exp2Result').textContent='p = '+rho+' × 9.8 × '+h.toFixed(1)+' = '+p.toLocaleString()+' Pa';
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0f172a';ctx.fillRect(0,0,W,H);
+  // Container
+  const cx=200,cy=30,cw=220,ch=340;
+  const liqC=rho>10000?'rgba(180,180,200,0.4)':rho>1000?'rgba(6,100,182,0.35)':'rgba(6,182,212,0.25)';
+  // Gradient for depth
+  const lG=ctx.createLinearGradient(cx,cy,cx,cy+ch);lG.addColorStop(0,liqC);lG.addColorStop(1,rho>10000?'rgba(140,140,170,0.6)':'rgba(6,80,160,0.5)');
+  ctx.fillStyle=lG;ctx.fillRect(cx,cy,cw,ch);
+  ctx.strokeStyle='#94a3b8';ctx.lineWidth=2;ctx.strokeRect(cx,cy,cw,ch);
+  ctx.fillStyle='#94a3b8';ctx.font='13px sans-serif';ctx.textAlign='right';ctx.fillText('液面',cx-8,cy+12);
+  // Depth scale
+  for(let d=0;d<=5;d++){const yy=cy+d/5*ch;ctx.strokeStyle='rgba(148,163,184,0.2)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cx,yy);ctx.lineTo(cx+cw,yy);ctx.stroke();ctx.fillStyle='#64748b';ctx.font='11px sans-serif';ctx.textAlign='right';ctx.fillText(d+'m',cx-6,yy+4)}
+  // Probe
+  const probeY=cy+h/5*ch,probeX=cx+cw/2;
+  // Depth line
+  ctx.strokeStyle='rgba(245,158,11,0.5)';ctx.setLineDash([4,4]);ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(cx+cw+10,cy);ctx.lineTo(cx+cw+10,probeY);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#f59e0b';ctx.font='bold 14px sans-serif';ctx.textAlign='left';ctx.fillText('h='+h.toFixed(1)+'m',cx+cw+15,(cy+probeY)/2);
+  // Probe circle
+  ctx.beginPath();ctx.arc(probeX,probeY,14,0,Math.PI*2);
+  ctx.fillStyle='rgba(245,158,11,0.3)';ctx.fill();ctx.strokeStyle='#f59e0b';ctx.lineWidth=2;ctx.stroke();
+  // Pressure arrows
+  const arrLen=Math.min(55,p/3000);
+  [[0,-1],[0,1],[-1,0],[1,0]].forEach(([dx,dy])=>{ctx.strokeStyle='#3b82f6';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(probeX,probeY);ctx.lineTo(probeX+dx*arrLen,probeY+dy*arrLen);ctx.stroke();ctx.beginPath();ctx.moveTo(probeX+dx*arrLen,probeY+dy*arrLen);ctx.lineTo(probeX+dx*(arrLen-6)+dy*3,probeY+dy*(arrLen-6)+dx*3);ctx.lineTo(probeX+dx*(arrLen-6)-dy*3,probeY+dy*(arrLen-6)-dx*3);ctx.fillStyle='#3b82f6';ctx.fill()});
+  // Fish illustration based on depth
+  const fishEmoji=h<1?'🐠':h<2?'🐟':h<3?'🐡':h<4?'🦑':'🐙';
+  ctx.font='28px sans-serif';ctx.textAlign='center';ctx.fillText(fishEmoji,probeX-40,probeY+5);
+  // Gauge
+  const gx=500,gy=40,gw=100,gh=300;
+  ctx.strokeStyle='#64748b';ctx.lineWidth=1;ctx.strokeRect(gx,gy,gw,gh);
+  const gaugeH=Math.min(gh-10,p/5000*gh);
+  const gG=ctx.createLinearGradient(gx,gy+gh,gx,gy+gh-gaugeH);gG.addColorStop(0,'#3b82f6');gG.addColorStop(1,'#06b6d4');
+  ctx.fillStyle=gG;ctx.fillRect(gx+5,gy+gh-gaugeH,gw-10,gaugeH);
+  ctx.fillStyle='#f8fafc';ctx.font='bold 15px sans-serif';ctx.textAlign='center';ctx.fillText(p.toLocaleString()+' Pa',gx+gw/2,gy+gh-gaugeH-10);
+  ctx.fillStyle='#94a3b8';ctx.font='13px sans-serif';ctx.fillText('压强仪',gx+gw/2,gy-8);
+}
+document.getElementById('exp2H')?.addEventListener('input',drawExp2);
+
+// ═══ Exp3: Communicating Vessels ═══
+function drawExp3(){
+  const c=document.getElementById('exp3Canvas');if(!c)return;
+  const ctx=setupHiDPI(c,700,380),W=700,H=380;
+  const waterPct=parseFloat(document.getElementById('exp3Left').value);
+  const shape=document.getElementById('exp3Shape').value;
+  document.getElementById('exp3Lval').textContent=waterPct;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0f172a';ctx.fillRect(0,0,W,H);
+  // Tube dimensions
+  const baseY=300,tubeH=220,leftW=60,connH=40;
+  const rightW=shape==='wide'?100:shape==='narrow'?30:60;
+  const leftX=220,rightX=420,connTop=baseY;
+  // Bottom connector
+  ctx.strokeStyle='#94a3b8';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(leftX,connTop);ctx.lineTo(leftX,connTop+connH);ctx.lineTo(rightX+rightW,connTop+connH);ctx.lineTo(rightX+rightW,connTop);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(leftX+leftW,connTop);ctx.lineTo(leftX+leftW,connTop+connH-10);ctx.lineTo(rightX,connTop+connH-10);ctx.lineTo(rightX,connTop);ctx.stroke();
+  // Left tube
+  ctx.strokeStyle='#94a3b8';ctx.lineWidth=2;
+  ctx.strokeRect(leftX,baseY-tubeH,leftW,tubeH);
+  // Right tube
+  ctx.strokeRect(rightX,baseY-tubeH,rightW,tubeH);
+  // Water level (same height in both tubes)
+  const waterH=tubeH*waterPct/100;
+  const waterTop=baseY-waterH;
+  if(waterPct>0){
+    // Left tube water
+    ctx.fillStyle='rgba(6,182,212,0.3)';ctx.fillRect(leftX+1,waterTop,leftW-2,waterH);
+    // Right tube water
+    ctx.fillRect(rightX+1,waterTop,rightW-2,waterH);
+    // Connector water
+    ctx.fillRect(leftX+1,connTop,leftW-2,connH-1);
+    ctx.fillRect(leftX+leftW,connTop+1,rightX-leftX-leftW,connH-11);
+    ctx.fillRect(rightX+1,connTop,rightW-2,connH-1);
+    // Water surface lines
+    ctx.strokeStyle='#06b6d4';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(leftX+2,waterTop);ctx.lineTo(leftX+leftW-2,waterTop);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(rightX+2,waterTop);ctx.lineTo(rightX+rightW-2,waterTop);ctx.stroke();
+    // Equal height indicator
+    ctx.strokeStyle='rgba(245,158,11,0.6)';ctx.setLineDash([6,4]);ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(leftX-30,waterTop);ctx.lineTo(rightX+rightW+30,waterTop);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='#f59e0b';ctx.font='bold 14px sans-serif';ctx.textAlign='center';
+    ctx.fillText('液面等高 ✓',W/2,waterTop-12);
+  }
+  // Labels
+  ctx.fillStyle='#94a3b8';ctx.font='14px sans-serif';ctx.textAlign='center';
+  ctx.fillText('左管 (w='+leftW+')',leftX+leftW/2,baseY+connH+20);
+  ctx.fillText('右管 (w='+rightW+')',rightX+rightW/2,baseY+connH+20);
+  ctx.fillStyle='#64748b';ctx.font='12px sans-serif';
+  ctx.fillText('底部连通',W/2,connTop+connH+10);
+  document.getElementById('exp3Result').textContent=waterPct>0?'液面等高 ✓ — 与管子粗细无关，连通器原理成立':'未注水';
+}
+document.getElementById('exp3Left')?.addEventListener('input',drawExp3);
+
+// ═══ Learning System v5.2 ═══
+const COURSE_ID='phy-pressure';
+const TeachAnyProgress={key:'teachany_progress_'+COURSE_ID,get(){try{return JSON.parse(localStorage.getItem(this.key))||{}}catch(e){return{}}},set(d){try{localStorage.setItem(this.key,JSON.stringify({...this.get(),...d,lastAccess:Date.now()}))}catch(e){}},setModuleScore(m,s){const d=this.get();d.modules=d.modules||{};d.modules[m]=Math.max(d.modules[m]||0,s);this.set(d)}};
+const TeachAnySR={key:'teachany_sr_'+COURSE_ID,get(){try{return JSON.parse(localStorage.getItem(this.key))||{}}catch(e){return{}}},record(q,ok){const d=this.get();d[q]=d[q]||{ease:2.5,interval:1,reps:0};const c=d[q];if(ok){c.reps++;c.interval=Math.round(c.interval*c.ease);c.ease=Math.max(1.3,c.ease+0.1)}else{c.reps=0;c.interval=1;c.ease=Math.max(1.3,c.ease-0.2)};c.nextReview=Date.now()+c.interval*864e5;localStorage.setItem(this.key,JSON.stringify(d))}};
+const TeachAnyAchievements={key:'teachany_ach_'+COURSE_ID,get(){try{return JSON.parse(localStorage.getItem(this.key))||[]}catch(e){return[]}},unlock(id,title){const a=this.get();if(a.find(x=>x.id===id))return;a.push({id,title,time:Date.now()});localStorage.setItem(this.key,JSON.stringify(a));this.showToast(title)},showToast(t){const d=document.createElement('div');d.innerHTML='<div style="position:fixed;top:80px;right:20px;z-index:9999;background:linear-gradient(135deg,rgba(139,92,246,.9),rgba(59,130,246,.8));color:#fff;padding:14px 22px;border-radius:12px;font-size:15px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.3)">🏆 '+t+'</div>';document.body.appendChild(d);setTimeout(()=>d.remove(),3000)}};
+function onModuleComplete(m,s,t){const p=Math.round(s/t*100);TeachAnyProgress.setModuleScore(m,p);if(m==='pretest'&&p===100)TeachAnyAchievements.unlock('pre-perfect','前测满分！');if(m==='posttest'&&p>=80)TeachAnyAchievements.unlock('post-pass','后测优秀！压强达人');if(m==='posttest'&&p===100)TeachAnyAchievements.unlock('post-perfect','后测满分！完美通关')}
+
+// ═══ TTS Engine ═══
+const ttsNarration=[
+  {id:'intro',section:'engage',mp3:'ch0-intro.mp3',zh:'大家好，今天我们来学习压强。同样是60公斤的人站在雪地上，穿普通鞋陷下去，穿雪橇却能在雪面滑行。为什么效果天差地别？因为力的"集中程度"不同。这就是压强。'},
+  {id:'solid',section:'lesson1',mp3:'ch1-solid-pressure.mp3',zh:'模块一：固体压强。压强描述的是压力的作用效果。公式p等于F除以S，单位是帕斯卡。注意S是受力面积，不是总面积。增大面积减小压强，减小面积增大压强。'},
+  {id:'liquid',section:'lesson2',mp3:'ch2-liquid-pressure.mp3',zh:'模块二：液体压强。液体因为有重力且能流动，对容器底部和侧壁都有压强。公式p等于ρgh。h是从液面到该点的竖直深度，不是从底部向上量。'},
+  {id:'vessel',section:'lesson3',mp3:'ch3-vessel.mp3',zh:'模块三：连通器。上端开口底部连通的容器叫连通器。装同种液体且静止时，各部分液面总是等高的。茶壶、船闸、水塔都是连通器的应用。'}
+];
+let ttsAudio=null,ttsCurrentIdx=0,ttsPlaying=false,ttsPlayerVisible=false;
+function toggleTTSPlayer(){ttsPlayerVisible=!ttsPlayerVisible;document.getElementById('ttsPlayer').classList.toggle('show',ttsPlayerVisible);document.getElementById('ttsToggle').classList.toggle('active',ttsPlayerVisible);document.body.style.paddingBottom=ttsPlayerVisible?'64px':''}
+function toggleTTSPlay(){ttsPlaying?pauseTTS():playTTS(ttsCurrentIdx)}
+function playTTS(idx){
+  if(idx<0||idx>=ttsNarration.length)return;if(ttsAudio){ttsAudio.pause();ttsAudio=null}
+  ttsCurrentIdx=idx;const seg=ttsNarration[idx];ttsAudio=new Audio(seg.mp3);ttsPlaying=true;
+  document.getElementById('ttsPlayBtn').textContent='⏸';document.getElementById('ttsPlayBtn').classList.add('playing');
+  document.getElementById('ttsSegTitle').textContent=seg.zh.slice(0,30)+'...';
+  document.getElementById('ttsProgressFill').style.width=((idx+.5)/ttsNarration.length*100)+'%';
+  document.getElementById('subtitleBar').classList.add('show');document.getElementById('subtitleZh').textContent=seg.zh;
+  if(seg.section){const el=document.getElementById(seg.section);if(el)el.scrollIntoView({behavior:'smooth',block:'start'})}
+  ttsAudio.onended=function(){document.getElementById('ttsProgressFill').style.width=((idx+1)/ttsNarration.length*100)+'%';if(idx+1<ttsNarration.length)setTimeout(()=>playTTS(idx+1),500);else{ttsPlaying=false;document.getElementById('ttsPlayBtn').textContent='▶';document.getElementById('ttsPlayBtn').classList.remove('playing');document.getElementById('subtitleBar').classList.remove('show');document.getElementById('ttsSegTitle').textContent='讲解完成 ✅'}};
+  ttsAudio.onerror=function(){if(idx+1<ttsNarration.length)setTimeout(()=>playTTS(idx+1),300);else{ttsPlaying=false;document.getElementById('ttsPlayBtn').textContent='▶'}};
+  ttsAudio.play().catch(e=>console.warn('播放被阻止:',e));
+}
+function pauseTTS(){if(ttsAudio)ttsAudio.pause();ttsPlaying=false;document.getElementById('ttsPlayBtn').textContent='▶';document.getElementById('ttsPlayBtn').classList.remove('playing');document.getElementById('subtitleBar').classList.remove('show')}
+function prevTTSSeg(){pauseTTS();playTTS(Math.max(0,ttsCurrentIdx-1))}
+function nextTTSSeg(){pauseTTS();playTTS(Math.min(ttsNarration.length-1,ttsCurrentIdx+1))}
+function seekTTS(e){const b=document.getElementById('ttsProgressBar'),p=(e.clientX-b.getBoundingClientRect().left)/b.offsetWidth,i=Math.floor(p*ttsNarration.length);pauseTTS();playTTS(Math.max(0,Math.min(i,ttsNarration.length-1)))}
+
+// ═══ Nav highlight ═══
+function initNav(){const links=document.querySelectorAll('.nav a'),secs=[];links.forEach(a=>{const id=a.getAttribute('href')?.slice(1);if(id)secs.push({id,el:document.getElementById(id),link:a})});window.addEventListener('scroll',()=>{const y=window.scrollY+100;let act=secs[0];secs.forEach(s=>{if(s.el&&s.el.offsetTop<=y)act=s});links.forEach(l=>l.classList.remove('active'));if(act)act.link.classList.add('active')})}
+
+// ═══ Init ═══
+document.addEventListener('DOMContentLoaded',()=>{buildQuiz();initNav();drawExp1();drawExp2();drawExp3()});
+ttsNarration.slice(0,2).forEach(s=>{const a=new Audio();a.preload='auto';a.src=s.mp3});
+</script>
+</body>
+</html>

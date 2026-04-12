@@ -1,0 +1,445 @@
+// ═══ Canvas HiDPI ═══
+function setupHiDPI(canvas,w,h){const dpr=window.devicePixelRatio||1;canvas.width=w*dpr;canvas.height=h*dpr;canvas.style.width=w+'px';canvas.style.height=h+'px';const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);return ctx}
+
+// ═══ Exp1: Magdeburg Hemispheres ═══
+function drawExp1(){
+  const c=document.getElementById('exp1Canvas');if(!c)return;
+  const ctx=setupHiDPI(c,700,400),W=700,H=400;
+  const horses=parseInt(document.getElementById('exp1Horses').value);
+  document.getElementById('exp1Horseval').textContent=horses;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0f172a';ctx.fillRect(0,0,W,H);
+
+  // Constants
+  const p0=101325,R=0.185,A=Math.PI*R*R,F_atm=Math.round(p0*A); // ≈10893N
+  const F_per_horse=1300,totalForce=horses*F_per_horse;
+  const separated=totalForce>F_atm;
+
+  // Title
+  ctx.fillStyle='#f8fafc';ctx.font='bold 16px sans-serif';ctx.textAlign='center';
+  ctx.fillText('马德堡半球实验模拟（1654年）',W/2,28);
+
+  // Ground line
+  ctx.strokeStyle='rgba(148,163,184,0.2)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(40,310);ctx.lineTo(W-40,310);ctx.stroke();
+
+  // Hemispheres center
+  const cx=W/2,cy=200,r=50;
+  const sep=separated?30:0; // separation distance
+
+  // Left hemisphere
+  ctx.beginPath();ctx.arc(cx-sep/2,cy,r,Math.PI*0.5,Math.PI*1.5);ctx.closePath();
+  const lg=ctx.createLinearGradient(cx-sep/2-r,cy,cx-sep/2,cy);
+  lg.addColorStop(0,'rgba(180,120,60,0.9)');lg.addColorStop(1,'rgba(200,160,80,0.7)');
+  ctx.fillStyle=lg;ctx.fill();ctx.strokeStyle='#b87333';ctx.lineWidth=2;ctx.stroke();
+
+  // Right hemisphere
+  ctx.beginPath();ctx.arc(cx+sep/2,cy,r,Math.PI*1.5,Math.PI*0.5);ctx.closePath();
+  const rg=ctx.createLinearGradient(cx+sep/2,cy,cx+sep/2+r,cy);
+  rg.addColorStop(0,'rgba(200,160,80,0.7)');rg.addColorStop(1,'rgba(180,120,60,0.9)');
+  ctx.fillStyle=rg;ctx.fill();ctx.strokeStyle='#b87333';ctx.lineWidth=2;ctx.stroke();
+
+  // Vacuum label (inside)
+  if(!separated){
+    ctx.fillStyle='rgba(139,92,246,0.8)';ctx.font='bold 13px sans-serif';ctx.textAlign='center';
+    ctx.fillText('真空',cx,cy+5);
+  }
+
+  // Atmospheric pressure arrows (pointing inward)
+  if(!separated){
+    const arrowDirs=[[-1,0],[1,0],[0,-1],[0,1],[-0.7,-0.7],[0.7,-0.7],[-0.7,0.7],[0.7,0.7]];
+    arrowDirs.forEach(([dx,dy])=>{
+      const sx=cx+dx*(r+35),sy=cy+dy*(r+35),ex=cx+dx*(r+8),ey=cy+dy*(r+8);
+      ctx.strokeStyle='rgba(59,130,246,0.5)';ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();
+      // Arrowhead
+      const angle=Math.atan2(ey-sy,ex-sx);
+      ctx.beginPath();
+      ctx.moveTo(ex,ey);
+      ctx.lineTo(ex-8*Math.cos(angle-0.3),ey-8*Math.sin(angle-0.3));
+      ctx.lineTo(ex-8*Math.cos(angle+0.3),ey-8*Math.sin(angle+0.3));
+      ctx.fillStyle='rgba(59,130,246,0.5)';ctx.fill();
+    });
+    ctx.fillStyle='#3b82f6';ctx.font='12px sans-serif';ctx.textAlign='left';
+    ctx.fillText('大气压',cx+r+40,cy-30);
+    ctx.fillText('F=p₀×A≈'+F_atm+'N',cx+r+40,cy-12);
+  }
+
+  // Ropes
+  ctx.strokeStyle='#a78bfa';ctx.lineWidth=3;
+  // Left rope
+  ctx.beginPath();ctx.moveTo(cx-sep/2-r,cy);ctx.lineTo(80,cy);ctx.stroke();
+  // Right rope
+  ctx.beginPath();ctx.moveTo(cx+sep/2+r,cy);ctx.lineTo(W-80,cy);ctx.stroke();
+
+  // Horses (left side, pulling left)
+  const hPerSide=Math.ceil(horses/2);
+  const leftH=hPerSide,rightH=horses-hPerSide;
+  ctx.font='28px sans-serif';ctx.textAlign='center';
+  for(let i=0;i<leftH;i++){
+    const hx=70-i*35,hy=cy-10;
+    ctx.fillText('🐴',hx,hy+10);
+    // Pull direction arrow
+    ctx.strokeStyle='rgba(239,68,68,0.4)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(hx+14,hy+16);ctx.lineTo(hx-8,hy+16);ctx.stroke();
+  }
+  for(let i=0;i<rightH;i++){
+    const hx=W-70+i*35,hy=cy-10;
+    ctx.save();ctx.translate(hx,hy+10);ctx.scale(-1,1);ctx.fillText('🐴',0,0);ctx.restore();
+    ctx.strokeStyle='rgba(239,68,68,0.4)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(hx-14,hy+16);ctx.lineTo(hx+8,hy+16);ctx.stroke();
+  }
+
+  // Horse count labels
+  ctx.fillStyle='#94a3b8';ctx.font='13px sans-serif';ctx.textAlign='center';
+  ctx.fillText('← '+leftH+'匹',70,cy+50);
+  ctx.fillText(rightH+'匹 →',W-70,cy+50);
+
+  // Force comparison bar
+  const barX=150,barY=340,barW=400,barH=18;
+  ctx.strokeStyle='#475569';ctx.lineWidth=1;ctx.strokeRect(barX,barY,barW,barH);
+  // Atmospheric force (threshold)
+  const ratio=Math.min(1,totalForce/F_atm);
+  const pullG=ctx.createLinearGradient(barX,barY,barX+barW*ratio,barY);
+  pullG.addColorStop(0,separated?'#10b981':'#ef4444');pullG.addColorStop(1,separated?'#34d399':'#f87171');
+  ctx.fillStyle=pullG;ctx.fillRect(barX,barY,barW*ratio,barH);
+  // Threshold line
+  const threshX=barX+barW;
+  ctx.strokeStyle='#f59e0b';ctx.lineWidth=2;ctx.setLineDash([4,3]);
+  ctx.beginPath();ctx.moveTo(threshX,barY-5);ctx.lineTo(threshX,barY+barH+5);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#f59e0b';ctx.font='11px sans-serif';ctx.textAlign='center';
+  ctx.fillText('大气压力:'+F_atm+'N',threshX,barY-10);
+
+  // Result status
+  ctx.fillStyle=separated?'#10b981':'#ef4444';ctx.font='bold 16px sans-serif';ctx.textAlign='center';
+  ctx.fillText(separated?'✅ 拉力超过大气压力，半球分开了！':'⚠️ 拉力不足，半球纹丝不动！',W/2,H-15);
+
+  // Pull force label
+  ctx.fillStyle='#f8fafc';ctx.font='13px sans-serif';
+  ctx.fillText('总拉力: '+horses+'×'+F_per_horse+'='+totalForce+'N',barX+barW*ratio/2,barY+barH/2+4);
+
+  document.getElementById('exp1Result').textContent=horses+'匹马（每匹'+F_per_horse+'N），总拉力='+totalForce+'N'+(separated?' > ':' < ')+F_atm+'N（大气压力）→'+(separated?'半球分开！':'拉不开！');
+}
+document.getElementById('exp1Horses')?.addEventListener('input',drawExp1);
+
+// ═══ Exp2: Torricelli Experiment ═══
+function drawExp2(){
+  const c=document.getElementById('exp2Canvas');if(!c)return;
+  const ctx=setupHiDPI(c,700,440),W=700,H=440;
+  const alt=parseFloat(document.getElementById('exp2Alt').value);
+  const tilt=parseFloat(document.getElementById('exp2Tilt').value);
+  document.getElementById('exp2Altval').textContent=alt;
+  document.getElementById('exp2Tiltval').textContent=tilt;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0f172a';ctx.fillRect(0,0,W,H);
+
+  // Pressure at altitude: barometric formula
+  const p_atm=101325*Math.exp(-alt/8500);
+  const h_hg=(p_atm/(13600*9.8)*1000).toFixed(1); // mm
+  const h_hg_m=p_atm/(13600*9.8); // meters
+  const tubeLen=tilt>0?(h_hg_m/Math.cos(tilt*Math.PI/180)*1000).toFixed(1):h_hg;
+
+  // Title
+  ctx.fillStyle='#f8fafc';ctx.font='bold 16px sans-serif';ctx.textAlign='center';
+  ctx.fillText('托里拆利实验模拟',W/2,28);
+
+  // === Left side: Experiment setup ===
+  const expCX=220,troughY=360,troughW=180,troughH=40;
+
+  // Mercury trough
+  ctx.fillStyle='rgba(180,180,200,0.3)';
+  ctx.fillRect(expCX-troughW/2,troughY,troughW,troughH);
+  ctx.strokeStyle='#94a3b8';ctx.lineWidth=2;
+  ctx.strokeRect(expCX-troughW/2,troughY,troughW,troughH);
+  // Mercury in trough
+  ctx.fillStyle='rgba(180,180,200,0.5)';
+  ctx.fillRect(expCX-troughW/2+3,troughY+8,troughW-6,troughH-10);
+  ctx.fillStyle='#94a3b8';ctx.font='12px sans-serif';ctx.textAlign='center';
+  ctx.fillText('水银槽',expCX,troughY+troughH+16);
+
+  // Glass tube
+  const tubeTop=80,tubeBot=troughY+8,tubeW=24;
+  const tiltRad=tilt*Math.PI/180;
+  ctx.save();
+  ctx.translate(expCX,tubeBot);
+  ctx.rotate(-tiltRad);
+
+  const tubeLength=tubeBot-tubeTop;
+  // Tube outline
+  ctx.strokeStyle='rgba(148,163,184,0.6)';ctx.lineWidth=1.5;
+  ctx.strokeRect(-tubeW/2,-tubeLength,tubeW,tubeLength);
+
+  // Mercury column height in pixels (proportional)
+  const maxHgPx=tubeLength*0.85; // max mercury pixel height
+  const hgFraction=parseFloat(h_hg)/760; // fraction of standard
+  const hgPx=Math.min(maxHgPx,maxHgPx*hgFraction);
+
+  // Mercury in tube
+  const mG=ctx.createLinearGradient(0,0,0,-hgPx);
+  mG.addColorStop(0,'rgba(180,180,200,0.7)');mG.addColorStop(1,'rgba(160,160,180,0.5)');
+  ctx.fillStyle=mG;
+  ctx.fillRect(-tubeW/2+2,0,tubeW-4,-hgPx);
+
+  // Vacuum area above mercury
+  if(hgPx<tubeLength-10){
+    ctx.fillStyle='rgba(139,92,246,0.15)';
+    ctx.fillRect(-tubeW/2+2,-tubeLength+2,tubeW-4,tubeLength-hgPx-4);
+    ctx.fillStyle='rgba(139,92,246,0.8)';ctx.font='bold 11px sans-serif';ctx.textAlign='center';
+    ctx.save();ctx.rotate(tiltRad);ctx.fillText('真空',-5,-tubeLength+hgPx/2+50);ctx.restore();
+  }
+
+  // Height indicator
+  ctx.strokeStyle='#f59e0b';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+  ctx.beginPath();ctx.moveTo(tubeW/2+8,0);ctx.lineTo(tubeW/2+8,-hgPx);ctx.stroke();ctx.setLineDash([]);
+  // Height arrow heads
+  ctx.fillStyle='#f59e0b';
+  ctx.beginPath();ctx.moveTo(tubeW/2+8,-2);ctx.lineTo(tubeW/2+4,6);ctx.lineTo(tubeW/2+12,6);ctx.fill();
+  ctx.beginPath();ctx.moveTo(tubeW/2+8,-hgPx+2);ctx.lineTo(tubeW/2+4,-hgPx-6);ctx.lineTo(tubeW/2+12,-hgPx-6);ctx.fill();
+
+  ctx.save();ctx.rotate(tiltRad);
+  ctx.fillStyle='#f59e0b';ctx.font='bold 13px sans-serif';ctx.textAlign='left';
+  ctx.fillText('h='+h_hg+'mm',tubeW/2+18,-hgPx/2);
+  ctx.restore();
+
+  ctx.restore(); // restore tilt transform
+
+  // Atmosphere arrows pointing down on trough surface
+  for(let i=0;i<5;i++){
+    const ax=expCX-60+i*30,ay=troughY-40;
+    ctx.strokeStyle='rgba(59,130,246,0.4)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(ax,ay+25);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(ax-3,ay+20);ctx.lineTo(ax,ay+25);ctx.lineTo(ax+3,ay+20);ctx.fillStyle='rgba(59,130,246,0.4)';ctx.fill();
+  }
+  ctx.fillStyle='#3b82f6';ctx.font='12px sans-serif';ctx.textAlign='center';
+  ctx.fillText('大气压↓',expCX,troughY-48);
+
+  // === Right side: Altitude & Mountain ===
+  const mtnX=520,mtnBaseY=380,mtnH=300;
+  // Mountain silhouette
+  ctx.beginPath();ctx.moveTo(mtnX-100,mtnBaseY);
+  ctx.lineTo(mtnX-40,mtnBaseY-120);ctx.lineTo(mtnX-10,mtnBaseY-80);
+  ctx.lineTo(mtnX+20,mtnBaseY-mtnH);ctx.lineTo(mtnX+50,mtnBaseY-200);
+  ctx.lineTo(mtnX+90,mtnBaseY-100);ctx.lineTo(mtnX+120,mtnBaseY);ctx.closePath();
+  const mtG=ctx.createLinearGradient(mtnX,mtnBaseY,mtnX,mtnBaseY-mtnH);
+  mtG.addColorStop(0,'rgba(71,85,105,0.3)');mtG.addColorStop(1,'rgba(148,163,184,0.1)');
+  ctx.fillStyle=mtG;ctx.fill();
+
+  // Altitude marker
+  const altFrac=alt/8848;
+  const markerY=mtnBaseY-altFrac*mtnH;
+  ctx.fillStyle='#ef4444';ctx.beginPath();ctx.arc(mtnX+20,markerY,5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#f8fafc';ctx.font='12px sans-serif';ctx.textAlign='left';
+  ctx.fillText(alt+'m',mtnX+30,markerY+4);
+
+  // Altitude scale
+  const altMarks=[0,2000,4000,6000,8848];
+  altMarks.forEach(a=>{
+    const y=mtnBaseY-(a/8848)*mtnH;
+    ctx.fillStyle='#64748b';ctx.font='10px sans-serif';ctx.textAlign='right';
+    ctx.fillText(a+'m',mtnX-106,y+3);
+    ctx.strokeStyle='rgba(148,163,184,0.15)';ctx.lineWidth=0.5;
+    ctx.beginPath();ctx.moveTo(mtnX-100,y);ctx.lineTo(mtnX+120,y);ctx.stroke();
+  });
+
+  // Pressure readout panel
+  ctx.fillStyle='rgba(30,41,59,0.8)';ctx.strokeStyle='#475569';ctx.lineWidth=1;
+  const panelX=460,panelY=50,panelW=210,panelH=100;
+  ctx.fillRect(panelX,panelY,panelW,panelH);ctx.strokeRect(panelX,panelY,panelW,panelH);
+  ctx.fillStyle='#f8fafc';ctx.font='bold 14px sans-serif';ctx.textAlign='left';
+  ctx.fillText('海拔: '+alt+' m',panelX+12,panelY+24);
+  ctx.fillStyle='#3b82f6';ctx.font='bold 14px sans-serif';
+  ctx.fillText('气压: '+Math.round(p_atm)+' Pa',panelX+12,panelY+48);
+  ctx.fillStyle='#f59e0b';ctx.font='bold 14px sans-serif';
+  ctx.fillText('水银柱: '+h_hg+' mm',panelX+12,panelY+72);
+  if(tilt>0){
+    ctx.fillStyle='#a78bfa';ctx.font='12px sans-serif';
+    ctx.fillText('管长: '+tubeLen+' mm（倾斜'+tilt+'°）',panelX+12,panelY+92);
+  }
+
+  document.getElementById('exp2Result').textContent='海拔'+alt+'m → 气压≈'+Math.round(p_atm)+'Pa → 水银柱竖直高度='+h_hg+'mm'+(tilt>0?'（管内长度='+tubeLen+'mm，竖直高度不变！）':'');
+}
+document.getElementById('exp2Alt')?.addEventListener('input',drawExp2);
+document.getElementById('exp2Tilt')?.addEventListener('input',drawExp2);
+
+// ═══ Exp3: Altitude-Pressure-Boiling Point Explorer ═══
+function setAlt(val){document.getElementById('exp3Alt').value=val;drawExp3()}
+function drawExp3(){
+  const c=document.getElementById('exp3Canvas');if(!c)return;
+  const ctx=setupHiDPI(c,700,420),W=700,H=420;
+  const alt=parseFloat(document.getElementById('exp3Alt').value);
+  document.getElementById('exp3Altval').textContent=alt;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0f172a';ctx.fillRect(0,0,W,H);
+
+  // Calculations
+  const p_atm=101325*Math.exp(-alt/8500);
+  const p_hPa=(p_atm/100).toFixed(1);
+  const boilPt=(100-alt/300).toFixed(1);
+
+  // Title
+  ctx.fillStyle='#f8fafc';ctx.font='bold 16px sans-serif';ctx.textAlign='center';
+  ctx.fillText('海拔-气压-沸点 探测器',W/2,28);
+
+  // === Left: Mountain profile with cities ===
+  const mtnX=30,mtnW=280,mtnBaseY=380,mtnH=310;
+
+  // Mountain gradient background
+  const skyG=ctx.createLinearGradient(mtnX,50,mtnX,mtnBaseY);
+  skyG.addColorStop(0,'rgba(59,130,246,0.05)');skyG.addColorStop(1,'rgba(6,182,212,0.02)');
+  ctx.fillStyle=skyG;ctx.fillRect(mtnX,50,mtnW,mtnBaseY-50);
+
+  // Mountain silhouette
+  ctx.beginPath();ctx.moveTo(mtnX,mtnBaseY);
+  ctx.lineTo(mtnX+40,mtnBaseY-80);ctx.lineTo(mtnX+80,mtnBaseY-140);
+  ctx.lineTo(mtnX+120,mtnBaseY-200);ctx.lineTo(mtnX+140,mtnBaseY-260);
+  ctx.lineTo(mtnX+160,mtnBaseY-mtnH);ctx.lineTo(mtnX+180,mtnBaseY-280);
+  ctx.lineTo(mtnX+210,mtnBaseY-180);ctx.lineTo(mtnX+240,mtnBaseY-120);
+  ctx.lineTo(mtnX+mtnW,mtnBaseY);ctx.closePath();
+  const mmG=ctx.createLinearGradient(mtnX,mtnBaseY,mtnX,mtnBaseY-mtnH);
+  mmG.addColorStop(0,'rgba(71,85,105,0.3)');mmG.addColorStop(0.5,'rgba(100,116,139,0.2)');mmG.addColorStop(1,'rgba(200,220,255,0.15)');
+  ctx.fillStyle=mmG;ctx.fill();
+
+  // Snow cap
+  ctx.beginPath();ctx.moveTo(mtnX+140,mtnBaseY-260);ctx.lineTo(mtnX+160,mtnBaseY-mtnH);
+  ctx.lineTo(mtnX+180,mtnBaseY-280);ctx.lineTo(mtnX+170,mtnBaseY-250);ctx.closePath();
+  ctx.fillStyle='rgba(255,255,255,0.3)';ctx.fill();
+
+  // City markers
+  const cities=[
+    {name:'海平面',alt:0,emoji:'🌊'},
+    {name:'北京',alt:43,emoji:'🏙️'},
+    {name:'昆明',alt:1891,emoji:'🌸'},
+    {name:'拉萨',alt:3650,emoji:'🏔️'},
+    {name:'珠穆朗玛',alt:8848,emoji:'🏔️'}
+  ];
+  cities.forEach(city=>{
+    const frac=city.alt/8848;
+    const y=mtnBaseY-frac*(mtnH-20)-10;
+    const x=mtnX+20+frac*120;
+    // Dot
+    const isActive=Math.abs(city.alt-alt)<200;
+    ctx.fillStyle=isActive?'#f59e0b':'#64748b';
+    ctx.beginPath();ctx.arc(x,y,isActive?5:3,0,Math.PI*2);ctx.fill();
+    // Label
+    ctx.fillStyle=isActive?'#f59e0b':'#94a3b8';ctx.font=(isActive?'bold ':'')+' 11px sans-serif';ctx.textAlign='left';
+    ctx.fillText(city.emoji+' '+city.name+' ('+city.alt+'m)',x+10,y+4);
+  });
+
+  // Current altitude marker
+  const curFrac=alt/8848;
+  const curY=mtnBaseY-curFrac*(mtnH-20)-10;
+  const curX=mtnX+20+curFrac*120;
+  ctx.fillStyle='#ef4444';ctx.beginPath();ctx.arc(curX,curY,7,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='rgba(239,68,68,0.4)';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+  ctx.beginPath();ctx.moveTo(curX,curY);ctx.lineTo(mtnX+mtnW+20,curY);ctx.stroke();ctx.setLineDash([]);
+
+  // === Right: Gauges ===
+  const gaugeX=370;
+
+  // Pressure Gauge
+  const pgX=gaugeX,pgY=60,pgW=140,pgH=250;
+  ctx.strokeStyle='#475569';ctx.lineWidth=1.5;ctx.strokeRect(pgX,pgY,pgW,pgH);
+  ctx.fillStyle='rgba(30,41,59,0.5)';ctx.fillRect(pgX,pgY,pgW,pgH);
+  // Gauge title
+  ctx.fillStyle='#3b82f6';ctx.font='bold 14px sans-serif';ctx.textAlign='center';
+  ctx.fillText('气压计',pgX+pgW/2,pgY-8);
+  // Fill level
+  const pFrac=Math.min(1,p_atm/101325);
+  const fillH=pgH*pFrac-10;
+  const pG=ctx.createLinearGradient(pgX,pgY+pgH,pgX,pgY+pgH-fillH);
+  pG.addColorStop(0,'#3b82f6');pG.addColorStop(1,'#06b6d4');
+  ctx.fillStyle=pG;ctx.fillRect(pgX+5,pgY+pgH-fillH-5,pgW-10,fillH);
+  // Value
+  ctx.fillStyle='#f8fafc';ctx.font='bold 18px sans-serif';ctx.textAlign='center';
+  ctx.fillText(p_hPa,pgX+pgW/2,pgY+pgH-fillH-15);
+  ctx.fillStyle='#94a3b8';ctx.font='12px sans-serif';
+  ctx.fillText('hPa',pgX+pgW/2,pgY+pgH-fillH);
+  // Scale marks
+  [0,200,400,600,800,1013].forEach(v=>{
+    const y=pgY+pgH-5-(v/1013)*(pgH-10);
+    ctx.strokeStyle='rgba(148,163,184,0.3)';ctx.lineWidth=0.5;
+    ctx.beginPath();ctx.moveTo(pgX,y);ctx.lineTo(pgX+pgW,y);ctx.stroke();
+    ctx.fillStyle='#64748b';ctx.font='9px sans-serif';ctx.textAlign='right';
+    ctx.fillText(v+'',pgX-4,y+3);
+  });
+
+  // Thermometer (Boiling Point)
+  const tX=gaugeX+170,tY=60,tW=60,tH=250;
+  ctx.strokeStyle='#475569';ctx.lineWidth=1.5;ctx.strokeRect(tX,tY,tW,tH);
+  ctx.fillStyle='rgba(30,41,59,0.5)';ctx.fillRect(tX,tY,tW,tH);
+  ctx.fillStyle='#ef4444';ctx.font='bold 14px sans-serif';ctx.textAlign='center';
+  ctx.fillText('沸点',tX+tW/2,tY-8);
+  // Fill level (mapping: 60°C->100°C)
+  const bpMin=60,bpMax=100;
+  const bpFrac=Math.max(0,Math.min(1,(parseFloat(boilPt)-bpMin)/(bpMax-bpMin)));
+  const bpFillH=(tH-10)*bpFrac;
+  const bpG=ctx.createLinearGradient(tX,tY+tH,tX,tY+tH-bpFillH);
+  bpG.addColorStop(0,'#ef4444');bpG.addColorStop(1,'#f59e0b');
+  ctx.fillStyle=bpG;ctx.fillRect(tX+5,tY+tH-bpFillH-5,tW-10,bpFillH);
+  // Value
+  ctx.fillStyle='#f8fafc';ctx.font='bold 18px sans-serif';ctx.textAlign='center';
+  ctx.fillText(boilPt+'°C',tX+tW/2,tY+tH-bpFillH-15);
+  // Scale marks
+  [60,70,80,90,100].forEach(v=>{
+    const y=tY+tH-5-((v-bpMin)/(bpMax-bpMin))*(tH-10);
+    ctx.strokeStyle='rgba(148,163,184,0.3)';ctx.lineWidth=0.5;
+    ctx.beginPath();ctx.moveTo(tX,y);ctx.lineTo(tX+tW,y);ctx.stroke();
+    ctx.fillStyle='#64748b';ctx.font='9px sans-serif';ctx.textAlign='left';
+    ctx.fillText(v+'°C',tX+tW+4,y+3);
+  });
+
+  // Info panel
+  ctx.fillStyle='rgba(30,41,59,0.8)';ctx.strokeStyle='#475569';ctx.lineWidth=1;
+  const ipY=340,ipW=310,ipH=65;
+  ctx.fillRect(gaugeX,ipY,ipW,ipH);ctx.strokeRect(gaugeX,ipY,ipW,ipH);
+  ctx.fillStyle='#f8fafc';ctx.font='bold 13px sans-serif';ctx.textAlign='left';
+  ctx.fillText('📍 海拔: '+alt+' m',gaugeX+12,ipY+20);
+  ctx.fillStyle='#3b82f6';
+  ctx.fillText('📊 气压: '+p_hPa+' hPa ('+Math.round(p_atm)+' Pa)',gaugeX+12,ipY+40);
+  ctx.fillStyle='#ef4444';
+  ctx.fillText('🌡️ 水沸点: '+boilPt+'°C',gaugeX+12,ipY+58);
+
+  document.getElementById('exp3Result').textContent='海拔'+alt+'m → 气压≈'+p_hPa+'hPa → 水的沸点≈'+boilPt+'°C'+(parseFloat(boilPt)<100?' （低于100°C，煮不熟鸡蛋！）':'');
+}
+document.getElementById('exp3Alt')?.addEventListener('input',drawExp3);
+
+// ═══ Learning System v5.2 ═══
+const COURSE_ID='phy-atmospheric-pressure';
+const TeachAnyProgress={key:'teachany_progress_'+COURSE_ID,get(){try{return JSON.parse(localStorage.getItem(this.key))||{}}catch(e){return{}}},set(d){try{localStorage.setItem(this.key,JSON.stringify({...this.get(),...d,lastAccess:Date.now()}))}catch(e){}},setModuleScore(m,s){const d=this.get();d.modules=d.modules||{};d.modules[m]=Math.max(d.modules[m]||0,s);this.set(d)}};
+const TeachAnySR={key:'teachany_sr_'+COURSE_ID,get(){try{return JSON.parse(localStorage.getItem(this.key))||{}}catch(e){return{}}},record(q,ok){const d=this.get();d[q]=d[q]||{ease:2.5,interval:1,reps:0};const c=d[q];if(ok){c.reps++;c.interval=Math.round(c.interval*c.ease);c.ease=Math.max(1.3,c.ease+0.1)}else{c.reps=0;c.interval=1;c.ease=Math.max(1.3,c.ease-0.2)};c.nextReview=Date.now()+c.interval*864e5;localStorage.setItem(this.key,JSON.stringify(d))}};
+const TeachAnyAchievements={key:'teachany_ach_'+COURSE_ID,get(){try{return JSON.parse(localStorage.getItem(this.key))||[]}catch(e){return[]}},unlock(id,title){const a=this.get();if(a.find(x=>x.id===id))return;a.push({id,title,time:Date.now()});localStorage.setItem(this.key,JSON.stringify(a));this.showToast(title)},showToast(t){const d=document.createElement('div');d.innerHTML='<div style="position:fixed;top:80px;right:20px;z-index:9999;background:linear-gradient(135deg,rgba(139,92,246,.9),rgba(59,130,246,.8));color:#fff;padding:14px 22px;border-radius:12px;font-size:15px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.3)">🏆 '+t+'</div>';document.body.appendChild(d);setTimeout(()=>d.remove(),3000)}};
+function onModuleComplete(m,s,t){const p=Math.round(s/t*100);TeachAnyProgress.setModuleScore(m,p);if(m==='pretest'&&p===100)TeachAnyAchievements.unlock('pre-perfect','前测满分！');if(m==='posttest'&&p>=80)TeachAnyAchievements.unlock('post-pass','后测优秀！大气压达人');if(m==='posttest'&&p===100)TeachAnyAchievements.unlock('post-perfect','后测满分！完美通关')}
+
+// ═══ TTS Engine ═══
+const ttsNarration=[
+  {id:'intro',section:'engage',mp3:'ch0-intro.mp3',zh:'大家好，今天我们来学习大气压强。你有没有试过把一张纸盖在装满水的杯子上，翻转过来，水居然不会流出来？这个现象的背后，就是大气压。而在1654年的马德堡实验中，16匹马竟然拉不开两个铜半球，正是因为大气压的力量之大超乎想象。'},
+  {id:'exist',section:'lesson1',mp3:'ch1-existence.mp3',zh:'模块一：大气压的存在。大气压产生的根本原因是空气有重力。我们生活在厚厚的气体海洋底部，这层大气把我们紧紧"压"住。标准大气压约为十万一千三百帕，相当于每平方米承受10吨的力。我们感觉不到，是因为大气压各方向均匀作用，且体内外压强平衡。'},
+  {id:'measure',section:'lesson2',mp3:'ch2-measurement.mp3',zh:'模块二：大气压的测量。1643年，意大利科学家托里拆利用一根装满水银的玻璃管，倒扣在水银槽中，发现水银柱停在约760毫米处。管内水银面上方是真空，外面的大气压支撑住了水银柱。由此算出标准大气压等于13600乘以9.8乘以0.76，约等于1.013乘以10的5次方帕斯卡。'},
+  {id:'app',section:'lesson3',mp3:'ch3-barometer.mp3',zh:'模块三：气压计与应用。气压计有水银气压计、无液膜盒气压计和电子气压计三种。大气压随海拔升高而降低，在珠穆朗玛峰顶只有海平面的三分之一。这导致高原上水的沸点低于100度，煮不熟鸡蛋。生活中吸管喝饮料、吸盘挂钩、注射器抽药液，都是大气压在帮忙。'}
+];
+let ttsAudio=null,ttsCurrentIdx=0,ttsPlaying=false,ttsPlayerVisible=false;
+function toggleTTSPlayer(){ttsPlayerVisible=!ttsPlayerVisible;document.getElementById('ttsPlayer').classList.toggle('show',ttsPlayerVisible);document.getElementById('ttsToggle').classList.toggle('active',ttsPlayerVisible);document.body.style.paddingBottom=ttsPlayerVisible?'64px':''}
+function toggleTTSPlay(){ttsPlaying?pauseTTS():playTTS(ttsCurrentIdx)}
+function playTTS(idx){
+  if(idx<0||idx>=ttsNarration.length)return;if(ttsAudio){ttsAudio.pause();ttsAudio=null}
+  ttsCurrentIdx=idx;const seg=ttsNarration[idx];ttsAudio=new Audio(seg.mp3);ttsPlaying=true;
+  document.getElementById('ttsPlayBtn').textContent='⏸';document.getElementById('ttsPlayBtn').classList.add('playing');
+  document.getElementById('ttsSegTitle').textContent=seg.zh.slice(0,30)+'...';
+  document.getElementById('ttsProgressFill').style.width=((idx+.5)/ttsNarration.length*100)+'%';
+  document.getElementById('subtitleBar').classList.add('show');document.getElementById('subtitleZh').textContent=seg.zh;
+  if(seg.section){const el=document.getElementById(seg.section);if(el)el.scrollIntoView({behavior:'smooth',block:'start'})}
+  ttsAudio.onended=function(){document.getElementById('ttsProgressFill').style.width=((idx+1)/ttsNarration.length*100)+'%';if(idx+1<ttsNarration.length)setTimeout(()=>playTTS(idx+1),500);else{ttsPlaying=false;document.getElementById('ttsPlayBtn').textContent='▶';document.getElementById('ttsPlayBtn').classList.remove('playing');document.getElementById('subtitleBar').classList.remove('show');document.getElementById('ttsSegTitle').textContent='讲解完成 ✅'}};
+  ttsAudio.onerror=function(){if(idx+1<ttsNarration.length)setTimeout(()=>playTTS(idx+1),300);else{ttsPlaying=false;document.getElementById('ttsPlayBtn').textContent='▶'}};
+  ttsAudio.play().catch(e=>console.warn('播放被阻止:',e));
+}
+function pauseTTS(){if(ttsAudio)ttsAudio.pause();ttsPlaying=false;document.getElementById('ttsPlayBtn').textContent='▶';document.getElementById('ttsPlayBtn').classList.remove('playing');document.getElementById('subtitleBar').classList.remove('show')}
+function prevTTSSeg(){pauseTTS();playTTS(Math.max(0,ttsCurrentIdx-1))}
+function nextTTSSeg(){pauseTTS();playTTS(Math.min(ttsNarration.length-1,ttsCurrentIdx+1))}
+function seekTTS(e){const b=document.getElementById('ttsProgressBar'),p=(e.clientX-b.getBoundingClientRect().left)/b.offsetWidth,i=Math.floor(p*ttsNarration.length);pauseTTS();playTTS(Math.max(0,Math.min(i,ttsNarration.length-1)))}
+
+// ═══ Nav highlight ═══
+function initNav(){const links=document.querySelectorAll('.nav a'),secs=[];links.forEach(a=>{const id=a.getAttribute('href')?.slice(1);if(id)secs.push({id,el:document.getElementById(id),link:a})});window.addEventListener('scroll',()=>{const y=window.scrollY+100;let act=secs[0];secs.forEach(s=>{if(s.el&&s.el.offsetTop<=y)act=s});links.forEach(l=>l.classList.remove('active'));if(act)act.link.classList.add('active')})}
+
+// ═══ Init ═══
+document.addEventListener('DOMContentLoaded',()=>{buildQuiz();initNav();drawExp1();drawExp2();drawExp3()});
+ttsNarration.slice(0,2).forEach(s=>{const a=new Audio();a.preload='auto';a.src=s.mp3});
+</script>
+</body>
+</html>

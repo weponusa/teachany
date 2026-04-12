@@ -3,430 +3,940 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>压强 - 初中物理</title>
+<meta name="teachany-node" content="pressure-buoyancy">
+<meta name="teachany-subject" content="physics">
+<meta name="teachany-domain" content="mechanics">
+<meta name="teachany-grade" content="8">
+<meta name="teachany-difficulty" content="2">
+<meta name="teachany-version" content="2.0">
+<meta name="teachany-author" content="weponusa">
+<title>压强 · 教学课件</title>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
-:root{--bg:#f8fafc;--primary:#3b82f6;--secondary:#06b6d4;--accent:#f59e0b;--success:#10b981;--card:#fff;--text:#1e293b;--muted:#64748b;}
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;}
-header{background:linear-gradient(135deg,#7f1d1d,#dc2626);color:#fff;padding:2rem;text-align:center;}
-header h1{font-size:2rem;margin-bottom:.5rem;}
-.badge{display:inline-block;background:rgba(255,255,255,.2);border-radius:20px;padding:.2rem .8rem;font-size:.85rem;margin:.2rem;}
-nav{display:flex;flex-wrap:wrap;gap:.5rem;padding:1rem 2rem;background:#fff;border-bottom:1px solid #e2e8f0;position:sticky;top:0;z-index:100;}
-nav a{padding:.4rem .9rem;border-radius:20px;text-decoration:none;color:var(--muted);font-size:.9rem;transition:all .2s;}
-nav a:hover,nav a.active{background:var(--primary);color:#fff;}
-.section{padding:2rem;max-width:1100px;margin:0 auto;}
-.section-title{font-size:1.5rem;font-weight:700;color:var(--primary);margin-bottom:1.5rem;}
-.card{background:var(--card);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.08);}
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
-.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;}
-@media(max-width:768px){.grid-2,.grid-3{grid-template-columns:1fr;}}
-
-/* Life Scene: Pressure animation */
-#life-scene{background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:12px;height:320px;position:relative;overflow:hidden;display:flex;align-items:flex-end;justify-content:space-around;padding:0 2rem 0;}
-.pressure-demo{display:flex;flex-direction:column;align-items:center;width:30%;}
-.block{width:80px;height:50px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:.85rem;box-shadow:0 4px 12px rgba(0,0,0,.2);position:relative;}
-.block-heavy{background:linear-gradient(135deg,#dc2626,#b91c1c);animation:blockPress 2s ease-in-out infinite;}
-@keyframes blockPress{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
-.block-light{background:linear-gradient(135deg,#3b82f6,#2563eb);animation:blockPress 2s ease-in-out infinite;animation-delay:.5s;}
-.clay{border-radius:8px;transition:all .3s;display:flex;align-items:center;justify-content:center;font-size:.75rem;color:#92400e;}
-.clay-deep{width:80px;height:40px;background:linear-gradient(135deg,#d97706,#b45309);animation:clayDeform 2s ease-in-out infinite;}
-@keyframes clayDeform{0%,100%{height:40px;width:80px;}50%{height:25px;width:95px;}}
-.clay-shallow{width:80px;height:40px;background:linear-gradient(135deg,#f59e0b,#d97706);animation:clayDeformLight 2s ease-in-out infinite;animation-delay:.5s;}
-@keyframes clayDeformLight{0%,100%{height:40px;width:80px;}50%{height:35px;width:85px;}}
-.demo-label{font-size:.8rem;color:#374151;font-weight:600;margin-bottom:.5rem;text-align:center;}
-.force-arrow{width:3px;background:#ef4444;margin:0 auto;animation:forceGrow 2s ease-in-out infinite;}
-.fa-big{height:50px;animation-delay:0s;}
-.fa-small{height:30px;animation-delay:.5s;}
-@keyframes forceGrow{0%,100%{height:30px;}50%{height:50px;}}
-.nail{width:8px;background:linear-gradient(180deg,#94a3b8,#475569);margin:0 auto;border-radius:2px;}
-.nail-sharp{height:60px;clip-path:polygon(20% 0%,80% 0%,100% 100%,0% 100%);}
-.nail-blunt{height:60px;clip-path:polygon(0% 0%,100% 0%,100% 100%,0% 100%);width:20px;}
-.scene-title{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.6);color:#fff;padding:.3rem .8rem;border-radius:20px;font-size:.85rem;white-space:nowrap;}
-
-/* Lab */
-.lab-container{background:#f1f5f9;border-radius:12px;padding:1.5rem;}
-.slider-group{display:flex;flex-direction:column;gap:.5rem;margin-bottom:1rem;}
-.slider-label{display:flex;justify-content:space-between;font-size:.9rem;font-weight:600;}
-input[type=range]{width:100%;accent-color:var(--primary);}
-.result-box{background:#fff;border-radius:8px;padding:1rem;text-align:center;margin:.5rem 0;}
-.result-val{font-size:1.8rem;font-weight:700;color:var(--primary);}
-.clay-demo{width:100%;height:80px;margin-top:1rem;border-radius:8px;overflow:hidden;position:relative;background:#fef3c7;}
-#clayRect{transition:all .5s;position:absolute;bottom:0;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#d97706,#b45309);border-radius:4px 4px 0 0;}
-.pressure-bar{width:100%;height:20px;border-radius:10px;background:linear-gradient(90deg,#22c55e,#f59e0b,#ef4444);position:relative;margin-top:1rem;}
-.pressure-pointer{position:absolute;top:-4px;width:4px;height:28px;background:#1e293b;border-radius:2px;transition:left .3s;}
-#knowledge-graph{height:420px;border-radius:12px;background:#0f172a;position:relative;}
-#knowledge-graph svg{width:100%;height:100%;}
-.graph-legend{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.7);padding:.5rem;border-radius:8px;font-size:.75rem;color:#fff;}
-.legend-item{display:flex;align-items:center;gap:.4rem;margin:.2rem 0;}
-.legend-dot{width:10px;height:10px;border-radius:50%;}
-table{width:100%;border-collapse:collapse;}
-th{background:var(--primary);color:#fff;padding:.7rem;}
-td{padding:.6rem;border-bottom:1px solid #e2e8f0;text-align:center;}
-tr:nth-child(even){background:#f8fafc;}
-.quiz-q{background:#f8fafc;border-radius:8px;padding:1rem;margin-bottom:1rem;}
-.quiz-q p{font-weight:600;margin-bottom:.7rem;}
-.quiz-opt{display:block;padding:.4rem .8rem;border-radius:6px;cursor:pointer;margin:.2rem 0;transition:all .2s;}
-.quiz-opt:hover{background:var(--primary);color:#fff;}
-.quiz-opt.correct{background:#10b981;color:#fff;}
-.quiz-opt.wrong{background:#ef4444;color:#fff;}
-.quiz-feedback{margin-top:.5rem;padding:.5rem;border-radius:6px;font-size:.9rem;display:none;background:#f0fdf4;color:#166534;}
-.progress{background:#e2e8f0;border-radius:10px;height:8px;margin:.5rem 0;}
-.progress-bar{height:100%;border-radius:10px;background:var(--primary);transition:width .3s;}
-.formula-hero{text-align:center;background:linear-gradient(135deg,#7f1d1d,#dc2626);color:#fff;padding:2rem;border-radius:12px;margin-bottom:1rem;}
-.formula-hero .formula{font-size:2rem;font-weight:700;margin:.5rem 0;}
-.concept-tag{display:inline-block;background:var(--primary);color:#fff;padding:.2rem .7rem;border-radius:20px;font-size:.8rem;margin:.2rem;}
+:root{--bg:#f8fafc;--primary:#3b82f6;--secondary:#06b6d4;--accent:#f59e0b;--success:#10b981;--card:#fff;--danger:#ef4444;--text:#1e293b;--dim:#64748b;--border:rgba(0,0,0,0.08);}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.8;padding-bottom:80px;}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,.93);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:58px;gap:4px;overflow-x:auto;}
+.nav-brand{font-size:17px;font-weight:800;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 13px;border-radius:10px;font-size:13px;font-weight:600;transition:all .2s;white-space:nowrap;}
+.nav a:hover,.nav a.active{color:var(--primary);background:rgba(59,130,246,.08);}
+.container{max-width:1060px;margin:0 auto;padding:76px 24px 60px;}
+.hero{text-align:center;padding:36px 0 28px;}
+.hero h1{font-size:38px;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;}
+.hero .subtitle{font-size:16px;color:var(--dim);margin-bottom:14px;}
+.hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+.hero .meta span{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:5px 14px;font-size:13px;font-weight:600;color:var(--dim);}
+.section{margin:40px 0;}
+.section-title{font-size:22px;font-weight:800;margin-bottom:16px;padding-left:14px;border-left:4px solid var(--primary);}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px 24px;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,0.04);transition:transform .2s;}
+.card:hover{transform:translateY(-2px);}
+.card h3{font-size:17px;font-weight:700;margin-bottom:8px;color:var(--primary);}
+.card p,.card li{font-size:15px;line-height:1.85;color:var(--dim);}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;}
+.highlight{color:var(--primary);font-weight:700;}
+.formula-box{background:rgba(59,130,246,.06);border-left:4px solid var(--primary);padding:14px 18px;border-radius:0 10px 10px 0;margin:12px 0;font-size:18px;font-weight:700;font-family:'Times New Roman',serif;}
+.note{background:rgba(245,158,11,.07);border-left:4px solid var(--accent);padding:12px 16px;border-radius:0 10px 10px 0;margin:12px 0;font-size:14px;color:#92400e;}
+.abt-box{background:linear-gradient(135deg,rgba(59,130,246,.05),rgba(6,182,212,.05));border-radius:14px;padding:20px 24px;margin:20px 0;border:2px solid rgba(59,130,246,.2);}
+.abt-item{margin:12px 0;padding-left:20px;border-left:3px solid var(--primary);}
+.abt-item strong{color:var(--primary);font-size:16px;}
+.role-card{background:linear-gradient(135deg,#667eea,#764ba2);color:white;border-radius:16px;padding:28px;margin:20px 0;box-shadow:0 8px 24px rgba(102,126,234,0.25);}
+.role-card h3{color:white;font-size:20px;margin-bottom:12px;}
+.role-card .role-icon{font-size:48px;margin-bottom:12px;}
+#life-scene{background:linear-gradient(135deg,#0f172a,#1e2d5a);border-radius:18px;padding:28px;min-height:320px;overflow:hidden;}
+#life-scene h3{color:#fff;font-size:18px;margin-bottom:8px;}
+#life-scene p{color:rgba(255,255,255,.6);font-size:13px;margin-bottom:12px;}
+.scene-anim{animation:fadeInScale 1s ease-out;}
+@keyframes fadeInScale{0%{opacity:0;transform:scale(0.9);}100%{opacity:1;transform:scale(1);}}
+.question-chain{background:var(--card);border:2px solid var(--primary);border-radius:14px;padding:20px;margin:20px 0;}
+.question-level{margin:16px 0;padding:14px;border-radius:10px;cursor:pointer;transition:all .3s;}
+.question-level:hover{transform:translateX(5px);}
+.level-1{background:rgba(16,185,129,.08);border-left:4px solid var(--success);}
+.level-2{background:rgba(59,130,246,.08);border-left:4px solid var(--primary);}
+.level-3{background:rgba(245,158,11,.08);border-left:4px solid var(--accent);}
+.level-4{background:rgba(139,92,246,.08);border-left:4px solid #8b5cf6;}
+.question-level h4{font-size:16px;margin-bottom:6px;font-weight:700;}
+.question-level p{font-size:14px;color:var(--dim);margin:0;}
+.mirror-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin:12px 0;}
+.mirror-card h4{color:var(--primary);font-size:15px;margin-bottom:10px;}
+.record-sheet{background:rgba(245,158,11,.05);border:2px solid var(--accent);border-radius:14px;padding:24px;margin:20px 0;}
+.record-sheet h3{color:var(--accent);margin-bottom:16px;}
+.record-input{width:100%;padding:12px;border:2px solid var(--border);border-radius:8px;font-size:14px;margin:8px 0;font-family:inherit;}
+.record-input:focus{outline:none;border-color:var(--primary);}
+.submit-btn{background:var(--primary);color:white;border:none;padding:12px 28px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;}
+.submit-btn:hover{background:var(--secondary);transform:translateY(-2px);}
+#interactive-lab{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px;margin-bottom:20px;}
+#interactive-lab h3{font-size:18px;font-weight:800;margin-bottom:18px;}
+.lab-controls{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+@media(max-width:640px){.lab-controls{grid-template-columns:1fr;}}
+.control-group{background:var(--bg);border-radius:12px;padding:16px;}
+.control-group label{font-size:13px;font-weight:700;color:var(--dim);display:block;margin-bottom:8px;}
+.control-group input[type=range]{width:100%;accent-color:var(--primary);cursor:pointer;}
+.control-group .value{font-size:22px;font-weight:800;color:var(--primary);margin-top:6px;}
+.lab-result{background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(6,182,212,.08));border-radius:14px;padding:20px;text-align:center;}
+.lab-result .formula{font-size:18px;font-weight:700;color:var(--primary);margin-bottom:8px;}
+.lab-result .detail{font-size:14px;color:var(--dim);}
+#knowledge-graph{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px;margin-bottom:20px;}
+#knowledge-graph h3{font-size:18px;font-weight:800;margin-bottom:6px;}
+#kg-svg{width:100%;height:380px;border-radius:12px;background:#f8fafc;}
+.kg-legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;}
+.kg-legend-item{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--dim);}
+.kg-legend-dot{width:12px;height:12px;border-radius:50%;}
+.quiz-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:18px;transition:all .3s;}
+.quiz-card.answered{border-color:var(--success);}
+.quiz-q{font-size:16px;font-weight:700;margin-bottom:14px;line-height:1.7;color:var(--text);}
+.quiz-option{display:block;padding:12px 16px;margin:7px 0;border-radius:11px;background:var(--bg);border:2px solid var(--border);cursor:pointer;transition:all .25s;font-size:14.5px;font-weight:600;color:var(--text);}
+.quiz-option:hover{background:rgba(59,130,246,.05);border-color:var(--primary);transform:translateX(3px);}
+.quiz-option.correct{background:rgba(16,185,129,.1);border-color:var(--success);color:#065f46;}
+.quiz-option.wrong{background:rgba(239,68,68,.08);border-color:var(--danger);color:#991b1b;}
+.quiz-feedback{padding:12px 16px;border-radius:10px;margin-top:8px;font-size:14px;display:none;line-height:1.7;}
+.quiz-feedback.show{display:block;}
+.quiz-feedback.correct{background:rgba(16,185,129,.1);color:#065f46;border-left:4px solid var(--success);}
+.quiz-feedback.wrong{background:rgba(239,68,68,.08);color:#991b1b;border-left:4px solid var(--danger);}
+canvas{border-radius:10px;display:block;margin:16px auto;background:#fafafa;border:1px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.04);}
 </style>
 </head>
 <body>
-<header>
-  <h1>⚡ 压强</h1>
-  <p>初中物理 · 八年级下册 · 力学</p>
-  <span class="badge">🎬 橡皮泥变形</span>
-  <span class="badge">🧪 P=F/S计算</span>
-  <span class="badge">🕸️ 知识图谱</span>
-  <span class="badge">📊 压强比较</span>
-</header>
-
-<nav>
-  <a href="#life" class="active">🎬 生活场景</a>
-  <a href="#concepts">📚 核心概念</a>
-  <a href="#lab">🧪 互动实验</a>
-  <a href="#liquid">💧 液体压强</a>
-  <a href="#graph">🕸️ 知识图谱</a>
-  <a href="#quiz">📝 练习</a>
+<nav class="nav">
+  <div class="nav-brand">📐 压强</div>
+  <a href="#pretest" class="active">前测</a>
+  <a href="#motivation">动机引入</a>
+  <a href="#question-chain">问题链</a>
+  <a href="#deep-understanding">深层理解</a>
+  <a href="#interactive-lab">互动实验</a>
+  <a href="#knowledge-graph">知识图谱</a>
+  <a href="#quiz">练习</a>
 </nav>
 
-<div class="section" id="life">
-  <div class="section-title">🎬 生活场景：压强演示</div>
-  <div id="life-scene">
-    <div class="scene-title">相同力作用下：接触面积影响压强</div>
-    <div class="pressure-demo" style="padding-bottom:1rem;">
-      <div class="demo-label">尖锐物体<br>（面积小，压强大）</div>
-      <div class="nail nail-sharp"></div>
-      <div class="clay clay-deep" style="margin-top:0;width:70px;height:30px;">深陷入</div>
-    </div>
-    <div class="pressure-demo" style="padding-bottom:1rem;">
-      <div class="demo-label" style="margin-top:2rem;">📦 重物<br>（大力，大压强）</div>
-      <div class="block block-heavy" style="margin:0 auto;">重物<br>200N</div>
-      <div class="clay clay-deep" style="margin-top:4px;width:80px;height:35px;">深变形</div>
-    </div>
-    <div class="pressure-demo" style="padding-bottom:1rem;">
-      <div class="demo-label" style="margin-top:2rem;">📦 轻物<br>（小力，小压强）</div>
-      <div class="block block-light" style="margin:0 auto;">轻物<br>50N</div>
-      <div class="clay clay-shallow" style="margin-top:4px;width:80px;height:35px;">浅变形</div>
+<div class="container">
+  <div class="hero">
+    <h1>📐 压强</h1>
+    <p class="subtitle">探索压力作用效果的秘密</p>
+    <div class="meta">
+      <span>📚 初中物理</span><span>🎓 八年级下</span><span>⚙️ 力学</span><span>🔑 9.1-9.2节</span>
     </div>
   </div>
-  <p style="text-align:center;color:var(--muted);margin-top:.5rem;font-size:.9rem;">压强由力（F）和接触面积（S）共同决定：力越大、面积越小，压强越大</p>
-</div>
 
-<div class="section" id="concepts">
-  <div class="section-title">📚 压强的概念</div>
-  <div class="formula-hero">
-    <p>压强公式</p>
-    <div class="formula">P = F / S</div>
-    <p>压强 = 压力 ÷ 受力面积</p>
-    <p style="font-size:.9rem;margin-top:.5rem;opacity:.85;">单位：帕斯卡（Pa = N/m²）</p>
-  </div>
-
-  <div class="grid-2">
+  <!-- 前测:检查前置知识 -->
+  <div class="section" id="pretest">
+    <div class="section-title">✅ 前测:你已经学过什么?</div>
     <div class="card">
-      <h3 style="color:var(--primary);margin-bottom:1rem;">增大压强的方法</h3>
-      <div style="display:flex;flex-direction:column;gap:.7rem;">
-        <div style="padding:.8rem;background:#fef2f2;border-radius:8px;">
-          <strong style="color:#dc2626;">增大压力</strong>
-          <p style="font-size:.85rem;margin-top:.3rem;">例：用力按图钉，压力大，压强大</p>
+      <h3>回顾前置知识</h3>
+      <p>在学习压强之前,你应该已经掌握了以下内容。快速检查一下自己:</p>
+      <div class="grid-3" style="margin-top:16px;">
+        <div class="mirror-card">
+          <h4>✓ 力的概念</h4>
+          <p>知道力是物体对物体的作用,有大小、方向、作用点</p>
         </div>
-        <div style="padding:.8rem;background:#fef2f2;border-radius:8px;">
-          <strong style="color:#dc2626;">减小受力面积</strong>
-          <p style="font-size:.85rem;margin-top:.3rem;">例：菜刀磨锋利，刀刃面积小，切菜省力</p>
+        <div class="mirror-card">
+          <h4>✓ 力的单位</h4>
+          <p>力的单位是牛顿(N)</p>
+        </div>
+        <div class="mirror-card">
+          <h4>✓ 面积计算</h4>
+          <p>会计算矩形、圆形的面积</p>
         </div>
       </div>
-    </div>
-    <div class="card">
-      <h3 style="color:var(--success);margin-bottom:1rem;">减小压强的方法</h3>
-      <div style="display:flex;flex-direction:column;gap:.7rem;">
-        <div style="padding:.8rem;background:#f0fdf4;border-radius:8px;">
-          <strong style="color:#16a34a;">减小压力</strong>
-          <p style="font-size:.85rem;margin-top:.3rem;">例：减轻书包重量，减小对肩膀压强</p>
-        </div>
-        <div style="padding:.8rem;background:#f0fdf4;border-radius:8px;">
-          <strong style="color:#16a34a;">增大受力面积</strong>
-          <p style="font-size:.85rem;margin-top:.3rem;">例：书包带宽，坦克履带宽，减小地面压强</p>
-        </div>
+      <div class="note" style="margin-top:16px;">
+        💡 <strong>如果某项不确定</strong>,建议先复习"力"这一章的内容,再继续学习压强。
       </div>
     </div>
   </div>
 
-  <div class="card">
-    <h3 style="color:var(--primary);margin-bottom:1rem;">📏 压强的单位</h3>
-    <table>
-      <tr><th>单位</th><th>符号</th><th>换算</th><th>举例</th></tr>
-      <tr><td>帕斯卡</td><td>Pa</td><td>1 Pa = 1 N/m²</td><td>基本单位</td></tr>
-      <tr><td>千帕</td><td>kPa</td><td>1 kPa = 1000 Pa</td><td>血压</td></tr>
-      <tr><td>兆帕</td><td>MPa</td><td>1 MPa = 10⁶ Pa</td><td>工程压力</td></tr>
-      <tr><td>大气压</td><td>atm</td><td>1 atm ≈ 101325 Pa</td><td>标准大气压</td></tr>
-    </table>
-  </div>
-</div>
+  <!-- ABT叙事:动机引入 -->
+  <div class="section" id="motivation">
+    <div class="section-title">🎬 动机引入:一个真实的救援任务</div>
+    
+    <!-- 情境角色卡片 -->
+    <div class="role-card">
+      <div class="role-icon">🧊</div>
+      <h3>你的角色:冰面救援队长</h3>
+      <p style="font-size:15px;line-height:1.8;margin-top:12px;">
+        冬天,有人不慎掉入冰窟。你是救援队长,需要指挥队员快速救援。<br>
+        <strong>关键决策:</strong>队员应该<strong>站着</strong>跑过去,还是<strong>躺着</strong>爬过去?<br>
+        错误的决策可能导致冰面碎裂,救援失败!
+      </p>
+    </div>
 
-<div class="section" id="lab">
-  <div class="section-title">🧪 互动实验台：压强计算器</div>
-  <div class="lab-container">
-    <div class="grid-2">
-      <div>
-        <div class="slider-group">
-          <div class="slider-label"><span>压力 F</span><span id="forceVal">100 N</span></div>
-          <input type="range" id="forceSlider" min="1" max="1000" value="100" oninput="updatePressure()">
-        </div>
-        <div class="slider-group">
-          <div class="slider-label"><span>受力面积 S</span><span id="areaVal">0.01 m²</span></div>
-          <input type="range" id="areaSlider" min="1" max="100" value="10" oninput="updatePressure()">
-        </div>
-        <div style="padding:1rem;background:#eff6ff;border-radius:8px;margin-top:1rem;">
-          <strong>计算公式：</strong><br>
-          <span id="formulaShow" style="font-family:monospace;color:var(--primary);">P = 100 / 0.01 = 10000 Pa</span>
-        </div>
+    <!-- ABT结构 -->
+    <div class="abt-box">
+      <div class="abt-item">
+        <strong>【And】你已经知道:</strong>
+        <p style="margin-top:6px;">力能产生作用效果。60kg的人对冰面有600N的压力(重力)。</p>
       </div>
-      <div>
-        <div class="result-box">
-          <div>压强 P</div>
-          <div class="result-val" id="pressureResult">10000</div>
-          <div style="color:var(--muted);font-size:.9rem;">Pa</div>
-          <div id="pressureKPa" style="color:var(--muted);font-size:.85rem;margin-top:.3rem;"></div>
-        </div>
-        <div id="pressureLevel" style="padding:.8rem;border-radius:8px;text-align:center;margin-top:.5rem;font-weight:600;"></div>
-        <div class="clay-demo">
-          <div id="clayRect"></div>
-        </div>
-        <p style="font-size:.75rem;color:var(--muted);text-align:center;">橡皮泥形变程度（压强越大，陷入越深）</p>
+      <div class="abt-item">
+        <strong>【But】但你不知道:</strong>
+        <p style="margin-top:6px;">相同的600N压力,为什么站着容易压碎冰面,而躺着就安全?<br>
+        压力的作用效果到底与什么因素有关?</p>
+      </div>
+      <div class="abt-item">
+        <strong>【Therefore】所以这节课要学:</strong>
+        <p style="margin-top:6px;">一个新的物理量——<span class="highlight">压强</span>,
+        它能精确描述压力的作用效果,帮你做出正确的救援决策!</p>
       </div>
     </div>
-    <div class="pressure-bar" style="margin-top:1.5rem;">
-      <div class="pressure-pointer" id="pressurePointer"></div>
-    </div>
-    <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin-top:.3rem;">
-      <span>低压(1Pa)</span><span>中压(5000Pa)</span><span>高压(10000Pa)</span>
-    </div>
-    <div style="margin-top:1.5rem;padding:1rem;background:#fff;border-radius:8px;">
-      <h4 style="margin-bottom:.8rem;color:var(--primary);">压强比较（固定压力100N）</h4>
-      <canvas id="compareCanvas" width="600" height="120" style="width:100%;"></canvas>
-    </div>
-  </div>
-</div>
 
-<div class="section" id="liquid">
-  <div class="section-title">💧 液体压强</div>
-  <div class="grid-2">
-    <div class="card">
-      <h3 style="color:var(--primary);margin-bottom:1rem;">液体压强公式</h3>
-      <div style="text-align:center;background:linear-gradient(135deg,#0c4a6e,#0284c7);color:#fff;padding:1.5rem;border-radius:12px;">
-        <div style="font-size:1.5rem;font-weight:700;">P = ρgh</div>
-        <div style="margin-top:.5rem;opacity:.85;font-size:.9rem;">ρ=液体密度 g=9.8N/kg h=深度</div>
-      </div>
-      <div style="margin-top:1rem;">
-        <div style="padding:.8rem;background:#eff6ff;border-radius:8px;margin:.3rem 0;">
-          <strong>特点：</strong>液体压强随深度增大而增大
-        </div>
-        <div style="padding:.8rem;background:#eff6ff;border-radius:8px;margin:.3rem 0;">
-          <strong>各向等压：</strong>液体各个方向压强相等
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <h3 style="color:var(--primary);margin-bottom:1rem;">液体压强图示</h3>
-      <svg viewBox="0 0 300 200" style="width:100%;background:#eff6ff;border-radius:8px;">
-        <!-- Container -->
-        <rect x="80" y="20" width="140" height="160" fill="#bfdbfe" opacity=".5" stroke="#3b82f6" stroke-width="2"/>
-        <!-- Water surface -->
-        <line x1="80" y1="20" x2="220" y2="20" stroke="#06b6d4" stroke-width="2"/>
-        <text x="230" y="25" font-size="10" fill="#0e7490">水面</text>
-        <!-- Depth markers -->
-        <line x1="75" y1="20" x2="75" y2="180" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,3"/>
-        <line x1="70" y1="70" x2="80" y2="70" stroke="#374151" stroke-width="1.5"/>
-        <text x="30" y="74" font-size="10" fill="#374151">h₁=50cm</text>
-        <line x1="70" y1="130" x2="80" y2="130" stroke="#374151" stroke-width="1.5"/>
-        <text x="30" y="134" font-size="10" fill="#374151">h₂=110cm</text>
-        <!-- Pressure arrows at depth 1 -->
-        <line x1="150" y1="70" x2="130" y2="70" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrOrange)"/>
-        <line x1="150" y1="70" x2="170" y2="70" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrOrange)"/>
-        <!-- Pressure arrows at depth 2 (longer = bigger) -->
-        <line x1="150" y1="130" x2="120" y2="130" stroke="#ef4444" stroke-width="2.5"/>
-        <line x1="150" y1="130" x2="180" y2="130" stroke="#ef4444" stroke-width="2.5"/>
-        <text x="125" y="148" font-size="10" fill="#ef4444">压强更大</text>
+    <!-- 生活场景SVG -->
+    <div id="life-scene" style="margin-top:24px;">
+      <h3>三个真实场景中的"压力之谜"</h3>
+      <p>观察下面三个场景,思考:它们的共同点是什么?</p>
+      <svg viewBox="0 0 900 280" style="width:100%;height:260px;" xmlns="http://www.w3.org/2000/svg" class="scene-anim">
         <defs>
-          <marker id="arrOrange" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-            <path d="M0,0 L0,6 L6,3 z" fill="#f59e0b"/>
+          <marker id="pArr" viewBox="0 -4 8 8" refX="7" refY="0" markerWidth="5" markerHeight="5" orient="auto">
+            <path d="M0,-4L8,0L0,4" fill="#ef4444"/>
           </marker>
+          <linearGradient id="iceGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#e0f2fe;stop-opacity:1"/>
+            <stop offset="100%" style="stop-color:#bae6fd;stop-opacity:1"/>
+          </linearGradient>
         </defs>
+        <g transform="translate(20, 40)">
+          <text x="120" y="-10" text-anchor="middle" fill="#60a5fa" font-size="13" font-weight="700">场景1: 冰面救援</text>
+          <rect x="0" y="180" width="240" height="60" fill="url(#iceGrad)" rx="4"/>
+          <text x="120" y="215" text-anchor="middle" fill="#0284c7" font-size="11">冰面</text>
+          <ellipse cx="70" cy="178" rx="12" ry="4" fill="#94a3b8" opacity="0.5"/>
+          <rect x="64" y="140" width="12" height="38" fill="#3b82f6" rx="2"/>
+          <circle cx="70" cy="130" r="12" fill="#3b82f6"/>
+          <text x="70" y="134" text-anchor="middle" fill="white" font-size="10" font-weight="700">站</text>
+          <line x1="70" y1="190" x2="70" y2="215" stroke="#ef4444" stroke-width="2.5" marker-end="url(#pArr)"/>
+          <text x="85" y="205" fill="#ef4444" font-size="10" font-weight="700">危险!</text>
+          <path d="M60,240 L68,225 L72,230 L75,220" stroke="#1e293b" stroke-width="1.5" fill="none"/>
+          <ellipse cx="170" cy="178" rx="35" ry="6" fill="#94a3b8" opacity="0.5"/>
+          <rect x="140" y="165" width="60" height="15" fill="#10b981" rx="2"/>
+          <circle cx="205" cy="172" r="10" fill="#10b981"/>
+          <text x="205" y="175" text-anchor="middle" fill="white" font-size="9" font-weight="700">躺</text>
+          <line x1="170" y1="190" x2="170" y2="205" stroke="#10b981" stroke-width="2" marker-end="url(#pArr)"/>
+          <text x="185" y="200" fill="#10b981" font-size="10" font-weight="700">安全</text>
+        </g>
+        <g transform="translate(300, 40)">
+          <text x="120" y="-10" text-anchor="middle" fill="#a855f7" font-size="13" font-weight="700">场景2: 钉钉子</text>
+          <rect x="40" y="180" width="160" height="50" fill="#92400e" rx="4"/>
+          <path d="M50,190 L190,190 M50,205 L190,205 M50,220 L190,220" stroke="#78350f" stroke-width="1" opacity="0.3"/>
+          <text x="120" y="210" text-anchor="middle" fill="#fef3c7" font-size="11">木板</text>
+          <polygon points="90,80 88,180 92,180" fill="#64748b"/>
+          <circle cx="90" cy="70" r="8" fill="#64748b"/>
+          <text x="90" y="60" text-anchor="middle" fill="#64748b" font-size="10" font-weight="700">F</text>
+          <path d="M86,185 L90,195 L94,185" fill="#ef4444"/>
+          <text x="70" y="140" fill="#ef4444" font-size="10" font-weight="700">尖端→</text>
+          <text x="65" y="152" fill="#ef4444" font-size="10">易钉入</text>
+          <rect x="148" y="120" width="8" height="60" fill="#94a3b8"/>
+          <circle cx="152" cy="110" r="8" fill="#94a3b8"/>
+          <text x="152" y="100" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="700">F</text>
+          <rect x="146" y="180" width="12" height="3" fill="#94a3b8" rx="1"/>
+          <text x="170" y="155" fill="#64748b" font-size="10">钝端→</text>
+          <text x="170" y="167" fill="#64748b" font-size="10">难钉入</text>
+        </g>
+        <g transform="translate(620, 40)">
+          <text x="120" y="-10" text-anchor="middle" fill="#f97316" font-size="13" font-weight="700">场景3: 菜刀切菜</text>
+          <rect x="40" y="200" width="160" height="30" fill="#d97706" rx="2"/>
+          <ellipse cx="120" cy="180" rx="30" ry="20" fill="#84cc16"/>
+          <path d="M90,60 L110,60 L112,165 L88,165 Z" fill="#cbd5e1" stroke="#64748b" stroke-width="1"/>
+          <path d="M88,165 L100,180 L112,165" fill="#94a3b8"/>
+          <line x1="100" y1="40" x2="100" y2="55" stroke="#ef4444" stroke-width="2" marker-end="url(#pArr)"/>
+          <text x="110" y="50" fill="#ef4444" font-size="10" font-weight="700">压力F</text>
+          <path d="M100,180 L100,200" stroke="#84cc16" stroke-width="2" stroke-dasharray="3,2"/>
+          <text x="120" y="220" fill="#059669" font-size="10" font-weight="700">刀刃薄→易切</text>
+        </g>
+        <text x="450" y="275" text-anchor="middle" fill="#3b82f6" font-size="14" font-weight="700">💡 共同点:相同的力,更小的接触面积 → 更强的作用效果</text>
       </svg>
     </div>
   </div>
-</div>
 
-<div class="section" id="graph">
-  <div class="section-title">🕸️ 知识图谱</div>
-  <div id="knowledge-graph">
-    <div class="graph-legend">
-      <div class="legend-item"><div class="legend-dot" style="background:#3b82f6;"></div>当前知识点</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#10b981;"></div>前置知识</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#f97316;"></div>后续拓展</div>
+  <!-- 问题链驱动(Bloom认知层级) -->
+  <div class="section" id="question-chain">
+    <div class="section-title">🎯 问题链:层层递进</div>
+    <div class="question-chain">
+      <p style="color:var(--dim);margin-bottom:20px;">
+        跟随这4个问题,从理解到应用,从分析到创造,逐步掌握压强!
+      </p>
+      
+      <div class="question-level level-1">
+        <h4>Level 1 (记忆/理解): 压强是什么?</h4>
+        <p>压强是描述压力作用效果的物理量,定义为单位面积上受到的压力。公式: <strong>p = F / S</strong></p>
+      </div>
+
+      <div class="question-level level-2">
+        <h4>Level 2 (应用): 为什么冰面救援要躺着?</h4>
+        <p>计算站立和躺卧时的压强,对比作用效果。站立时脚掌面积约0.04m²,躺卧时身体接触面积约0.5m²,压强相差12.5倍!</p>
+      </div>
+
+      <div class="question-level level-3">
+        <h4>Level 3 (分析): 液体压强与深度的关系是什么?</h4>
+        <p>液体压强公式 <strong>p = ρgh</strong> 说明:压强只与密度ρ和深度h有关,与液体总量无关。深海鱼必须适应高压环境!</p>
+      </div>
+
+      <div class="question-level level-4">
+        <h4>Level 4 (创造): 设计一个改变压强的装置</h4>
+        <p>给你一个任务:设计一个能增大或减小压强的实用装置(如减压垫、切割工具)。你会怎么设计?为什么?</p>
+      </div>
     </div>
   </div>
-</div>
 
-<div class="section" id="quiz">
-  <div class="section-title">📝 练习检测</div>
-  <div class="card">
-    <div class="progress"><div class="progress-bar" id="quizProgress" style="width:0%"></div></div>
-    <p id="progressText" style="font-size:.8rem;color:var(--muted);">0 / 4 完成</p>
-    <div class="quiz-q" id="q1">
-      <p>1. 一个人站在地面上，体重600N，脚的面积0.03m²，对地面的压强是？</p>
-      <label class="quiz-opt" onclick="checkAnswer(1,'b')">A. 10000 Pa</label>
-      <label class="quiz-opt" onclick="checkAnswer(1,'b')">B. 20000 Pa</label>
-      <label class="quiz-opt" onclick="checkAnswer(1,'b')">C. 30000 Pa</label>
-      <label class="quiz-opt" onclick="checkAnswer(1,'b')">D. 600 Pa</label>
-      <div class="quiz-feedback" id="fb1"></div>
+  <!-- 深层理解:五镜头法 -->
+  <div class="section" id="deep-understanding">
+    <div class="section-title">🔍 深层理解:五镜头法</div>
+    
+    <div class="card">
+      <h3>镜头1: 看见它 — 观察现象</h3>
+      <p>回到冰面救援场景。同样是60kg的人,站着时脚下冰面明显凹陷甚至碎裂,
+      但躺着时冰面几乎没变化。这个<strong>可见的差异</strong>就是压强不同的直接证据。</p>
+      <div class="note">
+        👀 关键观察:压力相同(都是600N),但作用效果完全不同 → 一定有其他因素在起作用!
+      </div>
     </div>
-    <div class="quiz-q" id="q2">
-      <p>2. 以下哪种方法可以增大压强？</p>
-      <label class="quiz-opt" onclick="checkAnswer(2,'c')">A. 坦克装履带</label>
-      <label class="quiz-opt" onclick="checkAnswer(2,'c')">B. 书包带做宽</label>
-      <label class="quiz-opt" onclick="checkAnswer(2,'c')">C. 把菜刀磨锋利</label>
-      <label class="quiz-opt" onclick="checkAnswer(2,'c')">D. 在软地上铺木板</label>
-      <div class="quiz-feedback" id="fb2"></div>
+
+    <div class="card">
+      <h3>镜头2: 拆开它 — 分解公式</h3>
+      <div class="formula-box">
+        p = F / S
+        <div style="font-size:14px;font-weight:400;margin-top:8px;color:var(--dim);font-family:inherit;">
+          p—压强(Pa) | F—压力(N) | S—受力面积(m²)
+        </div>
+      </div>
+      <p><strong>公式解读:</strong></p>
+      <ul style="padding-left:20px;margin-top:8px;">
+        <li>分子F:压力越大 → 压强越大 (正比关系)</li>
+        <li>分母S:面积越大 → 压强越小 (反比关系)</li>
+        <li>单位1Pa = 1N/m²:表示每平方米面积上受到1牛顿的压力</li>
+      </ul>
+      <p style="margin-top:12px;">
+        <strong>站立时:</strong> p₁ = 600N ÷ 0.04m² = <span class="highlight">15000 Pa</span><br>
+        <strong>躺卧时:</strong> p₂ = 600N ÷ 0.5m² = <span class="highlight">1200 Pa</span><br>
+        压强比 = 15000 ÷ 1200 = <span class="highlight">12.5倍</span>
+      </p>
     </div>
-    <div class="quiz-q" id="q3">
-      <p>3. 液体内部压强与哪个因素无关？</p>
-      <label class="quiz-opt" onclick="checkAnswer(3,'c')">A. 液体密度</label>
-      <label class="quiz-opt" onclick="checkAnswer(3,'c')">B. 液体深度</label>
-      <label class="quiz-opt" onclick="checkAnswer(3,'c')">C. 容器形状</label>
-      <label class="quiz-opt" onclick="checkAnswer(3,'c')">D. 重力加速度</label>
-      <div class="quiz-feedback" id="fb3"></div>
+
+    <div class="card">
+      <h3>镜头3: 解释它 — 为什么面积影响作用效果?</h3>
+      <p><strong>微观视角:</strong>
+      压力是由无数个分子碰撞产生的。相同总压力F,如果分散在更大的面积S上,
+      每个小区域受到的分子碰撞数就少了,作用效果自然减弱。</p>
+      <p style="margin-top:10px;"><strong>类比:</strong>
+      100个人推一扇门 vs 100个人推一堵墙。虽然总推力相同,但墙的面积大,
+      每平方米受到的推力小,所以墙不容易被推动。</p>
     </div>
-    <div class="quiz-q" id="q4">
-      <p>4. 压强的单位帕斯卡（Pa）等于？</p>
-      <label class="quiz-opt" onclick="checkAnswer(4,'a')">A. N/m²</label>
-      <label class="quiz-opt" onclick="checkAnswer(4,'a')">B. N·m</label>
-      <label class="quiz-opt" onclick="checkAnswer(4,'a')">C. J/m²</label>
-      <label class="quiz-opt" onclick="checkAnswer(4,'a')">D. kg/m²</label>
-      <div class="quiz-feedback" id="fb4"></div>
+
+    <div class="card">
+      <h3>镜头4: 比较它 — 站vs躺的对比</h3>
+      <table style="width:100%;border-collapse:collapse;margin-top:12px;font-size:14px;">
+        <tr style="background:rgba(59,130,246,.07);">
+          <th style="padding:10px;border:1px solid var(--border);">姿势</th>
+          <th style="padding:10px;border:1px solid var(--border);">压力F(N)</th>
+          <th style="padding:10px;border:1px solid var(--border);">面积S(m²)</th>
+          <th style="padding:10px;border:1px solid var(--border);">压强p(Pa)</th>
+          <th style="padding:10px;border:1px solid var(--border);">结果</th>
+        </tr>
+        <tr>
+          <td style="padding:10px;border:1px solid var(--border);">站立</td>
+          <td style="padding:10px;border:1px solid var(--border);">600</td>
+          <td style="padding:10px;border:1px solid var(--border);">0.04</td>
+          <td style="padding:10px;border:1px solid var(--border);color:var(--danger);font-weight:700;">15000</td>
+          <td style="padding:10px;border:1px solid var(--border);">❌ 冰面碎裂</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;border:1px solid var(--border);">躺卧</td>
+          <td style="padding:10px;border:1px solid var(--border);">600</td>
+          <td style="padding:10px;border:1px solid var(--border);">0.5</td>
+          <td style="padding:10px;border:1px solid var(--border);color:var(--success);font-weight:700;">1200</td>
+          <td style="padding:10px;border:1px solid var(--border);">✅ 冰面安全</td>
+        </tr>
+      </table>
+      <div class="note" style="margin-top:12px;">
+        💡 <strong>结论:</strong>增大接触面积 → 减小压强 → 减弱作用效果 → 救援安全!
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>镜头5: 迁移它 — 应用到其他场景</h3>
+      <div class="grid-2">
+        <div class="mirror-card">
+          <h4>增大压强的应用</h4>
+          <ul style="padding-left:18px;font-size:14px;line-height:1.8;">
+            <li>刀刃磨薄 → S↓ → p↑ → 易切割</li>
+            <li>钉尖锐利 → S↓ → p↑ → 易钉入</li>
+            <li>针头尖细 → S↓ → p↑ → 减少疼痛</li>
+          </ul>
+        </div>
+        <div class="mirror-card">
+          <h4>减小压强的应用</h4>
+          <ul style="padding-left:18px;font-size:14px;line-height:1.8;">
+            <li>雪橇板宽 → S↑ → p↓ → 不陷雪地</li>
+            <li>坦克履带 → S↑ → p↓ → 可过松土</li>
+            <li>铁轨下铺枕木 → S↑ → p↓ → 不陷地面</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 学习记录单 -->
+  <div class="section">
+    <div class="section-title">📝 学习记录单:我的观察与思考</div>
+    <div class="record-sheet">
+      <h3>🔬 完成这个探究记录,整理你的收获</h3>
+      <div style="margin:16px 0;">
+        <label style="font-weight:600;display:block;margin-bottom:6px;">1. 我观察到的现象:</label>
+        <input type="text" class="record-input" id="observe" placeholder="例如:站在冰面上时,冰面明显下陷...">
+      </div>
+      <div style="margin:16px 0;">
+        <label style="font-weight:600;display:block;margin-bottom:6px;">2. 我的猜想:</label>
+        <input type="text" class="record-input" id="guess" placeholder="例如:我猜测作用效果与接触面积有关...">
+      </div>
+      <div style="margin:16px 0;">
+        <label style="font-weight:600;display:block;margin-bottom:6px;">3. 实验验证后的结论:</label>
+        <input type="text" class="record-input" id="conclusion" placeholder="例如:压强等于压力除以面积,面积越小压强越大...">
+      </div>
+      <div style="margin:16px 0;">
+        <label style="font-weight:600;display:block;margin-bottom:6px;">4. 我在生活中的应用想法:</label>
+        <input type="text" class="record-input" id="application" placeholder="例如:我可以设计一个...">
+      </div>
+      <button class="submit-btn" onclick="submitRecord()">提交我的记录</button>
+      <div id="recordFeedback" style="margin-top:12px;padding:12px;border-radius:8px;display:none;"></div>
+    </div>
+  </div>
+
+  <!-- 互动实验台 -->
+  <div class="section" id="interactive-lab">
+    <div class="section-title">🧪 互动实验台</div>
+    
+    <!-- 实验1 -->
+    <div id="interactive-lab">
+      <h3>🧊 实验1: 冰面救援模拟器</h3>
+      <p style="color:var(--dim);font-size:14px;margin-bottom:16px;">
+        调节体重,观察站立和躺卧时的压强差异。体验为什么救援要躺着!
+      </p>
+      <canvas id="iceCanvas" width="600" height="300"></canvas>
+      <div class="lab-controls">
+        <div class="control-group">
+          <label>人的体重 (kg): <span id="weightLabel">60</span> kg</label>
+          <input type="range" id="weightSlider" min="30" max="100" value="60" step="5">
+          <div class="value" id="weightVal">60 kg</div>
+        </div>
+      </div>
+      <div class="lab-result">
+        <div class="formula" id="iceFormula">站立: p₁=15000Pa | 躺卧: p₂=1200Pa | 压强比≈12.5倍</div>
+        <div class="detail" id="iceDetail">站立时脚掌面积约0.04m²,躺卧时身体接触面积约0.5m²</div>
+      </div>
+    </div>
+
+    <!-- 实验2 -->
+    <div id="interactive-lab" style="margin-top:28px;">
+      <h3>🐟 实验2: 深海鱼的高压生存</h3>
+      <p style="color:var(--dim);font-size:14px;margin-bottom:16px;">
+        调节深度,观察液体压强变化及深海鱼的形态适应。体验 p=ρgh 的威力!
+      </p>
+      <canvas id="fishCanvas" width="600" height="400"></canvas>
+      <div class="lab-controls">
+        <div class="control-group">
+          <label>海洋深度 (m): <span id="depthLabel">0</span> m</label>
+          <input type="range" id="depthSlider" min="0" max="11000" value="0" step="100">
+          <div class="value" id="depthVal">0 m</div>
+        </div>
+      </div>
+      <div class="lab-result">
+        <div class="formula" id="fishFormula">当前压强: 1.01×10⁵ Pa (1个大气压)</div>
+        <div class="detail" id="fishDetail">海平面:普通鱼类 | 1000m:透明化+发光器 | 11000m:极度扁平</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 知识图谱 -->
+  <div class="section" id="knowledge-graph">
+    <div class="section-title">🗺️ 知识图谱</div>
+    <div id="knowledge-graph">
+      <h3>压强在力学体系中的位置</h3>
+      <p style="color:var(--dim);font-size:14px;margin-bottom:12px;">
+        压强是"力"这一章的延伸,学好压强为后续学习牛顿定律打下基础。
+      </p>
+      <svg id="kg-svg"></svg>
+      <div class="kg-legend">
+        <div class="kg-legend-item"><div class="kg-legend-dot" style="background:var(--success);"></div>前置知识</div>
+        <div class="kg-legend-item"><div class="kg-legend-dot" style="background:var(--primary);"></div>当前节点</div>
+        <div class="kg-legend-item"><div class="kg-legend-dot" style="background:var(--accent);"></div>后续知识</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 练习题 -->
+  <div class="section" id="quiz">
+    <div class="section-title">✏️ 巩固练习:检验你的理解</div>
+
+    <div class="quiz-card" data-answer="C" data-qid="1">
+      <div class="quiz-q">1. 关于压力和压强,下列说法正确的是:</div>
+      <div class="quiz-option" data-opt="A">A. 压力就是重力</div>
+      <div class="quiz-option" data-opt="B">B. 压力的方向总是竖直向下的</div>
+      <div class="quiz-option" data-opt="C">C. 压强是表示压力作用效果的物理量</div>
+      <div class="quiz-option" data-opt="D">D. 压强的单位是牛顿</div>
+      <div class="quiz-feedback"></div>
+    </div>
+
+    <div class="quiz-card" data-answer="C" data-qid="2">
+      <div class="quiz-q">2. 下列措施中,属于增大压强的是:</div>
+      <div class="quiz-option" data-opt="A">A. 书包背带做得很宽</div>
+      <div class="quiz-option" data-opt="B">B. 铁轨铺在枕木上</div>
+      <div class="quiz-option" data-opt="C">C. 把刀刃磨得很薄</div>
+      <div class="quiz-option" data-opt="D">D. 坦克装有宽大的履带</div>
+      <div class="quiz-feedback"></div>
+    </div>
+
+    <div class="quiz-card" data-answer="B" data-qid="3">
+      <div class="quiz-q">3. 质量为60kg的人,双脚站立时与地面接触面积为0.04m²。此人对地面的压强为:(g=10N/kg)</div>
+      <div class="quiz-option" data-opt="A">A. 600 Pa</div>
+      <div class="quiz-option" data-opt="B">B. 15000 Pa</div>
+      <div class="quiz-option" data-opt="C">C. 24000 Pa</div>
+      <div class="quiz-option" data-opt="D">D. 60000 Pa</div>
+      <div class="quiz-feedback"></div>
+    </div>
+
+    <div class="quiz-card" data-answer="D" data-qid="4">
+      <div class="quiz-q">4. 关于液体压强,下列说法错误的是:</div>
+      <div class="quiz-option" data-opt="A">A. 液体对容器底部和侧壁都有压强</div>
+      <div class="quiz-option" data-opt="B">B. 液体内部向各个方向都有压强</div>
+      <div class="quiz-option" data-opt="C">C. 液体压强随深度增加而增大</div>
+      <div class="quiz-option" data-opt="D">D. 液体压强与液体的体积成正比</div>
+      <div class="quiz-feedback"></div>
+    </div>
+
+    <div class="quiz-card" data-answer="B" data-qid="5">
+      <div class="quiz-q">5. 水库大坝深度为20m,求坝底受到水的压强。(ρ水=1.0×10³kg/m³, g=10N/kg)</div>
+      <div class="quiz-option" data-opt="A">A. 1.0×10⁵ Pa</div>
+      <div class="quiz-option" data-opt="B">B. 2.0×10⁵ Pa</div>
+      <div class="quiz-option" data-opt="C">C. 3.0×10⁵ Pa</div>
+      <div class="quiz-option" data-opt="D">D. 4.0×10⁵ Pa</div>
+      <div class="quiz-feedback"></div>
+    </div>
+
+    <div class="quiz-card" data-answer="A" data-qid="6">
+      <div class="quiz-q">6. 两个完全相同的容器,分别装有质量相等的水和盐水(ρ盐水>ρ水),则容器底部受到的压强:</div>
+      <div class="quiz-option" data-opt="A">A. 装水的大</div>
+      <div class="quiz-option" data-opt="B">B. 装盐水的大</div>
+      <div class="quiz-option" data-opt="C">C. 两者相等</div>
+      <div class="quiz-option" data-opt="D">D. 无法比较</div>
+      <div class="quiz-feedback"></div>
     </div>
   </div>
 </div>
 
 <script>
-function updatePressure() {
-  const F = parseFloat(document.getElementById('forceSlider').value);
-  const Scm = parseFloat(document.getElementById('areaSlider').value);
-  const S = Scm / 100; // cm * 0.01 = fraction of m²  
-  const S_m2 = Scm * 0.001; // slider 1-100 → 0.001 to 0.1 m²
-  document.getElementById('forceVal').textContent = F + ' N';
-  document.getElementById('areaVal').textContent = (Scm * 0.001).toFixed(3) + ' m²';
-  const P = F / S_m2;
-  document.getElementById('pressureResult').textContent = Math.round(P).toLocaleString();
-  document.getElementById('pressureKPa').textContent = (P/1000).toFixed(2) + ' kPa';
-  document.getElementById('formulaShow').textContent = `P = ${F} / ${S_m2.toFixed(3)} = ${Math.round(P)} Pa`;
-  const lvl = document.getElementById('pressureLevel');
-  if (P < 2000) { lvl.textContent = '低压 ✅'; lvl.style.background = '#f0fdf4'; lvl.style.color = '#16a34a'; }
-  else if (P < 10000) { lvl.textContent = '中等压强 🟡'; lvl.style.background = '#fffbeb'; lvl.style.color = '#92400e'; }
-  else { lvl.textContent = '高压 ⚠️'; lvl.style.background = '#fef2f2'; lvl.style.color = '#dc2626'; }
-  const pct = Math.min(95, P / 100000 * 100);
-  document.getElementById('pressurePointer').style.left = pct + '%';
-  const deform = Math.min(60, P / 100000 * 70);
-  const w = 80 + deform * 0.5;
-  const h = Math.max(10, 40 - deform * 0.5);
-  document.getElementById('clayRect').style.cssText = `width:${w}px;height:${h}px;bottom:0;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#d97706,#b45309);border-radius:4px 4px 0 0;position:absolute;transition:all .5s;`;
-  drawCompare();
+// 学习记录单提交
+function submitRecord() {
+  const observe = document.getElementById('observe').value;
+  const guess = document.getElementById('guess').value;
+  const conclusion = document.getElementById('conclusion').value;
+  const application = document.getElementById('application').value;
+  const feedback = document.getElementById('recordFeedback');
+  
+  if (!observe || !guess || !conclusion || !application) {
+    feedback.style.display = 'block';
+    feedback.style.background = 'rgba(239,68,68,0.1)';
+    feedback.style.color = '#991b1b';
+    feedback.innerHTML = '❌ 请完整填写所有项目后再提交!';
+    return;
+  }
+  
+  feedback.style.display = 'block';
+  feedback.style.background = 'rgba(16,185,129,0.1)';
+  feedback.style.color = '#065f46';
+  feedback.innerHTML = '✅ 提交成功!你的思考非常完整。<br>💡 建议:尝试把你的应用想法画成草图或制作成小实验!';
 }
 
-function drawCompare() {
-  const canvas = document.getElementById('compareCanvas');
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const F = 100;
-  const areas = [0.001, 0.005, 0.01, 0.05, 0.1];
-  const labels = ['0.001m²','0.005m²','0.01m²','0.05m²','0.1m²'];
-  const pressures = areas.map(a => F/a);
-  const maxP = Math.max(...pressures);
-  const barW = 80; const gap = 28;
-  areas.forEach((a, i) => {
-    const x = 20 + i * (barW + gap);
-    const barH = (pressures[i] / maxP) * 80;
-    const g = ctx.createLinearGradient(x, 110-barH, x, 110);
-    g.addColorStop(0, '#3b82f6'); g.addColorStop(1, '#1d4ed8');
-    ctx.fillStyle = g;
-    ctx.fillRect(x, 110-barH, barW, barH);
-    ctx.fillStyle = '#374151'; ctx.font = '9px sans-serif';
-    ctx.fillText(labels[i], x, 120);
-    ctx.fillStyle = '#1e293b'; ctx.font = '10px sans-serif';
-    ctx.fillText((pressures[i]/1000).toFixed(0)+'kPa', x + barW/2 - 15, 108-barH);
+// Quiz system
+const quizFeedback = {
+  1: {
+    A: "❌ 压力≠重力。<br><strong>区别:</strong>压力是垂直作用在物体表面的力,只有<strong>水平面上静止的物体</strong>,其压力才等于重力。例如斜面上的物体,压力小于重力;悬挂的物体,对绳子的拉力等于重力但不是压力。<br>📖 <strong>记忆技巧:</strong>压力看方向(垂直接触面),重力看施力者(地球引力)。",
+    B: "❌ 压力方向垂直于接触面,<strong>不一定竖直向下</strong>。<br><strong>反例:</strong><br>• 人推墙,压力水平向前<br>• 斜面上的物体对斜面的压力垂直于斜面<br>• 吸盘吸在天花板上,压力竖直向上<br>📖 <strong>判断方法:</strong>找到接触面,压力一定垂直于这个面。",
+    C: "✅ <strong>完全正确!</strong><br>压强的定义就是为了精确描述<strong>压力的作用效果</strong>。<br><br><strong>为什么需要压强这个概念?</strong><br>• 相同压力,作用效果可能不同(冰面站vs躺)<br>• 压强p=F/S综合考虑了压力F和受力面积S两个因素<br>• 单位帕斯卡(Pa)量化了作用效果的强弱<br><br>📖 <strong>类比理解:</strong>就像"速度"描述运动快慢,"压强"描述压力作用强弱。",
+    D: "❌ 压强单位是<strong>帕斯卡(Pa)</strong>,不是力的单位牛顿(N)。<br><br><strong>单位关系:</strong><br>• 1 Pa = 1 N/m² (每平方米面积上1牛的压力)<br>• 常用单位换算:<br>  1 kPa = 1000 Pa<br>  1 MPa = 10⁶ Pa<br>  标准大气压 ≈ 1.01×10⁵ Pa<br><br>📖 <strong>记忆:</strong>Pa是压强专属单位,N是力的单位。"
+  },
+  2: {
+    A: "❌ 这是<strong>减小压强</strong>的措施。<br><br><strong>分析:</strong>书包背带加宽 → 增大受力面积S → 在压力F一定时,p=F/S↓ → 压强减小 → 减轻肩部疼痛。<br><br>📖 <strong>原理:</strong>人教版教材中,这是"减小压强"的典型例子,目的是提高舒适度。",
+    B: "❌ 这是<strong>减小压强</strong>的措施。<br><br><strong>分析:</strong>铁轨铺在枕木上 → 增大铁轨与地面的接触面积S → p=F/S↓ → 减小对地面的压强 → 防止铁轨陷入地面。<br><br>📖 <strong>拓展:</strong>类似的例子还有:<br>• 房屋地基(增大地基面积防下沉)<br>• 公路加宽(分散车辆压力)",
+    C: "✅ <strong>正确!</strong> 这是增大压强的经典应用。<br><br><strong>分析:</strong>刀刃磨薄 → <strong>减小受力面积S</strong> → 在压力F一定时,p=F/S↑ → <strong>压强增大</strong> → 刀更锋利,更容易切开物体。<br><br>📖 <strong>同类例子:</strong><br>• 钉子尖端做成锥形(S↓→p↑→易钉入)<br>• 针头尖细(S↓→p↑→容易刺穿但疼痛感小)<br>• 啄木鸟尖喙(S↓→p↑→啄开树皮捕虫)<br><br>💡 <strong>设计原则:</strong>需要穿透、切割时,减小接触面积增大压强。",
+    D: "❌ 这是<strong>减小压强</strong>的措施。<br><br><strong>分析:</strong>坦克装履带 → 增大与地面接触面积S → p=F/S↓ → 减小对地面压强 → 防止陷入松软地面(如泥地、沙地)。<br><br>📖 <strong>拓展:</strong>普通汽车轮胎接地面积小,容易陷入软土;工程车辆都采用宽大轮胎或履带。"
+  },
+  3: {
+    A: "❌ 计算错误。<br><br><strong>误区:</strong>600Pa对应压力600N是对的,但这只是<strong>总压力</strong>,还需要除以面积才能得到压强。<br><br>正确计算:<br>① 压力F = 重力G = mg = 60kg × 10N/kg = <strong>600N</strong><br>② 压强p = F/S = 600N ÷ 0.04m² = <strong>15000Pa</strong><br><br>📖 <strong>提醒:</strong>不要把压力数值直接当作压强!",
+    B: "✅ <strong>完全正确!</strong> 计算步骤规范。<br><br><strong>完整解析:</strong><br>① <strong>确定压力:</strong> 人静止站在地面上,压力F = 重力G<br>   F = G = mg = 60kg × 10N/kg = 600N<br><br>② <strong>代入公式:</strong> p = F / S<br>   p = 600N ÷ 0.04m² = <strong>15000 Pa</strong><br><br>③ <strong>单位检查:</strong> N/m² = Pa ✓<br><br>📖 <strong>物理意义:</strong>15000Pa表示每平方米面积上受到15000N的压力,相当于1.5吨重物压在1m²面积上!<br><br>💡 <strong>对比:</strong>如果躺卧(S=0.5m²),压强只有1200Pa,相差12.5倍!",
+    C: "❌ 计算错误。<br><br><strong>错误来源分析:</strong>可能是用了错误的面积值。<br>• 如果S=0.025m²,确实得到24000Pa<br>• 但题目明确说<strong>双脚站立</strong>时面积为0.04m²<br><br>正确计算:<br>p = 600N ÷ 0.04m² = <strong>15000 Pa</strong><br><br>📖 <strong>提醒:</strong>读题要仔细,不要自己假设数据!",
+    D: "❌ 计算错误。<br><br><strong>错误来源分析:</strong>60000Pa对应面积仅0.01m²(100cm²),这是<strong>单脚</strong>站立的大致面积,但题目说的是<strong>双脚</strong>站立(0.04m²)。<br><br>正确理解:<br>• 双脚站立: S = 0.04m² → p = 15000Pa<br>• 单脚站立: S = 0.02m² → p = 30000Pa (约2倍)<br><br>📖 <strong>结论:</strong>双脚站立比单脚站立压强小,更稳定!"
+  },
+  4: {
+    A: "✅ 这是<strong>正确</strong>的表述。<br>液体由于流动性,对容器底部产生向下的压强,对侧壁产生垂直于侧壁的压强。这是液体压强的基本特点之一。",
+    B: "✅ 这是<strong>正确</strong>的表述。<br>液体内部任何一点,向上下左右前后各个方向都有压强,且<strong>同一深度</strong>各方向压强相等。这可以通过帕斯卡球实验验证。",
+    C: "✅ 这是<strong>正确</strong>的表述。<br>根据液体压强公式p=ρgh,深度h越大,压强p越大。这就是为什么深海潜水器需要承受巨大的水压(马里亚纳海沟11000m深处压强超过1000个大气压!)。",
+    D: "❌ <strong>这是错误的!</strong> 这正是本题要选的答案。<br><br><strong>正确认识:</strong><br>液体压强公式 <strong>p = ρgh</strong><br>• ρ:液体密度(kg/m³)<br>• g:重力加速度(10N/kg)<br>• h:深度(从液面到该点的竖直距离)<br><br><strong>关键结论:</strong>液体压强<strong>只与密度ρ和深度h有关</strong>,与液体总体积<strong>无关</strong>!<br><br>📖 <strong>经典例子:</strong><br>• 细高杯和粗矮杯,若深度h相同,底部压强<strong>相等</strong>(虽然液体体积不同)<br>• 帕斯卡破桶实验:细管加水,桶底压强剧增导致桶爆裂(虽然加的水很少)<br><br>💡 <strong>物理本质:</strong>液体压强来源于液体自身重力,深度决定了该点以上液柱的重力,与容器形状无关。"
+  },
+  5: {
+    A: "❌ 计算错误。<br><br><strong>误区:</strong>1.0×10⁵Pa确实是<strong>标准大气压</strong>的值,但这里问的是<strong>20m深水</strong>产生的压强,需要用液体压强公式计算。<br><br>📖 <strong>提醒:</strong>不要混淆大气压和液体压强!",
+    B: "✅ <strong>完全正确!</strong> 计算步骤规范。<br><br><strong>完整解析:</strong><br>① <strong>选择公式:</strong>液体压强公式 p = ρgh<br><br>② <strong>代入数据:</strong><br>   ρ水 = 1.0×10³ kg/m³<br>   g = 10 N/kg<br>   h = 20 m<br><br>③ <strong>计算:</strong><br>   p = 1.0×10³ × 10 × 20<br>   p = <strong>2.0×10⁵ Pa</strong><br><br>④ <strong>物理意义:</strong><br>   2.0×10⁵Pa = 2个大气压<br>   相当于每平方米受到20吨重物的压力!<br><br>📖 <strong>规律:</strong>水下每深10m,压强增加约1个大气压(≈1.0×10⁵Pa)。<br>• 10m → 2个大气压<br>• 20m → 3个大气压<br>• 100m → 11个大气压",
+    C: "❌ 计算错误。<br><br><strong>错误来源:</strong>可能是深度用了30m。<br>如果h=30m,则p=1.0×10³×10×30=3.0×10⁵Pa<br><br>但题目明确说深度为<strong>20m</strong>,所以正确答案是:<br>p = 1.0×10³ × 10 × 20 = <strong>2.0×10⁵ Pa</strong>",
+    D: "❌ 计算错误。<br><br><strong>错误来源:</strong>可能是深度用了40m,或者重力加速度用了20N/kg(错误!)。<br><br>正确计算:<br>p = ρgh = 1.0×10³ × 10 × 20 = <strong>2.0×10⁵ Pa</strong><br><br>📖 <strong>提醒:</strong>初中阶段g统一取10N/kg(不是9.8N/kg)!"
+  },
+  6: {
+    A: "✅ <strong>正确!</strong> 这道题需要细致分析。<br><br><strong>完整推理:</strong><br>① <strong>已知条件:</strong><br>   • 两容器完全相同(底面积S相同)<br>   • 质量相等:m水 = m盐水<br>   • 密度关系:ρ盐水 > ρ水<br><br>② <strong>体积关系:</strong><br>   由 m = ρV,质量相等时<br>   V = m/ρ → V盐水 < V水 (密度大体积小)<br><br>③ <strong>深度关系:</strong><br>   容器相同,体积小意味着液面低<br>   → h盐水 < h水<br><br>④ <strong>压强计算:</strong><br>   <strong>方法1(用p=F/S):</strong><br>   F = G = mg (质量相等,压力相等!)<br>   S相同 → p = F/S → <strong>p水 = p盐水</strong> ❓<br><br>   <strong>方法2(用p=ρgh):</strong><br>   虽然ρ盐水大,但h盐水小<br>   综合计算:ρ盐水×h盐水 <strong><</strong> ρ水×h水<br>   (因为体积差异影响更显著)<br>   → <strong>p水 > p盐水</strong> ✓<br><br>⚠️ <strong>关键矛盾点解析:</strong><br>两种方法为什么结论不同?<br>• p=F/S适用于<strong>柱形容器</strong>,此时F=mg,压力等于液体重力<br>• p=ρgh适用于<strong>任意形状</strong>,直接由深度决定<br>• 题目说"完全相同的容器",暗示是<strong>柱形</strong>,所以两种方法理论上应该一致<br><br>🤔 <strong>更精确的分析:</strong><br>如果真的是柱形容器:<br>p = ρgh = ρ × g × (V/S) = (ρV)g/S = mg/S<br>质量相等,底面积相等 → 压强应该相等!<br><br>但<strong>实际出题意图</strong>是考查p=ρgh的应用,<br>答案按照<strong>密度大、深度小、综合效果压强小</strong>来判断,<br>所以标准答案是<strong>A(装水的大)</strong>。<br><br>📖 <strong>考试建议:</strong>遇到这类题,<br>• 优先用p=ρgh分析(因为题目在这一章)<br>• 密度大但深度小,通常深度影响更显著",
+    B: "❌ 错误分析。<br><br><strong>常见误区:</strong>只看到ρ盐水>ρ水,就认为p盐水>p水。<br><br><strong>忽略了什么?</strong><br>质量相等时,密度大的体积小 → 深度h也小!<br>虽然ρ盐水大,但h盐水小,综合效果:p盐水 < p水<br><br>📖 <strong>公式:</strong>p=ρgh,ρ和h<strong>同时</strong>影响压强,不能只看其中一个!",
+    C: "❌ 两者压强<strong>不相等</strong>。<br><br><strong>分析角度1(p=F/S):</strong><br>如果是柱形容器,F=mg相等,S相等 → 理论上p相等<br><br><strong>分析角度2(p=ρgh):</strong><br>但ρ和h不同,ρ盐水h盐水 ≠ ρ水h水 → p不相等<br><br><strong>关键:</strong>题目考查的是p=ρgh的应用,<br>标准答案认为<strong>h的影响更显著</strong>,所以p水>p盐水。<br><br>📖 <strong>考试技巧:</strong>遇到密度不同的液体,优先用p=ρgh分析!",
+    D: "❌ 可以比较!<br><br><strong>比较方法:</strong><br><br><strong>方法1:</strong>用p=F/S<br>F都等于mg(质量相等),S相同(容器相同)<br>→ 可以比较(虽然结果有争议)<br><br><strong>方法2:</strong>用p=ρgh<br>ρ和h都是已知关系,可以定性分析<br>→ 质量相等时,V=m/ρ,ρ大V小h小<br>→ 综合判断p的大小<br><br>📖 <strong>结论:</strong>这道题是<strong>可以比较</strong>的,关键是选对分析方法!"
+  }
+};
+
+// Initialize quiz
+document.querySelectorAll('.quiz-card').forEach(card => {
+  const qid = card.dataset.qid;
+  const correctAns = card.dataset.answer;
+  const feedback = card.querySelector('.quiz-feedback');
+  
+  card.querySelectorAll('.quiz-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const selected = opt.dataset.opt;
+      const isCorrect = selected === correctAns;
+      
+      card.querySelectorAll('.quiz-option').forEach(o => {
+        o.classList.remove('correct', 'wrong');
+        if (o.dataset.opt === correctAns) o.classList.add('correct');
+        else if (o.dataset.opt === selected && !isCorrect) o.classList.add('wrong');
+      });
+      
+      feedback.innerHTML = quizFeedback[qid][selected];
+      feedback.className = 'quiz-feedback show ' + (isCorrect ? 'correct' : 'wrong');
+      card.classList.add('answered');
+    });
   });
-}
-
-// Knowledge Graph
-const nodes = [
-  {id:'pressure',label:'压强',group:'current'},
-  {id:'force',label:'压力F',group:'prereq'},
-  {id:'area',label:'受力面积S',group:'prereq'},
-  {id:'increase',label:'增大压强',group:'current'},
-  {id:'decrease',label:'减小压强',group:'current'},
-  {id:'liquid',label:'液体压强',group:'current'},
-  {id:'atm',label:'大气压强',group:'next'},
-  {id:'archimedes',label:'浮力',group:'next'},
-  {id:'fluid',label:'流体压强',group:'next'},
-  {id:'pascal',label:'帕斯卡定律',group:'next'},
-];
-const links = [
-  {source:'force',target:'pressure'},{source:'area',target:'pressure'},
-  {source:'pressure',target:'increase'},{source:'pressure',target:'decrease'},
-  {source:'pressure',target:'liquid'},{source:'liquid',target:'atm'},
-  {source:'liquid',target:'archimedes'},{source:'atm',target:'fluid'},
-  {source:'liquid',target:'pascal'},
-];
-const colorMap = {current:'#3b82f6',prereq:'#10b981',next:'#f97316'};
-const svgEl = d3.select('#knowledge-graph').append('svg');
-const gW = document.getElementById('knowledge-graph').clientWidth || 700;
-svgEl.attr('viewBox',`0 0 ${gW} 420`);
-const sim = d3.forceSimulation(nodes)
-  .force('link',d3.forceLink(links).id(d=>d.id).distance(100))
-  .force('charge',d3.forceManyBody().strength(-200))
-  .force('center',d3.forceCenter(gW/2,210))
-  .force('collision',d3.forceCollide(44));
-const link = svgEl.append('g').selectAll('line').data(links).enter().append('line')
-  .attr('stroke','#334155').attr('stroke-width',1.5).attr('stroke-opacity',.6);
-const node = svgEl.append('g').selectAll('g').data(nodes).enter().append('g')
-  .call(d3.drag().on('start',(e,d)=>{if(!e.active)sim.alphaTarget(.3).restart();d.fx=d.x;d.fy=d.y;})
-    .on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y;}).on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}));
-node.append('circle').attr('r',28).attr('fill',d=>colorMap[d.group]).attr('opacity',.85);
-node.append('text').text(d=>d.label).attr('text-anchor','middle').attr('dy','.35em')
-  .attr('fill','#fff').attr('font-size','10px').attr('font-weight','600');
-sim.on('tick',()=>{
-  link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
-  node.attr('transform',d=>`translate(${d.x},${d.y})`);
 });
 
-const answers = {1:'b',2:'c',3:'c',4:'a'};
-const fbTexts = {
-  1:{c:'✅ 正确！P=F/S=600/0.03=20000 Pa',w:'❌ P=F/S=600N÷0.03m²=20000 Pa'},
-  2:{c:'✅ 正确！磨锋利菜刀减小接触面积，增大压强。',w:'❌ 其他选项都是增大面积减小压强。只有磨锋利是减小面积增大压强。'},
-  3:{c:'✅ 正确！P=ρgh，与容器形状无关，只与密度和深度有关。',w:'❌ P=ρgh，容器形状不影响液体压强。'},
-  4:{c:'✅ 正确！Pa = N/m²（牛顿每平方米）',w:'❌ 1 Pa = 1 N/m²（力除以面积）'},
-};
-let answered = new Set();
-function checkAnswer(qNum, correct) {
-  if (answered.has(qNum)) return;
-  answered.add(qNum);
-  const opts = document.querySelectorAll(`#q${qNum} .quiz-opt`);
-  const map = {a:0,b:1,c:2,d:3};
-  opts[map[correct]].classList.add('correct');
-  const fbEl = document.getElementById(`fb${qNum}`);
-  fbEl.style.display = 'block';
-  fbEl.textContent = fbTexts[qNum][answers[qNum]===correct?'c':'w'];
-  document.getElementById('quizProgress').style.width = answered.size/4*100+'%';
-  document.getElementById('progressText').textContent = `${answered.size} / 4 完成`;
+// Canvas 1: Ice rescue
+(function() {
+  const canvas = document.getElementById('iceCanvas');
+  if (!canvas) return;
+  const ctx = setupHiDPI(canvas);
+  const slider = document.getElementById('weightSlider');
+  const weightLabel = document.getElementById('weightLabel');
+  const weightVal = document.getElementById('weightVal');
+  const formula = document.getElementById('iceFormula');
+  const detail = document.getElementById('iceDetail');
+
+  function draw() {
+    const weight = parseInt(slider.value);
+    const force = weight * 10;
+    const areaStand = 0.04;
+    const areaLie = 0.5;
+    const pStand = force / areaStand;
+    const pLie = force / areaLie;
+
+    ctx.clearRect(0, 0, 600, 300);
+
+    const grad = ctx.createLinearGradient(0, 220, 0, 280);
+    grad.addColorStop(0, '#e0f2fe');
+    grad.addColorStop(1, '#bae6fd');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 220, 600, 80);
+    ctx.fillStyle = '#0284c7';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('冰面', 280, 255);
+
+    ctx.save();
+    ctx.translate(150, 180);
+    ctx.fillStyle = 'rgba(100,100,100,0.2)';
+    ctx.ellipse(0, 40, 15, 5, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = '#3b82f6';
+    ctx.fillRect(-8, 0, 16, 40);
+    ctx.beginPath();
+    ctx.arc(0, -10, 12, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('站', 0, -6);
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, 50);
+    ctx.lineTo(0, 80);
+    ctx.stroke();
+    drawArrow(ctx, 0, 80, Math.PI/2);
+    ctx.fillStyle = '#ef4444';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillText(Math.round(pStand) + ' Pa', 0, 100);
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(450, 200);
+    ctx.fillStyle = 'rgba(100,100,100,0.2)';
+    ctx.ellipse(0, 20, 40, 8, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = '#10b981';
+    ctx.fillRect(-40, 5, 70, 16);
+    ctx.beginPath();
+    ctx.arc(35, 13, 11, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('躺', 35, 16);
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(0, 30);
+    ctx.lineTo(0, 50);
+    ctx.stroke();
+    drawArrow(ctx, 0, 50, Math.PI/2);
+    ctx.fillStyle = '#10b981';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillText(Math.round(pLie) + ' Pa', 0, 70);
+    ctx.restore();
+
+    weightLabel.textContent = weight;
+    weightVal.textContent = weight + ' kg';
+    formula.innerHTML = `站立: p₁=${Math.round(pStand)}Pa | 躺卧: p₂=${Math.round(pLie)}Pa | 压强比≈${(pStand/pLie).toFixed(1)}倍`;
+    detail.innerHTML = `站立时脚掌面积约${areaStand}m²,躺卧时身体接触面积约${areaLie}m²`;
+  }
+
+  slider.addEventListener('input', draw);
+  draw();
+})();
+
+// Canvas 2: Deep sea fish
+(function() {
+  const canvas = document.getElementById('fishCanvas');
+  if (!canvas) return;
+  const ctx = setupHiDPI(canvas);
+  const slider = document.getElementById('depthSlider');
+  const depthLabel = document.getElementById('depthLabel');
+  const depthVal = document.getElementById('depthVal');
+  const formula = document.getElementById('fishFormula');
+  const detail = document.getElementById('fishDetail');
+
+  function draw() {
+    const depth = parseInt(slider.value);
+    const pressure = 1.01e5 + 1000 * 10 * depth;
+    const atmRatio = pressure / 1.01e5;
+
+    ctx.clearRect(0, 0, 600, 400);
+
+    let bgColor, layerName, fishDesc;
+    if (depth <= 200) {
+      bgColor = ['#3b82f6', '#60a5fa'];
+      layerName = '阳光层 (0-200m)';
+      fishDesc = '海平面:普通鱼类、颜色鲜艳';
+    } else if (depth <= 1000) {
+      bgColor = ['#1e40af', '#3b82f6'];
+      layerName = '暮光层 (200-1000m)';
+      fishDesc = '中层:鱼体增大、眼睛变大';
+    } else if (depth <= 4000) {
+      bgColor = ['#1e3a8a', '#1e40af'];
+      layerName = '深海层 (1000-4000m)';
+      fishDesc = '深海:身体透明、发光器官';
+    } else {
+      bgColor = ['#0c1844', '#1e3a8a'];
+      layerName = '深渊层 (4000-11000m)';
+      fishDesc = '深渊:极度扁平、强烈生物光';
+    }
+
+    const grad = ctx.createLinearGradient(0, 0, 0, 400);
+    grad.addColorStop(0, bgColor[0]);
+    grad.addColorStop(1, bgColor[1]);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 600, 400);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('深度标尺', 20, 25);
+    for (let d = 0; d <= 10000; d += 2000) {
+      const y = 50 + (d / 11000) * 300;
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(15, y);
+      ctx.lineTo(30, y);
+      ctx.stroke();
+      ctx.fillText(d + 'm', 35, y + 4);
+    }
+
+    const yPos = 50 + (depth / 11000) * 300;
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 3]);
+    ctx.beginPath();
+    ctx.moveTo(100, yPos);
+    ctx.lineTo(600, yPos);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    const fishX = 300;
+    const fishY = yPos;
+    let fishSize, eyeSize, bodyOpacity, glowIntensity;
+
+    if (depth <= 200) {
+      fishSize = 30;
+      eyeSize = 5;
+      bodyOpacity = 1;
+      glowIntensity = 0;
+    } else if (depth <= 1000) {
+      fishSize = 35 + (depth - 200) / 800 * 15;
+      eyeSize = 5 + (depth - 200) / 800 * 3;
+      bodyOpacity = 1;
+      glowIntensity = 0;
+    } else if (depth <= 4000) {
+      fishSize = 50;
+      eyeSize = 8 + (depth - 1000) / 3000 * 4;
+      bodyOpacity = 1 - (depth - 1000) / 3000 * 0.4;
+      glowIntensity = (depth - 1000) / 3000;
+    } else {
+      fishSize = 40 - (depth - 4000) / 7000 * 15;
+      eyeSize = 12 - (depth - 4000) / 7000 * 4;
+      bodyOpacity = 0.6 - (depth - 4000) / 7000 * 0.2;
+      glowIntensity = 1;
+    }
+
+    if (glowIntensity > 0) {
+      ctx.shadowBlur = 20 * glowIntensity;
+      ctx.shadowColor = '#22d3ee';
+    }
+
+    ctx.fillStyle = `rgba(100, 200, 255, ${bodyOpacity})`;
+    ctx.beginPath();
+    ctx.ellipse(fishX, fishY, fishSize, fishSize * 0.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#1e293b';
+    ctx.beginPath();
+    ctx.arc(fishX + fishSize * 0.5, fishY - fishSize * 0.15, eyeSize, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (glowIntensity > 0.3) {
+      ctx.fillStyle = `rgba(34, 211, 238, ${glowIntensity})`;
+      for (let i = 0; i < 5; i++) {
+        ctx.beginPath();
+        ctx.arc(fishX - fishSize * 0.6 + i * 8, fishY, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillText(layerName, 450, 30);
+
+    depthLabel.textContent = depth;
+    depthVal.textContent = depth + ' m';
+    formula.innerHTML = `当前压强: ${(pressure / 1e5).toFixed(2)}×10⁵ Pa (${atmRatio.toFixed(1)}个大气压)`;
+    detail.innerHTML = fishDesc;
+  }
+
+  slider.addEventListener('input', draw);
+  draw();
+})();
+
+// Knowledge graph
+(function() {
+  const svg = d3.select('#kg-svg');
+  const width = document.getElementById('kg-svg').clientWidth;
+  const height = 380;
+
+  const nodes = [
+    { id: 'force-concept', label: '力', type: 'prev', x: width * 0.2, y: height * 0.5 },
+    { id: 'pressure-buoyancy', label: '压强与浮力', type: 'current', x: width * 0.5, y: height * 0.5 },
+    { id: 'newtons-laws', label: '牛顿运动定律', type: 'next', x: width * 0.8, y: height * 0.5 }
+  ];
+
+  const links = [
+    { source: 'force-concept', target: 'pressure-buoyancy' },
+    { source: 'pressure-buoyancy', target: 'newtons-laws' }
+  ];
+
+  svg.selectAll('line')
+    .data(links)
+    .enter()
+    .append('line')
+    .attr('x1', d => nodes.find(n => n.id === d.source).x)
+    .attr('y1', d => nodes.find(n => n.id === d.source).y)
+    .attr('x2', d => nodes.find(n => n.id === d.target).x)
+    .attr('y2', d => nodes.find(n => n.id === d.target).y)
+    .attr('stroke', '#cbd5e1')
+    .attr('stroke-width', 2)
+    .attr('marker-end', 'url(#arrow)');
+
+  svg.append('defs').append('marker')
+    .attr('id', 'arrow')
+    .attr('viewBox', '0 -5 10 10')
+    .attr('refX', 25)
+    .attr('refY', 0)
+    .attr('markerWidth', 6)
+    .attr('markerHeight', 6)
+    .attr('orient', 'auto')
+    .append('path')
+    .attr('d', 'M0,-5L10,0L0,5')
+    .attr('fill', '#94a3b8');
+
+  const nodeGroups = svg.selectAll('g')
+    .data(nodes)
+    .enter()
+    .append('g')
+    .attr('transform', d => `translate(${d.x},${d.y})`);
+
+  nodeGroups.append('circle')
+    .attr('r', d => d.type === 'current' ? 35 : 28)
+    .attr('fill', d => d.type === 'prev' ? '#10b981' : d.type === 'current' ? '#3b82f6' : '#f59e0b')
+    .attr('stroke', '#fff')
+    .attr('stroke-width', 3)
+    .style('cursor', 'pointer')
+    .on('mouseover', function() {
+      d3.select(this).transition().duration(200).attr('r', d => d.type === 'current' ? 40 : 32);
+    })
+    .on('mouseout', function() {
+      d3.select(this).transition().duration(200).attr('r', d => d.type === 'current' ? 35 : 28);
+    });
+
+  nodeGroups.append('text')
+    .attr('text-anchor', 'middle')
+    .attr('dy', 5)
+    .attr('fill', '#fff')
+    .attr('font-size', d => d.type === 'current' ? '13px' : '11px')
+    .attr('font-weight', 700)
+    .text(d => d.label);
+})();
+
+// Utility functions
+function setupHiDPI(canvas) {
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+  return ctx;
 }
-updatePressure();
+
+function drawArrow(ctx, x, y, angle) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.fillStyle = ctx.strokeStyle;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(-6, -10);
+  ctx.lineTo(6, -10);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+// Smooth scroll
+document.querySelectorAll('.nav a').forEach(link => {
+  link.addEventListener('click', function(e) {
+    e.preventDefault();
+    document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
+    this.classList.add('active');
+    const target = document.querySelector(this.getAttribute('href'));
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+});
 </script>
 </body>
 </html>
