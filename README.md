@@ -125,11 +125,14 @@ Click any course below to experience it live:
 TeachAny works as a **Skill** for AI coding assistants (CodeBuddy, Cursor, Windsurf, Claude, etc.):
 
 1. Copy `skill/SKILL.md` (English) or `skill/SKILL_CN.md` (Chinese) to your AI assistant's skill directory
-2. Start a conversation:
+2. Copy the `data/` directory alongside it — it contains knowledge trees, exercises, error banks, and concept graphs for all 9 subjects
+3. Start a conversation:
    ```
    Create an interactive courseware for "Photosynthesis" (Grade 7 Biology)
    ```
-3. The AI will follow TeachAny's methodology to produce a complete, interactive HTML courseware
+4. The AI will follow TeachAny's methodology to produce a complete, interactive HTML courseware
+
+> **Note**: The skill only needs `skill/` + `data/`. Official and community coursewares are available on the [TeachAny Gallery website](https://weponusa.github.io/teachany/) — they are NOT bundled with the skill.
 
 ### Option 1b: Admin Skill (for project maintainers)
 
@@ -250,7 +253,7 @@ teachany/
 │   ├── design-system.md         # Visual design specification
 │   └── subject-guides/          # Per-subject usage guides
 │
-├── examples/                    # 📦 Courseware examples (for local preview)
+├── examples/                    # 🌐 Official coursewares (website only, NOT part of skill)
 │   ├── math-quadratic-function/ # Quadratic functions (Math, Grade 9)
 │   ├── math-linear-function/    # Linear functions (Math, Grade 8)
 │   ├── math-congruent-triangles/# Congruent triangles (Math, Grade 8)
