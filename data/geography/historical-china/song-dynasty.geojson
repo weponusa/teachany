@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<base href="/History/">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>华夏千年 · 中国历代疆土</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#F5F0E1;--bg2:#EDE8D8;--bg3:#FAF8F2;--bgD:#2C2420;--bgM:#E8E0D0;
+  --ink:#2C1C10;--ink2:#3E2723;--ink3:#6D5D4E;--ink4:#9E8E7E;
+  --red:#C04851;--redH:#A03040;--redL:#F5E6E8;
+  --gold:#B8860B;--goldL:#D4AF37;
+  --bdr:#D4C5A9;--bdr2:#E0D8C8;
+  --ft:'ZCOOL XiaoWei','KaiTi','STKaiti','Noto Serif SC',serif;
+  --fb:'Noto Serif SC','STSong','SimSun',serif;
+}
+body{font-family:var(--fb);background:var(--bg);color:var(--ink2);height:100vh;overflow:hidden;position:relative}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 20% 35%,rgba(180,160,130,.04) 0%,transparent 50%),radial-gradient(circle at 75% 60%,rgba(160,140,110,.03) 0%,transparent 50%);pointer-events:none;z-index:0}
+
+/* Header */
+.header{height:56px;padding:0 32px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#2C2420,#3E2723 60%,#4A3830);position:relative;z-index:1000;box-shadow:0 2px 12px rgba(44,28,16,.15)}
+.header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--goldL),var(--gold),var(--goldL),transparent)}
+.site-title{color:#F5F0E1;font-family:var(--ft);font-size:22px;letter-spacing:6px;font-weight:600}
+.site-sub{color:#B8A89A;font-size:12px;letter-spacing:3px;margin-left:16px}
+
+/* Search */
+.search-box{position:relative;flex:1;max-width:360px;margin:0 32px}
+.search-input{width:100%;height:36px;padding:0 16px 0 40px;background:rgba(245,240,225,.12);border:1px solid rgba(212,197,169,.4);border-radius:4px;color:#F5F0E1;font-family:var(--fb);font-size:14px;outline:none;transition:.3s}
+.search-input::placeholder{color:rgba(184,168,154,.7);font-size:13px}
+.search-input:focus{background:rgba(245,240,225,.18);border-color:rgba(212,175,55,.6);box-shadow:0 0 0 3px rgba(212,175,55,.1)}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:rgba(184,168,154,.7);font-size:16px;pointer-events:none}
+#searchDrop{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;box-shadow:0 4px 16px rgba(44,28,16,.12);max-height:320px;overflow-y:auto;z-index:1100;display:none}
+.sr-item{padding:10px 16px;cursor:pointer;border-bottom:1px solid var(--bdr2);font-size:14px;transition:.2s}
+.sr-item:hover{background:var(--redL)}
+.sr-type{display:inline-block;font-size:11px;color:var(--ink3);background:var(--bg2);padding:1px 6px;border-radius:2px;margin-right:8px}
+.sr-empty{padding:16px;text-align:center;color:var(--ink3);font-size:13px}
+
+/* Filter */
+.filter-wrap{position:relative}
+.filter-btn{height:36px;padding:0 16px;background:transparent;border:1px solid rgba(212,197,169,.4);border-radius:4px;color:#F5F0E1;font-family:var(--fb);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:.3s}
+.filter-btn:hover{border-color:rgba(212,175,55,.6)}
+#filterDrop{position:absolute;top:calc(100% + 8px);right:0;width:260px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;box-shadow:0 4px 16px rgba(44,28,16,.12);padding:16px;z-index:1100;display:none}
+#filterDrop.show{display:block}
+.ft-title{font-size:12px;font-weight:600;color:var(--ink3);margin-bottom:8px;letter-spacing:1px}
+.ft-tag{display:inline-block;padding:4px 12px;margin:0 6px 6px 0;border:1px solid var(--bdr);border-radius:4px;font-size:12px;cursor:pointer;transition:.2s;background:transparent;color:var(--ink2);font-family:var(--fb)}
+.ft-tag:hover,.ft-tag.selected{background:var(--red);color:#FAF8F2;border-color:var(--red)}
+
+/* Dynasty bar */
+.dynasty-bar{background:var(--bg2);padding:10px 32px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--bdr);flex-wrap:wrap;position:relative;z-index:500}
+.dynasty-btn{padding:6px 14px;border:1px solid var(--bdr);background:transparent;color:var(--ink2);font-family:var(--fb);font-size:13px;cursor:pointer;border-radius:4px;transition:.3s;letter-spacing:2px;line-height:18px}
+.dynasty-btn:hover{background:var(--redL);border-color:var(--red);color:var(--red)}
+.dynasty-btn.active{background:var(--red);color:#FAF8F2;border-color:var(--red);box-shadow:0 2px 8px rgba(192,72,81,.25);font-weight:500}
+.db-years{display:block;font-size:9px;opacity:.65;letter-spacing:0;margin-top:1px}
+.dynasty-btn.active .db-years{color:rgba(250,248,242,.8);opacity:1}
+
+/* Main */
+.main{display:flex;height:calc(100vh - 56px - 52px);position:relative;z-index:1}
+.map-sec{flex:0 0 62%;position:relative;border-right:1px solid var(--bdr)}
+#map{width:100%;height:100%;background:var(--bgM)}
+.leaflet-container{background:var(--bgM)!important;font-family:var(--fb)!important}
+
+/* Info panel */
+.info-panel{flex:0 0 38%;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+#dynastyInfo{padding:20px 24px;overflow-y:auto;flex:1}
+.di-header{display:flex;align-items:baseline;gap:12px;margin-bottom:8px}
+.di-header h2{font-family:var(--ft);font-size:28px;color:var(--ink);letter-spacing:4px}
+.di-period{font-size:13px;color:var(--ink3)}
+.di-area{display:inline-block;background:var(--redL);color:var(--red);padding:4px 12px;border-radius:12px;font-size:13px;margin-bottom:14px}
+.di-section{margin-bottom:16px}
+.di-section h3{font-size:15px;color:var(--ink);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--bdr2);display:flex;align-items:center;gap:8px}
+.di-section h3::before{content:'';display:inline-block;width:3px;height:14px;background:var(--red);border-radius:2px}
+.emp-list{display:flex;flex-wrap:wrap;gap:8px}
+.emp-tag{padding:4px 12px;background:var(--bg2);border:1px solid var(--bdr);border-radius:4px;font-size:13px;color:var(--red);cursor:pointer;transition:.2s}
+.emp-tag:hover{background:var(--redL);border-color:var(--red);transform:translateY(-1px);box-shadow:0 2px 6px rgba(192,72,81,.12)}
+.evt-list{list-style:none}
+.evt-list li{padding:5px 0;font-size:13px;line-height:22px;display:flex;align-items:flex-start;gap:8px}
+.evt-list li::before{content:'◆';color:#4A5459;font-size:8px;margin-top:6px;flex-shrink:0}
+.person-link{color:var(--red);cursor:pointer;border-bottom:1px dashed rgba(192,72,81,.4);font-weight:500;transition:.2s}
+.person-link:hover{color:var(--redH);border-bottom-style:solid}
+.admin-text{font-size:13px;line-height:22px}
+.di-hint{margin-top:12px;padding:10px;background:var(--redL);border-radius:6px;font-size:12px;color:var(--ink3);line-height:1.6}
+
+/* Landmark detail — now uses modal */
+.ld-badge{display:inline-block;font-size:11px;color:var(--red);background:var(--redL);padding:2px 8px;border-radius:3px;border:1px solid rgba(192,72,81,.2);margin-bottom:12px}
+.ld-story{font-size:14px;line-height:24px;margin-bottom:16px;text-indent:2em}
+
+/* Poem */
+.poem-block{background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;padding:20px 24px;margin:12px 0;position:relative}
+.poem-block::before{content:'';position:absolute;left:0;top:16px;bottom:16px;width:3px;background:linear-gradient(180deg,transparent,var(--red) 20%,var(--red) 80%,transparent);border-radius:2px}
+.poem-title{font-family:var(--ft);font-size:18px;color:var(--ink);letter-spacing:2px;margin-bottom:4px}
+.poem-author,.poet-link{font-size:14px;color:var(--red);cursor:pointer;border-bottom:1px dashed rgba(192,72,81,.4);transition:.2s;display:inline-block;margin-bottom:12px}
+.poem-author:hover,.poet-link:hover{color:var(--redH);border-bottom-style:solid}
+.poem-text{font-size:16px;line-height:28px;color:var(--ink);letter-spacing:2px;white-space:pre-line;margin-bottom:16px}
+.poem-cmt{border-top:1px dashed var(--bdr);padding-top:14px}
+.cmt-item{margin-bottom:10px}
+.cmt-label{font-size:12px;font-weight:600;color:var(--gold);letter-spacing:1px;display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.cmt-label::before{content:'';display:inline-block;width:4px;height:14px;background:var(--gold);border-radius:1px}
+.cmt-item p{font-size:13px;line-height:22px;text-indent:2em}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(26,26,26,.6);backdrop-filter:blur(2px);z-index:2000;display:none;align-items:center;justify-content:center}
+.modal-overlay.show{display:block}
+.modal-overlay-layer{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+.modal-layer{position:fixed;inset:0}
+.modal{width:520px;max-width:90vw;max-height:80vh;background:var(--bg3);border-radius:12px;border:1px solid var(--bdr);box-shadow:0 8px 32px rgba(44,28,16,.2);overflow:hidden;display:flex;flex-direction:column;position:relative;animation:unfold .5s cubic-bezier(.22,.61,.36,1)}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,transparent,var(--gold),var(--goldL),var(--gold),transparent)}
+@keyframes unfold{0%{opacity:0;transform:scaleY(.3) scaleX(.8)}50%{opacity:1;transform:scaleY(1.02)}100%{transform:scaleY(1) scaleX(1)}}
+.modal-head{padding:24px 32px 16px;border-bottom:1px solid var(--bdr2);display:flex;justify-content:space-between;align-items:flex-start}
+.modal-title-text{font-family:var(--ft);font-size:24px;color:var(--ink);letter-spacing:3px}
+.modal-x{width:32px;height:32px;border:none;background:transparent;color:var(--ink3);font-size:20px;cursor:pointer;border-radius:4px;display:flex;align-items:center;justify-content:center;transition:.2s}
+.modal-x:hover{background:var(--redL);color:var(--red)}
+.modal-back{height:28px;padding:0 12px;border:1px solid var(--bdr);background:var(--bg2);color:var(--ink2);font-family:var(--fb);font-size:12px;cursor:pointer;border-radius:4px;transition:.2s;display:flex;align-items:center;gap:4px}
+.modal-back:hover{background:var(--redL);border-color:var(--red);color:var(--red)}
+.modal-body-content{padding:20px 32px 32px;overflow-y:auto;flex:1}
+.mi{display:flex;align-items:baseline;margin-bottom:6px;font-size:14px}
+.mil{color:var(--ink3);font-size:13px;min-width:64px;flex-shrink:0}
+.mp{font-size:14px;line-height:24px;margin-bottom:12px;text-indent:2em}
+.ms{font-size:15px;font-weight:600;color:var(--ink);margin:16px 0 6px;padding-left:10px;border-left:3px solid var(--red)}
+
+/* Map elements */
+.admin-lbl span{font-size:11px;color:#4A5459;font-weight:500;text-shadow:1px 1px 2px rgba(245,240,225,.9),-1px -1px 2px rgba(245,240,225,.9);letter-spacing:2px;white-space:nowrap;pointer-events:none}
+.lm-wrap{cursor:pointer}
+.lm-icon{width:32px;height:32px;background:var(--red);border:2px solid rgba(250,248,242,.8);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(44,28,16,.25);transition:transform .3s,box-shadow .3s;color:#FAF8F2;font-family:var(--ft);font-size:12px;font-weight:700}
+.lm-sq{border-radius:3px!important}
+.lm-icon:hover{transform:scale(1.2) translateY(-3px);box-shadow:0 4px 12px rgba(192,72,81,.35)}
+.geo-tip{background:rgba(250,248,242,.95)!important;border:1px solid #4A5459!important;color:var(--ink)!important;font-family:var(--fb)!important;font-size:13px!important;padding:4px 10px!important;border-radius:4px!important}
+.lm-tip{background:rgba(44,28,16,.85)!important;border:none!important;color:#FAF8F2!important;font-family:var(--fb)!important;font-size:13px!important;padding:4px 10px!important;border-radius:4px!important}
+.leaflet-control-zoom a{background:var(--bg)!important;color:var(--ink)!important;border-color:var(--bdr)!important}
+
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--red)}
+</style>
+</head>
+<body>
+<div class="header">
+  <div style="display:flex;align-items:baseline"><span class="site-title">华夏千年</span><span class="site-sub">中国历代疆土 · 名人典故</span></div>
+  <div class="search-box"><span class="search-icon">🔍</span><input class="search-input" placeholder="搜索朝代、人物、地标、诗词…" oninput="onSearch(this.value)"><div id="searchDrop"></div></div>
+  <div class="filter-wrap"><button class="filter-btn" onclick="toggleFilter()">筛选 ▾</button>
+    <div id="filterDrop"><div class="ft-title">按地标类型</div>
+      <button class="ft-tag selected" data-type="all" onclick="filterBy('all')">全部</button>
+      <button class="ft-tag" data-type="古都" onclick="filterBy('古都')">古都</button>
+      <button class="ft-tag" data-type="帝都" onclick="filterBy('帝都')">帝都</button>
+      <button class="ft-tag" data-type="文化名城" onclick="filterBy('文化名城')">文化</button>
+      <button class="ft-tag" data-type="贬谪" onclick="filterBy('贬谪')">贬谪</button>
+      <button class="ft-tag" data-type="军事工程" onclick="filterBy('军事工程')">军事</button>
+      <button class="ft-tag" data-type="丝路" onclick="filterBy('丝路')">丝路</button>
+    </div>
+  </div>
+</div>
+<div class="dynasty-bar" id="dynastyBar"></div>
+<div class="main">
+  <div class="map-sec"><div id="map"></div></div>
+  <div class="info-panel">
+    <div id="dynastyInfo"></div>
+  </div>
+</div>
+<div class="modal-overlay" id="modalOverlay">
+  <div id="modalStackContainer"></div>
+</div>
+<script src="js/app.js"></script>
+</body>
+</html>

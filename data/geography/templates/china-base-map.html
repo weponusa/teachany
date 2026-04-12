@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>中国地图模板</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <style>
+    body { margin: 0; font-family: sans-serif; }
+    #map { width: 100vw; height: 100vh; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script>
+    const chart = echarts.init(document.getElementById('map'));
+    
+    // 加载中国地图数据
+    fetch('../modern-china/provinces.geojson')
+      .then(res => res.json())
+      .then(geoJson => {
+        echarts.registerMap('china', geoJson);
+        
+        chart.setOption({
+          title: {
+            text: '中国地图',
+            left: 'center',
+            top: 20
+          },
+          tooltip: {
+            trigger: 'item',
+            formatter: '{b}: {c}'
+          },
+          visualMap: {
+            min: 0,
+            max: 5000,
+            text: ['高', '低'],
+            realtime: false,
+            calculable: true,
+            inRange: {
+              color: ['lightskyblue', 'yellow', 'orangered']
+            }
+          },
+          series: [{
+            name: '数据',
+            type: 'map',
+            map: 'china',
+            label: {
+              show: true
+            },
+            data: [
+              { name: '北京市', value: 2154 },
+              { name: '上海市', value: 2423 }
+              // 可添加更多数据
+            ]
+          }]
+        });
+      });
+  </script>
+</body>
+</html>

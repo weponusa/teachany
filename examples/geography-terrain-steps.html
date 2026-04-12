@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中国地形与三级阶梯 — TeachAny 地理示范课件</title>
+<script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+<link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<style>
+:root {
+  --primary: #1a73e8;
+  --success: #34a853;
+  --warning: #f9ab00;
+  --danger: #ea4335;
+  --dark: #202124;
+  --light: #f8f9fa;
+  --card-shadow: 0 2px 12px rgba(0,0,0,0.12);
+  --radius: 12px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--light); color: var(--dark); }
+
+/* ===== 顶部导航 ===== */
+.navbar {
+  background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
+  color: white; padding: 16px 24px;
+  display: flex; align-items: center; gap: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  position: sticky; top: 0; z-index: 100;
+}
+.navbar h1 { font-size: 20px; font-weight: 600; }
+.navbar .badge {
+  background: rgba(255,255,255,0.2); padding: 4px 12px;
+  border-radius: 20px; font-size: 12px;
+}
+.navbar .nav-links { margin-left: auto; display: flex; gap: 8px; }
+.navbar .nav-links button {
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+  color: white; padding: 6px 14px; border-radius: 20px; cursor: pointer;
+  font-size: 13px; transition: all 0.3s;
+}
+.navbar .nav-links button:hover { background: rgba(255,255,255,0.3); }
+.navbar .nav-links button.active { background: white; color: var(--primary); }
+
+/* ===== 卡片步骤 ===== */
+.container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+.section-card {
+  background: white; border-radius: var(--radius);
+  box-shadow: var(--card-shadow); margin-bottom: 24px;
+  overflow: hidden; transition: all 0.3s;
+  display: none;
+}
+.section-card.active { display: block; animation: fadeIn 0.5s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.card-header {
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e8eaf6 100%);
+  border-bottom: 1px solid #e0e0e0;
+  display: flex; align-items: center; gap: 12px;
+}
+.step-number {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--primary); color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 16px;
+}
+.card-header h2 { font-size: 18px; font-weight: 600; }
+.card-header .subtitle { font-size: 13px; color: #666; margin-left: auto; }
+
+.card-body { padding: 24px; }
+
+/* ===== 3D 地图 ===== */
+.map-container {
+  width: 100%; height: 520px;
+  border-radius: 8px; overflow: hidden;
+  position: relative; border: 1px solid #e0e0e0;
+}
+#map3d { width: 100%; height: 100%; }
+
+.map-overlay {
+  position: absolute; top: 12px; right: 12px;
+  background: rgba(255,255,255,0.95); padding: 14px;
+  border-radius: 8px; box-shadow: var(--card-shadow);
+  z-index: 10; max-width: 220px;
+}
+.map-overlay h4 { font-size: 14px; margin-bottom: 8px; color: #333; }
+.map-overlay label { display: block; font-size: 12px; color: #666; margin-bottom: 4px; }
+.map-overlay input[type="range"] { width: 100%; margin-bottom: 8px; }
+.map-overlay .val { font-weight: 600; color: var(--primary); }
+.map-overlay button {
+  width: 100%; padding: 8px; margin-bottom: 6px;
+  background: var(--primary); color: white; border: none;
+  border-radius: 6px; cursor: pointer; font-size: 13px;
+  transition: background 0.2s;
+}
+.map-overlay button:hover { background: #0d47a1; }
+.map-overlay button.secondary { background: #f5f5f5; color: #333; border: 1px solid #ddd; }
+.map-overlay button.secondary:hover { background: #e0e0e0; }
+
+.scene-buttons {
+  position: absolute; bottom: 12px; left: 12px; right: 12px;
+  display: flex; gap: 8px; flex-wrap: wrap; z-index: 10;
+}
+.scene-btn {
+  padding: 8px 16px; border: none; border-radius: 20px;
+  font-size: 13px; cursor: pointer; transition: all 0.3s;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+.scene-btn.step1 { background: #e3f2fd; color: #1565c0; }
+.scene-btn.step2 { background: #e8f5e9; color: #2e7d32; }
+.scene-btn.step3 { background: #fff3e0; color: #e65100; }
+.scene-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+.scene-btn.active { outline: 3px solid var(--primary); }
+
+/* ===== 知识卡片 ===== */
+.knowledge-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 16px; margin-top: 16px;
+}
+.knowledge-card {
+  padding: 16px; border-radius: 8px;
+  border: 1px solid #e0e0e0; cursor: pointer;
+  transition: all 0.3s; position: relative;
+}
+.knowledge-card:hover { transform: translateY(-3px); box-shadow: var(--card-shadow); }
+.knowledge-card .kc-step {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-weight: 700; font-size: 13px;
+  margin-bottom: 8px;
+}
+.knowledge-card h4 { font-size: 15px; margin-bottom: 6px; }
+.knowledge-card p { font-size: 13px; color: #666; line-height: 1.5; }
+.knowledge-card .data-tag {
+  display: inline-block; padding: 2px 8px;
+  border-radius: 4px; font-size: 11px; font-weight: 600;
+  margin-top: 8px;
+}
+
+.kc-1 { border-left: 4px solid #e65100; }
+.kc-1 .kc-step { background: #e65100; }
+.kc-1 .data-tag { background: #fff3e0; color: #e65100; }
+.kc-2 { border-left: 4px solid #2e7d32; }
+.kc-2 .kc-step { background: #2e7d32; }
+.kc-2 .data-tag { background: #e8f5e9; color: #2e7d32; }
+.kc-3 { border-left: 4px solid #1565c0; }
+.kc-3 .kc-step { background: #1565c0; }
+.kc-3 .data-tag { background: #e3f2fd; color: #1565c0; }
+
+/* ===== ECharts 剖面图 ===== */
+.profile-container {
+  width: 100%; height: 320px;
+  margin-top: 16px; border-radius: 8px;
+  overflow: hidden; border: 1px solid #e0e0e0;
+}
+
+/* ===== 信息框 ===== */
+.info-popup {
+  position: absolute; top: 12px; left: 12px;
+  background: rgba(255,255,255,0.95); padding: 16px;
+  border-radius: 8px; box-shadow: var(--card-shadow);
+  z-index: 10; max-width: 280px; display: none;
+  border-left: 4px solid var(--primary);
+}
+.info-popup.show { display: block; animation: fadeIn 0.3s ease; }
+.info-popup h4 { font-size: 14px; margin-bottom: 6px; }
+.info-popup p { font-size: 13px; color: #555; line-height: 1.6; }
+.info-popup .close { position: absolute; top: 8px; right: 8px; cursor: pointer; font-size: 16px; color: #999; background: none; border: none; }
+
+/* ===== 练习题 ===== */
+.quiz-card {
+  background: #fafafa; border: 1px solid #e0e0e0;
+  border-radius: 8px; padding: 20px; margin-top: 16px;
+}
+.quiz-card h4 { font-size: 15px; margin-bottom: 12px; color: var(--primary); }
+.quiz-option {
+  display: block; padding: 10px 16px; margin-bottom: 8px;
+  border: 1px solid #e0e0e0; border-radius: 6px;
+  cursor: pointer; transition: all 0.2s; font-size: 14px;
+}
+.quiz-option:hover { background: #e3f2fd; border-color: var(--primary); }
+.quiz-option.correct { background: #e8f5e9; border-color: var(--success); color: var(--success); }
+.quiz-option.wrong { background: #fce4ec; border-color: var(--danger); color: var(--danger); }
+.quiz-feedback { margin-top: 8px; font-size: 13px; padding: 10px; border-radius: 6px; display: none; }
+
+/* ===== 底部进度 ===== */
+.progress-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: white; box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+  padding: 12px 24px; display: flex; align-items: center; gap: 12px;
+  z-index: 100;
+}
+.progress-track {
+  flex: 1; height: 6px; background: #e0e0e0;
+  border-radius: 3px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; background: var(--primary);
+  border-radius: 3px; transition: width 0.5s ease;
+}
+.progress-text { font-size: 13px; color: #666; min-width: 80px; text-align: right; }
+.progress-bar button {
+  padding: 8px 20px; border: none; border-radius: 6px;
+  cursor: pointer; font-size: 13px; font-weight: 600;
+}
+.progress-bar .prev-btn { background: #f5f5f5; color: #333; }
+.progress-bar .next-btn { background: var(--primary); color: white; }
+
+/* ===== Token 提示 ===== */
+.token-notice {
+  background: #fff8e1; border: 1px solid #ffd54f;
+  border-radius: 8px; padding: 12px 16px;
+  font-size: 13px; color: #f57f17;
+  margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+}
+.token-notice a { color: #e65100; font-weight: 600; }
+
+@media (max-width: 768px) {
+  .knowledge-grid { grid-template-columns: 1fr; }
+  .map-container { height: 380px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== 导航栏 ===== -->
+<div class="navbar">
+  <span style="font-size:24px">🌏</span>
+  <h1>中国地形与三级阶梯</h1>
+  <span class="badge">初中地理 · 八年级</span>
+  <div class="nav-links">
+    <button class="active" onclick="goStep(1)">① 认识地形</button>
+    <button onclick="goStep(2)">② 3D 探索</button>
+    <button onclick="goStep(3)">③ 阶梯剖面</button>
+    <button onclick="goStep(4)">④ 思考练习</button>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ============================== Step 1：认识地形 ============================== -->
+<div class="section-card active" id="step1">
+  <div class="card-header">
+    <div class="step-number">1</div>
+    <h2>认识中国地形：西高东低，呈阶梯状分布</h2>
+    <span class="subtitle">核心知识 · 3 分钟</span>
+  </div>
+  <div class="card-body">
+    <p style="font-size:15px; line-height:1.8; margin-bottom:16px;">
+      中国地势<strong>西高东低</strong>，大致呈<strong>三级阶梯状</strong>分布。这一特征深刻影响了河流走向（大部分自西向东流）、气候分布（海洋水汽深入内陆）和人口经济格局。
+    </p>
+
+    <div class="knowledge-grid">
+      <div class="knowledge-card kc-1" onclick="goStep(2); flyToStep(1);">
+        <div class="kc-step">1</div>
+        <h4>🏔️ 第一级阶梯</h4>
+        <p>青藏高原为主体，平均海拔<strong>4000米以上</strong>，被称为"世界屋脊"。包括柴达木盆地。</p>
+        <span class="data-tag">海拔 4000m+</span>
+      </div>
+      <div class="knowledge-card kc-2" onclick="goStep(2); flyToStep(2);">
+        <div class="kc-step">2</div>
+        <h4>⛰️ 第二级阶梯</h4>
+        <p>以高原和盆地为主，海拔<strong>1000-2000米</strong>。包括内蒙古高原、黄土高原、云贵高原、准噶尔盆地、塔里木盆地、四川盆地。</p>
+        <span class="data-tag">海拔 1000-2000m</span>
+      </div>
+      <div class="knowledge-card kc-3" onclick="goStep(2); flyToStep(3);">
+        <div class="kc-step">3</div>
+        <h4>🌊 第三级阶梯</h4>
+        <p>以平原和丘陵为主，海拔<strong>500米以下</strong>。包括东北平原、华北平原、长江中下游平原及东南丘陵。</p>
+        <span class="data-tag">海拔 500m 以下</span>
+      </div>
+    </div>
+
+    <div style="margin-top:20px; padding:16px; background:#e8eaf6; border-radius:8px;">
+      <strong>💡 阶梯分界线（必背）</strong>
+      <ul style="margin-top:8px; font-size:14px; line-height:2; padding-left:20px;">
+        <li><strong>一、二级阶梯分界线</strong>：昆仑山脉 — 祁连山脉 — 横断山脉</li>
+        <li><strong>二、三级阶梯分界线</strong>：大兴安岭 — 太行山脉 — 巫山 — 雪峰山</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== Step 2：3D 地形探索 ============================== -->
+<div class="section-card" id="step2">
+  <div class="card-header">
+    <div class="step-number">2</div>
+    <h2>3D 地形交互探索：切换视角感受地势落差</h2>
+    <span class="subtitle">动手操作 · 5 分钟</span>
+  </div>
+  <div class="card-body">
+    <div class="token-notice">
+      ⚠️ 3D 地形需要 <a href="https://account.mapbox.com/" target="_blank">Mapbox Token</a>（免费额度 5 万次/月）。请在下方代码中替换 <code>YOUR_MAPBOX_TOKEN</code>。
+    </div>
+
+    <div class="map-container">
+      <div id="map3d"></div>
+
+      <!-- 控制面板 -->
+      <div class="map-overlay">
+        <h4>🎛️ 地形控制</h4>
+        <label>夸张倍数：<span class="val" id="exag-val">2.0</span>x</label>
+        <input type="range" id="exag-slider" min="0" max="3" step="0.1" value="2" oninput="setExag(this.value)">
+        <button onclick="toggleTerrain()" id="terrain-btn">关闭地形</button>
+        <button class="secondary" onclick="toggle3D()">切换 2D/3D</button>
+        <button class="secondary" onclick="resetView()">重置视角</button>
+      </div>
+
+      <!-- 场景切换 -->
+      <div class="scene-buttons">
+        <button class="scene-btn step1" onclick="flyToStep(1)">🏔️ 第一阶梯：青藏高原</button>
+        <button class="scene-btn step2" onclick="flyToStep(2)">⛰️ 第二阶梯：黄土高原</button>
+        <button class="scene-btn step3" onclick="flyToStep(3)">🌊 第三阶梯：华北平原</button>
+        <button class="scene-btn" style="background:#f3e5f5;color:#6a1b9a" onclick="flyToProfile()">📐 剖面飞行：36°N 横切</button>
+      </div>
+
+      <!-- 信息弹窗 -->
+      <div class="info-popup" id="info-popup">
+        <button class="close" onclick="closePopup()">✕</button>
+        <h4 id="popup-title"></h4>
+        <p id="popup-content"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== Step 3：阶梯剖面 ============================== -->
+<div class="section-card" id="step3">
+  <div class="card-header">
+    <div class="step-number">3</div>
+    <h2>地形剖面图：沿北纬 36° 从西到东看阶梯</h2>
+    <span class="subtitle">图表分析 · 3 分钟</span>
+  </div>
+  <div class="card-body">
+    <p style="font-size:14px; color:#666; margin-bottom:12px;">
+      从青藏高原到黄海沿岸，沿北纬 36° 线剖面清晰呈现三级阶梯的海拔落差。请注意每一级阶梯的分界山脉。
+    </p>
+    <div class="profile-container" id="profile-chart"></div>
+
+    <div style="margin-top:16px; display:grid; grid-template-columns:repeat(3,1fr); gap:12px;">
+      <div style="padding:12px; background:#fff3e0; border-radius:8px; text-align:center;">
+        <div style="font-size:24px; font-weight:700; color:#e65100;">4500m</div>
+        <div style="font-size:12px; color:#666; margin-top:4px;">第一阶梯平均海拔</div>
+      </div>
+      <div style="padding:12px; background:#e8f5e9; border-radius:8px; text-align:center;">
+        <div style="font-size:24px; font-weight:700; color:#2e7d32;">1200m</div>
+        <div style="font-size:12px; color:#666; margin-top:4px;">第二阶梯平均海拔</div>
+      </div>
+      <div style="padding:12px; background:#e3f2fd; border-radius:8px; text-align:center;">
+        <div style="font-size:24px; font-weight:700; color:#1565c0;">50m</div>
+        <div style="font-size:12px; color:#666; margin-top:4px;">第三阶梯平均海拔</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== Step 4：思考练习 ============================== -->
+<div class="section-card" id="step4">
+  <div class="card-header">
+    <div class="step-number">4</div>
+    <h2>思考与练习</h2>
+    <span class="subtitle">巩固检测 · 3 分钟</span>
+  </div>
+  <div class="card-body">
+
+    <div class="quiz-card" id="q1">
+      <h4>🧪 题目 1：中国地势的总体特征是什么？</h4>
+      <div class="quiz-option" onclick="checkAnswer(this,'q1',true)">A. 西高东低，呈阶梯状分布</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q1',false)">B. 东高西低，呈阶梯状分布</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q1',false)">C. 中间高，四周低</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q1',false)">D. 南高北低，呈阶梯状分布</div>
+      <div class="quiz-feedback" id="fb-q1"></div>
+    </div>
+
+    <div class="quiz-card" id="q2" style="margin-top:16px;">
+      <h4>🧪 题目 2：第一和第二级阶梯的分界线不包括以下哪座山脉？</h4>
+      <div class="quiz-option" onclick="checkAnswer(this,'q2',false)">A. 昆仑山脉</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q2',false)">B. 祁连山脉</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q2',true)">C. 太行山脉</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q2',false)">D. 横断山脉</div>
+      <div class="quiz-feedback" id="fb-q2"></div>
+    </div>
+
+    <div class="quiz-card" id="q3" style="margin-top:16px;">
+      <h4>🧪 题目 3：中国大部分河流自西向东流入太平洋，这主要受什么因素影响？</h4>
+      <div class="quiz-option" onclick="checkAnswer(this,'q3',false)">A. 季风方向</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q3',true)">B. 地势西高东低</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q3',false)">C. 地球自转偏向力</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q3',false)">D. 降水分布不均</div>
+      <div class="quiz-feedback" id="fb-q3"></div>
+    </div>
+
+    <div style="margin-top:20px; padding:16px; background:#e8f5e9; border-radius:8px;">
+      <strong>🌟 拓展思考</strong>
+      <p style="font-size:14px; line-height:1.8; margin-top:8px; color:#555;">
+        1. 三级阶梯交界处往往有丰富的水力资源（如三峡），试分析原因。<br>
+        2. 如果中国地势是"东高西低"，河流走向和沿海城市分布会有什么变化？<br>
+        3. 回忆在 3D 地图中看到的黄土高原地貌，思考水土流失与地形的关系。
+      </p>
+    </div>
+  </div>
+</div>
+
+</div><!-- .container -->
+
+<!-- 底部进度 -->
+<div class="progress-bar">
+  <button class="prev-btn" onclick="prevStep()">◀ 上一步</button>
+  <div class="progress-track">
+    <div class="progress-fill" id="progress-fill" style="width:25%"></div>
+  </div>
+  <span class="progress-text" id="progress-text">1 / 4</span>
+  <button class="next-btn" onclick="nextStep()">下一步 ▶</button>
+</div>
+
+<div style="height:60px"></div><!-- 底部占位 -->
+
+<script>
+// ============================== 步骤切换 ==============================
+let currentStep = 1;
+const totalSteps = 4;
+
+function goStep(n) {
+  currentStep = n;
+  document.querySelectorAll('.section-card').forEach(c => c.classList.remove('active'));
+  document.getElementById('step' + n).classList.add('active');
+  document.querySelectorAll('.nav-links button').forEach((b,i) => {
+    b.classList.toggle('active', i === n - 1);
+  });
+  document.getElementById('progress-fill').style.width = (n / totalSteps * 100) + '%';
+  document.getElementById('progress-text').textContent = n + ' / ' + totalSteps;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Step 3 时渲染剖面图
+  if (n === 3 && !profileRendered) renderProfile();
+}
+function nextStep() { if (currentStep < totalSteps) goStep(currentStep + 1); }
+function prevStep() { if (currentStep > 1) goStep(currentStep - 1); }
+
+// ============================== Mapbox 3D 地形 ==============================
+const MAPBOX_TOKEN = 'YOUR_MAPBOX_TOKEN'; // ← 替换为你的 Token
+let map, terrainOn = true;
+
+function initMap() {
+  if (typeof mapboxgl === 'undefined') return;
+  mapboxgl.accessToken = MAPBOX_TOKEN;
+
+  map = new mapboxgl.Map({
+    container: 'map3d',
+    style: 'mapbox://styles/mapbox/outdoors-v12',
+    center: [100, 35],
+    zoom: 3.8,
+    pitch: 55,
+    bearing: 15,
+    maxZoom: 14
+  });
+
+  map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+
+  map.on('load', () => {
+    // DEM 地形
+    map.addSource('mapbox-dem', {
+      type: 'raster-dem',
+      url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
+      tileSize: 512, maxzoom: 14
+    });
+    map.setTerrain({ source: 'mapbox-dem', exaggeration: 2 });
+
+    // 天空
+    map.addLayer({
+      id: 'sky', type: 'sky',
+      paint: { 'sky-type': 'atmosphere', 'sky-atmosphere-sun': [0, 90] }
+    });
+
+    // 阶梯分界线 —— 一二级分界
+    map.addSource('boundary-12', {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        geometry: {
+          type: 'LineString',
+          coordinates: [
+            [77, 36], [80, 35.5], [86, 36], [90, 36.5],
+            [94, 37.5], [97, 38], [99, 38.5], [100, 36],
+            [99, 30], [98, 28], [99, 26]
+          ]
+        },
+        properties: { name: '一二级阶梯分界线' }
+      }
+    });
+    map.addLayer({
+      id: 'boundary-12-line', type: 'line', source: 'boundary-12',
+      paint: { 'line-color': '#e65100', 'line-width': 3, 'line-dasharray': [4, 2] }
+    });
+
+    // 二三级分界
+    map.addSource('boundary-23', {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        geometry: {
+          type: 'LineString',
+          coordinates: [
+            [120, 50], [121, 47], [119, 44], [117, 42],
+            [115, 40], [114, 38], [113, 36], [110, 32],
+            [109, 30], [110, 28], [110, 26]
+          ]
+        },
+        properties: { name: '二三级阶梯分界线' }
+      }
+    });
+    map.addLayer({
+      id: 'boundary-23-line', type: 'line', source: 'boundary-23',
+      paint: { 'line-color': '#1565c0', 'line-width': 3, 'line-dasharray': [4, 2] }
+    });
+  });
+}
+
+// 控件
+function setExag(v) {
+  document.getElementById('exag-val').textContent = v;
+  if (map && terrainOn) map.setTerrain({ source: 'mapbox-dem', exaggeration: parseFloat(v) });
+}
+function toggleTerrain() {
+  terrainOn = !terrainOn;
+  if (map) map.setTerrain(terrainOn ? { source: 'mapbox-dem', exaggeration: parseFloat(document.getElementById('exag-slider').value) } : null);
+  document.getElementById('terrain-btn').textContent = terrainOn ? '关闭地形' : '开启地形';
+}
+function toggle3D() {
+  if (!map) return;
+  map.easeTo({ pitch: map.getPitch() === 0 ? 60 : 0, duration: 1000 });
+}
+function resetView() {
+  if (!map) return;
+  map.flyTo({ center: [100, 35], zoom: 3.8, pitch: 55, bearing: 15, duration: 2000 });
+  closePopup();
+}
+
+// 场景飞行
+function flyToStep(step) {
+  if (!map) return;
+  const scenes = {
+    1: {
+      center: [90, 33], zoom: 6, pitch: 65, bearing: 30,
+      title: '🏔️ 第一级阶梯：青藏高原',
+      content: '平均海拔 4000 米以上，是世界上最高最大的高原。柴达木盆地位于其内部。高寒气候，河流源头——长江、黄河、雅鲁藏布江均发源于此。'
+    },
+    2: {
+      center: [109, 36], zoom: 7, pitch: 65, bearing: 0,
+      title: '⛰️ 第二级阶梯：黄土高原',
+      content: '海拔 1000-2000 米。黄土高原是世界最大的黄土沉积区，面积约 64 万 km²。千沟万壑的地貌是水土流失的典型案例。四川盆地、云贵高原也在此阶梯。'
+    },
+    3: {
+      center: [117, 37], zoom: 7, pitch: 55, bearing: -15,
+      title: '🌊 第三级阶梯：华北平原',
+      content: '海拔 500 米以下，以平原和丘陵为主。华北平原面积约 30 万 km²，由黄河、海河冲积而成。这里是中国人口最密集、经济最发达的区域。'
+    }
+  };
+  const s = scenes[step];
+  map.flyTo({ center: s.center, zoom: s.zoom, pitch: s.pitch, bearing: s.bearing, duration: 2500, essential: true });
+  showPopup(s.title, s.content);
+}
+
+function flyToProfile() {
+  if (!map) return;
+  // 沿 36°N 从西到东飞行
+  map.flyTo({ center: [90, 36], zoom: 5, pitch: 50, bearing: 90, duration: 3000 });
+  showPopup('📐 36°N 剖面飞行', '从青藏高原（海拔 4500m）经黄土高原（1200m）到华北平原（50m），地势如三级台阶逐级下降。在阶梯交界处，河流落差大，蕴藏丰富的水能资源。');
+}
+
+function showPopup(title, content) {
+  const el = document.getElementById('info-popup');
+  document.getElementById('popup-title').textContent = title;
+  document.getElementById('popup-content').textContent = content;
+  el.classList.add('show');
+}
+function closePopup() { document.getElementById('info-popup').classList.remove('show'); }
+
+// ============================== 剖面图 ==============================
+let profileRendered = false;
+
+function renderProfile() {
+  profileRendered = true;
+  const chart = echarts.init(document.getElementById('profile-chart'));
+
+  // 模拟沿 36°N 的海拔剖面数据
+  const xLabels = [
+    '昆仑山西', '青藏高原', '昆仑山口', '祁连山',
+    '河西走廊', '贺兰山', '黄土高原（西）', '黄土高原（东）',
+    '太行山', '华北平原（西）', '华北平原（中）', '华北平原（东）', '黄海'
+  ];
+  const elevations = [4800, 4500, 4200, 3800, 1800, 2000, 1400, 1100, 1200, 200, 50, 20, 0];
+  const colors = elevations.map(e => e > 3500 ? '#e65100' : (e > 500 ? '#2e7d32' : '#1565c0'));
+
+  chart.setOption({
+    title: {
+      text: '中国地形剖面（沿北纬 36°）',
+      left: 'center', top: 10,
+      textStyle: { fontSize: 15, fontWeight: 600 }
+    },
+    tooltip: {
+      trigger: 'axis',
+      formatter: p => `<b>${p[0].name}</b><br>海拔：${p[0].value} 米`
+    },
+    grid: { top: 60, bottom: 60, left: 60, right: 30 },
+    xAxis: {
+      type: 'category', data: xLabels,
+      axisLabel: { rotate: 30, fontSize: 11 },
+      axisTick: { alignWithLabel: true }
+    },
+    yAxis: {
+      type: 'value', name: '海拔 (m)',
+      max: 5500, axisLabel: { fontSize: 11 }
+    },
+    series: [{
+      type: 'bar',
+      data: elevations.map((v, i) => ({
+        value: v,
+        itemStyle: { color: colors[i] }
+      })),
+      barWidth: '60%',
+      label: {
+        show: true, position: 'top',
+        formatter: p => p.value + 'm',
+        fontSize: 10
+      }
+    }],
+    // 分界线标注
+    graphic: [
+      {
+        type: 'line',
+        shape: { x1: 230, y1: 55, x2: 230, y2: 255 },
+        style: { stroke: '#e65100', lineWidth: 2, lineDash: [4, 3] }
+      },
+      {
+        type: 'text',
+        style: { text: '一二级分界', x: 210, y: 50, fill: '#e65100', fontSize: 11 }
+      },
+      {
+        type: 'line',
+        shape: { x1: 610, y1: 55, x2: 610, y2: 255 },
+        style: { stroke: '#1565c0', lineWidth: 2, lineDash: [4, 3] }
+      },
+      {
+        type: 'text',
+        style: { text: '二三级分界', x: 590, y: 50, fill: '#1565c0', fontSize: 11 }
+      }
+    ]
+  });
+  window.addEventListener('resize', () => chart.resize());
+}
+
+// ============================== 练习题 ==============================
+const feedbacks = {
+  q1: { correct: '✅ 正确！中国地势西高东低，大致呈三级阶梯状分布，这是最基本的地形特征。', wrong: '❌ 不对哦。中国地势的总体特征是"西高东低，呈阶梯状分布"。' },
+  q2: { correct: '✅ 正确！太行山脉是第二和第三级阶梯的分界线，不是一二级的分界线。', wrong: '❌ 太行山是二三级阶梯的分界，不是一二级的。一二级分界线是：昆仑山—祁连山—横断山。' },
+  q3: { correct: '✅ 正确！地势西高东低决定了河流总体自西向东流。水往低处流，这就是地形对水文的控制作用。', wrong: '❌ 河流走向主要受地势控制。中国西高东低的地势决定了大多数河流自西向东流入太平洋。' }
+};
+
+function checkAnswer(el, qid, isCorrect) {
+  const container = document.getElementById(qid);
+  if (container.dataset.answered) return;
+  container.dataset.answered = '1';
+
+  el.classList.add(isCorrect ? 'correct' : 'wrong');
+  if (!isCorrect) {
+    container.querySelectorAll('.quiz-option').forEach(o => {
+      if (o !== el && o.onclick.toString().includes('true')) o.classList.add('correct');
+    });
+  }
+
+  const fb = document.getElementById('fb-' + qid);
+  fb.style.display = 'block';
+  fb.style.background = isCorrect ? '#e8f5e9' : '#fce4ec';
+  fb.style.color = isCorrect ? '#2e7d32' : '#c62828';
+  fb.textContent = isCorrect ? feedbacks[qid].correct : feedbacks[qid].wrong;
+}
+
+// ============================== 初始化 ==============================
+document.addEventListener('DOMContentLoaded', () => {
+  initMap();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<script>
+// ═══ Knowledge Graph ═══
+const knowledgeGraphData={currentNode:"pressure",currentLabel:"压强",
+coreSubTopics:[{id:"sub-solid",label:"固体压强 p=F/S"},{id:"sub-liquid",label:"液体压强 p=ρgh"},{id:"sub-connector",label:"连通器原理"}],
+prerequisites:[{id:"force-concept",label:"力的概念",hasCourseware:true,url:"../teachany-phy-mid-force-basics/index.html",connectsTo:["sub-solid"]},{id:"density",label:"密度 ρ=m/V",hasCourseware:true,url:"../teachany-phy-mid-mass-density/index.html",connectsTo:["sub-liquid"]},{id:"newton-laws",label:"牛顿第一定律",hasCourseware:true,url:"../teachany-phy-mid-newton-laws/index.html",connectsTo:["sub-solid"]}],
+nextTopics:[{id:"atmos-pressure",label:"大气压强",hasCourseware:true,url:"../teachany-phy-mid-atmospheric-pressure/index.html",connectsFrom:["sub-liquid"]},{id:"fluid-flow",label:"流体压强与流速",hasCourseware:true,url:"../teachany-phy-mid-fluid-flow/index.html",connectsFrom:["sub-liquid","sub-connector"]},{id:"hydraulic",label:"帕斯卡定律",hasCourseware:false,url:"",connectsFrom:["sub-solid","sub-liquid"]}]};
+(function renderKG(){
+  const svg=document.getElementById('kg-svg');if(!svg)return;const d=knowledgeGraphData;
+  const NS='http://www.w3.org/2000/svg',el=t=>document.createElementNS(NS,t);
+  const C={pre:'#06b6d4',core:'#f59e0b',sub:'#3b82f6',next:'#10b981',preBg:'rgba(6,182,212,0.12)',coreBg:'rgba(245,158,11,0.18)',subBg:'rgba(59,130,246,0.12)',nextBg:'rgba(16,185,129,0.12)',noCw:'#94a3b8',noCwBg:'rgba(148,163,184,0.08)'};
+  const pre=d.prerequisites||[],sub=d.coreSubTopics||[],nxt=d.nextTopics||[];
+  const maxR=Math.max(pre.length,sub.length+1,nxt.length),rH=60;
+  const W=1100,H=Math.max(360,(maxR+1)*rH+40);
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.style.minHeight=H+'px';
+  const colX=[120,W/2,W-120],nW=200,nH=36;
+  const defs=el('defs');
+  ['pre','core','sub','next'].forEach(k=>{const m=el('marker');m.setAttribute('id','a-'+k);m.setAttribute('viewBox','0 0 10 10');m.setAttribute('refX','10');m.setAttribute('refY','5');m.setAttribute('markerWidth','6');m.setAttribute('markerHeight','6');m.setAttribute('orient','auto-start-reverse');const p=el('path');p.setAttribute('d','M0 0L10 5L0 10z');p.setAttribute('fill',C[k]);m.appendChild(p);defs.appendChild(m)});
+  svg.appendChild(defs);
+  function drawNode(cx,cy,txt,col,bg,url){const g=el('g');g.style.cursor=url?'pointer':'default';if(url)g.onclick=()=>window.open(url,'_blank');const r=el('rect');r.setAttribute('x',cx-nW/2);r.setAttribute('y',cy-nH/2);r.setAttribute('width',nW);r.setAttribute('height',nH);r.setAttribute('rx',10);r.setAttribute('fill',bg);r.setAttribute('stroke',col);r.setAttribute('stroke-width','1.5');if(!url)r.setAttribute('stroke-dasharray','4 3');g.appendChild(r);const t=el('text');t.setAttribute('x',cx);t.setAttribute('y',cy+5);t.setAttribute('text-anchor','middle');t.setAttribute('font-size','13');t.setAttribute('fill',col);t.setAttribute('font-weight','600');t.textContent=txt;g.appendChild(t);svg.appendChild(g);return{cx,cy,left:cx-nW/2,right:cx+nW/2}}
+  function drawCurve(x1,y1,x2,y2,col,mk){const p=el('path'),mx=(x1+x2)/2;p.setAttribute('d','M'+x1+' '+y1+' C'+mx+' '+y1+','+mx+' '+y2+','+x2+' '+y2);p.setAttribute('fill','none');p.setAttribute('stroke',col);p.setAttribute('stroke-width','1.5');p.setAttribute('marker-end','url(#a-'+mk+')');svg.appendChild(p)}
+  const cY=36,cP=drawNode(colX[1],cY,d.currentLabel,C.core,C.coreBg);
+  const sP={};sub.forEach((n,i)=>{const y=cY+(i+1)*rH;sP[n.id]=drawNode(colX[1],y,n.label,C.sub,C.subBg);drawCurve(cP.cx,cY+nH/2,colX[1],y-nH/2,C.sub,'sub')});
+  pre.forEach((n,i)=>{const tH=pre.length*rH,sY=cY+(sub.length*rH-tH)/2+rH,y=sY+i*rH;const col=n.hasCourseware?C.pre:C.noCw,bg=n.hasCourseware?C.preBg:C.noCwBg;const p=drawNode(colX[0],y,n.label,col,bg,n.url);(n.connectsTo||[]).forEach(t=>{if(sP[t])drawCurve(p.right,p.cy,sP[t].left,sP[t].cy,C.pre,'pre')})});
+  nxt.forEach((n,i)=>{const tH=nxt.length*rH,sY=cY+(sub.length*rH-tH)/2+rH,y=sY+i*rH;const col=n.hasCourseware?C.next:C.noCw,bg=n.hasCourseware?C.nextBg:C.noCwBg;const p=drawNode(colX[2],y,n.label,col,bg,n.url);(n.connectsFrom||[]).forEach(s=>{if(sP[s])drawCurve(sP[s].right,sP[s].cy,p.left,p.cy,C.next,'next')})});
+  [['前序知识',colX[0]],['核心子知识点',colX[1]],['后续知识',colX[2]]].forEach(([t,x])=>{const tx=el('text');tx.setAttribute('x',x);tx.setAttribute('y',H-10);tx.setAttribute('text-anchor','middle');tx.setAttribute('font-size','12');tx.setAttribute('fill','#64748b');tx.textContent=t;svg.appendChild(tx)});
+})();
+
+// ═══ ConcepTest ═══
+const conceptAnswers={
+ct1:{correct:'A',feedback:{A:{type:'correct',text:'✅ 正确！平放S=24×12=288cm²=0.0288m²，p=24/0.0288≈833Pa。'},B:{type:'wrong',text:'❌ 4000Pa是竖放（12×5=60cm²）时的值。题目说"平放"，底面积24×12=288cm²。'},C:{type:'wrong',text:'❌ 40000Pa太大。288cm²=0.0288m²，不是0.000288m²。1m²=10000cm²。'}}},
+ct2:{correct:'A',feedback:{A:{type:'correct',text:'✅ p=ρgh=1000×10×1.5=15000Pa。h是水面下1.5m，不是池深2m。'},B:{type:'wrong',text:'❌ 你用了池深2m。h是该点到<strong>液面</strong>的深度=1.5m。'},C:{type:'wrong',text:'❌ 5000Pa对应h=0.5m。题目是"水面下1.5m处"。'}}},
+ct3:{correct:'C',feedback:{A:{type:'wrong',text:'❌ 连通器液面高度与管子粗细无关！底部压强相等→液面等高。'},B:{type:'wrong',text:'❌ 液面高度与管子粗细无关。'},C:{type:'correct',text:'✅ 正确！连通器原理：同种液体静止时液面等高，与容器粗细无关！'}}}
+};
+const conceptAnswered={};
+function checkConcept(el,choice,id){
+  if(conceptAnswered[id])return;conceptAnswered[id]=true;
+  const data=conceptAnswers[id],fb=data.feedback[choice],fbEl=document.getElementById(id+'-feedback');
+  const labels=el.parentElement.querySelectorAll('.concept-label');
+  labels.forEach(l=>{l.style.pointerEvents='none';l.style.opacity='0.6'});el.style.opacity='1';
+  if(fb.type==='correct'){el.style.background='rgba(16,185,129,0.12)';el.style.borderColor='var(--success)';fbEl.style.background='rgba(16,185,129,0.08)';fbEl.style.border='1px solid rgba(16,185,129,0.3)'}
+  else{el.style.background='rgba(239,68,68,0.12)';el.style.borderColor='var(--danger)';fbEl.style.background='rgba(239,68,68,0.08)';fbEl.style.border='1px solid rgba(239,68,68,0.3)';labels.forEach(l=>{const s=l.querySelector('strong');if(s&&s.textContent.trim()===data.correct+'.'){l.style.opacity='1';l.style.background='rgba(16,185,129,0.12)';l.style.borderColor='var(--success)'}})}
+  fbEl.innerHTML='<p style="font-size:15px;line-height:1.8">'+fb.text+'</p>';fbEl.style.display='block';
+}
+
+// ═══ Pretest ═══
+const preAns={pre1:'B',pre2:'B',pre3:'B'};
+const preExp={pre1:{r:'✓ 力有两个效果：改变运动状态和使物体形变。',w:'力有两个效果：①改变运动状态 ②使物体形变。'},pre2:{r:'✓ 水平面上，书对桌面的压力=书的重力。',w:'A是质量不是力。C是桌面给书的力。水平面上压力=重力。'},pre3:{r:'✓ 密度是物质特性，不随质量和体积变化。',w:'密度=m/V，切半后m和V都减半，比值不变。'}};
+function checkPretest(){
+  let sc=0,html='';
+  for(let i=1;i<=3;i++){const s=document.querySelector('input[name="pre'+i+'"]:checked'),k='pre'+i,c=preAns[k],u=s?s.value:'',ok=u===c;if(ok)sc++;
+    html+='<div style="margin:8px 0;padding:10px;border-radius:8px;background:'+(ok?'rgba(16,185,129,0.06)':'rgba(239,68,68,0.06)')+'"><span style="color:'+(ok?'var(--success)':'var(--danger)')+'">第'+i+'题：'+(ok?'✓':'✗ 正确:'+c)+'</span><p style="color:var(--dim);font-size:14px;margin-top:4px">'+(ok?preExp[k].r:preExp[k].w)+'</p></div>'}
+  const p=Math.round(sc/3*100),el=document.getElementById('preResult');el.className='quiz-result show';
+  el.style.background=p>=67?'rgba(16,185,129,0.1)':'rgba(239,68,68,0.1)';
+  el.style.border='1px solid '+(p>=67?'rgba(16,185,129,0.3)':'rgba(239,68,68,0.3)');
+  el.innerHTML='<div style="font-size:20px;font-weight:700;color:'+(p>=67?'var(--success)':'var(--danger)')+'">前测：'+sc+'/3（'+p+'%）</div><div style="color:var(--dim);font-size:14px">'+(p>=67?'✅ 基础扎实，开始学习压强！':'⚠️ 建议先复习力、密度、重力。')+'</div>'+html;
+  onModuleComplete('pretest',sc,3);
+}
+
+// ═══ Scaffold Checks ═══
+function checkLevel1(){
+  const ans={s1a:'50',s1b:'50',s1c:'5000'};let c=0,d=[];
+  for(const[id,a]of Object.entries(ans)){const inp=document.getElementById(id),v=inp.value.trim();
+    if(v===a){c++;inp.style.borderColor='var(--success)';inp.style.background='rgba(16,185,129,0.1)'}
+    else{inp.style.borderColor='var(--danger)';inp.style.background='rgba(239,68,68,0.1)';
+      if(id==='s1a'||id==='s1b')d.push('G=mg=5×10=<strong>50</strong>N');if(id==='s1c')d.push('p=F/S=50/0.01=<strong>5000</strong>Pa')}}
+  const fb=document.getElementById('l1-feedback');fb.style.display='block';
+  if(c===3){fb.style.background='rgba(16,185,129,0.08)';fb.innerHTML='🎉 全对！p=F/S 已掌握。';onModuleComplete('scaffold-l1',c,3)}
+  else{fb.style.background='rgba(239,68,68,0.08)';fb.innerHTML='<span style="color:var(--danger)">有'+(3-c)+'处需修正</span><br>'+[...new Set(d)].map(x=>'• '+x).join('<br>')}
+}
+function checkLevel2(){
+  const a=document.getElementById('s2a').value.trim(),b=document.getElementById('s2b').value.trim(),cv=document.getElementById('s2c').value.trim();
+  let c=0,html='';
+  if(a==='2'){c++;document.getElementById('s2a').style.borderColor='var(--success)'}else{document.getElementById('s2a').style.borderColor='var(--danger)';html+='• h=<strong>2</strong>m（从液面向下量）<br>'}
+  if(b==='2'){c++;document.getElementById('s2b').style.borderColor='var(--success)'}else{document.getElementById('s2b').style.borderColor='var(--danger)';html+='• h=<strong>2</strong><br>'}
+  if(cv==='20000'){c++;document.getElementById('s2c').style.borderColor='var(--success)'}else{document.getElementById('s2c').style.borderColor='var(--danger)';html+='• p=1000×10×2=<strong>20000</strong>Pa<br>'}
+  const fb=document.getElementById('l2-feedback');fb.style.display='block';
+  if(c===3){fb.style.background='rgba(16,185,129,0.08)';fb.innerHTML='🎉 全对！液体压强公式已掌握。';onModuleComplete('scaffold-l2',c,3)}
+  else{fb.style.background='rgba(239,68,68,0.08)';fb.innerHTML='<span style="color:var(--danger)">需修正</span><br>'+html}
+}
+
+// ═══ Posttest Quiz ═══
+const quizData=[
+  {q:'1. 下列能增大压强的做法是（）',opts:['增大受力面积','减小压力','减小受力面积','同时增大压力和面积'],ans:2,exp:'✓ 减小S→p=F/S增大。',diag:{0:'增大S会减小压强。',1:'减小F会减小压强。',3:'两者同增效果不确定。'}},
+  {q:'2. 液体压强公式 p=ρgh 中 h 指的是（）',opts:['液体总深度','容器高度','从液面到该点的竖直深度','从该点到容器底的高度'],ans:2,exp:'✓ h是液面到该点的竖直距离。',diag:{0:'不是总深度，是某点到液面。',1:'不是容器高度。',3:'不是从底向上量。'}},
+  {q:'3. 60kg的人穿鞋（面积400cm²）对地面压强约为（g取10）',opts:['1500 Pa','15000 Pa','150000 Pa','600 Pa'],ans:1,exp:'✓ G=600N,S=0.04m²,p=15000Pa。',diag:{0:'单位换算错。400cm²=0.04m²。',2:'太大了。',3:'不对，请重算。'}},
+  {q:'4. 潜水员下潜越深耳朵越痛，因为（）',opts:['水温越低','浮力增大','液体压强随深度增大','大气压的作用'],ans:2,exp:'✓ p=ρgh，h越大p越大。',diag:{0:'水温与耳痛无关。',1:'浮力与耳痛无关。',3:'水下主要是液体压强。'}},
+  {q:'5. 关于连通器，正确的是（）',opts:['液面高度与管粗细有关','装不同液体液面也等高','装同种液体静止时液面等高','只有两根管时才成立'],ans:2,exp:'✓ 同种液体、静止、液面等高。',diag:{0:'与粗细无关。',1:'必须是同种液体。',3:'多管也成立。'}},
+  {q:'6. 在斜面上的物体，对斜面的压力（）',opts:['等于重力','大于重力','小于重力','等于零'],ans:2,exp:'✓ 斜面上F=Gcosθ<G。',diag:{0:'只有水平面上F=G。',1:'不可能大于重力。',3:'有接触就有压力。'}},
+  {q:'7. 三峡船闸利用了（）原理',opts:['阿基米德原理','连通器原理','大气压原理','杠杆原理'],ans:1,exp:'✓ 闸室与上下游构成连通器。',diag:{0:'那是浮力。',2:'不是大气压。',3:'不是杠杆。'}},
+  {q:'8. 同一块砖平放和竖放在地面上（）',opts:['压力相同，压强相同','压力不同，压强相同','压力相同，压强不同','压力不同，压强不同'],ans:2,exp:'✓ G不变→F不变，但S不同→p不同。',diag:{0:'F同但S不同所以p不同。',1:'F是相同的。',3:'F是相同的。'}}
+];
+function buildQuiz(){const a=document.getElementById('quizArea');let h='';quizData.forEach((it,i)=>{h+='<div class="quiz-q"><h4>'+it.q+'</h4>';it.opts.forEach((o,j)=>{h+='<label><input type="radio" name="q'+i+'" value="'+j+'"> '+String.fromCharCode(65+j)+'. '+o+'</label>'});h+='</div>'});a.innerHTML=h}
+function submitQuiz(){
+  let sc=0,html='';quizData.forEach((it,i)=>{const s=document.querySelector('input[name="q'+i+'"]:checked'),u=s?parseInt(s.value):-1,ok=u===it.ans;if(ok)sc++;
+    let fb=ok?it.exp:(it.diag&&it.diag[u])?it.diag[u]:'正确答案:'+String.fromCharCode(65+it.ans)+'。'+it.exp;
+    html+='<div style="margin:8px 0;padding:10px;border-radius:8px;background:'+(ok?'rgba(16,185,129,0.06)':'rgba(239,68,68,0.06)')+'"><span style="color:'+(ok?'var(--success)':'var(--danger)')+'">第'+(i+1)+'题 '+(ok?'✓':'✗')+'</span><p style="color:var(--dim);font-size:14px;margin-top:4px">'+fb+'</p></div>'});
+  const p=Math.round(sc/quizData.length*100),el=document.getElementById('quizResult');el.className='quiz-result show';
+  const g=p>=90?'优秀🌟':p>=70?'良好👍':p>=60?'及格📖':'需加强💪',gc=p>=90?'var(--success)':p>=70?'var(--primary)':p>=60?'var(--accent)':'var(--danger)';
+  el.style.background=gc+'15';el.style.border='1px solid '+gc+'40';
+  el.innerHTML='<div style="font-size:24px;font-weight:700;color:'+gc+'">后测：'+sc+'/'+quizData.length+'（'+p+'%）— '+g+'</div>'+html;
+  onModuleComplete('posttest',sc,quizData.length);
+}

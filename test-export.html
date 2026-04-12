@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>导出功能测试</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 20px;
+    background: #0f172a;
+    color: #f8fafc;
+  }
+  h1 {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .test-section {
+    margin: 30px 0;
+    padding: 20px;
+    background: rgba(30, 41, 59, 0.7);
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.15);
+  }
+  button {
+    padding: 10px 20px;
+    border-radius: 8px;
+    background: rgba(16,185,129,0.12);
+    color: #34d399;
+    border: 1px solid rgba(16,185,129,0.2);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  button:hover {
+    background: rgba(16,185,129,0.2);
+    border-color: rgba(16,185,129,0.4);
+    transform: translateY(-1px);
+  }
+  #statusLog {
+    margin-top: 15px;
+    padding: 10px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 6px;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .log-item {
+    margin: 4px 0;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+  .log-info { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+  .log-success { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+  .log-error { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+</style>
+</head>
+<body>
+
+<h1>📦 TeachAny 导出功能测试</h1>
+
+<div class="test-section">
+  <h2>测试 1: 导出欧姆定律课件</h2>
+  <p>课件路径: <code>ohms-law-courseware.html</code></p>
+  <button onclick="testExport1()">📦 测试导出</button>
+  <div id="statusLog"></div>
+</div>
+
+<div class="test-section">
+  <h2>测试 2: 导出远程课件（Registry）</h2>
+  <p>课件URL: <code>https://raw.githubusercontent.com/...</code></p>
+  <button onclick="testExport2()">📦 测试导出远程课件</button>
+  <div id="statusLog2"></div>
+</div>
+
+<script src="./scripts/export-courseware.js"></script>
+<script>
+function log(message, type = 'info', logId = 'statusLog') {
+  const logEl = document.getElementById(logId);
+  const item = document.createElement('div');
+  item.className = `log-item log-${type}`;
+  item.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+  logEl.appendChild(item);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+function testExport1() {
+  const logEl = document.getElementById('statusLog');
+  logEl.innerHTML = '';
+  
+  log('开始测试本地课件导出...');
+  
+  if (!window.TeachAnyExport) {
+    log('错误: TeachAnyExport 未定义！', 'error');
+    return;
+  }
+  
+  log('✓ TeachAnyExport 对象已加载', 'success');
+  
+  window.TeachAnyExport.exportCourseware({
+    url: './ohms-law-courseware.html',
+    courseName: '欧姆定律',
+    onProgress: (status, message) => {
+      const typeMap = {
+        'loading': 'info',
+        'fetching': 'info',
+        'parsing': 'info',
+        'downloading': 'info',
+        'packaging': 'info',
+        'complete': 'success',
+        'error': 'error'
+      };
+      log(message, typeMap[status] || 'info');
+    }
+  }).catch(err => {
+    log(`导出失败: ${err.message}`, 'error');
+  });
+}
+
+function testExport2() {
+  const logEl = document.getElementById('statusLog2');
+  logEl.innerHTML = '';
+  
+  log('开始测试远程课件导出...', 'info', 'statusLog2');
+  
+  // 使用一个实际存在的 Registry 课件
+  const testUrl = 'https://raw.githubusercontent.com/weponusa/teachany/main/photosynthesis/photosynthesis-courseware.html';
+  
+  window.TeachAnyExport.exportCourseware({
+    url: testUrl,
+    courseName: '光合作用',
+    onProgress: (status, message) => {
+      const typeMap = {
+        'loading': 'info',
+        'fetching': 'info',
+        'parsing': 'info',
+        'downloading': 'info',
+        'packaging': 'info',
+        'complete': 'success',
+        'error': 'error'
+      };
+      log(message, typeMap[status] || 'info', 'statusLog2');
+    }
+  }).catch(err => {
+    log(`导出失败: ${err.message}`, 'error', 'statusLog2');
+  });
+}
+
+// 页面加载时检查依赖
+window.addEventListener('DOMContentLoaded', () => {
+  if (window.TeachAnyExport) {
+    console.log('✓ TeachAnyExport 已加载');
+    console.log('可用方法:', Object.keys(window.TeachAnyExport));
+  } else {
+    console.error('✗ TeachAnyExport 未加载');
+  }
+});
+</script>
+
+</body>
+</html>

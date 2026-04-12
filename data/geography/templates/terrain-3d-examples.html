@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D 地形地图教学示例 - TeachAny</title>
+  <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+  <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+    
+    .control-panel {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      max-width: 320px;
+      z-index: 1000;
+    }
+    
+    .control-panel h2 {
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: #333;
+    }
+    
+    .scenario-btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: #1890ff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.3s;
+    }
+    
+    .scenario-btn:hover {
+      background: #096dd9;
+    }
+    
+    .scenario-btn.military { background: #fa541c; }
+    .scenario-btn.military:hover { background: #d4380d; }
+    
+    .scenario-btn.economic { background: #52c41a; }
+    .scenario-btn.economic:hover { background: #389e0d; }
+    
+    .scenario-btn.natural { background: #722ed1; }
+    .scenario-btn.natural:hover { background: #531dab; }
+    
+    .controls {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #e0e0e0;
+    }
+    
+    .control-item {
+      margin-bottom: 12px;
+    }
+    
+    .control-item label {
+      display: block;
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 5px;
+    }
+    
+    .control-item input[type="range"] {
+      width: 100%;
+    }
+    
+    .control-item button {
+      width: 48%;
+      padding: 8px;
+      background: #f5f5f5;
+      border: 1px solid #d9d9d9;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    
+    .control-item button:hover {
+      background: #e0e0e0;
+    }
+    
+    .info-box {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      font-size: 14px;
+      line-height: 1.6;
+      display: none;
+      z-index: 999;
+    }
+    
+    .info-box.show { display: block; }
+    
+    .info-box h3 {
+      font-size: 16px;
+      margin-bottom: 8px;
+      color: #333;
+    }
+    
+    .info-box p {
+      color: #666;
+      margin-bottom: 5px;
+    }
+    
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #999;
+    }
+    
+    .token-warning {
+      background: #fff7e6;
+      border: 1px solid #ffd591;
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      font-size: 12px;
+      color: #d46b08;
+    }
+    
+    .token-warning a {
+      color: #fa8c16;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div id='map'></div>
+  
+  <div class="control-panel">
+    <h2>🗺️ 3D 地形教学场景</h2>
+    
+    <div class="token-warning">
+      ⚠️ 需要 <a href="https://account.mapbox.com/" target="_blank">Mapbox Token</a> 才能正常显示（免费额度：5万次/月）
+    </div>
+    
+    <button class="scenario-btn military" onclick="loadScenario('changping')">
+      ⚔️ 军事：长平之战地形分析
+    </button>
+    <button class="scenario-btn economic" onclick="loadScenario('canal')">
+      💰 经济：京杭大运河与地形
+    </button>
+    <button class="scenario-btn natural" onclick="loadScenario('sanxia')">
+      🏔️ 自然：长江三峡地貌
+    </button>
+    <button class="scenario-btn" onclick="loadScenario('greatwall')">
+      🛡️ 历史：长城选址与地形
+    </button>
+    <button class="scenario-btn" onclick="loadScenario('loess')">
+      🌾 地理：黄土高原地貌
+    </button>
+    
+    <div class="controls">
+      <div class="control-item">
+        <label>地形夸张倍数：<span id="exag-value">1.0</span>x</label>
+        <input type="range" min="0" max="3" step="0.1" value="1" 
+               oninput="setExaggeration(this.value)">
+      </div>
+      
+      <div class="control-item">
+        <button onclick="toggleTerrain()">切换地形</button>
+        <button onclick="toggle3D()">切换3D</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="info-box" id="info-box">
+    <button class="close-btn" onclick="closeInfo()">✕</button>
+    <h3 id="info-title">场景标题</h3>
+    <p id="info-content">场景说明...</p>
+  </div>
+  
+  <script>
+    // ⚠️ 警告：需要替换为实际的 Mapbox Access Token
+    // 申请地址：https://account.mapbox.com/
+    // 免费额度：50,000次地图加载/月，足够教学使用
+    const MAPBOX_TOKEN = 'YOUR_MAPBOX_TOKEN'; // 请替换为实际 Token
+    
+    if (MAPBOX_TOKEN === 'YOUR_MAPBOX_TOKEN') {
+      alert('⚠️ 请先申请 Mapbox Access Token 并替换代码中的 YOUR_MAPBOX_TOKEN\n\n申请地址：https://account.mapbox.com/\n免费额度：5万次/月');
+    }
+    
+    mapboxgl.accessToken = MAPBOX_TOKEN;
+    
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/outdoors-v12',
+      center: [108, 34],
+      zoom: 5,
+      pitch: 60,
+      bearing: 0,
+      antialias: true
+    });
+    
+    let markers = [];
+    let terrainEnabled = true;
+    
+    map.on('load', () => {
+      // 添加 3D 地形源
+      map.addSource('mapbox-dem', {
+        type: 'raster-dem',
+        url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
+        tileSize: 512,
+        maxzoom: 14
+      });
+      
+      // 启用地形
+      map.setTerrain({ source: 'mapbox-dem', exaggeration: 1 });
+      
+      // 添加天空层
+      map.addLayer({
+        id: 'sky',
+        type: 'sky',
+        paint: {
+          'sky-type': 'atmosphere',
+          'sky-atmosphere-sun': [0.0, 90.0],
+          'sky-atmosphere-sun-intensity': 15
+        }
+      });
+      
+      // 添加导航控件
+      map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+    });
+    
+    // 场景配置
+    const scenarios = {
+      changping: {
+        title: '⚔️ 长平之战（前260年）',
+        content: `
+          <strong>地形分析：</strong><br>
+          • 赵军背靠太行山，退路被秦军切断<br>
+          • 秦军占据丹河以西高地，形成包围<br>
+          • 峡谷地形不利大军团作战，赵军40万被困<br>
+          • 地形劣势 + 粮道断绝 = 赵军全军覆没<br><br>
+          <strong>教学要点：</strong>军事地理中的"背水一战"和"据高临下"
+        `,
+        center: [112.92, 35.80],
+        zoom: 12,
+        pitch: 65,
+        bearing: 30,
+        exaggeration: 1.5,
+        markers: [
+          { coords: [112.92, 35.81], name: '赵军营地', color: '#ff4444', desc: '被围困位置，地势低洼' },
+          { coords: [112.93, 35.80], name: '秦军包围圈', color: '#4444ff', desc: '占据周围高地' },
+          { coords: [112.91, 35.79], name: '丹河峡谷', color: '#888888', desc: '退路被截断' }
+        ]
+      },
+      
+      canal: {
+        title: '💰 京杭大运河',
+        content: `
+          <strong>地形利用：</strong><br>
+          • 利用华北平原低平地势，避开山地<br>
+          • 连接海河、黄河、淮河、长江五大水系<br>
+          • 人工河段利用自然河道降低工程量<br>
+          • 北段（通惠河）落差大，设置多级船闸<br><br>
+          <strong>教学要点：</strong>经济地理中的交通线路与地形关系
+        `,
+        center: [117, 35],
+        zoom: 6,
+        pitch: 50,
+        bearing: 0,
+        exaggeration: 2,
+        line: {
+          id: 'canal-route',
+          coordinates: [
+            [116.40, 39.90], // 北京
+            [117.20, 39.10], // 天津
+            [117.00, 36.60], // 济南
+            [118.80, 32.05], // 扬州
+            [120.15, 30.25]  // 杭州
+          ],
+          color: '#0080ff',
+          width: 4
+        }
+      },
+      
+      sanxia: {
+        title: '🏔️ 长江三峡',
+        content: `
+          <strong>地貌特征：</strong><br>
+          • 瞿塘峡：最险，两岸悬崖陡峭<br>
+          • 巫峡：最秀，峰峦叠嶂<br>
+          • 西陵峡：最长，滩多水急<br>
+          • 三峡大坝：利用峡谷地形建坝，库容巨大<br><br>
+          <strong>教学要点：</strong>河流侵蚀地貌、峡谷形成过程
+        `,
+        center: [110.5, 30.9],
+        zoom: 10,
+        pitch: 70,
+        bearing: 90,
+        exaggeration: 2,
+        markers: [
+          { coords: [109.57, 31.05], name: '瞿塘峡', color: '#722ed1' },
+          { coords: [110.05, 31.07], name: '巫峡', color: '#722ed1' },
+          { coords: [110.98, 30.82], name: '西陵峡', color: '#722ed1' },
+          { coords: [111.00, 30.82], name: '三峡大坝', color: '#fa541c' }
+        ]
+      },
+      
+      greatwall: {
+        title: '🛡️ 万里长城选址',
+        content: `
+          <strong>地形策略：</strong><br>
+          • 依山势而建，"因地制宜，据险制塞"<br>
+          • 关口设在山谷通道（居庸关、山海关）<br>
+          • 烽火台建在制高点，便于瞭望<br>
+          • 北京段：利用太行山-燕山山脉天然屏障<br><br>
+          <strong>教学要点：</strong>军事防御工程与地形利用
+        `,
+        center: [116.5, 40.5],
+        zoom: 10,
+        pitch: 65,
+        bearing: 45,
+        exaggeration: 1.8,
+        line: {
+          id: 'greatwall-route',
+          coordinates: [
+            [116.3, 40.3],
+            [116.5, 40.5],
+            [116.7, 40.6],
+            [117.0, 40.5]
+          ],
+          color: '#d4380d',
+          width: 3,
+          dashArray: [2, 1]
+        }
+      },
+      
+      loess: {
+        title: '🌾 黄土高原',
+        content: `
+          <strong>地貌类型：</strong><br>
+          • 黄土塬：顶部平坦的高原面<br>
+          • 黄土梁：长条形高地<br>
+          • 黄土峁：孤立的馒头状山丘<br>
+          • 水土流失：沟壑纵横，千沟万壑<br><br>
+          <strong>教学要点：</strong>风成地貌、水土流失原理
+        `,
+        center: [109.5, 36.5],
+        zoom: 9,
+        pitch: 60,
+        bearing: 0,
+        exaggeration: 2.5,
+        markers: [
+          { coords: [109.5, 36.6], name: '黄土塬', color: '#fa8c16' },
+          { coords: [109.4, 36.5], name: '沟壑地貌', color: '#d46b08' }
+        ]
+      }
+    };
+    
+    // 加载场景
+    function loadScenario(scenarioId) {
+      const scenario = scenarios[scenarioId];
+      if (!scenario) return;
+      
+      // 清除旧标记
+      markers.forEach(m => m.remove());
+      markers = [];
+      
+      // 移除旧的线条图层
+      if (map.getLayer('route-line')) map.removeLayer('route-line');
+      if (map.getSource('route-source')) map.removeSource('route-source');
+      
+      // 设置地形夸张
+      map.setTerrain({ 
+        source: 'mapbox-dem', 
+        exaggeration: scenario.exaggeration 
+      });
+      document.getElementById('exag-value').textContent = scenario.exaggeration.toFixed(1);
+      document.querySelector('input[type="range"]').value = scenario.exaggeration;
+      
+      // 飞到目标位置
+      map.flyTo({
+        center: scenario.center,
+        zoom: scenario.zoom,
+        pitch: scenario.pitch,
+        bearing: scenario.bearing,
+        essential: true,
+        duration: 2000
+      });
+      
+      // 添加标记
+      if (scenario.markers) {
+        scenario.markers.forEach(marker => {
+          const el = document.createElement('div');
+          el.style.width = '12px';
+          el.style.height = '12px';
+          el.style.borderRadius = '50%';
+          el.style.backgroundColor = marker.color;
+          el.style.border = '2px solid white';
+          el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+          
+          const popup = new mapboxgl.Popup({ offset: 25 })
+            .setHTML(`<strong>${marker.name}</strong><br>${marker.desc || ''}`);
+          
+          const m = new mapboxgl.Marker({ element: el })
+            .setLngLat(marker.coords)
+            .setPopup(popup)
+            .addTo(map);
+          
+          markers.push(m);
+        });
+      }
+      
+      // 添加线条（如运河、长城）
+      if (scenario.line) {
+        setTimeout(() => {
+          map.addSource('route-source', {
+            type: 'geojson',
+            data: {
+              type: 'Feature',
+              geometry: {
+                type: 'LineString',
+                coordinates: scenario.line.coordinates
+              }
+            }
+          });
+          
+          map.addLayer({
+            id: 'route-line',
+            type: 'line',
+            source: 'route-source',
+            paint: {
+              'line-color': scenario.line.color,
+              'line-width': scenario.line.width,
+              'line-dasharray': scenario.line.dashArray || [1]
+            }
+          });
+        }, 2500);
+      }
+      
+      // 显示信息框
+      document.getElementById('info-title').textContent = scenario.title;
+      document.getElementById('info-content').innerHTML = scenario.content;
+      document.getElementById('info-box').classList.add('show');
+    }
+    
+    // 控制函数
+    function setExaggeration(value) {
+      const exag = parseFloat(value);
+      map.setTerrain({ source: 'mapbox-dem', exaggeration: exag });
+      document.getElementById('exag-value').textContent = exag.toFixed(1);
+    }
+    
+    function toggleTerrain() {
+      terrainEnabled = !terrainEnabled;
+      map.setTerrain(terrainEnabled ? { 
+        source: 'mapbox-dem', 
+        exaggeration: parseFloat(document.querySelector('input[type="range"]').value)
+      } : null);
+    }
+    
+    function toggle3D() {
+      const pitch = map.getPitch();
+      map.easeTo({ 
+        pitch: pitch === 0 ? 60 : 0, 
+        duration: 1000 
+      });
+    }
+    
+    function closeInfo() {
+      document.getElementById('info-box').classList.remove('show');
+    }
+    
+    // 默认加载长平之战场景
+    setTimeout(() => {
+      if (MAPBOX_TOKEN !== 'YOUR_MAPBOX_TOKEN') {
+        loadScenario('changping');
+      }
+    }, 1000);
+  </script>
+</body>
+</html>

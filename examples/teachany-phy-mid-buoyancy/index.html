@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="teachany-node" content="buoyancy">
+  <meta name="teachany-subject" content="physics">
+  <meta name="teachany-domain" content="mechanics">
+  <meta name="teachany-grade" content="8">
+  <meta name="teachany-prerequisites" content="pressure,liquid-pressure,atmospheric-pressure">
+  <title>浮力 — TeachAny 互动课件</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{--bg:#0f172a;--bg2:#1e293b;--surface:#334155;--border:#475569;--text:#f8fafc;--dim:#94a3b8;
+      --primary:#3b82f6;--secondary:#8b5cf6;--success:#10b981;--danger:#ef4444;--accent:#f59e0b;--pink:#ec4899;
+      --cyan:#06b6d4;--teal:#14b8a6}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.8;padding-top:56px}
+    .nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(15,23,42,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;height:56px;overflow-x:auto;gap:4px}
+    .nav a{color:var(--dim);text-decoration:none;font-size:13px;padding:6px 12px;border-radius:8px;white-space:nowrap;transition:all 0.2s}
+    .nav a:hover,.nav a.active{color:var(--primary);background:rgba(59,130,246,0.1)}
+    .container{max-width:900px;margin:0 auto;padding:0 20px 100px}
+    .section{margin-top:60px;scroll-margin-top:70px}
+    .section-title{font-size:26px;font-weight:800;margin-bottom:28px;background:linear-gradient(135deg,var(--primary),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:20px}
+    .card h3{font-size:18px;margin-bottom:12px;color:var(--text)}
+    .card h4{font-size:16px;margin-bottom:8px}
+    .card p{color:var(--dim);font-size:15px;margin-bottom:8px}
+    .highlight{color:var(--accent);font-weight:700;font-size:110%}
+    .formula{font-family:'Times New Roman',serif;font-size:22px;color:var(--accent);font-weight:700}
+    .insight-box{background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(236,72,153,0.04));border:1px solid rgba(245,158,11,0.25);border-radius:14px;padding:20px;margin:20px 0}
+    .insight-box h4{color:var(--accent);margin-bottom:8px}
+    .insight-box p{color:var(--dim);font-size:14px}
+    .grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px}
+    .grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px}
+    .interactive-panel{background:linear-gradient(135deg,rgba(59,130,246,0.06),rgba(139,92,246,0.04));border:1px solid rgba(59,130,246,0.2);border-radius:16px;padding:24px;margin:24px 0}
+    .interactive-panel canvas{display:block;margin:0 auto;border-radius:12px;background:var(--bg);max-width:100%}
+    .slider-group{display:flex;align-items:center;gap:12px;margin:14px 0;flex-wrap:wrap}
+    .slider-group label{color:var(--dim);font-size:14px;white-space:nowrap}
+    .slider-group input[type=range]{flex:1;min-width:150px;accent-color:var(--primary)}
+    .slider-group .val{color:var(--accent);font-weight:700;min-width:40px;text-align:center}
+    .exp-btn{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;border:none;padding:8px 22px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:transform 0.15s}
+    .exp-btn:hover{transform:scale(1.03)}
+    .concept-label{display:block;padding:12px 18px;margin:8px 0;border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:all 0.2s;color:var(--dim)}
+    .concept-label:hover{border-color:var(--primary);background:rgba(59,130,246,0.06)}
+    .quiz-btn{display:block;margin:24px auto 0;background:linear-gradient(135deg,var(--success),var(--teal));color:#fff;border:none;padding:14px 48px;border-radius:14px;font-size:18px;font-weight:700;cursor:pointer}
+    .quiz-result{display:none;margin-top:20px;padding:24px;border-radius:14px}.quiz-result.show{display:block}
+    .quiz-q{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;margin:16px 0}
+    .quiz-q label{display:block;padding:10px 16px;margin:6px 0;border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.2s;color:var(--dim)}
+    .quiz-q label:hover{border-color:var(--primary)}
+    table{width:100%;border-collapse:collapse;margin:12px 0}
+    th,td{padding:10px 14px;border:1px solid var(--border);font-size:14px}
+    th{background:rgba(59,130,246,0.1);color:var(--primary);font-weight:600}
+    td{color:var(--dim)}
+    .footer{text-align:center;padding:40px 20px;color:var(--dim);font-size:13px;border-top:1px solid var(--border);margin-top:60px}
+    .tts-toggle{position:fixed;bottom:20px;right:20px;z-index:999;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;border:none;font-size:22px;cursor:pointer;box-shadow:0 4px 16px rgba(59,130,246,0.4)}
+    .tts-toggle.active{background:linear-gradient(135deg,var(--success),var(--teal))}
+    .tts-player{position:fixed;bottom:0;left:0;right:0;z-index:998;background:rgba(15,23,42,0.98);backdrop-filter:blur(12px);border-top:1px solid var(--border);padding:10px 20px;display:none;align-items:center;gap:12px}
+    .tts-player.show{display:flex}
+    .tts-play-btn{width:36px;height:36px;border-radius:50%;background:var(--primary);color:#fff;border:none;font-size:16px;cursor:pointer;flex-shrink:0}
+    .tts-play-btn.playing{background:var(--success)}
+    .tts-progress{flex:1;height:4px;background:var(--bg2);border-radius:2px;cursor:pointer;position:relative}
+    .tts-progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:2px;width:0;transition:width 0.3s}
+    .tts-info{min-width:160px}.tts-seg-title{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+    .tts-seg-time{font-size:11px;color:var(--dim)}
+    .subtitle-bar{position:fixed;bottom:64px;left:50%;transform:translateX(-50%);z-index:997;background:rgba(0,0,0,0.85);padding:12px 28px;border-radius:12px;display:none;max-width:80%;text-align:center}
+    .subtitle-bar.show{display:block}
+    .subtitle-zh{font-size:15px;color:#f8fafc;line-height:1.6}
+    .quick-btns{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+    .quick-btns button{background:var(--bg2);border:1px solid var(--border);color:var(--dim);padding:6px 14px;border-radius:8px;font-size:13px;cursor:pointer;transition:all 0.2s}
+    .quick-btns button:hover{border-color:var(--primary);color:var(--primary)}
+    @media(max-width:700px){.nav{padding:0 10px;gap:2px}.nav a{font-size:12px;padding:4px 8px}.section-title{font-size:22px}.grid-2,.grid-3{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<nav class="nav">
+  <a href="#hero">首页</a><a href="#engage">引导</a><a href="#objectives">目标</a><a href="#knowledge-graph">图谱</a>
+  <a href="#precheck">前测</a><a href="#lesson1">浮力产生</a><a href="#lesson2">阿基米德</a><a href="#lesson3">浮沉条件</a>
+  <a href="#interactive">互动</a><a href="#scaffold">练习</a><a href="#postcheck">后测</a><a href="#summary">总结</a>
+</nav>
+<div class="container">
+
+<!-- HERO -->
+<div class="section" id="hero" style="text-align:center;padding-top:60px">
+  <div style="font-size:64px;margin-bottom:20px">🚢</div>
+  <h1 style="font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--cyan),var(--success),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:12px">浮 力</h1>
+  <p style="font-size:20px;color:var(--dim);max-width:600px;margin:0 auto">从压力差到阿基米德原理，揭秘"浮与沉"的物理密码</p>
+  <div style="display:flex;justify-content:center;gap:16px;margin-top:24px;flex-wrap:wrap">
+    <span style="background:rgba(6,182,212,0.15);color:var(--cyan);padding:6px 16px;border-radius:20px;font-size:13px">🔬 3个互动实验</span>
+    <span style="background:rgba(16,185,129,0.15);color:var(--success);padding:6px 16px;border-radius:20px;font-size:13px">📊 14题诊断测评</span>
+    <span style="background:rgba(139,92,246,0.15);color:var(--secondary);padding:6px 16px;border-radius:20px;font-size:13px">🎙 语音讲解</span>
+  </div>
+</div>
+
+<!-- ENGAGE -->
+<div class="section" id="engage">
+  <h2 class="section-title">🎭 为什么铁块沉而铁船浮？</h2>
+  <div class="card" style="border-left:4px solid var(--cyan);background:linear-gradient(135deg,rgba(6,182,212,0.06),rgba(59,130,246,0.04))">
+    <p style="font-size:17px;line-height:2">
+      <strong style="color:var(--success)">[And]</strong> 把铁块扔进水里，它会直接沉底。铁的密度约 7800 kg/m³，远大于水。<br>
+      <strong style="color:var(--danger)">[But]</strong> 可是航空母舰几万吨重，全身都是钢铁，却稳稳浮在海面上——这不矛盾吗？<br>
+      <strong style="color:var(--primary)">[Therefore]</strong> 关键不在"材料是什么"，而在<span class="highlight">排开液体的体积有多大</span>。浮力 = ρ液gV排，船的空心结构排开了巨量的水，所以浮力 > 重力 → 漂浮！
+    </p>
+  </div>
+  <div class="card">
+    <h3>🧠 本节课要回答的核心问题</h3>
+    <div style="display:grid;gap:10px;margin-top:12px">
+      <div style="display:flex;align-items:center;gap:10px"><span style="font-size:24px">❓</span><span style="color:var(--dim)">浮力是怎么产生的？（上下表面压力差）</span></div>
+      <div style="display:flex;align-items:center;gap:10px"><span style="font-size:24px">❓</span><span style="color:var(--dim)">浮力到底等于多少？（阿基米德原理）</span></div>
+      <div style="display:flex;align-items:center;gap:10px"><span style="font-size:24px">❓</span><span style="color:var(--dim)">什么决定物体浮还是沉？（密度比较）</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>📦 三大知识模块</h3>
+    <table>
+      <tr><th>模块</th><th>核心概念</th><th>公式</th></tr>
+      <tr><td style="color:var(--cyan)">浮力的产生</td><td>上下压力差 → 浮力</td><td class="formula">F浮 = F下 − F上</td></tr>
+      <tr><td style="color:var(--pink)">阿基米德原理</td><td>排开液体重力 = 浮力</td><td class="formula">F浮 = ρ液gV排</td></tr>
+      <tr><td style="color:var(--accent)">浮沉条件</td><td>密度决定浮沉</td><td class="formula">比较 ρ物 与 ρ液</td></tr>
+    </table>
+  </div>
+</div>
+
+
+<!-- OBJECTIVES -->
+<div class="section" id="objectives">
+  <h2 class="section-title">🎯 学习目标</h2>
+  <div class="grid-3">
+    <div class="card" style="border-top:3px solid var(--primary)">
+      <h4 style="color:var(--primary)">📘 知识与技能</h4>
+      <ul style="padding-left:18px;color:var(--dim);font-size:14px;line-height:2">
+        <li>理解浮力产生的原因（上下压力差）</li>
+        <li>掌握阿基米德原理 F浮=ρ液gV排</li>
+        <li>能用密度比较判断浮沉状态</li>
+        <li>会计算漂浮和完全浸没时的浮力</li>
+      </ul>
+    </div>
+    <div class="card" style="border-top:3px solid var(--success)">
+      <h4 style="color:var(--success)">🔬 过程与方法</h4>
+      <ul style="padding-left:18px;color:var(--dim);font-size:14px;line-height:2">
+        <li>通过 Canvas 实验观察浮力产生过程</li>
+        <li>通过溢水杯实验理解 F浮=G排</li>
+        <li>通过密度滑块模拟浮沉状态转变</li>
+      </ul>
+    </div>
+    <div class="card" style="border-top:3px solid var(--accent)">
+      <h4 style="color:var(--accent)">💡 情感与价值</h4>
+      <ul style="padding-left:18px;color:var(--dim);font-size:14px;line-height:2">
+        <li>感受阿基米德灵感瞬间的科学之美</li>
+        <li>理解浮力在航海、潜水、气球中的应用</li>
+        <li>体会物理规律解释日常现象的魅力</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- KNOWLEDGE GRAPH -->
+<div class="section" id="knowledge-graph">
+  <h2 class="section-title">🗺️ 知识图谱</h2>
+  <div class="card" style="text-align:center;overflow-x:auto">
+    <svg id="kg-svg" width="100%" viewBox="0 0 1100 280" style="min-height:280px"></svg>
+  </div>
+</div>
+
+<!-- PRECHECK -->
+<div class="section" id="precheck">
+  <h2 class="section-title">📋 前测：你已经知道多少？</h2>
+  <div class="card">
+    <p><strong>1.</strong> 液体内部深度为 h 处的压强公式是？</p>
+    <label class="concept-label" onclick="checkPre(this,0,'A')"><strong>A.</strong> p = F/S</label>
+    <label class="concept-label" onclick="checkPre(this,0,'B')"><strong>B.</strong> p = ρgh</label>
+    <label class="concept-label" onclick="checkPre(this,0,'C')"><strong>C.</strong> p = mv</label>
+    <div id="pre0-fb" style="display:none;padding:10px;border-radius:8px;margin-top:8px"></div>
+  </div>
+  <div class="card">
+    <p><strong>2.</strong> 物体在液体中越深，液体对它向下表面的压强越___</p>
+    <label class="concept-label" onclick="checkPre(this,1,'A')"><strong>A.</strong> 大</label>
+    <label class="concept-label" onclick="checkPre(this,1,'B')"><strong>B.</strong> 小</label>
+    <label class="concept-label" onclick="checkPre(this,1,'C')"><strong>C.</strong> 不变</label>
+    <div id="pre1-fb" style="display:none;padding:10px;border-radius:8px;margin-top:8px"></div>
+  </div>
+  <div class="card">
+    <p><strong>3.</strong> 水的密度是多少？</p>
+    <label class="concept-label" onclick="checkPre(this,2,'A')"><strong>A.</strong> 100 kg/m³</label>
+    <label class="concept-label" onclick="checkPre(this,2,'B')"><strong>B.</strong> 1000 kg/m³</label>
+    <label class="concept-label" onclick="checkPre(this,2,'C')"><strong>C.</strong> 10000 kg/m³</label>
+    <div id="pre2-fb" style="display:none;padding:10px;border-radius:8px;margin-top:8px"></div>
+  </div>
+</div>
+
+
+<!-- MODULE 1: 浮力的产生 -->
+<div class="section" id="lesson1">
+  <h2 class="section-title">📖 模块一：浮力的产生 — F浮 = F下 − F上</h2>
+  <div class="card" style="border-left:4px solid var(--cyan);background:linear-gradient(135deg,rgba(6,182,212,0.06),rgba(59,130,246,0.04))">
+    <h3>🤔 液体中的"隐形推力"</h3>
+    <p style="font-size:17px;line-height:2">
+      <strong style="color:var(--success)">[And]</strong> 液体内部各方向都有压强，深度越大压强越大（p=ρgh）。<br>
+      <strong style="color:var(--danger)">[But]</strong> 把一个石块缓缓放入水中，你能感觉水在"托"它——这个向上的力从何而来？<br>
+      <strong style="color:var(--primary)">[Therefore]</strong> 物体上下表面处于不同深度，下表面深度更大 → 压强更大 → 受到的压力更大 → <span class="highlight">F浮 = F下 − F上</span>。
+    </p>
+  </div>
+
+  <div class="card">
+    <h3>💡 核心知识：浮力的本质是压力差</h3>
+    <p style="font-size:16px">浸在液体中的物体，其上下表面分别承受液体的压力：</p>
+    <div style="text-align:center;margin:20px 0">
+      <p style="font-size:14px;color:var(--dim)">上表面（深度 h₁）：F上 = p₁ · S = ρ液gh₁S &nbsp;&nbsp;（向下）</p>
+      <p style="font-size:14px;color:var(--dim)">下表面（深度 h₂）：F下 = p₂ · S = ρ液gh₂S &nbsp;&nbsp;（向上）</p>
+      <p class="formula" style="text-align:center;margin:16px 0;font-size:28px">F浮 = F下 − F上 = ρ液g(h₂−h₁)S = ρ液gV排</p>
+    </div>
+    <p style="color:var(--dim);font-size:14px">其中 (h₂−h₁) 就是物体浸入液体的高度，乘以截面积 S 就是排开液体的体积 V排。</p>
+  </div>
+
+  <div class="insight-box">
+    <h4>⚠️ 高频易错：完全浸没后浮力与深度无关</h4>
+    <p>完全浸没后，物体上下表面深度差 (h₂−h₁) = 物体自身高度 = 不变 → V排不变 → <strong style="color:var(--accent)">F浮 = ρ液gV排 = 常数</strong>。</p>
+    <p style="margin-top:6px">所以金属块从水下1米沉到5米，浮力不变！很多同学以为"越深浮力越大"，这是错的。</p>
+  </div>
+
+  <div class="card">
+    <h3>🌊 哪些情况有浮力？</h3>
+    <table>
+      <tr><th>场景</th><th>有无浮力</th><th>原因</th></tr>
+      <tr><td>木块漂浮在水面</td><td style="color:var(--success)">✅ 有</td><td>下表面在水中，上表面在水面以上</td></tr>
+      <tr><td>石块沉在水底</td><td style="color:var(--success)">✅ 有</td><td>上下表面深度不同，有压力差</td></tr>
+      <tr><td>桥墩插在河底</td><td style="color:var(--danger)">⚠️ 特殊</td><td>底面紧贴河底，下方无水，则该面无液体压力；浮力减小甚至为零</td></tr>
+      <tr><td>气球在空气中</td><td style="color:var(--success)">✅ 有</td><td>气体也能产生浮力，原理相同</td></tr>
+    </table>
+  </div>
+
+  <!-- Canvas Experiment 1 -->
+  <div class="interactive-panel">
+    <h3>🧪 实验一：浮力的压差来源</h3>
+    <p style="color:var(--dim);margin-bottom:12px">拖动滑块改变物体浸入深度，观察上下表面压力箭头和浮力变化</p>
+    <canvas id="exp1Canvas" width="700" height="380" style="max-width:100%"></canvas>
+    <div class="slider-group">
+      <label>浸入深度 (%)：</label>
+      <input type="range" id="exp1Depth" min="0" max="100" value="50" step="5">
+      <span class="val" id="exp1Dval">50</span>
+    </div>
+    <p style="text-align:center;margin-top:12px;font-size:18px;color:var(--cyan)" id="exp1Result">浸入 50%</p>
+  </div>
+
+  <!-- ConcepTest 1 -->
+  <div class="card">
+    <h3>✏️ 即时检测</h3>
+    <p>金属块完全浸没在水中，从 1m 深处下沉到 5m 深处，浮力（）</p>
+    <label class="concept-label" onclick="checkConcept(this,'A','ct1')"><strong>A.</strong> 增大</label>
+    <label class="concept-label" onclick="checkConcept(this,'B','ct1')"><strong>B.</strong> 减小</label>
+    <label class="concept-label" onclick="checkConcept(this,'C','ct1')"><strong>C.</strong> 不变</label>
+    <div id="ct1-feedback" style="display:none;padding:12px;border-radius:10px;margin-top:10px"></div>
+  </div>
+</div>
+
+
+<!-- MODULE 2: 阿基米德原理 -->
+<div class="section" id="lesson2">
+  <h2 class="section-title">📖 模块二：阿基米德原理 — F浮 = ρ液gV排</h2>
+  <div class="card" style="border-left:4px solid var(--pink);background:linear-gradient(135deg,rgba(236,72,153,0.06),rgba(139,92,246,0.04))">
+    <h3>🤔 浮力到底等于多少？</h3>
+    <p style="font-size:17px;line-height:2">
+      <strong style="color:var(--success)">[And]</strong> 浮力来自上下表面的压力差，可以用 F下−F上 来计算。<br>
+      <strong style="color:var(--danger)">[But]</strong> 现实中物体形状千奇百怪——圆球、不规则石头、船体，逐面算压力根本不现实。<br>
+      <strong style="color:var(--primary)">[Therefore]</strong> 古希腊的阿基米德发现了一个惊人简洁的规律：<span class="highlight">F浮 = ρ液gV排</span>——只要知道排开液体的体积就行！
+    </p>
+  </div>
+
+  <div class="card">
+    <h3>🏛️ 阿基米德的"尤里卡"时刻</h3>
+    <p style="color:var(--dim);line-height:2">公元前 3 世纪，叙拉古国王请阿基米德鉴定王冠是否掺假。阿基米德苦思无果，直到某天泡澡时发现：<strong style="color:var(--accent)">身体入水越多，溢出的水越多，自己感觉越"轻"</strong>。</p>
+    <p style="color:var(--dim);line-height:2">他激动地跳出浴缸大喊 "Eureka!"（我发现了！）——溢出水的重力 = 浮力！</p>
+  </div>
+
+  <div class="card">
+    <h3>💡 核心知识</h3>
+    <p style="font-size:16px;margin-bottom:12px"><strong>阿基米德原理：</strong>浸在液体（或气体）中的物体受到的浮力，等于它排开液体（或气体）所受的重力。</p>
+    <p class="formula" style="text-align:center;margin:16px 0;font-size:28px">F浮 = G排 = ρ液 · g · V排</p>
+    <div class="grid-2" style="margin-top:16px">
+      <div style="padding:12px;background:rgba(6,182,212,0.06);border-radius:10px">
+        <p style="color:var(--cyan);font-weight:700;margin-bottom:6px">📌 公式拆解</p>
+        <p style="color:var(--dim);font-size:14px">• ρ液 — 液体密度（kg/m³），不是物体密度！</p>
+        <p style="color:var(--dim);font-size:14px">• g — 重力加速度（≈10 N/kg）</p>
+        <p style="color:var(--dim);font-size:14px">• V排 — 排开液体的体积，不一定等于物体体积</p>
+      </div>
+      <div style="padding:12px;background:rgba(236,72,153,0.06);border-radius:10px">
+        <p style="color:var(--pink);font-weight:700;margin-bottom:6px">⚠️ 关键区分</p>
+        <p style="color:var(--dim);font-size:14px">• 完全浸没：V排 = V物</p>
+        <p style="color:var(--dim);font-size:14px">• 漂浮/部分浸没：V排 < V物</p>
+        <p style="color:var(--dim);font-size:14px">• 对气体同样成立（热气球原理）</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <h4>💎 阿基米德原理的妙处</h4>
+    <p>不管物体什么形状（方的、圆的、不规则的），不管什么材料（铁的、木的、塑料的），浮力只跟<strong style="color:var(--accent)">两个量</strong>有关：<strong>液体密度 ρ液</strong> 和 <strong>排开体积 V排</strong>。</p>
+    <p style="margin-top:6px">这就是为什么 F浮=ρ液gV排 如此强大——它把复杂的压力差计算简化成了一个优雅的公式。</p>
+  </div>
+
+  <div class="card">
+    <h3>🧮 典型例题</h3>
+    <p style="color:var(--dim)">体积 200 cm³ 的铝块完全浸没在水中（g 取 10 N/kg），求浮力。</p>
+    <div style="background:rgba(139,92,246,0.06);padding:14px;border-radius:10px;margin-top:12px">
+      <p style="color:var(--secondary);font-size:14px">
+        <strong>解：</strong><br>
+        V排 = V物 = 200 cm³ = 200×10⁻⁶ m³ = 2×10⁻⁴ m³<br>
+        F浮 = ρ水gV排 = 1000 × 10 × 2×10⁻⁴ = <strong style="color:var(--accent)">2 N</strong>
+      </p>
+    </div>
+  </div>
+
+  <!-- Canvas Experiment 2 -->
+  <div class="interactive-panel">
+    <h3>🧪 实验二：验证阿基米德原理</h3>
+    <p style="color:var(--dim);margin-bottom:12px">缓慢将物体浸入溢水杯，观察弹簧秤示数变化和溢出水量关系</p>
+    <canvas id="exp2Canvas" width="700" height="420" style="max-width:100%"></canvas>
+    <div class="slider-group">
+      <label>物体密度 (kg/m³)：</label>
+      <input type="range" id="exp2Rho" min="500" max="8000" value="2700" step="100">
+      <span class="val" id="exp2Rval">2700</span>
+    </div>
+    <div class="slider-group">
+      <label>浸入比例 (%)：</label>
+      <input type="range" id="exp2Dip" min="0" max="100" value="0" step="5">
+      <span class="val" id="exp2Dpval">0</span>
+    </div>
+    <p style="text-align:center;margin-top:12px;font-size:18px;color:var(--pink)" id="exp2Result">浸入 0%：弹簧秤 = 重力</p>
+  </div>
+
+  <!-- ConcepTest 2 -->
+  <div class="card">
+    <h3>✏️ 即时检测</h3>
+    <p>体积 200cm³ 的物体完全浸没在水中，浮力是（g 取 10）</p>
+    <label class="concept-label" onclick="checkConcept(this,'A','ct2')"><strong>A.</strong> 0.2 N</label>
+    <label class="concept-label" onclick="checkConcept(this,'B','ct2')"><strong>B.</strong> 2 N</label>
+    <label class="concept-label" onclick="checkConcept(this,'C','ct2')"><strong>C.</strong> 20 N</label>
+    <div id="ct2-feedback" style="display:none;padding:12px;border-radius:10px;margin-top:10px"></div>
+  </div>
+</div>
+
+
+<!-- MODULE 3: 浮沉条件 -->
+<div class="section" id="lesson3">
+  <h2 class="section-title">📖 模块三：物体的浮沉条件</h2>
+  <div class="card" style="border-left:4px solid var(--accent);background:linear-gradient(135deg,rgba(245,158,11,0.06),rgba(16,185,129,0.04))">
+    <h3>🤔 什么决定浮还是沉？</h3>
+    <p style="font-size:17px;line-height:2">
+      <strong style="color:var(--success)">[And]</strong> 我们知道 F浮 = ρ液gV排，G物 = ρ物gV物。<br>
+      <strong style="color:var(--danger)">[But]</strong> 木块浮在水面、铁块沉入水底、鸡蛋在盐水中悬浮——同样是在水里，为什么结果截然不同？<br>
+      <strong style="color:var(--primary)">[Therefore]</strong> 关键是比较 F浮 和 G物 的大小。对于实心均匀物体，本质就是比较 <span class="highlight">ρ物 和 ρ液</span>！
+    </p>
+  </div>
+
+  <div class="card">
+    <h3>💡 核心知识：三种浮沉状态</h3>
+    <table>
+      <tr><th>力的关系</th><th>密度关系</th><th>运动状态</th><th>V排 关系</th><th>生活实例</th></tr>
+      <tr>
+        <td style="color:var(--danger)">F浮 < G物</td>
+        <td>ρ物 > ρ液</td>
+        <td><strong>下沉</strong></td>
+        <td>V排 = V物</td>
+        <td>铁块在水中、石头沉底</td>
+      </tr>
+      <tr>
+        <td style="color:var(--secondary)">F浮 = G物</td>
+        <td>ρ物 = ρ液</td>
+        <td><strong>悬浮</strong></td>
+        <td>V排 = V物</td>
+        <td>鸡蛋在适当盐水中</td>
+      </tr>
+      <tr>
+        <td style="color:var(--success)">F浮 > G物</td>
+        <td>ρ物 < ρ液</td>
+        <td><strong>上浮 → 漂浮</strong></td>
+        <td>漂浮时 V排 < V物</td>
+        <td>木块浮在水面、冰山</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <h4>⚠️ "悬浮"与"漂浮"的区别</h4>
+    <p><strong style="color:var(--secondary)">悬浮</strong>：物体完全浸没在液体中且静止，ρ物 = ρ液，V排 = V物。可以在液体内部任意深度停留。</p>
+    <p><strong style="color:var(--success)">漂浮</strong>：物体浮在液面上且静止，ρ物 < ρ液，V排 < V物。一部分露出液面。</p>
+    <p style="margin-top:8px">两者都满足 F浮 = G物，但 V排 不同！</p>
+  </div>
+
+  <div class="card">
+    <h3>🚢 漂浮问题的特殊性</h3>
+    <p style="color:var(--dim);margin-bottom:12px">漂浮时 F浮 = G物，这是解漂浮类题目的核心等式。</p>
+    <div style="background:rgba(245,158,11,0.06);padding:16px;border-radius:10px">
+      <p style="color:var(--accent);font-size:14px;line-height:2">
+        <strong>推导：</strong>漂浮时 ρ液gV排 = ρ物gV物<br>
+        → V排/V物 = ρ物/ρ液<br>
+        → <strong>浸入体积占总体积的比例 = 密度之比</strong><br>
+        <br>
+        例：冰的密度 ≈ 0.9×10³ kg/m³，水密度 = 1.0×10³ kg/m³<br>
+        → V排/V物 = 0.9/1.0 = 90%<br>
+        → <strong>冰山有 90% 体积在水下</strong>，只露出 10%——"冰山一角"由此而来！
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🔧 改变浮沉的方法</h3>
+    <div class="grid-2">
+      <div style="padding:12px;background:rgba(16,185,129,0.06);border-radius:10px">
+        <p style="color:var(--success);font-weight:700;margin-bottom:6px">让物体上浮</p>
+        <p style="color:var(--dim);font-size:14px">• 减小 ρ物：空心化（船舶设计）</p>
+        <p style="color:var(--dim);font-size:14px">• 增大 ρ液：加盐（死海浮人）</p>
+        <p style="color:var(--dim);font-size:14px">• 增大 V排：展平形状（铝箔实验）</p>
+      </div>
+      <div style="padding:12px;background:rgba(239,68,68,0.06);border-radius:10px">
+        <p style="color:var(--danger);font-weight:700;margin-bottom:6px">让物体下沉</p>
+        <p style="color:var(--dim);font-size:14px">• 增大 ρ物：注水压舱（潜水艇）</p>
+        <p style="color:var(--dim);font-size:14px">• 减小 ρ液：从盐水换成淡水</p>
+        <p style="color:var(--dim);font-size:14px">• 减小 V排：排气缩小体积</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🌍 生活中的浮沉应用</h3>
+    <div class="grid-2">
+      <div>
+        <p style="font-size:14px;color:var(--dim);line-height:2"><strong style="color:var(--cyan)">🚢 轮船</strong>：钢铁空心化 → 排开大量水 → F浮 > G → 漂浮。载货越多，吃水线越深。</p>
+        <p style="font-size:14px;color:var(--dim);line-height:2"><strong style="color:var(--cyan)">🐟 潜水艇</strong>：压载水舱注水/排水 → 改变自身重力 → 下潜/上浮/悬浮。</p>
+        <p style="font-size:14px;color:var(--dim);line-height:2"><strong style="color:var(--cyan)">🎈 热气球</strong>：加热空气 → 气球内空气密度 < 外部 → 浮力 > 重力 → 升空。</p>
+      </div>
+      <div>
+        <p style="font-size:14px;color:var(--dim);line-height:2"><strong style="color:var(--accent)">🏊 游泳</strong>：吸气时肺部膨胀 → V排增大 → 浮力增大 → 更容易浮。</p>
+        <p style="font-size:14px;color:var(--dim);line-height:2"><strong style="color:var(--accent)">🧊 冰山</strong>：ρ冰 < ρ水 → 90% 在水下 → 航海大忌。</p>
+        <p style="font-size:14px;color:var(--dim);line-height:2"><strong style="color:var(--accent)">🥚 盐水浮蛋</strong>：加盐增大 ρ液 → 鸡蛋从沉底到悬浮到漂浮。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Canvas Experiment 3 -->
+  <div class="interactive-panel">
+    <h3>🧪 实验三：浮沉条件模拟器</h3>
+    <p style="color:var(--dim);margin-bottom:12px">拖动滑块调节物体密度，观察浮/悬浮/沉的状态变化</p>
+    <canvas id="exp3Canvas" width="700" height="380" style="max-width:100%"></canvas>
+    <div class="slider-group">
+      <label>物体密度 (kg/m³)：</label>
+      <input type="range" id="exp3Rho" min="200" max="3000" value="1000" step="50">
+      <span class="val" id="exp3Rval">1000</span>
+    </div>
+    <div class="quick-btns">
+      <button onclick="document.getElementById('exp3Rho').value=200;drawExp3()">泡沫 200</button>
+      <button onclick="document.getElementById('exp3Rho').value=600;drawExp3()">木材 600</button>
+      <button onclick="document.getElementById('exp3Rho').value=900;drawExp3()">冰 900</button>
+      <button onclick="document.getElementById('exp3Rho').value=1000;drawExp3()">水 1000</button>
+      <button onclick="document.getElementById('exp3Rho').value=2700;drawExp3()">铝 2700</button>
+      <button onclick="document.getElementById('exp3Rho').value=7800;drawExp3()">铁 7800</button>
+    </div>
+    <p style="text-align:center;margin-top:12px;font-size:18px;color:var(--accent)" id="exp3Result">ρ物 = ρ液 → 悬浮</p>
+  </div>
+
+  <!-- ConcepTest 3 -->
+  <div class="card">
+    <h3>✏️ 即时检测</h3>
+    <p>密度 600 kg/m³ 的实心木球放入水中，最终会（）</p>
+    <label class="concept-label" onclick="checkConcept(this,'A','ct3')"><strong>A.</strong> 沉入水底</label>
+    <label class="concept-label" onclick="checkConcept(this,'B','ct3')"><strong>B.</strong> 悬浮在水中</label>
+    <label class="concept-label" onclick="checkConcept(this,'C','ct3')"><strong>C.</strong> 漂浮在水面</label>
+    <div id="ct3-feedback" style="display:none;padding:12px;border-radius:10px;margin-top:10px"></div>
+  </div>
+</div>
+
+
+<!-- INTERACTIVE HUB -->
+<div class="section" id="interactive">
+  <h2 class="section-title">🎮 综合互动实验室</h2>
+  <div class="grid-3">
+    <div class="card" style="text-align:center">
+      <div style="font-size:40px;margin-bottom:12px">📐</div>
+      <h4>实验一</h4><p>浮力压差来源</p>
+      <a href="#lesson1" class="exp-btn" style="display:inline-block;text-decoration:none;margin-top:10px">前往</a>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:40px;margin-bottom:12px">🏺</div>
+      <h4>实验二</h4><p>阿基米德验证</p>
+      <a href="#lesson2" class="exp-btn" style="display:inline-block;text-decoration:none;margin-top:10px">前往</a>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:40px;margin-bottom:12px">🚢</div>
+      <h4>实验三</h4><p>浮沉模拟器</p>
+      <a href="#lesson3" class="exp-btn" style="display:inline-block;text-decoration:none;margin-top:10px">前往</a>
+    </div>
+  </div>
+</div>
+
+<!-- SCAFFOLD -->
+<div class="section" id="scaffold">
+  <h2 class="section-title">🎯 分级练习（脚手架策略）</h2>
+
+  <!-- Level 1 -->
+  <div class="card">
+    <h3>Level 1 基础计算（有引导）</h3>
+    <p>体积 500 cm³ 的铝块完全浸没在水中（ρ水=1000 kg/m³，g 取 10）</p>
+    <p>① V排 = V物 = 500 cm³ = <input id="s1a" type="text" size="10" style="background:var(--bg2);color:var(--accent);border:1px solid var(--border);padding:4px 8px;border-radius:6px;font-size:16px;text-align:center"> m³</p>
+    <p>② F浮 = ρ水gV排 = 1000 × 10 × ___ = <input id="s1b" type="text" size="8" style="background:var(--bg2);color:var(--accent);border:1px solid var(--border);padding:4px 8px;border-radius:6px;font-size:16px;text-align:center"> N</p>
+    <button class="exp-btn" style="margin-top:12px" onclick="checkLevel1()">检查</button>
+    <div id="l1-feedback" style="display:none;padding:12px;border-radius:10px;margin-top:10px"></div>
+  </div>
+
+  <!-- Level 2 -->
+  <div class="card">
+    <h3>Level 2 综合判断（给提示）</h3>
+    <p>体积 500 cm³、质量 400 g 的物体放入水中（g 取 10）</p>
+    <p style="color:var(--dim)">💡 先比较密度判断浮沉，再用阿基米德原理算浮力</p>
+    <p>物体密度 = <input id="s2a" type="text" size="8" style="background:var(--bg2);color:var(--accent);border:1px solid var(--border);padding:4px 8px;border-radius:6px;font-size:16px;text-align:center"> kg/m³</p>
+    <p>浮沉状态 = <input id="s2b" type="text" size="8" style="background:var(--bg2);color:var(--accent);border:1px solid var(--border);padding:4px 8px;border-radius:6px;font-size:16px;text-align:center">（上浮/悬浮/下沉）</p>
+    <p>浮力 = <input id="s2c" type="text" size="8" style="background:var(--bg2);color:var(--accent);border:1px solid var(--border);padding:4px 8px;border-radius:6px;font-size:16px;text-align:center"> N</p>
+    <button class="exp-btn" style="margin-top:12px" onclick="checkLevel2()">检查</button>
+    <div id="l2-feedback" style="display:none;padding:12px;border-radius:10px;margin-top:10px"></div>
+  </div>
+
+  <!-- Level 3 -->
+  <div class="card">
+    <h3>Level 3 迁移挑战</h3>
+    <p><strong>设计题</strong>：一艘船质量 2×10⁵ kg，在海水（ρ=1.03×10³ kg/m³）中漂浮。</p>
+    <p>① 浮力是多少？② 排开海水体积是多少？③ 从海水驶入淡水会上浮还是下沉？</p>
+    <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block';this.textContent=this.nextElementSibling.style.display==='block'?'收起解析':'查看解析'" style="background:var(--secondary);color:#fff;border:none;padding:6px 18px;border-radius:8px;cursor:pointer;font-size:14px;margin-top:12px">查看解析</button>
+    <div style="display:none;margin-top:14px;padding:16px;background:rgba(139,92,246,0.08);border-radius:10px;">
+      <p style="color:var(--dim);line-height:2"><strong>①</strong> 漂浮 → F浮 = G = mg = 2×10⁵ × 10 = <strong style="color:var(--accent)">2×10⁶ N</strong></p>
+      <p style="color:var(--dim);line-height:2"><strong>②</strong> V排 = F浮/(ρ海水g) = 2×10⁶/(1.03×10³×10) ≈ <strong style="color:var(--accent)">194.2 m³</strong></p>
+      <p style="color:var(--dim);line-height:2"><strong>③</strong> 淡水 ρ 更小（1000 < 1030），为保持 F浮=G 不变，需要 V排 增大 → 船身下沉一些（吃水线上升）</p>
+    </div>
+  </div>
+</div>
+
+<!-- POSTCHECK -->
+<div class="section" id="postcheck">
+  <h2 class="section-title">📊 后测：学会了吗？</h2>
+  <div id="quizArea"></div>
+  <button class="quiz-btn" onclick="submitQuiz()">提交后测</button>
+  <div id="quizResult" class="quiz-result"></div>
+</div>
+
+<!-- SUMMARY -->
+<div class="section" id="summary">
+  <h2 class="section-title">📝 课程总结</h2>
+  <div class="grid-2">
+    <div class="card">
+      <h3>🔑 核心公式速查</h3>
+      <table>
+        <tr><th>概念</th><th>公式</th><th>适用条件</th></tr>
+        <tr><td>浮力本质</td><td class="formula">F浮 = F下 − F上</td><td>任何浸入液体的物体</td></tr>
+        <tr><td>阿基米德原理</td><td class="formula">F浮 = ρ液gV排</td><td>液体和气体通用</td></tr>
+        <tr><td>漂浮条件</td><td class="formula">F浮 = G物</td><td>ρ物 < ρ液</td></tr>
+        <tr><td>浸入比例</td><td class="formula">V排/V物 = ρ物/ρ液</td><td>漂浮的实心均匀物体</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>🧠 思维导图</h3>
+      <div style="padding:12px;background:rgba(59,130,246,0.06);border-radius:10px;font-size:14px;color:var(--dim);line-height:2.2">
+        <strong style="color:var(--primary)">浮力</strong><br>
+        ├─ 产生原因：上下压力差<br>
+        ├─ 大小：F浮=ρ液gV排<br>
+        ├─ 方向：竖直向上<br>
+        ├─ 浮沉条件<br>
+        │&nbsp;&nbsp;├─ 下沉：ρ物 > ρ液<br>
+        │&nbsp;&nbsp;├─ 悬浮：ρ物 = ρ液<br>
+        │&nbsp;&nbsp;└─ 漂浮：ρ物 < ρ液<br>
+        └─ 应用：轮船/潜艇/热气球/密度计
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>📚 延伸学习</h3>
+    <ul style="padding-left:20px;color:var(--dim);line-height:2">
+      <li>高中：流体力学与伯努利方程</li>
+      <li>工程：船舶浮力设计与稳性计算</li>
+      <li>生活：密度计、酒精计的工作原理</li>
+      <li>前沿：深海探测器耐压设计（蛟龙号）</li>
+      <li>趣味：死海为什么能躺着看书？</li>
+    </ul>
+  </div>
+</div>
+
+<div class="footer">
+  <p>🔬 浮力 · 八年级下册教学课件 | 教我学 TeachAny v5.2</p>
+  <p>ABT叙事 + ConcepTest + 脚手架分级 + Canvas互动 + 错因诊断 + 语音讲解 | 人教版2024 · 课标2022</p>
+</div>
+</div><!-- end container -->
+
+<!-- TTS UI -->
+<button class="tts-toggle" id="ttsToggle" onclick="toggleTTSPlayer()" title="语音讲解">🎙</button>
+<div class="subtitle-bar" id="subtitleBar">
+  <div class="subtitle-zh" id="subtitleZh"></div>
+</div>
+<div class="tts-player" id="ttsPlayer">
+  <button class="tts-play-btn" id="ttsPlayBtn" onclick="toggleTTSPlay()">▶</button>
+  <div class="tts-progress" id="ttsProgressBar" onclick="seekTTS(event)">
+    <div class="tts-progress-fill" id="ttsProgressFill"></div>
+  </div>
+  <div class="tts-info">
+    <div class="tts-seg-title" id="ttsSegTitle">准备就绪</div>
+    <div class="tts-seg-time" id="ttsSegTime">--:--</div>
+  </div>
+  <button style="background:transparent;border:1px solid var(--border);color:var(--dim);padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;white-space:nowrap" onclick="prevTTSSeg()">⏮ 上一段</button>
+  <button style="background:transparent;border:1px solid var(--border);color:var(--dim);padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;white-space:nowrap" onclick="nextTTSSeg()">下一段 ⏭</button>
+</div>
+
+<script>
+// ═══ Knowledge Graph ═══
+const knowledgeGraphData={currentNode:"buoyancy",currentLabel:"浮力",
+coreSubTopics:[{id:"sub-origin",label:"浮力的产生"},{id:"sub-archimedes",label:"阿基米德原理"},{id:"sub-floatsink",label:"浮沉条件"}],
+prerequisites:[{id:"pressure",label:"固体压强 p=F/S",hasCourseware:true,url:"../teachany-phy-mid-pressure/index.html",connectsTo:["sub-origin"]},{id:"liquid-pressure",label:"液体压强 p=ρgh",hasCourseware:true,url:"../teachany-phy-mid-pressure/index.html",connectsTo:["sub-origin","sub-archimedes"]},{id:"atmospheric",label:"大气压强",hasCourseware:true,url:"../teachany-phy-mid-atmospheric-pressure/index.html",connectsTo:["sub-origin"]}],
+nextTopics:[{id:"fluid-flow",label:"流体压强与流速",hasCourseware:false,url:"",connectsFrom:["sub-floatsink"]},{id:"bernoulli",label:"伯努利方程(高中)",hasCourseware:false,url:"",connectsFrom:["sub-archimedes"]},{id:"ship-design",label:"船舶浮力设计",hasCourseware:false,url:"",connectsFrom:["sub-floatsink"]}]};
+(function renderKG(){
+  const svg=document.getElementById('kg-svg');if(!svg)return;const d=knowledgeGraphData;
+  const NS='http://www.w3.org/2000/svg',el=t=>document.createElementNS(NS,t);
+  const C={pre:'#06b6d4',core:'#f59e0b',sub:'#3b82f6',next:'#10b981',preBg:'rgba(6,182,212,0.12)',coreBg:'rgba(245,158,11,0.18)',subBg:'rgba(59,130,246,0.12)',nextBg:'rgba(16,185,129,0.12)',noCw:'#94a3b8',noCwBg:'rgba(148,163,184,0.08)'};
+  const pre=d.prerequisites||[],sub=d.coreSubTopics||[],nxt=d.nextTopics||[];
+  const maxR=Math.max(pre.length,sub.length+1,nxt.length),rH=60;
+  const W=1100,H=Math.max(360,(maxR+1)*rH+40);
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.style.minHeight=H+'px';
+  const colX=[120,W/2,W-120],nW=200,nH=36;
+  const defs=el('defs');
+  ['pre','core','sub','next'].forEach(k=>{const m=el('marker');m.setAttribute('id','a-'+k);m.setAttribute('viewBox','0 0 10 10');m.setAttribute('refX','10');m.setAttribute('refY','5');m.setAttribute('markerWidth','6');m.setAttribute('markerHeight','6');m.setAttribute('orient','auto-start-reverse');const p=el('path');p.setAttribute('d','M0 0L10 5L0 10z');p.setAttribute('fill',C[k]);m.appendChild(p);defs.appendChild(m)});
+  svg.appendChild(defs);
+  function drawNode(cx,cy,txt,col,bg,url){const g=el('g');g.style.cursor=url?'pointer':'default';if(url)g.onclick=()=>window.open(url,'_blank');const r=el('rect');r.setAttribute('x',cx-nW/2);r.setAttribute('y',cy-nH/2);r.setAttribute('width',nW);r.setAttribute('height',nH);r.setAttribute('rx',10);r.setAttribute('fill',bg);r.setAttribute('stroke',col);r.setAttribute('stroke-width','1.5');if(!url)r.setAttribute('stroke-dasharray','4 3');g.appendChild(r);const t=el('text');t.setAttribute('x',cx);t.setAttribute('y',cy+5);t.setAttribute('text-anchor','middle');t.setAttribute('font-size','13');t.setAttribute('fill',col);t.setAttribute('font-weight','600');t.textContent=txt;g.appendChild(t);svg.appendChild(g);return{cx,cy,left:cx-nW/2,right:cx+nW/2}}
+  function drawCurve(x1,y1,x2,y2,col,mk){const p=el('path'),mx=(x1+x2)/2;p.setAttribute('d','M'+x1+' '+y1+' C'+mx+' '+y1+','+mx+' '+y2+','+x2+' '+y2);p.setAttribute('fill','none');p.setAttribute('stroke',col);p.setAttribute('stroke-width','1.5');p.setAttribute('marker-end','url(#a-'+mk+')');svg.appendChild(p)}
+  const cY=36,cP=drawNode(colX[1],cY,d.currentLabel,C.core,C.coreBg);
+  const sP={};sub.forEach((n,i)=>{const y=cY+(i+1)*rH;sP[n.id]=drawNode(colX[1],y,n.label,C.sub,C.subBg);drawCurve(cP.cx,cY+nH/2,colX[1],y-nH/2,C.sub,'sub')});
+  pre.forEach((n,i)=>{const tH=pre.length*rH,sY=cY+(sub.length*rH-tH)/2+rH,y=sY+i*rH;const col=n.hasCourseware?C.pre:C.noCw,bg=n.hasCourseware?C.preBg:C.noCwBg;const p=drawNode(colX[0],y,n.label,col,bg,n.url);(n.connectsTo||[]).forEach(t=>{if(sP[t])drawCurve(p.right,p.cy,sP[t].left,sP[t].cy,C.pre,'pre')})});
+  nxt.forEach((n,i)=>{const tH=nxt.length*rH,sY=cY+(sub.length*rH-tH)/2+rH,y=sY+i*rH;const col=n.hasCourseware?C.next:C.noCw,bg=n.hasCourseware?C.nextBg:C.noCwBg;const p=drawNode(colX[2],y,n.label,col,bg,n.url);(n.connectsFrom||[]).forEach(s=>{if(sP[s])drawCurve(sP[s].right,sP[s].cy,p.left,p.cy,C.next,'next')})});
+  [['前序知识',colX[0]],['核心子知识点',colX[1]],['后续知识',colX[2]]].forEach(([t,x])=>{const tx=el('text');tx.setAttribute('x',x);tx.setAttribute('y',H-10);tx.setAttribute('text-anchor','middle');tx.setAttribute('font-size','12');tx.setAttribute('fill','#64748b');tx.textContent=t;svg.appendChild(tx)});
+})();
+
+// ═══ ConcepTest ═══
+const conceptAnswers={
+ct1:{correct:'C',feedback:{A:{type:'wrong',text:'❌ 完全浸没后，V排不变（=V物），所以F浮=ρ液gV排=常数。浮力与深度无关！很多同学误以为"越深浮力越大"。'},B:{type:'wrong',text:'❌ 浮力不会减小。完全浸没后V排始终等于V物，不随深度变化。'},C:{type:'correct',text:'✅ 正确！完全浸没后V排=V物=常数，F浮=ρ液gV排不变。浮力只与ρ液和V排有关，与深度无关！'}}},
+ct2:{correct:'B',feedback:{A:{type:'wrong',text:'❌ 单位换算出错。200cm³=200×10⁻⁶m³=2×10⁻⁴m³，F浮=1000×10×2×10⁻⁴=2N，不是0.2N。'},B:{type:'correct',text:'✅ 正确！V排=200cm³=2×10⁻⁴m³，F浮=ρ水gV排=1000×10×2×10⁻⁴=2N。'},C:{type:'wrong',text:'❌ 体积单位没换算对。200cm³=2×10⁻⁴m³（不是2×10⁻³），F浮=2N。'}}},
+ct3:{correct:'C',feedback:{A:{type:'wrong',text:'❌ ρ木=600 < ρ水=1000，物体密度小于液体密度应该上浮，最终漂浮，不会下沉。'},B:{type:'wrong',text:'❌ 悬浮需要ρ物=ρ液（密度相等）。ρ木=600≠1000，不会悬浮。'},C:{type:'correct',text:'✅ 正确！ρ木=600 < ρ水=1000 → 上浮 → 最终漂浮在水面。浸入比例=600/1000=60%。'}}}
+};
+function checkConcept(el,choice,qid){
+  const q=conceptAnswers[qid];if(!q)return;const fb=document.getElementById(qid+'-feedback');fb.style.display='block';
+  const info=q.feedback[choice];
+  fb.style.background=info.type==='correct'?'rgba(16,185,129,0.08)':'rgba(239,68,68,0.08)';
+  fb.innerHTML=info.text;
+  el.style.borderColor=info.type==='correct'?'var(--success)':'var(--danger)';
+  el.style.background=info.type==='correct'?'rgba(16,185,129,0.06)':'rgba(239,68,68,0.06)';
+  if(info.type==='correct')onModuleComplete(qid,1,1);
+}
+
+// ═══ Pretest ═══
+const preAnswers=[
+  {correct:'B',explain:'✓ p=ρgh 是液体内部压强公式。p=F/S是压强通用定义，p=mv是动量公式。'},
+  {correct:'A',explain:'✓ 深度越大，p=ρgh越大，压强越大，下表面受到的压力也越大。'},
+  {correct:'B',explain:'✓ 水的密度=1000 kg/m³=1.0×10³ kg/m³=1 g/cm³。'}
+];
+function checkPre(el,idx,choice){
+  const fb=document.getElementById('pre'+idx+'-fb');fb.style.display='block';
+  const ok=choice===preAnswers[idx].correct;
+  fb.style.background=ok?'rgba(16,185,129,0.08)':'rgba(239,68,68,0.08)';
+  fb.innerHTML=(ok?'✅ ':'❌ 错误。')+preAnswers[idx].explain;
+  el.style.borderColor=ok?'var(--success)':'var(--danger)';
+  let preScore=0;for(let i=0;i<3;i++){const f=document.getElementById('pre'+i+'-fb');if(f&&f.style.display==='block'&&f.innerHTML.startsWith('✅'))preScore++}
+  if(preScore>0)onModuleComplete('pretest',preScore,3);
+}
+
+// ═══ Scaffold Checkers ═══
+function checkLevel1(){
+  const a=document.getElementById('s1a').value.trim().replace(/\s/g,'');
+  const b=document.getElementById('s1b').value.trim().replace(/\s/g,'');
+  let c=0,html='';
+  // V排=5×10⁻⁴ m³
+  if(a==='5e-4'||a==='5×10⁻⁴'||a==='5*10^-4'||a==='0.0005'||a==='5×10-4'){c++;document.getElementById('s1a').style.borderColor='var(--success)'}else{document.getElementById('s1a').style.borderColor='var(--danger)';html+='• V排=500cm³=500×10⁻⁶m³=<strong>5×10⁻⁴</strong> m³<br>'}
+  if(b==='5'){c++;document.getElementById('s1b').style.borderColor='var(--success)'}else{document.getElementById('s1b').style.borderColor='var(--danger)';html+='• F浮=1000×10×5×10⁻⁴=<strong>5</strong> N<br>'}
+  const fb=document.getElementById('l1-feedback');fb.style.display='block';
+  if(c===2){fb.style.background='rgba(16,185,129,0.08)';fb.innerHTML='🎉 全对！阿基米德原理计算：V排→F浮，掌握了核心步骤。';onModuleComplete('scaffold-l1',c,2)}
+  else{fb.style.background='rgba(239,68,68,0.08)';fb.innerHTML='<span style="color:var(--danger)">需修正</span><br>'+html}
+}
+function checkLevel2(){
+  const a=document.getElementById('s2a').value.trim().replace(/\s/g,'');
+  const b=document.getElementById('s2b').value.trim();
+  const cv=document.getElementById('s2c').value.trim().replace(/\s/g,'');
+  let c=0,html='';
+  if(a==='800'){c++;document.getElementById('s2a').style.borderColor='var(--success)'}else{document.getElementById('s2a').style.borderColor='var(--danger)';html+='• ρ=m/V=0.4kg/5×10⁻⁴m³=<strong>800</strong> kg/m³<br>'}
+  if(b==='上浮'||b==='漂浮'){c++;document.getElementById('s2b').style.borderColor='var(--success)'}else{document.getElementById('s2b').style.borderColor='var(--danger)';html+='• ρ物=800 < ρ水=1000 → <strong>上浮（漂浮）</strong><br>'}
+  if(cv==='4'){c++;document.getElementById('s2c').style.borderColor='var(--success)'}else{document.getElementById('s2c').style.borderColor='var(--danger)';html+='• 漂浮时F浮=G=mg=0.4×10=<strong>4</strong> N<br>'}
+  const fb=document.getElementById('l2-feedback');fb.style.display='block';
+  if(c===3){fb.style.background='rgba(16,185,129,0.08)';fb.innerHTML='🎉 全对！先判断浮沉再求浮力，完美解题流程！';onModuleComplete('scaffold-l2',c,3)}
+  else{fb.style.background='rgba(239,68,68,0.08)';fb.innerHTML='<span style="color:var(--danger)">需修正</span><br>'+html}
+}
+
+// ═══ Posttest Quiz ═══
+const quizData=[
+  {q:'1. 浮力产生的根本原因是（）',opts:['液体有重力','液体对物体上下表面的压力差','物体的重力','液体的表面张力'],ans:1,exp:'✓ 浮力的本质是液体对物体上下表面的压力差：F浮=F下−F上。',diag:{0:'液体有重力是产生液体压强的原因，但浮力的直接原因是压力差。',2:'物体的重力不是浮力产生的原因。',3:'表面张力不能解释浸没物体受到的浮力。'}},
+  {q:'2. 完全浸没在水中的石块从 2m 下沉到 8m，浮力（）',opts:['增大','减小','不变','先增后减'],ans:2,exp:'✓ 完全浸没后V排=V物=不变，F浮=ρ液gV排=常数。',diag:{0:'完全浸没后V排不随深度变化，浮力不会增大。',1:'不会减小。',3:'始终不变。'}},
+  {q:'3. 阿基米德原理的公式是（）',opts:['F浮=ρ物gV物','F浮=ρ液gV排','F浮=ρ液gV物','F浮=ρ物gV排'],ans:1,exp:'✓ F浮=ρ液gV排。注意是液体密度和排开体积。',diag:{0:'应该是液体密度ρ液，不是物体密度ρ物。',2:'V排不一定等于V物（漂浮时V排<V物）。',3:'密度应该是液体的，体积应该是排开液体的。'}},
+  {q:'4. 体积 100cm³ 的铁块完全浸没在水中，浮力是（g取10）',opts:['0.1 N','1 N','7.8 N','78 N'],ans:1,exp:'✓ F浮=ρ水gV排=1000×10×1×10⁻⁴=1N。',diag:{0:'单位换算错误。100cm³=1×10⁻⁴m³，F浮=1N。',2:'7.8N是铁块的重力（近似），不是浮力。',3:'78N算错了，重新检查单位换算。'}},
+  {q:'5. ρ物<ρ液，物体在液体中（）',opts:['下沉','悬浮','上浮后漂浮','无法确定'],ans:2,exp:'✓ ρ物<ρ液 → F浮>G → 上浮 → 最终漂浮（F浮=G）。',diag:{0:'ρ物<ρ液意味着浮力>重力，应该上浮。',1:'悬浮要求ρ物=ρ液（严格相等）。',3:'可以确定：密度小于液体的物体一定漂浮。'}},
+  {q:'6. 冰的密度约 0.9×10³ kg/m³，冰块浮在水面时浸入水中的体积约占（）',opts:['10%','50%','90%','100%'],ans:2,exp:'✓ V排/V物=ρ冰/ρ水=900/1000=90%。这就是"冰山一角"的来源。',diag:{0:'10%是露出水面的部分。',1:'不是一半，而是密度之比=90%。',3:'100%就是完全浸没/悬浮了，但冰密度<水密度，会漂浮。'}},
+  {q:'7. 漂浮在水面的木块，下列说法正确的是（）',opts:['浮力大于重力','浮力等于重力','浮力小于重力','浮力等于排开水的体积'],ans:1,exp:'✓ 漂浮时物体静止，合力为零，所以F浮=G物。',diag:{0:'如果浮力>重力，物体会继续上升。漂浮是平衡态，F浮=G。',2:'如果浮力<重力，物体会下沉。',3:'浮力等于排开水的重力（不是体积）。'}},
+  {q:'8. 潜水艇下潜的原理是（）',opts:['增大自身体积','改变水的密度','向水舱注水增大自身重力','减小排开水的体积'],ans:2,exp:'✓ 潜水艇通过向压载水舱注水来增大自身重力，使G>F浮而下潜。',diag:{0:'潜水艇体积基本不变。',1:'不能改变海水密度。',3:'潜水艇完全浸没后V排不变。'}}
+];
+function buildQuiz(){const a=document.getElementById('quizArea');let h='';quizData.forEach((it,i)=>{h+='<div class="quiz-q"><h4>'+it.q+'</h4>';it.opts.forEach((o,j)=>{h+='<label><input type="radio" name="q'+i+'" value="'+j+'"> '+String.fromCharCode(65+j)+'. '+o+'</label>'});h+='</div>'});a.innerHTML=h}
+function submitQuiz(){
+  let sc=0,html='';quizData.forEach((it,i)=>{const s=document.querySelector('input[name="q'+i+'"]:checked'),u=s?parseInt(s.value):-1,ok=u===it.ans;if(ok)sc++;
+    let fb=ok?it.exp:(it.diag&&it.diag[u])?it.diag[u]:'正确答案:'+String.fromCharCode(65+it.ans)+'。'+it.exp;
+    html+='<div style="margin:8px 0;padding:10px;border-radius:8px;background:'+(ok?'rgba(16,185,129,0.06)':'rgba(239,68,68,0.06)')+'"<span style="color:'+(ok?'var(--success)':'var(--danger)')+'">第'+(i+1)+'题 '+(ok?'✓':'✗')+'</span><p style="color:var(--dim);font-size:14px;margin-top:4px">'+fb+'</p></div>'});
+  const p=Math.round(sc/quizData.length*100),el=document.getElementById('quizResult');el.className='quiz-result show';
+  const g=p>=90?'优秀🌟':p>=70?'良好👍':p>=60?'及格📖':'需加强💪',gc=p>=90?'var(--success)':p>=70?'var(--primary)':p>=60?'var(--accent)':'var(--danger)';
+  el.style.background=gc+'15';el.style.border='1px solid '+gc+'40';
+  el.innerHTML='<div style="font-size:24px;font-weight:700;color:'+gc+'">后测：'+sc+'/'+quizData.length+'（'+p+'%）— '+g+'</div>'+html;
+  onModuleComplete('posttest',sc,quizData.length);
+}
+
+// ═══ Canvas HiDPI ═══
+function setupHiDPI(canvas,w,h){const dpr=window.devicePixelRatio||1;canvas.width=w*dpr;canvas.height=h*dpr;canvas.style.width=w+'px';canvas.style.height=h+'px';const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);return ctx}
+
+// ═══ Exp1: Buoyancy from Pressure Difference ═══
+function drawExp1(){
+  const c=document.getElementById('exp1Canvas');if(!c)return;
+  const ctx=setupHiDPI(c,700,380),W=700,H=380;
+  const pct=parseFloat(document.getElementById('exp1Depth').value);
+  document.getElementById('exp1Dval').textContent=pct;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0f172a';ctx.fillRect(0,0,W,H);
+
+  // Water container
+  const wx=150,wy=50,ww=400,wh=280;
+  const wG=ctx.createLinearGradient(wx,wy,wx,wy+wh);
+  wG.addColorStop(0,'rgba(6,182,212,0.08)');wG.addColorStop(1,'rgba(6,182,212,0.2)');
+  ctx.fillStyle=wG;ctx.fillRect(wx,wy,ww,wh);
+  ctx.strokeStyle='#06b6d4';ctx.lineWidth=2;ctx.strokeRect(wx,wy,ww,wh);
+  ctx.fillStyle='#06b6d4';ctx.font='13px sans-serif';ctx.textAlign='left';ctx.fillText('水面',wx+ww+8,wy+10);
+
+  // Depth scale
+  for(let d=0;d<=5;d++){
+    const y=wy+d/5*wh;
+    ctx.strokeStyle='rgba(148,163,184,0.15)';ctx.lineWidth=0.5;ctx.beginPath();ctx.moveTo(wx,y);ctx.lineTo(wx+ww,y);ctx.stroke();
+    ctx.fillStyle='#64748b';ctx.font='11px sans-serif';ctx.textAlign='right';ctx.fillText(d+'m',wx-6,y+4);
+  }
+
+  // Block
+  const bSz=80,bx=350-bSz/2;
+  const maxDip=wh-bSz-20;
+  const dip=pct/100*maxDip;
+  const by=wy-bSz+dip;
+  const grad=ctx.createLinearGradient(bx,by,bx+bSz,by+bSz);grad.addColorStop(0,'#8b5cf6');grad.addColorStop(1,'#6d28d9');
+  ctx.fillStyle=grad;ctx.beginPath();ctx.roundRect(bx,by,bSz,bSz,6);ctx.fill();
+
+  // Submerged part highlight
+  if(pct>0){
+    const subTop=Math.max(by,wy);const subBot=by+bSz;const subH=Math.min(subBot-subTop,bSz);
+    if(subH>0){ctx.fillStyle='rgba(6,182,212,0.15)';ctx.fillRect(bx,subTop,bSz,subH)}
+  }
+
+  // Pressure arrows
+  if(pct>0){
+    const subTop=Math.max(by,wy);const subBot=Math.min(by+bSz,wy+wh);
+    const hTop=(subTop-wy)/wh*5;const hBot=(subBot-wy)/wh*5;
+    const S=0.0064; // 80mm x 80mm
+    const fTop=1000*9.8*hTop*S;const fBot=1000*9.8*hBot*S;
+    const scale=3000;
+    // Top arrow (down) — F上
+    if(hTop>0){
+      const aL=Math.min(55,fTop/scale*55);
+      ctx.strokeStyle='#ef4444';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(350,subTop-aL);ctx.lineTo(350,subTop+2);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(346,subTop-4);ctx.lineTo(350,subTop+2);ctx.lineTo(354,subTop-4);ctx.fillStyle='#ef4444';ctx.fill();
+      ctx.fillStyle='#ef4444';ctx.font='12px sans-serif';ctx.textAlign='center';ctx.fillText('F上='+fTop.toFixed(1)+'N',350,subTop-aL-8);
+    }
+    // Bottom arrow (up) — F下
+    const aLb=Math.min(55,fBot/scale*55);
+    ctx.strokeStyle='#10b981';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(350,subBot+aLb);ctx.lineTo(350,subBot-2);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(346,subBot+4);ctx.lineTo(350,subBot-2);ctx.lineTo(354,subBot+4);ctx.fillStyle='#10b981';ctx.fill();
+    ctx.fillStyle='#10b981';ctx.font='12px sans-serif';ctx.textAlign='center';ctx.fillText('F下='+fBot.toFixed(1)+'N',350,subBot+aLb+16);
+
+    const fb=fBot-fTop;
+    // Net buoyancy arrow
+    if(fb>0.01){
+      ctx.strokeStyle='#f59e0b';ctx.lineWidth=4;
+      const netL=Math.min(65,fb/scale*80);
+      const midY=(subTop+subBot)/2;
+      ctx.beginPath();ctx.moveTo(bx+bSz+25,midY+netL/2);ctx.lineTo(bx+bSz+25,midY-netL/2);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(bx+bSz+21,midY-netL/2+6);ctx.lineTo(bx+bSz+25,midY-netL/2);ctx.lineTo(bx+bSz+29,midY-netL/2+6);ctx.fillStyle='#f59e0b';ctx.fill();
+      ctx.fillStyle='#f59e0b';ctx.font='bold 14px sans-serif';ctx.textAlign='left';ctx.fillText('F浮='+fb.toFixed(1)+'N ↑',bx+bSz+34,midY);
+    }
+    document.getElementById('exp1Result').textContent='浸入'+pct+'%：F下='+fBot.toFixed(1)+'N，F上='+fTop.toFixed(1)+'N → F浮='+fb.toFixed(1)+'N';
+  }else{
+    document.getElementById('exp1Result').textContent='浸入 0%：未入水，无浮力';
+  }
+
+  // Block label
+  ctx.fillStyle='rgba(255,255,255,0.7)';ctx.font='bold 13px sans-serif';ctx.textAlign='center';
+  ctx.fillText('方块',350,by+bSz/2+5);
+}
+document.getElementById('exp1Depth')?.addEventListener('input',drawExp1);
+
+// ═══ Exp2: Archimedes Verification ═══
+function drawExp2(){
+  const c=document.getElementById('exp2Canvas');if(!c)return;
+  const ctx=setupHiDPI(c,700,420),W=700,H=420;
+  const rho=parseInt(document.getElementById('exp2Rho').value);
+  const dip=parseInt(document.getElementById('exp2Dip').value);
+  document.getElementById('exp2Rval').textContent=rho;document.getElementById('exp2Dpval').textContent=dip;
+  const V=0.0001; // 100cm³
+  const G=rho*V*10;const Vdip=V*dip/100;const Fb=1000*Vdip*10;const spring=G-Fb;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0f172a';ctx.fillRect(0,0,W,H);
+
+  // Title
+  ctx.fillStyle='#f8fafc';ctx.font='bold 16px sans-serif';ctx.textAlign='center';
+  ctx.fillText('阿基米德原理验证实验',W/2,25);
+
+  // Overflow cup
+  const cx=250,cy=120,cw=160,ch=200;
+  const cupG=ctx.createLinearGradient(cx,cy,cx,cy+ch);
+  cupG.addColorStop(0,'rgba(6,182,212,0.1)');cupG.addColorStop(1,'rgba(6,182,212,0.2)');
+  ctx.fillStyle=cupG;ctx.fillRect(cx,cy,cw,ch);
+  ctx.strokeStyle='#06b6d4';ctx.lineWidth=2;ctx.strokeRect(cx,cy,cw,ch);
+
+  // Spout
+  ctx.strokeStyle='#06b6d4';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(cx+cw,cy+20);ctx.lineTo(cx+cw+40,cy+20);ctx.lineTo(cx+cw+40,cy+60);ctx.stroke();
+
+  // Collecting beaker
+  ctx.strokeStyle='#94a3b8';ctx.lineWidth=1;ctx.strokeRect(cx+cw+20,cy+60,60,80);
+  const spillH=Math.min(70,Vdip/V*70);
+  if(spillH>0){
+    ctx.fillStyle='rgba(6,182,212,0.25)';ctx.fillRect(cx+cw+22,cy+60+80-spillH,56,spillH);
+    // Spill water flow
+    ctx.strokeStyle='rgba(6,182,212,0.4)';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(cx+cw+40,cy+60);ctx.lineTo(cx+cw+50,cy+60+80-spillH);ctx.stroke();
+  }
+
+  // Object on spring scale
+  const objSz=50;const maxObjDip=ch-objSz-10;const objDip=dip/100*maxObjDip;
+  const objY=cy-objSz+objDip;const objX=cx+cw/2-objSz/2;
+
+  // Object
+  const oG=ctx.createLinearGradient(objX,objY,objX+objSz,objY+objSz);
+  oG.addColorStop(0,'rgba(139,92,246,0.7)');oG.addColorStop(1,'rgba(109,40,217,0.6)');
+  ctx.fillStyle=oG;ctx.beginPath();ctx.roundRect(objX,objY,objSz,objSz,6);ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='11px sans-serif';ctx.textAlign='center';
+  ctx.fillText('ρ='+rho,cx+cw/2,objY+objSz/2+4);
+
+  // Spring line
+  ctx.strokeStyle='#f59e0b';ctx.lineWidth=2;ctx.setLineDash([6,4]);
+  ctx.beginPath();ctx.moveTo(cx+cw/2,30);ctx.lineTo(cx+cw/2,objY);ctx.stroke();ctx.setLineDash([]);
+
+  // Spring scale reading
+  ctx.fillStyle='rgba(30,41,59,0.9)';
+  ctx.fillRect(cx+cw/2-70,35,140,28);
+  ctx.strokeStyle='#f59e0b';ctx.lineWidth=1;ctx.strokeRect(cx+cw/2-70,35,140,28);
+  ctx.fillStyle='#f59e0b';ctx.font='bold 15px sans-serif';ctx.textAlign='center';
+  ctx.fillText('弹簧秤: '+Math.max(0,spring).toFixed(2)+' N',cx+cw/2,54);
+
+  // Labels
+  ctx.fillStyle='#94a3b8';ctx.font='13px sans-serif';ctx.textAlign='center';
+  ctx.fillText('溢水杯',cx+cw/2,cy+ch+20);ctx.fillText('收集杯',cx+cw+50,cy+60+80+20);
+  if(spillH>0){ctx.fillStyle='#06b6d4';ctx.font='bold 13px sans-serif';ctx.fillText('G排='+Fb.toFixed(2)+'N',cx+cw+50,cy+60+80-spillH-8)}
+
+  // Right panel: comparison
+  const px=500,py=100;
+  ctx.fillStyle='rgba(30,41,59,0.8)';ctx.strokeStyle='#475569';ctx.lineWidth=1;
+  ctx.fillRect(px,py,180,200);ctx.strokeRect(px,py,180,200);
+  ctx.fillStyle='#f8fafc';ctx.font='bold 14px sans-serif';ctx.textAlign='left';
+  ctx.fillText('📊 数据面板',px+12,py+24);
+  ctx.font='13px sans-serif';
+  ctx.fillStyle='#94a3b8';ctx.fillText('物体重力 G:',px+12,py+52);
+  ctx.fillStyle='#ef4444';ctx.fillText(G.toFixed(2)+' N',px+120,py+52);
+  ctx.fillStyle='#94a3b8';ctx.fillText('浮力 F浮:',px+12,py+76);
+  ctx.fillStyle='#10b981';ctx.fillText(Fb.toFixed(2)+' N',px+120,py+76);
+  ctx.fillStyle='#94a3b8';ctx.fillText('弹簧秤 F示:',px+12,py+100);
+  ctx.fillStyle='#f59e0b';ctx.fillText(Math.max(0,spring).toFixed(2)+' N',px+120,py+100);
+  ctx.fillStyle='#94a3b8';ctx.fillText('溢水重力 G排:',px+12,py+124);
+  ctx.fillStyle='#06b6d4';ctx.fillText(Fb.toFixed(2)+' N',px+120,py+124);
+
+  // Verification
+  ctx.fillStyle='#a78bfa';ctx.font='bold 13px sans-serif';
+  ctx.fillText('─────────',px+12,py+148);
+  const verified=Math.abs(Fb-Fb)<0.01&&dip>0;
+  ctx.fillStyle=dip>0?'var(--success)':'#94a3b8';
+  ctx.fillText(dip>0?'✅ F浮 = G排 = '+Fb.toFixed(2)+' N':'等待浸入...',px+12,py+172);
+  ctx.fillStyle='#94a3b8';ctx.font='12px sans-serif';
+  ctx.fillText(dip>0?'阿基米德原理成立！':'',px+12,py+192);
+
+  document.getElementById('exp2Result').textContent='浸入'+dip+'%：G='+G.toFixed(2)+'N，F浮='+Fb.toFixed(2)+'N，弹簧秤='+Math.max(0,spring).toFixed(2)+'N，G排='+Fb.toFixed(2)+'N'+(dip>0?' → F浮=G排 ✓':'');
+}
+document.getElementById('exp2Rho')?.addEventListener('input',drawExp2);
+document.getElementById('exp2Dip')?.addEventListener('input',drawExp2);
+
+// ═══ Exp3: Float/Sink Simulator ═══
+function drawExp3(){
+  const c=document.getElementById('exp3Canvas');if(!c)return;
+  const ctx=setupHiDPI(c,700,380),W=700,H=380;
+  const rhoObj=parseInt(document.getElementById('exp3Rho').value);
+  document.getElementById('exp3Rval').textContent=rhoObj;
+  const rhoLiq=1000;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0f172a';ctx.fillRect(0,0,W,H);
+
+  // Water
+  const waterTop=100,waterH=240;
+  const wG=ctx.createLinearGradient(100,waterTop,100,waterTop+waterH);
+  wG.addColorStop(0,'rgba(6,182,212,0.08)');wG.addColorStop(1,'rgba(6,182,212,0.18)');
+  ctx.fillStyle=wG;ctx.fillRect(100,waterTop,500,waterH);
+  // Water surface
+  ctx.strokeStyle='#06b6d4';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(100,waterTop);ctx.lineTo(600,waterTop);ctx.stroke();
+  ctx.fillStyle='#06b6d4';ctx.font='13px sans-serif';ctx.textAlign='left';ctx.fillText('水面 (ρ=1000 kg/m³)',605,waterTop+5);
+
+  // Container walls
+  ctx.strokeStyle='#475569';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(100,waterTop-30);ctx.lineTo(100,waterTop+waterH);ctx.lineTo(600,waterTop+waterH);ctx.lineTo(600,waterTop-30);ctx.stroke();
+
+  // Object position based on density
+  const R=35;let objY;let state;let subPct;
+  if(rhoObj<rhoLiq){
+    const ratio=rhoObj/rhoLiq;
+    objY=waterTop-R+R*2*ratio;
+    subPct=Math.round(ratio*100);
+    state='漂浮（'+subPct+'% 浸入）';
+  }else if(rhoObj===rhoLiq){
+    objY=waterTop+waterH/2;subPct=100;state='悬浮（100% 浸入）';
+  }else{
+    objY=waterTop+waterH-R-20;subPct=100;state='下沉（沉底）';
+  }
+
+  // Draw sphere
+  const sGrad=ctx.createRadialGradient(350-10,objY-10,5,350,objY,R);
+  if(rhoObj<rhoLiq){sGrad.addColorStop(0,'#fbbf24');sGrad.addColorStop(1,'#d97706')}
+  else if(rhoObj===rhoLiq){sGrad.addColorStop(0,'#a78bfa');sGrad.addColorStop(1,'#7c3aed')}
+  else{sGrad.addColorStop(0,'#94a3b8');sGrad.addColorStop(1,'#475569')}
+  ctx.beginPath();ctx.arc(350,objY,R,0,Math.PI*2);ctx.fillStyle=sGrad;ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=1;ctx.stroke();
+
+  // Density label on sphere
+  ctx.fillStyle='rgba(255,255,255,0.7)';ctx.font='bold 12px sans-serif';ctx.textAlign='center';
+  ctx.fillText(rhoObj,350,objY+4);
+
+  // Force arrows
+  const V=0.0001;
+  const G=rhoObj*V*10;
+  const Vdip=rhoObj<=rhoLiq?(rhoObj===rhoLiq?V:rhoObj/rhoLiq*V):V;
+  const Fb=rhoLiq*Vdip*10;
+  const arrowScale=80;
+
+  // Gravity arrow (down)
+  const gLen=Math.min(60,G/arrowScale*60);
+  ctx.strokeStyle='#ef4444';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(350,objY+R+5);ctx.lineTo(350,objY+R+5+gLen);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(346,objY+R+gLen);ctx.lineTo(350,objY+R+5+gLen);ctx.lineTo(354,objY+R+gLen);ctx.fillStyle='#ef4444';ctx.fill();
+  ctx.fillStyle='#ef4444';ctx.font='13px sans-serif';ctx.textAlign='center';
+  ctx.fillText('G='+G.toFixed(2)+'N',420,objY+R+gLen/2+10);
+
+  // Buoyancy arrow (up)
+  const bLen=Math.min(60,Fb/arrowScale*60);
+  ctx.strokeStyle='#10b981';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(350,objY-R-5);ctx.lineTo(350,objY-R-5-bLen);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(346,objY-R-bLen);ctx.lineTo(350,objY-R-5-bLen);ctx.lineTo(354,objY-R-bLen);ctx.fillStyle='#10b981';ctx.fill();
+  ctx.fillStyle='#10b981';ctx.font='13px sans-serif';
+  ctx.fillText('F浮='+Fb.toFixed(2)+'N',280,objY-R-bLen/2-5);
+
+  // State label
+  const stCol=rhoObj<rhoLiq?'#f59e0b':rhoObj===rhoLiq?'#a78bfa':'#94a3b8';
+  ctx.fillStyle=stCol;ctx.font='bold 20px sans-serif';ctx.textAlign='center';
+  ctx.fillText(state,350,45);
+
+  // Density comparison
+  ctx.fillStyle='#64748b';ctx.font='14px sans-serif';
+  const cmpSign=rhoObj<rhoLiq?' < ':rhoObj===rhoLiq?' = ':' > ';
+  ctx.fillText('ρ物='+rhoObj+cmpSign+'ρ液=1000',350,70);
+
+  document.getElementById('exp3Result').textContent='ρ物='+rhoObj+cmpSign+'ρ液=1000 → '+state+'，G='+G.toFixed(2)+'N，F浮='+Fb.toFixed(2)+'N';
+}
+document.getElementById('exp3Rho')?.addEventListener('input',drawExp3);
+
+// ═══ Learning System v5.2 ═══
+const COURSE_ID='phy-buoyancy';
+const TeachAnyProgress={key:'teachany_progress_'+COURSE_ID,get(){try{return JSON.parse(localStorage.getItem(this.key))||{}}catch(e){return{}}},set(d){try{localStorage.setItem(this.key,JSON.stringify({...this.get(),...d,lastAccess:Date.now()}))}catch(e){}},setModuleScore(m,s){const d=this.get();d.modules=d.modules||{};d.modules[m]=Math.max(d.modules[m]||0,s);this.set(d)}};
+const TeachAnySR={key:'teachany_sr_'+COURSE_ID,get(){try{return JSON.parse(localStorage.getItem(this.key))||{}}catch(e){return{}}},record(q,ok){const d=this.get();d[q]=d[q]||{ease:2.5,interval:1,reps:0};const c=d[q];if(ok){c.reps++;c.interval=Math.round(c.interval*c.ease);c.ease=Math.max(1.3,c.ease+0.1)}else{c.reps=0;c.interval=1;c.ease=Math.max(1.3,c.ease-0.2)};c.nextReview=Date.now()+c.interval*864e5;localStorage.setItem(this.key,JSON.stringify(d))}};
+const TeachAnyAchievements={key:'teachany_ach_'+COURSE_ID,get(){try{return JSON.parse(localStorage.getItem(this.key))||[]}catch(e){return[]}},unlock(id,title){const a=this.get();if(a.find(x=>x.id===id))return;a.push({id,title,time:Date.now()});localStorage.setItem(this.key,JSON.stringify(a));this.showToast(title)},showToast(t){const d=document.createElement('div');d.innerHTML='<div style="position:fixed;top:80px;right:20px;z-index:9999;background:linear-gradient(135deg,rgba(139,92,246,.9),rgba(59,130,246,.8));color:#fff;padding:14px 22px;border-radius:12px;font-size:15px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.3)">🏆 '+t+'</div>';document.body.appendChild(d);setTimeout(()=>d.remove(),3000)}};
+function onModuleComplete(m,s,t){const p=Math.round(s/t*100);TeachAnyProgress.setModuleScore(m,p);if(m==='pretest'&&p===100)TeachAnyAchievements.unlock('pre-perfect','前测满分！');if(m==='posttest'&&p>=80)TeachAnyAchievements.unlock('post-pass','后测优秀！浮力达人');if(m==='posttest'&&p===100)TeachAnyAchievements.unlock('post-perfect','后测满分！完美通关')}
+
+// ═══ TTS Engine ═══
+const ttsNarration=[
+  {id:'intro',section:'engage',mp3:'ch0-intro.mp3',zh:'大家好，今天我们来学习浮力。把铁块扔进水里，它会直接沉底。可是航空母舰几万吨重，全身都是钢铁，却稳稳浮在海面上。这矛盾吗？不矛盾。关键不在材料是什么，而在排开液体的体积有多大。'},
+  {id:'origin',section:'lesson1',mp3:'ch1-origin.mp3',zh:'模块一：浮力的产生。物体浸在液体中，上下表面处于不同深度，下表面深度更大，受到的压力更大。这个压力差就是浮力。公式是F浮等于F下减F上。完全浸没后，上下深度差不变，所以浮力不随深度变化。'},
+  {id:'archimedes',section:'lesson2',mp3:'ch2-archimedes.mp3',zh:'模块二：阿基米德原理。阿基米德在泡澡时发现，物体排开液体越多，浮力越大。公式F浮等于ρ液乘以g乘以V排。注意是液体密度和排开体积，不是物体密度和物体体积。'},
+  {id:'floatsink',section:'lesson3',mp3:'ch3-floatsink.mp3',zh:'模块三：浮沉条件。物体浮还是沉，本质就是比较物体密度和液体密度。密度小于液体的物体漂浮，密度等于液体的悬浮，密度大于液体的下沉。冰的密度是水的百分之九十，所以冰山有百分之九十在水下。'}
+];
+let ttsAudio=null,ttsCurrentIdx=0,ttsPlaying=false,ttsPlayerVisible=false;
+function toggleTTSPlayer(){ttsPlayerVisible=!ttsPlayerVisible;document.getElementById('ttsPlayer').classList.toggle('show',ttsPlayerVisible);document.getElementById('ttsToggle').classList.toggle('active',ttsPlayerVisible);document.body.style.paddingBottom=ttsPlayerVisible?'64px':''}
+function toggleTTSPlay(){ttsPlaying?pauseTTS():playTTS(ttsCurrentIdx)}
+function playTTS(idx){
+  if(idx<0||idx>=ttsNarration.length)return;if(ttsAudio){ttsAudio.pause();ttsAudio=null}
+  ttsCurrentIdx=idx;const seg=ttsNarration[idx];ttsAudio=new Audio(seg.mp3);ttsPlaying=true;
+  document.getElementById('ttsPlayBtn').textContent='⏸';document.getElementById('ttsPlayBtn').classList.add('playing');
+  document.getElementById('ttsSegTitle').textContent=seg.zh.slice(0,30)+'...';
+  document.getElementById('ttsProgressFill').style.width=((idx+.5)/ttsNarration.length*100)+'%';
+  document.getElementById('subtitleBar').classList.add('show');document.getElementById('subtitleZh').textContent=seg.zh;
+  if(seg.section){const el=document.getElementById(seg.section);if(el)el.scrollIntoView({behavior:'smooth',block:'start'})}
+  ttsAudio.onended=function(){document.getElementById('ttsProgressFill').style.width=((idx+1)/ttsNarration.length*100)+'%';if(idx+1<ttsNarration.length)setTimeout(()=>playTTS(idx+1),500);else{ttsPlaying=false;document.getElementById('ttsPlayBtn').textContent='▶';document.getElementById('ttsPlayBtn').classList.remove('playing');document.getElementById('subtitleBar').classList.remove('show');document.getElementById('ttsSegTitle').textContent='讲解完成 ✅'}};
+  ttsAudio.onerror=function(){if(idx+1<ttsNarration.length)setTimeout(()=>playTTS(idx+1),300);else{ttsPlaying=false;document.getElementById('ttsPlayBtn').textContent='▶'}};
+  ttsAudio.play().catch(e=>console.warn('播放被阻止:',e));
+}
+function pauseTTS(){if(ttsAudio)ttsAudio.pause();ttsPlaying=false;document.getElementById('ttsPlayBtn').textContent='▶';document.getElementById('ttsPlayBtn').classList.remove('playing');document.getElementById('subtitleBar').classList.remove('show')}
+function prevTTSSeg(){pauseTTS();playTTS(Math.max(0,ttsCurrentIdx-1))}
+function nextTTSSeg(){pauseTTS();playTTS(Math.min(ttsNarration.length-1,ttsCurrentIdx+1))}
+function seekTTS(e){const b=document.getElementById('ttsProgressBar'),p=(e.clientX-b.getBoundingClientRect().left)/b.offsetWidth,i=Math.floor(p*ttsNarration.length);pauseTTS();playTTS(Math.max(0,Math.min(i,ttsNarration.length-1)))}
+
+// ═══ Nav highlight ═══
+function initNav(){const links=document.querySelectorAll('.nav a'),secs=[];links.forEach(a=>{const id=a.getAttribute('href')?.slice(1);if(id)secs.push({id,el:document.getElementById(id),link:a})});window.addEventListener('scroll',()=>{const y=window.scrollY+100;let act=secs[0];secs.forEach(s=>{if(s.el&&s.el.offsetTop<=y)act=s});links.forEach(l=>l.classList.remove('active'));if(act)act.link.classList.add('active')})}
+
+// ═══ Init ═══
+document.addEventListener('DOMContentLoaded',()=>{buildQuiz();initNav();drawExp1();drawExp2();drawExp3()});
+ttsNarration.slice(0,2).forEach(s=>{const a=new Audio();a.preload='auto';a.src=s.mp3});
+</script>
+</body>
+</html>
