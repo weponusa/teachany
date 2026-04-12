@@ -96,6 +96,10 @@ for course_dir in sorted(EXAMPLES_DIR.iterdir()):
             manifest['path'] = f"examples/{course_id}"
             manifest['url'] = f"./examples/{course_id}/index.html"
             
+            # 兼容 title/name 字段
+            if 'title' in manifest and 'name' not in manifest:
+                manifest['name'] = manifest['title']
+            
             # 如果没有 status 字段,默认为 community
             if 'status' not in manifest:
                 manifest['status'] = 'community'
