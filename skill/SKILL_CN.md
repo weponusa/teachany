@@ -3102,3 +3102,87 @@ Phase 3.5：打包课件（默认必选）
 - v5.8：**WorkBuddy 多 Agent 协作 + 版式一致性 + AI 主动生图/生视频**——(1) 新增 Section 10.2.1 HTML 骨架模板（强制使用，含完整 HTML 代码模板、必选/可选 section 标注、导航/进度条/翻页按钮）；(2) 新增 Section 10.2.2 统一导航规范（强制 Sticky 顶部导航+前后翻页，禁止 Tab 切换/多页 HTML/侧边栏导航）；(3) 新增 Section 10.4.1 AI 主动生图规范（AI 在生成课件时主动调用 image_gen 生成文科配图，含 6 类触发条件、prompt 策略、降级方案）；(4) 新增 Section 10.4.2 AI 主动生视频规范（理科实验过程/地理变化/生物过程等场景的视频生成策略）；(5) 新增 Section 10.5 WorkBuddy 多 Agent 协作流水线（定义 5 个 Agent 角色分工、并行执行架构图、task 调用 prompt 模板、三级降级策略）；(6) Generation Gate 新增 4 个字段（模块数量/HTML骨架/AI主动生图/Agent协作模式）；(7) Completeness Gate 从 17 项扩充至 20 项（+版式一致性+AI主动生图+Agent协作记录）；(8) 硬规则从 20 条扩充至 23 条（+HTML骨架模板+文科配图+多Agent并行）；(9) Phase 3 L1 制作指令新增 HTML 骨架模板、多 Agent 协作、AI 主动生图的引用。
 - v5.9：**知识图谱可视化 + 视频/音频播放器强制规范 + Remotion 中文字体修复**——(1) 新增 Section 10.2.3 知识图谱可视化规范（HTML 骨架新增必选 `#knowledge-graph` section，SVG 交互式图谱，节点从 `_graph.json` 提取，当前节点高亮、有课件节点可点击跳转、无课件节点虚线框）；(2) 新增 Section 10.2.4 视频播放器规范（强制使用 `<video controls preload="metadata" playsinline>` + `.video-player` 容器，禁止仅用 JS 动态创建视频）；(3) 新增 Section 10.2.5 音频播放器规范（HTML 骨架内置完整音频播放引擎——FAB 按钮+弹出式播放面板+段落列表+控制条+字幕显示，禁止只添加隐藏 `<audio>` 标签）；(4) L2 环境自动搭建新增步骤 2.5「安装中文字体」（Linux 下安装 fonts-noto-cjk）；(5) SubtitleTrack.tsx fontFamily 新增 `'Noto Sans SC'`、`'Noto Sans CJK SC'` 降级字体；(6) Generation Gate 新增 3 个字段（知识图谱数据/视频嵌入/音频播放器）；(7) Completeness Gate 从 20 项扩充至 24 项（+知识图谱可视化+视频标签+音频播放器UI+Remotion中文字体）；(8) 硬规则从 23 条扩充至 27 条（+知识图谱必选+视频必须用video标签+音频必须有播放器UI+Remotion必须安装中文字体）。
 - v5.10：**音频滚动自动播放 + 视频优先交互演示 + 默认仅中文**——(1) 音频播放器从 FAB+弹出面板+手动选段 改为 IntersectionObserver 滚动自动播放+底部悬浮控制条（播放/暂停+进度条+5档调速+字幕），`audioPlaylist` 每个条目新增 `sectionId` 字段关联对应 HTML section；(2) 视频嵌入新增"优先交互演示"原则（CSS/JS/Canvas/SVG 交互动画 > Remotion > 静态视频），视频必须嵌入到对应知识模块的 section 内部而非集中放置；(3) 双语课件从"默认生成"改为"默认仅中文"，用户明确要求时才生成英文版；Agent B 从"默认执行"改为"用户要求时执行"；(4) 同步更新 Generation Gate、Completeness Gate、硬规则 #19/#25/#26、Agent 协作架构图、Phase 3/4 流程。
+
+---
+
+## 十八、地理/历史课件地图资源（无需 API）
+
+### 18.1 基础地图数据
+
+所有地图文件位于 `data/geography/` 目录，**使用 ECharts 加载，完全本地化，无需任何 API Key**：
+
+**现代中国行政区划**（`modern-china/`）：
+- `provinces.geojson` - 省级行政区划（568KB）
+- `beijing.geojson` - 北京市区县（98KB）
+- `shanghai.geojson` - 上海市区县（83KB）
+
+**历史中国疆域**（`historical-china/`）：
+- 8个朝代边界 GeoJSON（秦/西汉/东汉/唐/宋/元/明/清）
+- 总计 ~7.85MB，用于历史疆域对比课件
+
+**世界地图**（`world/`）：
+- `countries.geojson` - 世界国家边界（250KB）
+
+**历史数据**（`data/history/`）：
+- `dynasties-detailed.json` - 详细朝代数据（221KB，含emperors/events/regions/landmarks/poems）
+- `persons.json` - 历史人物数据库（21.75KB）
+
+### 18.2 使用方法
+
+#### 方案 A：ECharts 地图（推荐，完全本地）
+
+```javascript
+// 加载 GeoJSON 并注册为地图
+fetch('../data/geography/modern-china/provinces.geojson')
+  .then(res => res.json())
+  .then(geoJson => {
+    echarts.registerMap('china', geoJson);
+    chart.setOption({
+      geo: { 
+        map: 'china', 
+        roam: true,  // 可缩放、平移
+        itemStyle: { areaColor: '#e0f2f1' }
+      }
+    });
+  });
+```
+
+**优点**：
+- ✅ **零依赖**：无需任何 API Key
+- ✅ **完全本地**：GeoJSON 预置在 data 目录
+- ✅ **性能优秀**：低配置设备也流畅
+- ✅ **功能丰富**：支持区域填充、散点图、路线图、热力图
+
+#### 方案 B：Leaflet + OpenStreetMap（需要实景地图）
+
+```javascript
+// 使用 OpenStreetMap 免费瓦片（无需 Token）
+const map = L.map('map').setView([35, 108], 5);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap',
+  maxZoom: 18
+}).addTo(map);
+```
+
+**优点**：
+- ✅ **免费瓦片**：OpenStreetMap 提供全球底图
+- ✅ **无需 Token**：直接使用，零配置
+- ✅ **实景展示**：真实街道地图
+
+⚠️ **注意**：需联网首次加载（瓦片可缓存）
+
+### 18.3 禁止使用需要 API 的方案
+
+❌ **Mapbox GL JS**：需要申请 Token，已移除
+❌ **Google Maps**：需要付费 API Key
+❌ **高德/百度地图**：需要申请 Key
+
+### 18.4 参考文档
+
+- 详细使用指南：`skill/map-resources-guide.md`
+- 地形集成规范：`skill/terrain-3d-integration.md`
+- 示范课件：
+  - `examples/geography-terrain-steps.html` - 中国地形与三级阶梯
+  - `examples/history-qin-unification-v2.html` - 秦灭六国（无需API版）
+
+---

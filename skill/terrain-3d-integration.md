@@ -37,67 +37,86 @@
 
 ## 二、3D 地形实现方案
 
-### 方案选择矩阵
+### 方案选择矩阵（无需 API Key 版本）
 
-| 方案 | 适用场景 | 优点 | 缺点 | 成本 |
+| 方案 | 适用场景 | 优点 | 缺点 | API要求 |
 |:---|:---|:---|:---|:---|
-| **Mapbox GL JS + 在线瓦片** | 通用课件、网络环境 | 轻量、快速、无配置 | 需要 Token（免费额度5万次/月） | 免费 |
-| **Cesium + 在线瓦片** | 高级地理分析、军事模拟 | 功能强大、真实感强 | 学习曲线高、加载慢 | 免费 |
-| **本地 MBTiles** | 离线环境、学校内网 | 不依赖外网 | 需预下载数据（~10GB） | 免费 |
-| **ECharts + 2.5D** | 低配置设备、简单场景 | 兼容性好、性能强 | 视觉效果弱 | 免费 |
+| **ECharts + GeoJSON**（推荐） | 行政区划、历史疆域、散点分布 | 完全本地、无需配置、性能优秀 | 仅支持 2D/2.5D | ❌ 无需 |
+| **Leaflet + OpenStreetMap** | 实景地图、路线规划、地标标注 | 免费瓦片、不需 Token、成熟稳定 | 需联网加载瓦片 | ❌ 无需 |
+| **Leaflet + 本地瓦片** | 完全离线环境、学校内网 | 不依赖外网 | 需预下载数据（~5-10GB） | ❌ 无需 |
+| **Cesium（备选）** | 高级地理分析、全球视角 | 真 3D 渲染、功能强大 | 学习曲线高、性能要求高 | ❌ 无需 |
 
 ### 推荐方案（默认）
 
-**Mapbox GL JS + 在线瓦片**（90%场景适用）
+**方案 1：ECharts + GeoJSON**（80%场景适用，完全本地）
 
-- ✅ 轻量：~400KB JS 库
-- ✅ 快速：首屏加载 < 2秒
-- ✅ 免费：5万次地图加载/月（足够100个学生用1年）
-- ✅ 文档全：中文教程丰富
+- ✅ **零依赖**：无需任何 API Key
+- ✅ **完全本地**：GeoJSON 文件已预置在 `data/geography/` 目录
+- ✅ **性能优秀**：渲染速度快，低配置设备也流畅
+- ✅ **功能丰富**：支持区域填充、散点图、路线图、热力图
+- ⚠️ **限制**：仅支持 2D 和伪 3D（geo3D），无真实地形起伏
+
+**方案 2：Leaflet + OpenStreetMap**（需要实景地图时使用）
+
+- ✅ **免费瓦片**：OpenStreetMap 提供免费全球底图
+- ✅ **无需 Token**：直接使用，零配置
+- ✅ **实景展示**：真实卫星图、街道地图
+- ⚠️ **需联网**：首次加载需下载瓦片（可缓存）
 
 ---
 
 ## 三、标准实现模式
 
-### 3.1 基础模板（复制即用）
+### 3.1 基础模板 A：ECharts 地图（推荐，无需 API）
 
 ```html
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>3D 地形课件</title>
-  <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
-  <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+  <title>ECharts 地图课件</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
   <style>
     body { margin: 0; padding: 0; }
-    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+    #map { width: 100%; height: 100vh; }
   </style>
 </head>
 <body>
   <div id='map'></div>
   
   <script>
-    // 1. 设置 Token（需申请：https://account.mapbox.com/）
-    mapboxgl.accessToken = 'YOUR_MAPBOX_TOKEN';
+    // 1. 初始化 ECharts
+    const chart = echarts.init(document.getElementById('map'));
     
-    // 2. 初始化地图
-    const map = new mapboxgl.Map({
-      container: 'map',
-      style: 'mapbox://styles/mapbox/outdoors-v12', // 户外风格
-      center: [108, 34], // 中心点 [经度, 纬度]
-      zoom: 5,           // 缩放级别
-      pitch: 60,         // 倾斜角度（0-85）
-      bearing: 0         // 旋转角度
-    });
-    
-    // 3. 加载完成后添加地形
-    map.on('load', () => {
-      map.addSource('mapbox-dem', {
-        type: 'raster-dem',
-        url: 'mapbox://mapbox.mapbox-terrain-dem-v1'
+    // 2. 加载 GeoJSON（从本地或 data 目录）
+    fetch('../data/geography/modern-china/provinces.geojson')
+      .then(res => res.json())
+      .then(geoJson => {
+        // 3. 注册地图
+        echarts.registerMap('china', geoJson);
+        
+        // 4. 配置地图
+        chart.setOption({
+          title: { text: '中国省级行政区划', left: 'center' },
+          tooltip: { trigger: 'item', formatter: '{b}' },
+          geo: {
+            map: 'china',
+            roam: true,  // 可缩放、平移
+            itemStyle: {
+              areaColor: '#e0f2f1',
+              borderColor: '#26a69a',
+              borderWidth: 1
+            },
+            emphasis: {
+              itemStyle: { areaColor: '#ffab91' },
+              label: { show: true, color: '#fff' }
+            }
+          }
+        });
       });
-      map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+  </script>
+</body>
+</html>
     });
   </script>
 </body>
