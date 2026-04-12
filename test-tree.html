@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>知识树数据测试</title>
+<style>
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+  padding: 40px;
+  max-width: 900px;
+  margin: 0 auto;
+  background: #0f172a;
+  color: #f8fafc;
+}
+pre {
+  background: #1e293b;
+  padding: 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+  border: 1px solid #334155;
+  max-height: 400px;
+}
+button {
+  padding: 10px 20px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin: 8px 4px;
+}
+button:hover { background: #2563eb; }
+.success { color: #10b981; }
+.error { color: #ef4444; }
+.warning { color: #f59e0b; }
+</style>
+</head>
+<body>
+<h1>📜 知识树数据测试 - 初中历史</h1>
+
+<div style="margin: 20px 0;">
+  <button onclick="testTree()">🔄 测试加载 history-middle.json</button>
+  <button onclick="testNode()">🏛️ 检查秦汉节点</button>
+</div>
+
+<div id="result"></div>
+
+<script>
+const resultDiv = document.getElementById('result');
+
+async function testTree() {
+  resultDiv.innerHTML = '<p>⏳ 加载 data/trees/history-middle.json...</p>';
+  try {
+    const resp = await fetch('./data/trees/history-middle.json?v=' + Date.now(), { cache: 'no-store' });
+    if (!resp.ok) {
+      resultDiv.innerHTML = `<p class="error">❌ HTTP ${resp.status}: ${resp.statusText}</p>`;
+      return;
+    }
+    const data = await resp.json();
+    resultDiv.innerHTML = `
+      <p class="success">✅ 知识树加载成功！</p>
+      <p><strong>学科</strong>: ${data.subject} - ${data.name}</p>
+      <p><strong>年级范围</strong>: ${data.grade_range.join('-')}</p>
+      <p><strong>领域数</strong>: ${data.domains.length}</p>
+      <details>
+        <summary>查看完整数据</summary>
+        <pre>${JSON.stringify(data, null, 2)}</pre>
+      </details>
+    `;
+  } catch (err) {
+    resultDiv.innerHTML = `<p class="error">❌ 加载失败: ${err.message}</p><pre>${err.stack}</pre>`;
+  }
+}
+
+async function testNode() {
+  resultDiv.innerHTML = '<p>⏳ 检查 imperial-unification 节点...</p>';
+  try {
+    const resp = await fetch('./data/trees/history-middle.json?v=' + Date.now(), { cache: 'no-store' });
+    const data = await resp.json();
+    
+    // 查找中国古代史领域
+    const ancientChina = data.domains.find(d => d.id === 'ancient-china');
+    if (!ancientChina) {
+      resultDiv.innerHTML = '<p class="error">❌ 未找到 ancient-china 领域</p>';
+      return;
+    }
+    
+    // 查找秦汉节点
+    const node = ancientChina.nodes.find(n => n.id === 'imperial-unification');
+    if (!node) {
+      resultDiv.innerHTML = `
+        <p class="error">❌ 未找到 imperial-unification 节点</p>
+        <p>ancient-china 领域的节点ID:</p>
+        <pre>${ancientChina.nodes.map(n => n.id).join('\n')}</pre>
+      `;
+      return;
+    }
+    
+    // 检查课件关联
+    const hasCourse = node.courses && node.courses.includes('imperial-unification');
+    const isActive = node.status === 'active';
+    
+    resultDiv.innerHTML = `
+      <p class="success">✅ 找到秦汉节点！</p>
+      <table style="border-collapse: collapse; width: 100%; margin: 16px 0;">
+        <tr style="border-bottom: 1px solid #334155;">
+          <td style="padding: 8px; color: #94a3b8;">ID</td>
+          <td style="padding: 8px;">${node.id}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #334155;">
+          <td style="padding: 8px; color: #94a3b8;">名称</td>
+          <td style="padding: 8px;">${node.name}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #334155;">
+          <td style="padding: 8px; color: #94a3b8;">年级</td>
+          <td style="padding: 8px;">${node.grade}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #334155;">
+          <td style="padding: 8px; color: #94a3b8;">状态</td>
+          <td style="padding: 8px;">
+            <span class="${isActive ? 'success' : 'warning'}">${node.status}</span>
+            ${isActive ? ' ✅' : ' ⚠️'}
+          </td>
+        </tr>
+        <tr style="border-bottom: 1px solid #334155;">
+          <td style="padding: 8px; color: #94a3b8;">课件</td>
+          <td style="padding: 8px;">
+            <span class="${hasCourse ? 'success' : 'error'}">${JSON.stringify(node.courses)}</span>
+            ${hasCourse ? ' ✅' : ' ❌'}
+          </td>
+        </tr>
+        <tr style="border-bottom: 1px solid #334155;">
+          <td style="padding: 8px; color: #94a3b8;">前置知识</td>
+          <td style="padding: 8px;">${JSON.stringify(node.prerequisites)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; color: #94a3b8;">后续知识</td>
+          <td style="padding: 8px;">${JSON.stringify(node.extends)}</td>
+        </tr>
+      </table>
+      <details>
+        <summary>查看完整节点数据</summary>
+        <pre>${JSON.stringify(node, null, 2)}</pre>
+      </details>
+      ${!hasCourse ? '<p class="error">⚠️ 节点数据正确，但可能是 tree.html 渲染逻辑的问题</p>' : ''}
+      ${!isActive ? '<p class="warning">⚠️ 节点状态不是 active，可能不会在地图中高亮显示</p>' : ''}
+    `;
+  } catch (err) {
+    resultDiv.innerHTML = `<p class="error">❌ 检查失败: ${err.message}</p>`;
+  }
+}
+
+// 自动测试
+window.onload = () => testNode();
+</script>
+</body>
+</html>
