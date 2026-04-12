@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Registry Test - Imperial Unification</title>
+<style>
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+  padding: 40px;
+  max-width: 900px;
+  margin: 0 auto;
+  background: #0f172a;
+  color: #f8fafc;
+}
+pre {
+  background: #1e293b;
+  padding: 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+  border: 1px solid #334155;
+}
+button {
+  padding: 10px 20px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin: 8px 4px;
+}
+button:hover { background: #2563eb; }
+.success { color: #10b981; }
+.error { color: #ef4444; }
+</style>
+</head>
+<body>
+<h1>📋 Registry 数据测试</h1>
+<p>测试 courseware-registry.json 是否包含 <code>imperial-unification</code> 课件</p>
+
+<div style="margin: 20px 0;">
+  <button onclick="testLocal()">🔄 测试本地文件</button>
+  <button onclick="testRemote()">🌐 测试 GitHub Raw</button>
+  <button onclick="clearCache()">🗑️ 清除缓存</button>
+</div>
+
+<div id="result"></div>
+
+<script>
+const resultDiv = document.getElementById('result');
+
+function clearCache() {
+  localStorage.removeItem('teachany_registry_cache');
+  resultDiv.innerHTML = '<p class="success">✅ 缓存已清除</p>';
+}
+
+async function testLocal() {
+  resultDiv.innerHTML = '<p>⏳ 加载本地文件...</p>';
+  try {
+    const resp = await fetch('./courseware-registry.json?v=' + Date.now(), { cache: 'no-store' });
+    const data = await resp.json();
+    const course = data.courses.find(c => c.id === 'imperial-unification');
+    
+    if (course) {
+      resultDiv.innerHTML = `
+        <p class="success">✅ 找到课件！</p>
+        <pre>${JSON.stringify(course, null, 2)}</pre>
+        <p><strong>总课件数</strong>: ${data.courses.length}</p>
+        <p><strong>更新时间</strong>: ${data.updated_at}</p>
+      `;
+    } else {
+      resultDiv.innerHTML = `
+        <p class="error">❌ 未找到课件</p>
+        <p>Registry 中共有 ${data.courses.length} 个课件</p>
+        <details>
+          <summary>查看所有课件 ID</summary>
+          <pre>${data.courses.map(c => c.id).join('\n')}</pre>
+        </details>
+      `;
+    }
+  } catch (err) {
+    resultDiv.innerHTML = `<p class="error">❌ 加载失败: ${err.message}</p>`;
+  }
+}
+
+async function testRemote() {
+  resultDiv.innerHTML = '<p>⏳ 加载 GitHub Raw...</p>';
+  try {
+    const url = 'https://raw.githubusercontent.com/weponusa/teachany/main/courseware-registry.json?v=' + Date.now();
+    const resp = await fetch(url, { cache: 'no-store' });
+    const data = await resp.json();
+    const course = data.courses.find(c => c.id === 'imperial-unification');
+    
+    if (course) {
+      resultDiv.innerHTML = `
+        <p class="success">✅ GitHub 数据已同步！</p>
+        <pre>${JSON.stringify(course, null, 2)}</pre>
+      `;
+    } else {
+      resultDiv.innerHTML = `<p class="error">❌ GitHub 数据尚未同步（可能需要几分钟）</p>`;
+    }
+  } catch (err) {
+    resultDiv.innerHTML = `<p class="error">❌ 加载失败: ${err.message}</p>`;
+  }
+}
+
+// 自动测试本地
+window.onload = () => testLocal();
+</script>
+</body>
+</html>
