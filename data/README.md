@@ -1,126 +1,383 @@
-# 📚 TeachAny Knowledge Layer | 知识层
+# TeachAny 地理历史数据集
 
-## 设计理念
+**版本**: v1.1  
+**数据总大小**: ~46 MB（不含 DEM 地形）  
+**覆盖范围**: 中国 + 全球基础数据 + 历史疆域战役  
+**最后更新**: 2026-04-12
 
-TeachAny 的 Skill 提供**"怎么做课件"**的方法论，Knowledge Layer 提供**"做什么内容"**的知识底座。
+---
 
-两者的关系：
+## 🚀 快速开始
 
+### 核心数据文件（⭐ 标记）
+
+#### 地理数据（底图）
+```javascript
+// 1. 中国河流（长江、黄河等）
+fetch('/data/geography/rivers/ne_10m_rivers_china.json')
+
+// 2. 中国湖泊（青海湖、鄱阳湖等）
+fetch('/data/geography/lakes/ne_10m_lakes_china.json')
+
+// 3. 中国海岸线
+fetch('/data/geography/coastline/ne_10m_coastline_china.json')
+
+// 4. 中国省级行政区划（35个省级）
+fetch('/data/geography/admin-boundaries/china-provinces.json')
+
+// 5. 世界国家边界（241个国家）
+fetch('/data/geography/admin-boundaries/ne_50m_admin_0_countries.json')
 ```
-┌─────────────────────────────────────────────────────┐
-│  Skill（方法论层）                                    │
-│  · ABT 叙事结构                                      │
-│  · 五镜头法 / Bloom 认知分类                          │
-│  · 脚手架策略 / 认知负荷管理                          │
-│  · 学科适配 / 课型分类                                │
-└────────────────────┬────────────────────────────────┘
-                     │ 查阅
-┌────────────────────▼────────────────────────────────┐
-│  Knowledge Layer（知识层）   ← 你现在在这里           │
-│  · 知识图谱：知识点 + 前置关系 + 学段定位              │
-│  · 易错点库：每个知识点的常见错误 + 诊断反馈           │
-│  · 题库：按 Bloom 层级分级的练习题                    │
-│  · 教学锚点：真实场景、类比、口诀                      │
-└─────────────────────────────────────────────────────┘
+
+#### 历史数据（核心）⭐ 新增
+```javascript
+// 6. 朝代疆域（秦/汉/唐/宋/元/明/清）
+fetch('/data/history/dynasties/qin-dynasty.geojson')
+
+// 7. 历史战役地点（30个重要战役）
+fetch('/data/history/battles/major-battles.geojson')
+
+// 8. 历代都城（25个都城）
+fetch('/data/history/cities/ancient-capitals.geojson')
+
+// 9. 战略要地（20个关隘）
+fetch('/data/history/cities/strategic-locations.geojson')
 ```
 
-## 为什么需要知识层？
+#### 3D 地形（混合加载）⭐ 推荐
+```javascript
+// 10. DEM 地形（本地 Z4-Z6 + 在线 Z7+）
+map.addSource('terrain', {
+  type: 'raster-dem',
+  tiles: [
+    '/data/terrain-tiles/{z}/{x}/{y}.png',      // 本地（32 MB）
+    'https://s3.amazonaws.com/.../terrarium/{z}/{x}/{y}.png'  // 在线回退
+  ],
+  encoding: 'terrarium'
+});
+```
 
-| 问题 | 没有知识层时 | 有知识层时 |
-|:---|:---|:---|
-| **知识准确性** | 依赖模型内置知识，可能编错 | 直接从图谱读取，保证准确 |
-| **前置知识链** | 模型猜测，可能遗漏 | 图谱中有明确的 `prerequisites` |
-| **易错点** | 模型凭经验生成，可能不典型 | 从教学一线积累的真实错因库 |
-| **练习题** | 模型现编，质量波动大 | 审核过的题库，带标准答案和诊断 |
-| **课程标准对齐** | 模型不确定是几年级的内容 | 每个知识点有 `grade` 和 `curriculum` 标注 |
+**DEM 地形设置**: 参见 [`README_TERRAIN.md`](README_TERRAIN.md)
 
-## 目录结构
+---
+
+## 📁 目录结构
 
 ```
 data/
-├── README.md                    # 本文件
-├── schema.md                    # 数据格式规范
-│
-├── chinese/                     # 语文
-│   ├── pinyin/                  # 拼音
-│   │   ├── _graph.json          # 知识图谱
-│   │   ├── _errors.json         # 易错点库
-│   │   └── _exercises.json      # 题库
-│   ├── reading/                 # 阅读理解
-│   └── writing/                 # 写作
-│
-├── math/                        # 数学
-│   ├── functions/               # 函数
-│   │   ├── _graph.json          
-│   │   ├── _errors.json         
-│   │   └── _exercises.json      
-│   ├── geometry/                # 几何
-│   ├── algebra/                 # 代数
-│   └── statistics/              # 统计
-│
-├── physics/                     # 物理
-├── chemistry/                   # 化学
-├── biology/                     # 生物
-├── geography/                   # 地理
-├── history/                     # 历史
-├── english/                     # 英语
-└── info-tech/                   # 信息技术
+├─ geography/                          # 地理数据（38.48 MB）
+│  ├─ rivers/
+│  │  ├─ ne_10m_rivers_china.json     ⭐ 中国河流 (4.58 MB, 233条)
+│  │  └─ ne_10m_rivers_lake_centerlines.json  # 全球河流（备份）
+│  ├─ lakes/
+│  │  ├─ ne_10m_lakes_china.json      ⭐ 中国湖泊 (1.39 MB, 196个)
+│  │  └─ ne_10m_lakes.json            # 全球湖泊（备份）
+│  ├─ coastline/
+│  │  ├─ ne_10m_coastline_china.json  ⭐ 中国海岸线 (2.85 MB, 273段)
+│  │  └─ ne_10m_coastline.json        # 全球海岸线（备份）
+│  └─ admin-boundaries/
+│     ├─ china-provinces.json         ⭐ 中国省级区划 (569 KB, 35个)
+│     ├─ china-cities.json            # 中国轮廓（简化版）
+│     └─ ne_50m_admin_0_countries.json ⭐ 世界国家边界 (4.46 MB, 241个)
+├─ history/                            # 历史数据（7.72 MB）⭐ 新增
+│  ├─ dynasties/                       ⭐ 历朝疆域（9个朝代，7.67 MB）
+│  │  ├─ qin-dynasty.geojson          ⭐ 秦朝 (926 KB, 183个行政区)
+│  │  ├─ west-han-dynasty.geojson     ⭐ 西汉 (936 KB, 233个)
+│  │  ├─ east-han-dynasty.geojson     ⭐ 东汉 (1.13 MB, 440个)
+│  │  ├─ tang-dynasty.geojson         ⭐ 唐朝 (954 KB, 225个)
+│  │  ├─ north-song-dynasty.geojson   ⭐ 北宋 (6.19 KB, 15路) ⭐ 新增
+│  │  ├─ south-song-dynasty.geojson   ⭐ 南宋 (5.87 KB, 14路) ⭐ 新增
+│  │  ├─ yuan-dynasty.geojson         ⭐ 元朝 (998 KB, 237个)
+│  │  ├─ ming-dynasty.geojson         ⭐ 明朝 (1.01 MB, 233个)
+│  │  └─ qing-dynasty.geojson         ⭐ 清朝 (1.80 MB, 627个)
+│  ├─ battles/                         ⭐ 历史战役（53.4 KB）⭐ 新增
+│  │  └─ major-battles.geojson        ⭐ 30个重要战役（前260-1948年）
+│  ├─ cities/                          ⭐ 历史城市（22.2 KB）⭐ 新增
+│  │  ├─ ancient-capitals.geojson     ⭐ 25个历代都城
+│  │  └─ strategic-locations.geojson  ⭐ 20个战略要地（关隘、渡口、军镇）
+│  ├─ routes/                          # 历史路线（待补充）
+│  └─ DYNASTIES_CATALOG.md             # 朝代疆域数据清单
+├─ terrain-tiles/                      # DEM 地形瓦片（可选，32 MB）⭐ 新增
+│  ├─ 4/                               # Z4：中国全境概览
+│  ├─ 5/                               # Z5：省级地形
+│  └─ 6/                               # Z6：市级地形
+├─ DATA_CATALOG.md                     # 📖 完整数据目录（详细文档）
+├─ README.md                           # 本文件
+├─ README_TERRAIN.md                   # 🗻 DEM 地形快速参考 ⭐ 新增
+├─ process_china_data.py               # 数据提取脚本
+├─ show_data_stats.py                  # 数据统计脚本
+├─ analyze_dynasties.py                # 历朝疆域分析脚本
+└─ download_terrain_tiles.py           # DEM 地形下载脚本 ⭐ 新增
 ```
 
-## AI 如何使用知识层
+---
 
-在 SKILL 中，AI 按以下流程使用知识层：
+## 📊 数据统计
 
-```
-1. 用户说"做一个复韵母课件"
-2. AI 先执行轻量检索：python3 scripts/knowledge_layer.py lookup --topic "复韵母" --subject chinese
-3. AI 根据命中的 subject/domain/node，再决定是否回读原始 JSON
-4. AI 优先读取该知识点的：
-   - 定义、前置知识、后续知识
-   - 真实场景、记忆锚点（口诀/类比）
-   - 课程标准定位（几年级、哪个单元）
-5. AI 按需读取 _errors.json：该知识点的典型错误和诊断反馈
-6. AI 按需读取 _exercises.json：现成的分级练习题
-7. AI 用 Skill 的方法论组装成课件
-```
+| 类别 | 文件 | 大小 | 要素数 | 覆盖范围 |
+|:---|:---|:---:|:---:|:---|
+| **中国河流** | `ne_10m_rivers_china.json` | 4.58 MB | 233 | 长江、黄河、珠江等 |
+| **中国湖泊** | `ne_10m_lakes_china.json` | 1.39 MB | 196 | 青海湖、鄱阳湖等 |
+| **中国海岸线** | `ne_10m_coastline_china.json` | 2.85 MB | 273 | 东部海岸 + 岛屿 |
+| **中国省份** | `china-provinces.json` | 569 KB | 35 | 34省 + 港澳台 |
+| **世界国家** | `ne_50m_admin_0_countries.json` | 4.46 MB | 241 | 全球国家边界 |
+| **秦朝疆域** | `qin-dynasty.geojson` | 926 KB | 183 | 秦朝行政区划 |
+| **西汉疆域** | `west-han-dynasty.geojson` | 936 KB | 233 | 西汉行政区划 |
+| **东汉疆域** | `east-han-dynasty.geojson` | 1.13 MB | 440 | 东汉行政区划 |
+| **唐朝疆域** | `tang-dynasty.geojson` | 954 KB | 225 | 唐朝行政区划 |
+| **元朝疆域** | `yuan-dynasty.geojson` | 998 KB | 237 | 元朝行政区划 |
+| **明朝疆域** | `ming-dynasty.geojson` | 1.01 MB | 233 | 明朝行政区划 |
+| **清朝疆域** | `qing-dynasty.geojson` | 1.80 MB | 627 | 清朝行政区划 |
+| **总计** | - | **21.52 MB** | **2,925** | - |
 
-### 推荐命令
+> 注: 全球原始数据（备份文件）共 46.11 MB，包含在统计中但通常不直接使用。
 
-#### 1）完整性审计
+---
+
+## 🛠️ 工具脚本
+
+### 1. 数据统计脚本
+
+显示所有数据文件的详细信息:
 
 ```bash
-python3 scripts/knowledge_layer.py audit
-python3 scripts/knowledge_layer.py audit --subject math
-python3 scripts/knowledge_layer.py audit --json
+python3 show_data_stats.py
 ```
 
-#### 2）主题按需检索（推荐）
+输出示例:
+```
+📂 河流数据
+📄 ne_10m_rivers_china.json
+   大小: 4.58 MB
+   要素数: 233
+   几何类型: LineString(168), MultiLineString(65)
+   数据来源: Natural Earth v5.0.0
+   中国要素: 233/1455 (16.0%)
+```
+
+### 2. 数据提取脚本
+
+从全球数据中提取特定区域数据:
 
 ```bash
-python3 scripts/knowledge_layer.py lookup --topic "一次函数" --subject math
-python3 scripts/knowledge_layer.py lookup --topic "光合作用" --subject biology --top 2 --errors 2 --exercises 2
-python3 scripts/knowledge_layer.py lookup --topic "季风" --subject geography --json
+python3 process_china_data.py
 ```
 
-### 为什么这样更省模型消耗？
+功能:
+- 从 Natural Earth 全球数据中提取中国范围内的要素
+- 自动添加 metadata 元数据
+- 输出优化后的 GeoJSON 文件
 
-- **先输出紧凑摘要**，避免整份 `_graph.json` 直接进上下文
-- **只命中一个或少数几个 node**，而不是通读整学科目录
-- **错误库和题库按需截取**，避免把大量暂时用不到的题塞给模型
-- **让 Skill 先复用已有知识层内容，再做补充生成**
+---
 
-## 贡献指南
+## 📖 使用示例
 
-### 添加新学科/新知识点
+### 示例 1: 在 MapLibre GL 中显示中国河流
 
-1. 在对应学科目录下创建子目录
-2. 按 `schema.md` 的格式编写 `_graph.json`、`_errors.json`、`_exercises.json`
-3. 确保 `prerequisites` 中引用的知识点 ID 在图谱中存在
-4. PR 时附上知识来源（教材版本、页码）
+```javascript
+const map = new maplibregl.Map({
+  container: 'map',
+  center: [110, 35],
+  zoom: 4
+});
 
-### 数据质量要求
+map.on('load', () => {
+  // 加载中国河流数据
+  fetch('/data/geography/rivers/ne_10m_rivers_china.json')
+    .then(res => res.json())
+    .then(data => {
+      map.addSource('china-rivers', {
+        type: 'geojson',
+        data: data
+      });
+      
+      map.addLayer({
+        id: 'rivers',
+        type: 'line',
+        source: 'china-rivers',
+        paint: {
+          'line-color': '#1976d2',
+          'line-width': [
+            'interpolate', ['linear'], ['zoom'],
+            4, 0.5,  // zoom 4 时 0.5px
+            8, 2     // zoom 8 时 2px
+          ]
+        }
+      });
+    });
+});
+```
 
-- **知识准确**：必须对照课程标准和教材
-- **学段正确**：标明适用年级
-- **易错点真实**：来自教学实践，不是臆测
-- **题目有来源**：标注是原创还是改编
+### 示例 2: 在 ECharts 中显示中国省份
+
+```javascript
+fetch('/data/geography/admin-boundaries/china-provinces.json')
+  .then(res => res.json())
+  .then(geoJson => {
+    echarts.registerMap('china', geoJson);
+    
+    const chart = echarts.init(document.getElementById('map'));
+    chart.setOption({
+      series: [{
+        type: 'map',
+        map: 'china',
+        roam: true,
+        itemStyle: {
+          areaColor: '#f3f3f3',
+          borderColor: '#516b91'
+        },
+        emphasis: {
+          itemStyle: {
+            areaColor: '#ffd700'
+          }
+        }
+      }]
+    });
+  });
+```
+
+### 示例 3: 显示数据元数据
+
+```javascript
+fetch('/data/geography/rivers/ne_10m_rivers_china.json')
+  .then(res => res.json())
+  .then(data => {
+    const meta = data.metadata;
+    console.log('数据来源:', meta.dataSource);
+    console.log('原始URL:', meta.sourceUrl);
+    console.log('处理日期:', meta.processedDate);
+    console.log('中国要素数:', meta.chinaFeatures);
+    console.log('全球总数:', meta.originalFeatures);
+  });
+```
+
+---
+
+## 🔄 数据来源
+
+| 数据源 | 类型 | 许可证 | 下载地址 |
+|:---|:---|:---|:---|
+| **Natural Earth** | 河流、湖泊、海岸线、国家边界 | Public Domain | https://www.naturalearthdata.com/ |
+| **DataV (阿里云)** | 中国行政区划 | 开放数据 | https://geo.datav.aliyun.com/ |
+| **CHGIS V6** | 中国历史疆域、城市（待补充） | 学术免费 | https://chgis.fas.harvard.edu/ |
+
+---
+
+## ✅ 数据质量保证
+
+所有数据文件均包含 `metadata` 字段,记录:
+- ✅ 数据来源 (`dataSource`)
+- ✅ 原始 URL (`sourceUrl`)
+- ✅ 处理日期 (`processedDate`)
+- ✅ 要素数量统计 (`originalFeatures`, `chinaFeatures`)
+- ✅ 过滤条件 (`filterBbox`)
+
+示例 metadata:
+```json
+{
+  "metadata": {
+    "title": "中国区域 ne_10m_rivers_lake_centerlines",
+    "dataSource": "Natural Earth v5.0.0",
+    "sourceUrl": "https://github.com/martynafford/natural-earth-geojson",
+    "filterBbox": {
+      "min_lon": 73.0,
+      "max_lon": 135.0,
+      "min_lat": 18.0,
+      "max_lat": 54.0
+    },
+    "processedBy": "TeachAny Data Processor",
+    "processedDate": "2026-04-12",
+    "originalFeatures": 1455,
+    "chinaFeatures": 233
+  }
+}
+```
+
+---
+
+## 🚧 待补充数据
+
+以下数据计划在后续版本中添加（按 K12 课程需求排序）:
+
+### 高优先级（近期）
+- [ ] 宋朝疆域（数据文件损坏，需重新获取）
+- [ ] 主要历史战役地点（长平之战、赤壁之战等）
+
+### 中优先级（中期）
+- [ ] 丝绸之路（陆上 + 海上）
+- [ ] 大运河路线
+- [ ] 郑和下西洋航线
+- [ ] 中国主要山脉（喜马拉雅、昆仑、秦岭等）
+- [ ] CHGIS 历史城市数据
+
+### 低优先级（长期）
+- [ ] 世界历史数据（古罗马、蒙古帝国等）
+- [ ] 红军长征路线
+- [ ] 抗日战争战役地点
+
+---
+
+## 📚 相关文档
+
+- **DATA_CATALOG.md**: 完整数据目录（包含每个文件的详细说明）
+- **TeachAny Skill v5.12**: 数据使用规范和最佳实践
+- **v5.12-update-summary.md**: v5.12 版本更新说明
+
+---
+
+## 🔗 有用的工具
+
+- **Mapshaper Web**: https://mapshaper.org/ - 可视化编辑 GeoJSON
+- **GeoJSON.io**: https://geojson.io/ - 在线查看/绘制 GeoJSON
+- **QGIS**: https://qgis.org/ - 专业 GIS 软件（免费开源）
+
+---
+
+## 💡 最佳实践
+
+1. **优先使用中国区域数据**（`*_china.json`）:
+   - 文件更小，加载更快
+   - 要素更少，渲染更流畅
+   - 已过滤无关数据
+
+2. **检查 metadata**:
+   ```javascript
+   const meta = data.metadata;
+   if (meta.dataSource !== 'Natural Earth v5.0.0') {
+     console.warn('数据来源不匹配!');
+   }
+   ```
+
+3. **使用适当的缩放级别**:
+   - 全国地图: zoom 4-6
+   - 省级地图: zoom 6-9
+   - 市级地图: zoom 9-12
+
+4. **缓存数据**:
+   ```javascript
+   const dataCache = new Map();
+   
+   async function loadData(url) {
+     if (dataCache.has(url)) {
+       return dataCache.get(url);
+     }
+     const data = await fetch(url).then(r => r.json());
+     dataCache.set(url, data);
+     return data;
+   }
+   ```
+
+---
+
+## 🐛 问题反馈
+
+如果您发现数据错误或有新的数据需求,请:
+1. 检查 `DATA_CATALOG.md` 确认数据来源
+2. 访问原始数据源验证
+3. 提交 Issue 并附上截图和坐标
+
+---
+
+**维护**: TeachAny Team  
+**更新周期**: 每季度同步上游数据源  
+**最后检查**: 2026-04-12
