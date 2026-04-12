@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="teachany-node" content="area-units">
+<meta name="teachany-subject" content="math">
+<meta name="teachany-domain" content="measurement">
+<meta name="teachany-grade" content="4">
+<meta name="teachany-difficulty" content="2">
+<meta name="teachany-version" content="2.0">
+<meta name="teachany-author" content="weponusa">
+<title>面积单位与换算 · TeachAny 互动课件</title>
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--danger:#ff6b6b;--purple:#cc5de8;--blue:#339af0;--orange:#ff922b;--text:#2b2b2b;--dim:#666;--dimmer:#999;--card:#ffffff;--border:rgba(0,0,0,0.06);}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:70px;}
+body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle at 10% 20%,rgba(255,107,107,0.06) 0%,transparent 50%),radial-gradient(circle at 90% 80%,rgba(78,205,196,0.06) 0%,transparent 50%);pointer-events:none;z-index:-1;}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;}
+.nav-brand{font-size:20px;font-weight:900;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all 0.25s;white-space:nowrap;}
+.nav a:hover,.nav a.active{color:#fff;background:linear-gradient(135deg,var(--primary),var(--orange));}
+.container{max-width:960px;margin:0 auto;padding:80px 20px 60px;}
+.hero{text-align:center;padding:36px 0 30px;}
+.hero h1{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple),var(--blue));background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
+@keyframes rainbowShift{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}
+.hero .subtitle{font-size:18px;color:var(--dim);margin-bottom:16px;}
+.hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+.hero .meta span{background:#fff;border:2px solid var(--border);border-radius:24px;padding:6px 18px;font-size:14px;font-weight:700;color:var(--dim);}
+.section{margin:40px 0;}
+.section-title{font-size:26px;font-weight:900;margin-bottom:18px;padding:10px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));display:inline-block;}
+.card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.04);transition:transform 0.25s,box-shadow 0.25s;}
+.card:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(255,107,107,0.12);}
+.card h3{font-size:20px;font-weight:900;margin-bottom:10px;}
+.card p,.card li{font-size:16px;line-height:1.9;color:var(--dim);}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px;}
+.obj-card{text-align:center;padding:22px 12px;}
+.obj-card .icon{font-size:40px;margin-bottom:10px;display:inline-block;animation:bounce 2s ease infinite;}
+@keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
+.obj-card h4{font-size:16px;font-weight:900;margin-bottom:6px;}
+.obj-card p{font-size:13px;color:var(--dim);}
+.highlight{color:var(--primary);font-weight:900;}
+.quiz-option{display:block;padding:16px 20px;margin:10px 0;border-radius:16px;background:#fff;border:2.5px solid #e8e8e8;cursor:pointer;transition:all 0.25s;font-size:16px;font-weight:700;color:var(--text);}
+.quiz-option:hover{background:rgba(78,205,196,0.08);border-color:var(--secondary);transform:translateX(4px);}
+.quiz-option.correct{background:rgba(81,207,102,0.12);border-color:var(--success);color:#2b8a3e;}
+.quiz-option.wrong{background:rgba(255,107,107,0.1);border-color:var(--danger);color:#c92a2a;}
+.quiz-feedback{padding:14px 18px;border-radius:14px;margin-top:10px;font-size:15px;display:none;font-weight:700;}
+.quiz-feedback.show{display:block;animation:popIn 0.35s cubic-bezier(0.34,1.56,0.64,1);}
+@keyframes popIn{from{opacity:0;transform:scale(0.92);}to{opacity:1;transform:scale(1);}}
+.insight-box{background:linear-gradient(135deg,rgba(204,93,232,0.08),rgba(51,154,240,0.08));border-left:5px solid var(--purple);padding:18px 22px;border-radius:0 16px 16px 0;margin:16px 0;}
+.insight-box h4{color:var(--purple);font-size:17px;font-weight:900;margin-bottom:8px;}
+.sticker{display:inline-block;font-size:28px;animation:wiggle 3s ease-in-out infinite;}
+@keyframes wiggle{0%,100%{transform:rotate(0deg);}25%{transform:rotate(8deg);}75%{transform:rotate(-8deg);}}
+.star-reward{text-align:center;padding:20px;font-size:18px;font-weight:900;background:linear-gradient(135deg,rgba(255,230,109,0.2),rgba(255,146,43,0.1));border-radius:20px;margin-top:16px;}
+.star-reward .stars{font-size:36px;display:block;margin-bottom:8px;}
+/* 生活场景 */
+#life-scene{background:linear-gradient(135deg,#f0fff0,#fff9e6);border-radius:24px;padding:32px;margin:40px 0;overflow:hidden;}
+.unit-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:16px;margin:20px 0;}
+.unit-card{background:white;border-radius:16px;padding:16px;text-align:center;border:3px solid var(--border);transition:transform 0.3s,box-shadow 0.3s;cursor:pointer;}
+.unit-card:hover{transform:scale(1.06);box-shadow:0 8px 24px rgba(255,107,107,0.2);}
+.unit-card .unit-name{font-size:20px;font-weight:900;color:var(--primary);margin-bottom:6px;}
+.unit-card .unit-sym{font-size:28px;margin-bottom:6px;}
+.unit-card .unit-desc{font-size:12px;color:var(--dim);}
+.zoom-anim{animation:zoomPulse 3s ease-in-out infinite;}
+.zoom-anim:nth-child(2){animation-delay:0.5s;}
+.zoom-anim:nth-child(3){animation-delay:1s;}
+.zoom-anim:nth-child(4){animation-delay:1.5s;}
+.zoom-anim:nth-child(5){animation-delay:2s;}
+@keyframes zoomPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.05);}}
+.unit-compare{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin:20px 0;}
+.compare-box{background:white;border-radius:12px;padding:12px 20px;font-size:15px;font-weight:700;border:2px solid var(--border);}
+.compare-arrow{font-size:24px;color:var(--primary);font-weight:900;}
+/* 互动实验台 */
+#interactive-lab{background:linear-gradient(135deg,#fff0f5,#f0fff4);border-radius:24px;padding:32px;margin:40px 0;}
+.lab-title{font-size:26px;font-weight:900;text-align:center;margin-bottom:24px;}
+.slider-demo{background:#fff;border-radius:20px;padding:24px;margin-bottom:24px;box-shadow:0 4px 16px rgba(0,0,0,0.06);}
+.slider-demo h3{font-size:18px;font-weight:900;margin-bottom:16px;color:var(--primary);}
+.slider-row{display:flex;align-items:center;gap:16px;margin:12px 0;flex-wrap:wrap;}
+.slider-row label{font-size:15px;font-weight:700;min-width:80px;}
+.slider-row input[type=range]{flex:1;min-width:120px;accent-color:var(--primary);}
+.slider-val{font-size:20px;font-weight:900;color:var(--primary);min-width:50px;}
+.calc-display{background:linear-gradient(135deg,var(--primary),var(--orange));color:white;border-radius:16px;padding:20px;text-align:center;font-size:20px;font-weight:900;margin-top:16px;}
+.drag-section{background:#fff;border-radius:20px;padding:24px;box-shadow:0 4px 16px rgba(0,0,0,0.06);}
+.drag-section h3{font-size:18px;font-weight:900;margin-bottom:16px;color:var(--secondary);}
+.drag-zone{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;padding:16px;background:#f8f9fa;border-radius:12px;}
+.drag-item{padding:10px 18px;background:linear-gradient(135deg,var(--secondary),var(--blue));color:white;border-radius:12px;cursor:grab;font-size:14px;font-weight:900;user-select:none;transition:transform 0.2s;}
+.drag-item:hover{transform:scale(1.08);}
+.drop-zone{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;}
+.drop-target{min-height:60px;border:3px dashed #ccc;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--dim);transition:all 0.2s;padding:8px;text-align:center;}
+.drop-target.drag-over{border-color:var(--secondary);background:rgba(78,205,196,0.08);}
+.drop-target.correct{border-color:var(--success);background:rgba(81,207,102,0.15);color:#2b8a3e;font-weight:900;}
+.drop-target.wrong{border-color:var(--danger);background:rgba(255,107,107,0.1);}
+.drop-result{text-align:center;margin-top:12px;font-size:16px;font-weight:700;}
+/* 知识图谱 */
+#knowledge-graph{background:linear-gradient(135deg,#f0f4ff,#fff0fa);border-radius:24px;padding:32px;margin:40px 0;}
+#kg-svg{width:100%;height:340px;border-radius:16px;background:rgba(255,255,255,0.6);}
+.kg-legend{display:flex;justify-content:center;gap:24px;margin-top:12px;flex-wrap:wrap;}
+.kg-legend-item{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;}
+.kg-dot{width:14px;height:14px;border-radius:50%;}
+/* 多步骤题 */
+.step-quiz{background:#fff;border-radius:20px;padding:24px;border:2px solid var(--border);margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.04);}
+.step-header{display:flex;gap:8px;margin-bottom:12px;align-items:center;}
+.step-dot{width:28px;height:28px;border-radius:50%;background:#e8e8e8;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:var(--dim);flex-shrink:0;}
+.step-dot.active{background:var(--primary);color:white;}
+.step-dot.done{background:var(--success);color:white;}
+.step-panel{display:none;}
+.step-panel.show{display:block;animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.step-q{font-size:17px;font-weight:700;margin-bottom:12px;}
+.conv-table{width:100%;border-collapse:collapse;margin:16px 0;}
+.conv-table th,.conv-table td{padding:12px 16px;border:2px solid var(--border);text-align:center;font-size:15px;}
+.conv-table th{background:var(--primary);color:white;font-weight:900;}
+.conv-table tr:nth-child(even){background:rgba(78,205,196,0.06);}
+footer{text-align:center;padding:36px 0;color:var(--dimmer);font-size:13px;border-top:3px dashed rgba(0,0,0,0.06);margin-top:50px;}
+.audio-bar{position:fixed;bottom:0;left:0;right:0;z-index:500;background:rgba(255,107,107,0.95);backdrop-filter:blur(12px);border-top:2px solid rgba(255,255,255,0.3);padding:10px 24px;display:flex;align-items:center;gap:14px;}
+.audio-bar .ab-btn{width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;background:#fff;color:var(--primary);font-size:16px;display:flex;align-items:center;justify-content:center;}
+.audio-bar .ab-info{flex:1;min-width:0;}
+.audio-bar .ab-title{font-size:13px;font-weight:700;color:#fff;}
+.audio-bar .ab-progress-wrap{height:4px;background:rgba(255,255,255,0.3);border-radius:2px;margin-top:4px;cursor:pointer;}
+.audio-bar .ab-progress{height:100%;background:#fff;border-radius:2px;width:0%;}
+.audio-bar .ab-time{font-size:11px;color:rgba(255,255,255,0.8);margin-top:2px;}
+.audio-bar .ab-vol{width:60px;accent-color:#fff;}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <span class="nav-brand">🌈 教我学 TeachAny</span>
+  <a href="#hero">首页</a>
+  <a href="#life-scene">🎬 场景</a>
+  <a href="#module-1">面积单位</a>
+  <a href="#interactive-lab">🧪 实验台</a>
+  <a href="#module-2">相邻换算</a>
+  <a href="#knowledge-graph">🕸️ 图谱</a>
+  <a href="#module-3">大单位</a>
+  <a href="#deep-understanding">深入</a>
+  <a href="#summary">小结</a>
+</nav>
+<div class="container">
+
+  <section class="hero" id="hero">
+    <h1>面积单位与换算 <span class="sticker">📐</span></h1>
+    <p class="subtitle">从指甲盖到足球场，面积单位帮我们测量世界！</p>
+    <div class="meta">
+      <span>📚 数学</span><span>🎒 四年级</span><span>⏱️ 约 35 分钟</span><span>🎯 新授课</span>
+    </div>
+  </section>
+
+  <section class="section" id="goals">
+    <h2 class="section-title">🎯 学习目标</h2>
+    <div class="grid-3">
+      <div class="card obj-card"><div class="icon">📏</div><h4>认识面积单位</h4><p>知道cm²、dm²、m²、公顷、km²</p></div>
+      <div class="card obj-card"><div class="icon">🔄</div><h4>单位换算</h4><p>掌握相邻单位间100倍的换算关系</p></div>
+      <div class="card obj-card"><div class="icon">🌍</div><h4>实际应用</h4><p>能根据实际情况选择合适的单位</p></div>
+    </div>
+  </section>
+
+  <!-- 生活场景动画 -->
+  <section id="life-scene">
+    <h2 class="section-title">🎬 面积单位大家族——从小到大！</h2>
+    <p style="text-align:center;color:var(--dim);margin-bottom:20px;">点击每个单位卡片，感受它们的大小！</p>
+    <div class="unit-grid">
+      <div class="unit-card zoom-anim" onclick="showUnitInfo('cm2')">
+        <div class="unit-sym">💅</div>
+        <div class="unit-name">cm²</div>
+        <div class="unit-desc">平方厘米<br>约一个指甲大</div>
+      </div>
+      <div class="unit-card zoom-anim" onclick="showUnitInfo('dm2')">
+        <div class="unit-sym">📱</div>
+        <div class="unit-name">dm²</div>
+        <div class="unit-desc">平方分米<br>约一个手机屏幕</div>
+      </div>
+      <div class="unit-card zoom-anim" onclick="showUnitInfo('m2')">
+        <div class="unit-sym">🚪</div>
+        <div class="unit-name">m²</div>
+        <div class="unit-desc">平方米<br>约一扇门的面积</div>
+      </div>
+      <div class="unit-card zoom-anim" onclick="showUnitInfo('ha')">
+        <div class="unit-sym">⚽</div>
+        <div class="unit-name">公顷</div>
+        <div class="unit-desc">约1.4个足球场</div>
+      </div>
+      <div class="unit-card zoom-anim" onclick="showUnitInfo('km2')">
+        <div class="unit-sym">🏙️</div>
+        <div class="unit-name">km²</div>
+        <div class="unit-desc">平方千米<br>一个小城镇</div>
+      </div>
+    </div>
+    <div id="unitInfo" style="text-align:center;margin-top:12px;padding:16px;background:rgba(255,255,255,0.8);border-radius:16px;font-size:16px;font-weight:700;color:var(--primary);min-height:48px;">👆 点击上方卡片查看详情</div>
+    <!-- 换算链条动画 -->
+    <div class="unit-compare" style="margin-top:20px;">
+      <div class="compare-box">1 cm²</div>
+      <div class="compare-arrow" style="animation:arrowPulse 1s ease-in-out infinite">×100</div>
+      <div class="compare-box">1 dm²</div>
+      <div class="compare-arrow" style="animation:arrowPulse 1s ease-in-out infinite 0.3s">×100</div>
+      <div class="compare-box">1 m²</div>
+      <div class="compare-arrow" style="animation:arrowPulse 1s ease-in-out infinite 0.6s">×10000</div>
+      <div class="compare-box">1公顷</div>
+      <div class="compare-arrow" style="animation:arrowPulse 1s ease-in-out infinite 0.9s">×100</div>
+      <div class="compare-box">1 km²</div>
+    </div>
+    @keyframes arrowPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.2);}}
+  </section>
+
+  <!-- 模块一：面积单位 -->
+  <section class="section" id="module-1">
+    <h2 class="section-title">📖 模块一：认识面积单位</h2>
+    <div class="card">
+      <h3>💡 面积单位的实际大小</h3>
+      <table class="conv-table">
+        <tr><th>单位</th><th>符号</th><th>实际参考</th><th>边长</th></tr>
+        <tr><td>平方厘米</td><td>cm²</td><td>指甲盖/邮票</td><td>边长1cm的正方形</td></tr>
+        <tr><td>平方分米</td><td>dm²</td><td>数学书封面</td><td>边长1dm的正方形</td></tr>
+        <tr><td>平方米</td><td>m²</td><td>一扇门的面积</td><td>边长1m的正方形</td></tr>
+        <tr><td>公顷</td><td>ha</td><td>约1.4个足球场</td><td>边长100m的正方形</td></tr>
+        <tr><td>平方千米</td><td>km²</td><td>小城区面积</td><td>边长1km的正方形</td></tr>
+      </table>
+    </div>
+    <div class="step-quiz" id="sq1">
+      <div class="step-header">
+        <div class="step-dot active" id="s1d1">1</div>
+        <div class="step-dot" id="s1d2">2</div>
+        <div class="step-dot" id="s1d3">3</div>
+        <span style="font-size:14px;">选择合适的面积单位</span>
+      </div>
+      <div class="step-panel show" id="s1p1">
+        <p class="step-q">Step 1：描述教室黑板的面积，应该用哪个单位？</p>
+        <div class="quiz-option" onclick="stepAnswer(this,false,'s1p1','s1d1','s1p2','s1d2','s1f1')">cm²（太小了）</div>
+        <div class="quiz-option" onclick="stepAnswer(this,true,'s1p1','s1d1','s1p2','s1d2','s1f1')">m²（黑板约6~8平方米）✓</div>
+        <div id="s1f1" class="quiz-feedback"></div>
+      </div>
+      <div class="step-panel" id="s1p2">
+        <p class="step-q">Step 2：描述一张邮票的面积，用哪个单位合适？</p>
+        <div class="quiz-option" onclick="stepAnswer(this,true,'s1p2','s1d2','s1p3','s1d3','s1f2')">cm²（邮票约6 cm²）✓</div>
+        <div class="quiz-option" onclick="stepAnswer(this,false,'s1p2','s1d2','s1p3','s1d3','s1f2')">m²（太大了）</div>
+        <div id="s1f2" class="quiz-feedback"></div>
+      </div>
+      <div class="step-panel" id="s1p3">
+        <p class="step-q">Step 3：北京市面积约16800___，填什么单位？</p>
+        <div class="quiz-option" onclick="finalStep(this,true,'s1f3')">km² ✓（城市面积用平方千米）</div>
+        <div class="quiz-option" onclick="finalStep(this,false,'s1f3')">m²（太小了）</div>
+        <div class="quiz-option" onclick="finalStep(this,false,'s1f3')">公顷</div>
+        <div id="s1f3" class="quiz-feedback"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 互动实验台 -->
+  <section id="interactive-lab">
+    <div class="lab-title">🧪 互动实验台</div>
+    <div class="slider-demo">
+      <h3>🎚️ 面积单位换算器</h3>
+      <div class="slider-row">
+        <label>数值：</label>
+        <input type="range" id="convNum" min="1" max="500" value="5" oninput="updateConv()">
+        <span class="slider-val" id="convVal">5</span>
+      </div>
+      <div class="slider-row">
+        <label>从：</label>
+        <select id="fromUnit" onchange="updateConv()" style="padding:8px 14px;border-radius:10px;border:2px solid var(--border);font-size:15px;font-weight:700;">
+          <option value="cm2">cm²（平方厘米）</option>
+          <option value="dm2">dm²（平方分米）</option>
+          <option value="m2">m²（平方米）</option>
+        </select>
+        <label>到：</label>
+        <select id="toUnit" onchange="updateConv()" style="padding:8px 14px;border-radius:10px;border:2px solid var(--border);font-size:15px;font-weight:700;">
+          <option value="cm2">cm²</option>
+          <option value="dm2" selected>dm²</option>
+          <option value="m2">m²</option>
+        </select>
+      </div>
+      <div class="calc-display" id="convResult">5 dm² = 500 cm²</div>
+    </div>
+    <div class="drag-section">
+      <h3>🎯 拖拽配对：把面积单位拖到合适的物体！</h3>
+      <div class="drag-zone" id="auDZ">
+        <div class="drag-item" draggable="true" data-id="u1">cm²</div>
+        <div class="drag-item" draggable="true" data-id="u2">m²</div>
+        <div class="drag-item" draggable="true" data-id="u3">公顷</div>
+        <div class="drag-item" draggable="true" data-id="u4">km²</div>
+      </div>
+      <div class="drop-zone">
+        <div class="drop-target" data-accept="u1">一枚硬币<br>的面积</div>
+        <div class="drop-target" data-accept="u2">一间卧室<br>的面积</div>
+        <div class="drop-target" data-accept="u3">一个公园<br>的面积</div>
+        <div class="drop-target" data-accept="u4">一个省份<br>的面积</div>
+      </div>
+      <div class="drop-result" id="auDR"></div>
+    </div>
+  </section>
+
+  <!-- 模块二：相邻单位换算 -->
+  <section class="section" id="module-2">
+    <h2 class="section-title">📖 模块二：相邻面积单位换算</h2>
+    <div class="card">
+      <h3>💡 换算规律——都是100倍！</h3>
+      <p>1 dm² = <span class="highlight">100</span> cm²（10cm × 10cm = 100 cm²）</p>
+      <p>1 m² = <span class="highlight">100</span> dm²（10dm × 10dm = 100 dm²）</p>
+      <p>1 公顷 = <span class="highlight">10000</span> m²（100m × 100m）</p>
+      <p>1 km² = <span class="highlight">100</span> 公顷</p>
+    </div>
+    <div class="insight-box">
+      <h4>🔍 换算口诀</h4>
+      <p>大化小乘进率，小化大除进率</p>
+      <p>3 m² = 3 × 100 = 300 dm²（大化小，乘100）</p>
+      <p>500 cm² = 500 ÷ 100 = 5 dm²（小化大，除100）</p>
+    </div>
+    <div class="step-quiz" id="sq2">
+      <div class="step-header">
+        <div class="step-dot active" id="s2d1">1</div>
+        <div class="step-dot" id="s2d2">2</div>
+        <div class="step-dot" id="s2d3">3</div>
+        <span style="font-size:14px;">换算 2.5 m² = ？dm²</span>
+      </div>
+      <div class="step-panel show" id="s2p1">
+        <p class="step-q">Step 1：m² 换 dm²，是大单位换小单位，应该乘还是除？</p>
+        <div class="quiz-option" onclick="stepAnswer(this,true,'s2p1','s2d1','s2p2','s2d2','s2f1')">乘（大换小要乘进率）✓</div>
+        <div class="quiz-option" onclick="stepAnswer(this,false,'s2p1','s2d1','s2p2','s2d2','s2f1')">除（方向错了）</div>
+        <div id="s2f1" class="quiz-feedback"></div>
+      </div>
+      <div class="step-panel" id="s2p2">
+        <p class="step-q">Step 2：1 m² = ？dm²（进率）</p>
+        <div class="quiz-option" onclick="stepAnswer(this,false,'s2p2','s2d2','s2p3','s2d3','s2f2')">10</div>
+        <div class="quiz-option" onclick="stepAnswer(this,true,'s2p2','s2d2','s2p3','s2d3','s2f2')">100 ✓（10dm×10dm=100dm²）</div>
+        <div id="s2f2" class="quiz-feedback"></div>
+      </div>
+      <div class="step-panel" id="s2p3">
+        <p class="step-q">Step 3：2.5 m² = 2.5 × 100 = ？dm²</p>
+        <div class="quiz-option" onclick="finalStep(this,true,'s2f3')">250 dm² ✓</div>
+        <div class="quiz-option" onclick="finalStep(this,false,'s2f3')">25 dm²</div>
+        <div class="quiz-option" onclick="finalStep(this,false,'s2f3')">0.025 dm²</div>
+        <div id="s2f3" class="quiz-feedback"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 知识图谱 -->
+  <section id="knowledge-graph">
+    <h2 class="section-title">🕸️ 知识图谱</h2>
+    <p style="text-align:center;color:var(--dim);font-size:14px;margin-bottom:20px;">点击节点查看 · 拖拽移动</p>
+    <svg id="kg-svg"></svg>
+    <div class="kg-legend">
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#339af0"></div>当前课题</div>
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#51cf66"></div>前置知识</div>
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#ff922b"></div>后续知识</div>
+    </div>
+  </section>
+
+  <!-- 模块三：大单位 -->
+  <section class="section" id="module-3">
+    <h2 class="section-title">📖 模块三：公顷和平方千米</h2>
+    <div class="card">
+      <h3>💡 大面积单位——量土地、量城市！</h3>
+      <p>1公顷 = 10000 m²（边长100m的正方形）</p>
+      <p>1 km² = 100公顷 = 1000000 m²</p>
+      <p>1公顷约等于 <span class="highlight">1.4个</span> 标准足球场</p>
+    </div>
+    <div class="step-quiz" id="sq3">
+      <div class="step-header">
+        <div class="step-dot active" id="s3d1">1</div>
+        <div class="step-dot" id="s3d2">2</div>
+        <div class="step-dot" id="s3d3">3</div>
+        <span style="font-size:14px;">3 km² = ？公顷</span>
+      </div>
+      <div class="step-panel show" id="s3p1">
+        <p class="step-q">Step 1：km² 换公顷，是大单位换小单位吗？</p>
+        <div class="quiz-option" onclick="stepAnswer(this,true,'s3p1','s3d1','s3p2','s3d2','s3f1')">是，km² > 公顷，需要乘进率 ✓</div>
+        <div class="quiz-option" onclick="stepAnswer(this,false,'s3p1','s3d1','s3p2','s3d2','s3f1')">不是，要除</div>
+        <div id="s3f1" class="quiz-feedback"></div>
+      </div>
+      <div class="step-panel" id="s3p2">
+        <p class="step-q">Step 2：1 km² = ？公顷（进率）</p>
+        <div class="quiz-option" onclick="stepAnswer(this,true,'s3p2','s3d2','s3p3','s3d3','s3f2')">100 公顷 ✓</div>
+        <div class="quiz-option" onclick="stepAnswer(this,false,'s3p2','s3d2','s3p3','s3d3','s3f2')">10 公顷</div>
+        <div id="s3f2" class="quiz-feedback"></div>
+      </div>
+      <div class="step-panel" id="s3p3">
+        <p class="step-q">Step 3：3 km² = 3 × 100 = ？公顷</p>
+        <div class="quiz-option" onclick="finalStep(this,true,'s3f3')">300 公顷 ✓</div>
+        <div class="quiz-option" onclick="finalStep(this,false,'s3f3')">30 公顷</div>
+        <div class="quiz-option" onclick="finalStep(this,false,'s3f3')">3000 公顷</div>
+        <div id="s3f3" class="quiz-feedback"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 深层理解 -->
+  <section class="section" id="deep-understanding">
+    <h2 class="section-title">🧠 深层理解</h2>
+    <div class="card">
+      <h3>🌍 生活中的面积单位</h3>
+      <p>🇨🇳 中国领土面积约960万 <span class="highlight">km²</span></p>
+      <p>🏫 一所小学占地约1~2 <span class="highlight">公顷</span></p>
+      <p>🏠 一套房子约80~120 <span class="highlight">m²</span></p>
+      <p>📱 手机屏幕约100~200 <span class="highlight">cm²</span></p>
+    </div>
+    <div class="card">
+      <h3>⭐⭐⭐ 综合练习</h3>
+      <p>一块农田长80m，宽50m，面积是多少平方米？合多少公顷？</p>
+      <div class="quiz-option" onclick="checkAnswer(this,true,'dq1')">A. 4000 m²，0.4 公顷 ✓（80×50=4000，4000÷10000=0.4）</div>
+      <div class="quiz-option" onclick="checkAnswer(this,false,'dq1')">B. 4000 m²，40 公顷（换算错误）</div>
+      <div class="quiz-option" onclick="checkAnswer(this,false,'dq1')">C. 400 m²，0.04 公顷</div>
+      <div id="dq1" class="quiz-feedback"></div>
+    </div>
+  </section>
+
+  <section class="section" id="summary">
+    <h2 class="section-title">📝 课程小结</h2>
+    <div class="card">
+      <h3>🌟 今天掌握了</h3>
+      <p>✅ 五种面积单位：<span class="highlight">cm² → dm² → m² → 公顷 → km²</span></p>
+      <p>✅ 相邻单位换算：每次×100（m²→公顷×10000）</p>
+      <p>✅ 大化小：乘进率；小化大：除进率</p>
+      <p>✅ 根据实际情况选择合适的面积单位</p>
+    </div>
+    <div class="star-reward"><span class="stars">🌟🌟🌟</span>面积单位全掌握！测量小达人！📐✨</div>
+  </section>
+  <footer><p>Made with <strong>教我学 TeachAny</strong> · <a href="https://github.com/weponusa/teachany" style="color:var(--primary);">GitHub</a></p></footer>
+</div>
+
+<div class="audio-bar">
+  <button class="ab-btn" id="abPrev">⏮</button>
+  <button class="ab-btn" id="abPlay">▶</button>
+  <button class="ab-btn" id="abNext">⏭</button>
+  <div class="ab-info">
+    <div class="ab-title" id="abTitle">🎵 面积单位与换算 · 第1段</div>
+    <div class="ab-progress-wrap" id="abProgressWrap"><div class="ab-progress" id="abProgress"></div></div>
+    <div class="ab-time" id="abTime">0:00 / 0:00</div>
+  </div>
+  <input class="ab-vol" type="range" id="abVol" min="0" max="1" step="0.05" value="0.85">
+</div>
+
+<script>
+// 单位信息展示
+const unitInfo={cm2:'1 cm² = 边长1厘米的正方形，约一个指甲盖大小 💅',dm2:'1 dm² = 边长1分米的正方形，约一个手机屏幕大小 📱',m2:'1 m² = 边长1米的正方形，约一扇门的面积 🚪',ha:'1公顷 = 边长100m的正方形 = 10000 m²，约1.4个足球场 ⚽',km2:'1 km² = 边长1千米的正方形 = 100公顷，一个小城镇面积 🏙️'};
+function showUnitInfo(key){document.getElementById('unitInfo').innerHTML=unitInfo[key];}
+
+// 换算器
+const convRates={cm2:1,dm2:100,m2:10000};
+function updateConv(){
+  const n=parseInt(document.getElementById('convNum').value);
+  const from=document.getElementById('fromUnit').value;
+  const to=document.getElementById('toUnit').value;
+  document.getElementById('convVal').textContent=n;
+  if(from===to){document.getElementById('convResult').textContent=`${n} = ${n}（相同单位）`;return;}
+  const fromRate=convRates[from],toRate=convRates[to];
+  const result=(n*fromRate/toRate).toFixed(toRate<fromRate?0:2);
+  const fromLabel=document.getElementById('fromUnit').selectedOptions[0].text.split('（')[0];
+  const toLabel=document.getElementById('toUnit').selectedOptions[0].text;
+  document.getElementById('convResult').textContent=`${n} ${fromLabel} = ${result} ${toLabel}`;
+}
+updateConv();
+
+// 拖拽
+let auScore=0;
+document.querySelectorAll('#auDZ .drag-item').forEach(el=>{el.addEventListener('dragstart',e=>{e.dataTransfer.setData('text',el.dataset.id);el.style.opacity='0.5';});el.addEventListener('dragend',()=>el.style.opacity='1');});
+document.querySelectorAll('.drop-target').forEach(el=>{el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('drag-over');});el.addEventListener('dragleave',()=>el.classList.remove('drag-over'));el.addEventListener('drop',e=>{e.preventDefault();el.classList.remove('drag-over');if(el.classList.contains('correct')||el.classList.contains('wrong'))return;const id=e.dataTransfer.getData('text');const de=document.querySelector('[data-id="'+id+'"]');if(id===el.dataset.accept){el.classList.add('correct');if(de)de.style.opacity='0.4';auScore++;document.getElementById('auDR').innerHTML=auScore>=4?'🎊 全部正确！面积单位完全掌握！':'✅ '+auScore+'/4 正确';}else{el.classList.add('wrong');setTimeout(()=>el.classList.remove('wrong'),800);document.getElementById('auDR').innerHTML='❌ 想想这个物体有多大～';}});});
+
+// D3 知识图谱
+(function(){
+  const nodes=[{id:'cur',name:'面积单位换算',type:'current'},{id:'p1',name:'矩形面积',type:'prereq'},{id:'p2',name:'长度单位',type:'prereq'},{id:'n1',name:'面积计算',type:'next'},{id:'n2',name:'体积单位',type:'next'},{id:'n3',name:'土地测量',type:'next'}];
+  const links=[{source:'p1',target:'cur'},{source:'p2',target:'cur'},{source:'cur',target:'n1'},{source:'cur',target:'n2'},{source:'cur',target:'n3'}];
+  const cm={current:'#339af0',prereq:'#51cf66',next:'#ff922b'};
+  const svg=d3.select('#kg-svg');const w=document.getElementById('kg-svg').clientWidth||700,h=340;
+  svg.attr('viewBox',`0 0 ${w} ${h}`);
+  const sim=d3.forceSimulation(nodes).force('link',d3.forceLink(links).id(d=>d.id).distance(110)).force('charge',d3.forceManyBody().strength(-260)).force('center',d3.forceCenter(w/2,h/2)).force('collide',d3.forceCollide(42));
+  const g=svg.append('g');svg.call(d3.zoom().scaleExtent([0.5,2]).on('zoom',e=>g.attr('transform',e.transform)));
+  svg.append('defs').append('marker').attr('id','arr5').attr('viewBox','0 -5 10 10').attr('refX',20).attr('refY',0).attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto').append('path').attr('d','M0,-5L10,0L0,5').attr('fill','#ccc');
+  const lk=g.append('g').selectAll('line').data(links).enter().append('line').attr('stroke','#ccc').attr('stroke-width',2).attr('marker-end','url(#arr5)');
+  const ng=g.append('g').selectAll('g').data(nodes).enter().append('g').call(d3.drag().on('start',(e,d)=>{if(!e.active)sim.alphaTarget(0.3).restart();d.fx=d.x;d.fy=d.y;}).on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y;}).on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null;})).on('click',(e,d)=>{d3.selectAll('.kgt').remove();svg.append('text').attr('class','kgt').attr('x',d.x).attr('y',d.y-38).attr('text-anchor','middle').attr('font-size','13').attr('font-weight','700').attr('fill','#333').text(d.name);setTimeout(()=>d3.selectAll('.kgt').remove(),2000);});
+  ng.append('circle').attr('r',d=>d.type==='current'?32:24).attr('fill',d=>cm[d.type]).attr('stroke','white').attr('stroke-width',3);
+  ng.append('text').attr('text-anchor','middle').attr('dy','0.35em').attr('font-size','10').attr('font-weight','900').attr('fill','white').each(function(d){const ws=d.name.length>5?[d.name.slice(0,5),d.name.slice(5)]:[d.name];ws.forEach((w,i)=>d3.select(this).append('tspan').attr('x',0).attr('dy',i===0?`${-(ws.length-1)*0.6}em`:'1.2em').text(w));});
+  sim.on('tick',()=>{lk.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);ng.attr('transform',d=>`translate(${d.x},${d.y})`);});
+})();
+
+function stepAnswer(el,c,cp,cd,np,nd,fid){const par=el.closest('.step-panel');if(par.dataset.answered)return;par.dataset.answered='true';par.querySelectorAll('.quiz-option').forEach(o=>{o.style.pointerEvents='none';o.style.opacity='0.6';});const fb=document.getElementById(fid);if(c){el.classList.add('correct');el.style.opacity='1';fb.innerHTML='✅ 正确！';fb.style.background='rgba(81,207,102,0.12)';fb.style.color='#2b8a3e';fb.classList.add('show');const dd=document.getElementById(cd);dd.classList.remove('active');dd.classList.add('done');dd.textContent='✓';setTimeout(()=>{par.classList.remove('show');document.getElementById(np).classList.add('show');document.getElementById(nd).classList.add('active');},700);}else{el.classList.add('wrong');el.style.opacity='1';fb.innerHTML='💪 再想想！';fb.style.background='rgba(255,107,107,0.08)';fb.style.color='#c92a2a';fb.classList.add('show');setTimeout(()=>{par.dataset.answered='';par.querySelectorAll('.quiz-option').forEach(o=>{o.style.pointerEvents='';o.style.opacity='';o.classList.remove('wrong','correct');});fb.classList.remove('show');},800);}}
+function finalStep(el,c,fid){const par=el.closest('.step-panel');if(par.dataset.answered)return;par.dataset.answered='true';par.querySelectorAll('.quiz-option').forEach(o=>{o.style.pointerEvents='none';o.style.opacity='0.6';});const fb=document.getElementById(fid);if(c){el.classList.add('correct');el.style.opacity='1';fb.innerHTML='🎉 <strong>全对！</strong>';fb.style.background='rgba(81,207,102,0.12)';fb.style.color='#2b8a3e';}else{el.classList.add('wrong');el.style.opacity='1';par.querySelectorAll('.quiz-option').forEach(o=>{if(o.onclick&&o.onclick.toString().includes('true')){o.classList.add('correct');o.style.opacity='1';}});fb.innerHTML='💪 看看正确答案！';fb.style.background='rgba(255,107,107,0.08)';fb.style.color='#c92a2a';}fb.classList.add('show');}
+function checkAnswer(el,c,fid){const p=el.parentElement;if(p.dataset.answered)return;p.dataset.answered='true';p.querySelectorAll('.quiz-option').forEach(o=>{o.style.pointerEvents='none';o.style.opacity='0.6';});const fb=document.getElementById(fid);if(c){el.classList.add('correct');el.style.opacity='1';fb.innerHTML='🎉 正确！';fb.style.background='rgba(81,207,102,0.12)';fb.style.color='#2b8a3e';}else{el.classList.add('wrong');el.style.opacity='1';p.querySelectorAll('.quiz-option').forEach(o=>{if(o.onclick&&o.onclick.toString().includes('true')){o.classList.add('correct');o.style.opacity='1';}});fb.innerHTML='💪 加油！注意进率！';fb.style.background='rgba(255,107,107,0.08)';fb.style.color='#c92a2a';}fb.classList.add('show');}
+const audioPlaylist=[{src:'tts/s01.mp3',title:'面积单位大家族'},{src:'tts/s02.mp3',title:'cm² dm² m²的大小'},{src:'tts/s03.mp3',title:'相邻单位换算100倍'},{src:'tts/s04.mp3',title:'公顷和平方千米'},{src:'tts/s05.mp3',title:'综合换算练习'},{src:'tts/s06.mp3',title:'课程小结'}];
+let curIdx=0;const audio=new Audio();
+const abPlay=document.getElementById('abPlay'),abPrev=document.getElementById('abPrev'),abNext=document.getElementById('abNext'),abTitle=document.getElementById('abTitle'),abProgress=document.getElementById('abProgress'),abProgressWrap=document.getElementById('abProgressWrap'),abTime=document.getElementById('abTime'),abVol=document.getElementById('abVol');
+function loadTrack(i){curIdx=i;audio.src=audioPlaylist[i].src;abTitle.textContent='🎵 '+audioPlaylist[i].title;abProgress.style.width='0%';}
+abPlay.addEventListener('click',()=>{if(audio.paused){audio.play();abPlay.textContent='⏸';}else{audio.pause();abPlay.textContent='▶';}});
+abPrev.addEventListener('click',()=>{if(curIdx>0){loadTrack(curIdx-1);audio.play();abPlay.textContent='⏸';}});
+abNext.addEventListener('click',()=>{if(curIdx<audioPlaylist.length-1){loadTrack(curIdx+1);audio.play();abPlay.textContent='⏸';}});
+audio.addEventListener('timeupdate',()=>{if(audio.duration)abProgress.style.width=(audio.currentTime/audio.duration*100)+'%';const f=t=>`${Math.floor(t/60)}:${String(Math.floor(t%60)).padStart(2,'0')}`;abTime.textContent=f(audio.currentTime)+' / '+f(audio.duration||0);});
+audio.addEventListener('ended',()=>{if(curIdx<audioPlaylist.length-1){loadTrack(curIdx+1);audio.play();}else abPlay.textContent='▶';});
+abProgressWrap.addEventListener('click',e=>{const r=abProgressWrap.getBoundingClientRect();audio.currentTime=(e.clientX-r.left)/r.width*(audio.duration||0);});
+abVol.addEventListener('input',()=>audio.volume=abVol.value);audio.volume=0.85;loadTrack(0);
+document.querySelectorAll('section[id]').forEach(s=>new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)document.querySelectorAll('.nav a').forEach(a=>{a.classList.remove('active');if(a.getAttribute('href')==='#'+e.target.id)a.classList.add('active');});});},{threshold:0.3}).observe(s));
+</script>
+</body>
+</html>

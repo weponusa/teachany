@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="teachany-node" content="decimal-operations">
+<meta name="teachany-subject" content="math">
+<meta name="teachany-domain" content="numbers-operations">
+<meta name="teachany-grade" content="5">
+<meta name="teachany-difficulty" content="2">
+<meta name="teachany-version" content="2.0">
+<meta name="teachany-author" content="weponusa">
+<title>小数四则运算 · TeachAny 互动课件</title>
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--danger:#ff6b6b;--purple:#cc5de8;--blue:#339af0;--orange:#ff922b;--text:#2b2b2b;--dim:#666;--dimmer:#999;--card:#ffffff;--border:rgba(0,0,0,0.06);}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:70px;}
+body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle at 10% 20%,rgba(255,107,107,0.06) 0%,transparent 50%),radial-gradient(circle at 90% 80%,rgba(78,205,196,0.06) 0%,transparent 50%);pointer-events:none;z-index:-1;}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;}
+.nav-brand{font-size:20px;font-weight:900;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all 0.25s;white-space:nowrap;}
+.nav a:hover,.nav a.active{color:#fff;background:linear-gradient(135deg,var(--primary),var(--orange));}
+.container{max-width:960px;margin:0 auto;padding:80px 20px 60px;}
+.hero{text-align:center;padding:36px 0 30px;}
+.hero h1{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple),var(--blue));background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
+@keyframes rainbowShift{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}
+.hero .subtitle{font-size:18px;color:var(--dim);margin-bottom:16px;}
+.hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+.hero .meta span{background:#fff;border:2px solid var(--border);border-radius:24px;padding:6px 18px;font-size:14px;font-weight:700;color:var(--dim);}
+.section{margin:40px 0;}
+.section-title{font-size:26px;font-weight:900;margin-bottom:18px;padding:10px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));display:inline-block;}
+.card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.04);transition:transform 0.25s,box-shadow 0.25s;}
+.card:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(255,107,107,0.12);}
+.card h3{font-size:20px;font-weight:900;margin-bottom:10px;}
+.card p,.card li{font-size:16px;line-height:1.9;color:var(--dim);}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;}
+.obj-card{text-align:center;padding:22px 12px;}
+.obj-card .icon{font-size:40px;margin-bottom:10px;display:inline-block;animation:bounce 2s ease infinite;}
+@keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
+.obj-card h4{font-size:16px;font-weight:900;margin-bottom:6px;}
+.obj-card p{font-size:13px;color:var(--dim);}
+.highlight{color:var(--primary);font-weight:900;}
+.quiz-option{display:block;padding:16px 20px;margin:10px 0;border-radius:16px;background:#fff;border:2.5px solid #e8e8e8;cursor:pointer;transition:all 0.25s;font-size:16px;font-weight:700;color:var(--text);}
+.quiz-option:hover{background:rgba(78,205,196,0.08);border-color:var(--secondary);transform:translateX(4px);}
+.quiz-option.correct{background:rgba(81,207,102,0.12);border-color:var(--success);color:#2b8a3e;}
+.quiz-option.wrong{background:rgba(255,107,107,0.1);border-color:var(--danger);color:#c92a2a;}
+.quiz-feedback{padding:14px 18px;border-radius:14px;margin-top:10px;font-size:15px;display:none;font-weight:700;}
+.quiz-feedback.show{display:block;animation:popIn 0.35s cubic-bezier(0.34,1.56,0.64,1);}
+@keyframes popIn{from{opacity:0;transform:scale(0.92);}to{opacity:1;transform:scale(1);}}
+.insight-box{background:linear-gradient(135deg,rgba(204,93,232,0.08),rgba(51,154,240,0.08));border-left:5px solid var(--purple);padding:18px 22px;border-radius:0 16px 16px 0;margin:16px 0;}
+.insight-box h4{color:var(--purple);font-size:17px;font-weight:900;margin-bottom:8px;}
+.sticker{display:inline-block;font-size:28px;animation:wiggle 3s ease-in-out infinite;}
+@keyframes wiggle{0%,100%{transform:rotate(0deg);}25%{transform:rotate(8deg);}75%{transform:rotate(-8deg);}}
+.star-reward{text-align:center;padding:20px;font-size:18px;font-weight:900;background:linear-gradient(135deg,rgba(255,230,109,0.2),rgba(255,146,43,0.1));border-radius:20px;margin-top:16px;}
+.star-reward .stars{font-size:36px;display:block;margin-bottom:8px;}
+
+/* 生活场景 */
+#life-scene{background:linear-gradient(135deg,#fff0e6,#e6fff9);border-radius:24px;padding:32px;margin:40px 0;overflow:hidden;}
+.price-scene{display:flex;justify-content:center;flex-wrap:wrap;gap:16px;margin:20px 0;}
+.price-card{background:white;border-radius:16px;padding:16px 20px;text-align:center;border:3px solid var(--border);min-width:110px;position:relative;transition:transform 0.3s;}
+.price-card:hover{transform:translateY(-4px);}
+.price-card .item-icon{font-size:32px;margin-bottom:6px;}
+.price-card .item-name{font-size:13px;color:var(--dim);margin-bottom:4px;}
+.price-card .item-price{font-size:20px;font-weight:900;color:var(--primary);}
+.price-card.bounce-anim{animation:priceAppear 0.5s ease forwards;opacity:0;}
+@keyframes priceAppear{from{opacity:0;transform:scale(0.8);}to{opacity:1;transform:scale(1);}}
+.receipt-box{background:white;border-radius:16px;padding:16px 22px;border:3px dashed var(--border);max-width:320px;margin:16px auto;font-family:monospace;}
+.receipt-row{display:flex;justify-content:space-between;font-size:14px;padding:4px 0;border-bottom:1px dashed #eee;}
+.receipt-total{display:flex;justify-content:space-between;font-size:18px;font-weight:900;color:var(--primary);padding:8px 0;}
+/* 数轴动画 */
+.number-line{position:relative;height:60px;margin:16px 0;overflow:hidden;}
+.nl-line{position:absolute;top:30px;left:20px;right:20px;height:3px;background:#ccc;border-radius:2px;}
+.nl-point{position:absolute;top:18px;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:white;animation:nlAppear 0.5s ease forwards;opacity:0;}
+@keyframes nlAppear{from{transform:translateY(-10px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.nl-label{position:absolute;top:44px;font-size:11px;font-weight:700;color:var(--dim);transform:translateX(-50%);}
+
+/* 互动实验台 */
+#interactive-lab{background:linear-gradient(135deg,#fff0f5,#f0fff4);border-radius:24px;padding:32px;margin:40px 0;}
+.lab-title{font-size:26px;font-weight:900;text-align:center;margin-bottom:24px;}
+.slider-demo{background:#fff;border-radius:20px;padding:24px;margin-bottom:24px;box-shadow:0 4px 16px rgba(0,0,0,0.06);}
+.slider-demo h3{font-size:18px;font-weight:900;margin-bottom:16px;color:var(--primary);}
+.slider-row{display:flex;align-items:center;gap:16px;margin:12px 0;flex-wrap:wrap;}
+.slider-row label{font-size:15px;font-weight:700;min-width:80px;}
+.slider-row input[type=range]{flex:1;min-width:120px;accent-color:var(--primary);}
+.slider-val{font-size:20px;font-weight:900;color:var(--primary);min-width:60px;}
+.calc-display{background:linear-gradient(135deg,var(--primary),var(--orange));color:white;border-radius:16px;padding:20px;text-align:center;font-size:22px;font-weight:900;margin-top:16px;}
+.drag-section{background:#fff;border-radius:20px;padding:24px;box-shadow:0 4px 16px rgba(0,0,0,0.06);}
+.drag-section h3{font-size:18px;font-weight:900;margin-bottom:16px;color:var(--secondary);}
+.drag-zone{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;padding:16px;background:#f8f9fa;border-radius:12px;}
+.drag-item{padding:10px 18px;background:linear-gradient(135deg,var(--secondary),var(--blue));color:white;border-radius:12px;cursor:grab;font-size:14px;font-weight:900;user-select:none;transition:transform 0.2s;}
+.drag-item:hover{transform:scale(1.08);}
+.drop-zone{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;}
+.drop-target{min-height:60px;border:3px dashed #ccc;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--dim);transition:all 0.2s;padding:8px;text-align:center;}
+.drop-target.drag-over{border-color:var(--secondary);background:rgba(78,205,196,0.08);}
+.drop-target.correct{border-color:var(--success);background:rgba(81,207,102,0.15);color:#2b8a3e;font-weight:900;}
+.drop-target.wrong{border-color:var(--danger);background:rgba(255,107,107,0.1);}
+.drop-result{text-align:center;margin-top:12px;font-size:16px;font-weight:700;}
+
+/* 知识图谱 */
+#knowledge-graph{background:linear-gradient(135deg,#f0f4ff,#fff0fa);border-radius:24px;padding:32px;margin:40px 0;}
+#kg-svg{width:100%;height:340px;border-radius:16px;background:rgba(255,255,255,0.6);}
+.kg-legend{display:flex;justify-content:center;gap:24px;margin-top:12px;flex-wrap:wrap;}
+.kg-legend-item{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;}
+.kg-dot{width:14px;height:14px;border-radius:50%;}
+
+/* 多步骤题 */
+.step-quiz{background:#fff;border-radius:20px;padding:24px;border:2px solid var(--border);margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.04);}
+.step-header{display:flex;gap:8px;margin-bottom:12px;align-items:center;}
+.step-dot{width:28px;height:28px;border-radius:50%;background:#e8e8e8;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:var(--dim);flex-shrink:0;}
+.step-dot.active{background:var(--primary);color:white;}
+.step-dot.done{background:var(--success);color:white;}
+.step-panel{display:none;}
+.step-panel.show{display:block;animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.step-q{font-size:17px;font-weight:700;margin-bottom:12px;}
+/* 竖式 */
+.decimal-calc{background:#fff;border:2px solid var(--primary);border-radius:16px;padding:16px 24px;font-size:20px;font-weight:900;font-family:monospace;display:inline-block;margin:12px auto;text-align:right;min-width:160px;}
+.dc-line{border-top:3px solid var(--primary);margin:6px 0;}
+.dc-result{color:var(--primary);}
+.dc-dot-note{font-size:13px;color:var(--orange);font-weight:700;}
+.calc-examples{display:flex;justify-content:center;gap:20px;flex-wrap:wrap;margin:16px 0;}
+
+footer{text-align:center;padding:36px 0;color:var(--dimmer);font-size:13px;border-top:3px dashed rgba(0,0,0,0.06);margin-top:50px;}
+.audio-bar{position:fixed;bottom:0;left:0;right:0;z-index:500;background:rgba(255,107,107,0.95);backdrop-filter:blur(12px);border-top:2px solid rgba(255,255,255,0.3);padding:10px 24px;display:flex;align-items:center;gap:14px;}
+.audio-bar .ab-btn{width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;background:#fff;color:var(--primary);font-size:16px;display:flex;align-items:center;justify-content:center;}
+.audio-bar .ab-info{flex:1;min-width:0;}
+.audio-bar .ab-title{font-size:13px;font-weight:700;color:#fff;}
+.audio-bar .ab-progress-wrap{height:4px;background:rgba(255,255,255,0.3);border-radius:2px;margin-top:4px;cursor:pointer;}
+.audio-bar .ab-progress{height:100%;background:#fff;border-radius:2px;width:0%;}
+.audio-bar .ab-time{font-size:11px;color:rgba(255,255,255,0.8);margin-top:2px;}
+.audio-bar .ab-vol{width:60px;accent-color:#fff;}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <span class="nav-brand">🌈 教我学 TeachAny</span>
+  <a href="#hero">首页</a>
+  <a href="#life-scene">🛒 场景</a>
+  <a href="#module-1">加减法</a>
+  <a href="#interactive-lab">🧪 实验台</a>
+  <a href="#module-2">乘法</a>
+  <a href="#knowledge-graph">🕸️ 图谱</a>
+  <a href="#module-3">除法</a>
+  <a href="#deep-understanding">深入</a>
+  <a href="#summary">小结</a>
+</nav>
+<div class="container">
+
+  <section class="hero" id="hero">
+    <h1>小数四则运算 <span class="sticker">🛒</span></h1>
+    <p class="subtitle">购物零钱、测量数据……小数运算天天都用到！</p>
+    <div class="meta">
+      <span>📚 数学</span><span>🎒 五年级</span><span>⏱️ 约 40 分钟</span><span>🎯 新授课</span>
+    </div>
+  </section>
+
+  <section class="section" id="goals">
+    <h2 class="section-title">🎯 学习目标</h2>
+    <div class="grid-3">
+      <div class="card obj-card"><div class="icon">➕</div><h4>小数加减</h4><p>小数点对齐，和整数加减一样！</p></div>
+      <div class="card obj-card"><div class="icon">✖️</div><h4>小数乘法</h4><p>先按整数乘，再确定小数点位置</p></div>
+      <div class="card obj-card"><div class="icon">➗</div><h4>小数除法</h4><p>除数化整数，再按整数除</p></div>
+    </div>
+  </section>
+
+  <!-- 生活场景动画 -->
+  <section id="life-scene">
+    <h2 class="section-title">🎬 超市购物——小数运算！</h2>
+    <p style="text-align:center;color:var(--dim);margin-bottom:16px;">买东西要用小数计算！一起来看购物小票！</p>
+    <div class="price-scene" id="priceScene">
+      <div class="price-card bounce-anim" style="animation-delay:0s">
+        <div class="item-icon">🍎</div><div class="item-name">苹果</div><div class="item-price">¥2.50</div>
+      </div>
+      <div class="price-card bounce-anim" style="animation-delay:0.2s">
+        <div class="item-icon">🥛</div><div class="item-name">牛奶</div><div class="item-price">¥3.80</div>
+      </div>
+      <div class="price-card bounce-anim" style="animation-delay:0.4s">
+        <div class="item-icon">🍞</div><div class="item-name">面包</div><div class="item-price">¥4.60</div>
+      </div>
+      <div class="price-card bounce-anim" style="animation-delay:0.6s">
+        <div class="item-icon">🧃</div><div class="item-name">果汁</div><div class="item-price">¥6.30</div>
+      </div>
+    </div>
+    <div class="receipt-box">
+      <div class="receipt-row"><span>苹果</span><span>¥ 2.50</span></div>
+      <div class="receipt-row"><span>牛奶</span><span>¥ 3.80</span></div>
+      <div class="receipt-row"><span>面包</span><span>¥ 4.60</span></div>
+      <div class="receipt-row"><span>果汁</span><span>¥ 6.30</span></div>
+      <div class="receipt-total"><span>合计</span><span>¥ 17.20</span></div>
+    </div>
+    <p style="text-align:center;color:var(--dim);font-size:14px;">💡 小数加法：小数点对齐，从低位算起，和整数加法一样！</p>
+  </section>
+
+  <!-- 模块一：加减法 -->
+  <section class="section" id="module-1">
+    <h2 class="section-title">📖 模块一：小数加减法</h2>
+    <div class="card">
+      <h3>💡 核心原则：小数点对齐！</h3>
+      <p>计算 3.56 + 2.4：把小数点上下对齐，个位对个位，十分位对十分位</p>
+      <div class="calc-examples">
+        <div class="decimal-calc">
+          <div class="dc-dot-note">①小数点对齐</div>
+          <div>&nbsp;3.56</div>
+          <div>+2.40</div>
+          <div class="dc-line"></div>
+          <div class="dc-result">&nbsp;5.96</div>
+        </div>
+        <div class="decimal-calc">
+          <div class="dc-dot-note">②从低位算起</div>
+          <div>&nbsp;6.70</div>
+          <div>-3.25</div>
+          <div class="dc-line"></div>
+          <div class="dc-result">&nbsp;3.45</div>
+        </div>
+      </div>
+    </div>
+    <div class="step-quiz" id="sq1">
+      <div class="step-header">
+        <div class="step-dot active" id="s1d1">1</div>
+        <div class="step-dot" id="s1d2">2</div>
+        <div class="step-dot" id="s1d3">3</div>
+        <span style="font-size:14px;">计算 4.73 + 2.6</span>
+      </div>
+      <div class="step-panel show" id="s1p1">
+        <p class="step-q">Step 1：写竖式时，小数点应该怎么对？</p>
+        <div class="quiz-option" onclick="stepAnswer(this,true,'s1p1','s1d1','s1p2','s1d2','s1f1')">小数点上下对齐 ✓（2.6写成2.60）</div>
+        <div class="quiz-option" onclick="stepAnswer(this,false,'s1p1','s1d1','s1p2','s1d2','s1f1')">末位对齐（这是错的，小数中末位对齐不等于数位对齐）</div>
+        <div id="s1f1" class="quiz-feedback"></div>
+      </div>
+      <div class="step-panel" id="s1p2">
+        <p class="step-q">Step 2：百分位：3+0=3，十分位：7+6=13，写3进1，个位：4+2+1=7</p>
+        <div class="quiz-option" onclick="stepAnswer(this,true,'s1p2','s1d2','s1p3','s1d3','s1f2')">十分位满10要进位 ✓（7+6=13）</div>
+        <div class="quiz-option" onclick="stepAnswer(this,false,'s1p2','s1d2','s1p3','s1d3','s1f2')">十分位不需要进位</div>
+        <div id="s1f2" class="quiz-feedback"></div>
+      </div>
+      <div class="step-panel" id="s1p3">
+        <p class="step-q">Step 3：4.73 + 2.60 = ？</p>
+        <div class="quiz-option" onclick="finalStep(this,true,'s1f3')">7.33 ✓（进位后：百分位3，十分位3，个位7）</div>
+        <div class="quiz-option" onclick="finalStep(this,false,'s1f3')">6.133（没有正确进位）</div>
+        <div class="quiz-option" onclick="finalStep(this,false,'s1f3')">7.43</div>
+        <div id="s1f3" class="quiz-feedback"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 互动实验台 -->
+  <section id="interactive-lab">
+    <div class="lab-title">🧪 互动实验台</div>
+    <div class="slider-demo">
+      <h3>🎚️ 小数四则运算计算器</h3>
+      <div class="slider-row">
+        <label>数A（×0.1）：</label>
+        <input type="range" id="decA" min="1" max="99" value="25" oninput="updateDecCalc()">
+        <span class="slider-val" id="decAVal">2.5</span>
+      </div>
+      <div class="slider-row">
+        <label>数B（×0.1）：</label>
+        <input type="range" id="decB" min="1" max="99" value="13" oninput="updateDecCalc()">
+        <span class="slider-val" id="decBVal">1.3</span>
+      </div>
+      <div class="slider-row">
+        <label>运算：</label>
+        <select id="decOp" onchange="updateDecCalc()" style="padding:8px 14px;border-radius:10px;border:2px solid var(--border);font-size:15px;font-weight:700;">
+          <option value="+">加法 +</option>
+          <option value="-">减法 -</option>
+          <option value="*">乘法 ×</option>
+          <option value="/">除法 ÷</option>
+        </select>
+      </div>
+      <div class="calc-display" id="decCalcResult">2.5 + 1.3 = 3.8</div>
+    </div>
+    <div class="drag-section">
+      <h3>🎯 拖拽配对：把运算规则拖到对应的运算！</h3>
+      <div class="drag-zone" id="decDZ">
+        <div class="drag-item" draggable="true" data-id="dr1">小数点对齐</div>
+        <div class="drag-item" draggable="true" data-id="dr2">数小数位</div>
+        <div class="drag-item" draggable="true" data-id="dr3">移动小数点</div>
+        <div class="drag-item" draggable="true" data-id="dr4">末尾补零</div>
+      </div>
+      <div class="drop-zone">
+        <div class="drop-target" data-accept="dr1">小数<br>加减法</div>
+        <div class="drop-target" data-accept="dr2">小数<br>乘法</div>
+        <div class="drop-target" data-accept="dr3">小数<br>除法</div>
+        <div class="drop-target" data-accept="dr4">位数不足<br>时补零</div>
+      </div>
+      <div class="drop-result" id="decDR"></div>
+    </div>
+  </section>
+
+  <!-- 模块二：乘法 -->
+  <section class="section" id="module-2">
+    <h2 class="section-title">📖 模块二：小数乘法</h2>
+    <div class="card">
+      <h3>💡 先按整数乘，再确定小数点</h3>
+      <p>算 2.3 × 1.4：先算 23 × 14 = 322</p>
+      <p>2.3有1位小数，1.4有1位小数，共2位小数</p>
+      <p>所以结果有2位小数：322 → <span class="highlight">3.22</span></p>
+    </div>
+    <div class="insight-box">
+      <h4>🔍 小数位数规则</h4>
+      <p>乘积的小数位数 = 两因数小数位数之和</p>
+      <p>0.3 × 0.4 = 0.12（1位 + 1位 = 2位）</p>
+      <p>0.12 × 0.5 = 0.060 = 0.06（2位 + 1位 = 3位）</p>
+    </div>
+    <div class="step-quiz" id="sq2">
+      <div class="step-header">
+        <div class="step-dot active" id="s2d1">1</div>
+        <div class="step-dot" id="s2d2">2</div>
+        <div class="step-dot" id="s2d3">3</div>
+        <span style="font-size:14px;">计算 1.5 × 0.8</span>
+      </div>
+      <div class="step-panel show" id="s2p1">
+        <p class="step-q">Step 1：先按整数乘：15 × 8 = ？</p>
+        <div class="quiz-option" onclick="stepAnswer(this,true,'s2p1','s2d1','s2p2','s2d2','s2f1')">120 ✓（15×8=120）</div>
+        <div class="quiz-option" onclick="stepAnswer(this,false,'s2p1','s2d1','s2p2','s2d2','s2f1')">12</div>
+        <div id="s2f1" class="quiz-feedback"></div>
+      </div>
+      <div class="step-panel" id="s2p2">
+        <p class="step-q">Step 2：1.5有1位小数，0.8有1位小数，共几位？</p>
+        <div class="quiz-option" onclick="stepAnswer(this,true,'s2p2','s2d2','s2p3','s2d3','s2f2')">2位 ✓（1+1=2）</div>
+        <div class="quiz-option" onclick="stepAnswer(this,false,'s2p2','s2d2','s2p3','s2d3','s2f2')">1位</div>
+        <div id="s2f2" class="quiz-feedback"></div>
+      </div>
+      <div class="step-panel" id="s2p3">
+        <p class="step-q">Step 3：120，保留2位小数是？</p>
+        <div class="quiz-option" onclick="finalStep(this,true,'s2f3')">1.20 = 1.2 ✓（从右往左数2位）</div>
+        <div class="quiz-option" onclick="finalStep(this,false,'s2f3')">12.0（只数了1位）</div>
+        <div class="quiz-option" onclick="finalStep(this,false,'s2f3')">0.120（数了3位）</div>
+        <div id="s2f3" class="quiz-feedback"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 知识图谱 -->
+  <section id="knowledge-graph">
+    <h2 class="section-title">🕸️ 知识图谱</h2>
+    <p style="text-align:center;color:var(--dim);font-size:14px;margin-bottom:20px;">点击节点查看 · 拖拽移动</p>
+    <svg id="kg-svg"></svg>
+    <div class="kg-legend">
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#339af0"></div>当前课题</div>
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#51cf66"></div>前置知识</div>
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#ff922b"></div>后续知识</div>
+    </div>
+  </section>
+
+  <!-- 模块三：除法 -->
+  <section class="section" id="module-3">
+    <h2 class="section-title">📖 模块三：小数除法</h2>
+    <div class="card">
+      <h3>💡 小数除法——除数化整数！</h3>
+      <p>算 3.6 ÷ 0.4：乘以10使除数变整数：36 ÷ 4 = 9</p>
+      <p>算 7.8 ÷ 1.5：乘以10：78 ÷ 15 = 5.2</p>
+      <p>💡 口诀：<span class="highlight">被除数和除数同时乘同一个数，商不变！</span></p>
+    </div>
+    <div class="step-quiz" id="sq3">
+      <div class="step-header">
+        <div class="step-dot active" id="s3d1">1</div>
+        <div class="step-dot" id="s3d2">2</div>
+        <div class="step-dot" id="s3d3">3</div>
+        <span style="font-size:14px;">计算 6.3 ÷ 0.9</span>
+      </div>
+      <div class="step-panel show" id="s3p1">
+        <p class="step-q">Step 1：0.9有1位小数，被除数和除数同时×10，变成？</p>
+        <div class="quiz-option" onclick="stepAnswer(this,true,'s3p1','s3d1','s3p2','s3d2','s3f1')">63 ÷ 9 ✓（6.3×10=63，0.9×10=9）</div>
+        <div class="quiz-option" onclick="stepAnswer(this,false,'s3p1','s3d1','s3p2','s3d2','s3f1')">0.63 ÷ 0.09</div>
+        <div id="s3f1" class="quiz-feedback"></div>
+      </div>
+      <div class="step-panel" id="s3p2">
+        <p class="step-q">Step 2：63 ÷ 9 = ？</p>
+        <div class="quiz-option" onclick="stepAnswer(this,true,'s3p2','s3d2','s3p3','s3d3','s3f2')">7 ✓（63÷9=7）</div>
+        <div class="quiz-option" onclick="stepAnswer(this,false,'s3p2','s3d2','s3p3','s3d3','s3f2')">0.7</div>
+        <div id="s3f2" class="quiz-feedback"></div>
+      </div>
+      <div class="step-panel" id="s3p3">
+        <p class="step-q">Step 3：6.3 ÷ 0.9 = ？</p>
+        <div class="quiz-option" onclick="finalStep(this,true,'s3f3')">7 ✓（被除数除数同×10，商不变）</div>
+        <div class="quiz-option" onclick="finalStep(this,false,'s3f3')">0.7</div>
+        <div class="quiz-option" onclick="finalStep(this,false,'s3f3')">70</div>
+        <div id="s3f3" class="quiz-feedback"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 深层理解 -->
+  <section class="section" id="deep-understanding">
+    <h2 class="section-title">🧠 深层理解</h2>
+    <div class="card">
+      <h3>🌍 生活中的小数运算</h3>
+      <p>💰 汇率换算：1美元≈7.2元人民币，100美元 = 100×7.2 = <span class="highlight">720元</span></p>
+      <p>🛒 超市折扣：原价38.5元打八折，应付 38.5×0.8 = <span class="highlight">30.8元</span></p>
+      <p>📏 身高分析：全班5人平均身高 = (152.3+148.6+…) ÷ 5</p>
+    </div>
+    <div class="card">
+      <h3>⭐⭐⭐ 综合练习</h3>
+      <p>买3.5kg苹果，每千克2.8元，一共花多少钱？付了20元，找回多少元？</p>
+      <div class="quiz-option" onclick="checkAnswer(this,true,'dq1')">A. 共花9.8元，找回10.2元 ✓（3.5×2.8=9.8，20-9.8=10.2）</div>
+      <div class="quiz-option" onclick="checkAnswer(this,false,'dq1')">B. 共花11.2元，找回8.8元（3.5+2.8乘法搞成加法了）</div>
+      <div class="quiz-option" onclick="checkAnswer(this,false,'dq1')">C. 共花10.5元，找回9.5元</div>
+      <div id="dq1" class="quiz-feedback"></div>
+    </div>
+  </section>
+
+  <section class="section" id="summary">
+    <h2 class="section-title">📝 课程小结</h2>
+    <div class="card">
+      <h3>🌟 今天掌握了</h3>
+      <p>✅ <span class="highlight">加减法</span>：小数点对齐，和整数运算一样</p>
+      <p>✅ <span class="highlight">乘法</span>：先按整数乘，结果小数位数=两因数小数位数之和</p>
+      <p>✅ <span class="highlight">除法</span>：除数化整数（同乘10的倍数），商不变</p>
+      <p>✅ <span class="highlight">运算律</span>：交换律、结合律对小数同样适用！</p>
+    </div>
+    <div class="star-reward"><span class="stars">🌟🌟🌟</span>小数四则运算全掌握！数学购物达人！🛒✨</div>
+  </section>
+  <footer><p>Made with <strong>教我学 TeachAny</strong> · <a href="https://github.com/weponusa/teachany" style="color:var(--primary);">GitHub</a></p></footer>
+</div>
+
+<div class="audio-bar">
+  <button class="ab-btn" id="abPrev">⏮</button>
+  <button class="ab-btn" id="abPlay">▶</button>
+  <button class="ab-btn" id="abNext">⏭</button>
+  <div class="ab-info">
+    <div class="ab-title" id="abTitle">🎵 小数四则运算 · 第1段</div>
+    <div class="ab-progress-wrap" id="abProgressWrap"><div class="ab-progress" id="abProgress"></div></div>
+    <div class="ab-time" id="abTime">0:00 / 0:00</div>
+  </div>
+  <input class="ab-vol" type="range" id="abVol" min="0" max="1" step="0.05" value="0.85">
+</div>
+
+<script>
+// 小数计算器
+function updateDecCalc(){
+  const a=parseInt(document.getElementById('decA').value)/10;
+  const b=parseInt(document.getElementById('decB').value)/10;
+  const op=document.getElementById('decOp').value;
+  document.getElementById('decAVal').textContent=a.toFixed(1);
+  document.getElementById('decBVal').textContent=b.toFixed(1);
+  let r,sym;
+  if(op==='+'){r=(a+b).toFixed(2);sym='+';}
+  else if(op==='-'){r=Math.max(0,a-b).toFixed(2);sym='-';}
+  else if(op==='*'){r=(a*b).toFixed(2);sym='×';}
+  else{r=b!==0?(a/b).toFixed(2):'∞';sym='÷';}
+  document.getElementById('decCalcResult').textContent=`${a.toFixed(1)} ${sym} ${b.toFixed(1)} = ${r}`;
+}
+updateDecCalc();
+
+// 拖拽
+let decScore=0;
+document.querySelectorAll('#decDZ .drag-item').forEach(el=>{el.addEventListener('dragstart',e=>{e.dataTransfer.setData('text',el.dataset.id);el.style.opacity='0.5';});el.addEventListener('dragend',()=>el.style.opacity='1');});
+document.querySelectorAll('.drop-target').forEach(el=>{el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('drag-over');});el.addEventListener('dragleave',()=>el.classList.remove('drag-over'));el.addEventListener('drop',e=>{e.preventDefault();el.classList.remove('drag-over');if(el.classList.contains('correct')||el.classList.contains('wrong'))return;const id=e.dataTransfer.getData('text');const de=document.querySelector('[data-id="'+id+'"]');if(id===el.dataset.accept){el.classList.add('correct');if(de)de.style.opacity='0.4';decScore++;document.getElementById('decDR').innerHTML=decScore>=4?'🎊 全部正确！小数运算规则全掌握！':'✅ '+decScore+'/4 正确';}else{el.classList.add('wrong');setTimeout(()=>el.classList.remove('wrong'),800);document.getElementById('decDR').innerHTML='❌ 再想想每种运算的关键规则！';}});});
+
+// D3 知识图谱
+(function(){
+  const nodes=[{id:'cur',name:'小数四则运算',type:'current'},{id:'p1',name:'整数四则运算',type:'prereq'},{id:'p2',name:'小数的认识',type:'prereq'},{id:'n1',name:'分数运算',type:'next'},{id:'n2',name:'百分数',type:'next'},{id:'n3',name:'比与比例',type:'next'}];
+  const links=[{source:'p1',target:'cur'},{source:'p2',target:'cur'},{source:'cur',target:'n1'},{source:'cur',target:'n2'},{source:'cur',target:'n3'}];
+  const cm={current:'#339af0',prereq:'#51cf66',next:'#ff922b'};
+  const svg=d3.select('#kg-svg');const w=document.getElementById('kg-svg').clientWidth||700,h=340;
+  svg.attr('viewBox',`0 0 ${w} ${h}`);
+  const sim=d3.forceSimulation(nodes).force('link',d3.forceLink(links).id(d=>d.id).distance(110)).force('charge',d3.forceManyBody().strength(-260)).force('center',d3.forceCenter(w/2,h/2)).force('collide',d3.forceCollide(42));
+  const g=svg.append('g');svg.call(d3.zoom().scaleExtent([0.5,2]).on('zoom',e=>g.attr('transform',e.transform)));
+  svg.append('defs').append('marker').attr('id','arr10').attr('viewBox','0 -5 10 10').attr('refX',20).attr('refY',0).attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto').append('path').attr('d','M0,-5L10,0L0,5').attr('fill','#ccc');
+  const lk=g.append('g').selectAll('line').data(links).enter().append('line').attr('stroke','#ccc').attr('stroke-width',2).attr('marker-end','url(#arr10)');
+  const ng=g.append('g').selectAll('g').data(nodes).enter().append('g').call(d3.drag().on('start',(e,d)=>{if(!e.active)sim.alphaTarget(0.3).restart();d.fx=d.x;d.fy=d.y;}).on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y;}).on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null;})).on('click',(e,d)=>{d3.selectAll('.kgt').remove();svg.append('text').attr('class','kgt').attr('x',d.x).attr('y',d.y-38).attr('text-anchor','middle').attr('font-size','13').attr('font-weight','700').attr('fill','#333').text(d.name);setTimeout(()=>d3.selectAll('.kgt').remove(),2000);});
+  ng.append('circle').attr('r',d=>d.type==='current'?32:24).attr('fill',d=>cm[d.type]).attr('stroke','white').attr('stroke-width',3);
+  ng.append('text').attr('text-anchor','middle').attr('dy','0.35em').attr('font-size','10').attr('font-weight','900').attr('fill','white').each(function(d){const ws=d.name.length>5?[d.name.slice(0,5),d.name.slice(5)]:[d.name];ws.forEach((w,i)=>d3.select(this).append('tspan').attr('x',0).attr('dy',i===0?`${-(ws.length-1)*0.6}em`:'1.2em').text(w));});
+  sim.on('tick',()=>{lk.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);ng.attr('transform',d=>`translate(${d.x},${d.y})`);});
+})();
+
+function stepAnswer(el,c,cp,cd,np,nd,fid){const par=el.closest('.step-panel');if(par.dataset.answered)return;par.dataset.answered='true';par.querySelectorAll('.quiz-option').forEach(o=>{o.style.pointerEvents='none';o.style.opacity='0.6';});const fb=document.getElementById(fid);if(c){el.classList.add('correct');el.style.opacity='1';fb.innerHTML='✅ 正确！';fb.style.background='rgba(81,207,102,0.12)';fb.style.color='#2b8a3e';fb.classList.add('show');const dd=document.getElementById(cd);dd.classList.remove('active');dd.classList.add('done');dd.textContent='✓';setTimeout(()=>{par.classList.remove('show');document.getElementById(np).classList.add('show');document.getElementById(nd).classList.add('active');},700);}else{el.classList.add('wrong');el.style.opacity='1';fb.innerHTML='💪 再想想！';fb.style.background='rgba(255,107,107,0.08)';fb.style.color='#c92a2a';fb.classList.add('show');setTimeout(()=>{par.dataset.answered='';par.querySelectorAll('.quiz-option').forEach(o=>{o.style.pointerEvents='';o.style.opacity='';o.classList.remove('wrong','correct');});fb.classList.remove('show');},800);}}
+function finalStep(el,c,fid){const par=el.closest('.step-panel');if(par.dataset.answered)return;par.dataset.answered='true';par.querySelectorAll('.quiz-option').forEach(o=>{o.style.pointerEvents='none';o.style.opacity='0.6';});const fb=document.getElementById(fid);if(c){el.classList.add('correct');el.style.opacity='1';fb.innerHTML='🎉 <strong>全对！</strong>';fb.style.background='rgba(81,207,102,0.12)';fb.style.color='#2b8a3e';}else{el.classList.add('wrong');el.style.opacity='1';par.querySelectorAll('.quiz-option').forEach(o=>{if(o.onclick&&o.onclick.toString().includes('true')){o.classList.add('correct');o.style.opacity='1';}});fb.innerHTML='💪 看看正确答案！';fb.style.background='rgba(255,107,107,0.08)';fb.style.color='#c92a2a';}fb.classList.add('show');}
+function checkAnswer(el,c,fid){const p=el.parentElement;if(p.dataset.answered)return;p.dataset.answered='true';p.querySelectorAll('.quiz-option').forEach(o=>{o.style.pointerEvents='none';o.style.opacity='0.6';});const fb=document.getElementById(fid);if(c){el.classList.add('correct');el.style.opacity='1';fb.innerHTML='🎉 正确！';fb.style.background='rgba(81,207,102,0.12)';fb.style.color='#2b8a3e';}else{el.classList.add('wrong');el.style.opacity='1';p.querySelectorAll('.quiz-option').forEach(o=>{if(o.onclick&&o.onclick.toString().includes('true')){o.classList.add('correct');o.style.opacity='1';}});fb.innerHTML='💪 注意小数乘法规则！';fb.style.background='rgba(255,107,107,0.08)';fb.style.color='#c92a2a';}fb.classList.add('show');}
+const audioPlaylist=[{src:'tts/s01.mp3',title:'超市购物引入小数'},{src:'tts/s02.mp3',title:'小数加减法：小数点对齐'},{src:'tts/s03.mp3',title:'小数乘法：数小数位数'},{src:'tts/s04.mp3',title:'小数除法：除数化整数'},{src:'tts/s05.mp3',title:'综合运算练习'},{src:'tts/s06.mp3',title:'课程小结'}];
+let curIdx=0;const audio=new Audio();
+const abPlay=document.getElementById('abPlay'),abPrev=document.getElementById('abPrev'),abNext=document.getElementById('abNext'),abTitle=document.getElementById('abTitle'),abProgress=document.getElementById('abProgress'),abProgressWrap=document.getElementById('abProgressWrap'),abTime=document.getElementById('abTime'),abVol=document.getElementById('abVol');
+function loadTrack(i){curIdx=i;audio.src=audioPlaylist[i].src;abTitle.textContent='🎵 '+audioPlaylist[i].title;abProgress.style.width='0%';}
+abPlay.addEventListener('click',()=>{if(audio.paused){audio.play();abPlay.textContent='⏸';}else{audio.pause();abPlay.textContent='▶';}});
+abPrev.addEventListener('click',()=>{if(curIdx>0){loadTrack(curIdx-1);audio.play();abPlay.textContent='⏸';}});
+abNext.addEventListener('click',()=>{if(curIdx<audioPlaylist.length-1){loadTrack(curIdx+1);audio.play();abPlay.textContent='⏸';}});
+audio.addEventListener('timeupdate',()=>{if(audio.duration)abProgress.style.width=(audio.currentTime/audio.duration*100)+'%';const f=t=>`${Math.floor(t/60)}:${String(Math.floor(t%60)).padStart(2,'0')}`;abTime.textContent=f(audio.currentTime)+' / '+f(audio.duration||0);});
+audio.addEventListener('ended',()=>{if(curIdx<audioPlaylist.length-1){loadTrack(curIdx+1);audio.play();}else abPlay.textContent='▶';});
+abProgressWrap.addEventListener('click',e=>{const r=abProgressWrap.getBoundingClientRect();audio.currentTime=(e.clientX-r.left)/r.width*(audio.duration||0);});
+abVol.addEventListener('input',()=>audio.volume=abVol.value);audio.volume=0.85;loadTrack(0);
+document.querySelectorAll('section[id]').forEach(s=>new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)document.querySelectorAll('.nav a').forEach(a=>{a.classList.remove('active');if(a.getAttribute('href')==='#'+e.target.id)a.classList.add('active');});});},{threshold:0.3}).observe(s));
+</script>
+</body>
+</html>

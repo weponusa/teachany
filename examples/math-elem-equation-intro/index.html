@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>用字母表示数 · 教学课件</title>
+<meta name="teachany-node" content="equation-intro">
+<meta name="teachany-subject" content="math">
+<meta name="teachany-grade" content="5">
+<meta name="teachany-version" content="2.0">
+<meta name="teachany-author" content="weponusa">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--danger:#ff6b6b;--purple:#cc5de8;--blue:#339af0;--orange:#ff922b;--text:#2b2b2b;--dim:#666;--card:#ffffff;--border:rgba(0,0,0,0.06);}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:80px;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 20% 30%,rgba(204,93,232,0.05),transparent 50%),radial-gradient(circle at 80% 70%,rgba(51,154,240,0.05),transparent 50%);pointer-events:none;z-index:-1;}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;}
+.nav-brand{font-size:20px;font-weight:900;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all .25s;white-space:nowrap;}
+.nav a:hover,.nav a.active{color:#fff;background:linear-gradient(135deg,var(--primary),var(--orange));}
+.container{max-width:960px;margin:0 auto;padding:80px 20px 60px;}
+.hero{text-align:center;padding:36px 0 30px;}
+.hero h1{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple),var(--blue));background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
+@keyframes rainbowShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.hero .subtitle{font-size:18px;color:var(--dim);margin-bottom:16px;}
+.hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+.hero .meta span{background:#fff;border:2px solid var(--border);border-radius:24px;padding:6px 18px;font-size:14px;font-weight:700;color:var(--dim);}
+.section{margin:40px 0;}
+.section-title{font-size:26px;font-weight:900;margin-bottom:18px;padding:10px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));display:inline-block;}
+.card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.04);transition:transform .25s;}
+.card:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(255,107,107,0.12);}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;}
+.highlight{color:var(--primary);font-weight:900;}
+/* LIFE SCENE */
+#life-scene{background:linear-gradient(135deg,#e3f2fd,#fce4ec);border-radius:24px;padding:30px;margin:30px 0;overflow:hidden;}
+#life-scene h2{text-align:center;font-size:22px;font-weight:900;margin-bottom:20px;}
+.scene-stage{position:relative;height:260px;background:linear-gradient(180deg,#e1f5fe 0%,#e1f5fe 55%,#e8f5e9 55%,#e8f5e9 100%);border-radius:16px;overflow:hidden;}
+/* 字母飞入 */
+.letter-fly{position:absolute;font-size:48px;font-weight:900;animation:letterFloat 3s ease-in-out infinite;}
+.letter-fly:nth-child(1){color:var(--primary);top:20px;left:10%;animation-delay:0s;}
+.letter-fly:nth-child(2){color:var(--secondary);top:15px;left:35%;animation-delay:.8s;}
+.letter-fly:nth-child(3){color:var(--orange);top:25px;left:60%;animation-delay:1.6s;}
+.letter-fly:nth-child(4){color:var(--purple);top:18px;left:80%;animation-delay:2.4s;}
+@keyframes letterFloat{0%,100%{transform:translateY(0) rotate(0);}50%{transform:translateY(-15px) rotate(5deg);}}
+/* 魔法棒 */
+.magic-wand{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);width:8px;height:100px;background:linear-gradient(180deg,#ffe66d,#ff922b);border-radius:4px;transform-origin:bottom center;animation:wandSwing 2s ease-in-out infinite;}
+.magic-wand::after{content:'✨';position:absolute;top:-20px;left:-8px;font-size:20px;}
+@keyframes wandSwing{0%,100%{transform:translateX(-50%) rotate(-15deg);}50%{transform:translateX(-50%) rotate(15deg);}}
+/* 等式变换 */
+.equation-anim{position:absolute;bottom:60px;right:30px;font-size:22px;font-weight:900;color:var(--blue);animation:eqChange 3s ease-in-out infinite;}
+@keyframes eqChange{0%{content:'S=a×b'}0%,33%{opacity:1;}34%{opacity:0;}67%{opacity:1;}100%{opacity:0;}}
+/* INTERACTIVE */
+#interactive-lab{background:#fff;border-radius:24px;padding:30px;margin:30px 0;box-shadow:0 4px 24px rgba(0,0,0,0.06);}
+#interactive-lab h2{font-size:22px;font-weight:900;margin-bottom:20px;}
+.lab-tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.lab-tab{padding:8px 20px;border-radius:20px;border:2px solid #e0e0e0;background:#f5f5f5;cursor:pointer;font-weight:700;font-size:14px;transition:all .2s;}
+.lab-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.lab-panel{display:none;}
+.lab-panel.active{display:block;}
+.slider-row{display:flex;align-items:center;gap:16px;margin:16px 0;}
+.slider-row label{font-weight:700;min-width:80px;font-size:14px;}
+input[type=range]{flex:1;accent-color:var(--primary);}
+.slider-val{font-size:20px;font-weight:900;color:var(--primary);min-width:50px;text-align:center;}
+.formula-display{text-align:center;font-size:36px;font-weight:900;padding:20px;background:#f8f9fa;border-radius:16px;margin:16px 0;color:var(--blue);}
+.drag-item{cursor:grab;padding:10px 18px;background:var(--secondary);color:#fff;border-radius:12px;font-weight:700;font-size:15px;user-select:none;display:inline-block;margin:4px;transition:transform .2s;}
+.drag-item:active{cursor:grabbing;transform:scale(0.95);}
+.drop-zone{min-width:130px;min-height:44px;border:3px dashed #ccc;border-radius:12px;padding:8px 16px;display:inline-flex;align-items:center;justify-content:center;font-size:14px;color:#aaa;margin:4px;transition:all .2s;}
+.drop-zone.drag-over{border-color:var(--secondary);background:rgba(78,205,196,0.1);}
+/* KNOWLEDGE GRAPH */
+#knowledge-graph{background:#fff;border-radius:24px;padding:30px;margin:30px 0;box-shadow:0 4px 24px rgba(0,0,0,0.06);}
+#knowledge-graph h2{font-size:22px;font-weight:900;margin-bottom:16px;}
+.kg-legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;}
+.kg-legend-item{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;}
+.kg-dot{width:14px;height:14px;border-radius:50%;}
+#kg-svg{width:100%;max-width:600px;display:block;margin:0 auto;border-radius:16px;background:#f8f9fa;}
+/* QUIZ */
+.quiz-card{background:#fff;border-radius:20px;padding:26px;margin-bottom:20px;border:2px solid var(--border);box-shadow:0 4px 16px rgba(0,0,0,0.04);}
+.q-number{font-size:13px;color:var(--dim);font-weight:700;margin-bottom:6px;}
+.q-text{font-size:18px;font-weight:900;margin-bottom:16px;}
+.quiz-step{display:none;}
+.quiz-step.active{display:block;}
+.quiz-option{display:block;padding:14px 20px;margin:8px 0;border-radius:14px;background:#f8f9fa;border:2.5px solid #e8e8e8;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);transition:all .2s;width:100%;text-align:left;}
+.quiz-option:hover{background:rgba(78,205,196,0.08);border-color:var(--secondary);}
+.quiz-option.correct{background:rgba(81,207,102,0.12);border-color:var(--success);color:#2b8a3e;}
+.quiz-option.wrong{background:rgba(255,107,107,0.1);border-color:var(--danger);color:#c92a2a;}
+.quiz-feedback{padding:14px 18px;border-radius:14px;margin-top:10px;font-size:15px;display:none;font-weight:700;}
+.quiz-feedback.show{display:block;animation:popIn .35s cubic-bezier(.34,1.56,.64,1);}
+@keyframes popIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+.progress-bar{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin:8px 0 16px;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--orange));border-radius:3px;transition:width .4s;}
+.formula-table{width:100%;border-collapse:collapse;margin:12px 0;}
+.formula-table td,.formula-table th{border:2px solid #e0e0e0;padding:10px 14px;text-align:center;font-weight:700;}
+.formula-table th{background:var(--primary);color:#fff;font-size:14px;}
+.formula-table td{font-size:15px;}
+.formula-table tr:hover td{background:rgba(255,230,109,0.3);}
+.footer{text-align:center;color:var(--dim);font-size:14px;margin-top:60px;padding-top:20px;border-top:2px solid var(--border);}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <span class="nav-brand">🔢 TeachAny</span>
+  <a href="#life-scene">🎬 场景</a>
+  <a href="#concepts">📖 概念</a>
+  <a href="#interactive-lab">🧪 实验台</a>
+  <a href="#knowledge-graph">🕸️ 图谱</a>
+  <a href="#quiz">✅ 练习</a>
+</nav>
+<div class="container">
+  <div class="hero">
+    <h1>用字母表示数</h1>
+    <p class="subtitle">✨ 用字母代替数字，开启代数思维的大门！</p>
+    <div class="meta">
+      <span>📚 五年级数学</span><span>⏱️ 45分钟</span><span>🎯 代数初步</span><span>⭐ 进阶</span>
+    </div>
+  </div>
+
+  <section id="life-scene">
+    <h2>🎬 生活场景：字母的魔法</h2>
+    <div class="scene-stage">
+      <div class="letter-fly">a</div>
+      <div class="letter-fly">b</div>
+      <div class="letter-fly">n</div>
+      <div class="letter-fly">x</div>
+      <div class="magic-wand"></div>
+      <div class="equation-anim">S = a × b</div>
+    </div>
+    <div class="card" style="margin-top:20px;">
+      <h3>🌟 为什么要用字母表示数？</h3>
+      <p>想象一下，小明每天做 <strong class="highlight">a</strong> 道题，一周做 <strong class="highlight">7×a</strong> 道。不管 a 是几，这个式子都成立！<br>
+      用字母表示数，可以：<br>
+      ① <strong class="highlight">概括规律</strong>（如：偶数 = 2n）<br>
+      ② <strong class="highlight">简化表达</strong>（如：正方形面积 = a²）<br>
+      ③ <strong class="highlight">方便计算</strong>（代入具体数字）</p>
+    </div>
+  </section>
+
+  <section id="concepts" class="section">
+    <div class="section-title">📖 核心概念</div>
+    <div class="grid-2">
+      <div class="card">
+        <h3>🔤 字母可以表示什么？</h3>
+        <ul style="margin:10px 0 0 20px;line-height:2.5;">
+          <li><strong class="highlight">任意数</strong>：n 可以是 1, 2, 3...</li>
+          <li><strong class="highlight">未知数</strong>：求 x 的值</li>
+          <li><strong class="highlight">变量</strong>：随情况变化的量</li>
+        </ul>
+        <div style="background:rgba(255,230,109,0.3);padding:12px;border-radius:12px;margin-top:12px;">
+          💡 字母和数字之间的乘号可以省略：<br>
+          <strong>3×a = 3a</strong>，<strong>a×a = a²</strong>
+        </div>
+      </div>
+      <div class="card">
+        <h3>📐 常见公式用字母表达</h3>
+        <table class="formula-table">
+          <tr><th>图形</th><th>公式</th></tr>
+          <tr><td>正方形面积</td><td>S = <strong class="highlight">a²</strong></td></tr>
+          <tr><td>正方形周长</td><td>C = <strong class="highlight">4a</strong></td></tr>
+          <tr><td>长方形面积</td><td>S = <strong class="highlight">ab</strong></td></tr>
+          <tr><td>长方形周长</td><td>C = <strong class="highlight">2(a+b)</strong></td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3>🔢 含字母的式子求值</h3>
+        <p>已知 <strong class="highlight">a = 3</strong>，求 <strong class="highlight">2a + 5</strong> = ?</p>
+        <div style="background:#f8f9fa;padding:12px;border-radius:12px;margin-top:10px;line-height:2.5;">
+          2a + 5<br>
+          = 2 × <strong class="highlight">3</strong> + 5<br>
+          = 6 + 5<br>
+          = <strong class="highlight">11</strong>
+        </div>
+        <p style="color:var(--dim);font-size:14px;margin-top:8px;">把字母换成具体数字，再按顺序计算</p>
+      </div>
+      <div class="card">
+        <h3>📊 规律中的字母</h3>
+        <table class="formula-table">
+          <tr><th>项目</th><th>规律</th><th>字母式</th></tr>
+          <tr><td>偶数</td><td>2,4,6,8...</td><td><strong class="highlight">2n</strong></td></tr>
+          <tr><td>奇数</td><td>1,3,5,7...</td><td><strong class="highlight">2n-1</strong></td></tr>
+          <tr><td>多边形内角和</td><td>三角=180...</td><td><strong class="highlight">(n-2)×180°</strong></td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="interactive-lab">
+    <h2>🧪 互动实验台</h2>
+    <div class="lab-tabs">
+      <button class="lab-tab active" onclick="switchTabE('formula')">📐 公式计算器</button>
+      <button class="lab-tab" onclick="switchTabE('pattern')">🔢 规律探索</button>
+      <button class="lab-tab" onclick="switchTabE('drag4')">🎯 拖拽配对</button>
+    </div>
+
+    <div id="tabE-formula" class="lab-panel active">
+      <div style="background:#f8f9fa;border-radius:16px;padding:20px;">
+        <h3 style="margin-bottom:16px;">📐 正方形面积公式体验！</h3>
+        <div class="slider-row">
+          <label>边长 a</label>
+          <input type="range" min="1" max="12" value="5" id="sideLen" oninput="updateFormula()">
+          <span class="slider-val" id="sideLenV">5</span>
+        </div>
+        <div class="formula-display" id="formulaDisplay">S = 5² = 25</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:16px;">
+          <div style="text-align:center;padding:16px;background:#fff;border-radius:12px;border:2px solid var(--border);min-width:120px;">
+            <div style="font-size:13px;color:var(--dim);">边长 a</div>
+            <div style="font-size:32px;font-weight:900;color:var(--blue);" id="fA">5</div>
+          </div>
+          <div style="text-align:center;padding:16px;background:#fff;border-radius:12px;border:2px solid var(--border);min-width:120px;">
+            <div style="font-size:13px;color:var(--dim);">面积 a²</div>
+            <div style="font-size:32px;font-weight:900;color:var(--primary);" id="fArea">25</div>
+          </div>
+          <div style="text-align:center;padding:16px;background:#fff;border-radius:12px;border:2px solid var(--border);min-width:120px;">
+            <div style="font-size:13px;color:var(--dim);">周长 4a</div>
+            <div style="font-size:32px;font-weight:900;color:var(--orange);" id="fPerim">20</div>
+          </div>
+        </div>
+        <div style="margin-top:20px;">
+          <p style="font-weight:700;margin-bottom:12px;">🎯 也可以自定义代入：</p>
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+            <span style="font-weight:700;">2a + </span>
+            <input id="bVal" type="number" value="3" style="width:70px;padding:8px;border-radius:8px;border:2px solid #e0e0e0;font-size:16px;font-weight:700;text-align:center;">
+            <span style="font-weight:700;"> = </span>
+            <span id="customResult" style="font-size:24px;font-weight:900;color:var(--primary);">13</span>
+          </div>
+          <button onclick="updateCustom()" style="margin-top:10px;padding:8px 20px;background:var(--secondary);color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;">计算</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="tabE-pattern" class="lab-panel">
+      <div style="background:#f8f9fa;border-radius:16px;padding:20px;">
+        <h3 style="margin-bottom:16px;">🔢 偶数规律 2n</h3>
+        <div class="slider-row">
+          <label>n 的值</label>
+          <input type="range" min="1" max="10" value="3" id="nVal" oninput="updatePattern()">
+          <span class="slider-val" id="nValV">3</span>
+        </div>
+        <div id="patternResult" style="text-align:center;padding:20px;background:#fff;border-radius:16px;font-size:28px;font-weight:900;color:var(--primary);border:3px solid var(--accent);margin-top:12px;">
+          2 × 3 = 6（第3个偶数）
+        </div>
+        <div id="patternList" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:16px;"></div>
+      </div>
+    </div>
+
+    <div id="tabE-drag4" class="lab-panel">
+      <p style="font-weight:700;margin-bottom:16px;">🎯 把字母式和文字描述配对！</p>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;align-items:flex-start;">
+        <div>
+          <p style="font-size:13px;color:var(--dim);font-weight:700;margin-bottom:10px;">字母式</p>
+          <div><div class="drag-item" draggable="true" data-val="a²" ondragstart="eStart(event)">a²</div></div>
+          <div style="margin-top:8px;"><div class="drag-item" draggable="true" data-val="2n" ondragstart="eStart(event)">2n</div></div>
+          <div style="margin-top:8px;"><div class="drag-item" draggable="true" data-val="4a" ondragstart="eStart(event)">4a</div></div>
+          <div style="margin-top:8px;"><div class="drag-item" draggable="true" data-val="2n-1" ondragstart="eStart(event)">2n-1</div></div>
+        </div>
+        <div>
+          <p style="font-size:13px;color:var(--dim);font-weight:700;margin-bottom:10px;">含义</p>
+          <div><div class="drop-zone" data-answer="a²" ondragover="eOver(event)" ondrop="eDrop(event)">拖到这里</div><span style="font-size:13px;color:var(--dim);margin-left:6px;">正方形面积</span></div>
+          <div style="margin-top:8px;"><div class="drop-zone" data-answer="2n" ondragover="eOver(event)" ondrop="eDrop(event)">拖到这里</div><span style="font-size:13px;color:var(--dim);margin-left:6px;">第n个偶数</span></div>
+          <div style="margin-top:8px;"><div class="drop-zone" data-answer="4a" ondragover="eOver(event)" ondrop="eDrop(event)">拖到这里</div><span style="font-size:13px;color:var(--dim);margin-left:6px;">正方形周长</span></div>
+          <div style="margin-top:8px;"><div class="drop-zone" data-answer="2n-1" ondragover="eOver(event)" ondrop="eDrop(event)">拖到这里</div><span style="font-size:13px;color:var(--dim);margin-left:6px;">第n个奇数</span></div>
+        </div>
+      </div>
+      <div id="drag4-result" style="text-align:center;font-size:16px;font-weight:700;margin-top:16px;"></div>
+    </div>
+  </section>
+
+  <section id="knowledge-graph">
+    <h2>🕸️ 知识图谱</h2>
+    <div class="kg-legend">
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#3b82f6;"></div>当前</div>
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#22c55e;"></div>前置</div>
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#f97316;"></div>后续</div>
+    </div>
+    <svg id="kg-svg" height="300"></svg>
+    <script>
+    (function(){
+      const g={nodes:[
+        {id:"c",name:"用字母表示数",type:"current"},
+        {id:"p1",name:"数的运算",type:"prereq"},
+        {id:"p2",name:"规律与数列",type:"prereq"},
+        {id:"p3",name:"面积公式",type:"prereq"},
+        {id:"n1",name:"简单方程",type:"next"},
+        {id:"n2",name:"代数式求值",type:"next"},
+        {id:"n3",name:"函数初步",type:"next"}
+      ],links:[{source:"p1",target:"c"},{source:"p2",target:"c"},{source:"p3",target:"c"},{source:"c",target:"n1"},{source:"c",target:"n2"},{source:"c",target:"n3"}]};
+      const W=560,H=300,svg=d3.select("#kg-svg").attr("width",W).attr("height",H).attr("viewBox",`0 0 ${W} ${H}`);
+      const col=d=>({current:"#3b82f6",prereq:"#22c55e",next:"#f97316"}[d.type]);
+      const sim=d3.forceSimulation(g.nodes).force("link",d3.forceLink(g.links).id(d=>d.id).distance(100)).force("charge",d3.forceManyBody().strength(-300)).force("center",d3.forceCenter(W/2,H/2));
+      const link=svg.append("g").selectAll("line").data(g.links).join("line").attr("stroke","#ccc").attr("stroke-width",2);
+      const node=svg.append("g").selectAll("circle").data(g.nodes).join("circle").attr("r",30).attr("fill",col).attr("stroke","#fff").attr("stroke-width",3).style("cursor","pointer");
+      const label=svg.append("g").selectAll("text").data(g.nodes).join("text").text(d=>d.name).attr("text-anchor","middle").attr("dy","0.35em").attr("font-size",10).attr("fill","#fff").attr("font-weight","bold");
+      sim.on("tick",()=>{link.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y).attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);node.attr("cx",d=>d.x).attr("cy",d=>d.y);label.attr("x",d=>d.x).attr("y",d=>d.y);});
+    })();
+    </script>
+  </section>
+
+  <section id="quiz" class="section">
+    <div class="section-title">✅ 多步骤练习题</div>
+    <div class="quiz-card">
+      <div class="q-number">题目 1/3</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:0%" id="eq1p"></div></div>
+      <div id="eq1s1" class="quiz-step active">
+        <div class="q-text">📐 正方形的边长为 a，面积的字母式是？</div>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','eq1s1',null,'eq1p',0)">A. 4a</button>
+        <button class="quiz-option" onclick="checkQ(this,'correct','eq1s1','eq1s2','eq1p',50)">B. a²</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','eq1s1',null,'eq1p',0)">C. 2a</button>
+        <div class="quiz-feedback" id="fb-eq1s1"></div>
+      </div>
+      <div id="eq1s2" class="quiz-step">
+        <div class="q-text">✅ 对！当 a = 6 时，正方形面积是多少？</div>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','eq1s2',null,'eq1p',50)">A. 12</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','eq1s2',null,'eq1p',50)">B. 24</button>
+        <button class="quiz-option" onclick="checkQ(this,'correct','eq1s2',null,'eq1p',100)">C. 36</button>
+        <div class="quiz-feedback" id="fb-eq1s2"></div>
+      </div>
+    </div>
+    <div class="quiz-card">
+      <div class="q-number">题目 2/3</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:0%" id="eq2p"></div></div>
+      <div id="eq2s1" class="quiz-step active">
+        <div class="q-text">🔢 当 a = 4 时，<span class="highlight">3a + 2</span> = ?</div>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','eq2s1',null,'eq2p',0)">A. 9</button>
+        <button class="quiz-option" onclick="checkQ(this,'correct','eq2s1','eq2s2','eq2p',50)">B. 14</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','eq2s1',null,'eq2p',0)">C. 18</button>
+        <div class="quiz-feedback" id="fb-eq2s1"></div>
+      </div>
+      <div id="eq2s2" class="quiz-step">
+        <div class="q-text">✅ 棒！那当 a = 2 时，<span class="highlight">3a + 2</span> = ?</div>
+        <button class="quiz-option" onclick="checkQ(this,'correct','eq2s2',null,'eq2p',100)">A. 8</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','eq2s2',null,'eq2p',50)">B. 10</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','eq2s2',null,'eq2p',50)">C. 12</button>
+        <div class="quiz-feedback" id="fb-eq2s2"></div>
+      </div>
+    </div>
+    <div class="quiz-card">
+      <div class="q-number">题目 3/3 · 挑战</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:0%" id="eq3p"></div></div>
+      <div id="eq3s1" class="quiz-step active">
+        <div class="q-text">📊 第 n 个奇数的字母式是？</div>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','eq3s1',null,'eq3p',0)">A. 2n</button>
+        <button class="quiz-option" onclick="checkQ(this,'correct','eq3s1','eq3s2','eq3p',50)">B. 2n - 1</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','eq3s1',null,'eq3p',0)">C. n + 1</button>
+        <div class="quiz-feedback" id="fb-eq3s1"></div>
+      </div>
+      <div id="eq3s2" class="quiz-step">
+        <div class="q-text">🏆 n = 5 时，第5个奇数是？</div>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','eq3s2',null,'eq3p',50)">A. 8</button>
+        <button class="quiz-option" onclick="checkQ(this,'correct','eq3s2',null,'eq3p',100)">B. 9</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','eq3s2',null,'eq3p',50)">C. 10</button>
+        <div class="quiz-feedback" id="fb-eq3s2"></div>
+      </div>
+    </div>
+  </section>
+  <div class="footer"><p>🎓 TeachAny · 用字母表示数 · 五年级数学</p></div>
+</div>
+
+<script>
+function updateFormula(){
+  const a=+document.getElementById('sideLen').value;
+  document.getElementById('sideLenV').textContent=a;
+  document.getElementById('formulaDisplay').textContent=`S = ${a}² = ${a*a}`;
+  document.getElementById('fA').textContent=a;
+  document.getElementById('fArea').textContent=a*a;
+  document.getElementById('fPerim').textContent=4*a;
+  updateCustom(a);
+}
+function updateCustom(a){
+  const sideVal=a||+document.getElementById('sideLen').value;
+  const b=+document.getElementById('bVal').value||0;
+  document.getElementById('customResult').textContent=2*sideVal+b;
+}
+function updatePattern(){
+  const n=+document.getElementById('nVal').value;
+  document.getElementById('nValV').textContent=n;
+  document.getElementById('patternResult').textContent=`2 × ${n} = ${2*n}（第${n}个偶数）`;
+  const list=document.getElementById('patternList');list.innerHTML='';
+  for(let i=1;i<=10;i++){
+    const span=document.createElement('span');
+    span.style.cssText=`padding:8px 12px;border-radius:8px;font-weight:900;font-size:16px;transition:all .3s;`;
+    span.style.background=i===n?'var(--primary)':'#f0f0f0';
+    span.style.color=i===n?'#fff':'#333';
+    span.textContent=2*i;
+    list.appendChild(span);
+  }
+}
+updateFormula();updatePattern();
+function switchTabE(name){
+  document.querySelectorAll('.lab-tab').forEach((t,i)=>{t.classList.toggle('active',['formula','pattern','drag4'][i]===name);});
+  document.querySelectorAll('.lab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(`tabE-${name}`).classList.add('active');
+}
+function eStart(e){e.dataTransfer.setData('text',e.target.dataset.val);}
+function eOver(e){e.preventDefault();e.currentTarget.classList.add('drag-over');}
+function eDrop(e){
+  e.preventDefault();const zone=e.currentTarget;zone.classList.remove('drag-over');
+  const val=e.dataTransfer.getData('text'),ans=zone.dataset.answer;
+  zone.textContent=val;zone.style.background=val===ans?'rgba(81,207,102,0.2)':'rgba(255,107,107,0.1)';zone.style.borderColor=val===ans?'#51cf66':'#ff6b6b';
+  const zones=document.querySelectorAll('#tabE-drag4 .drop-zone');let cor=0;zones.forEach(z=>{if(z.textContent===z.dataset.answer)cor++;});
+  const r=document.getElementById('drag4-result');
+  r.textContent=cor===zones.length?'🎉 全对！':'✅ '+cor+'/'+zones.length;r.style.color=cor===zones.length?'#51cf66':'var(--dim)';
+}
+function checkQ(btn,type,curStep,nextStep,progId,progVal){
+  const parent=document.getElementById(curStep);parent.querySelectorAll('.quiz-option').forEach(b=>b.disabled=true);btn.classList.add(type);
+  const fb=document.getElementById(`fb-${curStep}`);fb.classList.add('show');
+  if(type==='correct'){fb.style.background='rgba(81,207,102,0.12)';fb.style.color='#2b8a3e';fb.textContent='🎉 正确！';if(nextStep){setTimeout(()=>{parent.classList.remove('active');document.getElementById(nextStep).classList.add('active');},1200);}}
+  else{fb.style.background='rgba(255,107,107,0.1)';fb.style.color='#c92a2a';fb.textContent='❌ 再想想！';parent.querySelectorAll('.quiz-option').forEach(b=>{b.disabled=false;b.classList.remove('correct','wrong');});fb.classList.remove('show');return;}
+  document.getElementById(progId).style.width=progVal+'%';
+}
+</script>
+</body>
+</html>

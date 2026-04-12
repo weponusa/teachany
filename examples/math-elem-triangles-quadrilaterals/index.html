@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三角形和四边形 · 教学课件</title>
+<meta name="teachany-node" content="triangles-quadrilaterals">
+<meta name="teachany-subject" content="math">
+<meta name="teachany-grade" content="4">
+<meta name="teachany-version" content="2.0">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--card:#fff;--text:#2b2b2b;--dim:#666;--border:rgba(0,0,0,0.06);}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:80px;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 10% 20%,rgba(255,107,107,0.07) 0%,transparent 50%),radial-gradient(circle at 90% 80%,rgba(78,205,196,0.07) 0%,transparent 50%);pointer-events:none;z-index:-1;}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;}
+.nav-brand{font-size:20px;font-weight:900;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),#ff922b,#cc5de8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all 0.25s;}
+.nav a:hover{color:#fff;background:linear-gradient(135deg,var(--primary),#ff922b);}
+.container{max-width:960px;margin:0 auto;padding:80px 20px 60px;}
+.hero{text-align:center;padding:36px 0 30px;}
+.hero h1{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--primary),#ff922b,#cc5de8,#339af0);background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
+@keyframes rainbowShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.hero .subtitle{font-size:18px;color:var(--dim);margin-bottom:16px;}
+.hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+.hero .meta span{background:#fff;border:2px solid var(--border);border-radius:24px;padding:6px 18px;font-size:14px;font-weight:700;color:var(--dim);}
+.section{margin:40px 0;}
+.section-title{font-size:26px;font-weight:900;margin-bottom:18px;padding:10px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));display:inline-block;}
+.card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.04);}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;}
+.highlight{color:var(--primary);font-weight:900;}
+.formula-box{background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));border-radius:16px;padding:18px 22px;text-align:center;font-size:20px;font-weight:900;margin:12px 0;}
+.tip-box{background:rgba(255,230,109,0.25);border-left:4px solid var(--accent);border-radius:0 12px 12px 0;padding:12px 16px;margin:12px 0;font-size:15px;}
+/* LIFE SCENE */
+#life-scene{background:linear-gradient(135deg,#e8f5e9,#e3f2fd);border-radius:20px;padding:24px;min-height:300px;overflow:hidden;}
+.arch-scene{position:relative;width:100%;height:240px;background:linear-gradient(180deg,#87ceeb 0%,#c8e6c9 100%);border-radius:16px;overflow:hidden;}
+.arch-ground{position:absolute;bottom:0;left:0;right:0;height:50px;background:#81c784;}
+.arch-bridge{position:absolute;bottom:50px;left:10%;width:80%;}
+.arch-tri{position:absolute;bottom:0;width:0;height:0;animation:archAppear 0.8s ease forwards;}
+.arch-t1{border-left:40px solid transparent;border-right:40px solid transparent;border-bottom:60px solid rgba(255,107,107,0.7);left:10%;}
+.arch-t2{border-left:50px solid transparent;border-right:50px solid transparent;border-bottom:80px solid rgba(78,205,196,0.7);left:30%;}
+.arch-t3{border-left:45px solid transparent;border-right:45px solid transparent;border-bottom:70px solid rgba(255,230,109,0.9);left:55%;}
+.arch-t4{border-left:35px solid transparent;border-right:35px solid transparent;border-bottom:55px solid rgba(204,93,232,0.7);left:78%;}
+@keyframes archAppear{from{opacity:0;transform:scaleY(0)}to{opacity:1;transform:scaleY(1)}}
+.parallelogram-bridge{position:absolute;bottom:50px;left:5%;width:90%;height:20px;background:rgba(121,85,72,0.8);transform:skewX(-15deg);}
+.angle-label{position:absolute;font-size:18px;font-weight:900;animation:bounce 2s ease infinite;}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+/* LAB */
+#interactive-lab{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+.lab-tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.lab-tab{padding:8px 20px;border-radius:20px;border:2px solid var(--border);cursor:pointer;font-weight:700;font-size:14px;transition:all 0.25s;}
+.lab-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.lab-panel{display:none;}
+.lab-panel.active{display:block;animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.angle-slider-area{margin:14px 0;}
+.angle-row{display:flex;align-items:center;gap:10px;margin:8px 0;flex-wrap:wrap;}
+.angle-row label{width:60px;font-weight:700;font-size:14px;}
+.angle-row input{flex:1;accent-color:var(--primary);}
+.angle-row span{width:50px;font-weight:900;color:var(--primary);}
+#triCanvas{display:block;margin:0 auto;border:2px solid #f0f0f0;border-radius:12px;}
+.angle-sum{font-size:22px;font-weight:900;text-align:center;margin:10px 0;}
+/* KG */
+#knowledge-graph{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+#kg-svg-tq{width:100%;height:340px;}
+/* QUIZ */
+.quiz-section{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+.progress-bar-wrap{background:#f0f0f0;border-radius:10px;height:12px;margin-bottom:20px;overflow:hidden;}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:10px;transition:width 0.5s ease;}
+.quiz-step{display:none;}
+.quiz-step.active{display:block;animation:fadeSlide 0.4s ease;}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.quiz-q{font-size:20px;font-weight:900;margin-bottom:16px;}
+.quiz-option{display:block;padding:14px 20px;margin:8px 0;border-radius:14px;background:#fff;border:2.5px solid #e8e8e8;cursor:pointer;transition:all 0.25s;font-size:16px;font-weight:700;width:100%;text-align:left;}
+.quiz-option:hover{border-color:var(--secondary);}
+.quiz-option.correct{background:rgba(81,207,102,0.15);border-color:var(--success);color:#2b8a3e;}
+.quiz-option.wrong{background:rgba(255,107,107,0.1);border-color:var(--primary);color:#c92a2a;}
+.quiz-feedback{padding:12px 16px;border-radius:12px;margin-top:8px;font-size:15px;font-weight:700;display:none;}
+.quiz-feedback.show{display:block;}
+.quiz-feedback.ok{background:rgba(81,207,102,0.15);color:#2b8a3e;}
+.quiz-feedback.err{background:rgba(255,107,107,0.1);color:#c92a2a;}
+.next-btn{margin-top:14px;padding:12px 28px;background:linear-gradient(135deg,var(--primary),#ff922b);color:#fff;border:none;border-radius:20px;font-size:16px;font-weight:900;cursor:pointer;}
+.locked{opacity:0.35;pointer-events:none;}
+.step-indicator{display:flex;gap:8px;margin-bottom:16px;}
+.step-dot{width:12px;height:12px;border-radius:50%;background:#e0e0e0;transition:all 0.3s;}
+.step-dot.done{background:var(--success);}
+.step-dot.active{background:var(--primary);transform:scale(1.3);}
+table{width:100%;border-collapse:collapse;margin:12px 0;}
+th,td{border:2px solid #f0f0f0;padding:10px 14px;text-align:center;font-size:15px;}
+th{background:rgba(255,107,107,0.1);font-weight:900;}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-brand">📚 TeachAny</div>
+  <a href="#life-scene-sec">🌉 生活场景</a>
+  <a href="#concepts">📖 概念</a>
+  <a href="#interactive-lab">🧪 实验台</a>
+  <a href="#knowledge-graph">🕸️ 知识图谱</a>
+  <a href="#quiz">📝 练习</a>
+</nav>
+<div class="container">
+  <div class="hero">
+    <h1>三角形和四边形</h1>
+    <div class="subtitle">角度的秘密：三角形内角和180°，四边形360°！</div>
+    <div class="meta">
+      <span>📚 小学数学</span><span>🎒 四年级上册</span><span>⭐ 难度：★★☆</span><span>⏱️ 约45分钟</span>
+    </div>
+  </div>
+
+  <!-- 生活场景 -->
+  <section class="section" id="life-scene-sec">
+    <div class="section-title">🌉 生活场景：建筑中的图形</div>
+    <div id="life-scene">
+      <p style="font-weight:700;font-size:16px;margin-bottom:12px;">🏗️ 建筑师用三角形和四边形建造稳固结构！</p>
+      <div class="arch-scene">
+        <div class="arch-t1 arch-tri"></div>
+        <div class="arch-t2 arch-tri" style="animation-delay:0.2s"></div>
+        <div class="arch-t3 arch-tri" style="animation-delay:0.4s"></div>
+        <div class="arch-t4 arch-tri" style="animation-delay:0.6s"></div>
+        <div class="parallelogram-bridge"></div>
+        <div class="arch-ground"></div>
+        <div class="angle-label" style="top:20px;left:15%;">🔺180°</div>
+        <div class="angle-label" style="top:20px;right:20%;animation-delay:1s;">⬛360°</div>
+      </div>
+      <div class="card" style="margin-top:14px;">
+        <p>🔺 三角形因其稳定性，被广泛用于桥梁和屋顶设计。四边形用于窗户、地板等。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 核心概念 -->
+  <section class="section" id="concepts">
+    <div class="section-title">📖 核心概念</div>
+    <div class="grid-2">
+      <div class="card">
+        <h3>🔺 三角形</h3>
+        <p>由<span class="highlight">三条边、三个角</span>组成的封闭图形。</p>
+        <div class="formula-box">内角和 = 180°</div>
+        <p style="font-size:14px;margin-top:8px;">按角分类：<br>锐角三角形（三角都 &lt;90°）<br>直角三角形（有一角=90°）<br>钝角三角形（有一角 &gt;90°）</p>
+      </div>
+      <div class="card">
+        <h3>⬛ 四边形</h3>
+        <p>由<span class="highlight">四条边、四个角</span>组成的封闭图形。</p>
+        <div class="formula-box">内角和 = 360°</div>
+        <p style="font-size:14px;margin-top:8px;">常见四边形：正方形、长方形、平行四边形、梯形、菱形</p>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📊 三角形分类汇总</h3>
+      <table>
+        <tr><th>分类方式</th><th>类型</th><th>条件</th></tr>
+        <tr><td rowspan="3">按角度分</td><td>锐角三角形</td><td>三个角都小于90°</td></tr>
+        <tr><td>直角三角形</td><td>有一个角等于90°</td></tr>
+        <tr><td>钝角三角形</td><td>有一个角大于90°</td></tr>
+        <tr><td rowspan="3">按边长分</td><td>等边三角形</td><td>三边相等（=等角三角形）</td></tr>
+        <tr><td>等腰三角形</td><td>两边相等</td></tr>
+        <tr><td>不等边三角形</td><td>三边各不相等</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>📊 四边形家族关系</h3>
+      <div style="text-align:center;padding:16px;background:#f8f9fa;border-radius:12px;font-size:14px;line-height:2.2;">
+        四边形<br>↓<br>平行四边形（两组对边平行）→ 长方形（四直角）→ 正方形（四边等长）<br>↓（另一分支）<br>梯形（只有一组对边平行）| 菱形（四边相等）
+      </div>
+    </div>
+  </section>
+
+  <!-- 互动实验台 -->
+  <section class="section" id="interactive-lab">
+    <div class="section-title">🧪 互动实验台</div>
+    <div id="interactive-lab">
+      <div class="lab-tabs">
+        <button class="lab-tab active" onclick="switchTab('tab-angle')">📐 角度探索</button>
+        <button class="lab-tab" onclick="switchTab('tab-classify')">🗂️ 三角形分类</button>
+      </div>
+      <div id="tab-angle" class="lab-panel active">
+        <div class="card">
+          <h3>📐 三角形内角和验证</h3>
+          <p style="color:var(--dim);margin-bottom:12px;">调整前两个角，第三个角自动计算，内角和始终为180°</p>
+          <div class="angle-slider-area">
+            <div class="angle-row"><label>角A</label><input type="range" min="1" max="178" value="60" id="angA" oninput="updateAngles()"><span id="valA">60°</span></div>
+            <div class="angle-row"><label>角B</label><input type="range" min="1" max="178" value="60" id="angB" oninput="updateAngles()"><span id="valB">60°</span></div>
+            <div class="angle-row"><label>角C</label><input type="range" min="1" max="178" value="60" disabled id="angC" style="accent-color:var(--secondary);"><span id="valC" style="color:var(--secondary);">60°</span></div>
+          </div>
+          <div class="angle-sum" id="angleSum">角A + 角B + 角C = 60° + 60° + 60° = 180° ✓</div>
+          <canvas id="triCanvas" width="300" height="200"></canvas>
+          <div id="triType" style="text-align:center;font-weight:900;color:var(--primary);margin-top:8px;"></div>
+        </div>
+      </div>
+      <div id="tab-classify" class="lab-panel">
+        <div class="card">
+          <h3>🗂️ 根据角度判断三角形类型</h3>
+          <div id="classifyArea"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 知识图谱 -->
+  <section class="section" id="knowledge-graph">
+    <div class="section-title">🕸️ 知识图谱</div>
+    <div id="knowledge-graph"><svg id="kg-svg-tq"></svg></div>
+  </section>
+
+  <!-- 练习 -->
+  <section class="section" id="quiz">
+    <div class="section-title">📝 闯关练习</div>
+    <div class="quiz-section">
+      <div class="step-indicator" id="stepIndicator"></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressBar" style="width:0%"></div></div>
+      <div class="quiz-step active" id="step1">
+        <div class="quiz-q">📐 第1关：三角形三个内角分别为60°、70°，第三个角是？</div>
+        <button class="quiz-option" onclick="checkQ(1,'A','B')">A. 60°</button>
+        <button class="quiz-option" onclick="checkQ(1,'B','B')">B. 50°</button>
+        <button class="quiz-option" onclick="checkQ(1,'C','B')">C. 40°</button>
+        <div class="quiz-feedback" id="fb1"></div>
+        <button class="next-btn locked" id="next1" onclick="nextStep(2)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step2">
+        <div class="quiz-q">⬛ 第2关：四边形的内角和是？</div>
+        <button class="quiz-option" onclick="checkQ(2,'A','C')">A. 180°</button>
+        <button class="quiz-option" onclick="checkQ(2,'B','C')">B. 270°</button>
+        <button class="quiz-option" onclick="checkQ(2,'C','C')">C. 360°</button>
+        <div class="quiz-feedback" id="fb2"></div>
+        <button class="next-btn locked" id="next2" onclick="nextStep(3)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step3">
+        <div class="quiz-q">🔺 第3关：有一个角为90°的三角形叫什么？</div>
+        <button class="quiz-option" onclick="checkQ(3,'A','B')">A. 钝角三角形</button>
+        <button class="quiz-option" onclick="checkQ(3,'B','B')">B. 直角三角形</button>
+        <button class="quiz-option" onclick="checkQ(3,'C','B')">C. 锐角三角形</button>
+        <div class="quiz-feedback" id="fb3"></div>
+        <button class="next-btn locked" id="next3" onclick="nextStep(4)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step4">
+        <div class="quiz-q">🏗️ 第4关：正方形属于哪种四边形？</div>
+        <button class="quiz-option" onclick="checkQ(4,'A','A')">A. 特殊的长方形，也是特殊的菱形</button>
+        <button class="quiz-option" onclick="checkQ(4,'B','A')">B. 普通四边形</button>
+        <button class="quiz-option" onclick="checkQ(4,'C','A')">C. 梯形的特例</button>
+        <div class="quiz-feedback" id="fb4"></div>
+        <button class="next-btn locked" id="next4" onclick="showFinal()">完成 🎉</button>
+      </div>
+      <div class="quiz-step locked" id="stepFinal">
+        <div style="text-align:center;padding:30px;">
+          <div style="font-size:64px;animation:bounce 1s ease infinite;">🏆</div>
+          <h2 style="font-size:28px;font-weight:900;color:var(--primary);margin:16px 0;">图形专家！</h2>
+          <p>三角形和四边形完全掌握！</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+// ANGLE EXPLORER
+function updateAngles(){
+  let a=+document.getElementById('angA').value;
+  let b=+document.getElementById('angB').value;
+  if(a+b>=180){b=179-a;document.getElementById('angB').value=b;}
+  const c=180-a-b;
+  document.getElementById('valA').textContent=a+'°';
+  document.getElementById('valB').textContent=b+'°';
+  document.getElementById('valC').textContent=c+'°';
+  document.getElementById('angC').value=c;
+  document.getElementById('angleSum').textContent=`角A + 角B + 角C = ${a}° + ${b}° + ${c}° = 180° ✓`;
+  drawTri(a,b,c);
+  const type=c>90?'钝角三角形':c===90?'直角三角形':a===b&&b===c?'等边三角形':'锐角三角形';
+  document.getElementById('triType').textContent='▶ 这是：'+type;
+}
+function drawTri(a,b,c){
+  const canvas=document.getElementById('triCanvas');const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,300,200);
+  const ar=a*Math.PI/180,br=b*Math.PI/180;
+  const x1=150-80, y1=160;
+  const x3=x1+160, y3=160;
+  const tanA=Math.tan(ar),tanB=Math.tan(br);
+  const x2=x1+(tanA*(x3-x1))/(tanA+tanB);
+  const y2=y1-tanA*(x2-x1);
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.lineTo(x3,y3);ctx.closePath();
+  ctx.strokeStyle='#ff6b6b';ctx.lineWidth=3;ctx.fillStyle='rgba(255,107,107,0.1)';ctx.fill();ctx.stroke();
+  ctx.fillStyle='#333';ctx.font='bold 13px sans-serif';ctx.textAlign='center';
+  ctx.fillText(a+'°',x1-10,y1+4);ctx.fillText(b+'°',x3+10,y3+4);ctx.fillText(c+'°',x2,y2-8);
+}
+
+// CLASSIFY
+function initClassify(){
+  const cases=[{a:60,b:60,c:60},{a:90,b:45,c:45},{a:120,b:30,c:30},{a:80,b:70,c:30}];
+  const area=document.getElementById('classifyArea');
+  area.innerHTML='';
+  cases.forEach(({a,b,c})=>{
+    const type=a===90||b===90||c===90?'直角三角形':a>90||b>90||c>90?'钝角三角形':'锐角三角形';
+    const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:12px;margin:10px 0;padding:10px;background:#f8f9fa;border-radius:10px;flex-wrap:wrap;';
+    row.innerHTML=`<span style="font-weight:700;">角度：${a}°, ${b}°, ${c}°</span>
+      <span style="color:var(--dim);font-size:14px;">(和=${a+b+c}°)</span>
+      <select style="padding:6px 12px;border:2px solid #ddd;border-radius:8px;font-size:14px;font-weight:700;" data-answer="${type}">
+        <option value="">请选择...</option>
+        <option>锐角三角形</option>
+        <option>直角三角形</option>
+        <option>钝角三角形</option>
+      </select>
+      <span class="check-icon" style="font-size:18px;"></span>`;
+    const sel=row.querySelector('select');
+    sel.addEventListener('change',function(){
+      const icon=this.parentElement.querySelector('.check-icon');
+      icon.textContent=this.value===this.dataset.answer?'✅':'❌';
+    });
+    area.appendChild(row);
+  });
+}
+
+function switchTab(id){document.querySelectorAll('.lab-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.lab-tab').forEach(t=>t.classList.remove('active'));document.getElementById(id).classList.add('active');event.target.classList.add('active');}
+
+function initKG(){
+  const colorMap={current:"#ff6b6b",prereq:"#51cf66",next:"#4ecdc4"};
+  const kgData={nodes:[{id:"cur",name:"三角形四边形",type:"current"},{id:"p1",name:"角的认识",type:"prereq"},{id:"p2",name:"平面图形",type:"prereq"},{id:"n1",name:"多边形",type:"next"},{id:"n2",name:"周长面积",type:"next"},{id:"n3",name:"对称图形",type:"next"}],links:[{source:"p1",target:"cur"},{source:"p2",target:"cur"},{source:"cur",target:"n1"},{source:"cur",target:"n2"},{source:"cur",target:"n3"}]};
+  const svg=d3.select("#kg-svg-tq");const w=svg.node().parentElement.clientWidth||700,h=340;svg.attr("viewBox",`0 0 ${w} ${h}`);
+  svg.append("defs").append("marker").attr("id","arr-tq").attr("viewBox","0 -5 10 10").attr("refX",22).attr("markerWidth",6).attr("markerHeight",6).attr("orient","auto").append("path").attr("d","M0,-5L10,0L0,5").attr("fill","#bbb");
+  const sim=d3.forceSimulation(kgData.nodes).force("link",d3.forceLink(kgData.links).id(d=>d.id).distance(120)).force("charge",d3.forceManyBody().strength(-320)).force("center",d3.forceCenter(w/2,h/2));
+  const link=svg.append("g").selectAll("line").data(kgData.links).join("line").attr("stroke","#ddd").attr("stroke-width",2).attr("marker-end","url(#arr-tq)");
+  const node=svg.append("g").selectAll("g").data(kgData.nodes).join("g").call(d3.drag().on("start",e=>{if(!e.active)sim.alphaTarget(0.3).restart();e.subject.fx=e.subject.x;e.subject.fy=e.subject.y;}).on("drag",e=>{e.subject.fx=e.x;e.subject.fy=e.y;}).on("end",e=>{if(!e.active)sim.alphaTarget(0);e.subject.fx=null;e.subject.fy=null;}));
+  node.append("circle").attr("r",38).attr("fill",d=>colorMap[d.type]).attr("opacity",0.9);
+  node.append("text").attr("text-anchor","middle").attr("dy","0.35em").attr("font-size","11px").attr("font-weight","bold").attr("fill","#fff").each(function(d){const words=d.name.length>7?[d.name.slice(0,7),d.name.slice(7)]:[d.name];words.forEach((w,i)=>d3.select(this).append("tspan").attr("x",0).attr("dy",i?14:-7).text(w));});
+  const leg=svg.append("g").attr("transform",`translate(${w-160},20)`);[["prereq","前置知识"],["current","本节课"],["next","后续内容"]].forEach(([t,l],i)=>{leg.append("circle").attr("cx",10).attr("cy",i*26).attr("r",8).attr("fill",colorMap[t]);leg.append("text").attr("x",24).attr("y",i*26+5).attr("font-size","12px").attr("fill","#555").text(l);});
+  sim.on("tick",()=>{link.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y).attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);node.attr("transform",d=>`translate(${d.x},${d.y})`);});
+}
+
+function initStepIndicator(){const ind=document.getElementById('stepIndicator');for(let i=1;i<=4;i++){const d=document.createElement('div');d.className='step-dot'+(i===1?' active':'');d.id='dot'+i;ind.appendChild(d);}}
+function checkQ(step,choice,correct){const opts=document.querySelectorAll(`#step${step} .quiz-option`);opts.forEach(o=>o.disabled=true);const idx={A:0,B:1,C:2};const fb=document.getElementById('fb'+step);if(choice===correct){opts[idx[choice]].classList.add('correct');fb.className='quiz-feedback show ok';fb.textContent='✅ 正确！';}else{opts[idx[choice]].classList.add('wrong');opts[idx[correct]].classList.add('correct');fb.className='quiz-feedback show err';fb.textContent='❌ 正确答案是 '+correct;}fb.style.display='block';document.getElementById('progressBar').style.width=(step/4*100)+'%';setTimeout(()=>document.getElementById('next'+step).classList.remove('locked'),choice===correct?0:1500);}
+function nextStep(n){document.getElementById('step'+(n-1)).classList.remove('active');const s=document.getElementById('step'+n);s.classList.remove('locked');s.classList.add('active');document.getElementById('dot'+(n-1)).classList.replace('active','done');const dn=document.getElementById('dot'+n);if(dn)dn.classList.add('active');}
+function showFinal(){document.getElementById('step4').classList.remove('active');document.getElementById('stepFinal').classList.remove('locked');document.getElementById('stepFinal').classList.add('active');document.getElementById('progressBar').style.width='100%';}
+
+window.onload=()=>{updateAngles();initClassify();initKG();initStepIndicator();};
+</script>
+</body>
+</html>

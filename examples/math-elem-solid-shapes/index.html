@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>立体图形 · 教学课件</title>
+<meta name="teachany-node" content="solid-shapes">
+<meta name="teachany-subject" content="math">
+<meta name="teachany-grade" content="1">
+<meta name="teachany-version" content="2.0">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--card:#fff;--text:#2b2b2b;--dim:#666;--border:rgba(0,0,0,0.06);}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:80px;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 10% 20%,rgba(255,107,107,0.07) 0%,transparent 50%),radial-gradient(circle at 90% 80%,rgba(78,205,196,0.07) 0%,transparent 50%);pointer-events:none;z-index:-1;}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;}
+.nav-brand{font-size:20px;font-weight:900;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),#ff922b,#cc5de8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all 0.25s;}
+.nav a:hover{color:#fff;background:linear-gradient(135deg,var(--primary),#ff922b);}
+.container{max-width:960px;margin:0 auto;padding:80px 20px 60px;}
+.hero{text-align:center;padding:36px 0 30px;}
+.hero h1{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--primary),#ff922b,#cc5de8,#339af0);background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
+@keyframes rainbowShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.hero .subtitle{font-size:18px;color:var(--dim);margin-bottom:16px;}
+.hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+.hero .meta span{background:#fff;border:2px solid var(--border);border-radius:24px;padding:6px 18px;font-size:14px;font-weight:700;color:var(--dim);}
+.section{margin:40px 0;}
+.section-title{font-size:26px;font-weight:900;margin-bottom:18px;padding:10px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));display:inline-block;}
+.card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.04);}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;}
+.grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;}
+.highlight{color:var(--primary);font-weight:900;}
+.formula-box{background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));border-radius:16px;padding:18px 22px;text-align:center;font-size:20px;font-weight:900;margin:12px 0;}
+.tip-box{background:rgba(255,230,109,0.25);border-left:4px solid var(--accent);border-radius:0 12px 12px 0;padding:12px 16px;margin:12px 0;font-size:15px;}
+/* LIFE SCENE: 3D ROTATING */
+#life-scene{background:linear-gradient(135deg,#1a237e,#283593,#3949ab);border-radius:20px;padding:24px;min-height:320px;overflow:hidden;position:relative;}
+.scene-3d-title{color:#fff;font-size:17px;font-weight:900;text-align:center;margin-bottom:16px;}
+.shapes-3d{display:flex;justify-content:center;gap:30px;flex-wrap:wrap;perspective:600px;}
+.shape-3d-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;}
+.shape-3d{width:80px;height:80px;position:relative;transform-style:preserve-3d;animation:rotate3d 6s linear infinite;cursor:pointer;}
+.cube{animation-name:rotateCube;}
+.sphere-3d{width:80px;height:80px;background:radial-gradient(circle at 35% 35%,#ff9e9e,var(--primary));border-radius:50%;animation:rotateY3d 4s ease infinite;box-shadow:inset -10px -10px 20px rgba(0,0,0,0.3),0 8px 20px rgba(0,0,0,0.3);}
+.cylinder-3d{width:70px;height:90px;background:linear-gradient(135deg,#4ecdc4,#20c997);border-radius:8px;position:relative;animation:rotateY3d 5s ease infinite;}
+.cone-3d{width:0;height:0;border-left:40px solid transparent;border-right:40px solid transparent;border-bottom:90px solid #ffe66d;animation:rotateY3d 4.5s ease infinite;}
+@keyframes rotateCube{0%{transform:rotateY(0deg) rotateX(15deg)}100%{transform:rotateY(360deg) rotateX(15deg)}}
+@keyframes rotateY3d{0%,100%{transform:rotateY(-15deg) scale(1)}50%{transform:rotateY(15deg) scale(1.05)}}
+.cube-face{position:absolute;width:60px;height:60px;border:2px solid rgba(255,255,255,0.3);}
+.cube .front{background:rgba(255,107,107,0.8);transform:translateZ(30px);}
+.cube .back{background:rgba(200,80,80,0.8);transform:rotateY(180deg) translateZ(30px);}
+.cube .left{background:rgba(180,60,60,0.8);transform:rotateY(-90deg) translateZ(30px);}
+.cube .right{background:rgba(220,100,100,0.8);transform:rotateY(90deg) translateZ(30px);}
+.cube .top{background:rgba(240,120,120,0.8);transform:rotateX(90deg) translateZ(30px);}
+.cube .bottom{background:rgba(160,40,40,0.8);transform:rotateX(-90deg) translateZ(30px);}
+.shape-3d-label{color:#fff;font-size:13px;font-weight:700;}
+/* LAB */
+#interactive-lab{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+.lab-tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.lab-tab{padding:8px 20px;border-radius:20px;border:2px solid var(--border);cursor:pointer;font-weight:700;font-size:14px;transition:all 0.25s;}
+.lab-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.lab-panel{display:none;}
+.lab-panel.active{display:block;animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.face-counter{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0;}
+.face-card{background:#f8f9fa;border-radius:12px;padding:14px;text-align:center;}
+.face-card .shape-name{font-weight:900;font-size:16px;margin-bottom:8px;}
+.face-count{display:flex;flex-direction:column;gap:4px;font-size:14px;}
+.face-row{display:flex;justify-content:space-between;font-size:13px;}
+.drag-match-area{display:flex;gap:16px;flex-wrap:wrap;}
+/* KG */
+#knowledge-graph{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+#kg-svg-sol{width:100%;height:340px;}
+/* QUIZ */
+.quiz-section{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+.progress-bar-wrap{background:#f0f0f0;border-radius:10px;height:12px;margin-bottom:20px;overflow:hidden;}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:10px;transition:width 0.5s ease;}
+.quiz-step{display:none;}
+.quiz-step.active{display:block;animation:fadeSlide 0.4s ease;}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.quiz-q{font-size:20px;font-weight:900;margin-bottom:16px;}
+.quiz-option{display:block;padding:14px 20px;margin:8px 0;border-radius:14px;background:#fff;border:2.5px solid #e8e8e8;cursor:pointer;transition:all 0.25s;font-size:16px;font-weight:700;width:100%;text-align:left;}
+.quiz-option:hover{border-color:var(--secondary);}
+.quiz-option.correct{background:rgba(81,207,102,0.15);border-color:var(--success);color:#2b8a3e;}
+.quiz-option.wrong{background:rgba(255,107,107,0.1);border-color:var(--primary);color:#c92a2a;}
+.quiz-feedback{padding:12px 16px;border-radius:12px;margin-top:8px;font-size:15px;font-weight:700;display:none;}
+.quiz-feedback.show{display:block;}
+.quiz-feedback.ok{background:rgba(81,207,102,0.15);color:#2b8a3e;}
+.quiz-feedback.err{background:rgba(255,107,107,0.1);color:#c92a2a;}
+.next-btn{margin-top:14px;padding:12px 28px;background:linear-gradient(135deg,var(--primary),#ff922b);color:#fff;border:none;border-radius:20px;font-size:16px;font-weight:900;cursor:pointer;}
+.locked{opacity:0.35;pointer-events:none;}
+.step-indicator{display:flex;gap:8px;margin-bottom:16px;}
+.step-dot{width:12px;height:12px;border-radius:50%;background:#e0e0e0;transition:all 0.3s;}
+.step-dot.done{background:var(--success);}
+.step-dot.active{background:var(--primary);transform:scale(1.3);}
+table{width:100%;border-collapse:collapse;margin:12px 0;}
+th,td{border:2px solid #f0f0f0;padding:10px 14px;text-align:center;font-size:15px;}
+th{background:rgba(255,107,107,0.1);font-weight:900;}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-brand">📚 TeachAny</div>
+  <a href="#life-scene-sec">🎲 生活场景</a>
+  <a href="#concepts">📖 概念</a>
+  <a href="#interactive-lab">🧪 实验台</a>
+  <a href="#knowledge-graph">🕸️ 知识图谱</a>
+  <a href="#quiz">📝 练习</a>
+</nav>
+<div class="container">
+  <div class="hero">
+    <h1>立体图形</h1>
+    <div class="subtitle">球、正方体、圆柱、圆锥——三维世界的数学！</div>
+    <div class="meta">
+      <span>📚 小学数学</span><span>🎒 一年级上册</span><span>⭐ 难度：★☆☆</span><span>⏱️ 约35分钟</span>
+    </div>
+  </div>
+
+  <!-- 生活场景 -->
+  <section class="section" id="life-scene-sec">
+    <div class="section-title">🎲 生活场景：3D旋转展示</div>
+    <div id="life-scene">
+      <div class="scene-3d-title">🎲 四种立体图形3D旋转展示！点击图形了解详情</div>
+      <div class="shapes-3d">
+        <div class="shape-3d-wrap" onclick="showShapeInfo('cube')">
+          <div class="shape-3d cube" style="width:60px;height:60px;">
+            <div class="cube-face front"></div>
+            <div class="cube-face back"></div>
+            <div class="cube-face left"></div>
+            <div class="cube-face right"></div>
+            <div class="cube-face top"></div>
+            <div class="cube-face bottom"></div>
+          </div>
+          <div class="shape-3d-label">🎲 正方体</div>
+        </div>
+        <div class="shape-3d-wrap" onclick="showShapeInfo('sphere')">
+          <div class="sphere-3d"></div>
+          <div class="shape-3d-label">⚽ 球</div>
+        </div>
+        <div class="shape-3d-wrap" onclick="showShapeInfo('cylinder')">
+          <div class="cylinder-3d"></div>
+          <div class="shape-3d-label">🥤 圆柱</div>
+        </div>
+        <div class="shape-3d-wrap" onclick="showShapeInfo('cone')">
+          <div class="cone-3d"></div>
+          <div class="shape-3d-label">🍦 圆锥</div>
+        </div>
+      </div>
+      <div id="shapeInfoBox" style="margin-top:16px;background:rgba(255,255,255,0.15);border-radius:12px;padding:12px 18px;color:#fff;text-align:center;font-size:15px;font-weight:700;min-height:40px;"></div>
+    </div>
+  </section>
+
+  <!-- 核心概念 -->
+  <section class="section" id="concepts">
+    <div class="section-title">📖 四种立体图形</div>
+    <div class="grid-4">
+      <div class="card" style="text-align:center;">
+        <div style="font-size:50px;margin-bottom:8px;">🎲</div>
+        <h3>正方体</h3>
+        <p>6个<span class="highlight">正方形</span>的面，12条边，8个顶点</p>
+        <div class="tip-box" style="font-size:13px;">例：骰子、魔方</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:50px;margin-bottom:8px;">📦</div>
+        <h3>长方体</h3>
+        <p>6个<span class="highlight">长方形</span>的面（含正方体），12条边，8个顶点</p>
+        <div class="tip-box" style="font-size:13px;">例：书本、冰箱</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:50px;margin-bottom:8px;">🥤</div>
+        <h3>圆柱</h3>
+        <p>2个<span class="highlight">圆形</span>底面，1个曲面，无顶点</p>
+        <div class="tip-box" style="font-size:13px;">例：易拉罐、水管</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:50px;margin-bottom:8px;">🍦</div>
+        <h3>圆锥</h3>
+        <p>1个<span class="highlight">圆形</span>底面，1个曲面，1个顶点</p>
+        <div class="tip-box" style="font-size:13px;">例：冰淇淋筒、漏斗</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📊 四种立体图形比较</h3>
+      <table>
+        <tr><th>图形</th><th>面</th><th>顶点</th><th>棱（边）</th><th>特征</th></tr>
+        <tr><td>🎲 正方体</td><td>6个正方形</td><td>8个</td><td>12条</td><td>各边等长</td></tr>
+        <tr><td>📦 长方体</td><td>6个长方形</td><td>8个</td><td>12条</td><td>对面相同</td></tr>
+        <tr><td>🥤 圆柱</td><td>2个圆+1曲面</td><td>0个</td><td>0条（2个圆弧）</td><td>两底面平行等圆</td></tr>
+        <tr><td>🍦 圆锥</td><td>1个圆+1曲面</td><td>1个（顶）</td><td>0条（1个圆弧）</td><td>只有一个底面</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- 互动实验台 -->
+  <section class="section" id="interactive-lab">
+    <div class="section-title">🧪 互动实验台</div>
+    <div id="interactive-lab">
+      <div class="lab-tabs">
+        <button class="lab-tab active" onclick="switchTab('tab-faces')">🔢 面数计数</button>
+        <button class="lab-tab" onclick="switchTab('tab-match')">🃏 生活配对</button>
+      </div>
+      <div id="tab-faces" class="lab-panel active">
+        <div class="card">
+          <h3>🔢 点击立体图形，查看它的面数</h3>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin:12px 0;">
+            <button class="next-btn" onclick="showFaces('cube')">🎲 正方体</button>
+            <button class="next-btn" style="background:linear-gradient(135deg,var(--secondary),#20c997);" onclick="showFaces('rect')">📦 长方体</button>
+            <button class="next-btn" style="background:linear-gradient(135deg,#cc5de8,#845ef7);" onclick="showFaces('cylinder')">🥤 圆柱</button>
+            <button class="next-btn" style="background:linear-gradient(135deg,#ffe66d,#ff922b);color:#333;" onclick="showFaces('cone')">🍦 圆锥</button>
+          </div>
+          <div id="facesDisplay" class="formula-box" style="min-height:60px;">选择图形查看面数信息</div>
+          <canvas id="facesCanvas" width="300" height="200" style="display:block;margin:12px auto;border:2px solid #f0f0f0;border-radius:12px;"></canvas>
+        </div>
+      </div>
+      <div id="tab-match" class="lab-panel">
+        <div class="card">
+          <h3>🃏 将生活物品与立体图形配对（拖拽）</h3>
+          <div class="drag-match-area">
+            <div style="flex:1;min-width:180px;">
+              <div style="font-weight:700;margin-bottom:8px;color:var(--dim);">生活物品</div>
+              <div id="itemDrags"></div>
+            </div>
+            <div style="flex:2;min-width:220px;">
+              <div style="font-weight:700;margin-bottom:8px;color:var(--dim);">立体图形</div>
+              <div id="itemSlots"></div>
+            </div>
+          </div>
+          <div id="matchRes" style="display:none;margin-top:10px;font-weight:700;"></div>
+          <button class="next-btn" style="margin-top:10px;" onclick="checkItems()">✅ 检查</button>
+          <button class="next-btn" style="background:linear-gradient(135deg,var(--secondary),#20c997);margin-top:10px;" onclick="initItemMatch()">🔄 重置</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 知识图谱 -->
+  <section class="section" id="knowledge-graph">
+    <div class="section-title">🕸️ 知识图谱</div>
+    <div id="knowledge-graph"><svg id="kg-svg-sol"></svg></div>
+  </section>
+
+  <!-- 练习 -->
+  <section class="section" id="quiz">
+    <div class="section-title">📝 闯关练习</div>
+    <div class="quiz-section">
+      <div class="step-indicator" id="stepIndicator"></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressBar" style="width:0%"></div></div>
+      <div class="quiz-step active" id="step1">
+        <div class="quiz-q">🎲 第1关：正方体有几个面？</div>
+        <button class="quiz-option" onclick="checkQ(1,'A','B')">A. 4个</button>
+        <button class="quiz-option" onclick="checkQ(1,'B','B')">B. 6个</button>
+        <button class="quiz-option" onclick="checkQ(1,'C','B')">C. 8个</button>
+        <div class="quiz-feedback" id="fb1"></div>
+        <button class="next-btn locked" id="next1" onclick="nextStep(2)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step2">
+        <div class="quiz-q">🍦 第2关：圆锥有几个顶点？</div>
+        <button class="quiz-option" onclick="checkQ(2,'A','B')">A. 0个</button>
+        <button class="quiz-option" onclick="checkQ(2,'B','B')">B. 1个</button>
+        <button class="quiz-option" onclick="checkQ(2,'C','B')">C. 3个</button>
+        <div class="quiz-feedback" id="fb2"></div>
+        <button class="next-btn locked" id="next2" onclick="nextStep(3)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step3">
+        <div class="quiz-q">🥤 第3关：下面哪个是圆柱体的例子？</div>
+        <button class="quiz-option" onclick="checkQ(3,'A','B')">A. 骰子</button>
+        <button class="quiz-option" onclick="checkQ(3,'B','B')">B. 易拉罐</button>
+        <button class="quiz-option" onclick="checkQ(3,'C','B')">C. 冰淇淋球</button>
+        <div class="quiz-feedback" id="fb3"></div>
+        <button class="next-btn locked" id="next3" onclick="nextStep(4)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step4">
+        <div class="quiz-q">📦 第4关：长方体和正方体的共同点是？</div>
+        <button class="quiz-option" onclick="checkQ(4,'A','B')">A. 六个面都是正方形</button>
+        <button class="quiz-option" onclick="checkQ(4,'B','B')">B. 都有12条棱和8个顶点</button>
+        <button class="quiz-option" onclick="checkQ(4,'C','B')">C. 四条棱相等</button>
+        <div class="quiz-feedback" id="fb4"></div>
+        <button class="next-btn locked" id="next4" onclick="showFinal()">完成 🎉</button>
+      </div>
+      <div class="quiz-step locked" id="stepFinal">
+        <div style="text-align:center;padding:30px;">
+          <div style="font-size:64px;animation:bounce 1s ease infinite;">🏆</div>
+          <h2 style="font-size:28px;font-weight:900;color:var(--primary);margin:16px 0;">立体图形专家！</h2>
+          <p>三维世界已掌握！</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const shapeInfos={cube:'🎲 正方体：6个面，12条棱，8个顶点。每个面都是正方形，所有棱等长。',sphere:'⚽ 球：完美的圆形立体，每个方向都一样。没有角，没有棱，只有1个曲面。',cylinder:'🥤 圆柱：2个圆形底面，1个侧曲面。上下底面平行且相等。',cone:'🍦 圆锥：1个圆形底面，1个侧曲面，1个顶点。从圆形底面向顶点汇聚。'};
+function showShapeInfo(s){document.getElementById('shapeInfoBox').textContent=shapeInfos[s]||'';}
+
+const facesInfo={
+  cube:{label:'正方体：6个正方形面，12条棱，8个顶点',draw:ctx=>{ctx.clearRect(0,0,300,200);ctx.strokeStyle='#ff6b6b';ctx.lineWidth=3;ctx.fillStyle='rgba(255,107,107,0.2)';ctx.fillRect(80,60,120,120);ctx.strokeRect(80,60,120,120);ctx.beginPath();ctx.moveTo(80,60);ctx.lineTo(120,20);ctx.lineTo(240,20);ctx.lineTo(200,60);ctx.moveTo(240,20);ctx.lineTo(240,140);ctx.moveTo(200,180);ctx.lineTo(240,140);ctx.stroke();}},
+  rect:{label:'长方体：6个长方形面，12条棱，8个顶点',draw:ctx=>{ctx.clearRect(0,0,300,200);ctx.strokeStyle='#4ecdc4';ctx.lineWidth=3;ctx.fillStyle='rgba(78,205,196,0.2)';ctx.fillRect(60,70,160,110);ctx.strokeRect(60,70,160,110);ctx.beginPath();ctx.moveTo(60,70);ctx.lineTo(100,30);ctx.lineTo(260,30);ctx.lineTo(220,70);ctx.moveTo(260,30);ctx.lineTo(260,140);ctx.moveTo(220,180);ctx.lineTo(260,140);ctx.stroke();}},
+  cylinder:{label:'圆柱：2个圆形底面，1个侧曲面，无顶点',draw:ctx=>{ctx.clearRect(0,0,300,200);ctx.strokeStyle='#cc5de8';ctx.lineWidth=3;ctx.fillStyle='rgba(204,93,232,0.15)';ctx.beginPath();ctx.ellipse(150,60,70,20,0,0,2*Math.PI);ctx.fill();ctx.stroke();ctx.beginPath();ctx.moveTo(80,60);ctx.lineTo(80,150);ctx.stroke();ctx.beginPath();ctx.moveTo(220,60);ctx.lineTo(220,150);ctx.stroke();ctx.beginPath();ctx.ellipse(150,150,70,20,0,0,2*Math.PI);ctx.fill();ctx.stroke();}},
+  cone:{label:'圆锥：1个圆形底面，1个侧曲面，1个顶点',draw:ctx=>{ctx.clearRect(0,0,300,200);ctx.strokeStyle='#ff922b';ctx.lineWidth=3;ctx.fillStyle='rgba(255,146,43,0.15)';ctx.beginPath();ctx.moveTo(150,30);ctx.lineTo(80,160);ctx.lineTo(220,160);ctx.closePath();ctx.fill();ctx.stroke();ctx.beginPath();ctx.ellipse(150,160,70,20,0,0,2*Math.PI);ctx.fill();ctx.stroke();}}
+};
+function showFaces(type){
+  const info=facesInfo[type];
+  document.getElementById('facesDisplay').textContent=info.label;
+  const canvas=document.getElementById('facesCanvas');
+  info.draw(canvas.getContext('2d'));
+}
+
+// ITEM MATCH
+const items=[{name:'骰子🎲',cat:'cube'},{name:'易拉罐🥤',cat:'cylinder'},{name:'冰淇淋🍦',cat:'cone'},{name:'书📚',cat:'rect'},{name:'足球⚽',cat:'sphere'}];
+const targets=[{label:'正方体🎲',cat:'cube'},{label:'长方体📦',cat:'rect'},{label:'圆柱🥤',cat:'cylinder'},{label:'圆锥🍦',cat:'cone'},{label:'球⚽',cat:'sphere'}];
+let draggedItem=null;
+function initItemMatch(){
+  const dragsEl=document.getElementById('itemDrags');dragsEl.innerHTML='';
+  const slotsEl=document.getElementById('itemSlots');slotsEl.innerHTML='';
+  document.getElementById('matchRes').style.display='none';
+  [...items].sort(()=>Math.random()-0.5).forEach((item,i)=>{
+    const d=document.createElement('div');
+    d.style.cssText='display:inline-block;padding:8px 14px;margin:4px;border-radius:10px;background:rgba(255,107,107,0.1);border:2px solid var(--primary);cursor:grab;font-weight:700;font-size:14px;';
+    d.textContent=item.name;d.draggable=true;d.dataset.cat=item.cat;
+    d.addEventListener('dragstart',()=>draggedItem=item.cat);
+    dragsEl.appendChild(d);
+  });
+  targets.forEach(t=>{
+    const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:8px;margin:6px 0;';
+    const label=document.createElement('span');label.style.cssText='width:90px;font-weight:700;font-size:14px;';label.textContent=t.label;
+    const slot=document.createElement('div');slot.style.cssText='min-width:100px;min-height:36px;border:2px dashed #ddd;border-radius:8px;padding:4px 8px;display:flex;align-items:center;font-size:13px;font-weight:700;';
+    slot.dataset.expected=t.cat;slot.textContent='拖放';
+    slot.addEventListener('dragover',e=>{e.preventDefault();slot.style.borderColor='var(--primary)';});
+    slot.addEventListener('dragleave',()=>slot.style.borderColor='#ddd');
+    slot.addEventListener('drop',e=>{e.preventDefault();slot.textContent=items.find(i=>i.cat===draggedItem)?.name||draggedItem;slot.dataset.placed=draggedItem;slot.style.borderColor='#ddd';});
+    row.appendChild(label);row.appendChild(slot);slotsEl.appendChild(row);
+  });
+}
+function checkItems(){
+  let correct=0;
+  document.querySelectorAll('#itemSlots [data-expected]').forEach(s=>{
+    if(s.dataset.placed===s.dataset.expected){s.style.background='rgba(81,207,102,0.15)';correct++;}
+    else if(s.dataset.placed){s.style.background='rgba(255,107,107,0.1)';}
+  });
+  const res=document.getElementById('matchRes');res.style.display='block';
+  res.innerHTML=correct===5?`<span style="color:var(--success)">✅ 全部正确！</span>`:`<span style="color:var(--primary)">⚠️ ${correct}/5 正确</span>`;
+}
+
+function switchTab(id){document.querySelectorAll('.lab-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.lab-tab').forEach(t=>t.classList.remove('active'));document.getElementById(id).classList.add('active');event.target.classList.add('active');}
+
+function initKG(){
+  const colorMap={current:"#ff6b6b",prereq:"#51cf66",next:"#4ecdc4"};
+  const kgData={nodes:[{id:"cur",name:"立体图形",type:"current"},{id:"p1",name:"平面图形",type:"prereq"},{id:"p2",name:"空间感知",type:"prereq"},{id:"n1",name:"展开图",type:"next"},{id:"n2",name:"表面积",type:"next"},{id:"n3",name:"体积",type:"next"}],links:[{source:"p1",target:"cur"},{source:"p2",target:"cur"},{source:"cur",target:"n1"},{source:"cur",target:"n2"},{source:"cur",target:"n3"}]};
+  const svg=d3.select("#kg-svg-sol");const w=svg.node().parentElement.clientWidth||700,h=340;svg.attr("viewBox",`0 0 ${w} ${h}`);
+  svg.append("defs").append("marker").attr("id","arr-sol").attr("viewBox","0 -5 10 10").attr("refX",22).attr("markerWidth",6).attr("markerHeight",6).attr("orient","auto").append("path").attr("d","M0,-5L10,0L0,5").attr("fill","#bbb");
+  const sim=d3.forceSimulation(kgData.nodes).force("link",d3.forceLink(kgData.links).id(d=>d.id).distance(110)).force("charge",d3.forceManyBody().strength(-300)).force("center",d3.forceCenter(w/2,h/2));
+  const link=svg.append("g").selectAll("line").data(kgData.links).join("line").attr("stroke","#ddd").attr("stroke-width",2).attr("marker-end","url(#arr-sol)");
+  const node=svg.append("g").selectAll("g").data(kgData.nodes).join("g").call(d3.drag().on("start",e=>{if(!e.active)sim.alphaTarget(0.3).restart();e.subject.fx=e.subject.x;e.subject.fy=e.subject.y;}).on("drag",e=>{e.subject.fx=e.x;e.subject.fy=e.y;}).on("end",e=>{if(!e.active)sim.alphaTarget(0);e.subject.fx=null;e.subject.fy=null;}));
+  node.append("circle").attr("r",36).attr("fill",d=>colorMap[d.type]).attr("opacity",0.9);
+  node.append("text").attr("text-anchor","middle").attr("dy","0.35em").attr("font-size","11px").attr("font-weight","bold").attr("fill","#fff").each(function(d){const words=d.name.length>6?[d.name.slice(0,6),d.name.slice(6)]:[d.name];words.forEach((w,i)=>d3.select(this).append("tspan").attr("x",0).attr("dy",i?14:-7).text(w));});
+  const leg=svg.append("g").attr("transform",`translate(${w-160},20)`);[["prereq","前置知识"],["current","本节课"],["next","后续内容"]].forEach(([t,l],i)=>{leg.append("circle").attr("cx",10).attr("cy",i*26).attr("r",8).attr("fill",colorMap[t]);leg.append("text").attr("x",24).attr("y",i*26+5).attr("font-size","12px").attr("fill","#555").text(l);});
+  sim.on("tick",()=>{link.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y).attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);node.attr("transform",d=>`translate(${d.x},${d.y})`);});
+}
+
+function initStepIndicator(){const ind=document.getElementById('stepIndicator');for(let i=1;i<=4;i++){const d=document.createElement('div');d.className='step-dot'+(i===1?' active':'');d.id='dot'+i;ind.appendChild(d);}}
+function checkQ(step,choice,correct){const opts=document.querySelectorAll(`#step${step} .quiz-option`);opts.forEach(o=>o.disabled=true);const idx={A:0,B:1,C:2};const fb=document.getElementById('fb'+step);if(choice===correct){opts[idx[choice]].classList.add('correct');fb.className='quiz-feedback show ok';fb.textContent='✅ 正确！';}else{opts[idx[choice]].classList.add('wrong');opts[idx[correct]].classList.add('correct');fb.className='quiz-feedback show err';fb.textContent='❌ 正确答案是 '+correct;}fb.style.display='block';document.getElementById('progressBar').style.width=(step/4*100)+'%';setTimeout(()=>document.getElementById('next'+step).classList.remove('locked'),choice===correct?0:1500);}
+function nextStep(n){document.getElementById('step'+(n-1)).classList.remove('active');const s=document.getElementById('step'+n);s.classList.remove('locked');s.classList.add('active');document.getElementById('dot'+(n-1)).classList.replace('active','done');const dn=document.getElementById('dot'+n);if(dn)dn.classList.add('active');}
+function showFinal(){document.getElementById('step4').classList.remove('active');document.getElementById('stepFinal').classList.remove('locked');document.getElementById('stepFinal').classList.add('active');document.getElementById('progressBar').style.width='100%';}
+
+window.onload=()=>{showFaces('cube');initItemMatch();initKG();initStepIndicator();};
+</script>
+</body>
+</html>

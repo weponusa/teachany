@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>分数小数百分数互化 · 教学课件</title>
+<meta name="teachany-node" content="fraction-decimal-percent">
+<meta name="teachany-subject" content="math">
+<meta name="teachany-grade" content="6">
+<meta name="teachany-version" content="2.0">
+<meta name="teachany-author" content="weponusa">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--danger:#ff6b6b;--purple:#cc5de8;--blue:#339af0;--orange:#ff922b;--text:#2b2b2b;--dim:#666;--card:#ffffff;--border:rgba(0,0,0,0.06);}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:80px;}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;}
+.nav-brand{font-size:20px;font-weight:900;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all .25s;white-space:nowrap;}
+.nav a:hover,.nav a.active{color:#fff;background:linear-gradient(135deg,var(--primary),var(--orange));}
+.container{max-width:960px;margin:0 auto;padding:80px 20px 60px;}
+.hero{text-align:center;padding:36px 0 30px;}
+.hero h1{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple),var(--blue));background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
+@keyframes rainbowShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.hero .subtitle{font-size:18px;color:var(--dim);margin-bottom:16px;}
+.hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+.hero .meta span{background:#fff;border:2px solid var(--border);border-radius:24px;padding:6px 18px;font-size:14px;font-weight:700;color:var(--dim);}
+.section{margin:40px 0;}
+.section-title{font-size:26px;font-weight:900;margin-bottom:18px;padding:10px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));display:inline-block;}
+.card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.04);transition:transform .25s;}
+.card:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(255,107,107,0.12);}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;}
+.highlight{color:var(--primary);font-weight:900;}
+/* LIFE SCENE */
+#life-scene{background:linear-gradient(135deg,#f3e5f5,#e8eaf6);border-radius:24px;padding:30px;margin:30px 0;overflow:hidden;}
+#life-scene h2{text-align:center;font-size:22px;font-weight:900;margin-bottom:20px;}
+.scene-stage{position:relative;height:260px;background:linear-gradient(180deg,#ede7f6 0%,#ede7f6 55%,#e8f5e9 55%,#e8f5e9 100%);border-radius:16px;overflow:hidden;}
+/* 旋转的饼图 */
+.pie-container{position:absolute;top:20px;left:50%;transform:translateX(-50%);width:100px;height:100px;}
+.pie-svg{animation:pieRotate 8s linear infinite;}
+@keyframes pieRotate{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+/* 三角转化箭头 */
+.convert-triangle{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:24px;align-items:center;}
+.ct-node{padding:8px 16px;border-radius:12px;font-size:16px;font-weight:900;color:#fff;animation:ctPop 2s ease-in-out infinite;}
+.ct-node:nth-child(1){background:var(--primary);animation-delay:0s;}
+.ct-node:nth-child(2){background:var(--blue);animation-delay:.6s;}
+.ct-node:nth-child(3){background:var(--success);animation-delay:1.2s;}
+.ct-arrow{font-size:20px;color:#555;animation:ctArrowPulse 2s ease-in-out infinite;}
+@keyframes ctPop{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+@keyframes ctArrowPulse{0%,100%{opacity:0.4;}50%{opacity:1;}}
+/* 百分号动画 */
+.percent-sign{position:absolute;font-size:60px;font-weight:900;color:rgba(204,93,232,0.3);top:10px;right:20px;animation:percentSpin 6s linear infinite;}
+@keyframes percentSpin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+/* 数字条 */
+.num-bar{position:absolute;bottom:100px;left:20px;right:20px;height:20px;background:#e0e0e0;border-radius:10px;overflow:hidden;}
+.num-bar-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--blue),var(--success));animation:barFill 3s ease-in-out infinite;}
+@keyframes barFill{0%{width:0%;}50%{width:75%;}100%{width:0%;}}
+/* INTERACTIVE */
+#interactive-lab{background:#fff;border-radius:24px;padding:30px;margin:30px 0;box-shadow:0 4px 24px rgba(0,0,0,0.06);}
+#interactive-lab h2{font-size:22px;font-weight:900;margin-bottom:20px;}
+.lab-tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.lab-tab{padding:8px 20px;border-radius:20px;border:2px solid #e0e0e0;background:#f5f5f5;cursor:pointer;font-weight:700;font-size:14px;transition:all .2s;}
+.lab-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.lab-panel{display:none;}
+.lab-panel.active{display:block;}
+.slider-row{display:flex;align-items:center;gap:16px;margin:16px 0;}
+.slider-row label{font-weight:700;min-width:100px;font-size:14px;}
+input[type=range]{flex:1;accent-color:var(--primary);}
+.slider-val{font-size:20px;font-weight:900;color:var(--primary);min-width:60px;text-align:center;}
+.convert-display{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0;}
+.convert-card{padding:16px;border-radius:16px;text-align:center;border:2px solid var(--border);}
+.convert-card.frac{background:rgba(255,107,107,0.08);border-color:var(--primary);}
+.convert-card.dec{background:rgba(51,154,240,0.08);border-color:var(--blue);}
+.convert-card.pct{background:rgba(81,207,102,0.08);border-color:var(--success);}
+.convert-card .label{font-size:13px;color:var(--dim);font-weight:700;}
+.convert-card .value{font-size:28px;font-weight:900;margin-top:4px;}
+.drag-item{cursor:grab;padding:10px 18px;background:var(--secondary);color:#fff;border-radius:12px;font-weight:700;font-size:14px;user-select:none;display:inline-block;margin:4px;transition:transform .2s;}
+.drag-item:active{cursor:grabbing;transform:scale(0.95);}
+.drop-zone{min-width:120px;min-height:44px;border:3px dashed #ccc;border-radius:12px;padding:8px 14px;display:inline-flex;align-items:center;justify-content:center;font-size:14px;color:#aaa;margin:4px;transition:all .2s;}
+.drop-zone.drag-over{border-color:var(--secondary);background:rgba(78,205,196,0.1);}
+#knowledge-graph{background:#fff;border-radius:24px;padding:30px;margin:30px 0;box-shadow:0 4px 24px rgba(0,0,0,0.06);}
+#knowledge-graph h2{font-size:22px;font-weight:900;margin-bottom:16px;}
+.kg-legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;}
+.kg-legend-item{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;}
+.kg-dot{width:14px;height:14px;border-radius:50%;}
+#kg-svg{width:100%;max-width:600px;display:block;margin:0 auto;border-radius:16px;background:#f8f9fa;}
+.quiz-card{background:#fff;border-radius:20px;padding:26px;margin-bottom:20px;border:2px solid var(--border);box-shadow:0 4px 16px rgba(0,0,0,0.04);}
+.q-number{font-size:13px;color:var(--dim);font-weight:700;margin-bottom:6px;}
+.q-text{font-size:18px;font-weight:900;margin-bottom:16px;}
+.quiz-step{display:none;}
+.quiz-step.active{display:block;}
+.quiz-option{display:block;padding:14px 20px;margin:8px 0;border-radius:14px;background:#f8f9fa;border:2.5px solid #e8e8e8;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);transition:all .2s;width:100%;text-align:left;}
+.quiz-option:hover{background:rgba(78,205,196,0.08);border-color:var(--secondary);}
+.quiz-option.correct{background:rgba(81,207,102,0.12);border-color:var(--success);color:#2b8a3e;}
+.quiz-option.wrong{background:rgba(255,107,107,0.1);border-color:var(--danger);color:#c92a2a;}
+.quiz-feedback{padding:14px 18px;border-radius:14px;margin-top:10px;font-size:15px;display:none;font-weight:700;}
+.quiz-feedback.show{display:block;animation:popIn .35s cubic-bezier(.34,1.56,.64,1);}
+@keyframes popIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+.progress-bar{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin:8px 0 16px;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--orange));border-radius:3px;transition:width .4s;}
+.convert-table{width:100%;border-collapse:collapse;margin:16px 0;}
+.convert-table th{background:var(--primary);color:#fff;padding:10px;font-size:14px;}
+.convert-table td{border:2px solid #e0e0e0;padding:10px;text-align:center;font-size:15px;font-weight:700;}
+.convert-table tr:nth-child(even) td{background:#f8f9fa;}
+.footer{text-align:center;color:var(--dim);font-size:14px;margin-top:60px;padding-top:20px;border-top:2px solid var(--border);}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <span class="nav-brand">🔢 TeachAny</span>
+  <a href="#life-scene">🎬 场景</a>
+  <a href="#concepts">📖 概念</a>
+  <a href="#interactive-lab">🧪 实验台</a>
+  <a href="#knowledge-graph">🕸️ 图谱</a>
+  <a href="#quiz">✅ 练习</a>
+</nav>
+<div class="container">
+  <div class="hero">
+    <h1>分数小数百分数互化</h1>
+    <p class="subtitle">✨ 三兄弟互相变身，灵活运用！</p>
+    <div class="meta">
+      <span>📚 六年级数学</span><span>⏱️ 45分钟</span><span>🎯 数与运算</span><span>⭐ 综合</span>
+    </div>
+  </div>
+
+  <section id="life-scene">
+    <h2>🎬 生活场景：同一个量的三种表达</h2>
+    <div class="scene-stage">
+      <div class="pie-container">
+        <svg class="pie-svg" viewBox="0 0 100 100" width="100" height="100">
+          <circle cx="50" cy="50" r="45" fill="#e0e0e0"/>
+          <path d="M50,50 L95,50 A45,45 0 0,1 50,95 Z" fill="#ff6b6b"/>
+          <path d="M50,50 L50,95 A45,45 0 0,1 5,50 Z" fill="#4ecdc4"/>
+          <path d="M50,50 L5,50 A45,45 0 0,1 50,5 Z" fill="#ffe66d"/>
+          <path d="M50,50 L50,5 A45,45 0 0,1 95,50 Z" fill="#51cf66"/>
+        </svg>
+      </div>
+      <div class="convert-triangle">
+        <div class="ct-node">1/4</div>
+        <div class="ct-arrow">⇄</div>
+        <div class="ct-node">0.25</div>
+        <div class="ct-arrow">⇄</div>
+        <div class="ct-node">25%</div>
+      </div>
+      <div class="percent-sign">%</div>
+      <div class="num-bar"><div class="num-bar-fill"></div></div>
+    </div>
+    <div class="card" style="margin-top:20px;">
+      <h3>🌟 三种表示方式</h3>
+      <p>考试得 <strong class="highlight">75分</strong>（满分100分），可以说：<br>
+      分数：<strong class="highlight">75/100 = 3/4</strong>（四分之三）<br>
+      小数：<strong class="highlight">0.75</strong><br>
+      百分数：<strong class="highlight">75%</strong>（百分之七十五）<br>
+      三种表达，本质相同！</p>
+    </div>
+  </section>
+
+  <section id="concepts" class="section">
+    <div class="section-title">📖 互化方法</div>
+    <div class="card">
+      <h3>🔄 互化路线图</h3>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:center;font-size:16px;font-weight:700;padding:16px;">
+        <div style="padding:14px 20px;background:rgba(255,107,107,0.1);border-radius:14px;border:2px solid var(--primary);text-align:center;">
+          <div style="font-size:22px;color:var(--primary);">分数</div>
+          <div style="font-size:12px;color:var(--dim);">3/4</div>
+        </div>
+        <div style="text-align:center;">
+          <div>÷分母×100%→</div>
+          <div style="font-size:12px;color:var(--dim);">←×分母÷100%</div>
+        </div>
+        <div style="padding:14px 20px;background:rgba(81,207,102,0.1);border-radius:14px;border:2px solid var(--success);text-align:center;">
+          <div style="font-size:22px;color:var(--success);">百分数</div>
+          <div style="font-size:12px;color:var(--dim);">75%</div>
+        </div>
+        <div style="text-align:center;">
+          <div>÷100→</div>
+          <div style="font-size:12px;color:var(--dim);">←×100</div>
+        </div>
+        <div style="padding:14px 20px;background:rgba(51,154,240,0.1);border-radius:14px;border:2px solid var(--blue);text-align:center;">
+          <div style="font-size:22px;color:var(--blue);">小数</div>
+          <div style="font-size:12px;color:var(--dim);">0.75</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📊 常用互化速查表</h3>
+      <table class="convert-table">
+        <tr><th>分数</th><th>小数</th><th>百分数</th></tr>
+        <tr><td>1/2</td><td>0.5</td><td>50%</td></tr>
+        <tr><td>1/4</td><td>0.25</td><td>25%</td></tr>
+        <tr><td>3/4</td><td>0.75</td><td>75%</td></tr>
+        <tr><td>1/5</td><td>0.2</td><td>20%</td></tr>
+        <tr><td>2/5</td><td>0.4</td><td>40%</td></tr>
+        <tr><td>1/10</td><td>0.1</td><td>10%</td></tr>
+        <tr><td>1/3</td><td>0.333...</td><td>33.3%</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section id="interactive-lab">
+    <h2>🧪 互动实验台</h2>
+    <div class="lab-tabs">
+      <button class="lab-tab active" onclick="switchTabG('convert')">🔄 互化计算器</button>
+      <button class="lab-tab" onclick="switchTabG('drag6')">🎯 拖拽配对</button>
+      <button class="lab-tab" onclick="switchTabG('quiz2')">📊 快速练习</button>
+    </div>
+
+    <div id="tabG-convert" class="lab-panel active">
+      <div style="background:#f8f9fa;border-radius:16px;padding:20px;">
+        <h3 style="margin-bottom:16px;">🔄 拖动滑块，看三种形式！</h3>
+        <div class="slider-row">
+          <label>分子 (1~9)</label>
+          <input type="range" min="1" max="9" value="3" id="gNumer" oninput="updateConvert()">
+          <span class="slider-val" id="gNumerV">3</span>
+        </div>
+        <div class="slider-row">
+          <label>分母 (2~10)</label>
+          <input type="range" min="2" max="10" value="4" id="gDenom" oninput="updateConvert()">
+          <span class="slider-val" id="gDenomV">4</span>
+        </div>
+        <div class="convert-display">
+          <div class="convert-card frac">
+            <div class="label">分数</div>
+            <div class="value" id="cvFrac" style="color:var(--primary);">3/4</div>
+          </div>
+          <div class="convert-card dec">
+            <div class="label">小数</div>
+            <div class="value" id="cvDec" style="color:var(--blue);">0.75</div>
+          </div>
+          <div class="convert-card pct">
+            <div class="label">百分数</div>
+            <div class="value" id="cvPct" style="color:var(--success);">75%</div>
+          </div>
+        </div>
+        <div id="cvBar" style="height:24px;background:#e0e0e0;border-radius:12px;overflow:hidden;margin-top:16px;">
+          <div id="cvBarFill" style="height:100%;background:linear-gradient(90deg,var(--primary),var(--blue));border-radius:12px;transition:width .4s;width:75%;"></div>
+        </div>
+        <div id="cvBarLabel" style="text-align:center;font-size:14px;color:var(--dim);margin-top:6px;">75%</div>
+      </div>
+    </div>
+
+    <div id="tabG-drag6" class="lab-panel">
+      <p style="font-weight:700;margin-bottom:16px;">🎯 把分数、小数、百分数三种形式配对！</p>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;">
+        <div>
+          <p style="font-size:13px;color:var(--dim);font-weight:700;margin-bottom:10px;">分数</p>
+          <div><div class="drag-item" draggable="true" data-val="1/2" ondragstart="gStart(event)">1/2</div></div>
+          <div style="margin-top:8px;"><div class="drag-item" draggable="true" data-val="1/4" ondragstart="gStart(event)">1/4</div></div>
+          <div style="margin-top:8px;"><div class="drag-item" draggable="true" data-val="3/5" ondragstart="gStart(event)">3/5</div></div>
+        </div>
+        <div>
+          <p style="font-size:13px;color:var(--dim);font-weight:700;margin-bottom:10px;">对应小数</p>
+          <div><div class="drop-zone" data-answer="1/2" ondragover="gOver(event)" ondrop="gDrop(event)">拖到这里</div><span style="font-size:13px;color:var(--dim);margin-left:4px;">= 0.5</span></div>
+          <div style="margin-top:8px;"><div class="drop-zone" data-answer="1/4" ondragover="gOver(event)" ondrop="gDrop(event)">拖到这里</div><span style="font-size:13px;color:var(--dim);margin-left:4px;">= 0.25</span></div>
+          <div style="margin-top:8px;"><div class="drop-zone" data-answer="3/5" ondragover="gOver(event)" ondrop="gDrop(event)">拖到这里</div><span style="font-size:13px;color:var(--dim);margin-left:4px;">= 0.6</span></div>
+        </div>
+      </div>
+      <div id="drag6-result" style="text-align:center;font-size:16px;font-weight:700;margin-top:16px;"></div>
+    </div>
+
+    <div id="tabG-quiz2" class="lab-panel">
+      <div style="background:#f8f9fa;border-radius:16px;padding:20px;">
+        <h3 style="margin-bottom:16px;">📊 快速互化练习！</h3>
+        <div id="pctQ" style="font-size:22px;font-weight:900;text-align:center;color:var(--primary);margin:16px 0;">？</div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;" id="pctOptions"></div>
+        <div id="pctFeedback" style="text-align:center;font-size:16px;font-weight:700;margin-top:12px;padding:10px;border-radius:12px;display:none;"></div>
+        <button onclick="nextPctQ()" style="display:block;margin:12px auto 0;padding:10px 24px;background:var(--secondary);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;">下一题</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="knowledge-graph">
+    <h2>🕸️ 知识图谱</h2>
+    <div class="kg-legend">
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#3b82f6;"></div>当前</div>
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#22c55e;"></div>前置</div>
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#f97316;"></div>后续</div>
+    </div>
+    <svg id="kg-svg" height="300"></svg>
+    <script>
+    (function(){
+      const g={nodes:[
+        {id:"c",name:"分数小数百分数",type:"current"},
+        {id:"p1",name:"分数意义",type:"prereq"},
+        {id:"p2",name:"小数意义",type:"prereq"},
+        {id:"p3",name:"百分数意义",type:"prereq"},
+        {id:"n1",name:"百分率计算",type:"next"},
+        {id:"n2",name:"折扣利率",type:"next"},
+        {id:"n3",name:"统计应用",type:"next"}
+      ],links:[{source:"p1",target:"c"},{source:"p2",target:"c"},{source:"p3",target:"c"},{source:"c",target:"n1"},{source:"c",target:"n2"},{source:"c",target:"n3"}]};
+      const W=560,H=300,svg=d3.select("#kg-svg").attr("width",W).attr("height",H).attr("viewBox",`0 0 ${W} ${H}`);
+      const col=d=>({current:"#3b82f6",prereq:"#22c55e",next:"#f97316"}[d.type]);
+      const sim=d3.forceSimulation(g.nodes).force("link",d3.forceLink(g.links).id(d=>d.id).distance(100)).force("charge",d3.forceManyBody().strength(-280)).force("center",d3.forceCenter(W/2,H/2));
+      const link=svg.append("g").selectAll("line").data(g.links).join("line").attr("stroke","#ccc").attr("stroke-width",2);
+      const node=svg.append("g").selectAll("circle").data(g.nodes).join("circle").attr("r",30).attr("fill",col).attr("stroke","#fff").attr("stroke-width",3);
+      const label=svg.append("g").selectAll("text").data(g.nodes).join("text").text(d=>d.name).attr("text-anchor","middle").attr("dy","0.35em").attr("font-size",10).attr("fill","#fff").attr("font-weight","bold");
+      sim.on("tick",()=>{link.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y).attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);node.attr("cx",d=>d.x).attr("cy",d=>d.y);label.attr("x",d=>d.x).attr("y",d=>d.y);});
+    })();
+    </script>
+  </section>
+
+  <section id="quiz" class="section">
+    <div class="section-title">✅ 多步骤练习题</div>
+    <div class="quiz-card">
+      <div class="q-number">题目 1/3</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:0%" id="gq1p"></div></div>
+      <div id="gq1s1" class="quiz-step active">
+        <div class="q-text">🔄 <span class="highlight">3/5</span> 化成小数是？</div>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','gq1s1',null,'gq1p',0)">A. 0.35</button>
+        <button class="quiz-option" onclick="checkQ(this,'correct','gq1s1','gq1s2','gq1p',50)">B. 0.6</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','gq1s1',null,'gq1p',0)">C. 0.53</button>
+        <div class="quiz-feedback" id="fb-gq1s1"></div>
+      </div>
+      <div id="gq1s2" class="quiz-step">
+        <div class="q-text">✅ 对！0.6 化成百分数是？</div>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','gq1s2',null,'gq1p',50)">A. 6%</button>
+        <button class="quiz-option" onclick="checkQ(this,'correct','gq1s2',null,'gq1p',100)">B. 60%</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','gq1s2',null,'gq1p',50)">C. 600%</button>
+        <div class="quiz-feedback" id="fb-gq1s2"></div>
+      </div>
+    </div>
+    <div class="quiz-card">
+      <div class="q-number">题目 2/3</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:0%" id="gq2p"></div></div>
+      <div id="gq2s1" class="quiz-step active">
+        <div class="q-text">📊 <span class="highlight">36%</span> 化成小数是？</div>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','gq2s1',null,'gq2p',0)">A. 3.6</button>
+        <button class="quiz-option" onclick="checkQ(this,'correct','gq2s1','gq2s2','gq2p',50)">B. 0.36</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','gq2s1',null,'gq2p',0)">C. 0.036</button>
+        <div class="quiz-feedback" id="fb-gq2s1"></div>
+      </div>
+      <div id="gq2s2" class="quiz-step">
+        <div class="q-text">✅ 棒！36% 化成最简分数是？</div>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','gq2s2',null,'gq2p',50)">A. 36/100</button>
+        <button class="quiz-option" onclick="checkQ(this,'correct','gq2s2',null,'gq2p',100)">B. 9/25</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','gq2s2',null,'gq2p',50)">C. 18/50</button>
+        <div class="quiz-feedback" id="fb-gq2s2"></div>
+      </div>
+    </div>
+    <div class="quiz-card">
+      <div class="q-number">题目 3/3 · 挑战</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:0%" id="gq3p"></div></div>
+      <div id="gq3s1" class="quiz-step active">
+        <div class="q-text">🏆 班里40人，出勤36人，出勤率是多少？</div>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','gq3s1',null,'gq3p',0)">A. 40%</button>
+        <button class="quiz-option" onclick="checkQ(this,'correct','gq3s1','gq3s2','gq3p',50)">B. 90%</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','gq3s1',null,'gq3p',0)">C. 36%</button>
+        <div class="quiz-feedback" id="fb-gq3s1"></div>
+      </div>
+      <div id="gq3s2" class="quiz-step">
+        <div class="q-text">🎓 90% 化成分数是？</div>
+        <button class="quiz-option" onclick="checkQ(this,'correct','gq3s2',null,'gq3p',100)">A. 9/10</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','gq3s2',null,'gq3p',50)">B. 90/10</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','gq3s2',null,'gq3p',50)">C. 9/100</button>
+        <div class="quiz-feedback" id="fb-gq3s2"></div>
+      </div>
+    </div>
+  </section>
+  <div class="footer"><p>🎓 TeachAny · 分数小数百分数互化 · 六年级数学</p></div>
+</div>
+<script>
+function updateConvert(){
+  const n=+document.getElementById('gNumer').value,d=+document.getElementById('gDenom').value;
+  document.getElementById('gNumerV').textContent=n;document.getElementById('gDenomV').textContent=d;
+  if(n>=d){document.getElementById('gNumer').value=d-1;return;}
+  const dec=(n/d).toFixed(4).replace(/\.?0+$/,'');
+  const pct=((n/d)*100).toFixed(2).replace(/\.?0+$/,'')+'%';
+  document.getElementById('cvFrac').textContent=`${n}/${d}`;
+  document.getElementById('cvDec').textContent=dec;
+  document.getElementById('cvPct').textContent=pct;
+  const pctVal=(n/d)*100;
+  document.getElementById('cvBarFill').style.width=pctVal+'%';
+  document.getElementById('cvBarLabel').textContent=pct;
+}
+const pctQsList=[
+  {q:"1/4 = ？%",answer:"25",options:["20","25","40","50"]},
+  {q:"0.6 = ？%",answer:"60",options:["6","60","600","0.6"]},
+  {q:"75% = 0.？",answer:"75",options:["0.75","7.5","750","0.075"]},
+  {q:"80% = ？/5",answer:"4",options:["3","4","5","8"]},
+];
+let pctIdx=0;
+function loadPctQ(){
+  const q=pctQsList[pctIdx%pctQsList.length];
+  document.getElementById('pctQ').textContent=q.q;
+  const d=document.getElementById('pctOptions');d.innerHTML='';
+  document.getElementById('pctFeedback').style.display='none';
+  q.options.forEach(o=>{
+    const btn=document.createElement('button');btn.textContent=o;
+    btn.style.cssText='padding:12px 20px;border-radius:12px;border:2px solid #e0e0e0;background:#f5f5f5;font-size:18px;font-weight:900;cursor:pointer;margin:4px;';
+    btn.onclick=function(){
+      const fb=document.getElementById('pctFeedback');fb.style.display='block';
+      if(o===q.answer){fb.textContent='🎉 正确！';fb.style.background='rgba(81,207,102,0.15)';fb.style.color='#2b8a3e';}
+      else{fb.textContent=`❌ 答案是 ${q.answer}`;fb.style.background='rgba(255,107,107,0.1)';fb.style.color='#c92a2a';}
+    };
+    d.appendChild(btn);
+  });
+}
+function nextPctQ(){pctIdx++;loadPctQ();}
+loadPctQ();
+function switchTabG(name){
+  document.querySelectorAll('.lab-tab').forEach((t,i)=>{t.classList.toggle('active',['convert','drag6','quiz2'][i]===name);});
+  document.querySelectorAll('.lab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(`tabG-${name}`).classList.add('active');
+}
+function gStart(e){e.dataTransfer.setData('text',e.target.dataset.val);}
+function gOver(e){e.preventDefault();e.currentTarget.classList.add('drag-over');}
+function gDrop(e){
+  e.preventDefault();const zone=e.currentTarget;zone.classList.remove('drag-over');
+  const val=e.dataTransfer.getData('text'),ans=zone.dataset.answer;
+  zone.textContent=val;zone.style.background=val===ans?'rgba(81,207,102,0.2)':'rgba(255,107,107,0.1)';zone.style.borderColor=val===ans?'#51cf66':'#ff6b6b';
+  const zones=document.querySelectorAll('#tabG-drag6 .drop-zone');let cor=0;zones.forEach(z=>{if(z.textContent===z.dataset.answer)cor++;});
+  const r=document.getElementById('drag6-result');r.textContent=cor===zones.length?'🎉 全对！':'✅ '+cor+'/'+zones.length;r.style.color=cor===zones.length?'#51cf66':'var(--dim)';
+}
+function checkQ(btn,type,curStep,nextStep,progId,progVal){
+  const parent=document.getElementById(curStep);parent.querySelectorAll('.quiz-option').forEach(b=>b.disabled=true);btn.classList.add(type);
+  const fb=document.getElementById(`fb-${curStep}`);fb.classList.add('show');
+  if(type==='correct'){fb.style.background='rgba(81,207,102,0.12)';fb.style.color='#2b8a3e';fb.textContent='🎉 正确！';if(nextStep){setTimeout(()=>{parent.classList.remove('active');document.getElementById(nextStep).classList.add('active');},1200);}}
+  else{fb.style.background='rgba(255,107,107,0.1)';fb.style.color='#c92a2a';fb.textContent='❌ 再想想！';parent.querySelectorAll('.quiz-option').forEach(b=>{b.disabled=false;b.classList.remove('correct','wrong');});fb.classList.remove('show');return;}
+  document.getElementById(progId).style.width=progVal+'%';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小数的初步认识 · 教学课件</title>
+<meta name="teachany-node" content="decimals-intro">
+<meta name="teachany-subject" content="math">
+<meta name="teachany-domain" content="numbers-operations">
+<meta name="teachany-grade" content="3">
+<meta name="teachany-difficulty" content="1">
+<meta name="teachany-version" content="2.0">
+<meta name="teachany-author" content="weponusa">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--danger:#ff6b6b;--purple:#cc5de8;--blue:#339af0;--orange:#ff922b;--text:#2b2b2b;--dim:#666;--card:#ffffff;--border:rgba(0,0,0,0.06);}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:80px;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 15% 25%,rgba(255,107,107,0.06),transparent 50%),radial-gradient(circle at 85% 75%,rgba(78,205,196,0.06),transparent 50%);pointer-events:none;z-index:-1;}
+/* NAV */
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;box-shadow:0 2px 20px rgba(255,146,43,0.1);}
+.nav-brand{font-size:20px;font-weight:900;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all .25s;white-space:nowrap;}
+.nav a:hover,.nav a.active{color:#fff;background:linear-gradient(135deg,var(--primary),var(--orange));transform:scale(1.05);}
+/* LAYOUT */
+.container{max-width:960px;margin:0 auto;padding:80px 20px 60px;}
+.hero{text-align:center;padding:36px 0 30px;}
+.hero h1{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple),var(--blue));background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
+@keyframes rainbowShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.hero .subtitle{font-size:18px;color:var(--dim);margin-bottom:16px;}
+.hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+.hero .meta span{background:#fff;border:2px solid var(--border);border-radius:24px;padding:6px 18px;font-size:14px;font-weight:700;color:var(--dim);}
+.section{margin:40px 0;}
+.section-title{font-size:26px;font-weight:900;margin-bottom:18px;padding:10px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));display:inline-block;}
+.card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.04);transition:transform .25s,box-shadow .25s;}
+.card:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(255,107,107,0.12);}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;}
+.highlight{color:var(--primary);font-weight:900;}
+/* ========== LIFE SCENE ========== */
+#life-scene{background:linear-gradient(135deg,#e0f7fa,#f3e5f5);border-radius:24px;padding:30px;margin:30px 0;overflow:hidden;position:relative;min-height:320px;}
+#life-scene h2{text-align:center;font-size:22px;font-weight:900;margin-bottom:20px;color:#333;}
+.scene-stage{position:relative;height:240px;background:linear-gradient(180deg,#87CEEB 0%,#87CEEB 60%,#90EE90 60%,#90EE90 100%);border-radius:16px;overflow:hidden;}
+/* 太阳 */
+.sun{position:absolute;top:15px;right:30px;width:50px;height:50px;background:radial-gradient(circle,#FFD700,#FFA500);border-radius:50%;box-shadow:0 0 20px #FFD700;animation:sunPulse 3s ease-in-out infinite;}
+@keyframes sunPulse{0%,100%{box-shadow:0 0 20px #FFD700;transform:scale(1);}50%{box-shadow:0 0 40px #FFD700;transform:scale(1.08);}}
+/* 价签 */
+.price-tag{position:absolute;top:30px;left:40px;background:#fff;border:3px solid #ff6b6b;border-radius:12px;padding:8px 16px;font-size:20px;font-weight:900;color:#ff6b6b;animation:tagBounce 2s ease-in-out infinite;}
+@keyframes tagBounce{0%,100%{transform:translateY(0) rotate(-3deg);}50%{transform:translateY(-8px) rotate(3deg);}}
+/* 尺子 */
+.ruler{position:absolute;bottom:55px;left:50%;transform:translateX(-50%);width:280px;height:36px;background:linear-gradient(90deg,#ffe66d,#ffa502);border-radius:4px;border:2px solid #e67e00;}
+.ruler-mark{position:absolute;bottom:36px;font-size:11px;font-weight:700;color:#333;}
+.ruler-tick{position:absolute;bottom:0;width:2px;background:#555;}
+.ruler-tick.big{height:20px;}
+.ruler-tick.small{height:12px;}
+/* 放大镜 */
+.magnifier{position:absolute;bottom:30px;left:30%;width:60px;height:60px;border:4px solid #555;border-radius:50%;background:rgba(200,230,255,0.5);animation:magnifierMove 4s ease-in-out infinite;}
+.magnifier::after{content:'';position:absolute;bottom:-18px;right:-4px;width:4px;height:20px;background:#555;transform:rotate(45deg);}
+@keyframes magnifierMove{0%{left:20%;}50%{left:60%;}100%{left:20%;}}
+/* 小数点闪烁 */
+.decimal-dot{position:absolute;bottom:68px;left:50%;width:8px;height:8px;background:#ff6b6b;border-radius:50%;animation:dotBlink 1s ease-in-out infinite;transform:translateX(-50%);}
+@keyframes dotBlink{0%,100%{opacity:1;transform:translateX(-50%) scale(1);}50%{opacity:0.3;transform:translateX(-50%) scale(1.5);}}
+/* 数字飘动 */
+.float-num{position:absolute;font-size:28px;font-weight:900;animation:floatUp 3s ease-in-out infinite;}
+.float-num:nth-child(1){left:15%;bottom:80px;color:#ff6b6b;animation-delay:0s;}
+.float-num:nth-child(2){left:45%;bottom:90px;color:#4ecdc4;animation-delay:1s;}
+.float-num:nth-child(3){left:72%;bottom:75px;color:#ff922b;animation-delay:2s;}
+@keyframes floatUp{0%,100%{transform:translateY(0);}50%{transform:translateY(-15px);}}
+/* ========== INTERACTIVE LAB ========== */
+#interactive-lab{background:#fff;border-radius:24px;padding:30px;margin:30px 0;box-shadow:0 4px 24px rgba(0,0,0,0.06);}
+#interactive-lab h2{font-size:22px;font-weight:900;margin-bottom:20px;color:#333;}
+.lab-tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.lab-tab{padding:8px 20px;border-radius:20px;border:2px solid #e0e0e0;background:#f5f5f5;cursor:pointer;font-weight:700;font-size:14px;transition:all .2s;}
+.lab-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.lab-panel{display:none;}
+.lab-panel.active{display:block;}
+/* 滑块实验 */
+.slider-exp{padding:20px;background:#f8f9fa;border-radius:16px;}
+.slider-row{display:flex;align-items:center;gap:16px;margin:16px 0;}
+.slider-row label{font-weight:700;min-width:80px;font-size:15px;}
+input[type=range]{flex:1;height:6px;border-radius:3px;accent-color:var(--primary);}
+.slider-val{font-size:22px;font-weight:900;color:var(--primary);min-width:60px;text-align:center;}
+.decimal-display{text-align:center;padding:20px;background:#fff;border-radius:16px;margin-top:16px;border:3px solid var(--accent);}
+.decimal-display .big-num{font-size:56px;font-weight:900;color:var(--primary);}
+.decimal-display .label{font-size:14px;color:var(--dim);margin-top:8px;}
+.ruler-demo{display:flex;align-items:center;gap:0;margin:20px 0;background:#ffe66d;border-radius:8px;overflow:hidden;height:40px;}
+.ruler-seg{flex:1;border-right:2px solid #e67e00;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;}
+.ruler-seg.highlighted{background:#ff6b6b;color:#fff;}
+/* 拖拽配对 */
+.drag-area{display:flex;gap:30px;flex-wrap:wrap;justify-content:center;margin:20px 0;}
+.drag-items{display:flex;flex-direction:column;gap:12px;align-items:center;}
+.drag-item{cursor:grab;padding:10px 20px;background:var(--secondary);color:#fff;border-radius:12px;font-weight:700;font-size:16px;user-select:none;transition:transform .2s;box-shadow:0 3px 8px rgba(78,205,196,0.3);}
+.drag-item:hover{transform:scale(1.05);}
+.drag-item:active{cursor:grabbing;transform:scale(0.95);}
+.drop-zones{display:flex;flex-direction:column;gap:12px;align-items:center;}
+.drop-zone{min-width:160px;min-height:44px;border:3px dashed #ccc;border-radius:12px;padding:8px 16px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#aaa;transition:all .2s;}
+.drop-zone.drag-over{border-color:var(--secondary);background:rgba(78,205,196,0.1);}
+.drop-zone-label{font-size:12px;color:var(--dim);text-align:center;margin-top:4px;}
+/* ========== KNOWLEDGE GRAPH ========== */
+#knowledge-graph{background:#fff;border-radius:24px;padding:30px;margin:30px 0;box-shadow:0 4px 24px rgba(0,0,0,0.06);}
+#knowledge-graph h2{font-size:22px;font-weight:900;margin-bottom:16px;color:#333;}
+.kg-legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;}
+.kg-legend-item{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;}
+.kg-dot{width:14px;height:14px;border-radius:50%;}
+#kg-svg{width:100%;max-width:600px;display:block;margin:0 auto;border-radius:16px;background:#f8f9fa;}
+/* QUIZ */
+.quiz-card{background:#fff;border-radius:20px;padding:26px;margin-bottom:20px;border:2px solid var(--border);box-shadow:0 4px 16px rgba(0,0,0,0.04);}
+.quiz-card .q-number{font-size:13px;color:var(--dim);font-weight:700;margin-bottom:6px;}
+.quiz-card .q-text{font-size:18px;font-weight:900;margin-bottom:16px;color:var(--text);}
+.quiz-step{display:none;}
+.quiz-step.active{display:block;}
+.quiz-option{display:block;padding:14px 20px;margin:8px 0;border-radius:14px;background:#f8f9fa;border:2.5px solid #e8e8e8;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);transition:all .2s;width:100%;text-align:left;}
+.quiz-option:hover{background:rgba(78,205,196,0.08);border-color:var(--secondary);}
+.quiz-option.correct{background:rgba(81,207,102,0.12);border-color:var(--success);color:#2b8a3e;}
+.quiz-option.wrong{background:rgba(255,107,107,0.1);border-color:var(--danger);color:#c92a2a;}
+.quiz-feedback{padding:14px 18px;border-radius:14px;margin-top:10px;font-size:15px;display:none;font-weight:700;}
+.quiz-feedback.show{display:block;animation:popIn .35s cubic-bezier(.34,1.56,.64,1);}
+@keyframes popIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+.quiz-next-btn{margin-top:12px;padding:10px 24px;background:var(--primary);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;display:none;}
+.quiz-next-btn.show{display:inline-block;}
+.progress-bar{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin:8px 0 16px;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--orange));border-radius:3px;transition:width .4s;}
+/* SUMMARY */
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin:20px 0;}
+.summary-card{background:#fff;border-radius:16px;padding:20px;text-align:center;border:2px solid var(--border);}
+.summary-card .s-icon{font-size:36px;margin-bottom:8px;}
+.summary-card .s-title{font-size:15px;font-weight:900;margin-bottom:6px;}
+.summary-card .s-desc{font-size:13px;color:var(--dim);}
+/* FOOTER */
+.footer{text-align:center;color:var(--dim);font-size:14px;margin-top:60px;padding-top:20px;border-top:2px solid var(--border);}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <span class="nav-brand">🔢 TeachAny</span>
+  <a href="#life-scene" class="active">🎬 场景</a>
+  <a href="#concepts">📖 概念</a>
+  <a href="#interactive-lab">🧪 实验台</a>
+  <a href="#knowledge-graph">🕸️ 图谱</a>
+  <a href="#quiz">✅ 练习</a>
+  <a href="#summary">📋 总结</a>
+</nav>
+
+<div class="container">
+  <!-- HERO -->
+  <div class="hero">
+    <h1>小数的初步认识</h1>
+    <p class="subtitle">✨ 走进小数的奇妙世界，从生活中发现数学！</p>
+    <div class="meta">
+      <span>📚 三年级数学</span>
+      <span>⏱️ 45分钟</span>
+      <span>🎯 数与运算</span>
+      <span>⭐ 基础入门</span>
+    </div>
+  </div>
+
+  <!-- LIFE SCENE -->
+  <section id="life-scene">
+    <h2>🎬 生活场景：超市里的小数</h2>
+    <div class="scene-stage">
+      <div class="sun"></div>
+      <div class="price-tag">¥ 3.5</div>
+      <div class="ruler">
+        <span class="ruler-mark" style="left:0px;bottom:36px;">0</span>
+        <span class="ruler-mark" style="left:70px;bottom:36px;">1</span>
+        <span class="ruler-mark" style="left:140px;bottom:36px;">2</span>
+        <span class="ruler-mark" style="left:210px;bottom:36px;">3</span>
+      </div>
+      <div class="decimal-dot"></div>
+      <div class="magnifier"></div>
+      <div class="float-num">0.1</div>
+      <div class="float-num">0.5</div>
+      <div class="float-num">1.8</div>
+    </div>
+    <div class="card" style="margin-top:20px;background:rgba(255,255,255,0.9);">
+      <h3>🌟 为什么需要小数？</h3>
+      <p>当我们在超市购物时，经常会看到价格标签：<strong class="highlight">¥3.5</strong>、<strong class="highlight">¥12.8</strong>。当我们用尺子量东西时，结果可能不是整数，比如铅笔长 <strong class="highlight">15.6厘米</strong>。这些数里面有个小圆点，我们叫它<strong class="highlight">小数点</strong>。小数点左边是整数部分，右边是小数部分！</p>
+    </div>
+  </section>
+
+  <!-- CONCEPTS -->
+  <section id="concepts" class="section">
+    <div class="section-title">📖 核心概念</div>
+    <div class="grid-2">
+      <div class="card">
+        <h3>🔵 什么是小数？</h3>
+        <p>小数由两部分组成：</p>
+        <ul style="margin:10px 0 0 20px;line-height:2.2;">
+          <li>小数点<strong class="highlight">左边</strong>：整数部分（可以是0）</li>
+          <li>小数点<strong class="highlight">右边</strong>：小数部分</li>
+        </ul>
+        <div style="text-align:center;margin-top:16px;font-size:36px;font-weight:900;">
+          <span style="color:var(--blue)">3</span><span style="color:var(--primary);font-size:42px">.</span><span style="color:var(--orange)">5</span>
+        </div>
+        <p style="text-align:center;font-size:13px;color:var(--dim);margin-top:4px;">整数部分 · 小数点 · 小数部分</p>
+      </div>
+      <div class="card">
+        <h3>📏 小数与分数的关系</h3>
+        <p>小数是分数的另一种写法！</p>
+        <ul style="margin:10px 0 0 20px;line-height:2.5;">
+          <li><strong class="highlight">0.1</strong> = 十分之一（1/10）</li>
+          <li><strong class="highlight">0.5</strong> = 十分之五（5/10）</li>
+          <li><strong class="highlight">1.3</strong> = 1又十分之三</li>
+          <li><strong class="highlight">0.01</strong> = 百分之一（1/100）</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>🎯 小数的计数单位</h3>
+        <p>在数轴上，0到1之间可以等分成10份：</p>
+        <div style="display:flex;align-items:center;margin:16px 0;gap:0;overflow-x:auto;">
+          <div style="flex-shrink:0;font-weight:900;">0</div>
+          <div style="flex:1;height:4px;background:linear-gradient(90deg,var(--primary),var(--secondary));margin:0 8px;border-radius:2px;"></div>
+          <div style="flex-shrink:0;font-weight:900;">1</div>
+        </div>
+        <p>每一份是 <strong class="highlight">0.1</strong>（十分之一），这就是小数的一位数！</p>
+      </div>
+      <div class="card">
+        <h3>🌍 生活中的小数</h3>
+        <ul style="margin:0 0 0 20px;line-height:2.5;">
+          <li>体重：<strong class="highlight">35.6</strong> 千克</li>
+          <li>身高：<strong class="highlight">1.28</strong> 米</li>
+          <li>气温：<strong class="highlight">36.5</strong> °C</li>
+          <li>价格：<strong class="highlight">¥12.8</strong></li>
+          <li>成绩：<strong class="highlight">98.5</strong> 分</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- INTERACTIVE LAB -->
+  <section id="interactive-lab">
+    <h2>🧪 互动实验台</h2>
+    <div class="lab-tabs">
+      <button class="lab-tab active" onclick="switchTab('slider')">📊 数轴探索</button>
+      <button class="lab-tab" onclick="switchTab('drag')">🎯 拖拽配对</button>
+      <button class="lab-tab" onclick="switchTab('convert')">🔄 小数转换</button>
+    </div>
+
+    <!-- 滑块实验 -->
+    <div id="tab-slider" class="lab-panel active">
+      <div class="slider-exp">
+        <h3 style="margin-bottom:16px;">🎚️ 拖动滑块，探索小数！</h3>
+        <div class="slider-row">
+          <label>整数部分</label>
+          <input type="range" min="0" max="9" value="3" id="intPart" oninput="updateDecimal()">
+          <span class="slider-val" id="intVal">3</span>
+        </div>
+        <div class="slider-row">
+          <label>小数部分</label>
+          <input type="range" min="0" max="9" value="5" id="decPart" oninput="updateDecimal()">
+          <span class="slider-val" id="decVal">5</span>
+        </div>
+        <div class="decimal-display">
+          <div class="big-num" id="resultNum">3.5</div>
+          <div class="label" id="resultLabel">三点五 = 3又十分之五</div>
+        </div>
+        <div style="margin-top:16px;">
+          <p style="font-weight:700;margin-bottom:8px;">📏 在0~10的数轴上的位置：</p>
+          <div class="ruler-demo" id="rulerDemo">
+            <div class="ruler-seg">0</div>
+            <div class="ruler-seg">1</div>
+            <div class="ruler-seg">2</div>
+            <div class="ruler-seg">3</div>
+            <div class="ruler-seg highlighted" id="rulerActive">3.5▲</div>
+            <div class="ruler-seg">4</div>
+            <div class="ruler-seg">5</div>
+            <div class="ruler-seg">6</div>
+            <div class="ruler-seg">7</div>
+            <div class="ruler-seg">8</div>
+            <div class="ruler-seg">9</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 拖拽配对 -->
+    <div id="tab-drag" class="lab-panel">
+      <p style="font-weight:700;margin-bottom:16px;">🎯 把小数拖拽到正确的分数描述旁边！</p>
+      <div class="drag-area">
+        <div class="drag-items">
+          <p style="font-size:13px;color:var(--dim);font-weight:700;margin-bottom:8px;">小数</p>
+          <div class="drag-item" draggable="true" data-val="0.1" ondragstart="dragStart(event)">0.1</div>
+          <div class="drag-item" draggable="true" data-val="0.5" ondragstart="dragStart(event)">0.5</div>
+          <div class="drag-item" draggable="true" data-val="0.8" ondragstart="dragStart(event)">0.8</div>
+          <div class="drag-item" draggable="true" data-val="1.3" ondragstart="dragStart(event)">1.3</div>
+        </div>
+        <div class="drop-zones">
+          <p style="font-size:13px;color:var(--dim);font-weight:700;margin-bottom:8px;">对应意义</p>
+          <div>
+            <div class="drop-zone" data-answer="0.1" ondragover="dragOver(event)" ondrop="dropItem(event)">拖到这里</div>
+            <div class="drop-zone-label">十分之一</div>
+          </div>
+          <div>
+            <div class="drop-zone" data-answer="0.5" ondragover="dragOver(event)" ondrop="dropItem(event)">拖到这里</div>
+            <div class="drop-zone-label">十分之五（一半）</div>
+          </div>
+          <div>
+            <div class="drop-zone" data-answer="0.8" ondragover="dragOver(event)" ondrop="dropItem(event)">拖到这里</div>
+            <div class="drop-zone-label">十分之八</div>
+          </div>
+          <div>
+            <div class="drop-zone" data-answer="1.3" ondragover="dragOver(event)" ondrop="dropItem(event)">拖到这里</div>
+            <div class="drop-zone-label">1又十分之三</div>
+          </div>
+        </div>
+      </div>
+      <div id="drag-result" style="text-align:center;font-size:16px;font-weight:700;margin-top:10px;"></div>
+    </div>
+
+    <!-- 转换练习 -->
+    <div id="tab-convert" class="lab-panel">
+      <div style="background:#f8f9fa;border-radius:16px;padding:20px;">
+        <h3 style="margin-bottom:16px;">🔄 小数与分数互换！</h3>
+        <div id="convertQ" style="font-size:20px;font-weight:900;text-align:center;margin:20px 0;color:var(--primary);">0.3 = ？/10</div>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;" id="convertOptions"></div>
+        <div id="convertFeedback" style="text-align:center;font-size:16px;font-weight:700;margin-top:16px;padding:10px;border-radius:12px;display:none;"></div>
+        <button onclick="nextConvert()" style="display:block;margin:16px auto 0;padding:10px 24px;background:var(--secondary);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;">下一题 →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- KNOWLEDGE GRAPH -->
+  <section id="knowledge-graph">
+    <h2>🕸️ 知识图谱</h2>
+    <p style="color:var(--dim);font-size:14px;margin-bottom:16px;">当前课题与前置、后续知识的关联图</p>
+    <div class="kg-legend">
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#3b82f6;"></div>当前课题</div>
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#22c55e;"></div>前置知识</div>
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#f97316;"></div>后续知识</div>
+    </div>
+    <svg id="kg-svg" height="320"></svg>
+    <script>
+    (function(){
+      const graphData = {
+        nodes:[
+          {id:"current",name:"小数初步认识",type:"current"},
+          {id:"pre1",name:"整数认识",type:"prereq"},
+          {id:"pre2",name:"分数初步认识",type:"prereq"},
+          {id:"pre3",name:"数的大小比较",type:"prereq"},
+          {id:"next1",name:"小数意义性质",type:"next"},
+          {id:"next2",name:"小数加减法",type:"next"},
+          {id:"next3",name:"小数比较大小",type:"next"}
+        ],
+        links:[
+          {source:"pre1",target:"current"},
+          {source:"pre2",target:"current"},
+          {source:"pre3",target:"current"},
+          {source:"current",target:"next1"},
+          {source:"current",target:"next2"},
+          {source:"current",target:"next3"}
+        ]
+      };
+      const W=560,H=320;
+      const svg=d3.select("#kg-svg").attr("width",W).attr("height",H).attr("viewBox",`0 0 ${W} ${H}`);
+      const color=d=>({current:"#3b82f6",prereq:"#22c55e",next:"#f97316"}[d.type]);
+      const sim=d3.forceSimulation(graphData.nodes)
+        .force("link",d3.forceLink(graphData.links).id(d=>d.id).distance(110))
+        .force("charge",d3.forceManyBody().strength(-320))
+        .force("center",d3.forceCenter(W/2,H/2));
+      const link=svg.append("g").selectAll("line").data(graphData.links).join("line")
+        .attr("stroke","#ccc").attr("stroke-width",2).attr("marker-end","url(#arrow)");
+      svg.append("defs").append("marker").attr("id","arrow").attr("viewBox","0 -5 10 10")
+        .attr("refX",38).attr("refY",0).attr("markerWidth",8).attr("markerHeight",8)
+        .attr("orient","auto").append("path").attr("d","M0,-5L10,0L0,5").attr("fill","#ccc");
+      const node=svg.append("g").selectAll("circle").data(graphData.nodes).join("circle")
+        .attr("r",32).attr("fill",color).attr("stroke","#fff").attr("stroke-width",3)
+        .style("cursor","pointer").on("mouseover",function(){d3.select(this).attr("r",36);})
+        .on("mouseout",function(){d3.select(this).attr("r",32);});
+      const label=svg.append("g").selectAll("text").data(graphData.nodes).join("text")
+        .text(d=>d.name).attr("text-anchor","middle").attr("dy","0.35em")
+        .attr("font-size",10).attr("fill","#fff").attr("font-weight","bold");
+      sim.on("tick",()=>{
+        link.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y)
+            .attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);
+        node.attr("cx",d=>d.x).attr("cy",d=>d.y);
+        label.attr("x",d=>d.x).attr("y",d=>d.y);
+      });
+    })();
+    </script>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="quiz" class="section">
+    <div class="section-title">✅ 多步骤练习题</div>
+
+    <!-- Q1 -->
+    <div class="quiz-card">
+      <div class="q-number">题目 1/3 · 第一关</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:0%" id="q1-progress"></div></div>
+      <div id="q1-step1" class="quiz-step active">
+        <div class="q-text">🏪 超市里苹果价格是 <span class="highlight">3.6元</span>，请问小数点左边的数字是多少？</div>
+        <button class="quiz-option" onclick="checkQ(this,'correct','q1-step1','q1-step2','q1-progress',33)">A. 3（整数部分）</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','q1-step1',null,'q1-progress',0)">B. 6（小数部分）</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','q1-step1',null,'q1-progress',0)">C. 36</button>
+        <div class="quiz-feedback" id="fb-q1-step1"></div>
+      </div>
+      <div id="q1-step2" class="quiz-step">
+        <div class="q-text">✅ 答对了！那么 3.6 中，小数点右边的 6 表示什么？</div>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','q1-step2',null,'q1-progress',33)">A. 六个一</button>
+        <button class="quiz-option" onclick="checkQ(this,'correct','q1-step2','q1-step3','q1-progress',66)">B. 六个十分之一（6/10）</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','q1-step2',null,'q1-progress',33)">C. 六十</button>
+        <div class="quiz-feedback" id="fb-q1-step2"></div>
+      </div>
+      <div id="q1-step3" class="quiz-step">
+        <div class="q-text">🎉 超棒！3.6 可以怎么读？</div>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','q1-step3',null,'q1-progress',66)">A. 三六</button>
+        <button class="quiz-option" onclick="checkQ(this,'correct','q1-step3',null,'q1-progress',100)">B. 三点六</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','q1-step3',null,'q1-progress',66)">C. 三十六</button>
+        <div class="quiz-feedback" id="fb-q1-step3"></div>
+      </div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="quiz-card">
+      <div class="q-number">题目 2/3 · 第二关</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:0%" id="q2-progress"></div></div>
+      <div id="q2-step1" class="quiz-step active">
+        <div class="q-text">📏 用尺子量铅笔，量了 <span class="highlight">1整格</span> 又 <span class="highlight">5小格</span>（每小格是0.1cm）。铅笔长多少厘米？</div>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','q2-step1',null,'q2-progress',0)">A. 15厘米</button>
+        <button class="quiz-option" onclick="checkQ(this,'correct','q2-step1','q2-step2','q2-progress',50)">B. 1.5厘米</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','q2-step1',null,'q2-progress',0)">C. 0.15厘米</button>
+        <div class="quiz-feedback" id="fb-q2-step1"></div>
+      </div>
+      <div id="q2-step2" class="quiz-step">
+        <div class="q-text">✅ 对！1.5 中，十分位上的数字是？</div>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','q2-step2',null,'q2-progress',50)">A. 1</button>
+        <button class="quiz-option" onclick="checkQ(this,'correct','q2-step2',null,'q2-progress',100)">B. 5</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','q2-step2',null,'q2-progress',50)">C. 0</button>
+        <div class="quiz-feedback" id="fb-q2-step2"></div>
+      </div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="quiz-card">
+      <div class="q-number">题目 3/3 · 终极挑战</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:0%" id="q3-progress"></div></div>
+      <div id="q3-step1" class="quiz-step active">
+        <div class="q-text">🌡️ 下面哪个<strong>不是</strong>小数？</div>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','q3-step1',null,'q3-progress',0)">A. 0.5</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','q3-step1',null,'q3-progress',0)">B. 3.14</button>
+        <button class="quiz-option" onclick="checkQ(this,'correct','q3-step1','q3-step2','q3-progress',50)">C. 7（整数）</button>
+        <div class="quiz-feedback" id="fb-q3-step1"></div>
+      </div>
+      <div id="q3-step2" class="quiz-step">
+        <div class="q-text">🎓 最后一问：在数轴上，0.5 在哪两个整数之间？</div>
+        <button class="quiz-option" onclick="checkQ(this,'correct','q3-step2',null,'q3-progress',100)">A. 0和1之间</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','q3-step2',null,'q3-progress',50)">B. 1和2之间</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','q3-step2',null,'q3-progress',50)">C. 5和6之间</button>
+        <div class="quiz-feedback" id="fb-q3-step2"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SUMMARY -->
+  <section id="summary" class="section">
+    <div class="section-title">📋 学习总结</div>
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="s-icon">🔵</div>
+        <div class="s-title">小数点</div>
+        <div class="s-desc">分隔整数部分和小数部分的圆点，不能少！</div>
+      </div>
+      <div class="summary-card">
+        <div class="s-icon">📏</div>
+        <div class="s-title">十分位</div>
+        <div class="s-desc">小数点后第一位，每位是十分之一（0.1）</div>
+      </div>
+      <div class="summary-card">
+        <div class="s-icon">🔢</div>
+        <div class="s-title">读写方法</div>
+        <div class="s-desc">整数部分正常读，小数点读"点"，小数部分逐位读</div>
+      </div>
+      <div class="summary-card">
+        <div class="s-icon">🌍</div>
+        <div class="s-title">生活应用</div>
+        <div class="s-desc">价格、温度、长度等生活中处处有小数</div>
+      </div>
+    </div>
+    <div class="card" style="background:linear-gradient(135deg,rgba(78,205,196,0.1),rgba(255,230,109,0.1));">
+      <h3>🏆 核心记忆口诀</h3>
+      <p style="font-size:18px;font-weight:700;line-height:2.5;text-align:center;color:var(--primary);">
+        小数点，很重要 🔵<br>
+        左边整数右边小 📏<br>
+        十分之一是0.1 🔢<br>
+        生活处处离不了 🌟
+      </p>
+    </div>
+  </section>
+
+  <div class="footer">
+    <p>🎓 TeachAny · 小数的初步认识 · 三年级数学</p>
+    <p style="margin-top:6px;">Made with ❤️ for young mathematicians</p>
+  </div>
+</div>
+
+<script>
+// 滑块更新
+function updateDecimal(){
+  const i=document.getElementById('intPart').value;
+  const d=document.getElementById('decPart').value;
+  document.getElementById('intVal').textContent=i;
+  document.getElementById('decVal').textContent=d;
+  const num=`${i}.${d}`;
+  document.getElementById('resultNum').textContent=num;
+  const cn=['零','一','二','三','四','五','六','七','八','九'];
+  document.getElementById('resultLabel').textContent=`${cn[i]}点${cn[d]} = ${i}又十分之${d}`;
+  // 更新数轴
+  const segs=document.querySelectorAll('.ruler-seg');
+  segs.forEach((s,idx)=>{
+    s.classList.remove('highlighted');
+    s.textContent=idx;
+  });
+  const activeIdx=parseInt(i);
+  if(activeIdx<segs.length){
+    segs[activeIdx].classList.add('highlighted');
+    segs[activeIdx].textContent=`${num}▲`;
+  }
+}
+
+// Tab切换
+function switchTab(name){
+  document.querySelectorAll('.lab-tab').forEach((t,i)=>{
+    t.classList.toggle('active',['slider','drag','convert'][i]===name);
+  });
+  document.querySelectorAll('.lab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(`tab-${name}`).classList.add('active');
+}
+
+// 拖拽
+function dragStart(e){e.dataTransfer.setData('text',e.target.dataset.val);}
+function dragOver(e){e.preventDefault();e.currentTarget.classList.add('drag-over');}
+function dropItem(e){
+  e.preventDefault();
+  const zone=e.currentTarget;
+  zone.classList.remove('drag-over');
+  const val=e.dataTransfer.getData('text');
+  const answer=zone.dataset.answer;
+  zone.textContent=val;
+  zone.style.background=val===answer?'rgba(81,207,102,0.2)':'rgba(255,107,107,0.1)';
+  zone.style.borderColor=val===answer?'#51cf66':'#ff6b6b';
+  zone.style.color=val===answer?'#2b8a3e':'#c92a2a';
+  checkAllDrop();
+}
+function checkAllDrop(){
+  const zones=document.querySelectorAll('.drop-zone');
+  let correct=0;
+  zones.forEach(z=>{if(z.textContent===z.dataset.answer)correct++;});
+  const r=document.getElementById('drag-result');
+  if(correct===zones.length){r.textContent='🎉 全部正确！太棒了！';r.style.color='#51cf66';}
+  else{r.textContent=`✅ 正确 ${correct}/${zones.length}，继续加油！`;r.style.color='var(--dim)';}
+}
+
+// 转换题
+const convertQuestions=[
+  {q:"0.3 = ？/10",answer:3,options:[1,3,5,7]},
+  {q:"0.7 = ？/10",answer:7,options:[3,5,7,9]},
+  {q:"1.2 = 1又？/10",answer:2,options:[1,2,4,8]},
+  {q:"十分之六 = 0.？",answer:6,options:[1,4,6,9]},
+];
+let cqIdx=0;
+function loadConvert(){
+  const q=convertQuestions[cqIdx%convertQuestions.length];
+  document.getElementById('convertQ').textContent=q.q;
+  const div=document.getElementById('convertOptions');
+  div.innerHTML='';
+  q.options.forEach(o=>{
+    const btn=document.createElement('button');
+    btn.textContent=o;
+    btn.style.cssText='padding:12px 24px;border-radius:12px;border:2px solid #e0e0e0;background:#f5f5f5;font-size:18px;font-weight:900;cursor:pointer;transition:all .2s;';
+    btn.onclick=function(){
+      const fb=document.getElementById('convertFeedback');
+      fb.style.display='block';
+      if(o===q.answer){fb.textContent='🎉 正确！';fb.style.background='rgba(81,207,102,0.15)';fb.style.color='#2b8a3e';}
+      else{fb.textContent=`❌ 不对哦，正确答案是 ${q.answer}`;fb.style.background='rgba(255,107,107,0.1)';fb.style.color='#c92a2a';}
+    };
+    div.appendChild(btn);
+  });
+  document.getElementById('convertFeedback').style.display='none';
+}
+function nextConvert(){cqIdx++;loadConvert();}
+loadConvert();
+
+// 多步骤题
+function checkQ(btn,type,currentStep,nextStep,progressId,progressVal){
+  const parent=document.getElementById(currentStep);
+  parent.querySelectorAll('.quiz-option').forEach(b=>b.disabled=true);
+  btn.classList.add(type);
+  const fb=document.getElementById(`fb-${currentStep}`);
+  fb.classList.add('show');
+  if(type==='correct'){
+    fb.style.background='rgba(81,207,102,0.12)';fb.style.color='#2b8a3e';
+    fb.textContent='🎉 答对了！很棒！';
+    if(nextStep){
+      setTimeout(()=>{
+        parent.classList.remove('active');
+        document.getElementById(nextStep).classList.add('active');
+      },1200);
+    }
+  } else {
+    fb.style.background='rgba(255,107,107,0.1)';fb.style.color='#c92a2a';
+    fb.textContent='❌ 再想想看！请重新选择。';
+    btn.disabled=false;
+    parent.querySelectorAll('.quiz-option').forEach(b=>{if(b!==btn)b.disabled=false;});
+    btn.classList.remove(type);
+    fb.classList.remove('show');
+    return;
+  }
+  document.getElementById(progressId).style.width=progressVal+'%';
+}
+
+// NAV active
+const sections=document.querySelectorAll('section[id],div[id]');
+window.addEventListener('scroll',()=>{
+  let cur='';
+  sections.forEach(s=>{if(window.scrollY>=s.offsetTop-100)cur=s.id;});
+  document.querySelectorAll('.nav a').forEach(a=>{
+    a.classList.toggle('active',a.getAttribute('href')==='#'+cur);
+  });
+});
+</script>
+</body>
+</html>

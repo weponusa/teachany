@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>九九乘法表 · 互动课件</title>
+<meta name="teachany-node" content="multiplication-table">
+<meta name="teachany-subject" content="math">
+<meta name="teachany-domain" content="numbers-operations">
+<meta name="teachany-grade" content="2">
+<meta name="teachany-difficulty" content="2">
+<meta name="teachany-version" content="2.0">
+<meta name="teachany-author" content="weponusa">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--card:#fff;--purple:#cc5de8;--blue:#339af0;--orange:#ff922b;--text:#2b2b2b;--dim:#666;--border:rgba(0,0,0,0.06);}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:60px;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 10% 20%,rgba(255,107,107,.06),transparent 50%),radial-gradient(circle at 90% 80%,rgba(78,205,196,.06),transparent 50%);pointer-events:none;z-index:-1;}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;}
+.nav-brand{font-size:20px;font-weight:900;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all .25s;white-space:nowrap;}
+.nav a:hover,.nav a.active{color:#fff;background:linear-gradient(135deg,var(--primary),var(--orange));}
+.container{max-width:960px;margin:0 auto;padding:80px 20px 60px;}
+.hero{text-align:center;padding:36px 0 30px;}
+.hero h1{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple),var(--blue));background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
+@keyframes rainbowShift{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}
+.hero .subtitle{font-size:18px;color:var(--dim);margin-bottom:16px;}
+.hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+.hero .meta span{background:#fff;border:2px solid var(--border);border-radius:24px;padding:6px 18px;font-size:14px;font-weight:700;color:var(--dim);}
+.section{margin:40px 0;}
+.section-title{font-size:26px;font-weight:900;margin-bottom:18px;padding:10px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(255,107,107,.1),rgba(78,205,196,.1));display:inline-block;}
+.card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,.04);transition:transform .25s,box-shadow .25s;}
+.card:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(255,107,107,.12);}
+.card h3{font-size:20px;font-weight:900;margin-bottom:10px;}
+.card p,.card li{font-size:16px;line-height:1.9;color:var(--dim);}
+.highlight{color:var(--primary);font-weight:900;}
+
+/* ===== 生活场景：格子逐渐点亮 ===== */
+#life-scene{background:linear-gradient(135deg,#fff8e1,#e3f2fd);border-radius:24px;padding:32px;}
+.light-grid{display:grid;grid-template-columns:repeat(9,1fr);gap:6px;max-width:420px;margin:0 auto;}
+.light-cell{aspect-ratio:1;border-radius:8px;background:#e0e0e0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#999;animation:cellLight 0.5s ease forwards;opacity:0;}
+@keyframes cellLight{from{opacity:0;background:#e0e0e0;color:#ccc;}to{opacity:1;background:var(--cell-color,#ff6b6b);color:#fff;}}
+/* 太阳动画 */
+.life-sun{font-size:48px;text-align:center;margin-bottom:16px;animation:sunSpin 8s linear infinite;}
+@keyframes sunSpin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+/* 彩虹波纹 */
+.life-waves{display:flex;justify-content:center;gap:4px;margin-top:16px;}
+.wave-bar{width:8px;border-radius:4px;animation:waveUp 1s ease-in-out infinite;}
+@keyframes waveUp{0%,100%{height:16px;}50%{height:40px;}}
+
+/* ===== 乘法表 ===== */
+.mul-table{border-collapse:collapse;width:100%;font-size:13px;}
+.mul-table td,.mul-table th{padding:6px 4px;text-align:center;border:1px solid rgba(0,0,0,.08);border-radius:4px;cursor:pointer;transition:all .2s;}
+.mul-table .header-cell{background:linear-gradient(135deg,var(--primary),var(--orange));color:#fff;font-weight:900;border-radius:0;}
+.mul-table .data-cell{background:#fff;font-weight:700;color:var(--dim);}
+.mul-table .data-cell:hover{background:var(--accent);color:var(--text);transform:scale(1.1);}
+.mul-table .data-cell.highlight-row{background:rgba(255,107,107,.15);}
+.mul-table .data-cell.highlight-col{background:rgba(78,205,196,.15);}
+.mul-table .data-cell.highlight-cross{background:var(--primary);color:#fff;transform:scale(1.2);z-index:2;position:relative;}
+
+/* ===== 互动实验台 ===== */
+#interactive-lab{padding:28px;border-radius:24px;background:linear-gradient(135deg,#f0fff4,#fff0e0);}
+.slider-row{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+.slider-row label{font-weight:700;min-width:60px;}
+input[type=range]{flex:1;min-width:120px;accent-color:var(--primary);}
+.slider-val{min-width:40px;font-weight:900;color:var(--primary);}
+.mul-result-big{font-size:48px;font-weight:900;color:var(--primary);text-align:center;padding:20px;animation:popIn .3s cubic-bezier(.34,1.56,.64,1);}
+@keyframes popIn{from{transform:scale(.8);opacity:0;}to{transform:scale(1);opacity:1;}}
+
+/* 拖拽配对 */
+.drag-area{display:flex;gap:20px;flex-wrap:wrap;margin-top:16px;}
+.drag-items,.drop-zones{flex:1;min-width:160px;}
+.drag-item{padding:10px 14px;background:#fff;border:2.5px dashed var(--secondary);border-radius:14px;margin-bottom:8px;cursor:grab;font-weight:700;text-align:center;transition:all .2s;}
+.drag-item:hover{background:rgba(78,205,196,.12);transform:scale(1.05);}
+.drag-item.dragging{opacity:.5;}
+.drop-zone{padding:14px;border:2.5px dashed #ccc;border-radius:14px;margin-bottom:8px;min-height:48px;text-align:center;transition:all .2s;color:#999;font-size:14px;}
+.drop-zone.over{border-color:var(--primary);background:rgba(255,107,107,.06);}
+.drop-zone.matched{border-color:var(--success);background:rgba(81,207,102,.1);color:var(--success);font-weight:700;}
+.drop-zone.wrong-match{animation:shake .4s;}
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+
+/* 知识图谱 */
+#knowledge-graph{background:#fff;border-radius:24px;padding:24px;}
+#kg-svg{width:100%;height:340px;display:block;}
+.kg-legend{display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;}
+.kg-legend-item{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;}
+.kg-dot{width:14px;height:14px;border-radius:50%;}
+
+/* 互动题 */
+.quiz-step{display:none;}
+.quiz-step.active{display:block;animation:fadeIn .4s;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.quiz-q{font-size:18px;font-weight:900;margin-bottom:18px;}
+.quiz-option{display:block;width:100%;padding:14px 20px;margin:8px 0;border-radius:16px;background:#fff;border:2.5px solid #e8e8e8;cursor:pointer;font-size:16px;font-weight:700;text-align:left;transition:all .25s;}
+.quiz-option:hover{background:rgba(78,205,196,.08);border-color:var(--secondary);}
+.quiz-option.correct{background:rgba(81,207,102,.12);border-color:var(--success);color:#2b8a3e;}
+.quiz-option.wrong{background:rgba(255,107,107,.1);border-color:var(--primary);color:#c92a2a;}
+.quiz-feedback{padding:12px 18px;border-radius:14px;margin-top:10px;font-size:15px;font-weight:700;display:none;}
+.quiz-feedback.show{display:block;animation:popIn .35s cubic-bezier(.34,1.56,.64,1);}
+.quiz-feedback.ok{background:rgba(81,207,102,.15);color:#2b8a3e;}
+.quiz-feedback.err{background:rgba(255,107,107,.12);color:#c92a2a;}
+.quiz-next{margin-top:14px;padding:10px 28px;background:linear-gradient(135deg,var(--primary),var(--orange));color:#fff;border:none;border-radius:20px;font-size:16px;font-weight:900;cursor:pointer;display:none;}
+.progress-bar{height:8px;background:#f0f0f0;border-radius:4px;margin-bottom:18px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--orange));border-radius:4px;transition:width .4s;}
+.step-indicator{font-size:13px;color:var(--dim);margin-bottom:8px;font-weight:700;}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <span class="nav-brand">✖️ 九九乘法表</span>
+  <a href="#life-scene">生活场景</a>
+  <a href="#table">乘法表</a>
+  <a href="#interactive-lab">互动实验</a>
+  <a href="#knowledge-graph">知识图谱</a>
+  <a href="#quiz">互动练习</a>
+</nav>
+
+<div class="container">
+  <div class="hero">
+    <h1>✖️ 九九乘法表</h1>
+    <p class="subtitle">一到九的乘法口诀，记住规律，终身受用！</p>
+    <div class="meta">
+      <span>📚 二年级</span><span>🔢 运算</span><span>⏱️ 40分钟</span><span>⭐ 入门</span>
+    </div>
+  </div>
+
+  <!-- 生活场景 -->
+  <section class="section" id="life-scene">
+    <div class="section-title">🎬 生活场景：方格点亮</div>
+    <div class="life-sun">☀️</div>
+    <div class="light-grid" id="lightGrid"></div>
+    <div class="life-waves">
+      <div class="wave-bar" style="background:var(--primary);animation-delay:0s;"></div>
+      <div class="wave-bar" style="background:var(--orange);animation-delay:.1s;"></div>
+      <div class="wave-bar" style="background:var(--accent);animation-delay:.2s;"></div>
+      <div class="wave-bar" style="background:var(--success);animation-delay:.3s;"></div>
+      <div class="wave-bar" style="background:var(--secondary);animation-delay:.4s;"></div>
+      <div class="wave-bar" style="background:var(--purple);animation-delay:.5s;"></div>
+      <div class="wave-bar" style="background:var(--blue);animation-delay:.6s;"></div>
+      <div class="wave-bar" style="background:var(--primary);animation-delay:.7s;"></div>
+      <div class="wave-bar" style="background:var(--orange);animation-delay:.8s;"></div>
+    </div>
+    <p style="text-align:center;margin-top:14px;color:var(--dim);font-size:15px;">🌈 每行代表一个数，格子一个个点亮——这就是九九乘法表的规律！</p>
+  </section>
+
+  <!-- 乘法表 -->
+  <section class="section" id="table">
+    <div class="section-title">📊 互动九九乘法表</div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="mul-table" id="mulTable"></table>
+    </div>
+    <p style="color:var(--dim);font-size:14px;margin-top:8px;">👆 点击表格中的数字，高亮显示该乘法口诀！</p>
+  </section>
+
+  <!-- 互动实验台 -->
+  <section class="section" id="interactive-lab">
+    <div class="section-title">🧪 互动实验台</div>
+    <div class="card">
+      <h3>🎛️ 口算练习器</h3>
+      <div class="slider-row">
+        <label>第一个数</label>
+        <input type="range" id="sliderA" min="1" max="9" value="4">
+        <span class="slider-val"><span id="aVal">4</span></span>
+      </div>
+      <div class="slider-row">
+        <label>第二个数</label>
+        <input type="range" id="sliderB" min="1" max="9" value="7">
+        <span class="slider-val"><span id="bVal">7</span></span>
+      </div>
+      <div class="mul-result-big" id="mulBig">4 × 7 = 28</div>
+      <div style="text-align:center;font-size:14px;color:var(--secondary);font-weight:700;" id="mulSaying">四七二十八</div>
+    </div>
+
+    <div class="card">
+      <h3>🎯 拖拽配对：口诀 → 结果</h3>
+      <div class="drag-area">
+        <div class="drag-items">
+          <div class="drag-item" draggable="true" data-answer="12">3×4</div>
+          <div class="drag-item" draggable="true" data-answer="42">6×7</div>
+          <div class="drag-item" draggable="true" data-answer="56">7×8</div>
+          <div class="drag-item" draggable="true" data-answer="81">9×9</div>
+        </div>
+        <div class="drop-zones">
+          <div class="drop-zone" data-key="12">12</div>
+          <div class="drop-zone" data-key="42">42</div>
+          <div class="drop-zone" data-key="56">56</div>
+          <div class="drop-zone" data-key="81">81</div>
+        </div>
+      </div>
+      <button onclick="resetDrag()" style="margin-top:12px;padding:8px 22px;background:var(--secondary);color:#fff;border:none;border-radius:16px;font-weight:700;cursor:pointer;">🔄 重置</button>
+    </div>
+  </section>
+
+  <!-- 知识图谱 -->
+  <section class="section" id="knowledge-graph">
+    <div class="section-title">🕸️ 知识图谱</div>
+    <div class="card">
+      <svg id="kg-svg"></svg>
+      <div class="kg-legend">
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#51cf66"></div>前置知识</div>
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#ff6b6b"></div>当前主题</div>
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#4ecdc4"></div>后续学习</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 互动练习 -->
+  <section class="section" id="quiz">
+    <div class="section-title">✏️ 互动练习</div>
+    <div class="card">
+      <div class="step-indicator" id="stepInd">第 1 题 / 共 5 题</div>
+      <div class="progress-bar"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
+
+      <div class="quiz-step active" id="q1">
+        <div class="quiz-q">1. 7 × 8 = ?</div>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 不对！七八五十六，7×8=56。')">54</button>
+        <button class="quiz-option" onclick="answer(this,'correct','✅ 正确！七八五十六，7×8=56。')">56</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 不对，58不对应乘法口诀。')">58</button>
+        <div class="quiz-feedback" id="fb1"></div>
+        <button class="quiz-next" onclick="nextStep(1)">下一题 →</button>
+      </div>
+
+      <div class="quiz-step" id="q2">
+        <div class="quiz-q">2. 九九乘法表中最大的积是？</div>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 8×8=64，不是最大值。')">64</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 8×9=72，但9×9更大。')">72</button>
+        <button class="quiz-option" onclick="answer(this,'correct','✅ 正确！九九八十一，9×9=81，是最大的。')">81</button>
+        <div class="quiz-feedback" id="fb2"></div>
+        <button class="quiz-next" onclick="nextStep(2)">下一题 →</button>
+      </div>
+
+      <div class="quiz-step" id="q3">
+        <div class="quiz-q">3. 6的乘法口诀中，哪个积等于36？</div>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 6×5=30，不是36。')">6×5</button>
+        <button class="quiz-option" onclick="answer(this,'correct','✅ 正确！六六三十六，6×6=36。')">6×6</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 6×7=42，不是36。')">6×7</button>
+        <div class="quiz-feedback" id="fb3"></div>
+        <button class="quiz-next" onclick="nextStep(3)">下一题 →</button>
+      </div>
+
+      <div class="quiz-step" id="q4">
+        <div class="quiz-q">4. 一排有8个座位，4排共多少个？</div>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 4×8=32，不是24。')">24个</button>
+        <button class="quiz-option" onclick="answer(this,'correct','✅ 正确！4×8=32，四八三十二！')">32个</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 40个太多了，4排8个，共32个。')">40个</button>
+        <div class="quiz-feedback" id="fb4"></div>
+        <button class="quiz-next" onclick="nextStep(4)">下一题 →</button>
+      </div>
+
+      <div class="quiz-step" id="q5">
+        <div class="quiz-q">5. 下面哪个乘法口诀不存在于九九表（因为超出范围）？</div>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 9×9=81，在九九表中，是最后一句口诀。')">9×9</button>
+        <button class="quiz-option" onclick="answer(this,'correct','✅ 正确！九九表只到9×9，没有10×10=100这句。')">10×10</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 1×1=1，在九九表中，是第一句口诀。')">1×1</button>
+        <div class="quiz-feedback" id="fb5"></div>
+        <button class="quiz-next" onclick="showResult()">查看结果 🎉</button>
+      </div>
+
+      <div class="quiz-step" id="result">
+        <div style="text-align:center;padding:20px;">
+          <div style="font-size:64px;margin-bottom:16px;">🌟</div>
+          <div style="font-size:24px;font-weight:900;color:var(--primary);" id="scoreText"></div>
+          <button onclick="restartQuiz()" style="margin-top:20px;padding:12px 32px;background:linear-gradient(135deg,var(--primary),var(--orange));color:#fff;border:none;border-radius:20px;font-size:16px;font-weight:900;cursor:pointer;">🔄 再练一次</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+// ===== 格子点亮动画 =====
+const colors = ['#ff6b6b','#ff922b','#ffe66d','#51cf66','#4ecdc4','#339af0','#cc5de8','#f06595','#a9e34b'];
+const lightGrid = document.getElementById('lightGrid');
+for (let i = 0; i < 81; i++) {
+  const cell = document.createElement('div');
+  cell.className = 'light-cell';
+  const row = Math.floor(i / 9);
+  cell.style.setProperty('--cell-color', colors[row]);
+  cell.style.animationDelay = (i * 0.04) + 's';
+  cell.textContent = ((row+1) * ((i%9)+1));
+  lightGrid.appendChild(cell);
+}
+
+// ===== 乘法表 =====
+const mulTable = document.getElementById('mulTable');
+let thead = '<tr><th class="header-cell">×</th>';
+for (let i = 1; i <= 9; i++) thead += `<th class="header-cell">${i}</th>`;
+thead += '</tr>';
+let tbody = '';
+for (let r = 1; r <= 9; r++) {
+  tbody += `<tr><th class="header-cell">${r}</th>`;
+  for (let c = 1; c <= 9; c++) {
+    tbody += `<td class="data-cell" data-r="${r}" data-c="${c}" onclick="highlightCell(${r},${c})">${r*c}</td>`;
+  }
+  tbody += '</tr>';
+}
+mulTable.innerHTML = thead + tbody;
+
+function highlightCell(r, c) {
+  document.querySelectorAll('.data-cell').forEach(td => {
+    td.classList.remove('highlight-row','highlight-col','highlight-cross');
+    const tr = parseInt(td.dataset.r), tc = parseInt(td.dataset.c);
+    if (tr === r && tc === c) td.classList.add('highlight-cross');
+    else if (tr === r || tc === c) td.classList.add(tr === r ? 'highlight-row' : 'highlight-col');
+  });
+}
+
+// ===== 口算练习器 =====
+const sayings = {
+  '1':{1:'一一得一',2:'一二得二',3:'一三得三',4:'一四得四',5:'一五得五',6:'一六得六',7:'一七得七',8:'一八得八',9:'一九得九'},
+  '2':{2:'二二得四',3:'二三得六',4:'二四得八',5:'二五一十',6:'二六十二',7:'二七十四',8:'二八十六',9:'二九十八'},
+  '3':{3:'三三得九',4:'三四十二',5:'三五十五',6:'三六十八',7:'三七二十一',8:'三八二十四',9:'三九二十七'},
+  '4':{4:'四四十六',5:'四五二十',6:'四六二十四',7:'四七二十八',8:'四八三十二',9:'四九三十六'},
+  '5':{5:'五五二十五',6:'五六三十',7:'五七三十五',8:'五八四十',9:'五九四十五'},
+  '6':{6:'六六三十六',7:'六七四十二',8:'六八四十八',9:'六九五十四'},
+  '7':{7:'七七四十九',8:'七八五十六',9:'七九六十三'},
+  '8':{8:'八八六十四',9:'八九七十二'},
+  '9':{9:'九九八十一'}
+};
+
+let lastA = 4, lastB = 7;
+function updateMulBig() {
+  const a = parseInt(document.getElementById('sliderA').value);
+  const b = parseInt(document.getElementById('sliderB').value);
+  document.getElementById('aVal').textContent = a;
+  document.getElementById('bVal').textContent = b;
+  document.getElementById('mulBig').textContent = `${a} × ${b} = ${a*b}`;
+  const minN = Math.min(a,b), maxN = Math.max(a,b);
+  const saying = (sayings[minN] && sayings[minN][maxN]) ? sayings[minN][maxN] : `${a}×${b}=${a*b}`;
+  document.getElementById('mulSaying').textContent = saying;
+}
+document.getElementById('sliderA').addEventListener('input', updateMulBig);
+document.getElementById('sliderB').addEventListener('input', updateMulBig);
+updateMulBig();
+
+// ===== 拖拽配对 =====
+let dragSrc = null;
+document.querySelectorAll('.drag-item').forEach(item => {
+  item.addEventListener('dragstart', () => { dragSrc = item; item.classList.add('dragging'); });
+  item.addEventListener('dragend', () => item.classList.remove('dragging'));
+});
+document.querySelectorAll('.drop-zone').forEach(zone => {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('over');
+    if (!dragSrc) return;
+    if (dragSrc.dataset.answer === zone.dataset.key) {
+      zone.textContent = zone.dataset.key + ' ✅ (' + dragSrc.textContent + ')';
+      zone.classList.add('matched'); dragSrc.style.opacity='0.3'; dragSrc.draggable=false;
+    } else {
+      zone.classList.add('wrong-match'); setTimeout(()=>zone.classList.remove('wrong-match'),500);
+    }
+  });
+});
+function resetDrag() {
+  document.querySelectorAll('.drag-item').forEach(i=>{i.style.opacity='1';i.draggable=true;});
+  document.querySelectorAll('.drop-zone').forEach(z=>{z.classList.remove('matched','wrong-match');z.textContent=z.dataset.key;});
+}
+
+// ===== D3 知识图谱 =====
+const kgData={nodes:[{id:"count",name:"加法",type:"prereq"},{id:"repeat",name:"相同数相加",type:"prereq"},{id:"cur",name:"九九乘法表",type:"current"},{id:"multi",name:"多位数乘法",type:"next"},{id:"div",name:"除法入门",type:"next"},{id:"area",name:"面积计算",type:"next"}],links:[{source:"count",target:"cur"},{source:"repeat",target:"cur"},{source:"cur",target:"multi"},{source:"cur",target:"div"},{source:"cur",target:"area"}]};
+const colorMap={current:"#ff6b6b",prereq:"#51cf66",next:"#4ecdc4"};
+const svgEl=document.getElementById('kg-svg');
+const W=(svgEl.parentElement.offsetWidth||600)-48,H=340;
+svgEl.setAttribute('viewBox',`0 0 ${W} ${H}`);
+const kgSvg=d3.select('#kg-svg');
+kgSvg.append('defs').append('marker').attr('id','arrow').attr('viewBox','0 -5 10 10').attr('refX',22).attr('refY',0).attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto').append('path').attr('d','M0,-5L10,0L0,5').attr('fill','#aaa');
+const sim=d3.forceSimulation(kgData.nodes).force('link',d3.forceLink(kgData.links).id(d=>d.id).distance(110)).force('charge',d3.forceManyBody().strength(-280)).force('center',d3.forceCenter(W/2,H/2));
+const linkEl=kgSvg.append('g').selectAll('line').data(kgData.links).join('line').attr('stroke','#ccc').attr('stroke-width',2).attr('marker-end','url(#arrow)');
+const nodeEl=kgSvg.append('g').selectAll('g').data(kgData.nodes).join('g').call(d3.drag().on('start',(e,d)=>{if(!e.active)sim.alphaTarget(.3).restart();d.fx=d.x;d.fy=d.y;}).on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y;}).on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}));
+nodeEl.append('circle').attr('r',28).attr('fill',d=>colorMap[d.type]).attr('stroke','#fff').attr('stroke-width',3).style('filter','drop-shadow(0 2px 6px rgba(0,0,0,.15))');
+nodeEl.append('text').attr('text-anchor','middle').attr('dy','0.35em').attr('font-size','12px').attr('font-weight','700').attr('fill','#fff').text(d=>d.name);
+sim.on('tick',()=>{linkEl.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);nodeEl.attr('transform',d=>`translate(${d.x},${d.y})`);});
+
+let score=0,answered=[false,false,false,false,false];
+function answer(btn,type,msg){const step=btn.closest('.quiz-step');const fb=step.querySelector('.quiz-feedback');const nxt=step.querySelector('.quiz-next');if(step.querySelector('.correct')||step.querySelector('.wrong'))return;btn.classList.add(type==='correct'?'correct':'wrong');fb.textContent=msg;fb.className='quiz-feedback show '+(type==='correct'?'ok':'err');nxt.style.display='inline-block';const idx=parseInt(step.id.replace('q',''))-1;if(type==='correct'&&!answered[idx]){score++;answered[idx]=true;}}
+function nextStep(n){document.getElementById('q'+n).classList.remove('active');const next=document.getElementById('q'+(n+1));if(next){next.classList.add('active');document.getElementById('stepInd').textContent=`第 ${n+1} 题 / 共 5 题`;document.getElementById('progFill').style.width=(n*20)+'%';}}
+function showResult(){document.getElementById('q5').classList.remove('active');document.getElementById('result').classList.add('active');document.getElementById('progFill').style.width='100%';const msgs=['继续加油！','还不错哦！','做得好！','非常棒！','满分！太厉害了！'];document.getElementById('scoreText').textContent=`得了 ${score} / 5 分 — ${msgs[score]}`;}
+function restartQuiz(){score=0;answered=[false,false,false,false,false];document.querySelectorAll('.quiz-step').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.quiz-option').forEach(o=>o.classList.remove('correct','wrong'));document.querySelectorAll('.quiz-feedback').forEach(f=>f.className='quiz-feedback');document.querySelectorAll('.quiz-next').forEach(b=>b.style.display='none');document.getElementById('q1').classList.add('active');document.getElementById('stepInd').textContent='第 1 题 / 共 5 题';document.getElementById('progFill').style.width='0%';}
+</script>
+</body>
+</html>
