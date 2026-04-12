@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>基本应用题 · 教学课件</title>
+<meta name="teachany-node" content="word-problems-basic">
+<meta name="teachany-subject" content="math">
+<meta name="teachany-grade" content="3">
+<meta name="teachany-version" content="2.0">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--card:#fff;--text:#2b2b2b;--dim:#666;--border:rgba(0,0,0,0.06);}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:80px;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 10% 20%,rgba(255,107,107,0.07) 0%,transparent 50%),radial-gradient(circle at 90% 80%,rgba(78,205,196,0.07) 0%,transparent 50%);pointer-events:none;z-index:-1;}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;}
+.nav-brand{font-size:20px;font-weight:900;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),#ff922b,#cc5de8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all 0.25s;}
+.nav a:hover{color:#fff;background:linear-gradient(135deg,var(--primary),#ff922b);}
+.container{max-width:960px;margin:0 auto;padding:80px 20px 60px;}
+.hero{text-align:center;padding:36px 0 30px;}
+.hero h1{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--primary),#ff922b,#cc5de8,#339af0);background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
+@keyframes rainbowShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.hero .subtitle{font-size:18px;color:var(--dim);margin-bottom:16px;}
+.hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+.hero .meta span{background:#fff;border:2px solid var(--border);border-radius:24px;padding:6px 18px;font-size:14px;font-weight:700;color:var(--dim);}
+.section{margin:40px 0;}
+.section-title{font-size:26px;font-weight:900;margin-bottom:18px;padding:10px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));display:inline-block;}
+.card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.04);}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;}
+.highlight{color:var(--primary);font-weight:900;}
+.formula-box{background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));border-radius:16px;padding:18px 22px;text-align:center;font-size:20px;font-weight:900;margin:12px 0;}
+.tip-box{background:rgba(255,230,109,0.25);border-left:4px solid var(--accent);border-radius:0 12px 12px 0;padding:12px 16px;margin:12px 0;font-size:15px;}
+/* LIFE SCENE */
+#life-scene{background:linear-gradient(135deg,#fff8e1,#e8f5e9);border-radius:20px;padding:24px;min-height:300px;overflow:hidden;}
+.market-scene{position:relative;width:100%;height:220px;background:linear-gradient(180deg,#87ceeb 0%,#c8e6c9 100%);border-radius:16px;overflow:hidden;}
+.market-ground{position:absolute;bottom:0;left:0;right:0;height:50px;background:#81c784;}
+.stall{position:absolute;bottom:50px;border-radius:4px 4px 0 0;display:flex;flex-direction:column;align-items:center;}
+.stall-roof{width:100%;height:20px;border-radius:4px 4px 0 0;}
+.stall-body{width:100%;flex:1;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;}
+.stall-1{left:5%;width:80px;height:80px;}
+.stall-1 .stall-roof{background:#ef9a9a;}
+.stall-1 .stall-body{background:#fff9c4;}
+.stall-2{left:25%;width:100px;height:90px;}
+.stall-2 .stall-roof{background:#80cbc4;}
+.stall-2 .stall-body{background:#e8f5e9;}
+.stall-3{left:50%;width:90px;height:85px;}
+.stall-3 .stall-roof{background:#ce93d8;}
+.stall-3 .stall-body{background:#f3e5f5;}
+.stall-4{right:5%;width:80px;height:75px;}
+.stall-4 .stall-roof{background:#90caf9;}
+.stall-4 .stall-body{background:#e3f2fd;}
+.buyer{position:absolute;bottom:50px;font-size:30px;animation:walk 4s linear infinite;}
+@keyframes walk{0%{left:-5%}100%{left:100%}}
+.price-tag{position:absolute;top:5px;font-size:12px;font-weight:900;color:#333;background:rgba(255,255,255,0.9);border-radius:6px;padding:2px 6px;}
+/* PROBLEM SOLVER */
+.problem-card{background:#fff;border:2px solid var(--border);border-radius:16px;padding:20px;margin:12px 0;}
+.problem-text{font-size:18px;font-weight:700;line-height:2;margin-bottom:14px;padding:14px;background:#f8f9fa;border-radius:12px;}
+.problem-key{color:var(--primary);background:rgba(255,107,107,0.1);padding:2px 6px;border-radius:4px;}
+.solve-steps-area{display:flex;flex-direction:column;gap:10px;}
+.solve-step{display:flex;gap:10px;align-items:flex-start;padding:10px;background:#f0faf8;border-radius:10px;animation:slideIn 0.4s ease;}
+@keyframes slideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+.step-num{min-width:30px;height:30px;background:var(--secondary);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;}
+/* LAB */
+#interactive-lab{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+.lab-tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.lab-tab{padding:8px 20px;border-radius:20px;border:2px solid var(--border);cursor:pointer;font-weight:700;font-size:14px;transition:all 0.25s;}
+.lab-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.lab-panel{display:none;}
+.lab-panel.active{display:block;animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.problem-gen-area{margin:14px 0;}
+.gen-btn{padding:10px 22px;background:linear-gradient(135deg,var(--secondary),#20c997);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:12px;}
+.gen-problem{padding:16px;background:#f8f9fa;border-radius:12px;font-size:17px;font-weight:700;line-height:2;margin:10px 0;}
+.gen-answer{background:#fff;border:2px solid #ddd;border-radius:10px;padding:10px 14px;font-size:16px;font-weight:700;width:100%;margin:6px 0;}
+.check-gen-btn{padding:10px 22px;background:var(--primary);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;}
+.gen-result{margin-top:10px;font-weight:900;font-size:16px;min-height:24px;}
+/* KG */
+#knowledge-graph{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+#kg-svg-wp{width:100%;height:340px;}
+/* QUIZ */
+.quiz-section{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+.progress-bar-wrap{background:#f0f0f0;border-radius:10px;height:12px;margin-bottom:20px;overflow:hidden;}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:10px;transition:width 0.5s ease;}
+.quiz-step{display:none;}
+.quiz-step.active{display:block;animation:fadeSlide 0.4s ease;}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.quiz-q{font-size:20px;font-weight:900;margin-bottom:16px;}
+.quiz-option{display:block;padding:14px 20px;margin:8px 0;border-radius:14px;background:#fff;border:2.5px solid #e8e8e8;cursor:pointer;transition:all 0.25s;font-size:16px;font-weight:700;width:100%;text-align:left;}
+.quiz-option:hover{border-color:var(--secondary);}
+.quiz-option.correct{background:rgba(81,207,102,0.15);border-color:var(--success);color:#2b8a3e;}
+.quiz-option.wrong{background:rgba(255,107,107,0.1);border-color:var(--primary);color:#c92a2a;}
+.quiz-feedback{padding:12px 16px;border-radius:12px;margin-top:8px;font-size:15px;font-weight:700;display:none;}
+.quiz-feedback.show{display:block;}
+.quiz-feedback.ok{background:rgba(81,207,102,0.15);color:#2b8a3e;}
+.quiz-feedback.err{background:rgba(255,107,107,0.1);color:#c92a2a;}
+.next-btn{margin-top:14px;padding:12px 28px;background:linear-gradient(135deg,var(--primary),#ff922b);color:#fff;border:none;border-radius:20px;font-size:16px;font-weight:900;cursor:pointer;}
+.locked{opacity:0.35;pointer-events:none;}
+.step-indicator{display:flex;gap:8px;margin-bottom:16px;}
+.step-dot{width:12px;height:12px;border-radius:50%;background:#e0e0e0;transition:all 0.3s;}
+.step-dot.done{background:var(--success);}
+.step-dot.active{background:var(--primary);transform:scale(1.3);}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-brand">📚 TeachAny</div>
+  <a href="#life-scene-sec">🛒 生活场景</a>
+  <a href="#concepts">📖 方法</a>
+  <a href="#interactive-lab">🧪 实验台</a>
+  <a href="#knowledge-graph">🕸️ 知识图谱</a>
+  <a href="#quiz">📝 练习</a>
+</nav>
+<div class="container">
+  <div class="hero">
+    <h1>基本应用题</h1>
+    <div class="subtitle">从生活问题到数学解法，步步为营！</div>
+    <div class="meta">
+      <span>📚 小学数学</span><span>🎒 三年级上册</span><span>⭐ 难度：★★☆</span><span>⏱️ 约40分钟</span>
+    </div>
+  </div>
+
+  <!-- 生活场景 -->
+  <section class="section" id="life-scene-sec">
+    <div class="section-title">🛒 生活场景：菜市场购物</div>
+    <div id="life-scene">
+      <p style="font-weight:700;font-size:16px;margin-bottom:12px;">🛒 妈妈去买菜，帮她算算要花多少钱！</p>
+      <div class="market-scene">
+        <div class="stall stall-1"><div class="price-tag">苹果¥5/斤</div><div class="stall-roof"></div><div class="stall-body">🍎</div></div>
+        <div class="stall stall-2"><div class="price-tag">香蕉¥3/斤</div><div class="stall-roof"></div><div class="stall-body">🍌</div></div>
+        <div class="stall stall-3"><div class="price-tag">鸡肉¥12/斤</div><div class="stall-roof"></div><div class="stall-body">🍗</div></div>
+        <div class="stall stall-4"><div class="price-tag">蔬菜¥2/斤</div><div class="stall-roof"></div><div class="stall-body">🥬</div></div>
+        <div class="buyer">🛍️</div>
+        <div class="market-ground"></div>
+      </div>
+      <div class="card" style="margin-top:14px;">
+        <div class="problem-text">
+          妈妈买了<span class="problem-key">3斤苹果</span>和<span class="problem-key">2斤香蕉</span>，苹果每斤<span class="problem-key">5元</span>，香蕉每斤<span class="problem-key">3元</span>，共花了多少钱？
+        </div>
+        <div id="marketSolve" style="display:none;">
+          <div class="solve-steps-area">
+            <div class="solve-step"><div class="step-num">1</div><div>苹果总价：3 × 5 = 15元</div></div>
+            <div class="solve-step"><div class="step-num">2</div><div>香蕉总价：2 × 3 = 6元</div></div>
+            <div class="solve-step"><div class="step-num">3</div><div>共花：15 + 6 = <b style="color:var(--primary)">21元</b></div></div>
+          </div>
+        </div>
+        <button class="next-btn" onclick="showMarketSolve()">💡 解题步骤</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 解题方法 -->
+  <section class="section" id="concepts">
+    <div class="section-title">📖 解题方法</div>
+    <div class="card">
+      <h3>📋 解应用题四步法</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;margin:12px 0;">
+        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,107,107,0.08);border-radius:12px;">
+          <div style="min-width:40px;height:40px;background:var(--primary);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;">1</div>
+          <div><b>读题</b>：仔细阅读，找出<span class="highlight">已知条件</span>和<span class="highlight">问题</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(78,205,196,0.08);border-radius:12px;">
+          <div style="min-width:40px;height:40px;background:var(--secondary);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;">2</div>
+          <div><b>分析</b>：弄清数量关系，<span class="highlight">画线段图</span>帮助理解</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,230,109,0.15);border-radius:12px;">
+          <div style="min-width:40px;height:40px;background:#e6ac00;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;">3</div>
+          <div><b>列式</b>：选择合适的运算（<span class="highlight">加减乘除</span>），写出算式</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(81,207,102,0.08);border-radius:12px;">
+          <div style="min-width:40px;height:40px;background:var(--success);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;">4</div>
+          <div><b>答题</b>：计算结果，写完整的<span class="highlight">答句</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <h3>➕➖ 加减类应用题</h3>
+        <p><b>用加法</b>：求两部分合在一起的总量<br><b>用减法</b>：求两量相差多少，或从总量中取走一部分</p>
+        <div class="tip-box">关键词：多了/少了/一共/剩下/相差</div>
+      </div>
+      <div class="card">
+        <h3>✖️➗ 乘除类应用题</h3>
+        <p><b>用乘法</b>：每份数×份数=总数<br><b>用除法</b>：总数÷份数=每份数 或 总数÷每份数=份数</p>
+        <div class="tip-box">关键词：每个/每天/共几个/几份</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 互动实验台 -->
+  <section class="section" id="interactive-lab">
+    <div class="section-title">🧪 互动实验台</div>
+    <div id="interactive-lab">
+      <div class="lab-tabs">
+        <button class="lab-tab active" onclick="switchTab('tab-gen')">🎲 随机出题</button>
+        <button class="lab-tab" onclick="switchTab('tab-solve')">🔍 分步解题</button>
+      </div>
+      <div id="tab-gen" class="lab-panel active">
+        <div class="card">
+          <h3>🎲 随机生成应用题</h3>
+          <button class="gen-btn" onclick="generateProblem()">🎲 出一道题</button>
+          <div class="gen-problem" id="genProblem">点击按钮生成题目</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <label style="font-weight:700;">你的答案：</label>
+            <input type="number" id="genAnswerInput" class="gen-answer" style="width:100px;" placeholder="输入答案">
+          </div>
+          <button class="check-gen-btn" onclick="checkGenAnswer()">✅ 检验答案</button>
+          <div class="gen-result" id="genResult"></div>
+        </div>
+      </div>
+      <div id="tab-solve" class="lab-panel">
+        <div class="card">
+          <h3>🔍 分步解题展示</h3>
+          <p style="color:var(--dim);margin-bottom:12px;">选择题目类型，查看分步解题过程：</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="next-btn" onclick="showSolveDemo('add')">➕ 加法题</button>
+            <button class="next-btn" style="background:linear-gradient(135deg,var(--secondary),#20c997);" onclick="showSolveDemo('sub')">➖ 减法题</button>
+            <button class="next-btn" style="background:linear-gradient(135deg,#cc5de8,#845ef7);" onclick="showSolveDemo('mul')">✖️ 乘法题</button>
+          </div>
+          <div id="solveDemo" style="margin-top:14px;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 知识图谱 -->
+  <section class="section" id="knowledge-graph">
+    <div class="section-title">🕸️ 知识图谱</div>
+    <div id="knowledge-graph"><svg id="kg-svg-wp"></svg></div>
+  </section>
+
+  <!-- 练习 -->
+  <section class="section" id="quiz">
+    <div class="section-title">📝 闯关练习</div>
+    <div class="quiz-section">
+      <div class="step-indicator" id="stepIndicator"></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressBar" style="width:0%"></div></div>
+      <div class="quiz-step active" id="step1">
+        <div class="quiz-q">🛒 第1关：小明有38张贴纸，送给弟弟13张，还剩几张？</div>
+        <button class="quiz-option" onclick="checkQ(1,'A','B')">A. 51张</button>
+        <button class="quiz-option" onclick="checkQ(1,'B','B')">B. 25张</button>
+        <button class="quiz-option" onclick="checkQ(1,'C','B')">C. 24张</button>
+        <div class="quiz-feedback" id="fb1"></div>
+        <button class="next-btn locked" id="next1" onclick="nextStep(2)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step2">
+        <div class="quiz-q">🍎 第2关：每盒苹果6个，买了4盒，共有几个苹果？</div>
+        <button class="quiz-option" onclick="checkQ(2,'A','B')">A. 10个</button>
+        <button class="quiz-option" onclick="checkQ(2,'B','B')">B. 24个</button>
+        <button class="quiz-option" onclick="checkQ(2,'C','B')">C. 2个</button>
+        <div class="quiz-feedback" id="fb2"></div>
+        <button class="next-btn locked" id="next2" onclick="nextStep(3)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step3">
+        <div class="quiz-q">✏️ 第3关：48支铅笔平均分给6个同学，每人分几支？</div>
+        <button class="quiz-option" onclick="checkQ(3,'A','B')">A. 42支</button>
+        <button class="quiz-option" onclick="checkQ(3,'B','B')">B. 8支</button>
+        <button class="quiz-option" onclick="checkQ(3,'C','B')">C. 6支</button>
+        <div class="quiz-feedback" id="fb3"></div>
+        <button class="next-btn locked" id="next3" onclick="nextStep(4)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step4">
+        <div class="quiz-q">🏪 第4关：书包价格75元，比文具盒贵48元，文具盒多少钱？</div>
+        <button class="quiz-option" onclick="checkQ(4,'A','B')">A. 123元</button>
+        <button class="quiz-option" onclick="checkQ(4,'B','B')">B. 27元</button>
+        <button class="quiz-option" onclick="checkQ(4,'C','B')">C. 33元</button>
+        <div class="quiz-feedback" id="fb4"></div>
+        <button class="next-btn locked" id="next4" onclick="showFinal()">完成 🎉</button>
+      </div>
+      <div class="quiz-step locked" id="stepFinal">
+        <div style="text-align:center;padding:30px;">
+          <div style="font-size:64px;animation:bounce 1s ease infinite;">🏆</div>
+          <h2 style="font-size:28px;font-weight:900;color:var(--primary);margin:16px 0;">应用题高手！</h2>
+          <p>解题能力大提升！</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+function showMarketSolve(){document.getElementById('marketSolve').style.display='block';}
+
+// PROBLEM GENERATOR
+const problemTemplates=[
+  {type:'add',gen:()=>{const a=Math.floor(Math.random()*50+10),b=Math.floor(Math.random()*30+5);return{text:`小红有${a}块糖，小明又给了她${b}块，小红现在共有几块糖？`,ans:a+b,steps:[`已知：小红原有${a}块，又得到${b}块`,`列式：${a} + ${b}`,`结果：${a+b}块`]};},
+  type2:'sub',gen2:()=>{}},
+  {type:'sub',gen:()=>{const a=Math.floor(Math.random()*60+30),b=Math.floor(Math.random()*20+5);return{text:`图书馆有${a}本书，借出去${b}本，还剩几本？`,ans:a-b,steps:[`已知：原有${a}本，借出${b}本`,`列式：${a} - ${b}`,`结果：${a-b}本`]};}},
+  {type:'mul',gen:()=>{const a=Math.floor(Math.random()*8+2),b=Math.floor(Math.random()*9+2);return{text:`每排坐${a}人，共${b}排，一共坐了几人？`,ans:a*b,steps:[`已知：每排${a}人，共${b}排`,`列式：${a} × ${b}`,`结果：${a*b}人`]};}},
+  {type:'div',gen:()=>{const b=Math.floor(Math.random()*6+2),c=Math.floor(Math.random()*8+2);const a=b*c;return{text:`${a}个苹果平均分给${b}人，每人得几个？`,ans:c,steps:[`已知：共${a}个苹果，分给${b}人`,`列式：${a} ÷ ${b}`,`结果：${c}个`]};}}
+];
+let currentProblem=null;
+function generateProblem(){
+  const tpl=problemTemplates[Math.floor(Math.random()*problemTemplates.length)];
+  currentProblem=tpl.gen();
+  document.getElementById('genProblem').textContent=currentProblem.text;
+  document.getElementById('genAnswerInput').value='';
+  document.getElementById('genResult').textContent='';
+}
+function checkGenAnswer(){
+  if(!currentProblem){document.getElementById('genResult').textContent='请先生成题目';return;}
+  const ans=+document.getElementById('genAnswerInput').value;
+  const res=document.getElementById('genResult');
+  if(ans===currentProblem.ans){
+    res.innerHTML=`<span style="color:var(--success)">✅ 正确！解题思路：${currentProblem.steps.join(' → ')}</span>`;
+  }else{
+    res.innerHTML=`<span style="color:var(--primary)">❌ 不对，正确答案是 ${currentProblem.ans}。${currentProblem.steps.join(' → ')}</span>`;
+  }
+}
+
+// SOLVE DEMOS
+const demos={
+  add:{title:'➕ 加法应用题示例',text:'学校图书馆上周借出156本书，本周借出183本，两周共借出多少本？',steps:['条件：上周156本，本周183本','分析：求"共"用加法','列式：156 + 183 = 339','答：两周共借出339本书。']},
+  sub:{title:'➖ 减法应用题示例',text:'操场上有78名同学在运动，走了25人，还剩多少人？',steps:['条件：原有78人，走了25人','分析：求"还剩"用减法','列式：78 - 25 = 53','答：操场上还剩53名同学。']},
+  mul:{title:'✖️ 乘法应用题示例',text:'每箱饮料有12瓶，买了8箱，共有多少瓶饮料？',steps:['条件：每箱12瓶，共8箱','分析：求总数 = 每份 × 份数','列式：12 × 8 = 96','答：共有96瓶饮料。']}
+};
+function showSolveDemo(type){
+  const d=demos[type];
+  const el=document.getElementById('solveDemo');
+  el.innerHTML=`<div style="font-weight:900;font-size:16px;margin-bottom:8px;">${d.title}</div>
+    <div style="padding:12px;background:#f8f9fa;border-radius:10px;font-size:16px;font-weight:700;margin-bottom:10px;">${d.text}</div>
+    ${d.steps.map((s,i)=>`<div class="solve-step" style="display:flex;gap:8px;align-items:flex-start;padding:8px;background:rgba(78,205,196,0.08);border-radius:8px;margin:4px 0;animation:slideIn 0.3s ease ${i*0.1}s both;"><div style="min-width:26px;height:26px;background:var(--secondary);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;">${i+1}</div><div>${s}</div></div>`).join('')}`;
+}
+
+function switchTab(id){document.querySelectorAll('.lab-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.lab-tab').forEach(t=>t.classList.remove('active'));document.getElementById(id).classList.add('active');event.target.classList.add('active');}
+
+function initKG(){
+  const colorMap={current:"#ff6b6b",prereq:"#51cf66",next:"#4ecdc4"};
+  const kgData={nodes:[{id:"cur",name:"基本应用题",type:"current"},{id:"p1",name:"加减法",type:"prereq"},{id:"p2",name:"乘除法",type:"prereq"},{id:"n1",name:"两步应用题",type:"next"},{id:"n2",name:"分析推理",type:"next"},{id:"n3",name:"方程解题",type:"next"}],links:[{source:"p1",target:"cur"},{source:"p2",target:"cur"},{source:"cur",target:"n1"},{source:"cur",target:"n2"},{source:"cur",target:"n3"}]};
+  const svg=d3.select("#kg-svg-wp");const w=svg.node().parentElement.clientWidth||700,h=340;svg.attr("viewBox",`0 0 ${w} ${h}`);
+  svg.append("defs").append("marker").attr("id","arr-wp").attr("viewBox","0 -5 10 10").attr("refX",22).attr("markerWidth",6).attr("markerHeight",6).attr("orient","auto").append("path").attr("d","M0,-5L10,0L0,5").attr("fill","#bbb");
+  const sim=d3.forceSimulation(kgData.nodes).force("link",d3.forceLink(kgData.links).id(d=>d.id).distance(120)).force("charge",d3.forceManyBody().strength(-320)).force("center",d3.forceCenter(w/2,h/2));
+  const link=svg.append("g").selectAll("line").data(kgData.links).join("line").attr("stroke","#ddd").attr("stroke-width",2).attr("marker-end","url(#arr-wp)");
+  const node=svg.append("g").selectAll("g").data(kgData.nodes).join("g").call(d3.drag().on("start",e=>{if(!e.active)sim.alphaTarget(0.3).restart();e.subject.fx=e.subject.x;e.subject.fy=e.subject.y;}).on("drag",e=>{e.subject.fx=e.x;e.subject.fy=e.y;}).on("end",e=>{if(!e.active)sim.alphaTarget(0);e.subject.fx=null;e.subject.fy=null;}));
+  node.append("circle").attr("r",38).attr("fill",d=>colorMap[d.type]).attr("opacity",0.9);
+  node.append("text").attr("text-anchor","middle").attr("dy","0.35em").attr("font-size","11px").attr("font-weight","bold").attr("fill","#fff").each(function(d){const words=d.name.length>6?[d.name.slice(0,6),d.name.slice(6)]:[d.name];words.forEach((w,i)=>d3.select(this).append("tspan").attr("x",0).attr("dy",i?14:-7).text(w));});
+  const leg=svg.append("g").attr("transform",`translate(${w-160},20)`);[["prereq","前置知识"],["current","本节课"],["next","后续内容"]].forEach(([t,l],i)=>{leg.append("circle").attr("cx",10).attr("cy",i*26).attr("r",8).attr("fill",colorMap[t]);leg.append("text").attr("x",24).attr("y",i*26+5).attr("font-size","12px").attr("fill","#555").text(l);});
+  sim.on("tick",()=>{link.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y).attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);node.attr("transform",d=>`translate(${d.x},${d.y})`);});
+}
+
+function initStepIndicator(){const ind=document.getElementById('stepIndicator');for(let i=1;i<=4;i++){const d=document.createElement('div');d.className='step-dot'+(i===1?' active':'');d.id='dot'+i;ind.appendChild(d);}}
+function checkQ(step,choice,correct){const opts=document.querySelectorAll(`#step${step} .quiz-option`);opts.forEach(o=>o.disabled=true);const idx={A:0,B:1,C:2};const fb=document.getElementById('fb'+step);if(choice===correct){opts[idx[choice]].classList.add('correct');fb.className='quiz-feedback show ok';fb.textContent='✅ 正确！';}else{opts[idx[choice]].classList.add('wrong');opts[idx[correct]].classList.add('correct');fb.className='quiz-feedback show err';fb.textContent='❌ 正确答案是 '+correct;}fb.style.display='block';document.getElementById('progressBar').style.width=(step/4*100)+'%';setTimeout(()=>document.getElementById('next'+step).classList.remove('locked'),choice===correct?0:1500);}
+function nextStep(n){document.getElementById('step'+(n-1)).classList.remove('active');const s=document.getElementById('step'+n);s.classList.remove('locked');s.classList.add('active');document.getElementById('dot'+(n-1)).classList.replace('active','done');const dn=document.getElementById('dot'+n);if(dn)dn.classList.add('active');}
+function showFinal(){document.getElementById('step4').classList.remove('active');document.getElementById('stepFinal').classList.remove('locked');document.getElementById('stepFinal').classList.add('active');document.getElementById('progressBar').style.width='100%';}
+
+window.onload=()=>{generateProblem();initKG();initStepIndicator();};
+</script>
+</body>
+</html>

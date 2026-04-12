@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>分数四则运算 · 教学课件</title>
+<meta name="teachany-node" content="fraction-operations">
+<meta name="teachany-subject" content="math">
+<meta name="teachany-grade" content="6">
+<meta name="teachany-version" content="2.0">
+<meta name="teachany-author" content="weponusa">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--danger:#ff6b6b;--purple:#cc5de8;--blue:#339af0;--orange:#ff922b;--text:#2b2b2b;--dim:#666;--card:#ffffff;--border:rgba(0,0,0,0.06);}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:80px;}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;}
+.nav-brand{font-size:20px;font-weight:900;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all .25s;white-space:nowrap;}
+.nav a:hover,.nav a.active{color:#fff;background:linear-gradient(135deg,var(--primary),var(--orange));}
+.container{max-width:960px;margin:0 auto;padding:80px 20px 60px;}
+.hero{text-align:center;padding:36px 0 30px;}
+.hero h1{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple),var(--blue));background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
+@keyframes rainbowShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.hero .subtitle{font-size:18px;color:var(--dim);margin-bottom:16px;}
+.hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+.hero .meta span{background:#fff;border:2px solid var(--border);border-radius:24px;padding:6px 18px;font-size:14px;font-weight:700;color:var(--dim);}
+.section{margin:40px 0;}
+.section-title{font-size:26px;font-weight:900;margin-bottom:18px;padding:10px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));display:inline-block;}
+.card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.04);transition:transform .25s;}
+.card:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(255,107,107,0.12);}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;}
+.highlight{color:var(--primary);font-weight:900;}
+/* LIFE SCENE */
+#life-scene{background:linear-gradient(135deg,#fce4ec,#f3e5f5);border-radius:24px;padding:30px;margin:30px 0;overflow:hidden;}
+#life-scene h2{text-align:center;font-size:22px;font-weight:900;margin-bottom:20px;}
+.scene-stage{position:relative;height:260px;background:linear-gradient(180deg,#fce4ec 0%,#fce4ec 50%,#e8f5e9 50%,#e8f5e9 100%);border-radius:16px;overflow:hidden;}
+/* 披萨切割动画 */
+.pizza{position:absolute;top:15px;left:50%;transform:translateX(-50%);width:110px;height:110px;border-radius:50%;background:radial-gradient(circle,#ffa502,#ff6b00);border:4px solid #e67e00;animation:pizzaGrow 2s ease-in-out infinite;}
+@keyframes pizzaGrow{0%,100%{transform:translateX(-50%) scale(1);}50%{transform:translateX(-50%) scale(1.05);}}
+.pizza-cut{position:absolute;top:15px;left:50%;transform:translateX(-50%) rotate(0deg);width:110px;height:2px;background:#fff;transform-origin:0 50%;animation:pizzaCut 4s linear infinite;}
+@keyframes pizzaCut{from{transform:translateX(-50%) rotate(0deg);}to{transform:translateX(-50%) rotate(360deg);}}
+/* 分数标签 */
+.frac-label{position:absolute;font-size:20px;font-weight:900;background:#fff;border:3px solid;border-radius:10px;padding:4px 10px;animation:labelBob 2s ease-in-out infinite;}
+.frac-label:nth-child(1){top:40px;left:5%;border-color:var(--primary);color:var(--primary);animation-delay:0s;}
+.frac-label:nth-child(2){top:40px;right:5%;border-color:var(--blue);color:var(--blue);animation-delay:.8s;}
+.frac-label:nth-child(3){bottom:50px;left:15%;border-color:var(--success);color:var(--success);animation-delay:1.6s;}
+@keyframes labelBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+/* 运算演示 */
+.op-demo{position:absolute;bottom:30px;right:20px;font-size:24px;font-weight:900;color:var(--orange);animation:opPulse 1.5s ease-in-out infinite;}
+@keyframes opPulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+/* INTERACTIVE */
+#interactive-lab{background:#fff;border-radius:24px;padding:30px;margin:30px 0;box-shadow:0 4px 24px rgba(0,0,0,0.06);}
+#interactive-lab h2{font-size:22px;font-weight:900;margin-bottom:20px;}
+.lab-tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.lab-tab{padding:8px 20px;border-radius:20px;border:2px solid #e0e0e0;background:#f5f5f5;cursor:pointer;font-weight:700;font-size:14px;transition:all .2s;}
+.lab-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.lab-panel{display:none;}
+.lab-panel.active{display:block;}
+.frac-calc{background:#f8f9fa;border-radius:16px;padding:20px;}
+.frac-input-row{display:flex;align-items:center;gap:12px;margin:16px 0;flex-wrap:wrap;}
+.frac-box{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.frac-num{width:60px;padding:8px;border-radius:8px;border:2px solid #e0e0e0;font-size:18px;font-weight:700;text-align:center;}
+.frac-line{width:60px;height:3px;background:#333;border-radius:2px;}
+.op-select{font-size:24px;padding:8px;border-radius:8px;border:2px solid #e0e0e0;background:#fff;font-weight:700;cursor:pointer;}
+.frac-result{text-align:center;margin-top:16px;padding:16px;background:#fff;border-radius:12px;border:3px solid var(--accent);}
+.frac-result .r-frac{font-size:32px;font-weight:900;color:var(--primary);}
+.drag-item{cursor:grab;padding:10px 18px;background:var(--secondary);color:#fff;border-radius:12px;font-weight:700;font-size:15px;user-select:none;display:inline-block;margin:4px;transition:transform .2s;}
+.drag-item:active{cursor:grabbing;transform:scale(0.95);}
+.drop-zone{min-width:120px;min-height:44px;border:3px dashed #ccc;border-radius:12px;padding:8px 14px;display:inline-flex;align-items:center;justify-content:center;font-size:14px;color:#aaa;margin:4px;transition:all .2s;}
+.drop-zone.drag-over{border-color:var(--secondary);background:rgba(78,205,196,0.1);}
+#knowledge-graph{background:#fff;border-radius:24px;padding:30px;margin:30px 0;box-shadow:0 4px 24px rgba(0,0,0,0.06);}
+#knowledge-graph h2{font-size:22px;font-weight:900;margin-bottom:16px;}
+.kg-legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;}
+.kg-legend-item{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;}
+.kg-dot{width:14px;height:14px;border-radius:50%;}
+#kg-svg{width:100%;max-width:600px;display:block;margin:0 auto;border-radius:16px;background:#f8f9fa;}
+.quiz-card{background:#fff;border-radius:20px;padding:26px;margin-bottom:20px;border:2px solid var(--border);box-shadow:0 4px 16px rgba(0,0,0,0.04);}
+.q-number{font-size:13px;color:var(--dim);font-weight:700;margin-bottom:6px;}
+.q-text{font-size:18px;font-weight:900;margin-bottom:16px;}
+.quiz-step{display:none;}
+.quiz-step.active{display:block;}
+.quiz-option{display:block;padding:14px 20px;margin:8px 0;border-radius:14px;background:#f8f9fa;border:2.5px solid #e8e8e8;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);transition:all .2s;width:100%;text-align:left;}
+.quiz-option:hover{background:rgba(78,205,196,0.08);border-color:var(--secondary);}
+.quiz-option.correct{background:rgba(81,207,102,0.12);border-color:var(--success);color:#2b8a3e;}
+.quiz-option.wrong{background:rgba(255,107,107,0.1);border-color:var(--danger);color:#c92a2a;}
+.quiz-feedback{padding:14px 18px;border-radius:14px;margin-top:10px;font-size:15px;display:none;font-weight:700;}
+.quiz-feedback.show{display:block;animation:popIn .35s cubic-bezier(.34,1.56,.64,1);}
+@keyframes popIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+.progress-bar{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin:8px 0 16px;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--orange));border-radius:3px;transition:width .4s;}
+.step-block{background:rgba(78,205,196,0.08);border-left:4px solid var(--secondary);padding:12px 16px;margin:8px 0;border-radius:0 12px 12px 0;}
+.step-block .step-label{font-size:12px;color:var(--dim);font-weight:700;}
+.step-block .step-eq{font-size:20px;font-weight:900;color:var(--blue);}
+.footer{text-align:center;color:var(--dim);font-size:14px;margin-top:60px;padding-top:20px;border-top:2px solid var(--border);}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <span class="nav-brand">🔢 TeachAny</span>
+  <a href="#life-scene">🎬 场景</a>
+  <a href="#concepts">📖 概念</a>
+  <a href="#interactive-lab">🧪 实验台</a>
+  <a href="#knowledge-graph">🕸️ 图谱</a>
+  <a href="#quiz">✅ 练习</a>
+</nav>
+<div class="container">
+  <div class="hero">
+    <h1>分数四则运算</h1>
+    <p class="subtitle">✨ 分数加减乘除，步步为营！</p>
+    <div class="meta">
+      <span>📚 六年级数学</span><span>⏱️ 45分钟</span><span>🎯 数与运算</span><span>⭐ 综合</span>
+    </div>
+  </div>
+
+  <section id="life-scene">
+    <h2>🎬 生活场景：分披萨</h2>
+    <div class="scene-stage">
+      <div class="pizza"></div>
+      <div class="pizza-cut"></div>
+      <div class="frac-label">1/4</div>
+      <div class="frac-label">1/3</div>
+      <div class="frac-label">1/2</div>
+      <div class="op-demo">1/4 + 1/4 = 1/2</div>
+    </div>
+    <div class="card" style="margin-top:20px;">
+      <h3>🌟 分数运算的意义</h3>
+      <p>小明吃了披萨的 <strong class="highlight">1/4</strong>，小红也吃了 <strong class="highlight">1/4</strong>，他们一共吃了 <strong class="highlight">2/4 = 1/2</strong>。<br>
+      分数的加减：<strong class="highlight">同分母直接加减分子</strong>，异分母先通分！<br>
+      分数的乘法：<strong class="highlight">分子乘分子，分母乘分母</strong>！<br>
+      分数的除法：<strong class="highlight">乘以除数的倒数</strong>！</p>
+    </div>
+  </section>
+
+  <section id="concepts" class="section">
+    <div class="section-title">📖 运算法则</div>
+    <div class="grid-2">
+      <div class="card">
+        <h3>➕ 同分母分数加减</h3>
+        <div class="step-block"><div class="step-label">规则</div><div class="step-eq">分子相加减，分母不变</div></div>
+        <div class="step-block"><div class="step-label">例题</div><div class="step-eq">3/8 + 2/8 = 5/8</div></div>
+        <div class="step-block"><div class="step-label">例题</div><div class="step-eq">7/9 - 4/9 = 3/9 = 1/3</div></div>
+      </div>
+      <div class="card">
+        <h3>➕ 异分母分数加减（通分）</h3>
+        <div class="step-block"><div class="step-label">第一步：通分（找公分母）</div><div class="step-eq">1/3 + 1/4 → 4/12 + 3/12</div></div>
+        <div class="step-block"><div class="step-label">第二步：分子相加</div><div class="step-eq">4/12 + 3/12 = 7/12</div></div>
+      </div>
+      <div class="card">
+        <h3>✖️ 分数乘法</h3>
+        <div class="step-block"><div class="step-label">规则</div><div class="step-eq">分子×分子 ÷ 分母×分母</div></div>
+        <div class="step-block"><div class="step-label">例题</div><div class="step-eq">2/3 × 3/4 = 6/12 = 1/2</div></div>
+        <p style="color:var(--orange);font-weight:700;margin-top:8px;">💡 先约分再计算更简便！</p>
+      </div>
+      <div class="card">
+        <h3>➗ 分数除法</h3>
+        <div class="step-block"><div class="step-label">规则：除以一个数 = 乘以它的倒数</div><div class="step-eq">a/b ÷ c/d = a/b × d/c</div></div>
+        <div class="step-block"><div class="step-label">例题</div><div class="step-eq">3/4 ÷ 2/3 = 3/4 × 3/2 = 9/8</div></div>
+        <p style="color:var(--danger);font-weight:700;margin-top:8px;">⚠️ 被除数不动，除数取倒数！</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="interactive-lab">
+    <h2>🧪 互动实验台</h2>
+    <div class="lab-tabs">
+      <button class="lab-tab active" onclick="switchTabH('calc')">🔢 分数计算器</button>
+      <button class="lab-tab" onclick="switchTabH('visual')">🎨 可视化</button>
+      <button class="lab-tab" onclick="switchTabH('drag7')">🎯 拖拽配对</button>
+    </div>
+
+    <div id="tabH-calc" class="lab-panel active">
+      <div class="frac-calc">
+        <h3 style="margin-bottom:16px;">🔢 分数计算器</h3>
+        <div class="frac-input-row">
+          <div class="frac-box">
+            <input class="frac-num" type="number" id="f1n" value="1" min="1" max="20">
+            <div class="frac-line"></div>
+            <input class="frac-num" type="number" id="f1d" value="3" min="1" max="20">
+          </div>
+          <select class="op-select" id="fracOp">
+            <option value="+">+</option>
+            <option value="-">−</option>
+            <option value="*">×</option>
+            <option value="/">÷</option>
+          </select>
+          <div class="frac-box">
+            <input class="frac-num" type="number" id="f2n" value="1" min="1" max="20">
+            <div class="frac-line"></div>
+            <input class="frac-num" type="number" id="f2d" value="4" min="1" max="20">
+          </div>
+          <button onclick="calcFrac()" style="padding:12px 24px;background:var(--primary);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;">=</button>
+        </div>
+        <div class="frac-result" id="fracResult">
+          <div style="font-size:14px;color:var(--dim);">点击 = 计算</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tabH-visual" class="lab-panel">
+      <div style="background:#f8f9fa;border-radius:16px;padding:20px;">
+        <h3 style="margin-bottom:16px;">🎨 分数可视化！</h3>
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+          <label style="font-weight:700;">分数：</label>
+          <input type="range" min="1" max="9" value="3" id="visN" oninput="updateVis()">
+          <span style="font-weight:700;">/</span>
+          <input type="range" min="2" max="10" value="8" id="visD" oninput="updateVis()">
+          <span id="visLabel" style="font-size:22px;font-weight:900;color:var(--primary);">3/8</span>
+        </div>
+        <div id="visGrid" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:20px;justify-content:center;"></div>
+        <div id="visFracText" style="text-align:center;font-size:16px;font-weight:700;color:var(--dim);margin-top:12px;"></div>
+      </div>
+    </div>
+
+    <div id="tabH-drag7" class="lab-panel">
+      <p style="font-weight:700;margin-bottom:16px;">🎯 把算式和结果配对！</p>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;">
+        <div>
+          <p style="font-size:13px;color:var(--dim);font-weight:700;margin-bottom:10px;">算式</p>
+          <div><div class="drag-item" draggable="true" data-val="half" ondragstart="hStart(event)">1/4 + 1/4</div></div>
+          <div style="margin-top:8px;"><div class="drag-item" draggable="true" data-val="twothirds" ondragstart="hStart(event)">2/3 × 1</div></div>
+          <div style="margin-top:8px;"><div class="drag-item" draggable="true" data-val="onequarter" ondragstart="hStart(event)">3/4 - 1/2</div></div>
+          <div style="margin-top:8px;"><div class="drag-item" draggable="true" data-val="one" ondragstart="hStart(event)">2/3 ÷ 2/3</div></div>
+        </div>
+        <div>
+          <p style="font-size:13px;color:var(--dim);font-weight:700;margin-bottom:10px;">结果</p>
+          <div><div class="drop-zone" data-answer="half" ondragover="hOver(event)" ondrop="hDrop(event)">拖到这里</div><span style="font-size:13px;color:var(--dim);margin-left:4px;">= 1/2</span></div>
+          <div style="margin-top:8px;"><div class="drop-zone" data-answer="twothirds" ondragover="hOver(event)" ondrop="hDrop(event)">拖到这里</div><span style="font-size:13px;color:var(--dim);margin-left:4px;">= 2/3</span></div>
+          <div style="margin-top:8px;"><div class="drop-zone" data-answer="onequarter" ondragover="hOver(event)" ondrop="hDrop(event)">拖到这里</div><span style="font-size:13px;color:var(--dim);margin-left:4px;">= 1/4</span></div>
+          <div style="margin-top:8px;"><div class="drop-zone" data-answer="one" ondragover="hOver(event)" ondrop="hDrop(event)">拖到这里</div><span style="font-size:13px;color:var(--dim);margin-left:4px;">= 1</span></div>
+        </div>
+      </div>
+      <div id="drag7-result" style="text-align:center;font-size:16px;font-weight:700;margin-top:16px;"></div>
+    </div>
+  </section>
+
+  <section id="knowledge-graph">
+    <h2>🕸️ 知识图谱</h2>
+    <div class="kg-legend">
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#3b82f6;"></div>当前</div>
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#22c55e;"></div>前置</div>
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#f97316;"></div>后续</div>
+    </div>
+    <svg id="kg-svg" height="300"></svg>
+    <script>
+    (function(){
+      const g={nodes:[
+        {id:"c",name:"分数四则运算",type:"current"},
+        {id:"p1",name:"分数意义性质",type:"prereq"},
+        {id:"p2",name:"通分约分",type:"prereq"},
+        {id:"p3",name:"整数四则运算",type:"prereq"},
+        {id:"n1",name:"分数混合运算",type:"next"},
+        {id:"n2",name:"比与比例",type:"next"},
+        {id:"n3",name:"解方程",type:"next"}
+      ],links:[{source:"p1",target:"c"},{source:"p2",target:"c"},{source:"p3",target:"c"},{source:"c",target:"n1"},{source:"c",target:"n2"},{source:"c",target:"n3"}]};
+      const W=560,H=300,svg=d3.select("#kg-svg").attr("width",W).attr("height",H).attr("viewBox",`0 0 ${W} ${H}`);
+      const col=d=>({current:"#3b82f6",prereq:"#22c55e",next:"#f97316"}[d.type]);
+      const sim=d3.forceSimulation(g.nodes).force("link",d3.forceLink(g.links).id(d=>d.id).distance(100)).force("charge",d3.forceManyBody().strength(-280)).force("center",d3.forceCenter(W/2,H/2));
+      const link=svg.append("g").selectAll("line").data(g.links).join("line").attr("stroke","#ccc").attr("stroke-width",2);
+      const node=svg.append("g").selectAll("circle").data(g.nodes).join("circle").attr("r",30).attr("fill",col).attr("stroke","#fff").attr("stroke-width",3);
+      const label=svg.append("g").selectAll("text").data(g.nodes).join("text").text(d=>d.name).attr("text-anchor","middle").attr("dy","0.35em").attr("font-size",10).attr("fill","#fff").attr("font-weight","bold");
+      sim.on("tick",()=>{link.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y).attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);node.attr("cx",d=>d.x).attr("cy",d=>d.y);label.attr("x",d=>d.x).attr("y",d=>d.y);});
+    })();
+    </script>
+  </section>
+
+  <section id="quiz" class="section">
+    <div class="section-title">✅ 多步骤练习题</div>
+    <div class="quiz-card">
+      <div class="q-number">题目 1/3</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:0%" id="hq1p"></div></div>
+      <div id="hq1s1" class="quiz-step active">
+        <div class="q-text">➕ <span class="highlight">1/3 + 1/6</span> = ?（先通分！）</div>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','hq1s1',null,'hq1p',0)">A. 2/9</button>
+        <button class="quiz-option" onclick="checkQ(this,'correct','hq1s1','hq1s2','hq1p',50)">B. 1/2</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','hq1s1',null,'hq1p',0)">C. 2/6</button>
+        <div class="quiz-feedback" id="fb-hq1s1"></div>
+      </div>
+      <div id="hq1s2" class="quiz-step">
+        <div class="q-text">✅ 对！通分后：2/6 + 1/6 = 3/6 = <span class="highlight">1/2</span>。那么 1/2 + 1/4 = ?</div>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','hq1s2',null,'hq1p',50)">A. 2/6</button>
+        <button class="quiz-option" onclick="checkQ(this,'correct','hq1s2',null,'hq1p',100)">B. 3/4</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','hq1s2',null,'hq1p',50)">C. 1/6</button>
+        <div class="quiz-feedback" id="fb-hq1s2"></div>
+      </div>
+    </div>
+    <div class="quiz-card">
+      <div class="q-number">题目 2/3</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:0%" id="hq2p"></div></div>
+      <div id="hq2s1" class="quiz-step active">
+        <div class="q-text">✖️ <span class="highlight">2/3 × 3/4</span> = ?</div>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','hq2s1',null,'hq2p',0)">A. 6/7</button>
+        <button class="quiz-option" onclick="checkQ(this,'correct','hq2s1','hq2s2','hq2p',50)">B. 1/2</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','hq2s1',null,'hq2p',0)">C. 5/12</button>
+        <div class="quiz-feedback" id="fb-hq2s1"></div>
+      </div>
+      <div id="hq2s2" class="quiz-step">
+        <div class="q-text">✅ 棒！那 3/4 ÷ 3/4 = ?（除以自身）</div>
+        <button class="quiz-option" onclick="checkQ(this,'correct','hq2s2',null,'hq2p',100)">A. 1</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','hq2s2',null,'hq2p',50)">B. 9/16</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','hq2s2',null,'hq2p',50)">C. 0</button>
+        <div class="quiz-feedback" id="fb-hq2s2"></div>
+      </div>
+    </div>
+    <div class="quiz-card">
+      <div class="q-number">题目 3/3 · 挑战</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:0%" id="hq3p"></div></div>
+      <div id="hq3s1" class="quiz-step active">
+        <div class="q-text">🏆 小明用了绳子的 <span class="highlight">2/5</span>，剩余绳子占几分之几？</div>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','hq3s1',null,'hq3p',0)">A. 2/5</button>
+        <button class="quiz-option" onclick="checkQ(this,'correct','hq3s1','hq3s2','hq3p',50)">B. 3/5</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','hq3s1',null,'hq3p',0)">C. 1/5</button>
+        <div class="quiz-feedback" id="fb-hq3s1"></div>
+      </div>
+      <div id="hq3s2" class="quiz-step">
+        <div class="q-text">🎓 如果绳子总长 60cm，剩余长度是多少？</div>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','hq3s2',null,'hq3p',50)">A. 24cm</button>
+        <button class="quiz-option" onclick="checkQ(this,'correct','hq3s2',null,'hq3p',100)">B. 36cm</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','hq3s2',null,'hq3p',50)">C. 48cm</button>
+        <div class="quiz-feedback" id="fb-hq3s2"></div>
+      </div>
+    </div>
+  </section>
+  <div class="footer"><p>🎓 TeachAny · 分数四则运算 · 六年级数学</p></div>
+</div>
+<script>
+function gcd(a,b){return b===0?a:gcd(b,a%b);}
+function calcFrac(){
+  const f1n=+document.getElementById('f1n').value,f1d=+document.getElementById('f1d').value;
+  const f2n=+document.getElementById('f2n').value,f2d=+document.getElementById('f2d').value;
+  const op=document.getElementById('fracOp').value;
+  let rn,rd;
+  if(op==='+'){ rn=f1n*f2d+f2n*f1d; rd=f1d*f2d; }
+  else if(op==='-'){ rn=f1n*f2d-f2n*f1d; rd=f1d*f2d; }
+  else if(op==='*'){ rn=f1n*f2n; rd=f1d*f2d; }
+  else { rn=f1n*f2d; rd=f1d*f2n; }
+  if(rd===0){document.getElementById('fracResult').innerHTML='<div style="color:var(--danger);font-weight:700;">分母不能为0！</div>';return;}
+  const g=gcd(Math.abs(rn),Math.abs(rd));
+  rn/=g;rd/=g;
+  let display=rn+'/'+rd;
+  if(rd===1)display=String(rn);
+  else if(Math.abs(rn)===0)display='0';
+  const opSyms={'+':'+','-':'−','*':'×','/':'÷'};
+  document.getElementById('fracResult').innerHTML=`<div style="font-size:16px;color:var(--dim);">${f1n}/${f1d} ${opSyms[op]} ${f2n}/${f2d} =</div><div class="r-frac">${display}</div>`;
+}
+function updateVis(){
+  const n=+document.getElementById('visN').value,d=+document.getElementById('visD').value;
+  const nn=Math.min(n,d);
+  document.getElementById('visLabel').textContent=`${nn}/${d}`;
+  const grid=document.getElementById('visGrid');grid.innerHTML='';
+  for(let i=0;i<d;i++){
+    const cell=document.createElement('div');
+    cell.style.cssText=`width:48px;height:48px;border-radius:8px;border:3px solid ${i<nn?'var(--primary)':'#ccc'};background:${i<nn?'rgba(255,107,107,0.3)':'#f5f5f5'};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:${i<nn?'var(--primary)':'#aaa'};`;
+    cell.textContent=i<nn?'✓':'';
+    grid.appendChild(cell);
+  }
+  document.getElementById('visFracText').textContent=`${nn}/${d} = ${(nn/d*100).toFixed(1)}% ≈ ${(nn/d).toFixed(3)}`;
+}
+updateVis();
+function switchTabH(name){
+  document.querySelectorAll('.lab-tab').forEach((t,i)=>{t.classList.toggle('active',['calc','visual','drag7'][i]===name);});
+  document.querySelectorAll('.lab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(`tabH-${name}`).classList.add('active');
+}
+function hStart(e){e.dataTransfer.setData('text',e.target.dataset.val);}
+function hOver(e){e.preventDefault();e.currentTarget.classList.add('drag-over');}
+function hDrop(e){
+  e.preventDefault();const zone=e.currentTarget;zone.classList.remove('drag-over');
+  const val=e.dataTransfer.getData('text'),ans=zone.dataset.answer;
+  zone.textContent=val;zone.style.background=val===ans?'rgba(81,207,102,0.2)':'rgba(255,107,107,0.1)';zone.style.borderColor=val===ans?'#51cf66':'#ff6b6b';
+  const zones=document.querySelectorAll('#tabH-drag7 .drop-zone');let cor=0;zones.forEach(z=>{if(z.textContent===z.dataset.answer)cor++;});
+  const r=document.getElementById('drag7-result');r.textContent=cor===zones.length?'🎉 全对！':'✅ '+cor+'/'+zones.length;r.style.color=cor===zones.length?'#51cf66':'var(--dim)';
+}
+function checkQ(btn,type,curStep,nextStep,progId,progVal){
+  const parent=document.getElementById(curStep);parent.querySelectorAll('.quiz-option').forEach(b=>b.disabled=true);btn.classList.add(type);
+  const fb=document.getElementById(`fb-${curStep}`);fb.classList.add('show');
+  if(type==='correct'){fb.style.background='rgba(81,207,102,0.12)';fb.style.color='#2b8a3e';fb.textContent='🎉 正确！';if(nextStep){setTimeout(()=>{parent.classList.remove('active');document.getElementById(nextStep).classList.add('active');},1200);}}
+  else{fb.style.background='rgba(255,107,107,0.1)';fb.style.color='#c92a2a';fb.textContent='❌ 再想想！';parent.querySelectorAll('.quiz-option').forEach(b=>{b.disabled=false;b.classList.remove('correct','wrong');});fb.classList.remove('show');return;}
+  document.getElementById(progId).style.width=progVal+'%';
+}
+</script>
+</body>
+</html>

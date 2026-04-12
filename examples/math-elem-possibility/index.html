@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>可能性 · 教学课件</title>
+<meta name="teachany-node" content="possibility">
+<meta name="teachany-subject" content="math">
+<meta name="teachany-grade" content="5">
+<meta name="teachany-version" content="2.0">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--card:#fff;--text:#2b2b2b;--dim:#666;--border:rgba(0,0,0,0.06);}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:80px;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 10% 20%,rgba(255,107,107,0.07) 0%,transparent 50%),radial-gradient(circle at 90% 80%,rgba(78,205,196,0.07) 0%,transparent 50%);pointer-events:none;z-index:-1;}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;}
+.nav-brand{font-size:20px;font-weight:900;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),#ff922b,#cc5de8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all 0.25s;}
+.nav a:hover{color:#fff;background:linear-gradient(135deg,var(--primary),#ff922b);}
+.container{max-width:960px;margin:0 auto;padding:80px 20px 60px;}
+.hero{text-align:center;padding:36px 0 30px;}
+.hero h1{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--primary),#ff922b,#cc5de8,#339af0);background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
+@keyframes rainbowShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.hero .subtitle{font-size:18px;color:var(--dim);margin-bottom:16px;}
+.hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+.hero .meta span{background:#fff;border:2px solid var(--border);border-radius:24px;padding:6px 18px;font-size:14px;font-weight:700;color:var(--dim);}
+.section{margin:40px 0;}
+.section-title{font-size:26px;font-weight:900;margin-bottom:18px;padding:10px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));display:inline-block;}
+.card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.04);}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;}
+.highlight{color:var(--primary);font-weight:900;}
+.formula-box{background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));border-radius:16px;padding:18px 22px;text-align:center;font-size:20px;font-weight:900;margin:12px 0;}
+.tip-box{background:rgba(255,230,109,0.25);border-left:4px solid var(--accent);border-radius:0 12px 12px 0;padding:12px 16px;margin:12px 0;font-size:15px;}
+/* LIFE SCENE: DICE */
+#life-scene{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);border-radius:20px;padding:24px;min-height:300px;position:relative;overflow:hidden;}
+.casino-title{color:#ffe66d;font-size:18px;font-weight:900;margin-bottom:16px;text-align:center;}
+.dice-container{display:flex;justify-content:center;gap:30px;flex-wrap:wrap;margin:20px 0;}
+.dice{width:80px;height:80px;background:linear-gradient(135deg,#fff,#f0f0f0);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:40px;box-shadow:0 8px 24px rgba(0,0,0,0.5);cursor:pointer;transition:all 0.15s;border:3px solid rgba(255,255,255,0.3);}
+.dice:hover{transform:scale(1.05);}
+.dice.rolling{animation:diceRoll 0.6s ease;}
+@keyframes diceRoll{0%{transform:rotate(0deg) scale(1)}25%{transform:rotate(90deg) scale(0.9)}50%{transform:rotate(180deg) scale(1.1)}75%{transform:rotate(270deg) scale(0.9)}100%{transform:rotate(360deg) scale(1)}}
+.dice-info{text-align:center;color:#fff;margin:16px 0;}
+.dice-info .result{font-size:28px;font-weight:900;color:#ffe66d;}
+.prob-bar{display:flex;flex-direction:column;gap:6px;margin:16px 0;}
+.prob-row{display:flex;align-items:center;gap:8px;}
+.prob-label{width:40px;text-align:right;font-size:14px;color:#fff;font-weight:700;}
+.prob-track{flex:1;height:16px;background:rgba(255,255,255,0.1);border-radius:8px;overflow:hidden;}
+.prob-fill{height:100%;background:var(--accent);border-radius:8px;transition:width 0.5s ease;}
+.prob-val{width:50px;font-size:13px;color:#ffe66d;font-weight:700;}
+.stars{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;}
+.star{position:absolute;width:4px;height:4px;background:#fff;border-radius:50%;animation:twinkle 2s ease infinite;}
+@keyframes twinkle{0%,100%{opacity:0.2}50%{opacity:1}}
+/* LAB */
+#interactive-lab{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+.lab-tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.lab-tab{padding:8px 20px;border-radius:20px;border:2px solid var(--border);cursor:pointer;font-weight:700;font-size:14px;transition:all 0.25s;}
+.lab-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.lab-panel{display:none;}
+.lab-panel.active{display:block;animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.bag-grid{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0;}
+.ball{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;border:2px solid rgba(0,0,0,0.1);transition:all 0.2s;cursor:pointer;}
+.ball:hover{transform:scale(1.1);}
+.prob-display{font-size:22px;font-weight:900;text-align:center;margin:14px 0;color:var(--primary);}
+.spinner{position:relative;width:180px;height:180px;margin:0 auto;}
+#spinnerCanvas{display:block;}
+.spin-btn{display:block;margin:12px auto;padding:10px 28px;background:linear-gradient(135deg,var(--primary),#ff922b);color:#fff;border:none;border-radius:20px;font-size:16px;font-weight:900;cursor:pointer;}
+/* KG */
+#knowledge-graph{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+#kg-svg-poss{width:100%;height:340px;}
+/* QUIZ */
+.quiz-section{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+.progress-bar-wrap{background:#f0f0f0;border-radius:10px;height:12px;margin-bottom:20px;overflow:hidden;}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:10px;transition:width 0.5s ease;}
+.quiz-step{display:none;}
+.quiz-step.active{display:block;animation:fadeSlide 0.4s ease;}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.quiz-q{font-size:20px;font-weight:900;margin-bottom:16px;}
+.quiz-option{display:block;padding:14px 20px;margin:8px 0;border-radius:14px;background:#fff;border:2.5px solid #e8e8e8;cursor:pointer;transition:all 0.25s;font-size:16px;font-weight:700;width:100%;text-align:left;}
+.quiz-option:hover{border-color:var(--secondary);}
+.quiz-option.correct{background:rgba(81,207,102,0.15);border-color:var(--success);color:#2b8a3e;}
+.quiz-option.wrong{background:rgba(255,107,107,0.1);border-color:var(--primary);color:#c92a2a;}
+.quiz-feedback{padding:12px 16px;border-radius:12px;margin-top:8px;font-size:15px;font-weight:700;display:none;}
+.quiz-feedback.show{display:block;}
+.quiz-feedback.ok{background:rgba(81,207,102,0.15);color:#2b8a3e;}
+.quiz-feedback.err{background:rgba(255,107,107,0.1);color:#c92a2a;}
+.next-btn{margin-top:14px;padding:12px 28px;background:linear-gradient(135deg,var(--primary),#ff922b);color:#fff;border:none;border-radius:20px;font-size:16px;font-weight:900;cursor:pointer;}
+.locked{opacity:0.35;pointer-events:none;}
+.step-indicator{display:flex;gap:8px;margin-bottom:16px;}
+.step-dot{width:12px;height:12px;border-radius:50%;background:#e0e0e0;transition:all 0.3s;}
+.step-dot.done{background:var(--success);}
+.step-dot.active{background:var(--primary);transform:scale(1.3);}
+table{width:100%;border-collapse:collapse;margin:12px 0;}
+th,td{border:2px solid #f0f0f0;padding:10px 14px;text-align:center;font-size:15px;}
+th{background:rgba(255,107,107,0.1);font-weight:900;}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-brand">📚 TeachAny</div>
+  <a href="#life-scene-sec">🎲 生活场景</a>
+  <a href="#concepts">📖 概念</a>
+  <a href="#interactive-lab">🧪 实验台</a>
+  <a href="#knowledge-graph">🕸️ 知识图谱</a>
+  <a href="#quiz">📝 练习</a>
+</nav>
+<div class="container">
+  <div class="hero">
+    <h1>可能性</h1>
+    <div class="subtitle">骰子一掷，数学中的随机与概率！</div>
+    <div class="meta">
+      <span>📚 小学数学</span><span>🎒 五年级下册</span><span>⭐ 难度：★★★</span><span>⏱️ 约45分钟</span>
+    </div>
+  </div>
+
+  <!-- 生活场景 -->
+  <section class="section" id="life-scene-sec">
+    <div class="section-title">🎲 生活场景：掷骰子实验</div>
+    <div id="life-scene">
+      <div class="stars" id="starsContainer"></div>
+      <div class="casino-title">🎲 掷骰子！每面出现的可能性相等吗？</div>
+      <div class="dice-container">
+        <div class="dice" id="dice1" onclick="rollDice(1)">⚀</div>
+        <div class="dice" id="dice2" onclick="rollDice(2)">⚃</div>
+      </div>
+      <div class="dice-info">
+        <div>点击骰子进行投掷！</div>
+        <div class="result" id="diceResult">——</div>
+      </div>
+      <div class="prob-bar" id="probBars"></div>
+      <div style="text-align:center;color:rgba(255,255,255,0.7);font-size:14px;margin-top:8px;">（已投掷 <span id="rollCount">0</span> 次）</div>
+    </div>
+  </section>
+
+  <!-- 核心概念 -->
+  <section class="section" id="concepts">
+    <div class="section-title">📖 核心概念</div>
+    <div class="grid-2">
+      <div class="card">
+        <h3>🎯 可能性的概念</h3>
+        <p><span class="highlight">可能性</span>描述一个事件发生的可能程度。</p>
+        <div class="formula-box">可能性 = 有利结果数 ÷ 总结果数</div>
+        <p>例：掷骰子出现"3"的可能性 = 1/6</p>
+      </div>
+      <div class="card">
+        <h3>📊 可能性的大小</h3>
+        <div style="display:flex;flex-direction:column;gap:8px;margin:10px 0;">
+          <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:20px;">❌</span><div><b>不可能（0）</b>：一定不会发生<br><span style="color:var(--dim);font-size:14px;">例：掷出7点</span></div></div>
+          <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:20px;">⚖️</span><div><b>可能（0~1之间）</b>：可能发生<br><span style="color:var(--dim);font-size:14px;">例：掷出偶数（1/2）</span></div></div>
+          <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:20px;">✅</span><div><b>确定（1）</b>：一定会发生<br><span style="color:var(--dim);font-size:14px;">例：掷出1~6中的数</span></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid-3">
+      <div class="card">
+        <h3>🎱 摸球实验</h3>
+        <p>袋中3红2蓝，摸出红球概率 = 3/5</p>
+        <div class="formula-box">P = 3/5</div>
+      </div>
+      <div class="card">
+        <h3>🃏 扑克牌</h3>
+        <p>52张牌中摸出A的概率 = 4/52</p>
+        <div class="formula-box">P = 1/13</div>
+      </div>
+      <div class="card">
+        <h3>🌧️ 天气预报</h3>
+        <p>降雨概率60% 表示10次中约6次下雨</p>
+        <div class="formula-box">P = 0.6</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📊 可能性大小对比</h3>
+      <table>
+        <tr><th>情景</th><th>有利结果</th><th>总结果</th><th>可能性</th></tr>
+        <tr><td>掷骰子出1</td><td>1</td><td>6</td><td>1/6 ≈ 17%</td></tr>
+        <tr><td>掷骰子出奇数</td><td>3</td><td>6</td><td>1/2 = 50%</td></tr>
+        <tr><td>掷骰子出≤4</td><td>4</td><td>6</td><td>2/3 ≈ 67%</td></tr>
+        <tr><td>掷骰子出≤6</td><td>6</td><td>6</td><td>1 = 100%</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- 互动实验台 -->
+  <section class="section" id="interactive-lab">
+    <div class="section-title">🧪 互动实验台</div>
+    <div id="interactive-lab">
+      <div class="lab-tabs">
+        <button class="lab-tab active" onclick="switchTab('tab-bag')">🎱 摸球实验</button>
+        <button class="lab-tab" onclick="switchTab('tab-spinner')">🎡 转盘实验</button>
+      </div>
+      <div id="tab-bag" class="lab-panel active">
+        <div class="card">
+          <h3>🎱 神奇的球袋</h3>
+          <p style="color:var(--dim);margin-bottom:12px;">拖动滑块调整各色球数量，观察可能性变化</p>
+          <div id="bagSliders"></div>
+          <div class="bag-grid" id="bagDisplay"></div>
+          <div class="prob-display" id="bagProb">摸出红球：P = 3/10 = 30%</div>
+          <button class="next-btn" onclick="drawBall()">🖐️ 摸一个球</button>
+          <div id="drawResult" style="margin-top:12px;font-size:20px;font-weight:900;text-align:center;min-height:28px;"></div>
+        </div>
+      </div>
+      <div id="tab-spinner" class="lab-panel">
+        <div class="card">
+          <h3>🎡 旋转转盘</h3>
+          <p style="color:var(--dim);margin-bottom:12px;">点击旋转，看指针落在哪里</p>
+          <canvas id="spinnerCanvas" width="200" height="200" style="display:block;margin:0 auto;"></canvas>
+          <div id="spinResult" style="text-align:center;font-size:22px;font-weight:900;color:var(--primary);margin:12px 0;"></div>
+          <button class="spin-btn" onclick="spinWheel()">▶ 旋转！</button>
+          <div id="spinStats" style="margin-top:14px;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 知识图谱 -->
+  <section class="section" id="knowledge-graph">
+    <div class="section-title">🕸️ 知识图谱</div>
+    <div id="knowledge-graph"><svg id="kg-svg-poss"></svg></div>
+  </section>
+
+  <!-- 练习 -->
+  <section class="section" id="quiz">
+    <div class="section-title">📝 闯关练习</div>
+    <div class="quiz-section">
+      <div class="step-indicator" id="stepIndicator"></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressBar" style="width:0%"></div></div>
+      <div class="quiz-step active" id="step1">
+        <div class="quiz-q">🎲 第1关：口袋里有5个红球、3个蓝球，随机摸出1个，摸出红球的可能性是？</div>
+        <button class="quiz-option" onclick="checkQ(1,'A','A')">A. 5/8</button>
+        <button class="quiz-option" onclick="checkQ(1,'B','A')">B. 3/8</button>
+        <button class="quiz-option" onclick="checkQ(1,'C','A')">C. 1/2</button>
+        <div class="quiz-feedback" id="fb1"></div>
+        <button class="next-btn locked" id="next1" onclick="nextStep(2)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step2">
+        <div class="quiz-q">🎡 第2关：一个骰子有6面，掷出偶数的可能性是？</div>
+        <button class="quiz-option" onclick="checkQ(2,'A','B')">A. 1/3</button>
+        <button class="quiz-option" onclick="checkQ(2,'B','B')">B. 1/2</button>
+        <button class="quiz-option" onclick="checkQ(2,'C','B')">C. 2/3</button>
+        <div class="quiz-feedback" id="fb2"></div>
+        <button class="next-btn locked" id="next2" onclick="nextStep(3)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step3">
+        <div class="quiz-q">❌ 第3关：以下哪个事件的可能性为0（不可能）？</div>
+        <button class="quiz-option" onclick="checkQ(3,'A','C')">A. 明天下雨</button>
+        <button class="quiz-option" onclick="checkQ(3,'B','C')">B. 掷骰子出现偶数</button>
+        <button class="quiz-option" onclick="checkQ(3,'C','C')">C. 太阳从西边升起</button>
+        <div class="quiz-feedback" id="fb3"></div>
+        <button class="next-btn locked" id="next3" onclick="nextStep(4)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step4">
+        <div class="quiz-q">✅ 第4关：转盘分4等份（红、蓝、绿、黄），指针停在红色的概率？</div>
+        <button class="quiz-option" onclick="checkQ(4,'A','B')">A. 1/3</button>
+        <button class="quiz-option" onclick="checkQ(4,'B','B')">B. 1/4</button>
+        <button class="quiz-option" onclick="checkQ(4,'C','B')">C. 1/2</button>
+        <div class="quiz-feedback" id="fb4"></div>
+        <button class="next-btn locked" id="next4" onclick="showFinal()">完成 🎉</button>
+      </div>
+      <div class="quiz-step locked" id="stepFinal">
+        <div style="text-align:center;padding:30px;">
+          <div style="font-size:64px;animation:bounce 1s ease infinite;">🏆</div>
+          <h2 style="font-size:28px;font-weight:900;color:var(--primary);margin:16px 0;">概率达人！</h2>
+          <p style="font-size:18px;color:var(--dim);">可能性与概率已掌握！</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+// STARS
+function createStars(){const c=document.getElementById('starsContainer');for(let i=0;i<30;i++){const s=document.createElement('div');s.className='star';s.style.left=Math.random()*100+'%';s.style.top=Math.random()*100+'%';s.style.animationDelay=Math.random()*2+'s';c.appendChild(s);}}
+
+// DICE
+const diceFaces=['⚀','⚁','⚂','⚃','⚄','⚅'];
+const rollCounts=[0,0,0,0,0,0];
+let totalRolls=0;
+function initProbBars(){
+  const area=document.getElementById('probBars');
+  area.innerHTML='';
+  for(let i=0;i<6;i++){
+    area.innerHTML+=`<div class="prob-row"><div class="prob-label">${i+1}</div><div class="prob-track"><div class="prob-fill" id="pf${i}" style="width:0%"></div></div><div class="prob-val" id="pv${i}">0/0</div></div>`;
+  }
+}
+function rollDice(n){
+  const result=Math.floor(Math.random()*6);
+  const el=document.getElementById('dice'+n);
+  el.classList.add('rolling');
+  let fast=0;
+  const t=setInterval(()=>{el.textContent=diceFaces[Math.floor(Math.random()*6)];fast++;if(fast>12){clearInterval(t);el.textContent=diceFaces[result];el.classList.remove('rolling');recordRoll(result);}},50);
+}
+function recordRoll(r){
+  rollCounts[r]++;totalRolls++;
+  document.getElementById('rollCount').textContent=totalRolls;
+  document.getElementById('diceResult').textContent=`掷出了 ${r+1} 点！（理论概率：1/6 ≈ 16.7%）`;
+  for(let i=0;i<6;i++){const pct=totalRolls?rollCounts[i]/totalRolls*100:0;document.getElementById('pf'+i).style.width=pct+'%';document.getElementById('pv'+i).textContent=rollCounts[i]+'/'+totalRolls;}
+}
+
+// BAG
+let bagRed=3,bagBlue=2,bagGreen=2;
+function initBagSliders(){
+  const area=document.getElementById('bagSliders');
+  area.innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;margin:6px 0;"><label style="width:60px;font-weight:700;font-size:14px;">🔴 红球</label><input type="range" min="0" max="10" value="3" id="redSlider" oninput="bagRed=+this.value;updateBag()" style="flex:1;accent-color:#ff6b6b;"><span id="redVal" style="width:30px;font-weight:900;color:#ff6b6b;">3</span></div>
+    <div style="display:flex;align-items:center;gap:10px;margin:6px 0;"><label style="width:60px;font-weight:700;font-size:14px;">🔵 蓝球</label><input type="range" min="0" max="10" value="2" id="blueSlider" oninput="bagBlue=+this.value;updateBag()" style="flex:1;accent-color:#339af0;"><span id="blueVal" style="width:30px;font-weight:900;color:#339af0;">2</span></div>
+    <div style="display:flex;align-items:center;gap:10px;margin:6px 0;"><label style="width:60px;font-weight:700;font-size:14px;">🟢 绿球</label><input type="range" min="0" max="10" value="2" id="greenSlider" oninput="bagGreen=+this.value;updateBag()" style="flex:1;accent-color:var(--success);"><span id="greenVal" style="width:30px;font-weight:900;color:var(--success);">2</span></div>`;
+}
+function updateBag(){
+  document.getElementById('redVal').textContent=bagRed;
+  document.getElementById('blueVal').textContent=bagBlue;
+  document.getElementById('greenVal').textContent=bagGreen;
+  const total=bagRed+bagBlue+bagGreen||1;
+  const disp=document.getElementById('bagDisplay');disp.innerHTML='';
+  for(let i=0;i<bagRed;i++){disp.innerHTML+=`<div class="ball" style="background:#ff6b6b;">🔴</div>`;}
+  for(let i=0;i<bagBlue;i++){disp.innerHTML+=`<div class="ball" style="background:#339af0;">🔵</div>`;}
+  for(let i=0;i<bagGreen;i++){disp.innerHTML+=`<div class="ball" style="background:var(--success);">🟢</div>`;}
+  document.getElementById('bagProb').textContent=`摸出红球：P = ${bagRed}/${total} = ${(bagRed/total*100).toFixed(1)}%`;
+}
+function drawBall(){
+  const total=bagRed+bagBlue+bagGreen;
+  if(total===0){document.getElementById('drawResult').textContent='袋子是空的！';return;}
+  const r=Math.random()*total;
+  let result;
+  if(r<bagRed) result='🔴 红球';
+  else if(r<bagRed+bagBlue) result='🔵 蓝球';
+  else result='🟢 绿球';
+  document.getElementById('drawResult').textContent='摸出了 '+result+'！';
+}
+
+// SPINNER
+const spinColors=['#ff6b6b','#4ecdc4','#ffe66d','#cc5de8'];
+const spinLabels=['红','蓝','黄','紫'];
+const spinStats={0:0,1:0,2:0,3:0};let spinTotal=0;
+let currentAngle=0,spinning=false;
+function drawSpinner(angle){
+  const canvas=document.getElementById('spinnerCanvas');const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,200,200);
+  const cx=100,cy=100,r=85;
+  for(let i=0;i<4;i++){
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,angle+i*Math.PI/2,angle+(i+1)*Math.PI/2);ctx.closePath();
+    ctx.fillStyle=spinColors[i];ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
+    const mid=angle+(i+0.5)*Math.PI/2;
+    ctx.fillStyle='#fff';ctx.font='bold 16px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(spinLabels[i],cx+Math.cos(mid)*55,cy+Math.sin(mid)*55);
+  }
+  // pointer
+  ctx.fillStyle='#333';ctx.beginPath();ctx.moveTo(cx,cy-r-5);ctx.lineTo(cx-8,cy-r+15);ctx.lineTo(cx+8,cy-r+15);ctx.closePath();ctx.fill();
+}
+function spinWheel(){
+  if(spinning) return;spinning=true;
+  const totalAngle=2*Math.PI*(3+Math.random()*5);let elapsed=0;
+  const dur=2500;const start=Date.now();
+  const anim=setInterval(()=>{
+    elapsed=Date.now()-start;const t=elapsed/dur;const ease=1-Math.pow(1-t,3);
+    currentAngle=ease*totalAngle;drawSpinner(currentAngle);
+    if(elapsed>=dur){clearInterval(anim);spinning=false;
+      const norm=((currentAngle%(2*Math.PI))+2*Math.PI)%(2*Math.PI);
+      const sector=Math.floor(((2*Math.PI-norm)%(2*Math.PI))/(Math.PI/2))%4;
+      spinStats[sector]++;spinTotal++;
+      document.getElementById('spinResult').textContent=`指针停在：${spinLabels[sector]}色！`;
+      let stats='';for(let i=0;i<4;i++){stats+=`${spinLabels[i]}: ${spinStats[i]}次(${spinTotal?(spinStats[i]/spinTotal*100).toFixed(0):0}%) | `;}
+      document.getElementById('spinStats').innerHTML=`<div style="font-size:13px;color:var(--dim);">${stats}</div>`;}
+  },16);
+}
+
+function switchTab(id){
+  document.querySelectorAll('.lab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.lab-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// KG
+function initKG(){
+  const colorMap={current:"#ff6b6b",prereq:"#51cf66",next:"#4ecdc4"};
+  const kgData={nodes:[{id:"cur",name:"可能性",type:"current"},{id:"p1",name:"分数",type:"prereq"},{id:"p2",name:"统计初步",type:"prereq"},{id:"n1",name:"概率",type:"next"},{id:"n2",name:"统计决策",type:"next"},{id:"n3",name:"随机现象",type:"next"}],links:[{source:"p1",target:"cur"},{source:"p2",target:"cur"},{source:"cur",target:"n1"},{source:"cur",target:"n2"},{source:"cur",target:"n3"}]};
+  const svg=d3.select("#kg-svg-poss");const w=svg.node().parentElement.clientWidth||700,h=340;svg.attr("viewBox",`0 0 ${w} ${h}`);
+  svg.append("defs").append("marker").attr("id","arr-po").attr("viewBox","0 -5 10 10").attr("refX",22).attr("markerWidth",6).attr("markerHeight",6).attr("orient","auto").append("path").attr("d","M0,-5L10,0L0,5").attr("fill","#bbb");
+  const sim=d3.forceSimulation(kgData.nodes).force("link",d3.forceLink(kgData.links).id(d=>d.id).distance(120)).force("charge",d3.forceManyBody().strength(-320)).force("center",d3.forceCenter(w/2,h/2));
+  const link=svg.append("g").selectAll("line").data(kgData.links).join("line").attr("stroke","#ddd").attr("stroke-width",2).attr("marker-end","url(#arr-po)");
+  const node=svg.append("g").selectAll("g").data(kgData.nodes).join("g").call(d3.drag().on("start",e=>{if(!e.active)sim.alphaTarget(0.3).restart();e.subject.fx=e.subject.x;e.subject.fy=e.subject.y;}).on("drag",e=>{e.subject.fx=e.x;e.subject.fy=e.y;}).on("end",e=>{if(!e.active)sim.alphaTarget(0);e.subject.fx=null;e.subject.fy=null;}));
+  node.append("circle").attr("r",36).attr("fill",d=>colorMap[d.type]).attr("opacity",0.9);
+  node.append("text").attr("text-anchor","middle").attr("dy","0.35em").attr("font-size","11px").attr("font-weight","bold").attr("fill","#fff").each(function(d){const words=d.name.length>6?[d.name.slice(0,6),d.name.slice(6)]:[d.name];words.forEach((w,i)=>d3.select(this).append("tspan").attr("x",0).attr("dy",i?14:-7).text(w));});
+  const leg=svg.append("g").attr("transform",`translate(${w-160},20)`);[["prereq","前置知识"],["current","本节课"],["next","后续内容"]].forEach(([t,l],i)=>{leg.append("circle").attr("cx",10).attr("cy",i*26).attr("r",8).attr("fill",colorMap[t]);leg.append("text").attr("x",24).attr("y",i*26+5).attr("font-size","12px").attr("fill","#555").text(l);});
+  sim.on("tick",()=>{link.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y).attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);node.attr("transform",d=>`translate(${d.x},${d.y})`);});
+}
+
+// QUIZ
+function initStepIndicator(){const ind=document.getElementById('stepIndicator');for(let i=1;i<=4;i++){const d=document.createElement('div');d.className='step-dot'+(i===1?' active':'');d.id='dot'+i;ind.appendChild(d);}}
+function checkQ(step,choice,correct){
+  const opts=document.querySelectorAll(`#step${step} .quiz-option`);opts.forEach(o=>o.disabled=true);
+  const idx={A:0,B:1,C:2};const fb=document.getElementById('fb'+step);
+  if(choice===correct){opts[idx[choice]].classList.add('correct');fb.className='quiz-feedback show ok';fb.textContent='✅ 正确！';}
+  else{opts[idx[choice]].classList.add('wrong');opts[idx[correct]].classList.add('correct');fb.className='quiz-feedback show err';fb.textContent='❌ 正确答案是 '+correct;}
+  fb.style.display='block';document.getElementById('progressBar').style.width=(step/4*100)+'%';
+  setTimeout(()=>document.getElementById('next'+step).classList.remove('locked'),choice===correct?0:1500);
+}
+function nextStep(n){document.getElementById('step'+(n-1)).classList.remove('active');const s=document.getElementById('step'+n);s.classList.remove('locked');s.classList.add('active');document.getElementById('dot'+(n-1)).classList.replace('active','done');const dn=document.getElementById('dot'+n);if(dn)dn.classList.add('active');}
+function showFinal(){document.getElementById('step4').classList.remove('active');document.getElementById('stepFinal').classList.remove('locked');document.getElementById('stepFinal').classList.add('active');document.getElementById('progressBar').style.width='100%';}
+
+window.onload=()=>{createStars();initProbBars();initBagSliders();updateBag();drawSpinner(0);initKG();initStepIndicator();};
+</script>
+</body>
+</html>

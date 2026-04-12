@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>大数的认识 · 教学课件</title>
+<meta name="teachany-node" content="large-numbers">
+<meta name="teachany-subject" content="math">
+<meta name="teachany-grade" content="4">
+<meta name="teachany-version" content="2.0">
+<meta name="teachany-author" content="weponusa">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--danger:#ff6b6b;--purple:#cc5de8;--blue:#339af0;--orange:#ff922b;--text:#2b2b2b;--dim:#666;--card:#ffffff;--border:rgba(0,0,0,0.06);}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:80px;}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;}
+.nav-brand{font-size:20px;font-weight:900;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all .25s;white-space:nowrap;}
+.nav a:hover,.nav a.active{color:#fff;background:linear-gradient(135deg,var(--primary),var(--orange));}
+.container{max-width:960px;margin:0 auto;padding:80px 20px 60px;}
+.hero{text-align:center;padding:36px 0 30px;}
+.hero h1{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--orange),var(--purple),var(--blue));background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
+@keyframes rainbowShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.hero .subtitle{font-size:18px;color:var(--dim);margin-bottom:16px;}
+.hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+.hero .meta span{background:#fff;border:2px solid var(--border);border-radius:24px;padding:6px 18px;font-size:14px;font-weight:700;color:var(--dim);}
+.section{margin:40px 0;}
+.section-title{font-size:26px;font-weight:900;margin-bottom:18px;padding:10px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));display:inline-block;}
+.card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.04);transition:transform .25s;}
+.card:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(255,107,107,0.12);}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;}
+.highlight{color:var(--primary);font-weight:900;}
+/* LIFE SCENE */
+#life-scene{background:linear-gradient(135deg,#e8eaf6,#e0f7fa);border-radius:24px;padding:30px;margin:30px 0;overflow:hidden;}
+#life-scene h2{text-align:center;font-size:22px;font-weight:900;margin-bottom:20px;}
+.scene-stage{position:relative;height:260px;background:linear-gradient(180deg,#e3f2fd 0%,#e3f2fd 55%,#e8f5e9 55%,#e8f5e9 100%);border-radius:16px;overflow:hidden;}
+/* 计数器翻转动画 */
+.counter-display{position:absolute;top:20px;left:50%;transform:translateX(-50%);display:flex;gap:4px;}
+.counter-digit{width:44px;height:60px;background:linear-gradient(180deg,#1a237e,#283593);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;animation:digitFlip 1s ease-in-out infinite;}
+.counter-digit:nth-child(1){animation-delay:0s;}
+.counter-digit:nth-child(2){animation-delay:.2s;}
+.counter-digit:nth-child(3){animation-delay:.4s;}
+.counter-digit:nth-child(4){animation-delay:.6s;}
+.counter-digit:nth-child(5){animation-delay:.8s;}
+.counter-digit:nth-child(6){animation-delay:1.0s;}
+.counter-digit:nth-child(7){animation-delay:1.2s;}
+.counter-digit:nth-child(8){animation-delay:1.4s;}
+@keyframes digitFlip{0%,100%{background:linear-gradient(180deg,#1a237e,#283593);}50%{background:linear-gradient(180deg,var(--primary),var(--orange));}}
+/* 数位单位标签 */
+.unit-labels{position:absolute;top:88px;left:50%;transform:translateX(-50%);display:flex;gap:4px;}
+.unit-label{width:44px;font-size:10px;text-align:center;font-weight:700;color:#555;}
+/* 地球 */
+.earth-icon{position:absolute;right:20px;top:20px;font-size:56px;animation:earthSpin 8s linear infinite;}
+@keyframes earthSpin{from{transform:rotate(0);}to{transform:rotate(360deg);}}
+/* 数字增长 */
+.growing-num{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);font-size:28px;font-weight:900;color:var(--blue);animation:numGrow 2s ease-in-out infinite;}
+@keyframes numGrow{0%{content:'100';opacity:0.5;transform:translateX(-50%) scale(0.8);}50%{opacity:1;transform:translateX(-50%) scale(1.1);}100%{opacity:0.5;transform:translateX(-50%) scale(0.8);}}
+/* INTERACTIVE */
+#interactive-lab{background:#fff;border-radius:24px;padding:30px;margin:30px 0;box-shadow:0 4px 24px rgba(0,0,0,0.06);}
+#interactive-lab h2{font-size:22px;font-weight:900;margin-bottom:20px;}
+.lab-tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.lab-tab{padding:8px 20px;border-radius:20px;border:2px solid #e0e0e0;background:#f5f5f5;cursor:pointer;font-weight:700;font-size:14px;transition:all .2s;}
+.lab-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.lab-panel{display:none;}
+.lab-panel.active{display:block;}
+input[type=range]{accent-color:var(--primary);}
+.slider-row{display:flex;align-items:center;gap:16px;margin:16px 0;}
+.slider-row label{font-weight:700;min-width:100px;font-size:14px;}
+.slider-val{font-size:20px;font-weight:900;color:var(--primary);min-width:50px;text-align:center;}
+.digit-blocks{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:16px 0;}
+.digit-block{padding:12px;border-radius:12px;text-align:center;min-width:70px;}
+.digit-block .dv{font-size:28px;font-weight:900;}
+.digit-block .dn{font-size:12px;color:var(--dim);font-weight:700;margin-top:4px;}
+.drag-item{cursor:grab;padding:10px 18px;background:var(--secondary);color:#fff;border-radius:12px;font-weight:700;font-size:15px;user-select:none;display:inline-block;margin:4px;transition:transform .2s;}
+.drag-item:active{cursor:grabbing;transform:scale(0.95);}
+.drop-zone{min-width:130px;min-height:44px;border:3px dashed #ccc;border-radius:12px;padding:8px 16px;display:inline-flex;align-items:center;justify-content:center;font-size:14px;color:#aaa;margin:4px;transition:all .2s;}
+.drop-zone.drag-over{border-color:var(--secondary);background:rgba(78,205,196,0.1);}
+#knowledge-graph{background:#fff;border-radius:24px;padding:30px;margin:30px 0;box-shadow:0 4px 24px rgba(0,0,0,0.06);}
+#knowledge-graph h2{font-size:22px;font-weight:900;margin-bottom:16px;}
+.kg-legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;}
+.kg-legend-item{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;}
+.kg-dot{width:14px;height:14px;border-radius:50%;}
+#kg-svg{width:100%;max-width:600px;display:block;margin:0 auto;border-radius:16px;background:#f8f9fa;}
+.quiz-card{background:#fff;border-radius:20px;padding:26px;margin-bottom:20px;border:2px solid var(--border);box-shadow:0 4px 16px rgba(0,0,0,0.04);}
+.q-number{font-size:13px;color:var(--dim);font-weight:700;margin-bottom:6px;}
+.q-text{font-size:18px;font-weight:900;margin-bottom:16px;}
+.quiz-step{display:none;}
+.quiz-step.active{display:block;}
+.quiz-option{display:block;padding:14px 20px;margin:8px 0;border-radius:14px;background:#f8f9fa;border:2.5px solid #e8e8e8;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);transition:all .2s;width:100%;text-align:left;}
+.quiz-option:hover{background:rgba(78,205,196,0.08);border-color:var(--secondary);}
+.quiz-option.correct{background:rgba(81,207,102,0.12);border-color:var(--success);color:#2b8a3e;}
+.quiz-option.wrong{background:rgba(255,107,107,0.1);border-color:var(--danger);color:#c92a2a;}
+.quiz-feedback{padding:14px 18px;border-radius:14px;margin-top:10px;font-size:15px;display:none;font-weight:700;}
+.quiz-feedback.show{display:block;animation:popIn .35s cubic-bezier(.34,1.56,.64,1);}
+@keyframes popIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+.progress-bar{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin:8px 0 16px;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--orange));border-radius:3px;transition:width .4s;}
+.num-table{width:100%;border-collapse:collapse;margin:16px 0;}
+.num-table th{background:var(--primary);color:#fff;padding:10px;font-size:14px;}
+.num-table td{border:2px solid #e0e0e0;padding:10px;text-align:center;font-size:15px;font-weight:700;}
+.num-table .yi-col{background:rgba(255,107,107,0.08);color:var(--primary);}
+.num-table .wan-col{background:rgba(51,154,240,0.08);color:var(--blue);}
+.footer{text-align:center;color:var(--dim);font-size:14px;margin-top:60px;padding-top:20px;border-top:2px solid var(--border);}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <span class="nav-brand">🔢 TeachAny</span>
+  <a href="#life-scene">🎬 场景</a>
+  <a href="#concepts">📖 概念</a>
+  <a href="#interactive-lab">🧪 实验台</a>
+  <a href="#knowledge-graph">🕸️ 图谱</a>
+  <a href="#quiz">✅ 练习</a>
+</nav>
+<div class="container">
+  <div class="hero">
+    <h1>大数的认识</h1>
+    <p class="subtitle">✨ 从万到亿，感受数的神奇！</p>
+    <div class="meta">
+      <span>📚 四年级数学</span><span>⏱️ 45分钟</span><span>🎯 数与运算</span><span>⭐ 基础</span>
+    </div>
+  </div>
+
+  <section id="life-scene">
+    <h2>🎬 生活场景：大数在哪里？</h2>
+    <div class="scene-stage">
+      <div class="counter-display">
+        <div class="counter-digit">1</div>
+        <div class="counter-digit">4</div>
+        <div class="counter-digit">0</div>
+        <div class="counter-digit">0</div>
+        <div class="counter-digit">0</div>
+        <div class="counter-digit">0</div>
+        <div class="counter-digit">0</div>
+        <div class="counter-digit">0</div>
+      </div>
+      <div class="unit-labels">
+        <div class="unit-label">亿</div>
+        <div class="unit-label">千万</div>
+        <div class="unit-label">百万</div>
+        <div class="unit-label">十万</div>
+        <div class="unit-label">万</div>
+        <div class="unit-label">千</div>
+        <div class="unit-label">百</div>
+        <div class="unit-label">个</div>
+      </div>
+      <div class="earth-icon">🌍</div>
+      <div class="growing-num">14亿人口</div>
+    </div>
+    <div class="card" style="margin-top:20px;">
+      <h3>🌟 大数在生活中的应用</h3>
+      <p>中国人口约 <strong class="highlight">14亿</strong> = 1,400,000,000（十四亿）<br>
+      全球人口约 <strong class="highlight">80亿</strong> = 8,000,000,000<br>
+      北京到上海的距离约 <strong class="highlight">1300千米</strong> = 1,300,000米<br>
+      大数让我们能描述世界上任何数量！</p>
+    </div>
+  </section>
+
+  <section id="concepts" class="section">
+    <div class="section-title">📖 核心概念</div>
+    <div class="card">
+      <h3>📊 数位表（万级和亿级）</h3>
+      <table class="num-table">
+        <tr>
+          <th>级</th><th colspan="4" class="yi-col">亿级</th><th colspan="4" class="wan-col">万级</th>
+        </tr>
+        <tr>
+          <th>数位</th>
+          <td class="yi-col">千亿</td><td class="yi-col">百亿</td><td class="yi-col">十亿</td><td class="yi-col">亿</td>
+          <td class="wan-col">千万</td><td class="wan-col">百万</td><td class="wan-col">十万</td><td class="wan-col">万</td>
+        </tr>
+        <tr>
+          <th>计数单位</th>
+          <td class="yi-col">千亿</td><td class="yi-col">百亿</td><td class="yi-col">十亿</td><td class="yi-col">亿</td>
+          <td class="wan-col">千万</td><td class="wan-col">百万</td><td class="wan-col">十万</td><td class="wan-col">万</td>
+        </tr>
+        <tr>
+          <th>数值</th>
+          <td>10¹¹</td><td>10¹⁰</td><td>10⁹</td><td>10⁸</td>
+          <td>10⁷</td><td>10⁶</td><td>10⁵</td><td>10⁴</td>
+        </tr>
+      </table>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <h3>📖 大数的读法</h3>
+        <p>读数规则：</p>
+        <ol style="margin:10px 0 0 20px;line-height:2.5;">
+          <li>从高位到低位，分级读</li>
+          <li>每级末尾有0不读，中间有0读一个"零"</li>
+          <li>万级后加"万"，亿级后加"亿"</li>
+        </ol>
+        <div style="background:#f8f9fa;padding:12px;border-radius:12px;margin-top:12px;font-size:15px;">
+          <strong>3,0008,0024</strong><br>
+          读作：三亿零八万零二十四
+        </div>
+      </div>
+      <div class="card">
+        <h3>✏️ 大数的写法</h3>
+        <p>写数规则：</p>
+        <ol style="margin:10px 0 0 20px;line-height:2.5;">
+          <li>哪个数位上没有，就写0占位</li>
+          <li>亿级、万级、个级各4位</li>
+          <li>每4位一组，中间可加逗号</li>
+        </ol>
+        <div style="background:#f8f9fa;padding:12px;border-radius:12px;margin-top:12px;font-size:15px;">
+          五亿零三千万：<strong class="highlight">530,000,000</strong>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🔢 大数比较大小</h3>
+      <p>比较规则：<br>
+      ① 位数多的数更大<br>
+      ② 位数相同时，从最高位比较，哪位数字大就更大</p>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;">
+        <div style="padding:12px;background:rgba(255,107,107,0.08);border-radius:12px;font-size:18px;font-weight:700;">
+          <span style="color:var(--primary)">1,234,567</span> > <span style="color:var(--blue)">987,654</span><br>
+          <span style="font-size:13px;color:var(--dim);">（7位 > 6位）</span>
+        </div>
+        <div style="padding:12px;background:rgba(51,154,240,0.08);border-radius:12px;font-size:18px;font-weight:700;">
+          <span style="color:var(--primary)">5,123,456</span> > <span style="color:var(--blue)">4,987,654</span><br>
+          <span style="font-size:13px;color:var(--dim);">（最高位5>4）</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="interactive-lab">
+    <h2>🧪 互动实验台</h2>
+    <div class="lab-tabs">
+      <button class="lab-tab active" onclick="switchTabK('build')">🔨 组数游戏</button>
+      <button class="lab-tab" onclick="switchTabK('read')">📖 读数练习</button>
+      <button class="lab-tab" onclick="switchTabK('drag10')">🎯 拖拽配对</button>
+    </div>
+
+    <div id="tabK-build" class="lab-panel active">
+      <div style="background:#f8f9fa;border-radius:16px;padding:20px;">
+        <h3 style="margin-bottom:16px;">🔨 拖动滑块，组成大数！</h3>
+        <div class="slider-row">
+          <label>亿位</label>
+          <input type="range" min="0" max="9" value="3" id="yi" oninput="updateBigNum()">
+          <span class="slider-val" id="yiV">3</span>
+        </div>
+        <div class="slider-row">
+          <label>千万位</label>
+          <input type="range" min="0" max="9" value="2" id="qianwan" oninput="updateBigNum()">
+          <span class="slider-val" id="qianwanV">2</span>
+        </div>
+        <div class="slider-row">
+          <label>百万位</label>
+          <input type="range" min="0" max="9" value="0" id="baiwan" oninput="updateBigNum()">
+          <span class="slider-val" id="baiwanV">0</span>
+        </div>
+        <div class="slider-row">
+          <label>十万位</label>
+          <input type="range" min="0" max="9" value="5" id="shiwan" oninput="updateBigNum()">
+          <span class="slider-val" id="shiwanV">5</span>
+        </div>
+        <div id="bigNumDisplay" style="text-align:center;font-size:42px;font-weight:900;color:var(--primary);margin:20px;padding:16px;background:#fff;border-radius:16px;border:3px solid var(--accent);">3,205,000,000</div>
+        <div class="digit-blocks" id="digitBlocks"></div>
+        <div id="bigNumRead" style="text-align:center;font-size:18px;font-weight:700;color:var(--blue);margin-top:8px;padding:12px;background:rgba(51,154,240,0.08);border-radius:12px;">三十二亿零五十万</div>
+      </div>
+    </div>
+
+    <div id="tabK-read" class="lab-panel">
+      <div style="background:#f8f9fa;border-radius:16px;padding:20px;">
+        <h3 style="margin-bottom:16px;">📖 大数读法练习！</h3>
+        <div id="readQ" style="font-size:32px;font-weight:900;text-align:center;color:var(--primary);margin:20px 0;letter-spacing:2px;">30,050,000</div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;" id="readOptions"></div>
+        <div id="readFeedback" style="text-align:center;font-size:16px;font-weight:700;margin-top:12px;padding:10px;border-radius:12px;display:none;"></div>
+        <button onclick="nextReadQ()" style="display:block;margin:12px auto 0;padding:10px 24px;background:var(--secondary);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;">下一题</button>
+      </div>
+    </div>
+
+    <div id="tabK-drag10" class="lab-panel">
+      <p style="font-weight:700;margin-bottom:16px;">🎯 把大数和读法配对！</p>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;">
+        <div>
+          <p style="font-size:13px;color:var(--dim);font-weight:700;margin-bottom:10px;">大数</p>
+          <div><div class="drag-item" draggable="true" data-val="1yi" ondragstart="kStart(event)">100,000,000</div></div>
+          <div style="margin-top:8px;"><div class="drag-item" draggable="true" data-val="10wan" ondragstart="kStart(event)">100,000</div></div>
+          <div style="margin-top:8px;"><div class="drag-item" draggable="true" data-val="1wan" ondragstart="kStart(event)">10,000</div></div>
+          <div style="margin-top:8px;"><div class="drag-item" draggable="true" data-val="1000wan" ondragstart="kStart(event)">10,000,000</div></div>
+        </div>
+        <div>
+          <p style="font-size:13px;color:var(--dim);font-weight:700;margin-bottom:10px;">读法</p>
+          <div><div class="drop-zone" data-answer="1yi" ondragover="kOver(event)" ondrop="kDrop(event)">拖到这里</div><span style="font-size:13px;color:var(--dim);margin-left:4px;">一亿</span></div>
+          <div style="margin-top:8px;"><div class="drop-zone" data-answer="10wan" ondragover="kOver(event)" ondrop="kDrop(event)">拖到这里</div><span style="font-size:13px;color:var(--dim);margin-left:4px;">十万</span></div>
+          <div style="margin-top:8px;"><div class="drop-zone" data-answer="1wan" ondragover="kOver(event)" ondrop="kDrop(event)">拖到这里</div><span style="font-size:13px;color:var(--dim);margin-left:4px;">一万</span></div>
+          <div style="margin-top:8px;"><div class="drop-zone" data-answer="1000wan" ondragover="kOver(event)" ondrop="kDrop(event)">拖到这里</div><span style="font-size:13px;color:var(--dim);margin-left:4px;">一千万</span></div>
+        </div>
+      </div>
+      <div id="drag10-result" style="text-align:center;font-size:16px;font-weight:700;margin-top:16px;"></div>
+    </div>
+  </section>
+
+  <section id="knowledge-graph">
+    <h2>🕸️ 知识图谱</h2>
+    <div class="kg-legend">
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#3b82f6;"></div>当前</div>
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#22c55e;"></div>前置</div>
+      <div class="kg-legend-item"><div class="kg-dot" style="background:#f97316;"></div>后续</div>
+    </div>
+    <svg id="kg-svg" height="300"></svg>
+    <script>
+    (function(){
+      const g={nodes:[
+        {id:"c",name:"大数的认识",type:"current"},
+        {id:"p1",name:"万以内数",type:"prereq"},
+        {id:"p2",name:"数位与计数单位",type:"prereq"},
+        {id:"p3",name:"整数加减法",type:"prereq"},
+        {id:"n1",name:"大数加减法",type:"next"},
+        {id:"n2",name:"大数乘除法",type:"next"},
+        {id:"n3",name:"估算与近似数",type:"next"}
+      ],links:[{source:"p1",target:"c"},{source:"p2",target:"c"},{source:"p3",target:"c"},{source:"c",target:"n1"},{source:"c",target:"n2"},{source:"c",target:"n3"}]};
+      const W=560,H=300,svg=d3.select("#kg-svg").attr("width",W).attr("height",H).attr("viewBox",`0 0 ${W} ${H}`);
+      const col=d=>({current:"#3b82f6",prereq:"#22c55e",next:"#f97316"}[d.type]);
+      const sim=d3.forceSimulation(g.nodes).force("link",d3.forceLink(g.links).id(d=>d.id).distance(100)).force("charge",d3.forceManyBody().strength(-280)).force("center",d3.forceCenter(W/2,H/2));
+      const link=svg.append("g").selectAll("line").data(g.links).join("line").attr("stroke","#ccc").attr("stroke-width",2);
+      const node=svg.append("g").selectAll("circle").data(g.nodes).join("circle").attr("r",30).attr("fill",col).attr("stroke","#fff").attr("stroke-width",3);
+      const label=svg.append("g").selectAll("text").data(g.nodes).join("text").text(d=>d.name).attr("text-anchor","middle").attr("dy","0.35em").attr("font-size",10).attr("fill","#fff").attr("font-weight","bold");
+      sim.on("tick",()=>{link.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y).attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);node.attr("cx",d=>d.x).attr("cy",d=>d.y);label.attr("x",d=>d.x).attr("y",d=>d.y);});
+    })();
+    </script>
+  </section>
+
+  <section id="quiz" class="section">
+    <div class="section-title">✅ 多步骤练习题</div>
+    <div class="quiz-card">
+      <div class="q-number">题目 1/3</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:0%" id="kq1p"></div></div>
+      <div id="kq1s1" class="quiz-step active">
+        <div class="q-text">🔢 <span class="highlight">三亿四千五百万</span> 写成数字是？</div>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','kq1s1',null,'kq1p',0)">A. 34,500,000</button>
+        <button class="quiz-option" onclick="checkQ(this,'correct','kq1s1','kq1s2','kq1p',50)">B. 345,000,000</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','kq1s1',null,'kq1p',0)">C. 3,045,000,000</button>
+        <div class="quiz-feedback" id="fb-kq1s1"></div>
+      </div>
+      <div id="kq1s2" class="quiz-step">
+        <div class="q-text">✅ 对！345,000,000 中，3在哪个数位？</div>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','kq1s2',null,'kq1p',50)">A. 千万位</button>
+        <button class="quiz-option" onclick="checkQ(this,'correct','kq1s2',null,'kq1p',100)">B. 亿位</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','kq1s2',null,'kq1p',50)">C. 十亿位</button>
+        <div class="quiz-feedback" id="fb-kq1s2"></div>
+      </div>
+    </div>
+    <div class="quiz-card">
+      <div class="q-number">题目 2/3</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:0%" id="kq2p"></div></div>
+      <div id="kq2s1" class="quiz-step active">
+        <div class="q-text">📊 比较大小：<span class="highlight">8,090,000</span> 和 <span class="highlight">9,008,000</span>？</div>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','kq2s1',null,'kq2p',0)">A. 8,090,000 > 9,008,000</button>
+        <button class="quiz-option" onclick="checkQ(this,'correct','kq2s1','kq2s2','kq2p',50)">B. 8,090,000 < 9,008,000</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','kq2s1',null,'kq2p',0)">C. 8,090,000 = 9,008,000</button>
+        <div class="quiz-feedback" id="fb-kq2s1"></div>
+      </div>
+      <div id="kq2s2" class="quiz-step">
+        <div class="q-text">✅ 对！千万位8<9，所以8090000&lt;9008000。那 <span class="highlight">100,000,000</span> 读作？</div>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','kq2s2',null,'kq2p',50)">A. 一千万</button>
+        <button class="quiz-option" onclick="checkQ(this,'correct','kq2s2',null,'kq2p',100)">B. 一亿</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','kq2s2',null,'kq2p',50)">C. 一百万</button>
+        <div class="quiz-feedback" id="fb-kq2s2"></div>
+      </div>
+    </div>
+    <div class="quiz-card">
+      <div class="q-number">题目 3/3 · 挑战</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:0%" id="kq3p"></div></div>
+      <div id="kq3s1" class="quiz-step active">
+        <div class="q-text">🏆 中国人口约14亿，印度人口约14.3亿，哪个更多？</div>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','kq3s1',null,'kq3p',0)">A. 中国（14亿）</button>
+        <button class="quiz-option" onclick="checkQ(this,'correct','kq3s1','kq3s2','kq3p',50)">B. 印度（14.3亿）</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','kq3s1',null,'kq3p',0)">C. 一样多</button>
+        <div class="quiz-feedback" id="fb-kq3s1"></div>
+      </div>
+      <div id="kq3s2" class="quiz-step">
+        <div class="q-text">🎓 14亿 = 1,400,000,000，14.3亿 = ?</div>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','kq3s2',null,'kq3p',50)">A. 14,300,000</button>
+        <button class="quiz-option" onclick="checkQ(this,'correct','kq3s2',null,'kq3p',100)">B. 1,430,000,000</button>
+        <button class="quiz-option" onclick="checkQ(this,'wrong','kq3s2',null,'kq3p',50)">C. 143,000,000</button>
+        <div class="quiz-feedback" id="fb-kq3s2"></div>
+      </div>
+    </div>
+  </section>
+  <div class="footer"><p>🎓 TeachAny · 大数的认识 · 四年级数学</p></div>
+</div>
+<script>
+const unitNames=['亿','千万','百万','十万','万','千','百','十','个'];
+const unitColors=['#ff6b6b','#ff922b','#ffe66d','#51cf66','#4ecdc4','#339af0','#cc5de8','#ff6b6b','#ff922b'];
+function updateBigNum(){
+  const y=+document.getElementById('yi').value;
+  const qw=+document.getElementById('qianwan').value;
+  const bw=+document.getElementById('baiwan').value;
+  const sw=+document.getElementById('shiwan').value;
+  document.getElementById('yiV').textContent=y;
+  document.getElementById('qianwanV').textContent=qw;
+  document.getElementById('baiwanV').textContent=bw;
+  document.getElementById('shiwanV').textContent=sw;
+  const total=y*100000000+qw*10000000+bw*1000000+sw*100000;
+  document.getElementById('bigNumDisplay').textContent=total.toLocaleString('zh-CN');
+  // 数位显示
+  const blocks=document.getElementById('digitBlocks');blocks.innerHTML='';
+  const digits=[y,qw,bw,sw,0,0,0,0,0].slice(0,9);
+  const names=['亿','千万','百万','十万','万','千','百','十','个'];
+  digits.slice(0,4).forEach((d,i)=>{
+    const block=document.createElement('div');block.className='digit-block';
+    block.style.background=`rgba(255,107,107,${d>0?0.15:0.05})`;
+    block.style.border=`2px solid ${d>0?'var(--primary)':'#e0e0e0'}`;
+    block.innerHTML=`<div class="dv" style="color:${d>0?'var(--primary)':'#ccc'}">${d}</div><div class="dn">${names[i]}</div>`;
+    blocks.appendChild(block);
+  });
+  // 读数
+  let read='';
+  if(y>0)read+=y+'亿';
+  if(qw>0)read+=qw+'千万';
+  if(bw>0)read+=bw+'百万';
+  if(sw>0)read+=sw+'十万';
+  if(!read)read='零';
+  document.getElementById('bigNumRead').textContent='读作：'+read;
+}
+updateBigNum();
+
+const readQs=[
+  {q:"30,050,000",answer:"三千零五万",options:["三千零五万","三百零五万","三十万零五千","三十亿五万"]},
+  {q:"100,000,000",answer:"一亿",options:["一千万","一亿","十亿","一百万"]},
+  {q:"20,000,400",answer:"两千万零四百",options:["两千万零四百","二百万零四十","两亿零四百","二十万四百"]},
+  {q:"5,003,000,000",answer:"五十亿零三百万",options:["五十亿零三百万","五亿三百万","五百亿三千万","五十亿三千"]},
+];
+let readIdx=0;
+function loadReadQ(){
+  const q=readQs[readIdx%readQs.length];
+  document.getElementById('readQ').textContent=q.q;
+  const d=document.getElementById('readOptions');d.innerHTML='';
+  document.getElementById('readFeedback').style.display='none';
+  q.options.forEach(o=>{
+    const btn=document.createElement('button');btn.textContent=o;
+    btn.style.cssText='padding:10px 16px;border-radius:12px;border:2px solid #e0e0e0;background:#f5f5f5;font-size:14px;font-weight:700;cursor:pointer;margin:4px;';
+    btn.onclick=function(){
+      const fb=document.getElementById('readFeedback');fb.style.display='block';
+      if(o===q.answer){fb.textContent='🎉 正确！'+o;fb.style.background='rgba(81,207,102,0.15)';fb.style.color='#2b8a3e';}
+      else{fb.textContent=`❌ 答案是"${q.answer}"`;fb.style.background='rgba(255,107,107,0.1)';fb.style.color='#c92a2a';}
+    };
+    d.appendChild(btn);
+  });
+}
+function nextReadQ(){readIdx++;loadReadQ();}
+loadReadQ();
+
+function switchTabK(name){
+  document.querySelectorAll('.lab-tab').forEach((t,i)=>{t.classList.toggle('active',['build','read','drag10'][i]===name);});
+  document.querySelectorAll('.lab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(`tabK-${name}`).classList.add('active');
+}
+function kStart(e){e.dataTransfer.setData('text',e.target.dataset.val);}
+function kOver(e){e.preventDefault();e.currentTarget.classList.add('drag-over');}
+function kDrop(e){
+  e.preventDefault();const zone=e.currentTarget;zone.classList.remove('drag-over');
+  const val=e.dataTransfer.getData('text'),ans=zone.dataset.answer;
+  zone.textContent=val;zone.style.background=val===ans?'rgba(81,207,102,0.2)':'rgba(255,107,107,0.1)';zone.style.borderColor=val===ans?'#51cf66':'#ff6b6b';
+  const zones=document.querySelectorAll('#tabK-drag10 .drop-zone');let cor=0;zones.forEach(z=>{if(z.textContent===z.dataset.answer)cor++;});
+  const r=document.getElementById('drag10-result');r.textContent=cor===zones.length?'🎉 全对！':'✅ '+cor+'/'+zones.length;r.style.color=cor===zones.length?'#51cf66':'var(--dim)';
+}
+function checkQ(btn,type,curStep,nextStep,progId,progVal){
+  const parent=document.getElementById(curStep);parent.querySelectorAll('.quiz-option').forEach(b=>b.disabled=true);btn.classList.add(type);
+  const fb=document.getElementById(`fb-${curStep}`);fb.classList.add('show');
+  if(type==='correct'){fb.style.background='rgba(81,207,102,0.12)';fb.style.color='#2b8a3e';fb.textContent='🎉 正确！';if(nextStep){setTimeout(()=>{parent.classList.remove('active');document.getElementById(nextStep).classList.add('active');},1200);}}
+  else{fb.style.background='rgba(255,107,107,0.1)';fb.style.color='#c92a2a';fb.textContent='❌ 再想想！';parent.querySelectorAll('.quiz-option').forEach(b=>{b.disabled=false;b.classList.remove('correct','wrong');});fb.classList.remove('show');return;}
+  document.getElementById(progId).style.width=progVal+'%';
+}
+</script>
+</body>
+</html>

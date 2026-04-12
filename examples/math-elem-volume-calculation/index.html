@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>体积计算 · 教学课件</title>
+<meta name="teachany-node" content="volume-calculation">
+<meta name="teachany-subject" content="math">
+<meta name="teachany-grade" content="6">
+<meta name="teachany-version" content="2.0">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--card:#fff;--text:#2b2b2b;--dim:#666;--border:rgba(0,0,0,0.06);}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:80px;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 10% 20%,rgba(255,107,107,0.07) 0%,transparent 50%),radial-gradient(circle at 90% 80%,rgba(78,205,196,0.07) 0%,transparent 50%);pointer-events:none;z-index:-1;}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;}
+.nav-brand{font-size:20px;font-weight:900;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),#ff922b,#cc5de8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all 0.25s;}
+.nav a:hover{color:#fff;background:linear-gradient(135deg,var(--primary),#ff922b);}
+.container{max-width:960px;margin:0 auto;padding:80px 20px 60px;}
+.hero{text-align:center;padding:36px 0 30px;}
+.hero h1{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--primary),#ff922b,#cc5de8,#339af0);background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
+@keyframes rainbowShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.hero .subtitle{font-size:18px;color:var(--dim);margin-bottom:16px;}
+.hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+.hero .meta span{background:#fff;border:2px solid var(--border);border-radius:24px;padding:6px 18px;font-size:14px;font-weight:700;color:var(--dim);}
+.section{margin:40px 0;}
+.section-title{font-size:26px;font-weight:900;margin-bottom:18px;padding:10px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));display:inline-block;}
+.card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.04);}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;}
+.highlight{color:var(--primary);font-weight:900;}
+.formula-box{background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));border-radius:16px;padding:18px 22px;text-align:center;font-size:20px;font-weight:900;margin:12px 0;}
+.tip-box{background:rgba(255,230,109,0.25);border-left:4px solid var(--accent);border-radius:0 12px 12px 0;padding:12px 16px;margin:12px 0;font-size:15px;}
+/* LIFE SCENE */
+#life-scene{background:linear-gradient(135deg,#e8eaf6,#e3f2fd);border-radius:20px;padding:24px;min-height:300px;overflow:hidden;}
+.water-scene{position:relative;width:100%;height:240px;background:linear-gradient(180deg,#fff 0%,#e3f2fd 100%);border-radius:16px;overflow:hidden;}
+.tank{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:160px;height:160px;border:4px solid #90caf9;border-top:none;border-radius:0 0 8px 8px;}
+.water-fill{position:absolute;bottom:0;left:0;right:0;background:rgba(33,150,243,0.3);border-radius:0 0 4px 4px;transition:height 1.5s ease;}
+.fish{position:absolute;font-size:24px;animation:fishSwim 4s ease infinite;}
+@keyframes fishSwim{0%,100%{transform:translateX(0) scaleX(1)}50%{transform:translateX(40px) scaleX(-1)}}
+.cube-unit{position:absolute;width:20px;height:20px;background:rgba(255,107,107,0.6);border:1px solid rgba(255,107,107,0.8);animation:cubeFloat 2s ease infinite;}
+@keyframes cubeFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.vol-display{position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.9);border-radius:10px;padding:8px 12px;font-size:18px;font-weight:900;color:var(--primary);}
+/* LAB */
+#interactive-lab{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+.lab-tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.lab-tab{padding:8px 20px;border-radius:20px;border:2px solid var(--border);cursor:pointer;font-weight:700;font-size:14px;transition:all 0.25s;}
+.lab-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.lab-panel{display:none;}
+.lab-panel.active{display:block;animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.slider-row{display:flex;align-items:center;gap:10px;margin:8px 0;}
+.slider-row label{width:70px;font-weight:700;font-size:14px;}
+.slider-row input{flex:1;accent-color:var(--primary);}
+.slider-row span{width:55px;font-weight:900;color:var(--primary);}
+#volCanvas{display:block;margin:12px auto;border:2px solid #f0f0f0;border-radius:12px;}
+/* KG */
+#knowledge-graph{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+#kg-svg-vc{width:100%;height:340px;}
+/* QUIZ */
+.quiz-section{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+.progress-bar-wrap{background:#f0f0f0;border-radius:10px;height:12px;margin-bottom:20px;overflow:hidden;}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:10px;transition:width 0.5s ease;}
+.quiz-step{display:none;}
+.quiz-step.active{display:block;animation:fadeSlide 0.4s ease;}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.quiz-q{font-size:20px;font-weight:900;margin-bottom:16px;}
+.quiz-option{display:block;padding:14px 20px;margin:8px 0;border-radius:14px;background:#fff;border:2.5px solid #e8e8e8;cursor:pointer;transition:all 0.25s;font-size:16px;font-weight:700;width:100%;text-align:left;}
+.quiz-option:hover{border-color:var(--secondary);}
+.quiz-option.correct{background:rgba(81,207,102,0.15);border-color:var(--success);color:#2b8a3e;}
+.quiz-option.wrong{background:rgba(255,107,107,0.1);border-color:var(--primary);color:#c92a2a;}
+.quiz-feedback{padding:12px 16px;border-radius:12px;margin-top:8px;font-size:15px;font-weight:700;display:none;}
+.quiz-feedback.show{display:block;}
+.quiz-feedback.ok{background:rgba(81,207,102,0.15);color:#2b8a3e;}
+.quiz-feedback.err{background:rgba(255,107,107,0.1);color:#c92a2a;}
+.next-btn{margin-top:14px;padding:12px 28px;background:linear-gradient(135deg,var(--primary),#ff922b);color:#fff;border:none;border-radius:20px;font-size:16px;font-weight:900;cursor:pointer;}
+.locked{opacity:0.35;pointer-events:none;}
+.step-indicator{display:flex;gap:8px;margin-bottom:16px;}
+.step-dot{width:12px;height:12px;border-radius:50%;background:#e0e0e0;transition:all 0.3s;}
+.step-dot.done{background:var(--success);}
+.step-dot.active{background:var(--primary);transform:scale(1.3);}
+table{width:100%;border-collapse:collapse;margin:12px 0;}
+th,td{border:2px solid #f0f0f0;padding:10px 14px;text-align:center;font-size:15px;}
+th{background:rgba(255,107,107,0.1);font-weight:900;}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-brand">📚 TeachAny</div>
+  <a href="#life-scene-sec">🐟 生活场景</a>
+  <a href="#concepts">📖 概念</a>
+  <a href="#interactive-lab">🧪 实验台</a>
+  <a href="#knowledge-graph">🕸️ 知识图谱</a>
+  <a href="#quiz">📝 练习</a>
+</nav>
+<div class="container">
+  <div class="hero">
+    <h1>体积计算</h1>
+    <div class="subtitle">长方体、正方体、圆柱体积——空间数学的核心！</div>
+    <div class="meta">
+      <span>📚 小学数学</span><span>🎒 六年级上册</span><span>⭐ 难度：★★★</span><span>⏱️ 约50分钟</span>
+    </div>
+  </div>
+
+  <!-- 生活场景 -->
+  <section class="section" id="life-scene-sec">
+    <div class="section-title">🐟 生活场景：鱼缸注水</div>
+    <div id="life-scene">
+      <p style="font-weight:700;font-size:16px;margin-bottom:12px;">🐟 往长方体鱼缸里注水，体积等于长×宽×高！</p>
+      <div class="water-scene">
+        <div class="tank" id="tank">
+          <div class="water-fill" id="waterFill" style="height:20%;"></div>
+          <div class="fish" style="bottom:10px;left:20px;">🐟</div>
+          <div class="fish" style="bottom:30px;right:20px;animation-delay:2s;">🐠</div>
+        </div>
+        <div class="vol-display" id="volDisplay">体积：V=?</div>
+      </div>
+      <div class="card" style="margin-top:14px;">
+        <p>调整水位观察体积变化：</p>
+        <input type="range" min="0" max="100" value="20" style="width:100%;accent-color:var(--primary);margin:8px 0;" oninput="updateWater(this.value)">
+        <div id="waterInfo" style="font-weight:700;color:var(--primary);">水位：20%，体积约：24 dm³</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 核心概念 -->
+  <section class="section" id="concepts">
+    <div class="section-title">📖 核心概念</div>
+    <div class="grid-2">
+      <div class="card">
+        <h3>📦 长方体体积</h3>
+        <div class="formula-box">V = 长 × 宽 × 高<br>V = a × b × h</div>
+        <p>例：长4cm，宽3cm，高2cm<br>V = 4×3×2 = <span class="highlight">24cm³</span></p>
+      </div>
+      <div class="card">
+        <h3>🎲 正方体体积</h3>
+        <div class="formula-box">V = 棱长³<br>V = a × a × a = a³</div>
+        <p>例：棱长5cm<br>V = 5³ = <span class="highlight">125cm³</span></p>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <h3>🥤 圆柱体积</h3>
+        <div class="formula-box">V = 底面积 × 高<br>V = π r² × h</div>
+        <p>例：r=3cm，h=5cm<br>V = 3.14×9×5 = <span class="highlight">141.3cm³</span></p>
+        <div class="tip-box">💡 底面积 = πr²（π ≈ 3.14）</div>
+      </div>
+      <div class="card">
+        <h3>🔗 关系总结</h3>
+        <div class="formula-box">体积 = 底面积 × 高</div>
+        <p>长方体：底=长×宽，高=高<br>正方体：底=边²，高=边<br>圆柱：底=πr²，高=h</p>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📊 体积单位换算</h3>
+      <table>
+        <tr><th>单位</th><th>换算关系</th></tr>
+        <tr><td>1m³</td><td>= 1000 dm³</td></tr>
+        <tr><td>1dm³</td><td>= 1000 cm³ = 1升(L)</td></tr>
+        <tr><td>1cm³</td><td>= 1mL = 1000mm³</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- 互动实验台 -->
+  <section class="section" id="interactive-lab">
+    <div class="section-title">🧪 互动实验台</div>
+    <div id="interactive-lab">
+      <div class="lab-tabs">
+        <button class="lab-tab active" onclick="switchTab('tab-calc')">📐 体积计算器</button>
+        <button class="lab-tab" onclick="switchTab('tab-compare')">🔄 体积比较</button>
+      </div>
+      <div id="tab-calc" class="lab-panel active">
+        <div class="card">
+          <h3>📐 动态体积计算器</h3>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+            <button class="next-btn" onclick="setShapeType('rect')">📦 长方体</button>
+            <button class="next-btn" style="background:linear-gradient(135deg,var(--secondary),#20c997);" onclick="setShapeType('cube')">🎲 正方体</button>
+            <button class="next-btn" style="background:linear-gradient(135deg,#cc5de8,#845ef7);" onclick="setShapeType('cylinder')">🥤 圆柱</button>
+          </div>
+          <div id="volSliders"></div>
+          <canvas id="volCanvas" width="280" height="200"></canvas>
+          <div class="formula-box" id="volResult">体积 = ?</div>
+        </div>
+      </div>
+      <div id="tab-compare" class="lab-panel">
+        <div class="card">
+          <h3>🔄 相同体积，不同形状</h3>
+          <p style="color:var(--dim);margin-bottom:12px;">体积相同时，形状不同，维度各异</p>
+          <input type="number" id="targetVol" value="24" min="1" max="1000" style="padding:8px 12px;border:2px solid #ddd;border-radius:10px;font-size:18px;font-weight:900;width:120px;" oninput="compareVol()">
+          <span style="font-size:16px;font-weight:700;">cm³</span>
+          <div id="compareResult" style="margin-top:14px;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 知识图谱 -->
+  <section class="section" id="knowledge-graph">
+    <div class="section-title">🕸️ 知识图谱</div>
+    <div id="knowledge-graph"><svg id="kg-svg-vc"></svg></div>
+  </section>
+
+  <!-- 练习 -->
+  <section class="section" id="quiz">
+    <div class="section-title">📝 闯关练习</div>
+    <div class="quiz-section">
+      <div class="step-indicator" id="stepIndicator"></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressBar" style="width:0%"></div></div>
+      <div class="quiz-step active" id="step1">
+        <div class="quiz-q">📦 第1关：长方体长5cm宽4cm高3cm，体积是？</div>
+        <button class="quiz-option" onclick="checkQ(1,'A','B')">A. 47cm³</button>
+        <button class="quiz-option" onclick="checkQ(1,'B','B')">B. 60cm³</button>
+        <button class="quiz-option" onclick="checkQ(1,'C','B')">C. 12cm³</button>
+        <div class="quiz-feedback" id="fb1"></div>
+        <button class="next-btn locked" id="next1" onclick="nextStep(2)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step2">
+        <div class="quiz-q">🎲 第2关：正方体棱长4cm，体积是？</div>
+        <button class="quiz-option" onclick="checkQ(2,'A','C')">A. 16cm³</button>
+        <button class="quiz-option" onclick="checkQ(2,'B','C')">B. 12cm³</button>
+        <button class="quiz-option" onclick="checkQ(2,'C','C')">C. 64cm³</button>
+        <div class="quiz-feedback" id="fb2"></div>
+        <button class="next-btn locked" id="next2" onclick="nextStep(3)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step3">
+        <div class="quiz-q">🥤 第3关：圆柱底面半径3cm，高10cm，体积约是？（π≈3.14）</div>
+        <button class="quiz-option" onclick="checkQ(3,'A','B')">A. 94.2cm³</button>
+        <button class="quiz-option" onclick="checkQ(3,'B','B')">B. 282.6cm³</button>
+        <button class="quiz-option" onclick="checkQ(3,'C','B')">C. 942cm³</button>
+        <div class="quiz-feedback" id="fb3"></div>
+        <button class="next-btn locked" id="next3" onclick="nextStep(4)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step4">
+        <div class="quiz-q">🔄 第4关：1dm³等于多少cm³？</div>
+        <button class="quiz-option" onclick="checkQ(4,'A','C')">A. 10cm³</button>
+        <button class="quiz-option" onclick="checkQ(4,'B','C')">B. 100cm³</button>
+        <button class="quiz-option" onclick="checkQ(4,'C','C')">C. 1000cm³</button>
+        <div class="quiz-feedback" id="fb4"></div>
+        <button class="next-btn locked" id="next4" onclick="showFinal()">完成 🎉</button>
+      </div>
+      <div class="quiz-step locked" id="stepFinal">
+        <div style="text-align:center;padding:30px;">
+          <div style="font-size:64px;animation:bounce 1s ease infinite;">🏆</div>
+          <h2 style="font-size:28px;font-weight:900;color:var(--primary);margin:16px 0;">体积大师！</h2>
+          <p>体积计算完全掌握！</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+// WATER TANK
+function updateWater(v){
+  document.getElementById('waterFill').style.height=v+'%';
+  const vol=(v/100*120).toFixed(1);
+  document.getElementById('volDisplay').textContent=`体积：V=${vol}dm³`;
+  document.getElementById('waterInfo').textContent=`水位：${v}%，体积约：${vol} dm³`;
+}
+
+// VOLUME CALCULATOR
+let shapeType='rect';
+const canvas=document.getElementById('volCanvas');const ctx=canvas.getContext('2d');
+let sliderVals={a:4,b:3,h:2,r:3};
+function setShapeType(type){shapeType=type;buildVolSliders();drawVolShape();}
+function buildVolSliders(){
+  const area=document.getElementById('volSliders');
+  if(shapeType==='rect'){
+    area.innerHTML=`<div class="slider-row"><label>长(cm)</label><input type="range" min="1" max="12" value="${sliderVals.a}" oninput="sliderVals.a=+this.value;document.getElementById('vA').textContent=this.value;calcVol()"><span id="vA">${sliderVals.a}</span></div>
+    <div class="slider-row"><label>宽(cm)</label><input type="range" min="1" max="10" value="${sliderVals.b}" oninput="sliderVals.b=+this.value;document.getElementById('vB').textContent=this.value;calcVol()"><span id="vB">${sliderVals.b}</span></div>
+    <div class="slider-row"><label>高(cm)</label><input type="range" min="1" max="10" value="${sliderVals.h}" oninput="sliderVals.h=+this.value;document.getElementById('vH').textContent=this.value;calcVol()"><span id="vH">${sliderVals.h}</span></div>`;
+  }else if(shapeType==='cube'){
+    area.innerHTML=`<div class="slider-row"><label>棱长(cm)</label><input type="range" min="1" max="10" value="${sliderVals.a}" oninput="sliderVals.a=+this.value;document.getElementById('vA').textContent=this.value;calcVol()"><span id="vA">${sliderVals.a}</span></div>`;
+  }else{
+    area.innerHTML=`<div class="slider-row"><label>半径(cm)</label><input type="range" min="1" max="8" value="${sliderVals.r}" oninput="sliderVals.r=+this.value;document.getElementById('vR').textContent=this.value;calcVol()"><span id="vR">${sliderVals.r}</span></div>
+    <div class="slider-row"><label>高(cm)</label><input type="range" min="1" max="12" value="${sliderVals.h}" oninput="sliderVals.h=+this.value;document.getElementById('vH').textContent=this.value;calcVol()"><span id="vH">${sliderVals.h}</span></div>`;
+  }
+  calcVol();
+}
+function calcVol(){
+  let v,formula;
+  if(shapeType==='rect'){v=sliderVals.a*sliderVals.b*sliderVals.h;formula=`V = ${sliderVals.a} × ${sliderVals.b} × ${sliderVals.h} = ${v} cm³`;}
+  else if(shapeType==='cube'){v=Math.pow(sliderVals.a,3);formula=`V = ${sliderVals.a}³ = ${v} cm³`;}
+  else{v=(3.14*sliderVals.r*sliderVals.r*sliderVals.h).toFixed(2);formula=`V = 3.14 × ${sliderVals.r}² × ${sliderVals.h} = ${v} cm³`;}
+  document.getElementById('volResult').textContent=formula;
+  drawVolShape();
+}
+function drawVolShape(){
+  ctx.clearRect(0,0,280,200);
+  const cx=140,cy=100;
+  ctx.strokeStyle='#ff6b6b';ctx.lineWidth=3;ctx.fillStyle='rgba(255,107,107,0.15)';
+  if(shapeType==='rect'){
+    const w=Math.min(sliderVals.a*18,200),h=Math.min(sliderVals.b*14,120);
+    ctx.beginPath();ctx.rect(cx-w/2,cy-h/2,w,h);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#ff6b6b';ctx.font='bold 13px sans-serif';ctx.textAlign='center';
+    ctx.fillText(sliderVals.a+'cm',cx,cy-h/2-5);ctx.fillText(sliderVals.b+'cm',cx+w/2+15,cy);
+  }else if(shapeType==='cube'){
+    const s=Math.min(sliderVals.a*16,130);
+    ctx.beginPath();ctx.rect(cx-s/2,cy-s/2,s,s);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#ff6b6b';ctx.font='bold 13px sans-serif';ctx.textAlign='center';
+    ctx.fillText(sliderVals.a+'cm',cx,cy-s/2-5);
+  }else{
+    const r=Math.min(sliderVals.r*12,80);const h2=Math.min(sliderVals.h*12,140);
+    ctx.beginPath();ctx.ellipse(cx,cy-h2/2,r,r*0.3,0,0,2*Math.PI);ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx-r,cy-h2/2);ctx.lineTo(cx-r,cy+h2/2);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx+r,cy-h2/2);ctx.lineTo(cx+r,cy+h2/2);ctx.stroke();
+    ctx.beginPath();ctx.ellipse(cx,cy+h2/2,r,r*0.3,0,0,2*Math.PI);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#ff6b6b';ctx.font='bold 12px sans-serif';ctx.textAlign='center';
+    ctx.fillText('r='+sliderVals.r,cx+r+10,cy);ctx.fillText('h='+sliderVals.h,cx,cy+h2/2+15);
+  }
+}
+
+// COMPARE
+function compareVol(){
+  const v=+document.getElementById('targetVol').value||24;
+  const res=document.getElementById('compareResult');
+  // Long, wide, high combos
+  let combos=[];
+  for(let a=1;a<=20;a++){for(let b=1;b<=a;b++){const c=v/(a*b);if(Number.isInteger(c)&&c>=1&&c<=20)combos.push([a,b,c]);}}
+  const r=Math.sqrt(v/Math.PI/5).toFixed(2);
+  res.innerHTML=`<div style="font-size:15px;font-weight:700;margin-bottom:8px;">📦 部分长方体组合：</div>`+
+    combos.slice(0,5).map(([a,b,c])=>`<div style="background:#f8f9fa;border-radius:8px;padding:8px 12px;margin:4px 0;font-size:14px;">长=${a}, 宽=${b}, 高=${c} → V=${a*b*c}cm³</div>`).join('')+
+    `<div style="font-size:15px;font-weight:700;margin:10px 0 4px;">🎲 等体积正方体：棱长≈${Math.cbrt(v).toFixed(2)}cm</div>`+
+    `<div style="font-size:15px;font-weight:700;margin:4px 0;">🥤 等体积圆柱(h=5cm)：r≈${r}cm</div>`;
+}
+
+function switchTab(id){document.querySelectorAll('.lab-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.lab-tab').forEach(t=>t.classList.remove('active'));document.getElementById(id).classList.add('active');event.target.classList.add('active');}
+
+function initKG(){
+  const colorMap={current:"#ff6b6b",prereq:"#51cf66",next:"#4ecdc4"};
+  const kgData={nodes:[{id:"cur",name:"体积计算",type:"current"},{id:"p1",name:"体积单位",type:"prereq"},{id:"p2",name:"面积计算",type:"prereq"},{id:"n1",name:"容积",type:"next"},{id:"n2",name:"圆锥体积",type:"next"},{id:"n3",name:"组合体积",type:"next"}],links:[{source:"p1",target:"cur"},{source:"p2",target:"cur"},{source:"cur",target:"n1"},{source:"cur",target:"n2"},{source:"cur",target:"n3"}]};
+  const svg=d3.select("#kg-svg-vc");const w=svg.node().parentElement.clientWidth||700,h=340;svg.attr("viewBox",`0 0 ${w} ${h}`);
+  svg.append("defs").append("marker").attr("id","arr-vc").attr("viewBox","0 -5 10 10").attr("refX",22).attr("markerWidth",6).attr("markerHeight",6).attr("orient","auto").append("path").attr("d","M0,-5L10,0L0,5").attr("fill","#bbb");
+  const sim=d3.forceSimulation(kgData.nodes).force("link",d3.forceLink(kgData.links).id(d=>d.id).distance(120)).force("charge",d3.forceManyBody().strength(-320)).force("center",d3.forceCenter(w/2,h/2));
+  const link=svg.append("g").selectAll("line").data(kgData.links).join("line").attr("stroke","#ddd").attr("stroke-width",2).attr("marker-end","url(#arr-vc)");
+  const node=svg.append("g").selectAll("g").data(kgData.nodes).join("g").call(d3.drag().on("start",e=>{if(!e.active)sim.alphaTarget(0.3).restart();e.subject.fx=e.subject.x;e.subject.fy=e.subject.y;}).on("drag",e=>{e.subject.fx=e.x;e.subject.fy=e.y;}).on("end",e=>{if(!e.active)sim.alphaTarget(0);e.subject.fx=null;e.subject.fy=null;}));
+  node.append("circle").attr("r",36).attr("fill",d=>colorMap[d.type]).attr("opacity",0.9);
+  node.append("text").attr("text-anchor","middle").attr("dy","0.35em").attr("font-size","11px").attr("font-weight","bold").attr("fill","#fff").each(function(d){const words=d.name.length>6?[d.name.slice(0,6),d.name.slice(6)]:[d.name];words.forEach((w,i)=>d3.select(this).append("tspan").attr("x",0).attr("dy",i?14:-7).text(w));});
+  const leg=svg.append("g").attr("transform",`translate(${w-160},20)`);[["prereq","前置知识"],["current","本节课"],["next","后续内容"]].forEach(([t,l],i)=>{leg.append("circle").attr("cx",10).attr("cy",i*26).attr("r",8).attr("fill",colorMap[t]);leg.append("text").attr("x",24).attr("y",i*26+5).attr("font-size","12px").attr("fill","#555").text(l);});
+  sim.on("tick",()=>{link.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y).attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);node.attr("transform",d=>`translate(${d.x},${d.y})`);});
+}
+
+function initStepIndicator(){const ind=document.getElementById('stepIndicator');for(let i=1;i<=4;i++){const d=document.createElement('div');d.className='step-dot'+(i===1?' active':'');d.id='dot'+i;ind.appendChild(d);}}
+function checkQ(step,choice,correct){const opts=document.querySelectorAll(`#step${step} .quiz-option`);opts.forEach(o=>o.disabled=true);const idx={A:0,B:1,C:2};const fb=document.getElementById('fb'+step);if(choice===correct){opts[idx[choice]].classList.add('correct');fb.className='quiz-feedback show ok';fb.textContent='✅ 正确！';}else{opts[idx[choice]].classList.add('wrong');opts[idx[correct]].classList.add('correct');fb.className='quiz-feedback show err';fb.textContent='❌ 正确答案是 '+correct;}fb.style.display='block';document.getElementById('progressBar').style.width=(step/4*100)+'%';setTimeout(()=>document.getElementById('next'+step).classList.remove('locked'),choice===correct?0:1500);}
+function nextStep(n){document.getElementById('step'+(n-1)).classList.remove('active');const s=document.getElementById('step'+n);s.classList.remove('locked');s.classList.add('active');document.getElementById('dot'+(n-1)).classList.replace('active','done');const dn=document.getElementById('dot'+n);if(dn)dn.classList.add('active');}
+function showFinal(){document.getElementById('step4').classList.remove('active');document.getElementById('stepFinal').classList.remove('locked');document.getElementById('stepFinal').classList.add('active');document.getElementById('progressBar').style.width='100%';}
+
+window.onload=()=>{updateWater(20);buildVolSliders();compareVol();initKG();initStepIndicator();};
+</script>
+</body>
+</html>

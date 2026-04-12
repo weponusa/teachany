@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>万以内数的认识 · 互动课件</title>
+<meta name="teachany-node" content="numbers-within-10000">
+<meta name="teachany-subject" content="math">
+<meta name="teachany-domain" content="numbers">
+<meta name="teachany-grade" content="2">
+<meta name="teachany-difficulty" content="2">
+<meta name="teachany-version" content="2.0">
+<meta name="teachany-author" content="weponusa">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--card:#fff;--purple:#cc5de8;--blue:#339af0;--orange:#ff922b;--text:#2b2b2b;--dim:#666;--border:rgba(0,0,0,0.06);}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:60px;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 10% 20%,rgba(255,107,107,.06),transparent 50%),radial-gradient(circle at 90% 80%,rgba(78,205,196,.06),transparent 50%);pointer-events:none;z-index:-1;}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;}
+.nav-brand{font-size:20px;font-weight:900;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--orange),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all .25s;white-space:nowrap;}
+.nav a:hover,.nav a.active{color:#fff;background:linear-gradient(135deg,var(--primary),var(--orange));}
+.container{max-width:960px;margin:0 auto;padding:80px 20px 60px;}
+.hero{text-align:center;padding:36px 0 30px;}
+.hero h1{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--orange),var(--blue),var(--purple));background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
+@keyframes rainbowShift{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}
+.hero .subtitle{font-size:18px;color:var(--dim);margin-bottom:16px;}
+.hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+.hero .meta span{background:#fff;border:2px solid var(--border);border-radius:24px;padding:6px 18px;font-size:14px;font-weight:700;color:var(--dim);}
+.section{margin:40px 0;}
+.section-title{font-size:26px;font-weight:900;margin-bottom:18px;padding:10px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(255,107,107,.1),rgba(78,205,196,.1));display:inline-block;}
+.card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,.04);transition:transform .25s,box-shadow .25s;}
+.card:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(255,107,107,.12);}
+.card h3{font-size:20px;font-weight:900;margin-bottom:10px;}
+.card p,.card li{font-size:16px;line-height:1.9;color:var(--dim);}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;}
+.highlight{color:var(--primary);font-weight:900;}
+
+/* ===== 生活场景 ===== */
+#life-scene{background:linear-gradient(135deg,#e3f2fd,#fff8e1);border-radius:24px;padding:32px;}
+/* 城市建筑动画 */
+.city-stage{position:relative;height:200px;background:linear-gradient(180deg,#87ceeb 0%,#87ceeb 60%,#90ee90 60%,#6aaa6a 100%);border-radius:18px;overflow:hidden;}
+.building{position:absolute;bottom:40%;border-radius:4px 4px 0 0;animation:buildRise 2s ease-out forwards;}
+@keyframes buildRise{from{height:0;opacity:0;}to{opacity:1;}}
+.building-label{position:absolute;bottom:0;font-size:10px;font-weight:700;color:#fff;text-align:center;width:100%;}
+/* 星星数量动画 */
+.star-count{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;max-width:600px;margin:16px auto 0;}
+.mini-star{font-size:14px;animation:starTwinkle 2s ease-in-out infinite;}
+@keyframes starTwinkle{0%,100%{opacity:.8;}50%{opacity:.3;}}
+/* 弹跳数字 */
+.bounce-nums{display:flex;gap:16px;justify-content:center;margin-top:12px;flex-wrap:wrap;}
+.bounce-num{font-size:32px;font-weight:900;animation:numBounce 1.5s ease-in-out infinite;}
+.bounce-num:nth-child(2){animation-delay:.3s;}
+.bounce-num:nth-child(3){animation-delay:.6s;}
+.bounce-num:nth-child(4){animation-delay:.9s;}
+@keyframes numBounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+
+/* ===== 数位表 ===== */
+.place-table{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.place-cell{background:var(--card);border:3px solid var(--border);border-radius:14px;padding:16px 8px;text-align:center;transition:all .3s;}
+.place-cell .place-name{font-size:16px;font-weight:900;color:var(--primary);}
+.place-cell .place-value{font-size:32px;font-weight:900;color:var(--text);margin:4px 0;}
+.place-cell .place-unit{font-size:13px;color:var(--dim);font-weight:700;}
+.place-cell:hover{transform:scale(1.05);border-color:var(--primary);}
+.place-cell.wan{background:rgba(204,93,232,.1);border-color:rgba(204,93,232,.4);}
+.place-cell.qian{background:rgba(255,107,107,.1);border-color:rgba(255,107,107,.4);}
+.place-cell.bai{background:rgba(255,146,43,.1);border-color:rgba(255,146,43,.4);}
+.place-cell.shi{background:rgba(51,154,240,.1);border-color:rgba(51,154,240,.4);}
+.place-cell.ge{background:rgba(81,207,102,.1);border-color:rgba(81,207,102,.4);}
+
+/* ===== 互动实验台 ===== */
+#interactive-lab{padding:28px;border-radius:24px;background:linear-gradient(135deg,#f3e5f5,#e8f5e9);}
+.slider-row{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+.slider-row label{font-weight:700;min-width:80px;}
+input[type=range]{flex:1;min-width:120px;accent-color:var(--primary);}
+.slider-val{min-width:70px;font-weight:900;color:var(--primary);font-size:20px;}
+.decompose-result{background:#fff;border-radius:14px;padding:16px;text-align:center;font-size:16px;line-height:2.4;}
+.num-big{font-size:56px;font-weight:900;color:var(--primary);text-align:center;margin-bottom:8px;}
+
+/* 拖拽 */
+.drag-area{display:flex;gap:20px;flex-wrap:wrap;}
+.drag-items,.drop-zones{flex:1;min-width:180px;}
+.drag-item{padding:10px 14px;background:#fff;border:2.5px dashed var(--secondary);border-radius:14px;margin-bottom:8px;cursor:grab;font-weight:700;text-align:center;transition:all .2s;}
+.drag-item:hover{background:rgba(78,205,196,.12);transform:scale(1.04);}
+.drop-zone{padding:14px;border:2.5px dashed #ccc;border-radius:14px;margin-bottom:8px;min-height:50px;text-align:center;transition:all .2s;color:#999;font-size:14px;}
+.drop-zone.over{border-color:var(--primary);background:rgba(255,107,107,.06);}
+.drop-zone.matched{border-color:var(--success);background:rgba(81,207,102,.1);color:var(--success);font-weight:700;}
+.drop-zone.wrong-match{animation:shake .4s;}
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+
+/* 知识图谱 */
+#knowledge-graph{background:#fff;border-radius:24px;padding:24px;}
+#kg-svg{width:100%;height:340px;display:block;}
+.kg-legend{display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;}
+.kg-legend-item{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;}
+.kg-dot{width:14px;height:14px;border-radius:50%;}
+
+/* 互动题 */
+.quiz-step{display:none;}
+.quiz-step.active{display:block;animation:fadeIn .4s;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.quiz-q{font-size:18px;font-weight:900;margin-bottom:18px;}
+.quiz-option{display:block;width:100%;padding:14px 20px;margin:8px 0;border-radius:16px;background:#fff;border:2.5px solid #e8e8e8;cursor:pointer;font-size:16px;font-weight:700;text-align:left;transition:all .25s;}
+.quiz-option:hover{background:rgba(78,205,196,.08);border-color:var(--secondary);}
+.quiz-option.correct{background:rgba(81,207,102,.12);border-color:var(--success);color:#2b8a3e;}
+.quiz-option.wrong{background:rgba(255,107,107,.1);border-color:var(--primary);color:#c92a2a;}
+.quiz-feedback{padding:12px 18px;border-radius:14px;margin-top:10px;font-size:15px;font-weight:700;display:none;}
+.quiz-feedback.show{display:block;animation:popIn .35s cubic-bezier(.34,1.56,.64,1);}
+@keyframes popIn{from{opacity:0;transform:scale(.92);}to{opacity:1;transform:scale(1);}}
+.quiz-feedback.ok{background:rgba(81,207,102,.15);color:#2b8a3e;}
+.quiz-feedback.err{background:rgba(255,107,107,.12);color:#c92a2a;}
+.quiz-next{margin-top:14px;padding:10px 28px;background:linear-gradient(135deg,var(--primary),var(--orange));color:#fff;border:none;border-radius:20px;font-size:16px;font-weight:900;cursor:pointer;display:none;}
+.progress-bar{height:8px;background:#f0f0f0;border-radius:4px;margin-bottom:18px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--orange));border-radius:4px;transition:width .4s;}
+.step-indicator{font-size:13px;color:var(--dim);margin-bottom:8px;font-weight:700;}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <span class="nav-brand">🔟 万以内的数</span>
+  <a href="#life-scene">生活场景</a>
+  <a href="#place-value">位值概念</a>
+  <a href="#interactive-lab">互动实验</a>
+  <a href="#knowledge-graph">知识图谱</a>
+  <a href="#quiz">互动练习</a>
+</nav>
+
+<div class="container">
+  <div class="hero">
+    <h1>🔟 万以内数的认识</h1>
+    <p class="subtitle">认识千、百、十、个位，学会万以内数的读法、写法和比较</p>
+    <div class="meta">
+      <span>📚 二年级</span><span>🔢 数与代数</span><span>⏱️ 45分钟</span><span>⭐ 入门</span>
+    </div>
+  </div>
+
+  <!-- 生活场景 -->
+  <section class="section" id="life-scene">
+    <div class="section-title">🎬 生活场景：城市里的大数</div>
+    <div class="city-stage" id="cityStage">
+      <!-- 建筑动态生成 -->
+    </div>
+    <div class="bounce-nums">
+      <div class="bounce-num" style="color:var(--primary);">1000</div>
+      <div class="bounce-num" style="color:var(--orange);">2500</div>
+      <div class="bounce-num" style="color:var(--success);">5300</div>
+      <div class="bounce-num" style="color:var(--blue);">9999</div>
+    </div>
+    <div class="star-count" id="starCount"></div>
+  </section>
+
+  <!-- 位值概念 -->
+  <section class="section" id="place-value">
+    <div class="section-title">📐 数位表</div>
+    <div class="place-table" id="placeTable"></div>
+    <div class="card" style="margin-top:18px;">
+      <h3>📝 数位口诀</h3>
+      <ul style="list-style:none;padding:0;">
+        <li style="padding:6px 0;border-bottom:1px solid #f0f0f0;">📌 <span style="color:var(--purple);font-weight:900">万位</span>：表示几个<strong>一万</strong>（10000）</li>
+        <li style="padding:6px 0;border-bottom:1px solid #f0f0f0;">📌 <span style="color:var(--primary);font-weight:900">千位</span>：表示几个<strong>一千</strong>（1000）</li>
+        <li style="padding:6px 0;border-bottom:1px solid #f0f0f0;">📌 <span style="color:var(--orange);font-weight:900">百位</span>：表示几个<strong>一百</strong>（100）</li>
+        <li style="padding:6px 0;border-bottom:1px solid #f0f0f0;">📌 <span style="color:var(--blue);font-weight:900">十位</span>：表示几个<strong>十</strong>（10）</li>
+        <li style="padding:6px 0;">📌 <span style="color:var(--success);font-weight:900">个位</span>：表示几个<strong>一</strong>（1）</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 互动实验台 -->
+  <section class="section" id="interactive-lab">
+    <div class="section-title">🧪 互动实验台</div>
+    <div class="card">
+      <h3>🎛️ 数的分解器</h3>
+      <div class="slider-row">
+        <label>设定数</label>
+        <input type="range" id="bigSlider" min="100" max="9999" value="3456" step="1">
+        <span class="slider-val" id="bigVal">3456</span>
+      </div>
+      <div class="num-big" id="bigNumShow">3456</div>
+      <div class="decompose-result" id="decomposeResult"></div>
+    </div>
+
+    <div class="card">
+      <h3>🎯 拖拽配对：数的表达</h3>
+      <div class="drag-area">
+        <div class="drag-items">
+          <div class="drag-item" draggable="true" data-answer="2347">二千三百四十七</div>
+          <div class="drag-item" draggable="true" data-answer="1008">一千零八</div>
+          <div class="drag-item" draggable="true" data-answer="5060">五千零六十</div>
+          <div class="drag-item" draggable="true" data-answer="9000">九千</div>
+        </div>
+        <div class="drop-zones">
+          <div class="drop-zone" data-key="1008">1008</div>
+          <div class="drop-zone" data-key="2347">2347</div>
+          <div class="drop-zone" data-key="5060">5060</div>
+          <div class="drop-zone" data-key="9000">9000</div>
+        </div>
+      </div>
+      <button onclick="resetDrag()" style="margin-top:12px;padding:8px 22px;background:var(--secondary);color:#fff;border:none;border-radius:16px;font-weight:700;cursor:pointer;">🔄 重置</button>
+    </div>
+  </section>
+
+  <!-- 知识图谱 -->
+  <section class="section" id="knowledge-graph">
+    <div class="section-title">🕸️ 知识图谱</div>
+    <div class="card">
+      <svg id="kg-svg"></svg>
+      <div class="kg-legend">
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#51cf66"></div>前置知识</div>
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#ff6b6b"></div>当前主题</div>
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#4ecdc4"></div>后续学习</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 互动练习 -->
+  <section class="section" id="quiz">
+    <div class="section-title">✏️ 互动练习</div>
+    <div class="card">
+      <div class="step-indicator" id="stepInd">第 1 题 / 共 5 题</div>
+      <div class="progress-bar"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
+
+      <div class="quiz-step active" id="q1">
+        <div class="quiz-q">1. 2000 + 300 + 40 + 5 = ?</div>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 345只到了百位，还有2000呢。')">345</button>
+        <button class="quiz-option" onclick="answer(this,'correct','✅ 正确！2345 = 2个千+3个百+4个十+5个一。')">2345</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 23450多了个0。')">23450</button>
+        <div class="quiz-feedback" id="fb1"></div>
+        <button class="quiz-next" onclick="nextStep(1)">下一题 →</button>
+      </div>
+
+      <div class="quiz-step" id="q2">
+        <div class="quiz-q">2. 6085 中，6在什么数位？</div>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 6085：千位是6，百位是0，十位是8，个位是5。')">百位</button>
+        <button class="quiz-option" onclick="answer(this,'correct','✅ 正确！6085，6在千位，表示6000。')">千位</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 6在千位，不是万位。')">万位</button>
+        <div class="quiz-feedback" id="fb2"></div>
+        <button class="quiz-next" onclick="nextStep(2)">下一题 →</button>
+      </div>
+
+      <div class="quiz-step" id="q3">
+        <div class="quiz-q">3. "五千零三"用数字写是？</div>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 5300是五千三百。"零三"是个位是3，十位百位都是0。')">5300</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 5030是五千零三十，"零三"是3在个位。')">5030</button>
+        <button class="quiz-option" onclick="answer(this,'correct','✅ 正确！五千零三：千位5，百位0，十位0，个位3 = 5003。')">5003</button>
+        <div class="quiz-feedback" id="fb3"></div>
+        <button class="quiz-next" onclick="nextStep(3)">下一题 →</button>
+      </div>
+
+      <div class="quiz-step" id="q4">
+        <div class="quiz-q">4. 比较大小：3456 □ 3546</div>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 千位都是3相等，看百位：3456百位是4，3546百位是5，5>4，所以3456<3546。')">3456 > 3546</button>
+        <button class="quiz-option" onclick="answer(this,'correct','✅ 正确！千位相同看百位，4<5，所以3456<3546。')">3456 < 3546</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 3456和3546不相等。')">3456 = 3546</button>
+        <div class="quiz-feedback" id="fb4"></div>
+        <button class="quiz-next" onclick="nextStep(4)">下一题 →</button>
+      </div>
+
+      <div class="quiz-step" id="q5">
+        <div class="quiz-q">5. 一个四位数，最大的是多少？</div>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 4999不是最大的四位数。')">4999</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 10000是五位数了，不是四位数。')">10000</button>
+        <button class="quiz-option" onclick="answer(this,'correct','✅ 正确！9999是最大的四位数，再大一个就是10000（五位数）了。')">9999</button>
+        <div class="quiz-feedback" id="fb5"></div>
+        <button class="quiz-next" onclick="showResult()">查看结果 🎉</button>
+      </div>
+
+      <div class="quiz-step" id="result">
+        <div style="text-align:center;padding:20px;">
+          <div style="font-size:64px;margin-bottom:16px;">🏆</div>
+          <div style="font-size:24px;font-weight:900;color:var(--primary);" id="scoreText"></div>
+          <button onclick="restartQuiz()" style="margin-top:20px;padding:12px 32px;background:linear-gradient(135deg,var(--primary),var(--orange));color:#fff;border:none;border-radius:20px;font-size:16px;font-weight:900;cursor:pointer;">🔄 再练一次</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+// 城市建筑动画
+const cityColors = ['#ff6b6b','#ff922b','#4ecdc4','#339af0','#cc5de8'];
+const cityStage = document.getElementById('cityStage');
+const buildings = [{h:70,w:30,l:40,label:'1000'},{h:100,w:40,l:100,label:'2500'},{h:120,w:50,l:170,label:'5000'},{h:90,w:35,l:250,label:'3300'},{h:60,w:28,l:320,label:'1200'}];
+buildings.forEach((b,i) => {
+  const div = document.createElement('div');
+  div.className = 'building';
+  div.style.cssText = `left:${b.l}px;width:${b.w}px;height:${b.h}px;background:${cityColors[i%5]};animation-delay:${i*0.3}s;`;
+  div.innerHTML = `<div class="building-label">${b.label}</div>`;
+  cityStage.appendChild(div);
+});
+
+// 星星
+const starCount = document.getElementById('starCount');
+for (let i = 0; i < 30; i++) {
+  const s = document.createElement('div');
+  s.className = 'mini-star';
+  s.textContent = '⭐';
+  s.style.animationDelay = (i*0.1)+'s';
+  starCount.appendChild(s);
+}
+
+// 数位表
+const placeData = [
+  {name:'万位',value:'2',unit:'×10000',cls:'wan',color:'#cc5de8'},
+  {name:'千位',value:'3',unit:'×1000',cls:'qian',color:'#ff6b6b'},
+  {name:'百位',value:'4',unit:'×100',cls:'bai',color:'#ff922b'},
+  {name:'十位',value:'5',unit:'×10',cls:'shi',color:'#339af0'},
+  {name:'个位',value:'6',unit:'×1',cls:'ge',color:'#51cf66'}
+];
+const placeTable = document.getElementById('placeTable');
+placeTable.style.gridTemplateColumns = 'repeat(5,1fr)';
+placeData.forEach(p => {
+  const cell = document.createElement('div');
+  cell.className = `place-cell ${p.cls}`;
+  cell.innerHTML = `<div class="place-name" style="color:${p.color}">${p.name}</div><div class="place-value">${p.value}</div><div class="place-unit">${p.unit}</div>`;
+  placeTable.appendChild(cell);
+});
+
+// 分解器
+const bigSlider = document.getElementById('bigSlider');
+const bigVal = document.getElementById('bigVal');
+const bigNumShow = document.getElementById('bigNumShow');
+const decomposeResult = document.getElementById('decomposeResult');
+function updateBig() {
+  const n = parseInt(bigSlider.value);
+  bigVal.textContent = n; bigNumShow.textContent = n;
+  const wan = Math.floor(n/10000);
+  const qian = Math.floor((n%10000)/1000);
+  const bai = Math.floor((n%1000)/100);
+  const shi = Math.floor((n%100)/10);
+  const ge = n%10;
+  let parts = [];
+  if(wan>0) parts.push(`<span style="color:var(--purple);font-weight:900">${wan}个万</span>`);
+  if(qian>0) parts.push(`<span style="color:var(--primary);font-weight:900">${qian}个千</span>`);
+  if(bai>0) parts.push(`<span style="color:var(--orange);font-weight:900">${bai}个百</span>`);
+  if(shi>0) parts.push(`<span style="color:var(--blue);font-weight:900">${shi}个十</span>`);
+  if(ge>0) parts.push(`<span style="color:var(--success);font-weight:900">${ge}个一</span>`);
+  decomposeResult.innerHTML = `<strong>${n} =</strong><br>${parts.join(' + ')}`;
+
+  // 更新数位表
+  const vals = [wan,qian,bai,shi,ge];
+  document.querySelectorAll('.place-cell .place-value').forEach((v,i)=>v.textContent=vals[i]);
+}
+bigSlider.addEventListener('input', updateBig);
+updateBig();
+
+// 拖拽
+let dragSrc=null;
+document.querySelectorAll('.drag-item').forEach(item=>{item.addEventListener('dragstart',()=>dragSrc=item);});
+document.querySelectorAll('.drop-zone').forEach(zone=>{
+  zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('over');});
+  zone.addEventListener('dragleave',()=>zone.classList.remove('over'));
+  zone.addEventListener('drop',e=>{
+    e.preventDefault();zone.classList.remove('over');
+    if(!dragSrc)return;
+    if(dragSrc.dataset.answer===zone.dataset.key){zone.classList.add('matched');dragSrc.style.opacity='0.3';dragSrc.draggable=false;zone.textContent=zone.dataset.key+' ✅';}
+    else{zone.classList.add('wrong-match');setTimeout(()=>zone.classList.remove('wrong-match'),500);}
+  });
+});
+function resetDrag(){document.querySelectorAll('.drag-item').forEach(i=>{i.style.opacity='1';i.draggable=true;});document.querySelectorAll('.drop-zone').forEach(z=>{z.classList.remove('matched','wrong-match');z.textContent=z.dataset.key;});}
+
+// D3
+const kgData={nodes:[{id:"100",name:"100以内数",type:"prereq"},{id:"add100",name:"100以内加减",type:"prereq"},{id:"cur",name:"万以内数",type:"current"},{id:"add10000",name:"万以内加减",type:"next"},{id:"estimate",name:"估算",type:"next"},{id:"large",name:"大数认识",type:"next"}],links:[{source:"100",target:"cur"},{source:"add100",target:"cur"},{source:"cur",target:"add10000"},{source:"cur",target:"estimate"},{source:"cur",target:"large"}]};
+const colorMap={current:"#ff6b6b",prereq:"#51cf66",next:"#4ecdc4"};
+const svgEl=document.getElementById('kg-svg');
+const W=(svgEl.parentElement.offsetWidth||600)-48,H=340;
+svgEl.setAttribute('viewBox',`0 0 ${W} ${H}`);
+const kgSvg=d3.select('#kg-svg');
+kgSvg.append('defs').append('marker').attr('id','arrow').attr('viewBox','0 -5 10 10').attr('refX',22).attr('refY',0).attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto').append('path').attr('d','M0,-5L10,0L0,5').attr('fill','#aaa');
+const sim=d3.forceSimulation(kgData.nodes).force('link',d3.forceLink(kgData.links).id(d=>d.id).distance(110)).force('charge',d3.forceManyBody().strength(-280)).force('center',d3.forceCenter(W/2,H/2));
+const linkEl=kgSvg.append('g').selectAll('line').data(kgData.links).join('line').attr('stroke','#ccc').attr('stroke-width',2).attr('marker-end','url(#arrow)');
+const nodeEl=kgSvg.append('g').selectAll('g').data(kgData.nodes).join('g').call(d3.drag().on('start',(e,d)=>{if(!e.active)sim.alphaTarget(.3).restart();d.fx=d.x;d.fy=d.y;}).on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y;}).on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}));
+nodeEl.append('circle').attr('r',28).attr('fill',d=>colorMap[d.type]).attr('stroke','#fff').attr('stroke-width',3).style('filter','drop-shadow(0 2px 6px rgba(0,0,0,.15))');
+nodeEl.append('text').attr('text-anchor','middle').attr('dy','0.35em').attr('font-size','12px').attr('font-weight','700').attr('fill','#fff').text(d=>d.name);
+sim.on('tick',()=>{linkEl.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);nodeEl.attr('transform',d=>`translate(${d.x},${d.y})`);});
+
+let score=0,answered=[false,false,false,false,false];
+function answer(btn,type,msg){const step=btn.closest('.quiz-step');const fb=step.querySelector('.quiz-feedback');const nxt=step.querySelector('.quiz-next');if(step.querySelector('.correct')||step.querySelector('.wrong'))return;btn.classList.add(type==='correct'?'correct':'wrong');fb.textContent=msg;fb.className='quiz-feedback show '+(type==='correct'?'ok':'err');nxt.style.display='inline-block';const idx=parseInt(step.id.replace('q',''))-1;if(type==='correct'&&!answered[idx]){score++;answered[idx]=true;}}
+function nextStep(n){document.getElementById('q'+n).classList.remove('active');const next=document.getElementById('q'+(n+1));if(next){next.classList.add('active');document.getElementById('stepInd').textContent=`第 ${n+1} 题 / 共 5 题`;document.getElementById('progFill').style.width=(n*20)+'%';}}
+function showResult(){document.getElementById('q5').classList.remove('active');document.getElementById('result').classList.add('active');document.getElementById('progFill').style.width='100%';const msgs=['继续加油！','还不错哦！','做得好！','非常棒！','满分！太厉害了！'];document.getElementById('scoreText').textContent=`得了 ${score} / 5 分 — ${msgs[score]}`;}
+function restartQuiz(){score=0;answered=[false,false,false,false,false];document.querySelectorAll('.quiz-step').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.quiz-option').forEach(o=>o.classList.remove('correct','wrong'));document.querySelectorAll('.quiz-feedback').forEach(f=>f.className='quiz-feedback');document.querySelectorAll('.quiz-next').forEach(b=>b.style.display='none');document.getElementById('q1').classList.add('active');document.getElementById('stepInd').textContent='第 1 题 / 共 5 题';document.getElementById('progFill').style.width='0%';}
+</script>
+</body>
+</html>

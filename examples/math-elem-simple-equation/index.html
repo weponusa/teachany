@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>简单方程 · 教学课件</title>
+<meta name="teachany-node" content="simple-equation">
+<meta name="teachany-subject" content="math">
+<meta name="teachany-grade" content="5">
+<meta name="teachany-version" content="2.0">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--card:#fff;--text:#2b2b2b;--dim:#666;--border:rgba(0,0,0,0.06);}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:80px;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 10% 20%,rgba(255,107,107,0.07) 0%,transparent 50%),radial-gradient(circle at 90% 80%,rgba(78,205,196,0.07) 0%,transparent 50%);pointer-events:none;z-index:-1;}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;}
+.nav-brand{font-size:20px;font-weight:900;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),#ff922b,#cc5de8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all 0.25s;}
+.nav a:hover{color:#fff;background:linear-gradient(135deg,var(--primary),#ff922b);}
+.container{max-width:960px;margin:0 auto;padding:80px 20px 60px;}
+.hero{text-align:center;padding:36px 0 30px;}
+.hero h1{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--primary),#ff922b,#cc5de8,#339af0);background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
+@keyframes rainbowShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.hero .subtitle{font-size:18px;color:var(--dim);margin-bottom:16px;}
+.hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+.hero .meta span{background:#fff;border:2px solid var(--border);border-radius:24px;padding:6px 18px;font-size:14px;font-weight:700;color:var(--dim);}
+.section{margin:40px 0;}
+.section-title{font-size:26px;font-weight:900;margin-bottom:18px;padding:10px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));display:inline-block;}
+.card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.04);}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;}
+.highlight{color:var(--primary);font-weight:900;}
+.formula-box{background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));border-radius:16px;padding:18px 22px;text-align:center;font-size:20px;font-weight:900;margin:12px 0;}
+.tip-box{background:rgba(255,230,109,0.25);border-left:4px solid var(--accent);border-radius:0 12px 12px 0;padding:12px 16px;margin:12px 0;font-size:15px;}
+/* LIFE SCENE: BALANCE SCALE */
+#life-scene{background:linear-gradient(180deg,#e8eaf6 0%,#f3e5f5 100%);border-radius:20px;padding:24px;min-height:320px;overflow:hidden;}
+.balance-scene{display:flex;flex-direction:column;align-items:center;}
+.balance-title{font-size:17px;font-weight:900;color:#311b92;margin-bottom:16px;text-align:center;}
+.scale-wrap{position:relative;width:320px;height:200px;margin:0 auto;}
+.scale-beam{position:absolute;top:60px;left:50%;transform:translateX(-50%);width:260px;height:8px;background:#795548;border-radius:4px;transform-origin:center;transition:transform 0.6s ease;}
+.scale-pivot{position:absolute;top:55px;left:50%;transform:translateX(-50%);width:14px;height:60px;background:#a1887f;border-radius:3px;}
+.scale-base{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:60px;height:16px;background:#795548;border-radius:4px;}
+.scale-pan{position:absolute;top:70px;width:80px;height:80px;border-radius:50% 50% 45% 45%;background:rgba(255,255,255,0.7);border:2px solid #a1887f;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:top 0.6s ease;font-size:20px;font-weight:900;}
+.pan-left{left:20px;}
+.pan-right{right:20px;}
+.balance-info{margin-top:16px;text-align:center;font-size:15px;font-weight:700;}
+.equation-display{font-size:26px;font-weight:900;color:var(--primary);margin:10px 0;text-align:center;}
+.balance-controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:12px;}
+.bal-btn{padding:8px 18px;border-radius:16px;border:none;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.25s;}
+/* LAB */
+#interactive-lab{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+.lab-tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.lab-tab{padding:8px 20px;border-radius:20px;border:2px solid var(--border);cursor:pointer;font-weight:700;font-size:14px;transition:all 0.25s;}
+.lab-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.lab-panel{display:none;}
+.lab-panel.active{display:block;animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.equation-solver{margin:16px 0;}
+.eq-row{display:flex;align-items:center;gap:8px;margin:10px 0;flex-wrap:wrap;}
+.eq-input{border:2px solid #ddd;border-radius:10px;padding:8px 12px;font-size:18px;font-weight:900;width:80px;text-align:center;}
+.eq-op{font-size:22px;font-weight:900;color:var(--dim);}
+.solve-btn{padding:10px 24px;background:linear-gradient(135deg,var(--primary),#ff922b);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;}
+.solve-steps{margin-top:14px;padding:16px;background:#f8f9fa;border-radius:12px;font-size:15px;line-height:2;}
+.step-item{padding:4px 0;border-bottom:1px solid #f0f0f0;}
+.step-item:last-child{border-bottom:none;font-weight:900;color:var(--primary);}
+/* KG */
+#knowledge-graph{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+#kg-svg-eq{width:100%;height:340px;}
+/* QUIZ */
+.quiz-section{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+.progress-bar-wrap{background:#f0f0f0;border-radius:10px;height:12px;margin-bottom:20px;overflow:hidden;}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:10px;transition:width 0.5s ease;}
+.quiz-step{display:none;}
+.quiz-step.active{display:block;animation:fadeSlide 0.4s ease;}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.quiz-q{font-size:20px;font-weight:900;margin-bottom:16px;}
+.quiz-option{display:block;padding:14px 20px;margin:8px 0;border-radius:14px;background:#fff;border:2.5px solid #e8e8e8;cursor:pointer;transition:all 0.25s;font-size:16px;font-weight:700;width:100%;text-align:left;}
+.quiz-option:hover{border-color:var(--secondary);}
+.quiz-option.correct{background:rgba(81,207,102,0.15);border-color:var(--success);color:#2b8a3e;}
+.quiz-option.wrong{background:rgba(255,107,107,0.1);border-color:var(--primary);color:#c92a2a;}
+.quiz-feedback{padding:12px 16px;border-radius:12px;margin-top:8px;font-size:15px;font-weight:700;display:none;}
+.quiz-feedback.show{display:block;}
+.quiz-feedback.ok{background:rgba(81,207,102,0.15);color:#2b8a3e;}
+.quiz-feedback.err{background:rgba(255,107,107,0.1);color:#c92a2a;}
+.next-btn{margin-top:14px;padding:12px 28px;background:linear-gradient(135deg,var(--primary),#ff922b);color:#fff;border:none;border-radius:20px;font-size:16px;font-weight:900;cursor:pointer;}
+.locked{opacity:0.35;pointer-events:none;}
+.step-indicator{display:flex;gap:8px;margin-bottom:16px;}
+.step-dot{width:12px;height:12px;border-radius:50%;background:#e0e0e0;transition:all 0.3s;}
+.step-dot.done{background:var(--success);}
+.step-dot.active{background:var(--primary);transform:scale(1.3);}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-brand">📚 TeachAny</div>
+  <a href="#life-scene-sec">⚖️ 生活场景</a>
+  <a href="#concepts">📖 概念</a>
+  <a href="#interactive-lab">🧪 实验台</a>
+  <a href="#knowledge-graph">🕸️ 知识图谱</a>
+  <a href="#quiz">📝 练习</a>
+</nav>
+<div class="container">
+  <div class="hero">
+    <h1>简单方程</h1>
+    <div class="subtitle">用天平感受等式，解方程从未如此直观！</div>
+    <div class="meta">
+      <span>📚 小学数学</span><span>🎒 五年级上册</span><span>⭐ 难度：★★★</span><span>⏱️ 约45分钟</span>
+    </div>
+  </div>
+
+  <!-- 生活场景 -->
+  <section class="section" id="life-scene-sec">
+    <div class="section-title">⚖️ 生活场景：天平与方程</div>
+    <div id="life-scene">
+      <div class="balance-scene">
+        <div class="balance-title">⚖️ 天平两边保持平衡 = 等号两边相等！</div>
+        <div class="scale-wrap" id="scaleWrap">
+          <div class="scale-pivot" id="scalePivot"></div>
+          <div class="scale-beam" id="scaleBeam"></div>
+          <div class="scale-pan pan-left" id="panLeft"><div id="panLeftLabel">x+3</div><div id="panLeftVal" style="font-size:14px;color:var(--dim);">?</div></div>
+          <div class="scale-pan pan-right" id="panRight"><div id="panRightLabel">8</div><div id="panRightVal" style="font-size:14px;color:var(--dim);">8</div></div>
+          <div class="scale-base"></div>
+        </div>
+        <div class="equation-display" id="eqDisplay">x + 3 = 8</div>
+        <div class="balance-info" id="balInfo">天平倾斜，x = ?</div>
+        <div class="balance-controls">
+          <button class="bal-btn" style="background:var(--primary);color:#fff;" onclick="showBalance(5)">x = 5</button>
+          <button class="bal-btn" style="background:var(--secondary);color:#fff;" onclick="showBalance(3)">x = 3</button>
+          <button class="bal-btn" style="background:var(--accent);color:#333;" onclick="showBalance(7)">x = 7</button>
+          <button class="bal-btn" style="background:#f1f3f5;" onclick="resetBalance()">🔄 重置</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 核心概念 -->
+  <section class="section" id="concepts">
+    <div class="section-title">📖 核心概念</div>
+    <div class="grid-2">
+      <div class="card">
+        <h3>📝 方程的概念</h3>
+        <p><span class="highlight">方程</span>是含有未知数的等式。未知数通常用 x, y 表示。</p>
+        <div class="formula-box">x + 3 = 8<br>含未知数 x 的等式</div>
+        <div class="tip-box">💡 等式：左边 = 右边；方程：等式中含有未知数</div>
+      </div>
+      <div class="card">
+        <h3>🔑 解方程</h3>
+        <p><span class="highlight">解方程</span>就是求使方程成立的未知数的值，也叫方程的<span class="highlight">解</span>。</p>
+        <div class="formula-box">x + 3 = 8<br>x = 8 - 3 = 5</div>
+        <p>验证：5 + 3 = 8 ✓</p>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📋 解方程的方法（等式性质）</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:12px 0;">
+        <div style="background:rgba(255,107,107,0.08);border-radius:12px;padding:14px;">
+          <div style="font-weight:900;margin-bottom:6px;">➕ 减法</div>
+          <div style="font-size:14px;">x + a = b<br>两边减a：x = b - a</div>
+        </div>
+        <div style="background:rgba(78,205,196,0.08);border-radius:12px;padding:14px;">
+          <div style="font-weight:900;margin-bottom:6px;">➕ 加法</div>
+          <div style="font-size:14px;">x - a = b<br>两边加a：x = b + a</div>
+        </div>
+        <div style="background:rgba(255,230,109,0.2);border-radius:12px;padding:14px;">
+          <div style="font-weight:900;margin-bottom:6px;">✖️ 除法</div>
+          <div style="font-size:14px;">ax = b<br>两边除a：x = b ÷ a</div>
+        </div>
+        <div style="background:rgba(204,93,232,0.08);border-radius:12px;padding:14px;">
+          <div style="font-weight:900;margin-bottom:6px;">➗ 乘法</div>
+          <div style="font-size:14px;">x ÷ a = b<br>两边乘a：x = b × a</div>
+        </div>
+      </div>
+      <div class="tip-box">💡 等式性质：等式两边同时加、减、乘、除同一个数（除数≠0），等式仍然成立。</div>
+    </div>
+  </section>
+
+  <!-- 互动实验台 -->
+  <section class="section" id="interactive-lab">
+    <div class="section-title">🧪 互动实验台</div>
+    <div id="interactive-lab">
+      <div class="lab-tabs">
+        <button class="lab-tab active" onclick="switchTab('tab-solve')">🔢 解方程</button>
+        <button class="lab-tab" onclick="switchTab('tab-verify')">✅ 方程验证</button>
+      </div>
+      <div id="tab-solve" class="lab-panel active">
+        <div class="card">
+          <h3>🔢 方程解步器</h3>
+          <p style="color:var(--dim);margin-bottom:12px;">设定方程类型和数值，查看分步解题过程</p>
+          <div class="eq-row">
+            <span style="font-size:18px;font-weight:700;">x</span>
+            <select id="eqOp" style="padding:8px 12px;border:2px solid #ddd;border-radius:10px;font-size:16px;font-weight:700;" onchange="buildEq()">
+              <option value="add">+</option>
+              <option value="sub">-</option>
+              <option value="mul">×</option>
+              <option value="div">÷</option>
+            </select>
+            <input type="number" id="eqA" value="5" class="eq-input" oninput="buildEq()">
+            <span class="eq-op">=</span>
+            <input type="number" id="eqB" value="12" class="eq-input" oninput="buildEq()">
+          </div>
+          <div class="formula-box" id="eqPreview">x + 5 = 12</div>
+          <button class="solve-btn" onclick="solveEq()">🔍 逐步求解</button>
+          <div class="solve-steps" id="solveSteps" style="display:none;"></div>
+        </div>
+      </div>
+      <div id="tab-verify" class="lab-panel">
+        <div class="card">
+          <h3>✅ 验证方程的解</h3>
+          <p style="color:var(--dim);margin-bottom:12px;">输入x的值，验证是否满足方程</p>
+          <div class="eq-row">
+            <span>方程：</span>
+            <select id="verifOp" style="padding:8px 12px;border:2px solid #ddd;border-radius:10px;font-size:16px;font-weight:700;">
+              <option value="add">x +</option>
+              <option value="sub">x -</option>
+              <option value="mul">x ×</option>
+            </select>
+            <input type="number" id="verifA" value="3" class="eq-input" style="width:70px;">
+            <span class="eq-op">=</span>
+            <input type="number" id="verifB" value="8" class="eq-input" style="width:70px;">
+          </div>
+          <div class="eq-row" style="margin-top:10px;">
+            <span>验证 x =</span>
+            <input type="number" id="verifX" value="5" class="eq-input" style="width:70px;border-color:var(--primary);">
+          </div>
+          <button class="solve-btn" onclick="verifyEq()" style="margin-top:10px;">✅ 验证</button>
+          <div id="verifyResult" class="formula-box" style="margin-top:12px;display:none;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 知识图谱 -->
+  <section class="section" id="knowledge-graph">
+    <div class="section-title">🕸️ 知识图谱</div>
+    <div id="knowledge-graph"><svg id="kg-svg-eq"></svg></div>
+  </section>
+
+  <!-- 练习 -->
+  <section class="section" id="quiz">
+    <div class="section-title">📝 闯关练习</div>
+    <div class="quiz-section">
+      <div class="step-indicator" id="stepIndicator"></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressBar" style="width:0%"></div></div>
+      <div class="quiz-step active" id="step1">
+        <div class="quiz-q">🔢 第1关：解方程 x + 7 = 15，x = ?</div>
+        <button class="quiz-option" onclick="checkQ(1,'A','B')">A. x = 22</button>
+        <button class="quiz-option" onclick="checkQ(1,'B','B')">B. x = 8</button>
+        <button class="quiz-option" onclick="checkQ(1,'C','B')">C. x = 7</button>
+        <div class="quiz-feedback" id="fb1"></div>
+        <button class="next-btn locked" id="next1" onclick="nextStep(2)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step2">
+        <div class="quiz-q">✖️ 第2关：解方程 3x = 24，x = ?</div>
+        <button class="quiz-option" onclick="checkQ(2,'A','B')">A. x = 72</button>
+        <button class="quiz-option" onclick="checkQ(2,'B','B')">B. x = 8</button>
+        <button class="quiz-option" onclick="checkQ(2,'C','B')">C. x = 21</button>
+        <div class="quiz-feedback" id="fb2"></div>
+        <button class="next-btn locked" id="next2" onclick="nextStep(3)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step3">
+        <div class="quiz-q">➗ 第3关：解方程 x ÷ 4 = 9，x = ?</div>
+        <button class="quiz-option" onclick="checkQ(3,'A','C')">A. x = 4</button>
+        <button class="quiz-option" onclick="checkQ(3,'B','C')">B. x = 9</button>
+        <button class="quiz-option" onclick="checkQ(3,'C','C')">C. x = 36</button>
+        <div class="quiz-feedback" id="fb3"></div>
+        <button class="next-btn locked" id="next3" onclick="nextStep(4)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step4">
+        <div class="quiz-q">⚖️ 第4关："一个数减去14等于36"，设这个数为x，方程是？</div>
+        <button class="quiz-option" onclick="checkQ(4,'A','B')">A. x + 14 = 36</button>
+        <button class="quiz-option" onclick="checkQ(4,'B','B')">B. x - 14 = 36</button>
+        <button class="quiz-option" onclick="checkQ(4,'C','B')">C. 14 - x = 36</button>
+        <div class="quiz-feedback" id="fb4"></div>
+        <button class="next-btn locked" id="next4" onclick="showFinal()">完成 🎉</button>
+      </div>
+      <div class="quiz-step locked" id="stepFinal">
+        <div style="text-align:center;padding:30px;">
+          <div style="font-size:64px;animation:bounce 1s ease infinite;">🏆</div>
+          <h2 style="font-size:28px;font-weight:900;color:var(--primary);margin:16px 0;">方程高手！</h2>
+          <p>简单方程已完全掌握！</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+// BALANCE SCALE
+function showBalance(x){
+  const correct=(x===5);
+  const beam=document.getElementById('scaleBeam');
+  const leftPan=document.getElementById('panLeft');
+  const rightPan=document.getElementById('panRight');
+  document.getElementById('panLeftVal').textContent='x='+(x)+' → '+(x+3);
+  if(correct){
+    beam.style.transform='translateX(-50%) rotate(0deg)';
+    leftPan.style.top='70px';rightPan.style.top='70px';
+    document.getElementById('balInfo').textContent='✅ 天平平衡！x = 5 是正确答案！';
+    document.getElementById('balInfo').style.color='var(--success)';
+  } else if(x+3<8){
+    beam.style.transform='translateX(-50%) rotate(-8deg)';
+    leftPan.style.top='55px';rightPan.style.top='85px';
+    document.getElementById('balInfo').textContent=`❌ x=${x}时，左边=${x+3}<右边=8，天平右倾`;
+    document.getElementById('balInfo').style.color='var(--primary)';
+  } else {
+    beam.style.transform='translateX(-50%) rotate(8deg)';
+    leftPan.style.top='85px';rightPan.style.top='55px';
+    document.getElementById('balInfo').textContent=`❌ x=${x}时，左边=${x+3}>右边=8，天平左倾`;
+    document.getElementById('balInfo').style.color='var(--primary)';
+  }
+}
+function resetBalance(){
+  document.getElementById('scaleBeam').style.transform='translateX(-50%) rotate(-8deg)';
+  document.getElementById('panLeft').style.top='55px';
+  document.getElementById('panRight').style.top='85px';
+  document.getElementById('panLeftVal').textContent='?';
+  document.getElementById('balInfo').textContent='天平倾斜，x = ?';
+  document.getElementById('balInfo').style.color='var(--text)';
+}
+
+// EQUATION SOLVER
+function buildEq(){
+  const op=document.getElementById('eqOp').value;
+  const a=+document.getElementById('eqA').value;
+  const b=+document.getElementById('eqB').value;
+  const opMap={add:`x + ${a} = ${b}`,sub:`x - ${a} = ${b}`,mul:`${a}x = ${b}`,div:`x ÷ ${a} = ${b}`};
+  document.getElementById('eqPreview').textContent=opMap[op];
+}
+function solveEq(){
+  const op=document.getElementById('eqOp').value;
+  const a=+document.getElementById('eqA').value;
+  const b=+document.getElementById('eqB').value;
+  let steps=[],ans;
+  if(op==='add'){ans=b-a;steps=[`原方程：x + ${a} = ${b}`,`两边减 ${a}：x = ${b} - ${a}`,`x = ${ans}`,`验证：${ans} + ${a} = ${ans+a} = ${b} ✓`];}
+  else if(op==='sub'){ans=b+a;steps=[`原方程：x - ${a} = ${b}`,`两边加 ${a}：x = ${b} + ${a}`,`x = ${ans}`,`验证：${ans} - ${a} = ${ans-a} = ${b} ✓`];}
+  else if(op==='mul'&&a!==0){ans=b/a;steps=[`原方程：${a}x = ${b}`,`两边除以 ${a}：x = ${b} ÷ ${a}`,`x = ${ans}`,`验证：${a} × ${ans} = ${a*ans} = ${b} ✓`];}
+  else if(op==='div'&&a!==0){ans=b*a;steps=[`原方程：x ÷ ${a} = ${b}`,`两边乘以 ${a}：x = ${b} × ${a}`,`x = ${ans}`,`验证：${ans} ÷ ${a} = ${ans/a} = ${b} ✓`];}
+  else{steps=['请输入有效数值'];}
+  const el=document.getElementById('solveSteps');
+  el.style.display='block';
+  el.innerHTML=steps.map((s,i)=>`<div class="step-item">${i===steps.length-1?'<span style="color:var(--success)">✅ </span>':''}${s}</div>`).join('');
+}
+
+// VERIFY
+function verifyEq(){
+  const op=document.getElementById('verifOp').value;
+  const a=+document.getElementById('verifA').value;
+  const b=+document.getElementById('verifB').value;
+  const x=+document.getElementById('verifX').value;
+  let lhs;
+  if(op==='add') lhs=x+a;
+  else if(op==='sub') lhs=x-a;
+  else lhs=x*a;
+  const eq=lhs===b;
+  const res=document.getElementById('verifyResult');
+  res.style.display='block';
+  res.textContent=eq?`✅ 验证通过！左边 = ${lhs} = 右边 = ${b}`:`❌ 不满足！左边 = ${lhs} ≠ 右边 = ${b}`;
+  res.style.background=eq?'rgba(81,207,102,0.15)':'rgba(255,107,107,0.1)';
+  res.style.color=eq?'#2b8a3e':'#c92a2a';
+}
+
+function switchTab(id){
+  document.querySelectorAll('.lab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.lab-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');event.target.classList.add('active');
+}
+
+// KG
+function initKG(){
+  const colorMap={current:"#ff6b6b",prereq:"#51cf66",next:"#4ecdc4"};
+  const kgData={nodes:[{id:"cur",name:"简单方程",type:"current"},{id:"p1",name:"四则运算",type:"prereq"},{id:"p2",name:"等式概念",type:"prereq"},{id:"n1",name:"方程组",type:"next"},{id:"n2",name:"一次函数",type:"next"},{id:"n3",name:"代数思维",type:"next"}],links:[{source:"p1",target:"cur"},{source:"p2",target:"cur"},{source:"cur",target:"n1"},{source:"cur",target:"n2"},{source:"cur",target:"n3"}]};
+  const svg=d3.select("#kg-svg-eq");const w=svg.node().parentElement.clientWidth||700,h=340;svg.attr("viewBox",`0 0 ${w} ${h}`);
+  svg.append("defs").append("marker").attr("id","arr-eq").attr("viewBox","0 -5 10 10").attr("refX",22).attr("markerWidth",6).attr("markerHeight",6).attr("orient","auto").append("path").attr("d","M0,-5L10,0L0,5").attr("fill","#bbb");
+  const sim=d3.forceSimulation(kgData.nodes).force("link",d3.forceLink(kgData.links).id(d=>d.id).distance(120)).force("charge",d3.forceManyBody().strength(-320)).force("center",d3.forceCenter(w/2,h/2));
+  const link=svg.append("g").selectAll("line").data(kgData.links).join("line").attr("stroke","#ddd").attr("stroke-width",2).attr("marker-end","url(#arr-eq)");
+  const node=svg.append("g").selectAll("g").data(kgData.nodes).join("g").call(d3.drag().on("start",e=>{if(!e.active)sim.alphaTarget(0.3).restart();e.subject.fx=e.subject.x;e.subject.fy=e.subject.y;}).on("drag",e=>{e.subject.fx=e.x;e.subject.fy=e.y;}).on("end",e=>{if(!e.active)sim.alphaTarget(0);e.subject.fx=null;e.subject.fy=null;}));
+  node.append("circle").attr("r",36).attr("fill",d=>colorMap[d.type]).attr("opacity",0.9);
+  node.append("text").attr("text-anchor","middle").attr("dy","0.35em").attr("font-size","11px").attr("font-weight","bold").attr("fill","#fff").each(function(d){const words=d.name.length>6?[d.name.slice(0,6),d.name.slice(6)]:[d.name];words.forEach((w,i)=>d3.select(this).append("tspan").attr("x",0).attr("dy",i?14:-7).text(w));});
+  const leg=svg.append("g").attr("transform",`translate(${w-160},20)`);[["prereq","前置知识"],["current","本节课"],["next","后续内容"]].forEach(([t,l],i)=>{leg.append("circle").attr("cx",10).attr("cy",i*26).attr("r",8).attr("fill",colorMap[t]);leg.append("text").attr("x",24).attr("y",i*26+5).attr("font-size","12px").attr("fill","#555").text(l);});
+  sim.on("tick",()=>{link.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y).attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);node.attr("transform",d=>`translate(${d.x},${d.y})`);});
+}
+
+// QUIZ
+function initStepIndicator(){const ind=document.getElementById('stepIndicator');for(let i=1;i<=4;i++){const d=document.createElement('div');d.className='step-dot'+(i===1?' active':'');d.id='dot'+i;ind.appendChild(d);}}
+function checkQ(step,choice,correct){const opts=document.querySelectorAll(`#step${step} .quiz-option`);opts.forEach(o=>o.disabled=true);const idx={A:0,B:1,C:2};const fb=document.getElementById('fb'+step);if(choice===correct){opts[idx[choice]].classList.add('correct');fb.className='quiz-feedback show ok';fb.textContent='✅ 正确！';}else{opts[idx[choice]].classList.add('wrong');opts[idx[correct]].classList.add('correct');fb.className='quiz-feedback show err';fb.textContent='❌ 正确答案是 '+correct;}fb.style.display='block';document.getElementById('progressBar').style.width=(step/4*100)+'%';setTimeout(()=>document.getElementById('next'+step).classList.remove('locked'),choice===correct?0:1500);}
+function nextStep(n){document.getElementById('step'+(n-1)).classList.remove('active');const s=document.getElementById('step'+n);s.classList.remove('locked');s.classList.add('active');document.getElementById('dot'+(n-1)).classList.replace('active','done');const dn=document.getElementById('dot'+n);if(dn)dn.classList.add('active');}
+function showFinal(){document.getElementById('step4').classList.remove('active');document.getElementById('stepFinal').classList.remove('locked');document.getElementById('stepFinal').classList.add('active');document.getElementById('progressBar').style.width='100%';}
+
+window.onload=()=>{resetBalance();buildEq();initKG();initStepIndicator();};
+</script>
+</body>
+</html>

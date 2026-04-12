@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数的认识 · 互动课件</title>
+<meta name="teachany-node" content="number-recognition">
+<meta name="teachany-subject" content="math">
+<meta name="teachany-domain" content="numbers">
+<meta name="teachany-grade" content="1">
+<meta name="teachany-difficulty" content="1">
+<meta name="teachany-version" content="2.0">
+<meta name="teachany-author" content="weponusa">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--card:#fff;--purple:#cc5de8;--blue:#339af0;--orange:#ff922b;--text:#2b2b2b;--dim:#666;--border:rgba(0,0,0,0.06);}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:60px;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 10% 20%,rgba(255,107,107,.08),transparent 50%),radial-gradient(circle at 90% 80%,rgba(78,205,196,.08),transparent 50%);pointer-events:none;z-index:-1;}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;}
+.nav-brand{font-size:20px;font-weight:900;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--orange),var(--success));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all .25s;white-space:nowrap;}
+.nav a:hover,.nav a.active{color:#fff;background:linear-gradient(135deg,var(--primary),var(--orange));}
+.container{max-width:960px;margin:0 auto;padding:80px 20px 60px;}
+.hero{text-align:center;padding:36px 0 30px;}
+.hero h1{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--orange),var(--success),var(--blue));background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
+@keyframes rainbowShift{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}
+.hero .subtitle{font-size:18px;color:var(--dim);margin-bottom:16px;}
+.hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+.hero .meta span{background:#fff;border:2px solid var(--border);border-radius:24px;padding:6px 18px;font-size:14px;font-weight:700;color:var(--dim);}
+.section{margin:40px 0;}
+.section-title{font-size:26px;font-weight:900;margin-bottom:18px;padding:10px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(255,107,107,.1),rgba(255,230,109,.2));display:inline-block;}
+.card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,.04);transition:transform .25s,box-shadow .25s;}
+.card:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(255,107,107,.12);}
+.card h3{font-size:20px;font-weight:900;margin-bottom:10px;}
+.highlight{color:var(--primary);font-weight:900;}
+
+/* ===== 生活场景 ===== */
+#life-scene{background:linear-gradient(135deg,#fffde7,#e3f2fd);border-radius:24px;padding:32px;}
+.fruit-stage{display:flex;justify-content:center;align-items:flex-end;gap:20px;flex-wrap:wrap;min-height:160px;}
+.fruit-basket{text-align:center;transition:all .3s;}
+.fruit-count{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;max-width:120px;margin:0 auto;}
+.fruit-item{font-size:28px;animation:fruitBounce 1.5s ease-in-out infinite;}
+@keyframes fruitBounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+.fruit-number{font-size:48px;font-weight:900;color:var(--primary);margin-top:8px;}
+.fruit-label{font-size:14px;font-weight:700;color:var(--dim);}
+/* 气球动画 */
+.balloons{display:flex;justify-content:center;gap:12px;margin-bottom:16px;}
+.balloon{font-size:40px;animation:balloonFloat 2s ease-in-out infinite;}
+.balloon:nth-child(2){animation-delay:.4s;}
+.balloon:nth-child(3){animation-delay:.8s;}
+.balloon:nth-child(4){animation-delay:1.2s;}
+.balloon:nth-child(5){animation-delay:1.6s;}
+@keyframes balloonFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-15px);}}
+/* 星星闪烁 */
+.stars{display:flex;justify-content:center;gap:8px;margin-top:12px;}
+.star{font-size:24px;animation:starTwinkle 1s ease-in-out infinite;}
+.star:nth-child(2){animation-delay:.2s;}
+.star:nth-child(3){animation-delay:.4s;}
+@keyframes starTwinkle{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(.8);}}
+
+/* ===== 数字展示 ===== */
+.number-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;max-width:600px;margin:0 auto;}
+.num-card{background:var(--card);border:3px solid var(--border);border-radius:16px;padding:16px 8px;text-align:center;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;}
+.num-card:hover,.num-card.selected{transform:scale(1.08);border-color:var(--primary);background:rgba(255,107,107,.06);}
+.num-card .big-num{font-size:36px;font-weight:900;color:var(--primary);}
+.num-card .num-emoji{font-size:22px;margin-bottom:4px;}
+.num-card .num-name{font-size:14px;font-weight:700;color:var(--dim);}
+
+/* ===== 互动实验台 ===== */
+#interactive-lab{padding:28px;border-radius:24px;background:linear-gradient(135deg,#fffde7,#f3e5f5);}
+.slider-row{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+.slider-row label{font-weight:700;min-width:80px;}
+input[type=range]{flex:1;min-width:120px;accent-color:var(--primary);}
+.slider-val{min-width:50px;font-weight:900;color:var(--primary);font-size:20px;}
+.count-dots{display:flex;flex-wrap:wrap;gap:6px;padding:12px;background:#fff;border-radius:12px;min-height:60px;transition:all .3s;}
+.count-dot{width:30px;height:30px;border-radius:50%;background:var(--primary);animation:dotPop .3s cubic-bezier(.34,1.56,.64,1) backwards;}
+@keyframes dotPop{from{transform:scale(0);}to{transform:scale(1);}}
+
+/* 拖拽 */
+.drag-area{display:flex;gap:20px;flex-wrap:wrap;margin-top:14px;}
+.drag-items,.drop-zones{flex:1;min-width:160px;}
+.drag-item{padding:12px 14px;background:#fff;border:2.5px dashed var(--secondary);border-radius:14px;margin-bottom:8px;cursor:grab;font-weight:900;text-align:center;font-size:20px;transition:all .2s;}
+.drag-item:hover{background:rgba(78,205,196,.12);transform:scale(1.06);}
+.drop-zone{padding:14px;border:2.5px dashed #ccc;border-radius:14px;margin-bottom:8px;min-height:54px;text-align:center;transition:all .2s;color:#999;font-size:16px;}
+.drop-zone.over{border-color:var(--primary);background:rgba(255,107,107,.06);}
+.drop-zone.matched{border-color:var(--success);background:rgba(81,207,102,.1);color:var(--success);font-weight:700;}
+.drop-zone.wrong-match{animation:shake .4s;}
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+
+/* 知识图谱 */
+#knowledge-graph{background:#fff;border-radius:24px;padding:24px;}
+#kg-svg{width:100%;height:320px;display:block;}
+.kg-legend{display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;}
+.kg-legend-item{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;}
+.kg-dot{width:14px;height:14px;border-radius:50%;}
+
+/* 互动题 */
+.quiz-step{display:none;}
+.quiz-step.active{display:block;animation:fadeIn .4s;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.quiz-q{font-size:20px;font-weight:900;margin-bottom:18px;}
+.quiz-option{display:block;width:100%;padding:16px 20px;margin:8px 0;border-radius:16px;background:#fff;border:2.5px solid #e8e8e8;cursor:pointer;font-size:18px;font-weight:900;text-align:left;transition:all .25s;}
+.quiz-option:hover{background:rgba(78,205,196,.08);border-color:var(--secondary);}
+.quiz-option.correct{background:rgba(81,207,102,.12);border-color:var(--success);color:#2b8a3e;}
+.quiz-option.wrong{background:rgba(255,107,107,.1);border-color:var(--primary);color:#c92a2a;}
+.quiz-feedback{padding:12px 18px;border-radius:14px;margin-top:10px;font-size:15px;font-weight:700;display:none;}
+.quiz-feedback.show{display:block;animation:popIn .35s cubic-bezier(.34,1.56,.64,1);}
+@keyframes popIn{from{opacity:0;transform:scale(.92);}to{opacity:1;transform:scale(1);}}
+.quiz-feedback.ok{background:rgba(81,207,102,.15);color:#2b8a3e;}
+.quiz-feedback.err{background:rgba(255,107,107,.12);color:#c92a2a;}
+.quiz-next{margin-top:14px;padding:12px 32px;background:linear-gradient(135deg,var(--primary),var(--orange));color:#fff;border:none;border-radius:20px;font-size:18px;font-weight:900;cursor:pointer;display:none;}
+.progress-bar{height:10px;background:#f0f0f0;border-radius:5px;margin-bottom:18px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--orange));border-radius:5px;transition:width .4s;}
+.step-indicator{font-size:14px;color:var(--dim);margin-bottom:8px;font-weight:700;}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <span class="nav-brand">🔢 数的认识</span>
+  <a href="#life-scene">生活场景</a>
+  <a href="#numbers">认识数字</a>
+  <a href="#interactive-lab">互动实验</a>
+  <a href="#knowledge-graph">知识图谱</a>
+  <a href="#quiz">互动练习</a>
+</nav>
+
+<div class="container">
+  <div class="hero">
+    <h1>🔢 数的认识</h1>
+    <p class="subtitle">认识1到10的数字，学会数数、写数和比大小</p>
+    <div class="meta">
+      <span>📚 一年级</span><span>🔢 数与代数</span><span>⏱️ 35分钟</span><span>⭐ 入门</span>
+    </div>
+  </div>
+
+  <!-- 生活场景 -->
+  <section class="section" id="life-scene">
+    <div class="section-title">🎬 生活场景：数水果</div>
+    <div class="balloons">
+      <div class="balloon">🎈</div><div class="balloon">🎈</div><div class="balloon">🎈</div>
+      <div class="balloon">🎈</div><div class="balloon">🎈</div>
+    </div>
+    <div class="fruit-stage">
+      <div class="fruit-basket">
+        <div class="fruit-count" id="fruitDisplay"></div>
+        <div class="fruit-number" id="fruitNum">1</div>
+        <div class="fruit-label">个苹果</div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:center;gap:12px;margin-top:16px;flex-wrap:wrap;">
+      <button onclick="setFruitCount(1)" style="padding:10px 18px;background:#fff;border:2px solid var(--primary);border-radius:16px;font-size:20px;font-weight:900;cursor:pointer;transition:all .2s;" onmouseover="this.style.background='rgba(255,107,107,.1)'" onmouseout="this.style.background='#fff'">1</button>
+      <button onclick="setFruitCount(2)" style="padding:10px 18px;background:#fff;border:2px solid var(--orange);border-radius:16px;font-size:20px;font-weight:900;cursor:pointer;transition:all .2s;">2</button>
+      <button onclick="setFruitCount(3)" style="padding:10px 18px;background:#fff;border:2px solid var(--success);border-radius:16px;font-size:20px;font-weight:900;cursor:pointer;transition:all .2s;">3</button>
+      <button onclick="setFruitCount(5)" style="padding:10px 18px;background:#fff;border:2px solid var(--secondary);border-radius:16px;font-size:20px;font-weight:900;cursor:pointer;transition:all .2s;">5</button>
+      <button onclick="setFruitCount(8)" style="padding:10px 18px;background:#fff;border:2px solid var(--purple);border-radius:16px;font-size:20px;font-weight:900;cursor:pointer;transition:all .2s;">8</button>
+      <button onclick="setFruitCount(10)" style="padding:10px 18px;background:#fff;border:2px solid var(--blue);border-radius:16px;font-size:20px;font-weight:900;cursor:pointer;transition:all .2s;">10</button>
+    </div>
+    <div class="stars">
+      <div class="star">⭐</div><div class="star">⭐</div><div class="star">⭐</div>
+    </div>
+  </section>
+
+  <!-- 认识数字 -->
+  <section class="section" id="numbers">
+    <div class="section-title">🔢 认识1到10</div>
+    <div class="number-cards" id="numCards"></div>
+    <p style="text-align:center;margin-top:12px;color:var(--dim);font-size:14px;">👆 点击数字卡片，听一听、看一看！</p>
+  </section>
+
+  <!-- 互动实验台 -->
+  <section class="section" id="interactive-lab">
+    <div class="section-title">🧪 互动实验台</div>
+    <div class="card">
+      <h3>🎛️ 数数小助手</h3>
+      <div class="slider-row">
+        <label>数一数</label>
+        <input type="range" id="countSlider" min="1" max="10" value="3" step="1">
+        <span class="slider-val" id="countVal">3</span>
+      </div>
+      <div class="count-dots" id="countDots"></div>
+      <p style="font-size:14px;color:var(--dim);margin-top:8px;">拖动滑块，看看是几个点点</p>
+    </div>
+
+    <div class="card">
+      <h3>🎯 拖拽配对：数字 → 对应的点点数量</h3>
+      <div class="drag-area">
+        <div class="drag-items">
+          <div class="drag-item" draggable="true" data-answer="2">2️⃣</div>
+          <div class="drag-item" draggable="true" data-answer="5">5️⃣</div>
+          <div class="drag-item" draggable="true" data-answer="7">7️⃣</div>
+          <div class="drag-item" draggable="true" data-answer="9">9️⃣</div>
+        </div>
+        <div class="drop-zones">
+          <div class="drop-zone" data-key="2">●● (两个点)</div>
+          <div class="drop-zone" data-key="5">●●●●● (五个点)</div>
+          <div class="drop-zone" data-key="7">●●●●●●● (七个点)</div>
+          <div class="drop-zone" data-key="9">●●●●●●●●● (九个点)</div>
+        </div>
+      </div>
+      <button onclick="resetDrag()" style="margin-top:12px;padding:8px 22px;background:var(--secondary);color:#fff;border:none;border-radius:16px;font-weight:700;cursor:pointer;">🔄 重置</button>
+    </div>
+  </section>
+
+  <!-- 知识图谱 -->
+  <section class="section" id="knowledge-graph">
+    <div class="section-title">🕸️ 知识图谱</div>
+    <div class="card">
+      <svg id="kg-svg"></svg>
+      <div class="kg-legend">
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#51cf66"></div>前置知识</div>
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#ff6b6b"></div>当前主题</div>
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#4ecdc4"></div>后续学习</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 互动练习 -->
+  <section class="section" id="quiz">
+    <div class="section-title">✏️ 互动练习</div>
+    <div class="card">
+      <div class="step-indicator" id="stepInd">第 1 题 / 共 5 题</div>
+      <div class="progress-bar"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
+
+      <div class="quiz-step active" id="q1">
+        <div class="quiz-q">1. 🍎🍎🍎 有几个苹果？</div>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 数一数：1个、2个、3个，是3个哦！')">2</button>
+        <button class="quiz-option" onclick="answer(this,'correct','✅ 棒极了！1、2、3，一共3个苹果！')">3</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 再数数，只有3个，不是4个哦。')">4</button>
+        <div class="quiz-feedback" id="fb1"></div>
+        <button class="quiz-next" onclick="nextStep(1)">下一题 →</button>
+      </div>
+
+      <div class="quiz-step" id="q2">
+        <div class="quiz-q">2. 5比3大还是小？</div>
+        <button class="quiz-option" onclick="answer(this,'correct','✅ 正确！5比3多，所以5大于3。')">5比3大（5>3）</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 不对哦，5比3多，所以5比3大。')">5比3小（5<3）</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 5和3不同，不相等。')">5和3一样大</button>
+        <div class="quiz-feedback" id="fb2"></div>
+        <button class="quiz-next" onclick="nextStep(2)">下一题 →</button>
+      </div>
+
+      <div class="quiz-step" id="q3">
+        <div class="quiz-q">3. 7的前面一个数是几？</div>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 5的前面一个数才是6哦。')">5</button>
+        <button class="quiz-option" onclick="answer(this,'correct','✅ 太棒了！6、7，6就在7的前面！')">6</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 8在7的后面，不是前面。')">8</button>
+        <div class="quiz-feedback" id="fb3"></div>
+        <button class="quiz-next" onclick="nextStep(3)">下一题 →</button>
+      </div>
+
+      <div class="quiz-step" id="q4">
+        <div class="quiz-q">4. 从小到大排列：8、3、6、1</div>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 从小到大应该先1，再3，再6，再8。')">8、6、3、1</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 这是从大到小，从小到大是1、3、6、8。')">6、8、1、3</button>
+        <button class="quiz-option" onclick="answer(this,'correct','✅ 正确！从小到大：1 < 3 < 6 < 8！')">1、3、6、8</button>
+        <div class="quiz-feedback" id="fb4"></div>
+        <button class="quiz-next" onclick="nextStep(4)">下一题 →</button>
+      </div>
+
+      <div class="quiz-step" id="q5">
+        <div class="quiz-q">5. 1到10中，哪个数最大？</div>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 9比较大，但1到10里面10更大。')">9</button>
+        <button class="quiz-option" onclick="answer(this,'correct','✅ 太棒了！在1到10里，10是最大的！')">10</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 8不是1到10里最大的。')">8</button>
+        <div class="quiz-feedback" id="fb5"></div>
+        <button class="quiz-next" onclick="showResult()">查看结果 🎉</button>
+      </div>
+
+      <div class="quiz-step" id="result">
+        <div style="text-align:center;padding:20px;">
+          <div style="font-size:64px;margin-bottom:16px;">🌟</div>
+          <div style="font-size:24px;font-weight:900;color:var(--primary);" id="scoreText"></div>
+          <button onclick="restartQuiz()" style="margin-top:20px;padding:12px 32px;background:linear-gradient(135deg,var(--primary),var(--orange));color:#fff;border:none;border-radius:20px;font-size:16px;font-weight:900;cursor:pointer;">🔄 再练一次</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+// 水果计数
+const fruitEmojis = ['🍎','🍊','🍋','🍇','🍓','🍑','🍒','🍌','🥝','🍍'];
+function setFruitCount(n) {
+  const display = document.getElementById('fruitDisplay');
+  document.getElementById('fruitNum').textContent = n;
+  display.innerHTML = '';
+  for (let i = 0; i < n; i++) {
+    const el = document.createElement('span');
+    el.className = 'fruit-item';
+    el.textContent = fruitEmojis[i % fruitEmojis.length];
+    el.style.animationDelay = (i * 0.1) + 's';
+    display.appendChild(el);
+  }
+}
+setFruitCount(1);
+
+// 数字卡片
+const numInfo = [
+  {n:1,emoji:'🌟',name:'一'},
+  {n:2,emoji:'🐢',name:'二'},
+  {n:3,emoji:'🐣',name:'三'},
+  {n:4,emoji:'🦋',name:'四'},
+  {n:5,emoji:'⭐',name:'五'},
+  {n:6,emoji:'🌈',name:'六'},
+  {n:7,emoji:'🌺',name:'七'},
+  {n:8,emoji:'🎵',name:'八'},
+  {n:9,emoji:'🌙',name:'九'},
+  {n:10,emoji:'🎊',name:'十'}
+];
+const container = document.getElementById('numCards');
+numInfo.forEach(info => {
+  const card = document.createElement('div');
+  card.className = 'num-card';
+  card.innerHTML = `<div class="num-emoji">${info.emoji}</div><div class="big-num">${info.n}</div><div class="num-name">${info.name}</div>`;
+  card.onclick = () => {
+    document.querySelectorAll('.num-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    setFruitCount(info.n);
+  };
+  container.appendChild(card);
+});
+
+// 数数滑块
+const countSlider = document.getElementById('countSlider');
+const countVal = document.getElementById('countVal');
+const countDots = document.getElementById('countDots');
+const dotColors = ['#ff6b6b','#ff922b','#ffe66d','#51cf66','#4ecdc4','#339af0','#cc5de8','#f06595','#a9e34b','#74c0fc'];
+function updateDots() {
+  const n = parseInt(countSlider.value);
+  countVal.textContent = n;
+  countDots.innerHTML = '';
+  for (let i = 0; i < n; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'count-dot';
+    dot.style.background = dotColors[i % dotColors.length];
+    dot.style.animationDelay = (i * 0.06) + 's';
+    countDots.appendChild(dot);
+  }
+}
+countSlider.addEventListener('input', updateDots);
+updateDots();
+
+// 拖拽
+let dragSrc = null;
+document.querySelectorAll('.drag-item').forEach(item => {
+  item.addEventListener('dragstart', () => dragSrc = item);
+});
+document.querySelectorAll('.drop-zone').forEach(zone => {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('over');
+    if (!dragSrc) return;
+    if (dragSrc.dataset.answer === zone.dataset.key) {
+      zone.classList.add('matched'); dragSrc.style.opacity='0.3'; dragSrc.draggable=false;
+      zone.textContent = dragSrc.textContent + ' ✅ → ' + zone.textContent;
+    } else {
+      zone.classList.add('wrong-match'); setTimeout(()=>zone.classList.remove('wrong-match'),500);
+    }
+  });
+});
+function resetDrag() {
+  document.querySelectorAll('.drag-item').forEach(i=>{i.style.opacity='1';i.draggable=true;});
+  document.querySelectorAll('.drop-zone').forEach(z=>{
+    z.classList.remove('matched','wrong-match');
+    const lbl={'2':'●● (两个点)','5':'●●●●● (五个点)','7':'●●●●●●● (七个点)','9':'●●●●●●●●● (九个点)'};
+    z.textContent=lbl[z.dataset.key];
+  });
+}
+
+// D3 知识图谱
+const kgData={nodes:[{id:"prenumber",name:"对应与比较",type:"prereq"},{id:"count",name:"数数",type:"prereq"},{id:"cur",name:"数的认识",type:"current"},{id:"add",name:"加法入门",type:"next"},{id:"sub",name:"减法入门",type:"next"},{id:"compare",name:"大小比较",type:"next"}],links:[{source:"prenumber",target:"cur"},{source:"count",target:"cur"},{source:"cur",target:"add"},{source:"cur",target:"sub"},{source:"cur",target:"compare"}]};
+const colorMap={current:"#ff6b6b",prereq:"#51cf66",next:"#4ecdc4"};
+const svgEl=document.getElementById('kg-svg');
+const W=(svgEl.parentElement.offsetWidth||600)-48,H=320;
+svgEl.setAttribute('viewBox',`0 0 ${W} ${H}`);
+const kgSvg=d3.select('#kg-svg');
+kgSvg.append('defs').append('marker').attr('id','arrow').attr('viewBox','0 -5 10 10').attr('refX',22).attr('refY',0).attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto').append('path').attr('d','M0,-5L10,0L0,5').attr('fill','#aaa');
+const sim=d3.forceSimulation(kgData.nodes).force('link',d3.forceLink(kgData.links).id(d=>d.id).distance(110)).force('charge',d3.forceManyBody().strength(-280)).force('center',d3.forceCenter(W/2,H/2));
+const linkEl=kgSvg.append('g').selectAll('line').data(kgData.links).join('line').attr('stroke','#ccc').attr('stroke-width',2).attr('marker-end','url(#arrow)');
+const nodeEl=kgSvg.append('g').selectAll('g').data(kgData.nodes).join('g').call(d3.drag().on('start',(e,d)=>{if(!e.active)sim.alphaTarget(.3).restart();d.fx=d.x;d.fy=d.y;}).on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y;}).on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}));
+nodeEl.append('circle').attr('r',28).attr('fill',d=>colorMap[d.type]).attr('stroke','#fff').attr('stroke-width',3).style('filter','drop-shadow(0 2px 6px rgba(0,0,0,.15))');
+nodeEl.append('text').attr('text-anchor','middle').attr('dy','0.35em').attr('font-size','12px').attr('font-weight','700').attr('fill','#fff').text(d=>d.name);
+sim.on('tick',()=>{linkEl.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);nodeEl.attr('transform',d=>`translate(${d.x},${d.y})`);});
+
+let score=0,answered=[false,false,false,false,false];
+function answer(btn,type,msg){const step=btn.closest('.quiz-step');const fb=step.querySelector('.quiz-feedback');const nxt=step.querySelector('.quiz-next');if(step.querySelector('.correct')||step.querySelector('.wrong'))return;btn.classList.add(type==='correct'?'correct':'wrong');fb.textContent=msg;fb.className='quiz-feedback show '+(type==='correct'?'ok':'err');nxt.style.display='inline-block';const idx=parseInt(step.id.replace('q',''))-1;if(type==='correct'&&!answered[idx]){score++;answered[idx]=true;}}
+function nextStep(n){document.getElementById('q'+n).classList.remove('active');const next=document.getElementById('q'+(n+1));if(next){next.classList.add('active');document.getElementById('stepInd').textContent=`第 ${n+1} 题 / 共 5 题`;document.getElementById('progFill').style.width=(n*20)+'%';}}
+function showResult(){document.getElementById('q5').classList.remove('active');document.getElementById('result').classList.add('active');document.getElementById('progFill').style.width='100%';const msgs=['继续加油！','还不错哦！','做得好！','非常棒！','满分！超级棒！'];document.getElementById('scoreText').textContent=`得了 ${score} / 5 分 — ${msgs[score]}`;}
+function restartQuiz(){score=0;answered=[false,false,false,false,false];document.querySelectorAll('.quiz-step').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.quiz-option').forEach(o=>o.classList.remove('correct','wrong'));document.querySelectorAll('.quiz-feedback').forEach(f=>f.className='quiz-feedback');document.querySelectorAll('.quiz-next').forEach(b=>b.style.display='none');document.getElementById('q1').classList.add('active');document.getElementById('stepInd').textContent='第 1 题 / 共 5 题';document.getElementById('progFill').style.width='0%';}
+</script>
+</body>
+</html>

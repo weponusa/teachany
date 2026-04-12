@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>周长 · 教学课件</title>
+<meta name="teachany-node" content="perimeter">
+<meta name="teachany-subject" content="math">
+<meta name="teachany-grade" content="3">
+<meta name="teachany-version" content="2.0">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--card:#fff;--text:#2b2b2b;--dim:#666;--border:rgba(0,0,0,0.06);}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:80px;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 15% 20%,rgba(255,107,107,0.07) 0%,transparent 50%),radial-gradient(circle at 85% 80%,rgba(78,205,196,0.07) 0%,transparent 50%);pointer-events:none;z-index:-1;}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;}
+.nav-brand{font-size:20px;font-weight:900;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),#ff922b,#cc5de8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all 0.25s;}
+.nav a:hover{color:#fff;background:linear-gradient(135deg,var(--primary),#ff922b);}
+.container{max-width:960px;margin:0 auto;padding:80px 20px 60px;}
+.hero{text-align:center;padding:36px 0 30px;}
+.hero h1{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--primary),#ff922b,#cc5de8,#339af0);background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
+@keyframes rainbowShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.hero .subtitle{font-size:18px;color:var(--dim);margin-bottom:16px;}
+.hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+.hero .meta span{background:#fff;border:2px solid var(--border);border-radius:24px;padding:6px 18px;font-size:14px;font-weight:700;color:var(--dim);}
+.section{margin:40px 0;}
+.section-title{font-size:26px;font-weight:900;margin-bottom:18px;padding:10px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));display:inline-block;}
+.card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.04);}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;}
+.highlight{color:var(--primary);font-weight:900;}
+.formula-box{background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));border-radius:16px;padding:18px 22px;text-align:center;font-size:22px;font-weight:900;margin:12px 0;}
+.tip-box{background:rgba(255,230,109,0.25);border-left:4px solid var(--accent);border-radius:0 12px 12px 0;padding:12px 16px;margin:12px 0;font-size:15px;}
+
+/* ===== LIFE SCENE: ANT WALK ===== */
+#life-scene{background:linear-gradient(180deg,#e8f5e9 0%,#f1f8e9 100%);border-radius:20px;padding:24px;position:relative;overflow:hidden;min-height:320px;}
+.ant-scene-title{font-size:18px;font-weight:900;color:#1b5e20;margin-bottom:16px;}
+.ant-canvas-wrap{position:relative;display:flex;justify-content:center;align-items:center;}
+#antCanvas{border:2px solid rgba(0,0,0,0.08);border-radius:12px;background:#fff;}
+.ant-info{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;}
+.ant-info-card{background:#fff;border-radius:12px;padding:10px 18px;font-size:15px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,0.06);}
+.ant-info-card .val{font-size:24px;color:var(--primary);}
+.scene-controls{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+.scene-btn{padding:10px 22px;border-radius:20px;border:none;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.25s;}
+.scene-btn-primary{background:linear-gradient(135deg,var(--primary),#ff922b);color:#fff;}
+.scene-btn-secondary{background:linear-gradient(135deg,var(--secondary),#20c997);color:#fff;}
+
+/* ===== INTERACTIVE LAB ===== */
+#interactive-lab{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+.lab-tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.lab-tab{padding:8px 20px;border-radius:20px;border:2px solid var(--border);cursor:pointer;font-weight:700;font-size:14px;transition:all 0.25s;}
+.lab-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.lab-panel{display:none;}
+.lab-panel.active{display:block;animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.shape-select{display:flex;gap:12px;flex-wrap:wrap;margin:14px 0;}
+.shape-btn{padding:10px 18px;border-radius:12px;border:2px solid var(--border);cursor:pointer;font-weight:700;transition:all 0.25s;background:#fff;}
+.shape-btn.active{border-color:var(--primary);background:rgba(255,107,107,0.1);}
+.slider-row{display:flex;align-items:center;gap:12px;margin:10px 0;}
+.slider-row label{width:60px;font-weight:700;font-size:14px;}
+.slider-row input{flex:1;accent-color:var(--primary);}
+.slider-row span{width:50px;text-align:right;font-weight:900;color:var(--primary);}
+#shapeCanvas{display:block;margin:10px auto;border:2px solid #f0f0f0;border-radius:12px;}
+.perimeter-result{font-size:26px;font-weight:900;text-align:center;color:var(--primary);margin:10px 0;}
+.drag-container{min-height:100px;border:2px dashed #ddd;border-radius:12px;padding:12px;display:flex;flex-wrap:wrap;gap:8px;}
+.drag-item{padding:8px 16px;border-radius:10px;cursor:grab;font-weight:700;font-size:14px;user-select:none;transition:all 0.25s;}
+.drag-item:active{cursor:grabbing;transform:scale(1.05);}
+.match-row{display:flex;gap:16px;align-items:center;margin:10px 0;}
+.match-slot{min-width:120px;height:44px;border:2px dashed #ddd;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;transition:all 0.2s;}
+.match-slot.over{border-color:var(--primary);background:rgba(255,107,107,0.06);}
+
+/* ===== KNOWLEDGE GRAPH ===== */
+#knowledge-graph{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+#kg-svg-peri{width:100%;height:340px;}
+
+/* ===== QUIZ ===== */
+.quiz-section{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px;}
+.progress-bar-wrap{background:#f0f0f0;border-radius:10px;height:12px;margin-bottom:20px;overflow:hidden;}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:10px;transition:width 0.5s ease;}
+.quiz-step{display:none;}
+.quiz-step.active{display:block;animation:fadeSlide 0.4s ease;}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.quiz-q{font-size:20px;font-weight:900;margin-bottom:16px;}
+.quiz-option{display:block;padding:14px 20px;margin:8px 0;border-radius:14px;background:#fff;border:2.5px solid #e8e8e8;cursor:pointer;transition:all 0.25s;font-size:16px;font-weight:700;width:100%;text-align:left;}
+.quiz-option:hover{border-color:var(--secondary);background:rgba(78,205,196,0.06);}
+.quiz-option.correct{background:rgba(81,207,102,0.15);border-color:var(--success);color:#2b8a3e;}
+.quiz-option.wrong{background:rgba(255,107,107,0.1);border-color:var(--primary);color:#c92a2a;}
+.quiz-feedback{padding:12px 16px;border-radius:12px;margin-top:8px;font-size:15px;font-weight:700;display:none;}
+.quiz-feedback.show{display:block;animation:popIn 0.3s ease;}
+@keyframes popIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
+.quiz-feedback.ok{background:rgba(81,207,102,0.15);color:#2b8a3e;}
+.quiz-feedback.err{background:rgba(255,107,107,0.1);color:#c92a2a;}
+.next-btn{margin-top:14px;padding:12px 28px;background:linear-gradient(135deg,var(--primary),#ff922b);color:#fff;border:none;border-radius:20px;font-size:16px;font-weight:900;cursor:pointer;transition:all 0.25s;}
+.next-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(255,107,107,0.4);}
+.locked{opacity:0.35;pointer-events:none;}
+.step-indicator{display:flex;gap:8px;margin-bottom:16px;}
+.step-dot{width:12px;height:12px;border-radius:50%;background:#e0e0e0;transition:all 0.3s;}
+.step-dot.done{background:var(--success);}
+.step-dot.active{background:var(--primary);transform:scale(1.3);}
+table{width:100%;border-collapse:collapse;margin:12px 0;}
+th,td{border:2px solid #f0f0f0;padding:10px 14px;text-align:center;font-size:15px;}
+th{background:rgba(255,107,107,0.1);font-weight:900;}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-brand">📚 TeachAny</div>
+  <a href="#life-scene-section">🐜 生活场景</a>
+  <a href="#concepts">📖 概念</a>
+  <a href="#interactive-lab">🧪 实验台</a>
+  <a href="#knowledge-graph">🕸️ 知识图谱</a>
+  <a href="#quiz">📝 练习</a>
+</nav>
+<div class="container">
+  <div class="hero">
+    <h1>周长</h1>
+    <div class="subtitle">小蚂蚁爬一圈，就是周长！</div>
+    <div class="meta">
+      <span>📚 小学数学</span><span>🎒 三年级上册</span><span>⭐ 难度：★★☆</span><span>⏱️ 约40分钟</span>
+    </div>
+  </div>
+
+  <!-- 生活场景 -->
+  <section class="section" id="life-scene-section">
+    <div class="section-title">🐜 生活场景：小蚂蚁爬边框</div>
+    <div id="life-scene">
+      <div class="ant-scene-title">🐜 小蚂蚁沿着图形边缘爬行，走完一圈的路程就是周长！</div>
+      <div class="ant-canvas-wrap">
+        <canvas id="antCanvas" width="440" height="240"></canvas>
+      </div>
+      <div class="ant-info">
+        <div class="ant-info-card">形状：<span class="val" id="shapeLabel">矩形</span></div>
+        <div class="ant-info-card">已爬：<span class="val" id="antProgress">0%</span></div>
+        <div class="ant-info-card">周长：<span class="val" id="antPerimeter">?</span></div>
+      </div>
+      <div class="scene-controls">
+        <button class="scene-btn scene-btn-primary" onclick="startAntWalk()">▶ 开始爬行</button>
+        <button class="scene-btn scene-btn-secondary" onclick="changeShape()">🔄 换图形</button>
+        <button class="scene-btn" style="background:#f1f3f5;color:var(--text)" onclick="resetAnt()">⏹ 重置</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 概念 -->
+  <section class="section" id="concepts">
+    <div class="section-title">📖 核心概念</div>
+    <div class="grid-2">
+      <div class="card">
+        <h3>📏 什么是周长？</h3>
+        <p><span class="highlight">周长</span>是围成一个图形的所有边的<span class="highlight">总长度</span>。</p>
+        <div class="formula-box">周长 = 各条边之和</div>
+        <div class="tip-box">💡 "周"表示一圈，"长"表示长度。周长就是绕图形走一圈的距离。</div>
+      </div>
+      <div class="card">
+        <h3>🔲 长方形周长</h3>
+        <p>长方形有两条长和两条宽。</p>
+        <div class="formula-box">C = 2 × (长 + 宽)<br>C = 2长 + 2宽</div>
+        <p style="margin-top:8px;">例：长6cm，宽4cm<br>周长 = 2×(6+4) = <span class="highlight">20cm</span></p>
+      </div>
+    </div>
+    <div class="grid-3">
+      <div class="card">
+        <h3>⬛ 正方形周长</h3>
+        <p>正方形四边相等。</p>
+        <div class="formula-box">C = 4 × 边长</div>
+      </div>
+      <div class="card">
+        <h3>🔺 三角形周长</h3>
+        <p>三角形三边之和。</p>
+        <div class="formula-box">C = a + b + c</div>
+      </div>
+      <div class="card">
+        <h3>⬠ 多边形周长</h3>
+        <p>各边长度之和。</p>
+        <div class="formula-box">C = 各边之和</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📊 常见图形周长公式对比</h3>
+      <table>
+        <tr><th>图形</th><th>条件</th><th>周长公式</th><th>例子（单位cm）</th></tr>
+        <tr><td>长方形</td><td>长=a, 宽=b</td><td>2(a+b)</td><td>a=5,b=3 → C=16</td></tr>
+        <tr><td>正方形</td><td>边=a</td><td>4a</td><td>a=6 → C=24</td></tr>
+        <tr><td>等边三角形</td><td>边=a</td><td>3a</td><td>a=4 → C=12</td></tr>
+        <tr><td>一般三角形</td><td>三边a,b,c</td><td>a+b+c</td><td>3+4+5=12</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- 互动实验台 -->
+  <section class="section" id="interactive-lab">
+    <div class="section-title">🧪 互动实验台</div>
+    <div id="interactive-lab">
+      <div class="lab-tabs">
+        <button class="lab-tab active" onclick="switchTab('tab-calc')">📐 周长计算器</button>
+        <button class="lab-tab" onclick="switchTab('tab-match')">🃏 配对练习</button>
+      </div>
+      <div id="tab-calc" class="lab-panel active">
+        <div class="card">
+          <h3>📐 动态图形周长</h3>
+          <div class="shape-select">
+            <button class="shape-btn active" onclick="selectShape('rect',this)">长方形</button>
+            <button class="shape-btn" onclick="selectShape('square',this)">正方形</button>
+            <button class="shape-btn" onclick="selectShape('triangle',this)">等边三角形</button>
+          </div>
+          <div id="sliderArea"></div>
+          <canvas id="shapeCanvas" width="300" height="200"></canvas>
+          <div class="perimeter-result" id="perimeterResult">周长 = ?</div>
+        </div>
+      </div>
+      <div id="tab-match" class="lab-panel">
+        <div class="card">
+          <h3>🃏 将图形与周长公式配对</h3>
+          <p style="color:var(--dim);margin-bottom:12px;">将左侧公式拖拽到对应图形右侧的框内</p>
+          <div style="display:flex;gap:24px;flex-wrap:wrap;">
+            <div>
+              <div style="font-weight:700;margin-bottom:8px;color:var(--dim)">公式（拖拽）</div>
+              <div id="formulaDraggables" style="display:flex;flex-direction:column;gap:8px;"></div>
+            </div>
+            <div style="flex:1;min-width:220px;">
+              <div style="font-weight:700;margin-bottom:8px;color:var(--dim)">图形 → 对应公式</div>
+              <div id="matchSlots" style="display:flex;flex-direction:column;gap:8px;"></div>
+            </div>
+          </div>
+          <div id="matchResult" style="margin-top:12px;font-weight:700;display:none;"></div>
+          <button class="next-btn" style="margin-top:10px;" onclick="checkMatch()">✅ 检查答案</button>
+          <button class="next-btn" style="background:linear-gradient(135deg,var(--secondary),#20c997);margin-top:10px;" onclick="resetMatch()">🔄 重置</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 知识图谱 -->
+  <section class="section" id="knowledge-graph">
+    <div class="section-title">🕸️ 知识图谱</div>
+    <div id="knowledge-graph">
+      <svg id="kg-svg-peri"></svg>
+    </div>
+  </section>
+
+  <!-- 练习题 -->
+  <section class="section" id="quiz">
+    <div class="section-title">📝 闯关练习</div>
+    <div class="quiz-section">
+      <div class="step-indicator" id="stepIndicator"></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressBar" style="width:0%"></div></div>
+      <div class="quiz-step active" id="step1">
+        <div class="quiz-q">🔲 第1关：长方形长8cm，宽5cm，周长是多少？</div>
+        <button class="quiz-option" onclick="checkQ(1,'A','C')">A. 26cm</button>
+        <button class="quiz-option" onclick="checkQ(1,'B','C')">B. 40cm</button>
+        <button class="quiz-option" onclick="checkQ(1,'C','C')">C. 26cm（2×(8+5)=26）</button>
+        <div class="quiz-feedback" id="fb1"></div>
+        <button class="next-btn locked" id="next1" onclick="nextStep(2)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step2">
+        <div class="quiz-q">⬛ 第2关：正方形边长7cm，周长是多少？</div>
+        <button class="quiz-option" onclick="checkQ(2,'A','B')">A. 21cm</button>
+        <button class="quiz-option" onclick="checkQ(2,'B','B')">B. 28cm</button>
+        <button class="quiz-option" onclick="checkQ(2,'C','B')">C. 49cm</button>
+        <div class="quiz-feedback" id="fb2"></div>
+        <button class="next-btn locked" id="next2" onclick="nextStep(3)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step3">
+        <div class="quiz-q">🔺 第3关：三角形三边分别为3cm、4cm、5cm，周长是多少？</div>
+        <button class="quiz-option" onclick="checkQ(3,'A','B')">A. 11cm</button>
+        <button class="quiz-option" onclick="checkQ(3,'B','B')">B. 12cm</button>
+        <button class="quiz-option" onclick="checkQ(3,'C','B')">C. 60cm</button>
+        <div class="quiz-feedback" id="fb3"></div>
+        <button class="next-btn locked" id="next3" onclick="nextStep(4)">下一关 →</button>
+      </div>
+      <div class="quiz-step locked" id="step4">
+        <div class="quiz-q">🧩 第4关：一个正方形周长是20cm，其边长是多少？</div>
+        <button class="quiz-option" onclick="checkQ(4,'A','B')">A. 10cm</button>
+        <button class="quiz-option" onclick="checkQ(4,'B','B')">B. 5cm</button>
+        <button class="quiz-option" onclick="checkQ(4,'C','B')">C. 4cm</button>
+        <div class="quiz-feedback" id="fb4"></div>
+        <button class="next-btn locked" id="next4" onclick="showFinal()">完成 🎉</button>
+      </div>
+      <div class="quiz-step locked" id="stepFinal">
+        <div style="text-align:center;padding:30px;">
+          <div style="font-size:64px;animation:bounce 1s ease infinite;">🏆</div>
+          <h2 style="font-size:28px;font-weight:900;color:var(--primary);margin:16px 0;">恭喜通关！</h2>
+          <p style="font-size:18px;color:var(--dim);">你已掌握周长的核心知识！</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+// ===== ANT WALK ANIMATION =====
+const antCanvas = document.getElementById('antCanvas');
+const actx = antCanvas.getContext('2d');
+let antShapeIndex = 0;
+const antShapes = [
+  {label:'矩形', perimeter:'2×(140+80)=440', points:[[80,60],[320,60],[320,180],[80,180]]},
+  {label:'正方形', perimeter:'4×110=440', points:[[165,65],[275,65],[275,175],[165,175]]},
+  {label:'三角形', perimeter:'130+150+160=440', points:[[220,50],[80,190],[360,190]]}
+];
+let antT=0, antRunning=false, antTimer=null;
+function getShapePath(shape){
+  const pts=shape.points;
+  const path=[];
+  let totalLen=0;
+  for(let i=0;i<pts.length;i++){
+    const a=pts[i], b=pts[(i+1)%pts.length];
+    const len=Math.hypot(b[0]-a[0],b[1]-a[1]);
+    totalLen+=len;
+    path.push({ax:a[0],ay:a[1],bx:b[0],by:b[1],len,cumLen:totalLen});
+  }
+  path.totalLen=totalLen;
+  return path;
+}
+function getAntPos(path, t){
+  const target=t*path.totalLen;
+  for(const seg of path){
+    if(seg.cumLen>=target){
+      const prev=seg.cumLen-seg.len;
+      const r=(target-prev)/seg.len;
+      return{x:seg.ax+(seg.bx-seg.ax)*r, y:seg.ay+(seg.by-seg.ay)*r};
+    }
+  }
+  return{x:path[0].ax,y:path[0].ay};
+}
+function drawAntScene(t){
+  actx.clearRect(0,0,440,240);
+  const shape=antShapes[antShapeIndex];
+  const pts=shape.points;
+  const path=getShapePath(shape);
+  // Draw shape
+  actx.beginPath();
+  actx.moveTo(pts[0][0],pts[0][1]);
+  pts.forEach(p=>actx.lineTo(p[0],p[1]));
+  actx.closePath();
+  actx.strokeStyle='#4ecdc4';
+  actx.lineWidth=3;
+  actx.stroke();
+  actx.fillStyle='rgba(78,205,196,0.1)';
+  actx.fill();
+  // Draw trail
+  const trailEnd=t*path.totalLen;
+  actx.beginPath();
+  actx.moveTo(pts[0][0],pts[0][1]);
+  let drawn=0;
+  for(const seg of path){
+    if(drawn+seg.len<=trailEnd){
+      actx.lineTo(seg.bx,seg.by);
+      drawn+=seg.len;
+    }else{
+      const r=(trailEnd-drawn)/seg.len;
+      actx.lineTo(seg.ax+(seg.bx-seg.ax)*r,seg.ay+(seg.by-seg.ay)*r);
+      break;
+    }
+  }
+  actx.strokeStyle='#ff6b6b';
+  actx.lineWidth=4;
+  actx.stroke();
+  // Draw ant
+  const pos=getAntPos(path,t);
+  actx.font='20px serif';
+  actx.fillText('🐜',pos.x-10,pos.y+6);
+  // Update info
+  document.getElementById('antProgress').textContent=Math.round(t*100)+'%';
+  if(t>=1) document.getElementById('antPerimeter').textContent=shape.perimeter;
+}
+function startAntWalk(){
+  if(antRunning) return;
+  antRunning=true; antT=0;
+  document.getElementById('antPerimeter').textContent='?';
+  antTimer=setInterval(()=>{
+    antT=Math.min(antT+0.008,1);
+    drawAntScene(antT);
+    if(antT>=1){clearInterval(antTimer);antRunning=false;}
+  },30);
+}
+function changeShape(){
+  clearInterval(antTimer); antRunning=false; antT=0;
+  antShapeIndex=(antShapeIndex+1)%antShapes.length;
+  document.getElementById('shapeLabel').textContent=antShapes[antShapeIndex].label;
+  document.getElementById('antProgress').textContent='0%';
+  document.getElementById('antPerimeter').textContent='?';
+  drawAntScene(0);
+}
+function resetAnt(){
+  clearInterval(antTimer); antRunning=false; antT=0;
+  document.getElementById('antProgress').textContent='0%';
+  document.getElementById('antPerimeter').textContent='?';
+  drawAntScene(0);
+}
+
+// ===== SHAPE CALCULATOR =====
+let currentShapeType='rect';
+const shapeCanvas=document.getElementById('shapeCanvas');
+const sctx=shapeCanvas.getContext('2d');
+let shapeParams={a:6,b:4};
+function selectShape(type,btn){
+  currentShapeType=type;
+  document.querySelectorAll('.shape-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  buildSliders();
+}
+function buildSliders(){
+  const area=document.getElementById('sliderArea');
+  if(currentShapeType==='rect'){
+    area.innerHTML=`
+      <div class="slider-row"><label>长(cm)</label><input type="range" min="2" max="12" value="${shapeParams.a||6}" oninput="shapeParams.a=+this.value;document.getElementById('valA').textContent=this.value;updateShape()"><span id="valA">${shapeParams.a||6}</span></div>
+      <div class="slider-row"><label>宽(cm)</label><input type="range" min="1" max="10" value="${shapeParams.b||4}" oninput="shapeParams.b=+this.value;document.getElementById('valB').textContent=this.value;updateShape()"><span id="valB">${shapeParams.b||4}</span></div>`;
+  }else if(currentShapeType==='square'){
+    area.innerHTML=`<div class="slider-row"><label>边(cm)</label><input type="range" min="2" max="12" value="${shapeParams.a||6}" oninput="shapeParams.a=+this.value;document.getElementById('valA').textContent=this.value;updateShape()"><span id="valA">${shapeParams.a||6}</span></div>`;
+  }else{
+    area.innerHTML=`<div class="slider-row"><label>边(cm)</label><input type="range" min="2" max="10" value="${shapeParams.a||5}" oninput="shapeParams.a=+this.value;document.getElementById('valA').textContent=this.value;updateShape()"><span id="valA">${shapeParams.a||5}</span></div>`;
+  }
+  updateShape();
+}
+function updateShape(){
+  sctx.clearRect(0,0,300,200);
+  const cx=150,cy=100;
+  sctx.strokeStyle='#4ecdc4'; sctx.lineWidth=3; sctx.fillStyle='rgba(78,205,196,0.12)';
+  let peri='';
+  if(currentShapeType==='rect'){
+    const w=Math.min(shapeParams.a*18,260), h=Math.min(shapeParams.b*18,160);
+    sctx.beginPath(); sctx.rect(cx-w/2,cy-h/2,w,h); sctx.stroke(); sctx.fill();
+    sctx.fillStyle='#ff6b6b'; sctx.font='bold 13px sans-serif'; sctx.textAlign='center';
+    sctx.fillText(shapeParams.a+'cm',cx,cy-h/2-5);
+    sctx.fillText(shapeParams.b+'cm',cx+w/2+18,cy);
+    peri=`周长 = 2×(${shapeParams.a}+${shapeParams.b}) = ${2*(shapeParams.a+shapeParams.b)}cm`;
+  }else if(currentShapeType==='square'){
+    const s=Math.min(shapeParams.a*20,160);
+    sctx.beginPath(); sctx.rect(cx-s/2,cy-s/2,s,s); sctx.stroke(); sctx.fill();
+    sctx.fillStyle='#ff6b6b'; sctx.font='bold 13px sans-serif'; sctx.textAlign='center';
+    sctx.fillText(shapeParams.a+'cm',cx,cy-s/2-5);
+    peri=`周长 = 4×${shapeParams.a} = ${4*shapeParams.a}cm`;
+  }else{
+    const r=Math.min(shapeParams.a*16,80);
+    sctx.beginPath(); sctx.moveTo(cx,cy-r); sctx.lineTo(cx+r*0.866,cy+r*0.5); sctx.lineTo(cx-r*0.866,cy+r*0.5); sctx.closePath(); sctx.stroke(); sctx.fill();
+    peri=`周长 = 3×${shapeParams.a} = ${3*shapeParams.a}cm`;
+  }
+  document.getElementById('perimeterResult').textContent=peri;
+}
+
+// ===== DRAG MATCH =====
+const matchPairs=[
+  {shape:'长方形',formula:'2(长+宽)'},
+  {shape:'正方形',formula:'4×边长'},
+  {shape:'等边三角形',formula:'3×边长'}
+];
+let draggedFormula=null;
+function initMatch(){
+  const draggables=document.getElementById('formulaDraggables');
+  const slots=document.getElementById('matchSlots');
+  const shuffled=[...matchPairs].sort(()=>Math.random()-0.5);
+  shuffled.forEach(p=>{
+    const d=document.createElement('div');
+    d.className='drag-item'; d.textContent=p.formula;
+    d.style.background='rgba(78,205,196,0.15)'; d.style.border='2px solid var(--secondary)';
+    d.draggable=true; d.dataset.formula=p.formula;
+    d.addEventListener('dragstart',e=>{draggedFormula=p.formula;e.dataTransfer.effectAllowed='move';});
+    draggables.appendChild(d);
+  });
+  matchPairs.forEach(p=>{
+    const row=document.createElement('div'); row.className='match-row';
+    const label=document.createElement('span'); label.textContent=p.shape; label.style.fontWeight='700'; label.style.width='90px';
+    const slot=document.createElement('div'); slot.className='match-slot'; slot.dataset.expected=p.formula; slot.textContent='拖拽到此';
+    slot.addEventListener('dragover',e=>{e.preventDefault();slot.classList.add('over');});
+    slot.addEventListener('dragleave',()=>slot.classList.remove('over'));
+    slot.addEventListener('drop',e=>{e.preventDefault();slot.classList.remove('over');slot.textContent=draggedFormula;slot.dataset.placed=draggedFormula;});
+    row.appendChild(label); row.appendChild(slot); slots.appendChild(row);
+  });
+}
+function checkMatch(){
+  let correct=0;
+  document.querySelectorAll('.match-slot').forEach(s=>{
+    if(s.dataset.placed===s.dataset.expected){s.style.borderColor='var(--success)';s.style.background='rgba(81,207,102,0.1)';correct++;}
+    else if(s.dataset.placed){s.style.borderColor='var(--primary)';s.style.background='rgba(255,107,107,0.08)';}
+  });
+  const res=document.getElementById('matchResult');
+  res.style.display='block';
+  res.innerHTML=correct===3?'<span style="color:var(--success)">✅ 全部正确！太棒了！</span>':`<span style="color:var(--primary)">⚠️ ${correct}/3 正确，请继续调整</span>`;
+}
+function resetMatch(){
+  document.getElementById('formulaDraggables').innerHTML='';
+  document.getElementById('matchSlots').innerHTML='';
+  document.getElementById('matchResult').style.display='none';
+  initMatch();
+}
+function switchTab(id){
+  document.querySelectorAll('.lab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.lab-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ===== KNOWLEDGE GRAPH =====
+function initKG(){
+  const colorMap={current:"#ff6b6b",prereq:"#51cf66",next:"#4ecdc4"};
+  const kgData={
+    nodes:[
+      {id:"cur",name:"周长",type:"current"},
+      {id:"p1",name:"长度单位",type:"prereq"},
+      {id:"p2",name:"图形认识",type:"prereq"},
+      {id:"n1",name:"面积",type:"next"},
+      {id:"n2",name:"圆的周长",type:"next"},
+      {id:"n3",name:"不规则图形周长",type:"next"}
+    ],
+    links:[
+      {source:"p1",target:"cur"},{source:"p2",target:"cur"},
+      {source:"cur",target:"n1"},{source:"cur",target:"n2"},{source:"cur",target:"n3"}
+    ]
+  };
+  const svg=d3.select("#kg-svg-peri");
+  const w=svg.node().parentElement.clientWidth||700, h=340;
+  svg.attr("viewBox",`0 0 ${w} ${h}`);
+  svg.append("defs").append("marker").attr("id","arr-p").attr("viewBox","0 -5 10 10").attr("refX",22).attr("markerWidth",6).attr("markerHeight",6).attr("orient","auto").append("path").attr("d","M0,-5L10,0L0,5").attr("fill","#bbb");
+  const sim=d3.forceSimulation(kgData.nodes).force("link",d3.forceLink(kgData.links).id(d=>d.id).distance(120)).force("charge",d3.forceManyBody().strength(-320)).force("center",d3.forceCenter(w/2,h/2));
+  const link=svg.append("g").selectAll("line").data(kgData.links).join("line").attr("stroke","#ddd").attr("stroke-width",2).attr("marker-end","url(#arr-p)");
+  const node=svg.append("g").selectAll("g").data(kgData.nodes).join("g").call(d3.drag().on("start",e=>{if(!e.active)sim.alphaTarget(0.3).restart();e.subject.fx=e.subject.x;e.subject.fy=e.subject.y;}).on("drag",e=>{e.subject.fx=e.x;e.subject.fy=e.y;}).on("end",e=>{if(!e.active)sim.alphaTarget(0);e.subject.fx=null;e.subject.fy=null;}));
+  node.append("circle").attr("r",38).attr("fill",d=>colorMap[d.type]).attr("opacity",0.9);
+  node.append("text").attr("text-anchor","middle").attr("dy","0.35em").attr("font-size","11px").attr("font-weight","bold").attr("fill","#fff").each(function(d){const words=d.name.length>6?[d.name.slice(0,6),d.name.slice(6)]:[d.name];words.forEach((w,i)=>d3.select(this).append("tspan").attr("x",0).attr("dy",i?14:-7).text(w));});
+  const leg=svg.append("g").attr("transform",`translate(${w-160},20)`);
+  [["prereq","前置知识"],["current","本节课"],["next","后续内容"]].forEach(([t,l],i)=>{leg.append("circle").attr("cx",10).attr("cy",i*26).attr("r",8).attr("fill",colorMap[t]);leg.append("text").attr("x",24).attr("y",i*26+5).attr("font-size","12px").attr("fill","#555").text(l);});
+  sim.on("tick",()=>{link.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y).attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);node.attr("transform",d=>`translate(${d.x},${d.y})`);});
+}
+
+// ===== QUIZ =====
+function initStepIndicator(){
+  const ind=document.getElementById('stepIndicator');
+  for(let i=1;i<=4;i++){const d=document.createElement('div');d.className='step-dot'+(i===1?' active':'');d.id='dot'+i;ind.appendChild(d);}
+}
+function checkQ(step,choice,correct){
+  const opts=document.querySelectorAll(`#step${step} .quiz-option`);
+  opts.forEach(o=>o.disabled=true);
+  const idx={A:0,B:1,C:2};
+  const fb=document.getElementById('fb'+step);
+  if(choice===correct){opts[idx[choice]].classList.add('correct');fb.className='quiz-feedback show ok';fb.textContent='✅ 正确！';}
+  else{opts[idx[choice]].classList.add('wrong');opts[idx[correct]].classList.add('correct');fb.className='quiz-feedback show err';fb.textContent='❌ 答案是 '+correct;}
+  fb.style.display='block';
+  document.getElementById('progressBar').style.width=(step/4*100)+'%';
+  setTimeout(()=>document.getElementById('next'+step).classList.remove('locked'),choice===correct?0:1500);
+}
+function nextStep(n){
+  document.getElementById('step'+(n-1)).classList.remove('active');
+  const s=document.getElementById('step'+n);s.classList.remove('locked');s.classList.add('active');
+  document.getElementById('dot'+(n-1)).classList.replace('active','done');
+  const dn=document.getElementById('dot'+n);if(dn)dn.classList.add('active');
+}
+function showFinal(){document.getElementById('step4').classList.remove('active');const f=document.getElementById('stepFinal');f.classList.remove('locked');f.classList.add('active');document.getElementById('progressBar').style.width='100%';}
+
+window.onload=()=>{drawAntScene(0);buildSliders();initMatch();initKG();initStepIndicator();};
+</script>
+</body>
+</html>
