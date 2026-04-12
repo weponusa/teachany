@@ -1006,6 +1006,11 @@ function renderCommunityGalleryCards(grid, index) {
       grid.appendChild(card);
     }
   });
+  
+  // 更新统计数字
+  if (window.TeachAnyStats && typeof window.TeachAnyStats.registerCommunity === 'function') {
+    window.TeachAnyStats.registerCommunity(index);
+  }
 }
 
 /* ─── 导出 ───────────────────────────────────── */
