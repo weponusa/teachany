@@ -666,10 +666,7 @@ footer a { color: var(--primary); text-decoration: none; }
 </footer>
 
 <script src="./scripts/export-courseware.js"></script>
-<script src="./scripts/stats-updater.js"></script>
-<script src="./scripts/registry-loader.js"></script>
-<script src="./scripts/featured-loader.js"></script>
-<script src="./scripts/community-loader.js"></script>
+<script src="./scripts/unified-loader.js"></script>
 <script>
 /* ─── 年级 → 学段映射 ─── */
 function gradeToLevel(grade) {
@@ -760,38 +757,13 @@ function filterCourses(subject) {
   filterGallery('subject', subject, event && event.target);
 }
 
-// 初始化：Registry → 星标推荐 → 社区课件 → 用户课件导入器
+// 初始化：unified-loader.js 会自动加载所有课件
 document.addEventListener('DOMContentLoaded', async function() {
-  const officialGrid = document.getElementById('officialGrid');
-  const communityGrid = document.getElementById('communityGrid');
-
-  // 1. 从 Registry 加载课件到官方区
-  if (window.TeachAnyRegistry && officialGrid) {
-    await TeachAnyRegistry.initRegistryLoader('#officialGrid');
+  // 触发一次筛选以更新计数
+  const activeBtn = document.querySelector('#levelFilterRow .filter-btn.active');
+  if (activeBtn) {
+    filterGallery('level', 'all', activeBtn);
   }
-
-  // 2. 加载星标推荐课件，合并到官方区
-  if (window.TeachAnyFeatured && officialGrid) {
-    await TeachAnyFeatured.initFeaturedLoader('#officialGrid');
-  }
-
-  // 3. 初始化课件导入器（"添加我的课件"按钮）
-  if (window.TeachAnyImporter && officialGrid) {
-    TeachAnyImporter.initGalleryImporter('#officialGrid');
-  }
-
-  // 4. 异步加载社区课件到社区区
-  if (window.TeachAnyCommunity && communityGrid) {
-    try {
-      const index = await TeachAnyCommunity.fetchCommunityIndex();
-      TeachAnyCommunity.renderCommunityGalleryCards(communityGrid, index);
-    } catch (err) {
-      console.warn('[TeachAny] 社区课件加载失败:', err.message);
-    }
-  }
-
-  // 5. 触发一次筛选以更新计数
-  filterGallery('level', 'all', document.querySelector('#levelFilterRow .filter-btn.active'));
 });
 </script>
 

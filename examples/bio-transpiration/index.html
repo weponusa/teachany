@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="teachany-node" content="transpiration">
+<meta name="teachany-subject" content="biology">
+<meta name="teachany-domain" content="plant-life">
+<meta name="teachany-grade" content="7">
+<meta name="teachany-prerequisites" content="leaf-structure,root-tip">
+<meta name="teachany-difficulty" content="2">
+<meta name="teachany-version" content="1.4.0">
+<meta name="teachany-author" content="weponusa">
+<meta name="teachany-audio" content="tts/">
+<meta name="teachany-narration-lang" content="zh-CN-XiaoxiaoNeural">
+<meta name="teachany-audio-segments" content="8">
+<title>蒸腾作用 · TeachAny</title>
+<style>
+:root{
+  --primary:#0891b2;
+  --primary-dark:#0e7490;
+  --primary-light:#cffafe;
+  --accent:#22d3ee;
+  --text:#1e293b;
+  --muted:#64748b;
+  --border:#e2e8f0;
+  --radius:12px;
+  --shadow:0 4px 24px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;color:var(--text);background:#f8fafc;line-height:1.7}
+nav{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;gap:8px;height:52px;overflow-x:auto}
+.nav-logo{font-weight:700;color:var(--primary);margin-right:12px;white-space:nowrap;font-size:15px}
+.nav-btn{border:none;background:transparent;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--muted);white-space:nowrap;transition:all .2s}
+.nav-btn:hover,.nav-btn.active{background:var(--primary-light);color:var(--primary);font-weight:600}
+section{max-width:860px;margin:0 auto;padding:48px 20px}
+.section-tag{display:inline-block;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;background:var(--primary-light);color:var(--primary)}
+h1{font-size:clamp(22px,4vw,32px);font-weight:700;margin-bottom:8px}
+h2{font-size:clamp(18px,3vw,24px);font-weight:700;margin-bottom:16px}
+h3{font-size:16px;font-weight:600;margin-bottom:8px}
+.lead{font-size:16px;color:var(--muted);margin-bottom:24px}
+.card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);padding:24px;margin-bottom:20px;box-shadow:var(--shadow)}
+.abt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.abt-card{border-radius:var(--radius);padding:20px;border-left:4px solid}
+.abt-and{background:#f0fdf4;border-color:#16a34a}
+.abt-but{background:#fef2f2;border-color:#dc2626}
+.abt-thr{background:#ecfeff;border-color:var(--primary)}
+.abt-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;opacity:.7}
+.canvas-wrap{background:#fff;border-radius:var(--radius);border:1px solid var(--border);padding:20px;margin-bottom:20px;text-align:center}
+canvas{border-radius:8px;max-width:100%}
+.canvas-controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+.ctrl-btn{padding:7px 18px;border-radius:8px;border:1.5px solid var(--primary);background:#fff;color:var(--primary);cursor:pointer;font-size:13px;font-weight:600;transition:all .2s}
+.ctrl-btn:hover,.ctrl-btn.active{background:var(--primary);color:#fff}
+.drag-area{background:#fff;border-radius:var(--radius);border:1px solid var(--border);padding:20px;margin-bottom:20px}
+.drag-list{list-style:none;display:flex;flex-direction:column;gap:8px}
+.drag-item{padding:12px 16px;background:var(--primary-light);border:2px dashed var(--accent);border-radius:8px;cursor:grab;user-select:none;font-size:14px;font-weight:500;display:flex;align-items:center;gap:8px;transition:all .2s}
+.drag-item:hover{background:#a5f3fc}
+.drag-item.dragging{opacity:.4}
+.drag-item.drag-over{border-color:var(--primary);background:#a5f3fc;transform:scale(1.02)}
+.check-btn{margin-top:12px;padding:9px 24px;border-radius:8px;border:none;background:var(--primary);color:#fff;cursor:pointer;font-size:14px;font-weight:600}
+.check-btn:hover{background:var(--primary-dark)}
+.drag-result{margin-top:10px;font-size:14px;font-weight:600;padding:10px 14px;border-radius:8px}
+.drag-result.ok{background:#f0fdf4;color:#16a34a}
+.drag-result.err{background:#fef2f2;color:#dc2626}
+.quiz-card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);padding:22px;margin-bottom:16px}
+.quiz-q{font-size:15px;font-weight:600;margin-bottom:14px;line-height:1.5}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt-btn{padding:10px 16px;border-radius:8px;border:2px solid var(--border);background:#fff;text-align:left;cursor:pointer;font-size:14px;transition:all .2s}
+.opt-btn:hover{border-color:var(--accent);background:var(--primary-light)}
+.opt-btn.correct{border-color:#16a34a;background:#f0fdf4;color:#166534}
+.opt-btn.wrong{border-color:#dc2626;background:#fef2f2;color:#991b1b}
+.error-diagnosis{display:none;margin-top:10px;padding:12px;background:#fffbeb;border-radius:8px;border-left:4px solid #f59e0b;font-size:13px;color:#92400e}
+.error-diagnosis.show{display:block}
+.score-wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.score-circle{width:80px;height:80px;border-radius:50%;background:conic-gradient(var(--primary) 0%,#e2e8f0 0%);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--primary);position:relative;transition:background 1s}
+.score-circle::before{content:'';position:absolute;width:60px;height:60px;background:#fff;border-radius:50%}
+.score-num{position:relative;z-index:1}
+.kg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+@media(max-width:600px){.kg-grid{grid-template-columns:1fr 1fr}}
+.kg-node{background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:14px;text-align:center;transition:all .2s}
+.kg-node:hover{border-color:var(--accent);box-shadow:0 2px 12px rgba(34,211,238,.15);transform:translateY(-2px)}
+.kg-node .kg-icon{font-size:28px;margin-bottom:6px}
+.kg-node .kg-label{font-size:13px;font-weight:600;color:var(--text)}
+.kg-node .kg-desc{font-size:11px;color:var(--muted);margin-top:3px}
+.kg-node.core{border-color:var(--primary);background:var(--primary-light)}
+.highlight{background:var(--primary-light);border-radius:var(--radius);padding:16px 20px;margin:16px 0;border-left:4px solid var(--primary)}
+.highlight p{margin:0;font-size:14px}
+.audio-badge{position:fixed;bottom:24px;right:24px;z-index:200;background:var(--primary);color:#fff;border:none;border-radius:50px;padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(8,145,178,.4);transition:all .2s}
+.audio-badge:hover{background:var(--primary-dark);transform:translateY(-2px)}
+#audioPlayer{position:fixed;bottom:0;left:0;right:0;z-index:300;background:rgba(14,116,144,0.97);color:#fff;padding:12px 20px;transform:translateY(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);box-shadow:0 -4px 24px rgba(0,0,0,.2)}
+#audioPlayer.open{transform:translateY(0)}
+.ap-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.ap-title{font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px}
+.ap-close{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.ap-subtitle{font-size:13px;color:rgba(255,255,255,.8);min-height:20px;margin-bottom:8px;line-height:1.5}
+.ap-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ap-ctrl-btn{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:14px}
+.ap-ctrl-btn:hover{background:rgba(255,255,255,.35)}
+.ap-progress{flex:1;min-width:120px;height:4px;background:rgba(255,255,255,.3);border-radius:2px;cursor:pointer}
+.ap-progress-fill{height:100%;background:#fff;border-radius:2px;width:0;transition:width .3s}
+.seg-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.seg-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px}
+.seg-btn:hover{background:rgba(255,255,255,.3)}
+.seg-btn.playing{background:#fff;color:var(--primary);font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:14px;margin:12px 0}
+th,td{padding:10px 14px;border:1px solid var(--border);text-align:left}
+th{background:var(--primary-light);color:var(--primary);font-weight:600}
+tr:hover td{background:#f8fafc}
+.info-box{display:flex;gap:12px;align-items:flex-start;background:#ecfeff;border-radius:var(--radius);padding:16px;margin:16px 0}
+.info-icon{font-size:24px;flex-shrink:0}
+.info-text{font-size:14px;line-height:1.7}
+/* Factor slider */
+.factor-demo{background:#f0f9ff;border-radius:var(--radius);padding:16px;margin:12px 0}
+.factor-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;font-size:14px}
+.factor-row label{width:100px;font-weight:600;flex-shrink:0}
+.factor-row input{flex:1;max-width:200px}
+.factor-row .factor-val{width:60px;text-align:right;color:var(--primary);font-weight:600}
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-logo">💧 蒸腾作用</span>
+  <button class="nav-btn" data-target="target" onclick="goTo('target')">目标</button>
+  <button class="nav-btn" data-target="pretest" onclick="goTo('pretest')">预测</button>
+  <button class="nav-btn" data-target="module1" onclick="goTo('module1')">蒸腾过程</button>
+  <button class="nav-btn" data-target="module2" onclick="goTo('module2')">影响因素</button>
+  <button class="nav-btn" data-target="module3" onclick="goTo('module3')">生态意义</button>
+  <button class="nav-btn" data-target="practice" onclick="goTo('practice')">练习</button>
+  <button class="nav-btn" data-target="summary" onclick="goTo('summary')">总结</button>
+</nav>
+
+<div style="display:none" aria-hidden="true">
+  <audio id="ta-audio-s01" src="tts/s01.mp3" preload="none"></audio>
+  <audio id="ta-audio-s02" src="tts/s02.mp3" preload="none"></audio>
+  <audio id="ta-audio-s03" src="tts/s03.mp3" preload="none"></audio>
+  <audio id="ta-audio-s04" src="tts/s04.mp3" preload="none"></audio>
+  <audio id="ta-audio-s05" src="tts/s05.mp3" preload="none"></audio>
+  <audio id="ta-audio-s06" src="tts/s06.mp3" preload="none"></audio>
+  <audio id="ta-audio-s07" src="tts/s07.mp3" preload="none"></audio>
+  <audio id="ta-audio-s08" src="tts/s08.mp3" preload="none"></audio>
+</div>
+
+<section id="target">
+  <div class="section-tag">学习目标</div>
+  <h1>蒸腾作用</h1>
+  <p class="lead">一棵大树每天能蒸腾数百升水，这不是浪费，而是植物精巧的水分运输动力系统。</p>
+  <div class="abt-grid">
+    <div class="abt-card abt-and">
+      <div class="abt-label">And — 已知</div>
+      <p>根从土壤吸收水分，水通过导管向上运输到叶片。叶片上有气孔，可以和外界进行气体交换。</p>
+    </div>
+    <div class="abt-card abt-but">
+      <div class="abt-label">But — 问题</div>
+      <p>但水分从根运到十几米高的树冠，靠什么驱动力？为何炎热天气移植树木要去除大量叶片？</p>
+    </div>
+    <div class="abt-card abt-thr">
+      <div class="abt-label">Therefore — 探究</div>
+      <p>因此我们学习蒸腾作用——水分从叶片气孔散失的过程，理解它如何驱动水分在植物体内运输。</p>
+    </div>
+  </div>
+  <div class="highlight" style="margin-top:20px">
+    <p>📌 <strong>核心目标</strong>：描述蒸腾作用的全程路径；分析影响蒸腾速率的因素；解释蒸腾作用对植物和环境的意义。</p>
+  </div>
+</section>
+
+<section id="pretest">
+  <div class="section-tag">预备知识</div>
+  <h2>🔍 知识预检</h2>
+  <div class="card">
+    <h3>回顾已学内容：</h3>
+    <div style="display:flex;flex-direction:column;gap:12px;font-size:14px">
+      <div class="opt-btn" onclick="this.style.background='#f0fdf4';this.style.borderColor='#16a34a'">✅ 气孔由两个保卫细胞围成，主要在下表皮</div>
+      <div class="opt-btn" onclick="this.style.background='#f0fdf4';this.style.borderColor='#16a34a'">✅ 水分从根毛→皮层→导管→向上运输</div>
+      <div class="opt-btn" onclick="this.style.background='#fef2f2';this.style.borderColor='#dc2626'">❌ 蒸腾作用对植物毫无益处，只是水分流失</div>
+      <div class="opt-btn" onclick="this.style.background='#f0fdf4';this.style.borderColor='#16a34a'">✅ 气温高、风速大、湿度低时蒸腾速率加快</div>
+    </div>
+  </div>
+</section>
+
+<section id="module1">
+  <div class="section-tag">模块一</div>
+  <h2>💧 蒸腾作用的全程路径</h2>
+
+  <div class="canvas-wrap">
+    <canvas id="transCanvas" width="760" height="400"></canvas>
+    <div class="canvas-controls">
+      <button class="ctrl-btn active" onclick="setTransMode('path')">水分路径</button>
+      <button class="ctrl-btn" onclick="setTransMode('stomata')">气孔蒸腾</button>
+    </div>
+  </div>
+
+  <div class="highlight">
+    <p>💧 <strong>完整路径：</strong>土壤水分 → 根毛细胞（渗透吸水）→ 皮层细胞 → 木质部导管 → 茎导管 → 叶片导管 → 叶肉细胞间隙 → 气孔下腔 → <strong>气孔</strong> → 大气（以水蒸气形式散失）</p>
+  </div>
+
+  <div class="card">
+    <h3>蒸腾作用的三大功能</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:8px">
+      <div style="background:#ecfeff;border-radius:10px;padding:14px">
+        <div style="font-size:20px;margin-bottom:6px">🚀</div>
+        <strong style="font-size:13px">驱动水分运输</strong>
+        <p style="font-size:12px;color:var(--muted);margin-top:4px">蒸腾拉力是水分从根向上运输到高处的主要动力</p>
+      </div>
+      <div style="background:#f0fdf4;border-radius:10px;padding:14px">
+        <div style="font-size:20px;margin-bottom:6px">🌡️</div>
+        <strong style="font-size:13px">调节体温</strong>
+        <p style="font-size:12px;color:var(--muted);margin-top:4px">水分蒸发吸热，降低叶片温度，防止被灼伤</p>
+      </div>
+      <div style="background:#fffbeb;border-radius:10px;padding:14px">
+        <div style="font-size:20px;margin-bottom:6px">🌿</div>
+        <strong style="font-size:13px">促进无机盐运输</strong>
+        <p style="font-size:12px;color:var(--muted);margin-top:4px">水分运输的同时，携带溶解在水中的无机盐到达各组织</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 拖拽路径排序 -->
+  <div class="drag-area">
+    <h3>🖱️ 拖拽练习：将水分运输的路径正确排序</h3>
+    <ul class="drag-list" id="transList">
+      <li class="drag-item" draggable="true" data-id="stem" ondragstart="onDragStart(event)" ondragover="onDragOver(event)" ondrop="onDrop(event)" ondragend="onDragEnd(event)"><span>🔀</span>茎的导管向上运输</li>
+      <li class="drag-item" draggable="true" data-id="soil" ondragstart="onDragStart(event)" ondragover="onDragOver(event)" ondrop="onDrop(event)" ondragend="onDragEnd(event)"><span>🔀</span>土壤中的水分</li>
+      <li class="drag-item" draggable="true" data-id="air" ondragstart="onDragStart(event)" ondragover="onDragOver(event)" ondrop="onDrop(event)" ondragend="onDragEnd(event)"><span>🔀</span>水蒸气从气孔散失到大气</li>
+      <li class="drag-item" draggable="true" data-id="root" ondragstart="onDragStart(event)" ondragover="onDragOver(event)" ondrop="onDrop(event)" ondragend="onDragEnd(event)"><span>🔀</span>根毛细胞渗透吸水</li>
+      <li class="drag-item" draggable="true" data-id="leaf" ondragstart="onDragStart(event)" ondragover="onDragOver(event)" ondrop="onDrop(event)" ondragend="onDragEnd(event)"><span>🔀</span>叶片细胞间隙→气孔下腔</li>
+    </ul>
+    <button class="check-btn" onclick="checkTransOrder()">✓ 检查顺序</button>
+    <div id="transOrderResult" class="drag-result" style="display:none"></div>
+  </div>
+</section>
+
+<section id="module2">
+  <div class="section-tag">模块二</div>
+  <h2>🌡️ 影响蒸腾速率的因素</h2>
+
+  <div class="card">
+    <h3>🎛️ 影响因素模拟</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px">调节各因素，观察蒸腾速率变化：</p>
+    <div class="factor-demo">
+      <div class="factor-row">
+        <label>气温</label>
+        <input type="range" min="0" max="100" value="60" id="tempSlider" oninput="updateFactors()">
+        <span class="factor-val" id="tempVal">60%</span>
+      </div>
+      <div class="factor-row">
+        <label>光照强度</label>
+        <input type="range" min="0" max="100" value="70" id="lightSlider" oninput="updateFactors()">
+        <span class="factor-val" id="lightVal">70%</span>
+      </div>
+      <div class="factor-row">
+        <label>风速</label>
+        <input type="range" min="0" max="100" value="40" id="windSlider" oninput="updateFactors()">
+        <span class="factor-val" id="windVal">40%</span>
+      </div>
+      <div class="factor-row">
+        <label>空气湿度</label>
+        <input type="range" min="0" max="100" value="50" id="humidSlider" oninput="updateFactors()">
+        <span class="factor-val" id="humidVal">50%</span>
+      </div>
+      <div style="margin-top:12px;padding:12px;background:#fff;border-radius:8px;text-align:center">
+        <span style="font-size:14px;font-weight:600">蒸腾速率：</span>
+        <span id="transRate" style="font-size:20px;font-weight:700;color:var(--primary)">中等</span>
+        <div id="transBar" style="height:12px;background:var(--primary);border-radius:6px;margin-top:8px;width:50%;transition:width .5s"></div>
+      </div>
+    </div>
+  </div>
+
+  <table>
+    <tr><th>影响因素</th><th>对蒸腾速率的影响</th><th>原因</th></tr>
+    <tr><td>气温升高</td><td>蒸腾速率增大</td><td>水分子运动加快，蒸发加速</td></tr>
+    <tr><td>光照增强</td><td>蒸腾速率增大</td><td>气孔开放程度增大，散失水分增多</td></tr>
+    <tr><td>风速增大</td><td>蒸腾速率增大</td><td>及时带走水蒸气，维持浓度差</td></tr>
+    <tr><td>空气湿度升高</td><td>蒸腾速率减小</td><td>大气与叶片间水蒸气浓度差减小</td></tr>
+  </table>
+
+  <div class="info-box">
+    <div class="info-icon">🌳</div>
+    <div class="info-text">
+      <strong>移植树木为何要剪去大量枝叶？</strong><br>
+      移植时根系受损，吸水能力大幅下降。若不剪枝，大量叶片继续蒸腾，失水多于吸水，植物会因失水而死亡。去除叶片可以减少蒸腾，有助于成活。
+    </div>
+  </div>
+</section>
+
+<section id="module3">
+  <div class="section-tag">模块三</div>
+  <h2>🌍 蒸腾作用的生态意义</h2>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
+    <div class="card" style="border-top:4px solid var(--primary)">
+      <div style="font-size:28px;margin-bottom:8px">🚿</div>
+      <h3>水循环的驱动力</h3>
+      <p style="font-size:13px;color:var(--muted)">植物蒸腾是水循环的重要环节，大片森林的蒸腾作用可以影响局部气候，增加降水。</p>
+    </div>
+    <div class="card" style="border-top:4px solid #10b981">
+      <div style="font-size:28px;margin-bottom:8px">🌡️</div>
+      <h3>调节小气候</h3>
+      <p style="font-size:13px;color:var(--muted)">树木蒸腾吸收大量热量，使林区气温较低、空气湿润。城市绿化树木可降低城市热岛效应。</p>
+    </div>
+    <div class="card" style="border-top:4px solid #f59e0b">
+      <div style="font-size:28px;margin-bottom:8px">🧪</div>
+      <h3>促进无机盐吸收利用</h3>
+      <p style="font-size:13px;color:var(--muted)">蒸腾作用产生的拉力促使根吸水，水携带无机盐通过导管向上运输，供各器官利用。</p>
+    </div>
+  </div>
+
+  <div class="highlight" style="margin-top:20px">
+    <p>🔑 <strong>记忆要点：</strong>蒸腾作用 = 水分散失 + 降温 + 驱动水运输。植物每天有90%以上吸收的水分通过蒸腾散失，只有不到10%用于光合等生命活动。</p>
+  </div>
+</section>
+
+<section id="practice">
+  <div class="section-tag">巩固练习</div>
+  <h2>✏️ 综合练习</h2>
+
+  <div class="score-wrap" style="margin-bottom:20px">
+    <div class="score-circle" id="scoreCircle"><span class="score-num" id="scoreNum">0/3</span></div>
+    <div>
+      <div style="font-weight:600;font-size:16px">练习进度</div>
+      <div style="font-size:13px;color:var(--muted)">完成全部3道题目</div>
+    </div>
+  </div>
+
+  <div class="quiz-card" data-q="1">
+    <div class="quiz-q">Q1. 蒸腾作用是指植物体内的水分以______形式，通过______散失到大气中的过程。</div>
+    <div class="opts">
+      <button class="opt-btn" data-correct="false" onclick="selectOpt(this,1)">A. 液态水，根毛细胞</button>
+      <button class="opt-btn" data-correct="true" onclick="selectOpt(this,1)">B. 水蒸气，气孔（叶片）</button>
+      <button class="opt-btn" data-correct="false" onclick="selectOpt(this,1)">C. 水蒸气，叶脉导管</button>
+      <button class="opt-btn" data-correct="false" onclick="selectOpt(this,1)">D. 液态水，叶片表皮</button>
+    </div>
+    <div class="error-diagnosis" id="diag-1">
+      ❌ <strong>错因分析：</strong>蒸腾作用是水分从液态转变为水蒸气，通过叶片的气孔散失到大气中的过程。根毛是吸水的，导管是运水的，不是蒸腾作用发生的部位。
+    </div>
+  </div>
+
+  <div class="quiz-card" data-q="2">
+    <div class="quiz-q">Q2. 炎热夏天，在烈日下大树周围的温度比空旷地带低，主要原因是？</div>
+    <div class="opts">
+      <button class="opt-btn" data-correct="false" onclick="selectOpt(this,2)">A. 树木遮阴，阻挡了太阳辐射</button>
+      <button class="opt-btn" data-correct="true" onclick="selectOpt(this,2)">B. 蒸腾作用散失水分时吸收热量，降低气温</button>
+      <button class="opt-btn" data-correct="false" onclick="selectOpt(this,2)">C. 树木光合作用消耗了CO₂</button>
+      <button class="opt-btn" data-correct="false" onclick="selectOpt(this,2)">D. 树木呼吸作用产生水分，增加湿度</button>
+    </div>
+    <div class="error-diagnosis" id="diag-2">
+      ❌ <strong>错因分析：</strong>蒸腾作用中水分由液态变为气态，这个相变过程会吸收大量热量，从而使周围气温降低。这是蒸腾作用调节体温和小气候的重要功能。遮阴只是次要原因。
+    </div>
+  </div>
+
+  <div class="quiz-card" data-q="3">
+    <div class="quiz-q">Q3. 下列条件中，会使蒸腾速率明显减慢的是？</div>
+    <div class="opts">
+      <button class="opt-btn" data-correct="false" onclick="selectOpt(this,3)">A. 气温升高，光照增强</button>
+      <button class="opt-btn" data-correct="false" onclick="selectOpt(this,3)">B. 风速增大</button>
+      <button class="opt-btn" data-correct="true" onclick="selectOpt(this,3)">C. 空气湿度升高（下雨天）</button>
+      <button class="opt-btn" data-correct="false" onclick="selectOpt(this,3)">D. 白天晴天，叶片气孔大量开放</button>
+    </div>
+    <div class="error-diagnosis" id="diag-3">
+      ❌ <strong>错因分析：</strong>蒸腾速率取决于叶片与大气之间的水蒸气浓度差。当空气湿度升高（如雨天），大气中水蒸气浓度接近叶片气腔内的浓度，浓度差减小，蒸腾速率显著降低。高温、强光、大风都会加快蒸腾。
+    </div>
+  </div>
+</section>
+
+<section id="summary">
+  <div class="section-tag">知识总结</div>
+  <h2>🗺️ 知识图谱</h2>
+
+  <div class="kg-grid">
+    <div class="kg-node core">
+      <div class="kg-icon">💧</div>
+      <div class="kg-label">蒸腾作用</div>
+      <div class="kg-desc">水分以气态经气孔散失</div>
+    </div>
+    <div class="kg-node">
+      <div class="kg-icon">🌊</div>
+      <div class="kg-label">蒸腾拉力</div>
+      <div class="kg-desc">驱动水分从根向上运输</div>
+    </div>
+    <div class="kg-node">
+      <div class="kg-icon">💨</div>
+      <div class="kg-label">气孔</div>
+      <div class="kg-desc">蒸腾作用的主要通道</div>
+    </div>
+    <div class="kg-node">
+      <div class="kg-icon">🌡️</div>
+      <div class="kg-label">温度↑</div>
+      <div class="kg-desc">蒸腾速率增大</div>
+    </div>
+    <div class="kg-node">
+      <div class="kg-icon">☀️</div>
+      <div class="kg-label">光照↑</div>
+      <div class="kg-desc">气孔开放增大，蒸腾↑</div>
+    </div>
+    <div class="kg-node">
+      <div class="kg-icon">💨</div>
+      <div class="kg-label">风速↑</div>
+      <div class="kg-desc">带走水蒸气，蒸腾↑</div>
+    </div>
+    <div class="kg-node">
+      <div class="kg-icon">🌧️</div>
+      <div class="kg-label">湿度↑</div>
+      <div class="kg-desc">浓度差减小，蒸腾↓</div>
+    </div>
+    <div class="kg-node">
+      <div class="kg-icon">🌳</div>
+      <div class="kg-label">生态意义</div>
+      <div class="kg-desc">调节气候，促进水循环</div>
+    </div>
+    <div class="kg-node">
+      <div class="kg-icon">🌱</div>
+      <div class="kg-label">移植树木</div>
+      <div class="kg-desc">剪叶减少蒸腾促成活</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:24px">
+    <h3>本节重点回顾</h3>
+    <ul style="font-size:14px;line-height:2;padding-left:20px">
+      <li>蒸腾路径：<strong>土壤→根毛→皮层→导管→茎导管→叶导管→气腔→气孔→大气</strong></li>
+      <li>蒸腾拉力是<strong>水分向上运输</strong>的主要动力</li>
+      <li>温度高、光照强、风速大 → 蒸腾加快；湿度高 → 蒸腾减慢</li>
+      <li>蒸腾意义：驱动水分运输、调节体温、参与水循环调节小气候</li>
+      <li>移植树木剪叶：减少蒸腾→减少失水→提高成活率</li>
+    </ul>
+  </div>
+</section>
+
+<button class="audio-badge" id="audioBadge" onclick="toggleAudioPlayer()">🎧 听讲解</button>
+
+<div id="audioPlayer">
+  <div class="ap-top">
+    <div class="ap-title">🎧 <span id="apSegTitle">蒸腾作用</span></div>
+    <button class="ap-close" onclick="toggleAudioPlayer()">✕</button>
+  </div>
+  <div class="ap-subtitle" id="apSubtitle">点击下方片段开始播放</div>
+  <div class="ap-controls">
+    <button class="ap-ctrl-btn" onclick="prevSeg()">⏮</button>
+    <button class="ap-ctrl-btn" id="apPlayBtn" onclick="togglePlay()">▶</button>
+    <button class="ap-ctrl-btn" onclick="nextSeg()">⏭</button>
+    <div class="ap-progress" id="apProgress" onclick="seekAudio(event)">
+      <div class="ap-progress-fill" id="apProgressFill"></div>
+    </div>
+    <span id="apTime" style="font-size:12px;white-space:nowrap">0:00</span>
+  </div>
+  <div class="seg-btns" id="segBtns"></div>
+</div>
+
+<script>
+// NAV
+function goTo(id){const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));const btn=document.querySelector(`.nav-btn[data-target="${id}"]`);if(btn)btn.classList.add('active');}
+const observer=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){const id=e.target.id;document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));const btn=document.querySelector(`.nav-btn[data-target="${id}"]`);if(btn)btn.classList.add('active');}});},{threshold:0.3});
+document.querySelectorAll('section[id]').forEach(s=>observer.observe(s));
+
+// TRANSPIRATION CANVAS
+const tCanvas=document.getElementById('transCanvas');
+const tctx=tCanvas.getContext('2d');
+let transMode='path';
+let waterDrops=[];
+let tFrame=0;
+
+function initWaterDrops(){
+  waterDrops=[];
+  // Water moving up in stem (from root to leaf)
+  for(let i=0;i<15;i++){
+    waterDrops.push({
+      x:380,y:350-i*25,vy:-1.0,
+      alpha:0.7,r:3,phase:'stem'
+    });
+  }
+  // Vapor escaping from leaf
+  for(let i=0;i<10;i++){
+    waterDrops.push({
+      x:300+Math.random()*200,y:80,
+      vx:(Math.random()-0.5)*1.5,vy:-1.5-Math.random(),
+      alpha:0.5,r:2.5,phase:'vapor'
+    });
+  }
+}
+
+function drawTransPath(){
+  tctx.clearRect(0,0,760,400);
+  const bg=tctx.createLinearGradient(0,0,0,400);
+  bg.addColorStop(0,'#ecfeff');bg.addColorStop(1,'#f0fdf4');
+  tctx.fillStyle=bg;tctx.fillRect(0,0,760,400);
+
+  // Soil
+  tctx.fillStyle='rgba(180,140,100,0.15)';
+  tctx.fillRect(0,300,760,100);
+  tctx.strokeStyle='rgba(180,140,100,0.3)';tctx.setLineDash([8,5]);
+  tctx.beginPath();tctx.moveTo(0,300);tctx.lineTo(760,300);tctx.stroke();
+  tctx.setLineDash([]);
+
+  // Stem
+  tctx.fillStyle='rgba(101,163,13,0.3)';
+  tctx.beginPath();tctx.roundRect(365,80,30,240,4);tctx.fill();
+  tctx.strokeStyle='#65a30d';tctx.lineWidth=1.5;
+  tctx.beginPath();tctx.roundRect(365,80,30,240,4);tctx.stroke();
+
+  // Root
+  tctx.strokeStyle='#92400e';tctx.lineWidth=2;
+  const rootBranches=[[380,300],[360,330],[400,325],[345,355],[420,345],[330,375],[435,365]];
+  for(let i=1;i<rootBranches.length;i++){
+    tctx.beginPath();tctx.moveTo(rootBranches[0][0],rootBranches[0][1]);
+    tctx.quadraticCurveTo(rootBranches[i][0]+10*(i%2?1:-1),rootBranches[i][1]-15,rootBranches[i][0],rootBranches[i][1]);
+    tctx.stroke();
+  }
+
+  // Leaf shape
+  tctx.fillStyle='rgba(34,197,94,0.4)';
+  tctx.strokeStyle='#16a34a';tctx.lineWidth=2;
+  tctx.beginPath();
+  tctx.ellipse(280,80,90,40,Math.PI/6,0,Math.PI*2);
+  tctx.fill();tctx.stroke();
+  tctx.beginPath();
+  tctx.ellipse(490,80,90,40,-Math.PI/6,0,Math.PI*2);
+  tctx.fill();tctx.stroke();
+
+  // Leaf at top
+  tctx.fillStyle='rgba(34,197,94,0.5)';
+  tctx.beginPath();
+  tctx.ellipse(380,55,60,28,0,0,Math.PI*2);
+  tctx.fill();tctx.stroke();
+
+  // Labels
+  tctx.font='bold 13px PingFang SC,sans-serif';tctx.textAlign='center';
+  tctx.fillStyle='#1e293b';
+  tctx.fillText('叶片（气孔蒸腾）',380,22);
+  tctx.fillStyle='#065f46';tctx.fillText('茎（导管向上）',440,200);
+  tctx.fillStyle='#92400e';tctx.fillText('根（吸水）',580,335);
+
+  // Animate
+  tFrame++;
+  waterDrops.forEach(p=>{
+    if(p.phase==='stem'){
+      p.y+=p.vy;if(p.y<70)p.y=360;
+      tctx.beginPath();tctx.arc(p.x+(Math.random()-0.5)*20,p.y,p.r,0,Math.PI*2);
+      tctx.fillStyle=`rgba(59,130,246,${p.alpha})`;tctx.fill();
+    } else {
+      p.y+=p.vy;p.x+=p.vx;p.alpha-=0.01;
+      if(p.alpha<0){p.alpha=0.5;p.y=80;p.x=300+Math.random()*200;p.vy=-1.5-Math.random();}
+      tctx.beginPath();tctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      tctx.fillStyle=`rgba(186,230,253,${p.alpha})`;tctx.fill();
+    }
+  });
+
+  // Arrow labels
+  tctx.fillStyle='#3b82f6';tctx.font='12px PingFang SC,sans-serif';tctx.textAlign='left';
+  tctx.fillText('↑ 水分（导管）',520,160);
+  tctx.fillStyle='#0ea5e9';tctx.fillText('～ 水蒸气（气孔）',180,40);
+}
+
+function drawStomataDetail(){
+  tctx.clearRect(0,0,760,400);
+  const bg=tctx.createLinearGradient(0,0,0,400);
+  bg.addColorStop(0,'#ecfeff');bg.addColorStop(1,'#f0fdf4');
+  tctx.fillStyle=bg;tctx.fillRect(0,0,760,400);
+
+  // Draw leaf cross-section (simplified)
+  tctx.fillStyle='rgba(34,197,94,0.15)';
+  tctx.beginPath();tctx.roundRect(100,100,560,200,12);tctx.fill();
+  tctx.strokeStyle='#16a34a';tctx.lineWidth=2;
+  tctx.beginPath();tctx.roundRect(100,100,560,200,12);tctx.stroke();
+
+  // Upper epidermis
+  tctx.fillStyle='rgba(209,250,229,0.9)';
+  tctx.beginPath();tctx.roundRect(100,100,560,22,4);tctx.fill();
+  // Lower epidermis
+  tctx.fillStyle='rgba(209,250,229,0.9)';
+  tctx.beginPath();tctx.roundRect(100,278,560,22,4);tctx.fill();
+
+  // Stomata on lower epidermis
+  tFrame++;
+  for(let i=0;i<4;i++){
+    const sx=160+i*120;
+    // Guard cells
+    tctx.fillStyle='rgba(34,197,94,0.7)';
+    tctx.beginPath();tctx.ellipse(sx,289,7,12,0,0,Math.PI*2);tctx.fill();
+    tctx.beginPath();tctx.ellipse(sx+16,289,7,12,0,0,Math.PI*2);tctx.fill();
+    tctx.strokeStyle='#059669';tctx.lineWidth=1;
+    tctx.beginPath();tctx.ellipse(sx,289,7,12,0,0,Math.PI*2);tctx.stroke();
+    tctx.beginPath();tctx.ellipse(sx+16,289,7,12,0,0,Math.PI*2);tctx.stroke();
+    // Pore
+    tctx.fillStyle='rgba(255,255,255,0.95)';
+    tctx.beginPath();tctx.ellipse(sx+8,289,4,9,0,0,Math.PI*2);tctx.fill();
+
+    // Vapor particles escaping
+    for(let v=0;v<3;v++){
+      const vy_offset=((tFrame+i*30+v*20)%60)/60;
+      const py=310+vy_offset*50;
+      const alpha=1-vy_offset;
+      tctx.beginPath();tctx.arc(sx+8+(Math.random()-0.5)*8,py,2,0,Math.PI*2);
+      tctx.fillStyle=`rgba(186,230,253,${alpha})`;tctx.fill();
+    }
+  }
+
+  // Labels
+  tctx.fillStyle='#1e293b';tctx.font='13px PingFang SC,sans-serif';tctx.textAlign='center';
+  tctx.fillText('叶片横切面',380,92);
+  tctx.fillText('↓ 水蒸气从气孔散失',380,380);
+  tctx.fillStyle='#059669';tctx.textAlign='left';
+  tctx.fillText('保卫细胞',660,280);
+  tctx.fillText('气孔',660,300);
+}
+
+function setTransMode(mode){
+  transMode=mode;
+  document.querySelectorAll('.canvas-controls .ctrl-btn').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+function transAnimLoop(){
+  if(transMode==='path')drawTransPath();
+  else drawStomataDetail();
+  requestAnimationFrame(transAnimLoop);
+}
+initWaterDrops();
+transAnimLoop();
+
+// FACTOR SLIDERS
+function updateFactors(){
+  const temp=parseInt(document.getElementById('tempSlider').value);
+  const light=parseInt(document.getElementById('lightSlider').value);
+  const wind=parseInt(document.getElementById('windSlider').value);
+  const humid=parseInt(document.getElementById('humidSlider').value);
+  document.getElementById('tempVal').textContent=temp+'%';
+  document.getElementById('lightVal').textContent=light+'%';
+  document.getElementById('windVal').textContent=wind+'%';
+  document.getElementById('humidVal').textContent=humid+'%';
+  // Calculate rate: temp, light, wind increase; humid decreases
+  const rate=Math.min(100,Math.max(5,(temp+light+wind+(100-humid))/3.5));
+  const bar=document.getElementById('transBar');
+  bar.style.width=rate+'%';
+  const rateEl=document.getElementById('transRate');
+  if(rate>75){rateEl.textContent='很快 🔥';rateEl.style.color='#dc2626';}
+  else if(rate>50){rateEl.textContent='较快 📈';rateEl.style.color='#f97316';}
+  else if(rate>25){rateEl.textContent='中等 ➡️';rateEl.style.color=getComputedStyle(document.documentElement).getPropertyValue('--primary');}
+  else{rateEl.textContent='缓慢 🌧️';rateEl.style.color='#3b82f6';}
+}
+
+// DRAG DROP
+let dragSrc=null;
+function onDragStart(e){dragSrc=e.currentTarget;e.currentTarget.classList.add('dragging');}
+function onDragOver(e){e.preventDefault();e.currentTarget.classList.add('drag-over');}
+function onDrop(e){
+  e.preventDefault();const target=e.currentTarget;target.classList.remove('drag-over');
+  if(dragSrc&&dragSrc!==target){const list=target.parentNode;const items=[...list.querySelectorAll('.drag-item')];const si=items.indexOf(dragSrc),ti=items.indexOf(target);if(si<ti)list.insertBefore(dragSrc,target.nextSibling);else list.insertBefore(dragSrc,target);}
+}
+function onDragEnd(e){e.currentTarget.classList.remove('dragging');document.querySelectorAll('.drag-item').forEach(i=>i.classList.remove('drag-over'));}
+
+function checkTransOrder(){
+  const list=document.getElementById('transList');
+  const items=[...list.querySelectorAll('.drag-item')];
+  const order=items.map(i=>i.dataset.id);
+  const correct=['soil','root','stem','leaf','air'];
+  const result=document.getElementById('transOrderResult');
+  result.style.display='block';
+  if(JSON.stringify(order)===JSON.stringify(correct)){
+    result.className='drag-result ok';
+    result.textContent='✅ 正确！土壤水→根毛吸收→茎导管向上→叶片细胞间→气孔→大气';
+  } else {
+    result.className='drag-result err';
+    result.textContent='❌ 顺序有误。正确：土壤水分 → 根毛渗透吸水 → 茎导管向上 → 叶片细胞间隙→气孔下腔 → 水蒸气散失大气';
+  }
+}
+
+// QUIZ
+let quizScore=0;const answered=new Set();
+function selectOpt(btn,qNum){
+  if(answered.has(qNum))return;answered.add(qNum);
+  const isCorrect=btn.dataset.correct==='true';
+  btn.classList.add(isCorrect?'correct':'wrong');
+  btn.closest('.quiz-card').querySelectorAll('.opt-btn').forEach(b=>{b.disabled=true;if(b.dataset.correct==='true')b.classList.add('correct');});
+  if(!isCorrect){document.getElementById('diag-'+qNum).classList.add('show');}else{quizScore++;}
+  updateScore();
+}
+function updateScore(){
+  document.getElementById('scoreNum').textContent=quizScore+'/3';
+  const pct=quizScore/3*100;
+  document.getElementById('scoreCircle').style.background=`conic-gradient(var(--primary) ${pct}%,#e2e8f0 ${pct}%)`;
+}
+
+// AUDIO
+const SEGMENTS=[
+  {id:'s01',title:'课程导入',section:'target'},
+  {id:'s02',title:'预备知识',section:'pretest'},
+  {id:'s03',title:'蒸腾的全程路径',section:'module1'},
+  {id:'s04',title:'蒸腾的三大功能',section:'module1'},
+  {id:'s05',title:'影响蒸腾的因素',section:'module2'},
+  {id:'s06',title:'移植树木剪叶原理',section:'module2'},
+  {id:'s07',title:'蒸腾的生态意义',section:'module3'},
+  {id:'s08',title:'总结复习',section:'summary'},
+];
+const SEGMENT_TEXTS={
+  s01:'蒸腾作用是植物将体内水分以水蒸气形式通过气孔散失到大气中的过程。一棵大树每天能蒸腾数百升水，这不是浪费，而是生命运转的必要代价。',
+  s02:'我们已经学过气孔的结构，知道根从土壤吸水，导管向上运输。今天我们把这些知识串联起来，理解水分从土壤到大气的完整旅程。',
+  s03:'水分路径：土壤→根毛细胞（渗透吸水）→皮层细胞→木质部导管→茎导管→叶片导管→叶肉细胞间隙→气孔下腔→气孔→大气。气孔是蒸腾作用的主要通道。',
+  s04:'蒸腾作用有三大功能：一、产生蒸腾拉力，驱动水分从根向上运输到高处；二、水分蒸发吸热，为叶片降温；三、促进根对无机盐的吸收和运输。',
+  s05:'影响蒸腾速率的因素：温度升高、光照增强（气孔开放）、风速增大（带走水蒸气）都会加快蒸腾；空气湿度升高会减慢蒸腾，因为叶片与大气间的水蒸气浓度差减小了。',
+  s06:'移植树木时，根系受损，吸水能力大降。如果不剪去大量叶片，叶片继续大量蒸腾失水，植株会因水分亏缺而死亡。剪去枝叶减少蒸腾面积，有助于树木成活。',
+  s07:'蒸腾作用的生态意义：大片森林的蒸腾能影响局部气候，增加降水；城市绿化树木通过蒸腾降低城市热岛效应；水分的蒸腾也是自然界水循环的重要组成部分。',
+  s08:'本节重点：蒸腾路径土壤→气孔→大气；蒸腾拉力驱动水分向上运输；温度光照风速大则蒸腾快，湿度大则蒸腾慢；移植剪叶减少蒸腾提高成活率。学完了！',
+};
+let curSeg=0;let audioEl=null;let isPlaying=false;
+function buildAudioUI(){const container=document.getElementById('segBtns');SEGMENTS.forEach((seg,i)=>{const btn=document.createElement('button');btn.className='seg-btn';btn.id='segBtn-'+i;btn.textContent=(i+1)+'. '+seg.title;btn.onclick=()=>loadSegment(i);container.appendChild(btn);});}
+function loadSegment(i){curSeg=i;document.querySelectorAll('.seg-btn').forEach((b,j)=>b.classList.toggle('playing',j===i));const seg=SEGMENTS[i];document.getElementById('apSegTitle').textContent=seg.title;document.getElementById('apSubtitle').textContent=SEGMENT_TEXTS[seg.id]||'';if(audioEl){audioEl.pause();}audioEl=document.getElementById('ta-audio-'+seg.id);if(audioEl){audioEl.onended=()=>{isPlaying=false;document.getElementById('apPlayBtn').textContent='▶';if(curSeg<SEGMENTS.length-1)loadSegment(curSeg+1);};audioEl.ontimeupdate=updateProgress;playSegment();}goTo(seg.section);}
+function playSegment(){if(!audioEl)return;audioEl.play().then(()=>{isPlaying=true;document.getElementById('apPlayBtn').textContent='⏸';}).catch(()=>{isPlaying=false;});}
+function togglePlay(){if(!audioEl){loadSegment(0);return;}if(isPlaying){audioEl.pause();isPlaying=false;document.getElementById('apPlayBtn').textContent='▶';}else{audioEl.play();isPlaying=true;document.getElementById('apPlayBtn').textContent='⏸';}}
+function prevSeg(){if(curSeg>0)loadSegment(curSeg-1);}
+function nextSeg(){if(curSeg<SEGMENTS.length-1)loadSegment(curSeg+1);}
+function updateProgress(){if(!audioEl||!audioEl.duration)return;const pct=audioEl.currentTime/audioEl.duration*100;document.getElementById('apProgressFill').style.width=pct+'%';const m=Math.floor(audioEl.currentTime/60),s=Math.floor(audioEl.currentTime%60);document.getElementById('apTime').textContent=m+':'+(s<10?'0':'')+s;}
+function seekAudio(e){if(!audioEl||!audioEl.duration)return;const rect=document.getElementById('apProgress').getBoundingClientRect();audioEl.currentTime=(e.clientX-rect.left)/rect.width*audioEl.duration;}
+function toggleAudioPlayer(){document.getElementById('audioPlayer').classList.toggle('open');}
+window.addEventListener('DOMContentLoaded',buildAudioUI);
+</script>
+</body>
+</html>
