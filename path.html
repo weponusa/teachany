@@ -432,13 +432,14 @@ body {
         <select id="subjectFilter" class="subject-select" onchange="filterNodesBySubject()">
           <option value="all">全部学科</option>
           <option value="math">📐 数学 Math</option>
-          <option value="biology">🧬 生物 Biology</option>
-          <option value="physics">⚡ 物理 Physics</option>
-          <option value="chemistry">🧪 化学 Chemistry</option>
-          <option value="geography">🌍 地理 Geography</option>
-          <option value="history">🏛️ 历史 History</option>
           <option value="chinese">📖 语文 Chinese</option>
           <option value="english">🔤 英语 English</option>
+          <option value="physics">⚡ 物理 Physics</option>
+          <option value="chemistry">🧪 化学 Chemistry</option>
+          <option value="biology">🧬 生物 Biology</option>
+          <option value="geography">🌍 地理 Geography</option>
+          <option value="history">🏛️ 历史 History</option>
+          <option value="info-tech">💻 信息技术 Info Tech</option>
         </select>
       </div>
       
@@ -498,89 +499,67 @@ body {
 
 <script src="./scripts/learning-path.js"></script>
 <script>
-// 知识点数据库（从现有课件中提取的实际数据）
-const KNOWLEDGE_NODES = [
-  // 小学数学
-  { id: 'counting-1-10', name: '10以内数的认识', subject: 'math', grade: 1 },
-  { id: 'addition-subtraction-within-10', name: '10以内加减法', subject: 'math', grade: 1 },
-  { id: 'addition-subtraction-within-20', name: '20以内加减法', subject: 'math', grade: 1 },
-  { id: 'counting-20', name: '20以内数的认识', subject: 'math', grade: 1 },
-  { id: 'addition-subtraction-within-100', name: '100以内加减法', subject: 'math', grade: 2 },
-  { id: 'multiplication-division-concept', name: '乘除法概念', subject: 'math', grade: 2 },
-  { id: 'fraction-concept', name: '分数概念', subject: 'math', grade: 3 },
-  { id: 'decimal-concept', name: '小数概念', subject: 'math', grade: 4 },
-  { id: 'area-volume', name: '面积与体积', subject: 'math', grade: 5 },
-  { id: 'percentage', name: '百分数', subject: 'math', grade: 6 },
-  
-  // 初中数学
-  { id: 'rational-numbers', name: '有理数', subject: 'math', grade: 7 },
-  { id: 'algebraic-expressions', name: '代数式', subject: 'math', grade: 7 },
-  { id: 'linear-equations', name: '一元一次方程', subject: 'math', grade: 7 },
-  { id: 'linear-functions', name: '一次函数', subject: 'math', grade: 8 },
-  { id: 'quadratic-functions', name: '二次函数', subject: 'math', grade: 9 },
-  { id: 'geometric-proof', name: '几何证明', subject: 'math', grade: 9 },
-  { id: 'congruent-triangles', name: '全等三角形', subject: 'math', grade: 8 },
-  
-  // 高中数学
-  { id: 'sets-logic', name: '集合与逻辑', subject: 'math', grade: 10 },
-  { id: 'functions-advanced', name: '函数与性质', subject: 'math', grade: 10 },
-  { id: 'trigonometry', name: '三角函数', subject: 'math', grade: 10 },
-  { id: 'derivatives', name: '导数', subject: 'math', grade: 11 },
-  { id: 'integrals', name: '积分', subject: 'math', grade: 12 },
-  { id: 'space-geometry', name: '立体几何', subject: 'math', grade: 11 },
-  
-  // 生物
-  { id: 'cell-structure', name: '细胞结构', subject: 'biology', grade: 7 },
-  { id: 'plant-structure', name: '植物结构', subject: 'biology', grade: 7 },
-  { id: 'plant-reproduction', name: '植物生殖', subject: 'biology', grade: 7 },
-  { id: 'human-body-overview', name: '人体系统', subject: 'biology', grade: 8 },
-  { id: 'genetics-basics', name: '遗传基础', subject: 'biology', grade: 8 },
-  { id: 'evolution-theory', name: '进化论', subject: 'biology', grade: 9 },
-  { id: 'photosynthesis', name: '光合作用', subject: 'biology', grade: 7 },
-  { id: 'cell-division', name: '细胞分裂', subject: 'biology', grade: 8 },
-  
-  // 物理
-  { id: 'mechanics-basic', name: '力学基础', subject: 'physics', grade: 8 },
-  { id: 'pressure-buoyancy', name: '压强与浮力', subject: 'physics', grade: 8 },
-  { id: 'light-optics', name: '光学', subject: 'physics', grade: 8 },
-  { id: 'electricity-magnetism', name: '电磁学', subject: 'physics', grade: 9 },
-  { id: 'energy-motion', name: '能量与运动', subject: 'physics', grade: 10 },
-  
-  // 化学
-  { id: 'matter-classification', name: '物质分类', subject: 'chemistry', grade: 9 },
-  { id: 'chemical-reactions', name: '化学反应', subject: 'chemistry', grade: 9 },
-  { id: 'oxidation-reduction', name: '氧化还原反应', subject: 'chemistry', grade: 9 },
-  { id: 'acid-base-salt', name: '酸碱盐', subject: 'chemistry', grade: 9 },
-  { id: 'periodic-table', name: '元素周期表', subject: 'chemistry', grade: 10 },
-  { id: 'organic-chemistry-intro', name: '有机化学入门', subject: 'chemistry', grade: 11 },
-  
-  // 地理
-  { id: 'earth-overview', name: '地球概况', subject: 'geography', grade: 7 },
-  { id: 'climate-systems', name: '气候系统', subject: 'geography', grade: 7 },
-  { id: 'monsoon-systems', name: '季风系统', subject: 'geography', grade: 8 },
-  { id: 'china-geography', name: '中国地理', subject: 'geography', grade: 8 },
-  
-  // 历史
-  { id: 'ancient-civilization', name: '古代文明', subject: 'history', grade: 7 },
-  { id: 'imperial-unification', name: '秦汉统一', subject: 'history', grade: 7 },
-  { id: 'modern-history', name: '近代史', subject: 'history', grade: 8 },
-  
-  // 语文
-  { id: 'compound-vowel', name: '复韵母', subject: 'chinese', grade: 1 },
-  { id: 'reading-comprehension', name: '阅读理解', subject: 'chinese', grade: 7 },
-  
-  // 英语
-  { id: 'basic-grammar', name: '基础语法', subject: 'english', grade: 7 },
-  { id: 'vocabulary-building', name: '词汇构建', subject: 'english', grade: 8 }
-];
-
 // 全局状态
 let currentSubject = 'all';
 let currentGrade = 'all';
-let allNodes = [...KNOWLEDGE_NODES];
+let allNodes = [];
+let nodesLoaded = false;
+
+// 从服务器加载完整节点数据
+async function loadAllNodes() {
+  if (nodesLoaded) return allNodes;
+  
+  try {
+    console.log('[Path] 加载完整节点数据...');
+    const response = await fetch('./data/nodes-selector.json?t=' + Date.now());
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    
+    const data = await response.json();
+    allNodes = data;
+    nodesLoaded = true;
+    
+    console.log(`[Path] ✅ 加载成功: ${allNodes.length} 个节点`);
+    
+    // 统计
+    const stats = {
+      total: allNodes.length,
+      bySubject: {},
+      byGrade: {}
+    };
+    
+    allNodes.forEach(node => {
+      stats.bySubject[node.subject] = (stats.bySubject[node.subject] || 0) + 1;
+      stats.byGrade[node.grade] = (stats.byGrade[node.grade] || 0) + 1;
+    });
+    
+    console.log('[Path] 学科分布:', stats.bySubject);
+    console.log('[Path] 年级分布:', stats.byGrade);
+    
+    return allNodes;
+  } catch (error) {
+    console.error('[Path] ❌ 加载节点数据失败:', error);
+    alert('加载知识点数据失败，请刷新页面重试');
+    return [];
+  }
+}
 
 // 初始化：加载所有知识点
-function initializeNodeSelector() {
+async function initializeNodeSelector() {
+  // 显示加载提示
+  const nodeSelect = document.getElementById('nodeSelect');
+  nodeSelect.innerHTML = '<option value="">⏳ 正在加载知识点...</option>';
+  
+  // 加载节点数据
+  await loadAllNodes();
+  
+  if (allNodes.length === 0) {
+    nodeSelect.innerHTML = '<option value="">❌ 加载失败，请刷新页面</option>';
+    return;
+  }
+  
+  // 加载成功，更新列表
   updateNodeList();
 }
 
@@ -703,8 +682,8 @@ const urlParams = new URLSearchParams(window.location.search);
 const nodeIdFromURL = urlParams.get('node');
 
 // 页面加载时初始化
-window.addEventListener('DOMContentLoaded', () => {
-  initializeNodeSelector();
+window.addEventListener('DOMContentLoaded', async () => {
+  await initializeNodeSelector();
   
   // 如果URL有node参数，自动选中并显示
   if (nodeIdFromURL) {
@@ -714,13 +693,13 @@ window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('subjectFilter').value = node.subject;
       currentSubject = node.subject;
       
-      if (node.grade <= 6) {
+      if (node.grade >= 1 && node.grade <= 6) {
         document.getElementById('gradeFilter').value = 'elementary';
         currentGrade = 'elementary';
-      } else if (node.grade <= 9) {
+      } else if (node.grade >= 7 && node.grade <= 9) {
         document.getElementById('gradeFilter').value = 'middle';
         currentGrade = 'middle';
-      } else {
+      } else if (node.grade >= 10) {
         document.getElementById('gradeFilter').value = 'high';
         currentGrade = 'high';
       }
