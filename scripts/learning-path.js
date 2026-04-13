@@ -1,564 +1,691 @@
 /**
- * TeachAny 学习路径系统
- * 打通各学段知识点，构建完整知识图谱网络
+ * TeachAny 学习路径系统 v2.0
+ * 加载全部275个知识节点，预计算完整图谱网络
+ * 选择知识点后可即时显示学习路径
  */
 
 class LearningPathSystem {
   constructor() {
-    this.graphs = new Map(); // 存储所有知识图谱
-    this.nodeIndex = new Map(); // node_id -> 完整节点信息的索引
-    this.courseIndex = new Map(); // node_id -> 课件列表的索引
-    this.pathCache = new Map(); // 路径缓存
+    this.nodeIndex = new Map();       // node_id -> 完整节点信息
+    this.courseIndex = new Map();      // node_id -> 课件列表
+    this.reverseIndex = new Map();    // node_id -> 哪些节点以它为前置
+    this.pathCache = new Map();       // 路径缓存（nodeId -> 完整路径数据）
+    this.subjectMap = new Map();      // subject -> [nodeIds]
+    this.gradeMap = new Map();        // grade -> [nodeIds]
+    this.domainMap = new Map();       // domain -> [nodeIds]
     this.initialized = false;
+    this.initializing = false;
+    this._initPromise = null;
+    this.stats = null;
   }
 
   /**
-   * 初始化系统：加载所有图谱和课件
+   * 初始化系统：加载全部数据并预计算
    */
   async initialize() {
     if (this.initialized) return;
+    if (this.initializing) return this._initPromise;
 
-    console.log('[LearningPath] 开始初始化学习路径系统...');
-    
+    this.initializing = true;
+    this._initPromise = this._doInitialize();
+    return this._initPromise;
+  }
+
+  async _doInitialize() {
+    const t0 = performance.now();
+    console.log('[LearningPath] 开始初始化...');
+
     try {
-      // 1. 加载课件注册表
-      await this.loadCourseRegistry();
-      
-      // 2. 加载知识图谱元数据
-      await this.loadGraphMetadata();
-      
-      // 3. 构建索引
-      this.buildIndices();
-      
+      // 1. 并行加载节点元数据和课件注册表
+      const [nodesData, registryData] = await Promise.all([
+        this._fetchJSON('./data/nodes-metadata.json'),
+        this._fetchJSON('./registry.json')
+      ]);
+
+      // 2. 构建节点索引
+      this._buildNodeIndex(nodesData);
+      this.stats = nodesData.stats;
+
+      // 3. 构建课件索引
+      this._buildCourseIndex(registryData);
+
+      // 4. 构建反向索引（后继 → 前置）
+      this._buildReverseIndex();
+
+      // 5. 构建分类索引
+      this._buildCategoryIndices();
+
+      // 6. 预计算所有路径
+      this._precomputeAllPaths();
+
       this.initialized = true;
-      console.log('[LearningPath] 初始化完成');
-      console.log(`  - 知识节点: ${this.nodeIndex.size} 个`);
-      console.log(`  - 覆盖课件: ${this.courseIndex.size} 个知识点`);
+      this.initializing = false;
+
+      const elapsed = (performance.now() - t0).toFixed(0);
+      console.log(`[LearningPath] ✅ 初始化完成 (${elapsed}ms)`);
+      console.log(`  节点: ${this.nodeIndex.size}`);
+      console.log(`  课件覆盖: ${this.courseIndex.size} 个节点`);
+      console.log(`  路径缓存: ${this.pathCache.size} 条`);
     } catch (error) {
-      console.error('[LearningPath] 初始化失败:', error);
+      this.initializing = false;
+      console.error('[LearningPath] ❌ 初始化失败:', error);
+      throw error;
     }
   }
 
-  /**
-   * 加载课件注册表
-   */
-  async loadCourseRegistry() {
-    const response = await fetch('./registry.json?t=' + Date.now());
-    const registry = await response.json();
-    
-    // 按 node_id 分组课件
-    registry.courses.forEach(course => {
-      if (course.node_id) {
-        if (!this.courseIndex.has(course.node_id)) {
-          this.courseIndex.set(course.node_id, []);
+  // ─── 数据加载 ─────────────────────────────────
+
+  async _fetchJSON(url) {
+    const response = await fetch(url + '?t=' + Date.now());
+    if (!response.ok) throw new Error(`Fetch ${url}: HTTP ${response.status}`);
+    return response.json();
+  }
+
+  _buildNodeIndex(nodesData) {
+    const nodes = nodesData.nodes || [];
+    nodes.forEach(node => {
+      // 统一字段名
+      const normalized = {
+        id: node.id,
+        name: node.name,
+        subject: node.subject,
+        domain: node.domain,
+        grade: parseInt(node.grade) || 0,
+        graph_path: node.graph_path || '',
+        definition: node.definition || '',
+        key_concepts: node.key_concepts || [],
+        difficulty: node.difficulty || 0,
+        // 关系字段
+        prerequisites: node.prerequisites || [],
+        nextSteps: node.next_steps || [],
+        relatedNodes: node.related_nodes || []
+      };
+      this.nodeIndex.set(node.id, normalized);
+    });
+    console.log(`[LearningPath] 加载 ${this.nodeIndex.size} 个节点`);
+  }
+
+  _buildCourseIndex(registryData) {
+    const courses = registryData.courses || [];
+    courses.forEach(course => {
+      const nodeId = course.node_id;
+      if (nodeId) {
+        if (!this.courseIndex.has(nodeId)) {
+          this.courseIndex.set(nodeId, []);
         }
-        this.courseIndex.get(course.node_id).push(course);
+        this.courseIndex.get(nodeId).push(course);
       }
     });
+    console.log(`[LearningPath] 课件覆盖 ${this.courseIndex.size} 个节点`);
   }
 
-  /**
-   * 加载知识图谱元数据（硬编码版本，实际可从API获取）
-   */
-  async loadGraphMetadata() {
-    // 这里使用硬编码的图谱结构
-    // 实际部署时应从后端API或构建时生成的metadata.json加载
-    
-    // 示例：数学-数与运算图谱的部分节点
-    const sampleNodes = {
-      // 小学数学
-      'counting-1-10': {
-        id: 'counting-1-10',
-        name: '10以内数的认识',
-        subject: 'math',
-        grade: 1,
-        prerequisites: [],
-        nextSteps: ['counting-20', 'addition-subtraction-within-10'],
-        domain: 'numbers-operations',
-        graph: 'math/numbers-operations/_graph.json'
-      },
-      'addition-subtraction-within-10': {
-        id: 'addition-subtraction-within-10',
-        name: '10以内加减法',
-        subject: 'math',
-        grade: 1,
-        prerequisites: ['counting-1-10'],
-        nextSteps: ['counting-20', 'addition-subtraction-within-20'],
-        domain: 'numbers-operations',
-        graph: 'math/numbers-operations/_graph.json'
-      },
-      'addition-subtraction-within-20': {
-        id: 'addition-subtraction-within-20',
-        name: '20以内加减法',
-        subject: 'math',
-        grade: 1,
-        prerequisites: ['addition-subtraction-within-10', 'counting-20'],
-        nextSteps: ['multiplication-division-concept', 'addition-subtraction-within-100'],
-        domain: 'numbers-operations',
-        graph: 'math/numbers-operations/_graph.json'
-      },
-      
-      // 初中数学
-      'rational-numbers': {
-        id: 'rational-numbers',
-        name: '有理数',
-        subject: 'math',
-        grade: 7,
-        prerequisites: ['fractions-operations', 'integers'],
-        nextSteps: ['real-numbers', 'algebraic-expressions'],
-        domain: 'algebra',
-        graph: 'math/algebra/_graph.json'
-      },
-      
-      // 高中数学
-      'sets-logic': {
-        id: 'sets-logic',
-        name: '集合与逻辑',
-        subject: 'math',
-        grade: 10,
-        prerequisites: ['rational-numbers', 'real-numbers'],
-        nextSteps: ['functions-advanced', 'inequalities'],
-        domain: 'high-school',
-        graph: 'math/high-school/_graph.json'
-      },
-      'functions-advanced': {
-        id: 'functions-advanced',
-        name: '函数与性质',
-        subject: 'math',
-        grade: 10,
-        prerequisites: ['sets-logic', 'linear-functions', 'quadratic-functions'],
-        nextSteps: ['derivatives', 'exponential-logarithm'],
-        domain: 'high-school',
-        graph: 'math/high-school/_graph.json'
-      }
-    };
+  // ─── 索引构建 ─────────────────────────────────
 
-    // 将样本节点加入索引
-    Object.values(sampleNodes).forEach(node => {
-      this.nodeIndex.set(node.id, node);
-    });
-
-    console.log('[LearningPath] 加载了', Object.keys(sampleNodes).length, '个样本节点');
-  }
-
-  /**
-   * 构建索引
-   */
-  buildIndices() {
-    // 反向索引：从后继节点找到所有前置节点
+  _buildReverseIndex() {
+    // 反向索引：nextSteps[child] → parent
     this.nodeIndex.forEach((node, nodeId) => {
-      node.nextSteps?.forEach(nextId => {
-        const nextNode = this.nodeIndex.get(nextId);
-        if (nextNode) {
-          if (!nextNode.prerequisites) nextNode.prerequisites = [];
-          if (!nextNode.prerequisites.includes(nodeId)) {
-            nextNode.prerequisites.push(nodeId);
+      // 从 nextSteps 建立反向（谁的后续是我 → 它是我的前置）
+      if (node.nextSteps) {
+        node.nextSteps.forEach(nextId => {
+          if (!this.reverseIndex.has(nextId)) {
+            this.reverseIndex.set(nextId, new Set());
           }
-        }
-      });
+          this.reverseIndex.get(nextId).add(nodeId);
+        });
+      }
+
+      // 从 prerequisites 建立正向补充（如果图谱中明确声明了前置）
+      if (node.prerequisites) {
+        node.prerequisites.forEach(preId => {
+          if (!this.reverseIndex.has(nodeId)) {
+            this.reverseIndex.set(nodeId, new Set());
+          }
+          this.reverseIndex.get(nodeId).add(preId);
+
+          // 同时补充前置节点的 nextSteps
+          const preNode = this.nodeIndex.get(preId);
+          if (preNode && !preNode.nextSteps.includes(nodeId)) {
+            preNode.nextSteps.push(nodeId);
+          }
+        });
+      }
+    });
+
+    // 合并反向索引到节点的 prerequisites
+    this.reverseIndex.forEach((parentIds, nodeId) => {
+      const node = this.nodeIndex.get(nodeId);
+      if (node) {
+        parentIds.forEach(pid => {
+          if (!node.prerequisites.includes(pid)) {
+            node.prerequisites.push(pid);
+          }
+        });
+      }
+    });
+
+    console.log(`[LearningPath] 反向索引: ${this.reverseIndex.size} 个节点有前置`);
+  }
+
+  _buildCategoryIndices() {
+    this.nodeIndex.forEach((node, nodeId) => {
+      // 按学科
+      if (!this.subjectMap.has(node.subject)) {
+        this.subjectMap.set(node.subject, []);
+      }
+      this.subjectMap.get(node.subject).push(nodeId);
+
+      // 按年级
+      const grade = node.grade;
+      if (!this.gradeMap.has(grade)) {
+        this.gradeMap.set(grade, []);
+      }
+      this.gradeMap.get(grade).push(nodeId);
+
+      // 按领域
+      if (!this.domainMap.has(node.domain)) {
+        this.domainMap.set(node.domain, []);
+      }
+      this.domainMap.get(node.domain).push(nodeId);
     });
   }
 
-  /**
-   * 获取知识点的完整学习路径
-   */
-  getLearningPath(nodeId) {
-    const node = this.nodeIndex.get(nodeId);
-    if (!node) {
-      console.warn(`[LearningPath] 未找到节点: ${nodeId}`);
-      return null;
-    }
+  // ─── 预计算路径 ─────────────────────────────────
 
-    // 1. 获取前置路径（从最基础到当前节点）
-    const prerequisites = this.getPrerequisitePath(nodeId);
+  _precomputeAllPaths() {
+    const t0 = performance.now();
     
-    // 2. 获取后续路径（当前节点之后的学习方向）
-    const nextSteps = this.getNextStepsPath(nodeId);
-    
-    // 3. 获取平行知识点（同年级同学科）
-    const parallel = this.getParallelNodes(nodeId);
-    
-    // 4. 获取关联课件
+    this.nodeIndex.forEach((node, nodeId) => {
+      const path = this._computePath(nodeId);
+      this.pathCache.set(nodeId, path);
+    });
+
+    const elapsed = (performance.now() - t0).toFixed(0);
+    console.log(`[LearningPath] 预计算 ${this.pathCache.size} 条路径 (${elapsed}ms)`);
+  }
+
+  _computePath(nodeId) {
+    const node = this.nodeIndex.get(nodeId);
+    if (!node) return null;
+
+    // 1. 前置知识路径（递归向上，带去重）
+    const prerequisites = this._getPrerequisites(nodeId, new Set());
+
+    // 2. 后续学习方向（递归向下，深度3层）
+    const nextSteps = this._getNextSteps(nodeId, 3, new Set());
+
+    // 3. 平行知识点（同领域同年级）
+    const parallel = this._getParallelNodes(nodeId);
+
+    // 4. 跨学段链（跨越小学→初中→高中的知识链）
+    const crossGrade = this._getCrossGradeInfo(prerequisites, node, nextSteps);
+
+    // 5. 可用课件
     const coursewares = this.courseIndex.get(nodeId) || [];
 
     return {
-      current: node,
-      prerequisites: prerequisites,
-      nextSteps: nextSteps,
-      parallel: parallel,
-      coursewares: coursewares,
-      pathSummary: {
-        depth: prerequisites.length,
-        breadth: nextSteps.length,
-        alternatives: parallel.length,
-        resources: coursewares.length
+      current: {
+        ...node,
+        coursewares
+      },
+      prerequisites,
+      nextSteps,
+      parallel,
+      crossGrade,
+      summary: {
+        prerequisiteCount: prerequisites.length,
+        nextStepCount: this._countNextSteps(nextSteps),
+        parallelCount: parallel.length,
+        coursewareCount: coursewares.length,
+        hasPrerequisites: prerequisites.length > 0,
+        hasNextSteps: nextSteps.length > 0
       }
     };
   }
 
-  /**
-   * 递归获取所有前置节点（深度优先）
-   */
-  getPrerequisitePath(nodeId, visited = new Set()) {
+  _getPrerequisites(nodeId, visited) {
     if (visited.has(nodeId)) return [];
     visited.add(nodeId);
 
     const node = this.nodeIndex.get(nodeId);
-    if (!node || !node.prerequisites || node.prerequisites.length === 0) {
-      return [];
-    }
+    if (!node || node.prerequisites.length === 0) return [];
 
-    const path = [];
-    node.prerequisites.forEach(preId => {
+    const result = [];
+    for (const preId of node.prerequisites) {
       const preNode = this.nodeIndex.get(preId);
-      if (preNode) {
-        // 递归获取更深层的前置
-        const deeperPath = this.getPrerequisitePath(preId, visited);
-        path.push(...deeperPath);
-        path.push({
-          ...preNode,
-          coursewares: this.courseIndex.get(preId) || []
-        });
-      }
-    });
+      if (!preNode || visited.has(preId)) continue;
 
-    return path;
+      // 递归获取更深层前置
+      const deeper = this._getPrerequisites(preId, visited);
+      result.push(...deeper);
+
+      result.push({
+        id: preNode.id,
+        name: preNode.name,
+        subject: preNode.subject,
+        domain: preNode.domain,
+        grade: preNode.grade,
+        definition: preNode.definition,
+        hasCourseware: this.courseIndex.has(preId),
+        coursewareCount: (this.courseIndex.get(preId) || []).length
+      });
+    }
+    return result;
   }
 
-  /**
-   * 获取后续学习路径
-   */
-  getNextStepsPath(nodeId, depth = 2, visited = new Set()) {
-    if (depth === 0 || visited.has(nodeId)) return [];
+  _getNextSteps(nodeId, depth, visited) {
+    if (depth <= 0 || visited.has(nodeId)) return [];
     visited.add(nodeId);
 
     const node = this.nodeIndex.get(nodeId);
-    if (!node || !node.nextSteps || node.nextSteps.length === 0) {
-      return [];
-    }
+    if (!node || node.nextSteps.length === 0) return [];
 
-    const path = [];
-    node.nextSteps.forEach(nextId => {
+    const result = [];
+    for (const nextId of node.nextSteps) {
       const nextNode = this.nodeIndex.get(nextId);
-      if (nextNode) {
-        path.push({
-          ...nextNode,
-          coursewares: this.courseIndex.get(nextId) || [],
-          children: depth > 1 ? this.getNextStepsPath(nextId, depth - 1, visited) : []
-        });
-      }
-    });
+      if (!nextNode || visited.has(nextId)) continue;
 
-    return path;
+      result.push({
+        id: nextNode.id,
+        name: nextNode.name,
+        subject: nextNode.subject,
+        domain: nextNode.domain,
+        grade: nextNode.grade,
+        definition: nextNode.definition,
+        hasCourseware: this.courseIndex.has(nextId),
+        coursewareCount: (this.courseIndex.get(nextId) || []).length,
+        children: this._getNextSteps(nextId, depth - 1, new Set(visited))
+      });
+    }
+    return result;
   }
 
-  /**
-   * 获取平行知识点（同年级、同学科）
-   */
-  getParallelNodes(nodeId) {
+  _getParallelNodes(nodeId) {
     const node = this.nodeIndex.get(nodeId);
     if (!node) return [];
 
-    const parallel = [];
-    this.nodeIndex.forEach((otherNode, otherId) => {
-      if (otherId !== nodeId &&
-          otherNode.subject === node.subject &&
-          otherNode.grade === node.grade &&
-          otherNode.domain === node.domain) {
-        parallel.push({
-          ...otherNode,
-          coursewares: this.courseIndex.get(otherId) || []
-        });
-      }
-    });
+    const result = [];
+    const domainNodes = this.domainMap.get(node.domain) || [];
 
-    return parallel;
+    for (const otherId of domainNodes) {
+      if (otherId === nodeId) continue;
+      const otherNode = this.nodeIndex.get(otherId);
+      if (!otherNode) continue;
+      // 同领域即为平行，不限制同年级
+      result.push({
+        id: otherNode.id,
+        name: otherNode.name,
+        grade: otherNode.grade,
+        definition: otherNode.definition,
+        hasCourseware: this.courseIndex.has(otherId),
+        coursewareCount: (this.courseIndex.get(otherId) || []).length
+      });
+    }
+
+    // 按年级排序
+    result.sort((a, b) => a.grade - b.grade);
+    return result;
   }
 
-  /**
-   * 获取跨学段知识链
-   */
-  getCrossGradePath(nodeId) {
-    const path = this.getLearningPath(nodeId);
-    if (!path) return null;
+  _getCrossGradeInfo(prerequisites, currentNode, nextSteps) {
+    const elementary = []; // 小学 1-6
+    const middle = [];     // 初中 7-9
+    const high = [];       // 高中 10-12
 
-    // 按年级分组
-    const byGrade = {
-      elementary: [],
-      middle: [],
-      high: []
+    const classify = (node) => {
+      const g = node.grade;
+      if (g >= 1 && g <= 6) elementary.push(node);
+      else if (g >= 7 && g <= 9) middle.push(node);
+      else if (g >= 10) high.push(node);
     };
 
-    const classifyNode = (node) => {
-      const grade = parseInt(node.grade);
-      if (grade <= 6) return 'elementary';
-      if (grade <= 9) return 'middle';
-      return 'high';
-    };
+    prerequisites.forEach(classify);
+    classify(currentNode);
 
-    // 分类前置节点
-    path.prerequisites.forEach(node => {
-      const level = classifyNode(node);
-      byGrade[level].push(node);
-    });
-
-    // 当前节点
-    const currentLevel = classifyNode(path.current);
-    byGrade[currentLevel].push(path.current);
-
-    // 分类后续节点
-    const flattenNextSteps = (nodes) => {
-      let result = [];
-      nodes.forEach(node => {
-        result.push(node);
-        if (node.children) {
-          result = result.concat(flattenNextSteps(node.children));
-        }
+    const flattenNext = (nodes) => {
+      nodes.forEach(n => {
+        classify(n);
+        if (n.children) flattenNext(n.children);
       });
-      return result;
     };
+    flattenNext(nextSteps);
 
-    flattenNextSteps(path.nextSteps).forEach(node => {
-      const level = classifyNode(node);
-      byGrade[level].push(node);
-    });
+    const spans = (elementary.length > 0 ? 1 : 0) + (middle.length > 0 ? 1 : 0) + (high.length > 0 ? 1 : 0);
 
     return {
-      nodeId: nodeId,
-      nodeName: path.current.name,
-      elementary: byGrade.elementary,
-      middle: byGrade.middle,
-      high: byGrade.high,
-      summary: {
-        '小学': byGrade.elementary.length,
-        '初中': byGrade.middle.length,
-        '高中': byGrade.high.length
-      }
+      elementary,
+      middle,
+      high,
+      crossesGrades: spans >= 2,
+      spanCount: spans
     };
   }
 
+  _countNextSteps(nodes) {
+    let count = 0;
+    nodes.forEach(n => {
+      count++;
+      if (n.children) count += this._countNextSteps(n.children);
+    });
+    return count;
+  }
+
+  // ─── 公共API ──────────────────────────────────
+
   /**
-   * 渲染学习路径可视化
+   * 获取知识点学习路径（从缓存，即时返回）
    */
+  getLearningPath(nodeId) {
+    return this.pathCache.get(nodeId) || null;
+  }
+
+  /**
+   * 获取节点信息
+   */
+  getNode(nodeId) {
+    return this.nodeIndex.get(nodeId) || null;
+  }
+
+  /**
+   * 获取学科所有节点
+   */
+  getSubjectNodes(subject) {
+    const ids = this.subjectMap.get(subject) || [];
+    return ids.map(id => this.nodeIndex.get(id)).filter(Boolean);
+  }
+
+  /**
+   * 搜索节点
+   */
+  searchNodes(query) {
+    const q = query.toLowerCase();
+    const results = [];
+    this.nodeIndex.forEach((node, id) => {
+      if (node.name.toLowerCase().includes(q) ||
+          id.toLowerCase().includes(q) ||
+          (node.definition && node.definition.toLowerCase().includes(q))) {
+        results.push(node);
+      }
+    });
+    return results;
+  }
+
+  // ─── 渲染 ─────────────────────────────────────
+
   renderPathVisualization(nodeId, containerId) {
     const path = this.getLearningPath(nodeId);
-    if (!path) return;
-
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    const html = `
-      <div class="learning-path-viz">
-        <!-- 前置路径 -->
-        <div class="path-section prerequisites">
-          <h3>📚 前置知识 (${path.prerequisites.length})</h3>
-          <div class="node-list">
-            ${path.prerequisites.map(node => `
-              <div class="path-node" data-node-id="${node.id}">
-                <div class="node-grade">年级: ${node.grade}</div>
-                <div class="node-name">${node.name}</div>
-                <div class="node-courses">${node.coursewares.length} 个课件</div>
+    if (!path) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">⚠️</div>
+          <h2>未找到知识点</h2>
+          <p>节点 "${nodeId}" 不在知识图谱中</p>
+        </div>`;
+      return;
+    }
+
+    const subjectNames = {
+      math: '📐 数学', biology: '🧬 生物', physics: '⚡ 物理',
+      chemistry: '🧪 化学', geography: '🌍 地理', history: '🏛️ 历史',
+      chinese: '📖 语文', english: '🔤 英语', 'info-tech': '💻 信息技术'
+    };
+
+    const gradeLabel = (g) => {
+      if (!g || g === 0) return '通识';
+      if (g <= 6) return `小学${g}年级`;
+      if (g <= 9) return `初中${g - 6}年级`;
+      return `高中${g - 9}年级`;
+    };
+
+    const coursewareBadge = (node) => {
+      if (node.hasCourseware || node.coursewareCount > 0) {
+        return `<span class="badge badge-green">📖 ${node.coursewareCount || '有'}课件</span>`;
+      }
+      return `<span class="badge badge-gray">暂无课件</span>`;
+    };
+
+    const renderNodeCard = (node, clickable = true) => {
+      const cls = clickable ? 'path-node clickable' : 'path-node';
+      return `
+        <div class="${cls}" data-node-id="${node.id}" title="${node.definition || node.name}">
+          <div class="node-grade-tag">${gradeLabel(node.grade)}</div>
+          <div class="node-name">${node.name}</div>
+          ${coursewareBadge(node)}
+        </div>`;
+    };
+
+    const c = path.current;
+    const cw = path.current.coursewares || [];
+
+    // 构建HTML
+    let html = '<div class="learning-path-viz">';
+
+    // ===== 当前节点 =====
+    html += `
+      <div class="path-section current-section">
+        <div class="section-header"><span class="section-icon">🎯</span> 当前知识点</div>
+        <div class="current-node-card">
+          <div class="current-info">
+            <h2>${c.name}</h2>
+            <div class="current-meta">
+              <span>${subjectNames[c.subject] || c.subject}</span>
+              <span>${gradeLabel(c.grade)}</span>
+              <span>📂 ${c.domain}</span>
+            </div>
+            ${c.definition ? `<p class="current-def">${c.definition}</p>` : ''}
+            ${c.key_concepts && c.key_concepts.length > 0 ? `
+              <div class="key-concepts">
+                <strong>关键概念：</strong>
+                ${c.key_concepts.map(k => `<span class="concept-tag">${k}</span>`).join('')}
               </div>
-            `).join('<div class="arrow">→</div>')}
+            ` : ''}
+          </div>
+          <div class="current-stats">
+            <div class="stat-item"><span class="stat-val">${path.summary.prerequisiteCount}</span><span class="stat-lbl">前置知识</span></div>
+            <div class="stat-item"><span class="stat-val">${path.summary.nextStepCount}</span><span class="stat-lbl">后续方向</span></div>
+            <div class="stat-item"><span class="stat-val">${path.summary.parallelCount}</span><span class="stat-lbl">平行知识</span></div>
+            <div class="stat-item"><span class="stat-val">${path.summary.coursewareCount}</span><span class="stat-lbl">可用课件</span></div>
           </div>
         </div>
-
-        <!-- 当前节点 -->
-        <div class="path-section current">
-          <h3>🎯 当前知识点</h3>
-          <div class="current-node">
-            <h2>${path.current.name}</h2>
-            <p>年级: ${path.current.grade} | 学科: ${path.current.subject}</p>
-            <p>可用课件: ${path.coursewares.length} 个</p>
-            ${path.coursewares.map(c => `
-              <a href="${c.url || c.path}" class="courseware-link">
-                ${c.emoji || '📖'} ${c.name}
+        ${cw.length > 0 ? `
+          <div class="courseware-list">
+            <div class="cw-title">📖 可用课件</div>
+            ${cw.map(course => `
+              <a href="${course.url || ('./' + course.path + '/index.html')}" class="cw-link" target="_blank">
+                ${course.name || course.id}
+                ${course.status === 'official' ? '<span class="badge badge-red">⭐ 官方</span>' : ''}
               </a>
             `).join('')}
           </div>
-        </div>
-
-        <!-- 后续路径 -->
-        <div class="path-section next-steps">
-          <h3>🚀 后续方向 (${path.nextSteps.length})</h3>
-          <div class="node-tree">
-            ${this.renderNextStepsTree(path.nextSteps)}
-          </div>
-        </div>
-
-        <!-- 平行知识点 -->
-        ${path.parallel.length > 0 ? `
-          <div class="path-section parallel">
-            <h3>🔄 同级知识点 (${path.parallel.length})</h3>
-            <div class="node-grid">
-              ${path.parallel.map(node => `
-                <div class="parallel-node" data-node-id="${node.id}">
-                  <div class="node-name">${node.name}</div>
-                  <div class="node-courses">${node.coursewares.length} 课件</div>
-                </div>
-              `).join('')}
-            </div>
-          </div>
         ` : ''}
-      </div>
-    `;
+      </div>`;
 
+    // ===== 前置知识 =====
+    html += `
+      <div class="path-section prereq-section">
+        <div class="section-header"><span class="section-icon">📚</span> 前置知识路径 <span class="count">${path.prerequisites.length}</span></div>`;
+
+    if (path.prerequisites.length > 0) {
+      html += '<div class="prereq-chain">';
+      path.prerequisites.forEach((node, i) => {
+        html += renderNodeCard(node);
+        if (i < path.prerequisites.length - 1) {
+          html += '<div class="chain-arrow">→</div>';
+        }
+      });
+      html += `<div class="chain-arrow">→</div>
+        <div class="path-node current-marker">
+          <div class="node-name">🎯 ${c.name}</div>
+        </div>`;
+      html += '</div>';
+    } else {
+      html += '<div class="empty-hint">💡 这是该领域的起始知识点，没有前置依赖</div>';
+    }
+    html += '</div>';
+
+    // ===== 后续方向 =====
+    html += `
+      <div class="path-section next-section">
+        <div class="section-header"><span class="section-icon">🚀</span> 后续学习方向 <span class="count">${path.summary.nextStepCount}</span></div>`;
+
+    if (path.nextSteps.length > 0) {
+      html += '<div class="next-tree">';
+      html += this._renderNextTree(path.nextSteps, 0, gradeLabel, coursewareBadge);
+      html += '</div>';
+    } else {
+      html += '<div class="empty-hint">🏆 这是该领域的终极知识点，已到达知识链顶端</div>';
+    }
+    html += '</div>';
+
+    // ===== 平行知识 =====
+    if (path.parallel.length > 0) {
+      html += `
+        <div class="path-section parallel-section">
+          <div class="section-header"><span class="section-icon">🔄</span> 同领域知识点 <span class="count">${path.parallel.length}</span></div>
+          <div class="parallel-grid">
+            ${path.parallel.map(node => renderNodeCard(node)).join('')}
+          </div>
+        </div>`;
+    }
+
+    // ===== 跨学段分析 =====
+    if (path.crossGrade.crossesGrades) {
+      html += `
+        <div class="path-section cross-section">
+          <div class="section-header"><span class="section-icon">🎓</span> 跨学段知识链 <span class="count">跨${path.crossGrade.spanCount}个学段</span></div>
+          <div class="cross-grade-viz">
+            ${path.crossGrade.elementary.length > 0 ? `
+              <div class="grade-group">
+                <div class="grade-label">🏫 小学</div>
+                <div class="grade-nodes">${path.crossGrade.elementary.map(n =>
+                  `<span class="grade-node" data-node-id="${n.id}" title="${n.definition || ''}">${n.name}</span>`
+                ).join('<span class="mini-arrow">→</span>')}</div>
+              </div>
+              <div class="grade-connector">⬇</div>
+            ` : ''}
+            ${path.crossGrade.middle.length > 0 ? `
+              <div class="grade-group">
+                <div class="grade-label">📘 初中</div>
+                <div class="grade-nodes">${path.crossGrade.middle.map(n =>
+                  `<span class="grade-node" data-node-id="${n.id}" title="${n.definition || ''}">${n.name}</span>`
+                ).join('<span class="mini-arrow">→</span>')}</div>
+              </div>
+              ${path.crossGrade.high.length > 0 ? '<div class="grade-connector">⬇</div>' : ''}
+            ` : ''}
+            ${path.crossGrade.high.length > 0 ? `
+              <div class="grade-group">
+                <div class="grade-label">🎓 高中</div>
+                <div class="grade-nodes">${path.crossGrade.high.map(n =>
+                  `<span class="grade-node" data-node-id="${n.id}" title="${n.definition || ''}">${n.name}</span>`
+                ).join('<span class="mini-arrow">→</span>')}</div>
+              </div>
+            ` : ''}
+          </div>
+        </div>`;
+    }
+
+    html += '</div>';
     container.innerHTML = html;
 
-    // 添加交互事件
-    this.attachPathEvents(container);
-  }
+    // 绑定点击事件：点击任意节点可跳转
+    container.querySelectorAll('.clickable[data-node-id]').forEach(el => {
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', () => {
+        const id = el.dataset.nodeId;
+        // 更新选择器
+        const sel = document.getElementById('nodeSelect');
+        if (sel) sel.value = id;
+        // 更新URL
+        history.pushState(null, '', `?node=${id}`);
+        // 渲染新路径
+        this.renderPathVisualization(id, containerId);
+        // 滚动到顶部
+        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
 
-  /**
-   * 渲染后续节点树
-   */
-  renderNextStepsTree(nodes, level = 0) {
-    return nodes.map(node => `
-      <div class="tree-node level-${level}" data-node-id="${node.id}">
-        <div class="node-content">
-          <div class="node-grade">年级: ${node.grade}</div>
-          <div class="node-name">${node.name}</div>
-          <div class="node-courses">${node.coursewares.length} 个课件</div>
-        </div>
-        ${node.children && node.children.length > 0 ? `
-          <div class="node-children">
-            ${this.renderNextStepsTree(node.children, level + 1)}
-          </div>
-        ` : ''}
-      </div>
-    `).join('');
-  }
-
-  /**
-   * 附加交互事件
-   */
-  attachPathEvents(container) {
-    const nodes = container.querySelectorAll('[data-node-id]');
-    nodes.forEach(el => {
-      el.addEventListener('click', (e) => {
-        const nodeId = el.dataset.nodeId;
-        this.renderPathVisualization(nodeId, container.id);
+    container.querySelectorAll('.grade-node[data-node-id]').forEach(el => {
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', () => {
+        const id = el.dataset.nodeId;
+        const sel = document.getElementById('nodeSelect');
+        if (sel) sel.value = id;
+        history.pushState(null, '', `?node=${id}`);
+        this.renderPathVisualization(id, containerId);
+        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     });
   }
 
-  /**
-   * 生成跨学段学习地图
-   */
-  generateCrossGradeMap(subject) {
-    const subjectNodes = [];
-    this.nodeIndex.forEach((node, nodeId) => {
-      if (node.subject === subject) {
-        subjectNodes.push(node);
-      }
-    });
-
-    // 按年级排序
-    subjectNodes.sort((a, b) => a.grade - b.grade);
-
-    return {
-      subject: subject,
-      totalNodes: subjectNodes.length,
-      gradeDistribution: this.groupByGrade(subjectNodes),
-      continuityChains: this.findContinuityChains(subjectNodes)
-    };
-  }
-
-  /**
-   * 按年级分组
-   */
-  groupByGrade(nodes) {
-    const groups = {};
-    nodes.forEach(node => {
-      const grade = `年级${node.grade}`;
-      if (!groups[grade]) groups[grade] = [];
-      groups[grade].push(node);
-    });
-    return groups;
-  }
-
-  /**
-   * 查找连续性链条
-   */
-  findContinuityChains(nodes) {
-    // 找出所有跨越小学-初中-高中的知识链
-    const chains = [];
-    
-    nodes.forEach(node => {
-      if (node.grade <= 6) { // 从小学节点开始
-        const chain = this.traceContinuityChain(node.id);
-        if (chain.crossesGrades) {
-          chains.push(chain);
-        }
-      }
-    });
-
-    return chains;
-  }
-
-  /**
-   * 追踪连续性链条
-   */
-  traceContinuityChain(startNodeId) {
-    const chain = {
-      start: startNodeId,
-      nodes: [],
-      crossesGrades: false
-    };
-
-    let current = this.nodeIndex.get(startNodeId);
-    const visited = new Set();
-    const grades = new Set();
-
-    while (current && !visited.has(current.id)) {
-      visited.add(current.id);
-      chain.nodes.push(current);
-      grades.add(Math.floor(current.grade / 3)); // 0=小学, 1-2=初中, 3+=高中
-
-      if (current.nextSteps && current.nextSteps.length > 0) {
-        current = this.nodeIndex.get(current.nextSteps[0]);
-      } else {
-        break;
-      }
-    }
-
-    chain.crossesGrades = grades.size > 1;
-    return chain;
+  _renderNextTree(nodes, level, gradeLabel, coursewareBadge) {
+    return nodes.map(node => {
+      const indent = level * 24;
+      const hasChildren = node.children && node.children.length > 0;
+      return `
+        <div class="next-node level-${level}" style="margin-left:${indent}px">
+          <div class="next-node-card clickable" data-node-id="${node.id}" title="${node.definition || node.name}">
+            <span class="tree-prefix">${level === 0 ? '├─' : '└─'}</span>
+            <span class="node-grade-tag">${gradeLabel(node.grade)}</span>
+            <span class="node-name">${node.name}</span>
+            ${coursewareBadge(node)}
+          </div>
+          ${hasChildren ? this._renderNextTree(node.children, level + 1, gradeLabel, coursewareBadge) : ''}
+        </div>`;
+    }).join('');
   }
 }
 
-// 创建全局实例
+// ─── 全局实例 ────────────────────────────────────
+
 window.TeachAnyLearningPath = new LearningPathSystem();
 
-// 导出API
+// ─── 公共API ─────────────────────────────────────
+
 window.TeachAnyLearningPath.api = {
-  /**
-   * 显示知识点的学习路径
-   */
+  /** 显示知识点学习路径（即时，从缓存） */
   showPath: async (nodeId, containerId = 'learning-path-container') => {
-    await window.TeachAnyLearningPath.initialize();
-    window.TeachAnyLearningPath.renderPathVisualization(nodeId, containerId);
+    const sys = window.TeachAnyLearningPath;
+    await sys.initialize();
+    sys.renderPathVisualization(nodeId, containerId);
   },
-  
-  /**
-   * 获取跨学段路径数据
-   */
+
+  /** 获取路径数据（即时，从缓存） */
+  getPath: async (nodeId) => {
+    const sys = window.TeachAnyLearningPath;
+    await sys.initialize();
+    return sys.getLearningPath(nodeId);
+  },
+
+  /** 获取跨学段路径 */
   getCrossGradePath: async (nodeId) => {
-    await window.TeachAnyLearningPath.initialize();
-    return window.TeachAnyLearningPath.getCrossGradePath(nodeId);
+    const sys = window.TeachAnyLearningPath;
+    await sys.initialize();
+    const path = sys.getLearningPath(nodeId);
+    return path ? path.crossGrade : null;
   },
-  
-  /**
-   * 生成学科学习地图
-   */
-  generateSubjectMap: async (subject) => {
-    await window.TeachAnyLearningPath.initialize();
-    return window.TeachAnyLearningPath.generateCrossGradeMap(subject);
+
+  /** 搜索知识点 */
+  searchNodes: async (query) => {
+    const sys = window.TeachAnyLearningPath;
+    await sys.initialize();
+    return sys.searchNodes(query);
+  },
+
+  /** 获取全局统计 */
+  getStats: async () => {
+    const sys = window.TeachAnyLearningPath;
+    await sys.initialize();
+    return {
+      totalNodes: sys.nodeIndex.size,
+      coursewareCoverage: sys.courseIndex.size,
+      cachedPaths: sys.pathCache.size,
+      subjects: Array.from(sys.subjectMap.keys()),
+      grades: Array.from(sys.gradeMap.keys()).sort((a, b) => a - b),
+      rawStats: sys.stats
+    };
   }
 };
 
-console.log('[TeachAny] 学习路径系统已加载');
-console.log('使用方法:');
-console.log('  - TeachAnyLearningPath.api.showPath("node-id") - 显示学习路径');
-console.log('  - TeachAnyLearningPath.api.getCrossGradePath("node-id") - 获取跨学段路径');
-console.log('  - TeachAnyLearningPath.api.generateSubjectMap("math") - 生成学科地图');
+console.log('[TeachAny] 学习路径系统 v2.0 已加载');
