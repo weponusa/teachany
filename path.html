@@ -89,34 +89,74 @@ body {
 .search-section {
   margin-bottom: 40px;
 }
-.search-box {
-  max-width: 600px;
+
+/* Selector Group */
+.selector-group {
+  max-width: 1200px;
   margin: 0 auto;
   background: var(--card);
   border: 2px solid var(--border);
   border-radius: 16px;
-  padding: 16px 20px;
+  padding: 24px;
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
 }
-.search-box:focus-within {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(59,130,246,0.1);
-}
-.search-input {
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
-  font-size: 16px;
+  min-width: 180px;
+}
+
+.filter-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.subject-select,
+.grade-select,
+.node-select {
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
   color: var(--text);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
 }
-.search-input::placeholder {
-  color: var(--dimmer);
+
+.subject-select:hover,
+.grade-select:hover,
+.node-select:hover {
+  border-color: var(--primary);
 }
+
+.subject-select:focus,
+.grade-select:focus,
+.node-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+}
+
+.node-select {
+  flex: 1;
+}
+
+.node-select option {
+  padding: 8px;
+}
+
 .search-btn {
-  padding: 8px 20px;
+  padding: 12px 24px;
   border-radius: 8px;
   background: var(--primary);
   color: white;
@@ -125,10 +165,17 @@ body {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
+  align-self: stretch;
 }
+
 .search-btn:hover {
   background: var(--secondary);
   transform: scale(1.05);
+}
+
+.search-btn:active {
+  transform: scale(0.98);
 }
 
 /* Path Visualization */
@@ -345,6 +392,13 @@ body {
 
 @media (max-width: 768px) {
   .header h1 { font-size: 32px; }
+  .selector-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filter-group {
+    min-width: 100%;
+  }
   .node-list { flex-direction: column; align-items: stretch; }
   .tree-node.level-1 { margin-left: 20px; }
   .tree-node.level-2 { margin-left: 40px; }
@@ -369,17 +423,45 @@ body {
 </div>
 
 <div class="container">
-  <!-- 搜索框 -->
+  <!-- 选择器 -->
   <div class="search-section">
-    <div class="search-box">
-      <span style="font-size:20px">🔍</span>
-      <input 
-        type="text" 
-        id="nodeSearchInput" 
-        class="search-input"
-        placeholder="输入知识点ID（如 addition-subtraction-within-20）..."
-      />
-      <button class="search-btn" onclick="showPathForNode()">显示路径</button>
+    <div class="selector-group">
+      <!-- 学科筛选 -->
+      <div class="filter-group">
+        <label for="subjectFilter">📚 学科</label>
+        <select id="subjectFilter" class="subject-select" onchange="filterNodesBySubject()">
+          <option value="all">全部学科</option>
+          <option value="math">📐 数学 Math</option>
+          <option value="biology">🧬 生物 Biology</option>
+          <option value="physics">⚡ 物理 Physics</option>
+          <option value="chemistry">🧪 化学 Chemistry</option>
+          <option value="geography">🌍 地理 Geography</option>
+          <option value="history">🏛️ 历史 History</option>
+          <option value="chinese">📖 语文 Chinese</option>
+          <option value="english">🔤 英语 English</option>
+        </select>
+      </div>
+      
+      <!-- 年级筛选 -->
+      <div class="filter-group">
+        <label for="gradeFilter">🎓 年级</label>
+        <select id="gradeFilter" class="grade-select" onchange="filterNodesByGrade()">
+          <option value="all">全部年级</option>
+          <option value="elementary">🏫 小学 (1-6年级)</option>
+          <option value="middle">📘 初中 (7-9年级)</option>
+          <option value="high">🎓 高中 (10-12年级)</option>
+        </select>
+      </div>
+      
+      <!-- 知识点选择 -->
+      <div class="filter-group" style="flex: 2">
+        <label for="nodeSelect">🎯 选择知识点</label>
+        <select id="nodeSelect" class="node-select">
+          <option value="">请先选择学科和年级...</option>
+        </select>
+      </div>
+      
+      <button class="search-btn" onclick="showPathForNode()">📍 显示学习路径</button>
     </div>
   </div>
 
@@ -407,8 +489,8 @@ body {
   <div id="learning-path-container">
     <div class="empty-state">
       <div class="icon">🗺️</div>
-      <h2>输入知识点ID查看学习路径</h2>
-      <p>示例: addition-subtraction-within-20, rational-numbers, functions-advanced</p>
+      <h2>选择知识点查看学习路径</h2>
+      <p>从上方选择器中选择学科、年级和知识点</p>
       <p style="margin-top:16px;font-size:14px">或者从<a href="tree.html" style="color:var(--primary)">知识地图</a>点击任意节点跳转</p>
     </div>
   </div>
@@ -416,16 +498,176 @@ body {
 
 <script src="./scripts/learning-path.js"></script>
 <script>
-// 从URL参数获取node_id
-const urlParams = new URLSearchParams(window.location.search);
-const nodeIdFromURL = urlParams.get('node');
+// 知识点数据库（从现有课件中提取的实际数据）
+const KNOWLEDGE_NODES = [
+  // 小学数学
+  { id: 'counting-1-10', name: '10以内数的认识', subject: 'math', grade: 1 },
+  { id: 'addition-subtraction-within-10', name: '10以内加减法', subject: 'math', grade: 1 },
+  { id: 'addition-subtraction-within-20', name: '20以内加减法', subject: 'math', grade: 1 },
+  { id: 'counting-20', name: '20以内数的认识', subject: 'math', grade: 1 },
+  { id: 'addition-subtraction-within-100', name: '100以内加减法', subject: 'math', grade: 2 },
+  { id: 'multiplication-division-concept', name: '乘除法概念', subject: 'math', grade: 2 },
+  { id: 'fraction-concept', name: '分数概念', subject: 'math', grade: 3 },
+  { id: 'decimal-concept', name: '小数概念', subject: 'math', grade: 4 },
+  { id: 'area-volume', name: '面积与体积', subject: 'math', grade: 5 },
+  { id: 'percentage', name: '百分数', subject: 'math', grade: 6 },
+  
+  // 初中数学
+  { id: 'rational-numbers', name: '有理数', subject: 'math', grade: 7 },
+  { id: 'algebraic-expressions', name: '代数式', subject: 'math', grade: 7 },
+  { id: 'linear-equations', name: '一元一次方程', subject: 'math', grade: 7 },
+  { id: 'linear-functions', name: '一次函数', subject: 'math', grade: 8 },
+  { id: 'quadratic-functions', name: '二次函数', subject: 'math', grade: 9 },
+  { id: 'geometric-proof', name: '几何证明', subject: 'math', grade: 9 },
+  { id: 'congruent-triangles', name: '全等三角形', subject: 'math', grade: 8 },
+  
+  // 高中数学
+  { id: 'sets-logic', name: '集合与逻辑', subject: 'math', grade: 10 },
+  { id: 'functions-advanced', name: '函数与性质', subject: 'math', grade: 10 },
+  { id: 'trigonometry', name: '三角函数', subject: 'math', grade: 10 },
+  { id: 'derivatives', name: '导数', subject: 'math', grade: 11 },
+  { id: 'integrals', name: '积分', subject: 'math', grade: 12 },
+  { id: 'space-geometry', name: '立体几何', subject: 'math', grade: 11 },
+  
+  // 生物
+  { id: 'cell-structure', name: '细胞结构', subject: 'biology', grade: 7 },
+  { id: 'plant-structure', name: '植物结构', subject: 'biology', grade: 7 },
+  { id: 'plant-reproduction', name: '植物生殖', subject: 'biology', grade: 7 },
+  { id: 'human-body-overview', name: '人体系统', subject: 'biology', grade: 8 },
+  { id: 'genetics-basics', name: '遗传基础', subject: 'biology', grade: 8 },
+  { id: 'evolution-theory', name: '进化论', subject: 'biology', grade: 9 },
+  { id: 'photosynthesis', name: '光合作用', subject: 'biology', grade: 7 },
+  { id: 'cell-division', name: '细胞分裂', subject: 'biology', grade: 8 },
+  
+  // 物理
+  { id: 'mechanics-basic', name: '力学基础', subject: 'physics', grade: 8 },
+  { id: 'pressure-buoyancy', name: '压强与浮力', subject: 'physics', grade: 8 },
+  { id: 'light-optics', name: '光学', subject: 'physics', grade: 8 },
+  { id: 'electricity-magnetism', name: '电磁学', subject: 'physics', grade: 9 },
+  { id: 'energy-motion', name: '能量与运动', subject: 'physics', grade: 10 },
+  
+  // 化学
+  { id: 'matter-classification', name: '物质分类', subject: 'chemistry', grade: 9 },
+  { id: 'chemical-reactions', name: '化学反应', subject: 'chemistry', grade: 9 },
+  { id: 'oxidation-reduction', name: '氧化还原反应', subject: 'chemistry', grade: 9 },
+  { id: 'acid-base-salt', name: '酸碱盐', subject: 'chemistry', grade: 9 },
+  { id: 'periodic-table', name: '元素周期表', subject: 'chemistry', grade: 10 },
+  { id: 'organic-chemistry-intro', name: '有机化学入门', subject: 'chemistry', grade: 11 },
+  
+  // 地理
+  { id: 'earth-overview', name: '地球概况', subject: 'geography', grade: 7 },
+  { id: 'climate-systems', name: '气候系统', subject: 'geography', grade: 7 },
+  { id: 'monsoon-systems', name: '季风系统', subject: 'geography', grade: 8 },
+  { id: 'china-geography', name: '中国地理', subject: 'geography', grade: 8 },
+  
+  // 历史
+  { id: 'ancient-civilization', name: '古代文明', subject: 'history', grade: 7 },
+  { id: 'imperial-unification', name: '秦汉统一', subject: 'history', grade: 7 },
+  { id: 'modern-history', name: '近代史', subject: 'history', grade: 8 },
+  
+  // 语文
+  { id: 'compound-vowel', name: '复韵母', subject: 'chinese', grade: 1 },
+  { id: 'reading-comprehension', name: '阅读理解', subject: 'chinese', grade: 7 },
+  
+  // 英语
+  { id: 'basic-grammar', name: '基础语法', subject: 'english', grade: 7 },
+  { id: 'vocabulary-building', name: '词汇构建', subject: 'english', grade: 8 }
+];
 
+// 全局状态
+let currentSubject = 'all';
+let currentGrade = 'all';
+let allNodes = [...KNOWLEDGE_NODES];
+
+// 初始化：加载所有知识点
+function initializeNodeSelector() {
+  updateNodeList();
+}
+
+// 学科筛选
+function filterNodesBySubject() {
+  currentSubject = document.getElementById('subjectFilter').value;
+  updateNodeList();
+}
+
+// 年级筛选
+function filterNodesByGrade() {
+  currentGrade = document.getElementById('gradeFilter').value;
+  updateNodeList();
+}
+
+// 更新知识点列表
+function updateNodeList() {
+  const nodeSelect = document.getElementById('nodeSelect');
+  
+  // 筛选节点
+  let filtered = allNodes;
+  
+  if (currentSubject !== 'all') {
+    filtered = filtered.filter(n => n.subject === currentSubject);
+  }
+  
+  if (currentGrade !== 'all') {
+    filtered = filtered.filter(n => {
+      const grade = n.grade;
+      if (currentGrade === 'elementary') return grade >= 1 && grade <= 6;
+      if (currentGrade === 'middle') return grade >= 7 && grade <= 9;
+      if (currentGrade === 'high') return grade >= 10 && grade <= 12;
+      return true;
+    });
+  }
+  
+  // 按年级和名称排序
+  filtered.sort((a, b) => {
+    if (a.grade !== b.grade) return a.grade - b.grade;
+    return a.name.localeCompare(b.name, 'zh-CN');
+  });
+  
+  // 清空并重新填充
+  nodeSelect.innerHTML = '';
+  
+  if (filtered.length === 0) {
+    nodeSelect.innerHTML = '<option value="">该学科/年级暂无知识点</option>';
+    return;
+  }
+  
+  // 添加提示选项
+  nodeSelect.innerHTML = `<option value="">请选择知识点 (共${filtered.length}个)</option>`;
+  
+  // 按年级分组
+  const gradeGroups = {};
+  filtered.forEach(node => {
+    if (!gradeGroups[node.grade]) gradeGroups[node.grade] = [];
+    gradeGroups[node.grade].push(node);
+  });
+  
+  // 添加选项
+  Object.keys(gradeGroups).sort((a, b) => a - b).forEach(grade => {
+    const gradeLabel = grade <= 6 ? `小学${grade}年级` : 
+                       grade <= 9 ? `初中${grade-6}年级` : 
+                       `高中${grade-9}年级`;
+    
+    const optgroup = document.createElement('optgroup');
+    optgroup.label = gradeLabel;
+    
+    gradeGroups[grade].forEach(node => {
+      const option = document.createElement('option');
+      option.value = node.id;
+      option.textContent = node.name;
+      optgroup.appendChild(option);
+    });
+    
+    nodeSelect.appendChild(optgroup);
+  });
+}
+
+// 显示学习路径
 async function showPathForNode() {
-  const input = document.getElementById('nodeSearchInput');
-  const nodeId = input.value.trim() || nodeIdFromURL;
+  const nodeSelect = document.getElementById('nodeSelect');
+  const nodeId = nodeSelect.value || urlParams.get('node');
   
   if (!nodeId) {
-    alert('请输入知识点ID');
+    alert('请先选择知识点');
     return;
   }
 
@@ -443,28 +685,54 @@ async function showPathForNode() {
     // 更新URL（不刷新页面）
     history.pushState(null, '', `?node=${nodeId}`);
   } catch (error) {
+    const nodeName = allNodes.find(n => n.id === nodeId)?.name || nodeId;
     container.innerHTML = `
       <div class="empty-state">
         <div class="icon">⚠️</div>
-        <h2>未找到知识点</h2>
-        <p>找不到ID为 "${nodeId}" 的知识点</p>
-        <p style="margin-top:8px;font-size:14px;color:var(--dimmer)">请检查拼写或从知识地图中选择</p>
+        <h2>未找到学习路径</h2>
+        <p>知识点 "${nodeName}" 暂无详细路径数据</p>
+        <p style="margin-top:8px;font-size:14px;color:var(--dimmer)">该知识点可能尚未建立前后序关系</p>
       </div>
     `;
     console.error('[Path] 加载失败:', error);
   }
 }
 
-// 页面加载时自动显示路径（如果有node参数）
-if (nodeIdFromURL) {
-  document.getElementById('nodeSearchInput').value = nodeIdFromURL;
-  showPathForNode();
-}
+// URL参数处理
+const urlParams = new URLSearchParams(window.location.search);
+const nodeIdFromURL = urlParams.get('node');
 
-// 回车键触发搜索
-document.getElementById('nodeSearchInput').addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    showPathForNode();
+// 页面加载时初始化
+window.addEventListener('DOMContentLoaded', () => {
+  initializeNodeSelector();
+  
+  // 如果URL有node参数，自动选中并显示
+  if (nodeIdFromURL) {
+    const node = allNodes.find(n => n.id === nodeIdFromURL);
+    if (node) {
+      // 设置筛选条件
+      document.getElementById('subjectFilter').value = node.subject;
+      currentSubject = node.subject;
+      
+      if (node.grade <= 6) {
+        document.getElementById('gradeFilter').value = 'elementary';
+        currentGrade = 'elementary';
+      } else if (node.grade <= 9) {
+        document.getElementById('gradeFilter').value = 'middle';
+        currentGrade = 'middle';
+      } else {
+        document.getElementById('gradeFilter').value = 'high';
+        currentGrade = 'high';
+      }
+      
+      updateNodeList();
+      
+      // 选中节点
+      setTimeout(() => {
+        document.getElementById('nodeSelect').value = nodeIdFromURL;
+        showPathForNode();
+      }, 100);
+    }
   }
 });
 </script>
