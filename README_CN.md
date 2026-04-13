@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="#-快速开始"><img src="https://img.shields.io/badge/快速开始-30秒-brightgreen?style=flat-square" alt="快速开始"></a>
-  <a href="#-在线画廊"><img src="https://img.shields.io/badge/在线画廊-7门课-blue?style=flat-square" alt="画廊"></a>
+  <a href="#-在线画廊"><img src="https://img.shields.io/badge/在线画廊-131门课-blue?style=flat-square" alt="画廊"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/许可证-MIT-yellow?style=flat-square" alt="MIT License"></a>
   <a href="README.md"><img src="https://img.shields.io/badge/English-README-red?style=flat-square" alt="English README"></a>
 </p>
