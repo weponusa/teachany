@@ -196,8 +196,25 @@ def main():
 
     # 4. 重建注册表
     print('\n📋 步骤4: 重建注册表...')
+    
+    # 加载旧注册表以保留 status 等手动设置的字段
+    old_registry = {}
+    try:
+        with open('registry.json', encoding='utf-8') as f:
+            old_data = json.load(f)
+            for c in old_data.get('courses', []):
+                old_registry[c['id']] = c
+    except (FileNotFoundError, json.JSONDecodeError):
+        pass
+    
     registry_courses = []
+    official_count = 0
+    community_count = 0
     for course_id, manifest in sorted(courses.items()):
+        # 保留旧注册表中的 status（official/community），默认 community
+        old_entry = old_registry.get(course_id, {})
+        status = old_entry.get('status', 'community')
+        
         entry = {
             'id': course_id,
             'name': manifest.get('name', ''),
@@ -207,6 +224,7 @@ def main():
             'node_id': manifest.get('node_id', ''),
             'domain': manifest.get('domain', ''),
             'description': manifest.get('description', ''),
+            'description_zh': manifest.get('description_zh', ''),
             'emoji': manifest.get('emoji', '📚'),
             'tags': manifest.get('tags', []),
             'difficulty': manifest.get('difficulty', 1),
@@ -215,8 +233,18 @@ def main():
             'created': manifest.get('created', ''),
             'version': manifest.get('version', '1.0'),
             'license': manifest.get('license', 'MIT'),
+            'status': status,
+            'path': f'examples/{course_id}',
+            'has_tts': manifest.get('has_tts', False),
+            'has_video': manifest.get('has_video', False),
+            'has_en': manifest.get('has_en', False),
+            'author': manifest.get('author', ''),
         }
         registry_courses.append(entry)
+        if status == 'official':
+            official_count += 1
+        else:
+            community_count += 1
 
     registry = {
         'version': '1.0',
@@ -228,7 +256,7 @@ def main():
     with open('registry.json', 'w', encoding='utf-8') as f:
         json.dump(registry, f, ensure_ascii=False, indent=2)
 
-    print(f'   注册表已重建: {len(registry_courses)} 个课件')
+    print(f'   注册表已重建: {len(registry_courses)} 个课件 (官方={official_count}, 社区={community_count})')
 
     # 5. 最终验证
     print('\n' + '='*70)
