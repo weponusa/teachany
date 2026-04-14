@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>省界显示测试</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<style>
+  body { margin: 0; padding: 0; }
+  #map { width: 100vw; height: 100vh; }
+  .info { position: absolute; top: 10px; left: 10px; background: white; padding: 10px; border-radius: 5px; z-index: 1000; font-family: monospace; }
+</style>
+</head>
+<body>
+<div class="info" id="info">加载中...</div>
+<div id="map"></div>
+
+<script>
+console.log('开始初始化地图...');
+const info = document.getElementById('info');
+
+const map = new maplibregl.Map({
+  container: 'map',
+  style: {
+    version: 8,
+    sources: {
+      'terrain-dem': {
+        type: 'raster-dem',
+        tiles: [
+          '../../data/terrain-tiles/{z}/{x}/{y}.png',
+          'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'
+        ],
+        encoding: 'terrarium',
+        tileSize: 256,
+        minzoom: 4,
+        maxzoom: 15
+      }
+    },
+    layers: [
+      {
+        id: 'background',
+        type: 'background',
+        paint: { 'background-color': '#e8dcc8' }
+      },
+      {
+        id: 'hillshade',
+        type: 'hillshade',
+        source: 'terrain-dem',
+        paint: {
+          'hillshade-exaggeration': 0.6,
+          'hillshade-shadow-color': '#5a4a3a',
+          'hillshade-highlight-color': '#f5f0e8',
+          'hillshade-illumination-direction': 315
+        }
+      }
+    ]
+  },
+  center: [108, 34],
+  zoom: 4.5,
+  maxZoom: 10,
+  minZoom: 3
+});
+
+map.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+map.on('load', () => {
+  console.log('✅ 地图加载完成');
+  info.textContent = '地图加载完成，开始加载省界...';
+  
+  const url = '../../data/geography/modern-china/provinces.geojson';
+  console.log('正在fetch省界数据:', url);
+  
+  fetch(url)
+    .then(r => {
+      console.log('✅ fetch响应:', r.status, r.ok);
+      info.textContent = `fetch响应: ${r.status}`;
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(data => {
+      console.log('✅ JSON解析成功, features数量:', data.features?.length);
+      info.textContent = `加载成功: ${data.features?.length} 个省份`;
+      
+      map.addSource('china-provinces', { type: 'geojson', data });
+      console.log('✅ Source添加成功');
+      
+      // 添加填充图层（浅色）
+      map.addLayer({
+        id: 'provinces-fill',
+        type: 'fill',
+        source: 'china-provinces',
+        paint: { 
+          'fill-color': '#fef3c7', 
+          'fill-opacity': 0.3 
+        }
+      });
+      console.log('✅ Fill图层添加成功');
+      
+      // 添加边界图层（深色粗线）
+      map.addLayer({
+        id: 'provinces-border',
+        type: 'line',
+        source: 'china-provinces',
+        paint: { 
+          'line-color': '#dc2626',  // 鲜红色
+          'line-width': 2.5,
+          'line-opacity': 1
+        }
+      });
+      console.log('✅ Border图层添加成功');
+      
+      info.textContent = `✅ 省界显示成功 (${data.features?.length}个省份，红色边界)`;
+    })
+    .catch(err => {
+      console.error('❌ 加载失败:', err);
+      info.textContent = '❌ 加载失败: ' + err.message;
+      info.style.background = '#fee';
+      info.style.color = '#c00';
+    });
+});
+
+map.on('error', (e) => {
+  console.error('❌ 地图错误:', e);
+});
+</script>
+</body>
+</html>
