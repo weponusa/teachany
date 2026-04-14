@@ -843,18 +843,8 @@ function initMap() {
       .then(data => {
         console.log('省级边界数据加载成功，features数量:', data.features?.length);
         map.addSource('china-provinces', { type: 'geojson', data });
-        map.addLayer({
-          id: 'provinces-fill',
-          type: 'fill',
-          source: 'china-provinces',
-          paint: { 'fill-color': '#f5f0e0', 'fill-opacity': 0.2 }
-        });
-        map.addLayer({
-          id: 'provinces-border',
-          type: 'line',
-          source: 'china-provinces',
-          paint: { 'line-color': '#78350f', 'line-width': 1.2, 'line-opacity': 0.5 }
-        });
+        // 先添加省界图层（会在后续 loadDynasty 中被覆盖，但我们会在每次切换朝代后重新添加）
+        addProvinceLayers();
       })
       .catch(err => console.error('省级边界加载失败:', err));
 
@@ -862,6 +852,35 @@ function initMap() {
     loadDynasty('qin');
     addMarkers();
   });
+}
+
+// 辅助函数：添加/更新省界图层（确保始终在最上层）
+function addProvinceLayers() {
+  if (!map.getSource('china-provinces')) return;
+  
+  // 移除旧图层
+  if (map.getLayer('provinces-fill')) map.removeLayer('provinces-fill');
+  if (map.getLayer('provinces-border')) map.removeLayer('provinces-border');
+  
+  // 重新添加到最上层
+  map.addLayer({
+    id: 'provinces-fill',
+    type: 'fill',
+    source: 'china-provinces',
+    paint: { 'fill-color': '#f5f0e0', 'fill-opacity': 0.15 }
+  });
+  map.addLayer({
+    id: 'provinces-border',
+    type: 'line',
+    source: 'china-provinces',
+    paint: { 
+      'line-color': '#92400e',  // 更深的棕色
+      'line-width': 1.5,         // 更粗的线条
+      'line-opacity': 0.8,       // 更高的不透明度
+      'line-dasharray': [3, 2]   // 虚线样式
+    }
+  });
+  console.log('省界图层已更新到最上层');
 }
 
 function loadDynasty(id) {
@@ -897,6 +916,9 @@ function loadDynasty(id) {
         paint: { 'line-color': color, 'line-width': 2, 'line-opacity': 0.8 }
       });
       console.log('朝代疆域图层添加完成');
+      
+      // 重新添加省界到最上层（确保省界不被朝代疆域遮挡）
+      addProvinceLayers();
     })
     .catch(err => console.error('朝代疆域加载失败:', err));
 }
