@@ -2728,48 +2728,49 @@ src/
 > **L3 是默认必选项。L1 课件生成完毕后，AI 必须立即自动执行以下全部步骤生成语音讲解，不等待用户确认。**
 > **唯一跳过条件**：用户在下达任务时明确说了"不要语音/不要配音/不要TTS"。
 
-> ⚠️ **重要变更**：**强制使用本地系统 TTS（macOS `say` 命令）**，不再使用 edge-tts。
-> 原因：
+> ⚠️ **重要变更**：**强制使用跨平台本地 TTS**，不再使用 edge-tts。
+> 
+> **支持平台**：
+> - ✅ **macOS**：使用系统内置 `say` 命令（48kHz 高质量）
+> - ✅ **Windows**：使用 `pyttsx3`（SAPI5 引擎，自动安装）
+> - ❌ **Linux**：暂不支持（v6.3.0 计划支持 `espeak`）
+> 
+> **为什么切换**：
 > - ✅ 完全离线，无需网络
-> - ✅ 高质量音频（48kHz采样率）
+> - ✅ 高质量音频（macOS 48kHz，Windows 16kHz）
 > - ✅ 免费无限制
 > - ✅ 生成速度快（无网络延迟）
-> - ❌ edge-tts 依赖网络，音质不稳定
+> - ✅ 自动安装依赖（Windows 用户无感）
+> - ❌ edge-tts 依赖网络，音质不稳定，连接失败率高
 
 #### L3 自动安装流程（AI 在终端中执行）
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
-│  L3 本地 TTS 自动安装流程                                │
+│  L3 跨平台本地 TTS 自动安装流程                          │
 ├─────────────────────────────────────────────────────────┤
 │                                                         │
-│  1. 检测操作系统                                         │
-│     → uname -s（必须为 Darwin/macOS）                   │
-│     → 非 macOS？报错并提示安装 macOS 系统语音            │
+│  1. 检测 Python 环境                                     │
+│     → python3 --version                                 │
+│     → 缺失？安装：install_binary python 3.12.0          │
 │                                                         │
-│  2. 检测 say 命令                                       │
-│     → which say                                         │
-│     → say --version                                     │
+│  2. 自动检测操作系统                                     │
+│     → macOS：使用 say 命令                              │
+│     → Windows：自动安装 pyttsx3                         │
+│     → Linux：报错（暂不支持）                           │
 │                                                         │
-│  3. 检查可用语音                                         │
-│     → say -v ?  | grep -i "ting\|samantha"             │
-│     → 确认中文语音 Tingting 和英文语音 Samantha 可用     │
-│                                                         │
-│  4. （可选）安装 ffmpeg 优化音质                         │
-│     → which ffmpeg || brew install ffmpeg               │
-│     → 无 ffmpeg 也可用，但输出为 AIFF 格式              │
-│                                                         │
-│  5. 编写旁白脚本                                         │
+│  3. 编写旁白脚本                                         │
 │     → scripts/narration_zh.json（+ narration_en.json）  │
 │                                                         │
-│  6. 生成本地 TTS 脚本                                   │
-│     → scripts/generate-tts-local.py                     │
+│  4. 生成跨平台 TTS 脚本                                 │
+│     → scripts/generate-tts-cross-platform.py（已预置）  │
 │                                                         │
-│  7. 执行语音生成                                         │
-│     → python3 scripts/generate-tts-local.py zh          │
-│     → python3 scripts/generate-tts-local.py en（双语）  │
+│  5. 执行语音生成                                         │
+│     → python3 scripts/generate-tts-cross-platform.py zh │
+│     → python3 scripts/generate-tts-cross-platform.py en │
+│     → 首次运行自动安装依赖（Windows 用户）              │
 │                                                         │
-│  8. 生成 SRT 字幕                                       │
+│  6. 生成 SRT 字幕                                       │
 │     → python3 scripts/generate-srt.py zh                │
 │     → python3 scripts/generate-srt.py en（如双语）      │
 │                                                         │
@@ -2782,31 +2783,48 @@ src/
 
 | 情况 | 处理方式 |
 |:---|:---|
-| 非 macOS 系统 | **报错并停止**，提示："本地 TTS 仅支持 macOS 系统。请在 macOS 环境下使用 TeachAny，或联系开发者添加 Windows/Linux 支持。" |
-| say 命令不可用 | **报错并停止**，提示："未检测到 macOS say 命令，请检查系统完整性。" |
-| 中文语音缺失 | 自动降级到系统默认语音，提示："未安装 Tingting 语音，使用系统默认中文语音。建议在【系统偏好设置 → 辅助功能 → 语音】中下载高质量中文语音。" |
-| ffmpeg 未安装 | 输出 AIFF 格式音频，提示："未安装 ffmpeg，输出为 AIFF 格式（文件较大）。建议安装：`brew install ffmpeg`" |
+| Linux 系统 | **报错并停止**，提示："本地 TTS 暂不支持 Linux。请等待 v6.3.0 版本，或使用 macOS/Windows。" |
+| Python 不可用 | 生成旁白脚本和 TTS 脚本，提示用户安装 Python 3.12+ 后执行 |
+| Windows pyttsx3 安装失败 | 脚本会自动重试，失败提示："请手动安装：`pip install pyttsx3`" |
+| macOS 中文语音缺失 | 自动降级到系统默认语音，提示安装 Tingting（见下表） |
+| Windows 中文语音缺失 | 自动降级到系统默认语音，提示安装中文语音包（Windows 设置） |
 
-**注意**：macOS 系统 TTS **完全免费**——系统内置。无需网络、无 API Key、无配额限制。
+**注意**：本地系统 TTS **完全免费**——系统内置。无需网络、无 API Key、无配额限制。
 
-#### 语音选择（macOS 系统）
+#### 语音选择
+
+##### macOS 系统
 
 | 语言 | Voice 名称 | 风格 | 下载方式 |
 |:-----|:---------|:-----|:---------|
-| **中文（女声）** | `Tingting` | 温暖清晰，K-12 推荐 | 系统偏好设置 → 辅助功能 → 语音 → "简体中文" |
+| **中文（女声）** | `Tingting` | 温暖清晰，K-12 推荐 ⭐ | 系统偏好设置 → 辅助功能 → 语音 → "简体中文" |
 | **中文（女声）** | `Meijia` | 年轻清脆 | 同上 |
-| **英文（女声）** | `Samantha` | 清晰标准美式 | 系统预装 |
+| **英文（女声）** | `Samantha` | 清晰标准美式 ⭐ | 系统预装 |
 | **英文（女声）** | `Alex` | 系统默认 | 系统预装 |
-| **英文（男声）** | `Daniel`（英音） | 专业成熟 | 系统偏好设置 → 辅助功能 → 语音 |
+
+##### Windows 系统
+
+| 语言 | Voice 名称 | 风格 | 下载方式 |
+|:-----|:---------|:-----|:---------|
+| **中文（女声）** | `Microsoft Huihui` | SAPI5 中文 | Windows 设置 → 时间和语言 → 语音 |
+| **中文（女声）** | `Microsoft Yaoyao` | SAPI5 中文（高级） | 需下载语音包 |
+| **英文（女声）** | `Microsoft Zira` | SAPI5 英语 ⭐ | 系统预装 |
+| **英文（男声）** | `Microsoft David` | SAPI5 英语 | 系统预装 |
+
+**Windows 语音包安装**：
+```
+设置 → 时间和语言 → 语音 → 添加语音 → 中文（简体，中国）
+```
 
 **语音质量对比**：
 
-| 特性 | macOS say | edge-tts（已弃用） |
-|:---|:---:|:---:|
-| 音质 | ⭐⭐⭐⭐⭐ 48kHz | ⭐⭐⭐ 24kHz |
-| 速度 | ⭐⭐⭐⭐⭐ 即时 | ⭐⭐ 需网络 |
-| 稳定性 | ⭐⭐⭐⭐⭐ 离线 | ⭐⭐⭐ 依赖网络 |
-| 成本 | ✅ 免费 | ✅ 免费 |
+| 特性 | macOS say | Windows pyttsx3 | edge-tts（已弃用） |
+|:---|:---:|:---:|:---:|
+| 音质 | ⭐⭐⭐⭐⭐ 48kHz | ⭐⭐⭐⭐ 16kHz | ⭐⭐⭐ 24kHz |
+| 速度 | ⭐⭐⭐⭐⭐ 即时 | ⭐⭐⭐⭐ 即时 | ⭐⭐ 需网络 |
+| 稳定性 | ⭐⭐⭐⭐⭐ 离线 | ⭐⭐⭐⭐⭐ 离线 | ⭐⭐⭐ 依赖网络 |
+| 成本 | ✅ 免费 | ✅ 免费 | ✅ 免费 |
+| 跨平台 | ❌ 仅 macOS | ❌ 仅 Windows | ✅ 全平台（需网络） |
 
 #### TTS 脚本格式
 
@@ -2835,68 +2853,46 @@ src/
 ]
 ```
 
-#### 本地 TTS 生成脚本
+#### 跨平台 TTS 生成脚本
 
-`scripts/generate-tts-local.py`（已预置）：
+`scripts/generate-tts-cross-platform.py`（已预置，自动检测系统）：
 ```python
 #!/usr/bin/env python3
-"""使用 macOS say 命令生成高质量本地语音"""
-# 完整脚本见：scripts/generate-tts-local.py
+"""
+跨平台本地 TTS 生成器
+- macOS: 使用 say 命令（48kHz）
+- Windows: 使用 pyttsx3（自动安装）
+- Linux: 暂不支持
+"""
+# 完整脚本见：scripts/generate-tts-cross-platform.py
 
 # 使用示例
-# python3 scripts/generate-tts-local.py zh
-# python3 scripts/generate-tts-local.py en --voice Samantha
-# python3 scripts/generate-tts-local.py zh --rate 180 --overwrite
+# python3 scripts/generate-tts-cross-platform.py zh
+# python3 scripts/generate-tts-cross-platform.py en --rate 180
+# python3 scripts/generate-tts-cross-platform.py zh --list-voices
 ```
 
 **使用方法**：
 ```bash
-# 生成中文语音（默认使用 Tingting）
-python3 scripts/generate-tts-local.py zh
+# 生成中文语音（macOS: Tingting, Windows: Microsoft Huihui）
+python3 scripts/generate-tts-cross-platform.py zh
 
-# 生成英文语音（默认使用 Samantha）
-python3 scripts/generate-tts-local.py en
+# 生成英文语音（macOS: Samantha, Windows: Microsoft Zira）
+python3 scripts/generate-tts-cross-platform.py en
 
 # 列出系统可用语音
-python3 scripts/generate-tts-local.py zh --list-voices
+python3 scripts/generate-tts-cross-platform.py zh --list-voices
 
-# 自定义语速（单词/分钟，默认 180）
-python3 scripts/generate-tts-local.py zh --rate 200
+# 自定义语速（默认 180）
+python3 scripts/generate-tts-cross-platform.py zh --rate 200
+
+# 覆盖已存在的音频
+python3 scripts/generate-tts-cross-platform.py zh --overwrite
 ```
 
-async def generate_episode(episode_data, lang, output_dir):
-    voice = VOICE_MAP[lang]
-    os.makedirs(output_dir, exist_ok=True)
-    
-    for seg in episode_data["segments"]:
-        mp3_path = os.path.join(output_dir, f"{seg['id']}_{lang}.mp3")
-        communicate = edge_tts.Communicate(seg["text"], voice)
-        await communicate.save(mp3_path)
-        print(f"✅ {mp3_path}")
-
-async def main():
-    import sys
-    lang = sys.argv[1] if len(sys.argv) > 1 else "zh"
-    script_file = f"scripts/narration_{lang}.json"
-    
-    with open(script_file, "r", encoding="utf-8") as f:
-        episodes = json.load(f)
-    
-    for ep in episodes:
-        output_dir = f"public/tts/{ep['episode']}"
-        await generate_episode(ep, lang, output_dir)
-    
-    print(f"\n🎤 所有 {lang} 旁白生成完毕！")
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-运行：
-```bash
-python3 scripts/generate-tts.py zh   # 生成中文旁白
-python3 scripts/generate-tts.py en   # 生成英文旁白
-```
+**首次运行（Windows）**：
+- 脚本会自动安装 `pyttsx3`（约 5 秒）
+- 无需手动安装任何依赖
 
 ### 15.5 双语字幕系统
 
