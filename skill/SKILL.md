@@ -659,8 +659,8 @@ Three visual themes are provided, matched to student age groups. **Always determ
 Depending on task scope, deliver some or all of the following:
 
 **L1 — Interactive Courseware** (Always):
-- `public/index.html`: Complete interactive web courseware (Chinese)
-- `public/index_en.html`: Complete interactive web courseware (English, if bilingual)
+- `index.html`: Complete interactive web courseware (Chinese)
+- `index_en.html`: Complete interactive web courseware (English, if bilingual)
 - Exercise questions and feedback design
 - Open task rubrics
 - Pre-test / Post-test question sets
@@ -679,8 +679,8 @@ Depending on task scope, deliver some or all of the following:
 - `scripts/narration_en.json`: English narration script with frame timestamps
 - `scripts/generate-tts.py`: Edge TTS generation script
 - `scripts/generate-srt.py`: SRT subtitle export script
-- `public/tts/*.mp3`: Generated voice audio files
-- `public/tts/*.srt`: Generated subtitle files
+- `tts/*.mp3`: Generated voice audio files
+- `tts/*.srt`: Generated subtitle files
 
 ---
 
@@ -726,9 +726,9 @@ TeachAny supports an optional **video + AI narration** layer on top of the inter
 
 | Layer | Output | Dependencies | Required? |
 |:------|:-------|:-------------|:----------|
-| **L1 — Interactive Courseware** | `public/index.html` | None (zero-dependency) | ✅ Always |
+| **L1 — Interactive Courseware** | `index.html` | None (zero-dependency) | ✅ Always |
 | **L2 — Teaching Animations** | `out/*.mp4` via Remotion | Node.js ≥ 18, npm, ffmpeg | Optional |
-| **L3 — AI Voice Narration** | `public/tts/*.mp3` + `public/tts/*.srt` | Python 3.8+, edge-tts | Optional |
+| **L3 — AI Voice Narration** | `tts/*.mp3` + `tts/*.srt` | Python 3.8+, edge-tts | Optional |
 
 **Key Principle**: L1 always works standalone. L2 and L3 are progressive enhancements.
 
@@ -785,7 +785,7 @@ npm install remotion @remotion/cli @remotion/bundler react react-dom typescript 
 
 ```bash
 node generate-sfx.js
-# Creates public/sfx/{pop,step,highlight,success,whoosh,ding,error}.wav
+# Creates sfx/{pop,step,highlight,success,whoosh,ding,error}.wav
 ```
 
 The `generate-sfx.js` script is a pure Node.js WAV encoder with zero dependencies, generating 7 sound effect types used by the `SfxPlayer` component.
@@ -932,7 +932,7 @@ async def main():
         episodes = json.load(f)
     
     for ep in episodes:
-        output_dir = f"public/tts/{ep['episode']}"
+        output_dir = f"tts/{ep['episode']}"
         await generate_episode(ep, lang, output_dir)
     
     print(f"\n🎤 All {lang} narration generated!")
@@ -1067,7 +1067,7 @@ def generate_srt(narration_file, lang, output_path):
 
 if __name__ == "__main__":
     lang = sys.argv[1] if len(sys.argv) > 1 else "zh"
-    generate_srt(f"scripts/narration_{lang}.json", lang, f"public/tts/subtitles_{lang}.srt")
+    generate_srt(f"scripts/narration_{lang}.json", lang, f"tts/subtitles_{lang}.srt")
 ```
 
 ### 15.6 Language Configuration
@@ -1088,45 +1088,37 @@ When executing TeachAny, the user can specify language preferences:
 ### 15.7 Complete Project File Structure
 
 ```text
-teachany-course/
-├── package.json
-├── tsconfig.json
-├── remotion.config.ts
-├── generate-sfx.js                    # SFX generator (Node.js, zero-dep)
-├── scripts/
-│   ├── generate-tts.py                # Edge TTS generator
-│   ├── generate-srt.py                # SRT subtitle exporter
-│   ├── render-all.js                  # Batch render all compositions
-│   ├── narration_zh.json              # Chinese narration script
-│   └── narration_en.json              # English narration script
-├── public/
-│   ├── index.html                     # L1: Interactive courseware (Chinese)
-│   ├── index_en.html                  # L1: Interactive courseware (English)
-│   ├── sfx/                           # Generated sound effects
-│   │   ├── pop.wav
-│   │   ├── step.wav
-│   │   ├── highlight.wav
-│   │   ├── success.wav
-│   │   ├── whoosh.wav
-│   │   ├── ding.wav
-│   │   └── error.wav
-│   └── tts/                           # Generated TTS audio & subtitles
-│       ├── Episode01/
-│       │   ├── seg01_zh.mp3
-│       │   ├── seg01_en.mp3
-│       │   └── ...
-│       ├── subtitles_zh.srt
-│       └── subtitles_en.srt
-├── src/
-│   ├── index.tsx                      # Remotion entry
-│   ├── Root.tsx                       # Composition registration
-│   ├── SfxPlayer.tsx                  # Sound effects component
-│   ├── SubtitleTrack.tsx              # Bilingual subtitle overlay
+{course-id}/                            # Course root directory
+├── index.html                          # L1: Interactive courseware (Chinese)
+├── index_en.html                       # L1: Interactive courseware (English, if bilingual)
+├── manifest.json                       # Courseware metadata (required)
+├── tts/                                # L3: TTS audio & subtitles
+│   ├── seg01_zh.mp3
+│   ├── seg02_zh.mp3
+│   ├── ...
+│   ├── subtitles_zh.srt
+│   └── subtitles_en.srt               # (if bilingual)
+├── assets/                             # Illustrations/images (as needed)
+│   └── *.png
+├── sfx/                                # Sound effects (if L2 is used)
+│   ├── pop.wav
+│   ├── step.wav
+│   └── ...
+├── scripts/                            # TTS/animation generation scripts
+│   ├── generate-tts.py                 # Edge TTS generator
+│   ├── generate-srt.py                 # SRT subtitle exporter
+│   ├── narration_zh.json               # Chinese narration script
+│   └── narration_en.json               # English narration script
+├── src/                                # L2: Remotion animation source (as needed)
+│   ├── index.tsx
+│   ├── Root.tsx
 │   └── compositions/
-│       ├── Episode01.tsx
-│       ├── Episode02.tsx
-│       └── ...
-└── out/                               # Rendered videos
+│       └── *.tsx
+└── out/                                # L2: Rendered videos (as needed)
+    └── *.mp4
+```
+
+> **⚠️ Important**: Courseware files do **NOT** use a `public/` subdirectory. `index.html`, `tts/`, `assets/`, etc. go directly in the course root. This ensures GitHub Pages can serve all files correctly when pushed to the repository.
     ├── Episode01.mp4
     ├── Episode02.mp4
     └── ...
@@ -2206,7 +2198,7 @@ A single JSON file placed alongside the gallery page (or at a known relative pat
       "node": "linear-function",
       "subject": "math",
       "title": "一次函数",
-      "url": "./linear-function-course/public/index.html",
+      "url": "./examples/math-linear-function/index.html",
       "prereqs": ["math-proportional-function", "math-coordinate-system"],
       "next": ["math-quadratic-function"],
       "difficulty": 3,
@@ -2217,7 +2209,7 @@ A single JSON file placed alongside the gallery page (or at a known relative pat
       "node": "quadratic-function",
       "subject": "math",
       "title": "二次函数",
-      "url": "./quadratic-function-course/public/index.html",
+      "url": "./examples/math-quadratic-function/index.html",
       "prereqs": ["math-linear-function"],
       "next": ["math-quadratic-equation-graph"],
       "difficulty": 4,
@@ -2600,7 +2592,7 @@ When generating a new courseware, the AI **must** also output:
   "node": "linear-function",
   "subject": "math",
   "title": "一次函数",
-  "url": "./linear-function-course/public/index.html",
+  "url": "./examples/math-linear-function/index.html",
   "prereqs": ["math-proportional-function", "math-coordinate-system"],
   "next": ["math-quadratic-function"],
   "difficulty": 3,

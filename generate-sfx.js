@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
  * TeachAny zero-dependency WAV SFX generator.
- * Generates seven teaching-friendly sound effects into public/sfx.
+ * Generates seven teaching-friendly sound effects into sfx/.
  */
 const fs = require('fs');
 const path = require('path');
 
 const ROOT = __dirname;
-const OUT_DIR = path.join(ROOT, 'public', 'sfx');
+const OUT_DIR = path.join(ROOT, 'sfx');
 const SAMPLE_RATE = 44100;
 
 const SOUND_PRESETS = {
