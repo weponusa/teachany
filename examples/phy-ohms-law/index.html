@@ -1151,121 +1151,18 @@
       btn.classList.toggle('muted', !enabled);
     });
 
-    // ==================== SpeechSynthesis Narration System ====================
+    // ==================== NarrationEngine Stub (Edge TTS MP3 is primary) ====================
+    // Web Speech API removed — all narration uses pre-recorded Edge TTS mp3 files.
     const NarrationEngine = (() => {
-      let enabled = false;
-      let speaking = false;
-      let currentUtterance = null;
-      let speed = 1.0;
-
-      // Narration scripts for each section
-      const scripts = {
-        intro: [
-          '同学们好！今天我们来学习欧姆定律。',
-          '你已经知道了电路中有电流，也了解了电压和电阻。但是，它们之间到底是什么关系呢？',
-          '电压变大，电流会怎么变？电阻变大呢？这就是欧姆定律要回答的问题。',
-          '想一想：如果给你一个电池、一个小灯泡和几根导线，你能让灯泡变亮或变暗吗？'
-        ],
-        concept: [
-          '德国物理学家欧姆通过大量实验发现了一个重要规律。',
-          '当电阻不变时，电流与电压成正比。当电压不变时，电流与电阻成反比。',
-          '欧姆定律的内容是：导体中的电流，与导体两端的电压成正比，与导体的电阻成反比。',
-          '公式是 I 等于 U 除以 R。其中 I 是电流，单位安培；U 是电压，单位伏特；R 是电阻，单位欧姆。',
-          '注意：R 等于 U 除以 I 只是计算式，电阻是导体本身的性质，不随电压和电流改变！'
-        ],
-        simulator: [
-          '现在让我们来做一个互动实验！',
-          '拖动电压滑块改变电压，观察电流如何变化。',
-          '再试试改变电阻，看看电流是变大还是变小。',
-          '记住：电压越大电流越大，电阻越大电流越小。这就是欧姆定律！'
-        ],
-        deep: [
-          '让我们更深入地理解欧姆定律。',
-          '可以把电路想象成水管系统：电压相当于水压，电流相当于水流量，电阻相当于水管的粗细。',
-          '一个常见的错误是认为电阻与电压成正比、与电流成反比。这是不对的！电阻是导体本身的性质。',
-          '在生活中，家庭用电220伏，不同电器电阻不同所以电流不同。调光手电筒通过改变电阻来调节亮度。'
-        ],
-        practice: [
-          '现在来做几道练习题，检验一下你的掌握程度！',
-          '第一题是基础题，直接用公式 I 等于 U 除以 R 计算。',
-          '第二题需要用到变形公式 U 等于 I 乘以 R。',
-          '第三题是挑战题，需要分析电压变化和电流变化的关系。',
-          '加油！做完这些题你就真正掌握欧姆定律了！'
-        ]
+      return {
+        speak() {},
+        speakSection() {},
+        stop() {},
+        toggle() { return false; },
+        setSpeed() {},
+        isEnabled: () => false,
+        isSpeaking: () => false
       };
-
-      function speak(text) {
-        if (!enabled || !window.speechSynthesis) return;
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'zh-CN';
-        utterance.rate = speed;
-        utterance.pitch = 1.0;
-        
-        // Try to find a Chinese voice
-        const voices = window.speechSynthesis.getVoices();
-        const zhVoice = voices.find(v => v.lang.startsWith('zh'));
-        if (zhVoice) utterance.voice = zhVoice;
-
-        utterance.onstart = () => { speaking = true; updateUI(); };
-        utterance.onend = () => { speaking = false; updateUI(); };
-        utterance.onerror = () => { speaking = false; updateUI(); };
-
-        currentUtterance = utterance;
-        window.speechSynthesis.speak(utterance);
-      }
-
-      function speakSection(sectionId) {
-        if (!enabled) return;
-        const sectionScripts = scripts[sectionId];
-        if (!sectionScripts) return;
-
-        let fullText = sectionScripts.join('。 ');
-        speak(fullText);
-      }
-
-      function stop() {
-        if (window.speechSynthesis) {
-          window.speechSynthesis.cancel();
-        }
-        speaking = false;
-        updateUI();
-      }
-
-      function toggle() {
-        enabled = !enabled;
-        if (!enabled) stop();
-        updateUI();
-        return enabled;
-      }
-
-      function setSpeed(s) {
-        speed = s;
-      }
-
-      function updateUI() {
-        const btn = document.getElementById('voiceToggle');
-        if (speaking) {
-          btn.classList.add('active');
-          btn.textContent = '⏹️';
-          btn.title = '停止讲解';
-        } else {
-          btn.classList.remove('active');
-          btn.textContent = enabled ? '🔊' : '🔇';
-          btn.title = enabled ? '语音讲解' : '语音已关闭';
-        }
-
-        // Waveform bar
-        const bar = document.getElementById('waveformBar');
-        if (speaking) {
-          bar.style.width = '100%';
-          bar.style.transition = 'width 0.3s';
-        } else {
-          bar.style.width = '0%';
-        }
-      }
-
-      return { speak, speakSection, stop, toggle, setSpeed, isEnabled: () => enabled, isSpeaking: () => speaking };
     })();
 
     // ==================== PreRecordedAudioEngine (Section 20) ====================
@@ -1509,15 +1406,10 @@
       };
     })();
 
-    // Voice toggle button — uses PreRecordedAudioEngine (mp3) instead of TTS
+    // Voice toggle button — uses PreRecordedAudioEngine (Edge TTS mp3)
     document.getElementById('voiceToggle').addEventListener('click', () => {
       const player = PreRecordedAudioEngine.getPlayer();
       const isPlaying = player && !player.paused && player.readyState >= 2;
-
-      // Stop TTS first if it's speaking
-      if (NarrationEngine.isSpeaking()) {
-        NarrationEngine.stop();
-      }
 
       if (isPlaying) {
         // Currently playing pre-recorded audio → pause
@@ -1529,14 +1421,6 @@
         const segIdx = sectionAudioMap[currentSection];
         if (segIdx !== undefined) {
           PreRecordedAudioEngine.playSegment(segIdx);
-          SoundEngine.click();
-        } else {
-          // Fallback to TTS if no pre-recorded segment mapping
-          const enabled = NarrationEngine.toggle();
-          if (enabled) {
-            const sections = ['intro', 'concept', 'simulator', 'deep', 'practice'];
-            NarrationEngine.speakSection(sections[currentSection]);
-          }
           SoundEngine.click();
         }
       }
@@ -1555,10 +1439,7 @@
       document.getElementById('voiceSpeedVal').textContent = val.toFixed(1) + 'x';
     });
 
-    // Load voices
-    if (window.speechSynthesis) {
-      window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
-    }
+    // Edge TTS mp3 is used — no browser speech synthesis needed
 
     // ==================== TeachAny Adaptive Engine ====================
     const TeachAnyAdaptive = (() => {
