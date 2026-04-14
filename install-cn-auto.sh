@@ -13,7 +13,7 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 # 配置项
-GITEE_URL="https://gitee.com/wepon/teachany-opensource.git"
+GITEE_URL="https://gitee.com/weponusa/teachany.git"
 INSTALL_DIR="$HOME/.agents/skills/teachany-opensource"
 TEMP_DIR="/tmp/teachany-install-$$"
 
@@ -79,7 +79,7 @@ main() {
         echo "正在尝试备用下载方式..."
         
         # 备用：直接下载 ZIP
-        curl -L "https://gitee.com/wepon/teachany-opensource/repository/archive/main.zip" -o teachany.zip
+        curl -L "https://gitee.com/weponusa/teachany/repository/archive/main.zip" -o teachany.zip
         unzip -q teachany.zip
         mv teachany-opensource-main teachany-opensource
         print_success "使用备用方式下载成功"
@@ -129,7 +129,7 @@ main() {
     echo "  ${INSTALL_DIR}/INSTALL_CN.md"
     echo ""
     echo "❓ 遇到问题？"
-    echo "  - Gitee Issues: https://gitee.com/wepon/teachany-opensource/issues"
+    echo "  - Gitee Issues: https://gitee.com/weponusa/teachany/issues"
     echo "  - 微信交流群：[扫码加入]"
     echo ""
 }

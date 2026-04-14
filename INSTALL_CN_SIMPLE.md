@@ -10,7 +10,7 @@
 
 **安装链接**（Gitee 镜像，国内高速）：
 ```
-https://gitee.com/wepon/teachany-opensource
+https://gitee.com/weponusa/teachany
 ```
 
 ### 安装步骤（30秒完成）
@@ -21,7 +21,7 @@ https://gitee.com/wepon/teachany-opensource
 
 3. **输入安装命令**：
    ```
-   /install-skill https://gitee.com/wepon/teachany-opensource
+   /install-skill https://gitee.com/weponusa/teachany
    ```
    或者在 **Skills 管理** 界面：
    - 点击 **"从 URL 安装"**
@@ -114,7 +114,7 @@ https://gitee.com/wepon/teachany-opensource
 
 当有新版本发布时，重新运行安装命令即可：
 ```
-/install-skill https://gitee.com/wepon/teachany-opensource
+/install-skill https://gitee.com/weponusa/teachany
 ```
 
 WorkBuddy 会自动：
@@ -166,7 +166,7 @@ WorkBuddy 会自动：
 ## 📞 技术支持
 
 ### 反馈渠道
-- **Gitee Issues**：https://gitee.com/wepon/teachany-opensource/issues
+- **Gitee Issues**：https://gitee.com/weponusa/teachany/issues
 - **微信交流群**：[扫码加入]
 - **QQ群**：123456789
 - **邮箱**：support@teachany.cn
@@ -230,7 +230,7 @@ TeachAny 的核心理念：
 ✅ 完全免费，无需翻墙
 
 一键安装（30秒）：
-/install-skill https://gitee.com/wepon/teachany-opensource
+/install-skill https://gitee.com/weponusa/teachany
 
 试试看：/teachany 请生成"一次函数"的课件
 ```
@@ -247,7 +247,7 @@ TeachAny 的核心理念：
 **复制这个命令，粘贴到 CodeBuddy/WorkBuddy**：
 
 ```
-/install-skill https://gitee.com/wepon/teachany-opensource
+/install-skill https://gitee.com/weponusa/teachany
 ```
 
 **30秒后，您就可以用 AI 生成专业课件了！** 🎉

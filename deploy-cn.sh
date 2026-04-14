@@ -10,7 +10,7 @@ echo "=========================================="
 
 # 配置项
 GITEE_REMOTE="gitee"
-GITEE_URL="https://gitee.com/wepon/teachany-opensource.git"
+GITEE_URL="https://gitee.com/weponusa/teachany.git"
 VERSION=$(date +%Y.%m.%d)
 
 # 颜色定义
@@ -59,11 +59,11 @@ echo "  1. GitHub（国际）："
 echo "     https://github.com/wepon/teachany-opensource"
 echo ""
 echo "  2. Gitee（国内镜像，推荐）："
-echo "     https://gitee.com/wepon/teachany-opensource"
+echo "     https://gitee.com/weponusa/teachany"
 echo ""
 echo "📝 一键安装命令："
 echo "  国内用户："
-echo "  /install-skill https://gitee.com/wepon/teachany-opensource"
+echo "  /install-skill https://gitee.com/weponusa/teachany"
 echo ""
 echo "  国际用户："
 echo "  /install-skill https://github.com/wepon/teachany-opensource"

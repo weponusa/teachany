@@ -10,7 +10,7 @@
 
 **安装命令**：
 ```bash
-/install-skill https://gitee.com/wepon/teachany-opensource
+/install-skill https://gitee.com/weponusa/teachany
 ```
 
 **特点**：
@@ -20,7 +20,7 @@
 - ✅ 支持一键安装
 - ✅ 支持 Git 克隆和下载
 
-**访问地址**：https://gitee.com/wepon/teachany-opensource
+**访问地址**：https://gitee.com/weponusa/teachany
 
 **同步频率**：每次 GitHub 主仓库更新后自动同步（通过 GitHub Actions）
 
@@ -60,10 +60,10 @@
 ### 从 Gitee 下载
 ```bash
 # 克隆仓库
-git clone https://gitee.com/wepon/teachany-opensource.git
+git clone https://gitee.com/weponusa/teachany.git
 
 # 或下载 ZIP
-curl -L https://gitee.com/wepon/teachany-opensource/repository/archive/main.zip -o teachany.zip
+curl -L https://gitee.com/weponusa/teachany/repository/archive/main.zip -o teachany.zip
 ```
 
 ### 从 GitHub 下载（需要翻墙）
@@ -95,7 +95,7 @@ curl -L https://github.com/wepon/teachany-opensource/archive/refs/heads/main.zip
 ### Q2: 如何验证 Gitee 镜像是否是最新版本？
 
 访问 Gitee 仓库页面，查看最后提交时间：
-- Gitee: https://gitee.com/wepon/teachany-opensource/commits/main
+- Gitee: https://gitee.com/weponusa/teachany/commits/main
 - GitHub: https://github.com/wepon/teachany-opensource/commits/main
 
 两者的最新提交应该是同一个。
@@ -110,14 +110,14 @@ WorkBuddy 一键安装会自动选择最快的源，无需手动切换。
 /uninstall-skill teachany
 
 # 安装新镜像版本
-/install-skill https://gitee.com/wepon/teachany-opensource
+/install-skill https://gitee.com/weponusa/teachany
 ```
 
 ### Q4: 如何获取更新？
 
 重新运行安装命令即可：
 ```bash
-/install-skill https://gitee.com/wepon/teachany-opensource
+/install-skill https://gitee.com/weponusa/teachany
 ```
 
 WorkBuddy 会自动检测到已安装，并更新到最新版本。
@@ -127,7 +127,7 @@ WorkBuddy 会自动检测到已安装，并更新到最新版本。
 ## 📞 技术支持
 
 ### 反馈渠道
-- **Gitee Issues**：https://gitee.com/wepon/teachany-opensource/issues
+- **Gitee Issues**：https://gitee.com/weponusa/teachany/issues
 - **GitHub Issues**：https://github.com/wepon/teachany-opensource/issues
 - **微信交流群**：[扫码加入]
 - **QQ群**：待创建

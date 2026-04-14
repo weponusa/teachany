@@ -810,42 +810,21 @@ window.addEventListener('DOMContentLoaded', async () => {
   updateInitProgress(40, '加载知识图谱网络...');
 
   try {
-    // 注入进度回调
     const sys = window.TeachAnyLearningPath;
-    const origInit = sys._doInitialize.bind(sys);
-    sys._doInitialize = async function() {
-      const innerT0 = performance.now();
-
-      updateInitProgress(45, '加载节点元数据和课件注册表...');
-      const [nodesData, registryData] = await Promise.all([
-        sys._fetchJSON('./data/nodes-metadata.json'),
-        sys._fetchJSON('./registry.json')
-      ]);
-
-      updateInitProgress(60, '构建节点索引...');
-      sys._buildNodeIndex(nodesData);
-      sys.stats = nodesData.stats;
-
-      updateInitProgress(65, '构建课件索引...');
-      sys._buildCourseIndex(registryData);
-
-      updateInitProgress(70, '构建反向索引...');
-      sys._buildReverseIndex();
-
-      updateInitProgress(75, '构建分类索引...');
-      sys._buildCategoryIndices();
-
-      updateInitProgress(80, '预计算所有学习路径...');
-      sys._precomputeAllPaths();
-
-      sys.initialized = true;
-      sys.initializing = false;
-
-      const elapsed = (performance.now() - innerT0).toFixed(0);
-      console.log(`[LearningPath] ✅ 初始化完成 (${elapsed}ms)`);
-    };
-
+    
+    // 简单的进度模拟(因为无法直接监听内部步骤)
+    const progressInterval = setInterval(() => {
+      const currentWidth = parseInt(document.getElementById('initProgress').style.width);
+      if (currentWidth < 95) {
+        updateInitProgress(Math.min(currentWidth + 5, 95), '正在处理...');
+      }
+    }, 100);
+    
+    // 执行初始化
     await sys.initialize();
+    
+    // 完成
+    clearInterval(progressInterval);
     systemReady = true;
 
     const totalElapsed = (performance.now() - t0).toFixed(0);
