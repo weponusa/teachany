@@ -2723,59 +2723,55 @@ src/
 - 通过 `SfxPlayer` 组件按帧触发音效
 - **中文字体**：SubtitleTrack 的 fontFamily 必须包含 `'Noto Sans SC'` 降级（见 15.5），渲染前确保系统已安装中文字体（见 15.2 步骤 2.5）
 
-### 15.4 本地系统 TTS 集成（强制）
+### 15.4 Edge TTS 集成（默认）
 
 > **L3 是默认必选项。L1 课件生成完毕后，AI 必须立即自动执行以下全部步骤生成语音讲解，不等待用户确认。**
 > **唯一跳过条件**：用户在下达任务时明确说了"不要语音/不要配音/不要TTS"。
 
-> ⚠️ **重要变更**：**强制使用跨平台本地 TTS**，不再使用 edge-tts。
+> ⚠️ **默认引擎**：**Edge TTS**（微软免费云端 TTS）。
 > 
 > **支持平台**：
-> - ✅ **macOS**：使用系统内置 `say` 命令（48kHz 高质量）
-> - ✅ **Windows**：使用 `pyttsx3`（SAPI5 引擎，自动安装）
-> - ❌ **Linux**：暂不支持（v6.3.0 计划支持 `espeak`）
+> - ✅ **全平台**：macOS / Windows / Linux（需网络）
 > 
-> **为什么切换**：
-> - ✅ 完全离线，无需网络
-> - ✅ 高质量音频（macOS 48kHz，Windows 16kHz）
-> - ✅ 免费无限制
-> - ✅ 生成速度快（无网络延迟）
-> - ✅ 自动安装依赖（Windows 用户无感）
-> - ❌ edge-tts 依赖网络，音质不稳定，连接失败率高
+> **为什么选择 Edge TTS**：
+> - ✅ 全平台支持，无需关心操作系统差异
+> - ✅ 高质量神经网络语音（24kHz，zh-CN-XiaoxiaoNeural）
+> - ✅ 完全免费，微软提供
+> - ✅ 安装简单：`pip3 install edge-tts`
+> - ✅ 语音自然度远超系统内置 TTS
+> 
+> **降级方案**（网络不可用时）：
+> - macOS：使用系统 `say` 命令
+> - Windows：使用 `pyttsx3`（SAPI5 引擎）
 
 #### L3 自动安装流程（AI 在终端中执行）
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
-│  L3 跨平台本地 TTS 自动安装流程                          │
+│  L3 Edge TTS 自动安装流程                                │
 ├─────────────────────────────────────────────────────────┤
 │                                                         │
 │  1. 检测 Python 环境                                     │
 │     → python3 --version                                 │
 │     → 缺失？安装：install_binary python 3.12.0          │
 │                                                         │
-│  2. 自动检测操作系统                                     │
-│     → macOS：使用 say 命令                              │
-│     → Windows：自动安装 pyttsx3                         │
-│     → Linux：报错（暂不支持）                           │
+│  2. 安装 edge-tts                                        │
+│     → pip3 install edge-tts                             │
+│     → 验证：edge-tts --list-voices                      │
 │                                                         │
 │  3. 编写旁白脚本                                         │
 │     → scripts/narration_zh.json（+ narration_en.json）  │
 │                                                         │
-│  4. 生成跨平台 TTS 脚本                                 │
-│     → scripts/generate-tts-cross-platform.py（已预置）  │
+│  4. 执行语音生成                                         │
+│     → python3 scripts/generate-tts.py zh                │
+│     → python3 scripts/generate-tts.py en（如双语）      │
 │                                                         │
-│  5. 执行语音生成                                         │
-│     → python3 scripts/generate-tts-cross-platform.py zh │
-│     → python3 scripts/generate-tts-cross-platform.py en │
-│     → 首次运行自动安装依赖（Windows 用户）              │
-│                                                         │
-│  6. 生成 SRT 字幕                                       │
+│  5. 生成 SRT 字幕                                       │
 │     → python3 scripts/generate-srt.py zh                │
 │     → python3 scripts/generate-srt.py en（如双语）      │
 │                                                         │
 │  ✅ 完成 → 输出 public/tts/*.mp3 + *.srt               │
-│  ⚠️ 失败 → 脚本已生成，提示用户检查系统语音设置         │
+│  ⚠️ 失败 → 降级到本地系统 TTS                           │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -2783,48 +2779,41 @@ src/
 
 | 情况 | 处理方式 |
 |:---|:---|
-| Linux 系统 | **报错并停止**，提示："本地 TTS 暂不支持 Linux。请等待 v6.3.0 版本，或使用 macOS/Windows。" |
-| Python 不可用 | 生成旁白脚本和 TTS 脚本，提示用户安装 Python 3.12+ 后执行 |
-| Windows pyttsx3 安装失败 | 脚本会自动重试，失败提示："请手动安装：`pip install pyttsx3`" |
-| macOS 中文语音缺失 | 自动降级到系统默认语音，提示安装 Tingting（见下表） |
-| Windows 中文语音缺失 | 自动降级到系统默认语音，提示安装中文语音包（Windows 设置） |
+| 网络不可用 | 降级到本地系统 TTS：macOS 使用 `say`，Windows 使用 `pyttsx3` |
+| edge-tts 安装失败 | 保留旁白脚本 JSON，降级到本地 TTS，提示用户联网后执行 `pip3 install edge-tts` |
+| Python 不可用 | 生成旁白脚本 JSON + generate-tts.py，提示用户安装 Python 3.12+ 后执行 |
+| edge-tts 生成失败（网络中断） | 保留脚本文件，提示用户在网络正常时重新执行 |
 
-**注意**：本地系统 TTS **完全免费**——系统内置。无需网络、无 API Key、无配额限制。
+**注意**：Edge TTS **完全免费**——微软免费提供。无 API Key、无配额限制。
 
 #### 语音选择
 
-##### macOS 系统
+##### Edge TTS 推荐语音
 
-| 语言 | Voice 名称 | 风格 | 下载方式 |
-|:-----|:---------|:-----|:---------|
-| **中文（女声）** | `Tingting` | 温暖清晰，K-12 推荐 ⭐ | 系统偏好设置 → 辅助功能 → 语音 → "简体中文" |
-| **中文（女声）** | `Meijia` | 年轻清脆 | 同上 |
-| **英文（女声）** | `Samantha` | 清晰标准美式 ⭐ | 系统预装 |
-| **英文（女声）** | `Alex` | 系统默认 | 系统预装 |
+| 语言 | Voice 名称 | 风格 | 推荐 |
+|:-----|:---------|:-----|:-----|
+| **中文（女声）** | `zh-CN-XiaoxiaoNeural` | 温暖清晰，K-12 推荐 | ⭐ 默认 |
+| **中文（女声）** | `zh-CN-XiaohanNeural` | 年轻活泼 | |
+| **中文（男声）** | `zh-CN-YunxiNeural` | 沉稳可靠 | |
+| **英文（女声）** | `en-US-AriaNeural` | 清晰标准美式 | ⭐ 默认 |
+| **英文（女声）** | `en-US-JennyNeural` | 自然流畅 | |
 
-##### Windows 系统
+##### 降级方案：本地系统语音
 
-| 语言 | Voice 名称 | 风格 | 下载方式 |
-|:-----|:---------|:-----|:---------|
-| **中文（女声）** | `Microsoft Huihui` | SAPI5 中文 | Windows 设置 → 时间和语言 → 语音 |
-| **中文（女声）** | `Microsoft Yaoyao` | SAPI5 中文（高级） | 需下载语音包 |
-| **英文（女声）** | `Microsoft Zira` | SAPI5 英语 ⭐ | 系统预装 |
-| **英文（男声）** | `Microsoft David` | SAPI5 英语 | 系统预装 |
-
-**Windows 语音包安装**：
-```
-设置 → 时间和语言 → 语音 → 添加语音 → 中文（简体，中国）
-```
+| 平台 | Voice 名称 | 使用命令 |
+|:-----|:---------|:---------|
+| **macOS** | `Tingting`（中文）/ `Samantha`（英文） | `say -v Tingting "text"` |
+| **Windows** | `Microsoft Huihui`（中文）/ `Microsoft Zira`（英文） | `pyttsx3` |
 
 **语音质量对比**：
 
-| 特性 | macOS say | Windows pyttsx3 | edge-tts（已弃用） |
+| 特性 | Edge TTS | macOS say | Windows pyttsx3 |
 |:---|:---:|:---:|:---:|
-| 音质 | ⭐⭐⭐⭐⭐ 48kHz | ⭐⭐⭐⭐ 16kHz | ⭐⭐⭐ 24kHz |
-| 速度 | ⭐⭐⭐⭐⭐ 即时 | ⭐⭐⭐⭐ 即时 | ⭐⭐ 需网络 |
-| 稳定性 | ⭐⭐⭐⭐⭐ 离线 | ⭐⭐⭐⭐⭐ 离线 | ⭐⭐⭐ 依赖网络 |
+| 音质 | ⭐⭐⭐⭐⭐ 24kHz 神经网络 | ⭐⭐⭐⭐ 48kHz | ⭐⭐⭐ 16kHz |
+| 自然度 | ⭐⭐⭐⭐⭐ 最佳 | ⭐⭐⭐ | ⭐⭐ |
+| 跨平台 | ✅ 全平台 | ❌ 仅 macOS | ❌ 仅 Windows |
+| 网络依赖 | ⚠️ 需网络 | ✅ 离线 | ✅ 离线 |
 | 成本 | ✅ 免费 | ✅ 免费 | ✅ 免费 |
-| 跨平台 | ❌ 仅 macOS | ❌ 仅 Windows | ✅ 全平台（需网络） |
 
 #### TTS 脚本格式
 
@@ -2853,46 +2842,49 @@ src/
 ]
 ```
 
-#### 跨平台 TTS 生成脚本
+#### Edge TTS 生成脚本
 
-`scripts/generate-tts-cross-platform.py`（已预置，自动检测系统）：
+`scripts/generate-tts.py`（已预置）：
 ```python
 #!/usr/bin/env python3
 """
-跨平台本地 TTS 生成器
-- macOS: 使用 say 命令（48kHz）
-- Windows: 使用 pyttsx3（自动安装）
-- Linux: 暂不支持
+Edge TTS 生成器
+- 全平台支持（macOS / Windows / Linux）
+- 使用微软免费神经网络语音
+- 默认语音：zh-CN-XiaoxiaoNeural
 """
-# 完整脚本见：scripts/generate-tts-cross-platform.py
+# 完整脚本见：scripts/generate-tts.py
 
 # 使用示例
-# python3 scripts/generate-tts-cross-platform.py zh
-# python3 scripts/generate-tts-cross-platform.py en --rate 180
-# python3 scripts/generate-tts-cross-platform.py zh --list-voices
+# python3 scripts/generate-tts.py zh
+# python3 scripts/generate-tts.py en --voice en-US-AriaNeural
+# python3 scripts/generate-tts.py zh --rate +10%
 ```
 
 **使用方法**：
 ```bash
-# 生成中文语音（macOS: Tingting, Windows: Microsoft Huihui）
-python3 scripts/generate-tts-cross-platform.py zh
+# 安装 edge-tts
+pip3 install edge-tts
 
-# 生成英文语音（macOS: Samantha, Windows: Microsoft Zira）
-python3 scripts/generate-tts-cross-platform.py en
+# 生成中文语音（默认：zh-CN-XiaoxiaoNeural）
+python3 scripts/generate-tts.py zh
 
-# 列出系统可用语音
-python3 scripts/generate-tts-cross-platform.py zh --list-voices
+# 生成英文语音（默认：en-US-AriaNeural）
+python3 scripts/generate-tts.py en
 
-# 自定义语速（默认 180）
-python3 scripts/generate-tts-cross-platform.py zh --rate 200
+# 自定义语音
+python3 scripts/generate-tts.py zh --voice zh-CN-YunxiNeural
+
+# 调整语速
+python3 scripts/generate-tts.py zh --rate +10%
 
 # 覆盖已存在的音频
-python3 scripts/generate-tts-cross-platform.py zh --overwrite
+python3 scripts/generate-tts.py zh --overwrite
 ```
 
-**首次运行（Windows）**：
-- 脚本会自动安装 `pyttsx3`（约 5 秒）
-- 无需手动安装任何依赖
+**降级方案（网络不可用时）**：
+- macOS：使用 `scripts/generate-tts-local.py`（系统 `say` 命令）
+- Windows：使用 `scripts/generate-tts-local.py`（`pyttsx3` 引擎）
 
 ### 15.5 双语字幕系统
 

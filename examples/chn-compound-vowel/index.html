@@ -867,8 +867,11 @@ function updateScore() {
 }
 
 // ============================================
-// Text-to-Speech for Pinyin
+// Text-to-Speech for Pinyin (Edge TTS MP3)
 // ============================================
+const _pinyinAudioCache = {};
+const _pinyinIdMap = { 'ai':'ai','ei':'ei','ao':'ao','ou':'ou','iu':'iu','ie':'ie','üe':'ve','er':'er','ui':'ui' };
+
 function speakPinyin(pinyin, fallbackChar) {
   // Visual feedback
   event.target.closest('.pinyin-bubble, .family-member, .compare-side')?.animate([
@@ -877,14 +880,27 @@ function speakPinyin(pinyin, fallbackChar) {
     { transform: 'scale(1)' }
   ], { duration: 300, easing: 'ease' });
 
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(fallbackChar);
-    utter.lang = 'zh-CN';
-    utter.rate = 0.7;
-    utter.pitch = 1.2;
-    window.speechSynthesis.speak(utter);
+  const fileId = _pinyinIdMap[pinyin] || pinyin;
+  const mp3Url = 'tts/' + fileId + '.mp3';
+
+  // Try pre-recorded Edge TTS mp3 first
+  if (!_pinyinAudioCache[fileId]) {
+    _pinyinAudioCache[fileId] = new Audio(mp3Url);
+    _pinyinAudioCache[fileId].preload = 'auto';
   }
+  const audio = _pinyinAudioCache[fileId];
+  audio.currentTime = 0;
+  audio.play().catch(() => {
+    // Fallback to Web Speech API if mp3 fails (e.g. file:// protocol)
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(fallbackChar);
+      utter.lang = 'zh-CN';
+      utter.rate = 0.7;
+      utter.pitch = 1.2;
+      window.speechSynthesis.speak(utter);
+    }
+  });
 }
 
 // ============================================
