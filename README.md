@@ -26,6 +26,28 @@
 
 ---
 
+## 🚀 One-Click Install
+
+### For International Users (GitHub)
+```bash
+/install-skill https://github.com/weponusa/teachany-opensource
+```
+
+### For Chinese Users 🇨🇳 (Gitee Mirror)
+**国内用户请使用 Gitee 镜像（无需翻墙，高速访问）：**
+```bash
+/install-skill https://gitee.com/wepon/teachany-opensource
+```
+
+**详细安装指南**：
+- 🌐 国际用户：See [Getting Started](docs/getting-started.md)
+- 🇨🇳 国内用户：查看 [一键安装指南](INSTALL_CN_SIMPLE.md)（推荐）
+- 📦 离线安装：[百度网盘](https://pan.baidu.com/s/xxx) | [完整教程](INSTALL_CN.md)
+
+> **What's included**: 7 subjects (Math, Physics, Chemistry, Biology, History, Geography, Chinese), 178+ high-quality teaching materials, aligned with 2022 curriculum standards.
+
+---
+
 ## 🤔 The Problem
 
 Most AI-generated educational content looks like this:
