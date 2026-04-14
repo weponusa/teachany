@@ -750,9 +750,9 @@ function drawPolicyChart(stability, strength) {
 let map;
 const dynastyColors = { 'qin':'#991b1b', 'west-han':'#d97706', 'east-han':'#059669' };
 const dynastyFiles = {
-  'qin': '../teachany-opensource/data/history/dynasties/qin-dynasty.geojson',
-  'west-han': '../teachany-opensource/data/history/dynasties/west-han-dynasty.geojson',
-  'east-han': '../teachany-opensource/data/history/dynasties/east-han-dynasty.geojson'
+  'qin': '../../data/history/dynasties/qin-dynasty.geojson',
+  'west-han': '../../data/history/dynasties/west-han-dynasty.geojson',
+  'east-han': '../../data/history/dynasties/east-han-dynasty.geojson'
 };
 let activeDynasty = 'qin';
 let layerStates = { battles: false, capitals: false, passes: false };
@@ -791,15 +791,16 @@ function initMap() {
     style: {
       version: 8,
       sources: {
-        'terrain-tiles': {
+        'terrain-dem': {
           type: 'raster-dem',
           tiles: [
-            '../../data/terrain-tiles/{z}/{x}/{y}.png'  // 本地地形瓦片
+            '../../data/terrain-tiles/{z}/{x}/{y}.png',
+            'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'
           ],
           encoding: 'terrarium',
           tileSize: 256,
           minzoom: 4,
-          maxzoom: 6
+          maxzoom: 15
         }
       },
       layers: [
@@ -811,18 +812,19 @@ function initMap() {
         {
           id: 'hillshade',
           type: 'hillshade',
-          source: 'terrain-tiles',
+          source: 'terrain-dem',
           paint: {
-            'hillshade-exaggeration': 0.5,
+            'hillshade-exaggeration': 0.6,
             'hillshade-shadow-color': '#5a4a3a',
             'hillshade-highlight-color': '#f5f0e8',
             'hillshade-illumination-direction': 315
           }
         }
-      ]
+      ],
+      glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf'
     },
     center: [108, 34],
-    zoom: 3.8,
+    zoom: 4.5,
     maxZoom: 10,
     minZoom: 3
   });
@@ -830,12 +832,40 @@ function initMap() {
   map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
   map.on('load', () => {
+    console.log('地图加载完成，开始加载数据图层...');
+    
+    // 加载本地省级行政边界
+    fetch('../../data/geography/modern-china/provinces.geojson')
+      .then(r => {
+        console.log('省级边界fetch响应状态:', r.status);
+        return r.ok ? r.json() : Promise.reject('provinces.geojson HTTP ' + r.status);
+      })
+      .then(data => {
+        console.log('省级边界数据加载成功，features数量:', data.features?.length);
+        map.addSource('china-provinces', { type: 'geojson', data });
+        map.addLayer({
+          id: 'provinces-fill',
+          type: 'fill',
+          source: 'china-provinces',
+          paint: { 'fill-color': '#f5f0e0', 'fill-opacity': 0.2 }
+        });
+        map.addLayer({
+          id: 'provinces-border',
+          type: 'line',
+          source: 'china-provinces',
+          paint: { 'line-color': '#78350f', 'line-width': 1.2, 'line-opacity': 0.5 }
+        });
+      })
+      .catch(err => console.error('省级边界加载失败:', err));
+
+    // 加载朝代疆域和标记点
     loadDynasty('qin');
     addMarkers();
   });
 }
 
 function loadDynasty(id) {
+  console.log('开始加载朝代疆域:', id);
   // Remove previous dynasty layer
   if (map.getLayer('dynasty-fill')) map.removeLayer('dynasty-fill');
   if (map.getLayer('dynasty-outline')) map.removeLayer('dynasty-outline');
@@ -843,25 +873,32 @@ function loadDynasty(id) {
 
   activeDynasty = id;
   const color = dynastyColors[id];
+  const url = dynastyFiles[id];
+  console.log('朝代GeoJSON路径:', url);
 
-  fetch(dynastyFiles[id])
-    .then(r => r.json())
+  fetch(url)
+    .then(r => {
+      console.log('朝代疆域fetch响应状态:', r.status);
+      return r.ok ? r.json() : Promise.reject('Dynasty GeoJSON HTTP ' + r.status);
+    })
     .then(data => {
+      console.log('朝代疆域数据加载成功，features数量:', data.features?.length);
       map.addSource('dynasty', { type: 'geojson', data });
       map.addLayer({
         id: 'dynasty-fill',
         type: 'fill',
         source: 'dynasty',
         paint: { 'fill-color': color, 'fill-opacity': 0.25 }
-      }, 'hillshade');
+      });
       map.addLayer({
         id: 'dynasty-outline',
         type: 'line',
         source: 'dynasty',
         paint: { 'line-color': color, 'line-width': 2, 'line-opacity': 0.8 }
       });
+      console.log('朝代疆域图层添加完成');
     })
-    .catch(err => console.warn('Dynasty load error:', err));
+    .catch(err => console.error('朝代疆域加载失败:', err));
 }
 
 function toggleDynasty(id, btn) {
@@ -875,8 +912,11 @@ function toggleDynasty(id, btn) {
 let battleMarkers = [], capitalMarkers = [], passMarkers = [];
 
 function addMarkers() {
+  console.log('开始创建标记点...');
+  console.log('战役数量:', battles.length, '都城数量:', capitals.length, '关隘数量:', passes.length);
+  
   // Pre-create markers (hidden)
-  battles.forEach(b => {
+  battles.forEach((b, idx) => {
     const el = document.createElement('div');
     el.style.cssText = 'width:20px;height:20px;background:#3b82f6;border:2px solid white;border-radius:50%;cursor:pointer;display:none;box-shadow:0 1px 4px rgba(0,0,0,0.3);';
     el.innerHTML = '<span style="position:absolute;top:-2px;left:-1px;font-size:14px">⚔️</span>';
@@ -886,6 +926,8 @@ function addMarkers() {
       .addTo(map);
     battleMarkers.push({ marker, el });
   });
+  console.log('战役标记创建完成:', battleMarkers.length);
+  
   capitals.forEach(c => {
     const el = document.createElement('div');
     el.style.cssText = 'width:24px;height:24px;background:#ef4444;border:2px solid white;border-radius:50%;cursor:pointer;display:none;box-shadow:0 1px 4px rgba(0,0,0,0.3);font-size:14px;text-align:center;line-height:20px;';
@@ -896,6 +938,8 @@ function addMarkers() {
       .addTo(map);
     capitalMarkers.push({ marker, el });
   });
+  console.log('都城标记创建完成:', capitalMarkers.length);
+  
   passes.forEach(p => {
     const el = document.createElement('div');
     el.style.cssText = 'width:18px;height:18px;background:#d97706;border:2px solid white;border-radius:3px;cursor:pointer;display:none;box-shadow:0 1px 4px rgba(0,0,0,0.3);font-size:11px;text-align:center;line-height:14px;';
@@ -906,6 +950,8 @@ function addMarkers() {
       .addTo(map);
     passMarkers.push({ marker, el });
   });
+  console.log('关隘标记创建完成:', passMarkers.length);
+  console.log('所有标记点创建完成（初始隐藏状态），需要点击按钮切换显示');
 }
 
 function toggleLayer(type, btn) {
