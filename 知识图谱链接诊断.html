@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>知识图谱链接诊断工具</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+      border-bottom: 3px solid #4CAF50;
+      padding-bottom: 10px;
+    }
+    .section {
+      background: white;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .test-item {
+      padding: 15px;
+      margin: 10px 0;
+      border-left: 4px solid #2196F3;
+      background: #f9f9f9;
+    }
+    .test-item.success {
+      border-color: #4CAF50;
+      background: #E8F5E9;
+    }
+    .test-item.error {
+      border-color: #f44336;
+      background: #FFEBEE;
+    }
+    .url-test {
+      font-family: monospace;
+      font-size: 14px;
+      padding: 8px;
+      background: #263238;
+      color: #00E676;
+      border-radius: 4px;
+      margin: 5px 0;
+      word-break: break-all;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 5px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    .status {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .status.ok {
+      background: #4CAF50;
+      color: white;
+    }
+    .status.fail {
+      background: #f44336;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔍 知识图谱链接诊断工具</h1>
+  
+  <div class="section">
+    <h2>环境信息</h2>
+    <div id="env-info"></div>
+  </div>
+  
+  <div class="section">
+    <h2>测试课件链接</h2>
+    <button onclick="testAllLinks()">🚀 开始测试</button>
+    <button onclick="clearCache()">🗑️ 清除缓存</button>
+    <button onclick="location.reload(true)">🔄 强制刷新</button>
+    <div id="test-results"></div>
+  </div>
+  
+  <div class="section">
+    <h2>知识树数据检查</h2>
+    <button onclick="loadAndCheckTree()">📊 加载知识树</button>
+    <div id="tree-results"></div>
+  </div>
+
+  <script>
+    // 显示环境信息
+    const envInfo = document.getElementById('env-info');
+    envInfo.innerHTML = `
+      <div class="url-test">当前URL: ${location.href}</div>
+      <div class="url-test">Host: ${location.hostname}</div>
+      <div class="url-test">Protocol: ${location.protocol}</div>
+      <div class="url-test">Base Path: ${location.pathname}</div>
+      <div class="url-test">Is GitHub Pages: ${location.hostname.includes('github.io')}</div>
+    `;
+
+    // 测试课件列表
+    const TEST_COURSES = [
+      { id: 'chn-compound-vowel', name: '复韵母' },
+      { id: 'math-linear-function', name: '一次函数' },
+      { id: 'chem-periodic-table', name: '元素周期表' },
+      { id: 'bio-photosynthesis', name: '光合作用' },
+      { id: 'phy-mid-pressure', name: '压强' }
+    ];
+
+    async function testCourseLink(courseId, courseName) {
+      const basePath = location.hostname.includes('github.io') ? '/teachany' : '';
+      const paths = [
+        `${basePath}/examples/${courseId}/index.html`,
+        `./examples/${courseId}/index.html`,
+        `examples/${courseId}/index.html`,
+        `${courseId}/index.html`
+      ];
+
+      const results = [];
+      for (const path of paths) {
+        try {
+          const fullUrl = new URL(path, location.href).href;
+          const resp = await fetch(fullUrl, { method: 'HEAD' });
+          results.push({
+            path,
+            url: fullUrl,
+            status: resp.status,
+            ok: resp.ok
+          });
+        } catch (e) {
+          results.push({
+            path,
+            url: new URL(path, location.href).href,
+            status: 'ERROR',
+            ok: false,
+            error: e.message
+          });
+        }
+      }
+
+      return { courseId, courseName, results };
+    }
+
+    async function testAllLinks() {
+      const resultsDiv = document.getElementById('test-results');
+      resultsDiv.innerHTML = '<p>⏳ 正在测试...</p>';
+
+      const allResults = [];
+      for (const course of TEST_COURSES) {
+        const result = await testCourseLink(course.id, course.name);
+        allResults.push(result);
+      }
+
+      let html = '';
+      for (const { courseId, courseName, results } of allResults) {
+        const successCount = results.filter(r => r.ok).length;
+        const itemClass = successCount > 0 ? 'success' : 'error';
+        
+        html += `<div class="test-item ${itemClass}">`;
+        html += `<h3>${courseName} (${courseId}) - ${successCount}/${results.length} 可访问</h3>`;
+        
+        for (const r of results) {
+          const statusClass = r.ok ? 'ok' : 'fail';
+          html += `<div>`;
+          html += `<span class="status ${statusClass}">${r.status}</span> `;
+          html += `<code>${r.path}</code>`;
+          html += `<div class="url-test">${r.url}</div>`;
+          if (r.error) html += `<div style="color:red;">Error: ${r.error}</div>`;
+          html += `</div>`;
+        }
+        html += `</div>`;
+      }
+
+      resultsDiv.innerHTML = html;
+    }
+
+    async function loadAndCheckTree() {
+      const resultsDiv = document.getElementById('tree-results');
+      resultsDiv.innerHTML = '<p>⏳ 正在加载知识树...</p>';
+
+      try {
+        const treePath = 'data/trees/chinese-elementary.json';
+        const resp = await fetch(treePath + '?t=' + Date.now());
+        const tree = await resp.json();
+
+        let html = '<h3>✅ 知识树加载成功</h3>';
+        html += `<div class="url-test">文件: ${treePath}</div>`;
+        html += `<div class="url-test">域: ${tree.domains?.length || 0} 个</div>`;
+
+        // 找到有课件的节点
+        const nodesWithCourses = [];
+        function scanNodes(node, path = '') {
+          if (node.courses && node.courses.length > 0) {
+            nodesWithCourses.push({
+              id: node.id,
+              name: node.name,
+              courses: node.courses,
+              status: node.status,
+              path: path
+            });
+          }
+          ['children', 'nodes', 'domains'].forEach(key => {
+            if (node[key]) {
+              node[key].forEach((child, i) => {
+                scanNodes(child, `${path}/${key}[${i}]`);
+              });
+            }
+          });
+        }
+
+        tree.domains?.forEach((d, i) => scanNodes(d, `domains[${i}]`));
+
+        html += `<div class="url-test">有课件的节点: ${nodesWithCourses.length} 个</div>`;
+        html += '<h4>节点详情：</h4>';
+        
+        for (const node of nodesWithCourses.slice(0, 10)) {
+          html += `<div class="test-item">`;
+          html += `<strong>${node.name}</strong> (${node.id})`;
+          html += `<br>状态: ${node.status}`;
+          html += `<br>课件: ${node.courses.join(', ')}`;
+          html += `<br>路径: ${node.path}`;
+          html += `</div>`;
+        }
+
+        resultsDiv.innerHTML = html;
+      } catch (e) {
+        resultsDiv.innerHTML = `<div class="test-item error">❌ 加载失败: ${e.message}</div>`;
+      }
+    }
+
+    function clearCache() {
+      if ('caches' in window) {
+        caches.keys().then(names => {
+          names.forEach(name => caches.delete(name));
+          alert('✅ 缓存已清除，请刷新页面');
+        });
+      } else {
+        alert('⚠️ 浏览器不支持Cache API');
+      }
+    }
+
+    // 自动运行测试
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        testAllLinks();
+        loadAndCheckTree();
+      }, 500);
+    });
+  </script>
+</body>
+</html>
