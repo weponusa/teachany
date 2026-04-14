@@ -1,0 +1,32 @@
+name: 同步到 Gitee（国内镜像）
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  sync:
+    name: 同步到 Gitee
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # 获取完整历史记录
+      
+      - name: 同步到 Gitee
+        uses: wearerequired/git-mirror-action@v1
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.GITEE_SSH_PRIVATE_KEY }}
+        with:
+          source-repo: git@github.com:wepon/teachany-opensource.git
+          destination-repo: git@gitee.com:wepon/teachany-opensource.git
+      
+      - name: 发送通知
+        if: success()
+        run: |
+          echo "✅ 已成功同步到 Gitee"
+          echo "国内用户可访问：https://gitee.com/wepon/teachany-opensource"
