@@ -6,7 +6,7 @@
 # Requires -RunAsAdministrator
 
 # 配置项
-$GiteeURL = "https://gitee.com/wepon/teachany-opensource/repository/archive/main.zip"
+$GiteeURL = "https://gitee.com/weponusa/teachany/repository/archive/main.zip"
 $InstallDir = "$env:USERPROFILE\.agents\skills\teachany-opensource"
 $TempDir = "$env:TEMP\teachany-install-$(Get-Random)"
 
@@ -131,7 +131,7 @@ function Main {
         Write-Host "  $InstallDir\INSTALL_CN.md"
         Write-Host ""
         Write-Host "❓ 遇到问题？"
-        Write-Host "  - Gitee Issues: https://gitee.com/wepon/teachany-opensource/issues"
+        Write-Host "  - Gitee Issues: https://gitee.com/weponusa/teachany/issues"
         Write-Host "  - 微信交流群：[扫码加入]"
         Write-Host ""
         
@@ -147,7 +147,7 @@ function Main {
         Write-Host "  1. 检查网络连接是否正常"
         Write-Host "  2. 关闭防火墙或杀毒软件后重试"
         Write-Host "  3. 手动从 Gitee 下载 ZIP 并解压安装"
-        Write-Host "     https://gitee.com/wepon/teachany-opensource"
+        Write-Host "     https://gitee.com/weponusa/teachany"
         Write-Host ""
         
         # 清理临时文件

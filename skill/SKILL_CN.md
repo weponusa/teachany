@@ -1999,6 +1999,101 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
 从 `_exercises.json` 中提取：
 - 与当前教学目标匹配的 `bloom_level` 题目 → 直接复用或改编进课件
 
+#### 步骤 3.5：查阅教材补充数据（可选增强）⭐ NEW
+
+> **这是质量提升步骤。在已获取知识图谱数据后，进一步查阅教材补充素材，用真实教材内容替代AI编造。**
+
+**执行条件**：
+- 步骤3已成功获取 `_graph.json` 数据
+- 希望提升课件的真实性和教学性
+- 对应学科存在教材补充数据
+
+**操作流程**：
+
+1. **检查教材补充数据是否存在**：
+   ```bash
+   # 检查是否有对应学科的教材补充目录
+   ls references/data/textbook-supplements/{subject}/
+   # 示例: ls references/data/textbook-supplements/math/
+   #       ls references/data/textbook-supplements/biology/
+   ```
+
+2. **根据当前节点ID，读取相关素材文件**：
+   
+   可用的数据文件类型：
+   - `teaching_methods.json` → 教学方法(如双栏解法、Visual Connection思考题)
+   - `real_world_scenarios.json` 或 `phenomena_library.json` → 真实场景/日常现象
+   - `analogies.json` → 类比隐喻/记忆锚点
+   - `visual_strategies.json` → 可视化策略/图表设计
+   - `experiment_designs.json` → 实验设计方案(理科)
+   - `ecological_cases.json` → 生态学案例(生物学特有)
+   
+   示例：
+   ```python
+   # 读取数学学科的真实场景
+   scenarios = read_json("references/data/textbook-supplements/math/real_world_scenarios.json")
+   
+   # 读取物理学科的日常现象
+   phenomena = read_json("references/data/textbook-supplements/physics/phenomena_library.json")
+   
+   # 读取生物学科的教学方法
+   methods = read_json("references/data/textbook-supplements/biology/teaching_methods.json")
+   ```
+
+3. **筛选匹配当前节点的数据**：
+   ```python
+   # 从教材数据中筛选适用于当前节点的内容
+   current_node_id = "linear-function"  # 示例：一次函数
+   
+   relevant_items = [
+       item for item in data["items"] 
+       if current_node_id in item.get("applicable_node_ids", [])
+   ]
+   ```
+
+4. **优先使用教材素材替代AI生成内容**：
+   
+   | 课件模块 | 优先使用的教材数据 | 降级方案 |
+   |:---|:---|:---|
+   | ABT引入场景 | `real_world_scenarios` / `phenomena_library` | `_graph.json` 的 `real_world` 字段 |
+   | 记忆锚点/类比 | `analogies.json` | `_graph.json` 的 `memory_anchors` 字段 |
+   | 实验设计 | `experiment_designs.json` | AI设计实验方案 |
+   | 可视化设计 | `visual_strategies.json` 的描述 | AI生成可视化方案 |
+   | 教学方法 | `teaching_methods.json` 的 `implementation_notes` | 通用教学方法 |
+   | 生态案例(生物) | `ecological_cases.json` | `real_world_scenarios` |
+
+5. **标注数据来源**：
+   - 如果使用了教材素材，在课件中标注来源：`💡 来源: [教材名称] [章节]`
+   - 在Phase 0.5输出中说明：`✅ 已引用教材补充数据（X条）`
+   - 如果未命中教材数据，继续使用 `_graph.json` 数据（不强制要求教材数据）
+
+**数据优先级（降级规则）**：
+
+| 优先级 | 数据来源 | 适用场景 | 示例 |
+|:---|:---|:---|:---|
+| 🥇 | 教材补充数据 | 有精确匹配的node_id | 上海磁悬浮列车案例(College Algebra Ch1) |
+| 🥈 | 知识图谱数据 | 教材数据未命中 | `_graph.json` 中的 `real_world` 字段 |
+| 🥉 | Web搜索 | 图谱数据不充分 | 搜索"一次函数 生活应用 案例" |
+| 🥊 | 模型知识 | 所有数据源都不充分 | AI编造案例(必须标注⚠️) |
+
+**关键原则**：
+- ✅ **真实性优先**：教材中的真实案例 > AI编造的虚构案例
+- ✅ **补充增强**：教材数据用于补充图谱，不替代图谱核心数据(如定义、前置知识链)
+- ✅ **冲突处理**：如果教材数据与图谱数据冲突，以图谱数据为准(图谱经过课标校验)
+- ✅ **可选性**：此步骤是增强项，未命中教材数据不阻断流程
+
+**输出示例**：
+
+```
+✅ Phase 0.5 完成
+- 知识图谱命中: linear-function (一次函数)
+- 教材补充数据:
+  • 真实场景: 上海磁悬浮列车距离函数 (OpenStax College Algebra Ch1, p.45)
+  • 类比隐喻: 斜率=爬楼梯陡度 (OpenStax Prealgebra 2e Ch3, p.320)
+  • 可视化策略: 四象限多表征法 (Prealgebra 2e Ch4)
+- 数据来源优先级: 🥇教材数据(3条) + 🥈图谱数据
+```
+
 #### 步骤 4：补充读取（仅在摘要不够时）
 
 - 根据检索结果去读 `references/data/{subject}/{domain}/_graph.json` 原文
@@ -2037,15 +2132,40 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
 必须完成以下全部项目：
 
 1. **ABT + 情境角色引入设计**：为每个核心模块写 ABT 开场 + 选择情境模式（角色任务/故事冲突/生活现象/文化传承）
-   - 引入必须使用 Phase 0.5 获取的 `real_world` 真实场景（如有）
+   
+   - **数据来源优先级**（ABT引入场景选择）：
+     1. 🥇 **教材补充数据优先**：如果Phase 0.5查到了 `real_world_scenarios.json` 或 `phenomena_library.json` 中匹配当前节点的场景,**必须优先使用**
+        - ✅ 示例：一次函数用"上海磁悬浮列车"(OpenStax College Algebra)，而非AI编造的"打车费用"
+        - ✅ 示例：浮力用"潜水员水压变化"(OpenStax HS Physics)，而非抽象的"物体在水中"
+        - 📝 标注来源：`💡 案例来源: [教材名称] [章节]`
+     
+     2. 🥈 **知识图谱数据降级**：如果教材数据未命中，使用 `_graph.json` 的 `real_world` 字段
+     
+     3. 🥉 **AI生成兜底**：仅当以上两者都无法提供时，AI生成场景(但必须标注⚠️"此场景由AI生成")
+   
    - **`real_world` 与 `curriculum_standards` 的用途区分**：
-     - `real_world` → 面向学生的 ABT 引入和生活应用模块（"你遇到过这样的情况吗？"）
+     - `real_world` (图谱) 或 `real_world_scenarios` (教材) → 面向学生的 ABT 引入和生活应用模块（"你遇到过这样的情况吗？"）
      - `curriculum_standards` → 面向教学设计的参考依据，用于 Phase 0 "为什么学"、必做实验规划、跨学科活动设计，**不直接展示给学生**
      - 特殊情况：`curriculum_standards` 中 `category=required_experiment` 的必做实验，可以转化为"动手做"环节的具体实验方案
+   
+   - **记忆锚点/类比的数据来源优先级**：
+     1. 🥇 **教材类比优先**：如果Phase 0.5查到了 `analogies.json` 中的类比，优先使用教材中的类比而非AI编造
+        - ✅ 示例：斜率用"爬楼梯陡度"(OpenStax Prealgebra)，而非"开车上坡"
+        - ✅ 示例：分数用"切蛋糕"(OpenStax Prealgebra)，而非"分苹果"
+     2. 🥈 **图谱记忆锚点**：使用 `_graph.json` 的 `memory_anchors` 字段
+     3. 🥉 **AI生成类比**：AI编造类比(需验证科学性和文化适配性)
+   
    - **交互实验生活化设计**（理科尤其是物理）：
+     - 如果Phase 0.5查到了 `experiment_designs.json` 或 `phenomena_library.json` 中的实验方案，**优先参考教材中的实验步骤和注意事项**
      - 所有实验类交互组件（参数调节器、实验预测卡等）必须置于生活化场景中，**禁止纯抽象示意图**（详见 Section 6.4）
      - 类比和参照物选择必须贴近学生日常认知（用"大卡车"而非"牛顿"做力的类比）
      - 交互操作应模拟真实物理动作（拖拽放入=投放物体，滑块=调节深度/温度）
+   
+   - **教学方法借鉴**（可选增强）：
+     - 如果Phase 0.5查到了 `teaching_methods.json` 中的方法，可参考其 `implementation_notes` 优化教学设计
+     - ✅ 示例：数学解题用"双栏解法"(左栏解释why,右栏数学步骤)
+     - ✅ 示例：生物学概念用"Visual Connection问题"(先展示图表,再提问引导思考)
+     - ✅ 示例：化学解题用"Tro四步法"(Sort→Strategize→Solve→Check)
 2. **驱动结构设计**：根据 Phase 0 选定的驱动模式，设计：
    - 问题驱动：核心问题 + 3-4 个子问题链（标注 Bloom 层级）
    - 项目驱动：大项目 + 3-5 个子项目阶段（标注阶段交付物）

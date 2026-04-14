@@ -14,7 +14,7 @@
 
 在浏览器中访问：
 ```
-https://gitee.com/wepon/teachany-opensource
+https://gitee.com/weponusa/teachany
 ```
 
 #### 步骤 2：下载完整代码包
@@ -151,7 +151,7 @@ AI 会自动：
 ### Q3：如何更新到最新版本？
 
 **方法1（Gitee）**：
-1. 访问 https://gitee.com/wepon/teachany-opensource
+1. 访问 https://gitee.com/weponusa/teachany
 2. 重新下载 ZIP 并覆盖安装
 
 **方法2（自动更新）**：
@@ -178,7 +178,7 @@ AI 会自动：
 
 ### 问题反馈
 
-- **Gitee Issues**：https://gitee.com/wepon/teachany-opensource/issues
+- **Gitee Issues**：https://gitee.com/weponusa/teachany/issues
 - **微信交流群**：[扫码加入] (群二维码)
 - **QQ群**：123456789
 

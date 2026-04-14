@@ -36,7 +36,7 @@
 ### For Chinese Users 🇨🇳 (Gitee Mirror)
 **国内用户请使用 Gitee 镜像（无需翻墙，高速访问）：**
 ```bash
-/install-skill https://gitee.com/wepon/teachany-opensource
+/install-skill https://gitee.com/weponusa/teachany
 ```
 
 **详细安装指南**：
