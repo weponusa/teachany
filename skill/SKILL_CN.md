@@ -3196,17 +3196,111 @@ node scripts/pack-courseware.cjs ./examples/math-linear-function ./dist
 
 ### 17.4 AI 生成课件后的标准流程（默认执行）
 
-在 Phase 3（制作内容）完成后，**必须执行** Phase 3.5 — 打包：
+在 Phase 3（制作内容）完成后，**自动执行** Phase 3.5 — 质检与发布流程：
 
 ```text
-Phase 3.5：打包课件（默认必选）
-1. 确认 index.html 包含完整的 teachany-* meta 标签
-2. 运行 node scripts/pack-courseware.cjs <课件目录>
-3. 验证生成的 .teachany 包
-4. 告知用户：可将此文件拖入 TeachAny Gallery 或知识地图页面导入
+Phase 3.5：质检与发布（自动执行）
+
+Step 1️⃣ 质检（Validation）
+  命令：node <teachany-admin>/scripts/validate-courseware.cjs <课件目录>
+  
+  必检项（22 项）：
+  ✅ ABT 叙事 + 情境角色
+  ✅ 前测存在
+  ✅ 互动练习（每个核心知识点至少 1 道）
+  ✅ 诊断性反馈（错因分析，不只"对/错"）
+  ✅ 后测与学习闭环
+  ✅ 多层次理解卡片（概念、公式、视觉化）
+  ✅ 真实应用场景
+  ✅ meta 标签完整性
+  ✅ 响应式布局
+  ✅ 音频资源存在性（如有 TTS 引用）
+  ... 等 22 项
+  
+  输出：通过率 + 未通过项的修复建议
+
+Step 2️⃣ 打包（Packaging）
+  命令：node <teachany-admin>/scripts/pack-courseware.cjs <课件目录>
+  
+  操作：
+  1. 从 index.html 的 meta 标签生成 manifest.json
+  2. 打包为 <course-id>.teachany 压缩文件
+  3. 输出到 <teachany-admin>/dist/ 目录
+
+Step 3️⃣ 发布到社区（Publishing）
+  命令：node <teachany-admin>/scripts/publish-courseware.cjs <课件目录> --teachany-repo <teachany-opensource路径>
+  
+  操作：
+  1. 上传 .teachany 文件到 GitHub Release
+  2. 更新 courseware-registry.json
+  3. 更新 data/trees/*.json（知识地图 courses 数组 + status: "active"）
+  4. 同步源码到 examples/<courseId>/
+  5. 一次 git commit + push 完成所有更新
+  
+  参数：
+  --teachany-repo <path>   teachany 仓库的本地 clone 路径（必需）
+  --no-sync                不同步源码到 examples/（仅上传 Release）
+  --dry-run                仅打包，不上传
 ```
 
-> ⚠️ 打包是默认步骤，不需要用户要求。如果 pack-courseware.cjs 脚本不可用，在课件目录中生成 manifest.json 并告知用户手动打包即可。
+#### 自动化执行策略
+
+**默认行为**：课件制作完成后，AI **必须主动提示并执行**以下流程：
+
+1. **首先运行质检**：
+   ```bash
+   node ~/CodeBuddy/一次函数/teachany-admin/scripts/validate-courseware.cjs <课件目录>
+   ```
+   
+2. **如果质检通过率 ≥ 80%**，自动执行打包 + 发布：
+   ```bash
+   # 打包
+   node ~/CodeBuddy/一次函数/teachany-admin/scripts/pack-courseware.cjs <课件目录>
+   
+   # 发布到社区
+   node ~/CodeBuddy/一次函数/teachany-admin/scripts/publish-courseware.cjs <课件目录> \
+     --teachany-repo ~/CodeBuddy/一次函数/teachany-opensource
+   ```
+   
+3. **如果质检通过率 < 80%**，向用户报告未通过项及修复建议，询问是否继续发布。
+
+**用户可选操作**：
+- `--skip-validation`：跳过质检，直接打包发布
+- `--no-sync`：不同步源码到 examples/（仅上传 Release + 更新 Registry）
+- `--dry-run`：仅执行打包，不上传到 GitHub
+
+#### 输出反馈模板
+
+质检完成后，AI 应输出以下格式的报告：
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 课件质检报告
+
+课件：<课件名称> (<course-id>)
+通过率：18/22 (81.8%)
+
+✅ 通过项（18 项）：
+  ABT 叙事 + 情境角色、前测存在、互动练习、...
+
+❌ 未通过项（4 项）：
+  • 诊断性反馈 → 修复建议：每道练习的错误选项需附带具体错因诊断
+  • 真实应用场景 → 修复建议：添加"学以致用"卡片，展示知识的现实应用
+  ...
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 下一步操作：
+
+通过率 > 80%，建议立即发布到社区！
+
+执行命令：
+1. 打包：node ~/CodeBuddy/一次函数/teachany-admin/scripts/pack-courseware.cjs <课件目录>
+2. 发布：node ~/CodeBuddy/一次函数/teachany-admin/scripts/publish-courseware.cjs <课件目录> --teachany-repo ~/CodeBuddy/一次函数/teachany-opensource
+
+是否立即执行？（输入 y 继续，n 跳过）
+```
+
+> ⚠️ **重要**：Phase 3.5 是**强制流程**，不需要用户主动要求。课件制作完成后 AI 必须自动执行质检并提示发布。
 
 ### 17.5 HTML meta 标签（已有规范，此处汇总）
 
