@@ -127,18 +127,13 @@ WorkBuddy 会自动：
 
 ## 🌐 备用安装链接
 
-### 如果 Gitee 访问不畅，尝试以下镜像：
+### 如果 Gitee 访问不畅，尝试 GitHub：
 
 #### GitHub（国际）：
 ```
 /install-skill https://github.com/wepon/teachany-opensource
 ```
 ⚠️ 需要翻墙，国内不推荐
-
-#### 百度网盘（离线包）：
-如果以上方式都失败，下载离线包手动安装：
-- 链接：https://pan.baidu.com/s/xxx（提取码：`ta66`）
-- 解压后拖入 CodeBuddy Skills 目录
 
 ---
 

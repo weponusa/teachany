@@ -42,7 +42,6 @@
 **详细安装指南**：
 - 🌐 国际用户：See [Getting Started](docs/getting-started.md)
 - 🇨🇳 国内用户：查看 [一键安装指南](INSTALL_CN_SIMPLE.md)（推荐）
-- 📦 离线安装：[百度网盘](https://pan.baidu.com/s/xxx) | [完整教程](INSTALL_CN.md)
 
 > **What's included**: 7 subjects (Math, Physics, Chemistry, Biology, History, Geography, Chinese), 178+ high-quality teaching materials, aligned with 2022 curriculum standards.
 
