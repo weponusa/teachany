@@ -3196,111 +3196,139 @@ node scripts/pack-courseware.cjs ./examples/math-linear-function ./dist
 
 ### 17.4 AI 生成课件后的标准流程（默认执行）
 
-在 Phase 3（制作内容）完成后，**自动执行** Phase 3.5 — 质检与发布流程：
+在 Phase 3（制作内容）完成后，**自动执行** Phase 3.5 — 质检与打包：
 
 ```text
-Phase 3.5：质检与发布（自动执行）
+Phase 3.5：质检与打包（自动执行）
 
-Step 1️⃣ 质检（Validation）
-  命令：node <teachany-admin>/scripts/validate-courseware.cjs <课件目录>
+Step 1️⃣ 内置质检（Inline Validation）
+  无需外部脚本，AI 直接检查以下核心项：
   
-  必检项（22 项）：
-  ✅ ABT 叙事 + 情境角色
-  ✅ 前测存在
-  ✅ 互动练习（每个核心知识点至少 1 道）
-  ✅ 诊断性反馈（错因分析，不只"对/错"）
-  ✅ 后测与学习闭环
-  ✅ 多层次理解卡片（概念、公式、视觉化）
-  ✅ 真实应用场景
-  ✅ meta 标签完整性
-  ✅ 响应式布局
-  ✅ 音频资源存在性（如有 TTS 引用）
-  ... 等 22 项
+  ✅ meta 标签完整性（node、subject、grade、author）
+  ✅ ABT 叙事引入（检测关键词）
+  ✅ 互动练习数量（至少 3 组）
+  ✅ 前测/后测存在性
+  ✅ 音频/视频资源路径有效性
+  ✅ 响应式布局标记
   
-  输出：通过率 + 未通过项的修复建议
+  输出：通过率 + 未通过项简要说明
 
 Step 2️⃣ 打包（Packaging）
-  命令：node <teachany-admin>/scripts/pack-courseware.cjs <课件目录>
+  生成 manifest.json 和 .teachany 压缩包
   
-  操作：
-  1. 从 index.html 的 meta 标签生成 manifest.json
-  2. 打包为 <course-id>.teachany 压缩文件
-  3. 输出到 <teachany-admin>/dist/ 目录
+  方式 A（优先）：调用打包脚本
+  ```bash
+  node scripts/pack-courseware.cjs <课件目录>
+  ```
+  
+  方式 B（降级）：手动生成
+  1. 读取 index.html 的 meta 标签
+  2. 创建 manifest.json
+  3. 使用 zip 命令打包目录：
+     ```bash
+     cd <课件目录> && zip -r ../<course-id>.teachany . -x "*.DS_Store"
+     ```
 
-Step 3️⃣ 发布到社区（Publishing）
-  命令：node <teachany-admin>/scripts/publish-courseware.cjs <课件目录> --teachany-repo <teachany-opensource路径>
+Step 3️⃣ 保存位置提示
+  课件包保存到：
+  - <课件目录>/../<course-id>.teachany  （打包脚本方式）
+  - dist/<course-id>.teachany            （手动打包方式）
   
-  操作：
-  1. 上传 .teachany 文件到 GitHub Release
-  2. 更新 courseware-registry.json
-  3. 更新 data/trees/*.json（知识地图 courses 数组 + status: "active"）
-  4. 同步源码到 examples/<courseId>/
-  5. 一次 git commit + push 完成所有更新
-  
-  参数：
-  --teachany-repo <path>   teachany 仓库的本地 clone 路径（必需）
-  --no-sync                不同步源码到 examples/（仅上传 Release）
-  --dry-run                仅打包，不上传
+  告知用户三种使用方式：
+  1. 拖入 TeachAny Gallery "我的课件"区
+  2. 在知识地图节点上传
+  3. 分享给其他用户（.teachany 文件）
 ```
 
 #### 自动化执行策略
 
-**默认行为**：课件制作完成后，AI **必须主动提示并执行**以下流程：
+**默认行为**：课件制作完成后，AI **必须主动执行**以下流程：
 
-1. **首先运行质检**：
-   ```bash
-   node ~/CodeBuddy/一次函数/teachany-admin/scripts/validate-courseware.cjs <课件目录>
-   ```
-   
-2. **如果质检通过率 ≥ 80%**，自动执行打包 + 发布：
-   ```bash
-   # 打包
-   node ~/CodeBuddy/一次函数/teachany-admin/scripts/pack-courseware.cjs <课件目录>
-   
-   # 发布到社区
-   node ~/CodeBuddy/一次函数/teachany-admin/scripts/publish-courseware.cjs <课件目录> \
-     --teachany-repo ~/CodeBuddy/一次函数/teachany-opensource
-   ```
-   
-3. **如果质检通过率 < 80%**，向用户报告未通过项及修复建议，询问是否继续发布。
+1. **运行内置质检**（无需外部脚本）：
+   - 直接读取 `index.html` 源码
+   - 检查必需的 meta 标签、ABT 关键词、互动元素等
+   - 统计通过项数量
 
-**用户可选操作**：
-- `--skip-validation`：跳过质检，直接打包发布
-- `--no-sync`：不同步源码到 examples/（仅上传 Release + 更新 Registry）
-- `--dry-run`：仅执行打包，不上传到 GitHub
+2. **自动打包**（无论质检结果）：
+   ```bash
+   # 方式 A：使用打包脚本（如果可用）
+   node scripts/pack-courseware.cjs <课件目录>
+   
+   # 方式 B：手动打包（降级方案）
+   cd <课件目录> && zip -r ../<course-id>.teachany . -x "*.DS_Store"
+   ```
+
+3. **输出结果**：
+   - 质检通过率 + 未通过项列表
+   - .teachany 文件路径
+   - 使用说明（拖入 Gallery 或知识地图）
+
+#### 质检项清单（内置，无需外部脚本）
+
+| 类别 | 检查项 | 检测方式 |
+|:---|:---|:---|
+| **Meta 标签** | teachany-node, subject, grade, author | 正则匹配 `<meta name="teachany-*">` |
+| **ABT 叙事** | 为什么学、已经知道、问题、因此 | 搜索关键词：`为什么.*学\|已经知道\|但.*问题\|所以` |
+| **互动练习** | 选择题、拖拽、滑块等 | 搜索：`quiz-option\|draggable\|slider\|checkAnswer` |
+| **前测/后测** | pretest/posttest 模块 | 搜索：`pretest\|posttest\|前测\|后测` |
+| **音频资源** | .mp3 文件存在性 | 检查 `<audio>` 标签或 `tts/` 目录 |
+| **响应式布局** | viewport meta 标签 | 检查 `<meta name="viewport">` |
 
 #### 输出反馈模板
 
-质检完成后，AI 应输出以下格式的报告：
+质检完成后，AI 输出：
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📋 课件质检报告
 
 课件：<课件名称> (<course-id>)
-通过率：18/22 (81.8%)
+内置质检通过率：5/6 (83%)
 
-✅ 通过项（18 项）：
-  ABT 叙事 + 情境角色、前测存在、互动练习、...
+✅ 通过项（5 项）：
+  Meta 标签完整、ABT 叙事、互动练习、前测/后测、音频资源
 
-❌ 未通过项（4 项）：
-  • 诊断性反馈 → 修复建议：每道练习的错误选项需附带具体错因诊断
-  • 真实应用场景 → 修复建议：添加"学以致用"卡片，展示知识的现实应用
-  ...
+❌ 未通过项（1 项）：
+  • 响应式布局 → 缺少 viewport meta 标签
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🎯 下一步操作：
+📦 课件已打包
 
-通过率 > 80%，建议立即发布到社区！
+文件位置：<课件目录>/../<course-id>.teachany
+文件大小：2.3 MB
 
-执行命令：
-1. 打包：node ~/CodeBuddy/一次函数/teachany-admin/scripts/pack-courseware.cjs <课件目录>
-2. 发布：node ~/CodeBuddy/一次函数/teachany-admin/scripts/publish-courseware.cjs <课件目录> --teachany-repo ~/CodeBuddy/一次函数/teachany-opensource
+🎯 使用方式：
+1. 拖入 TeachAny Gallery "➕ 添加我的课件"
+2. 在知识地图节点点击"上传"
+3. 分享 .teachany 文件给其他用户
 
-是否立即执行？（输入 y 继续，n 跳过）
+注意：
+- 课件仅保存在本地，未上传到 GitHub
+- 如需提交到官方社区，请联系管理员或提交 PR
 ```
 
-> ⚠️ **重要**：Phase 3.5 是**强制流程**，不需要用户主动要求。课件制作完成后 AI 必须自动执行质检并提示发布。
+> ⚠️ **重要**：Phase 3.5 是**强制流程**，不需要用户主动要求。课件制作完成后 AI 必须自动执行质检和打包。
+
+#### 社区分享（可选）
+
+如果用户希望将课件分享到公开社区，可以通过以下方式：
+
+**方式 1：GitHub PR（推荐）**
+```bash
+# 1. Fork teachany 仓库
+# 2. 将 .teachany 文件上传到 community/pending/<course-id>.teachany
+# 3. 创建 community/pending/<course-id>.json 元数据文件
+# 4. 提交 PR，等待管理员审核
+```
+
+**方式 2：邮件提交**
+- 将 .teachany 文件和课件说明发送到 teachany@example.com
+- 管理员审核后会添加到社区索引
+
+**方式 3：社交分享**
+- 将 .teachany 文件上传到网盘/GitHub Release
+- 分享下载链接给其他用户
+- 其他用户可拖入自己的 Gallery 使用
 
 ### 17.5 HTML meta 标签（已有规范，此处汇总）
 
@@ -3330,12 +3358,20 @@ Step 3️⃣ 发布到社区（Publishing）
 
 ---
 
-**技能版本**：v5.12  
-**更新日期**：2026-04-12  
+**技能版本**：v6.0  
+**更新日期**：2026-04-14  
 **变更摘要**：
 - v1.0：数理课件版
 - v2.0：拆成通用底座+学科适配层
 - v3.0：补 Bloom 完整表、课型分类、脚手架策略、Mayer 原则、五镜头选择指引、3 学科完整示例、视觉设计细则、Phase 4 审查清单
+- v4.0：TTS 引擎切换为 Edge TTS
+- v5.0：知识图谱集成、社区课件机制
+- **v6.0**：**简化发布流程**
+  * **移除 Admin skill 依赖**：不再需要管理员权限和外部脚本
+  * **内置质检功能**：AI 直接检查 meta 标签、ABT 叙事、互动元素等核心项
+  * **本地打包优先**：生成 .teachany 文件保存到本地，用户拖入 Gallery 即可使用
+  * **去中心化分享**：支持 GitHub PR、邮件提交、网盘分享等多种社区贡献方式
+  * **零权限要求**：普通用户无需 GITHUB_TOKEN 即可制作和使用课件
 - v4.0：新增视频与音频制作流水线（Remotion 自动安装、Edge TTS 集成、双语字幕系统、语言配置）、Token 与成本估算
 - v5.3：新增例题配图硬性规范（Section 13）——涉及空间/几何/图形推理的例题和练习必须配图；详见英文版 SKILL.md Section 18.8 完整实现指南。
 - v5.4：新增课件打包与分发（Section 17）——定义 .teachany 课件包格式、打包脚本、Gallery/知识地图导入功能。
