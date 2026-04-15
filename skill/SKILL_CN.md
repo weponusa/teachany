@@ -3228,6 +3228,26 @@ Step 3️⃣ 保存位置提示
   1. 拖入 TeachAny Gallery "我的课件"区
   2. 在知识地图节点上传
   3. 分享给其他用户（.teachany 文件）
+
+Step 4️⃣ 推送到主站（如有 teachany-opensource 仓库写权限）
+  将课件部署到 GitHub Pages 主站，使其对所有用户可见：
+  
+  1. 复制课件到标准目录：
+     ```bash
+     cp -r <课件目录> teachany-opensource/examples/<course-id>/
+     ```
+  2. 在 registry.json 中添加课件条目：
+     - `path` 字段设为 `"examples/<course-id>"`
+     - 不要使用外部 URL（如 github.io 独立仓库地址）
+     - 不要添加 gallery_url 或 knowledge_map_url（Gallery 和知识地图由主站统一提供）
+  3. 提交并推送：
+     ```bash
+     cd teachany-opensource && git add -A && git commit -m "feat: 新增课件 <course-id>" && git push origin main
+     ```
+  4. push 到 main 后，deploy-pages.yml 会自动部署，课件地址为：
+     `https://weponusa.github.io/teachany/examples/<course-id>/`
+  
+  ⚠️ 禁止为单个课件创建独立 GitHub 仓库。所有课件统一在 examples/ 目录下管理。
 ```
 
 #### 自动化执行策略
