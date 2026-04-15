@@ -7,7 +7,7 @@
 <meta name="teachany-subject" content="biology">
 <meta name="teachany-domain" content="cross-disciplinary">
 <meta name="teachany-grade" content="grade7">
-<meta name="teachany-prerequisites" content="biosphere,plant-reproduction,human-reproduction,cell-structure,food-chain">
+<meta name="teachany-prerequisites" content="photosynthesis-m,food-chain">
 <meta name="teachany-difficulty" content="hard">
 <meta name="teachany-version" content="1.0.0">
 <meta name="teachany-author" content="TeachAny">
@@ -489,6 +489,10 @@ function showTab(id){
   document.getElementById(id).classList.add('active');
   const tabs=['intro','learn','practice','summary','graph'];
   document.querySelectorAll('.nav-tab')[tabs.indexOf(id)].classList.add('active');
+  // Fix: resize canvas when switching to learn tab (canvas width=0 when hidden)
+  if(id==='learn' && typeof resizeCanvas==='function'){
+    setTimeout(()=>{resizeCanvas();},50);
+  }
 }
 
 // ===== DOMAIN FILTER =====
@@ -672,6 +676,77 @@ const observer=new IntersectionObserver(entries=>{
   entries.forEach(e=>{if(e.isIntersecting&&segMap[e.target.id]!==undefined) loadSeg(segMap[e.target.id]);});
 },{threshold:.5});
 document.querySelectorAll('.section').forEach(s=>observer.observe(s));
+</script>
+<script>
+/* === TTS Guard: fallback to Web Speech API when no TTS files === */
+(function(){
+  var testAudio = document.querySelector('audio[src*="tts/"]');
+  if(!testAudio) return;
+  fetch(testAudio.getAttribute('src'), {method:'HEAD'}).then(function(r){
+    if(!r.ok) throw new Error('no tts');
+  }).catch(function(){
+    /* No TTS files — use Web Speech API as fallback */
+    var synth = window.speechSynthesis;
+    if(!synth){
+      /* No Speech API — hide audio UI */
+      ['.audio-bar','#audioBar'].forEach(function(sel){
+        document.querySelectorAll(sel).forEach(function(el){el.style.display='none';});
+      });
+      return;
+    }
+
+    var speaking = false;
+    var currentUtterance = null;
+
+    /* Override togglePlay to use Speech API */
+    window.togglePlay = function(){
+      if(speaking){
+        synth.cancel();
+        speaking = false;
+        document.getElementById('playBtn').textContent='▶';
+      } else {
+        var text = audioPlaylist[curSeg].text;
+        currentUtterance = new SpeechSynthesisUtterance(text);
+        currentUtterance.lang = 'zh-CN';
+        currentUtterance.rate = 1.0;
+        currentUtterance.onend = function(){
+          speaking = false;
+          document.getElementById('playBtn').textContent='▶';
+        };
+        currentUtterance.onerror = function(){
+          speaking = false;
+          document.getElementById('playBtn').textContent='▶';
+        };
+        synth.speak(currentUtterance);
+        speaking = true;
+        document.getElementById('playBtn').textContent='⏸';
+      }
+    };
+
+    /* Override loadSeg to stop current speech */
+    var origLoadSeg = window.loadSeg;
+    window.loadSeg = function(i){
+      synth.cancel();
+      speaking = false;
+      curSeg = i;
+      document.getElementById('audioTitle').textContent = audioPlaylist[i].title;
+      document.getElementById('audioFill').style.width = '0%';
+      document.getElementById('playBtn').textContent = '▶';
+    };
+
+    /* Override prevSeg/nextSeg */
+    window.prevSeg = function(){ if(curSeg>0) window.loadSeg(curSeg-1); };
+    window.nextSeg = function(){ if(curSeg<audioPlaylist.length-1) window.loadSeg(curSeg+1); };
+
+    /* Update audio title to show speech mode */
+    var titleEl = document.getElementById('audioTitle');
+    if(titleEl) titleEl.textContent = audioPlaylist[curSeg].title + ' 🗣️';
+
+    /* Hide progress bar (not applicable for speech) and hide the native audio element */
+    var audioElHidden = document.getElementById('audioEl');
+    if(audioElHidden) audioElHidden.style.display='none';
+  });
+})();
 </script>
 </body>
 </html>
