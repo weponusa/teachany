@@ -954,6 +954,88 @@ function injectViewerGuard(doc, manifest) {
     head.prepend(charset);
   }
 
+  // 注入 CSP：禁止所有外部网络请求、iframe 嵌入、插件
+  if (!doc.querySelector('meta[http-equiv="Content-Security-Policy"]')) {
+    const csp = doc.createElement('meta');
+    csp.setAttribute('http-equiv', 'Content-Security-Policy');
+    csp.setAttribute('content', [
+      "default-src 'self' data: blob:",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://cdn.tailwindcss.com",
+      "style-src 'self' 'unsafe-inline' data: blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://fonts.googleapis.com https://cdn.tailwindcss.com",
+      "font-src 'self' data: blob: https://fonts.gstatic.com https://cdn.jsdelivr.net",
+      "img-src 'self' data: blob:",
+      "media-src 'self' data: blob:",
+      "connect-src 'none'",
+      "frame-src 'none'",
+      "object-src 'none'",
+      "base-uri 'none'",
+      "form-action 'none'",
+    ].join('; '));
+    head.prepend(csp);
+  }
+
+  // 注入导航限制脚本：课件页面内的链接只能指向其他 TeachAny 课件
+  const navGuard = doc.createElement('script');
+  navGuard.textContent = `
+(function(){
+  var ALLOWED = [
+    /^\\.\\.\\//, /^\\.\\//,  // 相对路径
+    /^#/,                     // 锚点
+    /^data:/, /^blob:/,       // 内联资源
+    /^javascript:void/,       // 无操作
+    /^mailto:/,               // 邮件
+    /^https?:\\/\\/weponusa\\.github\\.io\\/teachany\\//,
+    /^https?:\\/\\/github\\.com\\/weponusa\\/teachany/
+  ];
+  function isAllowed(url) {
+    if (!url) return true;
+    url = url.trim();
+    if (!url || url === '#') return true;
+    // 相对路径（不含 ://）都允许
+    if (!/^[a-z]+:/i.test(url)) return true;
+    return ALLOWED.some(function(re) { return re.test(url); });
+  }
+  // 拦截所有 <a> 点击
+  document.addEventListener('click', function(e) {
+    var link = e.target.closest('a[href]');
+    if (!link) return;
+    var href = link.getAttribute('href');
+    if (!isAllowed(href)) {
+      e.preventDefault();
+      e.stopPropagation();
+      console.warn('[TeachAny Guard] 已拦截外部链接:', href);
+    }
+  }, true);
+  // 拦截 window.open
+  var _open = window.open;
+  window.open = function(url) {
+    if (!isAllowed(url)) {
+      console.warn('[TeachAny Guard] 已拦截 window.open:', url);
+      return null;
+    }
+    return _open.apply(this, arguments);
+  };
+  // 拦截 location 赋值
+  var _desc = Object.getOwnPropertyDescriptor(window, 'location');
+  // 注意：在 sandboxed iframe 中 location 可能不可覆盖，用 try/catch 保护
+  try {
+    if (window.Location && Location.prototype) {
+      ['assign', 'replace'].forEach(function(method) {
+        var orig = Location.prototype[method];
+        Location.prototype[method] = function(url) {
+          if (!isAllowed(url)) {
+            console.warn('[TeachAny Guard] 已拦截 location.' + method + ':', url);
+            return;
+          }
+          return orig.call(this, url);
+        };
+      });
+    }
+  } catch(e) {}
+})();
+`;
+  head.appendChild(navGuard);
+
   const marker = doc.createElement('meta');
   marker.name = 'teachany-imported-viewer';
   marker.content = manifest?.name || 'TeachAny';
@@ -1033,8 +1115,11 @@ async function mountImportedCourseViewer(container, options = {}) {
   const { html } = await buildRenderableCourseHtml(record);
 
   const iframe = document.createElement('iframe');
-  iframe.setAttribute('sandbox', 'allow-scripts');
+  // sandbox 安全策略：仅允许脚本执行和同源访问，禁止导航、弹窗、表单提交
+  iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
   iframe.setAttribute('referrerpolicy', 'no-referrer');
+  // CSP 二次防御：通过 csp 属性限制 iframe 内容的网络请求能力
+  iframe.setAttribute('csp', "connect-src 'none'; frame-src 'none'; object-src 'none'; form-action 'none'; base-uri 'none';");
   iframe.style.width = '100%';
   iframe.style.height = '100%';
   iframe.style.border = 'none';

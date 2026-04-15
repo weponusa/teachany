@@ -341,6 +341,7 @@ svg { width: 100%; height: 100%; }
 <script src="./scripts/featured-loader.js"></script>
 <script src="./scripts/courseware-importer.js"></script>
 <script src="./scripts/community-loader.js"></script>
+<script src="./scripts/courseware-hub.js"></script>
 <script>
 /* ─── 数据源配置 ─── */
 const TREE_API_BASE = 'https://api.github.com/repos/weponusa/teachany/contents/';
@@ -466,12 +467,24 @@ async function loadTree(index) {
 
   try {
     console.log(`[KnowledgeMap] Loading: ${TREES[index].label} (${TREES[index].file})`);
-    currentTree = await fetchTreeJSON(TREES[index].file);
+
+    // 并行加载：知识树 + CoursewareHub 初始化
+    const [treeData] = await Promise.all([
+      fetchTreeJSON(TREES[index].file),
+      window.TeachAnyHub ? TeachAnyHub.init() : Promise.resolve(),
+    ]);
+    currentTree = treeData;
+
     // 统计 active 节点
     const allNodes = currentTree.domains.flatMap(d => d.nodes);
     const activeNodes = allNodes.filter(n => n.status === 'active' && n.courses && n.courses.length);
-    console.log(`[KnowledgeMap] ${TREES[index].label}: ${allNodes.length} nodes, ${activeNodes.length} active with courses`);
-    activeNodes.forEach(n => console.log(`  ✅ ${n.id}: ${n.courses}`));
+    // 通过 Hub 检测额外有课件的节点（社区/用户课件自动接入）
+    const hubCoveredNodes = allNodes.filter(n => {
+      if (n.status === 'active' && n.courses && n.courses.length) return false; // 已计入 active
+      return window.TeachAnyHub && TeachAnyHub.hasAnyCourseware(n.id);
+    });
+    console.log(`[KnowledgeMap] ${TREES[index].label}: ${allNodes.length} nodes, ${activeNodes.length} active, ${hubCoveredNodes.length} hub-covered`);
+
     renderTree(currentTree);
   } catch (err) {
     console.error('[KnowledgeMap] Failed to load tree:', err);
@@ -538,6 +551,15 @@ function renderTree(tree) {
   const userCourses = window.TeachAnyImporter ? TeachAnyImporter.getUserCourses() : [];
   // 使用 isUserCourseNode 支持别名映射匹配（解决 node_id 不一致问题）
   const hasUserCourse = (nodeId) => window.TeachAnyImporter ? TeachAnyImporter.isUserCourseNode(nodeId) : false;
+  // Hub 通用检测：只要有任何来源的课件就算有
+  const hubHasCourse = (nodeId) => window.TeachAnyHub ? TeachAnyHub.hasAnyCourseware(nodeId) : false;
+  // 统一判断：节点是否有课件（合并所有来源）
+  const nodeHasAnyCourse = (n) => {
+    if (n.status === 'active' && n.courses && n.courses.length) return true;
+    if (hasUserCourse(n.id)) return true;
+    if (hubHasCourse(n.id)) return true;
+    return false;
+  };
   // 统计每个 node_id 下的课件数量
   const nodeCourseCounts = {};
   userCourses.forEach(c => {
@@ -545,26 +567,38 @@ function renderTree(tree) {
     if (nid) nodeCourseCounts[nid] = (nodeCourseCounts[nid] || 0) + 1;
   });
 
-  // Stats
+  // Stats — 使用 nodeHasAnyCourse() 统一统计所有来源
   const totalNodes = nodes.length;
-  const activeNodes = nodes.filter(n => n.status === 'active').length;
-  const userNodes = nodes.filter(n => n.status === 'gap' && hasUserCourse(n.id)).length;
-  const gapNodes = totalNodes - activeNodes - userNodes;
-  const coveredNodes = activeNodes + userNodes;
+  const officialNodes = nodes.filter(n => n.status === 'active' && n.courses && n.courses.length).length;
+  const userOnlyNodes = nodes.filter(n => !(n.status === 'active' && n.courses && n.courses.length) && hasUserCourse(n.id)).length;
+  const hubOnlyNodes = nodes.filter(n => {
+    if (n.status === 'active' && n.courses && n.courses.length) return false;
+    if (hasUserCourse(n.id)) return false;
+    return hubHasCourse(n.id);
+  }).length;
+  const coveredNodes = officialNodes + userOnlyNodes + hubOnlyNodes;
+  const gapNodes = totalNodes - coveredNodes;
 
-  // 记录 active 节点列表，供点击跳转
-  const activeNodeList = nodes.filter(n => n.status === 'active');
+  // 记录所有有课件的节点列表（包括 Hub 覆盖），供点击跳转
+  const activeNodeList = nodes.filter(n => nodeHasAnyCourse(n));
   let focusActiveIndex = 0; // 轮转索引
 
-  document.getElementById('statsBar').innerHTML = `
-    <div class="stat-chip">节点 <strong>${totalNodes}</strong></div>
-    <div class="stat-chip clickable" id="jumpActiveBtn" title="点击定位到有课件的节点">有课件 <strong>${activeNodes}</strong> 📍</div>
-    ${userNodes > 0 ? `<div class="stat-chip">我的课件 <strong style="color:#fbbf24;">${userNodes}</strong></div>` : ''}
-    <div class="stat-chip">待创建 <strong style="color:var(--danger);">${gapNodes}</strong></div>
-    <div class="stat-chip" style="font-size:11px;opacity:0.6;">更新于 ${new Date().toLocaleTimeString('zh-CN')}</div>
-    <div class="stat-chip">覆盖率 <strong>${Math.round(coveredNodes/totalNodes*100)}%</strong></div>
-    <button class="refresh-btn" onclick="refreshCurrentTree()" title="刷新知识地图数据">🔄</button>
-  `;
+  const statParts = [
+    `<div class="stat-chip">节点 <strong>${totalNodes}</strong></div>`,
+    `<div class="stat-chip clickable" id="jumpActiveBtn" title="点击定位到有课件的节点">有课件 <strong>${coveredNodes}</strong> 📍</div>`,
+  ];
+  if (userOnlyNodes > 0) {
+    statParts.push(`<div class="stat-chip">我的课件 <strong style="color:#fbbf24;">${userOnlyNodes}</strong></div>`);
+  }
+  if (hubOnlyNodes > 0) {
+    statParts.push(`<div class="stat-chip">社区接入 <strong style="color:#06b6d4;">${hubOnlyNodes}</strong></div>`);
+  }
+  statParts.push(`<div class="stat-chip">待创建 <strong style="color:var(--danger);">${gapNodes}</strong></div>`);
+  statParts.push(`<div class="stat-chip" style="font-size:11px;opacity:0.6;">更新于 ${new Date().toLocaleTimeString('zh-CN')}</div>`);
+  statParts.push(`<div class="stat-chip">覆盖率 <strong>${totalNodes > 0 ? Math.round(coveredNodes/totalNodes*100) : 0}%</strong></div>`);
+  statParts.push(`<button class="refresh-btn" onclick="refreshCurrentTree()" title="刷新知识地图数据">🔄</button>`);
+
+  document.getElementById('statsBar').innerHTML = statParts.join('\n    ');
 
   // D3 force simulation
   const g = svg.append('g');
@@ -607,26 +641,33 @@ function renderTree(tree) {
     .on('mouseleave', hideTooltip)
     .on('click', onNodeClick);
 
-  // Circle
+  // Circle — 使用 nodeHasAnyCourse() 统一检测
   nodeSel.append('circle')
     .attr('class', 'node-circle')
-    .attr('r', d => (d.status === 'active' || hasUserCourse(d.id)) ? 22 : 18)
+    .attr('r', d => nodeHasAnyCourse(d) ? 22 : 18)
     .attr('fill', d => {
       if (d.status === 'active') return hexToRgba(d.domainColor, 0.25);
       if (hasUserCourse(d.id)) return hexToRgba(d.domainColor, 0.15);
+      if (hubHasCourse(d.id)) return hexToRgba(d.domainColor, 0.15);
       return 'rgba(30,41,59,0.6)';
     })
     .attr('stroke', d => {
       if (d.status === 'active') return d.domainColor;
       if (hasUserCourse(d.id)) return d.domainColor;
+      if (hubHasCourse(d.id)) return d.domainColor;
       return '#64748b';
     })
     .attr('stroke-dasharray', d => {
-      if (d.status === 'gap' && !hasUserCourse(d.id)) return '4 3';
-      return 'none';
+      if (nodeHasAnyCourse(d)) return 'none';
+      return '4 3';
+    })
+    .attr('stroke-width', d => {
+      // Hub 社区接入节点用双线样式区分
+      if (!(d.status === 'active' && d.courses && d.courses.length) && !hasUserCourse(d.id) && hubHasCourse(d.id)) return 3.5;
+      return 2.5;
     });
 
-  // Status icon
+  // Status icon — 区分来源
   nodeSel.append('text')
     .attr('text-anchor', 'middle')
     .attr('dy', '0.35em')
@@ -634,6 +675,7 @@ function renderTree(tree) {
     .text(d => {
       if (d.status === 'active') return '✅';
       if (hasUserCourse(d.id)) return '📂';
+      if (hubHasCourse(d.id)) return '🌐';
       return '📝';
     });
 
@@ -749,90 +791,143 @@ function showTooltip(event, d) {
   let html = `<h3>${d.name}</h3>`;
   html += `<div class="meta">${d.domain} · ${d.grade}年级</div>`;
 
-  // 检查用户是否已上传该节点的课件（可能多个）
+  // ── 统一通过 Hub 获取所有课件（已按 likes 降序排列） ──
+  const hubCourses = window.TeachAnyHub ? TeachAnyHub.getAllCoursesForNode(d.id) : [];
+  const hubCount = hubCourses.length;
+
+  // 同时保留旧逻辑作为 fallback（Hub 未初始化时）
   const userCourses = window.TeachAnyImporter ? TeachAnyImporter.getTopCoursesForTreeNode(d.id) : [];
   const hasUserCourses = userCourses.length > 0;
-
-  // 检查社区共享课件
   const communityCourses = window.TeachAnyCommunity ? TeachAnyCommunity.getTopCommunityCourses(d.id, 5) : [];
   const hasCommunity = communityCourses.length > 0;
 
-  // 状态徽章 + 统计信息
-  const statParts = [];
-  if (d.status === 'active' && d.courses.length) {
-    html += `<span class="status-badge badge-active">✅ 有课件</span>`;
-    statParts.push(`📋 官方 ×${d.courses.length}`);
-  } else if (hasUserCourses) {
-    html += `<span class="status-badge badge-active">📂 我的课件 ×${userCourses.length}</span>`;
-  } else if (hasCommunity) {
-    html += `<span class="status-badge badge-active">🌐 社区共享</span>`;
+  // ── 状态徽章（基于统一检测） ──
+  const hasAnyCourse = nodeHasAnyCourse(d);
+  if (hasAnyCourse) {
+    if (d.status === 'active' && d.courses && d.courses.length) {
+      html += `<span class="status-badge badge-active">✅ 有课件</span>`;
+    } else if (hasUserCourses) {
+      html += `<span class="status-badge badge-active">📂 我的课件</span>`;
+    } else if (hubCount > 0) {
+      html += `<span class="status-badge badge-active">🌐 社区接入</span>`;
+    } else {
+      html += `<span class="status-badge badge-active">✅ 有课件</span>`;
+    }
   } else {
     html += `<span class="status-badge badge-gap">📝 待创建</span>`;
   }
 
-  // 社区课件数量
-  if (hasCommunity) {
-    statParts.push(`🌐 社区 ×${communityCourses.length}`);
-  }
-  if (hasUserCourses) {
-    statParts.push(`📂 我的 ×${userCourses.length}`);
+  // ── 来源统计行 ──
+  const statParts = [];
+
+  if (hubCount > 0) {
+    // Hub 模式：显示聚合统计
+    const officialCount = hubCourses.filter(c => c.source === 'official').length;
+    const communityRegCount = hubCourses.filter(c => c.source === 'community_registry').length;
+    const communitySharedCount = hubCourses.filter(c => c.source === 'community_shared').length;
+    const userCount = hubCourses.filter(c => c.source === 'user').length;
+
+    if (officialCount > 0) statParts.push(`📋 官方 ×${officialCount}`);
+    if (communityRegCount > 0) statParts.push(`🔖 社区精选 ×${communityRegCount}`);
+    if (communitySharedCount > 0) statParts.push(`🌐 社区共享 ×${communitySharedCount}`);
+    if (userCount > 0) statParts.push(`📂 我的 ×${userCount}`);
+
+    // 总 likes 数
+    const totalLikes = hubCourses.reduce((sum, c) => sum + (c.likes || 0), 0);
+    if (totalLikes > 0) statParts.push(`❤️ ${totalLikes}`);
+
+    // 总课件数
+    if (hubCount > 1) statParts.push(`共 ${hubCount} 个课件`);
+  } else {
+    // Fallback：Hub 未初始化时走旧逻辑
+    if (d.status === 'active' && d.courses.length) {
+      statParts.push(`📋 官方 ×${d.courses.length}`);
+    }
+    if (hasCommunity) statParts.push(`🌐 社区 ×${communityCourses.length}`);
+    if (hasUserCourses) statParts.push(`📂 我的 ×${userCourses.length}`);
+
+    // 爱心数（旧逻辑）
+    let totalLikes = 0;
+    if (window.TeachAnyRegistry) {
+      d.courses.forEach(c => {
+        const cid = typeof c === 'string' ? c.split('/').pop() : '';
+        totalLikes += TeachAnyRegistry.getRegistryLikeCount(cid);
+      });
+    }
+    if (window.TeachAnyImporter) {
+      userCourses.forEach(c => { totalLikes += TeachAnyImporter.getCourseLikes(c.id); });
+    }
+    if (totalLikes > 0) statParts.push(`❤️ ${totalLikes}`);
   }
 
-  // 星标推荐课件数量
+  // 星标推荐
   if (window.TeachAnyFeatured) {
     const featuredStats = TeachAnyFeatured.getFeaturedStatsForNode(d.id);
     if (featuredStats.total > 0) {
-      if (featuredStats.approved > 0) {
-        statParts.push(`⭐ 推荐 ×${featuredStats.approved}`);
-      }
-      if (featuredStats.starred > 0) {
-        statParts.push(`🔸 待审核 ×${featuredStats.starred}`);
-      }
+      if (featuredStats.approved > 0) statParts.push(`⭐ 推荐 ×${featuredStats.approved}`);
+      if (featuredStats.starred > 0) statParts.push(`🔸 待审核 ×${featuredStats.starred}`);
     }
-  }
-
-  // 爱心数（合并官方+用户+社区的点赞数）
-  let totalLikes = 0;
-  if (window.TeachAnyRegistry) {
-    d.courses.forEach(c => {
-      const cid = typeof c === 'string' ? c.split('/').pop() : '';
-      totalLikes += TeachAnyRegistry.getRegistryLikeCount(cid);
-    });
-  }
-  if (window.TeachAnyImporter) {
-    userCourses.forEach(c => { totalLikes += TeachAnyImporter.getCourseLikes(c.id); });
-  }
-  if (totalLikes > 0) {
-    statParts.push(`❤️ ${totalLikes}`);
   }
 
   if (statParts.length > 0) {
     html += `<div class="meta" style="margin-top:4px;">${statParts.join(' · ')}</div>`;
   }
 
+  // ── 前置知识 ──
   if (d.prerequisites.length) {
     html += `<div class="prereqs">前置知识：${d.prerequisites.join('、')}</div>`;
   }
 
-  if (d.status === 'active' && d.courses.length) {
-    html += `<a class="course-link" href="./examples/${d.courses[0]}/index.html" target="_blank">🎯 进入课件</a>`;
+  // ── 课件列表（Hub 统一展示） ──
+  if (hubCount > 0) {
+    // 最佳课件（心标最高者）优先展示为主按钮
+    const best = hubCourses[0];
+    const bestUrl = best.url || (best.path ? `./${best.path}/index.html` : '');
+    const bestLabel = hubCount > 1
+      ? `🎯 ${best.emoji || '📚'} ${best.name}${best.likes > 0 ? ' ❤️' + best.likes : ''} （最佳）`
+      : `🎯 进入课件`;
+    if (bestUrl) {
+      html += `<a class="course-link" href="${bestUrl}" target="_blank" onclick="event.preventDefault();safeOpenCourseUrl('${bestUrl.replace(/'/g, "\\'")}')">${bestLabel}</a>`;
+    }
+
+    // 多个课件时，展示排名列表
+    if (hubCount > 1) {
+      html += `<div style="margin-top:8px;font-size:12px;color:var(--dim);">全部课件（按 ❤️ 排序）：</div>`;
+      html += `<div style="max-height:120px;overflow-y:auto;margin-top:4px;">`;
+      hubCourses.forEach((c, idx) => {
+        const sourceIcon = { official: '📋', community_registry: '🔖', community_shared: '🌐', user: '📂' }[c.source] || '📚';
+        const likeBadge = c.likes > 0 ? ` <span style="color:#f87171;font-size:11px;">❤️${c.likes}</span>` : '';
+        const isBest = idx === 0 ? ' <span style="color:var(--accent);font-size:10px;">👑</span>' : '';
+        const courseUrl = c.url || (c.path ? `./${c.path}/index.html` : '');
+        if (courseUrl) {
+          html += `<a href="${courseUrl}" target="_blank" onclick="event.preventDefault();safeOpenCourseUrl('${courseUrl.replace(/'/g, "\\'")}')"
+            style="display:block;padding:4px 8px;margin:2px 0;border-radius:4px;font-size:12px;color:var(--text);text-decoration:none;background:rgba(148,163,184,0.08);transition:background 0.2s;pointer-events:auto;"
+            onmouseover="this.style.background='rgba(59,130,246,0.15)'"
+            onmouseout="this.style.background='rgba(148,163,184,0.08)'"
+          >${sourceIcon} ${c.name}${likeBadge}${isBest}</a>`;
+        }
+      });
+      html += `</div>`;
+    }
+  } else if (d.status === 'active' && d.courses.length) {
+    // Fallback：直接用 tree 中的课件路径
+    html += `<a class="course-link" href="./examples/${d.courses[0]}/index.html" target="_blank" onclick="event.preventDefault();safeOpenCourseUrl('./examples/${d.courses[0]}/index.html')">🎯 进入课件</a>`;
   }
 
   tooltip.innerHTML = html;
 
-  // 为有用户课件的节点或 gap 节点添加社区课件列表 + 上传按钮
-  if (window.TeachAnyImporter && (hasUserCourses || d.status === 'gap')) {
+  // 为有用户课件的节点或 gap 节点添加上传按钮
+  if (window.TeachAnyImporter && (hasUserCourses || !hasAnyCourse)) {
     TeachAnyImporter.addTreeUploadButton(d, tooltip);
   }
 
-  // 渲染社区共享课件列表（来自 community/index.json）
-  if (window.TeachAnyCommunity && hasCommunity) {
+  // 渲染社区共享课件列表（仅在 Hub 未覆盖时走旧逻辑）
+  if (hubCount === 0 && window.TeachAnyCommunity && hasCommunity) {
     TeachAnyCommunity.renderCommunityCoursesInTooltip(d.id, tooltip);
   }
 
-  // 定位：紧贴节点右侧（无间隙），这样鼠标从节点移到 tooltip 不会经过空白区域
+  // 定位
   positionTooltipAtNode(event, d);
-
   tooltip.classList.add('visible');
 }
 
@@ -897,33 +992,72 @@ tooltip.addEventListener('mouseleave', function() {
   this.classList.remove('visible');
 });
 
-function onNodeClick(event, d) {
-  // 优先级：1. 官方课件 2. 社区星标最高课件 3. 用户上传课件
-  if (d.status === 'active' && d.courses.length) {
-    // 1. 有官方课件,直接打开
-    window.open('./examples/' + d.courses[0] + '/index.html', '_blank');
+// ── TeachAny 导航白名单 ──
+const TEACHANY_NAV_WHITELIST = [
+  /^\.\.?\//,                                          // 相对路径
+  /^#/,                                                // 锚点
+  /^imported-course\.html/,                            // 用户课件查看器
+  /^https?:\/\/weponusa\.github\.io\/teachany\//,      // TeachAny Pages
+  /^https?:\/\/github\.com\/weponusa\/teachany\//,     // TeachAny GitHub
+];
+
+function isTeachAnyUrl(url) {
+  if (!url || url === '#') return false;
+  url = url.trim();
+  // 相对路径（不含协议前缀）都允许
+  if (!/^[a-z]+:/i.test(url)) return true;
+  return TEACHANY_NAV_WHITELIST.some(re => re.test(url));
+}
+
+function safeOpenCourseUrl(url) {
+  if (!url || url === '#') return;
+  if (isTeachAnyUrl(url)) {
+    window.open(url, '_blank', 'noopener');
   } else {
-    // 2. 尝试获取该节点的社区课件(按星标排序)
-    const communityCourses = window.TeachAnyCommunity 
-      ? TeachAnyCommunity.getTopCommunityCourses(d.id, 1) 
-      : [];
-    
-    if (communityCourses.length > 0) {
-      // 打开社区星标最高的课件（通过 download_url 下载）
-      const topCourse = communityCourses[0];
-      if (topCourse.download_url) {
-        window.open(topCourse.download_url, '_blank');
+    console.warn('[TeachAny] 已拦截非课件链接:', url);
+  }
+}
+
+function onNodeClick(event, d) {
+  // ── 优先级：Hub 最佳课件 → 官方课件 → 社区星标 → 用户上传 ──
+
+  // 1. 通过 Hub 获取心标最高的课件（统一所有来源）
+  if (window.TeachAnyHub) {
+    const best = TeachAnyHub.getBestCourseForNode(d.id);
+    if (best) {
+      const url = best.url || (best.path ? `./${best.path}/index.html` : '');
+      if (url) {
+        safeOpenCourseUrl(url);
         return;
       }
     }
-    
-    // 3. 最后尝试用户上传的课件
-    const topUserCourse = window.TeachAnyImporter 
-      ? TeachAnyImporter.findUserCourseByNodeId(d.id) 
-      : null;
-    if (topUserCourse) {
-      window.open(TeachAnyImporter.getCourseLaunchUrl(topUserCourse), '_blank', 'noopener');
+  }
+
+  // 2. Fallback：官方课件（Hub 未初始化时）
+  if (d.status === 'active' && d.courses.length) {
+    safeOpenCourseUrl('./examples/' + d.courses[0] + '/index.html');
+    return;
+  }
+
+  // 3. Fallback：社区课件
+  const communityCourses = window.TeachAnyCommunity 
+    ? TeachAnyCommunity.getTopCommunityCourses(d.id, 1) 
+    : [];
+  if (communityCourses.length > 0) {
+    const topCourse = communityCourses[0];
+    if (topCourse.download_url && isTeachAnyUrl(topCourse.download_url)) {
+      safeOpenCourseUrl(topCourse.download_url);
+      return;
     }
+  }
+
+  // 4. Fallback：用户上传课件
+  const topUserCourse = window.TeachAnyImporter 
+    ? TeachAnyImporter.findUserCourseByNodeId(d.id) 
+    : null;
+  if (topUserCourse) {
+    const launchUrl = TeachAnyImporter.getCourseLaunchUrl(topUserCourse);
+    safeOpenCourseUrl(launchUrl);
   }
 }
 
@@ -947,8 +1081,10 @@ if (window.TeachAnyCommunity) {
   TeachAnyCommunity.fetchCommunityIndex().catch(() => {});
 }
 
-// 课件导入回调：重新渲染当前知识地图
+// 课件导入回调：刷新 Hub 索引 + 重新渲染当前知识地图
 window.teachanyOnCourseImported = function(nodeId) {
+  // 先刷新 Hub 索引，将新导入课件纳入统一检索
+  if (window.TeachAnyHub) TeachAnyHub.refreshIndex();
   const activeIdx = Array.from(document.querySelectorAll('.subject-tab')).findIndex(t => t.classList.contains('active'));
   if (activeIdx >= 0) loadTree(activeIdx);
 };
