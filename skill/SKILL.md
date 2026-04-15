@@ -1119,6 +1119,8 @@ When executing TeachAny, the user can specify language preferences:
 ```
 
 > **⚠️ Important**: Courseware files do **NOT** use a `public/` subdirectory. `index.html`, `tts/`, `assets/`, etc. go directly in the course root. This ensures GitHub Pages can serve all files correctly when pushed to the repository.
+>
+> **⚠️ Do NOT create separate GitHub repositories for individual coursewares**. All coursewares must be stored under `teachany-opensource/examples/{course-id}/` and deployed via the main site's `deploy-pages.yml`. Do not create `gallery.html`, `knowledge-map.html`, or other site-level pages inside individual courseware directories — Gallery and Knowledge Map are provided by the main site. Courseware directories should only contain `index.html` + `tts/` + `assets/` and other teaching content files.
     ├── Episode01.mp4
     ├── Episode02.mp4
     └── ...
