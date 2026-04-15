@@ -3058,6 +3058,8 @@ if __name__ == "__main__":
 ```
 
 > **⚠️ 重要**：课件文件**不使用 `public/` 子目录**。`index.html`、`tts/`、`assets/` 等直接放在课件根目录下。这确保课件推送到 GitHub 仓库后，GitHub Pages 能正确服务所有文件。`registry.json` 中的 `path` 字段直接指向课件根目录（如 `examples/math-linear-function`），Gallery 会拼接为 `./examples/math-linear-function/index.html` 来访问课件。
+>
+> **⚠️ 禁止为单个课件创建独立 GitHub 仓库**。所有课件必须存放在 `teachany-opensource/examples/{course-id}/` 目录下，通过主站 `deploy-pages.yml` 统一部署到 GitHub Pages。禁止在单课件目录中创建 `gallery.html`、`knowledge-map.html` 等主站功能页面——Gallery 和知识地图由主站统一提供，课件仅包含 `index.html` + `tts/` + `assets/` 等教学内容文件。
 
 ### 15.8 快速启动命令
 
