@@ -1267,5 +1267,26 @@ function toggleAudioPlayer() {
 
 window.addEventListener('DOMContentLoaded', buildAudioUI);
 </script>
+<script>
+/* === TTS Guard: hide audio UI when no TTS files === */
+(function(){
+  var testAudio = document.querySelector('audio[src*="tts/"]');
+  if(!testAudio) return;
+  fetch(testAudio.getAttribute('src'), {method:'HEAD'}).then(function(r){
+    if(!r.ok) throw new Error('no tts');
+  }).catch(function(){
+    /* Hide all audio UI elements */
+    var selectors = ['.audio-bar', '.audio-badge', '.audio-panel', '#audioBar',
+                     'audio[src*="tts/"]', '[id^="ta-audio-"]'];
+    selectors.forEach(function(sel){
+      document.querySelectorAll(sel).forEach(function(el){ el.style.display='none'; });
+    });
+    /* Disable audio JS functions to prevent errors */
+    if(typeof togglePlay !== 'undefined') window.togglePlay = function(){};
+    if(typeof loadSeg !== 'undefined') window.loadSeg = function(){};
+    if(typeof toggleAudioPlayer !== 'undefined') window.toggleAudioPlayer = function(){};
+  });
+})();
+</script>
 </body>
 </html>
