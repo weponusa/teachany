@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>课标三级词汇总控 - TeachAny 互动课件</title>
+<meta name="teachany-node" content="curriculum-vocabulary">
+<meta name="teachany-subject" content="english">
+<meta name="teachany-domain" content="vocabulary">
+<meta name="teachany-grade" content="7">
+<meta name="teachany-difficulty" content="2">
+<meta name="teachany-version" content="1.0">
+<meta name="teachany-author" content="weponusa">
+<style>
+:root{--bg:#f0f4ff;--bg-soft:#e8eeff;--card:#fff;--primary:#4f46e5;--primary-light:#818cf8;--secondary:#0ea5e9;--accent:#f59e0b;--ink:#1e293b;--text-secondary:#64748b;--border:#e2e8f0;--success:#22c55e;--danger:#ef4444;--purple:#a855f7;--shadow:0 8px 32px rgba(79,70,229,.08);--radius:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:linear-gradient(135deg,#f0f4ff 0%,#e8eeff 50%,#f5f3ff 100%);color:var(--ink);line-height:1.7;min-height:100vh}
+body::before{content:"";position:fixed;inset:0;background:radial-gradient(circle at 20% 20%,rgba(79,70,229,.06) 0,transparent 40%),radial-gradient(circle at 80% 80%,rgba(14,165,233,.06) 0,transparent 40%);pointer-events:none;z-index:-1}
+
+.progress-bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:300;background:linear-gradient(90deg,var(--primary),var(--secondary));transition:width .2s}
+
+.nav-bar{position:sticky;top:0;z-index:200;display:flex;align-items:center;gap:8px;padding:12px 20px;background:rgba(240,244,255,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);overflow-x:auto;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.04)}
+.nav-bar .brand{font-weight:800;font-size:15px;color:var(--primary);margin-right:8px;flex-shrink:0}
+.nav-btn{padding:6px 14px;border-radius:20px;font-size:13px;cursor:pointer;border:1.5px solid var(--border);background:var(--card);color:var(--text-secondary);transition:all .2s;flex-shrink:0}
+.nav-btn:hover,.nav-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);transform:translateY(-1px)}
+
+.container{max-width:900px;margin:0 auto;padding:20px}
+
+/* Hero */
+.hero{text-align:center;padding:48px 20px 36px;position:relative}
+.hero h1{font-size:clamp(28px,5vw,42px);font-weight:900;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.hero .subtitle{font-size:18px;color:var(--text-secondary)}
+
+/* Stats bar */
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0}
+.stat-card{background:var(--card);border-radius:var(--radius);padding:16px;text-align:center;box-shadow:var(--shadow);border:1px solid var(--border)}
+.stat-card .num{font-size:28px;font-weight:800;color:var(--primary)}
+.stat-card .label{font-size:12px;color:var(--text-secondary);margin-top:4px}
+
+/* Section */
+.section{margin:28px 0}
+.section-title{font-size:22px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card{background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:16px}
+
+/* Tabs */
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.tab{padding:8px 16px;border-radius:20px;font-size:14px;cursor:pointer;border:1.5px solid var(--border);background:var(--card);color:var(--text-secondary);transition:all .2s}
+.tab:hover,.tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.tab .count{font-size:11px;opacity:.8;margin-left:4px}
+
+/* Search */
+.search-box{position:relative;margin-bottom:16px}
+.search-box input{width:100%;padding:14px 14px 14px 44px;border-radius:12px;border:2px solid var(--border);font-size:15px;background:var(--bg-soft);transition:border .2s;outline:none}
+.search-box input:focus{border-color:var(--primary)}
+.search-box::before{content:"🔍";position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:18px}
+
+/* Word grid */
+.word-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.word-card{background:var(--bg-soft);border-radius:12px;padding:14px;cursor:pointer;border:2px solid transparent;transition:all .25s;position:relative}
+.word-card:hover{border-color:var(--primary-light);transform:translateY(-2px);box-shadow:0 4px 12px rgba(79,70,229,.12)}
+.word-card.mastered{border-color:var(--success);background:#f0fdf4}
+.word-card.error{border-color:var(--danger);background:#fef2f2}
+.word-card .en{font-size:17px;font-weight:700;color:var(--primary)}
+.word-card .zh{font-size:13px;color:var(--text-secondary);margin-top:2px}
+.word-card .pos{font-size:11px;background:var(--primary);color:#fff;padding:2px 8px;border-radius:8px;display:inline-block;margin-top:4px}
+.word-card .star{position:absolute;top:10px;right:10px;font-size:16px;cursor:pointer;opacity:.5;transition:opacity .2s}
+.word-card .star:hover,.word-card .star.marked{opacity:1}
+
+/* Flashcard */
+.flashcard-area{perspective:1000px;margin:20px auto;max-width:400px}
+.flashcard{width:100%;min-height:240px;position:relative;cursor:pointer;transform-style:preserve-3d;transition:transform .5s}
+.flashcard.flipped{transform:rotateY(180deg)}
+.flashcard .front,.flashcard .back{position:absolute;inset:0;backface-visibility:hidden;border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;box-shadow:var(--shadow)}
+.flashcard .front{background:linear-gradient(135deg,#4f46e5,#818cf8);color:#fff}
+.flashcard .front .word{font-size:36px;font-weight:900;letter-spacing:1px}
+.flashcard .front .hint{margin-top:12px;font-size:14px;opacity:.7}
+.flashcard .back{background:var(--card);border:2px solid var(--primary);transform:rotateY(180deg)}
+.flashcard .back .meaning{font-size:22px;font-weight:700;color:var(--primary)}
+.flashcard .back .example{font-size:14px;color:var(--text-secondary);margin-top:12px;text-align:center;font-style:italic}
+
+/* Quiz */
+.quiz-area .question{font-size:20px;font-weight:700;text-align:center;margin-bottom:20px;color:var(--primary)}
+.quiz-options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.quiz-opt{padding:16px;border-radius:12px;border:2px solid var(--border);background:var(--card);cursor:pointer;font-size:15px;text-align:center;transition:all .2s}
+.quiz-opt:hover{border-color:var(--primary-light);background:var(--bg-soft)}
+.quiz-opt.correct{border-color:var(--success);background:#f0fdf4;color:var(--success);font-weight:700}
+.quiz-opt.wrong{border-color:var(--danger);background:#fef2f2;color:var(--danger)}
+
+/* Buttons */
+.btn{padding:12px 24px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;border:none;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:#4338ca;transform:translateY(-1px)}
+.btn-outline{background:transparent;border:2px solid var(--primary);color:var(--primary)}
+.btn-outline:hover{background:var(--primary);color:#fff}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-success{background:var(--success);color:#fff}
+.btn-group{display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+
+/* Error recycler */
+.error-list .word-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:10px;background:var(--bg-soft);margin-bottom:8px}
+.error-list .word-row .info{display:flex;align-items:center;gap:12px}
+.error-list .word-row .en{font-weight:700;font-size:16px;color:var(--danger)}
+.error-list .word-row .zh{color:var(--text-secondary);font-size:14px}
+.error-list .word-row .times{background:var(--danger);color:#fff;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:700}
+
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-secondary);font-size:16px}
+
+@media(max-width:640px){
+  .stats-bar{grid-template-columns:repeat(2,1fr)}
+  .word-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .quiz-options{grid-template-columns:1fr}
+  .nav-bar{padding:10px 12px}
+}
+</style>
+</head>
+<body>
+<div class="progress-bar" id="progressBar"></div>
+
+<nav class="nav-bar">
+  <span class="brand">📚 词汇总控</span>
+  <button class="nav-btn active" onclick="showSection('themes')">主题词群</button>
+  <button class="nav-btn" onclick="showSection('review')">分层复习</button>
+  <button class="nav-btn" onclick="showSection('quiz')">随机抽测</button>
+  <button class="nav-btn" onclick="showSection('errors')">易错回收</button>
+</nav>
+
+<div class="container">
+  <!-- Hero -->
+  <div class="hero">
+    <h1>课标三级词汇总控</h1>
+    <p class="subtitle">《义务教育英语课程标准（2022年版）》三级词汇表 · 约1600词</p>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-card"><div class="num" id="totalCount">0</div><div class="label">总词量</div></div>
+    <div class="stat-card"><div class="num" id="masteredCount" style="color:var(--success)">0</div><div class="label">已掌握</div></div>
+    <div class="stat-card"><div class="num" id="errorCount" style="color:var(--danger)">0</div><div class="label">易错词</div></div>
+    <div class="stat-card"><div class="num" id="progressPct">0%</div><div class="label">完成率</div></div>
+  </div>
+
+  <!-- Section: 主题词群 -->
+  <div class="section" id="sec-themes">
+    <h2 class="section-title">🏷️ 主题词群</h2>
+    <div class="search-box"><input type="text" id="searchInput" placeholder="搜索单词、中文释义或词性…" oninput="filterWords()"></div>
+    <div class="tabs" id="themeTabs"></div>
+    <div class="word-grid" id="wordGrid"></div>
+  </div>
+
+  <!-- Section: 分层复习 -->
+  <div class="section" id="sec-review" style="display:none">
+    <h2 class="section-title">🔄 分层复习</h2>
+    <div class="card">
+      <p style="margin-bottom:12px;color:var(--text-secondary)">点击卡片翻转查看释义，左右滑动或点击按钮判断掌握程度</p>
+      <div class="tabs" id="reviewLevelTabs"></div>
+      <div class="flashcard-area">
+        <div class="flashcard" id="flashcard" onclick="flipCard()">
+          <div class="front">
+            <div class="word" id="fcWord">apple</div>
+            <div class="hint">点击翻转 →</div>
+          </div>
+          <div class="back">
+            <div class="meaning" id="fcMeaning">n. 苹果</div>
+            <div class="example" id="fcExample">I like to eat apples.</div>
+          </div>
+        </div>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-danger" onclick="markReview('error')">😵 不认识</button>
+        <button class="btn btn-outline" onclick="markReview('unsure')">🤔 不确定</button>
+        <button class="btn btn-success" onclick="markReview('mastered')">✅ 已掌握</button>
+      </div>
+      <p style="text-align:center;margin-top:12px;color:var(--text-secondary);font-size:14px">
+        第 <strong id="fcIdx">1</strong> / <strong id="fcTotal">0</strong> 个
+      </p>
+    </div>
+  </div>
+
+  <!-- Section: 随机抽测 -->
+  <div class="section" id="sec-quiz" style="display:none">
+    <h2 class="section-title">🎯 随机抽测</h2>
+    <div class="card">
+      <div class="tabs" style="margin-bottom:16px">
+        <div class="tab active" onclick="startQuiz('en2zh')">英→中</div>
+        <div class="tab" onclick="startQuiz('zh2en')">中→英</div>
+        <div class="tab" onclick="startQuiz('listen')">听音选义</div>
+      </div>
+      <div class="quiz-area" id="quizArea">
+        <div class="empty-state">选择模式后开始抽测</div>
+      </div>
+      <div class="btn-group" id="quizBtns" style="display:none">
+        <button class="btn btn-primary" onclick="nextQuizQuestion()">下一题 →</button>
+      </div>
+      <p style="text-align:center;margin-top:12px;color:var(--text-secondary);font-size:14px">
+        得分：<strong id="quizScore">0</strong> / <strong id="quizTotal">0</strong>
+      </p>
+    </div>
+  </div>
+
+  <!-- Section: 易错回收 -->
+  <div class="section" id="sec-errors" style="display:none">
+    <h2 class="section-title">♻️ 易错回收站</h2>
+    <div class="card">
+      <p style="margin-bottom:16px;color:var(--text-secondary)">复习中标记为"不认识"或抽测答错的词汇会自动收录到这里</p>
+      <div class="error-list" id="errorList">
+        <div class="empty-state">🎉 还没有易错词，继续加油！</div>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="reviewErrors()">集中复习易错词</button>
+        <button class="btn btn-outline" onclick="clearErrors()">清空回收站</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   词库数据：按主题语境组织
+   每个词: {en, zh, pos, theme, level, example}
+   level: 2=二级(小学衔接), 3=三级(初中新增)
+   ═══════════════════════════════════════════════════ */
+const VOCAB = [
+  // ── 人与自我：个人情况 ──
+  {en:"name",zh:"名字",pos:"n.",theme:"人与自我",level:2,example:"My name is Li Ming."},
+  {en:"age",zh:"年龄",pos:"n.",theme:"人与自我",level:2,example:"What's your age?"},
+  {en:"birthday",zh:"生日",pos:"n.",theme:"人与自我",level:2,example:"When is your birthday?"},
+  {en:"hobby",zh:"爱好",pos:"n.",theme:"人与自我",level:2,example:"My hobby is reading."},
+  {en:"dream",zh:"梦想",pos:"n./v.",theme:"人与自我",level:3,example:"I dream of becoming a doctor."},
+  {en:"goal",zh:"目标",pos:"n.",theme:"人与自我",level:3,example:"Set a goal and work hard."},
+  {en:"experience",zh:"经历；经验",pos:"n./v.",theme:"人与自我",level:3,example:"It was an amazing experience."},
+  {en:"ability",zh:"能力",pos:"n.",theme:"人与自我",level:3,example:"She has the ability to lead."},
+  {en:"character",zh:"性格；角色",pos:"n.",theme:"人与自我",level:3,example:"He has a kind character."},
+  {en:"habit",zh:"习惯",pos:"n.",theme:"人与自我",level:3,example:"Reading is a good habit."},
+  {en:"health",zh:"健康",pos:"n.",theme:"人与自我",level:3,example:"Health is more important than wealth."},
+  {en:"feeling",zh:"感觉",pos:"n.",theme:"人与自我",level:2,example:"What's your feeling about it?"},
+  {en:"proud",zh:"骄傲的",pos:"adj.",theme:"人与自我",level:3,example:"I'm proud of you."},
+  {en:"confident",zh:"自信的",pos:"adj.",theme:"人与自我",level:3,example:"Be confident in yourself."},
+  {en:"brave",zh:"勇敢的",pos:"adj.",theme:"人与自我",level:3,example:"The brave boy saved the cat."},
+  // ── 人与自我：日常生活 ──
+  {en:"breakfast",zh:"早餐",pos:"n.",theme:"日常生活",level:2,example:"I have breakfast at 7:00."},
+  {en:"lunch",zh:"午餐",pos:"n.",theme:"日常生活",level:2,example:"Let's have lunch together."},
+  {en:"dinner",zh:"晚餐",pos:"n.",theme:"日常生活",level:2,example:"What's for dinner?"},
+  {en:"homework",zh:"作业",pos:"n.",theme:"日常生活",level:2,example:"I finished my homework."},
+  {en:"exercise",zh:"锻炼",pos:"n./v.",theme:"日常生活",level:3,example:"Exercise keeps you healthy."},
+  {en:"housework",zh:"家务",pos:"n.",theme:"日常生活",level:3,example:"She often does housework."},
+  {en:"schedule",zh:"时间表",pos:"n.",theme:"日常生活",level:3,example:"Check your schedule."},
+  {en:"daily",zh:"每日的",pos:"adj.",theme:"日常生活",level:3,example:"Daily exercise is important."},
+  {en:"brush",zh:"刷",pos:"v./n.",theme:"日常生活",level:2,example:"Brush your teeth twice a day."},
+  {en:"wake",zh:"醒来",pos:"v.",theme:"日常生活",level:3,example:"I wake up at 6 every morning."},
+  // ── 人与自我：学校 ──
+  {en:"subject",zh:"学科",pos:"n.",theme:"学校学习",level:2,example:"What's your favorite subject?"},
+  {en:"math",zh:"数学",pos:"n.",theme:"学校学习",level:2,example:"I'm good at math."},
+  {en:"science",zh:"科学",pos:"n.",theme:"学校学习",level:2,example:"Science is interesting."},
+  {en:"exam",zh:"考试",pos:"n.",theme:"学校学习",level:3,example:"The final exam is next week."},
+  {en:"grade",zh:"年级；成绩",pos:"n.",theme:"学校学习",level:3,example:"He got good grades."},
+  {en:"knowledge",zh:"知识",pos:"n.",theme:"学校学习",level:3,example:"Knowledge is power."},
+  {en:"practice",zh:"练习；实践",pos:"n./v.",theme:"学校学习",level:3,example:"Practice makes perfect."},
+  {en:"review",zh:"复习",pos:"v./n.",theme:"学校学习",level:3,example:"Let's review the lesson."},
+  {en:"mistake",zh:"错误",pos:"n.",theme:"学校学习",level:3,example:"Learn from your mistakes."},
+  {en:"improve",zh:"提高",pos:"v.",theme:"学校学习",level:3,example:"I want to improve my English."},
+  // ── 人与社会：家庭 ──
+  {en:"family",zh:"家庭",pos:"n.",theme:"家庭与朋友",level:2,example:"I love my family."},
+  {en:"parent",zh:"父/母",pos:"n.",theme:"家庭与朋友",level:2,example:"My parents are teachers."},
+  {en:"daughter",zh:"女儿",pos:"n.",theme:"家庭与朋友",level:3,example:"She is their daughter."},
+  {en:"son",zh:"儿子",pos:"n.",theme:"家庭与朋友",level:2,example:"He is my son."},
+  {en:"neighbor",zh:"邻居",pos:"n.",theme:"家庭与朋友",level:3,example:"Our neighbor is friendly."},
+  {en:"relationship",zh:"关系",pos:"n.",theme:"家庭与朋友",level:3,example:"Good relationships are important."},
+  {en:"respect",zh:"尊重",pos:"n./v.",theme:"家庭与朋友",level:3,example:"We should respect the old."},
+  {en:"trust",zh:"信任",pos:"n./v.",theme:"家庭与朋友",level:3,example:"Trust is the key to friendship."},
+  {en:"share",zh:"分享",pos:"v.",theme:"家庭与朋友",level:2,example:"Let's share the cake."},
+  {en:"communicate",zh:"交流",pos:"v.",theme:"家庭与朋友",level:3,example:"We need to communicate more."},
+  // ── 人与社会：社区与社会 ──
+  {en:"community",zh:"社区",pos:"n.",theme:"社区与社会",level:3,example:"Our community is safe."},
+  {en:"volunteer",zh:"志愿者",pos:"n./v.",theme:"社区与社会",level:3,example:"She works as a volunteer."},
+  {en:"culture",zh:"文化",pos:"n.",theme:"社区与社会",level:3,example:"Chinese culture is rich."},
+  {en:"tradition",zh:"传统",pos:"n.",theme:"社区与社会",level:3,example:"Spring Festival is a tradition."},
+  {en:"government",zh:"政府",pos:"n.",theme:"社区与社会",level:3,example:"The government helps people."},
+  {en:"rule",zh:"规则",pos:"n.",theme:"社区与社会",level:3,example:"Follow the school rules."},
+  {en:"law",zh:"法律",pos:"n.",theme:"社区与社会",level:3,example:"Everyone should obey the law."},
+  {en:"society",zh:"社会",pos:"n.",theme:"社区与社会",level:3,example:"We live in a modern society."},
+  {en:"safety",zh:"安全",pos:"n.",theme:"社区与社会",level:3,example:"Safety comes first."},
+  {en:"public",zh:"公共的",pos:"adj.",theme:"社区与社会",level:3,example:"Don't smoke in public places."},
+  // ── 人与社会：旅行与交通 ──
+  {en:"travel",zh:"旅行",pos:"v./n.",theme:"旅行交通",level:3,example:"I love to travel."},
+  {en:"journey",zh:"旅程",pos:"n.",theme:"旅行交通",level:3,example:"Life is a long journey."},
+  {en:"ticket",zh:"票",pos:"n.",theme:"旅行交通",level:3,example:"Buy a ticket first."},
+  {en:"passenger",zh:"乘客",pos:"n.",theme:"旅行交通",level:3,example:"All passengers please sit down."},
+  {en:"airport",zh:"机场",pos:"n.",theme:"旅行交通",level:3,example:"We arrived at the airport."},
+  {en:"station",zh:"车站",pos:"n.",theme:"旅行交通",level:2,example:"The train station is near."},
+  {en:"abroad",zh:"在国外",pos:"adv.",theme:"旅行交通",level:3,example:"He studies abroad."},
+  {en:"direction",zh:"方向",pos:"n.",theme:"旅行交通",level:3,example:"Which direction should we go?"},
+  {en:"guide",zh:"导游；指导",pos:"n./v.",theme:"旅行交通",level:3,example:"The guide showed us around."},
+  {en:"map",zh:"地图",pos:"n.",theme:"旅行交通",level:2,example:"Look at the map."},
+  // ── 人与自然：动植物 ──
+  {en:"animal",zh:"动物",pos:"n.",theme:"自然与环境",level:2,example:"Dogs are loyal animals."},
+  {en:"plant",zh:"植物",pos:"n./v.",theme:"自然与环境",level:2,example:"Water the plants every day."},
+  {en:"forest",zh:"森林",pos:"n.",theme:"自然与环境",level:3,example:"The forest is beautiful."},
+  {en:"ocean",zh:"海洋",pos:"n.",theme:"自然与环境",level:3,example:"The ocean is deep and wide."},
+  {en:"environment",zh:"环境",pos:"n.",theme:"自然与环境",level:3,example:"Protect the environment."},
+  {en:"pollution",zh:"污染",pos:"n.",theme:"自然与环境",level:3,example:"Air pollution is a big problem."},
+  {en:"recycle",zh:"回收利用",pos:"v.",theme:"自然与环境",level:3,example:"We should recycle paper."},
+  {en:"energy",zh:"能源；精力",pos:"n.",theme:"自然与环境",level:3,example:"Save energy, save the earth."},
+  {en:"climate",zh:"气候",pos:"n.",theme:"自然与环境",level:3,example:"The climate is changing."},
+  {en:"natural",zh:"自然的",pos:"adj.",theme:"自然与环境",level:3,example:"Natural beauty is everywhere."},
+  // ── 科技与未来 ──
+  {en:"technology",zh:"技术",pos:"n.",theme:"科技与未来",level:3,example:"Technology changes our life."},
+  {en:"computer",zh:"电脑",pos:"n.",theme:"科技与未来",level:2,example:"I use a computer every day."},
+  {en:"internet",zh:"互联网",pos:"n.",theme:"科技与未来",level:3,example:"The Internet connects the world."},
+  {en:"robot",zh:"机器人",pos:"n.",theme:"科技与未来",level:3,example:"Robots can help humans."},
+  {en:"invention",zh:"发明",pos:"n.",theme:"科技与未来",level:3,example:"It's a great invention."},
+  {en:"discover",zh:"发现",pos:"v.",theme:"科技与未来",level:3,example:"Columbus discovered America."},
+  {en:"develop",zh:"发展",pos:"v.",theme:"科技与未来",level:3,example:"China develops very fast."},
+  {en:"program",zh:"程序；节目",pos:"n.",theme:"科技与未来",level:3,example:"He wrote a computer program."},
+  {en:"online",zh:"在线的",pos:"adj.",theme:"科技与未来",level:3,example:"I take online classes."},
+  {en:"information",zh:"信息",pos:"n.",theme:"科技与未来",level:3,example:"Search for information online."},
+  // ── 高频动词 ──
+  {en:"achieve",zh:"实现；达到",pos:"v.",theme:"高频动词",level:3,example:"You can achieve your dream."},
+  {en:"afford",zh:"负担得起",pos:"v.",theme:"高频动词",level:3,example:"I can't afford a new car."},
+  {en:"allow",zh:"允许",pos:"v.",theme:"高频动词",level:3,example:"Smoking is not allowed here."},
+  {en:"attend",zh:"参加",pos:"v.",theme:"高频动词",level:3,example:"I attend the meeting every week."},
+  {en:"avoid",zh:"避免",pos:"v.",theme:"高频动词",level:3,example:"Avoid making the same mistake."},
+  {en:"believe",zh:"相信",pos:"v.",theme:"高频动词",level:3,example:"I believe you can do it."},
+  {en:"compare",zh:"比较",pos:"v.",theme:"高频动词",level:3,example:"Don't compare yourself with others."},
+  {en:"consider",zh:"考虑",pos:"v.",theme:"高频动词",level:3,example:"Please consider my suggestion."},
+  {en:"depend",zh:"依靠；取决于",pos:"v.",theme:"高频动词",level:3,example:"It depends on the weather."},
+  {en:"encourage",zh:"鼓励",pos:"v.",theme:"高频动词",level:3,example:"Teachers encourage students."},
+  {en:"expect",zh:"期望",pos:"v.",theme:"高频动词",level:3,example:"I expect good results."},
+  {en:"introduce",zh:"介绍",pos:"v.",theme:"高频动词",level:3,example:"Let me introduce myself."},
+  {en:"offer",zh:"提供",pos:"v.",theme:"高频动词",level:3,example:"He offered to help."},
+  {en:"realize",zh:"意识到",pos:"v.",theme:"高频动词",level:3,example:"I realized my mistake."},
+  {en:"suggest",zh:"建议",pos:"v.",theme:"高频动词",level:3,example:"I suggest we leave early."},
+  // ── 高频形容词/副词 ──
+  {en:"available",zh:"可用的",pos:"adj.",theme:"高频形容词",level:3,example:"Is this seat available?"},
+  {en:"basic",zh:"基础的",pos:"adj.",theme:"高频形容词",level:3,example:"Learn basic skills first."},
+  {en:"common",zh:"常见的",pos:"adj.",theme:"高频形容词",level:3,example:"It's a common mistake."},
+  {en:"exactly",zh:"确切地",pos:"adv.",theme:"高频形容词",level:3,example:"That's exactly what I mean."},
+  {en:"especially",zh:"尤其",pos:"adv.",theme:"高频形容词",level:3,example:"I like fruits, especially apples."},
+  {en:"necessary",zh:"必要的",pos:"adj.",theme:"高频形容词",level:3,example:"It's necessary to study hard."},
+  {en:"possible",zh:"可能的",pos:"adj.",theme:"高频形容词",level:3,example:"Everything is possible."},
+  {en:"proper",zh:"恰当的",pos:"adj.",theme:"高频形容词",level:3,example:"Use proper language."},
+  {en:"serious",zh:"严肃的；严重的",pos:"adj.",theme:"高频形容词",level:3,example:"This is a serious problem."},
+  {en:"valuable",zh:"有价值的",pos:"adj.",theme:"高频形容词",level:3,example:"Time is valuable."},
+];
+
+/* ═══════════════════════════════════════
+   状态管理
+   ═══════════════════════════════════════ */
+const STATE_KEY = 'teachany-vocab-state';
+let state = loadState();
+
+function loadState() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STATE_KEY));
+    return s && s.mastered ? s : {mastered: {}, errors: {}, reviewed: {}};
+  } catch { return {mastered: {}, errors: {}, reviewed: {}}; }
+}
+function saveState() { localStorage.setItem(STATE_KEY, JSON.stringify(state)); }
+
+/* ═══════════════════════════════════════
+   主题列表与初始化
+   ═══════════════════════════════════════ */
+const themes = [...new Set(VOCAB.map(w => w.theme))];
+let currentTheme = '全部';
+let currentReviewLevel = 'all';
+let reviewQueue = [];
+let reviewIdx = 0;
+let quizMode = 'en2zh';
+let quizQueue = [];
+let quizIdx = 0;
+let quizCorrect = 0;
+
+function init() {
+  renderThemeTabs();
+  renderWords();
+  updateStats();
+}
+
+function renderThemeTabs() {
+  const tabs = document.getElementById('themeTabs');
+  tabs.innerHTML = `<div class="tab active" onclick="setTheme('全部')">全部 <span class="count">${VOCAB.length}</span></div>`;
+  themes.forEach(t => {
+    const count = VOCAB.filter(w => w.theme === t).length;
+    tabs.innerHTML += `<div class="tab" onclick="setTheme('${t}')">${t} <span class="count">${count}</span></div>`;
+  });
+}
+
+function setTheme(t) {
+  currentTheme = t;
+  document.querySelectorAll('#themeTabs .tab').forEach(el => {
+    el.classList.toggle('active', el.textContent.includes(t === '全部' ? '全部' : t));
+  });
+  renderWords();
+}
+
+function renderWords() {
+  const grid = document.getElementById('wordGrid');
+  const query = document.getElementById('searchInput').value.toLowerCase().trim();
+  let words = currentTheme === '全部' ? VOCAB : VOCAB.filter(w => w.theme === currentTheme);
+  if (query) words = words.filter(w => w.en.includes(query) || w.zh.includes(query) || w.pos.includes(query));
+
+  grid.innerHTML = words.map(w => {
+    const isMastered = state.mastered[w.en];
+    const isError = state.errors[w.en];
+    const cls = isMastered ? 'mastered' : isError ? 'error' : '';
+    return `<div class="word-card ${cls}" onclick="toggleMaster('${w.en}')">
+      <div class="en">${w.en}</div>
+      <div class="zh">${w.zh}</div>
+      <span class="pos">${w.pos}</span>
+      <span class="star ${isError ? 'marked' : ''}" onclick="event.stopPropagation();toggleError('${w.en}')">${isError ? '⚠️' : '☆'}</span>
+    </div>`;
+  }).join('');
+}
+
+function filterWords() { renderWords(); }
+
+function toggleMaster(en) {
+  state.mastered[en] = !state.mastered[en];
+  if (state.mastered[en]) delete state.errors[en];
+  saveState(); renderWords(); updateStats();
+}
+
+function toggleError(en) {
+  if (state.errors[en]) { delete state.errors[en]; }
+  else { state.errors[en] = (state.errors[en] || 0) + 1; delete state.mastered[en]; }
+  saveState(); renderWords(); updateStats();
+}
+
+/* ═══════════════════════════════════════
+   统计
+   ═══════════════════════════════════════ */
+function updateStats() {
+  const total = VOCAB.length;
+  const mastered = Object.keys(state.mastered).filter(k => state.mastered[k]).length;
+  const errors = Object.keys(state.errors).length;
+  document.getElementById('totalCount').textContent = total;
+  document.getElementById('masteredCount').textContent = mastered;
+  document.getElementById('errorCount').textContent = errors;
+  document.getElementById('progressPct').textContent = Math.round(mastered / total * 100) + '%';
+  document.getElementById('progressBar').style.width = (mastered / total * 100) + '%';
+}
+
+/* ═══════════════════════════════════════
+   导航
+   ═══════════════════════════════════════ */
+function showSection(name) {
+  ['themes','review','quiz','errors'].forEach(s => {
+    document.getElementById('sec-' + s).style.display = s === name ? '' : 'none';
+  });
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  if (name === 'review') initReview();
+  if (name === 'errors') renderErrors();
+}
+
+/* ═══════════════════════════════════════
+   分层复习（Flashcard）
+   ═══════════════════════════════════════ */
+function initReview() {
+  reviewQueue = shuffle([...VOCAB]);
+  reviewIdx = 0;
+  showFlashcard();
+}
+
+function showFlashcard() {
+  if (reviewIdx >= reviewQueue.length) { reviewIdx = 0; reviewQueue = shuffle(reviewQueue); }
+  const w = reviewQueue[reviewIdx];
+  document.getElementById('fcWord').textContent = w.en;
+  document.getElementById('fcMeaning').textContent = `${w.pos} ${w.zh}`;
+  document.getElementById('fcExample').textContent = w.example || '';
+  document.getElementById('fcIdx').textContent = reviewIdx + 1;
+  document.getElementById('fcTotal').textContent = reviewQueue.length;
+  document.getElementById('flashcard').classList.remove('flipped');
+}
+
+function flipCard() { document.getElementById('flashcard').classList.toggle('flipped'); }
+
+function markReview(level) {
+  const w = reviewQueue[reviewIdx];
+  if (level === 'mastered') { state.mastered[w.en] = true; delete state.errors[w.en]; }
+  else if (level === 'error') { state.errors[w.en] = (state.errors[w.en] || 0) + 1; delete state.mastered[w.en]; }
+  saveState(); updateStats();
+  reviewIdx++;
+  showFlashcard();
+}
+
+/* ═══════════════════════════════════════
+   随机抽测
+   ═══════════════════════════════════════ */
+function startQuiz(mode) {
+  quizMode = mode;
+  quizQueue = shuffle([...VOCAB]).slice(0, 20);
+  quizIdx = 0; quizCorrect = 0;
+  document.querySelectorAll('#sec-quiz .tab').forEach((t, i) => {
+    t.classList.toggle('active', (mode === 'en2zh' && i === 0) || (mode === 'zh2en' && i === 1) || (mode === 'listen' && i === 2));
+  });
+  showQuizQuestion();
+}
+
+function showQuizQuestion() {
+  if (quizIdx >= quizQueue.length) {
+    document.getElementById('quizArea').innerHTML = `<div class="empty-state">🎉 测试完成！正确率 ${Math.round(quizCorrect/quizQueue.length*100)}%</div>`;
+    document.getElementById('quizBtns').style.display = 'none';
+    return;
+  }
+  const w = quizQueue[quizIdx];
+  const area = document.getElementById('quizArea');
+  document.getElementById('quizBtns').style.display = 'flex';
+
+  // 生成干扰项
+  const others = VOCAB.filter(x => x.en !== w.en);
+  const distractors = shuffle(others).slice(0, 3);
+
+  if (quizMode === 'en2zh') {
+    const opts = shuffle([w, ...distractors]);
+    area.innerHTML = `<div class="question">${w.en}</div>
+      <div class="quiz-options">${opts.map(o => `<div class="quiz-opt" onclick="checkAnswer(this,'${w.zh}','${o.zh}')">${o.zh}</div>`).join('')}</div>`;
+  } else if (quizMode === 'zh2en') {
+    const opts = shuffle([w, ...distractors]);
+    area.innerHTML = `<div class="question">${w.zh}（${w.pos}）</div>
+      <div class="quiz-options">${opts.map(o => `<div class="quiz-opt" onclick="checkAnswer(this,'${w.en}','${o.en}')">${o.en}</div>`).join('')}</div>`;
+  } else {
+    // 听音模式：用 SpeechSynthesis
+    const opts = shuffle([w, ...distractors]);
+    area.innerHTML = `<div class="question"><button class="btn btn-primary" onclick="speak('${w.en}')">🔊 播放发音</button></div>
+      <div class="quiz-options">${opts.map(o => `<div class="quiz-opt" onclick="checkAnswer(this,'${w.zh}','${o.zh}')">${o.zh}</div>`).join('')}</div>`;
+    setTimeout(() => speak(w.en), 300);
+  }
+  document.getElementById('quizScore').textContent = quizCorrect;
+  document.getElementById('quizTotal').textContent = quizIdx;
+}
+
+function checkAnswer(el, correct, chosen) {
+  const opts = el.parentElement.querySelectorAll('.quiz-opt');
+  opts.forEach(o => { o.style.pointerEvents = 'none'; if (o.textContent === correct) o.classList.add('correct'); });
+  if (chosen === correct) { quizCorrect++; }
+  else { el.classList.add('wrong'); const w = quizQueue[quizIdx]; state.errors[w.en] = (state.errors[w.en] || 0) + 1; delete state.mastered[w.en]; saveState(); }
+  document.getElementById('quizScore').textContent = quizCorrect;
+  document.getElementById('quizTotal').textContent = quizIdx + 1;
+  updateStats();
+}
+
+function nextQuizQuestion() { quizIdx++; showQuizQuestion(); }
+
+function speak(text) {
+  if ('speechSynthesis' in window) {
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-US'; u.rate = 0.9;
+    speechSynthesis.speak(u);
+  }
+}
+
+/* ═══════════════════════════════════════
+   易错回收
+   ═══════════════════════════════════════ */
+function renderErrors() {
+  const list = document.getElementById('errorList');
+  const errorWords = Object.entries(state.errors).map(([en, times]) => {
+    const w = VOCAB.find(v => v.en === en);
+    return w ? {...w, times} : null;
+  }).filter(Boolean).sort((a, b) => b.times - a.times);
+
+  if (!errorWords.length) {
+    list.innerHTML = '<div class="empty-state">🎉 还没有易错词，继续加油！</div>';
+    return;
+  }
+  list.innerHTML = errorWords.map(w => `<div class="word-row">
+    <div class="info"><span class="en">${w.en}</span><span class="zh">${w.pos} ${w.zh}</span></div>
+    <span class="times">错${w.times}次</span>
+  </div>`).join('');
+}
+
+function reviewErrors() {
+  const errorWords = Object.keys(state.errors).map(en => VOCAB.find(v => v.en === en)).filter(Boolean);
+  if (!errorWords.length) { alert('没有易错词！'); return; }
+  reviewQueue = shuffle(errorWords);
+  reviewIdx = 0;
+  showSection.call({}, 'review');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.textContent.includes('分层复习')));
+  showFlashcard();
+}
+
+function clearErrors() {
+  if (confirm('确认清空所有易错词？')) { state.errors = {}; saveState(); renderErrors(); updateStats(); }
+}
+
+/* ═══════════════════════════════════════
+   工具
+   ═══════════════════════════════════════ */
+function shuffle(arr) { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+// 初始化
+init();
+</script>
+</body>
+</html>
