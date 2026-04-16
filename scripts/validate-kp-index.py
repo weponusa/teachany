@@ -14,7 +14,7 @@ from pathlib import Path
 
 def validate_kp_id_format(kp_id):
     """验证 kp_id 格式"""
-    pattern = r'^kp-[a-z]{2,4}-[emh]-[a-z0-9-]+-[a-z0-9-]+$'
+    pattern = r'^kp-[a-z0-9-]{2,10}-[emhu]-[a-z0-9-]+-[a-z0-9-]+$'
     return bool(re.match(pattern, kp_id))
 
 def main():
@@ -86,9 +86,10 @@ def main():
     
     # 4. 验证关联关系
     print('\n🔍 验证关联关系...')
-    kp_id_set = set(kp_ids)
-    invalid_prereqs = []
+    node_id_set = {p.get('old_node_id', '') for p in points if p.get('old_node_id')}
+    invalid_relations = []
     invalid_courses = []
+    relation_fields = ['prerequisites', 'extends', 'parallel']
     
     # 加载课件列表
     course_ids = set()
@@ -99,23 +100,23 @@ def main():
     for point in points:
         kp_id = point.get('kp_id', '')
         
-        # 检查 prerequisites
-        for prereq in point.get('prerequisites', []):
-            if prereq not in kp_id_set:
-                invalid_prereqs.append((kp_id, prereq))
+        for field in relation_fields:
+            for related in point.get(field, []):
+                if related not in node_id_set:
+                    invalid_relations.append((kp_id, field, related))
         
         # 检查 courses
         for course in point.get('courses', []):
             if course not in course_ids:
                 invalid_courses.append((kp_id, course))
     
-    if invalid_prereqs:
-        print(f'   ⚠️  {len(invalid_prereqs)} 个无效前置关系:')
-        for kp_id, prereq in invalid_prereqs[:5]:
-            print(f'      {kp_id} → {prereq} (不存在)')
-        warnings.append(f'无效前置: {len(invalid_prereqs)} 个')
+    if invalid_relations:
+        print(f'   ⚠️  {len(invalid_relations)} 个无效节点关系:')
+        for kp_id, field, related in invalid_relations[:5]:
+            print(f'      {kp_id} [{field}] → {related} (不存在)')
+        warnings.append(f'无效节点关系: {len(invalid_relations)} 个')
     else:
-        print('   ✅ 所有前置关系有效')
+        print('   ✅ 所有节点关系有效')
     
     if invalid_courses:
         print(f'   ⚠️  {len(invalid_courses)} 个无效课件引用:')

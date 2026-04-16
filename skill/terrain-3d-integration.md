@@ -41,14 +41,34 @@
 
 | 方案 | 适用场景 | 优点 | 缺点 | API要求 |
 |:---|:---|:---|:---|:---|
-| **ECharts + GeoJSON**（推荐） | 行政区划、历史疆域、散点分布 | 完全本地、无需配置、性能优秀 | 仅支持 2D/2.5D | ❌ 无需 |
+| **⭐ 本地 Hillshade 图片**（v5.13 首选） | 所有历史/地理课件默认底图 | 零依赖、离线可用、835KB、彩色+阴影 | 静态图片，无 3D 旋转 | ❌ 无需 |
+| **ECharts + GeoJSON** | 行政区划、历史疆域、散点分布 | 完全本地、无需配置、性能优秀 | 仅支持 2D/2.5D | ❌ 无需 |
 | **Leaflet + OpenStreetMap** | 实景地图、路线规划、地标标注 | 免费瓦片、不需 Token、成熟稳定 | 需联网加载瓦片 | ❌ 无需 |
-| **Leaflet + 本地瓦片** | 完全离线环境、学校内网 | 不依赖外网 | 需预下载数据（~5-10GB） | ❌ 无需 |
+| **MapLibre GL + AWS Terrain** | 需要 3D 地形交互 | 真 3D 地形、可旋转倾斜 | 需联网、国内不稳定 | ❌ 无需 |
 | **Cesium（备选）** | 高级地理分析、全球视角 | 真 3D 渲染、功能强大 | 学习曲线高、性能要求高 | ❌ 无需 |
 
 ### 推荐方案（默认）
 
-**方案 1：ECharts + GeoJSON**（80%场景适用，完全本地）
+**方案 0（v5.13 强制默认）：本地彩色 Hillshade 图片**
+
+- ✅ **零依赖**：无需任何 API Key、无需联网
+- ✅ **效果优秀**：Natural Earth 专业制图数据，彩色+阴影立体感，山脉/平原/沙漠清晰可辨
+- ✅ **体积小**：4K 版仅 835KB，加载极快
+- ✅ **离线可用**：图片文件预置在 `data/geography/hillshade/` 目录
+- ✅ **全球覆盖**：等距圆柱投影，经纬度直接映射
+- ⚠️ **限制**：静态图片，无法 3D 旋转/倾斜/夸张（需要时升级到 MapLibre GL）
+
+```javascript
+// 用法示例（Canvas）
+const hillshade = new Image();
+hillshade.src = '../../data/geography/hillshade/global-color-hillshade-4k.jpg';
+hillshade.onload = () => {
+  ctx.drawImage(hillshade, 0, 0, canvas.width, canvas.height);
+  // 叠加 GeoJSON 疆域、标注等
+};
+```
+
+**方案 1：ECharts + GeoJSON**（需要区域填充/散点图时使用）
 
 - ✅ **零依赖**：无需任何 API Key
 - ✅ **完全本地**：GeoJSON 文件已预置在 `data/geography/` 目录
