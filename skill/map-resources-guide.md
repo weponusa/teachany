@@ -9,6 +9,13 @@ TeachAny 技能已预制完整的**历史地图**和**地理地图**资源，存
 ```
 data/
 ├── geography/              # 地理资源目录
+│   ├── hillshade/          # ⭐ 全球地形底图（v5.13 新增，历史/地理课件必选）
+│   │   ├── global-color-hillshade-4k.jpg  # ⭐ 彩色+阴影融合（推荐，835KB）
+│   │   ├── global-color-hillshade-8k.jpg  # 高清版（3.2MB）
+│   │   ├── global-color-hillshade-2k.jpg  # 快速加载版（200KB）
+│   │   ├── global-hillshade-*.jpg         # 灰度阴影版（适合叠加数据层）
+│   │   ├── global-color-relief-*.jpg      # 纯彩色版（无阴影）
+│   │   └── README.md                      # 使用说明
 │   ├── modern-china/       # 现代中国行政区划
 │   │   ├── provinces.geojson      # 省级边界 (568KB)
 │   │   ├── beijing.geojson        # 北京市区县边界

@@ -118,6 +118,149 @@ Level 3 (No scaffold):    Only task requirements → student works independently
 - Math problem solving: Step-by-step guidance → Strategy hints → Independent solving
 - History essay: Argument + evidence framework → Argument prompts → Free argumentation
 
+### 2.6.1 Adaptive Learning Design ⛔ MUST READ
+
+Adaptive learning is not just a code engine (`TeachAnyAdaptive`, see Section 17.2) — it is the **underlying logic of courseware content design**. When designing courseware, the AI must plan **differentiated learning paths and content** for students at different mastery levels.
+
+#### Four-Branch Content Design
+
+`decideBranch()` returns four paths. Each path **must have corresponding differentiated content** — not just the `normal` path:
+
+| Branch | Trigger | Required Content | Forbidden |
+|:---|:---|:---|:---|
+| **review-prereq** | Prerequisites mastery < 0.5 | ① 1-2 diagnostic questions on prerequisites ② Link card to prerequisite courseware ③ "Continue anyway" button (never block) | ❌ Must not be just "Please learn XX first" |
+| **scaffold** | Current node mastery < 0.3 | ① Extra worked example (step-by-step) ② Lower Bloom-level exercises ③ More visual aids and analogies | ❌ Must not be identical to normal path |
+| **normal** | Mastery 0.3–0.8 | Standard teaching flow (ABT → explain → practice → feedback) | — |
+| **challenge** | Mastery ≥ 0.8 | ① Skip basic explanation, go to synthesis ② Higher Bloom tasks (Analyze/Evaluate/Create) ③ Cross-topic problems or open inquiry | ❌ Must not be just "more of the same" |
+
+#### Phase 1 Adaptive Design Requirements
+
+During Phase 1 (building the instructional skeleton), complete these adaptive planning items:
+
+```text
+Adaptive Design Checklist (Phase 1 required):
+1. Prerequisite chain (from _graph.json prerequisites)
+   → Where might students get stuck?
+   → What does the review-prereq path show?
+
+2. Scaffold path design
+   → What are the 1-2 hardest concepts in this lesson?
+   → What extra help is provided for "never seen this" students?
+
+3. Challenge path design
+   → What extension is provided for "already mastered" students?
+   → E.g.: cross-chapter synthesis, open inquiry, variant problems
+
+4. Branch trigger points
+   → Where in the courseware does decideBranch() get called? (minimum 2)
+   → Typically: after pre-test + after core practice
+```
+
+#### Standard Branch Trigger Positions
+
+```text
+Adaptive trigger points in courseware structure:
+┌── Pre-test ──────┐
+│ High score → challenge (skip basics)
+│ Mid score  → normal
+│ Low score  → scaffold (add prerequisite review)
+└──────────────────┘
+     ↓
+┌── Core Practice ──┐
+│ All correct  → challenge extensions
+│ Some correct → normal consolidation
+│ Many errors  → scaffold extra worked examples + retry
+└───────────────────┘
+     ↓
+┌── Synthesis Task ──┐
+│ High mastery → open inquiry / creative task
+│ Mid mastery  → standard synthesis
+│ Low mastery  → simplified version with hints
+└────────────────────┘
+```
+
+#### Hard Rules
+
+- **Every courseware must have at least 2 adaptive trigger points** (after pre-test + after core practice)
+- **Scaffold path must have substantively different content** (not just the same content + hints)
+- **Challenge path must provide higher Bloom-level tasks** (not just more problems)
+- **Review-prereq path must provide actionable review resources** (links or embedded mini-review)
+- **Never block the student** — all branches provide a "skip/continue" option
+
+### 2.6.2 Inquiry-Based Learning ⛔ MUST READ
+
+Inquiry-based learning is not just "let students do experiments." It is a **question-driven, evidence-oriented, student-led** teaching strategy that spans science experiments, humanities argumentation, math modeling, and more.
+
+#### When Inquiry Is Required
+
+| Scenario | Inquiry Required? | Notes |
+|:---|:---|:---|
+| `curriculum_standards` contains "探究" (inquiry) keyword | ⛔ Required | Standards-mandated inquiry cannot be converted to lecture |
+| `bloom_verbs` contain `create`/`evaluate` | ⛔ Strongly recommended | Higher-order goals naturally suit inquiry |
+| Lab/Practical lesson type | ⛔ Required | Activity-driven + inquiry structure |
+| Thematic lesson type | ⛔ Recommended | Topic inquiry + multi-angle analysis |
+| Pure concept + young learners | Optional | Use "guided inquiry" (more scaffolding) |
+| Pure calculation/skill drill | Not needed | Step-by-step scaffolding suffices |
+
+#### Four-Level Inquiry Depth Model
+
+| Level | Name | Teacher Control | Grade Band | Courseware Implementation |
+|:---|:---|:---|:---|:---|
+| **L1 Structured** | Teacher gives question + method + steps | High (80%) | Elementary, early middle | Step-by-step cards + "Next" button + instant feedback |
+| **L2 Guided** | Teacher gives question + direction | Medium (50%) | Middle school | Question cards → student chooses method → execute → compare |
+| **L3 Open** | Teacher gives question only | Low (20%) | High school | Learning record sheet (project planner) + rubric |
+| **L4 Self-directed** | Student poses own question | Very low (10%) | Advanced HS / competition | Open task + presentation + peer review |
+
+**Selection Rules**:
+- Elementary: default L1, max L2
+- Middle school: default L2, may use L3
+- High school: default L2-L3, advanced students L4
+- **A single courseware can mix levels** (L1 warm-up → L2/L3 main inquiry)
+
+#### Standard Inquiry Module Structure
+
+When the lesson type requires inquiry, use this 6-step structure:
+
+```text
+Standard Inquiry Structure (6 steps):
+1. Situational Question — Present a real phenomenon/contradiction to spark curiosity
+   → Courseware: ABT intro + phenomenon image/video/animation
+   → Output: Student's initial prediction (fillable prediction card)
+
+2. Form Hypothesis — Guide students to formulate a testable hypothesis
+   → L1: Give 2-3 hypothesis options for selection
+   → L2/L3: Students write their own hypothesis (learning record sheet)
+
+3. Design Verification — Determine the experiment/investigation plan
+   → L1: Give complete steps, student confirms understanding
+   → L2: Give key steps, student fills in missing parts
+   → L3: Student designs independently, courseware provides rubric
+   → ⚠️ Science must specify controlled variable + control group
+
+4. Collect Evidence — Execute experiment/observation/data collection
+   → Science: Parameter sliders + real-time data charts
+   → Humanities: Source reading + evidence annotation
+   → Math: Dynamic geometry manipulation + data recording
+
+5. Analyze & Conclude — Analyze data, draw conclusions, answer the initial question
+   → Key: Compare initial prediction vs actual result (cognitive conflict moment)
+   → L1-L2: Select conclusion → explain why
+   → L3: Write conclusion + cite evidence
+
+6. Reflect & Extend — Reflect on the inquiry process, transfer to new contexts
+   → "What if we changed XX condition?"
+   → "Where else does this principle apply in daily life?"
+```
+
+#### Hard Rules for Inquiry
+
+1. **Standards-mandated inquiry experiments must not be converted to lecture** — if `curriculum_standards` says "探究 XX", the courseware must include the full 6-step inquiry structure
+2. **Every inquiry activity must have a learning record sheet** — using the 4 types defined in Section 2.6
+3. **Inquiry must have a "cognitive conflict moment"** — where the student's initial guess contradicts the actual result
+4. **Science inquiry must specify controlled variables** — "What changes? What stays the same? What do we measure?"
+5. **Inquiry depth must match grade band** — elementary ≠ L4, high school ≠ all L1
+6. **Humanities can be inquiry too** — history source analysis, literary text comparison, geographic regional surveys are all forms of inquiry
+
 ### 2.7 Learning Loop First, Visual Polish Second
 
 Priority order:
@@ -614,11 +757,14 @@ Three visual themes are provided, matched to student age groups. **Always determ
 - List knowledge points and perform content audit (Essential / Helpful / Decorative)
 - Establish prerequisite knowledge chain
 - Determine core question for each module
+- **Adaptive design** (⛔ required): Plan scaffold, challenge, and review-prereq path content; identify at least 2 branch trigger points (see Section 2.6.1)
+- **Inquiry design** (when curriculum standards require it): Determine inquiry depth level (L1-L4); design the 6-step inquiry structure; identify the cognitive conflict moment (see Section 2.6.2)
 
 ### Phase 2: Select Subject Mode
 - Consult the Subject Adaptation Matrix (4.1) — choose teaching approach, interaction components, assessment types
 - Mark concepts needing "deep understanding," select Five-Lens combinations
 - Decide scaffolding strategy (which tasks need leveled support)
+- Verify adaptive branch content is substantively different across scaffold/normal/challenge paths
 
 ### Phase 3: Build Content
 - Write web page structure and card content
@@ -651,6 +797,9 @@ Three visual themes are provided, matched to student age groups. **Always determ
 - [ ] Are map tile providers China-accessible? (GaoDe/TianDiTu first, CARTO/OSM fallback)
 - [ ] Do draggable SVG elements use `pointer` events? (Touch device compatibility)
 - [ ] Is Canvas set up for HiDPI/Retina displays? (`devicePixelRatio` scaling)
+- [ ] Does the courseware have at least 2 `decideBranch()` trigger points? Do scaffold and challenge paths have substantively different content? (Adaptive branching, Section 2.6.1)
+- [ ] For standards-mandated inquiry: Does the courseware use the full 6-step inquiry structure? Is inquiry depth appropriate for grade band (L1-L2 elementary, L2-L3 middle, L2-L4 high)? (Inquiry design, Section 2.6.2)
+- [ ] Does inquiry include a "cognitive conflict moment" where initial prediction differs from actual result? Do science inquiries specify controlled variable triad (change/constant/measure)? (N/A if no inquiry required)
 
 ---
 

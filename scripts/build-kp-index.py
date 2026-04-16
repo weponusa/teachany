@@ -9,6 +9,7 @@ TeachAny 知识点主索引生成工具
 4. 建立主索引 data/knowledge-points/index.json
 """
 import json
+from datetime import date
 from pathlib import Path
 from collections import defaultdict
 import re
@@ -195,7 +196,7 @@ def main():
     index = {
         'version': '1.0',
         'total': len(sorted_points),
-        'updated': '2026-04-14',
+        'updated': date.today().isoformat(),
         'description': '统一知识点索引',
         'points': sorted_points
     }
@@ -243,6 +244,32 @@ def main():
         point['old_node_id']: point['kp_id']
         for point in sorted_points
     }
+
+    legacy_aliases = {
+        'present-simple-m': 'tenses-present',
+        'present-continuous-m': 'tenses-present',
+        'past-simple-m': 'tenses-past',
+        'past-continuous': 'tenses-past',
+        'future-simple-m': 'tenses-future',
+        'past-future': 'tenses-future',
+        'present-perfect': 'tenses-perfect',
+        'present-perfect-continuous': 'tenses-perfect',
+        'sentence-structure': 'sentence-patterns',
+        'compound-sentence-en': 'sentence-patterns',
+        'reading-factual': 'reading-strategies',
+        'reading-inference': 'reading-strategies',
+        'reading-main-idea': 'reading-strategies',
+        'reading-comprehensive': 'text-types',
+        'writing-sentence-en': 'basic-writing',
+        'writing-paragraph-en': 'basic-writing',
+        'writing-essay-en': 'basic-writing',
+        'vocab-1600': 'curriculum-vocabulary'
+    }
+
+    for legacy_id, target_node_id in legacy_aliases.items():
+        target_kp_id = mapping.get(target_node_id)
+        if target_kp_id:
+            mapping[legacy_id] = target_kp_id
     
     with open('data/knowledge-points/migration-map.json', 'w', encoding='utf-8') as f:
         json.dump(mapping, f, ensure_ascii=False, indent=2)

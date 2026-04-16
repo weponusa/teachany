@@ -364,8 +364,9 @@ Step 4: 响应式适配
 │  (态势动画)    │  进攻路线动画+战役地点标记               │
 │              │  Timeline 组件控制时间进度               │
 ├──────────────┼───────────────────────────────────────┤
-│  地形分析      │  ✅ MapLibre GL + 本地 DEM 瓦片         │
-│  (3D地形)     │  terrain-tiles/ 预缓存瓦片              │
+│  地形分析      │  ⭐ 本地 Hillshade 图片（默认首选）      │
+│  (地形底图)    │  data/geography/hillshade/*.jpg          │
+│              │  升级：MapLibre GL + AWS Terrain（3D）   │
 │              │  降级：ECharts GL geo3D 伪3D            │
 ├──────────────┼───────────────────────────────────────┤
 │  实景地图      │  ✅ Leaflet + OpenStreetMap            │
@@ -384,7 +385,7 @@ Step 4: 响应式适配
   ├── 需要3D地形？
   │     ├── 是 + 联网环境 → MapLibre GL + AWS Terrain
   │     ├── 是 + 离线/国内 → MapLibre GL + 本地 terrain-tiles/
-  │     └── 否 → 下一步
+  │     └── 否 → ⭐ 本地 Hillshade 图片（data/geography/hillshade/*.jpg）
   │
   ├── 需要实景底图（街道/卫星）？
   │     ├── 是 → Leaflet + OpenStreetMap
@@ -705,7 +706,7 @@ Step 2: 选择数据源
   │         data/history/dynasties/*-inline.json (优先)
   ├── 战役 → data/history/battles/major-battles.geojson
   ├── 城市 → data/history/cities/ancient-capitals.geojson
-  ├── 地形 → data/terrain-tiles/ (本地) 或 AWS Terrain
+  ├── 地形 → data/geography/hillshade/*.jpg (本地，推荐) 或 terrain-tiles/ (3D)
   └── 时间线 → data/history/timelines/dynasties-detailed.json
 
 Step 3: 从模板开始
@@ -750,9 +751,9 @@ Step 5: 性能与降级
 1. **例题配图必须用 SVG**，禁止用 Canvas 位图或截图
 2. **SVG 必须包含 `viewBox` + `role="img"` + `aria-label`**
 3. **立体几何首选 CSS 3D Transforms**，仅复杂截面/向量运算时升级 Three.js
-4. **历史地理地图默认用 ECharts 5**，仅需3D地形时升级 MapLibre GL
+4. **历史地理地图默认用本地 Hillshade 图片底图**（`data/geography/hillshade/global-color-hillshade-4k.jpg`），仅需3D交互时升级 MapLibre GL
 5. **所有地图数据必须使用 `data/` 预置资源**，禁止外部 API
-6. **3D 地形必须实现三级降级**（本地瓦片→AWS→纯2D）
+6. **3D 地形必须实现三级降级**（本地 Hillshade→本地瓦片→AWS→纯2D）
 
 ---
 
