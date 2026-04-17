@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="course-id" content="history-sanguo-sui-tang">
+<meta name="course-node" content="sanguo-sui-tang">
+<meta name="course-subject" content="history">
+<meta name="course-title" content="三国两晋南北朝至隋唐">
+<meta name="course-prereqs" content="">
+<meta name="course-next" content="">
+<title>三国两晋南北朝至隋唐 — 初中历史互动课件</title>
+
+<!-- TeachAnyAdaptive Engine -->
+<script>
+const TeachAnyAdaptive = (() => {
+  const STORAGE_KEY = 'teachany_mastery';
+  function getMastery() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; } }
+  function saveMastery(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+  function getNodeMastery(nodeId) { return getMastery()[nodeId]?.level || 0; }
+  function updateMastery(nodeId, correct, bloomLevel = 1) {
+    const data = getMastery();
+    const prev = data[nodeId]?.level || 0;
+    const weight = 0.1 + (bloomLevel - 1) * 0.04;
+    const score = correct ? 1 : 0;
+    const newLevel = Math.min(1, Math.max(0, prev * (1 - weight) + score * weight));
+    data[nodeId] = { level: Math.round(newLevel * 1000) / 1000, attempts: (data[nodeId]?.attempts || 0) + 1, lastCorrect: correct, lastAttempt: Date.now(), bloomMax: Math.max(data[nodeId]?.bloomMax || 0, correct ? bloomLevel : 0) };
+    saveMastery(data); return data[nodeId];
+  }
+  function checkPrerequisites(prereqIds, threshold = 0.5) { const gaps = prereqIds.filter(id => getNodeMastery(id) < threshold); return { met: gaps.length === 0, gaps }; }
+  function decideBranch(nodeId, prereqIds = []) { const prereqCheck = checkPrerequisites(prereqIds); if (!prereqCheck.met) return 'review-prereq'; const mastery = getNodeMastery(nodeId); if (mastery < 0.3) return 'scaffold'; if (mastery >= 0.8) return 'challenge'; return 'normal'; }
+  return { getNodeMastery, updateMastery, checkPrerequisites, decideBranch, getMastery };
+})();
+
+const TeachAnyProgress = (() => {
+  function getKey(courseId) { return `teachany_progress_${courseId}`; }
+  function getProgress(courseId) { try { return JSON.parse(localStorage.getItem(getKey(courseId)) || '{}'); } catch { return {}; } }
+  function saveProgress(courseId, data) { const existing = getProgress(courseId); const merged = { ...existing, ...data, lastUpdated: Date.now() }; localStorage.setItem(getKey(courseId), JSON.stringify(merged)); }
+  function completeModule(courseId, moduleId, result = {}) {
+    const progress = getProgress(courseId);
+    if (!progress.modules) progress.modules = {};
+    progress.modules[moduleId] = { completed: true, completedAt: Date.now(), score: result.score || 0, total: result.totalQuestions || 0, bloom: result.bloomLevel || 1 };
+    const totalModules = document.querySelectorAll('[data-module-id]').length;
+    const completedCount = Object.values(progress.modules).filter(m => m.completed).length;
+    progress.completionPercent = Math.round((completedCount / totalModules) * 100);
+    saveProgress(courseId, progress);
+  }
+  function getGlobalStats() { try { return JSON.parse(localStorage.getItem('teachany_stats') || '{}'); } catch { return {}; } }
+  function updateGlobalStats() {
+    const stats = getGlobalStats();
+    const today = new Date().toISOString().slice(0, 10);
+    const lastDate = stats.lastActiveDate;
+    if (lastDate === today) { /* already active */ } else { const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10); stats.streak = (lastDate === yesterday) ? (stats.streak || 0) + 1 : 1; stats.lastActiveDate = today; }
+    stats.totalSessions = (stats.totalSessions || 0) + 1;
+    stats.maxStreak = Math.max(stats.maxStreak || 0, stats.streak);
+    localStorage.setItem('teachany_stats', JSON.stringify(stats)); return stats;
+  }
+  function restoreScrollPosition(courseId) { const pos = localStorage.getItem(`teachany_scroll_${courseId}`); if (pos) { requestAnimationFrame(() => window.scrollTo(0, parseInt(pos))); } }
+  function saveScrollPosition(courseId) { localStorage.setItem(`teachany_scroll_${courseId}`, String(window.scrollY)); }
+  return { getProgress, saveProgress, completeModule, getGlobalStats, updateGlobalStats, restoreScrollPosition, saveScrollPosition };
+})();
+</script>
+
+<style>
+:root {
+  --bg: #f8fafc;
+  --primary: #3b82f6;
+  --secondary: #06b6d4;
+  --accent: #f59e0b;
+  --card: #ffffff;
+  --text: #1e293b;
+  --text-secondary: #64748b;
+  --success: #10b981;
+  --error: #ef4444;
+  --border: #e2e8f0;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.8;
+  font-size: 15px;
+}
+
+/* Hero */
+.hero {
+  background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+  color: white;
+  padding: 60px 24px 80px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.hero-emoji { font-size: 56px; margin-bottom: 16px; }
+.hero h1 { font-size: 2rem; font-weight: 900; margin-bottom: 8px; }
+.hero-sub { color: #94a3b8; font-size: 1rem; margin-bottom: 24px; }
+.hero-tags { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.tag { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.tag-subject { background: rgba(59,130,246,0.2); color: #93c5fd; }
+.tag-grade { background: rgba(16,185,129,0.2); color: #6ee7b7; }
+.tag-type { background: rgba(245,158,11,0.2); color: #fcd34d; }
+
+/* Streak */
+#streak-display {
+  position: absolute; top: 16px; right: 20px;
+  display: flex; align-items: center; gap: 4px;
+  background: rgba(255,255,255,0.1); padding: 6px 14px; border-radius: 20px;
+  font-size: 14px; font-weight: 600;
+}
+#streak-display .streak-flame { font-size: 18px; }
+
+/* Nav */
+.nav-bar {
+  background: white; border-bottom: 1px solid var(--border);
+  padding: 0 24px; display: flex; gap: 0; overflow-x: auto;
+  position: sticky; top: 0; z-index: 100;
+}
+.nav-item {
+  padding: 14px 20px; font-size: 14px; font-weight: 600; color: var(--text-secondary);
+  cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap;
+  transition: all 0.2s;
+}
+.nav-item:hover { color: var(--primary); }
+.nav-item.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+/* Sections */
+.section { display: none; padding: 32px 24px 60px; max-width: 900px; margin: 0 auto; }
+.section.active { display: block; }
+
+/* Cards */
+.card {
+  background: var(--card); border-radius: 14px; padding: 24px;
+  margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  border: 1px solid var(--border);
+}
+.card-title {
+  font-size: 1.1rem; font-weight: 700; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.card-title .num {
+  background: var(--primary); color: white; width: 28px; height: 28px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700;
+}
+
+/* ABT Banner */
+.abt-banner {
+  background: linear-gradient(135deg, #1e3a5f, #0f172a);
+  color: white; border-radius: 14px; padding: 28px;
+  margin-bottom: 24px; position: relative; overflow: hidden;
+}
+.abt-banner::before {
+  content: 'And'; position: absolute; top: 10px; left: 14px;
+  font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px;
+}
+.abt-banner::after {
+  content: 'But'; position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+  font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px;
+}
+.abt-text { font-size: 1.05rem; line-height: 1.9; padding-left: 40px; }
+.abt-text strong { color: #fbbf24; }
+.abt-text em { color: #93c5fd; font-style: normal; }
+
+/* Learning Objectives */
+.obj-list { list-style: none; display: grid; gap: 10px; }
+.obj-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 16px; background: #f8fafc; border-radius: 10px;
+  border-left: 4px solid var(--primary);
+}
+.obj-item .check { color: var(--success); font-size: 18px; flex-shrink: 0; }
+.obj-item .obj-text { font-size: 14px; color: var(--text); }
+
+/* Timeline */
+.timeline-wrap { position: relative; padding: 20px 0; }
+.timeline-line {
+  position: absolute; left: 20px; top: 0; bottom: 0; width: 3px;
+  background: linear-gradient(to bottom, var(--primary), var(--secondary));
+  border-radius: 2px;
+}
+.tl-item {
+  position: relative; padding-left: 56px; margin-bottom: 28px;
+}
+.tl-dot {
+  position: absolute; left: 10px; top: 6px; width: 22px; height: 22px;
+  border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 2px var(--primary);
+  background: var(--primary); z-index: 1;
+}
+.tl-dot.active { background: var(--success); box-shadow: 0 0 0 2px var(--success); }
+.tl-year { font-size: 12px; font-weight: 700; color: var(--primary); margin-bottom: 2px; }
+.tl-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.tl-desc { font-size: 13px; color: var(--text-secondary); }
+
+/* Drag Sortable */
+.sortable-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.sortable-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 18px; background: white; border-radius: 10px;
+  border: 2px solid var(--border); cursor: grab; user-select: none;
+  transition: all 0.2s; font-size: 14px; font-weight: 600;
+}
+.sortable-item:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(59,130,246,0.15); }
+.sortable-item.dragging { opacity: 0.5; border-color: var(--primary); background: #eff6ff; }
+.sortable-item .handle { color: var(--text-secondary); font-size: 18px; flex-shrink: 0; }
+.sortable-item.correct { border-color: var(--success); background: #f0fdf4; color: var(--success); }
+.sortable-item.wrong { border-color: var(--error); background: #fef2f2; }
+
+/* Quiz */
+.quiz-question { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
+.quiz-options { display: flex; flex-direction: column; gap: 10px; }
+.quiz-option {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all 0.2s; font-size: 14px;
+}
+.quiz-option:hover { border-color: var(--primary); background: #eff6ff; }
+.quiz-option.selected { border-color: var(--primary); background: #dbeafe; }
+.quiz-option .opt-letter {
+  width: 26px; height: 26px; border-radius: 50%; background: var(--border);
+  display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;
+  flex-shrink: 0;
+}
+.quiz-option.correct { border-color: var(--success); background: #f0fdf4; }
+.quiz-option.correct .opt-letter { background: var(--success); color: white; }
+.quiz-option.wrong { border-color: var(--error); background: #fef2f2; }
+.quiz-option.wrong .opt-letter { background: var(--error); color: white; }
+
+/* Feedback */
+.feedback {
+  padding: 16px; border-radius: 10px; margin-top: 16px;
+  display: none; font-size: 14px; line-height: 1.7;
+}
+.feedback.show { display: block; }
+.feedback.correct { background: #f0fdf4; border-left: 4px solid var(--success); color: #065f46; }
+.feedback.wrong { background: #fef2f2; border-left: 4px solid var(--error); color: #991b1b; }
+
+/* Buttons */
+.btn {
+  padding: 12px 28px; border-radius: 10px; border: none; cursor: pointer;
+  font-size: 14px; font-weight: 700; transition: all 0.2s;
+}
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: #2563eb; box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+.btn-primary:disabled { background: var(--border); color: var(--text-secondary); cursor: not-allowed; }
+.btn-secondary { background: var(--border); color: var(--text); }
+.btn-success { background: var(--success); color: white; }
+
+/* Progress bar */
+.progress-bar-wrap { background: var(--border); border-radius: 10px; height: 10px; margin: 16px 0; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); border-radius: 10px; transition: width 0.5s ease; }
+
+/* Source Card */
+.source-card {
+  background: #fffbf0; border-radius: 10px; padding: 18px;
+  border-left: 4px solid var(--accent); margin: 12px 0;
+}
+.source-label { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.source-text { font-size: 13px; color: #92400e; line-height: 1.8; font-style: italic; }
+
+/* Compare columns */
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+.compare-col { background: #f8fafc; border-radius: 10px; padding: 16px; }
+.compare-col h4 { font-size: 14px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.compare-col ul { list-style: none; font-size: 13px; color: var(--text-secondary); }
+.compare-col ul li { padding: 4px 0; border-bottom: 1px solid var(--border); }
+.compare-col ul li:last-child { border-bottom: none; }
+
+/* Summary table */
+.summary-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+.summary-table th { background: var(--primary); color: white; padding: 10px 12px; text-align: left; font-weight: 700; }
+.summary-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+.summary-table tr:nth-child(even) td { background: #f8fafc; }
+
+/* Bottom nav */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: white; border-top: 1px solid var(--border);
+  padding: 12px 24px; display: flex; justify-content: space-between;
+  align-items: center; z-index: 200;
+}
+.bottom-nav .nav-hint { font-size: 12px; color: var(--text-secondary); }
+.bottom-nav .progress-text { font-size: 12px; color: var(--text-secondary); }
+
+/* Post-test banner */
+.post-test-banner {
+  background: linear-gradient(135deg, #065f46, #047857);
+  color: white; border-radius: 14px; padding: 28px; text-align: center;
+  margin: 20px 0;
+}
+.post-test-banner h3 { font-size: 1.2rem; margin-bottom: 8px; }
+.post-test-banner p { font-size: 13px; opacity: 0.8; margin-bottom: 16px; }
+
+/* Score circle */
+.score-circle {
+  width: 100px; height: 100px; border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  margin: 0 auto 16px; font-weight: 900;
+}
+.score-circle .score-num { font-size: 2rem; }
+.score-circle .score-label { font-size: 11px; opacity: 0.7; }
+
+/* Section header */
+.section-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 24px;
+  padding-bottom: 16px; border-bottom: 2px solid var(--border);
+}
+.section-header h2 { font-size: 1.3rem; font-weight: 900; }
+.section-header .emoji { font-size: 28px; }
+
+/* Level badge */
+.level-badge {
+  display: inline-block; padding: 2px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 700;
+}
+.level-1 { background: #dbeafe; color: #1d4ed8; }
+.level-2 { background: #fef3c7; color: #92400e; }
+.level-3 { background: #d1fae5; color: #065f46; }
+
+/* Concept box */
+.concept-box {
+  background: linear-gradient(135deg, #eff6ff, #f0f9ff);
+  border-radius: 10px; padding: 16px; margin: 12px 0;
+  border: 1px solid #bfdbfe;
+}
+.concept-box h4 { font-size: 13px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+.concept-box p { font-size: 13px; color: var(--text-secondary); }
+
+/* Map SVG */
+.map-wrap { background: #1a1a2e; border-radius: 14px; padding: 16px; margin: 16px 0; text-align: center; }
+.map-wrap svg { max-width: 100%; border-radius: 10px; }
+
+/* Responsive */
+@media (max-width: 600px) {
+  .compare-grid { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ========== HERO ========== -->
+<div class="hero">
+  <div id="streak-display">
+    <span class="streak-flame">🔥</span>
+    <span id="streak-count">0</span>
+    <span class="streak-label">天</span>
+  </div>
+  <div class="hero-emoji">🏛️</div>
+  <h1>三国两晋南北朝至隋唐</h1>
+  <p class="hero-sub">从分裂到统一：220年—907年中国历史关键转型期</p>
+  <div class="hero-tags">
+    <span class="tag tag-subject">初中历史</span>
+    <span class="tag tag-grade">七/八年级</span>
+    <span class="tag tag-type">主题型 · 互动课件</span>
+  </div>
+</div>
+
+<!-- ========== NAV ========== -->
+<div class="nav-bar" id="mainNav">
+  <div class="nav-item active" data-target="overview">📋 课程概览</div>
+  <div class="nav-item" data-target="timeline">⏳ 朝代更替</div>
+  <div class="nav-item" data-target="module1">⚔️ 三国西晋</div>
+  <div class="nav-item" data-target="module2">🌀 南北朝</div>
+  <div class="nav-item" data-target="module3">🏛️ 隋朝统一</div>
+  <div class="nav-item" data-target="module4">✨ 贞观之治</div>
+  <div class="nav-item" data-target="posttest">🎯 综合测评</div>
+</div>
+
+<!-- ========== SECTION: OVERVIEW ========== -->
+<div class="section active" id="section-overview" data-module-id="overview">
+
+  <!-- ABT Banner -->
+  <div class="abt-banner">
+    <div class="abt-text">
+      <strong>你知道</strong>东汉末年各地诸侯割据，三国鼎立局面形成。<br>
+      <em>但是</em>你知道为什么近400年的分裂之后，隋朝能够重新统一中国？<br>
+      <strong>因此</strong>本课将通过朝代更替的时间线，分析统一背后的历史条件。
+    </div>
+  </div>
+
+  <!-- Learning Objectives -->
+  <div class="card">
+    <div class="card-title"><span class="num">🎯</span>学习目标</div>
+    <ul class="obj-list">
+      <li class="obj-item">
+        <span class="check">✓</span>
+        <span class="obj-text">按时间顺序正确排列：三国→西晋→东晋→南北朝→隋→唐的朝代更替</span>
+      </li>
+      <li class="obj-item">
+        <span class="check">✓</span>
+        <span class="obj-text">说出隋朝完成统一的历史条件（经济基础、军事优势、政治手段）</span>
+      </li>
+      <li class="obj-item">
+        <span class="check">✓</span>
+        <span class="obj-text">概述唐太宗贞观之治的主要内容（政治、经济、民族关系）</span>
+      </li>
+      <li class="obj-item">
+        <span class="check">✓</span>
+        <span class="obj-text">通过史料分析，理解"统一是历史发展趋势"的史学观点</span>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Pre-Test -->
+  <div class="card">
+    <div class="card-title"><span class="num">📝</span>学前自测</div>
+    <p style="font-size:14px;color:var(--text-secondary);margin-bottom:16px;">回答3道题，测测你对这段历史的了解程度！</p>
+
+    <div class="quiz-question">1. 请问"三国"指的是哪三个国家？</div>
+    <div class="quiz-options" data-correct="A" data-q="pre1">
+      <div class="quiz-option" data-opt="A" onclick="selectOpt(this, 'pre1')">
+        <span class="opt-letter">A</span>魏、蜀、吴
+      </div>
+      <div class="quiz-option" data-opt="B" onclick="selectOpt(this, 'pre1')">
+        <span class="opt-letter">B</span>赵、魏、韩
+      </div>
+      <div class="quiz-option" data-opt="C" onclick="selectOpt(this, 'pre1')">
+        <span class="opt-letter">C</span>燕、齐、楚
+      </div>
+    </div>
+    <div class="feedback" id="feedback-pre1"></div>
+
+    <div class="quiz-question" style="margin-top:20px;">2. 隋朝统一南北朝是在哪一年？</div>
+    <div class="quiz-options" data-correct="C" data-q="pre2">
+      <div class="quiz-option" data-opt="A" onclick="selectOpt(this, 'pre2')">
+        <span class="opt-letter">A</span>公元220年
+      </div>
+      <div class="quiz-option" data-opt="B" onclick="selectOpt(this, 'pre2')">
+        <span class="opt-letter">B</span>公元420年
+      </div>
+      <div class="quiz-option" data-opt="C" onclick="selectOpt(this, 'pre2')">
+        <span class="opt-letter">C</span>公元589年
+      </div>
+    </div>
+    <div class="feedback" id="feedback-pre2"></div>
+
+    <div class="quiz-question" style="margin-top:20px;">3. 唐朝繁盛局面出现的根本原因是？</div>
+    <div class="quiz-options" data-correct="B" data-q="pre3">
+      <div class="quiz-option" data-opt="A" onclick="selectOpt(this, 'pre3')">
+        <span class="opt-letter">A</span>科举制度的建立
+      </div>
+      <div class="quiz-option" data-opt="B" onclick="selectOpt(this, 'pre3')">
+        <span class="opt-letter">B</span>国家统一，社会稳定
+      </div>
+      <div class="quiz-option" data-opt="C" onclick="selectOpt(this, 'pre3')">
+        <span class="opt-letter">C</span>唐太宗善于纳谏
+      </div>
+    </div>
+    <div class="feedback" id="feedback-pre3"></div>
+
+    <button class="btn btn-primary" onclick="checkPreTest()" style="margin-top:20px;width:100%;">查看结果</button>
+  </div>
+
+  <button class="btn btn-primary" onclick="switchSection('timeline')" style="width:100%;font-size:16px;padding:16px;">
+    🚀 开始学习：朝代更替 →
+  </button>
+</div>
+
+<!-- ========== SECTION: TIMELINE ========== -->
+<div class="section" id="section-timeline" data-module-id="timeline">
+  <div class="section-header">
+    <span class="emoji">⏳</span>
+    <h2>朝代更替时间线（220年—907年）</h2>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="num">📌</span>互动任务：排列朝代顺序</div>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">
+      将以下朝代按时间顺序排列，拖动卡片调整顺序。正确顺序是什么？提示：找规律！
+    </p>
+
+    <ul class="sortable-list" id="sortableTimeline">
+      <li class="sortable-item" draggable="true" data-order="1">
+        <span class="handle">☰</span>
+        <span>① 隋朝（581年—618年）</span>
+      </li>
+      <li class="sortable-item" draggable="true" data-order="2">
+        <span class="handle">☰</span>
+        <span>② 三国时期（220年—280年）</span>
+      </li>
+      <li class="sortable-item" draggable="true" data-order="3">
+        <span class="handle">☰</span>
+        <span>③ 唐朝（618年—907年）</span>
+      </li>
+      <li class="sortable-item" draggable="true" data-order="4">
+        <span class="handle">☰</span>
+        <span>④ 南北朝（420年—589年）</span>
+      </li>
+      <li class="sortable-item" draggable="true" data-order="5">
+        <span class="handle">☰</span>
+        <span>⑤ 西晋（265年—316年）</span>
+      </li>
+      <li class="sortable-item" draggable="true" data-order="6">
+        <span class="handle">☰</span>
+        <span>⑥ 东晋（317年—420年）</span>
+      </li>
+    </ul>
+
+    <button class="btn btn-primary" onclick="checkTimelineSort()" style="margin-top:16px;width:100%;">核对答案</button>
+    <div class="feedback" id="feedback-timeline"></div>
+  </div>
+
+  <!-- Timeline Detail -->
+  <div class="card">
+    <div class="card-title"><span class="num">🗺️</span>朝代更替详解</div>
+
+    <div class="timeline-wrap">
+      <div class="timeline-line"></div>
+
+      <div class="tl-item">
+        <div class="tl-dot active"></div>
+        <div class="tl-year">220年—280年</div>
+        <div class="tl-title">三国时期</div>
+        <div class="tl-desc">魏、蜀、吴三国鼎立。曹魏占据北方，实力最强；蜀汉据有益州；东吴统治江东。</div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-year">265年—316年</div>
+        <div class="tl-title">西晋（短暂统一）</div>
+        <div class="tl-desc">司马炎代魏建晋，280年灭吴，统一全国。但仅维持了36年便因"八王之乱"崩溃。</div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-year">317年—420年</div>
+        <div class="tl-title">东晋（衣冠南渡）</div>
+        <div class="tl-desc">晋室南迁建都建康（南京），北方陷入五胡十六国混战，史称"衣冠南渡"。</div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-year">420年—589年</div>
+        <div class="tl-title">南北朝（南北对峙）</div>
+        <div class="tl-desc">南方：宋→齐→梁→陈四朝更替；北方：北魏→东魏→西魏→北齐→北周。合计约170年对峙。</div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-year">581年—618年</div>
+        <div class="tl-title">隋朝（重新统一）</div>
+        <div class="tl-desc">杨坚代北周建隋，589年灭陈，完成统一。开创科举、三省六部，修建大运河。</div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-year">618年—907年</div>
+        <div class="tl-title">唐朝（盛世高峰）</div>
+        <div class="tl-desc">李渊建唐，经历贞观之治、武周政治、开元盛世，成为中国历史上最繁盛的朝代之一。</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" onclick="switchSection('module1')" style="width:100%;font-size:16px;padding:16px;">
+    ⚔️ 深入学习：三国与西晋 →
+  </button>
+</div>
+
+<!-- ========== SECTION: MODULE 1 — 三国与西晋 ========== -->
+<div class="section" id="section-module1" data-module-id="module1">
+  <div class="section-header">
+    <span class="emoji">⚔️</span>
+    <h2>模块一：三国鼎立与西晋统一</h2>
+  </div>
+
+  <!-- Deep Understanding: Compare -->
+  <div class="card">
+    <div class="card-title"><span class="num">🔍</span>深度理解：魏、蜀、吴三国对比</div>
+
+    <div class="compare-grid">
+      <div class="compare-col">
+        <h4>🟦 魏（220年—266年）</h4>
+        <ul>
+          <li>统治区域：北方中原</li>
+          <li>奠基者：曹操（未称帝）</li>
+          <li>建立者：曹丕（220年）</li>
+          <li>优势：人口最多，经济最强</li>
+          <li>都城：洛阳</li>
+        </ul>
+      </div>
+      <div class="compare-col">
+        <h4>🟥 蜀（221年—263年）</h4>
+        <ul>
+          <li>统治区域：益州（四川盆地）</li>
+          <li>奠基者/建立者：刘备</li>
+          <li>丞相：诸葛亮</li>
+          <li>特色：以汉室正统自居</li>
+          <li>都城：成都</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="compare-grid" style="margin-top:12px;">
+      <div class="compare-col">
+        <h4>🟩 吴（229年—280年）</h4>
+        <ul>
+          <li>统治区域：江东（江南地区）</li>
+          <li>奠基者：孙权</li>
+          <li>特色：海上贸易，渔业发达</li>
+          <li>存在时间最长（252年）</li>
+          <li>都城：建业（南京）</li>
+        </ul>
+      </div>
+      <div class="compare-col" style="background:#f0fdf4;">
+        <h4 style="color:var(--success);">💡 为何西晋能统一？</h4>
+        <ul>
+          <li>✅ 魏国实力最强，统一北方</li>
+          <li>✅ 司马氏夺权，政治稳定</li>
+          <li>✅ 蜀吴各自衰弱，难以抵抗</li>
+          <li>✅ 280年三路伐吴，一举统一</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Concept Box -->
+  <div class="concept-box">
+    <h4>📖 史学概念：何为"正统"之争？</h4>
+    <p>蜀汉以"汉室宗亲"自居，声称继承东汉正统；魏国则以实力说话，认为"天命"已转；东吴则强调江东地利。三国各自构建了自己的"正统性"叙事，这也是为什么陈寿《三国志》以魏为正统，而罗贯中《三国演义》却以蜀汉为正统——史观不同，正统标准不同。</p>
+  </div>
+
+  <!-- Quiz -->
+  <div class="card">
+    <div class="card-title"><span class="num">📝</span>练习1 — 层级一</div>
+    <div class="quiz-question">西晋灭吴、完成全国统一是在公元多少年？</div>
+    <div class="quiz-options" data-correct="B" data-q="m1q1">
+      <div class="quiz-option" data-opt="A" onclick="selectOpt(this, 'm1q1')">
+        <span class="opt-letter">A</span>220年
+      </div>
+      <div class="quiz-option" data-opt="B" onclick="selectOpt(this, 'm1q1')">
+        <span class="opt-letter">B</span>280年
+      </div>
+      <div class="quiz-option" data-opt="C" onclick="selectOpt(this, 'm1q1')">
+        <span class="opt-letter">C</span>589年
+      </div>
+    </div>
+    <div class="feedback" id="feedback-m1q1"></div>
+    <button class="btn btn-primary" onclick="checkQuiz('m1q1', 'module1')" style="margin-top:12px;width:100%;">提交答案</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="num">📝</span>练习2 — 层级二：材料分析</div>
+    <div class="source-card">
+      <div class="source-label">史料来源</div>
+      <div class="source-text">
+        "魏蜀吴三分天下，然魏有其地，蜀有其险，吴有其江。魏据中原，兵多粮足；蜀依剑阁，一夫当关；吴凭长江，水师无敌。然天下终归一者，非地险所能守也。"——某史学家评价
+      </div>
+    </div>
+    <div class="quiz-question">根据材料，西晋能够最终统一全国的最主要原因是什么？（请选择最准确的答案）</div>
+    <div class="quiz-options" data-correct="A" data-q="m1q2">
+      <div class="quiz-option" data-opt="A" onclick="selectOpt(this, 'm1q2')">
+        <span class="opt-letter">A</span>魏国占据中原，经济和军事实力最强
+      </div>
+      <div class="quiz-option" data-opt="B" onclick="selectOpt(this, 'm1q2')">
+        <span class="opt-letter">B</span>蜀国有一夫当关的剑阁天险
+      </div>
+      <div class="quiz-option" data-opt="C" onclick="selectOpt(this, 'm1q2')">
+        <span class="opt-letter">C</span>吴国拥有无敌的水师
+      </div>
+    </div>
+    <div class="feedback" id="feedback-m1q2"></div>
+    <button class="btn btn-primary" onclick="checkQuiz('m1q2', 'module1')" style="margin-top:12px;width:100%;">提交答案</button>
+  </div>
+
+  <button class="btn btn-secondary" onclick="switchSection('timeline')" style="width:49%;">← 朝代时间线</button>
+  <button class="btn btn-primary" onclick="switchSection('module2')" style="width:49%;">🌀 南北朝 →</button>
+</div>
+
+<!-- ========== SECTION: MODULE 2 — 南北朝 ========== -->
+<div class="section" id="section-module2" data-module-id="module2">
+  <div class="section-header">
+    <span class="emoji">🌀</span>
+    <h2>模块二：东晋与南北朝</h2>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="num">❓</span>核心问题：为什么近400年的分裂后能重新统一？</div>
+    <p style="font-size:14px;color:var(--text-secondary);margin-bottom:16px;">
+      这个问题贯穿整个时期的学习。让我们从"衣冠南渡"开始，逐步找到答案。
+    </p>
+
+    <div class="concept-box">
+      <h4>🧥 什么是"衣冠南渡"？</h4>
+      <p>311年永嘉之乱，匈奴攻破洛阳，晋室被迫南迁。士族大家携带典籍、文物、工艺南迁建康（南京），史称"衣冠南渡"。这一事件使中国经济重心开始南移，江南地区得到大规模开发——这为后来的统一奠定了经济基础。</p>
+    </div>
+
+    <div class="concept-box">
+      <h4>🛡️ 什么是"五胡"？</h4>
+      <p>"五胡"指东汉至西晋时期迁入内地的五个少数民族：匈奴、鲜卑、羌、氐、羯。他们在北方建立了自己的政权，与汉族政权长期并存。"五胡入华"打破了汉族政权对中原的垄断，也促进了民族融合。</p>
+    </div>
+  </div>
+
+  <!--南北朝对比图 -->
+  <div class="card">
+    <div class="card-title"><span class="num">🗺️</span>南北朝对峙形势</div>
+    <div class="compare-grid">
+      <div class="compare-col">
+        <h4>🌊 南方：四朝更迭</h4>
+        <ul>
+          <li><strong>宋（420年—479年）</strong>：刘裕建立，文学兴盛</li>
+          <li><strong>齐（479年—502年）</strong：存在仅23年</li>
+          <li><strong>梁（502年—557年）</strong>：梁武帝在位，出现"侯景之乱"</li>
+          <li><strong>陈（557年—589年）</strong>：最后一个南朝，589年被隋灭</li>
+        </ul>
+      </div>
+      <div class="compare-col">
+        <h4>🏔️ 北方：民族融合</h4>
+        <ul>
+          <li><strong>北魏（386年—534年）</strong>：鲜卑族建立，实行汉化改革</li>
+          <li><strong>东魏（534年—550年）</strong>→北齐</li>
+          <li><strong>西魏（535年—557年）</strong>→北周</li>
+          <li><strong>北周（557年—581年）</strong>：杨坚父系发迹地</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quiz -->
+  <div class="card">
+    <div class="card-title"><span class="num">📝</span>练习3</div>
+    <div class="quiz-question">"五胡"不包括以下哪个民族？</div>
+    <div class="quiz-options" data-correct="C" data-q="m2q1">
+      <div class="quiz-option" data-opt="A" onclick="selectOpt(this, 'm2q1')">
+        <span class="opt-letter">A</span>匈奴
+      </div>
+      <div class="quiz-option" data-opt="B" onclick="selectOpt(this, 'm2q1')">
+        <span class="opt-letter">B</span>鲜卑
+      </div>
+      <div class="quiz-option" data-opt="C" onclick="selectOpt(this, 'm2q1')">
+        <span class="opt-letter">C</span>蒙古
+      </div>
+    </div>
+    <div class="feedback" id="feedback-m2q1"></div>
+    <button class="btn btn-primary" onclick="checkQuiz('m2q1', 'module2')" style="margin-top:12px;width:100%;">提交答案</button>
+  </div>
+
+  <button class="btn btn-secondary" onclick="switchSection('module1')" style="width:49%;">← 三国西晋</button>
+  <button class="btn btn-primary" onclick="switchSection('module3')" style="width:49%;">🏛️ 隋朝统一 →</button>
+</div>
+
+<!-- ========== SECTION: MODULE 3 — 隋朝 ========== -->
+<div class="section" id="section-module3" data-module-id="module3">
+  <div class="section-header">
+    <span class="emoji">🏛️</span>
+    <h2>模块三：隋朝统一</h2>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="num">📌</span>隋统一的历史条件（三要素分析）</div>
+
+    <div class="timeline-wrap">
+      <div class="timeline-line" style="left:16px;"></div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-year">💰 经济基础</div>
+        <div class="tl-title">江南经济崛起</div>
+        <div class="tl-desc">"衣冠南渡"后，江南得到大规模开发水稻种植技术提升，粮食产量增加。南北经济差距缩小，南方积累了大量财富，为统一提供了物质保障。</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-year">⚔️ 军事优势</div>
+        <div class="tl-title">北周→隋：继承强权</div>
+        <div class="tl-desc">杨坚以"外戚"身份夺取北周皇位，继承了北周强大的军事力量。589年，隋以绝对兵力优势（51万大军）南下灭陈。</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-year">🧠 政治手段</div>
+        <div class="tl-title">人心思统</div>
+        <div class="tl-desc">近400年的战乱让人民渴望统一和社会稳定。杨坚以"禅让"而非暴力夺权，减少了政治动荡，获得了士族支持。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key innovations -->
+  <div class="card">
+    <div class="card-title"><span class="num">🔑</span>隋朝的历史贡献</div>
+    <table class="summary-table">
+      <thead>
+        <tr><th>制度创新</th><th>内容</th><th>对后世的影响</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>科举制度</strong></td>
+          <td>通过考试选拔官员，不看出身</td>
+          <td>影响中国1300多年，是现代公务员制度的前身</td>
+        </tr>
+        <tr>
+          <td><strong>三省六部制</strong></td>
+          <td>中书、门下、尚书三省分工制衡</td>
+          <td>确立了中央官制的基本格局，被唐朝继承完善</td>
+        </tr>
+        <tr>
+          <td><strong>大运河</strong></td>
+          <td>以洛阳为中心，南起余杭，北至涿郡</td>
+          <td>促进了南北经济文化交流，至今仍在发挥作用</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Quiz -->
+  <div class="card">
+    <div class="card-title"><span class="num">📝</span>练习4</div>
+    <div class="quiz-question">隋朝灭亡的根本原因是？</div>
+    <div class="quiz-options" data-correct="A" data-q="m3q1">
+      <div class="quiz-option" data-opt="A" onclick="selectOpt(this, 'm3q1')">
+        <span class="opt-letter">A</span>大兴土木（修建运河、长城等），导致民怨沸腾
+      </div>
+      <div class="quiz-option" data-opt="B" onclick="selectOpt(this, 'm3q1')">
+        <span class="opt-letter">B</span>科举制度损害了贵族利益
+      </div>
+      <div class="quiz-option" data-opt="C" onclick="selectOpt(this, 'm3q1')">
+        <span class="opt-letter">C</span>皇帝没有子嗣继承皇位
+      </div>
+    </div>
+    <div class="feedback" id="feedback-m3q1"></div>
+    <button class="btn btn-primary" onclick="checkQuiz('m3q1', 'module3')" style="margin-top:12px;width:100%;">提交答案</button>
+  </div>
+
+  <button class="btn btn-secondary" onclick="switchSection('module2')" style="width:49%;">← 南北朝</button>
+  <button class="btn btn-primary" onclick="switchSection('module4')" style="width:49%;">✨ 贞观之治 →</button>
+</div>
+
+<!-- ========== SECTION: MODULE 4 — 贞观之治 ========== -->
+<div class="section" id="section-module4" data-module-id="module4">
+  <div class="section-header">
+    <span class="emoji">✨</span>
+    <h2>模块四：贞观之治</h2>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="num">🌟</span>贞观之治（626年—649年）</div>
+    <p style="font-size:14px;color:var(--text-secondary);margin-bottom:16px;">
+      唐太宗李世民在位23年，开创了中国历史上著名的"贞观之治"，为盛唐奠定了基础。
+    </p>
+
+    <div class="compare-grid">
+      <div class="compare-col" style="background:#eff6ff;">
+        <h4 style="color:var(--primary);">⚖️ 政治清明</h4>
+        <ul>
+          <li>虚心纳谏（魏征直谏）</li>
+          <li>选贤任能（房玄龄、杜如晦）</li>
+          <li>完善科举，选拔人才</li>
+          <li>减轻徭役，休养生息</li>
+        </ul>
+      </div>
+      <div class="compare-col" style="background:#f0fdf4;">
+        <h4 style="color:var(--success);">💰 经济繁荣</h4>
+        <ul>
+          <li>推行均田制，农民有地种</li>
+          <li>轻徭薄赋，与民休息</li>
+          <li>社会安定，人口增长</li>
+          <li>粮食产量大幅提升</li>
+        </ul>
+      </div>
+    </div>
+    <div class="compare-grid" style="margin-top:12px;">
+      <div class="compare-col" style="background:#fef3c7;">
+        <h4 style="color:var(--accent);">🤝 民族和睦</h4>
+        <ul>
+          <li>击败东突厥，设都护府</li>
+          <li>被尊为"天可汗"</li>
+          <li>文成公主入藏（松赞干布）</li>
+          <li>丝绸之路畅通无阻</li>
+        </ul>
+      </div>
+      <div class="compare-col" style="background:#fdf4f2;">
+        <h4 style="color:var(--error);">📚 文化开放</h4>
+        <ul>
+          <li>完善科举，重视文教</li>
+          <li>玄奘西行取经</li>
+          <li>外国留学生来唐</li>
+          <li>诗歌、艺术高度繁荣</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Famous anecdote -->
+  <div class="card">
+    <div class="card-title"><span class="num">📖</span>史学故事：魏征直谏</div>
+    <div class="source-card">
+      <div class="source-label">史料记载</div>
+      <div class="source-text">
+        魏征前后上谏200余事，多被太宗采纳。太宗曾欲修洛阳宫，魏征上疏以为不可，太宗嘉纳之，谓侍臣曰："夫以铜为镜，可以正衣冠；以史为镜，可以知兴替；以人为镜，可以明得失。"
+      </div>
+    </div>
+    <div class="concept-box">
+      <h4>💡 思考问题</h4>
+      <p>唐太宗说"以人为镜，可以明得失"。魏征以敢于直言进谏著称。请思考：纳谏对于统治者做出正确决策有何意义？你认为现代社会中，什么角色扮演着"魏征"的角色？</p>
+    </div>
+  </div>
+
+  <!-- Quiz -->
+  <div class="card">
+    <div class="card-title"><span class="num">📝</span>练习5 — 层级三：观点评价</div>
+    <div class="quiz-question">有人认为"贞观之治的根本原因在于唐太宗个人的贤明"。你是否同意这一观点？请选择你支持的理由。</div>
+    <div class="quiz-options" data-correct="B" data-q="m4q1">
+      <div class="quiz-option" data-opt="A" onclick="selectOpt(this, 'm4q1')">
+        <span class="opt-letter">A</span>同意，因为历史完全由英雄人物决定
+      </div>
+      <div class="quiz-option" data-opt="B" onclick="selectOpt(this, 'm4q1')">
+        <span class="opt-letter">B</span>不完全同意，贞观之治建立在隋末农民起义教训和全国统一的基础上，个人贤能是重要因素，但不是根本原因
+      </div>
+      <div class="quiz-option" data-opt="C" onclick="selectOpt(this, 'm4q1')">
+        <span class="opt-letter">C</span>不同意，因为任何人都无法改变历史走向
+      </div>
+    </div>
+    <div class="feedback" id="feedback-m4q1"></div>
+    <button class="btn btn-primary" onclick="checkQuiz('m4q1', 'module4')" style="margin-top:12px;width:100%;">提交答案</button>
+  </div>
+
+  <button class="btn btn-secondary" onclick="switchSection('module3')" style="width:49%;">← 隋朝统一</button>
+  <button class="btn btn-success" onclick="switchSection('posttest')" style="width:49%;">🎯 综合测评 →</button>
+</div>
+
+<!-- ========== SECTION: POST TEST ========== -->
+<div class="section" id="section-posttest" data-module-id="posttest">
+
+  <div class="post-test-banner">
+    <h3>🎯 综合测评</h3>
+    <p>完成本课学习了吗？来做一套综合题，检验学习成果！</p>
+    <button class="btn btn-primary" onclick="startPostTest()" style="background:white;color:#065f46;font-weight:700;">
+      开始测评 →
+    </button>
+  </div>
+
+  <div id="posttest-questions" style="display:none;">
+
+    <!-- Post Q1 -->
+    <div class="card" id="pt-q1">
+      <div class="card-title"><span class="num">1</span>客观题 · 记忆</div>
+      <div class="quiz-question">隋朝完成全国统一，灭掉南朝陈的年份是？</div>
+      <div class="quiz-options" data-correct="C" data-q="pt1">
+        <div class="quiz-option" data-opt="A" onclick="selectOpt(this, 'pt1')"><span class="opt-letter">A</span>265年</div>
+        <div class="quiz-option" data-opt="B" onclick="selectOpt(this, 'pt1')"><span class="opt-letter">B</span>420年</div>
+        <div class="quiz-option" data-opt="C" onclick="selectOpt(this, 'pt1')"><span class="opt-letter">C</span>589年</div>
+        <div class="quiz-option" data-opt="D" onclick="selectOpt(this, 'pt1')"><span class="opt-letter">D</span>618年</div>
+      </div>
+      <div class="feedback" id="feedback-pt1"></div>
+    </div>
+
+    <!-- Post Q2 -->
+    <div class="card" id="pt-q2">
+      <div class="card-title"><span class="num">2</span>客观题 · 理解</div>
+      <div class="quiz-question">"贞观之治"不包括以下哪项内容？</div>
+      <div class="quiz-options" data-correct="C" data-q="pt2">
+        <div class="quiz-option" data-opt="A" onclick="selectOpt(this, 'pt2')"><span class="opt-letter">A</span>虚心纳谏，选贤任能</div>
+        <div class="quiz-option" data-opt="B" onclick="selectOpt(this, 'pt2')"><span class="opt-letter">B</span>推行均田制，轻徭薄赋</div>
+        <div class="quiz-option" data-opt="C" onclick="selectOpt(this, 'pt2')"><span class="opt-letter">C</span>废除科举，贵族世袭</div>
+        <div class="quiz-option" data-opt="D" onclick="selectOpt(this, 'pt2')"><span class="opt-letter">D</span>击败东突厥，被尊"天可汗"</div>
+      </div>
+      <div class="feedback" id="feedback-pt2"></div>
+    </div>
+
+    <!-- Post Q3: Drag sort -->
+    <div class="card" id="pt-q3">
+      <div class="card-title"><span class="num">3</span>排序题 · 应用</div>
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">请将下列朝代按时间顺序排列（从早到晚）：</p>
+      <ul class="sortable-list" id="sortablePT">
+        <li class="sortable-item" draggable="true" data-order="a"><span class="handle">☰</span>① 唐朝</li>
+        <li class="sortable-item" draggable="true" data-order="b"><span class="handle">☰</span>② 东晋</li>
+        <li class="sortable-item" draggable="true" data-order="c"><span class="handle">☰</span>③ 三国</li>
+        <li class="sortable-item" draggable="true" data-order="d"><span class="handle">☰</span>④ 南北朝</li>
+        <li class="sortable-item" draggable="true" data-order="e"><span class="handle">☰</span>⑤ 西晋</li>
+        <li class="sortable-item" draggable="true" data-order="f"><span class="handle">☰</span>⑥ 隋朝</li>
+      </ul>
+      <div class="feedback" id="feedback-pt-sort"></div>
+    </div>
+
+    <!-- Post Q4: Source analysis -->
+    <div class="card" id="pt-q4">
+      <div class="card-title"><span class="num">4</span>材料分析题 · 分析</div>
+      <div class="source-card">
+        <div class="source-label">史料</div>
+        <div class="source-text">
+          "自五胡乱华以来，天下纷争，生灵涂炭，近四百年矣。隋文帝起而统一之，隋炀帝继之，大兴土木，徭役繁重，终致覆灭。唐高祖、太宗以隋为鉴，轻徭薄赋，遂有贞观之治。"
+        </div>
+      </div>
+      <div class="quiz-question">根据材料，分析从隋朝到唐朝"贞观之治"的历史连续性（提示：从"以史为鉴"的角度分析）。</div>
+      <div class="source-card" style="background:#f0f9ff;border-color:var(--secondary);margin-top:12px;">
+        <div class="source-label" style="color:var(--secondary);">作答提示</div>
+        <div class="source-text" style="color:var(--text);">
+          贞观之治的成就与隋朝灭亡的教训紧密相连。隋炀帝滥用民力导致农民起义，这使唐太宗认识到——必须<span style="background:#fef9c3;padding:1px 4px;border-radius:3px;">轻徭薄赋、与民休息</span>才能维持统治。这种"以史为鉴"的统治智慧，正是历史连续性的体现。
+        </div>
+      </div>
+      <button class="btn btn-success" onclick="completePostTest()" style="margin-top:16px;width:100%;font-size:16px;padding:16px;">
+        🏆 完成课程！
+      </button>
+    </div>
+
+    <button class="btn btn-primary" onclick="submitPostTest()" style="width:100%;margin-top:8px;">提交测评</button>
+  </div>
+
+  <!-- Results -->
+  <div id="posttest-results" style="display:none;">
+    <div class="card" style="text-align:center;padding:40px;">
+      <div class="score-circle" id="scoreCircle">
+        <span class="score-num" id="scoreNum">0</span>
+        <span class="score-label">正确率</span>
+      </div>
+      <h3 id="scoreMsg" style="font-size:1.2rem;margin-bottom:16px;">测评中...</h3>
+      <div id="scoreDetails" style="text-align:left;margin-top:16px;"></div>
+      <button class="btn btn-primary" onclick="window.scrollTo(0,0)" style="margin-top:24px;">回到顶部</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== BOTTOM NAV ========== -->
+<div class="bottom-nav">
+  <span class="nav-hint">📚 初中历史 · 三国至隋唐</span>
+  <span class="progress-text" id="progressText">已完成 0%</span>
+</div>
+
+<!-- ========== SCRIPTS ========== -->
+<script>
+// --- Navigation ---
+const navItems = document.querySelectorAll('.nav-item');
+function switchSection(target) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  navItems.forEach(n => n.classList.remove('active'));
+  const sec = document.getElementById('section-' + target);
+  if (sec) sec.classList.add('active');
+  navItems.forEach(n => {
+    if (n.dataset.target === target) n.classList.add('active');
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  updateProgress();
+}
+navItems.forEach(item => {
+  item.addEventListener('click', () => switchSection(item.dataset.target));
+});
+
+// --- Quiz System ---
+let quizAnswers = {};
+let postTestScore = 0;
+let postTestTotal = 0;
+
+function selectOpt(el, qId) {
+  const container = el.closest('.quiz-options');
+  container.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  quizAnswers[qId] = el.dataset.opt;
+  const fb = document.getElementById('feedback-' + qId);
+  if (fb) { fb.classList.remove('show', 'correct', 'wrong'); }
+}
+
+function checkQuiz(qId, moduleId) {
+  const container = document.querySelector(`[data-q="${qId}"]`);
+  if (!container) return;
+  const correct = container.dataset.correct;
+  const selected = quizAnswers[qId];
+  const fb = document.getElementById('feedback-' + qId);
+  const isCorrect = selected === correct;
+
+  // Update mastery
+  const nodeId = 'history-' + moduleId + '-' + qId;
+  TeachAnyAdaptive.updateMastery(nodeId, isCorrect, 2);
+
+  // Show feedback
+  if (fb) {
+    fb.classList.add('show');
+    if (isCorrect) {
+      fb.classList.add('correct');
+      fb.innerHTML = '✅ 正确！';
+    } else {
+      fb.classList.add('wrong');
+      fb.innerHTML = '❌ 错误。正确答案是 <strong>' + correct + '</strong>。';
+    }
+  }
+
+  // Color options
+  container.querySelectorAll('.quiz-option').forEach(o => {
+    o.classList.remove('correct', 'wrong');
+    if (o.dataset.opt === correct) o.classList.add('correct');
+    else if (o.classList.contains('selected') && !isCorrect) o.classList.add('wrong');
+  });
+
+  // Complete module
+  TeachAnyProgress.completeModule('history-sanguo-sui-tang', moduleId, { score: isCorrect ? 1 : 0, totalQuestions: 1, bloomLevel: 2 });
+  updateProgress();
+}
+
+function checkPreTest() {
+  ['pre1', 'pre2', 'pre3'].forEach(q => {
+    const container = document.querySelector(`[data-q="${q}"]`);
+    if (!container) return;
+    const correct = container.dataset.correct;
+    const selected = quizAnswers[q];
+    const fb = document.getElementById('feedback-' + q);
+    if (!fb) return;
+    if (selected === correct) {
+      fb.classList.add('show', 'correct');
+      fb.innerHTML = '✅ 正确！';
+    } else {
+      fb.classList.add('show', 'wrong');
+      fb.innerHTML = '❌ 错误。正确答案是 <strong>' + correct + '</strong>。';
+    }
+    container.querySelectorAll('.quiz-option').forEach(o => {
+      if (o.dataset.opt === correct) o.classList.add('correct');
+      else if (o.classList.contains('selected')) o.classList.add('wrong');
+    });
+  });
+}
+
+// --- Timeline Sortable ---
+function initSortable(listId) {
+  const list = document.getElementById(listId);
+  if (!list) return;
+  let dragged = null;
+
+  list.querySelectorAll('.sortable-item').forEach(item => {
+    item.addEventListener('dragstart', e => {
+      dragged = item;
+      setTimeout(() => item.classList.add('dragging'), 0);
+    });
+    item.addEventListener('dragend', () => {
+      if (dragged) dragged.classList.remove('dragging');
+      dragged = null;
+    });
+    item.addEventListener('dragover', e => {
+      e.preventDefault();
+      const after = getDragAfterElement(list, e.clientY);
+      if (after === null) list.appendChild(item);
+      else list.insertBefore(item, after);
+    });
+  });
+
+  function getDragAfterElement(container, y) {
+    const els = [...container.querySelectorAll('.sortable-item:not(.dragging)')];
+    return els.reduce((closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset) return { offset, element: child };
+      else return closest;
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+  }
+}
+
+function checkTimelineSort() {
+  const list = document.getElementById('sortableTimeline');
+  if (!list) return;
+  const items = [...list.querySelectorAll('.sortable-item')];
+  // Correct order: 2(三国)→5(西晋)→6(东晋)→4(南北朝)→1(隋)→3(唐)
+  const correctOrder = ['2', '5', '6', '4', '1', '3'];
+  const currentOrder = items.map(it => it.dataset.order);
+  const isCorrect = JSON.stringify(currentOrder) === JSON.stringify(correctOrder);
+
+  items.forEach((it, i) => {
+    it.classList.remove('correct', 'wrong');
+    if (isCorrect) it.classList.add('correct');
+    else if (it.dataset.order === correctOrder[i]) it.classList.add('correct');
+    else it.classList.add('wrong');
+  });
+
+  const fb = document.getElementById('feedback-timeline');
+  if (fb) {
+    fb.classList.add('show');
+    if (isCorrect) {
+      fb.classList.add('correct');
+      fb.innerHTML = '🎉 完全正确！正确的顺序是：三国→西晋→东晋→南北朝→隋朝→唐朝（220年→907年）';
+      TeachAnyAdaptive.updateMastery('history-timeline-sort', true, 3);
+    } else {
+      fb.classList.add('wrong');
+      fb.innerHTML = '❌ 顺序不对。提示：从220年到907年，按时间先后排列。红色的是错误项，绿色的是正确位置的项。';
+    }
+  }
+  TeachAnyProgress.completeModule('history-sanguo-sui-tang', 'timeline', { score: isCorrect ? 1 : 0, totalQuestions: 1, bloomLevel: 3 });
+  updateProgress();
+}
+
+// --- Post Test ---
+let postTestStarted = false;
+
+function startPostTest() {
+  document.getElementById('posttest-questions').style.display = 'block';
+  postTestStarted = true;
+  document.getElementById('pt-q1').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function submitPostTest() {
+  let score = 0;
+  let total = 2; // Q1 and Q2 only
+
+  ['pt1', 'pt2'].forEach(q => {
+    const container = document.querySelector(`[data-q="${q}"]`);
+    if (!container) return;
+    const correct = container.dataset.correct;
+    const selected = quizAnswers[q];
+    const fb = document.getElementById('feedback-' + q);
+    if (selected === correct) { score++; container.querySelectorAll('.quiz-option').forEach(o => { if (o.dataset.opt === correct) o.classList.add('correct'); }); }
+    else { container.querySelectorAll('.quiz-option').forEach(o => { if (o.dataset.opt === correct) o.classList.add('correct'); else if (o.classList.contains('selected')) o.classList.add('wrong'); }); }
+    if (fb) { fb.classList.add('show'); fb.classList.add(selected === correct ? 'correct' : 'wrong'); fb.innerHTML = selected === correct ? '✅ 正确！' : '❌ 错误，正确答案是 <strong>' + correct + '</strong>。'; }
+  });
+
+  // Check sort
+  const list = document.getElementById('sortablePT');
+  if (list) {
+    const items = [...list.querySelectorAll('.sortable-item')];
+    const correctOrder = ['c', 'e', 'b', 'd', 'a', 'f'];
+    const currentOrder = items.map(it => it.dataset.order);
+    const sortCorrect = JSON.stringify(currentOrder) === JSON.stringify(correctOrder);
+    const fb = document.getElementById('feedback-pt-sort');
+    if (fb) {
+      fb.classList.add('show');
+      if (sortCorrect) { fb.classList.add('correct'); fb.innerHTML = '✅ 排序完全正确！'; score++; }
+      else { fb.classList.add('wrong'); fb.classList.add('show'); fb.innerHTML = '❌ 排序错误，正确顺序：三国→西晋→东晋→南北朝→唐朝→隋朝。'; }
+    }
+    total++;
+  }
+
+  postTestScore = score;
+  postTestTotal = total;
+
+  const pct = Math.round((score / total) * 100);
+  const circle = document.getElementById('scoreCircle');
+  circle.style.background = pct >= 80 ? '#d1fae5' : pct >= 60 ? '#fef3c7' : '#fee2e2';
+  circle.style.color = pct >= 80 ? '#065f46' : pct >= 60 ? '#92400e' : '#991b1b';
+  document.getElementById('scoreNum').textContent = pct + '%';
+  document.getElementById('scoreMsg').textContent = pct >= 80 ? '🏆 优秀！你已掌握本课核心内容！' : pct >= 60 ? '👍 不错，继续加油！' : '💪 建议回顾各模块再试一次！';
+  document.getElementById('scoreDetails').innerHTML = `<p style="font-size:14px;color:var(--text-secondary);">共 ${total} 题，答对 ${score} 题</p>`;
+
+  document.getElementById('posttest-questions').style.display = 'none';
+  document.getElementById('posttest-results').style.display = 'block';
+
+  // Mark posttest complete
+  TeachAnyAdaptive.updateMastery('history-sanguo-sui-tang', pct >= 60, 4);
+  TeachAnyProgress.completeModule('history-sanguo-sui-tang', 'posttest', { score, totalQuestions: total, bloomLevel: 4 });
+  updateProgress();
+}
+
+function completePostTest() {
+  submitPostTest();
+}
+
+// --- Progress ---
+function updateProgress() {
+  const progress = TeachAnyProgress.getProgress('history-sanguo-sui-tang');
+  const pct = progress.completionPercent || 0;
+  document.getElementById('progressText').textContent = '已完成 ' + pct + '%';
+}
+
+// --- Init ---
+(function init() {
+  const COURSE_ID = 'history-sanguo-sui-tang';
+  TeachAnyProgress.restoreScrollPosition(COURSE_ID);
+  let scrollTimer;
+  window.addEventListener('scroll', () => {
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => TeachAnyProgress.saveScrollPosition(COURSE_ID), 500);
+  });
+  TeachAnyProgress.updateGlobalStats();
+
+  // Render streak
+  const stats = TeachAnyProgress.getGlobalStats();
+  document.getElementById('streak-count').textContent = stats.streak || 0;
+
+  // Init sortable lists
+  initSortable('sortableTimeline');
+  initSortable('sortablePT');
+
+  updateProgress();
+})();
+</script>
+</body>
+</html>
