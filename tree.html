@@ -879,40 +879,39 @@ function showTooltip(event, d) {
     html += `<div class="prereqs">前置知识：${d.prerequisites.join('、')}</div>`;
   }
 
-  // ── 课件列表（Hub 统一展示） ──
+  // ── 课件列表（始终展示列表+心标，用户点选进入） ──
   if (hubCount > 0) {
-    // 最佳课件（心标最高者）优先展示为主按钮
-    const best = hubCourses[0];
-    const bestUrl = best.url || (best.path ? `./${best.path}/index.html` : '');
-    const bestLabel = hubCount > 1
-      ? `🎯 ${best.emoji || '📚'} ${best.name}${best.likes > 0 ? ' ❤️' + best.likes : ''} （最佳）`
-      : `🎯 进入课件`;
-    if (bestUrl) {
-      html += `<a class="course-link" href="${bestUrl}" target="_blank" onclick="event.preventDefault();safeOpenCourseUrl('${bestUrl.replace(/'/g, "\\'")}')">${bestLabel}</a>`;
-    }
-
-    // 多个课件时，展示排名列表
-    if (hubCount > 1) {
-      html += `<div style="margin-top:8px;font-size:12px;color:var(--dim);">全部课件（按 ❤️ 排序）：</div>`;
-      html += `<div style="max-height:120px;overflow-y:auto;margin-top:4px;">`;
-      hubCourses.forEach((c, idx) => {
-        const sourceIcon = { official: '📋', community_registry: '🔖', community_shared: '🌐', user: '📂' }[c.source] || '📚';
-        const likeBadge = c.likes > 0 ? ` <span style="color:#f87171;font-size:11px;">❤️${c.likes}</span>` : '';
-        const isBest = idx === 0 ? ' <span style="color:var(--accent);font-size:10px;">👑</span>' : '';
-        const courseUrl = c.url || (c.path ? `./${c.path}/index.html` : '');
-        if (courseUrl) {
-          html += `<a href="${courseUrl}" target="_blank" onclick="event.preventDefault();safeOpenCourseUrl('${courseUrl.replace(/'/g, "\\'")}')"
-            style="display:block;padding:4px 8px;margin:2px 0;border-radius:4px;font-size:12px;color:var(--text);text-decoration:none;background:rgba(148,163,184,0.08);transition:background 0.2s;pointer-events:auto;"
-            onmouseover="this.style.background='rgba(59,130,246,0.15)'"
-            onmouseout="this.style.background='rgba(148,163,184,0.08)'"
-          >${sourceIcon} ${c.name}${likeBadge}${isBest}</a>`;
-        }
-      });
-      html += `</div>`;
-    }
+    html += `<div style="margin-top:8px;font-size:12px;color:var(--dim);">课件列表${hubCount > 1 ? '（按 ❤️ 排序）' : ''}：</div>`;
+    html += `<div style="max-height:160px;overflow-y:auto;margin-top:4px;">`;
+    hubCourses.forEach((c, idx) => {
+      const sourceIcon = { official: '📋', community_registry: '🔖', community_shared: '🌐', user: '📂' }[c.source] || '📚';
+      const likeBadge = c.likes > 0 ? ` <span style="color:#f87171;">❤️${c.likes}</span>` : ' <span style="color:var(--dimmer);">❤️0</span>';
+      const isBest = idx === 0 && hubCount > 1 ? ' <span style="color:var(--accent);">👑</span>' : '';
+      const courseUrl = c.url || (c.path ? `./${c.path}/index.html` : '');
+      if (courseUrl) {
+        html += `<a href="${courseUrl}" target="_blank" onclick="event.preventDefault();safeOpenCourseUrl('${courseUrl.replace(/'/g, "\\'")}')"
+          style="display:flex;align-items:center;gap:6px;padding:6px 10px;margin:3px 0;border-radius:6px;font-size:13px;color:var(--text);text-decoration:none;background:rgba(148,163,184,0.08);transition:all 0.2s;pointer-events:auto;border:1px solid transparent;"
+          onmouseover="this.style.background='rgba(59,130,246,0.15)';this.style.borderColor='rgba(59,130,246,0.3)'"
+          onmouseout="this.style.background='rgba(148,163,184,0.08)';this.style.borderColor='transparent'"
+        ><span>${sourceIcon}</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.name}</span>${likeBadge}${isBest}</a>`;
+      }
+    });
+    html += `</div>`;
   } else if (d.status === 'active' && d.courses.length) {
-    // Fallback：直接用 tree 中的课件路径
-    html += `<a class="course-link" href="./examples/${d.courses[0]}/index.html" target="_blank" onclick="event.preventDefault();safeOpenCourseUrl('./examples/${d.courses[0]}/index.html')">🎯 进入课件</a>`;
+    // Fallback：用 tree 中的课件列表
+    html += `<div style="margin-top:8px;font-size:12px;color:var(--dim);">课件列表：</div>`;
+    html += `<div style="max-height:160px;overflow-y:auto;margin-top:4px;">`;
+    d.courses.forEach(courseId => {
+      const courseUrl = './examples/' + courseId + '/index.html';
+      const likesCount = window.TeachAnyRegistry ? TeachAnyRegistry.getRegistryLikeCount(courseId) : 0;
+      const likeBadge = likesCount > 0 ? ` <span style="color:#f87171;">❤️${likesCount}</span>` : ' <span style="color:var(--dimmer);">❤️0</span>';
+      html += `<a href="${courseUrl}" target="_blank" onclick="event.preventDefault();safeOpenCourseUrl('${courseUrl}')"
+        style="display:flex;align-items:center;gap:6px;padding:6px 10px;margin:3px 0;border-radius:6px;font-size:13px;color:var(--text);text-decoration:none;background:rgba(148,163,184,0.08);transition:all 0.2s;pointer-events:auto;border:1px solid transparent;"
+        onmouseover="this.style.background='rgba(59,130,246,0.15)';this.style.borderColor='rgba(59,130,246,0.3)'"
+        onmouseout="this.style.background='rgba(148,163,184,0.08)';this.style.borderColor='transparent'"
+      ><span>📋</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${courseId}</span>${likeBadge}</a>`;
+    });
+    html += `</div>`;
   }
 
   tooltip.innerHTML = html;
@@ -1020,46 +1019,35 @@ function safeOpenCourseUrl(url) {
 }
 
 function onNodeClick(event, d) {
-  // ── 优先级：Hub 最佳课件 → 官方课件 → 社区星标 → 用户上传 ──
-
-  // 1. 通过 Hub 获取心标最高的课件（统一所有来源）
-  if (window.TeachAnyHub) {
-    const best = TeachAnyHub.getBestCourseForNode(d.id);
-    if (best) {
-      const url = best.url || (best.path ? `./${best.path}/index.html` : '');
-      if (url) {
-        safeOpenCourseUrl(url);
-        return;
+  // 点击节点 → 锁定 tooltip 显示课件列表，让用户选择进入
+  // 不再直接跳转课件
+  event.stopPropagation();
+  
+  // 先显示 tooltip（如果还没显示）
+  showTooltip(event, d);
+  
+  // 锁定 tooltip，不会因鼠标移开而消失
+  tooltipLocked = true;
+  clearTimeout(tooltip._hideTimer);
+  
+  // 给 tooltip 加个视觉高亮表示已锁定
+  tooltip.style.borderColor = 'var(--primary)';
+  tooltip.style.boxShadow = '0 0 20px rgba(59,130,246,0.3)';
+  
+  // 点击页面其他位置关闭
+  setTimeout(() => {
+    const closeHandler = (e) => {
+      if (!tooltip.contains(e.target)) {
+        tooltipLocked = false;
+        tooltip.style.borderColor = '';
+        tooltip.style.boxShadow = '';
+        tooltip.classList.remove('visible');
+        activeNodeData = null;
+        document.removeEventListener('click', closeHandler);
       }
-    }
-  }
-
-  // 2. Fallback：官方课件（Hub 未初始化时）
-  if (d.status === 'active' && d.courses.length) {
-    safeOpenCourseUrl('./examples/' + d.courses[0] + '/index.html');
-    return;
-  }
-
-  // 3. Fallback：社区课件
-  const communityCourses = window.TeachAnyCommunity 
-    ? TeachAnyCommunity.getTopCommunityCourses(d.id, 1) 
-    : [];
-  if (communityCourses.length > 0) {
-    const topCourse = communityCourses[0];
-    if (topCourse.download_url && isTeachAnyUrl(topCourse.download_url)) {
-      safeOpenCourseUrl(topCourse.download_url);
-      return;
-    }
-  }
-
-  // 4. Fallback：用户上传课件
-  const topUserCourse = window.TeachAnyImporter 
-    ? TeachAnyImporter.findUserCourseByNodeId(d.id) 
-    : null;
-  if (topUserCourse) {
-    const launchUrl = TeachAnyImporter.getCourseLaunchUrl(topUserCourse);
-    safeOpenCourseUrl(launchUrl);
-  }
+    };
+    document.addEventListener('click', closeHandler);
+  }, 10);
 }
 
 // 刷新当前知识地图数据（手动触发，绕过一切缓存）
