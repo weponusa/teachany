@@ -210,10 +210,14 @@ def main():
     registry_courses = []
     official_count = 0
     community_count = 0
+    course_count = 0
     for course_id, manifest in sorted(courses.items()):
-        # 保留旧注册表中的 status（official/community），默认 community
+        # 保留旧注册表中的 status（official/community/course），默认 community
         old_entry = old_registry.get(course_id, {})
         status = old_entry.get('status', 'community')
+        # 若 manifest 指明 category=course 也视为多章节课程
+        if manifest.get('category') == 'course' and status not in ('official',):
+            status = 'course'
         
         entry = {
             'id': course_id,
@@ -243,20 +247,22 @@ def main():
         registry_courses.append(entry)
         if status == 'official':
             official_count += 1
+        elif status == 'course':
+            course_count += 1
         else:
             community_count += 1
 
     registry = {
         'version': '1.0',
         'total': len(registry_courses),
-        'updated': '2026-04-14',
+        'updated': '2026-04-17',
         'courses': registry_courses
     }
 
     with open('registry.json', 'w', encoding='utf-8') as f:
         json.dump(registry, f, ensure_ascii=False, indent=2)
 
-    print(f'   注册表已重建: {len(registry_courses)} 个课件 (官方={official_count}, 社区={community_count})')
+    print(f'   注册表已重建: {len(registry_courses)} 个课件 (官方={official_count}, 社区={community_count}, 课程={course_count})')
 
     # 5. 最终验证
     print('\n' + '='*70)
