@@ -1,5 +1,5 @@
 import React from 'react';
-import {AbsoluteFill, interpolate, useCurrentFrame, Easing, Sequence} from 'remotion';
+import {AbsoluteFill, interpolate, useCurrentFrame, Easing, Sequence, Audio, staticFile} from 'remotion';
 
 /**
  * 孟浩然《春晓》起承转合四幕动画
@@ -236,15 +236,31 @@ export const ChunxiaoQCH: React.FC = () => {
       <Background />
       <Sequence from={0} durationInFrames={180}>
         <Scene1Qi />
+        <Audio src={staticFile('audio/bgm-qi.mp3')} volume={0.55} />
+        <Sequence from={30} durationInFrames={150}>
+          <Audio src={staticFile('audio/qi.mp3')} volume={1.0} />
+        </Sequence>
       </Sequence>
       <Sequence from={180} durationInFrames={180}>
         <Scene2Cheng />
+        <Audio src={staticFile('audio/bgm-cheng.mp3')} volume={0.5} />
+        <Sequence from={30} durationInFrames={150}>
+          <Audio src={staticFile('audio/cheng.mp3')} volume={1.0} />
+        </Sequence>
       </Sequence>
       <Sequence from={360} durationInFrames={180}>
         <Scene3Zhuan />
+        <Audio src={staticFile('audio/bgm-zhuan.mp3')} volume={0.7} />
+        <Sequence from={30} durationInFrames={150}>
+          <Audio src={staticFile('audio/zhuan.mp3')} volume={1.0} />
+        </Sequence>
       </Sequence>
       <Sequence from={540} durationInFrames={180}>
         <Scene4He />
+        <Audio src={staticFile('audio/bgm-he.mp3')} volume={0.5} />
+        <Sequence from={30} durationInFrames={150}>
+          <Audio src={staticFile('audio/he.mp3')} volume={1.0} />
+        </Sequence>
       </Sequence>
       <ActLabel actIdx={actIdx} />
       <Verse actIdx={actIdx} />
