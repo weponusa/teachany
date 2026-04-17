@@ -988,8 +988,28 @@ tooltip.addEventListener('mouseenter', function() {
 });
 tooltip.addEventListener('mouseleave', function() {
   tooltipLocked = false;
+  clearTimeout(this._hideTimer);
+  // 延迟隐藏：给用户足够时间回到 tooltip 或点击链接
+  this._hideTimer = setTimeout(() => {
+    if (!tooltipLocked && !tooltip.matches(':hover')) {
+      tooltip.classList.remove('visible');
+      tooltip.style.borderColor = '';
+      tooltip.style.boxShadow = '';
+      activeNodeData = null;
+    }
+  }, 400);
+});
+
+// 点击 tooltip 外部（空白处）关闭 tooltip
+document.addEventListener('click', function(e) {
+  if (!tooltip.classList.contains('visible')) return;
+  if (tooltip.contains(e.target)) return;         // 点 tooltip 内部：忽略
+  if (e.target.closest('circle, .node')) return;  // 点节点：由 onNodeClick 处理
+  tooltipLocked = false;
+  tooltip.classList.remove('visible');
+  tooltip.style.borderColor = '';
+  tooltip.style.boxShadow = '';
   activeNodeData = null;
-  this.classList.remove('visible');
 });
 
 // ── TeachAny 导航白名单 ──
@@ -1019,35 +1039,13 @@ function safeOpenCourseUrl(url) {
 }
 
 function onNodeClick(event, d) {
-  // 点击节点 → 锁定 tooltip 显示课件列表，让用户选择进入
-  // 不再直接跳转课件
-  event.stopPropagation();
-  
-  // 先显示 tooltip（如果还没显示）
+  // 点击节点 → 显示课件列表，用户从列表选择进入
+  // 只做两件事：展示 tooltip、锁定不让它消失
   showTooltip(event, d);
-  
-  // 锁定 tooltip，不会因鼠标移开而消失
   tooltipLocked = true;
   clearTimeout(tooltip._hideTimer);
-  
-  // 给 tooltip 加个视觉高亮表示已锁定
   tooltip.style.borderColor = 'var(--primary)';
   tooltip.style.boxShadow = '0 0 20px rgba(59,130,246,0.3)';
-  
-  // 点击页面其他位置关闭
-  setTimeout(() => {
-    const closeHandler = (e) => {
-      if (!tooltip.contains(e.target)) {
-        tooltipLocked = false;
-        tooltip.style.borderColor = '';
-        tooltip.style.boxShadow = '';
-        tooltip.classList.remove('visible');
-        activeNodeData = null;
-        document.removeEventListener('click', closeHandler);
-      }
-    };
-    document.addEventListener('click', closeHandler);
-  }, 10);
 }
 
 // 刷新当前知识地图数据（手动触发，绕过一切缓存）
