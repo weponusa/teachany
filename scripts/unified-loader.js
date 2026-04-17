@@ -15,7 +15,7 @@
 
 /* ─── 常量 ───────────────────────────────────── */
 const REGISTRY_URL = './registry.json';
-const CACHE_KEY = 'teachany_registry_v3';
+const CACHE_KEY = 'teachany_registry_v3_1'; // v3.1 支持 status=course
 const CACHE_TTL = 30 * 60 * 1000; // 30 分钟缓存
 const LIKES_KEY = 'teachany_likes';
 
@@ -284,8 +284,9 @@ async function initGallery() {
     // 按 status 分组
     const official = registry.courses.filter(c => c.status === 'official');
     const community = registry.courses.filter(c => c.status === 'community');
+    const courses = registry.courses.filter(c => c.status === 'course');
 
-    console.log(`[TeachAny] 官方课件: ${official.length}, 社区课件: ${community.length}`);
+    console.log(`[TeachAny] 官方: ${official.length}, 社区: ${community.length}, 课程: ${courses.length}`);
 
     // 渲染官方课件
     const officialGrid = document.getElementById('officialGrid');
@@ -301,6 +302,17 @@ async function initGallery() {
       renderCourses(communityGrid, community, addCard);
       console.log(`[TeachAny] ✓ 渲染 ${community.length} 个社区课件`);
     }
+
+    // 渲染其他课程（多章节系统课程）
+    const otherCoursesGrid = document.getElementById('otherCoursesGrid');
+    if (otherCoursesGrid) {
+      renderCourses(otherCoursesGrid, courses);
+      console.log(`[TeachAny] ✓ 渲染 ${courses.length} 个其他课程`);
+    }
+    const otherCoursesCount = document.getElementById('otherCoursesCount');
+    if (otherCoursesCount) otherCoursesCount.textContent = `${courses.length} 个课程`;
+    const otherCoursesEmpty = document.getElementById('otherCoursesEmpty');
+    if (otherCoursesEmpty) otherCoursesEmpty.style.display = courses.length ? 'none' : 'block';
 
     // 更新统计数字
     updateStats({
