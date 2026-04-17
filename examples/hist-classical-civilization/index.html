@@ -1046,6 +1046,39 @@ const TeachAnyAchievements = (() => {
 })();
 
 // === Leaflet Map Initialization (DEM + GeoJSON, sync zoom) ===
+// v5.21 Fix: GitHub Pages skips deploying *.jpg / large binary under data/geography/,
+// causing 404. Strategy: try relative path first (local preview & other hosts),
+// fallback to jsDelivr CDN. Both paths validated against raw.githubusercontent.com.
+const GEO_CDN_BASE = 'https://cdn.jsdelivr.net/gh/weponusa/teachany@main';
+const GEO_LOCAL_BASE = '../..';
+function geoAssetUrl(relPath) {
+  // relPath like "data/geography/hillshade/global-color-hillshade-4k.jpg"
+  return `${GEO_LOCAL_BASE}/${relPath}`;
+}
+function geoAssetCdn(relPath) {
+  return `${GEO_CDN_BASE}/${relPath}`;
+}
+// Smart image overlay: try local first, fallback to CDN on error
+function addSmartImageOverlay(map, relPath, bounds, opts) {
+  const img = new Image();
+  const localUrl = geoAssetUrl(relPath);
+  const cdnUrl = geoAssetCdn(relPath);
+  img.onload = () => L.imageOverlay(localUrl, bounds, opts).addTo(map);
+  img.onerror = () => L.imageOverlay(cdnUrl, bounds, opts).addTo(map);
+  img.src = localUrl;
+}
+// Smart fetch JSON: local first, fallback CDN
+async function geoFetchJson(relPath) {
+  try {
+    const r = await fetch(geoAssetUrl(relPath));
+    if (!r.ok) throw new Error('local ' + r.status);
+    return await r.json();
+  } catch (e) {
+    const r = await fetch(geoAssetCdn(relPath));
+    return await r.json();
+  }
+}
+
 function initGreeceMap() {
   const el = document.getElementById('greece-map');
   if (!el || typeof L === 'undefined') return;
@@ -1061,16 +1094,14 @@ function initGreeceMap() {
   });
 
   // DEM hillshade base layer (4k recommended per README)
-  const hillshadeUrl = '../../data/geography/hillshade/global-color-hillshade-4k.jpg';
-  // ImageOverlay bounds must match equirectangular projection: [[-90,-180],[90,180]]
-  L.imageOverlay(hillshadeUrl, [[-90, -180], [90, 180]], { opacity: 0.65, z: 0 }).addTo(map);
+  // v5.21: Use smart loader to handle GitHub Pages not serving data/geography/*.jpg
+  addSmartImageOverlay(map, 'data/geography/hillshade/global-color-hillshade-4k.jpg', [[-90, -180], [90, 180]], { opacity: 0.65, z: 0 });
 
   // Sea background
   L.rectangle([[-90, -180], [90, 180]], { color: 'transparent', fillColor: '#0c2d4a', fillOpacity: 0.4, z: -1 }).addTo(map);
 
   // Load countries GeoJSON
-  fetch('../../data/geography/world/countries.geojson')
-    .then(r => r.json())
+  geoFetchJson('data/geography/world/countries.geojson')
     .then(geoJson => {
       // Highlight rules per country
       const highlight = {
@@ -1209,14 +1240,12 @@ function initRomeMap() {
   });
 
   // DEM hillshade base layer (4k recommended per README)
-  const hillshadeUrl = '../../data/geography/hillshade/global-color-hillshade-4k.jpg';
-  // ImageOverlay bounds: equirectangular [[-90,-180],[90,180]]
-  L.imageOverlay(hillshadeUrl, [[-90, -180], [90, 180]], { opacity: 0.6, z: 0 }).addTo(map);
+  // v5.21: Use smart loader (local → CDN fallback)
+  addSmartImageOverlay(map, 'data/geography/hillshade/global-color-hillshade-4k.jpg', [[-90, -180], [90, 180]], { opacity: 0.6, z: 0 });
   L.rectangle([[-90, -180], [90, 180]], { color: 'transparent', fillColor: '#0c2d4a', fillOpacity: 0.35, z: -1 }).addTo(map);
 
   // Load countries GeoJSON
-  fetch('../../data/geography/world/countries.geojson')
-    .then(r => r.json())
+  geoFetchJson('data/geography/world/countries.geojson')
     .then(geoJson => {
       // Roman Empire territories
       const romanTerritories = ['Italy','Greece','Spain','Turkey','Egypt','Tunisia','Albania','Bulgaria','Macedonia','Libya'];
