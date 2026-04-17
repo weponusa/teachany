@@ -317,7 +317,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
     <div class="map-container" style="position:relative;border-radius:var(--radius);overflow:hidden;">
       <div id="greece-map" style="width:100%;height:420px;"></div>
       <div style="position:absolute;bottom:8px;left:8px;background:rgba(15,23,42,0.85);padding:6px 12px;border-radius:6px;font-size:11px;color:var(--text2);pointer-events:none;">
-        🗺️ DEM底图 + GeoJSON · 点击城市查看详情
+        🗺️ 深色地图 + 地形浮雕 · 点击城市查看详情
       </div>
     </div>
   </div>
@@ -464,7 +464,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
     <div class="map-container" style="position:relative;border-radius:var(--radius);overflow:hidden;">
       <div id="rome-map" style="width:100%;height:400px;"></div>
       <div style="position:absolute;bottom:8px;left:8px;background:rgba(15,23,42,0.85);padding:6px 12px;border-radius:6px;font-size:11px;color:var(--text2);pointer-events:none;">
-        🗺️ DEM底图 · 高亮区域为罗马帝国核心疆域
+        🗺️ 深色地图 + 地形浮雕 · 高亮区域为罗马帝国核心疆域
       </div>
     </div>
   </div>
@@ -1045,28 +1045,15 @@ const TeachAnyAchievements = (() => {
   return { award, checkAndAward, getAchievements };
 })();
 
-// === Leaflet Map Initialization (DEM + GeoJSON, sync zoom) ===
-// v5.21 Fix: GitHub Pages skips deploying *.jpg / large binary under data/geography/,
-// causing 404. Strategy: try relative path first (local preview & other hosts),
-// fallback to jsDelivr CDN. Both paths validated against raw.githubusercontent.com.
+// === Leaflet Map Initialization (XYZ Tiles + GeoJSON, sync zoom) ===
+// v5.22 换方案：弃用 imageOverlay（equirectangular 图铺到 Mercator 地图必然高纬度拉伸错位），
+// 改用标准 XYZ 瓦片（Web Mercator），Leaflet 原生对齐 GeoJSON。
+// 瓦片源均为免费公开服务，无需 API key。
+// 同时保留 GeoJSON 的本地+CDN 双路径回退（防 GitHub Pages 跳过大文件部署）。
 const GEO_CDN_BASE = 'https://cdn.jsdelivr.net/gh/weponusa/teachany@main';
 const GEO_LOCAL_BASE = '../..';
-function geoAssetUrl(relPath) {
-  // relPath like "data/geography/hillshade/global-color-hillshade-4k.jpg"
-  return `${GEO_LOCAL_BASE}/${relPath}`;
-}
-function geoAssetCdn(relPath) {
-  return `${GEO_CDN_BASE}/${relPath}`;
-}
-// Smart image overlay: try local first, fallback to CDN on error
-function addSmartImageOverlay(map, relPath, bounds, opts) {
-  const img = new Image();
-  const localUrl = geoAssetUrl(relPath);
-  const cdnUrl = geoAssetCdn(relPath);
-  img.onload = () => L.imageOverlay(localUrl, bounds, opts).addTo(map);
-  img.onerror = () => L.imageOverlay(cdnUrl, bounds, opts).addTo(map);
-  img.src = localUrl;
-}
+function geoAssetUrl(relPath)  { return `${GEO_LOCAL_BASE}/${relPath}`; }
+function geoAssetCdn(relPath)  { return `${GEO_CDN_BASE}/${relPath}`; }
 // Smart fetch JSON: local first, fallback CDN
 async function geoFetchJson(relPath) {
   try {
@@ -1077,6 +1064,27 @@ async function geoFetchJson(relPath) {
     const r = await fetch(geoAssetCdn(relPath));
     return await r.json();
   }
+}
+// v5.22 统一底图：深色 CartoDB（海陆+国界+地名）+ Esri 地形浮雕（山脉纹理）
+// 两个都是 Web Mercator XYZ tiles，与 GeoJSON 天然对齐
+function addBaseTiles(map, opts = {}) {
+  const terrainOpacity = opts.terrainOpacity ?? 0.35;   // 地形浮雕透明度
+  const darkOpacity    = opts.darkOpacity    ?? 0.85;   // 深色底图透明度
+
+  // 底层：深色地图（海洋、陆地、国界、地名）—— 提供几何参考
+  L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', {
+    subdomains: 'abcd',
+    maxZoom: 19,
+    opacity: darkOpacity,
+    attribution: '© CartoDB · © OpenStreetMap'
+  }).addTo(map);
+
+  // 叠加层：Esri 地形浮雕（山脉、河谷、起伏），半透明叠在深色底图上
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 13,
+    opacity: terrainOpacity,
+    attribution: 'Esri · Shaded Relief'
+  }).addTo(map);
 }
 
 function initGreeceMap() {
@@ -1093,12 +1101,8 @@ function initGreeceMap() {
     attributionControl: false
   });
 
-  // DEM hillshade base layer (4k recommended per README)
-  // v5.21: Use smart loader to handle GitHub Pages not serving data/geography/*.jpg
-  addSmartImageOverlay(map, 'data/geography/hillshade/global-color-hillshade-4k.jpg', [[-90, -180], [90, 180]], { opacity: 0.65, z: 0 });
-
-  // Sea background
-  L.rectangle([[-90, -180], [90, 180]], { color: 'transparent', fillColor: '#0c2d4a', fillOpacity: 0.4, z: -1 }).addTo(map);
+  // v5.22: XYZ tiles base (Web Mercator，天然对齐 GeoJSON)
+  addBaseTiles(map, { terrainOpacity: 0.45, darkOpacity: 0.9 });
 
   // Load countries GeoJSON
   geoFetchJson('data/geography/world/countries.geojson')
@@ -1239,10 +1243,8 @@ function initRomeMap() {
     attributionControl: false
   });
 
-  // DEM hillshade base layer (4k recommended per README)
-  // v5.21: Use smart loader (local → CDN fallback)
-  addSmartImageOverlay(map, 'data/geography/hillshade/global-color-hillshade-4k.jpg', [[-90, -180], [90, 180]], { opacity: 0.6, z: 0 });
-  L.rectangle([[-90, -180], [90, 180]], { color: 'transparent', fillColor: '#0c2d4a', fillOpacity: 0.35, z: -1 }).addTo(map);
+  // v5.22: XYZ tiles base (Web Mercator，天然对齐 GeoJSON)
+  addBaseTiles(map, { terrainOpacity: 0.4, darkOpacity: 0.88 });
 
   // Load countries GeoJSON
   geoFetchJson('data/geography/world/countries.geojson')
