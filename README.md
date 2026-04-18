@@ -155,17 +155,7 @@ TeachAny works as a **Skill** for AI coding assistants (CodeBuddy, Cursor, Winds
 
 > **Note**: The skill only needs `skill/` + `data/`. Official and community coursewares are available on the [TeachAny Gallery website](https://weponusa.github.io/teachany/) — they are NOT bundled with the skill.
 
-### Option 1b: Admin Skill (for project maintainers)
-
-If you maintain the TeachAny repository and want to generate **and publish** official courseware:
-
-1. Copy `admin-skillhub-package/SKILL.md` to your AI assistant's skill directory
-2. Set `GITHUB_TOKEN` environment variable
-3. Start a conversation:
-   ```
-   Create a "Pythagorean Theorem" (Grade 8 Math) courseware and push it to the official Gallery
-   ```
-4. The AI will generate the courseware, validate quality, pack, publish to GitHub Releases, and push to Git — all automatically
+> **Note**: Since v6.0, TeachAny ships with built-in validation, packing, and community-sharing workflows inside the base skill. A separate "admin" skill and `GITHUB_TOKEN` are no longer required.
 
 ### Option 2: Start from the Template
 
@@ -255,10 +245,6 @@ teachany/
 ├── skill/
 │   ├── SKILL.md                 # English Skill definition
 │   └── SKILL_CN.md              # Chinese Skill definition
-│
-├── admin-skillhub-package/
-│   ├── SKILL.md                 # Admin Skill (generate + validate + pack + publish)
-│   └── README.md                # Admin Skill documentation
 │
 ├── data/                        # 📚 Knowledge Layer
 │   ├── README.md                # Architecture document
