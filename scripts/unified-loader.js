@@ -213,6 +213,10 @@ function renderCourseCard(course) {
   if (course.has_video) extraBadges.push('<span class="tag tag-cyan">🎬 Video</span>');
   if (course.has_en) extraBadges.push('<span class="tag tag-pink">🌐 EN</span>');
   if (isOfficial) extraBadges.push('<span class="tag tag-red">⭐ 官方</span>');
+  // TeachAny 版本徽章（v5.27 新增：显示课件制作时使用的 TeachAny SKILL 版本）
+  if (course.teachany_version) {
+    extraBadges.push(`<span class="tag tag-teachany" title="制作时使用的 TeachAny 版本">⚡ TeachAny v${escapeHtml(course.teachany_version)}</span>`);
+  }
 
   // Meta 信息
   const metaParts = [];
