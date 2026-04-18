@@ -94,6 +94,7 @@ def validate_one(course_dir):
     mg = m.get('grade')
     ms = m.get('subject')
     mn = m.get('node_id')
+    mv = m.get('teachany_version')
 
     issues = []
     manifest_level = grade_to_level(mg)
@@ -110,16 +111,44 @@ def validate_one(course_dir):
             f'{course_dir.name}: manifest.subject={ms} 但 node_id={mn} 指向 {node_subject}'))
 
     # 3. HTML 线索 vs manifest.grade
+    html_head = ''
     if html.exists():
-        head = ''
         with open(html, encoding='utf-8', errors='ignore') as f:
             for i, line in enumerate(f):
                 if i > 150: break
-                head += line
-        html_level, clue = detect_html_level(head)
+                html_head += line
+        html_level, clue = detect_html_level(html_head)
         if html_level and manifest_level and html_level != manifest_level:
             issues.append(('error',
                 f'{course_dir.name}: HTML 线索指示"{html_level}"(发现 "{clue}") 但 manifest.grade={mg}({manifest_level})'))
+
+    # 4. title 规范（v5.27 新增）
+    # 标准格式：《课件名》 · 《学段》《学科》 G{grade} · TeachAny v{version}
+    if html.exists():
+        title_m = re.search(r'<title>([^<]+)</title>', html_head)
+        if title_m:
+            title = title_m.group(1)
+            # 检查是否包含 TeachAny 版本
+            if 'TeachAny v' not in title:
+                issues.append(('error',
+                    f'{course_dir.name}: <title> 不含 "TeachAny v{{version}}" 标识 (当前: "{title}")'))
+            # 检查是否包含学段标签（小学/初中/高中）
+            if manifest_level:
+                level_cn = {'elementary':'小学', 'middle':'初中', 'high':'高中'}[manifest_level]
+                if level_cn not in title:
+                    issues.append(('error',
+                        f'{course_dir.name}: <title> 不含学段 "{level_cn}" (当前: "{title}")'))
+            # 检查是否包含年级标识
+            if isinstance(mg, int) and f'G{mg}' not in title and f'{mg}年级' not in title:
+                issues.append(('error',
+                    f'{course_dir.name}: <title> 不含年级 "G{mg}" (当前: "{title}")'))
+        else:
+            issues.append(('warn', f'{course_dir.name}: 无 <title> 标签'))
+
+    # 5. manifest.teachany_version（v5.27 新增）
+    if not mv:
+        issues.append(('error',
+            f'{course_dir.name}: manifest 缺 teachany_version 字段（示例: "5.27"）'))
 
     return issues
 

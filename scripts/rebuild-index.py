@@ -243,6 +243,7 @@ def main():
             'has_video': manifest.get('has_video', False),
             'has_en': manifest.get('has_en', False),
             'author': manifest.get('author', ''),
+            'teachany_version': manifest.get('teachany_version', ''),
         }
         registry_courses.append(entry)
         if status == 'official':
