@@ -4,6 +4,43 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased] - SKILL v5.34 - 2026-04-19
+
+### ✨ Added — AI 学伴悬浮球（强制基线）+ PPTX 导出（可选）
+
+- **`scripts/ai-tutor.css` / `scripts/ai-tutor.js`**：新增 AI 学伴公共资源——右下角 FAB 悬浮球 + OpenAI 兼容 API Key 配置 Modal + 360×520 对话面板。首次点击弹出 Key 配置（baseUrl/apiKey/model 三字段，默认 `https://api.openai.com/v1` + `gpt-4o-mini`）；Key 仅保存在 localStorage；支持 SSE 流式答复。
+- **学段感知答复**：按 `window.__TEACHANY_TUTOR_CONFIG__.grade` 动态构造 system prompt——小学 2-3 句口语化 / 初中 3-5 句结构化 / 高中 5-8 句可含公式。
+- **上下文自动抓取**：从可见 `<section>` / `:target` / IntersectionObserver 命中段提取最多 3000 字作为课件上下文，AI 回答聚焦当前学习内容。
+- **`scripts/export-pptx.py`**：新增 HTML → PPTX 导出工具（python-pptx + BeautifulSoup）。按 section 切分幻灯片、提取 `<img>` 作为主图、提取选择题 `handleQuiz` 正确答案、互动组件降级为"扫码/URL 回链"占位页。仅在用户 `output_formats` 包含 `"pptx"` 时触发。
+- **`scripts/pack-courseware.cjs`**：打包时自动把 `ai-tutor.css` + `ai-tutor.js` 复制到课件目录（基于 mtime 新旧对比），确保 `.teachany` 包自带学伴资源。
+- **`scripts/validate-courseware.py`**：新增 4 项 AI 学伴校验——① HTML 必须引 `ai-tutor.css`；② HTML 必须引 `ai-tutor.js`；③ HTML 必须含 `__TEACHANY_TUTOR_CONFIG__`；④ 严禁硬编码 `'sk-xxx'` 明文 Key。
+
+### ✏️ Changed — SKILL_CN.md
+
+- **Section 10.1**：技术组合表追加 PPTX 行，标注"可选派生件、用户触发"。
+- **Section 10.2.1 HTML 骨架模板**：`<head>` 新增 `<link rel="stylesheet" href="./ai-tutor.css">`；`<script>` 最前面注入 `window.__TEACHANY_TUTOR_CONFIG__`；`</body>` 前引入 `<script src="./ai-tutor.js" defer>`。
+- **新增 Section 10.2.6**：AI 学伴悬浮球规范（完整架构图 + 配置格式 + 运行时行为 + 安全红线 + 降级策略 + 禁止项）。
+- **Phase 0 新增第 8 步**：输出格式选择（默认 `["html"]`，命中 PPTX 关键词或用户显式要求时加 `"pptx"`）。
+- **Phase 3 新增 3.7 L5 PPTX 导出 + 3.8 通用能力注入**。
+- **Section 12 输出层级表**：从 3 层（L1-L3）扩充至 5 层（L1 互动课件 / L2 Remotion / L3 TTS / L4 打包 / L5 PPTX）。
+- **Completeness Gate**：从 27 项扩充至 29 项（+ #28 AI 学伴悬浮球 + #29 PPTX 导出）。
+- **硬规则**：从 44 条扩充至 46 条（+ #45 AI 学伴基线 + #46 PPTX 导出基线）；Section 十三标题同步改为 "46 条硬规则"。
+
+### 🔒 Security
+
+- AI 学伴的 API Key **严禁**以任何形式硬编码到课件代码中。
+- API Key 仅保存在用户当前浏览器的 localStorage，关闭页面或清浏览器数据后失效。
+- 课件不向任何后端或第三方分析服务发送 API Key。
+- 配置面板强制显示隐私提示条："Key 仅保存在本浏览器"。
+
+### 🧪 Tested
+
+- `python3 scripts/export-pptx.py examples/bio-asexual-repro` 生成 10 页 40KB 的 pptx，封面/结尾/section 切分全部正确。
+- AI 学伴烟雾测试页验证：FAB 渲染、Key 配置弹窗、对话面板、流式答复接口调用路径完整。
+- `python3 scripts/validate-courseware.py` 语法校验通过；新增的 4 项学伴校验在 HTML 缺项时正确报错。
+
+---
+
 ## [1.4.0] - 2026-04-10 *(superseded by v6.0)*
 
 ### ⚠️ Deprecated & Removed in v6.0

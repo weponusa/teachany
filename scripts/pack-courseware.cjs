@@ -87,6 +87,30 @@ if (fs.existsSync(manifestPath)) {
 // Ensure output dir exists
 if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
 
+// ⭐ v5.34: 打包前自动把 AI 学伴公共资源复制到课件目录（如缺失）
+// 这样每个 .teachany 包都自带 ./ai-tutor.css + ./ai-tutor.js
+const skillRoot = path.resolve(__dirname, '..');
+const tutorAssets = ['ai-tutor.css', 'ai-tutor.js'];
+tutorAssets.forEach(asset => {
+  const source = path.join(skillRoot, 'scripts', asset);
+  const dest = path.join(courseDir, asset);
+  if (!fs.existsSync(source)) {
+    log(`AI 学伴资源缺失: ${source}，打包时将跳过复制`, 'warn');
+    return;
+  }
+  // 只在课件内无该资源，或课件版本比源文件旧时复制
+  let shouldCopy = !fs.existsSync(dest);
+  if (!shouldCopy) {
+    try {
+      shouldCopy = fs.statSync(source).mtimeMs > fs.statSync(dest).mtimeMs;
+    } catch (e) { shouldCopy = true; }
+  }
+  if (shouldCopy) {
+    fs.copyFileSync(source, dest);
+    log(`已同步 AI 学伴资源: ${asset}`);
+  }
+});
+
 // Pack with zip
 const courseId = path.basename(courseDir);
 const zipPath = path.join(outputDir, `${courseId}.teachany`);
