@@ -32,6 +32,7 @@ SUBJECT_PREFIXES = {
     'chn': 'chinese', 'math': 'math', 'eng': 'english',
     'phy': 'physics', 'chem': 'chemistry', 'bio': 'biology',
     'hist': 'history', 'geo': 'geography', 'it': 'info-tech',
+    'sci': 'science',  # v5.34.6 新增：小学科学
 }
 
 LEVEL_INFIX = {
@@ -213,6 +214,67 @@ def validate_one(course_dir):
             if key_leak:
                 issues.append(('error',
                     f'{course_dir.name}: HTML 疑似硬编码 OpenAI API Key（{key_leak.group(0)[:20]}…）— 严禁任何形式把 Key 写入代码（v5.34 强制 · 硬规则 #45）'))
+
+    # 7. L3 TTS 语音基线（v5.34.6 新增，硬规则 #16/#31）
+    #    每个课件必须有 tts/*.mp3 语音文件 + 课件 HTML 必须有音频播放器 UI 元素
+    tts_dir = course_dir / 'tts'
+    mp3_files = list(tts_dir.glob('*.mp3')) if tts_dir.exists() else []
+    if not mp3_files:
+        issues.append(('error',
+            f'{course_dir.name}: 缺少 tts/*.mp3 语音文件（硬规则 #16/#31 强制 · edge-tts 生成，仅用户明确拒绝时豁免）'))
+    else:
+        if len(mp3_files) < 3:
+            issues.append(('warn',
+                f'{course_dir.name}: 仅 {len(mp3_files)} 个 mp3 文件（建议 ≥ 3 段，与 section/slide 数量对齐）'))
+        # 必须有播放器 UI（audioBadge + audioPanel + mainAudio 任一标志）
+        if html.exists():
+            if 'audioBadge' not in full_html and 'audioPanel' not in full_html and 'audioPlaylist' not in full_html:
+                issues.append(('error',
+                    f'{course_dir.name}: tts/ 已有 mp3 但 HTML 缺音频播放器 UI（需 audioBadge/audioPanel/audioPlaylist 任一，v5.34.6 强制 · 硬规则 #26）'))
+
+    # 8. AI 生图基线（v5.34.6 新增，硬规则 #34）
+    #    文/理/工/社科课件必须有 ≥2 张 assets/*.png/jpg 插图，并在 HTML <img> 引用
+    assets_dir = course_dir / 'assets'
+    img_files = []
+    if assets_dir.exists():
+        img_files = [f for f in assets_dir.iterdir() if f.suffix.lower() in ('.png', '.jpg', '.jpeg', '.webp')]
+    if html.exists() and full_html:
+        img_tags = re.findall(r'<img[^>]+src=[\'"]\.?/?assets/[^\'"]+[\'"]', full_html)
+        # 仅纯计算题课可豁免（subject=math 且 node_id 含 "calculation"/"operation"）
+        is_pure_calc = (ms == 'math' and any(kw in (mn or '') for kw in ('calculation', 'operation', 'arithmetic')))
+        if not is_pure_calc:
+            if len(img_files) < 2:
+                issues.append(('error',
+                    f'{course_dir.name}: assets/ 仅 {len(img_files)} 张图 < 2（硬规则 #34 强制 · 需调用 image_gen 生成≥2 张情境/过程/意境插图，仅纯计算课可豁免）'))
+            if len(img_tags) < 2:
+                issues.append(('error',
+                    f'{course_dir.name}: HTML 中 <img src="./assets/..."> 引用仅 {len(img_tags)} 处 < 2（硬规则 #34 强制 · 生成的图必须嵌入 HTML 对应 section）'))
+
+    # 9. PPTX 基线（v5.34.6 新增，硬规则 #47）
+    #    若课件存在 *.pptx，则 PPTX 必须包含图（否则是简陋 PPTX，直接 Gate 不通过）
+    pptx_files = list(course_dir.glob('*.pptx'))
+    if pptx_files:
+        pptx_path = pptx_files[0]
+        try:
+            from zipfile import ZipFile
+            with ZipFile(pptx_path) as z:
+                all_files = z.namelist()
+                pptx_slides = [f for f in all_files if 'slides/slide' in f and f.endswith('.xml')]
+                pptx_media = [f for f in all_files if '/media/' in f]
+            size_kb = pptx_path.stat().st_size / 1024
+            # 硬规则 #47：PPTX 大小 < 100KB 或含图数 = 0 视为简陋
+            if size_kb < 100:
+                issues.append(('error',
+                    f'{course_dir.name}: PPTX {pptx_path.name} 仅 {size_kb:.1f}KB < 100KB（过于简陋 · 硬规则 #47）— 需先确保 HTML 有 ≥2 张 assets 图再重跑 export-pptx.py'))
+            if len(pptx_media) == 0 and len(pptx_slides) > 2:
+                issues.append(('error',
+                    f'{course_dir.name}: PPTX {pptx_path.name} 含 {len(pptx_slides)} 页幻灯片但 0 张图（硬规则 #47）— HTML 的 assets/*.png 可能未被 export-pptx.py 抓取，检查 <img src=> 路径'))
+            # 建议：图数应至少覆盖 30% 的 slide
+            if len(pptx_slides) > 0 and len(pptx_media) / len(pptx_slides) < 0.3:
+                issues.append(('warn',
+                    f'{course_dir.name}: PPTX 图片密度偏低 {len(pptx_media)}/{len(pptx_slides)} 张（建议 ≥30% · 硬规则 #47）'))
+        except Exception as e:
+            issues.append(('warn', f'{course_dir.name}: PPTX 解析失败: {e}'))
 
     return issues
 
