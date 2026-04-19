@@ -15,9 +15,16 @@
 
 /* ─── 常量 ───────────────────────────────────── */
 const REGISTRY_URL = './registry.json';
-const CACHE_KEY = 'teachany_registry_v3_1'; // v3.1 支持 status=course
+const CACHE_KEY = 'teachany_registry_v3_2'; // v3.2: 强制刷新 (v5.34 Gallery 空白修复)
 const CACHE_TTL = 30 * 60 * 1000; // 30 分钟缓存
 const LIKES_KEY = 'teachany_likes';
+// 旧版 CACHE_KEY 列表，启动时主动清除，避免用户停留在坏缓存上
+const LEGACY_CACHE_KEYS = [
+  'teachany_registry',
+  'teachany_registry_v2',
+  'teachany_registry_v3',
+  'teachany_registry_v3_1',
+];
 
 /* ─── 辅助工具 ──────────────────────────────── */
 function escapeHtml(value) {
@@ -171,6 +178,7 @@ function renderCourseCard(course) {
   const level = gradeToLevel(course.grade);
   const isOfficial = course.status === 'official';
   const courseName = course.name || '';
+  const courseNameEn = course.name_en || '';
   const courseDesc = course.description_zh || course.description || '';
   
   // 学科中文名映射
@@ -372,15 +380,25 @@ window.TeachAnyUnifiedLoader = {
   clearCache: () => localStorage.removeItem(CACHE_KEY)
 };
 
-// 启动时清除可能的坏缓存
+// 启动时清除可能的坏缓存 + 所有旧版本缓存（v5.34 修复 Gallery 空白）
 (function() {
+  // 1. 清除所有历史版本的缓存 key
+  try {
+    LEGACY_CACHE_KEYS.forEach(k => {
+      if (localStorage.getItem(k) !== null) {
+        localStorage.removeItem(k);
+        console.log(`[TeachAny] 清除了旧缓存: ${k}`);
+      }
+    });
+  } catch {}
+  // 2. 当前版本如果是空/损坏的缓存，也清掉
   try {
     const cached = localStorage.getItem(CACHE_KEY);
     if (cached) {
       const { data } = JSON.parse(cached);
       if (!data || !data.courses || data.courses.length === 0) {
         localStorage.removeItem(CACHE_KEY);
-        console.log('[TeachAny] 清除了空的缓存');
+        console.log('[TeachAny] 清除了空的当前缓存');
       }
     }
   } catch {
