@@ -100,6 +100,23 @@ def main():
     print('TeachAny 课件索引重建工具')
     print('='*70)
 
+    # ⭐ v5.34.8 管理员身份校验：防止克隆仓库的普通用户误触发"重建官方索引"
+    admin_marker = Path('.teachany-admin')
+    if not admin_marker.exists():
+        print()
+        print('⛔ 本脚本只能由仓库管理员在本地运行。')
+        print('   未检测到 .teachany-admin 标记文件，已中止执行。')
+        print()
+        print('   ℹ️  如你是普通用户，想制作自己的课件：')
+        print('      - AI 会把课件保存到 community/drafts/ 下（仅本地）')
+        print('      - 如需贡献到社区，请按 community/README.md 的 PR 审批流程提交')
+        print()
+        print('   ℹ️  如你是仓库 owner，想重建索引：')
+        print('      touch .teachany-admin   # 在仓库根目录创建空标记文件（已被 .gitignore）')
+        print()
+        import sys
+        sys.exit(2)
+
     # 1. 扫描课件
     print('\n📦 步骤1: 扫描课件文件...')
     courses = scan_courses()
@@ -228,8 +245,16 @@ def main():
     course_count = 0
     for course_id, manifest in sorted(courses.items()):
         # 保留旧注册表中的 status（official/community/course），默认 community
+        # ⭐ v5.34.8 防污染：新增课件（旧 registry 中没有）默认一律为 community，
+        #    严禁仅凭位于 examples/ 目录就自动打成 official —— 这是导致用户生成
+        #    课件污染官方 Gallery 的历史漏洞。升级为 official 必须管理员手工改
+        #    registry.json 并提交 commit。
         old_entry = old_registry.get(course_id, {})
-        status = old_entry.get('status', 'community')
+        if old_entry:
+            status = old_entry.get('status', 'community')
+        else:
+            status = 'community'
+            print(f'  🆕 {course_id}: 新课件，默认 status=community（升级 official 请手工编辑 registry.json）')
         # 若 manifest 指明 category=course 也视为多章节课程
         if manifest.get('category') == 'course' and status not in ('official',):
             status = 'course'
