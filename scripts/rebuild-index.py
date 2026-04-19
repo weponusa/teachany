@@ -119,7 +119,8 @@ def main():
 
     # 3. 修复知识树
     print('\n🌳 步骤3: 修复知识树...')
-    tree_files = list(Path('data/trees').glob('*.json'))
+    # ⭐ 递归扫描：包含 data/trees/international/*.json 国际课标树
+    tree_files = sorted(Path('data/trees').rglob('*.json'))
 
     for tree_file in tree_files:
         tree_data = load_tree(tree_file)
@@ -152,6 +153,18 @@ def main():
 
             # 当前节点的 courses
             current_courses = node.get('courses', [])
+
+            # ⭐ 归一化：剥离 "examples/" 前缀（防止污染，参见 v5.34.5 fix）
+            normalized_current = []
+            for c in current_courses:
+                if isinstance(c, str) and c.startswith('examples/'):
+                    stripped = c.split('/', 1)[1]
+                    print(f'  🧹 {tree_name}/{node_id}: 归一化 "{c}" → "{stripped}"')
+                    normalized_current.append(stripped)
+                    modified = True
+                else:
+                    normalized_current.append(c)
+            current_courses = normalized_current
 
             # 过滤掉不存在的课件引用
             valid_current = [c for c in current_courses if c in courses]
@@ -271,9 +284,9 @@ def main():
     print('📊 最终验证')
     print('='*70)
 
-    # 重新扫描
+    # 重新扫描（递归覆盖 international/ 子目录）
     tree_courses = set()
-    for tf in Path('data/trees').glob('*.json'):
+    for tf in Path('data/trees').rglob('*.json'):
         td = load_tree(tf)
         def collect(n):
             if 'courses' in n and n['courses']:
