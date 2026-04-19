@@ -11,8 +11,9 @@
 
 <p align="center">
   <a href="#-quick-start"><img src="https://img.shields.io/badge/Quick_Start-30s-brightgreen?style=flat-square" alt="Quick Start"></a>
-  <a href="#-live-gallery"><img src="https://img.shields.io/badge/Live_Gallery-131_courses-blue?style=flat-square" alt="Gallery"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" alt="MIT License"></a>
+  <a href="#-live-gallery"><img src="https://img.shields.io/badge/Live_Gallery-137_courses-blue?style=flat-square" alt="Gallery"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL--3.0%20%2B%20Commercial-blue?style=flat-square" alt="Dual License"></a>
+  <a href="docs/TRADEMARK.md"><img src="https://img.shields.io/badge/TeachAny-trademark%20protected-orange?style=flat-square" alt="Trademark Policy"></a>
   <a href="README_CN.md"><img src="https://img.shields.io/badge/中文文档-点击查看-red?style=flat-square" alt="Chinese README"></a>
 </p>
 
@@ -21,8 +22,11 @@
   <a href="#-live-gallery">Live Gallery</a> ·
   <a href="docs/getting-started.md">Getting Started</a> ·
   <a href="docs/methodology.md">Methodology</a> ·
+  <a href="docs/TRADEMARK.md">Trademark</a> ·
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>
+
+> ⚖️ **Trademark Notice**: **TeachAny™** and **教我学™** are trademarks of the TeachAny project author, in continuous public use since 2026-04-07. These marks are **unregistered** but actively asserted under prior-use rights. Forks must rename; see [TRADEMARK.md](docs/TRADEMARK.md) for full policy.
 
 ---
 
@@ -236,7 +240,7 @@ For any difficult concept, select 2-3 lenses:
 teachany/
 ├── README.md                    # English README (this file)
 ├── README_CN.md                 # Chinese README
-├── LICENSE                      # MIT License
+├── LICENSE                      # Dual License (AGPL-3.0 + Commercial)
 ├── CONTRIBUTING.md              # Contribution guide (bilingual)
 ├── CHANGELOG.md                 # Version history
 ├── index.html                   # Gallery homepage (dynamically loads courseware)
@@ -394,9 +398,15 @@ TeachAny's methodology is grounded in peer-reviewed learning science:
 
 ---
 
-## 📜 License
+## 📜 License & Trademark
 
-MIT License — see [LICENSE](LICENSE) for details.
+**Dual License**:
+- 🟢 **Non-commercial use** (personal, public schools, academic research, open-source forks): free under [AGPL-3.0](LICENSE) — see [license.html](license.html) for an illustrated summary.
+- 💰 **Commercial use** (SaaS, paid courses, enterprise training): requires a commercial license — see [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md) or [commercial-license.html](commercial-license.html).
+
+**Trademark**: **TeachAny™** and **教我学™** are unregistered but actively-asserted trademarks under prior-use rights. Forks must rename; see [docs/TRADEMARK.md](docs/TRADEMARK.md) for the full policy.
+
+Contact: **weponusa@gmail.com** (prefix subject with `[TeachAny Commercial]` or `[TeachAny Trademark]`).
 
 ---
 
