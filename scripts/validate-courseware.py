@@ -191,17 +191,24 @@ def main():
                 except Exception:
                     pass
 
-    # v5.29：跨课件检测——同 node_id 不能挂多份课件
+    # v5.29：跨课件检测——同 node_id 最多 1 份 official（community 允许多份并按 likes 排序）
     if not only:
         for nid, items in sorted(node_to_courses.items()):
-            if len(items) > 1:
-                ids_str = ', '.join(f"{it['course_id']}({it['status']})" for it in items)
+            officials = [it for it in items if it.get('status') == 'official']
+            if len(officials) > 1:
+                ids_str = ', '.join(it['course_id'] for it in officials)
                 all_issues.append(('error',
-                    f'节点 {nid} 被 {len(items)} 份课件同时挂载: {ids_str}；'
-                    f'请保留 status=official 优先的那份，或合并/删除冗余课件'))
+                    f'节点 {nid} 被 {len(officials)} 份 official 课件同时挂载: {ids_str}；'
+                    f'同一知识点的官方课件必须唯一，请合并内容或将其中一份降级为 community'))
+            # 同时提供信息性警告，帮助观察哪些节点已存在多份课件（不阻断）
+            elif len(items) > 1:
+                ids_str = ', '.join(f"{it['course_id']}({it.get('status','?')})" for it in items)
+                all_issues.append(('info',
+                    f'节点 {nid} 挂载了 {len(items)} 份课件（{ids_str}）— Gallery 会按 likes 排序展示'))
 
     errors = [i for i in all_issues if i[0] == 'error']
     warns = [i for i in all_issues if i[0] == 'warn']
+    infos = [i for i in all_issues if i[0] == 'info']
 
     print(f"扫描 {scanned} 个课件")
     print(f"❌ 错误: {len(errors)}")
@@ -210,6 +217,10 @@ def main():
     if warns:
         print(f"⚠ 警告: {len(warns)}")
         for _, msg in warns:
+            print(f"   {msg}")
+    if infos:
+        print(f"ℹ️  信息: {len(infos)} 个节点挂载多份课件（非错误，仅提示）")
+        for _, msg in infos:
             print(f"   {msg}")
 
     if errors:
