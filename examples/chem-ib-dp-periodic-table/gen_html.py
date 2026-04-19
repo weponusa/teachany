@@ -578,6 +578,9 @@ slides.append("""
 </div>
 """)
 
+# Write head first
+html.write(head)
+
 # Write all slides
 for s in slides:
     html.write(s)
