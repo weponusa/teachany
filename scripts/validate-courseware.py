@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-课件挂载一致性校验器 (v5.27 新增)
+课件挂载一致性校验器 (v5.27 新增，v5.29 增强)
 
 在发布任何课件前（rebuild-index 之前）必须运行，确保：
   1. manifest.grade 的学段 与 manifest.node_id 的前缀（chem-h-/chem-m-/chem-e-）一致
   2. manifest.subject 与 node_id 的学科前缀一致
   3. HTML title/course-id 中的学段指示（高中/初中/小学/必修X/xxx年级）与 manifest.grade 一致
+  4. <title> 规范：含 TeachAny v{ver} + 学段 + 年级
+  5. manifest.teachany_version 字段存在
+  6. (v5.29) 同一 node_id 不挂多份不同 id 的课件（冲突挂载检测）
 
 命名约定（节点 id 前缀）：
   *-e-*  → elementary (G1-6)
@@ -20,6 +23,7 @@
 import json
 import re
 import sys
+from collections import defaultdict
 from pathlib import Path
 
 LEVEL_RANGE = {'elementary': (1,6), 'middle': (7,9), 'high': (10,12)}
@@ -158,6 +162,9 @@ def main():
     examples = Path('examples')
     all_issues = []
     scanned = 0
+    # v5.29：收集 (course_id, node_id, status) 做跨课件冲突检测
+    node_to_courses = defaultdict(list)
+
     for d in sorted(examples.iterdir()):
         if not d.is_dir() or d.name.startswith('_') or d.name.startswith('course-'):
             continue
@@ -166,6 +173,32 @@ def main():
         issues = validate_one(d)
         all_issues.extend(issues)
         scanned += 1
+
+        # 收集 node_id（用于后续冲突检测，仅全量扫描时生效）
+        if not only:
+            mf = d / 'manifest.json'
+            if mf.exists():
+                try:
+                    m = json.load(open(mf, encoding='utf-8'))
+                    nid = m.get('node_id')
+                    if nid:
+                        node_to_courses[nid].append({
+                            'course_id': d.name,
+                            'status': m.get('status', 'unknown'),
+                            'grade': m.get('grade'),
+                            'name': m.get('name', ''),
+                        })
+                except Exception:
+                    pass
+
+    # v5.29：跨课件检测——同 node_id 不能挂多份课件
+    if not only:
+        for nid, items in sorted(node_to_courses.items()):
+            if len(items) > 1:
+                ids_str = ', '.join(f"{it['course_id']}({it['status']})" for it in items)
+                all_issues.append(('error',
+                    f'节点 {nid} 被 {len(items)} 份课件同时挂载: {ids_str}；'
+                    f'请保留 status=official 优先的那份，或合并/删除冗余课件'))
 
     errors = [i for i in all_issues if i[0] == 'error']
     warns = [i for i in all_issues if i[0] == 'warn']
