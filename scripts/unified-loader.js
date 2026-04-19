@@ -209,6 +209,18 @@ function renderCourseCard(course) {
 
   // 附加功能标签
   const extraBadges = [];
+  // 课标徽章（v5.32 新增：显示课件遵循的课程体系，中英双语）
+  const curriculumLabels = {
+    'cn-national':  { zh: '中国课标', en: 'CN National', flag: '🇨🇳' },
+    'ib-dp':        { zh: 'IB DP', en: 'IB Diploma', flag: '🎓' },
+    'cambridge-al': { zh: 'A-Level', en: 'Cambridge A-Level', flag: '🇬🇧' },
+    'ap':           { zh: 'AP', en: 'Advanced Placement', flag: '🇺🇸' },
+  };
+  const currKey = course.curriculum || 'cn-national';
+  const currInfo = curriculumLabels[currKey];
+  if (currInfo) {
+    extraBadges.push(`<span class="tag tag-curriculum" title="${escapeHtml(currInfo.en)}">${currInfo.flag} ${escapeHtml(currInfo.zh)} · ${escapeHtml(currInfo.en)}</span>`);
+  }
   if (course.has_tts) extraBadges.push('<span class="tag tag-green">🔊 TTS</span>');
   if (course.has_video) extraBadges.push('<span class="tag tag-cyan">🎬 Video</span>');
   if (course.has_en) extraBadges.push('<span class="tag tag-pink">🌐 EN</span>');
