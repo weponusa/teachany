@@ -299,6 +299,10 @@ svg { width: 100%; height: 100%; }
   </div>
 </div>
 
+<div class="subject-tabs" id="curriculumTabs" style="padding:8px 24px 0;gap:8px;border-bottom:1px dashed var(--border);">
+  <span class="stage-label" style="color:var(--primary);font-weight:600;">📚 课标 Curriculum</span>
+</div>
+
 <div class="subject-tabs" id="subjectTabs"></div>
 
 <div id="tree-container">
@@ -409,7 +413,7 @@ async function fetchTreeJSON(relativePath) {
   throw new Error('All fetch strategies failed for ' + relativePath);
 }
 
-const TREES = [
+const TREES_CN_FALLBACK = [
   // 小学
   { file: 'data/trees/chinese-elementary.json', emoji: '📖', label: '小学语文' },
   { file: 'data/trees/math-elementary.json', emoji: '🔢', label: '小学数学' },
@@ -435,31 +439,146 @@ const TREES = [
   { file: 'data/trees/info-tech-high.json', emoji: '💻', label: '高中信息技术' }
 ];
 
+// v5.30：课标体系（Curriculum）支持 ——————————————————————
+// 从 data/curricula.json 动态加载支持的课标清单；默认 cn-national
+let CURRICULA = null;           // 全部课标配置
+let CURRENT_CURRICULUM = null;  // 当前选中课标对象 (含 trees 列表)
+let TREES = TREES_CN_FALLBACK;  // 当前课标对应的树清单（用于后续 loadTree）
+const CURRICULUM_STORAGE_KEY = 'teachany_active_curriculum';
+
+async function loadCurriculaConfig() {
+  try {
+    const resp = await fetch('data/curricula.json?v=' + Date.now(), { cache: 'no-store' });
+    if (resp.ok) CURRICULA = await resp.json();
+  } catch (e) {
+    console.warn('[KnowledgeMap] curricula.json 加载失败，使用内置 cn-national 兜底:', e.message);
+  }
+  if (!CURRICULA) {
+    // 兜底：仅中国课标
+    CURRICULA = {
+      default: 'cn-national',
+      curricula: [{
+        id: 'cn-national', name_zh: '中国国家课标', short: '中国', emoji: '🇨🇳',
+        stages: [
+          { key: 'elementary', name_zh: '小学', grade_range: [1,6] },
+          { key: 'middle', name_zh: '初中', grade_range: [7,9] },
+          { key: 'high', name_zh: '高中', grade_range: [10,12] }
+        ],
+        trees: TREES_CN_FALLBACK.map(t => ({ file: t.file, emoji: t.emoji, label_zh: t.label }))
+      }]
+    };
+  }
+  // 规范化：把每棵树转为 {file, emoji, label} 格式
+  CURRICULA.curricula.forEach(c => {
+    c.trees_normalized = c.trees.map(t => ({
+      file: t.file, emoji: t.emoji,
+      label: t.label_zh || t.label_en || t.file
+    }));
+  });
+}
+
+function switchCurriculum(currId) {
+  const curr = CURRICULA.curricula.find(c => c.id === currId);
+  if (!curr) return;
+  CURRENT_CURRICULUM = curr;
+  TREES = curr.trees_normalized;
+  try { localStorage.setItem(CURRICULUM_STORAGE_KEY, currId); } catch {}
+  // 更新课标按钮激活态
+  document.querySelectorAll('#curriculumTabs .subject-tab').forEach(b => {
+    b.classList.toggle('active', b.dataset.curr === currId);
+  });
+  // 重建学科 tab 并加载第一棵树
+  rebuildSubjectTabs();
+  if (TREES.length > 0) loadTree(0);
+  else {
+    const svg = document.getElementById('treeSvg');
+    if (svg) svg.innerHTML = '';
+    const container = document.getElementById('tree-container');
+    if (container) {
+      const msg = document.createElement('div');
+      msg.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--dim);font-size:18px;text-align:center;';
+      msg.innerHTML = `<div style="font-size:48px;margin-bottom:12px;">${curr.emoji || '📚'}</div>
+        <div><strong>${curr.name_zh || curr.name_en || curr.id}</strong></div>
+        <div style="font-size:13px;margin-top:8px;opacity:0.7;">该课标体系的知识树尚未建立<br/>Trees for this curriculum are not yet available</div>
+        <div style="font-size:12px;margin-top:8px;opacity:0.5;">欢迎贡献！详见 <code>data/trees/international/README.md</code></div>`;
+      container.querySelectorAll('.curriculum-placeholder').forEach(n => n.remove());
+      msg.className = 'curriculum-placeholder';
+      container.appendChild(msg);
+    }
+  }
+}
+
+function rebuildCurriculumTabs() {
+  const el = document.getElementById('curriculumTabs');
+  if (!el) return;
+  // 保留最前面那个"📚 课标 Curriculum"标签
+  el.innerHTML = '<span class="stage-label" style="color:var(--primary);font-weight:600;">📚 课标 Curriculum</span>';
+  CURRICULA.curricula.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'subject-tab';
+    btn.dataset.curr = c.id;
+    btn.textContent = (c.emoji || '') + ' ' + (c.short || c.name_zh || c.id);
+    btn.title = c.name_en || c.name_zh || '';
+    btn.onclick = () => switchCurriculum(c.id);
+    el.appendChild(btn);
+  });
+}
+
+function rebuildSubjectTabs() {
+  const tabsEl = document.getElementById('subjectTabs');
+  if (!tabsEl) return;
+  tabsEl.innerHTML = '';
+  // 动态计算 stage 分段（根据当前课标的 stages 配置）
+  const stages = (CURRENT_CURRICULUM && CURRENT_CURRICULUM.stages) || [];
+  const stageKeys = stages.map(s => s.key);
+  const stageNames = stages.map(s => s.name_zh || s.name_en || s.key);
+  // 用 file 关键字判断 stage（简化：查文件名里是否含 stage.key 或 stage.id_infix）
+  function treeStage(treeFile) {
+    for (let i = 0; i < stages.length; i++) {
+      const s = stages[i];
+      if (treeFile.includes('-' + s.key + '.') || treeFile.includes('-' + s.key + '-')) return i;
+      if (s.id_infix && treeFile.includes(s.id_infix.replaceAll('-', ''))) return i;
+    }
+    return 0;
+  }
+  let lastStage = -1;
+  TREES.forEach((t, i) => {
+    const si = treeStage(t.file);
+    if (si !== lastStage && stageNames[si]) {
+      const label = document.createElement('span');
+      label.className = 'stage-label';
+      label.textContent = stageNames[si];
+      tabsEl.appendChild(label);
+      lastStage = si;
+    }
+    const btn = document.createElement('button');
+    btn.className = 'subject-tab' + (i === 0 ? ' active' : '');
+    btn.textContent = (t.emoji || '') + ' ' + (t.label || '').replace(/小学|初中|高中|CN · /g, '').trim();
+    btn.onclick = () => loadTree(i);
+    tabsEl.appendChild(btn);
+  });
+  // 清除 placeholder（如切换后有树）
+  document.querySelectorAll('.curriculum-placeholder').forEach(n => n.remove());
+}
+
 let currentTree = null;
 let simulation = null;
 
-// Build subject tabs with stage labels
-const tabsEl = document.getElementById('subjectTabs');
-const stageBreaks = [0, 3, 11]; // indices where new stage starts
-const stageNames = ['小学', '初中', '高中'];
-TREES.forEach((t, i) => {
-  const stageIdx = stageBreaks.indexOf(i);
-  if (stageIdx !== -1) {
-    const label = document.createElement('span');
-    label.className = 'stage-label';
-    label.textContent = stageNames[stageIdx];
-    tabsEl.appendChild(label);
-  }
-  const btn = document.createElement('button');
-  btn.className = 'subject-tab' + (i === 0 ? ' active' : '');
-  btn.textContent = t.emoji + ' ' + t.label.replace(/小学|初中|高中/, '');
-  btn.onclick = () => loadTree(i);
-  tabsEl.appendChild(btn);
-});
+// v5.30：先加载课标清单，再按 localStorage/default 切到对应课标，最后 loadTree(0)
+(async function initCurriculaAndTabs() {
+  await loadCurriculaConfig();
+  rebuildCurriculumTabs();
+  let savedId = null;
+  try { savedId = localStorage.getItem(CURRICULUM_STORAGE_KEY); } catch {}
+  const defaultId = (savedId && CURRICULA.curricula.find(c => c.id === savedId))
+    ? savedId
+    : (CURRICULA.default || CURRICULA.curricula[0].id);
+  switchCurriculum(defaultId);
+})();
 
 async function loadTree(index) {
   // Update tab active state
-  document.querySelectorAll('.subject-tab').forEach((t, i) => {
+  document.querySelectorAll('#subjectTabs .subject-tab').forEach((t, i) => {
     t.classList.toggle('active', i === index);
   });
 
@@ -486,6 +605,22 @@ async function loadTree(index) {
     renderTree(currentTree);
   } catch (err) {
     console.error('[KnowledgeMap] Failed to load tree:', err);
+    // v5.30：树加载失败时显示友好占位，尤其是国际课标树尚未建立的场景
+    const svg = document.getElementById('treeSvg');
+    if (svg) svg.innerHTML = '';
+    const container = document.getElementById('tree-container');
+    if (container) {
+      document.querySelectorAll('.curriculum-placeholder').forEach(n => n.remove());
+      const msg = document.createElement('div');
+      msg.className = 'curriculum-placeholder';
+      msg.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--dim);font-size:16px;text-align:center;max-width:600px;padding:24px;';
+      const currName = (CURRENT_CURRICULUM && (CURRENT_CURRICULUM.name_zh || CURRENT_CURRICULUM.name_en)) || '该体系';
+      msg.innerHTML = `<div style="font-size:56px;margin-bottom:16px;">${(CURRENT_CURRICULUM && CURRENT_CURRICULUM.emoji) || '📚'}</div>
+        <div style="font-size:20px;font-weight:600;color:var(--text);margin-bottom:8px;">${TREES[index].label}</div>
+        <div style="margin-bottom:12px;opacity:0.75;">该知识树尚未建立 / Tree not yet available</div>
+        <div style="font-size:13px;opacity:0.55;line-height:1.6;">这是 <strong>${currName}</strong> 体系下的知识树占位。<br/>欢迎国际学校老师贡献首棵树！<br/>详见 <code>data/trees/international/README.md</code></div>`;
+      container.appendChild(msg);
+    }
   }
 }
 
@@ -1049,8 +1184,7 @@ async function refreshCurrentTree() {
   }
 }
 
-// Load initial tree
-loadTree(0);
+// Load initial tree — v5.30: 已在 initCurriculaAndTabs 中完成，此处保留注释
 
 // 预取社区课件索引（后台异步，不阻塞首屏）
 if (window.TeachAnyCommunity) {
@@ -1061,7 +1195,7 @@ if (window.TeachAnyCommunity) {
 window.teachanyOnCourseImported = function(nodeId) {
   // 先刷新 Hub 索引，将新导入课件纳入统一检索
   if (window.TeachAnyHub) TeachAnyHub.refreshIndex();
-  const activeIdx = Array.from(document.querySelectorAll('.subject-tab')).findIndex(t => t.classList.contains('active'));
+  const activeIdx = Array.from(document.querySelectorAll('#subjectTabs .subject-tab')).findIndex(t => t.classList.contains('active'));
   if (activeIdx >= 0) loadTree(activeIdx);
 };
 </script>

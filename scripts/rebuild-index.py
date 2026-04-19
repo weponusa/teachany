@@ -244,6 +244,7 @@ def main():
             'has_en': manifest.get('has_en', False),
             'author': manifest.get('author', ''),
             'teachany_version': manifest.get('teachany_version', ''),
+            'curriculum': manifest.get('curriculum', 'cn-national'),
         }
         registry_courses.append(entry)
         if status == 'official':

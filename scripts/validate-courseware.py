@@ -38,6 +38,9 @@ LEVEL_INFIX = {
     '-e-': 'elementary', '-m-': 'middle', '-h-': 'high',
 }
 
+# 国际课标 infix 识别（v5.30 新增）——命中任一表示该课件使用非 cn-national 体系
+INTERNATIONAL_INFIXES = ['-ib-dp-', '-ib-myp-', '-cam-igcse-', '-cam-as-', '-cam-al-', '-ap-']
+
 # HTML 线索关键词
 HTML_LEVEL_KEYWORDS = {
     'high':       ['高中', '高一', '高二', '高三', '必修一', '必修二', '必修三', '必修四', '必修五',
@@ -99,8 +102,40 @@ def validate_one(course_dir):
     ms = m.get('subject')
     mn = m.get('node_id')
     mv = m.get('teachany_version')
+    # v5.30：curriculum 字段决定校验规则集；默认 cn-national（向下兼容）
+    mc = m.get('curriculum', 'cn-national')
 
     issues = []
+
+    # v5.30：国际课标体系走独立校验路径（ID 前缀、年级范围、HTML 线索关键词都不同）
+    if mc != 'cn-national':
+        # 仅做最小校验：subject 与 node_id 学科前缀一致 + teachany_version 必填 + title 含 TeachAny
+        node_subject, _ = parse_node_id(mn)
+        # 检查是否真的用了国际 infix
+        uses_intl_infix = any(ix in (mn or '') for ix in INTERNATIONAL_INFIXES)
+        if mn and not uses_intl_infix:
+            issues.append(('warn',
+                f'{course_dir.name}: curriculum={mc} 但 node_id={mn} 未使用国际课标 infix（如 -ib-dp- / -cam-al- / -ap-）'))
+        if ms and node_subject and ms != node_subject:
+            issues.append(('error',
+                f'{course_dir.name}: manifest.subject={ms} 但 node_id={mn} 指向 {node_subject}'))
+        if not mv:
+            issues.append(('error',
+                f'{course_dir.name}: manifest 缺 teachany_version 字段（示例: "5.27"）'))
+        # title 只要求含 TeachAny v（学段/年级校验跳过，因为国际体系命名规范不同）
+        if html.exists():
+            html_head = ''
+            with open(html, encoding='utf-8', errors='ignore') as f:
+                for i, line in enumerate(f):
+                    if i > 150: break
+                    html_head += line
+            title_m = re.search(r'<title>([^<]+)</title>', html_head)
+            if title_m and 'TeachAny v' not in title_m.group(1):
+                issues.append(('error',
+                    f'{course_dir.name}: <title> 不含 "TeachAny v{{version}}" 标识'))
+        return issues
+
+    # ── 以下为 cn-national（中国课标）原有校验逻辑 ──────────────
     manifest_level = grade_to_level(mg)
     node_subject, node_level = parse_node_id(mn)
 
