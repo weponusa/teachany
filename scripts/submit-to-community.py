@@ -218,22 +218,26 @@ def main():
     package_b64, raw_size = pack_to_base64(course_dir)
     print(f"✅ 打包完成：{raw_size / 1024:.1f} KB")
 
-    # 4. 组装 payload
+    # 4. 组装 payload（GitHub repository_dispatch client_payload 最多 10 个字段）
     author = args.author or manifest.get("author", "") or "匿名用户"
+    # 把元数据里的次要字段合并成 extra，保持顶层 ≤ 10
+    extra = {
+        "name_en": manifest.get("name_en", ""),
+        "version": manifest.get("version", "1.0.0"),
+        "file_count": sum(1 for _ in course_dir.rglob("*") if _.is_file()),
+        "tags": manifest.get("tags", []),
+        "teachany_version": manifest.get("teachany_version", ""),
+        "curriculum": manifest.get("curriculum", "cn-national"),
+        "user_message": args.message,
+    }
     payload = {
         "node_id": manifest["node_id"],
         "name": manifest["name"],
-        "name_en": manifest.get("name_en", ""),
         "subject": manifest["subject"],
         "grade": manifest["grade"],
         "author": author,
         "description": manifest.get("description") or manifest.get("description_zh", ""),
-        "version": manifest.get("version", "1.0.0"),
-        "file_count": sum(1 for _ in course_dir.rglob("*") if _.is_file()),
-        "tags": manifest.get("tags", []),
-        "user_message": args.message,
-        "teachany_version": manifest.get("teachany_version", ""),
-        "curriculum": manifest.get("curriculum", "cn-national"),
+        "extra": extra,
         "packageBase64": package_b64,
     }
 

@@ -104,7 +104,9 @@ jobs:
 
       - name: Commit and push
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # v5.34.9: 优先用 COMMUNITY_BOT_PAT（PAT），否则降级为默认 GITHUB_TOKEN
+          # PAT 创建的 PR 会触发其他 workflow（validate/auto-merge）；GITHUB_TOKEN 不会
+          GITHUB_TOKEN: ${{ secrets.COMMUNITY_BOT_PAT || secrets.GITHUB_TOKEN }}
         run: |
           BRANCH="${{ steps.process.outputs.branch_name }}"
           COURSE_ID="${{ steps.process.outputs.course_id }}"
@@ -121,7 +123,7 @@ jobs:
 
       - name: Create Pull Request
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.COMMUNITY_BOT_PAT || secrets.GITHUB_TOKEN }}
         run: |
           BRANCH="${{ steps.process.outputs.branch_name }}"
           COURSE_ID="${{ steps.process.outputs.course_id }}"
