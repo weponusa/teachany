@@ -3,66 +3,151 @@ name: Validate Courseware
 on:
   push:
     branches: [main]
-    paths: ['examples/**']
+    paths:
+      - 'examples/**'
+      - 'community/pending/**'
   pull_request:
     branches: [main]
-    paths: ['examples/**']
+    paths:
+      - 'examples/**'
+      - 'community/pending/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
 
 jobs:
-  validate-html:
+  validate:
     runs-on: ubuntu-latest
-    name: Validate HTML Files
+    name: Run validate-courseware.py
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
-      - name: Check HTML files exist
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # 1. 社区提交的 PR 流程：解包 community/pending/*.teachany → examples/
+      - name: Unpack community submission (if any)
+        id: unpack
         run: |
-          echo "Checking example courses..."
-          for dir in examples/*/; do
-            if [ -f "${dir}index.html" ]; then
-              echo "✅ Found: ${dir}index.html"
-            elif [ "$dir" = "examples/_template/" ]; then
-              echo "✅ Template: ${dir}index.html"
+          set -e
+          mkdir -p examples
+          UNPACKED_IDS=""
+          for zipfile in community/pending/*.teachany; do
+            [ -f "$zipfile" ] || continue
+            # 从 zipfile 同名 json 读 course_id
+            meta_json="${zipfile%.teachany}.json"
+            if [ -f "$meta_json" ]; then
+              course_id=$(python3 -c "import json,sys; d=json.load(open('$meta_json')); print(d.get('id',''))")
             else
-              echo "⚠️ Missing index.html in: $dir"
+              course_id=$(basename "$zipfile" .teachany)
             fi
+            echo "📦 解包社区提交: $course_id ← $zipfile"
+            mkdir -p "examples/$course_id"
+            unzip -oq "$zipfile" -d "examples/$course_id"
+            UNPACKED_IDS="${UNPACKED_IDS} ${course_id}"
           done
+          echo "unpacked_ids=${UNPACKED_IDS}" >> "$GITHUB_OUTPUT"
 
-      - name: Validate HTML syntax
+      # 2. 找出本次 PR / push 涉及的课件 id
+      - name: Detect changed courseware IDs
+        id: changed
         run: |
-          npm install -g htmlhint
-          for file in examples/*/index.html; do
-            echo "Validating: $file"
-            htmlhint "$file" --config '{"tagname-lowercase": true, "attr-lowercase": true, "doctype-first": true}' || true
-          done
+          set -e
+          # union of: unpacked PR submissions + diff-detected examples changes
+          IDS="${{ steps.unpack.outputs.unpacked_ids }}"
+          if [ -n "${{ github.event.pull_request.base.sha }}" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+            head="${{ github.event.pull_request.head.sha }}"
+            diff_ids=$(git diff --name-only "$base" "$head" | grep '^examples/' | awk -F/ '{print $2}' | sort -u || true)
+            IDS="${IDS} ${diff_ids}"
+          fi
+          # 去重
+          IDS=$(echo "$IDS" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+          echo "Detected courseware IDs: $IDS"
+          echo "ids=$IDS" >> "$GITHUB_OUTPUT"
 
-      - name: Check for required sections
+      # 3. 跑真正的 validator
+      - name: Run validate-courseware.py
+        id: validate
         run: |
-          echo "Checking required TeachAny sections..."
-          for file in examples/*/index.html; do
-            [ "$file" = "examples/_template/index.html" ] && continue
-            echo "--- $file ---"
+          set +e
+          IDS="${{ steps.changed.outputs.ids }}"
+          if [ -z "$(echo $IDS | tr -d ' ')" ]; then
+            echo "⚠️ 没有检测到需要校验的课件，跳过。"
+            echo "result=skipped" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "🔍 校验课件: $IDS"
+          output=$(python3 scripts/validate-courseware.py $IDS 2>&1)
+          exit_code=$?
+          # 把完整输出写进 GH summary + 供后续 step 使用
+          echo "$output" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "$output" > /tmp/validate_output.txt
+          if [ $exit_code -eq 0 ]; then
+            echo "result=pass" >> "$GITHUB_OUTPUT"
+          else
+            echo "result=fail" >> "$GITHUB_OUTPUT"
+          fi
+          exit 0  # 不让 step 失败（后面 label 会处理）
 
-            # Check for learning objectives
-            if grep -qi "学习目标\|Learning Objective\|goals" "$file"; then
-              echo "  ✅ Learning Objectives found"
-            else
-              echo "  ⚠️ Learning Objectives might be missing"
-            fi
+      # 4. PR 场景：打标签 + 评论
+      - name: Label PR passed-validation
+        if: github.event_name == 'pull_request' && steps.validate.outputs.result == 'pass'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['passed-validation']
+            }).catch(() => {});
+            // 移除 needs-revision 标签（如果之前失败过）
+            await github.rest.issues.removeLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              name: 'needs-revision'
+            }).catch(() => {});
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: '✅ **自动质检通过**\n\n课件已通过 `validate-courseware.py` 全部硬规则检查。标签 `passed-validation` 已添加，`auto-merge.yml` 将在几秒后自动合并这个 PR。\n\n*Powered by TeachAny v5.34.9 社区自动化流水线*'
+            });
 
-            # Check for quiz/practice
-            if grep -qi "quiz\|练习\|practice\|测" "$file"; then
-              echo "  ✅ Assessment/Quiz found"
-            else
-              echo "  ⚠️ Assessment/Quiz might be missing"
-            fi
-
-            # Check for TeachAny design system colors
-            if grep -q "#0f172a\|--bg:" "$file"; then
-              echo "  ✅ TeachAny design system detected"
-            else
-              echo "  ⚠️ May not use TeachAny design system"
-            fi
-          done
+      - name: Label PR needs-revision
+        if: github.event_name == 'pull_request' && steps.validate.outputs.result == 'fail'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let output = '(no output)';
+            try { output = fs.readFileSync('/tmp/validate_output.txt', 'utf-8').slice(0, 4000); } catch {}
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['needs-revision']
+            }).catch(() => {});
+            // 移除 passed-validation 标签
+            await github.rest.issues.removeLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              name: 'passed-validation'
+            }).catch(() => {});
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: '❌ **自动质检未通过**\n\n课件在 `validate-courseware.py` 中发现以下问题，**本 PR 不会自动合并**。请修改后重新提交：\n\n```\n' + output + '\n```\n\n常见原因：\n- 缺少 `tts/*.mp3` 旁白（硬规则 #16/#31）\n- `assets/` 插图少于 2 张或 HTML 未引用（硬规则 #34）\n- 缺少 `window.__TEACHANY_TUTOR_CONFIG__`（硬规则 #45）\n- node_id 在知识树中不存在（硬规则 #44）\n\n*Powered by TeachAny v5.34.9 社区自动化流水线*'
+            });

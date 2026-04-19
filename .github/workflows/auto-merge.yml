@@ -1,0 +1,70 @@
+name: Auto Merge Community PR
+
+# 触发条件：PR 被打上 passed-validation 标签时，自动合并
+# 前提：该 PR 必须是 community-submit.yml 创建的（含 community-courseware 标签）
+# 语义：社区提交 + 质检通过 = 直接合并，不需要人工审核
+
+on:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  auto-merge:
+    if: >
+      github.event.label.name == 'passed-validation' &&
+      github.event.pull_request.state == 'open' &&
+      contains(github.event.pull_request.labels.*.name, 'community-courseware')
+    runs-on: ubuntu-latest
+    name: Auto-merge community PR after validation passes
+
+    steps:
+      - name: Enable auto-merge
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            console.log(`处理 PR #${pr.number}: ${pr.title}`);
+
+            // 再次校验：不能有 needs-revision 标签
+            const labels = pr.labels.map(l => l.name);
+            if (labels.includes('needs-revision')) {
+              console.log('⚠️ PR 有 needs-revision 标签，拒绝合并');
+              return;
+            }
+            if (labels.includes('do-not-merge')) {
+              console.log('⚠️ PR 有 do-not-merge 标签（人工阻止），跳过');
+              return;
+            }
+
+            // 合并 PR
+            try {
+              await github.rest.pulls.merge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                merge_method: 'squash',
+                commit_title: `${pr.title} (auto-merge)`,
+                commit_message: `自动合并：社区课件质检通过。\n\nPR #${pr.number}\n作者：${pr.user.login}`
+              });
+              console.log(`✅ PR #${pr.number} 已自动合并`);
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: '🎉 **已自动合并**\n\n课件质检通过，PR 已合并到 `main`。接下来：\n\n1. `community-publish.yml` 会把课件注册到 Gallery（约 1-2 分钟）\n2. GitHub Pages 重新部署（约 5-10 分钟）\n3. 你可以在 [首页](https://weponusa.github.io/teachany/) 看到你的课件\n\n课件的 ❤️ 心标数由其他用户点赞累计，心标高的会排在同类课件前列。\n\n感谢贡献 🙏'
+              });
+            } catch (err) {
+              console.error(`❌ 合并失败: ${err.message}`);
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: `⚠️ 自动合并失败：\`${err.message}\`\n\n可能原因：\n- 分支有冲突（需要人工 rebase）\n- Branch protection 规则限制\n- GitHub API 临时错误\n\n请仓库维护者手动合并。`
+              });
+            }
