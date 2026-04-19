@@ -240,7 +240,7 @@ function renderCourseCard(course) {
     ? `<button class="ta-export-btn" onclick="event.preventDefault();event.stopPropagation();window.TeachAnyExport.exportCourseware({url:'${escapeHtml(url)}',courseName:'${escapeHtml(courseName)}',onProgress:(s,m)=>console.log(m)})" title="导出离线课件包">📦 导出</button>`
     : '';
 
-  return `<a href="${escapeHtml(url)}" class="course-card" data-subject="${escapeHtml(course.subject)}" data-course-id="${escapeHtml(course.id)}" data-grade="${course.grade || ''}" data-level="${level}" data-status="${course.status || 'community'}" data-course-name="${escapeHtml(courseName)}" data-course-desc="${escapeHtml(courseDesc)}">
+  return `<a href="${escapeHtml(url)}" class="course-card" data-subject="${escapeHtml(course.subject)}" data-course-id="${escapeHtml(course.id)}" data-grade="${course.grade || ''}" data-level="${level}" data-status="${course.status || 'community'}" data-curriculum="${escapeHtml(course.curriculum || 'cn-national')}" data-course-name="${escapeHtml(courseName)}" data-course-desc="${escapeHtml(courseDesc)}">
       <div class="card-header">
         <div class="card-emoji">${escapeHtml(course.emoji || '📚')}</div>
         <h3 class="card-title">${escapeHtml(courseName)}</h3>
