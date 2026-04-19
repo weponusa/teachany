@@ -432,7 +432,10 @@ def export_pptx(course_dir: Path, output: Path = None) -> Path:
 
     sections = soup.find_all('section')
     if not sections:
-        print('⚠️  HTML 中未找到任何 <section>，仅导出封面与结尾页。')
+        # 兼容 TeachAny 课件：用 <div class="slide"> 作为幻灯片容器
+        sections = soup.select('div.slide')
+    if not sections:
+        print('⚠️  HTML 中未找到任何 <section> 或 <div class="slide">，仅导出封面与结尾页。')
 
     slide_count = 1
     for sec in sections:
