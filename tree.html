@@ -696,6 +696,8 @@ function rebuildSubjectTabs() {
 
 let currentTree = null;
 let simulation = null;
+// v5.34.4：请求令牌，杜绝 loadTree 竞态（旧请求晚到覆盖新请求的 placeholder）
+let _loadTreeToken = 0;
 
 // v5.30：先加载课标清单，再按 localStorage/default 切到对应课标，最后 loadTree(0)
 (async function initCurriculaAndTabs() {
@@ -720,10 +722,14 @@ let simulation = null;
 })();
 
 async function loadTree(index) {
+  // v5.34.4：请求令牌，杜绝竞态
+  const myToken = ++_loadTreeToken;
   // Update tab active state —— v5.34.3：按 data-tree-index 匹配（按钮分布在多个 stage-row 中）
   document.querySelectorAll('#subjectTabs .subject-tab').forEach(t => {
     t.classList.toggle('active', Number(t.dataset.treeIndex) === index);
   });
+  // 进入新请求：先清上一轮残留 placeholder（无论它是成功还是失败留下的）
+  document.querySelectorAll('.curriculum-placeholder').forEach(n => n.remove());
 
   try {
     console.log(`[KnowledgeMap] Loading: ${TREES[index].label} (${TREES[index].file})`);
@@ -733,7 +739,15 @@ async function loadTree(index) {
       fetchTreeJSON(TREES[index].file),
       window.TeachAnyHub ? TeachAnyHub.init() : Promise.resolve(),
     ]);
+    // 如果已经有更新的请求进来，丢弃旧结果，避免旧数据覆盖
+    if (myToken !== _loadTreeToken) {
+      console.log('[KnowledgeMap] stale load ignored:', TREES[index].file);
+      return;
+    }
     currentTree = treeData;
+
+    // 成功分支：再次确保 placeholder 被清掉（防御性）
+    document.querySelectorAll('.curriculum-placeholder').forEach(n => n.remove());
 
     // 统计 active 节点
     const allNodes = currentTree.domains.flatMap(d => d.nodes);
@@ -747,6 +761,11 @@ async function loadTree(index) {
 
     renderTree(currentTree);
   } catch (err) {
+    // v5.34.4：旧请求晚到的失败直接吞掉，不要覆盖已经成功渲染的新树
+    if (myToken !== _loadTreeToken) {
+      console.log('[KnowledgeMap] stale load error ignored:', TREES[index].file, err.message);
+      return;
+    }
     console.error('[KnowledgeMap] Failed to load tree:', err);
     // v5.30：树加载失败时显示友好占位，尤其是国际课标树尚未建立的场景
     const svg = document.getElementById('treeSvg');
@@ -759,7 +778,7 @@ async function loadTree(index) {
       msg.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--dim);font-size:16px;text-align:center;max-width:600px;padding:24px;';
       const currName = (CURRENT_CURRICULUM && (CURRENT_CURRICULUM.name_zh || CURRENT_CURRICULUM.name_en)) || '该体系';
       msg.innerHTML = `<div style="font-size:56px;margin-bottom:16px;">${(CURRENT_CURRICULUM && CURRENT_CURRICULUM.emoji) || '📚'}</div>
-        <div style="font-size:20px;font-weight:600;color:var(--text);margin-bottom:8px;">${TREES[index].label}</div>
+        <div style="font-size:20px;font-weight:600;color:var(--text);margin-bottom:8px;">${TREES[index].label_zh || TREES[index].label}</div>
         <div style="margin-bottom:12px;opacity:0.75;">该知识树尚未建立 / Tree not yet available</div>
         <div style="font-size:13px;opacity:0.55;line-height:1.6;">这是 <strong>${currName}</strong> 体系下的知识树占位。<br/>欢迎国际学校老师贡献首棵树！<br/>详见 <code>data/trees/international/README.md</code></div>`;
       container.appendChild(msg);
