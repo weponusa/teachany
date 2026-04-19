@@ -1,6 +1,6 @@
 ---
 name: TeachAny
-description: "K-12 interactive courseware development skill. Triggered when users need to create teaching courseware, interactive lessons, educational animations, or mention K-12, courseware, instructional design, topic explanation. Covers Math, Physics, Chemistry, Biology, Geography, History, Chinese Language, English, and IT. Integrates Cognitive Load Theory, ABT Narrative, Bloom's Taxonomy, Peer Instruction, and more."
+description: "K-12 interactive courseware development skill. Triggered when users need to create teaching courseware, interactive lessons, educational animations, or mention K-12, courseware, instructional design, topic explanation, 历史地图, 地形底图, hillshade, 古典文明, 交互地图, interactive map, AI学伴, AI tutor, PPTX导出, 课标, IB, A-Level, AP, 知识图谱, knowledge graph. Covers Math, Physics, Chemistry, Biology, Geography, History, Chinese Language, English, and IT. Integrates Cognitive Load Theory, ABT Narrative, Bloom's Taxonomy, Peer Instruction, and more."
 ---
 
 # TeachAny: K-12 Interactive Courseware Development Skill
@@ -1273,9 +1273,15 @@ When executing TeachAny, the user can specify language preferences:
 >
 > **Deployment to main site** (when the user has write access to the teachany-opensource repo):
 > 1. Copy courseware to `teachany-opensource/examples/{course-id}/`
-> 2. Add entry to `registry.json` with `"path": "examples/{course-id}"` (never use external URLs or separate GitHub repos)
+> 2. **MUST** add entry to **ALL THREE** registry files (not just output a snippet):
+>    - `registry.json` — add course entry to `courses[]` array, increment `total`
+>    - `courseware-registry.json` — add full entry with interactions/theories/tags to `courses[]` array
+>    - `data/trees/{curriculum}/{subject-tree}.json` — set node `status: "active"`, add `"examples/{course-id}"` to node's `courses[]` array
 > 3. `git add -A && git commit && git push origin main` — `deploy-pages.yml` auto-deploys
-> 4. Final URL: `https://weponusa.github.io/teachany/examples/{course-id}/`
+> 4. Also push to Gitee: `git push gitee main`
+> 5. Final URL: `https://weponusa.github.io/teachany/examples/{course-id}/`
+>
+> **⚠️ Registry registration is NOT optional**. A courseware without registry entries is invisible in the Gallery. AI MUST write entries to all three files AND push — not just output a JSON snippet for "manual merge".
     ├── Episode01.mp4
     ├── Episode02.mp4
     └── ...
@@ -2255,7 +2261,7 @@ When building courseware, include these frontend loop features according to the 
 | **P1** | Spaced repetition enrollment | ✅ When module has quiz | `TeachAnySR.addToReview()` |
 | **P1** | Achievement checking | ✅ Always | `TeachAnyAchievements.checkAndAward()` |
 | **P1** | Cross-courseware routing metadata | ✅ Always | `<meta name="course-id">` + 5 more meta tags |
-| **P1** | Registry entry output | ✅ Always | JSON snippet for `course-registry.json` |
+| **P1** | Registry entry output | ✅ Always | JSON snippet for `course-registry.json` — AND must write to `registry.json`, `courseware-registry.json`, and knowledge tree file, then git push |
 | **P2** | Cross-courseware nav bar | When registry file exists | `TeachAnyRouter.renderNavBar()` |
 | **P2** | Prerequisite warning modal | When prereqs defined | `TeachAnyRouter.checkAndWarnPrereqs()` |
 | **P2** | Review center UI | When standalone review page exists | `TeachAnySR.getDueReviews()` |
@@ -2390,7 +2396,7 @@ A single JSON file placed alongside the gallery page (or at a known relative pat
 | `difficulty` | number | 1–5 scale, maps to Bloom level |
 | `estimatedMinutes` | number | Estimated completion time |
 
-**Registry Generation Rule**: When AI generates a new courseware, it should also output a registry entry snippet. The gallery build process (or the user manually) merges these into the single `course-registry.json`.
+**Registry Generation Rule**: When AI generates a new courseware, it MUST NOT just output a registry entry snippet for "manual merge". It MUST directly write entries to all three registry files (`registry.json`, `courseware-registry.json`, and the corresponding knowledge tree JSON under `data/trees/`), set the tree node's `status` to `"active"` and add the course path to its `courses[]`, then commit and push to both GitHub and Gitee. A courseware without registry entries is invisible in the Gallery.
 
 #### 17.9.4 `TeachAnyRouter` Runtime Module
 
