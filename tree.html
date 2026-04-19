@@ -123,6 +123,12 @@ svg { width: 100%; height: 100%; }
   text-anchor: middle;
   pointer-events: none;
 }
+.node-label-en {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  fill: var(--dim);
+  text-anchor: middle;
+  pointer-events: none;
+}
 .node-grade {
   font-size: 10px;
   fill: var(--dimmer);
@@ -665,6 +671,7 @@ function renderTree(tree) {
       const n = {
         id: node.id,
         name: node.name,
+        name_en: node.name_en || '',
         grade: node.grade,
         domain: domain.name,
         domainColor: domain.color,
@@ -839,16 +846,25 @@ function renderTree(tree) {
       return '📝';
     });
 
-  // Label
+  // Label (中文主名)
   nodeSel.append('text')
     .attr('class', 'node-label')
     .attr('dy', 38)
     .text(d => d.name);
 
-  // Grade
+  // English label (v5.33：若有 name_en 则显示为次级副标)
+  nodeSel.append('text')
+    .attr('class', 'node-label-en')
+    .attr('dy', 52)
+    .style('opacity', 0.55)
+    .style('font-style', 'italic')
+    .style('font-size', '10px')
+    .text(d => d.name_en || '');
+
+  // Grade（有英文时下移以避免重叠）
   nodeSel.append('text')
     .attr('class', 'node-grade')
-    .attr('dy', 52)
+    .attr('dy', d => d.name_en ? 68 : 52)
     .text(d => d.grade + '年级');
 
   // Simulation

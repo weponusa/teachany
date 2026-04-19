@@ -256,6 +256,7 @@ function renderCourseCard(course) {
       <div class="card-header">
         <div class="card-emoji">${escapeHtml(course.emoji || '📚')}</div>
         <h3 class="card-title">${escapeHtml(courseName)}</h3>
+        ${courseNameEn ? `<h4 class="card-title-en">${escapeHtml(courseNameEn)}</h4>` : ''}
         <p class="card-desc">${escapeHtml(courseDesc)}</p>
         <div class="card-tags">
           ${tags.join('\n          ')}
