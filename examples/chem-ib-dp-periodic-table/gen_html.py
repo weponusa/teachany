@@ -9,6 +9,8 @@ head = """<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Periodic Table and Periodic Trends · IB DP Chemistry</title>
+  <!-- ⭐ v5.34 强制：AI 学伴样式（公共资源，打包时随 .teachany 分发） -->
+  <link rel="stylesheet" href="./ai-tutor.css">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#0d1117;--surface:#161b22;--surface2:#21262d;--border:#30363d;--text:#e6edf3;--text2:#8b949e;--accent:#58a6ff;--accent2:#3fb950;--hl:#f0883e;--hl2:#a371f7;--danger:#f85149;--r1:rgba(88,166,255,.15);--r2:rgba(63,185,80,.15);--r3:rgba(240,136,62,.15);--r4:rgba(163,113,247,.15)}
@@ -89,22 +91,7 @@ h3{font-size:1.1rem;font-weight:600;margin-bottom:.4rem;color:var(--accent)}
 .hint-panel h4{color:var(--hl2);margin-bottom:.4rem;font-size:.85rem}
 .lo-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:.75rem 1rem;margin:.5rem 0;font-size:.88rem;display:flex;align-items:flex-start;gap:.6rem}
 .lo-card .lo-num{background:var(--r1);color:var(--accent);width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0}
-#ai-tutor{position:fixed;bottom:24px;right:24px;z-index:1000}
-#ai-tutor-btn{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--hl2));border:none;cursor:pointer;font-size:1.4rem;box-shadow:0 4px 20px rgba(88,166,255,.4);transition:transform .2s;display:flex;align-items:center;justify-content:center}
-#ai-tutor-btn:hover{transform:scale(1.1)}
-#ai-tutor-panel{min-width:300px;max-width:340px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1rem;box-shadow:0 8px 32px rgba(0,0,0,.4);display:none;margin-bottom:.75rem}
-#ai-tutor-panel.vis{display:block}
-#ai-tutor-header{display:flex;align-items:center;gap:.6rem;margin-bottom:.75rem;padding-bottom:.6rem;border-bottom:1px solid var(--border)}
-#ai-tutor-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--hl2));display:flex;align-items:center;justify-content:center;font-size:.9rem}
-#ai-tutor-name{font-weight:600;font-size:.9rem}
-#ai-tutor-role{font-size:.72rem;color:var(--text2)}
-#ai-tutor-msgs{max-height:240px;overflow-y:auto;margin-bottom:.75rem;display:flex;flex-direction:column;gap:.5rem}
-.ai-msg{font-size:.83rem;line-height:1.5;padding:.5rem .65rem;background:var(--surface2);border-radius:8px}
-.ai-msg.user{background:var(--r1);align-self:flex-end}
-#ai-tutor-input{display:flex;gap:.4rem}
-#ai-tutor-input input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:.45rem .65rem;font-size:.82rem}
-#ai-tutor-input input:focus{outline:none;border-color:var(--accent)}
-#ai-tutor-input button{background:var(--accent);border:none;color:#fff;padding:.35rem .75rem;border-radius:6px;cursor:pointer;font-size:.78rem;font-weight:600}
+/* AI Tutor styles moved to ./ai-tutor.css */
 .nav{display:flex;justify-content:space-between;align-items:center;padding:1rem 2rem;position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);z-index:100}
 .nav-logo{font-weight:800;font-size:1rem;letter-spacing:-.02em}
 .nav-meta{font-size:.75rem;color:var(--text2)}
@@ -554,29 +541,9 @@ slides.append("""
 </div>
 """)
 
-# AI TUTOR
-slides.append("""
-<!-- AI TUTOR -->
-<div id="ai-tutor">
-  <div id="ai-tutor-panel">
-    <div id="ai-tutor-header">
-      <div id="ai-tutor-avatar">🧪</div>
-      <div>
-        <div id="ai-tutor-name">ChemAI Tutor</div>
-        <div id="ai-tutor-role">IB Chemistry · Z_eff &amp; Periodic Trends</div>
-      </div>
-    </div>
-    <div id="ai-tutor-msgs">
-      <div class="ai-msg">Hi! I'm your ChemAI tutor. Ask me anything about periodic trends, Z_eff, or IB chemistry exam questions. I'll help you think through it step by step. 💡</div>
-    </div>
-    <div id="ai-tutor-input">
-      <input type="text" id="tutorInput" placeholder="Ask a chemistry question..." onkeydown="if(event.key==='Enter')sendMsg()">
-      <button onclick="sendMsg()">Ask</button>
-    </div>
-  </div>
-  <button id="ai-tutor-btn" onclick="toggleTutor()">🧪</button>
-</div>
-""")
+# AI Tutor: no inline HTML needed — ai-tutor.js auto-injects FAB + panel
+slides.append("")
+
 
 # Write head first
 html.write(head)
@@ -745,42 +712,33 @@ function checkMCQ(el, idx) {
   }
 }
 
-// AI Tutor
-function toggleTutor() {
-  document.getElementById('ai-tutor-panel').classList.toggle('vis');
-}
-function sendMsg() {
-  const input = document.getElementById('tutorInput');
-  const msg = input.value.trim();
-  if(!msg) return;
-  const msgs = document.getElementById('ai-tutor-msgs');
-  msgs.innerHTML += '<div class="ai-msg user">'+msg+'</div>';
-  input.value = '';
-  // Simulated response
-  const lower = msg.toLowerCase();
-  let resp = "Good question! Let me help you think through this step by step. For IB chemistry questions about periodic trends, remember to always link the observation back to Z_eff or shielding. Could you tell me which specific trend or element you're asking about?";
-  if(lower.includes('ionization') && lower.includes('why')) {
-    resp = "Ionization energy depends on two factors: (1) Z_eff on the outer electron — higher Z_eff means more energy needed, and (2) electron configuration — a full subshell (like Mg's 3s²) is especially stable and hard to ionize. That's why Mg has higher IE₁ than Al even though Al has more protons!";
-  } else if(lower.includes('radius') || lower.includes('size')) {
-    resp = "Atomic radius trends are driven by Z_eff vs shielding. Across a period, Z_eff increases (same shell, more protons) so radius decreases. Down a group, a new shell is added — shielding increases faster than Z_eff, so radius increases. Remember: shells win over Z_eff when going down!";
-  } else if(lower.includes('electronegativ')) {
-    resp = "Electronegativity measures how strongly an atom pulls on bonding electrons. Like ionization energy, it increases across a period (Z_eff ↑) and decreases down a group (shell distance ↑). Fluorine is the most electronegative element at 4.0 on the Pauling scale. Noble gases are not assigned values since they rarely form bonds.";
-  } else if(lower.includes('francium') || lower.includes('reactivity')) {
-    resp = "Francium is at the BOTTOM of Group 1, meaning it has the most electron shells. Even though its Z is highest, the shielding from all those inner shells dominates — its outer electron feels the least nuclear pull of all alkali metals. That's why Francium (and K > Na > Li) are the most reactive metals!";
-  }
-  setTimeout(() => {
-    msgs.innerHTML += '<div class="ai-msg">'+resp+'</div>';
-    msgs.scrollTop = msgs.scrollHeight;
-  }, 600);
-  msgs.scrollTop = msgs.scrollHeight;
-}
-
 // keyboard nav
 document.addEventListener('keydown', e => {
   if(e.key === 'ArrowRight' || e.key === 'ArrowDown') nextSlide();
   if(e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevSlide();
 });
 </script>
+  <!-- ⭐ v5.34 强制：AI 学伴配置（必须在 ai-tutor.js 加载前定义） -->
+  <script>
+  window.__TEACHANY_TUTOR_CONFIG__ = {
+    courseTitle: 'Periodic Table and Periodic Trends',
+    subject: 'chem',         // chn/math/eng/phy/chem/bio/hist/geo/it
+    grade: 11,
+    learningObjectives: [
+      'Explain the trends in atomic radius, ionization energy, electronegativity, and ionic radius across periods and down groups',
+      'Use electron configuration and effective nuclear charge (Z_eff) to account for these trends',
+      'Predict the chemical properties of an element based on its position in the periodic table',
+      'Distinguish between first ionization energy and subsequent ionization energies'
+    ],
+    getContext: function() {
+      var active = document.querySelector('.slide.active');
+      if (active && active.innerText) return active.innerText.slice(0, 3000);
+      return '';
+    }
+  };
+  </script>
+  <!-- ⭐ v5.34 强制：AI 学伴脚本（必须放在 </body> 前，defer 保证 DOM 已就绪） -->
+  <script src="./ai-tutor.js" defer></script>
 </body>
 </html>
 """
