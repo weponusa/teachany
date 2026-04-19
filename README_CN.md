@@ -11,8 +11,9 @@
 
 <p align="center">
   <a href="#-快速开始"><img src="https://img.shields.io/badge/快速开始-30秒-brightgreen?style=flat-square" alt="快速开始"></a>
-  <a href="#-在线画廊"><img src="https://img.shields.io/badge/在线画廊-131门课-blue?style=flat-square" alt="画廊"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/许可证-MIT-yellow?style=flat-square" alt="MIT License"></a>
+  <a href="#-在线画廊"><img src="https://img.shields.io/badge/在线画廊-137门课-blue?style=flat-square" alt="画廊"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/许可证-AGPL--3.0%20%2B%20商业授权-blue?style=flat-square" alt="双许可"></a>
+  <a href="docs/TRADEMARK.md"><img src="https://img.shields.io/badge/TeachAny-商标保护-orange?style=flat-square" alt="商标政策"></a>
   <a href="README.md"><img src="https://img.shields.io/badge/English-README-red?style=flat-square" alt="English README"></a>
 </p>
 
@@ -21,8 +22,11 @@
   <a href="#-在线画廊">在线画廊</a> ·
   <a href="docs/getting-started.md">快速上手</a> ·
   <a href="docs/methodology.md">方法论</a> ·
+  <a href="docs/TRADEMARK.md">商标政策</a> ·
   <a href="CONTRIBUTING.md">参与贡献</a>
 </p>
+
+> ⚖️ **商标声明**：**TeachAny™** 与 **教我学™** 是 TeachAny 项目作者的商标，自 **2026-04-07** 起在 GitHub、Gallery、Skill 分发渠道持续公开使用。上述商标**尚未正式注册**，但项目作者对其享有**在先使用权**（依《商标法》第 32 条）。Fork 本项目必须改名，详见 [商标政策](docs/TRADEMARK.md)。
 
 ---
 
@@ -195,7 +199,7 @@ Phase 0: 明确目标     Phase 1: 设计骨架      Phase 2: 学科适配      
 teachany/
 ├── README.md                    # 英文 README
 ├── README_CN.md                 # 中文 README（本文件）
-├── LICENSE                      # MIT 许可证
+├── LICENSE                      # 双许可证（AGPL-3.0 + 商业授权）
 ├── CONTRIBUTING.md              # 贡献指南（中英双语）
 ├── CHANGELOG.md                 # 版本记录
 ├── index.html                   # Gallery 首页（动态加载课件列表）
@@ -343,9 +347,15 @@ TeachAny 的方法论基于经过同行评审的学习科学研究：
 
 ---
 
-## 📜 许可证
+## 📜 许可证与商标
 
-MIT License — 详见 [LICENSE](LICENSE)。
+**双许可证**：
+- 🟢 **非商业用途**（个人学习、公立学校教学、学术研究、开源 fork）：免费，遵循 [AGPL-3.0](LICENSE)，图文说明见 [license.html](license.html)。
+- 💰 **商业用途**（SaaS 产品、付费课程平台、企业培训、收费部署）：需获得商业授权，详见 [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md) 或 [commercial-license.html](commercial-license.html)。
+
+**商标**：**TeachAny™** 与 **教我学™** 是项目作者的未注册商标，自 2026-04-07 起持续公开使用，依《商标法》第 32 条享有在先使用权。Fork 必须改名，详见 [docs/TRADEMARK.md](docs/TRADEMARK.md)。
+
+联系方式：**weponusa@gmail.com**（主题加 `[TeachAny Commercial]` 或 `[TeachAny Trademark]`）。
 
 ---
 
