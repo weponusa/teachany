@@ -553,14 +553,26 @@ function rebuildSubjectTabs() {
     const en = s.name_en || '';
     return (en && en !== zh) ? `${zh} · ${en}` : zh;
   });
-  // 用 file 关键字判断 stage（简化：查文件名里是否含 stage.key 或 stage.id_infix）
+  // 用 file 关键字判断 stage
+  // v5.34.1 修复：原先 id_infix.replaceAll('-','') 会把 '-e-' 退化为 'e'，
+  // 导致任何含字母 e 的文件名都被误判为第一个学段（小学），所有学科混在一起。
+  // 现在：用文件名末段（basename）做 stage.key 的词边界匹配；
+  // 未命中时返回 -1（由渲染侧判断为"无分组标签"），而不是错误地归到第 0 个学段。
   function treeStage(treeFile) {
+    const full = treeFile || '';
+    // 取文件名 basename（不含扩展名），再按 '-' 切片
+    const base = (full.split('/').pop() || '').replace(/\.json$/i, '');
+    const parts = base.split('-');
     for (let i = 0; i < stages.length; i++) {
       const s = stages[i];
-      if (treeFile.includes('-' + s.key + '.') || treeFile.includes('-' + s.key + '-')) return i;
-      if (s.id_infix && treeFile.includes(s.id_infix.replaceAll('-', ''))) return i;
+      const k = (s.key || '').toLowerCase();
+      if (!k) continue;
+      // 规则 1：stage.key 作为 basename 的任一 '-' 分隔段（词边界，避免 'e' 碰 'elementary'）
+      if (parts.includes(k)) return i;
+      // 规则 2：原始 id_infix 做子串匹配（长度 ≥ 3 才算，跳过 '-e-' 这类易误伤的）
+      if (s.id_infix && s.id_infix.length >= 4 && full.includes(s.id_infix)) return i;
     }
-    return 0;
+    return -1;
   }
   let lastStage = -1;
   TREES.forEach((t, i) => {
