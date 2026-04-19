@@ -324,7 +324,7 @@ GITHUB_TOKEN=ghp_xxx node scripts/publish-courseware.cjs --all
 | **Phase 4 审查清单** | 覆盖教学法、互动性、无障碍和视觉设计的质量保证协议 |
 | **视觉设计系统** | 专为教育内容优化的暗色主题毛玻璃设计语言 |
 
-> TeachAny Skill prompt 及全部配套文档采用 MIT License 发布，可自由使用、修改和再分发。
+> TeachAny Skill prompt 及全部配套文档采用**双许可证**：非商业用途（个人学习、公立学校、学术研究、开源贡献）遵循 AGPL-3.0；商业用途需获得单独授权，详见 [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md)。
 
 ---
 

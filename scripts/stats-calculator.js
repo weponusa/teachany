@@ -1,250 +1,212 @@
 /**
- * TeachAny 实时统计计算器
- * 动态计算并更新所有关键统计数据
+ * TeachAny 实时统计计算器 (v5.35 rewrite)
+ * 
+ * 全部指标从真实数据源动态计算：
+ *   - registry.json       → 课件总数 / 官方 / 社区 / 学科分布 / 课标体系分布
+ *   - data/curricula.json → 课标体系数 + 知识树清单
+ *   - data/trees/*.json (递归含 international/) → 真实节点数 + 图谱数
+ * 
+ * 不再硬编码任何统计数字。
  */
-
-const GRAPH_BASE_PATH = '../.agents/skills/TeachAny/references/data';
 
 class StatsCalculator {
   constructor() {
     this.registry = null;
-    this.graphs = new Map();
+    this.curricula = null;
+    this.trees = [];          // [{ file, standard, subject, curriculum, nodeCount, domainCount }]
     this.stats = {
       totalCourses: 0,
       officialCourses: 0,
       communityCourses: 0,
       subjects: 0,
+      subjectsUnique: 0,
       totalNodes: 0,
       graphFiles: 0,
+      curriculumCount: 0,
       subjectDistribution: {},
       gradeDistribution: {},
+      curriculumDistribution: {},
       nodesCovered: 0,
-      coverageRate: 0
+      coverageRate: 0,
     };
   }
 
-  /**
-   * 从registry.json加载课件数据
-   */
+  /* ─── Load registry ─── */
   async loadRegistry() {
     try {
-      const response = await fetch('./registry.json?t=' + Date.now());
-      this.registry = await response.json();
+      const res = await fetch('./registry.json?t=' + Date.now());
+      this.registry = await res.json();
       return this.registry;
-    } catch (error) {
-      console.error('[Stats] 无法加载 registry.json:', error);
+    } catch (e) {
+      console.error('[Stats] registry.json load failed:', e);
       return null;
     }
   }
 
-  /**
-   * 加载所有知识图谱
-   */
-  async loadAllGraphs() {
-    // 知识图谱路径配置
-    const graphPaths = {
-      'math': [
-        'math/numbers-operations/_graph.json',
-        'math/algebra/_graph.json',
-        'math/functions/_graph.json',
-        'math/geometry-primary/_graph.json',
-        'math/measurement/_graph.json',
-        'math/statistics-probability-primary/_graph.json',
-        'math/high-school/_graph.json'
-      ],
-      'biology': [
-        'biology/cells-life/_graph.json',
-        'biology/plant-reproduction/_graph.json',
-        'biology/human-body/_graph.json',
-        'biology/genetics-evolution/_graph.json'
-      ],
-      'physics': [
-        'physics/mechanics/_graph.json',
-        'physics/light-optics/_graph.json',
-        'physics/thermodynamics/_graph.json',
-        'physics/electricity-magnetism/_graph.json'
-      ],
-      'chemistry': [
-        'chemistry/matter-structure/_graph.json',
-        'chemistry/chemical-reactions/_graph.json',
-        'chemistry/solution-metals/_graph.json',
-        'chemistry/organic-chemistry/_graph.json'
-      ],
-      'geography': [
-        'geography/earth-environment/_graph.json',
-        'geography/china-geography/_graph.json'
-      ],
-      'history': [
-        'history/ancient-civilization/_graph.json',
-        'history/modern-history/_graph.json'
-      ],
-      'chinese': [
-        'chinese/reading-writing/_graph.json'
-      ],
-      'english': [
-        'english/vocabulary-grammar/_graph.json'
-      ]
-    };
+  /* ─── Load curricula + all trees ─── */
+  async loadAllTrees() {
+    try {
+      const res = await fetch('./data/curricula.json?t=' + Date.now());
+      this.curricula = await res.json();
+    } catch (e) {
+      console.warn('[Stats] curricula.json load failed, using fallback:', e);
+      this.curricula = { curricula: [] };
+    }
 
-    const allNodes = [];
-    let totalGraphFiles = 0;
-
-    for (const [subject, paths] of Object.entries(graphPaths)) {
-      for (const path of paths) {
-        try {
-          // 这里实际部署时需要从服务器加载，开发环境用静态路径
-          const fullPath = `.agents/skills/TeachAny/references/data/${path}`;
-          // 注意: 浏览器中无法直接读取本地文件系统，需要通过API或打包时处理
-          // 暂时使用硬编码的统计数据
-          totalGraphFiles++;
-        } catch (error) {
-          console.warn(`[Stats] 无法加载图谱: ${path}`, error);
-        }
+    const treeFiles = [];
+    for (const c of (this.curricula.curricula || [])) {
+      for (const t of (c.trees || [])) {
+        treeFiles.push({ file: t.file, curriculum: c.id, label: t.label_zh || t.label_en || t.file });
       }
     }
 
-    // 硬编码已知数据（后续可通过构建时生成）
-    this.stats.totalNodes = 275;
-    this.stats.graphFiles = 44;
-    this.stats.subjects = Object.keys(graphPaths).length;
+    let totalNodes = 0;
+    const loadPromises = treeFiles.map(async (meta) => {
+      try {
+        const res = await fetch('./' + meta.file + '?t=' + Date.now());
+        if (!res.ok) return null;
+        const tree = await res.json();
+        let nodeCount = 0;
+        for (const d of (tree.domains || [])) {
+          nodeCount += (d.nodes || []).length;
+        }
+        return {
+          file: meta.file,
+          curriculum: meta.curriculum,
+          subject: tree.subject || '',
+          domainCount: (tree.domains || []).length,
+          nodeCount,
+        };
+      } catch (e) {
+        console.warn('[Stats] tree load failed:', meta.file, e);
+        return null;
+      }
+    });
 
-    return {
-      totalNodes: 275,
-      graphFiles: 44,
-      subjects: 8
-    };
+    const results = (await Promise.all(loadPromises)).filter(Boolean);
+    this.trees = results;
+    results.forEach(t => { totalNodes += t.nodeCount; });
+
+    this.stats.totalNodes = totalNodes;
+    this.stats.graphFiles = results.length;
+    this.stats.curriculumCount = (this.curricula.curricula || []).length;
+    return results;
   }
 
-  /**
-   * 计算课件统计
-   */
+  /* ─── Course stats from registry ─── */
   calculateCourseStats() {
-    if (!this.registry || !this.registry.courses) {
-      return null;
-    }
-
+    if (!this.registry || !this.registry.courses) return null;
     const courses = this.registry.courses;
-    
-    // 基础统计
+
     this.stats.totalCourses = courses.length;
     this.stats.officialCourses = courses.filter(c => c.status === 'official').length;
     this.stats.communityCourses = courses.filter(c => c.status === 'community').length;
 
-    // 学科分布
-    const subjectDistribution = {};
+    // Subject distribution — derived from courses + trees (union)
     const subjectNames = {
-      'math': '数学',
-      'biology': '生物',
-      'physics': '物理',
-      'chemistry': '化学',
-      'geography': '地理',
-      'history': '历史',
-      'chinese': '语文',
-      'english': '英语'
+      math: '数学', biology: '生物', physics: '物理', chemistry: '化学',
+      geography: '地理', history: '历史', chinese: '语文', english: '英语',
+      science: '科学', info_tech: '信息技术', economics: '经济学',
+      cs: '计算机', arts: '艺术', design: '设计', pe: '体育',
     };
+    const subjectsFromCourses = new Set(courses.map(c => c.subject).filter(Boolean));
+    const subjectsFromTrees = new Set(this.trees.map(t => t.subject).filter(Boolean));
+    const allSubjects = new Set([...subjectsFromCourses, ...subjectsFromTrees]);
 
-    courses.forEach(course => {
-      const subject = course.subject || 'other';
-      const subjectCN = subjectNames[subject] || subject;
-      if (!subjectDistribution[subjectCN]) {
-        subjectDistribution[subjectCN] = 0;
-      }
-      subjectDistribution[subjectCN]++;
+    const distribution = {};
+    courses.forEach(c => {
+      const name = subjectNames[c.subject] || c.subject || 'other';
+      distribution[name] = (distribution[name] || 0) + 1;
     });
+    this.stats.subjectDistribution = distribution;
+    this.stats.subjects = allSubjects.size;  // union count
+    this.stats.subjectsUnique = subjectsFromCourses.size; // courses-only count
 
-    this.stats.subjectDistribution = subjectDistribution;
-    this.stats.subjects = Object.keys(subjectDistribution).length;
-
-    // 年级分布
-    const gradeDistribution = {};
-    courses.forEach(course => {
-      if (course.grade) {
-        const grade = parseInt(course.grade);
-        const level = grade <= 6 ? '小学' : grade <= 9 ? '初中' : '高中';
-        if (!gradeDistribution[level]) {
-          gradeDistribution[level] = 0;
-        }
-        gradeDistribution[level]++;
-      }
+    // Grade distribution
+    const grades = {};
+    courses.forEach(c => {
+      const g = parseInt(c.grade);
+      if (!g) return;
+      const lvl = g <= 6 ? '小学' : g <= 9 ? '初中' : '高中';
+      grades[lvl] = (grades[lvl] || 0) + 1;
     });
+    this.stats.gradeDistribution = grades;
 
-    this.stats.gradeDistribution = gradeDistribution;
+    // Curriculum distribution
+    const currDist = {};
+    courses.forEach(c => {
+      const cr = c.curriculum || 'cn-national';
+      currDist[cr] = (currDist[cr] || 0) + 1;
+    });
+    this.stats.curriculumDistribution = currDist;
 
-    // 节点覆盖率
+    // Coverage
     const uniqueNodes = new Set(courses.map(c => c.node_id).filter(Boolean));
     this.stats.nodesCovered = uniqueNodes.size;
-    this.stats.coverageRate = (uniqueNodes.size / this.stats.totalNodes * 100).toFixed(1);
+    this.stats.coverageRate = this.stats.totalNodes > 0
+      ? (uniqueNodes.size / this.stats.totalNodes * 100).toFixed(2)
+      : '0';
 
     return this.stats;
   }
 
-  /**
-   * 获取完整统计数据
-   */
   async getFullStats() {
-    await this.loadRegistry();
-    await this.loadAllGraphs();
+    // Parallel load for speed
+    await Promise.all([this.loadRegistry(), this.loadAllTrees()]);
     this.calculateCourseStats();
-    
     return {
       ...this.stats,
       timestamp: new Date().toISOString(),
-      version: this.registry?.version || 'unknown'
+      version: this.registry?.version || 'unknown',
     };
   }
 
-  /**
-   * 更新页面显示
-   */
+  /* ─── Update page DOM ─── */
   async updatePageStats() {
     const stats = await this.getFullStats();
-    
-    // 更新主要统计数字
+
     const updates = {
-      'officialCountStat': stats.officialCourses,
+      'stat-total': stats.totalCourses,
+      'totalCountStat': stats.totalCourses,
       'stat-official': stats.officialCourses,
+      'officialCountStat': stats.officialCourses,
       'stat-community': stats.communityCourses,
       'communityCountStat': stats.communityCourses,
       'subjectsCountStat': stats.subjects,
       'nodesCountStat': stats.totalNodes,
-      'totalCountStat': stats.totalCourses,
-      'stat-total': stats.totalCourses
+      'graphsCountStat': stats.graphFiles,
+      'curriculumCountStat': stats.curriculumCount,  // v5.35 新增
     };
 
     Object.entries(updates).forEach(([id, value]) => {
       const el = document.getElementById(id);
-      if (el) {
-        // 添加动画效果
-        el.style.transition = 'all 0.3s ease';
-        el.textContent = value;
-        el.style.transform = 'scale(1.1)';
-        setTimeout(() => {
-          el.style.transform = 'scale(1)';
-        }, 300);
-      }
+      if (!el) return;
+      el.style.transition = 'all 0.3s ease';
+      el.textContent = value;
+      el.style.transform = 'scale(1.1)';
+      setTimeout(() => { el.style.transform = 'scale(1)'; }, 300);
     });
 
-    // 在控制台输出详细统计
     console.log('[TeachAny Stats] 实时统计数据:', {
-      '总课件数': stats.totalCourses,
-      '官方课件': stats.officialCourses,
-      '社区课件': stats.communityCourses,
-      '学科数': stats.subjects,
+      '总课件': stats.totalCourses,
+      '官方': stats.officialCourses,
+      '社区': stats.communityCourses,
+      '学科': stats.subjects,
       '知识节点': stats.totalNodes,
-      '图谱文件': stats.graphFiles,
+      '知识图谱': stats.graphFiles,
+      '课标体系': stats.curriculumCount,
       '节点覆盖': `${stats.nodesCovered}/${stats.totalNodes} (${stats.coverageRate}%)`,
       '学科分布': stats.subjectDistribution,
-      '学段分布': stats.gradeDistribution
+      '学段分布': stats.gradeDistribution,
+      '课标分布': stats.curriculumDistribution,
     });
 
     return stats;
   }
 }
 
-// 创建全局实例
 window.TeachAnyStats = new StatsCalculator();
 
-// 自动初始化
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     window.TeachAnyStats.updatePageStats();
