@@ -40,7 +40,7 @@ from pathlib import Path
 
 
 # TeachAny 官方公共提交端点（Cloudflare Worker）
-# 部署完成后由仓库管理员更新此常量为实际 URL
+# v5.34.9 部署完成，2026-04-19
 DEFAULT_WORKER_URL = "https://teachany-submit.weponusa.workers.dev/api/submit"
 
 REPO = "weponusa/teachany"
