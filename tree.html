@@ -439,12 +439,17 @@ const TREES_CN_FALLBACK = [
   { file: 'data/trees/info-tech-high.json', emoji: '💻', label: '高中信息技术' }
 ];
 
-// v5.30：课标体系（Curriculum）支持 ——————————————————————
+// v5.32：课标体系（Curriculum）支持 ——————————————————————
 // 从 data/curricula.json 动态加载支持的课标清单；默认 cn-national
 let CURRICULA = null;           // 全部课标配置
 let CURRENT_CURRICULUM = null;  // 当前选中课标对象 (含 trees 列表)
 let TREES = TREES_CN_FALLBACK;  // 当前课标对应的树清单（用于后续 loadTree）
 const CURRICULUM_STORAGE_KEY = 'teachany_active_curriculum';
+
+// HTML 转义 —— 避免课标名/学科名中的特殊字符破坏 innerHTML
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 
 async function loadCurriculaConfig() {
   try {
@@ -531,7 +536,12 @@ function rebuildSubjectTabs() {
   // 动态计算 stage 分段（根据当前课标的 stages 配置）
   const stages = (CURRENT_CURRICULUM && CURRENT_CURRICULUM.stages) || [];
   const stageKeys = stages.map(s => s.key);
-  const stageNames = stages.map(s => s.name_zh || s.name_en || s.key);
+  // v5.32：学段标签也双语
+  const stageNames = stages.map(s => {
+    const zh = s.name_zh || s.key;
+    const en = s.name_en || '';
+    return (en && en !== zh) ? `${zh} · ${en}` : zh;
+  });
   // 用 file 关键字判断 stage（简化：查文件名里是否含 stage.key 或 stage.id_infix）
   function treeStage(treeFile) {
     for (let i = 0; i < stages.length; i++) {
@@ -553,7 +563,15 @@ function rebuildSubjectTabs() {
     }
     const btn = document.createElement('button');
     btn.className = 'subject-tab' + (i === 0 ? ' active' : '');
-    btn.textContent = (t.emoji || '') + ' ' + (t.label || '').replace(/小学|初中|高中|CN · /g, '').trim();
+    // v5.32：中英双语学科标签 —— zh 去掉学段前缀，en 作为副标
+    const zhClean = (t.label_zh || t.label || '').replace(/小学|初中|高中|CN · /g, '').trim();
+    const enClean = (t.label_en || '').replace(/^CN · /, '').trim();
+    if (enClean && enClean !== zhClean) {
+      btn.innerHTML = `${t.emoji || ''} ${escapeHtml(zhClean)} <span style="opacity:0.7;font-size:0.85em;">${escapeHtml(enClean)}</span>`;
+    } else {
+      btn.textContent = `${t.emoji || ''} ${zhClean}`;
+    }
+    btn.title = enClean || zhClean;
     btn.onclick = () => loadTree(i);
     tabsEl.appendChild(btn);
   });
