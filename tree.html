@@ -63,19 +63,60 @@ body {
   background: rgba(59,130,246,0.15);
 }
 
-/* Subject Tabs */
+/* Subject Tabs —— v5.34.3 重构：每学段独占一行（grid 布局） */
 .subject-tabs {
   display: flex;
-  gap: 6px;
-  padding: 10px 24px;
+  flex-direction: column;  /* 课标行 + 多个学段行，纵向堆叠 */
+  gap: 4px;
+  padding: 8px 24px;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
-  overflow-x: auto;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+/* 课标选择行（单独一行，不分段） */
+#curriculumTabs {
+  display: flex;
   flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px dashed rgba(148,163,184,0.1);
+  margin-bottom: 2px;
+}
+/* 每个学段的一行 */
+.stage-row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 4px 0;
+  min-height: 32px;
+}
+.stage-row:not(:last-child) {
+  border-bottom: 1px dashed rgba(148,163,184,0.08);
+}
+.stage-row-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary);
+  padding: 4px 10px;
+  background: rgba(59,130,246,0.08);
+  border-radius: 6px;
+  border-left: 3px solid var(--primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stage-row-subjects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
 }
 .subject-tab {
-  padding: 5px 12px;
-  border-radius: 16px;
+  padding: 4px 11px;
+  border-radius: 14px;
   border: 1px solid var(--border);
   background: transparent;
   color: var(--dim);
@@ -83,19 +124,27 @@ body {
   font-size: 12px;
   white-space: nowrap;
   transition: all 0.2s;
+  line-height: 1.3;
 }
-.subject-tab:hover { border-color: var(--primary); color: var(--text); }
+.subject-tab:hover { border-color: var(--primary); color: var(--text); background: rgba(59,130,246,0.06); }
 .subject-tab.active {
   background: var(--primary);
   border-color: var(--primary);
   color: white;
+  box-shadow: 0 2px 8px rgba(59,130,246,0.3);
 }
+/* 课标 row 里 label 样式（保持原 .stage-label 兼容） */
 .stage-label {
-  padding: 5px 8px;
+  padding: 4px 8px;
   font-size: 11px;
   color: var(--dimmer);
   font-weight: 600;
-  align-self: center;
+  white-space: nowrap;
+}
+/* 响应式：窄屏把学段 label 改为独占上方一行 */
+@media (max-width: 720px) {
+  .stage-row { grid-template-columns: 1fr; gap: 4px; }
+  .stage-row-label { align-self: start; display: inline-block; max-width: fit-content; }
 }
 
 /* SVG Canvas */
@@ -305,7 +354,7 @@ svg { width: 100%; height: 100%; }
   </div>
 </div>
 
-<div class="subject-tabs" id="curriculumTabs" style="padding:8px 24px 0;gap:8px;border-bottom:1px dashed var(--border);">
+<div class="subject-tabs" id="curriculumTabs" style="padding:8px 24px 0;gap:8px;border-bottom:1px dashed var(--border);flex-direction:row;">
   <span class="stage-label" style="color:var(--primary);font-weight:600;">📚 课标 Curriculum</span>
 </div>
 
@@ -544,60 +593,103 @@ function rebuildSubjectTabs() {
   const tabsEl = document.getElementById('subjectTabs');
   if (!tabsEl) return;
   tabsEl.innerHTML = '';
-  // 动态计算 stage 分段（根据当前课标的 stages 配置）
+  // v5.34.3：学段分组 + 每学段独占一行（grid 布局）
   const stages = (CURRENT_CURRICULUM && CURRENT_CURRICULUM.stages) || [];
-  const stageKeys = stages.map(s => s.key);
-  // v5.32：学段标签也双语
   const stageNames = stages.map(s => {
     const zh = s.name_zh || s.key;
     const en = s.name_en || '';
-    return (en && en !== zh) ? `${zh} · ${en}` : zh;
+    return (en && en !== zh) ? { zh, en } : { zh, en: '' };
   });
-  // 用 file 关键字判断 stage
-  // v5.34.1 修复：原先 id_infix.replaceAll('-','') 会把 '-e-' 退化为 'e'，
-  // 导致任何含字母 e 的文件名都被误判为第一个学段（小学），所有学科混在一起。
-  // 现在：用文件名末段（basename）做 stage.key 的词边界匹配；
-  // 未命中时返回 -1（由渲染侧判断为"无分组标签"），而不是错误地归到第 0 个学段。
+
+  // treeStage —— 用文件名 basename 做词边界匹配（v5.34.1 已修）
   function treeStage(treeFile) {
     const full = treeFile || '';
-    // 取文件名 basename（不含扩展名），再按 '-' 切片
     const base = (full.split('/').pop() || '').replace(/\.json$/i, '');
     const parts = base.split('-');
     for (let i = 0; i < stages.length; i++) {
       const s = stages[i];
       const k = (s.key || '').toLowerCase();
       if (!k) continue;
-      // 规则 1：stage.key 作为 basename 的任一 '-' 分隔段（词边界，避免 'e' 碰 'elementary'）
       if (parts.includes(k)) return i;
-      // 规则 2：原始 id_infix 做子串匹配（长度 ≥ 3 才算，跳过 '-e-' 这类易误伤的）
       if (s.id_infix && s.id_infix.length >= 4 && full.includes(s.id_infix)) return i;
     }
     return -1;
   }
-  let lastStage = -1;
+
+  // Step 1：按学段把 trees 分桶
+  const buckets = stages.map(() => []);
+  const orphan = [];
   TREES.forEach((t, i) => {
     const si = treeStage(t.file);
-    if (si !== lastStage && stageNames[si]) {
-      const label = document.createElement('span');
-      label.className = 'stage-label';
-      label.textContent = stageNames[si];
-      tabsEl.appendChild(label);
-      lastStage = si;
-    }
-    const btn = document.createElement('button');
-    btn.className = 'subject-tab' + (i === 0 ? ' active' : '');
-    // v5.32：中英双语学科标签 —— zh 去掉学段前缀和课标前缀，en 作为副标
-    const zhClean = (t.label_zh || t.label || '').replace(/小学|初中|高中|CN · |IB DP |A-Level |AP /g, '').trim();
-    const enClean = (t.label_en || '').replace(/^(CN · |IB DP · |A-Level · |AP · )/, '').trim();
-    if (enClean && enClean !== zhClean) {
-      btn.innerHTML = `${t.emoji || ''} ${escapeHtml(zhClean)} <span style="opacity:0.7;font-size:0.85em;">${escapeHtml(enClean)}</span>`;
-    } else {
-      btn.textContent = `${t.emoji || ''} ${zhClean}`;
-    }
-    btn.title = enClean || zhClean;
-    btn.onclick = () => loadTree(i);
-    tabsEl.appendChild(btn);
+    if (si >= 0) buckets[si].push({ tree: t, index: i });
+    else orphan.push({ tree: t, index: i });
   });
+
+  // Step 2：按学段顺序渲染每个 row
+  stages.forEach((stage, si) => {
+    const items = buckets[si];
+    if (!items.length) return;  // 该学段无知识树则不出现
+    const row = document.createElement('div');
+    row.className = 'stage-row';
+    // 学段 label
+    const labelEl = document.createElement('div');
+    labelEl.className = 'stage-row-label';
+    const { zh, en } = stageNames[si];
+    labelEl.textContent = zh;
+    labelEl.title = en ? `${zh} · ${en}` : zh;
+    row.appendChild(labelEl);
+    // 科目按钮容器
+    const subjectsEl = document.createElement('div');
+    subjectsEl.className = 'stage-row-subjects';
+    items.forEach(({ tree: t, index: i }) => {
+      const btn = document.createElement('button');
+      btn.className = 'subject-tab';
+      // v5.34：标签已在 curricula.json v1.2 里清洗过，不再需要运行时 replace
+      const zhText = (t.label_zh || t.label || '').trim();
+      const enText = (t.label_en || '').trim();
+      if (enText && enText !== zhText) {
+        btn.innerHTML = `${t.emoji || ''} ${escapeHtml(zhText)} <span style="opacity:0.7;font-size:0.85em;">${escapeHtml(enText)}</span>`;
+      } else {
+        btn.textContent = `${t.emoji || ''} ${zhText}`;
+      }
+      btn.title = enText || zhText;
+      btn.dataset.treeIndex = String(i);
+      btn.onclick = () => loadTree(i);
+      subjectsEl.appendChild(btn);
+    });
+    row.appendChild(subjectsEl);
+    tabsEl.appendChild(row);
+  });
+
+  // Step 3：未命中任何学段的树，放入"其他"行
+  if (orphan.length) {
+    const row = document.createElement('div');
+    row.className = 'stage-row';
+    const labelEl = document.createElement('div');
+    labelEl.className = 'stage-row-label';
+    labelEl.style.color = 'var(--dimmer)';
+    labelEl.style.borderLeftColor = 'var(--dimmer)';
+    labelEl.style.background = 'rgba(100,116,139,0.08)';
+    labelEl.textContent = '其他 Other';
+    row.appendChild(labelEl);
+    const subjectsEl = document.createElement('div');
+    subjectsEl.className = 'stage-row-subjects';
+    orphan.forEach(({ tree: t, index: i }) => {
+      const btn = document.createElement('button');
+      btn.className = 'subject-tab';
+      btn.textContent = `${t.emoji || ''} ${(t.label_zh || t.label || '').trim()}`;
+      btn.dataset.treeIndex = String(i);
+      btn.onclick = () => loadTree(i);
+      subjectsEl.appendChild(btn);
+    });
+    row.appendChild(subjectsEl);
+    tabsEl.appendChild(row);
+  }
+
+  // 默认激活第一个按钮
+  const firstBtn = tabsEl.querySelector('.subject-tab');
+  if (firstBtn) firstBtn.classList.add('active');
+
   // 清除 placeholder（如切换后有树）
   document.querySelectorAll('.curriculum-placeholder').forEach(n => n.remove());
 }
@@ -628,9 +720,9 @@ let simulation = null;
 })();
 
 async function loadTree(index) {
-  // Update tab active state
-  document.querySelectorAll('#subjectTabs .subject-tab').forEach((t, i) => {
-    t.classList.toggle('active', i === index);
+  // Update tab active state —— v5.34.3：按 data-tree-index 匹配（按钮分布在多个 stage-row 中）
+  document.querySelectorAll('#subjectTabs .subject-tab').forEach(t => {
+    t.classList.toggle('active', Number(t.dataset.treeIndex) === index);
   });
 
   try {
@@ -1238,7 +1330,8 @@ async function refreshCurrentTree() {
   const btn = document.querySelector('.refresh-btn');
   if (btn) { btn.classList.add('spinning'); btn.disabled = true; }
   try {
-    const activeIdx = Array.from(document.querySelectorAll('.subject-tab')).findIndex(t => t.classList.contains('active'));
+    const activeBtn = document.querySelector('#subjectTabs .subject-tab.active');
+    const activeIdx = activeBtn ? Number(activeBtn.dataset.treeIndex) : -1;
     if (activeIdx >= 0) await loadTree(activeIdx);
   } finally {
     if (btn) { btn.classList.remove('spinning'); btn.disabled = false; }
