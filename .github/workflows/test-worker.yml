@@ -1,0 +1,36 @@
+name: Test Community Submit Worker
+
+# 手动触发：在 GitHub Actions 页面点 "Run workflow"
+# 或用 gh cli: gh workflow run test-worker.yml
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Health check
+        run: |
+          echo "=== Worker 健康检查 ==="
+          curl -sS --fail https://teachany-submit.weponusa.workers.dev/health | tee /tmp/health.json
+          echo ""
+
+      - name: Invalid request test
+        run: |
+          echo "=== 无效请求测试（应返回 400 MISSING_FIELDS）==="
+          curl -sS -X POST https://teachany-submit.weponusa.workers.dev/api/submit \
+            -H "Content-Type: application/json" \
+            -d '{}' | tee /tmp/err.json
+          echo ""
+          if grep -q MISSING_FIELDS /tmp/err.json; then
+            echo "✅ 字段校验正常工作"
+          else
+            echo "❌ 预期 MISSING_FIELDS，实际不匹配"
+            exit 1
+          fi
+
+      - name: Summary
+        run: |
+          echo "✅ Worker 健康 & 校验逻辑都正常"
+          echo "地址: https://teachany-submit.weponusa.workers.dev"
