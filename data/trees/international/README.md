@@ -43,4 +43,20 @@ data/trees/
 
 ## 当前状态
 
-截至 v5.30，国际课标树为**配置预留**状态，文件列表见 `data/curricula.json`。欢迎国际学校老师提交第一棵实际知识树。
+截至 v5.31，**11 棵国际课标树已全部构建完毕**（47 个域 / 202 个节点），数据来源于各体系官方 Subject Guide / Syllabus / CED 最新版本：
+
+| 课标 | 学科 | 文件 | 节点数 | 来源 |
+|:---|:---|:---|:-:|:---|
+| IB DP | 数学 AA | `ib-dp-math-aa.json` | 29 | IB 2021 首考大纲 |
+| IB DP | 物理 | `ib-dp-physics.json` | 21 | IB 2025 首考新大纲 |
+| IB DP | 化学 | `ib-dp-chemistry.json` | 19 | IB 2025 Structure & Reactivity |
+| IB DP | 生物 | `ib-dp-biology.json` | 23 | IB 2025 四主题框架 |
+| A-Level | 数学 | `cam-al-math.json` | 28 | Cambridge 9709 (2025-27) |
+| A-Level | 物理 | `cam-al-physics.json` | 22 | Cambridge 9702 (2025-27) |
+| A-Level | 化学 | `cam-al-chemistry.json` | 25 | Cambridge 9701 (2025-27) |
+| AP | Calculus BC | `ap-calculus.json` | 10 | College Board CED |
+| AP | Physics 1 | `ap-physics-1.json` | 8 | AP Physics 1 (2025 修订) |
+| AP | Chemistry | `ap-chemistry.json` | 9 | College Board CED |
+| AP | Biology | `ap-biology.json` | 8 | College Board CED |
+
+**全部节点当前 `status=placeholder`、`courses=[]`**——等待国际学校老师提交首批课件来"点亮"这些节点。欢迎通过 PR 贡献课件或修订节点结构。
