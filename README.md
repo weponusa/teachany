@@ -375,7 +375,7 @@ The following frameworks and methods are **original creations** of the TeachAny 
 | **Phase 4 Review Checklist** | A quality assurance protocol covering pedagogy, interaction, accessibility, and visual design |
 | **Visual Design System** | A cohesive dark-theme glassmorphism design language optimized for educational content |
 
-> The TeachAny Skill prompt and all associated documentation are released under MIT License. You may use, modify, and redistribute them freely.
+> The TeachAny Skill prompt and all associated documentation are released under a **dual license**: AGPL-3.0 for non-commercial use (personal, academic, non-profit education), and a Commercial License for commercial deployment. See [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md).
 
 ---
 
