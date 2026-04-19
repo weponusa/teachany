@@ -611,6 +611,16 @@ let simulation = null;
   rebuildCurriculumTabs();
   let savedId = null;
   try { savedId = localStorage.getItem(CURRICULUM_STORAGE_KEY); } catch {}
+  // v5.34.2 legacy id 迁移：curricula.json v1.0 → v1.1 ID 合并后的平滑切换
+  const LEGACY_CURR_ID_MAP = {
+    'ib-dp': 'ib',            // IB DP 合并到完整 IB（含 PYP/MYP/DP）
+    'cambridge-al': 'cambridge', // 剑桥 A-Level 扩充为完整剑桥（含 Primary/LowerSec/IGCSE/AS/A2）
+    'ap': 'us'                // AP 并入完整美式体系（含 K-5/6-8/9-12/AP）
+  };
+  if (savedId && LEGACY_CURR_ID_MAP[savedId]) {
+    savedId = LEGACY_CURR_ID_MAP[savedId];
+    try { localStorage.setItem(CURRICULUM_STORAGE_KEY, savedId); } catch {}
+  }
   const defaultId = (savedId && CURRICULA.curricula.find(c => c.id === savedId))
     ? savedId
     : (CURRICULA.default || CURRICULA.curricula[0].id);
