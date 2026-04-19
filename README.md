@@ -143,7 +143,7 @@ Click any course below to experience it live:
 
 ### Option 1: Use as an AI Skill (Recommended)
 
-TeachAny works as a **Skill** for AI coding assistants (CodeBuddy, Cursor, Windsurf, Claude, etc.):
+TeachAny works as a **Skill** for AI coding assistants ([WorkBuddy](https://workbuddy.tencent.com/) recommended; also works with CodeBuddy, Cursor, Windsurf, Claude, etc.):
 
 1. Copy `skill/SKILL.md` (English) or `skill/SKILL_CN.md` (Chinese) to your AI assistant's skill directory
 2. Copy the `data/` directory alongside it — it contains knowledge trees, exercises, error banks, and concept graphs for all 9 subjects
