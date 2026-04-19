@@ -103,6 +103,31 @@ h3{font-size:1.1rem;font-weight:600;margin-bottom:.4rem;color:var(--accent)}
 .badge-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
 .bd1{background:var(--accent)}.bd2{background:var(--accent2)}.bd3{background:var(--hl)}.bd4{background:var(--hl2)}
 .text-sm{font-size:.82rem;color:var(--text2)}
+/* ============ AUDIO NARRATION PLAYER (L3) ============ */
+.audio-badge{position:fixed;bottom:96px;right:24px;z-index:200;width:48px;height:48px;border-radius:50%;background:var(--accent);color:#fff;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(88,166,255,.45);font-size:20px;display:flex;align-items:center;justify-content:center;transition:.2s}
+.audio-badge:hover{transform:scale(1.08);box-shadow:0 6px 20px rgba(88,166,255,.6)}
+.audio-badge.playing{background:var(--accent2);box-shadow:0 4px 16px rgba(63,185,80,.5);animation:pulse 1.5s ease infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.audio-panel{position:fixed;bottom:154px;right:24px;z-index:199;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 10px 32px rgba(0,0,0,.55);padding:14px;width:320px;display:none;color:var(--text)}
+.audio-panel.open{display:block;animation:fadeIn .25s ease}
+.ap-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.ap-title{font-weight:700;font-size:13px;color:var(--accent)}
+.ap-close{background:none;border:none;cursor:pointer;color:var(--text2);font-size:18px;line-height:1;padding:0 4px}
+.ap-close:hover{color:var(--danger)}
+.ap-seg-title{font-size:12px;color:var(--text2);margin-bottom:8px;min-height:18px}
+.ap-progress{width:100%;height:4px;background:var(--surface2);border-radius:2px;cursor:pointer;margin-bottom:6px;overflow:hidden}
+.ap-progress-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;transition:width .15s linear}
+.ap-time{display:flex;justify-content:space-between;font-size:10px;color:var(--text2);margin-bottom:10px;font-family:'Courier New',monospace}
+.ap-controls{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:10px}
+.ap-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:.2s}
+.ap-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.ap-play{width:42px;height:42px;border-radius:50%;background:var(--accent);color:#fff;border:none;font-size:15px}
+.ap-play:hover{background:#2f81f7;transform:scale(1.05)}
+.ap-subtitle{font-size:11.5px;color:var(--text);background:var(--surface2);border-radius:6px;padding:8px 10px;line-height:1.5;min-height:40px;margin-bottom:10px;border-left:2px solid var(--accent)}
+.seg-btns{display:flex;flex-wrap:wrap;gap:4px}
+.seg-btn{padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;font-size:10.5px;transition:.15s}
+.seg-btn:hover{border-color:var(--accent);color:var(--accent)}
+.seg-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 </style>
 </head>
 <body>
@@ -672,7 +697,180 @@ document.addEventListener('keydown', e => {
   if(e.key === 'ArrowRight' || e.key === 'ArrowDown') nextSlide();
   if(e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevSlide();
 });
+
+// ============================================================
+// AUDIO NARRATION (L3) — 8 segments aligned with 8 slides
+// ============================================================
+const AUDIO_BASE = 'tts/';
+const SEGMENTS = [
+  { id: 's0', label: 'Opening Hook', slide: 0 },
+  { id: 's1', label: 'The Map', slide: 1 },
+  { id: 's2', label: 'Z_eff', slide: 2 },
+  { id: 's3', label: 'Atomic Radius', slide: 3 },
+  { id: 's4', label: 'Ionization Energy', slide: 4 },
+  { id: 's5', label: 'Trends 3-5', slide: 5 },
+  { id: 's6', label: 'Predicting', slide: 6 },
+  { id: 's7', label: 'One Principle', slide: 7 }
+];
+const SEGMENT_TEXTS = {
+  s0: "Welcome. Why does fluorine steal electrons while francium gives them away? By the end, you'll know the one principle behind every answer.",
+  s1: "The periodic table is a map. Rows = shells (periods). Columns = valence electrons (groups). Same group = same chemistry.",
+  s2: "Every trend traces back to effective nuclear charge: Z_eff = Z − S. It grows sharply across, grows only slightly down.",
+  s3: "Atomic radius shrinks across a period, expands down a group. Watch the Ga/Al exception caused by 3d poor shielding.",
+  s4: "First ionization energy rises across, falls down — opposite to radius. Period 3 shows two anomalies: Al<Mg, S<P.",
+  s5: "Electronegativity peaks at F. Cations shrink; anions swell; in isoelectronic series, most protons = smallest ion.",
+  s6: "K reacts with water more violently than Na (lower IE). F₂ is a stronger oxidizer than Cl₂ (higher χ, smaller size).",
+  s7: "One principle: Z_eff + distance decides how tightly the outer electron is held. Next up — ionic bonding."
+};
+
+let currentSegIdx = 0;
+let isPlaying = false;
+let panelBuilt = false;
+const audioPlayer = document.createElement('audio');
+audioPlayer.id = 'mainAudio';
+document.body.appendChild(audioPlayer);
+
+function loadSegment(idx) {
+  currentSegIdx = idx;
+  const seg = SEGMENTS[idx];
+  audioPlayer.src = AUDIO_BASE + seg.id + '.mp3';
+  audioPlayer.load();
+  updateSegmentUI(idx);
+  // Sync slide
+  if (typeof goTo === 'function' && current !== seg.slide) goTo(seg.slide);
+}
+
+function updateSegmentUI(idx) {
+  const seg = SEGMENTS[idx];
+  const titleEl = document.getElementById('apSegTitle');
+  const subEl = document.getElementById('apSubtitle');
+  if (titleEl) titleEl.textContent = 'Now: ' + seg.label;
+  if (subEl) subEl.textContent = SEGMENT_TEXTS[seg.id] || '';
+  const fill = document.getElementById('apFill');
+  if (fill) fill.style.width = '0%';
+  const cur = document.getElementById('apCurrent');
+  if (cur) cur.textContent = '0:00';
+  const tot = document.getElementById('apTotal');
+  if (tot) tot.textContent = '0:00';
+  document.querySelectorAll('.seg-btn').forEach((b,i) => b.classList.toggle('active', i === idx));
+}
+
+function togglePlayPause() {
+  if (!audioPlayer.src) {
+    loadSegment(currentSegIdx);
+  }
+  if (audioPlayer.paused) {
+    audioPlayer.play().catch(()=>{});
+    isPlaying = true;
+  } else {
+    audioPlayer.pause();
+    isPlaying = false;
+  }
+  document.getElementById('apPlay').textContent = isPlaying ? '⏸' : '▶';
+  document.getElementById('audioBadge').classList.toggle('playing', isPlaying);
+}
+
+function prevSeg() {
+  if (currentSegIdx > 0) { loadSegment(currentSegIdx - 1); if (isPlaying) audioPlayer.play().catch(()=>{}); }
+}
+function nextSeg() {
+  if (currentSegIdx < SEGMENTS.length - 1) { loadSegment(currentSegIdx + 1); if (isPlaying) audioPlayer.play().catch(()=>{}); }
+}
+function seekAudio(e) {
+  if (!audioPlayer.duration) return;
+  const rect = e.currentTarget.getBoundingClientRect();
+  audioPlayer.currentTime = ((e.clientX - rect.left) / rect.width) * audioPlayer.duration;
+}
+function fmtTime(s) {
+  if (isNaN(s)) return '0:00';
+  return Math.floor(s/60) + ':' + (Math.floor(s%60) + '').padStart(2,'0');
+}
+
+audioPlayer.addEventListener('timeupdate', () => {
+  if (!audioPlayer.duration) return;
+  const pct = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+  const fill = document.getElementById('apFill');
+  if (fill) fill.style.width = pct + '%';
+  const cur = document.getElementById('apCurrent');
+  if (cur) cur.textContent = fmtTime(audioPlayer.currentTime);
+  const tot = document.getElementById('apTotal');
+  if (tot) tot.textContent = fmtTime(audioPlayer.duration);
+});
+
+audioPlayer.addEventListener('ended', () => {
+  isPlaying = false;
+  const pb = document.getElementById('apPlay');
+  if (pb) pb.textContent = '▶';
+  document.getElementById('audioBadge').classList.remove('playing');
+  if (currentSegIdx < SEGMENTS.length - 1) {
+    nextSeg();
+    audioPlayer.play().catch(()=>{});
+    isPlaying = true;
+    if (pb) pb.textContent = '⏸';
+    document.getElementById('audioBadge').classList.add('playing');
+  }
+});
+
+function buildSegmentBtns() {
+  if (panelBuilt) return;
+  const wrap = document.getElementById('segBtns');
+  SEGMENTS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'seg-btn' + (i === 0 ? ' active' : '');
+    b.textContent = (i+1) + '. ' + s.label;
+    b.onclick = () => { loadSegment(i); if (isPlaying) audioPlayer.play().catch(()=>{}); };
+    wrap.appendChild(b);
+  });
+  panelBuilt = true;
+}
+
+function toggleAudioPlayer() {
+  const panel = document.getElementById('audioPanel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) {
+    buildSegmentBtns();
+    // Initialize on first open
+    if (!audioPlayer.src) loadSegment(0);
+  }
+}
+
+// When user navigates slides, auto-align audio segment (without forcing play)
+const _origGoTo = goTo;
+goTo = function(n) {
+  _origGoTo(n);
+  const segIdx = SEGMENTS.findIndex(s => s.slide === n);
+  if (segIdx !== -1 && segIdx !== currentSegIdx) {
+    audioPlayer.pause();
+    isPlaying = false;
+    const pb = document.getElementById('apPlay');
+    if (pb) pb.textContent = '▶';
+    document.getElementById('audioBadge')?.classList.remove('playing');
+    loadSegment(segIdx);
+  }
+};
 </script>
+
+<!-- AUDIO NARRATION UI (L3) -->
+<button class="audio-badge" id="audioBadge" onclick="toggleAudioPlayer()" title="Narration (click to play)">🎧</button>
+<div class="audio-panel" id="audioPanel">
+  <div class="ap-header">
+    <span class="ap-title">🎧 AI Narration</span>
+    <button class="ap-close" onclick="toggleAudioPlayer()">✕</button>
+  </div>
+  <div class="ap-seg-title" id="apSegTitle">Now: Opening Hook</div>
+  <div class="ap-progress" id="apProgress" onclick="seekAudio(event)">
+    <div class="ap-progress-fill" id="apFill"></div>
+  </div>
+  <div class="ap-time"><span id="apCurrent">0:00</span><span id="apTotal">0:00</span></div>
+  <div class="ap-controls">
+    <button class="ap-btn" onclick="prevSeg()" title="Previous">⏮</button>
+    <button class="ap-btn ap-play" id="apPlay" onclick="togglePlayPause()" title="Play/Pause">▶</button>
+    <button class="ap-btn" onclick="nextSeg()" title="Next">⏭</button>
+  </div>
+  <div class="ap-subtitle" id="apSubtitle">Click play to begin listening…</div>
+  <div class="seg-btns" id="segBtns"></div>
+</div>
+
   <!-- ⭐ v5.34 强制：AI 学伴配置（必须在 ai-tutor.js 加载前定义） -->
   <script>
   window.__TEACHANY_TUTOR_CONFIG__ = {
