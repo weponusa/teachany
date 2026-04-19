@@ -189,6 +189,31 @@ def validate_one(course_dir):
         issues.append(('error',
             f'{course_dir.name}: manifest 缺 teachany_version 字段（示例: "5.27"）'))
 
+    # 6. AI 学伴基线校验（v5.34 新增，硬规则 #45）
+    if html.exists():
+        try:
+            full_html = html.read_text(encoding='utf-8', errors='ignore')
+        except Exception:
+            full_html = ''
+        if full_html:
+            # ① 必须引入 ai-tutor.css
+            if 'ai-tutor.css' not in full_html:
+                issues.append(('error',
+                    f'{course_dir.name}: HTML 缺少 <link rel="stylesheet" href="./ai-tutor.css"> （v5.34 强制 · 硬规则 #45）'))
+            # ② 必须引入 ai-tutor.js
+            if 'ai-tutor.js' not in full_html:
+                issues.append(('error',
+                    f'{course_dir.name}: HTML 缺少 <script src="./ai-tutor.js"> （v5.34 强制 · 硬规则 #45）'))
+            # ③ 必须注入 TUTOR_CONFIG
+            if '__TEACHANY_TUTOR_CONFIG__' not in full_html:
+                issues.append(('error',
+                    f'{course_dir.name}: HTML 缺少 window.__TEACHANY_TUTOR_CONFIG__ 配置注入（v5.34 强制 · 硬规则 #45）'))
+            # ④ 严禁硬编码 API Key（明文 sk-xxx）
+            key_leak = re.search(r'[\'"]sk-[A-Za-z0-9]{16,}[\'"]', full_html)
+            if key_leak:
+                issues.append(('error',
+                    f'{course_dir.name}: HTML 疑似硬编码 OpenAI API Key（{key_leak.group(0)[:20]}…）— 严禁任何形式把 Key 写入代码（v5.34 强制 · 硬规则 #45）'))
+
     return issues
 
 
