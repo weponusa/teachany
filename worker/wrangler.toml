@@ -1,0 +1,34 @@
+# Cloudflare Worker 部署配置
+# 使用方式：
+#   cd worker
+#   npm install -g wrangler
+#   wrangler login
+#   wrangler secret put GITHUB_TOKEN  # 按提示粘贴 GitHub PAT
+#   wrangler kv namespace create RATE_LIMIT_KV  # 按提示拿到 id 填回本文件
+#   wrangler deploy
+#
+# 部署完成后会得到一个 URL，如：
+#   https://teachany-submit.<you>.workers.dev
+# 把它填入 scripts/submit-to-community.py 的 WORKER_URL 常量
+
+name = "teachany-submit"
+main = "submit-api.js"
+compatibility_date = "2025-04-01"
+workers_dev = true  # 首次部署使用 *.workers.dev 免费域名
+
+# 自定义域名（可选）
+# routes = [
+#   { pattern = "submit.teachany.example.com/*", zone_name = "teachany.example.com" }
+# ]
+
+[[kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "REPLACE_WITH_YOUR_KV_ID_AFTER_CREATE"
+# preview_id = "REPLACE_WITH_YOUR_KV_PREVIEW_ID"  # 可选
+
+# 环境变量（非敏感）
+[vars]
+GITHUB_REPO = "weponusa/teachany"
+
+# 敏感变量用 `wrangler secret put` 设置，不要写在这里：
+# - GITHUB_TOKEN
