@@ -477,7 +477,9 @@ async function loadCurriculaConfig() {
   CURRICULA.curricula.forEach(c => {
     c.trees_normalized = c.trees.map(t => ({
       file: t.file, emoji: t.emoji,
-      label: t.label_zh || t.label_en || t.file
+      label: t.label_zh || t.label_en || t.file,
+      label_zh: t.label_zh || '',
+      label_en: t.label_en || ''
     }));
   });
 }
@@ -522,7 +524,10 @@ function rebuildCurriculumTabs() {
     const btn = document.createElement('button');
     btn.className = 'subject-tab';
     btn.dataset.curr = c.id;
-    btn.textContent = (c.emoji || '') + ' ' + (c.short || c.name_zh || c.id);
+    // v5.32：中英双语标题 —— "🇨🇳 中国 · CN National"（用 short 简写，避免过长）
+    const zh = c.short_zh || c.short || c.name_zh || c.id;
+    const en = c.short_en || c.name_en || '';
+    btn.innerHTML = `${c.emoji || ''} ${escapeHtml(zh)}${en ? ' · <span style="opacity:0.75;font-size:0.9em;">' + escapeHtml(en) + '</span>' : ''}`;
     btn.title = c.name_en || c.name_zh || '';
     btn.onclick = () => switchCurriculum(c.id);
     el.appendChild(btn);
@@ -563,9 +568,9 @@ function rebuildSubjectTabs() {
     }
     const btn = document.createElement('button');
     btn.className = 'subject-tab' + (i === 0 ? ' active' : '');
-    // v5.32：中英双语学科标签 —— zh 去掉学段前缀，en 作为副标
-    const zhClean = (t.label_zh || t.label || '').replace(/小学|初中|高中|CN · /g, '').trim();
-    const enClean = (t.label_en || '').replace(/^CN · /, '').trim();
+    // v5.32：中英双语学科标签 —— zh 去掉学段前缀和课标前缀，en 作为副标
+    const zhClean = (t.label_zh || t.label || '').replace(/小学|初中|高中|CN · |IB DP |A-Level |AP /g, '').trim();
+    const enClean = (t.label_en || '').replace(/^(CN · |IB DP · |A-Level · |AP · )/, '').trim();
     if (enClean && enClean !== zhClean) {
       btn.innerHTML = `${t.emoji || ''} ${escapeHtml(zhClean)} <span style="opacity:0.7;font-size:0.85em;">${escapeHtml(enClean)}</span>`;
     } else {
