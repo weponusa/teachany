@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Passage Questions | 阅读理解 | 五年级英语</title>
+<style>
+:root {
+  --bg: #fffbf0;
+  --primary: #ff6b6b;
+  --secondary: #4ecdc4;
+  --accent: #ffe66d;
+  --card: #fff;
+  --text: #2d3436;
+  --shadow: 0 4px 20px rgba(0,0,0,0.12);
+  --radius: 18px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', 'PingFang SC', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+.section { display: none; min-height: 100vh; padding: 20px; animation: fadeIn 0.4s ease; }
+.section.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+/* ===== HERO ===== */
+#hero { background: linear-gradient(135deg, #4ecdc4 0%, #ff6b6b 50%, #ffe66d 100%); text-align: center; }
+.hero-mascot { font-size: 80px; animation: bounce 2s infinite; }
+@keyframes bounce { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-15px); } }
+.hero-title { font-size: 2.4rem; font-weight: 900; color: #fff; text-shadow: 3px 3px 0 rgba(0,0,0,0.15); margin: 16px 0 8px; }
+.hero-sub { font-size: 1.1rem; color: rgba(255,255,255,0.9); margin-bottom: 30px; }
+.hero-badge { display: inline-block; background: rgba(255,255,255,0.25); border: 2px solid rgba(255,255,255,0.6); border-radius: 30px; padding: 6px 20px; color: #fff; font-size: 0.9rem; margin-bottom: 30px; }
+.btn-start { background: #fff; color: var(--secondary); border: none; border-radius: 50px; padding: 16px 50px; font-size: 1.3rem; font-weight: 800; cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,0.15); transition: all 0.2s; }
+.btn-start:hover { transform: translateY(-3px) scale(1.05); }
+
+.progress-bar { position: fixed; top: 0; left: 0; width: 100%; height: 5px; background: rgba(0,0,0,0.1); z-index: 100; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--secondary), var(--accent), var(--primary)); transition: width 0.5s ease; }
+
+.mascot-bubble { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; z-index: 50; }
+.mascot-icon { font-size: 2.5rem; cursor: pointer; animation: wiggle 3s infinite; }
+@keyframes wiggle { 0%,90%,100% { transform:rotate(0); } 93% { transform:rotate(-8deg); } 96% { transform:rotate(8deg); } }
+.mascot-hint { background: var(--card); border-radius: 12px 12px 4px 12px; padding: 10px 14px; max-width: 210px; font-size: 0.85rem; box-shadow: var(--shadow); border: 2px solid var(--accent); display: none; line-height: 1.5; }
+.mascot-hint.show { display: block; animation: fadeIn 0.3s ease; }
+
+.star-float { position: fixed; pointer-events: none; font-size: 1.5rem; z-index: 200; animation: starUp 1.2s ease-out forwards; }
+@keyframes starUp { 0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-80px) scale(1.5);} }
+
+.nav-btn { background: var(--primary); color: #fff; border: none; border-radius: 50px; padding: 13px 36px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 20px; box-shadow: var(--shadow); transition: all 0.2s; }
+.nav-btn:hover { transform: translateY(-2px); }
+.nav-btn.secondary { background: var(--secondary); }
+
+/* ===== OBJ ===== */
+.obj-card { background: var(--card); border-radius: var(--radius); padding: 30px; max-width: 600px; width: 100%; box-shadow: var(--shadow); }
+.obj-title { font-size: 1.6rem; font-weight: 800; color: var(--secondary); text-align: center; margin-bottom: 24px; }
+.obj-item { display: flex; gap: 14px; margin-bottom: 16px; padding: 14px; background: #f0fffe; border-radius: 12px; border-left: 4px solid var(--secondary); }
+.obj-icon { font-size: 1.6rem; flex-shrink: 0; }
+.obj-text { font-size: 1rem; line-height: 1.6; }
+.obj-text strong { color: var(--secondary); }
+
+/* ===== WARMUP ===== */
+#warmup { background: linear-gradient(135deg, #f0fffe, #fff9f0); }
+.warm-title { font-size: 1.6rem; font-weight: 800; color: var(--secondary); text-align: center; margin-bottom: 24px; }
+.predict-card { background: var(--card); border-radius: var(--radius); padding: 24px; max-width: 580px; width: 100%; box-shadow: var(--shadow); }
+.predict-title { font-size: 1.1rem; font-weight: 700; color: var(--secondary); margin-bottom: 16px; text-align: center; }
+.predict-passage-preview { background: #f9f9f9; border-radius: 12px; padding: 16px; margin-bottom: 20px; font-style: italic; color: #555; font-size: 1rem; line-height: 1.8; border-left: 4px solid var(--accent); }
+.predict-title-text { font-size: 1.2rem; font-weight: 800; color: var(--primary); text-align: center; margin-bottom: 12px; }
+.predict-options { display: grid; gap: 10px; }
+.predict-opt { background: #f5f5f5; border: 2.5px solid transparent; border-radius: 12px; padding: 13px 18px; cursor: pointer; font-size: 0.95rem; font-weight: 600; transition: all 0.2s; }
+.predict-opt:hover { border-color: var(--secondary); background: #f0fffe; }
+.predict-opt.selected { border-color: var(--primary); background: #fff0f0; }
+.predict-result { text-align: center; font-size: 1rem; font-weight: 600; padding: 12px; border-radius: 10px; margin-top: 12px; display: none; }
+.predict-result.show { display: block; background: #e8f5e9; color: #2e7d32; }
+
+/* ===== PASSAGE READ ===== */
+#passage { background: var(--bg); }
+.passage-wrapper { background: var(--card); border-radius: var(--radius); padding: 28px; max-width: 720px; width: 100%; box-shadow: var(--shadow); }
+.passage-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+.passage-nav-title { font-size: 1.3rem; font-weight: 800; color: var(--primary); }
+.passage-tools { display: flex; gap: 8px; flex-wrap: wrap; }
+.ptool-btn { background: #f5f5f5; border: 2px solid transparent; border-radius: 20px; padding: 6px 14px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.ptool-btn:hover { border-color: var(--secondary); }
+.ptool-btn.on { background: var(--secondary); color: #fff; border-color: var(--secondary); }
+.passage-reading { font-size: 1.05rem; line-height: 2.2; background: #fafafa; border-radius: 12px; padding: 20px; position: relative; }
+.kw { border-radius: 4px; padding: 1px 4px; cursor: pointer; transition: all 0.2s; }
+.kw-blue { background: #bbdefb; }
+.kw-green { background: #c8e6c9; }
+.kw-yellow { background: var(--accent); }
+.kw-red { background: #ffcdd2; }
+.kw:hover { filter: brightness(0.9); transform: scale(1.03); }
+.reading-timer { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.timer-icon { font-size: 1rem; }
+.timer-bar { flex: 1; height: 8px; background: #eee; border-radius: 4px; overflow: hidden; }
+.timer-fill { height: 100%; background: linear-gradient(90deg, var(--secondary), var(--primary)); transition: width 0.5s; }
+.timer-text { font-size: 0.85rem; color: #888; min-width: 40px; }
+.passage-para { margin-bottom: 14px; }
+.passage-para-num { font-size: 0.75rem; font-weight: 700; color: #aaa; margin-right: 8px; }
+.ann-panel { background: #fffde7; border: 1px solid #ffe082; border-radius: 10px; padding: 12px; margin-top: 12px; font-size: 0.85rem; display: none; }
+.ann-panel.show { display: block; animation: fadeIn 0.3s; }
+.ann-panel-text { color: #555; line-height: 1.7; }
+.tip-popup2 { display: none; position: fixed; background: #2d3436; color: #fff; padding: 7px 14px; border-radius: 10px; font-size: 0.85rem; z-index: 999; pointer-events: none; max-width: 200px; }
+.tip-popup2.show { display: block; }
+
+/* ===== LEVEL 1: MCQ ===== */
+#level1 { background: linear-gradient(135deg, #f0fffe, #fff9f0); }
+.mcq-wrapper { background: var(--card); border-radius: var(--radius); padding: 28px; max-width: 680px; width: 100%; box-shadow: var(--shadow); }
+.mcq-title { font-size: 1.4rem; font-weight: 800; color: var(--primary); text-align: center; margin-bottom: 8px; }
+.mcq-sub { text-align: center; color: #888; font-size: 0.9rem; margin-bottom: 20px; }
+.mcq-item { margin-bottom: 22px; padding: 18px; background: #f9f9f9; border-radius: 14px; border-left: 4px solid transparent; transition: all 0.2s; }
+.mcq-item.correct { border-left-color: var(--secondary); background: #f0fffe; }
+.mcq-item.wrong { border-left-color: var(--primary); background: #fff0f0; }
+.mcq-q { font-size: 1rem; font-weight: 700; margin-bottom: 12px; line-height: 1.5; }
+.mcq-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.mcq-opt { background: var(--card); border: 2px solid #ddd; border-radius: 10px; padding: 10px 14px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; }
+.mcq-opt:hover { border-color: var(--secondary); background: #f0fffe; }
+.mcq-opt.selected { border-color: var(--primary); background: #fff0f0; }
+.mcq-opt.correct { border-color: var(--secondary); background: #e0faf8; color: #2e7d32; font-weight: 700; }
+.mcq-opt.wrong { border-color: var(--primary); background: #ffe8e8; color: #c62828; }
+.mcq-explain { font-size: 0.85rem; color: #555; margin-top: 10px; padding: 8px 12px; background: #fff9e6; border-radius: 8px; display: none; line-height: 1.6; }
+.mcq-explain.show { display: block; animation: fadeIn 0.3s; }
+.mcq-progress { text-align: center; font-size: 0.9rem; color: #888; margin-top: 14px; }
+
+/* ===== LEVEL 2: SHORT ANSWER ===== */
+#level2 { background: #fff9f0; }
+.sa-wrapper { background: var(--card); border-radius: var(--radius); padding: 28px; max-width: 660px; width: 100%; box-shadow: var(--shadow); }
+.sa-title { font-size: 1.4rem; font-weight: 800; color: var(--primary); text-align: center; margin-bottom: 8px; }
+.sa-sub { text-align: center; color: #888; font-size: 0.9rem; margin-bottom: 20px; }
+.sa-items { display: flex; flex-direction: column; gap: 18px; }
+.sa-item { background: #f9f9f9; border-radius: 12px; padding: 16px; }
+.sa-q { font-size: 1rem; font-weight: 700; margin-bottom: 8px; line-height: 1.5; }
+.sa-q .qnum { color: var(--secondary); margin-right: 6px; }
+.sa-input { width: 100%; border: 2px solid #ddd; border-radius: 10px; padding: 11px 14px; font-size: 0.95rem; outline: none; font-family: inherit; transition: border-color 0.2s; }
+.sa-input:focus { border-color: var(--secondary); }
+.sa-input.correct { border-color: var(--secondary); background: #f0fffe; }
+.sa-input.wrong { border-color: var(--primary); background: #fff0f0; }
+.sa-hint { font-size: 0.8rem; color: #aaa; margin-top: 5px; display: none; }
+.sa-hint.show { display: block; }
+.sa-check { background: var(--secondary); color: #fff; border: none; border-radius: 12px; padding: 13px 36px; font-size: 1rem; font-weight: 700; cursor: pointer; display: block; margin: 18px auto 0; transition: all 0.2s; }
+.sa-check:hover { transform: scale(1.04); }
+.sa-result { text-align: center; font-size: 1rem; font-weight: 600; padding: 12px; border-radius: 10px; margin-top: 12px; display: none; }
+.sa-result.show { display: block; }
+.sa-result.ok { background: #e8f5e9; color: #2e7d32; }
+.sa-result.partial { background: #fff3e0; color: #e65100; }
+
+/* ===== LEVEL 3: SUMMARY ===== */
+#level3 { background: #f8f0ff; }
+.sum-wrapper { background: var(--card); border-radius: var(--radius); padding: 28px; max-width: 660px; width: 100%; box-shadow: var(--shadow); }
+.sum-title { font-size: 1.4rem; font-weight: 800; color: var(--primary); text-align: center; margin-bottom: 8px; }
+.sum-sub { text-align: center; color: #888; font-size: 0.9rem; margin-bottom: 20px; }
+.sum-skeleton { background: #fafafa; border-radius: 12px; padding: 18px; font-size: 1rem; line-height: 2.2; margin-bottom: 18px; }
+.sum-blank { display: inline-block; min-width: 90px; background: var(--accent); border-radius: 6px; padding: 2px 10px; cursor: pointer; font-weight: 700; border: 2px dashed #e0a800; text-align: center; transition: all 0.2s; vertical-align: middle; }
+.sum-blank:hover { background: #ffcc00; }
+.sum-blank.filled { background: var(--secondary); color: #fff; border-color: var(--secondary); }
+.sum-blank.wrong { background: var(--primary); color: #fff; border-color: var(--primary); }
+.sum-word-pool { display: flex; flex-wrap: wrap; gap: 9px; background: #f5f5f5; border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+.sum-pool-word { background: linear-gradient(135deg, #fff, #f0f0f0); border: 2px solid var(--secondary); border-radius: 20px; padding: 7px 16px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.sum-pool-word:hover { background: var(--secondary); color: #fff; }
+.sum-pool-word.used { opacity: 0.4; pointer-events: none; }
+.sum-pool-word.selected { background: var(--primary); color: #fff; border-color: var(--primary); outline: 3px solid var(--accent); }
+.sum-score-bar { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+.sum-score-label { font-size: 0.9rem; color: #888; min-width: 60px; }
+.sum-score-track { flex: 1; height: 10px; background: #eee; border-radius: 5px; overflow: hidden; }
+.sum-score-fill { height: 100%; background: linear-gradient(90deg, var(--secondary), var(--primary)); border-radius: 5px; transition: width 0.5s; }
+
+/* ===== BOSS ===== */
+#boss { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); color: #fff; }
+.boss-wrap { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); border-radius: var(--radius); padding: 28px; max-width: 680px; width: 100%; }
+.boss-title { font-size: 1.8rem; font-weight: 800; color: var(--accent); text-align: center; margin-bottom: 6px; }
+.boss-sub { color: rgba(255,255,255,0.7); text-align: center; margin-bottom: 20px; font-size: 0.9rem; }
+.boss-tabs { display: flex; border-radius: 12px; overflow: hidden; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.15); }
+.boss-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; font-size: 0.88rem; font-weight: 600; color: rgba(255,255,255,0.65); transition: all 0.2s; }
+.boss-tab.active { background: rgba(255,255,255,0.15); color: #fff; }
+.boss-passage2 { background: rgba(255,255,255,0.07); border-radius: 12px; padding: 16px; font-size: 0.93rem; line-height: 1.9; color: rgba(255,255,255,0.88); margin-bottom: 14px; max-height: 180px; overflow-y: auto; }
+.boss-qs { display: flex; flex-direction: column; gap: 14px; }
+.boss-q-card { background: rgba(255,220,70,0.1); border: 1px solid rgba(255,220,70,0.3); border-radius: 12px; padding: 14px; }
+.boss-q-text { font-size: 0.95rem; color: var(--accent); font-weight: 600; margin-bottom: 10px; }
+.boss-q-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.boss-q-opt { background: rgba(255,255,255,0.1); border: 1.5px solid rgba(255,255,255,0.2); border-radius: 9px; padding: 9px 12px; font-size: 0.87rem; cursor: pointer; color: rgba(255,255,255,0.87); transition: all 0.2s; }
+.boss-q-opt:hover { background: rgba(78,205,196,0.2); border-color: var(--secondary); }
+.boss-q-opt.chosen { background: rgba(78,205,196,0.25); border-color: var(--secondary); }
+.boss-q-opt.correct { background: rgba(78,205,196,0.4); border-color: #4ecdc4; color: #fff; font-weight: 700; }
+.boss-q-opt.wrong { background: rgba(255,107,107,0.3); border-color: #ff6b6b; }
+.boss-essay { margin-top: 16px; }
+.boss-essay-title { font-size: 0.95rem; color: var(--accent); font-weight: 600; margin-bottom: 8px; }
+.boss-essay-area { width: 100%; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.25); border-radius: 12px; padding: 13px 16px; color: #fff; font-size: 0.9rem; outline: none; resize: vertical; font-family: inherit; transition: border-color 0.2s; min-height: 90px; }
+.boss-essay-area:focus { border-color: var(--accent); }
+.boss-essay-area::placeholder { color: rgba(255,255,255,0.4); }
+.boss-btns { display: flex; gap: 12px; justify-content: center; margin-top: 18px; }
+.boss-btn-submit { background: var(--accent); color: var(--text); border: none; border-radius: 12px; padding: 14px 36px; font-size: 1.05rem; font-weight: 800; cursor: pointer; transition: all 0.2s; }
+.boss-btn-submit:hover { transform: scale(1.05); }
+.boss-fb { text-align: center; font-size: 0.95rem; font-weight: 600; padding: 12px; border-radius: 10px; margin-top: 12px; display: none; }
+.boss-fb.show { display: block; }
+.boss-fb.ok { background: rgba(78,205,196,0.25); color: #4ecdc4; }
+.boss-fb.err { background: rgba(255,107,107,0.2); color: #ff6b6b; }
+
+/* ===== REPORT ===== */
+#report { background: linear-gradient(135deg, #302b63, #0f0c29); color: #fff; }
+.report-card { background: rgba(255,255,255,0.12); backdrop-filter: blur(10px); border-radius: var(--radius); padding: 36px; max-width: 560px; width: 100%; text-align: center; border: 1px solid rgba(255,255,255,0.2); }
+.report-emoji { font-size: 70px; animation: bounce 1.5s infinite; margin-bottom: 16px; }
+.report-title { font-size: 2rem; font-weight: 900; margin-bottom: 8px; }
+.stars-row { font-size: 2rem; margin: 16px 0; }
+.score-big { font-size: 4rem; font-weight: 900; color: var(--accent); }
+.score-label { font-size: 1rem; opacity: 0.8; margin-bottom: 24px; }
+.achievements-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }
+.ach-item { background: rgba(255,255,255,0.12); border-radius: 12px; padding: 12px 8px; text-align: center; }
+.ach-item .ach-icon { font-size: 1.6rem; }
+.ach-item .ach-name { font-size: 0.7rem; margin-top: 4px; }
+.ach-item.locked { opacity: 0.35; filter: grayscale(1); }
+.stat-row { display: flex; justify-content: space-around; margin: 16px 0; }
+.stat-item { text-align: center; }
+.stat-num { font-size: 1.8rem; font-weight: 800; color: var(--accent); }
+.stat-lbl { font-size: 0.8rem; opacity: 0.75; }
+.btn-retry { background: rgba(255,255,255,0.2); color: #fff; border: 2px solid rgba(255,255,255,0.4); border-radius: 50px; padding: 14px 40px; font-size: 1.1rem; font-weight: 800; cursor: pointer; margin: 8px; transition: all 0.2s; }
+.btn-retry:hover { background: rgba(255,255,255,0.3); transform: scale(1.05); }
+
+/* ===== EXTENSION ===== */
+#extension { background: var(--bg); }
+.ext-card { background: var(--card); border-radius: var(--radius); padding: 30px; max-width: 680px; width: 100%; box-shadow: var(--shadow); }
+.ext-title { font-size: 1.4rem; font-weight: 800; color: var(--secondary); margin-bottom: 20px; text-align: center; }
+.strategy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
+.strategy-card { background: linear-gradient(135deg, #f0fffe, #e8f5e9); border-radius: 14px; padding: 16px; border-top: 4px solid var(--secondary); }
+.strategy-num { font-size: 2rem; font-weight: 900; color: rgba(78,205,196,0.3); margin-bottom: 4px; }
+.strategy-name { font-size: 0.95rem; font-weight: 700; color: var(--secondary); margin-bottom: 6px; }
+.strategy-text { font-size: 0.82rem; color: #555; line-height: 1.7; }
+.practice-passage { background: linear-gradient(135deg, #fff9f0, #fff0f0); border-radius: 14px; padding: 18px; border: 2px solid rgba(255,107,107,0.3); }
+.pp-title { font-size: 1rem; font-weight: 700; color: var(--primary); margin-bottom: 12px; }
+.pp-text { font-size: 0.92rem; line-height: 1.9; color: #444; }
+</style>
+</head>
+<body>
+
+<div class="progress-bar"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+<div class="tip-popup2" id="tip2"></div>
+
+<div class="mascot-bubble">
+  <div class="mascot-hint" id="mascotHint">🧠 阅读理解技巧：<br>1️⃣ 先读题目<br>2️⃣ 带问题读文章<br>3️⃣ 找关键词回答！</div>
+  <div class="mascot-icon" onclick="toggleHint()">🐻</div>
+</div>
+
+<!-- HERO -->
+<section class="section active" id="hero">
+  <div class="hero-mascot">🧠</div>
+  <div class="hero-title">Passage Questions</div>
+  <div class="hero-sub">阅读理解挑战 · 五年级英语</div>
+  <div class="hero-badge">📝 4关卡 · 🏆 8成就 · 🧠 深度理解</div>
+  <button class="btn-start" onclick="goTo('objectives')">开始挑战 🚀</button>
+</section>
+
+<!-- OBJECTIVES -->
+<section class="section" id="objectives">
+  <div class="obj-card">
+    <div class="obj-title">🎯 理解目标</div>
+    <div class="obj-item"><div class="obj-icon">🔮</div><div class="obj-text"><strong>预测内容</strong>：根据标题预测文章主题</div></div>
+    <div class="obj-item"><div class="obj-icon">🔍</div><div class="obj-text"><strong>精读理解</strong>：阅读高亮文章，深度理解</div></div>
+    <div class="obj-item"><div class="obj-icon">❓</div><div class="obj-text"><strong>多种题型</strong>：选择题+简答题+摘要填空</div></div>
+    <div class="obj-item"><div class="obj-icon">🏆</div><div class="obj-text"><strong>综合输出</strong>：Boss关卡新篇章综合理解</div></div>
+    <button class="nav-btn secondary" onclick="goTo('warmup')">预热热身 🔥</button>
+  </div>
+</section>
+
+<!-- WARMUP: PREDICT -->
+<section class="section" id="warmup">
+  <div class="warm-title">🔮 阅读预测热身</div>
+  <div class="predict-card">
+    <div class="predict-title">👀 看标题，猜内容：</div>
+    <div class="predict-title-text">📰 "A Trip to the Zoo"</div>
+    <div class="predict-passage-preview">"Yesterday, our class went on a special trip. We woke up early and boarded the school bus. Everyone was very excited..."</div>
+    <div class="predict-title">这篇文章最可能是讲什么的？</div>
+    <div class="predict-options">
+      <div class="predict-opt" id="popt0" onclick="selectPredict(0)">A. 一个家庭的日常生活</div>
+      <div class="predict-opt" id="popt1" onclick="selectPredict(1)">B. 学生们去动物园的经历 ✓</div>
+      <div class="predict-opt" id="popt2" onclick="selectPredict(2)">C. 一只动物的故事</div>
+      <div class="predict-opt" id="popt3" onclick="selectPredict(3)">D. 学校里的一天</div>
+    </div>
+    <div class="predict-result" id="predictResult"></div>
+    <button class="nav-btn secondary" id="predictNext" onclick="goTo('passage')" style="display:none">开始阅读 📖</button>
+  </div>
+</section>
+
+<!-- PASSAGE -->
+<section class="section" id="passage">
+  <div class="passage-wrapper">
+    <div class="passage-nav">
+      <div class="passage-nav-title">📰 A Trip to the Zoo</div>
+      <div class="passage-tools">
+        <button class="ptool-btn on" id="pt-read" onclick="toggleTool('read',this)">阅读模式</button>
+        <button class="ptool-btn" id="pt-kw" onclick="toggleTool('kw',this)">🔑 关键词</button>
+        <button class="ptool-btn" id="pt-ann" onclick="toggleTool('ann',this)">📝 注释</button>
+      </div>
+    </div>
+    <div class="reading-timer">
+      <div class="timer-icon">⏱️</div>
+      <div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:0%"></div></div>
+      <div class="timer-text" id="timerText">0s</div>
+    </div>
+    <div class="passage-reading" id="passageText">
+      <div class="passage-para"><span class="passage-para-num">¶1</span>
+        <span class="kw kw-blue" data-tip="昨天 yesterday">Yesterday</span>, our <span class="kw kw-green" data-tip="班级 class">class</span> went on a <span class="kw kw-yellow" data-tip="特别的 special">special</span> trip to the <span class="kw kw-red" data-tip="动物园 zoo">zoo</span>. We woke up <span class="kw kw-blue" data-tip="早 early">early</span> and <span class="kw kw-green" data-tip="上了 boarded">boarded</span> the school bus. Everyone was very <span class="kw kw-yellow" data-tip="兴奋的 excited">excited</span>.
+      </div>
+      <div class="passage-para"><span class="passage-para-num">¶2</span>
+        At the zoo, we saw many <span class="kw kw-red" data-tip="动物 animals">animals</span>. The <span class="kw kw-blue" data-tip="大象 elephants">elephants</span> were huge and <span class="kw kw-green" data-tip="友好的 friendly">friendly</span>. The <span class="kw kw-yellow" data-tip="猴子 monkeys">monkeys</span> were funny and made us laugh. There was also a beautiful <span class="kw kw-red" data-tip="孔雀 peacock">peacock</span> with colourful <span class="kw kw-blue" data-tip="尾巴 tail">feathers</span>.
+      </div>
+      <div class="passage-para"><span class="passage-para-num">¶3</span>
+        Our teacher, <span class="kw kw-green" data-tip="林老师 Teacher Lin">Miss Lin</span>, told us many interesting <span class="kw kw-yellow" data-tip="知识 facts">facts</span> about the animals. We learned that elephants can <span class="kw kw-red" data-tip="记住 remember">remember</span> things for a very long time. That was amazing!
+      </div>
+      <div class="passage-para"><span class="passage-para-num">¶4</span>
+        After <span class="kw kw-blue" data-tip="午餐 lunch">lunch</span>, we visited the <span class="kw kw-green" data-tip="海洋馆 aquarium">aquarium</span>. We saw <span class="kw kw-yellow" data-tip="鲨鱼 sharks">sharks</span>, <span class="kw kw-red" data-tip="乌龟 turtles">turtles</span>, and many <span class="kw kw-blue" data-tip="各种 colourful">colourful</span> fish. It was breathtaking!
+      </div>
+      <div class="passage-para"><span class="passage-para-num">¶5</span>
+        We returned to school in the <span class="kw kw-green" data-tip="下午 afternoon">afternoon</span>. Everyone was <span class="kw kw-yellow" data-tip="疲惫的 tired">tired</span> but <span class="kw kw-red" data-tip="开心的 happy">happy</span>. It was one of the best days of our school year. I hope we can go again next year!
+      </div>
+    </div>
+    <div class="ann-panel" id="annPanel">
+      <div class="ann-panel-text">
+        📋 <strong>中文参考：</strong> 昨天，我们班去动物园参加了一次特别的旅行。我们早早起床，坐上学校的校车，大家都非常兴奋。在动物园里，我们看到了很多动物：巨大友好的大象、有趣的猴子，还有一只漂亮的孔雀。林老师告诉我们很多关于动物的有趣知识，比如大象记忆力非常好。午餐后，我们参观了海洋馆，看到了鲨鱼、海龟和五颜六色的鱼。我们在下午返校，大家又累又开心。这是我们学年中最棒的一天之一！
+      </div>
+    </div>
+    <button class="nav-btn secondary" onclick="goTo('level1')" style="margin-top:18px">开始答题 ✏️</button>
+  </div>
+</section>
+
+<!-- LEVEL 1: MCQ -->
+<section class="section" id="level1">
+  <div class="mcq-wrapper">
+    <div class="mcq-title">✏️ 关卡1：选择题</div>
+    <div class="mcq-sub">根据文章内容，选择最佳答案！</div>
+    <div id="mcqItems"></div>
+    <button class="nav-btn" id="mcqSubmit" onclick="checkMCQ()" style="display:block;margin:0 auto">提交选择题 ✅</button>
+    <div class="mcq-progress">已选: <span id="mcqSelected">0</span>/5</div>
+  </div>
+</section>
+
+<!-- LEVEL 2: SHORT ANSWER -->
+<section class="section" id="level2">
+  <div class="sa-wrapper">
+    <div class="sa-title">💬 关卡2：简答题</div>
+    <div class="sa-sub">用英语完整回答问题！</div>
+    <div class="sa-items" id="saItems"></div>
+    <button class="sa-check" onclick="checkSA()">检查答案 ✅</button>
+    <div class="sa-result" id="saResult"></div>
+  </div>
+</section>
+
+<!-- LEVEL 3: SUMMARY FILL -->
+<section class="section" id="level3">
+  <div class="sum-wrapper">
+    <div class="sum-title">📝 关卡3：摘要填空</div>
+    <div class="sum-sub">从词库中选词，完成文章摘要！</div>
+    <div class="sum-skeleton" id="sumSkeleton"></div>
+    <div class="sum-word-pool" id="sumPool"></div>
+    <div class="sum-score-bar">
+      <div class="sum-score-label">完成度</div>
+      <div class="sum-score-track"><div class="sum-score-fill" id="sumFill" style="width:0%"></div></div>
+      <span id="sumCount" style="font-size:0.85rem;color:#888;min-width:40px">0/5</span>
+    </div>
+  </div>
+</section>
+
+<!-- BOSS -->
+<section class="section" id="boss">
+  <div class="boss-title">⚡ Boss：终极阅读挑战</div>
+  <div class="boss-sub">五年级阅读最强关卡</div>
+  <div class="boss-wrap">
+    <div class="boss-tabs">
+      <div class="boss-tab active" onclick="switchBossTab(0,this)">📖 阅读</div>
+      <div class="boss-tab" onclick="switchBossTab(1,this)">❓ 选择</div>
+      <div class="boss-tab" onclick="switchBossTab(2,this)">✍️ 写作</div>
+    </div>
+    <div id="bossTabContent"></div>
+    <button class="boss-btn-submit" onclick="submitBoss()">提交挑战 ⚡</button>
+    <div class="boss-fb" id="bossFb"></div>
+  </div>
+</section>
+
+<!-- REPORT -->
+<section class="section" id="report">
+  <div class="report-card">
+    <div class="report-emoji" id="reportEmoji">🏆</div>
+    <div class="report-title" id="reportTitle">阅读高手！</div>
+    <div class="stars-row" id="starsRow">⭐⭐⭐</div>
+    <div class="score-big" id="scoreDisplay">0</div>
+    <div class="score-label">/ 100 分</div>
+    <div class="stat-row">
+      <div class="stat-item"><div class="stat-num" id="statCorrect">0</div><div class="stat-lbl">答对</div></div>
+      <div class="stat-item"><div class="stat-num" id="statAch">0</div><div class="stat-lbl">成就</div></div>
+      <div class="stat-item"><div class="stat-num" id="statTime">0</div><div class="stat-lbl">秒</div></div>
+    </div>
+    <div class="achievements-grid" id="achievementsGrid"></div>
+    <button class="btn-retry" onclick="goTo('hero')">再来一次 🔄</button>
+    <button class="btn-retry" onclick="goTo('extension')">策略拓展 📚</button>
+  </div>
+</section>
+
+<!-- EXTENSION -->
+<section class="section" id="extension">
+  <div class="ext-card">
+    <div class="ext-title">📚 高级阅读策略</div>
+    <div class="strategy-grid">
+      <div class="strategy-card"><div class="strategy-num">01</div><div class="strategy-name">SQ3R法</div><div class="strategy-text">Survey(浏览)→Question(提问)→Read(阅读)→Recite(复述)→Review(回顾)，系统提升阅读理解力。</div></div>
+      <div class="strategy-card"><div class="strategy-num">02</div><div class="strategy-name">主题句定位</div><div class="strategy-text">每段第一句通常是主题句，快速把握段落大意。遇到问题时，先定位相关段落。</div></div>
+      <div class="strategy-card"><div class="strategy-num">03</div><div class="strategy-name">关键词高亮</div><div class="strategy-text">时间词(yesterday/first)、地点词(at the zoo)、人物名词是定位答案的关键线索。</div></div>
+      <div class="strategy-card"><div class="strategy-num">04</div><div class="strategy-name">排除法</div><div class="strategy-text">选择题中，先排除明显错误的选项，缩小范围，再从剩余选项中选最佳答案。</div></div>
+    </div>
+    <div class="practice-passage">
+      <div class="pp-title">🎁 Bonus 加练短文：Our School Garden</div>
+      <div class="pp-text">Our school has a beautiful garden. There are many flowers and trees. In spring, the flowers are red, yellow, and pink. Students often come here to read books and relax. We take care of the garden every week. Our teacher says a beautiful environment makes us happy and helps us learn better.</div>
+    </div>
+    <button class="nav-btn secondary" onclick="goTo('hero')" style="margin-top:20px">🏠 返回首页</button>
+  </div>
+</section>
+
+<script>
+const state = {
+  score: 0, correct: 0, achievements: new Set(), startTime: Date.now(),
+  readTime: 0, timerInterval: null,
+  mcqAnswers: {}, mcqSelected: 0,
+  saAnswers: {},
+  sumFilled: 0, sumSelected: null,
+  bossTab: 0, bossAnswers: {}, bossEssay: ''
+};
+const sectionProgress = {hero:0,objectives:10,warmup:20,passage:35,level1:52,level2:66,level3:80,boss:92,report:100,extension:100};
+const achievements = [
+  {id:'start',icon:'🌟',name:'启程',desc:'开始学习'},
+  {id:'predict',icon:'🔮',name:'预言家',desc:'完成预测'},
+  {id:'reader',icon:'📖',name:'深度读者',desc:'完整阅读文章'},
+  {id:'mcq',icon:'✏️',name:'选择高手',desc:'选择题全对'},
+  {id:'sa',icon:'💬',name:'简答达人',desc:'简答题优秀'},
+  {id:'summary',icon:'📝',name:'摘要王',desc:'摘要全对'},
+  {id:'boss',icon:'⚔️',name:'阅读终结者',desc:'Boss挑战完成'},
+  {id:'perfect',icon:'💯',name:'满分理解',desc:'满分'}
+];
+
+function goTo(id) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('progress').style.width=(sectionProgress[id]||0)+'%';
+  if(id==='warmup')unlockAch('start');
+  if(id==='passage')initPassage();
+  if(id==='level1')initMCQ();
+  if(id==='level2')initSA();
+  if(id==='level3')initSummary();
+  if(id==='boss'){initBoss();}
+  if(id==='report')showReport();
+  scrollTo(0,0);
+}
+
+const AudioCtx=window.AudioContext||window.webkitAudioContext;
+let audioCtx;
+function getCtx(){if(!audioCtx)audioCtx=new AudioCtx();return audioCtx;}
+function playTone(f,d,t='sine',v=0.3){try{const c=getCtx();const o=c.createOscillator();const g=c.createGain();o.connect(g);g.connect(c.destination);o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+d);o.start();o.stop(c.currentTime+d);}catch(e){}}
+function playCorrect(){playTone(523,0.1);setTimeout(()=>playTone(659,0.1),100);setTimeout(()=>playTone(784,0.2),200);}
+function playWrong(){playTone(200,0.3,'sawtooth',0.2);}
+function playAch(){[523,587,659,784].forEach((f,i)=>setTimeout(()=>playTone(f,0.15),i*80));}
+
+function unlockAch(id){
+  if(state.achievements.has(id))return;
+  state.achievements.add(id);
+  const a=achievements.find(x=>x.id===id);
+  if(!a)return;
+  playAch();floatStar('🏆');showToast(`🏆 ${a.icon} ${a.name} 解锁！`);
+  state.score+=5;
+}
+function showToast(msg){
+  const d=document.createElement('div');
+  d.style.cssText='position:fixed;top:60px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#4ecdc4,#302b63);color:#fff;padding:10px 22px;border-radius:30px;font-size:0.95rem;font-weight:700;z-index:300;box-shadow:0 4px 20px rgba(0,0,0,0.25)';
+  d.textContent=msg;document.body.appendChild(d);setTimeout(()=>d.remove(),2500);
+}
+function floatStar(e='⭐'){
+  const el=document.createElement('div');el.className='star-float';el.textContent=e;
+  el.style.left=(Math.random()*60+20)+'%';el.style.top=(Math.random()*40+30)+'%';
+  document.body.appendChild(el);setTimeout(()=>el.remove(),1200);
+}
+function toggleHint(){document.getElementById('mascotHint').classList.toggle('show');}
+
+// WARMUP PREDICT
+function selectPredict(idx){
+  document.querySelectorAll('.predict-opt').forEach((el,i)=>el.classList.toggle('selected',i===idx));
+  const r=document.getElementById('predictResult');
+  const next=document.getElementById('predictNext');
+  playTone(523,0.08,'triangle',0.1);
+  if(idx===1){
+    r.className='predict-result show';r.textContent='✅ 正确！通过标题和开头段落，我们可以推断这篇文章讲的是动物园参观之旅！';
+    playCorrect();floatStar('⭐');unlockAch('predict');state.score+=5;
+  } else {
+    r.className='predict-result show';r.style.background='#ffebee';r.style.color='#c62828';r.textContent='💡 再想想！看标题"A Trip to the Zoo"和第一段"went on a special trip to the zoo"，谁去了动物园？';
+  }
+  next.style.display='block';
+}
+
+// PASSAGE
+let timerSec=0;
+function initPassage(){
+  unlockAch('reader');
+  clearInterval(state.timerInterval);
+  timerSec=0;
+  state.timerInterval=setInterval(()=>{
+    timerSec++;
+    document.getElementById('timerText').textContent=timerSec+'s';
+    document.getElementById('timerFill').style.width=Math.min(100,timerSec/60*100)+'%';
+  },1000);
+  document.querySelectorAll('.kw').forEach(el=>{
+    el.addEventListener('mouseenter',e=>{
+      const t=document.getElementById('tip2');
+      t.textContent=el.dataset.tip;t.className='tip-popup2 show';
+      t.style.left=e.clientX+10+'px';t.style.top=e.clientY+10+'px';
+      playTone(660,0.06,'triangle',0.08);
+    });
+    el.addEventListener('mouseleave',()=>document.getElementById('tip2').className='tip-popup2');
+    el.addEventListener('click',()=>{floatStar('💡');playTone(523,0.08,'triangle',0.12);});
+  });
+}
+function toggleTool(tool,btn){
+  if(tool==='ann'){
+    btn.classList.toggle('on');
+    document.getElementById('annPanel').classList.toggle('show');
+  } else if(tool==='kw'){
+    btn.classList.toggle('on');
+    document.querySelectorAll('.kw').forEach(el=>el.style.background=btn.classList.contains('on')?'':el.className.includes('blue')?'#bbdefb':el.className.includes('green')?'#c8e6c9':el.className.includes('yellow')?'var(--accent)':'#ffcdd2');
+  } else {
+    document.querySelectorAll('.ptool-btn').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on');
+  }
+}
+
+// LEVEL 1: MCQ
+const mcqData=[
+  {q:"Where did the class go yesterday?",opts:["The park","The museum","The zoo","The library"],ans:2,explain:"¶1: 'went on a special trip to the zoo'"},
+  {q:"How did they get to the zoo?",opts:["By car","By school bus","By subway","On foot"],ans:1,explain:"¶1: 'boarded the school bus'"},
+  {q:"What can elephants do, according to Miss Lin?",opts:["Fly high","Run very fast","Remember things for a long time","Talk to humans"],ans:2,explain:"¶3: 'elephants can remember things for a very long time'"},
+  {q:"What did they visit after lunch?",opts:["The monkey house","The elephant park","The gift shop","The aquarium"],ans:3,explain:"¶4: 'After lunch, we visited the aquarium'"},
+  {q:"How did everyone feel at the end?",opts:["Angry and hungry","Tired but happy","Bored and sleepy","Scared and excited"],ans:1,explain:"¶5: 'Everyone was tired but happy'"}
+];
+function initMCQ(){
+  state.mcqAnswers={};state.mcqSelected=0;
+  document.getElementById('mcqSelected').textContent=0;
+  const container=document.getElementById('mcqItems');container.innerHTML='';
+  mcqData.forEach((q,qi)=>{
+    const div=document.createElement('div');div.className='mcq-item';
+    div.innerHTML=`<div class="mcq-q">${qi+1}. ${q.q}</div><div class="mcq-opts" id="mopts${qi}"></div><div class="mcq-explain" id="mexplain${qi}">💡 ${q.explain}</div>`;
+    container.appendChild(div);
+    const opts=div.querySelector(`#mopts${qi}`);
+    q.opts.forEach((o,oi)=>{
+      const btn=document.createElement('div');btn.className='mcq-opt';
+      btn.textContent=String.fromCharCode(65+oi)+'. '+o;
+      btn.onclick=()=>{
+        opts.querySelectorAll('.mcq-opt').forEach(b=>b.classList.remove('selected'));
+        btn.classList.add('selected');
+        const wasSelected=!!state.mcqAnswers[qi];
+        state.mcqAnswers[qi]=oi;
+        if(!wasSelected){state.mcqSelected++;document.getElementById('mcqSelected').textContent=state.mcqSelected;}
+        playTone(523,0.08,'triangle',0.1);
+      };
+      opts.appendChild(btn);
+    });
+  });
+}
+function checkMCQ(){
+  if(state.mcqSelected<5){showToast('⚠️ 请回答所有5道题！');return;}
+  let correct=0;
+  mcqData.forEach((q,qi)=>{
+    const item=document.getElementById('mcqItems').children[qi];
+    const opts=document.getElementById('mopts'+qi);
+    opts.querySelectorAll('.mcq-opt').forEach((b,oi)=>{
+      if(oi===q.ans)b.classList.add('correct');
+      else if(oi===state.mcqAnswers[qi])b.classList.add('wrong');
+    });
+    document.getElementById('mexplain'+qi).classList.add('show');
+    if(state.mcqAnswers[qi]===q.ans){item.classList.add('correct');correct++;}
+    else{item.classList.add('wrong');}
+  });
+  state.score+=correct*8;state.correct+=correct;
+  if(correct===5)unlockAch('mcq');
+  if(correct>=4)playCorrect();else playWrong();
+  floatStar(correct>=4?'⭐':'');
+  document.getElementById('mcqSubmit').style.display='none';
+  setTimeout(()=>goTo('level2'),2500);
+}
+
+// LEVEL 2: SHORT ANSWER
+const saData=[
+  {q:"What animals did they see at the zoo? (Name at least 2)",hint:"elephants, monkeys, peacock",keywords:['elephant','monkey','peacock','animal']},
+  {q:"What did Miss Lin teach them about elephants?",hint:"elephants can remember things for a long time",keywords:['remember','memory','long time']},
+  {q:"What did they see in the aquarium?",hint:"sharks, turtles, colourful fish",keywords:['shark','turtle','fish']}
+];
+function initSA(){
+  state.saAnswers={};
+  const container=document.getElementById('saItems');container.innerHTML='';
+  saData.forEach((q,qi)=>{
+    const div=document.createElement('div');div.className='sa-item';
+    div.innerHTML=`<div class="sa-q"><span class="qnum">Q${qi+1}.</span>${q.q}</div>
+      <input class="sa-input" id="sa${qi}" placeholder="Write your answer here..." />
+      <div class="sa-hint" id="sahint${qi}">💡 参考：${q.hint}</div>`;
+    container.appendChild(div);
+  });
+}
+function checkSA(){
+  let totalScore=0;
+  saData.forEach((q,qi)=>{
+    const val=document.getElementById('sa'+qi).value.toLowerCase().trim();
+    const inp=document.getElementById('sa'+qi);
+    const hint=document.getElementById('sahint'+qi);
+    const keyHit=q.keywords.some(k=>val.includes(k));
+    const lengthOk=val.split(' ').length>=3;
+    if(keyHit&&lengthOk){
+      inp.classList.add('correct');totalScore++;state.correct++;
+      playCorrect();floatStar('⭐');
+    } else {
+      inp.classList.add('wrong');
+      hint.classList.add('show');
+      playWrong();
+    }
+  });
+  state.score+=totalScore*8;
+  if(totalScore>=2)unlockAch('sa');
+  const r=document.getElementById('saResult');
+  r.classList.add('show');
+  if(totalScore===3){r.className='sa-result show ok';r.textContent='✅ 简答全对！你是阅读理解达人！';}
+  else{r.className='sa-result show partial';r.textContent=`${totalScore}/3 正确，已显示参考答案！`;}
+  setTimeout(()=>goTo('level3'),2500);
+}
+
+// LEVEL 3: SUMMARY
+const sumData = {
+  template: [
+    {text:'Our class went on a trip to the '},
+    {blank:0,ans:'zoo'},
+    {text:'. We saw elephants, '},
+    {blank:1,ans:'monkeys'},
+    {text:' and a beautiful peacock. Miss Lin told us many '},
+    {blank:2,ans:'interesting'},
+    {text:' facts about the animals. After lunch, we visited the '},
+    {blank:3,ans:'aquarium'},
+    {text:'. Everyone felt '},
+    {blank:4,ans:'happy'},
+    {text:' at the end of the day.'}
+  ],
+  pool: ['zoo','monkeys','interesting','aquarium','happy','school','birds','boring','park','tired']
+};
+let sumSelected=null;
+let sumBlanksFilled={};
+
+function initSummary(){
+  state.sumFilled=0;sumBlanksFilled={};sumSelected=null;
+  const skeleton=document.getElementById('sumSkeleton');
+  skeleton.innerHTML='';
+  sumData.template.forEach(t=>{
+    if(t.text){skeleton.appendChild(document.createTextNode(t.text));}
+    else{
+      const el=document.createElement('span');
+      el.className='sum-blank';el.id='sblank'+t.blank;el.textContent='_____';
+      el.dataset.ans=t.ans;el.dataset.idx=t.blank;
+      el.onclick=()=>{
+        sumSelected=el;
+        document.querySelectorAll('.sum-blank').forEach(b=>b.style.outline='');
+        el.style.outline='3px solid var(--primary)';
+        playTone(523,0.08,'triangle',0.1);
+      };
+      skeleton.appendChild(el);
+    }
+  });
+  const pool=document.getElementById('sumPool');
+  pool.innerHTML='';
+  sumData.pool.sort(()=>Math.random()-0.5).forEach(w=>{
+    const el=document.createElement('div');el.className='sum-pool-word';el.textContent=w;el.dataset.word=w;
+    el.onclick=()=>fillSumBlank(w,el);
+    pool.appendChild(el);
+  });
+  updateSumBar();
+}
+function fillSumBlank(word,wordEl){
+  if(wordEl.classList.contains('used'))return;
+  if(!sumSelected){showToast('⚠️ 请先点击要填写的空格！');return;}
+  const ans=sumSelected.dataset.ans;
+  if(word===ans){
+    sumSelected.textContent=word;sumSelected.classList.add('filled');
+    sumSelected.style.outline='';wordEl.classList.add('used');
+    sumBlanksFilled[sumSelected.dataset.idx]=true;
+    playCorrect();floatStar('⭐');
+    state.sumFilled=Object.keys(sumBlanksFilled).length;
+    state.score+=8;state.correct++;
+    updateSumBar();
+    if(state.sumFilled>=5){unlockAch('summary');setTimeout(()=>goTo('boss'),1500);}
+  } else {
+    sumSelected.classList.add('wrong');playWrong();
+    setTimeout(()=>sumSelected.classList.remove('wrong'),600);
+  }
+  sumSelected.style.outline='';sumSelected=null;
+  document.querySelectorAll('.sum-pool-word.selected').forEach(e=>e.classList.remove('selected'));
+}
+function updateSumBar(){
+  const filled=state.sumFilled;
+  document.getElementById('sumFill').style.width=(filled/5*100)+'%';
+  document.getElementById('sumCount').textContent=filled+'/5';
+}
+
+// BOSS
+const bossPassage = `Every summer, Lily's family goes on a <strong>holiday</strong>. Last summer, they travelled to <strong>Hainan Island</strong>. It is a beautiful island in southern China. The <strong>beaches</strong> were white and the sea was clear blue. Lily and her brother Tom loved swimming in the sea. Their parents enjoyed relaxing under the <strong>coconut trees</strong>. In the evenings, they ate <strong>delicious seafood</strong>. The trip lasted for <strong>five days</strong>. Everyone had a wonderful time. Lily wrote about it in her school diary.`;
+const bossQs=[
+  {q:"Where did Lily's family go last summer?",opts:["Beijing","Hainan Island","Shanghai","Sanya"],ans:1},
+  {q:"What did Lily and Tom enjoy?",opts:["Climbing mountains","Swimming in the sea","Eating coconuts","Playing football"],ans:1},
+  {q:"How long was the trip?",opts:["Three days","A week","Five days","Two weeks"],ans:2}
+];
+let bossTabIdx=0;
+const bossTabContents=[
+  ()=>`<div class="boss-passage2">${bossPassage}</div>`,
+  ()=>{
+    let html='<div class="boss-qs">';
+    bossQs.forEach((q,qi)=>{
+      html+=`<div class="boss-q-card"><div class="boss-q-text">${qi+1}. ${q.q}</div><div class="boss-q-opts" id="bqopts${qi}">`;
+      q.opts.forEach((o,oi)=>html+=`<div class="boss-q-opt" id="bopt${qi}_${oi}" onclick="selectBossOpt(${qi},${oi})">${String.fromCharCode(65+oi)}. ${o}</div>`);
+      html+=`</div></div>`;
+    });
+    return html+'</div>';
+  },
+  ()=>`<div class="boss-essay">
+    <div class="boss-essay-title">✍️ 用3-4句英语描述你的一次旅行或参观经历</div>
+    <textarea class="boss-essay-area" id="bossEssayInput" placeholder="Last year, I went to... I saw... It was... I felt..."></textarea>
+  </div>`
+];
+
+function switchBossTab(idx,btn){
+  bossTabIdx=idx;
+  document.querySelectorAll('.boss-tab').forEach((t,i)=>t.classList.toggle('active',i===idx));
+  document.getElementById('bossTabContent').innerHTML=bossTabContents[idx]();
+}
+function initBoss(){
+  state.bossAnswers={};
+  document.getElementById('bossTabContent').innerHTML=bossTabContents[0]();
+}
+function selectBossOpt(qi,oi){
+  document.querySelectorAll(`#bqopts${qi} .boss-q-opt`).forEach(b=>b.classList.remove('chosen'));
+  document.getElementById(`bopt${qi}_${oi}`).classList.add('chosen');
+  state.bossAnswers[qi]=oi;
+  playTone(523,0.08,'triangle',0.1);
+}
+function submitBoss(){
+  let mcqCorrect=0;
+  bossQs.forEach((q,qi)=>{
+    if(state.bossAnswers[qi]===q.ans)mcqCorrect++;
+  });
+  const essayEl=document.getElementById('bossEssayInput');
+  const essay=essayEl?essayEl.value.toLowerCase().trim():'';
+  const hasEssay=essay.split(' ').length>=8;
+  const fb=document.getElementById('bossFb');
+  if(mcqCorrect>=2&&hasEssay){
+    fb.className='boss-fb show ok';
+    fb.textContent=`🎉 挑战成功！选择题 ${mcqCorrect}/3，写作精彩！总分优秀！`;
+    playCorrect();floatStar('⭐');floatStar('⭐');floatStar('⭐');
+    unlockAch('boss');state.score+=mcqCorrect*6+10;
+    if(state.score>=95)unlockAch('perfect');
+    setTimeout(()=>goTo('report'),2000);
+  } else {
+    fb.className='boss-fb show err';
+    let tip='💡 ';
+    if(mcqCorrect<2)tip+=`选择题 ${mcqCorrect}/3，请切换到"选择"标签完成！`;
+    else tip+='请切换到"写作"标签，写3-4句话（至少8个单词）！';
+    fb.textContent=tip;playWrong();
+  }
+}
+
+function showReport(){
+  clearInterval(state.timerInterval);
+  const score=Math.min(100,state.score);
+  const elapsed=Math.round((Date.now()-state.startTime)/1000);
+  document.getElementById('scoreDisplay').textContent=score;
+  document.getElementById('statCorrect').textContent=state.correct;
+  document.getElementById('statAch').textContent=state.achievements.size;
+  document.getElementById('statTime').textContent=elapsed;
+  document.getElementById('starsRow').textContent=score>=90?'⭐⭐⭐':score>=70?'⭐⭐':'⭐';
+  const[e,t]=score>=90?['🏆','阅读满分英雄！']:[score>=70?['🎉','阅读理解达人！']:['💪','继续加油！']][0];
+  document.getElementById('reportEmoji').textContent=e;
+  document.getElementById('reportTitle').textContent=t;
+  const grid=document.getElementById('achievementsGrid');grid.innerHTML='';
+  achievements.forEach(a=>{
+    const el=document.createElement('div');
+    el.className='ach-item'+(state.achievements.has(a.id)?'':' locked');
+    el.innerHTML=`<div class="ach-icon">${a.icon}</div><div class="ach-name">${a.name}</div>`;
+    grid.appendChild(el);
+  });
+  playAch();
+}
+</script>
+</body>
+</html>

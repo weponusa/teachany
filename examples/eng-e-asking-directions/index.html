@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Asking Directions | 问路 | 四年级英语</title>
+<style>
+:root {
+  --bg: #fffbf0;
+  --primary: #ff6b6b;
+  --secondary: #4ecdc4;
+  --accent: #ffe66d;
+  --card: #fff;
+  --text: #2d3436;
+  --shadow: 0 4px 20px rgba(0,0,0,0.12);
+  --radius: 18px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', 'PingFang SC', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* ===== SECTIONS ===== */
+.section { display: none; min-height: 100vh; padding: 20px; animation: fadeIn 0.4s ease; }
+.section.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ===== HERO ===== */
+#hero { background: linear-gradient(135deg, #ff6b6b 0%, #ffd93d 50%, #4ecdc4 100%); text-align: center; }
+.hero-mascot { font-size: 80px; animation: bounce 2s infinite; }
+@keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+.hero-title { font-size: 2.4rem; font-weight: 900; color: #fff; text-shadow: 3px 3px 0 rgba(0,0,0,0.15); margin: 16px 0 8px; }
+.hero-sub { font-size: 1.1rem; color: rgba(255,255,255,0.9); margin-bottom: 30px; }
+.hero-badge { display: inline-block; background: rgba(255,255,255,0.25); border: 2px solid rgba(255,255,255,0.6); border-radius: 30px; padding: 6px 20px; color: #fff; font-size: 0.9rem; margin-bottom: 30px; }
+.btn-start { background: #fff; color: var(--primary); border: none; border-radius: 50px; padding: 16px 50px; font-size: 1.3rem; font-weight: 800; cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,0.15); transition: all 0.2s; }
+.btn-start:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+
+/* ===== OBJECTIVES ===== */
+#objectives { background: var(--bg); }
+.obj-card { background: var(--card); border-radius: var(--radius); padding: 30px; max-width: 600px; width: 100%; box-shadow: var(--shadow); }
+.obj-title { font-size: 1.6rem; font-weight: 800; color: var(--primary); text-align: center; margin-bottom: 24px; }
+.obj-item { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 16px; padding: 14px; background: #fff9f0; border-radius: 12px; border-left: 4px solid var(--secondary); }
+.obj-icon { font-size: 1.6rem; flex-shrink: 0; }
+.obj-text { font-size: 1rem; line-height: 1.6; }
+.obj-text strong { color: var(--primary); }
+
+/* ===== WARMUP ===== */
+#warmup { background: linear-gradient(135deg, #fff9f0, #f0fff4); }
+.warmup-title { font-size: 1.6rem; font-weight: 800; color: var(--secondary); text-align: center; margin-bottom: 24px; }
+.word-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; max-width: 560px; width: 100%; margin-bottom: 24px; }
+.word-card { background: var(--card); border-radius: 14px; padding: 18px 10px; text-align: center; cursor: pointer; box-shadow: var(--shadow); border: 3px solid transparent; transition: all 0.25s; }
+.word-card:hover { border-color: var(--secondary); transform: scale(1.04); }
+.word-card.flipped { border-color: var(--primary); background: linear-gradient(135deg, #ff6b6b, #ffd93d); color: #fff; }
+.word-card .word-en { font-size: 1.1rem; font-weight: 700; }
+.word-card .word-cn { font-size: 0.85rem; color: #888; margin-top: 4px; }
+.word-card.flipped .word-cn { color: rgba(255,255,255,0.85); }
+
+/* ===== LEVELS ===== */
+.level-header { text-align: center; margin-bottom: 20px; }
+.level-title { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
+.level-sub { font-size: 0.95rem; color: #888; margin-top: 4px; }
+
+/* ===== MAP GAME ===== */
+#level1 { background: #f0fffe; }
+.map-container { background: var(--card); border-radius: var(--radius); padding: 24px; max-width: 640px; width: 100%; box-shadow: var(--shadow); }
+.map-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; background: #e8f5e9; border-radius: 12px; padding: 12px; margin: 16px 0; aspect-ratio: 1.6; position: relative; }
+.map-cell { border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; min-height: 50px; cursor: pointer; transition: all 0.2s; position: relative; }
+.map-cell.road { background: #b2dfdb; }
+.map-cell.building { background: linear-gradient(135deg, #ffcc02, #ff9800); color: #fff; font-size: 0.7rem; font-weight: 700; text-align: center; border-radius: 8px; }
+.map-cell.you { background: var(--primary); }
+.map-cell.destination { background: var(--secondary); animation: pulse-map 1.5s infinite; }
+@keyframes pulse-map { 0%,100% { box-shadow: 0 0 0 0 rgba(78,205,196,0.6); } 50% { box-shadow: 0 0 0 8px rgba(78,205,196,0); } }
+.direction-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 200px; margin: 0 auto 16px; }
+.dir-btn { background: var(--secondary); color: #fff; border: none; border-radius: 10px; padding: 12px; font-size: 1.2rem; cursor: pointer; transition: all 0.2s; }
+.dir-btn:hover { background: #3bb3aa; transform: scale(1.08); }
+.dir-btn:active { transform: scale(0.96); }
+.dir-btn.empty { background: transparent; pointer-events: none; }
+.dialogue-box { background: linear-gradient(135deg, #e3f2fd, #e8f5e9); border-radius: 12px; padding: 16px; margin: 12px 0; border-left: 4px solid var(--secondary); }
+.dialogue-text { font-size: 1.05rem; font-weight: 600; color: #2d3436; }
+
+/* ===== DIALOGUE LEVEL ===== */
+#level2 { background: #fff9f0; }
+.chat-container { background: var(--card); border-radius: var(--radius); padding: 24px; max-width: 600px; width: 100%; box-shadow: var(--shadow); }
+.chat-scene { display: flex; align-items: flex-end; gap: 12px; margin-bottom: 20px; }
+.char-img { font-size: 2.5rem; flex-shrink: 0; }
+.chat-bubble { background: linear-gradient(135deg, #e3f2fd, #bbdefb); border-radius: 18px 18px 18px 4px; padding: 14px 18px; max-width: 400px; position: relative; }
+.chat-bubble.right { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); border-radius: 18px 18px 4px 18px; margin-left: auto; }
+.chat-bubble .text { font-size: 1.05rem; font-weight: 600; line-height: 1.5; }
+.chat-bubble .trans { font-size: 0.82rem; color: #888; margin-top: 4px; }
+.choices { display: grid; gap: 10px; margin-top: 16px; }
+.choice-btn { background: #fff; border: 2.5px solid var(--secondary); border-radius: 12px; padding: 14px 18px; font-size: 1rem; cursor: pointer; text-align: left; transition: all 0.2s; }
+.choice-btn:hover { background: var(--secondary); color: #fff; border-color: var(--secondary); transform: translateX(4px); }
+.choice-btn.correct { background: #4ecdc4; color: #fff; border-color: #4ecdc4; }
+.choice-btn.wrong { background: #ff6b6b; color: #fff; border-color: #ff6b6b; }
+.feedback { text-align: center; font-size: 1.2rem; font-weight: 700; padding: 12px; border-radius: 10px; margin-top: 12px; display: none; }
+.feedback.show { display: block; }
+.feedback.correct { background: #e8f5e9; color: #2e7d32; }
+.feedback.wrong { background: #ffebee; color: #c62828; }
+
+/* ===== READING LEVEL ===== */
+#level3 { background: #f8f0ff; }
+.reading-card { background: var(--card); border-radius: var(--radius); padding: 28px; max-width: 620px; width: 100%; box-shadow: var(--shadow); }
+.passage { font-size: 1.05rem; line-height: 2; background: #f9f9ff; border-radius: 12px; padding: 18px; margin-bottom: 20px; }
+.passage .highlight { background: var(--accent); border-radius: 4px; padding: 1px 4px; cursor: pointer; transition: all 0.2s; }
+.passage .highlight:hover { background: #ffcc00; transform: scale(1.02); }
+.tooltip { display: none; position: fixed; background: #2d3436; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; z-index: 999; pointer-events: none; }
+.tooltip.show { display: block; }
+.q-title { font-size: 1.1rem; font-weight: 700; color: var(--primary); margin-bottom: 14px; }
+.q-item { margin-bottom: 18px; }
+.q-text { font-size: 1rem; font-weight: 600; margin-bottom: 8px; }
+.q-options { display: grid; gap: 8px; }
+.q-opt { background: #f5f5f5; border: 2px solid transparent; border-radius: 10px; padding: 10px 14px; cursor: pointer; transition: all 0.2s; font-size: 0.95rem; }
+.q-opt:hover { border-color: var(--secondary); background: #e8f5f4; }
+.q-opt.selected { border-color: var(--primary); background: #fff0f0; }
+.q-opt.correct { border-color: #4ecdc4; background: #e0faf8; }
+.q-opt.wrong { border-color: #ff6b6b; background: #ffe8e8; }
+
+/* ===== BOSS ===== */
+#boss { background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460); color: #fff; }
+.boss-title { font-size: 1.8rem; font-weight: 800; color: var(--accent); text-align: center; margin-bottom: 8px; }
+.boss-sub { color: rgba(255,255,255,0.7); text-align: center; margin-bottom: 24px; }
+.boss-card { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); border-radius: var(--radius); padding: 28px; max-width: 600px; width: 100%; }
+.boss-map { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin: 16px 0; }
+.boss-cell { height: 50px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+.boss-cell.road { background: rgba(255,255,255,0.15); }
+.boss-cell.building { background: linear-gradient(135deg, #ffd93d, #ff6b6b); font-size: 0.65rem; font-weight: 700; color: #fff; text-align: center; border-radius: 8px; padding: 2px; }
+.boss-cell.start { background: var(--primary); }
+.boss-cell.end { background: var(--secondary); animation: pulse-map 1.5s infinite; }
+.boss-task { background: rgba(255,220,70,0.2); border: 1px solid var(--accent); border-radius: 12px; padding: 16px; margin: 16px 0; }
+.boss-task-text { font-size: 1.05rem; color: var(--accent); font-weight: 600; line-height: 1.6; }
+.boss-input { width: 100%; background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3); border-radius: 12px; padding: 14px 18px; color: #fff; font-size: 1rem; margin: 12px 0; outline: none; }
+.boss-input::placeholder { color: rgba(255,255,255,0.5); }
+.boss-submit { background: var(--accent); color: var(--text); border: none; border-radius: 12px; padding: 14px 36px; font-size: 1.1rem; font-weight: 800; cursor: pointer; transition: all 0.2s; margin-top: 8px; }
+.boss-submit:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(255,230,109,0.4); }
+
+/* ===== REPORT ===== */
+#report { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+.report-card { background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border-radius: var(--radius); padding: 36px; max-width: 560px; width: 100%; text-align: center; border: 1px solid rgba(255,255,255,0.25); }
+.report-emoji { font-size: 70px; margin-bottom: 16px; animation: bounce 1.5s infinite; }
+.report-title { font-size: 2rem; font-weight: 900; margin-bottom: 8px; }
+.stars-row { font-size: 2rem; margin: 16px 0; }
+.score-big { font-size: 4rem; font-weight: 900; color: var(--accent); }
+.score-label { font-size: 1rem; opacity: 0.8; margin-bottom: 24px; }
+.achievements-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }
+.ach-item { background: rgba(255,255,255,0.15); border-radius: 12px; padding: 12px 8px; text-align: center; }
+.ach-item .ach-icon { font-size: 1.6rem; }
+.ach-item .ach-name { font-size: 0.7rem; margin-top: 4px; opacity: 0.85; }
+.ach-item.locked { opacity: 0.35; filter: grayscale(1); }
+.stat-row { display: flex; justify-content: space-around; margin: 16px 0; }
+.stat-item { text-align: center; }
+.stat-num { font-size: 1.8rem; font-weight: 800; color: var(--accent); }
+.stat-lbl { font-size: 0.8rem; opacity: 0.75; }
+.btn-retry { background: #fff; color: #667eea; border: none; border-radius: 50px; padding: 14px 40px; font-size: 1.1rem; font-weight: 800; cursor: pointer; margin: 8px; transition: all 0.2s; }
+.btn-retry:hover { transform: scale(1.05); }
+
+/* ===== EXTENSION ===== */
+#extension { background: var(--bg); }
+.ext-card { background: var(--card); border-radius: var(--radius); padding: 30px; max-width: 620px; width: 100%; box-shadow: var(--shadow); }
+.ext-title { font-size: 1.4rem; font-weight: 800; color: var(--secondary); margin-bottom: 20px; text-align: center; }
+.phrases-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.phrase-card { background: linear-gradient(135deg, #e3f2fd, #e8f5e9); border-radius: 12px; padding: 14px; border-left: 4px solid var(--secondary); }
+.phrase-en { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+.phrase-cn { font-size: 0.82rem; color: #888; margin-top: 4px; }
+.cultural-box { background: linear-gradient(135deg, #fff9e6, #fff3cd); border-radius: 12px; padding: 18px; border: 2px dashed var(--accent); }
+.cultural-title { font-size: 1rem; font-weight: 700; color: #e67e22; margin-bottom: 8px; }
+.cultural-text { font-size: 0.9rem; line-height: 1.7; color: #555; }
+
+/* ===== PROGRESS BAR ===== */
+.progress-bar { position: fixed; top: 0; left: 0; width: 100%; height: 5px; background: rgba(0,0,0,0.1); z-index: 100; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); transition: width 0.5s ease; }
+
+/* ===== MASCOT ===== */
+.mascot-bubble { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; z-index: 50; }
+.mascot-icon { font-size: 2.5rem; cursor: pointer; transition: transform 0.2s; animation: wiggle 3s infinite; }
+@keyframes wiggle { 0%,90%,100% { transform: rotate(0); } 93% { transform: rotate(-8deg); } 96% { transform: rotate(8deg); } }
+.mascot-hint { background: var(--card); border-radius: 12px 12px 4px 12px; padding: 10px 14px; max-width: 200px; font-size: 0.85rem; box-shadow: var(--shadow); border: 2px solid var(--accent); display: none; line-height: 1.5; }
+.mascot-hint.show { display: block; animation: fadeIn 0.3s ease; }
+
+/* ===== STARS FLOATING ===== */
+.star-float { position: fixed; pointer-events: none; font-size: 1.5rem; z-index: 200; animation: starUp 1.2s ease-out forwards; }
+@keyframes starUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-80px) scale(1.5); } }
+
+/* ===== NAV ===== */
+.nav-btn { background: var(--primary); color: #fff; border: none; border-radius: 50px; padding: 13px 36px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 20px; box-shadow: var(--shadow); transition: all 0.2s; }
+.nav-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(255,107,107,0.35); }
+.nav-btn.secondary { background: var(--secondary); }
+.nav-btn.secondary:hover { box-shadow: 0 8px 25px rgba(78,205,196,0.35); }
+
+/* ===== HP BAR ===== */
+.hp-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.hp-label { font-size: 0.9rem; font-weight: 700; color: var(--primary); min-width: 60px; }
+.hp-track { flex: 1; height: 14px; background: rgba(255,255,255,0.3); border-radius: 7px; overflow: hidden; }
+.hp-fill { height: 100%; background: linear-gradient(90deg, #ff6b6b, #ffd93d); border-radius: 7px; transition: width 0.5s ease; }
+</style>
+</head>
+<body>
+
+<div class="progress-bar"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+
+<!-- MASCOT -->
+<div class="mascot-bubble">
+  <div class="mascot-hint" id="mascotHint">点我获取提示！🗺️<br>方向词：left, right, straight!</div>
+  <div class="mascot-icon" onclick="toggleHint()">🐻</div>
+</div>
+
+<!-- TOOLTIP -->
+<div class="tooltip" id="tooltip"></div>
+
+<!-- ===== HERO ===== -->
+<section class="section active" id="hero">
+  <div class="hero-mascot">🗺️</div>
+  <div class="hero-title">Asking Directions</div>
+  <div class="hero-sub">问路冒险 · 四年级英语</div>
+  <div class="hero-badge">🎯 3关卡 · 🏆 8成就 · ⭐ 100分</div>
+  <button class="btn-start" onclick="goTo('objectives')">开始冒险 🚀</button>
+</section>
+
+<!-- ===== OBJECTIVES ===== -->
+<section class="section" id="objectives">
+  <div class="obj-card">
+    <div class="obj-title">🎯 今日目标</div>
+    <div class="obj-item"><div class="obj-icon">🗣️</div><div class="obj-text"><strong>学会询问</strong>：Excuse me, where is the...?</div></div>
+    <div class="obj-item"><div class="obj-icon">👂</div><div class="obj-text"><strong>学会回答</strong>：Turn left/right, Go straight</div></div>
+    <div class="obj-item"><div class="obj-icon">🗺️</div><div class="obj-text"><strong>互动地图</strong>：在虚拟地图上完成问路任务</div></div>
+    <div class="obj-item"><div class="obj-icon">🏆</div><div class="obj-text"><strong>解锁成就</strong>：收集8个探险家徽章</div></div>
+    <button class="nav-btn" onclick="goTo('warmup')">开始热身 🔥</button>
+  </div>
+</section>
+
+<!-- ===== WARMUP ===== -->
+<section class="section" id="warmup">
+  <div class="warmup-title">🔥 热身：认识方向词</div>
+  <div class="word-grid">
+    <div class="word-card" onclick="flipWord(this, 'straight', '直走')"><div class="word-en">straight</div><div class="word-cn">点击翻译</div></div>
+    <div class="word-card" onclick="flipWord(this, 'left', '左')"><div class="word-en">left</div><div class="word-cn">点击翻译</div></div>
+    <div class="word-card" onclick="flipWord(this, 'right', '右')"><div class="word-en">right</div><div class="word-cn">点击翻译</div></div>
+    <div class="word-card" onclick="flipWord(this, 'turn', '转弯')"><div class="word-en">turn</div><div class="word-cn">点击翻译</div></div>
+    <div class="word-card" onclick="flipWord(this, 'near', '附近')"><div class="word-en">near</div><div class="word-cn">点击翻译</div></div>
+    <div class="word-card" onclick="flipWord(this, 'far', '远')"><div class="word-en">far</div><div class="word-cn">点击翻译</div></div>
+  </div>
+  <p style="color:#888;font-size:0.9rem;margin-bottom:16px">已翻转: <span id="flipCount">0</span>/6 个单词</p>
+  <button class="nav-btn" onclick="goTo('level1')">进入关卡1 🗺️</button>
+</section>
+
+<!-- ===== LEVEL 1: MAP GAME ===== -->
+<section class="section" id="level1">
+  <div class="map-container">
+    <div class="level-header">
+      <div class="level-title">🗺️ 关卡1：地图导航</div>
+      <div class="level-sub">按提示移动小人到目的地！</div>
+    </div>
+    <div class="hp-bar">
+      <div class="hp-label">❤️ HP</div>
+      <div class="hp-track"><div class="hp-fill" id="mapHp" style="width:100%"></div></div>
+      <span id="mapHpNum">3</span>
+    </div>
+    <div class="map-grid" id="mapGrid"></div>
+    <div class="dialogue-box">
+      <div class="dialogue-text" id="mapDialogue">🧑 Excuse me, where is the <strong id="mapTarget">library</strong>?</div>
+    </div>
+    <div class="direction-buttons">
+      <div class="dir-btn empty"></div>
+      <button class="dir-btn" onclick="movePlayer('up')">⬆️</button>
+      <div class="dir-btn empty"></div>
+      <button class="dir-btn" onclick="movePlayer('left')">⬅️</button>
+      <div class="dir-btn empty"></div>
+      <button class="dir-btn" onclick="movePlayer('right')">➡️</button>
+      <div class="dir-btn empty"></div>
+      <button class="dir-btn" onclick="movePlayer('down')">⬇️</button>
+      <div class="dir-btn empty"></div>
+    </div>
+    <div style="text-align:center">
+      <span style="font-size:0.9rem;color:#888">步数: <span id="stepCount">0</span> | 关卡: <span id="mapLevel">1</span>/3</span>
+    </div>
+  </div>
+</section>
+
+<!-- ===== LEVEL 2: DIALOGUE ===== -->
+<section class="section" id="level2">
+  <div class="chat-container">
+    <div class="level-header">
+      <div class="level-title">💬 关卡2：对话模拟</div>
+      <div class="level-sub">选择正确的问路回答！</div>
+    </div>
+    <div id="dialogueArea"></div>
+    <div id="choicesArea" class="choices"></div>
+    <div class="feedback" id="dialogueFeedback"></div>
+    <div style="text-align:center;margin-top:14px">
+      <span style="font-size:0.9rem;color:#888">题目: <span id="dialogueQ">1</span>/4 | 得分: <span id="dialogueScore">0</span></span>
+    </div>
+  </div>
+</section>
+
+<!-- ===== LEVEL 3: READING ===== -->
+<section class="section" id="level3">
+  <div class="reading-card">
+    <div class="level-header">
+      <div class="level-title">📖 关卡3：阅读理解</div>
+      <div class="level-sub">点击高亮词汇查看释义，回答问题！</div>
+    </div>
+    <div class="passage">
+      <p>Tom wants to go to the <span class="highlight" data-tip="图书馆 library">library</span>. He asks a woman on the street: <em>"Excuse me, where is the library?"</em></p>
+      <p style="margin-top:12px">The woman says: <em>"<span class="highlight" data-tip="直走 go straight">Go straight</span> for two blocks, then <span class="highlight" data-tip="左转 turn left">turn left</span>. The library is on the <span class="highlight" data-tip="右边 right side">right side</span>."</em></p>
+      <p style="margin-top:12px">Tom says: <em>"<span class="highlight" data-tip="非常感谢 thank you very much">Thank you very much!</span>"</em> The woman smiles: <em>"You're welcome!"</em></p>
+    </div>
+    <div class="q-title">📝 阅读理解题</div>
+    <div id="readingQuestions"></div>
+    <button class="nav-btn secondary" id="checkReadingBtn" onclick="checkReading()" style="display:none">提交答案 ✅</button>
+  </div>
+</section>
+
+<!-- ===== BOSS ===== -->
+<section class="section" id="boss">
+  <div class="boss-title">⚡ Boss挑战：问路大师</div>
+  <div class="boss-sub">帮助小明找到正确路线并写出对话！</div>
+  <div class="boss-card">
+    <div class="hp-bar">
+      <div class="hp-label">🐲 Boss</div>
+      <div class="hp-track"><div class="hp-fill" id="bossHp" style="width:100%"></div></div>
+    </div>
+    <div class="boss-map" id="bossMap"></div>
+    <div class="boss-task">
+      <div class="boss-task-text" id="bossTask">📍 小明在 🟥 出发点，需要去 🟩 医院 (hospital)<br>请写出完整问路对话（至少2句话）</div>
+    </div>
+    <textarea class="boss-input" id="bossAnswer" rows="4" placeholder="A: Excuse me, where is the hospital?&#10;B: ..."></textarea>
+    <div style="text-align:center">
+      <button class="boss-submit" onclick="checkBoss()">提交 ⚡</button>
+    </div>
+    <div class="feedback" id="bossFeedback"></div>
+  </div>
+</section>
+
+<!-- ===== REPORT ===== -->
+<section class="section" id="report">
+  <div class="report-card">
+    <div class="report-emoji" id="reportEmoji">🏆</div>
+    <div class="report-title" id="reportTitle">太棒了！</div>
+    <div class="stars-row" id="starsRow">⭐⭐⭐</div>
+    <div class="score-big" id="scoreDisplay">0</div>
+    <div class="score-label">/ 100 分</div>
+    <div class="stat-row">
+      <div class="stat-item"><div class="stat-num" id="statCorrect">0</div><div class="stat-lbl">答对</div></div>
+      <div class="stat-item"><div class="stat-num" id="statAch">0</div><div class="stat-lbl">成就</div></div>
+      <div class="stat-item"><div class="stat-num" id="statTime">0</div><div class="stat-lbl">秒</div></div>
+    </div>
+    <div class="achievements-grid" id="achievementsGrid"></div>
+    <button class="btn-retry" onclick="goTo('hero')">再来一次 🔄</button>
+    <button class="btn-retry" onclick="goTo('extension')">课后拓展 📚</button>
+  </div>
+</section>
+
+<!-- ===== EXTENSION ===== -->
+<section class="section" id="extension">
+  <div class="ext-card">
+    <div class="ext-title">📚 拓展学习：问路常用句</div>
+    <div class="phrases-grid">
+      <div class="phrase-card"><div class="phrase-en">Excuse me, where is...?</div><div class="phrase-cn">打扰一下，...在哪里？</div></div>
+      <div class="phrase-card"><div class="phrase-en">Turn left / Turn right</div><div class="phrase-cn">向左转 / 向右转</div></div>
+      <div class="phrase-card"><div class="phrase-en">Go straight ahead</div><div class="phrase-cn">一直往前走</div></div>
+      <div class="phrase-card"><div class="phrase-en">It's on the left/right.</div><div class="phrase-cn">它在左/右边。</div></div>
+      <div class="phrase-card"><div class="phrase-en">How far is it?</div><div class="phrase-cn">有多远？</div></div>
+      <div class="phrase-card"><div class="phrase-en">You can't miss it!</div><div class="phrase-cn">你一定能找到！</div></div>
+    </div>
+    <div class="cultural-box">
+      <div class="cultural-title">🌍 文化小知识</div>
+      <div class="cultural-text">在英语国家问路时，要先说 <strong>"Excuse me"</strong> 表示礼貌。英国人习惯用"地标"（landmark）指路，比如"It's next to the red building"（在红色建筑旁边）。美国人则更常用"block"（街区）来表示距离，比如"two blocks away"（两个街区远）。</div>
+    </div>
+    <button class="nav-btn" onclick="goTo('hero')" style="margin-top:20px">🏠 返回首页</button>
+  </div>
+</section>
+
+<script>
+// ===== STATE =====
+const state = {
+  score: 0,
+  correct: 0,
+  achievements: new Set(),
+  startTime: Date.now(),
+  mapHp: 3,
+  mapMission: 0,
+  playerPos: { r: 4, c: 0 },
+  destPos: { r: 0, c: 4 },
+  dialogueIndex: 0,
+  dialogueScore: 0,
+  readingAnswers: {},
+  bossAttempts: 0,
+  flipCount: 0
+};
+
+const sections = ['hero','objectives','warmup','level1','level2','level3','boss','report','extension'];
+const sectionProgress = { hero:0, objectives:12, warmup:25, level1:38, level2:55, level3:70, boss:85, report:100, extension:100 };
+
+const achievements = [
+  { id:'first_step', icon:'👣', name:'第一步', desc:'开始学习' },
+  { id:'warm_master', icon:'🔥', name:'热身达人', desc:'翻完6词' },
+  { id:'navigator', icon:'🧭', name:'小导航员', desc:'地图任务完成' },
+  { id:'chat_star', icon:'💬', name:'对话之星', desc:'对话全对' },
+  { id:'reader', icon:'📖', name:'阅读小能手', desc:'阅读全对' },
+  { id:'boss_slayer', icon:'⚔️', name:'Boss终结者', desc:'完成Boss挑战' },
+  { id:'speed_run', icon:'⚡', name:'闪电玩家', desc:'5分钟内完成' },
+  { id:'perfect', icon:'💯', name:'满分选手', desc:'得满分' }
+];
+
+function goTo(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('progress').style.width = (sectionProgress[id] || 0) + '%';
+  if (id === 'level1') initMap();
+  if (id === 'level2') initDialogue();
+  if (id === 'level3') initReading();
+  if (id === 'boss') initBoss();
+  if (id === 'report') showReport();
+  if (id === 'warmup') unlockAch('first_step');
+  scrollTo(0,0);
+}
+
+// ===== AUDIO =====
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+function getAudioCtx() { if (!audioCtx) audioCtx = new AudioCtx(); return audioCtx; }
+function playTone(freq, dur, type='sine', vol=0.3) {
+  try {
+    const ctx = getAudioCtx();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    o.start(); o.stop(ctx.currentTime + dur);
+  } catch(e) {}
+}
+function playCorrect() { playTone(523,0.1); setTimeout(()=>playTone(659,0.1),100); setTimeout(()=>playTone(784,0.2),200); }
+function playWrong() { playTone(200,0.3,'sawtooth',0.2); }
+function playAch() { [523,587,659,784].forEach((f,i)=>setTimeout(()=>playTone(f,0.15),i*80)); }
+function playMove() { playTone(440,0.08,'triangle',0.15); }
+
+// ===== ACHIEVEMENTS =====
+function unlockAch(id) {
+  if (state.achievements.has(id)) return;
+  state.achievements.add(id);
+  const ach = achievements.find(a => a.id === id);
+  if (!ach) return;
+  playAch();
+  floatStar('🏆');
+  showToast(`🏆 成就解锁：${ach.icon} ${ach.name}`);
+  state.score += 5;
+}
+
+function showToast(msg) {
+  const d = document.createElement('div');
+  d.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:10px 22px;border-radius:30px;font-size:0.95rem;font-weight:700;z-index:300;box-shadow:0 4px 20px rgba(0,0,0,0.2);animation:fadeIn 0.3s ease';
+  d.textContent = msg;
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 2500);
+}
+
+function floatStar(emoji='⭐') {
+  const el = document.createElement('div');
+  el.className = 'star-float';
+  el.textContent = emoji;
+  el.style.left = (Math.random()*60+20)+'%';
+  el.style.top = (Math.random()*40+30)+'%';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1200);
+}
+
+// ===== MASCOT =====
+function toggleHint() {
+  const h = document.getElementById('mascotHint');
+  h.classList.toggle('show');
+}
+
+// ===== WARMUP =====
+function flipWord(el, word, trans) {
+  if (el.classList.contains('flipped')) return;
+  el.classList.add('flipped');
+  el.querySelector('.word-cn').textContent = trans;
+  playCorrect();
+  floatStar('⭐');
+  state.flipCount++;
+  document.getElementById('flipCount').textContent = state.flipCount;
+  if (state.flipCount >= 6) unlockAch('warm_master');
+}
+
+// ===== MAP GAME =====
+const mapMissions = [
+  { target: 'library', destR: 0, destC: 4, startR: 4, startC: 0 },
+  { target: 'hospital', destR: 1, destC: 3, startR: 3, startC: 0 },
+  { target: 'school', destR: 0, destC: 2, startR: 4, startC: 4 }
+];
+const buildingEmojis = { library:'📚', hospital:'🏥', school:'🏫', park:'🌳', store:'🛒' };
+
+function initMap() {
+  const m = mapMissions[state.mapMission % mapMissions.length];
+  state.playerPos = { r: m.startR, c: m.startC };
+  state.destPos = { r: m.destR, c: m.destC };
+  document.getElementById('mapTarget').textContent = m.target;
+  document.getElementById('mapHpNum').textContent = state.mapHp;
+  document.getElementById('mapLevel').textContent = (state.mapMission + 1);
+  document.getElementById('stepCount').textContent = 0;
+  renderMap();
+}
+
+function renderMap() {
+  const grid = document.getElementById('mapGrid');
+  const rows = 5, cols = 5;
+  grid.innerHTML = '';
+  const buildings = [
+    { r:0,c:4,type:'library' }, { r:1,c:3,type:'hospital' }, { r:0,c:2,type:'school' },
+    { r:2,c:1,type:'park' }, { r:3,c:4,type:'store' }
+  ];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'map-cell';
+      const bld = buildings.find(b => b.r===r && b.c===c);
+      const isPlayer = state.playerPos.r===r && state.playerPos.c===c;
+      const isDest = state.destPos.r===r && state.destPos.c===c;
+      if (isPlayer) { cell.classList.add('you'); cell.textContent = '🧒'; }
+      else if (isDest) { cell.classList.add('destination'); cell.textContent = buildingEmojis[mapMissions[state.mapMission % mapMissions.length].target] || '⭐'; }
+      else if (bld) { cell.classList.add('building'); cell.textContent = (buildingEmojis[bld.type]||'🏢') + '\n' + bld.type; cell.style.fontSize='0.7rem'; }
+      else { cell.classList.add('road'); }
+      grid.appendChild(cell);
+    }
+  }
+}
+
+function movePlayer(dir) {
+  const rows = 5, cols = 5;
+  let { r, c } = state.playerPos;
+  if (dir === 'up') r--;
+  if (dir === 'down') r++;
+  if (dir === 'left') c--;
+  if (dir === 'right') c++;
+  if (r < 0 || r >= rows || c < 0 || c >= cols) { playWrong(); return; }
+  playMove();
+  state.playerPos = { r, c };
+  const steps = parseInt(document.getElementById('stepCount').textContent) + 1;
+  document.getElementById('stepCount').textContent = steps;
+  renderMap();
+  if (r === state.destPos.r && c === state.destPos.c) {
+    playCorrect();
+    floatStar('⭐'); floatStar('⭐'); floatStar('⭐');
+    state.score += 15;
+    state.correct++;
+    state.mapMission++;
+    if (state.mapMission >= 3) {
+      unlockAch('navigator');
+      setTimeout(() => goTo('level2'), 1000);
+    } else {
+      showToast('🎉 找到了！继续下一个任务！');
+      setTimeout(() => initMap(), 1200);
+    }
+  }
+}
+
+// ===== DIALOGUE =====
+const dialogueQuestions = [
+  {
+    scene: '🧑 A: Excuse me, where is the supermarket?',
+    trans: '打扰一下，超市在哪里？',
+    choices: ['B: Go straight and turn right.', 'B: I like apples.', 'B: The weather is nice.', 'B: I am a student.'],
+    correct: 0
+  },
+  {
+    scene: '🧑 A: Is the park far from here?',
+    trans: '公园离这里远吗？',
+    choices: ['B: Yes, it is very far.', 'B: I go to school by bus.', 'B: She is my friend.', 'B: I have a cat.'],
+    correct: 0
+  },
+  {
+    scene: '🧑 A: How can I get to the hospital?',
+    trans: '我怎么去医院？',
+    choices: ['B: Turn left, then go straight.', 'B: My name is Lucy.', 'B: I like playing football.', 'B: Today is Monday.'],
+    correct: 0
+  },
+  {
+    scene: '🧑 A: Thank you for your help!',
+    trans: '感谢你的帮助！',
+    choices: ["B: You're welcome!", 'B: How old are you?', 'B: I live in Beijing.', 'B: Let\'s go swimming.'],
+    correct: 0
+  }
+];
+
+function initDialogue() {
+  state.dialogueIndex = 0;
+  state.dialogueScore = 0;
+  renderDialogue();
+}
+
+function renderDialogue() {
+  const q = dialogueQuestions[state.dialogueIndex];
+  if (!q) { unlockAch('chat_star'); goTo('level3'); return; }
+  document.getElementById('dialogueQ').textContent = state.dialogueIndex + 1;
+  document.getElementById('dialogueScore').textContent = state.dialogueScore;
+  const area = document.getElementById('dialogueArea');
+  area.innerHTML = `
+    <div class="chat-scene">
+      <div class="char-img">🧑</div>
+      <div class="chat-bubble">
+        <div class="text">${q.scene.replace('🧑 A: ','')}</div>
+        <div class="trans">${q.trans}</div>
+      </div>
+    </div>
+    <div class="chat-scene" style="flex-direction:row-reverse">
+      <div class="char-img">👩</div>
+      <div class="chat-bubble right"><div class="text">???</div></div>
+    </div>
+  `;
+  const choicesArea = document.getElementById('choicesArea');
+  choicesArea.innerHTML = '';
+  const shuffled = q.choices.map((c,i)=>({text:c,idx:i})).sort(()=>Math.random()-0.5);
+  shuffled.forEach(item => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = item.text;
+    btn.onclick = () => answerDialogue(item.idx, q.correct, btn);
+    choicesArea.appendChild(btn);
+  });
+  document.getElementById('dialogueFeedback').classList.remove('show');
+}
+
+function answerDialogue(idx, correct, btn) {
+  const fb = document.getElementById('dialogueFeedback');
+  document.querySelectorAll('.choice-btn').forEach(b => b.onclick = null);
+  if (idx === correct) {
+    btn.classList.add('correct');
+    fb.className = 'feedback correct show';
+    fb.textContent = '✅ 太棒了！回答正确！';
+    playCorrect(); floatStar('⭐');
+    state.dialogueScore++;
+    state.score += 10;
+    state.correct++;
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('.choice-btn')[0].classList.add('correct');
+    fb.className = 'feedback wrong show';
+    fb.textContent = '❌ 再想想！正确答案已高亮显示。';
+    playWrong();
+  }
+  state.dialogueIndex++;
+  setTimeout(renderDialogue, 1800);
+}
+
+// ===== READING =====
+const readingQs = [
+  { q: 'Where does Tom want to go?', opts: ['The park', 'The library', 'The school', 'The hospital'], correct: 1 },
+  { q: 'What does Tom say first?', opts: ['"Thank you!"', '"Hello!"', '"Excuse me, where is the library?"', '"Go straight!"'], correct: 2 },
+  { q: 'Which way does Tom turn?', opts: ['Right', 'Left', 'Straight', 'Back'], correct: 1 },
+  { q: 'Where is the library?', opts: ['On the left side', 'On the right side', 'Behind the park', 'Near the school'], correct: 1 }
+];
+
+function initReading() {
+  state.readingAnswers = {};
+  const container = document.getElementById('readingQuestions');
+  container.innerHTML = '';
+  readingQs.forEach((q,qi) => {
+    const div = document.createElement('div');
+    div.className = 'q-item';
+    div.innerHTML = `<div class="q-text">${qi+1}. ${q.q}</div><div class="q-options" id="ropts${qi}"></div>`;
+    container.appendChild(div);
+    const optsDiv = div.querySelector(`#ropts${qi}`);
+    q.opts.forEach((opt,oi) => {
+      const btn = document.createElement('div');
+      btn.className = 'q-opt';
+      btn.textContent = String.fromCharCode(65+oi) + '. ' + opt;
+      btn.onclick = () => selectReadingOpt(qi, oi, btn, optsDiv);
+      optsDiv.appendChild(btn);
+    });
+  });
+  document.getElementById('checkReadingBtn').style.display = 'block';
+
+  // tooltip for highlights
+  document.querySelectorAll('.highlight').forEach(el => {
+    el.addEventListener('mouseenter', e => {
+      const t = document.getElementById('tooltip');
+      t.textContent = el.dataset.tip;
+      t.className = 'tooltip show';
+      t.style.left = e.clientX + 10 + 'px';
+      t.style.top = e.clientY + 10 + 'px';
+      playTone(660,0.08,'triangle',0.1);
+    });
+    el.addEventListener('mouseleave', () => document.getElementById('tooltip').className = 'tooltip');
+  });
+}
+
+function selectReadingOpt(qi, oi, btn, container) {
+  container.querySelectorAll('.q-opt').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  state.readingAnswers[qi] = oi;
+  playTone(523,0.08,'triangle',0.15);
+}
+
+function checkReading() {
+  if (Object.keys(state.readingAnswers).length < readingQs.length) { showToast('⚠️ 请回答所有问题！'); return; }
+  let correct = 0;
+  readingQs.forEach((q,qi) => {
+    const container = document.getElementById('ropts'+qi);
+    container.querySelectorAll('.q-opt').forEach((b,oi) => {
+      if (oi === q.correct) b.classList.add('correct');
+      else if (oi === state.readingAnswers[qi]) b.classList.add('wrong');
+    });
+    if (state.readingAnswers[qi] === q.correct) correct++;
+  });
+  state.score += correct * 8;
+  state.correct += correct;
+  if (correct === readingQs.length) { unlockAch('reader'); floatStar('💯'); }
+  document.getElementById('checkReadingBtn').style.display = 'none';
+  showToast(`📖 阅读得分：${correct}/${readingQs.length}`);
+  setTimeout(() => goTo('boss'), 2000);
+}
+
+// ===== BOSS =====
+function initBoss() {
+  const bossCells = [
+    '🟥','road','road','road','road','road',
+    'road','road','road','🏥','road','road',
+    'road','road','road','road','road','road',
+  ];
+  const grid = document.getElementById('bossMap');
+  grid.innerHTML = '';
+  [
+    {t:'start',e:'🏠'},{t:'road'},{t:'road'},{t:'road'},{t:'road'},{t:'road'},
+    {t:'road'},{t:'road'},{t:'road'},{t:'building',e:'🏥',l:'hospital'},{t:'road'},{t:'road'},
+    {t:'road'},{t:'road'},{t:'road'},{t:'road'},{t:'road'},{t:'road'}
+  ].forEach(c => {
+    const el = document.createElement('div');
+    el.className = 'boss-cell ' + (c.t==='building'?'building':c.t==='start'?'start':'road');
+    if (c.e) el.textContent = c.e;
+    grid.appendChild(el);
+  });
+}
+
+function checkBoss() {
+  const ans = document.getElementById('bossAnswer').value.toLowerCase().trim();
+  const fb = document.getElementById('bossFeedback');
+  if (ans.includes('excuse me') && (ans.includes('where') || ans.includes('hospital'))) {
+    fb.className = 'feedback correct show';
+    fb.textContent = '🎉 完美！对话非常地道！';
+    playCorrect(); floatStar('⭐'); floatStar('⭐'); floatStar('⭐');
+    unlockAch('boss_slayer');
+    state.score += 20;
+    const elapsed = (Date.now() - state.startTime) / 1000;
+    if (elapsed < 300) unlockAch('speed_run');
+    if (state.score >= 95) unlockAch('perfect');
+    setTimeout(() => goTo('report'), 2000);
+  } else {
+    state.bossAttempts++;
+    fb.className = 'feedback wrong show';
+    fb.textContent = '💡 提示：记得用 "Excuse me, where is the hospital?" 开头！';
+    playWrong();
+    document.getElementById('bossHp').style.width = Math.max(0, 100 - state.bossAttempts*33) + '%';
+  }
+}
+
+// ===== REPORT =====
+function showReport() {
+  const score = Math.min(100, state.score);
+  const elapsed = Math.round((Date.now() - state.startTime) / 1000);
+  document.getElementById('scoreDisplay').textContent = score;
+  document.getElementById('statCorrect').textContent = state.correct;
+  document.getElementById('statAch').textContent = state.achievements.size;
+  document.getElementById('statTime').textContent = elapsed;
+  const stars = score >= 90 ? '⭐⭐⭐' : score >= 70 ? '⭐⭐' : '⭐';
+  document.getElementById('starsRow').textContent = stars;
+  const emojis = score >= 90 ? ['🏆','太棒了！满分英雄！'] : score >= 70 ? ['🎉','做得很好！'] : ['💪','继续加油！'];
+  document.getElementById('reportEmoji').textContent = emojis[0];
+  document.getElementById('reportTitle').textContent = emojis[1];
+  const grid = document.getElementById('achievementsGrid');
+  grid.innerHTML = '';
+  achievements.forEach(a => {
+    const el = document.createElement('div');
+    el.className = 'ach-item' + (state.achievements.has(a.id) ? '' : ' locked');
+    el.innerHTML = `<div class="ach-icon">${a.icon}</div><div class="ach-name">${a.name}</div>`;
+    grid.appendChild(el);
+  });
+  playAch();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>一般将来时 - 六年级英语</title>
+<style>
+  :root {
+    --bg: #fffbf0;
+    --primary: #ff6b6b;
+    --secondary: #4ecdc4;
+    --accent: #ffe66d;
+    --card: #fff;
+    --text: #333;
+    --shadow: 0 4px 20px rgba(0,0,0,0.1);
+    --purple: #a855f7;
+    --blue: #3b82f6;
+    --green: #22c55e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', 'PingFang SC', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  .screen { display: none; min-height: 100vh; padding: 20px; animation: fadeIn 0.5s ease; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+  @keyframes rocketLaunch { 0% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-30px) rotate(5deg); } 100% { transform: translateY(0) rotate(0deg); } }
+  @keyframes starFly { 0% { opacity: 1; transform: scale(0); } 100% { opacity: 0; transform: scale(2) translateY(-100px); } }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+  @keyframes bossFloat { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-20px) rotate(8deg); } }
+  @keyframes timelineSlide { from { transform: scaleX(0); transform-origin: left; } to { transform: scaleX(1); } }
+
+  /* HERO */
+  #screen-hero { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 70%, #533483 100%); justify-content: center; text-align: center; gap: 20px; position: relative; overflow: hidden; }
+  .hero-stars { position: absolute; inset: 0; pointer-events: none; }
+  .star-bg { position: absolute; border-radius: 50%; background: #fff; animation: pulse 2s infinite; }
+  .hero-rocket { font-size: 5em; animation: rocketLaunch 3s ease-in-out infinite; }
+  .hero-title { font-size: 2.5em; font-weight: 900; color: #fff; text-shadow: 0 0 20px rgba(168,85,247,0.8); }
+  .hero-sub { color: rgba(255,255,255,0.9); font-size: 1.2em; }
+  .btn-start { background: linear-gradient(135deg, var(--purple), var(--blue)); color: #fff; border: none; border-radius: 50px; padding: 16px 48px; font-size: 1.3em; font-weight: 700; cursor: pointer; box-shadow: 0 6px 30px rgba(168,85,247,0.5); transition: all 0.3s; }
+  .btn-start:hover { transform: scale(1.05); box-shadow: 0 8px 40px rgba(168,85,247,0.7); }
+
+  /* TOPBAR */
+  .topbar { width: 100%; max-width: 800px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; background: var(--card); border-radius: 20px; padding: 10px 20px; box-shadow: var(--shadow); }
+  .topbar-stars { color: #f0a500; font-weight: 700; font-size: 1.1em; }
+  .topbar-progress { flex: 1; margin: 0 15px; }
+  .progress-bar { height: 12px; background: #eee; border-radius: 10px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--purple), var(--primary)); border-radius: 10px; transition: width 0.5s; }
+
+  /* COMMON */
+  .section-title { font-size: 1.8em; font-weight: 800; color: var(--primary); margin-bottom: 15px; text-align: center; }
+  .section-sub { color: #666; margin-bottom: 25px; text-align: center; font-size: 1.05em; }
+  .card { background: var(--card); border-radius: 20px; padding: 25px; box-shadow: var(--shadow); width: 100%; max-width: 800px; margin-bottom: 20px; }
+  .bear-box { display: flex; align-items: flex-start; gap: 15px; background: linear-gradient(135deg, #f5f0ff, #fff); border: 3px solid var(--purple); border-radius: 20px; padding: 20px; margin-bottom: 20px; max-width: 800px; width: 100%; }
+  .bear-icon { font-size: 2.5em; flex-shrink: 0; }
+  .bear-speech strong { display: block; color: var(--purple); margin-bottom: 5px; }
+  .btn { border: none; border-radius: 50px; padding: 12px 35px; font-size: 1em; font-weight: 700; cursor: pointer; transition: all 0.3s; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-secondary { background: var(--secondary); color: #fff; }
+  .btn-purple { background: var(--purple); color: #fff; }
+  .btn-blue { background: var(--blue); color: #fff; }
+  .btn:hover { transform: scale(1.05); filter: brightness(1.05); }
+  .btn-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+  .level-badge { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, var(--purple), var(--blue)); color: #fff; border-radius: 50px; padding: 8px 20px; font-weight: 800; font-size: 1.1em; margin-bottom: 15px; }
+  .feedback { text-align: center; padding: 15px; border-radius: 12px; font-size: 1.1em; font-weight: 700; margin-top: 15px; display: none; }
+  .feedback.show { display: block; animation: fadeIn 0.3s; }
+  .feedback.ok { background: #f0fff4; color: #22c55e; }
+  .feedback.ng { background: #fff5f5; color: var(--primary); }
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .opt-btn { background: #f5f5f5; border: 2px solid #eee; border-radius: 12px; padding: 14px 20px; font-size: 1em; cursor: pointer; text-align: left; transition: all 0.3s; font-weight: 600; }
+  .opt-btn:hover { border-color: var(--purple); background: #faf5ff; }
+  .opt-btn.correct { background: #f0fff4; border-color: #22c55e; color: #16a34a; }
+  .opt-btn.wrong { background: #fff5f5; border-color: var(--primary); color: var(--primary); }
+  .star-pop { position: fixed; pointer-events: none; font-size: 2em; z-index: 999; animation: starFly 1s ease-out forwards; }
+  .fill-input { border: 3px solid #ddd; border-radius: 12px; padding: 10px 15px; font-size: 1.1em; outline: none; transition: border 0.3s; text-align: center; font-weight: 600; }
+  .fill-input:focus { border-color: var(--purple); }
+  .fill-input.correct { border-color: #22c55e; background: #f0fff4; }
+  .fill-input.wrong { border-color: var(--primary); background: #fff5f5; }
+  .btn-check { background: var(--purple); color: #fff; border: none; border-radius: 50px; padding: 10px 30px; font-size: 1em; font-weight: 700; cursor: pointer; transition: all 0.3s; }
+  .btn-check:hover { transform: scale(1.05); }
+
+  /* FUTURE TIMELINE */
+  .future-timeline { padding: 30px 20px; position: relative; }
+  .ft-bar { height: 6px; background: linear-gradient(90deg, var(--purple), var(--blue), var(--secondary)); border-radius: 3px; margin: 40px 0; animation: timelineSlide 1.5s ease-out; }
+  .ft-events { display: flex; justify-content: space-between; margin-top: -50px; }
+  .ft-event { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .ft-dot { width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 3px solid var(--purple); }
+  .ft-label { font-size: 0.8em; font-weight: 700; text-align: center; max-width: 80px; color: var(--purple); }
+  .ft-above { margin-bottom: 55px; }
+  .ft-below { margin-top: 5px; }
+
+  /* COMPARISON TABLE */
+  .compare-table { width: 100%; border-collapse: collapse; }
+  .compare-table th { padding: 12px 15px; text-align: center; font-weight: 700; }
+  .compare-table td { padding: 10px 15px; border: 1px solid #eee; font-size: 0.95em; }
+  .compare-table .col-will { background: #faf5ff; border-color: var(--purple); }
+  .compare-table .col-going { background: #f0f9ff; border-color: var(--blue); }
+  .th-will { background: var(--purple); color: #fff; border-radius: 8px 8px 0 0; }
+  .th-going { background: var(--blue); color: #fff; border-radius: 8px 8px 0 0; }
+
+  /* DRAG SORT */
+  .drag-container { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; margin: 20px 0; }
+  .drag-item { background: var(--accent); border: 2px solid #f0c030; border-radius: 10px; padding: 10px 18px; cursor: grab; font-weight: 700; font-size: 1em; transition: all 0.3s; user-select: none; }
+  .drag-item:hover { transform: translateY(-3px); background: #ffd700; }
+  .drag-area { border: 3px dashed #ccc; border-radius: 15px; min-height: 55px; padding: 8px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; transition: border-color 0.3s; }
+  .drag-area.over { border-color: var(--purple); background: #faf5ff; }
+  .placed-item { background: var(--purple); color: #fff; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+
+  /* PREDICTION GAME */
+  .predict-scene { background: linear-gradient(135deg, #1a1a2e, #0f3460); border-radius: 20px; padding: 30px; text-align: center; margin: 15px 0; color: #fff; }
+  .predict-emoji { font-size: 4em; margin-bottom: 15px; }
+  .predict-situation { font-size: 1.1em; opacity: 0.9; margin-bottom: 20px; }
+  .predict-options { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .predict-btn { background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3); border-radius: 12px; padding: 12px 18px; color: #fff; cursor: pointer; font-weight: 600; font-size: 0.95em; transition: all 0.3s; }
+  .predict-btn:hover { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.6); }
+  .predict-btn.correct-p { background: rgba(34,197,94,0.3); border-color: #22c55e; }
+  .predict-btn.wrong-p { background: rgba(239,68,68,0.3); border-color: #ef4444; }
+
+  /* BOSS */
+  .boss-scene { text-align: center; padding: 20px; }
+  .boss-char { font-size: 5em; animation: bossFloat 2s ease-in-out infinite; }
+  .boss-hp { display: flex; align-items: center; gap: 10px; margin: 15px 0; }
+  .hp-bar { flex: 1; height: 20px; background: #eee; border-radius: 10px; overflow: hidden; }
+  .hp-fill { height: 100%; background: linear-gradient(90deg, #22c55e, #f0c030, var(--primary)); transition: width 0.5s; }
+
+  /* REPORT */
+  .report-card { background: linear-gradient(135deg, #1a1a2e, #533483, #a855f7); border-radius: 25px; padding: 30px; color: #fff; text-align: center; max-width: 600px; width: 100%; }
+  .report-score { font-size: 4em; font-weight: 900; margin: 15px 0; }
+  .report-stars { font-size: 2.5em; margin: 10px 0; }
+  .achievement-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }
+  .ach-badge { background: rgba(255,255,255,0.15); border-radius: 12px; padding: 12px 8px; text-align: center; }
+  .ach-badge.earned { background: rgba(255,230,109,0.3); border: 2px solid var(--accent); }
+  .ach-icon { font-size: 1.8em; }
+  .ach-name { font-size: 0.7em; margin-top: 5px; opacity: 0.9; }
+
+  /* EXT */
+  .ext-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; width: 100%; max-width: 800px; }
+  .ext-card { background: var(--card); border-radius: 15px; padding: 20px; box-shadow: var(--shadow); text-align: center; cursor: pointer; transition: all 0.3s; border: 2px solid transparent; }
+  .ext-card:hover { border-color: var(--purple); transform: translateY(-3px); }
+
+  @media (max-width: 600px) {
+    .hero-title { font-size: 1.8em; }
+    .options { grid-template-columns: 1fr; }
+    .achievement-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div id="screen-hero" class="screen active">
+  <div class="hero-stars" id="hero-stars"></div>
+  <div class="hero-rocket">🚀</div>
+  <div class="hero-title">一般将来时</div>
+  <div class="hero-sub">Simple Future Tense</div>
+  <div style="background:rgba(168,85,247,0.3);border:2px solid rgba(168,85,247,0.5);border-radius:20px;padding:8px 20px;color:#fff;font-weight:700">📚 小学六年级英语</div>
+  <div style="color:rgba(255,255,255,0.85);font-size:1.1em">Will & Be going to 双剑合璧 ✨</div>
+  <button class="btn-start" onclick="showScreen('screen-objectives')">🚀 飞向未来！</button>
+  <div style="color:rgba(255,255,255,0.6);font-size:0.9em">⭐ 共5关 · 8个成就 · 未来大冒险</div>
+</div>
+
+<!-- OBJECTIVES -->
+<div id="screen-objectives" class="screen">
+  <div class="topbar">
+    <div class="topbar-stars">⭐ <span id="stars1">0</span></div>
+    <div class="topbar-progress"><div class="progress-bar"><div class="progress-fill" style="width:10%"></div></div></div>
+    <div class="topbar-level">📍 目标</div>
+  </div>
+  <div class="section-title">🎯 本节学习目标</div>
+  <div class="bear-box">
+    <div class="bear-icon">🐻</div>
+    <div class="bear-speech">
+      <strong>Bear说：</strong>
+      嗨！今天我们要学<strong>一般将来时</strong>——描述未来将要发生的事情！英语有两种主要方式：<strong>will + 动词原形</strong> 和 <strong>be going to + 动词原形</strong>。两者用法有细微差别，我们一起来探索！🚀
+    </div>
+  </div>
+  <ul class="card" style="list-style:none;max-width:800px">
+    <li style="padding:12px 15px;margin:8px 0;background:#faf5ff;border-radius:12px;border-left:4px solid var(--purple);display:flex;gap:10px"><span style="font-size:1.3em">🚀</span> 理解将来时的概念：描述未来将发生的事</li>
+    <li style="padding:12px 15px;margin:8px 0;background:#f0f9ff;border-radius:12px;border-left:4px solid var(--blue);display:flex;gap:10px"><span style="font-size:1.3em">💡</span> 掌握 <strong>will + 动词原形</strong> 的结构和用法</li>
+    <li style="padding:12px 15px;margin:8px 0;background:#f0fff4;border-radius:12px;border-left:4px solid var(--green);display:flex;gap:10px"><span style="font-size:1.3em">📅</span> 掌握 <strong>be going to + 动词原形</strong> 的结构和用法</li>
+    <li style="padding:12px 15px;margin:8px 0;background:#fff5f5;border-radius:12px;border-left:4px solid var(--primary);display:flex;gap:10px"><span style="font-size:1.3em">🔄</span> 能进行否定句和疑问句的转换</li>
+    <li style="padding:12px 15px;margin:8px 0;background:#fffae0;border-radius:12px;border-left:4px solid var(--accent);display:flex;gap:10px"><span style="font-size:1.3em">🏆</span> 完成Boss挑战，获得8个成就徽章！</li>
+  </ul>
+  <div class="btn-row">
+    <button class="btn btn-purple" onclick="showScreen('screen-warmup')">开始热身 🔥</button>
+  </div>
+</div>
+
+<!-- WARMUP -->
+<div id="screen-warmup" class="screen">
+  <div class="topbar">
+    <div class="topbar-stars">⭐ <span id="stars2">0</span></div>
+    <div class="topbar-progress"><div class="progress-bar"><div class="progress-fill" style="width:20%"></div></div></div>
+    <div class="topbar-level">🔥 热身</div>
+  </div>
+  <div class="section-title">🔥 热身：时间认知</div>
+  <div class="card">
+    <div style="font-size:1.1em;font-weight:700;margin-bottom:20px">🌅 三种时态时间轴可视化</div>
+    <div class="future-timeline">
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+        <div style="text-align:center">
+          <div style="font-size:2em">⏪</div>
+          <div style="font-weight:700;color:#6c5ce7">过去</div>
+          <div style="font-size:0.85em;color:#888">visited/played</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:2em">⏰</div>
+          <div style="font-weight:700;color:var(--secondary)">现在</div>
+          <div style="font-size:0.85em;color:#888">visit/is visiting</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:2em">⏩</div>
+          <div style="font-weight:700;color:var(--purple)">将来</div>
+          <div style="font-size:0.85em;color:#888">will visit/is going to</div>
+        </div>
+      </div>
+      <div class="ft-bar"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center">
+      <div style="background:#faf5ff;border-radius:12px;padding:12px;border:2px solid var(--purple)">
+        <div style="font-weight:700;color:var(--purple);margin-bottom:5px">将来时标志词</div>
+        <div style="font-size:0.82em;color:#666">tomorrow · next week · soon · in 2025 · later · this weekend</div>
+      </div>
+      <div style="background:#f0f9ff;border-radius:12px;padding:12px;border:2px solid var(--blue)">
+        <div style="font-weight:700;color:var(--blue);margin-bottom:5px">will 常见缩写</div>
+        <div style="font-size:0.82em;color:#666">I'll = I will<br>She'll = She will<br>They'll = They will</div>
+      </div>
+      <div style="background:#f0fff4;border-radius:12px;padding:12px;border:2px solid var(--green)">
+        <div style="font-weight:700;color:var(--green);margin-bottom:5px">否定缩写</div>
+        <div style="font-size:0.82em;color:#666">won't = will not<br>isn't going to<br>aren't going to</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div style="font-size:1.1em;font-weight:700;color:var(--purple);margin-bottom:15px">⚡ 快速判断：这句话是将来时吗？</div>
+    <div id="warmup-container"></div>
+  </div>
+  <div id="warmup-next" style="display:none" class="btn-row">
+    <button class="btn btn-purple" onclick="showScreen('screen-level1')">第一关：will 结构 →</button>
+  </div>
+</div>
+
+<!-- LEVEL 1 - Will -->
+<div id="screen-level1" class="screen">
+  <div class="topbar">
+    <div class="topbar-stars">⭐ <span id="stars3">0</span></div>
+    <div class="topbar-progress"><div class="progress-bar"><div class="progress-fill" style="width:40%"></div></div></div>
+    <div class="topbar-level">🎮 第一关</div>
+  </div>
+  <div class="level-badge">💡 第一关：will 的用法</div>
+  <div class="card">
+    <div style="font-size:1.2em;font-weight:700;margin-bottom:15px">📌 will 的结构与用法</div>
+    <div style="background:linear-gradient(135deg,#faf5ff,#fff);border:2px dashed var(--purple);border-radius:15px;padding:20px;text-align:center;margin-bottom:15px">
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;font-size:1.2em;font-weight:700">
+        <span style="background:var(--purple);color:#fff;padding:6px 14px;border-radius:10px">主语</span>
+        <span style="font-size:1.4em;color:#aaa">+</span>
+        <span style="background:var(--blue);color:#fff;padding:6px 14px;border-radius:10px">will</span>
+        <span style="font-size:1.4em;color:#aaa">+</span>
+        <span style="background:var(--accent);color:#333;padding:6px 14px;border-radius:10px">动词原形</span>
+      </div>
+    </div>
+    <div style="display:grid;gap:10px">
+      <div style="background:#faf5ff;border-radius:12px;padding:12px;border-left:4px solid var(--purple)">
+        <strong>✅ 肯定：</strong>I <span style="color:var(--purple);font-weight:700">will visit</span> Beijing next year.
+        <div style="font-size:0.85em;color:#888">（表示将要做的事，临时决定）</div>
+      </div>
+      <div style="background:#fff5f5;border-radius:12px;padding:12px;border-left:4px solid var(--primary)">
+        <strong>❌ 否定：</strong>I <span style="color:var(--primary);font-weight:700">won't visit</span> Beijing next year.
+        <div style="font-size:0.85em;color:#888">（will not 缩写为 won't）</div>
+      </div>
+      <div style="background:#f0f9ff;border-radius:12px;padding:12px;border-left:4px solid var(--blue)">
+        <strong>❓ 疑问：</strong><span style="color:var(--blue);font-weight:700">Will</span> you visit Beijing next year?
+        <div style="font-size:0.85em;color:#888">（Will 提到主语前面）</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div style="font-size:1.1em;font-weight:700;color:var(--purple);margin-bottom:15px">✏️ 练习：选择正确答案</div>
+    <div id="l1-container"></div>
+  </div>
+  <div class="btn-row" id="l1-next" style="display:none">
+    <button class="btn btn-blue" onclick="showScreen('screen-level2')">第二关：be going to →</button>
+  </div>
+</div>
+
+<!-- LEVEL 2 - Be going to -->
+<div id="screen-level2" class="screen">
+  <div class="topbar">
+    <div class="topbar-stars">⭐ <span id="stars4">0</span></div>
+    <div class="topbar-progress"><div class="progress-bar"><div class="progress-fill" style="width:55%"></div></div></div>
+    <div class="topbar-level">🎮 第二关</div>
+  </div>
+  <div class="level-badge">📅 第二关：be going to 的用法</div>
+  <div class="card">
+    <div style="font-size:1.2em;font-weight:700;margin-bottom:15px">📌 be going to 的结构与用法</div>
+    <div style="background:linear-gradient(135deg,#f0f9ff,#fff);border:2px dashed var(--blue);border-radius:15px;padding:20px;text-align:center;margin-bottom:15px">
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;font-size:1.2em;font-weight:700">
+        <span style="background:var(--purple);color:#fff;padding:6px 14px;border-radius:10px">主语</span>
+        <span style="color:#aaa;font-size:1.4em">+</span>
+        <span style="background:var(--secondary);color:#fff;padding:6px 14px;border-radius:10px">am/is/are</span>
+        <span style="color:#aaa;font-size:1.4em">+</span>
+        <span style="background:var(--blue);color:#fff;padding:6px 14px;border-radius:10px">going to</span>
+        <span style="color:#aaa;font-size:1.4em">+</span>
+        <span style="background:var(--accent);color:#333;padding:6px 14px;border-radius:10px">动词原形</span>
+      </div>
+    </div>
+    <div style="font-size:1em;font-weight:700;color:#888;margin-bottom:12px">🆚 will vs be going to 对比</div>
+    <table class="compare-table">
+      <tr>
+        <th class="th-will" style="width:50%">will</th>
+        <th class="th-going" style="width:50%">be going to</th>
+      </tr>
+      <tr>
+        <td class="col-will">临时决定/预测（无根据）<br><small style="color:#888">"I think it will rain."</small></td>
+        <td class="col-going">事先计划/有根据的预测<br><small style="color:#888">"Look at the clouds, it is going to rain."</small></td>
+      </tr>
+      <tr>
+        <td class="col-will">I will help you.<br><small style="color:#888">（临时决定帮忙）</small></td>
+        <td class="col-going">I am going to visit grandma.<br><small style="color:#888">（已计划好的安排）</small></td>
+      </tr>
+    </table>
+  </div>
+  <div class="card">
+    <div style="font-size:1.1em;font-weight:700;color:var(--blue);margin-bottom:15px">✏️ 填写 be going to 句子</div>
+    <div id="l2-container"></div>
+  </div>
+  <div class="btn-row" id="l2-next" style="display:none">
+    <button class="btn btn-secondary" onclick="showScreen('screen-level3')">第三关：预测游戏 →</button>
+  </div>
+</div>
+
+<!-- LEVEL 3 - Prediction Game -->
+<div id="screen-level3" class="screen">
+  <div class="topbar">
+    <div class="topbar-stars">⭐ <span id="stars5">0</span></div>
+    <div class="topbar-progress"><div class="progress-bar"><div class="progress-fill" style="width:72%"></div></div></div>
+    <div class="topbar-level">🎮 第三关</div>
+  </div>
+  <div class="level-badge">🔮 第三关：未来预言家</div>
+  <div class="bear-box">
+    <div class="bear-icon">🐻</div>
+    <div class="bear-speech"><strong>Bear说：</strong>看图猜测！根据图片描述的情景，选择最合适的将来时句子。记住：有计划用be going to，临时决定/预测用will！</div>
+  </div>
+  <div class="card">
+    <div id="predict-container"></div>
+  </div>
+  <div class="btn-row" id="l3-next" style="display:none">
+    <button class="btn btn-primary" onclick="showScreen('screen-boss')">⚔️ 挑战Boss！</button>
+  </div>
+</div>
+
+<!-- BOSS -->
+<div id="screen-boss" class="screen">
+  <div class="topbar">
+    <div class="topbar-stars">⭐ <span id="stars6">0</span></div>
+    <div class="topbar-progress"><div class="progress-bar"><div class="progress-fill" style="width:88%"></div></div></div>
+    <div class="topbar-level">⚔️ Boss战</div>
+  </div>
+  <div class="section-title">⚔️ Boss：未来之神</div>
+  <div class="boss-scene">
+    <div class="boss-char">🤖</div>
+    <div style="font-size:1.1em;font-weight:700;color:#888">未来预言者 Futurus</div>
+    <div class="boss-hp">
+      <span>⚡</span>
+      <div class="hp-bar"><div class="hp-fill" id="boss-hp-fill" style="width:100%"></div></div>
+      <span id="boss-hp-text">5/5</span>
+    </div>
+  </div>
+  <div class="card" id="boss-quiz-card">
+    <div id="boss-q-container"></div>
+  </div>
+  <div id="boss-win" style="display:none;text-align:center">
+    <div style="font-size:4em;animation:bounce 1s infinite">🎊</div>
+    <div style="font-size:1.5em;font-weight:800;color:var(--purple)">未来之神被征服了！</div>
+    <div class="btn-row">
+      <button class="btn btn-purple" onclick="showReport()">查看成绩单 📊</button>
+    </div>
+  </div>
+</div>
+
+<!-- REPORT -->
+<div id="screen-report" class="screen">
+  <div class="section-title">🏆 学习成绩单</div>
+  <div class="report-card">
+    <div style="font-size:1.5em;font-weight:700">🐻 Bear的评语</div>
+    <div class="report-score" id="final-score">98</div>
+    <div style="font-size:1em;opacity:0.8">分</div>
+    <div class="report-stars" id="final-stars">⭐⭐⭐</div>
+    <div id="report-comment" style="font-size:1.05em;margin:10px 0;opacity:0.9">未来大师！will和be going to都掌握了！</div>
+    <div style="font-size:0.95em;opacity:0.7;margin-bottom:15px">今日学习：一般将来时 (Simple Future) | 六年级</div>
+    <div class="achievement-grid">
+      <div class="ach-badge earned" id="ach0"><div class="ach-icon">🌅</div><div class="ach-name">时间觉醒者</div></div>
+      <div class="ach-badge" id="ach1"><div class="ach-icon">💡</div><div class="ach-name">Will大师</div></div>
+      <div class="ach-badge" id="ach2"><div class="ach-icon">📅</div><div class="ach-name">计划达人</div></div>
+      <div class="ach-badge" id="ach3"><div class="ach-icon">🔮</div><div class="ach-name">未来预言家</div></div>
+      <div class="ach-badge" id="ach4"><div class="ach-icon">🤖</div><div class="ach-name">Boss终结者</div></div>
+      <div class="ach-badge" id="ach5"><div class="ach-icon">💯</div><div class="ach-name">满分英雄</div></div>
+      <div class="ach-badge" id="ach6"><div class="ach-icon">🚀</div><div class="ach-name">速度之星</div></div>
+      <div class="ach-badge" id="ach7"><div class="ach-icon">👑</div><div class="ach-name">将来时之王</div></div>
+    </div>
+  </div>
+  <div class="btn-row" style="margin-top:20px">
+    <button class="btn btn-secondary" onclick="showScreen('screen-extension')">📚 拓展挑战 →</button>
+    <button class="btn btn-purple" onclick="restartGame()">🔄 再玩一次</button>
+  </div>
+</div>
+
+<!-- EXTENSION -->
+<div id="screen-extension" class="screen">
+  <div class="section-title">📚 拓展学习</div>
+  <div class="bear-box">
+    <div class="bear-icon">🐻</div>
+    <div class="bear-speech"><strong>Bear说：</strong>你已经掌握了一般将来时！来探索更多用法：现在进行时表将来（I'm visiting grandma tomorrow.）和其他表将来的方式！</div>
+  </div>
+  <div class="ext-grid">
+    <div class="ext-card" onclick="showExt('future-words')">
+      <div style="font-size:2.5em;margin-bottom:10px">📅</div>
+      <div style="font-weight:700;color:var(--purple)">将来时间词大全</div>
+    </div>
+    <div class="ext-card" onclick="showExt('contrast')">
+      <div style="font-size:2.5em;margin-bottom:10px">🆚</div>
+      <div style="font-weight:700;color:var(--purple)">will vs going to 详解</div>
+    </div>
+    <div class="ext-card" onclick="showExt('present-future')">
+      <div style="font-size:2.5em;margin-bottom:10px">🔄</div>
+      <div style="font-weight:700;color:var(--purple)">现在进行时表将来</div>
+    </div>
+    <div class="ext-card" onclick="showExt('wh-future')">
+      <div style="font-size:2.5em;margin-bottom:10px">🔍</div>
+      <div style="font-weight:700;color:var(--purple)">将来时特殊疑问句</div>
+    </div>
+  </div>
+  <div class="card" id="ext-info" style="display:none;max-width:800px"></div>
+  <div class="btn-row" style="margin-top:20px">
+    <button class="btn btn-purple" onclick="restartGame()">🔄 重新挑战</button>
+  </div>
+</div>
+
+<script>
+// Stars background
+(function(){
+  const c=document.getElementById('hero-stars');
+  for(let i=0;i<50;i++){
+    const s=document.createElement('div');
+    s.className='star-bg';
+    const sz=Math.random()*3+1;
+    s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${Math.random()*2}s;animation-duration:${1+Math.random()*2}s`;
+    c.appendChild(s);
+  }
+})();
+
+let state={stars:0,score:0,achievements:new Array(8).fill(false),startTime:Date.now(),correctCount:0,totalQuestions:0,bossHp:5,bossIdx:0,bossCorrect:0};
+
+const AC=window.AudioContext||window.webkitAudioContext;
+let ac=null;
+function getAC(){if(!ac)ac=new AC();return ac;}
+function pt(f,t,d,v){try{const c=getAC(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=f;o.type=t||'sine';g.gain.setValueAtTime(v||0.3,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+d);o.start();o.stop(c.currentTime+d);}catch(e){}}
+function playCorrect(){pt(523,'sine',0.15);setTimeout(()=>pt(659,'sine',0.15),100);setTimeout(()=>pt(784,'sine',0.25),200);}
+function playWrong(){pt(200,'sawtooth',0.3,0.2);}
+function playLevelUp(){[523,587,659,698,784].forEach((f,i)=>setTimeout(()=>pt(f,'triangle',0.2),i*80));}
+
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);syncStars();}
+function syncStars(){document.querySelectorAll('[id^="stars"]').forEach(el=>el.textContent=state.stars);}
+function addStars(n){state.stars+=n;state.score+=n*10;syncStars();spawnStars(n);}
+function spawnStars(n){for(let i=0;i<n;i++){const el=document.createElement('div');el.className='star-pop';el.textContent='⭐';el.style.left=(30+Math.random()*40)+'vw';el.style.top=(20+Math.random()*40)+'vh';document.body.appendChild(el);setTimeout(()=>el.remove(),1000);}}
+function unlockAch(i,name){if(state.achievements[i])return;state.achievements[i]=true;document.getElementById('ach'+i)&&document.getElementById('ach'+i).classList.add('earned');showToast('🏅 成就解锁：'+name);addStars(2);}
+function showToast(msg){const t=document.createElement('div');t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:'+encodeURIComponent('{}')+';color:#fff;padding:10px 20px;border-radius:50px;z-index:9999;font-weight:700;font-size:0.95em;background:#a855f7';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2500);}
+
+// WARMUP
+const wuData=[
+  {s:'She will travel to Japan next month.',isFuture:true},
+  {s:'He played basketball yesterday.',isFuture:false},
+  {s:'They are going to build a new school.',isFuture:true},
+  {s:'I am reading a book right now.',isFuture:false},
+];
+let wuIdx=0,wuCorrect=0;
+function initWarmup(){wuIdx=0;wuCorrect=0;renderWarmup();}
+function renderWarmup(){
+  if(wuIdx>=wuData.length){
+    document.getElementById('warmup-container').innerHTML='<div style="text-align:center"><div style="font-size:3em">🎉</div><div style="font-size:1.2em;font-weight:700;color:var(--purple)">热身完成！答对'+wuCorrect+'/'+wuData.length+'</div></div>';
+    document.getElementById('warmup-next').style.display='flex';
+    unlockAch(0,'时间觉醒者');
+    addStars(wuCorrect);
+    return;
+  }
+  const d=wuData[wuIdx];
+  document.getElementById('warmup-container').innerHTML=`
+    <div style="text-align:center;font-size:1.2em;padding:20px;background:#faf5ff;border-radius:12px;margin-bottom:20px;color:var(--purple);font-weight:700">"${d.s}"</div>
+    <div style="font-size:1.1em;font-weight:700;text-align:center;margin-bottom:15px">这是一般将来时吗？</div>
+    <div style="display:flex;gap:15px;justify-content:center">
+      <button class="btn btn-purple" onclick="checkWU(true,${d.isFuture})">🚀 是！将来时</button>
+      <button class="btn btn-primary" onclick="checkWU(false,${d.isFuture})">❌ 不是</button>
+    </div>
+    <div class="feedback" id="wu-fb"></div>`;
+}
+function checkWU(sel,correct){
+  state.totalQuestions++;
+  const fb=document.getElementById('wu-fb');
+  if(sel===correct){wuCorrect++;state.correctCount++;addStars(1);playCorrect();fb.className='feedback ok show';fb.textContent='✅ 正确！';}
+  else{playWrong();fb.className='feedback ng show';fb.textContent='❌ 再想想！';}
+  document.querySelectorAll('#warmup-container button').forEach(b=>b.disabled=true);
+  setTimeout(()=>{wuIdx++;renderWarmup();},1200);
+}
+
+// LEVEL 1 - Will
+const l1Qs=[
+  {q:'I __ go to the cinema tomorrow.',opts:['will','am','have','shall'],ans:0},
+  {q:'She __ (not) come to the party.',opts:["won't","doesn't","isn't","can't"],ans:0},
+  {q:'__ they travel to France next summer?',opts:['Will','Are','Do','Have'],ans:0},
+  {q:'He __ be a doctor when he grows up.',opts:['will','is','was','going'],ans:0},
+];
+let l1Idx=0,l1Correct=0;
+function initL1(){l1Idx=0;l1Correct=0;renderL1();}
+function renderL1(){
+  if(l1Idx>=l1Qs.length){
+    document.getElementById('l1-container').innerHTML='<div style="text-align:center"><div style="font-size:2.5em">🎉</div><div style="font-size:1.2em;font-weight:700;color:var(--purple)">第一关完成！答对'+l1Correct+'/'+l1Qs.length+'</div></div>';
+    document.getElementById('l1-next').style.display='flex';
+    unlockAch(1,'Will大师');playLevelUp();
+    return;
+  }
+  const q=l1Qs[l1Idx];
+  document.getElementById('l1-container').innerHTML=`
+    <div style="font-size:1.1em;font-weight:700;margin-bottom:15px">${l1Idx+1}/${l1Qs.length}. ${q.q}</div>
+    <div class="options">${q.opts.map((o,i)=>`<button class="opt-btn" onclick="checkL1(${i},${q.ans},this)">${o}</button>`).join('')}</div>
+    <div class="feedback" id="l1-fb"></div>`;
+}
+function checkL1(sel,ans,el){
+  el.closest('#l1-container').querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);
+  state.totalQuestions++;
+  const fb=document.getElementById('l1-fb');
+  if(sel===ans){el.classList.add('correct');l1Correct++;state.correctCount++;addStars(1);playCorrect();fb.className='feedback ok show';fb.textContent='✅ 正确！+1⭐';}
+  else{el.classList.add('wrong');el.closest('#l1-container').querySelectorAll('.opt-btn')[ans].classList.add('correct');playWrong();fb.className='feedback ng show';fb.textContent='❌ 正确答案是第'+(ans+1)+'个！';}
+  setTimeout(()=>{l1Idx++;renderL1();},1200);
+}
+
+// LEVEL 2 - Be going to
+const l2Items=[
+  {prompt:'I __ (go) to the library this afternoon.', answer:'am going to go', clue:'I → am'},
+  {prompt:'She __ (visit) her aunt next Sunday.', answer:'is going to visit', clue:'She → is'},
+  {prompt:'We __ (have) a picnic tomorrow.', answer:'are going to have', clue:'We → are'},
+];
+function initL2(){renderL2();}
+function renderL2(){
+  let html='';
+  l2Items.forEach((item,i)=>{
+    html+=`<div style="margin:15px 0;padding:15px;background:#f0f9ff;border-radius:12px">
+      <div style="font-weight:700;margin-bottom:10px">${item.prompt}</div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <input id="l2-${i}" class="fill-input" style="max-width:200px" placeholder="be going to...">
+        <button class="btn-check" style="background:var(--blue)" onclick="checkL2(${i})">检查</button>
+        <span style="color:#aaa;font-size:0.85em">💡${item.clue}</span>
+        <span id="l2-res-${i}"></span>
+      </div>
+    </div>`;
+  });
+  html+=`<div class="btn-row"><button class="btn btn-blue" onclick="checkAllL2()">全部完成 ✓</button></div>`;
+  document.getElementById('l2-container').innerHTML=html;
+}
+function checkL2(i){
+  const v=document.getElementById('l2-'+i).value.trim().toLowerCase();
+  state.totalQuestions++;
+  if(v===l2Items[i].answer||v.replace(/\s+/g,' ')===l2Items[i].answer){
+    document.getElementById('l2-'+i).classList.add('correct');
+    document.getElementById('l2-res-'+i).textContent='✅';
+    state.correctCount++;addStars(1);playCorrect();
+  } else {
+    document.getElementById('l2-'+i).classList.add('wrong');
+    document.getElementById('l2-res-'+i).textContent='❌ 正确：'+l2Items[i].answer;
+    playWrong();
+  }
+}
+function checkAllL2(){
+  l2Items.forEach((_,i)=>checkL2(i));
+  setTimeout(()=>{document.getElementById('l2-next').style.display='flex';unlockAch(2,'计划达人');playLevelUp();},500);
+}
+
+// LEVEL 3 - Prediction
+const predictScenes=[
+  {emoji:'🌩️',situation:'天空乌云密布，雷声阵阵。(根据现象预测)',correct:'It is going to rain.',options:['It will rain tomorrow.','It is going to rain.','It rains heavily.','It rained yesterday.'],hint:'有根据的预测用be going to'},
+  {emoji:'📞',situation:'电话铃响了，没人接。（临时决定）',correct:"I'll answer it.",options:["I'll answer it.","I'm going to answer it.",'I answered it.','I answer it now.'],hint:'临时决定用will'},
+  {emoji:'🎂',situation:'今天是妈妈生日，你已经买好了礼物。',correct:"I'm going to give mom a present.",options:["I'll give mom a present."," I'm going to give mom a present.",'I gave mom a present.','I give mom a present.'],hint:'事先计划用be going to'},
+];
+let predIdx=0,predCorrect=0;
+function initL3(){predIdx=0;predCorrect=0;renderPred();}
+function renderPred(){
+  if(predIdx>=predictScenes.length){
+    document.getElementById('predict-container').innerHTML='<div style="text-align:center"><div style="font-size:2.5em">🎉</div><div style="font-size:1.2em;font-weight:700;color:var(--purple)">预测游戏完成！答对'+predCorrect+'/'+predictScenes.length+'题</div></div>';
+    document.getElementById('l3-next').style.display='flex';
+    unlockAch(3,'未来预言家');playLevelUp();
+    return;
+  }
+  const s=predictScenes[predIdx];
+  const shuffled=[...s.options].sort(()=>Math.random()-0.5);
+  document.getElementById('predict-container').innerHTML=`
+    <div class="predict-scene">
+      <div class="predict-emoji">${s.emoji}</div>
+      <div class="predict-situation">${predIdx+1}/${predictScenes.length}: ${s.situation}</div>
+      <div class="predict-options">
+        ${shuffled.map(o=>`<button class="predict-btn" onclick="checkPred('${o.replace(/'/g,"\\'")}','${s.correct.replace(/'/g,"\\'")}',this)">${o}</button>`).join('')}
+      </div>
+    </div>
+    <div style="text-align:center;color:#aaa;font-size:0.85em;margin-top:10px">💡 ${s.hint}</div>
+    <div class="feedback" id="pred-fb"></div>`;
+}
+function checkPred(sel,correct,el){
+  document.querySelectorAll('.predict-btn').forEach(b=>b.style.pointerEvents='none');
+  state.totalQuestions++;
+  const fb=document.getElementById('pred-fb');
+  if(sel===correct){el.classList.add('correct-p');predCorrect++;state.correctCount++;addStars(2);playCorrect();fb.className='feedback ok show';fb.textContent='✅ 完全正确！+2⭐';}
+  else{el.classList.add('wrong-p');document.querySelectorAll('.predict-btn').forEach(b=>{if(b.textContent===correct)b.classList.add('correct-p');});playWrong();fb.className='feedback ng show';fb.textContent='❌ 正确：'+correct;}
+  setTimeout(()=>{predIdx++;renderPred();},1500);
+}
+
+// BOSS
+const bossQs=[
+  {q:'I __ (call) you when I arrive.',ans:'will call',opts:['will call','am calling','called','going to call']},
+  {q:'She __ (be going to) visit Paris. → 疑问句',ans:'Is she going to visit Paris?',opts:['Is she going to visit Paris?','Will she going to Paris?','Does she going to visit Paris?','Is she go to visit Paris?']},
+  {q:"We won't play football. → 肯定句",ans:'We will play football.',opts:['We will play football.','We played football.','We are playing football.','We go to play football.']},
+  {q:'选出正确句子：',ans:'They are going to have a party next week.',opts:['They are going to have a party next week.','They will going to have a party.','They going to have a party.','They will have a party next week ago.']},
+  {q:'__ you __ (go) camping this weekend?',ans:'Are...going to go',opts:['Are...going to go','Will...going to go','Do...going to go','Is...going to go']},
+];
+let bossIdx=0,bossCorrect=0;
+function initBoss(){bossIdx=0;bossCorrect=0;state.bossHp=5;renderBoss();}
+function renderBoss(){
+  if(bossIdx>=bossQs.length){
+    document.getElementById('boss-quiz-card').style.display='none';
+    document.getElementById('boss-win').style.display='block';
+    document.getElementById('boss-hp-fill').style.width='0%';
+    document.getElementById('boss-hp-text').textContent='0/5';
+    unlockAch(4,'Boss终结者');
+    if(bossCorrect>=4)unlockAch(7,'将来时之王');
+    addStars(bossCorrect*2);playLevelUp();
+    return;
+  }
+  const q=bossQs[bossIdx];
+  document.getElementById('boss-q-container').innerHTML=`
+    <div style="font-size:1.1em;font-weight:700;margin-bottom:15px">⚔️ ${bossIdx+1}/${bossQs.length}: ${q.q}</div>
+    <div class="options">${q.opts.map(o=>`<button class="opt-btn" onclick="checkBoss('${o.replace(/'/g,"\\'")}','${q.ans.replace(/'/g,"\\'")}',this)">${o}</button>`).join('')}</div>
+    <div class="feedback" id="boss-fb"></div>`;
+}
+function checkBoss(sel,ans,el){
+  el.closest('#boss-q-container').querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);
+  state.totalQuestions++;
+  const fb=document.getElementById('boss-fb');
+  if(sel===ans){
+    el.classList.add('correct');bossCorrect++;state.correctCount++;
+    state.bossHp=Math.max(0,state.bossHp-1);
+    document.getElementById('boss-hp-fill').style.width=(state.bossHp/5*100)+'%';
+    document.getElementById('boss-hp-text').textContent=state.bossHp+'/5';
+    addStars(2);pt(440,'square',0.1,0.15);
+    fb.className='feedback ok show';fb.textContent='⚔️ 命中！+2⭐';
+  } else {
+    el.classList.add('wrong');
+    el.closest('#boss-q-container').querySelectorAll('.opt-btn').forEach(b=>{if(b.textContent===ans)b.classList.add('correct');});
+    playWrong();fb.className='feedback ng show';fb.textContent='💨 错了！正确：'+ans;
+  }
+  setTimeout(()=>{bossIdx++;renderBoss();},1300);
+}
+function showReport(){
+  const elapsed=Math.round((Date.now()-state.startTime)/1000);
+  const pct=state.totalQuestions>0?Math.round(state.correctCount/state.totalQuestions*100):100;
+  document.getElementById('final-score').textContent=pct;
+  document.getElementById('final-stars').textContent=pct>=90?'⭐⭐⭐':pct>=70?'⭐⭐':'⭐';
+  document.getElementById('report-comment').textContent=pct>=90?'未来语言大师！Will和be going to都驾轻就熟！🏆':pct>=70?'做得不错！多用才能更熟练！💪':'加油！将来时需要多练习！📚';
+  if(pct>=100)unlockAch(5,'满分英雄');
+  if(elapsed<600)unlockAch(6,'速度之星');
+  state.achievements.forEach((a,i)=>{if(a){const el=document.getElementById('ach'+i);if(el)el.classList.add('earned');}});
+  showScreen('screen-report');
+  for(let i=0;i<15;i++)setTimeout(()=>spawnStars(1),i*100);
+}
+function restartGame(){
+  state={stars:0,score:0,achievements:new Array(8).fill(false),startTime:Date.now(),correctCount:0,totalQuestions:0,bossHp:5,bossIdx:0,bossCorrect:0};
+  initWarmup();initL1();initL2();initL3();initBoss();
+  showScreen('screen-hero');
+}
+const extContents={
+  'future-words':'<div style="font-size:1.1em;font-weight:700;color:var(--purple);margin-bottom:15px">将来时常用时间词</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px"><div style="background:#faf5ff;padding:10px;border-radius:8px;text-align:center"><strong>tomorrow</strong><br>明天</div><div style="background:#faf5ff;padding:10px;border-radius:8px;text-align:center"><strong>next week</strong><br>下周</div><div style="background:#faf5ff;padding:10px;border-radius:8px;text-align:center"><strong>soon</strong><br>不久</div><div style="background:#faf5ff;padding:10px;border-radius:8px;text-align:center"><strong>later</strong><br>稍后</div><div style="background:#faf5ff;padding:10px;border-radius:8px;text-align:center"><strong>in 2025</strong><br>在2025年</div><div style="background:#faf5ff;padding:10px;border-radius:8px;text-align:center"><strong>this weekend</strong><br>这周末</div></div>',
+  'contrast':'<div style="font-size:1.1em;font-weight:700;color:var(--purple);margin-bottom:15px">will vs be going to 详细对比</div><div style="display:grid;gap:12px"><div style="background:#faf5ff;padding:15px;border-radius:12px"><strong style="color:var(--purple)">will 用于：</strong><br>• 临时决定：A: The phone is ringing. B: I\'ll get it!<br>• 预测（无根据）：I think it will snow.<br>• 承诺：I will help you.</div><div style="background:#f0f9ff;padding:15px;border-radius:12px"><strong style="color:var(--blue)">be going to 用于：</strong><br>• 事先计划：I\'m going to study tonight.<br>• 有根据的预测：Look at those clouds, it\'s going to rain.<br>• 已打算好的事：She\'s going to be a teacher.</div></div>',
+  'present-future':'<div style="font-size:1.1em;font-weight:700;color:var(--purple);margin-bottom:15px">现在进行时表将来</div><div style="background:#f9f7ff;padding:15px;border-radius:12px;line-height:2">有时可以用现在进行时表示已安排好的将来计划（常用于go, come等动词）：<br><strong>I am visiting grandma tomorrow.</strong>（已安排）<br><strong>They are flying to Shanghai next Monday.</strong>（已定机票）<br><br>与 I am going to visit grandma tomorrow. 意思相近。</div>',
+  'wh-future':'<div style="font-size:1.1em;font-weight:700;color:var(--purple);margin-bottom:15px">将来时特殊疑问句</div><div style="display:grid;gap:10px"><div style="background:#faf5ff;padding:12px;border-radius:10px"><strong>What will you do tomorrow?</strong><br>I will play tennis.</div><div style="background:#faf5ff;padding:12px;border-radius:10px"><strong>Where are you going to go?</strong><br>I am going to go to the park.</div><div style="background:#faf5ff;padding:12px;border-radius:10px"><strong>When will she arrive?</strong><br>She will arrive at 8 o\'clock.</div></div>'
+};
+function showExt(key){document.getElementById('ext-info').style.display='block';document.getElementById('ext-info').innerHTML=extContents[key];}
+
+initWarmup();initL1();initL2();initL3();initBoss();
+</script>
+</body>
+</html>

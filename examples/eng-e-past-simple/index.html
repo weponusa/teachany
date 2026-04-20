@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>一般过去时 - 五年级英语</title>
+<style>
+  :root {
+    --bg: #fffbf0;
+    --primary: #ff6b6b;
+    --secondary: #4ecdc4;
+    --accent: #ffe66d;
+    --card: #fff;
+    --text: #333;
+    --shadow: 0 4px 20px rgba(0,0,0,0.1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', 'PingFang SC', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  .screen { display: none; min-height: 100vh; padding: 20px; animation: fadeIn 0.5s ease; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+  @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+  @keyframes pop { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+  @keyframes pulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+  @keyframes starFly { 0% { opacity: 1; transform: scale(0) rotate(0deg); } 100% { opacity: 0; transform: scale(2) rotate(180deg) translateY(-100px); } }
+  @keyframes timelineGrow { from { width: 0; } to { width: 100%; } }
+
+  /* HERO */
+  #screen-hero { background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 50%, #fd79a8 100%); justify-content: center; text-align: center; gap: 20px; }
+  .hero-bear { font-size: 80px; animation: bounce 2s infinite; }
+  .hero-title { font-size: 2.5em; font-weight: 900; color: #fff; text-shadow: 3px 3px 0 rgba(0,0,0,0.2); }
+  .hero-sub { font-size: 1.2em; color: rgba(255,255,255,0.9); }
+  .btn-start { background: #fff; color: #6c5ce7; border: none; border-radius: 50px; padding: 16px 48px; font-size: 1.3em; font-weight: 700; cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,0.2); transition: all 0.3s; }
+  .btn-start:hover { transform: scale(1.05); }
+
+  /* TOPBAR */
+  .topbar { width: 100%; max-width: 800px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; background: var(--card); border-radius: 20px; padding: 10px 20px; box-shadow: var(--shadow); }
+  .topbar-stars { color: #f0a500; font-weight: 700; font-size: 1.1em; }
+  .topbar-progress { flex: 1; margin: 0 15px; }
+  .progress-bar { height: 12px; background: #eee; border-radius: 10px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #6c5ce7, var(--primary)); border-radius: 10px; transition: width 0.5s; }
+  .topbar-level { font-weight: 700; color: #6c5ce7; }
+
+  /* COMMON */
+  .section-title { font-size: 1.8em; font-weight: 800; color: var(--primary); margin-bottom: 15px; text-align: center; }
+  .section-sub { color: #666; margin-bottom: 25px; text-align: center; font-size: 1.05em; }
+  .card { background: var(--card); border-radius: 20px; padding: 25px; box-shadow: var(--shadow); width: 100%; max-width: 800px; margin-bottom: 20px; }
+  .bear-box { display: flex; align-items: flex-start; gap: 15px; background: linear-gradient(135deg, #f0e8ff, #fff); border: 3px solid #a29bfe; border-radius: 20px; padding: 20px; margin-bottom: 20px; max-width: 800px; width: 100%; }
+  .bear-icon { font-size: 2.5em; flex-shrink: 0; }
+  .bear-speech strong { display: block; color: #6c5ce7; margin-bottom: 5px; }
+  .btn { border: none; border-radius: 50px; padding: 12px 35px; font-size: 1em; font-weight: 700; cursor: pointer; transition: all 0.3s; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-secondary { background: var(--secondary); color: #fff; }
+  .btn-purple { background: #6c5ce7; color: #fff; }
+  .btn:hover { transform: scale(1.05); filter: brightness(1.05); }
+  .btn-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+  .level-badge { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: #fff; border-radius: 50px; padding: 8px 20px; font-weight: 800; font-size: 1.1em; margin-bottom: 15px; }
+  .feedback { text-align: center; padding: 15px; border-radius: 12px; font-size: 1.1em; font-weight: 700; margin-top: 15px; display: none; }
+  .feedback.show { display: block; animation: fadeIn 0.3s; }
+  .feedback.ok { background: #f0fff4; color: #27ae60; }
+  .feedback.ng { background: #fff5f5; color: #e74c3c; }
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .opt-btn { background: #f5f5f5; border: 2px solid #eee; border-radius: 12px; padding: 14px 20px; font-size: 1em; cursor: pointer; text-align: left; transition: all 0.3s; font-weight: 600; }
+  .opt-btn:hover { border-color: #6c5ce7; background: #f5f0ff; }
+  .opt-btn.correct { background: #f0fff4; border-color: #2ecc71; color: #27ae60; }
+  .opt-btn.wrong { background: #fff5f5; border-color: var(--primary); color: var(--primary); }
+  .star-pop { position: fixed; pointer-events: none; font-size: 2em; z-index: 999; animation: starFly 1s ease-out forwards; }
+
+  /* TIMELINE */
+  .timeline { position: relative; padding: 30px 0; overflow: hidden; }
+  .timeline-bar { position: absolute; top: 50%; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #6c5ce7, #fd79a8); border-radius: 3px; transform: translateY(-50%); animation: timelineGrow 1s ease-out; }
+  .timeline-points { display: flex; justify-content: space-between; position: relative; z-index: 2; }
+  .tl-point { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .tl-dot { width: 20px; height: 20px; border-radius: 50%; background: #fff; border: 3px solid; }
+  .tl-label { font-size: 0.8em; font-weight: 700; text-align: center; max-width: 80px; }
+
+  /* VERB IRREGULAR TABLE */
+  .verb-table { width: 100%; border-collapse: collapse; }
+  .verb-table th { background: #6c5ce7; color: #fff; padding: 10px 15px; text-align: left; }
+  .verb-table td { padding: 10px 15px; border-bottom: 1px solid #eee; font-size: 0.95em; }
+  .verb-table tr:nth-child(even) td { background: #f9f7ff; }
+  .verb-table .v-base { font-weight: 700; color: #6c5ce7; }
+  .verb-table .v-past { font-weight: 700; color: var(--primary); }
+
+  /* FILL INPUT */
+  .fill-input { border: 3px solid #ddd; border-radius: 12px; padding: 10px 15px; font-size: 1.1em; outline: none; transition: border 0.3s; text-align: center; font-weight: 600; }
+  .fill-input:focus { border-color: #6c5ce7; }
+  .fill-input.correct { border-color: #2ecc71; background: #f0fff4; }
+  .fill-input.wrong { border-color: var(--primary); background: #fff5f5; }
+  .btn-check { background: #6c5ce7; color: #fff; border: none; border-radius: 50px; padding: 10px 30px; font-size: 1em; font-weight: 700; cursor: pointer; transition: all 0.3s; }
+  .btn-check:hover { transform: scale(1.05); }
+
+  /* SENTENCE TRANSFORM */
+  .transform-card { background: var(--card); border: 2px solid #e0d9ff; border-radius: 15px; padding: 20px; margin: 10px 0; }
+  .transform-source { font-size: 1.1em; font-weight: 700; color: #6c5ce7; margin-bottom: 10px; padding: 10px 15px; background: #f5f0ff; border-radius: 10px; }
+  .transform-result { font-size: 1em; color: #888; font-style: italic; margin-top: 8px; }
+  .transform-result.revealed { color: #27ae60; font-style: normal; font-weight: 700; }
+
+  /* STORY */
+  .story-box { background: linear-gradient(135deg, #fff9f0, #fff); border: 2px solid var(--accent); border-radius: 15px; padding: 20px; font-size: 1.05em; line-height: 1.8; margin: 15px 0; }
+  .story-blank { display: inline-block; border-bottom: 2px solid #6c5ce7; min-width: 80px; cursor: pointer; color: #6c5ce7; font-weight: 700; }
+  .story-blank.filled { border-bottom-color: #2ecc71; color: #27ae60; }
+  .word-bank { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0; }
+  .bank-word { background: #6c5ce7; color: #fff; padding: 8px 16px; border-radius: 50px; cursor: pointer; font-weight: 600; font-size: 0.95em; transition: all 0.3s; }
+  .bank-word:hover { transform: scale(1.05); background: #5a4ccc; }
+  .bank-word.used { opacity: 0.3; pointer-events: none; }
+
+  /* BOSS */
+  .boss-scene { text-align: center; padding: 20px; }
+  .boss-char { font-size: 5em; animation: bossFloat 2s ease-in-out infinite; }
+  @keyframes bossFloat { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-15px) rotate(-5deg); } }
+  .boss-hp { display: flex; align-items: center; gap: 10px; margin: 15px 0; }
+  .hp-bar { flex: 1; height: 20px; background: #eee; border-radius: 10px; overflow: hidden; }
+  .hp-fill { height: 100%; background: linear-gradient(90deg, #2ecc71, #f0c030, var(--primary)); transition: width 0.5s; }
+
+  /* REPORT */
+  .report-card { background: linear-gradient(135deg, #6c5ce7, #fd79a8); border-radius: 25px; padding: 30px; color: #fff; text-align: center; max-width: 600px; width: 100%; }
+  .report-score { font-size: 4em; font-weight: 900; margin: 15px 0; }
+  .report-stars { font-size: 2.5em; margin: 10px 0; }
+  .achievement-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }
+  .ach-badge { background: rgba(255,255,255,0.2); border-radius: 12px; padding: 12px 8px; text-align: center; }
+  .ach-badge.earned { background: rgba(255,230,109,0.4); border: 2px solid var(--accent); }
+  .ach-icon { font-size: 1.8em; }
+  .ach-name { font-size: 0.7em; margin-top: 5px; opacity: 0.9; }
+
+  /* EXT */
+  .ext-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; width: 100%; max-width: 800px; }
+  .ext-card { background: var(--card); border-radius: 15px; padding: 20px; box-shadow: var(--shadow); text-align: center; cursor: pointer; transition: all 0.3s; border: 2px solid transparent; }
+  .ext-card:hover { border-color: #6c5ce7; transform: translateY(-3px); }
+  .ext-icon { font-size: 2.5em; margin-bottom: 10px; }
+
+  @media (max-width: 600px) {
+    .hero-title { font-size: 1.8em; }
+    .options { grid-template-columns: 1fr; }
+    .achievement-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div id="screen-hero" class="screen active">
+  <div class="hero-bear">🐻</div>
+  <div class="hero-title">一般过去时</div>
+  <div class="hero-sub">Simple Past Tense</div>
+  <div style="background:rgba(255,255,255,0.3);border-radius:20px;padding:8px 20px;color:#fff;font-weight:700">📚 小学五年级英语</div>
+  <div style="color:rgba(255,255,255,0.85);font-size:1.1em;margin-top:10px">穿越时间，探索过去！⏰</div>
+  <button class="btn-start" onclick="showScreen('screen-objectives')">🚀 开始时间旅行！</button>
+  <div style="color:rgba(255,255,255,0.7);font-size:0.9em;margin-top:15px">⭐ 共5关 · 8个成就 · 过去时大冒险</div>
+</div>
+
+<!-- OBJECTIVES -->
+<div id="screen-objectives" class="screen">
+  <div class="topbar">
+    <div class="topbar-stars">⭐ <span id="stars1">0</span></div>
+    <div class="topbar-progress"><div class="progress-bar"><div class="progress-fill" style="width:10%"></div></div></div>
+    <div class="topbar-level">📍 目标</div>
+  </div>
+  <div class="section-title">🎯 本节学习目标</div>
+  <div class="bear-box">
+    <div class="bear-icon">🐻</div>
+    <div class="bear-speech">
+      <strong>Bear说：</strong>
+      嗨！今天我们乘坐时光机，去探索<strong>一般过去时</strong>！它描述的是过去已经发生的事情。比如"I ate pizza yesterday"就是"我昨天吃了披萨"。规则动词加-ed，不规则动词要单独记！准备好了吗？🎉
+    </div>
+  </div>
+  <ul class="card" style="list-style:none;max-width:800px">
+    <li style="padding:12px 15px;margin:8px 0;background:#f8f8f8;border-radius:12px;border-left:4px solid #6c5ce7;display:flex;align-items:center;gap:10px"><span style="font-size:1.3em">⏰</span> 理解一般过去时表示已经发生的事情</li>
+    <li style="padding:12px 15px;margin:8px 0;background:#f8f8f8;border-radius:12px;border-left:4px solid var(--primary);display:flex;align-items:center;gap:10px"><span style="font-size:1.3em">📝</span> 掌握规则动词过去式(-ed)的变形规则</li>
+    <li style="padding:12px 15px;margin:8px 0;background:#f8f8f8;border-radius:12px;border-left:4px solid var(--secondary);display:flex;align-items:center;gap:10px"><span style="font-size:1.3em">🔀</span> 记住常见不规则动词的过去式</li>
+    <li style="padding:12px 15px;margin:8px 0;background:#f8f8f8;border-radius:12px;border-left:4px solid #f0c030;display:flex;align-items:center;gap:10px"><span style="font-size:1.3em">❓</span> 学会did的疑问句和否定句 (didn't)</li>
+    <li style="padding:12px 15px;margin:8px 0;background:#f8f8f8;border-radius:12px;border-left:4px solid #fd79a8;display:flex;align-items:center;gap:10px"><span style="font-size:1.3em">🏆</span> 完成Boss挑战，获得8个成就徽章！</li>
+  </ul>
+  <div class="btn-row">
+    <button class="btn btn-purple" onclick="showScreen('screen-warmup')">开始热身 🔥</button>
+  </div>
+</div>
+
+<!-- WARMUP -->
+<div id="screen-warmup" class="screen">
+  <div class="topbar">
+    <div class="topbar-stars">⭐ <span id="stars2">0</span></div>
+    <div class="topbar-progress"><div class="progress-bar"><div class="progress-fill" style="width:20%"></div></div></div>
+    <div class="topbar-level">🔥 热身</div>
+  </div>
+  <div class="section-title">🔥 热身：时间线认知</div>
+  <div class="card">
+    <div style="font-size:1.1em;font-weight:700;margin-bottom:20px">📅 时间轴 - 过去、现在、将来</div>
+    <div class="timeline">
+      <div class="timeline-bar"></div>
+      <div class="timeline-points">
+        <div class="tl-point">
+          <div class="tl-dot" style="border-color:#6c5ce7"></div>
+          <div class="tl-label" style="color:#6c5ce7">过去<br>Yesterday</div>
+        </div>
+        <div class="tl-point">
+          <div class="tl-dot" style="border-color:var(--secondary);background:var(--secondary)"></div>
+          <div class="tl-label" style="color:var(--secondary)">現在<br>Now</div>
+        </div>
+        <div class="tl-point">
+          <div class="tl-dot" style="border-color:#fd79a8"></div>
+          <div class="tl-label" style="color:#fd79a8">将来<br>Tomorrow</div>
+        </div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:10px;text-align:center">
+      <div style="background:#f5f0ff;border-radius:12px;padding:12px;border:2px solid #6c5ce7">
+        <div style="font-weight:700;color:#6c5ce7;margin-bottom:5px">过去时标志词</div>
+        <div style="font-size:0.85em;color:#666">yesterday · last week · ago · last year · in 2020</div>
+      </div>
+      <div style="background:#f0fffe;border-radius:12px;padding:12px;border:2px solid var(--secondary)">
+        <div style="font-weight:700;color:var(--secondary);margin-bottom:5px">现在时标志词</div>
+        <div style="font-size:0.85em;color:#666">now · today · every day · usually · always</div>
+      </div>
+      <div style="background:#fff0f5;border-radius:12px;padding:12px;border:2px solid #fd79a8">
+        <div style="font-weight:700;color:#fd79a8;margin-bottom:5px">将来时标志词</div>
+        <div style="font-size:0.85em;color:#666">tomorrow · next week · will · be going to</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div style="font-size:1.1em;font-weight:700;color:#6c5ce7;margin-bottom:15px">⚡ 快速判断：这句话是过去时吗？</div>
+    <div id="warmup-quiz-container"></div>
+  </div>
+  <div id="warmup-next" style="display:none" class="btn-row">
+    <button class="btn btn-purple" onclick="showScreen('screen-level1')">第一关：规则动词 →</button>
+  </div>
+</div>
+
+<!-- LEVEL 1 - Regular Verbs -->
+<div id="screen-level1" class="screen">
+  <div class="topbar">
+    <div class="topbar-stars">⭐ <span id="stars3">0</span></div>
+    <div class="topbar-progress"><div class="progress-bar"><div class="progress-fill" style="width:40%"></div></div></div>
+    <div class="topbar-level">🎮 第一关</div>
+  </div>
+  <div class="level-badge">📝 第一关：规则动词变形</div>
+  <div class="card">
+    <div style="font-size:1.2em;font-weight:700;margin-bottom:15px">📌 规则动词+ed 的四大变形规则</div>
+    <div style="display:grid;gap:12px">
+      <div style="background:#f5f0ff;border-radius:12px;padding:15px;border-left:4px solid #6c5ce7">
+        <strong>规则① 直接加-ed</strong>
+        <div style="color:#888;margin-top:5px">play→played · walk→walked · clean→cleaned · watch→watched</div>
+      </div>
+      <div style="background:#f0fff4;border-radius:12px;padding:15px;border-left:4px solid #2ecc71">
+        <strong>规则② 以e结尾→直接加-d</strong>
+        <div style="color:#888;margin-top:5px">love→loved · dance→danced · live→lived · arrive→arrived</div>
+      </div>
+      <div style="background:#fffae0;border-radius:12px;padding:15px;border-left:4px solid #f0c030">
+        <strong>规则③ 辅音+y结尾→y改i，再加-ed</strong>
+        <div style="color:#888;margin-top:5px">study→studied · try→tried · carry→carried · cry→cried</div>
+      </div>
+      <div style="background:#fff0f5;border-radius:12px;padding:15px;border-left:4px solid #fd79a8">
+        <strong>规则④ CVC结构→双写末尾字母+ed</strong>
+        <div style="color:#888;margin-top:5px">stop→stopped · plan→planned · drop→dropped · clap→clapped</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div style="font-size:1.1em;font-weight:700;color:#6c5ce7;margin-bottom:15px">✏️ 练习：写出正确的过去式</div>
+    <div id="reg-verb-container"></div>
+  </div>
+  <div class="btn-row" id="l1-next" style="display:none">
+    <button class="btn btn-purple" onclick="showScreen('screen-level2')">第二关：不规则动词 →</button>
+  </div>
+</div>
+
+<!-- LEVEL 2 - Irregular Verbs -->
+<div id="screen-level2" class="screen">
+  <div class="topbar">
+    <div class="topbar-stars">⭐ <span id="stars4">0</span></div>
+    <div class="topbar-progress"><div class="progress-bar"><div class="progress-fill" style="width:55%"></div></div></div>
+    <div class="topbar-level">🎮 第二关</div>
+  </div>
+  <div class="level-badge">🔀 第二关：不规则动词记忆</div>
+  <div class="bear-box">
+    <div class="bear-icon">🐻</div>
+    <div class="bear-speech"><strong>Bear说：</strong>不规则动词没有固定规律，要靠记忆！我把最常见的整理在下面了，先看一遍，然后来做记忆配对游戏！</div>
+  </div>
+  <div class="card">
+    <div style="font-size:1.1em;font-weight:700;margin-bottom:15px">📚 常见不规则动词表</div>
+    <table class="verb-table">
+      <tr><th>原形</th><th>过去式</th><th>含义</th><th>原形</th><th>过去式</th><th>含义</th></tr>
+      <tr><td class="v-base">go</td><td class="v-past">went</td><td>去</td><td class="v-base">come</td><td class="v-past">came</td><td>来</td></tr>
+      <tr><td class="v-base">eat</td><td class="v-past">ate</td><td>吃</td><td class="v-base">drink</td><td class="v-past">drank</td><td>喝</td></tr>
+      <tr><td class="v-base">see</td><td class="v-past">saw</td><td>看</td><td class="v-base">run</td><td class="v-past">ran</td><td>跑</td></tr>
+      <tr><td class="v-base">have</td><td class="v-past">had</td><td>有/吃</td><td class="v-base">make</td><td class="v-past">made</td><td>做</td></tr>
+      <tr><td class="v-base">take</td><td class="v-past">took</td><td>拿/乘</td><td class="v-base">buy</td><td class="v-past">bought</td><td>买</td></tr>
+      <tr><td class="v-base">get</td><td class="v-past">got</td><td>得到</td><td class="v-base">say</td><td class="v-past">said</td><td>说</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <div style="font-size:1.1em;font-weight:700;color:#6c5ce7;margin-bottom:15px">🎯 记忆配对：点击原形和过去式进行匹配！</div>
+    <div id="irr-match-container"></div>
+  </div>
+  <div class="btn-row" id="l2-next" style="display:none">
+    <button class="btn btn-purple" onclick="showScreen('screen-level3')">第三关：句型转换 →</button>
+  </div>
+</div>
+
+<!-- LEVEL 3 - Sentence Patterns -->
+<div id="screen-level3" class="screen">
+  <div class="topbar">
+    <div class="topbar-stars">⭐ <span id="stars5">0</span></div>
+    <div class="topbar-progress"><div class="progress-bar"><div class="progress-fill" style="width:72%"></div></div></div>
+    <div class="topbar-level">🎮 第三关</div>
+  </div>
+  <div class="level-badge">🔄 第三关：句型转换大师</div>
+  <div class="card">
+    <div style="font-size:1.2em;font-weight:700;margin-bottom:15px">📌 过去时句型变换规则</div>
+    <div style="display:grid;gap:12px">
+      <div style="background:#f5f0ff;padding:15px;border-radius:12px">
+        <strong>✅ 肯定句：</strong>She <span style="color:#6c5ce7;font-weight:700">visited</span> her grandma yesterday.
+      </div>
+      <div style="background:#fff0f5;padding:15px;border-radius:12px">
+        <strong>❌ 否定句：</strong>She <span style="color:var(--primary);font-weight:700">didn't visit</span> her grandma yesterday.
+        <div style="color:#888;font-size:0.9em;margin-top:5px">💡 didn't + 动词原形（不加-ed）</div>
+      </div>
+      <div style="background:#f0fff4;padding:15px;border-radius:12px">
+        <strong>❓ 疑问句：</strong><span style="color:#2ecc71;font-weight:700">Did</span> she <span style="color:#2ecc71;font-weight:700">visit</span> her grandma yesterday?
+        <div style="color:#888;font-size:0.9em;margin-top:5px">💡 Did + 主语 + 动词原形?</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div style="font-size:1.1em;font-weight:700;color:#6c5ce7;margin-bottom:15px">✏️ 完形填空故事</div>
+    <div class="story-box" id="story-box">
+      Last Sunday, Tom <span class="story-blank" id="blank0" onclick="fillBlank(0)">________</span> (go) to the park.
+      He <span class="story-blank" id="blank1" onclick="fillBlank(1)">________</span> (see) a big dog.
+      He <span class="story-blank" id="blank2" onclick="fillBlank(2)">________</span> (run) away quickly.
+      Then he <span class="story-blank" id="blank3" onclick="fillBlank(3)">________</span> (eat) ice cream.
+      It was a fun day!
+    </div>
+    <div style="font-size:0.9em;font-weight:700;color:#888;margin-bottom:8px">🗂️ 词库（点击填入，再点空格处填入）：</div>
+    <div class="word-bank">
+      <div class="bank-word" onclick="selectWord('went',0)" id="bank-went">went</div>
+      <div class="bank-word" onclick="selectWord('saw',1)" id="bank-saw">saw</div>
+      <div class="bank-word" onclick="selectWord('ran',2)" id="bank-ran">ran</div>
+      <div class="bank-word" onclick="selectWord('ate',3)" id="bank-ate">ate</div>
+      <div class="bank-word" onclick="selectWord('played',-1)" id="bank-played">played</div>
+      <div class="bank-word" onclick="selectWord('went',-1)" id="bank-went2">walked</div>
+    </div>
+    <div class="feedback" id="story-fb"></div>
+    <div class="btn-row" style="margin-top:10px">
+      <button class="btn-check" onclick="checkStory()">检查答案 ✓</button>
+    </div>
+  </div>
+  <div class="btn-row" id="l3-next" style="display:none">
+    <button class="btn btn-primary" onclick="showScreen('screen-boss')">⚔️ 挑战Boss！</button>
+  </div>
+</div>
+
+<!-- BOSS -->
+<div id="screen-boss" class="screen">
+  <div class="topbar">
+    <div class="topbar-stars">⭐ <span id="stars6">0</span></div>
+    <div class="topbar-progress"><div class="progress-bar"><div class="progress-fill" style="width:88%"></div></div></div>
+    <div class="topbar-level">⚔️ Boss战</div>
+  </div>
+  <div class="section-title">⚔️ Boss：时间魔法师</div>
+  <div class="boss-scene">
+    <div class="boss-char">🧙‍♀️</div>
+    <div style="font-size:1.1em;font-weight:700;color:#666;margin:5px 0">时间魔法师 Chrono</div>
+    <div class="boss-hp">
+      <span>❤️</span>
+      <div class="hp-bar"><div class="hp-fill" id="boss-hp-fill" style="width:100%"></div></div>
+      <span id="boss-hp-text">5/5</span>
+    </div>
+  </div>
+  <div class="card" id="boss-quiz-card">
+    <div id="boss-q-container"></div>
+  </div>
+  <div id="boss-win" style="display:none;text-align:center">
+    <div style="font-size:4em;animation:bounce 1s infinite">🎊</div>
+    <div style="font-size:1.5em;font-weight:800;color:#6c5ce7">时间魔法师被打败了！</div>
+    <div class="btn-row">
+      <button class="btn btn-purple" onclick="showReport()">查看成绩单 📊</button>
+    </div>
+  </div>
+</div>
+
+<!-- REPORT -->
+<div id="screen-report" class="screen">
+  <div class="section-title">🏆 学习成绩单</div>
+  <div class="report-card">
+    <div style="font-size:1.5em;font-weight:700">🐻 Bear的评语</div>
+    <div class="report-score" id="final-score">98</div>
+    <div style="font-size:1em;opacity:0.8">分</div>
+    <div class="report-stars" id="final-stars">⭐⭐⭐</div>
+    <div id="report-comment" style="font-size:1.05em;margin:10px 0;opacity:0.9">时间旅行家！你掌握了过去时！</div>
+    <div style="font-size:0.95em;opacity:0.7;margin-bottom:15px">今日学习：一般过去时 (Simple Past) | 五年级</div>
+    <div class="achievement-grid">
+      <div class="ach-badge earned" id="ach0"><div class="ach-icon">⏰</div><div class="ach-name">时间感知者</div></div>
+      <div class="ach-badge" id="ach1"><div class="ach-icon">📝</div><div class="ach-name">规则达人</div></div>
+      <div class="ach-badge" id="ach2"><div class="ach-icon">🔀</div><div class="ach-name">不规则征服者</div></div>
+      <div class="ach-badge" id="ach3"><div class="ach-icon">📖</div><div class="ach-name">故事讲述者</div></div>
+      <div class="ach-badge" id="ach4"><div class="ach-icon">⚔️</div><div class="ach-name">时间战士</div></div>
+      <div class="ach-badge" id="ach5"><div class="ach-icon">💯</div><div class="ach-name">满分英雄</div></div>
+      <div class="ach-badge" id="ach6"><div class="ach-icon">🚀</div><div class="ach-name">速度之星</div></div>
+      <div class="ach-badge" id="ach7"><div class="ach-icon">👑</div><div class="ach-name">过去时之王</div></div>
+    </div>
+  </div>
+  <div class="btn-row" style="margin-top:20px">
+    <button class="btn btn-secondary" onclick="showScreen('screen-extension')">📚 拓展挑战 →</button>
+    <button class="btn btn-purple" onclick="restartGame()">🔄 再玩一次</button>
+  </div>
+</div>
+
+<!-- EXTENSION -->
+<div id="screen-extension" class="screen">
+  <div class="section-title">📚 拓展学习</div>
+  <div class="section-sub">继续探索一般过去时的更多用法！</div>
+  <div class="bear-box">
+    <div class="bear-icon">🐻</div>
+    <div class="bear-speech"><strong>Bear说：</strong>恭喜完成今天的学习！一般过去时还可以用来讲故事！"Once upon a time, there was a little bear who went on an adventure..."</div>
+  </div>
+  <div class="ext-grid">
+    <div class="ext-card" onclick="showExt('past-words')">
+      <div class="ext-icon">📅</div>
+      <div style="font-weight:700;color:#6c5ce7">过去时间词大全</div>
+      <div style="font-size:0.85em;color:#666;margin-top:5px">yesterday, last week, ago...</div>
+    </div>
+    <div class="ext-card" onclick="showExt('storytelling')">
+      <div class="ext-icon">📖</div>
+      <div style="font-weight:700;color:#6c5ce7">用过去时讲故事</div>
+      <div style="font-size:0.85em;color:#666;margin-top:5px">Once upon a time...</div>
+    </div>
+    <div class="ext-card" onclick="showExt('irregular-list')">
+      <div class="ext-icon">📋</div>
+      <div style="font-weight:700;color:#6c5ce7">不规则动词完整表</div>
+      <div style="font-size:0.85em;color:#666;margin-top:5px">更多不规则动词对照</div>
+    </div>
+    <div class="ext-card" onclick="showExt('wh-question')">
+      <div class="ext-icon">🔍</div>
+      <div style="font-weight:700;color:#6c5ce7">特殊疑问句(Wh-)</div>
+      <div style="font-size:0.85em;color:#666;margin-top:5px">What did you do? When did...</div>
+    </div>
+  </div>
+  <div class="card" id="ext-info" style="display:none;max-width:800px"></div>
+  <div class="btn-row" style="margin-top:20px">
+    <button class="btn btn-purple" onclick="restartGame()">🔄 重新挑战</button>
+  </div>
+</div>
+
+<script>
+let state = {
+  stars:0, score:0, achievements:new Array(8).fill(false),
+  startTime:Date.now(), correctCount:0, totalQuestions:0,
+  bossHp:5, bossIdx:0, bossCorrect:0,
+  storyAnswers:['went','saw','ran','ate'],
+  storyFilled:[false,false,false,false]
+};
+
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx=null;
+function getAC(){if(!audioCtx)audioCtx=new AudioCtx();return audioCtx;}
+function playTone(f,t,d,v){try{const c=getAC(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=f;o.type=t||'sine';g.gain.setValueAtTime(v||0.3,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+d);o.start();o.stop(c.currentTime+d);}catch(e){}}
+function playCorrect(){playTone(523,'sine',0.15);setTimeout(()=>playTone(659,'sine',0.15),100);setTimeout(()=>playTone(784,'sine',0.25),200);}
+function playWrong(){playTone(200,'sawtooth',0.3,0.2);}
+function playLevelUp(){[523,587,659,698,784].forEach((f,i)=>setTimeout(()=>playTone(f,'triangle',0.2),i*80));}
+function playBossHit(){playTone(440,'square',0.1,0.15);}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  syncStars();
+}
+function syncStars(){document.querySelectorAll('[id^="stars"]').forEach(el=>el.textContent=state.stars);}
+function addStars(n){state.stars+=n;state.score+=n*10;syncStars();spawnStars(n);}
+function spawnStars(n){for(let i=0;i<n;i++){const el=document.createElement('div');el.className='star-pop';el.textContent='⭐';el.style.left=(30+Math.random()*40)+'vw';el.style.top=(20+Math.random()*40)+'vh';document.body.appendChild(el);setTimeout(()=>el.remove(),1000);}}
+function unlockAch(i,name){if(state.achievements[i])return;state.achievements[i]=true;document.getElementById('ach'+i)&&document.getElementById('ach'+i).classList.add('earned');showToast('🏅 成就解锁：'+name);addStars(2);}
+function showToast(msg){const t=document.createElement('div');t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#6c5ce7;color:#fff;padding:10px 20px;border-radius:50px;z-index:9999;font-weight:700;font-size:0.95em;animation:fadeIn 0.3s';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2500);}
+
+// WARMUP
+const warmupSentences=[
+  {sentence:'I ate breakfast yesterday.',isPast:true},
+  {sentence:'She is reading now.',isPast:false},
+  {sentence:'They played football last week.',isPast:true},
+  {sentence:'He goes to school every day.',isPast:false},
+];
+let wuIdx=0,wuCorrect=0;
+function initWarmup(){wuIdx=0;wuCorrect=0;renderWarmup();}
+function renderWarmup(){
+  if(wuIdx>=warmupSentences.length){
+    document.getElementById('warmup-quiz-container').innerHTML='<div style="text-align:center"><div style="font-size:3em">🎉</div><div style="font-size:1.2em;font-weight:700;color:#6c5ce7">热身完成！答对'+wuCorrect+'/'+warmupSentences.length+'题</div></div>';
+    document.getElementById('warmup-next').style.display='flex';
+    unlockAch(0,'时间感知者');
+    addStars(wuCorrect);
+    return;
+  }
+  const d=warmupSentences[wuIdx];
+  document.getElementById('warmup-quiz-container').innerHTML=`
+    <div style="font-size:1.1em;font-weight:700;margin-bottom:15px;text-align:center">这是一般过去时吗？</div>
+    <div style="text-align:center;font-size:1.2em;padding:20px;background:#f9f7ff;border-radius:12px;margin-bottom:20px;color:#6c5ce7;font-weight:700">"${d.sentence}"</div>
+    <div style="display:flex;gap:15px;justify-content:center">
+      <button class="btn btn-purple" onclick="checkWU(true,${d.isPast})">✅ 是！过去时</button>
+      <button class="btn" style="background:#fd79a8;color:#fff" onclick="checkWU(false,${d.isPast})">❌ 不是</button>
+    </div>
+    <div class="feedback" id="wu-fb"></div>`;
+}
+function checkWU(sel,correct){
+  state.totalQuestions++;
+  const fb=document.getElementById('wu-fb');
+  if(sel===correct){wuCorrect++;state.correctCount++;addStars(1);playCorrect();fb.className='feedback ok show';fb.textContent='✅ 正确！'+(correct?'有yesterday/last等过去时间词，是一般过去时！':'没有过去时间词，是现在时！');}
+  else{playWrong();fb.className='feedback ng show';fb.textContent='❌ '+(!correct?'这句有yesterday/played等，是一般过去时！':'注意时间词，这不是过去时！');}
+  document.querySelectorAll('#warmup-quiz-container button').forEach(b=>b.disabled=true);
+  setTimeout(()=>{wuIdx++;renderWarmup();},1300);
+}
+
+// LEVEL 1 - Regular Verbs
+const regVerbs=[
+  {verb:'play',answer:'played',rule:'直接加ed',hint:''},
+  {verb:'dance',answer:'danced',rule:'去e加d',hint:'以e结尾'},
+  {verb:'study',answer:'studied',rule:'y→i+ed',hint:'辅音+y'},
+  {verb:'stop',answer:'stopped',rule:'双写+ed',hint:'CVC结构'},
+  {verb:'watch',answer:'watched',rule:'直接加ed',hint:''},
+];
+let regResults=[];
+function initL1(){renderRegVerbs();}
+function renderRegVerbs(){
+  let html='';
+  regVerbs.forEach((v,i)=>{
+    html+=`<div style="margin:12px 0;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="font-size:1.1em;font-weight:700;min-width:70px">${v.verb} →</span>
+      <input id="rv-${i}" class="fill-input" style="max-width:140px" placeholder="过去式">
+      <button class="btn-check" onclick="checkRegVerb(${i})">检查</button>
+      <span style="color:#aaa;font-size:0.85em">💡 ${v.rule}${v.hint?'（'+v.hint+'）':''}</span>
+      <span id="rv-result-${i}"></span>
+    </div>`;
+  });
+  html+='<div class="btn-row" style="margin-top:10px"><button class="btn btn-purple" onclick="checkAllReg()">全部完成 ✓</button></div>';
+  document.getElementById('reg-verb-container').innerHTML=html;
+}
+function checkRegVerb(i){
+  const v=document.getElementById('rv-'+i).value.trim().toLowerCase();
+  state.totalQuestions++;
+  if(v===regVerbs[i].answer){
+    document.getElementById('rv-'+i).classList.add('correct');
+    document.getElementById('rv-result-'+i).textContent='✅';
+    state.correctCount++;
+    addStars(1);playCorrect();
+  } else {
+    document.getElementById('rv-'+i).classList.add('wrong');
+    document.getElementById('rv-result-'+i).textContent='❌ 正确：'+regVerbs[i].answer;
+    playWrong();
+  }
+}
+function checkAllReg(){
+  regVerbs.forEach((_,i)=>checkRegVerb(i));
+  setTimeout(()=>{document.getElementById('l1-next').style.display='flex';unlockAch(1,'规则达人');playLevelUp();},500);
+}
+
+// LEVEL 2 - Irregular Match
+const irrPairs=[
+  {base:'go',past:'went'},{base:'eat',past:'ate'},{base:'see',past:'saw'},
+  {base:'run',past:'ran'},{base:'have',past:'had'},{base:'take',past:'took'},
+];
+let irrSel={base:null,past:null};
+let irrMatched=0;
+function initL2(){renderIrrMatch();}
+function renderIrrMatch(){
+  const shuffledBase=[...irrPairs].sort(()=>Math.random()-0.5);
+  const shuffledPast=[...irrPairs].sort(()=>Math.random()-0.5);
+  let html='<div style="display:flex;gap:20px;flex-wrap:wrap">';
+  html+='<div style="flex:1;min-width:120px"><div style="font-weight:700;margin-bottom:10px;color:#888">动词原形</div>';
+  shuffledBase.forEach((v,i)=>{html+=`<div class="irrb irrb-base" id="irrb-${v.base}" data-base="${v.base}" onclick="selBase('${v.base}')" style="background:#6c5ce7;color:#fff;padding:10px 15px;border-radius:10px;margin:6px 0;font-weight:700;cursor:pointer;transition:all 0.3s">${v.base}</div>`;});
+  html+='</div><div style="display:flex;align-items:center;font-size:2em">⚡</div>';
+  html+='<div style="flex:1;min-width:120px"><div style="font-weight:700;margin-bottom:10px;color:#888">过去式</div>';
+  shuffledPast.forEach((v,i)=>{html+=`<div class="irrp" id="irrp-${v.past}" data-past="${v.past}" onclick="selPast('${v.past}')" style="background:#f0e8ff;border:2px solid #6c5ce7;padding:10px 15px;border-radius:10px;margin:6px 0;font-weight:700;cursor:pointer;transition:all 0.3s">${v.past}</div>`;});
+  html+='</div></div><div id="irr-result" style="margin-top:15px;font-weight:700;text-align:center;color:#6c5ce7"></div>';
+  html+='<div id="irr-score" style="text-align:center;margin-top:10px;color:#888">已匹配: <span id="irr-matched">0</span>/'+irrPairs.length+'</div>';
+  document.getElementById('irr-match-container').innerHTML=html;
+  irrMatched=0;
+}
+let irrSelBase=null;
+function selBase(base){
+  document.querySelectorAll('.irrb-base').forEach(el=>el.style.outline='none');
+  irrSelBase=base;
+  document.getElementById('irrb-'+base).style.outline='3px solid var(--accent)';
+}
+function selPast(past){
+  if(!irrSelBase){showToast('请先点击左边的动词原形！');return;}
+  const match=irrPairs.find(p=>p.base===irrSelBase);
+  if(match&&match.past===past){
+    document.getElementById('irrb-'+irrSelBase).style.background='#2ecc71';
+    document.getElementById('irrb-'+irrSelBase).style.outline='none';
+    document.getElementById('irrb-'+irrSelBase).style.pointerEvents='none';
+    document.getElementById('irrp-'+past).style.background='#2ecc71';
+    document.getElementById('irrp-'+past).style.color='#fff';
+    document.getElementById('irrp-'+past).style.pointerEvents='none';
+    irrMatched++;
+    document.getElementById('irr-matched').textContent=irrMatched;
+    addStars(1);playCorrect();
+    document.getElementById('irr-result').textContent='✅ 正确！'+irrSelBase+' → '+past;
+    unlockAch(2,'不规则征服者');
+    if(irrMatched>=irrPairs.length){
+      setTimeout(()=>{document.getElementById('l2-next').style.display='flex';playLevelUp();},500);
+    }
+  } else {
+    document.getElementById('irr-result').textContent='❌ 配错了，再试试！';
+    document.getElementById('irrp-'+past).style.background='#ffebeb';
+    setTimeout(()=>{document.getElementById('irrp-'+past).style.background='#f0e8ff';},800);
+    playWrong();
+  }
+  irrSelBase=null;
+  document.querySelectorAll('.irrb-base').forEach(el=>el.style.outline='none');
+}
+
+// LEVEL 3 - Story Fill
+let storyWords=[null,null,null,null];
+const storyAnswers=['went','saw','ran','ate'];
+let selectedWord=null,selectedWordIdx=-1;
+function selectWord(word,correctIdx){
+  selectedWord=word;selectedWordIdx=correctIdx;
+  showToast('选中了"'+word+'"，点击故事中的空格填入！');
+}
+function fillBlank(i){
+  if(!selectedWord){showToast('请先从词库中选择单词！');return;}
+  document.getElementById('blank'+i).textContent=selectedWord;
+  document.getElementById('blank'+i).classList.add('filled');
+  storyWords[i]=selectedWord;
+  if(selectedWordIdx>=0){
+    const bankEl=document.getElementById('bank-'+selectedWord);
+    if(bankEl)bankEl.classList.add('used');
+  }
+  selectedWord=null;selectedWordIdx=-1;
+}
+function checkStory(){
+  let correct=0;
+  storyAnswers.forEach((ans,i)=>{
+    state.totalQuestions++;
+    if(storyWords[i]===ans){correct++;state.correctCount++;document.getElementById('blank'+i).style.color='#27ae60';}
+    else{document.getElementById('blank'+i).style.color='#e74c3c';document.getElementById('blank'+i).textContent=document.getElementById('blank'+i).textContent+'(✗→'+ans+')';}
+  });
+  const fb=document.getElementById('story-fb');
+  if(correct===storyAnswers.length){
+    fb.className='feedback ok show';fb.textContent='🎉 完美！故事全部填对！+4⭐';
+    addStars(4);playLevelUp();unlockAch(3,'故事讲述者');
+  } else {
+    fb.className='feedback ng show';fb.textContent='答对'+correct+'/'+storyAnswers.length+'，再加油！';
+    addStars(correct);playWrong();
+  }
+  document.getElementById('l3-next').style.display='flex';
+}
+
+// BOSS
+const bossQuestions=[
+  {q:'I __ (go) to school yesterday.',ans:'went',opts:['went','goes','goed','going']},
+  {q:'She __ (eat) an apple last morning.',ans:'ate',opts:['eated','ated','ate','eats']},
+  {q:'They __ (not play) football last Sunday.',ans:"didn't play",opts:["didn't play","didn't played","not played","don't play"]},
+  {q:'__ he __ (run) in the park yesterday?',ans:'Did...run',opts:['Did...run','Did...ran','Does...run','Did...running']},
+  {q:'选出正确句子：',ans:'She visited London last year.',opts:['She visit London last year.','She visited London last year.','She visits London yesterday.','She was visited London.']},
+];
+let bossIdx=0,bossCorrect=0;
+function initBoss(){bossIdx=0;bossCorrect=0;state.bossHp=5;renderBoss();}
+function renderBoss(){
+  if(bossIdx>=bossQuestions.length){
+    document.getElementById('boss-quiz-card').style.display='none';
+    document.getElementById('boss-win').style.display='block';
+    document.getElementById('boss-hp-fill').style.width='0%';
+    document.getElementById('boss-hp-text').textContent='0/5';
+    unlockAch(4,'时间战士');
+    if(bossCorrect>=4)unlockAch(7,'过去时之王');
+    addStars(bossCorrect*2);playLevelUp();
+    return;
+  }
+  const q=bossQuestions[bossIdx];
+  document.getElementById('boss-q-container').innerHTML=`
+    <div style="font-size:1.1em;font-weight:700;margin-bottom:15px">⚔️ ${bossIdx+1}/${bossQuestions.length}: ${q.q}</div>
+    <div class="options">${q.opts.map(o=>`<button class="opt-btn" onclick="checkBoss('${o.replace(/'/g,"\\'")}','${q.ans.replace(/'/g,"\\'")}',this)">${o}</button>`).join('')}</div>
+    <div class="feedback" id="boss-fb"></div>`;
+}
+function checkBoss(sel,ans,el){
+  el.closest('#boss-q-container').querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);
+  state.totalQuestions++;
+  const fb=document.getElementById('boss-fb');
+  if(sel===ans){
+    el.classList.add('correct');bossCorrect++;state.correctCount++;
+    state.bossHp=Math.max(0,state.bossHp-1);
+    document.getElementById('boss-hp-fill').style.width=(state.bossHp/5*100)+'%';
+    document.getElementById('boss-hp-text').textContent=state.bossHp+'/5';
+    addStars(2);playBossHit();
+    fb.className='feedback ok show';fb.textContent='⚔️ 命中！+2⭐';
+  } else {
+    el.classList.add('wrong');
+    el.closest('#boss-q-container').querySelectorAll('.opt-btn').forEach(b=>{if(b.textContent===ans)b.classList.add('correct');});
+    playWrong();fb.className='feedback ng show';fb.textContent='💨 错了！正确：'+ans;
+  }
+  setTimeout(()=>{bossIdx++;renderBoss();},1300);
+}
+function showReport(){
+  const elapsed=Math.round((Date.now()-state.startTime)/1000);
+  const pct=state.totalQuestions>0?Math.round(state.correctCount/state.totalQuestions*100):100;
+  document.getElementById('final-score').textContent=pct;
+  document.getElementById('final-stars').textContent=pct>=90?'⭐⭐⭐':pct>=70?'⭐⭐':'⭐';
+  document.getElementById('report-comment').textContent=pct>=90?'时间旅行大师！过去时完全掌握！🏆':pct>=70?'做得很好！继续练习！💪':'加油！多复习就能掌握！📚';
+  if(pct>=100)unlockAch(5,'满分英雄');
+  if(elapsed<600)unlockAch(6,'速度之星');
+  state.achievements.forEach((a,i)=>{if(a){const el=document.getElementById('ach'+i);if(el)el.classList.add('earned');}});
+  showScreen('screen-report');
+  for(let i=0;i<15;i++)setTimeout(()=>spawnStars(1),i*100);
+}
+function restartGame(){
+  state={stars:0,score:0,achievements:new Array(8).fill(false),startTime:Date.now(),correctCount:0,totalQuestions:0,bossHp:5,bossIdx:0,bossCorrect:0,storyAnswers:['went','saw','ran','ate'],storyFilled:[false,false,false,false]};
+  storyWords=[null,null,null,null];
+  initWarmup();initL1();initL2();initBoss();
+  showScreen('screen-hero');
+}
+
+const extContents={
+  'past-words':'<div style="font-size:1.1em;font-weight:700;color:#6c5ce7;margin-bottom:15px">过去时常用时间词</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px"><div style="background:#f5f0ff;padding:12px;border-radius:10px"><strong>yesterday</strong> 昨天</div><div style="background:#f5f0ff;padding:12px;border-radius:10px"><strong>last night</strong> 昨晚</div><div style="background:#f5f0ff;padding:12px;border-radius:10px"><strong>last week</strong> 上周</div><div style="background:#f5f0ff;padding:12px;border-radius:10px"><strong>ago</strong> ...以前</div><div style="background:#f5f0ff;padding:12px;border-radius:10px"><strong>last year</strong> 去年</div><div style="background:#f5f0ff;padding:12px;border-radius:10px"><strong>in 2020</strong> 在2020年</div></div>',
+  'storytelling':'<div style="font-size:1.1em;font-weight:700;color:#6c5ce7;margin-bottom:15px">用过去时讲故事</div><div style="background:#f9f7ff;padding:15px;border-radius:12px;line-height:2">Once upon a time, there <strong>was</strong> a little bear.<br>He <strong>went</strong> into the forest.<br>He <strong>saw</strong> a big honey tree.<br>He <strong>ate</strong> all the honey and <strong>went</strong> home happy!</div>',
+  'irregular-list':'<div style="font-size:1.1em;font-weight:700;color:#6c5ce7;margin-bottom:15px">更多不规则动词</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:0.9em"><div style="background:#f5f0ff;padding:8px;border-radius:8px"><strong>fly→flew</strong> 飞</div><div style="background:#f5f0ff;padding:8px;border-radius:8px"><strong>give→gave</strong> 给</div><div style="background:#f5f0ff;padding:8px;border-radius:8px"><strong>know→knew</strong> 知道</div><div style="background:#f5f0ff;padding:8px;border-radius:8px"><strong>find→found</strong> 找到</div><div style="background:#f5f0ff;padding:8px;border-radius:8px"><strong>feel→felt</strong> 感觉</div><div style="background:#f5f0ff;padding:8px;border-radius:8px"><strong>think→thought</strong> 想</div></div>',
+  'wh-question':'<div style="font-size:1.1em;font-weight:700;color:#6c5ce7;margin-bottom:15px">过去时特殊疑问句</div><div style="display:grid;gap:10px"><div style="background:#f9f7ff;padding:12px;border-radius:10px"><strong>What did you do?</strong> 你做了什么？<br><span style="color:#888">I played football.</span></div><div style="background:#f9f7ff;padding:12px;border-radius:10px"><strong>Where did she go?</strong> 她去哪了？<br><span style="color:#888">She went to the park.</span></div><div style="background:#f9f7ff;padding:12px;border-radius:10px"><strong>When did they arrive?</strong> 他们什么时候到？<br><span style="color:#888">They arrived yesterday.</span></div></div>'
+};
+function showExt(key){document.getElementById('ext-info').style.display='block';document.getElementById('ext-info').innerHTML=extContents[key];}
+
+initWarmup();initL1();initL2();initBoss();
+</script>
+</body>
+</html>

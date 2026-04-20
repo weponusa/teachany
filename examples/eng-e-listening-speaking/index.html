@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>六年级英语听说课 · 糖果色闯关🌈</title>
+<style>
+  :root {
+    --bg: #fffbf0;
+    --primary: #ff6b6b;
+    --secondary: #4ecdc4;
+    --accent: #ffe66d;
+    --card: #fff;
+    --text: #333;
+    --text-light: #666;
+    --radius: 16px;
+    --shadow: 0 4px 20px rgba(0,0,0,0.1);
+    --shadow-hover: 0 8px 32px rgba(0,0,0,0.18);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ===== LAYOUT ===== */
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; flex-direction: column; }
+
+  /* ===== HERO ===== */
+  #screen-hero {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ffa07a 40%, #ffe66d 70%, #4ecdc4 100%);
+    align-items: center; justify-content: center; text-align: center; padding: 40px 20px;
+    position: relative; overflow: hidden;
+  }
+  #screen-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.08'%3E%3Cpath d='M50 50c0-5.5 4.5-10 10-10s10 4.5 10 10-4.5 10-10 10-10-4.5-10-10z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+  .hero-bear { font-size: 96px; animation: bearBounce 2s ease-in-out infinite; display: block; margin-bottom: 10px; }
+  @keyframes bearBounce {
+    0%,100% { transform: translateY(0) rotate(-3deg); }
+    50% { transform: translateY(-18px) rotate(3deg); }
+  }
+  .hero-title { font-size: 2.8rem; font-weight: 900; color: #fff; text-shadow: 3px 3px 0 rgba(0,0,0,0.15); line-height: 1.2; }
+  .hero-subtitle { font-size: 1.15rem; color: rgba(255,255,255,0.9); margin: 12px 0 24px; }
+  .hero-tags { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 32px; }
+  .hero-tag {
+    background: rgba(255,255,255,0.25); color: #fff; border: 2px solid rgba(255,255,255,0.5);
+    border-radius: 20px; padding: 4px 14px; font-size: 0.85rem; font-weight: 600;
+  }
+  .btn-start {
+    background: #fff; color: var(--primary); border: none; border-radius: 50px;
+    padding: 16px 48px; font-size: 1.25rem; font-weight: 800;
+    cursor: pointer; box-shadow: 0 6px 24px rgba(0,0,0,0.2);
+    transition: transform 0.2s, box-shadow 0.2s;
+    letter-spacing: 1px;
+  }
+  .btn-start:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 10px 32px rgba(0,0,0,0.25); }
+  .floating-stars { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+  .star { position: absolute; font-size: 1.5rem; animation: floatStar 4s ease-in-out infinite; opacity: 0.6; }
+  @keyframes floatStar {
+    0%,100% { transform: translateY(0) scale(1); opacity: 0.6; }
+    50% { transform: translateY(-20px) scale(1.2); opacity: 1; }
+  }
+
+  /* ===== TOP BAR ===== */
+  .topbar {
+    background: var(--card); box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    padding: 10px 20px; display: flex; align-items: center; gap: 12px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-bear { font-size: 1.8rem; }
+  .topbar-title { font-weight: 800; font-size: 1rem; color: var(--primary); flex: 1; }
+  .topbar-xp {
+    display: flex; align-items: center; gap: 6px;
+    background: linear-gradient(90deg, #ffe66d, #ffd700);
+    border-radius: 20px; padding: 4px 12px; font-weight: 700; font-size: 0.9rem; color: #8a5a00;
+  }
+  .xp-bar-wrap { flex: 1; max-width: 120px; background: #eee; border-radius: 10px; height: 8px; overflow: hidden; }
+  .xp-bar { height: 100%; background: linear-gradient(90deg, var(--secondary), #2ed8cc); border-radius: 10px; transition: width 0.5s; }
+  .topbar-lives { display: flex; gap: 2px; font-size: 1.1rem; }
+
+  /* ===== SECTION HEADER ===== */
+  .section-header { padding: 24px 20px 8px; text-align: center; }
+  .section-badge {
+    display: inline-block; background: var(--accent); color: #8a5a00;
+    border-radius: 20px; padding: 4px 16px; font-size: 0.8rem; font-weight: 700;
+    margin-bottom: 8px; letter-spacing: 1px;
+  }
+  .section-title { font-size: 1.6rem; font-weight: 900; color: var(--primary); }
+  .section-sub { color: var(--text-light); font-size: 0.95rem; margin-top: 6px; }
+
+  /* ===== OBJECTIVES ===== */
+  #screen-objectives { background: var(--bg); padding-bottom: 40px; }
+  .obj-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; padding: 16px 20px; }
+  .obj-card {
+    background: var(--card); border-radius: var(--radius); padding: 20px 16px; text-align: center;
+    box-shadow: var(--shadow); border-top: 5px solid transparent;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .obj-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+  .obj-card:nth-child(1) { border-color: var(--primary); }
+  .obj-card:nth-child(2) { border-color: var(--secondary); }
+  .obj-card:nth-child(3) { border-color: var(--accent); }
+  .obj-card:nth-child(4) { border-color: #a29bfe; }
+  .obj-icon { font-size: 2.2rem; margin-bottom: 10px; }
+  .obj-card h3 { font-size: 0.95rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .obj-card p { font-size: 0.82rem; color: var(--text-light); line-height: 1.5; }
+
+  /* ===== WARMUP ===== */
+  #screen-warmup { background: var(--bg); padding-bottom: 40px; }
+  .warmup-dialogue {
+    background: var(--card); border-radius: var(--radius); margin: 12px 20px;
+    padding: 20px; box-shadow: var(--shadow);
+  }
+  .dialogue-line { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
+  .dialogue-line.right { flex-direction: row-reverse; }
+  .dialogue-avatar { font-size: 2rem; flex-shrink: 0; }
+  .dialogue-bubble {
+    background: #f0f8ff; border-radius: 12px; padding: 10px 14px;
+    font-size: 0.95rem; line-height: 1.5; max-width: 75%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .dialogue-line.right .dialogue-bubble { background: #fff0f5; }
+  .dialogue-en { font-weight: 600; color: var(--text); }
+  .dialogue-cn { color: var(--text-light); font-size: 0.82rem; margin-top: 3px; }
+  .tts-btn {
+    background: none; border: none; cursor: pointer; font-size: 1.1rem;
+    padding: 4px; border-radius: 8px; transition: background 0.2s;
+  }
+  .tts-btn:hover { background: rgba(0,0,0,0.06); }
+  .warmup-controls { text-align: center; margin: 20px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+  /* ===== LEVELS NAV ===== */
+  .levels-nav { display: flex; gap: 12px; padding: 12px 20px; overflow-x: auto; }
+  .level-pip {
+    flex-shrink: 0; background: var(--card); border: 3px solid #ddd; border-radius: 12px;
+    padding: 10px 18px; font-size: 0.85rem; font-weight: 700; cursor: pointer;
+    transition: all 0.2s; color: var(--text-light);
+  }
+  .level-pip.active { border-color: var(--primary); color: var(--primary); background: #fff5f5; }
+  .level-pip.done { border-color: var(--secondary); color: var(--secondary); background: #f0fdfc; }
+  .level-pip.locked { opacity: 0.4; cursor: not-allowed; }
+
+  /* ===== LEVEL 1: Listening ===== */
+  .listen-card {
+    background: var(--card); border-radius: var(--radius); margin: 12px 20px;
+    padding: 24px; box-shadow: var(--shadow);
+  }
+  .listen-question { font-size: 1.05rem; font-weight: 700; margin-bottom: 16px; color: var(--text); }
+  .listen-question-num { color: var(--primary); font-weight: 900; }
+  .play-btn {
+    display: flex; align-items: center; gap: 10px; background: linear-gradient(135deg, var(--primary), #ff8e8e);
+    color: #fff; border: none; border-radius: 50px; padding: 14px 28px;
+    font-size: 1rem; font-weight: 700; cursor: pointer; margin-bottom: 20px;
+    transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 16px rgba(255,107,107,0.35);
+  }
+  .play-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(255,107,107,0.45); }
+  .play-btn.playing { background: linear-gradient(135deg, var(--secondary), #2ed8cc); }
+  .choices-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .choice-btn {
+    background: var(--card); border: 2.5px solid #e0e0e0; border-radius: 12px;
+    padding: 14px 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer;
+    transition: all 0.2s; text-align: center; display: flex; align-items: center; gap: 8px;
+    justify-content: center;
+  }
+  .choice-btn:hover:not(:disabled) { border-color: var(--primary); background: #fff5f5; }
+  .choice-btn.correct { background: #e8fff8; border-color: var(--secondary); color: #1a7a6e; }
+  .choice-btn.wrong { background: #fff0f0; border-color: var(--primary); color: var(--primary); animation: shake 0.4s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+  .choice-icon { font-size: 1.3rem; }
+  .feedback-msg { margin-top: 14px; padding: 10px 14px; border-radius: 10px; font-weight: 600; font-size: 0.95rem; display: none; }
+  .feedback-msg.show { display: block; }
+  .feedback-msg.ok { background: #e8fff8; color: #1a7a6e; }
+  .feedback-msg.err { background: #fff0f0; color: #c0392b; }
+  .progress-bar-wrap { background: #eee; border-radius: 10px; height: 8px; margin: 16px 0; }
+  .progress-bar { height: 100%; border-radius: 10px; background: linear-gradient(90deg, var(--primary), var(--accent)); transition: width 0.5s; }
+
+  /* ===== LEVEL 2: Speaking ===== */
+  .speaking-card {
+    background: var(--card); border-radius: var(--radius); margin: 12px 20px;
+    padding: 24px; box-shadow: var(--shadow);
+  }
+  .speaking-prompt { font-size: 1.1rem; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+  .speaking-hint { font-size: 0.88rem; color: var(--text-light); margin-bottom: 16px; }
+  .speaking-sentence {
+    background: linear-gradient(135deg, #f0f8ff, #e8f5ff); border-radius: 12px;
+    padding: 16px; font-size: 1.15rem; font-weight: 700; color: var(--text);
+    margin-bottom: 16px; text-align: center; border-left: 5px solid var(--secondary);
+    line-height: 1.6;
+  }
+  .mic-btn {
+    display: flex; align-items: center; gap: 10px; background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+    color: #fff; border: none; border-radius: 50px; padding: 14px 28px;
+    font-size: 1rem; font-weight: 700; cursor: pointer; margin: 0 auto 16px;
+    transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 16px rgba(108,92,231,0.35);
+  }
+  .mic-btn:hover { transform: translateY(-2px); }
+  .mic-btn.recording { background: linear-gradient(135deg, var(--primary), #c0392b); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,107,107,0.5); } 50% { box-shadow: 0 0 0 12px rgba(255,107,107,0); } }
+  .transcript-area {
+    min-height: 60px; background: #f8f8f8; border-radius: 10px; padding: 12px;
+    font-size: 0.95rem; color: var(--text); border: 2px dashed #ddd;
+    margin-bottom: 12px; text-align: center; line-height: 1.6;
+  }
+  .score-stars { display: flex; gap: 6px; justify-content: center; font-size: 1.8rem; margin: 8px 0; }
+  .star-item { transition: transform 0.3s; }
+  .star-item.lit { animation: starPop 0.4s ease; }
+  @keyframes starPop { 0% { transform: scale(0); } 60% { transform: scale(1.3); } 100% { transform: scale(1); } }
+
+  /* ===== LEVEL 3: Role Play ===== */
+  .roleplay-card {
+    background: var(--card); border-radius: var(--radius); margin: 12px 20px;
+    padding: 24px; box-shadow: var(--shadow);
+  }
+  .roleplay-scenario {
+    background: linear-gradient(135deg, #fff9c4, #fffde7); border-radius: 12px;
+    padding: 16px; margin-bottom: 16px; border-left: 5px solid var(--accent);
+  }
+  .roleplay-scenario h4 { font-size: 0.85rem; color: #8a5a00; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .roleplay-scenario p { font-size: 0.95rem; color: var(--text); line-height: 1.5; }
+  .role-select { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .role-btn {
+    flex: 1; min-width: 140px; background: var(--card); border: 2.5px solid #e0e0e0;
+    border-radius: 12px; padding: 14px; text-align: center; cursor: pointer;
+    transition: all 0.2s; font-size: 0.9rem; font-weight: 600;
+  }
+  .role-btn:hover { border-color: var(--primary); background: #fff5f5; }
+  .role-btn.selected { border-color: var(--primary); background: #fff5f5; }
+  .role-btn .role-emoji { font-size: 2rem; display: block; margin-bottom: 6px; }
+  .roleplay-convo { background: #f8f9ff; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .convo-line {
+    display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px;
+    animation: fadeSlideIn 0.3s ease;
+  }
+  @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .convo-avatar { font-size: 1.6rem; flex-shrink: 0; }
+  .convo-bubble {
+    border-radius: 10px; padding: 8px 12px; font-size: 0.92rem;
+    line-height: 1.5; max-width: 80%;
+  }
+  .convo-bubble.ai { background: #e8f5e9; color: #2e7d32; }
+  .convo-bubble.user { background: #e3f2fd; color: #1565c0; }
+  .convo-input-wrap { display: flex; gap: 8px; }
+  .convo-input {
+    flex: 1; border: 2px solid #e0e0e0; border-radius: 10px; padding: 10px 14px;
+    font-size: 0.95rem; outline: none; transition: border-color 0.2s;
+  }
+  .convo-input:focus { border-color: var(--secondary); }
+  .convo-send-btn {
+    background: var(--secondary); color: #fff; border: none; border-radius: 10px;
+    padding: 10px 18px; cursor: pointer; font-weight: 700; transition: background 0.2s;
+  }
+  .convo-send-btn:hover { background: #3dbeb6; }
+
+  /* ===== BOSS ===== */
+  #screen-boss { background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%); padding-bottom: 40px; }
+  #screen-boss .section-title { color: #fff; }
+  #screen-boss .section-badge { background: rgba(255,255,255,0.2); color: #fff; }
+  #screen-boss .section-sub { color: rgba(255,255,255,0.8); }
+  .boss-card {
+    background: rgba(255,255,255,0.12); backdrop-filter: blur(10px);
+    border-radius: var(--radius); margin: 12px 20px; padding: 24px;
+    border: 1px solid rgba(255,255,255,0.2); color: #fff;
+  }
+  .boss-monster { font-size: 5rem; text-align: center; margin-bottom: 12px; animation: bossShake 1s ease-in-out infinite; }
+  @keyframes bossShake { 0%,100%{transform:rotate(-5deg)} 50%{transform:rotate(5deg)} }
+  .boss-health { margin-bottom: 16px; }
+  .boss-health-label { display: flex; justify-content: space-between; margin-bottom: 6px; font-weight: 700; font-size: 0.9rem; }
+  .boss-health-bar { background: rgba(0,0,0,0.3); border-radius: 10px; height: 14px; overflow: hidden; }
+  .boss-health-fill { height: 100%; background: linear-gradient(90deg, #ff6b6b, #ffd700); border-radius: 10px; transition: width 0.8s; }
+  .boss-question {
+    background: rgba(255,255,255,0.15); border-radius: 12px; padding: 16px;
+    font-size: 1.05rem; font-weight: 700; margin-bottom: 14px; text-align: center;
+  }
+  .boss-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .boss-choice {
+    background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3);
+    color: #fff; border-radius: 12px; padding: 12px; cursor: pointer;
+    font-size: 0.9rem; font-weight: 600; transition: all 0.2s;
+  }
+  .boss-choice:hover { background: rgba(255,255,255,0.25); border-color: var(--accent); }
+  .boss-choice.correct { background: rgba(78,205,196,0.4); border-color: var(--secondary); }
+  .boss-choice.wrong { background: rgba(255,107,107,0.4); border-color: var(--primary); }
+  .attack-fx {
+    text-align: center; font-size: 2rem; height: 40px; margin: 8px 0;
+    animation: attackAnim 0.5s ease;
+  }
+  @keyframes attackAnim { 0%{transform:scale(0) rotate(-20deg);opacity:0} 50%{transform:scale(1.5) rotate(10deg);opacity:1} 100%{transform:scale(1);opacity:1} }
+
+  /* ===== REPORT ===== */
+  #screen-report { background: var(--bg); padding-bottom: 60px; }
+  .report-hero { text-align: center; padding: 30px 20px; }
+  .report-trophy { font-size: 5rem; animation: trophySpin 2s ease infinite; display: block; }
+  @keyframes trophySpin { 0%,100%{transform:rotate(-10deg) scale(1)} 50%{transform:rotate(10deg) scale(1.1)} }
+  .report-title { font-size: 2rem; font-weight: 900; color: var(--primary); margin: 12px 0 6px; }
+  .report-sub { color: var(--text-light); }
+  .report-score-ring {
+    width: 120px; height: 120px; margin: 20px auto;
+    background: conic-gradient(var(--primary) 0%, var(--accent) var(--score-pct, 0%), #eee var(--score-pct, 0%));
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem; font-weight: 900; color: var(--text);
+    box-shadow: inset 0 0 0 20px var(--bg);
+  }
+  .achievements-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; padding: 0 20px; margin-bottom: 24px; }
+  .achievement {
+    background: var(--card); border-radius: var(--radius); padding: 16px 10px;
+    text-align: center; box-shadow: var(--shadow); border: 3px solid transparent;
+    transition: all 0.2s; opacity: 0.35; filter: grayscale(1);
+  }
+  .achievement.unlocked { opacity: 1; filter: none; border-color: var(--accent); }
+  .achievement-icon { font-size: 2rem; }
+  .achievement-name { font-size: 0.72rem; font-weight: 700; color: var(--text); margin-top: 6px; }
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 0 20px; margin-bottom: 24px; }
+  .stat-box { background: var(--card); border-radius: 12px; padding: 16px; text-align: center; box-shadow: var(--shadow); }
+  .stat-box .val { font-size: 1.8rem; font-weight: 900; color: var(--primary); }
+  .stat-box .label { font-size: 0.75rem; color: var(--text-light); margin-top: 4px; }
+
+  /* ===== EXTENSION ===== */
+  #screen-extension { background: var(--bg); padding-bottom: 60px; }
+  .ext-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; padding: 16px 20px; }
+  .ext-card {
+    background: var(--card); border-radius: var(--radius); padding: 20px;
+    box-shadow: var(--shadow); transition: transform 0.2s, box-shadow 0.2s;
+    border-top: 5px solid var(--secondary); cursor: pointer;
+  }
+  .ext-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+  .ext-card h3 { font-size: 1rem; font-weight: 800; color: var(--text); margin: 10px 0 6px; }
+  .ext-card p { font-size: 0.83rem; color: var(--text-light); line-height: 1.5; }
+  .ext-icon { font-size: 2.2rem; }
+  .ext-card:nth-child(2) { border-color: var(--primary); }
+  .ext-card:nth-child(3) { border-color: var(--accent); }
+  .ext-card:nth-child(4) { border-color: #a29bfe; }
+
+  /* ===== NAVIGATION ===== */
+  .btn-nav {
+    background: linear-gradient(135deg, var(--primary), #ff8e8e); color: #fff; border: none;
+    border-radius: 50px; padding: 13px 36px; font-size: 1rem; font-weight: 700;
+    cursor: pointer; box-shadow: 0 4px 16px rgba(255,107,107,0.35);
+    transition: transform 0.2s, box-shadow 0.2s; margin: 0 auto; display: block;
+  }
+  .btn-nav:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(255,107,107,0.45); }
+  .btn-nav.secondary {
+    background: linear-gradient(135deg, var(--secondary), #3dbeb6);
+    box-shadow: 0 4px 16px rgba(78,205,196,0.35);
+  }
+  .nav-btns { display: flex; gap: 12px; justify-content: center; padding: 16px 20px; flex-wrap: wrap; }
+
+  /* ===== TOAST ===== */
+  .toast {
+    position: fixed; top: 80px; left: 50%; transform: translateX(-50%) translateY(-100px);
+    background: #333; color: #fff; border-radius: 50px; padding: 12px 24px;
+    font-weight: 700; font-size: 0.95rem; z-index: 999; transition: transform 0.4s;
+    pointer-events: none; white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ===== XP POPUP ===== */
+  .xp-popup {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0);
+    font-size: 2.5rem; font-weight: 900; color: #fff;
+    text-shadow: 3px 3px 0 rgba(0,0,0,0.2);
+    z-index: 1000; pointer-events: none; transition: transform 0.3s, opacity 0.3s;
+  }
+  .xp-popup.show { animation: xpPop 1s ease forwards; }
+  @keyframes xpPop { 0%{transform:translate(-50%,-50%) scale(0);opacity:1} 50%{transform:translate(-50%,-80%) scale(1.2);opacity:1} 100%{transform:translate(-50%,-120%) scale(0.8);opacity:0} }
+
+  /* ===== CONFETTI ===== */
+  .confetti-piece {
+    position: fixed; width: 10px; height: 10px; border-radius: 2px;
+    animation: confettiFall 3s ease-in forwards;
+    pointer-events: none; z-index: 9999;
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(-20px) rotate(0); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 480px) {
+    .hero-title { font-size: 2rem; }
+    .choices-grid { grid-template-columns: 1fr; }
+    .boss-choices { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+<div class="xp-popup" id="xpPopup">+XP</div>
+
+<!-- ============================================================
+     SCREEN 1: HERO
+     ============================================================ -->
+<section class="screen active" id="screen-hero">
+  <div class="floating-stars">
+    <span class="star" style="left:8%;top:15%;animation-delay:0s">⭐</span>
+    <span class="star" style="left:85%;top:10%;animation-delay:1s">🌟</span>
+    <span class="star" style="left:20%;top:70%;animation-delay:2s">✨</span>
+    <span class="star" style="left:75%;top:65%;animation-delay:0.5s">⭐</span>
+    <span class="star" style="left:50%;top:88%;animation-delay:1.5s">🌟</span>
+    <span class="star" style="left:5%;top:50%;animation-delay:2.5s">✨</span>
+    <span class="star" style="left:92%;top:40%;animation-delay:3s">⭐</span>
+  </div>
+  <span class="hero-bear">🐻</span>
+  <h1 class="hero-title">六年级英语听说<br>糖果色闯关 🌈</h1>
+  <p class="hero-subtitle">Unit 5 · Going Green · 情境对话 · 角色扮演</p>
+  <div class="hero-tags">
+    <span class="hero-tag">🎧 听力训练</span>
+    <span class="hero-tag">🗣️ 口语练习</span>
+    <span class="hero-tag">🎭 角色扮演</span>
+    <span class="hero-tag">🏆 挑战Boss</span>
+    <span class="hero-tag">🌱 绿色环保</span>
+  </div>
+  <button class="btn-start" onclick="goTo('screen-objectives')">开始闯关 🚀</button>
+</section>
+
+<!-- ============================================================
+     SCREEN 2: OBJECTIVES
+     ============================================================ -->
+<section class="screen" id="screen-objectives">
+  <div class="topbar">
+    <span class="topbar-bear">🐻</span>
+    <span class="topbar-title">本课目标</span>
+    <span class="topbar-xp">⭐ <span id="xpCount">0</span> XP</span>
+    <div class="topbar-lives" id="livesDisplay">❤️❤️❤️</div>
+  </div>
+  <div class="section-header">
+    <div class="section-badge">📋 LEARNING GOALS</div>
+    <h2 class="section-title">今天，我们能做什么？</h2>
+    <p class="section-sub">掌握这四项本领，成为英语小达人！</p>
+  </div>
+  <div class="obj-grid">
+    <div class="obj-card">
+      <div class="obj-icon">🎧</div>
+      <h3>听音识义</h3>
+      <p>听懂关于环保的日常对话，抓住关键信息</p>
+    </div>
+    <div class="obj-card">
+      <div class="obj-icon">🗣️</div>
+      <h3>朗读表达</h3>
+      <p>用正确语音语调朗读句子，表达观点想法</p>
+    </div>
+    <div class="obj-card">
+      <div class="obj-icon">🎭</div>
+      <h3>角色扮演</h3>
+      <p>模拟真实对话情境，用英语完成沟通任务</p>
+    </div>
+    <div class="obj-card">
+      <div class="obj-icon">🌱</div>
+      <h3>话题拓展</h3>
+      <p>谈论"绿色生活"，运用本单元核心词汇句型</p>
+    </div>
+  </div>
+  <div class="nav-btns">
+    <button class="btn-nav" onclick="goTo('screen-warmup')">热身准备 🔥</button>
+  </div>
+</section>
+
+<!-- ============================================================
+     SCREEN 3: WARMUP
+     ============================================================ -->
+<section class="screen" id="screen-warmup">
+  <div class="topbar">
+    <span class="topbar-bear">🐻</span>
+    <span class="topbar-title">热身 · Warm-up</span>
+    <span class="topbar-xp">⭐ <span id="xpCount2">0</span> XP</span>
+    <div class="topbar-lives" id="livesDisplay2">❤️❤️❤️</div>
+  </div>
+  <div class="section-header">
+    <div class="section-badge">🔥 WARM-UP</div>
+    <h2 class="section-title">来，跟Beary说说话！</h2>
+    <p class="section-sub">AI学伴Beary正在等你，点击🔊听对话</p>
+  </div>
+  <div class="warmup-dialogue">
+    <div class="dialogue-line">
+      <span class="dialogue-avatar">🐻</span>
+      <div>
+        <div class="dialogue-bubble">
+          <div class="dialogue-en">Hi! I'm Beary. Are you ready to talk about going green today? <button class="tts-btn" onclick="speak('Hi! I am Beary. Are you ready to talk about going green today?')">🔊</button></div>
+          <div class="dialogue-cn">嗨！我是Beary。今天准备好讨论"绿色生活"了吗？</div>
+        </div>
+      </div>
+    </div>
+    <div class="dialogue-line right">
+      <span class="dialogue-avatar">👦</span>
+      <div>
+        <div class="dialogue-bubble">
+          <div class="dialogue-en">Yes! I think we should protect the environment. <button class="tts-btn" onclick="speak('Yes! I think we should protect the environment.')">🔊</button></div>
+          <div class="dialogue-cn">是的！我认为我们应该保护环境。</div>
+        </div>
+      </div>
+    </div>
+    <div class="dialogue-line">
+      <span class="dialogue-avatar">🐻</span>
+      <div>
+        <div class="dialogue-bubble">
+          <div class="dialogue-en">Great! What do you do to help the environment? <button class="tts-btn" onclick="speak('Great! What do you do to help the environment?')">🔊</button></div>
+          <div class="dialogue-cn">太棒了！你做些什么来帮助环境呢？</div>
+        </div>
+      </div>
+    </div>
+    <div class="dialogue-line right">
+      <span class="dialogue-avatar">👦</span>
+      <div>
+        <div class="dialogue-bubble">
+          <div class="dialogue-en">I turn off the lights and save water every day. <button class="tts-btn" onclick="speak('I turn off the lights and save water every day.')">🔊</button></div>
+          <div class="dialogue-cn">我每天都关灯省电，还节约用水。</div>
+        </div>
+      </div>
+    </div>
+    <div class="dialogue-line">
+      <span class="dialogue-avatar">🐻</span>
+      <div>
+        <div class="dialogue-bubble">
+          <div class="dialogue-en">Wonderful! You're an eco-hero! 🌍 Let's learn more together! <button class="tts-btn" onclick="speak('Wonderful! You are an eco hero! Let us learn more together!')">🔊</button></div>
+          <div class="dialogue-cn">太棒了！你是一位环保英雄！让我们一起继续学习！</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="warmup-controls">
+    <button class="btn-nav" onclick="speak('Hi! I am Beary. Are you ready to talk about going green today? Great! What do you do to help the environment? Wonderful! You are an eco hero!')">🔊 朗读全文</button>
+    <button class="btn-nav secondary" onclick="startLevels()">进入闯关 🌈</button>
+  </div>
+</section>
+
+<!-- ============================================================
+     SCREEN 4: LEVELS
+     ============================================================ -->
+<section class="screen" id="screen-levels">
+  <div class="topbar">
+    <span class="topbar-bear">🐻</span>
+    <span class="topbar-title" id="levelTitle">关卡 1 · 听音选答</span>
+    <span class="topbar-xp">⭐ <span id="xpCount3">0</span> XP</span>
+    <div class="topbar-lives" id="livesDisplay3">❤️❤️❤️</div>
+  </div>
+  <div class="levels-nav">
+    <div class="level-pip active" id="pip1" onclick="showLevel(1)">🎧 关卡1</div>
+    <div class="level-pip locked" id="pip2" onclick="showLevel(2)">🗣️ 关卡2</div>
+    <div class="level-pip locked" id="pip3" onclick="showLevel(3)">🎭 关卡3</div>
+  </div>
+
+  <!-- LEVEL 1: LISTENING -->
+  <div id="level1" class="level-content">
+    <div class="section-header">
+      <div class="section-badge">🎧 LEVEL 1 · LISTENING</div>
+      <h2 class="section-title">听音选答案</h2>
+      <p class="section-sub">仔细听，选出你听到的内容！</p>
+    </div>
+    <div id="listenProgressWrap" class="listen-card" style="padding:12px 20px;background:transparent;box-shadow:none;margin-bottom:0">
+      <div class="progress-bar-wrap"><div class="progress-bar" id="listenProgress" style="width:0%"></div></div>
+      <div style="text-align:right;font-size:0.82rem;color:var(--text-light)" id="listenQNum">题目 1/5</div>
+    </div>
+    <div class="listen-card" id="listenCard">
+      <div class="listen-question"><span class="listen-question-num" id="qNum">Q1.</span> <span id="qText">Listen and choose the correct answer.</span></div>
+      <button class="play-btn" id="playBtn" onclick="playQuestion()">
+        <span id="playIcon">▶️</span> 播放音频
+      </button>
+      <div class="choices-grid" id="choicesGrid"></div>
+      <div class="feedback-msg" id="listeningFeedback"></div>
+    </div>
+    <div class="nav-btns" id="listenNavBtns" style="display:none">
+      <button class="btn-nav secondary" onclick="showLevel(2)">进入关卡2 🗣️</button>
+    </div>
+  </div>
+
+  <!-- LEVEL 2: SPEAKING -->
+  <div id="level2" class="level-content" style="display:none">
+    <div class="section-header">
+      <div class="section-badge">🗣️ LEVEL 2 · SPEAKING</div>
+      <h2 class="section-title">跟读打分</h2>
+      <p class="section-sub">点击麦克风，大声朗读句子！</p>
+    </div>
+    <div class="speaking-card">
+      <div class="speaking-prompt">🐻 Beary说：</div>
+      <div class="speaking-hint">读完下面的句子，AI帮你打分！</div>
+      <div class="speaking-sentence" id="speakingSentence">We should recycle waste and protect our planet.</div>
+      <div style="display:flex;gap:10px;justify-content:center;margin-bottom:12px;flex-wrap:wrap">
+        <button class="play-btn" style="margin:0" onclick="listenToSentence()">🔊 先听一遍</button>
+        <button class="mic-btn" id="micBtn" onclick="toggleRecording()">🎤 开始朗读</button>
+      </div>
+      <div class="transcript-area" id="transcript">等待你的朗读... 🎤</div>
+      <div class="score-stars" id="scoreStars">
+        <span class="star-item">⭐</span>
+        <span class="star-item">⭐</span>
+        <span class="star-item">⭐</span>
+      </div>
+      <div style="text-align:center;font-size:0.85rem;color:var(--text-light);margin-bottom:12px" id="speakingFeedback"></div>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+        <button class="btn-nav" style="padding:10px 20px;font-size:0.9rem" onclick="nextSpeakingSentence()">下一句 →</button>
+        <button class="btn-nav secondary" id="lvl2NextBtn" style="display:none" onclick="showLevel(3)">进入关卡3 🎭</button>
+      </div>
+      <div style="text-align:center;margin-top:10px;font-size:0.82rem;color:var(--text-light)" id="speakingProgress">句子 1/4</div>
+    </div>
+  </div>
+
+  <!-- LEVEL 3: ROLE PLAY -->
+  <div id="level3" class="level-content" style="display:none">
+    <div class="section-header">
+      <div class="section-badge">🎭 LEVEL 3 · ROLE PLAY</div>
+      <h2 class="section-title">角色扮演对话</h2>
+      <p class="section-sub">选择你的角色，开始英语对话！</p>
+    </div>
+    <div class="roleplay-card">
+      <div class="roleplay-scenario">
+        <h4>🎬 场景设定</h4>
+        <p>你和朋友在学校讨论如何为"地球日"活动出力，用英语交流你们的环保计划！</p>
+      </div>
+      <div class="role-select">
+        <div class="role-btn" id="roleA" onclick="selectRole('A')">
+          <span class="role-emoji">🧑</span>
+          <strong>Alex</strong><br>
+          <small style="color:var(--text-light)">提问者</small>
+        </div>
+        <div class="role-btn" id="roleB" onclick="selectRole('B')">
+          <span class="role-emoji">👩</span>
+          <strong>Bella</strong><br>
+          <small style="color:var(--text-light)">回答者</small>
+        </div>
+      </div>
+      <div class="roleplay-convo" id="roleplayConvo">
+        <div class="convo-line">
+          <span class="convo-avatar">🐻</span>
+          <div class="convo-bubble ai">请先选择你要扮演的角色，然后输入你的台词开始对话！</div>
+        </div>
+      </div>
+      <div class="convo-input-wrap">
+        <input type="text" class="convo-input" id="convoInput" placeholder="输入你的英语台词..." onkeydown="if(event.key==='Enter')sendLine()">
+        <button class="convo-send-btn" onclick="sendLine()">发送</button>
+      </div>
+      <div style="text-align:center;margin-top:12px;font-size:0.8rem;color:var(--text-light)" id="roleplayHint">提示：你可以说 "What can we do for Earth Day?" 或 "I will plant trees in the park."</div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn-nav" onclick="goTo('screen-boss')">挑战Boss！🏆</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SCREEN 5: BOSS
+     ============================================================ -->
+<section class="screen" id="screen-boss">
+  <div class="topbar" style="background:rgba(0,0,0,0.3);border-bottom:1px solid rgba(255,255,255,0.1)">
+    <span class="topbar-bear">🐻</span>
+    <span class="topbar-title" style="color:#fff">Boss挑战！</span>
+    <span class="topbar-xp">⭐ <span id="xpCount4">0</span> XP</span>
+    <div class="topbar-lives" id="livesDisplay4">❤️❤️❤️</div>
+  </div>
+  <div class="section-header">
+    <div class="section-badge">🏆 BOSS CHALLENGE</div>
+    <h2 class="section-title">击败英语Boss！</h2>
+    <p class="section-sub">答对问题，让怪兽的血量降到零！</p>
+  </div>
+  <div class="boss-card">
+    <div class="boss-monster" id="bossMonster">👾</div>
+    <div class="boss-health">
+      <div class="boss-health-label">
+        <span>👾 英语Boss</span>
+        <span id="bossHpText">100 / 100</span>
+      </div>
+      <div class="boss-health-bar"><div class="boss-health-fill" id="bossHpBar" style="width:100%"></div></div>
+    </div>
+    <div class="attack-fx" id="attackFx"></div>
+    <div class="boss-question" id="bossQuestion">准备好了吗？</div>
+    <div class="boss-choices" id="bossChoices"></div>
+    <div style="margin-top:14px;text-align:center;font-size:0.88rem;color:rgba(255,255,255,0.7)" id="bossFeedback"></div>
+  </div>
+  <div class="nav-btns" id="bossNavBtns" style="display:none">
+    <button class="btn-nav" onclick="goTo('screen-report')">查看成绩单 📊</button>
+  </div>
+</section>
+
+<!-- ============================================================
+     SCREEN 6: REPORT
+     ============================================================ -->
+<section class="screen" id="screen-report">
+  <div class="topbar">
+    <span class="topbar-bear">🐻</span>
+    <span class="topbar-title">成绩单</span>
+    <span class="topbar-xp">⭐ <span id="xpCount5">0</span> XP</span>
+  </div>
+  <div class="report-hero">
+    <span class="report-trophy">🏆</span>
+    <div class="report-title" id="reportTitle">太厉害啦！</div>
+    <div class="report-sub" id="reportSub">你完成了本节课所有挑战！</div>
+    <div class="report-score-ring" id="scoreRing" style="--score-pct:0%">
+      <span id="scoreText">0%</span>
+    </div>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-box"><div class="val" id="statXp">0</div><div class="label">⭐ 总经验</div></div>
+    <div class="stat-box"><div class="val" id="statCorrect">0</div><div class="label">✅ 答对题数</div></div>
+    <div class="stat-box"><div class="val" id="statAchievements">0</div><div class="label">🏅 成就数</div></div>
+  </div>
+  <div style="padding:0 20px;font-size:1rem;font-weight:700;color:var(--text);margin-bottom:12px">🏅 我的成就</div>
+  <div class="achievements-grid" id="achievementsGrid"></div>
+  <div class="nav-btns">
+    <button class="btn-nav secondary" onclick="goTo('screen-extension')">拓展学习 🌱</button>
+    <button class="btn-nav" onclick="restartGame()">再来一遍 🔄</button>
+  </div>
+</section>
+
+<!-- ============================================================
+     SCREEN 7: EXTENSION
+     ============================================================ -->
+<section class="screen" id="screen-extension">
+  <div class="topbar">
+    <span class="topbar-bear">🐻</span>
+    <span class="topbar-title">拓展学习</span>
+    <span class="topbar-xp">⭐ <span id="xpCount6">0</span> XP</span>
+  </div>
+  <div class="section-header">
+    <div class="section-badge">🌱 EXTENSION</div>
+    <h2 class="section-title">继续探索英语世界！</h2>
+    <p class="section-sub">Beary为你准备了更多有趣活动</p>
+  </div>
+  <div class="ext-grid">
+    <div class="ext-card" onclick="playExtActivity('vocab')">
+      <div class="ext-icon">📚</div>
+      <h3>单词闪卡 Flash Cards</h3>
+      <p>复习本单元核心词汇：recycle, environment, protect, energy...</p>
+    </div>
+    <div class="ext-card" onclick="playExtActivity('song')">
+      <div class="ext-icon">🎵</div>
+      <h3>环保英语歌</h3>
+      <p>边唱边学！"Go Green Song" 让英语更有趣</p>
+    </div>
+    <div class="ext-card" onclick="playExtActivity('write')">
+      <div class="ext-icon">✏️</div>
+      <h3>写作挑战</h3>
+      <p>用3-5句英语写下你的环保计划，给地球一封信！</p>
+    </div>
+    <div class="ext-card" onclick="playExtActivity('video')">
+      <div class="ext-icon">🎬</div>
+      <h3>绿色故事</h3>
+      <p>听Beary讲述The Earth Day Story，练习整体理解</p>
+    </div>
+  </div>
+  <!-- Vocab Flash Cards mini-activity -->
+  <div id="vocabActivity" style="display:none;padding:0 20px 20px">
+    <div style="background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);text-align:center">
+      <div style="font-size:3rem;margin-bottom:8px" id="vocabEmoji">♻️</div>
+      <div style="font-size:1.8rem;font-weight:900;color:var(--primary);margin-bottom:8px" id="vocabWord">recycle</div>
+      <div style="font-size:1rem;color:var(--text-light);margin-bottom:8px" id="vocabPhonetic">/ˌriːˈsaɪkl/</div>
+      <div style="font-size:1rem;color:var(--text);margin-bottom:16px" id="vocabMeaning">v. 回收利用；重新使用</div>
+      <div style="font-size:0.9rem;background:#f0f8ff;padding:10px;border-radius:10px;color:var(--secondary);margin-bottom:16px" id="vocabExample">We should recycle paper and plastic.</div>
+      <button class="btn-nav" onclick="speak(document.getElementById('vocabWord').innerText)" style="margin-bottom:12px;padding:10px 24px;font-size:0.95rem">🔊 朗读单词</button><br>
+      <button class="btn-nav secondary" onclick="nextVocab()" style="padding:10px 24px;font-size:0.95rem">下一张 →</button>
+    </div>
+  </div>
+  <div class="nav-btns">
+    <button class="btn-nav" onclick="goTo('screen-report')">← 返回成绩单</button>
+  </div>
+</section>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+// ===== STATE =====
+const state = {
+  xp: 0,
+  lives: 3,
+  correctCount: 0,
+  totalQuestions: 0,
+  currentListenQ: 0,
+  currentSpeakSentence: 0,
+  currentBossQ: 0,
+  bossHp: 100,
+  selectedRole: null,
+  roleTurn: 0,
+  speakSentencesDone: 0,
+  listenCorrect: 0,
+  achievements: {}
+};
+
+// ===== DATA =====
+const listeningQuestions = [
+  {
+    audio: "What does Tom do to save energy? He turns off the lights when he leaves a room.",
+    text: "Tom为了节能做了什么？",
+    choices: [
+      { emoji: '💡', text: 'Turns off lights', correct: true },
+      { emoji: '🚿', text: 'Takes short showers', correct: false },
+      { emoji: '🚲', text: 'Rides his bike', correct: false },
+      { emoji: '🌱', text: 'Plants trees', correct: false },
+    ]
+  },
+  {
+    audio: "Sara recycles bottles and cans every week to help the environment.",
+    text: "Sara每周做什么帮助环境？",
+    choices: [
+      { emoji: '🌊', text: 'Cleans rivers', correct: false },
+      { emoji: '♻️', text: 'Recycles bottles', correct: true },
+      { emoji: '🌳', text: 'Plants trees', correct: false },
+      { emoji: '🚗', text: 'Uses electric car', correct: false },
+    ]
+  },
+  {
+    audio: "The Green Club at school plants trees and cleans the park every month.",
+    text: "Green Club每月在学校做什么？",
+    choices: [
+      { emoji: '🎨', text: 'Paints pictures', correct: false },
+      { emoji: '🏊', text: 'Swims in pool', correct: false },
+      { emoji: '🌱', text: 'Plants trees & cleans park', correct: true },
+      { emoji: '📚', text: 'Reads books', correct: false },
+    ]
+  },
+  {
+    audio: "Instead of using plastic bags, Lucy brings her own reusable bag when shopping.",
+    text: "Lucy购物时用什么代替塑料袋？",
+    choices: [
+      { emoji: '🛍️', text: 'Plastic bag', correct: false },
+      { emoji: '♻️', text: 'Reusable bag', correct: true },
+      { emoji: '📦', text: 'Cardboard box', correct: false },
+      { emoji: '🎒', text: 'Backpack', correct: false },
+    ]
+  },
+  {
+    audio: "Mike saves water by turning off the tap while brushing his teeth.",
+    text: "Mike如何节约用水？",
+    choices: [
+      { emoji: '🚿', text: 'Short showers', correct: false },
+      { emoji: '🌧️', text: 'Collects rainwater', correct: false },
+      { emoji: '🚰', text: 'Turns off tap while brushing', correct: true },
+      { emoji: '🏊', text: 'No swimming', correct: false },
+    ]
+  }
+];
+
+const speakingSentences = [
+  { en: "We should recycle waste and protect our planet.", cn: "我们应该回收废物，保护我们的星球。" },
+  { en: "Turn off the lights when you leave the room.", cn: "离开房间时请关灯。" },
+  { en: "I always bring a reusable bag when I go shopping.", cn: "我购物时总是带可重复使用的袋子。" },
+  { en: "Planting trees helps make our environment better.", cn: "种树有助于改善我们的环境。" }
+];
+
+const bossQuestions = [
+  {
+    q: "Which sentence means 保护环境?",
+    choices: [
+      { text: "A. Destroy the environment", correct: false },
+      { text: "B. Protect the environment ✅", correct: true },
+      { text: "C. Forget the environment", correct: false },
+      { text: "D. Ignore the environment", correct: false },
+    ]
+  },
+  {
+    q: "Fill in: We should _____ water every day.",
+    choices: [
+      { text: "A. waste", correct: false },
+      { text: "B. save ✅", correct: true },
+      { text: "C. pour", correct: false },
+      { text: "D. ignore", correct: false },
+    ]
+  },
+  {
+    q: "What does 'recycle' mean?",
+    choices: [
+      { text: "A. 丢弃废物", correct: false },
+      { text: "B. 购买新物品", correct: false },
+      { text: "C. 回收再利用 ✅", correct: true },
+      { text: "D. 燃烧垃圾", correct: false },
+    ]
+  },
+  {
+    q: "Which is NOT an eco-friendly action?",
+    choices: [
+      { text: "A. Planting trees", correct: false },
+      { text: "B. Saving electricity", correct: false },
+      { text: "C. Leaving taps on ✅", correct: true },
+      { text: "D. Using reusable bags", correct: false },
+    ]
+  },
+  {
+    q: "How do you say 可再生能源 in English?",
+    choices: [
+      { text: "A. Fossil fuel", correct: false },
+      { text: "B. Renewable energy ✅", correct: true },
+      { text: "C. Nuclear power", correct: false },
+      { text: "D. Coal energy", correct: false },
+    ]
+  }
+];
+
+const achievements = [
+  { id: 'first_blood', icon: '⚔️', name: '首战告捷', desc: '答对第一题' },
+  { id: 'listen_ace', icon: '🎧', name: '顺风耳', desc: '听力全对' },
+  { id: 'speak_star', icon: '🎤', name: '小歌星', desc: '完成朗读' },
+  { id: 'role_player', icon: '🎭', name: '表演派', desc: '完成角色扮演' },
+  { id: 'boss_slayer', icon: '⚡', name: '斩Boss', desc: '击败Boss' },
+  { id: 'xp_100', icon: '💰', name: '百分宝', desc: '获得100XP' },
+  { id: 'eco_hero', icon: '🌍', name: '地球卫士', desc: '完成所有关卡' },
+  { id: 'beary_friend', icon: '🐻', name: 'Beary好友', desc: '与Beary完成对话' },
+  { id: 'vocab_master', icon: '📚', name: '词汇达人', desc: '浏览所有单词卡' }
+];
+
+const vocabCards = [
+  { emoji: '♻️', word: 'recycle', phonetic: '/ˌriːˈsaɪkl/', meaning: 'v. 回收利用；重复使用', example: 'We should recycle paper and plastic.' },
+  { emoji: '🌍', word: 'environment', phonetic: '/ɪnˈvaɪrənmənt/', meaning: 'n. 环境', example: 'We must protect the environment.' },
+  { emoji: '⚡', word: 'energy', phonetic: '/ˈenədʒi/', meaning: 'n. 能源；精力', example: 'Solar energy is clean and renewable.' },
+  { emoji: '🌱', word: 'protect', phonetic: '/prəˈtekt/', meaning: 'v. 保护', example: 'We should protect wild animals.' },
+  { emoji: '💧', word: 'conserve', phonetic: '/kənˈsɜːv/', meaning: 'v. 节省；保护', example: 'Conserve water by turning off taps.' },
+  { emoji: '🌿', word: 'sustainable', phonetic: '/səˈsteɪnəbl/', meaning: 'adj. 可持续的', example: 'Sustainable living helps our planet.' },
+  { emoji: '☀️', word: 'renewable', phonetic: '/rɪˈnjuːəbl/', meaning: 'adj. 可再生的', example: 'Wind is a renewable energy source.' },
+  { emoji: '🗑️', word: 'waste', phonetic: '/weɪst/', meaning: 'v./n. 浪费；废物', example: 'Don\'t waste food or water.' }
+];
+
+const roleplayScript = {
+  A: [ // Alex starts
+    { role: 'A', line: "What can we do for Earth Day this year?", cn: "今年地球日我们能做些什么？" },
+    { role: 'A', line: "That sounds great! When should we start?", cn: "听起来不错！我们什么时候开始？" },
+    { role: 'A', line: "I will tell our classmates. Let's make Earth Day special!", cn: "我去告诉同学们，让地球日变得特别！" },
+  ],
+  B: [
+    { role: 'B', line: "I think we should plant trees in the park.", cn: "我认为我们应该在公园里种树。" },
+    { role: 'B', line: "We can start this Saturday morning.", cn: "我们可以这个周六早上开始。" },
+    { role: 'B', line: "Yes! And we can bring reusable bags for cleaning.", cn: "好！我们还可以带可重复使用的袋子来清洁。" },
+  ]
+};
+
+let currentVocab = 0;
+let selectedRole = null;
+let roleConvoCursor = 0;
+let recognition = null;
+let isRecording = false;
+let currentSpeakIdx = 0;
+
+// ===== NAVIGATION =====
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+  updateXpDisplays();
+  if (id === 'screen-boss') initBoss();
+  if (id === 'screen-report') showReport();
+}
+
+function startLevels() {
+  goTo('screen-levels');
+  showLevel(1);
+  unlockAchievement('beary_friend');
+}
+
+function showLevel(n) {
+  if (n === 2 && !state.achievements['first_blood']) {
+    showToast('先完成关卡1解锁！🔒'); return;
+  }
+  if (n === 3 && !state.achievements['speak_star']) {
+    showToast('先完成关卡2解锁！🔒'); return;
+  }
+  document.querySelectorAll('.level-content').forEach(l => l.style.display = 'none');
+  document.getElementById('level' + n).style.display = 'block';
+  document.querySelectorAll('.level-pip').forEach((p, i) => p.classList.toggle('active', i === n - 1));
+  document.getElementById('levelTitle').textContent = ['关卡 1 · 听音选答', '关卡 2 · 跟读打分', '关卡 3 · 角色扮演'][n - 1];
+  if (n === 1) renderListenQuestion();
+  if (n === 2) renderSpeakSentence();
+  if (n === 3) initRoleplay();
+}
+
+// ===== XP & LIVES =====
+function addXp(amount) {
+  state.xp += amount;
+  updateXpDisplays();
+  showXpPopup('+' + amount + ' XP');
+  if (state.xp >= 100) unlockAchievement('xp_100');
+}
+
+function updateXpDisplays() {
+  document.querySelectorAll('[id^="xpCount"]').forEach(el => el.textContent = state.xp);
+  const pct = Math.min((state.xp / 300) * 100, 100);
+  document.querySelectorAll('.xp-bar').forEach(b => b && (b.style.width = pct + '%'));
+  updateLivesDisplays();
+}
+
+function loseLife() {
+  if (state.lives > 0) state.lives--;
+  updateLivesDisplays();
+}
+
+function updateLivesDisplays() {
+  const hearts = '❤️'.repeat(state.lives) + '🖤'.repeat(3 - state.lives);
+  document.querySelectorAll('[id^="livesDisplay"]').forEach(el => el.textContent = hearts);
+}
+
+// ===== TTS =====
+function speak(text) {
+  if (!window.speechSynthesis) { showToast('浏览器不支持语音合成'); return; }
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US'; u.rate = 0.85; u.pitch = 1.1;
+  const voices = window.speechSynthesis.getVoices();
+  const eng = voices.find(v => v.lang.startsWith('en'));
+  if (eng) u.voice = eng;
+  window.speechSynthesis.speak(u);
+}
+
+// ===== LISTENING LEVEL =====
+function renderListenQuestion() {
+  const q = listeningQuestions[state.currentListenQ];
+  if (!q) return;
+  document.getElementById('qNum').textContent = 'Q' + (state.currentListenQ + 1) + '.';
+  document.getElementById('qText').textContent = q.text;
+  const pct = (state.currentListenQ / listeningQuestions.length) * 100;
+  document.getElementById('listenProgress').style.width = pct + '%';
+  document.getElementById('listenQNum').textContent = '题目 ' + (state.currentListenQ + 1) + '/' + listeningQuestions.length;
+  const grid = document.getElementById('choicesGrid');
+  grid.innerHTML = '';
+  q.choices.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = '<span class="choice-icon">' + c.emoji + '</span>' + c.text;
+    btn.onclick = () => answerListen(i, c.correct, btn);
+    grid.appendChild(btn);
+  });
+  document.getElementById('listeningFeedback').className = 'feedback-msg';
+  document.getElementById('playBtn').className = 'play-btn';
+  document.getElementById('playIcon').textContent = '▶️';
+}
+
+function playQuestion() {
+  const q = listeningQuestions[state.currentListenQ];
+  const btn = document.getElementById('playBtn');
+  btn.classList.add('playing');
+  document.getElementById('playIcon').textContent = '⏸️';
+  speak(q.audio);
+  setTimeout(() => {
+    btn.classList.remove('playing');
+    document.getElementById('playIcon').textContent = '▶️';
+  }, 4000);
+}
+
+function answerListen(idx, correct, btn) {
+  const allBtns = document.querySelectorAll('#choicesGrid .choice-btn');
+  allBtns.forEach(b => b.disabled = true);
+  const fb = document.getElementById('listeningFeedback');
+  if (correct) {
+    btn.classList.add('correct');
+    fb.textContent = '✅ 棒极了！答对啦！+20 XP 🌟';
+    fb.className = 'feedback-msg ok show';
+    addXp(20);
+    state.listenCorrect++;
+    state.correctCount++;
+    unlockAchievement('first_blood');
+    showToast('答对了！✅');
+    launchConfetti(5);
+  } else {
+    btn.classList.add('wrong');
+    allBtns.forEach((b, i) => {
+      if (listeningQuestions[state.currentListenQ].choices[i].correct) b.classList.add('correct');
+    });
+    fb.textContent = '❌ 再试一次！正确答案已标绿 💪';
+    fb.className = 'feedback-msg err show';
+    loseLife();
+    showToast('加油，下次更棒！💪');
+  }
+  state.totalQuestions++;
+  setTimeout(() => {
+    state.currentListenQ++;
+    if (state.currentListenQ >= listeningQuestions.length) {
+      document.getElementById('listenProgress').style.width = '100%';
+      if (state.listenCorrect >= 4) unlockAchievement('listen_ace');
+      document.getElementById('listenCard').innerHTML = '<div style="text-align:center;padding:30px"><div style="font-size:3rem">🎉</div><div style="font-size:1.2rem;font-weight:800;color:var(--secondary);margin:12px 0">听力关卡完成！</div><div style="color:var(--text-light)">答对 ' + state.listenCorrect + '/' + listeningQuestions.length + ' 题</div></div>';
+      document.getElementById('listenNavBtns').style.display = 'flex';
+      document.getElementById('pip2').classList.remove('locked');
+      document.getElementById('pip2').classList.add('done');
+    } else {
+      renderListenQuestion();
+    }
+  }, 1800);
+}
+
+// ===== SPEAKING LEVEL =====
+function renderSpeakSentence() {
+  const s = speakingSentences[currentSpeakIdx];
+  document.getElementById('speakingSentence').textContent = s.en;
+  document.getElementById('transcript').textContent = '等待你的朗读... 🎤';
+  document.getElementById('speakingFeedback').textContent = '';
+  document.getElementById('speakingProgress').textContent = '句子 ' + (currentSpeakIdx + 1) + '/' + speakingSentences.length;
+  document.getElementById('scoreStars').innerHTML = '<span class="star-item">⭐</span><span class="star-item">⭐</span><span class="star-item">⭐</span>';
+  document.getElementById('lvl2NextBtn').style.display = 'none';
+}
+
+function listenToSentence() {
+  speak(speakingSentences[currentSpeakIdx].en);
+}
+
+function toggleRecording() {
+  if (!isRecording) startRecording();
+  else stopRecording();
+}
+
+function startRecording() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    simulateSpeaking();
+    return;
+  }
+  recognition = new SpeechRecognition();
+  recognition.lang = 'en-US';
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.onstart = () => {
+    isRecording = true;
+    document.getElementById('micBtn').classList.add('recording');
+    document.getElementById('micBtn').innerHTML = '🛑 停止录音';
+    document.getElementById('transcript').textContent = '录音中...';
+  };
+  recognition.onresult = (e) => {
+    const t = Array.from(e.results).map(r => r[0].transcript).join('');
+    document.getElementById('transcript').textContent = t;
+  };
+  recognition.onend = () => {
+    isRecording = false;
+    document.getElementById('micBtn').classList.remove('recording');
+    document.getElementById('micBtn').innerHTML = '🎤 重新朗读';
+    scoreSpeaking();
+  };
+  recognition.onerror = () => simulateSpeaking();
+  recognition.start();
+}
+
+function stopRecording() {
+  if (recognition) recognition.stop();
+}
+
+function simulateSpeaking() {
+  const s = speakingSentences[currentSpeakIdx];
+  const partials = [s.en.substring(0, Math.floor(s.en.length * 0.7)), s.en];
+  document.getElementById('micBtn').classList.add('recording');
+  document.getElementById('micBtn').innerHTML = '🛑 停止录音';
+  document.getElementById('transcript').textContent = '录音中...';
+  isRecording = true;
+  setTimeout(() => {
+    document.getElementById('transcript').textContent = partials[0] + '...';
+  }, 800);
+  setTimeout(() => {
+    document.getElementById('transcript').textContent = s.en;
+    isRecording = false;
+    document.getElementById('micBtn').classList.remove('recording');
+    document.getElementById('micBtn').innerHTML = '🎤 重新朗读';
+    scoreSpeaking();
+  }, 2200);
+}
+
+function scoreSpeaking() {
+  const target = speakingSentences[currentSpeakIdx].en.toLowerCase();
+  const said = (document.getElementById('transcript').textContent || '').toLowerCase();
+  let score = 0;
+  const targetWords = target.split(/\s+/);
+  const saidWords = said.split(/\s+/);
+  targetWords.forEach(w => { if (saidWords.includes(w)) score++; });
+  const pct = targetWords.length > 0 ? score / targetWords.length : 0;
+  let stars = 1;
+  if (pct >= 0.5) stars = 2;
+  if (pct >= 0.8) stars = 3;
+  const starsEl = document.getElementById('scoreStars');
+  starsEl.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const s = document.createElement('span');
+    s.className = 'star-item';
+    s.textContent = i < stars ? '⭐' : '☆';
+    starsEl.appendChild(s);
+    if (i < stars) setTimeout(() => s.classList.add('lit'), i * 200);
+  }
+  const fb = document.getElementById('speakingFeedback');
+  if (stars === 3) { fb.textContent = '🌟 完美！发音超棒！+30 XP'; addXp(30); launchConfetti(8); }
+  else if (stars === 2) { fb.textContent = '👍 不错！再练练更好！+20 XP'; addXp(20); }
+  else { fb.textContent = '💪 继续努力！+10 XP'; addXp(10); }
+  state.speakSentencesDone++;
+  unlockAchievement('speak_star');
+}
+
+function nextSpeakingSentence() {
+  currentSpeakIdx++;
+  if (currentSpeakIdx >= speakingSentences.length) {
+    currentSpeakIdx = speakingSentences.length - 1;
+    document.getElementById('lvl2NextBtn').style.display = 'block';
+    document.getElementById('pip3').classList.remove('locked');
+    document.getElementById('pip3').classList.add('done');
+    showToast('口语关卡完成！🎉');
+    return;
+  }
+  renderSpeakSentence();
+}
+
+// ===== ROLE PLAY =====
+function initRoleplay() {
+  roleConvoCursor = 0;
+  document.getElementById('roleplayConvo').innerHTML = '<div class="convo-line"><span class="convo-avatar">🐻</span><div class="convo-bubble ai">请选择你的角色，然后开始对话！试试说：<em>"What can we do for Earth Day?"</em></div></div>';
+  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('selected'));
+  selectedRole = null;
+}
+
+function selectRole(role) {
+  selectedRole = role;
+  document.getElementById('roleA').classList.toggle('selected', role === 'A');
+  document.getElementById('roleB').classList.toggle('selected', role === 'B');
+  const other = role === 'A' ? 'Bella 🐻' : 'Alex 🐻';
+  const hint = role === 'A' ? 'Alex的台词: "What can we do for Earth Day?"' : 'Bella的台词: "I think we should plant trees."';
+  document.getElementById('roleplayHint').textContent = '提示：你扮演' + (role === 'A' ? 'Alex' : 'Bella') + '。' + hint;
+  addConvoLine('ai', '太棒了！你将扮演 ' + (role === 'A' ? 'Alex 🧑' : 'Bella 👩') + '，' + other + ' 会配合你对话。开始吧！');
+}
+
+function addConvoLine(type, text, cn) {
+  const convo = document.getElementById('roleplayConvo');
+  const div = document.createElement('div');
+  div.className = 'convo-line';
+  const isAi = type === 'ai';
+  const avatarEmoji = isAi ? '🐻' : (selectedRole === 'A' ? '🧑' : '👩');
+  div.innerHTML = '<span class="convo-avatar">' + avatarEmoji + '</span><div class="convo-bubble ' + type + '">' + text + (cn ? '<br><small style="opacity:0.7">' + cn + '</small>' : '') + '</div>';
+  convo.appendChild(div);
+  convo.scrollTop = convo.scrollHeight;
+}
+
+function sendLine() {
+  const input = document.getElementById('convoInput');
+  const val = input.value.trim();
+  if (!val || !selectedRole) { showToast(selectedRole ? '请输入你的台词！' : '请先选择角色！'); return; }
+  addConvoLine('user', val);
+  input.value = '';
+  addXp(15);
+  const script = roleplayScript[selectedRole === 'A' ? 'B' : 'A'];
+  setTimeout(() => {
+    if (roleConvoCursor < script.length) {
+      const line = script[roleConvoCursor];
+      addConvoLine('ai', line.line, line.cn);
+      speak(line.line);
+      roleConvoCursor++;
+      if (roleConvoCursor >= 2) unlockAchievement('role_player');
+    } else {
+      addConvoLine('ai', 'Great conversation! 👏 你的英语对话真棒！可以去挑战Boss了！');
+      addXp(20);
+    }
+  }, 800);
+}
+
+// ===== BOSS =====
+function initBoss() {
+  state.currentBossQ = 0;
+  state.bossHp = 100;
+  document.getElementById('bossHpBar').style.width = '100%';
+  document.getElementById('bossHpText').textContent = '100 / 100';
+  document.getElementById('attackFx').textContent = '';
+  document.getElementById('bossNavBtns').style.display = 'none';
+  renderBossQuestion();
+}
+
+function renderBossQuestion() {
+  const q = bossQuestions[state.currentBossQ];
+  if (!q) return;
+  document.getElementById('bossQuestion').textContent = q.q;
+  document.getElementById('bossFeedback').textContent = '';
+  const choices = document.getElementById('bossChoices');
+  choices.innerHTML = '';
+  q.choices.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'boss-choice';
+    btn.textContent = c.text;
+    btn.onclick = () => answerBoss(i, c.correct, btn);
+    choices.appendChild(btn);
+  });
+}
+
+function answerBoss(idx, correct, btn) {
+  document.querySelectorAll('.boss-choice').forEach(b => b.disabled = true);
+  if (correct) {
+    btn.classList.add('correct');
+    const dmg = 20;
+    state.bossHp = Math.max(0, state.bossHp - dmg);
+    document.getElementById('bossHpBar').style.width = state.bossHp + '%';
+    document.getElementById('bossHpText').textContent = state.bossHp + ' / 100';
+    document.getElementById('attackFx').textContent = '⚡💥';
+    document.getElementById('bossFeedback').textContent = '✅ Excellent! -' + dmg + ' Boss HP';
+    addXp(25);
+    state.correctCount++;
+    launchConfetti(6);
+    if (state.bossHp <= 0) {
+      document.getElementById('bossMonster').textContent = '💀';
+      document.getElementById('bossQuestion').textContent = '🎉 Boss被击败了！你太厉害啦！';
+      document.getElementById('bossChoices').innerHTML = '';
+      document.getElementById('bossNavBtns').style.display = 'flex';
+      unlockAchievement('boss_slayer');
+      unlockAchievement('eco_hero');
+      launchConfetti(20);
+      return;
+    }
+  } else {
+    btn.classList.add('wrong');
+    document.getElementById('attackFx').textContent = '😵';
+    document.getElementById('bossFeedback').textContent = '❌ 加油！继续挑战！';
+    loseLife();
+  }
+  state.totalQuestions++;
+  setTimeout(() => {
+    state.currentBossQ++;
+    if (state.currentBossQ >= bossQuestions.length) {
+      state.currentBossQ = 0;
+      document.getElementById('bossQuestion').textContent = 'Boss还没倒下！再来一轮！🔥';
+      document.getElementById('bossChoices').innerHTML = '';
+      setTimeout(renderBossQuestion, 800);
+    } else {
+      renderBossQuestion();
+    }
+  }, 1600);
+}
+
+// ===== REPORT =====
+function showReport() {
+  const total = listeningQuestions.length + speakingSentences.length + bossQuestions.length;
+  const pct = Math.round((state.correctCount / Math.max(state.totalQuestions, 1)) * 100);
+  document.getElementById('scoreRing').style.setProperty('--score-pct', pct + '%');
+  document.getElementById('scoreText').textContent = pct + '%';
+  document.getElementById('statXp').textContent = state.xp;
+  document.getElementById('statCorrect').textContent = state.correctCount;
+  const unlocked = Object.keys(state.achievements).length;
+  document.getElementById('statAchievements').textContent = unlocked;
+  if (pct >= 90) document.getElementById('reportTitle').textContent = '完美！你是英语之星！⭐';
+  else if (pct >= 70) document.getElementById('reportTitle').textContent = '太棒了！Keep it up! 🎉';
+  else document.getElementById('reportTitle').textContent = '加油！下次一定更好！💪';
+  const grid = document.getElementById('achievementsGrid');
+  grid.innerHTML = '';
+  achievements.forEach(a => {
+    const div = document.createElement('div');
+    div.className = 'achievement' + (state.achievements[a.id] ? ' unlocked' : '');
+    div.innerHTML = '<div class="achievement-icon">' + a.icon + '</div><div class="achievement-name">' + a.name + '</div>';
+    div.title = a.desc;
+    grid.appendChild(div);
+  });
+  launchConfetti(15);
+}
+
+function restartGame() {
+  Object.assign(state, {
+    xp: 0, lives: 3, correctCount: 0, totalQuestions: 0,
+    currentListenQ: 0, currentSpeakSentence: 0, currentBossQ: 0,
+    bossHp: 100, listenCorrect: 0, speakSentencesDone: 0, achievements: {}
+  });
+  currentSpeakIdx = 0;
+  roleConvoCursor = 0;
+  selectedRole = null;
+  document.querySelectorAll('.level-pip').forEach((p, i) => {
+    p.className = 'level-pip' + (i === 0 ? ' active' : ' locked');
+  });
+  goTo('screen-hero');
+}
+
+// ===== ACHIEVEMENTS =====
+function unlockAchievement(id) {
+  if (state.achievements[id]) return;
+  state.achievements[id] = true;
+  const a = achievements.find(x => x.id === id);
+  if (a) {
+    showToast('🏅 成就解锁：' + a.name + ' ' + a.icon);
+    addXp(10);
+  }
+}
+
+// ===== EXTENSION =====
+function playExtActivity(type) {
+  if (type === 'vocab') {
+    document.getElementById('vocabActivity').style.display = 'block';
+    renderVocabCard();
+  } else if (type === 'song') {
+    speak("Go green, go green, let us keep our planet clean. Plant a tree, save the sea, this is where we want to be. Recycle, reuse, never let the earth lose. Go green today, let us find a better way!");
+    showToast('🎵 正在播放环保英语歌！🎶');
+  } else if (type === 'write') {
+    showToast('✏️ 挑战：用英语写3句你的环保计划！');
+    speak("Writing challenge: Write three sentences about your plan to help the environment. Use words like recycle, protect, save energy, and plant trees.");
+  } else if (type === 'video') {
+    speak("The Earth Day Story: One day, the Earth was very sad. People were using too much plastic and wasting water. Then, the children decided to help. They planted trees, recycled rubbish, and saved energy. The Earth smiled again. The end.");
+    showToast('🎬 Beary正在讲故事！🌍');
+  }
+}
+
+let vocabIdx = 0;
+function renderVocabCard() {
+  const v = vocabCards[vocabIdx];
+  document.getElementById('vocabEmoji').textContent = v.emoji;
+  document.getElementById('vocabWord').textContent = v.word;
+  document.getElementById('vocabPhonetic').textContent = v.phonetic;
+  document.getElementById('vocabMeaning').textContent = v.meaning;
+  document.getElementById('vocabExample').textContent = v.example;
+}
+
+function nextVocab() {
+  vocabIdx = (vocabIdx + 1) % vocabCards.length;
+  if (vocabIdx === 0) unlockAchievement('vocab_master');
+  renderVocabCard();
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ===== XP POPUP =====
+function showXpPopup(text) {
+  const el = document.getElementById('xpPopup');
+  el.textContent = text;
+  el.className = 'xp-popup show';
+  setTimeout(() => el.className = 'xp-popup', 1100);
+}
+
+// ===== CONFETTI =====
+function launchConfetti(count) {
+  const colors = ['#ff6b6b','#4ecdc4','#ffe66d','#a29bfe','#fd79a8','#00b894'];
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      el.style.left = Math.random() * 100 + 'vw';
+      el.style.background = colors[Math.floor(Math.random() * colors.length)];
+      el.style.animationDuration = (2 + Math.random() * 2) + 's';
+      el.style.animationDelay = Math.random() * 0.5 + 's';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 4000);
+    }, i * 80);
+  }
+}
+
+// ===== INIT =====
+window.speechSynthesis && window.speechSynthesis.getVoices();
+updateXpDisplays();
+</script>
+</body>
+</html>

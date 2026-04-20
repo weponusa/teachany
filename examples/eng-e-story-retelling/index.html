@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>故事复述 · 五年级英语 · Story Retelling Quest</title>
+<style>
+:root {
+  --bg: #fffbf0;
+  --primary: #ff6b6b;
+  --secondary: #4ecdc4;
+  --accent: #ffe66d;
+  --card: #fff;
+  --text: #2d3436;
+  --muted: #636e72;
+  --success: #00b894;
+  --radius: 16px;
+  --shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', 'PingFang SC', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+#hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(135deg, #ff6b6b18 0%, #4ecdc418 50%, #ffe66d18 100%); }
+.hero-icon { font-size: 5rem; animation: bear-wave 2s ease-in-out infinite; }
+@keyframes bear-wave { 0%,100%{transform:rotate(-10deg)} 50%{transform:rotate(10deg)} }
+.hero-title { font-size: clamp(2rem,6vw,3rem); font-weight: 900; color: var(--primary); margin: 16px 0 8px; text-align: center; text-shadow: 3px 3px 0 #fff; }
+.hero-sub { color: var(--muted); font-size: 1.1rem; margin-bottom: 24px; text-align: center; }
+.hero-tags { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 28px; }
+.tag { background: var(--card); border-radius: 20px; padding: 6px 14px; font-size: 0.85rem; font-weight: 600; box-shadow: var(--shadow); }
+.tag-p { border: 2px solid var(--primary); color: var(--primary); }
+.tag-s { border: 2px solid var(--secondary); color: var(--secondary); }
+.tag-x { border: 2px solid var(--accent); color: #b7950b; }
+.btn-go { background: linear-gradient(135deg, var(--primary), #ff8e8e); color: #fff; border: none; border-radius: 50px; padding: 14px 44px; font-size: 1.1rem; font-weight: 700; cursor: pointer; box-shadow: 0 6px 20px rgba(255,107,107,0.4); transition: all 0.3s; }
+.btn-go:hover { transform: translateY(-3px) scale(1.05); }
+
+#topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 999; background: var(--card); box-shadow: 0 2px 10px rgba(0,0,0,0.08); padding: 8px 20px; display: none; align-items: center; gap: 12px; }
+#topbar.show { display: flex; }
+.tb-icon { font-size: 1.4rem; }
+.tb-prog { flex: 1; }
+.tb-label { font-size: 0.75rem; color: var(--muted); }
+.tb-bar { background: #eee; border-radius: 8px; height: 8px; margin-top: 3px; overflow: hidden; }
+.tb-fill { background: linear-gradient(90deg, var(--primary), var(--accent)); height: 100%; border-radius: 8px; transition: width 0.4s; }
+.tb-xp { font-weight: 700; color: var(--primary); font-size: 0.85rem; white-space: nowrap; }
+.tb-stars { font-size: 1.1rem; }
+
+.screen { display: none; min-height: 100vh; padding: 76px 20px 40px; max-width: 880px; margin: 0 auto; }
+.screen.active { display: block; }
+.s-title { font-size: 1.7rem; font-weight: 800; color: var(--primary); margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
+.s-desc { color: var(--muted); margin-bottom: 28px; }
+
+/* Story display */
+.story-panel { background: var(--card); border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow); margin-bottom: 24px; border-top: 4px solid var(--secondary); }
+.story-panel h3 { color: var(--secondary); font-size: 1.1rem; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.story-panel p { line-height: 1.9; margin-bottom: 10px; font-size: 0.98rem; }
+.highlight { background: linear-gradient(135deg, #ffe66d88, #ffd32a88); border-radius: 4px; padding: 1px 4px; font-weight: 600; cursor: pointer; }
+
+/* Sort drag */
+.sort-area { display: grid; gap: 10px; margin-bottom: 20px; }
+.sort-item { background: var(--card); border: 2px solid #e0e0e0; border-radius: 12px; padding: 14px 18px; cursor: grab; display: flex; align-items: center; gap: 12px; font-size: 0.95rem; transition: all 0.2s; user-select: none; }
+.sort-item:hover { border-color: var(--secondary); box-shadow: 0 4px 12px rgba(78,205,196,0.2); }
+.sort-item.dragging { opacity: 0.5; border-color: var(--primary); }
+.sort-item.drag-over { border-color: var(--primary); background: #ff6b6b11; transform: scale(1.02); }
+.sort-num { background: var(--primary); color: #fff; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; }
+.sort-icon { font-size: 1.2rem; }
+.sort-correct { border-color: var(--success) !important; background: #00b89411 !important; }
+.sort-wrong { border-color: var(--primary) !important; background: #ff6b6b11 !important; animation: wobble 0.4s ease; }
+@keyframes wobble { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+
+/* Character cards */
+.char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
+.char-card { background: var(--card); border-radius: var(--radius); padding: 16px; text-align: center; box-shadow: var(--shadow); cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
+.char-card:hover { border-color: var(--secondary); transform: translateY(-3px); }
+.char-card.selected { border-color: var(--primary); background: #ff6b6b0f; }
+.char-emoji { font-size: 2.5rem; margin-bottom: 8px; }
+.char-name { font-weight: 700; font-size: 0.9rem; }
+.char-role { font-size: 0.75rem; color: var(--muted); }
+
+/* Retell textarea */
+.retell-area { width: 100%; min-height: 120px; border: 2px solid #e0e0e0; border-radius: 12px; padding: 14px; font-size: 0.95rem; font-family: inherit; resize: vertical; outline: none; color: var(--text); transition: border-color 0.2s; background: var(--card); }
+.retell-area:focus { border-color: var(--secondary); }
+.sentence-starters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.starter-chip { background: linear-gradient(135deg, #4ecdc422, #4ecdc411); border: 1.5px solid var(--secondary); border-radius: 20px; padding: 5px 12px; font-size: 0.82rem; font-weight: 600; color: #0d8a82; cursor: pointer; transition: all 0.2s; }
+.starter-chip:hover { background: var(--secondary); color: #fff; }
+
+/* Q cards */
+.q-card { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 14px; }
+.q-card h4 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; }
+.opts { display: grid; gap: 8px; }
+.opt { background: var(--bg); border: 2px solid #e0e0e0; border-radius: 10px; padding: 11px 15px; text-align: left; cursor: pointer; font-size: 0.93rem; transition: all 0.2s; color: var(--text); width: 100%; }
+.opt:hover { border-color: var(--secondary); background: #4ecdc411; }
+.opt.ok { border-color: var(--success); background: #00b89418; color: var(--success); font-weight: 700; }
+.opt.no { border-color: var(--primary); background: #ff6b6b18; color: var(--primary); }
+.opt:disabled { cursor: not-allowed; }
+.q-fb { margin-top: 8px; padding: 9px 12px; border-radius: 8px; font-size: 0.88rem; font-weight: 600; display: none; }
+.q-fb.show { display: block; }
+.q-fb.ok { background: #00b89418; color: var(--success); }
+.q-fb.no { background: #ff6b6b18; color: var(--primary); }
+
+/* Timeline */
+.timeline { position: relative; padding-left: 30px; }
+.timeline::before { content:''; position:absolute; left:10px; top:0; bottom:0; width:3px; background:linear-gradient(180deg,var(--primary),var(--secondary),var(--accent)); border-radius:2px; }
+.tl-item { position: relative; margin-bottom: 20px; }
+.tl-dot { position: absolute; left: -25px; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--primary); }
+.tl-content { background: var(--card); border-radius: 12px; padding: 14px 18px; box-shadow: var(--shadow); font-size: 0.92rem; }
+.tl-content strong { color: var(--primary); }
+
+/* Boss */
+.boss-wrap { text-align: center; }
+.boss-face { font-size: 5rem; animation: boss-anim 1.5s ease-in-out infinite; }
+@keyframes boss-anim { 0%,100%{transform:rotate(-5deg) scale(1)} 50%{transform:rotate(5deg) scale(1.1)} }
+.boss-title { font-size: 1.3rem; font-weight: 800; color: var(--primary); margin: 10px 0; }
+.hp-wrap { margin: 10px 0 20px; }
+.hp-label { font-size: 0.8rem; color: var(--muted); margin-bottom: 4px; }
+.hp-bar { background: #eee; border-radius: 20px; height: 16px; overflow: hidden; }
+.hp-fill { background: linear-gradient(90deg,#ff6b6b,#ee5a24); height:100%; border-radius:20px; transition:width 0.5s; }
+
+/* Report */
+.report-hero { background: linear-gradient(135deg, #ff6b6b22, #4ecdc422); border-radius: var(--radius); padding: 30px; text-align: center; margin-bottom: 20px; }
+.rep-score { font-size: 4rem; font-weight: 900; color: var(--primary); }
+.rep-stars { font-size: 2.5rem; margin: 8px 0; }
+.rep-msg { font-size: 1.1rem; color: var(--muted); }
+.ach-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(140px,1fr)); gap: 10px; }
+.ach-item { background: var(--card); border-radius: 12px; padding: 14px; text-align: center; box-shadow: var(--shadow); border: 2px solid #eee; }
+.ach-item.got { border-color: var(--accent); }
+.ach-item.got .ai { opacity: 1; }
+.ai { font-size: 1.8rem; opacity: 0.3; }
+.an { font-size: 0.78rem; font-weight: 700; margin-top: 4px; }
+.ad { font-size: 0.7rem; color: var(--muted); }
+
+/* Ext */
+.ext-grid { display: grid; gap: 14px; }
+.ext-item { background: var(--card); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); display: flex; gap: 14px; cursor: pointer; transition: all 0.2s; }
+.ext-item:hover { transform: translateY(-2px); }
+.ext-ei { font-size: 1.8rem; }
+.ext-it h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 3px; }
+.ext-it p { font-size: 0.82rem; color: var(--muted); }
+
+.nav { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 28px; }
+.btn { padding: 12px 26px; border-radius: 50px; border: none; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+.btn-p { background: linear-gradient(135deg,var(--primary),#ff8e8e); color:#fff; box-shadow:0 4px 15px rgba(255,107,107,0.35); }
+.btn-s { background: linear-gradient(135deg,var(--secondary),#7be0d8); color:#fff; box-shadow:0 4px 15px rgba(78,205,196,0.35); }
+.btn-a { background: linear-gradient(135deg,var(--accent),#ffd32a); color:#7d6608; box-shadow:0 4px 15px rgba(255,230,109,0.4); }
+.btn:hover { transform: translateY(-2px) scale(1.03); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.toast { position:fixed; top:76px; right:20px; background:var(--card); border-radius:12px; padding:12px 18px; box-shadow:0 8px 25px rgba(0,0,0,0.12); font-weight:700; font-size:0.9rem; z-index:2000; transform:translateX(150px); transition:transform 0.35s; display:flex; align-items:center; gap:8px; border-left:4px solid var(--success); }
+.toast.show { transform:translateX(0); }
+.toast.xp { border-left-color:var(--accent); }
+.toast.ach { border-left-color:var(--primary); }
+.lv-badge { background:linear-gradient(135deg,var(--primary),#ff8e8e); color:#fff; border-radius:50%; width:46px; height:46px; display:flex; align-items:center; justify-content:center; font-size:1.4rem; font-weight:900; box-shadow:0 4px 12px rgba(255,107,107,0.35); }
+.xp-chip { background:linear-gradient(135deg,var(--accent),#ffd32a); border-radius:8px; padding:4px 10px; font-size:0.8rem; font-weight:700; color:#7d6608; }
+.lv-row { display:flex; align-items:center; gap:14px; margin-bottom:18px; }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div id="hero" class="screen active">
+  <div class="hero-icon">🐻📖</div>
+  <h1 class="hero-title">Story Retelling Quest</h1>
+  <p class="hero-sub">五年级英语故事复述 · 和熊熊讲故事！</p>
+  <div class="hero-tags">
+    <span class="tag tag-p">🎓 Grade 5</span>
+    <span class="tag tag-s">📖 Story Retelling</span>
+    <span class="tag tag-x">⭐ 480 XP</span>
+  </div>
+  <button class="btn-go" onclick="go()">🎬 开始故事！</button>
+  <p style="margin-top:20px;color:var(--muted);font-size:0.88rem">Story sequencing · Characters · Retelling · 5W1H</p>
+</div>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <span class="tb-icon">🐻</span>
+  <div class="tb-prog">
+    <div class="tb-label" id="tb-label">Loading...</div>
+    <div class="tb-bar"><div class="tb-fill" id="tb-fill" style="width:0%"></div></div>
+  </div>
+  <span class="tb-xp" id="tb-xp">0 XP</span>
+  <span class="tb-stars" id="tb-stars">⭐⭐⭐</span>
+</div>
+
+<!-- OBJECTIVES -->
+<div id="screen-objectives" class="screen">
+  <h1 class="s-title">🎯 学习目标</h1>
+  <p class="s-desc">🐻 今天熊熊要带你一起读故事、排顺序、学复述！</p>
+  <div style="display:grid;gap:12px">
+    <div style="background:var(--card);border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow);display:flex;gap:14px;align-items:center;border-left:4px solid var(--primary)">
+      <span style="font-size:1.5rem">📋</span>
+      <div><strong>Sequence a Story</strong><br><span style="font-size:0.85rem;color:var(--muted)">将故事情节按正确顺序排列</span></div>
+    </div>
+    <div style="background:var(--card);border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow);display:flex;gap:14px;align-items:center;border-left:4px solid var(--secondary)">
+      <span style="font-size:1.5rem">👤</span>
+      <div><strong>Identify Characters & Settings</strong><br><span style="font-size:0.85rem;color:var(--muted)">识别故事人物、时间、地点</span></div>
+    </div>
+    <div style="background:var(--card);border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow);display:flex;gap:14px;align-items:center;border-left:4px solid var(--accent);color:#7d6608">
+      <span style="font-size:1.5rem">🗣️</span>
+      <div><strong>Retell in Your Own Words</strong><br><span style="font-size:0.85rem;color:var(--muted)">用自己的话复述故事</span></div>
+    </div>
+    <div style="background:var(--card);border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow);display:flex;gap:14px;align-items:center;border-left:4px solid var(--success)">
+      <span style="font-size:1.5rem">🔍</span>
+      <div><strong>Use 5W1H</strong><br><span style="font-size:0.85rem;color:var(--muted)">运用Who/What/When/Where/Why/How分析故事</span></div>
+    </div>
+  </div>
+  <div class="nav">
+    <button class="btn btn-p" onclick="go2('warmup')">开始热身 →</button>
+  </div>
+</div>
+
+<!-- WARMUP -->
+<div id="screen-warmup" class="screen">
+  <h1 class="s-title">🔥 热身：故事词汇</h1>
+  <p class="s-desc">认识这些故事常用词，准备好了吗？</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:24px">
+    <div style="background:var(--card);border-radius:12px;padding:14px;text-align:center;box-shadow:var(--shadow);cursor:pointer;transition:all 0.2s" onclick="flipCard(this)">
+      <div class="front" style="font-size:1.1rem;font-weight:700;color:var(--primary)">Once upon a time</div>
+      <div class="back" style="display:none;font-size:0.9rem;color:var(--secondary)">从前…（故事开头）</div>
+    </div>
+    <div style="background:var(--card);border-radius:12px;padding:14px;text-align:center;box-shadow:var(--shadow);cursor:pointer;transition:all 0.2s" onclick="flipCard(this)">
+      <div class="front" style="font-size:1.1rem;font-weight:700;color:var(--primary)">suddenly</div>
+      <div class="back" style="display:none;font-size:0.9rem;color:var(--secondary)">突然</div>
+    </div>
+    <div style="background:var(--card);border-radius:12px;padding:14px;text-align:center;box-shadow:var(--shadow);cursor:pointer;transition:all 0.2s" onclick="flipCard(this)">
+      <div class="front" style="font-size:1.1rem;font-weight:700;color:var(--primary)">in the end</div>
+      <div class="back" style="display:none;font-size:0.9rem;color:var(--secondary)">最终，结局</div>
+    </div>
+    <div style="background:var(--card);border-radius:12px;padding:14px;text-align:center;box-shadow:var(--shadow);cursor:pointer;transition:all 0.2s" onclick="flipCard(this)">
+      <div class="front" style="font-size:1.1rem;font-weight:700;color:var(--primary)">meanwhile</div>
+      <div class="back" style="display:none;font-size:0.9rem;color:var(--secondary)">与此同时</div>
+    </div>
+    <div style="background:var(--card);border-radius:12px;padding:14px;text-align:center;box-shadow:var(--shadow);cursor:pointer;transition:all 0.2s" onclick="flipCard(this)">
+      <div class="front" style="font-size:1.1rem;font-weight:700;color:var(--primary)">protagonist</div>
+      <div class="back" style="display:none;font-size:0.9rem;color:var(--secondary)">主角，主人公</div>
+    </div>
+    <div style="background:var(--card);border-radius:12px;padding:14px;text-align:center;box-shadow:var(--shadow);cursor:pointer;transition:all 0.2s" onclick="flipCard(this)">
+      <div class="front" style="font-size:1.1rem;font-weight:700;color:var(--primary)">plot twist</div>
+      <div class="back" style="display:none;font-size:0.9rem;color:var(--secondary)">情节转折，意外发展</div>
+    </div>
+  </div>
+  <div style="background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);text-align:center">
+    <p style="font-size:0.95rem">🐻 熊熊提示：点击卡片翻看中文意思！这些词在今天的故事里都会出现哦。</p>
+  </div>
+  <div class="nav">
+    <button class="btn btn-p" onclick="go2('level1')">进入第1关 →</button>
+  </div>
+</div>
+
+<!-- LEVEL 1: Story Sequence Drag -->
+<div id="screen-level1" class="screen">
+  <div class="lv-row">
+    <div class="lv-badge">1</div>
+    <div>
+      <h2 style="font-size:1.4rem;font-weight:800">📋 Level 1: Story Sequence</h2>
+      <p style="color:var(--muted);font-size:0.88rem">拖拽故事片段，排列正确顺序</p>
+    </div>
+    <span class="xp-chip">+80 XP</span>
+  </div>
+
+  <div class="story-panel">
+    <h3>📚 The Three Little Pigs — 三只小猪（节选）</h3>
+    <p>Long ago, three little pigs left home to build their own houses. The <span class="highlight">first pig</span> built a house of straw — it was quick but not strong. The <span class="highlight">second pig</span> built a house of sticks. The <span class="highlight">third pig</span> worked very hard and built a house of bricks.</p>
+    <p>Then came the <span class="highlight">Big Bad Wolf</span>! He huffed and puffed and blew down the straw house, then the stick house. But he could NOT blow down the brick house! The wolf tried to sneak in through the chimney, but the clever third pig had a pot of boiling water waiting. The wolf ran away and never came back!</p>
+  </div>
+
+  <p style="font-weight:700;margin-bottom:12px;color:var(--primary)">🔀 拖拽排序：把故事情节排成正确顺序</p>
+  <div class="sort-area" id="sort-area">
+    <div class="sort-item" draggable="true" data-order="4" id="si4">
+      <span class="sort-num">?</span>
+      <span class="sort-icon">🔥</span>
+      <span>The wolf tried to enter through the chimney but was defeated.</span>
+    </div>
+    <div class="sort-item" draggable="true" data-order="1" id="si1">
+      <span class="sort-num">?</span>
+      <span class="sort-icon">🏠</span>
+      <span>Three pigs left home to build their own houses.</span>
+    </div>
+    <div class="sort-item" draggable="true" data-order="3" id="si3">
+      <span class="sort-num">?</span>
+      <span class="sort-icon">🌬️</span>
+      <span>The wolf blew down the straw and stick houses.</span>
+    </div>
+    <div class="sort-item" draggable="true" data-order="5" id="si5">
+      <span class="sort-num">?</span>
+      <span class="sort-icon">🏃</span>
+      <span>The wolf ran away and never came back!</span>
+    </div>
+    <div class="sort-item" draggable="true" data-order="2" id="si2">
+      <span class="sort-num">?</span>
+      <span class="sort-icon">🧱</span>
+      <span>The first pig built straw, second built sticks, third built bricks.</span>
+    </div>
+  </div>
+  <div class="nav">
+    <button class="btn btn-s" onclick="checkSort()">✔ 检查顺序</button>
+    <button class="btn btn-p" id="btn-l1-next" onclick="complLv(1,80)" disabled>完成第1关 →</button>
+  </div>
+</div>
+
+<!-- LEVEL 2: Characters & 5W1H -->
+<div id="screen-level2" class="screen">
+  <div class="lv-row">
+    <div class="lv-badge" style="background:linear-gradient(135deg,var(--secondary),#7be0d8)">2</div>
+    <div>
+      <h2 style="font-size:1.4rem;font-weight:800">👤 Level 2: Characters & 5W1H</h2>
+      <p style="color:var(--muted);font-size:0.88rem">认识故事角色，用5W1H分析故事</p>
+    </div>
+    <span class="xp-chip">+100 XP</span>
+  </div>
+  <p style="font-weight:700;margin-bottom:12px;color:var(--secondary)">👥 认识角色：点击角色卡了解他们的特点</p>
+  <div class="char-grid" id="char-grid">
+    <div class="char-card" onclick="showCharInfo('pig1')">
+      <div class="char-emoji">🐷</div>
+      <div class="char-name">First Pig</div>
+      <div class="char-role">The lazy one</div>
+    </div>
+    <div class="char-card" onclick="showCharInfo('pig2')">
+      <div class="char-emoji">🐷</div>
+      <div class="char-name">Second Pig</div>
+      <div class="char-role">The quick one</div>
+    </div>
+    <div class="char-card" onclick="showCharInfo('pig3')">
+      <div class="char-emoji">🐷</div>
+      <div class="char-name">Third Pig</div>
+      <div class="char-role">The smart one</div>
+    </div>
+    <div class="char-card" onclick="showCharInfo('wolf')">
+      <div class="char-emoji">🐺</div>
+      <div class="char-name">Big Bad Wolf</div>
+      <div class="char-role">The villain</div>
+    </div>
+  </div>
+  <div id="char-info" style="display:none;background:var(--card);border-radius:12px;padding:16px;box-shadow:var(--shadow);margin-bottom:16px;border-left:4px solid var(--secondary)"></div>
+
+  <p style="font-weight:700;margin:20px 0 12px;color:var(--secondary)">❓ 5W1H 问题</p>
+  <div class="q-card">
+    <h4>WHO are the main characters in this story?</h4>
+    <div class="opts">
+      <button class="opt" onclick="chkQ(this,'wrong','❌ The rabbit is from a different story!')">The tortoise, the hare, and the fox</button>
+      <button class="opt" onclick="chkQ(this,'ok','✅ Correct! Three little pigs and the Big Bad Wolf are the main characters.')">Three little pigs and the Big Bad Wolf</button>
+      <button class="opt" onclick="chkQ(this,'wrong','❌ Not quite — the mother doesn\'t appear in the main story.')">The mother pig and her three children</button>
+    </div>
+    <div class="q-fb" id="qfb-w1"></div>
+  </div>
+  <div class="q-card">
+    <h4>WHY did the wolf fail to destroy the third pig's house?</h4>
+    <div class="opts">
+      <button class="opt" onclick="chkQ(this,'wrong','❌ The story doesn\'t mention this.')">He got tired and gave up.</button>
+      <button class="opt" onclick="chkQ(this,'wrong','❌ Not mentioned in the story.')">The third pig called for help.</button>
+      <button class="opt" onclick="chkQ(this,'ok','✅ Exactly! Bricks are strong and can\'t be blown down. The third pig was smart and hardworking!')">The brick house was too strong to blow down.</button>
+    </div>
+    <div class="q-fb" id="qfb-w2"></div>
+  </div>
+  <div class="q-card">
+    <h4>WHAT lesson does this story teach?</h4>
+    <div class="opts">
+      <button class="opt" onclick="chkQ(this,'wrong','❌ That\'s not the lesson here.')">Always run away from danger.</button>
+      <button class="opt" onclick="chkQ(this,'ok','✅ Perfect! Hard work and smart planning pay off — the classic moral of this story! 🌟')">Hard work and careful planning lead to success.</button>
+      <button class="opt" onclick="chkQ(this,'wrong','❌ Think deeper — the story is about preparation, not helping.')">It\'s important to help your brothers.</button>
+    </div>
+    <div class="q-fb" id="qfb-w3"></div>
+  </div>
+  <div class="nav">
+    <button class="btn btn-p" id="btn-l2-next" onclick="complLv(2,100)">完成第2关 →</button>
+  </div>
+</div>
+
+<!-- LEVEL 3: Story Retelling Template -->
+<div id="screen-level3" class="screen">
+  <div class="lv-row">
+    <div class="lv-badge" style="background:linear-gradient(135deg,var(--accent),#ffd32a);color:#7d6608">3</div>
+    <div>
+      <h2 style="font-size:1.4rem;font-weight:800">🗣️ Level 3: Retell the Story</h2>
+      <p style="color:var(--muted);font-size:0.88rem">用你自己的话复述故事！</p>
+    </div>
+    <span class="xp-chip">+120 XP</span>
+  </div>
+
+  <p style="font-weight:700;margin-bottom:8px;color:#b7950b">📝 Story Timeline — 故事时间轴</p>
+  <div class="timeline" style="margin-bottom:24px">
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-content"><strong>Beginning:</strong> Three pigs left home and built different houses.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot" style="background:var(--secondary)"></div>
+      <div class="tl-content"><strong>Rising Action:</strong> The Big Bad Wolf came and tried to blow down the houses.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot" style="background:var(--accent)"></div>
+      <div class="tl-content"><strong>Climax:</strong> The wolf couldn't blow down the brick house!</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot" style="background:var(--success)"></div>
+      <div class="tl-content"><strong>Ending:</strong> The wolf was defeated and ran away forever.</div>
+    </div>
+  </div>
+
+  <p style="font-weight:700;margin-bottom:8px;color:#b7950b">💬 Sentence Starters — 可以这样开始：</p>
+  <div class="sentence-starters">
+    <span class="starter-chip" onclick="insertStarter('Once upon a time, ')">Once upon a time,</span>
+    <span class="starter-chip" onclick="insertStarter('First, ')">First,</span>
+    <span class="starter-chip" onclick="insertStarter('Then, ')">Then,</span>
+    <span class="starter-chip" onclick="insertStarter('Suddenly, ')">Suddenly,</span>
+    <span class="starter-chip" onclick="insertStarter('In the end, ')">In the end,</span>
+    <span class="starter-chip" onclick="insertStarter('The lesson is ')">The lesson is</span>
+  </div>
+  <textarea class="retell-area" id="retell-box" placeholder="Write your retelling here... 在这里写你的故事复述（至少3句话）"></textarea>
+  <div style="margin-top:8px;font-size:0.82rem;color:var(--muted)">字数: <span id="word-count">0</span> words | 目标: 30+ words</div>
+  <div class="nav">
+    <button class="btn btn-s" onclick="evalRetell()">✔ 检查复述</button>
+    <button class="btn btn-p" id="btn-l3-next" onclick="complLv(3,120)" disabled>完成第3关 →</button>
+  </div>
+</div>
+
+<!-- BOSS -->
+<div id="screen-boss" class="screen">
+  <div class="boss-wrap">
+    <p style="font-weight:700;color:var(--muted);margin-bottom:8px">⚔️ FINAL BOSS</p>
+    <div class="boss-face">🐺</div>
+    <p class="boss-title">The Big Bad Wolf Returns!</p>
+    <div class="hp-wrap">
+      <div class="hp-label">Wolf HP: <span id="bhp-val">3</span>/3</div>
+      <div class="hp-bar"><div class="hp-fill" id="bhp-fill" style="width:100%"></div></div>
+    </div>
+    <div id="boss-q-box"></div>
+  </div>
+</div>
+
+<!-- REPORT -->
+<div id="screen-report" class="screen">
+  <h1 class="s-title">🎉 故事讲完啦！</h1>
+  <div class="report-hero">
+    <div class="rep-score" id="rep-xp">0</div>
+    <div style="color:var(--muted)">/ 480 XP</div>
+    <div class="rep-stars" id="rep-stars">⭐⭐⭐</div>
+    <div class="rep-msg" id="rep-msg">Amazing Storyteller! 🏆</div>
+  </div>
+  <div style="background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:20px">
+    <p style="font-weight:700;margin-bottom:10px">📊 成绩详情</p>
+    <div id="rep-details" style="font-size:0.9rem;color:var(--muted);line-height:2.2"></div>
+  </div>
+  <p style="font-weight:700;margin-bottom:14px">🏅 成就展示</p>
+  <div class="ach-grid" id="ach-grid"></div>
+  <div class="nav" style="margin-top:20px">
+    <button class="btn btn-p" onclick="go2('extension')">🌟 拓展学习</button>
+    <button class="btn btn-s" onclick="restart()">🔄 再来一次</button>
+  </div>
+</div>
+
+<!-- EXTENSION -->
+<div id="screen-extension" class="screen">
+  <h1 class="s-title">🌟 拓展学习</h1>
+  <p class="s-desc">继续你的故事复述之旅！</p>
+  <div class="ext-grid">
+    <div class="ext-item" onclick="showExtContent('starters')">
+      <span class="ext-ei">🗣️</span>
+      <div class="ext-it"><h3>Story Starters Collection</h3><p>50个精选故事开头句子，让你的复述更生动</p></div>
+    </div>
+    <div class="ext-item" onclick="showExtContent('connectors')">
+      <span class="ext-ei">🔗</span>
+      <div class="ext-it"><h3>Connective Words</h3><p>连接词大全：时间/转折/因果，让故事更流畅</p></div>
+    </div>
+    <div class="ext-item" onclick="showExtContent('compare')">
+      <span class="ext-ei">⚖️</span>
+      <div class="ext-it"><h3>Compare Two Stories</h3><p>三只小猪 vs 小红帽：比较两个故事的异同</p></div>
+    </div>
+    <div class="ext-item" onclick="showExtContent('change')">
+      <span class="ext-ei">✏️</span>
+      <div class="ext-it"><h3>Change the Ending</h3><p>如果故事结局不同……写你自己的创意结局！</p></div>
+    </div>
+  </div>
+  <div id="ext-content" style="display:none;margin-top:18px;background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)"></div>
+  <div class="nav">
+    <button class="btn btn-p" onclick="go2('hero')">🏠 回到主页</button>
+  </div>
+</div>
+
+<script>
+// STATE
+let G = {
+  xp:0, stars:3, ach:[], correct:0, bossHp:3, bossQ:0, sortDone:false
+};
+
+const ACHS = [
+  {id:'sort_pro',icon:'📋',name:'Sort Pro',desc:'完成故事排序'},
+  {id:'char_master',icon:'👤',name:'Char Master',desc:'了解所有角色'},
+  {id:'5w1h_ace',icon:'❓',name:'5W1H Ace',desc:'答对5W1H题目'},
+  {id:'storyteller',icon:'🗣️',name:'Storyteller',desc:'完成故事复述'},
+  {id:'wolf_slayer',icon:'🐺',name:'Wolf Slayer',desc:'击败大灰狼'},
+  {id:'perfect_sort',icon:'✨',name:'Perfect Sort',desc:'一次排序全对'},
+  {id:'reader_5',icon:'⭐',name:'Story Star',desc:'获得400+XP'},
+  {id:'complete',icon:'🏆',name:'Champion',desc:'完成全部关卡'},
+];
+
+const BOSS_Qs = [
+  {q:"What type of story is 'The Three Little Pigs'?",hint:'Think about stories with animals that have human qualities.',ops:[
+    {t:'A fairy tale / fable with a moral lesson',c:true,f:'✅ Wolf -1 HP! 🗡️ It\'s a classic fairy tale with a clear moral about hard work!'},
+    {t:'A true news report',c:false,f:'❌ News reports are factual — fairy tales are fictional!'},
+    {t:'A science article about pigs',c:false,f:'❌ This is fiction, not science!'},
+  ]},
+  {q:"How does the story use REPETITION to build tension?",hint:'Notice what happens with each house.',ops:[
+    {t:'The wolf visits each pig three times',c:false,f:'❌ He visits each house once — but it happens three times in total.'},
+    {t:'The wolf huffs and puffs at three houses in a row, each time building more suspense',c:true,f:'✅ Wolf -1 HP! 🗡️ Perfect! Repetition (3 houses) builds tension and makes the final victory more satisfying!'},
+    {t:'The pigs all say the same words',c:false,f:'❌ The repetition is about the wolf\'s actions, not the pigs\' words.'},
+  ]},
+  {q:"If you retell this story, which sentence would be the BEST opening?",hint:'A good retelling begins with setting.',ops:[
+    {t:'This story has a wolf and three pigs.',c:false,f:'❌ Too simple and doesn\'t set the scene well.'},
+    {t:'Once upon a time, three little pigs left their mother\'s home to build their own houses.',c:true,f:'✅ Wolf DEFEATED! 🔥 Excellent! A great retelling opening includes time, characters, and the starting situation!'},
+    {t:'At the end, the wolf ran away.',c:false,f:'❌ That\'s an ending, not an opening! Never spoil the story at the start!'},
+  ]}
+];
+
+let audio;
+function initA() { if(!audio) audio = new (window.AudioContext||window.webkitAudioContext)(); }
+function tone(f,d,t='sine',v=0.25) {
+  try { initA(); const o=audio.createOscillator(),g=audio.createGain(); o.connect(g); g.connect(audio.destination); o.frequency.value=f; o.type=t; g.gain.setValueAtTime(v,audio.currentTime); g.gain.exponentialRampToValueAtTime(0.01,audio.currentTime+d); o.start(); o.stop(audio.currentTime+d); } catch(e){}
+}
+function yay() { tone(523,.1);setTimeout(()=>tone(659,.1),100);setTimeout(()=>tone(784,.2),200); }
+function nope() { tone(200,.3,'sawtooth',.2); }
+function ding() { tone(880,.05);setTimeout(()=>tone(1047,.1),60); }
+function fanfare() { [523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.15),i*120)); }
+
+function go() { yay(); go2('objectives'); }
+function go2(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el = document.getElementById('screen-'+id)||document.getElementById(id);
+  if(el) el.classList.add('active');
+  const tb = document.getElementById('topbar');
+  id==='hero'?tb.classList.remove('show'):tb.classList.add('show');
+  updateHUD(id);
+  window.scrollTo(0,0);
+}
+function updateHUD(id) {
+  document.getElementById('tb-fill').style.width = Math.min(100,Math.round(G.xp/480*100))+'%';
+  document.getElementById('tb-xp').textContent = G.xp+' XP';
+  const lbs={objectives:'🎯 目标',warmup:'🔥 热身',level1:'📋 Level 1',level2:'👤 Level 2',level3:'🗣️ Level 3',boss:'⚔️ Boss',report:'🎉 报告',extension:'🌟 拓展'};
+  document.getElementById('tb-label').textContent = lbs[id]||'';
+}
+function toast(msg,type='') {
+  let t=document.querySelector('.toast'); if(!t){t=document.createElement('div');t.className='toast';document.body.appendChild(t);}
+  t.className='toast '+type; t.innerHTML=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2800);
+}
+function xp(n) { G.xp+=n; updateHUD(''); toast(`+${n} XP ⭐`,'xp'); ding(); }
+function unlock(id) {
+  if(G.ach.includes(id)) return; G.ach.push(id);
+  const a=ACHS.find(x=>x.id===id); if(a){toast(`🏅 成就: ${a.name}`,'ach');fanfare();}
+}
+function flipCard(el) {
+  const f=el.querySelector('.front'),b=el.querySelector('.back');
+  if(b.style.display==='none'){f.style.display='none';b.style.display='block';tone(523,.1);}
+  else{f.style.display='block';b.style.display='none';}
+}
+
+// SORT DRAG
+let dragEl=null;
+document.addEventListener('DOMContentLoaded',()=>{
+  const sa=document.getElementById('sort-area');
+  sa.querySelectorAll('.sort-item').forEach(item=>{
+    item.addEventListener('dragstart',e=>{dragEl=item;item.classList.add('dragging');});
+    item.addEventListener('dragend',e=>{item.classList.remove('dragging');dragEl=null;});
+    item.addEventListener('dragover',e=>{e.preventDefault();item.classList.add('drag-over');});
+    item.addEventListener('dragleave',e=>{item.classList.remove('drag-over');});
+    item.addEventListener('drop',e=>{
+      e.preventDefault(); item.classList.remove('drag-over');
+      if(dragEl&&dragEl!==item){sa.insertBefore(dragEl,item);}
+    });
+  });
+  updateWordCount();
+  loadBossQ();
+});
+
+function checkSort() {
+  const items = document.querySelectorAll('#sort-area .sort-item');
+  let allOk=true;
+  items.forEach((item,i)=>{
+    item.classList.remove('sort-correct','sort-wrong');
+    const nums = item.querySelectorAll('.sort-num');
+    nums.forEach(n=>n.textContent=i+1);
+    if(parseInt(item.dataset.order)===i+1){item.classList.add('sort-correct');}
+    else{item.classList.add('sort-wrong');allOk=false;}
+  });
+  if(allOk){
+    yay(); xp(20); unlock('sort_pro'); unlock('perfect_sort');
+    toast('🎉 顺序完全正确！','xp');
+    document.getElementById('btn-l1-next').disabled=false;
+  } else {
+    nope(); toast('🤔 还有些顺序不对，再调整一下！','');
+    G.stars=Math.max(0,G.stars-0.5);
+    document.getElementById('btn-l1-next').disabled=false; // allow proceed after trying
+  }
+}
+
+let charSeen=new Set();
+const CHAR_INFO = {
+  pig1:'<strong>🐷 First Pig</strong><br>Adjective: lazy, careless<br>Action: built a <em>straw</em> house quickly<br>Lesson: Being lazy leads to problems!',
+  pig2:'<strong>🐷 Second Pig</strong><br>Adjective: quick but not careful<br>Action: built a <em>stick</em> house<br>Lesson: Speed without planning isn\'t enough!',
+  pig3:'<strong>🐷 Third Pig</strong><br>Adjective: smart, hardworking, patient<br>Action: built a strong <em>brick</em> house<br>Lesson: Hard work always pays off! 💪',
+  wolf:'<strong>🐺 Big Bad Wolf</strong><br>Adjective: greedy, cunning, dangerous<br>Action: huffed and puffed, tried the chimney<br>Lesson: Even clever villains can be outsmarted!'
+};
+function showCharInfo(id) {
+  document.querySelectorAll('.char-card').forEach(c=>c.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  const box=document.getElementById('char-info');
+  box.innerHTML=CHAR_INFO[id]; box.style.display='block';
+  charSeen.add(id); tone(440,.1);
+  if(charSeen.size===4) unlock('char_master');
+}
+
+let qAnswered=0;
+function chkQ(btn,type,fb) {
+  if(btn.disabled) return;
+  btn.parentElement.querySelectorAll('.opt').forEach(o=>o.disabled=true);
+  btn.classList.add(type);
+  const fbEl=btn.parentElement.nextElementSibling;
+  fbEl.textContent=fb; fbEl.className='q-fb show '+type;
+  qAnswered++;
+  if(type==='ok'){yay();xp(20);G.correct++;if(qAnswered>=2&&G.correct>=2)unlock('5w1h_ace');}
+  else{nope();G.stars=Math.max(0,G.stars-0.4);}
+}
+function complLv(n,xpv) {
+  xp(xpv); fanfare(); toast(`✅ Level ${n} 完成！+${xpv} XP`,'xp');
+  const nexts={1:'level2',2:'level3',3:'boss'};
+  setTimeout(()=>go2(nexts[n]),400);
+}
+
+// RETELL
+document.addEventListener('DOMContentLoaded',()=>{
+  const rb=document.getElementById('retell-box');
+  if(rb) rb.addEventListener('input',updateWordCount);
+});
+function updateWordCount() {
+  const rb=document.getElementById('retell-box');
+  if(!rb) return;
+  const wc=(rb.value.trim().match(/\S+/g)||[]).length;
+  document.getElementById('word-count').textContent=wc;
+}
+function insertStarter(s) {
+  const rb=document.getElementById('retell-box');
+  rb.value+=s; rb.focus(); updateWordCount();
+}
+function evalRetell() {
+  const rb=document.getElementById('retell-box');
+  const wc=(rb.value.trim().match(/\S+/g)||[]).length;
+  if(wc<15){nope();toast('🤔 再多写一点！目标30个单词哦','');return;}
+  yay(); xp(30); unlock('storyteller');
+  toast('🌟 很棒的复述！','xp');
+  document.getElementById('btn-l3-next').disabled=false;
+}
+
+// BOSS
+function loadBossQ() {
+  const bq=BOSS_Qs[G.bossQ]; if(!bq) return;
+  const box=document.getElementById('boss-q-box');
+  box.innerHTML=`
+    <div style="background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);text-align:left">
+      <p style="font-style:italic;color:var(--primary);margin-bottom:12px;text-align:center">🐺 "Answer me if you dare!"</p>
+      <h4 style="margin-bottom:8px">${bq.q}</h4>
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px">${bq.hint}</p>
+      <div style="display:grid;gap:8px">
+        ${bq.ops.map((o,i)=>`<button class="opt" onclick="bossAns(this,${o.c},'${o.f.replace(/'/g,"&#39;")}')">${'ABCD'[i]}. ${o.t}</button>`).join('')}
+      </div>
+      <div class="q-fb" id="bfb"></div>
+    </div>`;
+}
+function bossAns(btn,ok,fb) {
+  btn.parentElement.querySelectorAll('.opt').forEach(o=>o.disabled=true);
+  btn.classList.add(ok?'ok':'no');
+  const fbEl=document.getElementById('bfb');
+  fbEl.textContent=fb; fbEl.className='q-fb show '+(ok?'ok':'no');
+  if(ok){
+    yay(); xp(50); G.bossHp--;
+    const pct=(G.bossHp/3)*100;
+    document.getElementById('bhp-fill').style.width=pct+'%';
+    document.getElementById('bhp-val').textContent=G.bossHp;
+    if(G.bossHp<=0){
+      setTimeout(()=>{
+        document.getElementById('boss-q-box').innerHTML='<div style="text-align:center;padding:24px"><div style="font-size:3.5rem">💥</div><p style="font-size:1.2rem;font-weight:700;color:var(--success)">Wolf Defeated! You Win! 🎉</p></div>';
+        unlock('wolf_slayer'); unlock('complete'); setTimeout(showReport,1800);
+      },1000);
+    } else { setTimeout(()=>{G.bossQ++;loadBossQ();},1400); }
+  } else {
+    nope(); G.stars=Math.max(0,G.stars-0.5);
+    setTimeout(()=>{fbEl.className='q-fb';fbEl.textContent='';btn.parentElement.querySelectorAll('.opt').forEach(o=>{o.disabled=false;o.className='opt';});},1800);
+  }
+}
+function showReport() {
+  if(G.xp>=400) unlock('reader_5');
+  document.getElementById('rep-xp').textContent=G.xp;
+  const st=G.stars>=2.5?'⭐⭐⭐':G.stars>=1.5?'⭐⭐☆':'⭐☆☆';
+  document.getElementById('rep-stars').textContent=st;
+  const msgs={3:'Amazing Storyteller! 🏆',2:'Great Story Teller! 🥈',1:'Keep Practicing! 💪'};
+  const g=G.stars>=2.5?3:G.stars>=1.5?2:1;
+  document.getElementById('rep-msg').textContent=msgs[g];
+  document.getElementById('rep-details').innerHTML=`✅ 答对: ${G.correct} 题<br>⭐ XP: ${G.xp}/480<br>🏅 成就: ${G.ach.length}/${ACHS.length}<br>🌟 评级: ${msgs[g]}`;
+  const ag=document.getElementById('ach-grid');
+  ag.innerHTML=ACHS.map(a=>`<div class="ach-item ${G.ach.includes(a.id)?'got':''}"><div class="ai">${a.icon}</div><div class="an">${a.name}</div><div class="ad">${a.desc}</div></div>`).join('');
+  go2('report');
+}
+
+const EXT = {
+  starters:'<h3 style="color:var(--primary);margin-bottom:12px">🗣️ Story Opening Starters</h3><ul style="line-height:2.4;padding-left:20px"><li>Once upon a time, ...</li><li>Long, long ago, ...</li><li>In a faraway land, there lived ...</li><li>One sunny morning, ...</li><li>It all started when ...</li></ul><p style="margin-top:10px;color:var(--muted);font-size:0.88rem">Try using these next time you tell a story!</p>',
+  connectors:'<h3 style="color:var(--secondary);margin-bottom:12px">🔗 Story Connective Words</h3><table style="width:100%;border-collapse:collapse"><tr style="background:#f0f0f0"><th style="padding:8px;text-align:left">Purpose</th><th style="padding:8px;text-align:left">Words</th></tr><tr><td style="padding:8px">Time</td><td style="padding:8px">first, then, next, after that, finally</td></tr><tr style="background:#f9f9f9"><td style="padding:8px">Contrast</td><td style="padding:8px">but, however, on the other hand</td></tr><tr><td style="padding:8px">Cause</td><td style="padding:8px">because, so, therefore, as a result</td></tr><tr style="background:#f9f9f9"><td style="padding:8px">Addition</td><td style="padding:8px">also, furthermore, in addition</td></tr></table>',
+  compare:'<h3 style="color:var(--accent);margin-bottom:12px;color:#b7950b">⚖️ Three Little Pigs vs Little Red Riding Hood</h3><table style="width:100%;border-collapse:collapse"><tr style="background:#f0f0f0"><th style="padding:8px;text-align:left">Element</th><th style="padding:8px">Three Pigs</th><th style="padding:8px">Red Riding Hood</th></tr><tr><td style="padding:8px">Villain</td><td style="padding:8px;text-align:center">🐺 Wolf</td><td style="padding:8px;text-align:center">🐺 Wolf</td></tr><tr style="background:#f9f9f9"><td style="padding:8px">Hero</td><td style="padding:8px;text-align:center">3rd Pig</td><td style="padding:8px;text-align:center">Woodcutter</td></tr><tr><td style="padding:8px">Moral</td><td style="padding:8px;text-align:center">Hard work</td><td style="padding:8px;text-align:center">Don\'t trust strangers</td></tr></table>',
+  change:'<h3 style="color:var(--primary);margin-bottom:12px">✏️ Change the Ending!</h3><p style="margin-bottom:12px">What if...?</p><ul style="line-height:2.2;padding-left:20px"><li>What if the wolf became friends with the pigs?</li><li>What if there was a FOURTH pig who built a metal house?</li><li>What if the wolf was actually afraid of the pigs?</li></ul><p style="margin-top:12px;color:var(--muted);font-size:0.88rem">🖊️ Pick one and write 3-5 sentences about your new ending!</p>'
+};
+function showExtContent(key) {
+  const box=document.getElementById('ext-content');
+  box.innerHTML=EXT[key]; box.style.display='block';
+  box.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function restart() {
+  G={xp:0,stars:3,ach:[],correct:0,bossHp:3,bossQ:0,sortDone:false};
+  document.querySelectorAll('.opt').forEach(o=>{o.disabled=false;o.className='opt';});
+  document.querySelectorAll('.q-fb').forEach(f=>{f.className='q-fb';f.textContent='';});
+  document.querySelectorAll('.sort-item').forEach(i=>i.className='sort-item');
+  const rb=document.getElementById('retell-box'); if(rb)rb.value='';
+  charSeen=new Set(); qAnswered=0;
+  document.getElementById('btn-l3-next').disabled=true;
+  document.getElementById('btn-l1-next').disabled=true;
+  loadBossQ();
+  go2('hero');
+}
+go2('hero');
+</script>
+</body>
+</html>

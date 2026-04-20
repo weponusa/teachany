@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>简单写作 · 五年级英语 · Simple Writing Adventure</title>
+<style>
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--card:#fff;--text:#2d3436;--muted:#636e72;--success:#00b894;--radius:16px;--shadow:0 4px 20px rgba(0,0,0,0.1);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI','PingFang SC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+#hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#ffe66d1a 0%,#ff6b6b0d 50%,var(--bg) 100%);}
+.h-bear{font-size:5rem;animation:write-anim 1.5s ease-in-out infinite;}
+@keyframes write-anim{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+.h-title{font-size:clamp(1.8rem,5.5vw,3rem);font-weight:900;color:var(--primary);margin:16px 0 8px;text-align:center;text-shadow:3px 3px 0 #fff;}
+.h-sub{color:var(--muted);font-size:1.05rem;margin-bottom:22px;text-align:center;}
+.h-chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:26px;}
+.chip{background:var(--card);border-radius:20px;padding:5px 14px;font-size:0.83rem;font-weight:600;box-shadow:var(--shadow);}
+.chip-r{border:2px solid var(--primary);color:var(--primary);}
+.chip-g{border:2px solid var(--secondary);color:var(--secondary);}
+.chip-b{border:2px solid var(--accent);color:#b7950b;}
+.btn-start{background:linear-gradient(135deg,var(--primary),#ff8e8e);color:#fff;border:none;border-radius:50px;padding:14px 44px;font-size:1.1rem;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(255,107,107,0.4);transition:all 0.3s;}
+.btn-start:hover{transform:translateY(-3px) scale(1.05);}
+
+#topbar{position:fixed;top:0;left:0;right:0;z-index:999;background:var(--card);box-shadow:0 2px 10px rgba(0,0,0,0.07);padding:8px 18px;display:none;align-items:center;gap:12px;}
+#topbar.vis{display:flex;}
+.tb-b{font-size:1.3rem;}
+.tb-p{flex:1;}
+.tb-lbl{font-size:0.72rem;color:var(--muted);}
+.tb-track{background:#eee;border-radius:8px;height:8px;margin-top:3px;overflow:hidden;}
+.tb-bar{background:linear-gradient(90deg,var(--primary),var(--accent));height:100%;border-radius:8px;transition:width 0.4s;}
+.tb-xp{font-weight:700;color:var(--primary);font-size:0.83rem;white-space:nowrap;}
+.tb-s{font-size:1rem;}
+
+.screen{display:none;min-height:100vh;padding:72px 18px 40px;max-width:880px;margin:0 auto;}
+.screen.on{display:block;}
+.stitle{font-size:1.65rem;font-weight:800;color:var(--primary);margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+.sdesc{color:var(--muted);margin-bottom:26px;}
+
+/* CARD */
+.card{background:var(--card);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);margin-bottom:16px;}
+
+/* SENTENCE STRUCTURE */
+.struct-parts{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0;}
+.part{padding:10px 18px;border-radius:10px;font-weight:700;font-size:0.92rem;cursor:pointer;border:2px solid transparent;transition:all 0.2s;}
+.part-sub{background:#ffe66d44;border-color:#ffd32a;color:#7d6608;}
+.part-sub:hover,.part-sub.sel{background:var(--accent);box-shadow:0 3px 10px rgba(255,230,109,0.5);}
+.part-verb{background:#ff6b6b22;border-color:var(--primary);color:var(--primary);}
+.part-verb:hover,.part-verb.sel{background:var(--primary);color:#fff;box-shadow:0 3px 10px rgba(255,107,107,0.4);}
+.part-obj{background:#4ecdc422;border-color:var(--secondary);color:#0d8a82;}
+.part-obj:hover,.part-obj.sel{background:var(--secondary);color:#fff;box-shadow:0 3px 10px rgba(78,205,196,0.4);}
+.part-adv{background:#a29bfe22;border-color:#a29bfe;color:#6c5ce7;}
+.part-adv:hover,.part-adv.sel{background:#a29bfe;color:#fff;}
+.sentence-display{background:#f8f9fa;border-radius:12px;padding:14px 18px;font-size:1.1rem;font-weight:700;min-height:52px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border:2px dashed #e0e0e0;margin-top:12px;}
+.sentence-display.built{border-style:solid;border-color:var(--success);background:#00b89411;}
+.sent-tag{padding:4px 12px;border-radius:8px;font-size:0.95rem;}
+
+/* TEMPLATE FILL */
+.template-card{background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:16px;line-height:2.8;font-size:1rem;}
+.blank{display:inline-block;min-width:90px;border:none;border-bottom:2.5px solid var(--primary);background:transparent;font-size:1rem;color:var(--text);text-align:center;outline:none;font-family:inherit;padding:2px 4px;transition:border-color 0.2s;}
+.blank:focus{border-bottom-color:var(--secondary);}
+.blank.ok{border-bottom-color:var(--success);color:var(--success);font-weight:700;}
+.blank.err{border-bottom-color:var(--primary);color:var(--primary);}
+.bank{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;padding:14px;background:#f5f5f5;border-radius:12px;}
+.bword{background:linear-gradient(135deg,var(--accent),#ffd32a);border-radius:8px;padding:6px 14px;font-size:0.88rem;font-weight:700;cursor:pointer;color:#7d6608;transition:all 0.2s;border:2px solid transparent;}
+.bword:hover{transform:scale(1.05);border-color:#7d6608;}
+.bword.used{opacity:0.35;cursor:not-allowed;text-decoration:line-through;}
+
+/* IMAGE PROMPT */
+.img-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin:16px 0;}
+.img-card{background:var(--card);border:2px solid #e0e0e0;border-radius:14px;padding:16px;text-align:center;cursor:pointer;transition:all 0.2s;}
+.img-card:hover{border-color:var(--secondary);transform:translateY(-2px);}
+.img-card.picked{border-color:var(--primary);background:#ff6b6b0d;}
+.img-icon{font-size:2.5rem;margin-bottom:8px;}
+.img-label{font-size:0.85rem;font-weight:600;}
+.img-hint{font-size:0.75rem;color:var(--muted);}
+
+/* WRITE BOX */
+.write-box{width:100%;min-height:140px;border:2px solid #e0e0e0;border-radius:12px;padding:14px;font-size:0.95rem;font-family:inherit;resize:vertical;outline:none;color:var(--text);background:var(--card);transition:border-color 0.2s;line-height:1.8;}
+.write-box:focus{border-color:var(--secondary);}
+.starters-row{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px;}
+.sc{background:#4ecdc411;border:1.5px solid var(--secondary);border-radius:20px;padding:5px 12px;font-size:0.8rem;font-weight:600;color:#0d8a82;cursor:pointer;transition:all 0.2s;}
+.sc:hover{background:var(--secondary);color:#fff;}
+.wc-info{font-size:0.8rem;color:var(--muted);margin-top:6px;}
+
+/* QUIZ */
+.qbox{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:14px;}
+.qbox h4{font-size:0.97rem;font-weight:700;margin-bottom:12px;}
+.opts{display:grid;gap:8px;}
+.opt{background:var(--bg);border:2px solid #e0e0e0;border-radius:10px;padding:11px 15px;text-align:left;cursor:pointer;font-size:0.92rem;transition:all 0.2s;color:var(--text);width:100%;}
+.opt:hover{border-color:var(--secondary);background:#4ecdc411;}
+.opt.ok{border-color:var(--success);background:#00b89418;color:var(--success);font-weight:700;}
+.opt.no{border-color:var(--primary);background:#ff6b6b18;color:var(--primary);}
+.opt:disabled{cursor:not-allowed;}
+.qfb{margin-top:8px;padding:9px 12px;border-radius:8px;font-size:0.87rem;font-weight:600;display:none;}
+.qfb.on{display:block;}
+.qfb.ok{background:#00b89418;color:var(--success);}
+.qfb.no{background:#ff6b6b18;color:var(--primary);}
+
+/* BOSS */
+.bwrap{text-align:center;padding:20px 0;}
+.bface{font-size:5rem;animation:bbounce 1.5s ease-in-out infinite;}
+@keyframes bbounce{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.btitle{font-size:1.3rem;font-weight:800;color:var(--primary);margin:10px 0;}
+.hp-row{margin:10px 0 18px;}
+.hp-lbl{font-size:0.78rem;color:var(--muted);margin-bottom:4px;}
+.hp-tr{background:#eee;border-radius:20px;height:16px;overflow:hidden;}
+.hp-fl{background:linear-gradient(90deg,#ff6b6b,#ee5a24);height:100%;border-radius:20px;transition:width 0.5s;}
+
+/* REPORT */
+.rep-hero{background:linear-gradient(135deg,#ffe66d22,#4ecdc422);border-radius:var(--radius);padding:28px;text-align:center;margin-bottom:18px;}
+.rep-score{font-size:3.8rem;font-weight:900;color:var(--primary);}
+.rep-stars{font-size:2.3rem;margin:8px 0;}
+.rep-tag{font-size:1.05rem;color:var(--muted);}
+.ach-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:10px;}
+.a-item{background:var(--card);border-radius:12px;padding:12px;text-align:center;box-shadow:var(--shadow);border:2px solid #eee;}
+.a-item.got{border-color:var(--accent);}
+.a-ico{font-size:1.7rem;opacity:0.3;}
+.a-item.got .a-ico{opacity:1;}
+.a-n{font-size:0.77rem;font-weight:700;margin-top:4px;}
+.a-d{font-size:0.69rem;color:var(--muted);}
+
+/* EXT */
+.ext-g{display:grid;gap:12px;}
+.ext-c{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);display:flex;gap:12px;cursor:pointer;transition:all 0.2s;}
+.ext-c:hover{transform:translateY(-2px);}
+.ext-i{font-size:1.7rem;}
+.ext-t h3{font-size:0.92rem;font-weight:700;margin-bottom:2px;}
+.ext-t p{font-size:0.8rem;color:var(--muted);}
+
+.nav{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:26px;}
+.btn{padding:11px 24px;border-radius:50px;border:none;font-size:0.93rem;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.btn-p{background:linear-gradient(135deg,var(--primary),#ff8e8e);color:#fff;box-shadow:0 4px 14px rgba(255,107,107,0.35);}
+.btn-s{background:linear-gradient(135deg,var(--secondary),#7be0d8);color:#fff;box-shadow:0 4px 14px rgba(78,205,196,0.35);}
+.btn-a{background:linear-gradient(135deg,var(--accent),#ffd32a);color:#7d6608;box-shadow:0 4px 14px rgba(255,230,109,0.35);}
+.btn:hover{transform:translateY(-2px) scale(1.03);}
+.btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+
+.toast{position:fixed;top:72px;right:18px;background:var(--card);border-radius:12px;padding:11px 16px;box-shadow:0 8px 25px rgba(0,0,0,0.12);font-weight:700;font-size:0.88rem;z-index:2000;transform:translateX(140px);transition:transform 0.33s;display:flex;align-items:center;gap:8px;border-left:4px solid var(--success);}
+.toast.show{transform:translateX(0);}
+.toast.xp{border-left-color:var(--accent);}
+.toast.ach{border-left-color:var(--primary);}
+.lv-row{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+.lv-num{background:linear-gradient(135deg,var(--primary),#ff8e8e);color:#fff;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:900;box-shadow:0 3px 12px rgba(255,107,107,0.35);}
+.xc{background:linear-gradient(135deg,var(--accent),#ffd32a);border-radius:8px;padding:4px 10px;font-size:0.78rem;font-weight:700;color:#7d6608;}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div id="hero" class="screen on">
+  <div class="h-bear">✏️🐻</div>
+  <h1 class="h-title">Simple Writing Adventure</h1>
+  <p class="h-sub">五年级英语简单写作 · 熊熊陪你写出好句子！</p>
+  <div class="h-chips">
+    <span class="chip chip-r">🎓 Grade 5</span>
+    <span class="chip chip-g">✏️ Simple Writing</span>
+    <span class="chip chip-b">⭐ 460 XP</span>
+  </div>
+  <button class="btn-start" onclick="go('objectives')">🚀 开始写作！</button>
+  <p style="margin-top:18px;color:var(--muted);font-size:0.86rem">Sentences · Templates · Image prompts · Short paragraphs</p>
+</div>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <span class="tb-b">✏️</span>
+  <div class="tb-p">
+    <div class="tb-lbl" id="tb-l">Loading</div>
+    <div class="tb-track"><div class="tb-bar" id="tb-b" style="width:0%"></div></div>
+  </div>
+  <span class="tb-xp" id="tb-x">0 XP</span>
+  <span class="tb-s" id="tb-s">⭐⭐⭐</span>
+</div>
+
+<!-- OBJECTIVES -->
+<div id="screen-objectives" class="screen">
+  <h1 class="stitle">🎯 学习目标</h1>
+  <p class="sdesc">✏️ 今天我们要学写简单英语句子和短段落！</p>
+  <div style="display:grid;gap:10px">
+    <div class="card" style="border-left:4px solid var(--primary);display:flex;gap:14px;align-items:center"><span style="font-size:1.4rem">📐</span><div><strong>Sentence Structure</strong><br><span style="font-size:0.83rem;color:var(--muted)">掌握英语句子的基本结构：主谓宾</span></div></div>
+    <div class="card" style="border-left:4px solid var(--secondary);display:flex;gap:14px;align-items:center"><span style="font-size:1.4rem">📋</span><div><strong>Writing Templates</strong><br><span style="font-size:0.83rem;color:var(--muted)">使用写作模板，套用写出正确句子</span></div></div>
+    <div class="card" style="border-left:4px solid var(--accent);display:flex;gap:14px;align-items:center"><span style="font-size:1.4rem">🖼️</span><div><strong>Image-Based Writing</strong><br><span style="font-size:0.83rem;color:var(--muted)">看图写话，用英语描述图片场景</span></div></div>
+    <div class="card" style="border-left:4px solid var(--success);display:flex;gap:14px;align-items:center"><span style="font-size:1.4rem">📝</span><div><strong>Short Paragraph</strong><br><span style="font-size:0.83rem;color:var(--muted)">写一个3-5句话的简短段落</span></div></div>
+  </div>
+  <div class="nav"><button class="btn btn-p" onclick="go('warmup')">开始热身 →</button></div>
+</div>
+
+<!-- WARMUP -->
+<div id="screen-warmup" class="screen">
+  <h1 class="stitle">🔥 热身：认识句子成分</h1>
+  <p class="sdesc">点击选择正确的句子成分！</p>
+  <div class="card">
+    <p style="font-weight:700;margin-bottom:14px">🔤 点击句子成分，认识它们的颜色：</p>
+    <div class="struct-parts">
+      <span class="part part-sub" onclick="togglePart(this)">Subject (主语)</span>
+      <span class="part part-verb" onclick="togglePart(this)">Verb (谓语)</span>
+      <span class="part part-obj" onclick="togglePart(this)">Object (宾语)</span>
+      <span class="part part-adv" onclick="togglePart(this)">Adverb (副词)</span>
+    </div>
+    <p style="color:var(--muted);font-size:0.88rem;margin-bottom:16px">👆 点击了解每个成分的颜色和含义</p>
+    <p style="font-weight:700;margin-bottom:12px">🧩 识别句子成分：</p>
+    <div id="sentence-demo" style="background:#f8f9fa;border-radius:12px;padding:14px;font-size:1.05rem;line-height:2.2">
+      <span style="background:#ffe66d55;border-radius:4px;padding:2px 6px;font-weight:700;cursor:pointer" onclick="explain('sub','主语 Subject：句子的主体，谁做了这件事')">The big dog</span>
+      <span> </span>
+      <span style="background:#ff6b6b22;border-radius:4px;padding:2px 6px;font-weight:700;cursor:pointer;color:var(--primary)" onclick="explain('verb','谓语 Verb：行为动词，发生了什么')">runs</span>
+      <span> </span>
+      <span style="background:#4ecdc422;border-radius:4px;padding:2px 6px;font-weight:700;cursor:pointer;color:#0d8a82" onclick="explain('obj','宾语 Object：接受动作的人或物')">in the park</span>
+      <span> </span>
+      <span style="background:#a29bfe22;border-radius:4px;padding:2px 6px;font-weight:700;cursor:pointer;color:#6c5ce7" onclick="explain('adv','副词 Adverb：描述动作的方式、时间')">every day</span>.
+    </div>
+    <div id="explain-box" style="margin-top:12px;min-height:30px;font-size:0.9rem;color:var(--secondary);font-weight:600;text-align:center"></div>
+  </div>
+  <div class="nav"><button class="btn btn-p" onclick="go('level1')">进入第1关 →</button></div>
+</div>
+
+<!-- LEVEL 1: Sentence Building -->
+<div id="screen-level1" class="screen">
+  <div class="lv-row">
+    <div class="lv-num">1</div>
+    <div><h2 style="font-size:1.35rem;font-weight:800">🧩 Level 1: Build Sentences</h2><p style="color:var(--muted);font-size:0.86rem">选择成分，拼出正确句子</p></div>
+    <span class="xc">+80 XP</span>
+  </div>
+  <div id="sentence-builder">
+    <!-- Sentence 1 -->
+    <div class="card" id="sb1">
+      <p style="font-weight:700;margin-bottom:4px;color:var(--primary)">✏️ Sentence 1:</p>
+      <p style="color:var(--muted);font-size:0.88rem;margin-bottom:14px">🐻 熊熊提示：谁在图书馆看书？选择正确的成分！</p>
+      <p style="font-weight:600;margin-bottom:10px;font-size:0.9rem">主语 (Subject):</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="part part-sub" onclick="pickPart('s1_sub',this,'My sister')">My sister</button>
+        <button class="part part-sub" onclick="pickPart('s1_sub',this,'The books')">The books</button>
+        <button class="part part-sub" onclick="pickPart('s1_sub',this,'The library')">The library</button>
+      </div>
+      <p style="font-weight:600;margin-bottom:10px;font-size:0.9rem">动词 (Verb):</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="part part-verb" onclick="pickPart('s1_verb',this,'reads')">reads</button>
+        <button class="part part-verb" onclick="pickPart('s1_verb',this,'sleeps')">sleeps</button>
+        <button class="part part-verb" onclick="pickPart('s1_verb',this,'eats')">eats</button>
+      </div>
+      <p style="font-weight:600;margin-bottom:10px;font-size:0.9rem">地点 (Where):</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="part part-adv" onclick="pickPart('s1_adv',this,'in the library')">in the library</button>
+        <button class="part part-adv" onclick="pickPart('s1_adv',this,'on the playground')">on the playground</button>
+        <button class="part part-adv" onclick="pickPart('s1_adv',this,'in the kitchen')">in the kitchen</button>
+      </div>
+      <div class="sentence-display" id="sd1">
+        <span style="color:var(--muted);font-size:0.9rem">← 选择成分，句子会自动组合</span>
+      </div>
+      <button class="btn btn-s" style="margin-top:12px" onclick="checkSentence(1)">✔ 检查</button>
+      <div class="qfb on" id="sfb1" style="display:none;margin-top:8px"></div>
+    </div>
+
+    <!-- Sentence 2 -->
+    <div class="card" id="sb2">
+      <p style="font-weight:700;margin-bottom:4px;color:var(--primary)">✏️ Sentence 2:</p>
+      <p style="color:var(--muted);font-size:0.88rem;margin-bottom:14px">他们每天早上在公园跑步</p>
+      <p style="font-weight:600;margin-bottom:10px;font-size:0.9rem">主语 + 动词 + 地点 + 时间:</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="part part-sub" onclick="pickPart('s2_sub',this,'They')">They</button>
+        <button class="part part-sub" onclick="pickPart('s2_sub',this,'We')">We</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="part part-verb" onclick="pickPart('s2_verb',this,'run')">run</button>
+        <button class="part part-verb" onclick="pickPart('s2_verb',this,'swim')">swim</button>
+        <button class="part part-verb" onclick="pickPart('s2_verb',this,'sing')">sing</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="part part-adv" onclick="pickPart('s2_adv1',this,'in the park')">in the park</button>
+        <button class="part part-adv" onclick="pickPart('s2_adv1',this,'at school')">at school</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="part part-adv" onclick="pickPart('s2_adv2',this,'every morning')">every morning</button>
+        <button class="part part-adv" onclick="pickPart('s2_adv2',this,'at night')">at night</button>
+        <button class="part part-adv" onclick="pickPart('s2_adv2',this,'on Sundays')">on Sundays</button>
+      </div>
+      <div class="sentence-display" id="sd2">
+        <span style="color:var(--muted);font-size:0.9rem">← 选择成分，句子会自动组合</span>
+      </div>
+      <button class="btn btn-s" style="margin-top:12px" onclick="checkSentence(2)">✔ 检查</button>
+      <div class="qfb" id="sfb2" style="margin-top:8px"></div>
+    </div>
+  </div>
+  <div class="nav">
+    <button class="btn btn-p" id="l1-next" onclick="complLv(1,80)" disabled>完成第1关 →</button>
+  </div>
+</div>
+
+<!-- LEVEL 2: Template Fill -->
+<div id="screen-level2" class="screen">
+  <div class="lv-row">
+    <div class="lv-num" style="background:linear-gradient(135deg,var(--secondary),#7be0d8)">2</div>
+    <div><h2 style="font-size:1.35rem;font-weight:800">📋 Level 2: Writing Templates</h2><p style="color:var(--muted);font-size:0.86rem">用模板写出完整的句子</p></div>
+    <span class="xc">+100 XP</span>
+  </div>
+  <p style="font-weight:700;margin-bottom:14px;color:var(--secondary)">🐻 熊熊模板：My Favourite Things</p>
+  <div class="template-card">
+    My favourite <input class="blank" id="b1" placeholder="animal" data-ans="animal" onfocus="setAB(this)"> is a <input class="blank" id="b2" placeholder="name" data-ans="dog" onfocus="setAB(this)">. It is <input class="blank" id="b3" placeholder="adjective" data-ans="cute" onfocus="setAB(this)"> and <input class="blank" id="b4" placeholder="adjective" data-ans="friendly" onfocus="setAB(this)">. It likes to <input class="blank" id="b5" placeholder="verb" data-ans="play" onfocus="setAB(this)"> with me. I love my <input class="blank" id="b6" placeholder="animal" data-ans="pet" onfocus="setAB(this)">!
+  </div>
+  <div class="bank" id="bank1">
+    <span class="bword" onclick="fbw('animal')">animal</span>
+    <span class="bword" onclick="fbw('dog')">dog</span>
+    <span class="bword" onclick="fbw('cute')">cute</span>
+    <span class="bword" onclick="fbw('friendly')">friendly</span>
+    <span class="bword" onclick="fbw('play')">play</span>
+    <span class="bword" onclick="fbw('pet')">pet</span>
+    <span class="bword" onclick="fbw('run')">run</span>
+    <span class="bword" onclick="fbw('big')">big</span>
+  </div>
+  <p style="font-weight:700;margin:20px 0 14px;color:var(--secondary)">🌟 Now write YOUR own version!</p>
+  <div class="template-card" style="background:linear-gradient(135deg,#fffbf0,#fff9e0)">
+    My favourite <input class="blank" id="c1" placeholder="anything!"> is a/an <input class="blank" id="c2" placeholder="your word">. It is <input class="blank" id="c3" placeholder="adjective"> and <input class="blank" id="c4" placeholder="adjective">. It likes to <input class="blank" id="c5" placeholder="verb"> <input class="blank" id="c6" placeholder="where/how">. I love my <input class="blank" id="c7" placeholder="your word">!
+  </div>
+  <div class="nav">
+    <button class="btn btn-s" onclick="checkTemplate()">✔ 检查模板</button>
+    <button class="btn btn-p" id="l2-next" onclick="complLv(2,100)" disabled>完成第2关 →</button>
+  </div>
+</div>
+
+<!-- LEVEL 3: Image Writing -->
+<div id="screen-level3" class="screen">
+  <div class="lv-row">
+    <div class="lv-num" style="background:linear-gradient(135deg,var(--accent),#ffd32a);color:#7d6608">3</div>
+    <div><h2 style="font-size:1.35rem;font-weight:800">🖼️ Level 3: Write About a Picture</h2><p style="color:var(--muted);font-size:0.86rem">选择图片，用英语写3句描述！</p></div>
+    <span class="xc">+120 XP</span>
+  </div>
+  <p style="font-weight:700;margin-bottom:12px;color:#b7950b">🎨 选择一张图片：</p>
+  <div class="img-grid">
+    <div class="img-card" onclick="pickImg(this,'park')">
+      <div class="img-icon">🌳</div>
+      <div class="img-label">In the Park</div>
+      <div class="img-hint">公园场景</div>
+    </div>
+    <div class="img-card" onclick="pickImg(this,'school')">
+      <div class="img-icon">🏫</div>
+      <div class="img-label">At School</div>
+      <div class="img-hint">学校场景</div>
+    </div>
+    <div class="img-card" onclick="pickImg(this,'market')">
+      <div class="img-icon">🛒</div>
+      <div class="img-label">At the Market</div>
+      <div class="img-hint">市场场景</div>
+    </div>
+    <div class="img-card" onclick="pickImg(this,'beach')">
+      <div class="img-icon">🏖️</div>
+      <div class="img-label">At the Beach</div>
+      <div class="img-hint">海滩场景</div>
+    </div>
+  </div>
+  <div id="img-hints" style="display:none;background:var(--card);border-radius:12px;padding:16px;box-shadow:var(--shadow);margin-bottom:16px;border-left:4px solid var(--secondary)"></div>
+  <p style="font-weight:700;margin-bottom:8px;color:#b7950b">🌟 句子开头参考：</p>
+  <div class="starters-row">
+    <span class="sc" onclick="ins('In this picture, ')">In this picture,</span>
+    <span class="sc" onclick="ins('I can see ')">I can see</span>
+    <span class="sc" onclick="ins('There is/are ')">There is/are</span>
+    <span class="sc" onclick="ins('The ... is/are ')">The ... is/are</span>
+    <span class="sc" onclick="ins('It looks ')">It looks</span>
+  </div>
+  <textarea class="write-box" id="img-write" placeholder="Write 3 sentences about your picture... 写3句英文描述你选的图片场景"></textarea>
+  <div class="wc-info">字数: <span id="iwc">0</span> | 目标: 20+词，3句话</div>
+  <div class="nav">
+    <button class="btn btn-s" onclick="evalImgWrite()">✔ 检查写作</button>
+    <button class="btn btn-p" id="l3-next" onclick="complLv(3,120)" disabled>完成第3关 →</button>
+  </div>
+</div>
+
+<!-- BOSS -->
+<div id="screen-boss" class="screen">
+  <div class="bwrap">
+    <p style="font-weight:700;color:var(--muted);margin-bottom:8px">⚔️ BOSS BATTLE</p>
+    <div class="bface">🐉</div>
+    <p class="btitle">The Grammar Dragon!</p>
+    <div class="hp-row">
+      <div class="hp-lbl">Dragon HP: <span id="bhv">3</span>/3</div>
+      <div class="hp-tr"><div class="hp-fl" id="bhf" style="width:100%"></div></div>
+    </div>
+    <div id="bqbox"></div>
+  </div>
+</div>
+
+<!-- REPORT -->
+<div id="screen-report" class="screen">
+  <h1 class="stitle">🎉 写作冒险完成！</h1>
+  <div class="rep-hero">
+    <div class="rep-score" id="rscore">0</div>
+    <div style="color:var(--muted)">/ 460 XP</div>
+    <div class="rep-stars" id="rstars">⭐⭐⭐</div>
+    <div class="rep-tag" id="rtag">Amazing Writer! 🏆</div>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <p style="font-weight:700;margin-bottom:10px">📊 成绩单</p>
+    <div id="rdets" style="font-size:0.88rem;color:var(--muted);line-height:2.2"></div>
+  </div>
+  <p style="font-weight:700;margin-bottom:12px">🏅 成就展示</p>
+  <div class="ach-g" id="achg"></div>
+  <div class="nav" style="margin-top:18px">
+    <button class="btn btn-p" onclick="go('extension')">🌟 拓展学习</button>
+    <button class="btn btn-s" onclick="restart()">🔄 再来一次</button>
+  </div>
+</div>
+
+<!-- EXTENSION -->
+<div id="screen-extension" class="screen">
+  <h1 class="stitle">🌟 拓展学习</h1>
+  <p class="sdesc">继续你的写作之旅！</p>
+  <div class="ext-g">
+    <div class="ext-c" onclick="showExt('adj')"><span class="ext-i">🎨</span><div class="ext-t"><h3>Adjective Bank</h3><p>100个常用形容词，让描述更生动</p></div></div>
+    <div class="ext-c" onclick="showExt('connector')"><span class="ext-i">🔗</span><div class="ext-t"><h3>Sentence Connectors</h3><p>用连接词写出更复杂的句子</p></div></div>
+    <div class="ext-c" onclick="showExt('diary')"><span class="ext-i">📔</span><div class="ext-t"><h3>Diary Entry Template</h3><p>用日记模板练习每日写作</p></div></div>
+    <div class="ext-c" onclick="showExt('mistakes')"><span class="ext-i">🔍</span><div class="ext-t"><h3>Common Mistakes</h3><p>五年级同学最常犯的写作错误</p></div></div>
+  </div>
+  <div id="ext-box" style="display:none;margin-top:16px;background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)"></div>
+  <div class="nav"><button class="btn btn-p" onclick="go('hero')">🏠 回到主页</button></div>
+</div>
+
+<script>
+let G={xp:0,stars:3,ach:[],correct:0,bossHp:3,bossQ:0};
+let picks={s1_sub:null,s1_verb:null,s1_adv:null,s2_sub:null,s2_verb:null,s2_adv1:null,s2_adv2:null};
+let ab=null;
+
+const ACHS=[
+  {id:'s_builder',ico:'🧩',nm:'Sentence Builder',desc:'完成句子构建'},
+  {id:'template_pro',ico:'📋',nm:'Template Pro',desc:'完成写作模板'},
+  {id:'image_writer',ico:'🖼️',nm:'Image Writer',desc:'看图写作完成'},
+  {id:'dragon_slayer',ico:'🐉',nm:'Dragon Slayer',desc:'击败语法龙'},
+  {id:'grammar_ace',ico:'✅',nm:'Grammar Ace',desc:'Boss关全对'},
+  {id:'wordy',ico:'📝',nm:'Word Master',desc:'写30+个词'},
+  {id:'star_writer',ico:'⭐',nm:'Star Writer',desc:'获得380+XP'},
+  {id:'complete',ico:'🏆',nm:'Champion',desc:'完成全部关卡'},
+];
+const BQS=[
+  {q:'Which sentence is CORRECT?',hint:'Check subject-verb agreement!',ops:[
+    {t:'She run to school every day.',c:false,f:'❌ "She" needs "runs" (add -s for he/she/it)!'},
+    {t:'She runs to school every day.',c:true,f:'✅ Dragon -1 HP! 🗡️ Perfect! "She" + "runs" — third person singular adds -s!'},
+    {t:'She running to school every day.',c:false,f:'❌ "running" needs "is" before it: "She is running..."'},
+  ]},
+  {q:'Choose the BEST describing sentence for a park:',hint:'Good descriptions use adjectives and details.',ops:[
+    {t:'There is a park.',c:false,f:'❌ Too simple — no adjectives or details!'},
+    {t:'The park is big with tall green trees and a small blue lake.',c:true,f:'✅ Dragon -1 HP! 🗡️ Excellent! Multiple adjectives and specific details make writing come alive!'},
+    {t:'I went park.',c:false,f:'❌ Missing words: "I went to the park."'},
+  ]},
+  {q:'What is MISSING from this sentence: "My cat the fish."',hint:'Every sentence needs a verb!',ops:[
+    {t:'A subject (the cat)',c:false,f:'❌ "My cat" is already the subject!'},
+    {t:'A verb (action word)',c:true,f:'✅ Dragon DEFEATED! 🔥 Right! It should be "My cat eats the fish." — every sentence needs a verb!'},
+    {t:'An adjective (describing word)',c:false,f:'❌ While adjectives help, the main problem here is the missing verb!'},
+  ]}
+];
+
+let aud;
+function ia(){if(!aud)aud=new(window.AudioContext||window.webkitAudioContext)();}
+function tn(f,d,t='sine',v=0.25){try{ia();const o=aud.createOscillator(),g=aud.createGain();o.connect(g);g.connect(aud.destination);o.frequency.value=f;o.type=t;g.gain.setValueAtTime(v,aud.currentTime);g.gain.exponentialRampToValueAtTime(0.01,aud.currentTime+d);o.start();o.stop(aud.currentTime+d);}catch(e){}}
+function yay(){tn(523,.1);setTimeout(()=>tn(659,.1),100);setTimeout(()=>tn(784,.2),200);}
+function nope(){tn(200,.3,'sawtooth',.2);}
+function ding(){tn(880,.05);setTimeout(()=>tn(1047,.1),60);}
+function fan(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tn(f,.15),i*120));}
+
+function go(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  const el=document.getElementById('screen-'+id)||document.getElementById(id);
+  if(el)el.classList.add('on');
+  const tb=document.getElementById('topbar');
+  id==='hero'?tb.classList.remove('vis'):tb.classList.add('vis');
+  updHUD(id); window.scrollTo(0,0);
+}
+function updHUD(id){
+  document.getElementById('tb-b').style.width=Math.min(100,Math.round(G.xp/460*100))+'%';
+  document.getElementById('tb-x').textContent=G.xp+' XP';
+  const lb={objectives:'🎯 目标',warmup:'🔥 热身',level1:'🧩 Level 1',level2:'📋 Level 2',level3:'🖼️ Level 3',boss:'⚔️ Boss',report:'🎉 报告',extension:'🌟 拓展'};
+  document.getElementById('tb-l').textContent=lb[id]||'';
+}
+function toast(m,tp=''){
+  let t=document.querySelector('.toast');if(!t){t=document.createElement('div');t.className='toast';document.body.appendChild(t);}
+  t.className='toast '+tp;t.innerHTML=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);
+}
+function xp(n){G.xp+=n;updHUD('');toast(`+${n} XP ⭐`,'xp');ding();}
+function unlock(id){
+  if(G.ach.includes(id))return;G.ach.push(id);
+  const a=ACHS.find(x=>x.id===id);if(a){toast(`🏅 ${a.nm}`,'ach');fan();}
+}
+function togglePart(el){
+  const was=el.classList.contains('sel');
+  document.querySelectorAll('.struct-parts .part').forEach(p=>p.classList.remove('sel'));
+  if(!was)el.classList.add('sel');
+  tn(440,.1);
+}
+function explain(t,msg){
+  document.getElementById('explain-box').textContent='💡 '+msg;
+  tn(523,.1);
+}
+function pickPart(key,btn,val){
+  picks[key]=val;
+  const grp=btn.parentElement;
+  grp.querySelectorAll('.part').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  updateSentenceDisplay();
+  tn(440,.08);
+}
+function updateSentenceDisplay(){
+  const s1=document.getElementById('sd1');
+  const s2=document.getElementById('sd2');
+  if(s1){
+    const p=picks;
+    if(p.s1_sub||p.s1_verb||p.s1_adv){
+      s1.innerHTML=(p.s1_sub?`<span class="sent-tag" style="background:#ffe66d55">${p.s1_sub}</span> `:'')
+        +(p.s1_verb?`<span class="sent-tag" style="background:#ff6b6b22;color:var(--primary)">${p.s1_verb}</span> `:'')
+        +(p.s1_adv?`<span class="sent-tag" style="background:#a29bfe22;color:#6c5ce7">${p.s1_adv}</span>`:'')+'.';
+      s1.classList.add('built');
+    }
+  }
+  if(s2){
+    const p=picks;
+    if(p.s2_sub||p.s2_verb||p.s2_adv1||p.s2_adv2){
+      s2.innerHTML=(p.s2_sub?`<span class="sent-tag" style="background:#ffe66d55">${p.s2_sub}</span> `:'')
+        +(p.s2_verb?`<span class="sent-tag" style="background:#ff6b6b22;color:var(--primary)">${p.s2_verb}</span> `:'')
+        +(p.s2_adv1?`<span class="sent-tag" style="background:#a29bfe22;color:#6c5ce7">${p.s2_adv1}</span> `:'')
+        +(p.s2_adv2?`<span class="sent-tag" style="background:#4ecdc422;color:#0d8a82">${p.s2_adv2}</span>`:'')+'.';
+      s2.classList.add('built');
+    }
+  }
+}
+function checkSentence(n){
+  const p=picks;
+  let ok=false;
+  if(n===1){ok=p.s1_sub==='My sister'&&p.s1_verb==='reads'&&p.s1_adv==='in the library';}
+  else{ok=p.s2_sub&&p.s2_verb==='run'&&p.s2_adv1==='in the park'&&p.s2_adv2;}
+  const fbEl=document.getElementById('sfb'+n);
+  fbEl.style.display='block';
+  if(ok){fbEl.textContent='✅ Perfect sentence!';fbEl.className='qfb on ok';yay();xp(20);G.correct++;unlock('s_builder');}
+  else{fbEl.textContent='🤔 Not quite — check the subject and verb!';fbEl.className='qfb on no';nope();}
+  if(G.correct>=1)document.getElementById('l1-next').disabled=false;
+}
+
+let abInp=null;
+function setAB(el){abInp=el;}
+function fbw(w){
+  if(!abInp){toast('👆 先点击要填写的空格！','');return;}
+  abInp.value=w;
+  document.querySelectorAll('#bank1 .bword').forEach(bw=>{if(bw.textContent===w)bw.classList.add('used');});
+  tn(523,.08); abInp=null;
+}
+function checkTemplate(){
+  const blanks=document.querySelectorAll('#screen-level2 .blank[data-ans]');
+  let ok=true;
+  blanks.forEach(b=>{
+    if(b.value.trim().toLowerCase()===b.dataset.ans.toLowerCase()){b.classList.add('ok');b.classList.remove('err');}
+    else if(b.value.trim()){b.classList.add('err');b.classList.remove('ok');ok=false;}
+  });
+  const ownBlanks=[...document.querySelectorAll('#screen-level2 .blank:not([data-ans])')];
+  const ownFilled=ownBlanks.filter(b=>b.value.trim()).length;
+  if(ok&&ownFilled>=4){fan();xp(20);unlock('template_pro');toast('🎉 模板完成！写得很棒！','xp');document.getElementById('l2-next').disabled=false;}
+  else if(ok){toast('✅ 示范模板正确！继续填写你自己的版本吧！','xp');document.getElementById('l2-next').disabled=false;}
+  else{nope();toast('🤔 示范模板有些错误，再检查一下','');}
+}
+function complLv(n,xpv){xp(xpv);fan();toast(`✅ Level ${n} 完成！`,'xp');const nx={1:'level2',2:'level3',3:'boss'};setTimeout(()=>go(nx[n]),400);}
+
+let imgPicked=null;
+const IMG_HINTS={
+  park:'🌳 Park scene hints:<br>• The children are playing on the swings.<br>• There are tall green trees and colourful flowers.<br>• A man is jogging along the path.',
+  school:'🏫 School scene hints:<br>• The students are sitting in the classroom.<br>• The teacher is writing on the blackboard.<br>• There are books and pencils on the desks.',
+  market:'🛒 Market scene hints:<br>• There are many stalls with fruit and vegetables.<br>• A woman is choosing ripe red apples.<br>• The market is busy and colourful.',
+  beach:'🏖️ Beach scene hints:<br>• Children are building sandcastles on the beach.<br>• The sea is blue and the waves are gentle.<br>• Seagulls are flying in the clear sky.'
+};
+function pickImg(el,key){
+  document.querySelectorAll('.img-card').forEach(c=>c.classList.remove('picked'));
+  el.classList.add('picked'); imgPicked=key; tn(440,.1);
+  const box=document.getElementById('img-hints');
+  box.innerHTML='<strong style="color:var(--secondary)">💡 Writing Hints:</strong><br>'+IMG_HINTS[key];
+  box.style.display='block';
+}
+function ins(s){const t=document.getElementById('img-write');t.value+=s;t.focus();updIWC();}
+function updIWC(){const t=document.getElementById('img-write');document.getElementById('iwc').textContent=(t.value.trim().match(/\S+/g)||[]).length;}
+document.addEventListener('DOMContentLoaded',()=>{const t=document.getElementById('img-write');if(t)t.addEventListener('input',updIWC);loadBQ();});
+function evalImgWrite(){
+  const t=document.getElementById('img-write');
+  const wc=(t.value.trim().match(/\S+/g)||[]).length;
+  if(!imgPicked){nope();toast('🖼️ 先选一张图片！','');return;}
+  if(wc<15){nope();toast('🤔 再多写一些！目标20+词，3句话','');return;}
+  yay();xp(20);unlock('image_writer');
+  if(wc>=30)unlock('wordy');
+  toast('🌟 看图写作完成！','xp');
+  document.getElementById('l3-next').disabled=false;
+}
+
+function loadBQ(){
+  const bq=BQS[G.bossQ];if(!bq)return;
+  document.getElementById('bqbox').innerHTML=`
+    <div class="card" style="text-align:left">
+      <p style="font-style:italic;color:var(--primary);margin-bottom:10px;text-align:center">🐉 "Fix my grammar mistakes if you dare!"</p>
+      <h4 style="margin-bottom:8px">${bq.q}</h4>
+      <p style="font-size:0.8rem;color:var(--muted);margin-bottom:12px">${bq.hint}</p>
+      <div class="opts">
+        ${bq.ops.map((o,i)=>`<button class="opt" onclick="bossA(this,${o.c},'${o.f.replace(/'/g,"&#39;")}')">${'ABC'[i]}. ${o.t}</button>`).join('')}
+      </div>
+      <div class="qfb" id="bfb"></div>
+    </div>`;
+}
+function bossA(btn,ok,fb){
+  btn.parentElement.querySelectorAll('.opt').forEach(o=>o.disabled=true);
+  btn.classList.add(ok?'ok':'no');
+  const f=document.getElementById('bfb');f.textContent=fb;f.className='qfb on '+(ok?'ok':'no');
+  if(ok){
+    yay();xp(50);G.bossHp--;
+    document.getElementById('bhf').style.width=(G.bossHp/3*100)+'%';
+    document.getElementById('bhv').textContent=G.bossHp;
+    if(G.bossHp<=0){
+      setTimeout(()=>{document.getElementById('bqbox').innerHTML='<div style="text-align:center;padding:22px"><div style="font-size:3rem">💥</div><p style="font-size:1.1rem;font-weight:700;color:var(--success)">Dragon Defeated! 🎉</p></div>';unlock('dragon_slayer');unlock('grammar_ace');unlock('complete');setTimeout(showReport,1600);},900);
+    } else {setTimeout(()=>{G.bossQ++;loadBQ();},1300);}
+  } else {
+    nope();G.stars=Math.max(0,G.stars-0.5);
+    setTimeout(()=>{f.className='qfb';f.textContent='';btn.parentElement.querySelectorAll('.opt').forEach(o=>{o.disabled=false;o.className='opt';});},1700);
+  }
+}
+function showReport(){
+  if(G.xp>=380)unlock('star_writer');
+  document.getElementById('rscore').textContent=G.xp;
+  const st=G.stars>=2.5?'⭐⭐⭐':G.stars>=1.5?'⭐⭐☆':'⭐☆☆';
+  document.getElementById('rstars').textContent=st;
+  const msgs={3:'Amazing Writer! 🏆',2:'Good Writer! 🥈',1:'Keep Practicing! 💪'};
+  const g=G.stars>=2.5?3:G.stars>=1.5?2:1;
+  document.getElementById('rtag').textContent=msgs[g];
+  document.getElementById('rdets').innerHTML=`✅ 答对: ${G.correct} 题<br>⭐ XP: ${G.xp}/460<br>🏅 成就: ${G.ach.length}/${ACHS.length}<br>🌟 评级: ${msgs[g]}`;
+  document.getElementById('achg').innerHTML=ACHS.map(a=>`<div class="a-item ${G.ach.includes(a.id)?'got':''}"><div class="a-ico">${a.ico}</div><div class="a-n">${a.nm}</div><div class="a-d">${a.desc}</div></div>`).join('');
+  go('report');
+}
+const EXTS={
+  adj:'<h3 style="color:var(--primary);margin-bottom:12px">🎨 Common Adjectives</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.9rem"><div><strong>Size:</strong> big, small, tall, short, huge, tiny</div><div><strong>Colour:</strong> red, blue, golden, snowy, vibrant</div><div><strong>Feeling:</strong> happy, sad, excited, nervous, proud</div><div><strong>Quality:</strong> amazing, terrible, wonderful, boring</div></div>',
+  connector:'<h3 style="color:var(--secondary);margin-bottom:12px">🔗 Sentence Connectors</h3><table style="width:100%;border-collapse:collapse"><tr style="background:#f0f0f0"><th style="padding:8px;text-align:left">Type</th><th style="padding:8px;text-align:left">Words</th></tr><tr><td style="padding:8px">Adding</td><td style="padding:8px">and, also, in addition</td></tr><tr style="background:#f9f9f9"><td style="padding:8px">Contrasting</td><td style="padding:8px">but, however, although</td></tr><tr><td style="padding:8px">Cause/Effect</td><td style="padding:8px">because, so, therefore</td></tr></table>',
+  diary:'<h3 style="color:var(--accent);margin-bottom:12px;color:#b7950b">📔 Diary Entry Template</h3><div style="background:#f9f9f9;border-radius:8px;padding:14px;font-family:Georgia,serif;line-height:2"><strong>Date: ____________________</strong><br>Dear Diary,<br>Today, I ___________________________.<br>I felt ____________ because ____________.<br>The best part was ______________________.<br>Tomorrow, I want to ___________________.<br><br>From,<br>_____________________</div>',
+  mistakes:'<h3 style="color:var(--primary);margin-bottom:12px">🔍 Common Mistakes</h3><ul style="line-height:2.4;padding-left:20px"><li>❌ "He go school" → ✅ "He goes to school"</li><li>❌ "I am go" → ✅ "I am going" or "I go"</li><li>❌ "They is happy" → ✅ "They are happy"</li><li>❌ "a apple" → ✅ "an apple"</li><li>❌ "more bigger" → ✅ "bigger" (already comparative)</li></ul>'
+};
+function showExt(k){const b=document.getElementById('ext-box');b.innerHTML=EXTS[k];b.style.display='block';b.scrollIntoView({behavior:'smooth',block:'nearest'});}
+function restart(){
+  G={xp:0,stars:3,ach:[],correct:0,bossHp:3,bossQ:0};
+  picks={s1_sub:null,s1_verb:null,s1_adv:null,s2_sub:null,s2_verb:null,s2_adv1:null,s2_adv2:null};
+  document.querySelectorAll('.opt').forEach(o=>{o.disabled=false;o.className='opt';});
+  document.querySelectorAll('.qfb').forEach(f=>{f.className='qfb';f.textContent='';});
+  document.querySelectorAll('.blank').forEach(b=>{b.value='';b.className='blank';});
+  document.querySelectorAll('.bword').forEach(b=>b.classList.remove('used'));
+  const iw=document.getElementById('img-write');if(iw)iw.value='';
+  imgPicked=null;
+  document.getElementById('l1-next').disabled=true;
+  document.getElementById('l2-next').disabled=true;
+  document.getElementById('l3-next').disabled=true;
+  loadBQ(); go('hero');
+}
+go('hero');
+</script>
+</body>
+</html>
