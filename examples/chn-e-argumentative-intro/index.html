@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>议论文入门 · 六年级语文闯关</title>
+<style>
+  :root {
+    --bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--card:#fff;
+    --shadow:0 4px 20px rgba(0,0,0,0.08);--radius:20px;--text:#333;
+    --purple:#a29bfe;--orange:#fd9644;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);font-family:'PingFang SC','Microsoft YaHei',sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden;}
+  .screen{display:none;min-height:100vh;padding:20px;}
+  .screen.active{display:flex;flex-direction:column;align-items:center;}
+
+  .hero{background:linear-gradient(135deg,#6c5ce7,#a29bfe);border-radius:var(--radius);padding:40px 30px;text-align:center;width:100%;max-width:620px;color:#fff;margin-bottom:20px;position:relative;overflow:hidden;}
+  .hero::before{content:'⚡';position:absolute;top:10px;right:20px;font-size:5em;opacity:0.15;}
+  .hero .grade-badge{background:rgba(255,255,255,0.2);border-radius:30px;padding:4px 16px;display:inline-block;margin-bottom:12px;font-size:0.85em;}
+  .hero h1{font-size:2.2em;font-weight:900;margin-bottom:8px;}
+  .hero p{opacity:0.9;line-height:1.6;}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;border-radius:50px;border:none;font-size:1em;font-weight:700;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 12px rgba(0,0,0,0.15);}
+  .btn-primary{background:var(--primary);color:#fff;}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(255,107,107,0.4);}
+  .btn-secondary{background:var(--secondary);color:#fff;}
+  .btn-secondary:hover{transform:translateY(-2px);}
+  .btn-purple{background:var(--purple);color:#fff;}
+  .btn-purple:hover{transform:translateY(-2px);}
+
+  .card{background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);width:100%;max-width:620px;margin-bottom:16px;}
+  .card h2{color:var(--primary);font-size:1.3em;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+
+  .progress-bar{width:100%;max-width:620px;background:#f0e8e0;border-radius:30px;height:12px;margin-bottom:16px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--primary));border-radius:30px;transition:width 0.5s;}
+
+  .stars-display{display:flex;align-items:center;gap:6px;}
+  .star{color:#ddd;font-size:1.6em;transition:color 0.3s;}
+  .star.earned{color:#ffd700;animation:starPop 0.4s ease;}
+  @keyframes starPop{0%{transform:scale(0)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
+
+  .section-title{font-size:1.4em;font-weight:800;color:#6c5ce7;margin-bottom:16px;display:flex;align-items:center;gap:8px;width:100%;max-width:620px;}
+  .badge{background:var(--accent);color:#333;border-radius:20px;padding:3px 12px;font-size:0.75em;font-weight:700;}
+
+  /* Three-part structure visual */
+  .three-parts{display:flex;flex-direction:column;gap:8px;margin:12px 0;}
+  .part-card{border-radius:16px;padding:16px;display:flex;align-items:flex-start;gap:14px;position:relative;}
+  .part-card.claim{background:#ffe0e0;border-left:4px solid var(--primary);}
+  .part-card.evidence{background:#e0f7f4;border-left:4px solid var(--secondary);}
+  .part-card.reasoning{background:#f0edff;border-left:4px solid var(--purple);}
+  .part-icon{font-size:1.8em;flex-shrink:0;}
+  .part-label{font-weight:800;margin-bottom:4px;}
+  .part-desc{font-size:0.88em;color:#666;line-height:1.5;}
+
+  /* Argument builder */
+  .arg-builder{background:#f8f4ef;border-radius:var(--radius);padding:16px;margin:12px 0;}
+  .arg-slot{border:2px dashed #ddd;border-radius:12px;padding:12px;min-height:48px;margin-bottom:8px;transition:all 0.2s;display:flex;align-items:center;flex-wrap:wrap;gap:6px;}
+  .arg-slot.highlight{border-color:var(--secondary);}
+  .arg-slot-label{font-size:0.8em;color:#aaa;margin-bottom:4px;display:block;}
+  .arg-chip{background:var(--card);border:2px solid #e0d8d0;border-radius:20px;padding:6px 14px;cursor:pointer;font-size:0.88em;display:inline-block;margin:3px;transition:all 0.2s;user-select:none;}
+  .arg-chip:hover{border-color:var(--purple);transform:scale(1.05);}
+  .arg-chip.placed{background:var(--purple);color:#fff;border-color:var(--purple);}
+  .arg-chip.correct{background:#4ecdc4;color:#fff;border-color:#4ecdc4;}
+  .arg-chip.wrong{background:#ff6b6b;color:#fff;border-color:#ff6b6b;}
+
+  /* Debate board */
+  .debate-board{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0;}
+  .debate-side{border-radius:16px;padding:14px;}
+  .debate-pro{background:#e0f7f4;border-top:4px solid var(--secondary);}
+  .debate-con{background:#ffe0e0;border-top:4px solid var(--primary);}
+  .debate-title{font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+  .debate-point{background:var(--card);border-radius:10px;padding:8px 10px;font-size:0.85em;margin-bottom:6px;cursor:pointer;transition:all 0.2s;line-height:1.4;}
+  .debate-point:hover{transform:translateX(3px);}
+  .debate-point.selected{box-shadow:0 0 0 2px var(--purple);}
+
+  /* Opinion meter */
+  .opinion-meter{background:#f8f4ef;border-radius:14px;padding:14px;margin:12px 0;}
+  .meter-bar{position:relative;height:24px;background:#e0d8d0;border-radius:30px;overflow:hidden;margin:8px 0;}
+  .meter-fill{height:100%;background:linear-gradient(90deg,#ff6b6b,#ffe66d,#4ecdc4);border-radius:30px;transition:width 0.5s;}
+  .meter-labels{display:flex;justify-content:space-between;font-size:0.75em;color:#888;}
+
+  /* Logic chain */
+  .logic-chain{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin:12px 0;}
+  .logic-box{background:var(--card);border:2px solid #e0d8d0;border-radius:12px;padding:8px 12px;font-size:0.88em;text-align:center;}
+  .logic-arrow{color:#aaa;font-size:1.2em;}
+
+  /* Writing area */
+  .writing-pad{width:100%;background:#fff;border-radius:14px;border:2px solid #e0d8d0;padding:16px;font-size:1em;min-height:160px;resize:none;font-family:inherit;line-height:1.9;}
+  .writing-pad:focus{outline:none;border-color:var(--purple);}
+  .char-count{text-align:right;font-size:0.8em;color:#aaa;margin-top:6px;}
+
+  /* Checklist */
+  .checklist{display:flex;flex-direction:column;gap:6px;margin:12px 0;}
+  .check-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f8f4ef;border-radius:10px;font-size:0.9em;}
+  .check-item input[type=checkbox]{width:18px;height:18px;cursor:pointer;}
+  .check-item.checked{background:#e0f7f4;}
+
+  /* Feedback */
+  .feedback{border-radius:14px;padding:14px 18px;margin-top:10px;font-size:0.95em;line-height:1.6;}
+  .feedback.good{background:#e0f7f4;border-left:4px solid var(--secondary);color:#2a9d8f;}
+  .feedback.bad{background:#ffe0e0;border-left:4px solid var(--primary);color:#c0392b;}
+  .feedback.tip{background:#fff8e0;border-left:4px solid var(--accent);color:#855a00;}
+
+  /* Buddy */
+  .buddy{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;align-items:flex-end;gap:8px;z-index:100;}
+  .buddy-avatar{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#a29bfe,#6c5ce7);display:flex;align-items:center;justify-content:center;font-size:2em;cursor:pointer;box-shadow:0 4px 16px rgba(162,155,254,0.5);transition:transform 0.2s;}
+  .buddy-avatar:hover{transform:scale(1.1);}
+  .buddy-bubble{background:var(--card);border-radius:16px 16px 4px 16px;padding:12px 16px;max-width:230px;font-size:0.88em;line-height:1.5;box-shadow:var(--shadow);display:none;color:#333;}
+  .buddy-bubble.show{display:block;animation:bubbleIn 0.3s ease;}
+  @keyframes bubbleIn{from{opacity:0;transform:scale(0.8)}to{opacity:1;transform:scale(1)}}
+
+  .achievement-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#ffd700,#ffb700);color:#333;border-radius:30px;padding:10px 24px;font-weight:700;font-size:0.95em;display:none;z-index:200;box-shadow:0 4px 20px rgba(255,183,0,0.4);}
+  .achievement-toast.show{display:flex;align-items:center;gap:8px;animation:toastIn 0.4s ease;}
+  @keyframes toastIn{from{opacity:0;top:0}to{opacity:1;top:20px}}
+
+  .report-card{background:linear-gradient(135deg,#f0edff,#fff);border-radius:var(--radius);padding:30px;text-align:center;width:100%;max-width:620px;box-shadow:var(--shadow);}
+  .score-ring{width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,var(--purple),#6c5ce7);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 20px;font-size:2em;font-weight:900;}
+  .achievements-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0;}
+  .ach-badge{border-radius:12px;padding:10px 4px;text-align:center;font-size:0.72em;}
+  .ach-badge.earned{background:linear-gradient(135deg,#ffe66d,#ffd700);}
+  .ach-badge.locked{background:#f0e8e0;color:#aaa;}
+  .ach-badge .ach-icon{font-size:1.6em;margin-bottom:3px;}
+
+  .option{background:#f8f4ef;border:2px solid #e8ddd0;border-radius:14px;padding:12px 16px;cursor:pointer;transition:all 0.2s;font-size:0.95em;line-height:1.5;margin-bottom:8px;}
+  .option:hover{border-color:var(--purple);background:#f0edff;}
+  .option.correct{border-color:#4ecdc4;background:#e0f7f4;color:#2a9d8f;}
+  .option.wrong{border-color:#ff6b6b;background:#ffe0e0;color:#c0392b;}
+  .option.disabled{pointer-events:none;}
+
+  .confetti-piece{position:fixed;width:8px;height:8px;border-radius:2px;animation:confettiFall 1.5s ease-out forwards;pointer-events:none;z-index:999;}
+  @keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+
+  /* Tabs */
+  .tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .tab{padding:8px 18px;border-radius:30px;border:2px solid #e0d8d0;background:#f8f4ef;cursor:pointer;font-size:0.88em;font-weight:600;transition:all 0.2s;}
+  .tab.active{background:var(--purple);color:#fff;border-color:var(--purple);}
+
+  /* Evidence cards */
+  .ev-card{border-radius:14px;padding:14px;margin-bottom:8px;border-left:4px solid;}
+  .ev-card.fact{border-color:#4ecdc4;background:#e0f7f4;}
+  .ev-card.example{border-color:#ff6b6b;background:#ffe0e0;}
+  .ev-card.quote{border-color:#a29bfe;background:#f0edff;}
+  .ev-type{font-size:0.75em;font-weight:700;margin-bottom:4px;text-transform:uppercase;}
+  .ev-content{font-size:0.9em;line-height:1.5;}
+
+  @media(max-width:480px){
+    .debate-board{grid-template-columns:1fr;}
+    .achievements-grid{grid-template-columns:repeat(3,1fr);}
+  }
+</style>
+</head>
+<body>
+
+<div class="buddy" id="buddy">
+  <div class="buddy-bubble" id="buddyBubble">我是小毛虫🐛！今天我们一起学议论文，练习用道理说服别人！</div>
+  <div class="buddy-avatar" onclick="toggleBuddy()">🐛</div>
+</div>
+
+<div class="achievement-toast" id="achieveToast">🏆 <span id="achieveText"></span></div>
+
+<!-- ===== HERO ===== -->
+<div class="screen active" id="screen-hero">
+  <div style="width:100%;max-width:620px;display:flex;flex-direction:column;align-items:center;gap:16px;padding-top:30px;">
+    <div class="hero">
+      <div class="grade-badge">📚 六年级语文</div>
+      <h1>⚡ 议论文入门</h1>
+      <p>论点 · 论据 · 论证<br>学会用逻辑说服世界！</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:3em;margin-bottom:10px;">🗣️</div>
+      <h2 style="justify-content:center;margin-bottom:8px;">辩论大挑战</h2>
+      <p style="margin-bottom:16px;">掌握「论点-论据-论证」三件套<br>成为最有说服力的小辩手！</p>
+      <div class="stars-display" style="justify-content:center;margin-bottom:16px;">
+        <div class="star" id="star1">⭐</div>
+        <div class="star" id="star2">⭐</div>
+        <div class="star" id="star3">⭐</div>
+        <span style="font-size:0.8em;color:#aaa;margin-left:8px;" id="starCount">0 / 3</span>
+      </div>
+      <button class="btn btn-purple" onclick="goTo('screen-objectives')" style="font-size:1.1em;">🚀 开始挑战！</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== OBJECTIVES ===== -->
+<div class="screen" id="screen-objectives">
+  <div style="width:100%;max-width:620px;">
+    <div class="section-title">🎯 本节目标</div>
+    <div class="card">
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:10px;background:#f0edff;border-radius:12px;">
+          <div style="width:28px;height:28px;background:var(--purple);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.8em;flex-shrink:0;">知</div>
+          <div>理解议论文三要素：<strong>论点（观点）、论据（证据）、论证（推理）</strong>的含义和作用</div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:10px;background:#e0f7f4;border-radius:12px;">
+          <div style="width:28px;height:28px;background:var(--secondary);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.8em;flex-shrink:0;">做</div>
+          <div>能区分<strong>不同类型的论据</strong>（事实论据/道理论据），并能为观点找到合适的支撑</div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:10px;background:#fff8e0;border-radius:12px;">
+          <div style="width:28px;height:28px;background:var(--orange);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.8em;flex-shrink:0;">感</div>
+          <div>体验理性表达的魅力，<strong>感受逻辑思维</strong>在写作和生活中的重要价值</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>🗺️ 闯关路线</h2>
+      <div style="display:flex;align-items:center;gap:8px;overflow-x:auto;padding:12px 0;flex-wrap:wrap;justify-content:center;">
+        <div style="text-align:center;"><div style="width:52px;height:52px;background:var(--secondary);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3em;cursor:pointer;" onclick="goTo('screen-warmup')">🔥</div><div style="font-size:0.72em;color:#666;margin-top:4px;">热身</div></div>
+        <div style="color:#ddd;font-size:1.4em;">→</div>
+        <div style="text-align:center;"><div style="width:52px;height:52px;background:#e0d8d0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3em;" id="lv1node">1️⃣</div><div style="font-size:0.72em;color:#666;margin-top:4px;">论点</div></div>
+        <div style="color:#ddd;font-size:1.4em;">→</div>
+        <div style="text-align:center;"><div style="width:52px;height:52px;background:#e0d8d0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3em;" id="lv2node">2️⃣</div><div style="font-size:0.72em;color:#666;margin-top:4px;">论据</div></div>
+        <div style="color:#ddd;font-size:1.4em;">→</div>
+        <div style="text-align:center;"><div style="width:52px;height:52px;background:#e0d8d0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3em;" id="lv3node">3️⃣</div><div style="font-size:0.72em;color:#666;margin-top:4px;">论证</div></div>
+        <div style="color:#ddd;font-size:1.4em;">→</div>
+        <div style="text-align:center;"><div style="width:52px;height:52px;background:#e0d8d0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3em;" id="bossnode">👑</div><div style="font-size:0.72em;color:#666;margin-top:4px;">Boss</div></div>
+      </div>
+    </div>
+    <div style="text-align:center;">
+      <button class="btn btn-secondary" onclick="goTo('screen-warmup')">➡️ 开始热身</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== WARMUP ===== -->
+<div class="screen" id="screen-warmup">
+  <div style="width:100%;max-width:620px;">
+    <div class="progress-bar"><div class="progress-fill" style="width:15%"></div></div>
+    <div class="section-title">🔥 热身：认识议论文</div>
+    <div class="card">
+      <h2>📖 什么是议论文？</h2>
+      <p style="line-height:1.8;margin-bottom:14px;">议论文就是用<strong>道理说服别人</strong>的文章。它有三个核心要素：</p>
+      <div class="three-parts">
+        <div class="part-card claim">
+          <div class="part-icon">💡</div>
+          <div>
+            <div class="part-label" style="color:#ff6b6b;">论点 = 你的观点/主张</div>
+            <div class="part-desc">例：「我认为网络游戏对青少年有害」</div>
+          </div>
+        </div>
+        <div class="part-card evidence">
+          <div class="part-icon">📊</div>
+          <div>
+            <div class="part-label" style="color:#4ecdc4;">论据 = 支持观点的证据</div>
+            <div class="part-desc">例：「研究表明过度游戏影响视力和睡眠」</div>
+          </div>
+        </div>
+        <div class="part-card reasoning">
+          <div class="part-icon">🔗</div>
+          <div>
+            <div class="part-label" style="color:#a29bfe;">论证 = 用论据证明论点的过程</div>
+            <div class="part-desc">例：分析为什么这个证据支持了你的观点</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>❓ 快速判断</h2>
+      <p style="color:#666;margin-bottom:12px;">以下句子，哪一句是「论点」（观点/主张）？</p>
+      <div onclick="warmupAns(this,'A')" class="option">A. 「世界上有很多人喜欢读书」</div>
+      <div onclick="warmupAns(this,'B')" class="option">B. 「阅读是提升自我最好的方式」</div>
+      <div onclick="warmupAns(this,'C')" class="option">C. 「鲁迅从小就酷爱读书」</div>
+      <div onclick="warmupAns(this,'D')" class="option">D. 「书籍在图书馆里静静地等待」</div>
+      <div id="warmupFb" class="feedback" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LEVEL 1: 论点 ===== -->
+<div class="screen" id="screen-level1">
+  <div style="width:100%;max-width:620px;">
+    <div class="progress-bar"><div class="progress-fill" style="width:35%"></div></div>
+    <div class="section-title">💡 第一关：找准论点 <span class="badge">⭐辨析训练</span></div>
+    
+    <div class="card">
+      <h2>📖 论点的特征</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.9em;">
+        <div style="background:#e0f7f4;border-radius:12px;padding:12px;">
+          <div style="font-weight:700;color:#4ecdc4;margin-bottom:6px;">✅ 论点应该是</div>
+          <div>• 明确的判断</div>
+          <div>• 可以论证的</div>
+          <div>• 一句完整的话</div>
+          <div>• 有鲜明立场</div>
+        </div>
+        <div style="background:#ffe0e0;border-radius:12px;padding:12px;">
+          <div style="font-weight:700;color:#ff6b6b;margin-bottom:6px;">❌ 论点不是</div>
+          <div>• 事实描述</div>
+          <div>• 疑问句</div>
+          <div>• 没有立场的话</div>
+          <div>• 模糊不清的</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>❓ 辨析训练</h2>
+      <p style="color:#666;margin-bottom:14px;">下面哪一句是合格的论点？</p>
+      <div onclick="ansLv1(this,'A')" class="option">A. 「体育锻炼能强健身体。」（可以吗？）</div>
+      <div onclick="ansLv1(this,'B')" class="option">B. 「很多同学都参加了体育活动。」</div>
+      <div onclick="ansLv1(this,'C')" class="option">C. 「体育锻炼好吗？」</div>
+      <div onclick="ansLv1(this,'D')" class="option">D. 「现在很多学校有体育课。」</div>
+      <div id="lv1Fb" class="feedback" style="display:none;"></div>
+    </div>
+
+    <div class="card" id="lv1challenge" style="display:none;">
+      <h2>✍️ 论点升级练习</h2>
+      <p style="color:#666;margin-bottom:10px;">把下面这个模糊的句子改写成一个鲜明的论点：</p>
+      <div style="background:#f8f4ef;border-radius:12px;padding:12px;margin-bottom:12px;font-style:italic;color:#888;">
+        原句：「我觉得手机有好有坏……」
+      </div>
+      <textarea class="writing-pad" id="lv1text" placeholder="例：「中小学生在课堂上使用手机会分散注意力，应该禁止带手机入校」" style="min-height:80px;" oninput="updateCC('lv1text','lv1cc')"></textarea>
+      <div class="char-count" id="lv1cc">0字</div>
+      <button class="btn btn-purple" onclick="submitLv1()" style="margin-top:10px;width:100%;justify-content:center;">✅ 提交论点</button>
+      <div id="lv1writeFb" class="feedback" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LEVEL 2: 论据 ===== -->
+<div class="screen" id="screen-level2">
+  <div style="width:100%;max-width:620px;">
+    <div class="progress-bar"><div class="progress-fill" style="width:55%"></div></div>
+    <div class="section-title">📊 第二关：选好论据 <span class="badge">⭐分类游戏</span></div>
+
+    <div class="card">
+      <h2>📖 两种论据类型</h2>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div class="ev-card fact">
+          <div class="ev-type" style="color:#4ecdc4;">📊 事实论据（最有力！）</div>
+          <div class="ev-content">真实发生过的事情、数据、统计结果<br><em>例："调查显示，每天读书30分钟的学生，成绩比不读书的同学高出15%。"</em></div>
+        </div>
+        <div class="ev-card quote">
+          <div class="ev-type" style="color:#a29bfe;">💬 道理论据（权威有说服力）</div>
+          <div class="ev-content">名人名言、公认的道理、科学规律<br><em>例："书籍是人类进步的阶梯。——高尔基"</em></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🎮 论据分类游戏</h2>
+      <p style="color:#666;margin-bottom:12px;">点击每条论据，判断是「事实论据」还是「道理论据」：</p>
+      <div id="sortGame">
+        <div class="debate-side debate-pro" style="margin-bottom:10px;">
+          <div class="debate-title" style="color:#4ecdc4;">📊 事实论据区</div>
+          <div id="factZone" style="min-height:40px;display:flex;flex-wrap:wrap;gap:6px;"></div>
+        </div>
+        <div class="debate-side debate-con">
+          <div class="debate-title" style="color:#a29bfe;">💬 道理论据区</div>
+          <div id="quoteZone" style="min-height:40px;display:flex;flex-wrap:wrap;gap:6px;"></div>
+        </div>
+      </div>
+      <div style="margin:14px 0;display:flex;flex-wrap:wrap;gap:8px;" id="sortChips">
+        <div class="arg-chip" data-type="fact" onclick="sortChip(this)">①科学家研究发现，睡眠8小时有益健康</div>
+        <div class="arg-chip" data-type="quote" onclick="sortChip(this)">②"健康是最大的财富"——苏格拉底</div>
+        <div class="arg-chip" data-type="fact" onclick="sortChip(this)">③我班50名同学中，天天锻炼的同学感冒次数更少</div>
+        <div class="arg-chip" data-type="quote" onclick="sortChip(this)">④"生命在于运动"——伏尔泰</div>
+      </div>
+      <button class="btn btn-secondary" onclick="checkSort()" style="width:100%;justify-content:center;margin-top:8px;">✅ 检查分类</button>
+      <div id="sortFb" class="feedback" style="display:none;"></div>
+    </div>
+
+    <div class="card" id="lv2challenge" style="display:none;">
+      <h2>✍️ 找论据练习</h2>
+      <p style="color:#666;margin-bottom:10px;">论点是：「<strong>同学之间应该互相帮助</strong>」<br>请写一条支持这个论点的<strong>事实论据</strong>：</p>
+      <textarea class="writing-pad" id="lv2text" placeholder="例：「上学期期中考试前，班里的小明主动帮同学补习数学，后来全班数学成绩都提高了……」" style="min-height:100px;" oninput="updateCC('lv2text','lv2cc')"></textarea>
+      <div class="char-count" id="lv2cc">0字</div>
+      <button class="btn btn-secondary" onclick="submitLv2()" style="margin-top:10px;width:100%;justify-content:center;">🚀 提交论据</button>
+      <div id="lv2writeFb" class="feedback" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LEVEL 3: 论证 ===== -->
+<div class="screen" id="screen-level3">
+  <div style="width:100%;max-width:620px;">
+    <div class="progress-bar"><div class="progress-fill" style="width:75%"></div></div>
+    <div class="section-title">🔗 第三关：论证逻辑 <span class="badge">⭐思维训练</span></div>
+
+    <div class="card">
+      <h2>📖 论证方法</h2>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="background:#e0f7f4;border-radius:12px;padding:12px;"><strong>✅ 举例论证</strong>：用具体事例来说明<br><small style="color:#666;">「比如……」「例如……」「曾经……」</small></div>
+        <div style="background:#f0edff;border-radius:12px;padding:12px;"><strong>💬 引用论证</strong>：引用权威说法<br><small style="color:#666;">「正如……所说」「古人云」</small></div>
+        <div style="background:#fff8e0;border-radius:12px;padding:12px;"><strong>↔️ 对比论证</strong>：正反两面对比<br><small style="color:#666;">「反之……」「相比之下……」</small></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>❓ 论证方法识别</h2>
+      <p style="color:#666;margin-bottom:12px;">读下面这段话，它用的是什么论证方法？</p>
+      <div style="background:#f8f4ef;border-radius:12px;padding:14px;margin-bottom:14px;line-height:1.7;font-size:0.95em;">
+        「勤奋学习的人终将成功。<strong>我国著名数学家华罗庚，从小家境贫寒，但他坚持每天自学十几个小时，最终成为享誉世界的数学大师。</strong>由此可见，只要坚持努力，梦想终将实现。」
+      </div>
+      <div onclick="ansLv3(this,'A')" class="option">A. 引用论证（引用了名人名言）</div>
+      <div onclick="ansLv3(this,'B')" class="option">B. 举例论证（用了华罗庚的事例）</div>
+      <div onclick="ansLv3(this,'C')" class="option">C. 对比论证（进行了正反对比）</div>
+      <div onclick="ansLv3(this,'D')" class="option">D. 比喻论证（用了比喻手法）</div>
+      <div id="lv3Fb" class="feedback" style="display:none;"></div>
+    </div>
+
+    <div class="card" id="lv3chain" style="display:none;">
+      <h2>🔗 搭建论证逻辑链</h2>
+      <p style="color:#666;margin-bottom:12px;">论点：「坚持阅读有助于提高写作能力」<br>把下面的内容拼成完整的论证：</p>
+      <div id="chainSlots" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
+        <div style="font-size:0.82em;color:#888;">点击选择顺序（1→2→3）</div>
+        <div class="arg-slot highlight" id="slot1" onclick="selectSlot(1)">
+          <span id="slot1text" style="color:#aaa;">第1步：？</span>
+        </div>
+        <div class="arg-slot highlight" id="slot2" onclick="selectSlot(2)">
+          <span id="slot2text" style="color:#aaa;">第2步：？</span>
+        </div>
+        <div class="arg-slot highlight" id="slot3" onclick="selectSlot(3)">
+          <span id="slot3text" style="color:#aaa;">第3步：？</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+        <div class="arg-chip" onclick="pickChain(this,'B','我们班读书最多的同学，作文总是获得高分')" data-val="B">B.我们班读书最多的同学，作文总是获得高分</div>
+        <div class="arg-chip" onclick="pickChain(this,'A','坚持阅读有助于提高写作能力')" data-val="A">A.坚持阅读有助于提高写作能力</div>
+        <div class="arg-chip" onclick="pickChain(this,'C','因此，同学们应该坚持每天阅读')" data-val="C">C.因此，同学们应该坚持每天阅读</div>
+      </div>
+      <button class="btn btn-purple" onclick="checkChain()" style="width:100%;justify-content:center;">✅ 确认顺序</button>
+      <div id="chainFb" class="feedback" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== BOSS ===== -->
+<div class="screen" id="screen-boss">
+  <div style="width:100%;max-width:620px;">
+    <div class="progress-bar"><div class="progress-fill" style="width:88%"></div></div>
+    <div class="section-title">👑 Boss关：小辩手挑战</div>
+    
+    <div class="card" style="background:linear-gradient(135deg,#f0edff,#fff);border:2px solid var(--purple);">
+      <h2 style="color:#6c5ce7;">🎯 辩题</h2>
+      <div style="background:var(--purple);color:#fff;border-radius:12px;padding:14px;margin-bottom:14px;font-size:1.1em;font-weight:700;text-align:center;">
+        「中小学生应该参加课外兴趣班」
+      </div>
+      <div class="tabs">
+        <div class="tab active" id="tab-pro" onclick="selectSide('pro')">👍 正方（支持）</div>
+        <div class="tab" id="tab-con" onclick="selectSide('con')">👎 反方（反对）</div>
+      </div>
+      <p style="color:#666;font-size:0.9em;">选择你的立场，写一段有论点+论据+论证的短文（80字以上）</p>
+    </div>
+
+    <div class="card">
+      <div class="checklist" id="bossChecklist">
+        <div class="check-item" id="check-claim">
+          <input type="checkbox" id="cb1" onchange="updateChecklist()"> <label for="cb1">✅ 有明确的论点（我认为……）</label>
+        </div>
+        <div class="check-item" id="check-evidence">
+          <input type="checkbox" id="cb2" onchange="updateChecklist()"> <label for="cb2">📊 有至少一条论据（事实或道理）</label>
+        </div>
+        <div class="check-item" id="check-logic">
+          <input type="checkbox" id="cb3" onchange="updateChecklist()"> <label for="cb3">🔗 有论证（解释论据为何支持论点）</label>
+        </div>
+        <div class="check-item" id="check-length">
+          <input type="checkbox" id="cb4" onchange="updateChecklist()"> <label for="cb4">📝 字数≥80字</label>
+        </div>
+      </div>
+      <textarea class="writing-pad" id="bossText" placeholder="我认为……（论点）&#10;&#10;例如/数据表明……（论据）&#10;&#10;由此可见……（论证）" style="min-height:200px;" oninput="bossPad()"></textarea>
+      <div class="char-count" id="bossCC">0字</div>
+      <button class="btn btn-primary" onclick="submitBoss()" style="margin-top:12px;width:100%;justify-content:center;font-size:1.05em;">👑 提交论文！</button>
+      <div id="bossFb" class="feedback" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== REPORT ===== -->
+<div class="screen" id="screen-report">
+  <div style="width:100%;max-width:620px;">
+    <div class="report-card">
+      <div style="font-size:2.5em;margin-bottom:8px;">🎓</div>
+      <h2 style="color:#6c5ce7;font-size:1.6em;margin-bottom:8px;">议论文大师！</h2>
+      <div class="score-ring"><span style="font-size:0.4em;font-weight:400">总分</span><span id="finalScore">100</span></div>
+      <div class="stars-display" style="justify-content:center;margin-bottom:16px;" id="finalStars">
+        <span style="font-size:2em;">⭐⭐⭐</span>
+      </div>
+      <div class="achievements-grid">
+        <div class="ach-badge earned"><div class="ach-icon">💡</div>论点达人</div>
+        <div class="ach-badge earned"><div class="ach-icon">📊</div>证据收集者</div>
+        <div class="ach-badge earned"><div class="ach-icon">🔗</div>逻辑大师</div>
+        <div class="ach-badge earned"><div class="ach-icon">🗣️</div>小辩手</div>
+        <div class="ach-badge locked"><div class="ach-icon">🔒</div>完美论证</div>
+        <div class="ach-badge locked"><div class="ach-icon">🔒</div>引经据典</div>
+        <div class="ach-badge locked"><div class="ach-icon">🔒</div>辩论冠军</div>
+        <div class="ach-badge locked"><div class="ach-icon">🔒</div>说服专家</div>
+      </div>
+      <p style="color:#888;font-size:0.88em;margin-bottom:20px;">继续练习，解锁全部8个成就！</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <button class="btn btn-purple" onclick="goTo('screen-extension')">🌟 拓展学习</button>
+        <button class="btn btn-secondary" onclick="restartGame()">🔄 再挑战</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== EXTRA PRACTICE SCREEN ===== -->
+<div class="screen" id="screen-extra">
+  <div style="width:100%;max-width:620px;">
+    <div class="section-title">🧩 加练：反驳训练</div>
+    <div class="card">
+      <h2>📖 什么是反驳？</h2>
+      <p style="line-height:1.8;margin-bottom:14px;">好的议论文不只说自己的观点，还要<strong>考虑对立面</strong>，然后反驳它，这样更有说服力！</p>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="background:#ffe0e0;border-radius:12px;padding:12px;"><strong>❌ 反方观点</strong>：「学生参加课外班会增加负担，影响休息。」</div>
+        <div style="background:#e0f7f4;border-radius:12px;padding:12px;"><strong>✅ 有效反驳</strong>：「虽然过多课外班确实会加重负担，但选择1-2个感兴趣的课外班，能培养特长，反而让孩子更有成就感和自信心。」</div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>🎮 反驳训练</h2>
+      <p style="color:#666;margin-bottom:12px;">对方说：「读课外书浪费时间，不如多做练习题。」<br>请写一段有力的反驳（至少40字）：</p>
+      <textarea class="writing-pad" id="extraText" placeholder="虽然……但是……由此可见……" style="min-height:120px;" oninput="updateCC('extraText','extraCC')"></textarea>
+      <div class="char-count" id="extraCC">0字</div>
+      <button class="btn btn-purple" onclick="submitExtra()" style="margin-top:10px;width:100%;justify-content:center;">✅ 提交反驳</button>
+      <div id="extraFb" class="feedback" style="display:none;"></div>
+    </div>
+    <div class="card">
+      <h2>⚡ 速写练习：一分钟论点</h2>
+      <p style="color:#666;margin-bottom:12px;">针对以下话题，快速写出你的<strong>论点</strong>（一句话）和<strong>一条论据</strong>：</p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="background:#f0edff;border-radius:12px;padding:12px;">
+          <div style="font-weight:700;color:#6c5ce7;margin-bottom:8px;">话题①：「学校应该取消期末考试」</div>
+          <textarea class="writing-pad" id="quick1" placeholder="论点：我认为……&#10;论据：例如……" style="min-height:80px;font-size:0.9em;"></textarea>
+        </div>
+        <div style="background:#e0f7f4;border-radius:12px;padding:12px;">
+          <div style="font-weight:700;color:#4ecdc4;margin-bottom:8px;">话题②：「同学之间应该互借零花钱」</div>
+          <textarea class="writing-pad" id="quick2" placeholder="论点：我认为……&#10;论据：例如……" style="min-height:80px;font-size:0.9em;"></textarea>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-bottom:16px;">
+      <button class="btn btn-purple" onclick="goTo('screen-extension')">🌈 进入拓展天地</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== EXTENSION ===== -->
+<div class="screen" id="screen-extension">
+  <div style="width:100%;max-width:620px;">
+    <div class="section-title">🌈 拓展天地</div>
+    
+    <div class="card">
+      <h2>📐 议论文基本结构</h2>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="background:#fff8e0;border-radius:12px;padding:12px;border-left:4px solid var(--accent);">
+          <strong>开头段</strong>：引出话题，提出论点（总说）
+        </div>
+        <div style="background:#e0f7f4;border-radius:12px;padding:12px;border-left:4px solid var(--secondary);">
+          <strong>中间段（1-3段）</strong>：分论点 + 论据 + 分析论证
+        </div>
+        <div style="background:#f0edff;border-radius:12px;padding:12px;border-left:4px solid var(--purple);">
+          <strong>结尾段</strong>：总结全文，重申论点，发出号召
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🗣️ 辩论思维练习</h2>
+      <p style="color:#666;margin-bottom:14px;">对下面的话题，你怎么看？能说出2条支持和2条反对的理由吗？</p>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="background:#f8f4ef;border-radius:12px;padding:12px;cursor:pointer;transition:all 0.2s;" onclick="this.style.background='#f0edff'">💭 「小学生应该每天写日记」</div>
+        <div style="background:#f8f4ef;border-radius:12px;padding:12px;cursor:pointer;transition:all 0.2s;" onclick="this.style.background='#f0edff'">💭 「班级要设立班干部轮换制度」</div>
+        <div style="background:#f8f4ef;border-radius:12px;padding:12px;cursor:pointer;transition:all 0.2s;" onclick="this.style.background='#f0edff'">💭 「学校应该取消期中考试」</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>💡 写好议论文的秘诀</h2>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;"><span style="font-size:1.4em;">🎯</span><div><strong>论点要明确</strong>：开头第一段就说清楚你的主张，不要含糊</div></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;"><span style="font-size:1.4em;">🔍</span><div><strong>论据要有力</strong>：尽量用真实数据和知名事例，避免「我觉得」「可能」</div></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;"><span style="font-size:1.4em;">🔗</span><div><strong>论证要连贯</strong>：告诉读者「为什么这个证据能证明我的观点」</div></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;"><span style="font-size:1.4em;">⚖️</span><div><strong>考虑对方</strong>：承认对立观点，再反驳，更有说服力</div></div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-bottom:30px;">
+      <button class="btn btn-purple" onclick="goTo('screen-hero')">🏠 返回首页</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+function getAudio(){ if(!audioCtx) audioCtx = new AudioCtx(); return audioCtx; }
+function playBeep(f,d,t='sine',v=0.3){ try{ const ctx=getAudio(),o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(ctx.destination);o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+d);o.start(ctx.currentTime);o.stop(ctx.currentTime+d); }catch(e){} }
+function playCorrect(){ playBeep(523,0.1);setTimeout(()=>playBeep(659,0.1),100);setTimeout(()=>playBeep(784,0.2),200); }
+function playWrong(){ playBeep(220,0.3,'sawtooth',0.2); }
+function playLevelUp(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>playBeep(f,0.15),i*100)); }
+
+const state = { stars:0, score:0, side:'pro', chainOrder:[], chainStep:1, sortedChips:{} };
+
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  const msgs={ 'screen-warmup':'先搞清楚什么是论点！', 'screen-level1':'论点要鲜明！别模棱两可～', 'screen-level2':'论据是论点的支撑，越有力越好！', 'screen-level3':'论证就是把论点和论据串起来的逻辑桥！', 'screen-boss':'综合运用三要素，写出有说服力的文章！' };
+  if(msgs[id]) showBuddy(msgs[id]);
+  if(id==='screen-level1') document.getElementById('lv1node').style.background='#4ecdc4';
+  if(id==='screen-level2') document.getElementById('lv2node').style.background='#4ecdc4';
+  if(id==='screen-level3') document.getElementById('lv3node').style.background='#4ecdc4';
+  if(id==='screen-boss') document.getElementById('bossnode').style.background='linear-gradient(135deg,#a29bfe,#6c5ce7)';
+}
+function toggleBuddy(){ const b=document.getElementById('buddyBubble'); b.classList.toggle('show'); }
+function showBuddy(msg){ const b=document.getElementById('buddyBubble'); b.textContent=msg; b.classList.add('show'); setTimeout(()=>b.classList.remove('show'),3500); }
+function showAchieve(t){ document.getElementById('achieveText').textContent=t; const a=document.getElementById('achieveToast'); a.classList.add('show'); playLevelUp(); setTimeout(()=>a.classList.remove('show'),2500); }
+function earnStar(){ if(state.stars>=3)return; state.stars++; document.getElementById('star'+state.stars).classList.add('earned'); playBeep(880,0.1);setTimeout(()=>playBeep(1047,0.1),120); document.getElementById('starCount').textContent=state.stars+' / 3'; }
+function updateCC(tid,cid){ document.getElementById(cid).textContent=document.getElementById(tid).value.length+'字'; }
+function launchConfetti(){ const cs=['#ff6b6b','#4ecdc4','#ffe66d','#a29bfe','#fd79a8']; for(let i=0;i<40;i++){setTimeout(()=>{ const c=document.createElement('div'); c.className='confetti-piece'; c.style.cssText=`left:${Math.random()*100}%;background:${cs[Math.floor(Math.random()*cs.length)]};animation-duration:${1+Math.random()}s;`; document.body.appendChild(c);setTimeout(()=>c.remove(),2000); },i*30);} }
+
+function warmupAns(el,ans){ if(el.classList.contains('disabled'))return; document.querySelectorAll('#screen-warmup .option').forEach(o=>o.classList.add('disabled')); const fb=document.getElementById('warmupFb'); fb.style.display='block'; if(ans==='B'){el.classList.add('correct');fb.className='feedback good';fb.innerHTML='✅ 正确！「阅读是提升自我最好的方式」是一个鲜明的判断，有立场，可以论证！';playCorrect();setTimeout(()=>goTo('screen-level1'),1500);}else{el.classList.add('wrong');document.querySelectorAll('#screen-warmup .option')[1].classList.add('correct');fb.className='feedback bad';fb.innerHTML='❌ A是事实陈述，C是疑问，D是描述。只有B是明确表明立场的论点！';playWrong();setTimeout(()=>goTo('screen-level1'),2000);} }
+
+function ansLv1(el,ans){ if(el.classList.contains('disabled'))return; document.querySelectorAll('#screen-level1 .option').forEach(o=>o.classList.add('disabled')); const fb=document.getElementById('lv1Fb'); fb.style.display='block'; if(ans==='A'){el.classList.add('correct');fb.className='feedback good';fb.innerHTML='✅ 正确！A是一个明确的判断，表达了鲜明立场，可以用论据来证明！';playCorrect();showAchieve('💡 论点达人解锁！');earnStar();setTimeout(()=>{document.getElementById('lv1challenge').style.display='block';},800);}else{el.classList.add('wrong');document.querySelectorAll('#screen-level1 .option')[0].classList.add('correct');fb.className='feedback bad';fb.innerHTML='❌ B是事实描述，C是疑问句，D是陈述现象。只有A是明确的观点！';playWrong();setTimeout(()=>{document.getElementById('lv1challenge').style.display='block';},600);} }
+
+function submitLv1(){ const t=document.getElementById('lv1text').value.trim(); const fb=document.getElementById('lv1writeFb'); fb.style.display='block'; if(t.length>=20){ fb.className='feedback good';fb.innerHTML='✅ 很好！你的论点明确，有立场！进入第二关：论据！';playCorrect();if(state.stars<3)earnStar();setTimeout(()=>goTo('screen-level2'),1500);}else{fb.className='feedback tip';fb.innerHTML='💡 太短了，试着写一个完整的句子，表达你对手机的明确立场！';} }
+
+// Sort game
+const sortState = { placed:{} };
+function sortChip(el){ const type=el.getAttribute('data-type'); const val=el.getAttribute('data-val')||el.textContent; if(el.classList.contains('placed')) return; el.classList.add('placed'); const zone=type==='fact'?document.getElementById('factZone'):document.getElementById('quoteZone'); const chip=document.createElement('div'); chip.className='arg-chip placed'; chip.textContent=el.textContent; zone.appendChild(chip); sortState.placed[el.textContent]=type; el.style.display='none'; }
+function checkSort(){ const fb=document.getElementById('sortFb'); fb.style.display='block'; const factZone=document.getElementById('factZone'); const quoteZone=document.getElementById('quoteZone'); const allCorrect = factZone.children.length>=2 && quoteZone.children.length>=2; if(allCorrect){fb.className='feedback good';fb.innerHTML='✅ 分类正确！①③是事实论据（有具体数据/事例），②④是道理论据（名人名言）！';playCorrect();showAchieve('📊 证据收集者解锁！');earnStar();setTimeout(()=>{document.getElementById('lv2challenge').style.display='block';},800);}else{fb.className='feedback tip';fb.innerHTML='💡 还没分完！把所有4张卡片都点击分类吧！';} }
+
+function submitLv2(){ const t=document.getElementById('lv2text').value.trim(); const fb=document.getElementById('lv2writeFb'); fb.style.display='block'; if(t.length>=30){fb.className='feedback good';fb.innerHTML='✅ 好的事实论据！有具体的人物和事情，很有说服力！进入第三关！';playCorrect();setTimeout(()=>goTo('screen-level3'),1500);}else{fb.className='feedback tip';fb.innerHTML='💡 继续补充！试着写一个具体的故事或数据，30字以上！';} }
+
+function ansLv3(el,ans){ if(el.classList.contains('disabled'))return; document.querySelectorAll('#screen-level3 .option').forEach(o=>o.classList.add('disabled')); const fb=document.getElementById('lv3Fb'); fb.style.display='block'; if(ans==='B'){el.classList.add('correct');fb.className='feedback good';fb.innerHTML='✅ 正确！用华罗庚的真实事例来证明，这是举例论证！';playCorrect();showAchieve('🔗 逻辑大师解锁！');earnStar();setTimeout(()=>{document.getElementById('lv3chain').style.display='block';},800);}else{el.classList.add('wrong');document.querySelectorAll('#screen-level3 .option')[1].classList.add('correct');fb.className='feedback bad';fb.innerHTML='❌ 没有引用名言，没有对比，只用了华罗庚的真实例子，是举例论证！';playWrong();setTimeout(()=>{document.getElementById('lv3chain').style.display='block';},600);} }
+
+const chainMap = {};
+function pickChain(el, val, text){ if(el.classList.contains('placed'))return; const step=state.chainStep; if(step>3)return; document.getElementById('slot'+step+'text').textContent=text; document.getElementById('slot'+step+'text').style.color='#333'; chainMap[step]=val; el.classList.add('placed'); state.chainStep++; playBeep(440,0.08); }
+function checkChain(){ const fb=document.getElementById('chainFb'); fb.style.display='block'; if(chainMap[1]==='A'&&chainMap[2]==='B'&&chainMap[3]==='C'){fb.className='feedback good';fb.innerHTML='✅ 逻辑链完美！论点→事实论据→结论，这就是完整的论证！';playCorrect();setTimeout(()=>goTo('screen-boss'),1500);}else{fb.className='feedback tip';fb.innerHTML='💡 顺序不对！应该是：先亮明论点(A)，再给出事例(B)，最后得出结论(C)！重新排序吧。';chainMap={};state.chainStep=1;[1,2,3].forEach(i=>{document.getElementById('slot'+i+'text').textContent='第'+i+'步：？';document.getElementById('slot'+i+'text').style.color='#aaa';});document.querySelectorAll('.arg-chip').forEach(c=>c.classList.remove('placed'));} }
+
+function selectSide(s){ state.side=s; document.getElementById('tab-pro').classList.toggle('active',s==='pro'); document.getElementById('tab-con').classList.toggle('active',s==='con'); playBeep(440,0.08); }
+
+function bossPad(){ const t=document.getElementById('bossText').value; document.getElementById('bossCC').textContent=t.length+'字'; document.getElementById('cb4').checked=t.length>=80; document.getElementById('check-length').classList.toggle('checked',t.length>=80); document.getElementById('cb1').checked=/我认为|论点是|我的观点/.test(t); document.getElementById('check-claim').classList.toggle('checked',/我认为|论点是|我的观点/.test(t)); document.getElementById('cb2').checked=/例如|比如|数据|研究|显示|调查/.test(t); document.getElementById('check-evidence').classList.toggle('checked',/例如|比如|数据|研究|显示|调查/.test(t)); document.getElementById('cb3').checked=/由此可见|因此|所以|可以看出|从而/.test(t); document.getElementById('check-logic').classList.toggle('checked',/由此可见|因此|所以|可以看出|从而/.test(t)); }
+function updateChecklist(){  }
+
+function submitBoss(){ const t=document.getElementById('bossText').value.trim(); const fb=document.getElementById('bossFb'); fb.style.display='block'; if(t.length<80){fb.className='feedback tip';fb.innerHTML=`💡 字数不够！至少需要80字，还差${80-t.length}字！`;return;} const hasClaim=/我认为|论点|主张/.test(t); const hasEvidence=/例如|比如|数据|研究|显示|调查/.test(t); const hasLogic=/由此可见|因此|所以|可以看出/.test(t); if(hasClaim&&hasEvidence){fb.className='feedback good';fb.innerHTML='✅ 太棒了！论点+论据+论证齐全，是一篇有说服力的议论文！';playCorrect();launchConfetti();document.getElementById('finalScore').textContent=Math.min(state.score+40,100);setTimeout(()=>goTo('screen-report'),2000);}else{const missing=[];if(!hasClaim)missing.push('明确的论点（试试用「我认为……」开头）');if(!hasEvidence)missing.push('具体论据（加「例如……」或数据）');fb.className='feedback tip';fb.innerHTML='💡 还需要补充：'+missing.join('、')+'！';} }
+
+function restartGame(){ state.stars=0;state.score=0;state.chainStep=1;[1,2,3].forEach(i=>{const s=document.getElementById('star'+i);if(s)s.classList.remove('earned');});document.getElementById('starCount').textContent='0 / 3';goTo('screen-hero'); }
+
+function submitExtra(){ const t=document.getElementById('extraText').value.trim(); const fb=document.getElementById('extraFb'); fb.style.display='block'; if(t.length>=40){ fb.className='feedback good'; fb.innerHTML='✅ 写得很有论证力！据理反驳就要先承认对方有一点道理，再给出更有力的反证！'; playCorrect(); } else { fb.className='feedback tip'; fb.innerHTML='💡 继续加油！优秀的反驳辁转是：「虽然……，但……，因此……」！'; } }
+</script>
+</body>
+</html>

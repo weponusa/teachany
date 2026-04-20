@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌈 自然拼读 · 元音大冒险 | 四年级</title>
+<style>
+  :root {
+    --bg: #fffbf0;
+    --primary: #ff6b6b;
+    --secondary: #4ecdc4;
+    --accent: #ffe66d;
+    --card: #fff;
+    --radius: 20px;
+    --shadow: 0 8px 32px rgba(0,0,0,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); font-family: 'Segoe UI', 'PingFang SC', sans-serif; min-height: 100vh; overflow-x: hidden; }
+
+  /* ===== HERO ===== */
+  #hero {
+    background: linear-gradient(135deg, #ff6b6b 0%, #feca57 50%, #48dbfb 100%);
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center;
+    padding: 40px 20px; position: relative; overflow: hidden;
+  }
+  #hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.08'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .hero-bear { font-size: 80px; animation: bounce 2s infinite; z-index:1; }
+  .hero-title { font-size: clamp(2rem, 6vw, 3.5rem); font-weight: 900; color: #fff; text-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index:1; margin: 16px 0 8px; }
+  .hero-sub { font-size: 1.2rem; color: rgba(255,255,255,0.9); z-index:1; margin-bottom: 24px; }
+  .hero-badges { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; z-index:1; margin-bottom: 32px; }
+  .badge { background: rgba(255,255,255,0.25); backdrop-filter: blur(8px); color: #fff; padding: 8px 18px; border-radius: 50px; font-size: 0.95rem; font-weight: 600; }
+  .start-btn {
+    background: #fff; color: var(--primary); border: none; padding: 18px 48px;
+    border-radius: 50px; font-size: 1.3rem; font-weight: 800; cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15); z-index:1;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .start-btn:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 12px 32px rgba(0,0,0,0.2); }
+
+  /* ===== PROGRESS BAR ===== */
+  #progress-bar-wrap {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--card); box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    padding: 12px 24px; display: none; align-items: center; gap: 16px;
+  }
+  .prog-label { font-weight: 700; color: var(--primary); white-space: nowrap; font-size: 0.95rem; }
+  .prog-track { flex: 1; height: 12px; background: #ffe8e8; border-radius: 6px; overflow: hidden; }
+  .prog-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 6px; transition: width 0.5s ease; width: 0%; }
+  .star-count { font-size: 1.1rem; font-weight: 700; color: #f9ca24; }
+
+  /* ===== SECTIONS ===== */
+  .section { display: none; padding: 40px 20px; max-width: 900px; margin: 0 auto; }
+  .section.active { display: block; }
+  .section-title { font-size: 1.8rem; font-weight: 800; color: var(--primary); margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+  .section-desc { color: #666; margin-bottom: 28px; font-size: 1rem; }
+
+  /* ===== CARDS ===== */
+  .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px; margin-bottom: 24px; }
+
+  /* ===== OBJECTIVES ===== */
+  .obj-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+  .obj-item { background: linear-gradient(135deg, #fff0f0, #fff8f0); border-radius: var(--radius); padding: 20px; text-align: center; border: 2px solid #ffe0e0; }
+  .obj-icon { font-size: 2.5rem; margin-bottom: 8px; }
+  .obj-text { font-size: 0.9rem; font-weight: 600; color: #555; }
+
+  /* ===== VOWEL DISPLAY ===== */
+  .vowel-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 20px; }
+  .vowel-card {
+    background: var(--card); border-radius: var(--radius); padding: 24px 16px;
+    text-align: center; cursor: pointer; transition: all 0.3s;
+    border: 3px solid transparent; box-shadow: var(--shadow);
+    position: relative; overflow: hidden;
+  }
+  .vowel-card::before { content: ''; position: absolute; inset: 0; opacity: 0; transition: opacity 0.3s; }
+  .vowel-card:nth-child(1)::before { background: linear-gradient(135deg, #ffe0e0, #fff0f0); }
+  .vowel-card:nth-child(2)::before { background: linear-gradient(135deg, #e0f0ff, #f0f8ff); }
+  .vowel-card:nth-child(3)::before { background: linear-gradient(135deg, #e0ffe0, #f0fff0); }
+  .vowel-card:nth-child(4)::before { background: linear-gradient(135deg, #fff0e0, #fffaf0); }
+  .vowel-card:nth-child(5)::before { background: linear-gradient(135deg, #f0e0ff, #faf0ff); }
+  .vowel-card:hover::before, .vowel-card.active::before { opacity: 1; }
+  .vowel-card:hover { transform: translateY(-6px); border-color: var(--primary); }
+  .vowel-letter { font-size: 72px; font-weight: 900; line-height: 1; position: relative; z-index: 1; }
+  .vowel-card:nth-child(1) .vowel-letter { color: #ff6b6b; }
+  .vowel-card:nth-child(2) .vowel-letter { color: #4ecdc4; }
+  .vowel-card:nth-child(3) .vowel-letter { color: #26de81; }
+  .vowel-card:nth-child(4) .vowel-letter { color: #fd9644; }
+  .vowel-card:nth-child(5) .vowel-letter { color: #a55eea; }
+  .vowel-phonetic { font-size: 1.2rem; color: #888; margin: 4px 0; position: relative; z-index: 1; }
+  .vowel-emoji { font-size: 2rem; position: relative; z-index: 1; }
+  .vowel-word { font-size: 1rem; font-weight: 600; color: #555; position: relative; z-index: 1; }
+  .sound-btn { margin-top: 10px; background: var(--primary); color: #fff; border: none; border-radius: 50px; padding: 8px 20px; cursor: pointer; font-size: 0.9rem; font-weight: 600; position: relative; z-index: 1; transition: all 0.2s; }
+  .sound-btn:hover { transform: scale(1.05); }
+
+  /* ===== WARMUP ===== */
+  .warmup-vowels { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin: 20px 0; }
+  .warmup-v { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 900; cursor: pointer; transition: all 0.3s; box-shadow: var(--shadow); }
+  .warmup-v:hover { transform: scale(1.2) rotate(10deg); }
+  .wv-a { background: linear-gradient(135deg, #ff6b6b, #feca57); color: #fff; }
+  .wv-e { background: linear-gradient(135deg, #48dbfb, #4ecdc4); color: #fff; }
+  .wv-i { background: linear-gradient(135deg, #26de81, #20bf6b); color: #fff; }
+  .wv-o { background: linear-gradient(135deg, #fd9644, #e55039); color: #fff; }
+  .wv-u { background: linear-gradient(135deg, #a55eea, #8854d0); color: #fff; }
+
+  /* ===== QUIZ ===== */
+  .quiz-box { text-align: center; }
+  .quiz-q { font-size: 1.3rem; color: #333; font-weight: 600; margin-bottom: 24px; }
+  .quiz-word { font-size: 3rem; font-weight: 900; color: var(--primary); margin: 16px 0; letter-spacing: 4px; }
+  .quiz-choices { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin: 20px 0; }
+  .choice-btn {
+    padding: 14px 28px; border-radius: 50px; border: 3px solid #ddd; background: #fff;
+    font-size: 1.2rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
+    min-width: 80px;
+  }
+  .choice-btn:hover { border-color: var(--primary); background: #fff0f0; transform: translateY(-2px); }
+  .choice-btn.correct { background: #d4edda; border-color: #28a745; color: #155724; }
+  .choice-btn.wrong { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+  .feedback { font-size: 1.2rem; font-weight: 700; min-height: 36px; margin: 8px 0; }
+  .feedback.ok { color: #28a745; }
+  .feedback.no { color: #dc3545; }
+
+  /* ===== DRAG GAME ===== */
+  .drag-area { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; justify-content: center; }
+  .drag-target {
+    width: 260px; min-height: 80px; background: #f0f4ff; border-radius: var(--radius);
+    border: 3px dashed #4ecdc4; display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem; font-weight: 800; color: #aaa; padding: 12px; flex-wrap: wrap; gap: 6px;
+    transition: all 0.3s;
+  }
+  .drag-target.over { border-color: var(--primary); background: #fff0f0; }
+  .drag-letters { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .drag-letter {
+    width: 52px; height: 52px; background: linear-gradient(135deg, var(--primary), #feca57);
+    color: #fff; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem; font-weight: 900; cursor: grab; transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(255,107,107,0.3); user-select: none;
+  }
+  .drag-letter:hover { transform: scale(1.1); }
+  .drag-letter.dragging { opacity: 0.5; cursor: grabbing; }
+  .placed-letter {
+    width: 44px; height: 44px; background: var(--secondary); color: #fff;
+    border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; font-weight: 900; cursor: pointer;
+  }
+
+  /* ===== BOSS ===== */
+  .boss-wrap { text-align: center; }
+  .boss-bear { font-size: 80px; animation: shake 0.5s ease; }
+  .boss-text { font-size: 1.2rem; color: #555; margin: 12px 0 24px; }
+  .boss-q { font-size: 2rem; font-weight: 900; color: var(--primary); margin: 16px 0; }
+  .boss-hp { background: #eee; border-radius: 10px; height: 20px; overflow: hidden; margin: 12px 0 24px; }
+  .boss-hp-fill { height: 100%; background: linear-gradient(90deg, #ff6b6b, #feca57); border-radius: 10px; transition: width 0.5s; }
+
+  /* ===== REPORT ===== */
+  .report-wrap { text-align: center; }
+  .report-stars { font-size: 3rem; margin: 20px 0; }
+  .report-score { font-size: 3.5rem; font-weight: 900; color: var(--primary); }
+  .report-label { font-size: 1.1rem; color: #888; margin-bottom: 24px; }
+  .achievements { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin: 24px 0; }
+  .ach { background: linear-gradient(135deg, #fffbf0, #fff8e0); border-radius: 16px; padding: 16px; text-align: center; border: 2px solid #ffe66d; transition: all 0.3s; }
+  .ach.locked { opacity: 0.35; filter: grayscale(1); }
+  .ach-icon { font-size: 2rem; }
+  .ach-name { font-size: 0.75rem; font-weight: 600; color: #666; margin-top: 4px; }
+  .next-btn { background: linear-gradient(135deg, var(--primary), #feca57); color: #fff; border: none; padding: 16px 40px; border-radius: 50px; font-size: 1.2rem; font-weight: 800; cursor: pointer; box-shadow: 0 6px 20px rgba(255,107,107,0.3); transition: all 0.2s; }
+  .next-btn:hover { transform: translateY(-3px); }
+
+  /* ===== NAV ===== */
+  .nav-btns { display: flex; gap: 12px; justify-content: center; margin-top: 32px; flex-wrap: wrap; }
+  .nav-btn { padding: 12px 28px; border-radius: 50px; border: none; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+  .nav-prev { background: #eee; color: #555; }
+  .nav-prev:hover { background: #ddd; }
+  .nav-next { background: linear-gradient(135deg, var(--primary), #feca57); color: #fff; box-shadow: 0 4px 16px rgba(255,107,107,0.3); }
+  .nav-next:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,107,107,0.4); }
+
+  /* ===== ANIMATIONS ===== */
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
+  @keyframes shake { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-10deg)} 75%{transform:rotate(10deg)} }
+  @keyframes pop { 0%{transform:scale(0.8);opacity:0} 70%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+  .pop { animation: pop 0.4s ease forwards; }
+  .float { animation: float 3s ease infinite; }
+
+  /* ===== STAR RAIN ===== */
+  .star-rain { position: fixed; inset: 0; pointer-events: none; z-index: 9999; }
+  .star-particle { position: absolute; font-size: 1.5rem; animation: fall 1.5s ease forwards; top: -50px; }
+  @keyframes fall { to { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
+
+  /* ===== EXTENSION ===== */
+  .ext-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+  .ext-item { background: linear-gradient(135deg, #fff, #f0f8ff); border-radius: var(--radius); padding: 20px; border-left: 5px solid var(--secondary); }
+  .ext-word { font-size: 1.4rem; font-weight: 800; color: var(--primary); }
+  .ext-phonetic { font-size: 1rem; color: #888; }
+  .ext-meaning { font-size: 0.9rem; color: #555; margin-top: 4px; }
+
+  /* ===== AI BUDDY ===== */
+  #ai-buddy {
+    position: fixed; bottom: 24px; right: 24px; z-index: 200;
+    display: flex; flex-direction: column; align-items: flex-end; gap: 12px;
+  }
+  .buddy-bubble {
+    background: var(--card); border-radius: 20px 20px 4px 20px;
+    box-shadow: var(--shadow); padding: 14px 18px; max-width: 220px;
+    font-size: 0.9rem; color: #333; line-height: 1.5; border: 2px solid #ffe66d;
+    display: none;
+  }
+  .buddy-bubble.show { display: block; animation: pop 0.3s ease; }
+  .buddy-avatar { width: 60px; height: 60px; background: linear-gradient(135deg, #feca57, #ff6b6b); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; cursor: pointer; box-shadow: var(--shadow); transition: transform 0.2s; }
+  .buddy-avatar:hover { transform: scale(1.1) rotate(10deg); }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-bear">🐻</div>
+  <h1 class="hero-title">🌈 元音大冒险</h1>
+  <p class="hero-sub">自然拼读 · 四年级 · 掌握5个元音发音</p>
+  <div class="hero-badges">
+    <span class="badge">📚 四年级</span>
+    <span class="badge">🎯 5个元音</span>
+    <span class="badge">🎮 3关闯关</span>
+    <span class="badge">⭐ 赢取星星</span>
+  </div>
+  <button class="start-btn" onclick="startCourse()">🚀 开始冒险！</button>
+</section>
+
+<!-- PROGRESS BAR -->
+<div id="progress-bar-wrap">
+  <span class="prog-label">🐻 学习进度</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <span class="star-count" id="star-display">⭐ 0</span>
+</div>
+
+<!-- SECTION 1: OBJECTIVES -->
+<section class="section" id="sec-obj">
+  <div class="section-title">🎯 今天的目标</div>
+  <p class="section-desc">看看今天我们要学什么，准备好了吗？</p>
+  <div class="obj-grid">
+    <div class="obj-item"><div class="obj-icon">🔤</div><div class="obj-text">认识5个英语元音<br>A E I O U</div></div>
+    <div class="obj-item"><div class="obj-icon">🔊</div><div class="obj-text">学会每个元音<br>的标准发音</div></div>
+    <div class="obj-item"><div class="obj-icon">📝</div><div class="obj-text">认读含元音<br>的单词</div></div>
+    <div class="obj-item"><div class="obj-icon">🎮</div><div class="obj-text">用拼词游戏<br>巩固所学</div></div>
+  </div>
+  <div class="nav-btns">
+    <button class="nav-btn nav-next" onclick="goTo('sec-warmup')">下一步 →</button>
+  </div>
+</section>
+
+<!-- SECTION 2: WARMUP -->
+<section class="section" id="sec-warmup">
+  <div class="section-title">🔥 热身运动</div>
+  <p class="section-desc">先认识这5个特殊的字母——它们是英语的"元音"！点击听发音！</p>
+  <div class="card">
+    <p style="font-size:1.1rem;color:#555;margin-bottom:16px;">元音字母就像音乐中的"do re mi"，每个单词都少不了它们！</p>
+    <div class="warmup-vowels">
+      <div class="warmup-v wv-a" onclick="playVowel('a')">A</div>
+      <div class="warmup-v wv-e" onclick="playVowel('e')">E</div>
+      <div class="warmup-v wv-i" onclick="playVowel('i')">I</div>
+      <div class="warmup-v wv-o" onclick="playVowel('o')">O</div>
+      <div class="warmup-v wv-u" onclick="playVowel('u')">U</div>
+    </div>
+    <p style="text-align:center;color:#888;font-size:0.9rem;margin-top:12px;">👆 点击字母听发音！</p>
+  </div>
+  <div class="nav-btns">
+    <button class="nav-btn nav-prev" onclick="goTo('sec-obj')">← 上一步</button>
+    <button class="nav-btn nav-next" onclick="goTo('sec-learn')">开始学习 →</button>
+  </div>
+</section>
+
+<!-- SECTION 3: LEARN -->
+<section class="section" id="sec-learn">
+  <div class="section-title">📖 元音大展示</div>
+  <p class="section-desc">每个元音都有自己的声音和朋友单词，点击卡片听发音！</p>
+  <div class="vowel-grid">
+    <div class="vowel-card" onclick="playAndHighlight(this,'a')">
+      <div class="vowel-letter">Aa</div>
+      <div class="vowel-phonetic">/æ/</div>
+      <div class="vowel-emoji">🍎</div>
+      <div class="vowel-word">apple</div>
+      <button class="sound-btn" onclick="event.stopPropagation();playVowel('a')">🔊 发音</button>
+    </div>
+    <div class="vowel-card" onclick="playAndHighlight(this,'e')">
+      <div class="vowel-letter">Ee</div>
+      <div class="vowel-phonetic">/e/</div>
+      <div class="vowel-emoji">🥚</div>
+      <div class="vowel-word">egg</div>
+      <button class="sound-btn" onclick="event.stopPropagation();playVowel('e')">🔊 发音</button>
+    </div>
+    <div class="vowel-card" onclick="playAndHighlight(this,'i')">
+      <div class="vowel-letter">Ii</div>
+      <div class="vowel-phonetic">/ɪ/</div>
+      <div class="vowel-emoji">🦎</div>
+      <div class="vowel-word">igloo</div>
+      <button class="sound-btn" onclick="event.stopPropagation();playVowel('i')">🔊 发音</button>
+    </div>
+    <div class="vowel-card" onclick="playAndHighlight(this,'o')">
+      <div class="vowel-letter">Oo</div>
+      <div class="vowel-phonetic">/ɒ/</div>
+      <div class="vowel-emoji">🐙</div>
+      <div class="vowel-word">octopus</div>
+      <button class="sound-btn" onclick="event.stopPropagation();playVowel('o')">🔊 发音</button>
+    </div>
+    <div class="vowel-card" onclick="playAndHighlight(this,'u')">
+      <div class="vowel-letter">Uu</div>
+      <div class="vowel-phonetic">/ʌ/</div>
+      <div class="vowel-emoji">☂️</div>
+      <div class="vowel-word">umbrella</div>
+      <button class="sound-btn" onclick="event.stopPropagation();playVowel('u')">🔊 发音</button>
+    </div>
+  </div>
+  <div class="nav-btns">
+    <button class="nav-btn nav-prev" onclick="goTo('sec-warmup')">← 上一步</button>
+    <button class="nav-btn nav-next" onclick="goTo('sec-lv1')">关卡1 →</button>
+  </div>
+</section>
+
+<!-- LEVEL 1: SOUND MATCH -->
+<section class="section" id="sec-lv1">
+  <div class="section-title">🎮 关卡1：听音选字母</div>
+  <p class="section-desc">听单词，选出单词中含有的元音字母！</p>
+  <div class="card quiz-box">
+    <div class="quiz-q" id="lv1-prompt">单词的元音是哪个字母？</div>
+    <div class="quiz-word" id="lv1-word">cat</div>
+    <div style="font-size:1.5rem;margin-bottom:12px;" id="lv1-emoji">🐱</div>
+    <button onclick="speakWord(document.getElementById('lv1-word').textContent)" style="background:var(--secondary);color:#fff;border:none;border-radius:50px;padding:10px 24px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:16px;">🔊 听单词</button>
+    <div class="quiz-choices" id="lv1-choices"></div>
+    <div class="feedback" id="lv1-feedback"></div>
+    <div id="lv1-progress" style="color:#888;font-size:0.9rem;"></div>
+  </div>
+  <div class="nav-btns">
+    <button class="nav-btn nav-prev" onclick="goTo('sec-learn')">← 返回学习</button>
+    <button class="nav-btn nav-next" onclick="goTo('sec-lv2')">关卡2 →</button>
+  </div>
+</section>
+
+<!-- LEVEL 2: WORD FILL -->
+<section class="section" id="sec-lv2">
+  <div class="section-title">🎮 关卡2：填入元音</div>
+  <p class="section-desc">单词里缺了元音，帮它补全！</p>
+  <div class="card quiz-box">
+    <div class="quiz-q" id="lv2-prompt">补全这个单词，填入正确的元音：</div>
+    <div class="quiz-word" id="lv2-display">c_t</div>
+    <div style="font-size:1.5rem;margin-bottom:12px;" id="lv2-emoji">🐱</div>
+    <div class="quiz-choices" id="lv2-choices"></div>
+    <div class="feedback" id="lv2-feedback"></div>
+  </div>
+  <div class="nav-btns">
+    <button class="nav-btn nav-prev" onclick="goTo('sec-lv1')">← 关卡1</button>
+    <button class="nav-btn nav-next" onclick="goTo('sec-lv3')">关卡3 →</button>
+  </div>
+</section>
+
+<!-- LEVEL 3: DRAG SPELL -->
+<section class="section" id="sec-lv3">
+  <div class="section-title">🎮 关卡3：拖拽拼词</div>
+  <p class="section-desc">把字母拖到框里，拼出正确的单词！</p>
+  <div class="card">
+    <div style="text-align:center;margin-bottom:16px;">
+      <div id="lv3-hint" style="font-size:1.5rem;margin-bottom:12px;">🍎 苹果 (apple)</div>
+      <div id="lv3-emoji" style="font-size:3rem;margin-bottom:12px;">🍎</div>
+    </div>
+    <div class="drag-area">
+      <div>
+        <p style="font-size:0.9rem;color:#888;text-align:center;margin-bottom:8px;">字母库</p>
+        <div class="drag-letters" id="drag-source"></div>
+      </div>
+      <div>
+        <p style="font-size:0.9rem;color:#888;text-align:center;margin-bottom:8px;">放到这里 👇</p>
+        <div class="drag-target" id="drag-target" ondragover="onDragOver(event)" ondrop="onDrop(event)">
+          <span id="drag-placeholder">拖字母过来！</span>
+        </div>
+        <div style="text-align:center;margin-top:12px;">
+          <button onclick="checkSpelling()" style="background:var(--primary);color:#fff;border:none;border-radius:50px;padding:10px 24px;font-size:1rem;font-weight:700;cursor:pointer;margin-right:8px;">✅ 检查</button>
+          <button onclick="clearDrag()" style="background:#eee;color:#555;border:none;border-radius:50px;padding:10px 24px;font-size:1rem;font-weight:700;cursor:pointer;">🗑️ 清空</button>
+        </div>
+      </div>
+    </div>
+    <div class="feedback" id="lv3-feedback" style="text-align:center;margin-top:12px;"></div>
+    <div style="display:flex;justify-content:center;margin-top:12px;">
+      <button onclick="nextDragWord()" style="background:var(--secondary);color:#fff;border:none;border-radius:50px;padding:10px 24px;font-size:0.95rem;font-weight:700;cursor:pointer;">换一个词 →</button>
+    </div>
+  </div>
+  <div class="nav-btns">
+    <button class="nav-btn nav-prev" onclick="goTo('sec-lv2')">← 关卡2</button>
+    <button class="nav-btn nav-next" onclick="goTo('sec-boss')">Boss关 →</button>
+  </div>
+</section>
+
+<!-- BOSS -->
+<section class="section" id="sec-boss">
+  <div class="section-title">👾 Boss关卡</div>
+  <p class="section-desc">打败Boss！快速回答问题，每题减少Boss血量！</p>
+  <div class="card boss-wrap">
+    <div class="boss-bear" id="boss-bear">👾</div>
+    <div class="boss-hp"><div class="boss-hp-fill" id="boss-hp-fill" style="width:100%"></div></div>
+    <div class="boss-text">Boss血量: <span id="boss-hp-text">100</span>/100</div>
+    <div class="boss-q" id="boss-q">Loading...</div>
+    <div class="quiz-choices" id="boss-choices"></div>
+    <div class="feedback" id="boss-feedback"></div>
+  </div>
+  <div class="nav-btns">
+    <button class="nav-btn nav-prev" onclick="goTo('sec-lv3')">← 返回</button>
+    <button class="nav-btn nav-next" onclick="goTo('sec-report')">查看成绩 →</button>
+  </div>
+</section>
+
+<!-- REPORT -->
+<section class="section" id="sec-report">
+  <div class="section-title">🏆 学习成绩单</div>
+  <div class="card report-wrap">
+    <div style="font-size:3rem;">🎉</div>
+    <div class="report-stars" id="report-stars">⭐⭐⭐</div>
+    <div class="report-score" id="report-score">0</div>
+    <div class="report-label">总得分</div>
+    <p style="color:#666;margin-bottom:20px;" id="report-msg">太棒了！你掌握了元音发音！</p>
+    <div class="achievements" id="achievements">
+      <div class="ach" id="ach-1"><div class="ach-icon">🔊</div><div class="ach-name">发音达人</div></div>
+      <div class="ach" id="ach-2"><div class="ach-icon">🎯</div><div class="ach-name">神射手</div></div>
+      <div class="ach" id="ach-3"><div class="ach-icon">⚡</div><div class="ach-name">闪电手</div></div>
+      <div class="ach" id="ach-4"><div class="ach-icon">🧩</div><div class="ach-name">拼词大师</div></div>
+      <div class="ach" id="ach-5"><div class="ach-icon">💎</div><div class="ach-name">完美通关</div></div>
+      <div class="ach" id="ach-6"><div class="ach-icon">🔥</div><div class="ach-name">连胜王者</div></div>
+      <div class="ach" id="ach-7"><div class="ach-icon">🌟</div><div class="ach-name">元音专家</div></div>
+      <div class="ach" id="ach-8"><div class="ach-icon">🏅</div><div class="ach-name">勇敢学者</div></div>
+    </div>
+    <button class="next-btn" onclick="goTo('sec-ext')">🚀 挑战拓展 →</button>
+  </div>
+</section>
+
+<!-- EXTENSION -->
+<section class="section" id="sec-ext">
+  <div class="section-title">🌟 拓展词汇</div>
+  <p class="section-desc">你已经掌握了基础元音！来认识更多含元音的单词吧！</p>
+  <div class="ext-grid">
+    <div class="ext-item"><div class="ext-word">🍎 apple</div><div class="ext-phonetic">/ˈæpəl/</div><div class="ext-meaning">元音: A → /æ/</div></div>
+    <div class="ext-item"><div class="ext-word">🐘 elephant</div><div class="ext-phonetic">/ˈelɪfənt/</div><div class="ext-meaning">元音: E → /e/</div></div>
+    <div class="ext-item"><div class="ext-word">🦎 insect</div><div class="ext-phonetic">/ˈɪnsekt/</div><div class="ext-meaning">元音: I → /ɪ/</div></div>
+    <div class="ext-item"><div class="ext-word">🐙 orange</div><div class="ext-phonetic">/ˈɒrɪndʒ/</div><div class="ext-meaning">元音: O → /ɒ/</div></div>
+    <div class="ext-item"><div class="ext-word">☂️ uncle</div><div class="ext-phonetic">/ˈʌŋkəl/</div><div class="ext-meaning">元音: U → /ʌ/</div></div>
+    <div class="ext-item"><div class="ext-word">🐜 ant</div><div class="ext-phonetic">/ænt/</div><div class="ext-meaning">元音: A → /æ/</div></div>
+    <div class="ext-item"><div class="ext-word">🥚 end</div><div class="ext-phonetic">/end/</div><div class="ext-meaning">元音: E → /e/</div></div>
+    <div class="ext-item"><div class="ext-word">🎶 in</div><div class="ext-phonetic">/ɪn/</div><div class="ext-meaning">元音: I → /ɪ/</div></div>
+  </div>
+  <div class="nav-btns">
+    <button class="nav-btn nav-prev" onclick="goTo('sec-report')">← 成绩单</button>
+    <button class="nav-btn nav-next" onclick="restart()" style="background:linear-gradient(135deg,var(--secondary),#48dbfb)">🔄 再来一次</button>
+  </div>
+</section>
+
+<!-- AI BUDDY -->
+<div id="ai-buddy">
+  <div class="buddy-bubble" id="buddy-bubble">👋 你好！我是小熊同学！点击我随时提问！</div>
+  <div class="buddy-avatar" onclick="toggleBuddy()">🐻</div>
+</div>
+
+<!-- STAR RAIN CONTAINER -->
+<div class="star-rain" id="star-rain"></div>
+
+<script>
+// ===== STATE =====
+let currentSection = 'hero';
+let stars = 0;
+let totalScore = 0;
+let lv1Index = 0, lv2Index = 0, lv3Index = 0, bossIndex = 0;
+let lv1Correct = 0, lv2Correct = 0;
+let bossHP = 100;
+let dragWord = '';
+let dragPlaced = [];
+let buddyOpen = false;
+const buddyTips = [
+  '💡 记住：A E I O U 是5个元音！',
+  '🎵 嘴巴张大发A，嘴角咧开发E！',
+  '🍎 apple里的元音是A！',
+  '⭐ 你真棒！继续加油！',
+  '🔊 多听多说，发音越来越准！',
+  '🎮 游戏是学习的好帮手！',
+];
+let buddyTipIndex = 0;
+
+// ===== AUDIO =====
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let ctx = null;
+function getAudioCtx() { if (!ctx) ctx = new AudioCtx(); return ctx; }
+
+function playTone(freq, dur, type='sine', gain=0.3) {
+  const ac = getAudioCtx();
+  const osc = ac.createOscillator();
+  const g = ac.createGain();
+  osc.connect(g); g.connect(ac.destination);
+  osc.type = type; osc.frequency.value = freq;
+  g.gain.setValueAtTime(gain, ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
+  osc.start(); osc.stop(ac.currentTime + dur);
+}
+
+const vowelFreqs = { a: 220, e: 330, i: 440, o: 165, u: 196 };
+function playVowel(v) {
+  const f = vowelFreqs[v] || 300;
+  playTone(f, 0.5, 'sine', 0.3);
+  setTimeout(() => playTone(f * 1.5, 0.3, 'sine', 0.15), 200);
+  addStar(1);
+}
+
+function playSuccess() { [523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,0.2,'sine',0.25),i*100)); }
+function playFail() { playTone(200,0.3,'sawtooth',0.2); }
+function playLevelUp() { [262,330,392,523,659].forEach((f,i)=>setTimeout(()=>playTone(f,0.25,'triangle',0.3),i*80)); }
+
+function speakWord(word) {
+  if ('speechSynthesis' in window) {
+    const u = new SpeechSynthesisUtterance(word);
+    u.lang = 'en-US'; u.rate = 0.8;
+    speechSynthesis.speak(u);
+  } else {
+    playTone(440, 0.4);
+  }
+}
+
+// ===== NAVIGATION =====
+function startCourse() {
+  document.getElementById('hero').style.display = 'none';
+  document.getElementById('progress-bar-wrap').style.display = 'flex';
+  goTo('sec-obj');
+}
+
+const sectionOrder = ['sec-obj','sec-warmup','sec-learn','sec-lv1','sec-lv2','sec-lv3','sec-boss','sec-report','sec-ext'];
+function goTo(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  const sec = document.getElementById(id);
+  if (sec) { sec.classList.add('active'); sec.scrollIntoView({behavior:'smooth'}); }
+  currentSection = id;
+  updateProgress();
+  if (id === 'sec-lv1') initLv1();
+  if (id === 'sec-lv2') initLv2();
+  if (id === 'sec-lv3') initLv3();
+  if (id === 'sec-boss') initBoss();
+  if (id === 'sec-report') showReport();
+  showBuddyTip(id);
+}
+
+function updateProgress() {
+  const idx = sectionOrder.indexOf(currentSection);
+  const pct = Math.max(0, (idx / (sectionOrder.length - 1)) * 100);
+  document.getElementById('prog-fill').style.width = pct + '%';
+}
+
+function addStar(n) {
+  stars += n; totalScore += n * 10;
+  document.getElementById('star-display').textContent = '⭐ ' + stars;
+  if (n > 0) rainStars();
+}
+
+function rainStars() {
+  const container = document.getElementById('star-rain');
+  for (let i = 0; i < 5; i++) {
+    const s = document.createElement('div');
+    s.className = 'star-particle';
+    s.textContent = ['⭐','✨','🌟'][Math.floor(Math.random()*3)];
+    s.style.left = Math.random() * 100 + 'vw';
+    s.style.animationDuration = (0.8 + Math.random() * 0.7) + 's';
+    container.appendChild(s);
+    setTimeout(() => s.remove(), 2000);
+  }
+}
+
+function playAndHighlight(el, v) {
+  document.querySelectorAll('.vowel-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  playVowel(v);
+}
+
+// ===== LEVEL 1 =====
+const lv1Data = [
+  { word: 'cat', emoji: '🐱', vowel: 'a', distractors: ['e','i','o','u'] },
+  { word: 'bed', emoji: '🛏️', vowel: 'e', distractors: ['a','i','o','u'] },
+  { word: 'pig', emoji: '🐷', vowel: 'i', distractors: ['a','e','o','u'] },
+  { word: 'dog', emoji: '🐶', vowel: 'o', distractors: ['a','e','i','u'] },
+  { word: 'cup', emoji: '☕', vowel: 'u', distractors: ['a','e','i','o'] },
+  { word: 'hat', emoji: '🎩', vowel: 'a', distractors: ['e','i','o','u'] },
+  { word: 'hen', emoji: '🐔', vowel: 'e', distractors: ['a','i','o','u'] },
+  { word: 'lip', emoji: '💋', vowel: 'i', distractors: ['a','e','o','u'] },
+];
+
+function initLv1() {
+  lv1Index = 0; lv1Correct = 0;
+  renderLv1();
+}
+function renderLv1() {
+  if (lv1Index >= lv1Data.length) {
+    document.getElementById('lv1-feedback').textContent = '🎉 全部完成！得了' + lv1Correct + '颗星！';
+    document.getElementById('lv1-feedback').className = 'feedback ok';
+    playLevelUp(); addStar(lv1Correct);
+    return;
+  }
+  const q = lv1Data[lv1Index];
+  document.getElementById('lv1-word').textContent = q.word;
+  document.getElementById('lv1-emoji').textContent = q.emoji;
+  document.getElementById('lv1-progress').textContent = (lv1Index+1) + '/' + lv1Data.length;
+  document.getElementById('lv1-feedback').textContent = '';
+  const choices = [q.vowel, ...q.distractors.slice(0,3)].sort(() => Math.random()-0.5);
+  const container = document.getElementById('lv1-choices');
+  container.innerHTML = '';
+  choices.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = c.toUpperCase();
+    btn.onclick = () => checkLv1(c, q.vowel, btn);
+    container.appendChild(btn);
+  });
+}
+function checkLv1(chosen, correct, btn) {
+  const btns = document.querySelectorAll('#lv1-choices .choice-btn');
+  btns.forEach(b => b.disabled = true);
+  if (chosen === correct) {
+    btn.classList.add('correct');
+    document.getElementById('lv1-feedback').textContent = '✅ 正确！太棒了！';
+    document.getElementById('lv1-feedback').className = 'feedback ok';
+    playSuccess(); lv1Correct++;
+  } else {
+    btn.classList.add('wrong');
+    btns.forEach(b => { if (b.textContent.toLowerCase() === correct) b.classList.add('correct'); });
+    document.getElementById('lv1-feedback').textContent = '❌ 答案是 ' + correct.toUpperCase();
+    document.getElementById('lv1-feedback').className = 'feedback no';
+    playFail();
+  }
+  lv1Index++;
+  setTimeout(renderLv1, 1200);
+}
+
+// ===== LEVEL 2 =====
+const lv2Data = [
+  { display: 'c_t', word: 'cat', vowel: 'a', emoji: '🐱' },
+  { display: 'b_d', word: 'bed', vowel: 'e', emoji: '🛏️' },
+  { display: 'p_g', word: 'pig', vowel: 'i', emoji: '🐷' },
+  { display: 'd_g', word: 'dog', vowel: 'o', emoji: '🐶' },
+  { display: 'c_p', word: 'cup', vowel: 'u', emoji: '☕' },
+  { display: 'h_t', word: 'hat', vowel: 'a', emoji: '🎩' },
+];
+function initLv2() { lv2Index = 0; lv2Correct = 0; renderLv2(); }
+function renderLv2() {
+  if (lv2Index >= lv2Data.length) {
+    document.getElementById('lv2-feedback').textContent = '🎉 关卡2完成！你很厉害！';
+    document.getElementById('lv2-feedback').className = 'feedback ok';
+    playLevelUp(); addStar(lv2Correct);
+    return;
+  }
+  const q = lv2Data[lv2Index];
+  document.getElementById('lv2-display').textContent = q.display;
+  document.getElementById('lv2-emoji').textContent = q.emoji;
+  document.getElementById('lv2-feedback').textContent = '';
+  const choices = ['a','e','i','o','u'];
+  const container = document.getElementById('lv2-choices');
+  container.innerHTML = '';
+  choices.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = c.toUpperCase();
+    btn.onclick = () => checkLv2(c, q.vowel, btn, q);
+    container.appendChild(btn);
+  });
+}
+function checkLv2(chosen, correct, btn, q) {
+  const btns = document.querySelectorAll('#lv2-choices .choice-btn');
+  btns.forEach(b => b.disabled = true);
+  if (chosen === correct) {
+    btn.classList.add('correct');
+    document.getElementById('lv2-display').textContent = q.word;
+    document.getElementById('lv2-feedback').textContent = '✅ ' + q.word + ' 拼对了！';
+    document.getElementById('lv2-feedback').className = 'feedback ok';
+    playSuccess(); speakWord(q.word); lv2Correct++;
+  } else {
+    btn.classList.add('wrong');
+    btns.forEach(b => { if (b.textContent.toLowerCase() === correct) b.classList.add('correct'); });
+    document.getElementById('lv2-feedback').textContent = '❌ 应该是 ' + correct.toUpperCase();
+    document.getElementById('lv2-feedback').className = 'feedback no';
+    playFail();
+  }
+  lv2Index++;
+  setTimeout(renderLv2, 1300);
+}
+
+// ===== LEVEL 3: DRAG =====
+const lv3Words = [
+  { word: 'apple', emoji: '🍎', hint: '苹果' },
+  { word: 'egg', emoji: '🥚', hint: '鸡蛋' },
+  { word: 'igloo', emoji: '🏠', hint: '冰屋' },
+  { word: 'open', emoji: '📖', hint: '打开' },
+  { word: 'under', emoji: '⬇️', hint: '在…下面' },
+  { word: 'ant', emoji: '🐜', hint: '蚂蚁' },
+];
+let lv3WordIndex = 0;
+function initLv3() { lv3WordIndex = 0; loadDragWord(); }
+function loadDragWord() {
+  const wdata = lv3Words[lv3WordIndex % lv3Words.length];
+  dragWord = wdata.word;
+  dragPlaced = [];
+  document.getElementById('lv3-hint').textContent = wdata.emoji + ' ' + wdata.hint;
+  document.getElementById('lv3-emoji').textContent = wdata.emoji;
+  document.getElementById('lv3-feedback').textContent = '';
+  const target = document.getElementById('drag-target');
+  target.innerHTML = '<span id="drag-placeholder">拖字母过来！</span>';
+  const letters = dragWord.split('').sort(() => Math.random() - 0.5);
+  const extra = 'bcdfghjklmnpqrstvwxyz'.split('').sort(()=>Math.random()-0.5).slice(0,3);
+  const all = [...letters, ...extra].sort(() => Math.random() - 0.5);
+  const src = document.getElementById('drag-source');
+  src.innerHTML = '';
+  all.forEach((l, i) => {
+    const d = document.createElement('div');
+    d.className = 'drag-letter';
+    d.textContent = l;
+    d.draggable = true;
+    d.dataset.letter = l;
+    d.dataset.id = i;
+    d.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', l + '|' + i); d.classList.add('dragging'); });
+    d.addEventListener('dragend', () => d.classList.remove('dragging'));
+    src.appendChild(d);
+  });
+}
+function onDragOver(e) { e.preventDefault(); document.getElementById('drag-target').classList.add('over'); }
+function onDrop(e) {
+  e.preventDefault();
+  document.getElementById('drag-target').classList.remove('over');
+  const data = e.dataTransfer.getData('text/plain');
+  const [letter] = data.split('|');
+  dragPlaced.push(letter);
+  const ph = document.getElementById('drag-placeholder');
+  if (ph) ph.remove();
+  const target = document.getElementById('drag-target');
+  const pl = document.createElement('div');
+  pl.className = 'placed-letter';
+  pl.textContent = letter;
+  pl.onclick = () => { dragPlaced.splice(dragPlaced.indexOf(letter), 1); pl.remove(); };
+  target.appendChild(pl);
+}
+function checkSpelling() {
+  const attempt = dragPlaced.join('');
+  const fb = document.getElementById('lv3-feedback');
+  if (attempt.toLowerCase() === dragWord.toLowerCase()) {
+    fb.textContent = '🎉 太棒了！拼对了 "' + dragWord + '"！';
+    fb.className = 'feedback ok';
+    playSuccess(); addStar(2); speakWord(dragWord);
+  } else {
+    fb.textContent = '❌ 再试试！正确答案是 "' + dragWord + '"';
+    fb.className = 'feedback no';
+    playFail();
+  }
+}
+function clearDrag() {
+  dragPlaced = [];
+  document.getElementById('drag-target').innerHTML = '<span id="drag-placeholder">拖字母过来！</span>';
+  document.getElementById('lv3-feedback').textContent = '';
+}
+function nextDragWord() { lv3WordIndex++; loadDragWord(); }
+
+// ===== BOSS =====
+const bossQuestions = [
+  { q: '"apple" 的元音是？', choices: ['A','E','I','O'], answer: 'A' },
+  { q: '"egg" 的元音是？', choices: ['A','E','I','U'], answer: 'E' },
+  { q: '"pig" 的元音是？', choices: ['A','E','I','O'], answer: 'I' },
+  { q: '"dog" 的元音是？', choices: ['A','E','O','U'], answer: 'O' },
+  { q: '"cup" 的元音是？', choices: ['A','I','O','U'], answer: 'U' },
+  { q: '"cat" 的发音是 /kæt/，其元音是？', choices: ['A','E','I','O'], answer: 'A' },
+  { q: 'A E I O U 共有几个元音？', choices: ['3','4','5','6'], answer: '5' },
+  { q: '"bed" 的元音字母是？', choices: ['A','E','I','U'], answer: 'E' },
+];
+function initBoss() { bossIndex = 0; bossHP = 100; renderBoss(); }
+function renderBoss() {
+  if (bossIndex >= bossQuestions.length) {
+    document.getElementById('boss-feedback').textContent = '🎉 你打败了Boss！';
+    document.getElementById('boss-bear').textContent = '😵';
+    return;
+  }
+  const q = bossQuestions[bossIndex];
+  document.getElementById('boss-q').textContent = q.q;
+  document.getElementById('boss-feedback').textContent = '';
+  const container = document.getElementById('boss-choices');
+  container.innerHTML = '';
+  q.choices.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = c;
+    btn.onclick = () => checkBoss(c, q.answer, btn);
+    container.appendChild(btn);
+  });
+}
+function checkBoss(chosen, correct, btn) {
+  const btns = document.querySelectorAll('#boss-choices .choice-btn');
+  btns.forEach(b => b.disabled = true);
+  if (chosen === correct) {
+    btn.classList.add('correct');
+    bossHP = Math.max(0, bossHP - 20);
+    document.getElementById('boss-hp-fill').style.width = bossHP + '%';
+    document.getElementById('boss-hp-text').textContent = bossHP;
+    document.getElementById('boss-feedback').textContent = '💥 命中！Boss掉血20！';
+    document.getElementById('boss-feedback').className = 'feedback ok';
+    playSuccess(); addStar(1);
+  } else {
+    btn.classList.add('wrong');
+    btns.forEach(b => { if (b.textContent === correct) b.classList.add('correct'); });
+    document.getElementById('boss-feedback').textContent = '💢 打偏了！答案是 ' + correct;
+    document.getElementById('boss-feedback').className = 'feedback no';
+    playFail();
+    document.getElementById('boss-bear').classList.remove('float');
+    void document.getElementById('boss-bear').offsetWidth;
+    document.getElementById('boss-bear').style.animation = 'shake 0.5s';
+  }
+  bossIndex++;
+  setTimeout(renderBoss, 1200);
+}
+
+// ===== REPORT =====
+function showReport() {
+  document.getElementById('report-score').textContent = totalScore;
+  const starCount = stars >= 20 ? 3 : stars >= 10 ? 2 : 1;
+  document.getElementById('report-stars').textContent = '⭐'.repeat(starCount);
+  const achs = document.querySelectorAll('.ach');
+  achs.forEach((a, i) => {
+    if (i < Math.min(stars, 8)) a.classList.remove('locked');
+    else a.classList.add('locked');
+  });
+  playLevelUp();
+}
+
+// ===== BUDDY =====
+function toggleBuddy() {
+  buddyOpen = !buddyOpen;
+  const bubble = document.getElementById('buddy-bubble');
+  if (buddyOpen) {
+    bubble.textContent = buddyTips[buddyTipIndex % buddyTips.length];
+    buddyTipIndex++;
+    bubble.classList.add('show');
+    playTone(660, 0.15);
+  } else { bubble.classList.remove('show'); }
+}
+function showBuddyTip(section) {
+  const tips = {
+    'sec-lv1': '🎵 听声音，找元音！仔细听单词里的"主角"字母！',
+    'sec-lv2': '💡 找到空格，想想单词的发音，填入元音！',
+    'sec-lv3': '🧩 把字母一个个拖过去，拼出完整单词！',
+    'sec-boss': '⚡ Boss来了！快速作答，打败他！',
+  };
+  if (tips[section]) {
+    const bubble = document.getElementById('buddy-bubble');
+    bubble.textContent = tips[section];
+    bubble.classList.add('show');
+    setTimeout(() => bubble.classList.remove('show'), 4000);
+  }
+}
+
+function restart() {
+  stars = 0; totalScore = 0;
+  document.getElementById('star-display').textContent = '⭐ 0';
+  goTo('sec-obj');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>整本书阅读 · 三至九年级语文闯关</title>
+<style>
+:root{
+  --bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--card:#fff;
+  --text:#2d2d2d;--muted:#888;--radius:20px;--shadow:0 8px 32px rgba(0,0,0,.10);
+  --purple:#9c27b0;--indigo:#3f51b5;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);font-family:'Segoe UI',system-ui,sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden;}
+.hidden{display:none!important;}
+canvas#bg{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;}
+.screen{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px;}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px;max-width:700px;width:100%;}
+.btn{cursor:pointer;border:none;border-radius:var(--radius);font-weight:700;padding:12px 30px;font-size:1rem;transition:transform .15s,box-shadow .15s;}
+.btn:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(0,0,0,.18);}
+.btn-primary{background:var(--accent);color:var(--text);}
+.btn-secondary{background:var(--secondary);color:#fff;}
+.btn-danger{background:var(--primary);color:#fff;}
+
+/* PROGRESS */
+#prog-wrap{position:fixed;top:0;left:0;width:100%;z-index:100;background:rgba(255,251,240,.92);backdrop-filter:blur(8px);padding:8px 20px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 12px rgba(0,0,0,.08);}
+.prog-bar{flex:1;height:12px;background:#e0e0e0;border-radius:10px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--primary),var(--accent));border-radius:10px;transition:width .5s;}
+#star-count{font-size:1.1rem;font-weight:700;color:var(--purple);}
+
+/* HERO */
+#hero{background:linear-gradient(135deg,#7c3aed 0%,#db2777 100%)!important;color:#fff;}
+.hero-book{font-size:5rem;animation:float 3s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0) rotate(-5deg);}50%{transform:translateY(-18px) rotate(5deg);}}
+.badge-pill{background:rgba(255,255,255,.25);border-radius:50px;padding:6px 18px;font-size:.85rem;margin-bottom:16px;display:inline-block;}
+h1.hero-title{font-size:2.5rem;font-weight:900;margin-bottom:8px;text-shadow:0 4px 16px rgba(0,0,0,.2);}
+.hero-meta{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:16px 0;}
+.hero-meta span{background:rgba(255,255,255,.2);border-radius:12px;padding:4px 14px;font-size:.85rem;}
+
+/* BOOK SHELF */
+.bookshelf{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin:16px 0;}
+.book-card{background:var(--card);border-radius:16px;padding:16px;text-align:center;cursor:pointer;transition:transform .2s,box-shadow .2s;border:2px solid transparent;}
+.book-card:hover{transform:translateY(-4px);box-shadow:0 12px 28px rgba(0,0,0,.14);}
+.book-card.selected{border-color:var(--primary);background:#fff3f3;}
+.book-emoji{font-size:2.5rem;margin-bottom:8px;}
+.book-title{font-size:.85rem;font-weight:700;margin-bottom:4px;}
+.book-grade{font-size:.75rem;color:var(--muted);}
+
+/* QUIZ */
+.quiz-q{background:#f8f4ff;border-radius:14px;padding:18px;margin-bottom:16px;}
+.quiz-q p{font-size:.98rem;margin-bottom:12px;font-weight:600;}
+.opts{display:flex;flex-direction:column;gap:8px;}
+.opt-btn{background:#fff;border:2px solid #e0e0e0;border-radius:12px;padding:10px 16px;cursor:pointer;font-size:.9rem;text-align:left;transition:all .2s;}
+.opt-btn:hover{border-color:var(--secondary);}
+.opt-btn.correct{border-color:#4caf50;background:#e8f5e9;}
+.opt-btn.wrong{border-color:var(--primary);background:#ffebee;}
+.opt-btn:disabled{cursor:default;}
+.level-badge{display:inline-block;background:var(--primary);color:#fff;border-radius:50px;padding:5px 18px;font-size:.9rem;font-weight:700;margin-bottom:12px;}
+
+/* MAP GAME */
+.chapter-map{display:flex;flex-direction:column;gap:10px;}
+.chapter-item{background:#fff;border-radius:14px;padding:14px 18px;border:2px solid #e0e0e0;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:12px;}
+.chapter-item:hover{border-color:var(--secondary);transform:translateX(4px);}
+.chapter-item.done{border-color:#4caf50;background:#e8f5e9;}
+.chapter-item.active{border-color:var(--primary);background:#fff3f3;}
+.chap-num{width:36px;height:36px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;flex-shrink:0;}
+.chap-info{flex:1;}
+.chap-title{font-weight:700;font-size:.9rem;}
+.chap-hint{font-size:.8rem;color:var(--muted);margin-top:2px;}
+
+/* MIND MAP */
+.mind-map{background:#f5f5f5;border-radius:16px;padding:20px;margin:12px 0;}
+.mm-center{background:var(--primary);color:#fff;border-radius:14px;padding:12px 20px;text-align:center;font-weight:700;margin:0 auto 16px;max-width:200px;}
+.mm-branches{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.mm-branch{background:#fff;border-radius:12px;padding:10px 12px;border-left:4px solid var(--secondary);font-size:.88rem;}
+.mm-branch textarea{width:100%;border:1px solid #e0e0e0;border-radius:8px;padding:6px;font-size:.85rem;resize:none;min-height:52px;margin-top:6px;}
+
+/* TIMELINE */
+.timeline{position:relative;padding-left:28px;margin:12px 0;}
+.timeline::before{content:'';position:absolute;left:10px;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--primary),var(--accent));}
+.tl-item{position:relative;margin-bottom:16px;}
+.tl-dot{position:absolute;left:-22px;top:4px;width:16px;height:16px;border-radius:50%;background:var(--primary);border:3px solid #fff;box-shadow:0 0 0 2px var(--primary);}
+.tl-content{background:#fff;border-radius:12px;padding:10px 14px;box-shadow:0 2px 8px rgba(0,0,0,.07);}
+.tl-title{font-weight:700;font-size:.9rem;color:var(--primary);}
+.tl-text{font-size:.85rem;color:var(--muted);margin-top:4px;}
+
+/* CHARACTER CARD */
+.char-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:12px 0;}
+.char-card{background:#fff;border-radius:16px;padding:14px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.08);}
+.char-avatar{font-size:2.5rem;margin-bottom:8px;}
+.char-name{font-weight:700;font-size:.9rem;margin-bottom:4px;}
+.char-trait{font-size:.78rem;color:var(--muted);}
+.trait-input{border:1px solid #e0e0e0;border-radius:8px;padding:6px;font-size:.8rem;width:100%;margin-top:6px;}
+
+/* BOSS */
+.boss-wrap{background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;border-radius:var(--radius);padding:28px;max-width:700px;width:100%;}
+.boss-wrap h2{color:var(--accent);}
+.boss-textarea{width:100%;min-height:130px;border-radius:14px;padding:14px;font-size:.95rem;margin:12px 0;border:none;resize:vertical;background:rgba(255,255,255,.08);color:#fff;}
+.boss-textarea::placeholder{color:rgba(255,255,255,.4);}
+
+/* SCORE */
+.score-card{background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;border-radius:var(--radius);padding:32px;text-align:center;max-width:600px;width:100%;}
+.score-num{font-size:4rem;font-weight:900;}
+.achs{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px 0;}
+.ach{background:rgba(255,255,255,.15);border-radius:50px;padding:5px 14px;font-size:.82rem;}
+.ach.earned{background:var(--accent);color:var(--text);font-weight:700;}
+.stars-row{font-size:2rem;margin:8px 0;}
+
+/* EXT */
+.ext-card{background:linear-gradient(135deg,#4ecdc4,#44a1a0);color:#fff;border-radius:var(--radius);padding:28px;max-width:700px;width:100%;}
+
+/* TOAST */
+#toast{position:fixed;top:80px;left:50%;transform:translateX(-50%) translateY(-40px);background:var(--purple);color:#fff;padding:12px 24px;border-radius:50px;font-weight:700;z-index:300;opacity:0;transition:all .3s;pointer-events:none;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* BUDDY */
+#buddy{position:fixed;bottom:24px;right:24px;z-index:200;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+.bubble{background:var(--card);border-radius:18px 18px 4px 18px;padding:12px 16px;box-shadow:var(--shadow);font-size:.88rem;max-width:220px;animation:fadeUp .3s;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.buddy-btn{width:54px;height:54px;background:var(--purple);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.7rem;cursor:pointer;box-shadow:var(--shadow);transition:transform .2s;}
+.buddy-btn:hover{transform:scale(1.1);}
+
+@media(max-width:480px){
+  h1.hero-title{font-size:1.8rem;}
+  .mm-branches{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div id="prog-wrap" class="hidden">
+  <span>📚</span>
+  <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+  <span id="star-count">⭐ 0</span>
+</div>
+<div id="toast"></div>
+<div id="buddy">
+  <div class="bubble hidden" id="buddy-msg">我是书虫🐛，陪你读透整本书！</div>
+  <div class="buddy-btn" onclick="toggleBuddy()">🐛</div>
+</div>
+
+<!-- S0 HERO -->
+<div class="screen" id="s0" style="background:linear-gradient(135deg,#7c3aed,#db2777);">
+  <div style="text-align:center;color:#fff;">
+    <div class="hero-book">📚</div>
+    <div class="badge-pill">三至九年级 · 整本书阅读 🌈</div>
+    <h1 class="hero-title">整本书阅读探险队</h1>
+    <p style="opacity:.88;font-size:1.05rem;margin-bottom:16px;">从情节到人物，从主题到写法<br>成为真正的阅读达人！</p>
+    <div class="hero-meta">
+      <span>🗺️ 3大关卡</span><span>⭐ 共300分</span>
+      <span>⏱ 约30分钟</span><span>🏆 8成就</span>
+    </div>
+    <button class="btn btn-primary" onclick="goTo(1)">🚀 开始探险！</button>
+  </div>
+</div>
+
+<!-- S1 OBJECTIVES -->
+<div class="screen hidden" id="s1">
+  <div class="card">
+    <h2 style="color:var(--purple);margin-bottom:14px;">🎯 本次阅读目标</h2>
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
+      <li style="background:#f3e5f5;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;"><span style="font-size:1.3rem;">🗺️</span>梳理全书情节脉络，制作故事地图</li>
+      <li style="background:#e3f2fd;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;"><span style="font-size:1.3rem;">👤</span>分析主要人物形象及其成长变化</li>
+      <li style="background:#e8f5e9;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;"><span style="font-size:1.3rem;">💡</span>提炼书中的核心主题与作者寄托</li>
+      <li style="background:#fff8e1;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;"><span style="font-size:1.3rem;">✍️</span>撰写书评，表达个性化阅读感悟</li>
+    </ul>
+    <div style="background:#f3e5f5;border-radius:14px;padding:14px;margin-bottom:20px;font-size:.92rem;">
+      <b>🐛 书虫说：</b>读整本书要"三读"：速读看情节→精读析人物→研读悟主题。今天我们一起闯关，把书读透！
+    </div>
+    <button class="btn btn-secondary" onclick="goTo(2)">✅ 出发！</button>
+  </div>
+</div>
+
+<!-- S2 BOOK SELECT + WARMUP -->
+<div class="screen hidden" id="s2">
+  <div class="card">
+    <h2 style="color:var(--purple);margin-bottom:6px;">🔥 热身：选一本书开始旅程</h2>
+    <p style="color:var(--muted);font-size:.9rem;margin-bottom:16px;">选择你读过（或正在读）的书，个性化你的闯关体验！</p>
+    <div class="bookshelf" id="bookshelf">
+      <div class="book-card" onclick="selectBook(this,'西游记','🐒','经典名著')">
+        <div class="book-emoji">🐒</div>
+        <div class="book-title">西游记</div>
+        <div class="book-grade">六至九年级</div>
+      </div>
+      <div class="book-card" onclick="selectBook(this,'夏洛的网','🕷️','外国名著')">
+        <div class="book-emoji">🕷️</div>
+        <div class="book-title">夏洛的网</div>
+        <div class="book-grade">三至五年级</div>
+      </div>
+      <div class="book-card" onclick="selectBook(this,'朝花夕拾','🌸','现代经典')">
+        <div class="book-emoji">🌸</div>
+        <div class="book-title">朝花夕拾</div>
+        <div class="book-grade">七至九年级</div>
+      </div>
+      <div class="book-card" onclick="selectBook(this,'小王子','🌹','经典童话')">
+        <div class="book-emoji">🌹</div>
+        <div class="book-title">小王子</div>
+        <div class="book-grade">四至六年级</div>
+      </div>
+      <div class="book-card" onclick="selectBook(this,'水浒传','⚔️','经典名著')">
+        <div class="book-emoji">⚔️</div>
+        <div class="book-title">水浒传</div>
+        <div class="book-grade">七至九年级</div>
+      </div>
+      <div class="book-card" onclick="selectBook(this,'自选书目','📖','自定义')">
+        <div class="book-emoji">📖</div>
+        <div class="book-title">自选书目</div>
+        <div class="book-grade">自由选择</div>
+      </div>
+    </div>
+    <div id="book-quiz" class="hidden" style="margin-top:16px;">
+      <h3 style="margin-bottom:12px;">🔥 热身题（关于所选书目）</h3>
+      <div id="bq-container"></div>
+      <div id="bq-result" class="hidden" style="text-align:center;margin-top:12px;">
+        <div id="bq-score-txt" style="font-size:1.2rem;font-weight:700;margin-bottom:12px;"></div>
+        <button class="btn btn-primary" onclick="goTo(3)">🗺️ 进入第一关！</button>
+      </div>
+    </div>
+    <div id="book-note" class="hidden" style="background:#f3e5f5;border-radius:12px;padding:12px;margin-top:12px;font-size:.88rem;">
+      已选：<span id="selected-book-name" style="font-weight:700;color:var(--purple);"></span>
+      <span id="selected-book-type" style="margin-left:8px;color:var(--muted);"></span>
+    </div>
+  </div>
+</div>
+
+<!-- S3 LEVEL 1: STORY MAP -->
+<div class="screen hidden" id="s3">
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <span class="level-badge">🗺️ 第一关</span>
+      <span style="font-weight:700;font-size:1.1rem;">故事地图</span>
+      <span style="margin-left:auto;color:var(--muted);font-size:.9rem;">+60⭐</span>
+    </div>
+    <h3 style="margin-bottom:10px;">按顺序拖放，完成故事时间线</h3>
+    <p style="color:var(--muted);font-size:.88rem;margin-bottom:14px;">以《夏洛的网》为例（可替换为你选择的书）</p>
+
+    <div class="timeline" id="tl-user">
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-content">
+          <div class="tl-title">📍 开端</div>
+          <textarea class="trait-input" style="min-height:50px;" id="tl1" placeholder="故事是怎么开始的？写出主要事件…">小猪威尔伯出生，弗恩救了它，后来被送到朱克曼农场。</textarea>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="background:var(--secondary);box-shadow:0 0 0 2px var(--secondary);"></div>
+        <div class="tl-content">
+          <div class="tl-title" style="color:var(--secondary);">📍 发展</div>
+          <textarea class="trait-input" style="min-height:50px;" id="tl2" placeholder="中间发生了什么？矛盾如何激化？">威尔伯得知自己将被宰杀，蜘蛛夏洛决定帮助他。</textarea>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="background:#ff9800;box-shadow:0 0 0 2px #ff9800;"></div>
+        <div class="tl-content">
+          <div class="tl-title" style="color:#e65100;">📍 高潮</div>
+          <textarea class="trait-input" style="min-height:50px;" id="tl3" placeholder="故事最紧张的时刻是什么？">夏洛在网上织字，威尔伯在展览会上获奖，被保住了生命。</textarea>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="background:#9c27b0;box-shadow:0 0 0 2px #9c27b0;"></div>
+        <div class="tl-content">
+          <div class="tl-title" style="color:#9c27b0;">📍 结局</div>
+          <textarea class="trait-input" style="min-height:50px;" id="tl4" placeholder="故事如何收尾？人物命运如何？">夏洛去世，但孩子们留了下来，威尔伯铭记友情。</textarea>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;">
+      <p style="font-size:.9rem;font-weight:700;margin-bottom:8px;">核心冲突是什么？</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="conflict-btns">
+        <button class="opt-btn" onclick="pickConflict(this,'人与自然')">🌿 人与自然</button>
+        <button class="opt-btn" onclick="pickConflict(this,'友情与牺牲')">❤️ 友情与牺牲</button>
+        <button class="opt-btn" onclick="pickConflict(this,'善恶对立')">⚖️ 善恶对立</button>
+        <button class="opt-btn" onclick="pickConflict(this,'成长与蜕变')">🦋 成长与蜕变</button>
+      </div>
+      <input type="hidden" id="conflict-val">
+    </div>
+
+    <button class="btn btn-primary" style="margin-top:16px;" onclick="checkL1()">✅ 提交地图</button>
+  </div>
+</div>
+
+<!-- S4 LEVEL 2: CHARACTER ANALYSIS -->
+<div class="screen hidden" id="s4">
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <span class="level-badge" style="background:var(--secondary);">👤 第二关</span>
+      <span style="font-weight:700;font-size:1.1rem;">人物形象分析</span>
+      <span style="margin-left:auto;color:var(--muted);font-size:.9rem;">+80⭐</span>
+    </div>
+
+    <h3 style="margin-bottom:10px;">为书中人物填写形象卡</h3>
+    <div class="char-cards">
+      <div class="char-card">
+        <div class="char-avatar">🕷️</div>
+        <div class="char-name">夏洛</div>
+        <div class="char-trait">蜘蛛，威尔伯的朋友</div>
+        <input class="trait-input" id="c1-trait" placeholder="3个形容词（如：聪明、无私…）">
+        <input class="trait-input" id="c1-ev" placeholder="支撑观点的情节">
+      </div>
+      <div class="char-card">
+        <div class="char-avatar">🐷</div>
+        <div class="char-name">威尔伯</div>
+        <div class="char-trait">猪，故事主角</div>
+        <input class="trait-input" id="c2-trait" placeholder="3个形容词">
+        <input class="trait-input" id="c2-ev" placeholder="支撑观点的情节">
+      </div>
+      <div class="char-card">
+        <div class="char-avatar">👧</div>
+        <div class="char-name">弗恩</div>
+        <div class="char-trait">小女孩，威尔伯的恩人</div>
+        <input class="trait-input" id="c3-trait" placeholder="3个形容词">
+        <input class="trait-input" id="c3-ev" placeholder="支撑观点的情节">
+      </div>
+    </div>
+
+    <div style="margin-top:16px;background:#f8f4ff;border-radius:14px;padding:16px;">
+      <p style="font-weight:700;margin-bottom:10px;">🔍 人物关系图（拖动连线/选择关系）</p>
+      <p style="font-size:.88rem;color:var(--muted);margin-bottom:10px;">选择每对人物之间的关系：</p>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;align-items:center;gap:8px;font-size:.9rem;">
+          <span>🕷️夏洛 & 🐷威尔伯：</span>
+          <select class="trait-input" style="flex:1;max-width:200px;" id="rel1">
+            <option value="">请选择</option>
+            <option value="挚友/救命恩人">挚友/救命恩人</option>
+            <option value="竞争对手">竞争对手</option>
+            <option value="陌生人">陌生人</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:.9rem;">
+          <span>👧弗恩 & 🐷威尔伯：</span>
+          <select class="trait-input" style="flex:1;max-width:200px;" id="rel2">
+            <option value="">请选择</option>
+            <option value="救助者与被救者">救助者与被救者</option>
+            <option value="敌对关系">敌对关系</option>
+            <option value="主人与宠物">主人与宠物</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;">
+      <p style="font-weight:700;margin-bottom:8px;">书中最令你感动的人物是哪个？为什么？</p>
+      <textarea style="width:100%;border:2px solid #e0e0e0;border-radius:12px;padding:12px;font-size:.9rem;min-height:80px;resize:none;outline:none;" id="char-feeling" placeholder="我最感动的是……因为……"></textarea>
+    </div>
+
+    <button class="btn btn-primary" style="margin-top:16px;" onclick="checkL2()">✅ 提交分析</button>
+  </div>
+</div>
+
+<!-- S5 LEVEL 3: THEME MIND MAP -->
+<div class="screen hidden" id="s5">
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <span class="level-badge" style="background:var(--purple);">💡 第三关</span>
+      <span style="font-weight:700;font-size:1.1rem;">主题思维导图</span>
+      <span style="margin-left:auto;color:var(--muted);font-size:.9rem;">+80⭐</span>
+    </div>
+    <h3 style="margin-bottom:10px;">提炼书的核心主题，完成思维导图</h3>
+
+    <div class="mind-map">
+      <div class="mm-center" id="mm-book-name">《夏洛的网》</div>
+      <div class="mm-branches">
+        <div class="mm-branch">
+          <b>🌟 核心主题</b>
+          <textarea id="mm1" placeholder="这本书想告诉我们什么？">友情与牺牲的力量</textarea>
+        </div>
+        <div class="mm-branch">
+          <b>📝 关键词</b>
+          <textarea id="mm2" placeholder="3-5个关键词，用逗号分隔">友情、牺牲、生命、成长、珍贵</textarea>
+        </div>
+        <div class="mm-branch">
+          <b>💬 金句摘录</b>
+          <textarea id="mm3" placeholder="书中最触动你的一句话">"一个朋友，一辈子的财富。"</textarea>
+        </div>
+        <div class="mm-branch">
+          <b>🔗 联系生活</b>
+          <textarea id="mm4" placeholder="这本书让你联想到生活中的什么？">让我想到了我的好朋友……</textarea>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;">
+      <p style="font-weight:700;margin-bottom:10px;">这本书属于什么类型？（多选）</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;" id="genre-btns">
+        <button class="opt-btn" onclick="toggleGenre(this,'成长小说')">🌱 成长小说</button>
+        <button class="opt-btn" onclick="toggleGenre(this,'动物小说')">🐾 动物小说</button>
+        <button class="opt-btn" onclick="toggleGenre(this,'奇幻冒险')">🧙 奇幻冒险</button>
+        <button class="opt-btn" onclick="toggleGenre(this,'友情主题')">❤️ 友情主题</button>
+        <button class="opt-btn" onclick="toggleGenre(this,'历史题材')">🏛️ 历史题材</button>
+        <button class="opt-btn" onclick="toggleGenre(this,'科幻小说')">🚀 科幻小说</button>
+      </div>
+      <div id="genre-list" style="font-size:.85rem;color:var(--muted);margin-top:8px;">已选：无</div>
+    </div>
+
+    <div style="margin-top:16px;">
+      <p style="font-weight:700;margin-bottom:8px;">你会给这本书打几颗星？（点击选择）</p>
+      <div id="star-rating" style="display:flex;gap:4px;font-size:2rem;cursor:pointer;">
+        <span onclick="setRating(1)" class="star-btn">☆</span>
+        <span onclick="setRating(2)" class="star-btn">☆</span>
+        <span onclick="setRating(3)" class="star-btn">☆</span>
+        <span onclick="setRating(4)" class="star-btn">☆</span>
+        <span onclick="setRating(5)" class="star-btn">☆</span>
+      </div>
+      <input type="hidden" id="book-rating" value="0">
+    </div>
+
+    <button class="btn btn-primary" style="margin-top:16px;" onclick="checkL3()">✅ 完成导图</button>
+  </div>
+</div>
+
+<!-- S6 BOSS: BOOK REVIEW -->
+<div class="screen hidden" id="s6">
+  <div class="boss-wrap">
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-size:3rem;">👑</div>
+      <h2>Boss关卡：写一篇迷你书评</h2>
+      <p style="opacity:.8;margin-top:8px;">围绕你选择的书，写一篇100字以上的书评<br>包含：简介/精彩情节/人物分析/个人感悟</p>
+    </div>
+    <div style="background:rgba(255,255,255,.1);border-radius:14px;padding:16px;margin-bottom:14px;font-size:.88rem;">
+      <b>📝 书评框架：</b><br>
+      ① 开头：一句话介绍这本书（书名+作者+体裁）<br>
+      ② 情节：书中最精彩的一段情节<br>
+      ③ 人物：你最喜欢/印象深刻的人物<br>
+      ④ 感悟：读完这本书你明白了什么道理？<br>
+      ⑤ 推荐：你会把这本书推荐给谁？为什么？
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;font-size:.88rem;opacity:.7;margin-bottom:6px;">
+      <span>已选书目：<span id="boss-book-name" style="font-weight:700;color:var(--accent);">夏洛的网</span></span>
+      <span>字数：<span id="boss-count">0</span></span>
+    </div>
+    <textarea class="boss-textarea" id="boss-text" placeholder="开始写你的书评……
+《夏洛的网》是美国作家怀特所著的一部经典儿童小说……"></textarea>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+      <button class="btn btn-secondary" onclick="aiAnalyzeReview()">🔍 AI点评</button>
+    </div>
+    <div id="review-feedback" class="hidden" style="background:rgba(255,255,255,.12);border-radius:12px;padding:14px;margin-bottom:12px;font-size:.88rem;"></div>
+    <button class="btn btn-primary" onclick="submitBoss()">🏆 提交书评</button>
+  </div>
+</div>
+
+<!-- S7 SCORECARD -->
+<div class="screen hidden" id="s7">
+  <div class="score-card">
+    <div style="font-size:3rem;">📚</div>
+    <h2 style="margin-bottom:4px;">阅读探险完成！</h2>
+    <div class="score-num" id="final-score">0</div>
+    <div style="opacity:.8;margin-bottom:14px;">分</div>
+    <div class="stars-row" id="stars-row">⭐⭐⭐</div>
+    <div class="achs">
+      <div class="ach" id="a1">🗺️ 故事侦探</div>
+      <div class="ach" id="a2">👤 人物分析师</div>
+      <div class="ach" id="a3">💡 主题探究者</div>
+      <div class="ach" id="a4">✍️ 书评达人</div>
+      <div class="ach" id="a5">📖 博览群书</div>
+      <div class="ach" id="a6">🏆 全程通关</div>
+      <div class="ach" id="a7">💯 完美书单</div>
+      <div class="ach" id="a8">🐛 书虫挚友</div>
+    </div>
+    <div style="background:rgba(255,255,255,.15);border-radius:12px;padding:14px;margin:12px 0;text-align:left;font-size:.88rem;" id="breakdown"></div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="goTo(8)">🌱 拓展阅读</button>
+      <button class="btn" style="background:rgba(255,255,255,.25);color:#fff;" onclick="location.reload()">🔄 再来一次</button>
+    </div>
+  </div>
+</div>
+
+<!-- S8 EXTENSION -->
+<div class="screen hidden" id="s8">
+  <div class="ext-card">
+    <h2 style="margin-bottom:6px;">🌱 阅读拓展园地</h2>
+    <p style="opacity:.85;margin-bottom:18px;">整本书阅读，让你的思维更开阔！</p>
+    <div style="display:grid;gap:14px;">
+      <div style="background:rgba(255,255,255,.2);border-radius:14px;padding:16px;">
+        <b>📚 经典书单推荐</b>
+        <ul style="margin-top:8px;padding-left:16px;font-size:.88rem;opacity:.9;line-height:2;">
+          <li>三四年级：《夏洛的网》《草房子》《小王子》</li>
+          <li>五六年级：《西游记》《哈利波特》《鲁滨逊漂流记》</li>
+          <li>七八九年级：《朝花夕拾》《水浒传》《平凡的世界》</li>
+        </ul>
+      </div>
+      <div style="background:rgba(255,255,255,.2);border-radius:14px;padding:16px;">
+        <b>🔑 整本书阅读方法</b>
+        <div style="margin-top:8px;font-size:.88rem;opacity:.9;line-height:2;">
+          ▸ <b>做批注</b>：在书页空白处写感悟<br>
+          ▸ <b>画地图</b>：为故事情节画时间线<br>
+          ▸ <b>写人物卡</b>：记录人物特点与成长<br>
+          ▸ <b>找主题</b>：问自己"作者想说什么"<br>
+          ▸ <b>写书评</b>：把感悟写成文字
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,.2);border-radius:14px;padding:16px;">
+        <b>🎯 课后挑战</b>
+        <p style="font-size:.88rem;opacity:.9;margin-top:8px;">选一本你最喜欢的书，用今天学到的方法：制作故事地图+人物卡+写100字书评，分享给同学！</p>
+      </div>
+    </div>
+    <div style="margin-top:20px;text-align:center;">
+      <button class="btn btn-primary" onclick="goTo(0)">🏠 返回首页</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const st={stars:0,screen:0,selectedBook:'夏洛的网',l1s:0,l2s:0,l3s:0,bossSc:0,genres:[],rating:0,conflict:'',achs:[]};
+// Audio
+const AC2=window.AudioContext||window.webkitAudioContext;let ac2;
+function ga(){if(!ac2)ac2=new AC2();return ac2;}
+function pt(f,d=.15,t='sine',v=.28){try{const a=ga(),o=a.createOscillator(),g=a.createGain();o.type=t;o.frequency.setValueAtTime(f,a.currentTime);g.gain.setValueAtTime(v,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+d);o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+d);}catch(e){}}
+function pSuccess(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>pt(f,.2),i*120));}
+function pWrong(){[300,250].forEach((f,i)=>setTimeout(()=>pt(f,.18,'sawtooth'),i*150));}
+function pStar(){pt(880,.1);setTimeout(()=>pt(1100,.15),120);}
+function pClick(){pt(440,.07,'sine',.12);}
+
+// Stars BG
+(()=>{const c=document.getElementById('bg'),ctx=c.getContext('2d');c.width=window.innerWidth;c.height=window.innerHeight;
+const sp=Array.from({length:70},()=>({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*1.8+.6,v:Math.random()*.35+.1,h:Math.random()*100+240}));
+function dr(){ctx.clearRect(0,0,c.width,c.height);sp.forEach(s=>{ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`hsla(${s.h},80%,75%,.6)`;ctx.fill();s.y+=s.v;if(s.y>c.height){s.y=0;s.x=Math.random()*c.width;}});requestAnimationFrame(dr);}
+dr();window.addEventListener('resize',()=>{c.width=window.innerWidth;c.height=window.innerHeight;});})();
+
+function goTo(n){pClick();document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));document.getElementById('s'+n).classList.remove('hidden');st.screen=n;updateProg();window.scrollTo(0,0);if(n>0)document.getElementById('prog-wrap').classList.remove('hidden');updateBuddy(n);}
+function updateProg(){document.getElementById('prog-fill').style.width=(st.screen/8*100)+'%';document.getElementById('star-count').textContent='⭐ '+st.stars;}
+function addStar(n){st.stars+=n;pStar();updateProg();toast('⭐ +'+n+' 星星！');}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+const bHints={0:'我是书虫🐛，陪你读透整本书！',1:'整本书阅读有四步：读情节→析人物→悟主题→写书评',2:'选一本你熟悉的书，效果最好！',3:'故事地图帮你理清全书脉络！',4:'分析人物要找"支撑证据"哦！',5:'主题是作者藏在故事里的话',6:'好书评 = 简介+情节+人物+感悟+推荐',7:'你完成了阅读探险！继续读更多好书吧！',8:'用今天学到的方法读下一本书试试！'};
+let buddyOn=false;
+function toggleBuddy(){pClick();buddyOn=!buddyOn;const m=document.getElementById('buddy-msg');if(buddyOn){m.classList.remove('hidden');m.textContent=bHints[st.screen]||'加油！';}else m.classList.add('hidden');}
+function updateBuddy(n){if(buddyOn){const m=document.getElementById('buddy-msg');m.textContent=bHints[n]||'加油！';}}
+
+// Book select
+function selectBook(el,name,emoji,type){pClick();document.querySelectorAll('.book-card').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');st.selectedBook=name;const n=document.getElementById('book-note');n.classList.remove('hidden');document.getElementById('selected-book-name').textContent=name;document.getElementById('selected-book-type').textContent=type;document.getElementById('boss-book-name').textContent=name;const qc=document.getElementById('book-quiz');qc.classList.remove('hidden');renderBookQuiz(name);}
+const bookQuizzes={
+  '夏洛的网':[{q:'《夏洛的网》的作者是谁？',opts:['A.怀特','B.海明威','C.马克·吐温'],ans:0},{q:'夏洛在网上织了哪些词来拯救威尔伯？',opts:['A."王"和"英雄"','B."了不起"等单词','C."朋友"'],ans:1}],
+  '西游记':[{q:'西游记的作者是谁？',opts:['A.罗贯中','B.吴承恩','C.施耐庵'],ans:1},{q:'唐僧师徒共经历多少难？',opts:['A.七十二难','B.八十一难','C.九九八十一难'],ans:2}],
+  default:[{q:'整本书阅读最重要的方法是什么？',opts:['A.只看故事情节','B.做批注，写感悟','C.只记人物名字'],ans:1},{q:'写书评时最重要的是什么？',opts:['A.复述全书情节','B.结合情节表达个人感悟','C.只写书名和作者'],ans:1}]
+};
+let bqAnswers={};
+function renderBookQuiz(name){const qs=bookQuizzes[name]||bookQuizzes.default;const c=document.getElementById('bq-container');c.innerHTML='';bqAnswers={};qs.forEach((q,i)=>{const div=document.createElement('div');div.className='quiz-q';div.innerHTML=`<p><b>Q${i+1}.</b> ${q.q}</p><div class="opts">${q.opts.map((o,j)=>`<button class="opt-btn" onclick="answerBQ(${i},${j},${q.ans})">${o}</button>`).join('')}</div>`;c.appendChild(div);});}
+let bqScore=0;
+function answerBQ(qi,sel,ans){pClick();if(bqAnswers[qi]!==undefined)return;bqAnswers[qi]=sel;const btns=document.querySelectorAll(`#bq-container .quiz-q:nth-child(${qi+1}) .opt-btn`);btns.forEach((b,i)=>{if(i===ans)b.classList.add('correct');else if(i===sel&&sel!==ans)b.classList.add('wrong');b.disabled=true;});if(sel===ans){addStar(10);bqScore++;pSuccess();}else pWrong();const qs=bookQuizzes[st.selectedBook]||bookQuizzes.default;if(Object.keys(bqAnswers).length===qs.length){document.getElementById('bq-result').classList.remove('hidden');document.getElementById('bq-score-txt').textContent=bqScore===qs.length?'🎉 全对！热身完美！':'👍 完成热身！继续闯关！';}}
+
+// L1
+function pickConflict(el,v){pClick();document.querySelectorAll('#conflict-btns .opt-btn').forEach(b=>b.classList.remove('correct'));el.classList.add('correct');st.conflict=v;document.getElementById('conflict-val').value=v;}
+function checkL1(){pClick();let s=0;if(document.getElementById('tl1').value.trim().length>10)s+=15;if(document.getElementById('tl2').value.trim().length>10)s+=15;if(document.getElementById('tl3').value.trim().length>10)s+=15;if(st.conflict)s+=15;st.l1s=s;addStar(s);if(s>=50){pSuccess();toast('🗺️ 地图绘制完成！+'+s+'⭐');unlock('a1');}else{toast('👍 继续完善地图！+'+s+'⭐');}setTimeout(()=>goTo(4),1500);}
+
+// L2
+function checkL2(){pClick();let s=0;const r1=document.getElementById('rel1').value;const r2=document.getElementById('rel2').value;if(r1==='挚友/救命恩人')s+=20;if(r2==='救助者与被救者'||r2==='主人与宠物')s+=20;if(document.getElementById('c1-trait').value.trim().length>3)s+=10;if(document.getElementById('char-feeling').value.trim().length>15)s+=30;st.l2s=s;addStar(s);if(s>=60){pSuccess();toast('👤 人物分析出色！+'+s+'⭐');unlock('a2');}else toast('👍 继续分析！+'+s+'⭐');setTimeout(()=>goTo(5),1500);}
+
+// L3
+const genres=[];
+function toggleGenre(el,g){pClick();const i=genres.indexOf(g);if(i>-1){genres.splice(i,1);el.classList.remove('correct');}else{genres.push(g);el.classList.add('correct');}st.genres=genres;document.getElementById('genre-list').textContent='已选：'+(genres.join('、')||'无');}
+function setRating(n){st.rating=n;document.getElementById('book-rating').value=n;document.querySelectorAll('.star-btn').forEach((s,i)=>{s.textContent=i<n?'⭐':'☆';});pStar();}
+function checkL3(){pClick();let s=0;if(document.getElementById('mm1').value.trim().length>5)s+=20;if(document.getElementById('mm3').value.trim().length>5)s+=20;if(st.genres.length>0)s+=20;if(st.rating>0)s+=20;st.l3s=s;addStar(s);if(s>=60){pSuccess();toast('💡 主题探索完成！+'+s+'⭐');unlock('a3');}else toast('👍 导图完成！+'+s+'⭐');setTimeout(()=>goTo(6),1500);}
+
+// Boss
+document.addEventListener('DOMContentLoaded',()=>{const ta=document.getElementById('boss-text');if(ta)ta.addEventListener('input',()=>{document.getElementById('boss-count').textContent=ta.value.length;});});
+function aiAnalyzeReview(){pClick();const t=document.getElementById('boss-text').value.trim();const f=document.getElementById('review-feedback');f.classList.remove('hidden');if(t.length<30){f.innerHTML='⚠️ 内容太少，请至少写50字再分析！';return;}let fb='🔍 AI点评：<br>';if(t.includes('书名')||t.includes(st.selectedBook))fb+='✅ 提到了书名<br>';else fb+='💡 建议在开头提到书名<br>';if(t.length>100)fb+='✅ 内容充实，篇幅合适<br>';if(t.includes('我觉得')||t.includes('感受')||t.includes('让我'))fb+='✅ 有个人感悟<br>';else fb+='💡 建议加入你的个人感悟<br>';if(t.includes('推荐'))fb+='✅ 有推荐语，很棒！';f.innerHTML=fb;}
+function submitBoss(){pClick();const t=document.getElementById('boss-text').value.trim();if(t.length<30){toast('请写至少30字再提交！');return;}const bonus=t.length>150?100:t.length>80?80:60;st.bossSc=bonus;st.stars+=bonus;st.bossSubmitted=true;unlock('a4');pSuccess();toast('🏆 书评完成！+'+bonus+'⭐');setTimeout(showScore,1500);}
+function showScore(){const total=st.stars;document.getElementById('final-score').textContent=total;document.getElementById('breakdown').innerHTML=`热身：${bqScore*10}分 | 第一关：${st.l1s}分<br>第二关：${st.l2s}分 | 第三关：${st.l3s}分<br>Boss关：${st.bossSc}分`;document.getElementById('stars-row').textContent=total>=200?'⭐⭐⭐':total>=130?'⭐⭐':'⭐';if(total>=250)unlock('a7');unlock('a6');unlock('a8');unlock('a5');goTo(7);}
+function unlock(id){if(st.achs.includes(id))return;st.achs.push(id);const el=document.getElementById(id);if(el){el.classList.add('earned');pStar();toast('🏆 成就解锁：'+el.textContent);}}
+</script>
+</body>
+</html>

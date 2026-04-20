@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日记写作 · 二年级语文闯关</title>
+<style>
+:root{
+  --bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--card:#fff;
+  --warm:#ff8c42;--mint:#a8e6cf;--lavender:#dbbfff;--peach:#ffcba4;
+  --text:#2d2d2d;--muted:#999;--radius:20px;--shadow:0 8px 32px rgba(0,0,0,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);font-family:'Comic Sans MS','Segoe UI',system-ui,sans-serif;color:var(--text);overflow-x:hidden;min-height:100vh;}
+.hidden{display:none!important;}
+canvas#bg{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;}
+.screen{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:22px 14px;}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:26px;max-width:660px;width:100%;}
+.btn{cursor:pointer;border:none;border-radius:var(--radius);font-weight:900;padding:12px 30px;font-size:1rem;transition:transform .15s,box-shadow .15s;}
+.btn:hover{transform:translateY(-3px) scale(1.04);box-shadow:0 10px 24px rgba(0,0,0,.18);}
+
+/* PROGRESS */
+#prog{position:fixed;top:0;left:0;width:100%;z-index:100;background:rgba(255,251,240,.94);backdrop-filter:blur(8px);padding:8px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 10px rgba(0,0,0,.08);}
+.pb{flex:1;height:13px;background:#e0e0e0;border-radius:10px;overflow:hidden;}
+.pf{height:100%;background:linear-gradient(90deg,#ff6b6b,#ffe66d,#4ecdc4);border-radius:10px;transition:width .5s;}
+#sd{font-size:1.1rem;font-weight:700;color:var(--primary);}
+
+/* HERO */
+#s0{background:linear-gradient(135deg,#ff9a9e 0%,#fad0c4 35%,#ffecd2 100%)!important;}
+.diary-anim{font-size:5rem;animation:openDiary 1.5s ease-in-out infinite alternate;}
+@keyframes openDiary{0%{transform:rotate(-8deg) scale(.95);}100%{transform:rotate(8deg) scale(1.05);}}
+.hero-h1{font-size:2.5rem;font-weight:900;color:#fff;text-shadow:0 4px 16px rgba(0,0,0,.15);}
+.badge{background:rgba(255,255,255,.3);color:#fff;border-radius:50px;padding:5px 16px;font-size:.82rem;display:inline-block;margin-bottom:14px;}
+.meta-row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:12px 0;}
+.meta-row span{background:rgba(255,255,255,.25);color:#fff;border-radius:10px;padding:3px 12px;font-size:.82rem;}
+
+/* DIARY PAGE */
+.diary-page{background:#fff9f0;border-radius:16px;border:3px solid #f0c080;padding:20px;margin-bottom:14px;position:relative;font-family:'Comic Sans MS',cursive;}
+.diary-page::before{content:'';position:absolute;left:48px;top:0;bottom:0;width:2px;background:#ff8c42;opacity:.4;}
+.diary-lines{background:repeating-linear-gradient(transparent,transparent 32px,#e8d5b7 32px,#e8d5b7 34px);border-radius:8px;padding:10px 10px 10px 56px;min-height:80px;}
+.diary-date{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;}
+.date-field{border:2px solid #f0c080;border-radius:10px;padding:6px 12px;font-size:.9rem;width:80px;text-align:center;font-family:inherit;outline:none;}
+.date-field:focus{border-color:var(--warm);}
+.weather-pick{display:flex;gap:8px;flex-wrap:wrap;}
+.w-btn{font-size:1.4rem;cursor:pointer;border-radius:10px;border:2px solid transparent;padding:4px 8px;transition:all .2s;}
+.w-btn.active{border-color:var(--warm);background:#fff3e0;}
+.w-btn:hover{transform:scale(1.15);}
+
+/* EMOTION PICKER */
+.emo-row{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0;}
+.emo-btn{font-size:1.8rem;cursor:pointer;border-radius:12px;border:3px solid transparent;padding:6px 10px;transition:all .2s;background:#f9f9f9;}
+.emo-btn.picked{border-color:var(--primary);background:#fff3f3;transform:scale(1.12);}
+.emo-btn:hover{transform:scale(1.1);}
+
+/* WRITING AREA */
+.write-area{width:100%;min-height:110px;background:transparent;border:none;border-radius:8px;padding:6px 8px;font-size:1rem;font-family:'Comic Sans MS',cursive;resize:none;outline:none;line-height:2;color:#4a3728;}
+.write-area::placeholder{color:#c9b79c;}
+
+/* OPT BUTTONS */
+.opts-col{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+.opt-row{background:#fff;border:2.5px solid #e0e0e0;border-radius:14px;padding:10px 16px;cursor:pointer;font-size:.95rem;transition:all .2s;display:flex;align-items:center;gap:10px;}
+.opt-row:hover{border-color:var(--secondary);background:#f0fdfc;}
+.opt-row.ok{border-color:#4caf50;background:#e8f5e9;}
+.opt-row.ng{border-color:var(--primary);background:#ffebee;}
+.opt-row:disabled{cursor:default;}
+.opt-icon{font-size:1.3rem;}
+
+/* WORD TOOLBOX */
+.toolbox{background:#fff9c4;border-radius:14px;padding:14px;margin-bottom:14px;}
+.toolbox-title{font-size:.9rem;font-weight:700;margin-bottom:8px;color:#7b5e00;}
+.word-chips{display:flex;flex-wrap:wrap;gap:8px;}
+.wchip{background:var(--accent);border-radius:10px;padding:6px 14px;cursor:pointer;font-size:.9rem;font-weight:700;transition:all .2s;border:2px solid transparent;}
+.wchip:hover{background:var(--primary);color:#fff;transform:scale(1.06);}
+.wchip.in{background:var(--secondary);color:#fff;}
+
+/* FORMAT CHECKER */
+.format-items{display:flex;flex-direction:column;gap:8px;}
+.fmt-item{display:flex;align-items:center;gap:10px;background:#f9f9f9;border-radius:12px;padding:10px 14px;font-size:.9rem;}
+.fmt-check{width:24px;height:24px;border-radius:50%;border:2px solid #e0e0e0;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.9rem;flex-shrink:0;transition:all .2s;}
+.fmt-check.done{background:#4caf50;border-color:#4caf50;color:#fff;}
+
+/* GRADE PREVIEW */
+.diary-preview{background:#fffde7;border-radius:16px;border:3px dashed #f0c080;padding:18px;margin-bottom:14px;font-family:'Comic Sans MS',cursive;font-size:.95rem;line-height:2;color:#4a3728;}
+
+/* BOSS */
+.boss-wrap{background:linear-gradient(135deg,#ff8c42,#ff6b6b);color:#fff;border-radius:var(--radius);padding:28px;max-width:660px;width:100%;}
+.boss-diary{background:rgba(255,255,255,.15);border-radius:16px;padding:16px;margin-bottom:14px;}
+
+/* SCORE */
+.sc-card{background:linear-gradient(135deg,#ff8c42,#ff6b6b);color:#fff;border-radius:var(--radius);padding:32px;text-align:center;max-width:580px;width:100%;}
+.big-sc{font-size:4.5rem;font-weight:900;}
+.ach-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:12px 0;}
+.ach-t{background:rgba(255,255,255,.15);border-radius:40px;padding:5px 14px;font-size:.82rem;}
+.ach-t.on{background:var(--accent);color:#333;font-weight:700;}
+
+/* EXT */
+.ext-wrap{background:linear-gradient(135deg,#4ecdc4,#44a1a0);color:#fff;border-radius:var(--radius);padding:26px;max-width:660px;width:100%;}
+
+/* TOAST */
+#toast{position:fixed;top:78px;left:50%;transform:translateX(-50%) translateY(-40px);background:var(--warm);color:#fff;padding:12px 24px;border-radius:50px;font-weight:900;z-index:300;opacity:0;transition:all .3s;pointer-events:none;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* BUDDY */
+#buddy{position:fixed;bottom:22px;right:22px;z-index:200;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+.bb{background:var(--card);border-radius:16px 16px 4px 16px;padding:12px 14px;box-shadow:var(--shadow);font-size:.88rem;max-width:210px;}
+.bbn{width:56px;height:56px;background:linear-gradient(135deg,#ff8c42,#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.9rem;cursor:pointer;box-shadow:var(--shadow);border:4px solid rgba(255,255,255,.5);transition:transform .2s;}
+.bbn:hover{transform:scale(1.1) rotate(-5deg);}
+
+/* LEVEL BADGE */
+.lbadge{display:inline-block;border-radius:50px;padding:5px 18px;font-size:.9rem;font-weight:900;color:#fff;}
+
+@media(max-width:480px){
+  .hero-h1{font-size:1.9rem;}
+  .meta-row span{font-size:.78rem;}
+}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div id="prog" class="hidden">
+  <span>📔</span>
+  <div class="pb"><div class="pf" id="pf" style="width:0%"></div></div>
+  <span id="sd">⭐ 0</span>
+</div>
+<div id="toast"></div>
+<div id="buddy">
+  <div class="bb hidden" id="bmsg">我是小日记本🐛，一起来写日记！</div>
+  <div class="bbn" onclick="toggleB()">🐛</div>
+</div>
+
+<!-- S0 HERO -->
+<div class="screen" id="s0">
+  <div style="text-align:center;">
+    <div class="diary-anim">📔</div>
+    <div class="badge">二年级语文 · 闯关模式 🌈</div>
+    <h1 class="hero-h1">日记写作大闯关！</h1>
+    <p style="color:rgba(255,255,255,.9);font-size:1rem;margin-bottom:12px;">学会写日记，记录每一天的美好时光！<br>成为日记小达人！✨</p>
+    <div class="meta-row">
+      <span>📔 3关挑战</span><span>⭐ 共200分</span>
+      <span>⏱ 约25分钟</span><span>🏆 8奖章</span>
+    </div>
+    <button class="btn" style="background:var(--accent);color:#333;font-size:1.15rem;" onclick="go(1)">🚀 开始写日记！</button>
+  </div>
+</div>
+
+<!-- S1 OBJECTIVES -->
+<div class="screen hidden" id="s1">
+  <div class="card">
+    <div style="font-size:1.4rem;font-weight:900;margin-bottom:14px;">🎯 今天学什么？</div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:18px;">
+      <div style="background:#fff9c4;border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:12px;">
+        <span style="font-size:1.8rem;">📅</span><span><b>日记格式</b>：年月日、星期、天气，一个都不少</span>
+      </div>
+      <div style="background:#e8f5e9;border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:12px;">
+        <span style="font-size:1.8rem;">😊</span><span><b>情感表达</b>：写出你的心情和感受</span>
+      </div>
+      <div style="background:#e3f2fd;border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:12px;">
+        <span style="font-size:1.8rem;">✏️</span><span><b>写事记录</b>：今天发生了什么有趣的事？</span>
+      </div>
+      <div style="background:#f3e5f5;border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:12px;">
+        <span style="font-size:1.8rem;">🌟</span><span><b>好词好句</b>：用上好词，让日记更生动</span>
+      </div>
+    </div>
+    <div style="background:#fff3e0;border-radius:14px;padding:14px;margin-bottom:16px;font-size:.92rem;">
+      🐛 小日记本说：日记是你的秘密朋友，每天的所见所闻所感，都可以写进去哦！格式记牢：<b>日期→天气→正文</b>！
+    </div>
+    <button class="btn" style="background:var(--secondary);color:#fff;" onclick="go(2)">✅ 知道了！开始！</button>
+  </div>
+</div>
+
+<!-- S2 WARMUP: FORMAT -->
+<div class="screen hidden" id="s2">
+  <div class="card">
+    <div style="font-size:1.4rem;font-weight:900;margin-bottom:6px;">🔥 热身：日记格式练习</div>
+    <p style="color:var(--muted);font-size:.88rem;margin-bottom:16px;">先来练一练日记的基本格式！</p>
+
+    <div style="background:#fff9c4;border-radius:14px;padding:14px;margin-bottom:14px;">
+      <p style="font-weight:700;margin-bottom:10px;">Q1. 日记的第一行应该写什么？</p>
+      <div class="opts-col" id="q1-opts">
+        <div class="opt-row" onclick="ansQ(1,0,0)"><span class="opt-icon">📅</span>年月日、星期几、天气</div>
+        <div class="opt-row" onclick="ansQ(1,1,0)"><span class="opt-icon">📝</span>故事内容</div>
+        <div class="opt-row" onclick="ansQ(1,2,0)"><span class="opt-icon">✍️</span>自己的名字</div>
+      </div>
+    </div>
+
+    <div style="background:#e1f5fe;border-radius:14px;padding:14px;margin-bottom:14px;">
+      <p style="font-weight:700;margin-bottom:10px;">Q2. 下面哪个日期格式是正确的？</p>
+      <div class="opts-col" id="q2-opts">
+        <div class="opt-row" onclick="ansQ(2,0,1)"><span class="opt-icon">❌</span>二〇二五年月日</div>
+        <div class="opt-row" onclick="ansQ(2,1,1)"><span class="opt-icon">✅</span>2025年4月21日 星期一</div>
+        <div class="opt-row" onclick="ansQ(2,2,1)"><span class="opt-icon">❌</span>天气晴年月日</div>
+      </div>
+    </div>
+
+    <div style="background:#f3e5f5;border-radius:14px;padding:14px;margin-bottom:14px;">
+      <p style="font-weight:700;margin-bottom:10px;">Q3. 日记正文的第一行要怎么写？</p>
+      <div class="opts-col" id="q3-opts">
+        <div class="opt-row" onclick="ansQ(3,0,2)"><span class="opt-icon">❌</span>紧贴左边，不留空格</div>
+        <div class="opt-row" onclick="ansQ(3,1,2)"><span class="opt-icon">❌</span>空一格开始</div>
+        <div class="opt-row" onclick="ansQ(3,2,2)"><span class="opt-icon">✅</span>空两格（缩进）开始</div>
+      </div>
+    </div>
+
+    <div id="warm-done" class="hidden" style="text-align:center;margin-top:12px;">
+      <div id="warm-txt" style="font-size:1.15rem;font-weight:700;margin-bottom:12px;"></div>
+      <button class="btn" style="background:var(--primary);color:#fff;" onclick="go(3)">📔 进入第一关！</button>
+    </div>
+  </div>
+</div>
+
+<!-- S3 LEVEL 1: DIARY FORMAT -->
+<div class="screen hidden" id="s3">
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <span class="lbadge" style="background:var(--primary);">📅 第一关</span>
+      <span style="font-weight:900;font-size:1.1rem;">填写日记格式</span>
+      <span style="margin-left:auto;color:var(--muted);font-size:.85rem;">+35⭐</span>
+    </div>
+    <p style="color:var(--muted);font-size:.88rem;margin-bottom:14px;">在空白处填写完整的日记格式，然后写几句话。</p>
+
+    <div class="diary-page">
+      <div class="diary-date">
+        <input class="date-field" id="d-year" placeholder="年" maxlength="4" style="width:72px;">
+        <span style="font-size:1rem;">年</span>
+        <input class="date-field" id="d-month" placeholder="月" maxlength="2" style="width:52px;">
+        <span>月</span>
+        <input class="date-field" id="d-day" placeholder="日" maxlength="2" style="width:52px;">
+        <span>日</span>
+        <select class="date-field" id="d-week" style="width:100px;">
+          <option value="">星期?</option>
+          <option>星期一</option><option>星期二</option><option>星期三</option>
+          <option>星期四</option><option>星期五</option><option>星期六</option><option>星期日</option>
+        </select>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+        <span style="font-size:.9rem;font-weight:700;">天气：</span>
+        <div class="weather-pick" id="weather-row">
+          <span class="w-btn" onclick="pickW(this,'☀️晴')">☀️</span>
+          <span class="w-btn" onclick="pickW(this,'⛅多云')">⛅</span>
+          <span class="w-btn" onclick="pickW(this,'🌧️雨')">🌧️</span>
+          <span class="w-btn" onclick="pickW(this,'❄️雪')">❄️</span>
+          <span class="w-btn" onclick="pickW(this,'🌫️雾')">🌫️</span>
+          <span class="w-btn" onclick="pickW(this,'🌩️雷雨')">🌩️</span>
+        </div>
+        <span id="weather-val" style="font-size:.9rem;color:var(--warm);font-weight:700;"></span>
+      </div>
+
+      <p style="font-size:.9rem;font-weight:700;margin-bottom:10px;">今天的心情：</p>
+      <div class="emo-row" id="emo-row">
+        <span class="emo-btn" onclick="pickEmo(this,'😊开心')">😊</span>
+        <span class="emo-btn" onclick="pickEmo(this,'😃高兴')">😃</span>
+        <span class="emo-btn" onclick="pickEmo(this,'😢难过')">😢</span>
+        <span class="emo-btn" onclick="pickEmo(this,'😤生气')">😤</span>
+        <span class="emo-btn" onclick="pickEmo(this,'😴困')">😴</span>
+        <span class="emo-btn" onclick="pickEmo(this,'🤩惊喜')">🤩</span>
+        <span class="emo-btn" onclick="pickEmo(this,'😌满足')">😌</span>
+        <span class="emo-btn" onclick="pickEmo(this,'🥳兴奋')">🥳</span>
+      </div>
+      <input type="hidden" id="emo-val">
+
+      <div class="diary-lines">
+        <textarea class="write-area" id="l1-text" rows="4" placeholder="今天，我……（空两格开始写）"></textarea>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;font-size:.82rem;color:var(--muted);margin-bottom:12px;">
+      <span>字数：<span id="l1-count">0</span></span>
+      <span>天气：<span id="l1-weather" style="color:var(--warm);">未选</span> | 心情：<span id="l1-emo" style="color:var(--primary);">未选</span></span>
+    </div>
+    <button class="btn" style="background:var(--primary);color:#fff;" onclick="checkL1()">✅ 提交日记格式</button>
+    <div id="l1-res" class="hidden" style="margin-top:12px;border-radius:12px;padding:12px;font-size:.9rem;"></div>
+  </div>
+</div>
+
+<!-- S4 LEVEL 2: EVENT WRITING -->
+<div class="screen hidden" id="s4">
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <span class="lbadge" style="background:var(--secondary);">✏️ 第二关</span>
+      <span style="font-weight:900;font-size:1.1rem;">记录今天的事</span>
+      <span style="margin-left:auto;color:var(--muted);font-size:.85rem;">+45⭐</span>
+    </div>
+
+    <p style="font-weight:700;margin-bottom:12px;font-size:.95rem;">选一个今天发生的事情，用日记记录下来：</p>
+
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;" id="event-select">
+      <div class="opt-row" style="flex-direction:column;text-align:center;padding:14px;" onclick="pickEvent(this,'去公园玩','🌳')">
+        <span style="font-size:2rem;margin-bottom:4px;">🌳</span><span style="font-weight:700;font-size:.9rem;">去公园玩</span>
+      </div>
+      <div class="opt-row" style="flex-direction:column;text-align:center;padding:14px;" onclick="pickEvent(this,'上学第一天','🏫')">
+        <span style="font-size:2rem;margin-bottom:4px;">🏫</span><span style="font-weight:700;font-size:.9rem;">上学第一天</span>
+      </div>
+      <div class="opt-row" style="flex-direction:column;text-align:center;padding:14px;" onclick="pickEvent(this,'帮妈妈做家务','🧹')">
+        <span style="font-size:2rem;margin-bottom:4px;">🧹</span><span style="font-weight:700;font-size:.9rem;">帮妈妈做家务</span>
+      </div>
+      <div class="opt-row" style="flex-direction:column;text-align:center;padding:14px;" onclick="pickEvent(this,'下雨天的心情','🌧️')">
+        <span style="font-size:2rem;margin-bottom:4px;">🌧️</span><span style="font-weight:700;font-size:.9rem;">下雨天的心情</span>
+      </div>
+    </div>
+    <input type="hidden" id="event-val">
+
+    <div id="event-prompts" class="hidden">
+      <div style="background:#e1f5fe;border-radius:14px;padding:14px;margin-bottom:14px;">
+        <div style="font-size:.88rem;font-weight:700;margin-bottom:8px;">💡 写作提示（按顺序想）：</div>
+        <div id="event-hints" style="font-size:.88rem;color:#1565c0;line-height:2;"></div>
+      </div>
+
+      <div class="toolbox">
+        <div class="toolbox-title">🧰 好词工具箱（点击插入）</div>
+        <div class="word-chips" id="word-toolbox"></div>
+      </div>
+
+      <div class="diary-page">
+        <div class="diary-lines">
+          <textarea class="write-area" id="l2-text" rows="6" placeholder="今天，我……"></textarea>
+        </div>
+      </div>
+      <div style="font-size:.82rem;color:var(--muted);margin-bottom:12px;">字数：<span id="l2-count">0</span>字 | 目标：40字以上</div>
+      <button class="btn" style="background:var(--secondary);color:#fff;" onclick="checkL2()">✅ 提交日记正文</button>
+      <div id="l2-res" class="hidden" style="margin-top:12px;border-radius:12px;padding:12px;font-size:.9rem;"></div>
+    </div>
+    <div id="event-wait" style="color:var(--muted);font-size:.9rem;text-align:center;padding:12px;">请先选择一件事情～</div>
+  </div>
+</div>
+
+<!-- S5 LEVEL 3: IMPROVE DIARY -->
+<div class="screen hidden" id="s5">
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <span class="lbadge" style="background:#9c27b0;">🌟 第三关</span>
+      <span style="font-weight:900;font-size:1.1rem;">修改完善日记</span>
+      <span style="margin-left:auto;color:var(--muted);font-size:.85rem;">+50⭐</span>
+    </div>
+
+    <p style="font-weight:700;margin-bottom:10px;font-size:.95rem;">这篇日记有4处需要改进，你能找出来吗？</p>
+
+    <div class="diary-preview" id="bad-diary">
+      <b>2025年4月5日 晴</b><br>
+      <br>
+      今天去了公园。<br>
+      公园里有花。<br>
+      我很高兴。<br>
+      我和爸爸妈妈在一起。<br>
+      我们吃了东西。<br>
+    </div>
+
+    <p style="font-weight:700;margin-bottom:8px;font-size:.92rem;">找出日记存在的问题（点击勾选）：</p>
+    <div class="format-items" id="problem-list">
+      <div class="fmt-item">
+        <div class="fmt-check" id="fc1" onclick="toggleFC('fc1')"></div>
+        <span>❌ 日期格式不完整（缺少星期几）</span>
+      </div>
+      <div class="fmt-item">
+        <div class="fmt-check" id="fc2" onclick="toggleFC('fc2')"></div>
+        <span>❌ 正文没有缩进（需要空两格）</span>
+      </div>
+      <div class="fmt-item">
+        <div class="fmt-check" id="fc3" onclick="toggleFC('fc3')"></div>
+        <span>❌ 内容太简单，没有具体描写</span>
+      </div>
+      <div class="fmt-item">
+        <div class="fmt-check" id="fc4" onclick="toggleFC('fc4')"></div>
+        <span>❌ 没有写出心情和感受</span>
+      </div>
+      <div class="fmt-item">
+        <div class="fmt-check" id="fc5" onclick="toggleFC('fc5')"></div>
+        <span>✅ 结尾用了感叹号（这是对的！）</span>
+      </div>
+    </div>
+    <input type="hidden" id="fc-vals" value="">
+
+    <div style="margin-top:16px;">
+      <p style="font-weight:700;margin-bottom:8px;font-size:.92rem;">✏️ 现在把日记改得更好！（在下面重新写）</p>
+      <div class="toolbox" style="margin-bottom:10px;">
+        <div class="toolbox-title">✨ 改写小助手 - 可以加上这些：</div>
+        <div class="word-chips">
+          <span class="wchip" onclick="insWord3('绽放着')">🌸 绽放着</span>
+          <span class="wchip" onclick="insWord3('五颜六色的')">🎨 五颜六色的</span>
+          <span class="wchip" onclick="insWord3('笑着说')">😄 笑着说</span>
+          <span class="wchip" onclick="insWord3('高兴极了')">🎉 高兴极了</span>
+          <span class="wchip" onclick="insWord3('香喷喷的')">🍱 香喷喷的</span>
+          <span class="wchip" onclick="insWord3('在阳光下')">☀️ 在阳光下</span>
+          <span class="wchip" onclick="insWord3('真美啊！')">💬 真美啊！</span>
+        </div>
+      </div>
+      <div class="diary-page">
+        <div class="diary-lines">
+          <textarea class="write-area" id="l3-text" rows="7" placeholder="2025年4月5日 星期六 晴
+  今天，我和爸爸妈妈去了公园……（空两格开始）"></textarea>
+        </div>
+      </div>
+      <div style="font-size:.82rem;color:var(--muted);margin-bottom:12px;">字数：<span id="l3-count">0</span>字</div>
+    </div>
+    <button class="btn" style="background:#9c27b0;color:#fff;" onclick="checkL3()">✅ 提交修改版</button>
+    <div id="l3-res" class="hidden" style="margin-top:12px;border-radius:12px;padding:12px;font-size:.9rem;"></div>
+  </div>
+</div>
+
+<!-- S6 BOSS -->
+<div class="screen hidden" id="s6">
+  <div class="boss-wrap">
+    <div style="text-align:center;margin-bottom:16px;">
+      <div style="font-size:3rem;">👑</div>
+      <h2 style="color:#fff;font-size:1.5rem;margin-bottom:6px;">Boss关卡：写一篇完整日记</h2>
+      <p style="color:rgba(255,255,255,.85);font-size:.9rem;">用今天学到的方法，写一篇格式正确、内容丰富的日记</p>
+    </div>
+
+    <div class="boss-diary">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <input style="background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.4);border-radius:10px;padding:6px 10px;color:#fff;font-size:.88rem;width:80px;outline:none;" id="bd-year" placeholder="年">
+        <span style="color:#fff;">年</span>
+        <input style="background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.4);border-radius:10px;padding:6px 10px;color:#fff;font-size:.88rem;width:52px;outline:none;" id="bd-month" placeholder="月">
+        <span style="color:#fff;">月</span>
+        <input style="background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.4);border-radius:10px;padding:6px 10px;color:#fff;font-size:.88rem;width:52px;outline:none;" id="bd-day" placeholder="日">
+        <select style="background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.4);border-radius:10px;padding:6px 8px;color:#fff;font-size:.85rem;outline:none;" id="bd-week">
+          <option value="" style="color:#333;">星期?</option>
+          <option style="color:#333;">星期一</option><option style="color:#333;">星期二</option><option style="color:#333;">星期三</option>
+          <option style="color:#333;">星期四</option><option style="color:#333;">星期五</option><option style="color:#333;">星期六</option><option style="color:#333;">星期日</option>
+        </select>
+        <span style="color:#fff;">天气：</span>
+        <span style="cursor:pointer;font-size:1.4rem;" onclick="cycleBossWeather()" id="bw-disp">☀️</span>
+      </div>
+
+      <div style="background:rgba(255,255,255,.1);border-radius:12px;padding:10px;margin-bottom:12px;font-size:.85rem;color:rgba(255,255,255,.85);">
+        <b>💡 写作检查清单：</b><br>
+        ① 日期格式完整 ② 正文空两格 ③ 写了什么事 ④ 写了心情 ⑤ 用上好词
+      </div>
+
+      <textarea style="width:100%;min-height:140px;background:rgba(255,255,255,.15);border:none;border-radius:12px;padding:12px;font-size:1rem;font-family:'Comic Sans MS',cursive;color:#fff;resize:none;outline:none;line-height:2;" id="boss-text" placeholder="  今天，……（记得空两格！）"></textarea>
+      <div style="display:flex;justify-content:space-between;font-size:.82rem;color:rgba(255,255,255,.7);margin:8px 0 12px;">
+        <span>字数：<span id="boss-count">0</span></span><span>目标：50字以上</span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+      <button class="btn" style="background:rgba(255,255,255,.25);color:#fff;padding:10px 20px;font-size:.9rem;" onclick="aiCheckBoss()">🔍 格式检查</button>
+    </div>
+    <div id="boss-fb" class="hidden" style="background:rgba(255,255,255,.15);border-radius:12px;padding:12px;margin-bottom:12px;font-size:.88rem;color:#fff;"></div>
+    <button class="btn" style="background:var(--accent);color:#333;width:100%;font-size:1.05rem;" onclick="submitBoss()">🏆 提交我的日记！</button>
+  </div>
+</div>
+
+<!-- S7 SCORE -->
+<div class="screen hidden" id="s7">
+  <div class="sc-card">
+    <div style="font-size:3.5rem;">📔</div>
+    <h2 style="font-size:1.6rem;margin-bottom:4px;">日记达人诞生！</h2>
+    <div class="big-sc" id="fin-score">0</div>
+    <div style="opacity:.8;margin-bottom:12px;">分</div>
+    <div id="stars-disp2" style="font-size:2.5rem;margin-bottom:12px;">⭐⭐⭐</div>
+    <div class="ach-row">
+      <div class="ach-t" id="a1">📅 格式达人</div>
+      <div class="ach-t" id="a2">✏️ 写作宝宝</div>
+      <div class="ach-t" id="a3">🔍 修改能手</div>
+      <div class="ach-t" id="a4">📔 日记达人</div>
+      <div class="ach-t" id="a5">🏆 全关通关</div>
+      <div class="ach-t" id="a6">⭐ 热身王者</div>
+      <div class="ach-t" id="a7">💯 满分日记</div>
+      <div class="ach-t" id="a8">🐛 日记好友</div>
+    </div>
+    <div style="background:rgba(255,255,255,.2);border-radius:12px;padding:14px;margin:12px 0;font-size:.88rem;text-align:left;" id="bd"></div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <button class="btn" style="background:var(--accent);color:#333;" onclick="go(8)">🌱 拓展园地</button>
+      <button class="btn" style="background:rgba(255,255,255,.25);color:#fff;" onclick="location.reload()">🔄 再来一次</button>
+    </div>
+  </div>
+</div>
+
+<!-- S8 EXTENSION -->
+<div class="screen hidden" id="s8">
+  <div class="ext-wrap">
+    <h2 style="margin-bottom:6px;">🌱 日记拓展园地</h2>
+    <p style="opacity:.85;margin-bottom:16px;">学会了日记格式，继续练习更多写法！</p>
+    <div style="display:grid;gap:12px;">
+      <div style="background:rgba(255,255,255,.2);border-radius:14px;padding:14px;">
+        <b>📔 日记写作口诀</b>
+        <div style="font-size:.88rem;opacity:.9;margin-top:8px;line-height:2;">
+          日期天气写第一行，<br>
+          正文开头空两格，<br>
+          今天发生的事写清楚，<br>
+          心情感受不能忘，<br>
+          好词好句来装扮，<br>
+          日记就会写得棒！
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,.2);border-radius:14px;padding:14px;">
+        <b>✨ 日记好词积累</b>
+        <div style="font-size:.88rem;opacity:.9;margin-top:8px;line-height:2;">
+          天气词：阳光明媚、乌云密布、春风轻抚<br>
+          心情词：喜出望外、愁眉苦脸、兴高采烈<br>
+          动作词：蹦蹦跳跳、小心翼翼、一蹦三尺高
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,.2);border-radius:14px;padding:14px;">
+        <b>🌟 日记题材宝库</b>
+        <div style="font-size:.88rem;opacity:.9;margin-top:8px;line-height:2;">
+          📅 开心事：生日、旅游、得奖<br>
+          😢 难过事：摔跤、失去东西<br>
+          🌱 有趣事：看到新鲜的东西<br>
+          💡 想法事：有了一个好点子
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,.2);border-radius:14px;padding:14px;">
+        <b>🎯 课后挑战</b>
+        <p style="font-size:.88rem;opacity:.9;margin-top:8px;">回家后写一篇真实的日记！把今天在学校发生的一件事写下来，记得格式正确、写出心情哦！明天带来和同学分享！</p>
+      </div>
+    </div>
+    <div style="margin-top:18px;text-align:center;">
+      <button class="btn" style="background:var(--accent);color:#333;" onclick="go(0)">🏠 返回首页</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const G={stars:0,sc:0,wq:{1:null,2:null,3:null},wqS:0,weather:'',emo:'',event:'',fc:{fc1:false,fc2:false,fc3:false,fc4:false,fc5:false},l1s:0,l2s:0,l3s:0,bSc:0,achs:[]};
+const AC4=window.AudioContext||window.webkitAudioContext;let ac4;
+function ga(){if(!ac4)ac4=new AC4();return ac4;}
+function pt(f,d=.15,t='sine',v=.28){try{const a=ga(),o=a.createOscillator(),g=a.createGain();o.type=t;o.frequency.setValueAtTime(f,a.currentTime);g.gain.setValueAtTime(v,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+d);o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+d);}catch(e){}}
+function pOk(){[523,659,784].forEach((f,i)=>setTimeout(()=>pt(f,.18),i*100));}
+function pYay(){[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>pt(f,.15),i*90));}
+function pNo(){[300,250].forEach((f,i)=>setTimeout(()=>pt(f,.16,'sawtooth',.2),i*140));}
+function pTap(){pt(440,.07,'sine',.1);}
+function pStar(){pt(880,.08);setTimeout(()=>pt(1100,.12),100);}
+
+(()=>{const c=document.getElementById('bg'),ctx=c.getContext('2d');c.width=window.innerWidth;c.height=window.innerHeight;
+const p=Array.from({length:25},()=>({x:Math.random()*c.width,y:Math.random()*c.height,e:['📝','⭐','✏️','📔','🌟','💛'][Math.floor(Math.random()*6)],s:Math.random()*16+12,v:Math.random()*.3+.1,a:Math.random()*.4+.1}));
+function dr(){ctx.clearRect(0,0,c.width,c.height);p.forEach(s=>{ctx.save();ctx.globalAlpha=s.a;ctx.font=s.s+'px serif';ctx.fillText(s.e,s.x,s.y);ctx.restore();s.y+=s.v;if(s.y>c.height+20){s.y=-20;s.x=Math.random()*c.width;}});requestAnimationFrame(dr);}
+dr();window.addEventListener('resize',()=>{c.width=window.innerWidth;c.height=window.innerHeight;});})();
+
+function go(n){pTap();document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));document.getElementById('s'+n).classList.remove('hidden');G.sc=n;updateP();window.scrollTo(0,0);if(n>0)document.getElementById('prog').classList.remove('hidden');updateB(n);}
+function updateP(){document.getElementById('pf').style.width=(G.sc/8*100)+'%';document.getElementById('sd').textContent='⭐ '+G.stars;}
+function addS(n){G.stars+=n;pStar();updateP();toast('⭐ +'+n+'！');}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
+const bHints={0:'我是小日记本🐛，一起来写日记！',1:'日记格式：年月日→星期→天气→正文（空两格）',2:'格式是日记的骨架，先练好！',3:'仔细填写每个格子，别忘了天气和心情！',4:'把今天的事情写清楚，加上好词！',5:'找出日记的问题，然后改写得更棒！',6:'用今天学到的所有方法，写一篇完整日记！',7:'你是真正的日记达人了！继续坚持每天写！',8:'每天写日记，坚持一周就会有大进步！'};
+let bon=false;
+function toggleB(){pTap();bon=!bon;const m=document.getElementById('bmsg');if(bon){m.classList.remove('hidden');m.textContent=bHints[G.sc]||'加油！';}else m.classList.add('hidden');}
+function updateB(n){if(bon){document.getElementById('bmsg').textContent=bHints[n]||'加油！';}}
+
+// Warmup
+let wqD={1:null,2:null,3:null},wqS=0;
+function ansQ(q,sel,ans){pTap();if(wqD[q]!==null)return;wqD[q]=sel;const btns=document.querySelectorAll(`#q${q}-opts .opt-row`);btns.forEach((b,i)=>{if(i===ans)b.classList.add('ok');else if(i===sel&&sel!==ans)b.classList.add('ng');});if(sel===ans){addS(5);wqS++;pOk();}else pNo();if(wqD[1]!==null&&wqD[2]!==null&&wqD[3]!==null){document.getElementById('warm-done').classList.remove('hidden');document.getElementById('warm-txt').textContent=wqS===3?'🎉 全对！格式大师！':wqS>=2?'👍 做得不错！':' 💪 继续加油！';if(wqS===3)unlk('a6');}}
+
+// L1
+document.addEventListener('DOMContentLoaded',()=>{
+  const inputs=[['l1-text','l1-count'],['l2-text','l2-count'],['l3-text','l3-count'],['boss-text','boss-count']];
+  inputs.forEach(([id,cnt])=>{const el=document.getElementById(id);if(el)el.addEventListener('input',()=>{const c=document.getElementById(cnt);if(c)c.textContent=el.value.length;});});
+});
+function pickW(el,v){pTap();document.querySelectorAll('.w-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');G.weather=v;document.getElementById('weather-val').textContent=v;document.getElementById('l1-weather').textContent=v;}
+function pickEmo(el,v){pTap();document.querySelectorAll('.emo-btn').forEach(b=>b.classList.remove('picked'));el.classList.add('picked');G.emo=v;document.getElementById('emo-val').value=v;document.getElementById('l1-emo').textContent=v;}
+function checkL1(){pTap();let s=0;const y=document.getElementById('d-year').value.trim();const m=document.getElementById('d-month').value.trim();const d=document.getElementById('d-day').value.trim();const w=document.getElementById('d-week').value;const txt=document.getElementById('l1-text').value.trim();if(y.length>=4)s+=8;if(m.length>=1)s+=5;if(d.length>=1)s+=5;if(w)s+=7;if(G.weather)s+=5;if(G.emo)s+=5;if(txt.length>10)s+=10;G.l1s=s;addS(s);const r=document.getElementById('l1-res');r.classList.remove('hidden');if(s>=35){pOk();r.style.background='#e8f5e9';r.style.border='2px solid #4caf50';r.textContent='🎉 日记格式写得很好！';unlk('a1');}else if(s>=20){r.style.background='#fff9c4';r.style.border='2px solid #f0c080';r.textContent='👍 不错！检查一下有没有漏填的格子？';}else{pNo();r.style.background='#ffebee';r.style.border='2px solid #ef9a9a';r.textContent='💪 有些格子没填完整，再检查一下！'}setTimeout(()=>go(4),2000);}
+
+// L2 Event
+const eventData={
+  '去公园玩':{hints:'① 什么时候去的公园？\n② 看到了什么？（花、草、小动物）\n③ 做了什么游戏？\n④ 心情怎么样？',words:['鲜花盛开','绿草如茵','高兴极了','蝴蝶飞舞','阳光灿烂','欢声笑语','玩得真开心']},
+  '上学第一天':{hints:'① 第一天上学是什么感觉？\n② 遇到了什么新朋友？\n③ 老师是什么样的？\n④ 你最喜欢哪节课？',words:['紧张地','第一次','新朋友','认识了','笑眯眯','太有趣了','下次还要']},
+  '帮妈妈做家务':{hints:'① 帮妈妈做了什么家务？\n② 做的时候遇到什么困难？\n③ 结果怎么样？\n④ 妈妈说了什么？',words:['认真地','一丝不苟','夸奖我','累但开心','做得真棒','学会了','以后每天']},
+  '下雨天的心情':{hints:'① 下雨天的天气是什么样的？\n② 下雨天你做了什么？\n③ 窗外的景色是什么样的？\n④ 你对下雨天的感受？',words:['淅淅沥沥','乌云密布','雨滴声','待在家里','心情也湿了','水坑里','好喜欢下雨']},
+};
+function pickEvent(el,name,emoji){pTap();document.querySelectorAll('#event-select .opt-row').forEach(b=>b.classList.remove('ok'));el.classList.add('ok');G.event=name;document.getElementById('event-val').value=name;document.getElementById('event-wait').classList.add('hidden');const ep=document.getElementById('event-prompts');ep.classList.remove('hidden');const ed=eventData[name];document.getElementById('event-hints').innerHTML=ed.hints.split('\n').join('<br>');const wt=document.getElementById('word-toolbox');wt.innerHTML='';ed.words.forEach(w=>{const c=document.createElement('span');c.className='wchip';c.textContent=w;c.onclick=()=>{pTap();const ta=document.getElementById('l2-text');ta.value+=w;ta.focus();document.getElementById('l2-count').textContent=ta.value.length;};wt.appendChild(c);});}
+function checkL2(){pTap();const txt=document.getElementById('l2-text').value.trim();let s=0;if(txt.length>20)s+=20;if(txt.length>40)s+=15;if(txt.includes('。')||txt.includes('！'))s+=5;if(G.event)s+=5;G.l2s=s;addS(s);const r=document.getElementById('l2-res');r.classList.remove('hidden');if(s>=35){pOk();r.style.background='#e8f5e9';r.style.border='2px solid #4caf50';r.textContent='✏️ 太棒了！日记内容很丰富！';unlk('a2');}else if(s>=20){r.style.background='#fff9c4';r.style.border='2px solid #f0c080';r.textContent='👍 写得不错！再加几句话会更好！';}else{pNo();r.style.background='#ffebee';r.style.border='2px solid #ef9a9a';r.textContent='💪 内容太少了，多写几句吧！'}setTimeout(()=>go(5),2000);}
+
+// L3
+const fcCorrect=['fc1','fc2','fc3','fc4'];
+function toggleFC(id){pTap();G.fc[id]=!G.fc[id];const el=document.getElementById(id);el.classList.toggle('done',G.fc[id]);if(G.fc[id])el.textContent='✓';else el.textContent='';}
+function insWord3(w){pTap();const ta=document.getElementById('l3-text');ta.value+=w;document.getElementById('l3-count').textContent=ta.value.length;}
+function checkL3(){pTap();let fcSc=0;fcCorrect.forEach(id=>{if(G.fc[id])fcSc+=8;});if(G.fc['fc5']===false){}else fcSc-=4;const txt=document.getElementById('l3-text').value.trim();let writeSc=0;if(txt.length>30)writeSc+=10;if(txt.length>60)writeSc+=8;if(txt.includes('星期'))writeSc+=4;G.l3s=Math.max(0,fcSc+writeSc);addS(G.l3s);const r=document.getElementById('l3-res');r.classList.remove('hidden');if(G.l3s>=40){pOk();r.style.background='#e8f5e9';r.style.border='2px solid #4caf50';r.textContent='🌟 修改得非常好！你是日记修改能手！';unlk('a3');}else if(G.l3s>=20){r.style.background='#fff9c4';r.style.border='2px solid #f0c080';r.textContent='👍 找出了一些问题！继续加油！';}else{pNo();r.style.background='#ffebee';r.style.border='2px solid #ef9a9a';r.textContent='💪 再仔细看看日记，找找问题！'}setTimeout(()=>go(6),2000);}
+
+// Boss
+const weathers=['☀️','⛅','🌧️','❄️','🌫️','🌈'];let bwIdx=0;
+function cycleBossWeather(){bwIdx=(bwIdx+1)%weathers.length;document.getElementById('bw-disp').textContent=weathers[bwIdx];pTap();}
+function aiCheckBoss(){pTap();const t=document.getElementById('boss-text').value.trim();const y=document.getElementById('bd-year').value;const m=document.getElementById('bd-month').value;const d=document.getElementById('bd-day').value;const w=document.getElementById('bd-week').value;const fb=document.getElementById('boss-fb');fb.classList.remove('hidden');let html='🔍 格式检查结果：<br>';if(y&&m&&d&&w)html+='✅ 日期格式完整<br>';else html+='⚠️ 日期还未填写完整<br>';if(t.startsWith('  ')||t.startsWith('\t'))html+='✅ 正文已缩进<br>';else html+='⚠️ 别忘了正文开头空两格！<br>';if(t.length>50)html+='✅ 内容充实<br>';else html+='⚠️ 内容较少，可以多写一些<br>';if(t.includes('高兴')||t.includes('开心')||t.includes('快乐')||t.includes('难过'))html+='✅ 写出了心情<br>';else html+='💡 建议加上你的心情描述<br>';fb.innerHTML=html;}
+function submitBoss(){pTap();const t=document.getElementById('boss-text').value.trim();if(t.length<15){toast('再多写几个字哦！');return;}const y=document.getElementById('bd-year').value;const w=document.getElementById('bd-week').value;let b=50;if(y&&w)b+=15;if(t.length>60)b+=15;G.bSc=b;G.stars+=b;pYay();unlk('a4');toast('🏆 日记完成！+'+b+'⭐');setTimeout(showSc,1500);}
+function showSc(){const total=G.stars;document.getElementById('fin-score').textContent=total;document.getElementById('bd').innerHTML=`热身：${wqS*5}分 | 第一关：${G.l1s}分<br>第二关：${G.l2s}分 | 第三关：${G.l3s}分<br>Boss关：${G.bSc}分`;document.getElementById('stars-disp2').textContent=total>=150?'⭐⭐⭐':total>=90?'⭐⭐':'⭐';if(total>=180)unlk('a7');unlk('a5');unlk('a8');go(7);}
+function unlk(id){if(G.achs.includes(id))return;G.achs.push(id);const el=document.getElementById(id);if(el){el.classList.add('on');pStar();toast('🏆 奖章解锁：'+el.textContent);}}
+</script>
+</body>
+</html>

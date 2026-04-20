@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>写句子 · 一年级语文闯关</title>
+<style>
+  :root {
+    --bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--card:#fff;
+    --shadow:0 4px 20px rgba(0,0,0,0.08);--radius:20px;--text:#333;
+    --green:#55efc4;--pink:#fd79a8;--orange:#fdcb6e;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);font-family:'PingFang SC','Microsoft YaHei',sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden;}
+  .screen{display:none;min-height:100vh;padding:16px;}
+  .screen.active{display:flex;flex-direction:column;align-items:center;}
+
+  /* Big friendly hero for grade 1 */
+  .hero{background:linear-gradient(135deg,#ff6b6b,#fd79a8);border-radius:var(--radius);padding:36px 24px;text-align:center;width:100%;max-width:560px;color:#fff;margin-bottom:16px;position:relative;overflow:hidden;}
+  .hero h1{font-size:2.4em;font-weight:900;margin-bottom:8px;text-shadow:0 2px 8px rgba(0,0,0,0.15);}
+  .hero p{font-size:1.1em;opacity:0.95;line-height:1.6;}
+  .hero .deco{position:absolute;font-size:4em;opacity:0.18;}
+  .hero .deco1{top:5px;left:10px;}
+  .hero .deco2{bottom:5px;right:10px;}
+
+  /* Big buttons for small kids */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:16px 36px;border-radius:50px;border:none;font-size:1.1em;font-weight:800;cursor:pointer;transition:all 0.2s;box-shadow:0 5px 15px rgba(0,0,0,0.15);min-width:140px;}
+  .btn-primary{background:var(--primary);color:#fff;}
+  .btn-primary:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(255,107,107,0.45);}
+  .btn-secondary{background:var(--secondary);color:#fff;}
+  .btn-secondary:hover{transform:translateY(-3px);}
+  .btn-green{background:#00b894;color:#fff;}
+  .btn-pink{background:var(--pink);color:#fff;}
+
+  .card{background:var(--card);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);width:100%;max-width:560px;margin-bottom:14px;}
+  .card h2{color:var(--primary);font-size:1.35em;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+
+  .section-title{font-size:1.5em;font-weight:900;color:var(--primary);margin-bottom:16px;display:flex;align-items:center;gap:8px;width:100%;max-width:560px;}
+
+  /* Progress */
+  .progress-bar{width:100%;max-width:560px;background:#f0e8e0;border-radius:30px;height:16px;margin-bottom:14px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,#fd79a8,#ff6b6b,#ffe66d);border-radius:30px;transition:width 0.5s;}
+
+  /* Stars */
+  .star{font-size:2.2em;color:#e0d0b0;transition:all 0.3s;}
+  .star.earned{color:#ffd700;animation:starPop 0.5s ease;}
+  @keyframes starPop{0%{transform:scale(0) rotate(-20deg)}60%{transform:scale(1.4) rotate(10deg)}100%{transform:scale(1) rotate(0)}}
+
+  /* Word cards - big and colorful for grade 1 */
+  .word-card{background:var(--card);border:3px solid var(--primary);border-radius:18px;padding:14px 20px;font-size:1.3em;font-weight:700;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;user-select:none;min-width:70px;text-align:center;margin:6px;}
+  .word-card:hover{transform:scale(1.08);box-shadow:0 4px 14px rgba(255,107,107,0.3);}
+  .word-card.selected{background:var(--primary);color:#fff;border-color:var(--primary);}
+  .word-card.correct{background:#4ecdc4;color:#fff;border-color:#4ecdc4;}
+  .word-card.wrong{background:#ff6b6b;color:#fff;border-color:#ff6b6b;animation:shake 0.3s ease;}
+  .word-card.used{background:#f0e8e0;color:#bbb;border-color:#e0d8d0;cursor:default;pointer-events:none;}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+  /* Sentence builder */
+  .sentence-builder{background:#fff8f0;border-radius:var(--radius);padding:18px;margin:12px 0;}
+  .sentence-slots{display:flex;flex-wrap:wrap;gap:8px;min-height:60px;padding:10px;background:#f8f4ef;border-radius:14px;margin-bottom:12px;align-items:center;}
+  .sentence-slot{border:3px dashed #ddd;border-radius:12px;padding:10px 16px;font-size:1.2em;min-width:64px;text-align:center;cursor:pointer;transition:all 0.2s;background:#fff;}
+  .sentence-slot:hover{border-color:var(--secondary);}
+  .sentence-slot.filled{border-color:var(--secondary);background:#e0f7f4;color:#2a9d8f;font-weight:700;}
+
+  /* Picture story */
+  .picture-card{background:linear-gradient(135deg,#fff8f0,#fff);border-radius:var(--radius);padding:16px;border:3px solid var(--accent);cursor:pointer;transition:all 0.2s;text-align:center;}
+  .picture-card:hover{transform:scale(1.02);}
+  .picture-card .emoji{font-size:3.5em;margin-bottom:8px;}
+  .picture-card .label{font-size:0.88em;color:#888;}
+
+  /* Big text input */
+  .writing-pad{width:100%;background:#fff;border-radius:14px;border:3px solid var(--accent);padding:14px;font-size:1.2em;min-height:100px;resize:none;font-family:inherit;line-height:2;}
+  .writing-pad:focus{outline:none;border-color:var(--secondary);}
+
+  /* Feedback */
+  .feedback{border-radius:14px;padding:14px 18px;margin-top:10px;font-size:1em;line-height:1.6;}
+  .feedback.good{background:#e0f7f4;border-left:4px solid var(--secondary);color:#2a9d8f;}
+  .feedback.bad{background:#ffe0e0;border-left:4px solid var(--primary);color:#c0392b;}
+  .feedback.tip{background:#fff8e0;border-left:4px solid var(--accent);color:#855a00;}
+
+  /* Buddy */
+  .buddy{position:fixed;bottom:16px;right:16px;display:flex;flex-direction:column;align-items:flex-end;gap:8px;z-index:100;}
+  .buddy-avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#fd79a8,#ff6b6b);display:flex;align-items:center;justify-content:center;font-size:2.2em;cursor:pointer;box-shadow:0 4px 16px rgba(253,121,168,0.5);transition:transform 0.2s;animation:bounce 2s infinite;}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  .buddy-avatar:hover{animation:none;transform:scale(1.1);}
+  .buddy-bubble{background:var(--card);border-radius:16px 16px 4px 16px;padding:12px 16px;max-width:200px;font-size:1em;line-height:1.5;box-shadow:var(--shadow);display:none;color:#333;}
+  .buddy-bubble.show{display:block;animation:bubbleIn 0.3s ease;}
+  @keyframes bubbleIn{from{opacity:0;transform:scale(0.8)}to{opacity:1;transform:scale(1)}}
+
+  .achievement-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#ffd700,#ffb700);color:#333;border-radius:30px;padding:12px 28px;font-weight:800;font-size:1em;display:none;z-index:200;box-shadow:0 4px 20px rgba(255,183,0,0.4);}
+  .achievement-toast.show{display:flex;align-items:center;gap:8px;animation:toastIn 0.4s ease;}
+  @keyframes toastIn{from{opacity:0;top:0}to{opacity:1;top:20px}}
+
+  /* Report */
+  .report-card{background:linear-gradient(135deg,#fff0f8,#fff);border-radius:var(--radius);padding:30px;text-align:center;width:100%;max-width:560px;box-shadow:var(--shadow);}
+  .big-score{font-size:5em;font-weight:900;color:var(--primary);}
+  .achievements-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0;}
+  .ach-badge{border-radius:12px;padding:8px 4px;text-align:center;font-size:0.72em;}
+  .ach-badge.earned{background:linear-gradient(135deg,#ffe66d,#ffd700);}
+  .ach-badge.locked{background:#f0e8e0;color:#bbb;}
+  .ach-icon{font-size:1.8em;display:block;margin-bottom:3px;}
+
+  /* Option boxes */
+  .option{background:#f8f4ef;border:3px solid #e8ddd0;border-radius:14px;padding:14px 18px;cursor:pointer;transition:all 0.2s;font-size:1.05em;line-height:1.5;margin-bottom:8px;}
+  .option:hover{border-color:var(--secondary);background:#e0f7f4;transform:translateX(4px);}
+  .option.correct{border-color:#4ecdc4;background:#e0f7f4;color:#2a9d8f;}
+  .option.wrong{border-color:#ff6b6b;background:#ffe0e0;color:#c0392b;}
+  .option.disabled{pointer-events:none;}
+
+  /* Confetti */
+  .confetti-piece{position:fixed;width:10px;height:10px;border-radius:3px;animation:confettiFall 1.5s ease-out forwards;pointer-events:none;z-index:999;}
+  @keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+
+  /* Fill blanks */
+  .fill-blank{display:inline-block;min-width:60px;border-bottom:3px solid var(--primary);background:transparent;font-size:1em;outline:none;text-align:center;padding:2px 6px;font-family:inherit;}
+  
+  /* Color coding for sentence parts */
+  .part-who{color:#ff6b6b;font-weight:700;}
+  .part-do{color:#4ecdc4;font-weight:700;}
+  .part-what{color:#a29bfe;font-weight:700;}
+
+  .sentence-example{background:#f8f4ef;border-radius:14px;padding:14px;font-size:1.15em;line-height:2;margin:8px 0;}
+
+  @media(max-width:400px){.btn{padding:14px 24px;font-size:1em;}}
+</style>
+</head>
+<body>
+
+<div class="buddy" id="buddy">
+  <div class="buddy-bubble" id="buddyBubble">你好呀！我是小毛虫🐛！今天我们来学写句子，超级好玩的！</div>
+  <div class="buddy-avatar" onclick="toggleBuddy()">🐛</div>
+</div>
+<div class="achievement-toast" id="achieveToast">🏆 <span id="achieveText"></span></div>
+
+<!-- ===== HERO ===== -->
+<div class="screen active" id="screen-hero">
+  <div style="width:100%;max-width:560px;display:flex;flex-direction:column;align-items:center;gap:14px;padding-top:24px;">
+    <div class="hero">
+      <div class="deco deco1">🌈</div>
+      <div class="deco deco2">⭐</div>
+      <div style="background:rgba(255,255,255,0.2);border-radius:30px;padding:4px 16px;display:inline-block;margin-bottom:10px;font-size:0.85em;">📚 一年级语文</div>
+      <h1>✍️ 写句子</h1>
+      <p>学会写完整的句子<br>🌟 谁 + 干什么 🌟</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:3.5em;margin-bottom:10px;animation:bounce 2s infinite;">🌸</div>
+      <h2 style="justify-content:center;font-size:1.5em;margin-bottom:10px;">写句子大冒险！</h2>
+      <p style="margin-bottom:16px;font-size:1em;color:#666;">跟着小毛虫一起学写句子<br>收集 ⭐星星 获得徽章！</p>
+      <div style="display:flex;gap:12px;justify-content:center;margin-bottom:16px;" id="starsRow">
+        <span class="star" id="star1">⭐</span>
+        <span class="star" id="star2">⭐</span>
+        <span class="star" id="star3">⭐</span>
+      </div>
+      <button class="btn btn-primary" onclick="goTo('screen-objectives')" style="font-size:1.2em;padding:18px 40px;">
+        🚀 出发！
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== OBJECTIVES ===== -->
+<div class="screen" id="screen-objectives">
+  <div style="width:100%;max-width:560px;">
+    <div class="section-title">🎯 今天学什么？</div>
+    <div class="card">
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div style="display:flex;gap:12px;align-items:center;background:#ffe0e0;border-radius:14px;padding:14px;">
+          <span style="font-size:2.5em;">👁️</span>
+          <div style="font-size:1.05em;"><strong>认识完整的句子</strong><br><span style="color:#666;font-size:0.9em;">一句话要说清楚：谁？干什么？</span></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;background:#e0f7f4;border-radius:14px;padding:14px;">
+          <span style="font-size:2.5em;">✏️</span>
+          <div style="font-size:1.05em;"><strong>会写几种句式</strong><br><span style="color:#666;font-size:0.9em;">陈述句、疑问句、感叹句</span></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;background:#fff8e0;border-radius:14px;padding:14px;">
+          <span style="font-size:2.5em;">😊</span>
+          <div style="font-size:1.05em;"><strong>喜欢写句子</strong><br><span style="color:#666;font-size:0.9em;">用句子表达自己的想法！</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>🗺️ 闯关地图</h2>
+      <div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:10px 0;">
+        <div style="text-align:center;">
+          <div style="width:60px;height:60px;background:var(--secondary);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.6em;cursor:pointer;box-shadow:0 4px 12px rgba(78,205,196,0.4);" onclick="goTo('screen-warmup')">🔥</div>
+          <div style="font-size:0.75em;color:#666;margin-top:6px;font-weight:700;">热身</div>
+        </div>
+        <div style="display:flex;align-items:center;color:#ddd;font-size:1.6em;">→</div>
+        <div style="text-align:center;">
+          <div style="width:60px;height:60px;background:#f0e8e0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.6em;" id="lv1node">🌸</div>
+          <div style="font-size:0.75em;color:#666;margin-top:6px;">谁+干什么</div>
+        </div>
+        <div style="display:flex;align-items:center;color:#ddd;font-size:1.6em;">→</div>
+        <div style="text-align:center;">
+          <div style="width:60px;height:60px;background:#f0e8e0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.6em;" id="lv2node">🎨</div>
+          <div style="font-size:0.75em;color:#666;margin-top:6px;">加描述</div>
+        </div>
+        <div style="display:flex;align-items:center;color:#ddd;font-size:1.6em;">→</div>
+        <div style="text-align:center;">
+          <div style="width:60px;height:60px;background:#f0e8e0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.6em;" id="lv3node">❓</div>
+          <div style="font-size:0.75em;color:#666;margin-top:6px;">问句叹句</div>
+        </div>
+        <div style="display:flex;align-items:center;color:#ddd;font-size:1.6em;">→</div>
+        <div style="text-align:center;">
+          <div style="width:60px;height:60px;background:#f0e8e0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.6em;" id="bossnode">🏆</div>
+          <div style="font-size:0.75em;color:#666;margin-top:6px;">大挑战</div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;"><button class="btn btn-secondary" onclick="goTo('screen-warmup')">➡️ 开始！</button></div>
+  </div>
+</div>
+
+<!-- ===== WARMUP ===== -->
+<div class="screen" id="screen-warmup">
+  <div style="width:100%;max-width:560px;">
+    <div class="progress-bar"><div class="progress-fill" style="width:15%"></div></div>
+    <div class="section-title">🔥 热身：什么是句子？</div>
+    <div class="card">
+      <h2>📖 句子的样子</h2>
+      <p style="line-height:1.8;margin-bottom:14px;font-size:1em;">一个完整的句子要说清楚：</p>
+      <div style="display:flex;gap:12px;justify-content:center;margin-bottom:16px;flex-wrap:wrap;">
+        <div style="background:#ffe0e0;border-radius:16px;padding:12px 20px;text-align:center;">
+          <div style="font-size:2em;margin-bottom:4px;">🐱</div>
+          <div style="font-weight:800;color:#ff6b6b;font-size:1.1em;">谁（什么）</div>
+          <div style="font-size:0.85em;color:#888;">句子的主角</div>
+        </div>
+        <div style="display:flex;align-items:center;font-size:2em;color:#ddd;">+</div>
+        <div style="background:#e0f7f4;border-radius:16px;padding:12px 20px;text-align:center;">
+          <div style="font-size:2em;margin-bottom:4px;">🐟</div>
+          <div style="font-weight:800;color:#4ecdc4;font-size:1.1em;">干什么</div>
+          <div style="font-size:0.85em;color:#888;">做了什么</div>
+        </div>
+      </div>
+      <div class="sentence-example">
+        <span class="part-who">小猫</span> <span class="part-do">吃</span> <span class="part-what">小鱼</span>。
+      </div>
+    </div>
+    <div class="card">
+      <h2>❓ 判断一下</h2>
+      <p style="color:#666;margin-bottom:12px;font-size:1em;">下面哪句话是完整的句子？</p>
+      <div onclick="warmupAns(this,'A')" class="option">A. 小狗</div>
+      <div onclick="warmupAns(this,'B')" class="option">B. 小狗在草地上跑。</div>
+      <div onclick="warmupAns(this,'C')" class="option">C. 跑跑跑</div>
+      <div onclick="warmupAns(this,'D')" class="option">D. 草地上的</div>
+      <div id="warmupFb" class="feedback" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LEVEL 1: 谁+干什么 ===== -->
+<div class="screen" id="screen-level1">
+  <div style="width:100%;max-width:560px;">
+    <div class="progress-bar"><div class="progress-fill" style="width:35%"></div></div>
+    <div class="section-title">🌸 第一关：谁+干什么 <span style="font-size:0.65em;background:var(--accent);border-radius:20px;padding:3px 10px;color:#333;font-weight:700;">⭐拼句子</span></div>
+    
+    <div class="card">
+      <h2>📖 句子成分</h2>
+      <div style="font-size:1.3em;text-align:center;padding:10px 0;line-height:2.2;">
+        <span class="part-who" style="background:#ffe0e0;padding:4px 12px;border-radius:10px;">爸爸</span>
+        &nbsp;
+        <span class="part-do" style="background:#e0f7f4;padding:4px 12px;border-radius:10px;">在厨房</span>
+        &nbsp;
+        <span class="part-what" style="background:#f0edff;padding:4px 12px;border-radius:10px;">做饭</span>。
+      </div>
+    </div>
+
+    <!-- Word sorting game -->
+    <div class="card">
+      <h2>🎮 拼句子游戏</h2>
+      <p style="color:#666;margin-bottom:14px;font-size:1em;">把下面的词语拼成一句完整的话！点击词语加入句子。</p>
+      <div class="sentence-slots" id="sentSlots">
+        <span style="color:#bbb;font-size:0.9em;">点击下面的词语，拼成一句话↓</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:14px;">
+        <span class="word-card" id="wc1" onclick="addWord(this,'小兔子')">小兔子</span>
+        <span class="word-card" id="wc2" onclick="addWord(this,'跳')">跳</span>
+        <span class="word-card" id="wc3" onclick="addWord(this,'草地上')">草地上</span>
+        <span class="word-card" id="wc4" onclick="addWord(this,'在')">在</span>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-primary" onclick="checkSent()" style="flex:1;padding:14px;">✅ 对了！</button>
+        <button class="btn btn-secondary" onclick="clearSent()" style="padding:14px 20px;">🔄 重拼</button>
+      </div>
+      <div id="sent1Fb" class="feedback" style="display:none;"></div>
+    </div>
+
+    <div class="card" id="lv1img" style="display:none;">
+      <h2>🖼️ 看图写句子</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div class="picture-card" id="pic1" onclick="pickPic(1)">
+          <div class="emoji">🐦</div>
+          <div style="font-size:1.1em;font-weight:700;">小鸟</div>
+          <div class="label">点击选择</div>
+        </div>
+        <div class="picture-card" id="pic2" onclick="pickPic(2)">
+          <div class="emoji">🌸</div>
+          <div style="font-size:1.1em;font-weight:700;">花儿</div>
+          <div class="label">点击选择</div>
+        </div>
+        <div class="picture-card" id="pic3" onclick="pickPic(3)">
+          <div class="emoji">☀️</div>
+          <div style="font-size:1.1em;font-weight:700;">太阳</div>
+          <div class="label">点击选择</div>
+        </div>
+      </div>
+      <p style="color:#666;margin-bottom:8px;font-size:0.95em;" id="picHint">选一张图，写一句话：</p>
+      <textarea class="writing-pad" id="lv1text" placeholder="例：小鸟在树上唱歌。" style="min-height:80px;" oninput="updateCC('lv1text','lv1cc')"></textarea>
+      <div style="text-align:right;font-size:0.88em;color:#aaa;margin-top:4px;" id="lv1cc">0字</div>
+      <button class="btn btn-secondary" onclick="submitLv1()" style="margin-top:10px;width:100%;justify-content:center;">🚀 写好了！</button>
+      <div id="lv1writeFb" class="feedback" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LEVEL 2: 加描述 ===== -->
+<div class="screen" id="screen-level2">
+  <div style="width:100%;max-width:560px;">
+    <div class="progress-bar"><div class="progress-fill" style="width:55%"></div></div>
+    <div class="section-title">🎨 第二关：加上描述词 <span style="font-size:0.65em;background:var(--accent);border-radius:20px;padding:3px 10px;color:#333;font-weight:700;">⭐扩句</span></div>
+    
+    <div class="card">
+      <h2>📖 让句子更生动！</h2>
+      <p style="color:#666;margin-bottom:12px;">在「谁」前面加颜色/形状，在「干什么」前面加地点/方式：</p>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div class="sentence-example" style="font-size:1em;">
+          普通：<span class="part-who">小猫</span><span class="part-do">跑</span>。
+        </div>
+        <div style="text-align:center;font-size:1.5em;color:var(--accent);">↓ 加描述词</div>
+        <div class="sentence-example" style="font-size:1em;background:#e8f7f4;">
+          生动：<span style="color:#a29bfe;font-weight:700;">白色的</span><span class="part-who">小猫</span><span style="color:#fdcb6e;font-weight:700;">快速地</span><span class="part-do">跑</span>了过去。
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>❓ 填空练习</h2>
+      <p style="color:#666;margin-bottom:14px;font-size:0.95em;">选择合适的词语填入空格：</p>
+      <div style="font-size:1.1em;line-height:2.5;padding:10px;background:#f8f4ef;border-radius:14px;margin-bottom:14px;">
+        <input class="fill-blank" id="fb1" type="text" placeholder="____" maxlength="4" style="width:70px;">
+        小鸟在
+        <input class="fill-blank" id="fb2" type="text" placeholder="____" maxlength="4" style="width:70px;">
+        树上
+        <input class="fill-blank" id="fb3" type="text" placeholder="____" maxlength="4" style="width:70px;">
+        歌。
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+        <span class="word-card" style="font-size:1em;padding:8px 14px;" onclick="fillBlank('fb1',this)">漂亮的</span>
+        <span class="word-card" style="font-size:1em;padding:8px 14px;" onclick="fillBlank('fb2',this)">高高的</span>
+        <span class="word-card" style="font-size:1em;padding:8px 14px;" onclick="fillBlank('fb3',this)">唱</span>
+        <span class="word-card" style="font-size:1em;padding:8px 14px;" onclick="fillBlank('fb1','可爱的')">可爱的</span>
+      </div>
+      <button class="btn btn-primary" onclick="checkFill()" style="width:100%;justify-content:center;">✅ 检查！</button>
+      <div id="lv2Fb" class="feedback" style="display:none;"></div>
+    </div>
+
+    <div class="card" id="lv2write" style="display:none;">
+      <h2>✍️ 扩句练习</h2>
+      <p style="color:#666;margin-bottom:8px;font-size:0.95em;">原句：「弟弟吃饭。」</p>
+      <p style="color:#666;margin-bottom:10px;font-size:0.95em;">加上描述词，让句子更生动：</p>
+      <textarea class="writing-pad" id="lv2text" placeholder="例：小弟弟在饭桌前，开心地大口吃饭。" style="min-height:80px;" oninput="updateCC('lv2text','lv2cc')"></textarea>
+      <div style="text-align:right;font-size:0.88em;color:#aaa;margin-top:4px;" id="lv2cc">0字</div>
+      <button class="btn btn-secondary" onclick="submitLv2()" style="margin-top:10px;width:100%;justify-content:center;">🚀 写好了！</button>
+      <div id="lv2writeFb" class="feedback" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LEVEL 3: 问句感叹句 ===== -->
+<div class="screen" id="screen-level3">
+  <div style="width:100%;max-width:560px;">
+    <div class="progress-bar"><div class="progress-fill" style="width:75%"></div></div>
+    <div class="section-title">❓ 第三关：问句和叹句 <span style="font-size:0.65em;background:var(--accent);border-radius:20px;padding:3px 10px;color:#333;font-weight:700;">⭐变变变</span></div>
+    
+    <div class="card">
+      <h2>📖 三种句子</h2>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="background:#e0f7f4;border-radius:14px;padding:12px;font-size:1.05em;">
+          <div style="font-weight:800;color:#4ecdc4;margin-bottom:4px;">📢 陈述句（句号）</div>
+          <div>今天天气很好。</div>
+        </div>
+        <div style="background:#ffe0e0;border-radius:14px;padding:12px;font-size:1.05em;">
+          <div style="font-weight:800;color:#ff6b6b;margin-bottom:4px;">❓ 疑问句（问号）</div>
+          <div>今天天气好吗？</div>
+        </div>
+        <div style="background:#fff8e0;border-radius:14px;padding:12px;font-size:1.05em;">
+          <div style="font-weight:800;color:#fdcb6e;margin-bottom:4px;">❗ 感叹句（叹号）</div>
+          <div>今天天气真好啊！</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>❓ 认一认</h2>
+      <p style="color:#666;margin-bottom:12px;font-size:1em;">「这朵花真漂亮！」是什么句子？</p>
+      <div onclick="ansLv3(this,'A')" class="option">A. 陈述句（讲一件事）</div>
+      <div onclick="ansLv3(this,'B')" class="option">B. 疑问句（问问题）</div>
+      <div onclick="ansLv3(this,'C')" class="option">C. 感叹句（表达感情）</div>
+      <div id="lv3Fb" class="feedback" style="display:none;"></div>
+    </div>
+
+    <div class="card" id="lv3change" style="display:none;">
+      <h2>🔄 句子变变变</h2>
+      <p style="color:#666;margin-bottom:10px;font-size:0.95em;">把这句话改成<strong>疑问句</strong>：</p>
+      <div style="background:#f8f4ef;border-radius:12px;padding:12px;font-size:1.1em;margin-bottom:12px;">小明喜欢画画。</div>
+      <div onclick="changeSent(this,'A')" class="option">A. 小明不喜欢画画。</div>
+      <div onclick="changeSent(this,'B')" class="option">B. 小明喜欢画画吗？</div>
+      <div onclick="changeSent(this,'C')" class="option">C. 小明真喜欢画画啊！</div>
+      <div id="lv3changeFb" class="feedback" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== BOSS ===== -->
+<div class="screen" id="screen-boss">
+  <div style="width:100%;max-width:560px;">
+    <div class="progress-bar"><div class="progress-fill" style="width:88%"></div></div>
+    <div class="section-title">🏆 大挑战！</div>
+    
+    <div class="card" style="background:linear-gradient(135deg,#fff0f8,#fff);border:3px solid var(--pink);">
+      <h2 style="color:#fd79a8;">🎯 任务</h2>
+      <p style="font-size:1.05em;line-height:1.8;">看看下面的图，写三句话：<br>
+        ① 一句<strong>陈述句</strong>（说一件事）<br>
+        ② 一句<strong>疑问句</strong>（问一个问题）<br>
+        ③ 一句<strong>感叹句</strong>（表达心情）
+      </p>
+    </div>
+
+    <div class="card">
+      <div style="font-size:5em;text-align:center;padding:10px 0;background:#fff8f0;border-radius:16px;margin-bottom:14px;">
+        🌳🐿️🍂
+      </div>
+      <p style="color:#888;font-size:0.9em;text-align:center;margin-bottom:12px;">秋天，小松鼠在大树下收集松果</p>
+      <textarea class="writing-pad" id="bossText" placeholder="① 小松鼠在秋天收集松果。（陈述句）&#10;② 小松鼠找到了多少松果？（疑问句）&#10;③ 秋天的叶子真好看啊！（感叹句）" style="min-height:180px;" oninput="bossCount()"></textarea>
+      <div style="text-align:right;font-size:0.88em;color:#aaa;margin-top:4px;" id="bossCC">0字</div>
+      <button class="btn btn-primary" onclick="submitBoss()" style="margin-top:12px;width:100%;justify-content:center;font-size:1.1em;">🏆 提交！</button>
+      <div id="bossFb" class="feedback" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== REPORT ===== -->
+<div class="screen" id="screen-report">
+  <div style="width:100%;max-width:560px;">
+    <div class="report-card">
+      <div style="font-size:3em;margin-bottom:8px;">🎉</div>
+      <h2 style="color:var(--primary);font-size:1.8em;margin-bottom:10px;">厉害啦！</h2>
+      <div class="big-score" id="finalScore">⭐⭐⭐</div>
+      <p style="color:#888;font-size:1em;margin:10px 0 16px;">你学会了写句子！</p>
+      <div class="achievements-grid">
+        <div class="ach-badge earned"><span class="ach-icon">🌸</span>拼句小能手</div>
+        <div class="ach-badge earned"><span class="ach-icon">🎨</span>扩句达人</div>
+        <div class="ach-badge earned"><span class="ach-icon">❓</span>问句高手</div>
+        <div class="ach-badge earned"><span class="ach-icon">✍️</span>写作新星</div>
+        <div class="ach-badge locked"><span class="ach-icon">🔒</span>标点正确</div>
+        <div class="ach-badge locked"><span class="ach-icon">🔒</span>图文写作</div>
+        <div class="ach-badge locked"><span class="ach-icon">🔒</span>词汇达人</div>
+        <div class="ach-badge locked"><span class="ach-icon">🔒</span>全能写手</div>
+      </div>
+      <p style="color:#aaa;font-size:0.88em;margin-bottom:20px;">继续努力，解锁更多徽章！</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="goTo('screen-extension')">🌟 更多练习</button>
+        <button class="btn btn-secondary" onclick="restartGame()">🔄 再玩！</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== EXTENSION ===== -->
+<div class="screen" id="screen-extension">
+  <div style="width:100%;max-width:560px;">
+    <div class="section-title">🌈 更多练习</div>
+    
+    <div class="card">
+      <h2>📝 句子类型速查</h2>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:1em;">
+        <div style="background:#e0f7f4;border-radius:12px;padding:10px;display:flex;justify-content:space-between;align-items:center;">
+          <span>陈述句</span><span style="color:#4ecdc4;font-weight:700;">→ 句号 。</span>
+        </div>
+        <div style="background:#ffe0e0;border-radius:12px;padding:10px;display:flex;justify-content:space-between;align-items:center;">
+          <span>疑问句</span><span style="color:#ff6b6b;font-weight:700;">→ 问号 ？</span>
+        </div>
+        <div style="background:#fff8e0;border-radius:12px;padding:10px;display:flex;justify-content:space-between;align-items:center;">
+          <span>感叹句</span><span style="color:#fdcb6e;font-weight:700;">→ 叹号 ！</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🎮 自由练习</h2>
+      <p style="color:#666;margin-bottom:12px;">自己写三个句子，每种类型各一个！</p>
+      <textarea class="writing-pad" id="freeText" placeholder="①（陈述句）。&#10;②（疑问句）？&#10;③（感叹句）！" style="min-height:140px;"></textarea>
+    </div>
+
+    <div class="card">
+      <h2>🏠 今天的作业</h2>
+      <div style="background:#fff8e0;border-radius:14px;padding:14px;line-height:2;font-size:1em;">
+        <div>⭐ 回家后，用三种句式各写一句话</div>
+        <div>⭐⭐ 看一张图，写一段3句话的小故事</div>
+        <div>⭐⭐⭐ 和爸爸妈妈玩：出题考考他们！</div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-bottom:30px;margin-top:10px;">
+      <button class="btn btn-primary" onclick="goTo('screen-hero')">🏠 回首页</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+function getAudio(){ if(!audioCtx) audioCtx = new AudioCtx(); return audioCtx; }
+function playBeep(f,d,t='sine',v=0.3){ try{ const ctx=getAudio(),o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(ctx.destination);o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+d);o.start(ctx.currentTime);o.stop(ctx.currentTime+d); }catch(e){} }
+function playCorrect(){ playBeep(523,0.1);setTimeout(()=>playBeep(659,0.1),100);setTimeout(()=>playBeep(784,0.2),200); }
+function playWrong(){ playBeep(220,0.3,'sawtooth',0.2); }
+function playLevelUp(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>playBeep(f,0.15),i*100)); }
+function playPop(){ playBeep(660,0.1,'sine',0.2); }
+
+const state = { stars:0, words:[], selectedPic:null };
+
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  const msgs = { 'screen-warmup':'先看看什么是完整的句子！', 'screen-level1':'把词语拼成句子，加油！', 'screen-level2':'描述词让句子更漂亮！', 'screen-level3':'问句和叹句，记住标点！', 'screen-boss':'三种句子都写出来，你最棒！' };
+  if(msgs[id]) showBuddy(msgs[id]);
+  if(id==='screen-level1') document.getElementById('lv1node').style.background='#4ecdc4';
+  if(id==='screen-level2') document.getElementById('lv2node').style.background='#4ecdc4';
+  if(id==='screen-level3') document.getElementById('lv3node').style.background='#4ecdc4';
+  if(id==='screen-boss') document.getElementById('bossnode').style.background='linear-gradient(135deg,#ffd700,#ff6b6b)';
+}
+function toggleBuddy(){ const b=document.getElementById('buddyBubble'); b.classList.toggle('show'); }
+function showBuddy(msg){ const b=document.getElementById('buddyBubble'); b.textContent=msg; b.classList.add('show'); setTimeout(()=>b.classList.remove('show'),3500); }
+function showAchieve(t){ document.getElementById('achieveText').textContent=t; const a=document.getElementById('achieveToast'); a.classList.add('show'); playLevelUp(); setTimeout(()=>a.classList.remove('show'),2500); }
+function earnStar(){ if(state.stars>=3)return; state.stars++; document.getElementById('star'+state.stars).classList.add('earned'); playBeep(880,0.1);setTimeout(()=>playBeep(1047,0.1),120); }
+function updateCC(tid,cid){ const l=document.getElementById(tid).value.length; if(document.getElementById(cid)) document.getElementById(cid).textContent=l+'字'; }
+function launchConfetti(){ const cs=['#ff6b6b','#4ecdc4','#ffe66d','#a29bfe','#fd79a8']; for(let i=0;i<40;i++){setTimeout(()=>{ const c=document.createElement('div'); c.className='confetti-piece'; c.style.cssText=`left:${Math.random()*100}%;background:${cs[Math.floor(Math.random()*cs.length)]};animation-duration:${1+Math.random()}s;`; document.body.appendChild(c);setTimeout(()=>c.remove(),2000); },i*30);} }
+
+// Warmup
+function warmupAns(el,ans){ if(el.classList.contains('disabled'))return; document.querySelectorAll('#screen-warmup .option').forEach(o=>o.classList.add('disabled')); const fb=document.getElementById('warmupFb'); fb.style.display='block'; if(ans==='B'){el.classList.add('correct');fb.className='feedback good';fb.innerHTML='✅ 对了！「小狗在草地上跑」说清楚了谁、在哪里、做什么，是完整的句子！';playCorrect();setTimeout(()=>goTo('screen-level1'),1500);}else{el.classList.add('wrong');document.querySelectorAll('#screen-warmup .option')[1].classList.add('correct');fb.className='feedback bad';fb.innerHTML='❌ 再想想！A只有「谁」，没有「干什么」；C只有动作；D是没说完的词语。B才完整！';playWrong();setTimeout(()=>goTo('screen-level1'),2000);} }
+
+// Word building
+function addWord(el,word){ if(el.classList.contains('used'))return; el.classList.add('used'); state.words.push(word); const slots=document.getElementById('sentSlots'); slots.innerHTML=''; state.words.forEach(w=>{ const span=document.createElement('span'); span.style.cssText='background:#4ecdc4;color:#fff;border-radius:12px;padding:8px 16px;font-size:1.2em;font-weight:700;'; span.textContent=w; slots.appendChild(span); }); if(state.words.length===1) slots.querySelector('span').style.cssText+='cursor:pointer;'; playPop(); }
+function clearSent(){ state.words=[]; document.getElementById('sentSlots').innerHTML='<span style="color:#bbb;font-size:0.9em;">点击下面的词语，拼成一句话↓</span>'; ['wc1','wc2','wc3','wc4'].forEach(id=>{const e=document.getElementById(id);if(e){e.classList.remove('used','correct','wrong');}}); }
+function checkSent(){ const fb=document.getElementById('sent1Fb'); fb.style.display='block'; const sent=state.words.join(''); const correct=sent.includes('小兔子')&&sent.includes('在')&&sent.includes('草地上')&&sent.includes('跳'); if(correct){fb.className='feedback good';fb.innerHTML='✅ 拼对了！「小兔子在草地上跳。」句子完整，棒棒！';playCorrect();showAchieve('🌸 拼句小能手解锁！');earnStar();setTimeout(()=>{document.getElementById('lv1img').style.display='block';},800);}else{fb.className='feedback tip';fb.innerHTML='💡 再想想顺序！试试：小兔子 → 在 → 草地上 → 跳';} }
+
+// Pic pick
+function pickPic(n){ ['pic1','pic2','pic3'].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.border='3px solid '+('var(--accent)'); }); document.getElementById('pic'+n).style.border='4px solid #ff6b6b'; state.selectedPic=n; const hints=['小鸟在树上唱歌','花儿开放了','太阳照耀大地']; document.getElementById('picHint').textContent='写一句关于这个的话：（参考：'+hints[n-1]+'）'; playPop(); }
+function submitLv1(){ const t=document.getElementById('lv1text').value.trim(); const fb=document.getElementById('lv1writeFb'); fb.style.display='block'; if(t.length>=5&&/。|！|？/.test(t)){fb.className='feedback good';fb.innerHTML='✅ 写得很好！句子完整，有标点！进入第二关！';playCorrect();earnStar();setTimeout(()=>goTo('screen-level2'),1500);}else if(t.length>=5){fb.className='feedback tip';fb.innerHTML='💡 快写好了！别忘记在最后加上标点符号（。或！或？）';}else{fb.className='feedback tip';fb.innerHTML='💡 再多写几个字！';} }
+
+// Level 2 fill
+function fillBlank(id, elOrVal){ const val = typeof elOrVal==='string' ? elOrVal : elOrVal.textContent; document.getElementById(id).value=val; if(typeof elOrVal!=='string') elOrVal.classList.add('used'); playPop(); }
+function checkFill(){ const fb=document.getElementById('lv2Fb'); fb.style.display='block'; const f1=document.getElementById('fb1').value; const f2=document.getElementById('fb2').value; const f3=document.getElementById('fb3').value; if(f1&&f2&&f3){fb.className='feedback good';fb.innerHTML='✅ 填得很好！句子变得更生动了！';playCorrect();showAchieve('🎨 扩句达人解锁！');earnStar();setTimeout(()=>{document.getElementById('lv2write').style.display='block';},800);}else{fb.className='feedback tip';fb.innerHTML='💡 还有空白！把三个空格都填上吧！';} }
+function submitLv2(){ const t=document.getElementById('lv2text').value.trim(); const fb=document.getElementById('lv2writeFb'); fb.style.display='block'; if(t.length>=8){fb.className='feedback good';fb.innerHTML='✅ 扩句成功！比原句生动多了！进入第三关！';playCorrect();setTimeout(()=>goTo('screen-level3'),1500);}else{fb.className='feedback tip';fb.innerHTML='💡 再加几个描述词，让句子更好看！';} }
+
+// Level 3
+function ansLv3(el,ans){ if(el.classList.contains('disabled'))return; document.querySelectorAll('#screen-level3 .option').forEach(o=>o.classList.add('disabled')); const fb=document.getElementById('lv3Fb'); fb.style.display='block'; if(ans==='C'){el.classList.add('correct');fb.className='feedback good';fb.innerHTML='✅ 对！「真漂亮！」表达了惊喜和喜爱的心情，后面有叹号！是感叹句！';playCorrect();showAchieve('❓ 问句高手解锁！');earnStar();setTimeout(()=>{document.getElementById('lv3change').style.display='block';},800);}else{el.classList.add('wrong');document.querySelectorAll('#screen-level3 .option')[2].classList.add('correct');fb.className='feedback bad';fb.innerHTML='❌ 注意叹号！「真漂亮！」表达强烈感情，是感叹句！';playWrong();setTimeout(()=>{document.getElementById('lv3change').style.display='block';},600);} }
+function changeSent(el,ans){ if(el.classList.contains('disabled'))return; document.querySelectorAll('#screen-level3 .card:last-child .option').forEach(o=>o.classList.add('disabled')); const fb=document.getElementById('lv3changeFb'); fb.style.display='block'; if(ans==='B'){el.classList.add('correct');fb.className='feedback good';fb.innerHTML='✅ 正确！「……吗？」是疑问句的标志！进入大挑战！';playCorrect();setTimeout(()=>goTo('screen-boss'),1500);}else{el.classList.add('wrong');document.querySelectorAll('#screen-level3 .card:last-child .option')[1].classList.add('correct');fb.className='feedback bad';fb.innerHTML='❌ 疑问句要问问题，加「吗？」就变成疑问句了！';playWrong();setTimeout(()=>goTo('screen-boss'),2000);} }
+
+// Boss
+function bossCount(){ document.getElementById('bossCC').textContent=document.getElementById('bossText').value.length+'字'; }
+function submitBoss(){ const t=document.getElementById('bossText').value.trim(); const fb=document.getElementById('bossFb'); fb.style.display='block'; if(t.length<20){fb.className='feedback tip';fb.innerHTML='💡 再写多一点！写三句话，每种句子各一个！';return;} const hasDot=/。/.test(t); const hasQ=/？/.test(t); const hasEx=/！/.test(t); if(hasDot&&hasQ&&hasEx){fb.className='feedback good';fb.innerHTML='✅ 太厉害了！三种句子都写出来了！陈述句、疑问句、感叹句，全部掌握！';playCorrect();launchConfetti();setTimeout(()=>goTo('screen-report'),2000);}else{const m=[];if(!hasDot)m.push('陈述句（用句号。）');if(!hasQ)m.push('疑问句（用问号？）');if(!hasEx)m.push('感叹句（用叹号！）');fb.className='feedback tip';fb.innerHTML='💡 还需要：'+m.join('、');} }
+
+function restartGame(){ state.stars=0;[1,2,3].forEach(i=>document.getElementById('star'+i).classList.remove('earned'));goTo('screen-hero'); }
+</script>
+</body>
+</html>

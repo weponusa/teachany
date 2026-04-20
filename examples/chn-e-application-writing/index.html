@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>应用文写作 · 五年级语文闯关</title>
+<style>
+  :root {
+    --bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--card:#fff;
+    --shadow:0 4px 20px rgba(0,0,0,0.08);--radius:20px;--text:#333;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);font-family:'PingFang SC','Microsoft YaHei',sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden;}
+  .screen{display:none;min-height:100vh;padding:20px;}
+  .screen.active{display:flex;flex-direction:column;align-items:center;}
+
+  /* Hero */
+  .hero{background:linear-gradient(135deg,#ff6b6b,#ff8e8e);border-radius:var(--radius);padding:40px 30px;text-align:center;width:100%;max-width:600px;color:#fff;margin-bottom:20px;position:relative;overflow:hidden;}
+  .hero::before{content:'';position:absolute;top:-30px;right:-30px;width:150px;height:150px;background:rgba(255,255,255,0.15);border-radius:50%;}
+  .hero::after{content:'';position:absolute;bottom:-20px;left:-20px;width:100px;height:100px;background:rgba(255,255,255,0.1);border-radius:50%;}
+  .hero h1{font-size:2.2em;font-weight:900;margin-bottom:8px;position:relative;}
+  .hero p{font-size:1em;opacity:0.9;position:relative;}
+  .hero .grade-badge{background:rgba(255,255,255,0.25);border-radius:30px;padding:4px 16px;display:inline-block;margin-bottom:12px;font-size:0.85em;}
+
+  /* Buttons */
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;border-radius:50px;border:none;font-size:1em;font-weight:700;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 12px rgba(0,0,0,0.15);}
+  .btn-primary{background:var(--primary);color:#fff;}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(255,107,107,0.4);}
+  .btn-secondary{background:var(--secondary);color:#fff;}
+  .btn-secondary:hover{transform:translateY(-2px);}
+  .btn-accent{background:var(--accent);color:#333;}
+  .btn-accent:hover{transform:translateY(-2px);}
+
+  /* Cards */
+  .card{background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);width:100%;max-width:600px;margin-bottom:16px;}
+  .card h2{color:var(--primary);font-size:1.3em;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  .card p{line-height:1.8;color:#555;}
+
+  /* Progress */
+  .progress-bar{width:100%;max-width:600px;background:#f0e8e0;border-radius:30px;height:12px;margin-bottom:16px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:30px;transition:width 0.5s;}
+
+  /* Stars */
+  .stars-display{display:flex;align-items:center;gap:6px;font-size:1.2em;}
+  .star{color:#ddd;transition:color 0.3s;font-size:1.4em;}
+  .star.earned{color:#ffd700;animation:starPop 0.4s ease;}
+  @keyframes starPop{0%{transform:scale(0)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
+
+  /* Objectives */
+  .obj-list{list-style:none;}
+  .obj-list li{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #f5e8d8;}
+  .obj-list li:last-child{border:none;}
+  .obj-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.8em;flex-shrink:0;margin-top:2px;}
+  .obj-know{background:#ffe0e0;color:#ff6b6b;}
+  .obj-do{background:#e0f7f4;color:#4ecdc4;}
+  .obj-feel{background:#fff8e0;color:#f0a000;}
+
+  /* Level map */
+  .level-map{display:flex;align-items:center;gap:0;width:100%;max-width:600px;overflow-x:auto;padding:20px 0;}
+  .level-node{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;}
+  .level-circle{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4em;cursor:pointer;transition:all 0.2s;position:relative;}
+  .level-circle.locked{background:#e0d8d0;color:#aaa;}
+  .level-circle.unlocked{background:var(--secondary);color:#fff;box-shadow:0 4px 12px rgba(78,205,196,0.4);}
+  .level-circle.unlocked:hover{transform:scale(1.1);}
+  .level-circle.completed{background:var(--primary);color:#fff;}
+  .level-circle.boss{background:linear-gradient(135deg,#a29bfe,#6c5ce7);color:#fff;}
+  .level-name{font-size:0.72em;color:#666;text-align:center;max-width:70px;}
+  .level-connector{width:30px;height:4px;background:#e0d8d0;flex-shrink:0;}
+  .level-connector.done{background:var(--primary);}
+
+  /* Quiz */
+  .question-box{background:linear-gradient(135deg,#fff8f0,#fff);border-radius:var(--radius);padding:24px;border:2px solid #ffe0c0;width:100%;max-width:600px;margin-bottom:16px;}
+  .question-text{font-size:1.1em;font-weight:600;line-height:1.7;margin-bottom:16px;}
+  .options{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .option{background:#f8f4ef;border:2px solid #e8ddd0;border-radius:14px;padding:12px 16px;cursor:pointer;transition:all 0.2s;font-size:0.95em;line-height:1.5;}
+  .option:hover{border-color:var(--secondary);background:#e0f7f4;}
+  .option.correct{border-color:#4ecdc4;background:#e0f7f4;color:#2a9d8f;}
+  .option.wrong{border-color:#ff6b6b;background:#ffe0e0;color:#c0392b;}
+  .option.disabled{pointer-events:none;}
+
+  /* Writing pad */
+  .writing-pad{width:100%;background:#fff;border-radius:var(--radius);border:2px solid #ffe0c0;padding:16px;font-size:1em;min-height:140px;resize:none;font-family:inherit;line-height:1.9;}
+  .writing-pad:focus{outline:none;border-color:var(--secondary);}
+  .char-count{text-align:right;font-size:0.8em;color:#aaa;margin-top:6px;}
+
+  /* Feedback */
+  .feedback{border-radius:14px;padding:14px 18px;margin-top:10px;font-size:0.95em;line-height:1.6;}
+  .feedback.good{background:#e0f7f4;border-left:4px solid var(--secondary);color:#2a9d8f;}
+  .feedback.bad{background:#ffe0e0;border-left:4px solid var(--primary);color:#c0392b;}
+  .feedback.tip{background:#fff8e0;border-left:4px solid var(--accent);color:#855a00;}
+
+  /* Buddy */
+  .buddy{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;align-items:flex-end;gap:8px;z-index:100;}
+  .buddy-avatar{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--secondary),#26d0ce);display:flex;align-items:center;justify-content:center;font-size:2em;cursor:pointer;box-shadow:0 4px 16px rgba(78,205,196,0.4);transition:transform 0.2s;}
+  .buddy-avatar:hover{transform:scale(1.1);}
+  .buddy-bubble{background:var(--card);border-radius:16px 16px 4px 16px;padding:12px 16px;max-width:220px;font-size:0.88em;line-height:1.5;box-shadow:var(--shadow);display:none;color:#333;}
+  .buddy-bubble.show{display:block;animation:bubbleIn 0.3s ease;}
+  @keyframes bubbleIn{from{opacity:0;transform:scale(0.8)}to{opacity:1;transform:scale(1)}}
+
+  /* Achievement */
+  .achievement-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#ffd700,#ffb700);color:#333;border-radius:30px;padding:10px 24px;font-weight:700;font-size:0.95em;display:none;z-index:200;box-shadow:0 4px 20px rgba(255,183,0,0.4);}
+  .achievement-toast.show{display:flex;align-items:center;gap:8px;animation:toastIn 0.4s ease;}
+  @keyframes toastIn{from{opacity:0;top:0}to{opacity:1;top:20px}}
+
+  /* Report */
+  .report-card{background:linear-gradient(135deg,#fff8f0,#fff);border-radius:var(--radius);padding:30px;text-align:center;width:100%;max-width:600px;box-shadow:var(--shadow);}
+  .score-circle{width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#ff8e8e);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 20px;font-size:2em;font-weight:900;}
+  .score-circle span{font-size:0.35em;font-weight:400;}
+  .achievements-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0;}
+  .ach-badge{border-radius:14px;padding:10px 6px;text-align:center;font-size:0.72em;}
+  .ach-badge.earned{background:linear-gradient(135deg,#ffe66d,#ffd700);}
+  .ach-badge.locked{background:#f0e8e0;color:#aaa;}
+  .ach-badge .ach-icon{font-size:1.6em;margin-bottom:4px;}
+
+  /* Drag drop */
+  .drag-zone{background:#f8f4ef;border:2px dashed #ddd;border-radius:14px;padding:12px;min-height:50px;transition:border-color 0.2s;}
+  .drag-zone.over{border-color:var(--secondary);background:#e0f7f4;}
+  .drag-item{background:#fff;border:2px solid #e8ddd0;border-radius:10px;padding:8px 14px;display:inline-block;cursor:grab;margin:4px;font-size:0.9em;transition:all 0.2s;}
+  .drag-item:hover{border-color:var(--primary);transform:translateY(-2px);}
+  .drag-item.dragging{opacity:0.5;}
+
+  /* Template display */
+  .template-box{background:#fff8f0;border:2px solid #ffd0a0;border-radius:var(--radius);padding:20px;margin:12px 0;font-family:monospace;font-size:0.92em;line-height:2;}
+  .template-box .blank{display:inline-block;min-width:60px;border-bottom:2px solid var(--primary);color:var(--primary);font-weight:700;text-align:center;}
+
+  /* Warmup */
+  .warmup-item{background:var(--card);border-radius:14px;padding:16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,0.06);}
+  .warmup-icon{font-size:2em;flex-shrink:0;}
+
+  .section-title{font-size:1.4em;font-weight:800;color:var(--primary);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+  .badge{background:var(--accent);color:#333;border-radius:20px;padding:3px 12px;font-size:0.75em;font-weight:700;}
+
+  /* Confetti */
+  .confetti-piece{position:fixed;width:8px;height:8px;border-radius:2px;animation:confettiFall 1.5s ease-out forwards;pointer-events:none;z-index:999;}
+  @keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+
+  .nav-dots{display:flex;gap:6px;margin-bottom:16px;}
+  .nav-dot{width:10px;height:10px;border-radius:50%;background:#ddd;transition:all 0.2s;}
+  .nav-dot.active{background:var(--primary);transform:scale(1.3);}
+
+  @media(max-width:480px){
+    .options{grid-template-columns:1fr;}
+    .achievements-grid{grid-template-columns:repeat(3,1fr);}
+    .level-map{gap:0;}
+  }
+</style>
+</head>
+<body>
+
+<!-- AI Buddy -->
+<div class="buddy" id="buddy">
+  <div class="buddy-bubble" id="buddyBubble">你好！我是小毛虫🐛，陪你一起学应用文写作！加油哦～</div>
+  <div class="buddy-avatar" onclick="toggleBuddy()">🐛</div>
+</div>
+
+<!-- Achievement Toast -->
+<div class="achievement-toast" id="achieveToast">🏆 <span id="achieveText"></span></div>
+
+<!-- ===== SCREEN 0: HERO ===== -->
+<div class="screen active" id="screen-hero">
+  <div style="width:100%;max-width:600px;display:flex;flex-direction:column;align-items:center;gap:16px;padding-top:30px;">
+    <div class="hero">
+      <div class="grade-badge">📚 五年级语文</div>
+      <h1>✍️ 应用文写作</h1>
+      <p>通知书 · 邀请函 · 倡议书<br>掌握实用写作三件套！</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:3em;margin-bottom:12px;">🌟</div>
+      <h2 style="justify-content:center;margin-bottom:8px;">闯关大冒险</h2>
+      <p style="margin-bottom:16px;">完成3关挑战，收集⭐星星，解锁成就徽章！<br>准备好了吗？</p>
+      <div class="stars-display" style="justify-content:center;margin-bottom:16px;">
+        <div class="star" id="star1">⭐</div>
+        <div class="star" id="star2">⭐</div>
+        <div class="star" id="star3">⭐</div>
+        <span style="font-size:0.8em;color:#aaa;margin-left:8px;" id="starCount">0 / 3</span>
+      </div>
+      <button class="btn btn-primary" onclick="goTo('screen-objectives')" style="font-size:1.1em;">🚀 开始冒险！</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 1: OBJECTIVES ===== -->
+<div class="screen" id="screen-objectives">
+  <div style="width:100%;max-width:600px;">
+    <div class="section-title">🎯 本节目标</div>
+    <div class="card">
+      <ul class="obj-list">
+        <li>
+          <div class="obj-icon obj-know">知</div>
+          <div><strong>了解三种应用文</strong>的格式要素：通知书、邀请函、倡议书各有哪些必备部分</div>
+        </li>
+        <li>
+          <div class="obj-icon obj-do">做</div>
+          <div><strong>能规范写作</strong>一份完整的应用文，格式正确，要素齐全</div>
+        </li>
+        <li>
+          <div class="obj-icon obj-feel">感</div>
+          <div><strong>感受应用文的实用价值</strong>，体会规范表达在生活中的重要性</div>
+        </li>
+      </ul>
+    </div>
+    <div class="card" style="background:linear-gradient(135deg,#fff8f0,#fff);">
+      <h2>🗺️ 闯关地图</h2>
+      <div class="level-map" id="levelMap">
+        <div class="level-node">
+          <div class="level-circle unlocked" onclick="goTo('screen-warmup')">🔥</div>
+          <div class="level-name">热身</div>
+        </div>
+        <div class="level-connector" id="conn1"></div>
+        <div class="level-node">
+          <div class="level-circle locked" id="lv1">1️⃣</div>
+          <div class="level-name">通知书</div>
+        </div>
+        <div class="level-connector" id="conn2"></div>
+        <div class="level-node">
+          <div class="level-circle locked" id="lv2">2️⃣</div>
+          <div class="level-name">邀请函</div>
+        </div>
+        <div class="level-connector" id="conn3"></div>
+        <div class="level-node">
+          <div class="level-circle locked" id="lv3">3️⃣</div>
+          <div class="level-name">倡议书</div>
+        </div>
+        <div class="level-connector" id="conn4"></div>
+        <div class="level-node">
+          <div class="level-circle boss locked" id="lvBoss">👑</div>
+          <div class="level-name">Boss关</div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;">
+      <button class="btn btn-secondary" onclick="goTo('screen-warmup')">➡️ 进入热身</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 2: WARMUP ===== -->
+<div class="screen" id="screen-warmup">
+  <div style="width:100%;max-width:600px;">
+    <div class="progress-bar"><div class="progress-fill" style="width:20%"></div></div>
+    <div class="section-title">🔥 热身运动 <span class="badge">连连看</span></div>
+    <div class="card">
+      <p style="margin-bottom:16px;color:#666;">你在生活中见过这些文件吗？把左边的应用文和右边的场景连起来！</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <div class="warmup-item" style="cursor:pointer;" id="wu-a" onclick="selectWarmup('left','a')">
+            <div class="warmup-icon">📋</div><div><strong>通知书</strong></div>
+          </div>
+          <div class="warmup-item" style="cursor:pointer;" id="wu-b" onclick="selectWarmup('left','b')">
+            <div class="warmup-icon">💌</div><div><strong>邀请函</strong></div>
+          </div>
+          <div class="warmup-item" style="cursor:pointer;" id="wu-c" onclick="selectWarmup('left','c')">
+            <div class="warmup-icon">📣</div><div><strong>倡议书</strong></div>
+          </div>
+        </div>
+        <div>
+          <div class="warmup-item" style="cursor:pointer;" id="wu-1" onclick="selectWarmup('right','1')">
+            <div class="warmup-icon">🎂</div><div>请朋友参加生日派对</div>
+          </div>
+          <div class="warmup-item" style="cursor:pointer;" id="wu-2" onclick="selectWarmup('right','2')">
+            <div class="warmup-icon">♻️</div><div>号召大家保护环境</div>
+          </div>
+          <div class="warmup-item" style="cursor:pointer;" id="wu-3" onclick="selectWarmup('right','3')">
+            <div class="warmup-icon">📅</div><div>告知活动时间地点</div>
+          </div>
+        </div>
+      </div>
+      <div id="warmupFeedback" class="feedback tip" style="display:none;"></div>
+    </div>
+    <div style="text-align:center;margin-top:8px;">
+      <button class="btn btn-primary" onclick="checkWarmup()">✅ 确认连线</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 3: LEVEL 1 - 通知书 ===== -->
+<div class="screen" id="screen-level1">
+  <div style="width:100%;max-width:600px;">
+    <div class="progress-bar"><div class="progress-fill" style="width:40%"></div></div>
+    <div class="section-title">📋 第一关：通知书 <span class="badge">⭐格式知识</span></div>
+    
+    <div class="card">
+      <h2>📖 知识卡片</h2>
+      <div class="template-box">
+        <strong>通知书格式：</strong><br>
+        ① 标题：<span class="blank">通知</span><br>
+        ② 称呼：<span class="blank">全体同学：</span><br>
+        ③ 正文：时间、地点、事项（要求）<br>
+        ④ 落款：<span class="blank">发通知的单位</span><br>
+        ⑤ 日期：<span class="blank">XXXX年X月X日</span>
+      </div>
+    </div>
+
+    <div class="question-box">
+      <div class="question-text">❓ 下面哪一项不是通知书的必备要素？</div>
+      <div class="options">
+        <div class="option" onclick="answerLv1(this,'A')">A. 活动时间</div>
+        <div class="option" onclick="answerLv1(this,'B')">B. 活动地点</div>
+        <div class="option" onclick="answerLv1(this,'C')">C. 参与人员</div>
+        <div class="option" onclick="answerLv1(this,'D')">D. 作者简介</div>
+      </div>
+      <div id="lv1Feedback" class="feedback" style="display:none;"></div>
+    </div>
+
+    <div class="card" id="lv1Writing" style="display:none;">
+      <h2>✍️ 实战练习</h2>
+      <p style="color:#666;margin-bottom:12px;">学校本周五下午3点在操场举行运动会，请你写一份通知。</p>
+      <textarea class="writing-pad" id="lv1Text" placeholder="提示：别忘了写标题「通知」、称呼、正文（时间/地点/事项）、落款和日期哦！" oninput="updateCharCount('lv1Text','lv1Count')"></textarea>
+      <div class="char-count" id="lv1Count">0 字</div>
+      <button class="btn btn-secondary" onclick="submitLv1Writing()" style="margin-top:10px;width:100%;justify-content:center;">🚀 提交作品</button>
+      <div id="lv1WriteFeedback" class="feedback" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 4: LEVEL 2 - 邀请函 ===== -->
+<div class="screen" id="screen-level2">
+  <div style="width:100%;max-width:600px;">
+    <div class="progress-bar"><div class="progress-fill" style="width:60%"></div></div>
+    <div class="section-title">💌 第二关：邀请函 <span class="badge">⭐格式对比</span></div>
+    
+    <div class="card">
+      <h2>📖 邀请函 vs 通知书</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:0.9em;">
+        <div style="background:#ffe0e0;border-radius:12px;padding:12px;">
+          <div style="font-weight:700;color:#ff6b6b;margin-bottom:6px;">📋 通知书</div>
+          <div>• 上级→下级</div>
+          <div>• 语气：正式/命令</div>
+          <div>• 对象：必须参加</div>
+        </div>
+        <div style="background:#e0f7f4;border-radius:12px;padding:12px;">
+          <div style="font-weight:700;color:#4ecdc4;margin-bottom:6px;">💌 邀请函</div>
+          <div>• 平等/尊重</div>
+          <div>• 语气：诚恳/热情</div>
+          <div>• 对象：自愿参加</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="question-box">
+      <div class="question-text">❓ 给外校嘉宾写邀请参加毕业晚会的信件，应该选用哪种文体？为什么？</div>
+      <div class="options">
+        <div class="option" onclick="answerLv2(this,'A')">A. 通知书，因为要明确时间地点</div>
+        <div class="option" onclick="answerLv2(this,'B')">B. 邀请函，因为对方是尊贵嘉宾</div>
+        <div class="option" onclick="answerLv2(this,'C')">C. 倡议书，因为要号召更多人参与</div>
+        <div class="option" onclick="answerLv2(this,'D')">D. 两种都可以，没有区别</div>
+      </div>
+      <div id="lv2Feedback" class="feedback" style="display:none;"></div>
+    </div>
+
+    <div class="card" id="lv2Fill" style="display:none;">
+      <h2>✍️ 填空练习</h2>
+      <p style="color:#666;margin-bottom:12px;">补全这份邀请函：</p>
+      <div class="template-box">
+        尊敬的 <input type="text" id="fill1" style="border:none;border-bottom:2px solid #ff6b6b;background:transparent;font-size:1em;width:80px;outline:none;" placeholder="称呼"> 先生/女士：<br><br>
+        您好！我校将于 <input type="text" id="fill2" style="border:none;border-bottom:2px solid #ff6b6b;background:transparent;font-size:1em;width:100px;outline:none;" placeholder="时间"> 举办<br>
+        「六年级毕业晚会」，<strong>诚邀</strong>您莅临指导。<br><br>
+        活动地点：<input type="text" id="fill3" style="border:none;border-bottom:2px solid #ff6b6b;background:transparent;font-size:1em;width:120px;outline:none;" placeholder="地点"><br><br>
+        期待您的光临！<br><br>
+        六年级全体师生<br>
+        <input type="text" id="fill4" style="border:none;border-bottom:2px solid #ff6b6b;background:transparent;font-size:1em;width:100px;outline:none;" placeholder="日期">
+      </div>
+      <button class="btn btn-secondary" onclick="checkLv2Fill()" style="margin-top:12px;width:100%;justify-content:center;">✅ 检查填写</button>
+      <div id="lv2FillFeedback" class="feedback" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 5: LEVEL 3 - 倡议书 ===== -->
+<div class="screen" id="screen-level3">
+  <div style="width:100%;max-width:600px;">
+    <div class="progress-bar"><div class="progress-fill" style="width:80%"></div></div>
+    <div class="section-title">📣 第三关：倡议书 <span class="badge">⭐综合运用</span></div>
+    
+    <div class="card">
+      <h2>📖 倡议书结构</h2>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="background:#fff8e0;border-radius:12px;padding:10px 14px;display:flex;gap:10px;align-items:center;">
+          <span style="font-size:1.4em;">📢</span><div><strong>开头：</strong>提出倡议背景和意义</div>
+        </div>
+        <div style="background:#e0f7f4;border-radius:12px;padding:10px 14px;display:flex;gap:10px;align-items:center;">
+          <span style="font-size:1.4em;">📝</span><div><strong>主体：</strong>具体倡议内容（分条列举）</div>
+        </div>
+        <div style="background:#ffe0e0;border-radius:12px;padding:10px 14px;display:flex;gap:10px;align-items:center;">
+          <span style="font-size:1.4em;">✊</span><div><strong>结尾：</strong>发出号召，表达期望</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="question-box">
+      <div class="question-text">❓ 把下面这份倡议书的段落排序（选择正确顺序）：<br><small style="color:#666;">① 让我们从现在开始，节约用水，从点滴做起！<br>② 同学们，水是生命之源，但地球上淡水资源十分有限。<br>③ 具体做法：关紧水龙头、循环用水、劝导他人。</small></div>
+      <div class="options">
+        <div class="option" onclick="answerLv3(this,'A')">A. ①②③</div>
+        <div class="option" onclick="answerLv3(this,'B')">B. ②③①</div>
+        <div class="option" onclick="answerLv3(this,'C')">C. ③①②</div>
+        <div class="option" onclick="answerLv3(this,'D')">D. ②①③</div>
+      </div>
+      <div id="lv3Feedback" class="feedback" style="display:none;"></div>
+    </div>
+
+    <div class="card" id="lv3Writing" style="display:none;">
+      <h2>✍️ 创意挑战</h2>
+      <p style="color:#666;margin-bottom:12px;">以「保护校园绿化」为主题，写一份50字以上的倡议书开头段落。</p>
+      <textarea class="writing-pad" id="lv3Text" placeholder="参考开头：「亲爱的同学们，校园是我们共同的家……」" oninput="updateCharCount('lv3Text','lv3Count')"></textarea>
+      <div class="char-count" id="lv3Count">0 字</div>
+      <button class="btn btn-secondary" onclick="submitLv3Writing()" style="margin-top:10px;width:100%;justify-content:center;">🚀 提交作品</button>
+      <div id="lv3WriteFeedback" class="feedback" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 6: BOSS ===== -->
+<div class="screen" id="screen-boss">
+  <div style="width:100%;max-width:600px;">
+    <div class="progress-bar"><div class="progress-fill" style="width:90%"></div></div>
+    <div class="section-title">👑 Boss关：综合大挑战</div>
+    
+    <div class="card" style="background:linear-gradient(135deg,#a29bfe22,#fff);border:2px solid #a29bfe;">
+      <h2 style="color:#6c5ce7;">🎯 任务说明</h2>
+      <p>学校要组织一次「环保义卖」活动。你需要完成三件事：<br>
+      <strong>① 写一份通知</strong>（告知时间地点）<br>
+      <strong>② 写一份邀请函</strong>（邀请家长参与）<br>
+      <strong>③ 写一份倡议书</strong>（号召同学捐出旧物）</p>
+      <p style="margin-top:8px;color:#888;font-size:0.9em;">选择你最想写的一种，认真完成！</p>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+        <button class="btn btn-primary" style="padding:8px 18px;font-size:0.85em;" onclick="setBossType('通知书')">📋 通知书</button>
+        <button class="btn btn-secondary" style="padding:8px 18px;font-size:0.85em;" onclick="setBossType('邀请函')">💌 邀请函</button>
+        <button class="btn btn-accent" style="padding:8px 18px;font-size:0.85em;" onclick="setBossType('倡议书')">📣 倡议书</button>
+      </div>
+      <div id="bossTypeHint" class="feedback tip" style="display:none;"></div>
+      <textarea class="writing-pad" id="bossText" placeholder="选择文体后开始写作……格式要规范哦！" style="min-height:200px;" oninput="updateCharCount('bossText','bossCount')"></textarea>
+      <div class="char-count" id="bossCount">0 字</div>
+      <button class="btn btn-primary" onclick="submitBoss()" style="margin-top:12px;width:100%;justify-content:center;font-size:1.05em;">👑 提交挑战！</button>
+      <div id="bossFeedback" class="feedback" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 7: REPORT ===== -->
+<div class="screen" id="screen-report">
+  <div style="width:100%;max-width:600px;">
+    <div class="report-card">
+      <div style="font-size:2em;margin-bottom:8px;">🎉</div>
+      <h2 style="color:var(--primary);font-size:1.6em;margin-bottom:6px;">太棒了！闯关成功！</h2>
+      <div class="score-circle" id="finalScore">
+        <span>总分</span>
+        100
+      </div>
+      <div class="stars-display" style="justify-content:center;margin-bottom:16px;" id="finalStars">
+        <span style="font-size:2em;">⭐⭐⭐</span>
+      </div>
+      <div class="achievements-grid" id="achievementsGrid">
+        <div class="ach-badge earned"><div class="ach-icon">📋</div>通知达人</div>
+        <div class="ach-badge earned"><div class="ach-icon">💌</div>邀请高手</div>
+        <div class="ach-badge earned"><div class="ach-icon">📣</div>倡议小将</div>
+        <div class="ach-badge earned"><div class="ach-icon">✍️</div>写作新星</div>
+        <div class="ach-badge locked"><div class="ach-icon">🔒</div>完美格式</div>
+        <div class="ach-badge locked"><div class="ach-icon">🔒</div>词汇达人</div>
+        <div class="ach-badge locked"><div class="ach-icon">🔒</div>速度王者</div>
+        <div class="ach-badge locked"><div class="ach-icon">🔒</div>全能写手</div>
+      </div>
+      <p style="color:#888;font-size:0.88em;margin-bottom:20px;">继续练习，解锁更多成就徽章！</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="goTo('screen-extension')">🌟 拓展学习</button>
+        <button class="btn btn-secondary" onclick="restartGame()">🔄 再来一次</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 8: EXTENSION ===== -->
+<div class="screen" id="screen-extension">
+  <div style="width:100%;max-width:600px;">
+    <div class="section-title">🌈 拓展天地</div>
+    
+    <div class="card">
+      <h2>📚 三种应用文速查表</h2>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:0.88em;">
+          <tr style="background:#ffe0c0;">
+            <th style="padding:8px;border-radius:8px 0 0 0;">类型</th>
+            <th style="padding:8px;">用途</th>
+            <th style="padding:8px;">语气</th>
+            <th style="padding:8px;border-radius:0 8px 0 0;">关键词</th>
+          </tr>
+          <tr style="background:#fff8f0;">
+            <td style="padding:8px;text-align:center;">📋 通知</td>
+            <td style="padding:8px;">告知事项</td>
+            <td style="padding:8px;">正式</td>
+            <td style="padding:8px;">现通知如下</td>
+          </tr>
+          <tr style="background:#f0fffe;">
+            <td style="padding:8px;text-align:center;">💌 邀请</td>
+            <td style="padding:8px;">诚邀参加</td>
+            <td style="padding:8px;">热情尊重</td>
+            <td style="padding:8px;">诚邀 敬请</td>
+          </tr>
+          <tr style="background:#fffbf0;">
+            <td style="padding:8px;text-align:center;">📣 倡议</td>
+            <td style="padding:8px;">号召行动</td>
+            <td style="padding:8px;">积极感召</td>
+            <td style="padding:8px;">让我们 行动起来</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>💡 写作小贴士</h2>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="font-size:1.4em;flex-shrink:0;">🎯</span>
+          <div><strong>格式第一</strong>：应用文格式是固定的，先把格式背熟，再填内容</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="font-size:1.4em;flex-shrink:0;">✏️</span>
+          <div><strong>要素齐全</strong>：时间、地点、事项、署名、日期，一个都不能少</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="font-size:1.4em;flex-shrink:0;">🗣️</span>
+          <div><strong>语气匹配</strong>：对象不同，语气要调整；写给长辈要恭敬</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="font-size:1.4em;flex-shrink:0;">📝</span>
+          <div><strong>简洁清晰</strong>：应用文不用华丽词藻，把事情说清楚最重要</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🏠 课后任务</h2>
+      <div style="background:#fff8e0;border-radius:14px;padding:16px;">
+        <p style="margin-bottom:10px;">选择以下任一任务完成：</p>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span>⭐</span><div>为班级下周班会写一份<strong>通知书</strong></div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span>⭐⭐</span><div>邀请你的好朋友参加周末活动，写一份<strong>邀请函</strong></div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span>⭐⭐⭐</span><div>就「节约粮食」主题写一份完整的<strong>倡议书</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-bottom:30px;">
+      <button class="btn btn-primary" onclick="goTo('screen-hero')">🏠 返回首页</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+const state = {
+  currentScreen: 'screen-hero',
+  stars: 0,
+  score: 0,
+  warmupLeft: null, warmupRight: null,
+  warmupMatches: {},
+  lv1Done: false, lv2Done: false, lv3Done: false, bossDone: false,
+  bossType: '',
+  achievements: [],
+  startTime: Date.now()
+};
+
+const correctMatches = { a:'3', b:'1', c:'2' };
+const buddyMessages = {
+  'screen-hero': '你好！我是小毛虫🐛，今天我们学应用文写作！',
+  'screen-warmup': '连连看！先回忆一下这三种文体各用在什么场合～',
+  'screen-level1': '通知书要写清楚：时间、地点、事项、落款！',
+  'screen-level2': '邀请函要有礼貌，语气要温和尊重哦！',
+  'screen-level3': '倡议书要有号召力，让大家都想行动起来！',
+  'screen-boss': '加油！把学到的知识都用上，认真写一篇！',
+  'screen-report': '哇！你好厉害！全部完成了，我以你为荣🎉！',
+};
+
+// ===== AUDIO =====
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+function getAudio() { if(!audioCtx) audioCtx = new AudioCtx(); return audioCtx; }
+
+function playBeep(freq, dur, type='sine', vol=0.3) {
+  try {
+    const ctx = getAudio();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+dur);
+    o.start(ctx.currentTime); o.stop(ctx.currentTime+dur);
+  } catch(e){}
+}
+function playCorrect() { playBeep(523,0.1); setTimeout(()=>playBeep(659,0.1),100); setTimeout(()=>playBeep(784,0.2),200); }
+function playWrong()   { playBeep(220,0.3,'sawtooth',0.2); }
+function playStarSound(){ playBeep(880,0.1); setTimeout(()=>playBeep(1047,0.1),120); }
+function playLevelUp() {
+  [523,659,784,1047].forEach((f,i)=>setTimeout(()=>playBeep(f,0.15),i*100));
+}
+
+// ===== NAVIGATION =====
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  state.currentScreen = id;
+  window.scrollTo(0,0);
+  showBuddyMessage(id);
+  if(id==='screen-level1') unlockLevel('lv1','conn1');
+  if(id==='screen-level2') unlockLevel('lv2','conn2');
+  if(id==='screen-level3') unlockLevel('lv3','conn3');
+  if(id==='screen-boss')   unlockLevel('lvBoss','conn4');
+}
+
+function unlockLevel(lvId, connId) {
+  const el = document.getElementById(lvId);
+  if(el && el.classList.contains('locked')) {
+    el.classList.remove('locked'); el.classList.add('unlocked');
+  }
+  const conn = document.getElementById(connId);
+  if(conn) conn.classList.add('done');
+}
+
+// ===== BUDDY =====
+function toggleBuddy() {
+  const b = document.getElementById('buddyBubble');
+  b.classList.toggle('show');
+  if(b.classList.contains('show')) playBeep(440,0.1);
+}
+function showBuddyMessage(screen) {
+  const msg = buddyMessages[screen];
+  if(msg) {
+    const b = document.getElementById('buddyBubble');
+    b.textContent = msg; b.classList.add('show');
+    setTimeout(()=>b.classList.remove('show'), 3500);
+  }
+}
+
+// ===== STARS =====
+function earnStar() {
+  if(state.stars >= 3) return;
+  state.stars++;
+  state.score += 30;
+  const star = document.getElementById('star'+state.stars);
+  if(star) { star.classList.add('earned'); playStarSound(); }
+  document.getElementById('starCount').textContent = state.stars + ' / 3';
+}
+
+// ===== ACHIEVEMENTS =====
+function showAchievement(text) {
+  const t = document.getElementById('achieveToast');
+  document.getElementById('achieveText').textContent = text;
+  t.classList.add('show');
+  playLevelUp();
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+// ===== CONFETTI =====
+function launchConfetti() {
+  const colors = ['#ff6b6b','#4ecdc4','#ffe66d','#a29bfe','#fd79a8'];
+  for(let i=0;i<40;i++) {
+    setTimeout(()=>{
+      const c = document.createElement('div');
+      c.className = 'confetti-piece';
+      c.style.cssText = `left:${Math.random()*100}%;background:${colors[Math.floor(Math.random()*colors.length)]};
+        animation-duration:${1+Math.random()*1}s;animation-delay:${Math.random()*0.5}s;`;
+      document.body.appendChild(c);
+      setTimeout(()=>c.remove(), 2000);
+    }, i*30);
+  }
+}
+
+// ===== CHAR COUNT =====
+function updateCharCount(textId, countId) {
+  const len = document.getElementById(textId).value.length;
+  document.getElementById(countId).textContent = len + ' 字';
+}
+
+// ===== WARMUP =====
+function selectWarmup(side, id) {
+  if(side==='left') {
+    document.querySelectorAll('#wu-a,#wu-b,#wu-c').forEach(e=>e.style.border='');
+    document.getElementById('wu-'+id).style.border='2px solid #ff6b6b';
+    state.warmupLeft = id;
+  } else {
+    document.querySelectorAll('#wu-1,#wu-2,#wu-3').forEach(e=>e.style.border='');
+    document.getElementById('wu-'+id).style.border='2px solid #4ecdc4';
+    state.warmupRight = id;
+  }
+  if(state.warmupLeft && state.warmupRight) {
+    state.warmupMatches[state.warmupLeft] = state.warmupRight;
+    playBeep(440,0.08);
+    state.warmupLeft = null; state.warmupRight = null;
+  }
+}
+
+function checkWarmup() {
+  const fb = document.getElementById('warmupFeedback');
+  let correct = 0;
+  Object.keys(correctMatches).forEach(k=>{
+    if(state.warmupMatches[k]===correctMatches[k]) correct++;
+  });
+  fb.style.display='block';
+  if(correct===3) {
+    fb.className='feedback good';
+    fb.innerHTML='🎉 全对！通知书→告知事项，邀请函→邀请参加，倡议书→号召行动！';
+    playCorrect();
+    setTimeout(()=>goTo('screen-level1'),1500);
+  } else {
+    fb.className='feedback bad';
+    fb.innerHTML=`答对了 ${correct}/3 个。提示：通知是「告知」，邀请是「邀请」，倡议是「号召」！重新连连看吧～`;
+    playWrong();
+  }
+}
+
+// ===== LEVEL 1 =====
+function answerLv1(el, ans) {
+  if(el.classList.contains('disabled')) return;
+  document.querySelectorAll('#screen-level1 .option').forEach(o=>o.classList.add('disabled'));
+  const fb = document.getElementById('lv1Feedback');
+  fb.style.display='block';
+  if(ans==='D') {
+    el.classList.add('correct');
+    fb.className='feedback good';
+    fb.innerHTML='✅ 正确！「作者简介」不是通知书的必备要素。通知书要有标题、称呼、时间地点事项、落款和日期！';
+    playCorrect(); earnStar();
+    showAchievement('📋 通知达人解锁！');
+    setTimeout(()=>{ document.getElementById('lv1Writing').style.display='block'; },800);
+  } else {
+    el.classList.add('wrong');
+    document.querySelectorAll('#screen-level1 .option')[3].classList.add('correct');
+    fb.className='feedback bad';
+    fb.innerHTML='❌ 再想想～通知书需要写清楚时间、地点和参与人员，但「作者简介」不是必须的哦！';
+    playWrong();
+    setTimeout(()=>{ document.getElementById('lv1Writing').style.display='block'; },600);
+  }
+}
+
+function submitLv1Writing() {
+  const text = document.getElementById('lv1Text').value.trim();
+  const fb = document.getElementById('lv1WriteFeedback');
+  fb.style.display='block';
+  const checks = {
+    '通知': text.includes('通知'),
+    '时间': /周五|三点|下午|3点/.test(text),
+    '地点': /操场/.test(text),
+    '落款': text.length > 30
+  };
+  const passed = Object.values(checks).filter(Boolean).length;
+  if(passed >= 3) {
+    fb.className='feedback good';
+    fb.innerHTML='✅ 写得很好！格式规范，要素基本齐全。继续加油！';
+    playCorrect();
+    if(!state.lv1Done) { state.lv1Done=true; earnStar(); }
+    setTimeout(()=>goTo('screen-level2'),1500);
+  } else {
+    fb.className='feedback tip';
+    const missing = [];
+    if(!checks['通知']) missing.push('标题「通知」');
+    if(!checks['时间']) missing.push('时间');
+    if(!checks['地点']) missing.push('地点（操场）');
+    fb.innerHTML=`💡 还需要补充：${missing.join('、')}。继续完善再提交！`;
+  }
+}
+
+// ===== LEVEL 2 =====
+function answerLv2(el, ans) {
+  if(el.classList.contains('disabled')) return;
+  document.querySelectorAll('#screen-level2 .option').forEach(o=>o.classList.add('disabled'));
+  const fb = document.getElementById('lv2Feedback');
+  fb.style.display='block';
+  if(ans==='B') {
+    el.classList.add('correct');
+    fb.className='feedback good';
+    fb.innerHTML='✅ 正确！邀请嘉宾要用邀请函，语气要尊重热情。填空练习来了！';
+    playCorrect(); showAchievement('💌 邀请高手解锁！');
+    setTimeout(()=>{ document.getElementById('lv2Fill').style.display='block'; },800);
+  } else {
+    el.classList.add('wrong');
+    document.querySelectorAll('#screen-level2 .option')[1].classList.add('correct');
+    fb.className='feedback bad';
+    fb.innerHTML='❌ 对嘉宾要有礼貌！应该选邀请函，语气要恭敬热情哦！';
+    playWrong();
+    setTimeout(()=>{ document.getElementById('lv2Fill').style.display='block'; },600);
+  }
+}
+
+function checkLv2Fill() {
+  const f1=document.getElementById('fill1').value.trim();
+  const f2=document.getElementById('fill2').value.trim();
+  const f3=document.getElementById('fill3').value.trim();
+  const f4=document.getElementById('fill4').value.trim();
+  const fb = document.getElementById('lv2FillFeedback');
+  fb.style.display='block';
+  const filled = [f1,f2,f3,f4].filter(v=>v.length>0).length;
+  if(filled>=3) {
+    fb.className='feedback good';
+    fb.innerHTML='✅ 填写完整！邀请函格式掌握得很好！';
+    playCorrect();
+    if(!state.lv2Done) { state.lv2Done=true; earnStar(); }
+    setTimeout(()=>goTo('screen-level3'),1500);
+  } else {
+    fb.className='feedback tip';
+    fb.innerHTML='💡 还有空白没填哦！把称呼、时间、地点、日期都填上吧！';
+  }
+}
+
+// ===== LEVEL 3 =====
+function answerLv3(el, ans) {
+  if(el.classList.contains('disabled')) return;
+  document.querySelectorAll('#screen-level3 .option').forEach(o=>o.classList.add('disabled'));
+  const fb = document.getElementById('lv3Feedback');
+  fb.style.display='block';
+  if(ans==='B') {
+    el.classList.add('correct');
+    fb.className='feedback good';
+    fb.innerHTML='✅ 正确！倡议书顺序：先说背景意义②，再列具体内容③，最后发出号召①！';
+    playCorrect(); showAchievement('📣 倡议小将解锁！');
+    setTimeout(()=>{ document.getElementById('lv3Writing').style.display='block'; },800);
+  } else {
+    el.classList.add('wrong');
+    document.querySelectorAll('#screen-level3 .option')[1].classList.add('correct');
+    fb.className='feedback bad';
+    fb.innerHTML='❌ 想想写文章的顺序：先说为什么，再说怎么做，最后发出号召！答案是②③①';
+    playWrong();
+    setTimeout(()=>{ document.getElementById('lv3Writing').style.display='block'; },600);
+  }
+}
+
+function submitLv3Writing() {
+  const text = document.getElementById('lv3Text').value.trim();
+  const fb = document.getElementById('lv3WriteFeedback');
+  fb.style.display='block';
+  if(text.length >= 50) {
+    fb.className='feedback good';
+    fb.innerHTML='✅ 写得很有号召力！进入Boss关挑战吧！';
+    playCorrect();
+    if(!state.lv3Done) { state.lv3Done=true; }
+    showAchievement('✍️ 写作新星解锁！');
+    setTimeout(()=>goTo('screen-boss'),1500);
+  } else {
+    fb.className='feedback tip';
+    fb.innerHTML=`💡 继续加油！还需要 ${50-text.length} 个字，把倡议的原因和意义写清楚！`;
+  }
+}
+
+// ===== BOSS =====
+const bossHints = {
+  '通知书': '记住格式：标题「通知」+ 称呼 + 正文（时间/地点/事项）+ 落款 + 日期',
+  '邀请函': '语气要热情尊重！用「诚邀」「期待您光临」等词，别忘记活动信息',
+  '倡议书': '结构：背景意义 → 具体做法 → 热情号召，字数尽量多一些！'
+};
+
+function setBossType(type) {
+  state.bossType = type;
+  const hint = document.getElementById('bossTypeHint');
+  hint.style.display='block';
+  hint.className='feedback tip';
+  hint.innerHTML='💡 ' + bossHints[type];
+  document.getElementById('bossText').placeholder=`开始写你的${type}……`;
+  playBeep(523,0.1);
+}
+
+function submitBoss() {
+  const text = document.getElementById('bossText').value.trim();
+  const fb = document.getElementById('bossFeedback');
+  fb.style.display='block';
+  if(!state.bossType) {
+    fb.className='feedback tip'; fb.innerHTML='💡 先选择一种文体哦！'; return;
+  }
+  if(text.length < 80) {
+    fb.className='feedback tip';
+    fb.innerHTML=`💡 写得太少了！${state.bossType}至少要写80字，现在还差 ${80-text.length} 字！`;
+    return;
+  }
+  fb.className='feedback good';
+  fb.innerHTML=`✅ 棒极了！你的${state.bossType}完成了！格式规范，内容充实！`;
+  playCorrect(); launchConfetti();
+  state.bossDone = true;
+  // Update score
+  const elapsed = Math.floor((Date.now()-state.startTime)/1000);
+  if(elapsed < 600) state.score += 10; // speed bonus
+  document.getElementById('finalScore').innerHTML = `<span>总分</span>${Math.min(state.score+40,100)}`;
+  setTimeout(()=>goTo('screen-report'),2000);
+}
+
+// ===== RESTART =====
+function restartGame() {
+  state.stars=0; state.score=0; state.lv1Done=false; state.lv2Done=false; state.lv3Done=false;
+  state.bossDone=false; state.bossType=''; state.warmupMatches={};
+  [1,2,3].forEach(i=>{ const s=document.getElementById('star'+i); if(s) s.classList.remove('earned'); });
+  document.getElementById('starCount').textContent='0 / 3';
+  ['lv1','lv2','lv3','lvBoss'].forEach(id=>{ const e=document.getElementById(id); if(e){e.className='level-circle locked';} });
+  ['conn1','conn2','conn3','conn4'].forEach(id=>{ const e=document.getElementById(id); if(e) e.classList.remove('done'); });
+  goTo('screen-hero');
+}
+
+// Init
+showBuddyMessage('screen-hero');
+</script>
+</body>
+</html>

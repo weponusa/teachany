@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>写段落 · 三年级语文闯关</title>
+<style>
+  :root {
+    --bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--card:#fff;
+    --shadow:0 4px 20px rgba(0,0,0,0.08);--radius:20px;--text:#333;
+    --purple:#a29bfe;--teal:#26d0ce;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);font-family:'PingFang SC','Microsoft YaHei',sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden;}
+  .screen{display:none;min-height:100vh;padding:20px;}
+  .screen.active{display:flex;flex-direction:column;align-items:center;}
+
+  .hero{background:linear-gradient(135deg,#4ecdc4,#26d0ce);border-radius:var(--radius);padding:40px 28px;text-align:center;width:100%;max-width:600px;color:#fff;margin-bottom:18px;position:relative;overflow:hidden;}
+  .hero::before{content:'📝';position:absolute;top:10px;right:15px;font-size:5em;opacity:0.15;}
+  .hero::after{content:'✨';position:absolute;bottom:10px;left:15px;font-size:3em;opacity:0.15;}
+  .hero .grade-badge{background:rgba(255,255,255,0.2);border-radius:30px;padding:4px 16px;display:inline-block;margin-bottom:12px;font-size:0.85em;}
+  .hero h1{font-size:2.2em;font-weight:900;margin-bottom:8px;}
+  .hero p{opacity:0.9;line-height:1.6;}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 32px;border-radius:50px;border:none;font-size:1em;font-weight:700;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 12px rgba(0,0,0,0.12);}
+  .btn-primary{background:var(--primary);color:#fff;}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(255,107,107,0.4);}
+  .btn-secondary{background:var(--secondary);color:#fff;}
+  .btn-secondary:hover{transform:translateY(-2px);}
+  .btn-teal{background:var(--teal);color:#fff;}
+  .btn-teal:hover{transform:translateY(-2px);}
+
+  .card{background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);width:100%;max-width:600px;margin-bottom:14px;}
+  .card h2{color:var(--secondary);font-size:1.3em;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+
+  .progress-bar{width:100%;max-width:600px;background:#f0e8e0;border-radius:30px;height:12px;margin-bottom:16px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,#4ecdc4,#ffe66d);border-radius:30px;transition:width 0.5s;}
+
+  .stars-display{display:flex;align-items:center;gap:6px;}
+  .star{color:#ddd;font-size:1.5em;transition:all 0.3s;}
+  .star.earned{color:#ffd700;animation:starPop 0.4s ease;}
+  @keyframes starPop{0%{transform:scale(0)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
+
+  .section-title{font-size:1.4em;font-weight:800;color:var(--secondary);margin-bottom:16px;display:flex;align-items:center;gap:8px;width:100%;max-width:600px;}
+  .badge{background:var(--accent);color:#333;border-radius:20px;padding:3px 12px;font-size:0.75em;font-weight:700;}
+
+  /* Paragraph structure visual */
+  .para-structure{display:flex;flex-direction:column;gap:0;margin:12px 0;border-radius:16px;overflow:hidden;}
+  .para-part{padding:14px 18px;display:flex;gap:12px;align-items:flex-start;}
+  .para-topic{background:linear-gradient(135deg,#ff6b6b,#ff8e8e);color:#fff;}
+  .para-support{background:linear-gradient(135deg,#f8f4ef,#fff);border-left:4px solid #4ecdc4;}
+  .para-support + .para-support{border-top:1px solid #f0e8e0;}
+  .para-conclude{background:linear-gradient(135deg,#4ecdc4,#26d0ce);color:#fff;}
+  .para-num{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:0.8em;font-weight:700;flex-shrink:0;}
+  .para-content{flex:1;}
+  .para-label{font-weight:800;font-size:0.85em;margin-bottom:2px;opacity:0.85;}
+  .para-text{font-size:0.93em;line-height:1.5;}
+
+  /* Sentence order game */
+  .sortable-list{display:flex;flex-direction:column;gap:8px;margin:12px 0;}
+  .sortable-item{background:var(--card);border:2px solid #e0d8d0;border-radius:14px;padding:12px 16px;cursor:grab;transition:all 0.2s;display:flex;align-items:center;gap:10px;user-select:none;font-size:0.95em;line-height:1.5;}
+  .sortable-item:hover{border-color:var(--secondary);box-shadow:0 2px 10px rgba(78,205,196,0.2);}
+  .sortable-item.dragging{opacity:0.5;border-color:var(--secondary);}
+  .sortable-item.drag-over{border-color:var(--accent);background:#fff8e0;}
+  .sortable-item .drag-handle{color:#ccc;font-size:1.2em;cursor:grab;flex-shrink:0;}
+  .sortable-item .item-num{width:24px;height:24px;background:#f0e8e0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.78em;font-weight:700;color:#aaa;flex-shrink:0;}
+
+  /* Writing pad */
+  .writing-pad{width:100%;background:#fff;border-radius:14px;border:2px solid #e0d8d0;padding:14px;font-size:1em;min-height:140px;resize:none;font-family:inherit;line-height:1.9;}
+  .writing-pad:focus{outline:none;border-color:var(--secondary);}
+  .char-count{text-align:right;font-size:0.8em;color:#aaa;margin-top:4px;}
+
+  /* Feedback */
+  .feedback{border-radius:14px;padding:14px 18px;margin-top:10px;font-size:0.95em;line-height:1.6;}
+  .feedback.good{background:#e0f7f4;border-left:4px solid var(--secondary);color:#2a9d8f;}
+  .feedback.bad{background:#ffe0e0;border-left:4px solid var(--primary);color:#c0392b;}
+  .feedback.tip{background:#fff8e0;border-left:4px solid var(--accent);color:#855a00;}
+
+  /* Buddy */
+  .buddy{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;align-items:flex-end;gap:8px;z-index:100;}
+  .buddy-avatar{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#4ecdc4,#26d0ce);display:flex;align-items:center;justify-content:center;font-size:2em;cursor:pointer;box-shadow:0 4px 16px rgba(78,205,196,0.4);transition:transform 0.2s;}
+  .buddy-avatar:hover{transform:scale(1.1);}
+  .buddy-bubble{background:var(--card);border-radius:16px 16px 4px 16px;padding:12px 16px;max-width:220px;font-size:0.88em;line-height:1.5;box-shadow:var(--shadow);display:none;color:#333;}
+  .buddy-bubble.show{display:block;animation:bubbleIn 0.3s ease;}
+  @keyframes bubbleIn{from{opacity:0;transform:scale(0.8)}to{opacity:1;transform:scale(1)}}
+
+  .achievement-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#ffd700,#ffb700);color:#333;border-radius:30px;padding:10px 24px;font-weight:700;font-size:0.95em;display:none;z-index:200;box-shadow:0 4px 20px rgba(255,183,0,0.4);}
+  .achievement-toast.show{display:flex;align-items:center;gap:8px;animation:toastIn 0.4s ease;}
+  @keyframes toastIn{from{opacity:0;top:0}to{opacity:1;top:20px}}
+
+  .option{background:#f8f4ef;border:2px solid #e8ddd0;border-radius:14px;padding:12px 16px;cursor:pointer;transition:all 0.2s;font-size:0.95em;line-height:1.5;margin-bottom:8px;}
+  .option:hover{border-color:var(--secondary);background:#e0f7f4;}
+  .option.correct{border-color:#4ecdc4;background:#e0f7f4;color:#2a9d8f;}
+  .option.wrong{border-color:#ff6b6b;background:#ffe0e0;color:#c0392b;}
+  .option.disabled{pointer-events:none;}
+
+  .report-card{background:linear-gradient(135deg,#f0fffe,#fff);border-radius:var(--radius);padding:30px;text-align:center;width:100%;max-width:600px;box-shadow:var(--shadow);}
+  .score-circle{width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,var(--secondary),var(--teal));color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 20px;font-size:2em;font-weight:900;}
+  .achievements-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0;}
+  .ach-badge{border-radius:12px;padding:10px 4px;text-align:center;font-size:0.72em;}
+  .ach-badge.earned{background:linear-gradient(135deg,#ffe66d,#ffd700);}
+  .ach-badge.locked{background:#f0e8e0;color:#aaa;}
+  .ach-icon{font-size:1.6em;display:block;margin-bottom:3px;}
+
+  .confetti-piece{position:fixed;width:8px;height:8px;border-radius:2px;animation:confettiFall 1.5s ease-out forwards;pointer-events:none;z-index:999;}
+  @keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+
+  /* Topic sentence highlight */
+  .highlight-topic{background:#ffe0e0;border-radius:6px;padding:2px 6px;color:#ff6b6b;font-weight:700;}
+  .highlight-support{background:#e0f7f4;border-radius:6px;padding:2px 6px;color:#2a9d8f;}
+  .highlight-conclude{background:#e8f4ff;border-radius:6px;padding:2px 6px;color:#4a90d9;}
+
+  /* Up/down buttons for order game */
+  .order-btn{width:28px;height:28px;border-radius:8px;border:none;background:#f0e8e0;cursor:pointer;font-size:0.9em;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0;}
+  .order-btn:hover{background:var(--secondary);color:#fff;}
+
+  /* Word chips */
+  .chip{background:var(--card);border:2px solid #e0d8d0;border-radius:20px;padding:6px 14px;cursor:pointer;font-size:0.9em;display:inline-block;margin:4px;transition:all 0.2s;}
+  .chip:hover{border-color:var(--secondary);transform:scale(1.05);}
+  .chip.used{background:#f0e8e0;color:#bbb;pointer-events:none;}
+  .chip.good{background:var(--secondary);color:#fff;border-color:var(--secondary);}
+
+  /* Draft paper */
+  .draft-paper{background:repeating-linear-gradient(transparent,transparent 31px,#e0f7f4 31px,#e0f7f4 33px);background-color:#fff;border-radius:14px;border:2px solid #e0d8d0;}
+
+  @media(max-width:480px){.achievements-grid{grid-template-columns:repeat(3,1fr);}}
+</style>
+</head>
+<body>
+
+<div class="buddy" id="buddy">
+  <div class="buddy-bubble" id="buddyBubble">你好！我是小毛虫🐛！今天我们学写段落，让句子变成一段精彩的故事！</div>
+  <div class="buddy-avatar" onclick="toggleBuddy()">🐛</div>
+</div>
+<div class="achievement-toast" id="achieveToast">🏆 <span id="achieveText"></span></div>
+
+<!-- ===== HERO ===== -->
+<div class="screen active" id="screen-hero">
+  <div style="width:100%;max-width:600px;display:flex;flex-direction:column;align-items:center;gap:16px;padding-top:28px;">
+    <div class="hero">
+      <div class="grade-badge">📚 三年级语文</div>
+      <h1>📝 写段落</h1>
+      <p>总分句 · 支撑句 · 总结句<br>让你的文章有血有肉！</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:3em;margin-bottom:10px;">🌿</div>
+      <h2 style="justify-content:center;font-size:1.4em;margin-bottom:10px;">段落写作大冒险</h2>
+      <p style="margin-bottom:16px;color:#666;">掌握段落三要素<br>写出有条理的精彩文章！</p>
+      <div class="stars-display" style="justify-content:center;margin-bottom:16px;">
+        <div class="star" id="star1">⭐</div>
+        <div class="star" id="star2">⭐</div>
+        <div class="star" id="star3">⭐</div>
+        <span style="font-size:0.8em;color:#aaa;margin-left:8px;" id="starCount">0 / 3</span>
+      </div>
+      <button class="btn btn-teal" onclick="goTo('screen-objectives')" style="font-size:1.1em;padding:16px 40px;">🚀 开始冒险！</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== OBJECTIVES ===== -->
+<div class="screen" id="screen-objectives">
+  <div style="width:100%;max-width:600px;">
+    <div class="section-title">🎯 本节目标</div>
+    <div class="card">
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="background:#e0f7f4;border-radius:14px;padding:14px;display:flex;gap:12px;align-items:flex-start;">
+          <div style="width:28px;height:28px;background:var(--secondary);border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.78em;flex-shrink:0;">知</div>
+          <div>理解段落的三部分：<strong>总起句（主题句）+ 支撑句 + 总结句</strong>及其作用</div>
+        </div>
+        <div style="background:#fff8e0;border-radius:14px;padding:14px;display:flex;gap:12px;align-items:flex-start;">
+          <div style="width:28px;height:28px;background:var(--accent);border-radius:50%;color:#333;display:flex;align-items:center;justify-content:center;font-size:0.78em;flex-shrink:0;">做</div>
+          <div>能围绕主题写出<strong>有条理的段落</strong>，句子之间逻辑清晰、连贯</div>
+        </div>
+        <div style="background:#ffe0e0;border-radius:14px;padding:14px;display:flex;gap:12px;align-items:flex-start;">
+          <div style="width:28px;height:28px;background:var(--primary);border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.78em;flex-shrink:0;">感</div>
+          <div>体会<strong>有条理写作</strong>的重要性，养成写段落前先想好框架的习惯</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>🗺️ 闯关地图</h2>
+      <div style="display:flex;align-items:center;gap:6px;overflow-x:auto;padding:12px 0;justify-content:center;flex-wrap:wrap;">
+        <div style="text-align:center;"><div style="width:54px;height:54px;background:var(--secondary);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3em;cursor:pointer;" onclick="goTo('screen-warmup')">🔥</div><div style="font-size:0.72em;color:#666;margin-top:4px;font-weight:600;">热身</div></div>
+        <div style="color:#ddd;font-size:1.3em;">→</div>
+        <div style="text-align:center;"><div style="width:54px;height:54px;background:#e0d8d0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3em;" id="lv1n">1️⃣</div><div style="font-size:0.72em;color:#666;margin-top:4px;">总起句</div></div>
+        <div style="color:#ddd;font-size:1.3em;">→</div>
+        <div style="text-align:center;"><div style="width:54px;height:54px;background:#e0d8d0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3em;" id="lv2n">2️⃣</div><div style="font-size:0.72em;color:#666;margin-top:4px;">支撑句</div></div>
+        <div style="color:#ddd;font-size:1.3em;">→</div>
+        <div style="text-align:center;"><div style="width:54px;height:54px;background:#e0d8d0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3em;" id="lv3n">3️⃣</div><div style="font-size:0.72em;color:#666;margin-top:4px;">总结句</div></div>
+        <div style="color:#ddd;font-size:1.3em;">→</div>
+        <div style="text-align:center;"><div style="width:54px;height:54px;background:#e0d8d0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3em;" id="bossn">👑</div><div style="font-size:0.72em;color:#666;margin-top:4px;">综合写作</div></div>
+      </div>
+    </div>
+    <div style="text-align:center;"><button class="btn btn-secondary" onclick="goTo('screen-warmup')">➡️ 进入热身</button></div>
+  </div>
+</div>
+
+<!-- ===== WARMUP ===== -->
+<div class="screen" id="screen-warmup">
+  <div style="width:100%;max-width:600px;">
+    <div class="progress-bar"><div class="progress-fill" style="width:15%"></div></div>
+    <div class="section-title">🔥 热身：段落是什么？</div>
+    <div class="card">
+      <h2>📖 一个段落的样子</h2>
+      <div class="para-structure">
+        <div class="para-part para-topic">
+          <div class="para-num">①</div>
+          <div class="para-content">
+            <div class="para-label">🔴 总起句（主题句）</div>
+            <div class="para-text">我的小猫叫球球，它是家里最淘气的成员。</div>
+          </div>
+        </div>
+        <div class="para-part para-support">
+          <div class="para-num" style="background:#e0d8d0;color:#888;">②</div>
+          <div class="para-content">
+            <div class="para-label" style="color:#4ecdc4;">🟢 支撑句（举例说明）</div>
+            <div class="para-text">它喜欢把家里的鞋子叼到沙发下面藏起来。</div>
+          </div>
+        </div>
+        <div class="para-part para-support">
+          <div class="para-num" style="background:#e0d8d0;color:#888;">③</div>
+          <div class="para-content">
+            <div class="para-label" style="color:#4ecdc4;">🟢 支撑句（继续说明）</div>
+            <div class="para-text">每次我们找鞋子时，它就躲在柜子后面偷笑。</div>
+          </div>
+        </div>
+        <div class="para-part para-conclude">
+          <div class="para-num">④</div>
+          <div class="para-content">
+            <div class="para-label">🔵 总结句</div>
+            <div class="para-text">虽然球球淘气，但我们都非常爱它。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>❓ 热身题</h2>
+      <p style="color:#666;margin-bottom:12px;">一个段落的第一句话叫什么？</p>
+      <div onclick="warmupAns(this,'A')" class="option">A. 支撑句（举例说明的句子）</div>
+      <div onclick="warmupAns(this,'B')" class="option">B. 总起句/主题句（说明段落中心的句子）</div>
+      <div onclick="warmupAns(this,'C')" class="option">C. 总结句（结束段落的句子）</div>
+      <div id="warmupFb" class="feedback" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LEVEL 1: 总起句 ===== -->
+<div class="screen" id="screen-level1">
+  <div style="width:100%;max-width:600px;">
+    <div class="progress-bar"><div class="progress-fill" style="width:35%"></div></div>
+    <div class="section-title">🌱 第一关：总起句 <span class="badge">⭐找总起</span></div>
+
+    <div class="card">
+      <h2>📖 总起句的特点</h2>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:0.93em;">
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:8px;background:#ffe0e0;border-radius:10px;">
+          <span style="font-size:1.3em;flex-shrink:0;">🎯</span>
+          <div>总起句是段落的<strong>核心</strong>，告诉读者这段话讲什么</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:8px;background:#e0f7f4;border-radius:10px;">
+          <span style="font-size:1.3em;flex-shrink:0;">📍</span>
+          <div>总起句通常在<strong>段落开头</strong>，后面的句子都来支持它</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:8px;background:#fff8e0;border-radius:10px;">
+          <span style="font-size:1.3em;flex-shrink:0;">💬</span>
+          <div>好的总起句：<strong>明确、有趣、让人想继续读</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>❓ 找出总起句</h2>
+      <p style="color:#666;margin-bottom:12px;">读下面这段话，哪句是总起句？</p>
+      <div style="background:#f8f4ef;border-radius:14px;padding:16px;line-height:1.9;margin-bottom:14px;font-size:0.95em;">
+        （甲）春天的校园里，百花争艳，美不胜收。（乙）桃花开满了教学楼前的小路，粉红色的花瓣像蝴蝶一样飞舞。（丙）迎春花也不甘示弱，一串串金黄色的小花挂满了枝条。（丁）每当风吹来，花香就飘满了整个校园。
+      </div>
+      <div onclick="ansLv1(this,'A')" class="option">A. 句甲：「春天的校园里，百花争艳……」</div>
+      <div onclick="ansLv1(this,'B')" class="option">B. 句乙：「桃花开满了……」</div>
+      <div onclick="ansLv1(this,'C')" class="option">C. 句丙：「迎春花也不甘示弱……」</div>
+      <div onclick="ansLv1(this,'D')" class="option">D. 句丁：「每当风吹来……」</div>
+      <div id="lv1Fb" class="feedback" style="display:none;"></div>
+    </div>
+
+    <div class="card" id="lv1write" style="display:none;">
+      <h2>✍️ 写总起句</h2>
+      <p style="color:#666;margin-bottom:10px;">以「我的教室」为主题，写一句总起句：</p>
+      <div style="background:#fff8e0;border-radius:12px;padding:10px;margin-bottom:10px;font-size:0.88em;color:#855a00;">
+        💡 参考结构：「我的教室____，（是）____的地方。」
+      </div>
+      <textarea class="writing-pad" id="lv1text" placeholder="例：我的教室宽敞明亮，是我们快乐学习的地方。" style="min-height:80px;" oninput="updateCC('lv1text','lv1cc')"></textarea>
+      <div class="char-count" id="lv1cc">0字</div>
+      <button class="btn btn-secondary" onclick="submitLv1()" style="margin-top:10px;width:100%;justify-content:center;">✅ 提交</button>
+      <div id="lv1writeFb" class="feedback" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LEVEL 2: 支撑句 ===== -->
+<div class="screen" id="screen-level2">
+  <div style="width:100%;max-width:600px;">
+    <div class="progress-bar"><div class="progress-fill" style="width:55%"></div></div>
+    <div class="section-title">🌿 第二关：支撑句 <span class="badge">⭐排序游戏</span></div>
+
+    <div class="card">
+      <h2>📖 支撑句的作用</h2>
+      <p style="line-height:1.7;margin-bottom:12px;">支撑句是段落的「证据」，用来<strong>具体说明总起句</strong>。常用方法：</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.88em;">
+        <div style="background:#e0f7f4;border-radius:12px;padding:10px;"><strong>举例子</strong>：「比如……」</div>
+        <div style="background:#f0edff;border-radius:12px;padding:10px;"><strong>描述细节</strong>：「它……、她……」</div>
+        <div style="background:#fff8e0;border-radius:12px;padding:10px;"><strong>讲故事</strong>：「有一次……」</div>
+        <div style="background:#ffe0e0;border-radius:12px;padding:10px;"><strong>作比较</strong>：「和……不同」</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🔀 句子排序游戏</h2>
+      <p style="color:#666;margin-bottom:12px;">把这些句子重新排成一个合理的段落（点击↑↓调整顺序）：</p>
+      <div class="sortable-list" id="sortList">
+        <div class="sortable-item" data-order="3" id="si1">
+          <button class="order-btn" onclick="moveUp('si1')">↑</button>
+          <button class="order-btn" onclick="moveDown('si1')">↓</button>
+          <span class="item-num">1</span>
+          <span>放学时，同学们都不愿意回家，围在图书角看得入迷。</span>
+        </div>
+        <div class="sortable-item" data-order="1" id="si2">
+          <button class="order-btn" onclick="moveUp('si2')">↑</button>
+          <button class="order-btn" onclick="moveDown('si2')">↓</button>
+          <span class="item-num">2</span>
+          <span>我们班有一个大家最爱的角落——图书角。</span>
+        </div>
+        <div class="sortable-item" data-order="4" id="si3">
+          <button class="order-btn" onclick="moveUp('si3')">↑</button>
+          <button class="order-btn" onclick="moveDown('si3')">↓</button>
+          <span class="item-num">3</span>
+          <span>图书角让我们的课余生活丰富多彩，书香满教室。</span>
+        </div>
+        <div class="sortable-item" data-order="2" id="si4">
+          <button class="order-btn" onclick="moveUp('si4')">↑</button>
+          <button class="order-btn" onclick="moveDown('si4')">↓</button>
+          <span class="item-num">4</span>
+          <span>那里摆满了各种各样的书，有故事书、科普书、漫画……</span>
+        </div>
+      </div>
+      <button class="btn btn-secondary" onclick="checkOrder()" style="margin-top:10px;width:100%;justify-content:center;">✅ 检查顺序</button>
+      <div id="lv2orderFb" class="feedback" style="display:none;"></div>
+    </div>
+
+    <div class="card" id="lv2write" style="display:none;">
+      <h2>✍️ 补充支撑句</h2>
+      <p style="color:#666;margin-bottom:10px;">总起句已给出，补充2-3句支撑句：</p>
+      <div style="background:#ffe0e0;border-radius:12px;padding:12px;font-size:0.95em;margin-bottom:10px;border-left:4px solid var(--primary);">
+        <strong>总起句：</strong>我的奶奶是一位非常勤劳的人。
+      </div>
+      <textarea class="writing-pad" id="lv2text" placeholder="每天天还没亮，她就已经……&#10;有一次……&#10;她还……" oninput="updateCC('lv2text','lv2cc')"></textarea>
+      <div class="char-count" id="lv2cc">0字</div>
+      <button class="btn btn-teal" onclick="submitLv2()" style="margin-top:10px;width:100%;justify-content:center;">🚀 提交支撑句</button>
+      <div id="lv2writeFb" class="feedback" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LEVEL 3: 总结句 ===== -->
+<div class="screen" id="screen-level3">
+  <div style="width:100%;max-width:600px;">
+    <div class="progress-bar"><div class="progress-fill" style="width:75%"></div></div>
+    <div class="section-title">🎯 第三关：总结句 <span class="badge">⭐收尾</span></div>
+
+    <div class="card">
+      <h2>📖 总结句的妙用</h2>
+      <p style="line-height:1.7;margin-bottom:12px;">好的总结句让段落「有始有终」。常见写法：</p>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:0.9em;">
+        <div style="background:#e0f7f4;border-radius:12px;padding:10px;">🔄 <strong>呼应总起</strong>：「由此可见……」「可见……是多么……」</div>
+        <div style="background:#fff8e0;border-radius:12px;padding:10px;">💭 <strong>表达感情</strong>：「我真……」「这让我深深感受到……」</div>
+        <div style="background:#f0edff;border-radius:12px;padding:10px;">🌅 <strong>升华主题</strong>：「这种……精神值得……」</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>❓ 选总结句</h2>
+      <p style="color:#666;margin-bottom:12px;">段落总起句是「妈妈是我见过最有爱心的人」，哪个总结句最合适？</p>
+      <div onclick="ansLv3(this,'A')" class="option">A. 「另外，妈妈还特别喜欢做饭。」</div>
+      <div onclick="ansLv3(this,'B')" class="option">B. 「妈妈的爱心让我懂得了善待他人的道理，我要向她学习。」</div>
+      <div onclick="ansLv3(this,'C')" class="option">C. 「总之，我们班的同学都很棒。」</div>
+      <div onclick="ansLv3(this,'D')" class="option">D. 「昨天我们一起去了公园。」</div>
+      <div id="lv3Fb" class="feedback" style="display:none;"></div>
+    </div>
+
+    <div class="card" id="lv3write" style="display:none;">
+      <h2>✍️ 写总结句</h2>
+      <p style="color:#666;margin-bottom:10px;">读这段话，然后写一句总结句：</p>
+      <div style="background:#f8f4ef;border-radius:12px;padding:14px;margin-bottom:10px;font-size:0.93em;line-height:1.8;">
+        图书馆是我最喜欢去的地方。那里有无数本有趣的书等我探索。每次去图书馆，我都感觉像是打开了一扇通向新世界的门。安静的阅读环境让我能专心思考，忘记烦恼。
+        <br><br><strong>请写总结句：</strong>
+      </div>
+      <textarea class="writing-pad" id="lv3text" placeholder="例：因此，图书馆对我来说是一个充满魔力的神奇地方。" style="min-height:80px;" oninput="updateCC('lv3text','lv3cc')"></textarea>
+      <div class="char-count" id="lv3cc">0字</div>
+      <button class="btn btn-secondary" onclick="submitLv3()" style="margin-top:10px;width:100%;justify-content:center;">✅ 提交总结句</button>
+      <div id="lv3writeFb" class="feedback" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== BOSS ===== -->
+<div class="screen" id="screen-boss">
+  <div style="width:100%;max-width:600px;">
+    <div class="progress-bar"><div class="progress-fill" style="width:88%"></div></div>
+    <div class="section-title">👑 Boss关：综合写段落</div>
+
+    <div class="card" style="background:linear-gradient(135deg,#e0f7f4,#fff);border:2px solid var(--secondary);">
+      <h2 style="color:var(--teal);">🎯 写作任务</h2>
+      <p style="line-height:1.8;">以<strong>「我喜欢的季节」</strong>为主题，写一个<strong>完整的段落</strong>：<br>
+        ① <span style="color:#ff6b6b;font-weight:700;">总起句</span>：说明你最喜欢哪个季节<br>
+        ② <span style="color:#4ecdc4;font-weight:700;">支撑句×2</span>：举两个具体的例子/特点<br>
+        ③ <span style="color:#a29bfe;font-weight:700;">总结句</span>：表达你的感受或总结
+      </p>
+    </div>
+
+    <!-- Writing scaffold -->
+    <div class="card">
+      <h2>📝 段落脚手架</h2>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+        <div style="background:#ffe0e0;border-radius:12px;padding:10px;font-size:0.9em;">
+          🔴 总起句：「我最喜欢____，因为……」
+        </div>
+        <div style="background:#e0f7f4;border-radius:12px;padding:10px;font-size:0.9em;">
+          🟢 支撑句1：「____时候，____会……」
+        </div>
+        <div style="background:#e0f7f4;border-radius:12px;padding:10px;font-size:0.9em;">
+          🟢 支撑句2：「不仅如此，____还……」
+        </div>
+        <div style="background:#e8f4ff;border-radius:12px;padding:10px;font-size:0.9em;">
+          🔵 总结句：「因此，____是我最____的季节。」
+        </div>
+      </div>
+      <textarea class="writing-pad draft-paper" id="bossText" placeholder="开始写你的段落……" style="min-height:220px;" oninput="updateBossCount()"></textarea>
+      <div class="char-count" id="bossCC">0字 (目标：60字以上)</div>
+      <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">
+        <span class="chip" id="tip1" onclick="insertTip(this,'最……的')">💡 最……的</span>
+        <span class="chip" id="tip2" onclick="insertTip(this,'不仅……还……')">💡 不仅……还……</span>
+        <span class="chip" id="tip3" onclick="insertTip(this,'因此……')">💡 因此……</span>
+        <span class="chip" id="tip4" onclick="insertTip(this,'让我感到……')">💡 让我感到……</span>
+      </div>
+      <button class="btn btn-primary" onclick="submitBoss()" style="margin-top:14px;width:100%;justify-content:center;font-size:1.05em;">👑 提交段落！</button>
+      <div id="bossFb" class="feedback" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== REPORT ===== -->
+<div class="screen" id="screen-report">
+  <div style="width:100%;max-width:600px;">
+    <div class="report-card">
+      <div style="font-size:2.5em;margin-bottom:8px;">🎉</div>
+      <h2 style="color:var(--secondary);font-size:1.6em;margin-bottom:8px;">段落写作大师！</h2>
+      <div class="score-circle"><span style="font-size:0.35em;font-weight:400">总分</span><span id="finalScore">100</span></div>
+      <div class="stars-display" style="justify-content:center;margin-bottom:16px;">
+        <span style="font-size:2em;" id="finalStars">⭐⭐⭐</span>
+      </div>
+      <div class="achievements-grid">
+        <div class="ach-badge earned"><span class="ach-icon">🌱</span>识句高手</div>
+        <div class="ach-badge earned"><span class="ach-icon">🔀</span>排序达人</div>
+        <div class="ach-badge earned"><span class="ach-icon">🎯</span>总结小将</div>
+        <div class="ach-badge earned"><span class="ach-icon">📝</span>写作新星</div>
+        <div class="ach-badge locked"><span class="ach-icon">🔒</span>段落精英</div>
+        <div class="ach-badge locked"><span class="ach-icon">🔒</span>词汇丰富</div>
+        <div class="ach-badge locked"><span class="ach-icon">🔒</span>逻辑大师</div>
+        <div class="ach-badge locked"><span class="ach-icon">🔒</span>全能写手</div>
+      </div>
+      <p style="color:#888;font-size:0.88em;margin-bottom:20px;">再写几篇，解锁全部徽章！</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <button class="btn btn-teal" onclick="goTo('screen-extension')">🌟 拓展练习</button>
+        <button class="btn btn-secondary" onclick="restartGame()">🔄 再来一次</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== EXTENSION ===== -->
+<div class="screen" id="screen-extension">
+  <div style="width:100%;max-width:600px;">
+    <div class="section-title">🌈 拓展天地</div>
+
+    <div class="card">
+      <h2>📐 段落写作公式</h2>
+      <div style="background:#f8f4ef;border-radius:14px;padding:16px;font-size:1.05em;line-height:2.2;">
+        <div style="display:flex;align-items:center;gap:8px;"><span style="background:#ff6b6b;color:#fff;border-radius:8px;padding:2px 8px;font-size:0.8em;font-weight:700;">总</span> 一句话说明段落中心</div>
+        <div style="display:flex;align-items:center;gap:8px;"><span style="background:#4ecdc4;color:#fff;border-radius:8px;padding:2px 8px;font-size:0.8em;font-weight:700;">分</span> 2-4句举例/描述具体支撑</div>
+        <div style="display:flex;align-items:center;gap:8px;"><span style="background:#a29bfe;color:#fff;border-radius:8px;padding:2px 8px;font-size:0.8em;font-weight:700;">总</span> 一句话总结、呼应或升华</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>✏️ 自由写作练习</h2>
+      <p style="color:#666;margin-bottom:12px;">选一个题目，练习写段落：</p>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+        <div style="background:#ffe0e0;border-radius:12px;padding:10px;cursor:pointer;" onclick="setTopic(this,'我的好朋友')">🌟 我的好朋友</div>
+        <div style="background:#e0f7f4;border-radius:12px;padding:10px;cursor:pointer;" onclick="setTopic(this,'课间十分钟')">🌟 课间十分钟</div>
+        <div style="background:#f0edff;border-radius:12px;padding:10px;cursor:pointer;" onclick="setTopic(this,'我家门前的大树')">🌟 我家门前的大树</div>
+      </div>
+      <div id="topicHint" style="display:none;background:#fff8e0;border-radius:12px;padding:10px;font-size:0.88em;color:#855a00;margin-bottom:10px;"></div>
+      <textarea class="writing-pad draft-paper" id="freeText" placeholder="选好题目后在这里写……" style="min-height:180px;"></textarea>
+    </div>
+
+    <div class="card">
+      <h2>🏠 课后作业</h2>
+      <div style="background:#fff8e0;border-radius:14px;padding:16px;line-height:2;">
+        <div>⭐ 选一件喜欢的事物，写一个3-4句的段落</div>
+        <div>⭐⭐ 写一段「我的一天」，用总-分-总结构</div>
+        <div>⭐⭐⭐ 写三个段落，组成一篇小作文！</div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-bottom:30px;margin-top:10px;">
+      <button class="btn btn-teal" onclick="goTo('screen-hero')">🏠 返回首页</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+function getAudio(){ if(!audioCtx) audioCtx = new AudioCtx(); return audioCtx; }
+function playBeep(f,d,t='sine',v=0.3){ try{ const ctx=getAudio(),o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(ctx.destination);o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+d);o.start(ctx.currentTime);o.stop(ctx.currentTime+d); }catch(e){} }
+function playCorrect(){ playBeep(523,0.1);setTimeout(()=>playBeep(659,0.1),100);setTimeout(()=>playBeep(784,0.2),200); }
+function playWrong(){ playBeep(220,0.3,'sawtooth',0.2); }
+function playLevelUp(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>playBeep(f,0.15),i*100)); }
+
+const state = { stars:0, score:0 };
+
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  const msgs={'screen-warmup':'来学段落的结构，有意思的！','screen-level1':'总起句是段落的灵魂！','screen-level2':'支撑句要和总起句紧密联系！','screen-level3':'总结句为段落画上完美句号！','screen-boss':'把三部分都写出来，你是段落写作高手！'};
+  if(msgs[id]) showBuddy(msgs[id]);
+  if(id==='screen-level1') unlockNode('lv1n');
+  if(id==='screen-level2') unlockNode('lv2n');
+  if(id==='screen-level3') unlockNode('lv3n');
+  if(id==='screen-boss') unlockNode('bossn');
+}
+function unlockNode(id){ const e=document.getElementById(id); if(e){e.style.background='linear-gradient(135deg,#4ecdc4,#26d0ce)';e.style.color='#fff';} }
+function toggleBuddy(){ const b=document.getElementById('buddyBubble'); b.classList.toggle('show'); }
+function showBuddy(msg){ const b=document.getElementById('buddyBubble'); b.textContent=msg; b.classList.add('show'); setTimeout(()=>b.classList.remove('show'),3500); }
+function showAchieve(t){ document.getElementById('achieveText').textContent=t; const a=document.getElementById('achieveToast'); a.classList.add('show'); playLevelUp(); setTimeout(()=>a.classList.remove('show'),2500); }
+function earnStar(){ if(state.stars>=3)return; state.stars++; document.getElementById('star'+state.stars).classList.add('earned'); playBeep(880,0.1);setTimeout(()=>playBeep(1047,0.1),120); document.getElementById('starCount').textContent=state.stars+' / 3'; }
+function updateCC(tid,cid){ document.getElementById(cid).textContent=document.getElementById(tid).value.length+'字'; }
+function launchConfetti(){ const cs=['#ff6b6b','#4ecdc4','#ffe66d','#a29bfe','#fd79a8']; for(let i=0;i<40;i++){setTimeout(()=>{ const c=document.createElement('div'); c.className='confetti-piece'; c.style.cssText=`left:${Math.random()*100}%;background:${cs[Math.floor(Math.random()*cs.length)]};animation-duration:${1+Math.random()}s;`; document.body.appendChild(c);setTimeout(()=>c.remove(),2000); },i*30);} }
+
+// Warmup
+function warmupAns(el,ans){ if(el.classList.contains('disabled'))return; document.querySelectorAll('#screen-warmup .option').forEach(o=>o.classList.add('disabled')); const fb=document.getElementById('warmupFb'); fb.style.display='block'; if(ans==='B'){el.classList.add('correct');fb.className='feedback good';fb.innerHTML='✅ 正确！总起句（主题句）在段落开头，告诉读者这段话的中心内容是什么！';playCorrect();setTimeout(()=>goTo('screen-level1'),1500);}else{el.classList.add('wrong');document.querySelectorAll('#screen-warmup .option')[1].classList.add('correct');fb.className='feedback bad';fb.innerHTML='❌ 总起句就是告诉读者「这段话讲什么」的句子，通常在段落最前面！';playWrong();setTimeout(()=>goTo('screen-level1'),2000);} }
+
+// Level 1
+function ansLv1(el,ans){ if(el.classList.contains('disabled'))return; document.querySelectorAll('#screen-level1 .option').forEach(o=>o.classList.add('disabled')); const fb=document.getElementById('lv1Fb'); fb.style.display='block'; if(ans==='A'){el.classList.add('correct');fb.className='feedback good';fb.innerHTML='✅ 对！句甲「春天的校园里，百花争艳，美不胜收」统领全段，后面的句子都是在具体描写各种花！';playCorrect();showAchieve('🌱 识句高手解锁！');earnStar();setTimeout(()=>{document.getElementById('lv1write').style.display='block';},800);}else{el.classList.add('wrong');document.querySelectorAll('#screen-level1 .option')[0].classList.add('correct');fb.className='feedback bad';fb.innerHTML='❌ 乙丙丁都是具体描写某种花，只有甲总体说了「百花争艳」，是总起句！';playWrong();setTimeout(()=>{document.getElementById('lv1write').style.display='block';},600);} }
+
+function submitLv1(){ const t=document.getElementById('lv1text').value.trim(); const fb=document.getElementById('lv1writeFb'); fb.style.display='block'; if(t.length>=15){fb.className='feedback good';fb.innerHTML='✅ 很好！总起句写得清晰，能让读者知道这段要讲什么！进入第二关！';playCorrect();if(state.stars<2) earnStar();setTimeout(()=>goTo('screen-level2'),1500);}else{fb.className='feedback tip';fb.innerHTML='💡 再写长一点！总起句要能概括这段话的主要内容，至少15个字！';} }
+
+// Level 2 - ordering
+function moveUp(id){ const list=document.getElementById('sortList'); const item=document.getElementById(id); const prev=item.previousElementSibling; if(prev){list.insertBefore(item,prev);updateNums();playBeep(440,0.08);} }
+function moveDown(id){ const list=document.getElementById('sortList'); const item=document.getElementById(id); const next=item.nextElementSibling; if(next){list.insertBefore(next,item);updateNums();playBeep(440,0.08);} }
+function updateNums(){ document.querySelectorAll('.sortable-item').forEach((el,i)=>{el.querySelector('.item-num').textContent=i+1;}); }
+function checkOrder(){ const items=[...document.querySelectorAll('.sortable-item')].map(el=>el.id); const fb=document.getElementById('lv2orderFb'); fb.style.display='block'; // correct: si2, si4, si1, si3
+  if(items[0]==='si2'&&items[1]==='si4'&&items[2]==='si1'&&items[3]==='si3'){fb.className='feedback good';fb.innerHTML='✅ 排序正确！总起→具体描述→举例→总结，逻辑清晰！';playCorrect();showAchieve('🔀 排序达人解锁！');earnStar();setTimeout(()=>{document.getElementById('lv2write').style.display='block';},800);}else{fb.className='feedback tip';fb.innerHTML='💡 再想想！总起句（介绍图书角）应该在最前面，最后是总结句。试试再调整！';} }
+
+function submitLv2(){ const t=document.getElementById('lv2text').value.trim(); const fb=document.getElementById('lv2writeFb'); fb.style.display='block'; if(t.length>=40){fb.className='feedback good';fb.innerHTML='✅ 支撑句写得很好！具体事例让总起句更有说服力！进入第三关！';playCorrect();setTimeout(()=>goTo('screen-level3'),1500);}else{fb.className='feedback tip';fb.innerHTML=`💡 还需要更多细节！目前${t.length}字，至少写40字，举2个具体的例子！`;} }
+
+// Level 3
+function ansLv3(el,ans){ if(el.classList.contains('disabled'))return; document.querySelectorAll('#screen-level3 .option').forEach(o=>o.classList.add('disabled')); const fb=document.getElementById('lv3Fb'); fb.style.display='block'; if(ans==='B'){el.classList.add('correct');fb.className='feedback good';fb.innerHTML='✅ 正确！B呼应了总起句（妈妈有爱心），表达了感受，还有升华（向她学习）！';playCorrect();showAchieve('🎯 总结小将解锁！');earnStar();setTimeout(()=>{document.getElementById('lv3write').style.display='block';},800);}else{el.classList.add('wrong');document.querySelectorAll('#screen-level3 .option')[1].classList.add('correct');fb.className='feedback bad';fb.innerHTML='❌ A是继续支撑，C跑题了，D无关。好总结句要呼应总起句，表达感受！';playWrong();setTimeout(()=>{document.getElementById('lv3write').style.display='block';},600);} }
+
+function submitLv3(){ const t=document.getElementById('lv3text').value.trim(); const fb=document.getElementById('lv3writeFb'); fb.style.display='block'; if(t.length>=15){fb.className='feedback good';fb.innerHTML='✅ 总结句写得好！和段落主题紧扣，有感情！进入Boss关！';playCorrect();setTimeout(()=>goTo('screen-boss'),1500);}else{fb.className='feedback tip';fb.innerHTML='💡 总结句要完整，呼应「图书馆」这个主题，至少写15字！';} }
+
+// Boss
+function updateBossCount(){ const t=document.getElementById('bossText').value; document.getElementById('bossCC').textContent=t.length+'字 (目标：60字以上)'; }
+function insertTip(el, tip){ if(el.classList.contains('used'))return; const ta=document.getElementById('bossText'); ta.value+=tip; el.classList.add('used','good'); updateBossCount(); ta.focus(); }
+function setTopic(el, topic){ document.querySelectorAll('#screen-extension .card:nth-child(2) div div').forEach(e=>e.style.border='none'); el.style.border='2px solid var(--secondary)'; document.getElementById('topicHint').style.display='block'; document.getElementById('topicHint').innerHTML=`💡 题目「${topic}」：先写总起（介绍它/他），再写2个具体的事例，最后写感受！`; document.getElementById('freeText').placeholder=`开始写关于「${topic}」的段落……`; }
+
+function submitBoss(){ const t=document.getElementById('bossText').value.trim(); const fb=document.getElementById('bossFb'); fb.style.display='block'; if(t.length<60){fb.className='feedback tip';fb.innerHTML=`💡 字数不够！目前${t.length}字，至少需要60字！记得写总起+支撑+总结三部分！`;return;} const hasTopic=/最喜欢|因为|我爱/.test(t); const hasSupport=t.length>80; const hasConclude=/因此|所以|总之|让我|感到/.test(t); if(hasTopic&&hasSupport){fb.className='feedback good';fb.innerHTML='✅ 棒极了！段落结构完整，总-分-总清晰，是一篇优秀的段落！';playCorrect();launchConfetti();document.getElementById('finalScore').textContent=Math.min(state.score+40,100);setTimeout(()=>goTo('screen-report'),2000);}else if(t.length>=60){fb.className='feedback good';fb.innerHTML='✅ 写得不错！字数达标，段落基本完整！继续加油，尝试加入总结句会更好！';playCorrect();launchConfetti();setTimeout(()=>goTo('screen-report'),2000);}else{const m=[];if(!hasTopic)m.push('明确说出最喜欢哪个季节');if(!hasConclude)m.push('总结句（因此/让我……）');fb.className='feedback tip';fb.innerHTML='💡 还需要：'+m.join('、');} }
+
+function restartGame(){ state.stars=0;state.score=0;[1,2,3].forEach(i=>{const s=document.getElementById('star'+i);if(s)s.classList.remove('earned');});document.getElementById('starCount').textContent='0 / 3';goTo('screen-hero'); }
+</script>
+</body>
+</html>

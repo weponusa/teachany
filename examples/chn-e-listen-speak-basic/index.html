@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>听说大冒险 | 一年级语文</title>
+<style>
+:root {
+  --bg: #fffbf0;
+  --primary: #ff6b6b;
+  --secondary: #4ecdc4;
+  --accent: #ffe66d;
+  --card: #fff;
+  --text: #333;
+  --radius: 20px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.10);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+.screen { display: none; min-height: 100vh; padding: 20px; animation: fadeIn 0.5s ease; }
+.screen.active { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+/* Hero */
+#hero { background: linear-gradient(135deg, #4ecdc4 0%, #44cf6c 50%, #ffe66d 100%); justify-content: center; text-align: center; }
+.hero-animal { font-size: 100px; animation: wobble 1.5s infinite; display: block; }
+@keyframes wobble { 0%,100%{transform:rotate(-5deg);} 50%{transform:rotate(5deg) scale(1.1);} }
+.hero-title { font-size: 3em; font-weight: 900; color: #fff; text-shadow: 3px 3px 0 rgba(0,0,0,0.15); margin: 12px 0 8px; }
+.hero-sub { font-size: 1.3em; color: rgba(255,255,255,0.9); margin-bottom: 28px; }
+.hero-badges { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 36px; }
+.badge { background: rgba(255,255,255,0.3); backdrop-filter: blur(8px); border-radius: 50px; padding: 8px 18px; color: #fff; font-size: 1em; font-weight: 700; border: 2px solid rgba(255,255,255,0.5); }
+.btn-start { background: #fff; color: var(--secondary); font-size: 1.5em; font-weight: 900; padding: 20px 60px; border-radius: 50px; border: none; cursor: pointer; box-shadow: 0 8px 24px rgba(78,205,196,0.4); transition: transform 0.2s; }
+.btn-start:hover { transform: translateY(-4px) scale(1.03); }
+
+/* Common */
+.progress-wrap { width: 100%; max-width: 700px; margin-bottom: 20px; }
+.progress-label { display: flex; justify-content: space-between; font-size: 0.85em; color: #888; margin-bottom: 6px; }
+.progress-bar { background: #e8e8e8; border-radius: 10px; height: 14px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--secondary), var(--accent)); border-radius: 10px; transition: width 0.6s; }
+
+.card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px; width: 100%; max-width: 700px; margin-bottom: 18px; }
+.card-title { font-size: 1.35em; font-weight: 800; color: var(--secondary); margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+
+.section-header { text-align: center; margin-bottom: 22px; width: 100%; max-width: 700px; }
+.section-emoji { font-size: 54px; display: block; margin-bottom: 8px; }
+.section-title { font-size: 2em; font-weight: 900; color: var(--secondary); }
+.section-desc { font-size: 1em; color: #666; margin-top: 8px; }
+
+/* Big picture cards for Grade 1 */
+.big-card-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; }
+.big-card { background: linear-gradient(135deg, #e0fff9, #f0fff8); border-radius: var(--radius); padding: 24px 16px; text-align: center; cursor: pointer; border: 4px solid transparent; transition: all 0.3s; }
+.big-card:hover, .big-card.selected { border-color: var(--secondary); transform: translateY(-4px); background: linear-gradient(135deg, #c0f5ee, #e0fff9); }
+.big-card .bc-emoji { font-size: 3.5em; display: block; margin-bottom: 10px; }
+.big-card .bc-text { font-size: 1.2em; font-weight: 800; color: #333; }
+
+/* Listening options */
+.listen-opts { display: grid; gap: 12px; }
+.listen-opt { background: #fff; border: 4px solid #e8e8e8; border-radius: var(--radius); padding: 18px 20px; cursor: pointer; font-size: 1.15em; font-weight: 700; text-align: center; transition: all 0.2s; display: flex; align-items: center; gap: 14px; }
+.listen-opt:hover { border-color: var(--secondary); background: #f0fffe; }
+.listen-opt.correct { border-color: var(--secondary); background: #e0fffe; }
+.listen-opt.wrong { border-color: var(--primary); background: #fff0f0; }
+.listen-opt .opt-emoji { font-size: 1.8em; }
+
+/* Repeat practice */
+.say-word-big { font-size: 5em; text-align: center; display: block; margin: 20px 0; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.08);} }
+.phonics-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+.phonics-card { background: linear-gradient(135deg, #fff0f0, #fff5f5); border-radius: 16px; padding: 20px 10px; text-align: center; cursor: pointer; border: 3px solid transparent; transition: all 0.2s; }
+.phonics-card:hover { border-color: var(--primary); transform: translateY(-3px); }
+.phonics-card.done { background: linear-gradient(135deg, #e0fffe, #f0fff8); border-color: var(--secondary); }
+.phonics-card .pc-char { font-size: 2.5em; display: block; }
+.phonics-card .pc-pin { font-size: 0.9em; color: #888; margin-top: 4px; }
+
+/* Story listening */
+.story-box { background: linear-gradient(135deg, #fff9e6, #fffbf0); border-radius: var(--radius); padding: 24px; border-left: 6px solid var(--accent); font-size: 1.15em; line-height: 2.5; position: relative; }
+.story-highlight { background: var(--accent); border-radius: 6px; padding: 2px 8px; }
+
+/* Speaking practice */
+.speaking-prompt { background: linear-gradient(135deg, #e8f5ff, #f0faff); border-radius: 16px; padding: 20px; text-align: center; font-size: 1.2em; font-weight: 700; margin-bottom: 18px; border: 3px solid #b3d9ff; }
+.mic-btn { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #ff8e53); border: none; cursor: pointer; font-size: 2em; display: flex; align-items: center; justify-content: center; margin: 0 auto; box-shadow: 0 4px 20px rgba(255,107,107,0.4); transition: transform 0.2s; }
+.mic-btn:hover { transform: scale(1.1); }
+.mic-btn.recording { animation: recordPulse 1s infinite; background: linear-gradient(135deg, #e63946, #ff6b6b); }
+@keyframes recordPulse { 0%,100%{box-shadow: 0 0 0 0 rgba(255,107,107,0.4);} 50%{box-shadow: 0 0 0 16px rgba(255,107,107,0);} }
+
+/* Response choices */
+.response-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.response-item { background: var(--card); border-radius: 16px; padding: 16px; text-align: center; cursor: pointer; border: 3px solid #e8e8e8; transition: all 0.2s; }
+.response-item:hover { border-color: var(--accent); transform: translateY(-3px); }
+.response-item.selected { border-color: var(--secondary); background: #f0fffe; }
+.response-item .ri-emoji { font-size: 2.5em; display: block; margin-bottom: 8px; }
+.response-item .ri-text { font-size: 1em; font-weight: 700; }
+
+/* Stars */
+.stars-row { display: flex; gap: 10px; justify-content: center; margin: 16px 0; }
+.star { font-size: 2.2em; }
+.star.lit { animation: starPop 0.4s ease; }
+@keyframes starPop { 0%{transform:scale(0) rotate(0);} 60%{transform:scale(1.4) rotate(180deg);} 100%{transform:scale(1) rotate(360deg);} }
+
+/* Achievements */
+.achievements-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+.ach-item { background: #f0f0f0; border-radius: 14px; padding: 12px 6px; text-align: center; transition: all 0.3s; }
+.ach-item.unlocked { background: linear-gradient(135deg, #ffe66d, #ffd700); box-shadow: 0 4px 16px rgba(255,230,109,0.4); }
+.ach-icon { font-size: 1.8em; display: block; margin-bottom: 4px; }
+.ach-name { font-size: 0.68em; font-weight: 700; color: #888; }
+.ach-item.unlocked .ach-name { color: #333; }
+
+/* Score */
+.score-hero { font-size: 5em; text-align: center; display: block; margin: 16px 0; }
+.score-number { font-size: 4.5em; font-weight: 900; color: var(--secondary); text-align: center; display: block; }
+.score-breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+.score-item { background: #f0fffe; border-radius: 14px; padding: 16px; text-align: center; }
+.si-num { font-size: 2em; font-weight: 900; color: var(--primary); }
+.si-label { font-size: 0.82em; color: #888; }
+
+/* Boss */
+.boss-area { background: linear-gradient(135deg, #0a3d62, #1e3799); border-radius: var(--radius); padding: 28px; color: #fff; text-align: center; width: 100%; max-width: 700px; }
+.boss-monster { font-size: 80px; animation: bossShake 0.5s infinite; display: block; margin-bottom: 12px; }
+@keyframes bossShake { 0%,100%{transform:rotate(-3deg);} 50%{transform:rotate(3deg);} }
+
+/* Expand */
+.expand-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.expand-card { background: var(--card); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); cursor: pointer; transition: transform 0.2s; border-top: 5px solid; }
+.expand-card:nth-child(1) { border-color: var(--secondary); }
+.expand-card:nth-child(2) { border-color: var(--primary); }
+.expand-card:nth-child(3) { border-color: var(--accent); }
+.expand-card:nth-child(4) { border-color: #a29bfe; }
+.expand-card:hover { transform: translateY(-4px); }
+.ec-icon { font-size: 2em; margin-bottom: 8px; }
+.ec-title { font-weight: 800; margin-bottom: 4px; }
+.ec-desc { font-size: 0.82em; color: #888; }
+
+/* Feedback */
+.feedback { border-radius: 14px; padding: 14px 18px; margin-top: 14px; font-weight: 700; display: none; animation: fadeIn 0.3s; font-size: 1.05em; }
+.feedback.correct { background: #e0fffe; border: 2px solid var(--secondary); color: #2a9d8f; }
+.feedback.wrong { background: #fff0f0; border: 2px solid var(--primary); color: #e63946; }
+
+/* Nav */
+.nav-row { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; justify-content: center; }
+.btn { padding: 16px 36px; border-radius: 50px; border: none; cursor: pointer; font-size: 1.05em; font-weight: 800; transition: all 0.2s; }
+.btn-primary { background: linear-gradient(135deg, var(--secondary), #45b7aa); color: #fff; box-shadow: 0 4px 16px rgba(78,205,196,0.3); }
+.btn-primary:hover { transform: translateY(-2px); }
+.btn-outline { background: transparent; border: 3px solid var(--secondary); color: var(--secondary); }
+
+/* AI Companion */
+.ai-companion { position: fixed; bottom: 24px; right: 24px; z-index: 1000; }
+.ai-bubble { background: var(--card); border-radius: var(--radius); padding: 14px 18px; box-shadow: var(--shadow); max-width: 220px; font-size: 0.92em; line-height: 1.5; border: 2px solid var(--accent); display: none; margin-bottom: 12px; }
+.ai-toggle { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #ffd700); border: none; cursor: pointer; font-size: 2em; box-shadow: 0 4px 16px rgba(255,230,109,0.5); transition: transform 0.2s; }
+.ai-toggle:hover { transform: scale(1.1); }
+
+/* Confetti */
+#confetti-layer { position: fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:9999; }
+
+/* Rhyme cards */
+.rhyme-box { background: linear-gradient(135deg, #fff3cd, #fffbf0); border-radius: var(--radius); padding: 24px; text-align: center; font-size: 1.8em; font-weight: 900; line-height: 2.2; border: 4px solid var(--accent); }
+.rhyme-line { display: block; }
+
+@media (max-width: 600px) {
+  .hero-title { font-size: 2.2em; }
+  .big-card-grid, .response-grid, .phonics-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- AI Companion -->
+<div class="ai-companion">
+  <div class="ai-bubble" id="aiBubble">🌟 我是小蜗牛！听仔细，说清楚，一年级的你最棒啦！</div>
+  <button class="ai-toggle" onclick="toggleAI()" title="AI学伴">🐌</button>
+</div>
+<canvas id="confetti-layer"></canvas>
+
+<!-- ====== HERO ====== -->
+<div id="screen-hero" class="screen active">
+  <span class="hero-animal">🐛</span>
+  <h1 class="hero-title">听说大冒险</h1>
+  <p class="hero-sub">一年级语文 · 听仔细、说清楚</p>
+  <div class="hero-badges">
+    <span class="badge">👂 一年级</span>
+    <span class="badge">🎮 闯关</span>
+    <span class="badge">⭐ 8成就</span>
+    <span class="badge">🎉 超好玩</span>
+  </div>
+  <button class="btn-start" onclick="goScreen('screen-objectives')">🚀 我准备好了！</button>
+</div>
+
+<!-- ====== OBJECTIVES ====== -->
+<div id="screen-objectives" class="screen">
+  <div class="section-header">
+    <span class="section-emoji">🎯</span>
+    <h2 class="section-title">今天我们来学</h2>
+    <p class="section-desc">听仔细、说清楚，我是小小播音员！</p>
+  </div>
+  <div class="card">
+    <div class="card-title">📋 学习目标</div>
+    <ul style="list-style:none">
+      <li style="padding:10px;border-bottom:1px solid #f0f0f0;font-size:1.1em">🌸 能认真听老师和同学说话</li>
+      <li style="padding:10px;border-bottom:1px solid #f0f0f0;font-size:1.1em">🗣️ 能用普通话清楚地表达自己</li>
+      <li style="padding:10px;border-bottom:1px solid #f0f0f0;font-size:1.1em">👀 听话时要看着说话人</li>
+      <li style="padding:10px;font-size:1.1em">💬 学会简单的自我介绍</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-title">🗺️ 今天的冒险地图</div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:1.1em;">
+      <span>🔥热身</span><span style="color:#ccc">→</span>
+      <span>👂关卡1</span><span style="color:#ccc">→</span>
+      <span>🗣️关卡2</span><span style="color:#ccc">→</span>
+      <span>🎵关卡3</span><span style="color:#ccc">→</span>
+      <span>👑Boss战</span>
+    </div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-primary" onclick="goScreen('screen-warmup')">开始热身！🔥</button>
+  </div>
+</div>
+
+<!-- ====== WARMUP ====== -->
+<div id="screen-warmup" class="screen">
+  <div class="section-header">
+    <span class="section-emoji">🔥</span>
+    <h2 class="section-title">热身：认识图片</h2>
+    <p class="section-desc">点击图片，大声说出它的名字！</p>
+  </div>
+  <div class="card">
+    <div class="card-title">👆 点一点，说一说</div>
+    <div class="big-card-grid">
+      <div class="big-card" onclick="sayWord(this,'苹果🍎','píng guǒ')">
+        <span class="bc-emoji">🍎</span>
+        <div class="bc-text">苹果</div>
+      </div>
+      <div class="big-card" onclick="sayWord(this,'香蕉🍌','xiāng jiāo')">
+        <span class="bc-emoji">🍌</span>
+        <div class="bc-text">香蕉</div>
+      </div>
+      <div class="big-card" onclick="sayWord(this,'小狗🐕','xiǎo gǒu')">
+        <span class="bc-emoji">🐕</span>
+        <div class="bc-text">小狗</div>
+      </div>
+      <div class="big-card" onclick="sayWord(this,'小猫🐈','xiǎo māo')">
+        <span class="bc-emoji">🐈</span>
+        <div class="bc-text">小猫</div>
+      </div>
+    </div>
+    <div id="warmup-tip" style="margin-top:16px;text-align:center;font-size:1.1em;display:none;padding:12px;background:#e0fff9;border-radius:12px;font-weight:700;color:#2a9d8f;"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📖 听听这首儿歌</div>
+    <div class="rhyme-box">
+      <span class="rhyme-line">小耳朵，认真听 👂</span>
+      <span class="rhyme-line">小嘴巴，大声说 🗣️</span>
+      <span class="rhyme-line">听仔细，说清楚</span>
+      <span class="rhyme-line">我是最棒的小学生！⭐</span>
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:14px" onclick="playRhyme()">🎵 听老师读</button>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-primary" onclick="goScreen('screen-level1'); unlockAch(0)">准备好了！进入关卡一 👂</button>
+  </div>
+</div>
+
+<!-- ====== LEVEL 1: LISTEN ====== -->
+<div id="screen-level1" class="screen">
+  <div class="progress-wrap">
+    <div class="progress-label"><span>关卡 1/3</span><span id="sc1">0分</span></div>
+    <div class="progress-bar"><div class="progress-fill" style="width:33%"></div></div>
+  </div>
+  <div class="section-header">
+    <span class="section-emoji">👂</span>
+    <h2 class="section-title">关卡一：听一听</h2>
+    <p class="section-desc">仔细听，选出正确答案</p>
+  </div>
+  <div class="card">
+    <div class="card-title">🧩 听力理解</div>
+    <div id="l1-content"></div>
+    <div class="feedback" id="l1-fb"></div>
+  </div>
+  <div class="stars-row" id="l1-stars"><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span></div>
+  <div class="nav-row">
+    <button class="btn btn-primary" id="l1-next" style="display:none" onclick="goScreen('screen-level2')">下一关 🗣️</button>
+  </div>
+</div>
+
+<!-- ====== LEVEL 2: SPEAK ====== -->
+<div id="screen-level2" class="screen">
+  <div class="progress-wrap">
+    <div class="progress-label"><span>关卡 2/3</span><span id="sc2">0分</span></div>
+    <div class="progress-bar"><div class="progress-fill" style="width:66%"></div></div>
+  </div>
+  <div class="section-header">
+    <span class="section-emoji">🗣️</span>
+    <h2 class="section-title">关卡二：说一说</h2>
+    <p class="section-desc">大声练习，跟着屏幕说出来！</p>
+  </div>
+  <div class="card">
+    <div class="card-title">📢 自我介绍练习</div>
+    <div class="speaking-prompt">🎤 大声说出下面的句子：</div>
+    <div id="l2-sentence" style="font-size:1.6em;font-weight:900;text-align:center;padding:20px;background:#f8f9ff;border-radius:14px;line-height:1.8;margin-bottom:16px;"></div>
+    <div style="text-align:center">
+      <button class="mic-btn" id="mic-btn" onclick="toggleMic()">🎤</button>
+      <div style="margin-top:10px;color:#888;font-size:0.9em">点击麦克风，大声朗读！</div>
+    </div>
+    <div id="l2-choices" style="margin-top:18px"></div>
+    <div class="feedback" id="l2-fb"></div>
+  </div>
+  <div class="stars-row" id="l2-stars"><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span></div>
+  <div class="nav-row">
+    <button class="btn btn-primary" id="l2-next" style="display:none" onclick="goScreen('screen-level3')">进入关卡三 🎵</button>
+  </div>
+</div>
+
+<!-- ====== LEVEL 3: RHYME ====== -->
+<div id="screen-level3" class="screen">
+  <div class="progress-wrap">
+    <div class="progress-label"><span>关卡 3/3</span><span id="sc3">0分</span></div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+  </div>
+  <div class="section-header">
+    <span class="section-emoji">🎵</span>
+    <h2 class="section-title">关卡三：背儿歌</h2>
+    <p class="section-desc">跟着节奏，背出完整的儿歌！</p>
+  </div>
+  <div class="card">
+    <div class="card-title">🎶 儿歌接龙</div>
+    <div id="l3-rhyme-display" class="rhyme-box" style="font-size:1.5em;"></div>
+    <div id="l3-blanks" style="margin-top:18px"></div>
+    <div class="feedback" id="l3-fb"></div>
+  </div>
+  <div class="stars-row" id="l3-stars"><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span></div>
+  <div class="nav-row">
+    <button class="btn btn-primary" id="l3-next" style="display:none" onclick="goScreen('screen-boss')">准备挑战Boss！ 👑</button>
+  </div>
+</div>
+
+<!-- ====== BOSS ====== -->
+<div id="screen-boss" class="screen">
+  <div class="section-header">
+    <span class="section-emoji">👑</span>
+    <h2 class="section-title" style="color:var(--primary)">Boss挑战：小小播音员</h2>
+    <p class="section-desc">完整自我介绍，让大家认识你！</p>
+  </div>
+  <div class="boss-area">
+    <span class="boss-monster">🎙️</span>
+    <div style="font-size:1.3em;font-weight:900;margin-bottom:14px">模板：大声读出来！</div>
+    <div style="background:rgba(255,255,255,0.15);border-radius:16px;padding:20px;font-size:1.2em;line-height:2.5;text-align:left;margin-bottom:20px;">
+      大家好！我叫___。<br>
+      我今年___岁，在___小学读一年级。<br>
+      我喜欢___和___。<br>
+      我希望大家和我做好朋友！🌸
+    </div>
+    <textarea id="boss-answer" placeholder="填写你的自我介绍内容，然后大声读出来！" style="width:100%;min-height:130px;border-radius:14px;padding:14px;font-size:1.1em;font-family:inherit;border:none;resize:none;background:rgba(255,255,255,0.95);" rows="5"></textarea>
+    <button onclick="submitBoss()" style="margin-top:16px;width:100%;padding:16px;border-radius:50px;background:linear-gradient(135deg,var(--accent),#ffd700);border:none;font-size:1.2em;font-weight:900;cursor:pointer;color:#333;">提交我的介绍！🌟</button>
+    <div class="feedback" id="boss-fb" style="margin-top:12px;color:#333;"></div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-primary" id="boss-next" style="display:none" onclick="goScreen('screen-score')">查看我的成绩 📊</button>
+  </div>
+</div>
+
+<!-- ====== SCORE ====== -->
+<div id="screen-score" class="screen">
+  <div class="section-header">
+    <span class="section-emoji">🏆</span>
+    <h2 class="section-title">我的成绩单</h2>
+  </div>
+  <div class="card">
+    <span class="score-hero" id="score-emoji">🎉</span>
+    <span class="score-number" id="total-score">0</span>
+    <span class="score-label" style="text-align:center;display:block;margin-top:8px">总得分</span>
+    <div class="score-breakdown">
+      <div class="score-item"><div class="si-num" id="ss1">0</div><div class="si-label">听力得分</div></div>
+      <div class="score-item"><div class="si-num" id="ss2">0</div><div class="si-label">口语得分</div></div>
+      <div class="score-item"><div class="si-num" id="ss3">0</div><div class="si-label">儿歌得分</div></div>
+      <div class="score-item"><div class="si-num" id="ss4">0</div><div class="si-label">Boss得分</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">🏅 我的成就</div>
+    <div class="achievements-grid" id="ach-grid"></div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-primary" onclick="goScreen('screen-expand')">看看拓展内容 🌈</button>
+    <button class="btn btn-outline" onclick="restartGame()">再玩一次 🔄</button>
+  </div>
+</div>
+
+<!-- ====== EXPAND ====== -->
+<div id="screen-expand" class="screen">
+  <div class="section-header">
+    <span class="section-emoji">🌈</span>
+    <h2 class="section-title">探索更多</h2>
+    <p class="section-desc">继续练习听和说的本领！</p>
+  </div>
+  <div class="expand-grid">
+    <div class="expand-card" onclick="showExpandContent(0)">
+      <div class="ec-icon">🎵</div>
+      <div class="ec-title">更多儿歌</div>
+      <div class="ec-desc">5首好听的儿歌</div>
+    </div>
+    <div class="expand-card" onclick="showExpandContent(1)">
+      <div class="ec-icon">🎤</div>
+      <div class="ec-title">口语练习</div>
+      <div class="ec-desc">更多句型练习</div>
+    </div>
+    <div class="expand-card" onclick="showExpandContent(2)">
+      <div class="ec-icon">📝</div>
+      <div class="ec-title">礼貌用语</div>
+      <div class="ec-desc">常用礼貌词语</div>
+    </div>
+    <div class="expand-card" onclick="showExpandContent(3)">
+      <div class="ec-icon">🌟</div>
+      <div class="ec-title">听说小游戏</div>
+      <div class="ec-desc">和家人一起玩</div>
+    </div>
+  </div>
+  <div class="card" id="expand-block" style="display:none">
+    <div class="card-title" id="expand-title2"></div>
+    <div id="expand-body2" style="line-height:2;font-size:1.05em;"></div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-primary" onclick="restartGame()">🔄 再次挑战</button>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+const gs = {
+  scores: [0,0,0,0],
+  ach: Array(8).fill(false),
+  l1q: 0, l1ok: 0,
+  l3q: 0, l3ok: 0,
+  micActive: false
+};
+
+// ===== AUDIO =====
+let actx;
+function gac() { if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)(); return actx; }
+function tone(f,t='sine',d=0.15,v=0.3) {
+  try { const c=gac(),o=c.createOscillator(),g=c.createGain(); o.connect(g);g.connect(c.destination); o.type=t;o.frequency.value=f; g.gain.setValueAtTime(v,c.currentTime); g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+d); o.start();o.stop(c.currentTime+d); } catch(e){}
+}
+function playOK() { tone(523,'sine',0.1);setTimeout(()=>tone(659,'sine',0.1),100);setTimeout(()=>tone(784,'sine',0.2),200); }
+function playNo() { tone(200,'sawtooth',0.25); }
+function playClick() { tone(440,'sine',0.08,0.2); }
+function playStar() { [523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,'sine',0.15),i*80)); }
+function playChime() { [523,587,659,698,784].forEach((f,i)=>setTimeout(()=>tone(f,'triangle',0.2),i*100)); }
+
+function playRhyme() {
+  // Simulate musical chime for the rhyme
+  [523,659,784,659,784,880,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,'triangle',0.18),i*180));
+  showToast('🎵 小耳朵，认真听！小嘴巴，大声说！');
+}
+
+// ===== NAV =====
+function goScreen(id) {
+  playClick();
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  if(id==='screen-level1') initL1();
+  if(id==='screen-level2') initL2();
+  if(id==='screen-level3') initL3();
+  if(id==='screen-score') showScore();
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t=document.createElement('div');
+  t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#4ecdc4,#ffe66d);color:#333;padding:12px 28px;border-radius:50px;font-weight:800;z-index:10000;box-shadow:0 4px 16px rgba(0,0,0,0.15);white-space:nowrap;max-width:90vw;text-align:center';
+  t.textContent=msg; document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2500);
+}
+
+// ===== ACHIEVEMENTS =====
+const ACHS = [
+  {icon:'🔥',name:'热身达人'},{icon:'👂',name:'小小听众'},{icon:'🗣️',name:'朗读小将'},
+  {icon:'🎵',name:'儿歌达人'},{icon:'👑',name:'播音小星'},{icon:'⭐',name:'全星战士'},
+  {icon:'💯',name:'百分英雄'},{icon:'🌈',name:'好奇宝宝'},
+];
+function unlockAch(i) {
+  if(!gs.ach[i]) { gs.ach[i]=true; playStar(); showToast(`🏅 解锁：${ACHS[i].icon} ${ACHS[i].name}！`); }
+}
+function lightStars(prefix, ratio) {
+  const stars = document.querySelectorAll(`#${prefix} .star`);
+  const count = ratio>=0.9?3:ratio>=0.6?2:ratio>=0.3?1:0;
+  stars.forEach((s,i)=>{ if(i<count){ setTimeout(()=>{s.classList.add('lit');playStar();},i*300); } });
+  return count;
+}
+
+// ===== WARMUP =====
+function sayWord(el, word, pin) {
+  document.querySelectorAll('.big-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  const tip=document.getElementById('warmup-tip');
+  tip.textContent=`读作：${pin} — 大声说"${word}"！`;
+  tip.style.display='block';
+  playOK(); playClick();
+}
+
+// ===== LEVEL 1: LISTEN =====
+const L1QS = [
+  { story:'小明在教室里，老师说：同学们，上课请坐好，把书翻到第三页。',
+    q:'老师让同学们做什么？',
+    opts:['出去玩','坐好看书','唱歌','休息'], correct:1 },
+  { story:'妈妈说：小花，记得放学后直接回家，别在外面玩太久哦。',
+    q:'妈妈让小花怎么做？',
+    opts:['去同学家玩','买零食','直接回家','打电话'], correct:2 },
+  { story:'体育老师说：同学们，今天我们做广播体操，请站好排队。',
+    q:'今天体育课做什么？',
+    opts:['跑步','踢球','广播体操','游泳'], correct:2 },
+];
+function initL1() {
+  gs.l1q=0; gs.l1ok=0;
+  renderL1();
+}
+function renderL1() {
+  if(gs.l1q>=L1QS.length){finishL1();return;}
+  const q=L1QS[gs.l1q];
+  document.getElementById('l1-content').innerHTML=`
+    <div style="background:#fff9e6;border-radius:14px;padding:16px;margin-bottom:16px;font-size:1.05em;line-height:2;border-left:5px solid var(--accent)">
+      📖 听故事：${q.story}
+    </div>
+    <div style="font-weight:800;margin-bottom:12px;font-size:1.1em">❓ ${q.q}</div>
+    <div class="listen-opts">
+      ${q.opts.map((o,i)=>`<button class="listen-opt" onclick="ansL1(${i})">
+        <span class="opt-emoji">${['🅰️','🅱️','🅾️','🆒'][i]}</span>${o}</button>`).join('')}
+    </div>`;
+  document.getElementById('l1-fb').style.display='none';
+}
+function ansL1(idx) {
+  const q=L1QS[gs.l1q];
+  const opts=document.querySelectorAll('#l1-content .listen-opt');
+  opts.forEach(o=>o.disabled=true);
+  const fb=document.getElementById('l1-fb');
+  if(idx===q.correct){ opts[idx].classList.add('correct'); gs.l1ok++; gs.scores[0]+=30; fb.className='feedback correct'; fb.textContent='✅ 听得真仔细！答对了！'; playOK(); }
+  else { opts[idx].classList.add('wrong'); opts[q.correct].classList.add('correct'); fb.className='feedback wrong'; fb.textContent='❌ 再听仔细一点！答案是：'+q.opts[q.correct]; playNo(); }
+  fb.style.display='block'; gs.l1q++;
+  setTimeout(()=>renderL1(),1500);
+}
+function finishL1() {
+  document.getElementById('l1-content').innerHTML=`<div style="text-align:center;padding:20px"><div style="font-size:3em">🎊</div><div style="font-size:1.3em;font-weight:800">关卡一完成！答对${gs.l1ok}/${L1QS.length}题</div></div>`;
+  document.getElementById('l1-fb').style.display='none';
+  document.getElementById('l1-next').style.display='block';
+  document.getElementById('sc1').textContent=gs.scores[0]+'分';
+  lightStars('l1-stars', gs.l1ok/L1QS.length);
+  unlockAch(1);
+}
+
+// ===== LEVEL 2: SPEAK =====
+const L2_SENTENCES = [
+  '我叫小明，我喜欢画画和跑步。',
+  '老师好！同学们好！',
+  '请问，图书馆在哪里？',
+];
+let l2idx=0;
+function initL2() {
+  l2idx=0; renderL2();
+}
+function renderL2() {
+  if(l2idx>=L2_SENTENCES.length){finishL2();return;}
+  document.getElementById('l2-sentence').textContent=L2_SENTENCES[l2idx];
+  document.getElementById('l2-choices').innerHTML=`
+    <div style="font-weight:800;margin-bottom:10px">你读对了吗？</div>
+    <div class="response-grid">
+      <div class="response-item" onclick="ansL2(true)"><span class="ri-emoji">✅</span><span class="ri-text">我读正确了！</span></div>
+      <div class="response-item" onclick="ansL2(false)"><span class="ri-emoji">🔄</span><span class="ri-text">我要再试一次</span></div>
+    </div>`;
+  document.getElementById('l2-fb').style.display='none';
+  gs.micActive=false;
+}
+function toggleMic() {
+  gs.micActive=!gs.micActive;
+  const btn=document.getElementById('mic-btn');
+  if(gs.micActive){ btn.classList.add('recording'); btn.textContent='⏹️'; playChime(); showToast('🎤 请大声朗读屏幕上的句子！'); }
+  else { btn.classList.remove('recording'); btn.textContent='🎤'; playClick(); }
+}
+function ansL2(correct) {
+  const fb=document.getElementById('l2-fb');
+  if(correct){ gs.scores[1]+=10; fb.className='feedback correct'; fb.textContent=`✅ 棒极了！"${L2_SENTENCES[l2idx]}"说得非常清楚！`; playOK(); l2idx++; setTimeout(()=>renderL2(),1200); }
+  else { fb.className='feedback wrong'; fb.textContent='💪 没关系！再练一次，你一定可以的！'; playClick(); }
+  fb.style.display='block';
+}
+function finishL2() {
+  document.getElementById('l2-sentence').textContent='';
+  document.getElementById('l2-choices').innerHTML=`<div style="text-align:center;padding:20px"><div style="font-size:3em">🌟</div><div style="font-size:1.3em;font-weight:800">口语练习完成！</div></div>`;
+  document.getElementById('l2-next').style.display='block';
+  document.getElementById('sc2').textContent=gs.scores[1]+'分';
+  lightStars('l2-stars', gs.scores[1]/30);
+  unlockAch(2);
+}
+
+// ===== LEVEL 3: RHYME =====
+const RHYME_FULL = ['小耳朵，认真听 👂','小嘴巴，大声说 🗣️','听仔细，说清楚','我是最棒小学生！⭐'];
+const RHYME_BLANKS = [
+  { display:'小耳朵，___', blank:'认真听 👂', opts:['认真听 👂','用力跑 🏃','快快睡 😴'] },
+  { display:'小嘴巴，___', blank:'大声说 🗣️', opts:['吃东西 😋','大声说 🗣️','摸摸脸 🤗'] },
+  { display:'听___，说___', blank:'仔细/清楚', opts:['仔细/清楚','好了/完了','多了/少了'] },
+];
+let l3idx=0;
+function initL3() {
+  l3idx=0; gs.l3ok=0;
+  document.getElementById('l3-rhyme-display').innerHTML=RHYME_FULL.map(l=>`<span>${l}</span>`).join('<br>');
+  setTimeout(()=>renderL3(),500);
+}
+function renderL3() {
+  if(l3idx>=RHYME_BLANKS.length){finishL3();return;}
+  const rb=RHYME_BLANKS[l3idx];
+  document.getElementById('l3-blanks').innerHTML=`
+    <div style="font-size:1.3em;font-weight:900;text-align:center;padding:14px;background:#fff9e6;border-radius:14px;margin-bottom:14px">🎵 ${rb.display}</div>
+    <div style="font-weight:800;margin-bottom:10px">填入正确的词：</div>
+    <div class="listen-opts">
+      ${rb.opts.map((o,i)=>`<button class="listen-opt" onclick="ansL3(${i},'${o.replace(/'/g,"\\'")}','${rb.blank.replace(/'/g,"\\'")}')">
+        <span class="opt-emoji">${['🔵','🟢','🔴'][i]}</span>${o}</button>`).join('')}
+    </div>`;
+  document.getElementById('l3-fb').style.display='none';
+}
+function ansL3(idx, chosen, correct) {
+  const opts=document.querySelectorAll('#l3-blanks .listen-opt');
+  opts.forEach(o=>o.disabled=true);
+  const fb=document.getElementById('l3-fb');
+  if(chosen===correct){ opts[idx].classList.add('correct'); gs.l3ok++; gs.scores[2]+=20; fb.className='feedback correct'; fb.textContent='✅ 背得真棒！继续！'; playOK(); }
+  else { opts[idx].classList.add('wrong'); fb.className='feedback wrong'; fb.textContent='❌ 再想想！答案是：'+correct; playNo(); }
+  fb.style.display='block'; l3idx++;
+  setTimeout(()=>renderL3(),1400);
+}
+function finishL3() {
+  document.getElementById('l3-blanks').innerHTML=`<div style="text-align:center;padding:20px"><div style="font-size:3em">🎊</div><div style="font-size:1.3em;font-weight:800">儿歌全部背完了！太厉害！</div></div>`;
+  document.getElementById('l3-next').style.display='block';
+  document.getElementById('sc3').textContent=gs.scores[2]+'分';
+  lightStars('l3-stars', gs.l3ok/RHYME_BLANKS.length);
+  unlockAch(3);
+}
+
+// ===== BOSS =====
+function submitBoss() {
+  const ans=document.getElementById('boss-answer').value.trim();
+  const fb=document.getElementById('boss-fb');
+  if(ans.length<10){ fb.className='feedback wrong'; fb.textContent='✏️ 请先写上你的名字和爱好，再大声说出来！'; fb.style.display='block'; playNo(); return; }
+  fb.className='feedback correct';
+  fb.textContent=`🌟 太棒了！你的自我介绍写得很好！记得大声说出来哦！`;
+  fb.style.display='block';
+  gs.scores[3]=40;
+  document.getElementById('boss-next').style.display='block';
+  unlockAch(4); playChime(); launchConfetti();
+}
+
+// ===== SCORE =====
+function showScore() {
+  const total=gs.scores.reduce((a,b)=>a+b,0);
+  document.getElementById('total-score').textContent=total;
+  ['ss1','ss2','ss3','ss4'].forEach((id,i)=>document.getElementById(id).textContent=gs.scores[i]);
+  document.getElementById('score-emoji').textContent = total>=100?'🏆':total>=60?'🌟':'💪';
+  if(total>=100) unlockAch(6);
+  unlockAch(7);
+  renderAch(); launchConfetti();
+}
+function renderAch() {
+  document.getElementById('ach-grid').innerHTML=ACHS.map((a,i)=>`<div class="ach-item ${gs.ach[i]?'unlocked':''}"><span class="ach-icon">${a.icon}</span><div class="ach-name">${gs.ach[i]?a.name:'???'}</div></div>`).join('');
+}
+
+// ===== EXPAND =====
+const EXP = [
+  {t:'🎵 更多儿歌',b:`<ol style="padding-left:18px;line-height:2.5;font-size:1.1em"><li>《小星星》：一闪一闪亮晶晶，满天都是小星星</li><li>《两只老虎》：两只老虎，两只老虎，跑得快，跑得快</li><li>《找朋友》：找到一个好朋友，敬个礼，握个手</li><li>《春天在哪里》：春天在哪里，春天在哪里</li><li>《数鸭子》：门前大桥下，游过一群鸭</li></ol>`},
+  {t:'🎤 口语句型',b:`<ul style="list-style:none;line-height:2.5;font-size:1.1em"><li>👋 打招呼：你好！老师好！同学好！</li><li>🙏 道谢：谢谢你！非常感谢！</li><li>😊 道歉：对不起，请原谅我。</li><li>❓ 提问：请问...在哪里？</li><li>✋ 请求帮助：请你帮帮我，好吗？</li></ul>`},
+  {t:'📝 礼貌用语大全',b:`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div style="background:#e0fff9;border-radius:12px;padding:12px;text-align:center"><div style="font-size:1.5em">👋</div>你好</div><div style="background:#fff9e6;border-radius:12px;padding:12px;text-align:center"><div style="font-size:1.5em">🙏</div>谢谢</div><div style="background:#fff0f0;border-radius:12px;padding:12px;text-align:center"><div style="font-size:1.5em">😊</div>对不起</div><div style="background:#f0f0ff;border-radius:12px;padding:12px;text-align:center"><div style="font-size:1.5em">🌟</div>再见</div></div>`},
+  {t:'🌟 听说游戏',b:`<ul class="obj-list" style="font-size:1.05em"><li>游戏一：耳语传话——把一句话悄悄传给下一个人</li><li>游戏二：我说你做——听到指令就做动作</li><li>游戏三：词语接龙——上一个人说最后一个字开头的词</li><li>游戏四：我是小老师——轮流当小老师提问</li></ul>`},
+];
+function showExpandContent(i) {
+  const d=EXP[i];
+  document.getElementById('expand-title2').textContent=d.t;
+  document.getElementById('expand-body2').innerHTML=d.b;
+  document.getElementById('expand-block').style.display='block';
+  playClick(); document.getElementById('expand-block').scrollIntoView({behavior:'smooth'});
+  unlockAch(7);
+}
+
+// ===== AI =====
+const TIPS=['🌟 听别人说话时，要看着对方的眼睛哦！','👂 仔细听，不要打断别人说话！','🗣️ 说话要清楚，声音要响亮！','💪 不会说的时候，可以先想想再说！','😊 说话要有礼貌，多用"请"和"谢谢"！'];
+let tipIdx=0, aiVis=false;
+function toggleAI() {
+  aiVis=!aiVis;
+  const b=document.getElementById('aiBubble');
+  b.style.display=aiVis?'block':'none';
+  if(aiVis){ b.textContent=TIPS[tipIdx%TIPS.length]; tipIdx++; playClick(); }
+}
+
+// ===== CONFETTI =====
+function launchConfetti() {
+  const canvas=document.getElementById('confetti-layer');
+  const ctx=canvas.getContext('2d');
+  canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+  const ps=Array.from({length:80},()=>({x:Math.random()*canvas.width,y:-20,vx:(Math.random()-0.5)*4,vy:Math.random()*4+2,color:['#4ecdc4','#ff6b6b','#ffe66d','#a29bfe','#fd79a8'][Math.floor(Math.random()*5)],size:Math.random()*10+5,rot:Math.random()*360,rv:(Math.random()-0.5)*8}));
+  let f=0;
+  (function draw(){ ctx.clearRect(0,0,canvas.width,canvas.height); ps.forEach(p=>{ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot*Math.PI/180);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(0,0,p.size/2,0,Math.PI*2);ctx.fill();ctx.restore(); p.x+=p.vx;p.y+=p.vy;p.rot+=p.rv;p.vy+=0.06;}); if(++f<100) requestAnimationFrame(draw); else ctx.clearRect(0,0,canvas.width,canvas.height); })();
+}
+
+// ===== RESTART =====
+function restartGame() {
+  gs.scores=[0,0,0,0]; gs.ach=Array(8).fill(false); gs.l1q=0;gs.l1ok=0;l2idx=0;l3idx=0;gs.l3ok=0;
+  document.querySelectorAll('.star').forEach(s=>s.classList.remove('lit'));
+  ['l1-next','l2-next','l3-next','boss-next'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
+  ['boss-answer'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  goScreen('screen-hero');
+}
+</script>
+</body>
+</html>
