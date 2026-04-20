@@ -1,8 +1,8 @@
 /**
- * TeachAny TTS Player v1.0
- * 支持预生成MP3 + Web Speech API降级
+ * TeachAny TTS Player v1.1 — Edge TTS Only
+ * 强制使用预生成MP3（Edge TTS生成），不降级Web Speech
  */
-(function() {
+(function () {
   'use strict';
 
   const TTSPlayer = {
@@ -11,14 +11,13 @@
     isPlaying: false,
     isPaused: false,
     audio: null,
-    useWebSpeechFallback: false,
 
     // 初始化
     init(narrationData) {
       this.narration = narrationData;
       this.createUI();
       this.bindEvents();
-      console.log('[TTS] 初始化完成，共', narrationData.segments.length, '段旁白');
+      console.log('[TTS] Edge TTS Player 初始化，共', narrationData.segments.length, '段旁白');
     },
 
     // 创建TTS控制UI
@@ -54,9 +53,9 @@
             display: flex;
             align-items: center;
             justify-content: center;
-          ">▶</button>
+          " title="播放旁白">▶</button>
           <div class="tts-info" style="flex: 1; min-width: 0;">
-            <div class="tts-label" style="font-size: 12px; color: #666; margin-bottom: 4px;">🎧 语音旁白</div>
+            <div class="tts-label" style="font-size: 12px; color: #666; margin-bottom: 4px;">🎧 Edge TTS 旁白</div>
             <div class="tts-progress-bar" style="
               height: 4px;
               background: #eee;
@@ -77,39 +76,18 @@
             font-size: 18px;
             cursor: pointer;
             color: #999;
-          ">×</button>
+          " title="关闭语音">×</button>
         </div>
       `;
       document.body.appendChild(ui);
-
-      // 检查是否有MP3文件
-      this.checkAudioFiles();
-    },
-
-    // 检查MP3文件是否存在
-    checkAudioFiles() {
-      const seg0 = this.narration.segments[0];
-      if (!seg0) return;
-
-      const testAudio = new Audio(`tts/${seg0.id}.mp3`);
-      testAudio.addEventListener('canplaythrough', () => {
-        console.log('[TTS] MP3文件可用，使用预生成音频');
-        this.useWebSpeechFallback = false;
-      });
-      testAudio.addEventListener('error', () => {
-        console.log('[TTS] MP3文件不可用，降级到Web Speech API');
-        this.useWebSpeechFallback = true;
-      });
-      testAudio.load();
     },
 
     // 绑定事件
     bindEvents() {
       const playBtn = document.getElementById('tts-play-btn');
       const closeBtn = document.getElementById('tts-close-btn');
-
-      playBtn.addEventListener('click', () => this.togglePlay());
-      closeBtn.addEventListener('click', () => this.close());
+      if (playBtn) playBtn.addEventListener('click', () => this.togglePlay());
+      if (closeBtn) closeBtn.addEventListener('click', () => this.close());
     },
 
     // 切换播放/暂停
@@ -132,8 +110,9 @@
       this.updateUI();
     },
 
-    // 播放指定段落
+    // 播放指定段落（强制MP3）
     playSegment(index) {
+      if (!this.narration) return;
       if (index >= this.narration.segments.length) {
         this.stop();
         return;
@@ -141,90 +120,68 @@
 
       this.currentSeg = index;
       const seg = this.narration.segments[index];
+      const mp3Path = `tts/${seg.id}.mp3`;
 
-      if (this.useWebSpeechFallback) {
-        this.playWithWebSpeech(seg);
-      } else {
-        this.playWithMP3(seg, index);
-      }
-    },
-
-    // 使用MP3播放
-    playWithMP3(seg, index) {
       if (this.audio) {
         this.audio.pause();
         this.audio = null;
       }
 
-      this.audio = new Audio(`tts/${seg.id}.mp3`);
+      this.audio = new Audio(mp3Path);
+
+      this.audio.addEventListener('canplaythrough', () => {
+        this.audio.play().catch(e => {
+          console.error('[TTS] 播放失败:', mp3Path, e);
+          this.showError(`无法播放 ${mp3Path}，文件可能缺失`);
+          // 不再降级，直接跳过
+          setTimeout(() => this.playSegment(index + 1), 1000);
+        });
+      }, { once: true });
+
       this.audio.addEventListener('timeupdate', () => {
-        const progress = (this.audio.currentTime / this.audio.duration) * 100;
-        this.updateProgress(progress);
+        if (this.audio.duration) {
+          const progress = (this.audio.currentTime / this.audio.duration) * 100;
+          this.updateProgress(progress);
+        }
       });
+
       this.audio.addEventListener('ended', () => {
         this.playSegment(index + 1);
       });
-      this.audio.play().catch(e => {
-        console.warn('[TTS] MP3播放失败，降级到Web Speech:', e);
-        this.useWebSpeechFallback = true;
-        this.playWithWebSpeech(seg);
-      });
+
+      this.audio.addEventListener('error', () => {
+        console.error('[TTS] MP3文件加载失败:', mp3Path);
+        this.showError(`MP3文件缺失: ${mp3Path}。请用 edge-tts 生成：`);
+        this.showError(`  edge-tts --voice "zh-CN-XiaoxiaoNeural" --text "..." --write-media tts/${seg.id}.mp3`);
+        // 不再降级，停止播放
+        this.stop();
+      }, { once: true });
 
       // 高亮对应幻灯片
-      this.highlightSlide(seg.slideIndex);
-    },
-
-    // 使用Web Speech API播放
-    playWithWebSpeech(seg) {
-      if (!('speechSynthesis' in window)) {
-        console.warn('[TTS] 浏览器不支持Web Speech API');
-        return;
+      if (seg.slideIndex !== undefined) {
+        this.highlightSlide(seg.slideIndex);
       }
 
-      const utterance = new SpeechSynthesisUtterance(seg.text);
-      utterance.lang = 'zh-CN';
-      utterance.rate = 0.9;
-      utterance.pitch = 1;
-
-      utterance.onend = () => {
-        this.playSegment(this.currentSeg + 1);
-      };
-
-      utterance.onerror = (e) => {
-        console.warn('[TTS] Web Speech播放失败:', e);
-        this.playSegment(this.currentSeg + 1);
-      };
-
-      speechSynthesis.speak(utterance);
-      this.currentUtterance = utterance;
-
-      // 高亮对应幻灯片
-      this.highlightSlide(seg.slideIndex);
-
-      // 模拟进度
-      const duration = seg.text.length * 200;
-      this.simulateProgress(duration);
+      this.audio.load();
     },
 
-    // 模拟进度（Web Speech模式）
-    simulateProgress(duration) {
-      const start = Date.now();
-      const update = () => {
-        if (!this.isPlaying || this.isPaused) return;
-        const elapsed = Date.now() - start;
-        const progress = Math.min((elapsed / duration) * 100, 95);
-        this.updateProgress(progress);
-        if (progress < 95) {
-          requestAnimationFrame(update);
-        }
-      };
-      requestAnimationFrame(update);
+    // 显示错误提示
+    showError(msg) {
+      let errDiv = document.getElementById('tts-error');
+      if (!errDiv) {
+        errDiv = document.createElement('div');
+        errDiv.id = 'tts-error';
+        errDiv.style.cssText = 'position:fixed;bottom:140px;right:20px;background:#fee;color:#c33;padding:8px 12px;border-radius:8px;font-size:12px;max-width:300px;z-index:1000;';
+        document.body.appendChild(errDiv);
+      }
+      errDiv.textContent = msg;
+      errDiv.style.display = 'block';
+      setTimeout(() => { if (errDiv) errDiv.style.display = 'none'; }, 5000);
     },
 
     // 高亮幻灯片
     highlightSlide(slideIndex) {
-      // 尝试滚动到对应幻灯片
-      const slides = document.querySelectorAll('.slide, [class*="slide"], section');
+      const slides = document.querySelectorAll('.slide, section, [class*="slide"]');
       if (slides && slides[slideIndex]) {
         slides[slideIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
@@ -234,7 +191,7 @@
     updateProgress(percent) {
       const progressBar = document.querySelector('.tts-progress');
       if (progressBar) {
-        progressBar.style.width = `${percent}%`;
+        progressBar.style.width = `${Math.min(percent, 100)}%`;
       }
     },
 
@@ -249,24 +206,14 @@
     // 暂停
     pause() {
       this.isPaused = true;
-      if (this.audio) {
-        this.audio.pause();
-      }
-      if (this.currentUtterance) {
-        speechSynthesis.pause();
-      }
+      if (this.audio) this.audio.pause();
       this.updateUI();
     },
 
     // 恢复
     resume() {
       this.isPaused = false;
-      if (this.audio) {
-        this.audio.play();
-      }
-      if (this.currentUtterance) {
-        speechSynthesis.resume();
-      }
+      if (this.audio) this.audio.play();
       this.updateUI();
     },
 
@@ -275,13 +222,7 @@
       this.isPlaying = false;
       this.isPaused = false;
       this.currentSeg = -1;
-      if (this.audio) {
-        this.audio.pause();
-        this.audio = null;
-      }
-      if (this.currentUtterance) {
-        speechSynthesis.cancel();
-      }
+      if (this.audio) { this.audio.pause(); this.audio = null; }
       this.updateProgress(0);
       this.updateUI();
     },
@@ -291,9 +232,17 @@
       this.stop();
       const ui = document.getElementById('tts-player');
       if (ui) ui.remove();
+      const err = document.getElementById('tts-error');
+      if (err) err.remove();
     }
   };
 
   // 导出到全局
   window.TeachAnyTTS = TTSPlayer;
+
+  // 自动加载 narration.json 并初始化
+  fetch('tts/narration.json')
+    .then(r => r.json())
+    .then(data => TTSPlayer.init(data))
+    .catch(e => console.warn('[TTS] 未找到 tts/narration.json，TTS Player 未初始化'));
 })();
