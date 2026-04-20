@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数字与颜色 | 三年级英语</title>
+<style>
+  :root {
+    --bg: #fffbf0;
+    --primary: #ff6b6b;
+    --secondary: #4ecdc4;
+    --accent: #ffe66d;
+    --card: #fff;
+    --text: #2d3436;
+    --shadow: 0 4px 20px rgba(0,0,0,0.1);
+    --radius: 18px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', 'PingFang SC', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+  .screen { display: none; min-height: 100vh; padding: 20px; animation: fadeIn 0.4s ease; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+  .top-bar { width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .stars-display { display: flex; align-items: center; gap: 6px; background: var(--accent); padding: 7px 14px; border-radius: 20px; font-weight: bold; font-size: 17px; box-shadow: var(--shadow); }
+  .progress-bar { width: 100%; max-width: 800px; height: 14px; background: #e0e0e0; border-radius: 7px; margin-bottom: 18px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent)); border-radius: 7px; transition: width 0.5s ease; }
+
+  /* HERO */
+  #hero { background: linear-gradient(135deg, #ff6b6b20, #4ecdc420, #ffe66d20); justify-content: center; text-align: center; }
+  .hero-bear { font-size: 110px; animation: wiggle 1.2s ease-in-out infinite; }
+  @keyframes wiggle { 0%,100%{transform:rotate(-5deg)} 50%{transform:rotate(5deg)} }
+  .hero-title { font-size: 44px; font-weight: 900; color: var(--primary); margin: 18px 0 8px; text-shadow: 3px 3px 0 #fff, 5px 5px 0 var(--accent); }
+  .hero-sub { font-size: 20px; color: var(--secondary); margin-bottom: 28px; font-weight: 600; }
+  .hero-badges { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 28px; }
+  .badge { background: var(--card); padding: 8px 16px; border-radius: 20px; font-size: 15px; box-shadow: var(--shadow); border: 2px solid var(--accent); }
+  .btn-start { background: linear-gradient(135deg, var(--primary), #ff8e8e); color: #fff; border: none; padding: 18px 50px; font-size: 24px; font-weight: 800; border-radius: 50px; cursor: pointer; box-shadow: 0 6px 22px rgba(255,107,107,0.45); transition: all 0.2s; letter-spacing: 1px; }
+  .btn-start:hover { transform: translateY(-4px) scale(1.03); box-shadow: 0 12px 32px rgba(255,107,107,0.5); }
+
+  /* SECTION */
+  .section-title { font-size: 30px; font-weight: 900; color: var(--primary); margin-bottom: 18px; text-align: center; }
+  .bear-chat { display: flex; align-items: flex-start; gap: 12px; background: var(--card); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); margin-bottom: 18px; width: 100%; max-width: 700px; }
+  .bear-avatar { font-size: 42px; flex-shrink: 0; }
+  .bear-bubble { background: var(--accent); border-radius: 0 var(--radius) var(--radius) var(--radius); padding: 12px 16px; font-size: 16px; line-height: 1.7; }
+  .bear-name { font-weight: 800; color: var(--primary); margin-bottom: 4px; font-size: 15px; }
+  .obj-list { width: 100%; max-width: 700px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
+  .obj-item { background: var(--card); border-radius: var(--radius); padding: 14px 20px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); border-left: 6px solid var(--secondary); font-size: 16px; }
+  .obj-num { background: var(--secondary); color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; font-size: 16px; }
+
+  /* NUMBER CARDS */
+  .number-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; width: 100%; max-width: 720px; margin-bottom: 22px; }
+  .number-card { background: var(--card); border-radius: var(--radius); padding: 18px 10px; text-align: center; box-shadow: var(--shadow); cursor: pointer; transition: all 0.2s; border: 3px solid transparent; }
+  .number-card:hover { transform: translateY(-5px) scale(1.04); border-color: var(--primary); box-shadow: 0 10px 28px rgba(255,107,107,0.2); }
+  .number-card.clicked { background: linear-gradient(135deg, var(--primary), #ff8e8e); color: white; border-color: var(--primary); }
+  .num-big { font-size: 54px; font-weight: 900; color: var(--primary); line-height: 1; }
+  .number-card.clicked .num-big { color: white; }
+  .num-word { font-size: 20px; font-weight: 800; margin-top: 6px; }
+  .num-zh { font-size: 14px; color: #888; margin-top: 2px; }
+  .number-card.clicked .num-zh { color: rgba(255,255,255,0.8); }
+
+  /* COLOR CARDS */
+  .color-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; width: 100%; max-width: 720px; margin-bottom: 22px; }
+  .color-card { border-radius: var(--radius); padding: 20px 12px; text-align: center; box-shadow: var(--shadow); cursor: pointer; transition: all 0.2s; border: 4px solid rgba(255,255,255,0.5); color: white; font-weight: 800; }
+  .color-card:hover { transform: translateY(-5px) scale(1.05); }
+  .color-card.active { border-color: var(--accent); transform: scale(1.08); }
+  .color-word { font-size: 22px; text-shadow: 1px 1px 4px rgba(0,0,0,0.3); }
+  .color-emoji { font-size: 36px; margin-bottom: 6px; }
+  .color-zh { font-size: 13px; opacity: 0.9; margin-top: 3px; }
+
+  /* QUIZ */
+  .level-card { background: var(--card); border-radius: var(--radius); padding: 22px; width: 100%; max-width: 700px; box-shadow: var(--shadow); margin-bottom: 18px; }
+  .level-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--primary); color: white; padding: 6px 18px; border-radius: 20px; font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+  .big-display { font-size: 80px; font-weight: 900; text-align: center; margin: 14px 0; line-height: 1; text-shadow: 4px 4px 0 var(--accent); }
+  .big-number { color: var(--primary); }
+  .quiz-sub { font-size: 17px; color: #777; text-align: center; margin-bottom: 14px; }
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 580px; }
+  .opt-btn { background: var(--card); border: 3px solid #e0e0e0; border-radius: var(--radius); padding: 14px 16px; font-size: 19px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+  .opt-btn:hover:not(:disabled) { border-color: var(--secondary); background: #f0fffe; }
+  .opt-btn.correct { background: #c8f7c5; border-color: #27ae60; }
+  .opt-btn.wrong { background: #ffd6d6; border-color: #e74c3c; }
+  .feedback { font-size: 20px; font-weight: 700; margin: 12px 0; text-align: center; min-height: 28px; }
+  .feedback.correct { color: #27ae60; }
+  .feedback.wrong { color: #e74c3c; }
+  .q-count { color: #999; font-size: 13px; text-align: center; margin-top: 6px; }
+
+  /* COLOR QUIZ */
+  .color-swatch { width: 120px; height: 120px; border-radius: 50%; margin: 16px auto; border: 6px solid #fff; box-shadow: 0 6px 24px rgba(0,0,0,0.15); }
+  .color-opt { background: var(--card); border: 3px solid #e0e0e0; border-radius: var(--radius); padding: 12px 16px; font-size: 18px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 10px; }
+  .color-opt:hover:not(:disabled) { border-color: var(--secondary); background: #f0fffe; }
+  .color-opt.correct { background: #c8f7c5; border-color: #27ae60; }
+  .color-opt.wrong { background: #ffd6d6; border-color: #e74c3c; }
+  .color-dot { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; }
+
+  /* DRAG */
+  .drag-intro { font-size: 18px; color: var(--secondary); font-weight: 700; text-align: center; margin-bottom: 14px; }
+  .drag-target { font-size: 50px; text-align: center; margin-bottom: 10px; }
+  .drag-question { font-size: 20px; text-align: center; font-weight: 700; margin-bottom: 16px; color: var(--primary); }
+  .drop-area { min-height: 72px; border: 3px dashed var(--secondary); border-radius: var(--radius); padding: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; background: #f0fffe; margin-bottom: 14px; transition: background 0.2s; font-size: 20px; font-weight: 700; color: #aaa; }
+  .drop-area.drag-over { background: #d0f5f2; border-color: var(--primary); }
+  .drop-area.has-items { color: var(--text); }
+  .word-tiles { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 18px; }
+  .word-tile { background: var(--accent); border: 3px solid #f0c040; border-radius: 12px; padding: 12px 22px; font-size: 22px; font-weight: 900; cursor: grab; user-select: none; transition: all 0.2s; box-shadow: var(--shadow); }
+  .word-tile:hover { transform: scale(1.1) rotate(2deg); }
+  .word-tile:active { cursor: grabbing; opacity: 0.5; }
+  .word-tile.used { opacity: 0.3; pointer-events: none; }
+  .placed-tile { background: var(--secondary); color: white; border-radius: 10px; padding: 10px 18px; font-size: 20px; font-weight: 700; cursor: pointer; }
+  .placed-tile:hover { background: var(--primary); }
+
+  /* COUNTING GAME */
+  .count-scene { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; padding: 20px; background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; min-height: 120px; cursor: pointer; }
+  .count-item { font-size: 36px; transition: transform 0.2s; user-select: none; }
+  .count-item:hover { transform: scale(1.2); }
+  .count-item.counted { filter: drop-shadow(0 0 8px var(--primary)); transform: scale(1.1); }
+  .count-input { width: 100%; max-width: 200px; display: block; margin: 0 auto 14px; padding: 14px 18px; font-size: 28px; font-weight: 900; border: 3px solid #e0e0e0; border-radius: var(--radius); text-align: center; outline: none; }
+  .count-input:focus { border-color: var(--secondary); }
+  .count-input.correct-input { border-color: #27ae60; background: #f0fff4; }
+  .count-input.wrong-input { border-color: #e74c3c; animation: shake 0.3s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+
+  /* BOSS */
+  #boss { background: linear-gradient(135deg, #6c3483, #1a1a2e); }
+  #boss .section-title { color: var(--accent); }
+  #boss .level-card { background: rgba(255,255,255,0.08); color: white; border: 2px solid rgba(255,230,109,0.3); }
+  #boss .quiz-sub { color: #ccc; }
+  #boss .big-display { color: var(--accent) !important; }
+  #boss .opt-btn, #boss .color-opt { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.25); color: white; }
+  #boss .opt-btn:hover:not(:disabled), #boss .color-opt:hover:not(:disabled) { background: rgba(255,255,255,0.22); }
+  #boss .count-input { background: rgba(255,255,255,0.1); color: white; border-color: rgba(255,255,255,0.3); }
+  .boss-hp { width: 100%; max-width: 560px; margin-bottom: 16px; }
+  .boss-hp-lbl { color: var(--accent); font-weight: 700; margin-bottom: 5px; font-size: 16px; }
+  .boss-hp-bar { height: 18px; background: rgba(255,255,255,0.15); border-radius: 9px; overflow: hidden; }
+  .boss-hp-fill { height: 100%; background: linear-gradient(90deg, #c0392b, #e74c3c, #e67e22); border-radius: 9px; transition: width 0.5s; }
+  .boss-fig { font-size: 90px; text-align: center; margin: 12px 0; animation: bossFloat 1.5s ease-in-out infinite; }
+  @keyframes bossFloat { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-10px) rotate(3deg)} }
+
+  /* REPORT */
+  #report { text-align: center; }
+  .score-circle { width: 160px; height: 160px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; flex-direction: column; color: white; box-shadow: 0 8px 30px rgba(255,107,107,0.4); margin: 18px auto; }
+  .score-num { font-size: 48px; font-weight: 900; }
+  .score-lbl { font-size: 14px; }
+  .achievements { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 14px 0; }
+  .ach-item { background: var(--card); border-radius: var(--radius); padding: 12px 14px; text-align: center; box-shadow: var(--shadow); border: 2px solid var(--accent); min-width: 90px; }
+  .ach-icon { font-size: 30px; }
+  .ach-name { font-size: 11px; color: #888; margin-top: 3px; }
+  .ach-item.locked { opacity: 0.2; filter: grayscale(1); }
+  .stars-earned { font-size: 36px; color: var(--accent); margin: 8px 0; letter-spacing: 4px; }
+
+  /* EXT */
+  .ext-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; width: 100%; max-width: 700px; }
+  .ext-card { background: var(--card); border-radius: var(--radius); padding: 18px; text-align: center; box-shadow: var(--shadow); border-top: 5px solid var(--secondary); }
+  .ext-icon { font-size: 38px; margin-bottom: 10px; }
+  .ext-title { font-size: 17px; font-weight: 800; margin-bottom: 6px; }
+  .ext-desc { font-size: 13px; color: #666; line-height: 1.5; }
+
+  /* BTNS */
+  .btn-next { background: linear-gradient(135deg, var(--secondary), #45b7aa); color: white; border: none; padding: 14px 36px; font-size: 18px; font-weight: 700; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 15px rgba(78,205,196,0.4); transition: all 0.2s; margin-top: 14px; }
+  .btn-next:hover { transform: translateY(-2px); }
+  .btn-check { background: linear-gradient(135deg, var(--primary), #ff8e8e); color: white; border: none; padding: 13px 28px; font-size: 16px; font-weight: 700; border-radius: 50px; cursor: pointer; transition: all 0.2s; }
+  .btn-check:hover { transform: translateY(-2px); }
+  .btn-sound { background: var(--accent); border: none; border-radius: 50%; width: 44px; height: 44px; font-size: 20px; cursor: pointer; box-shadow: var(--shadow); transition: transform 0.2s; }
+  .btn-sound:hover { transform: scale(1.12); }
+
+  .toast { position: fixed; top: 72px; left: 50%; transform: translateX(-50%) translateY(-100px); background: var(--primary); color: white; padding: 10px 24px; border-radius: 28px; font-size: 15px; font-weight: 700; z-index: 1000; transition: transform 0.3s; box-shadow: 0 4px 18px rgba(0,0,0,0.2); }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .star-pop { position: fixed; font-size: 30px; pointer-events: none; z-index: 999; animation: starFly 1s ease-out forwards; }
+  @keyframes starFly { from { opacity: 1; transform: scale(1) translateY(0); } to { opacity: 0; transform: scale(2.2) translateY(-72px); } }
+  .confetti { position: fixed; pointer-events: none; z-index: 998; font-size: 24px; animation: confettiFall 2s ease-out forwards; }
+  @keyframes confettiFall { from { opacity: 1; transform: translateY(-20px) rotate(0deg); } to { opacity: 0; transform: translateY(100vh) rotate(720deg); } }
+
+  @media (max-width: 560px) {
+    .options { grid-template-columns: 1fr; }
+    .number-grid { grid-template-columns: repeat(3, 1fr); }
+    .color-grid { grid-template-columns: repeat(2, 1fr); }
+    .hero-title { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+<div class="toast" id="toast">🎉 棒极了！</div>
+
+<!-- HERO -->
+<section class="screen active" id="hero">
+  <div class="hero-bear">🐻</div>
+  <div class="hero-title">数字与颜色</div>
+  <div class="hero-sub">三年级 · Numbers & Colors 🌈</div>
+  <div class="hero-badges">
+    <span class="badge">🔢 1-20数字</span>
+    <span class="badge">🎨 12种颜色</span>
+    <span class="badge">⭐ 赚取星星</span>
+    <span class="badge">🏆 8大成就</span>
+  </div>
+  <button class="btn-start" onclick="goTo('objectives')">出发冒险 🚀</button>
+</section>
+
+<!-- OBJECTIVES -->
+<section class="screen" id="objectives">
+  <div class="top-bar">
+    <div class="stars-display">⭐ <span id="stars-obj">0</span></div>
+    <button class="btn-sound" onclick="speakText('Let us learn numbers and colors!')">🔊</button>
+  </div>
+  <div class="section-title">🎯 今天要学什么</div>
+  <div class="obj-list">
+    <div class="obj-item"><div class="obj-num">1</div>学会用英语说1-20的数字</div>
+    <div class="obj-item"><div class="obj-num">2</div>认识并记住12种常见颜色</div>
+    <div class="obj-item"><div class="obj-num">3</div>能看图数数并说出英文数字</div>
+    <div class="obj-item"><div class="obj-num">4</div>能用"I see + 数字 + 颜色"造句</div>
+  </div>
+  <div class="bear-chat">
+    <div class="bear-avatar">🐻</div>
+    <div class="bear-bubble">
+      <div class="bear-name">小熊老师</div>
+      嗨小朋友！我是你的AI学伴🐻 今天我们要学数字和颜色！一起来数苹果🍎，认识彩虹🌈 颜色，闯过3个关卡打败Boss！准备好了吗？
+    </div>
+  </div>
+  <button class="btn-next" onclick="goTo('warmup')">进入热身 🔥</button>
+</section>
+
+<!-- WARMUP -->
+<section class="screen" id="warmup">
+  <div class="top-bar">
+    <div class="stars-display">⭐ <span id="stars-warm">0</span></div>
+    <span style="font-size:16px;font-weight:700;color:var(--primary)">🔥 热身</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" style="width:15%"></div></div>
+  <div class="section-title">🔢 认识数字</div>
+  <div class="bear-chat">
+    <div class="bear-avatar">🐻</div>
+    <div class="bear-bubble">
+      <div class="bear-name">小熊老师</div>
+      点击数字卡片听发音！大声跟着说一遍！每点一个得⭐
+    </div>
+  </div>
+  <div class="number-grid" id="number-grid">
+    <!-- Generated by JS -->
+  </div>
+  <div style="font-size:18px;font-weight:700;color:var(--secondary);text-align:center;margin-bottom:18px">🎨 认识颜色</div>
+  <div class="color-grid" id="color-grid">
+    <!-- Generated by JS -->
+  </div>
+  <button class="btn-next" onclick="goTo('level1'); initLevel1()">第一关 ⚔️</button>
+</section>
+
+<!-- LEVEL 1: 数字匹配 -->
+<section class="screen" id="level1">
+  <div class="top-bar">
+    <div class="stars-display">⭐ <span id="stars-l1">0</span></div>
+    <span style="font-size:16px;font-weight:700;color:var(--primary)">关卡 1/3</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" style="width:35%"></div></div>
+  <div class="level-card">
+    <div class="level-badge">🔢 第一关：数字识别</div>
+    <div class="big-display big-number" id="l1-display">7</div>
+    <div class="quiz-sub" id="l1-sub">选出正确的英文单词</div>
+    <div class="options" id="l1-opts"></div>
+    <div class="feedback" id="l1-fb"></div>
+    <div class="q-count" id="l1-cnt">0/8 题</div>
+  </div>
+</section>
+
+<!-- LEVEL 2: 颜色识别 -->
+<section class="screen" id="level2">
+  <div class="top-bar">
+    <div class="stars-display">⭐ <span id="stars-l2">0</span></div>
+    <span style="font-size:16px;font-weight:700;color:var(--primary)">关卡 2/3</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" style="width:58%"></div></div>
+  <div class="level-card">
+    <div class="level-badge">🎨 第二关：颜色识别</div>
+    <div class="color-swatch" id="l2-swatch"></div>
+    <div class="quiz-sub">这是什么颜色？</div>
+    <div class="options" id="l2-opts" style="grid-template-columns:1fr 1fr"></div>
+    <div class="feedback" id="l2-fb"></div>
+    <div class="q-count" id="l2-cnt">0/8 题</div>
+  </div>
+</section>
+
+<!-- LEVEL 3: 数数游戏 -->
+<section class="screen" id="level3">
+  <div class="top-bar">
+    <div class="stars-display">⭐ <span id="stars-l3">0</span></div>
+    <span style="font-size:16px;font-weight:700;color:var(--primary)">关卡 3/3</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" style="width:78%"></div></div>
+  <div class="level-card">
+    <div class="level-badge">🔢 第三关：数数挑战</div>
+    <div class="quiz-sub" id="l3-question">数数图片里有几只动物？</div>
+    <div class="count-scene" id="count-scene" onclick="countItem(event)"></div>
+    <div style="text-align:center;font-size:14px;color:#888;margin-bottom:10px">点击物品来数数 <span id="count-num" style="font-size:20px;font-weight:900;color:var(--primary)">0</span></div>
+    <div style="text-align:center;margin-bottom:12px">
+      <input class="count-input" id="count-input" type="text" placeholder="输入英文数字..." autocomplete="off" onkeydown="if(event.key==='Enter')checkCount()">
+    </div>
+    <div style="display:flex;gap:12px;justify-content:center">
+      <button class="btn-check" onclick="checkCount()">✅ 确认</button>
+      <button class="btn-check" style="background:linear-gradient(135deg,#74b9ff,#0984e3)" onclick="resetCount()">🔄 重置</button>
+      <button class="btn-sound" onclick="speakL3()">🔊</button>
+    </div>
+    <div class="feedback" id="l3-fb"></div>
+    <div class="q-count" id="l3-cnt">0/5 题</div>
+  </div>
+</section>
+
+<!-- BOSS -->
+<section class="screen" id="boss">
+  <div class="top-bar">
+    <div class="stars-display">⭐ <span id="stars-boss">0</span></div>
+    <span style="font-size:16px;font-weight:700;color:var(--accent)">👹 Boss战</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" style="width:90%"></div></div>
+  <div class="section-title">👹 彩虹龙Boss！</div>
+  <div class="boss-hp">
+    <div class="boss-hp-lbl">龙的血量: <span id="boss-hp-txt">100</span>%</div>
+    <div class="boss-hp-bar"><div class="boss-hp-fill" id="boss-fill" style="width:100%"></div></div>
+  </div>
+  <div class="boss-fig" id="boss-fig">🐲</div>
+  <div class="level-card">
+    <div id="boss-type-display"></div>
+    <div class="quiz-sub" id="boss-q">综合挑战：数字 + 颜色！</div>
+    <div class="big-display" id="boss-display" style="color:var(--accent);font-size:60px">?</div>
+    <div class="options" id="boss-opts"></div>
+    <div class="feedback" id="boss-fb"></div>
+    <div class="q-count" id="boss-cnt">0/8 题</div>
+  </div>
+</section>
+
+<!-- REPORT -->
+<section class="screen" id="report">
+  <div class="section-title">🏆 超棒！学习报告</div>
+  <div style="font-size:90px;animation:wiggle 1.2s ease-in-out infinite">🐻</div>
+  <div class="score-circle"><div class="score-num" id="final-score">0</div><div class="score-lbl">总分</div></div>
+  <div class="stars-earned" id="stars-earned">⭐⭐⭐⭐⭐</div>
+  <div style="font-size:18px;margin-bottom:18px;font-weight:700" id="report-msg">你是数字颜色小达人！</div>
+  <div style="font-size:18px;font-weight:700;margin-bottom:10px">🏅 获得成就</div>
+  <div class="achievements" id="ach-list"></div>
+  <div style="display:flex;gap:12px;margin-top:18px;flex-wrap:wrap;justify-content:center">
+    <button class="btn-next" onclick="goTo('extension')">拓展学习 📚</button>
+    <button class="btn-check" onclick="restart()">再玩一次 🔄</button>
+  </div>
+</section>
+
+<!-- EXTENSION -->
+<section class="screen" id="extension">
+  <div class="section-title">📚 继续学习</div>
+  <div class="bear-chat">
+    <div class="bear-avatar">🐻</div>
+    <div class="bear-bubble">
+      <div class="bear-name">小熊老师</div>
+      🎊 哇！你太厉害啦！今天学了好多数字和颜色。回家后可以找找身边有什么颜色，用英语说一说！
+    </div>
+  </div>
+  <div style="background:var(--card);border-radius:var(--radius);padding:20px;width:100%;max-width:700px;box-shadow:var(--shadow);margin-bottom:18px">
+    <div style="font-size:20px;font-weight:800;margin-bottom:14px;color:var(--primary)">✏️ 造句练习</div>
+    <div style="font-size:16px;line-height:2.2;color:#555">
+      <div>📌 I see <strong style="color:var(--primary)">five</strong> <strong style="color:#e74c3c">red</strong> apples. 🍎🍎🍎🍎🍎</div>
+      <div>📌 I have <strong style="color:var(--primary)">three</strong> <strong style="color:#3498db">blue</strong> balls. 🔵🔵🔵</div>
+      <div>📌 There are <strong style="color:var(--primary)">ten</strong> <strong style="color:#f1c40f">yellow</strong> stars. ⭐×10</div>
+    </div>
+  </div>
+  <div class="ext-grid">
+    <div class="ext-card">
+      <div class="ext-icon">🎨</div>
+      <div class="ext-title">更多颜色</div>
+      <div class="ext-desc">silver 银色<br>gold 金色<br>pink 粉色<br>grey 灰色</div>
+    </div>
+    <div class="ext-card">
+      <div class="ext-icon">🔢</div>
+      <div class="ext-title">更多数字</div>
+      <div class="ext-desc">20→ twenty<br>30→ thirty<br>100→ hundred<br>1000→ thousand</div>
+    </div>
+    <div class="ext-card">
+      <div class="ext-icon">✏️</div>
+      <div class="ext-title">家庭作业</div>
+      <div class="ext-desc">数数家里每种颜色的物品，用英文写出来！</div>
+    </div>
+    <div class="ext-card">
+      <div class="ext-icon">🎮</div>
+      <div class="ext-title">下节预告</div>
+      <div class="ext-desc">下节课：形状与大小 shapes & sizes！</div>
+    </div>
+  </div>
+  <button class="btn-next" onclick="goTo('hero')" style="margin-top:18px">🏠 返回主页</button>
+</section>
+
+<script>
+// ===== DATA =====
+const NUMBERS = [
+  { n: 1, w: 'one', zh: '一' }, { n: 2, w: 'two', zh: '二' }, { n: 3, w: 'three', zh: '三' },
+  { n: 4, w: 'four', zh: '四' }, { n: 5, w: 'five', zh: '五' }, { n: 6, w: 'six', zh: '六' },
+  { n: 7, w: 'seven', zh: '七' }, { n: 8, w: 'eight', zh: '八' }, { n: 9, w: 'nine', zh: '九' },
+  { n: 10, w: 'ten', zh: '十' }, { n: 11, w: 'eleven', zh: '十一' }, { n: 12, w: 'twelve', zh: '十二' },
+  { n: 13, w: 'thirteen', zh: '十三' }, { n: 14, w: 'fourteen', zh: '十四' }, { n: 15, w: 'fifteen', zh: '十五' },
+  { n: 16, w: 'sixteen', zh: '十六' }, { n: 17, w: 'seventeen', zh: '十七' }, { n: 18, w: 'eighteen', zh: '十八' },
+  { n: 19, w: 'nineteen', zh: '十九' }, { n: 20, w: 'twenty', zh: '二十' },
+];
+
+const COLORS = [
+  { w: 'red', zh: '红色', hex: '#e74c3c', emoji: '🔴' },
+  { w: 'blue', zh: '蓝色', hex: '#3498db', emoji: '🔵' },
+  { w: 'yellow', zh: '黄色', hex: '#f1c40f', emoji: '🟡' },
+  { w: 'green', zh: '绿色', hex: '#2ecc71', emoji: '🟢' },
+  { w: 'orange', zh: '橙色', hex: '#e67e22', emoji: '🟠' },
+  { w: 'purple', zh: '紫色', hex: '#9b59b6', emoji: '🟣' },
+  { w: 'pink', zh: '粉色', hex: '#fd79a8', emoji: '🌸' },
+  { w: 'white', zh: '白色', hex: '#ecf0f1', emoji: '⚪' },
+  { w: 'black', zh: '黑色', hex: '#2c3e50', emoji: '⚫' },
+  { w: 'brown', zh: '棕色', hex: '#a0522d', emoji: '🟤' },
+  { w: 'grey', zh: '灰色', hex: '#95a5a6', emoji: '🩶' },
+  { w: 'gold', zh: '金色', hex: '#f9ca24', emoji: '🌟' },
+];
+
+const COUNT_SCENES = [
+  { emoji: '🍎', count: 5, q: '有几个苹果？' },
+  { emoji: '🐱', count: 3, q: '有几只猫咪？' },
+  { emoji: '⭐', count: 8, q: '有几颗星星？' },
+  { emoji: '🦋', count: 6, q: '有几只蝴蝶？' },
+  { emoji: '🍭', count: 4, q: '有几颗糖果？' },
+];
+
+// ===== STATE =====
+const state = {
+  stars: 0, score: 0, achievements: [],
+  l1Cur: 0, l1Ok: 0,
+  l2Cur: 0, l2Ok: 0,
+  l3Cur: 0, l3Ok: 0, countClicked: 0,
+  bossCur: 0, bossOk: 0, bossHp: 100
+};
+
+const ACHIEVEMENTS = [
+  { id: 'first_star', icon: '⭐', name: '第一颗星' },
+  { id: 'number_fan', icon: '🔢', name: '数字迷' },
+  { id: 'color_artist', icon: '🎨', name: '色彩艺术家' },
+  { id: 'counter', icon: '🖐️', name: '数数高手' },
+  { id: 'boss_win', icon: '🏅', name: 'Boss终结者' },
+  { id: 'perfect_l1', icon: '💯', name: '关卡1全对' },
+  { id: 'rainbow', icon: '🌈', name: '彩虹收集者' },
+  { id: 'combo_3', icon: '🔥', name: '3连正确' },
+];
+
+// ===== NAVIGATION =====
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+  updateStars();
+  if (id === 'level2') initLevel2();
+  if (id === 'boss') initBoss();
+  if (id === 'report') showReport();
+}
+
+function updateStars() {
+  ['obj','warm','l1','l2','l3','boss'].forEach(id => {
+    const el = document.getElementById('stars-' + id);
+    if (el) el.textContent = state.stars;
+  });
+}
+
+function addStars(n) {
+  state.stars += n;
+  state.score += n * 10;
+  updateStars();
+  showStarPop();
+  showToast(`+${n}⭐`);
+}
+
+function showToast(m) {
+  const t = document.getElementById('toast');
+  t.textContent = m;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function showStarPop() {
+  const el = document.createElement('div');
+  el.className = 'star-pop';
+  el.textContent = '⭐';
+  el.style.left = (10 + Math.random() * 80) + '%';
+  el.style.top = '40%';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1100);
+}
+
+function confetti() {
+  ['🌈','⭐','🎉','🎊','🍬'].forEach(e => {
+    for (let i = 0; i < 5; i++) {
+      const el = document.createElement('div');
+      el.className = 'confetti';
+      el.textContent = e;
+      el.style.left = Math.random() * 100 + '%';
+      el.style.top = '0px';
+      el.style.animationDelay = Math.random() * 0.5 + 's';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 2500);
+    }
+  });
+}
+
+function unlockAch(id) {
+  if (state.achievements.includes(id)) return;
+  state.achievements.push(id);
+  const a = ACHIEVEMENTS.find(x => x.id === id);
+  if (a) showToast(`🏅 ${a.icon} ${a.name}`);
+}
+
+// ===== AUDIO =====
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+let actx;
+function getActx() { if (!actx) actx = new AudioContext(); return actx; }
+function playTone(f, d, type = 'sine') {
+  try {
+    const c = getActx(), o = c.createOscillator(), g = c.createGain();
+    o.connect(g); g.connect(c.destination);
+    o.type = type; o.frequency.setValueAtTime(f, c.currentTime);
+    g.gain.setValueAtTime(0.28, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.01, c.currentTime + d);
+    o.start(); o.stop(c.currentTime + d);
+  } catch(e) {}
+}
+function playOK() { playTone(523, 0.1); setTimeout(() => playTone(659, 0.1), 120); setTimeout(() => playTone(784, 0.15), 240); setTimeout(() => playTone(1047, 0.2), 360); }
+function playFail() { playTone(220, 0.4, 'sawtooth'); }
+function playClick() { playTone(660, 0.08); }
+function speakText(t) {
+  if ('speechSynthesis' in window) {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(t);
+    u.lang = 'en-US'; u.rate = 0.75;
+    speechSynthesis.speak(u);
+  } else { playClick(); }
+}
+
+// ===== WARMUP SETUP =====
+function buildWarmup() {
+  const numGrid = document.getElementById('number-grid');
+  NUMBERS.slice(0, 12).forEach(n => {
+    const card = document.createElement('div');
+    card.className = 'number-card';
+    card.innerHTML = `<div class="num-big">${n.n}</div><div class="num-word">${n.w}</div><div class="num-zh">${n.zh}</div>`;
+    card.onclick = () => {
+      speakText(n.w);
+      card.classList.add('clicked');
+      setTimeout(() => card.classList.remove('clicked'), 600);
+      addStars(1);
+      unlockAch('first_star');
+    };
+    numGrid.appendChild(card);
+  });
+  const colGrid = document.getElementById('color-grid');
+  COLORS.forEach(c => {
+    const card = document.createElement('div');
+    card.className = 'color-card';
+    card.style.background = c.hex;
+    if (c.w === 'white') card.style.color = '#666';
+    card.innerHTML = `<div class="color-emoji">${c.emoji}</div><div class="color-word">${c.w}</div><div class="color-zh">${c.zh}</div>`;
+    card.onclick = () => {
+      speakText(c.w);
+      card.classList.add('active');
+      setTimeout(() => card.classList.remove('active'), 700);
+      addStars(1);
+      unlockAch('rainbow');
+    };
+    colGrid.appendChild(card);
+  });
+}
+
+// ===== LEVEL 1: NUMBERS =====
+const L1_POOL = [
+  ...NUMBERS.slice(0, 10).map(n => ({ display: n.n.toString(), answer: n.w, type: 'num2word' })),
+  ...NUMBERS.slice(0, 10).map(n => ({ display: n.w, answer: n.n.toString(), type: 'word2num' })),
+];
+let l1Questions = [];
+let l1Combo = 0;
+
+function initLevel1() {
+  l1Questions = [...L1_POOL].sort(() => Math.random() - 0.5).slice(0, 8);
+  state.l1Cur = 0; state.l1Ok = 0; l1Combo = 0;
+  renderL1();
+}
+
+function renderL1() {
+  if (state.l1Cur >= l1Questions.length) {
+    if (state.l1Ok >= 7) { addStars(3); unlockAch('perfect_l1'); }
+    else if (state.l1Ok >= 5) addStars(2);
+    else addStars(1);
+    unlockAch('number_fan');
+    goTo('level2');
+    return;
+  }
+  const q = l1Questions[state.l1Cur];
+  document.getElementById('l1-display').textContent = q.display;
+  document.getElementById('l1-cnt').textContent = `${state.l1Cur}/8 题`;
+  document.getElementById('l1-fb').textContent = '';
+  speakText(q.type === 'num2word' ? q.answer : q.display);
+
+  const allOpts = q.type === 'num2word'
+    ? NUMBERS.map(n => n.w).filter(w => w !== q.answer).sort(() => Math.random() - 0.5).slice(0, 3).concat([q.answer]).sort(() => Math.random() - 0.5)
+    : NUMBERS.map(n => n.n.toString()).filter(v => v !== q.answer).sort(() => Math.random() - 0.5).slice(0, 3).concat([q.answer]).sort(() => Math.random() - 0.5);
+
+  document.getElementById('l1-sub').textContent = q.type === 'num2word' ? '选出正确的英文单词' : '选出正确的数字';
+  const div = document.getElementById('l1-opts');
+  div.innerHTML = '';
+  allOpts.forEach(opt => {
+    const b = document.createElement('button');
+    b.className = 'opt-btn';
+    b.textContent = opt;
+    if (q.type === 'word2num') b.style.fontSize = '28px';
+    b.onclick = () => answerL1(b, opt, q.answer);
+    div.appendChild(b);
+  });
+}
+
+function answerL1(btn, ans, correct) {
+  document.querySelectorAll('#l1-opts .opt-btn').forEach(b => b.disabled = true);
+  const fb = document.getElementById('l1-fb');
+  if (ans === correct) {
+    btn.classList.add('correct');
+    fb.textContent = '✅ 棒棒的！正确！';
+    fb.className = 'feedback correct';
+    state.l1Ok++; l1Combo++;
+    addStars(1); playOK();
+    if (l1Combo >= 3) unlockAch('combo_3');
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('#l1-opts .opt-btn').forEach(b => { if (b.textContent === correct) b.classList.add('correct'); });
+    fb.textContent = `❌ 正确答案是 "${correct}"`;
+    fb.className = 'feedback wrong';
+    l1Combo = 0; playFail();
+  }
+  state.l1Cur++;
+  setTimeout(renderL1, 1500);
+}
+
+// ===== LEVEL 2: COLORS =====
+let l2Questions = [];
+function initLevel2() {
+  l2Questions = [...COLORS].sort(() => Math.random() - 0.5).slice(0, 8);
+  state.l2Cur = 0; state.l2Ok = 0;
+  renderL2();
+}
+function renderL2() {
+  if (state.l2Cur >= l2Questions.length) {
+    if (state.l2Ok >= 7) { addStars(3); unlockAch('color_artist'); }
+    else if (state.l2Ok >= 5) addStars(2);
+    else addStars(1);
+    goTo('level3'); initLevel3();
+    return;
+  }
+  const q = l2Questions[state.l2Cur];
+  document.getElementById('l2-swatch').style.background = q.hex;
+  document.getElementById('l2-cnt').textContent = `${state.l2Cur}/8 题`;
+  document.getElementById('l2-fb').textContent = '';
+  speakText(q.w);
+  const wrongOpts = COLORS.filter(c => c.w !== q.w).sort(() => Math.random() - 0.5).slice(0, 3);
+  const allOpts = [...wrongOpts, q].sort(() => Math.random() - 0.5);
+  const div = document.getElementById('l2-opts');
+  div.innerHTML = '';
+  allOpts.forEach(opt => {
+    const b = document.createElement('div');
+    b.className = 'color-opt';
+    b.innerHTML = `<div class="color-dot" style="background:${opt.hex};border:2px solid #eee"></div><span>${opt.w} ${opt.emoji}</span>`;
+    b.onclick = () => answerL2(b, opt.w, q.w);
+    div.appendChild(b);
+  });
+}
+function answerL2(btn, ans, correct) {
+  document.querySelectorAll('#l2-opts .color-opt').forEach(b => b.style.pointerEvents = 'none');
+  const fb = document.getElementById('l2-fb');
+  if (ans === correct) {
+    btn.classList.add('correct');
+    fb.textContent = `✅ 正确！这是 ${correct}！`;
+    fb.className = 'feedback correct';
+    state.l2Ok++; addStars(1); playOK();
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('#l2-opts .color-opt').forEach(b => { if (b.textContent.trim().startsWith(correct)) b.classList.add('correct'); });
+    fb.textContent = `❌ 正确是 "${correct}"`;
+    fb.className = 'feedback wrong';
+    playFail();
+  }
+  state.l2Cur++;
+  setTimeout(renderL2, 1600);
+}
+
+// ===== LEVEL 3: COUNTING =====
+function initLevel3() { state.l3Cur = 0; state.l3Ok = 0; renderL3(); }
+function renderL3() {
+  if (state.l3Cur >= COUNT_SCENES.length) {
+    if (state.l3Ok >= 4) { addStars(3); unlockAch('counter'); }
+    else addStars(1);
+    goTo('boss');
+    return;
+  }
+  const s = COUNT_SCENES[state.l3Cur];
+  state.countClicked = 0;
+  document.getElementById('l3-question').textContent = s.q;
+  document.getElementById('l3-cnt').textContent = `${state.l3Cur}/5 题`;
+  document.getElementById('l3-fb').textContent = '';
+  document.getElementById('count-num').textContent = '0';
+  document.getElementById('count-input').value = '';
+  document.getElementById('count-input').className = 'count-input';
+  const scene = document.getElementById('count-scene');
+  scene.innerHTML = '';
+  for (let i = 0; i < s.count; i++) {
+    const el = document.createElement('div');
+    el.className = 'count-item';
+    el.textContent = s.emoji;
+    el.dataset.counted = '0';
+    scene.appendChild(el);
+  }
+}
+function countItem(e) {
+  const item = e.target.closest('.count-item');
+  if (!item) return;
+  if (item.dataset.counted === '1') {
+    item.classList.remove('counted');
+    item.dataset.counted = '0';
+    state.countClicked = Math.max(0, state.countClicked - 1);
+  } else {
+    item.classList.add('counted');
+    item.dataset.counted = '1';
+    state.countClicked++;
+    playTone(440 + state.countClicked * 30, 0.08);
+  }
+  document.getElementById('count-num').textContent = state.countClicked;
+}
+function speakL3() { if (state.l3Cur < COUNT_SCENES.length) speakText(NUMBERS[COUNT_SCENES[state.l3Cur].count - 1].w); }
+function resetCount() {
+  state.countClicked = 0;
+  document.getElementById('count-num').textContent = '0';
+  document.querySelectorAll('.count-item').forEach(el => { el.classList.remove('counted'); el.dataset.counted = '0'; });
+  document.getElementById('count-input').value = '';
+  document.getElementById('l3-fb').textContent = '';
+}
+function checkCount() {
+  const val = document.getElementById('count-input').value.trim().toLowerCase();
+  const target = COUNT_SCENES[state.l3Cur];
+  const correct = NUMBERS[target.count - 1].w;
+  const correctNum = target.count.toString();
+  const input = document.getElementById('count-input');
+  const fb = document.getElementById('l3-fb');
+  if (val === correct || val === correctNum) {
+    input.classList.add('correct-input');
+    fb.textContent = `✅ 正确！共 ${correct}（${target.count}）个！`;
+    fb.className = 'feedback correct';
+    state.l3Ok++; addStars(2); playOK();
+    confetti();
+    state.l3Cur++;
+    setTimeout(() => { input.classList.remove('correct-input'); renderL3(); }, 1500);
+  } else {
+    input.classList.add('wrong-input');
+    setTimeout(() => input.classList.remove('wrong-input'), 400);
+    fb.textContent = `❌ 提示：有 ${target.count} 个，英文是 "${correct}"`;
+    fb.className = 'feedback wrong';
+    playFail();
+  }
+}
+
+// ===== BOSS =====
+const BOSS_DATA = [
+  { display: '7', sub: '数字7的英文是？', answer: 'seven', opts: ['six', 'seven', 'eight', 'nine'], type: 'num' },
+  { display: '#e74c3c', sub: '这个颜色的英文是？', answer: 'red', opts: ['red', 'blue', 'green', 'pink'], type: 'color' },
+  { display: '12', sub: '数字12的英文是？', answer: 'twelve', opts: ['eleven', 'twelve', 'thirteen', 'ten'], type: 'num' },
+  { display: '#3498db', sub: '这个颜色是？', answer: 'blue', opts: ['purple', 'grey', 'blue', 'black'], type: 'color' },
+  { display: '15', sub: '数字15的英文是？', answer: 'fifteen', opts: ['fourteen', 'sixteen', 'fifteen', 'eighteen'], type: 'num' },
+  { display: '#2ecc71', sub: '这个颜色是？', answer: 'green', opts: ['green', 'yellow', 'orange', 'brown'], type: 'color' },
+  { display: '20', sub: '数字20的英文是？', answer: 'twenty', opts: ['twelve', 'twenty', 'eleven', 'nineteen'], type: 'num' },
+  { display: '#9b59b6', sub: '这个颜色是？', answer: 'purple', opts: ['pink', 'blue', 'purple', 'grey'], type: 'color' },
+];
+
+function initBoss() {
+  state.bossCur = 0; state.bossOk = 0; state.bossHp = 100;
+  document.getElementById('boss-fill').style.width = '100%';
+  document.getElementById('boss-hp-txt').textContent = '100';
+  document.getElementById('boss-fig').textContent = '🐲';
+  renderBoss();
+}
+
+function renderBoss() {
+  if (state.bossCur >= BOSS_DATA.length) {
+    unlockAch('boss_win');
+    if (state.bossOk >= 7) { addStars(5); confetti(); }
+    else if (state.bossOk >= 5) addStars(3);
+    else addStars(1);
+    goTo('report');
+    return;
+  }
+  const q = BOSS_DATA[state.bossCur];
+  document.getElementById('boss-q').textContent = q.sub;
+  document.getElementById('boss-cnt').textContent = `${state.bossCur}/8 题`;
+  document.getElementById('boss-fb').textContent = '';
+  const disp = document.getElementById('boss-display');
+  if (q.type === 'num') {
+    disp.textContent = q.display;
+    disp.style.color = 'var(--accent)';
+    disp.style.fontSize = '80px';
+    disp.style.background = 'transparent';
+    disp.style.width = 'auto';
+    disp.style.height = 'auto';
+    disp.style.margin = '14px auto';
+  } else {
+    disp.textContent = '';
+    disp.style.background = q.display;
+    disp.style.width = '100px';
+    disp.style.height = '100px';
+    disp.style.borderRadius = '50%';
+    disp.style.margin = '16px auto';
+    disp.style.border = '4px solid rgba(255,255,255,0.3)';
+  }
+  speakText(q.answer);
+  const div = document.getElementById('boss-opts');
+  div.innerHTML = '';
+  q.opts.forEach(opt => {
+    const b = document.createElement('button');
+    b.className = 'opt-btn';
+    b.textContent = opt;
+    b.onclick = () => answerBoss(b, opt, q.answer);
+    div.appendChild(b);
+  });
+}
+
+function answerBoss(btn, ans, correct) {
+  document.querySelectorAll('#boss-opts .opt-btn').forEach(b => b.disabled = true);
+  const fb = document.getElementById('boss-fb');
+  if (ans === correct) {
+    btn.classList.add('correct');
+    fb.textContent = '✅ 打中！龙受伤了！';
+    fb.className = 'feedback correct';
+    state.bossOk++;
+    state.bossHp = Math.max(0, state.bossHp - 13);
+    document.getElementById('boss-fill').style.width = state.bossHp + '%';
+    document.getElementById('boss-hp-txt').textContent = state.bossHp;
+    if (state.bossHp <= 0) { document.getElementById('boss-fig').textContent = '💀'; confetti(); }
+    else if (state.bossHp <= 35) document.getElementById('boss-fig').textContent = '😰';
+    addStars(2); playOK();
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('#boss-opts .opt-btn').forEach(b => { if (b.textContent === correct) b.classList.add('correct'); });
+    fb.textContent = `❌ 正确是 "${correct}"，继续加油！`;
+    fb.className = 'feedback wrong';
+    playFail();
+  }
+  state.bossCur++;
+  setTimeout(renderBoss, 1500);
+}
+
+// ===== REPORT =====
+function showReport() {
+  document.getElementById('final-score').textContent = Math.min(100, state.score);
+  const s = state.stars;
+  document.getElementById('stars-earned').textContent = s >= 25 ? '⭐⭐⭐⭐⭐' : s >= 18 ? '⭐⭐⭐⭐' : s >= 10 ? '⭐⭐⭐' : '⭐⭐';
+  const msgs = ['再多练练哦！📚', '做得不错！👍', '超棒的！🎉', '数字颜色小达人！🏆'];
+  document.getElementById('report-msg').textContent = msgs[s >= 25 ? 3 : s >= 18 ? 2 : s >= 10 ? 1 : 0];
+  const div = document.getElementById('ach-list');
+  div.innerHTML = '';
+  ACHIEVEMENTS.forEach(a => {
+    const el = document.createElement('div');
+    el.className = 'ach-item' + (state.achievements.includes(a.id) ? '' : ' locked');
+    el.innerHTML = `<div class="ach-icon">${a.icon}</div><div class="ach-name">${a.name}</div>`;
+    div.appendChild(el);
+  });
+}
+
+function restart() { state.stars = 0; state.score = 0; state.achievements = []; goTo('hero'); }
+
+// ===== INIT =====
+buildWarmup();
+initLevel1();
+</script>
+</body>
+</html>

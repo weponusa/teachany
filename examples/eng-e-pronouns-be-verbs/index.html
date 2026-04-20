@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>代词与be动词 | Pronouns & Be Verbs 🐻</title>
+<style>
+  :root {
+    --bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--card:#fff;
+    --text:#333;--shadow:0 4px 20px rgba(0,0,0,.12);--radius:16px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);font-family:'Segoe UI',Arial,sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden;}
+  .screen{display:none;min-height:100vh;padding:20px;animation:fadeIn .4s ease;}
+  .screen.active{display:flex;flex-direction:column;align-items:center;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  .top-bar{width:100%;max-width:700px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .bear{font-size:2rem;animation:bounce 2s infinite;}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  .stars-display{background:var(--accent);border-radius:20px;padding:4px 12px;font-weight:700;}
+  .progress-bar{width:100%;max-width:700px;height:10px;background:#eee;border-radius:10px;margin-bottom:10px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:10px;transition:width .5s;}
+  .section-title{font-size:1.6rem;font-weight:700;color:var(--primary);margin-bottom:6px;text-align:center;}
+  .section-sub{font-size:.95rem;color:#666;margin-bottom:20px;text-align:center;}
+  .btn{background:var(--primary);color:#fff;border:none;border-radius:30px;padding:14px 36px;font-size:1.1rem;font-weight:700;cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:var(--shadow);}
+  .btn:hover{transform:translateY(-2px);}
+  .btn.secondary{background:var(--secondary);}
+  .btn.accent{background:#9b59b6;}
+
+  /* HERO */
+  #hero{background:linear-gradient(135deg,#ff6b6b22,#4ecdc422);justify-content:center;}
+  .hero-content{text-align:center;max-width:600px;}
+  .hero-emoji{font-size:5rem;animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+  h1.hero-title{font-size:2.2rem;color:var(--primary);margin:12px 0 8px;}
+  .badge-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px;}
+  .badge{background:var(--card);border-radius:12px;padding:8px 14px;font-size:.85rem;box-shadow:0 2px 8px rgba(0,0,0,.08);opacity:.5;}
+  .badge.earned{opacity:1;background:var(--accent);}
+
+  /* PRONOUN TABLE */
+  .pronoun-table{width:100%;max-width:680px;border-collapse:collapse;margin:10px 0;}
+  .pronoun-table th{background:var(--primary);color:#fff;padding:10px 14px;text-align:left;}
+  .pronoun-table td{background:var(--card);padding:10px 14px;border-bottom:2px solid var(--bg);}
+  .pronoun-table tr:nth-child(even) td{background:#f9f9f9;}
+  .pronoun-cell{font-size:1.2rem;font-weight:700;color:var(--secondary);}
+
+  /* CONJUGATION WHEEL */
+  .conj-wheel{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:620px;margin:10px 0;}
+  .conj-card{background:var(--card);border-radius:var(--radius);padding:16px;text-align:center;box-shadow:var(--shadow);}
+  .conj-pronoun{font-size:1.3rem;font-weight:700;color:var(--secondary);}
+  .conj-verb{font-size:1rem;color:var(--primary);font-weight:600;margin-top:4px;}
+  .conj-cn{font-size:.8rem;color:#888;margin-top:3px;}
+
+  /* ANIMATION SENTENCE */
+  .anim-sentence{background:var(--card);border-radius:var(--radius);padding:20px;width:100%;max-width:680px;box-shadow:var(--shadow);font-size:1.2rem;min-height:80px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;}
+  .word-token{display:inline-block;background:var(--accent);border-radius:20px;padding:8px 16px;font-weight:700;opacity:0;transform:translateY(20px);transition:all .3s;}
+  .word-token.pronoun{background:var(--primary);color:#fff;}
+  .word-token.verb{background:var(--secondary);color:#fff;}
+  .word-token.visible{opacity:1;transform:translateY(0);}
+
+  /* WARMUP MATCH */
+  .match-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;max-width:620px;}
+  .match-col{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);}
+  .match-col h3{color:var(--secondary);margin-bottom:12px;font-size:1rem;}
+  .match-item{background:#f0f0f0;border:2px solid #ddd;border-radius:20px;padding:9px 18px;margin-bottom:8px;cursor:pointer;font-size:1rem;font-weight:600;text-align:center;transition:all .2s;}
+  .match-item.selected{background:var(--accent);border-color:var(--primary);}
+  .match-item.matched{background:#d4edda;border-color:#28a745;cursor:default;}
+  .match-item.mismatch{background:#f8d7da;border-color:#dc3545;animation:shake .3s;}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+  /* FILL BLANK */
+  .fill-q{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:12px;width:100%;max-width:660px;}
+  .fill-sentence{font-size:1.1rem;line-height:2;}
+  .fill-input{border:2px solid #ddd;border-radius:8px;padding:6px 12px;font-size:1rem;width:90px;text-align:center;transition:border-color .2s;}
+  .fill-input:focus{outline:none;border-color:var(--secondary);}
+  .fill-input.ok{border-color:#28a745;background:#d4edda;}
+  .fill-input.err{border-color:#dc3545;background:#f8d7da;}
+  .opts-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .opt{background:#f0f0f0;border:2px solid #ddd;border-radius:20px;padding:6px 14px;cursor:pointer;font-size:.9rem;transition:all .2s;}
+  .opt:hover{background:var(--accent);}
+  .opt.picked{background:var(--secondary);color:#fff;border-color:var(--secondary);}
+
+  /* SENTENCE BUILDER */
+  .build-frame{width:100%;max-width:680px;}
+  .build-drop{background:var(--card);border:3px dashed var(--secondary);border-radius:var(--radius);min-height:60px;padding:14px;display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center;}
+  .word-tile{background:var(--accent);border-radius:20px;padding:8px 14px;cursor:pointer;font-size:1rem;font-weight:700;transition:transform .2s;}
+  .word-tile:hover{transform:scale(1.08);}
+  .word-tile.used{background:var(--primary);color:#fff;}
+  .built-chip{background:var(--primary);color:#fff;border-radius:16px;padding:7px 14px;font-weight:700;cursor:pointer;}
+
+  /* DIALOGUE PRACTICE */
+  .dialog-box{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);width:100%;max-width:660px;margin-bottom:14px;}
+  .dialog-turn{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;}
+  .dialog-turn.right{flex-direction:row-reverse;}
+  .dialog-avatar{font-size:1.8rem;flex-shrink:0;}
+  .dialog-bubble{background:#f0f0f0;border-radius:16px;padding:10px 16px;font-size:1rem;max-width:420px;}
+  .dialog-turn.right .dialog-bubble{background:var(--secondary);color:#fff;}
+  .dialog-blank{border:2px solid var(--primary);background:#fff;border-radius:8px;padding:4px 10px;font-size:1rem;min-width:70px;text-align:center;display:inline-block;}
+
+  /* BOSS */
+  .boss-wrap{width:100%;max-width:680px;text-align:center;}
+  .boss-img{font-size:5rem;animation:bossAnim 1s infinite alternate;}
+  @keyframes bossAnim{from{transform:rotate(-5deg) scale(1)}to{transform:rotate(5deg) scale(1.1)}}
+  .boss-hp-bar{width:100%;height:20px;background:#eee;border-radius:10px;margin:14px 0;overflow:hidden;}
+  .boss-hp-inner{height:100%;background:linear-gradient(90deg,#ff4444,#ff6b6b);border-radius:10px;transition:width .5s;}
+  .boss-q-card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin:14px 0;}
+  .boss-choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+  .boss-choice{background:#f0f0f0;border:2px solid #ddd;border-radius:var(--radius);padding:14px;cursor:pointer;font-size:1rem;font-weight:600;transition:all .2s;}
+  .boss-choice:hover{background:var(--accent);}
+  .boss-choice.ok{background:#d4edda;border-color:#28a745;}
+  .boss-choice.err{background:#f8d7da;border-color:#dc3545;}
+
+  /* REPORT */
+  .report-card{background:var(--card);border-radius:24px;padding:30px;width:100%;max-width:620px;box-shadow:var(--shadow);text-align:center;}
+  .score-circle{width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:2.2rem;font-weight:700;color:#fff;}
+  .ach-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:20px 0;}
+  .ach-cell{background:#f9f9f9;border-radius:12px;padding:10px;text-align:center;font-size:.8rem;}
+  .ach-cell .ico{font-size:1.8rem;}
+  .ach-cell.done{background:var(--accent);}
+
+  /* EXTENSION */
+  .ext-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:660px;}
+  .ext-card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);text-align:center;}
+
+  /* TOAST */
+  #toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:12px 28px;border-radius:30px;font-size:1rem;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;}
+  #toast.show{opacity:1;}
+  .star-burst{position:fixed;pointer-events:none;z-index:1000;font-size:2rem;animation:starFloat 1s ease-out forwards;}
+  @keyframes starFloat{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-80px) scale(1.5)}}
+
+  @media(max-width:480px){
+    .match-cols{grid-template-columns:1fr;}
+    .boss-choices{grid-template-columns:1fr;}
+    .ach-grid{grid-template-columns:repeat(2,1fr);}
+    .ext-grid{grid-template-columns:1fr;}
+    .conj-wheel{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<!-- HERO -->
+<div id="hero" class="screen active">
+  <div class="hero-content">
+    <div class="hero-emoji">👤</div>
+    <h1 class="hero-title">代词与be动词</h1>
+    <p style="font-size:1.3rem;color:var(--secondary);font-weight:700;">Pronouns &amp; Be Verbs</p>
+    <p style="font-size:1.1rem;color:#666;margin-bottom:24px;">三年级英语语法 · 糖果闯关版 🍬</p>
+    <div class="badge-row" id="hero-badges">
+      <span class="badge">🌟 初学者</span><span class="badge">🔗 配对王</span>
+      <span class="badge">✍️ 填空达人</span><span class="badge">💬 对话高手</span>
+      <span class="badge">👹 Boss猎人</span><span class="badge">⭐ 代词专家</span>
+      <span class="badge">🎓 语法达人</span><span class="badge">🐻 Bear伙伴</span>
+    </div>
+    <button class="btn" style="margin-top:24px;" onclick="goTo('objectives')">开始闯关 🚀</button>
+  </div>
+</div>
+
+<!-- OBJECTIVES -->
+<div id="objectives" class="screen">
+  <div class="top-bar"><span class="bear">🐻</span><span style="font-weight:700;color:var(--primary);">学习目标</span><span class="stars-display">⭐ <span id="obj-s">0</span></span></div>
+  <div class="progress-bar"><div class="progress-fill" style="width:10%"></div></div>
+  <div class="section-title">🎯 学习目标</div>
+  <div class="section-sub">今天我们要学什么？</div>
+  <ul style="list-style:none;width:100%;max-width:600px;">
+    <li style="background:var(--card);border-radius:var(--radius);padding:14px 18px;margin-bottom:10px;box-shadow:var(--shadow);font-size:1rem;">👤 认识人称代词：I, you, he, she, it, we, they</li>
+    <li style="background:var(--card);border-radius:var(--radius);padding:14px 18px;margin-bottom:10px;box-shadow:var(--shadow);font-size:1rem;">🔗 掌握 be 动词：am, is, are 的用法</li>
+    <li style="background:var(--card);border-radius:var(--radius);padding:14px 18px;margin-bottom:10px;box-shadow:var(--shadow);font-size:1rem;">📝 能够正确搭配代词与be动词</li>
+    <li style="background:var(--card);border-radius:var(--radius);padding:14px 18px;margin-bottom:10px;box-shadow:var(--shadow);font-size:1rem;">💬 能用 be 动词进行简单的英语对话</li>
+  </ul>
+  <div style="background:var(--card);border-radius:var(--radius);padding:16px;max-width:580px;width:100%;box-shadow:var(--shadow);margin-top:10px;">
+    <p style="font-size:1rem;line-height:1.7;">🐻 <strong>小熊说：</strong>记住口诀！<br>
+    I用am，you用are，<br>
+    he/she/it全用is，<br>
+    we/you/they都用are！</p>
+  </div>
+  <div class="conj-wheel" style="margin-top:20px;">
+    <div class="conj-card"><div class="conj-pronoun">I</div><div class="conj-verb">am</div><div class="conj-cn">我</div></div>
+    <div class="conj-card"><div class="conj-pronoun">You</div><div class="conj-verb">are</div><div class="conj-cn">你/您</div></div>
+    <div class="conj-card"><div class="conj-pronoun">He</div><div class="conj-verb">is</div><div class="conj-cn">他</div></div>
+    <div class="conj-card"><div class="conj-pronoun">She</div><div class="conj-verb">is</div><div class="conj-cn">她</div></div>
+    <div class="conj-card"><div class="conj-pronoun">It</div><div class="conj-verb">is</div><div class="conj-cn">它</div></div>
+    <div class="conj-card"><div class="conj-pronoun">We</div><div class="conj-verb">are</div><div class="conj-cn">我们</div></div>
+    <div class="conj-card" style="grid-column:1/3;"><div class="conj-pronoun">They</div><div class="conj-verb">are</div><div class="conj-cn">他们/她们/它们</div></div>
+  </div>
+  <button class="btn secondary" style="margin-top:20px;" onclick="goTo('warmup')">进入热身 🔥</button>
+</div>
+
+<!-- WARMUP: MATCHING -->
+<div id="warmup" class="screen">
+  <div class="top-bar"><span class="bear">🐻</span><span style="font-weight:700;color:var(--primary);">热身活动</span><span class="stars-display">⭐ <span id="wu-s">0</span></span></div>
+  <div class="progress-bar"><div class="progress-fill" style="width:20%"></div></div>
+  <div class="section-title">🔥 热身：配对连线</div>
+  <div class="section-sub">把代词和中文意思配对！</div>
+  <div class="match-cols">
+    <div class="match-col">
+      <h3>英语代词</h3>
+      <div id="match-left"></div>
+    </div>
+    <div class="match-col">
+      <h3>中文意思</h3>
+      <div id="match-right"></div>
+    </div>
+  </div>
+  <div id="match-msg" style="margin-top:16px;font-size:1rem;color:var(--secondary);font-weight:600;text-align:center;min-height:30px;"></div>
+  <button class="btn secondary" id="wu-next" style="display:none;margin-top:16px;" onclick="goTo('level1')">第一关 ➡️</button>
+</div>
+
+<!-- LEVEL 1: SENTENCE ANIMATION + FILL -->
+<div id="level1" class="screen">
+  <div class="top-bar"><span class="bear">🐻</span><span style="font-weight:700;color:var(--primary);">第一关 🌟</span><span class="stars-display">⭐ <span id="l1-s">0</span></span></div>
+  <div class="progress-bar"><div class="progress-fill" style="width:38%"></div></div>
+  <div class="section-title">🌟 第一关：be动词配对</div>
+  <div class="section-sub">观察句子结构动画，然后完成填空！</div>
+  <div class="anim-sentence" id="anim-sentence"></div>
+  <div style="display:flex;gap:10px;margin:12px 0;">
+    <button class="btn" onclick="nextAnim()" style="padding:10px 24px;font-size:.95rem;">下一个句子 ▶</button>
+  </div>
+  <div id="l1-fills"></div>
+  <button class="btn" onclick="checkL1()" style="margin-top:10px;">检查答案 ✓</button>
+  <div id="l1-result" style="margin-top:12px;text-align:center;font-size:1rem;font-weight:600;min-height:24px;"></div>
+  <button class="btn secondary" id="l1-next" style="display:none;margin-top:14px;" onclick="goTo('level2')">第二关 ➡️</button>
+</div>
+
+<!-- LEVEL 2: SENTENCE BUILD -->
+<div id="level2" class="screen">
+  <div class="top-bar"><span class="bear">🐻</span><span style="font-weight:700;color:var(--primary);">第二关 🌟🌟</span><span class="stars-display">⭐ <span id="l2-s">0</span></span></div>
+  <div class="progress-bar"><div class="progress-fill" style="width:58%"></div></div>
+  <div class="section-title">🌟🌟 第二关：造句游戏</div>
+  <div class="section-sub">点击词卡，组成正确的句子！</div>
+  <div class="build-frame">
+    <div style="background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:12px;box-shadow:var(--shadow);">
+      <p id="l2-hint" style="font-size:1rem;color:#666;"></p>
+    </div>
+    <div class="build-drop" id="l2-drop"></div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;" id="l2-bank"></div>
+    <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;justify-content:center;">
+      <button class="btn" onclick="checkL2()">检查 ✓</button>
+      <button class="btn secondary" onclick="clearL2()">清空 🗑️</button>
+      <button class="btn accent" onclick="nextL2()">下一句 ➡️</button>
+    </div>
+    <div id="l2-result" style="margin-top:12px;text-align:center;font-size:1rem;font-weight:600;min-height:24px;"></div>
+    <p id="l2-prog" style="text-align:center;color:#888;font-size:.9rem;margin-top:6px;"></p>
+  </div>
+  <button class="btn secondary" id="l2-next" style="display:none;margin-top:16px;" onclick="goTo('level3')">第三关 ➡️</button>
+</div>
+
+<!-- LEVEL 3: DIALOGUE PRACTICE -->
+<div id="level3" class="screen">
+  <div class="top-bar"><span class="bear">🐻</span><span style="font-weight:700;color:var(--primary);">第三关 🌟🌟🌟</span><span class="stars-display">⭐ <span id="l3-s">0</span></span></div>
+  <div class="progress-bar"><div class="progress-fill" style="width:76%"></div></div>
+  <div class="section-title">🌟🌟🌟 第三关：对话练习</div>
+  <div class="section-sub">选择正确的单词完成对话！</div>
+  <div id="dialog-area"></div>
+  <button class="btn" onclick="checkDialog()" style="margin-top:10px;">检查对话 ✓</button>
+  <div id="l3-result" style="margin-top:12px;text-align:center;font-size:1rem;font-weight:600;min-height:24px;"></div>
+  <button class="btn secondary" id="l3-next" style="display:none;margin-top:14px;" onclick="goTo('boss')">挑战Boss 👹</button>
+</div>
+
+<!-- BOSS -->
+<div id="boss" class="screen">
+  <div class="top-bar"><span class="bear">🐻</span><span style="font-weight:700;color:var(--primary);">Boss关 👹</span><span class="stars-display">⭐ <span id="b-s">0</span></span></div>
+  <div class="progress-bar"><div class="progress-fill" style="width:88%"></div></div>
+  <div class="boss-wrap">
+    <div class="boss-img">🤖</div>
+    <div style="font-size:1.2rem;font-weight:700;color:var(--primary);">语法机器人</div>
+    <div style="color:#888;font-size:.9rem;margin:4px 0 8px;">需要答对 5 题才能击败它！</div>
+    <div class="boss-hp-bar"><div class="boss-hp-inner" id="boss-hp" style="width:100%"></div></div>
+    <div id="boss-hp-txt" style="font-size:.9rem;color:#888;margin-bottom:10px;">血量：5/5</div>
+    <div class="boss-q-card">
+      <div id="boss-q" style="font-size:1.1rem;font-weight:600;margin-bottom:12px;"></div>
+      <div class="boss-choices" id="boss-opts"></div>
+    </div>
+    <div id="boss-msg" style="font-size:1rem;font-weight:700;min-height:28px;color:var(--secondary);margin-top:8px;"></div>
+  </div>
+</div>
+
+<!-- REPORT -->
+<div id="report" class="screen">
+  <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+  <div class="report-card">
+    <div class="bear" style="font-size:3rem;">🐻</div>
+    <h2 style="color:var(--primary);margin:10px 0;">闯关完成！</h2>
+    <div class="score-circle" id="score-circle">0%</div>
+    <p id="report-comment" style="color:#666;"></p>
+    <div style="margin:12px 0;font-size:1.1rem;font-weight:700;">⭐ 星星：<span id="total-stars">0</span></div>
+    <div class="ach-grid" id="ach-grid"></div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:16px;">
+      <button class="btn" onclick="goTo('extension')">拓展学习 📖</button>
+      <button class="btn secondary" onclick="restart()">再玩一次 🔄</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXTENSION -->
+<div id="extension" class="screen">
+  <div class="top-bar"><span class="bear">🐻</span><span style="font-weight:700;color:var(--primary);">拓展学习</span><span class="stars-display">⭐ <span id="ext-s">0</span></span></div>
+  <div class="section-title">📖 拓展学习</div>
+  <div class="section-sub">巩固今天的知识点！</div>
+  <div class="ext-grid">
+    <div class="ext-card">
+      <div style="font-size:2.5rem;margin-bottom:10px;">📊</div>
+      <h3 style="color:var(--primary);margin-bottom:8px;">be动词变形表</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:.9rem;">
+        <tr><td style="padding:5px;font-weight:700;color:var(--secondary);">I</td><td style="padding:5px;">am</td></tr>
+        <tr style="background:#f9f9f9;"><td style="padding:5px;font-weight:700;color:var(--secondary);">You/We/They</td><td style="padding:5px;">are</td></tr>
+        <tr><td style="padding:5px;font-weight:700;color:var(--secondary);">He/She/It</td><td style="padding:5px;">is</td></tr>
+      </table>
+    </div>
+    <div class="ext-card">
+      <div style="font-size:2.5rem;margin-bottom:10px;">❓</div>
+      <h3 style="color:var(--primary);margin-bottom:8px;">疑问句变形</h3>
+      <p style="font-size:.9rem;line-height:1.7;color:#555;">I am → <strong>Am I?</strong><br>He is → <strong>Is he?</strong><br>They are → <strong>Are they?</strong><br>把be动词移到句首！</p>
+    </div>
+    <div class="ext-card">
+      <div style="font-size:2.5rem;margin-bottom:10px;">🚫</div>
+      <h3 style="color:var(--primary);margin-bottom:8px;">否定句变形</h3>
+      <p style="font-size:.9rem;line-height:1.7;color:#555;">I am not = I'm not<br>He is not = He isn't<br>They are not = They aren't<br>在be动词后加 not！</p>
+    </div>
+    <div class="ext-card">
+      <div style="font-size:2.5rem;margin-bottom:10px;">💬</div>
+      <h3 style="color:var(--primary);margin-bottom:8px;">常用对话</h3>
+      <p style="font-size:.9rem;line-height:1.7;color:#555;">A: What is your name?<br>B: My name is Tom.<br>A: How old are you?<br>B: I am eight.</p>
+    </div>
+  </div>
+  <div style="background:var(--card);border-radius:var(--radius);padding:18px;max-width:660px;width:100%;box-shadow:var(--shadow);margin-top:14px;">
+    <strong>🐻 小熊口诀：</strong><br>
+    I用am，you用are，<br>he/she/it全用is，<br>we/you/they全用are，<br>记住口诀不会错！
+  </div>
+  <div style="display:flex;gap:12px;margin-top:24px;flex-wrap:wrap;justify-content:center;">
+    <button class="btn" onclick="goTo('hero')">回到首页 🏠</button>
+    <button class="btn secondary" onclick="goTo('report')">查看成绩 📊</button>
+  </div>
+</div>
+
+<script>
+let stars = 0, achievements = Array(8).fill(false);
+let bossHP = 5, bossQ = 0;
+let l2Idx = 0, l2Built = [], l2Done = 0;
+let animIdx = 0;
+
+function playSound(t) {
+  try {
+    const c = new (window.AudioContext||window.webkitAudioContext)();
+    const o = c.createOscillator(), g = c.createGain();
+    o.connect(g); g.connect(c.destination);
+    if (t==='ok') { o.frequency.setValueAtTime(523,c.currentTime); o.frequency.setValueAtTime(784,c.currentTime+.15); g.gain.setValueAtTime(.3,c.currentTime); g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.5); o.start(); o.stop(c.currentTime+.5); }
+    else { o.frequency.setValueAtTime(200,c.currentTime); g.gain.setValueAtTime(.3,c.currentTime); g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.3); o.start(); o.stop(c.currentTime+.3); }
+  } catch(e) {}
+}
+function showToast(m) { const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
+function addStars(n, e) {
+  stars += n;
+  document.querySelectorAll('[id$="-s"]').forEach(el => el.textContent = stars);
+  if (e) { const s = document.createElement('div'); s.className='star-burst'; s.textContent='⭐'; s.style.left=((e.clientX||200)-10)+'px'; s.style.top=((e.clientY||200)-10)+'px'; document.body.appendChild(s); setTimeout(()=>s.remove(),1000); }
+  playSound('ok');
+}
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id==='warmup') initMatch();
+  if (id==='level1') initL1();
+  if (id==='level2') initL2();
+  if (id==='level3') initDialog();
+  if (id==='boss') initBoss();
+  if (id==='report') showReport();
+  window.scrollTo(0,0);
+}
+
+// MATCH
+const matchPairs = [
+  {en:'I',cn:'我'},{en:'You',cn:'你/您'},{en:'He',cn:'他'},
+  {en:'She',cn:'她'},{en:'It',cn:'它'},{en:'We',cn:'我们'},{en:'They',cn:'他们'}
+];
+let selLeft=null, selRight=null, matchedCount=0;
+function initMatch() {
+  matchedCount=0; selLeft=null; selRight=null;
+  const left=document.getElementById('match-left'), right=document.getElementById('match-right');
+  left.innerHTML=''; right.innerHTML='';
+  const rightItems=[...matchPairs].sort(()=>Math.random()-.5);
+  matchPairs.forEach((p,i)=>{
+    const l=document.createElement('div'); l.className='match-item'; l.textContent=p.en; l.dataset.val=p.en;
+    l.onclick=()=>selectLeft(l); left.appendChild(l);
+  });
+  rightItems.forEach(p=>{
+    const r=document.createElement('div'); r.className='match-item'; r.textContent=p.cn; r.dataset.val=p.en;
+    r.onclick=()=>selectRight(r); right.appendChild(r);
+  });
+  document.getElementById('match-msg').textContent='点击左边的代词，再点击对应的中文！';
+  document.getElementById('wu-next').style.display='none';
+}
+function selectLeft(el) {
+  if (el.classList.contains('matched')) return;
+  document.querySelectorAll('#match-left .match-item').forEach(e=>e.classList.remove('selected'));
+  selLeft=el; el.classList.add('selected');
+  if (selRight) checkMatch();
+}
+function selectRight(el) {
+  if (el.classList.contains('matched')) return;
+  document.querySelectorAll('#match-right .match-item').forEach(e=>e.classList.remove('selected'));
+  selRight=el; el.classList.add('selected');
+  if (selLeft) checkMatch();
+}
+function checkMatch() {
+  if (!selLeft||!selRight) return;
+  if (selLeft.dataset.val===selRight.dataset.val) {
+    selLeft.classList.add('matched'); selRight.classList.add('matched');
+    selLeft.classList.remove('selected'); selRight.classList.remove('selected');
+    addStars(1); matchedCount++;
+    if (matchedCount===matchPairs.length) {
+      document.getElementById('match-msg').textContent='🎉 全部配对成功！';
+      document.getElementById('wu-next').style.display='inline-block';
+      unlockAch(0);
+    }
+  } else {
+    selLeft.classList.add('mismatch'); selRight.classList.add('mismatch');
+    setTimeout(()=>{ selLeft.classList.remove('mismatch','selected'); selRight.classList.remove('mismatch','selected'); selLeft=null; selRight=null; }, 600);
+    playSound('err'); return;
+  }
+  selLeft=null; selRight=null;
+}
+
+// LEVEL 1: ANIMATION + FILL
+const animSentences = [
+  {words:['I','am','a','student.'],types:['pronoun','verb','',''],translation:'我是一名学生。'},
+  {words:['She','is','happy.'],types:['pronoun','verb',''],translation:'她很开心。'},
+  {words:['They','are','my','friends.'],types:['pronoun','verb','',''],translation:'他们是我的朋友。'},
+  {words:['He','is','a','teacher.'],types:['pronoun','verb','',''],translation:'他是一名老师。'},
+];
+const l1Qs = [
+  {text:'I ___ happy.',a:'am',opts:['am','is','are']},
+  {text:'She ___ a doctor.',a:'is',opts:['am','is','are']},
+  {text:'They ___ students.',a:'are',opts:['am','is','are']},
+  {text:'He ___ my friend.',a:'is',opts:['am','is','are']},
+  {text:'We ___ in class.',a:'are',opts:['am','is','are']},
+];
+function initL1() {
+  animIdx=0; renderAnim();
+  const c=document.getElementById('l1-fills'); c.innerHTML='';
+  l1Qs.forEach((q,i)=>{
+    const d=document.createElement('div'); d.className='fill-q';
+    d.innerHTML=`<div class="fill-sentence">${q.text.replace('___',`<input class="fill-input" id="f1-${i}" placeholder="___">`)}</div>
+    <div class="opts-row">${q.opts.map(o=>`<button class="opt" onclick="pickL1(${i},'${o}',this)">${o}</button>`).join('')}</div>`;
+    c.appendChild(d);
+  });
+  document.getElementById('l1-result').textContent='';
+  document.getElementById('l1-next').style.display='none';
+}
+function renderAnim() {
+  const s=animSentences[animIdx%animSentences.length];
+  const el=document.getElementById('anim-sentence');
+  el.innerHTML=`<div style="color:#888;font-size:.9rem;margin-right:10px;">${s.translation}</div>`;
+  s.words.forEach((w,i)=>{
+    const span=document.createElement('span'); span.className='word-token';
+    if (s.types[i]==='pronoun') span.classList.add('pronoun');
+    if (s.types[i]==='verb') span.classList.add('verb');
+    span.textContent=w; el.appendChild(span);
+    setTimeout(()=>span.classList.add('visible'),i*250);
+  });
+}
+function nextAnim() { animIdx++; renderAnim(); }
+function pickL1(i,v,btn) {
+  document.getElementById('f1-'+i).value=v;
+  btn.closest('.opts-row').querySelectorAll('.opt').forEach(b=>b.classList.remove('picked'));
+  btn.classList.add('picked');
+}
+function checkL1() {
+  let ok=0;
+  l1Qs.forEach((q,i)=>{
+    const v=(document.getElementById('f1-'+i).value||'').trim().toLowerCase();
+    const inp=document.getElementById('f1-'+i);
+    if (v===q.a) { ok++; inp.classList.add('ok'); inp.classList.remove('err'); }
+    else { inp.classList.add('err'); inp.classList.remove('ok'); }
+  });
+  const r=document.getElementById('l1-result');
+  if (ok===l1Qs.length) {
+    r.textContent='🎉 全对！+4 ⭐'; r.style.color='#28a745';
+    addStars(4); unlockAch(2);
+    document.getElementById('l1-next').style.display='inline-block';
+  } else {
+    r.textContent=`${ok}/${l1Qs.length} 正确，继续修改！`; r.style.color='#ff6b6b'; playSound('err');
+  }
+}
+
+// LEVEL 2: SENTENCE BUILD
+const l2Sentences = [
+  {hint:'她是我的姐姐。',words:['She','is','my','sister','.'],ans:'She is my sister .'},
+  {hint:'我们是同学。',words:['We','are','classmates','.'],ans:'We are classmates .'},
+  {hint:'他们很聪明。',words:['They','are','smart','.'],ans:'They are smart .'},
+  {hint:'这只猫是黑色的。',words:['It','is','black','.'],ans:'It is black .'},
+];
+function initL2() { l2Idx=0; l2Done=0; loadL2(); document.getElementById('l2-next').style.display='none'; }
+function loadL2() {
+  if (l2Idx>=l2Sentences.length) { document.getElementById('l2-result').textContent='🎉 全部完成！'; document.getElementById('l2-next').style.display='inline-block'; unlockAch(3); return; }
+  const s=l2Sentences[l2Idx]; l2Built=[];
+  document.getElementById('l2-hint').textContent=`排列：${s.hint}`;
+  const drop=document.getElementById('l2-drop'); drop.innerHTML='';
+  const bank=document.getElementById('l2-bank'); bank.innerHTML='';
+  [...s.words].sort(()=>Math.random()-.5).forEach(w=>{
+    const el=document.createElement('div'); el.className='word-tile'; el.textContent=w;
+    el.onclick=()=>{
+      if (el.classList.contains('used')) return;
+      l2Built.push(w); el.classList.add('used');
+      const chip=document.createElement('span'); chip.className='built-chip'; chip.textContent=w;
+      chip.onclick=()=>{ l2Built=l2Built.filter((_,i)=>i!==l2Built.lastIndexOf(w)); chip.remove(); el.classList.remove('used'); };
+      drop.appendChild(chip);
+    };
+    bank.appendChild(el);
+  });
+  document.getElementById('l2-result').textContent='';
+  document.getElementById('l2-prog').textContent=`句子 ${l2Idx+1}/${l2Sentences.length}`;
+}
+function checkL2() {
+  const s=l2Sentences[l2Idx]; const built=l2Built.join(' ');
+  const r=document.getElementById('l2-result');
+  if (built===s.ans) { r.textContent='🎉 完美！+2 ⭐'; r.style.color='#28a745'; addStars(2); l2Done++; playSound('ok'); }
+  else { r.textContent=`❌ 正确：${s.ans}`; r.style.color='#ff6b6b'; playSound('err'); }
+}
+function clearL2() { l2Built=[]; document.getElementById('l2-drop').innerHTML=''; document.querySelectorAll('#l2-bank .word-tile').forEach(e=>e.classList.remove('used')); }
+function nextL2() { l2Idx++; loadL2(); }
+
+// LEVEL 3: DIALOGUE
+const dialogs = [
+  {turns:[
+    {side:'left',avatar:'👧',text:'Hi! What ___ your name?',blank:0},
+    {side:'right',avatar:'👦',text:'My name ___ Tom.',blank:1},
+    {side:'left',avatar:'👧',text:'How old ___ you?',blank:2},
+    {side:'right',avatar:'👦',text:'I ___ eight years old.',blank:3},
+  ],answers:['is','is','are','am'],opts:[['is','are','am'],['is','are','am'],['is','are','am'],['is','are','am']]}
+];
+let dialogAns = {};
+function initDialog() {
+  dialogAns={};
+  const d=dialogs[0];
+  const area=document.getElementById('dialog-area');
+  area.innerHTML='';
+  const box=document.createElement('div'); box.className='dialog-box';
+  d.turns.forEach((t,i)=>{
+    const turn=document.createElement('div'); turn.className='dialog-turn'+(t.side==='right'?' right':'');
+    const avEl=document.createElement('div'); avEl.className='dialog-avatar'; avEl.textContent=t.avatar;
+    const bubble=document.createElement('div'); bubble.className='dialog-bubble';
+    const parts=t.text.split('___');
+    bubble.innerHTML=parts[0]+(typeof t.blank!=='undefined'?`<span class="dialog-blank" id="db-${i}">___</span>`:'')+parts[1];
+    if (typeof t.blank!=='undefined') {
+      const optsDiv=document.createElement('div'); optsDiv.style.cssText='display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;';
+      d.opts[i].forEach(o=>{
+        const btn=document.createElement('button'); btn.className='opt'; btn.style.cssText='padding:5px 12px;font-size:.85rem;';
+        btn.textContent=o; btn.onclick=()=>{ dialogAns[i]=o; document.getElementById('db-'+i).textContent=o; document.getElementById('db-'+i).style.background='var(--accent)'; optsDiv.querySelectorAll('.opt').forEach(b=>b.classList.remove('picked')); btn.classList.add('picked'); };
+        optsDiv.appendChild(btn);
+      });
+      bubble.appendChild(optsDiv);
+    }
+    turn.appendChild(avEl); turn.appendChild(bubble); box.appendChild(turn);
+  });
+  area.appendChild(box);
+  document.getElementById('l3-result').textContent='';
+  document.getElementById('l3-next').style.display='none';
+}
+function checkDialog() {
+  const d=dialogs[0]; let ok=0;
+  d.turns.forEach((t,i)=>{
+    if (typeof t.blank==='undefined') return;
+    const el=document.getElementById('db-'+i);
+    if ((dialogAns[i]||'').toLowerCase()===d.answers[i].toLowerCase()) { ok++; el.style.background='#d4edda'; el.style.border='2px solid #28a745'; }
+    else { el.style.background='#f8d7da'; el.style.border='2px solid #dc3545'; el.textContent=d.answers[i]; }
+  });
+  const r=document.getElementById('l3-result');
+  if (ok===4) { r.textContent='🎉 对话完美！+4 ⭐'; r.style.color='#28a745'; addStars(4); unlockAch(3); document.getElementById('l3-next').style.display='inline-block'; playSound('ok'); }
+  else { r.textContent=`${ok}/4 正确，红色已显示答案！`; r.style.color='#ff6b6b'; playSound('err'); }
+}
+
+// BOSS
+const bossQs = [
+  {q:'___ am a student.',opts:['I','You','He','She'],a:'I'},
+  {q:'She ___ my sister.',opts:['am','is','are','be'],a:'is'},
+  {q:'We ___ happy.',opts:['am','is','are','be'],a:'are'},
+  {q:'It ___ a cat.',opts:['am','is','are','be'],a:'is'},
+  {q:'___ are my friends.',opts:['I','He','She','They'],a:'They'},
+];
+let bossIdx=0, bossHPn=5;
+function initBoss() { bossIdx=0; bossHPn=5; updateBoss(); loadBossQ(); }
+function updateBoss() {
+  document.getElementById('boss-hp').style.width=(bossHPn/5*100)+'%';
+  document.getElementById('boss-hp-txt').textContent=`血量：${bossHPn}/5`;
+}
+function loadBossQ() {
+  if (bossIdx>=bossQs.length) { document.getElementById('boss-msg').textContent='🎉 机器人被击败了！'; playSound('ok'); unlockAch(4); addStars(5); setTimeout(()=>goTo('report'),2000); return; }
+  const q=bossQs[bossIdx];
+  document.getElementById('boss-q').innerHTML=`<strong>选择正确的词：</strong><br>${q.q}`;
+  const opts=document.getElementById('boss-opts'); opts.innerHTML='';
+  q.opts.forEach(o=>{ const b=document.createElement('button'); b.className='boss-choice'; b.textContent=o; b.onclick=()=>answerBoss(o,b); opts.appendChild(b); });
+  document.getElementById('boss-msg').textContent='';
+}
+function answerBoss(ans,btn) {
+  const q=bossQs[bossIdx];
+  document.querySelectorAll('.boss-choice').forEach(b=>b.onclick=null);
+  if (ans===q.a) { btn.classList.add('ok'); bossHPn--; document.getElementById('boss-msg').textContent='💥 +1 伤害！'; updateBoss(); playSound('ok'); }
+  else { btn.classList.add('err'); document.querySelectorAll('.boss-choice').forEach(b=>{ if (b.textContent===q.a) b.classList.add('ok'); }); document.getElementById('boss-msg').textContent='❌ 答错了！'; playSound('err'); }
+  bossIdx++; setTimeout(loadBossQ,1200);
+}
+
+// ACHIEVEMENTS
+const achDefs = [{ico:'🌟',n:'初学者'},{ico:'🔗',n:'配对王'},{ico:'✍️',n:'填空达人'},{ico:'💬',n:'对话高手'},{ico:'👹',n:'Boss猎人'},{ico:'⭐',n:'代词专家'},{ico:'🎓',n:'语法达人'},{ico:'🐻',n:'Bear伙伴'}];
+function unlockAch(i) {
+  if (!achievements[i]) { achievements[i]=true; showToast(`🏆 成就：${achDefs[i].n}！`); const badges=document.querySelectorAll('#hero-badges .badge'); if (badges[i]) badges[i].classList.add('earned'); }
+}
+function showReport() {
+  document.getElementById('total-stars').textContent=stars;
+  const pct=Math.min(100,Math.round(stars/20*100));
+  document.getElementById('score-circle').textContent=pct+'%';
+  const cmts=['继续加油！','不错哦！','很棒！','太厉害了！','完美！'];
+  document.getElementById('report-comment').textContent=cmts[Math.min(4,Math.floor(pct/20))];
+  const g=document.getElementById('ach-grid'); g.innerHTML='';
+  achDefs.forEach((a,i)=>{ const d=document.createElement('div'); d.className='ach-cell'+(achievements[i]?' done':''); d.innerHTML=`<div class="ico">${a.ico}</div><div>${a.n}</div>`; g.appendChild(d); });
+  unlockAch(6); if (stars>=15) unlockAch(5); if (stars>=18) unlockAch(7);
+}
+function restart() { stars=0; achievements=Array(8).fill(false); document.querySelectorAll('[id$="-s"]').forEach(e=>e.textContent=0); goTo('hero'); }
+</script>
+</body>
+</html>

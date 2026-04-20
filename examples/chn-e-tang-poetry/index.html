@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>唐诗学习 · 三年级语文</title>
+<style>
+:root {
+  --bg: #fffbf0;
+  --primary: #ff6b6b;
+  --secondary: #4ecdc4;
+  --accent: #ffe66d;
+  --card: #fff;
+  --text: #333;
+  --radius: 20px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.10);
+  --ink: #2c1810;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); font-family: 'Segoe UI', 'PingFang SC', sans-serif; color: var(--text); min-height: 100vh; overflow-x: hidden; }
+.section { display: none; min-height: 100vh; padding: 20px; }
+.section.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+/* HERO */
+#hero { background: linear-gradient(160deg, #1a1a2e 0%, #16213e 40%, #0f3460 70%, #533483 100%); position: relative; overflow: hidden; }
+.stars-bg { position: absolute; inset: 0; overflow: hidden; }
+.star-dot { position: absolute; background: white; border-radius: 50%; animation: twinkle linear infinite; }
+.hero-content { position: relative; text-align: center; color: white; }
+.hero-big-char { font-size: 100px; line-height: 1; margin-bottom: 8px; animation: float 3s ease-in-out infinite; filter: drop-shadow(0 0 20px rgba(255,230,109,0.6)); }
+.hero-title { font-size: 2.6em; font-weight: 900; margin-bottom: 8px; background: linear-gradient(135deg, #ffe66d, #ffa07a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.hero-sub { font-size: 1.15em; opacity: 0.85; margin-bottom: 28px; color: #ccc; }
+.hero-tags { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 28px; }
+.hero-tag { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 6px 16px; font-size: 0.9em; color: #eee; }
+.btn-start { background: linear-gradient(135deg, #ffe66d, #ffa07a); color: #1a1a2e; font-size: 1.3em; font-weight: 900; border: none; border-radius: 20px; padding: 16px 44px; cursor: pointer; box-shadow: 0 8px 32px rgba(255,230,109,0.4); transition: all 0.3s; }
+.btn-start:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 12px 40px rgba(255,230,109,0.5); }
+
+/* CARDS */
+.card { background: var(--card); border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow); width: 100%; max-width: 720px; margin: 10px 0; }
+.card-title { font-size: 1.5em; font-weight: 800; color: var(--primary); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.section-label { background: var(--accent); color: #333; font-size: 0.8em; font-weight: 700; padding: 3px 12px; border-radius: 12px; }
+
+/* PROGRESS */
+.progress-bar-wrap { width: 100%; max-width: 720px; margin-bottom: 16px; }
+.progress-bar { height: 12px; background: #e0e0e0; border-radius: 10px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #533483, #ff6b6b, #ffe66d); border-radius: 10px; transition: width 0.6s; }
+.progress-label { font-size: 0.9em; color: #888; margin-bottom: 4px; text-align: right; }
+
+/* POEM BIG DISPLAY */
+.poem-scroll { background: linear-gradient(160deg, #fdf6e3, #fef3c7); border-radius: 24px; padding: 36px; box-shadow: 0 8px 32px rgba(0,0,0,0.08), inset 0 0 0 3px rgba(210,180,100,0.3); position: relative; overflow: hidden; margin: 10px 0; }
+.poem-scroll::before { content: ''; position: absolute; left: 24px; top: 0; bottom: 0; width: 2px; background: rgba(210,180,100,0.3); }
+.poem-scroll::after { content: ''; position: absolute; right: 24px; top: 0; bottom: 0; width: 2px; background: rgba(210,180,100,0.3); }
+.poem-title-big { font-size: 2em; font-weight: 900; color: var(--ink); text-align: center; margin-bottom: 4px; letter-spacing: 4px; }
+.poem-author-big { text-align: center; color: #888; margin-bottom: 24px; font-size: 1em; }
+
+/* VERTICAL POEM */
+.poem-vertical { display: flex; justify-content: center; gap: 24px; }
+.poem-col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.poem-char-v { font-size: 2.2em; font-weight: 700; color: var(--ink); cursor: pointer; position: relative; padding: 4px; border-radius: 8px; transition: all 0.25s; writing-mode: vertical-rl; }
+.poem-char-v:hover { background: rgba(255,107,107,0.12); color: var(--primary); transform: scale(1.1); }
+.poem-char-v.has-note::after { content: '...'; position: absolute; right: -12px; top: 0; font-size: 0.5em; color: var(--secondary); }
+
+/* HORIZONTAL POEM */
+.poem-horizontal .poem-line-h { font-size: 1.8em; font-weight: 700; color: var(--ink); letter-spacing: 6px; margin-bottom: 14px; text-align: center; cursor: pointer; padding: 6px 12px; border-radius: 10px; transition: all 0.25s; }
+.poem-line-h:hover { background: rgba(255,107,107,0.1); }
+.poem-line-h.active-h { background: rgba(255,230,109,0.3); color: var(--primary); }
+
+/* VIEW TOGGLE */
+.view-toggle { display: flex; gap: 10px; justify-content: center; margin-bottom: 16px; }
+.view-btn { background: #f0f0f0; border: none; border-radius: 12px; padding: 8px 20px; cursor: pointer; font-size: 0.95em; font-weight: 600; transition: all 0.2s; }
+.view-btn.active { background: var(--primary); color: white; }
+
+/* ANNOTATION MODAL */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 800; display: none; align-items: center; justify-content: center; }
+.modal-overlay.show { display: flex; }
+.modal-box { background: var(--card); border-radius: 24px; padding: 32px; max-width: 420px; width: 90%; box-shadow: 0 16px 64px rgba(0,0,0,0.2); position: relative; animation: fadeIn 0.3s; }
+.modal-close { position: absolute; top: 16px; right: 20px; font-size: 1.5em; cursor: pointer; color: #888; background: none; border: none; }
+.modal-char { font-size: 4em; text-align: center; margin-bottom: 12px; color: var(--ink); }
+.modal-pinyin { text-align: center; color: var(--secondary); font-size: 1.3em; margin-bottom: 8px; }
+.modal-meaning { background: #f8f9ff; border-radius: 14px; padding: 16px; font-size: 1em; line-height: 1.7; }
+.modal-example { font-style: italic; color: #888; font-size: 0.92em; margin-top: 8px; border-top: 1px solid #eee; padding-top: 8px; }
+
+/* RHYTHM ANIMATION */
+.rhythm-anim { display: flex; align-items: flex-end; gap: 4px; height: 40px; justify-content: center; margin: 12px 0; }
+.rhythm-bar-v { width: 6px; background: var(--primary); border-radius: 4px; animation: rhythmGrow 1s ease-in-out infinite; }
+
+/* MULTIPLE CHOICE */
+.mc-question { background: linear-gradient(135deg, #fff9e6, #fff3d4); border-radius: 18px; padding: 20px; font-size: 1.15em; font-weight: 700; margin-bottom: 16px; border: 2px solid var(--accent); }
+.mc-opts { display: flex; flex-direction: column; gap: 10px; }
+.mc-opt { background: var(--card); border: 2px solid #e0e0e0; border-radius: 14px; padding: 14px 18px; cursor: pointer; font-size: 1em; transition: all 0.25s; text-align: left; }
+.mc-opt:hover { border-color: var(--secondary); background: #f0faf9; transform: translateX(4px); }
+.mc-opt.correct { background: #d4edda; border-color: #28a745; color: #155724; }
+.mc-opt.wrong { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+
+/* SORT POEM */
+.sort-pool { display: flex; flex-wrap: wrap; gap: 10px; min-height: 60px; background: #f8f9ff; border-radius: 16px; padding: 14px; }
+.sort-zone-poem { min-height: 60px; display: flex; flex-wrap: wrap; gap: 10px; border: 2px dashed #ccc; border-radius: 16px; padding: 14px; transition: all 0.3s; }
+.sort-zone-poem.drag-over { border-color: var(--secondary); background: rgba(78,205,196,0.08); }
+.poem-chunk { background: var(--card); border: 2px solid var(--accent); border-radius: 12px; padding: 10px 16px; cursor: grab; font-size: 1.2em; font-weight: 700; letter-spacing: 2px; user-select: none; transition: all 0.2s; color: var(--ink); }
+.poem-chunk:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.poem-chunk.dragging { opacity: 0.5; transform: rotate(3deg); }
+
+/* BOSS */
+.boss-wrap { text-align: center; }
+.boss-img { font-size: 80px; margin-bottom: 8px; display: block; }
+.boss-hp-bar { height: 18px; background: #e0e0e0; border-radius: 10px; overflow: hidden; margin: 10px 0; }
+.boss-hp-fill { height: 100%; background: linear-gradient(90deg, #533483, #ff6b6b); border-radius: 10px; transition: width 0.6s; }
+.boss-q { background: linear-gradient(135deg, #fff9e6, #fff3d4); border-radius: 18px; padding: 18px; margin: 16px 0; font-size: 1.1em; font-weight: 700; text-align: center; border: 2px solid var(--accent); }
+.boss-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.boss-opt { background: var(--card); border: 2px solid #e0e0e0; border-radius: 14px; padding: 14px; font-size: 1em; cursor: pointer; transition: all 0.25s; font-weight: 600; }
+.boss-opt:hover { border-color: var(--primary); background: #fff5f5; transform: scale(1.03); }
+
+/* SCOREBOARD */
+.score-display { font-size: 5em; font-weight: 900; color: var(--primary); text-align: center; }
+.ach-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin: 20px 0; }
+.ach-item { border-radius: 16px; padding: 14px; text-align: center; }
+.ach-item.unlocked { background: linear-gradient(135deg, #ffe66d22, #ffd70055); border: 2px solid var(--accent); }
+.ach-item.locked { background: #f0f0f0; opacity: 0.4; filter: grayscale(1); }
+
+/* EXT */
+.ext-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; width: 100%; max-width: 720px; }
+.ext-c { background: var(--card); border-radius: 20px; padding: 20px 16px; text-align: center; box-shadow: var(--shadow); cursor: pointer; transition: all 0.3s; }
+.ext-c:hover { transform: translateY(-5px); box-shadow: 0 14px 40px rgba(0,0,0,0.12); }
+
+/* AI */
+.ai-companion { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; z-index: 500; }
+.ai-bubble { background: var(--card); border-radius: 18px 18px 4px 18px; padding: 12px 18px; box-shadow: var(--shadow); max-width: 210px; font-size: 0.9em; line-height: 1.5; display: none; }
+.ai-bubble.show { display: block; animation: fadeIn 0.3s; }
+.ai-avatar { width: 56px; height: 56px; background: linear-gradient(135deg, #533483, #ff6b6b); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2em; cursor: pointer; box-shadow: 0 4px 16px rgba(83,52,131,0.5); transition: transform 0.3s; }
+.ai-avatar:hover { transform: scale(1.1) rotate(10deg); }
+
+/* ACH POPUP */
+.ach-popup { position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, #ffe66d, #ffd700); border-radius: 20px; padding: 14px 22px; box-shadow: 0 8px 32px rgba(255,215,0,0.4); z-index: 1000; display: none; }
+.ach-popup.show { display: flex; align-items: center; gap: 10px; animation: slideInRight 0.5s ease, fadeOut 0.5s ease 2.5s forwards; }
+
+/* NAV */
+.nav-row { display: flex; gap: 12px; margin-top: 18px; justify-content: center; flex-wrap: wrap; }
+.btn { border: none; border-radius: 14px; padding: 12px 26px; font-size: 1em; font-weight: 700; cursor: pointer; transition: all 0.25s; }
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: #e55a5a; transform: translateY(-2px); }
+.btn-secondary { background: var(--secondary); color: white; }
+.btn-ghost { background: #f0f0f0; color: #555; }
+.btn-ghost:hover { background: #e0e0e0; }
+.tip-box { background: linear-gradient(135deg, #e8f8f7, #d4f4f1); border-left: 4px solid var(--secondary); border-radius: 12px; padding: 12px 16px; margin: 10px 0; font-size: 0.95em; }
+
+/* ANIMATIONS */
+@keyframes float { 0%,100%{transform:translateY(0);}50%{transform:translateY(-14px);} }
+@keyframes twinkle { 0%,100%{opacity:1;}50%{opacity:0.3;} }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);} }
+@keyframes slideInRight { from{transform:translateX(120%);opacity:0;}to{transform:translateX(0);opacity:1;} }
+@keyframes fadeOut { from{opacity:1;}to{opacity:0;pointer-events:none;} }
+@keyframes rhythmGrow { 0%,100%{height:8px;}50%{height:30px;} }
+@keyframes confetti { 0%{transform:translateY(-20px)rotate(0);opacity:1;}100%{transform:translateY(100vh)rotate(720deg);opacity:0;} }
+.confetti-piece { position:fixed;width:12px;height:12px;border-radius:3px;animation:confetti 3s ease forwards;pointer-events:none;z-index:9999; }
+@keyframes shake { 0%,100%{transform:translateX(0);}25%{transform:translateX(-5px);}75%{transform:translateX(5px);} }
+
+/* PINYIN TOGGLE */
+.pinyin-toggle { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
+.toggle-sw { position: relative; width: 42px; height: 22px; }
+.toggle-sw input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #ccc; border-radius: 22px; transition: 0.3s; }
+.toggle-slider::before { content:''; position:absolute; width:18px; height:18px; left:2px; bottom:2px; background:white; border-radius:50%; transition:0.3s; }
+input:checked+.toggle-slider { background: var(--secondary); }
+input:checked+.toggle-slider::before { transform: translateX(20px); }
+.pinyin-text { font-size: 0.75em; color: var(--secondary); display: none; text-align: center; letter-spacing: 2px; margin-bottom: 2px; }
+.show-pinyin .pinyin-text { display: block; }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section id="hero" class="section active">
+  <div class="stars-bg" id="stars-bg"></div>
+  <div class="hero-content">
+    <div class="hero-big-char">🏮</div>
+    <h1 class="hero-title">唐诗学习</h1>
+    <p class="hero-sub">三年级语文 · 感受大唐诗意，领悟千年文韵</p>
+    <div class="hero-tags">
+      <span class="hero-tag">🌿 三年级</span>
+      <span class="hero-tag">📜 语文</span>
+      <span class="hero-tag">🎵 朗诵动画</span>
+      <span class="hero-tag">📝 注释弹窗</span>
+      <span class="hero-tag">🏆 8成就</span>
+    </div>
+    <button class="btn-start" onclick="goTo('objectives')">🏮 开始探索！</button>
+  </div>
+</section>
+
+<!-- OBJECTIVES -->
+<section id="objectives" class="section">
+  <div class="progress-bar-wrap">
+    <div class="progress-label">进度 1/7</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:14%"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>🎯</span>本课目标 <span class="section-label">学习目标</span></div>
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:12px;">
+      <li style="display:flex;gap:14px;align-items:center;background:#f8f9ff;border-radius:14px;padding:14px;font-size:1.05em;"><span style="font-size:1.6em">📜</span>正确朗读并背诵《静夜思》《登鹳雀楼》</li>
+      <li style="display:flex;gap:14px;align-items:center;background:#f8f9ff;border-radius:14px;padding:14px;font-size:1.05em;"><span style="font-size:1.6em">🔍</span>理解重点字词意思，学会注释查阅</li>
+      <li style="display:flex;gap:14px;align-items:center;background:#f8f9ff;border-radius:14px;padding:14px;font-size:1.05em;"><span style="font-size:1.6em">🎵</span>感受诗歌的节奏韵律之美</li>
+      <li style="display:flex;gap:14px;align-items:center;background:#f8f9ff;border-radius:14px;padding:14px;font-size:1.05em;"><span style="font-size:1.6em">🌌</span>理解诗人所描绘的意境与情感</li>
+    </ul>
+    <div class="tip-box">🌟 唐诗是中国文学的瑰宝，读好唐诗，打好语文基础！</div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-ghost" onclick="goTo('hero')">← 返回</button>
+    <button class="btn btn-primary" onclick="goTo('warmup')">热身 →</button>
+  </div>
+</section>
+
+<!-- WARMUP: 诗歌大展示 -->
+<section id="warmup" class="section">
+  <div class="progress-bar-wrap">
+    <div class="progress-label">进度 2/7</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:28%"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>🌙</span>细读《静夜思》 <span class="section-label">热身朗读</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+      <div class="view-toggle">
+        <button class="view-btn active" id="v-horiz" onclick="setView('h')">横排</button>
+        <button class="view-btn" id="v-vert" onclick="setView('v')">竖排</button>
+      </div>
+      <label class="pinyin-toggle">
+        <span style="font-size:0.9em;color:#888">显示拼音</span>
+        <label class="toggle-sw"><input type="checkbox" id="pinyin-tog" onchange="togglePinyin()"><span class="toggle-slider"></span></label>
+      </label>
+    </div>
+
+    <!-- HORIZONTAL -->
+    <div class="poem-scroll show-pinyin" id="poem-h-view">
+      <div class="poem-title-big">静 夜 思</div>
+      <div class="poem-author-big">【唐】李白</div>
+      <div class="poem-horizontal">
+        <div class="poem-line-h" onclick="highlightH(this)">
+          <div class="pinyin-text">chuáng qián míng yuè guāng</div>
+          床 前 明 月 光
+        </div>
+        <div class="poem-line-h" onclick="highlightH(this)">
+          <div class="pinyin-text">yí shì dì shàng shuāng</div>
+          疑 是 地 上 霜
+        </div>
+        <div class="poem-line-h" onclick="highlightH(this)">
+          <div class="pinyin-text">jǔ tóu wàng míng yuè</div>
+          举 头 望 明 月
+        </div>
+        <div class="poem-line-h" onclick="highlightH(this)">
+          <div class="pinyin-text">dī tóu sī gù xiāng</div>
+          低 头 思 故 乡
+        </div>
+      </div>
+    </div>
+
+    <!-- VERTICAL -->
+    <div class="poem-scroll" id="poem-v-view" style="display:none;">
+      <div class="poem-title-big" style="margin-bottom:20px;">静 夜 思</div>
+      <div class="poem-vertical">
+        <div class="poem-col">
+          <div class="poem-char-v has-note" onclick="openNote('床','chuáng','床：睡觉的床，这里指诗人在室内向窗外看。','床前明月光——床前洒满了明亮的月光')">床</div>
+          <div class="poem-char-v has-note" onclick="openNote('前','qián','前：前方，前面。','床前=床的前方')">前</div>
+          <div class="poem-char-v has-note" onclick="openNote('明','míng','明：明亮，光亮。','明月=明亮的月亮')">明</div>
+          <div class="poem-char-v has-note" onclick="openNote('月','yuè','月：月亮，月光。圆圆的月亮代表思念。','月光=月亮的光')">月</div>
+          <div class="poem-char-v" onclick="openNote('光','guāng','光：光芒，光线。','月光洒在地上')">光</div>
+        </div>
+        <div class="poem-col">
+          <div class="poem-char-v has-note" onclick="openNote('疑','yí','疑：以为，好像，怀疑。','疑是=好像是')">疑</div>
+          <div class="poem-char-v" onclick="openNote('是','shì','是：是，就是。','疑是=好像是')">是</div>
+          <div class="poem-char-v" onclick="openNote('地','dì','地：地面，大地。','地上=地面上')">地</div>
+          <div class="poem-char-v" onclick="openNote('上','shàng','上：上面，表示位置。','地上=地面上')">上</div>
+          <div class="poem-char-v has-note" onclick="openNote('霜','shuāng','霜：秋冬季节地面上白色的冰晶，很像月光。','白色的霜=月光的比喻')">霜</div>
+        </div>
+        <div class="poem-col">
+          <div class="poem-char-v has-note" onclick="openNote('举','jǔ','举：抬起，往上。','举头=抬起头')">举</div>
+          <div class="poem-char-v has-note" onclick="openNote('头','tóu','头：脑袋，头部。','举头=抬起头')">头</div>
+          <div class="poem-char-v" onclick="openNote('望','wàng','望：看，遥望，望着远处。','望月=看着月亮')">望</div>
+          <div class="poem-char-v" onclick="openNote('明','míng','明：明亮，同前文。','明月=明亮的月')">明</div>
+          <div class="poem-char-v" onclick="openNote('月','yuè','月：月亮，此处呼应开头，首尾呼应。','又一次出现月')">月</div>
+        </div>
+        <div class="poem-col">
+          <div class="poem-char-v has-note" onclick="openNote('低','dī','低：放低，向下。与"举"相对。','低头=低下头')">低</div>
+          <div class="poem-char-v" onclick="openNote('头','tóu','头：脑袋，与"举头"对应。','低头=低下头')">头</div>
+          <div class="poem-char-v has-note" onclick="openNote('思','sī','思：思念，想念。这个字是全诗的情感核心！','思=深深思念')">思</div>
+          <div class="poem-char-v has-note" onclick="openNote('故','gù','故：原来的，以前的。','故乡=家乡，出生的地方')">故</div>
+          <div class="poem-char-v has-note" onclick="openNote('乡','xiāng','乡：家乡，故乡。诗人李白在外漂泊，思念家乡。','故乡=家乡，情感的归宿')">乡</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:12px;">
+      <button class="btn btn-secondary" onclick="startRhythm()">🎵 <span id="rhythm-txt">节奏朗诵</span></button>
+      <button class="btn btn-ghost" onclick="stopRhythm()">⏹ 停止</button>
+    </div>
+    <div class="rhythm-anim" id="rhythm-anim" style="display:none;">
+      <div class="rhythm-bar-v" style="animation-delay:0s"></div>
+      <div class="rhythm-bar-v" style="animation-delay:0.15s"></div>
+      <div class="rhythm-bar-v" style="animation-delay:0.3s"></div>
+      <div class="rhythm-bar-v" style="animation-delay:0.45s"></div>
+      <div class="rhythm-bar-v" style="animation-delay:0.6s"></div>
+    </div>
+    <div id="warmup-result" style="display:none;margin-top:10px;" class="tip-box"></div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-ghost" onclick="goTo('objectives')">← 返回</button>
+    <button class="btn btn-primary" onclick="goTo('level1')">关卡一 →</button>
+  </div>
+</section>
+
+<!-- MODAL: ANNOTATION -->
+<div class="modal-overlay" id="note-modal" onclick="closeNote(event)">
+  <div class="modal-box">
+    <button class="modal-close" onclick="document.getElementById('note-modal').classList.remove('show')">✕</button>
+    <div class="modal-char" id="modal-char">床</div>
+    <div class="modal-pinyin" id="modal-pinyin">chuáng</div>
+    <div class="modal-meaning">
+      <div id="modal-meaning"></div>
+      <div class="modal-example" id="modal-example"></div>
+    </div>
+  </div>
+</div>
+
+<!-- LEVEL 1: 选择题 -->
+<section id="level1" class="section">
+  <div class="progress-bar-wrap">
+    <div class="progress-label">进度 3/7 · 关卡一</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:42%"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>🔍</span>关卡一：字词理解 <span class="section-label">意思选择</span></div>
+    <div id="mc-container"></div>
+    <div id="mc-result" style="display:none;margin-top:12px;" class="tip-box"></div>
+    <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;">
+      <span style="color:#888;">得分 <strong id="mc-score" style="color:var(--primary)">0</strong> / <span id="mc-total">3</span></span>
+    </div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-ghost" onclick="goTo('warmup')">← 返回</button>
+    <button class="btn btn-primary" onclick="goTo('level2')">关卡二 →</button>
+  </div>
+</section>
+
+<!-- LEVEL 2: 排序 -->
+<section id="level2" class="section">
+  <div class="progress-bar-wrap">
+    <div class="progress-label">进度 4/7 · 关卡二</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:57%"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>🔀</span>关卡二：诗句排序 <span class="section-label">诗句复原</span></div>
+    <p style="color:#888;margin-bottom:16px;">把打乱的诗句拖拽到正确位置！</p>
+    <div style="margin-bottom:12px;font-size:0.9em;color:#888;">📦 待排序（从这里拖走）</div>
+    <div class="sort-pool" id="sort-pool">
+      <div class="poem-chunk" draggable="true" data-idx="3" ondragstart="dStart(event)" id="pc3">低头思故乡</div>
+      <div class="poem-chunk" draggable="true" data-idx="1" ondragstart="dStart(event)" id="pc1">疑是地上霜</div>
+      <div class="poem-chunk" draggable="true" data-idx="0" ondragstart="dStart(event)" id="pc0">床前明月光</div>
+      <div class="poem-chunk" draggable="true" data-idx="2" ondragstart="dStart(event)" id="pc2">举头望明月</div>
+    </div>
+    <div style="margin:16px 0 8px;font-size:0.9em;color:#888;">✅ 拖到这里按顺序排列：</div>
+    <div class="sort-zone-poem" id="sort-zone" ondragover="dOver(event)" ondrop="dDrop(event)">
+      <p style="color:#ccc;width:100%;text-align:center;font-size:0.9em">把诗句按顺序拖到这里 →</p>
+    </div>
+    <button class="btn btn-secondary" onclick="checkSort()" style="width:100%;margin-top:14px;">✔ 检查顺序</button>
+    <div id="sort-result" style="display:none;margin-top:12px;" class="tip-box"></div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-ghost" onclick="goTo('level1')">← 返回</button>
+    <button class="btn btn-primary" onclick="goTo('level3')">关卡三 →</button>
+  </div>
+</section>
+
+<!-- LEVEL 3: 诗意画面 -->
+<section id="level3" class="section">
+  <div class="progress-bar-wrap">
+    <div class="progress-label">进度 5/7 · 关卡三</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:71%"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>🌌</span>关卡三：诗意配图 <span class="section-label">意境理解</span></div>
+    <p style="color:#888;margin-bottom:16px;">读完诗句，选出它描绘的画面：</p>
+    <div id="img-q-area"></div>
+    <div id="img-result" style="display:none;margin-top:12px;" class="tip-box"></div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-ghost" onclick="goTo('level2')">← 返回</button>
+    <button class="btn btn-primary" onclick="goTo('boss')">Boss 关 →</button>
+  </div>
+</section>
+
+<!-- BOSS -->
+<section id="boss" class="section">
+  <div class="progress-bar-wrap">
+    <div class="progress-label">进度 6/7 · Boss 关卡</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:85%"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>👾</span>Boss 关：诗圣挑战 <span class="section-label">终极考验</span></div>
+    <div class="boss-wrap">
+      <span class="boss-img" id="boss-emoji">🧙‍♂️</span>
+      <div style="font-weight:800;font-size:1.2em;color:var(--primary)">诗圣爷爷</div>
+      <div class="boss-hp-bar"><div class="boss-hp-fill" id="boss-hp" style="width:100%"></div></div>
+      <div style="font-size:0.9em;color:#888;margin-bottom:4px">血量：<span id="boss-hp-num">100</span> / 100</div>
+      <div class="boss-q" id="boss-question">🏮 第一题：背诵《静夜思》第一句是什么？</div>
+      <div class="boss-opts" id="boss-options">
+        <button class="boss-opt" onclick="bossAns(this,true)">床前明月光</button>
+        <button class="boss-opt" onclick="bossAns(this,false)">夜来风雨声</button>
+        <button class="boss-opt" onclick="bossAns(this,false)">鹅鹅鹅，曲项向天歌</button>
+        <button class="boss-opt" onclick="bossAns(this,false)">春眠不觉晓</button>
+      </div>
+      <div id="boss-fb" style="display:none;margin-top:12px;" class="tip-box"></div>
+    </div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-ghost" onclick="goTo('level3')">← 返回</button>
+    <button class="btn btn-primary" id="boss-next-btn" style="display:none" onclick="goTo('scoreboard')">🏆 成绩单</button>
+  </div>
+</section>
+
+<!-- SCOREBOARD -->
+<section id="scoreboard" class="section">
+  <div class="card" style="text-align:center;">
+    <div class="card-title" style="justify-content:center;"><span>🏆</span>闯关成绩</div>
+    <div class="score-display" id="final-score">0</div>
+    <div style="color:#888;margin-bottom:6px;">总积分</div>
+    <div id="star-bar" style="font-size:2.2em;margin-bottom:14px;"></div>
+    <div id="score-comment" style="font-size:1.1em;margin-bottom:20px;color:#555;"></div>
+    <div class="ach-grid" id="ach-grid"></div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-ghost" onclick="goTo('hero')">🔄 再挑战</button>
+    <button class="btn btn-primary" onclick="goTo('extension')">📚 拓展</button>
+  </div>
+</section>
+
+<!-- EXTENSION -->
+<section id="extension" class="section">
+  <div class="card" style="text-align:center;margin-bottom:10px;">
+    <div class="card-title" style="justify-content:center;">🌌 诗意拓展</div>
+    <p style="color:#888;">深入感受唐诗的魅力</p>
+  </div>
+  <div class="ext-cards">
+    <div class="ext-c" onclick="playSound('click');showExtC(0)">
+      <div style="font-size:2.5em;margin-bottom:8px">📜</div>
+      <div style="font-weight:700;margin-bottom:4px">《登鹳雀楼》</div>
+      <div style="font-size:0.85em;color:#888">王之涣的壮志豪情</div>
+    </div>
+    <div class="ext-c" onclick="playSound('click');showExtC(1)">
+      <div style="font-size:2.5em;margin-bottom:8px">🌕</div>
+      <div style="font-weight:700;margin-bottom:4px">李白的月亮</div>
+      <div style="font-size:0.85em;color:#888">找找李白写月的诗</div>
+    </div>
+    <div class="ext-c" onclick="playSound('click');showExtC(2)">
+      <div style="font-size:2.5em;margin-bottom:8px">🎨</div>
+      <div style="font-weight:700;margin-bottom:4px">诗配画</div>
+      <div style="font-size:0.85em;color:#888">给静夜思画配图</div>
+    </div>
+    <div class="ext-c" onclick="playSound('click');showExtC(3)">
+      <div style="font-size:2.5em;margin-bottom:8px">✍️</div>
+      <div style="font-weight:700;margin-bottom:4px">我来创作</div>
+      <div style="font-size:0.85em;color:#888">试着写一首小诗</div>
+    </div>
+  </div>
+  <div id="ext-detail" class="card" style="display:none;margin-top:14px;width:100%;max-width:720px;"></div>
+  <div class="nav-row">
+    <button class="btn btn-ghost" onclick="goTo('scoreboard')">← 成绩单</button>
+    <button class="btn btn-primary" onclick="goTo('hero')">🏠 首页</button>
+  </div>
+</section>
+
+<!-- AI -->
+<div class="ai-companion">
+  <div class="ai-bubble" id="ai-bubble">我是小虫🐛，点我看唐诗小知识！</div>
+  <div class="ai-avatar" onclick="toggleAI()">🐛</div>
+</div>
+
+<!-- ACH POPUP -->
+<div class="ach-popup" id="ach-popup">
+  <span id="ach-pop-ico" style="font-size:2em">🏆</span>
+  <div><strong id="ach-pop-t" style="display:block">成就！</strong><span id="ach-pop-d" style="font-size:0.9em;color:#666"></span></div>
+</div>
+
+<script>
+// INIT STARS
+(function(){const bg=document.getElementById('stars-bg');for(let i=0;i<60;i++){const d=document.createElement('div');d.className='star-dot';const s=Math.random()*3+1;d.style.cssText=`width:${s}px;height:${s}px;left:${Math.random()*100}%;top:${Math.random()*100}%;animation-duration:${Math.random()*3+2}s;animation-delay:${Math.random()*3}s;`;bg.appendChild(d);}})();
+
+const state={score:0,stars:0,achievements:[],notesOpened:0,mcScore:0,sortDone:false,imgDone:false,bossDone:false};
+const ACHS=[
+  {id:'reader',icon:'📜',name:'诗歌朗读者',desc:'完成节奏朗诵',condition:()=>state.stars>=1},
+  {id:'annotator',icon:'🔍',name:'注释达人',desc:'查阅3个注释',condition:()=>state.notesOpened>=3},
+  {id:'word_master',icon:'🔤',name:'字词理解王',desc:'字词选择全对',condition:()=>state.mcScore>=3},
+  {id:'sorter',icon:'🔀',name:'诗句排序师',desc:'完成诗句排序',condition:()=>state.sortDone},
+  {id:'painter',icon:'🎨',name:'意境感知者',desc:'诗意配图成功',condition:()=>state.imgDone},
+  {id:'boss_win',icon:'⚔️',name:'诗圣弟子',desc:'通关Boss关卡',condition:()=>state.bossDone},
+  {id:'high_s',icon:'💯',name:'满分选手',desc:'总分超200',condition:()=>state.score>=200},
+  {id:'explorer',icon:'🌌',name:'诗意探索者',desc:'进入拓展区',condition:()=>false},
+];
+
+let actx;
+function playSound(t){
+  try{if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);const c={click:[440,'sine',0.1,0.12],correct:[660,'triangle',0.2,0.35],wrong:[200,'sawtooth',0.12,0.2],star:[880,'sine',0.2,0.45],achievement:[990,'triangle',0.2,0.5],rhythm:[520,'sine',0.15,0.15]};const[f,w,v,d]=c[t]||c.click;o.type=w;o.frequency.value=f;g.gain.setValueAtTime(v,actx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+d);o.start();o.stop(actx.currentTime+d);}catch(e){}
+}
+
+const aiH={hero:'欢迎！今天学唐诗《静夜思》！🌙',objectives:'李白是唐代最伟大的诗人之一！',warmup:'点字符可以看注释哦！切换竖排更有古诗味~',level1:'字词理解要结合上下文哦！',level2:'先在脑海中背一遍，再排顺序~',level3:'想象画面，感受诗的意境！',boss:'诗圣爷爷出题了！考考你背诗的功夫！',scoreboard:'你太棒了！唐诗达人就是你！',extension:'拓展区有更多精彩！'};
+function updateAI(id){document.getElementById('ai-bubble').textContent=aiH[id]||'继续加油！💪';}
+function toggleAI(){document.getElementById('ai-bubble').classList.toggle('show');playSound('click');}
+
+function goTo(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0); playSound('click'); updateAI(id);
+  if(id==='scoreboard')renderScore();
+  if(id==='extension'){ACHS[7].condition=()=>true;unlockAch('explorer');}
+  checkAllAch();
+}
+
+// POEM VIEW
+let curView='h';
+function setView(v){
+  curView=v;
+  document.getElementById('poem-h-view').style.display=v==='h'?'block':'none';
+  document.getElementById('poem-v-view').style.display=v==='v'?'block':'none';
+  document.getElementById('v-horiz').className='view-btn'+(v==='h'?' active':'');
+  document.getElementById('v-vert').className='view-btn'+(v==='v'?' active':'');
+}
+function togglePinyin(){const v=document.getElementById('poem-h-view');v.classList.toggle('show-pinyin',document.getElementById('pinyin-tog').checked);}
+function highlightH(el){document.querySelectorAll('.poem-line-h').forEach(l=>l.classList.remove('active-h'));el.classList.add('active-h');playSound('rhythm');}
+
+// ANNOTATION
+function openNote(char,pinyin,meaning,example){
+  document.getElementById('modal-char').textContent=char;
+  document.getElementById('modal-pinyin').textContent=pinyin;
+  document.getElementById('modal-meaning').textContent=meaning;
+  document.getElementById('modal-example').textContent='📖 例：'+example;
+  document.getElementById('note-modal').classList.add('show');
+  state.notesOpened++;playSound('click');checkAllAch();
+}
+function closeNote(e){if(e.target===document.getElementById('note-modal'))document.getElementById('note-modal').classList.remove('show');}
+
+// RHYTHM
+let rhythmTimer=null,lineIdx2=0;
+function startRhythm(){
+  document.getElementById('rhythm-anim').style.display='flex';
+  document.getElementById('rhythm-txt').textContent='朗诵中...';
+  if(rhythmTimer)clearInterval(rhythmTimer);
+  lineIdx2=0;
+  const lines=document.querySelectorAll('.poem-line-h');
+  rhythmTimer=setInterval(()=>{
+    lines.forEach(l=>l.classList.remove('active-h'));
+    if(lineIdx2<lines.length){lines[lineIdx2].classList.add('active-h');playSound('rhythm');lineIdx2++;}
+    else{clearInterval(rhythmTimer);rhythmTimer=null;document.getElementById('rhythm-txt').textContent='节奏朗诵';document.getElementById('rhythm-anim').style.display='none';const r=document.getElementById('warmup-result');r.style.display='block';r.textContent='🎉 太棒了！你完整朗读了《静夜思》！';addScore(20);addStar();checkAllAch();}
+  },1100);
+}
+function stopRhythm(){if(rhythmTimer){clearInterval(rhythmTimer);rhythmTimer=null;document.getElementById('rhythm-txt').textContent='节奏朗诵';document.getElementById('rhythm-anim').style.display='none';document.querySelectorAll('.poem-line-h').forEach(l=>l.classList.remove('active-h'));}}
+
+// LEVEL 1: MC
+const mcQs=[
+  {q:'"疑是地上霜"中，"疑"是什么意思？',opts:['怀疑别人','好像、以为','思念','发现'],correct:1},
+  {q:'"举头望明月"中，"举"是什么意思？',opts:['抬起','举起旗子','赞美','举办活动'],correct:0},
+  {q:'《静夜思》表达了诗人怎样的情感？',opts:['对月亮的赞美','对星空的好奇','对故乡的思念','对夜晚的喜爱'],correct:2},
+];
+let mcCur=0,mcScoreLocal=0;
+function renderMC(){
+  const q=mcQs[mcCur];
+  const html=`<div class="mc-question">第 ${mcCur+1}/3 题：${q.q}</div><div class="mc-opts">${q.opts.map((o,i)=>`<button class="mc-opt" onclick="checkMC(this,${i==q.correct})">${o}</button>`).join('')}</div>`;
+  document.getElementById('mc-container').innerHTML=html;
+  document.getElementById('mc-result').style.display='none';
+}
+function checkMC(btn,correct){
+  document.querySelectorAll('.mc-opt').forEach(b=>b.disabled=true);
+  const r=document.getElementById('mc-result');r.style.display='block';
+  if(correct){btn.classList.add('correct');mcScoreLocal++;state.mcScore=mcScoreLocal;addScore(30);playSound('correct');r.textContent='🎉 正确！';r.style.background='#d4edda';document.getElementById('mc-score').textContent=mcScoreLocal;checkAllAch();}
+  else{btn.classList.add('wrong');document.querySelectorAll('.mc-opt').forEach((b,i)=>{if(i===mcQs[mcCur].correct)b.classList.add('correct');});playSound('wrong');r.textContent='💡 再想想！';r.style.background='#f8d7da';}
+  mcCur++;if(mcCur<mcQs.length)setTimeout(renderMC,1600);else{r.textContent=`全部完成！答对 ${mcScoreLocal}/3 题！`;if(mcScoreLocal===3){addStar();r.textContent+=' 🏆 满分！';}}
+}
+
+// LEVEL 2: SORT
+let dragItem=null;
+function dStart(e){dragItem=e.target;e.target.classList.add('dragging');playSound('click');}
+document.addEventListener('dragend',()=>document.querySelectorAll('.poem-chunk').forEach(c=>c.classList.remove('dragging')));
+function dOver(e){e.preventDefault();document.getElementById('sort-zone').classList.add('drag-over');}
+document.getElementById('sort-zone') && document.getElementById('sort-zone').addEventListener('dragleave',()=>document.getElementById('sort-zone').classList.remove('drag-over'));
+function dDrop(e){e.preventDefault();document.getElementById('sort-zone').classList.remove('drag-over');if(dragItem){document.getElementById('sort-zone').appendChild(dragItem);playSound('click');}}
+function checkSort(){
+  const zone=document.getElementById('sort-zone');const items=[...zone.querySelectorAll('.poem-chunk')];
+  const r=document.getElementById('sort-result');r.style.display='block';
+  const order=items.map(i=>parseInt(i.dataset.idx));
+  const correct=JSON.stringify(order)===JSON.stringify([0,1,2,3]);
+  if(correct){r.textContent='🎉 完美！诗句顺序正确！床前明月光→疑是地上霜→举头望明月→低头思故乡';r.style.background='#d4edda';addScore(45);addStar();state.sortDone=true;playSound('correct');checkAllAch();}
+  else{r.textContent='💡 顺序有点问题，试着先默背一遍，再重新排！';r.style.background='#fff7ee';playSound('wrong');}
+}
+
+// LEVEL 3: IMAGE MATCHING
+const imgQs=[
+  {q:'"床前明月光，疑是地上霜"描绘了什么画面？',opts:['☀️ 阳光照耀田野','🌙 夜晚月光洒在床前像白霜','❄️ 冬天大雪纷飞','🌊 波光粼粼的湖面'],correct:1},
+  {q:'"低头思故乡"，诗人此刻的心情是？',opts:['😄 快乐开心','😤 生气烦躁','😢 思念家乡，略感忧愁','😴 困得想睡觉'],correct:2},
+];
+let imgCur=0,imgRight=0;
+function renderImgQ(){
+  if(imgCur>=imgQs.length){document.getElementById('img-q-area').innerHTML='<div class="tip-box" style="text-align:center">🎉 全部完成！你深刻理解了诗的意境！</div>';return;}
+  const q=imgQs[imgCur];
+  document.getElementById('img-q-area').innerHTML=`<div class="mc-question">第${imgCur+1}/2题：${q.q}</div><div class="mc-opts">${q.opts.map((o,i)=>`<button class="mc-opt" onclick="checkImg(this,${i===q.correct})">${o}</button>`).join('')}</div>`;
+  document.getElementById('img-result').style.display='none';
+}
+function checkImg(btn,correct){
+  document.querySelectorAll('.mc-opt').forEach(b=>b.disabled=true);
+  const r=document.getElementById('img-result');r.style.display='block';
+  if(correct){btn.classList.add('correct');addScore(35);imgRight++;playSound('correct');r.textContent='🎉 你真的理解了诗的意境！';r.style.background='#d4edda';if(imgRight===2){state.imgDone=true;addStar();checkAllAch();}imgCur++;setTimeout(renderImgQ,1500);}
+  else{btn.classList.add('wrong');document.querySelectorAll('.mc-opt').forEach((b,i)=>{if(i===imgQs[imgCur].correct)b.classList.add('correct');});playSound('wrong');r.textContent='💡 再想想诗描绘的画面~';r.style.background='#f8d7da';imgCur++;setTimeout(renderImgQ,1500);}
+}
+
+// BOSS
+let bossHp=100,bossR=0;
+const bossQsArr=[
+  {q:'《静夜思》第一句：床前________',opts:['明月光','夜有霜','月如刀','花正开'],correct:0},
+  {q:'李白是哪个朝代的诗人？',opts:['宋朝','唐朝','明朝','汉朝'],correct:1},
+  {q:'"低头思故乡"中，"故乡"是指？',opts:['旅行目的地','出生长大的家乡','朋友家','皇宫'],correct:1},
+];
+function bossAns(btn,correct){
+  document.querySelectorAll('.boss-opt').forEach(b=>b.disabled=true);
+  const fb=document.getElementById('boss-fb');fb.style.display='block';
+  if(correct){bossHp-=34;bossR++;document.getElementById('boss-hp').style.width=Math.max(0,bossHp)+'%';document.getElementById('boss-hp-num').textContent=Math.max(0,bossHp);btn.style.background='#d4edda';fb.textContent='⚔️ 正确！诗圣爷爷受到冲击！';fb.style.background='#d4edda';addScore(40);playSound('correct');if(bossHp<=0||bossR>=3){document.getElementById('boss-emoji').textContent='😵';fb.textContent='🎉 你打倒了诗圣爷爷！真正的唐诗小达人！';state.bossDone=true;addStar();addStar();document.getElementById('boss-next-btn').style.display='inline-block';checkAllAch();}else{setTimeout(nextBossQ,1500);}}
+  else{btn.style.background='#f8d7da';fb.textContent='💡 再想想！回头看看诗的内容~';fb.style.background='#f8d7da';playSound('wrong');bossR++;setTimeout(nextBossQ,1500);}
+}
+function nextBossQ(){if(bossR>=bossQsArr.length){document.getElementById('boss-next-btn').style.display='inline-block';return;}const q=bossQsArr[bossR];document.getElementById('boss-question').innerHTML=`🏮 第${bossR+1}题：${q.q}`;const opts=document.getElementById('boss-options');opts.innerHTML='';q.opts.forEach((o,i)=>{const b=document.createElement('button');b.className='boss-opt';b.textContent=o;b.onclick=function(){bossAns(this,i===q.correct);};opts.appendChild(b);});document.getElementById('boss-fb').style.display='none';}
+
+// SCORE
+function addScore(n){state.score+=n;}
+function addStar(){state.stars++;playSound('star');spawnConfetti();}
+function spawnConfetti(){const c=['#ff6b6b','#4ecdc4','#ffe66d','#533483','#ffa07a'];for(let i=0;i<20;i++){const p=document.createElement('div');p.className='confetti-piece';p.style.left=Math.random()*100+'vw';p.style.background=c[Math.floor(Math.random()*c.length)];p.style.animationDelay=Math.random()*0.6+'s';p.style.borderRadius=Math.random()>0.5?'50%':'3px';document.body.appendChild(p);setTimeout(()=>p.remove(),3500);}}
+
+function renderScore(){
+  document.getElementById('final-score').textContent=state.score;
+  document.getElementById('star-bar').textContent='⭐'.repeat(state.stars)+'☆'.repeat(Math.max(0,5-state.stars));
+  const comment=state.score>=220?'🏆 唐诗小达人！李白都要夸你！':state.score>=130?'🌟 学习认真！继续加油！':'💪 多读几遍，你会越来越好！';
+  document.getElementById('score-comment').textContent=comment;
+  const grid=document.getElementById('ach-grid');grid.innerHTML='';
+  ACHS.forEach(a=>{const u=state.achievements.includes(a.id);const d=document.createElement('div');d.className='ach-item '+(u?'unlocked':'locked');d.innerHTML=`<div style="font-size:2em;margin-bottom:6px">${a.icon}</div><div style="font-size:0.85em;font-weight:700">${a.name}</div><div style="font-size:0.78em;color:#aaa">${a.desc}</div>`;grid.appendChild(d);});
+}
+function checkAllAch(){ACHS.forEach(a=>{if(!state.achievements.includes(a.id)&&a.condition())unlockAch(a.id);});}
+function unlockAch(id){if(state.achievements.includes(id))return;state.achievements.push(id);const a=ACHS.find(x=>x.id===id);if(!a)return;document.getElementById('ach-pop-ico').textContent=a.icon;document.getElementById('ach-pop-t').textContent='🏆 '+a.name;document.getElementById('ach-pop-d').textContent=a.desc;const p=document.getElementById('ach-popup');p.classList.add('show');setTimeout(()=>p.classList.remove('show'),3200);playSound('achievement');}
+
+// EXT
+const extC=[
+  `<h3 style="margin-bottom:16px">📜 登鹳雀楼</h3><div style="background:linear-gradient(135deg,#fdf6e3,#fef3c7);border-radius:20px;padding:24px;text-align:center;font-size:1.6em;font-weight:700;letter-spacing:6px;line-height:2.2">白日依山尽，<br>黄河入海流。<br>欲穷千里目，<br>更上一层楼。</div><p style="margin-top:12px;color:#888;font-size:0.9em">王之涣（唐）— 意志豪迈，寓意深刻！</p>`,
+  `<h3 style="margin-bottom:12px">🌕 李白的月亮诗</h3><ul style="line-height:2.2;font-size:1.05em"><li>🌙 <strong>《静夜思》</strong>：床前明月光，疑是地上霜</li><li>🌊 <strong>《峨眉山月歌》</strong>：峨眉山月半轮秋</li><li>🏔️ <strong>《月下独酌》</strong>：举杯邀明月，对影成三人</li></ul><p style="color:#888;font-size:0.9em;margin-top:8px">李白写了大量与月相关的诗，你还知道哪些？</p>`,
+  `<h3 style="margin-bottom:12px">🎨 诗配画创作指南</h3><p style="line-height:1.8">想象《静夜思》的画面：<br>🌙 窗外月亮很圆很亮<br>🏠 室内床铺，地面月光如霜<br>👨 诗人李白坐在床前，仰头望月<br>😢 眼神透着淡淡的思乡愁绪<br><br>拿起画笔，画出这个夜晚吧！</p>`,
+  `<h3 style="margin-bottom:12px">✍️ 我来写小诗</h3><p style="margin-bottom:10px;color:#888">五言绝句格式：每行5个字，共4行，尾韵相近</p><div style="background:#f8f9ff;border-radius:14px;padding:16px;font-size:1.05em;line-height:2">我的小诗：<br>___________，<br>___________。<br>___________，<br>___________。</div><p style="margin-top:10px;color:#888;font-size:0.9em">试着写写你看到的春天/秋天/夜晚！</p>`,
+];
+function showExtC(i){const d=document.getElementById('ext-detail');d.style.display='block';d.innerHTML=extC[i];}
+
+// INIT
+renderMC();renderImgQ();updateAI('hero');
+</script>
+</body>
+</html>

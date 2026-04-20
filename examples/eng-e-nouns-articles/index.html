@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>名词与冠词 | Nouns & Articles 🐻</title>
+<style>
+  :root {
+    --bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--card:#fff;
+    --text:#333;--shadow:0 4px 20px rgba(0,0,0,0.12);--radius:16px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);font-family:'Segoe UI',Arial,sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden;}
+  
+  /* ===== SCREENS ===== */
+  .screen{display:none;min-height:100vh;padding:20px;animation:fadeIn .4s ease;}
+  .screen.active{display:flex;flex-direction:column;align-items:center;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  
+  /* ===== HEADER ===== */
+  .top-bar{width:100%;max-width:700px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .bear{font-size:2rem;animation:bounce 2s infinite;}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  .stars-display{background:var(--accent);border-radius:20px;padding:4px 12px;font-weight:700;font-size:1rem;}
+  .progress-bar{width:100%;max-width:700px;height:10px;background:#eee;border-radius:10px;margin-bottom:10px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:10px;transition:width .5s ease;}
+  
+  /* ===== HERO ===== */
+  #hero{background:linear-gradient(135deg,#ff6b6b22,#4ecdc422);justify-content:center;}
+  .hero-content{text-align:center;max-width:600px;}
+  .hero-emoji{font-size:5rem;animation:spin 4s linear infinite;}
+  @keyframes spin{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+  h1.hero-title{font-size:2.2rem;color:var(--primary);margin:12px 0 8px;}
+  .hero-sub{font-size:1.1rem;color:#666;margin-bottom:24px;}
+  .btn{background:var(--primary);color:#fff;border:none;border-radius:30px;padding:14px 36px;font-size:1.1rem;font-weight:700;cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:var(--shadow);}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(255,107,107,.4);}
+  .btn.secondary{background:var(--secondary);}
+  .btn.secondary:hover{box-shadow:0 6px 24px rgba(78,205,196,.4);}
+  .badge-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px;}
+  .badge{background:var(--card);border-radius:12px;padding:8px 14px;font-size:.85rem;box-shadow:0 2px 8px rgba(0,0,0,.08);opacity:.5;}
+  .badge.earned{opacity:1;background:var(--accent);}
+  
+  /* ===== OBJECTIVES ===== */
+  .obj-list{list-style:none;width:100%;max-width:600px;}
+  .obj-list li{background:var(--card);border-radius:var(--radius);padding:14px 18px;margin-bottom:10px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;font-size:1rem;}
+  .obj-list li::before{content:'🎯';font-size:1.2rem;}
+  
+  /* ===== WARMUP ===== */
+  .warmup-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:640px;}
+  .warmup-card{background:var(--card);border-radius:var(--radius);padding:20px;text-align:center;cursor:pointer;box-shadow:var(--shadow);transition:transform .2s;font-size:1rem;}
+  .warmup-card:hover{transform:scale(1.05);}
+  .warmup-card.correct{background:#d4edda;border:2px solid #28a745;}
+  .warmup-card.wrong{background:#f8d7da;border:2px solid #dc3545;animation:shake .3s;}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+  .warmup-card .word-big{font-size:1.4rem;font-weight:700;color:var(--primary);}
+  .warmup-card .word-cn{font-size:.85rem;color:#888;margin-top:4px;}
+  
+  /* ===== SECTION TITLE ===== */
+  .section-title{font-size:1.6rem;font-weight:700;color:var(--primary);margin-bottom:6px;text-align:center;}
+  .section-sub{font-size:.95rem;color:#666;margin-bottom:20px;text-align:center;}
+  
+  /* ===== DRAG DROP ===== */
+  .drag-area{width:100%;max-width:680px;}
+  .word-bank{display:flex;flex-wrap:wrap;gap:8px;background:#f0f0f0;border-radius:var(--radius);padding:14px;margin-bottom:16px;min-height:60px;}
+  .drag-word{background:var(--primary);color:#fff;border-radius:20px;padding:8px 16px;cursor:grab;font-weight:600;font-size:.95rem;transition:transform .2s,opacity .2s;user-select:none;}
+  .drag-word:hover{transform:scale(1.08);}
+  .drag-word.dragging{opacity:.4;}
+  .drop-zones{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .drop-zone{background:var(--card);border:3px dashed #ddd;border-radius:var(--radius);padding:14px;min-height:100px;transition:border-color .2s;}
+  .drop-zone.drag-over{border-color:var(--secondary);background:#4ecdc422;}
+  .drop-zone h3{font-size:1rem;margin-bottom:10px;color:var(--secondary);display:flex;align-items:center;gap:6px;}
+  .dropped-words{display:flex;flex-wrap:wrap;gap:6px;min-height:40px;}
+  .dropped-chip{background:var(--secondary);color:#fff;border-radius:16px;padding:5px 12px;font-size:.9rem;font-weight:600;display:flex;align-items:center;gap:4px;cursor:pointer;}
+  .dropped-chip .remove{font-size:.75rem;opacity:.7;}
+  
+  /* ===== FILL BLANK ===== */
+  .fill-question{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:14px;width:100%;max-width:660px;}
+  .fill-question .sentence{font-size:1.1rem;line-height:2;margin-bottom:10px;}
+  .fill-input{border:2px solid #ddd;border-radius:8px;padding:6px 12px;font-size:1rem;width:80px;text-align:center;transition:border-color .2s;}
+  .fill-input:focus{outline:none;border-color:var(--secondary);}
+  .fill-input.correct-ans{border-color:#28a745;background:#d4edda;}
+  .fill-input.wrong-ans{border-color:#dc3545;background:#f8d7da;}
+  .hint-text{font-size:.85rem;color:#888;margin-top:6px;}
+  .options-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .opt-btn{background:#f0f0f0;border:2px solid #ddd;border-radius:20px;padding:6px 16px;cursor:pointer;font-size:.9rem;transition:all .2s;}
+  .opt-btn:hover{background:var(--accent);}
+  .opt-btn.selected-opt{background:var(--secondary);color:#fff;border-color:var(--secondary);}
+  
+  /* ===== SENTENCE BUILD ===== */
+  .sentence-builder{width:100%;max-width:680px;}
+  .build-area{background:var(--card);border:3px dashed var(--secondary);border-radius:var(--radius);min-height:60px;padding:14px;display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;align-items:center;}
+  .build-area.empty-hint::before{content:'把单词拖到这里组成句子 👇';color:#bbb;font-size:.9rem;}
+  .word-piece{background:var(--accent);border-radius:20px;padding:8px 14px;cursor:pointer;font-size:1rem;font-weight:600;color:var(--text);transition:transform .2s,box-shadow .2s;box-shadow:0 2px 8px rgba(0,0,0,.1);}
+  .word-piece:hover{transform:scale(1.08);box-shadow:0 4px 12px rgba(0,0,0,.15);}
+  .word-piece.in-sentence{background:var(--primary);color:#fff;}
+  .build-result{background:var(--card);border-radius:var(--radius);padding:16px;text-align:center;margin-top:10px;font-size:1rem;box-shadow:var(--shadow);}
+  .build-result.correct-build{border:2px solid #28a745;background:#d4edda;}
+  .build-result.wrong-build{border:2px solid #dc3545;background:#f8d7da;}
+  
+  /* ===== BOSS ===== */
+  .boss-area{width:100%;max-width:680px;text-align:center;}
+  .boss-img{font-size:5rem;animation:bossWiggle 1s infinite alternate;}
+  @keyframes bossWiggle{from{transform:scale(1)}to{transform:scale(1.1) rotate(3deg)}}
+  .boss-hp{width:100%;height:20px;background:#eee;border-radius:10px;margin:14px 0;overflow:hidden;}
+  .boss-hp-fill{height:100%;background:linear-gradient(90deg,#ff6b6b,#ff4444);border-radius:10px;transition:width .5s;}
+  .boss-q{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin:14px 0;font-size:1.1rem;}
+  .boss-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+  .boss-opt{background:#f0f0f0;border:2px solid #ddd;border-radius:var(--radius);padding:14px;cursor:pointer;font-size:1rem;font-weight:600;transition:all .2s;}
+  .boss-opt:hover{background:var(--accent);}
+  .boss-opt.b-correct{background:#d4edda;border-color:#28a745;}
+  .boss-opt.b-wrong{background:#f8d7da;border-color:#dc3545;}
+  
+  /* ===== REPORT ===== */
+  .report-card{background:var(--card);border-radius:24px;padding:30px;width:100%;max-width:620px;box-shadow:var(--shadow);text-align:center;}
+  .score-circle{width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:2.2rem;font-weight:700;color:#fff;}
+  .achievement-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:20px 0;}
+  .ach-item{background:#f9f9f9;border-radius:12px;padding:10px;text-align:center;font-size:.8rem;}
+  .ach-item .ach-icon{font-size:1.8rem;margin-bottom:4px;}
+  .ach-item.unlocked{background:var(--accent);}
+  
+  /* ===== EXTENSION ===== */
+  .ext-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:660px;}
+  .ext-card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);text-align:center;}
+  .ext-card .ext-icon{font-size:2.5rem;margin-bottom:10px;}
+  .ext-card h3{font-size:1rem;color:var(--primary);margin-bottom:6px;}
+  .ext-card p{font-size:.85rem;color:#666;}
+  
+  /* ===== FEEDBACK TOAST ===== */
+  #toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:12px 28px;border-radius:30px;font-size:1rem;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;}
+  #toast.show{opacity:1;}
+  
+  /* ===== ANIMATION OVERLAY ===== */
+  .star-burst{position:fixed;pointer-events:none;z-index:1000;font-size:2rem;animation:starFloat 1s ease-out forwards;}
+  @keyframes starFloat{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-80px) scale(1.5)}}
+  
+  /* ===== RESPONSIVE ===== */
+  @media(max-width:480px){
+    .drop-zones{grid-template-columns:1fr;}
+    .achievement-grid{grid-template-columns:repeat(2,1fr);}
+    .ext-grid{grid-template-columns:1fr;}
+    .warmup-grid{grid-template-columns:repeat(2,1fr);}
+    h1.hero-title{font-size:1.6rem;}
+  }
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- ===== HERO ===== -->
+<div id="hero" class="screen active">
+  <div class="hero-content">
+    <div class="hero-emoji">📚</div>
+    <h1 class="hero-title">名词与冠词</h1>
+    <p style="font-size:1.3rem;color:var(--secondary);font-weight:700;">Nouns &amp; Articles</p>
+    <p class="hero-sub">三年级英语语法 · 糖果闯关版 🍬<br>AI小熊陪你一起学英语！</p>
+    <div class="badge-row" id="hero-badges">
+      <span class="badge" data-id="0">🌟 初学者</span>
+      <span class="badge" data-id="1">🏆 分类达人</span>
+      <span class="badge" data-id="2">✍️ 填空王</span>
+      <span class="badge" data-id="3">🧩 造句高手</span>
+      <span class="badge" data-id="4">👹 Boss猎人</span>
+      <span class="badge" data-id="5">⭐ 冠词专家</span>
+      <span class="badge" data-id="6">🎓 语法达人</span>
+      <span class="badge" data-id="7">🐻 Bear护卫</span>
+    </div>
+    <button class="btn" style="margin-top:24px;" onclick="goTo('objectives')">开始闯关 🚀</button>
+  </div>
+</div>
+
+<!-- ===== OBJECTIVES ===== -->
+<div id="objectives" class="screen">
+  <div class="top-bar">
+    <span class="bear">🐻</span>
+    <span style="font-weight:700;color:var(--primary);">今天的学习目标</span>
+    <span class="stars-display">⭐ <span id="obj-stars">0</span></span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="obj-progress" style="width:10%"></div></div>
+  <div class="section-title">🎯 学习目标</div>
+  <div class="section-sub">今天我们要学习什么？</div>
+  <ul class="obj-list">
+    <li>认识名词 (Noun) —— 事物的名称</li>
+    <li>区分可数名词与不可数名词</li>
+    <li>学会使用不定冠词 a / an</li>
+    <li>学会使用定冠词 the</li>
+    <li>能在句子中正确使用冠词</li>
+  </ul>
+  <div style="margin-top:20px;background:var(--card);border-radius:var(--radius);padding:16px;max-width:580px;width:100%;box-shadow:var(--shadow);">
+    <p style="font-size:1rem;line-height:1.7;">🐻 <strong>小熊说：</strong>冠词就像名词的"帽子"！a/an 是第一次见面时戴的帽子，the 是老朋友才戴的帽子。记住了吗？</p>
+  </div>
+  <button class="btn secondary" style="margin-top:24px;" onclick="goTo('warmup')">进入热身 🔥</button>
+</div>
+
+<!-- ===== WARMUP ===== -->
+<div id="warmup" class="screen">
+  <div class="top-bar">
+    <span class="bear">🐻</span>
+    <span style="font-weight:700;color:var(--primary);">热身活动</span>
+    <span class="stars-display">⭐ <span id="wu-stars">0</span></span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" style="width:25%"></div></div>
+  <div class="section-title">🔥 热身：认识单词</div>
+  <div class="section-sub">点击正确的名词图卡，获得⭐！</div>
+  <div class="warmup-grid" id="warmup-grid"></div>
+  <div id="warmup-msg" style="margin-top:16px;font-size:1rem;color:var(--secondary);font-weight:600;text-align:center;min-height:30px;"></div>
+  <button class="btn secondary" style="margin-top:20px;display:none;" id="warmup-next" onclick="goTo('level1')">进入第一关 ➡️</button>
+</div>
+
+<!-- ===== LEVEL 1: DRAG ===== -->
+<div id="level1" class="screen">
+  <div class="top-bar">
+    <span class="bear">🐻</span>
+    <span style="font-weight:700;color:var(--primary);">第一关 🌟</span>
+    <span class="stars-display">⭐ <span id="l1-stars">0</span></span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" style="width:40%"></div></div>
+  <div class="section-title">🌟 第一关：名词大分类</div>
+  <div class="section-sub">拖动单词到正确的分类框！</div>
+  <div class="drag-area">
+    <div class="word-bank" id="word-bank"></div>
+    <div class="drop-zones">
+      <div class="drop-zone" id="zone-person" ondragover="allowDrop(event)" ondrop="dropWord(event,'person')">
+        <h3>👤 人物 (People)</h3>
+        <div class="dropped-words" id="dropped-person"></div>
+      </div>
+      <div class="drop-zone" id="zone-thing" ondragover="allowDrop(event)" ondrop="dropWord(event,'thing')">
+        <h3>📦 物品 (Things)</h3>
+        <div class="dropped-words" id="dropped-thing"></div>
+      </div>
+      <div class="drop-zone" id="zone-place" ondragover="allowDrop(event)" ondrop="dropWord(event,'place')">
+        <h3>🏫 地点 (Places)</h3>
+        <div class="dropped-words" id="dropped-place"></div>
+      </div>
+      <div class="drop-zone" id="zone-animal" ondragover="allowDrop(event)" ondrop="dropWord(event,'animal')">
+        <h3>🐾 动物 (Animals)</h3>
+        <div class="dropped-words" id="dropped-animal"></div>
+      </div>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:10px;justify-content:center;">
+      <button class="btn" onclick="checkDrag()">检查答案 ✓</button>
+      <button class="btn secondary" onclick="resetDrag()">重置 🔄</button>
+    </div>
+    <div id="drag-result" style="margin-top:12px;text-align:center;font-size:1rem;font-weight:600;min-height:24px;"></div>
+  </div>
+</div>
+
+<!-- ===== LEVEL 2: FILL BLANK ===== -->
+<div id="level2" class="screen">
+  <div class="top-bar">
+    <span class="bear">🐻</span>
+    <span style="font-weight:700;color:var(--primary);">第二关 🌟🌟</span>
+    <span class="stars-display">⭐ <span id="l2-stars">0</span></span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" style="width:60%"></div></div>
+  <div class="section-title">🌟🌟 第二关：填写冠词</div>
+  <div class="section-sub">选择正确的冠词 a / an / the，填入空白处！</div>
+  <div id="fill-questions"></div>
+  <button class="btn" onclick="checkFill()" style="margin-top:8px;">提交答案 ✓</button>
+  <div id="fill-result" style="margin-top:12px;text-align:center;font-size:1rem;font-weight:600;min-height:24px;"></div>
+  <button class="btn secondary" id="l2-next" style="margin-top:14px;display:none;" onclick="goTo('level3')">进入第三关 ➡️</button>
+</div>
+
+<!-- ===== LEVEL 3: SENTENCE BUILD ===== -->
+<div id="level3" class="screen">
+  <div class="top-bar">
+    <span class="bear">🐻</span>
+    <span style="font-weight:700;color:var(--primary);">第三关 🌟🌟🌟</span>
+    <span class="stars-display">⭐ <span id="l3-stars">0</span></span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" style="width:75%"></div></div>
+  <div class="section-title">🌟🌟🌟 第三关：造句游戏</div>
+  <div class="section-sub">点击单词卡片，按正确顺序排列句子！</div>
+  <div class="sentence-builder">
+    <div id="l3-question" style="background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:14px;box-shadow:var(--shadow);">
+      <p id="l3-q-text" style="font-size:1rem;color:#666;margin-bottom:8px;"></p>
+    </div>
+    <div class="build-area empty-hint" id="build-area"></div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;" id="piece-bank"></div>
+    <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;justify-content:center;">
+      <button class="btn" onclick="checkSentence()">检查句子 ✓</button>
+      <button class="btn secondary" onclick="clearSentence()">清空 🗑️</button>
+      <button class="btn" onclick="nextSentence()" style="background:#9b59b6;">下一句 ➡️</button>
+    </div>
+    <div id="l3-result" style="margin-top:12px;text-align:center;font-size:1rem;font-weight:600;min-height:24px;"></div>
+    <div id="l3-progress-text" style="text-align:center;color:#888;font-size:.9rem;margin-top:8px;"></div>
+  </div>
+  <button class="btn secondary" id="l3-next" style="margin-top:20px;display:none;" onclick="goTo('boss')">挑战Boss 👹</button>
+</div>
+
+<!-- ===== BOSS ===== -->
+<div id="boss" class="screen">
+  <div class="top-bar">
+    <span class="bear">🐻</span>
+    <span style="font-weight:700;color:var(--primary);">Boss关卡 👹</span>
+    <span class="stars-display">⭐ <span id="boss-stars">0</span></span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" style="width:88%"></div></div>
+  <div class="boss-area">
+    <div class="boss-img">👹</div>
+    <div style="font-size:1.2rem;font-weight:700;color:var(--primary);">冠词怪兽</div>
+    <div style="color:#888;font-size:.9rem;margin-top:4px;">击败它需要正确回答 5 道题！</div>
+    <div class="boss-hp"><div class="boss-hp-fill" id="boss-hp-fill" style="width:100%"></div></div>
+    <div id="boss-hp-text" style="font-size:.9rem;color:#888;margin-bottom:10px;">怪兽血量：5/5</div>
+    <div class="boss-q" id="boss-q-area">
+      <div id="boss-q-text" style="font-size:1.1rem;font-weight:600;margin-bottom:14px;"></div>
+      <div class="boss-opts" id="boss-opts"></div>
+    </div>
+    <div id="boss-msg" style="font-size:1rem;font-weight:700;min-height:28px;color:var(--secondary);margin-top:8px;"></div>
+  </div>
+</div>
+
+<!-- ===== REPORT ===== -->
+<div id="report" class="screen">
+  <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+  <div class="report-card">
+    <div class="bear" style="font-size:3rem;">🐻</div>
+    <h2 style="color:var(--primary);margin:10px 0;">太棒了！闯关完成！</h2>
+    <div class="score-circle" id="score-circle">0</div>
+    <p style="font-size:1rem;color:#666;" id="report-comment"></p>
+    <div style="margin:16px 0;font-size:1.1rem;font-weight:700;">⭐ 获得星星：<span id="total-stars">0</span></div>
+    <div class="achievement-grid" id="achievement-grid"></div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:20px;">
+      <button class="btn" onclick="goTo('extension')">学习拓展 📖</button>
+      <button class="btn secondary" onclick="restartGame()">再玩一次 🔄</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== EXTENSION ===== -->
+<div id="extension" class="screen">
+  <div class="top-bar">
+    <span class="bear">🐻</span>
+    <span style="font-weight:700;color:var(--primary);">拓展学习</span>
+    <span class="stars-display">⭐ <span id="ext-stars">0</span></span>
+  </div>
+  <div class="section-title">📖 拓展学习</div>
+  <div class="section-sub">巩固今天所学，探索更多！</div>
+  <div class="ext-grid">
+    <div class="ext-card">
+      <div class="ext-icon">🔤</div>
+      <h3>a vs an 规则</h3>
+      <p>辅音开头用 <strong>a</strong>：a cat, a book<br>元音开头用 <strong>an</strong>：an apple, an egg</p>
+    </div>
+    <div class="ext-card">
+      <div class="ext-icon">📌</div>
+      <h3>the 的用法</h3>
+      <p>特指某个事物：<strong>the sun</strong>, <strong>the moon</strong><br>双方都知道：<strong>Close the door.</strong></p>
+    </div>
+    <div class="ext-card">
+      <div class="ext-icon">🚫</div>
+      <h3>不用冠词</h3>
+      <p>专有名词：<strong>China</strong>, <strong>Tom</strong><br>泛指复数：<strong>Cats are cute.</strong></p>
+    </div>
+    <div class="ext-card">
+      <div class="ext-icon">📝</div>
+      <h3>今日词汇表</h3>
+      <p>apple🍎 book📚 teacher👩‍🏫 school🏫<br>dog🐶 cat🐱 chair🪑 flower🌸</p>
+    </div>
+  </div>
+  <div style="background:var(--card);border-radius:var(--radius);padding:18px;max-width:660px;width:100%;box-shadow:var(--shadow);margin-top:14px;">
+    <strong>🐻 小熊口诀：</strong><br>
+    名词是事物的名字，人地物动都算里；<br>
+    第一次见用a或an，元音开头an来帮；<br>
+    特指某物用the，双方都知才合适！
+  </div>
+  <div style="display:flex;gap:12px;margin-top:24px;flex-wrap:wrap;justify-content:center;">
+    <button class="btn" onclick="goTo('hero')">回到首页 🏠</button>
+    <button class="btn secondary" onclick="goTo('report')">查看成绩单 📊</button>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+let stars = 0, currentSentenceIdx = 0, sentencesDone = 0;
+let bossHP = 5, bossQ = 0, bossCorrect = 0;
+let achievements = Array(8).fill(false);
+let dragData = {};
+
+// ===== AUDIO =====
+function playSound(type) {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  if (type === 'correct') { osc.frequency.setValueAtTime(523, ctx.currentTime); osc.frequency.setValueAtTime(659, ctx.currentTime+.1); osc.frequency.setValueAtTime(784, ctx.currentTime+.2); gain.gain.setValueAtTime(.3, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime+.5); osc.start(); osc.stop(ctx.currentTime+.5); }
+  else if (type === 'wrong') { osc.frequency.setValueAtTime(200, ctx.currentTime); osc.frequency.setValueAtTime(150, ctx.currentTime+.15); gain.gain.setValueAtTime(.3, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime+.3); osc.start(); osc.stop(ctx.currentTime+.3); }
+  else if (type === 'star') { osc.frequency.setValueAtTime(880, ctx.currentTime); osc.frequency.setValueAtTime(1047, ctx.currentTime+.1); gain.gain.setValueAtTime(.2, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime+.4); osc.start(); osc.stop(ctx.currentTime+.4); }
+}
+
+// ===== TOAST =====
+function showToast(msg, dur=2000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+// ===== STAR BURST =====
+function burstStar(x, y) {
+  const el = document.createElement('div');
+  el.className = 'star-burst'; el.textContent = '⭐';
+  el.style.left = x + 'px'; el.style.top = y + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1000);
+}
+
+// ===== ADD STARS =====
+function addStars(n, event) {
+  stars += n;
+  document.querySelectorAll('[id$="-stars"]').forEach(el => el.textContent = stars);
+  if (event) burstStar(event.clientX || 200, event.clientY || 200);
+  playSound('star');
+}
+
+// ===== NAVIGATION =====
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'warmup') initWarmup();
+  if (id === 'level1') initDrag();
+  if (id === 'level2') initFill();
+  if (id === 'level3') initLevel3();
+  if (id === 'boss') initBoss();
+  if (id === 'report') showReport();
+  window.scrollTo(0, 0);
+}
+
+// ===== WARMUP =====
+const warmupWords = [
+  {word:'apple',cn:'苹果',isNoun:true,emoji:'🍎'},
+  {word:'run',cn:'跑',isNoun:false,emoji:'🏃'},
+  {word:'teacher',cn:'老师',isNoun:true,emoji:'👩‍🏫'},
+  {word:'blue',cn:'蓝色',isNoun:false,emoji:'💙'},
+  {word:'school',cn:'学校',isNoun:true,emoji:'🏫'},
+  {word:'happy',cn:'高兴',isNoun:false,emoji:'😊'},
+];
+let warmupClicked = 0;
+function initWarmup() {
+  const grid = document.getElementById('warmup-grid');
+  grid.innerHTML = '';
+  warmupClicked = 0;
+  warmupWords.forEach((w, i) => {
+    const card = document.createElement('div');
+    card.className = 'warmup-card';
+    card.innerHTML = `<div style="font-size:2rem">${w.emoji}</div><div class="word-big">${w.word}</div><div class="word-cn">${w.cn}</div>`;
+    card.onclick = () => handleWarmup(card, w, i);
+    grid.appendChild(card);
+  });
+  document.getElementById('warmup-msg').textContent = '点击所有的名词卡片！';
+  document.getElementById('warmup-next').style.display = 'none';
+}
+function handleWarmup(card, w, i) {
+  if (card.classList.contains('correct') || card.classList.contains('wrong')) return;
+  if (w.isNoun) {
+    card.classList.add('correct');
+    playSound('correct');
+    addStars(1);
+    warmupClicked++;
+    if (warmupClicked === warmupWords.filter(x=>x.isNoun).length) {
+      document.getElementById('warmup-msg').textContent = '🎉 所有名词都找到了！太棒了！';
+      document.getElementById('warmup-next').style.display = 'inline-block';
+      unlockAchievement(0);
+    } else {
+      document.getElementById('warmup-msg').textContent = `✅ 正确！还有 ${warmupWords.filter(x=>x.isNoun).length - warmupClicked} 个名词！`;
+    }
+  } else {
+    card.classList.add('wrong');
+    playSound('wrong');
+    showToast('❌ 这不是名词哦！');
+  }
+}
+
+// ===== LEVEL 1: DRAG =====
+const dragWords = [
+  {word:'teacher',cat:'person'},{word:'dog',cat:'animal'},{word:'park',cat:'place'},
+  {word:'book',cat:'thing'},{word:'student',cat:'person'},{word:'cat',cat:'animal'},
+  {word:'hospital',cat:'place'},{word:'pencil',cat:'thing'},{word:'doctor',cat:'person'},
+  {word:'bird',cat:'animal'}
+];
+function initDrag() {
+  const bank = document.getElementById('word-bank');
+  bank.innerHTML = '';
+  ['person','thing','place','animal'].forEach(cat => document.getElementById('dropped-'+cat).innerHTML = '');
+  dragData = {};
+  dragWords.forEach(({word, cat}) => {
+    const el = document.createElement('div');
+    el.className = 'drag-word'; el.textContent = word;
+    el.draggable = true; el.dataset.word = word; el.dataset.cat = cat;
+    el.addEventListener('dragstart', e => { e.dataTransfer.setData('text', word); el.classList.add('dragging'); dragData.currentEl = el; });
+    el.addEventListener('dragend', () => el.classList.remove('dragging'));
+    // Touch support
+    el.addEventListener('touchstart', touchStart, {passive:true});
+    el.addEventListener('touchend', touchEnd);
+    bank.appendChild(el);
+  });
+  document.getElementById('drag-result').textContent = '';
+  document.querySelectorAll('.drop-zone').forEach(z => {
+    z.addEventListener('dragover', e => { e.preventDefault(); z.classList.add('drag-over'); });
+    z.addEventListener('dragleave', () => z.classList.remove('drag-over'));
+    z.addEventListener('drop', e => { e.preventDefault(); z.classList.remove('drag-over'); });
+  });
+}
+let touchItem = null, touchCat = null;
+function touchStart(e) { touchItem = e.currentTarget; }
+function touchEnd(e) {
+  if (!touchItem) return;
+  const touch = e.changedTouches[0];
+  const els = document.elementsFromPoint(touch.clientX, touch.clientY);
+  const zone = els.find(el => el.classList.contains('drop-zone'));
+  if (zone) {
+    const cat = zone.id.replace('zone-','');
+    dropWordDirect(touchItem, cat);
+  }
+  touchItem = null;
+}
+function allowDrop(e) { e.preventDefault(); }
+function dropWord(e, cat) {
+  e.preventDefault();
+  const word = e.dataTransfer.getData('text');
+  const el = document.querySelector(`.drag-word[data-word="${word}"]`);
+  if (el) dropWordDirect(el, cat);
+}
+function dropWordDirect(el, cat) {
+  const word = el.dataset.word;
+  const container = document.getElementById('dropped-'+cat);
+  const chip = document.createElement('div');
+  chip.className = 'dropped-chip'; chip.dataset.word = word; chip.dataset.cat = cat;
+  chip.innerHTML = `${word} <span class="remove" onclick="returnWord('${word}','${cat}')">✕</span>`;
+  container.appendChild(chip);
+  el.style.display = 'none';
+}
+function returnWord(word, cat) {
+  const chip = document.querySelector(`.dropped-chip[data-word="${word}"][data-cat="${cat}"]`);
+  if (chip) chip.remove();
+  const el = document.querySelector(`.drag-word[data-word="${word}"]`);
+  if (el) el.style.display = '';
+}
+function checkDrag() {
+  const chips = document.querySelectorAll('.dropped-chip');
+  let correct = 0, total = chips.length;
+  chips.forEach(chip => {
+    const word = chip.dataset.word; const cat = chip.dataset.cat;
+    const expected = dragWords.find(w => w.word === word)?.cat;
+    if (expected === cat) { correct++; chip.style.background = '#28a745'; }
+    else { chip.style.background = '#dc3545'; }
+  });
+  const result = document.getElementById('drag-result');
+  if (correct === dragWords.length && total === dragWords.length) {
+    result.textContent = `🎉 全对！+3 ⭐ 太厉害了！`;
+    result.style.color = '#28a745';
+    addStars(3);
+    unlockAchievement(1);
+    setTimeout(() => goTo('level2'), 1500);
+  } else {
+    result.textContent = `✅ ${correct}/${dragWords.length} 正确，继续调整！`;
+    result.style.color = '#ff6b6b';
+    playSound('wrong');
+  }
+}
+function resetDrag() { initDrag(); }
+
+// ===== LEVEL 2: FILL =====
+const fillQs = [
+  {sentence:'I have ___ apple.', answer:'an', hint:'apple以元音a开头', opts:['a','an','the']},
+  {sentence:'She is ___ teacher.', answer:'a', hint:'teacher以辅音t开头', opts:['a','an','the']},
+  {sentence:'Please close ___ door.', answer:'the', hint:'特指这扇门，用the', opts:['a','an','the']},
+  {sentence:'He has ___ umbrella.', answer:'an', hint:'umbrella以元音u开头', opts:['a','an','the']},
+  {sentence:'___ sun is bright today.', answer:'The', hint:'太阳是特指，用The', opts:['A','An','The']},
+  {sentence:'This is ___ interesting book.', answer:'an', hint:'interesting以元音i开头', opts:['a','an','the']},
+];
+let fillAnswers = {};
+function initFill() {
+  fillAnswers = {};
+  const container = document.getElementById('fill-questions');
+  container.innerHTML = '';
+  fillQs.forEach((q, i) => {
+    const div = document.createElement('div');
+    div.className = 'fill-question';
+    div.innerHTML = `
+      <div class="sentence">${q.sentence.replace('___', `<input class="fill-input" id="fill-${i}" placeholder="___" autocomplete="off">`)}</div>
+      <div class="options-row">${q.opts.map(o => `<button class="opt-btn" onclick="selectOpt(${i},'${o}',this)">${o}</button>`).join('')}</div>
+      <div class="hint-text">💡 提示：${q.hint}</div>
+    `;
+    container.appendChild(div);
+  });
+  document.getElementById('fill-result').textContent = '';
+  document.getElementById('l2-next').style.display = 'none';
+}
+function selectOpt(i, val, btn) {
+  fillAnswers[i] = val;
+  document.getElementById('fill-'+i).value = val;
+  btn.closest('.options-row').querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected-opt'));
+  btn.classList.add('selected-opt');
+}
+function checkFill() {
+  let correct = 0;
+  fillQs.forEach((q, i) => {
+    const input = document.getElementById('fill-'+i);
+    const val = (input.value || '').trim().toLowerCase();
+    if (val === q.answer.toLowerCase()) {
+      correct++;
+      input.classList.add('correct-ans'); input.classList.remove('wrong-ans');
+    } else {
+      input.classList.add('wrong-ans'); input.classList.remove('correct-ans');
+    }
+  });
+  const result = document.getElementById('fill-result');
+  if (correct === fillQs.length) {
+    result.textContent = '🎉 全部正确！+ 4 ⭐';
+    result.style.color = '#28a745';
+    addStars(4); unlockAchievement(2);
+    document.getElementById('l2-next').style.display = 'inline-block';
+    playSound('correct');
+  } else {
+    result.textContent = `✅ ${correct}/${fillQs.length} 正确，红色标注的需要修改！`;
+    result.style.color = '#ff6b6b';
+    playSound('wrong');
+  }
+}
+
+// ===== LEVEL 3: SENTENCE BUILD =====
+const sentences = [
+  {cn:'我有一只猫。', words:['I','have','a','cat','.'], correct:'I have a cat .'},
+  {cn:'这是一只苹果。', words:['This','is','an','apple','.'], correct:'This is an apple .'},
+  {cn:'太阳是黄色的。', words:['The','sun','is','yellow','.'], correct:'The sun is yellow .'},
+  {cn:'她是一名教师。', words:['She','is','a','teacher','.'], correct:'She is a teacher .'},
+];
+let builtSentence = [];
+function initLevel3() {
+  currentSentenceIdx = 0; sentencesDone = 0;
+  loadSentence();
+  document.getElementById('l3-next').style.display = 'none';
+}
+function loadSentence() {
+  if (currentSentenceIdx >= sentences.length) {
+    document.getElementById('l3-result').textContent = '🎉 所有句子完成！';
+    document.getElementById('l3-next').style.display = 'inline-block';
+    unlockAchievement(3); addStars(3); return;
+  }
+  const s = sentences[currentSentenceIdx];
+  builtSentence = [];
+  document.getElementById('l3-q-text').textContent = `把下面的单词排成句子：${s.cn}`;
+  const area = document.getElementById('build-area');
+  area.innerHTML = ''; area.classList.add('empty-hint');
+  const bank = document.getElementById('piece-bank');
+  bank.innerHTML = '';
+  const shuffled = [...s.words].sort(() => Math.random() - .5);
+  shuffled.forEach(w => {
+    const el = document.createElement('div');
+    el.className = 'word-piece'; el.textContent = w; el.dataset.word = w;
+    el.onclick = () => addToSentence(w, el);
+    bank.appendChild(el);
+  });
+  document.getElementById('l3-result').textContent = '';
+  document.getElementById('l3-progress-text').textContent = `句子 ${currentSentenceIdx+1} / ${sentences.length}`;
+}
+function addToSentence(word, el) {
+  if (el.classList.contains('in-sentence')) return;
+  builtSentence.push(word);
+  el.classList.add('in-sentence');
+  const area = document.getElementById('build-area');
+  area.classList.remove('empty-hint');
+  const chip = document.createElement('span');
+  chip.style.cssText = 'background:var(--primary);color:#fff;border-radius:16px;padding:7px 14px;font-weight:700;font-size:1rem;cursor:pointer;';
+  chip.textContent = word;
+  chip.onclick = () => { builtSentence = builtSentence.filter((_,i) => i !== builtSentence.lastIndexOf(word)); chip.remove(); el.classList.remove('in-sentence'); if (!area.children.length) area.classList.add('empty-hint'); };
+  area.appendChild(chip);
+}
+function checkSentence() {
+  const s = sentences[currentSentenceIdx];
+  const built = builtSentence.join(' ');
+  const result = document.getElementById('l3-result');
+  if (built === s.correct) {
+    result.textContent = '🎉 完美！+2 ⭐';
+    result.style.color = '#28a745';
+    addStars(2); sentencesDone++;
+    playSound('correct');
+  } else {
+    result.textContent = `❌ 再试试！正确：${s.correct}`;
+    result.style.color = '#ff6b6b';
+    playSound('wrong');
+  }
+}
+function clearSentence() {
+  builtSentence = [];
+  const area = document.getElementById('build-area');
+  area.innerHTML = ''; area.classList.add('empty-hint');
+  document.querySelectorAll('#piece-bank .word-piece').forEach(el => el.classList.remove('in-sentence'));
+}
+function nextSentence() {
+  currentSentenceIdx++;
+  loadSentence();
+}
+
+// ===== BOSS =====
+const bossQuestions = [
+  {q:'___ elephant is big.',opts:['A','An','The','—'],a:'An'},
+  {q:'I see ___ bird in the tree.',opts:['a','an','the','—'],a:'a'},
+  {q:'___ Earth moves around the sun.',opts:['A','An','The','—'],a:'The'},
+  {q:'She has ___ orange.',opts:['a','an','the','—'],a:'an'},
+  {q:'Open ___ window, please.',opts:['a','an','the','—'],a:'the'},
+];
+function initBoss() {
+  bossHP = 5; bossQ = 0; bossCorrect = 0;
+  updateBossHP(); loadBossQ();
+}
+function updateBossHP() {
+  const pct = (bossHP / 5) * 100;
+  document.getElementById('boss-hp-fill').style.width = pct + '%';
+  document.getElementById('boss-hp-text').textContent = `怪兽血量：${bossHP}/5`;
+}
+function loadBossQ() {
+  if (bossQ >= bossQuestions.length) {
+    document.getElementById('boss-msg').textContent = '🎉 Boss 被打败了！';
+    playSound('correct'); unlockAchievement(4);
+    addStars(5);
+    setTimeout(() => goTo('report'), 2000);
+    return;
+  }
+  const q = bossQuestions[bossQ];
+  document.getElementById('boss-q-text').innerHTML = `<strong>选择正确的冠词：</strong><br>${q.q}`;
+  const opts = document.getElementById('boss-opts');
+  opts.innerHTML = '';
+  q.opts.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'boss-opt'; btn.textContent = opt;
+    btn.onclick = () => answerBoss(opt, btn);
+    opts.appendChild(btn);
+  });
+  document.getElementById('boss-msg').textContent = '';
+}
+function answerBoss(ans, btn) {
+  const q = bossQuestions[bossQ];
+  document.querySelectorAll('.boss-opt').forEach(b => b.onclick = null);
+  if (ans === q.a) {
+    btn.classList.add('b-correct');
+    bossHP--; bossCorrect++;
+    updateBossHP();
+    document.getElementById('boss-msg').textContent = '💥 命中！+1 伤害！';
+    playSound('correct');
+  } else {
+    btn.classList.add('b-wrong');
+    document.querySelectorAll('.boss-opt').forEach(b => { if (b.textContent === q.a) b.classList.add('b-correct'); });
+    document.getElementById('boss-msg').textContent = '❌ 答错了！没有伤害...';
+    playSound('wrong');
+  }
+  bossQ++;
+  setTimeout(loadBossQ, 1200);
+}
+
+// ===== ACHIEVEMENTS =====
+const achievementDefs = [
+  {icon:'🌟',name:'初学者'},{icon:'🏆',name:'分类达人'},{icon:'✍️',name:'填空王'},
+  {icon:'🧩',name:'造句高手'},{icon:'👹',name:'Boss猎人'},{icon:'⭐',name:'冠词专家'},
+  {icon:'🎓',name:'语法达人'},{icon:'🐻',name:'Bear护卫'},
+];
+function unlockAchievement(i) {
+  if (!achievements[i]) {
+    achievements[i] = true;
+    showToast(`🏆 成就解锁：${achievementDefs[i].name}！`);
+    document.querySelectorAll('#hero-badges .badge').forEach((b, idx) => {
+      if (idx === i) b.classList.add('earned');
+    });
+  }
+}
+
+// ===== REPORT =====
+function showReport() {
+  const total = stars;
+  document.getElementById('total-stars').textContent = total;
+  const pct = Math.min(100, Math.round((total / 20) * 100));
+  document.getElementById('score-circle').textContent = pct + '%';
+  const comments = ['继续加油！💪','不错哦！😊','很棒！⭐','太厉害了！🏆','完美！🎉'];
+  document.getElementById('report-comment').textContent = comments[Math.min(4, Math.floor(pct/20))];
+  const grid = document.getElementById('achievement-grid');
+  grid.innerHTML = '';
+  achievementDefs.forEach((a, i) => {
+    const div = document.createElement('div');
+    div.className = 'ach-item' + (achievements[i] ? ' unlocked' : '');
+    div.innerHTML = `<div class="ach-icon">${a.icon}</div><div>${a.name}</div>`;
+    grid.appendChild(div);
+  });
+  unlockAchievement(6);
+  if (stars >= 15) unlockAchievement(5);
+  if (stars >= 18) unlockAchievement(7);
+}
+function restartGame() {
+  stars = 0; achievements = Array(8).fill(false);
+  bossHP = 5; currentSentenceIdx = 0;
+  document.querySelectorAll('[id$="-stars"]').forEach(el => el.textContent = 0);
+  goTo('hero');
+}
+</script>
+</body>
+</html>

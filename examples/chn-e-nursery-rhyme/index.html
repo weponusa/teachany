@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>儿歌童谣 · 一年级语文</title>
+<style>
+:root {
+  --bg: #fffbf0;
+  --primary: #ff6b6b;
+  --secondary: #4ecdc4;
+  --accent: #ffe66d;
+  --card: #fff;
+  --text: #333;
+  --radius: 20px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.10);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); font-family: 'Segoe UI', 'PingFang SC', 'Comic Sans MS', sans-serif; color: var(--text); min-height: 100vh; overflow-x: hidden; }
+.section { display: none; min-height: 100vh; padding: 20px; }
+.section.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+/* HERO */
+#hero { background: linear-gradient(135deg, #ff9ff3 0%, #ff6b6b 30%, #ffe66d 70%, #4ecdc4 100%); position: relative; overflow: hidden; }
+.floating-icons { position: absolute; inset: 0; pointer-events: none; }
+.float-icon { position: absolute; font-size: 2.5em; animation: floatAround linear infinite; }
+.hero-content { position: relative; text-align: center; color: white; }
+.hero-emoji { font-size: 90px; animation: wiggle 1.5s ease-in-out infinite; }
+.hero-title { font-size: 2.8em; font-weight: 900; text-shadow: 0 4px 12px rgba(0,0,0,0.2); margin-bottom: 8px; letter-spacing: 2px; }
+.hero-sub { font-size: 1.2em; opacity: 0.95; margin-bottom: 28px; }
+.hero-tags { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 28px; }
+.hero-tag { background: rgba(255,255,255,0.3); border-radius: 20px; padding: 6px 16px; font-size: 0.95em; backdrop-filter: blur(4px); }
+.btn-start { background: white; color: var(--primary); font-size: 1.4em; font-weight: 900; border: none; border-radius: var(--radius); padding: 16px 44px; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,0.15); transition: all 0.3s; letter-spacing: 1px; }
+.btn-start:hover { transform: translateY(-3px) scale(1.05); }
+
+/* CARDS */
+.card { background: var(--card); border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow); width: 100%; max-width: 680px; margin: 10px 0; }
+.card-title { font-size: 1.5em; font-weight: 800; color: var(--primary); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+.section-label { background: var(--accent); color: #333; font-size: 0.8em; font-weight: 700; padding: 3px 12px; border-radius: 12px; }
+
+/* PROGRESS */
+.progress-bar-wrap { width: 100%; max-width: 680px; margin-bottom: 16px; }
+.progress-bar { height: 14px; background: #e0e0e0; border-radius: 10px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #ff6b6b, #ffe66d, #4ecdc4); border-radius: 10px; transition: width 0.6s; }
+.progress-label { font-size: 0.9em; color: #888; margin-bottom: 4px; text-align: right; }
+
+/* POEM DISPLAY */
+.poem-display { background: linear-gradient(135deg, #fff9e6, #fff3d4); border-radius: 24px; padding: 32px; text-align: center; position: relative; overflow: hidden; border: 3px solid var(--accent); }
+.poem-display::before { content: '✨'; position: absolute; top: 12px; left: 16px; font-size: 1.5em; animation: twinkle 2s infinite; }
+.poem-display::after { content: '✨'; position: absolute; top: 12px; right: 16px; font-size: 1.5em; animation: twinkle 2s infinite 0.5s; }
+.poem-title { font-size: 1.8em; font-weight: 900; color: var(--primary); margin-bottom: 8px; }
+.poem-author { color: #888; font-size: 0.95em; margin-bottom: 20px; }
+.poem-lines { display: flex; flex-direction: column; gap: 12px; }
+.poem-line { font-size: 1.5em; font-weight: 700; color: #333; letter-spacing: 4px; cursor: pointer; padding: 8px 16px; border-radius: 12px; transition: all 0.3s; }
+.poem-line:hover { background: rgba(255,107,107,0.1); transform: scale(1.02); }
+.poem-line.highlight-line { background: rgba(255,230,109,0.5); transform: scale(1.04); }
+.poem-pinyin { font-size: 0.85em; color: #4ecdc4; letter-spacing: 1px; display: block; margin-bottom: 2px; }
+
+/* RHYTHM ANIMATION */
+.rhythm-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--primary); margin: 0 3px; animation: rhythmBounce 0.8s ease-in-out infinite; }
+.rhythm-bar { display: flex; justify-content: center; align-items: center; gap: 4px; margin: 12px 0; }
+
+/* CHARACTER CARDS */
+.char-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 12px; }
+.char-card { background: linear-gradient(135deg, #fff9e6, #fff3d4); border-radius: 16px; padding: 16px 12px; text-align: center; cursor: pointer; border: 2px solid var(--accent); transition: all 0.3s; }
+.char-card:hover { transform: translateY(-4px) scale(1.05); box-shadow: 0 8px 24px rgba(255,230,109,0.4); }
+.char-card.matched { background: linear-gradient(135deg, #d4edda, #c8f5d0); border-color: #28a745; }
+.char-big { font-size: 2.5em; margin-bottom: 6px; }
+.char-pinyin { font-size: 0.85em; color: var(--secondary); font-weight: 600; }
+.char-meaning { font-size: 0.82em; color: #888; margin-top: 4px; }
+
+/* CONNECT LINES */
+.connect-game { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.connect-col { display: flex; flex-direction: column; gap: 12px; }
+.connect-item { background: var(--card); border: 2px solid #e0e0e0; border-radius: 14px; padding: 14px 18px; cursor: pointer; font-size: 1.05em; text-align: center; transition: all 0.25s; user-select: none; }
+.connect-item:hover { border-color: var(--secondary); background: #f0faf9; }
+.connect-item.selected { border-color: var(--primary); background: #fff5f5; transform: scale(1.03); }
+.connect-item.matched { border-color: #28a745; background: #d4edda; color: #155724; pointer-events: none; }
+.connect-item.wrong { border-color: #dc3545; background: #f8d7da; animation: shake 0.3s; }
+
+/* FILL GAME */
+.poem-fill { font-size: 1.4em; line-height: 2.5em; text-align: center; background: linear-gradient(135deg, #fff9e6, #fff3d4); border-radius: 20px; padding: 24px; letter-spacing: 3px; }
+.fill-blank-big { display: inline-block; border-bottom: 3px solid var(--primary); min-width: 50px; text-align: center; cursor: pointer; color: var(--primary); font-weight: 700; padding: 0 4px; font-size: 1em; }
+.choice-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+.choice-btn { font-size: 1.4em; background: var(--card); border: 2px solid var(--accent); border-radius: 14px; padding: 10px 20px; cursor: pointer; transition: all 0.2s; font-weight: 700; }
+.choice-btn:hover { background: var(--accent); transform: scale(1.08); }
+.choice-btn.used { opacity: 0.3; pointer-events: none; }
+
+/* BOSS */
+.boss-scene { position: relative; text-align: center; }
+.boss-character { font-size: 80px; margin-bottom: 8px; display: block; }
+.boss-hp { height: 18px; background: #e0e0e0; border-radius: 10px; overflow: hidden; margin: 10px 0; }
+.boss-hp-fill { height: 100%; background: linear-gradient(90deg, #ff6b6b, #ffa07a); border-radius: 10px; transition: width 0.6s; }
+.quiz-box { background: linear-gradient(135deg, #fff9e6, #fff3d4); border-radius: 20px; padding: 20px; margin: 16px 0; font-size: 1.1em; font-weight: 700; text-align: center; border: 2px solid var(--accent); }
+.quiz-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.quiz-opt { background: var(--card); border: 2px solid #e0e0e0; border-radius: 14px; padding: 14px; font-size: 1.1em; cursor: pointer; transition: all 0.25s; font-weight: 700; text-align: center; }
+.quiz-opt:hover { border-color: var(--secondary); background: #f0faf9; transform: scale(1.03); }
+
+/* SCOREBOARD */
+.score-big { font-size: 5em; font-weight: 900; color: var(--primary); line-height: 1; text-align: center; }
+.ach-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin: 20px 0; }
+.ach-badge { border-radius: 16px; padding: 14px; text-align: center; transition: transform 0.2s; }
+.ach-badge.unlocked { background: linear-gradient(135deg, #ffe66d33, #ffd70055); border: 2px solid var(--accent); }
+.ach-badge.locked { background: #f0f0f0; opacity: 0.4; filter: grayscale(1); }
+.ach-badge:hover.unlocked { transform: scale(1.06); }
+.ach-icon-big { font-size: 2em; margin-bottom: 6px; }
+.ach-name { font-size: 0.85em; font-weight: 700; }
+
+/* EXTENSION */
+.ext-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; width: 100%; max-width: 680px; }
+.ext-card { background: var(--card); border-radius: 20px; padding: 20px 16px; text-align: center; cursor: pointer; box-shadow: var(--shadow); transition: all 0.3s; }
+.ext-card:hover { transform: translateY(-5px) scale(1.03); }
+.ext-icon { font-size: 2.8em; margin-bottom: 8px; }
+
+/* AI COMPANION */
+.ai-companion { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; z-index: 500; }
+.ai-bubble { background: var(--card); border-radius: 18px 18px 4px 18px; padding: 12px 18px; box-shadow: var(--shadow); max-width: 200px; font-size: 0.92em; line-height: 1.5; display: none; }
+.ai-bubble.show { display: block; animation: fadeIn 0.3s; }
+.ai-avatar { width: 58px; height: 58px; background: linear-gradient(135deg, #ff9ff3, #ff6b6b); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2em; cursor: pointer; box-shadow: 0 4px 16px rgba(255,107,107,0.4); transition: transform 0.3s; }
+.ai-avatar:hover { transform: scale(1.12) rotate(10deg); }
+
+/* ACHIEVEMENT POPUP */
+.achievement-popup { position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, #ffe66d, #ffd700); border-radius: 20px; padding: 14px 22px; box-shadow: 0 8px 32px rgba(255,215,0,0.4); z-index: 1000; display: none; }
+.achievement-popup.show { display: flex; align-items: center; gap: 10px; animation: slideInRight 0.5s ease, fadeOut 0.5s ease 2.5s forwards; }
+
+/* BUTTONS */
+.nav-row { display: flex; gap: 12px; margin-top: 18px; justify-content: center; flex-wrap: wrap; }
+.btn { border: none; border-radius: 14px; padding: 12px 26px; font-size: 1em; font-weight: 700; cursor: pointer; transition: all 0.25s; }
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: #e55a5a; transform: translateY(-2px); }
+.btn-secondary { background: var(--secondary); color: white; }
+.btn-secondary:hover { background: #3ab8af; transform: translateY(-2px); }
+.btn-ghost { background: #f0f0f0; color: #555; }
+.btn-ghost:hover { background: #e0e0e0; }
+.btn-accent { background: var(--accent); color: #333; }
+.btn-accent:hover { background: #ffd740; transform: translateY(-2px); }
+
+/* SOUND TOGGLE */
+.sound-btn { position: fixed; top: 16px; right: 16px; background: white; border: none; border-radius: 50%; width: 44px; height: 44px; font-size: 1.3em; cursor: pointer; box-shadow: var(--shadow); z-index: 999; transition: transform 0.2s; }
+.sound-btn:hover { transform: scale(1.1); }
+
+/* TIP BOX */
+.tip-box { background: linear-gradient(135deg, #e8f8f7, #d4f4f1); border-left: 4px solid var(--secondary); border-radius: 12px; padding: 12px 16px; margin: 10px 0; font-size: 0.95em; }
+
+/* ANIMATIONS */
+@keyframes wiggle { 0%,100%{transform:rotate(-6deg);}50%{transform:rotate(6deg);} }
+@keyframes floatAround { 0%{transform:translateY(0) rotate(0);opacity:0.7;} 50%{opacity:1;} 100%{transform:translateY(-80px) rotate(360deg);opacity:0.3;} }
+@keyframes rhythmBounce { 0%,100%{transform:scaleY(1);} 50%{transform:scaleY(2);} }
+@keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-5px);} 75%{transform:translateX(5px);} }
+@keyframes twinkle { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.5;transform:scale(0.8);} }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
+@keyframes slideInRight { from{transform:translateX(120%);opacity:0;} to{transform:translateX(0);opacity:1;} }
+@keyframes fadeOut { from{opacity:1;} to{opacity:0;pointer-events:none;} }
+@keyframes starPop { 0%{transform:scale(0)rotate(-30deg);} 60%{transform:scale(1.4)rotate(10deg);} 100%{transform:scale(1)rotate(0);} }
+@keyframes confetti { 0%{transform:translateY(-20px)rotate(0);opacity:1;} 100%{transform:translateY(100vh)rotate(720deg);opacity:0;} }
+.confetti-piece { position:fixed;width:12px;height:12px;border-radius:3px;animation:confetti 3s ease forwards;pointer-events:none;z-index:9999; }
+
+/* SING ALONG */
+.lyrics-display { font-size: 1.3em; line-height: 2.2em; text-align: center; letter-spacing: 2px; }
+.lyric-word { display: inline-block; transition: all 0.2s; cursor: pointer; padding: 2px 4px; border-radius: 6px; }
+.lyric-word:hover { background: rgba(78,205,196,0.15); }
+.lyric-word.active-word { color: var(--primary); background: rgba(255,107,107,0.15); transform: scale(1.15); font-weight: 700; }
+.play-btn { background: linear-gradient(135deg, var(--primary), #ffa07a); color: white; border: none; border-radius: 20px; padding: 12px 32px; font-size: 1.1em; font-weight: 700; cursor: pointer; box-shadow: 0 4px 16px rgba(255,107,107,0.3); transition: all 0.3s; display: flex; align-items: center; gap: 8px; margin: 12px auto; }
+.play-btn:hover { transform: translateY(-2px) scale(1.04); }
+</style>
+</head>
+<body>
+
+<button class="sound-btn" id="sound-toggle" onclick="toggleSound()" title="切换音效">🔊</button>
+
+<!-- HERO -->
+<section id="hero" class="section active">
+  <div class="floating-icons">
+    <div class="float-icon" style="left:5%;top:15%;animation-duration:6s">🌸</div>
+    <div class="float-icon" style="left:85%;top:20%;animation-duration:7s;animation-delay:1s">🌈</div>
+    <div class="float-icon" style="left:10%;top:70%;animation-duration:8s;animation-delay:2s">⭐</div>
+    <div class="float-icon" style="left:80%;top:65%;animation-duration:5s;animation-delay:0.5s">🦋</div>
+    <div class="float-icon" style="left:45%;top:5%;animation-duration:9s;animation-delay:1.5s">🎵</div>
+  </div>
+  <div class="hero-content">
+    <div class="hero-emoji">🎶</div>
+    <h1 class="hero-title">儿歌童谣</h1>
+    <p class="hero-sub">一年级语文 · 唱唱跳跳学语文</p>
+    <div class="hero-tags">
+      <span class="hero-tag">🌱 一年级</span>
+      <span class="hero-tag">📚 语文</span>
+      <span class="hero-tag">🎵 跟我唱</span>
+      <span class="hero-tag">🏆 8个成就</span>
+    </div>
+    <button class="btn-start" onclick="goTo('objectives')">🎀 开始学习！</button>
+  </div>
+</section>
+
+<!-- OBJECTIVES -->
+<section id="objectives" class="section">
+  <div class="progress-bar-wrap">
+    <div class="progress-label">进度 1/7</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:14%"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>🎯</span>今天学什么 <span class="section-label">学习目标</span></div>
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:12px;">
+      <li style="display:flex;align-items:center;gap:14px;background:#f8f9ff;border-radius:14px;padding:14px;font-size:1.1em;">
+        <span style="font-size:1.8em">🗣️</span>能流利朗读《春晓》《咏鹅》等儿歌
+      </li>
+      <li style="display:flex;align-items:center;gap:14px;background:#f8f9ff;border-radius:14px;padding:14px;font-size:1.1em;">
+        <span style="font-size:1.8em">🔤</span>认识并书写8个生字词语
+      </li>
+      <li style="display:flex;align-items:center;gap:14px;background:#f8f9ff;border-radius:14px;padding:14px;font-size:1.1em;">
+        <span style="font-size:1.8em">🎵</span>感受儿歌的节奏与韵律美
+      </li>
+      <li style="display:flex;align-items:center;gap:14px;background:#f8f9ff;border-radius:14px;padding:14px;font-size:1.1em;">
+        <span style="font-size:1.8em">💭</span>理解儿歌中描绘的自然画面
+      </li>
+    </ul>
+    <div class="tip-box">🌟 今天我们学儿歌，把汉字和旋律一起记住，超级好玩！</div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-ghost" onclick="goTo('hero')">← 返回</button>
+    <button class="btn btn-primary" onclick="goTo('warmup')">热身 →</button>
+  </div>
+</section>
+
+<!-- WARMUP: 跟我唱 -->
+<section id="warmup" class="section">
+  <div class="progress-bar-wrap">
+    <div class="progress-label">进度 2/7</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:28%"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>🎵</span>跟我唱《春晓》 <span class="section-label">热身</span></div>
+    <div class="poem-display">
+      <div class="poem-title">春 晓</div>
+      <div class="poem-author">【唐】孟浩然</div>
+      <div class="poem-lines" id="poem-lines-warmup">
+        <div class="poem-line" onclick="highlightLine(this, 0)">
+          <span class="poem-pinyin">chūn mián bù jué xiǎo</span>
+          春 眠 不 觉 晓
+        </div>
+        <div class="poem-line" onclick="highlightLine(this, 1)">
+          <span class="poem-pinyin">chǔ chǔ wén tí niǎo</span>
+          处 处 闻 啼 鸟
+        </div>
+        <div class="poem-line" onclick="highlightLine(this, 2)">
+          <span class="poem-pinyin">yè lái fēng yǔ shēng</span>
+          夜 来 风 雨 声
+        </div>
+        <div class="poem-line" onclick="highlightLine(this, 3)">
+          <span class="poem-pinyin">huā luò zhī duō shǎo</span>
+          花 落 知 多 少
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:16px;">
+      <button class="play-btn" onclick="startRhythm()">
+        <span id="play-icon">▶</span> <span id="play-text">跟我打节奏！</span>
+      </button>
+    </div>
+    <div class="rhythm-bar" id="rhythm-bar" style="display:none;">
+      <div class="rhythm-dot" style="animation-delay:0s"></div>
+      <div class="rhythm-dot" style="animation-delay:0.1s"></div>
+      <div class="rhythm-dot" style="animation-delay:0.2s"></div>
+      <div class="rhythm-dot" style="animation-delay:0.3s"></div>
+      <div class="rhythm-dot" style="animation-delay:0.4s"></div>
+    </div>
+    <div class="stars-row" style="display:flex;align-items:center;gap:6px;margin-top:14px;">
+      <span>节奏感：</span>
+      <span id="warmup-stars">⭐⭐⭐</span>
+    </div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-ghost" onclick="goTo('objectives')">← 返回</button>
+    <button class="btn btn-primary" onclick="goTo('level1')">关卡一 →</button>
+  </div>
+</section>
+
+<!-- LEVEL 1: 认字游戏 -->
+<section id="level1" class="section">
+  <div class="progress-bar-wrap">
+    <div class="progress-label">进度 3/7 · 关卡一</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:42%"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>🔤</span>关卡一：认字闯关 <span class="section-label">生字认读</span></div>
+    <p style="color:#888;margin-bottom:16px;">点击汉字，听读音，学拼音！</p>
+    <div class="char-grid" id="char-grid">
+      <div class="char-card" onclick="showCharInfo(this, '春', 'chūn', '春天，万物生长的季节 🌸')">
+        <div class="char-big">春</div>
+        <div class="char-pinyin">chūn</div>
+        <div class="char-meaning">春天</div>
+      </div>
+      <div class="char-card" onclick="showCharInfo(this, '晓', 'xiǎo', '天刚亮的时候，清晨 🌅')">
+        <div class="char-big">晓</div>
+        <div class="char-pinyin">xiǎo</div>
+        <div class="char-meaning">天亮</div>
+      </div>
+      <div class="char-card" onclick="showCharInfo(this, '眠', 'mián', '睡觉，休眠 😴')">
+        <div class="char-big">眠</div>
+        <div class="char-pinyin">mián</div>
+        <div class="char-meaning">睡眠</div>
+      </div>
+      <div class="char-card" onclick="showCharInfo(this, '啼', 'tí', '鸟叫声，哭声 🐦')">
+        <div class="char-big">啼</div>
+        <div class="char-pinyin">tí</div>
+        <div class="char-meaning">鸟叫</div>
+      </div>
+      <div class="char-card" onclick="showCharInfo(this, '落', 'luò', '从上往下掉 🍂')">
+        <div class="char-big">落</div>
+        <div class="char-pinyin">luò</div>
+        <div class="char-meaning">落下</div>
+      </div>
+      <div class="char-card" onclick="showCharInfo(this, '处', 'chǔ', '地方、位置 📍')">
+        <div class="char-big">处</div>
+        <div class="char-pinyin">chǔ</div>
+        <div class="char-meaning">地方</div>
+      </div>
+    </div>
+    <div id="char-info" style="display:none;margin-top:16px;" class="tip-box"></div>
+    <div style="margin-top:16px;">
+      <div style="font-weight:700;margin-bottom:10px;">🎯 测一测：下面哪个字读 "chūn"？</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="choice-btn" onclick="checkChar(this,false)">落</button>
+        <button class="choice-btn" onclick="checkChar(this,true)">春</button>
+        <button class="choice-btn" onclick="checkChar(this,false)">啼</button>
+        <button class="choice-btn" onclick="checkChar(this,false)">眠</button>
+      </div>
+    </div>
+    <div id="char-result" style="display:none;margin-top:12px;" class="tip-box"></div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-ghost" onclick="goTo('warmup')">← 返回</button>
+    <button class="btn btn-primary" onclick="goTo('level2')">关卡二 →</button>
+  </div>
+</section>
+
+<!-- LEVEL 2: 连线游戏 -->
+<section id="level2" class="section">
+  <div class="progress-bar-wrap">
+    <div class="progress-label">进度 4/7 · 关卡二</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:57%"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>🔗</span>关卡二：词语连线 <span class="section-label">词语理解</span></div>
+    <p style="color:#888;margin-bottom:16px;">点击左边的词，再点右边的解释，完成连线！</p>
+    <div class="connect-game">
+      <div class="connect-col" id="left-col">
+        <div class="connect-item" onclick="selectConnect(this,'春眠')" data-word="春眠">春眠</div>
+        <div class="connect-item" onclick="selectConnect(this,'啼鸟')" data-word="啼鸟">啼鸟</div>
+        <div class="connect-item" onclick="selectConnect(this,'风雨')" data-word="风雨">风雨</div>
+        <div class="connect-item" onclick="selectConnect(this,'花落')" data-word="花落">花落</div>
+      </div>
+      <div class="connect-col" id="right-col">
+        <div class="connect-item" onclick="selectConnect(this,'花落')" data-word="花落">🌸 花瓣掉下来</div>
+        <div class="connect-item" onclick="selectConnect(this,'啼鸟')" data-word="啼鸟">🐦 鸟儿叫啊叫</div>
+        <div class="connect-item" onclick="selectConnect(this,'春眠')" data-word="春眠">😴 春天睡得香</div>
+        <div class="connect-item" onclick="selectConnect(this,'风雨')" data-word="风雨">🌧️ 刮风下雨了</div>
+      </div>
+    </div>
+    <div id="connect-result" style="display:none;margin-top:14px;" class="tip-box"></div>
+    <div id="connect-score" style="font-size:1em;color:var(--secondary);margin-top:10px;font-weight:600;"></div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-ghost" onclick="goTo('level1')">← 返回</button>
+    <button class="btn btn-primary" onclick="goTo('level3')">关卡三 →</button>
+  </div>
+</section>
+
+<!-- LEVEL 3: 填词 -->
+<section id="level3" class="section">
+  <div class="progress-bar-wrap">
+    <div class="progress-label">进度 5/7 · 关卡三</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:71%"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>✨</span>关卡三：补全儿歌 <span class="section-label">词语填空</span></div>
+    <p style="color:#888;margin-bottom:16px;">从下面选字，把儿歌补全！</p>
+    <div class="poem-fill">
+      春眠不觉<span class="fill-blank-big" id="fb0" onclick="fillWord(0)">__</span>，<br>
+      处处闻<span class="fill-blank-big" id="fb1" onclick="fillWord(1)">__</span>鸟，<br>
+      夜来<span class="fill-blank-big" id="fb2" onclick="fillWord(2)">__</span>雨声，<br>
+      花落知多<span class="fill-blank-big" id="fb3" onclick="fillWord(3)">__</span>。
+    </div>
+    <div class="choice-row" id="choice-row">
+      <button class="choice-btn" onclick="pickWord(this,'晓',0)">晓</button>
+      <button class="choice-btn" onclick="pickWord(this,'风',2)">风</button>
+      <button class="choice-btn" onclick="pickWord(this,'少',3)">少</button>
+      <button class="choice-btn" onclick="pickWord(this,'啼',1)">啼</button>
+    </div>
+    <div id="fill-result" style="display:none;margin-top:14px;" class="tip-box"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;">
+      <span style="color:#888;font-size:0.95em">填对了 <span id="fill-count" style="font-weight:700;color:var(--primary)">0</span> / 4 个</span>
+      <button class="btn btn-ghost" onclick="resetFill()">🔄 重新填</button>
+    </div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-ghost" onclick="goTo('level2')">← 返回</button>
+    <button class="btn btn-primary" onclick="goTo('boss')">Boss 关 →</button>
+  </div>
+</section>
+
+<!-- BOSS -->
+<section id="boss" class="section">
+  <div class="progress-bar-wrap">
+    <div class="progress-label">进度 6/7 · Boss 关卡</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:85%"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>👾</span>Boss 关：诗仙挑战 <span class="section-label">终极考验</span></div>
+    <div class="boss-scene">
+      <span class="boss-character" id="boss-char">🧙‍♂️</span>
+      <div style="font-weight:800;font-size:1.2em;color:var(--primary)">诗仙爷爷</div>
+      <div class="boss-hp"><div class="boss-hp-fill" id="boss-hp-bar" style="width:100%"></div></div>
+      <div style="font-size:0.9em;color:#888;margin-bottom:8px">Boss 血量：<span id="boss-hp-val">100</span> / 100</div>
+      <div class="quiz-box" id="boss-quiz">
+        🌟 挑战开始！<br>
+        <span style="font-size:1.15em;">《春晓》的作者是谁？</span>
+      </div>
+      <div class="quiz-opts" id="boss-quiz-opts">
+        <button class="quiz-opt" onclick="bossFight(this, false)">李白</button>
+        <button class="quiz-opt" onclick="bossFight(this, true)">孟浩然</button>
+        <button class="quiz-opt" onclick="bossFight(this, false)">杜甫</button>
+        <button class="quiz-opt" onclick="bossFight(this, false)">王维</button>
+      </div>
+      <div id="boss-fb" style="display:none;margin-top:12px;" class="tip-box"></div>
+    </div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-ghost" onclick="goTo('level3')">← 返回</button>
+    <button class="btn btn-primary" id="boss-next" style="display:none" onclick="goTo('scoreboard')">🏆 看成绩！</button>
+  </div>
+</section>
+
+<!-- SCOREBOARD -->
+<section id="scoreboard" class="section">
+  <div class="card" style="text-align:center;">
+    <div class="card-title" style="justify-content:center;"><span>🏆</span>今天表现真棒！</div>
+    <div class="score-big" id="final-score">0</div>
+    <div style="color:#888;margin-bottom:8px;">总积分</div>
+    <div style="font-size:2em;margin-bottom:16px;" id="star-row"></div>
+    <div id="score-comment" style="font-size:1.15em;margin-bottom:20px;color:#555;"></div>
+    <div class="ach-grid" id="ach-grid"></div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-ghost" onclick="goTo('hero')">🔄 再来一次</button>
+    <button class="btn btn-primary" onclick="goTo('extension')">🌈 拓展 →</button>
+  </div>
+</section>
+
+<!-- EXTENSION -->
+<section id="extension" class="section">
+  <div class="card" style="text-align:center;margin-bottom:10px;">
+    <div class="card-title" style="justify-content:center;">🌈 继续探索！</div>
+    <p style="color:#888;">选一个你感兴趣的活动吧！</p>
+  </div>
+  <div class="ext-grid">
+    <div class="ext-card" onclick="playSound('click');showExt(0)">
+      <div class="ext-icon">🎨</div>
+      <div style="font-weight:700;margin-bottom:6px;">画一画</div>
+      <div style="font-size:0.88em;color:#888">给春晓配插图</div>
+    </div>
+    <div class="ext-card" onclick="playSound('click');showExt(1)">
+      <div class="ext-icon">🎵</div>
+      <div style="font-weight:700;margin-bottom:6px;">再唱一首</div>
+      <div style="font-size:0.88em;color:#888">学《咏鹅》儿歌</div>
+    </div>
+    <div class="ext-card" onclick="playSound('click');showExt(2)">
+      <div class="ext-icon">✍️</div>
+      <div style="font-weight:700;margin-bottom:6px;">写一写</div>
+      <div style="font-size:0.88em;color:#888">练习生字笔顺</div>
+    </div>
+    <div class="ext-card" onclick="playSound('click');showExt(3)">
+      <div class="ext-icon">🌸</div>
+      <div style="font-weight:700;margin-bottom:6px;">找春天</div>
+      <div style="font-size:0.88em;color:#888">说说春天的样子</div>
+    </div>
+  </div>
+  <div id="ext-content" class="card" style="display:none;margin-top:14px;width:100%;max-width:680px;"></div>
+  <div class="nav-row">
+    <button class="btn btn-ghost" onclick="goTo('scoreboard')">← 成绩单</button>
+    <button class="btn btn-primary" onclick="goTo('hero')">🏠 回首页</button>
+  </div>
+</section>
+
+<!-- AI COMPANION -->
+<div class="ai-companion">
+  <div class="ai-bubble" id="ai-bubble">你好呀！我是小虫🐛，来一起唱儿歌吧！🎵</div>
+  <div class="ai-avatar" onclick="toggleAI()">🐛</div>
+</div>
+
+<!-- ACHIEVEMENT POPUP -->
+<div class="achievement-popup" id="ach-popup">
+  <span id="ach-pop-icon" style="font-size:2em">🏆</span>
+  <div>
+    <strong id="ach-pop-title" style="display:block">成就解锁！</strong>
+    <span id="ach-pop-desc" style="font-size:0.9em;color:#666">恭喜你！</span>
+  </div>
+</div>
+
+<script>
+// STATE
+const state = { score:0, stars:0, achievements:[], charViewed:0, connectScore:0, fillCount:0, bossDone:false, soundOn:true };
+const ACHIEVEMENTS = [
+  { id:'reader', icon:'📖', name:'小朗读者', desc:'跟我唱节奏', condition:()=>state.stars>=1 },
+  { id:'char_master', icon:'🔤', name:'认字达人', desc:'学会6个生字', condition:()=>state.charViewed>=4 },
+  { id:'connector', icon:'🔗', name:'连线高手', desc:'连线全对', condition:()=>state.connectScore>=4 },
+  { id:'poet', icon:'✍️', name:'小诗人', desc:'填词全对', condition:()=>state.fillCount>=4 },
+  { id:'boss_winner', icon:'⚔️', name:'打倒诗仙', desc:'通关Boss', condition:()=>state.bossDone },
+  { id:'high_score', icon:'💯', name:'高分王', desc:'得分超150', condition:()=>state.score>=150 },
+  { id:'star_3', icon:'⭐', name:'星星满天', desc:'获得3颗星', condition:()=>state.stars>=3 },
+  { id:'explorer', icon:'🌈', name:'好奇宝贝', desc:'探索拓展区', condition:()=>false },
+];
+
+// AUDIO
+let actx;
+let soundOn = true;
+function getACtx() { if (!actx) actx = new (window.AudioContext||window.webkitAudioContext)(); return actx; }
+function playSound(type) {
+  if (!soundOn) return;
+  try {
+    const ctx = getACtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    const configs = { click:[440,'sine',0.1,0.12], correct:[660,'triangle',0.2,0.35], wrong:[200,'sawtooth',0.12,0.2], star:[880,'sine',0.2,0.45], achievement:[990,'triangle',0.2,0.5], rhythm:[520,'sine',0.15,0.15] };
+    const [f,w,v,d] = configs[type]||configs.click;
+    osc.type=w; osc.frequency.value=f;
+    gain.gain.setValueAtTime(v, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+d);
+    osc.start(); osc.stop(ctx.currentTime+d);
+  } catch(e){}
+}
+function toggleSound() { soundOn=!soundOn; document.getElementById('sound-toggle').textContent=soundOn?'🔊':'🔇'; }
+
+// NAV
+function goTo(id) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  playSound('click');
+  updateAI(id);
+  if (id==='scoreboard') renderScore();
+  if (id==='extension') { ACHIEVEMENTS[7].condition=()=>true; unlockAch('explorer'); }
+  checkAllAch();
+}
+
+const aiHints = {
+  hero:'来唱儿歌啦！准备好了吗？🎵',
+  objectives:'今天学春晓，超级好听的诗歌！',
+  warmup:'点击每一行诗来朗读，感受节奏~',
+  level1:'点字卡可以看拼音和意思哦！',
+  level2:'先点左边的词，再点右边的意思，连起来！',
+  level3:'从下面的选字区选字，填到空白里！',
+  boss:'诗仙爷爷出题啦！认真作答！',
+  scoreboard:'太棒了！你学会了春晓！',
+  extension:'还想学更多？来探索拓展区！',
+};
+function updateAI(id) { document.getElementById('ai-bubble').textContent = aiHints[id]||'继续加油！💪'; }
+function toggleAI() { document.getElementById('ai-bubble').classList.toggle('show'); playSound('click'); }
+
+// RHYTHM
+let rhythmTimer=null, lineIdx=0;
+function startRhythm() {
+  document.getElementById('rhythm-bar').style.display='flex';
+  const btn = document.getElementById('play-icon');
+  const txt = document.getElementById('play-text');
+  if (rhythmTimer) { clearInterval(rhythmTimer); rhythmTimer=null; btn.textContent='▶'; txt.textContent='跟我打节奏！'; document.querySelectorAll('.poem-line').forEach(l=>l.classList.remove('highlight-line')); return; }
+  btn.textContent='⏸'; txt.textContent='正在朗读...';
+  const lines = document.querySelectorAll('#poem-lines-warmup .poem-line');
+  lineIdx=0;
+  rhythmTimer = setInterval(()=>{
+    lines.forEach(l=>l.classList.remove('highlight-line'));
+    if (lineIdx < lines.length) { lines[lineIdx].classList.add('highlight-line'); playSound('rhythm'); lineIdx++; }
+    else { clearInterval(rhythmTimer); rhythmTimer=null; btn.textContent='▶'; txt.textContent='跟我打节奏！'; addScore(20); addStar(); checkAllAch(); }
+  }, 1200);
+}
+function highlightLine(el) { document.querySelectorAll('.poem-line').forEach(l=>l.classList.remove('highlight-line')); el.classList.add('highlight-line'); playSound('rhythm'); }
+
+// CHAR
+function showCharInfo(card, char, pinyin, meaning) {
+  state.charViewed++;
+  card.classList.add('matched');
+  document.getElementById('char-info').style.display='block';
+  document.getElementById('char-info').innerHTML=`<strong style="font-size:1.5em">${char}</strong> <span style="color:var(--secondary)">${pinyin}</span> — ${meaning}`;
+  playSound('click');
+  checkAllAch();
+}
+function checkChar(btn, correct) {
+  document.querySelectorAll('.choice-btn').forEach(b=>{b.disabled=true;});
+  if (correct) {
+    btn.style.background='#d4edda'; btn.style.borderColor='#28a745';
+    document.getElementById('char-result').style.display='block';
+    document.getElementById('char-result').textContent='🎉 答对了！"春"的拼音是 chūn，春天来了，花儿开了🌸';
+    document.getElementById('char-result').style.background='#d4edda';
+    addScore(25); addStar(); playSound('correct'); checkAllAch();
+  } else {
+    btn.style.background='#f8d7da'; btn.style.borderColor='#dc3545';
+    document.getElementById('char-result').style.display='block';
+    document.getElementById('char-result').textContent='💡 再想想！"春"读 chūn，你可以在上面的字卡中找一找~';
+    document.getElementById('char-result').style.background='#f8d7da';
+    playSound('wrong');
+  }
+}
+
+// CONNECT
+let selectedLeft=null, selectedRight=null, connectMatched=0;
+function selectConnect(el, word) {
+  const isLeft = el.parentElement.id==='left-col';
+  if (el.classList.contains('matched')) return;
+  if (isLeft) {
+    if (selectedLeft) selectedLeft.classList.remove('selected');
+    selectedLeft = el; el.classList.add('selected');
+  } else {
+    if (selectedRight) selectedRight.classList.remove('selected');
+    selectedRight = el; el.classList.add('selected');
+  }
+  if (selectedLeft && selectedRight) {
+    const lWord = selectedLeft.dataset.word, rWord = selectedRight.dataset.word;
+    if (lWord === rWord) {
+      selectedLeft.classList.remove('selected'); selectedLeft.classList.add('matched');
+      selectedRight.classList.remove('selected'); selectedRight.classList.add('matched');
+      selectedLeft=null; selectedRight=null;
+      connectMatched++;
+      state.connectScore = connectMatched;
+      addScore(20); playSound('correct');
+      document.getElementById('connect-score').textContent = `已连对 ${connectMatched}/4 对！`;
+      if (connectMatched===4) {
+        document.getElementById('connect-result').style.display='block';
+        document.getElementById('connect-result').textContent='🎉 全部连对啦！你真的很棒！';
+        document.getElementById('connect-result').style.background='#d4edda';
+        addStar(); checkAllAch();
+      }
+    } else {
+      selectedLeft.classList.add('wrong'); selectedRight.classList.add('wrong');
+      setTimeout(()=>{
+        selectedLeft && selectedLeft.classList.remove('selected','wrong');
+        selectedRight && selectedRight.classList.remove('selected','wrong');
+        selectedLeft=null; selectedRight=null;
+      }, 600);
+      playSound('wrong');
+    }
+  }
+  playSound('click');
+}
+
+// FILL
+const fillAnswers = ['晓','啼','风','少'];
+const fillStatus = [null,null,null,null];
+let fillCorrectCount=0;
+function pickWord(btn, char, blankIdx) {
+  if (fillStatus[blankIdx] !== null) return;
+  fillStatus[blankIdx] = char;
+  const blank = document.getElementById('fb'+blankIdx);
+  blank.textContent = char;
+  blank.style.color = '#28a745';
+  blank.style.borderColor = '#28a745';
+  btn.classList.add('used');
+  fillCorrectCount++;
+  state.fillCount = fillCorrectCount;
+  addScore(15);
+  document.getElementById('fill-count').textContent = fillCorrectCount;
+  playSound('correct');
+  if (fillCorrectCount===4) {
+    document.getElementById('fill-result').style.display='block';
+    document.getElementById('fill-result').textContent='🎉 全部填对！《春晓》你已经会背啦！';
+    document.getElementById('fill-result').style.background='#d4edda';
+    addStar(); checkAllAch();
+  }
+}
+function fillWord(idx) { document.getElementById('ai-bubble').textContent='从下面选一个字填进来吧~'; document.getElementById('ai-bubble').classList.add('show'); }
+function resetFill() {
+  fillCorrectCount=0; state.fillCount=0;
+  for(let i=0;i<4;i++){
+    fillStatus[i]=null;
+    const b=document.getElementById('fb'+i);
+    b.textContent='__'; b.style.color=''; b.style.borderColor='';
+  }
+  document.querySelectorAll('.choice-btn').forEach(b=>b.classList.remove('used'));
+  document.getElementById('fill-result').style.display='none';
+  document.getElementById('fill-count').textContent='0';
+}
+
+// BOSS
+let bossHp=100, bossRound=0;
+const bossQs=[
+  {q:'《春晓》的作者是谁？', opts:['李白','孟浩然','杜甫','王维'], correct:1},
+  {q:'"处处闻啼鸟"中，"啼"是什么意思？', opts:['飞翔','歌唱','叫声','奔跑'], correct:2},
+  {q:'《春晓》共有几行？', opts:['3行','5行','4行','6行'], correct:2},
+];
+function bossFight(btn, correct) {
+  document.querySelectorAll('.quiz-opt').forEach(b=>b.disabled=true);
+  const fb = document.getElementById('boss-fb');
+  fb.style.display='block';
+  if (correct) {
+    bossHp -= 34; bossRound++;
+    document.getElementById('boss-hp-bar').style.width=Math.max(0,bossHp)+'%';
+    document.getElementById('boss-hp-val').textContent=Math.max(0,bossHp);
+    btn.style.background='#d4edda'; fb.textContent='⚔️ 答对了！诗仙爷爷被打了一下！';
+    fb.style.background='#d4edda'; addScore(40); playSound('correct');
+    if (bossHp<=0||bossRound>=3) {
+      document.getElementById('boss-char').textContent='😵';
+      fb.textContent='🎉 你打倒了诗仙爷爷！你已经是小诗人啦！';
+      state.bossDone=true; addStar(); addStar();
+      document.getElementById('boss-next').style.display='inline-block';
+      checkAllAch();
+    } else { setTimeout(()=>nextBossQ(),1500); }
+  } else {
+    btn.style.background='#f8d7da'; fb.textContent='💡 回去复习一下诗的内容，再想想！';
+    fb.style.background='#f8d7da'; playSound('wrong');
+    bossRound++;
+    setTimeout(()=>nextBossQ(),1500);
+  }
+}
+function nextBossQ() {
+  if(bossRound>=bossQs.length){document.getElementById('boss-next').style.display='inline-block';return;}
+  const q=bossQs[bossRound];
+  document.getElementById('boss-quiz').innerHTML=`🌟 第${bossRound+1}题：<br><span style="font-size:1.1em">${q.q}</span>`;
+  const opts=document.getElementById('boss-quiz-opts'); opts.innerHTML='';
+  q.opts.forEach((o,i)=>{ const b=document.createElement('button'); b.className='quiz-opt'; b.textContent=o; b.onclick=function(){bossFight(this,i===q.correct);}; opts.appendChild(b); });
+  document.getElementById('boss-fb').style.display='none';
+}
+
+// SCORE
+function addScore(n){state.score+=n;}
+function addStar(){state.stars++;playSound('star');spawnConfetti();}
+function spawnConfetti(){
+  const cols=['#ff6b6b','#4ecdc4','#ffe66d','#a8e6cf','#fd79a8'];
+  for(let i=0;i<20;i++){
+    const p=document.createElement('div'); p.className='confetti-piece';
+    p.style.left=Math.random()*100+'vw'; p.style.background=cols[Math.floor(Math.random()*cols.length)];
+    p.style.animationDelay=Math.random()*0.6+'s'; p.style.borderRadius=Math.random()>0.5?'50%':'3px';
+    document.body.appendChild(p); setTimeout(()=>p.remove(),3500);
+  }
+}
+
+// RENDER SCORE
+function renderScore(){
+  document.getElementById('final-score').textContent=state.score;
+  document.getElementById('star-row').textContent='⭐'.repeat(state.stars)+'☆'.repeat(Math.max(0,5-state.stars));
+  const comment=state.score>=180?'🏆 超级棒！你是儿歌小达人！':state.score>=100?'🌟 很棒！继续努力，你会更好！':'💪 加油！多练几次会越来越好！';
+  document.getElementById('score-comment').textContent=comment;
+  const grid=document.getElementById('ach-grid'); grid.innerHTML='';
+  ACHIEVEMENTS.forEach(a=>{
+    const unlocked=state.achievements.includes(a.id);
+    const d=document.createElement('div'); d.className='ach-badge '+(unlocked?'unlocked':'locked');
+    d.innerHTML=`<div class="ach-icon-big">${a.icon}</div><div class="ach-name">${a.name}</div><div style="font-size:0.8em;color:#aaa">${a.desc}</div>`;
+    grid.appendChild(d);
+  });
+}
+
+// ACHIEVEMENTS
+function checkAllAch(){ ACHIEVEMENTS.forEach(a=>{ if(!state.achievements.includes(a.id)&&a.condition()) unlockAch(a.id); }); }
+function unlockAch(id){
+  if(state.achievements.includes(id))return;
+  state.achievements.push(id);
+  const a=ACHIEVEMENTS.find(x=>x.id===id); if(!a)return;
+  document.getElementById('ach-pop-icon').textContent=a.icon;
+  document.getElementById('ach-pop-title').textContent='🏆 '+a.name;
+  document.getElementById('ach-pop-desc').textContent=a.desc;
+  const p=document.getElementById('ach-popup'); p.classList.add('show');
+  setTimeout(()=>p.classList.remove('show'),3200);
+  playSound('achievement');
+}
+
+// EXTENSION
+const extContent=[
+  '<h3>🎨 给春晓配一幅画</h3><p style="margin-top:10px;line-height:1.8">想象一下：<br>🌸 春天，你早上睡醒，听到窗外小鸟叫<br>🌧️ 昨晚下了雨，花瓣落了一地<br><br>拿起彩笔，画出你想象中的"春晓"场景吧！</p>',
+  '<h3 style="margin-bottom:12px">🎵 咏鹅</h3><div style="font-size:1.3em;line-height:2.2;text-align:center;letter-spacing:3px;background:#fff9e6;border-radius:16px;padding:20px">鹅鹅鹅，<br>曲项向天歌。<br>白毛浮绿水，<br>红掌拨清波。</div><p style="margin-top:12px;color:#888;font-size:0.9em">唐·骆宾王（7岁时所作！）</p>',
+  '<h3>✍️ 生字笔顺练习</h3><ul style="margin-top:12px;line-height:2.5;font-size:1.1em"><li>春 (9画)：三横、撇、捺、日字底</li><li>晓 (10画)：日字旁、折、横、撇、折</li><li>眠 (10画)：目字旁、横折钩、点、撇折、点</li></ul><p style="color:#888;font-size:0.9em;margin-top:8px">（请在练习本上照着写3遍）</p>',
+  '<h3>🌸 说说你的春天</h3><p style="margin-top:10px;line-height:1.8">春天有什么？<br>🌸 花 — 什么花开了？<br>🐦 鸟 — 听到什么鸟叫？<br>☀️ 天气 — 暖和还是冷？<br>🌧️ 雨 — 春雨是什么样的？<br><br>试着用一句话描述你看到的春天！</p>',
+];
+function showExt(i){ const d=document.getElementById('ext-content'); d.style.display='block'; d.innerHTML=extContent[i]; }
+
+updateAI('hero');
+</script>
+</body>
+</html>

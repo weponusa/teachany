@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>单词拼读 | 五年级英语</title>
+<style>
+  :root {
+    --bg: #fffbf0;
+    --primary: #ff6b6b;
+    --secondary: #4ecdc4;
+    --accent: #ffe66d;
+    --card: #fff;
+    --text: #2d3436;
+    --shadow: 0 4px 20px rgba(0,0,0,0.1);
+    --radius: 16px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', 'PingFang SC', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+  .screen { display: none; min-height: 100vh; padding: 20px; animation: fadeIn 0.4s ease; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .top-bar { width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .stars-display { display: flex; align-items: center; gap: 6px; background: var(--accent); padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 18px; box-shadow: var(--shadow); }
+  .progress-bar { width: 100%; max-width: 800px; height: 12px; background: #e0e0e0; border-radius: 6px; margin-bottom: 20px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); border-radius: 6px; transition: width 0.5s ease; }
+
+  /* HERO */
+  #hero { background: linear-gradient(135deg, #ff6b6b18, #4ecdc418, #ffe66d18); justify-content: center; text-align: center; }
+  .hero-bear { font-size: 90px; animation: float 2s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-16px)} }
+  .hero-title { font-size: 38px; font-weight: 900; color: var(--primary); margin: 18px 0 8px; text-shadow: 3px 3px 0 #fff; }
+  .hero-sub { font-size: 19px; color: var(--secondary); margin-bottom: 26px; }
+  .hero-badges { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 28px; }
+  .badge { background: var(--card); padding: 7px 14px; border-radius: 18px; font-size: 14px; box-shadow: var(--shadow); border: 2px solid var(--accent); }
+  .btn-start { background: linear-gradient(135deg, var(--primary), #ff8e8e); color: #fff; border: none; padding: 16px 44px; font-size: 21px; font-weight: 700; border-radius: 50px; cursor: pointer; box-shadow: 0 6px 20px rgba(255,107,107,0.4); transition: all 0.2s; }
+  .btn-start:hover { transform: translateY(-3px); }
+
+  /* COMMON */
+  .section-title { font-size: 28px; font-weight: 800; color: var(--primary); margin-bottom: 18px; text-align: center; }
+  .bear-chat { display: flex; align-items: flex-start; gap: 10px; background: var(--card); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); margin-bottom: 18px; width: 100%; max-width: 700px; }
+  .bear-avatar { font-size: 38px; flex-shrink: 0; }
+  .bear-bubble { background: var(--accent); border-radius: 0 var(--radius) var(--radius) var(--radius); padding: 10px 14px; font-size: 15px; line-height: 1.6; }
+  .bear-name { font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+  .obj-list { width: 100%; max-width: 700px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+  .obj-item { background: var(--card); border-radius: var(--radius); padding: 14px 20px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); border-left: 5px solid var(--secondary); font-size: 16px; }
+  .obj-num { background: var(--secondary); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+
+  /* WORD CARDS */
+  .word-showcase { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; width: 100%; max-width: 720px; margin-bottom: 22px; }
+  .word-card { background: var(--card); border-radius: var(--radius); padding: 18px 12px; text-align: center; box-shadow: var(--shadow); cursor: pointer; transition: all 0.25s; border: 3px solid transparent; }
+  .word-card:hover { transform: translateY(-4px); border-color: var(--primary); box-shadow: 0 8px 25px rgba(255,107,107,0.2); }
+  .word-card.played { border-color: var(--secondary); background: linear-gradient(135deg, #f0fffe, #fff); }
+  .wc-emoji { font-size: 44px; margin-bottom: 8px; }
+  .wc-word { font-size: 28px; font-weight: 900; color: var(--primary); }
+  .wc-split { font-size: 15px; color: var(--secondary); margin: 4px 0; font-family: monospace; }
+  .wc-ipa { font-size: 13px; color: #888; }
+
+  /* SYLLABLE VIEW */
+  .syllable-display { width: 100%; max-width: 680px; background: var(--card); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); margin-bottom: 20px; text-align: center; }
+  .syll-word { font-size: 56px; font-weight: 900; display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
+  .syll-part { display: inline-block; cursor: pointer; transition: all 0.2s; border-radius: 8px; padding: 0 4px; }
+  .syll-part:hover { background: var(--accent); }
+  .syll-part.vowel { color: var(--primary); }
+  .syll-part.consonant { color: var(--text); }
+  .syll-part.blend { color: #8e44ad; }
+  .syll-legend { display: flex; gap: 16px; justify-content: center; margin-top: 12px; font-size: 13px; }
+  .leg-item { display: flex; align-items: center; gap: 6px; }
+  .leg-dot { width: 12px; height: 12px; border-radius: 50%; }
+
+  /* QUIZ */
+  .level-card { background: var(--card); border-radius: var(--radius); padding: 22px; width: 100%; max-width: 700px; box-shadow: var(--shadow); margin-bottom: 18px; }
+  .level-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--primary); color: white; padding: 5px 16px; border-radius: 18px; font-size: 15px; font-weight: 700; margin-bottom: 14px; }
+  .big-word-q { font-size: 58px; font-weight: 900; color: var(--primary); text-align: center; margin: 14px 0; letter-spacing: 3px; text-shadow: 3px 3px 0 var(--accent); }
+  .quiz-sub { font-size: 16px; color: #777; text-align: center; margin-bottom: 14px; }
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 560px; }
+  .opt-btn { background: var(--card); border: 3px solid #e0e0e0; border-radius: var(--radius); padding: 13px 16px; font-size: 17px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .opt-btn:hover:not(:disabled) { border-color: var(--secondary); background: #f0fffe; }
+  .opt-btn.correct { background: #c8f7c5; border-color: #27ae60; }
+  .opt-btn.wrong { background: #ffd6d6; border-color: #e74c3c; }
+  .feedback { font-size: 19px; font-weight: 700; margin: 12px 0; text-align: center; min-height: 28px; }
+  .feedback.correct { color: #27ae60; }
+  .feedback.wrong { color: #e74c3c; }
+  .q-count { color: #999; font-size: 13px; text-align: center; margin-top: 6px; }
+
+  /* TYPING GAME */
+  .type-container { width: 100%; max-width: 680px; }
+  .type-emoji { font-size: 60px; text-align: center; margin-bottom: 8px; }
+  .type-hint { font-size: 17px; color: var(--secondary); font-weight: 600; text-align: center; margin-bottom: 14px; }
+  .type-ipa { font-size: 20px; color: #777; text-align: center; margin-bottom: 16px; }
+  .type-input { width: 100%; max-width: 360px; display: block; margin: 0 auto 16px; padding: 14px 20px; font-size: 24px; font-weight: 700; border: 3px solid #e0e0e0; border-radius: var(--radius); text-align: center; outline: none; background: var(--card); transition: border-color 0.2s; }
+  .type-input:focus { border-color: var(--secondary); }
+  .type-input.correct-input { border-color: #27ae60; background: #f0fff4; }
+  .type-input.wrong-input { border-color: #e74c3c; background: #fff5f5; animation: shake 0.3s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+  .type-btns { display: flex; gap: 12px; justify-content: center; }
+  .hint-letter { display: inline-block; background: var(--accent); border-radius: 6px; padding: 4px 10px; font-size: 22px; font-weight: 700; margin: 2px; }
+  .letter-reveal { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
+  .letter-box { width: 44px; height: 52px; border: 3px solid #e0e0e0; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; transition: all 0.3s; }
+  .letter-box.filled { border-color: var(--secondary); background: #f0fffe; }
+  .letter-box.correct-box { border-color: #27ae60; background: #c8f7c5; }
+  .letter-box.wrong-box { border-color: #e74c3c; background: #ffd6d6; }
+
+  /* BOSS */
+  #boss { background: linear-gradient(135deg, #0f3460, #16213e); }
+  #boss .section-title { color: var(--accent); }
+  #boss .level-card { background: rgba(255,255,255,0.08); color: white; border: 1px solid rgba(255,230,109,0.3); }
+  #boss .quiz-sub { color: #bbb; }
+  #boss .big-word-q { color: var(--accent); }
+  #boss .opt-btn { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: white; }
+  #boss .opt-btn:hover:not(:disabled) { background: rgba(255,255,255,0.2); }
+  .boss-hp { width: 100%; max-width: 560px; margin-bottom: 18px; }
+  .boss-hp-lbl { color: var(--accent); font-weight: 700; margin-bottom: 6px; font-size: 16px; }
+  .boss-hp-bar { height: 18px; background: rgba(255,255,255,0.15); border-radius: 9px; overflow: hidden; }
+  .boss-hp-fill { height: 100%; background: linear-gradient(90deg, #e74c3c, #e67e22); border-radius: 9px; transition: width 0.5s; }
+  .boss-fig { font-size: 80px; text-align: center; margin: 14px 0; }
+  #boss .type-input { background: rgba(255,255,255,0.1); color: white; border-color: rgba(255,255,255,0.3); }
+  #boss .type-input:focus { border-color: var(--accent); }
+  #boss .type-hint { color: var(--accent); }
+
+  /* REPORT */
+  #report { text-align: center; }
+  .score-circle { width: 150px; height: 150px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; flex-direction: column; color: white; box-shadow: 0 8px 28px rgba(255,107,107,0.4); margin: 18px auto; }
+  .score-num { font-size: 44px; font-weight: 900; }
+  .score-lbl { font-size: 14px; }
+  .achievements { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 14px 0; }
+  .ach-item { background: var(--card); border-radius: var(--radius); padding: 10px 12px; text-align: center; box-shadow: var(--shadow); border: 2px solid var(--accent); min-width: 85px; }
+  .ach-icon { font-size: 28px; }
+  .ach-name { font-size: 11px; color: #888; margin-top: 3px; }
+  .ach-item.locked { opacity: 0.2; filter: grayscale(1); }
+  .stars-earned { font-size: 32px; color: var(--accent); margin: 8px 0; letter-spacing: 3px; }
+
+  /* EXT */
+  .ext-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; width: 100%; max-width: 680px; }
+  .ext-card { background: var(--card); border-radius: var(--radius); padding: 16px; text-align: center; box-shadow: var(--shadow); border-top: 4px solid var(--secondary); }
+  .ext-icon { font-size: 34px; margin-bottom: 8px; }
+  .ext-title { font-size: 16px; font-weight: 700; margin-bottom: 5px; }
+  .ext-desc { font-size: 12px; color: #666; }
+
+  .btn-next { background: linear-gradient(135deg, var(--secondary), #45b7aa); color: white; border: none; padding: 13px 32px; font-size: 17px; font-weight: 700; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 14px rgba(78,205,196,0.4); transition: all 0.2s; margin-top: 12px; }
+  .btn-next:hover { transform: translateY(-2px); }
+  .btn-check { background: linear-gradient(135deg, var(--primary), #ff8e8e); color: white; border: none; padding: 12px 26px; font-size: 15px; font-weight: 700; border-radius: 50px; cursor: pointer; transition: all 0.2s; }
+  .btn-check:hover { transform: translateY(-2px); }
+  .btn-sound { background: var(--accent); border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 17px; cursor: pointer; box-shadow: var(--shadow); transition: transform 0.2s; }
+  .btn-sound:hover { transform: scale(1.12); }
+
+  .toast { position: fixed; top: 68px; left: 50%; transform: translateX(-50%) translateY(-100px); background: var(--primary); color: white; padding: 9px 22px; border-radius: 26px; font-size: 14px; font-weight: 700; z-index: 1000; transition: transform 0.3s; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .star-pop { position: fixed; font-size: 26px; pointer-events: none; z-index: 999; animation: starFly 1s ease-out forwards; }
+  @keyframes starFly { from { opacity: 1; transform: scale(1) translateY(0); } to { opacity: 0; transform: scale(2) translateY(-65px); } }
+
+  @media (max-width: 560px) {
+    .options { grid-template-columns: 1fr; }
+    .word-showcase { grid-template-columns: repeat(2, 1fr); }
+    .syll-word { font-size: 40px; }
+  }
+</style>
+</head>
+<body>
+<div class="toast" id="toast">🎉 棒极了！</div>
+
+<!-- HERO -->
+<section class="screen active" id="hero">
+  <div class="hero-bear">🐻</div>
+  <div class="hero-title">单词拼读</div>
+  <div class="hero-sub">五年级 · Word Reading 🌈</div>
+  <div class="hero-badges">
+    <span class="badge">🔤 音节分解</span>
+    <span class="badge">🎯 3关挑战</span>
+    <span class="badge">⭐ 赚取星星</span>
+    <span class="badge">⌨️ 拼写练习</span>
+  </div>
+  <button class="btn-start" onclick="goTo('objectives')">开始冒险 🚀</button>
+</section>
+
+<!-- OBJECTIVES -->
+<section class="screen" id="objectives">
+  <div class="top-bar">
+    <div class="stars-display">⭐ <span id="stars-obj">0</span></div>
+    <button class="btn-sound" onclick="speakText('Word reading is exciting!')">🔊</button>
+  </div>
+  <div class="section-title">🎯 学习目标</div>
+  <div class="obj-list">
+    <div class="obj-item"><div class="obj-num">1</div>掌握音节划分规则（VC/V, VCV规则）</div>
+    <div class="obj-item"><div class="obj-num">2</div>能正确拼读2-3音节单词</div>
+    <div class="obj-item"><div class="obj-num">3</div>运用拼读规则猜测未知单词发音</div>
+    <div class="obj-item"><div class="obj-num">4</div>能听音写出常见词汇</div>
+  </div>
+  <div class="bear-chat">
+    <div class="bear-avatar">🐻</div>
+    <div class="bear-bubble">
+      <div class="bear-name">小熊老师</div>
+      今天我们要成为"拼读侦探"🔍！把长单词拆成音节，每个音节都有一个元音，学会了就能拼读任何英文单词！
+    </div>
+  </div>
+  <button class="btn-next" onclick="goTo('warmup')">进入热身 🔥</button>
+</section>
+
+<!-- WARMUP: 音节可视化 -->
+<section class="screen" id="warmup">
+  <div class="top-bar">
+    <div class="stars-display">⭐ <span id="stars-warm">0</span></div>
+    <span style="font-size:16px;font-weight:700;color:var(--primary)">🔥 热身</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" style="width:15%"></div></div>
+  <div class="section-title">音节拆分练习</div>
+  <div class="bear-chat">
+    <div class="bear-avatar">🐻</div>
+    <div class="bear-bubble">
+      <div class="bear-name">小熊老师</div>
+      点击每个单词的字母，看看音节是怎么分的！<span style="color:#e74c3c">红色</span>是元音，<span style="color:#8e44ad">紫色</span>是辅音组合
+    </div>
+  </div>
+  <div class="word-showcase">
+    <div class="word-card" onclick="showSyllable('basket','bas·ket',['b','a','s','k','e','t'],'🧺')">
+      <div class="wc-emoji">🧺</div>
+      <div class="wc-word">basket</div>
+      <div class="wc-split">bas · ket</div>
+      <div class="wc-ipa">/ˈbɑːskɪt/</div>
+    </div>
+    <div class="word-card" onclick="showSyllable('garden','gar·den',['g','ar','d','e','n'],'🌻')">
+      <div class="wc-emoji">🌻</div>
+      <div class="wc-word">garden</div>
+      <div class="wc-split">gar · den</div>
+      <div class="wc-ipa">/ˈɡɑːrdən/</div>
+    </div>
+    <div class="word-card" onclick="showSyllable('rabbit','rab·bit',['r','a','bb','i','t'],'🐰')">
+      <div class="wc-emoji">🐰</div>
+      <div class="wc-word">rabbit</div>
+      <div class="wc-split">rab · bit</div>
+      <div class="wc-ipa">/ˈræbɪt/</div>
+    </div>
+    <div class="word-card" onclick="showSyllable('winter','win·ter',['w','i','n','t','er'],'❄️')">
+      <div class="wc-emoji">❄️</div>
+      <div class="wc-word">winter</div>
+      <div class="wc-split">win · ter</div>
+      <div class="wc-ipa">/ˈwɪntər/</div>
+    </div>
+    <div class="word-card" onclick="showSyllable('happy','hap·py',['h','a','pp','y'],'😊')">
+      <div class="wc-emoji">😊</div>
+      <div class="wc-word">happy</div>
+      <div class="wc-split">hap · py</div>
+      <div class="wc-ipa">/ˈhæpi/</div>
+    </div>
+    <div class="word-card" onclick="showSyllable('pencil','pen·cil',['p','e','n','c','i','l'],'✏️')">
+      <div class="wc-emoji">✏️</div>
+      <div class="wc-word">pencil</div>
+      <div class="wc-split">pen · cil</div>
+      <div class="wc-ipa">/ˈpensəl/</div>
+    </div>
+  </div>
+  <div class="syllable-display" id="syll-display" style="display:none">
+    <div style="font-size:15px;color:#888;margin-bottom:12px">音节分析</div>
+    <div class="syll-word" id="syll-word-disp"></div>
+    <div class="syll-legend">
+      <div class="leg-item"><div class="leg-dot" style="background:var(--primary)"></div><span>元音</span></div>
+      <div class="leg-item"><div class="leg-dot" style="background:#8e44ad"></div><span>辅音组合</span></div>
+      <div class="leg-item"><div class="leg-dot" style="background:#2d3436"></div><span>辅音</span></div>
+    </div>
+  </div>
+  <button class="btn-next" onclick="goTo('level1'); initLevel1()">第一关 ⚔️</button>
+</section>
+
+<!-- LEVEL 1: 音节计数 -->
+<section class="screen" id="level1">
+  <div class="top-bar">
+    <div class="stars-display">⭐ <span id="stars-l1">0</span></div>
+    <span style="font-size:16px;font-weight:700;color:var(--primary)">关卡 1/3</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" style="width:35%"></div></div>
+  <div class="level-card">
+    <div class="level-badge">🔢 第一关：音节计数</div>
+    <div class="big-word-q" id="l1-word">basket 🧺</div>
+    <div class="quiz-sub">这个单词有几个音节？</div>
+    <div class="options" id="l1-opts"></div>
+    <div class="feedback" id="l1-fb"></div>
+    <div class="q-count" id="l1-cnt">0/6 题</div>
+  </div>
+</section>
+
+<!-- LEVEL 2: 拼读选词 -->
+<section class="screen" id="level2">
+  <div class="top-bar">
+    <div class="stars-display">⭐ <span id="stars-l2">0</span></div>
+    <span style="font-size:16px;font-weight:700;color:var(--primary)">关卡 2/3</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" style="width:58%"></div></div>
+  <div class="level-card">
+    <div class="level-badge">👂 第二关：听音选词</div>
+    <div style="text-align:center;margin-bottom:14px">
+      <button class="btn-sound" style="width:60px;height:60px;font-size:28px" id="l2-play-btn" onclick="playL2Word()">🔊</button>
+      <div style="font-size:13px;color:#888;margin-top:6px">点击喇叭听发音</div>
+    </div>
+    <div class="quiz-sub" id="l2-prompt">选出你听到的单词</div>
+    <div class="options" id="l2-opts"></div>
+    <div class="feedback" id="l2-fb"></div>
+    <div class="q-count" id="l2-cnt">0/6 题</div>
+  </div>
+</section>
+
+<!-- LEVEL 3: 打字拼写 -->
+<section class="screen" id="level3">
+  <div class="top-bar">
+    <div class="stars-display">⭐ <span id="stars-l3">0</span></div>
+    <span style="font-size:16px;font-weight:700;color:var(--primary)">关卡 3/3</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" style="width:78%"></div></div>
+  <div class="level-card">
+    <div class="level-badge">⌨️ 第三关：听音拼写</div>
+    <div class="type-container">
+      <div class="type-emoji" id="l3-emoji">🧺</div>
+      <div class="type-hint" id="l3-hint">音节: bas·ket</div>
+      <div class="type-ipa" id="l3-ipa">/ˈbɑːskɪt/</div>
+      <div class="letter-reveal" id="letter-boxes"></div>
+      <input class="type-input" id="type-input" type="text" placeholder="输入单词..." autocomplete="off" autocorrect="off" spellcheck="false"
+        oninput="updateLetterBoxes()" onkeydown="if(event.key==='Enter')checkType()">
+      <div class="type-btns">
+        <button class="btn-check" onclick="checkType()">✅ 确认</button>
+        <button class="btn-check" style="background:linear-gradient(135deg,#74b9ff,#0984e3)" onclick="revealHint()">💡 提示</button>
+        <button class="btn-sound" style="width:44px;height:44px;font-size:18px" onclick="playL3Word()">🔊</button>
+      </div>
+    </div>
+    <div class="feedback" id="l3-fb"></div>
+    <div class="q-count" id="l3-cnt">0/5 词</div>
+  </div>
+</section>
+
+<!-- BOSS -->
+<section class="screen" id="boss">
+  <div class="top-bar">
+    <div class="stars-display">⭐ <span id="stars-boss">0</span></div>
+    <span style="font-size:16px;font-weight:700;color:var(--accent)">👹 Boss战</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" style="width:90%"></div></div>
+  <div class="section-title">👹 拼读大决战</div>
+  <div class="boss-hp">
+    <div class="boss-hp-lbl">Boss血量: <span id="boss-hp-txt">100</span>%</div>
+    <div class="boss-hp-bar"><div class="boss-hp-fill" id="boss-fill" style="width:100%"></div></div>
+  </div>
+  <div class="boss-fig" id="boss-fig">🐉</div>
+  <div class="level-card">
+    <div style="text-align:center;margin-bottom:12px">
+      <button class="btn-sound" style="width:54px;height:54px;font-size:24px" onclick="playBossWord()">🔊</button>
+      <div style="color:var(--accent);font-size:13px;margin-top:4px">听发音，输入单词</div>
+    </div>
+    <div class="type-emoji" id="boss-emoji" style="font-size:50px">🌟</div>
+    <div class="type-hint" id="boss-hint" style="color:var(--accent)">音节提示...</div>
+    <input class="type-input" id="boss-input" type="text" placeholder="输入单词..." autocomplete="off" autocorrect="off" spellcheck="false"
+      onkeydown="if(event.key==='Enter')checkBoss()">
+    <div style="display:flex;gap:12px;justify-content:center;margin-top:12px">
+      <button class="btn-check" onclick="checkBoss()">⚔️ 攻击！</button>
+      <button class="btn-check" style="background:linear-gradient(135deg,#74b9ff,#0984e3)" onclick="bossRevealHint()">💡 提示</button>
+    </div>
+    <div class="feedback" id="boss-fb"></div>
+    <div class="q-count" id="boss-cnt">0/5 题</div>
+  </div>
+</section>
+
+<!-- REPORT -->
+<section class="screen" id="report">
+  <div class="section-title">🏆 学习报告</div>
+  <div style="font-size:76px;animation:float 2s ease-in-out infinite">🐻</div>
+  <div class="score-circle"><div class="score-num" id="final-score">0</div><div class="score-lbl">总分</div></div>
+  <div class="stars-earned" id="stars-earned">⭐⭐⭐</div>
+  <div style="font-size:17px;margin-bottom:18px;font-weight:600" id="report-msg">继续加油！</div>
+  <div style="font-size:17px;font-weight:700;margin-bottom:10px">🏅 解锁成就</div>
+  <div class="achievements" id="ach-list"></div>
+  <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;justify-content:center">
+    <button class="btn-next" onclick="goTo('extension')">拓展学习 📚</button>
+    <button class="btn-check" onclick="restart()">再来一次 🔄</button>
+  </div>
+</section>
+
+<!-- EXTENSION -->
+<section class="screen" id="extension">
+  <div class="section-title">📚 拓展学习</div>
+  <div class="bear-chat">
+    <div class="bear-avatar">🐻</div>
+    <div class="bear-bubble">
+      <div class="bear-name">小熊老师</div>
+      🎊 你已经掌握了单词拼读的核心技巧！记住：每个音节都有一个元音，这是你的"秘密武器"！
+    </div>
+  </div>
+  <div class="ext-grid">
+    <div class="ext-card">
+      <div class="ext-icon">📐</div>
+      <div class="ext-title">VC/CV规则</div>
+      <div class="ext-desc">辅音前面的音节：bas/ket, rab/bit, win/ter</div>
+    </div>
+    <div class="ext-card">
+      <div class="ext-icon">🎵</div>
+      <div class="ext-title">重音规律</div>
+      <div class="ext-desc">双音节名词常在第一音节重读：BAS-ket, RAB-bit</div>
+    </div>
+    <div class="ext-card">
+      <div class="ext-icon">✍️</div>
+      <div class="ext-title">每日单词</div>
+      <div class="ext-desc">每天学5个新单词，用音节法拼读并造句</div>
+    </div>
+    <div class="ext-card">
+      <div class="ext-icon">🎮</div>
+      <div class="ext-title">下节预告</div>
+      <div class="ext-desc">词根与前缀：un-, re-, pre-, dis- 让词汇量翻倍！</div>
+    </div>
+  </div>
+  <button class="btn-next" onclick="goTo('hero')" style="margin-top:18px">🏠 返回主页</button>
+</section>
+
+<script>
+const state = {
+  stars: 0, score: 0, achievements: [],
+  l1Cur: 0, l1Ok: 0,
+  l2Cur: 0, l2Ok: 0, l2Word: '',
+  l3Cur: 0, l3Ok: 0, l3Hints: 0,
+  bossCur: 0, bossOk: 0, bossHp: 100, bossHints: 0
+};
+
+const ACHIEVEMENTS = [
+  { id: 'first', icon: '⭐', name: '第一颗星' },
+  { id: 'syllable_ace', icon: '🔢', name: '音节达人' },
+  { id: 'listener', icon: '👂', name: '听力高手' },
+  { id: 'speller', icon: '⌨️', name: '打字高手' },
+  { id: 'no_hint', icon: '🧠', name: '无需提示' },
+  { id: 'boss_defeat', icon: '🏅', name: 'Boss终结者' },
+  { id: 'combo', icon: '🔥', name: '3连正确' },
+  { id: 'word_master', icon: '📖', name: '单词大师' },
+];
+
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+  updateStars();
+  if (id === 'level2') initLevel2();
+  if (id === 'boss') initBoss();
+  if (id === 'report') showReport();
+}
+
+function updateStars() {
+  ['obj','warm','l1','l2','l3','boss'].forEach(id => {
+    const el = document.getElementById('stars-' + id);
+    if (el) el.textContent = state.stars;
+  });
+}
+
+function addStars(n) {
+  state.stars += n;
+  state.score += n * 10;
+  updateStars();
+  showStarPop();
+  showToast(`+${n}⭐`);
+}
+
+function showToast(m) {
+  const t = document.getElementById('toast');
+  t.textContent = m;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function showStarPop() {
+  const el = document.createElement('div');
+  el.className = 'star-pop';
+  el.textContent = '⭐';
+  el.style.left = (10 + Math.random() * 80) + '%';
+  el.style.top = '38%';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1100);
+}
+
+function unlockAch(id) {
+  if (state.achievements.includes(id)) return;
+  state.achievements.push(id);
+  const a = ACHIEVEMENTS.find(x => x.id === id);
+  if (a) showToast(`🏅 ${a.icon} ${a.name}`);
+}
+
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+let actx;
+function getActx() { if (!actx) actx = new AudioContext(); return actx; }
+function playTone(f, d, type = 'sine') {
+  try {
+    const c = getActx(), o = c.createOscillator(), g = c.createGain();
+    o.connect(g); g.connect(c.destination);
+    o.type = type; o.frequency.setValueAtTime(f, c.currentTime);
+    g.gain.setValueAtTime(0.25, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.01, c.currentTime + d);
+    o.start(); o.stop(c.currentTime + d);
+  } catch(e) {}
+}
+function playOK() { playTone(523, 0.12); setTimeout(() => playTone(659, 0.12), 130); setTimeout(() => playTone(784, 0.18), 260); }
+function playFail() { playTone(220, 0.35, 'sawtooth'); }
+function speakText(t, rate = 0.8) {
+  if ('speechSynthesis' in window) {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(t);
+    u.lang = 'en-US'; u.rate = rate;
+    speechSynthesis.speak(u);
+  } else { playTone(440, 0.3); }
+}
+
+// WARMUP
+function showSyllable(word, split, letters, emoji) {
+  speakText(word);
+  addStars(1);
+  unlockAch('first');
+  const disp = document.getElementById('syll-display');
+  disp.style.display = 'block';
+  const container = document.getElementById('syll-word-disp');
+  container.innerHTML = '';
+  const vowels = ['a','e','i','o','u'];
+  letters.forEach(chunk => {
+    const span = document.createElement('span');
+    span.className = 'syll-part';
+    span.textContent = chunk;
+    if (vowels.includes(chunk.toLowerCase())) span.classList.add('vowel');
+    else if (chunk.length > 1) span.classList.add('blend');
+    else span.classList.add('consonant');
+    span.onclick = () => speakText(chunk);
+    container.appendChild(span);
+  });
+  document.querySelectorAll('.word-card').forEach(c => c.classList.remove('played'));
+  event.currentTarget.classList.add('played');
+}
+
+// LEVEL 1
+const L1_DATA = [
+  { word: 'basket 🧺', syllables: 2, opts: ['1个', '2个', '3个', '4个'], ansIdx: 1 },
+  { word: 'rabbit 🐰', syllables: 2, opts: ['1个', '2个', '3个', '4个'], ansIdx: 1 },
+  { word: 'cat 🐱', syllables: 1, opts: ['1个', '2个', '3个', '4个'], ansIdx: 0 },
+  { word: 'winter ❄️', syllables: 2, opts: ['1个', '2个', '3个', '4个'], ansIdx: 1 },
+  { word: 'umbrella ☂️', syllables: 3, opts: ['1个', '2个', '3个', '4个'], ansIdx: 2 },
+  { word: 'happy 😊', syllables: 2, opts: ['1个', '2个', '3个', '4个'], ansIdx: 1 },
+];
+let l1Combo = 0;
+
+function initLevel1() { state.l1Cur = 0; state.l1Ok = 0; l1Combo = 0; renderL1(); }
+function renderL1() {
+  if (state.l1Cur >= L1_DATA.length) {
+    if (state.l1Ok >= 5) { addStars(3); unlockAch('syllable_ace'); }
+    else addStars(1);
+    goTo('level2');
+    return;
+  }
+  const q = L1_DATA[state.l1Cur];
+  document.getElementById('l1-word').textContent = q.word;
+  document.getElementById('l1-cnt').textContent = `${state.l1Cur}/6 题`;
+  document.getElementById('l1-fb').textContent = '';
+  speakText(q.word.split(' ')[0]);
+  const div = document.getElementById('l1-opts');
+  div.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const b = document.createElement('button');
+    b.className = 'opt-btn';
+    b.textContent = opt;
+    b.onclick = () => answerL1(b, i, q.ansIdx);
+    div.appendChild(b);
+  });
+}
+function answerL1(btn, idx, correct) {
+  document.querySelectorAll('#l1-opts .opt-btn').forEach(b => b.disabled = true);
+  const fb = document.getElementById('l1-fb');
+  if (idx === correct) {
+    btn.classList.add('correct');
+    fb.textContent = `✅ 正确！${L1_DATA[state.l1Cur].syllables}个音节`;
+    fb.className = 'feedback correct';
+    state.l1Ok++; l1Combo++;
+    addStars(1); playOK();
+    if (l1Combo >= 3) unlockAch('combo');
+  } else {
+    btn.classList.add('wrong');
+    document.getElementById('l1-opts').children[correct].classList.add('correct');
+    fb.textContent = '❌ 再数数！每个元音=一个音节';
+    fb.className = 'feedback wrong';
+    l1Combo = 0; playFail();
+  }
+  state.l1Cur++;
+  setTimeout(renderL1, 1500);
+}
+
+// LEVEL 2
+const L2_DATA = [
+  { word: 'pencil', emoji: '✏️', opts: ['pencil ✏️', 'panda 🐼', 'purple 🟣', 'pillow 🛏️'] },
+  { word: 'garden', emoji: '🌻', opts: ['golden 🟡', 'garden 🌻', 'gallon 🪣', 'garlic 🧄'] },
+  { word: 'winter', emoji: '❄️', opts: ['winner 🏆', 'water 💧', 'winter ❄️', 'window 🪟'] },
+  { word: 'basket', emoji: '🧺', opts: ['biscuit 🍪', 'basket 🧺', 'bucket 🪣', 'blanket 🛏️'] },
+  { word: 'rabbit', emoji: '🐰', opts: ['rabbit 🐰', 'robber 🦹', 'ribbon 🎀', 'rubber 🔴'] },
+  { word: 'happy', emoji: '😊', opts: ['hippo 🦛', 'honey 🍯', 'happy 😊', 'hobby 🎨'] },
+];
+let l2CurrentWord = '';
+
+function initLevel2() { state.l2Cur = 0; state.l2Ok = 0; renderL2(); }
+function renderL2() {
+  if (state.l2Cur >= L2_DATA.length) {
+    if (state.l2Ok >= 5) { addStars(3); unlockAch('listener'); }
+    else addStars(1);
+    goTo('level3'); initLevel3();
+    return;
+  }
+  const q = L2_DATA[state.l2Cur];
+  l2CurrentWord = q.word;
+  document.getElementById('l2-cnt').textContent = `${state.l2Cur}/6 题`;
+  document.getElementById('l2-fb').textContent = '';
+  document.getElementById('l2-prompt').textContent = '选出你听到的单词';
+  const shuffled = [...q.opts].sort(() => Math.random() - 0.5);
+  const div = document.getElementById('l2-opts');
+  div.innerHTML = '';
+  shuffled.forEach(opt => {
+    const b = document.createElement('button');
+    b.className = 'opt-btn';
+    b.textContent = opt;
+    b.onclick = () => answerL2(b, opt, q.word);
+    div.appendChild(b);
+  });
+  speakText(q.word);
+}
+function playL2Word() { if (l2CurrentWord) speakText(l2CurrentWord); }
+function answerL2(btn, chosen, correct) {
+  document.querySelectorAll('#l2-opts .opt-btn').forEach(b => b.disabled = true);
+  const fb = document.getElementById('l2-fb');
+  const isCorrect = chosen.toLowerCase().startsWith(correct);
+  if (isCorrect) {
+    btn.classList.add('correct');
+    fb.textContent = '✅ 听出来了！';
+    fb.className = 'feedback correct';
+    state.l2Ok++; addStars(1); playOK();
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('#l2-opts .opt-btn').forEach(b => { if (b.textContent.toLowerCase().startsWith(correct)) b.classList.add('correct'); });
+    fb.textContent = `❌ 正确是 "${correct}"`;
+    fb.className = 'feedback wrong';
+    playFail();
+  }
+  state.l2Cur++;
+  setTimeout(renderL2, 1600);
+}
+
+// LEVEL 3
+const L3_DATA = [
+  { word: 'basket', emoji: '🧺', hint: 'bas·ket', ipa: '/ˈbɑːskɪt/' },
+  { word: 'rabbit', emoji: '🐰', hint: 'rab·bit', ipa: '/ˈræbɪt/' },
+  { word: 'winter', emoji: '❄️', hint: 'win·ter', ipa: '/ˈwɪntər/' },
+  { word: 'pencil', emoji: '✏️', hint: 'pen·cil', ipa: '/ˈpensəl/' },
+  { word: 'happy', emoji: '😊', hint: 'hap·py', ipa: '/ˈhæpi/' },
+];
+
+function initLevel3() { state.l3Cur = 0; state.l3Ok = 0; state.l3Hints = 0; renderL3(); }
+function renderL3() {
+  if (state.l3Cur >= L3_DATA.length) {
+    if (state.l3Ok >= 4) { addStars(3); unlockAch('speller'); }
+    else addStars(1);
+    if (state.l3Hints === 0) unlockAch('no_hint');
+    goTo('boss');
+    return;
+  }
+  const w = L3_DATA[state.l3Cur];
+  document.getElementById('l3-emoji').textContent = w.emoji;
+  document.getElementById('l3-hint').textContent = `音节: ${w.hint}`;
+  document.getElementById('l3-ipa').textContent = w.ipa;
+  document.getElementById('l3-cnt').textContent = `${state.l3Cur}/5 词`;
+  document.getElementById('l3-fb').textContent = '';
+  document.getElementById('type-input').value = '';
+  document.getElementById('type-input').className = 'type-input';
+  buildLetterBoxes(w.word.length);
+  speakText(w.word, 0.6);
+}
+function buildLetterBoxes(len) {
+  const div = document.getElementById('letter-boxes');
+  div.innerHTML = '';
+  for (let i = 0; i < len; i++) {
+    const b = document.createElement('div');
+    b.className = 'letter-box';
+    b.id = `lb${i}`;
+    div.appendChild(b);
+  }
+}
+function updateLetterBoxes() {
+  const val = document.getElementById('type-input').value;
+  const len = L3_DATA[state.l3Cur].word.length;
+  for (let i = 0; i < len; i++) {
+    const b = document.getElementById('lb' + i);
+    if (!b) continue;
+    if (val[i]) { b.textContent = val[i]; b.classList.add('filled'); }
+    else { b.textContent = ''; b.classList.remove('filled', 'correct-box', 'wrong-box'); }
+  }
+}
+function checkType() {
+  const val = document.getElementById('type-input').value.trim().toLowerCase();
+  const target = L3_DATA[state.l3Cur].word;
+  const fb = document.getElementById('l3-fb');
+  const input = document.getElementById('type-input');
+  if (val === target) {
+    input.classList.add('correct-input');
+    for (let i = 0; i < target.length; i++) { const b = document.getElementById('lb' + i); if (b) { b.classList.add('correct-box'); b.classList.remove('filled'); } }
+    fb.textContent = '✅ 拼写正确！';
+    fb.className = 'feedback correct';
+    state.l3Ok++; addStars(2); playOK();
+    state.l3Cur++;
+    setTimeout(() => { input.classList.remove('correct-input'); renderL3(); }, 1400);
+  } else {
+    input.classList.add('wrong-input');
+    setTimeout(() => input.classList.remove('wrong-input'), 400);
+    fb.textContent = `❌ 再试试！提示：${target[0]}...`;
+    fb.className = 'feedback wrong';
+    playFail();
+  }
+}
+function revealHint() {
+  state.l3Hints++;
+  const w = L3_DATA[state.l3Cur];
+  document.getElementById('type-input').value = w.word[0];
+  updateLetterBoxes();
+  showToast(`💡 首字母是 "${w.word[0].toUpperCase()}"`);
+}
+function playL3Word() { speakText(L3_DATA[state.l3Cur].word, 0.55); }
+
+// BOSS
+const BOSS_WORDS = [
+  { word: 'garden', emoji: '🌻', hint: 'gar·den', ipa: '/ˈɡɑːrdən/' },
+  { word: 'winter', emoji: '❄️', hint: 'win·ter', ipa: '/ˈwɪntər/' },
+  { word: 'rabbit', emoji: '🐰', hint: 'rab·bit', ipa: '/ˈræbɪt/' },
+  { word: 'pencil', emoji: '✏️', hint: 'pen·cil', ipa: '/ˈpensəl/' },
+  { word: 'basket', emoji: '🧺', hint: 'bas·ket', ipa: '/ˈbɑːskɪt/' },
+];
+
+function initBoss() {
+  state.bossCur = 0; state.bossOk = 0; state.bossHp = 100; state.bossHints = 0;
+  document.getElementById('boss-fill').style.width = '100%';
+  document.getElementById('boss-hp-txt').textContent = '100';
+  document.getElementById('boss-fig').textContent = '🐉';
+  renderBoss();
+}
+function renderBoss() {
+  if (state.bossCur >= BOSS_WORDS.length) {
+    unlockAch('boss_defeat');
+    if (state.bossOk >= 4) { addStars(5); unlockAch('word_master'); }
+    else addStars(2);
+    goTo('report');
+    return;
+  }
+  const w = BOSS_WORDS[state.bossCur];
+  document.getElementById('boss-emoji').textContent = w.emoji;
+  document.getElementById('boss-hint').textContent = `音节: ${w.hint}`;
+  document.getElementById('boss-cnt').textContent = `${state.bossCur}/5 题`;
+  document.getElementById('boss-fb').textContent = '';
+  document.getElementById('boss-input').value = '';
+  speakText(w.word, 0.55);
+}
+function playBossWord() { if (state.bossCur < BOSS_WORDS.length) speakText(BOSS_WORDS[state.bossCur].word, 0.55); }
+function checkBoss() {
+  const val = document.getElementById('boss-input').value.trim().toLowerCase();
+  const target = BOSS_WORDS[state.bossCur].word;
+  const fb = document.getElementById('boss-fb');
+  if (val === target) {
+    fb.textContent = '✅ 打中！Dragon受伤了！';
+    fb.className = 'feedback correct';
+    state.bossOk++;
+    state.bossHp = Math.max(0, state.bossHp - 20);
+    document.getElementById('boss-fill').style.width = state.bossHp + '%';
+    document.getElementById('boss-hp-txt').textContent = state.bossHp;
+    if (state.bossHp <= 0) document.getElementById('boss-fig').textContent = '💀';
+    else if (state.bossHp <= 40) document.getElementById('boss-fig').textContent = '😰';
+    addStars(3); playOK();
+    state.bossCur++;
+    setTimeout(renderBoss, 1400);
+  } else {
+    fb.textContent = `❌ 拼写错误！正确是 "${target}"`;
+    fb.className = 'feedback wrong';
+    playFail();
+  }
+}
+function bossRevealHint() {
+  state.bossHints++;
+  const w = BOSS_WORDS[state.bossCur];
+  document.getElementById('boss-input').value = w.word[0];
+  showToast(`💡 首字母 "${w.word[0].toUpperCase()}"`);
+}
+
+function showReport() {
+  document.getElementById('final-score').textContent = Math.min(100, state.score);
+  const s = state.stars;
+  document.getElementById('stars-earned').textContent = s >= 22 ? '⭐⭐⭐⭐⭐' : s >= 15 ? '⭐⭐⭐⭐' : s >= 8 ? '⭐⭐⭐' : '⭐⭐';
+  const msgs = ['继续练习！📚', '做得不错！👍', '拼读高手！🎉', '单词拼读大师！🏆'];
+  document.getElementById('report-msg').textContent = msgs[s >= 22 ? 3 : s >= 15 ? 2 : s >= 8 ? 1 : 0];
+  const div = document.getElementById('ach-list');
+  div.innerHTML = '';
+  ACHIEVEMENTS.forEach(a => {
+    const el = document.createElement('div');
+    el.className = 'ach-item' + (state.achievements.includes(a.id) ? '' : ' locked');
+    el.innerHTML = `<div class="ach-icon">${a.icon}</div><div class="ach-name">${a.name}</div>`;
+    div.appendChild(el);
+  });
+}
+
+function restart() { state.stars = 0; state.score = 0; state.achievements = []; goTo('hero'); }
+initLevel1();
+</script>
+</body>
+</html>

@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>辩论与讨论 · 五年级语文</title>
+<style>
+:root {
+  --bg: #fffbf0;
+  --primary: #ff6b6b;
+  --secondary: #4ecdc4;
+  --accent: #ffe66d;
+  --card: #fff;
+  --text: #333;
+  --radius: 20px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.10);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); font-family: 'Segoe UI', 'PingFang SC', sans-serif; color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+/* ===== SECTIONS ===== */
+.section { display: none; min-height: 100vh; padding: 20px; }
+.section.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+/* ===== HERO ===== */
+#hero { background: linear-gradient(135deg, #ff6b6b 0%, #ffa07a 50%, #ffe66d 100%); position: relative; overflow: hidden; }
+#hero::before { content: ''; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.08'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+.hero-content { position: relative; text-align: center; color: white; }
+.hero-emoji { font-size: 80px; margin-bottom: 16px; animation: bounce 2s infinite; }
+.hero-title { font-size: 3em; font-weight: 900; text-shadow: 0 4px 12px rgba(0,0,0,0.2); margin-bottom: 8px; }
+.hero-sub { font-size: 1.3em; opacity: 0.9; margin-bottom: 32px; }
+.hero-tags { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 32px; }
+.hero-tag { background: rgba(255,255,255,0.25); border-radius: 20px; padding: 6px 18px; font-size: 0.95em; backdrop-filter: blur(4px); }
+.btn-start { background: white; color: var(--primary); font-size: 1.3em; font-weight: 700; border: none; border-radius: var(--radius); padding: 16px 48px; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,0.15); transition: all 0.3s; }
+.btn-start:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 12px 32px rgba(0,0,0,0.2); }
+
+/* ===== CARDS ===== */
+.card { background: var(--card); border-radius: var(--radius); padding: 32px; box-shadow: var(--shadow); width: 100%; max-width: 700px; margin: 12px 0; }
+.card-title { font-size: 1.6em; font-weight: 800; color: var(--primary); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+.section-label { background: var(--accent); color: #333; font-size: 0.85em; font-weight: 700; padding: 3px 12px; border-radius: 12px; }
+
+/* ===== PROGRESS ===== */
+.progress-bar-wrap { width: 100%; max-width: 700px; margin-bottom: 20px; }
+.progress-bar { height: 12px; background: #e0e0e0; border-radius: 10px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); border-radius: 10px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+.progress-label { font-size: 0.9em; color: #888; margin-bottom: 4px; text-align: right; }
+
+/* ===== STARS / SCORE ===== */
+.stars-row { display: flex; align-items: center; gap: 6px; font-size: 1.1em; }
+.star { font-size: 1.4em; transition: transform 0.3s; }
+.star.earned { animation: starPop 0.5s ease; }
+
+/* ===== OBJECTIVES ===== */
+.obj-list { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+.obj-item { display: flex; align-items: center; gap: 14px; background: #f8f9ff; border-radius: 14px; padding: 14px 18px; font-size: 1.05em; }
+.obj-icon { font-size: 1.6em; }
+
+/* ===== WARMUP ===== */
+.warmup-options { display: flex; flex-direction: column; gap: 12px; }
+.warmup-btn { background: #f0faf9; border: 2px solid var(--secondary); border-radius: 16px; padding: 14px 22px; font-size: 1.05em; cursor: pointer; transition: all 0.25s; text-align: left; }
+.warmup-btn:hover { background: var(--secondary); color: white; transform: translateX(6px); }
+.warmup-btn.correct { background: #d4edda; border-color: #28a745; color: #155724; }
+.warmup-btn.wrong { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+
+/* ===== DEBATE ARENA ===== */
+.debate-arena { display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: start; width: 100%; max-width: 750px; margin: 16px 0; }
+.debate-side { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+.side-pro { border-top: 5px solid var(--primary); }
+.side-con { border-top: 5px solid var(--secondary); }
+.side-label { font-weight: 800; font-size: 1.1em; margin-bottom: 12px; }
+.side-pro .side-label { color: var(--primary); }
+.side-con .side-label { color: var(--secondary); }
+.vs-badge { background: var(--accent); border-radius: 50%; width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.2em; align-self: center; box-shadow: 0 4px 12px rgba(255,230,109,0.5); }
+.debate-point { background: #f8f9ff; border-radius: 12px; padding: 10px 14px; margin-bottom: 8px; font-size: 0.95em; cursor: grab; border-left: 4px solid transparent; transition: all 0.2s; }
+.debate-point:hover { transform: scale(1.02); }
+.side-pro .debate-point { border-left-color: var(--primary); }
+.side-con .debate-point { border-left-color: var(--secondary); }
+
+/* ===== SORT / DRAG ===== */
+.sort-zone { min-height: 80px; border: 2px dashed #ccc; border-radius: 14px; padding: 12px; transition: all 0.3s; }
+.sort-zone.drag-over { border-color: var(--secondary); background: rgba(78,205,196,0.08); }
+.drag-item { background: var(--card); border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; cursor: grab; box-shadow: 0 2px 8px rgba(0,0,0,0.08); font-size: 1em; user-select: none; transition: transform 0.2s, box-shadow 0.2s; border-left: 4px solid var(--accent); }
+.drag-item:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+.drag-item.dragging { opacity: 0.5; transform: rotate(3deg); }
+
+/* ===== FILL BLANK ===== */
+.fill-sentence { font-size: 1.2em; line-height: 2.2em; background: #f8f9ff; border-radius: 14px; padding: 18px 22px; }
+.fill-blank { display: inline-block; border-bottom: 3px solid var(--primary); min-width: 80px; text-align: center; cursor: pointer; color: var(--primary); font-weight: 700; padding: 0 6px; }
+.fill-input { font-size: 1em; border: 2px solid var(--secondary); border-radius: 10px; padding: 4px 10px; width: 90px; outline: none; }
+
+/* ===== BOSS BATTLE ===== */
+.boss-wrap { text-align: center; }
+.boss-emoji { font-size: 90px; animation: shake 0.5s; margin-bottom: 12px; }
+.boss-hp { height: 20px; background: #e0e0e0; border-radius: 12px; overflow: hidden; margin: 12px 0; }
+.boss-hp-fill { height: 100%; background: linear-gradient(90deg, #ff6b6b, #ffa07a); border-radius: 12px; transition: width 0.6s; }
+.boss-question { font-size: 1.15em; font-weight: 700; margin: 20px 0 16px; background: #fff7ee; border-radius: 14px; padding: 18px; }
+.attack-options { display: flex; flex-direction: column; gap: 10px; }
+.attack-btn { background: var(--card); border: 2px solid var(--accent); border-radius: 14px; padding: 13px 18px; font-size: 1em; cursor: pointer; transition: all 0.25s; text-align: left; }
+.attack-btn:hover { background: var(--accent); transform: translateX(4px); }
+
+/* ===== ACHIEVEMENT ===== */
+.achievement-popup { position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, #ffe66d, #ffd700); border-radius: 20px; padding: 16px 24px; box-shadow: 0 8px 32px rgba(255,215,0,0.4); z-index: 1000; animation: slideInRight 0.5s ease, fadeOut 0.5s ease 2.5s forwards; display: none; }
+.achievement-popup.show { display: flex; align-items: center; gap: 12px; }
+.ach-icon { font-size: 2em; }
+.ach-text strong { display: block; font-size: 1.05em; }
+.ach-text span { font-size: 0.9em; color: #666; }
+
+/* ===== SCOREBOARD ===== */
+.score-card { text-align: center; }
+.score-big { font-size: 5em; font-weight: 900; color: var(--primary); line-height: 1; }
+.score-label { color: #888; margin-bottom: 20px; }
+.achievements-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 20px 0; }
+.ach-badge { background: #f8f9ff; border-radius: 16px; padding: 14px; text-align: center; transition: transform 0.2s; }
+.ach-badge.unlocked { background: linear-gradient(135deg, #ffe66d22, #ffd70044); border: 2px solid var(--accent); }
+.ach-badge.unlocked:hover { transform: scale(1.05); }
+.ach-badge.locked { opacity: 0.4; filter: grayscale(1); }
+.ach-badge-icon { font-size: 2em; margin-bottom: 6px; }
+.ach-badge-name { font-size: 0.85em; font-weight: 600; }
+
+/* ===== EXTENSION ===== */
+.ext-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; width: 100%; max-width: 700px; }
+.ext-card { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); text-align: center; cursor: pointer; transition: all 0.3s; }
+.ext-card:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 12px 32px rgba(0,0,0,0.12); }
+.ext-card-icon { font-size: 2.5em; margin-bottom: 10px; }
+.ext-card-title { font-weight: 700; font-size: 1.05em; margin-bottom: 6px; }
+.ext-card-desc { font-size: 0.88em; color: #888; }
+
+/* ===== NAV ===== */
+.nav-row { display: flex; gap: 12px; margin-top: 20px; justify-content: center; flex-wrap: wrap; }
+.btn { border: none; border-radius: 14px; padding: 12px 28px; font-size: 1em; font-weight: 700; cursor: pointer; transition: all 0.25s; }
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: #e55a5a; transform: translateY(-2px); }
+.btn-secondary { background: var(--secondary); color: white; }
+.btn-secondary:hover { background: #3ab8af; transform: translateY(-2px); }
+.btn-ghost { background: #f0f0f0; color: #555; }
+.btn-ghost:hover { background: #e0e0e0; }
+
+/* ===== AI COMPANION ===== */
+.ai-companion { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; z-index: 500; }
+.ai-bubble { background: var(--card); border-radius: 18px 18px 4px 18px; padding: 12px 18px; box-shadow: var(--shadow); max-width: 220px; font-size: 0.92em; line-height: 1.5; display: none; }
+.ai-bubble.show { display: block; animation: fadeIn 0.3s ease; }
+.ai-avatar { width: 56px; height: 56px; background: linear-gradient(135deg, var(--secondary), #45b7d1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2em; cursor: pointer; box-shadow: 0 4px 16px rgba(78,205,196,0.4); transition: transform 0.3s; }
+.ai-avatar:hover { transform: scale(1.1) rotate(10deg); }
+
+/* ===== ANIMATIONS ===== */
+@keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+@keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+@keyframes starPop { 0% { transform: scale(0) rotate(-30deg); } 60% { transform: scale(1.4) rotate(10deg); } 100% { transform: scale(1) rotate(0); } }
+@keyframes slideInRight { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; pointer-events: none; } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes confetti { 0% { transform: translateY(-20px) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+.confetti-piece { position: fixed; width: 12px; height: 12px; border-radius: 3px; animation: confetti 3s ease forwards; pointer-events: none; z-index: 9999; }
+
+/* ===== LAYOUT HELPERS ===== */
+.text-center { text-align: center; }
+.mb-16 { margin-bottom: 16px; }
+.badge { display: inline-block; background: var(--accent); color: #333; font-size: 0.8em; font-weight: 700; padding: 2px 10px; border-radius: 10px; margin-left: 8px; }
+.tip-box { background: linear-gradient(135deg, #e8f8f7, #d4f4f1); border-left: 4px solid var(--secondary); border-radius: 12px; padding: 14px 18px; margin: 12px 0; font-size: 0.95em; }
+.highlight { color: var(--primary); font-weight: 700; }
+
+/* ===== DEBATE TIMER ===== */
+.debate-timer { font-size: 3em; font-weight: 900; color: var(--primary); text-align: center; font-variant-numeric: tabular-nums; }
+.timer-label { color: #888; font-size: 0.9em; text-align: center; margin-bottom: 8px; }
+
+/* ===== SPEECH BUBBLE ===== */
+.speech-options { display: flex; flex-direction: column; gap: 10px; }
+.speech-card { background: var(--card); border-radius: 16px; padding: 14px 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); cursor: pointer; border: 2px solid transparent; transition: all 0.25s; position: relative; }
+.speech-card:hover { border-color: var(--secondary); background: #f0faf9; }
+.speech-card.selected { border-color: var(--primary); background: #fff5f5; }
+.speech-card-label { font-size: 0.82em; color: #888; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; }
+.speech-card-text { font-size: 1.05em; }
+.check-mark { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 1.4em; opacity: 0; transition: opacity 0.2s; }
+.speech-card.selected .check-mark { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- ===== HERO ===== -->
+<section id="hero" class="section active">
+  <div class="hero-content">
+    <div class="hero-emoji">🗣️</div>
+    <h1 class="hero-title">辩论与讨论</h1>
+    <p class="hero-sub">五年级语文 · 说话有理有据，表达清晰有力</p>
+    <div class="hero-tags">
+      <span class="hero-tag">🏆 五年级</span>
+      <span class="hero-tag">📚 语文</span>
+      <span class="hero-tag">⭐ 积分闯关</span>
+      <span class="hero-tag">🎯 8个成就</span>
+    </div>
+    <button class="btn-start" onclick="goTo('objectives')">🚀 开始挑战！</button>
+  </div>
+</section>
+
+<!-- ===== OBJECTIVES ===== -->
+<section id="objectives" class="section">
+  <div class="progress-bar-wrap">
+    <div class="progress-label">进度 1/7</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:14%"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>🎯</span>本课目标 <span class="section-label">学习目标</span></div>
+    <ul class="obj-list">
+      <li class="obj-item"><span class="obj-icon">💬</span>掌握辩论的基本格式与礼仪规范</li>
+      <li class="obj-item"><span class="obj-icon">🧠</span>学会用论点+论据+论证表达观点</li>
+      <li class="obj-item"><span class="obj-icon">👂</span>培养专注倾听、理解对方立场的能力</li>
+      <li class="obj-item"><span class="obj-icon">✍️</span>能写出一段有说服力的辩论词</li>
+    </ul>
+    <div class="tip-box">💡 辩论不是吵架！好的辩手既能清晰表达自己，也能尊重对方。</div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-ghost" onclick="goTo('hero')">← 返回</button>
+    <button class="btn btn-primary" onclick="goTo('warmup')">热身 →</button>
+  </div>
+</section>
+
+<!-- ===== WARMUP ===== -->
+<section id="warmup" class="section">
+  <div class="progress-bar-wrap">
+    <div class="progress-label">进度 2/7</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:28%"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>🔥</span>热身问答 <span class="section-label">热身</span></div>
+    <p class="mb-16" style="color:#888;">选出辩论的三要素</p>
+    <div id="warmup-q" style="font-size:1.15em;font-weight:700;margin-bottom:20px;background:#fff7ee;border-radius:12px;padding:14px;">辩论中，你的核心主张叫做什么？</div>
+    <div class="warmup-options" id="warmup-opts">
+      <button class="warmup-btn" onclick="checkWarmup(this, false)">📖 论文</button>
+      <button class="warmup-btn" onclick="checkWarmup(this, true)">💡 论点</button>
+      <button class="warmup-btn" onclick="checkWarmup(this, false)">📊 论坛</button>
+      <button class="warmup-btn" onclick="checkWarmup(this, false)">🗒️ 议案</button>
+    </div>
+    <div id="warmup-feedback" style="margin-top:14px;display:none;" class="tip-box"></div>
+    <div class="stars-row" style="margin-top:16px;">
+      <span>热身星星：</span>
+      <span id="warmup-star1" class="star">⭐</span>
+    </div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-ghost" onclick="goTo('objectives')">← 返回</button>
+    <button class="btn btn-primary" onclick="goTo('level1')">关卡一 →</button>
+  </div>
+</section>
+
+<!-- ===== LEVEL 1: 辩题分析 ===== -->
+<section id="level1" class="section">
+  <div class="progress-bar-wrap">
+    <div class="progress-label">进度 3/7 · 关卡一</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:42%"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>⚔️</span>关卡一：辩题分析 <span class="section-label">判断分类</span></div>
+    <p style="margin-bottom:16px;color:#666;">阅读辩题，将论点分别拖入正方或反方的区域</p>
+    <div style="background:#fff7ee;border-radius:14px;padding:14px 18px;margin-bottom:20px;font-size:1.15em;font-weight:700;text-align:center;">
+      辩题：<span class="highlight">中小学生应不应该使用智能手机？</span>
+    </div>
+    <div class="debate-arena">
+      <div class="debate-side side-pro">
+        <div class="side-label">✅ 正方（应该）</div>
+        <div class="sort-zone" id="pro-zone" ondragover="allowDrop(event)" ondrop="dropArg(event,'pro')">
+          <p style="color:#ccc;font-size:0.9em;text-align:center;margin-top:20px;">拖放论点到这里</p>
+        </div>
+      </div>
+      <div class="vs-badge">VS</div>
+      <div class="debate-side side-con">
+        <div class="side-label">❌ 反方（不应该）</div>
+        <div class="sort-zone" id="con-zone" ondragover="allowDrop(event)" ondrop="dropArg(event,'con')">
+          <p style="color:#ccc;font-size:0.9em;text-align:center;margin-top:20px;">拖放论点到这里</p>
+        </div>
+      </div>
+    </div>
+    <div id="arg-pool" style="display:flex;flex-wrap:wrap;gap:10px;margin:16px 0;">
+      <div class="drag-item" draggable="true" data-side="pro" ondragstart="dragStart(event)" id="arg1">📱 可以快速查资料</div>
+      <div class="drag-item" draggable="true" data-side="con" ondragstart="dragStart(event)" id="arg2">🎮 容易沉迷游戏</div>
+      <div class="drag-item" draggable="true" data-side="pro" ondragstart="dragStart(event)" id="arg3">📹 方便与家人视频</div>
+      <div class="drag-item" draggable="true" data-side="con" ondragstart="dragStart(event)" id="arg4">👁️ 损害视力健康</div>
+      <div class="drag-item" draggable="true" data-side="pro" ondragstart="dragStart(event)" id="arg5">🌐 学习英语APP</div>
+      <div class="drag-item" draggable="true" data-side="con" ondragstart="dragStart(event)" id="arg6">😴 影响睡眠质量</div>
+    </div>
+    <button class="btn btn-secondary" onclick="checkLevel1()" style="width:100%">✔ 检查答案</button>
+    <div id="l1-result" style="display:none;margin-top:14px;" class="tip-box"></div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-ghost" onclick="goTo('warmup')">← 返回</button>
+    <button class="btn btn-primary" onclick="goTo('level2')">关卡二 →</button>
+  </div>
+</section>
+
+<!-- ===== LEVEL 2: 辩论词 ===== -->
+<section id="level2" class="section">
+  <div class="progress-bar-wrap">
+    <div class="progress-label">进度 4/7 · 关卡二</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:57%"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>✍️</span>关卡二：辩论词填空 <span class="section-label">语言表达</span></div>
+    <p style="margin-bottom:16px;color:#666;">选择最恰当的词语完成辩论词</p>
+    <div class="fill-sentence" id="fill-area">
+      对方辩友，您好！我方<span class="fill-blank" onclick="showFillOpts(0)" id="blank0">___</span>是：中小学生应该合理使用智能手机。我们的<span class="fill-blank" onclick="showFillOpts(1)" id="blank1">___</span>有三点：第一，手机能帮助学生<span class="fill-blank" onclick="showFillOpts(2)" id="blank2">___</span>学习资源；第二……<span class="fill-blank" onclick="showFillOpts(3)" id="blank3">___</span>，我们必须承认合理使用的重要性。
+    </div>
+    <div id="fill-opts-area" style="margin-top:16px;display:none;">
+      <div style="font-size:0.9em;color:#888;margin-bottom:8px;">请选择第 <span id="cur-blank-idx">1</span> 空的答案：</div>
+      <div id="fill-opts-list" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+    </div>
+    <div id="fill-result" style="display:none;margin-top:14px;" class="tip-box"></div>
+    <div class="stars-row" style="margin-top:16px;">
+      得分：<span id="fill-score" style="font-size:1.3em;font-weight:800;color:var(--primary);">0</span> / 4
+    </div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-ghost" onclick="goTo('level1')">← 返回</button>
+    <button class="btn btn-primary" onclick="goTo('level3')">关卡三 →</button>
+  </div>
+</section>
+
+<!-- ===== LEVEL 3: 回应技巧 ===== -->
+<section id="level3" class="section">
+  <div class="progress-bar-wrap">
+    <div class="progress-label">进度 5/7 · 关卡三</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:71%"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>🎤</span>关卡三：最佳回应 <span class="section-label">思辨选择</span></div>
+    <p style="margin-bottom:16px;color:#666;">对方提出了反驳，选择最有力的回应方式</p>
+    <div id="speech-q" style="background:#fff7ee;border-radius:14px;padding:16px;margin-bottom:20px;font-size:1.1em;font-weight:700;">
+      💬 对方说："使用手机会让学生成绩下降。"<br>
+      <span style="font-size:0.9em;color:#888;font-weight:400;margin-top:6px;display:block;">你是正方，如何有力回应？</span>
+    </div>
+    <div class="speech-options" id="speech-opts">
+      <div class="speech-card" onclick="selectSpeech(this, false)">
+        <div class="speech-card-label">选项 A</div>
+        <div class="speech-card-text">你说得对，手机确实不好。</div>
+        <span class="check-mark">✅</span>
+      </div>
+      <div class="speech-card" onclick="selectSpeech(this, false)">
+        <div class="speech-card-label">选项 B</div>
+        <div class="speech-card-text">那是因为你们家孩子不自律！</div>
+        <span class="check-mark">✅</span>
+      </div>
+      <div class="speech-card" onclick="selectSpeech(this, true)">
+        <div class="speech-card-label">选项 C ✨</div>
+        <div class="speech-card-text">研究表明，合理管控使用时间的学生，成绩反而因学习资源丰富而提升——问题在于"管理"，而非手机本身。</div>
+        <span class="check-mark">✅</span>
+      </div>
+      <div class="speech-card" onclick="selectSpeech(this, false)">
+        <div class="speech-card-label">选项 D</div>
+        <div class="speech-card-text">手机很好用，没有手机很不方便。</div>
+        <span class="check-mark">✅</span>
+      </div>
+    </div>
+    <div id="speech-result" style="display:none;margin-top:14px;" class="tip-box"></div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-ghost" onclick="goTo('level2')">← 返回</button>
+    <button class="btn btn-primary" onclick="goTo('boss')">Boss 关 →</button>
+  </div>
+</section>
+
+<!-- ===== BOSS BATTLE ===== -->
+<section id="boss" class="section">
+  <div class="progress-bar-wrap">
+    <div class="progress-label">进度 6/7 · Boss 关卡</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:85%"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>👾</span>Boss 关：辩论擂台 <span class="section-label">终极挑战</span></div>
+    <div class="boss-wrap">
+      <div class="boss-emoji" id="boss-emoji">😤</div>
+      <div style="font-weight:800;font-size:1.2em;margin-bottom:8px;" id="boss-name">反方大魔王</div>
+      <div class="boss-hp"><div class="boss-hp-fill" id="boss-hp-fill" style="width:100%"></div></div>
+      <div style="font-size:0.9em;color:#888;margin-bottom:4px;">Boss 血量：<span id="boss-hp-num">100</span> / 100</div>
+      <div class="boss-question" id="boss-q">🎯 Boss 挑战：选择正确的辩论礼仪！<br><small style="color:#888">辩论开始时，正方应该先做什么？</small></div>
+      <div class="attack-options" id="boss-opts">
+        <button class="attack-btn" onclick="attackBoss(this, false)">🔥 直接反驳对方</button>
+        <button class="attack-btn" onclick="attackBoss(this, true)">🎩 介绍己方立场和辩手</button>
+        <button class="attack-btn" onclick="attackBoss(this, false)">💢 质问评委</button>
+        <button class="attack-btn" onclick="attackBoss(this, false)">📢 喊口号</button>
+      </div>
+      <div id="boss-result" style="display:none;margin-top:14px;" class="tip-box"></div>
+    </div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-ghost" onclick="goTo('level3')">← 返回</button>
+    <button class="btn btn-primary" id="boss-next-btn" style="display:none" onclick="goTo('scoreboard')">查看成绩 →</button>
+  </div>
+</section>
+
+<!-- ===== SCOREBOARD ===== -->
+<section id="scoreboard" class="section">
+  <div class="card score-card">
+    <div class="card-title" style="justify-content:center;"><span>🏆</span>闯关成绩单</div>
+    <div class="score-big" id="final-score">0</div>
+    <div class="score-label">总积分</div>
+    <div id="score-comment" style="font-size:1.1em;margin-bottom:20px;color:#555;"></div>
+    <div class="achievements-grid" id="ach-grid"></div>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:20px;">
+      <span id="star-display" style="font-size:2em;"></span>
+    </div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-ghost" onclick="goTo('hero')">🔄 重新挑战</button>
+    <button class="btn btn-primary" onclick="goTo('extension')">📚 拓展学习 →</button>
+  </div>
+</section>
+
+<!-- ===== EXTENSION ===== -->
+<section id="extension" class="section">
+  <div class="card" style="text-align:center;margin-bottom:8px;">
+    <div class="card-title" style="justify-content:center;">🌈 拓展学习</div>
+    <p style="color:#888;">继续探索，成为辩论达人！</p>
+  </div>
+  <div class="ext-grid">
+    <div class="ext-card" onclick="playSound('click');showExtDetail(0)">
+      <div class="ext-card-icon">🎭</div>
+      <div class="ext-card-title">角色扮演</div>
+      <div class="ext-card-desc">模拟真实辩论，担任正反方辩手</div>
+    </div>
+    <div class="ext-card" onclick="playSound('click');showExtDetail(1)">
+      <div class="ext-card-icon">📋</div>
+      <div class="ext-card-title">辩论词模板</div>
+      <div class="ext-card-desc">学习标准辩论词写作格式</div>
+    </div>
+    <div class="ext-card" onclick="playSound('click');showExtDetail(2)">
+      <div class="ext-card-icon">🎬</div>
+      <div class="ext-card-title">经典辩例</div>
+      <div class="ext-card-desc">欣赏《国际大专辩论赛》精彩片段</div>
+    </div>
+    <div class="ext-card" onclick="playSound('click');showExtDetail(3)">
+      <div class="ext-card-icon">✏️</div>
+      <div class="ext-card-title">我来出题</div>
+      <div class="ext-card-desc">设计一个辩题，挑战同学</div>
+    </div>
+  </div>
+  <div id="ext-detail" style="display:none;margin-top:16px;width:100%;max-width:700px;" class="card"></div>
+  <div class="nav-row">
+    <button class="btn btn-ghost" onclick="goTo('scoreboard')">← 成绩单</button>
+    <button class="btn btn-primary" onclick="goTo('hero')">🏠 回到首页</button>
+  </div>
+</section>
+
+<!-- ===== AI COMPANION ===== -->
+<div class="ai-companion">
+  <div class="ai-bubble" id="ai-bubble">嗨！我是小虫🐛，遇到困难可以问我哦！</div>
+  <div class="ai-avatar" onclick="toggleAI()">🐛</div>
+</div>
+
+<!-- ===== ACHIEVEMENT POPUP ===== -->
+<div class="achievement-popup" id="ach-popup">
+  <div class="ach-icon" id="ach-pop-icon">🏆</div>
+  <div class="ach-text">
+    <strong id="ach-pop-title">成就解锁！</strong>
+    <span id="ach-pop-desc">你真棒！</span>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+const state = {
+  score: 0,
+  stars: 0,
+  achievements: [],
+  warmupDone: false,
+  l1Done: false,
+  l2Score: 0,
+  l3Done: false,
+  bossDone: false,
+};
+
+const ACHIEVEMENTS = [
+  { id: 'first_step', icon: '👟', name: '迈出第一步', desc: '完成热身关卡', condition: () => state.warmupDone },
+  { id: 'classifier', icon: '🗂️', name: '论点分类师', desc: '完成辩题分析', condition: () => state.l1Done },
+  { id: 'wordsmith', icon: '✍️', name: '词语大师', desc: '填空全对', condition: () => state.l2Score >= 4 },
+  { id: 'debater', icon: '🎤', name: '辩手新星', desc: '选出最佳回应', condition: () => state.l3Done },
+  { id: 'boss_slayer', icon: '⚔️', name: '打倒大魔王', desc: '通关Boss关卡', condition: () => state.bossDone },
+  { id: 'high_score', icon: '💯', name: '高分选手', desc: '获得200分以上', condition: () => state.score >= 200 },
+  { id: 'star_collector', icon: '⭐', name: '星星收集者', desc: '获得3颗星', condition: () => state.stars >= 3 },
+  { id: 'explorer', icon: '🌈', name: '知识探索者', desc: '访问拓展学习', condition: () => false },
+];
+
+// ===== AUDIO =====
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let actx;
+function getACtx() { if (!actx) actx = new AudioCtx(); return actx; }
+function playSound(type) {
+  try {
+    const ctx = getACtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    const configs = {
+      click: [440, 'sine', 0.1, 0.1],
+      correct: [660, 'sine', 0.2, 0.3],
+      wrong: [220, 'sawtooth', 0.15, 0.2],
+      star: [880, 'triangle', 0.2, 0.4],
+      boss: [330, 'square', 0.15, 0.5],
+      achievement: [990, 'sine', 0.2, 0.5],
+    };
+    const [freq, wave, vol, dur] = configs[type] || configs.click;
+    osc.type = wave; osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    osc.start(); osc.stop(ctx.currentTime + dur);
+  } catch(e) {}
+}
+
+// ===== NAVIGATION =====
+function goTo(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  playSound('click');
+  updateAI(id);
+  if (id === 'scoreboard') renderScoreboard();
+  if (id === 'extension') unlockAch('explorer');
+}
+
+// ===== AI COMPANION =====
+const aiMessages = {
+  hero: '欢迎来到辩论课！准备好发表你的观点了吗？🎤',
+  objectives: '今天我们要学会"有理有据"地说话，这很重要哦！',
+  warmup: '热身题不难，仔细想想辩论的三要素是什么~',
+  level1: '论点分类：想想哪些理由支持"应该"，哪些支持"不应该"？',
+  level2: '选词要看上下文！辩论词有固定的表达套路。',
+  level3: '好的回应要有逻辑和证据，不能只是情绪化反驳哦！',
+  boss: 'Boss 来了！冷静分析，选最有礼有理的答案！',
+  scoreboard: '恭喜完成所有关卡！你的辩论技能 UP UP UP！🚀',
+  extension: '拓展区有很多好玩的，去看看吧！',
+};
+function updateAI(section) {
+  const bubble = document.getElementById('ai-bubble');
+  bubble.textContent = aiMessages[section] || '继续加油！💪';
+}
+function toggleAI() {
+  const bubble = document.getElementById('ai-bubble');
+  bubble.classList.toggle('show');
+  playSound('click');
+}
+
+// ===== WARMUP =====
+function checkWarmup(btn, correct) {
+  const opts = document.querySelectorAll('.warmup-btn');
+  opts.forEach(b => b.disabled = true);
+  const fb = document.getElementById('warmup-feedback');
+  fb.style.display = 'block';
+  if (correct) {
+    btn.classList.add('correct');
+    fb.textContent = '🎉 正确！论点是辩论的核心主张，还有论据（支持论点的事实）和论证（推理过程）。';
+    fb.style.background = '#d4edda';
+    playSound('correct');
+    addScore(30); addStar();
+    state.warmupDone = true;
+    checkAllAchievements();
+  } else {
+    btn.classList.add('wrong');
+    opts.forEach(b => { if(b.onclick.toString().includes('true')) b.classList.add('correct'); });
+    fb.textContent = '💡 再想想！论点是你的核心主张。';
+    fb.style.background = '#f8d7da';
+    playSound('wrong');
+  }
+}
+
+// ===== LEVEL 1: DRAG ===== 
+let draggedId = null;
+function dragStart(e) { draggedId = e.target.id; e.target.classList.add('dragging'); playSound('click'); }
+function allowDrop(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+document.addEventListener('dragend', () => { document.querySelectorAll('.drag-item').forEach(i=>i.classList.remove('dragging')); document.querySelectorAll('.sort-zone').forEach(z=>z.classList.remove('drag-over')); });
+function dropArg(e, zone) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  const el = document.getElementById(draggedId);
+  if (!el) return;
+  e.currentTarget.appendChild(el);
+  playSound('click');
+}
+function checkLevel1() {
+  const proZone = document.getElementById('pro-zone');
+  const conZone = document.getElementById('con-zone');
+  let correct = 0, total = 6;
+  proZone.querySelectorAll('.drag-item').forEach(el => { if (el.dataset.side === 'pro') correct++; });
+  conZone.querySelectorAll('.drag-item').forEach(el => { if (el.dataset.side === 'con') correct++; });
+  const result = document.getElementById('l1-result');
+  result.style.display = 'block';
+  if (correct === total) {
+    result.textContent = '🎉 太棒了！6个论点全部分对！正方论点有利用手机的好处，反方论点关注手机的危害。';
+    result.style.background = '#d4edda';
+    addScore(50); addStar(); state.l1Done = true;
+    playSound('correct'); checkAllAchievements();
+  } else {
+    result.textContent = `💡 答对了 ${correct}/${total} 个！试试重新拖动——正方找"好处"，反方找"坏处"。`;
+    result.style.background = '#fff7ee';
+    playSound('wrong');
+  }
+}
+
+// ===== LEVEL 2: FILL BLANK =====
+const fillAnswers = ['观点', '论据', '获取', '综上所述'];
+const fillOptions = [
+  ['立场','观点','意见','结论'],
+  ['理由','论据','证明','例子'],
+  ['获取','收集','浏览','下载'],
+  ['综上所述','总之来说','所以可以','但是然而'],
+];
+const fillCorrect = [1,1,0,0];
+let curBlankIdx = -1;
+let fillDone = [false,false,false,false];
+
+function showFillOpts(idx) {
+  curBlankIdx = idx;
+  document.getElementById('cur-blank-idx').textContent = idx + 1;
+  const area = document.getElementById('fill-opts-area');
+  const list = document.getElementById('fill-opts-list');
+  area.style.display = 'block';
+  list.innerHTML = '';
+  fillOptions[idx].forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.textContent = opt;
+    btn.className = 'attack-btn';
+    btn.style.flex = '1';
+    btn.style.minWidth = '80px';
+    btn.onclick = () => selectFill(i, opt);
+    list.appendChild(btn);
+  });
+}
+function selectFill(i, val) {
+  if (fillDone[curBlankIdx]) return;
+  const blank = document.getElementById('blank' + curBlankIdx);
+  const correct = (i === fillCorrect[curBlankIdx]);
+  blank.textContent = val;
+  blank.style.color = correct ? '#28a745' : '#dc3545';
+  blank.style.borderColor = correct ? '#28a745' : '#dc3545';
+  fillDone[curBlankIdx] = true;
+  if (correct) {
+    state.l2Score++;
+    addScore(15);
+    playSound('correct');
+    document.getElementById('fill-score').textContent = state.l2Score;
+  } else {
+    playSound('wrong');
+  }
+  if (state.l2Score === 4) { checkAllAchievements(); addStar(); }
+  document.getElementById('fill-opts-area').style.display = 'none';
+  if (fillDone.every(Boolean)) {
+    const r = document.getElementById('fill-result');
+    r.style.display = 'block';
+    r.textContent = `完成填空！得分 ${state.l2Score}/4 🎯 辩论词的固定表达很重要，多练习就能熟练！`;
+    r.style.background = state.l2Score >= 3 ? '#d4edda' : '#fff7ee';
+  }
+}
+
+// ===== LEVEL 3: SPEECH =====
+function selectSpeech(card, correct) {
+  document.querySelectorAll('.speech-card').forEach(c => { c.classList.remove('selected'); c.style.pointerEvents='none'; });
+  card.classList.add('selected');
+  const result = document.getElementById('speech-result');
+  result.style.display = 'block';
+  if (correct) {
+    result.textContent = '🎉 完美回应！选项C用了"数据+转移论点"策略——不否认问题，而是指出真正原因。这是高级辩论技巧！';
+    result.style.background = '#d4edda';
+    addScore(40); addStar(); state.l3Done = true;
+    playSound('correct'); checkAllAchievements();
+  } else {
+    result.textContent = '💡 这个回应不够有力。好的辩手要用证据和逻辑，而不是情绪！';
+    result.style.background = '#f8d7da';
+    playSound('wrong');
+  }
+}
+
+// ===== BOSS =====
+let bossHp = 100;
+let bossRound = 0;
+const bossQs = [
+  { q: '辩论开始时，正方应该先做什么？', correct: 1, opts: ['直接反驳对方', '介绍己方立场和辩手', '质问评委', '喊口号'] },
+  { q: '以下哪种说法是有效的论证方式？', correct: 2, opts: ['你说得不对！', '感觉上应该是这样', '根据XX研究数据显示…', '因为大家都这么说'] },
+  { q: '辩论结束，应该怎么做？', correct: 0, opts: ['感谢对手和评委，礼貌致意', '大声说我们赢了', '批评对方的表现', '立刻离席'] },
+];
+function attackBoss(btn, correct) {
+  document.querySelectorAll('.attack-btn').forEach(b => b.disabled = true);
+  const result = document.getElementById('boss-result');
+  result.style.display = 'block';
+  if (correct) {
+    bossHp -= 34;
+    document.getElementById('boss-hp-fill').style.width = Math.max(0, bossHp) + '%';
+    document.getElementById('boss-hp-num').textContent = Math.max(0, bossHp);
+    btn.style.background = '#d4edda';
+    result.textContent = '⚔️ 命中！你的回答正确，Boss受到了打击！';
+    result.style.background = '#d4edda';
+    playSound('correct');
+    addScore(35);
+    bossRound++;
+    if (bossHp <= 0 || bossRound >= 3) {
+      document.getElementById('boss-emoji').textContent = '😵';
+      document.getElementById('boss-name').textContent = '反方大魔王（已被击败）';
+      result.textContent = '🎉 Boss 被打败了！你的辩论技能已经相当厉害！';
+      state.bossDone = true; addStar(); addStar();
+      checkAllAchievements();
+      document.getElementById('boss-next-btn').style.display = 'inline-block';
+    } else {
+      setTimeout(() => nextBossQ(), 1500);
+    }
+  } else {
+    btn.style.background = '#f8d7da';
+    result.textContent = '💥 没打中！注意礼仪和逻辑是辩论的关键！';
+    result.style.background = '#f8d7da';
+    playSound('wrong');
+    setTimeout(() => nextBossQ(), 1500);
+  }
+}
+function nextBossQ() {
+  if (bossRound >= bossQs.length) return;
+  const q = bossQs[bossRound];
+  document.getElementById('boss-q').innerHTML = `🎯 Round ${bossRound+1}：${q.q}`;
+  const opts = document.getElementById('boss-opts');
+  opts.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'attack-btn';
+    btn.textContent = opt;
+    btn.onclick = function() { attackBoss(this, i === q.correct); };
+    opts.appendChild(btn);
+  });
+  document.getElementById('boss-result').style.display = 'none';
+}
+
+// ===== SCOREBOARD =====
+function renderScoreboard() {
+  document.getElementById('final-score').textContent = state.score;
+  const comment = state.score >= 200 ? '🏆 辩论之星！你的论证能力超强！' :
+                  state.score >= 120 ? '🌟 优秀辩手！继续努力，你会更棒！' :
+                  '💪 好的开始！多练习，辩论技能会快速提升！';
+  document.getElementById('score-comment').textContent = comment;
+  const starStr = '⭐'.repeat(state.stars) + '☆'.repeat(Math.max(0, 5-state.stars));
+  document.getElementById('star-display').textContent = starStr;
+  const grid = document.getElementById('ach-grid');
+  grid.innerHTML = '';
+  ACHIEVEMENTS.forEach(a => {
+    const unlocked = state.achievements.includes(a.id);
+    const div = document.createElement('div');
+    div.className = 'ach-badge ' + (unlocked ? 'unlocked' : 'locked');
+    div.innerHTML = `<div class="ach-badge-icon">${a.icon}</div><div class="ach-badge-name">${a.name}</div><div style="font-size:0.8em;color:#aaa">${a.desc}</div>`;
+    grid.appendChild(div);
+  });
+}
+
+// ===== ACHIEVEMENTS =====
+function checkAllAchievements() {
+  ACHIEVEMENTS.forEach(a => {
+    if (!state.achievements.includes(a.id) && a.condition()) unlockAch(a.id);
+  });
+  if (state.score >= 200) unlockAch('high_score');
+  if (state.stars >= 3) unlockAch('star_collector');
+}
+function unlockAch(id) {
+  if (state.achievements.includes(id)) return;
+  state.achievements.push(id);
+  const a = ACHIEVEMENTS.find(x => x.id === id);
+  if (!a) return;
+  showAchPopup(a.icon, a.name, a.desc);
+  playSound('achievement');
+}
+function showAchPopup(icon, title, desc) {
+  const popup = document.getElementById('ach-popup');
+  document.getElementById('ach-pop-icon').textContent = icon;
+  document.getElementById('ach-pop-title').textContent = '🏆 成就解锁：' + title;
+  document.getElementById('ach-pop-desc').textContent = desc;
+  popup.classList.add('show');
+  setTimeout(() => popup.classList.remove('show'), 3200);
+}
+
+// ===== SCORE / STARS =====
+function addScore(n) { state.score += n; }
+function addStar() {
+  state.stars++;
+  playSound('star');
+  spawnConfetti();
+}
+function spawnConfetti() {
+  const colors = ['#ff6b6b','#4ecdc4','#ffe66d','#a8e6cf','#fd79a8'];
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.background = colors[Math.floor(Math.random()*colors.length)];
+    p.style.animationDelay = Math.random() * 0.5 + 's';
+    p.style.borderRadius = Math.random() > 0.5 ? '50%' : '3px';
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 3500);
+  }
+}
+
+// ===== EXTENSION =====
+const extDetails = [
+  '<h3>🎭 角色扮演指南</h3><p>找一位同学，一人扮正方，一人扮反方。选好辩题（如："课间时间应该增加"），每人准备3个论点，轮流发言，最后由第三人评判。</p>',
+  '<h3>📋 辩论词模板</h3><pre style="background:#f8f9ff;border-radius:12px;padding:14px;font-size:0.9em;line-height:1.8">对方辩友，[评委，同学们]，你们好！\n我方的观点是：[你的立场]。\n我方的论据有三点：\n  第一，……\n  第二，……\n  第三，……\n综上所述，我们认为[重申立场]。\n谢谢！</pre>',
+  '<h3>🎬 经典辩例推荐</h3><ul style="line-height:2"><li>《国际大专辩论赛》精彩集锦</li><li>辩题：人性本善 vs. 人性本恶</li><li>辩题：网络是否使人更孤独</li></ul>',
+  '<h3>✏️ 创作辩题</h3><p>好辩题的标准：1⃣ 有争议性 2⃣ 双方都有合理理由 3⃣ 话题贴近生活</p><p style="margin-top:10px">试试设计：<strong>____应不应该____？</strong></p>',
+];
+function showExtDetail(i) {
+  const div = document.getElementById('ext-detail');
+  div.style.display = 'block';
+  div.innerHTML = extDetails[i];
+}
+
+// Initialize
+updateAI('hero');
+</script>
+</body>
+</html>
