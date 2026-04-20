@@ -211,7 +211,9 @@ function renderCourseCard(course) {
   
   // 3. 难度标签 (可选)
   if (course.difficulty) {
-    const diffStars = '★'.repeat(course.difficulty) + '☆'.repeat(5 - course.difficulty);
+    // 边界保护：clamp 到 [1, 5]，防止异常数据触发 RangeError: Invalid count value
+    const diff = Math.max(1, Math.min(5, parseInt(course.difficulty) || 1));
+    const diffStars = '★'.repeat(diff) + '☆'.repeat(5 - diff);
     tags.push(`<span class="tag tag-yellow">${diffStars}</span>`);
   }
 
@@ -288,15 +290,20 @@ function renderCourses(grid, courses, addCard = null) {
   if (!grid || !courses.length) return;
 
   courses.forEach(course => {
-    const cardHtml = renderCourseCard(course);
-    const temp = document.createElement('div');
-    temp.innerHTML = cardHtml;
-    const card = temp.firstElementChild;
+    try {
+      const cardHtml = renderCourseCard(course);
+      const temp = document.createElement('div');
+      temp.innerHTML = cardHtml;
+      const card = temp.firstElementChild;
 
-    if (addCard) {
-      grid.insertBefore(card, addCard);
-    } else {
-      grid.appendChild(card);
+      if (addCard) {
+        grid.insertBefore(card, addCard);
+      } else {
+        grid.appendChild(card);
+      }
+    } catch (err) {
+      // 单个课件渲染失败不应拖垮整组
+      console.error(`[TeachAny] 课件 ${course?.id || '?'} 渲染失败，跳过:`, err);
     }
   });
 }
