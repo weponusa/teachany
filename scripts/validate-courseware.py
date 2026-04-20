@@ -290,6 +290,94 @@ def validate_one(course_dir):
         except Exception as e:
             issues.append(('warn', f'{course_dir.name}: PPTX 解析失败: {e}'))
 
+    # 10. Canvas 互动基线（v5.34.11 新增，硬规则 #33）
+    #     每个课件必须有 ≥1 个原生 <canvas> 交互组件（纯文言字词类可豁免）
+    if html.exists() and full_html:
+        canvas_tags = re.findall(r'<canvas\b[^>]*>', full_html, re.IGNORECASE)
+        # 纯文言字词豁免：语文 + node_id 含 classical/character/stroke
+        is_pure_chn_char = (ms == 'chinese' and any(kw in (mn or '') for kw in
+                            ('classical', 'character', 'stroke', 'pinyin')))
+        if not canvas_tags and not is_pure_chn_char:
+            issues.append(('error',
+                f'{course_dir.name}: HTML 无原生 <canvas> 交互组件（硬规则 #33 强制 · 拖拽/画板/参数滑块/实时绘图任一；纯文言字词可用 SVG 替代但需在 manifest 声明）'))
+
+    # 11. Remotion 教学动画基线（v5.34.11 新增，硬规则 #32）
+    #     每个课件必须有 ≥1 段真实 Remotion 渲染的 mp4（Canvas/SVG 动画不得替代）
+    mp4_files = list(course_dir.glob('assets/*.mp4')) + list(course_dir.glob('videos/*.mp4'))
+    # HTML 中是否嵌入 <video src> 指向本地 mp4
+    video_tags = []
+    if html.exists() and full_html:
+        video_tags = re.findall(r'<video[^>]+src=[\'"][^\'\"]+\.mp4[\'"]', full_html, re.IGNORECASE)
+        # 也接受 <source src="xxx.mp4">
+        source_tags = re.findall(r'<source[^>]+src=[\'"][^\'\"]+\.mp4[\'"]', full_html, re.IGNORECASE)
+        video_tags.extend(source_tags)
+    # L2 视频缺失仅 warn（国产模型环境下 Remotion 常无法跑），给出自愈指引
+    if not mp4_files and not video_tags:
+        issues.append(('warn',
+            f'{course_dir.name}: 无真实 mp4 教学动画（硬规则 #32 · L2 Remotion 基线）；'
+            f'Canvas/SVG 动画不得作为唯一过程性可视化——请跑 `python3 scripts/preflight-check.py` 核实 L2 能力，'
+            f'若 Node/ffmpeg 就位则必须补至少 1 段 Remotion mp4'))
+    elif not mp4_files and video_tags:
+        # HTML 引用了 mp4 但文件不存在 → error（死链）
+        issues.append(('error',
+            f'{course_dir.name}: HTML 引用了 mp4 但 assets/*.mp4 或 videos/*.mp4 均不存在（视频死链）'))
+
+    # 12. 知识图谱基线（v5.34.11 新增，硬规则 #24）
+    #     课件必须含交互式 #knowledge-graph section 或相应 SVG 图
+    if html.exists() and full_html:
+        has_kg_section = bool(re.search(r'id=[\'"]knowledge-graph[\'"]', full_html))
+        has_kg_data = 'knowledgeGraphData' in full_html or '_graph.json' in full_html
+        if not has_kg_section and not has_kg_data:
+            issues.append(('warn',
+                f'{course_dir.name}: HTML 缺 #knowledge-graph section 或 knowledgeGraphData 数据'
+                f'（硬规则 #24 · 每个课件必须含交互式知识图谱）'))
+
+    # 13. 地图基线（v5.34.11 新增，硬规则 #35/#36）
+    #     历史/地理课件必须有 XYZ 瓦片底图 + fitBounds/setView 聚焦
+    needs_map = ms in ('history', 'geography')
+    if needs_map and html.exists() and full_html:
+        has_tile_layer = bool(re.search(r'L\.tileLayer\s*\(', full_html))
+        has_fit_bounds = bool(re.search(r'\.fitBounds\s*\(|\.setView\s*\(', full_html))
+        has_image_overlay_full = bool(re.search(
+            r'L\.imageOverlay\s*\([^)]*?\[\s*\[\s*-?90', full_html))
+        has_echarts_graphic_image = bool(re.search(
+            r'graphic\s*:\s*\[[^\]]*?type\s*:\s*[\'"]image[\'"]', full_html))
+        if has_image_overlay_full:
+            issues.append(('error',
+                f'{course_dir.name}: 检测到 L.imageOverlay 全球铺图（[-90,-180]..[90,180]）'
+                f'（硬规则 #35 严禁 · 必定在中高纬度错位 · 改用 L.tileLayer XYZ 瓦片）'))
+        if has_echarts_graphic_image:
+            issues.append(('error',
+                f'{course_dir.name}: 检测到 ECharts graphic type:"image" 铺底图'
+                f'（硬规则 #35 严禁 · DOM 绝对定位不跟随 geo 变换，必定错位）'))
+        if not has_tile_layer:
+            issues.append(('warn',
+                f'{course_dir.name}: 历史/地理课件 HTML 缺 L.tileLayer XYZ 瓦片底图调用'
+                f'（硬规则 #35 · 请用 cartodb-basemaps + arcgisonline hillshade 双层）'))
+        if has_tile_layer and not has_fit_bounds:
+            issues.append(('warn',
+                f'{course_dir.name}: 地图初始化未调用 fitBounds/setView 聚焦核心区域'
+                f'（硬规则 #36 · 禁止停留在 [0,0] 默认中心）'))
+
+    # 14. 视频嵌入规范（v5.34.11 新增，硬规则 #25）
+    if html.exists() and full_html:
+        # 若使用了视频，必须用 <video> 标签 + controls + preload + playsinline
+        video_with_attrs = re.findall(
+            r'<video\b[^>]*>', full_html, re.IGNORECASE)
+        if video_with_attrs:
+            for v in video_with_attrs:
+                low = v.lower()
+                if 'controls' not in low:
+                    issues.append(('warn',
+                        f'{course_dir.name}: <video> 标签缺 `controls` 属性'
+                        f'（硬规则 #25 · 必须允许用户手动播放）'))
+                    break
+        # 严禁纯 JS 动态 createElement('video')（v5.34.11 放宽为 warn）
+        if re.search(r'createElement\s*\(\s*[\'"]video[\'"]', full_html):
+            issues.append(('warn',
+                f'{course_dir.name}: 检测到 createElement("video") 动态视频注入'
+                f'（硬规则 #25 · 推荐直接写 <video> 标签，便于无 JS 环境与打印）'))
+
     return issues
 
 
