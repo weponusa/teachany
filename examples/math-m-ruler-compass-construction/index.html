@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="course-id" content="math-m-ruler-compass-construction">
+<meta name="course-subject" content="math">
+<title>尺规作图 | 七年级数学</title>
+<style>
+:root{--bg:#f8fafc;--primary:#3b82f6;--secondary:#06b6d4;--accent:#f59e0b;--card:#fff;--text:#1e293b;--muted:#64748b;--success:#22c55e;--error:#ef4444;--radius:14px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+#prog-bar{position:fixed;top:0;left:0;width:100%;height:4px;background:#e2e8f0;z-index:999}
+#prog-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));transition:width .4s;width:0%}
+.hero{background:linear-gradient(135deg,#1e3a8a,#0891b2);color:#fff;padding:56px 20px;text-align:center}
+.hero h1{font-size:2.2rem;font-weight:800;margin-bottom:10px}
+.hero p{font-size:1.05rem;opacity:.9;max-width:560px;margin:0 auto 20px}
+.hero-meta{display:flex;justify-content:center;gap:16px;flex-wrap:wrap}
+.hero-badge{background:rgba(255,255,255,.2);border-radius:20px;padding:5px 16px;font-size:.88rem}
+.container{max-width:880px;margin:0 auto;padding:20px 16px}
+.section{background:var(--card);border-radius:var(--radius);padding:26px;margin-bottom:22px;box-shadow:0 2px 10px rgba(0,0,0,.06);opacity:0;transform:translateY(18px);transition:opacity .5s,transform .5s}
+.section.visible{opacity:1;transform:none}
+.sec-title{font-size:1.25rem;font-weight:700;color:var(--primary);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.sec-title::before{content:'';display:inline-block;width:4px;height:20px;background:var(--primary);border-radius:2px}
+.obj-list{list-style:none;display:flex;flex-direction:column;gap:8px}
+.obj-list li{padding:10px 16px;background:#eff6ff;border-radius:10px;border-left:4px solid var(--primary);display:flex;align-items:flex-start;gap:8px}
+.obj-list li::before{content:'🎯';margin-top:1px}
+.abt{background:linear-gradient(135deg,#fef9c3,#fef3c7);border-radius:12px;padding:18px;margin-bottom:16px;border-left:4px solid var(--accent)}
+.abt h3{color:#92400e;margin-bottom:8px;font-size:1rem}
+.abt p{margin-bottom:6px;font-size:.95rem}
+.explain{background:#f8fafc;border-radius:12px;padding:18px;margin-bottom:14px}
+.explain h4{color:var(--secondary);margin-bottom:10px}
+.hl{background:linear-gradient(90deg,#dbeafe,#e0f2fe);padding:1px 6px;border-radius:4px;font-weight:600}
+.quiz-card{background:#f8fafc;border-radius:12px;padding:18px;margin-bottom:14px}
+.quiz-q{font-weight:600;margin-bottom:12px}
+.opts{display:flex;flex-direction:column;gap:7px}
+.opt{padding:10px 15px;border:2px solid #e2e8f0;border-radius:10px;cursor:pointer;transition:all .2s;background:#fff;font-size:.95rem;text-align:left}
+.opt:hover{border-color:var(--primary);background:#eff6ff}
+.opt.correct{border-color:var(--success)!important;background:#f0fdf4!important;color:#15803d}
+.opt.wrong{border-color:var(--error)!important;background:#fef2f2!important;color:#b91c1c}
+.opt.disabled{cursor:not-allowed;pointer-events:none}
+.fb{margin-top:10px;padding:10px 14px;border-radius:10px;font-size:.9rem;display:none}
+.fb.show{display:block}
+.fb.correct{background:#f0fdf4;color:#15803d;border:1px solid #86efac}
+.fb.wrong{background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5}
+.err-box{background:#fff7ed;border-radius:12px;padding:14px;border-left:4px solid var(--accent);margin-top:14px}
+.err-box h4{color:#c2410c;margin-bottom:8px;font-size:.95rem}
+.err-item{display:flex;gap:8px;margin-bottom:6px;font-size:.88rem;align-items:flex-start}
+.progress-row{background:var(--card);border-radius:var(--radius);padding:18px;margin-bottom:20px;box-shadow:0 2px 10px rgba(0,0,0,.06);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.mastery-wrap{min-width:180px}
+.mastery-bar{height:10px;background:#e2e8f0;border-radius:5px;overflow:hidden;margin-top:5px}
+.mastery-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--success));transition:width .5s;border-radius:5px;width:0%}
+.achs{display:flex;gap:8px;flex-wrap:wrap}
+.ach{padding:6px 12px;border-radius:16px;font-size:.8rem;font-weight:600;border:2px solid #e2e8f0;background:#f8fafc;opacity:.35;transition:all .3s}
+.ach.unlocked{opacity:1;background:linear-gradient(135deg,#fef3c7,#fde68a);border-color:var(--accent);animation:pop .35s}
+@keyframes pop{0%{transform:scale(.7)}65%{transform:scale(1.12)}100%{transform:scale(1)}}
+.btn{padding:8px 18px;border:none;border-radius:9px;cursor:pointer;font-weight:600;transition:all .2s;font-size:.9rem}
+.btn-p{background:var(--primary);color:#fff}.btn-p:hover{background:#2563eb}
+.btn-a{background:var(--accent);color:#fff}.btn-a:hover{background:#d97706}
+.btn-g{background:#e2e8f0;color:var(--text)}.btn-g:hover{background:#cbd5e1}
+.btn-s{background:var(--secondary);color:#fff}.btn-s:hover{background:#0891b2}
+.svg-demo{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.08);padding:12px;margin-bottom:14px;overflow:hidden}
+.svg-demo svg{display:block;margin:0 auto;max-width:100%}
+.step-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.step-ind{background:#eff6ff;border-radius:8px;padding:6px 14px;font-size:.88rem;color:var(--primary);font-weight:600}
+.step-desc{background:#f0f9ff;border-radius:10px;padding:12px 16px;font-size:.92rem;margin:8px 0;border-left:3px solid var(--secondary)}
+.step-list{list-style:none}
+.step-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #f1f5f9;align-items:flex-start}
+.step-item:last-child{border-bottom:none}
+.step-num{background:var(--primary);color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0;margin-top:1px}
+.tools-card{display:flex;gap:14px;flex-wrap:wrap;margin:12px 0}
+.tool-item{flex:1;min-width:130px;background:#eff6ff;border-radius:10px;padding:14px;text-align:center;border:2px solid #dbeafe}
+.tool-icon{font-size:2rem;margin-bottom:6px}
+.tool-name{font-weight:700;font-size:.9rem;color:var(--primary);margin-bottom:4px}
+.tool-desc{font-size:.8rem;color:var(--muted)}
+.hl-box{background:linear-gradient(135deg,#dbeafe,#e0f2fe);border-radius:10px;padding:14px;margin:10px 0;font-size:.93rem}
+.expand-card{background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border-radius:12px;padding:18px;margin-bottom:12px;border:1px solid #bae6fd}
+.expand-card h4{color:var(--primary);margin-bottom:8px}
+.task-area{border:2px dashed var(--secondary);border-radius:12px;padding:18px;background:#f0f9ff}
+.score-big{text-align:center;font-size:2.2rem;font-weight:800;color:var(--primary);margin:14px 0}
+.score-lbl{color:var(--muted);font-size:.88rem;text-align:center}
+.anim-hint{text-align:center;color:var(--muted);font-size:.85rem;margin-top:6px;font-style:italic}
+@media(max-width:600px){.hero h1{font-size:1.5rem}.container{padding:10px}.section{padding:16px}.tools-card{flex-direction:column}}
+</style>
+</head>
+<body>
+<div id="prog-bar"><div id="prog-fill"></div></div>
+<div class="hero">
+  <h1>📐 尺规作图</h1>
+  <p>只用直尺和圆规，绘制精准几何图形——古老的技艺，永恒的精确！</p>
+  <div class="hero-meta">
+    <span class="hero-badge">📚 七年级数学</span>
+    <span class="hero-badge">⏱ 约45分钟</span>
+    <span class="hero-badge">🎯 互动课件</span>
+  </div>
+</div>
+<div class="container">
+<div class="progress-row">
+  <div class="mastery-wrap">
+    <div style="font-weight:700;font-size:.95rem">学习掌握度</div>
+    <div class="mastery-bar"><div class="mastery-fill" id="mfill"></div></div>
+    <div style="font-size:.78rem;color:var(--muted);margin-top:3px">当前：<span id="mval">0</span>%</div>
+  </div>
+  <div class="achs">
+    <div class="ach" id="ach-geometer">📐 初级几何师</div>
+    <div class="ach" id="ach-bisector">✂️ 平分专家</div>
+    <div class="ach" id="ach-perp">⊥ 垂直大师</div>
+    <div class="ach" id="ach-compass">🔵 圆规高手</div>
+    <div class="ach" id="ach-euclid">🏺 欧几里得</div>
+  </div>
+</div>
+<div class="section">
+  <div class="sec-title">学习目标</div>
+  <ul class="obj-list">
+    <li>理解尺规作图的规则：直尺只能画线，圆规负责传递长度</li>
+    <li>掌握作线段垂直平分线（中垂线）的完整步骤</li>
+    <li>掌握作角的平分线的完整步骤</li>
+    <li>能综合运用基本尺规作图解决实际几何问题</li>
+  </ul>
+</div>
+<div class="section">
+  <div class="sec-title">前测：基础检验</div>
+  <div class="quiz-card" id="pq1">
+    <div class="quiz-q">1. 尺规作图中，直尺（无刻度）的主要用途是？</div>
+    <div class="opts">
+      <button class="opt" onclick="ans('pq1','A','C')">A. 量取特定长度</button>
+      <button class="opt" onclick="ans('pq1','B','C')">B. 量角度</button>
+      <button class="opt" onclick="ans('pq1','C','C')">C. 连接两点，画直线或线段</button>
+      <button class="opt" onclick="ans('pq1','D','C')">D. 画圆弧</button>
+    </div>
+    <div class="fb" id="pq1-fb"></div>
+  </div>
+  <div class="quiz-card" id="pq2">
+    <div class="quiz-q">2. 线段垂直平分线上任意一点 P，满足什么条件？</div>
+    <div class="opts">
+      <button class="opt" onclick="ans('pq2','A','B')">A. P 一定在线段上</button>
+      <button class="opt" onclick="ans('pq2','B','B')">B. P 到线段两端点的距离相等（PA=PB）</button>
+      <button class="opt" onclick="ans('pq2','C','B')">C. P 到线段的距离等于线段长</button>
+      <button class="opt" onclick="ans('pq2','D','B')">D. P 只在线段中点处</button>
+    </div>
+    <div class="fb" id="pq2-fb"></div>
+  </div>
+  <div class="quiz-card" id="pq3">
+    <div class="quiz-q">3. 角平分线上的点 Q，到角的两边距离关系是？</div>
+    <div class="opts">
+      <button class="opt" onclick="ans('pq3','A','C')">A. 到一边距离更近</button>
+      <button class="opt" onclick="ans('pq3','B','C')">B. 不确定，取决于角的大小</button>
+      <button class="opt" onclick="ans('pq3','C','C')">C. 到角两边的距离相等</button>
+      <button class="opt" onclick="ans('pq3','D','C')">D. 只有顶点处距离相等</button>
+    </div>
+    <div class="fb" id="pq3-fb"></div>
+  </div>
+</div>
+<div class="section">
+  <div class="sec-title">模块一：认识尺规作图的工具与规则</div>
+  <div class="abt">
+    <h3>🏛️ ABT引入：古希腊几何学家的约定</h3>
+    <p><strong>And（背景）：</strong>古希腊数学家欧几里得只用两样工具：无刻度直尺和圆规研究几何。</p>
+    <p><strong>But（冲突）：</strong>没有刻度怎么量距离？没有量角器怎么分角度？</p>
+    <p><strong>Therefore（转折）：</strong>圆规可以"搬运"长度！两弧的交点能精确定位！这套方法精确无误，延续2000多年！</p>
+  </div>
+  <div class="tools-card">
+    <div class="tool-item">
+      <div class="tool-icon">📏</div>
+      <div class="tool-name">无刻度直尺</div>
+      <div class="tool-desc">只能连接两点画直线/线段，<strong>不能量距离</strong></div>
+    </div>
+    <div class="tool-item">
+      <div class="tool-icon">🔵</div>
+      <div class="tool-name">圆规</div>
+      <div class="tool-desc">画圆弧，<strong>传递和比较长度</strong></div>
+    </div>
+  </div>
+  <div class="hl-box">
+    <strong>三条规则：</strong>
+    <ul style="margin:8px 0 0 20px;line-height:2.2">
+      <li>直尺只能 <span class="hl">画线段</span>，不能量距离</li>
+      <li>圆规可以 <span class="hl">以一点为圆心，某长度为半径画弧</span></li>
+      <li>作图的 <span class="hl">辅助圆弧必须保留</span>，不能擦掉</li>
+    </ul>
+  </div>
+  <div class="quiz-card" id="m1q1">
+    <div class="quiz-q">📝 下面哪个操作违反了尺规作图规则？</div>
+    <div class="opts">
+      <button class="opt" onclick="ans('m1q1','A','C')">A. 用圆规画两个圆弧，找交点</button>
+      <button class="opt" onclick="ans('m1q1','B','C')">B. 用直尺连接圆弧的两个交点</button>
+      <button class="opt" onclick="ans('m1q1','C','C')">C. 用直尺上的刻度量出3cm的线段</button>
+      <button class="opt" onclick="ans('m1q1','D','C')">D. 以已知线段的端点为圆心画弧</button>
+    </div>
+    <div class="fb" id="m1q1-fb"></div>
+  </div>
+  <div class="err-box">
+    <h4>⚠️ 常见错误</h4>
+    <div class="err-item"><span>❌</span><span style="color:#ef4444">用有刻度的直尺直接量取长度</span></div>
+    <div class="err-item"><span>✅</span><span style="color:#22c55e">用圆规截取等长线段来传递长度</span></div>
+    <div class="err-item"><span>❌</span><span style="color:#ef4444">作图结束后擦掉辅助弧</span></div>
+    <div class="err-item"><span>✅</span><span style="color:#22c55e">辅助弧是作图过程的记录，必须保留</span></div>
+  </div>
+</div>
+<div class="section">
+  <div class="sec-title">模块二：作线段的垂直平分线</div>
+  <div class="abt">
+    <h3>🎯 ABT引入：两个村庄的公平选址</h3>
+    <p><strong>And：</strong>A、B 两村要在公路上建一个车站，要求到两村距离完全相等。</p>
+    <p><strong>But：</strong>没有刻度尺怎么找到 AB 的中点？</p>
+    <p><strong>Therefore：</strong>用圆规作出垂直平分线，交点就是唯一的公平位置！</p>
+  </div>
+  <div class="explain">
+    <h4>📐 作线段 AB 的垂直平分线 — 步骤</h4>
+    <ul class="step-list">
+      <li class="step-item"><div class="step-num">1</div><div>给定线段 AB</div></li>
+      <li class="step-item"><div class="step-num">2</div><div>以 <strong>A</strong> 为圆心，大于 AB/2 的长度为半径，画弧（上下各一段）</div></li>
+      <li class="step-item"><div class="step-num">3</div><div>以 <strong>B</strong> 为圆心，<strong>相同半径</strong>，画弧，与前弧交于 C、D 两点</div></li>
+      <li class="step-item"><div class="step-num">4</div><div>用直尺连接 C、D，即得 AB 的垂直平分线，C、D 连线与 AB 交点 M 即为 AB 中点</div></li>
+    </ul>
+  </div>
+  <div class="svg-demo">
+    <svg id="svg-perp" width="480" height="280" viewBox="0 0 480 280">
+      <rect width="480" height="280" fill="#f8fafc" rx="8"/>
+      <g stroke="#e2e8f0" stroke-width="0.7">
+        <line x1="48" y1="0" x2="48" y2="280"/><line x1="96" y1="0" x2="96" y2="280"/>
+        <line x1="144" y1="0" x2="144" y2="280"/><line x1="192" y1="0" x2="192" y2="280"/>
+        <line x1="240" y1="0" x2="240" y2="280"/><line x1="288" y1="0" x2="288" y2="280"/>
+        <line x1="336" y1="0" x2="336" y2="280"/><line x1="384" y1="0" x2="384" y2="280"/>
+        <line x1="432" y1="0" x2="432" y2="280"/>
+        <line x1="0" y1="56" x2="480" y2="56"/><line x1="0" y1="112" x2="480" y2="112"/>
+        <line x1="0" y1="168" x2="480" y2="168"/><line x1="0" y1="224" x2="480" y2="224"/>
+      </g>
+      <line x1="100" y1="140" x2="380" y2="140" stroke="#334155" stroke-width="2.5"/>
+      <circle cx="100" cy="140" r="5" fill="#3b82f6"/>
+      <circle cx="380" cy="140" r="5" fill="#3b82f6"/>
+      <text x="88" y="130" fill="#1d4ed8" font-weight="bold" font-size="15">A</text>
+      <text x="385" y="130" fill="#1d4ed8" font-weight="bold" font-size="15">B</text>
+      <circle id="p-arc-a" cx="100" cy="140" r="165" fill="none" stroke="#06b6d4" stroke-width="1.6" stroke-dasharray="5,3" opacity="0"/>
+      <circle id="p-arc-b" cx="380" cy="140" r="165" fill="none" stroke="#f59e0b" stroke-width="1.6" stroke-dasharray="5,3" opacity="0"/>
+      <circle id="p-c" cx="240" cy="5" r="5" fill="#ef4444" opacity="0"/>
+      <circle id="p-d" cx="240" cy="275" r="5" fill="#ef4444" opacity="0"/>
+      <text id="p-cl" x="248" y="18" fill="#ef4444" font-weight="bold" font-size="13" opacity="0">C</text>
+      <text id="p-dl" x="248" y="275" fill="#ef4444" font-weight="bold" font-size="13" opacity="0">D</text>
+      <line id="p-bisect" x1="240" y1="8" x2="240" y2="272" stroke="#22c55e" stroke-width="2.2" stroke-dasharray="7,3" opacity="0"/>
+      <circle id="p-m" cx="240" cy="140" r="6.5" fill="#f59e0b" opacity="0"/>
+      <text id="p-ml" x="248" y="136" fill="#92400e" font-weight="bold" font-size="13" opacity="0">M</text>
+      <polyline id="p-ra" points="228,140 228,128 240,128" fill="none" stroke="#334155" stroke-width="1.8" opacity="0"/>
+    </svg>
+  </div>
+  <div class="step-controls">
+    <button class="btn btn-g" onclick="perpStep(-1)">← 上一步</button>
+    <span class="step-ind" id="perp-ind">步骤 0/4</span>
+    <button class="btn btn-p" onclick="perpStep(1)">下一步 →</button>
+    <button class="btn btn-a" onclick="perpReset()">重置</button>
+  </div>
+  <div class="step-desc" id="perp-desc">点击"下一步"，逐步演示作垂直平分线的过程</div>
+  <div class="anim-hint">💡 建议同步用真实圆规和直尺动手操作！</div>
+  <div class="quiz-card" id="m2q1" style="margin-top:16px">
+    <div class="quiz-q">📝 作线段 AB 的中垂线时，以 A、B 为圆心画弧，半径要满足什么条件？</div>
+    <div class="opts">
+      <button class="opt" onclick="ans('m2q1','A','C')">A. 只要 A 的半径够大就行</button>
+      <button class="opt" onclick="ans('m2q1','B','C')">B. 两弧半径随意，不需要相等</button>
+      <button class="opt" onclick="ans('m2q1','C','C')">C. 两弧半径相等，且大于 AB 长度的一半</button>
+      <button class="opt" onclick="ans('m2q1','D','C')">D. 半径恰好等于 AB 长度</button>
+    </div>
+    <div class="fb" id="m2q1-fb"></div>
+  </div>
+  <div class="quiz-card" id="m2q2">
+    <div class="quiz-q">📝 线段 AB 的垂直平分线上任意一点 P 满足？</div>
+    <div class="opts">
+      <button class="opt" onclick="ans('m2q2','A','B')">A. P 必须在 AB 的延长线上</button>
+      <button class="opt" onclick="ans('m2q2','B','B')">B. PA = PB</button>
+      <button class="opt" onclick="ans('m2q2','C','B')">C. P 到 AB 的距离等于 AB 长度</button>
+      <button class="opt" onclick="ans('m2q2','D','B')">D. P 只能是中点 M</button>
+    </div>
+    <div class="fb" id="m2q2-fb"></div>
+  </div>
+  <div class="err-box">
+    <h4>⚠️ 常见错误</h4>
+    <div class="err-item"><span>❌</span><span style="color:#ef4444">两弧半径不等，交点位置不正确</span></div>
+    <div class="err-item"><span>✅</span><span style="color:#22c55e">两弧半径必须相等，且大于线段的一半，才能上下各交于一点</span></div>
+    <div class="err-item"><span>❌</span><span style="color:#ef4444">只画线段的一部分，不理解"中垂线是直线"</span></div>
+    <div class="err-item"><span>✅</span><span style="color:#22c55e">垂直平分线是无限延长的直线，通过两交点并垂直于线段</span></div>
+  </div>
+</div>
+<div class="section">
+  <div class="sec-title">模块三：作角的平分线</div>
+  <div class="abt">
+    <h3>🏗️ ABT引入：角形地块的对称道路</h3>
+    <p><strong>And：</strong>在角形土地里要修一条路，要求到角两边的距离完全相等。</p>
+    <p><strong>But：</strong>用量角器很难做到精确。</p>
+    <p><strong>Therefore：</strong>用尺规作角平分线！两弧交点确定方向，精确又优雅！</p>
+  </div>
+  <div class="explain">
+    <h4>📐 作 ∠AOB 的角平分线 — 步骤</h4>
+    <ul class="step-list">
+      <li class="step-item"><div class="step-num">1</div><div>以顶点 O 为圆心，任意半径 r₁ 画弧，交 OA 于点 M，交 OB 于点 N</div></li>
+      <li class="step-item"><div class="step-num">2</div><div>以 M 为圆心，适当半径 r₂ 画弧（在角内部）</div></li>
+      <li class="step-item"><div class="step-num">3</div><div>以 N 为圆心，<strong>相同半径 r₂</strong> 画弧，两弧相交于点 P</div></li>
+      <li class="step-item"><div class="step-num">4</div><div>连接 O、P，射线 OP 即为 ∠AOB 的角平分线</div></li>
+    </ul>
+  </div>
+  <div class="svg-demo">
+    <svg id="svg-angle" width="480" height="300" viewBox="0 0 480 300">
+      <rect width="480" height="300" fill="#f8fafc" rx="8"/>
+      <g stroke="#e2e8f0" stroke-width="0.7">
+        <line x1="48" y1="0" x2="48" y2="300"/><line x1="96" y1="0" x2="96" y2="300"/>
+        <line x1="144" y1="0" x2="144" y2="300"/><line x1="192" y1="0" x2="192" y2="300"/>
+        <line x1="240" y1="0" x2="240" y2="300"/><line x1="288" y1="0" x2="288" y2="300"/>
+        <line x1="336" y1="0" x2="336" y2="300"/><line x1="384" y1="0" x2="384" y2="300"/>
+        <line x1="432" y1="0" x2="432" y2="300"/>
+        <line x1="0" y1="60" x2="480" y2="60"/><line x1="0" y1="120" x2="480" y2="120"/>
+        <line x1="0" y1="180" x2="480" y2="180"/><line x1="0" y1="240" x2="480" y2="240"/>
+      </g>
+      <circle cx="80" cy="220" r="5" fill="#3b82f6"/>
+      <text x="62" y="240" fill="#1d4ed8" font-weight="bold" font-size="15">O</text>
+      <line x1="80" y1="220" x2="430" y2="60" stroke="#334155" stroke-width="2.5" stroke-linecap="round"/>
+      <text x="435" y="62" fill="#1d4ed8" font-weight="bold" font-size="14">A</text>
+      <line x1="80" y1="220" x2="450" y2="270" stroke="#334155" stroke-width="2.5" stroke-linecap="round"/>
+      <text x="452" y="273" fill="#1d4ed8" font-weight="bold" font-size="14">B</text>
+      <circle id="a-arc-o" cx="80" cy="220" r="130" fill="none" stroke="#06b6d4" stroke-width="1.6" stroke-dasharray="5,3" opacity="0"/>
+      <!-- M on OA at param t, OA direction=(350,-160), |OA|~384, t=130/384~0.338, M=(80+130*350/384, 220+130*(-160)/384)=(199,166) -->
+      <circle id="a-m" cx="199" cy="166" r="5" fill="#9333ea" opacity="0"/>
+      <text id="a-ml" x="205" y="162" fill="#7c3aed" font-weight="bold" font-size="13" opacity="0">M</text>
+      <!-- N on OB at param t, OB direction=(370,50), |OB|~373, t=130/373~0.349, N=(80+130*370/373, 220+130*50/373)=(209,237) -->
+      <circle id="a-n" cx="209" cy="237" r="5" fill="#9333ea" opacity="0"/>
+      <text id="a-nl" x="215" y="252" fill="#7c3aed" font-weight="bold" font-size="13" opacity="0">N</text>
+      <circle id="a-arc-m" cx="199" cy="166" r="65" fill="none" stroke="#ef4444" stroke-width="1.6" stroke-dasharray="5,3" opacity="0"/>
+      <circle id="a-arc-n" cx="209" cy="237" r="65" fill="none" stroke="#f59e0b" stroke-width="1.6" stroke-dasharray="5,3" opacity="0"/>
+      <!-- P intersection of arcs from M(199,166) and N(209,237), both r=65. Midpoint of MN=(204,201.5). MN direction=(10,71), |MN|~71.7. Perpendicular bisector of MN at (204,201.5). Half-chord = sqrt(65^2-(|MN|/2)^2)=sqrt(4225-1278)=sqrt(2947)~54.3. P is on perpendicular to MN at midpoint. Unit perp=(-71,10)/71.7=(-0.99,0.14). P1=(204-54.3*0.99, 201.5+54.3*0.14)=(150,209). Let's use P=(150,209) on the O-side -->
+      <circle id="a-p" cx="150" cy="209" r="5" fill="#22c55e" opacity="0"/>
+      <text id="a-pl" x="135" y="206" fill="#15803d" font-weight="bold" font-size="13" opacity="0">P</text>
+      <line id="a-bisect" x1="80" y1="220" x2="430" y2="195" stroke="#22c55e" stroke-width="2.2" stroke-dasharray="7,3" opacity="0"/>
+    </svg>
+  </div>
+  <div class="step-controls">
+    <button class="btn btn-g" onclick="angleStep(-1)">← 上一步</button>
+    <span class="step-ind" id="angle-ind">步骤 0/4</span>
+    <button class="btn btn-p" onclick="angleStep(1)">下一步 →</button>
+    <button class="btn btn-a" onclick="angleReset()">重置</button>
+  </div>
+  <div class="step-desc" id="angle-desc">点击"下一步"，逐步演示作角平分线的过程</div>
+  <div class="quiz-card" id="m3q1" style="margin-top:16px">
+    <div class="quiz-q">📝 作角平分线时，以 M、N 为圆心所画两弧的半径关系是？</div>
+    <div class="opts">
+      <button class="opt" onclick="ans('m3q1','A','B')">A. M 的半径要更大</button>
+      <button class="opt" onclick="ans('m3q1','B','B')">B. 两弧半径相等</button>
+      <button class="opt" onclick="ans('m3q1','C','B')">C. 任意，不需要相等</button>
+      <button class="opt" onclick="ans('m3q1','D','B')">D. 等于角顶点到 M 的距离</button>
+    </div>
+    <div class="fb" id="m3q1-fb"></div>
+  </div>
+  <div class="quiz-card" id="m3q2">
+    <div class="quiz-q">📝 角平分线上的点 Q，到角两边的距离满足？</div>
+    <div class="opts">
+      <button class="opt" onclick="ans('m3q2','A','C')">A. 到第一条边距离更近</button>
+      <button class="opt" onclick="ans('m3q2','B','C')">B. 到顶点距离相等</button>
+      <button class="opt" onclick="ans('m3q2','C','C')">C. 到角两边的距离相等</button>
+      <button class="opt" onclick="ans('m3q2','D','C')">D. 距离之和等于线段长</button>
+    </div>
+    <div class="fb" id="m3q2-fb"></div>
+  </div>
+  <div class="err-box">
+    <h4>⚠️ 常见错误</h4>
+    <div class="err-item"><span>❌</span><span style="color:#ef4444">以M、N为圆心时使用不同半径，导致两弧不相交</span></div>
+    <div class="err-item"><span>✅</span><span style="color:#22c55e">以M、N为圆心的两弧半径必须相等，才能交于角平分线上的点P</span></div>
+    <div class="err-item"><span>❌</span><span style="color:#ef4444">连接MP或NP，而不是连接OP</span></div>
+    <div class="err-item"><span>✅</span><span style="color:#22c55e">角平分线是从顶点O出发的射线OP，必须从O连到P</span></div>
+  </div>
+</div>
+<div class="section">
+  <div class="sec-title">综合任务：设计对称小屋</div>
+  <div class="task-area">
+    <p style="color:var(--muted);font-size:.95rem;margin-bottom:14px">🏠 使用尺规作图，按步骤完成以下综合练习：</p>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <div style="background:var(--secondary);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:.85rem">1</div>
+        <div>画一条线段 AB = 6cm，用尺规作出它的垂直平分线，找到中点 M</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <div style="background:var(--secondary);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:.85rem">2</div>
+        <div>以 M 为顶点，画一个 60° 角（可借助等边三角形），再用尺规作该角的平分线</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <div style="background:var(--secondary);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:.85rem">3</div>
+        <div>完成作图后，自查：是否保留了所有辅助弧？垂直关系是否标记？</div>
+      </div>
+    </div>
+    <div style="margin-top:16px;background:#fff;border-radius:10px;padding:14px">
+      <svg id="svg-task" width="420" height="220" viewBox="0 0 420 220">
+        <rect width="420" height="220" fill="#f8fafc" rx="8"/>
+        <g stroke="#e2e8f0" stroke-width="0.8">
+          <line x1="42" y1="0" x2="42" y2="220"/><line x1="84" y1="0" x2="84" y2="220"/>
+          <line x1="126" y1="0" x2="126" y2="220"/><line x1="168" y1="0" x2="168" y2="220"/>
+          <line x1="210" y1="0" x2="210" y2="220"/><line x1="252" y1="0" x2="252" y2="220"/>
+          <line x1="294" y1="0" x2="294" y2="220"/><line x1="336" y1="0" x2="336" y2="220"/>
+          <line x1="378" y1="0" x2="378" y2="220"/>
+          <line x1="0" y1="44" x2="420" y2="44"/><line x1="0" y1="88" x2="420" y2="88"/>
+          <line x1="0" y1="132" x2="420" y2="132"/><line x1="0" y1="176" x2="420" y2="176"/>
+        </g>
+        <line x1="60" y1="130" x2="360" y2="130" stroke="#334155" stroke-width="2.5"/>
+        <circle cx="60" cy="130" r="4" fill="#3b82f6"/>
+        <circle cx="360" cy="130" r="4" fill="#3b82f6"/>
+        <text x="48" y="122" fill="#1d4ed8" font-weight="bold" font-size="13">A</text>
+        <text x="364" y="122" fill="#1d4ed8" font-weight="bold" font-size="13">B</text>
+        <text x="206" y="122" fill="#64748b" font-size="11">M</text>
+        <circle cx="210" cy="130" r="4" fill="#f59e0b"/>
+        <line x1="210" y1="15" x2="210" y2="215" stroke="#22c55e" stroke-width="1.8" stroke-dasharray="6,3"/>
+        <polyline points="198,130 198,118 210,118" fill="none" stroke="#334155" stroke-width="1.5"/>
+        <circle id="task-arc-a" cx="60" cy="130" r="160" fill="none" stroke="#06b6d4" stroke-width="1.2" stroke-dasharray="4,3" opacity="0.4"/>
+        <circle id="task-arc-b" cx="360" cy="130" r="160" fill="none" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="4,3" opacity="0.4"/>
+        <text x="110" y="50" fill="#64748b" font-size="11" font-style="italic">辅助弧必须保留</text>
+      </svg>
+    </div>
+  </div>
+</div>
+<div class="section">
+  <div class="sec-title">后测：检验学习成果</div>
+  <div class="quiz-card" id="po1">
+    <div class="quiz-q">1. 以下关于尺规作图的说法，正确的是？</div>
+    <div class="opts">
+      <button class="opt" onclick="ansP(1,'A','D')">A. 直尺可以用来量距离</button>
+      <button class="opt" onclick="ansP(1,'B','D')">B. 圆规只能画圆，不能截取线段长度</button>
+      <button class="opt" onclick="ansP(1,'C','D')">C. 作图完成后要擦掉辅助弧</button>
+      <button class="opt" onclick="ansP(1,'D','D')">D. 圆规可以将已知线段的长度"搬运"到新位置</button>
+    </div>
+    <div class="fb" id="po1-fb"></div>
+  </div>
+  <div class="quiz-card" id="po2">
+    <div class="quiz-q">2. 作线段 AB 的垂直平分线，必须满足什么条件？</div>
+    <div class="opts">
+      <button class="opt" onclick="ansP(2,'A','B')">A. 以 A 为圆心的弧半径大于以 B 为圆心的弧半径</button>
+      <button class="opt" onclick="ansP(2,'B','B')">B. 两弧半径相等，且均大于 AB 的一半</button>
+      <button class="opt" onclick="ansP(2,'C','B')">C. 两弧半径等于 AB</button>
+      <button class="opt" onclick="ansP(2,'D','B')">D. 两弧半径可以任意不同</button>
+    </div>
+    <div class="fb" id="po2-fb"></div>
+  </div>
+  <div class="quiz-card" id="po3">
+    <div class="quiz-q">3. 已知点 P 在线段 AB 的垂直平分线上，则 PA 与 PB 的关系是？</div>
+    <div class="opts">
+      <button class="opt" onclick="ansP(3,'A','A')">A. PA = PB</button>
+      <button class="opt" onclick="ansP(3,'B','A')">B. PA &gt; PB</button>
+      <button class="opt" onclick="ansP(3,'C','A')">C. PA &lt; PB</button>
+      <button class="opt" onclick="ansP(3,'D','A')">D. 不确定</button>
+    </div>
+    <div class="fb" id="po3-fb"></div>
+  </div>
+  <div class="quiz-card" id="po4">
+    <div class="quiz-q">4. 作 ∠AOB 的角平分线，射线 OP 是角平分线，则 ∠AOP 与 ∠BOP 的关系是？</div>
+    <div class="opts">
+      <button class="opt" onclick="ansP(4,'A','B')">A. ∠AOP &gt; ∠BOP</button>
+      <button class="opt" onclick="ansP(4,'B','B')">B. ∠AOP = ∠BOP</button>
+      <button class="opt" onclick="ansP(4,'C','B')">C. ∠AOP &lt; ∠BOP</button>
+      <button class="opt" onclick="ansP(4,'D','B')">D. 无法确定</button>
+    </div>
+    <div class="fb" id="po4-fb"></div>
+  </div>
+  <div class="quiz-card" id="po5">
+    <div class="quiz-q">5. 尺规作图时，如何找到一条线段的中点？</div>
+    <div class="opts">
+      <button class="opt" onclick="ansP(5,'A','C')">A. 用直尺测量后取一半</button>
+      <button class="opt" onclick="ansP(5,'B','C')">B. 用量角器辅助找到90°方向</button>
+      <button class="opt" onclick="ansP(5,'C','C')">C. 作线段的垂直平分线，垂直平分线与线段的交点即为中点</button>
+      <button class="opt" onclick="ansP(5,'D','C')">D. 直接目测估计</button>
+    </div>
+    <div class="fb" id="po5-fb"></div>
+  </div>
+  <div class="score-big" id="post-score" style="display:none"></div>
+  <div class="score-lbl" id="post-msg" style="display:none"></div>
+</div>
+<div class="section">
+  <div class="sec-title">拓展延伸</div>
+  <div class="expand-card">
+    <h4>🏺 历史背景：古希腊三大几何难题</h4>
+    <p>古希腊提出了三大尺规作图难题：① 化圆为方（作与圆面积相等的正方形）② 三等分角 ③ 倍立方（作边长为原来∛2倍的正方体）。2000年后数学家证明这三个问题在尺规作图下均<strong>无解</strong>！这促生了抽象代数的发展。</p>
+  </div>
+  <div class="expand-card">
+    <h4>🔬 垂直平分线与外接圆</h4>
+    <p>三角形三边的垂直平分线交于一点——外心，该点到三个顶点距离相等，以外心为圆心可作三角形的外接圆。这是尺规作图的重要应用！</p>
+  </div>
+  <div class="expand-card">
+    <h4>💡 角平分线与内切圆</h4>
+    <p>三角形三个角的平分线交于一点——内心，该点到三条边距离相等，以内心为圆心可作三角形的内切圆。内心恒在三角形内部！</p>
+  </div>
+</div>
+</div>
+<script>
+const TAP={_k:'ta-ruler',_d:null,_l(){if(!this._d)this._d=JSON.parse(localStorage.getItem(this._k)||'{}');return this._d;},get(k){return this._l()[k];},set(k,v){this._l()[k]=v;localStorage.setItem(this._k,JSON.stringify(this._d));}};
+const TAA={mastery:parseInt(TAP.get('mastery')||0),update(ok){this.mastery=Math.min(100,Math.max(0,this.mastery+(ok?9:-3)));TAP.set('mastery',this.mastery);document.getElementById('mfill').style.width=this.mastery+'%';document.getElementById('mval').textContent=this.mastery;checkAchs();}};
+const TACH={_u:new Set(JSON.parse(TAP.get('achs')||'[]')),unlock(id,name){if(this._u.has(id))return;this._u.add(id);TAP.set('achs',JSON.stringify([...this._u]));const el=document.getElementById('ach-'+id);if(el)el.classList.add('unlocked');toast('🏅 成就解锁：'+name);},restore(){this._u.forEach(id=>{const el=document.getElementById('ach-'+id);if(el)el.classList.add('unlocked');});}};
+function checkAchs(){const m=TAA.mastery;if(m>=10)TACH.unlock('geometer','初级几何师');if(m>=30)TACH.unlock('bisector','平分专家');if(m>=55)TACH.unlock('perp','垂直大师');if(m>=75)TACH.unlock('compass','圆规高手');if(m>=95)TACH.unlock('euclid','欧几里得');}
+TACH.restore();
+document.getElementById('mfill').style.width=TAA.mastery+'%';
+document.getElementById('mval').textContent=TAA.mastery;
+function toast(msg){const t=document.createElement('div');t.textContent=msg;Object.assign(t.style,{position:'fixed',bottom:'24px',right:'24px',background:'#1e293b',color:'#fff',padding:'11px 18px',borderRadius:'10px',zIndex:'9999',fontSize:'.88rem',boxShadow:'0 4px 14px rgba(0,0,0,.25)',transition:'opacity .3s'});document.body.appendChild(t);setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),400);},2600);}
+const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:0.1});
+document.querySelectorAll('.section').forEach(s=>obs.observe(s));
+const EXPS={'pq1-fb':'直尺（无刻度）只能连接两点画线段，不能量距离。','pq2-fb':'垂直平分线上任意一点到线段两端点的距离相等，这是垂直平分线的核心性质。','pq3-fb':'角平分线上的点到角两边距离相等，这是角平分线的性质定理。','m1q1-fb':'用直尺刻度量距离违反尺规作图规则；应用圆规截取等长。','m2q1-fb':'两弧必须等半径，且大于AB/2，才能在AB两侧各交于一点。','m2q2-fb':'垂直平分线的性质：PA=PB，即线上每个点到两端距离相等。','m3q1-fb':'以M、N为圆心的两弧必须等半径，才能保证交点P在角平分线上。','m3q2-fb':'角平分线的性质：线上每个点到角两边距离相等。','po1-fb':'圆规的本质功能就是"搬运长度"，以一点为圆心、某长度为半径的圆弧上每个点都等距于圆心。','po2-fb':'等半径且大于AB/2，才能保证两弧相交于线段两侧各一点。','po3-fb':'垂直平分线性质：线上点到两端距离相等，PA=PB。','po4-fb':'角平分线将角分成相等的两半，所以∠AOP=∠BOP。','po5-fb':'作线段垂直平分线，其与线段的交点即为中点。'};
+function ans(qid,sel,correct){const card=document.getElementById(qid);if(!card)return;const opts=card.querySelectorAll('.opt');opts.forEach(o=>{const oc=o.getAttribute('onclick')||'';if(oc.includes("'"+sel+"'"))o.classList.add(sel===correct?'correct':'wrong');if(sel!==correct&&oc.includes("'"+correct+"'"))o.classList.add('correct');o.classList.add('disabled');o.disabled=true;});const fb=document.getElementById(qid+'-fb');if(fb){const ok=sel===correct;fb.className='fb show '+(ok?'correct':'wrong');const exp=EXPS[qid+'-fb']||'';fb.innerHTML=ok?'✅ 正确！<span style="font-size:.85rem;opacity:.8"> '+exp+'</span>':'❌ 正确答案是 '+correct+'。<span style="font-size:.85rem;opacity:.8"> '+exp+'</span>';}TAA.update(sel===correct);}
+const pSel={},pCrt={1:'D',2:'B',3:'A',4:'B',5:'C'};
+function ansP(n,sel,correct){if(pSel[n])return;pSel[n]=sel;ans('po'+n,sel,correct);if(Object.keys(pSel).length===5)showScore();}
+function showScore(){let s=0;for(let i=1;i<=5;i++)if(pSel[i]===pCrt[i])s++;if(s>=5)TACH.unlock('euclid','欧几里得');const el=document.getElementById('post-score');el.style.display='block';el.textContent=s+'/5 分';const msg=document.getElementById('post-msg');msg.style.display='block';msg.textContent=s>=4?'🏺 优秀！尺规作图掌握扎实！':s>=3?'😊 良好，再巩固一下步骤细节！':'📖 建议回头重读模块二、三的步骤';}
+let perpCur=0;
+const perpDescs=['点击"下一步"开始演示作线段垂直平分线','第一步：以 A 为圆心，大于 AB/2 的半径画弧（蓝色弧）','第二步：以 B 为圆心，相同半径画弧（黄色弧），两弧交于 C、D','第三步：连接 C、D，得到垂直平分线（绿色虚线）','第四步：C、D连线与 AB 的交点 M 即为 AB 的中点，右角符号表示垂直'];
+function perpStep(d){perpCur=Math.max(0,Math.min(4,perpCur+d));const show=(id,v)=>{const el=document.getElementById(id);if(el)el.setAttribute('opacity',v?'1':'0');};show('p-arc-a',perpCur>=1);show('p-arc-b',perpCur>=2);show('p-c',perpCur>=2);show('p-d',perpCur>=2);show('p-cl',perpCur>=2);show('p-dl',perpCur>=2);show('p-bisect',perpCur>=3);show('p-m',perpCur>=4);show('p-ml',perpCur>=4);show('p-ra',perpCur>=4);document.getElementById('perp-ind').textContent='步骤 '+perpCur+'/4';document.getElementById('perp-desc').textContent=perpDescs[perpCur];if(perpCur>=2)TAA.update(true);}
+function perpReset(){perpCur=0;perpStep(0);}
+let angleCur=0;
+const angleDescs=['点击"下一步"开始演示作角平分线','第一步：以顶点 O 为圆心，任意半径画弧，交 OA 于 M，交 OB 于 N（青色弧）','第二步：以 M 为圆心，适当半径画弧，在角的内部（红色弧）','第三步：以 N 为圆心，相同半径画弧（黄色弧），与 M 的弧交于点 P','第四步：连接 O、P，射线 OP 即为角平分线（绿色虚线）'];
+function angleStep(d){angleCur=Math.max(0,Math.min(4,angleCur+d));const show=(id,v)=>{const el=document.getElementById(id);if(el)el.setAttribute('opacity',v?'1':'0');};show('a-arc-o',angleCur>=1);show('a-m',angleCur>=1);show('a-ml',angleCur>=1);show('a-n',angleCur>=1);show('a-nl',angleCur>=1);show('a-arc-m',angleCur>=2);show('a-arc-n',angleCur>=3);show('a-p',angleCur>=3);show('a-pl',angleCur>=3);show('a-bisect',angleCur>=4);document.getElementById('angle-ind').textContent='步骤 '+angleCur+'/4';document.getElementById('angle-desc').textContent=angleDescs[angleCur];if(angleCur>=3)TAA.update(true);}
+function angleReset(){angleCur=0;angleStep(0);}
+</script>
+</body>
+</html>

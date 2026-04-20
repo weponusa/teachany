@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="course-id" content="math-m-sampling-estimation">
+<meta name="course-subject" content="math">
+<title>抽样与估计 · 八年级数学</title>
+<style>
+:root {
+  --bg:#f8fafc; --primary:#3b82f6; --secondary:#06b6d4; --accent:#f59e0b;
+  --card:#fff; --text:#1e293b; --muted:#64748b; --success:#10b981; --error:#ef4444;
+  --radius:14px; --shadow:0 4px 24px rgba(59,130,246,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;}
+.container{max-width:900px;margin:0 auto;padding:0 16px 60px;}
+.hero{background:linear-gradient(135deg,#0ea5e9,#06b6d4);color:#fff;padding:60px 40px 50px;border-radius:0 0 var(--radius) var(--radius);text-align:center;position:relative;overflow:hidden;}
+.hero::before{content:'🎯';font-size:120px;position:absolute;right:-20px;top:-20px;opacity:.15;}
+.hero h1{font-size:2.2rem;font-weight:800;margin-bottom:8px;}
+.hero p{font-size:1.1rem;opacity:.9;}
+.badge{display:inline-block;background:rgba(255,255,255,.2);border-radius:20px;padding:4px 16px;font-size:.85rem;margin-top:12px;}
+.progress-wrap{background:#e2e8f0;border-radius:10px;height:10px;margin:28px 0 8px;}
+.progress-bar{height:10px;background:linear-gradient(90deg,#0ea5e9,#06b6d4);border-radius:10px;transition:width .6s ease;}
+.section{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:32px;margin-top:24px;}
+.section-title{font-size:1.4rem;font-weight:700;color:var(--primary);margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+.section-title span{font-size:1.5rem;}
+.obj-list{list-style:none;display:grid;gap:10px;}
+.obj-list li{background:linear-gradient(90deg,#eff6ff,#fff);border-left:4px solid var(--primary);border-radius:8px;padding:12px 16px;display:flex;align-items:flex-start;gap:10px;}
+.obj-list li::before{content:'✓';color:var(--primary);font-weight:700;flex-shrink:0;}
+.quiz-block{margin-bottom:20px;}
+.quiz-q{font-weight:600;margin-bottom:12px;font-size:1rem;}
+.quiz-opts{display:grid;gap:8px;}
+.opt-btn{border:2px solid #e2e8f0;background:#fff;border-radius:10px;padding:10px 16px;cursor:pointer;text-align:left;font-size:.95rem;transition:all .2s;}
+.opt-btn:hover{border-color:var(--primary);background:#eff6ff;}
+.opt-btn.correct{border-color:var(--success);background:#d1fae5;color:#065f46;}
+.opt-btn.wrong{border-color:var(--error);background:#fee2e2;color:#7f1d1d;}
+.feedback{font-size:.9rem;margin-top:8px;padding:8px 12px;border-radius:8px;display:none;}
+.feedback.show{display:block;}
+.feedback.correct{background:#d1fae5;color:#065f46;}
+.feedback.wrong{background:#fee2e2;color:#7f1d1d;}
+.module{border:1px solid #e2e8f0;border-radius:var(--radius);overflow:hidden;margin-bottom:20px;}
+.module-head{background:linear-gradient(90deg,#0ea5e9,#06b6d4);color:#fff;padding:14px 20px;font-weight:700;font-size:1.05rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
+.module-body{padding:24px;display:none;}
+.module-body.open{display:block;}
+.abt{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:16px;margin-bottom:16px;}
+.abt-label{font-size:.75rem;font-weight:700;color:var(--accent);text-transform:uppercase;margin-bottom:6px;}
+.formula{background:#f1f5f9;border-radius:10px;padding:14px 20px;font-size:1.1rem;text-align:center;margin:12px 0;font-family:'Courier New',monospace;border-left:4px solid var(--primary);}
+canvas{display:block;margin:16px auto;border-radius:10px;}
+.data-table{width:100%;border-collapse:collapse;margin:12px 0;}
+.data-table th{background:var(--primary);color:#fff;padding:10px 14px;font-size:.9rem;}
+.data-table td{padding:9px 14px;border-bottom:1px solid #e2e8f0;font-size:.9rem;}
+.data-table tr:nth-child(even) td{background:#f8fafc;}
+.input-row{display:flex;gap:10px;align-items:center;margin:10px 0;flex-wrap:wrap;}
+.input-row input{border:2px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:1rem;width:120px;outline:none;}
+.input-row input:focus{border-color:var(--primary);}
+.check-btn{background:var(--primary);color:#fff;border:none;border-radius:8px;padding:8px 18px;cursor:pointer;font-size:.95rem;transition:background .2s;}
+.check-btn:hover{background:#2563eb;}
+.achievement-bar{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;}
+.ach{background:#fff;border:2px solid #e2e8f0;border-radius:12px;padding:10px 16px;font-size:.85rem;display:flex;align-items:center;gap:8px;transition:all .3s;}
+.ach.unlocked{border-color:var(--accent);background:#fffbeb;}
+.ach .ach-icon{font-size:1.3rem;}
+.score-display{text-align:center;padding:20px;font-size:1.8rem;font-weight:800;color:var(--primary);}
+.task-card{background:linear-gradient(135deg,#eff6ff,#f0fdfa);border:1px solid #bae6fd;border-radius:var(--radius);padding:24px;}
+.task-step{display:flex;gap:14px;margin-bottom:14px;}
+.step-num{width:30px;height:30px;background:var(--primary);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;}
+.expand-card{background:linear-gradient(135deg,#fdf4ff,#eff6ff);border:1px solid #e9d5ff;border-radius:var(--radius);padding:24px;}
+.submit-btn{background:linear-gradient(90deg,#0ea5e9,#06b6d4);color:#fff;border:none;border-radius:10px;padding:12px 32px;font-size:1rem;font-weight:700;cursor:pointer;display:block;margin:20px auto 0;transition:transform .2s;}
+.submit-btn:hover{transform:scale(1.04);}
+
+/* Sampling simulator */
+.sim-container{border:2px dashed #bae6fd;border-radius:var(--radius);padding:20px;margin:16px 0;text-align:center;}
+.balls-display{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:12px 0;min-height:40px;}
+.ball{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#fff;cursor:default;}
+.ball.red{background:#ef4444;}
+.ball.blue{background:#3b82f6;}
+.ball.yellow{background:#f59e0b;}
+.sim-result{font-size:.95rem;margin-top:10px;padding:10px;background:#f0fdf4;border-radius:8px;}
+.concept-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0;}
+.concept-card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px;}
+.concept-card h4{color:var(--primary);margin-bottom:6px;font-size:.95rem;}
+@media(max-width:600px){
+  .hero{padding:40px 20px;}
+  .hero h1{font-size:1.6rem;}
+  .section{padding:20px;}
+  .concept-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="container">
+    <div class="badge">📐 八年级数学 · 第19章</div>
+    <h1>抽样与估计</h1>
+    <p>总体与样本 · 抽样方法 · 用样本估计总体</p>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Progress -->
+  <div class="section" style="padding:20px 24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <span style="font-weight:600;">学习进度</span>
+      <span id="progress-pct" style="color:var(--primary);font-weight:700;">0%</span>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
+    <div id="progress-label" style="font-size:.8rem;color:var(--muted);text-align:right;">开始学习，解锁知识！</div>
+  </div>
+
+  <!-- Objectives -->
+  <div class="section">
+    <div class="section-title"><span>🎯</span> 学习目标</div>
+    <ul class="obj-list">
+      <li>理解总体、个体、样本、样本容量的概念</li>
+      <li>了解普查与抽样调查的区别及应用场景</li>
+      <li>掌握简单随机抽样和系统抽样的方法</li>
+      <li>能用样本的频率分布估计总体，解决实际问题</li>
+    </ul>
+  </div>
+
+  <!-- Pre-test -->
+  <div class="section">
+    <div class="section-title"><span>🔍</span> 前测：你已经知道什么？</div>
+    <div class="quiz-block" id="pre1">
+      <div class="quiz-q">1. 调查某班50名同学的身高，"样本"是指？</div>
+      <div class="quiz-opts">
+        <button class="opt-btn" onclick="checkOpt(this,'pre1','A','A')">A. 这50名同学的身高数据</button>
+        <button class="opt-btn" onclick="checkOpt(this,'pre1','B','A')">B. 全国所有学生的身高</button>
+        <button class="opt-btn" onclick="checkOpt(this,'pre1','C','A')">C. 班里最高同学的身高</button>
+        <button class="opt-btn" onclick="checkOpt(this,'pre1','D','A')">D. 班里平均身高</button>
+      </div>
+      <div class="feedback" id="fb-pre1"></div>
+    </div>
+    <div class="quiz-block" id="pre2">
+      <div class="quiz-q">2. 下列调查中，适合普查的是？</div>
+      <div class="quiz-opts">
+        <button class="opt-btn" onclick="checkOpt(this,'pre2','A','B')">A. 测试某型导弹的命中率</button>
+        <button class="opt-btn" onclick="checkOpt(this,'pre2','B','B')">B. 统计某班期末考试成绩</button>
+        <button class="opt-btn" onclick="checkOpt(this,'pre2','C','B')">C. 调查全国青少年视力情况</button>
+        <button class="opt-btn" onclick="checkOpt(this,'pre2','D','B')">D. 检验一批灯泡使用寿命</button>
+      </div>
+      <div class="feedback" id="fb-pre2"></div>
+    </div>
+    <div class="quiz-block" id="pre3">
+      <div class="quiz-q">3. 用频率估计概率的前提条件是？</div>
+      <div class="quiz-opts">
+        <button class="opt-btn" onclick="checkOpt(this,'pre3','A','C')">A. 样本容量越小越好</button>
+        <button class="opt-btn" onclick="checkOpt(this,'pre3','B','C')">B. 样本必须是总体的一半</button>
+        <button class="opt-btn" onclick="checkOpt(this,'pre3','C','C')">C. 样本容量足够大，且随机抽取</button>
+        <button class="opt-btn" onclick="checkOpt(this,'pre3','D','C')">D. 所有个体都被抽到</button>
+      </div>
+      <div class="feedback" id="fb-pre3"></div>
+    </div>
+  </div>
+
+  <!-- Module 1 -->
+  <div class="section">
+    <div class="section-title"><span>📘</span> 知识模块一：基本概念</div>
+    <div class="module">
+      <div class="module-head" onclick="toggleModule('m1')">
+        1.1 总体、个体与样本 <span id="m1-arrow">▶</span>
+      </div>
+      <div class="module-body" id="m1">
+        <div class="abt">
+          <div class="abt-label">📖 ABT 故事</div>
+          <strong>And：</strong>某品牌生产了10万个零件，工厂需要判断这批零件是否合格。<br>
+          <strong>But：</strong>但逐个检验10万个太费时，且检验过程会破坏零件。<br>
+          <strong>Therefore：</strong>因此，从中随机取出200个来检验——这就是<em>抽样调查</em>！
+        </div>
+        <div class="concept-grid">
+          <div class="concept-card">
+            <h4>🌍 总体 (Population)</h4>
+            <p>研究对象的全体。例：这10万个零件</p>
+          </div>
+          <div class="concept-card">
+            <h4>👤 个体 (Individual)</h4>
+            <p>总体中的每一个对象。例：每一个零件</p>
+          </div>
+          <div class="concept-card">
+            <h4>🔬 样本 (Sample)</h4>
+            <p>从总体中抽取的一部分个体。例：抽取的200个零件</p>
+          </div>
+          <div class="concept-card">
+            <h4>🔢 样本容量 (n)</h4>
+            <p>样本中个体的数量。例：n = 200</p>
+          </div>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>调查方式</th><th>定义</th><th>优点</th><th>缺点</th><th>适用</th></tr></thead>
+          <tbody>
+            <tr><td>普查</td><td>对所有个体调查</td><td>准确</td><td>费时费力</td><td>小总体</td></tr>
+            <tr><td>抽样调查</td><td>对样本调查</td><td>省时省力</td><td>有误差</td><td>大总体/破坏性检验</td></tr>
+          </tbody>
+        </table>
+        <div class="quiz-block" id="q-concept">
+          <div class="quiz-q">调查某市10万名初中生的视力，抽取1000名，则样本容量是？</div>
+          <div class="quiz-opts">
+            <button class="opt-btn" onclick="checkOpt(this,'q-concept','A','C')">A. 10万</button>
+            <button class="opt-btn" onclick="checkOpt(this,'q-concept','B','C')">B. 1</button>
+            <button class="opt-btn" onclick="checkOpt(this,'q-concept','C','C')">C. 1000</button>
+            <button class="opt-btn" onclick="checkOpt(this,'q-concept','D','C')">D. 10001</button>
+          </div>
+          <div class="feedback" id="fb-q-concept"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Module 2: 抽样方法 -->
+  <div class="section">
+    <div class="section-title"><span>📗</span> 知识模块二：抽样方法</div>
+    <div class="module">
+      <div class="module-head" onclick="toggleModule('m2')">
+        2.1 简单随机抽样 <span id="m2-arrow">▶</span>
+      </div>
+      <div class="module-body" id="m2">
+        <div class="abt">
+          <div class="abt-label">📖 方法说明</div>
+          <strong>抽签法（摸球法）：</strong>将所有个体编号，放入容器随机摸取。<br>
+          <strong>随机数表法：</strong>用随机数字表或计算机生成随机数进行抽取。
+        </div>
+        <p><strong>关键特性：</strong>每个个体被抽到的概率相等，且每次抽取相互独立。</p>
+        <div class="sim-container">
+          <p><strong>🎮 模拟抽签：</strong>袋中有编号1-20的球，随机抽取5个</p>
+          <div class="balls-display" id="balls-pool"></div>
+          <button class="check-btn" onclick="runSampling()">🎲 随机抽样</button>
+          <div class="sim-result" id="sim-result" style="display:none;"></div>
+        </div>
+        <div class="quiz-block" id="q-srs">
+          <div class="quiz-q">简单随机抽样要求每个个体被选中的概率？</div>
+          <div class="quiz-opts">
+            <button class="opt-btn" onclick="checkOpt(this,'q-srs','A','B')">A. 不需要相等</button>
+            <button class="opt-btn" onclick="checkOpt(this,'q-srs','B','B')">B. 必须相等</button>
+            <button class="opt-btn" onclick="checkOpt(this,'q-srs','C','B')">C. 前面的概率更大</button>
+            <button class="opt-btn" onclick="checkOpt(this,'q-srs','D','B')">D. 后面的概率更大</button>
+          </div>
+          <div class="feedback" id="fb-q-srs"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="module">
+      <div class="module-head" onclick="toggleModule('m3')">
+        2.2 系统抽样（等距抽样） <span id="m3-arrow">▶</span>
+      </div>
+      <div class="module-body" id="m3">
+        <div class="abt">
+          <div class="abt-label">📖 方法说明</div>
+          将总体分成若干段，每段等间隔取一个个体。
+        </div>
+        <div class="formula">抽样间隔 k = N / n（N为总体，n为样本容量）</div>
+        <p><strong>例：</strong>总体N=500，需抽n=25人：</p>
+        <ul style="margin:10px 0 10px 20px;">
+          <li>k = 500/25 = 20（每20个取1个）</li>
+          <li>在1-20中随机选起点，如选第8号</li>
+          <li>依次取：8, 28, 48, 68, … 第488号</li>
+        </ul>
+        <div class="input-row">
+          <span>总体N=200，需n=10，抽样间隔k=</span>
+          <input type="number" id="sys-k" placeholder="?">
+          <button class="check-btn" onclick="checkSysK()">验证</button>
+        </div>
+        <div class="feedback" id="fb-sys-k"></div>
+      </div>
+    </div>
+
+    <div class="module">
+      <div class="module-head" onclick="toggleModule('m4')">
+        2.3 分层抽样 <span id="m4-arrow">▶</span>
+      </div>
+      <div class="module-body" id="m4">
+        <div class="abt">
+          <div class="abt-label">📖 方法说明</div>
+          将总体按某特征分层，再在各层中按比例抽样——确保样本代表性更好！
+        </div>
+        <p><strong>例题：</strong>某学校有高一300人，高二250人，高三200人，共750人。用分层抽样抽取75人，各层应抽多少？</p>
+        <table class="data-table">
+          <thead><tr><th>年级</th><th>总人数</th><th>比例</th><th>应抽人数</th></tr></thead>
+          <tbody>
+            <tr><td>高一</td><td>300</td><td>300/750=40%</td><td>75×40%=<strong>30人</strong></td></tr>
+            <tr><td>高二</td><td>250</td><td>250/750≈33%</td><td>75×(250/750)=<strong>25人</strong></td></tr>
+            <tr><td>高三</td><td>200</td><td>200/750≈27%</td><td>75×(200/750)=<strong>20人</strong></td></tr>
+          </tbody>
+        </table>
+        <div class="quiz-block" id="q-strat">
+          <div class="quiz-q">分层抽样中"按比例"的含义是？</div>
+          <div class="quiz-opts">
+            <button class="opt-btn" onclick="checkOpt(this,'q-strat','A','B')">A. 每层抽同样多人</button>
+            <button class="opt-btn" onclick="checkOpt(this,'q-strat','B','B')">B. 每层抽取比例与该层占总体比例相同</button>
+            <button class="opt-btn" onclick="checkOpt(this,'q-strat','C','B')">C. 优先抽取重要层</button>
+            <button class="opt-btn" onclick="checkOpt(this,'q-strat','D','B')">D. 随意分配各层人数</button>
+          </div>
+          <div class="feedback" id="fb-q-strat"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Module 3: 用样本估计总体 -->
+  <div class="section">
+    <div class="section-title"><span>📙</span> 知识模块三：用样本估计总体</div>
+    <div class="module">
+      <div class="module-head" onclick="toggleModule('m5')">
+        3.1 频率直方图与频率分布 <span id="m5-arrow">▶</span>
+      </div>
+      <div class="module-body" id="m5">
+        <div class="abt">
+          <div class="abt-label">📖 引入</div>
+          调查100名学生的身高，如何用频率直方图展示分布并估计总体？
+        </div>
+        <canvas id="chart-hist" width="560" height="220"></canvas>
+        <p style="text-align:center;font-size:.85rem;color:var(--muted);">100名学生身高频率直方图（模拟数据）</p>
+        <div class="formula">频率/组距 = 各组频率 ÷ 组距（纵轴）</div>
+        <p><strong>估计：</strong>若样本中155-165cm区间频率为45%，则估计总体中该区间比例约为45%。</p>
+        <div class="abt" style="background:#fee2e2;border-color:#fca5a5;">
+          <div class="abt-label" style="color:var(--error);">💡 错误诊断</div>
+          <strong>常见错误：</strong>用频率/组距当作频率！纵轴是"频率/组距"，要得到频率要乘以组距。<br>
+          <strong>记忆：</strong>频率 = (频率/组距) × 组距
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 综合任务 -->
+  <div class="section">
+    <div class="section-title"><span>🏆</span> 综合任务：估计次品率</div>
+    <div class="task-card">
+      <p>某工厂生产了5000个零件，从中随机抽取100个检验，发现6个次品。</p>
+      <div class="task-step">
+        <div class="step-num">1</div>
+        <div>样本容量是多少？这100个零件是<em>什么</em>？（总体还是样本？）</div>
+      </div>
+      <div class="task-step">
+        <div class="step-num">2</div>
+        <div>样本中次品率是多少？</div>
+      </div>
+      <div class="task-step">
+        <div class="step-num">3</div>
+        <div>估计这批5000个零件中大约有多少次品？</div>
+      </div>
+      <div class="input-row" style="margin-top:10px;">
+        <span>估计次品数约 = </span>
+        <input type="number" id="defect-ans" placeholder="输入数字">
+        <button class="check-btn" onclick="checkDefect()">验证</button>
+      </div>
+      <div class="feedback" id="fb-defect"></div>
+    </div>
+  </div>
+
+  <!-- Post-test -->
+  <div class="section">
+    <div class="section-title"><span>📝</span> 后测：检验学习成果</div>
+    <div class="quiz-block" id="post1">
+      <div class="quiz-q">1. 下列属于系统抽样的是？</div>
+      <div class="quiz-opts">
+        <button class="opt-btn" onclick="checkPost(this,'post1','A','B',1)">A. 从100人中随机摸球取10人</button>
+        <button class="opt-btn" onclick="checkPost(this,'post1','B','B',1)">B. 每隔10人取1人，共取10人</button>
+        <button class="opt-btn" onclick="checkPost(this,'post1','C','B',1)">C. 按年级比例各取若干人</button>
+        <button class="opt-btn" onclick="checkPost(this,'post1','D','B',1)">D. 只调查愿意参与的人</button>
+      </div>
+      <div class="feedback" id="fb-post1"></div>
+    </div>
+    <div class="quiz-block" id="post2">
+      <div class="quiz-q">2. 总体N=1000，用系统抽样取n=50，抽样间隔为？</div>
+      <div class="quiz-opts">
+        <button class="opt-btn" onclick="checkPost(this,'post2','A','C',2)">A. 5</button>
+        <button class="opt-btn" onclick="checkPost(this,'post2','B','C',2)">B. 15</button>
+        <button class="opt-btn" onclick="checkPost(this,'post2','C','C',2)">C. 20</button>
+        <button class="opt-btn" onclick="checkPost(this,'post2','D','C',2)">D. 50</button>
+      </div>
+      <div class="feedback" id="fb-post2"></div>
+    </div>
+    <div class="quiz-block" id="post3">
+      <div class="quiz-q">3. 样本容量为200，某特征频率为0.35，估计总体中该特征频率为？</div>
+      <div class="quiz-opts">
+        <button class="opt-btn" onclick="checkPost(this,'post3','A','B',3)">A. 0.30</button>
+        <button class="opt-btn" onclick="checkPost(this,'post3','B','B',3)">B. 0.35</button>
+        <button class="opt-btn" onclick="checkPost(this,'post3','C','B',3)">C. 0.40</button>
+        <button class="opt-btn" onclick="checkPost(this,'post3','D','B',3)">D. 0.70</button>
+      </div>
+      <div class="feedback" id="fb-post3"></div>
+    </div>
+    <div class="quiz-block" id="post4">
+      <div class="quiz-q">4. 下列哪种情况必须用抽样而不用普查？</div>
+      <div class="quiz-opts">
+        <button class="opt-btn" onclick="checkPost(this,'post4','A','C',4)">A. 调查班级30人的爱好</button>
+        <button class="opt-btn" onclick="checkPost(this,'post4','B','C',4)">B. 统计校运动会获奖人数</button>
+        <button class="opt-btn" onclick="checkPost(this,'post4','C','C',4)">C. 检验一批炮弹的质量</button>
+        <button class="opt-btn" onclick="checkPost(this,'post4','D','C',4)">D. 统计全班期末成绩</button>
+      </div>
+      <div class="feedback" id="fb-post4"></div>
+    </div>
+    <div class="quiz-block" id="post5">
+      <div class="quiz-q">5. 分层抽样与简单随机抽样相比，优点是？</div>
+      <div class="quiz-opts">
+        <button class="opt-btn" onclick="checkPost(this,'post5','A','B',5)">A. 操作更简单</button>
+        <button class="opt-btn" onclick="checkPost(this,'post5','B','B',5)">B. 样本代表性更强</button>
+        <button class="opt-btn" onclick="checkPost(this,'post5','C','B',5)">C. 不需要随机性</button>
+        <button class="opt-btn" onclick="checkPost(this,'post5','D','B',5)">D. 样本容量更小</button>
+      </div>
+      <div class="feedback" id="fb-post5"></div>
+    </div>
+    <div id="post-score" class="score-display" style="display:none;"></div>
+    <button class="submit-btn" onclick="submitPost()">提交后测 🎯</button>
+  </div>
+
+  <!-- Achievements -->
+  <div class="section">
+    <div class="section-title"><span>🏅</span> 成就系统</div>
+    <div class="achievement-bar" id="achievements">
+      <div class="ach" id="ach-start"><span class="ach-icon">🌟</span><span>课程启动</span></div>
+      <div class="ach" id="ach-pretest"><span class="ach-icon">🔍</span><span>前测完成</span></div>
+      <div class="ach" id="ach-simulate"><span class="ach-icon">🎮</span><span>模拟实验</span></div>
+      <div class="ach" id="ach-module"><span class="ach-icon">📚</span><span>三法精通</span></div>
+      <div class="ach" id="ach-task"><span class="ach-icon">🏭</span><span>质检专家</span></div>
+      <div class="ach" id="ach-master"><span class="ach-icon">🎓</span><span>抽样达人</span></div>
+    </div>
+  </div>
+
+  <!-- Expand -->
+  <div class="section">
+    <div class="section-title"><span>🚀</span> 拓展思考</div>
+    <div class="expand-card">
+      <p><strong>现实应用：</strong>民调公司用1000人样本预测1亿选民的投票结果，误差在±3%内——为什么这么小的样本能这么准？</p>
+      <p style="margin-top:10px;">统计学定理告诉我们：样本容量足够大时，样本均值趋近总体均值（中心极限定理）。1000人已足够大！</p>
+      <p style="margin-top:14px;"><strong>思考题：</strong>网络调查（自愿填写问卷）属于随机抽样吗？有什么问题？</p>
+      <button class="check-btn" style="margin-top:12px;" onclick="document.getElementById('exp-ans').style.display='block'">💡 查看分析</button>
+      <div id="exp-ans" style="display:none;margin-top:10px;background:#d1fae5;padding:10px 14px;border-radius:8px;color:#065f46;">
+        <strong>不是随机抽样！</strong>自愿填写存在"选择偏差"——只有对该话题感兴趣的人才会参与，不代表总体。这是统计中的重大误差来源。
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const COURSE_ID = 'math-m-sampling-estimation';
+const Progress = {
+  data: JSON.parse(localStorage.getItem('tap_'+COURSE_ID)||'{"score":0,"modules":[],"postAnswers":{},"postScore":0}'),
+  save(){localStorage.setItem('tap_'+COURSE_ID,JSON.stringify(this.data));},
+  addScore(n){this.data.score=Math.min(100,this.data.score+n);this.save();updateProgress();},
+  markModule(id){if(!this.data.modules.includes(id)){this.data.modules.push(id);this.addScore(5);}},
+};
+const Adaptive={correct:0,total:0,record(ok){this.total++;if(ok)this.correct++;}};
+const Achievements={
+  unlock(id){const el=document.getElementById(id);if(el&&!el.classList.contains('unlocked')){el.classList.add('unlocked');}}
+};
+Achievements.unlock('ach-start');
+
+function updateProgress(){
+  const pct=Math.min(Progress.data.score,100);
+  document.getElementById('progress-bar').style.width=pct+'%';
+  document.getElementById('progress-pct').textContent=pct+'%';
+  const labels=['刚刚起步 💪','不错的开始！','已掌握基础！','很棒，继续！','即将完成！','🎉 学习完成！'];
+  document.getElementById('progress-label').textContent=labels[Math.min(Math.floor(pct/20),5)];
+}
+updateProgress();
+
+const answered={};
+function checkOpt(btn,blockId,selected,correct){
+  if(answered[blockId])return;
+  answered[blockId]=true;
+  const opts=btn.parentNode.querySelectorAll('.opt-btn');
+  opts.forEach(b=>b.disabled=true);
+  const ok=selected===correct;
+  btn.classList.add(ok?'correct':'wrong');
+  if(!ok)opts.forEach(b=>{if(b.textContent.startsWith(correct))b.classList.add('correct');});
+  const fb=document.getElementById('fb-'+blockId);
+  const explains={
+    'pre1':'样本是从总体中抽取的部分——这50名同学的数据就是样本。',
+    'pre2':'普查适用于总体较小且不涉及破坏性检验的情况，如班级期末成绩。',
+    'pre3':'样本越大越随机，估计越准确。',
+    'q-concept':'样本容量是样本中个体数量，即1000。',
+    'q-srs':'随机抽样的核心是等概率，每个个体机会相等。',
+    'q-strat':'分层抽样保证各层代表性，按比例才能不偏向某层。',
+  };
+  fb.textContent=(ok?'✅ 正确！':'❌ 再想想。')+' '+(explains[blockId]||'');
+  fb.className='feedback show '+(ok?'correct':'wrong');
+  Adaptive.record(ok);
+  if(ok)Progress.addScore(3);
+  if(['pre1','pre2','pre3'].every(id=>answered[id]))Achievements.unlock('ach-pretest');
+}
+
+function toggleModule(id){
+  const body=document.getElementById(id);
+  const arrow=document.getElementById(id+'-arrow');
+  const isOpen=body.classList.contains('open');
+  body.classList.toggle('open');
+  arrow.textContent=isOpen?'▶':'▼';
+  if(!isOpen){
+    Progress.markModule(id);
+    if(Progress.data.modules.length>=3)Achievements.unlock('ach-module');
+    if(id==='m5')drawHist();
+    // init balls for m2
+    if(id==='m2')initBalls();
+  }
+}
+
+function initBalls(){
+  const pool=document.getElementById('balls-pool');
+  if(!pool)return;
+  pool.innerHTML='';
+  for(let i=1;i<=20;i++){
+    const b=document.createElement('div');
+    b.className='ball blue';
+    b.textContent=i;
+    b.id='ball-'+i;
+    pool.appendChild(b);
+  }
+}
+
+function runSampling(){
+  initBalls();
+  const nums=[];
+  while(nums.length<5){const n=Math.floor(Math.random()*20)+1;if(!nums.includes(n))nums.push(n);}
+  nums.forEach(n=>{
+    const b=document.getElementById('ball-'+n);
+    if(b){b.className='ball red';b.style.transform='scale(1.2)';}
+  });
+  const res=document.getElementById('sim-result');
+  res.textContent='抽取到编号：'+nums.sort((a,b)=>a-b).join(', ')+'（红色标出）';
+  res.style.display='block';
+  Achievements.unlock('ach-simulate');
+  Progress.addScore(5);
+}
+
+function checkSysK(){
+  const v=parseInt(document.getElementById('sys-k').value);
+  const fb=document.getElementById('fb-sys-k');
+  const ok=v===20;
+  fb.textContent=ok?'✅ 正确！k=200/10=20':'❌ k=N/n=200/10=20';
+  fb.className='feedback show '+(ok?'correct':'wrong');
+  if(ok)Progress.addScore(4);
+}
+
+function checkDefect(){
+  const v=parseInt(document.getElementById('defect-ans').value);
+  const fb=document.getElementById('fb-defect');
+  const ok=v===300;
+  fb.innerHTML=ok?'✅ 正确！样本次品率=6/100=6%，估计总体次品数=5000×6%=<strong>300个</strong>':
+    '❌ 答案是300个。次品率=6/100=6%，5000×6%=300';
+  fb.className='feedback show '+(ok?'correct':'wrong');
+  if(ok){Achievements.unlock('ach-task');Progress.addScore(10);}
+}
+
+const postAns={},correctPost={1:'B',2:'C',3:'B',4:'C',5:'B'};
+function checkPost(btn,blockId,selected,correct,num){
+  if(postAns[num])return;
+  postAns[num]=selected;
+  const opts=btn.parentNode.querySelectorAll('.opt-btn');
+  opts.forEach(b=>b.disabled=true);
+  const ok=selected===correct;
+  btn.classList.add(ok?'correct':'wrong');
+  if(!ok)opts.forEach(b=>{if(b.textContent.startsWith(correct))b.classList.add('correct');});
+  const fb=document.getElementById('fb-post'+num);
+  const exp={1:'每隔10人取1人=系统抽样；摸球=简单随机；按比例=分层。',2:'k=1000/50=20。',3:'用样本频率估计总体频率，直接用0.35。',4:'炮弹检验是破坏性的，必须抽样。',5:'分层确保各层都有代表，样本结构更接近总体。'};
+  fb.textContent=(ok?'✅ 正确！':'❌ 错误。')+' '+exp[num];
+  fb.className='feedback show '+(ok?'correct':'wrong');
+}
+function submitPost(){
+  let score=0;
+  [1,2,3,4,5].forEach(n=>{if(postAns[n]===correctPost[n])score+=20;});
+  const d=document.getElementById('post-score');
+  d.textContent='后测得分：'+score+'分';
+  d.style.display='block';
+  if(score>=80)Achievements.unlock('ach-master');
+  Progress.addScore(15);
+}
+
+// Frequency histogram
+function drawHist(){
+  const c=document.getElementById('chart-hist');if(!c)return;
+  const ctx=c.getContext('2d');
+  const w=c.width,h=c.height;
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,w,h);
+  // simulated data: height groups
+  const groups=['145-150','150-155','155-160','160-165','165-170','170-175'];
+  const freqs=[0.05,0.15,0.30,0.25,0.15,0.10]; // relative freq
+  const orgDist=5; // class width
+  const density=freqs.map(f=>f/orgDist); // freq/class width
+  const maxD=Math.max(...density)*1.2;
+  const pad={l:60,r:20,t:20,b:50};
+  const bw=(w-pad.l-pad.r)/groups.length;
+  // axes
+  ctx.strokeStyle='#94a3b8';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,h-pad.b);ctx.lineTo(w-pad.r,h-pad.b);ctx.stroke();
+  // bars
+  density.forEach((d,i)=>{
+    const x=pad.l+i*bw;
+    const bh=(h-pad.b-pad.t)*d/maxD;
+    const y=h-pad.b-bh;
+    const g=ctx.createLinearGradient(0,y,0,h-pad.b);
+    g.addColorStop(0,'#3b82f6');g.addColorStop(1,'#06b6d4');
+    ctx.fillStyle=g;
+    ctx.fillRect(x+2,y,bw-4,bh);
+    ctx.fillStyle='#1e293b';ctx.font='10px sans-serif';ctx.textAlign='center';
+    ctx.fillText((freqs[i]*100)+'%',x+bw/2,y-5);
+    ctx.fillStyle='#64748b';ctx.fillText(groups[i],x+bw/2,h-pad.b+16);
+    if(i===0)ctx.fillText('(cm)',x+bw/2,h-pad.b+28);
+  });
+  // y-axis labels
+  for(let i=0;i<=4;i++){
+    const val=(maxD*i/4).toFixed(3);
+    const y=h-pad.b-(h-pad.b-pad.t)*i/4;
+    ctx.fillStyle='#94a3b8';ctx.font='10px sans-serif';ctx.textAlign='right';
+    ctx.fillText(val,pad.l-5,y+4);
+    ctx.strokeStyle='#e2e8f0';ctx.setLineDash([3,3]);
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(w-pad.r,y);ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  // y-axis title
+  ctx.save();ctx.translate(14,h/2);ctx.rotate(-Math.PI/2);
+  ctx.fillStyle='#64748b';ctx.font='11px sans-serif';ctx.textAlign='center';
+  ctx.fillText('频率/组距',0,0);ctx.restore();
+}
+</script>
+</body>
+</html>
