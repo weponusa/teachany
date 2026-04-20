@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深度阅读 · 五年级语文闯关</title>
+<style>
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--card:#fff;--radius:20px;--shadow:0 8px 32px rgba(255,107,107,0.15);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);font-family:'PingFang SC','Microsoft YaHei',sans-serif;min-height:100vh;overflow-x:hidden;}
+
+/* Hero */
+#hero{background:linear-gradient(135deg,#6c5ce7,#a29bfe);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.hero-circles{position:absolute;inset:0;pointer-events:none;}
+.hc{position:absolute;border-radius:50%;opacity:.12;animation:hcFloat 5s ease-in-out infinite;}
+@keyframes hcFloat{0%,100%{transform:scale(1) translateY(0);}50%{transform:scale(1.1) translateY(-20px);}}
+#hero h1{font-size:3rem;color:#fff;text-align:center;text-shadow:0 4px 16px rgba(0,0,0,.25);margin-bottom:.5rem;}
+#hero .sub{color:rgba(255,255,255,.9);font-size:1.2rem;margin-bottom:.5rem;text-align:center;}
+.reading-meter{display:flex;align-items:center;gap:.5rem;background:rgba(255,255,255,.15);border-radius:50px;padding:.5rem 1.2rem;margin-bottom:2rem;backdrop-filter:blur(4px);}
+.rm-bar{width:120px;height:8px;background:rgba(255,255,255,.3);border-radius:4px;overflow:hidden;}
+.rm-fill{height:100%;background:#ffe66d;border-radius:4px;width:0%;transition:width 1s;}
+.rm-label{color:#ffe66d;font-size:.9rem;font-weight:600;}
+.btn-hero{background:#ffe66d;color:#333;border:none;padding:1rem 3rem;font-size:1.3rem;border-radius:50px;cursor:pointer;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.2);transition:transform .2s;}
+.btn-hero:hover{transform:translateY(-3px);}
+section{max-width:950px;margin:0 auto;padding:3rem 1.5rem;}
+.section-title{font-size:2rem;color:var(--primary);text-align:center;margin-bottom:2rem;}
+.section-title::after{content:'';display:block;width:60px;height:4px;background:var(--accent);margin:.5rem auto 0;border-radius:4px;}
+.level-header{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;}
+.level-badge{background:var(--primary);color:#fff;border-radius:50px;padding:.4rem 1.2rem;font-weight:700;}
+.level-name{font-size:1.5rem;font-weight:700;color:#333;}
+
+/* Objectives */
+#objectives{background:var(--bg);}
+.obj-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1.2rem;}
+.obj-step{background:var(--card);border-radius:var(--radius);padding:1.5rem;text-align:center;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+.obj-step::before{content:attr(data-num);position:absolute;top:-10px;right:-5px;font-size:4rem;font-weight:900;color:rgba(255,107,107,.08);line-height:1;}
+.obj-step .icon{font-size:2.2rem;margin-bottom:.5rem;}
+.obj-step h3{color:var(--primary);margin-bottom:.4rem;font-size:1rem;}
+.obj-step p{font-size:.82rem;color:#666;line-height:1.5;}
+
+/* Warmup - reading timer */
+#warmup{background:#f0f8ff;}
+.passage-box{background:var(--card);border-radius:var(--radius);padding:2rem;box-shadow:var(--shadow);}
+.passage-meta{display:flex;gap:1rem;margin-bottom:1rem;flex-wrap:wrap;}
+.pmeta-tag{background:#f0f8ff;color:var(--secondary);border-radius:50px;padding:.3rem .9rem;font-size:.85rem;}
+.passage-text{line-height:2.2;font-size:1.05rem;color:#333;margin-bottom:1.5rem;}
+.passage-text p{margin-bottom:1rem;}
+.reading-toolbar{display:flex;gap:1rem;flex-wrap:wrap;align-items:center;}
+.tool-btn{background:var(--secondary);color:#fff;border:none;padding:.5rem 1.2rem;border-radius:50px;cursor:pointer;font-size:.9rem;transition:transform .2s;}
+.tool-btn:hover{transform:scale(1.05);}
+.tool-btn.active{background:var(--primary);}
+.highlight-mode .passage-text::selection{background:#ffe66d;}
+#readTimer{font-size:.9rem;color:#888;}
+
+/* Level 1 - Annotation drag */
+#level1{background:#fff8f0;}
+.anno-container{display:grid;grid-template-columns:1fr 1fr;gap:2rem;}
+.anno-text-area{background:var(--card);border-radius:var(--radius);padding:1.5rem;box-shadow:var(--shadow);line-height:2.5;font-size:1rem;position:relative;}
+.anno-text-area .sent{display:inline;cursor:pointer;padding:2px 4px;border-radius:6px;transition:background .2s;}
+.anno-text-area .sent:hover{background:#fff3cd;}
+.anno-text-area .sent.annotated{background:#d4f3ee;border-bottom:2px solid var(--secondary);}
+.anno-panel{background:var(--card);border-radius:var(--radius);padding:1.5rem;box-shadow:var(--shadow);}
+.anno-panel h4{color:var(--secondary);margin-bottom:1rem;}
+.anno-types{display:flex;flex-direction:column;gap:.8rem;margin-bottom:1.5rem;}
+.anno-type{display:flex;align-items:center;gap:.8rem;padding:.7rem 1rem;border-radius:12px;cursor:pointer;border:2px solid #eee;transition:all .2s;}
+.anno-type:hover,.anno-type.active{border-color:var(--primary);background:#fff0f0;}
+.anno-type .dot{width:16px;height:16px;border-radius:50%;flex-shrink:0;}
+.anno-notes{display:flex;flex-direction:column;gap:.5rem;max-height:200px;overflow-y:auto;}
+.anno-note-item{background:#f9f9f9;border-radius:8px;padding:.5rem .8rem;font-size:.85rem;color:#555;border-left:3px solid var(--secondary);}
+
+/* Level 2 - Multi-level questions */
+#level2{background:#f5fff5;}
+.reading-qbox{background:var(--card);border-radius:var(--radius);padding:1.5rem;box-shadow:var(--shadow);margin-bottom:1.5rem;}
+.rq-level-tag{display:inline-block;background:var(--accent);color:#333;padding:.2rem .8rem;border-radius:50px;font-size:.8rem;font-weight:600;margin-bottom:.8rem;}
+.rq-level-tag.l2{background:#ffd6e7;}
+.rq-level-tag.l3{background:#d6f5ff;}
+.rq-text2{font-size:1rem;font-weight:600;margin-bottom:1rem;color:#333;line-height:1.6;}
+.rq-opts2{display:flex;flex-direction:column;gap:.7rem;}
+.rq-opt2{background:#f9f9f9;border:2px solid #eee;border-radius:12px;padding:.8rem 1.2rem;cursor:pointer;transition:all .2s;font-size:.95rem;}
+.rq-opt2:hover{border-color:var(--secondary);}
+.rq-opt2.correct{background:#e8fff8;border-color:var(--secondary);color:#2a9d8f;font-weight:600;}
+.rq-opt2.wrong{background:#fff0f0;border-color:var(--primary);color:var(--primary);}
+.explanation{background:#f0fff8;border-radius:12px;padding:1rem;font-size:.9rem;color:#555;margin-top:.8rem;line-height:1.7;display:none;border-left:4px solid var(--secondary);}
+.explanation.show{display:block;}
+
+/* Level 3 - Think & construct */
+#level3{background:#f9f0ff;}
+.think-scaffold{background:var(--card);border-radius:var(--radius);padding:2rem;box-shadow:var(--shadow);}
+.scaffold-steps{display:flex;flex-direction:column;gap:1.5rem;}
+.scs{border:2px solid #eee;border-radius:var(--radius);padding:1.2rem;}
+.scs-header{display:flex;align-items:center;gap:.8rem;margin-bottom.8rem;}
+.scs-num{width:32px;height:32px;background:var(--primary);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;flex-shrink:0;}
+.scs-title{font-weight:600;color:#333;font-size:1rem;}
+.scs textarea{width:100%;min-height:80px;border:2px solid #eee;border-radius:12px;padding:.8rem;font-size:.95rem;resize:vertical;outline:none;margin-top:.8rem;font-family:inherit;}
+.scs textarea:focus{border-color:var(--secondary);}
+.scs-hint{font-size:.85rem;color:#888;margin-top:.4rem;line-height:1.5;}
+
+/* Boss */
+#boss{background:linear-gradient(135deg,#2d3436,#636e72);color:#fff;}
+#boss .section-title{color:#ffe66d;}
+.boss-tabs{display:flex;gap:.8rem;margin-bottom:1.5rem;}
+.btab{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:.5rem 1.2rem;border-radius:50px;cursor:pointer;transition:all .2s;font-size:.9rem;}
+.btab.active{background:#ffe66d;color:#333;border-color:#ffe66d;}
+.btab-content{display:none;}
+.btab-content.active{display:block;}
+.boss-passage2{background:rgba(255,255,255,.08);border-radius:var(--radius);padding:1.5rem;margin-bottom:1.5rem;line-height:2;font-size:1rem;border:1px solid rgba(255,255,255,.1);}
+.boss-qa{background:rgba(255,255,255,.08);border-radius:var(--radius);padding:1.5rem;}
+.bq-item{margin-bottom:1.5rem;}
+.bq-item h4{color:#4ecdc4;margin-bottom:.5rem;font-size:1rem;}
+.boss-input{width:100%;min-height:80px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:.8rem;color:#fff;font-size:.95rem;resize:vertical;outline:none;}
+.boss-input:focus{border-color:#4ecdc4;}
+.btn-submit{background:#4ecdc4;color:#fff;border:none;padding:.9rem 2.5rem;border-radius:50px;font-size:1.1rem;font-weight:700;cursor:pointer;transition:transform .2s;margin-top:1rem;}
+.btn-submit:hover{transform:scale(1.05);}
+
+/* Score */
+#scoresheet{background:var(--bg);}
+.score-podium{display:flex;align-items:flex-end;justify-content:center;gap:1rem;margin:2rem 0;}
+.podium-block{border-radius:var(--radius) var(--radius) 0 0;display:flex;flex-direction:column;align-items:center;padding:1rem;width:100px;}
+.podium-block:nth-child(1){height:80px;background:#C0C0C0;}
+.podium-block:nth-child(2){height:120px;background:#FFD700;}
+.podium-block:nth-child(3){height:60px;background:#CD7F32;}
+.podium-label{font-weight:700;color:#fff;font-size:.9rem;}
+.ach-row{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;margin-top:1.5rem;}
+.ach-card{background:var(--card);border-radius:var(--radius);padding:1rem;text-align:center;box-shadow:var(--shadow);min-width:110px;opacity:.4;transition:all .4s;}
+.ach-card.unlocked{opacity:1;transform:scale(1.05);}
+.ach-icon2{font-size:1.8rem;}
+.ach-n{font-size:.8rem;color:#555;margin-top:.3rem;}
+.score-big{font-size:4rem;font-weight:900;color:var(--primary);text-align:center;margin:1rem 0;}
+
+/* Expand */
+#expand{background:#f8f0ff;}
+.strategy-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.5rem;}
+.strategy-card{background:var(--card);border-radius:var(--radius);padding:1.5rem;box-shadow:var(--shadow);border-top:5px solid var(--primary);transition:transform .2s;}
+.strategy-card:hover{transform:translateY(-4px);}
+.sc-icon{font-size:2.5rem;margin-bottom:.8rem;}
+.sc-title{font-weight:700;color:var(--primary);margin-bottom:.5rem;}
+.sc-desc{font-size:.9rem;color:#555;line-height:1.7;}
+/* Utilities */
+#progress-bar{position:fixed;top:0;left:0;width:0%;height:5px;background:linear-gradient(90deg,#6c5ce7,var(--secondary));z-index:999;transition:width .4s;}
+#ai-buddy{position:fixed;bottom:2rem;right:2rem;z-index:888;display:flex;flex-direction:column;align-items:flex-end;gap:.8rem;}
+.buddy-avatar3{width:64px;height:64px;background:#6c5ce7;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;cursor:pointer;box-shadow:0 6px 20px rgba(108,92,231,.4);animation:bba 2.5s ease-in-out infinite;border:3px solid #fff;}
+@keyframes bba{0%,100%{transform:translateY(0) rotate(0deg);}50%{transform:translateY(-8px) rotate(5deg);}}
+.buddy-bubble3{background:#fff;border-radius:16px 16px 4px 16px;padding:.8rem 1.2rem;max-width:220px;font-size:.9rem;color:#333;box-shadow:0 4px 16px rgba(0,0,0,.1);display:none;line-height:1.5;}
+.buddy-bubble3.show{display:block;}
+.toast{position:fixed;top:2rem;left:50%;transform:translateX(-50%) translateY(-80px);background:#333;color:#fff;padding:.8rem 2rem;border-radius:50px;font-size:1rem;z-index:999;transition:transform .4s;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.star-rain{position:fixed;pointer-events:none;z-index:777;font-size:1.5rem;animation:starFall 1.5s ease-in forwards;}
+@keyframes starFall{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(200px) scale(.5);}}
+.reveal{opacity:0;transform:translateY(30px);transition:opacity .6s,transform .6s;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+</style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<div class="toast" id="toast"></div>
+
+<section id="hero">
+  <div class="hero-circles">
+    <div class="hc" style="width:400px;height:400px;background:#fff;top:-150px;right:-100px;animation-delay:0s;"></div>
+    <div class="hc" style="width:250px;height:250px;background:#ffe66d;bottom:0;left:-80px;animation-delay:2s;"></div>
+  </div>
+  <div style="font-size:4rem;margin-bottom:1rem;">🔬</div>
+  <h1>深度阅读大闯关</h1>
+  <div class="sub">五年级语文 · 读出文字背后的意义</div>
+  <div class="reading-meter">
+    <div class="rm-bar"><div class="rm-fill" id="rmFill"></div></div>
+    <div class="rm-label">阅读深度 0%</div>
+  </div>
+  <button class="btn-hero" onclick="startJourney()">🚀 开始深度阅读</button>
+</section>
+
+<!-- Objectives -->
+<section id="objectives" class="reveal">
+  <div class="section-title">🎯 深度阅读四步法</div>
+  <div class="obj-steps">
+    <div class="obj-step" data-num="1"><div class="icon">👁️</div><h3>表面读</h3><p>理解字义词义，抓住基本信息</p></div>
+    <div class="obj-step" data-num="2"><div class="icon">🔍</div><h3>结构读</h3><p>理清文章结构，找到关键段落</p></div>
+    <div class="obj-step" data-num="3"><div class="icon">💡</div><h3>推理读</h3><p>结合语境，推断作者意图</p></div>
+    <div class="obj-step" data-num="4"><div class="icon">🌐</div><h3>评价读</h3><p>结合生活，形成自己的观点</p></div>
+  </div>
+</section>
+
+<!-- Warmup - read & annotate -->
+<section id="warmup" class="reveal">
+  <div class="section-title">🌡️ 热身·精读短文</div>
+  <div class="passage-box">
+    <div class="passage-meta">
+      <span class="pmeta-tag">📖 叙事散文</span>
+      <span class="pmeta-tag">约200字</span>
+      <span class="pmeta-tag" id="readTimer">⏱️ 开始阅读</span>
+    </div>
+    <div class="passage-text" id="mainPassage">
+      <p>　　那年夏天，我跟着爷爷去赶集。爷爷走得很慢，因为他的腿不好，每走一步都要用那根老旧的竹杖撑一下。我在前面跑，回头看见爷爷费力地走着，心里有些不耐烦。</p>
+      <p>　　集市上人很多，爷爷带我买了一个冰激凌。我舔着冰激凌，觉得甜甜的，很快乐。爷爷看着我吃，眼睛眯成了一条缝，也不说话，只是笑。</p>
+      <p>　　回家的路上，天下起了小雨。爷爷把他的草帽摘下来，扣在我头上，说："别淋湿了。"我没有推辞，戴着草帽跑在前面，却没想到回头看一看。</p>
+      <p>　　很多年后，我总会想起那个雨天。那顶草帽像一把伞，为我遮住了所有的风雨——可惜，爷爷自己却淋在雨里。</p>
+    </div>
+    <div class="reading-toolbar">
+      <button class="tool-btn" id="timerBtn" onclick="startReadTimer()">▶️ 开始计时</button>
+      <button class="tool-btn" onclick="markKeyInfo()">🔖 标记关键信息</button>
+      <button class="tool-btn" onclick="showToast('提示：注意文中时间变化！细读每一段')">💡 阅读提示</button>
+    </div>
+  </div>
+</section>
+
+<!-- Level 1 - Annotate sentences -->
+<section id="level1" class="reveal">
+  <div class="level-header">
+    <span class="level-badge">第一关</span>
+    <span class="level-name">📝 批注阅读——给句子做标注</span>
+  </div>
+  <p style="color:#555;margin-bottom:1.2rem;">点击左边的句子，选择批注类型，积累你的阅读批注！</p>
+  <div class="anno-container">
+    <div class="anno-text-area">
+      <span class="sent" onclick="annotateSent(this,'情感')">①"我在前面跑，回头看见爷爷费力地走着，心里有些不耐烦。"</span><br><br>
+      <span class="sent" onclick="annotateSent(this,'细节')">②"爷爷走得很慢，因为他的腿不好，每走一步都要用那根老旧的竹杖撑一下。"</span><br><br>
+      <span class="sent" onclick="annotateSent(this,'手法')">③"那顶草帽像一把伞，为我遮住了所有的风雨。"</span><br><br>
+      <span class="sent" onclick="annotateSent(this,'主旨')">④"可惜，爷爷自己却淋在雨里。"</span>
+    </div>
+    <div class="anno-panel">
+      <h4>🏷️ 批注类型（点击选择）</h4>
+      <div class="anno-types">
+        <div class="anno-type" data-type="情感" onclick="selectAnnoType(this)"><div class="dot" style="background:#ff6b6b;"></div><div><strong>情感批注</strong><div style="font-size:.8rem;color:#888;">体会人物情感变化</div></div></div>
+        <div class="anno-type" data-type="细节" onclick="selectAnnoType(this)"><div class="dot" style="background:#4ecdc4;"></div><div><strong>细节批注</strong><div style="font-size:.8rem;color:#888;">分析重要细节描写</div></div></div>
+        <div class="anno-type" data-type="手法" onclick="selectAnnoType(this)"><div class="dot" style="background:#ffe66d;"></div><div><strong>手法批注</strong><div style="font-size:.8rem;color:#888;">识别写作手法</div></div></div>
+        <div class="anno-type" data-type="主旨" onclick="selectAnnoType(this)"><div class="dot" style="background:#a29bfe;"></div><div><strong>主旨批注</strong><div style="font-size:.8rem;color:#888;">与文章主题相关</div></div></div>
+      </div>
+      <h4 style="color:#666;margin-bottom:.8rem;">📓 我的批注记录</h4>
+      <div class="anno-notes" id="annoNotes"><div style="color:#ccc;font-size:.85rem;">点击句子+选类型来添加批注</div></div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:1.5rem;">
+    <button class="btn-submit" style="background:var(--secondary);" onclick="checkAnno()">✅ 完成批注</button>
+  </div>
+  <div id="anno-feedback" style="text-align:center;margin-top:1rem;font-size:1.1rem;font-weight:600;"></div>
+</section>
+
+<!-- Level 2 - Multi-level reading questions -->
+<section id="level2" class="reveal">
+  <div class="level-header">
+    <span class="level-badge">第二关</span>
+    <span class="level-name">🔍 层层深读——多层次阅读理解</span>
+  </div>
+
+  <div class="reading-qbox">
+    <span class="rq-level-tag">🌱 字面理解</span>
+    <div class="rq-text2">1. 文章第一段描述了"我"当时什么样的心情？</div>
+    <div class="rq-opts2" id="oq1">
+      <div class="rq-opt2" onclick="ansQ(0,this,'B')">A. 开心快乐</div>
+      <div class="rq-opt2" onclick="ansQ(0,this,'B')">B. 不耐烦</div>
+      <div class="rq-opt2" onclick="ansQ(0,this,'B')">C. 伤心难过</div>
+      <div class="rq-opt2" onclick="ansQ(0,this,'B')">D. 十分感动</div>
+    </div>
+    <div class="explanation" id="exp1">✅ 原文写道"心里有些不耐烦"，直接表明了"我"当时的心情。字面理解就是找原文中的关键词！</div>
+  </div>
+
+  <div class="reading-qbox">
+    <span class="rq-level-tag l2">🌿 推理理解</span>
+    <div class="rq-text2">2. "爷爷看着我吃，眼睛眯成了一条缝，也不说话，只是笑"——这句话表达了什么？</div>
+    <div class="rq-opts2" id="oq2">
+      <div class="rq-opt2" onclick="ansQ(1,this,'C')">A. 爷爷困了想睡觉</div>
+      <div class="rq-opt2" onclick="ansQ(1,this,'C')">B. 爷爷自己也想吃</div>
+      <div class="rq-opt2" onclick="ansQ(1,this,'C')">C. 爷爷看着孙子快乐，内心满足和慈爱</div>
+      <div class="rq-opt2" onclick="ansQ(1,this,'C')">D. 爷爷对孩子感到失望</div>
+    </div>
+    <div class="explanation" id="exp2">✅ 爷爷"眯眼而笑"是一种慈祥满足的神态，表达了对孙子深深的爱。推理理解要结合上下文和生活经验！</div>
+  </div>
+
+  <div class="reading-qbox">
+    <span class="rq-level-tag l3">🌳 评价理解</span>
+    <div class="rq-text2">3. "那顶草帽像一把伞"这个比喻，除了字面意思，作者还想表达什么深层含义？</div>
+    <div class="rq-opts2" id="oq3">
+      <div class="rq-opt2" onclick="ansQ(2,this,'A')">A. 爷爷的爱像保护伞，无论何时都庇护着"我"</div>
+      <div class="rq-opt2" onclick="ansQ(2,this,'A')">B. 草帽真的是一把很好的雨伞</div>
+      <div class="rq-opt2" onclick="ansQ(2,this,'A')">C. 爷爷喜欢下雨天</div>
+      <div class="rq-opt2" onclick="ansQ(2,this,'A')">D. 集市上应该卖伞</div>
+    </div>
+    <div class="explanation" id="exp3">✅ 深层含义题需要联系全文主旨。草帽是具体的物，"遮风挡雨"象征爷爷的守护与爱，是典型的以小见大写法！</div>
+  </div>
+
+  <div class="reading-qbox">
+    <span class="rq-level-tag l2">🌿 结构分析</span>
+    <div class="rq-text2">4. 文章采用了怎样的叙述顺序？最后一段的作用是什么？</div>
+    <div class="rq-opts2" id="oq4">
+      <div class="rq-opt2" onclick="ansQ(3,this,'B')">A. 倒叙；引出人物</div>
+      <div class="rq-opt2" onclick="ansQ(3,this,'B')">B. 顺叙+插叙；卒章显志，点明主旨</div>
+      <div class="rq-opt2" onclick="ansQ(3,this,'B')">C. 倒叙；铺垫情节</div>
+      <div class="rq-opt2" onclick="ansQ(3,this,'B')">D. 顺叙；交代背景</div>
+    </div>
+    <div class="explanation" id="exp4">✅ 文章以时间顺序（那年夏天→很多年后）叙述，结尾用"很多年后"的回忆点明主旨。这是典型的首尾呼应、卒章显志结构！</div>
+  </div>
+</section>
+
+<!-- Level 3 - Scaffold response -->
+<section id="level3" class="reveal">
+  <div class="level-header">
+    <span class="level-badge">第三关</span>
+    <span class="level-name">💭 思维脚手架——有逻辑地回答</span>
+  </div>
+  <p style="color:#555;margin-bottom:1.2rem;">用脚手架一步步构建你的回答，回答问题：<em>"这篇文章想表达什么主题？请结合具体内容分析。"</em></p>
+  <div class="think-scaffold">
+    <div class="scaffold-steps">
+      <div class="scs">
+        <div class="scs-header" style="display:flex;align-items:center;gap:.8rem;margin-bottom:.5rem;">
+          <div class="scs-num">1</div>
+          <div class="scs-title">我的总体判断（主题是什么？）</div>
+        </div>
+        <textarea id="sc1" placeholder="这篇文章的主题是...（一句话概括）"></textarea>
+        <div class="scs-hint">💡 提示：文章写了什么人？什么事？表达了什么情感？</div>
+      </div>
+      <div class="scs">
+        <div class="scs-header" style="display:flex;align-items:center;gap:.8rem;margin-bottom:.5rem;">
+          <div class="scs-num">2</div>
+          <div class="scs-title">证据一：找一处具体的句子支撑</div>
+        </div>
+        <textarea id="sc2" placeholder="例：文章第___段写道'...'，这说明..."></textarea>
+        <div class="scs-hint">💡 提示：用"文章写道……这说明……"的格式</div>
+      </div>
+      <div class="scs">
+        <div class="scs-header" style="display:flex;align-items:center;gap:.8rem;margin-bottom:.5rem;">
+          <div class="scs-num">3</div>
+          <div class="scs-title">证据二：找另一处内容</div>
+        </div>
+        <textarea id="sc3" placeholder="另外，文章还写到..."></textarea>
+      </div>
+      <div class="scs">
+        <div class="scs-header" style="display:flex;align-items:center;gap:.8rem;margin-bottom:.5rem;">
+          <div class="scs-num">4</div>
+          <div class="scs-title">总结：回到主题，联系自身</div>
+        </div>
+        <textarea id="sc4" placeholder="因此，这篇文章让我想到...我觉得..."></textarea>
+        <div class="scs-hint">💡 提示：可以联系自己的生活经历</div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:1.5rem;">
+      <button class="btn-submit" style="background:#6c5ce7;" onclick="checkScaffold()">✅ 提交思维导图</button>
+    </div>
+    <div id="scaffold-feedback" style="text-align:center;margin-top:1rem;font-size:1.1rem;font-weight:600;color:var(--secondary);"></div>
+  </div>
+</section>
+
+<!-- Boss -->
+<section id="boss" class="reveal">
+  <div class="section-title">👑 Boss关卡 · 深度解析</div>
+  <div class="boss-tabs">
+    <div class="btab active" onclick="switchBossTab(0,this)">📖 读一篇新文章</div>
+    <div class="btab" onclick="switchBossTab(1,this)">❓ 回答深度问题</div>
+  </div>
+  <div class="btab-content active" id="btab0">
+    <div class="boss-passage2">
+      <p style="color:rgba(255,255,255,.6);font-size:.85rem;margin-bottom:.8rem;">📜 新文章·请认真阅读：</p>
+      <p style="line-height:2.2;">"每到考试前，同学们都会变得紧张起来。图书馆里，平时喧闹的走廊突然安静了；食堂里，大家端着盘子，心不在焉地吃着饭；就连操场上，那些平日里飞奔的脚步，也变得迟缓了。只有那棵老槐树，不管春夏秋冬，不管考试与否，依然慢慢地生长，慢慢地沉默，慢慢地见证着一届又一届的学生。"</p>
+      <p style="line-height:2.2;margin-top:1rem;">"我常常望着槐树发呆，心想：它会不会也有自己的烦恼呢？或许，对于槐树来说，时间流逝不过是添了几个年轮，而对于我们，每一次考试，都是一次成长。"</p>
+    </div>
+    <button class="btab active" onclick="switchBossTab(1,document.querySelectorAll('.btab')[1])" style="background:#ffe66d;color:#333;border:none;padding:.7rem 2rem;border-radius:50px;cursor:pointer;font-size:1rem;">→ 进入答题 →</button>
+  </div>
+  <div class="btab-content" id="btab1">
+    <div class="boss-qa">
+      <div class="bq-item">
+        <h4>Q1. 文中"图书馆、食堂、操场"三个场景的描写，有什么作用？（从结构或手法角度分析）</h4>
+        <textarea class="boss-input" id="bq1" placeholder="这三个场景的描写..."></textarea>
+      </div>
+      <div class="bq-item">
+        <h4>Q2. 老槐树在文中有什么象征意义？作者为什么要写它？</h4>
+        <textarea class="boss-input" id="bq2" placeholder="老槐树象征..."></textarea>
+      </div>
+      <div class="bq-item">
+        <h4>Q3. 结合文章和你的经历，谈谈你对"每一次考试，都是一次成长"的理解。</h4>
+        <textarea class="boss-input" id="bq3" placeholder="我认为...在我的生活中..."></textarea>
+      </div>
+      <button class="btn-submit" onclick="submitBoss()">🏆 提交挑战</button>
+    </div>
+  </div>
+</section>
+
+<!-- Score -->
+<section id="scoresheet" class="reveal">
+  <div class="section-title">🏆 深度阅读成绩单</div>
+  <div class="score-big" id="totalScore">0 <span style="font-size:2rem;color:#888;">分</span></div>
+  <p style="text-align:center;color:#666;" id="scoreMsg">完成所有关卡解锁满分！</p>
+  <div class="ach-row">
+    <div class="ach-card" id="ach1"><div class="ach-icon2">⏱️</div><div class="ach-n">阅读计时</div></div>
+    <div class="ach-card" id="ach2"><div class="ach-icon2">📝</div><div class="ach-n">批注达人</div></div>
+    <div class="ach-card" id="ach3"><div class="ach-icon2">🔍</div><div class="ach-n">深度理解</div></div>
+    <div class="ach-card" id="ach4"><div class="ach-icon2">🧠</div><div class="ach-n">思维清晰</div></div>
+    <div class="ach-card" id="ach5"><div class="ach-icon2">👑</div><div class="ach-n">Boss挑战者</div></div>
+    <div class="ach-card" id="ach6"><div class="ach-icon2">🌟</div><div class="ach-n">满分选手</div></div>
+    <div class="ach-card" id="ach7"><div class="ach-icon2">📚</div><div class="ach-n">阅读精英</div></div>
+    <div class="ach-card" id="ach8"><div class="ach-icon2">🚀</div><div class="ach-n">语文超人</div></div>
+  </div>
+  <div style="text-align:center;margin-top:2rem;">
+    <button class="btn-submit" onclick="window.scrollTo({top:0,behavior:'smooth'})">🔄 重新挑战</button>
+  </div>
+</section>
+
+<!-- Expand -->
+<section id="expand" class="reveal">
+  <div class="section-title">🌈 深度阅读策略</div>
+  <div class="strategy-cards">
+    <div class="strategy-card"><div class="sc-icon">🔖</div><div class="sc-title">批注阅读法</div><div class="sc-desc">边读边在重要句子旁写下自己的理解、感受或问题，让阅读更主动！</div></div>
+    <div class="strategy-card"><div class="sc-icon">❓</div><div class="sc-title">提问阅读法</div><div class="sc-desc">读完一段后自问"作者为什么这么写？""这个词换掉会怎样？"</div></div>
+    <div class="strategy-card"><div class="sc-icon">🗺️</div><div class="sc-title">思维导图法</div><div class="sc-desc">把文章的主旨、事件、人物、情感用思维导图整理，一目了然！</div></div>
+    <div class="strategy-card"><div class="sc-icon">🔗</div><div class="sc-title">文本联结法</div><div class="sc-desc">联系自身经历、其他书本或社会现象，让阅读更有深度！</div></div>
+  </div>
+</section>
+
+<!-- AI Buddy -->
+<div id="ai-buddy">
+  <div class="buddy-bubble3" id="buddyMsg">我是小虫🐛！深度阅读有疑问就问我！</div>
+  <div class="buddy-avatar3" onclick="showBuddy()">🐛</div>
+</div>
+
+<script>
+const AudioCtx=window.AudioContext||window.webkitAudioContext;let ctx;
+function getCtx(){if(!ctx)ctx=new AudioCtx();return ctx;}
+function playTone(f,d,t='sine',v=.3){try{const c=getCtx();const o=c.createOscillator();const g=c.createGain();o.connect(g);g.connect(c.destination);o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+d);o.start();o.stop(c.currentTime+d);}catch(e){}}
+function playSuccess(){playTone(659,.1);setTimeout(()=>playTone(784,.1),100);setTimeout(()=>playTone(1047,.25),200);}
+function playWrong(){playTone(200,.2,'sawtooth');}
+function playClick(){playTone(440,.05);}
+function playCelebrate(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,.2),i*100));}
+
+const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');}),{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+window.addEventListener('scroll',()=>{const p=(window.scrollY+window.innerHeight)/document.body.scrollHeight*100;document.getElementById('progress-bar').style.width=Math.min(p,100)+'%';updateReadMeter();});
+
+let score=0;
+const scoreMap={timer:false,anno:false,quiz:0,scaffold:false,boss:false};
+
+function startJourney(){playClick();document.getElementById('objectives').scrollIntoView({behavior:'smooth'});}
+
+// Reading meter
+function updateReadMeter(){
+  const p=(window.scrollY/document.body.scrollHeight)*100;
+  document.getElementById('rmFill').style.width=Math.min(p*3,100)+'%';
+  document.querySelector('.rm-label').textContent='阅读深度 '+Math.min(Math.round(p*3),100)+'%';
+}
+
+// Timer
+let readTimerInterval=null;let readSeconds=0;
+function startReadTimer(){
+  if(readTimerInterval) return;
+  playClick();
+  document.getElementById('timerBtn').textContent='⏱️ 计时中...';
+  readTimerInterval=setInterval(()=>{
+    readSeconds++;
+    document.getElementById('readTimer').textContent=`⏱️ ${readSeconds}秒`;
+    if(readSeconds>=30&&!scoreMap.timer){
+      scoreMap.timer=true;unlockAch('ach1');updateScore();showToast('⏱️ 认真阅读30秒，成就解锁！');
+    }
+  },1000);
+}
+function markKeyInfo(){
+  playClick();
+  const sents=document.querySelectorAll('#mainPassage p');
+  sents.forEach(s=>{s.style.background='rgba(255,230,109,.2)';s.style.borderRadius='8px';s.style.padding='.2rem';});
+  showToast('📌 已标记关键信息段落！');
+}
+
+// Annotate
+let selectedAnnoType=null;
+let annoCount=0;
+function selectAnnoType(el){
+  playClick();
+  document.querySelectorAll('.anno-type').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');
+  selectedAnnoType=el.dataset.type;
+}
+function annotateSent(el,suggestedType){
+  if(!selectedAnnoType){showToast('请先在右边选择批注类型！');playWrong();return;}
+  el.classList.add('annotated');
+  const notes=document.getElementById('annoNotes');
+  const item=document.createElement('div');
+  item.className='anno-note-item';
+  const colors={情感:'#ff6b6b',细节:'#4ecdc4',手法:'#f9a825',主旨:'#a29bfe'};
+  item.style.borderColor=colors[selectedAnnoType]||'#4ecdc4';
+  item.textContent=`[${selectedAnnoType}] ${el.textContent.substring(0,25)}...`;
+  const firstChild=notes.querySelector('div[style*="color:#ccc"]');
+  if(firstChild) firstChild.remove();
+  notes.appendChild(item);
+  annoCount++;
+  playSuccess();spawnStars(2);
+  if(annoCount===1&&notes.querySelector('div[style*="color:#ccc"]"')){notes.innerHTML='';}
+}
+function checkAnno(){
+  if(annoCount<2){showToast('请至少完成2处批注！');playWrong();return;}
+  document.getElementById('anno-feedback').textContent=`✅ 完成${annoCount}处批注，阅读批注能力超强！`;
+  playSuccess();unlockAch('ach2');scoreMap.anno=true;updateScore();spawnStars(6);
+}
+
+// Quiz questions
+const qAnswers=[null,null,null,null];
+function ansQ(idx,el,correct){
+  const letters=['A','B','C','D'];
+  const opts=el.closest('.rq-opts2').querySelectorAll('.rq-opt2');
+  opts.forEach(o=>o.onclick=null);
+  const myL=letters[Array.from(opts).indexOf(el)];
+  if(myL===correct){el.classList.add('correct');playSuccess();qAnswers[idx]=true;spawnStars(3);}
+  else{el.classList.add('wrong');opts.forEach((o,i)=>{if(letters[i]===correct)o.classList.add('correct');});playWrong();qAnswers[idx]=false;}
+  document.getElementById(`exp${idx+1}`).classList.add('show');
+  if(qAnswers.filter(x=>x!==null).length===4){
+    const c=qAnswers.filter(Boolean).length;scoreMap.quiz=c;
+    if(c>=3)unlockAch('ach3');updateScore();showToast(`阅读题完成！答对${c}/4！`);
+  }
+}
+
+// Scaffold
+function checkScaffold(){
+  const vals=[1,2,3,4].map(i=>document.getElementById(`sc${i}`).value.trim());
+  const filled=vals.filter(v=>v.length>=10).length;
+  if(filled<3){showToast('请完成至少3个步骤！');playWrong();return;}
+  document.getElementById('scaffold-feedback').textContent='✅ 思维脚手架完成！逻辑清晰，有理有据！';
+  playSuccess();unlockAch('ach4');scoreMap.scaffold=true;updateScore();spawnStars(8);
+}
+
+// Boss
+function switchBossTab(idx,el){
+  playClick();
+  document.querySelectorAll('.btab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.btab-content').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(`btab${idx}`).classList.add('active');
+}
+function submitBoss(){
+  const vals=[1,2,3].map(i=>document.getElementById(`bq${i}`).value.trim());
+  const filled=vals.filter(v=>v.length>=20).length;
+  if(filled<2){showToast('请完成至少2个问题的回答！');playWrong();return;}
+  playSuccess();playCelebrate();unlockAch('ach5');scoreMap.boss=true;updateScore();spawnStars(15);
+  showToast('🏆 Boss关卡完成！深度阅读能力一流！');
+  setTimeout(()=>document.getElementById('scoresheet').scrollIntoView({behavior:'smooth'}),1500);
+}
+
+function updateScore(){
+  let s=0;
+  if(scoreMap.timer)s+=10;
+  if(scoreMap.anno)s+=15;
+  s+=scoreMap.quiz*10;
+  if(scoreMap.scaffold)s+=20;
+  if(scoreMap.boss)s+=15;
+  score=s;
+  document.getElementById('totalScore').innerHTML=s+' <span style="font-size:2rem;color:#888;">分</span>';
+  if(s>=70){document.getElementById('scoreMsg').textContent='🎉 阅读精英！深度理解能力超强！';unlockAch('ach7');unlockAch('ach8');}
+  if(s>=85) unlockAch('ach6');
+}
+function unlockAch(id){const el=document.getElementById(id);if(el&&!el.classList.contains('unlocked')){el.classList.add('unlocked');playCelebrate();showToast('🏅 解锁：'+el.querySelector('.ach-n').textContent);}}
+function spawnStars(n){for(let i=0;i<n;i++){setTimeout(()=>{const s=document.createElement('div');s.className='star-rain';s.textContent=['⭐','🌟','✨','💫'][Math.floor(Math.random()*4)];s.style.left=Math.random()*100+'vw';s.style.top=Math.random()*50+'vh';document.body.appendChild(s);setTimeout(()=>s.remove(),1600);},i*100);}}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+const buddyTips3=['💡 深度阅读：先通读全文，再细读重点句！','🔍 推断题：联系上下文，不要孤立看句子！','📝 批注要写出"为什么"，不只写"是什么"！','🌐 评价题：可以联系自己的生活经验！','🗺️ 结构题：关注开头、结尾和过渡句！'];
+let bi=0;
+function showBuddy(){playClick();const msg=document.getElementById('buddyMsg');msg.textContent=buddyTips3[bi%buddyTips3.length];msg.classList.toggle('show');bi++;}
+</script>
+</body>
+</html>

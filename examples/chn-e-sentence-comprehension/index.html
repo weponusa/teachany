@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>句子理解 · 二年级语文闯关</title>
+<style>
+:root {
+  --bg: #fffbf0;
+  --primary: #ff6b6b;
+  --secondary: #4ecdc4;
+  --accent: #ffe66d;
+  --card: #fff;
+  --radius: 20px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.10);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; color: #333; min-height: 100vh; }
+
+/* ---- STARS ---- */
+#star-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
+.star { position: absolute; font-size: 1.5rem; animation: starFloat 1.2s ease-out forwards; }
+@keyframes starFloat { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-80px) scale(1.5)} }
+
+/* ---- SCREENS ---- */
+.screen { display: none; min-height: 100vh; padding: 20px; }
+.screen.active { display: flex; flex-direction: column; align-items: center; }
+
+/* ---- HERO ---- */
+#hero { background: linear-gradient(135deg, #ff6b6b 0%, #ffa07a 50%, #ffe66d 100%); justify-content: center; }
+.hero-mascot { font-size: 6rem; animation: bounce 1.5s infinite; margin-bottom: 16px; }
+@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-18px)} }
+.hero-title { font-size: 2.4rem; font-weight: 900; color: #fff; text-shadow: 3px 3px 0 rgba(0,0,0,0.15); text-align: center; }
+.hero-sub { font-size: 1.1rem; color: #fff; margin: 12px 0 28px; text-align: center; opacity: 0.9; }
+.btn { background: var(--card); color: var(--primary); border: none; border-radius: var(--radius); padding: 14px 36px; font-size: 1.1rem; font-weight: 700; cursor: pointer; box-shadow: var(--shadow); transition: transform 0.15s, box-shadow 0.15s; }
+.btn:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 12px 36px rgba(0,0,0,0.15); }
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-secondary { background: var(--secondary); color: #fff; }
+.btn-accent { background: var(--accent); color: #333; }
+
+/* ---- OBJECTIVE ---- */
+#objective { background: var(--bg); gap: 16px; }
+.section-header { font-size: 1.8rem; font-weight: 800; color: var(--primary); margin-bottom: 8px; }
+.obj-card { background: var(--card); border-radius: var(--radius); padding: 20px 24px; box-shadow: var(--shadow); width: 100%; max-width: 540px; }
+.obj-item { display: flex; align-items: center; gap: 12px; font-size: 1.05rem; margin: 10px 0; }
+.obj-icon { font-size: 1.5rem; }
+.progress-bar-wrap { background: #f0f0f0; border-radius: 10px; height: 12px; width: 100%; max-width: 540px; overflow: hidden; margin: 8px 0; }
+.progress-bar { height: 100%; background: linear-gradient(90deg,var(--primary),var(--accent)); border-radius: 10px; transition: width 0.6s; width: 0%; }
+
+/* ---- WARMUP ---- */
+#warmup { background: #fff8e1; gap: 16px; }
+.warmup-card { background: var(--card); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); width: 100%; max-width: 600px; }
+.warmup-sentence { font-size: 1.5rem; font-weight: 700; color: #333; text-align: center; line-height: 2.2; padding: 12px; background: var(--bg); border-radius: 12px; }
+.word-tag { display: inline-block; background: var(--accent); border-radius: 8px; padding: 2px 8px; margin: 0 3px; cursor: pointer; transition: background 0.2s; }
+.word-tag:hover { background: var(--primary); color: #fff; }
+.word-tag.selected { background: var(--secondary); color: #fff; }
+
+/* ---- LEVELS ---- */
+.level-screen { gap: 16px; }
+.level-header { display: flex; align-items: center; gap: 12px; width: 100%; max-width: 640px; }
+.level-badge { background: var(--primary); color: #fff; border-radius: 50%; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.2rem; flex-shrink: 0; }
+.level-title { font-size: 1.4rem; font-weight: 800; color: #333; }
+.level-subtitle { font-size: 0.9rem; color: #999; }
+.card { background: var(--card); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); width: 100%; max-width: 640px; }
+.sentence-box { font-size: 1.3rem; font-weight: 600; color: #333; background: var(--bg); border-radius: 12px; padding: 16px 20px; margin-bottom: 18px; line-height: 2; border-left: 5px solid var(--primary); }
+.question { font-size: 1.05rem; font-weight: 600; color: #555; margin-bottom: 14px; }
+.options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.opt-btn { background: var(--bg); border: 2.5px solid #e0e0e0; border-radius: var(--radius); padding: 14px 12px; font-size: 1rem; cursor: pointer; transition: all 0.2s; text-align: left; }
+.opt-btn:hover { border-color: var(--secondary); background: #e8faf9; }
+.opt-btn.correct { border-color: var(--secondary); background: #d4f5f1; color: #2a9d8f; font-weight: 700; }
+.opt-btn.wrong { border-color: var(--primary); background: #ffe5e5; color: #d62839; }
+.feedback { margin-top: 14px; padding: 12px 16px; border-radius: 12px; font-size: 1rem; font-weight: 600; display: none; }
+.feedback.show { display: block; }
+.feedback.ok { background: #d4f5f1; color: #2a9d8f; }
+.feedback.bad { background: #ffe5e5; color: #d62839; }
+
+/* drag */
+.drag-zone { display: flex; flex-wrap: wrap; gap: 10px; min-height: 56px; background: var(--bg); border-radius: 12px; padding: 12px; margin-bottom: 12px; border: 2px dashed #ddd; }
+.drag-item { background: var(--accent); border-radius: 10px; padding: 8px 14px; font-size: 1rem; cursor: grab; user-select: none; transition: opacity 0.2s; font-weight: 600; }
+.drag-item:active { cursor: grabbing; opacity: 0.6; }
+.drop-zone { background: #f5f5f5; border-radius: 12px; padding: 12px; min-height: 56px; border: 2px dashed #ccc; display: flex; flex-wrap: wrap; gap: 10px; }
+.drop-zone.over { border-color: var(--secondary); background: #e8faf9; }
+
+/* ---- BOSS ---- */
+#boss { background: linear-gradient(135deg,#667eea,#764ba2); gap: 16px; }
+#boss .section-header { color: #fff; }
+.boss-card { background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border-radius: var(--radius); padding: 24px; width: 100%; max-width: 640px; color: #fff; }
+.boss-health { height: 18px; background: rgba(255,255,255,0.2); border-radius: 9px; margin: 12px 0; overflow: hidden; }
+.boss-health-bar { height: 100%; background: linear-gradient(90deg,#ff6b6b,#ffe66d); border-radius: 9px; transition: width 0.5s; }
+.boss-sentence { font-size: 1.2rem; font-weight: 700; color: #fff; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; line-height: 1.9; }
+.boss-options .opt-btn { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: #fff; }
+.boss-options .opt-btn:hover { background: rgba(255,255,255,0.3); }
+.boss-options .opt-btn.correct { background: rgba(78,205,196,0.4); border-color: var(--secondary); }
+.boss-options .opt-btn.wrong { background: rgba(255,107,107,0.4); border-color: var(--primary); }
+
+/* ---- SCORE ---- */
+#scorecard { background: linear-gradient(135deg,#ffe66d,#ffa07a); gap: 16px; }
+.score-mascot { font-size: 5rem; animation: bounce 1.5s infinite; }
+.score-number { font-size: 4rem; font-weight: 900; color: var(--primary); }
+.score-label { font-size: 1.1rem; color: #555; }
+.achievement-grid { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; max-width: 540px; }
+.ach-badge { background: var(--card); border-radius: 16px; padding: 12px 16px; display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 100px; box-shadow: var(--shadow); opacity: 0.3; transition: opacity 0.4s; }
+.ach-badge.earned { opacity: 1; animation: popIn 0.4s ease; }
+@keyframes popIn { 0%{transform:scale(0.5)} 70%{transform:scale(1.15)} 100%{transform:scale(1)} }
+.ach-icon { font-size: 2rem; }
+.ach-name { font-size: 0.78rem; font-weight: 700; color: #555; text-align: center; }
+
+/* ---- EXPAND ---- */
+#expand { background: var(--bg); gap: 16px; }
+.expand-card { background: var(--card); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); max-width: 640px; width: 100%; }
+.expand-sentence { font-size: 1.2rem; background: #fff8e1; border-radius: 12px; padding: 14px; margin-bottom: 14px; border-left: 4px solid var(--accent); line-height: 1.9; }
+.expand-tip { font-size: 0.95rem; color: #888; }
+
+/* ---- AI COMPANION ---- */
+#ai-companion { position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.ai-bubble { background: var(--card); border-radius: 16px; padding: 12px 16px; box-shadow: var(--shadow); max-width: 220px; font-size: 0.9rem; color: #333; display: none; animation: slideUp 0.3s ease; }
+.ai-bubble.show { display: block; }
+@keyframes slideUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+.ai-avatar { width: 56px; height: 56px; background: var(--secondary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; cursor: pointer; box-shadow: var(--shadow); border: 3px solid #fff; transition: transform 0.2s; }
+.ai-avatar:hover { transform: scale(1.1); }
+
+/* ---- STARS DISPLAY ---- */
+.stars-display { display: flex; gap: 6px; justify-content: center; }
+.star-icon { font-size: 1.6rem; transition: transform 0.3s; }
+.star-icon.earned { animation: starPop 0.5s ease; }
+@keyframes starPop { 0%{transform:scale(0) rotate(-30deg)} 70%{transform:scale(1.3) rotate(5deg)} 100%{transform:scale(1)} }
+
+/* ---- NAV ---- */
+.nav-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+
+/* ---- RESPONSIVE ---- */
+@media(max-width:480px) {
+  .options { grid-template-columns: 1fr; }
+  .hero-title { font-size: 1.8rem; }
+}
+</style>
+</head>
+<body>
+
+<div id="star-container"></div>
+
+<!-- AI Companion -->
+<div id="ai-companion">
+  <div class="ai-bubble" id="ai-text">嗨！我是小虫虫🐛，我来帮你理解句子！</div>
+  <div class="ai-avatar" onclick="toggleAI()">🐛</div>
+</div>
+
+<!-- ===== HERO ===== -->
+<div class="screen active" id="hero">
+  <div class="hero-mascot">🌈</div>
+  <div class="hero-title">句子理解大冒险</div>
+  <div class="hero-sub">二年级语文 · 读懂每一句话的秘密✨</div>
+  <div class="stars-display" style="margin-bottom:24px;">
+    <span class="star-icon">⭐</span><span class="star-icon">⭐</span><span class="star-icon">⭐</span>
+  </div>
+  <button class="btn btn-primary" onclick="go('objective')">开始冒险 🚀</button>
+</div>
+
+<!-- ===== OBJECTIVE ===== -->
+<div class="screen" id="objective">
+  <div class="section-header">📋 今日目标</div>
+  <div class="obj-card">
+    <div class="obj-item"><span class="obj-icon">🔍</span><span>理解句子的基本意思</span></div>
+    <div class="obj-item"><span class="obj-icon">🎯</span><span>找出句子中的关键词</span></div>
+    <div class="obj-item"><span class="obj-icon">💡</span><span>判断句子的感情色彩</span></div>
+    <div class="obj-item"><span class="obj-icon">🌟</span><span>完成3关挑战，打败Boss！</span></div>
+  </div>
+  <div class="obj-card" style="margin-top:8px;">
+    <div style="font-size:0.95rem;color:#888;margin-bottom:8px;">今日进度</div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="main-progress"></div></div>
+    <div style="font-size:0.85rem;color:#aaa;text-align:right;" id="progress-text">0 / 10</div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-accent" onclick="go('warmup')">热身练习 🔥</button>
+  </div>
+</div>
+
+<!-- ===== WARMUP ===== -->
+<div class="screen" id="warmup">
+  <div class="section-header">🔥 热身：点击关键词</div>
+  <div class="warmup-card">
+    <div style="font-size:1rem;color:#888;margin-bottom:12px;">读读下面的句子，点击你认为最重要的词语！</div>
+    <div class="warmup-sentence" id="warmup-sentence"></div>
+    <div style="margin-top:16px;font-size:0.95rem;color:#555;">你选了：<span id="selected-words" style="color:var(--primary);font-weight:700;">还没选</span></div>
+    <div style="margin-top:8px;font-size:0.9rem;color:#aaa;" id="warmup-hint"></div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-secondary" onclick="checkWarmup()">确认选择 ✅</button>
+    <button class="btn" onclick="go('level1')">进入第一关 →</button>
+  </div>
+</div>
+
+<!-- ===== LEVEL 1 ===== -->
+<div class="screen level-screen" id="level1">
+  <div class="level-header">
+    <div class="level-badge">1</div>
+    <div>
+      <div class="level-title">第一关：句子意思</div>
+      <div class="level-subtitle">理解句子说的是什么</div>
+    </div>
+    <div style="margin-left:auto;" id="l1-stars">⭐⭐⭐</div>
+  </div>
+  <div class="card" id="l1-card">
+    <!-- dynamic -->
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-secondary" id="l1-next" style="display:none;" onclick="nextL1()">下一题 →</button>
+  </div>
+</div>
+
+<!-- ===== LEVEL 2 ===== -->
+<div class="screen level-screen" id="level2">
+  <div class="level-header">
+    <div class="level-badge" style="background:var(--secondary);">2</div>
+    <div>
+      <div class="level-title">第二关：拖拽排句</div>
+      <div class="level-subtitle">把打乱的词语排成正确的句子</div>
+    </div>
+    <div style="margin-left:auto;" id="l2-stars">⭐⭐⭐</div>
+  </div>
+  <div class="card" id="l2-card"></div>
+  <div class="nav-row">
+    <button class="btn btn-secondary" id="l2-check" onclick="checkL2()">检查答案 ✅</button>
+    <button class="btn btn-accent" id="l2-next" style="display:none;" onclick="nextL2()">下一题 →</button>
+  </div>
+</div>
+
+<!-- ===== LEVEL 3 ===== -->
+<div class="screen level-screen" id="level3">
+  <div class="level-header">
+    <div class="level-badge" style="background:var(--accent);color:#333;">3</div>
+    <div>
+      <div class="level-title">第三关：感情色彩</div>
+      <div class="level-subtitle">这句话表达了什么感情？</div>
+    </div>
+    <div style="margin-left:auto;" id="l3-stars">⭐⭐⭐</div>
+  </div>
+  <div class="card" id="l3-card"></div>
+  <div class="nav-row">
+    <button class="btn btn-secondary" id="l3-next" style="display:none;" onclick="nextL3()">下一题 →</button>
+  </div>
+</div>
+
+<!-- ===== BOSS ===== -->
+<div class="screen" id="boss">
+  <div class="section-header">👾 Boss战：句子大考验</div>
+  <div class="boss-card">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+      <span style="font-size:2rem;">🐉</span>
+      <div style="flex:1;">
+        <div style="font-size:0.9rem;color:rgba(255,255,255,0.8);">Boss 生命值</div>
+        <div class="boss-health"><div class="boss-health-bar" id="boss-bar" style="width:100%"></div></div>
+      </div>
+      <span style="font-size:1.2rem;font-weight:800;" id="boss-hp">❤️ 5</span>
+    </div>
+    <div class="boss-sentence" id="boss-sentence"></div>
+    <div class="boss-options options" id="boss-options"></div>
+    <div class="feedback" id="boss-feedback"></div>
+  </div>
+  <div class="nav-row">
+    <button class="btn" id="boss-next" style="display:none;" onclick="nextBoss()">继续攻击 ⚔️</button>
+  </div>
+</div>
+
+<!-- ===== SCORE ===== -->
+<div class="screen" id="scorecard">
+  <div class="score-mascot">🎉</div>
+  <div class="score-number" id="final-score">0</div>
+  <div class="score-label">总分</div>
+  <div style="margin:16px 0;font-size:1.1rem;color:#555;" id="score-comment"></div>
+  <div class="achievement-grid" id="achievement-grid"></div>
+  <div class="nav-row" style="margin-top:20px;">
+    <button class="btn btn-secondary" onclick="go('expand')">拓展练习 📚</button>
+    <button class="btn btn-primary" onclick="restart()">再来一次 🔄</button>
+  </div>
+</div>
+
+<!-- ===== EXPAND ===== -->
+<div class="screen" id="expand">
+  <div class="section-header">📚 拓展：造句练习</div>
+  <div class="expand-card">
+    <div style="font-size:1rem;font-weight:700;margin-bottom:12px;color:var(--primary);">📖 学一学：句子的三要素</div>
+    <div class="expand-sentence">一个完整的句子 = <strong>谁/什么</strong> + <strong>做什么/是什么</strong></div>
+    <div style="font-size:1rem;font-weight:700;margin:16px 0 8px;color:var(--secondary);">✏️ 试着用下面的词语造句：</div>
+    <div id="expand-words" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;"></div>
+    <textarea id="my-sentence" placeholder="在这里写你的句子..." style="width:100%;border-radius:12px;border:2px solid #e0e0e0;padding:12px;font-size:1rem;min-height:80px;outline:none;font-family:inherit;resize:vertical;"></textarea>
+    <button class="btn btn-primary" style="margin-top:12px;width:100%;" onclick="submitExpand()">提交句子 ✉️</button>
+    <div id="expand-result" style="margin-top:12px;font-size:1rem;display:none;"></div>
+  </div>
+  <div class="expand-card" style="margin-top:0;">
+    <div style="font-size:1rem;font-weight:700;margin-bottom:12px;color:var(--accent);">🌈 今日收获</div>
+    <div id="summary-list"></div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-primary" onclick="go('hero')">回到主页 🏠</button>
+  </div>
+</div>
+
+<script>
+// ===================== AUDIO =====================
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let ctx;
+function getCtx() { if(!ctx) ctx = new AudioCtx(); return ctx; }
+function playTone(freq, dur, type='sine', vol=0.3) {
+  try {
+    const c = getCtx();
+    const o = c.createOscillator();
+    const g = c.createGain();
+    o.type = type;
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
+    o.connect(g); g.connect(c.destination);
+    o.start(); o.stop(c.currentTime + dur);
+  } catch(e){}
+}
+function playCorrect() { playTone(523,0.1); setTimeout(()=>playTone(659,0.1),100); setTimeout(()=>playTone(784,0.2),200); }
+function playWrong() { playTone(200,0.3,'sawtooth',0.2); }
+function playWin() { [523,587,659,698,784,880,988,1047].forEach((f,i)=>setTimeout(()=>playTone(f,0.15),i*80)); }
+function playClick() { playTone(800,0.05,'square',0.15); }
+
+// ===================== STATE =====================
+let state = {
+  score: 0, totalQ: 0, correctQ: 0,
+  l1Index: 0, l2Index: 0, l3Index: 0, bossIndex: 0,
+  bossHP: 5,
+  achievements: [],
+  stars: { l1: 0, l2: 0, l3: 0 }
+};
+
+// ===================== DATA =====================
+const l1Questions = [
+  {
+    sentence: "小明在公园里快乐地奔跑。",
+    question: "这句话说的是谁在哪里做什么？",
+    options: ["小明在公园里跑步", "小红在操场上跑步", "小明在家里睡觉", "小朋友在公园玩耍"],
+    answer: 0,
+    explain: "句子说的是"小明"在"公园里"做"快乐地奔跑"这件事。"
+  },
+  {
+    sentence: "美丽的蝴蝶在花丛中飞舞。",
+    question: "这句话的主角是什么？",
+    options: ["花朵", "蝴蝶", "蜜蜂", "小鸟"],
+    answer: 1,
+    explain: ""蝴蝶"是这个句子的主角，描写了蝴蝶在花丛中飞舞的情景。"
+  },
+  {
+    sentence: "奶奶每天早上都要去买菜。",
+    question: "奶奶什么时候去买菜？",
+    options: ["下午", "晚上", "每天早上", "周末"],
+    answer: 2,
+    explain: "句子中"每天早上"说明奶奶买菜的时间。"
+  }
+];
+
+const l2Questions = [
+  {
+    words: ["小猫", "可爱的", "在", "玩球", "地上"],
+    correct: ["可爱的", "小猫", "在", "地上", "玩球"],
+    hint: "想想：谁+在哪里+做什么"
+  },
+  {
+    words: ["太阳", "照耀着", "暖暖的", "大地"],
+    correct: ["暖暖的", "太阳", "照耀着", "大地"],
+    hint: "想想：什么样的+谁+做什么+什么"
+  },
+  {
+    words: ["同学们", "认真地", "在教室里", "读书"],
+    correct: ["同学们", "在教室里", "认真地", "读书"],
+    hint: "想想：谁+在哪里+怎么样地+做什么"
+  }
+];
+
+const l3Questions = [
+  {
+    sentence: "今天妈妈给我买了心爱的玩具，我开心极了！",
+    question: "这句话表达了什么感情？",
+    options: ["高兴喜悦 😊", "伤心难过 😢", "生气愤怒 😠", "害怕担心 😨"],
+    answer: 0,
+    explain: ""开心极了"表达了非常高兴喜悦的感情。"
+  },
+  {
+    sentence: "小鸟的家被人破坏了，它在树枝上哀鸣。",
+    question: "这句话主要表达了什么感情？",
+    options: ["快乐 😄", "悲伤 😢", "惊喜 🎉", "自豪 😤"],
+    answer: 1,
+    explain: ""哀鸣"说明小鸟很伤心悲哀。"
+  },
+  {
+    sentence: "我们的祖国多么美丽，多么伟大！",
+    question: "这句话表达了作者什么感情？",
+    options: ["批评 😒", "思念 🥺", "赞美 😍", "担忧 😟"],
+    answer: 2,
+    explain: ""多么美丽，多么伟大"是赞美祖国的感情。"
+  }
+];
+
+const bossQuestions = [
+  {
+    sentence: "春天来了，小溪边的柳树发芽了，嫩绿嫩绿的叶子在微风中轻轻摇摆。",
+    question: "这段描写的是什么季节？",
+    options: ["夏天", "秋天", "春天", "冬天"],
+    answer: 2,
+    explain: ""春天来了"直接说明了季节。"
+  },
+  {
+    sentence: "他低着头，默默地走回家，一句话也没有说。",
+    question: "他此刻最可能的心情是？",
+    options: ["非常高兴", "很难过或愧疚", "十分生气", "感到无聊"],
+    answer: 1,
+    explain: ""低着头""默默地""一句话也没有说"描写了难过或愧疚的状态。"
+  },
+  {
+    sentence: "大树爷爷每天都要给小草浇水，风雨无阻。",
+    question: "这句话用了什么方法来描写大树？",
+    options: ["把大树当成了老人来写", "描写了大树的外貌", "说明大树很高", "描写了天气变化"],
+    answer: 0,
+    explain: ""大树爷爷"把大树比作了有感情的老人，运用了拟人的写法。"
+  },
+  {
+    sentence: "小燕子说："叽叽喳喳，春天真好！"",
+    question: "这句话里谁在说话？",
+    options: ["小朋友", "妈妈", "小燕子", "老师"],
+    answer: 2,
+    explain: "引号前面的"小燕子说"表明是小燕子在说话。"
+  },
+  {
+    sentence: "弟弟的眼睛圆溜溜的，像两颗大葡萄。",
+    question: "这句话把眼睛比作了什么？",
+    options: ["葡萄", "苹果", "橙子", "樱桃"],
+    answer: 0,
+    explain: ""像两颗大葡萄"是把眼睛比作葡萄。"
+  }
+];
+
+const achievements = [
+  {id:'first_correct', icon:'🎯', name:'首战告捷', cond: s => s.correctQ >= 1},
+  {id:'perfect_l1', icon:'💯', name:'第一关满星', cond: s => s.stars.l1 >= 3},
+  {id:'drag_master', icon:'🖐️', name:'拖拽高手', cond: s => s.stars.l2 >= 2},
+  {id:'emotion_reader', icon:'❤️', name:'情感达人', cond: s => s.stars.l3 >= 3},
+  {id:'boss_slayer', icon:'⚔️', name:'Boss终结者', cond: s => s.bossHP <= 0},
+  {id:'half_score', icon:'⭐', name:'中等学霸', cond: s => s.score >= 40},
+  {id:'high_score', icon:'🏆', name:'优秀之星', cond: s => s.score >= 70},
+  {id:'perfect_score', icon:'👑', name:'完美通关', cond: s => s.score >= 95},
+  {id:'fast_reader', icon:'⚡', name:'闪电阅读', cond: s => s.correctQ >= 8},
+];
+
+// ===================== UTILS =====================
+function go(id) {
+  playClick();
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  if(id==='level1') renderL1();
+  if(id==='level2') renderL2();
+  if(id==='level3') renderL3();
+  if(id==='boss') renderBoss();
+  if(id==='scorecard') renderScore();
+  if(id==='expand') renderExpand();
+  updateProgress();
+  showAIHint(id);
+}
+
+function updateProgress() {
+  const pct = Math.min(100, (state.totalQ / 14) * 100);
+  document.getElementById('main-progress').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = state.totalQ + ' / 14';
+}
+
+function spawnStars(x, y, count=6) {
+  const container = document.getElementById('star-container');
+  for(let i=0;i<count;i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    star.textContent = ['⭐','✨','🌟','💫'][Math.floor(Math.random()*4)];
+    star.style.left = (x + (Math.random()-0.5)*80) + 'px';
+    star.style.top = (y + (Math.random()-0.5)*40) + 'px';
+    container.appendChild(star);
+    setTimeout(()=>star.remove(), 1300);
+  }
+}
+
+function restart() {
+  playClick();
+  state = { score:0, totalQ:0, correctQ:0, l1Index:0, l2Index:0, l3Index:0, bossIndex:0, bossHP:5, achievements:[], stars:{l1:0,l2:0,l3:0} };
+  go('hero');
+}
+
+// ===================== AI COMPANION =====================
+const aiHints = {
+  hero: "嗨！我是小虫虫🐛，今天我们来学句子理解！",
+  objective: "目标明确，出发前先了解任务哦！",
+  warmup: "热身很重要！点击你认为关键的词语吧！",
+  level1: "读句子时，找"谁""在哪里""做什么"三个要素！",
+  level2: "排句子要想：先说谁，再说在哪，最后说做什么！",
+  level3: "感情色彩藏在关键词里，找找感叹词和修饰词！",
+  boss: "Boss战！把你学到的全用上！💪",
+  scorecard: "太棒了！看看你得了多少分和成就！",
+  expand: "举一反三！试着用今天学的知识造句吧！",
+};
+let aiVisible = false;
+function showAIHint(screen) {
+  const text = aiHints[screen] || "继续加油！🌟";
+  document.getElementById('ai-text').textContent = text;
+  document.getElementById('ai-text').classList.add('show');
+  aiVisible = true;
+  setTimeout(()=>{ document.getElementById('ai-text').classList.remove('show'); aiVisible=false; }, 4000);
+}
+function toggleAI() {
+  const bubble = document.getElementById('ai-text');
+  if(aiVisible) { bubble.classList.remove('show'); aiVisible=false; }
+  else { bubble.classList.add('show'); aiVisible=true; }
+}
+
+// ===================== WARMUP =====================
+const warmupSentence = "小红骑着自行车快乐地去上学。";
+const warmupKeywords = ["小红","快乐","上学"];
+let selectedWarmup = [];
+
+function renderWarmup() {
+  const words = warmupSentence.replace(/[，。！？]/g,'，').split(/(?<=[\u4e00-\u9fa5a-zA-Z]{1,3})/g).filter(w=>w.trim());
+  // Simpler: split by characters manually
+  const container = document.getElementById('warmup-sentence');
+  const charWords = ["小红","骑着","自行车","快乐地","去","上学","。"];
+  container.innerHTML = charWords.map(w=>`<span class="word-tag" onclick="selectWarmupWord(this,'${w}')">${w}</span>`).join('');
+}
+function selectWarmupWord(el, word) {
+  el.classList.toggle('selected');
+  if(el.classList.contains('selected')) { if(!selectedWarmup.includes(word)) selectedWarmup.push(word); }
+  else { selectedWarmup = selectedWarmup.filter(w=>w!==word); }
+  document.getElementById('selected-words').textContent = selectedWarmup.length ? selectedWarmup.join('、') : '还没选';
+  playClick();
+}
+function checkWarmup() {
+  const hits = selectedWarmup.filter(w=>warmupKeywords.includes(w)).length;
+  const hint = document.getElementById('warmup-hint');
+  if(hits >= 2) { hint.textContent='✅ 很棒！你找到了关键词："小红""快乐""上学"！'; hint.style.color='#2a9d8f'; playCorrect(); }
+  else { hint.textContent='💡 提示：关键词通常是"人物""动作"和"心情"哦！'; hint.style.color='#ff6b6b'; }
+}
+
+// ===================== LEVEL 1 =====================
+let l1Answered = false;
+function renderL1() {
+  l1Answered = false;
+  const idx = state.l1Index;
+  if(idx >= l1Questions.length) { showAchievements(); go('level2'); return; }
+  const q = l1Questions[idx];
+  const card = document.getElementById('l1-card');
+  card.innerHTML = `
+    <div style="font-size:0.85rem;color:#aaa;margin-bottom:8px;">题目 ${idx+1} / ${l1Questions.length}</div>
+    <div class="sentence-box">${q.sentence}</div>
+    <div class="question">${q.question}</div>
+    <div class="options" id="l1-opts">
+      ${q.options.map((o,i)=>`<button class="opt-btn" onclick="answerL1(${i},this)">${o}</button>`).join('')}
+    </div>
+    <div class="feedback" id="l1-feedback"></div>
+  `;
+  document.getElementById('l1-next').style.display='none';
+}
+function answerL1(idx, el) {
+  if(l1Answered) return;
+  l1Answered = true;
+  state.totalQ++;
+  const q = l1Questions[state.l1Index];
+  document.querySelectorAll('#l1-opts .opt-btn').forEach(b=>b.disabled=true);
+  const fb = document.getElementById('l1-feedback');
+  if(idx === q.answer) {
+    el.classList.add('correct');
+    fb.className='feedback ok show';
+    fb.textContent='✅ 答对了！' + q.explain;
+    state.score += 10; state.correctQ++;
+    state.stars.l1++;
+    playCorrect();
+    spawnStars(el.getBoundingClientRect().left + el.offsetWidth/2, el.getBoundingClientRect().top, 5);
+  } else {
+    el.classList.add('wrong');
+    document.querySelectorAll('#l1-opts .opt-btn')[q.answer].classList.add('correct');
+    fb.className='feedback bad show';
+    fb.textContent='❌ 再想想！' + q.explain;
+    playWrong();
+  }
+  document.getElementById('l1-next').style.display='block';
+}
+function nextL1() {
+  state.l1Index++;
+  if(state.l1Index >= l1Questions.length) { go('level2'); }
+  else { renderL1(); }
+}
+
+// ===================== LEVEL 2 (Drag) =====================
+let l2Current = [];
+function renderL2() {
+  const idx = state.l2Index;
+  if(idx >= l2Questions.length) { go('level3'); return; }
+  const q = l2Questions[idx];
+  const card = document.getElementById('l2-card');
+  l2Current = [...q.words].sort(()=>Math.random()-0.5);
+  card.innerHTML = `
+    <div style="font-size:0.85rem;color:#aaa;margin-bottom:8px;">题目 ${idx+1} / ${l2Questions.length}</div>
+    <div style="font-size:1rem;color:#888;margin-bottom:10px;">💡 提示：${q.hint}</div>
+    <div style="font-size:0.95rem;font-weight:600;margin-bottom:6px;color:var(--primary);">词语库（点击添加）：</div>
+    <div class="drag-zone" id="word-pool">
+      ${l2Current.map(w=>`<div class="drag-item" onclick="moveWord(this,'pool','drop')">${w}</div>`).join('')}
+    </div>
+    <div style="font-size:0.95rem;font-weight:600;margin:10px 0 6px;color:var(--secondary);">我的句子（点击移回）：</div>
+    <div class="drop-zone" id="drop-zone"></div>
+    <div class="feedback" id="l2-feedback"></div>
+  `;
+  document.getElementById('l2-check').style.display='block';
+  document.getElementById('l2-next').style.display='none';
+}
+function moveWord(el, from, to) {
+  playClick();
+  const pool = document.getElementById('word-pool');
+  const drop = document.getElementById('drop-zone');
+  if(from==='pool') drop.appendChild(el);
+  else pool.appendChild(el);
+  // rebind
+  el.onclick = from==='pool' ? ()=>moveWord(el,'drop','pool') : ()=>moveWord(el,'pool','drop');
+}
+function checkL2() {
+  const q = l2Questions[state.l2Index];
+  const drop = document.getElementById('drop-zone');
+  const words = Array.from(drop.querySelectorAll('.drag-item')).map(e=>e.textContent);
+  const fb = document.getElementById('l2-feedback');
+  state.totalQ++;
+  if(JSON.stringify(words) === JSON.stringify(q.correct)) {
+    fb.className='feedback ok show'; fb.textContent='✅ 排列正确！句子通顺！';
+    state.score+=10; state.correctQ++; state.stars.l2++;
+    playCorrect(); spawnStars(300,300,6);
+  } else {
+    fb.className='feedback bad show'; fb.textContent='❌ 顺序不对！正确顺序：' + q.correct.join(' ');
+    playWrong();
+  }
+  document.getElementById('l2-check').style.display='none';
+  document.getElementById('l2-next').style.display='block';
+}
+function nextL2() {
+  state.l2Index++;
+  if(state.l2Index >= l2Questions.length) go('level3');
+  else renderL2();
+}
+
+// ===================== LEVEL 3 =====================
+let l3Answered = false;
+function renderL3() {
+  l3Answered = false;
+  const idx = state.l3Index;
+  if(idx >= l3Questions.length) { go('boss'); return; }
+  const q = l3Questions[idx];
+  const card = document.getElementById('l3-card');
+  card.innerHTML = `
+    <div style="font-size:0.85rem;color:#aaa;margin-bottom:8px;">题目 ${idx+1} / ${l3Questions.length}</div>
+    <div class="sentence-box">${q.sentence}</div>
+    <div class="question">${q.question}</div>
+    <div class="options" id="l3-opts">
+      ${q.options.map((o,i)=>`<button class="opt-btn" onclick="answerL3(${i},this)">${o}</button>`).join('')}
+    </div>
+    <div class="feedback" id="l3-feedback"></div>
+  `;
+  document.getElementById('l3-next').style.display='none';
+}
+function answerL3(idx, el) {
+  if(l3Answered) return;
+  l3Answered = true;
+  state.totalQ++;
+  const q = l3Questions[state.l3Index];
+  document.querySelectorAll('#l3-opts .opt-btn').forEach(b=>b.disabled=true);
+  const fb = document.getElementById('l3-feedback');
+  if(idx === q.answer) {
+    el.classList.add('correct');
+    fb.className='feedback ok show'; fb.textContent='✅ 正确！' + q.explain;
+    state.score+=10; state.correctQ++; state.stars.l3++;
+    playCorrect(); spawnStars(300,300,5);
+  } else {
+    el.classList.add('wrong');
+    document.querySelectorAll('#l3-opts .opt-btn')[q.answer].classList.add('correct');
+    fb.className='feedback bad show'; fb.textContent='❌ 不对！' + q.explain;
+    playWrong();
+  }
+  document.getElementById('l3-next').style.display='block';
+}
+function nextL3() {
+  state.l3Index++;
+  if(state.l3Index >= l3Questions.length) go('boss');
+  else renderL3();
+}
+
+// ===================== BOSS =====================
+let bossAnswered = false;
+function renderBoss() {
+  bossAnswered = false;
+  const idx = state.bossIndex;
+  if(idx >= bossQuestions.length || state.bossHP <= 0) { endBoss(); return; }
+  const q = bossQuestions[idx];
+  document.getElementById('boss-sentence').textContent = q.sentence;
+  document.getElementById('boss-options').innerHTML = q.options.map((o,i)=>`<button class="opt-btn" onclick="answerBoss(${i},this)">${o}</button>`).join('');
+  document.getElementById('boss-feedback').className='feedback';
+  document.getElementById('boss-next').style.display='none';
+  updateBossHP();
+}
+function answerBoss(idx, el) {
+  if(bossAnswered) return;
+  bossAnswered = true;
+  state.totalQ++;
+  const q = bossQuestions[state.bossIndex];
+  document.querySelectorAll('#boss-options .opt-btn').forEach(b=>b.disabled=true);
+  const fb = document.getElementById('boss-feedback');
+  if(idx === q.answer) {
+    el.classList.add('correct');
+    fb.className='feedback ok show'; fb.textContent='⚔️ 打中了！' + q.explain;
+    state.bossHP--; state.score+=15; state.correctQ++;
+    playCorrect(); spawnStars(300,200,8);
+    updateBossHP();
+    if(state.bossHP<=0) { setTimeout(()=>{ playWin(); endBoss(); },1200); return; }
+  } else {
+    el.classList.add('wrong');
+    document.querySelectorAll('#boss-options .opt-btn')[q.answer].classList.add('correct');
+    fb.className='feedback bad show'; fb.textContent='💥 被Boss反击！' + q.explain;
+    playWrong();
+  }
+  document.getElementById('boss-next').style.display='block';
+}
+function updateBossHP() {
+  const pct = (state.bossHP/5)*100;
+  document.getElementById('boss-bar').style.width = pct+'%';
+  document.getElementById('boss-hp').textContent = '❤️ ' + state.bossHP;
+}
+function nextBoss() {
+  state.bossIndex++;
+  if(state.bossIndex >= bossQuestions.length) endBoss();
+  else renderBoss();
+}
+function endBoss() { showAchievements(); go('scorecard'); }
+
+// ===================== ACHIEVEMENTS =====================
+function showAchievements() {
+  achievements.forEach(a => {
+    if(!state.achievements.includes(a.id) && a.cond(state)) {
+      state.achievements.push(a.id);
+    }
+  });
+}
+
+// ===================== SCORE =====================
+function renderScore() {
+  showAchievements();
+  playWin();
+  document.getElementById('final-score').textContent = state.score;
+  const comments = [
+    [90,'🏆 太厉害了！满分学霸！'],
+    [70,'🌟 非常优秀！继续努力！'],
+    [50,'😊 不错哦！还有进步空间！'],
+    [0,'💪 再加把劲，下次一定行！'],
+  ];
+  const c = comments.find(([n])=>state.score>=n);
+  document.getElementById('score-comment').textContent = c ? c[1] : '';
+  const grid = document.getElementById('achievement-grid');
+  grid.innerHTML = achievements.map(a=>`
+    <div class="ach-badge ${state.achievements.includes(a.id)?'earned':''}">
+      <div class="ach-icon">${a.icon}</div>
+      <div class="ach-name">${a.name}</div>
+    </div>
+  `).join('');
+}
+
+// ===================== EXPAND =====================
+const expandWords = ['阳光','小鸟','快乐地','在花园里','歌唱'];
+function renderExpand() {
+  document.getElementById('expand-words').innerHTML = expandWords.map(w=>`<span style="background:var(--accent);border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer;" onclick="insertWord('${w}')">${w}</span>`).join('');
+  const summary = [
+    '✅ 句子理解要找"谁+做什么"',
+    '✅ 关键词决定句子意思',
+    '✅ 感情色彩看感叹词和修饰词',
+    '✅ 完整句子=主语+谓语（+宾语）',
+  ];
+  document.getElementById('summary-list').innerHTML = summary.map(s=>`<div style="margin:6px 0;color:#555;font-size:0.95rem;">${s}</div>`).join('');
+}
+function insertWord(w) {
+  const ta = document.getElementById('my-sentence');
+  ta.value += w;
+  ta.focus();
+}
+function submitExpand() {
+  const val = document.getElementById('my-sentence').value.trim();
+  const res = document.getElementById('expand-result');
+  if(val.length < 4) { res.style.display='block'; res.innerHTML='<span style="color:red">请写一个完整的句子哦！</span>'; return; }
+  res.style.display='block';
+  res.innerHTML='<span style="color:var(--secondary);">✅ 棒极了！你的句子写得很好！再加油！⭐</span>';
+  state.score += 5; playCorrect();
+  spawnStars(300,400,8);
+}
+
+// ===================== INIT =====================
+renderWarmup();
+</script>
+</body>
+</html>

@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>篇章结构分析 · 四年级语文闯关</title>
+<style>
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--card:#fff;--radius:20px;--shadow:0 8px 32px rgba(0,0,0,0.10);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);font-family:'PingFang SC','Microsoft YaHei',sans-serif;color:#333;min-height:100vh;}
+#stars{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;}
+.star{position:absolute;animation:sf 1.3s ease-out forwards;}
+@keyframes sf{0%{opacity:1;transform:translateY(0)scale(1)}100%{opacity:0;transform:translateY(-90px)scale(1.5)}}
+.screen{display:none;min-height:100vh;padding:20px;}
+.screen.active{display:flex;flex-direction:column;align-items:center;}
+
+/* HERO */
+#hero{background:linear-gradient(135deg,#667eea,#764ba2,#f093fb);justify-content:center;text-align:center;}
+.hero-e{font-size:5rem;animation:float 3s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-14px) rotate(3deg)}}
+h1.ht{font-size:2.1rem;font-weight:900;color:#fff;text-shadow:2px 4px 8px rgba(0,0,0,0.2);margin:12px 0 8px;}
+.hs{font-size:0.98rem;color:rgba(255,255,255,0.92);margin-bottom:26px;}
+.btn{background:var(--card);color:var(--primary);border:none;border-radius:var(--radius);padding:13px 28px;font-size:1rem;font-weight:700;cursor:pointer;box-shadow:var(--shadow);transition:transform 0.15s;}
+.btn:hover{transform:translateY(-3px)scale(1.04);}
+.btn:active{transform:scale(0.97);}
+.btn-p{background:var(--primary);color:#fff;}
+.btn-s{background:var(--secondary);color:#fff;}
+.btn-a{background:var(--accent);color:#333;}
+
+/* LAYOUT */
+.st{font-size:1.65rem;font-weight:800;color:var(--primary);text-align:center;margin-bottom:12px;}
+.card{background:var(--card);border-radius:var(--radius);padding:20px 22px;box-shadow:var(--shadow);width:100%;max-width:680px;}
+.nav-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:14px;}
+.pw{background:#f0f0f0;border-radius:10px;height:12px;width:100%;max-width:540px;overflow:hidden;margin:8px 0;}
+.pb{height:100%;background:linear-gradient(90deg,#667eea,var(--accent));border-radius:10px;transition:width 0.5s;width:0%;}
+
+/* STRUCTURE DIAGRAM */
+.struct-diagram{display:flex;flex-direction:column;gap:8px;margin:12px 0;}
+.struct-block{border-radius:14px;padding:14px 16px;font-size:0.95rem;position:relative;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;}
+.struct-block:hover{transform:translateX(4px);box-shadow:0 4px 16px rgba(0,0,0,0.1);}
+.struct-block.intro{background:linear-gradient(135deg,#ffecd2,#fcb69f);border-left:5px solid #f59563;}
+.struct-block.develop{background:linear-gradient(135deg,#a1c4fd,#c2e9fb);border-left:5px solid #5b8dee;}
+.struct-block.climax{background:linear-gradient(135deg,#fbc2eb,#a6c1ee);border-left:5px solid #c879e0;}
+.struct-block.conclusion{background:linear-gradient(135deg,#d4fc79,#96e6a1);border-left:5px solid #4db66a;}
+.struct-label{font-weight:800;font-size:0.9rem;margin-bottom:4px;}
+.struct-desc{font-size:0.83rem;color:#555;}
+.arrow{text-align:center;font-size:1.5rem;color:#aaa;}
+
+/* ARTICLE DISPLAY */
+.article{font-size:1rem;line-height:2.2;background:linear-gradient(135deg,#f8f9ff,#fffbf0);border-radius:16px;padding:18px 20px;position:relative;}
+.para{margin-bottom:12px;padding:8px 12px;border-radius:10px;border-left:4px solid #e0e0e0;cursor:pointer;transition:all 0.2s;}
+.para:hover{border-left-color:var(--secondary);background:rgba(78,205,196,0.05);}
+.para.tagged-intro{border-left-color:#f59563;background:rgba(252,182,159,0.12);}
+.para.tagged-develop{border-left-color:#5b8dee;background:rgba(161,196,253,0.15);}
+.para.tagged-climax{border-left-color:#c879e0;background:rgba(251,194,235,0.15);}
+.para.tagged-conclusion{border-left-color:#4db66a;background:rgba(212,252,121,0.2);}
+.para-num{font-size:0.75rem;color:#aaa;margin-bottom:4px;}
+.para-tag{font-size:0.78rem;font-weight:700;padding:2px 8px;border-radius:6px;display:inline-block;margin-bottom:4px;}
+
+/* TAG BUTTONS */
+.tag-btns{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;}
+.tag-btn{border:none;border-radius:10px;padding:7px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;transition:transform 0.15s;}
+.tag-btn:hover{transform:scale(1.06);}
+.tb-intro{background:rgba(252,182,159,0.6);}
+.tb-develop{background:rgba(161,196,253,0.6);}
+.tb-climax{background:rgba(251,194,235,0.6);}
+.tb-conclusion{background:rgba(212,252,121,0.6);}
+.tb-clear{background:#f0f0f0;}
+
+/* OPTIONS */
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+.opt{background:var(--bg);border:2.5px solid #e0e0e0;border-radius:var(--radius);padding:12px 10px;font-size:0.9rem;cursor:pointer;transition:all 0.2s;text-align:left;}
+.opt:hover{border-color:var(--secondary);background:#e8faf9;}
+.opt.ok{border-color:var(--secondary);background:#d4f5f1;color:#2a9d8f;font-weight:700;}
+.opt.no{border-color:var(--primary);background:#ffe5e5;color:#d62839;}
+.fb{margin-top:12px;padding:12px 16px;border-radius:12px;font-size:0.9rem;font-weight:600;display:none;}
+.fb.show{display:block;}
+.fb.ok{background:#d4f5f1;color:#2a9d8f;}
+.fb.no{background:#ffe5e5;color:#d62839;}
+
+/* LV HEAD */
+.lv-h{display:flex;align-items:center;gap:12px;width:100%;max-width:680px;margin-bottom:6px;}
+.lv-b{border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.1rem;flex-shrink:0;color:#fff;}
+.lv-t{font-size:1.2rem;font-weight:800;}
+.lv-s{font-size:0.82rem;color:#999;}
+
+/* TIMELINE */
+.timeline{display:flex;flex-direction:column;gap:0;width:100%;}
+.tl-item{display:flex;gap:14px;align-items:flex-start;}
+.tl-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;margin-top:6px;}
+.tl-line{width:2px;height:30px;background:#e0e0e0;margin-left:6px;}
+.tl-content{flex:1;padding-bottom:16px;font-size:0.92rem;line-height:1.7;}
+.tl-label{font-weight:700;font-size:0.85rem;margin-bottom:3px;}
+
+/* BOSS */
+#boss{background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);gap:16px;}
+#boss .st{color:#fff;}
+.boss-c{background:rgba(255,255,255,0.1);backdrop-filter:blur(8px);border-radius:var(--radius);padding:20px 22px;width:100%;max-width:680px;color:#fff;}
+.bhw{height:14px;background:rgba(255,255,255,0.15);border-radius:7px;margin:8px 0;overflow:hidden;}
+.bhb{height:100%;background:linear-gradient(90deg,#f093fb,#f5576c,#fda085);border-radius:7px;transition:width 0.5s;}
+.boss-article{font-size:0.95rem;line-height:2;background:rgba(0,0,0,0.25);border-radius:12px;padding:14px;margin-bottom:14px;max-height:200px;overflow-y:auto;}
+.boss-opts .opt{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2);color:#fff;}
+.boss-opts .opt:hover{background:rgba(255,255,255,0.22);}
+.boss-opts .opt.ok{background:rgba(78,205,196,0.3);border-color:var(--secondary);}
+.boss-opts .opt.no{background:rgba(255,107,107,0.3);border-color:var(--primary);}
+
+/* SCORE */
+#scorecard{background:linear-gradient(135deg,#f093fb,#f5576c,#fda085);gap:16px;}
+.sn{font-size:4.5rem;font-weight:900;color:#fff;}
+.ach-grid{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:580px;}
+.ach{background:var(--card);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:94px;opacity:0.25;transition:opacity 0.4s;}
+.ach.on{opacity:1;animation:pop 0.4s;}
+@keyframes pop{0%{transform:scale(0.4)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+.ai{font-size:1.8rem;}.an{font-size:0.73rem;font-weight:700;text-align:center;color:#555;}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
+
+/* AI */
+#ai{position:fixed;bottom:18px;right:18px;z-index:1000;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+.ai-bub{background:var(--card);border-radius:14px;padding:10px 14px;box-shadow:var(--shadow);max-width:210px;font-size:0.87rem;display:none;}
+.ai-bub.on{display:block;animation:su 0.3s;}
+@keyframes su{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.ai-face{width:52px;height:52px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;cursor:pointer;box-shadow:var(--shadow);border:3px solid #fff;}
+
+#expand{background:var(--bg);gap:16px;}
+@media(max-width:500px){.opts{grid-template-columns:1fr;}.struct-diagram{gap:4px;}}
+</style>
+</head>
+<body>
+<div id="stars"></div>
+<div id="ai">
+  <div class="ai-bub" id="ai-text">嗨！我是小虫虫🐛，篇章结构分析专家！</div>
+  <div class="ai-face" onclick="toggleAI()">🐛</div>
+</div>
+
+<!-- HERO -->
+<div class="screen active" id="hero">
+  <div class="hero-e">📜</div>
+  <h1 class="ht">篇章结构分析大冒险</h1>
+  <div class="hs">四年级语文 · 读懂文章的骨架🌈</div>
+  <div style="font-size:1.5rem;margin-bottom:28px;">⭐⭐⭐</div>
+  <button class="btn btn-p" onclick="go('objective')">开始冒险 🚀</button>
+</div>
+
+<!-- OBJECTIVE -->
+<div class="screen" id="objective">
+  <div class="st">📋 学习目标</div>
+  <div class="card">
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div style="display:flex;gap:10px;align-items:center;"><span style="font-size:1.3rem;">🏗️</span><span>理解文章的基本结构：开头-发展-高潮-结尾</span></div>
+      <div style="display:flex;gap:10px;align-items:center;"><span style="font-size:1.3rem;">🗺️</span><span>识别文章各部分的功能和特征</span></div>
+      <div style="display:flex;gap:10px;align-items:center;"><span style="font-size:1.3rem;">🔍</span><span>分析不同类型文章的结构模式</span></div>
+      <div style="display:flex;gap:10px;align-items:center;"><span style="font-size:1.3rem;">✏️</span><span>运用结构知识分析和写作文章</span></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:8px;">
+    <div style="font-size:0.88rem;color:#888;margin-bottom:6px;">学习进度</div>
+    <div class="pw"><div class="pb" id="main-pb"></div></div>
+    <div style="font-size:0.82rem;color:#aaa;text-align:right;" id="pb-t">0 / 15</div>
+  </div>
+  <div class="nav-row"><button class="btn btn-a" onclick="go('warmup')">热身练习 🔥</button></div>
+</div>
+
+<!-- WARMUP -->
+<div class="screen" id="warmup">
+  <div class="st">🔥 热身：文章结构地图</div>
+  <div class="card">
+    <div style="font-size:0.93rem;color:#555;margin-bottom:12px;">一篇文章就像一栋房子，有它的骨架结构👇</div>
+    <div class="struct-diagram">
+      <div class="struct-block intro" onclick="showStructInfo('intro')">
+        <div class="struct-label">🌅 开头（引入）</div>
+        <div class="struct-desc">引出文章主题，吸引读者阅读兴趣</div>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="struct-block develop" onclick="showStructInfo('develop')">
+        <div class="struct-label">📖 发展（展开）</div>
+        <div class="struct-desc">逐步展开主题，交代事件经过或论据</div>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="struct-block climax" onclick="showStructInfo('climax')">
+        <div class="struct-label">⚡ 高潮（转折/重点）</div>
+        <div class="struct-desc">事件最紧张、最重要的部分</div>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="struct-block conclusion" onclick="showStructInfo('conclusion')">
+        <div class="struct-label">🌟 结尾（总结）</div>
+        <div class="struct-desc">总结全文，升华主题，留下印象</div>
+      </div>
+    </div>
+    <div id="struct-info" style="background:var(--bg);border-radius:12px;padding:12px;font-size:0.9rem;display:none;margin-top:8px;line-height:1.8;"></div>
+  </div>
+  <div class="nav-row"><button class="btn btn-s" onclick="go('level1')">进入第一关 →</button></div>
+</div>
+
+<!-- LEVEL 1 -->
+<div class="screen" id="level1">
+  <div class="lv-h">
+    <div class="lv-b" style="background:var(--primary);">1</div>
+    <div><div class="lv-t">第一关：识别段落功能</div><div class="lv-s">判断每段话在文章中的作用</div></div>
+    <div style="margin-left:auto;font-size:1.3rem;" id="l1-stars">⭐⭐⭐</div>
+  </div>
+  <div class="card" id="l1-card"></div>
+  <div class="nav-row">
+    <button class="btn btn-s" id="l1-next" style="display:none;" onclick="nextL1()">下一题 →</button>
+  </div>
+</div>
+
+<!-- LEVEL 2 -->
+<div class="screen" id="level2">
+  <div class="lv-h">
+    <div class="lv-b" style="background:var(--secondary);">2</div>
+    <div><div class="lv-t">第二关：文章结构标注</div><div class="lv-s">给文章的每个段落标注结构部分</div></div>
+    <div style="margin-left:auto;font-size:1.3rem;" id="l2-stars">⭐⭐⭐</div>
+  </div>
+  <div class="card" id="l2-card"></div>
+  <div class="nav-row">
+    <button class="btn btn-s" id="l2-check" onclick="checkL2()">检查标注 ✅</button>
+    <button class="btn btn-a" id="l2-next" style="display:none;" onclick="nextL2()">下一题 →</button>
+  </div>
+</div>
+
+<!-- LEVEL 3 -->
+<div class="screen" id="level3">
+  <div class="lv-h">
+    <div class="lv-b" style="background:var(--accent);color:#333;">3</div>
+    <div><div class="lv-t">第三关：结构模式分析</div><div class="lv-s">分析文章的整体结构模式</div></div>
+    <div style="margin-left:auto;font-size:1.3rem;" id="l3-stars">⭐⭐⭐</div>
+  </div>
+  <div class="card" id="l3-card"></div>
+  <div class="nav-row">
+    <button class="btn btn-s" id="l3-next" style="display:none;" onclick="nextL3()">下一题 →</button>
+  </div>
+</div>
+
+<!-- BOSS -->
+<div class="screen" id="boss">
+  <div class="st">👾 Boss战：篇章大师终极考验</div>
+  <div class="boss-c">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+      <span style="font-size:1.8rem;">🐲</span>
+      <div style="flex:1;"><div style="font-size:0.83rem;opacity:0.8;">Boss 生命</div>
+        <div class="bhw"><div class="bhb" id="bhb" style="width:100%"></div></div>
+      </div>
+      <span style="font-size:1.1rem;font-weight:800;" id="bhn">❤️ 5</span>
+    </div>
+    <div class="boss-article" id="boss-art"></div>
+    <div style="font-size:0.93rem;font-weight:700;margin-bottom:10px;" id="boss-q"></div>
+    <div class="boss-opts opts" id="boss-opts"></div>
+    <div class="fb" id="boss-fb"></div>
+  </div>
+  <div class="nav-row">
+    <button class="btn" id="boss-next" style="display:none;" onclick="nextBoss()">继续攻击 ⚔️</button>
+  </div>
+</div>
+
+<!-- SCORE -->
+<div class="screen" id="scorecard">
+  <div style="font-size:4rem;animation:bounce 1.5s infinite;">🎊</div>
+  <div class="sn" id="final-score">0</div>
+  <div style="font-size:1rem;color:rgba(255,255,255,0.9);">总分</div>
+  <div style="font-size:1.05rem;font-weight:700;color:#fff;margin:10px 0;" id="score-cmt"></div>
+  <div class="ach-grid" id="ach-grid"></div>
+  <div class="nav-row" style="margin-top:16px;">
+    <button class="btn btn-s" onclick="go('expand')">拓展练习 📚</button>
+    <button class="btn btn-p" onclick="restart()">再来一次 🔄</button>
+  </div>
+</div>
+
+<!-- EXPAND -->
+<div class="screen" id="expand">
+  <div class="st">📚 拓展：写作结构指南</div>
+  <div class="card">
+    <div style="font-weight:700;color:var(--primary);margin-bottom:10px;">🗺️ 常见文章结构模式</div>
+    <div style="display:flex;flex-direction:column;gap:10px;font-size:0.9rem;">
+      <div style="background:#fff8e1;border-radius:12px;padding:12px;">
+        <div style="font-weight:700;color:#e67e22;margin-bottom:6px;">📝 记叙文：时间顺序型</div>
+        <div class="timeline">
+          <div class="tl-item"><div class="tl-dot" style="background:#f59563;"></div><div class="tl-content"><div class="tl-label" style="color:#f59563;">开头</div>交代时间、地点、人物</div></div>
+          <div class="tl-item" style="margin-left:0;"><div style="width:14px;display:flex;justify-content:center;"><div class="tl-line"></div></div><div></div></div>
+          <div class="tl-item"><div class="tl-dot" style="background:#5b8dee;"></div><div class="tl-content"><div class="tl-label" style="color:#5b8dee;">发展</div>事件按时间顺序展开</div></div>
+          <div class="tl-item" style="margin-left:0;"><div style="width:14px;display:flex;justify-content:center;"><div class="tl-line"></div></div><div></div></div>
+          <div class="tl-item"><div class="tl-dot" style="background:#c879e0;"></div><div class="tl-content"><div class="tl-label" style="color:#c879e0;">高潮</div>最重要、最感人的部分</div></div>
+          <div class="tl-item" style="margin-left:0;"><div style="width:14px;display:flex;justify-content:center;"><div class="tl-line"></div></div><div></div></div>
+          <div class="tl-item"><div class="tl-dot" style="background:#4db66a;"></div><div class="tl-content"><div class="tl-label" style="color:#4db66a;">结尾</div>总结，表达感受或收获</div></div>
+        </div>
+      </div>
+      <div style="background:#e8faf9;border-radius:12px;padding:12px;">
+        <div style="font-weight:700;color:#2a9d8f;margin-bottom:6px;">📊 说明文：总分总型</div>
+        <div style="color:#555;">开头提出说明对象 → 分各方面具体介绍 → 结尾总结特点意义</div>
+      </div>
+      <div style="background:#fff0f0;border-radius:12px;padding:12px;">
+        <div style="font-weight:700;color:#d62839;margin-bottom:6px;">💬 议论文：观点论证型</div>
+        <div style="color:#555;">提出观点 → 列举论据支持 → 反驳对立观点 → 重申结论</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div style="font-weight:700;color:var(--secondary);margin-bottom:10px;">✏️ 规划你的作文结构</div>
+    <div style="font-size:0.88rem;color:#888;margin-bottom:8px;">题目：一次难忘的经历（记叙文）</div>
+    <div style="display:flex;flex-direction:column;gap:8px;" id="plan-form">
+      <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:1.1rem;">🌅</span><input id="p-intro" placeholder="开头：时间/地点/人物是..." style="flex:1;border:2px solid #e0e0e0;border-radius:10px;padding:9px 12px;font-size:0.9rem;font-family:inherit;outline:none;"></div>
+      <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:1.1rem;">📖</span><input id="p-develop" placeholder="发展：经过是..." style="flex:1;border:2px solid #e0e0e0;border-radius:10px;padding:9px 12px;font-size:0.9rem;font-family:inherit;outline:none;"></div>
+      <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:1.1rem;">⚡</span><input id="p-climax" placeholder="高潮：最重要的部分是..." style="flex:1;border:2px solid #e0e0e0;border-radius:10px;padding:9px 12px;font-size:0.9rem;font-family:inherit;outline:none;"></div>
+      <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:1.1rem;">🌟</span><input id="p-conclusion" placeholder="结尾：感受或收获是..." style="flex:1;border:2px solid #e0e0e0;border-radius:10px;padding:9px 12px;font-size:0.9rem;font-family:inherit;outline:none;"></div>
+    </div>
+    <button class="btn btn-p" style="margin-top:12px;width:100%;" onclick="submitPlan()">提交计划 ✉️</button>
+    <div id="plan-result" style="display:none;margin-top:10px;font-size:0.9rem;"></div>
+  </div>
+  <div class="nav-row"><button class="btn btn-p" onclick="go('hero')">回主页 🏠</button></div>
+</div>
+
+<script>
+const AudioCtx=window.AudioContext||window.webkitAudioContext;
+let ctx;
+function getCtx(){if(!ctx)ctx=new AudioCtx();return ctx;}
+function tone(f,d,t='sine',v=0.28){try{const c=getCtx(),o=c.createOscillator(),g=c.createGain();o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+d);o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+d);}catch(e){}}
+function ok(){tone(523,0.08);setTimeout(()=>tone(659,0.08),90);setTimeout(()=>tone(784,0.18),180);}
+function bad(){tone(180,0.3,'sawtooth',0.18);}
+function win(){[523,587,659,698,784,880,988,1047].forEach((f,i)=>setTimeout(()=>tone(f,0.12),i*70));}
+function click(){tone(900,0.04,'square',0.1);}
+function spawnStars(x,y,n=6){const c=document.getElementById('stars');for(let i=0;i<n;i++){const s=document.createElement('div');s.className='star';s.textContent=['⭐','✨','🌟','💫','🎆','🎇'][Math.floor(Math.random()*6)];s.style.cssText=`left:${x+(Math.random()-0.5)*80}px;top:${y+(Math.random()-0.5)*40}px;font-size:${1+Math.random()}rem;`;c.appendChild(s);setTimeout(()=>s.remove(),1400);}}
+
+let S={score:0,total:0,correct:0,l1i:0,l2i:0,l3i:0,bi:0,bossHP:5,achs:[],stars:{l1:0,l2:0,l3:0}};
+
+// STRUCT INFO
+const structInfos={
+  intro:{color:'#f59563',title:'🌅 开头（引入）',text:'<b>作用：</b>引出文章主题，吸引读者注意。<br><b>常见写法：</b>设悬念、用对话开头、直接点明主题、描写环境。<br><b>例：</b>"那是一个雪花纷飞的冬天，我永远不会忘记那件事…"'},
+  develop:{color:'#5b8dee',title:'📖 发展（展开）',text:'<b>作用：</b>逐步展开主题，交代事件经过。<br><b>常见写法：</b>按时间/地点/逻辑顺序展开，添加细节描写。<br><b>例：</b>按照"首先…然后…接着…"的顺序叙述。'},
+  climax:{color:'#c879e0',title:'⚡ 高潮（转折/重点）',text:'<b>作用：</b>事件最关键、最紧张、最感人的部分。<br><b>常见写法：</b>加强描写，用对话、心理活动突出重点。<br><b>例：</b>事情的转折点，冲突最激烈的时刻。'},
+  conclusion:{color:'#4db66a',title:'🌟 结尾（总结）',text:'<b>作用：</b>总结全文，升华主题，给读者留下深刻印象。<br><b>常见写法：</b>点题、抒发感情、留下悬念、呼应开头。<br><b>例：</b>"这次经历让我懂得了…从此，我…"'},
+};
+function showStructInfo(type){
+  const info=structInfos[type];
+  const el=document.getElementById('struct-info');
+  el.style.display='block';
+  el.innerHTML=`<div style="font-weight:800;color:${info.color};margin-bottom:8px;">${info.title}</div>${info.text}`;
+  click();spawnStars(300,300,4);
+}
+
+// L1 DATA
+const l1Qs=[
+  {para:'那是一个秋天的早晨，金黄的落叶铺满了校园的小路。我一边踢着叶子，一边哼着歌走进教室，却不知道今天将发生一件让我终生难忘的事。',q:'这段话在一篇文章中最可能是哪个部分？',opts:['🌅 开头/引入','📖 发展','⚡ 高潮','🌟 结尾'],ans:0,explain:'"那是一个秋天的早晨"交代了时间和环境，并用"却不知道"制造悬念，是典型的开头引入写法。'},
+  {para:'我赶紧跑过去，用双手捧住那只受伤的小麻雀。它的翅膀在颤抖，小眼睛无助地看着我。我的心猛地收紧了，一个念头闪过：我一定要救它！',q:'这段文字中"我的心猛地收紧""一个念头闪过"说明这是文章的哪个部分？',opts:['开头环境描写','事件发展过渡','故事的高潮/转折','结尾感悟'],ans:2,explain:'情感最强烈、行动最关键的描写，是典型的高潮/转折部分。'},
+  {para:'从那以后，我每天放学都去公园看看那棵老槐树。春天，它开出白色的花；夏天，它撑起一片绿荫；秋冬，它静静地站着守护着公园。',q:'这段描写是文章中的哪个部分？',opts:['开头引入','发展展开','高潮转折','结尾总结'],ans:1,explain:'按时间顺序描写老槐树不同季节的样子，是事件展开的发展部分。'},
+  {para:'这件事让我明白了一个道理：生命中最宝贵的东西，不是金钱，不是名誉，而是那些真诚相待的人。感谢那个雨天，感谢那位陌生的老奶奶。',q:'这段话最可能是文章的哪个结构部分？',opts:['引入开头','事件发展','情节高潮','🌟 结尾/总结'],ans:3,explain:'"让我明白了一个道理"是点题升华，"感谢…"是抒发情感，是典型的结尾写法。'},
+];
+
+// L2 DATA
+const l2Qs=[
+  {
+    title:'《第一次骑自行车》',
+    paras:[
+      {text:'那年暑假，爸爸说要教我骑自行车。我既兴奋又紧张，站在那辆红色的自行车旁边，怎么看怎么觉得它好高好大。',type:'intro'},
+      {text:'一开始，爸爸扶着我的车座，让我感受平衡的感觉。我晃晃悠悠地踩着踏板，不停地歪来歪去。练了一个小时，我已经累得满头大汗，还是摔了好几跤。',type:'develop'},
+      {text:'就在我想放弃的时候，爸爸突然放开了手。我没有意识到，竟然自己骑了好几米！当我回头，才发现爸爸已经站在很远的地方，对我竖起大拇指。那一刻，我又激动又想哭。',type:'climax'},
+      {text:'学会骑自行车这件小事，让我懂得了：很多事情，你以为自己做不到，只要勇敢迈出第一步，就会发现，原来自己可以。',type:'conclusion'},
+    ],
+    correctTypes:['intro','develop','climax','conclusion'],
+  },
+];
+
+// L3 DATA
+const l3Qs=[
+  {article:'《我的好朋友》\n本文先介绍了好朋友小明的外貌和性格（第1段），然后讲述了三件能体现他助人为乐品质的事（第2-4段），最后总结了小明对自己的影响，表达了深厚的友情（第5段）。',q:'这篇文章的结构模式是？',opts:['时间顺序型','总-分-总型','对比型','问答型'],ans:1,explain:'先总介绍人物，再分三件事具体写，最后总结，是"总-分-总"型结构。'},
+  {article:'《变化的家乡》\n文章先描写了多年前家乡破旧落后的样子（第1-2段），然后转入现在家乡高楼林立、道路宽敞的新面貌（第3-4段），最后抒发了对家乡巨大变化的感慨和自豪（第5段）。',q:'这篇文章采用了什么写作手法和结构？',opts:['时间顺序：过去→现在的对比','总分总：先总写后分写','空间顺序：由远到近','首尾呼应：开头结尾写同一场景'],ans:0,explain:'"多年前…现在…"明显是时间对比，通过对比体现家乡的变化，是时间顺序型结构。'},
+  {article:'《春天的校园》\n文章开头总写"春天来了，校园变得更美丽"（第1句），然后分别写了花坛里的鲜花盛开（第2句）、操场上的绿草如茵（第3句）、教室里书声琅琅（第4句），最后以"春天的校园真是一道美丽的风景"结尾（第5句）。',q:'这段文字的结构特点是？',opts:['分总结构','总分总结构','时间顺序','倒叙结构'],ans:1,explain:'第1句总写，中间三句分写校园不同角落，最后一句总结，是典型的"总-分-总"结构。'},
+];
+
+// BOSS DATA
+const bossQs=[
+  {art:'《爷爷的菜园》\n①春天，爷爷播下种子，每天浇水施肥，精心呵护。②夏天，菜园里绿意盎然，黄瓜、番茄挂满枝头。③秋天，爷爷把收获的蔬菜分送给邻居，院子里回荡着笑声。④这小小的菜园，承载着爷爷对生活的热爱，也装满了我童年最甜蜜的记忆。',q:'文章的第④段在结构上起什么作用？',opts:['开头引入，总起全文','发展段落，描写事件','高潮段落，最关键事件','结尾总结，升华主题'],ans:3,explain:'第④段总结了菜园的意义，升华到"对生活的热爱"和"童年记忆"，是结尾总结段。'},
+  {art:'《一封信》\n①多年后，我偶然翻到一封旧信，泛黄的纸上，是老师当年写给我的字……②那时候，我是班里最调皮的学生，成绩一团糟，同学们都不喜欢我。③有一天，老师把我叫到办公室，没有批评，只是把那封信递给了我。④信中，老师说我是一块未经雕琢的宝石，只要肯努力，终有一天会发光。⑤从那天起，我变了……今天的我，终于可以告慰老师：我做到了。',q:'文章①②③④⑤段分别对应哪种结构功能？',opts:['开头-发展-高潮-高潮-结尾','开头-发展-发展-高潮-结尾','高潮-开头-发展-发展-结尾','开头-高潮-发展-结尾-总结'],ans:1,explain:'①倒叙开头，②③描写事件经过（发展），④是关键转折（高潮），⑤是结尾感悟。'},
+  {art:'《松树的品格》\n①松树是一种坚强的树木。②无论风雪多么猛烈，它都挺立不倒。③在悬崖峭壁上，它也能扎根生长。④即使在严寒的冬天，它的叶子依然翠绿。⑤松树这种不屈不挠的精神，值得我们每一个人学习。',q:'这是一篇说明/议论性短文，它的结构模式是？',opts:['总-分-总（总→具体例子→总结）','时间顺序','空间顺序','倒叙结构'],ans:0,explain:'①提出观点（总），②③④用三个例子支持（分），⑤总结升华（总），是典型的"总-分-总"结构。'},
+  {art:'《妈妈的手》\n①我第一次认真看妈妈的手，是在她生病住院的那天夜里。②那双手，曾经做过多少顿饭，缝过多少件衣，扶过我多少次跌倒……③如今，那双手躺在白色的床单上，布满了老茧和皱纹。④我握住她的手，泪水模糊了视线。⑤妈妈的手，是世界上最美的手。',q:'文章从①到④，情感是如何变化的？这体现了什么结构特点？',opts:['平淡叙事，没有起伏','由淡然→感动→深情，情感递进型结构','先强后弱，情感下降','来回波折，对比型结构'],ans:1,explain:'从①普通观察→②回忆感慨→③触景伤情→④情感爆发，情感逐步深化，是情感递进型叙事结构。'},
+  {art:'《秋天的校园》（片段）\n秋天来了，校园里的梧桐树叶变黄了，飘飘洒洒地落下来，像一只只金色的蝴蝶。操场边的菊花开了，黄的、白的、紫的，一丛丛，一簇簇，美不胜收。这时候，同学们手拿课本在树荫下朗读，书声和着风声，好听极了。秋天的校园，是一幅美丽的图画。',q:'最后一句"秋天的校园，是一幅美丽的图画"在结构上起什么作用？',opts:['引入话题','展开描写','过渡连接','点题总结，呼应开头'],ans:3,explain:'这句是全段的结尾，用比喻总结了前面所有描写，点明了中心（美丽的校园），并与开头的"秋天来了"形成呼应。'},
+];
+
+const achs=[
+  {id:'first',icon:'🎯',name:'首战告捷',cond:s=>s.correct>=1},
+  {id:'l1f',icon:'🏗️',name:'结构识别者',cond:s=>s.stars.l1>=3},
+  {id:'l2f',icon:'🏷️',name:'标注能手',cond:s=>s.stars.l2>=1},
+  {id:'l3f',icon:'🗺️',name:'模式专家',cond:s=>s.stars.l3>=2},
+  {id:'boss',icon:'⚔️',name:'打败Boss',cond:s=>s.bossHP<=0},
+  {id:'s50',icon:'⭐',name:'优秀学生',cond:s=>s.score>=50},
+  {id:'s80',icon:'🏆',name:'语文学霸',cond:s=>s.score>=80},
+  {id:'s110',icon:'👑',name:'篇章大师',cond:s=>s.score>=110},
+  {id:'combo',icon:'🔥',name:'六连正确',cond:s=>s.correct>=6},
+];
+
+function go(id){
+  click();
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  if(id==='level1')renderL1();
+  if(id==='level2')renderL2();
+  if(id==='level3')renderL3();
+  if(id==='boss')renderBoss();
+  if(id==='scorecard')renderScore();
+  updatePB();showAI(id);
+}
+function updatePB(){const p=Math.min(100,(S.total/15)*100);document.getElementById('main-pb').style.width=p+'%';document.getElementById('pb-t').textContent=S.total+' / 15';}
+function restart(){click();S={score:0,total:0,correct:0,l1i:0,l2i:0,l3i:0,bi:0,bossHP:5,achs:[],stars:{l1:0,l2:0,l3:0}};go('hero');}
+function achCheck(){achs.forEach(a=>{if(!S.achs.includes(a.id)&&a.cond(S))S.achs.push(a.id);});}
+
+const aiLines={hero:"你好！我是小虫虫🐛，篇章结构分析专家！",objective:"了解目标，明确方向！",warmup:"热身！认识文章的4个结构部分！",level1:"识别段落功能：开头引入、发展展开、高潮转折、结尾总结！",level2:"标注文章！给每段打上结构标签！",level3:"分析整体结构模式：总分总？时间型？",boss:"Boss终极战！综合运用篇章结构知识！",scorecard:"太棒了！查看你的成就！",expand:"试着规划一篇作文的结构！"};
+let aiV=false;
+function showAI(s){const t=aiLines[s]||"继续加油！";document.getElementById('ai-text').textContent=t;document.getElementById('ai-text').classList.add('on');aiV=true;setTimeout(()=>{document.getElementById('ai-text').classList.remove('on');aiV=false;},4000);}
+function toggleAI(){const b=document.getElementById('ai-text');if(aiV){b.classList.remove('on');aiV=false;}else{b.classList.add('on');aiV=true;}}
+
+// L1
+let l1done=false;
+function renderL1(){
+  l1done=false;
+  const idx=S.l1i;if(idx>=l1Qs.length){go('level2');return;}
+  const q=l1Qs[idx];
+  document.getElementById('l1-card').innerHTML=`
+    <div style="font-size:0.82rem;color:#aaa;margin-bottom:8px;">题目${idx+1}/${l1Qs.length}</div>
+    <div style="background:var(--bg);border-radius:14px;padding:16px;font-size:1rem;line-height:2;margin-bottom:14px;border-left:5px solid var(--primary);">${q.para}</div>
+    <div style="font-size:0.95rem;font-weight:700;margin-bottom:10px;">${q.q}</div>
+    <div class="opts" id="l1-opts">
+      ${q.opts.map((o,i)=>`<button class="opt" onclick="ansL1(${i},this)">${o}</button>`).join('')}
+    </div>
+    <div class="fb" id="l1-fb"></div>
+  `;
+  document.getElementById('l1-next').style.display='none';
+}
+function ansL1(i,el){
+  if(l1done)return;l1done=true;S.total++;
+  const q=l1Qs[S.l1i];
+  document.querySelectorAll('#l1-opts .opt').forEach(b=>b.disabled=true);
+  const fb=document.getElementById('l1-fb');
+  if(i===q.ans){el.classList.add('ok');fb.className='fb ok show';fb.textContent='✅ 正确！'+q.explain;S.score+=10;S.correct++;S.stars.l1++;ok();spawnStars(el.getBoundingClientRect().left+30,el.getBoundingClientRect().top,5);}
+  else{el.classList.add('no');document.querySelectorAll('#l1-opts .opt')[q.ans].classList.add('ok');fb.className='fb no show';fb.textContent='❌ 再想想！'+q.explain;bad();}
+  document.getElementById('l1-next').style.display='block';
+}
+function nextL1(){S.l1i++;if(S.l1i>=l1Qs.length)go('level2');else renderL1();}
+
+// L2
+let l2sel={},l2done=false;
+const typeColors={intro:'tagged-intro',develop:'tagged-develop',climax:'tagged-climax',conclusion:'tagged-conclusion'};
+const typeLabels={intro:'🌅开头',develop:'📖发展',climax:'⚡高潮',conclusion:'🌟结尾'};
+const tagBtnColors={intro:'tb-intro',develop:'tb-develop',climax:'tb-climax',conclusion:'tb-conclusion'};
+let l2CurTag='intro';
+function renderL2(){
+  l2sel={};l2done=false;
+  const idx=S.l2i;if(idx>=l2Qs.length){go('level3');return;}
+  const q=l2Qs[idx];
+  document.getElementById('l2-card').innerHTML=`
+    <div style="font-size:0.82rem;color:#aaa;margin-bottom:8px;">${q.title}</div>
+    <div style="font-size:0.9rem;color:#555;margin-bottom:8px;">先选择标签类型，再点击对应的段落</div>
+    <div class="tag-btns">
+      <button class="tag-btn tb-intro" onclick="setTag('intro',this)">🌅 开头</button>
+      <button class="tag-btn tb-develop" onclick="setTag('develop',this)">📖 发展</button>
+      <button class="tag-btn tb-climax" onclick="setTag('climax',this)">⚡ 高潮</button>
+      <button class="tag-btn tb-conclusion" onclick="setTag('conclusion',this)">🌟 结尾</button>
+    </div>
+    <div style="font-size:0.85rem;color:var(--primary);font-weight:700;margin-bottom:8px;" id="cur-tag-label">当前标签：🌅 开头</div>
+    <div class="article">
+      ${q.paras.map((p,i)=>`
+        <div class="para" id="p${i}" onclick="tagPara(${i})">
+          <div class="para-num">第${i+1}段</div>
+          <div id="pt${i}" class="para-tag" style="display:none;"></div>
+          <div>${p.text}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="fb" id="l2-fb"></div>
+  `;
+  document.getElementById('l2-check').style.display='block';
+  document.getElementById('l2-next').style.display='none';
+}
+function setTag(type,el){
+  l2CurTag=type;
+  const labels={intro:'🌅 开头',develop:'📖 发展',climax:'⚡ 高潮',conclusion:'🌟 结尾'};
+  document.getElementById('cur-tag-label').textContent='当前标签：'+labels[type];
+  click();
+}
+function tagPara(i){
+  click();
+  l2sel[i]=l2CurTag;
+  const el=document.getElementById('p'+i);
+  el.className='para '+typeColors[l2CurTag];
+  const tag=document.getElementById('pt'+i);
+  tag.style.display='inline-block';
+  tag.textContent=typeLabels[l2CurTag];
+  tag.style.background={intro:'rgba(245,149,99,0.3)',develop:'rgba(91,141,238,0.3)',climax:'rgba(200,121,224,0.3)',conclusion:'rgba(77,182,106,0.3)'}[l2CurTag];
+}
+function checkL2(){
+  S.total++;
+  const q=l2Qs[S.l2i];
+  let c=0;
+  q.paras.forEach((_,i)=>{if(l2sel[i]===q.correctTypes[i])c++;});
+  const fb=document.getElementById('l2-fb');
+  if(c===q.paras.length){fb.className='fb ok show';fb.textContent='✅ 全部标注正确！结构清晰！';S.score+=15;S.correct++;S.stars.l2++;ok();spawnStars(300,300,8);}
+  else if(c>=2){fb.className='fb ok show';fb.textContent=`✅ 标对了${c}/${q.paras.length}个！再想想其余的！`;S.score+=8;S.stars.l2++;ok();}
+  else{fb.className='fb no show';fb.textContent=`❌ 标对了${c}/${q.paras.length}个。开头引入→发展展开→高潮转折→结尾总结。`;bad();}
+  document.getElementById('l2-check').style.display='none';
+  document.getElementById('l2-next').style.display='block';
+}
+function nextL2(){S.l2i++;if(S.l2i>=l2Qs.length)go('level3');else renderL2();}
+
+// L3
+let l3done=false;
+function renderL3(){
+  l3done=false;
+  const idx=S.l3i;if(idx>=l3Qs.length){go('boss');return;}
+  const q=l3Qs[idx];
+  document.getElementById('l3-card').innerHTML=`
+    <div style="font-size:0.82rem;color:#aaa;margin-bottom:8px;">题目${idx+1}/${l3Qs.length}</div>
+    <div style="background:var(--bg);border-radius:14px;padding:16px;font-size:0.93rem;line-height:2;white-space:pre-wrap;margin-bottom:14px;border-left:5px solid var(--secondary);">${q.article}</div>
+    <div style="font-size:0.95rem;font-weight:700;margin-bottom:10px;">${q.q}</div>
+    <div class="opts" id="l3-opts">
+      ${q.opts.map((o,i)=>`<button class="opt" onclick="ansL3(${i},this)">${o}</button>`).join('')}
+    </div>
+    <div class="fb" id="l3-fb"></div>
+  `;
+  document.getElementById('l3-next').style.display='none';
+}
+function ansL3(i,el){
+  if(l3done)return;l3done=true;S.total++;
+  const q=l3Qs[S.l3i];
+  document.querySelectorAll('#l3-opts .opt').forEach(b=>b.disabled=true);
+  const fb=document.getElementById('l3-fb');
+  if(i===q.ans){el.classList.add('ok');fb.className='fb ok show';fb.textContent='✅ 正确！'+q.explain;S.score+=12;S.correct++;S.stars.l3++;ok();spawnStars(300,300,6);}
+  else{el.classList.add('no');document.querySelectorAll('#l3-opts .opt')[q.ans].classList.add('ok');fb.className='fb no show';fb.textContent='❌ '+q.explain;bad();}
+  document.getElementById('l3-next').style.display='block';
+}
+function nextL3(){S.l3i++;if(S.l3i>=l3Qs.length)go('boss');else renderL3();}
+
+// BOSS
+let bossDone=false;
+function renderBoss(){
+  bossDone=false;
+  const idx=S.bi;if(idx>=bossQs.length||S.bossHP<=0){endBoss();return;}
+  const q=bossQs[idx];
+  document.getElementById('boss-art').textContent=q.art;
+  document.getElementById('boss-q').textContent=q.q;
+  document.getElementById('boss-opts').innerHTML=q.opts.map((o,i)=>`<button class="opt" onclick="ansBoss(${i},this)">${o}</button>`).join('');
+  document.getElementById('boss-fb').className='fb';
+  document.getElementById('boss-next').style.display='none';
+  document.getElementById('bhb').style.width=(S.bossHP/5*100)+'%';
+  document.getElementById('bhn').textContent='❤️ '+S.bossHP;
+}
+function ansBoss(i,el){
+  if(bossDone)return;bossDone=true;S.total++;
+  const q=bossQs[S.bi];
+  document.querySelectorAll('#boss-opts .opt').forEach(b=>b.disabled=true);
+  const fb=document.getElementById('boss-fb');
+  if(i===q.ans){
+    el.classList.add('ok');fb.className='fb ok show';fb.textContent='⚔️ 命中！'+q.explain;
+    S.bossHP--;S.score+=16;S.correct++;ok();spawnStars(300,200,9);
+    document.getElementById('bhb').style.width=(S.bossHP/5*100)+'%';
+    document.getElementById('bhn').textContent='❤️ '+S.bossHP;
+    if(S.bossHP<=0){setTimeout(()=>{win();endBoss();},1200);return;}
+  } else {
+    el.classList.add('no');document.querySelectorAll('#boss-opts .opt')[q.ans].classList.add('ok');
+    fb.className='fb no show';fb.textContent='💥 被反击！'+q.explain;bad();
+  }
+  document.getElementById('boss-next').style.display='block';
+}
+function nextBoss(){S.bi++;bossDone=false;if(S.bi>=bossQs.length)endBoss();else renderBoss();}
+function endBoss(){achCheck();go('scorecard');}
+
+function renderScore(){
+  achCheck();win();
+  document.getElementById('final-score').textContent=S.score;
+  const cs=[[100,'🏆 篇章大师！完美通关！'],[75,'🌟 非常优秀！结构清晰！'],[50,'😊 良好！继续练习！'],[0,'💪 加油！你能做到的！']];
+  const c=cs.find(([n])=>S.score>=n);
+  document.getElementById('score-cmt').textContent=c?c[1]:'';
+  document.getElementById('ach-grid').innerHTML=achs.map(a=>`<div class="ach ${S.achs.includes(a.id)?'on':''}"><div class="ai">${a.icon}</div><div class="an">${a.name}</div></div>`).join('');
+}
+
+function submitPlan(){
+  const v1=document.getElementById('p-intro').value.trim();
+  const v2=document.getElementById('p-develop').value.trim();
+  const v3=document.getElementById('p-climax').value.trim();
+  const v4=document.getElementById('p-conclusion').value.trim();
+  const r=document.getElementById('plan-result');
+  r.style.display='block';
+  const filled=[v1,v2,v3,v4].filter(v=>v.length>2).length;
+  if(filled===4){r.innerHTML='<span style="color:var(--secondary)">✅ 太棒了！你的作文结构非常完整！开始写作吧！🌟</span>';S.score+=8;ok();spawnStars(300,400,10);}
+  else if(filled>=2){r.innerHTML=`<span style="color:var(--primary)">✅ 已填写${filled}/4个部分！再完善剩余部分！</span>`;S.score+=3;ok();}
+  else{r.innerHTML='<span style="color:red">请至少填写2个结构部分！</span>';}
+}
+</script>
+</body>
+</html>

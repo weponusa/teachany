@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>段落分析 · 三年级语文闯关</title>
+<style>
+:root {
+  --bg: #fffbf0;
+  --primary: #ff6b6b;
+  --secondary: #4ecdc4;
+  --accent: #ffe66d;
+  --card: #fff;
+  --radius: 20px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);font-family:'PingFang SC','Microsoft YaHei',sans-serif;color:#333;min-height:100vh;}
+#star-container{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;}
+.star{position:absolute;font-size:1.4rem;animation:sf 1.2s ease-out forwards;}
+@keyframes sf{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-80px) scale(1.5)}}
+.screen{display:none;min-height:100vh;padding:20px;}
+.screen.active{display:flex;flex-direction:column;align-items:center;}
+/* HERO */
+#hero{background:linear-gradient(135deg,#4ecdc4,#45b7d1,#96e6a1);justify-content:center;}
+.hero-emoji{font-size:5rem;animation:bounce 1.8s infinite;}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
+.hero-title{font-size:2.2rem;font-weight:900;color:#fff;text-shadow:3px 3px 0 rgba(0,0,0,0.12);text-align:center;margin:12px 0 8px;}
+.hero-sub{font-size:1rem;color:rgba(255,255,255,0.9);text-align:center;margin-bottom:24px;}
+.btn{background:var(--card);color:var(--primary);border:none;border-radius:var(--radius);padding:13px 32px;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:var(--shadow);transition:transform 0.15s,box-shadow 0.15s;}
+.btn:hover{transform:translateY(-3px) scale(1.04);}
+.btn:active{transform:scale(0.97);}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-secondary{background:var(--secondary);color:#fff;}
+.btn-accent{background:var(--accent);color:#333;}
+/* COMMON */
+.section-title{font-size:1.7rem;font-weight:800;color:var(--primary);margin-bottom:14px;text-align:center;}
+.card{background:var(--card);border-radius:var(--radius);padding:22px 24px;box-shadow:var(--shadow);width:100%;max-width:660px;}
+.nav-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:14px;}
+/* PROGRESS */
+.prog-wrap{background:#f0f0f0;border-radius:10px;height:12px;width:100%;max-width:540px;overflow:hidden;margin:8px 0;}
+.prog-bar{height:100%;background:linear-gradient(90deg,var(--secondary),var(--accent));border-radius:10px;transition:width 0.6s;width:0%;}
+/* PARAGRAPH BOX */
+.para-box{background:linear-gradient(135deg,#f0fffe,#fffbf0);border-radius:16px;padding:18px 20px;font-size:1.05rem;line-height:2;border-left:5px solid var(--secondary);margin-bottom:16px;position:relative;}
+.para-box .sentence{display:inline;cursor:pointer;border-radius:6px;padding:2px 4px;transition:background 0.2s;}
+.para-box .sentence:hover{background:var(--accent);}
+.para-box .sentence.highlighted{background:var(--accent);}
+.para-box .sentence.topic{background:rgba(255,107,107,0.25);border-bottom:3px solid var(--primary);}
+.para-box .sentence.support{background:rgba(78,205,196,0.25);border-bottom:3px dashed var(--secondary);}
+.para-box .sentence.conclude{background:rgba(255,230,109,0.5);border-bottom:3px dotted #d4a017;}
+/* LABELS */
+.label-row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;}
+.label{border-radius:10px;padding:5px 12px;font-size:0.85rem;font-weight:700;cursor:pointer;transition:transform 0.15s;}
+.label-topic{background:rgba(255,107,107,0.2);color:#d62839;border:2px solid var(--primary);}
+.label-support{background:rgba(78,205,196,0.2);color:#2a9d8f;border:2px solid var(--secondary);}
+.label-conclude{background:rgba(255,230,109,0.5);color:#7a6000;border:2px solid var(--accent);}
+/* OPTIONS */
+.options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+.opt-btn{background:var(--bg);border:2.5px solid #e0e0e0;border-radius:var(--radius);padding:12px;font-size:0.95rem;cursor:pointer;transition:all 0.2s;text-align:left;}
+.opt-btn:hover{border-color:var(--secondary);background:#e8faf9;}
+.opt-btn.correct{border-color:var(--secondary);background:#d4f5f1;color:#2a9d8f;font-weight:700;}
+.opt-btn.wrong{border-color:var(--primary);background:#ffe5e5;color:#d62839;}
+.feedback{margin-top:12px;padding:12px 16px;border-radius:12px;font-size:0.95rem;font-weight:600;display:none;}
+.feedback.show{display:block;}
+.feedback.ok{background:#d4f5f1;color:#2a9d8f;}
+.feedback.bad{background:#ffe5e5;color:#d62839;}
+/* LEVEL HEADER */
+.lv-head{display:flex;align-items:center;gap:12px;width:100%;max-width:660px;margin-bottom:4px;}
+.lv-badge{background:var(--primary);color:#fff;border-radius:50%;width:46px;height:46px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.1rem;flex-shrink:0;}
+.lv-title{font-size:1.3rem;font-weight:800;}
+.lv-sub{font-size:0.85rem;color:#999;}
+/* HIGHLIGHT TOOL */
+.highlight-toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.ht-btn{border:none;border-radius:10px;padding:6px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;}
+.ht-topic{background:rgba(255,107,107,0.3);}
+.ht-support{background:rgba(78,205,196,0.3);}
+.ht-conclude{background:rgba(255,230,109,0.7);}
+.ht-clear{background:#f0f0f0;}
+/* BOSS */
+#boss{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);gap:16px;}
+#boss .section-title{color:#fff;}
+.boss-card{background:rgba(255,255,255,0.1);backdrop-filter:blur(8px);border-radius:var(--radius);padding:22px;width:100%;max-width:660px;color:#fff;}
+.boss-hp-wrap{height:16px;background:rgba(255,255,255,0.15);border-radius:8px;margin:10px 0;overflow:hidden;}
+.boss-hp-bar{height:100%;background:linear-gradient(90deg,#ff6b6b,#ffe66d);border-radius:8px;transition:width 0.5s;}
+.boss-para{font-size:1rem;line-height:2;background:rgba(0,0,0,0.2);border-radius:12px;padding:14px;margin-bottom:14px;}
+.boss-opts .opt-btn{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.25);color:#fff;}
+.boss-opts .opt-btn:hover{background:rgba(255,255,255,0.25);}
+.boss-opts .opt-btn.correct{background:rgba(78,205,196,0.35);border-color:var(--secondary);}
+.boss-opts .opt-btn.wrong{background:rgba(255,107,107,0.35);border-color:var(--primary);}
+/* SCORE */
+#scorecard{background:linear-gradient(135deg,#96e6a1,#4ecdc4);gap:16px;}
+.score-big{font-size:5rem;font-weight:900;color:var(--card);}
+.ach-grid{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:560px;}
+.ach{background:var(--card);border-radius:14px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:96px;opacity:0.3;transition:opacity 0.4s;}
+.ach.on{opacity:1;animation:popIn 0.4s;}
+@keyframes popIn{0%{transform:scale(0.5)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+.ach-icon{font-size:1.8rem;}
+.ach-name{font-size:0.75rem;font-weight:700;text-align:center;color:#555;}
+/* AI */
+#ai{position:fixed;bottom:18px;right:18px;z-index:1000;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+.ai-bubble{background:var(--card);border-radius:14px;padding:10px 14px;box-shadow:var(--shadow);max-width:210px;font-size:0.88rem;display:none;}
+.ai-bubble.on{display:block;animation:slideUp 0.3s;}
+@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.ai-face{width:52px;height:52px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;cursor:pointer;box-shadow:var(--shadow);border:3px solid #fff;}
+/* EXPAND */
+#expand{background:var(--bg);gap:16px;}
+.expand-para{background:#f0fffe;border-radius:14px;padding:14px 18px;font-size:1rem;line-height:2;border-left:4px solid var(--secondary);margin-bottom:12px;}
+@media(max-width:480px){.options{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div id="star-container"></div>
+<div id="ai">
+  <div class="ai-bubble" id="ai-text">你好！我是小虫虫🐛，段落分析小专家！</div>
+  <div class="ai-face" onclick="toggleAI()">🐛</div>
+</div>
+
+<!-- HERO -->
+<div class="screen active" id="hero">
+  <div class="hero-emoji">📖</div>
+  <div class="hero-title">段落分析大闯关</div>
+  <div class="hero-sub">三年级语文 · 读懂段落结构的秘密🌈</div>
+  <div style="display:flex;gap:8px;margin-bottom:24px;font-size:1.6rem;">⭐⭐⭐</div>
+  <button class="btn btn-primary" onclick="go('objective')">开始冒险 🚀</button>
+</div>
+
+<!-- OBJECTIVE -->
+<div class="screen" id="objective">
+  <div class="section-title">📋 学习目标</div>
+  <div class="card">
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div style="display:flex;gap:10px;align-items:center;"><span style="font-size:1.4rem;">🎯</span><span>认识段落的三种句子类型</span></div>
+      <div style="display:flex;gap:10px;align-items:center;"><span style="font-size:1.4rem;">🔍</span><span>找出段落的中心句（主题句）</span></div>
+      <div style="display:flex;gap:10px;align-items:center;"><span style="font-size:1.4rem;">🧩</span><span>理解支撑句如何支持主题</span></div>
+      <div style="display:flex;gap:10px;align-items:center;"><span style="font-size:1.4rem;">🌟</span><span>分析段落的结构模式</span></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:8px;">
+    <div style="font-size:0.9rem;color:#888;margin-bottom:6px;">学习进度</div>
+    <div class="prog-wrap"><div class="prog-bar" id="main-prog"></div></div>
+    <div style="font-size:0.82rem;color:#aaa;text-align:right;" id="prog-text">0 / 12</div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-accent" onclick="go('warmup')">热身练习 🔥</button>
+  </div>
+</div>
+
+<!-- WARMUP -->
+<div class="screen" id="warmup">
+  <div class="section-title">🔥 热身：认识句子类型</div>
+  <div class="card">
+    <div style="font-size:0.95rem;color:#555;margin-bottom:14px;">📚 知识点：一个段落通常包含这三种句子：</div>
+    <div class="label-row">
+      <span class="label label-topic">🔴 主题句</span>
+      <span class="label label-support">🔵 支撑句</span>
+      <span class="label label-conclude">🟡 结尾句</span>
+    </div>
+    <div style="font-size:0.9rem;color:#777;margin:10px 0;">
+      <div>🔴 <strong>主题句</strong>：告诉我们这段话主要说什么</div>
+      <div style="margin-top:6px;">🔵 <strong>支撑句</strong>：用例子、描写来支持主题句</div>
+      <div style="margin-top:6px;">🟡 <strong>结尾句</strong>：总结或强调主要意思</div>
+    </div>
+    <div style="font-size:0.95rem;font-weight:700;color:var(--primary);margin:14px 0 10px;">练一练：下面哪句是主题句？</div>
+    <div style="font-size:1rem;background:var(--bg);border-radius:12px;padding:14px;line-height:2;">
+      ①小狗汪汪叫着迎接主人。②我家的小狗非常聪明。③它还能表演握手和翻滚。
+    </div>
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn" onclick="warmupAns(1,this)">①</button>
+      <button class="btn" onclick="warmupAns(2,this)">②</button>
+      <button class="btn" onclick="warmupAns(3,this)">③</button>
+    </div>
+    <div id="warmup-fb" style="margin-top:12px;font-size:0.95rem;display:none;"></div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-secondary" onclick="go('level1')">进入第一关 →</button>
+  </div>
+</div>
+
+<!-- LEVEL 1 -->
+<div class="screen" id="level1">
+  <div class="lv-head">
+    <div class="lv-badge">1</div>
+    <div><div class="lv-title">第一关：找中心句</div><div class="lv-sub">找出每段话的主题句</div></div>
+    <div style="margin-left:auto;font-size:1.3rem;" id="l1-stars">⭐⭐⭐</div>
+  </div>
+  <div class="card" id="l1-card"></div>
+  <div class="nav-row">
+    <button class="btn btn-secondary" id="l1-next" style="display:none;" onclick="nextL1()">下一题 →</button>
+  </div>
+</div>
+
+<!-- LEVEL 2 -->
+<div class="screen" id="level2">
+  <div class="lv-head">
+    <div class="lv-badge" style="background:var(--secondary);">2</div>
+    <div><div class="lv-title">第二关：标注结构</div><div class="lv-sub">用颜色标注句子类型</div></div>
+    <div style="margin-left:auto;font-size:1.3rem;" id="l2-stars">⭐⭐⭐</div>
+  </div>
+  <div class="card" id="l2-card"></div>
+  <div class="nav-row">
+    <button class="btn btn-secondary" id="l2-check" onclick="checkL2()">检查标注 ✅</button>
+    <button class="btn btn-accent" id="l2-next" style="display:none;" onclick="nextL2()">下一题 →</button>
+  </div>
+</div>
+
+<!-- LEVEL 3 -->
+<div class="screen" id="level3">
+  <div class="lv-head">
+    <div class="lv-badge" style="background:var(--accent);color:#333;">3</div>
+    <div><div class="lv-title">第三关：段落分析</div><div class="lv-sub">综合分析段落结构</div></div>
+    <div style="margin-left:auto;font-size:1.3rem;" id="l3-stars">⭐⭐⭐</div>
+  </div>
+  <div class="card" id="l3-card"></div>
+  <div class="nav-row">
+    <button class="btn btn-secondary" id="l3-next" style="display:none;" onclick="nextL3()">下一题 →</button>
+  </div>
+</div>
+
+<!-- BOSS -->
+<div class="screen" id="boss">
+  <div class="section-title">👾 Boss战：段落大师考验</div>
+  <div class="boss-card">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+      <span style="font-size:1.8rem;">🐉</span>
+      <div style="flex:1;"><div style="font-size:0.85rem;opacity:0.8;">Boss 生命</div>
+        <div class="boss-hp-wrap"><div class="boss-hp-bar" id="boss-hp-bar" style="width:100%"></div></div>
+      </div>
+      <span style="font-size:1.1rem;font-weight:800;" id="boss-hp-num">❤️ 5</span>
+    </div>
+    <div class="boss-para" id="boss-para"></div>
+    <div style="font-size:0.95rem;font-weight:700;margin-bottom:10px;" id="boss-q"></div>
+    <div class="boss-opts options" id="boss-opts"></div>
+    <div class="feedback" id="boss-fb"></div>
+  </div>
+  <div class="nav-row">
+    <button class="btn" id="boss-next-btn" style="display:none;" onclick="nextBoss()">继续攻击 ⚔️</button>
+  </div>
+</div>
+
+<!-- SCORE -->
+<div class="screen" id="scorecard">
+  <div style="font-size:4.5rem;animation:bounce 1.5s infinite;">🎊</div>
+  <div class="score-big" id="final-score">0</div>
+  <div style="font-size:1rem;color:rgba(255,255,255,0.9);">总分</div>
+  <div style="font-size:1.1rem;font-weight:700;color:#fff;margin:12px 0;" id="score-comment"></div>
+  <div class="ach-grid" id="ach-grid"></div>
+  <div class="nav-row" style="margin-top:18px;">
+    <button class="btn btn-primary" onclick="go('expand')">拓展练习 📚</button>
+    <button class="btn" onclick="restart()">再来一次 🔄</button>
+  </div>
+</div>
+
+<!-- EXPAND -->
+<div class="screen" id="expand">
+  <div class="section-title">📚 拓展：写好段落</div>
+  <div class="card">
+    <div style="font-weight:700;color:var(--primary);margin-bottom:10px;">📖 三种段落结构模式</div>
+    <div style="display:flex;flex-direction:column;gap:10px;font-size:0.95rem;">
+      <div style="background:#fff8e1;border-radius:12px;padding:12px;">
+        <div style="font-weight:700;color:var(--primary);">🅰️ 总-分结构</div>
+        <div style="color:#555;margin-top:4px;">先写主题句，再用支撑句展开说明。<br>例：春天真美丽。/樱花盛开了。/燕子飞回来了。/小草也绿了。</div>
+      </div>
+      <div style="background:#e8faf9;border-radius:12px;padding:12px;">
+        <div style="font-weight:700;color:var(--secondary);">🅱️ 分-总结构</div>
+        <div style="color:#555;margin-top:4px;">先写支撑细节，最后写结论。<br>例：春风暖暖的。/小花开了。/鸟儿唱歌了。/这就是美丽的春天！</div>
+      </div>
+      <div style="background:#fff0f0;border-radius:12px;padding:12px;">
+        <div style="font-weight:700;color:var(--accent);color:#d4a017;">🆎️ 总-分-总结构</div>
+        <div style="color:#555;margin-top:4px;">先写主题，展开描写，最后总结。<br>例：动物园好玩极了。/有大象和长颈鹿…/真是难忘的一天！</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div style="font-weight:700;color:var(--secondary);margin-bottom:10px;">✏️ 自由练习：写一段话</div>
+    <div style="font-size:0.9rem;color:#888;margin-bottom:8px;">主题：我最喜欢的季节（用总-分结构）</div>
+    <textarea id="my-para" placeholder="写下你的段落..." style="width:100%;border-radius:12px;border:2px solid #e0e0e0;padding:12px;font-size:0.95rem;min-height:100px;font-family:inherit;resize:vertical;outline:none;"></textarea>
+    <button class="btn btn-primary" style="margin-top:10px;width:100%;" onclick="submitPara()">提交 ✉️</button>
+    <div id="para-result" style="display:none;margin-top:10px;font-size:0.95rem;"></div>
+  </div>
+  <div class="nav-row">
+    <button class="btn btn-secondary" onclick="go('hero')">回到主页 🏠</button>
+  </div>
+</div>
+
+<script>
+// AUDIO
+const AudioCtx=window.AudioContext||window.webkitAudioContext;
+let ctx;
+function getCtx(){if(!ctx)ctx=new AudioCtx();return ctx;}
+function playTone(f,d,t='sine',v=0.28){try{const c=getCtx(),o=c.createOscillator(),g=c.createGain();o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+d);o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+d);}catch(e){}}
+function playOk(){playTone(523,0.08);setTimeout(()=>playTone(659,0.08),90);setTimeout(()=>playTone(784,0.18),180);}
+function playBad(){playTone(220,0.28,'sawtooth',0.2);}
+function playWin(){[523,587,659,698,784,880,1047].forEach((f,i)=>setTimeout(()=>playTone(f,0.14),i*80));}
+function playClick(){playTone(880,0.04,'square',0.12);}
+function spawnStars(x,y,n=6){const c=document.getElementById('star-container');for(let i=0;i<n;i++){const s=document.createElement('div');s.className='star';s.textContent=['⭐','✨','🌟','💫'][Math.floor(Math.random()*4)];s.style.left=(x+(Math.random()-0.5)*80)+'px';s.style.top=(y+(Math.random()-0.5)*40)+'px';c.appendChild(s);setTimeout(()=>s.remove(),1300);}}
+
+// STATE
+let S={score:0,total:0,correct:0,l1i:0,l2i:0,l3i:0,bi:0,bossHP:5,achs:[],stars:{l1:0,l2:0,l3:0}};
+
+// DATA
+const l1Qs=[
+  {para:`我的妈妈是一名护士，她非常辛勤。每天早上五点，她就起床准备上班。工作中，她耐心地照顾每一位病人。下班回家后，她还要照顾我们的生活。她真是我们家的英雄！`,sents:["我的妈妈是一名护士，她非常辛勤。","每天早上五点，她就起床准备上班。","工作中，她耐心地照顾每一位病人。","下班回家后，她还要照顾我们的生活。","她真是我们家的英雄！"],topic:0,q:"哪句是这段话的主题句？",explain:"第一句说明了整段的主题：妈妈是辛勤的护士。"},
+  {para:`秋天的树林美极了。金黄的叶子纷纷飘落，像一只只蝴蝶在空中飞舞。地上铺满了厚厚的落叶，踩上去发出沙沙的声音。远处的山上，红叶与黄叶交织，美如画卷。`,sents:["秋天的树林美极了。","金黄的叶子纷纷飘落，像一只只蝴蝶在空中飞舞。","地上铺满了厚厚的落叶，踩上去发出沙沙的声音。","远处的山上，红叶与黄叶交织，美如画卷。"],topic:0,q:"这段话的中心句是哪一句？",explain:"第一句"秋天的树林美极了"是中心句，后面都是具体描写秋天树林的美。"},
+  {para:`读书有很多好处。读书可以增长知识，让我们了解世界。读书还能提高写作能力。通过读书，我们也可以开阔视野、丰富想象力。所以，我们要养成爱读书的好习惯。`,sents:["读书有很多好处。","读书可以增长知识，让我们了解世界。","读书还能提高写作能力。","通过读书，我们也可以开阔视野、丰富想象力。","所以，我们要养成爱读书的好习惯。"],topic:0,q:"找出段落的主题句",explain:"第一句"读书有很多好处"概括了整段的主要内容。"}
+];
+
+const l2Qs=[
+  {sents:["小河里的水清澈见底。","水草在水中轻轻摇摆。","小鱼游来游去，快活极了。","小河真是一个美丽的地方。"],types:['topic','support','support','conclude'],labels:{topic:'主题句',support:'支撑句',conclude:'结尾句'}},
+  {sents:["冬天来了，天气变冷了。","雪花从天上飘落下来。","孩子们在院子里打雪仗、堆雪人。","冬天虽冷，却充满了欢乐。"],types:['topic','support','support','conclude'],labels:{topic:'主题句',support:'支撑句',conclude:'结尾句'}},
+];
+
+const l3Qs=[
+  {para:"学校的花园美丽又整洁。春天，花坛里开满了各色的鲜花，红的、黄的、紫的，五彩缤纷。夏天，绿树成荫，走进花园就感到一阵凉爽。秋天，菊花盛开，香气四溢。花园真是同学们最喜欢的地方。",
+   q:"这段话的结构是什么？",opts:["总-分结构","分-总结构","总-分-总结构","并列结构"],ans:2,explain:"开头一句总写（总），中间分春夏秋描写（分），最后一句总结（总），是"总-分-总"结构。"},
+  {para:"地球是我们唯一的家园，我们要保护它。大气污染让空气变得浑浊，影响我们的健康。水源污染让河流和湖泊中的生物濒临消亡。垃圾乱丢让大地变得面目全非。因此，保护地球，从我做起！",
+   q:"这段话的论述方式是？",opts:["先举例再结论","先结论再举例","只有举例没有结论","先结论再举例再结论"],ans:3,explain:"第一句是结论，中间三句列举了破坏地球的例子，最后一句再次强调结论。"},
+];
+
+const bossQs=[
+  {para:"竹子是一种神奇的植物。它生长速度极快，有的一天可以长一米。竹子全身都是宝：竹叶可以喂大熊猫，竹竿可以做成家具和工艺品，竹笋还是美味的食物。",
+   q:"这段话的主题是什么？",opts:["大熊猫的食物","竹子很神奇","竹子生长快","如何使用竹子"],ans:1,explain:"开头"竹子是一种神奇的植物"是主题句，后面都在说明竹子神奇的地方。"},
+  {para:"教室里传来了朗朗的读书声。同学们坐得端端正正，捧着课本大声朗读。老师在讲台旁微笑着点头。阳光透过窗户照进来，照在每个人的脸上。",
+   q:"这段话中缺少哪种类型的句子？",opts:["主题句","支撑句","结尾句","描写句"],ans:2,explain:"这段话有主题（读书声）和细节描写（支撑句），但没有总结性的结尾句。"},
+  {para:"诚信是做人的根本。说到做到，是诚信最基本的要求。对朋友诚实，才能赢得真正的友谊。对自己诚实，才能不断进步。拥有诚信的人，走到哪里都受人尊敬。",
+   q:"这段话哪句是支撑句（支持主题的句子）？",opts:["第一句","第二句","最后一句","整段都是"],ans:1,explain:"第二、三、四句都是用具体的道理来支持"诚信是做人根本"这个主题，属于支撑句。"},
+  {para:"我国有很多传统节日。春节是最热闹的，全家团聚、贴春联、放鞭炮。中秋节要吃月饼、赏月亮。端午节要赛龙舟、吃粽子。每个节日都有独特的习俗和文化内涵。",
+   q:"这段话属于哪种段落结构？",opts:["分-总","总-分-总","并列","时间顺序"],ans:1,explain:"第一句总写（总），中间三句分别列举三个节日（分），最后一句总结（总）。"},
+  {para:"下雨了，同学们没带雨伞。李明把伞借给了旁边的同学。他自己冒雨跑回教室，全身都湿透了。老师看见后，感动地说：李明真是一个乐于助人的好孩子！",
+   q:"这段话通过什么方式表达主题？",opts:["直接说明","叙事＋点评","描写环境","引用诗句"],ans:1,explain:"通过讲李明借伞的故事（叙事），再用老师的话来点明主题（点评）。"},
+];
+
+const achList=[
+  {id:'first_hit',icon:'🎯',name:'首战告捷',cond:s=>s.correct>=1},
+  {id:'l1_star',icon:'🌟',name:'找句达人',cond:s=>s.stars.l1>=2},
+  {id:'l2_star',icon:'🎨',name:'标注能手',cond:s=>s.stars.l2>=2},
+  {id:'l3_full',icon:'💯',name:'结构专家',cond:s=>s.stars.l3>=2},
+  {id:'boss_win',icon:'⚔️',name:'打败Boss',cond:s=>s.bossHP<=0},
+  {id:'score50',icon:'⭐',name:'良好学生',cond:s=>s.score>=50},
+  {id:'score80',icon:'🏆',name:'优秀学霸',cond:s=>s.score>=80},
+  {id:'score100',icon:'👑',name:'完美通关',cond:s=>s.score>=100},
+  {id:'combo5',icon:'🔥',name:'五连正确',cond:s=>s.correct>=5},
+];
+
+// UTILS
+function go(id){
+  playClick();
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  if(id==='level1')renderL1();
+  if(id==='level2')renderL2();
+  if(id==='level3')renderL3();
+  if(id==='boss')renderBoss();
+  if(id==='scorecard')renderScore();
+  if(id==='expand')renderExpand();
+  updateProg();
+  showAI(id);
+}
+function updateProg(){const p=Math.min(100,(S.total/15)*100);document.getElementById('main-prog').style.width=p+'%';document.getElementById('prog-text').textContent=S.total+' / 15';}
+function restart(){playClick();S={score:0,total:0,correct:0,l1i:0,l2i:0,l3i:0,bi:0,bossHP:5,achs:[],stars:{l1:0,l2:0,l3:0}};go('hero');}
+
+// AI
+const aiLines={hero:"你好！我是小虫虫🐛，段落分析专家在此！",objective:"了解目标，学习更有方向！",warmup:"热身一下！认识段落的三种句子类型。",level1:"找中心句！通常在段落开头或结尾。",level2:"标注颜色！红=主题，蓝=支撑，黄=结尾。",level3:"分析整段结构，是总分总？还是分总？",boss:"Boss战！综合运用所学知识！",scorecard:"恭喜完成！看看你的成就！",expand:"学以致用！试着写一个段落。"};
+let aiOn=false;
+function showAI(screen){const t=aiLines[screen]||"继续加油！";document.getElementById('ai-text').textContent=t;document.getElementById('ai-text').classList.add('on');aiOn=true;setTimeout(()=>{document.getElementById('ai-text').classList.remove('on');aiOn=false;},4000);}
+function toggleAI(){const b=document.getElementById('ai-text');if(aiOn){b.classList.remove('on');aiOn=false;}else{b.classList.add('on');aiOn=true;}}
+
+// WARMUP
+function warmupAns(n,el){
+  document.querySelectorAll('.screen.active .btn').forEach(b=>{if(b!==el)b.disabled=true;});
+  const fb=document.getElementById('warmup-fb');fb.style.display='block';
+  if(n===2){el.style.background='#d4f5f1';fb.innerHTML='<span style="color:#2a9d8f">✅ 正确！"我家的小狗非常聪明"是主题句，①③是支撑句。</span>';playOk();spawnStars(200,300,5);}
+  else{el.style.background='#ffe5e5';fb.innerHTML='<span style="color:#d62839">❌ 不对！②"我家的小狗非常聪明"才是主题句，概括了整段内容。</span>';playBad();}
+}
+
+// LEVEL 1
+let l1Done=false;
+function renderL1(){
+  l1Done=false;
+  const idx=S.l1i;
+  if(idx>=l1Qs.length){go('level2');return;}
+  const q=l1Qs[idx];
+  const card=document.getElementById('l1-card');
+  card.innerHTML=`
+    <div style="font-size:0.82rem;color:#aaa;margin-bottom:8px;">题目${idx+1}/${l1Qs.length}</div>
+    <div style="font-size:0.95rem;font-weight:700;margin-bottom:10px;color:var(--primary);">${q.q}</div>
+    <div class="para-box" id="l1-para">
+      ${q.sents.map((s,i)=>`<span class="sentence" id="s${i}" onclick="pickTopic(${i})">${s}</span> `).join('')}
+    </div>
+    <div class="feedback" id="l1-fb"></div>
+  `;
+  document.getElementById('l1-next').style.display='none';
+}
+function pickTopic(i){
+  if(l1Done)return;
+  l1Done=true;S.total++;
+  const q=l1Qs[S.l1i];
+  const fb=document.getElementById('l1-fb');
+  const el=document.getElementById('s'+i);
+  if(i===q.topic){
+    el.classList.add('topic');
+    fb.className='feedback ok show';fb.textContent='✅ 正确！'+q.explain;
+    S.score+=10;S.correct++;S.stars.l1++;
+    playOk();spawnStars(el.getBoundingClientRect().left+40,el.getBoundingClientRect().top,5);
+  } else {
+    el.style.background='#ffe5e5';
+    document.getElementById('s'+q.topic).classList.add('topic');
+    fb.className='feedback bad show';fb.textContent='❌ 再想想！'+q.explain;
+    playBad();
+  }
+  document.getElementById('l1-next').style.display='block';
+}
+function nextL1(){S.l1i++;if(S.l1i>=l1Qs.length)go('level2');else renderL1();}
+
+// LEVEL 2
+let l2Selections={};
+function renderL2(){
+  l2Selections={};
+  const idx=S.l2i;
+  if(idx>=l2Qs.length){go('level3');return;}
+  const q=l2Qs[idx];
+  const card=document.getElementById('l2-card');
+  card.innerHTML=`
+    <div style="font-size:0.82rem;color:#aaa;margin-bottom:8px;">题目${idx+1}/${l2Qs.length}</div>
+    <div style="font-size:0.9rem;color:#555;margin-bottom:10px;">点击句子右侧按钮来标注它的类型：</div>
+    <div class="label-row"><span class="label label-topic">🔴 主题句</span><span class="label label-support">🔵 支撑句</span><span class="label label-conclude">🟡 结尾句</span></div>
+    <div id="l2-sents" style="display:flex;flex-direction:column;gap:10px;margin-top:14px;">
+      ${q.sents.map((s,i)=>`
+        <div style="display:flex;align-items:center;gap:8px;background:var(--bg);border-radius:12px;padding:10px 12px;">
+          <div style="flex:1;font-size:0.95rem;line-height:1.7;">${s}</div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <button class="ht-btn ht-topic" onclick="markSent(${i},'topic',this)">主题</button>
+            <button class="ht-btn ht-support" onclick="markSent(${i},'support',this)">支撑</button>
+            <button class="ht-btn ht-conclude" onclick="markSent(${i},'conclude',this)">结尾</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="feedback" id="l2-fb"></div>
+  `;
+  document.getElementById('l2-check').style.display='block';
+  document.getElementById('l2-next').style.display='none';
+}
+function markSent(i,type,el){
+  playClick();
+  l2Selections[i]=type;
+  const row=el.closest('[style*="display:flex"]');
+  row.style.background={topic:'rgba(255,107,107,0.15)',support:'rgba(78,205,196,0.15)',conclude:'rgba(255,230,109,0.4)'}[type]||'var(--bg)';
+}
+function checkL2(){
+  const q=l2Qs[S.l2i];
+  S.total++;
+  let correct=0;
+  q.types.forEach((t,i)=>{if(l2Selections[i]===t)correct++;});
+  const fb=document.getElementById('l2-fb');
+  if(correct===q.types.length){
+    fb.className='feedback ok show';fb.textContent='✅ 全部标注正确！';
+    S.score+=15;S.correct++;S.stars.l2++;
+    playOk();spawnStars(300,300,8);
+  } else if(correct>=2) {
+    fb.className='feedback ok show';fb.textContent=`✅ 标注了${correct}/${q.types.length}个正确！`;
+    S.score+=8;S.stars.l2++;playOk();
+  } else {
+    fb.className='feedback bad show';fb.textContent='❌ 还差一点！正确顺序：主题句→支撑句→支撑句→结尾句';
+    playBad();
+  }
+  document.getElementById('l2-check').style.display='none';
+  document.getElementById('l2-next').style.display='block';
+}
+function nextL2(){S.l2i++;if(S.l2i>=l2Qs.length)go('level3');else renderL2();}
+
+// LEVEL 3
+let l3Done=false;
+function renderL3(){
+  l3Done=false;
+  const idx=S.l3i;
+  if(idx>=l3Qs.length){go('boss');return;}
+  const q=l3Qs[idx];
+  const card=document.getElementById('l3-card');
+  card.innerHTML=`
+    <div style="font-size:0.82rem;color:#aaa;margin-bottom:8px;">题目${idx+1}/${l3Qs.length}</div>
+    <div class="para-box">${q.para}</div>
+    <div style="font-size:0.95rem;font-weight:700;margin-bottom:10px;">${q.q}</div>
+    <div class="options" id="l3-opts">
+      ${q.opts.map((o,i)=>`<button class="opt-btn" onclick="ansL3(${i},this)">${o}</button>`).join('')}
+    </div>
+    <div class="feedback" id="l3-fb"></div>
+  `;
+  document.getElementById('l3-next').style.display='none';
+}
+function ansL3(i,el){
+  if(l3Done)return;l3Done=true;S.total++;
+  const q=l3Qs[S.l3i];
+  document.querySelectorAll('#l3-opts .opt-btn').forEach(b=>b.disabled=true);
+  const fb=document.getElementById('l3-fb');
+  if(i===q.ans){
+    el.classList.add('correct');fb.className='feedback ok show';fb.textContent='✅ 正确！'+q.explain;
+    S.score+=12;S.correct++;S.stars.l3++;playOk();spawnStars(300,300,6);
+  } else {
+    el.classList.add('wrong');
+    document.querySelectorAll('#l3-opts .opt-btn')[q.ans].classList.add('correct');
+    fb.className='feedback bad show';fb.textContent='❌ 再想想！'+q.explain;playBad();
+  }
+  document.getElementById('l3-next').style.display='block';
+}
+function nextL3(){S.l3i++;if(S.l3i>=l3Qs.length)go('boss');else renderL3();}
+
+// BOSS
+let bossDone=false;
+function renderBoss(){
+  bossDone=false;
+  const idx=S.bi;
+  if(idx>=bossQs.length||S.bossHP<=0){endBoss();return;}
+  const q=bossQs[idx];
+  document.getElementById('boss-para').textContent=q.para;
+  document.getElementById('boss-q').textContent=q.q;
+  document.getElementById('boss-opts').innerHTML=q.opts.map((o,i)=>`<button class="opt-btn" onclick="ansBoss(${i},this)">${o}</button>`).join('');
+  document.getElementById('boss-fb').className='feedback';
+  document.getElementById('boss-next-btn').style.display='none';
+  updateBossHP();
+}
+function ansBoss(i,el){
+  if(bossDone)return;bossDone=true;S.total++;
+  const q=bossQs[S.bi];
+  document.querySelectorAll('#boss-opts .opt-btn').forEach(b=>b.disabled=true);
+  const fb=document.getElementById('boss-fb');
+  if(i===q.ans){
+    el.classList.add('correct');fb.className='feedback ok show';fb.textContent='⚔️ 命中！'+q.explain;
+    S.bossHP--;S.score+=15;S.correct++;playOk();spawnStars(300,200,8);
+    updateBossHP();
+    if(S.bossHP<=0){setTimeout(()=>{playWin();endBoss();},1200);return;}
+  } else {
+    el.classList.add('wrong');
+    document.querySelectorAll('#boss-opts .opt-btn')[q.ans].classList.add('correct');
+    fb.className='feedback bad show';fb.textContent='💥 被Boss反击！'+q.explain;playBad();
+  }
+  document.getElementById('boss-next-btn').style.display='block';
+}
+function updateBossHP(){
+  const p=(S.bossHP/5)*100;
+  document.getElementById('boss-hp-bar').style.width=p+'%';
+  document.getElementById('boss-hp-num').textContent='❤️ '+S.bossHP;
+}
+function nextBoss(){S.bi++;bossDone=false;if(S.bi>=bossQs.length)endBoss();else renderBoss();}
+function endBoss(){achCheck();go('scorecard');}
+
+// ACHIEVEMENTS
+function achCheck(){achList.forEach(a=>{if(!S.achs.includes(a.id)&&a.cond(S))S.achs.push(a.id);});}
+
+// SCORE
+function renderScore(){
+  achCheck();playWin();
+  document.getElementById('final-score').textContent=S.score;
+  const comments=[[90,'🏆 完美！段落分析大师！'],[70,'🌟 优秀！你很有语文天赋！'],[50,'😊 不错！继续练习！'],[0,'💪 加油！下次会更好！']];
+  const c=comments.find(([n])=>S.score>=n);
+  document.getElementById('score-comment').textContent=c?c[1]:'';
+  document.getElementById('ach-grid').innerHTML=achList.map(a=>`<div class="ach ${S.achs.includes(a.id)?'on':''}"><div class="ach-icon">${a.icon}</div><div class="ach-name">${a.name}</div></div>`).join('');
+}
+
+// EXPAND
+function renderExpand(){}
+// ===================== BONUS QUIZ =====================
+const bonusQs = [
+  {q:'"蓝天是白云的家，大地是花草的家"使用了什么结构？',opts:['总分结构','排比结构','对比结构','时间结构'],ans:1,exp:'两个
+  const v=document.getElementById('my-para').value.trim();
+  const r=document.getElementById('para-result');
+  r.style.display='block';
+  if(v.length<10){r.innerHTML='<span style="color:red">请写一段完整的话哦！</span>';return;}
+  r.innerHTML='<span style="color:var(--secondary)">✅ 写得很棒！你掌握了段落写作的技巧！⭐</span>';
+  S.score+=5;playOk();spawnStars(300,400,8);
+}
+</script>
+</body>
+</html>

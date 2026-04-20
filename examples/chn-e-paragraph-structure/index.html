@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>段落结构 🌈 三年级语文闯关</title>
+<style>
+:root {
+  --bg: #fffbf0;
+  --primary: #ff6b6b;
+  --secondary: #4ecdc4;
+  --accent: #ffe66d;
+  --card: #fff;
+  --text: #333;
+  --radius: 20px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); font-family: 'Microsoft YaHei', sans-serif; color: var(--text); overflow-x: hidden; }
+.star-field { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+.star { position: absolute; border-radius: 50%; background: var(--accent); animation: twinkle 2s infinite alternate; }
+@keyframes twinkle { 0% { opacity: 0.3; transform: scale(1); } 100% { opacity: 1; transform: scale(1.5); } }
+
+.hero { position: relative; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px 20px; z-index: 1; background: linear-gradient(135deg, #fff9f0 0%, #e8fff9 50%, #fff0ff 100%); }
+.hero-badge { background: var(--secondary); color: #fff; padding: 8px 24px; border-radius: 50px; font-size: 14px; font-weight: bold; margin-bottom: 20px; display: inline-block; animation: bounce 2s infinite; }
+@keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+.hero h1 { font-size: clamp(2.5rem, 8vw, 5rem); font-weight: 900; background: linear-gradient(135deg, var(--secondary), var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 16px; }
+.hero-sub { font-size: 1.3rem; color: #666; margin-bottom: 40px; }
+.hero-mascot { font-size: 80px; margin: 20px 0; animation: wiggle 3s infinite; display: inline-block; }
+@keyframes wiggle { 0%,100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+.start-btn { background: linear-gradient(135deg, var(--secondary), #6ee7e0); color: #fff; border: none; padding: 18px 60px; border-radius: 50px; font-size: 1.4rem; font-weight: bold; cursor: pointer; box-shadow: 0 8px 24px rgba(78,205,196,0.4); transition: all 0.3s; }
+.start-btn:hover { transform: translateY(-4px) scale(1.05); box-shadow: 0 12px 32px rgba(78,205,196,0.5); }
+.hero-stats { display: flex; gap: 20px; margin-top: 30px; flex-wrap: wrap; justify-content: center; }
+.stat-pill { background: var(--card); border-radius: 50px; padding: 10px 20px; box-shadow: var(--shadow); font-size: 0.95rem; display: flex; align-items: center; gap: 6px; }
+
+.progress-wrap { position: fixed; top: 0; left: 0; width: 100%; height: 6px; background: #eee; z-index: 1000; }
+.progress-bar { height: 100%; background: linear-gradient(90deg, var(--secondary), var(--primary)); transition: width 0.5s ease; }
+.top-hud { position: fixed; top: 10px; right: 16px; z-index: 1000; display: flex; gap: 10px; align-items: center; }
+.hud-pill { background: var(--card); border-radius: 50px; padding: 6px 14px; box-shadow: var(--shadow); font-size: 0.9rem; font-weight: bold; display: flex; align-items: center; gap: 4px; }
+
+.section { display: none; min-height: 100vh; padding: 80px 20px 40px; position: relative; z-index: 1; }
+.section.active { display: block; }
+.section-inner { max-width: 860px; margin: 0 auto; }
+.section-title { text-align: center; font-size: 2rem; font-weight: 900; color: var(--secondary); margin-bottom: 32px; }
+.section-title span { background: var(--accent); padding: 4px 12px; border-radius: 10px; color: #333; }
+
+.card { background: var(--card); border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow); margin-bottom: 20px; border: 2px solid transparent; transition: all 0.3s; }
+
+.obj-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+.obj-card { background: linear-gradient(135deg, #fff, #f0fff9); border-radius: var(--radius); padding: 24px; text-align: center; box-shadow: var(--shadow); border: 2px solid var(--secondary); }
+.obj-icon { font-size: 48px; margin-bottom: 12px; display: block; }
+.obj-card h3 { color: var(--secondary); font-size: 1.1rem; margin-bottom: 8px; }
+.obj-card p { color: #666; font-size: 0.9rem; line-height: 1.5; }
+
+/* PARAGRAPH DISPLAY */
+.para-demo { background: linear-gradient(135deg, #f0fff9, #fff); border-radius: var(--radius); padding: 28px; border: 3px solid var(--secondary); margin-bottom: 20px; position: relative; }
+.para-label { position: absolute; top: -14px; left: 20px; background: var(--secondary); color: #fff; padding: 4px 16px; border-radius: 50px; font-size: 0.85rem; font-weight: bold; }
+.para-text { line-height: 2.2; font-size: 1.1rem; color: var(--text); }
+.para-text .topic { color: var(--primary); font-weight: bold; text-decoration: underline; text-decoration-color: var(--accent); }
+.para-text .support { color: var(--secondary); }
+.para-text .conclude { color: #a29bfe; font-weight: bold; }
+.para-legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 16px; }
+.legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+.legend-dot { width: 14px; height: 14px; border-radius: 50%; }
+
+/* STRUCTURE TABS */
+.struct-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.struct-tab { padding: 10px 20px; border-radius: 50px; border: 2px solid var(--secondary); background: #fff; cursor: pointer; font-size: 0.95rem; font-weight: bold; color: var(--secondary); transition: all 0.3s; }
+.struct-tab.active { background: var(--secondary); color: #fff; }
+.struct-content { display: none; }
+.struct-content.show { display: block; }
+
+/* SORT ITEMS */
+.sort-pool { display: flex; flex-direction: column; gap: 10px; padding: 16px; background: #f8f9fa; border-radius: var(--radius); margin-bottom: 16px; }
+.sort-item { background: var(--card); border-radius: 14px; padding: 14px 18px; cursor: grab; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 2px solid #e0e0e0; transition: all 0.3s; font-size: 1rem; }
+.sort-item:hover { border-color: var(--secondary); transform: translateX(4px); }
+.sort-item.dragging { opacity: 0.4; transform: scale(1.02) rotate(2deg); }
+.sort-item .handle { color: #ccc; font-size: 1.2rem; }
+.sort-item.correct-pos { border-color: #28a745; background: linear-gradient(135deg, #d4edda, #fff); }
+.sort-item.wrong-pos { border-color: #dc3545; background: linear-gradient(135deg, #f8d7da, #fff); }
+.sort-drop { min-height: 60px; border: 2px dashed var(--primary); border-radius: var(--radius); padding: 12px; margin-bottom: 12px; display: flex; align-items: center; }
+.sort-slot { display: flex; flex-direction: column; gap: 8px; }
+.slot-label { font-size: 0.85rem; font-weight: bold; color: var(--primary); background: #fff0f0; padding: 4px 12px; border-radius: 50px; display: inline-block; margin-bottom: 4px; }
+
+/* HIGHLIGHT INTERACTIVE */
+.highlight-text { font-size: 1.1rem; line-height: 2.2; cursor: pointer; user-select: none; }
+.highlight-text span { padding: 2px 4px; border-radius: 6px; transition: all 0.2s; }
+.highlight-text span:hover { background: rgba(78,205,196,0.2); }
+.highlight-text span.topic-hl { background: rgba(255,107,107,0.25); border-bottom: 2px solid var(--primary); }
+.highlight-text span.support-hl { background: rgba(78,205,196,0.25); border-bottom: 2px solid var(--secondary); }
+.highlight-text span.conclude-hl { background: rgba(162,155,254,0.25); border-bottom: 2px solid #a29bfe; }
+
+.hl-toolbar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.hl-btn { padding: 8px 16px; border-radius: 50px; border: 2px solid; cursor: pointer; font-size: 0.9rem; font-weight: bold; transition: all 0.3s; }
+.hl-btn.topic-btn { border-color: var(--primary); color: var(--primary); }
+.hl-btn.topic-btn.active { background: var(--primary); color: #fff; }
+.hl-btn.support-btn { border-color: var(--secondary); color: var(--secondary); }
+.hl-btn.support-btn.active { background: var(--secondary); color: #fff; }
+.hl-btn.conclude-btn { border-color: #a29bfe; color: #a29bfe; }
+.hl-btn.conclude-btn.active { background: #a29bfe; color: #fff; }
+.hl-btn.clear-btn { border-color: #ddd; color: #888; }
+
+/* QUIZ */
+.quiz-question { font-size: 1.3rem; font-weight: bold; color: var(--text); margin-bottom: 24px; line-height: 1.6; }
+.options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media(max-width: 500px) { .options-grid { grid-template-columns: 1fr; } }
+.option-btn { background: var(--card); border: 2px solid #e0e0e0; border-radius: var(--radius); padding: 16px 20px; font-size: 1rem; cursor: pointer; transition: all 0.3s; text-align: left; font-family: inherit; }
+.option-btn:hover { border-color: var(--secondary); background: #f0fffe; }
+.option-btn.correct { background: linear-gradient(135deg, #d4edda, #c3e6cb); border-color: #28a745; }
+.option-btn.wrong { background: linear-gradient(135deg, #f8d7da, #f5c6cb); border-color: #dc3545; }
+.feedback { margin-top: 16px; padding: 16px; border-radius: var(--radius); font-size: 1rem; line-height: 1.6; display: none; }
+.feedback.show { display: block; }
+.feedback.correct { background: linear-gradient(135deg, #d4edda, #f0fff4); border: 2px solid #28a745; }
+.feedback.wrong { background: linear-gradient(135deg, #fff3cd, #fff9e6); border: 2px solid var(--accent); }
+.next-btn { margin-top: 16px; background: linear-gradient(135deg, var(--secondary), #6ee7e0); color: #fff; border: none; border-radius: 50px; padding: 12px 36px; font-size: 1rem; cursor: pointer; font-weight: bold; transition: all 0.3s; }
+.next-btn:hover { transform: translateY(-2px); }
+.level-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+.level-badge { background: linear-gradient(135deg, var(--secondary), var(--primary)); color: #fff; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; box-shadow: var(--shadow); flex-shrink: 0; }
+.level-info h2 { font-size: 1.6rem; }
+.level-info p { color: #888; font-size: 0.9rem; }
+.level-progress { height: 8px; background: #f0f0f0; border-radius: 50px; margin-bottom: 24px; overflow: hidden; }
+.level-progress-fill { height: 100%; background: linear-gradient(90deg, var(--secondary), var(--accent)); border-radius: 50px; transition: width 0.5s; }
+
+/* BOSS */
+.boss-section { background: linear-gradient(135deg, #f0fff9, #e0ffff); border-radius: var(--radius); padding: 30px; margin-bottom: 20px; border: 3px solid var(--secondary); }
+.boss-monster { font-size: 80px; text-align: center; margin: 20px 0; animation: float 3s infinite ease-in-out; }
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+.boss-hp { height: 24px; background: #f0f0f0; border-radius: 50px; overflow: hidden; margin: 16px 0; }
+.boss-hp-fill { height: 100%; background: linear-gradient(90deg, #4ecdc4, #ffe66d); border-radius: 50px; transition: width 0.5s; }
+
+.achievement-toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: linear-gradient(135deg, var(--accent), #ffd700); color: #333; padding: 16px 28px; border-radius: 50px; box-shadow: 0 8px 32px rgba(255,230,109,0.5); z-index: 9999; font-weight: bold; font-size: 1.1rem; transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); display: flex; align-items: center; gap: 10px; }
+.achievement-toast.show { transform: translateX(-50%) translateY(0); }
+
+.score-hero { text-align: center; padding: 40px 20px; }
+.score-circle { width: 160px; height: 160px; border-radius: 50%; background: linear-gradient(135deg, var(--secondary), var(--primary)); display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto 30px; box-shadow: 0 12px 40px rgba(78,205,196,0.4); }
+.score-num { font-size: 3rem; font-weight: 900; color: #fff; line-height: 1; }
+.score-label { font-size: 0.9rem; color: rgba(255,255,255,0.9); }
+.achieve-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; margin-top: 24px; }
+.achieve-card { background: var(--card); border-radius: var(--radius); padding: 20px 16px; text-align: center; box-shadow: var(--shadow); border: 2px solid #eee; }
+.achieve-card.unlocked { border-color: var(--accent); background: linear-gradient(135deg, #fff9e6, #fff); }
+.achieve-card .icon { font-size: 36px; margin-bottom: 8px; }
+.achieve-card p { font-size: 0.8rem; color: #666; }
+.achieve-card.locked { filter: grayscale(1); opacity: 0.5; }
+
+.mascot-bubble { position: fixed; bottom: 20px; right: 20px; z-index: 500; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+.mascot-body { font-size: 48px; cursor: pointer; transition: transform 0.3s; animation: breathe 4s infinite; }
+@keyframes breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+.mascot-speech { background: var(--card); border-radius: 20px 20px 4px 20px; padding: 12px 16px; max-width: 220px; font-size: 0.9rem; box-shadow: var(--shadow); line-height: 1.5; border: 2px solid var(--secondary); display: none; }
+.mascot-speech.show { display: block; animation: fadeIn 0.3s; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.extension-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+.ext-card { background: linear-gradient(135deg, #f0fff9, #e8f9ff); border-radius: var(--radius); padding: 24px; border: 2px solid var(--secondary); }
+.ext-card h3 { color: var(--secondary); margin-bottom: 12px; font-size: 1.1rem; }
+.ext-card ul { padding-left: 20px; color: #555; }
+.ext-card li { margin-bottom: 8px; font-size: 0.95rem; line-height: 1.5; }
+.retry-btn { background: linear-gradient(135deg, var(--primary), #ff8e8e); color: #fff; border: none; border-radius: 50px; padding: 16px 48px; font-size: 1.1rem; cursor: pointer; font-weight: bold; margin: 10px; transition: all 0.3s; }
+.retry-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(255,107,107,0.4); }
+.nav-dots { position: fixed; left: 16px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 500; }
+.nav-dot { width: 10px; height: 10px; border-radius: 50%; background: #ddd; cursor: pointer; transition: all 0.3s; }
+.nav-dot.active { background: var(--secondary); transform: scale(1.5); }
+.nav-dot.done { background: var(--primary); }
+.confetti-piece { position: fixed; top: -20px; border-radius: 4px; animation: fall linear forwards; pointer-events: none; z-index: 9998; }
+@keyframes fall { to { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
+</style>
+</head>
+<body>
+<div class="star-field" id="starField"></div>
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+<div class="top-hud">
+  <div class="hud-pill">⭐ <span id="hudStars">0</span></div>
+  <div class="hud-pill">🏆 <span id="hudScore">0</span></div>
+  <div class="hud-pill">💪 <span id="hudStreak">0</span>连击</div>
+</div>
+<div class="nav-dots" id="navDots"></div>
+<div class="achievement-toast" id="achieveToast">
+  <span id="achieveIcon">🏆</span><span id="achieveText">成就解锁！</span>
+</div>
+<div class="mascot-bubble">
+  <div class="mascot-speech" id="mascotSpeech">你好！我是段段🦋，一起来学段落结构吧！</div>
+  <div class="mascot-body" onclick="toggleMascot()">🦋</div>
+</div>
+
+<!-- HERO -->
+<section class="section active" id="sec-hero">
+  <div class="hero">
+    <div class="hero-badge">🌈 三年级语文 · 段落结构闯关</div>
+    <div class="hero-mascot">🦋</div>
+    <h1>段落探险家</h1>
+    <p class="hero-sub">认识段落结构，让写作更有条理！</p>
+    <div class="hero-stats">
+      <div class="stat-pill">📝 8个成就等你解锁</div>
+      <div class="stat-pill">🎮 3大关卡+Boss战</div>
+      <div class="stat-pill">🔍 互动标注+排序</div>
+    </div>
+    <br><br>
+    <button class="start-btn" onclick="goSection(1)">🚀 开始探险！</button>
+  </div>
+</section>
+
+<!-- OBJECTIVES -->
+<section class="section" id="sec-obj">
+  <div class="section-inner">
+    <h2 class="section-title">🎯 学习<span>目标</span></h2>
+    <div class="obj-grid">
+      <div class="obj-card">
+        <span class="obj-icon">📌</span>
+        <h3>中心句</h3>
+        <p>能找出段落中的中心句（总起句）</p>
+      </div>
+      <div class="obj-card">
+        <span class="obj-icon">🔧</span>
+        <h3>支撑句</h3>
+        <p>理解支撑句对中心句的具体说明作用</p>
+      </div>
+      <div class="obj-card">
+        <span class="obj-icon">🔚</span>
+        <h3>总结句</h3>
+        <p>认识段落的总结句和它的收尾作用</p>
+      </div>
+      <div class="obj-card">
+        <span class="obj-icon">📐</span>
+        <h3>段落结构</h3>
+        <p>掌握总—分、总—分—总等常见结构</p>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:32px;">
+      <button class="start-btn" onclick="goSection(2)">开始热身 →</button>
+    </div>
+  </div>
+</section>
+
+<!-- WARMUP -->
+<section class="section" id="sec-warmup">
+  <div class="section-inner">
+    <h2 class="section-title">🔥 热身<span>感知</span></h2>
+    <p style="text-align:center;color:#666;margin-bottom:24px;">观察这个段落，认识三种句子的作用</p>
+    <div class="para-demo">
+      <div class="para-label">示范段落</div>
+      <div class="para-text">
+        <span class="topic">🌟春天是美丽的季节。</span>
+        <span class="support">春天里，粉红的桃花、洁白的梨花竞相开放，散发出阵阵芬芳。</span>
+        <span class="support">小河里的冰雪消融了，清澈的流水欢快地流淌着。</span>
+        <span class="support">田野里，嫩绿的小草从地下钻出来，展示着勃勃生机。</span>
+        <span class="conclude">🔚是啊，春天真是充满生机与活力！</span>
+      </div>
+      <div class="para-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--primary)"></div><span><strong style="color:var(--primary)">中心句</strong> — 点明段落中心</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--secondary)"></div><span><strong style="color:var(--secondary)">支撑句</strong> — 具体说明</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#a29bfe"></div><span><strong style="color:#a29bfe">总结句</strong> — 呼应收尾</span></div>
+      </div>
+    </div>
+    
+    <div class="struct-tabs">
+      <div class="struct-tab active" onclick="showTab('total-split')">总—分结构</div>
+      <div class="struct-tab" onclick="showTab('total-split-total')">总—分—总</div>
+      <div class="struct-tab" onclick="showTab('split-total')">分—总结构</div>
+    </div>
+    <div class="struct-content show" id="tab-total-split">
+      <div class="card">
+        <h3 style="color:var(--secondary);margin-bottom:12px;">📋 总—分结构</h3>
+        <p style="color:#555;line-height:1.8;">先写一个总括性的中心句，然后分几个方面具体说明。<br>
+        特点：段落开头是中心句，后面是对中心句的详细说明。</p>
+        <div style="margin-top:16px;padding:16px;background:#f0fff9;border-radius:14px;font-size:0.95rem;line-height:2;">
+          <strong style="color:var(--primary);">例：</strong>
+          <span style="color:var(--primary);font-weight:bold;">我的家乡有许多美景。</span>
+          <span style="color:var(--secondary);">春天，桃花盛开，美不胜收。</span>
+          <span style="color:var(--secondary);">夏天，荷花飘香，令人陶醉。</span>
+          <span style="color:var(--secondary);">秋天，红叶似火，如画一般。</span>
+        </div>
+      </div>
+    </div>
+    <div class="struct-content" id="tab-total-split-total">
+      <div class="card">
+        <h3 style="color:var(--secondary);margin-bottom:12px;">📋 总—分—总结构</h3>
+        <p style="color:#555;line-height:1.8;">先有总起句，中间具体说明，最后有总结句，首尾呼应。<br>
+        特点：段落结构完整，有开头总述，中间分述，结尾总结。</p>
+        <div style="margin-top:16px;padding:16px;background:#f0fff9;border-radius:14px;font-size:0.95rem;line-height:2;">
+          <strong style="color:var(--primary);">例：</strong>
+          <span style="color:var(--primary);font-weight:bold;">大熊猫非常可爱。</span>
+          <span style="color:var(--secondary);">它圆圆的脑袋上顶着两个黑耳朵，像戴了帽子。</span>
+          <span style="color:var(--secondary);">两个大黑眼圈，看起来总是睡眼惺忪的样子。</span>
+          <span style="color:#a29bfe;font-weight:bold;">难怪人们都喜欢这个胖乎乎的家伙！</span>
+        </div>
+      </div>
+    </div>
+    <div class="struct-content" id="tab-split-total">
+      <div class="card">
+        <h3 style="color:var(--secondary);margin-bottom:12px;">📋 分—总结构</h3>
+        <p style="color:#555;line-height:1.8;">先分别叙述几件事或几个方面，最后写总结句。<br>
+        特点：在段落末尾出现总结或感悟。</p>
+        <div style="margin-top:16px;padding:16px;background:#f0fff9;border-radius:14px;font-size:0.95rem;line-height:2;">
+          <strong style="color:var(--primary);">例：</strong>
+          <span style="color:var(--secondary);">妈妈每天早起为我做早饭。</span>
+          <span style="color:var(--secondary);">下雨天，她总是第一个来接我。</span>
+          <span style="color:var(--secondary);">我生病时，她整夜守护在床边。</span>
+          <span style="color:#a29bfe;font-weight:bold;">妈妈对我的爱深沉而无私。</span>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:32px;">
+      <button class="start-btn" onclick="goSection(3)">进入第一关 🎮</button>
+    </div>
+  </div>
+</section>
+
+<!-- LEVEL 1: HIGHLIGHT -->
+<section class="section" id="sec-lv1">
+  <div class="section-inner">
+    <div class="level-header">
+      <div class="level-badge">1</div>
+      <div class="level-info">
+        <h2>第一关：句子标注</h2>
+        <p>点击句子，给它贴上正确的标签！</p>
+      </div>
+    </div>
+    <div class="level-progress"><div class="level-progress-fill" id="lv1Progress" style="width:0%"></div></div>
+    <div id="lv1Container"></div>
+    <div id="lv1NextWrap" style="text-align:center;margin-top:16px;display:none;">
+      <button class="start-btn" onclick="goSection(4)" style="font-size:1.1rem;padding:14px 48px;">进入第二关 🎮</button>
+    </div>
+  </div>
+</section>
+
+<!-- LEVEL 2: SORT -->
+<section class="section" id="sec-lv2">
+  <div class="section-inner">
+    <div class="level-header">
+      <div class="level-badge" style="background:linear-gradient(135deg,var(--secondary),#6ee7e0);">2</div>
+      <div class="level-info">
+        <h2>第二关：句序排列</h2>
+        <p>拖动句子，排出正确的段落顺序！</p>
+      </div>
+    </div>
+    <div class="level-progress"><div class="level-progress-fill" id="lv2Progress" style="width:0%;background:linear-gradient(90deg,var(--secondary),var(--accent));"></div></div>
+    <div id="lv2Container"></div>
+    <div id="lv2NextWrap" style="text-align:center;margin-top:16px;display:none;">
+      <button class="start-btn" onclick="goSection(5)" style="font-size:1.1rem;padding:14px 48px;">进入第三关 🎮</button>
+    </div>
+  </div>
+</section>
+
+<!-- LEVEL 3: QUIZ -->
+<section class="section" id="sec-lv3">
+  <div class="section-inner">
+    <div class="level-header">
+      <div class="level-badge" style="background:linear-gradient(135deg,var(--accent),#ffd700);color:#333;">3</div>
+      <div class="level-info">
+        <h2>第三关：段落诊断</h2>
+        <p>读段落，判断它的结构类型！</p>
+      </div>
+    </div>
+    <div class="level-progress"><div class="level-progress-fill" id="lv3Progress" style="width:0%;background:linear-gradient(90deg,var(--accent),var(--primary));"></div></div>
+    <div class="card" id="lv3Container"></div>
+    <div id="lv3NextWrap" style="text-align:center;margin-top:16px;display:none;">
+      <button class="start-btn" onclick="goSection(6)" style="font-size:1.1rem;padding:14px 48px;">挑战BOSS！👹</button>
+    </div>
+  </div>
+</section>
+
+<!-- BOSS -->
+<section class="section" id="sec-boss">
+  <div class="section-inner">
+    <div class="boss-section">
+      <h2 style="text-align:center;color:var(--secondary);font-size:1.8rem;">🐲 Boss战：段落大师挑战</h2>
+      <div class="boss-monster" id="bossEmoji">🐲</div>
+      <div style="text-align:center;font-size:0.9rem;color:#888;margin-bottom:8px;">Boss血量</div>
+      <div class="boss-hp"><div class="boss-hp-fill" id="bossHP" style="width:100%"></div></div>
+    </div>
+    <div class="card" id="bossContainer"></div>
+    <div id="bossNextWrap" style="text-align:center;margin-top:16px;display:none;">
+      <button class="start-btn" onclick="goSection(7)" style="font-size:1.1rem;padding:14px 48px;">查看成绩单 📊</button>
+    </div>
+  </div>
+</section>
+
+<!-- SCORE -->
+<section class="section" id="sec-score">
+  <div class="section-inner">
+    <div class="score-hero">
+      <h2 class="section-title">📊 成绩单</h2>
+      <div class="score-circle">
+        <div class="score-num" id="finalScore">0</div>
+        <div class="score-label">总分</div>
+      </div>
+      <div style="font-size:2.5rem;margin:10px 0;" id="scoreStars">⭐⭐⭐</div>
+      <p style="color:#666;font-size:1.1rem;" id="scoreMsg">你是段落结构小达人！</p>
+    </div>
+    <h3 style="text-align:center;margin-bottom:16px;color:var(--secondary);">🏆 已获成就</h3>
+    <div class="achieve-grid" id="achieveGrid"></div>
+    <div style="text-align:center;margin-top:32px;">
+      <button class="retry-btn" onclick="location.reload()">🔄 再来一次</button>
+      <button class="retry-btn" onclick="goSection(8)" style="background:linear-gradient(135deg,var(--secondary),#6ee7e0);">🌟 查看拓展</button>
+    </div>
+  </div>
+</section>
+
+<!-- EXTENSION -->
+<section class="section" id="sec-ext">
+  <div class="section-inner">
+    <h2 class="section-title">🌟 拓展<span>训练</span></h2>
+    <div class="extension-grid">
+      <div class="ext-card">
+        <h3>✍️ 写作口诀</h3>
+        <ul>
+          <li>总起句在最前头，概括意思很清楚</li>
+          <li>支撑句来帮忙，具体细节讲清楚</li>
+          <li>总结句在最后面，首尾呼应更完整</li>
+          <li>总分总结构用，文章层次更分明</li>
+        </ul>
+      </div>
+      <div class="ext-card">
+        <h3>🔍 找中心句方法</h3>
+        <ul>
+          <li>看段落第一句，常是总起中心句</li>
+          <li>看段落最后句，常是总结中心句</li>
+          <li>找段落中反复出现的词语</li>
+          <li>问自己：这段主要写什么？</li>
+        </ul>
+      </div>
+      <div class="ext-card">
+        <h3>📝 练习题目</h3>
+        <ul>
+          <li>给下面的中心句写2个支撑句：<br><em>我的教室很整洁。</em></li>
+          <li>把以下句子排列成段落：<br><em>总结句/两个支撑句/中心句</em></li>
+          <li>判断段落结构：总分？分总？总分总？</li>
+        </ul>
+      </div>
+      <div class="ext-card">
+        <h3>📚 优秀段落赏析</h3>
+        <ul>
+          <li>《荷花》中的描写段落</li>
+          <li>《富饶的西沙群岛》景物描写</li>
+          <li>《我们的民族小学》场景描写</li>
+          <li>尝试模仿写一个相似结构的段落</li>
+        </ul>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:32px;">
+      <button class="retry-btn" onclick="location.reload()">🔄 重新闯关</button>
+    </div>
+  </div>
+</section>
+
+<script>
+// AUDIO
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+function getAudio() { if (!audioCtx) audioCtx = new AudioCtx(); return audioCtx; }
+function playSound(type) {
+  try {
+    const ctx = getAudio();
+    const o = ctx.createOscillator(); const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    const configs = {
+      correct: { freq:[523,659,784], dur:0.1, wave:'sine' },
+      wrong:   { freq:[200,150], dur:0.15, wave:'sawtooth' },
+      click:   { freq:[440], dur:0.05, wave:'sine' },
+      achieve: { freq:[523,659,784,1047], dur:0.12, wave:'triangle' },
+    };
+    const c = configs[type] || configs.click;
+    o.type = c.wave;
+    let t = ctx.currentTime;
+    c.freq.forEach((f,i) => o.frequency.setValueAtTime(f, t+i*c.dur));
+    g.gain.setValueAtTime(0.3, t);
+    g.gain.exponentialRampToValueAtTime(0.01, t+c.freq.length*c.dur);
+    o.start(t); o.stop(t+c.freq.length*c.dur+0.1);
+  } catch(e) {}
+}
+
+let state = { section:0, score:0, stars:0, streak:0, achievements:{} };
+const SECTIONS = ['sec-hero','sec-obj','sec-warmup','sec-lv1','sec-lv2','sec-lv3','sec-boss','sec-score','sec-ext'];
+const ACHIEVEMENTS = [
+  {id:'first_correct',icon:'🌟',name:'首战告捷',desc:'第一次答对！'},
+  {id:'streak3',icon:'🔥',name:'三连击',desc:'连续答对3题'},
+  {id:'streak5',icon:'💫',name:'五连击',desc:'连续答对5题'},
+  {id:'lv1_done',icon:'🎨',name:'标注达人',desc:'完成句子标注'},
+  {id:'lv2_done',icon:'📐',name:'排序高手',desc:'完成句序排列'},
+  {id:'lv3_perfect',icon:'💎',name:'结构专家',desc:'段落诊断全对'},
+  {id:'boss_win',icon:'🏆',name:'Boss猎手',desc:'打败Boss！'},
+  {id:'all_done',icon:'👑',name:'段落小王子',desc:'完成全部关卡！'},
+];
+
+function unlockAchievement(id) {
+  if (state.achievements[id]) return;
+  state.achievements[id] = true;
+  const a = ACHIEVEMENTS.find(x=>x.id===id); if(!a) return;
+  playSound('achieve');
+  const toast = document.getElementById('achieveToast');
+  document.getElementById('achieveIcon').textContent = a.icon;
+  document.getElementById('achieveText').textContent = `${a.name}：${a.desc}`;
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'), 3000);
+  addStars(3);
+}
+function addStars(n) { state.stars+=n; document.getElementById('hudStars').textContent=state.stars; }
+function addScore(n) { state.score+=n; document.getElementById('hudScore').textContent=state.score; }
+function initStars() {
+  const field=document.getElementById('starField');
+  for(let i=0;i<40;i++){
+    const s=document.createElement('div'); s.className='star';
+    const sz=Math.random()*4+2;
+    s.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;animation-delay:${Math.random()*2}s;animation-duration:${1.5+Math.random()*2}s;`;
+    field.appendChild(s);
+  }
+}
+function launchConfetti() {
+  const colors=['#ff6b6b','#4ecdc4','#ffe66d','#a29bfe','#fd79a8'];
+  for(let i=0;i<50;i++){
+    const c=document.createElement('div'); c.className='confetti-piece';
+    const sz=Math.random()*12+6;
+    c.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}vw;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${2+Math.random()*2}s;`;
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(),4000);
+  }
+}
+function goSection(idx) {
+  playSound('click');
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(SECTIONS[idx]).classList.add('active');
+  state.section=idx;
+  document.getElementById('progressBar').style.width=(idx/(SECTIONS.length-1)*100)+'%';
+  updateNavDots(); window.scrollTo(0,0);
+  if(idx===3) initLv1();
+  if(idx===4) initLv2();
+  if(idx===5) initLv3();
+  if(idx===6) initBoss();
+  if(idx===7) renderScore();
+}
+function initNavDots() {
+  const wrap=document.getElementById('navDots');
+  SECTIONS.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='nav-dot'+(i===0?' active':'');
+    d.onclick=()=>{ if(i<=state.section+1) goSection(i); };
+    wrap.appendChild(d);
+  });
+}
+function updateNavDots() {
+  document.querySelectorAll('.nav-dot').forEach((d,i)=>{
+    d.className='nav-dot'+(i===state.section?' active':i<state.section?' done':'');
+  });
+}
+
+// TABS
+function showTab(id) {
+  document.querySelectorAll('.struct-content').forEach(c=>c.classList.remove('show'));
+  document.querySelectorAll('.struct-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('show');
+  event.target.classList.add('active');
+  playSound('click');
+}
+
+// LEVEL 1: HIGHLIGHT TASK
+const lv1Tasks = [
+  {
+    title:'标注下面段落中的句子类型',
+    sentences:[
+      {text:'北京是我国的首都，是一座历史悠久的城市。', type:'topic', label:'中心句'},
+      {text:'天安门广场宏伟壮观，是世界上最大的广场之一。', type:'support', label:'支撑句'},
+      {text:'故宫博物院保存着大量珍贵的文物，是世界文化遗产。', type:'support', label:'支撑句'},
+      {text:'长城绵延万里，是中华民族的象征。', type:'support', label:'支撑句'},
+      {text:'北京真是一座令人骄傲的伟大城市！', type:'conclude', label:'总结句'},
+    ],
+    struct:'总—分—总'
+  },
+  {
+    title:'找出这个段落的中心句',
+    sentences:[
+      {text:'小明是班里最努力的同学。', type:'topic', label:'中心句'},
+      {text:'每天早上，他第一个到教室，认真预习当天的课程。', type:'support', label:'支撑句'},
+      {text:'下课时，别人都去玩耍，他却留在座位上做练习题。', type:'support', label:'支撑句'},
+      {text:'放学后，他把作业全部完成才回家。', type:'support', label:'支撑句'},
+    ],
+    struct:'总—分'
+  },
+];
+
+let lv1Index=0, lv1Task=null, lv1Marked={}, lv1Mode='topic';
+function initLv1() {
+  lv1Index=0; renderLv1Task();
+}
+function renderLv1Task() {
+  if(lv1Index>=lv1Tasks.length){
+    document.getElementById('lv1Container').innerHTML=`<div class="card" style="text-align:center;font-size:1.2rem;">🎉 标注完成！你掌握了句子类型！</div>`;
+    document.getElementById('lv1NextWrap').style.display='block';
+    unlockAchievement('lv1_done');
+    return;
+  }
+  lv1Task=lv1Tasks[lv1Index]; lv1Marked={};
+  document.getElementById('lv1Progress').style.width=(lv1Index/lv1Tasks.length*100)+'%';
+  const c=document.getElementById('lv1Container');
+  c.innerHTML=`
+    <div class="card">
+      <div class="quiz-question">第${lv1Index+1}题：${lv1Task.title}</div>
+      <div class="hl-toolbar">
+        <button class="hl-btn topic-btn active" onclick="setMode('topic',this)" id="modeTopicBtn">🔴 中心句</button>
+        <button class="hl-btn support-btn" onclick="setMode('support',this)" id="modeSupportBtn">🟢 支撑句</button>
+        <button class="hl-btn conclude-btn" onclick="setMode('conclude',this)" id="modeConcludeBtn">🟣 总结句</button>
+        <button class="hl-btn clear-btn" onclick="clearMarks()">🗑️ 清除</button>
+      </div>
+      <div class="highlight-text" id="hlText">
+        ${lv1Task.sentences.map((s,i)=>`<span data-idx="${i}" onclick="markSentence(${i})">${s.text} </span>`).join('<br>')}
+      </div>
+      <div style="margin-top:16px;">
+        <button class="next-btn" onclick="checkLv1()" style="display:inline-flex;align-items:center;gap:8px;">✅ 检查标注</button>
+      </div>
+      <div class="feedback" id="lv1Feedback"></div>
+    </div>
+  `;
+  lv1Mode='topic';
+}
+function setMode(mode, btn) {
+  lv1Mode=mode;
+  document.querySelectorAll('.hl-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  playSound('click');
+}
+function markSentence(idx) {
+  lv1Marked[idx]=lv1Mode;
+  const spans=document.querySelectorAll('#hlText span');
+  spans[idx].className=lv1Mode+'-hl';
+  playSound('click');
+}
+function clearMarks() {
+  lv1Marked={};
+  document.querySelectorAll('#hlText span').forEach(s=>s.className='');
+  playSound('click');
+}
+function checkLv1() {
+  let correct=0, total=lv1Task.sentences.length;
+  lv1Task.sentences.forEach((s,i)=>{
+    if(lv1Marked[i]===s.type) correct++;
+  });
+  const fb=document.getElementById('lv1Feedback');
+  if(correct===total){
+    fb.className='feedback show correct';
+    fb.innerHTML=`✅ 全部标注正确！这是<strong>${lv1Task.struct}</strong>结构的段落。`;
+    addScore(15); addStars(2); playSound('correct'); state.streak++;
+    document.getElementById('hudStreak').textContent=state.streak;
+    if(!state.achievements.first_correct) unlockAchievement('first_correct');
+    if(state.streak>=3) unlockAchievement('streak3');
+  } else {
+    fb.className='feedback show wrong';
+    fb.innerHTML=`💡 答对了${correct}/${total}句。提示：中心句通常在段落开头或结尾，说明段落主要内容。`;
+    playSound('wrong'); state.streak=0;
+    document.getElementById('hudStreak').textContent=0;
+  }
+  setTimeout(()=>{ lv1Index++; renderLv1Task(); },2000);
+}
+
+// LEVEL 2: SENTENCE SORT
+const lv2Sets = [
+  {
+    title:'把下面的句子排列成一个完整的段落（拖动调序）',
+    sentences:[
+      {text:'🔴 桂林山水甲天下。', order:0, type:'topic'},
+      {text:'🟢 这里的山千奇百怪，像老人、像骆驼、像大象……', order:1, type:'support'},
+      {text:'🟢 这里的水清澈透明，可以看见水底的沙石。', order:2, type:'support'},
+      {text:'🟢 岸边的翠竹倒映在水中，美丽如画。', order:3, type:'support'},
+      {text:'🟣 置身其中，真是仿佛走进了美丽的画卷！', order:4, type:'conclude'},
+    ]
+  },
+];
+let lv2DragSrc=null;
+function initLv2() {
+  const container=document.getElementById('lv2Container');
+  const set=lv2Sets[0];
+  const shuffled=[...set.sentences].sort(()=>Math.random()-0.5);
+  container.innerHTML=`
+    <div class="card">
+      <p style="color:#666;margin-bottom:16px;">${set.title}</p>
+      <p style="font-size:0.85rem;color:#999;margin-bottom:12px;">💡 拖拽句子到正确位置，或点击"↑↓"调换顺序</p>
+      <div class="sort-pool" id="sortPool">
+        ${shuffled.map((s,i)=>`
+          <div class="sort-item" draggable="true" data-order="${s.order}" data-type="${s.type}" id="sortItem${i}">
+            <span class="handle">⠿</span>
+            <span>${s.text}</span>
+            <span style="margin-left:auto;display:flex;gap:4px;">
+              <button onclick="moveItem(this,-1)" style="background:none;border:1px solid #ddd;border-radius:8px;padding:2px 8px;cursor:pointer;">↑</button>
+              <button onclick="moveItem(this,1)" style="background:none;border:1px solid #ddd;border-radius:8px;padding:2px 8px;cursor:pointer;">↓</button>
+            </span>
+          </div>
+        `).join('')}
+      </div>
+      <button class="next-btn" onclick="checkLv2()" style="display:inline-flex;align-items:center;gap:8px;">✅ 检查顺序</button>
+      <div class="feedback" id="lv2Feedback"></div>
+    </div>
+  `;
+  setupSortDrag();
+  document.getElementById('lv2Progress').style.width='50%';
+}
+function setupSortDrag() {
+  document.querySelectorAll('.sort-item').forEach(item=>{
+    item.addEventListener('dragstart',e=>{ lv2DragSrc=item; item.classList.add('dragging'); });
+    item.addEventListener('dragend',()=>{ item.classList.remove('dragging'); lv2DragSrc=null; });
+    item.addEventListener('dragover',e=>e.preventDefault());
+    item.addEventListener('drop',e=>{
+      e.preventDefault();
+      if(lv2DragSrc&&lv2DragSrc!==item){
+        const pool=document.getElementById('sortPool');
+        const items=[...pool.querySelectorAll('.sort-item')];
+        const srcIdx=items.indexOf(lv2DragSrc), dstIdx=items.indexOf(item);
+        if(srcIdx<dstIdx) pool.insertBefore(lv2DragSrc, item.nextSibling);
+        else pool.insertBefore(lv2DragSrc, item);
+        playSound('click');
+      }
+    });
+  });
+}
+function moveItem(btn, dir) {
+  const item=btn.closest('.sort-item');
+  const pool=document.getElementById('sortPool');
+  const items=[...pool.querySelectorAll('.sort-item')];
+  const idx=items.indexOf(item);
+  if(dir===-1&&idx>0) pool.insertBefore(item,items[idx-1]);
+  else if(dir===1&&idx<items.length-1) pool.insertBefore(items[idx+1],item);
+  playSound('click');
+}
+function checkLv2() {
+  const pool=document.getElementById('sortPool');
+  const items=[...pool.querySelectorAll('.sort-item')];
+  let correct=0;
+  items.forEach((item,i)=>{
+    if(parseInt(item.dataset.order)===i){ item.classList.add('correct-pos'); correct++; }
+    else item.classList.add('wrong-pos');
+  });
+  const fb=document.getElementById('lv2Feedback');
+  if(correct===items.length){
+    fb.className='feedback show correct';
+    fb.innerHTML='🎉 排列完全正确！总—分—总结构，逻辑清晰！';
+    addScore(20); addStars(3); playSound('correct'); unlockAchievement('lv2_done');
+    state.streak++; document.getElementById('hudStreak').textContent=state.streak;
+    if(state.streak>=3) unlockAchievement('streak3');
+    if(state.streak>=5) unlockAchievement('streak5');
+    setTimeout(()=>{ document.getElementById('lv2NextWrap').style.display='block'; },1500);
+  } else {
+    fb.className='feedback show wrong';
+    fb.innerHTML=`💡 答对了${correct}/${items.length}个位置。提示：中心句（红色）通常在最前面！`;
+    playSound('wrong'); state.streak=0; document.getElementById('hudStreak').textContent=0;
+    setTimeout(()=>{
+      items.forEach(i=>{ i.classList.remove('correct-pos','wrong-pos'); });
+      fb.className='feedback'; 
+    },2000);
+  }
+}
+
+// LEVEL 3: STRUCTURE QUIZ
+const lv3Questions=[
+  {
+    passage:'🌟我的爸爸非常能干。他会修电器，家里坏了的电视、电风扇都是他修好的。他还会做各种美味的菜肴，每当家里来了客人，他总是大显身手。他更是我学习上的好帮手，每当我遇到难题，他总是耐心地给我讲解。',
+    question:'这个段落是什么结构？',
+    options:['总—分—总', '总—分', '分—总', '并列'],
+    answer:1,
+    feedback:'中心句"爸爸非常能干"在开头，后面三句分别说明爸爸三个方面的能干，是"总—分"结构。'
+  },
+  {
+    passage:'妈妈每天早起为我做热腾腾的早饭。下雨天，她总是第一个来接我放学。我生病时，她整夜不睡守在床边照看我。🟣妈妈对我的爱，比山高，比海深！',
+    question:'这个段落的中心句在哪里？',
+    options:['第一句', '第二句', '最后一句', '没有中心句'],
+    answer:2,
+    feedback:'前三句分别举了妈妈爱我的三个例子，最后一句"妈妈对我的爱，比山高，比海深"是总结句，也是中心句。这是"分—总"结构。'
+  },
+  {
+    passage:'🌟大熊猫是我国的国宝。它的样子非常可爱：圆圆的脑袋，胖嘟嘟的身体，黑白相间的毛色。大熊猫主要生活在四川、陕西等地的竹林里，以竹子为食。由于数量稀少，大熊猫已被列为濒危动物。🟣因此，保护大熊猫是我们的责任。',
+    question:'这个段落是什么结构？',
+    options:['总—分', '总—分—总', '分—总', '并列'],
+    answer:1,
+    feedback:'"大熊猫是国宝"是总起，中间三句分别介绍外貌、生活习性、保护现状，最后"保护大熊猫"是总结，这是完整的"总—分—总"结构。'
+  },
+  {
+    passage:'天空中出现了一道彩虹。🟡彩虹弯弯的，像一座桥架在天空中。彩虹是由红、橙、黄、绿、蓝、靛、紫七种颜色组成的。雨过天晴时，阳光照射水珠，就会形成美丽的彩虹。',
+    question:'这个段落的中心句是？',
+    options:['彩虹弯弯的，像一座桥', '彩虹是七种颜色的', '天空中出现了一道彩虹', '雨过天晴时形成彩虹'],
+    answer:2,
+    feedback:'第一句"天空中出现了一道彩虹"是中心句（总起句），后面三句分别描述彩虹的形状、颜色和成因，是"总—分"结构。'
+  },
+];
+
+let lv3Index=0, lv3Correct=0;
+function initLv3() { lv3Index=0; lv3Correct=0; renderLv3(); }
+function renderLv3() {
+  if(lv3Index>=lv3Questions.length){
+    document.getElementById('lv3Container').innerHTML=`<div style="text-align:center;font-size:1.2rem;">🎉 完成！答对${lv3Correct}/${lv3Questions.length}题</div>`;
+    document.getElementById('lv3NextWrap').style.display='block';
+    if(lv3Correct===lv3Questions.length) unlockAchievement('lv3_perfect');
+    return;
+  }
+  const q=lv3Questions[lv3Index];
+  document.getElementById('lv3Progress').style.width=(lv3Index/lv3Questions.length*100)+'%';
+  document.getElementById('lv3Container').innerHTML=`
+    <div style="background:#f0fff9;border-radius:14px;padding:18px;margin-bottom:16px;font-size:1rem;line-height:2;color:#555;">${q.passage}</div>
+    <div class="quiz-question">第${lv3Index+1}题 / 共${lv3Questions.length}题：${q.question}</div>
+    <div class="options-grid" id="lv3Opts">
+      ${q.options.map((o,i)=>`<button class="option-btn" onclick="answerLv3(${i})">${['A','B','C','D'][i]}. ${o}</button>`).join('')}
+    </div>
+    <div class="feedback" id="lv3Feedback"></div>
+    <button class="next-btn" id="lv3NextBtn" onclick="lv3Index++;renderLv3();" style="display:none;margin-top:12px;">下一题 →</button>
+  `;
+}
+function answerLv3(idx) {
+  const q=lv3Questions[lv3Index];
+  document.querySelectorAll('#lv3Opts .option-btn').forEach(b=>b.disabled=true);
+  const btns=document.querySelectorAll('#lv3Opts .option-btn');
+  const fb=document.getElementById('lv3Feedback');
+  if(idx===q.answer){
+    btns[idx].classList.add('correct');
+    fb.className='feedback show correct'; fb.innerHTML=`✅ ${q.feedback}`;
+    addScore(15); addStars(2); playSound('correct'); lv3Correct++;
+    state.streak++; document.getElementById('hudStreak').textContent=state.streak;
+    if(!state.achievements.first_correct) unlockAchievement('first_correct');
+    if(state.streak>=3) unlockAchievement('streak3');
+    if(state.streak>=5) unlockAchievement('streak5');
+  } else {
+    btns[idx].classList.add('wrong'); btns[q.answer].classList.add('correct');
+    fb.className='feedback show wrong'; fb.innerHTML=`💡 正确答案：${['A','B','C','D'][q.answer]}. ${q.options[q.answer]}<br>${q.feedback}`;
+    playSound('wrong'); state.streak=0; document.getElementById('hudStreak').textContent=0;
+  }
+  document.getElementById('lv3NextBtn').style.display='inline-flex';
+}
+
+// BOSS
+const bossQs=[
+  {q:'一个段落可以有几个中心句？',options:['很多个','两个','通常只有一个','没有中心句'],answer:2,feedback:'一个段落通常只有一个中心句，它统领整个段落的内容。'},
+  {q:'"总—分—总"结构的段落，总结句的作用是？',options:['引出话题','补充说明','首尾呼应，深化主题','举例证明'],answer:2,feedback:'总结句与开头的中心句相呼应，使段落结构完整，同时深化主题。'},
+  {q:'下面哪种结构最适合描写一件事情的多个方面？',options:['时间顺序','空间顺序','总—分结构','日记结构'],answer:2,feedback:'"总—分"结构适合先提出中心观点，再从多个角度具体说明。'},
+];
+let bossIndex=0;
+function initBoss(){bossIndex=0;document.getElementById('bossHP').style.width='100%';renderBossQ();}
+function renderBossQ(){
+  if(bossIndex>=bossQs.length){
+    document.getElementById('bossContainer').innerHTML=`<div style="text-align:center;"><div style="font-size:60px;">🎉</div><h3 style="color:var(--secondary);font-size:1.5rem;margin:16px 0;">Boss被打败！</h3><p>你是真正的段落结构专家！</p></div>`;
+    document.getElementById('bossEmoji').textContent='😵';
+    document.getElementById('bossNextWrap').style.display='block';
+    unlockAchievement('boss_win'); unlockAchievement('all_done'); launchConfetti();
+    return;
+  }
+  const q=bossQs[bossIndex];
+  document.getElementById('bossContainer').innerHTML=`
+    <div class="quiz-question">Boss发问：${q.q}</div>
+    <div class="options-grid" id="bossOpts">
+      ${q.options.map((o,i)=>`<button class="option-btn" onclick="answerBoss(${i})">${['A','B','C','D'][i]}. ${o}</button>`).join('')}
+    </div>
+    <div class="feedback" id="bossFb"></div>
+  `;
+}
+function answerBoss(idx){
+  const q=bossQs[bossIndex];
+  document.querySelectorAll('#bossOpts .option-btn').forEach(b=>b.disabled=true);
+  const btns=document.querySelectorAll('#bossOpts .option-btn');
+  const fb=document.getElementById('bossFb');
+  if(idx===q.answer){
+    btns[idx].classList.add('correct');
+    fb.className='feedback show correct'; fb.innerHTML=`✅ ${q.feedback}`;
+    addScore(20); addStars(3); playSound('correct');
+    const hp=document.getElementById('bossHP');
+    hp.style.width=Math.max(0,parseInt(hp.style.width)-34)+'%';
+  } else {
+    btns[idx].classList.add('wrong'); btns[q.answer].classList.add('correct');
+    fb.className='feedback show wrong'; fb.innerHTML=`💡 ${q.feedback}`;
+    playSound('wrong');
+  }
+  setTimeout(()=>{bossIndex++;renderBossQ();},2500);
+}
+
+function renderScore(){
+  document.getElementById('finalScore').textContent=state.score;
+  const pct=Math.min(100,Math.round(state.score/150*100));
+  let stars='⭐',msg='继续加油！';
+  if(pct>=90){stars='⭐⭐⭐';msg='完美！你是段落结构小达人！🎉';}
+  else if(pct>=70){stars='⭐⭐';msg='很棒！段落写作更上一层楼！💪';}
+  else if(pct>=50){stars='⭐';msg='不错，多读多练会更好！📚';}
+  document.getElementById('scoreStars').textContent=stars;
+  document.getElementById('scoreMsg').textContent=msg;
+  const grid=document.getElementById('achieveGrid');
+  grid.innerHTML='';
+  ACHIEVEMENTS.forEach(a=>{
+    const card=document.createElement('div');
+    card.className='achieve-card '+(state.achievements[a.id]?'unlocked':'locked');
+    card.innerHTML=`<div class="icon">${a.icon}</div><strong>${a.name}</strong><p>${a.desc}</p>`;
+    grid.appendChild(card);
+  });
+}
+
+const mascotLines=['段落的中心句很重要，要认真找！','总—分—总是最常见的段落结构！','多读好文章，感受段落的节奏！','加油！你做得很棒！⭐','写段落时先想好中心，再想支撑！'];
+let mascotOpen=false;
+function toggleMascot(){
+  mascotOpen=!mascotOpen;
+  const sp=document.getElementById('mascotSpeech');
+  if(mascotOpen){sp.textContent=mascotLines[Math.floor(Math.random()*mascotLines.length)];sp.classList.add('show');}
+  else sp.classList.remove('show');
+}
+
+initStars(); initNavDots();
+setTimeout(()=>{const sp=document.getElementById('mascotSpeech');sp.classList.add('show');setTimeout(()=>sp.classList.remove('show'),4000);},2000);
+</script>
+</body>
+</html>

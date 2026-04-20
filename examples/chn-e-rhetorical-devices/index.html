@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>修辞手法识别 · 三年级语文闯关</title>
+<style>
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--card:#fff;--radius:20px;--shadow:0 8px 32px rgba(0,0,0,0.10);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);font-family:'PingFang SC','Microsoft YaHei',sans-serif;color:#333;min-height:100vh;}
+#star-container{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;}
+.star{position:absolute;animation:sf 1.3s ease-out forwards;}
+@keyframes sf{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-90px) scale(1.6)}}
+.screen{display:none;min-height:100vh;padding:20px;}
+.screen.active{display:flex;flex-direction:column;align-items:center;}
+
+/* HERO */
+#hero{background:linear-gradient(135deg,#ff6b6b 0%,#ee9ca7 50%,#ffdde1 100%);justify-content:center;text-align:center;}
+.hero-icon{font-size:5.5rem;animation:spin 4s linear infinite;}
+@keyframes spin{0%{transform:rotate(0deg)}25%{transform:rotate(-10deg)}75%{transform:rotate(10deg)}100%{transform:rotate(0deg)}}
+h1.hero-t{font-size:2.3rem;font-weight:900;color:#fff;text-shadow:3px 3px 0 rgba(0,0,0,0.12);margin:14px 0 8px;}
+.hero-s{font-size:1rem;color:rgba(255,255,255,0.9);margin-bottom:28px;}
+.btn{background:var(--card);color:var(--primary);border:none;border-radius:var(--radius);padding:13px 30px;font-size:1rem;font-weight:700;cursor:pointer;box-shadow:var(--shadow);transition:transform 0.15s;}
+.btn:hover{transform:translateY(-3px) scale(1.05);}
+.btn:active{transform:scale(0.97);}
+.btn-p{background:var(--primary);color:#fff;}
+.btn-s{background:var(--secondary);color:#fff;}
+.btn-a{background:var(--accent);color:#333;}
+
+/* LAYOUT */
+.section-t{font-size:1.7rem;font-weight:800;color:var(--primary);text-align:center;margin-bottom:14px;}
+.card{background:var(--card);border-radius:var(--radius);padding:22px 24px;box-shadow:var(--shadow);width:100%;max-width:660px;}
+.nav-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:14px;}
+.prog-wrap{background:#f0f0f0;border-radius:10px;height:12px;width:100%;max-width:540px;overflow:hidden;margin:8px 0;}
+.prog-bar{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:10px;transition:width 0.5s;width:0%;}
+
+/* RHETORIC CARDS */
+.rhet-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0;}
+.rhet-card{border-radius:16px;padding:14px;text-align:center;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;}
+.rhet-card:hover{transform:translateY(-4px);box-shadow:0 12px 28px rgba(0,0,0,0.13);}
+.rhet-card.simile{background:linear-gradient(135deg,#ffecd2,#fcb69f);}
+.rhet-card.personify{background:linear-gradient(135deg,#a1c4fd,#c2e9fb);}
+.rhet-card.exagger{background:linear-gradient(135deg,#fbc2eb,#a6c1ee);}
+.rhet-card.repeat{background:linear-gradient(135deg,#d4fc79,#96e6a1);}
+.rhet-icon{font-size:2.2rem;margin-bottom:6px;}
+.rhet-name{font-size:1rem;font-weight:800;}
+.rhet-desc{font-size:0.78rem;color:#555;margin-top:4px;}
+
+/* SENTENCE BOX */
+.sent-box{font-size:1.1rem;line-height:2;background:var(--bg);border-radius:14px;padding:16px 18px;margin-bottom:16px;border-left:5px solid var(--primary);}
+.keyword{font-weight:800;color:var(--primary);border-bottom:2px dashed var(--primary);}
+/* highlight types */
+.hl-simile{background:rgba(252,182,159,0.4);border-radius:4px;padding:1px 3px;}
+.hl-personify{background:rgba(162,193,253,0.4);border-radius:4px;padding:1px 3px;}
+.hl-exagger{background:rgba(251,194,235,0.4);border-radius:4px;padding:1px 3px;}
+.hl-repeat{background:rgba(150,230,161,0.4);border-radius:4px;padding:1px 3px;}
+
+/* OPTIONS */
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+.opt{background:var(--bg);border:2.5px solid #e0e0e0;border-radius:var(--radius);padding:12px 10px;font-size:0.95rem;cursor:pointer;transition:all 0.2s;text-align:left;}
+.opt:hover{border-color:var(--secondary);background:#e8faf9;}
+.opt.ok{border-color:var(--secondary);background:#d4f5f1;color:#2a9d8f;font-weight:700;}
+.opt.no{border-color:var(--primary);background:#ffe5e5;color:#d62839;}
+.fb{margin-top:12px;padding:12px 16px;border-radius:12px;font-size:0.92rem;font-weight:600;display:none;}
+.fb.show{display:block;}
+.fb.ok{background:#d4f5f1;color:#2a9d8f;}
+.fb.no{background:#ffe5e5;color:#d62839;}
+
+/* LV HEADER */
+.lv-head{display:flex;align-items:center;gap:12px;width:100%;max-width:660px;margin-bottom:6px;}
+.lv-badge{border-radius:50%;width:46px;height:46px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.1rem;flex-shrink:0;color:#fff;}
+.lv-t{font-size:1.25rem;font-weight:800;}
+.lv-s{font-size:0.83rem;color:#999;}
+
+/* DRAG */
+.word-pool{display:flex;flex-wrap:wrap;gap:8px;background:var(--bg);border-radius:14px;padding:12px;min-height:50px;border:2px dashed #ddd;margin-bottom:10px;}
+.w-chip{background:var(--accent);border-radius:10px;padding:8px 14px;font-size:0.95rem;font-weight:600;cursor:pointer;user-select:none;transition:opacity 0.2s;}
+.w-chip:hover{opacity:0.7;}
+.drop-area{display:flex;flex-wrap:wrap;gap:8px;background:#f5f5f5;border-radius:14px;padding:12px;min-height:50px;border:2px dashed #ccc;}
+.drop-area.over{border-color:var(--secondary);background:#e8faf9;}
+
+/* MATCH */
+.match-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0;}
+.match-col{display:flex;flex-direction:column;gap:8px;}
+.match-item{background:var(--bg);border-radius:12px;padding:10px 14px;font-size:0.9rem;cursor:pointer;border:2.5px solid transparent;transition:all 0.2s;}
+.match-item.selected{border-color:var(--primary);background:#fff0f0;}
+.match-item.matched{border-color:var(--secondary);background:#d4f5f1;}
+
+/* BOSS */
+#boss{background:linear-gradient(135deg,#2d1b69,#11998e,#38ef7d);gap:16px;}
+#boss .section-t{color:#fff;}
+.boss-card{background:rgba(255,255,255,0.12);backdrop-filter:blur(8px);border-radius:var(--radius);padding:22px;width:100%;max-width:660px;color:#fff;}
+.boss-hp-w{height:15px;background:rgba(255,255,255,0.15);border-radius:8px;margin:8px 0;overflow:hidden;}
+.boss-hp-b{height:100%;background:linear-gradient(90deg,#ff6b6b,#ffe66d);border-radius:8px;transition:width 0.5s;}
+.boss-sent{font-size:1.05rem;line-height:2;background:rgba(0,0,0,0.2);border-radius:12px;padding:14px;margin-bottom:14px;}
+.boss-opts .opt{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2);color:#fff;}
+.boss-opts .opt:hover{background:rgba(255,255,255,0.25);}
+.boss-opts .opt.ok{background:rgba(78,205,196,0.3);border-color:var(--secondary);}
+.boss-opts .opt.no{background:rgba(255,107,107,0.3);border-color:var(--primary);}
+
+/* SCORE */
+#scorecard{background:linear-gradient(135deg,#fddb92,#d1fdff);gap:16px;}
+.score-n{font-size:4.5rem;font-weight:900;color:var(--primary);}
+.ach-grid{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:560px;}
+.ach{background:var(--card);border-radius:14px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:96px;opacity:0.28;transition:opacity 0.4s;}
+.ach.on{opacity:1;animation:pop 0.4s;}
+@keyframes pop{0%{transform:scale(0.4)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+.ach-i{font-size:1.8rem;}
+.ach-n{font-size:0.75rem;font-weight:700;text-align:center;color:#555;}
+
+/* AI */
+#ai{position:fixed;bottom:18px;right:18px;z-index:1000;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+.ai-bub{background:var(--card);border-radius:14px;padding:10px 14px;box-shadow:var(--shadow);max-width:210px;font-size:0.87rem;display:none;}
+.ai-bub.on{display:block;animation:slideUp 0.3s;}
+@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.ai-f{width:52px;height:52px;background:var(--secondary);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;cursor:pointer;box-shadow:var(--shadow);border:3px solid #fff;}
+
+#expand{background:var(--bg);gap:16px;}
+@media(max-width:480px){.opts,.rhet-grid{grid-template-columns:1fr;}.match-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div id="star-container"></div>
+<div id="ai">
+  <div class="ai-bub" id="ai-text">嗨！我是小虫虫🐛，修辞小博士！</div>
+  <div class="ai-f" onclick="toggleAI()">🐛</div>
+</div>
+
+<!-- HERO -->
+<div class="screen active" id="hero">
+  <div class="hero-icon">🎨</div>
+  <h1 class="hero-t">修辞手法识别大冒险</h1>
+  <div class="hero-s">三年级语文 · 发现语言的美丽秘密🌈</div>
+  <div style="font-size:1.5rem;margin-bottom:28px;">⭐⭐⭐</div>
+  <button class="btn btn-p" onclick="go('objective')">开始学习 🚀</button>
+</div>
+
+<!-- OBJECTIVE -->
+<div class="screen" id="objective">
+  <div class="section-t">📋 学习目标</div>
+  <div class="card">
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div style="display:flex;gap:10px;align-items:center;"><span style="font-size:1.4rem;">🎭</span><span>认识比喻、拟人、夸张、排比四种修辞</span></div>
+      <div style="display:flex;gap:10px;align-items:center;"><span style="font-size:1.4rem;">🔍</span><span>识别句子中使用的修辞手法</span></div>
+      <div style="display:flex;gap:10px;align-items:center;"><span style="font-size:1.4rem;">💡</span><span>理解修辞手法的表达效果</span></div>
+      <div style="display:flex;gap:10px;align-items:center;"><span style="font-size:1.4rem;">✏️</span><span>尝试用修辞手法造句</span></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:8px;">
+    <div style="font-size:0.9rem;color:#888;margin-bottom:6px;">学习进度</div>
+    <div class="prog-wrap"><div class="prog-bar" id="main-prog"></div></div>
+    <div style="font-size:0.82rem;color:#aaa;text-align:right;" id="prog-t">0 / 14</div>
+  </div>
+  <div class="nav-row"><button class="btn btn-a" onclick="go('warmup')">热身练习 🔥</button></div>
+</div>
+
+<!-- WARMUP -->
+<div class="screen" id="warmup">
+  <div class="section-t">🔥 热身：认识四种修辞</div>
+  <div class="card">
+    <div style="font-size:0.95rem;color:#555;margin-bottom:14px;">点击卡片，了解每种修辞手法👇</div>
+    <div class="rhet-grid">
+      <div class="rhet-card simile" onclick="showRhet('simile',this)">
+        <div class="rhet-icon">🌊</div>
+        <div class="rhet-name">比喻</div>
+        <div class="rhet-desc">用"像""是"比较两种事物</div>
+      </div>
+      <div class="rhet-card personify" onclick="showRhet('personify',this)">
+        <div class="rhet-icon">🌸</div>
+        <div class="rhet-name">拟人</div>
+        <div class="rhet-desc">把事物当人来写</div>
+      </div>
+      <div class="rhet-card exagger" onclick="showRhet('exagger',this)">
+        <div class="rhet-icon">🚀</div>
+        <div class="rhet-name">夸张</div>
+        <div class="rhet-desc">故意夸大或缩小描述</div>
+      </div>
+      <div class="rhet-card repeat" onclick="showRhet('repeat',this)">
+        <div class="rhet-icon">🎵</div>
+        <div class="rhet-name">排比</div>
+        <div class="rhet-desc">三个或以上相似结构的句子</div>
+      </div>
+    </div>
+    <div id="rhet-detail" style="background:var(--bg);border-radius:14px;padding:14px;font-size:0.92rem;line-height:1.8;display:none;margin-top:8px;"></div>
+  </div>
+  <div class="nav-row"><button class="btn btn-s" onclick="go('level1')">进入第一关 →</button></div>
+</div>
+
+<!-- LEVEL 1 -->
+<div class="screen" id="level1">
+  <div class="lv-head">
+    <div class="lv-badge" style="background:var(--primary);">1</div>
+    <div><div class="lv-t">第一关：识别修辞</div><div class="lv-s">判断句子用了什么修辞手法</div></div>
+    <div style="margin-left:auto;font-size:1.3rem;" id="l1-stars">⭐⭐⭐</div>
+  </div>
+  <div class="card" id="l1-card"></div>
+  <div class="nav-row">
+    <button class="btn btn-s" id="l1-next" style="display:none;" onclick="nextL1()">下一题 →</button>
+  </div>
+</div>
+
+<!-- LEVEL 2 -->
+<div class="screen" id="level2">
+  <div class="lv-head">
+    <div class="lv-badge" style="background:var(--secondary);">2</div>
+    <div><div class="lv-t">第二关：配对连线</div><div class="lv-s">把句子和修辞手法连起来</div></div>
+    <div style="margin-left:auto;font-size:1.3rem;" id="l2-stars">⭐⭐⭐</div>
+  </div>
+  <div class="card" id="l2-card"></div>
+  <div class="nav-row">
+    <button class="btn btn-s" id="l2-check" onclick="checkL2()">检查答案 ✅</button>
+    <button class="btn btn-a" id="l2-next" style="display:none;" onclick="nextL2()">下一组 →</button>
+  </div>
+</div>
+
+<!-- LEVEL 3 -->
+<div class="screen" id="level3">
+  <div class="lv-head">
+    <div class="lv-badge" style="background:var(--accent);color:#333;">3</div>
+    <div><div class="lv-t">第三关：找关键词</div><div class="lv-s">找出修辞手法的标志词</div></div>
+    <div style="margin-left:auto;font-size:1.3rem;" id="l3-stars">⭐⭐⭐</div>
+  </div>
+  <div class="card" id="l3-card"></div>
+  <div class="nav-row">
+    <button class="btn btn-s" id="l3-next" style="display:none;" onclick="nextL3()">下一题 →</button>
+  </div>
+</div>
+
+<!-- BOSS -->
+<div class="screen" id="boss">
+  <div class="section-t">👾 Boss战：修辞大魔王</div>
+  <div class="boss-card">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+      <span style="font-size:1.8rem;">🐉</span>
+      <div style="flex:1;">
+        <div style="font-size:0.85rem;opacity:0.8;">Boss 生命</div>
+        <div class="boss-hp-w"><div class="boss-hp-b" id="bhp-bar" style="width:100%"></div></div>
+      </div>
+      <span style="font-size:1.1rem;font-weight:800;" id="bhp-num">❤️ 5</span>
+    </div>
+    <div class="boss-sent" id="boss-sent"></div>
+    <div style="font-size:0.95rem;font-weight:700;margin-bottom:10px;" id="boss-q"></div>
+    <div class="boss-opts opts" id="boss-opts"></div>
+    <div class="fb" id="boss-fb"></div>
+  </div>
+  <div class="nav-row">
+    <button class="btn" id="boss-next" style="display:none;" onclick="nextBoss()">继续攻击 ⚔️</button>
+  </div>
+</div>
+
+<!-- SCORE -->
+<div class="screen" id="scorecard">
+  <div style="font-size:4rem;animation:bounce 1.5s infinite;">🎉</div>
+  <div class="score-n" id="final-score">0</div>
+  <div style="font-size:1rem;color:#555;">总分</div>
+  <div style="font-size:1.1rem;font-weight:700;color:var(--primary);margin:10px 0;" id="score-comment"></div>
+  <div class="ach-grid" id="ach-grid"></div>
+  <div class="nav-row" style="margin-top:16px;">
+    <button class="btn btn-s" onclick="go('expand')">拓展练习 📚</button>
+    <button class="btn btn-p" onclick="restart()">再来一次 🔄</button>
+  </div>
+</div>
+
+<!-- EXPAND -->
+<div class="screen" id="expand">
+  <div class="section-t">📚 拓展：我来用修辞</div>
+  <div class="card" id="expand-examples">
+    <div style="font-weight:700;color:var(--primary);margin-bottom:10px;">🌟 四种修辞的经典例句</div>
+    <div style="display:flex;flex-direction:column;gap:10px;font-size:0.93rem;">
+      <div style="background:rgba(252,182,159,0.2);border-radius:12px;padding:12px;">
+        <div style="font-weight:700;color:#d4522a;">🌊 比喻</div>
+        <div>弯弯的月亮<span class="hl-simile">像</span>小船一样挂在天上。</div>
+        <div style="color:#888;font-size:0.85rem;margin-top:4px;">标志词："像""是""好像""仿佛"</div>
+      </div>
+      <div style="background:rgba(162,193,253,0.2);border-radius:12px;padding:12px;">
+        <div style="font-weight:700;color:#3a6bc9;">🌸 拟人</div>
+        <div>小草在微风中<span class="hl-personify">跳舞</span>，高兴地欢迎春天的到来。</div>
+        <div style="color:#888;font-size:0.85rem;margin-top:4px;">特征：用人的动作/感情描写事物</div>
+      </div>
+      <div style="background:rgba(251,194,235,0.2);border-radius:12px;padding:12px;">
+        <div style="font-weight:700;color:#9b4dca;">🚀 夸张</div>
+        <div>他的肚子饿得<span class="hl-exagger">咕噜咕噜叫</span>，能吃下一头牛！</div>
+        <div style="color:#888;font-size:0.85rem;margin-top:4px;">特征：明显夸大或缩小，生动形象</div>
+      </div>
+      <div style="background:rgba(150,230,161,0.2);border-radius:12px;padding:12px;">
+        <div style="font-weight:700;color:#2a7d4f;">🎵 排比</div>
+        <div><span class="hl-repeat">爱是一片阳光，</span><span class="hl-repeat">爱是一场春雨，</span><span class="hl-repeat">爱是一首歌曲。</span></div>
+        <div style="color:#888;font-size:0.85rem;margin-top:4px;">特征：三个或以上结构相似的短语</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div style="font-weight:700;color:var(--secondary);margin-bottom:10px;">✏️ 挑战：选一种修辞手法造句</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+      <button class="btn" style="padding:8px 14px;font-size:0.88rem;" onclick="selectRhetType('比喻',this)">🌊 比喻</button>
+      <button class="btn" style="padding:8px 14px;font-size:0.88rem;" onclick="selectRhetType('拟人',this)">🌸 拟人</button>
+      <button class="btn" style="padding:8px 14px;font-size:0.88rem;" onclick="selectRhetType('夸张',this)">🚀 夸张</button>
+      <button class="btn" style="padding:8px 14px;font-size:0.88rem;" onclick="selectRhetType('排比',this)">🎵 排比</button>
+    </div>
+    <div id="expand-hint" style="font-size:0.88rem;color:#888;margin-bottom:8px;">请先选择修辞手法</div>
+    <textarea id="my-sent" placeholder="写下你的句子..." style="width:100%;border-radius:12px;border:2px solid #e0e0e0;padding:12px;font-size:0.95rem;min-height:70px;font-family:inherit;resize:vertical;outline:none;"></textarea>
+    <button class="btn btn-p" style="margin-top:10px;width:100%;" onclick="submitExpand()">提交 ✉️</button>
+    <div id="expand-result" style="display:none;margin-top:10px;font-size:0.92rem;"></div>
+  </div>
+  <div class="nav-row"><button class="btn btn-p" onclick="go('hero')">回主页 🏠</button></div>
+</div>
+
+<script>
+const AudioCtx=window.AudioContext||window.webkitAudioContext;
+let ctx;
+function getCtx(){if(!ctx)ctx=new AudioCtx();return ctx;}
+function tone(f,d,t='sine',v=0.28){try{const c=getCtx(),o=c.createOscillator(),g=c.createGain();o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+d);o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+d);}catch(e){}}
+function ok(){tone(523,0.08);setTimeout(()=>tone(659,0.08),90);setTimeout(()=>tone(784,0.18),180);}
+function bad(){tone(200,0.3,'sawtooth',0.2);}
+function win(){[523,587,659,698,784,880,988,1047].forEach((f,i)=>setTimeout(()=>tone(f,0.13),i*70));}
+function click(){tone(800,0.04,'square',0.12);}
+function stars(x,y,n=6){const c=document.getElementById('star-container');for(let i=0;i<n;i++){const s=document.createElement('div');s.className='star';s.textContent=['⭐','✨','🌟','💫','🎆'][Math.floor(Math.random()*5)];s.style.cssText=`left:${x+(Math.random()-0.5)*80}px;top:${y+(Math.random()-0.5)*40}px;font-size:${1+Math.random()}rem;`;c.appendChild(s);setTimeout(()=>s.remove(),1400);}}
+
+let S={score:0,total:0,correct:0,l1i:0,l2i:0,l3i:0,bi:0,bossHP:5,achs:[],stars:{l1:0,l2:0,l3:0}};
+
+const rhetDetails={
+  simile:{title:'比喻 🌊',color:'#d4522a',text:'把一个事物比作另一个事物，让描写更生动。\n\n标志词：像、是、好像、仿佛、犹如\n\n例句：弯弯的月亮<b>像</b>小船一样挂在天上。\n例句：她的头发<b>像</b>瀑布一样柔顺。'},
+  personify:{title:'拟人 🌸',color:'#3a6bc9',text:'把动物、植物、无生命的东西当作人来写，赋予它们人的动作、思想和感情。\n\n特征：用人的行为词语描写非人事物\n\n例句：小草悄悄地探出头来，<b>微笑</b>着迎接春天。'},
+  exagger:{title:'夸张 🚀',color:'#9b4dca',text:'故意对事物的特征进行夸大或缩小，让表达更有力。\n\n特征：明显不真实，但让人印象深刻\n\n例句：饿得能吃下一头牛！\n例句：他的眼泪流成了一条小河。'},
+  repeat:{title:'排比 🎵',color:'#2a7d4f',text:'三个或以上结构相似、语气一致的短语或句子排列在一起，增强语势。\n\n特征：结构相同，通常有重复的词语\n\n例句：爱是阳光，爱是春雨，爱是微笑。'},
+};
+
+const l1Qs=[
+  {sent:'弯弯的月亮<span class="keyword">像</span>一只小船，挂在夜空中。',q:'这句话使用了什么修辞手法？',opts:['比喻','拟人','夸张','排比'],ans:0,explain:'"像一只小船"是比喻，把月亮比作小船。'},
+  {sent:'春天来了，小花<span class="keyword">微笑着</span>探出头，迎接暖暖的阳光。',q:'这句话使用了什么修辞手法？',opts:['夸张','排比','比喻','拟人'],ans:3,explain:'"微笑着探出头"是把花当成人来写，是拟人手法。'},
+  {sent:'他饿得肚子<span class="keyword">咕噜咕噜</span>直叫，简直能吃下一头大象！',q:'这句话主要使用了什么修辞手法？',opts:['比喻','拟人','夸张','排比'],ans:2,explain:'"能吃下一头大象"明显是夸大表达，是夸张手法。'},
+  {sent:'<span class="keyword">我爱</span>蓝色的天空，<span class="keyword">我爱</span>碧绿的草原，<span class="keyword">我爱</span>美丽的祖国。',q:'这句话使用了什么修辞手法？',opts:['比喻','拟人','夸张','排比'],ans:3,explain:'三个"我爱…"结构相同，是排比手法，增强了感情的表达。'},
+];
+
+const l2Sets=[
+  {pairs:[
+    {sent:'荷叶是青蛙的大圆桌。',type:'比喻'},
+    {sent:'风儿唱着歌，跑过山岗。',type:'拟人'},
+    {sent:'他的书多得可以堆成一座山。',type:'夸张'},
+    {sent:'勤是摇钱树，勤是聚宝盆，勤是进步的阶梯。',type:'排比'},
+  ],types:['比喻','拟人','夸张','排比']},
+];
+
+const l3Qs=[
+  {sent:'他的脸<span class="hl-simile">红得像</span>苹果一样。',q:'这句话中，哪些词是比喻的标志？',opts:['"红得"','\"像…一样\"','\"他的脸"','整句话'],ans:1,explain:'"像…一样"是比喻的标志词，表示把脸比作苹果。'},
+  {sent:'大树<span class="hl-personify">弯下腰</span>，轻轻<span class="hl-personify">拍打</span>着小树苗说："别怕风雨。"',q:'哪些词体现了拟人手法？',opts:['"大树"','\"弯下腰""拍打""说"','\"小树苗"','\"别怕风雨"'],ans:1,explain:'"弯下腰""拍打""说"都是人的动作，用来描写大树，是拟人手法。'},
+  {sent:'他的力气<span class="hl-exagger">大得能推倒一座山</span>。',q:'这是什么修辞手法？这句话中夸大了什么？',opts:['夸张了身高','夸张了力气大','比喻山的高度','拟人了山'],ans:1,explain:'"能推倒一座山"夸大了力气，这是夸张手法。'},
+];
+
+const bossQs=[
+  {sent:'妈妈是我的<span class="hl-simile">太阳</span>，温暖着我的心；妈妈是我的<span class="hl-simile">港湾</span>，保护着我的梦想；妈妈是我的<span class="hl-simile">歌声</span>，伴随着我成长。',q:'这段话使用了哪种修辞手法？',opts:['只有比喻','只有排比','比喻＋排比','拟人＋夸张'],ans:2,explain:'三个"妈妈是我的…"是排比，同时"太阳""港湾""歌声"都是比喻，共同使用。'},
+  {sent:'书籍是人类进步的阶梯，是知识的宝库，是心灵的灯塔。',q:'这句话中"阶梯""宝库""灯塔"是什么修辞？',opts:['拟人','排比','比喻','夸张'],ans:2,explain:'"是阶梯""是宝库""是灯塔"都是把书籍比作具体事物，是比喻。同时也是排比结构，但主要的修辞是比喻。'},
+  {sent:'小雨点儿笑着跳下来，在荷叶上跳舞，叮叮咚咚地唱起了歌。',q:'这句话使用了什么修辞手法？',opts:['比喻','夸张','拟人','排比'],ans:2,explain:'"笑着""跳舞""唱起了歌"都是人的行为，用来描写雨点，是拟人手法。'},
+  {sent:'她的嗓音美极了，<span class="hl-exagger">整个山谷都被她的歌声震醒了</span>，小鸟们纷纷从巢中飞出来听歌。',q:'划线部分使用了什么修辞手法？',opts:['比喻','拟人','夸张','排比'],ans:2,explain:'"整个山谷都被她的歌声震醒了"明显是夸大了嗓音的力量，是夸张手法。'},
+  {sent:'长城是一条卧着的巨龙，蜿蜒在山岭之间，壮丽雄伟。',q:'"一条卧着的巨龙"是什么修辞手法？',opts:['夸张','拟人','比喻','排比'],ans:2,explain:'"是一条卧着的巨龙"把长城比作巨龙，是比喻手法。'},
+];
+
+const achs=[
+  {id:'first',icon:'🎯',name:'首战告捷',cond:s=>s.correct>=1},
+  {id:'l1s',icon:'🌟',name:'识别达人',cond:s=>s.stars.l1>=3},
+  {id:'l2s',icon:'🧩',name:'配对高手',cond:s=>s.stars.l2>=1},
+  {id:'l3s',icon:'🔑',name:'关键词猎人',cond:s=>s.stars.l3>=2},
+  {id:'boss',icon:'⚔️',name:'打败Boss',cond:s=>s.bossHP<=0},
+  {id:'s50',icon:'⭐',name:'优秀学生',cond:s=>s.score>=50},
+  {id:'s80',icon:'🏆',name:'修辞学霸',cond:s=>s.score>=80},
+  {id:'s100',icon:'👑',name:'修辞大师',cond:s=>s.score>=100},
+  {id:'combo',icon:'🔥',name:'五连正确',cond:s=>s.correct>=5},
+];
+
+function go(id){
+  click();
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  if(id==='level1')renderL1();
+  if(id==='level2')renderL2();
+  if(id==='level3')renderL3();
+  if(id==='boss')renderBoss();
+  if(id==='scorecard')renderScore();
+  updateProg();showAI(id);
+}
+function updateProg(){const p=Math.min(100,(S.total/14)*100);document.getElementById('main-prog').style.width=p+'%';document.getElementById('prog-t').textContent=S.total+' / 14';}
+function restart(){click();S={score:0,total:0,correct:0,l1i:0,l2i:0,l3i:0,bi:0,bossHP:5,achs:[],stars:{l1:0,l2:0,l3:0}};go('hero');}
+function achCheck(){achs.forEach(a=>{if(!S.achs.includes(a.id)&&a.cond(S))S.achs.push(a.id);});}
+
+const aiLines={hero:"嗨！我是小虫虫🐛，修辞小博士来啦！",objective:"了解目标，让学习更有方向！",warmup:"热身！认识4种修辞手法！",level1:"找修辞！看关键词：像=比喻，人的动作=拟人！",level2:"配对！把句子和修辞手法连起来！",level3:"找标志词！比喻有"像"，拟人有动作词！",boss:"Boss战！综合运用所有知识！",scorecard:"太棒了！看看你的成就！",expand:"试着用修辞手法造一个句子！"};
+let aiVis=false;
+function showAI(s){const t=aiLines[s]||"继续加油！";document.getElementById('ai-text').textContent=t;document.getElementById('ai-text').classList.add('on');aiVis=true;setTimeout(()=>{document.getElementById('ai-text').classList.remove('on');aiVis=false;},4000);}
+function toggleAI(){const b=document.getElementById('ai-text');if(aiVis){b.classList.remove('on');aiVis=false;}else{b.classList.add('on');aiVis=true;}}
+
+function showRhet(type,el){
+  const d=rhetDetails[type];
+  const detail=document.getElementById('rhet-detail');
+  detail.style.display='block';
+  detail.innerHTML=`<div style="font-weight:800;color:${d.color};margin-bottom:8px;">${d.title}</div><div>${d.text.replace(/\n/g,'<br>')}</div>`;
+  click();stars(el.getBoundingClientRect().left+40,el.getBoundingClientRect().top,4);
+}
+
+// L1
+let l1done=false;
+function renderL1(){
+  l1done=false;
+  const idx=S.l1i;if(idx>=l1Qs.length){go('level2');return;}
+  const q=l1Qs[idx];
+  document.getElementById('l1-card').innerHTML=`
+    <div style="font-size:0.82rem;color:#aaa;margin-bottom:8px;">题目${idx+1}/${l1Qs.length}</div>
+    <div class="sent-box">${q.sent}</div>
+    <div style="font-size:0.95rem;font-weight:700;margin-bottom:10px;">${q.q}</div>
+    <div class="opts" id="l1-opts">
+      ${q.opts.map((o,i)=>`<button class="opt" onclick="ansL1(${i},this)">${o}</button>`).join('')}
+    </div>
+    <div class="fb" id="l1-fb"></div>
+  `;
+  document.getElementById('l1-next').style.display='none';
+}
+function ansL1(i,el){
+  if(l1done)return;l1done=true;S.total++;
+  const q=l1Qs[S.l1i];
+  document.querySelectorAll('#l1-opts .opt').forEach(b=>b.disabled=true);
+  const fb=document.getElementById('l1-fb');
+  if(i===q.ans){el.classList.add('ok');fb.className='fb ok show';fb.textContent='✅ 正确！'+q.explain;S.score+=10;S.correct++;S.stars.l1++;ok();stars(el.getBoundingClientRect().left+30,el.getBoundingClientRect().top,5);}
+  else{el.classList.add('no');document.querySelectorAll('#l1-opts .opt')[q.ans].classList.add('ok');fb.className='fb no show';fb.textContent='❌ 再想想！'+q.explain;bad();}
+  document.getElementById('l1-next').style.display='block';
+}
+function nextL1(){S.l1i++;if(S.l1i>=l1Qs.length)go('level2');else renderL1();}
+
+// L2 MATCH
+let l2sel={left:null,right:null},l2pairs={},l2done=false;
+function renderL2(){
+  l2done=false;l2sel={left:null,right:null};l2pairs={};
+  const idx=S.l2i;if(idx>=l2Sets.length){go('level3');return;}
+  const set=l2Sets[idx];
+  const shuffledSents=[...set.pairs].sort(()=>Math.random()-0.5);
+  const shuffledTypes=[...set.types].sort(()=>Math.random()-0.5);
+  document.getElementById('l2-card').innerHTML=`
+    <div style="font-size:0.82rem;color:#aaa;margin-bottom:8px;">点击左边的句子，再点击右边的修辞手法，进行配对</div>
+    <div class="match-grid">
+      <div class="match-col" id="sents-col">
+        ${shuffledSents.map((p,i)=>`<div class="match-item" id="sent-${i}" data-sent="${p.type}" onclick="selectMatch('left','sent-${i}','${p.type}')">${p.sent}</div>`).join('')}
+      </div>
+      <div class="match-col" id="types-col">
+        ${shuffledTypes.map((t,i)=>`<div class="match-item" id="type-${i}" data-type="${t}" onclick="selectMatch('right','type-${i}','${t}')">${t}</div>`).join('')}
+      </div>
+    </div>
+    <div class="fb" id="l2-fb"></div>
+  `;
+  document.getElementById('l2-check').style.display='block';
+  document.getElementById('l2-next').style.display='none';
+}
+let l2lastLeft=null;
+function selectMatch(side,id,val){
+  click();
+  if(side==='left'){
+    if(l2lastLeft)document.getElementById(l2lastLeft).classList.remove('selected');
+    l2lastLeft=id;document.getElementById(id).classList.add('selected');l2sel.left={id,val};
+  } else {
+    if(l2sel.left){
+      l2pairs[l2sel.left.val]=val;
+      document.getElementById(l2sel.left.id).classList.remove('selected');
+      document.getElementById(l2sel.left.id).classList.add('matched');
+      document.getElementById(id).classList.add('matched');
+      l2lastLeft=null;l2sel.left=null;
+    }
+  }
+}
+function checkL2(){
+  S.total++;
+  const set=l2Sets[S.l2i];
+  let c=0;
+  set.pairs.forEach(p=>{if(l2pairs[p.type]===p.type)c++;});
+  const fb=document.getElementById('l2-fb');
+  if(c===set.pairs.length){fb.className='fb ok show';fb.textContent='✅ 全部配对正确！';S.score+=15;S.correct++;S.stars.l2++;ok();stars(300,300,8);}
+  else{fb.className='fb no show';fb.textContent=`❌ 配对了${c}/${set.pairs.length}个正确，继续努力！`;bad();}
+  document.getElementById('l2-check').style.display='none';
+  document.getElementById('l2-next').style.display='block';
+}
+function nextL2(){S.l2i++;if(S.l2i>=l2Sets.length)go('level3');else renderL2();}
+
+// L3
+let l3done=false;
+function renderL3(){
+  l3done=false;
+  const idx=S.l3i;if(idx>=l3Qs.length){go('boss');return;}
+  const q=l3Qs[idx];
+  document.getElementById('l3-card').innerHTML=`
+    <div style="font-size:0.82rem;color:#aaa;margin-bottom:8px;">题目${idx+1}/${l3Qs.length}</div>
+    <div class="sent-box">${q.sent}</div>
+    <div style="font-size:0.95rem;font-weight:700;margin-bottom:10px;">${q.q}</div>
+    <div class="opts" id="l3-opts">
+      ${q.opts.map((o,i)=>`<button class="opt" onclick="ansL3(${i},this)">${o}</button>`).join('')}
+    </div>
+    <div class="fb" id="l3-fb"></div>
+  `;
+  document.getElementById('l3-next').style.display='none';
+}
+function ansL3(i,el){
+  if(l3done)return;l3done=true;S.total++;
+  const q=l3Qs[S.l3i];
+  document.querySelectorAll('#l3-opts .opt').forEach(b=>b.disabled=true);
+  const fb=document.getElementById('l3-fb');
+  if(i===q.ans){el.classList.add('ok');fb.className='fb ok show';fb.textContent='✅ 正确！'+q.explain;S.score+=12;S.correct++;S.stars.l3++;ok();stars(300,300,6);}
+  else{el.classList.add('no');document.querySelectorAll('#l3-opts .opt')[q.ans].classList.add('ok');fb.className='fb no show';fb.textContent='❌ '+q.explain;bad();}
+  document.getElementById('l3-next').style.display='block';
+}
+function nextL3(){S.l3i++;if(S.l3i>=l3Qs.length)go('boss');else renderL3();}
+
+// BOSS
+let bossD=false;
+function renderBoss(){
+  bossD=false;
+  const idx=S.bi;if(idx>=bossQs.length||S.bossHP<=0){endBoss();return;}
+  const q=bossQs[idx];
+  document.getElementById('boss-sent').innerHTML=q.sent;
+  document.getElementById('boss-q').textContent=q.q;
+  document.getElementById('boss-opts').innerHTML=q.opts.map((o,i)=>`<button class="opt" onclick="ansBoss(${i},this)">${o}</button>`).join('');
+  document.getElementById('boss-fb').className='fb';
+  document.getElementById('boss-next').style.display='none';
+  document.getElementById('bhp-bar').style.width=(S.bossHP/5*100)+'%';
+  document.getElementById('bhp-num').textContent='❤️ '+S.bossHP;
+}
+function ansBoss(i,el){
+  if(bossD)return;bossD=true;S.total++;
+  const q=bossQs[S.bi];
+  document.querySelectorAll('#boss-opts .opt').forEach(b=>b.disabled=true);
+  const fb=document.getElementById('boss-fb');
+  if(i===q.ans){
+    el.classList.add('ok');fb.className='fb ok show';fb.textContent='⚔️ 命中！'+q.explain;
+    S.bossHP--;S.score+=15;S.correct++;ok();stars(300,200,8);
+    document.getElementById('bhp-bar').style.width=(S.bossHP/5*100)+'%';
+    document.getElementById('bhp-num').textContent='❤️ '+S.bossHP;
+    if(S.bossHP<=0){setTimeout(()=>{win();endBoss();},1200);return;}
+  } else {
+    el.classList.add('no');document.querySelectorAll('#boss-opts .opt')[q.ans].classList.add('ok');
+    fb.className='fb no show';fb.textContent='💥 被反击！'+q.explain;bad();
+  }
+  document.getElementById('boss-next').style.display='block';
+}
+function nextBoss(){S.bi++;bossD=false;if(S.bi>=bossQs.length)endBoss();else renderBoss();}
+function endBoss(){achCheck();go('scorecard');}
+
+function renderScore(){
+  achCheck();win();
+  document.getElementById('final-score').textContent=S.score;
+  const cs=[[90,'🏆 修辞大师！完美通关！'],[70,'🌟 非常优秀！'],[50,'😊 良好！继续加油！'],[0,'💪 再练练，你一定行！']];
+  const c=cs.find(([n])=>S.score>=n);
+  document.getElementById('score-comment').textContent=c?c[1]:'';
+  document.getElementById('ach-grid').innerHTML=achs.map(a=>`<div class="ach ${S.achs.includes(a.id)?'on':''}"><div class="ach-i">${a.icon}</div><div class="ach-n">${a.name}</div></div>`).join('');
+}
+
+let selectedRhetType='';
+function selectRhetType(type,el){
+  click();selectedRhetType=type;
+  document.querySelectorAll('#expand .btn:not(.btn-p)').forEach(b=>b.style.background='');
+  el.style.background=var_map[type]||'var(--accent)';
+  const hints={比喻:'提示：用"像""是"把甲比作乙',拟人:'提示：给事物赋予人的动作或感情',夸张:'提示：故意夸大或缩小某种特征',排比:'提示：写三个结构相同的短句'};
+  document.getElementById('expand-hint').textContent=hints[type]||'';
+}
+const var_map={比喻:'rgba(252,182,159,0.5)',拟人:'rgba(162,193,253,0.5)',夸张:'rgba(251,194,235,0.5)',排比:'rgba(150,230,161,0.5)'};
+function submitExpand(){
+  const v=document.getElementById('my-sent').value.trim();
+  const r=document.getElementById('expand-result');
+  r.style.display='block';
+  if(!selectedRhetType){r.innerHTML='<span style="color:red">请先选择修辞手法！</span>';return;}
+  if(v.length<5){r.innerHTML='<span style="color:red">请写一个完整的句子！</span>';return;}
+  r.innerHTML=`<span style="color:var(--secondary)">✅ 棒极了！你用${selectedRhetType}造了一个句子！继续练习！⭐</span>`;
+  S.score+=5;ok();stars(300,400,8);
+}
+</script>
+</body>
+</html>
