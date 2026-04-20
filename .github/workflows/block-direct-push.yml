@@ -1,0 +1,185 @@
+name: Block Direct Push to examples/
+
+# ============================================================
+# TeachAny v5.34.10 第二层护栏
+# ------------------------------------------------------------
+# 本 workflow 在 push 事件触发，检测本次 push 是否对 examples/ 下
+# 的课件做了"直推"（不经过 PR、不是 github-actions[bot] 生成、
+# 也没有 TeachAny-Promote commit trailer）。
+#
+# 一旦检测到直推：
+#   1. workflow 直接失败（红叉）
+#   2. 自动开 issue 提醒仓库维护者
+#
+# 合法绕过：
+#   • 该 commit 是 github-actions[bot] 生成（由 auto-merge /
+#     admin-promote 等 bot workflow 产生）
+#   • commit message 含 `TeachAny-Promote:` trailer（由
+#     scripts/promote-community.py 写入）
+#   • push 是 merge commit（来自 PR 合并）
+#
+# 注意：本 workflow 是事后拦截——它无法"阻止" push 落地，
+# 但能让整个提交链打红叉，便于快速察觉并回滚。真正的事前
+# 拦截在本地 `scripts/pre-push.sh`。
+# ============================================================
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'examples/**'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check-direct-push:
+    name: Verify push is through legal channel
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Inspect pushed commits
+        id: check
+        env:
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.event.after }}
+          PUSHER: ${{ github.event.pusher.name }}
+        run: |
+          set -e
+          echo "Pusher: $PUSHER"
+          echo "Range : $BEFORE..$AFTER"
+
+          # 初始 push（before 为 0000...）——取第一个 commit 之后的全部
+          if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            # 拿全部 commit
+            commits=$(git log --format='%H' "$AFTER" -- 'examples/**' | head -50)
+          else
+            commits=$(git log --format='%H' "$BEFORE..$AFTER" -- 'examples/**')
+          fi
+
+          if [ -z "$commits" ]; then
+            echo "✅ 本次 push 未涉及 examples/，跳过"
+            echo "violation=0" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "涉及 examples/ 的 commits:"
+          echo "$commits"
+
+          violations=""
+          for sha in $commits; do
+            subject=$(git log -1 --format='%s' "$sha")
+            author=$(git log -1 --format='%an' "$sha")
+            email=$(git log -1 --format='%ae' "$sha")
+            parents=$(git log -1 --format='%P' "$sha" | wc -w | tr -d ' ')
+
+            # 1. bot 生成的 commit 放行
+            if echo "$author$email" | grep -qE 'github-actions\[bot\]|41898282\+github-actions'; then
+              echo "  [$sha] ✅ bot commit (author=$author)"
+              continue
+            fi
+
+            # 2. merge commit（来自 PR 合并，parents ≥ 2）放行
+            if [ "$parents" -ge 2 ]; then
+              echo "  [$sha] ✅ merge commit (parents=$parents)"
+              continue
+            fi
+
+            # 3. 带 TeachAny-Promote trailer 的放行
+            if git log -1 --format='%B' "$sha" | grep -qE '^TeachAny-Promote:[[:space:]]+'; then
+              trailer=$(git log -1 --format='%B' "$sha" | grep -E '^TeachAny-Promote:[[:space:]]+' | head -1)
+              echo "  [$sha] ✅ promote trailer ($trailer)"
+              continue
+            fi
+
+            # 4. 以上都不是 = 直推，违规
+            echo "  [$sha] ❌ direct push! author=$author subject=$subject"
+            violations="$violations$sha|$author|$subject\n"
+          done
+
+          if [ -n "$violations" ]; then
+            echo "violation=1" >> $GITHUB_OUTPUT
+            printf "%b" "$violations" > /tmp/violations.txt
+            exit 1
+          else
+            echo "violation=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Open issue on violation
+        if: failure() && steps.check.outputs.violation == '1'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let violations = '';
+            try {
+              violations = fs.readFileSync('/tmp/violations.txt', 'utf8').trim();
+            } catch (e) {}
+
+            const pusher = context.payload.pusher ? context.payload.pusher.name : 'unknown';
+            const rows = violations
+              .split('\n')
+              .filter(Boolean)
+              .map(line => {
+                const [sha, author, ...rest] = line.split('|');
+                return `| \`${sha.slice(0, 10)}\` | ${author} | ${rest.join('|')} |`;
+              })
+              .join('\n');
+
+            const body = [
+              '## 🚨 检测到 examples/ 目录的直接推送',
+              '',
+              `**推送者**: @${pusher}`,
+              `**commit 范围**: ${context.payload.before}..${context.payload.after}`,
+              '',
+              '### 违规 commit',
+              '',
+              '| SHA | Author | Subject |',
+              '|-----|--------|---------|',
+              rows || '| (详见 Actions 日志) | | |',
+              '',
+              '### TeachAny v5.34.10 起的强制规则',
+              '',
+              '`examples/` 下的官方课件**只能**通过以下两条通道进入仓库：',
+              '',
+              '1. **用户侧 skill 上传**：',
+              '   ```',
+              '   python3 scripts/submit-to-community.py <course-id>',
+              '   ```',
+              '   → 课件会落在 `community/`，由心标排序；管理员后续可升级。',
+              '',
+              '2. **管理员升级通道（未来独立命令实现）**：',
+              '   把社区课件升级为官方课件的动作，不在本仓库内提供脚本——',
+              '   管理员会通过独立 CLI 命令完成，该命令会自动在 commit',
+              '   message 末尾写入：',
+              '   ```',
+              '   TeachAny-Promote: <course-id>',
+              '   ```',
+              '   trailer。本 workflow 与 `scripts/pre-push.sh` 识别到该',
+              '   trailer 后即放行。',
+              '',
+              '### 补救方式',
+              '',
+              '- **立刻回滚**：',
+              '  ```',
+              `  git revert ${context.payload.after} && git push`,
+              '  ```',
+              '- **或**：把被直推的课件先从 `examples/` 移到 `community/drafts/`，',
+              '  再走标准流程（submit-to-community.py）重新提交。',
+              '',
+              '---',
+              '*本 issue 由 `.github/workflows/block-direct-push.yml` 自动开立。*',
+            ].join('\n');
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Direct push to examples/ detected (${context.payload.after.slice(0, 8)})`,
+              body,
+              labels: ['security', 'direct-push-violation'],
+            });

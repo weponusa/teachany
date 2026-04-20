@@ -5,6 +5,47 @@
 
 ---
 
+## 零、课件入库通道（v5.34.10 起强制）
+
+**`examples/` 下的官方课件只能通过两条合法通道落入本仓库：**
+
+1. **用户 skill 上传（默认路径，99% 场景走这条）**  
+   用户侧 AI 跑 `python3 scripts/submit-to-community.py <id>`，课件经过
+   Cloudflare Worker → PR → auto-merge 后合并进 `community/`，由
+   `github-actions[bot]` 完成最终 commit。
+
+2. **管理员升级通道（独立命令，后续实现）**  
+   把社区课件"翻牌"为官方课件的动作，**不在本仓库内提供脚本**，由独立
+   的管理员 CLI 命令完成。该命令在升级时必须在 commit message 末尾追加
+   Git trailer：
+   ```
+   TeachAny-Promote: <course-id>
+   TeachAny-Promote-Reason: <可选理由>
+   ```
+   本地 `scripts/pre-push.sh` 与 `.github/workflows/block-direct-push.yml`
+   识别到该 trailer 后放行。
+
+**双层护栏**：
+
+- **本地**：`scripts/pre-push.sh` 在 `git push` 前扫描本次 push 涉及
+  `examples/` 的 commit，若既不是 bot commit、也不是 merge commit、也没有
+  `TeachAny-Promote:` trailer，立即拒绝 push。
+- **服务端**：`.github/workflows/block-direct-push.yml` 在 push 到 main 后
+  独立再校验，发现直推即打红叉 + 自动开一条 `direct-push-violation` 标签
+  的 issue 提醒回滚。
+
+**紧急绕过**（仅 owner 非课件 hotfix）：
+```bash
+TEACHANY_ADMIN_BYPASS=1 git push   # 只免除本地 hook，服务端 workflow 仍会校验
+```
+⚠️ 该绕过**不免除服务端拦截**——若绕过时仍动到 `examples/`，照样打红叉。
+
+**本文档的"审核"是什么**：自 v5.34.9 起人工审核不是默认路径，质检通过即
+合并。本清单主要用于**管理员把社区课件升级为官方课件前的合规复核**，
+以及**出现违规直推时的回滚决策**。
+
+---
+
 ## 一、自动化扫描（必须通过）
 
 在审核 PR 前，先运行自动安全扫描：
@@ -162,4 +203,4 @@ node security-scan.cjs --strict
 
 ---
 
-*最后更新：2026-04-15*
+*最后更新：2026-04-20（v5.34.10 · 新增 `examples/` 禁直推通道条款）*

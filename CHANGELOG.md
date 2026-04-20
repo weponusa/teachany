@@ -4,6 +4,67 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased] - SKILL v5.34.10 - 2026-04-20
+
+### 🔒 Security — `examples/` 禁止任何形式的直推
+
+彻底关闭"管理员直推官方课件"通道。自本版本起，`examples/<id>/` 下的任何创建/
+修改/删除操作只允许通过以下两条合法通道产生：
+
+1. **用户 skill 上传**（99% 默认路径）：`python3 scripts/submit-to-community.py <id>`
+   → Cloudflare Worker → PR → auto-merge，由 `github-actions[bot]` 完成最终 commit。
+2. **管理员升级通道**（独立命令，后续实现）：升级命令须在 commit message 末尾追加
+   Git trailer `TeachAny-Promote: <course-id>`，pre-push hook 与 CI workflow 识别
+   该 trailer 后放行。**本仓库刻意不内置升级脚本**，以避免与用户 skill 上传通道混用。
+
+**双层护栏**：
+
+- **本地**：`scripts/pre-push.sh` 升级为 v5.34.10——对本次 push 涉及 `examples/` 的
+  每个 commit 做白名单校验（bot commit / merge commit / 带 `TeachAny-Promote:`
+  trailer），命中直推立即 exit 1 拒绝 push。
+- **服务端**：新增 `.github/workflows/block-direct-push.yml`——push 到 main 后独立
+  再校验一次，发现直推即打红叉 + 自动开一条 `direct-push-violation` 标签的 issue
+  提醒回滚。
+
+**紧急绕过**（仅 owner、仅非课件 hotfix）：`TEACHANY_ADMIN_BYPASS=1 git push`
+只免除本地 hook，服务端 workflow 仍会独立校验——若该 push 仍动到 `examples/`
+则照样打红叉。
+
+### ✏️ Changed
+
+- **`scripts/pre-push.sh`**：从"仅校验 validator"升级为"直推拦截 + validator"双阶段。
+  新增 `TEACHANY_ADMIN_BYPASS=1` 超级绕过开关与 `TeachAny-Promote:` trailer 识别。
+- **`skill/SKILL_CN.md`**：硬规则从 47 条扩充至 49 条；
+  - 修订硬规则 #48：删除旧的"AI 三重门条件 A/B/C 可把课件从 drafts 搬到 examples"
+    条款（与 #49 冲突），补充"新课件 registry.json status=official 由 #49 规定的
+    管理员独立升级命令唯一写入"。
+  - 新增硬规则 #49：`examples/` 禁止任何形式的直推；明确双层护栏、紧急绕过的
+    严格边界、AI 绝对禁止行为（教用户绕过 hook / 伪造 trailer / 卸载 hook /
+    给 workflow 加 paths-ignore 等）；声明 `TeachAny-Promote:` trailer 为公开的
+    管理员升级协议。
+- **`ADMIN_REVIEW.md`**：新增零节《课件入库通道》，明确两条合法路径、双层护栏与
+  紧急绕过边界；修订文档定位为"升级复核 + 违规回滚决策"。
+
+### 🆕 Added
+
+- **`.github/workflows/block-direct-push.yml`**：服务端禁直推 workflow，对 push
+  到 `main` 分支的 `examples/**` 变更做白名单校验，违规时自动开 issue 报警。
+
+### 🧪 Tested
+
+- `scripts/pre-push.sh` 本地干跑：bot commit / merge commit / 带 `TeachAny-Promote:`
+  trailer 的 commit 均放行；普通 owner commit 直接被拒绝。
+- workflow YAML 语法本地解析通过。
+
+### 📌 Note
+
+- 本版本**不提供**任何"把社区课件升级为官方课件"的脚本——该能力将由未来独立的
+  管理员 CLI / slash command 实现，以保持"上传"与"升级"两条通道彻底分离。
+- 现有 `.github/workflows/admin-promote.yml` 依然保留（它本就是通过 PR label
+  触发、由 `github-actions[bot]` 提交，天然满足 #49 的白名单）。
+
+---
+
 ## [Unreleased] - SKILL v5.34 - 2026-04-19
 
 ### ✨ Added — AI 学伴悬浮球（强制基线）+ PPTX 导出（可选）
