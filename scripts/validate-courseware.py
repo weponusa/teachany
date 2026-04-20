@@ -96,8 +96,22 @@ def detect_html_level(html_head):
 def validate_one(course_dir):
     mf = course_dir / 'manifest.json'
     html = course_dir / 'index.html'
+    errors = []
+
+    # ⭐ v5.34.9.2: 无 manifest.json 直接 error（发布阻断）
+    # 根因：2026-04-20 发现 science-genetics-variation-intro 课件没 manifest，
+    # 老逻辑只给个 warn 然后 return，导致后续 47 条硬规则全部跳过，形成"裸 HTML
+    # 绕过质检"漏洞。
     if not mf.exists():
-        return [('warn', f'{course_dir.name}: 无 manifest.json')]
+        errors.append(('error', f'{course_dir.name}: 缺少 manifest.json '
+                               f'（硬规则 #18 强制 · 发布阻断 · 须含 name/subject/grade/node_id/teachany_version）'))
+        # 即便缺 manifest，也继续检查 HTML 是否存在，给用户一次性反馈
+    if not html.exists():
+        errors.append(('error', f'{course_dir.name}: 缺少 index.html（硬规则 #21 强制）'))
+    # manifest 和 html 都缺就直接返回
+    if not mf.exists():
+        return errors
+
     m = json.load(open(mf, encoding='utf-8'))
     mg = m.get('grade')
     ms = m.get('subject')
@@ -106,7 +120,7 @@ def validate_one(course_dir):
     # v5.30：curriculum 字段决定校验规则集；默认 cn-national（向下兼容）
     mc = m.get('curriculum', 'cn-national')
 
-    issues = []
+    issues = list(errors)  # v5.34.9.2: 把早期错误（如 html 缺失）合并进主返回列表
 
     # v5.30：国际课标体系走独立校验路径（ID 前缀、年级范围、HTML 线索关键词都不同）
     if mc != 'cn-national':
