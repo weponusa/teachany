@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>圆的周长和面积 - 六年级数学</title>
+<style>
+:root {
+  --bg: #fffbf0;
+  --primary: #ff6b6b;
+  --secondary: #4ecdc4;
+  --accent: #ffe66d;
+  --card: #fff;
+  --purple: #a29bfe;
+  --orange: #fd79a8;
+  --green: #55efc4;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); font-family: 'Microsoft YaHei', sans-serif; overflow-x: hidden; }
+
+/* Navigation */
+.nav { background: linear-gradient(135deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3);
+  padding: 10px 20px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+  position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+.nav-btn { background: rgba(255,255,255,0.9); border: none; border-radius: 20px;
+  padding: 6px 16px; cursor: pointer; font-size: 14px; font-weight: bold;
+  transition: all 0.3s; color: #333; }
+.nav-btn:hover, .nav-btn.active { background: #fff; transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+
+/* Sections */
+.section { display: none; min-height: 100vh; padding: 20px; }
+.section.active { display: block; }
+
+/* Hero */
+.hero { text-align: center; padding: 60px 20px; background: linear-gradient(135deg, #ffecd2, #fcb69f);
+  border-radius: 30px; margin-bottom: 30px; }
+.hero h1 { font-size: 3em; background: linear-gradient(135deg, #ff6b6b, #feca57, #48dbfb);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  animation: bounce 1s infinite alternate; }
+@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-10px); } }
+.hero p { font-size: 1.3em; color: #666; margin-top: 15px; }
+.hero-emoji { font-size: 80px; display: block; margin-bottom: 20px; animation: spin 4s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* Cards */
+.card { background: var(--card); border-radius: 20px; padding: 25px; margin: 15px 0;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.1); border: 3px solid transparent;
+  background-clip: padding-box; transition: transform 0.3s; }
+.card:hover { transform: translateY(-5px); }
+.card-rainbow { border-image: linear-gradient(135deg, #ff6b6b, #feca57, #48dbfb) 1; border: 3px solid; border-radius: 20px; }
+
+h2 { font-size: 1.8em; background: linear-gradient(135deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  margin-bottom: 15px; }
+h3 { font-size: 1.3em; color: var(--primary); margin-bottom: 10px; }
+
+/* Formula Box */
+.formula-box { background: linear-gradient(135deg, #667eea, #764ba2); color: white;
+  border-radius: 20px; padding: 20px; text-align: center; font-size: 1.5em;
+  font-weight: bold; margin: 15px 0; box-shadow: 0 8px 20px rgba(102,126,234,0.4); }
+
+/* Buttons */
+.btn { background: linear-gradient(135deg, var(--primary), var(--orange));
+  color: white; border: none; border-radius: 25px; padding: 12px 30px;
+  font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s;
+  box-shadow: 0 6px 20px rgba(255,107,107,0.4); }
+.btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(255,107,107,0.5); }
+.btn-green { background: linear-gradient(135deg, var(--secondary), var(--green)); }
+.btn-purple { background: linear-gradient(135deg, var(--purple), #6c5ce7); }
+
+/* Canvas container */
+.canvas-container { display: flex; justify-content: center; margin: 20px 0; }
+canvas { border-radius: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); }
+
+/* Quiz */
+.quiz-option { background: #f8f9fa; border: 3px solid #e9ecef; border-radius: 15px;
+  padding: 15px 20px; margin: 8px 0; cursor: pointer; font-size: 16px; transition: all 0.3s; }
+.quiz-option:hover { border-color: var(--secondary); background: #e8f8f7; transform: translateX(5px); }
+.quiz-option.correct { border-color: #55efc4; background: #d5f9f0; }
+.quiz-option.wrong { border-color: var(--primary); background: #ffe3e3; }
+
+/* Stars */
+.stars-display { position: fixed; top: 60px; right: 20px; background: linear-gradient(135deg, #ffd700, #ffb347);
+  border-radius: 25px; padding: 10px 20px; font-size: 18px; font-weight: bold;
+  box-shadow: 0 4px 15px rgba(255,200,0,0.4); z-index: 99; }
+
+/* Achievement popup */
+.achievement-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
+  background: linear-gradient(135deg, #ffd700, #ffb347); border-radius: 25px;
+  padding: 30px 40px; text-align: center; z-index: 200; transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+.achievement-popup.show { transform: translate(-50%, -50%) scale(1); }
+
+/* AI Buddy */
+.ai-buddy { position: fixed; bottom: 20px; right: 20px; z-index: 150; }
+.buddy-avatar { width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+  display: flex; align-items: center; justify-content: center; font-size: 35px; cursor: pointer;
+  box-shadow: 0 8px 25px rgba(162,155,254,0.5); animation: buddy-bounce 2s ease-in-out infinite;
+  border: 3px solid white; }
+@keyframes buddy-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.buddy-speech { position: absolute; bottom: 80px; right: 0; background: white; border-radius: 20px;
+  padding: 15px 20px; width: 250px; box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  display: none; font-size: 14px; line-height: 1.5; border: 2px solid var(--secondary); }
+.buddy-speech::after { content: ''; position: absolute; bottom: -15px; right: 20px;
+  border: 8px solid transparent; border-top-color: white; }
+.buddy-speech.show { display: block; }
+
+/* Progress bar */
+.progress-bar { background: #f0f0f0; border-radius: 10px; height: 12px; margin: 10px 0; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb);
+  border-radius: 10px; transition: width 0.5s ease; }
+
+/* Input */
+input[type="number"] { border: 3px solid var(--secondary); border-radius: 15px; padding: 12px 20px;
+  font-size: 16px; width: 150px; text-align: center; outline: none; }
+input[type="number"]:focus { border-color: var(--primary); box-shadow: 0 0 15px rgba(255,107,107,0.3); }
+
+/* Scoreboard */
+.score-card { background: linear-gradient(135deg, #ffd700, #ffb347); border-radius: 25px;
+  padding: 30px; text-align: center; font-size: 1.5em; font-weight: bold; color: white; }
+.score-item { margin: 10px 0; font-size: 1.1em; }
+
+/* Range slider */
+input[type="range"] { -webkit-appearance: none; width: 200px; height: 8px; border-radius: 5px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary)); outline: none; cursor: pointer; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 25px; height: 25px;
+  border-radius: 50%; background: var(--accent); cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,0.2); }
+
+/* Tabs */
+.tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.tab { background: #f0f0f0; border: none; border-radius: 20px; padding: 8px 20px;
+  cursor: pointer; font-size: 14px; transition: all 0.3s; }
+.tab.active { background: linear-gradient(135deg, var(--primary), var(--orange)); color: white; }
+
+.feedback { border-radius: 15px; padding: 15px; margin: 10px 0; font-size: 1.1em; font-weight: bold; }
+.feedback.correct { background: #d5f9f0; color: #00b894; border: 2px solid #00b894; }
+.feedback.wrong { background: #ffe3e3; color: #d63031; border: 2px solid #d63031; }
+
+.highlight { background: var(--accent); border-radius: 8px; padding: 2px 8px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } .hero h1 { font-size: 2em; } }
+</style>
+</head>
+<body>
+
+<div class="nav" id="nav">
+  <button class="nav-btn active" onclick="showSection('hero')">🏠 首页</button>
+  <button class="nav-btn" onclick="showSection('goals')">🎯 目标</button>
+  <button class="nav-btn" onclick="showSection('warmup')">🔥 热身</button>
+  <button class="nav-btn" onclick="showSection('level1')">⭐ 关卡1</button>
+  <button class="nav-btn" onclick="showSection('level2')">⭐⭐ 关卡2</button>
+  <button class="nav-btn" onclick="showSection('level3')">⭐⭐⭐ 关卡3</button>
+  <button class="nav-btn" onclick="showSection('boss')">👾 Boss关</button>
+  <button class="nav-btn" onclick="showSection('scoreboard')">🏆 成绩单</button>
+  <button class="nav-btn" onclick="showSection('extend')">🚀 拓展</button>
+</div>
+
+<div class="stars-display">⭐ <span id="star-count">0</span></div>
+
+<!-- Hero Section -->
+<div class="section active" id="hero">
+  <div class="hero">
+    <span class="hero-emoji">⭕</span>
+    <h1>圆的周长和面积</h1>
+    <p>六年级数学 · 探索神奇的圆形世界！</p>
+    <br>
+    <button class="btn" onclick="showSection('goals')">开始冒险 🚀</button>
+  </div>
+  <div class="card card-rainbow">
+    <h2>🎮 游戏说明</h2>
+    <p>完成每个关卡可以收集⭐星星，解锁成就徽章！你能通关所有挑战吗？</p>
+    <div class="progress-bar" style="margin-top:15px">
+      <div class="progress-fill" id="total-progress" style="width:0%"></div>
+    </div>
+    <p style="text-align:center; margin-top:5px; color:#666">总体进度: <span id="progress-text">0%</span></p>
+  </div>
+</div>
+
+<!-- Goals Section -->
+<div class="section" id="goals">
+  <div class="card card-rainbow">
+    <h2>🎯 今天的学习目标</h2>
+    <div class="card" style="border-left: 5px solid var(--primary);">
+      <h3>✅ 我能学会：</h3>
+      <ul style="font-size:1.1em; line-height:2.2; padding-left:20px;">
+        <li>认识圆周率 π 是什么</li>
+        <li>用公式 <span class="highlight">C = 2πr</span> 计算圆的周长</li>
+        <li>用公式 <span class="highlight">S = πr²</span> 计算圆的面积</li>
+        <li>解决实际生活中关于圆的问题</li>
+      </ul>
+    </div>
+    <div class="formula-box">
+      圆周率 π ≈ 3.14
+    </div>
+    <div class="grid-2">
+      <div class="formula-box" style="background: linear-gradient(135deg, #ff6b6b, #fd79a8);">
+        周长公式<br>C = 2πr = πd
+      </div>
+      <div class="formula-box" style="background: linear-gradient(135deg, #4ecdc4, #48dbfb);">
+        面积公式<br>S = πr²
+      </div>
+    </div>
+  </div>
+  <button class="btn" onclick="showSection('warmup')">继续 ➡️</button>
+</div>
+
+<!-- Warmup Section -->
+<div class="section" id="warmup">
+  <div class="card card-rainbow">
+    <h2>🔥 热身：认识圆周率</h2>
+    <p style="font-size:1.1em; margin-bottom:20px;">拖动滑块改变圆的半径，观察周长和面积的变化！</p>
+    <div style="text-align:center; margin:20px 0;">
+      <label style="font-size:1.1em; font-weight:bold">半径 r = <span id="radius-val">5</span> cm</label><br><br>
+      <input type="range" id="radius-slider" min="1" max="10" value="5" oninput="updateCircle()">
+    </div>
+    <div class="canvas-container">
+      <canvas id="circle-canvas" width="350" height="350"></canvas>
+    </div>
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card" style="background: linear-gradient(135deg, #ffecd2, #fcb69f); text-align:center;">
+        <h3>周长</h3>
+        <div style="font-size:1.8em; font-weight:bold; color:var(--primary)" id="circ-val">31.40 cm</div>
+        <div style="color:#666">C = 2 × 3.14 × <span id="circ-r">5</span></div>
+      </div>
+      <div class="card" style="background: linear-gradient(135deg, #a1c4fd, #c2e9fb); text-align:center;">
+        <h3>面积</h3>
+        <div style="font-size:1.8em; font-weight:bold; color:#6c5ce7" id="area-val">78.50 cm²</div>
+        <div style="color:#666">S = 3.14 × <span id="area-r">5</span>²</div>
+      </div>
+    </div>
+    <div style="margin-top:20px">
+      <button class="btn btn-green" onclick="playUnrollAnimation()">▶️ 播放「展开动画」</button>
+    </div>
+    <div class="canvas-container" style="margin-top:10px">
+      <canvas id="unroll-canvas" width="500" height="200"></canvas>
+    </div>
+  </div>
+  <button class="btn" onclick="addStars(2); showSection('level1')">热身完成！继续 ➡️ (+2⭐)</button>
+</div>
+
+<!-- Level 1 -->
+<div class="section" id="level1">
+  <div class="card card-rainbow">
+    <h2>⭐ 关卡一：计算周长</h2>
+    <p style="font-size:1.1em; margin-bottom:20px;">用公式 <span class="highlight">C = 2πr</span> 计算下面各圆的周长（π取3.14）</p>
+    <div id="l1-questions"></div>
+    <button class="btn" id="l1-check-btn" onclick="checkLevel1()">检查答案 ✅</button>
+    <div id="l1-feedback"></div>
+  </div>
+</div>
+
+<!-- Level 2 -->
+<div class="section" id="level2">
+  <div class="card card-rainbow">
+    <h2>⭐⭐ 关卡二：计算面积</h2>
+    <p style="font-size:1.1em; margin-bottom:20px;">用公式 <span class="highlight">S = πr²</span> 计算下面各圆的面积（π取3.14）</p>
+    <div id="l2-questions"></div>
+    <button class="btn" id="l2-check-btn" onclick="checkLevel2()">检查答案 ✅</button>
+    <div id="l2-feedback"></div>
+  </div>
+</div>
+
+<!-- Level 3 -->
+<div class="section" id="level3">
+  <div class="card card-rainbow">
+    <h2>⭐⭐⭐ 关卡三：判断题挑战</h2>
+    <div id="l3-quiz"></div>
+  </div>
+</div>
+
+<!-- Boss Level -->
+<div class="section" id="boss">
+  <div class="card card-rainbow">
+    <h2>👾 Boss关：生活中的圆</h2>
+    <div class="card" style="background: linear-gradient(135deg, #ffecd2, #fcb69f);">
+      <h3>🎯 应用题大挑战</h3>
+      <div id="boss-problem"></div>
+    </div>
+    <canvas id="boss-canvas" width="400" height="300" style="display:block; margin:20px auto; border-radius:15px; box-shadow: 0 8px 30px rgba(0,0,0,0.1);"></canvas>
+    <div id="boss-inputs"></div>
+    <button class="btn" onclick="checkBoss()">提交答案 🎯</button>
+    <div id="boss-feedback"></div>
+  </div>
+</div>
+
+<!-- Scoreboard -->
+<div class="section" id="scoreboard">
+  <div class="score-card">
+    <div style="font-size:3em">🏆</div>
+    <h2 style="-webkit-text-fill-color:white">你的成绩单</h2>
+    <div class="score-item">获得星星: ⭐ × <span id="final-stars">0</span></div>
+    <div class="score-item">完成关卡: <span id="final-levels">0</span>/5</div>
+    <div class="score-item">解锁成就: 🏅 × <span id="final-achievements">0</span></div>
+  </div>
+  <div id="achievements-list" style="margin-top:20px;"></div>
+  <div style="text-align:center; margin-top:20px">
+    <button class="btn btn-purple" onclick="showSection('extend')">查看拓展知识 🚀</button>
+  </div>
+</div>
+
+<!-- Extend -->
+<div class="section" id="extend">
+  <div class="card card-rainbow">
+    <h2>🚀 拓展：圆周率的秘密</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3>🔢 π的历史</h3>
+        <p>人类很早就发现圆的周长与直径的比值是个固定的数！古代数学家阿基米德算出π约等于<span class="highlight">3.14159...</span></p>
+      </div>
+      <div class="card">
+        <h3>🌍 π在生活中</h3>
+        <ul style="padding-left:20px; line-height:2">
+          <li>车轮转一圈走多远</li>
+          <li>圆形操场的跑道长度</li>
+          <li>圆形蛋糕的大小</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card" style="background: linear-gradient(135deg, #667eea22, #764ba222); margin-top:15px">
+      <h3>💡 趣味挑战</h3>
+      <p>圆形比正方形更「省材料」——用同样长度的绳子，围成圆形的面积最大！这叫做<span class="highlight">等周定理</span>，快去探索吧！</p>
+    </div>
+    <div class="canvas-container">
+      <canvas id="extend-canvas" width="400" height="250"></canvas>
+    </div>
+  </div>
+  <div style="text-align:center; margin-top:20px">
+    <button class="btn" onclick="showSection('scoreboard')">查看成绩单 🏆</button>
+  </div>
+</div>
+
+<!-- Achievement Popup -->
+<div class="achievement-popup" id="achievement-popup">
+  <div style="font-size:3em" id="ach-icon">🏅</div>
+  <h3 id="ach-title" style="margin:10px 0">成就解锁！</h3>
+  <p id="ach-desc">恭喜你！</p>
+</div>
+
+<!-- AI Buddy -->
+<div class="ai-buddy">
+  <div class="buddy-speech" id="buddy-speech">
+    你好！我是小π，你的数学学伴！圆周率π约等于3.14，是个神奇的数字哦！🎉
+  </div>
+  <div class="buddy-avatar" onclick="toggleBuddy()">🤖</div>
+</div>
+
+<script>
+// ===== State =====
+const state = {
+  stars: 0,
+  levels: 0,
+  achievements: [],
+  l1Correct: 0,
+  l2Correct: 0,
+  l3Correct: 0,
+  bossCorrect: false,
+};
+
+const achievementDefs = [
+  { id: 'first-star', icon: '🌟', title: '第一颗星', desc: '获得了第一颗星星！' },
+  { id: 'warmup-done', icon: '🔥', title: '热身达人', desc: '完成了热身练习！' },
+  { id: 'circle-master', icon: '⭕', title: '圆周大师', desc: '正确计算了所有周长！' },
+  { id: 'area-master', icon: '📐', title: '面积大师', desc: '正确计算了所有面积！' },
+  { id: 'quiz-ace', icon: '🧠', title: '答题小王', desc: '关卡三全部答对！' },
+  { id: 'boss-slayer', icon: '👾', title: 'Boss终结者', desc: '挑战Boss关成功！' },
+  { id: 'star-collector', icon: '⭐', title: '星星收藏家', desc: '收集了10颗以上星星！' },
+  { id: 'pi-scholar', icon: '🔢', title: 'π的学者', desc: '完成了所有学习内容！' },
+  { id: 'speed-learner', icon: '⚡', title: '闪电学习者', desc: '所有关卡一次通过！' },
+];
+
+// ===== Audio =====
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+function getAudioCtx() { if (!audioCtx) audioCtx = new AudioCtx(); return audioCtx; }
+function playNote(freq, dur=0.2, type='sine') {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = freq;
+    osc.type = type;
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    osc.start(); osc.stop(ctx.currentTime + dur);
+  } catch(e) {}
+}
+function playSuccess() { [523, 659, 784, 1047].forEach((f,i) => setTimeout(() => playNote(f, 0.3), i*100)); }
+function playError() { playNote(220, 0.5, 'sawtooth'); }
+function playClick() { playNote(800, 0.1); }
+
+// ===== Stars =====
+function addStars(n) {
+  state.stars += n;
+  document.getElementById('star-count').textContent = state.stars;
+  updateProgress();
+  if (state.stars >= 1 && !state.achievements.includes('first-star')) unlockAchievement('first-star');
+  if (state.stars >= 10 && !state.achievements.includes('star-collector')) unlockAchievement('star-collector');
+}
+
+function updateProgress() {
+  const p = Math.min(100, Math.round(state.stars / 25 * 100));
+  document.getElementById('total-progress').style.width = p + '%';
+  document.getElementById('progress-text').textContent = p + '%';
+  document.getElementById('final-stars').textContent = state.stars;
+  document.getElementById('final-levels').textContent = state.levels;
+  document.getElementById('final-achievements').textContent = state.achievements.length;
+}
+
+// ===== Achievements =====
+function unlockAchievement(id) {
+  if (state.achievements.includes(id)) return;
+  state.achievements.push(id);
+  const ach = achievementDefs.find(a => a.id === id);
+  if (!ach) return;
+  const popup = document.getElementById('achievement-popup');
+  document.getElementById('ach-icon').textContent = ach.icon;
+  document.getElementById('ach-title').textContent = ach.title;
+  document.getElementById('ach-desc').textContent = ach.desc;
+  popup.classList.add('show');
+  playSuccess();
+  setTimeout(() => popup.classList.remove('show'), 3000);
+  updateProgress();
+  renderAchievements();
+}
+
+function renderAchievements() {
+  const list = document.getElementById('achievements-list');
+  list.innerHTML = '<h2 style="margin-bottom:15px">🏅 已解锁成就</h2>';
+  state.achievements.forEach(id => {
+    const ach = achievementDefs.find(a => a.id === id);
+    if (!ach) return;
+    list.innerHTML += `<div class="card" style="display:flex;align-items:center;gap:15px;margin:8px 0;">
+      <span style="font-size:2em">${ach.icon}</span>
+      <div><strong>${ach.title}</strong><br><span style="color:#666">${ach.desc}</span></div>
+    </div>`;
+  });
+  document.getElementById('final-achievements').textContent = state.achievements.length;
+}
+
+// ===== Navigation =====
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const btns = document.querySelectorAll('.nav-btn');
+  btns.forEach(b => { if (b.getAttribute('onclick').includes(id)) b.classList.add('active'); });
+  playClick();
+  window.scrollTo(0, 0);
+  if (id === 'level1') initLevel1();
+  if (id === 'level2') initLevel2();
+  if (id === 'level3') initLevel3();
+  if (id === 'boss') initBoss();
+  if (id === 'extend') drawExtend();
+  if (id === 'scoreboard') { updateProgress(); renderAchievements(); }
+  updateBuddyHint(id);
+}
+
+// ===== Warmup: Circle Canvas =====
+function updateCircle() {
+  const r = +document.getElementById('radius-slider').value;
+  document.getElementById('radius-val').textContent = r;
+  document.getElementById('circ-r').textContent = r;
+  document.getElementById('area-r').textContent = r;
+  const C = (2 * 3.14 * r).toFixed(2);
+  const S = (3.14 * r * r).toFixed(2);
+  document.getElementById('circ-val').textContent = C + ' cm';
+  document.getElementById('area-val').textContent = S + ' cm²';
+  drawCircle(r);
+}
+
+function drawCircle(r) {
+  const canvas = document.getElementById('circle-canvas');
+  const ctx = canvas.getContext('2d');
+  const cx = 175, cy = 175;
+  const scale = 15;
+  const pr = r * scale;
+  ctx.clearRect(0, 0, 350, 350);
+  // bg
+  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, pr + 10);
+  grad.addColorStop(0, '#ffecd2'); grad.addColorStop(1, '#fcb69f');
+  ctx.fillStyle = grad; ctx.fillRect(0, 0, 350, 350);
+  // circle
+  const cgrad = ctx.createLinearGradient(cx - pr, cy, cx + pr, cy);
+  cgrad.addColorStop(0, '#ff6b6b'); cgrad.addColorStop(0.5, '#feca57'); cgrad.addColorStop(1, '#48dbfb');
+  ctx.strokeStyle = cgrad; ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.arc(cx, cy, pr, 0, Math.PI * 2); ctx.stroke();
+  // fill
+  ctx.fillStyle = 'rgba(255,107,107,0.1)'; ctx.fill();
+  // center dot
+  ctx.fillStyle = '#ff6b6b'; ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2); ctx.fill();
+  // radius line
+  ctx.strokeStyle = '#ff6b6b'; ctx.lineWidth = 2; ctx.setLineDash([5,3]);
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + pr, cy); ctx.stroke();
+  ctx.setLineDash([]);
+  // label r
+  ctx.fillStyle = '#d63031'; ctx.font = 'bold 16px Microsoft YaHei';
+  ctx.fillText('r = ' + r, cx + pr/2 - 15, cy - 10);
+  // diameter
+  ctx.strokeStyle = '#0984e3'; ctx.lineWidth = 2; ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(cx - pr, cy); ctx.lineTo(cx + pr, cy); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#0984e3';
+  ctx.fillText('d = ' + (r*2), cx - 20, cy + 20);
+}
+
+// Unroll animation
+let unrollAnim = null;
+function playUnrollAnimation() {
+  const canvas = document.getElementById('unroll-canvas');
+  const ctx = canvas.getContext('2d');
+  const r = +document.getElementById('radius-slider').value * 8;
+  let t = 0;
+  cancelAnimationFrame(unrollAnim);
+  function frame() {
+    ctx.clearRect(0, 0, 500, 200);
+    // bg
+    ctx.fillStyle = '#f8f9fa'; ctx.fillRect(0, 0, 500, 200);
+    // Draw circle
+    const cx = 80, cy = 100;
+    ctx.strokeStyle = '#ff6b6b'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2 * (1 - t/100)); ctx.stroke();
+    // Draw unrolling line
+    const lineLen = 2 * Math.PI * r * (t / 100);
+    if (lineLen > 0) {
+      ctx.strokeStyle = '#feca57'; ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.moveTo(cx + r, cy + 30);
+      ctx.lineTo(cx + r + lineLen, cy + 30); ctx.stroke();
+    }
+    // Label
+    ctx.fillStyle = '#d63031'; ctx.font = 'bold 14px Microsoft YaHei';
+    ctx.fillText('周长 C = 2πr', 200, 160);
+    if (t < 100) { t += 1; unrollAnim = requestAnimationFrame(frame); }
+    else { playSuccess(); addStars(1); unlockAchievement('warmup-done'); }
+  }
+  frame();
+}
+
+// ===== Level 1: Perimeter =====
+const l1Data = [
+  { r: 5, answer: 31.4 },
+  { r: 3, answer: 18.84 },
+  { r: 7, answer: 43.96 },
+];
+function initLevel1() {
+  const div = document.getElementById('l1-questions');
+  div.innerHTML = l1Data.map((q, i) => `
+    <div class="card" style="margin:10px 0; border-left:5px solid var(--secondary);">
+      <h3>第 ${i+1} 题</h3>
+      <p style="font-size:1.1em">一个圆的半径 r = <strong>${q.r} cm</strong>，求它的周长。</p>
+      <p style="color:#666; margin:8px 0">C = 2 × 3.14 × ${q.r} = ？</p>
+      <input type="number" id="l1-ans-${i}" placeholder="填写答案" step="0.01"> cm
+    </div>
+  `).join('');
+}
+function checkLevel1() {
+  let correct = 0;
+  let html = '';
+  l1Data.forEach((q, i) => {
+    const val = +document.getElementById(`l1-ans-${i}`).value;
+    if (Math.abs(val - q.answer) < 0.05) {
+      correct++;
+      document.getElementById(`l1-ans-${i}`).style.borderColor = '#55efc4';
+    } else {
+      document.getElementById(`l1-ans-${i}`).style.borderColor = '#ff6b6b';
+    }
+  });
+  if (correct === l1Data.length) {
+    html = '<div class="feedback correct">🎉 全对！太棒了！周长大师！+5⭐</div>';
+    addStars(5); state.levels++; unlockAchievement('circle-master'); playSuccess();
+    setTimeout(() => showSection('level2'), 2000);
+  } else {
+    html = `<div class="feedback wrong">💪 还差一点！答对了 ${correct}/${l1Data.length} 题，再试试！</div>`;
+    playError();
+  }
+  document.getElementById('l1-feedback').innerHTML = html;
+}
+
+// ===== Level 2: Area =====
+const l2Data = [
+  { r: 4, answer: 50.24 },
+  { r: 6, answer: 113.04 },
+  { r: 10, answer: 314 },
+];
+function initLevel2() {
+  const div = document.getElementById('l2-questions');
+  div.innerHTML = l2Data.map((q, i) => `
+    <div class="card" style="margin:10px 0; border-left:5px solid var(--purple);">
+      <h3>第 ${i+1} 题</h3>
+      <p style="font-size:1.1em">一个圆的半径 r = <strong>${q.r} cm</strong>，求它的面积。</p>
+      <p style="color:#666; margin:8px 0">S = 3.14 × ${q.r}² = 3.14 × ${q.r*q.r} = ？</p>
+      <input type="number" id="l2-ans-${i}" placeholder="填写答案" step="0.01"> cm²
+    </div>
+  `).join('');
+}
+function checkLevel2() {
+  let correct = 0;
+  l2Data.forEach((q, i) => {
+    const val = +document.getElementById(`l2-ans-${i}`).value;
+    if (Math.abs(val - q.answer) < 0.05) {
+      correct++;
+      document.getElementById(`l2-ans-${i}`).style.borderColor = '#55efc4';
+    } else {
+      document.getElementById(`l2-ans-${i}`).style.borderColor = '#ff6b6b';
+    }
+  });
+  let html = '';
+  if (correct === l2Data.length) {
+    html = '<div class="feedback correct">🎉 全对！面积大师！+5⭐</div>';
+    addStars(5); state.levels++; unlockAchievement('area-master'); playSuccess();
+    setTimeout(() => showSection('level3'), 2000);
+  } else {
+    html = `<div class="feedback wrong">💪 继续加油！答对 ${correct}/${l2Data.length} 题！</div>`;
+    playError();
+  }
+  document.getElementById('l2-feedback').innerHTML = html;
+}
+
+// ===== Level 3: Quiz =====
+const l3Questions = [
+  { q: '圆的周长公式是？', options: ['C = 2πr', 'C = πr²', 'C = 2r', 'C = r²'], ans: 0 },
+  { q: '圆的面积公式是？', options: ['S = 2πr', 'S = πr', 'S = πr²', 'S = 2πr²'], ans: 2 },
+  { q: '半径为5cm的圆，面积是？', options: ['15.7 cm²', '31.4 cm²', '78.5 cm²', '314 cm²'], ans: 2 },
+  { q: '直径为10cm的圆，周长是？', options: ['15.7 cm', '31.4 cm', '62.8 cm', '314 cm'], ans: 1 },
+  { q: 'π约等于？', options: ['2.14', '3.14', '4.14', '1.41'], ans: 1 },
+];
+let l3Score = 0, l3Current = 0;
+function initLevel3() {
+  l3Score = 0; l3Current = 0;
+  renderL3Question();
+}
+function renderL3Question() {
+  if (l3Current >= l3Questions.length) {
+    const div = document.getElementById('l3-quiz');
+    div.innerHTML = `<div class="card score-card">
+      <div style="font-size:2em">🎊</div>
+      <h3 style="-webkit-text-fill-color:white">关卡三完成！</h3>
+      <p>答对 ${l3Score}/${l3Questions.length} 题！</p>
+      <br><button class="btn" onclick="finishLevel3()">下一关 ➡️</button>
+    </div>`;
+    return;
+  }
+  const q = l3Questions[l3Current];
+  const div = document.getElementById('l3-quiz');
+  div.innerHTML = `
+    <div style="text-align:right; color:#666">第 ${l3Current+1}/${l3Questions.length} 题</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${(l3Current/l3Questions.length)*100}%"></div></div>
+    <div class="card" style="margin:15px 0; border-left:5px solid var(--accent);">
+      <h3 style="font-size:1.3em; color:#333">${q.q}</h3>
+    </div>
+    ${q.options.map((opt, i) => `
+      <div class="quiz-option" onclick="answerL3(${i})">${['A','B','C','D'][i]}. ${opt}</div>
+    `).join('')}
+  `;
+}
+function answerL3(idx) {
+  const q = l3Questions[l3Current];
+  const opts = document.querySelectorAll('.quiz-option');
+  opts[idx].classList.add(idx === q.ans ? 'correct' : 'wrong');
+  if (idx !== q.ans) opts[q.ans].classList.add('correct');
+  if (idx === q.ans) { l3Score++; playSuccess(); } else { playError(); }
+  opts.forEach(o => o.onclick = null);
+  setTimeout(() => { l3Current++; renderL3Question(); }, 1200);
+}
+function finishLevel3() {
+  addStars(l3Score * 2); state.levels++;
+  if (l3Score === l3Questions.length) unlockAchievement('quiz-ace');
+  showSection('boss');
+}
+
+// ===== Boss Level =====
+let bossProblem = null;
+function initBoss() {
+  const problems = [
+    { text: '小明家有个圆形花坛，半径是3米。他想在花坛外围一圈栅栏，需要多少米？如果还要在花坛里种草，花坛面积是多少？',
+      perim: { label: '栅栏长度（周长）', r: 3, formula: 'C = 2 × 3.14 × 3', answer: 18.84, unit: '米' },
+      area: { label: '花坛面积', r: 3, formula: 'S = 3.14 × 3²', answer: 28.26, unit: '平方米' } },
+  ];
+  bossProblem = problems[0];
+  document.getElementById('boss-problem').innerHTML = `<p style="font-size:1.1em; line-height:2">${bossProblem.text}</p>`;
+  document.getElementById('boss-inputs').innerHTML = `
+    <div style="display:flex; gap:20px; flex-wrap:wrap; margin:20px 0;">
+      <div class="card" style="flex:1; min-width:200px;">
+        <h3>${bossProblem.perim.label}</h3>
+        <p style="color:#666">${bossProblem.perim.formula} = ？</p>
+        <input type="number" id="boss-ans-1" placeholder="答案" step="0.01"> ${bossProblem.perim.unit}
+      </div>
+      <div class="card" style="flex:1; min-width:200px;">
+        <h3>${bossProblem.area.label}</h3>
+        <p style="color:#666">${bossProblem.area.formula} = ？</p>
+        <input type="number" id="boss-ans-2" placeholder="答案" step="0.01"> ${bossProblem.area.unit}
+      </div>
+    </div>
+  `;
+  drawBossCanvas(3);
+}
+function drawBossCanvas(r) {
+  const canvas = document.getElementById('boss-canvas');
+  const ctx = canvas.getContext('2d');
+  const cx = 200, cy = 150, scale = 30;
+  const pr = r * scale;
+  ctx.clearRect(0, 0, 400, 300);
+  ctx.fillStyle = '#f0fff4'; ctx.fillRect(0, 0, 400, 300);
+  // grass
+  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, pr);
+  grad.addColorStop(0, '#55efc4'); grad.addColorStop(1, '#00b894');
+  ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(cx, cy, pr, 0, Math.PI*2); ctx.fill();
+  // fence
+  ctx.strokeStyle = '#d63031'; ctx.lineWidth = 5; ctx.setLineDash([8,4]);
+  ctx.beginPath(); ctx.arc(cx, cy, pr + 10, 0, Math.PI*2); ctx.stroke();
+  ctx.setLineDash([]);
+  // flowers
+  for (let a = 0; a < Math.PI*2; a += Math.PI/4) {
+    const fx = cx + Math.cos(a) * pr * 0.6;
+    const fy = cy + Math.sin(a) * pr * 0.6;
+    ctx.fillStyle = '#fdcb6e'; ctx.beginPath(); ctx.arc(fx, fy, 8, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#ff7675'; ctx.font = '16px serif'; ctx.fillText('🌸', fx - 8, fy + 6);
+  }
+  // center
+  ctx.fillStyle = '#e17055'; ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI*2); ctx.fill();
+  // radius label
+  ctx.strokeStyle = '#d63031'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + pr, cy); ctx.stroke();
+  ctx.fillStyle = '#d63031'; ctx.font = 'bold 16px Microsoft YaHei';
+  ctx.fillText('r = ' + r + 'm', cx + pr/2 - 20, cy - 10);
+  ctx.fillStyle = '#636e72'; ctx.font = '14px Microsoft YaHei';
+  ctx.fillText('花坛', cx - 15, cy + 5);
+  ctx.fillStyle = '#d63031'; ctx.font = '13px Microsoft YaHei';
+  ctx.fillText('← 栅栏 →', cx - 30, cy + pr + 28);
+}
+function checkBoss() {
+  const a1 = +document.getElementById('boss-ans-1').value;
+  const a2 = +document.getElementById('boss-ans-2').value;
+  const ok1 = Math.abs(a1 - bossProblem.perim.answer) < 0.05;
+  const ok2 = Math.abs(a2 - bossProblem.area.answer) < 0.05;
+  let html = '';
+  if (ok1 && ok2) {
+    html = '<div class="feedback correct">🎉🎉 太棒了！全部答对！Boss被消灭了！+10⭐</div>';
+    addStars(10); state.levels++; unlockAchievement('boss-slayer');
+    if (!state.achievements.includes('pi-scholar')) unlockAchievement('pi-scholar');
+    playSuccess();
+    setTimeout(() => showSection('scoreboard'), 2000);
+  } else {
+    const hints = [];
+    if (!ok1) hints.push(`周长：正确答案是 ${bossProblem.perim.answer} 米`);
+    if (!ok2) hints.push(`面积：正确答案是 ${bossProblem.area.answer} 平方米`);
+    html = `<div class="feedback wrong">💪 加油！${hints.join('；')}</div>`;
+    playError();
+  }
+  document.getElementById('boss-feedback').innerHTML = html;
+}
+
+// ===== Extend =====
+function drawExtend() {
+  const canvas = document.getElementById('extend-canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 400, 250);
+  ctx.fillStyle = '#f8f9fa'; ctx.fillRect(0, 0, 400, 250);
+  const perimeter = 200;
+  // Square
+  const side = perimeter / 4;
+  ctx.strokeStyle = '#6c5ce7'; ctx.lineWidth = 3;
+  ctx.strokeRect(50, 75, side, side);
+  ctx.fillStyle = 'rgba(108,92,231,0.15)'; ctx.fillRect(50, 75, side, side);
+  const sArea = (side * side).toFixed(1);
+  ctx.fillStyle = '#6c5ce7'; ctx.font = 'bold 13px Microsoft YaHei';
+  ctx.fillText('正方形 S=' + sArea, 30, 170);
+  // Circle
+  const r = perimeter / (2 * Math.PI);
+  ctx.strokeStyle = '#ff6b6b'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(280, 125, r, 0, Math.PI*2); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,107,107,0.15)'; ctx.fill();
+  const cArea = (Math.PI * r * r).toFixed(1);
+  ctx.fillStyle = '#ff6b6b'; ctx.font = 'bold 13px Microsoft YaHei';
+  ctx.fillText('圆 S=' + cArea, 245, 210);
+  ctx.fillStyle = '#333'; ctx.font = '14px Microsoft YaHei';
+  ctx.fillText('相同周长200cm', 120, 240);
+  ctx.fillText('圆的面积更大！', 120, 30);
+  ctx.strokeStyle = '#feca57'; ctx.lineWidth = 2; ctx.setLineDash([5,3]);
+  ctx.beginPath(); ctx.moveTo(200, 125); ctx.lineTo(200, 30); ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+// ===== AI Buddy =====
+const buddyHints = {
+  hero: '你好！我是小π！今天我们一起探索圆的奥秘！🎉',
+  goals: '记住公式很重要：C=2πr是周长，S=πr²是面积！💡',
+  warmup: '拖动滑块看看半径变大，周长和面积是怎么变化的？👀',
+  level1: '记住 C = 2 × π × r，π用3.14哦！加油💪',
+  level2: '面积 S = π × r²，先算r²，再乘3.14！',
+  level3: '判断题要仔细看，别被迷惑啦！🧠',
+  boss: '应用题：先找条件（半径），再选公式！🎯',
+  scoreboard: '太棒了！看看你得了多少星星！⭐',
+  extend: '圆是最"节省"的形状！等周定理真神奇！🔢',
+};
+function updateBuddyHint(section) {
+  const speech = document.getElementById('buddy-speech');
+  speech.textContent = buddyHints[section] || '继续加油！🎉';
+  speech.classList.add('show');
+  setTimeout(() => speech.classList.remove('show'), 4000);
+}
+function toggleBuddy() {
+  playClick();
+  const speech = document.getElementById('buddy-speech');
+  speech.classList.toggle('show');
+}
+
+// ===== Init =====
+drawCircle(5);
+updateCircle();
+</script>
+</body>
+</html>

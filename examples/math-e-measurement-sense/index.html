@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>量感小侦探 📏 综合数学</title>
+<style>
+:root {
+  --bg: #fffbf0; --primary: #ff6b6b; --secondary: #4ecdc4;
+  --accent: #ffe66d; --card: #fff;
+  --purple: #a855f7; --blue: #3b82f6; --green: #22c55e; --orange: #f97316;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); font-family: 'Microsoft YaHei', Arial, sans-serif; overflow-x: hidden; }
+
+nav {
+  background: linear-gradient(135deg, #22c55e, #4ecdc4, #3b82f6, #a855f7);
+  padding: 12px 20px; display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+.nav-title { color: white; font-size: 1.3rem; font-weight: bold; }
+.stars-display { background: rgba(255,255,255,0.3); border-radius: 20px; padding: 6px 16px; color: white; font-weight: bold; }
+.progress-bar { height: 8px; background: rgba(255,255,255,0.3); border-radius: 4px; flex: 1; margin: 0 15px; }
+.progress-fill { height: 100%; background: white; border-radius: 4px; transition: width 0.5s; }
+
+.section { min-height: 100vh; padding: 40px 20px; display: none; }
+.section.active { display: block; }
+
+#hero {
+  background: linear-gradient(135deg, #22c55e 0%, #4ecdc4 50%, #3b82f6 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+}
+.hero-title {
+  font-size: clamp(2rem, 7vw, 4.5rem); font-weight: bold;
+  background: linear-gradient(135deg, #fff, #ffe66d, #fff);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3)); animation: bounce 1s ease infinite alternate;
+}
+@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-15px); } }
+.hero-emoji { font-size: 5rem; display: block; margin: 20px; animation: pulse 2s ease infinite; }
+@keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+.btn-start {
+  background: white; color: var(--green); border: none; padding: 18px 50px;
+  border-radius: 50px; font-size: 1.5rem; font-weight: bold; cursor: pointer;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.2); transition: all 0.3s; margin-top: 20px;
+}
+.btn-start:hover { transform: scale(1.05); }
+
+.card {
+  background: var(--card); border-radius: 20px; padding: 30px;
+  margin: 20px auto; max-width: 800px; box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+}
+.card-title {
+  font-size: 1.8rem; font-weight: bold; margin-bottom: 20px;
+  background: linear-gradient(135deg, var(--green), var(--blue));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.btn {
+  background: linear-gradient(135deg, var(--green), var(--secondary));
+  color: white; border: none; padding: 12px 30px; border-radius: 25px;
+  font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: all 0.3s; margin: 8px;
+}
+.btn:hover { transform: translateY(-3px); }
+.btn-blue { background: linear-gradient(135deg, var(--blue), var(--purple)); }
+.btn-red { background: linear-gradient(135deg, var(--primary), var(--orange)); }
+.level-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: linear-gradient(135deg, var(--green), var(--blue));
+  color: white; padding: 8px 20px; border-radius: 20px; font-weight: bold; margin-bottom: 15px;
+}
+.story-box {
+  background: linear-gradient(135deg, #f0fff4, #f0fffe);
+  border-left: 5px solid var(--green); border-radius: 0 15px 15px 0;
+  padding: 20px; margin: 20px 0; font-size: 1.1rem; line-height: 1.8; color: #444;
+}
+.feedback { padding: 15px 20px; border-radius: 15px; margin: 15px 0; font-size: 1.2rem; font-weight: bold; display: none; }
+.feedback.correct { background: #d4edda; color: #155724; display: block; }
+.feedback.wrong { background: #f8d7da; color: #721c24; display: block; }
+.option-btn {
+  background: white; border: 3px solid #e0e0e0; border-radius: 15px;
+  padding: 18px; font-size: 1.05rem; cursor: pointer; transition: all 0.3s;
+}
+.option-btn:hover { border-color: var(--green); background: #f0fff4; transform: scale(1.02); }
+.option-btn.correct { background: #d4edda; border-color: var(--green); }
+.option-btn.wrong { background: #f8d7da; border-color: var(--primary); animation: shake 0.5s; }
+@keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+.options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+.question-text { font-size: 1.3rem; margin: 20px 0; color: #333; line-height: 1.6; }
+
+/* ===== MEASUREMENT RULER ANIMATION ===== */
+.ruler-demo {
+  background: linear-gradient(135deg, #f5f5dc, #e8e8c8);
+  border-radius: 15px; padding: 20px; margin: 20px 0; position: relative; overflow: hidden;
+}
+.ruler-track {
+  height: 60px; background: linear-gradient(to bottom, #d4a555, #b8822a);
+  border-radius: 8px; position: relative; margin: 10px 0;
+  display: flex; align-items: flex-end;
+}
+.ruler-tick { position: absolute; bottom: 0; width: 2px; background: #333; }
+.ruler-tick.big { height: 30px; }
+.ruler-tick.mid { height: 20px; }
+.ruler-tick.small { height: 12px; }
+.ruler-number { position: absolute; bottom: 32px; font-size: 11px; color: #333; font-weight: bold; transform: translateX(-50%); }
+.measure-obj {
+  height: 50px; background: linear-gradient(135deg, var(--primary), var(--orange));
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  color: white; font-weight: bold; font-size: 1rem; margin: 15px 0;
+  transition: width 1.5s ease; position: relative;
+}
+.measure-label { position: absolute; right: -50px; color: var(--primary); font-weight: bold; }
+
+/* ===== UNIT CARDS ===== */
+.unit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin: 20px 0; }
+.unit-card {
+  background: white; border-radius: 15px; padding: 20px; text-align: center;
+  border: 3px solid #e0e0e0; transition: all 0.3s; cursor: pointer;
+}
+.unit-card:hover { border-color: var(--green); transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+.unit-card.active { border-color: var(--green); background: #f0fff4; }
+.unit-icon { font-size: 2.5rem; margin-bottom: 10px; }
+.unit-name { font-weight: bold; font-size: 1rem; color: #333; }
+.unit-example { font-size: 0.85rem; color: #777; margin-top: 5px; }
+
+/* ===== SCALE ANIMATION ===== */
+.scale-demo { display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: wrap; margin: 20px 0; }
+.scale-item {
+  background: white; border-radius: 15px; padding: 20px; text-align: center;
+  border: 3px solid #e0e0e0; min-width: 120px; transition: all 0.3s;
+}
+.scale-item .item-icon { font-size: 3rem; display: block; margin-bottom: 10px; transition: transform 0.5s; }
+.scale-item.heavy .item-icon { transform: scale(1.2); }
+.vs-arrow { font-size: 2rem; color: var(--orange); font-weight: bold; }
+
+/* ===== DRAG ===== */
+.drag-item {
+  background: linear-gradient(135deg, var(--accent), var(--orange));
+  padding: 12px 18px; border-radius: 12px; font-size: 1rem; font-weight: bold;
+  cursor: grab; user-select: none; display: inline-block; margin: 6px; color: #333;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: transform 0.2s;
+}
+.drag-item:hover { transform: scale(1.05); }
+.drag-item.dragging { opacity: 0.4; }
+.drop-zone {
+  min-width: 100px; min-height: 50px; border: 3px dashed #ccc; border-radius: 12px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.9rem; color: #999; margin: 6px; padding: 8px; transition: all 0.3s;
+}
+.drop-zone.over { border-color: var(--green); background: #f0fff4; }
+.drop-zone.correct { border-color: var(--green); background: #d4edda; color: #155724; font-weight: bold; }
+.drop-zone.wrong { border-color: var(--primary); background: #f8d7da; }
+
+/* ===== ACHIEVEMENTS ===== */
+.achievement-popup {
+  position: fixed; top: 80px; right: 20px;
+  background: linear-gradient(135deg, var(--accent), var(--orange));
+  color: white; padding: 15px 25px; border-radius: 20px;
+  font-size: 1.1rem; font-weight: bold; box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+  z-index: 999; animation: slideIn 0.5s ease; max-width: 280px;
+}
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.achievements-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
+.achievement-badge { background: #f5f5f5; border-radius: 15px; padding: 20px; text-align: center; border: 3px solid #e0e0e0; transition: all 0.3s; }
+.achievement-badge.unlocked { background: linear-gradient(135deg, #ffe66d, #22c55e); border-color: var(--green); animation: glow 2s ease infinite; }
+@keyframes glow { 0%,100% { box-shadow: 0 4px 15px rgba(34,197,94,0.3); } 50% { box-shadow: 0 4px 30px rgba(34,197,94,0.6); } }
+.badge-icon { font-size: 2.5rem; }
+.badge-name { font-size: 0.85rem; font-weight: bold; margin-top: 8px; color: #333; }
+
+/* ===== AI BUDDY ===== */
+.ai-buddy {
+  position: fixed; bottom: 20px; right: 20px; width: 70px; height: 70px;
+  background: linear-gradient(135deg, var(--green), var(--secondary));
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; cursor: pointer; z-index: 200;
+  box-shadow: 0 6px 20px rgba(34,197,94,0.4); animation: float 3s ease-in-out infinite;
+}
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.buddy-tip {
+  position: fixed; bottom: 100px; right: 20px; background: white; border-radius: 20px;
+  padding: 15px 20px; max-width: 250px; box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  font-size: 0.95rem; color: #333; display: none; z-index: 200; border: 3px solid var(--green);
+}
+.buddy-tip.show { display: block; animation: slideIn 0.3s ease; }
+
+/* ===== SCORE ===== */
+.score-board {
+  text-align: center; background: linear-gradient(135deg, var(--green), var(--blue));
+  border-radius: 20px; padding: 40px; color: white; margin: 20px auto; max-width: 600px;
+}
+.final-score { font-size: 4rem; font-weight: bold; animation: bounce 1s ease infinite alternate; }
+
+/* ===== ESTIMATION GAME ===== */
+.estimation-game { background: #f0fff4; border-radius: 15px; padding: 25px; margin: 20px 0; }
+.est-object { font-size: 5rem; text-align: center; margin: 20px 0; animation: bounce 0.5s ease infinite alternate; }
+.est-slider-wrap { display: flex; align-items: center; gap: 15px; margin: 15px 0; }
+.est-slider { flex: 1; height: 8px; accent-color: var(--green); }
+.est-value { font-size: 1.5rem; font-weight: bold; color: var(--green); min-width: 80px; }
+.est-result { font-size: 1.2rem; font-weight: bold; text-align: center; padding: 15px; border-radius: 15px; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-title">📏 量感小侦探</div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div class="stars-display">⭐ <span id="starCount">0</span></div>
+</nav>
+
+<!-- HERO -->
+<div class="section active" id="hero">
+  <span class="hero-emoji">📏</span>
+  <h1 class="hero-title">量感小侦探</h1>
+  <p style="color:white;font-size:1.5rem;margin:20px 0;text-shadow:1px 1px 3px rgba(0,0,0,0.3)">综合数学 · 培养对长度、重量、时间的感觉！</p>
+  <p style="color:rgba(255,255,255,0.9);font-size:1.1rem;margin-bottom:30px">🔍 不用尺子，用眼睛和大脑估量！</p>
+  <button class="btn-start" onclick="goTo('objectives')">🔍 开始侦探任务！</button>
+</div>
+
+<!-- OBJECTIVES -->
+<div class="section" id="objectives">
+  <div class="card">
+    <div class="level-badge">📋 侦探任务</div>
+    <h2 class="card-title">量感小侦探的任务</h2>
+    <ul style="list-style:none">
+      <li style="padding:10px 0;font-size:1.1rem;border-bottom:1px solid #f0f0f0">✅ 认识长度单位：mm、cm、dm、m、km</li>
+      <li style="padding:10px 0;font-size:1.1rem;border-bottom:1px solid #f0f0f0">✅ 认识重量单位：g、kg、t</li>
+      <li style="padding:10px 0;font-size:1.1rem;border-bottom:1px solid #f0f0f0">✅ 认识时间单位：秒、分、时、天</li>
+      <li style="padding:10px 0;font-size:1.1rem;border-bottom:1px solid #f0f0f0">✅ 培养估量能力：不测量也能猜对</li>
+      <li style="padding:10px 0;font-size:1.1rem">✅ 在生活中正确使用量的单位</li>
+    </ul>
+    <div class="story-box">
+      <strong>🌍 量感就在生活里！</strong><br>
+      你的手指宽约1厘米，身高约1.2米，一袋糖约500克，
+      从家到学校约500米……量感就是对"大小"的感觉！
+    </div>
+    <button class="btn" onclick="goTo('warmup')">🔥 开始热身！</button>
+  </div>
+</div>
+
+<!-- WARMUP -->
+<div class="section" id="warmup">
+  <div class="card">
+    <div class="level-badge">🔥 热身 · 单位大排行</div>
+    <h2 class="card-title">单位从小到大排排坐！</h2>
+    <p style="color:#555;font-size:1.1rem;margin-bottom:20px">把长度单位从最小拖到最大！</p>
+    <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center">
+      <div>
+        <p style="font-weight:bold;margin-bottom:10px;color:var(--purple)">📦 单位标签</p>
+        <div id="wDragArea" style="display:flex;flex-direction:column;gap:8px">
+          <div class="drag-item" draggable="true" id="wu1" data-val="km">千米(km)</div>
+          <div class="drag-item" draggable="true" id="wu2" data-val="mm">毫米(mm)</div>
+          <div class="drag-item" draggable="true" id="wu3" data-val="m">米(m)</div>
+          <div class="drag-item" draggable="true" id="wu4" data-val="cm">厘米(cm)</div>
+        </div>
+      </div>
+      <div>
+        <p style="font-weight:bold;margin-bottom:10px;color:var(--green)">📊 从小到大（1=最小，4=最大）</p>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-weight:bold;color:var(--green)">①最小</span>
+            <div class="drop-zone" data-answer="mm" id="wz1" style="min-width:150px">拖到这里</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-weight:bold;color:var(--blue)">②</span>
+            <div class="drop-zone" data-answer="cm" id="wz2" style="min-width:150px">拖到这里</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-weight:bold;color:var(--orange)">③</span>
+            <div class="drop-zone" data-answer="m" id="wz3" style="min-width:150px">拖到这里</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-weight:bold;color:var(--primary)">④最大</span>
+            <div class="drop-zone" data-answer="km" id="wz4" style="min-width:150px">拖到这里</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="warmupFb" class="feedback"></div>
+    <button class="btn" onclick="checkWarmup()">✅ 提交排序</button>
+    <button class="btn btn-blue" onclick="goTo('level1')">➡️ 继续任务</button>
+  </div>
+</div>
+
+<!-- LEVEL 1: 长度单位 -->
+<div class="section" id="level1">
+  <div class="card">
+    <div class="level-badge">🌟 第一关 · 长度侦探</div>
+    <div class="story-box">
+      <strong>📐 ABT故事：</strong><br>
+      小侦探要测量教室，<strong>And</strong> 她有尺子，
+      <strong>But</strong> 要选什么单位呢？测指甲用mm，量黑板用m，量路程用km……
+      <strong>Therefore</strong> 不同长度需要用不同的单位！
+    </div>
+    <h3 style="margin:20px 0;font-size:1.3rem">🎬 尺子刻度动画</h3>
+    <div class="ruler-demo">
+      <p style="font-weight:bold;margin-bottom:10px">📏 这支铅笔有多长？</p>
+      <div style="position:relative;height:80px;margin:10px 0">
+        <div id="rulerSvgWrap"></div>
+      </div>
+      <div id="pencilBar" class="measure-obj" style="width:0%;transition:width 1.5s ease">
+        <span id="pencilLabel">? cm</span>
+      </div>
+      <button class="btn" onclick="animatePencil()" style="margin-top:10px">▶️ 开始测量！</button>
+    </div>
+    <h3 style="margin:20px 0;font-size:1.3rem">🧠 单位选择题</h3>
+    <div id="lengthQuiz"></div>
+    <div id="lengthFb" class="feedback"></div>
+  </div>
+  <div style="text-align:center;margin-top:15px">
+    <button class="btn" onclick="goTo('level2')">🚀 下一关！</button>
+  </div>
+</div>
+
+<!-- LEVEL 2: 重量单位 -->
+<div class="section" id="level2">
+  <div class="card">
+    <div class="level-badge">🌟🌟 第二关 · 重量侦探</div>
+    <div class="story-box">
+      <strong>⚖️ ABT故事：</strong><br>
+      小明去买东西，<strong>And</strong> 要买蔬菜和钢铁，
+      <strong>But</strong> 用同一个单位怎么都不对，
+      <strong>Therefore</strong> 克(g)、千克(kg)、吨(t) 各有各的用处！
+    </div>
+    <div style="background:#f0fff4;border-radius:15px;padding:20px;margin:20px 0;font-size:1.1rem">
+      <p>⚖️ 重量单位口诀：</p>
+      <p style="margin:8px 0">🍬 <strong>克(g)</strong>：一颗糖约1克，轻轻的</p>
+      <p style="margin:8px 0">🎒 <strong>千克(kg)</strong>：一本书约1千克=1000克</p>
+      <p style="margin:8px 0">🚛 <strong>吨(t)</strong>：一辆卡车约10吨=10000千克</p>
+    </div>
+    <h3 style="margin:20px 0;font-size:1.3rem">🎬 重量动画感受</h3>
+    <div class="scale-demo">
+      <div class="scale-item" id="scaleApple">
+        <span class="item-icon">🍎</span>
+        <div style="font-weight:bold">苹果</div>
+        <div style="color:#777;font-size:0.9rem">约200g</div>
+      </div>
+      <div class="vs-arrow">VS</div>
+      <div class="scale-item" id="scaleWater">
+        <span class="item-icon">🪣</span>
+        <div style="font-weight:bold">一桶水</div>
+        <div style="color:#777;font-size:0.9rem">约10kg</div>
+      </div>
+      <div class="vs-arrow">VS</div>
+      <div class="scale-item" id="scaleCar">
+        <span class="item-icon">🚗</span>
+        <div style="font-weight:bold">轿车</div>
+        <div style="color:#777;font-size:0.9rem">约1.5t</div>
+      </div>
+    </div>
+    <button class="btn" onclick="animateWeights()">⚖️ 比一比！</button>
+    <h3 style="margin:20px 0;font-size:1.3rem">🧠 重量选择题</h3>
+    <div id="weightQuiz"></div>
+    <div id="weightFb" class="feedback"></div>
+  </div>
+  <div style="text-align:center;margin-top:15px">
+    <button class="btn" onclick="goTo('level3')">🚀 下一关！</button>
+  </div>
+</div>
+
+<!-- LEVEL 3: 估量游戏 -->
+<div class="section" id="level3">
+  <div class="card">
+    <div class="level-badge">🌟🌟🌟 第三关 · 估量大师</div>
+    <div class="story-box">
+      <strong>🎯 ABT故事：</strong><br>
+      超市收银员估算顾客的购物重量，<strong>And</strong> 需要凭经验快速估算，
+      <strong>But</strong> 没有秤也能猜对，
+      <strong>Therefore</strong> 锻炼量感就是练习"不用工具也能猜得差不多"！
+    </div>
+    <h3 style="margin:20px 0;font-size:1.3rem">🎮 估量猜谜游戏</h3>
+    <div class="estimation-game" id="estGame">
+      <div id="estObj" class="est-object">🍌</div>
+      <p id="estQuestion" style="font-size:1.2rem;text-align:center;font-weight:bold;margin-bottom:15px">这根香蕉有多长？</p>
+      <div class="est-slider-wrap">
+        <span>小</span>
+        <input type="range" class="est-slider" id="estSlider" min="1" max="100" value="20" oninput="updateEst()">
+        <span>大</span>
+        <div class="est-value" id="estValDisplay">20 cm</div>
+      </div>
+      <button class="btn" onclick="checkEst()" style="display:block;margin:0 auto">🎯 提交估量！</button>
+      <div id="estResult" class="est-result" style="display:none"></div>
+      <button class="btn btn-blue" id="estNextBtn" onclick="nextEstQ()" style="display:none;margin:10px auto;display:block">➡️ 下一题</button>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:15px">
+    <button class="btn btn-red" onclick="goTo('boss')">💥 挑战BOSS！</button>
+  </div>
+</div>
+
+<!-- BOSS -->
+<div class="section" id="boss">
+  <div class="card">
+    <div class="level-badge" style="background:linear-gradient(135deg,#ff0040,#f97316)">💥 BOSS关 · 量感终极测试</div>
+    <h2 class="card-title">🐲 量感大魔王</h2>
+    <p style="color:#555;margin-bottom:20px">考验你所有的量感知识！</p>
+    <div id="bossQuiz"></div>
+    <div style="margin:20px 0">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+        <span>BOSS血量</span><span id="bossHpText">400/400</span>
+      </div>
+      <div style="background:#f0f0f0;border-radius:10px;height:30px;overflow:hidden">
+        <div id="bossHpBar" style="height:100%;background:linear-gradient(135deg,#ff0040,#f97316);width:100%;transition:width 0.5s;border-radius:10px"></div>
+      </div>
+    </div>
+    <div id="bossFb" class="feedback"></div>
+    <div id="bossTimer" style="font-size:1.5rem;font-weight:bold;color:var(--primary);text-align:center;margin:15px 0"></div>
+  </div>
+  <div style="text-align:center;margin-top:15px">
+    <button class="btn btn-blue" id="bossNextBtn" onclick="goTo('scoreboard')" style="display:none">🎊 查看成绩！</button>
+  </div>
+</div>
+
+<!-- SCOREBOARD -->
+<div class="section" id="scoreboard">
+  <div class="score-board">
+    <p style="font-size:1.5rem;margin-bottom:10px">📏 量感侦探任务完成！</p>
+    <div class="final-score" id="finalScore">0</div>
+    <div style="font-size:3rem;margin:20px 0" id="finalStars">⭐⭐⭐</div>
+    <div style="display:flex;justify-content:space-around;margin:20px 0">
+      <div style="text-align:center"><div style="font-size:2rem;font-weight:bold" id="statCorrect">0</div><div style="opacity:0.8">答对题数</div></div>
+      <div style="text-align:center"><div style="font-size:2rem;font-weight:bold" id="statAch">0</div><div style="opacity:0.8">成就解锁</div></div>
+      <div style="text-align:center"><div style="font-size:2rem;font-weight:bold" id="statStars">0</div><div style="opacity:0.8">收集星星</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2 class="card-title">🏆 成就收集</h2>
+    <div class="achievements-grid" id="achievementsGrid"></div>
+  </div>
+  <div class="card">
+    <h2 class="card-title">🚀 拓展挑战</h2>
+    <div class="story-box">
+      <strong>🌟 回家量一量：</strong><br>
+      ① 用尺子量你的手掌宽度（大约几厘米？）<br>
+      ② 估算家里客厅的长度，再用尺子量，看估得准不准！<br>
+      ③ 找3样东西，用手掂掂，猜猜各多重？
+    </div>
+    <button class="btn" onclick="goTo('hero')">🔄 再来一次！</button>
+  </div>
+</div>
+
+<div class="ai-buddy" onclick="toggleBuddy()">🤖</div>
+<div class="buddy-tip" id="buddyTip">
+  <p>👋 我是小AI侦探！</p>
+  <p id="buddyTipText" style="margin-top:8px;color:#555">点我获取提示！</p>
+</div>
+<div class="achievement-popup" id="achievePopup" style="display:none"></div>
+
+<script>
+const state = {
+  stars:0, score:0, correct:0, section:'hero',
+  achievements:{}, bossHp:400, bossQ:0,
+  estQ:0, dragId:null
+};
+
+const ACHIEVEMENTS=[
+  {id:'first_star',name:'侦探初心',icon:'🔍',condition:()=>state.stars>=1},
+  {id:'drag_done',name:'排序专家',icon:'📊',condition:()=>state.achievements['drag_complete']},
+  {id:'length_know',name:'长度侦探',icon:'📏',condition:()=>state.achievements['length_done']},
+  {id:'weight_know',name:'重量侦探',icon:'⚖️',condition:()=>state.achievements['weight_done']},
+  {id:'est_good',name:'估量大师',icon:'🎯',condition:()=>state.achievements['est_done']},
+  {id:'combo3',name:'三连侦探',icon:'🔥',condition:()=>state.correct>=3},
+  {id:'boss_win',name:'量感守护者',icon:'🐲',condition:()=>state.achievements['boss_defeated']},
+  {id:'star10',name:'星星侦探',icon:'⭐',condition:()=>state.stars>=10},
+];
+
+const AudioCtx=window.AudioContext||window.webkitAudioContext;
+let audioCtx;
+function getAudio(){if(!audioCtx)audioCtx=new AudioCtx();return audioCtx;}
+function playCorrect(){try{const ctx=getAudio();[523,659,784].forEach((f,i)=>{const o=ctx.createOscillator();const g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=f;g.gain.setValueAtTime(0.2,ctx.currentTime+i*0.1);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+i*0.1+0.3);o.start(ctx.currentTime+i*0.1);o.stop(ctx.currentTime+i*0.1+0.3);});}catch(e){}}
+function playWrong(){try{const ctx=getAudio();const o=ctx.createOscillator();const g=ctx.createGain();o.type='sawtooth';o.connect(g);g.connect(ctx.destination);o.frequency.setValueAtTime(200,ctx.currentTime);o.frequency.linearRampToValueAtTime(100,ctx.currentTime+0.3);g.gain.setValueAtTime(0.2,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.4);o.start(ctx.currentTime);o.stop(ctx.currentTime+0.4);}catch(e){}}
+
+const SECTIONS=['hero','objectives','warmup','level1','level2','level3','boss','scoreboard'];
+function goTo(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  state.section=id;
+  document.getElementById('progressFill').style.width=((SECTIONS.indexOf(id)/(SECTIONS.length-1))*100)+'%';
+  if(id==='level1')initLevel1();
+  if(id==='level2')initLevel2();
+  if(id==='level3')initEstGame();
+  if(id==='boss')initBoss();
+  if(id==='scoreboard')showScoreboard();
+  window.scrollTo(0,0);
+}
+function addStars(n){state.stars+=n;state.score+=n*10;document.getElementById('starCount').textContent=state.stars;checkAchievements();}
+function checkAchievements(){ACHIEVEMENTS.forEach(a=>{if(!state.achievements[a.id]&&a.condition()){state.achievements[a.id]=true;showAchievement(a);}});}
+function showAchievement(a){const p=document.getElementById('achievePopup');p.innerHTML=`🏆 成就解锁！<br><strong>${a.icon} ${a.name}</strong>`;p.style.display='block';playCorrect();setTimeout(()=>p.style.display='none',3000);}
+
+const TIPS={
+  warmup:'mm<cm<m<km，从最小到最大排列！',
+  level1:'测手指宽用mm，量黑板用cm或m，量路程用km！',
+  level2:'一颗糖约1克，一本书约1千克，一辆车约1吨！',
+  level3:'先想想生活中的参照物，比如你的手掌约15cm！',
+  boss:'综合运用所有量感知识，不要慌！',
+};
+function toggleBuddy(){const tip=document.getElementById('buddyTip');document.getElementById('buddyTipText').textContent=TIPS[state.section]||'量感就是对大小的感觉，多练习就会准了！💪';tip.classList.toggle('show');setTimeout(()=>tip.classList.remove('show'),5000);}
+
+// WARMUP DRAG
+let dragId2=null;
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('.drag-item').forEach(item=>{
+    item.addEventListener('dragstart',()=>{dragId2=item.id;item.classList.add('dragging');});
+    item.addEventListener('dragend',()=>item.classList.remove('dragging'));
+  });
+  document.querySelectorAll('.drop-zone').forEach(zone=>{
+    zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('over');});
+    zone.addEventListener('dragleave',()=>zone.classList.remove('over'));
+    zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('over');if(dragId2){const el=document.getElementById(dragId2);zone.dataset.dropped=el.dataset.val;zone.textContent=el.textContent;}});
+  });
+});
+function checkWarmup(){
+  const correct=[{id:'wz1',ans:'mm'},{id:'wz2',ans:'cm'},{id:'wz3',ans:'m'},{id:'wz4',ans:'km'}];
+  let ok=correct.every(c=>document.getElementById(c.id).dataset.dropped===c.ans);
+  const fb=document.getElementById('warmupFb');
+  if(ok){fb.textContent='🎉 完全正确！mm→cm→m→km，从小到大！';fb.className='feedback correct';state.achievements['drag_complete']=true;addStars(2);playCorrect();checkAchievements();}
+  else{fb.textContent='😅 有点小错！记住：毫米→厘米→米→千米，越来越大！';fb.className='feedback wrong';playWrong();}
+}
+
+// LEVEL 1
+function initLevel1(){animatePencil();renderLengthQuiz();}
+function animatePencil(){
+  const bar=document.getElementById('pencilBar');
+  const label=document.getElementById('pencilLabel');
+  bar.style.width='0%';
+  bar.style.background='linear-gradient(135deg,var(--green),var(--secondary))';
+  setTimeout(()=>{bar.style.width='15%';label.textContent='15 cm';},300);
+}
+const lengthQs=[
+  {q:'量一粒米的宽度，用什么单位最合适？',opts:['千米(km)','厘米(cm)','毫米(mm)','米(m)'],ans:2,exp:'一粒米很小，宽度约1mm，用毫米！'},
+  {q:'从家到学校的距离，用什么单位？',opts:['毫米(mm)','厘米(cm)','分米(dm)','千米(km)'],ans:3,exp:'路程很长，用千米(km)！大约1-2km'},
+  {q:'黑板的长度，用什么单位最合适？',opts:['毫米','厘米','米','千米'],ans:2,exp:'黑板约4米长，用"米"最合适！'},
+];
+let lqIdx=0;
+function renderLengthQuiz(){lqIdx=0;renderLQ();}
+function renderLQ(){
+  const q=lengthQs[lqIdx%lengthQs.length];
+  document.getElementById('lengthQuiz').innerHTML=`<p class="question-text">📏 ${q.q}</p><div class="options-grid" id="lqOpts"></div>`;
+  const opts=document.getElementById('lqOpts');
+  q.opts.forEach((o,i)=>{const btn=document.createElement('button');btn.className='option-btn';btn.textContent=o;btn.onclick=()=>checkLQ(i,q,btn);opts.appendChild(btn);});
+  document.getElementById('lengthFb').style.display='none';
+}
+function checkLQ(i,q,btn){
+  document.querySelectorAll('#lqOpts .option-btn').forEach(b=>b.disabled=true);
+  const fb=document.getElementById('lengthFb');
+  if(i===q.ans){btn.classList.add('correct');fb.textContent=`🎉 选对了！${q.exp}`;fb.className='feedback correct';addStars(2);state.correct++;playCorrect();state.achievements['length_done']=true;checkAchievements();lqIdx++;if(lqIdx<lengthQs.length)setTimeout(renderLQ,2000);}
+  else{btn.classList.add('wrong');document.querySelectorAll('#lqOpts .option-btn')[q.ans].classList.add('correct');fb.textContent=`😅 不对哦！${q.exp}`;fb.className='feedback wrong';playWrong();lqIdx++;setTimeout(renderLQ,2000);}
+}
+
+// LEVEL 2
+function initLevel2(){renderWeightQuiz();}
+function animateWeights(){
+  const apple=document.getElementById('scaleApple');
+  const water=document.getElementById('scaleWater');
+  const car=document.getElementById('scaleCar');
+  apple.querySelector('.item-icon').style.transform='scale(1)';
+  water.querySelector('.item-icon').style.transform='scale(1.5)';
+  car.querySelector('.item-icon').style.transform='scale(2.5)';
+  setTimeout(()=>{apple.querySelector('.item-icon').style.transform='';water.querySelector('.item-icon').style.transform='';car.querySelector('.item-icon').style.transform='';},2000);
+}
+const weightQs=[
+  {q:'一袋面粉约5___，选什么单位？',opts:['克(g)','千克(kg)','吨(t)','毫克'],ans:1,exp:'一袋面粉约5千克，用kg！'},
+  {q:'一只小蚂蚁约1___，选什么单位？',opts:['千克','克','吨','毫克'],ans:1,exp:'蚂蚁很轻，约1克，用g！'},
+  {q:'一头大象约4___，选什么单位？',opts:['克','千克','吨','毫克'],ans:2,exp:'大象很重！约4吨=4000千克，用t！'},
+];
+let wqIdx=0;
+function renderWeightQuiz(){wqIdx=0;renderWQ();}
+function renderWQ(){
+  const q=weightQs[wqIdx%weightQs.length];
+  document.getElementById('weightQuiz').innerHTML=`<p class="question-text">⚖️ ${q.q}</p><div class="options-grid" id="wqOpts"></div>`;
+  const opts=document.getElementById('wqOpts');
+  q.opts.forEach((o,i)=>{const btn=document.createElement('button');btn.className='option-btn';btn.textContent=o;btn.onclick=()=>checkWQ(i,q,btn);opts.appendChild(btn);});
+  document.getElementById('weightFb').style.display='none';
+}
+function checkWQ(i,q,btn){
+  document.querySelectorAll('#wqOpts .option-btn').forEach(b=>b.disabled=true);
+  const fb=document.getElementById('weightFb');
+  if(i===q.ans){btn.classList.add('correct');fb.textContent=`🎉 选对了！${q.exp}`;fb.className='feedback correct';addStars(2);state.correct++;playCorrect();state.achievements['weight_done']=true;checkAchievements();wqIdx++;if(wqIdx<weightQs.length)setTimeout(renderWQ,2000);}
+  else{btn.classList.add('wrong');document.querySelectorAll('#wqOpts .option-btn')[q.ans].classList.add('correct');fb.textContent=`😅 不对！${q.exp}`;fb.className='feedback wrong';playWrong();wqIdx++;setTimeout(renderWQ,2000);}
+}
+
+// ESTIMATION GAME
+const estQs=[
+  {obj:'🍌',q:'这根香蕉有多长？',unit:'cm',min:1,max:50,answer:20,tolerance:5},
+  {obj:'📏',q:'一把标准直尺有多长？',unit:'cm',min:1,max:60,answer:30,tolerance:3},
+  {obj:'🏫',q:'教室的高度大约是多少？',unit:'m',min:1,max:10,answer:3,tolerance:1},
+  {obj:'🍎',q:'一个苹果约多重？',unit:'g',min:50,max:500,answer:200,tolerance:50},
+];
+function initEstGame(){state.estQ=0;renderEstQ();}
+function renderEstQ(){
+  const q=estQs[state.estQ%estQs.length];
+  document.getElementById('estObj').textContent=q.obj;
+  document.getElementById('estQuestion').textContent=q.q;
+  const slider=document.getElementById('estSlider');
+  slider.min=q.min;slider.max=q.max;slider.value=Math.floor((q.min+q.max)/2);
+  document.getElementById('estValDisplay').textContent=slider.value+' '+q.unit;
+  document.getElementById('estResult').style.display='none';
+  document.getElementById('estNextBtn').style.display='none';
+}
+function updateEst(){
+  const q=estQs[state.estQ%estQs.length];
+  document.getElementById('estValDisplay').textContent=document.getElementById('estSlider').value+' '+q.unit;
+}
+function checkEst(){
+  const q=estQs[state.estQ%estQs.length];
+  const val=parseInt(document.getElementById('estSlider').value);
+  const diff=Math.abs(val-q.answer);
+  const res=document.getElementById('estResult');
+  res.style.display='block';
+  if(diff<=q.tolerance){
+    res.textContent=`🎉 估得很准！正确答案约${q.answer}${q.unit}，你猜了${val}${q.unit}，误差仅${diff}${q.unit}！`;
+    res.style.background='#d4edda';res.style.color='#155724';
+    addStars(3);state.correct++;playCorrect();state.achievements['est_done']=true;checkAchievements();
+  } else if(diff<=q.tolerance*3){
+    res.textContent=`👍 还不错！正确答案约${q.answer}${q.unit}，你猜了${val}${q.unit}，继续练习！`;
+    res.style.background='#fff3cd';res.style.color='#856404';
+    addStars(1);playCorrect();
+  } else {
+    res.textContent=`😅 差得有点多！正确答案约${q.answer}${q.unit}，你猜了${val}${q.unit}，再感受感受！`;
+    res.style.background='#f8d7da';res.style.color='#721c24';
+    playWrong();
+  }
+  document.getElementById('estNextBtn').style.display='inline-block';
+}
+function nextEstQ(){state.estQ++;if(state.estQ<estQs.length)renderEstQ();}
+
+// BOSS
+const bossQs=[
+  {q:'小明身高135___，填什么单位？',opts:['毫米','厘米','米','千米'],ans:1,exp:'人的身高用厘米，135cm！'},
+  {q:'一瓶矿泉水重500___',opts:['吨','千克','克','毫克'],ans:2,exp:'矿泉水500克（约半瓶）'},
+  {q:'北京到上海约1200___',opts:['毫米','厘米','米','千米'],ans:3,exp:'城市间距离用千米，约1200km'},
+  {q:'一头牛约500___，选单位',opts:['克','千克','吨','毫克'],ans:1,exp:'一头牛约500千克=0.5吨'},
+];
+let bTimer=null,bTime=30;
+function initBoss(){state.bossHp=400;state.bossQ=0;renderBossQ();}
+function renderBossQ(){
+  clearInterval(bTimer);bTime=30;
+  const q=bossQs[state.bossQ%bossQs.length];
+  document.getElementById('bossQuiz').innerHTML=`<p class="question-text">💥 ${q.q}</p><div class="options-grid" id="bOpts"></div>`;
+  const opts=document.getElementById('bOpts');
+  q.opts.forEach((o,i)=>{const btn=document.createElement('button');btn.className='option-btn';btn.textContent=o;btn.onclick=()=>checkBoss(i,q,btn);opts.appendChild(btn);});
+  const tEl=document.getElementById('bossTimer');tEl.textContent=`⏱️ ${bTime} 秒`;
+  bTimer=setInterval(()=>{bTime--;tEl.textContent=`⏱️ ${bTime} 秒`;if(bTime<=0){clearInterval(bTimer);tEl.textContent='⏰ 时间到！';playWrong();nextBoss();}},1000);
+}
+function checkBoss(i,q,btn){
+  clearInterval(bTimer);
+  document.querySelectorAll('#bOpts .option-btn').forEach(b=>b.disabled=true);
+  const fb=document.getElementById('bossFb');
+  if(i===q.ans){btn.classList.add('correct');fb.textContent=`🎉 击中！${q.exp}`;fb.className='feedback correct';playCorrect();addStars(3);state.correct++;
+    state.bossHp-=100;document.getElementById('bossHpBar').style.width=Math.max(0,(state.bossHp/400)*100)+'%';document.getElementById('bossHpText').textContent=`${Math.max(0,state.bossHp)}/400`;
+    if(state.bossHp<=0){state.achievements['boss_defeated']=true;checkAchievements();document.getElementById('bossNextBtn').style.display='inline-block';return;}
+    nextBoss();
+  } else {
+    btn.classList.add('wrong');document.querySelectorAll('#bOpts .option-btn')[q.ans].classList.add('correct');fb.textContent=`😅 被反击！${q.exp}`;fb.className='feedback wrong';playWrong();nextBoss();
+  }
+}
+function nextBoss(){state.bossQ++;if(state.bossQ<bossQs.length)setTimeout(renderBossQ,2000);else document.getElementById('bossNextBtn').style.display='inline-block';}
+
+function showScoreboard(){
+  const unl=ACHIEVEMENTS.filter(a=>state.achievements[a.id]).length;
+  document.getElementById('finalScore').textContent=state.score;
+  document.getElementById('statCorrect').textContent=state.correct;
+  document.getElementById('statAch').textContent=unl;
+  document.getElementById('statStars').textContent=state.stars;
+  document.getElementById('finalStars').textContent='⭐'.repeat(Math.min(5,Math.max(1,Math.floor(state.stars/4))));
+  const grid=document.getElementById('achievementsGrid');
+  grid.innerHTML='';
+  ACHIEVEMENTS.forEach(a=>{const badge=document.createElement('div');badge.className='achievement-badge'+(state.achievements[a.id]?' unlocked':'');badge.innerHTML=`<div class="badge-icon">${a.icon}</div><div class="badge-name">${a.name}</div>`;grid.appendChild(badge);});
+}
+</script>
+</body>
+</html>

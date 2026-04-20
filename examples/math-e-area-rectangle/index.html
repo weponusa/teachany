@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>面积大闯关 🟦 三年级数学</title>
+<style>
+:root {
+  --bg: #fffbf0; --primary: #ff6b6b; --secondary: #4ecdc4;
+  --accent: #ffe66d; --card: #fff;
+  --purple: #a855f7; --blue: #3b82f6; --green: #22c55e; --orange: #f97316;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); font-family: 'Microsoft YaHei', Arial, sans-serif; overflow-x: hidden; }
+
+nav {
+  background: linear-gradient(135deg, #3b82f6, #a855f7, #ff6b6b, #ffe66d);
+  padding: 12px 20px; display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+.nav-title { color: white; font-size: 1.3rem; font-weight: bold; }
+.stars-display { background: rgba(255,255,255,0.3); border-radius: 20px; padding: 6px 16px; color: white; font-weight: bold; }
+.progress-bar { height: 8px; background: rgba(255,255,255,0.3); border-radius: 4px; flex: 1; margin: 0 15px; }
+.progress-fill { height: 100%; background: white; border-radius: 4px; transition: width 0.5s; }
+
+.section { min-height: 100vh; padding: 40px 20px; display: none; }
+.section.active { display: block; }
+
+#hero {
+  background: linear-gradient(135deg, #3b82f6 0%, #a855f7 50%, #ff6b6b 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+}
+.hero-title {
+  font-size: clamp(2rem, 7vw, 4.5rem); font-weight: bold;
+  background: linear-gradient(135deg, #fff, #ffe66d, #fff);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+  animation: bounce 1s ease infinite alternate;
+}
+@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-15px); } }
+.hero-emoji { font-size: 5rem; display: block; margin: 20px; animation: spin 4s ease-in-out infinite; }
+@keyframes spin { 0%,100% { transform: rotateY(0); } 50% { transform: rotateY(360deg); } }
+.btn-start {
+  background: white; color: var(--blue); border: none; padding: 18px 50px;
+  border-radius: 50px; font-size: 1.5rem; font-weight: bold; cursor: pointer;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.2); transition: all 0.3s; margin-top: 20px;
+}
+.btn-start:hover { transform: scale(1.05); }
+
+.card {
+  background: var(--card); border-radius: 20px; padding: 30px;
+  margin: 20px auto; max-width: 800px; box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+}
+.card-title {
+  font-size: 1.8rem; font-weight: bold; margin-bottom: 20px;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.btn {
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  color: white; border: none; padding: 12px 30px; border-radius: 25px;
+  font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: all 0.3s; margin: 8px;
+}
+.btn:hover { transform: translateY(-3px); }
+.btn-green { background: linear-gradient(135deg, var(--green), var(--secondary)); }
+.btn-red { background: linear-gradient(135deg, var(--primary), var(--orange)); }
+.btn-orange { background: linear-gradient(135deg, var(--orange), var(--primary)); }
+.level-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  color: white; padding: 8px 20px; border-radius: 20px; font-weight: bold; margin-bottom: 15px;
+}
+.story-box {
+  background: linear-gradient(135deg, #f0f4ff, #f8f0ff);
+  border-left: 5px solid var(--blue); border-radius: 0 15px 15px 0;
+  padding: 20px; margin: 20px 0; font-size: 1.1rem; line-height: 1.8; color: #444;
+}
+.feedback { padding: 15px 20px; border-radius: 15px; margin: 15px 0; font-size: 1.2rem; font-weight: bold; display: none; }
+.feedback.correct { background: #d4edda; color: #155724; display: block; }
+.feedback.wrong { background: #f8d7da; color: #721c24; display: block; }
+.option-btn {
+  background: white; border: 3px solid #e0e0e0; border-radius: 15px;
+  padding: 18px; font-size: 1.1rem; cursor: pointer; transition: all 0.3s;
+}
+.option-btn:hover { border-color: var(--blue); background: #f0f4ff; transform: scale(1.02); }
+.option-btn.correct { background: #d4edda; border-color: var(--green); }
+.option-btn.wrong { background: #f8d7da; border-color: var(--primary); animation: shake 0.5s; }
+@keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+.options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+.question-text { font-size: 1.3rem; margin: 20px 0; color: #333; line-height: 1.6; }
+
+/* ===== GRID AREA ANIMATION ===== */
+.area-grid-wrap { display: flex; justify-content: center; flex-wrap: wrap; gap: 30px; margin: 20px 0; }
+.area-grid-demo { text-align: center; }
+.grid-canvas { border: 3px solid #333; border-radius: 8px; display: block; margin: 0 auto; }
+.grid-label { margin-top: 10px; font-size: 1rem; font-weight: bold; color: #555; }
+
+/* ===== FILL ANIMATION ===== */
+.fill-grid {
+  display: grid; gap: 2px; margin: 10px auto;
+  background: #ddd; padding: 3px; border-radius: 8px;
+}
+.fill-cell {
+  background: #f5f5f5; border-radius: 3px; transition: background 0.15s;
+  aspect-ratio: 1;
+}
+.fill-cell.filled-blue { background: linear-gradient(135deg, var(--blue), var(--purple)); }
+.fill-cell.filled-green { background: linear-gradient(135deg, var(--green), var(--secondary)); }
+.fill-cell.filled-orange { background: linear-gradient(135deg, var(--orange), var(--primary)); }
+.fill-cell.clickable { cursor: pointer; }
+.fill-cell.clickable:hover { background: var(--accent); }
+.fill-cell.user-selected { background: linear-gradient(135deg, var(--accent), var(--orange)); }
+
+/* ===== RECTANGLE BUILDER ===== */
+.rect-builder {
+  background: #f8f9ff; border-radius: 15px; padding: 25px; margin: 20px 0;
+}
+.rect-display {
+  position: relative; margin: 20px auto;
+  display: flex; align-items: center; justify-content: center;
+}
+.rect-box {
+  background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(168,85,247,0.2));
+  border: 3px solid var(--blue); border-radius: 4px;
+  transition: all 0.5s ease; position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+.rect-formula {
+  font-size: 1.5rem; font-weight: bold; text-align: center;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.dim-label { position: absolute; font-size: 0.9rem; font-weight: bold; color: var(--blue); }
+.slider-group { display: flex; align-items: center; gap: 15px; margin: 10px 0; flex-wrap: wrap; }
+.slider-group label { font-size: 1.1rem; min-width: 80px; }
+.dim-slider { flex: 1; min-width: 120px; accent-color: var(--blue); }
+.dim-value { font-size: 1.2rem; font-weight: bold; color: var(--purple); min-width: 60px; }
+
+/* ===== DRAG ===== */
+.drag-item {
+  background: linear-gradient(135deg, var(--accent), var(--orange));
+  padding: 12px 18px; border-radius: 12px; font-size: 1rem; font-weight: bold;
+  cursor: grab; user-select: none; display: inline-block; margin: 6px; color: #333;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: transform 0.2s;
+}
+.drag-item:hover { transform: scale(1.05); }
+.drag-item.dragging { opacity: 0.4; }
+.drop-zone {
+  min-width: 90px; min-height: 50px; border: 3px dashed #ccc; border-radius: 12px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.9rem; color: #999; margin: 6px; padding: 8px; transition: all 0.3s;
+}
+.drop-zone.over { border-color: var(--blue); background: #f0f4ff; }
+.drop-zone.correct { border-color: var(--green); background: #d4edda; color: #155724; font-weight: bold; }
+.drop-zone.wrong { border-color: var(--primary); background: #f8d7da; }
+
+/* ===== ACHIEVEMENTS ===== */
+.achievement-popup {
+  position: fixed; top: 80px; right: 20px;
+  background: linear-gradient(135deg, var(--accent), var(--orange));
+  color: white; padding: 15px 25px; border-radius: 20px;
+  font-size: 1.1rem; font-weight: bold; box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+  z-index: 999; animation: slideIn 0.5s ease; max-width: 280px;
+}
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.achievements-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
+.achievement-badge { background: #f5f5f5; border-radius: 15px; padding: 20px; text-align: center; border: 3px solid #e0e0e0; }
+.achievement-badge.unlocked { background: linear-gradient(135deg, #ffe66d, #3b82f6); border-color: var(--blue); animation: glow 2s ease infinite; }
+@keyframes glow { 0%,100% { box-shadow: 0 4px 15px rgba(59,130,246,0.3); } 50% { box-shadow: 0 4px 30px rgba(59,130,246,0.6); } }
+.badge-icon { font-size: 2.5rem; }
+.badge-name { font-size: 0.85rem; font-weight: bold; margin-top: 8px; color: #333; }
+
+/* ===== AI BUDDY ===== */
+.ai-buddy {
+  position: fixed; bottom: 20px; right: 20px; width: 70px; height: 70px;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; cursor: pointer; z-index: 200;
+  box-shadow: 0 6px 20px rgba(59,130,246,0.4); animation: float 3s ease-in-out infinite;
+}
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.buddy-tip {
+  position: fixed; bottom: 100px; right: 20px; background: white; border-radius: 20px;
+  padding: 15px 20px; max-width: 250px; box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  font-size: 0.95rem; color: #333; display: none; z-index: 200; border: 3px solid var(--blue);
+}
+.buddy-tip.show { display: block; animation: slideIn 0.3s ease; }
+
+/* ===== SCORE ===== */
+.score-board {
+  text-align: center; background: linear-gradient(135deg, var(--blue), var(--purple));
+  border-radius: 20px; padding: 40px; color: white; margin: 20px auto; max-width: 600px;
+}
+.final-score { font-size: 4rem; font-weight: bold; animation: bounce 1s ease infinite alternate; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-title">🟦 面积大闯关</div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div class="stars-display">⭐ <span id="starCount">0</span></div>
+</nav>
+
+<!-- HERO -->
+<div class="section active" id="hero">
+  <span class="hero-emoji">🟦</span>
+  <h1 class="hero-title">面积大闯关</h1>
+  <p style="color:white;font-size:1.5rem;margin:20px 0;text-shadow:1px 1px 3px rgba(0,0,0,0.3)">三年级数学 · 长方形和正方形的面积！</p>
+  <p style="color:rgba(255,255,255,0.9);font-size:1.1rem;margin-bottom:30px">🏠 从铺地砖到种菜地，面积就在我们身边！</p>
+  <button class="btn-start" onclick="goTo('objectives')">🚀 开始闯关！</button>
+</div>
+
+<!-- OBJECTIVES -->
+<div class="section" id="objectives">
+  <div class="card">
+    <div class="level-badge">📋 闯关目标</div>
+    <h2 class="card-title">今天要征服什么？</h2>
+    <ul style="list-style:none">
+      <li style="padding:10px 0;font-size:1.1rem;border-bottom:1px solid #f0f0f0">✅ 理解"面积"是什么意思</li>
+      <li style="padding:10px 0;font-size:1.1rem;border-bottom:1px solid #f0f0f0">✅ 学会长方形面积公式：长×宽</li>
+      <li style="padding:10px 0;font-size:1.1rem;border-bottom:1px solid #f0f0f0">✅ 学会正方形面积公式：边长×边长</li>
+      <li style="padding:10px 0;font-size:1.1rem;border-bottom:1px solid #f0f0f0">✅ 理解面积单位：cm²、m²</li>
+      <li style="padding:10px 0;font-size:1.1rem">✅ 解决生活中的面积问题</li>
+    </ul>
+    <div class="story-box">
+      <strong>🏠 面积在生活里！</strong><br>
+      妈妈要买地毯，需要知道客厅有多大——这就是面积！
+      农民伯伯种菜，要知道菜地多大——也是面积！
+      面积就是"一个面有多大"。
+    </div>
+    <button class="btn" onclick="goTo('warmup')">🔥 热身开始！</button>
+  </div>
+</div>
+
+<!-- WARMUP -->
+<div class="section" id="warmup">
+  <div class="card">
+    <div class="level-badge">🔥 热身 · 数格子</div>
+    <h2 class="card-title">哪个图形更大？来数格子！</h2>
+    <p style="color:#555;font-size:1.1rem;margin-bottom:20px">点击格子，把两个图形都涂满，数数各自有多少格！</p>
+    <div class="area-grid-wrap">
+      <div class="area-grid-demo">
+        <p style="font-weight:bold;color:var(--blue);margin-bottom:8px">图形A（长方形）</p>
+        <div id="gridA" class="fill-grid" style="grid-template-columns: repeat(4,40px)"></div>
+        <div id="countA" style="margin-top:8px;font-weight:bold;color:var(--blue)">已填：0 格</div>
+      </div>
+      <div style="font-size:3rem;display:flex;align-items:center;color:var(--orange);font-weight:bold">VS</div>
+      <div class="area-grid-demo">
+        <p style="font-weight:bold;color:var(--purple);margin-bottom:8px">图形B（正方形）</p>
+        <div id="gridB" class="fill-grid" style="grid-template-columns: repeat(3,40px)"></div>
+        <div id="countB" style="margin-top:8px;font-weight:bold;color:var(--purple)">已填：0 格</div>
+      </div>
+    </div>
+    <div id="warmupFb" class="feedback"></div>
+    <button class="btn" onclick="checkWarmup()">✅ 看谁更大！</button>
+    <button class="btn btn-green" onclick="fillAll()">🎨 全部涂满</button>
+    <button class="btn-orange btn" onclick="goTo('level1')">➡️ 下一关</button>
+  </div>
+</div>
+
+<!-- LEVEL 1: 面积概念 + 格子填充动画 -->
+<div class="section" id="level1">
+  <div class="card">
+    <div class="level-badge">🌟 第一关 · 面积是什么</div>
+    <div class="story-box">
+      <strong>🏡 ABT故事：</strong><br>
+      小明家要铺地砖，<strong>And</strong> 地板是长方形的，
+      <strong>But</strong> 要买多少块砖？需要知道"地有多大"，
+      <strong>Therefore</strong> 我们就用正方形格子来量——这就是面积！
+    </div>
+    <h3 style="margin:20px 0;font-size:1.3rem">🎬 格子填充动画</h3>
+    <div style="text-align:center;margin:20px 0">
+      <p style="margin-bottom:10px;font-size:1.1rem;color:#555">观察：长4格×宽3格的长方形，一共有多少格？</p>
+      <div id="animGrid" class="fill-grid" style="grid-template-columns:repeat(4,50px);margin:0 auto;display:inline-grid"></div>
+      <div id="animCount" style="font-size:1.5rem;font-weight:bold;color:var(--blue);margin-top:15px">
+        面积 = <span id="animNum">0</span> 个格子 = <span id="animCalc">?</span>
+      </div>
+    </div>
+    <button class="btn" onclick="startFillAnim()">▶️ 开始填充！</button>
+    <button class="btn btn-green" onclick="resetAnim()">🔄 重置</button>
+    <hr style="margin:25px 0;border:none;border-top:2px solid #f0f0f0">
+    <h3 style="margin:20px 0;font-size:1.3rem">❓ 快问快答</h3>
+    <div id="conceptQuiz"></div>
+    <div id="conceptFb" class="feedback"></div>
+  </div>
+  <div style="text-align:center;margin-top:15px">
+    <button class="btn" onclick="goTo('level2')">🚀 下一关！</button>
+  </div>
+</div>
+
+<!-- LEVEL 2: 面积公式 -->
+<div class="section" id="level2">
+  <div class="card">
+    <div class="level-badge">🌟🌟 第二关 · 面积公式</div>
+    <div class="story-box">
+      <strong>📐 ABT故事：</strong><br>
+      每次数格子太麻烦，<strong>And</strong> 数学家发现了规律：
+      <strong>But</strong> 其实不用数格子，
+      <strong>Therefore</strong> <b>长方形面积 = 长 × 宽</b>，正方形面积 = 边长 × 边长！
+    </div>
+    <h3 style="margin:20px 0;font-size:1.3rem">🎛️ 交互式面积探索</h3>
+    <div class="rect-builder">
+      <div class="slider-group">
+        <label>长：</label>
+        <input type="range" class="dim-slider" id="rectLen" min="1" max="10" value="4" oninput="updateRect()">
+        <div class="dim-value"><span id="lenVal">4</span> cm</div>
+      </div>
+      <div class="slider-group">
+        <label>宽：</label>
+        <input type="range" class="dim-slider" id="rectWid" min="1" max="10" value="3" oninput="updateRect()">
+        <div class="dim-value"><span id="widVal">3</span> cm</div>
+      </div>
+      <div class="rect-display" style="min-height:180px">
+        <div class="rect-box" id="rectBox" style="width:160px;height:120px">
+          <div class="dim-label" style="top:-25px;left:50%;transform:translateX(-50%)" id="topLen">4 cm</div>
+          <div class="dim-label" style="right:-40px;top:50%;transform:translateY(-50%)" id="rightWid">3 cm</div>
+          <div class="rect-formula" id="areaFormula">面积 = 12 cm²</div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:10px;font-size:1.2rem;color:#555">
+        <span id="rectLen2">4</span> × <span id="rectWid2">3</span> = <strong id="rectArea2" style="color:var(--blue)">12</strong> cm²
+      </div>
+    </div>
+    <h3 style="margin:20px 0;font-size:1.3rem">🧮 公式练习</h3>
+    <div id="formulaQuiz"></div>
+    <div id="formulaFb" class="feedback"></div>
+  </div>
+  <div style="text-align:center;margin-top:15px">
+    <button class="btn" onclick="goTo('level3')">🚀 下一关！</button>
+  </div>
+</div>
+
+<!-- LEVEL 3: 面积单位 + 拖拽 -->
+<div class="section" id="level3">
+  <div class="card">
+    <div class="level-badge">🌟🌟🌟 第三关 · 面积单位</div>
+    <div class="story-box">
+      <strong>📏 ABT故事：</strong><br>
+      小红量了客厅面积，<strong>And</strong> 写成"20格"，
+      <strong>But</strong> 别人看不懂"格"是多大，
+      <strong>Therefore</strong> 我们要用统一的单位：<b>cm²</b>（平方厘米）和 <b>m²</b>（平方米）！
+    </div>
+    <div style="background:#f0f4ff;border-radius:15px;padding:20px;margin:20px 0;font-size:1.1rem">
+      <p>📌 面积单位口诀：</p>
+      <p style="margin:8px 0">👆 <strong>1cm²</strong>：大拇指指甲盖那么大</p>
+      <p style="margin:8px 0">🚪 <strong>1m²</strong>：大约一扇门那么大 = 10000cm²</p>
+      <p style="margin:8px 0">⚽ <strong>100m²</strong>：大约一个篮球场那么大</p>
+    </div>
+    <h3 style="margin:20px 0;font-size:1.3rem">🧩 拖拽配对：选择合适的面积单位</h3>
+    <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;margin:20px 0">
+      <div>
+        <p style="font-weight:bold;margin-bottom:10px;color:var(--purple)">单位标签</p>
+        <div id="unitDragArea" style="display:flex;flex-direction:column;gap:8px">
+          <div class="drag-item" draggable="true" id="ud1" data-val="cm²">平方厘米(cm²)</div>
+          <div class="drag-item" draggable="true" id="ud2" data-val="m²">平方米(m²)</div>
+          <div class="drag-item" draggable="true" id="ud3" data-val="cm²">cm²</div>
+          <div class="drag-item" draggable="true" id="ud4" data-val="m²">m²</div>
+        </div>
+      </div>
+      <div>
+        <p style="font-weight:bold;margin-bottom:10px;color:var(--blue)">物品</p>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span>📱 手机屏幕（约100___）</span>
+            <div class="drop-zone" data-answer="cm²" id="uz1" style="min-width:120px">拖到这</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span>🏠 卧室地板（约15___）</span>
+            <div class="drop-zone" data-answer="m²" id="uz2" style="min-width:120px">拖到这</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span>📒 课本封面（约600___）</span>
+            <div class="drop-zone" data-answer="cm²" id="uz3" style="min-width:120px">拖到这</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span>🏫 操场（约2000___）</span>
+            <div class="drop-zone" data-answer="m²" id="uz4" style="min-width:120px">拖到这</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="unitFb" class="feedback"></div>
+    <button class="btn" onclick="checkUnits()">✅ 检查答案</button>
+  </div>
+  <div style="text-align:center;margin-top:15px">
+    <button class="btn btn-red" onclick="goTo('boss')">💥 挑战BOSS！</button>
+  </div>
+</div>
+
+<!-- BOSS -->
+<div class="section" id="boss">
+  <div class="card">
+    <div class="level-badge" style="background:linear-gradient(135deg,#ff0040,#a855f7)">💥 BOSS关 · 面积终极挑战</div>
+    <h2 class="card-title">🐉 面积大魔王</h2>
+    <p style="color:#555;margin-bottom:20px">用长×宽击败大魔王！每题限时30秒！</p>
+    <div id="bossQuiz"></div>
+    <div style="margin:20px 0">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+        <span>BOSS血量</span><span id="bossHpText">400/400</span>
+      </div>
+      <div style="background:#f0f0f0;border-radius:10px;height:30px;overflow:hidden">
+        <div id="bossHpBar" style="height:100%;background:linear-gradient(135deg,#ff0040,#a855f7);width:100%;transition:width 0.5s;border-radius:10px"></div>
+      </div>
+    </div>
+    <div id="bossFb" class="feedback"></div>
+    <div id="bossTimer" style="font-size:1.5rem;font-weight:bold;color:var(--primary);text-align:center;margin:15px 0"></div>
+  </div>
+  <div style="text-align:center;margin-top:15px">
+    <button class="btn btn-green" id="bossNextBtn" onclick="goTo('scoreboard')" style="display:none">🎊 查看成绩！</button>
+  </div>
+</div>
+
+<!-- SCOREBOARD -->
+<div class="section" id="scoreboard">
+  <div class="score-board">
+    <p style="font-size:1.5rem;margin-bottom:10px">🟦 面积大闯关完成！</p>
+    <div class="final-score" id="finalScore">0</div>
+    <div style="font-size:3rem;margin:20px 0" id="finalStars">⭐⭐⭐</div>
+    <div style="display:flex;justify-content:space-around;margin:20px 0">
+      <div style="text-align:center"><div style="font-size:2rem;font-weight:bold" id="statCorrect">0</div><div style="opacity:0.8">答对题数</div></div>
+      <div style="text-align:center"><div style="font-size:2rem;font-weight:bold" id="statAch">0</div><div style="opacity:0.8">成就解锁</div></div>
+      <div style="text-align:center"><div style="font-size:2rem;font-weight:bold" id="statStars">0</div><div style="opacity:0.8">收集星星</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2 class="card-title">🏆 成就收集</h2>
+    <div class="achievements-grid" id="achievementsGrid"></div>
+  </div>
+  <div class="card">
+    <h2 class="card-title">🚀 拓展挑战</h2>
+    <div class="story-box">
+      <strong>🌟 动手做一做：</strong><br>
+      ① 量量你的课桌面：长___cm，宽___cm，面积=___cm²<br>
+      ② 用尺子量卧室的一面墙：高___m，宽___m，面积=___m²<br>
+      ③ 把两块4cm×3cm的长方形拼在一起，面积是多少？
+    </div>
+    <button class="btn" onclick="goTo('hero')">🔄 再来一次！</button>
+  </div>
+</div>
+
+<div class="ai-buddy" onclick="toggleBuddy()">🤖</div>
+<div class="buddy-tip" id="buddyTip">
+  <p>👋 我是小AI！</p>
+  <p id="buddyTipText" style="margin-top:8px;color:#555">点我获取提示！</p>
+</div>
+<div class="achievement-popup" id="achievePopup" style="display:none"></div>
+
+<script>
+const state = {
+  stars:0, score:0, correct:0, section:'hero',
+  achievements:{}, bossHp:400, bossQ:0,
+  gridACount:0, gridBCount:0,
+  animFilling:false, animIdx:0, animInterval:null,
+  fqIdx:0, cqIdx:0,
+  dragId:null
+};
+
+const ACHIEVEMENTS=[
+  {id:'first_star',name:'开始闯关',icon:'🟦',condition:()=>state.stars>=1},
+  {id:'grid_done',name:'格子大师',icon:'📊',condition:()=>state.achievements['warmup_done']},
+  {id:'anim_watched',name:'动画观察家',icon:'🎬',condition:()=>state.achievements['anim_done']},
+  {id:'formula_known',name:'公式记忆王',icon:'📐',condition:()=>state.correct>=2},
+  {id:'unit_match',name:'单位达人',icon:'📏',condition:()=>state.achievements['unit_done']},
+  {id:'combo3',name:'三连击',icon:'🔥',condition:()=>state.correct>=3},
+  {id:'boss_win',name:'面积守护者',icon:'🐉',condition:()=>state.achievements['boss_defeated']},
+  {id:'star10',name:'星星收藏家',icon:'⭐',condition:()=>state.stars>=10},
+];
+
+const AudioCtx=window.AudioContext||window.webkitAudioContext;
+let audioCtx;
+function getAudio(){if(!audioCtx)audioCtx=new AudioCtx();return audioCtx;}
+function playCorrect(){try{const ctx=getAudio();[523,659,784,1046].forEach((f,i)=>{const o=ctx.createOscillator();const g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=f;g.gain.setValueAtTime(0.15,ctx.currentTime+i*0.08);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+i*0.08+0.3);o.start(ctx.currentTime+i*0.08);o.stop(ctx.currentTime+i*0.08+0.3);});}catch(e){}}
+function playWrong(){try{const ctx=getAudio();const o=ctx.createOscillator();const g=ctx.createGain();o.type='sawtooth';o.connect(g);g.connect(ctx.destination);o.frequency.setValueAtTime(200,ctx.currentTime);o.frequency.linearRampToValueAtTime(80,ctx.currentTime+0.4);g.gain.setValueAtTime(0.2,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.4);o.start(ctx.currentTime);o.stop(ctx.currentTime+0.4);}catch(e){}}
+
+const SECTIONS=['hero','objectives','warmup','level1','level2','level3','boss','scoreboard'];
+function goTo(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  state.section=id;
+  document.getElementById('progressFill').style.width=((SECTIONS.indexOf(id)/(SECTIONS.length-1))*100)+'%';
+  if(id==='warmup')initWarmup();
+  if(id==='level1')initLevel1();
+  if(id==='level2')initLevel2();
+  if(id==='level3')initLevel3();
+  if(id==='boss')initBoss();
+  if(id==='scoreboard')showScoreboard();
+  window.scrollTo(0,0);
+}
+function addStars(n){state.stars+=n;state.score+=n*10;document.getElementById('starCount').textContent=state.stars;checkAchievements();}
+function checkAchievements(){ACHIEVEMENTS.forEach(a=>{if(!state.achievements[a.id]&&a.condition()){state.achievements[a.id]=true;showAchievement(a);}});}
+function showAchievement(a){const p=document.getElementById('achievePopup');p.innerHTML=`🏆 成就解锁！<br><strong>${a.icon} ${a.name}</strong>`;p.style.display='block';playCorrect();setTimeout(()=>p.style.display='none',3000);}
+
+const TIPS={
+  warmup:'数格子：一行4格，3行，总共4×3=12格！',
+  level1:'面积就是"图形里有多少个正方形格子"！',
+  level2:'长方形面积=长×宽，正方形面积=边长×边长！',
+  level3:'手机屏用cm²，客厅用m²，记住大小参照！',
+  boss:'记住公式：长×宽=面积，别忘了单位！',
+};
+function toggleBuddy(){const tip=document.getElementById('buddyTip');document.getElementById('buddyTipText').textContent=TIPS[state.section]||'面积=长×宽，加油！💪';tip.classList.toggle('show');setTimeout(()=>tip.classList.remove('show'),5000);}
+
+// WARMUP GRIDS
+function initWarmup(){
+  buildClickGrid('gridA',4,3,'blue');
+  buildClickGrid('gridB',3,3,'purple');
+  state.gridACount=0;state.gridBCount=0;
+}
+function buildClickGrid(id,cols,rows,colorClass){
+  const grid=document.getElementById(id);
+  grid.style.gridTemplateColumns=`repeat(${cols},40px)`;
+  grid.innerHTML='';
+  for(let i=0;i<rows*cols;i++){
+    const cell=document.createElement('div');
+    cell.className='fill-cell clickable';
+    cell.style.width='40px';cell.style.height='40px';
+    cell.addEventListener('click',()=>{
+      if(cell.classList.contains('user-selected')){
+        cell.classList.remove('user-selected');
+        if(id==='gridA'){state.gridACount--;document.getElementById('countA').textContent='已填：'+state.gridACount+' 格';}
+        else{state.gridBCount--;document.getElementById('countB').textContent='已填：'+state.gridBCount+' 格';}
+      } else {
+        cell.classList.add('user-selected');
+        if(id==='gridA'){state.gridACount++;document.getElementById('countA').textContent='已填：'+state.gridACount+' 格';}
+        else{state.gridBCount++;document.getElementById('countB').textContent='已填：'+state.gridBCount+' 格';}
+      }
+    });
+    grid.appendChild(cell);
+  }
+}
+function fillAll(){
+  document.querySelectorAll('#gridA .fill-cell').forEach(c=>c.classList.add('user-selected'));
+  state.gridACount=12;document.getElementById('countA').textContent='已填：12 格';
+  document.querySelectorAll('#gridB .fill-cell').forEach(c=>c.classList.add('user-selected'));
+  state.gridBCount=9;document.getElementById('countB').textContent='已填：9 格';
+}
+function checkWarmup(){
+  const fb=document.getElementById('warmupFb');
+  if(state.gridACount>0&&state.gridBCount>0){
+    fb.textContent=`🎉 图形A有${state.gridACount}格，图形B有${state.gridBCount}格，${state.gridACount>state.gridBCount?'A':'B'}更大！4×3=12，3×3=9，面积就是格子数！`;
+    fb.className='feedback correct';
+    state.achievements['warmup_done']=true;addStars(2);playCorrect();checkAchievements();
+  } else {
+    fb.textContent='😅 先涂满格子，再比较大小！';fb.className='feedback wrong';playWrong();
+  }
+}
+
+// LEVEL 1: FILL ANIMATION
+function initLevel1(){
+  buildAnimGrid();state.cqIdx=0;renderConceptQ();
+}
+function buildAnimGrid(){
+  const grid=document.getElementById('animGrid');
+  grid.style.gridTemplateColumns='repeat(4,50px)';
+  grid.innerHTML='';
+  for(let i=0;i<12;i++){
+    const cell=document.createElement('div');
+    cell.className='fill-cell';cell.style.width='50px';cell.style.height='50px';
+    cell.id='anim-cell-'+i;
+    grid.appendChild(cell);
+  }
+  document.getElementById('animNum').textContent='0';
+  document.getElementById('animCalc').textContent='4×3=?';
+}
+function startFillAnim(){
+  if(state.animFilling)return;
+  state.animFilling=true;state.animIdx=0;
+  clearInterval(state.animInterval);
+  state.animInterval=setInterval(()=>{
+    if(state.animIdx>=12){
+      clearInterval(state.animInterval);state.animFilling=false;
+      document.getElementById('animNum').textContent='12';
+      document.getElementById('animCalc').textContent='4×3=12 ✓';
+      state.achievements['anim_done']=true;addStars(1);checkAchievements();
+      return;
+    }
+    const cell=document.getElementById('anim-cell-'+state.animIdx);
+    if(cell) cell.classList.add('filled-blue');
+    state.animIdx++;
+    document.getElementById('animNum').textContent=state.animIdx;
+    document.getElementById('animCalc').textContent='4×3='+state.animIdx+(state.animIdx<12?'...':'✓');
+  },120);
+}
+function resetAnim(){
+  clearInterval(state.animInterval);state.animFilling=false;
+  for(let i=0;i<12;i++){const c=document.getElementById('anim-cell-'+i);if(c)c.className='fill-cell';c.style.width='50px';c.style.height='50px';}
+  document.getElementById('animNum').textContent='0';
+  document.getElementById('animCalc').textContent='?';
+}
+const cqs=[
+  {q:'一个长方形，长5格，宽3格，面积是多少格？',opts:['8格','15格','12格','20格'],ans:1,exp:'5×3=15格！长×宽就是面积！'},
+  {q:'什么叫面积？',opts:['图形的长度','图形的周长','图形的大小（所占面积）','图形的高度'],ans:2,exp:'面积就是图形所占平面的大小！'},
+  {q:'用来量面积的单位是哪个？',opts:['厘米(cm)','米(m)','平方厘米(cm²)','千米(km)'],ans:2,exp:'面积用"平方"单位，如cm²或m²！'},
+];
+let cqIdx2=0;
+function renderConceptQ(){cqIdx2=0;renderCQ();}
+function renderCQ(){
+  const q=cqs[cqIdx2%cqs.length];
+  document.getElementById('conceptQuiz').innerHTML=`<p class="question-text">❓ ${q.q}</p><div class="options-grid" id="cqOpts"></div>`;
+  const opts=document.getElementById('cqOpts');
+  q.opts.forEach((o,i)=>{const btn=document.createElement('button');btn.className='option-btn';btn.textContent=o;btn.onclick=()=>checkCQ(i,q,btn);opts.appendChild(btn);});
+  document.getElementById('conceptFb').style.display='none';
+}
+function checkCQ(i,q,btn){
+  document.querySelectorAll('#cqOpts .option-btn').forEach(b=>b.disabled=true);
+  const fb=document.getElementById('conceptFb');
+  if(i===q.ans){btn.classList.add('correct');fb.textContent=`🎉 答对了！${q.exp}`;fb.className='feedback correct';addStars(2);state.correct++;playCorrect();checkAchievements();cqIdx2++;if(cqIdx2<cqs.length)setTimeout(renderCQ,2000);}
+  else{btn.classList.add('wrong');document.querySelectorAll('#cqOpts .option-btn')[q.ans].classList.add('correct');fb.textContent=`😅 不对哦！${q.exp}`;fb.className='feedback wrong';playWrong();cqIdx2++;setTimeout(renderCQ,2000);}
+}
+
+// LEVEL 2
+function initLevel2(){updateRect();state.fqIdx=0;renderFormulaQ();}
+function updateRect(){
+  const l=parseInt(document.getElementById('rectLen').value);
+  const w=parseInt(document.getElementById('rectWid').value);
+  const area=l*w;
+  document.getElementById('lenVal').textContent=l;
+  document.getElementById('widVal').textContent=w;
+  document.getElementById('topLen').textContent=l+' cm';
+  document.getElementById('rightWid').textContent=w+' cm';
+  document.getElementById('areaFormula').textContent='面积 = '+area+' cm²';
+  document.getElementById('rectLen2').textContent=l;
+  document.getElementById('rectWid2').textContent=w;
+  document.getElementById('rectArea2').textContent=area;
+  const box=document.getElementById('rectBox');
+  box.style.width=(l*25)+'px';box.style.height=(w*25)+'px';
+}
+const fqs=[
+  {q:'长方形长6cm，宽4cm，面积是？',opts:['10cm²','20cm²','24cm²','12cm²'],ans:2,exp:'6×4=24cm²'},
+  {q:'正方形边长5cm，面积是？',opts:['20cm²','10cm²','15cm²','25cm²'],ans:3,exp:'5×5=25cm²，正方形面积=边长×边长'},
+  {q:'长8m，宽3m的菜地，面积是？',opts:['24m²','11m²','22m²','16m²'],ans:0,exp:'8×3=24m²'},
+];
+let fqIdx2=0;
+function renderFormulaQ(){fqIdx2=0;renderFQ();}
+function renderFQ(){
+  const q=fqs[fqIdx2%fqs.length];
+  document.getElementById('formulaQuiz').innerHTML=`<p class="question-text">🧮 ${q.q}</p><div class="options-grid" id="fqOpts"></div>`;
+  const opts=document.getElementById('fqOpts');
+  q.opts.forEach((o,i)=>{const btn=document.createElement('button');btn.className='option-btn';btn.textContent=o;btn.onclick=()=>checkFQ(i,q,btn);opts.appendChild(btn);});
+  document.getElementById('formulaFb').style.display='none';
+}
+function checkFQ(i,q,btn){
+  document.querySelectorAll('#fqOpts .option-btn').forEach(b=>b.disabled=true);
+  const fb=document.getElementById('formulaFb');
+  if(i===q.ans){btn.classList.add('correct');fb.textContent=`🎉 算对了！${q.exp}`;fb.className='feedback correct';addStars(2);state.correct++;playCorrect();checkAchievements();fqIdx2++;if(fqIdx2<fqs.length)setTimeout(renderFQ,2000);}
+  else{btn.classList.add('wrong');document.querySelectorAll('#fqOpts .option-btn')[q.ans].classList.add('correct');fb.textContent=`😅 再算算！${q.exp}`;fb.className='feedback wrong';playWrong();fqIdx2++;setTimeout(renderFQ,2000);}
+}
+
+// LEVEL 3 DRAG
+let dragIdU=null;
+function initLevel3(){
+  document.querySelectorAll('.drag-item').forEach(item=>{
+    item.addEventListener('dragstart',()=>{dragIdU=item.id;item.classList.add('dragging');});
+    item.addEventListener('dragend',()=>item.classList.remove('dragging'));
+  });
+  document.querySelectorAll('.drop-zone').forEach(zone=>{
+    zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('over');});
+    zone.addEventListener('dragleave',()=>zone.classList.remove('over'));
+    zone.addEventListener('drop',e=>{
+      e.preventDefault();zone.classList.remove('over');
+      if(dragIdU){const el=document.getElementById(dragIdU);zone.dataset.dropped=el.dataset.val;zone.textContent=el.textContent;}
+    });
+  });
+}
+function checkUnits(){
+  const ans=[{id:'uz1',val:'cm²'},{id:'uz2',val:'m²'},{id:'uz3',val:'cm²'},{id:'uz4',val:'m²'}];
+  let ok=ans.every(a=>document.getElementById(a.id).dataset.dropped===a.val);
+  const fb=document.getElementById('unitFb');
+  if(ok){fb.textContent='🎉 全对！小物品用cm²，大空间用m²！';fb.className='feedback correct';state.achievements['unit_done']=true;addStars(3);playCorrect();checkAchievements();}
+  else{fb.textContent='😅 有点小错！记住：手机、课本用cm²；房间、操场用m²！';fb.className='feedback wrong';playWrong();}
+}
+
+// BOSS
+const bossQs=[
+  {q:'厨房长5m，宽4m，面积是多少？',opts:['18m²','9m²','20m²','16m²'],ans:2,exp:'5×4=20m²'},
+  {q:'正方形边长7cm，面积是多少？',opts:['28cm²','14cm²','21cm²','49cm²'],ans:3,exp:'7×7=49cm²'},
+  {q:'一块面积24cm²的长方形，长8cm，宽是多少？',opts:['2cm','3cm','4cm','6cm'],ans:1,exp:'24÷8=3cm'},
+  {q:'两块3m×4m的地毯拼在一起，总面积是多少？',opts:['12m²','14m²','24m²','36m²'],ans:2,exp:'3×4=12m²，两块共12×2=24m²'},
+];
+let bTimer=null,bTime=30;
+function initBoss(){state.bossHp=400;state.bossQ=0;renderBossQ();}
+function renderBossQ(){
+  clearInterval(bTimer);bTime=30;
+  const q=bossQs[state.bossQ%bossQs.length];
+  document.getElementById('bossQuiz').innerHTML=`<p class="question-text">💥 ${q.q}</p><div class="options-grid" id="bOpts"></div>`;
+  const opts=document.getElementById('bOpts');
+  q.opts.forEach((o,i)=>{const btn=document.createElement('button');btn.className='option-btn';btn.textContent=o;btn.onclick=()=>checkBoss(i,q,btn);opts.appendChild(btn);});
+  const tEl=document.getElementById('bossTimer');tEl.textContent=`⏱️ ${bTime} 秒`;
+  bTimer=setInterval(()=>{bTime--;tEl.textContent=`⏱️ ${bTime} 秒`;if(bTime<=0){clearInterval(bTimer);tEl.textContent='⏰ 时间到！';playWrong();nextBoss();}},1000);
+}
+function checkBoss(i,q,btn){
+  clearInterval(bTimer);
+  document.querySelectorAll('#bOpts .option-btn').forEach(b=>b.disabled=true);
+  const fb=document.getElementById('bossFb');
+  if(i===q.ans){btn.classList.add('correct');fb.textContent=`🎉 击中BOSS！${q.exp}`;fb.className='feedback correct';playCorrect();addStars(3);state.correct++;
+    state.bossHp-=100;document.getElementById('bossHpBar').style.width=Math.max(0,(state.bossHp/400)*100)+'%';document.getElementById('bossHpText').textContent=`${Math.max(0,state.bossHp)}/400`;
+    if(state.bossHp<=0){state.achievements['boss_defeated']=true;checkAchievements();document.getElementById('bossNextBtn').style.display='inline-block';return;}
+    nextBoss();
+  } else {
+    btn.classList.add('wrong');document.querySelectorAll('#bOpts .option-btn')[q.ans].classList.add('correct');fb.textContent=`😅 被反击！${q.exp}`;fb.className='feedback wrong';playWrong();nextBoss();
+  }
+}
+function nextBoss(){state.bossQ++;if(state.bossQ<bossQs.length)setTimeout(renderBossQ,2000);else document.getElementById('bossNextBtn').style.display='inline-block';}
+
+function showScoreboard(){
+  const unl=ACHIEVEMENTS.filter(a=>state.achievements[a.id]).length;
+  document.getElementById('finalScore').textContent=state.score;
+  document.getElementById('statCorrect').textContent=state.correct;
+  document.getElementById('statAch').textContent=unl;
+  document.getElementById('statStars').textContent=state.stars;
+  document.getElementById('finalStars').textContent='⭐'.repeat(Math.min(5,Math.max(1,Math.floor(state.stars/4))));
+  const grid=document.getElementById('achievementsGrid');
+  grid.innerHTML='';
+  ACHIEVEMENTS.forEach(a=>{const b=document.createElement('div');b.className='achievement-badge'+(state.achievements[a.id]?' unlocked':'');b.innerHTML=`<div class="badge-icon">${a.icon}</div><div class="badge-name">${a.name}</div>`;grid.appendChild(b);});
+}
+</script>
+</body>
+</html>

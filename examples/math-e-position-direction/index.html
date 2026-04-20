@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>位置与方向 - 三年级数学</title>
+<style>
+:root {
+  --bg:#fffbf0; --primary:#ff6b6b; --secondary:#4ecdc4;
+  --accent:#ffe66d; --card:#fff; --purple:#a29bfe; --orange:#fd79a8;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); font-family:'Microsoft YaHei',sans-serif; overflow-x:hidden; }
+.nav { background:linear-gradient(135deg,#ff6b6b,#feca57,#48dbfb,#ff9ff3);
+  padding:10px 20px; display:flex; gap:8px; flex-wrap:wrap; justify-content:center;
+  position:sticky; top:0; z-index:100; box-shadow:0 4px 15px rgba(0,0,0,0.1); }
+.nav-btn { background:rgba(255,255,255,0.9); border:none; border-radius:20px;
+  padding:6px 14px; cursor:pointer; font-size:13px; font-weight:bold; transition:all 0.3s; }
+.nav-btn:hover,.nav-btn.active { background:#fff; transform:scale(1.1); box-shadow:0 4px 15px rgba(0,0,0,0.2); }
+.section { display:none; min-height:100vh; padding:20px; }
+.section.active { display:block; }
+.hero { text-align:center; padding:50px 20px; background:linear-gradient(135deg,#d4fc79,#96e6a1);
+  border-radius:30px; margin-bottom:20px; }
+.hero h1 { font-size:2.5em; background:linear-gradient(135deg,#00b894,#0984e3,#6c5ce7);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  animation:bounce 1s infinite alternate; }
+@keyframes bounce { from{transform:translateY(0)} to{transform:translateY(-10px)} }
+.card { background:var(--card); border-radius:20px; padding:20px; margin:12px 0;
+  box-shadow:0 8px 30px rgba(0,0,0,0.08); transition:transform 0.3s; }
+.card:hover { transform:translateY(-3px); }
+.card-rainbow { border:3px solid; border-image:linear-gradient(135deg,#ff6b6b,#feca57,#48dbfb) 1; border-radius:20px; }
+h2 { font-size:1.7em; background:linear-gradient(135deg,var(--primary),var(--secondary));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:12px; }
+h3 { font-size:1.2em; color:var(--primary); margin-bottom:8px; }
+.formula-box { background:linear-gradient(135deg,#667eea,#764ba2); color:white;
+  border-radius:20px; padding:18px; text-align:center; font-size:1.3em; font-weight:bold; margin:12px 0; }
+.btn { background:linear-gradient(135deg,var(--primary),var(--orange)); color:white; border:none;
+  border-radius:25px; padding:12px 28px; font-size:15px; font-weight:bold; cursor:pointer;
+  transition:all 0.3s; box-shadow:0 6px 20px rgba(255,107,107,0.4); margin:5px; }
+.btn:hover { transform:translateY(-3px); }
+.btn-green { background:linear-gradient(135deg,var(--secondary),#55efc4); }
+.btn-blue { background:linear-gradient(135deg,#74b9ff,#0984e3); }
+.stars-display { position:fixed; top:60px; right:20px; background:linear-gradient(135deg,#ffd700,#ffb347);
+  border-radius:25px; padding:10px 20px; font-size:18px; font-weight:bold; z-index:99; }
+.achievement-popup { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0);
+  background:linear-gradient(135deg,#ffd700,#ffb347); border-radius:25px; padding:30px 40px;
+  text-align:center; z-index:200; transition:transform 0.5s cubic-bezier(0.175,0.885,0.32,1.275);
+  box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+.achievement-popup.show { transform:translate(-50%,-50%) scale(1); }
+.ai-buddy { position:fixed; bottom:20px; right:20px; z-index:150; }
+.buddy-avatar { width:70px; height:70px; border-radius:50%; background:linear-gradient(135deg,#55efc4,#00b894);
+  display:flex; align-items:center; justify-content:center; font-size:35px; cursor:pointer;
+  box-shadow:0 8px 25px rgba(85,239,196,0.5); animation:buddy-bounce 2s ease-in-out infinite; border:3px solid white; }
+@keyframes buddy-bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+.buddy-speech { position:absolute; bottom:80px; right:0; background:white; border-radius:20px;
+  padding:15px; width:240px; box-shadow:0 8px 30px rgba(0,0,0,0.15);
+  display:none; font-size:13px; line-height:1.5; border:2px solid var(--secondary); }
+.buddy-speech.show { display:block; }
+.quiz-opt { background:#f8f9fa; border:3px solid #e9ecef; border-radius:15px;
+  padding:12px 18px; margin:7px 0; cursor:pointer; font-size:15px; transition:all 0.3s; }
+.quiz-opt:hover { border-color:var(--secondary); transform:translateX(5px); }
+.quiz-opt.correct { border-color:#55efc4; background:#d5f9f0; }
+.quiz-opt.wrong { border-color:var(--primary); background:#ffe3e3; }
+.feedback { border-radius:15px; padding:12px; margin:10px 0; font-size:1.1em; font-weight:bold; }
+.feedback.correct { background:#d5f9f0; color:#00b894; border:2px solid #00b894; }
+.feedback.wrong { background:#ffe3e3; color:#d63031; border:2px solid #d63031; }
+.highlight { background:var(--accent); border-radius:8px; padding:2px 6px; }
+.progress-bar { background:#f0f0f0; border-radius:10px; height:12px; margin:10px 0; overflow:hidden; }
+.progress-fill { height:100%; background:linear-gradient(90deg,#ff6b6b,#feca57,#48dbfb); border-radius:10px; transition:width 0.5s; }
+.score-card { background:linear-gradient(135deg,#ffd700,#ffb347); border-radius:25px;
+  padding:30px; text-align:center; font-size:1.4em; font-weight:bold; color:white; }
+/* Map game */
+#map-container { position:relative; width:100%; max-width:480px; height:400px; margin:20px auto;
+  background:linear-gradient(135deg,#d4fc79,#96e6a1); border-radius:20px; overflow:hidden;
+  box-shadow:0 8px 30px rgba(0,0,0,0.1); border:3px solid #55efc4; }
+.map-item { position:absolute; font-size:30px; cursor:grab; user-select:none;
+  transition:transform 0.2s; filter:drop-shadow(2px 2px 3px rgba(0,0,0,0.3)); }
+.map-item:active { cursor:grabbing; transform:scale(1.2); }
+.map-label { position:absolute; font-size:11px; font-weight:bold; color:#333; white-space:nowrap; }
+.direction-marker { position:absolute; font-size:22px; font-weight:bold; color:#d63031; pointer-events:none; }
+/* Compass */
+#compass { display:block; margin:20px auto; border-radius:50%; box-shadow:0 8px 30px rgba(0,0,0,0.2); }
+/* Drag arrows */
+.arrow-zone { display:inline-flex; align-items:center; justify-content:center;
+  width:60px; height:60px; border:3px dashed #ccc; border-radius:12px; margin:5px;
+  font-size:28px; transition:all 0.3s; background:rgba(255,255,255,0.5); }
+.arrow-zone.has-item { border-color:#55efc4; background:rgba(85,239,196,0.2); }
+.arrow-zone.drag-over { border-color:var(--primary); background:rgba(255,107,107,0.1); transform:scale(1.1); }
+.draggable-arrow { display:inline-flex; align-items:center; justify-content:center;
+  width:55px; height:55px; border-radius:10px; font-size:28px; cursor:grab; margin:5px;
+  background:linear-gradient(135deg,var(--primary),var(--orange)); box-shadow:0 4px 15px rgba(255,107,107,0.4); }
+.draggable-arrow:active { cursor:grabbing; }
+</style>
+</head>
+<body>
+<div class="nav">
+  <button class="nav-btn active" onclick="showSection('hero')">🏠 首页</button>
+  <button class="nav-btn" onclick="showSection('goals')">🎯 目标</button>
+  <button class="nav-btn" onclick="showSection('warmup')">🧭 热身</button>
+  <button class="nav-btn" onclick="showSection('level1')">⭐ 关卡1</button>
+  <button class="nav-btn" onclick="showSection('level2')">⭐⭐ 关卡2</button>
+  <button class="nav-btn" onclick="showSection('level3')">⭐⭐⭐ 关卡3</button>
+  <button class="nav-btn" onclick="showSection('boss')">👾 Boss关</button>
+  <button class="nav-btn" onclick="showSection('scoreboard')">🏆 成绩单</button>
+  <button class="nav-btn" onclick="showSection('extend')">🚀 拓展</button>
+</div>
+<div class="stars-display">⭐ <span id="star-count">0</span></div>
+
+<!-- Hero -->
+<div class="section active" id="hero">
+  <div class="hero">
+    <div style="font-size:80px;animation:bounce 1s infinite alternate">🧭</div>
+    <h1>位置与方向探险</h1>
+    <p style="font-size:1.2em;color:#333;margin-top:15px">三年级数学 · 学会东南西北，成为方向小达人！</p>
+    <br><button class="btn" onclick="showSection('goals')">出发探险 🚀</button>
+  </div>
+  <div class="card card-rainbow">
+    <h2>🎮 闯关说明</h2>
+    <p>学会辨认方向，帮助小动物找到回家的路！完成关卡赢取⭐！</p>
+    <div class="progress-bar"><div class="progress-fill" id="total-progress" style="width:0%"></div></div>
+    <p style="text-align:center;color:#666">进度: <span id="progress-text">0%</span></p>
+  </div>
+</div>
+
+<!-- Goals -->
+<div class="section" id="goals">
+  <div class="card card-rainbow">
+    <h2>🎯 今天的目标</h2>
+    <div class="card" style="border-left:5px solid var(--primary)">
+      <ul style="font-size:1.1em;line-height:2.3;padding-left:20px">
+        <li>认识东、南、西、北四个基本方向</li>
+        <li>会看地图找方向</li>
+        <li>能描述物体的位置（在…的…方向）</li>
+        <li>知道东南、东北、西南、西北</li>
+      </ul>
+    </div>
+    <div class="formula-box">
+      上北下南，左西右东 🧭
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px">
+      <div class="card" style="text-align:center;background:linear-gradient(135deg,#ffecd2,#fcb69f)">
+        <div style="font-size:3em">⬆️</div><strong>北</strong>
+      </div>
+      <div class="card" style="text-align:center;background:linear-gradient(135deg,#a1c4fd,#c2e9fb)">
+        <div style="font-size:3em">⬇️</div><strong>南</strong>
+      </div>
+      <div class="card" style="text-align:center;background:linear-gradient(135deg,#d4fc79,#96e6a1)">
+        <div style="font-size:3em">⬅️</div><strong>西</strong>
+      </div>
+      <div class="card" style="text-align:center;background:linear-gradient(135deg,#fbd3e9,#bb377d22)">
+        <div style="font-size:3em">➡️</div><strong>东</strong>
+      </div>
+    </div>
+  </div>
+  <button class="btn" onclick="showSection('warmup')">继续 ➡️</button>
+</div>
+
+<!-- Warmup: Compass -->
+<div class="section" id="warmup">
+  <div class="card card-rainbow">
+    <h2>🧭 热身：转转指南针</h2>
+    <p style="font-size:1.1em;margin-bottom:15px">旋转指南针，点击不同方向，学会辨认方向！</p>
+    <div style="text-align:center">
+      <canvas id="compass" width="280" height="280"></canvas>
+      <div style="margin:15px 0; display:flex; gap:10px; flex-wrap:wrap; justify-content:center">
+        <button class="btn" onclick="rotateCompass(0)">⬆️ 北</button>
+        <button class="btn btn-green" onclick="rotateCompass(90)">➡️ 东</button>
+        <button class="btn btn-blue" onclick="rotateCompass(180)">⬇️ 南</button>
+        <button class="btn" style="background:linear-gradient(135deg,#a29bfe,#6c5ce7)" onclick="rotateCompass(270)">⬅️ 西</button>
+      </div>
+      <div id="compass-hint" style="font-size:1.2em;font-weight:bold;color:var(--primary);min-height:30px"></div>
+    </div>
+    <div class="card" style="background:#fff8e1;margin-top:15px">
+      <h3>💡 记忆小技巧</h3>
+      <p>面向北方时：你的右手边是东，左手边是西，背后是南！</p>
+    </div>
+  </div>
+  <button class="btn" onclick="addStars(2);unlockAchievement('warmup-done');showSection('level1')">热身完成！+2⭐ ➡️</button>
+</div>
+
+<!-- Level 1: Map reading -->
+<div class="section" id="level1">
+  <div class="card card-rainbow">
+    <h2>⭐ 关卡一：地图方向</h2>
+    <p style="font-size:1.1em;margin-bottom:10px">看地图，回答下面的问题！</p>
+    <div id="map-container">
+      <!-- Map drawn by JS -->
+    </div>
+    <div id="l1-questions"></div>
+    <button class="btn" onclick="checkLevel1()">检查答案 ✅</button>
+    <div id="l1-feedback"></div>
+  </div>
+</div>
+
+<!-- Level 2: Drag arrows -->
+<div class="section" id="level2">
+  <div class="card card-rainbow">
+    <h2>⭐⭐ 关卡二：拖拽方向标签</h2>
+    <p style="font-size:1.1em;margin-bottom:10px">把正确的方向标签拖到指南针上对应的位置！</p>
+    <canvas id="compass2" width="280" height="280" style="display:block;margin:20px auto;border-radius:50%;box-shadow:0 8px 30px rgba(0,0,0,0.1)"></canvas>
+    <div id="drag-area" style="margin:20px 0;text-align:center">
+      <p style="font-weight:bold;margin-bottom:10px">可用标签（拖到下面的格子里）：</p>
+      <div id="drag-labels" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"></div>
+    </div>
+    <div style="text-align:center;margin:15px 0">
+      <p style="font-weight:bold;margin-bottom:10px">方向格子：</p>
+      <div id="drop-targets" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;max-width:350px;margin:0 auto"></div>
+    </div>
+    <button class="btn" onclick="checkLevel2()">确认答案 ✅</button>
+    <div id="l2-feedback"></div>
+  </div>
+</div>
+
+<!-- Level 3: Multiple choice -->
+<div class="section" id="level3">
+  <div class="card card-rainbow">
+    <h2>⭐⭐⭐ 关卡三：方向问答</h2>
+    <div id="l3-quiz"></div>
+  </div>
+</div>
+
+<!-- Boss -->
+<div class="section" id="boss">
+  <div class="card card-rainbow">
+    <h2>👾 Boss关：帮小熊找路！</h2>
+    <p style="font-size:1.1em;margin-bottom:10px">根据地图，描述动物的位置关系！</p>
+    <canvas id="boss-canvas" width="400" height="380" style="display:block;margin:20px auto;border-radius:20px;box-shadow:0 8px 30px rgba(0,0,0,0.1)"></canvas>
+    <div id="boss-questions"></div>
+    <button class="btn" onclick="checkBoss()">提交答案 🎯</button>
+    <div id="boss-feedback"></div>
+  </div>
+</div>
+
+<!-- Scoreboard -->
+<div class="section" id="scoreboard">
+  <div class="score-card">
+    <div style="font-size:3em">🏆</div>
+    <h2 style="-webkit-text-fill-color:white">方向小达人！</h2>
+    <p>星星 ⭐ × <span id="final-stars">0</span></p>
+    <p>成就 🏅 × <span id="final-ach">0</span></p>
+  </div>
+  <div id="ach-list" style="margin-top:20px"></div>
+  <div style="text-align:center;margin-top:20px">
+    <button class="btn btn-blue" onclick="showSection('extend')">🚀 拓展探索</button>
+  </div>
+</div>
+
+<!-- Extend -->
+<div class="section" id="extend">
+  <div class="card card-rainbow">
+    <h2>🚀 拓展：方向的秘密</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px">
+      <div class="card">
+        <h3>🌍 地球的方向</h3>
+        <p>地球有南极和北极，磁北极让指南针永远指向北方！</p>
+      </div>
+      <div class="card">
+        <h3>🗺️ 地图上的方向</h3>
+        <p>通常地图上方是北，但有些地图会特别标注指北针！</p>
+      </div>
+      <div class="card">
+        <h3>🏠 风水方向</h3>
+        <p>古代人很重视房子的朝向，南北朝向的房子采光好！</p>
+      </div>
+      <div class="card">
+        <h3>⭐ 北极星</h3>
+        <p>夜晚找到北极星就能判断北方方向！古代航海靠它！</p>
+      </div>
+    </div>
+    <div class="card" style="background:#fff8e1;margin-top:15px">
+      <h3>💡 8个方向</h3>
+      <p>除了4个基本方向，还有：<span class="highlight">东北、东南、西北、西南</span>，一共8个方向！</p>
+    </div>
+    <canvas id="extend-canvas" width="350" height="350" style="display:block;margin:20px auto;border-radius:50%;box-shadow:0 8px 30px rgba(0,0,0,0.1)"></canvas>
+  </div>
+</div>
+
+<div class="achievement-popup" id="achievement-popup">
+  <div style="font-size:3em" id="ach-icon">🏅</div>
+  <h3 id="ach-title" style="margin:10px 0">成就解锁！</h3>
+  <p id="ach-desc">恭喜！</p>
+</div>
+<div class="ai-buddy">
+  <div class="buddy-speech" id="buddy-speech">我是导航小熊！🐻记住：上北下南，左西右东！</div>
+  <div class="buddy-avatar" onclick="toggleBuddy()">🐻</div>
+</div>
+
+<script>
+const state = { stars: 0, achievements: [], levels: 0 };
+const achievementDefs = [
+  { id: 'warmup-done', icon: '🧭', title: '指南针大师', desc: '完成了指南针热身！' },
+  { id: 'map-reader', icon: '🗺️', title: '地图读手', desc: '读懂了地图方向！' },
+  { id: 'drag-master', icon: '🎯', title: '拖拽达人', desc: '正确摆放了方向标签！' },
+  { id: 'quiz-ace', icon: '🧠', title: '方向小达人', desc: '关卡三全对！' },
+  { id: 'boss-slayer', icon: '👾', title: '寻路英雄', desc: '帮小熊找到了路！' },
+  { id: 'star-10', icon: '⭐', title: '星星收藏家', desc: '收集了10颗星！' },
+  { id: 'direction-pro', icon: '🌟', title: '方向专家', desc: '掌握8个方向！' },
+  { id: 'explorer', icon: '🧭', title: '探险家', desc: '完成全部学习！' },
+];
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+function getAudioCtx() { if (!audioCtx) audioCtx = new AudioCtx(); return audioCtx; }
+function playNote(freq, dur=0.2, type='sine') {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = freq; osc.type = type;
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    osc.start(); osc.stop(ctx.currentTime + dur);
+  } catch(e) {}
+}
+function playSuccess() { [523,659,784,1047].forEach((f,i)=>setTimeout(()=>playNote(f,0.3),i*100)); }
+function playError() { playNote(220,0.5,'sawtooth'); }
+function playClick() { playNote(800,0.1); }
+
+function addStars(n) {
+  state.stars += n;
+  document.getElementById('star-count').textContent = state.stars;
+  const p = Math.min(100, Math.round(state.stars/25*100));
+  document.getElementById('total-progress').style.width = p + '%';
+  document.getElementById('progress-text').textContent = p + '%';
+  document.getElementById('final-stars').textContent = state.stars;
+  if (state.stars >= 10) unlockAchievement('star-10');
+}
+function unlockAchievement(id) {
+  if (state.achievements.includes(id)) return;
+  state.achievements.push(id);
+  const ach = achievementDefs.find(a => a.id === id);
+  if (!ach) return;
+  document.getElementById('ach-icon').textContent = ach.icon;
+  document.getElementById('ach-title').textContent = ach.title;
+  document.getElementById('ach-desc').textContent = ach.desc;
+  const popup = document.getElementById('achievement-popup');
+  popup.classList.add('show'); playSuccess();
+  setTimeout(()=>popup.classList.remove('show'), 3000);
+  document.getElementById('final-ach').textContent = state.achievements.length;
+  renderAchievements();
+}
+function renderAchievements() {
+  const list = document.getElementById('ach-list');
+  list.innerHTML = '<h2 style="margin-bottom:10px">🏅 已解锁成就</h2>';
+  state.achievements.forEach(id => {
+    const ach = achievementDefs.find(a => a.id === id);
+    if (!ach) return;
+    list.innerHTML += `<div class="card" style="display:flex;align-items:center;gap:15px;margin:6px 0">
+      <span style="font-size:2em">${ach.icon}</span>
+      <div><strong>${ach.title}</strong><br><span style="color:#666">${ach.desc}</span></div>
+    </div>`;
+  });
+}
+
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>{
+    if (b.getAttribute('onclick').includes("'"+id+"'")) b.classList.add('active');
+  });
+  playClick(); window.scrollTo(0,0);
+  if (id === 'warmup') drawCompass('compass', 0);
+  if (id === 'level1') { initMapGame(); initLevel1Questions(); }
+  if (id === 'level2') initLevel2();
+  if (id === 'level3') initLevel3();
+  if (id === 'boss') initBoss();
+  if (id === 'extend') drawExtendCompass();
+  if (id === 'scoreboard') renderAchievements();
+  updateBuddyHint(id);
+}
+
+// ===== Compass =====
+let compassAngle = 0;
+function drawCompass(canvasId, angle) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W/2, cy = H/2, R = Math.min(W,H)/2 - 10;
+  ctx.clearRect(0,0,W,H);
+  // Background
+  const bg = ctx.createRadialGradient(cx,cy,0,cx,cy,R);
+  bg.addColorStop(0,'#fff'); bg.addColorStop(1,'#f0f4f8');
+  ctx.fillStyle = bg; ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#ccc'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.stroke();
+  // Direction labels (fixed)
+  const dirs = [
+    {label:'北',angle:-90,color:'#d63031'},{label:'东',angle:0,color:'#0984e3'},
+    {label:'南',angle:90,color:'#00b894'},{label:'西',angle:180,color:'#e17055'},
+    {label:'东北',angle:-45,color:'#6c5ce7',small:true},{label:'东南',angle:45,color:'#6c5ce7',small:true},
+    {label:'西南',angle:135,color:'#6c5ce7',small:true},{label:'西北',angle:-135,color:'#6c5ce7',small:true},
+  ];
+  dirs.forEach(d => {
+    const rad = (d.angle + angle) * Math.PI / 180;
+    const lr = d.small ? R - 22 : R - 20;
+    const x = cx + Math.cos(rad) * lr;
+    const y = cy + Math.sin(rad) * lr;
+    ctx.fillStyle = d.color;
+    ctx.font = d.small ? 'bold 11px Microsoft YaHei' : 'bold 16px Microsoft YaHei';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(d.label, x, y);
+  });
+  // Tick marks
+  for (let i = 0; i < 360; i += 45) {
+    const rad = (i + angle) * Math.PI / 180;
+    const len = i % 90 === 0 ? 12 : 7;
+    ctx.strokeStyle = i % 90 === 0 ? '#333' : '#999';
+    ctx.lineWidth = i % 90 === 0 ? 3 : 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(rad)*(R-35), cy + Math.sin(rad)*(R-35));
+    ctx.lineTo(cx + Math.cos(rad)*(R-35-len), cy + Math.sin(rad)*(R-35-len));
+    ctx.stroke();
+  }
+  // Needle (red=north, blue=south)
+  const nAngle = (-90 + angle) * Math.PI / 180;
+  const sAngle = (90 + angle) * Math.PI / 180;
+  ctx.lineWidth = 5;
+  // North needle
+  ctx.strokeStyle = '#d63031';
+  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+Math.cos(nAngle)*(R-50), cy+Math.sin(nAngle)*(R-50)); ctx.stroke();
+  // South needle
+  ctx.strokeStyle = '#0984e3';
+  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+Math.cos(sAngle)*(R-50), cy+Math.sin(sAngle)*(R-50)); ctx.stroke();
+  // Center circle
+  ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(cx,cy,6,0,Math.PI*2); ctx.fill();
+}
+function rotateCompass(targetAngle) {
+  compassAngle = targetAngle;
+  drawCompass('compass', targetAngle);
+  const dirs = {0:'朝北！⬆️ 上方是北方',90:'朝东！➡️ 右边是东方',180:'朝南！⬇️ 下方是南方',270:'朝西！⬅️ 左边是西方'};
+  document.getElementById('compass-hint').textContent = dirs[targetAngle] || '';
+  playNote(600, 0.3);
+}
+
+// ===== Level 1 Map =====
+function initMapGame() {
+  const container = document.getElementById('map-container');
+  container.innerHTML = '';
+  // Draw a simple map
+  const canvas = document.createElement('canvas');
+  canvas.width = 480; canvas.height = 400;
+  canvas.style.cssText = 'position:absolute;left:0;top:0;border-radius:20px';
+  container.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  // bg
+  ctx.fillStyle = '#c8e6c9'; ctx.fillRect(0,0,480,400);
+  // roads
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 12;
+  ctx.beginPath(); ctx.moveTo(240,0); ctx.lineTo(240,400); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,200); ctx.lineTo(480,200); ctx.stroke();
+  // grid light lines
+  ctx.strokeStyle = '#b2dfdb'; ctx.lineWidth = 1;
+  [120,360].forEach(x => { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,400); ctx.stroke(); });
+  [100,300].forEach(y => { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(480,y); ctx.stroke(); });
+  // compass rose
+  ctx.fillStyle = '#d63031'; ctx.font = 'bold 16px Microsoft YaHei'; ctx.textAlign = 'center';
+  ctx.fillText('北', 240, 25);
+  ctx.fillStyle = '#0984e3'; ctx.fillText('南', 240, 390);
+  ctx.fillStyle = '#e17055'; ctx.fillText('西', 20, 205);
+  ctx.fillStyle = '#00b894'; ctx.fillText('东', 460, 205);
+  // North arrow
+  ctx.fillStyle = '#d63031'; ctx.beginPath();
+  ctx.moveTo(240,35); ctx.lineTo(233,52); ctx.lineTo(247,52); ctx.closePath(); ctx.fill();
+  // buildings
+  const items = [
+    {emoji:'🏫',x:100,y:100,name:'学校'},
+    {emoji:'🏥',x:360,y:100,name:'医院'},
+    {emoji:'🏪',x:100,y:300,name:'超市'},
+    {emoji:'🌳',x:360,y:300,name:'公园'},
+    {emoji:'🏠',x:240,y:200,name:'我家',center:true},
+  ];
+  ctx.textAlign = 'center';
+  items.forEach(item => {
+    ctx.font = '35px serif';
+    ctx.fillText(item.emoji, item.x, item.y);
+    ctx.font = 'bold 12px Microsoft YaHei';
+    ctx.fillStyle = '#333';
+    ctx.fillText(item.name, item.x, item.y+22);
+  });
+}
+const l1Qs = [
+  { q: '学校在我家的哪个方向？', options: ['东北方向', '西北方向', '东南方向', '西南方向'], ans: 1 },
+  { q: '医院在我家的哪个方向？', options: ['西北方向', '东北方向', '西南方向', '东南方向'], ans: 1 },
+  { q: '超市在我家的哪个方向？', options: ['西北方向', '东北方向', '西南方向', '东南方向'], ans: 2 },
+  { q: '公园在我家的哪个方向？', options: ['西南方向', '东南方向', '东北方向', '西北方向'], ans: 1 },
+];
+function initLevel1Questions() {
+  document.getElementById('l1-questions').innerHTML = `
+    <div style="margin:15px 0">
+      ${l1Qs.map((q,i)=>`
+        <div class="card" style="margin:8px 0;border-left:5px solid var(--secondary)">
+          <h3>第${i+1}题：${q.q}</h3>
+          ${q.options.map((o,j)=>`
+            <label style="display:block;padding:6px 0;cursor:pointer;font-size:14px">
+              <input type="radio" name="l1-q${i}" value="${j}" style="margin-right:8px">
+              ${['A','B','C','D'][j]}. ${o}
+            </label>
+          `).join('')}
+        </div>
+      `).join('')}
+    </div>
+  `;
+  document.getElementById('l1-feedback').innerHTML = '';
+}
+function checkLevel1() {
+  let correct = 0;
+  l1Qs.forEach((q,i) => {
+    const sel = document.querySelector(`input[name="l1-q${i}"]:checked`);
+    if (sel && +sel.value === q.ans) correct++;
+  });
+  if (correct === l1Qs.length) {
+    document.getElementById('l1-feedback').innerHTML = '<div class="feedback correct">🎉 全对！地图方向大师！+5⭐</div>';
+    addStars(5); state.levels++; unlockAchievement('map-reader'); playSuccess();
+    setTimeout(()=>showSection('level2'), 2000);
+  } else {
+    document.getElementById('l1-feedback').innerHTML = `<div class="feedback wrong">💪 答对了 ${correct}/${l1Qs.length} 题！提示：上北下南，左西右东！</div>`;
+    playError();
+  }
+}
+
+// ===== Level 2: Drag arrows =====
+const dragTargets = [
+  {pos:'top', label:'北', correct:'北'},
+  {pos:'left', label:'西', correct:'西'},
+  {pos:'right', label:'东', correct:'东'},
+  {pos:'bottom', label:'南', correct:'南'},
+];
+const labels = ['东','南','西','北'];
+let l2Answers = {};
+function initLevel2() {
+  drawCompass('compass2', 0);
+  l2Answers = {};
+  const dragLabels = document.getElementById('drag-labels');
+  dragLabels.innerHTML = '';
+  const shuffled = [...labels].sort(() => Math.random() - 0.5);
+  shuffled.forEach(label => {
+    const el = document.createElement('div');
+    el.className = 'draggable-arrow';
+    el.textContent = label;
+    el.draggable = true;
+    el.id = 'drag-' + label;
+    el.addEventListener('dragstart', e => e.dataTransfer.setData('text', label));
+    dragLabels.appendChild(el);
+  });
+  const dropTargets = document.getElementById('drop-targets');
+  dropTargets.innerHTML = '';
+  const grid = [
+    {pos:'top-center',label:'北位',correct:'北'},{pos:'mid-left',label:'西位',correct:'西'},{pos:'mid-right',label:'东位',correct:'东'},null,{pos:'bottom-center',label:'南位',correct:'南'},null
+  ];
+  const positions = [
+    {label:'北位',correct:'北'}, {label:'空1',correct:null}, {label:'空2',correct:null},
+    {label:'西位',correct:'西'}, {label:'中心',correct:null}, {label:'东位',correct:'东'},
+    {label:'空3',correct:null}, {label:'空4',correct:null}, {label:'南位',correct:'南'},
+  ];
+  positions.forEach(p => {
+    const el = document.createElement('div');
+    if (!p.correct) {
+      el.style.cssText = 'width:80px;height:60px';
+      dropTargets.appendChild(el);
+      return;
+    }
+    el.className = 'arrow-zone';
+    el.id = 'drop-' + p.correct;
+    el.style.cssText = 'width:80px;height:60px;font-size:18px';
+    el.textContent = p.label;
+    el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
+    el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      const data = e.dataTransfer.getData('text');
+      el.textContent = data;
+      el.classList.remove('drag-over');
+      el.classList.add('has-item');
+      l2Answers[p.correct] = data;
+    });
+    dropTargets.appendChild(el);
+  });
+  document.getElementById('l2-feedback').innerHTML = '';
+}
+function checkLevel2() {
+  const correct = dragTargets.filter(t => l2Answers[t.correct] === t.correct).length;
+  const needed = dragTargets.filter(t=>t.correct).length;
+  if (correct === needed) {
+    document.getElementById('l2-feedback').innerHTML = '<div class="feedback correct">🎉 全对！方向摆放完美！+5⭐</div>';
+    addStars(5); state.levels++; unlockAchievement('drag-master'); playSuccess();
+    setTimeout(()=>showSection('level3'), 2000);
+  } else {
+    document.getElementById('l2-feedback').innerHTML = '<div class="feedback wrong">💪 有些方向放错了！记住：上北下南，左西右东！</div>';
+    playError();
+  }
+}
+
+// ===== Level 3 =====
+const l3Qs = [
+  { q: '面向北方站立，你的右手边是哪个方向？', opts:['南','西','东','北'], ans:2 },
+  { q: '太阳从哪个方向升起？', opts:['西','南','北','东'], ans:3 },
+  { q: '地图上通常哪个方向在上面？', opts:['东','南','北','西'], ans:2 },
+  { q: '东南方向在地图上是哪个角落？', opts:['左上','右上','左下','右下'], ans:3 },
+  { q: '从超市向北走到学校，学校在超市的？', opts:['南方','东方','北方','西方'], ans:2 },
+];
+let l3Score=0, l3Cur=0;
+function initLevel3() { l3Score=0; l3Cur=0; renderL3(); }
+function renderL3() {
+  if (l3Cur >= l3Qs.length) {
+    document.getElementById('l3-quiz').innerHTML = `<div class="card score-card">
+      <div style="font-size:2em">🎊</div>
+      <h3 style="-webkit-text-fill-color:white">关卡三完成！</h3>
+      <p>答对 ${l3Score}/${l3Qs.length} 题！</p>
+      <br><button class="btn" onclick="finishL3()">下一关 ➡️</button>
+    </div>`;
+    return;
+  }
+  const q = l3Qs[l3Cur];
+  document.getElementById('l3-quiz').innerHTML = `
+    <div style="text-align:right;color:#666">第 ${l3Cur+1}/${l3Qs.length} 题</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${(l3Cur/l3Qs.length)*100}%"></div></div>
+    <div class="card" style="margin:12px 0;border-left:5px solid var(--accent)"><h3>${q.q}</h3></div>
+    ${q.opts.map((o,i)=>`<div class="quiz-opt" onclick="ansL3(${i})">${['A','B','C','D'][i]}. ${o}</div>`).join('')}
+  `;
+}
+function ansL3(idx) {
+  const q = l3Qs[l3Cur];
+  const opts = document.querySelectorAll('.quiz-opt');
+  opts[idx].classList.add(idx===q.ans?'correct':'wrong');
+  if (idx!==q.ans) opts[q.ans].classList.add('correct');
+  if (idx===q.ans) { l3Score++; playSuccess(); } else playError();
+  opts.forEach(o=>o.onclick=null);
+  setTimeout(()=>{ l3Cur++; renderL3(); }, 1200);
+}
+function finishL3() {
+  addStars(l3Score*2); state.levels++;
+  if (l3Score===l3Qs.length) unlockAchievement('quiz-ace');
+  showSection('boss');
+}
+
+// ===== Boss =====
+function initBoss() {
+  const canvas = document.getElementById('boss-canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,400,380);
+  ctx.fillStyle = '#e8f5e9'; ctx.fillRect(0,0,400,380);
+  // roads
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 15;
+  ctx.beginPath(); ctx.moveTo(200,0); ctx.lineTo(200,380); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,190); ctx.lineTo(400,190); ctx.stroke();
+  // compass
+  ctx.fillStyle = '#d63031'; ctx.font = 'bold 14px Microsoft YaHei'; ctx.textAlign='center';
+  ctx.fillText('北↑', 200, 20);
+  ctx.fillStyle = '#0984e3'; ctx.fillText('南↓', 200, 375);
+  ctx.fillStyle = '#e17055'; ctx.fillText('←西', 25, 195);
+  ctx.fillStyle = '#00b894'; ctx.fillText('东→', 375, 195);
+  // Animals
+  const animals = [
+    {emoji:'🐻',x:90,y:90,name:'小熊'},
+    {emoji:'🦁',x:310,y:90,name:'狮子'},
+    {emoji:'🐘',x:90,y:295,name:'大象'},
+    {emoji:'🏠',x:200,y:190,name:'家',center:true},
+    {emoji:'🦊',x:310,y:295,name:'狐狸'},
+  ];
+  ctx.textAlign = 'center';
+  animals.forEach(a => {
+    ctx.font = '38px serif'; ctx.fillText(a.emoji, a.x, a.y);
+    ctx.font = 'bold 12px Microsoft YaHei'; ctx.fillStyle = '#333';
+    ctx.fillText(a.name, a.x, a.y+22);
+  });
+  document.getElementById('boss-questions').innerHTML = `
+    <div style="margin:15px 0">
+      <div class="card" style="margin:8px 0;border-left:5px solid var(--primary)">
+        <h3>① 小熊在家的哪个方向？</h3>
+        <select id="boss-q1" style="border:3px solid var(--secondary);border-radius:12px;padding:8px 15px;font-size:15px;outline:none">
+          <option value="">选择方向</option>
+          <option>东北方向</option><option>西北方向</option><option>东南方向</option><option>西南方向</option>
+        </select>
+      </div>
+      <div class="card" style="margin:8px 0;border-left:5px solid var(--secondary)">
+        <h3>② 狮子在家的哪个方向？</h3>
+        <select id="boss-q2" style="border:3px solid var(--secondary);border-radius:12px;padding:8px 15px;font-size:15px;outline:none">
+          <option value="">选择方向</option>
+          <option>东北方向</option><option>西北方向</option><option>东南方向</option><option>西南方向</option>
+        </select>
+      </div>
+      <div class="card" style="margin:8px 0;border-left:5px solid var(--purple)">
+        <h3>③ 从家向南走会遇到谁？</h3>
+        <select id="boss-q3" style="border:3px solid var(--secondary);border-radius:12px;padding:8px 15px;font-size:15px;outline:none">
+          <option value="">选择动物</option>
+          <option>小熊</option><option>狮子</option><option>大象</option><option>狐狸</option>
+        </select>
+      </div>
+    </div>
+  `;
+  document.getElementById('boss-feedback').innerHTML = '';
+}
+function checkBoss() {
+  const a1 = document.getElementById('boss-q1').value;
+  const a2 = document.getElementById('boss-q2').value;
+  const a3 = document.getElementById('boss-q3').value;
+  const ok1 = a1 === '西北方向';
+  const ok2 = a2 === '东北方向';
+  const ok3 = a3 === '大象' || a3 === '狐狸'; // both are south
+  if (ok1 && ok2 && ok3) {
+    document.getElementById('boss-feedback').innerHTML = '<div class="feedback correct">🎉🎉 太棒了！全部答对！小熊找到路了！+10⭐</div>';
+    addStars(10); state.levels++; unlockAchievement('boss-slayer'); unlockAchievement('explorer'); playSuccess();
+    setTimeout(()=>showSection('scoreboard'), 2000);
+  } else {
+    const hints = [];
+    if (!ok1) hints.push('①小熊在家的西北方向');
+    if (!ok2) hints.push('②狮子在家的东北方向');
+    if (!ok3) hints.push('③向南走会遇到大象或狐狸');
+    document.getElementById('boss-feedback').innerHTML = `<div class="feedback wrong">💪 ${hints.join('；')}</div>`;
+    playError();
+  }
+}
+
+// ===== Extend Compass =====
+function drawExtendCompass() {
+  const canvas = document.getElementById('extend-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = 350, H = 350, cx = W/2, cy = H/2, R = 150;
+  ctx.clearRect(0,0,W,H);
+  const bg = ctx.createRadialGradient(cx,cy,0,cx,cy,R);
+  bg.addColorStop(0,'#fff9c4'); bg.addColorStop(1,'#fff3e0');
+  ctx.fillStyle = bg; ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#ff6b6b'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.stroke();
+  // 8 directions
+  const dirs8 = [
+    {a:-90,label:'北',color:'#d63031',r:R-18},
+    {a:-45,label:'东北',color:'#6c5ce7',r:R-18},
+    {a:0,label:'东',color:'#0984e3',r:R-18},
+    {a:45,label:'东南',color:'#6c5ce7',r:R-18},
+    {a:90,label:'南',color:'#00b894',r:R-18},
+    {a:135,label:'西南',color:'#6c5ce7',r:R-18},
+    {a:180,label:'西',color:'#e17055',r:R-18},
+    {a:-135,label:'西北',color:'#6c5ce7',r:R-18},
+  ];
+  dirs8.forEach(d => {
+    const rad = d.a * Math.PI/180;
+    const x = cx + Math.cos(rad) * d.r;
+    const y = cy + Math.sin(rad) * d.r;
+    ctx.fillStyle = d.color; ctx.font = 'bold 15px Microsoft YaHei';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(d.label, x, y);
+    // line
+    ctx.strokeStyle = d.color + '88'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+Math.cos(rad)*(R-38), cy+Math.sin(rad)*(R-38)); ctx.stroke();
+  });
+  // Center
+  ctx.fillStyle = '#ff6b6b'; ctx.beginPath(); ctx.arc(cx,cy,10,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 10px Microsoft YaHei'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('你', cx, cy);
+  unlockAchievement('direction-pro');
+}
+
+// ===== Buddy =====
+const buddyHints = {
+  hero: '我是导航小熊🐻！东南西北，我帮你记！',
+  goals: '记住：上北下南，左西右东！',
+  warmup: '转动指南针，感受方向的变化！',
+  level1: '看地图：学校在我家的左上角，那是西北！',
+  level2: '把方向标签拖到正确位置：上=北，下=南！',
+  level3: '面向北，右手是东，左手是西，背后是南！',
+  boss: '仔细看地图！左上是西北，右上是东北！',
+  scoreboard: '恭喜你成为方向小达人！🏆',
+  extend: '八个方向：东南西北+东北、东南、西北、西南！',
+};
+function updateBuddyHint(id) {
+  const s = document.getElementById('buddy-speech');
+  s.textContent = buddyHints[id] || '加油！🎉';
+  s.classList.add('show'); setTimeout(()=>s.classList.remove('show'), 4000);
+}
+function toggleBuddy() {
+  playClick();
+  document.getElementById('buddy-speech').classList.toggle('show');
+}
+</script>
+</body>
+</html>

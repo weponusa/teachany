@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>对称、平移与旋转 - 三年级数学</title>
+<style>
+:root {
+  --bg:#fffbf0; --primary:#ff6b6b; --secondary:#4ecdc4;
+  --accent:#ffe66d; --card:#fff; --purple:#a29bfe; --orange:#fd79a8;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); font-family:'Microsoft YaHei',sans-serif; overflow-x:hidden; }
+.nav { background:linear-gradient(135deg,#ff6b6b,#feca57,#48dbfb,#ff9ff3);
+  padding:10px 20px; display:flex; gap:8px; flex-wrap:wrap; justify-content:center;
+  position:sticky; top:0; z-index:100; box-shadow:0 4px 15px rgba(0,0,0,0.1); }
+.nav-btn { background:rgba(255,255,255,0.9); border:none; border-radius:20px;
+  padding:6px 14px; cursor:pointer; font-size:13px; font-weight:bold; transition:all 0.3s; }
+.nav-btn:hover,.nav-btn.active { background:#fff; transform:scale(1.1); box-shadow:0 4px 15px rgba(0,0,0,0.2); }
+.section { display:none; min-height:100vh; padding:20px; }
+.section.active { display:block; }
+.hero { text-align:center; padding:50px 20px; background:linear-gradient(135deg,#fbd3e9,#c1e8fa);
+  border-radius:30px; margin-bottom:20px; }
+.hero h1 { font-size:2.4em; background:linear-gradient(135deg,#fd79a8,#a29bfe,#4ecdc4);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  animation:bounce 1s infinite alternate; }
+@keyframes bounce { from{transform:translateY(0)} to{transform:translateY(-10px)} }
+.card { background:var(--card); border-radius:20px; padding:20px; margin:12px 0;
+  box-shadow:0 8px 30px rgba(0,0,0,0.08); transition:transform 0.3s; }
+.card:hover { transform:translateY(-3px); }
+.card-rainbow { border:3px solid; border-image:linear-gradient(135deg,#ff6b6b,#feca57,#48dbfb) 1; border-radius:20px; }
+h2 { font-size:1.7em; background:linear-gradient(135deg,var(--primary),var(--secondary));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:12px; }
+h3 { font-size:1.2em; color:var(--primary); margin-bottom:8px; }
+.formula-box { background:linear-gradient(135deg,#667eea,#764ba2); color:white;
+  border-radius:20px; padding:18px; text-align:center; font-size:1.2em; font-weight:bold; margin:12px 0; }
+.btn { background:linear-gradient(135deg,var(--primary),var(--orange)); color:white; border:none;
+  border-radius:25px; padding:12px 28px; font-size:15px; font-weight:bold; cursor:pointer;
+  transition:all 0.3s; box-shadow:0 6px 20px rgba(255,107,107,0.4); margin:5px; }
+.btn:hover { transform:translateY(-3px); }
+.btn-green { background:linear-gradient(135deg,var(--secondary),#55efc4); }
+.btn-purple { background:linear-gradient(135deg,var(--purple),#6c5ce7); }
+.btn-blue { background:linear-gradient(135deg,#74b9ff,#0984e3); }
+.stars-display { position:fixed; top:60px; right:20px; background:linear-gradient(135deg,#ffd700,#ffb347);
+  border-radius:25px; padding:10px 20px; font-size:18px; font-weight:bold; z-index:99; }
+.achievement-popup { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0);
+  background:linear-gradient(135deg,#ffd700,#ffb347); border-radius:25px; padding:30px 40px;
+  text-align:center; z-index:200; transition:transform 0.5s cubic-bezier(0.175,0.885,0.32,1.275);
+  box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+.achievement-popup.show { transform:translate(-50%,-50%) scale(1); }
+.ai-buddy { position:fixed; bottom:20px; right:20px; z-index:150; }
+.buddy-avatar { width:70px; height:70px; border-radius:50%; background:linear-gradient(135deg,#fd79a8,#a29bfe);
+  display:flex; align-items:center; justify-content:center; font-size:35px; cursor:pointer;
+  box-shadow:0 8px 25px rgba(253,121,168,0.5); animation:buddy-bounce 2s ease-in-out infinite; border:3px solid white; }
+@keyframes buddy-bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+.buddy-speech { position:absolute; bottom:80px; right:0; background:white; border-radius:20px;
+  padding:15px; width:240px; box-shadow:0 8px 30px rgba(0,0,0,0.15);
+  display:none; font-size:13px; line-height:1.5; border:2px solid var(--secondary); }
+.buddy-speech.show { display:block; }
+.quiz-opt { background:#f8f9fa; border:3px solid #e9ecef; border-radius:15px;
+  padding:12px 18px; margin:7px 0; cursor:pointer; font-size:15px; transition:all 0.3s; }
+.quiz-opt:hover { border-color:var(--secondary); transform:translateX(5px); }
+.quiz-opt.correct { border-color:#55efc4; background:#d5f9f0; }
+.quiz-opt.wrong { border-color:var(--primary); background:#ffe3e3; }
+.feedback { border-radius:15px; padding:12px; margin:10px 0; font-size:1.1em; font-weight:bold; }
+.feedback.correct { background:#d5f9f0; color:#00b894; border:2px solid #00b894; }
+.feedback.wrong { background:#ffe3e3; color:#d63031; border:2px solid #d63031; }
+.highlight { background:var(--accent); border-radius:8px; padding:2px 6px; }
+.progress-bar { background:#f0f0f0; border-radius:10px; height:12px; margin:10px 0; overflow:hidden; }
+.progress-fill { height:100%; background:linear-gradient(90deg,#ff6b6b,#feca57,#48dbfb); border-radius:10px; transition:width 0.5s; }
+.score-card { background:linear-gradient(135deg,#ffd700,#ffb347); border-radius:25px;
+  padding:30px; text-align:center; font-size:1.4em; font-weight:bold; color:white; }
+.tabs { display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap; }
+.tab { background:#f0f0f0; border:none; border-radius:20px; padding:8px 20px;
+  cursor:pointer; font-size:14px; transition:all 0.3s; }
+.tab.active { background:linear-gradient(135deg,var(--primary),var(--orange)); color:white; }
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:15px; }
+@media(max-width:600px) { .grid-2 { grid-template-columns:1fr; } .hero h1 { font-size:1.8em; } }
+canvas { max-width:100%; }
+/* Symmetry painter */
+#sym-canvas { cursor:crosshair; border-radius:15px; box-shadow:0 8px 30px rgba(0,0,0,0.1); }
+.color-picker { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0; }
+.color-btn { width:35px; height:35px; border-radius:50%; border:3px solid transparent; cursor:pointer; transition:all 0.3s; }
+.color-btn.active { border-color:#333; transform:scale(1.2); }
+</style>
+</head>
+<body>
+<div class="nav">
+  <button class="nav-btn active" onclick="showSection('hero')">🏠 首页</button>
+  <button class="nav-btn" onclick="showSection('goals')">🎯 目标</button>
+  <button class="nav-btn" onclick="showSection('warmup')">🔥 热身</button>
+  <button class="nav-btn" onclick="showSection('level1')">⭐ 对称</button>
+  <button class="nav-btn" onclick="showSection('level2')">⭐⭐ 平移</button>
+  <button class="nav-btn" onclick="showSection('level3')">⭐⭐⭐ 旋转</button>
+  <button class="nav-btn" onclick="showSection('boss')">👾 Boss关</button>
+  <button class="nav-btn" onclick="showSection('scoreboard')">🏆 成绩单</button>
+  <button class="nav-btn" onclick="showSection('extend')">🚀 拓展</button>
+</div>
+<div class="stars-display">⭐ <span id="star-count">0</span></div>
+
+<!-- Hero -->
+<div class="section active" id="hero">
+  <div class="hero">
+    <div style="font-size:70px;animation:bounce 1s infinite alternate">🦋</div>
+    <h1>对称 · 平移 · 旋转</h1>
+    <p style="font-size:1.2em;color:#444;margin-top:15px">三年级数学 · 发现数学中的美丽变换！</p>
+    <br><button class="btn" onclick="showSection('goals')">开始探索 ✨</button>
+  </div>
+  <div class="card card-rainbow">
+    <h2>🎮 闯关说明</h2>
+    <p>学习图形的三种变换，用画笔和拖拽创作你的艺术！收集⭐解锁成就！</p>
+    <div class="progress-bar"><div class="progress-fill" id="total-progress" style="width:0%"></div></div>
+    <p style="text-align:center;color:#666">进度: <span id="progress-text">0%</span></p>
+  </div>
+</div>
+
+<!-- Goals -->
+<div class="section" id="goals">
+  <div class="card card-rainbow">
+    <h2>🎯 今天学什么</h2>
+    <div class="grid-2">
+      <div class="card" style="background:linear-gradient(135deg,#ffecd2,#fcb69f);text-align:center">
+        <div style="font-size:50px">🪞</div>
+        <h3>对称</h3>
+        <p>沿对称轴折叠，两侧完全重合！</p>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,#d4fc79,#96e6a1);text-align:center">
+        <div style="font-size:50px">➡️</div>
+        <h3>平移</h3>
+        <p>图形沿直线移动，形状和大小不变！</p>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,#a1c4fd,#c2e9fb);text-align:center;grid-column:span 2">
+        <div style="font-size:50px">🔄</div>
+        <h3>旋转</h3>
+        <p>图形绕一个点转动，形状和大小不变！</p>
+      </div>
+    </div>
+    <div class="formula-box">
+      三种变换：对称 🪞 | 平移 ➡️ | 旋转 🔄
+    </div>
+  </div>
+  <button class="btn" onclick="showSection('warmup')">继续 ➡️</button>
+</div>
+
+<!-- Warmup: Interactive demos -->
+<div class="section" id="warmup">
+  <div class="card card-rainbow">
+    <h2>🔥 热身：三种变换体验</h2>
+    <div class="tabs">
+      <button class="tab active" onclick="switchWarmup('sym')">🪞 对称</button>
+      <button class="tab" onclick="switchWarmup('trans')">➡️ 平移</button>
+      <button class="tab" onclick="switchWarmup('rot')">🔄 旋转</button>
+    </div>
+    <div id="warmup-sym">
+      <p style="margin-bottom:10px">在左半边画画，右边会自动出现<span class="highlight">对称图案</span>！</p>
+      <div style="text-align:center">
+        <div class="color-picker" id="color-picker"></div>
+        <canvas id="sym-canvas" width="400" height="250"></canvas>
+        <br><button class="btn btn-green" style="margin-top:10px" onclick="clearSymCanvas()">清除 🗑️</button>
+        <button class="btn" onclick="flipAnimation()">翻转动画 ✨</button>
+      </div>
+    </div>
+    <div id="warmup-trans" style="display:none">
+      <p style="margin-bottom:10px">拖动图形，看看它如何<span class="highlight">平移</span>！</p>
+      <div style="text-align:center">
+        <canvas id="trans-canvas" width="400" height="250" style="border-radius:15px;box-shadow:0 8px 30px rgba(0,0,0,0.1);cursor:grab"></canvas>
+        <br>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:10px">
+          <button class="btn btn-green" onclick="moveShape('left')">⬅️ 向左</button>
+          <button class="btn btn-blue" onclick="moveShape('right')">➡️ 向右</button>
+          <button class="btn" onclick="moveShape('up')">⬆️ 向上</button>
+          <button class="btn btn-purple" onclick="moveShape('down')">⬇️ 向下</button>
+        </div>
+        <p id="move-info" style="margin-top:10px;color:#666;font-size:1.1em"></p>
+      </div>
+    </div>
+    <div id="warmup-rot" style="display:none">
+      <p style="margin-bottom:10px">点击按钮，看图形如何<span class="highlight">旋转</span>！</p>
+      <div style="text-align:center">
+        <canvas id="rot-canvas" width="300" height="300" style="border-radius:50%;box-shadow:0 8px 30px rgba(0,0,0,0.1)"></canvas>
+        <br>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:10px">
+          <button class="btn btn-green" onclick="rotateShape(-90)">↩️ 左转90°</button>
+          <button class="btn btn-blue" onclick="rotateShape(90)">↪️ 右转90°</button>
+          <button class="btn btn-purple" onclick="rotateShape(45)">🔄 转45°</button>
+        </div>
+        <p id="rot-info" style="margin-top:10px;color:#666;font-size:1.1em">当前角度: 0°</p>
+      </div>
+    </div>
+  </div>
+  <button class="btn" onclick="addStars(2);unlockAchievement('warmup-done');showSection('level1')">热身完成！+2⭐ ➡️</button>
+</div>
+
+<!-- Level 1: Symmetry -->
+<div class="section" id="level1">
+  <div class="card card-rainbow">
+    <h2>⭐ 关卡一：找对称轴</h2>
+    <p style="font-size:1.1em;margin-bottom:10px">判断哪些图形有对称轴，并选出正确答案！</p>
+    <div id="l1-content">
+      <canvas id="l1-canvas" width="500" height="200" style="display:block;margin:15px auto;border-radius:15px;box-shadow:0 8px 30px rgba(0,0,0,0.1)"></canvas>
+      <div id="l1-questions"></div>
+    </div>
+    <button class="btn" onclick="checkLevel1()">确认答案 ✅</button>
+    <div id="l1-feedback"></div>
+  </div>
+</div>
+
+<!-- Level 2: Translation -->
+<div class="section" id="level2">
+  <div class="card card-rainbow">
+    <h2>⭐⭐ 关卡二：平移方向与距离</h2>
+    <p style="font-size:1.1em;margin-bottom:10px">看图判断图形平移了哪个方向，移动了几格？</p>
+    <canvas id="l2-canvas" width="500" height="300" style="display:block;margin:15px auto;border-radius:15px;box-shadow:0 8px 30px rgba(0,0,0,0.1)"></canvas>
+    <div id="l2-questions"></div>
+    <button class="btn" onclick="checkLevel2()">确认答案 ✅</button>
+    <div id="l2-feedback"></div>
+  </div>
+</div>
+
+<!-- Level 3: Quiz -->
+<div class="section" id="level3">
+  <div class="card card-rainbow">
+    <h2>⭐⭐⭐ 关卡三：变换知识问答</h2>
+    <div id="l3-quiz"></div>
+  </div>
+</div>
+
+<!-- Boss -->
+<div class="section" id="boss">
+  <div class="card card-rainbow">
+    <h2>👾 Boss关：图案设计师</h2>
+    <p style="font-size:1.1em;margin-bottom:10px">完成以下变换任务，成为图案设计师！</p>
+    <div id="boss-content">
+      <div class="grid-2">
+        <div class="card">
+          <h3>① 对称挑战</h3>
+          <canvas id="boss-sym" width="220" height="200" style="border-radius:15px;box-shadow:0 4px 15px rgba(0,0,0,0.1)"></canvas>
+          <p style="margin-top:10px;color:#666">画出这个图形关于虚线的对称图形！</p>
+          <select id="boss-q1" style="border:3px solid var(--secondary);border-radius:12px;padding:8px;font-size:14px;outline:none;margin-top:8px">
+            <option value="">选择对称轴</option>
+            <option>竖直对称轴（左右对称）</option>
+            <option>水平对称轴（上下对称）</option>
+            <option>斜线对称轴</option>
+          </select>
+        </div>
+        <div class="card">
+          <h3>② 平移挑战</h3>
+          <canvas id="boss-trans" width="220" height="200" style="border-radius:15px;box-shadow:0 4px 15px rgba(0,0,0,0.1)"></canvas>
+          <p style="margin-top:10px;color:#666">小星星向右平移了几格？</p>
+          <select id="boss-q2" style="border:3px solid var(--secondary);border-radius:12px;padding:8px;font-size:14px;outline:none;margin-top:8px">
+            <option value="">选择格数</option>
+            <option>2格</option><option>3格</option><option>4格</option><option>5格</option>
+          </select>
+        </div>
+      </div>
+      <div class="card" style="margin-top:10px">
+        <h3>③ 旋转挑战</h3>
+        <canvas id="boss-rot" width="400" height="200" style="display:block;margin:10px auto;border-radius:15px;box-shadow:0 4px 15px rgba(0,0,0,0.1)"></canvas>
+        <p style="color:#666">图形顺时针旋转了多少度？</p>
+        <select id="boss-q3" style="border:3px solid var(--secondary);border-radius:12px;padding:8px;font-size:14px;outline:none;margin-top:8px">
+          <option value="">选择角度</option>
+          <option>45°</option><option>90°</option><option>135°</option><option>180°</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn" style="margin-top:15px" onclick="checkBoss()">提交答案 🎯</button>
+    <div id="boss-feedback"></div>
+  </div>
+</div>
+
+<!-- Scoreboard -->
+<div class="section" id="scoreboard">
+  <div class="score-card">
+    <div style="font-size:3em">🏆</div>
+    <h2 style="-webkit-text-fill-color:white">图形变换大师！</h2>
+    <p>星星 ⭐ × <span id="final-stars">0</span></p>
+    <p>成就 🏅 × <span id="final-ach">0</span></p>
+  </div>
+  <div id="ach-list" style="margin-top:20px"></div>
+  <div style="text-align:center;margin-top:20px">
+    <button class="btn btn-purple" onclick="showSection('extend')">🚀 拓展探索</button>
+  </div>
+</div>
+
+<!-- Extend -->
+<div class="section" id="extend">
+  <div class="card card-rainbow">
+    <h2>🚀 拓展：生活中的变换</h2>
+    <div class="grid-2">
+      <div class="card" style="background:linear-gradient(135deg,#ffecd2,#fcb69f)">
+        <h3>🦋 蝴蝶翅膀</h3>
+        <p>蝴蝶的翅膀是轴对称图形，美丽的花纹两侧完全相同！</p>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,#d4fc79,#96e6a1)">
+        <h3>🚂 火车</h3>
+        <p>火车在轨道上行驶就是平移！形状不变，只是位置移动！</p>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,#a1c4fd,#c2e9fb)">
+        <h3>🎡 摩天轮</h3>
+        <p>摩天轮转动就是旋转！绕着中心点转动！</p>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,#fbd3e9,#bb377d22)">
+        <h3>🎨 图案设计</h3>
+        <p>用对称、平移、旋转可以创作出漂亮的图案！</p>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:20px">
+      <canvas id="extend-canvas" width="400" height="300" style="border-radius:20px;box-shadow:0 8px 30px rgba(0,0,0,0.1)"></canvas>
+    </div>
+    <p style="text-align:center;margin-top:10px;color:#666">用三种变换创作的美丽图案 ✨</p>
+  </div>
+</div>
+
+<div class="achievement-popup" id="achievement-popup">
+  <div style="font-size:3em" id="ach-icon">🏅</div>
+  <h3 id="ach-title" style="margin:10px 0">成就解锁！</h3>
+  <p id="ach-desc">恭喜！</p>
+</div>
+<div class="ai-buddy">
+  <div class="buddy-speech" id="buddy-speech">我是小蝴蝶！🦋 对称、平移、旋转是图形的三种变换！</div>
+  <div class="buddy-avatar" onclick="toggleBuddy()">🦋</div>
+</div>
+
+<script>
+const state = { stars:0, achievements:[], levels:0 };
+const achievementDefs = [
+  { id:'warmup-done', icon:'🎨', title:'变换体验者', desc:'体验了三种图形变换！' },
+  { id:'sym-master', icon:'🪞', title:'对称大师', desc:'掌握了对称的概念！' },
+  { id:'trans-master', icon:'➡️', title:'平移达人', desc:'理解了平移！' },
+  { id:'rot-master', icon:'🔄', title:'旋转专家', desc:'搞懂了旋转！' },
+  { id:'quiz-ace', icon:'🧠', title:'变换知识王', desc:'关卡三全对！' },
+  { id:'boss-slayer', icon:'👾', title:'图案设计师', desc:'完成Boss关任务！' },
+  { id:'star-10', icon:'⭐', title:'星星收藏家', desc:'收集了10颗星！' },
+  { id:'artist', icon:'🎨', title:'数学艺术家', desc:'完成了所有关卡！' },
+];
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+function getAudioCtx() { if (!audioCtx) audioCtx = new AudioCtx(); return audioCtx; }
+function playNote(freq, dur=0.2, type='sine') {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = freq; osc.type = type;
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    osc.start(); osc.stop(ctx.currentTime + dur);
+  } catch(e) {}
+}
+function playSuccess() { [523,659,784,1047].forEach((f,i)=>setTimeout(()=>playNote(f,0.3),i*100)); }
+function playError() { playNote(220,0.5,'sawtooth'); }
+function playClick() { playNote(800,0.1); }
+function addStars(n) {
+  state.stars += n;
+  document.getElementById('star-count').textContent = state.stars;
+  const p = Math.min(100, Math.round(state.stars/25*100));
+  document.getElementById('total-progress').style.width = p + '%';
+  document.getElementById('progress-text').textContent = p + '%';
+  document.getElementById('final-stars').textContent = state.stars;
+  if (state.stars >= 10) unlockAchievement('star-10');
+}
+function unlockAchievement(id) {
+  if (state.achievements.includes(id)) return;
+  state.achievements.push(id);
+  const ach = achievementDefs.find(a => a.id === id);
+  if (!ach) return;
+  document.getElementById('ach-icon').textContent = ach.icon;
+  document.getElementById('ach-title').textContent = ach.title;
+  document.getElementById('ach-desc').textContent = ach.desc;
+  const popup = document.getElementById('achievement-popup');
+  popup.classList.add('show'); playSuccess();
+  setTimeout(()=>popup.classList.remove('show'), 3000);
+  document.getElementById('final-ach').textContent = state.achievements.length;
+  renderAchievements();
+}
+function renderAchievements() {
+  const list = document.getElementById('ach-list');
+  list.innerHTML = '<h2 style="margin-bottom:10px">🏅 已解锁成就</h2>';
+  state.achievements.forEach(id => {
+    const ach = achievementDefs.find(a => a.id === id);
+    if (!ach) return;
+    list.innerHTML += `<div class="card" style="display:flex;align-items:center;gap:15px;margin:6px 0">
+      <span style="font-size:2em">${ach.icon}</span>
+      <div><strong>${ach.title}</strong><br><span style="color:#666">${ach.desc}</span></div>
+    </div>`;
+  });
+}
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>{
+    if (b.getAttribute('onclick').includes("'"+id+"'")) b.classList.add('active');
+  });
+  playClick(); window.scrollTo(0,0);
+  if (id === 'warmup') { initSymCanvas(); initTransCanvas(); initRotCanvas(); }
+  if (id === 'level1') initLevel1();
+  if (id === 'level2') initLevel2();
+  if (id === 'level3') initLevel3();
+  if (id === 'boss') initBoss();
+  if (id === 'extend') drawExtend();
+  if (id === 'scoreboard') renderAchievements();
+  updateBuddyHint(id);
+}
+
+// ===== Warmup Tabs =====
+function switchWarmup(tab) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('warmup-sym').style.display = tab === 'sym' ? 'block' : 'none';
+  document.getElementById('warmup-trans').style.display = tab === 'trans' ? 'block' : 'none';
+  document.getElementById('warmup-rot').style.display = tab === 'rot' ? 'block' : 'none';
+  if (tab === 'trans') drawTransCanvas();
+  if (tab === 'rot') drawRotCanvas();
+}
+
+// ===== Symmetry Canvas =====
+const symColors = ['#ff6b6b','#4ecdc4','#a29bfe','#feca57','#fd79a8','#55efc4','#333'];
+let symColor = '#ff6b6b', symDrawing = false;
+function initSymCanvas() {
+  const picker = document.getElementById('color-picker');
+  picker.innerHTML = '';
+  symColors.forEach(c => {
+    const btn = document.createElement('div');
+    btn.className = 'color-btn' + (c === symColor ? ' active' : '');
+    btn.style.background = c;
+    btn.onclick = () => {
+      symColor = c;
+      document.querySelectorAll('.color-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+    };
+    picker.appendChild(btn);
+  });
+  const canvas = document.getElementById('sym-canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,400,250);
+  ctx.fillStyle = '#f8f9fa'; ctx.fillRect(0,0,400,250);
+  // axis line
+  ctx.strokeStyle = '#ccc'; ctx.lineWidth = 2; ctx.setLineDash([8,4]);
+  ctx.beginPath(); ctx.moveTo(200,0); ctx.lineTo(200,250); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#ccc'; ctx.font = '13px Microsoft YaHei'; ctx.textAlign = 'center';
+  ctx.fillText('对称轴', 200, 240);
+  ctx.fillText('在左边画画 ✏️', 100, 15);
+  canvas.onmousedown = (e) => {
+    symDrawing = true;
+    drawSym(e);
+  };
+  canvas.onmousemove = (e) => { if (symDrawing) drawSym(e); };
+  canvas.onmouseup = () => symDrawing = false;
+  canvas.ontouchstart = (e) => { symDrawing = true; drawSym(e.touches[0]); e.preventDefault(); };
+  canvas.ontouchmove = (e) => { if (symDrawing) drawSym(e.touches[0]); e.preventDefault(); };
+  canvas.ontouchend = () => symDrawing = false;
+}
+function drawSym(e) {
+  const canvas = document.getElementById('sym-canvas');
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const x = (e.clientX - rect.left) * scaleX;
+  const y = (e.clientY - rect.top) * scaleY;
+  if (x > 195) return; // only left side
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = symColor;
+  ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2); ctx.fill();
+  // mirror
+  ctx.fillStyle = symColor + 'aa';
+  ctx.beginPath(); ctx.arc(400 - x, y, 6, 0, Math.PI*2); ctx.fill();
+}
+function clearSymCanvas() {
+  const canvas = document.getElementById('sym-canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,400,250);
+  ctx.fillStyle = '#f8f9fa'; ctx.fillRect(0,0,400,250);
+  ctx.strokeStyle = '#ccc'; ctx.lineWidth = 2; ctx.setLineDash([8,4]);
+  ctx.beginPath(); ctx.moveTo(200,0); ctx.lineTo(200,250); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#ccc'; ctx.font = '13px Microsoft YaHei'; ctx.textAlign = 'center';
+  ctx.fillText('对称轴', 200, 240); ctx.fillText('在左边画画 ✏️', 100, 15);
+}
+let flipAnim = null, flipT = 0;
+function flipAnimation() {
+  const canvas = document.getElementById('sym-canvas');
+  const ctx = canvas.getContext('2d');
+  const img = ctx.getImageData(0,0,200,250);
+  flipT = 0; cancelAnimationFrame(flipAnim);
+  function frame() {
+    ctx.clearRect(0,0,400,250);
+    ctx.fillStyle = '#f8f9fa'; ctx.fillRect(0,0,400,250);
+    ctx.putImageData(img, 0, 0);
+    // animated flip
+    const scaleX = Math.cos(flipT * Math.PI / 50);
+    const cx = 200;
+    ctx.save();
+    ctx.translate(cx, 0); ctx.scale(scaleX, 1); ctx.translate(-cx, 0);
+    ctx.putImageData(img, 400-200-Math.abs(scaleX*200), 0);
+    ctx.restore();
+    ctx.strokeStyle = '#ff6b6b'; ctx.lineWidth = 2; ctx.setLineDash([8,4]);
+    ctx.beginPath(); ctx.moveTo(200,0); ctx.lineTo(200,250); ctx.stroke();
+    ctx.setLineDash([]);
+    flipT++; if (flipT <= 50) flipAnim = requestAnimationFrame(frame);
+    else { playSuccess(); addStars(1); }
+  }
+  frame();
+}
+
+// ===== Translation Canvas =====
+let transX = 50, transY = 100;
+function initTransCanvas() { transX = 50; transY = 100; drawTransCanvas(); }
+function drawTransCanvas() {
+  const canvas = document.getElementById('trans-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,400,250);
+  ctx.fillStyle = '#f0f8ff'; ctx.fillRect(0,0,400,250);
+  // grid
+  ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 1;
+  for (let x = 0; x < 400; x += 25) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,250); ctx.stroke(); }
+  for (let y = 0; y < 250; y += 25) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(400,y); ctx.stroke(); }
+  // shadow (original position)
+  ctx.strokeStyle = '#ccc'; ctx.lineWidth = 2; ctx.setLineDash([5,3]);
+  ctx.strokeRect(50, 100, 60, 60);
+  ctx.setLineDash([]);
+  // moved shape
+  const grad = ctx.createLinearGradient(transX, transY, transX+60, transY+60);
+  grad.addColorStop(0, '#ff6b6b'); grad.addColorStop(1, '#fd79a8');
+  ctx.fillStyle = grad; ctx.fillRect(transX, transY, 60, 60);
+  ctx.strokeStyle = '#d63031'; ctx.lineWidth = 2; ctx.strokeRect(transX, transY, 60, 60);
+  // smiley
+  ctx.fillStyle = '#fff'; ctx.font = '35px serif'; ctx.textAlign='center';
+  ctx.fillText('😊', transX+30, transY+42);
+  // movement arrow
+  if (transX !== 50 || transY !== 100) {
+    ctx.strokeStyle = '#feca57'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(80, 130); ctx.lineTo(transX+30, transY+30);
+    ctx.stroke();
+  }
+}
+function moveShape(dir) {
+  const step = 25;
+  if (dir==='left' && transX>0) transX -= step;
+  if (dir==='right' && transX<310) transX += step;
+  if (dir==='up' && transY>0) transY -= step;
+  if (dir==='down' && transY<165) transY += step;
+  const dx = Math.round((transX-50)/25);
+  const dy = Math.round((transY-100)/25);
+  let info = [];
+  if (dx > 0) info.push(`向右移动了${dx}格`);
+  if (dx < 0) info.push(`向左移动了${Math.abs(dx)}格`);
+  if (dy > 0) info.push(`向下移动了${dy}格`);
+  if (dy < 0) info.push(`向上移动了${Math.abs(dy)}格`);
+  document.getElementById('move-info').textContent = info.length ? '📐 ' + info.join('，') : '还没有移动！';
+  drawTransCanvas(); playNote(500+Math.random()*200, 0.15);
+}
+
+// ===== Rotation Canvas =====
+let rotAngle = 0;
+function initRotCanvas() { rotAngle = 0; drawRotCanvas(); }
+function drawRotCanvas() {
+  const canvas = document.getElementById('rot-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W=300, H=300, cx=W/2, cy=H/2;
+  ctx.clearRect(0,0,W,H);
+  const bg = ctx.createRadialGradient(cx,cy,0,cx,cy,130);
+  bg.addColorStop(0,'#fff9c4'); bg.addColorStop(1,'#f0e6ff');
+  ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+  // center dot
+  ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(cx,cy,6,0,Math.PI*2); ctx.fill();
+  // rotating arrow shape
+  ctx.save();
+  ctx.translate(cx, cy); ctx.rotate(rotAngle * Math.PI/180);
+  // Arrow
+  ctx.fillStyle = '#ff6b6b';
+  ctx.beginPath();
+  ctx.moveTo(0, -90); ctx.lineTo(20, -50); ctx.lineTo(10, -50);
+  ctx.lineTo(10, 0); ctx.lineTo(-10, 0); ctx.lineTo(-10, -50);
+  ctx.lineTo(-20, -50); ctx.closePath();
+  ctx.fill();
+  // Decoration
+  const dgrad = ctx.createLinearGradient(-20,-90,20,0);
+  dgrad.addColorStop(0,'#ff6b6b'); dgrad.addColorStop(1,'#fd79a8');
+  ctx.fillStyle = dgrad; ctx.fill();
+  ctx.restore();
+  // Angle label
+  ctx.fillStyle = '#6c5ce7'; ctx.font = 'bold 16px Microsoft YaHei'; ctx.textAlign='center';
+  ctx.fillText('旋转: ' + ((rotAngle % 360 + 360) % 360) + '°', cx, H-15);
+}
+function rotateShape(deg) {
+  rotAngle += deg;
+  drawRotCanvas();
+  document.getElementById('rot-info').textContent = '当前角度: ' + ((rotAngle % 360 + 360) % 360) + '°';
+  playNote(400 + Math.abs(deg)*2, 0.2);
+}
+
+// ===== Level 1: Symmetry =====
+function initLevel1() {
+  const canvas = document.getElementById('l1-canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,500,200);
+  ctx.fillStyle = '#f8f9fa'; ctx.fillRect(0,0,500,200);
+  // Draw 4 shapes
+  const shapes = [
+    {x:60,y:100,type:'circle',sym:true,label:'圆形'},
+    {x:180,y:100,type:'triangle',sym:true,label:'等腰三角'},
+    {x:300,y:100,type:'scalene',sym:false,label:'不等边三角'},
+    {x:420,y:100,type:'leaf',sym:true,label:'树叶'},
+  ];
+  shapes.forEach((s,i) => {
+    ctx.save(); ctx.translate(s.x, s.y);
+    if (s.type === 'circle') {
+      const g = ctx.createRadialGradient(0,0,0,0,0,35);
+      g.addColorStop(0,'#ff6b6b'); g.addColorStop(1,'#fd79a8');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0,0,35,0,Math.PI*2); ctx.fill();
+    } else if (s.type === 'triangle') {
+      ctx.fillStyle = '#4ecdc4';
+      ctx.beginPath(); ctx.moveTo(0,-40); ctx.lineTo(35,35); ctx.lineTo(-35,35); ctx.closePath(); ctx.fill();
+    } else if (s.type === 'scalene') {
+      ctx.fillStyle = '#a29bfe';
+      ctx.beginPath(); ctx.moveTo(-10,-40); ctx.lineTo(40,30); ctx.lineTo(-35,20); ctx.closePath(); ctx.fill();
+    } else if (s.type === 'leaf') {
+      ctx.fillStyle = '#55efc4';
+      ctx.beginPath(); ctx.moveTo(0,-40); ctx.bezierCurveTo(35,-20,35,20,0,40);
+      ctx.bezierCurveTo(-35,20,-35,-20,0,-40); ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+    // Symmetry axis for symmetric shapes
+    if (s.sym) {
+      ctx.strokeStyle = '#feca57'; ctx.lineWidth = 2; ctx.setLineDash([4,3]);
+      ctx.beginPath(); ctx.moveTo(s.x,s.y-50); ctx.lineTo(s.x,s.y+50); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    ctx.fillStyle = '#333'; ctx.font = '12px Microsoft YaHei'; ctx.textAlign='center';
+    ctx.fillText(s.label, s.x, s.y+60);
+    ctx.fillText((i+1)+'', s.x, s.y-55);
+  });
+  document.getElementById('l1-questions').innerHTML = `
+    <div style="margin:15px 0">
+      <div class="card" style="border-left:5px solid var(--primary);margin:8px 0">
+        <h3>① 上面哪些图形有对称轴？（可多选）</h3>
+        ${['圆形（1号）','等腰三角形（2号）','不等边三角形（3号）','树叶（4号）'].map((o,i)=>`
+          <label style="display:block;padding:5px 0;cursor:pointer">
+            <input type="checkbox" name="l1-sym" value="${i}" style="margin-right:8px">${o}
+          </label>
+        `).join('')}
+      </div>
+      <div class="card" style="border-left:5px solid var(--secondary);margin:8px 0">
+        <h3>② 对称图形折叠后，两边的形状和大小是否相同？</h3>
+        <label style="padding:5px 0;display:block;cursor:pointer"><input type="radio" name="l1-q2" value="yes" style="margin-right:8px">是，完全相同</label>
+        <label style="padding:5px 0;display:block;cursor:pointer"><input type="radio" name="l1-q2" value="no" style="margin-right:8px">不相同</label>
+      </div>
+    </div>
+  `;
+  document.getElementById('l1-feedback').innerHTML = '';
+}
+function checkLevel1() {
+  const checked = Array.from(document.querySelectorAll('input[name="l1-sym"]:checked')).map(e=>+e.value);
+  const q2 = document.querySelector('input[name="l1-q2"]:checked');
+  const correctSym = [0,1,3];
+  const ok1 = checked.length===3 && correctSym.every(v=>checked.includes(v)) && !checked.includes(2);
+  const ok2 = q2 && q2.value === 'yes';
+  if (ok1 && ok2) {
+    document.getElementById('l1-feedback').innerHTML = '<div class="feedback correct">🎉 全对！对称大师！+5⭐</div>';
+    addStars(5); state.levels++; unlockAchievement('sym-master'); playSuccess();
+    setTimeout(()=>showSection('level2'), 2000);
+  } else {
+    const hints = [];
+    if (!ok1) hints.push('提示：1号圆形、2号等腰三角形、4号树叶有对称轴！');
+    if (!ok2) hints.push('折叠后两边完全相同！');
+    document.getElementById('l1-feedback').innerHTML = `<div class="feedback wrong">💪 ${hints.join(' ')}</div>`;
+    playError();
+  }
+}
+
+// ===== Level 2: Translation =====
+function initLevel2() {
+  const canvas = document.getElementById('l2-canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,500,300);
+  ctx.fillStyle = '#f0f8ff'; ctx.fillRect(0,0,500,300);
+  // grid
+  ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 1;
+  for (let x=0;x<500;x+=25){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,300);ctx.stroke();}
+  for (let y=0;y<300;y+=25){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(500,y);ctx.stroke();}
+  // Example 1: star moved right 3 grids
+  drawStar(ctx, 80, 100, '#feca57', 20);
+  ctx.strokeStyle='#ccc';ctx.lineWidth=2;ctx.setLineDash([4,3]);
+  drawStarOutline(ctx, 80, 100, 20);
+  ctx.setLineDash([]);
+  drawStar(ctx, 155, 100, '#feca57', 20);
+  ctx.strokeStyle='#feca57';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(100,100);ctx.lineTo(150,100);ctx.stroke();
+  ctx.fillStyle='#feca57';ctx.beginPath();ctx.moveTo(155,100);ctx.lineTo(145,95);ctx.lineTo(145,105);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#333';ctx.font='12px Microsoft YaHei';ctx.textAlign='center';
+  ctx.fillText('图A:向右移动了?格',120,155);
+  // Example 2: heart moved down 4 grids
+  drawHeart(ctx, 320, 60, '#ff6b6b', 15);
+  ctx.strokeStyle='#ccc';ctx.lineWidth=2;ctx.setLineDash([4,3]);
+  drawHeartOutline(ctx, 320, 60, 15);
+  ctx.setLineDash([]);
+  drawHeart(ctx, 320, 160, '#ff6b6b', 15);
+  ctx.strokeStyle='#ff6b6b';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(320,80);ctx.lineTo(320,155);ctx.stroke();
+  ctx.fillStyle='#ff6b6b';ctx.beginPath();ctx.moveTo(320,160);ctx.lineTo(315,150);ctx.lineTo(325,150);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#333';ctx.textAlign='center';
+  ctx.fillText('图B:向下移动了?格',360,230);
+  document.getElementById('l2-questions').innerHTML = `
+    <div style="display:flex;gap:15px;flex-wrap:wrap;margin:15px 0">
+      <div class="card" style="flex:1;min-width:200px;border-left:5px solid var(--accent)">
+        <h3>图A向右移动了几格？</h3>
+        <select id="l2-q1" style="border:3px solid var(--secondary);border-radius:12px;padding:8px;font-size:14px;outline:none">
+          <option value="">选择</option>
+          <option>1格</option><option>2格</option><option>3格</option><option>4格</option>
+        </select>
+      </div>
+      <div class="card" style="flex:1;min-width:200px;border-left:5px solid var(--primary)">
+        <h3>图B向下移动了几格？</h3>
+        <select id="l2-q2" style="border:3px solid var(--secondary);border-radius:12px;padding:8px;font-size:14px;outline:none">
+          <option value="">选择</option>
+          <option>2格</option><option>3格</option><option>4格</option><option>5格</option>
+        </select>
+      </div>
+    </div>
+  `;
+  document.getElementById('l2-feedback').innerHTML = '';
+}
+function drawStar(ctx, cx, cy, color, r) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  for (let i=0;i<5;i++) {
+    const a = (i*4*Math.PI/5) - Math.PI/2;
+    const b = (i*4*Math.PI/5 + 2*Math.PI/5) - Math.PI/2;
+    if (i===0) ctx.moveTo(cx+Math.cos(a)*r, cy+Math.sin(a)*r);
+    else ctx.lineTo(cx+Math.cos(a)*r, cy+Math.sin(a)*r);
+    ctx.lineTo(cx+Math.cos(b)*r*0.4, cy+Math.sin(b)*r*0.4);
+  }
+  ctx.closePath(); ctx.fill();
+}
+function drawStarOutline(ctx,cx,cy,r) {
+  ctx.beginPath();
+  for (let i=0;i<5;i++) {
+    const a=(i*4*Math.PI/5)-Math.PI/2;const b=(i*4*Math.PI/5+2*Math.PI/5)-Math.PI/2;
+    if(i===0)ctx.moveTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);
+    else ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);
+    ctx.lineTo(cx+Math.cos(b)*r*0.4,cy+Math.sin(b)*r*0.4);
+  }
+  ctx.closePath();ctx.stroke();
+}
+function drawHeart(ctx,cx,cy,color,r) {
+  ctx.fillStyle=color;ctx.beginPath();
+  ctx.moveTo(cx,cy+r);
+  ctx.bezierCurveTo(cx-r*2,cy-r,cx-r*2.5,cy-r*2,cx,cy-r);
+  ctx.bezierCurveTo(cx+r*2.5,cy-r*2,cx+r*2,cy-r,cx,cy+r);
+  ctx.closePath();ctx.fill();
+}
+function drawHeartOutline(ctx,cx,cy,r) {
+  ctx.beginPath();
+  ctx.moveTo(cx,cy+r);
+  ctx.bezierCurveTo(cx-r*2,cy-r,cx-r*2.5,cy-r*2,cx,cy-r);
+  ctx.bezierCurveTo(cx+r*2.5,cy-r*2,cx+r*2,cy-r,cx,cy+r);
+  ctx.closePath();ctx.stroke();
+}
+function checkLevel2() {
+  const a1 = document.getElementById('l2-q1').value;
+  const a2 = document.getElementById('l2-q2').value;
+  if (a1==='3格' && a2==='4格') {
+    document.getElementById('l2-feedback').innerHTML = '<div class="feedback correct">🎉 全对！平移达人！+5⭐</div>';
+    addStars(5); state.levels++; unlockAchievement('trans-master'); playSuccess();
+    setTimeout(()=>showSection('level3'), 2000);
+  } else {
+    document.getElementById('l2-feedback').innerHTML = '<div class="feedback wrong">💪 数数格子：图A向右3格，图B向下4格！</div>';
+    playError();
+  }
+}
+
+// ===== Level 3 Quiz =====
+const l3Qs = [
+  { q:'图形沿对称轴折叠后，两侧形状大小？', opts:['完全相同','大小不同','形状不同','无法确定'], ans:0 },
+  { q:'平移后，图形的形状和大小？', opts:['都改变','都不改变','形状变','大小变'], ans:1 },
+  { q:'旋转的中心叫做什么？', opts:['对称轴','旋转点','平移点','中心轴'], ans:1 },
+  { q:'下面哪个是旋转变换的例子？', opts:['推窗户','开门（门绕轴转）','搬桌子','折纸'], ans:1 },
+  { q:'时钟的分针转动是什么变换？', opts:['对称','平移','旋转','翻折'], ans:2 },
+];
+let l3Score=0, l3Cur=0;
+function initLevel3() { l3Score=0; l3Cur=0; renderL3(); }
+function renderL3() {
+  if (l3Cur>=l3Qs.length) {
+    document.getElementById('l3-quiz').innerHTML = `<div class="card score-card">
+      <div style="font-size:2em">🎊</div>
+      <h3 style="-webkit-text-fill-color:white">关卡三完成！</h3>
+      <p>答对 ${l3Score}/${l3Qs.length} 题！</p>
+      <br><button class="btn" onclick="finishL3()">下一关 ➡️</button>
+    </div>`;
+    return;
+  }
+  const q = l3Qs[l3Cur];
+  document.getElementById('l3-quiz').innerHTML = `
+    <div style="text-align:right;color:#666">第 ${l3Cur+1}/${l3Qs.length} 题</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${(l3Cur/l3Qs.length)*100}%"></div></div>
+    <div class="card" style="margin:12px 0;border-left:5px solid var(--accent)"><h3>${q.q}</h3></div>
+    ${q.opts.map((o,i)=>`<div class="quiz-opt" onclick="ansL3(${i})">${['A','B','C','D'][i]}. ${o}</div>`).join('')}
+  `;
+}
+function ansL3(idx) {
+  const q = l3Qs[l3Cur];
+  const opts = document.querySelectorAll('.quiz-opt');
+  opts[idx].classList.add(idx===q.ans?'correct':'wrong');
+  if (idx!==q.ans) opts[q.ans].classList.add('correct');
+  if (idx===q.ans) { l3Score++; playSuccess(); } else playError();
+  opts.forEach(o=>o.onclick=null);
+  setTimeout(()=>{ l3Cur++; renderL3(); }, 1200);
+}
+function finishL3() {
+  addStars(l3Score*2); state.levels++;
+  if (l3Score===l3Qs.length) unlockAchievement('quiz-ace');
+  unlockAchievement('rot-master');
+  showSection('boss');
+}
+
+// ===== Boss =====
+function initBoss() {
+  // Symmetry canvas
+  const c1 = document.getElementById('boss-sym');
+  const ctx1 = c1.getContext('2d');
+  ctx1.clearRect(0,0,220,200);
+  ctx1.fillStyle = '#f8f9fa'; ctx1.fillRect(0,0,220,200);
+  // Draw butterfly on left
+  ctx1.fillStyle = '#fd79a8'; ctx1.beginPath();
+  ctx1.moveTo(110,100); ctx1.bezierCurveTo(70,40,20,40,30,100); ctx1.bezierCurveTo(20,150,70,170,110,130);
+  ctx1.closePath(); ctx1.fill();
+  // dots
+  ctx1.fillStyle = '#a29bfe';
+  [[60,70],[40,100],[65,120]].forEach(([x,y])=>{ctx1.beginPath();ctx1.arc(x,y,8,0,Math.PI*2);ctx1.fill();});
+  // axis
+  ctx1.strokeStyle='#333';ctx1.lineWidth=2;ctx1.setLineDash([6,3]);
+  ctx1.beginPath();ctx1.moveTo(110,10);ctx1.lineTo(110,190);ctx1.stroke();
+  ctx1.setLineDash([]);
+  ctx1.fillStyle='#666';ctx1.font='12px Microsoft YaHei';ctx1.textAlign='center';
+  ctx1.fillText('对称轴',110,198);
+  // Translation canvas
+  const c2 = document.getElementById('boss-trans');
+  const ctx2 = c2.getContext('2d');
+  ctx2.clearRect(0,0,220,200);
+  ctx2.fillStyle='#f0f8ff'; ctx2.fillRect(0,0,220,200);
+  for(let x=0;x<220;x+=20){ctx2.strokeStyle='#e0e0e0';ctx2.lineWidth=1;ctx2.beginPath();ctx2.moveTo(x,0);ctx2.lineTo(x,200);ctx2.stroke();}
+  for(let y=0;y<200;y+=20){ctx2.beginPath();ctx2.moveTo(0,y);ctx2.lineTo(220,y);ctx2.stroke();}
+  drawStar(ctx2, 40, 100, '#ccc', 15);
+  ctx2.strokeStyle='#ccc';ctx2.lineWidth=1;ctx2.setLineDash([3,2]);drawStarOutline(ctx2,40,100,15);ctx2.setLineDash([]);
+  drawStar(ctx2, 120, 100, '#feca57', 15);
+  ctx2.strokeStyle='#feca57';ctx2.lineWidth=2;
+  ctx2.beginPath();ctx2.moveTo(58,100);ctx2.lineTo(103,100);ctx2.stroke();
+  ctx2.fillStyle='#feca57';ctx2.beginPath();ctx2.moveTo(108,100);ctx2.lineTo(98,95);ctx2.lineTo(98,105);ctx2.closePath();ctx2.fill();
+  // Rotation canvas
+  const c3 = document.getElementById('boss-rot');
+  const ctx3 = c3.getContext('2d');
+  ctx3.clearRect(0,0,400,200);
+  ctx3.fillStyle='#fef9e7'; ctx3.fillRect(0,0,400,200);
+  // Original L-shape
+  ctx3.fillStyle='rgba(162,155,254,0.4)'; ctx3.strokeStyle='#a29bfe'; ctx3.lineWidth=2;
+  ctx3.setLineDash([5,3]);
+  ctx3.fillRect(50,60,40,80); ctx3.strokeRect(50,60,40,80);
+  ctx3.fillRect(50,100,80,40); ctx3.strokeRect(50,100,80,40);
+  ctx3.setLineDash([]);
+  ctx3.fillStyle='#333';ctx3.font='12px Microsoft YaHei';ctx3.textAlign='center';
+  ctx3.fillText('原来',90,175);
+  // Rotated 90° clockwise
+  ctx3.save(); ctx3.translate(280,100); ctx3.rotate(Math.PI/2);
+  ctx3.fillStyle='rgba(255,107,107,0.8)'; ctx3.strokeStyle='#ff6b6b'; ctx3.lineWidth=2;
+  ctx3.fillRect(-20,-40,40,80); ctx3.strokeRect(-20,-40,40,80);
+  ctx3.fillRect(-60,-40,80,40); ctx3.strokeRect(-60,-40,80,40);
+  ctx3.restore();
+  ctx3.fillStyle='#333';ctx3.fillText('旋转后',280,175);
+  // arrow
+  ctx3.strokeStyle='#feca57';ctx3.lineWidth=3;
+  ctx3.beginPath();ctx3.moveTo(155,100);ctx3.lineTo(200,100);ctx3.stroke();
+  ctx3.fillStyle='#feca57';ctx3.beginPath();ctx3.moveTo(205,100);ctx3.lineTo(195,94);ctx3.lineTo(195,106);ctx3.closePath();ctx3.fill();
+  ctx3.fillStyle='#666';ctx3.font='13px Microsoft YaHei';ctx3.textAlign='center';
+  ctx3.fillText('顺时针旋转了？',175,85);
+  document.getElementById('boss-feedback').innerHTML = '';
+}
+function checkBoss() {
+  const a1 = document.getElementById('boss-q1').value;
+  const a2 = document.getElementById('boss-q2').value;
+  const a3 = document.getElementById('boss-q3').value;
+  const ok1 = a1 === '竖直对称轴（左右对称）';
+  const ok2 = a2 === '4格';
+  const ok3 = a3 === '90°';
+  if (ok1 && ok2 && ok3) {
+    document.getElementById('boss-feedback').innerHTML = '<div class="feedback correct">🎉🎉 三道全对！图案设计师！+10⭐</div>';
+    addStars(10); state.levels++; unlockAchievement('boss-slayer'); unlockAchievement('artist'); playSuccess();
+    setTimeout(()=>showSection('scoreboard'), 2000);
+  } else {
+    const hints = [];
+    if (!ok1) hints.push('①蝴蝶是竖直对称轴（左右对称）');
+    if (!ok2) hints.push('②数格子：星星移动了4格');
+    if (!ok3) hints.push('③L形旋转了90度');
+    document.getElementById('boss-feedback').innerHTML = `<div class="feedback wrong">💪 ${hints.join('；')}</div>`;
+    playError();
+  }
+}
+
+// ===== Extend =====
+function drawExtend() {
+  const canvas = document.getElementById('extend-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W=400, H=300;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#fff8e1'; ctx.fillRect(0,0,W,H);
+  const cx=200, cy=150, R=100;
+  const colors=['#ff6b6b','#feca57','#4ecdc4','#a29bfe','#fd79a8','#55efc4'];
+  // 6-fold rotational symmetry pattern
+  for (let i=0;i<6;i++) {
+    const ang = (i*60) * Math.PI/180;
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(ang);
+    ctx.fillStyle = colors[i];
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(R*0.5,20); ctx.lineTo(R*0.8,0); ctx.lineTo(R*0.5,-20); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  // center
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(cx,cy,18,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#333'; ctx.font='bold 12px Microsoft YaHei'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('✨',cx,cy);
+  // labels
+  ctx.textBaseline='alphabetic';
+  ctx.fillStyle='#333'; ctx.font='13px Microsoft YaHei';
+  ctx.fillText('旋转对称图案',cx,H-10);
+}
+
+// ===== Buddy =====
+const buddyHints = {
+  hero: '我是小蝴蝶🦋！今天学三种变换：对称、平移、旋转！',
+  goals: '对称→翻折相同；平移→直线移动；旋转→绕点转！',
+  warmup: '在左边画画，看右边的对称图案！或者拖动图形！',
+  level1: '看图形能不能沿某条线折叠成完全相同的两半！',
+  level2: '数格子！注意起点和终点的距离！',
+  level3: '三种变换：形状和大小都不变哦！',
+  boss: '仔细观察！对称轴方向，平移格数，旋转角度！',
+  scoreboard: '恭喜成为图形变换大师！🎨',
+  extend: '旋转对称图案在生活中随处可见！',
+};
+function updateBuddyHint(id) {
+  const s = document.getElementById('buddy-speech');
+  s.textContent = buddyHints[id] || '加油！🎉';
+  s.classList.add('show'); setTimeout(()=>s.classList.remove('show'), 4000);
+}
+function toggleBuddy() {
+  playClick();
+  document.getElementById('buddy-speech').classList.toggle('show');
+}
+</script>
+</body>
+</html>

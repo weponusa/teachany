@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="三年级数学 - 混合运算 互动课件">
+<title>🌈 混合运算 - 三年级数学</title>
+<style>
+:root {
+  --bg: #fffbf0;
+  --primary: #ff6b6b;
+  --secondary: #4ecdc4;
+  --accent: #ffe66d;
+  --card: #ffffff;
+  --green: #95e06c;
+  --purple: #c77dff;
+  --orange: #ff9f43;
+  --blue: #54a0ff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); font-family: 'Microsoft YaHei', sans-serif; min-height: 100vh; }
+
+@keyframes rainbow { 0%{color:#ff6b6b}16%{color:#ff9f43}33%{color:#ffe66d}50%{color:#95e06c}66%{color:#4ecdc4}83%{color:#c77dff}100%{color:#ff6b6b} }
+@keyframes bounce { 0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)} }
+@keyframes fadeIn { from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)} }
+@keyframes popIn { 0%{transform:scale(0)}70%{transform:scale(1.2)}100%{transform:scale(1)} }
+@keyframes gradientShift { 0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%} }
+@keyframes starFloat { 0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(-80px) rotate(360deg);opacity:0} }
+@keyframes highlight { 0%,100%{background:transparent}50%{background:rgba(255,230,100,0.5)} }
+@keyframes stepReveal { from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)} }
+@keyframes shake { 0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)} }
+@keyframes glow { 0%,100%{box-shadow:0 0 5px rgba(255,107,107,0.3)}50%{box-shadow:0 0 20px rgba(255,107,107,0.7)} }
+
+.hero {
+  background: linear-gradient(135deg, #54a0ff, #ff9f43, #ffe66d, #c77dff);
+  background-size: 300% 300%;
+  animation: gradientShift 4s ease infinite;
+  padding: 40px 20px;
+  text-align: center;
+}
+.hero-title { font-size: 2.8rem; font-weight: 900; color: white; text-shadow: 3px 3px 0 rgba(0,0,0,0.2); margin-bottom: 10px; }
+.hero-icon { font-size: 3.5rem; display: inline-block; animation: bounce 1.5s infinite; }
+.hero-sub { color: rgba(255,255,255,0.95); font-size: 1.1rem; }
+
+.nav { background: white; padding: 12px 20px; display: flex; gap: 10px; overflow-x: auto; border-bottom: 3px solid var(--blue); position: sticky; top: 0; z-index: 100; }
+.nav-btn { background: var(--bg); border: 2px solid #eee; border-radius: 20px; padding: 6px 16px; cursor: pointer; font-size: 0.85rem; white-space: nowrap; transition: all 0.2s; }
+.nav-btn:hover, .nav-btn.active { background: var(--blue); color: white; border-color: var(--blue); }
+
+.star-bar { background: white; padding: 10px 20px; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #f0f0f0; }
+.star-count { font-size: 1.4rem; font-weight: bold; color: var(--orange); }
+.achievement-badge { background: linear-gradient(135deg, var(--accent), var(--orange)); border-radius: 15px; padding: 4px 12px; font-size: 0.85rem; font-weight: bold; display: none; animation: popIn 0.4s ease; }
+.achievement-badge.show { display: inline-block; }
+.progress-bar { background: #f0f0f0; border-radius: 20px; height: 12px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--blue), var(--purple)); border-radius: 20px; transition: width 0.5s ease; }
+
+.main { max-width: 800px; margin: 0 auto; padding: 20px; }
+.section { display: none; animation: fadeIn 0.4s ease; }
+.section.active { display: block; }
+
+.card { background: var(--card); border-radius: 20px; padding: 25px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 2px solid #f0f0f0; }
+.card-title { font-size: 1.3rem; font-weight: bold; color: var(--blue); margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+
+.level-badge { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, var(--blue), var(--purple)); color: white; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; margin-bottom: 15px; }
+
+/* 运算顺序演示 */
+.expr-display { font-size: 2rem; font-weight: bold; text-align: center; padding: 15px; background: #f5f5ff; border-radius: 15px; margin: 10px 0; letter-spacing: 4px; }
+.expr-part { display: inline-block; padding: 4px 8px; border-radius: 8px; transition: all 0.3s; }
+.expr-part.active { background: var(--accent); color: #333; animation: glow 0.8s ease; font-size: 2.2rem; }
+.expr-part.done { color: #aaa; text-decoration: line-through; }
+.expr-part.result { color: var(--primary); font-size: 2.2rem; }
+
+/* 步骤解析 */
+.step-box { padding: 12px 18px; border-radius: 12px; margin: 8px 0; font-size: 1rem; opacity: 0; animation: stepReveal 0.4s ease forwards; }
+.step-box.mul-div { background: #fff3cd; border-left: 4px solid var(--orange); }
+.step-box.add-sub { background: #e8f4ff; border-left: 4px solid var(--blue); }
+.step-box.bracket { background: #f0e8ff; border-left: 4px solid var(--purple); }
+.step-num { display: inline-block; width: 24px; height: 24px; border-radius: 50%; text-align: center; line-height: 24px; font-size: 0.8rem; font-weight: bold; color: white; margin-right: 8px; }
+.step-num.mul { background: var(--orange); }
+.step-num.add { background: var(--blue); }
+.step-num.bra { background: var(--purple); }
+
+/* 优先级规则展示 */
+.rule-card { border-radius: 15px; padding: 15px; margin: 10px 0; display: flex; align-items: center; gap: 12px; }
+.rule-icon { font-size: 2.5rem; width: 60px; text-align: center; }
+.rule-text { flex: 1; }
+.rule-title { font-weight: bold; font-size: 1.1rem; margin-bottom: 4px; }
+.rule-desc { font-size: 0.9rem; color: #666; }
+.priority-badge { background: var(--primary); color: white; border-radius: 10px; padding: 2px 10px; font-size: 0.8rem; font-weight: bold; }
+
+/* 拖拽排序运算顺序 */
+.sort-container { display: flex; flex-direction: column; gap: 10px; margin: 15px 0; }
+.sort-item { background: white; border: 3px solid #e0e0e0; border-radius: 15px; padding: 15px 18px; font-size: 1.1rem; cursor: grab; display: flex; align-items: center; gap: 10px; transition: all 0.2s; user-select: none; }
+.sort-item:active { cursor: grabbing; box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+.sort-item.drag-over { border-color: var(--blue); background: #e8f4ff; }
+.sort-handle { color: #aaa; font-size: 1.3rem; }
+.sort-num { width: 32px; height: 32px; border-radius: 50%; background: #f0f0f0; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+
+/* 计算步骤游戏 */
+.calc-game { background: #f8f8ff; border-radius: 15px; padding: 20px; }
+.calc-expr { font-size: 1.6rem; font-weight: bold; text-align: center; margin-bottom: 15px; color: #333; }
+.calc-steps { display: flex; flex-direction: column; gap: 10px; }
+.calc-step { display: flex; align-items: center; gap: 10px; }
+.calc-step-label { font-size: 0.85rem; color: #888; width: 60px; }
+.calc-step-input { flex: 1; padding: 8px 12px; border: 2px solid #ddd; border-radius: 10px; font-size: 1.1rem; text-align: center; max-width: 120px; }
+.calc-step-hint { font-size: 0.85rem; color: #aaa; }
+
+/* 括号影响演示 */
+.bracket-demo { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+.bracket-box { border-radius: 15px; padding: 15px; text-align: center; }
+.bracket-box .expr { font-size: 1.3rem; font-weight: bold; margin-bottom: 10px; }
+.bracket-box .steps { font-size: 0.9rem; color: #555; line-height: 1.8; }
+.bracket-box .answer { font-size: 1.8rem; font-weight: bold; margin-top: 10px; }
+
+.answer-input { width: 120px; padding: 10px 12px; font-size: 1.4rem; border: 3px solid var(--blue); border-radius: 15px; text-align: center; outline: none; }
+.answer-input:focus { border-color: var(--primary); }
+.submit-btn { background: linear-gradient(135deg, var(--blue), var(--purple)); color: white; border: none; border-radius: 20px; padding: 12px 28px; font-size: 1.05rem; font-weight: bold; cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 10px rgba(84,160,255,0.4); }
+.submit-btn:hover { transform: scale(1.05); }
+.submit-btn-red { background: linear-gradient(135deg, var(--primary), var(--orange)); }
+.feedback { margin-top: 15px; padding: 15px 20px; border-radius: 15px; font-size: 1.1rem; font-weight: bold; display: none; animation: popIn 0.3s ease; }
+.feedback.correct { background: #e8f8e8; color: #2d8a2d; border: 2px solid #95e06c; display: block; }
+.feedback.wrong { background: #fff0f0; color: #d63031; border: 2px solid #ffb8b8; display: block; animation: shake 0.4s ease; }
+
+.question-text { font-size: 1.4rem; font-weight: bold; color: #333; margin-bottom: 20px; text-align: center; }
+
+/* Boss关 */
+.boss-title { font-size: 1.8rem; font-weight: 900; text-align: center; animation: rainbow 2s infinite; margin-bottom: 20px; }
+.boss-problem { background: linear-gradient(135deg, #e8f4ff22, #f0e8ff22); border: 3px solid var(--blue); border-radius: 20px; padding: 25px; margin: 15px 0; }
+
+/* 成绩单 */
+.report-card { background: linear-gradient(135deg, #e8f4ff, #f0e8ff); border-radius: 20px; padding: 30px; text-align: center; border: 3px solid var(--blue); }
+.report-score { font-size: 4rem; font-weight: 900; animation: rainbow 2s infinite; }
+
+.achievements-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
+.achievement { background: #f5f5f5; border-radius: 15px; padding: 15px 10px; text-align: center; border: 2px solid #e0e0e0; transition: all 0.3s; }
+.achievement.unlocked { background: linear-gradient(135deg, #e8f4ff, #f0e8ff); border-color: var(--blue); animation: popIn 0.4s ease; }
+.achievement-icon { font-size: 2rem; display: block; margin-bottom: 5px; }
+.achievement-name { font-size: 0.75rem; color: #555; font-weight: bold; }
+
+.buddy { position: fixed; bottom: 20px; right: 20px; cursor: pointer; z-index: 1000; }
+.buddy-body { width: 70px; height: 70px; background: linear-gradient(135deg, var(--blue), var(--purple)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); animation: bounce 2s infinite; border: 3px solid white; }
+.buddy-bubble { position: absolute; bottom: 80px; right: 0; background: white; border-radius: 15px; padding: 12px 15px; width: 210px; font-size: 0.85rem; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border: 2px solid var(--blue); display: none; }
+.buddy-bubble:after { content: ''; position: absolute; bottom: -10px; right: 25px; border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 10px solid var(--blue); }
+.buddy-bubble.show { display: block; animation: fadeIn 0.3s ease; }
+
+.float-star { position: fixed; pointer-events: none; font-size: 1.5rem; animation: starFloat 1.5s ease forwards; z-index: 9999; }
+
+@media (max-width: 600px) {
+  .hero-title { font-size: 2rem; }
+  .bracket-demo { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-icon">🧮</div>
+  <h1 class="hero-title">混合运算</h1>
+  <p class="hero-sub">三年级数学 · 掌握运算顺序，计算不出错！</p>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="showSection('goals')">🌈 学习目标</button>
+  <button class="nav-btn" onclick="showSection('warmup')">🔥 热身关</button>
+  <button class="nav-btn" onclick="showSection('level1')">⭐ 关卡1</button>
+  <button class="nav-btn" onclick="showSection('level2')">🏆 关卡2</button>
+  <button class="nav-btn" onclick="showSection('level3')">👑 关卡3</button>
+  <button class="nav-btn" onclick="showSection('boss')">🐉 Boss关</button>
+  <button class="nav-btn" onclick="showSection('report')">📊 成绩单</button>
+</nav>
+
+<div class="star-bar">
+  <span>⭐</span>
+  <span class="star-count" id="starCount">0</span>
+  <span class="star-label">颗星星</span>
+  <span class="achievement-badge" id="achieveBadge">🏆 新成就！</span>
+  <div style="flex:1"></div>
+  <div class="progress-bar" style="width:200px;flex-shrink:0">
+    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- 学习目标 -->
+<div class="section active" id="goals">
+  <div class="card">
+    <div class="card-title">🎯 今天我们要学什么？</div>
+    <ul style="list-style:none">
+      <li style="padding:10px 0;border-bottom:1px dashed #f0f0f0;font-size:1.05rem">⭐ 掌握只含加减法或只含乘除法时，从左到右算</li>
+      <li style="padding:10px 0;border-bottom:1px dashed #f0f0f0;font-size:1.05rem">⭐ 学会先乘除后加减的运算规则</li>
+      <li style="padding:10px 0;border-bottom:1px dashed #f0f0f0;font-size:1.05rem">⭐ 理解括号的作用——让特定部分先算</li>
+      <li style="padding:10px 0;font-size:1.05rem">⭐ 能解决含混合运算的应用题</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-title">🛒 一道有趣的问题</div>
+    <div style="background:#fff9e6;border-radius:15px;padding:18px;font-size:1.05rem;line-height:1.8;color:#444">
+      🍦 小明买了 <strong>3 根冰淇淋，每根 4 元</strong>，又买了 <strong>1 瓶水 2 元</strong>。<br>
+      一共花了多少钱？<br><br>
+      算式：<strong>3 × 4 + 2 = ?</strong><br>
+      先算乘法，再算加法！这就是<strong style="color:var(--blue)">混合运算</strong> 🎉
+    </div>
+    <button class="submit-btn" style="margin-top:15px" onclick="showSection('warmup')">开始挑战 →</button>
+  </div>
+</div>
+
+<!-- 热身关 -->
+<div class="section" id="warmup">
+  <div class="card">
+    <div class="level-badge">🔥 热身关 — 先检查基础！</div>
+    <div class="card-title">第1题：只有加减</div>
+    <div class="question-text">15 - 8 + 3 = ?</div>
+    <p style="text-align:center;color:#666;font-size:0.9rem;margin-bottom:15px">💡 从左到右算！</p>
+    <div style="display:flex;gap:15px;align-items:center;flex-wrap:wrap;justify-content:center">
+      <input type="number" class="answer-input" id="w1-ans" placeholder="?" onkeydown="if(event.key==='Enter')checkWarmup(1)">
+      <button class="submit-btn" onclick="checkWarmup(1)">检查答案 ✓</button>
+    </div>
+    <div class="feedback" id="w1-feedback"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">第2题：只有乘除</div>
+    <div class="question-text">24 ÷ 4 × 3 = ?</div>
+    <p style="text-align:center;color:#666;font-size:0.9rem;margin-bottom:15px">💡 从左到右算！</p>
+    <div style="display:flex;gap:15px;align-items:center;flex-wrap:wrap;justify-content:center">
+      <input type="number" class="answer-input" id="w2-ans" placeholder="?" onkeydown="if(event.key==='Enter')checkWarmup(2)">
+      <button class="submit-btn" onclick="checkWarmup(2)">检查答案 ✓</button>
+    </div>
+    <div class="feedback" id="w2-feedback"></div>
+  </div>
+</div>
+
+<!-- 关卡1：先乘除后加减 -->
+<div class="section" id="level1">
+  <div class="card">
+    <div class="level-badge">⭐ 关卡1：基础星 — 先乘除后加减</div>
+    <div class="card-title">🎬 故事引入</div>
+    <p style="font-size:1.05rem;line-height:1.8;color:#444;background:#fff9e6;padding:15px;border-radius:12px">
+      🏪 文具店：铅笔每支 <strong>3 元</strong>，橡皮每块 <strong>2 元</strong>。<br>
+      小红买了 <strong>4 支铅笔</strong>和 <strong>1 块橡皮</strong>，一共花多少钱？<br>
+      算式：<strong>3 × 4 + 2</strong> 
+      ——先算乘法，再算加法！
+    </p>
+  </div>
+  <div class="card">
+    <div class="card-title">🎨 动画演示：运算顺序</div>
+    <button class="submit-btn" id="animBtn1" onclick="startOrderAnimation()">▶ 开始演示</button>
+    <div style="margin-top:20px">
+      <div class="expr-display">
+        <span class="expr-part" id="ep-n1">3</span>
+        <span class="expr-part" id="ep-x"> × </span>
+        <span class="expr-part" id="ep-n2">4</span>
+        <span class="expr-part" id="ep-plus"> + </span>
+        <span class="expr-part" id="ep-n3">2</span>
+        <span class="expr-part" id="ep-eq"> = </span>
+        <span class="expr-part" id="ep-res" style="display:none">14</span>
+      </div>
+      <div id="stepsArea"></div>
+    </div>
+    <div style="margin-top:15px;background:#fff9e6;border-radius:12px;padding:12px">
+      <div class="rule-card" style="background:transparent">
+        <div class="rule-icon">✖️</div>
+        <div class="rule-text">
+          <div class="rule-title">规则一：先乘除</div>
+          <div class="rule-desc">有乘除先算乘除，就像VIP一样优先！</div>
+        </div>
+        <span class="priority-badge">优先</span>
+      </div>
+      <div class="rule-card" style="background:transparent">
+        <div class="rule-icon">➕</div>
+        <div class="rule-text">
+          <div class="rule-title">规则二：后加减</div>
+          <div class="rule-desc">加减等排队，乘除算完再轮到它们。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">✏️ 练习1</div>
+    <div class="question-text">5 × 3 + 8 = ?</div>
+    <div style="display:flex;gap:15px;align-items:center;flex-wrap:wrap;justify-content:center">
+      <input type="number" class="answer-input" id="l1a-ans" placeholder="?" onkeydown="if(event.key==='Enter')checkL('l1a', 23)">
+      <button class="submit-btn" onclick="checkL('l1a', 23)">检查答案 ✓</button>
+    </div>
+    <div class="feedback" id="l1a-feedback"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">✏️ 练习2</div>
+    <div class="question-text">30 - 4 × 6 = ?</div>
+    <div style="display:flex;gap:15px;align-items:center;flex-wrap:wrap;justify-content:center">
+      <input type="number" class="answer-input" id="l1b-ans" placeholder="?" onkeydown="if(event.key==='Enter')checkL('l1b', 6)">
+      <button class="submit-btn" onclick="checkL('l1b', 6)">检查答案 ✓</button>
+    </div>
+    <div class="feedback" id="l1b-feedback"></div>
+  </div>
+  <!-- 拖拽排序：运算顺序 -->
+  <div class="card">
+    <div class="card-title">🎮 拖拽排序：运算步骤</div>
+    <p style="color:#666;margin-bottom:10px">题目：<strong>20 - 3 × 5 + 4</strong>，把计算步骤排序！</p>
+    <div class="sort-container" id="sortContainer">
+      <div class="sort-item" draggable="true" data-idx="0" data-order="2" ondragstart="sortDragStart(event)" ondragover="sortDragOver(event)" ondrop="sortDrop(event)">
+        <span class="sort-handle">⠿</span>
+        <span class="sort-num" id="sn0">?</span>
+        <span>第二步：20 - 15 + 4 = 9（加减从左到右）</span>
+      </div>
+      <div class="sort-item" draggable="true" data-idx="1" data-order="1" ondragstart="sortDragStart(event)" ondragover="sortDragOver(event)" ondrop="sortDrop(event)">
+        <span class="sort-handle">⠿</span>
+        <span class="sort-num" id="sn1">?</span>
+        <span>第一步：3 × 5 = 15（先乘除）</span>
+      </div>
+    </div>
+    <button class="submit-btn" style="margin-top:12px" onclick="checkSort()">验证顺序 ✓</button>
+    <div class="feedback" id="sort-feedback"></div>
+  </div>
+</div>
+
+<!-- 关卡2：括号的力量 -->
+<div class="section" id="level2">
+  <div class="card">
+    <div class="level-badge">🏆 关卡2：技能达人 — 括号的力量</div>
+    <div class="card-title">🎬 故事引入</div>
+    <p style="font-size:1.05rem;line-height:1.8;color:#444;background:#f0e8ff;padding:15px;border-radius:12px">
+      🔮 括号是数学界的魔法！加上括号，运算顺序大变身！<br>
+      <strong>6 + 4 × 3 = 18</strong>（先乘：4×3=12，再加：6+12=18）<br>
+      <strong>(6 + 4) × 3 = 30</strong>（括号先算：6+4=10，再乘：10×3=30）<br>
+      括号让加法变成了第一优先级！
+    </p>
+  </div>
+  <div class="card">
+    <div class="card-title">🎨 括号对比演示</div>
+    <button class="submit-btn" onclick="showBracketDemo()">▶ 对比演示</button>
+    <div id="bracketDemoArea" style="display:none;margin-top:15px">
+      <div class="bracket-demo">
+        <div class="bracket-box" style="background:#fff9e6;border:2px solid var(--orange)">
+          <div class="expr">8 + 2 × 5</div>
+          <div class="steps">
+            第一步：<span style="color:var(--orange)">2 × 5 = 10</span><br>
+            第二步：8 + 10 = 18
+          </div>
+          <div class="answer" style="color:var(--orange)">= 18</div>
+        </div>
+        <div class="bracket-box" style="background:#f0e8ff;border:2px solid var(--purple)">
+          <div class="expr">(8 + 2) × 5</div>
+          <div class="steps">
+            第一步：<span style="color:var(--purple)">(8 + 2) = 10</span><br>
+            第二步：10 × 5 = 50
+          </div>
+          <div class="answer" style="color:var(--purple)">= 50</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding:12px;background:#e8f0ff;border-radius:12px;font-size:0.95rem">
+        💡 <strong>括号规则：</strong>有括号先算括号里的！括号比乘除还优先！
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">✏️ 练习：括号计算</div>
+    <div class="question-text">(12 + 8) × 3 = ?</div>
+    <div style="display:flex;gap:15px;align-items:center;flex-wrap:wrap;justify-content:center">
+      <input type="number" class="answer-input" id="l2a-ans" placeholder="?" onkeydown="if(event.key==='Enter')checkL('l2a', 60)">
+      <button class="submit-btn" onclick="checkL('l2a', 60)">检查答案 ✓</button>
+    </div>
+    <div class="feedback" id="l2a-feedback"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">✏️ 练习：加括号改变顺序</div>
+    <div class="question-text">35 ÷ (7 - 2) = ?</div>
+    <div style="display:flex;gap:15px;align-items:center;flex-wrap:wrap;justify-content:center">
+      <input type="number" class="answer-input" id="l2b-ans" placeholder="?" onkeydown="if(event.key==='Enter')checkL('l2b', 7)">
+      <button class="submit-btn" onclick="checkL('l2b', 7)">检查答案 ✓</button>
+    </div>
+    <div class="feedback" id="l2b-feedback"></div>
+  </div>
+</div>
+
+<!-- 关卡3：综合练习 -->
+<div class="section" id="level3">
+  <div class="card">
+    <div class="level-badge">👑 关卡3：挑战大师 — 综合混合运算</div>
+    <div class="card-title">📋 运算规则总结</div>
+    <div style="background:#f8f8ff;border-radius:15px;padding:20px">
+      <div style="display:flex;align-items:center;gap:12px;margin:8px 0;padding:10px;background:white;border-radius:10px;border-left:4px solid var(--purple)">
+        <span style="font-size:1.5rem">🥇</span>
+        <div><strong>第一优先：括号 ( )</strong><br><span style="font-size:0.9rem;color:#666">括号内的先算</span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin:8px 0;padding:10px;background:white;border-radius:10px;border-left:4px solid var(--orange)">
+        <span style="font-size:1.5rem">🥈</span>
+        <div><strong>第二优先：乘除 × ÷</strong><br><span style="font-size:0.9rem;color:#666">从左到右计算</span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin:8px 0;padding:10px;background:white;border-radius:10px;border-left:4px solid var(--blue)">
+        <span style="font-size:1.5rem">🥉</span>
+        <div><strong>第三优先：加减 + -</strong><br><span style="font-size:0.9rem;color:#666">从左到右计算</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">✏️ 练习1</div>
+    <div class="question-text">6 × (15 - 8) + 3 = ?</div>
+    <div style="background:#f5f5f5;border-radius:12px;padding:12px;font-size:0.9rem;color:#666;margin-bottom:15px">
+      💡 提示：先算括号里的 15-8，再乘6，再加3
+    </div>
+    <div style="display:flex;gap:15px;align-items:center;flex-wrap:wrap;justify-content:center">
+      <input type="number" class="answer-input" id="l3a-ans" placeholder="?" onkeydown="if(event.key==='Enter')checkL('l3a', 45)">
+      <button class="submit-btn" onclick="checkL('l3a', 45)">检查答案 ✓</button>
+    </div>
+    <div class="feedback" id="l3a-feedback"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">✏️ 练习2</div>
+    <div class="question-text">48 ÷ 6 - 3 × 2 = ?</div>
+    <div style="background:#f5f5f5;border-radius:12px;padding:12px;font-size:0.9rem;color:#666;margin-bottom:15px">
+      💡 提示：先算 48÷6 和 3×2，再做减法
+    </div>
+    <div style="display:flex;gap:15px;align-items:center;flex-wrap:wrap;justify-content:center">
+      <input type="number" class="answer-input" id="l3b-ans" placeholder="?" onkeydown="if(event.key==='Enter')checkL('l3b', 2)">
+      <button class="submit-btn" onclick="checkL('l3b', 2)">检查答案 ✓</button>
+    </div>
+    <div class="feedback" id="l3b-feedback"></div>
+  </div>
+  <!-- 错误判断 -->
+  <div class="card">
+    <div class="card-title">🔍 找错误游戏</div>
+    <p style="color:#555;margin-bottom:15px">小明的计算有错误，找出第一步计算错误的地方：</p>
+    <div style="background:#fff0f0;border-radius:15px;padding:15px;font-size:1.05rem;margin-bottom:15px">
+      题目：4 + 3 × 2<br>
+      小明算：<del style="color:#aaa">第一步：4 + 3 = 7</del> （❓这里对吗？）<br>
+      <span style="color:var(--primary)">第二步：7 × 2 = 14</span>
+    </div>
+    <p style="margin-bottom:10px;font-size:1.1rem">正确答案应该是多少？</p>
+    <div style="display:flex;gap:15px;align-items:center;flex-wrap:wrap">
+      <input type="number" class="answer-input" id="l3c-ans" placeholder="?" onkeydown="if(event.key==='Enter')checkL('l3c', 10)">
+      <button class="submit-btn" onclick="checkL('l3c', 10)">检查答案 ✓</button>
+    </div>
+    <div class="feedback" id="l3c-feedback"></div>
+  </div>
+</div>
+
+<!-- Boss关 -->
+<div class="section" id="boss">
+  <div class="card">
+    <div class="boss-title">🐉 Boss关：混合运算大挑战！</div>
+    <div class="boss-problem">
+      <div class="card-title">📝 应用题 1</div>
+      <p style="font-size:1.05rem;line-height:1.8;color:#444">
+        🎪 游乐场：过山车每人 <strong>8 元</strong>，摩天轮每人 <strong>5 元</strong>。<br>
+        小明一家 <strong>3 人</strong>，都坐了过山车；妈妈和爸爸坐了摩天轮。<br>
+        一共花了多少钱？（列出算式再计算）
+      </p>
+      <p style="text-align:center;font-size:1.1rem;margin:10px 0">8 × 3 + 5 × 2 = ?</p>
+      <div style="display:flex;gap:15px;align-items:center;flex-wrap:wrap;justify-content:center">
+        <input type="number" class="answer-input" id="boss1-ans" placeholder="?" onkeydown="if(event.key==='Enter')checkBoss(1)">
+        <button class="submit-btn submit-btn-red" onclick="checkBoss(1)">提交答案 ✓</button>
+      </div>
+      <div class="feedback" id="boss1-feedback"></div>
+    </div>
+
+    <div class="boss-problem" style="margin-top:15px">
+      <div class="card-title">📝 应用题 2</div>
+      <p style="font-size:1.05rem;line-height:1.8;color:#444">
+        🍪 曲奇工厂：每盒装 <strong>6 块</strong>曲奇，有 <strong>4 盒</strong>，又散装了 <strong>8 块</strong>。<br>
+        总共有多少块曲奇？
+      </p>
+      <p style="text-align:center;font-size:1.1rem;margin:10px 0">6 × 4 + 8 = ?</p>
+      <div style="display:flex;gap:15px;align-items:center;flex-wrap:wrap;justify-content:center">
+        <input type="number" class="answer-input" id="boss2-ans" placeholder="?" onkeydown="if(event.key==='Enter')checkBoss(2)">
+        <button class="submit-btn submit-btn-red" onclick="checkBoss(2)">提交答案 ✓</button>
+      </div>
+      <div class="feedback" id="boss2-feedback"></div>
+    </div>
+
+    <div class="boss-problem" style="margin-top:15px">
+      <div class="card-title">🏆 终极挑战</div>
+      <p style="font-size:1.05rem;line-height:1.8;color:#444">
+        计算：<strong style="font-size:1.2rem">(25 + 15) ÷ 8 × 3 - 4</strong>
+      </p>
+      <div style="display:flex;gap:15px;align-items:center;flex-wrap:wrap;justify-content:center;margin-top:12px">
+        <input type="number" class="answer-input" id="boss3-ans" placeholder="?" onkeydown="if(event.key==='Enter')checkBoss(3)">
+        <button class="submit-btn submit-btn-red" onclick="checkBoss(3)">提交答案 ✓</button>
+      </div>
+      <div class="feedback" id="boss3-feedback"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 成绩单 -->
+<div class="section" id="report">
+  <div class="report-card">
+    <div style="font-size:2rem;margin-bottom:10px">🎓 学习成绩单</div>
+    <div class="report-score" id="reportScore">0</div>
+    <div style="font-size:1.1rem;color:#555;margin:5px 0">颗星星收集！</div>
+    <div style="font-size:2rem;margin:10px 0" id="reportStars">⭐</div>
+    <div style="font-size:1.2rem;font-weight:bold;color:var(--blue);margin:15px 0" id="reportMsg">继续加油！</div>
+  </div>
+  <div class="card" style="margin-top:20px">
+    <div class="card-title">🏆 已解锁成就</div>
+    <div class="achievements-grid">
+      <div class="achievement" id="ach-start"><span class="achievement-icon">🌟</span><span class="achievement-name">开始学习</span></div>
+      <div class="achievement" id="ach-warmup"><span class="achievement-icon">🔥</span><span class="achievement-name">热身完成</span></div>
+      <div class="achievement" id="ach-order"><span class="achievement-icon">📋</span><span class="achievement-name">顺序掌握</span></div>
+      <div class="achievement" id="ach-bracket"><span class="achievement-icon">🔮</span><span class="achievement-name">括号魔法</span></div>
+      <div class="achievement" id="ach-sort"><span class="achievement-icon">🎮</span><span class="achievement-name">排序高手</span></div>
+      <div class="achievement" id="ach-err"><span class="achievement-icon">🔍</span><span class="achievement-name">错误猎手</span></div>
+      <div class="achievement" id="ach-boss"><span class="achievement-icon">🐉</span><span class="achievement-name">计算霸主</span></div>
+      <div class="achievement" id="ach-perfect"><span class="achievement-icon">💯</span><span class="achievement-name">满星大师</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">📖 拓展学习</div>
+    <p style="line-height:1.8;color:#555">
+      🌟 <strong>你学会了：</strong>先乘除后加减、括号优先的运算规则<br>
+      📚 <strong>下一步：</strong>学习运算律（加法交换律、乘法分配律），让计算更灵活！<br>
+      🎮 <strong>生活练习：</strong>去超市购物时，用混合运算来计算总价！
+    </p>
+  </div>
+</div>
+
+</div>
+
+<!-- AI学伴 -->
+<div class="buddy" id="buddy" onclick="toggleBuddy()">
+  <div class="buddy-body">🦉</div>
+  <div class="buddy-bubble" id="buddyBubble">
+    💡 混合运算口诀：括号最大，乘除第二，加减最小，从左到右！
+  </div>
+</div>
+
+<script>
+const state = { stars: 0, achievements: new Set(), sortOrder: [0, 1] };
+const tips = [
+  "💡 运算口诀：括号最大，乘除第二，加减最小，从左到右！",
+  "💡 看到括号，先算括号里的，无论里面是什么！",
+  "💡 先乘除后加减：×÷比+-更优先，就像贵宾先排队！",
+  "💡 遇到只有加减或只有乘除，从左向右依次计算。",
+  "💡 验算方法：把结果代回，从另一个方向想想是否合理。"
+];
+let tipIdx = 0;
+
+// 音效
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+function getAudioCtx() { if (!audioCtx) audioCtx = new AudioCtx(); return audioCtx; }
+function playCorrect() {
+  try {
+    const ctx = getAudioCtx();
+    [440, 554, 659, 880].forEach((f, i) => {
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = f; o.type = 'triangle';
+      g.gain.setValueAtTime(0.2, ctx.currentTime + i * 0.1);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.1 + 0.3);
+      o.start(ctx.currentTime + i * 0.1); o.stop(ctx.currentTime + i * 0.1 + 0.35);
+    });
+  } catch(e) {}
+}
+function playWrong() {
+  try {
+    const ctx = getAudioCtx();
+    const o = ctx.createOscillator(); const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = 180; o.type = 'sawtooth';
+    g.gain.setValueAtTime(0.15, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+    o.start(); o.stop(ctx.currentTime + 0.4);
+  } catch(e) {}
+}
+function playStar() {
+  try {
+    const ctx = getAudioCtx();
+    const o = ctx.createOscillator(); const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.setValueAtTime(880, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.2);
+    g.gain.setValueAtTime(0.2, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    o.start(); o.stop(ctx.currentTime + 0.3);
+  } catch(e) {}
+}
+
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    if (b.getAttribute('onclick') && b.getAttribute('onclick').includes(id)) b.classList.add('active');
+  });
+  if (id === 'report') updateReport();
+  if (id === 'goals') unlockAchievement('start');
+}
+
+function addStars(n) {
+  state.stars += n;
+  document.getElementById('starCount').textContent = state.stars;
+  document.getElementById('progressFill').style.width = Math.min(100, (state.stars / 20) * 100) + '%';
+  playStar();
+  for (let i = 0; i < n; i++) {
+    const s = document.createElement('div'); s.className = 'float-star'; s.textContent = '⭐';
+    s.style.left = (Math.random() * window.innerWidth * 0.8 + window.innerWidth * 0.1) + 'px';
+    s.style.top = (window.innerHeight * 0.5) + 'px';
+    document.body.appendChild(s); setTimeout(() => s.remove(), 1600);
+  }
+  if (state.stars >= 20) unlockAchievement('perfect');
+}
+function unlockAchievement(id) {
+  if (state.achievements.has(id)) return;
+  state.achievements.add(id);
+  const el = document.getElementById('ach-' + id);
+  if (el) el.classList.add('unlocked');
+  const badge = document.getElementById('achieveBadge');
+  badge.classList.add('show'); setTimeout(() => badge.classList.remove('show'), 2500);
+}
+function showFeedback(fid, correct, correctAns) {
+  const el = document.getElementById(fid + '-feedback');
+  el.className = 'feedback ' + (correct ? 'correct' : 'wrong');
+  el.textContent = correct ? '🎉 太棒了！答对了！' : `💪 加油！正确答案是 ${correctAns}，再算一次！`;
+  if (correct) { playCorrect(); addStars(1); }
+  else playWrong();
+}
+
+function checkWarmup(n) {
+  const ans = { 1: 10, 2: 18 };
+  const v = parseInt(document.getElementById('w' + n + '-ans').value);
+  const ok = v === ans[n];
+  showFeedback('w' + n, ok, ans[n]);
+  if (ok && n === 2) unlockAchievement('warmup');
+}
+
+function checkL(id, correct) {
+  const v = parseInt(document.getElementById(id + '-ans').value);
+  const ok = v === correct;
+  showFeedback(id, ok, correct);
+  if (ok) {
+    if (id.startsWith('l1')) unlockAchievement('order');
+    if (id.startsWith('l2')) unlockAchievement('bracket');
+    if (id === 'l3c') unlockAchievement('err');
+  }
+}
+
+function checkBoss(n) {
+  const answers = { 1: 34, 2: 32, 3: 11 };
+  const v = parseInt(document.getElementById('boss' + n + '-ans').value);
+  const ok = v === answers[n];
+  showFeedback('boss' + n, ok, answers[n]);
+  if (ok) { addStars(2); if (n === 3) unlockAchievement('boss'); }
+}
+
+// 动画演示
+async function startOrderAnimation() {
+  document.getElementById('animBtn1').disabled = true;
+  const stepsArea = document.getElementById('stepsArea');
+  stepsArea.innerHTML = '';
+
+  // 高亮乘法部分
+  document.getElementById('ep-n1').classList.add('active');
+  document.getElementById('ep-x').classList.add('active');
+  document.getElementById('ep-n2').classList.add('active');
+  await sleep(600);
+
+  const step1 = document.createElement('div');
+  step1.className = 'step-box mul-div';
+  step1.style.animationDelay = '0s';
+  step1.innerHTML = '<span class="step-num mul">1</span> 先算乘法：3 × 4 = <strong>12</strong>（乘除优先！）';
+  stepsArea.appendChild(step1);
+  await sleep(700);
+
+  document.getElementById('ep-n1').classList.remove('active'); document.getElementById('ep-n1').classList.add('done');
+  document.getElementById('ep-x').classList.remove('active'); document.getElementById('ep-x').classList.add('done');
+  document.getElementById('ep-n2').classList.remove('active'); document.getElementById('ep-n2').classList.add('done');
+  document.getElementById('ep-plus').classList.add('active');
+  document.getElementById('ep-n3').classList.add('active');
+  await sleep(500);
+
+  const step2 = document.createElement('div');
+  step2.className = 'step-box add-sub';
+  step2.style.animationDelay = '0s';
+  step2.innerHTML = '<span class="step-num add">2</span> 再算加法：12 + 2 = <strong>14</strong>';
+  stepsArea.appendChild(step2);
+  await sleep(700);
+
+  document.getElementById('ep-res').style.display = 'inline';
+  document.getElementById('ep-res').style.animation = 'popIn 0.4s ease';
+  document.getElementById('animBtn1').disabled = false;
+  document.getElementById('animBtn1').textContent = '▶ 再看一次';
+  unlockAchievement('order');
+}
+
+function showBracketDemo() {
+  const area = document.getElementById('bracketDemoArea');
+  area.style.display = 'block';
+  area.style.animation = 'fadeIn 0.4s ease';
+  unlockAchievement('bracket');
+  addStars(1);
+}
+
+// 拖拽排序
+let dragSortItem = null;
+function sortDragStart(e) { dragSortItem = e.currentTarget; e.currentTarget.style.opacity = '0.5'; }
+function sortDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function sortDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (dragSortItem && dragSortItem !== e.currentTarget) {
+    const container = document.getElementById('sortContainer');
+    const items = [...container.querySelectorAll('.sort-item')];
+    const fromIdx = items.indexOf(dragSortItem);
+    const toIdx = items.indexOf(e.currentTarget);
+    if (fromIdx > toIdx) container.insertBefore(dragSortItem, e.currentTarget);
+    else container.insertBefore(dragSortItem, e.currentTarget.nextSibling);
+  }
+  if (dragSortItem) dragSortItem.style.opacity = '1';
+  dragSortItem = null;
+}
+function checkSort() {
+  const items = [...document.querySelectorAll('#sortContainer .sort-item')];
+  const orders = items.map(i => parseInt(i.getAttribute('data-order')));
+  const correct = orders[0] === 1 && orders[1] === 2;
+  showFeedback('sort', correct, '第一步是先算乘法，第二步再算加减');
+  if (correct) unlockAchievement('sort');
+}
+
+function toggleBuddy() {
+  const b = document.getElementById('buddyBubble');
+  b.classList.toggle('show');
+  if (b.classList.contains('show')) b.textContent = tips[tipIdx++ % tips.length];
+}
+
+function updateReport() {
+  document.getElementById('reportScore').textContent = state.stars;
+  document.getElementById('reportStars').textContent = '⭐'.repeat(Math.min(state.stars, 10));
+  const msg = state.stars >= 16 ? '🏆 运算大师！你超级棒！' : state.stars >= 10 ? '🌟 很厉害！继续保持！' : '💪 加油！你已经学会了基本规则！';
+  document.getElementById('reportMsg').textContent = msg;
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+unlockAchievement('start');
+</script>
+</body>
+</html>

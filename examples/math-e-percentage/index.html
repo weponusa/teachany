@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>百分数大冒险 🎯 六年级数学</title>
+<style>
+:root {
+  --bg: #fffbf0;
+  --primary: #ff6b6b;
+  --secondary: #4ecdc4;
+  --accent: #ffe66d;
+  --card: #fff;
+  --purple: #a855f7;
+  --blue: #3b82f6;
+  --green: #22c55e;
+  --orange: #f97316;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); font-family: 'Microsoft YaHei', Arial, sans-serif; overflow-x: hidden; }
+
+/* ===== NAVIGATION ===== */
+nav {
+  background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #ffe66d, #a855f7);
+  padding: 12px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+.nav-title { color: white; font-size: 1.3rem; font-weight: bold; text-shadow: 1px 1px 3px rgba(0,0,0,0.3); }
+.stars-display { background: rgba(255,255,255,0.3); border-radius: 20px; padding: 6px 16px; color: white; font-weight: bold; font-size: 1.1rem; }
+.progress-bar { height: 8px; background: rgba(255,255,255,0.3); border-radius: 4px; flex: 1; margin: 0 15px; }
+.progress-fill { height: 100%; background: white; border-radius: 4px; transition: width 0.5s ease; }
+
+/* ===== SECTIONS ===== */
+.section { min-height: 100vh; padding: 40px 20px; display: none; }
+.section.active { display: block; }
+
+/* ===== HERO ===== */
+#hero {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 50%, #ffe66d 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; position: relative; overflow: hidden;
+}
+#hero::before {
+  content: '';
+  position: absolute; top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  animation: rotate 20s linear infinite;
+}
+@keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.hero-title {
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  background: linear-gradient(135deg, #fff, #ffe66d, #fff);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  animation: bounce 1s ease infinite alternate;
+  text-shadow: none; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}
+@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-15px); } }
+.hero-subtitle { color: white; font-size: 1.5rem; margin: 20px 0; text-shadow: 1px 1px 3px rgba(0,0,0,0.3); }
+.hero-emoji { font-size: 5rem; animation: spin 3s ease-in-out infinite; display: block; margin: 20px 0; }
+@keyframes spin { 0%,100% { transform: rotateY(0deg); } 50% { transform: rotateY(180deg); } }
+.btn-start {
+  background: white; color: var(--primary); border: none; padding: 18px 50px;
+  border-radius: 50px; font-size: 1.5rem; font-weight: bold; cursor: pointer;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.2); transition: all 0.3s;
+  animation: pulse 2s ease infinite;
+}
+@keyframes pulse { 0%,100% { box-shadow: 0 8px 25px rgba(0,0,0,0.2); } 50% { box-shadow: 0 8px 40px rgba(255,107,107,0.5); } }
+.btn-start:hover { transform: scale(1.05); }
+
+/* ===== CARDS ===== */
+.card {
+  background: var(--card); border-radius: 20px;
+  padding: 30px; margin: 20px auto; max-width: 800px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+}
+.card-title {
+  font-size: 1.8rem; font-weight: bold; margin-bottom: 20px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.btn {
+  background: linear-gradient(135deg, var(--primary), var(--orange));
+  color: white; border: none; padding: 12px 30px;
+  border-radius: 25px; font-size: 1.1rem; font-weight: bold;
+  cursor: pointer; transition: all 0.3s; margin: 10px;
+  box-shadow: 0 4px 15px rgba(255,107,107,0.3);
+}
+.btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(255,107,107,0.4); }
+.btn-secondary {
+  background: linear-gradient(135deg, var(--secondary), var(--blue));
+}
+.btn-green { background: linear-gradient(135deg, var(--green), var(--secondary)); }
+
+/* ===== PERCENTAGE BAR ANIMATION ===== */
+.percent-demo { margin: 30px 0; }
+.percent-bar-container {
+  background: #f0f0f0; border-radius: 15px; height: 50px;
+  overflow: hidden; margin: 15px 0; position: relative;
+}
+.percent-bar-fill {
+  height: 100%; border-radius: 15px;
+  background: linear-gradient(135deg, var(--primary), var(--orange));
+  width: 0%; transition: width 1.5s ease;
+  display: flex; align-items: center; justify-content: flex-end; padding-right: 15px;
+  color: white; font-weight: bold; font-size: 1.1rem;
+}
+.percent-label { font-size: 1.1rem; color: #555; margin: 5px 0; }
+.percent-visual {
+  display: flex; flex-wrap: wrap; gap: 4px; margin: 20px 0;
+}
+.percent-cell {
+  width: 22px; height: 22px; border-radius: 4px;
+  background: #e0e0e0; transition: all 0.1s;
+}
+.percent-cell.filled { background: linear-gradient(135deg, var(--primary), var(--orange)); }
+.percent-cell.special { background: linear-gradient(135deg, var(--secondary), var(--blue)); }
+
+/* ===== QUIZ ===== */
+.question-text { font-size: 1.4rem; margin: 20px 0; color: #333; line-height: 1.6; }
+.options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+.option-btn {
+  background: white; border: 3px solid #e0e0e0; border-radius: 15px;
+  padding: 18px; font-size: 1.1rem; cursor: pointer; transition: all 0.3s;
+  text-align: left;
+}
+.option-btn:hover { border-color: var(--primary); background: #fff5f5; transform: scale(1.02); }
+.option-btn.correct { background: #d4edda; border-color: var(--green); animation: correctAnim 0.5s ease; }
+.option-btn.wrong { background: #f8d7da; border-color: var(--primary); animation: shake 0.5s ease; }
+@keyframes correctAnim { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+@keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+.feedback { padding: 15px 20px; border-radius: 15px; margin: 15px 0; font-size: 1.2rem; font-weight: bold; display: none; }
+.feedback.correct { background: #d4edda; color: #155724; display: block; }
+.feedback.wrong { background: #f8d7da; color: #721c24; display: block; }
+
+/* ===== DRAG & DROP ===== */
+.drag-container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin: 20px 0; }
+.drag-item {
+  background: linear-gradient(135deg, var(--accent), var(--orange));
+  padding: 15px 25px; border-radius: 15px; font-size: 1.2rem; font-weight: bold;
+  cursor: grab; user-select: none; box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  transition: transform 0.2s; color: #333;
+}
+.drag-item:hover { transform: scale(1.05); }
+.drag-item.dragging { opacity: 0.5; transform: scale(1.1); }
+.drop-zone {
+  min-width: 120px; min-height: 60px; border: 3px dashed #ccc;
+  border-radius: 15px; display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; color: #999; transition: all 0.3s; padding: 10px;
+}
+.drop-zone.over { border-color: var(--primary); background: #fff5f5; }
+.drop-zone.correct { border-color: var(--green); background: #d4edda; }
+.drop-zone.wrong { border-color: var(--primary); background: #f8d7da; }
+
+/* ===== ACHIEVEMENT ===== */
+.achievement-popup {
+  position: fixed; top: 80px; right: 20px;
+  background: linear-gradient(135deg, var(--accent), var(--orange));
+  color: white; padding: 15px 25px; border-radius: 20px;
+  font-size: 1.1rem; font-weight: bold;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+  z-index: 999; animation: slideIn 0.5s ease;
+  max-width: 280px;
+}
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.achievements-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
+.achievement-badge {
+  background: #f5f5f5; border-radius: 15px; padding: 20px; text-align: center;
+  border: 3px solid #e0e0e0; transition: all 0.3s;
+}
+.achievement-badge.unlocked {
+  background: linear-gradient(135deg, #ffe66d, #ff6b6b);
+  border-color: var(--orange); box-shadow: 0 4px 15px rgba(255,107,107,0.3);
+  animation: achieveGlow 2s ease infinite;
+}
+@keyframes achieveGlow { 0%,100% { box-shadow: 0 4px 15px rgba(255,107,107,0.3); } 50% { box-shadow: 0 4px 30px rgba(255,107,107,0.6); } }
+.achievement-badge .badge-icon { font-size: 2.5rem; }
+.achievement-badge .badge-name { font-size: 0.85rem; font-weight: bold; margin-top: 8px; color: #333; }
+
+/* ===== AI BUDDY ===== */
+.ai-buddy {
+  position: fixed; bottom: 20px; right: 20px;
+  width: 70px; height: 70px;
+  background: linear-gradient(135deg, var(--primary), var(--purple));
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; cursor: pointer; z-index: 200;
+  box-shadow: 0 6px 20px rgba(255,107,107,0.4);
+  animation: floatBuddy 3s ease-in-out infinite;
+}
+@keyframes floatBuddy { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.buddy-tip {
+  position: fixed; bottom: 100px; right: 20px;
+  background: white; border-radius: 20px; padding: 15px 20px;
+  max-width: 250px; box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  font-size: 0.95rem; color: #333; display: none; z-index: 200;
+  border: 3px solid var(--primary);
+}
+.buddy-tip::after {
+  content: ''; position: absolute; bottom: -12px; right: 25px;
+  border: 6px solid transparent; border-top-color: var(--primary);
+}
+.buddy-tip.show { display: block; animation: slideIn 0.3s ease; }
+
+/* ===== SCORE BOARD ===== */
+.score-board {
+  text-align: center; background: linear-gradient(135deg, var(--secondary), var(--blue));
+  border-radius: 20px; padding: 40px; color: white; margin: 20px auto; max-width: 600px;
+}
+.final-score { font-size: 4rem; font-weight: bold; animation: bounce 1s ease infinite alternate; }
+.stars-row { font-size: 3rem; margin: 20px 0; }
+.stat-row { display: flex; justify-content: space-around; margin: 20px 0; }
+.stat-item { text-align: center; }
+.stat-value { font-size: 2rem; font-weight: bold; }
+.stat-label { font-size: 0.9rem; opacity: 0.8; }
+
+/* ===== LEVEL INDICATOR ===== */
+.level-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: linear-gradient(135deg, var(--purple), var(--blue));
+  color: white; padding: 8px 20px; border-radius: 20px; font-weight: bold; margin-bottom: 15px;
+}
+.objectives { list-style: none; }
+.objectives li { padding: 10px 0; font-size: 1.1rem; border-bottom: 1px solid #f0f0f0; }
+.objectives li::before { content: '✅ '; }
+.story-box {
+  background: linear-gradient(135deg, #fff9e6, #fff5f0);
+  border-left: 5px solid var(--accent); border-radius: 0 15px 15px 0;
+  padding: 20px; margin: 20px 0; font-size: 1.1rem; line-height: 1.8; color: #444;
+}
+</style>
+</head>
+<body>
+
+<!-- NAVIGATION -->
+<nav>
+  <div class="nav-title">🎯 百分数大冒险</div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div class="stars-display">⭐ <span id="starCount">0</span></div>
+</nav>
+
+<!-- SECTION: HERO -->
+<div class="section active" id="hero">
+  <span class="hero-emoji">🎯</span>
+  <h1 class="hero-title">百分数大冒险</h1>
+  <p class="hero-subtitle">六年级数学 · 探索百分数的神奇世界！</p>
+  <p style="color:white;font-size:1.1rem;margin:10px 0 30px;opacity:0.9">
+    🌟 集满星星 · 解锁成就 · 成为百分数小达人！
+  </p>
+  <button class="btn-start" onclick="goTo('objectives')">🚀 开始冒险！</button>
+</div>
+
+<!-- SECTION: OBJECTIVES -->
+<div class="section" id="objectives">
+  <div class="card">
+    <div class="level-badge">📋 学习目标</div>
+    <h2 class="card-title">今天我们要学什么？</h2>
+    <ul class="objectives">
+      <li>认识百分数，理解它的含义</li>
+      <li>学会读写百分数（如 75%）</li>
+      <li>在生活中找到百分数的身影</li>
+      <li>计算简单的百分数问题</li>
+      <li>比较分数与百分数的关系</li>
+    </ul>
+    <div class="story-box">
+      <strong>🌈 生活中的百分数</strong><br>
+      妈妈买的果汁上写着"橙汁含量 50%"，超市打折写着"8折优惠"，
+      体检报告上写着"及格率 95%"……百分数就藏在我们身边！
+    </div>
+    <button class="btn" onclick="goTo('warmup')">🔥 热身一下！</button>
+  </div>
+</div>
+
+<!-- SECTION: WARMUP -->
+<div class="section" id="warmup">
+  <div class="card">
+    <div class="level-badge">🔥 热身挑战</div>
+    <h2 class="card-title">猜猜看！</h2>
+    <p class="question-text">你知道这些数字是什么意思吗？拖动匹配一下！</p>
+    <div style="display:flex;gap:30px;flex-wrap:wrap;justify-content:center;margin:30px 0">
+      <div>
+        <p style="font-weight:bold;margin-bottom:15px;color:var(--purple)">📦 百分数</p>
+        <div id="dragItems" class="drag-container" style="flex-direction:column;gap:10px">
+          <div class="drag-item" draggable="true" data-value="100分满分得了75分" id="d1">75%</div>
+          <div class="drag-item" draggable="true" data-value="百中取一" id="d2">1%</div>
+          <div class="drag-item" draggable="true" data-value="全部都有" id="d3">100%</div>
+          <div class="drag-item" draggable="true" data-value="一半" id="d4">50%</div>
+        </div>
+      </div>
+      <div>
+        <p style="font-weight:bold;margin-bottom:15px;color:var(--primary)">💡 意思</p>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="drop-zone" data-answer="100分满分得了75分" id="z1">100分满分得了75分 📝</div>
+          <div class="drop-zone" data-answer="百中取一" id="z2">百中取一 🔍</div>
+          <div class="drop-zone" data-answer="全部都有" id="z3">全部都有 🎁</div>
+          <div class="drop-zone" data-answer="一半" id="z4">一半 🍎</div>
+        </div>
+      </div>
+    </div>
+    <div id="warmupFeedback" class="feedback"></div>
+    <button class="btn" onclick="checkWarmup()">✅ 检查答案</button>
+    <button class="btn btn-secondary" onclick="goTo('level1')">➡️ 进入第一关</button>
+  </div>
+</div>
+
+<!-- SECTION: LEVEL 1 -->
+<div class="section" id="level1">
+  <div class="card">
+    <div class="level-badge">🌟 第一关 · 百分数是什么</div>
+    <div class="story-box">
+      <strong>🏫 ABT 故事：</strong><br>
+      小明的班级有 100 个同学，<strong>And</strong>（已知）老师说今天表现好的有 75 个，
+      <strong>But</strong>（转折）怎么表达这个"75个里的好学生"比例呢？
+      <strong>Therefore</strong>（所以）我们发明了一种特殊写法：<b>75%</b>！
+    </div>
+    <h3 style="font-size:1.3rem;margin:20px 0 10px">🎬 百分数进度条演示</h3>
+    <p class="percent-label">班级出勤率：<span id="pct1Label">0</span>%</p>
+    <div class="percent-bar-container">
+      <div class="percent-bar-fill" id="pct1Bar">0%</div>
+    </div>
+    <p class="percent-label">作业完成率：<span id="pct2Label">0</span>%</p>
+    <div class="percent-bar-container">
+      <div class="percent-bar-fill" id="pct2Bar" style="background:linear-gradient(135deg,var(--secondary),var(--blue))">0%</div>
+    </div>
+    <button class="btn" onclick="animatePercent()">▶️ 播放动画</button>
+    <hr style="margin:25px 0;border:none;border-top:2px solid #f0f0f0">
+    <h3 style="font-size:1.3rem;margin-bottom:15px">🎯 100格可视化</h3>
+    <p style="color:#555;margin-bottom:15px">点击格子，选出 <strong>60%</strong> 的区域（60格）</p>
+    <div class="percent-visual" id="percentGrid"></div>
+    <div id="gridCount" style="font-size:1.2rem;margin:10px 0;font-weight:bold;color:var(--purple)">已选：0 / 100</div>
+    <button class="btn btn-green" onclick="checkGrid()">✅ 完成选择</button>
+    <div id="gridFeedback" class="feedback"></div>
+  </div>
+  <div style="text-align:center;margin-top:15px">
+    <button class="btn" onclick="goTo('level2')">🚀 进入第二关！</button>
+  </div>
+</div>
+
+<!-- SECTION: LEVEL 2 -->
+<div class="section" id="level2">
+  <div class="card">
+    <div class="level-badge">🌟🌟 第二关 · 分数变百分数</div>
+    <div class="story-box">
+      <strong>🍕 ABT 故事：</strong><br>
+      小红吃了一块披萨，一共8块，<strong>And</strong> 她吃了3块，
+      <strong>But</strong> 妈妈想知道吃了多少百分比，
+      <strong>Therefore</strong> 我们要把分数 <b>3/8</b> 变成百分数！
+    </div>
+    <h3 style="margin:20px 0 15px;font-size:1.3rem">🔢 方法：分数 ÷ = 百分数</h3>
+    <div style="background:#f8f9ff;border-radius:15px;padding:20px;margin:15px 0;font-size:1.2rem">
+      <p>① 先算出小数：3 ÷ 8 = <strong>0.375</strong></p>
+      <p style="margin:10px 0">② 移动小数点：0.375 → <strong>37.5%</strong></p>
+      <p>③ 或者：分子 × 100 ÷ 分母 = <strong>37.5%</strong></p>
+    </div>
+    <h3 style="margin:20px 0 15px;font-size:1.3rem">❓ 快速问答 · 计时挑战！</h3>
+    <div id="level2Quiz"></div>
+    <div id="level2Feedback" class="feedback"></div>
+  </div>
+  <div style="text-align:center;margin-top:15px">
+    <button class="btn" onclick="goTo('level3')">🚀 进入第三关！</button>
+  </div>
+</div>
+
+<!-- SECTION: LEVEL 3 -->
+<div class="section" id="level3">
+  <div class="card">
+    <div class="level-badge">🌟🌟🌟 第三关 · 生活中的百分数</div>
+    <div class="story-box">
+      <strong>🛍️ ABT 故事：</strong><br>
+      周末小强去买玩具，<strong>And</strong> 标价100元，
+      <strong>But</strong> 商店打了"七折"，他算不出要花多少钱，
+      <strong>Therefore</strong> 我们要学会折扣与百分数的关系！
+    </div>
+    <div style="background:#fff9e6;border-radius:15px;padding:20px;margin:20px 0">
+      <p style="font-size:1.2rem;line-height:2">
+        📌 <strong>折扣口诀：</strong><br>
+        七折 = 70% = 原价 × 0.7<br>
+        八折 = 80% = 原价 × 0.8<br>
+        九折 = 90% = 原价 × 0.9<br>
+        <span style="color:var(--primary)">越低的折扣，越便宜！</span>
+      </p>
+    </div>
+    <h3 style="margin:20px 0 15px;font-size:1.3rem">🛒 购物计算挑战！</h3>
+    <div id="level3Quiz"></div>
+    <div id="level3Feedback" class="feedback"></div>
+  </div>
+  <div style="text-align:center;margin-top:15px">
+    <button class="btn" onclick="goTo('boss')">💥 挑战BOSS关！</button>
+  </div>
+</div>
+
+<!-- SECTION: BOSS -->
+<div class="section" id="boss">
+  <div class="card">
+    <div class="level-badge" style="background:linear-gradient(135deg,#ff0040,#ff6b6b)">💥 BOSS关 · 综合大挑战</div>
+    <h2 class="card-title">🐉 百分数守护者</h2>
+    <p style="margin-bottom:20px;color:#555;font-size:1.1rem">连续答对3题，击败BOSS！每题30秒！</p>
+    <div id="bossQuiz"></div>
+    <div style="margin:20px 0">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+        <span>BOSS血量</span>
+        <span id="bossHpText">300/300</span>
+      </div>
+      <div style="background:#f0f0f0;border-radius:10px;height:30px;overflow:hidden">
+        <div id="bossHpBar" style="height:100%;background:linear-gradient(135deg,#ff0040,#ff6b6b);width:100%;transition:width 0.5s;border-radius:10px"></div>
+      </div>
+    </div>
+    <div id="bossFeedback" class="feedback"></div>
+    <div id="bossTimer" style="font-size:1.5rem;font-weight:bold;color:var(--primary);text-align:center;margin:15px 0"></div>
+  </div>
+  <div style="text-align:center;margin-top:15px">
+    <button class="btn btn-green" id="bossNextBtn" onclick="goTo('scoreboard')" style="display:none">🎊 查看成绩！</button>
+  </div>
+</div>
+
+<!-- SECTION: SCOREBOARD -->
+<div class="section" id="scoreboard">
+  <div class="score-board">
+    <p style="font-size:1.5rem;margin-bottom:10px">🎊 恭喜完成百分数大冒险！</p>
+    <div class="final-score" id="finalScore">0</div>
+    <p style="font-size:1.2rem;opacity:0.9">总分</p>
+    <div class="stars-row" id="finalStars">⭐⭐⭐</div>
+    <div class="stat-row">
+      <div class="stat-item"><div class="stat-value" id="statCorrect">0</div><div class="stat-label">答对题数</div></div>
+      <div class="stat-item"><div class="stat-value" id="statAchieve">0</div><div class="stat-label">成就解锁</div></div>
+      <div class="stat-item"><div class="stat-value" id="statStars">0</div><div class="stat-label">收集星星</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2 class="card-title">🏆 成就收集</h2>
+    <div class="achievements-grid" id="achievementsGrid"></div>
+  </div>
+  <div class="card">
+    <h2 class="card-title">🚀 拓展思考</h2>
+    <div class="story-box">
+      <strong>🌟 试试看：</strong><br>
+      ① 找找家里食品包装上的百分数，比较哪个营养含量更高<br>
+      ② 如果全校有500人，90%参加运动会，有多少人参加？<br>
+      ③ 你今天完成了多少百分比的作业？写下来！
+    </div>
+    <button class="btn" onclick="goTo('hero')">🔄 再来一次！</button>
+    <button class="btn btn-secondary" onclick="goTo('objectives')">📖 重新学习</button>
+  </div>
+</div>
+
+<!-- AI BUDDY -->
+<div class="ai-buddy" id="aiBuddy" onclick="toggleBuddy()">🤖</div>
+<div class="buddy-tip" id="buddyTip">
+  <p>👋 我是小AI，随时帮你！</p>
+  <p id="buddyTipText" style="margin-top:8px;color:#555">点击任意时刻获取提示哦！</p>
+</div>
+
+<!-- ACHIEVEMENT POPUP -->
+<div class="achievement-popup" id="achievePopup" style="display:none"></div>
+
+<script>
+// ===== STATE =====
+const state = {
+  stars: 0, score: 0, correct: 0,
+  section: 'hero', progress: 0,
+  achievements: {},
+  bossHp: 300, bossQ: 0, bossCorrect: 0,
+  timer: null,
+  dragItem: null,
+  gridSelected: 0,
+  level2Q: 0, level3Q: 0
+};
+
+const ACHIEVEMENTS = [
+  { id: 'first_star', name: '初心之星', icon: '⭐', desc: '获得第一颗星星', condition: () => state.stars >= 1 },
+  { id: 'drag_master', name: '拖拽达人', icon: '🤏', desc: '完成拖拽练习', condition: () => state.achievements['drag_done'] },
+  { id: 'grid_60', name: '百分工匠', icon: '🎨', desc: '准确选出60格', condition: () => state.achievements['grid_done'] },
+  { id: 'speed_demon', name: '闪电答题', icon: '⚡', desc: '快速答对题目', condition: () => state.achievements['fast_answer'] },
+  { id: 'combo_3', name: '三连击', icon: '🔥', desc: '连续答对3题', condition: () => state.correct >= 3 },
+  { id: 'boss_slayer', name: 'BOSS终结者', icon: '🐉', desc: '击败百分数守护者', condition: () => state.achievements['boss_defeated'] },
+  { id: 'star_collector', name: '星星收藏家', icon: '🌟', desc: '收集10颗星星', condition: () => state.stars >= 10 },
+  { id: 'perfect', name: '百分百完美', icon: '💯', desc: '获得满分', condition: () => state.score >= 200 },
+];
+
+// ===== AUDIO =====
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+function getAudio() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+  return audioCtx;
+}
+function playCorrect() {
+  try {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(523, ctx.currentTime);
+    osc.frequency.setValueAtTime(659, ctx.currentTime + 0.1);
+    osc.frequency.setValueAtTime(784, ctx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.5);
+  } catch(e) {}
+}
+function playWrong() {
+  try {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(200, ctx.currentTime);
+    osc.frequency.setValueAtTime(150, ctx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.4);
+  } catch(e) {}
+}
+
+// ===== NAVIGATION =====
+const SECTIONS = ['hero','objectives','warmup','level1','level2','level3','boss','scoreboard'];
+function goTo(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  state.section = id;
+  const idx = SECTIONS.indexOf(id);
+  document.getElementById('progressFill').style.width = ((idx / (SECTIONS.length-1)) * 100) + '%';
+  if (id === 'level1') initLevel1();
+  if (id === 'level2') initLevel2();
+  if (id === 'level3') initLevel3();
+  if (id === 'boss') initBoss();
+  if (id === 'scoreboard') showScoreboard();
+  window.scrollTo(0, 0);
+}
+
+// ===== STARS =====
+function addStars(n, reason) {
+  state.stars += n; state.score += n * 10;
+  document.getElementById('starCount').textContent = state.stars;
+  checkAchievements();
+}
+
+// ===== ACHIEVEMENTS =====
+function checkAchievements() {
+  ACHIEVEMENTS.forEach(a => {
+    if (!state.achievements[a.id] && a.condition()) {
+      state.achievements[a.id] = true;
+      showAchievement(a);
+    }
+  });
+}
+function showAchievement(a) {
+  const popup = document.getElementById('achievePopup');
+  popup.innerHTML = `🏆 成就解锁！<br><strong>${a.icon} ${a.name}</strong><br><small>${a.desc}</small>`;
+  popup.style.display = 'block';
+  playCorrect();
+  setTimeout(() => { popup.style.display = 'none'; }, 3000);
+}
+
+// ===== AI BUDDY =====
+const TIPS = {
+  hero: '点击"开始冒险"来学习百分数！',
+  objectives: '看看今天要学什么，有目标更容易学！',
+  warmup: '把左边的百分数拖到右边对应的意思！',
+  level1: '百分数表示"100份里有多少份"！比如75%就是100份里有75份。',
+  level2: '把分数变成百分数：分子÷分母×100就行！',
+  level3: '七折=70%，这样就能算打折后的价格啦！',
+  boss: '仔细读题，不要着急！',
+  scoreboard: '恭喜你！去找找生活中更多的百分数吧！'
+};
+function toggleBuddy() {
+  const tip = document.getElementById('buddyTip');
+  const tipText = document.getElementById('buddyTipText');
+  tipText.textContent = TIPS[state.section] || '加油，你棒棒的！💪';
+  tip.classList.toggle('show');
+  setTimeout(() => tip.classList.remove('show'), 5000);
+}
+
+// ===== WARMUP DRAG =====
+let dragId = null;
+document.querySelectorAll('.drag-item').forEach(item => {
+  item.addEventListener('dragstart', e => {
+    dragId = item.id;
+    item.classList.add('dragging');
+  });
+  item.addEventListener('dragend', e => { item.classList.remove('dragging'); });
+});
+document.querySelectorAll('.drop-zone').forEach(zone => {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('over'); });
+  zone.addEventListener('dragleave', e => { zone.classList.remove('over'); });
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('over');
+    if (dragId) {
+      const dragEl = document.getElementById(dragId);
+      zone.innerHTML = dragEl.textContent + ' ' + zone.dataset.answer.slice(-2);
+      zone.dataset.dropped = dragId;
+      dragId = null;
+    }
+  });
+});
+function checkWarmup() {
+  let allCorrect = true;
+  const map = { d1: '100分满分得了75分', d2: '百中取一', d3: '全部都有', d4: '一半' };
+  const zoneMap = { z1: 'd1', z2: 'd2', z3: 'd3', z4: 'd4' };
+  document.querySelectorAll('.drop-zone').forEach(zone => {
+    if (zone.dataset.dropped !== zoneMap[zone.id]) allCorrect = false;
+  });
+  const fb = document.getElementById('warmupFeedback');
+  if (allCorrect) {
+    fb.textContent = '🎉 全部正确！你已经懂百分数的基本意思了！'; fb.className = 'feedback correct';
+    state.achievements['drag_done'] = true;
+    addStars(2, '热身完成'); playCorrect(); checkAchievements();
+  } else {
+    fb.textContent = '🤔 有些不对哦！再想想看？七折是70%，一半是50%！'; fb.className = 'feedback wrong';
+    playWrong();
+  }
+}
+
+// ===== LEVEL 1: GRID =====
+function initLevel1() {
+  const grid = document.getElementById('percentGrid');
+  grid.innerHTML = '';
+  state.gridSelected = 0;
+  for (let i = 0; i < 100; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'percent-cell';
+    cell.addEventListener('click', () => {
+      if (cell.classList.contains('filled')) {
+        cell.classList.remove('filled'); state.gridSelected--;
+      } else {
+        cell.classList.add('filled'); state.gridSelected++;
+      }
+      document.getElementById('gridCount').textContent = `已选：${state.gridSelected} / 100`;
+    });
+    grid.appendChild(cell);
+  }
+}
+function animatePercent() {
+  const bar1 = document.getElementById('pct1Bar');
+  const bar2 = document.getElementById('pct2Bar');
+  const lbl1 = document.getElementById('pct1Label');
+  const lbl2 = document.getElementById('pct2Label');
+  let p1 = 0, p2 = 0;
+  const interval = setInterval(() => {
+    if (p1 < 92) { p1++; bar1.style.width = p1 + '%'; bar1.textContent = p1 + '%'; lbl1.textContent = p1; }
+    if (p2 < 85) { p2++; bar2.style.width = p2 + '%'; bar2.textContent = p2 + '%'; lbl2.textContent = p2; }
+    if (p1 >= 92 && p2 >= 85) clearInterval(interval);
+  }, 20);
+}
+function checkGrid() {
+  const fb = document.getElementById('gridFeedback');
+  if (state.gridSelected === 60) {
+    fb.textContent = '🎉 太棒了！正好60格，就是60%！你对百分数有了感觉！'; fb.className = 'feedback correct';
+    state.achievements['grid_done'] = true; addStars(3, '网格练习'); playCorrect(); checkAchievements();
+  } else if (Math.abs(state.gridSelected - 60) <= 3) {
+    fb.textContent = `👍 很接近！你选了 ${state.gridSelected} 格，60%应该是60格，再试试！`; fb.className = 'feedback wrong';
+    playWrong();
+  } else {
+    fb.textContent = `😅 你选了 ${state.gridSelected} 格，60%是60格哦！注意是刚好一半再多一点点！`; fb.className = 'feedback wrong';
+    playWrong();
+  }
+}
+
+// ===== LEVEL 2 QUIZ =====
+const L2Q = [
+  { q: '把分数 1/4 变成百分数是？', opts: ['25%','40%','14%','41%'], ans: 0, exp: '1÷4=0.25，即25%' },
+  { q: '3/5 等于百分之多少？', opts: ['35%','53%','60%','30%'], ans: 2, exp: '3÷5=0.6，即60%' },
+  { q: '2/5 等于多少百分数？', opts: ['25%','52%','45%','40%'], ans: 3, exp: '2÷5=0.4，即40%' },
+];
+function initLevel2() {
+  state.level2Q = 0;
+  renderL2();
+}
+function renderL2() {
+  const q = L2Q[state.level2Q % L2Q.length];
+  const container = document.getElementById('level2Quiz');
+  container.innerHTML = `
+    <p class="question-text">❓ ${q.q}</p>
+    <div class="options-grid" id="l2opts"></div>
+  `;
+  const opts = document.getElementById('l2opts');
+  q.opts.forEach((o, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn'; btn.textContent = o;
+    btn.onclick = () => checkL2(i, q, btn);
+    opts.appendChild(btn);
+  });
+  document.getElementById('level2Feedback').style.display = 'none';
+}
+function checkL2(i, q, btn) {
+  const fb = document.getElementById('level2Feedback');
+  document.querySelectorAll('#l2opts .option-btn').forEach(b => b.disabled = true);
+  if (i === q.ans) {
+    btn.classList.add('correct');
+    fb.textContent = `🎉 正确！${q.exp}`; fb.className = 'feedback correct';
+    addStars(2, '答对'); state.correct++; playCorrect();
+    state.achievements['fast_answer'] = true; checkAchievements();
+    state.level2Q++;
+    if (state.level2Q < L2Q.length) setTimeout(renderL2, 2000);
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('#l2opts .option-btn')[q.ans].classList.add('correct');
+    fb.textContent = `😅 再想想！${q.exp}`; fb.className = 'feedback wrong';
+    playWrong();
+    state.level2Q++;
+    setTimeout(renderL2, 2000);
+  }
+}
+
+// ===== LEVEL 3 QUIZ =====
+const L3Q = [
+  { q: '玩具原价 80 元，打了七折，要付多少钱？', opts: ['56元','70元','64元','48元'], ans: 0, exp: '80×70%=80×0.7=56元' },
+  { q: '书包原价 200 元，现在打折后要 160 元，是几折？', opts: ['七折','八折','九折','六折'], ans: 1, exp: '160÷200=0.8，即八折（80%）' },
+  { q: '全班 40 人，今天 95% 到校，来了多少人？', opts: ['38人','36人','40人','35人'], ans: 0, exp: '40×95%=40×0.95=38人' },
+];
+function initLevel3() {
+  state.level3Q = 0;
+  renderL3();
+}
+function renderL3() {
+  const q = L3Q[state.level3Q % L3Q.length];
+  const container = document.getElementById('level3Quiz');
+  container.innerHTML = `
+    <p class="question-text">🛒 ${q.q}</p>
+    <div class="options-grid" id="l3opts"></div>
+  `;
+  const opts = document.getElementById('l3opts');
+  q.opts.forEach((o, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn'; btn.textContent = o;
+    btn.onclick = () => checkL3(i, q, btn);
+    opts.appendChild(btn);
+  });
+  document.getElementById('level3Feedback').style.display = 'none';
+}
+function checkL3(i, q, btn) {
+  const fb = document.getElementById('level3Feedback');
+  document.querySelectorAll('#l3opts .option-btn').forEach(b => b.disabled = true);
+  if (i === q.ans) {
+    btn.classList.add('correct');
+    fb.textContent = `🎉 算对了！${q.exp}`; fb.className = 'feedback correct';
+    addStars(2, '答对'); state.correct++; playCorrect(); checkAchievements();
+    state.level3Q++;
+    if (state.level3Q < L3Q.length) setTimeout(renderL3, 2000);
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('#l3opts .option-btn')[q.ans].classList.add('correct');
+    fb.textContent = `😅 再算算！${q.exp}`; fb.className = 'feedback wrong';
+    playWrong();
+    state.level3Q++;
+    setTimeout(renderL3, 2000);
+  }
+}
+
+// ===== BOSS =====
+const BOSSQ = [
+  { q: '学校图书馆有书1000本，语文书占25%，语文书有多少本？', opts: ['250本','200本','125本','300本'], ans: 0, exp: '1000×25%=250本' },
+  { q: '小明考了80分，满分100分，他的得分率是？', opts: ['80%','8%','0.8%','18%'], ans: 0, exp: '80÷100=80%' },
+  { q: '打折：原价150元，打折后90元，折扣是多少？', opts: ['七折','六折','八折','五折'], ans: 1, exp: '90÷150=0.6，即六折' },
+  { q: '完成作业的人占全班的75%，全班40人，完成的有多少人？', opts: ['30人','35人','32人','28人'], ans: 0, exp: '40×75%=30人' },
+];
+let bossTimer = null;
+let bossTimeLeft = 30;
+function initBoss() {
+  state.bossHp = 300; state.bossQ = 0; state.bossCorrect = 0;
+  renderBossQ();
+}
+function renderBossQ() {
+  clearInterval(bossTimer);
+  bossTimeLeft = 30;
+  const q = BOSSQ[state.bossQ % BOSSQ.length];
+  const container = document.getElementById('bossQuiz');
+  container.innerHTML = `
+    <p class="question-text">💥 ${q.q}</p>
+    <div class="options-grid" id="bossOpts"></div>
+  `;
+  const opts = document.getElementById('bossOpts');
+  q.opts.forEach((o, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn'; btn.textContent = o;
+    btn.onclick = () => checkBoss(i, q, btn);
+    opts.appendChild(btn);
+  });
+  const timerEl = document.getElementById('bossTimer');
+  timerEl.textContent = `⏱️ ${bossTimeLeft} 秒`;
+  bossTimer = setInterval(() => {
+    bossTimeLeft--;
+    timerEl.textContent = `⏱️ ${bossTimeLeft} 秒`;
+    if (bossTimeLeft <= 0) {
+      clearInterval(bossTimer);
+      timerEl.textContent = '⏰ 时间到！';
+      playWrong(); nextBossQ(false);
+    }
+  }, 1000);
+}
+function checkBoss(i, q, btn) {
+  clearInterval(bossTimer);
+  document.querySelectorAll('#bossOpts .option-btn').forEach(b => b.disabled = true);
+  const fb = document.getElementById('bossFeedback');
+  if (i === q.ans) {
+    btn.classList.add('correct');
+    fb.textContent = `🎉 击中BOSS！${q.exp}`; fb.className = 'feedback correct';
+    playCorrect(); state.bossCorrect++; addStars(3, 'Boss答对'); state.correct++;
+    state.bossHp -= 100;
+    const pct = Math.max(0, (state.bossHp / 300) * 100);
+    document.getElementById('bossHpBar').style.width = pct + '%';
+    document.getElementById('bossHpText').textContent = `${state.bossHp}/300`;
+    if (state.bossHp <= 0) {
+      state.achievements['boss_defeated'] = true; checkAchievements();
+      fb.textContent = '🐉 BOSS被你击败了！百分数小勇士！'; fb.className = 'feedback correct';
+      document.getElementById('bossNextBtn').style.display = 'inline-block';
+      return;
+    }
+    nextBossQ(true);
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('#bossOpts .option-btn')[q.ans].classList.add('correct');
+    fb.textContent = `😅 被BOSS反击！${q.exp}`; fb.className = 'feedback wrong';
+    playWrong(); nextBossQ(false);
+  }
+}
+function nextBossQ(success) {
+  state.bossQ++;
+  if (state.bossQ < BOSSQ.length) setTimeout(renderBossQ, 2000);
+  else {
+    document.getElementById('bossNextBtn').style.display = 'inline-block';
+    if (state.bossHp <= 0) {
+      state.achievements['boss_defeated'] = true; checkAchievements();
+    }
+  }
+}
+
+// ===== SCOREBOARD =====
+function showScoreboard() {
+  const unlocked = Object.values(state.achievements).filter(Boolean).length;
+  document.getElementById('finalScore').textContent = state.score;
+  document.getElementById('statCorrect').textContent = state.correct;
+  document.getElementById('statAchieve').textContent = unlocked;
+  document.getElementById('statStars').textContent = state.stars;
+  const starCount = state.stars >= 20 ? 5 : state.stars >= 15 ? 4 : state.stars >= 10 ? 3 : state.stars >= 5 ? 2 : 1;
+  document.getElementById('finalStars').textContent = '⭐'.repeat(starCount);
+  const grid = document.getElementById('achievementsGrid');
+  grid.innerHTML = '';
+  ACHIEVEMENTS.forEach(a => {
+    const badge = document.createElement('div');
+    badge.className = 'achievement-badge' + (state.achievements[a.id] ? ' unlocked' : '');
+    badge.innerHTML = `<div class="badge-icon">${a.icon}</div><div class="badge-name">${a.name}</div>`;
+    grid.appendChild(badge);
+  });
+}
+
+// ===== INIT =====
+initLevel1();
+</script>
+</body>
+</html>

@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>长方体和正方体的表面积 - 五年级数学</title>
+<style>
+:root {
+  --bg: #fffbf0; --primary: #ff6b6b; --secondary: #4ecdc4;
+  --accent: #ffe66d; --card: #fff; --purple: #a29bfe; --orange: #fd79a8;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); font-family: 'Microsoft YaHei', sans-serif; overflow-x: hidden; }
+.nav { background: linear-gradient(135deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3);
+  padding: 10px 20px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+  position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+.nav-btn { background: rgba(255,255,255,0.9); border: none; border-radius: 20px;
+  padding: 6px 16px; cursor: pointer; font-size: 13px; font-weight: bold;
+  transition: all 0.3s; color: #333; }
+.nav-btn:hover, .nav-btn.active { background: #fff; transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+.section { display: none; min-height: 100vh; padding: 20px; }
+.section.active { display: block; }
+.hero { text-align: center; padding: 50px 20px; background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
+  border-radius: 30px; margin-bottom: 30px; }
+.hero h1 { font-size: 2.5em; background: linear-gradient(135deg, #6c5ce7, #a29bfe, #fd79a8);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  animation: bounce 1s infinite alternate; }
+@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-10px); } }
+.card { background: var(--card); border-radius: 20px; padding: 25px; margin: 15px 0;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.1); transition: transform 0.3s; }
+.card:hover { transform: translateY(-3px); }
+.card-rainbow { border: 3px solid; border-image: linear-gradient(135deg, #ff6b6b, #feca57, #48dbfb) 1; border-radius: 20px; }
+h2 { font-size: 1.8em; background: linear-gradient(135deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 15px; }
+h3 { font-size: 1.3em; color: var(--primary); margin-bottom: 10px; }
+.formula-box { background: linear-gradient(135deg, #667eea, #764ba2); color: white;
+  border-radius: 20px; padding: 20px; text-align: center; font-size: 1.3em; font-weight: bold;
+  margin: 15px 0; box-shadow: 0 8px 20px rgba(102,126,234,0.4); }
+.btn { background: linear-gradient(135deg, var(--primary), var(--orange)); color: white;
+  border: none; border-radius: 25px; padding: 12px 30px; font-size: 16px; font-weight: bold;
+  cursor: pointer; transition: all 0.3s; box-shadow: 0 6px 20px rgba(255,107,107,0.4); }
+.btn:hover { transform: translateY(-3px); }
+.btn-green { background: linear-gradient(135deg, var(--secondary), #55efc4); }
+.btn-purple { background: linear-gradient(135deg, var(--purple), #6c5ce7); }
+.stars-display { position: fixed; top: 60px; right: 20px; background: linear-gradient(135deg, #ffd700, #ffb347);
+  border-radius: 25px; padding: 10px 20px; font-size: 18px; font-weight: bold;
+  box-shadow: 0 4px 15px rgba(255,200,0,0.4); z-index: 99; }
+.achievement-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0);
+  background: linear-gradient(135deg, #ffd700, #ffb347); border-radius: 25px; padding: 30px 40px;
+  text-align: center; z-index: 200; transition: transform 0.5s cubic-bezier(0.175,0.885,0.32,1.275);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+.achievement-popup.show { transform: translate(-50%,-50%) scale(1); }
+.ai-buddy { position: fixed; bottom: 20px; right: 20px; z-index: 150; }
+.buddy-avatar { width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(135deg, #fd79a8, #e84393);
+  display: flex; align-items: center; justify-content: center; font-size: 35px; cursor: pointer;
+  box-shadow: 0 8px 25px rgba(253,121,168,0.5); animation: buddy-bounce 2s ease-in-out infinite;
+  border: 3px solid white; }
+@keyframes buddy-bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.buddy-speech { position: absolute; bottom: 80px; right: 0; background: white; border-radius: 20px;
+  padding: 15px 20px; width: 250px; box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  display: none; font-size: 14px; line-height: 1.5; border: 2px solid var(--secondary); }
+.buddy-speech.show { display: block; }
+.quiz-option { background: #f8f9fa; border: 3px solid #e9ecef; border-radius: 15px;
+  padding: 15px 20px; margin: 8px 0; cursor: pointer; font-size: 15px; transition: all 0.3s; }
+.quiz-option:hover { border-color: var(--secondary); transform: translateX(5px); }
+.quiz-option.correct { border-color: #55efc4; background: #d5f9f0; }
+.quiz-option.wrong { border-color: var(--primary); background: #ffe3e3; }
+.feedback { border-radius: 15px; padding: 15px; margin: 10px 0; font-size: 1.1em; font-weight: bold; }
+.feedback.correct { background: #d5f9f0; color: #00b894; border: 2px solid #00b894; }
+.feedback.wrong { background: #ffe3e3; color: #d63031; border: 2px solid #d63031; }
+.highlight { background: var(--accent); border-radius: 8px; padding: 2px 8px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+@media(max-width:600px) { .grid-2,.grid-3 { grid-template-columns: 1fr; } .hero h1 { font-size: 1.8em; } }
+input[type="number"] { border: 3px solid var(--secondary); border-radius: 15px; padding: 10px 15px;
+  font-size: 15px; width: 140px; text-align: center; outline: none; }
+.progress-bar { background: #f0f0f0; border-radius: 10px; height: 12px; margin: 10px 0; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb);
+  border-radius: 10px; transition: width 0.5s; }
+.score-card { background: linear-gradient(135deg, #ffd700, #ffb347); border-radius: 25px;
+  padding: 30px; text-align: center; font-size: 1.5em; font-weight: bold; color: white; }
+/* Net drag area */
+#net-container { position: relative; width: 100%; max-width: 550px; height: 350px; margin: 20px auto;
+  background: #f8f9fa; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.1); }
+.net-face { position: absolute; border: 3px solid #666; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: bold; cursor: grab; user-select: none; border-radius: 5px;
+  transition: background 0.3s; }
+.net-face:active { cursor: grabbing; }
+.face-top { background: rgba(255,107,107,0.6); }
+.face-bottom { background: rgba(255,107,107,0.6); }
+.face-front { background: rgba(78,205,196,0.6); }
+.face-back { background: rgba(78,205,196,0.6); }
+.face-left { background: rgba(162,155,254,0.6); }
+.face-right { background: rgba(162,155,254,0.6); }
+.drop-zone { position: absolute; border: 3px dashed #ccc; border-radius: 5px; background: rgba(0,0,0,0.03); }
+.drop-zone.highlight-drop { background: rgba(255,230,100,0.3); border-color: #feca57; }
+.drop-zone.filled { border-color: #55efc4; background: rgba(85,239,196,0.2); }
+</style>
+</head>
+<body>
+<div class="nav">
+  <button class="nav-btn active" onclick="showSection('hero')">🏠 首页</button>
+  <button class="nav-btn" onclick="showSection('goals')">🎯 目标</button>
+  <button class="nav-btn" onclick="showSection('warmup')">🔥 热身</button>
+  <button class="nav-btn" onclick="showSection('level1')">⭐ 关卡1</button>
+  <button class="nav-btn" onclick="showSection('level2')">⭐⭐ 关卡2</button>
+  <button class="nav-btn" onclick="showSection('level3')">⭐⭐⭐ 关卡3</button>
+  <button class="nav-btn" onclick="showSection('boss')">👾 Boss关</button>
+  <button class="nav-btn" onclick="showSection('scoreboard')">🏆 成绩单</button>
+  <button class="nav-btn" onclick="showSection('extend')">🚀 拓展</button>
+</div>
+<div class="stars-display">⭐ <span id="star-count">0</span></div>
+
+<!-- Hero -->
+<div class="section active" id="hero">
+  <div class="hero">
+    <div style="font-size:80px; animation: bounce 1s infinite alternate; display:block">📦</div>
+    <h1>表面积大冒险</h1>
+    <p style="font-size:1.2em; color:#555; margin-top:15px">五年级数学 · 长方体和正方体的表面积</p>
+    <br><button class="btn" onclick="showSection('goals')">开始冒险 🚀</button>
+  </div>
+  <div class="card card-rainbow">
+    <h2>🎮 闯关说明</h2>
+    <p>帮助小包裹完成包装任务！学会计算表面积，收集⭐，解锁成就！</p>
+    <div class="progress-bar" style="margin-top:15px">
+      <div class="progress-fill" id="total-progress" style="width:0%"></div>
+    </div>
+    <p style="text-align:center; margin-top:5px; color:#666">进度: <span id="progress-text">0%</span></p>
+  </div>
+</div>
+
+<!-- Goals -->
+<div class="section" id="goals">
+  <div class="card card-rainbow">
+    <h2>🎯 学习目标</h2>
+    <div class="card" style="border-left:5px solid var(--primary)">
+      <h3>✅ 今天我会：</h3>
+      <ul style="font-size:1.1em; line-height:2.3; padding-left:20px">
+        <li>知道什么是表面积</li>
+        <li>认识长方体的6个面</li>
+        <li>用公式计算长方体表面积</li>
+        <li>用公式计算正方体表面积</li>
+      </ul>
+    </div>
+    <div class="grid-2">
+      <div class="formula-box" style="background:linear-gradient(135deg,#ff6b6b,#fd79a8)">
+        长方体<br>S = 2(lb + lh + bh)
+      </div>
+      <div class="formula-box" style="background:linear-gradient(135deg,#4ecdc4,#48dbfb)">
+        正方体<br>S = 6a²
+      </div>
+    </div>
+    <div class="card" style="background:#fff8e1">
+      <h3>💡 关键词</h3>
+      <p>l = 长，b = 宽，h = 高，a = 边长</p>
+    </div>
+  </div>
+  <button class="btn" onclick="showSection('warmup')">继续 ➡️</button>
+</div>
+
+<!-- Warmup: 3D Animation -->
+<div class="section" id="warmup">
+  <div class="card card-rainbow">
+    <h2>🔥 热身：认识6个面</h2>
+    <p style="font-size:1.1em; margin-bottom:15px">点击「展开」看看长方体是怎么展开成6个面的！</p>
+    <div style="text-align:center; margin:10px 0">
+      <button class="btn" onclick="playUnfold()">📦 展开立体图形</button>
+      <button class="btn btn-green" onclick="playFold()" style="margin-left:10px">🔄 重新折叠</button>
+    </div>
+    <div class="canvas-container" style="display:flex;justify-content:center;margin:20px 0">
+      <canvas id="unfold-canvas" width="500" height="350" style="border-radius:20px;box-shadow:0 8px 30px rgba(0,0,0,0.1)"></canvas>
+    </div>
+    <div class="grid-3">
+      <div class="card" style="background:rgba(255,107,107,0.1);text-align:center">
+        <div style="font-size:2em">🔴</div>
+        <strong>上面 + 下面</strong><br><span style="color:#666">各1个</span>
+      </div>
+      <div class="card" style="background:rgba(78,205,196,0.1);text-align:center">
+        <div style="font-size:2em">🟢</div>
+        <strong>前面 + 后面</strong><br><span style="color:#666">各1个</span>
+      </div>
+      <div class="card" style="background:rgba(162,155,254,0.1);text-align:center">
+        <div style="font-size:2em">🔵</div>
+        <strong>左面 + 右面</strong><br><span style="color:#666">各1个</span>
+      </div>
+    </div>
+    <div style="text-align:center; margin-top:20px">
+      <p style="font-size:1.1em">一共 <span class="highlight">6个面</span>，对面的面积相等！</p>
+    </div>
+  </div>
+  <button class="btn" onclick="addStars(2); showSection('level1'); unlockAchievement('warmup-done')">热身完成！+2⭐ ➡️</button>
+</div>
+
+<!-- Level 1: Cuboid formula -->
+<div class="section" id="level1">
+  <div class="card card-rainbow">
+    <h2>⭐ 关卡一：长方体表面积</h2>
+    <p style="font-size:1.1em;margin-bottom:10px">公式：S = 2(lb + lh + bh)，代入数字计算！</p>
+    <div id="l1-content"></div>
+    <button class="btn" onclick="checkLevel1()">检查答案 ✅</button>
+    <div id="l1-feedback"></div>
+  </div>
+</div>
+
+<!-- Level 2: Cube -->
+<div class="section" id="level2">
+  <div class="card card-rainbow">
+    <h2>⭐⭐ 关卡二：正方体表面积</h2>
+    <p style="font-size:1.1em;margin-bottom:10px">公式：S = 6a²，正方体6个面都一样大！</p>
+    <div id="l2-content"></div>
+    <button class="btn" onclick="checkLevel2()">检查答案 ✅</button>
+    <div id="l2-feedback"></div>
+  </div>
+</div>
+
+<!-- Level 3: Net dragging quiz -->
+<div class="section" id="level3">
+  <div class="card card-rainbow">
+    <h2>⭐⭐⭐ 关卡三：判断和计算</h2>
+    <div id="l3-quiz"></div>
+  </div>
+</div>
+
+<!-- Boss -->
+<div class="section" id="boss">
+  <div class="card card-rainbow">
+    <h2>👾 Boss关：包装工厂任务</h2>
+    <div id="boss-content"></div>
+    <button class="btn" onclick="checkBoss()">提交答案 🎯</button>
+    <div id="boss-feedback"></div>
+  </div>
+</div>
+
+<!-- Scoreboard -->
+<div class="section" id="scoreboard">
+  <div class="score-card">
+    <div style="font-size:3em">🏆</div>
+    <h2 style="-webkit-text-fill-color:white">成绩单</h2>
+    <p>获得星星 ⭐ × <span id="final-stars">0</span></p>
+    <p>解锁成就 🏅 × <span id="final-ach">0</span></p>
+  </div>
+  <div id="ach-list" style="margin-top:20px"></div>
+  <div style="text-align:center;margin-top:20px">
+    <button class="btn btn-purple" onclick="showSection('extend')">看拓展 🚀</button>
+  </div>
+</div>
+
+<!-- Extend -->
+<div class="section" id="extend">
+  <div class="card card-rainbow">
+    <h2>🚀 拓展：生活中的表面积</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3>🎁 包装盒</h3>
+        <p>制作包装盒需要多少纸板，就是计算表面积！</p>
+      </div>
+      <div class="card">
+        <h3>🏠 涂墙</h3>
+        <p>粉刷一间房间，需要算墙壁的表面积！</p>
+      </div>
+      <div class="card">
+        <h3>📦 冰箱</h3>
+        <p>冰箱外壳用钢板的面积，就是表面积！</p>
+      </div>
+      <div class="card">
+        <h3>🎨 DIY</h3>
+        <p>给木块上色，也需要知道它的表面积！</p>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:20px">
+      <canvas id="extend-canvas" width="400" height="250" style="border-radius:15px;box-shadow:0 8px 30px rgba(0,0,0,0.1)"></canvas>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:20px">
+    <button class="btn" onclick="showSection('scoreboard')">🏆 查看成绩</button>
+  </div>
+</div>
+
+<div class="achievement-popup" id="achievement-popup">
+  <div style="font-size:3em" id="ach-icon">🏅</div>
+  <h3 id="ach-title" style="margin:10px 0">成就解锁！</h3>
+  <p id="ach-desc">恭喜！</p>
+</div>
+<div class="ai-buddy">
+  <div class="buddy-speech" id="buddy-speech">我是小方方！📦 长方体有6个面，相对的面相等哦！</div>
+  <div class="buddy-avatar" onclick="toggleBuddy()">📦</div>
+</div>
+
+<script>
+const state = { stars: 0, levels: 0, achievements: [] };
+const achievementDefs = [
+  { id: 'warmup-done', icon: '🔥', title: '热身达人', desc: '完成了展开动画热身！' },
+  { id: 'cuboid-master', icon: '📐', title: '长方体达人', desc: '掌握了长方体表面积！' },
+  { id: 'cube-master', icon: '🎲', title: '正方体达人', desc: '掌握了正方体表面积！' },
+  { id: 'quiz-ace', icon: '🧠', title: '判断小王', desc: '关卡三全对！' },
+  { id: 'boss-slayer', icon: '👾', title: 'Boss终结者', desc: '包装任务完成！' },
+  { id: 'star-10', icon: '⭐', title: '星星收藏家', desc: '收集了10颗星！' },
+  { id: 'net-expert', icon: '🗺️', title: '展开图专家', desc: '理解了展开图！' },
+  { id: 'formula-hero', icon: '🔢', title: '公式英雄', desc: '熟练运用公式！' },
+];
+
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+function getAudioCtx() { if (!audioCtx) audioCtx = new AudioCtx(); return audioCtx; }
+function playNote(freq, dur=0.2, type='sine') {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = freq; osc.type = type;
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    osc.start(); osc.stop(ctx.currentTime + dur);
+  } catch(e) {}
+}
+function playSuccess() { [523,659,784,1047].forEach((f,i) => setTimeout(()=>playNote(f,0.3),i*100)); }
+function playError() { playNote(220, 0.5, 'sawtooth'); }
+function playClick() { playNote(800, 0.1); }
+
+function addStars(n) {
+  state.stars += n;
+  document.getElementById('star-count').textContent = state.stars;
+  const p = Math.min(100, Math.round(state.stars/25*100));
+  document.getElementById('total-progress').style.width = p + '%';
+  document.getElementById('progress-text').textContent = p + '%';
+  document.getElementById('final-stars').textContent = state.stars;
+  if (state.stars >= 10) unlockAchievement('star-10');
+}
+function unlockAchievement(id) {
+  if (state.achievements.includes(id)) return;
+  state.achievements.push(id);
+  const ach = achievementDefs.find(a => a.id === id);
+  if (!ach) return;
+  const popup = document.getElementById('achievement-popup');
+  document.getElementById('ach-icon').textContent = ach.icon;
+  document.getElementById('ach-title').textContent = ach.title;
+  document.getElementById('ach-desc').textContent = ach.desc;
+  popup.classList.add('show'); playSuccess();
+  setTimeout(() => popup.classList.remove('show'), 3000);
+  document.getElementById('final-ach').textContent = state.achievements.length;
+  renderAchievements();
+}
+function renderAchievements() {
+  const list = document.getElementById('ach-list');
+  list.innerHTML = '<h2 style="margin-bottom:15px">🏅 已解锁成就</h2>';
+  state.achievements.forEach(id => {
+    const ach = achievementDefs.find(a => a.id === id);
+    if (!ach) return;
+    list.innerHTML += `<div class="card" style="display:flex;align-items:center;gap:15px;margin:8px 0">
+      <span style="font-size:2em">${ach.icon}</span>
+      <div><strong>${ach.title}</strong><br><span style="color:#666">${ach.desc}</span></div>
+    </div>`;
+  });
+}
+
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    if (b.getAttribute('onclick').includes("'" + id + "'")) b.classList.add('active');
+  });
+  playClick(); window.scrollTo(0,0);
+  if (id === 'level1') initLevel1();
+  if (id === 'level2') initLevel2();
+  if (id === 'level3') initLevel3();
+  if (id === 'boss') initBoss();
+  if (id === 'extend') drawExtend();
+  if (id === 'scoreboard') renderAchievements();
+  updateBuddyHint(id);
+}
+
+// ===== Unfold Animation =====
+let unfoldProgress = 0, unfoldDir = 1, unfoldRAF = null;
+function playUnfold() {
+  unfoldDir = 1;
+  cancelAnimationFrame(unfoldRAF);
+  animateUnfold();
+}
+function playFold() {
+  unfoldDir = -1;
+  cancelAnimationFrame(unfoldRAF);
+  animateUnfold();
+}
+function animateUnfold() {
+  unfoldProgress += unfoldDir * 2;
+  unfoldProgress = Math.max(0, Math.min(100, unfoldProgress));
+  drawUnfold(unfoldProgress);
+  if ((unfoldDir === 1 && unfoldProgress < 100) || (unfoldDir === -1 && unfoldProgress > 0)) {
+    unfoldRAF = requestAnimationFrame(animateUnfold);
+  } else if (unfoldProgress === 100) {
+    playSuccess(); addStars(1); unlockAchievement('net-expert');
+  }
+}
+function drawUnfold(t) {
+  const canvas = document.getElementById('unfold-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = 500, H = 350;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#f0f4f8'; ctx.fillRect(0, 0, W, H);
+  const p = t / 100;
+  const L = 80, B = 60, Hh = 50;
+  const cx = 250, cy = 175;
+  // Base: front face always center
+  const fw = L, fh = Hh;
+  // Front face
+  ctx.fillStyle = 'rgba(78,205,196,0.7)'; ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+  ctx.fillRect(cx - fw/2, cy - fh/2, fw, fh); ctx.strokeRect(cx - fw/2, cy - fh/2, fw, fh);
+  ctx.fillStyle = '#333'; ctx.font = 'bold 13px Microsoft YaHei'; ctx.textAlign = 'center';
+  ctx.fillText('前面', cx, cy + 5);
+  // Back face unfold upward
+  const backY = cy - fh/2 - p * fh;
+  ctx.fillStyle = 'rgba(78,205,196,0.5)'; ctx.fillRect(cx - fw/2, backY - fh, fw, fh);
+  ctx.strokeRect(cx - fw/2, backY - fh, fw, fh);
+  ctx.fillStyle = '#333'; ctx.fillText('后面', cx, backY - fh/2 + 5);
+  // Top face
+  const topY = cy - fh/2 - fh - p * B;
+  ctx.fillStyle = 'rgba(255,107,107,0.6)'; ctx.fillRect(cx - fw/2, topY - B, fw, B);
+  ctx.strokeRect(cx - fw/2, topY - B, fw, B);
+  ctx.fillText('上面', cx, topY - B/2 + 5);
+  // Bottom face unfold downward
+  const botY = cy + fh/2 + p * B;
+  ctx.fillStyle = 'rgba(255,107,107,0.5)'; ctx.fillRect(cx - fw/2, botY, fw, B);
+  ctx.strokeRect(cx - fw/2, botY, fw, B);
+  ctx.fillText('下面', cx, botY + B/2 + 5);
+  // Left face
+  const leftX = cx - fw/2 - p * B;
+  ctx.fillStyle = 'rgba(162,155,254,0.6)'; ctx.fillRect(leftX - B, cy - fh/2, B, fh);
+  ctx.strokeRect(leftX - B, cy - fh/2, B, fh);
+  ctx.fillText('左面', leftX - B/2, cy + 5);
+  // Right face
+  const rightX = cx + fw/2 + p * B;
+  ctx.fillStyle = 'rgba(162,155,254,0.5)'; ctx.fillRect(rightX, cy - fh/2, B, fh);
+  ctx.strokeRect(rightX, cy - fh/2, B, fh);
+  ctx.fillText('右面', rightX + B/2, cy + 5);
+  // Labels
+  if (t > 0) {
+    ctx.fillStyle = '#636e72'; ctx.font = '12px Microsoft YaHei';
+    ctx.fillText('展开度: ' + t + '%', 30, H - 10);
+  }
+}
+
+// ===== Level 1 =====
+const l1Data = [
+  { l: 5, b: 4, h: 3, answer: 94 },
+  { l: 8, b: 6, h: 5, answer: 236 },
+];
+function initLevel1() {
+  document.getElementById('l1-content').innerHTML = l1Data.map((q, i) => `
+    <div class="card" style="margin:10px 0;border-left:5px solid var(--secondary)">
+      <h3>第 ${i+1} 题</h3>
+      <p>长方体：长 = <strong>${q.l}cm</strong>，宽 = <strong>${q.b}cm</strong>，高 = <strong>${q.h}cm</strong></p>
+      <p style="color:#666;margin:8px 0">S = 2×(${q.l}×${q.b} + ${q.l}×${q.h} + ${q.b}×${q.h}) = 2×(${q.l*q.b} + ${q.l*q.h} + ${q.b*q.h}) = ？</p>
+      <input type="number" id="l1-${i}" placeholder="答案"> cm²
+    </div>
+  `).join('');
+  document.getElementById('l1-feedback').innerHTML = '';
+}
+function checkLevel1() {
+  let correct = 0;
+  l1Data.forEach((q,i) => {
+    const val = +document.getElementById(`l1-${i}`).value;
+    document.getElementById(`l1-${i}`).style.borderColor = Math.abs(val-q.answer)<0.5 ? '#55efc4' : '#ff6b6b';
+    if (Math.abs(val-q.answer)<0.5) correct++;
+  });
+  if (correct === l1Data.length) {
+    document.getElementById('l1-feedback').innerHTML = '<div class="feedback correct">🎉 全对！长方体达人！+5⭐</div>';
+    addStars(5); state.levels++; unlockAchievement('cuboid-master'); playSuccess();
+    setTimeout(()=>showSection('level2'), 2000);
+  } else {
+    document.getElementById('l1-feedback').innerHTML = `<div class="feedback wrong">💪 答对 ${correct}/${l1Data.length}，再试试！</div>`;
+    playError();
+  }
+}
+
+// ===== Level 2 =====
+const l2Data = [
+  { a: 4, answer: 96 },
+  { a: 7, answer: 294 },
+  { a: 3, answer: 54 },
+];
+function initLevel2() {
+  document.getElementById('l2-content').innerHTML = l2Data.map((q,i) => `
+    <div class="card" style="margin:10px 0;border-left:5px solid var(--purple)">
+      <h3>第 ${i+1} 题</h3>
+      <p>正方体边长 a = <strong>${q.a}cm</strong>，求表面积</p>
+      <p style="color:#666;margin:8px 0">S = 6 × ${q.a}² = 6 × ${q.a*q.a} = ？</p>
+      <input type="number" id="l2-${i}" placeholder="答案"> cm²
+    </div>
+  `).join('');
+  document.getElementById('l2-feedback').innerHTML = '';
+}
+function checkLevel2() {
+  let correct = 0;
+  l2Data.forEach((q,i) => {
+    const val = +document.getElementById(`l2-${i}`).value;
+    document.getElementById(`l2-${i}`).style.borderColor = Math.abs(val-q.answer)<0.5 ? '#55efc4' : '#ff6b6b';
+    if (Math.abs(val-q.answer)<0.5) correct++;
+  });
+  if (correct === l2Data.length) {
+    document.getElementById('l2-feedback').innerHTML = '<div class="feedback correct">🎉 完美！正方体达人！+5⭐</div>';
+    addStars(5); state.levels++; unlockAchievement('cube-master'); playSuccess();
+    setTimeout(()=>showSection('level3'), 2000);
+  } else {
+    document.getElementById('l2-feedback').innerHTML = `<div class="feedback wrong">💪 答对 ${correct}/${l2Data.length}，加油！</div>`;
+    playError();
+  }
+}
+
+// ===== Level 3 Quiz =====
+const l3Qs = [
+  { q: '长方体有几个面？', opts: ['4个', '5个', '6个', '8个'], ans: 2 },
+  { q: '正方体的表面积公式是？', opts: ['S=4a²', 'S=6a²', 'S=8a²', 'S=2a²'], ans: 1 },
+  { q: '长方体相对的面面积是否相等？', opts: ['是的，完全相等', '不相等', '有时相等', '无法确定'], ans: 0 },
+  { q: '边长3cm的正方体表面积是？', opts: ['36cm²', '54cm²', '27cm²', '18cm²'], ans: 1 },
+  { q: '长5宽4高3的长方体，哪两个面最大？', opts: ['上面和下面', '前面和后面', '左面和右面', '都一样大'], ans: 0 },
+];
+let l3Score = 0, l3Cur = 0;
+function initLevel3() { l3Score = 0; l3Cur = 0; renderL3(); }
+function renderL3() {
+  if (l3Cur >= l3Qs.length) {
+    document.getElementById('l3-quiz').innerHTML = `<div class="card score-card">
+      <div style="font-size:2em">🎊</div>
+      <h3 style="-webkit-text-fill-color:white">关卡三完成！</h3>
+      <p>答对 ${l3Score}/${l3Qs.length} 题！</p>
+      <br><button class="btn" onclick="endLevel3()">下一关 ➡️</button>
+    </div>`;
+    return;
+  }
+  const q = l3Qs[l3Cur];
+  document.getElementById('l3-quiz').innerHTML = `
+    <div style="text-align:right;color:#666">第 ${l3Cur+1}/${l3Qs.length} 题</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${(l3Cur/l3Qs.length)*100}%"></div></div>
+    <div class="card" style="margin:15px 0;border-left:5px solid var(--accent)"><h3>${q.q}</h3></div>
+    ${q.opts.map((o,i)=>`<div class="quiz-option" onclick="ansL3(${i})">${['A','B','C','D'][i]}. ${o}</div>`).join('')}
+  `;
+}
+function ansL3(idx) {
+  const q = l3Qs[l3Cur];
+  const opts = document.querySelectorAll('.quiz-option');
+  opts[idx].classList.add(idx === q.ans ? 'correct' : 'wrong');
+  if (idx !== q.ans) opts[q.ans].classList.add('correct');
+  if (idx === q.ans) { l3Score++; playSuccess(); } else playError();
+  opts.forEach(o => o.onclick = null);
+  setTimeout(() => { l3Cur++; renderL3(); }, 1200);
+}
+function endLevel3() {
+  addStars(l3Score * 2); state.levels++;
+  if (l3Score === l3Qs.length) unlockAchievement('quiz-ace');
+  unlockAchievement('formula-hero');
+  showSection('boss');
+}
+
+// ===== Boss =====
+function initBoss() {
+  document.getElementById('boss-content').innerHTML = `
+    <div class="card" style="background:linear-gradient(135deg,#ffecd2,#fcb69f)">
+      <h3>🎁 包装任务</h3>
+      <p style="font-size:1.1em;line-height:2">
+        工厂要给一批礼品盒包装纸。礼品盒是长方体，长<strong>20cm</strong>，宽<strong>15cm</strong>，高<strong>10cm</strong>。
+      </p>
+      <p style="font-size:1em;color:#666;margin-top:10px">① 包一个礼品盒需要多少cm²的包装纸？（即表面积）</p>
+      <p style="font-size:1em;color:#666">② 如果包装100个礼品盒，需要多少cm²的包装纸？</p>
+    </div>
+    <canvas id="boss-canvas" width="380" height="250" style="display:block;margin:20px auto;border-radius:15px;box-shadow:0 8px 30px rgba(0,0,0,0.1)"></canvas>
+    <div style="display:flex;gap:15px;flex-wrap:wrap;margin:15px 0">
+      <div class="card" style="flex:1;min-width:200px">
+        <h3>① 一个礼品盒</h3>
+        <p style="color:#666">S = 2×(20×15 + 20×10 + 15×10) = ？</p>
+        <input type="number" id="boss-1" placeholder="答案"> cm²
+      </div>
+      <div class="card" style="flex:1;min-width:200px">
+        <h3>② 100个礼品盒</h3>
+        <p style="color:#666">总面积 = 一个 × 100 = ？</p>
+        <input type="number" id="boss-2" placeholder="答案"> cm²
+      </div>
+    </div>
+  `;
+  drawBossBox();
+}
+function drawBossBox() {
+  const canvas = document.getElementById('boss-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 380, 250);
+  ctx.fillStyle = '#f0f4f8'; ctx.fillRect(0, 0, 380, 250);
+  // Draw 3D cuboid
+  const x = 100, y = 80, w = 160, h = 100, d = 60;
+  // Front face
+  ctx.fillStyle = 'rgba(78,205,196,0.8)'; ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.rect(x, y, w, h); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#333'; ctx.font = 'bold 13px Microsoft YaHei'; ctx.textAlign = 'center';
+  ctx.fillText('20cm', x + w/2, y + h + 20); ctx.fillText('10cm', x - 25, y + h/2);
+  // Top face
+  ctx.fillStyle = 'rgba(255,107,107,0.8)';
+  ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+d,y-d*0.6); ctx.lineTo(x+w+d,y-d*0.6); ctx.lineTo(x+w,y); ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#333'; ctx.fillText('15cm', x+w/2+d/2, y-d*0.3);
+  // Right face
+  ctx.fillStyle = 'rgba(162,155,254,0.8)';
+  ctx.beginPath(); ctx.moveTo(x+w,y); ctx.lineTo(x+w+d,y-d*0.6); ctx.lineTo(x+w+d,y+h-d*0.6); ctx.lineTo(x+w,y+h); ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  // ribbon
+  ctx.strokeStyle = '#ff6b6b'; ctx.lineWidth = 3; ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(x+w/2,y-d*0.3); ctx.lineTo(x+w/2,y+h); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x,y+h/2); ctx.lineTo(x+w,y+h/2); ctx.stroke();
+  // bow
+  ctx.fillStyle = '#ff6b6b'; ctx.font = '20px serif'; ctx.fillText('🎀', x+w/2-10, y+5);
+}
+function checkBoss() {
+  const a1 = +document.getElementById('boss-1').value;
+  const a2 = +document.getElementById('boss-2').value;
+  const ok1 = Math.abs(a1 - 1300) < 1;
+  const ok2 = Math.abs(a2 - 130000) < 10;
+  if (ok1 && ok2) {
+    document.getElementById('boss-feedback').innerHTML = '<div class="feedback correct">🎉🎉 全对！包装任务完成！+10⭐ Boss被打败了！</div>';
+    addStars(10); state.levels++; unlockAchievement('boss-slayer'); playSuccess();
+    setTimeout(()=>showSection('scoreboard'), 2000);
+  } else {
+    const hints = [];
+    if (!ok1) hints.push('①正确答案是1300cm²（2×(300+200+150)=1300）');
+    if (!ok2) hints.push('②正确答案是130000cm²');
+    document.getElementById('boss-feedback').innerHTML = `<div class="feedback wrong">💪 ${hints.join('；')}</div>`;
+    playError();
+  }
+}
+
+// ===== Extend Canvas =====
+function drawExtend() {
+  const canvas = document.getElementById('extend-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 400, 250);
+  ctx.fillStyle = '#fff8f0'; ctx.fillRect(0, 0, 400, 250);
+  // Paint room illustration
+  ctx.fillStyle = '#ffd4d4'; ctx.fillRect(50, 50, 300, 160); // wall
+  ctx.fillStyle = '#c8a06e'; ctx.fillRect(50, 210, 300, 20); // floor
+  ctx.fillStyle = '#fff'; ctx.fillRect(80, 90, 60, 80); // door
+  ctx.fillStyle = '#87ceeb'; ctx.fillRect(200, 80, 80, 60); // window
+  ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+  ctx.strokeRect(50, 50, 300, 160); ctx.strokeRect(80, 90, 60, 80); ctx.strokeRect(200, 80, 80, 60);
+  // Paint roller
+  ctx.fillStyle = '#ff6b6b'; ctx.fillRect(150, 160, 60, 15);
+  ctx.fillStyle = '#666'; ctx.fillRect(175, 130, 5, 30);
+  ctx.fillStyle = '#333'; ctx.font = '13px Microsoft YaHei'; ctx.textAlign = 'center';
+  ctx.fillText('刷墙面积 = 墙的表面积', 200, 240);
+  ctx.fillStyle = '#ff6b6b'; ctx.font = 'bold 15px Microsoft YaHei';
+  ctx.fillText('生活中的表面积 🎨', 200, 35);
+}
+
+// ===== Buddy =====
+const buddyHints = {
+  hero: '我是小方方📦！长方体有6个面，相对的面面积相等！',
+  goals: '记住公式：S=2(lb+lh+bh)！',
+  warmup: '点展开，看看立体图形是怎么展开的！',
+  level1: '前两步：先算各面的面积，再×2哦！',
+  level2: '正方体6个面一样大，S=6a²！',
+  level3: '仔细看题，长方体一定有6个面！',
+  boss: '先算一个，再乘100！💪',
+  scoreboard: '太棒了！你真是表面积小达人！🏆',
+  extend: '生活中到处都有表面积！🌍',
+};
+function updateBuddyHint(id) {
+  const s = document.getElementById('buddy-speech');
+  s.textContent = buddyHints[id] || '继续加油！🎉';
+  s.classList.add('show'); setTimeout(()=>s.classList.remove('show'), 4000);
+}
+function toggleBuddy() {
+  playClick();
+  document.getElementById('buddy-speech').classList.toggle('show');
+}
+
+drawUnfold(0);
+</script>
+</body>
+</html>
