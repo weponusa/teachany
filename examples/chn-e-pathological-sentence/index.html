@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="course-id" content="chn-e-pathological-sentence">
+<meta name="course-node" content="pathological-sentence">
+<meta name="course-subject" content="chinese">
+<meta name="course-title" content="病句修改">
+<meta name="course-prereqs" content="">
+<meta name="course-next" content="chn-e-sentence-transformations-zh">
+<title>🏥 病句修改 | 五年级语文</title>
+<style>
+:root {
+  --bg: #fffbf0;
+  --primary: #ff6b6b;
+  --secondary: #4ecdc4;
+  --accent: #ffe66d;
+  --card: #fff;
+  --text: #2d2d2d;
+  --text-light: #666;
+  --shadow: 0 4px 20px rgba(255,107,107,0.12);
+  --radius: 20px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'PingFang SC','Microsoft YaHei',system-ui,sans-serif; font-size: 16px; line-height: 1.8; }
+
+/* HERO */
+.hero {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 50%, #ffe66d 100%);
+  padding: 60px 20px 80px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.08'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.hero-emoji { font-size: 72px; display: block; margin-bottom: 16px; animation: bounce 2s infinite; }
+@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+.hero h1 { font-size: clamp(28px,5vw,48px); font-weight: 900; color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,0.2); }
+.hero-sub { color: rgba(255,255,255,0.9); font-size: 18px; margin-top: 8px; }
+.hero-tags { display: flex; gap: 10px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+.tag { background: rgba(255,255,255,0.25); color: #fff; border-radius: 30px; padding: 5px 16px; font-size: 14px; backdrop-filter: blur(4px); }
+
+/* PROGRESS BAR */
+.progress-wrap { background: rgba(255,255,255,0.8); padding: 16px 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+.progress-inner { max-width: 860px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
+.progress-bar { flex: 1; height: 10px; background: #f0e8dc; border-radius: 10px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 10px; transition: width 0.5s ease; width: 0%; }
+.progress-text { font-size: 13px; font-weight: 700; color: var(--primary); white-space: nowrap; }
+.star-counter { display: flex; align-items: center; gap: 4px; font-weight: 700; color: #f59e0b; }
+
+/* CONTAINER */
+.container { max-width: 860px; margin: 0 auto; padding: 30px 20px 80px; }
+.section { margin-bottom: 40px; }
+.section-title { font-size: 22px; font-weight: 800; color: var(--primary); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+/* CARDS */
+.card { background: var(--card); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); margin-bottom: 16px; }
+.card-highlight { border-left: 5px solid var(--secondary); }
+.card-accent { border-left: 5px solid var(--accent); }
+
+/* OBJECTIVES */
+.objectives-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.obj-card { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); text-align: center; }
+.obj-icon { font-size: 32px; margin-bottom: 8px; }
+.obj-text { font-size: 14px; color: var(--text-light); }
+
+/* DIAGNOSIS ANIMATION */
+.sentence-box { 
+  background: #fff9e6; border-radius: 16px; padding: 20px 24px; 
+  font-size: 18px; font-weight: 600; position: relative;
+  border: 2px dashed #ffe66d; cursor: pointer; user-select: none;
+  transition: all 0.3s;
+}
+.sentence-box:hover { border-color: var(--primary); }
+.sentence-box .error-mark {
+  background: rgba(255,107,107,0.2);
+  border-radius: 4px;
+  padding: 2px 4px;
+  position: relative;
+  cursor: pointer;
+  display: inline;
+  transition: background 0.3s;
+}
+.sentence-box .error-mark.active {
+  background: rgba(255,107,107,0.6);
+  text-decoration: line-through;
+  color: #c00;
+}
+.sentence-box .fix-text {
+  color: var(--secondary);
+  font-weight: 700;
+  margin-left: 4px;
+  opacity: 0;
+  transition: opacity 0.4s 0.2s;
+}
+.sentence-box .fix-text.show { opacity: 1; }
+
+.diag-btn { 
+  margin-top: 16px; padding: 12px 28px; background: var(--primary); color: #fff;
+  border: none; border-radius: 30px; font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: all 0.25s; display: inline-flex; align-items: center; gap: 6px;
+}
+.diag-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,107,107,0.4); }
+.diag-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.diagnosis-result {
+  margin-top: 16px; padding: 16px 20px; border-radius: 14px;
+  background: linear-gradient(135deg, #e8fdf8, #d0f8f2);
+  border-left: 4px solid var(--secondary);
+  display: none;
+}
+.diagnosis-result.show { display: block; animation: fadeInUp 0.4s ease; }
+@keyframes fadeInUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+.error-type-badge {
+  display: inline-block; padding: 3px 12px; border-radius: 20px;
+  font-size: 13px; font-weight: 700; margin-right: 8px;
+  background: var(--primary); color: #fff;
+}
+
+/* QUIZ */
+.quiz-card { background: var(--card); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); margin-bottom: 20px; }
+.quiz-q { font-size: 17px; font-weight: 700; margin-bottom: 16px; color: var(--text); }
+.options { display: flex; flex-direction: column; gap: 10px; }
+.option {
+  padding: 12px 18px; border-radius: 14px; border: 2px solid #f0e8dc;
+  cursor: pointer; font-size: 15px; transition: all 0.2s; background: var(--card);
+  text-align: left;
+}
+.option:hover { border-color: var(--primary); background: #fff5f5; }
+.option.correct { border-color: var(--secondary); background: #e8fdf8; color: #0a7060; }
+.option.wrong { border-color: var(--primary); background: #fff5f5; color: #c0392b; }
+.option:disabled { cursor: default; }
+.feedback { margin-top: 12px; padding: 12px 16px; border-radius: 12px; font-size: 14px; display: none; }
+.feedback.show { display: block; animation: fadeInUp 0.3s ease; }
+.feedback.good { background: #e8fdf8; color: #0a7060; border-left: 3px solid var(--secondary); }
+.feedback.bad { background: #fff5f5; color: #c0392b; border-left: 3px solid var(--primary); }
+
+/* FILL BLANK */
+.fill-input {
+  border: 2px solid #f0e8dc; border-radius: 10px; padding: 8px 14px;
+  font-size: 16px; outline: none; transition: border 0.2s; width: 100%; margin-top: 8px;
+}
+.fill-input:focus { border-color: var(--secondary); }
+.fill-input.correct-input { border-color: var(--secondary); background: #e8fdf8; }
+.fill-input.wrong-input { border-color: var(--primary); background: #fff5f5; }
+.check-btn {
+  margin-top: 10px; padding: 10px 24px; background: var(--secondary); color: #fff;
+  border: none; border-radius: 20px; font-size: 14px; font-weight: 700; cursor: pointer;
+  transition: all 0.2s;
+}
+.check-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(78,205,196,0.4); }
+
+/* AI BUDDY */
+.ai-buddy {
+  position: fixed; bottom: 90px; right: 20px; z-index: 500;
+}
+.buddy-btn {
+  width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--secondary), #38b2a8);
+  border: none; font-size: 28px; cursor: pointer; box-shadow: 0 4px 16px rgba(78,205,196,0.4);
+  transition: all 0.3s; display: flex; align-items: center; justify-content: center;
+}
+.buddy-btn:hover { transform: scale(1.1) rotate(10deg); }
+.buddy-popup {
+  position: absolute; bottom: 70px; right: 0; width: 260px;
+  background: var(--card); border-radius: 20px; padding: 18px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15); display: none;
+}
+.buddy-popup.open { display: block; animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes popIn { from{transform:scale(0.7) translateY(20px);opacity:0} to{transform:scale(1) translateY(0);opacity:1} }
+.buddy-tip { font-size: 14px; line-height: 1.6; color: var(--text); }
+.buddy-name { font-weight: 700; color: var(--secondary); margin-bottom: 6px; display: block; }
+
+/* ACHIEVEMENTS */
+.achievements-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.badge-item {
+  background: var(--card); border-radius: 16px; padding: 16px; text-align: center;
+  box-shadow: var(--shadow); transition: transform 0.2s;
+}
+.badge-item:hover { transform: translateY(-3px); }
+.badge-item.locked { opacity: 0.4; filter: grayscale(0.8); }
+.badge-icon { font-size: 32px; display: block; margin-bottom: 6px; }
+.badge-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.badge-desc { font-size: 11px; color: var(--text-light); margin-top: 3px; }
+
+/* LEVEL HEADER */
+.level-header {
+  display: flex; align-items: center; gap: 14px; margin-bottom: 20px;
+  padding: 16px 20px; border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--primary) 0%, #ff8e53 100%);
+  color: #fff;
+}
+.level-num { font-size: 28px; font-weight: 900; }
+.level-info h3 { font-size: 18px; margin-bottom: 2px; }
+.level-info p { font-size: 13px; opacity: 0.85; }
+
+/* BOSS */
+.boss-card {
+  background: linear-gradient(135deg, #2d1b69, #11998e);
+  border-radius: var(--radius); padding: 30px; color: #fff;
+  position: relative; overflow: hidden;
+}
+.boss-card::before {
+  content: '👾';
+  position: absolute; right: 20px; top: 20px; font-size: 60px; opacity: 0.15;
+}
+
+/* REPORT CARD */
+.report-card { text-align: center; }
+.score-circle {
+  width: 140px; height: 140px; border-radius: 50%; margin: 0 auto 20px;
+  background: conic-gradient(var(--primary) var(--pct, 0%), #f0e8dc var(--pct, 0%));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px; font-weight: 900; color: var(--primary);
+  box-shadow: 0 0 0 8px var(--bg), 0 0 0 12px #f0e8dc;
+}
+.stats-row { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+.stat-box { background: var(--card); border-radius: 14px; padding: 14px 20px; box-shadow: var(--shadow); text-align: center; }
+.stat-num { font-size: 28px; font-weight: 900; color: var(--primary); }
+.stat-label { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+
+/* EXPAND */
+.expand-item { border-radius: 14px; background: var(--card); margin-bottom: 12px; box-shadow: var(--shadow); overflow: hidden; }
+.expand-header { padding: 16px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
+.expand-header:hover { background: #fff9f0; }
+.expand-body { padding: 0 20px; max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.3s; }
+.expand-body.open { max-height: 600px; padding: 0 20px 16px; }
+.expand-arrow { transition: transform 0.3s; }
+.expand-arrow.open { transform: rotate(180deg); }
+
+/* TOAST */
+.toast {
+  position: fixed; top: 20px; right: -300px; z-index: 9999;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #1a1a2e; padding: 14px 20px; border-radius: 14px;
+  font-weight: 700; box-shadow: 0 6px 24px rgba(251,191,36,0.4);
+  transition: right 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  display: flex; align-items: center; gap: 10px;
+}
+.toast.show { right: 20px; }
+
+/* STEP INDICATOR */
+.steps { display: flex; gap: 0; margin-bottom: 30px; overflow-x: auto; padding-bottom: 4px; }
+.step {
+  flex: 1; min-width: 80px; text-align: center; padding: 10px 4px;
+  font-size: 12px; font-weight: 600; color: var(--text-light);
+  position: relative; cursor: pointer;
+}
+.step.active { color: var(--primary); }
+.step.done { color: var(--secondary); }
+.step::after {
+  content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 24px; height: 24px; border-radius: 50%;
+  background: #f0e8dc; display: flex; align-items: center; justify-content: center;
+}
+.step-dot {
+  width: 28px; height: 28px; border-radius: 50%; background: #f0e8dc;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 4px; font-size: 14px; transition: all 0.3s;
+}
+.step.active .step-dot { background: var(--primary); color: #fff; }
+.step.done .step-dot { background: var(--secondary); color: #fff; }
+
+@media(max-width:600px) {
+  .hero { padding: 40px 16px 60px; }
+  .hero-emoji { font-size: 52px; }
+  .container { padding: 20px 14px 60px; }
+  .objectives-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <span class="hero-emoji">🏥</span>
+  <h1>病句修改大作战</h1>
+  <p class="hero-sub">变身"语言医生"，诊断并治好生病的句子！</p>
+  <div class="hero-tags">
+    <span class="tag">🌟 五年级语文</span>
+    <span class="tag">🎮 互动闯关</span>
+    <span class="tag">🏆 8枚成就</span>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-wrap">
+  <div class="progress-inner">
+    <div class="progress-bar"><div class="progress-fill" id="mainProgress"></div></div>
+    <div class="progress-text" id="progressText">0 / 7 关</div>
+    <div class="star-counter">⭐ <span id="starCount">0</span></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="container">
+
+  <!-- STEPS NAV -->
+  <div class="steps">
+    <div class="step active" id="step0"><div class="step-dot">🎯</div>目标</div>
+    <div class="step" id="step1"><div class="step-dot">🔥</div>热身</div>
+    <div class="step" id="step2"><div class="step-dot">1️⃣</div>关卡1</div>
+    <div class="step" id="step3"><div class="step-dot">2️⃣</div>关卡2</div>
+    <div class="step" id="step4"><div class="step-dot">3️⃣</div>关卡3</div>
+    <div class="step" id="step5"><div class="step-dot">👾</div>Boss</div>
+    <div class="step" id="step6"><div class="step-dot">📊</div>成绩</div>
+  </div>
+
+  <!-- SECTION 0: OBJECTIVES -->
+  <div class="section" id="sec-obj">
+    <div class="section-title">🎯 学习目标</div>
+    <div class="objectives-grid">
+      <div class="obj-card">
+        <div class="obj-icon">🔍</div>
+        <div><strong>识别6种病句类型</strong></div>
+        <div class="obj-text">成分残缺、搭配不当、语义重复、语序混乱、前后矛盾、关联词误用</div>
+      </div>
+      <div class="obj-card">
+        <div class="obj-icon">🩺</div>
+        <div><strong>诊断病因</strong></div>
+        <div class="obj-text">像医生一样找出句子"生病"的具体原因</div>
+      </div>
+      <div class="obj-card">
+        <div class="obj-icon">💊</div>
+        <div><strong>开出"药方"</strong></div>
+        <div class="obj-text">用正确的方法修改病句，让句子恢复健康</div>
+      </div>
+    </div>
+    <div class="card card-highlight" style="margin-top:20px">
+      <strong>🤔 先想一想：</strong>你知道句子会生哪些"病"吗？生活中你见过什么奇怪的句子？
+    </div>
+  </div>
+
+  <!-- SECTION 1: WARMUP - ABT -->
+  <div class="section" id="sec-warm">
+    <div class="level-header" style="background: linear-gradient(135deg,#4ecdc4,#2bb5ac);">
+      <div class="level-num">🔥</div>
+      <div class="level-info">
+        <h3>热身：认识病句</h3>
+        <p>了解句子会生什么"病"，以及为什么会生病</p>
+      </div>
+    </div>
+    <div class="card card-highlight">
+      <p>你已经学会了<strong>写句子</strong>（And），<br>
+      但有些句子看起来"怪怪的"，别人读不懂（But），<br>
+      所以我们要学会诊断和修改病句（Therefore）！🩺</p>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="section-title" style="font-size:17px">🧬 六大病句类型速览</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:12px">
+        <div style="background:#fff9e6;border-radius:14px;padding:14px">
+          <strong>😷 成分残缺</strong><br>
+          <span style="font-size:13px;color:#666">句子缺少主语、谓语或宾语<br>例：<em>"操场上打篮球。"</em>（缺主语）</span>
+        </div>
+        <div style="background:#fff0f0;border-radius:14px;padding:14px">
+          <strong>🤒 搭配不当</strong><br>
+          <span style="font-size:13px;color:#666">词语搭配不合逻辑<br>例：<em>"他穿着一双明亮的眼睛。"</em></span>
+        </div>
+        <div style="background:#f0fff4;border-radius:14px;padding:14px">
+          <strong>🤔 语义重复</strong><br>
+          <span style="font-size:13px;color:#666">同一个意思说了两遍<br>例：<em>"大约可能是他。"</em></span>
+        </div>
+        <div style="background:#f0f4ff;border-radius:14px;padding:14px">
+          <strong>😵 语序混乱</strong><br>
+          <span style="font-size:13px;color:#666">词语或分句顺序颠倒<br>例：<em>"把衣服我洗干净了。"</em></span>
+        </div>
+        <div style="background:#fff5e6;border-radius:14px;padding:14px">
+          <strong>🙃 前后矛盾</strong><br>
+          <span style="font-size:13px;color:#666">句子内容自相矛盾<br>例：<em>"他几乎没有缺过席。"</em></span>
+        </div>
+        <div style="background:#f5f0ff;border-radius:14px;padding:14px">
+          <strong>😬 关联词误用</strong><br>
+          <span style="font-size:13px;color:#666">关联词使用不对<br>例：<em>"因为天黑了，所以我很高兴。"</em></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIAGNOSIS ANIMATION DEMO -->
+    <div class="card" style="margin-top:16px">
+      <div class="section-title" style="font-size:17px">🩺 诊断动画演示 — 点击"诊断"</div>
+      <div id="demoSentence" class="sentence-box">
+        他有一双<span class="error-mark" id="errWord1">明亮</span>的眼睛，穿着<span class="error-mark" id="errWord2">明亮</span>的衣服。
+        <span class="fix-text" id="fixWord1">明亮→明亮的</span>
+      </div>
+
+      <!-- Demo diagnosis card -->
+      <div id="demoDiag" class="sentence-box" style="margin-top:16px">
+        我<span class="error-mark" id="err2">大约</span><span class="error-mark" id="err2b">可能</span>迟到了。
+      </div>
+      <button class="diag-btn" id="diagBtn1" onclick="runDiagnosis()">🔬 开始诊断</button>
+      <div class="diagnosis-result" id="diagResult1">
+        <span class="error-type-badge">语义重复</span>
+        <strong>病因：</strong>"大约"和"可能"意思相近，不能同时使用。<br>
+        <strong>💊 药方：</strong>删去"大约"或"可能"其中一个<br>
+        <strong>✅ 正确：</strong>"我大约迟到了。" 或 "我可能迟到了。"
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: LEVEL 1 -->
+  <div class="section" id="sec-lv1">
+    <div class="level-header">
+      <div class="level-num">1️⃣</div>
+      <div class="level-info">
+        <h3>关卡一：识别病句类型</h3>
+        <p>⭐ 基础关 | 找出句子生了什么"病"</p>
+      </div>
+    </div>
+
+    <!-- Q1 -->
+    <div class="quiz-card">
+      <div class="quiz-q">❓ 第1题：下面哪句话是病句，并说明病因？</div>
+      <div class="options" id="opts1">
+        <button class="option" onclick="checkOpt(this,'opts1',false,'feedback1','这句话完整，没有问题。')">A. 春天来了，花儿开了。</button>
+        <button class="option" onclick="checkOpt(this,'opts1',false,'feedback1','这句话完整，没有问题。')">B. 小明认真地完成了作业。</button>
+        <button class="option" onclick="checkOpt(this,'opts1',true,'feedback1','✅ 正确！"操场上跑步"缺少主语（谁在跑步？），属于"成分残缺"类病句。修改：同学们在操场上跑步。')">C. 操场上跑步。</button>
+        <button class="option" onclick="checkOpt(this,'opts1',false,'feedback1','这句话完整，没有问题。')">D. 图书馆里有很多书。</button>
+      </div>
+      <div class="feedback" id="feedback1"></div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="quiz-card">
+      <div class="quiz-q">❓ 第2题：判断下面这句话的病因</div>
+      <div style="background:#fff9e6;border-radius:12px;padding:14px;margin-bottom:14px;font-size:17px">
+        "他有一双乌黑发亮的眼睛，穿着一件白色的裙子。"
+      </div>
+      <div class="options" id="opts2">
+        <button class="option" onclick="checkOpt(this,'opts2',false,'feedback2','提示：句子有主语（他）、动词（穿），宾语（裙子），成分完整。但注意性别问题……')">A. 成分残缺</button>
+        <button class="option" onclick="checkOpt(this,'opts2',false,'feedback2','搭配不当是词语组合的问题，比如"穿着眼睛"，本句有这个问题吗？')">B. 搭配不当</button>
+        <button class="option" onclick="checkOpt(this,'opts2',false,'feedback2','语义重复是同一意思说两遍，本句没有这个问题。')">C. 语义重复</button>
+        <button class="option" onclick="checkOpt(this,'opts2',true,'feedback2','✅ 正确！"他"是男性，不能穿"裙子"（通常），或者说修饰词与中心词不协调。这是搭配不当，应改为"她有……穿着裙子"或"他穿着一条白色的裤子"。')">D. 搭配不当（性别与服饰矛盾）</button>
+      </div>
+      <div class="feedback" id="feedback2"></div>
+    </div>
+
+    <!-- Q3 Interactive diagnosis -->
+    <div class="quiz-card">
+      <div class="quiz-q">🩺 第3题：点击句子中的"病灶"位置</div>
+      <div class="sentence-box" id="clickSentence">
+        我们要<span class="error-mark" id="cm1" onclick="markError('cm1','clickResult','关联词误用')">因为</span>热爱祖国，
+        <span class="error-mark" id="cm2" onclick="markError('cm2','clickResult','正确词语')">所以</span>努力学习。
+      </div>
+      <div class="diagnosis-result" id="clickResult">
+      </div>
+      <p style="font-size:13px;color:#888;margin-top:8px">💡 提示：想一想，这里的逻辑关系用"因为……所以……"对吗？</p>
+    </div>
+  </div>
+
+  <!-- SECTION 3: LEVEL 2 -->
+  <div class="section" id="sec-lv2">
+    <div class="level-header" style="background:linear-gradient(135deg,#f093fb,#f5576c)">
+      <div class="level-num">2️⃣</div>
+      <div class="level-info">
+        <h3>关卡二：修改病句</h3>
+        <p>⭐⭐ 进阶关 | 诊断+开药，写出修改后的句子</p>
+      </div>
+    </div>
+
+    <!-- Fix exercise 1 -->
+    <div class="quiz-card">
+      <div class="quiz-q">✏️ 练习1：修改下面的病句（将修改后的句子写在输入框中）</div>
+      <div style="background:#fff9e6;border-radius:12px;padding:14px;margin-bottom:10px;font-size:17px">
+        "妈妈买了苹果、香蕉、水果和梨。"
+      </div>
+      <p style="font-size:14px;color:#888;margin-bottom:8px">💊 提示：仔细看，"水果"和其他词有什么关系？</p>
+      <input type="text" class="fill-input" id="fix1Input" placeholder="写下修改后的句子…" />
+      <br>
+      <button class="check-btn" onclick="checkFill('fix1Input','fix1Feedback',['妈妈买了苹果、香蕉和梨','妈妈买了苹果香蕉梨','妈妈买了苹果、香蕉和梨。'],'病因：苹果、香蕉、梨都是水果，"水果"是它们的上级词，不能并列。删去"水果和"即可。')">检查答案 ✅</button>
+      <div class="feedback" id="fix1Feedback"></div>
+    </div>
+
+    <!-- Fix exercise 2 -->
+    <div class="quiz-card">
+      <div class="quiz-q">✏️ 练习2：这句话哪里有问题？请修改</div>
+      <div style="background:#fff0f0;border-radius:12px;padding:14px;margin-bottom:10px;font-size:17px">
+        "他穿着一双新鲜的布鞋。"
+      </div>
+      <input type="text" class="fill-input" id="fix2Input" placeholder="写下修改后的句子…" />
+      <br>
+      <button class="check-btn" onclick="checkFill('fix2Input','fix2Feedback',['他穿着一双崭新的布鞋','他穿着一双新的布鞋','他穿着一双崭新的布鞋。'],'病因：搭配不当，"新鲜"通常修饰食物、空气等，不能修饰布鞋。改为"崭新"。')">检查答案 ✅</button>
+      <div class="feedback" id="fix2Feedback"></div>
+    </div>
+
+    <!-- Fix exercise 3 -->
+    <div class="quiz-card">
+      <div class="quiz-q">✏️ 练习3：修改语序混乱的句子</div>
+      <div style="background:#f0f4ff;border-radius:12px;padding:14px;margin-bottom:10px;font-size:17px">
+        "今天的作业把我做完了。"
+      </div>
+      <div class="options" id="opts3">
+        <button class="option" onclick="checkOpt(this,'opts3',false,'feedback3','语序还是有问题，"把"字句的结构需要是主语+把+宾语+动词。')">A. 我把今天的作业了做完。</button>
+        <button class="option" onclick="checkOpt(this,'opts3',true,'feedback3','✅ 正确！"把"字句结构：我（主语）把今天的作业（宾语）做完了（动词+补语）。')">B. 我把今天的作业做完了。</button>
+        <button class="option" onclick="checkOpt(this,'opts3',false,'feedback3','这句话虽然通顺，但意思变了，不算修改，算改写。')">C. 今天的作业全部完成。</button>
+        <button class="option" onclick="checkOpt(this,'opts3',false,'feedback3','这改变了句子结构，也不保留原意。')">D. 作业被我今天做完。</button>
+      </div>
+      <div class="feedback" id="feedback3"></div>
+    </div>
+  </div>
+
+  <!-- SECTION 4: LEVEL 3 -->
+  <div class="section" id="sec-lv3">
+    <div class="level-header" style="background:linear-gradient(135deg,#43e97b,#38f9d7)">
+      <div class="level-num">3️⃣</div>
+      <div class="level-info">
+        <h3>关卡三：综合诊断</h3>
+        <p>⭐⭐⭐ 挑战关 | 独立完成完整诊断报告</p>
+      </div>
+    </div>
+
+    <!-- Comprehensive diagnosis -->
+    <div class="quiz-card">
+      <div class="quiz-q">📋 综合题1：写出下面每句话的<strong>病因</strong>和<strong>修改方案</strong></div>
+      
+      <div style="background:#fffbf0;border:2px solid var(--accent);border-radius:14px;padding:16px;margin-bottom:16px">
+        <p style="font-weight:700;margin-bottom:8px">A. "老师表扬了我和他的进步。"</p>
+        <p style="font-size:13px;color:#888;margin-bottom:8px">选择病因类型：</p>
+        <div class="options" id="optsA">
+          <button class="option" onclick="checkOpt(this,'optsA',false,'feedA','虽然"进步"前缺少限定，但主要问题是"我"和"他的进步"结构歧义。')">成分残缺</button>
+          <button class="option" onclick="checkOpt(this,'optsA',true,'feedA','✅ 正确！"老师表扬了我和他的进步"有歧义：是表扬了"我"和"他的进步"，还是表扬了"我和他"的进步？可改为："老师表扬了我和他取得的进步。"')">结构歧义（表意不明）</button>
+          <button class="option" onclick="checkOpt(this,'optsA',false,'feedA','语义重复是意思重复，这里没有重复意思。')">语义重复</button>
+        </div>
+        <div class="feedback" id="feedA"></div>
+      </div>
+
+      <div style="background:#fffbf0;border:2px solid var(--accent);border-radius:14px;padding:16px">
+        <p style="font-weight:700;margin-bottom:8px">B. "这本书的内容十分生动活泼，值得大家阅读和参考。"</p>
+        <p style="font-size:13px;color:#888;margin-bottom:8px">这句话有问题吗？</p>
+        <div class="options" id="optsB">
+          <button class="option" onclick="checkOpt(this,'optsB',false,'feedB','仔细想想，"阅读"和"参考"搭配的对象是什么？书可以被阅读，但能被"参考"吗？')">没有问题，句子完全正确</button>
+          <button class="option" onclick="checkOpt(this,'optsB',true,'feedB','✅ 正确！"阅读"和"参考"都有各自的宾语，这句的问题是"搭配不当"——书可以被"阅读"，但应改为"值得大家阅读"，"参考"一般用于材料、资料。若保留两个词，可改为："值得大家阅读，并作为参考"。')">有问题，搭配不当</button>
+          <button class="option" onclick="checkOpt(this,'optsB',false,'feedB','没有语义重复，"生动活泼"和"阅读参考"意思不同。')">语义重复</button>
+        </div>
+        <div class="feedback" id="feedB"></div>
+      </div>
+    </div>
+
+    <!-- Creative task -->
+    <div class="quiz-card">
+      <div class="quiz-q">✍️ 创作题：故意写一个病句，并说明你设计的是哪种病句类型</div>
+      <textarea id="createSentence" style="width:100%;border:2px solid #f0e8dc;border-radius:12px;padding:12px;font-size:15px;outline:none;resize:vertical;min-height:80px;transition:border 0.2s;font-family:inherit" placeholder="在这里写你设计的病句…"></textarea>
+      <input type="text" class="fill-input" id="createType" placeholder="病句类型（如：语义重复、搭配不当…）" style="margin-top:8px" />
+      <button class="check-btn" onclick="checkCreative()" style="margin-top:8px">提交创作 🎨</button>
+      <div class="feedback" id="createFeedback"></div>
+    </div>
+  </div>
+
+  <!-- SECTION 5: BOSS -->
+  <div class="section" id="sec-boss">
+    <div class="boss-card">
+      <h2 style="font-size:24px;margin-bottom:8px">👾 Boss关卡：病句诊断室</h2>
+      <p style="opacity:0.85;margin-bottom:20px">连续5句，每句都需要指出病因并修改，全对获得"语言医生"称号！</p>
+      
+      <div id="bossQuestions">
+        <!-- Boss Q1 -->
+        <div class="quiz-card" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);">
+          <div class="quiz-q" style="color:#fff">👾 Boss Q1：找出病因并选择修改方案</div>
+          <div style="background:rgba(255,255,255,0.1);border-radius:12px;padding:14px;margin-bottom:14px;font-size:17px;color:#fff">
+            "通过这次活动，使同学们受到了深刻教育。"
+          </div>
+          <div class="options" id="optsB1">
+            <button class="option" style="background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.2)" onclick="checkOpt(this,'optsB1',false,'feedB1','提示：原句有"通过"和"使"两个介词开头，导致主语消失了。')">A. 通过这次活动，同学们深刻地教育了。</button>
+            <button class="option" style="background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.2)" onclick="checkOpt(this,'optsB1',true,'feedB1','✅ Boss Q1 击破！病因：成分残缺（无主语）。"通过"和"使"都是介词，造成主语残缺。修改方法：删去"通过"或"使"其中一个。+2⭐')">B. 这次活动使同学们受到了深刻教育。</button>
+            <button class="option" style="background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.2)" onclick="checkOpt(this,'optsB1',false,'feedB1','虽然语意通顺，但改变了原句结构，修改方向不对。')">C. 同学们通过这次活动受益匪浅。</button>
+          </div>
+          <div class="feedback" id="feedB1"></div>
+        </div>
+
+        <!-- Boss Q2 -->
+        <div class="quiz-card" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);margin-top:16px">
+          <div class="quiz-q" style="color:#fff">👾 Boss Q2：修改并写出正确句子</div>
+          <div style="background:rgba(255,255,255,0.1);border-radius:12px;padding:14px;margin-bottom:10px;font-size:17px;color:#fff">
+            "他的成绩不但没有下降，而且有所提高了。"
+          </div>
+          <input type="text" class="fill-input" id="bossQ2" placeholder="写出修改后的句子…" style="background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.3)" />
+          <button class="check-btn" onclick="checkFill('bossQ2','feedB2',['他的成绩不但没有下降，反而有所提高了','他的成绩不但没有下降，反而有所提高','他的成绩不但没有下降，而且有所提高'],'病因：关联词误用。"不但…而且"表示递进，而"提高"是好事，应用"反而"或保留"而且"。最合适改为："不但没有下降，反而有所提高了"。')" style="background:var(--accent);color:#333">检查 ✅</button>
+          <div class="feedback" id="feedB2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 6: REPORT CARD -->
+  <div class="section" id="sec-report">
+    <div class="section-title">📊 学习成绩单</div>
+    <div class="card report-card">
+      <div class="score-circle" id="scoreCircle">
+        <span id="scoreNum">?</span>
+      </div>
+      <h3 style="font-size:20px;margin-bottom:6px" id="reportTitle">完成所有题目后查看成绩！</h3>
+      <p style="color:var(--text-light);margin-bottom:16px" id="reportMsg"></p>
+      <div class="stats-row">
+        <div class="stat-box">
+          <div class="stat-num" id="statStars">0</div>
+          <div class="stat-label">⭐ 获得星星</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" id="statCorrect">0</div>
+          <div class="stat-label">✅ 答对题数</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" id="statBadges">0</div>
+          <div class="stat-label">🏅 获得成就</div>
+        </div>
+      </div>
+      <button class="diag-btn" onclick="generateReport()" style="margin-top:20px">生成成绩单 📋</button>
+    </div>
+
+    <!-- ACHIEVEMENTS -->
+    <div style="margin-top:24px">
+      <div class="section-title">🏅 成就墙</div>
+      <div class="achievements-grid" id="achieveGrid">
+        <div class="badge-item" id="badge-start">
+          <span class="badge-icon">🌱</span>
+          <div class="badge-name">初出茅庐</div>
+          <div class="badge-desc">完成第一题</div>
+        </div>
+        <div class="badge-item locked" id="badge-diag">
+          <span class="badge-icon">🔬</span>
+          <div class="badge-name">诊断高手</div>
+          <div class="badge-desc">识别3种病句类型</div>
+        </div>
+        <div class="badge-item locked" id="badge-fix">
+          <span class="badge-icon">💊</span>
+          <div class="badge-name">药到病除</div>
+          <div class="badge-desc">正确修改2个病句</div>
+        </div>
+        <div class="badge-item locked" id="badge-perfect">
+          <span class="badge-icon">⭐</span>
+          <div class="badge-name">满分医生</div>
+          <div class="badge-desc">关卡一全部答对</div>
+        </div>
+        <div class="badge-item locked" id="badge-boss">
+          <span class="badge-icon">👾</span>
+          <div class="badge-name">Boss猎手</div>
+          <div class="badge-desc">击败Boss关卡</div>
+        </div>
+        <div class="badge-item locked" id="badge-creative">
+          <span class="badge-icon">🎨</span>
+          <div class="badge-name">病句设计师</div>
+          <div class="badge-desc">完成创作练习</div>
+        </div>
+        <div class="badge-item locked" id="badge-combo">
+          <span class="badge-icon">🔥</span>
+          <div class="badge-name">连击大师</div>
+          <div class="badge-desc">连续答对5题</div>
+        </div>
+        <div class="badge-item locked" id="badge-doctor">
+          <span class="badge-icon">👨‍⚕️</span>
+          <div class="badge-name">语言医生</div>
+          <div class="badge-desc">完成全部关卡</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 7: EXTEND -->
+  <div class="section" id="sec-extend">
+    <div class="section-title">🚀 拓展探究</div>
+    
+    <div class="expand-item">
+      <div class="expand-header" onclick="toggleExpand(this)">
+        <span>📚 更多病句类型：逻辑错误</span>
+        <span class="expand-arrow">▼</span>
+      </div>
+      <div class="expand-body">
+        <p style="margin-bottom:12px">除了6大基本类型，还有一种重要的病句类型——<strong>逻辑错误</strong>：</p>
+        <div style="background:#fff9e6;border-radius:12px;padding:14px">
+          <p>例：<em>"这件事十分重要，所有人都应该知道，无论男女老少都不例外，连小孩都应该了解。"</em></p>
+          <p style="margin-top:8px;font-size:14px;color:#666">问题："所有人"、"无论男女老少"、"连小孩"意思层层重复，属于逻辑上的冗余表达。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="expand-item">
+      <div class="expand-header" onclick="toggleExpand(this)">
+        <span>🎯 判断病句的四步法</span>
+        <span class="expand-arrow">▼</span>
+      </div>
+      <div class="expand-body">
+        <ol style="margin-left:16px;line-height:2.2">
+          <li>找主语 — 这句话在说谁/什么？</li>
+          <li>找谓语 — 主语在干什么/是什么？</li>
+          <li>找宾语 — 动作的对象是什么？</li>
+          <li>检查逻辑 — 主谓宾搭配合理吗？前后是否矛盾？</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="expand-item">
+      <div class="expand-header" onclick="toggleExpand(this)">
+        <span>📰 生活中的"病句"大收集</span>
+        <span class="expand-arrow">▼</span>
+      </div>
+      <div class="expand-body">
+        <p>生活中到处有不规范的语言，比如：</p>
+        <ul style="margin-left:16px;margin-top:8px;line-height:2">
+          <li>广告语："本品只要买一送三，每人限购两份。"（逻辑混乱）</li>
+          <li>通知："各位同学请注意，今天放学后，不要忘记带好自己的东西，勿必离开。"（"勿必"=务必，别字）</li>
+          <li>路牌："前方施工，禁止通过，如有违犯，负其后果。"</li>
+        </ul>
+        <p style="margin-top:8px;color:#888;font-size:14px">🔍 任务：今天回家找一个生活中的"病句"并拍照！</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- AI BUDDY -->
+<div class="ai-buddy">
+  <div class="buddy-popup" id="buddyPopup">
+    <span class="buddy-name">🐛 小虫虫老师</span>
+    <div class="buddy-tip" id="buddyTip">嗨！我是你的AI学伴小虫虫🐛<br>遇到难题随时点我，我来帮你！</div>
+  </div>
+  <button class="buddy-btn" onclick="toggleBuddy()">🐛</button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="mainToast"></div>
+
+<script>
+// ===== STATE =====
+const state = {
+  stars: 0,
+  correct: 0,
+  total: 0,
+  badges: new Set(),
+  combo: 0,
+  maxCombo: 0,
+  typesFound: new Set(),
+  fixCount: 0,
+  lv1AllCorrect: true,
+  bossHit: false,
+  creativeSubmitted: false
+};
+
+const COURSE_ID = 'chn-e-pathological-sentence';
+
+// ===== WEB AUDIO =====
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+function getAudio() { if (!audioCtx) audioCtx = new AudioCtx(); return audioCtx; }
+
+function playBeep(freq, dur, type='sine', vol=0.3) {
+  try {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = type; osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    osc.start(); osc.stop(ctx.currentTime + dur);
+  } catch(e) {}
+}
+
+function playSuccess() { playBeep(523,0.1); setTimeout(()=>playBeep(659,0.1),100); setTimeout(()=>playBeep(784,0.2),200); }
+function playError() { playBeep(200,0.3,'sawtooth',0.2); }
+function playClick() { playBeep(800,0.05,'square',0.1); }
+function playAchieve() { [523,659,784,1047].forEach((f,i)=>setTimeout(()=>playBeep(f,0.2),i*80)); }
+
+// ===== PROGRESS =====
+function updateProgress(completed, total=7) {
+  const pct = Math.round((completed/total)*100);
+  document.getElementById('mainProgress').style.width = pct + '%';
+  document.getElementById('progressText').textContent = completed + ' / ' + total + ' 关';
+}
+
+function addStars(n) {
+  state.stars += n;
+  document.getElementById('starCount').textContent = state.stars;
+  showToast('⭐ +' + n + ' 获得星星！');
+}
+
+// ===== QUIZ ENGINE =====
+let completedSections = new Set();
+
+function checkOpt(btn, groupId, isCorrect, feedbackId, msg) {
+  playClick();
+  const group = document.getElementById(groupId);
+  if (!group) return;
+  const allBtns = group.querySelectorAll('.option');
+  allBtns.forEach(b => { b.disabled = true; b.onclick = null; });
+  
+  state.total++;
+  const fb = document.getElementById(feedbackId);
+  if (isCorrect) {
+    btn.classList.add('correct');
+    state.correct++;
+    state.combo++;
+    state.maxCombo = Math.max(state.maxCombo, state.combo);
+    addStars(1);
+    playSuccess();
+    if (fb) { fb.className = 'feedback good show'; fb.innerHTML = '🎉 回答正确！ ' + msg; }
+    checkBadges(groupId);
+  } else {
+    btn.classList.add('wrong');
+    state.combo = 0;
+    playError();
+    if (fb) { fb.className = 'feedback bad show'; fb.innerHTML = '💪 再想想！ ' + msg; }
+    state.lv1AllCorrect = false;
+  }
+  updateSectionProgress();
+}
+
+function checkFill(inputId, feedbackId, acceptList, explanation) {
+  playClick();
+  const input = document.getElementById(inputId);
+  const fb = document.getElementById(feedbackId);
+  if (!input || !fb) return;
+  const val = input.value.trim().replace(/[，。！？,\.!?]/g,'');
+  const found = acceptList.some(a => val.includes(a.replace(/[，。！？,\.!?]/g,'')));
+  
+  state.total++;
+  if (found) {
+    input.classList.add('correct-input');
+    state.correct++;
+    state.combo++;
+    state.fixCount++;
+    addStars(1);
+    playSuccess();
+    fb.className = 'feedback good show';
+    fb.innerHTML = '🎉 修改正确！' + explanation;
+    checkBadges('fill');
+  } else {
+    input.classList.add('wrong-input');
+    state.combo = 0;
+    playError();
+    fb.className = 'feedback bad show';
+    fb.innerHTML = '💪 还不太对。' + explanation;
+  }
+  updateSectionProgress();
+}
+
+function updateSectionProgress() {
+  const secIds = ['sec-obj','sec-warm','sec-lv1','sec-lv2','sec-lv3','sec-boss','sec-report'];
+  let done = 0;
+  secIds.forEach((sid,i) => {
+    const sec = document.getElementById(sid);
+    if (!sec) return;
+    const btns = sec.querySelectorAll('.option[disabled],.fill-input.correct-input,.fill-input.wrong-input');
+    if (btns.length > 0) {
+      done++;
+      document.getElementById('step'+i)?.classList.add('done');
+    }
+  });
+  updateProgress(done, 7);
+}
+
+// ===== BADGES =====
+function checkBadges(context) {
+  if (!state.badges.has('start')) { unlockBadge('badge-start','start','🌱 初出茅庐 解锁！'); }
+  if (state.fixCount >= 2 && !state.badges.has('fix')) { unlockBadge('badge-fix','fix','💊 药到病除 解锁！'); }
+  if (state.maxCombo >= 5 && !state.badges.has('combo')) { unlockBadge('badge-combo','combo','🔥 连击大师 解锁！'); }
+  if (state.typesFound.size >= 3 && !state.badges.has('diag')) { unlockBadge('badge-diag','diag','🔬 诊断高手 解锁！'); }
+  if (state.bossHit && !state.badges.has('boss')) { unlockBadge('badge-boss','boss','👾 Boss猎手 解锁！'); }
+  if (state.creativeSubmitted && !state.badges.has('creative')) { unlockBadge('badge-creative','creative','🎨 病句设计师 解锁！'); }
+}
+
+function unlockBadge(elemId, key, msg) {
+  state.badges.add(key);
+  const el = document.getElementById(elemId);
+  if (el) el.classList.remove('locked');
+  showToast('🏅 ' + msg);
+  playAchieve();
+  document.getElementById('statBadges').textContent = state.badges.size;
+}
+
+// ===== DIAGNOSIS DEMO =====
+function runDiagnosis() {
+  const btn = document.getElementById('diagBtn1');
+  btn.disabled = true;
+  btn.textContent = '🔬 诊断中…';
+  playClick();
+  
+  setTimeout(() => {
+    document.getElementById('err2').classList.add('active');
+    playBeep(400, 0.15, 'square');
+  }, 400);
+  setTimeout(() => {
+    document.getElementById('err2b').classList.add('active');
+    playBeep(350, 0.15, 'square');
+  }, 800);
+  setTimeout(() => {
+    const res = document.getElementById('diagResult1');
+    res.classList.add('show');
+    btn.textContent = '✅ 诊断完成';
+    playSuccess();
+    state.typesFound.add('语义重复');
+    checkBadges('diag');
+  }, 1200);
+}
+
+// ===== CLICK SENTENCE =====
+function markError(markId, resultId, type) {
+  playClick();
+  const el = document.getElementById(markId);
+  const res = document.getElementById(resultId);
+  el.classList.add('active');
+  state.typesFound.add(type);
+  
+  if (markId === 'cm1') {
+    res.className = 'diagnosis-result show';
+    res.innerHTML = '<span class="error-type-badge">关联词误用</span><strong>分析：</strong>"因为……所以……"表示因果关系，但"热爱祖国"和"努力学习"之间是目的关系，应该用"为了……要……"。<br><strong>✅ 修改：</strong>"我们为了热爱祖国，要努力学习。" 或 "我们要热爱祖国，努力学习。"';
+    addStars(1);
+    playSuccess();
+    checkBadges('click');
+  } else {
+    res.className = 'diagnosis-result show';
+    res.style.background = 'linear-gradient(135deg,#fff9e6,#fff3d0)';
+    res.innerHTML = '💡 这个词本身没问题，问题在于"因为"。再点击"因为"试试？';
+  }
+}
+
+// ===== CREATIVE =====
+function checkCreative() {
+  const sent = document.getElementById('createSentence').value.trim();
+  const type = document.getElementById('createType').value.trim();
+  const fb = document.getElementById('createFeedback');
+  
+  if (sent.length < 5) {
+    fb.className = 'feedback bad show';
+    fb.textContent = '💪 句子太短了，再写长一点吧！';
+    return;
+  }
+  if (!type) {
+    fb.className = 'feedback bad show';
+    fb.textContent = '💪 请填写你设计的病句类型！';
+    return;
+  }
+  
+  fb.className = 'feedback good show';
+  fb.innerHTML = '🎨 太棒了！你设计了一个"' + type + '"类型的病句："' + sent + '"<br>这说明你真的理解了病句的原理！';
+  state.creativeSubmitted = true;
+  addStars(2);
+  playAchieve();
+  checkBadges('creative');
+}
+
+// ===== REPORT =====
+function generateReport() {
+  const pct = state.total > 0 ? Math.round((state.correct/state.total)*100) : 0;
+  document.getElementById('scoreNum').textContent = pct + '%';
+  document.getElementById('scoreCircle').style.setProperty('--pct', pct + '%');
+  document.getElementById('statStars').textContent = state.stars;
+  document.getElementById('statCorrect').textContent = state.correct + '/' + state.total;
+  document.getElementById('statBadges').textContent = state.badges.size;
+  
+  let title, msg;
+  if (pct >= 90) { title = '👨‍⚕️ 语言医生！'; msg = '太厉害了！你能准确诊断各种病句，真正达到了"语言医生"的水平！'; unlockBadge('badge-doctor','doctor','👨‍⚕️ 语言医生 解锁！'); }
+  else if (pct >= 70) { title = '🌟 进步达人！'; msg = '做得很好！大多数病句都难不倒你，再练习一下就能成为语言医生！'; }
+  else { title = '💪 继续加油！'; msg = '病句修改需要多练习。回顾一下病句类型，相信下次你会更棒！'; }
+  
+  document.getElementById('reportTitle').textContent = title;
+  document.getElementById('reportMsg').textContent = msg;
+  playAchieve();
+  
+  // Check all-badge
+  if (state.badges.size >= 7 && !state.badges.has('doctor')) { unlockBadge('badge-doctor','doctor','👨‍⚕️ 语言医生 解锁！'); }
+}
+
+// ===== AI BUDDY =====
+const tips = [
+  '💡 找病句时，先试试"主谓宾"三步法：找主语→找谓语→找宾语！',
+  '🔍 "大约"、"可能"、"也许"意思相近，遇到两个在一起就要注意语义重复！',
+  '💊 遇到"穿着…眼睛"这样的句子，想想动词和宾语能搭配吗？',
+  '📝 "把"字句的结构是：主语+把+宾语+动词，记住了吗？',
+  '🎯 看到"因为…所以…"、"虽然…但是…"这样的关联词，要检查逻辑关系对不对！',
+  '🌟 你做得很棒！继续加油，病句修改难不倒你的！'
+];
+let tipIndex = 0;
+let buddyOpen = false;
+
+function toggleBuddy() {
+  playClick();
+  buddyOpen = !buddyOpen;
+  const popup = document.getElementById('buddyPopup');
+  popup.classList.toggle('open', buddyOpen);
+  if (buddyOpen) {
+    document.getElementById('buddyTip').innerHTML = tips[tipIndex % tips.length];
+    tipIndex++;
+  }
+}
+
+// ===== EXPAND =====
+function toggleExpand(header) {
+  playClick();
+  const body = header.nextElementSibling;
+  const arrow = header.querySelector('.expand-arrow');
+  body.classList.toggle('open');
+  arrow.classList.toggle('open');
+}
+
+// ===== TOAST =====
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('mainToast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', () => {
+  // Auto-save scroll
+  let scrollTimer;
+  window.addEventListener('scroll', () => {
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => {
+      try { localStorage.setItem('teachany_scroll_' + COURSE_ID, String(window.scrollY)); } catch(e){}
+    }, 500);
+  });
+  // Restore scroll
+  try {
+    const pos = localStorage.getItem('teachany_scroll_' + COURSE_ID);
+    if (pos) requestAnimationFrame(() => window.scrollTo(0, parseInt(pos)));
+  } catch(e) {}
+  
+  // Show first badge on load
+  setTimeout(() => {
+    if (!state.badges.has('start')) unlockBadge('badge-start', 'start', '🌱 欢迎来到病句修改课堂！');
+  }, 1500);
+  
+  updateProgress(0);
+});
+</script>
+</body>
+</html>

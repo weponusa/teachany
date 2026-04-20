@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="course-id" content="chn-e-parts-of-speech">
+<meta name="course-node" content="parts-of-speech">
+<meta name="course-subject" content="chinese">
+<meta name="course-title" content="词性">
+<meta name="course-prereqs" content="">
+<meta name="course-next" content="chn-e-sentence-transformations-zh">
+<title>🎠 词性大分类 | 四至六年级语文</title>
+<style>
+:root {
+  --bg: #fffbf0;
+  --primary: #ff6b6b;
+  --secondary: #4ecdc4;
+  --accent: #ffe66d;
+  --card: #fff;
+  --text: #2d2d2d;
+  --text-light: #666;
+  --radius: 20px;
+  --shadow: 0 4px 20px rgba(255,107,107,0.1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'PingFang SC','Microsoft YaHei',system-ui,sans-serif;font-size:16px;line-height:1.8;}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,#ff6b6b,#4ecdc4,#ffe66d);background-size:300% 300%;animation:gradShift 6s ease infinite;padding:60px 20px 80px;text-align:center;position:relative;overflow:hidden;}
+@keyframes gradShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.hero-emoji{font-size:72px;display:block;margin-bottom:16px;animation:spin 4s linear infinite;}
+@keyframes spin{0%{transform:rotate(0deg) scale(1)}25%{transform:rotate(5deg) scale(1.05)}50%{transform:rotate(0deg) scale(1)}75%{transform:rotate(-5deg) scale(1.05)}}
+.hero h1{font-size:clamp(26px,5vw,46px);font-weight:900;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,0.2);}
+.hero-sub{color:rgba(255,255,255,0.9);font-size:17px;margin-top:8px;}
+.hero-tags{display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap;}
+.tag{background:rgba(255,255,255,0.25);color:#fff;border-radius:30px;padding:5px 16px;font-size:14px;backdrop-filter:blur(4px);}
+
+/* STICKY PROGRESS */
+.progress-wrap{background:rgba(255,255,255,0.9);padding:14px 20px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,0.08);backdrop-filter:blur(8px);}
+.progress-inner{max-width:900px;margin:0 auto;display:flex;align-items:center;gap:12px;}
+.progress-bar{flex:1;height:10px;background:#f0e8dc;border-radius:10px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));border-radius:10px;transition:width 0.5s ease;width:0%;}
+.progress-text{font-size:13px;font-weight:700;color:var(--primary);white-space:nowrap;}
+.star-counter{display:flex;align-items:center;gap:4px;font-weight:700;color:#f59e0b;}
+
+/* CONTAINER */
+.container{max-width:900px;margin:0 auto;padding:30px 20px 100px;}
+.section{margin-bottom:44px;}
+.section-title{font-size:22px;font-weight:800;color:var(--primary);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+
+/* CARDS */
+.card{background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:16px;}
+
+/* SPEECH PART COLORS */
+.sp-noun{background:#fff0f0;border-left:4px solid #ff6b6b;color:#c0392b;}
+.sp-verb{background:#f0fff8;border-left:4px solid #2ecc71;color:#1a7a4a;}
+.sp-adj{background:#f0f4ff;border-left:4px solid #5b8cff;color:#2c4abf;}
+.sp-adv{background:#fff9f0;border-left:4px solid #ff9800;color:#b05e00;}
+.sp-pron{background:#fdf0ff;border-left:4px solid #9b59b6;color:#6c1a96;}
+.sp-prep{background:#f0fffe;border-left:4px solid #1abc9c;color:#0d6e5e;}
+.sp-conj{background:#fffde0;border-left:4px solid #f1c40f;color:#8a6e00;}
+.sp-measure{background:#fff5f0;border-left:4px solid #e67e22;color:#934a00;}
+
+/* DRAG-DROP */
+.drag-arena{margin-top:20px;}
+.word-bank{display:flex;flex-wrap:wrap;gap:10px;padding:20px;background:#f8f4ec;border-radius:16px;min-height:70px;margin-bottom:20px;}
+.word-chip{
+  padding:8px 18px;border-radius:30px;font-size:15px;font-weight:700;
+  cursor:grab;user-select:none;background:var(--card);
+  box-shadow:0 3px 10px rgba(0,0,0,0.12);transition:all 0.2s;
+  border:2px solid transparent;touch-action:none;
+}
+.word-chip:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.18);}
+.word-chip.dragging{opacity:0.5;transform:scale(0.95);}
+.word-chip.placed{opacity:0.4;pointer-events:none;}
+
+.drop-zones{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;}
+.drop-zone{
+  border:2px dashed #ccc;border-radius:16px;padding:14px;min-height:120px;
+  text-align:center;transition:all 0.25s;position:relative;
+}
+.drop-zone.drag-over{border-color:var(--secondary);background:rgba(78,205,196,0.08);transform:scale(1.02);}
+.drop-zone.correct-zone{border-color:#2ecc71;border-style:solid;background:#f0fff8;}
+.drop-zone.wrong-zone{border-color:#e74c3c;border-style:solid;background:#fff5f5;animation:shake 0.4s ease;}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.zone-label{font-weight:800;font-size:13px;margin-bottom:8px;display:block;}
+.zone-items{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:6px;}
+.zone-item{background:var(--card);border-radius:20px;padding:4px 12px;font-size:13px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+
+/* CATEGORY BOXES */
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:16px;}
+.cat-box{border-radius:var(--radius);padding:18px;text-align:center;}
+.cat-icon{font-size:30px;margin-bottom:8px;}
+.cat-name{font-size:16px;font-weight:800;margin-bottom:4px;}
+.cat-desc{font-size:13px;opacity:0.8;}
+.cat-examples{margin-top:10px;display:flex;flex-wrap:wrap;gap:4px;justify-content:center;}
+.cat-ex{background:rgba(255,255,255,0.6);border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600;}
+
+/* QUIZ */
+.quiz-card{background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:20px;}
+.quiz-q{font-size:17px;font-weight:700;margin-bottom:16px;color:var(--text);}
+.options{display:flex;flex-direction:column;gap:10px;}
+.option{padding:12px 18px;border-radius:14px;border:2px solid #f0e8dc;cursor:pointer;font-size:15px;transition:all 0.2s;background:var(--card);text-align:left;}
+.option:hover{border-color:var(--primary);background:#fff5f5;}
+.option.correct{border-color:var(--secondary);background:#e8fdf8;color:#0a7060;}
+.option.wrong{border-color:var(--primary);background:#fff5f5;color:#c0392b;}
+.feedback{margin-top:12px;padding:12px 16px;border-radius:12px;font-size:14px;display:none;}
+.feedback.show{display:block;animation:fadeInUp 0.3s ease;}
+.feedback.good{background:#e8fdf8;color:#0a7060;border-left:3px solid var(--secondary);}
+.feedback.bad{background:#fff5f5;color:#c0392b;border-left:3px solid var(--primary);}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* LEVEL HEADER */
+.level-header{display:flex;align-items:center;gap:14px;margin-bottom:20px;padding:16px 20px;border-radius:var(--radius);color:#fff;}
+.level-num{font-size:28px;font-weight:900;}
+.level-info h3{font-size:18px;margin-bottom:2px;}
+.level-info p{font-size:13px;opacity:0.85;}
+
+/* SENTENCE ANALYSIS */
+.sent-analysis{background:#fffbf0;border-radius:16px;padding:20px;margin-bottom:16px;}
+.sa-sentence{font-size:20px;font-weight:700;margin-bottom:16px;line-height:2.4;}
+.sa-word{
+  display:inline-block;padding:2px 8px;border-radius:8px;cursor:pointer;
+  margin:0 2px;border-bottom:3px solid transparent;transition:all 0.2s;
+  position:relative;
+}
+.sa-word:hover{transform:translateY(-2px);}
+.sa-word.annotated::after{
+  content:attr(data-type);
+  position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);
+  font-size:11px;font-weight:700;white-space:nowrap;
+  padding:2px 6px;border-radius:10px;color:#fff;
+}
+.sa-w-noun{border-color:#ff6b6b;background:#fff0f0;}
+.sa-w-noun.annotated::after{background:#ff6b6b;}
+.sa-w-verb{border-color:#2ecc71;background:#f0fff8;}
+.sa-w-verb.annotated::after{background:#2ecc71;}
+.sa-w-adj{border-color:#5b8cff;background:#f0f4ff;}
+.sa-w-adj.annotated::after{background:#5b8cff;}
+.sa-w-adv{border-color:#ff9800;background:#fff9f0;}
+.sa-w-adv.annotated::after{background:#ff9800;}
+.sa-w-meas{border-color:#e67e22;background:#fff5f0;}
+.sa-w-meas.annotated::after{background:#e67e22;}
+
+/* BOSS */
+.boss-card{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);border-radius:var(--radius);padding:30px;color:#fff;position:relative;overflow:hidden;}
+.boss-card::before{content:'🎯';position:absolute;right:24px;top:20px;font-size:60px;opacity:0.12;}
+
+/* ACHIEVEMENTS */
+.achievements-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;}
+.badge-item{background:var(--card);border-radius:16px;padding:16px;text-align:center;box-shadow:var(--shadow);transition:transform 0.2s;}
+.badge-item:hover{transform:translateY(-3px);}
+.badge-item.locked{opacity:0.4;filter:grayscale(0.8);}
+.badge-icon{font-size:32px;display:block;margin-bottom:6px;}
+.badge-name{font-size:13px;font-weight:700;color:var(--text);}
+.badge-desc{font-size:11px;color:var(--text-light);margin-top:3px;}
+
+/* REPORT */
+.report-center{text-align:center;}
+.score-circle{width:140px;height:140px;border-radius:50%;margin:0 auto 20px;background:conic-gradient(var(--primary) var(--pct,0%),#f0e8dc var(--pct,0%));display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:900;color:var(--primary);box-shadow:0 0 0 8px var(--bg),0 0 0 12px #f0e8dc;}
+.stats-row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:16px;}
+.stat-box{background:var(--card);border-radius:14px;padding:14px 20px;box-shadow:var(--shadow);text-align:center;}
+.stat-num{font-size:28px;font-weight:900;color:var(--primary);}
+.stat-label{font-size:12px;color:var(--text-light);margin-top:4px;}
+
+/* EXPAND */
+.expand-item{border-radius:14px;background:var(--card);margin-bottom:12px;box-shadow:var(--shadow);overflow:hidden;}
+.expand-header{padding:16px 20px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:700;}
+.expand-header:hover{background:#fff9f0;}
+.expand-body{padding:0 20px;max-height:0;overflow:hidden;transition:max-height 0.4s ease,padding 0.3s;}
+.expand-body.open{max-height:800px;padding:0 20px 16px;}
+.expand-arrow{transition:transform 0.3s;}
+.expand-arrow.open{transform:rotate(180deg);}
+
+/* TOAST */
+.toast{position:fixed;top:20px;right:-320px;z-index:9999;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#1a1a2e;padding:14px 20px;border-radius:14px;font-weight:700;box-shadow:0 6px 24px rgba(251,191,36,0.4);transition:right 0.4s cubic-bezier(0.34,1.56,0.64,1);display:flex;align-items:center;gap:10px;}
+.toast.show{right:20px;}
+
+/* AI BUDDY */
+.ai-buddy{position:fixed;bottom:90px;right:20px;z-index:500;}
+.buddy-btn{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--secondary),#38b2a8);border:none;font-size:28px;cursor:pointer;box-shadow:0 4px 16px rgba(78,205,196,0.4);transition:all 0.3s;display:flex;align-items:center;justify-content:center;}
+.buddy-btn:hover{transform:scale(1.1) rotate(10deg);}
+.buddy-popup{position:absolute;bottom:70px;right:0;width:260px;background:var(--card);border-radius:20px;padding:18px;box-shadow:0 8px 32px rgba(0,0,0,0.15);display:none;}
+.buddy-popup.open{display:block;animation:popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);}
+@keyframes popIn{from{transform:scale(0.7) translateY(20px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.buddy-name{font-weight:700;color:var(--secondary);margin-bottom:6px;display:block;font-size:14px;}
+.buddy-tip{font-size:14px;line-height:1.6;color:var(--text);}
+
+/* STEPS */
+.steps{display:flex;gap:0;margin-bottom:30px;overflow-x:auto;padding-bottom:4px;}
+.step{flex:1;min-width:72px;text-align:center;padding:10px 4px;font-size:12px;font-weight:600;color:var(--text-light);}
+.step.active{color:var(--primary);}
+.step.done{color:var(--secondary);}
+.step-dot{width:28px;height:28px;border-radius:50%;background:#f0e8dc;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;font-size:14px;transition:all 0.3s;}
+.step.active .step-dot{background:var(--primary);color:#fff;}
+.step.done .step-dot{background:var(--secondary);color:#fff;}
+
+/* MATCH LINE */
+.match-exercise{display:grid;grid-template-columns:1fr 1fr;gap:30px;align-items:start;}
+.match-col{display:flex;flex-direction:column;gap:10px;}
+.match-item{padding:12px 16px;border-radius:14px;border:2px solid #f0e8dc;cursor:pointer;font-size:15px;transition:all 0.2s;background:var(--card);}
+.match-item:hover{border-color:var(--secondary);background:#f0fffe;}
+.match-item.selected{border-color:var(--primary);background:#fff5f5;}
+.match-item.matched{border-color:var(--secondary);background:#e8fdf8;pointer-events:none;}
+.match-item.wrong-flash{border-color:#e74c3c;background:#fff5f5;animation:shake 0.4s ease;}
+
+/* FILL */
+.fill-input{border:2px solid #f0e8dc;border-radius:10px;padding:8px 14px;font-size:16px;outline:none;transition:border 0.2s;width:100%;margin-top:8px;font-family:inherit;}
+.fill-input:focus{border-color:var(--secondary);}
+.fill-input.correct-input{border-color:var(--secondary);background:#e8fdf8;}
+.fill-input.wrong-input{border-color:var(--primary);background:#fff5f5;}
+.check-btn{margin-top:10px;padding:10px 24px;background:var(--secondary);color:#fff;border:none;border-radius:20px;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.check-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(78,205,196,0.4);}
+.diag-btn{padding:12px 28px;background:var(--primary);color:#fff;border:none;border-radius:30px;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.25s;display:inline-flex;align-items:center;gap:6px;margin-top:12px;}
+.diag-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(255,107,107,0.4);}
+
+@media(max-width:600px){
+  .hero{padding:40px 16px 60px;}
+  .hero-emoji{font-size:52px;}
+  .container{padding:20px 14px 60px;}
+  .cat-grid{grid-template-columns:1fr 1fr;}
+  .drop-zones{grid-template-columns:1fr 1fr;}
+  .match-exercise{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <span class="hero-emoji">🎠</span>
+  <h1>词性大分类</h1>
+  <p class="hero-sub">拖拽词语到正确的词性"家"里，成为词性小达人！</p>
+  <div class="hero-tags">
+    <span class="tag">📚 四至六年级语文</span>
+    <span class="tag">🎮 拖拽互动</span>
+    <span class="tag">🏆 8枚成就</span>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-wrap">
+  <div class="progress-inner">
+    <div class="progress-bar"><div class="progress-fill" id="mainProgress"></div></div>
+    <div class="progress-text" id="progressText">0 / 7 关</div>
+    <div class="star-counter">⭐ <span id="starCount">0</span></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- STEPS -->
+  <div class="steps">
+    <div class="step active" id="step0"><div class="step-dot">🎯</div>目标</div>
+    <div class="step" id="step1"><div class="step-dot">🔥</div>热身</div>
+    <div class="step" id="step2"><div class="step-dot">1️⃣</div>关卡1</div>
+    <div class="step" id="step3"><div class="step-dot">2️⃣</div>关卡2</div>
+    <div class="step" id="step4"><div class="step-dot">3️⃣</div>关卡3</div>
+    <div class="step" id="step5"><div class="step-dot">👾</div>Boss</div>
+    <div class="step" id="step6"><div class="step-dot">📊</div>成绩</div>
+  </div>
+
+  <!-- SECTION: OBJECTIVES -->
+  <div class="section" id="sec-obj">
+    <div class="section-title">🎯 学习目标</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
+      <div class="card" style="text-align:center">
+        <div style="font-size:32px;margin-bottom:8px">🏷️</div>
+        <strong>认识8大词性</strong>
+        <p style="font-size:13px;color:var(--text-light);margin-top:4px">名词、动词、形容词、副词、代词、介词、连词、量词</p>
+      </div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:32px;margin-bottom:8px">🔍</div>
+        <strong>判断词性</strong>
+        <p style="font-size:13px;color:var(--text-light);margin-top:4px">在句子中快速找出各类词语的词性</p>
+      </div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:32px;margin-bottom:8px">🎯</div>
+        <strong>灵活运用</strong>
+        <p style="font-size:13px;color:var(--text-light);margin-top:4px">了解词性对写作和修改语病的帮助</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;border-left:4px solid var(--secondary)">
+      <strong>🤔 先想一想：</strong>你知道"跑"、"美丽"、"桌子"分别属于什么词性吗？它们有什么不同？
+    </div>
+  </div>
+
+  <!-- SECTION: WARMUP -->
+  <div class="section" id="sec-warm">
+    <div class="level-header" style="background:linear-gradient(135deg,#4ecdc4,#2bb5ac)">
+      <div class="level-num">🔥</div>
+      <div class="level-info">
+        <h3>热身：8大词性速览</h3>
+        <p>你已经会造句了（And），但不知道每个词"属于哪类"（But），所以我们来认识词性（Therefore）！</p>
+      </div>
+    </div>
+    <div class="cat-grid">
+      <div class="cat-box sp-noun">
+        <div class="cat-icon">📦</div>
+        <div class="cat-name">名词</div>
+        <div class="cat-desc">表示人、地点、事物、概念的名称</div>
+        <div class="cat-examples"><span class="cat-ex">桌子</span><span class="cat-ex">北京</span><span class="cat-ex">友情</span><span class="cat-ex">老师</span></div>
+      </div>
+      <div class="cat-box sp-verb">
+        <div class="cat-icon">🏃</div>
+        <div class="cat-name">动词</div>
+        <div class="cat-desc">表示动作、行为、状态的变化</div>
+        <div class="cat-examples"><span class="cat-ex">跑步</span><span class="cat-ex">学习</span><span class="cat-ex">喜欢</span><span class="cat-ex">存在</span></div>
+      </div>
+      <div class="cat-box sp-adj">
+        <div class="cat-icon">🌈</div>
+        <div class="cat-name">形容词</div>
+        <div class="cat-desc">表示人或事物的性质、状态</div>
+        <div class="cat-examples"><span class="cat-ex">美丽</span><span class="cat-ex">聪明</span><span class="cat-ex">宽阔</span><span class="cat-ex">炎热</span></div>
+      </div>
+      <div class="cat-box sp-adv">
+        <div class="cat-icon">⚡</div>
+        <div class="cat-name">副词</div>
+        <div class="cat-desc">修饰动词或形容词，表示程度/时间/范围</div>
+        <div class="cat-examples"><span class="cat-ex">非常</span><span class="cat-ex">已经</span><span class="cat-ex">都</span><span class="cat-ex">很</span></div>
+      </div>
+      <div class="cat-box sp-pron">
+        <div class="cat-icon">👤</div>
+        <div class="cat-name">代词</div>
+        <div class="cat-desc">代替名词、动词、形容词使用</div>
+        <div class="cat-examples"><span class="cat-ex">我</span><span class="cat-ex">他们</span><span class="cat-ex">这里</span><span class="cat-ex">什么</span></div>
+      </div>
+      <div class="cat-box sp-prep">
+        <div class="cat-icon">🔗</div>
+        <div class="cat-name">介词</div>
+        <div class="cat-desc">与名词组合，表示时间/地点/方式等</div>
+        <div class="cat-examples"><span class="cat-ex">在</span><span class="cat-ex">从</span><span class="cat-ex">把</span><span class="cat-ex">对于</span></div>
+      </div>
+      <div class="cat-box sp-conj">
+        <div class="cat-icon">🤝</div>
+        <div class="cat-name">连词</div>
+        <div class="cat-desc">连接词、短语或句子，表示关系</div>
+        <div class="cat-examples"><span class="cat-ex">和</span><span class="cat-ex">因为</span><span class="cat-ex">虽然</span><span class="cat-ex">但是</span></div>
+      </div>
+      <div class="cat-box sp-measure">
+        <div class="cat-icon">📏</div>
+        <div class="cat-name">量词</div>
+        <div class="cat-desc">表示人、事物或动作的计量单位</div>
+        <div class="cat-examples"><span class="cat-ex">个</span><span class="cat-ex">只</span><span class="cat-ex">条</span><span class="cat-ex">张</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: LEVEL 1 - DRAG DROP -->
+  <div class="section" id="sec-lv1">
+    <div class="level-header" style="background:linear-gradient(135deg,#ff6b6b,#ff8e53)">
+      <div class="level-num">1️⃣</div>
+      <div class="level-info">
+        <h3>关卡一：拖拽分类</h3>
+        <p>⭐ 把下面的词语拖到正确的词性区域</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <p style="font-weight:700;margin-bottom:4px">📦 词语银行 — 把它们拖到正确的分类框中</p>
+      <p style="font-size:13px;color:var(--text-light);margin-bottom:16px">点击词语，然后点击目标分类区域完成放置</p>
+      <div class="word-bank" id="wordBank">
+        <div class="word-chip" data-word="跳跃" data-type="动词" onclick="selectChip(this)">跳跃</div>
+        <div class="word-chip" data-word="蓝天" data-type="名词" onclick="selectChip(this)">蓝天</div>
+        <div class="word-chip" data-word="可爱" data-type="形容词" onclick="selectChip(this)">可爱</div>
+        <div class="word-chip" data-word="非常" data-type="副词" onclick="selectChip(this)">非常</div>
+        <div class="word-chip" data-word="他们" data-type="代词" onclick="selectChip(this)">他们</div>
+        <div class="word-chip" data-word="向" data-type="介词" onclick="selectChip(this)">向</div>
+        <div class="word-chip" data-word="而且" data-type="连词" onclick="selectChip(this)">而且</div>
+        <div class="word-chip" data-word="朵" data-type="量词" onclick="selectChip(this)">朵</div>
+        <div class="word-chip" data-word="学校" data-type="名词" onclick="selectChip(this)">学校</div>
+        <div class="word-chip" data-word="思考" data-type="动词" onclick="selectChip(this)">思考</div>
+        <div class="word-chip" data-word="温柔" data-type="形容词" onclick="selectChip(this)">温柔</div>
+        <div class="word-chip" data-word="已经" data-type="副词" onclick="selectChip(this)">已经</div>
+      </div>
+
+      <div class="drop-zones" id="dropZones">
+        <div class="drop-zone" data-type="名词" onclick="dropToZone(this)">
+          <span class="zone-label" style="color:#c0392b">📦 名词</span>
+          <div class="zone-items" id="zone-名词"></div>
+        </div>
+        <div class="drop-zone" data-type="动词" onclick="dropToZone(this)">
+          <span class="zone-label" style="color:#1a7a4a">🏃 动词</span>
+          <div class="zone-items" id="zone-动词"></div>
+        </div>
+        <div class="drop-zone" data-type="形容词" onclick="dropToZone(this)">
+          <span class="zone-label" style="color:#2c4abf">🌈 形容词</span>
+          <div class="zone-items" id="zone-形容词"></div>
+        </div>
+        <div class="drop-zone" data-type="副词" onclick="dropToZone(this)">
+          <span class="zone-label" style="color:#b05e00">⚡ 副词</span>
+          <div class="zone-items" id="zone-副词"></div>
+        </div>
+        <div class="drop-zone" data-type="代词" onclick="dropToZone(this)">
+          <span class="zone-label" style="color:#6c1a96">👤 代词</span>
+          <div class="zone-items" id="zone-代词"></div>
+        </div>
+        <div class="drop-zone" data-type="介词" onclick="dropToZone(this)">
+          <span class="zone-label" style="color:#0d6e5e">🔗 介词</span>
+          <div class="zone-items" id="zone-介词"></div>
+        </div>
+        <div class="drop-zone" data-type="连词" onclick="dropToZone(this)">
+          <span class="zone-label" style="color:#8a6e00">🤝 连词</span>
+          <div class="zone-items" id="zone-连词"></div>
+        </div>
+        <div class="drop-zone" data-type="量词" onclick="dropToZone(this)">
+          <span class="zone-label" style="color:#934a00">📏 量词</span>
+          <div class="zone-items" id="zone-量词"></div>
+        </div>
+      </div>
+      <div id="dragFeedback" class="feedback" style="margin-top:12px"></div>
+      <button class="check-btn" onclick="checkAllDrag()" style="margin-top:14px">检验分类结果 🔍</button>
+    </div>
+  </div>
+
+  <!-- SECTION: LEVEL 2 - SENTENCE ANALYSIS -->
+  <div class="section" id="sec-lv2">
+    <div class="level-header" style="background:linear-gradient(135deg,#f093fb,#f5576c)">
+      <div class="level-num">2️⃣</div>
+      <div class="level-info">
+        <h3>关卡二：句子词性标注</h3>
+        <p>⭐⭐ 点击句子中的每个词，为它们标注词性</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <p style="font-weight:700;margin-bottom:16px">🖊️ 点击句中的词语，了解它们的词性</p>
+      <div class="sent-analysis">
+        <div class="sa-sentence" id="saSentence">
+          <span class="sa-word sa-w-pron" data-type="代词" data-word="我们" onclick="annotateWord(this)">我们</span>
+          <span class="sa-word sa-w-adv" data-type="副词" data-word="都" onclick="annotateWord(this)">都</span>
+          <span class="sa-word sa-w-adv" data-type="副词" data-word="非常" onclick="annotateWord(this)">非常</span>
+          <span class="sa-word sa-w-adj" data-type="形容词" data-word="认真" onclick="annotateWord(this)">认真</span>
+          <span style="color:#999">地</span>
+          <span class="sa-word sa-w-verb" data-type="动词" data-word="学习" onclick="annotateWord(this)">学习</span>
+          <span class="sa-word sa-w-noun" data-type="名词" data-word="语文" onclick="annotateWord(this)">语文</span>
+          <span class="sa-word sa-w-meas" data-type="量词" data-word="课" onclick="annotateWord(this)">课</span>
+          <span style="color:#999">。</span>
+        </div>
+        <p style="font-size:13px;color:var(--text-light)">点击有颜色的词语，查看其词性分析</p>
+        <div id="wordAnnotation" style="margin-top:12px;padding:14px;background:#f8f4ec;border-radius:12px;display:none"></div>
+      </div>
+
+      <!-- Quick classification quiz -->
+      <div class="quiz-card" style="box-shadow:none;padding:0;margin-bottom:0">
+        <div class="quiz-q">❓ 判断下面词语的词性：</div>
+        <p style="background:#fff9e6;border-radius:12px;padding:12px;font-size:18px;font-weight:700;margin-bottom:14px">"忽然" 的词性是？</p>
+        <div class="options" id="opts1">
+          <button class="option" onclick="checkOpt(this,'opts1',false,'feed1','"忽然"不是形容词，形容词描述性质状态，如"美丽"、"高兴"。"忽然"描述动作发生的方式/时间。')">形容词</button>
+          <button class="option" onclick="checkOpt(this,'opts1',true,'feed1','✅ 正确！"忽然"是副词，修饰动词，表示动作发生得突然、没有预兆。+1⭐')">副词</button>
+          <button class="option" onclick="checkOpt(this,'opts1',false,'feed1','动词表示动作或行为，"忽然"不能单独表达动作。')">动词</button>
+          <button class="option" onclick="checkOpt(this,'opts1',false,'feed1','名词是事物的名称，"忽然"不是任何事物的名称。')">名词</button>
+        </div>
+        <div class="feedback" id="feed1"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="quiz-q">🔍 辨析练习：下面的"一"是什么词性？</div>
+      <div style="background:#fff9e6;border-radius:12px;padding:14px;margin-bottom:14px;font-size:17px">
+        A. "他一直在学习。" 中的"一"<br>
+        B. "桌上有一本书。" 中的"一"
+      </div>
+      <div class="options" id="opts2">
+        <button class="option" onclick="checkOpt(this,'opts2',false,'feed2','仔细想想A句中"一直"是整体，"一"单独是什么词性？')">A和B都是副词</button>
+        <button class="option" onclick="checkOpt(this,'opts2',false,'feed2','数词和量词不同：量词是"个、只"，数词是"一、二、三"。')">A和B都是量词</button>
+        <button class="option" onclick="checkOpt(this,'opts2',true,'feed2','✅ 正确！A中"一直"是副词整体，表示持续不断；B中"一本书"里的"一"是数词，表示数量。同一个字在不同语境中词性可以不同！+2⭐')">A中"一"是副词，B中"一"是数词</button>
+        <button class="option" onclick="checkOpt(this,'opts2',false,'feed2','这两个方向都不对，再仔细分析语境。')">A中"一"是数词，B中"一"是副词</button>
+      </div>
+      <div class="feedback" id="feed2"></div>
+    </div>
+  </div>
+
+  <!-- SECTION: LEVEL 3 - MATCHING + FILL -->
+  <div class="section" id="sec-lv3">
+    <div class="level-header" style="background:linear-gradient(135deg,#43e97b,#38f9d7)">
+      <div class="level-num">3️⃣</div>
+      <div class="level-info">
+        <h3>关卡三：配对与应用</h3>
+        <p>⭐⭐⭐ 词性配对 + 用词性知识分析句子</p>
+      </div>
+    </div>
+
+    <!-- Matching game -->
+    <div class="card">
+      <div class="quiz-q">🎯 配对游戏：点击左边的词，再点击右边对应的词性</div>
+      <div class="match-exercise" id="matchGame">
+        <div class="match-col" id="matchLeft">
+          <div class="match-item" data-id="m1" data-pair="形容词" onclick="matchClick(this,'left')">温暖</div>
+          <div class="match-item" data-id="m2" data-pair="动词" onclick="matchClick(this,'left')">飞翔</div>
+          <div class="match-item" data-id="m3" data-pair="量词" onclick="matchClick(this,'left')">张（一张纸）</div>
+          <div class="match-item" data-id="m4" data-pair="介词" onclick="matchClick(this,'left')">从（从北京）</div>
+          <div class="match-item" data-id="m5" data-pair="连词" onclick="matchClick(this,'left')">虽然</div>
+        </div>
+        <div class="match-col" id="matchRight">
+          <div class="match-item" data-id="r5" data-pair="连词" onclick="matchClick(this,'right')">连词</div>
+          <div class="match-item" data-id="r1" data-pair="形容词" onclick="matchClick(this,'right')">形容词</div>
+          <div class="match-item" data-id="r3" data-pair="量词" onclick="matchClick(this,'right')">量词</div>
+          <div class="match-item" data-id="r2" data-pair="动词" onclick="matchClick(this,'right')">动词</div>
+          <div class="match-item" data-id="r4" data-pair="介词" onclick="matchClick(this,'right')">介词</div>
+        </div>
+      </div>
+      <div class="feedback" id="matchFeedback"></div>
+    </div>
+
+    <!-- Fill in part of speech -->
+    <div class="card">
+      <div class="quiz-q">✏️ 填空：在横线上写出括号中词语的词性</div>
+      <div style="margin-bottom:14px">
+        <p style="font-size:16px;margin-bottom:8px">① "她<strong>（静静地）</strong>看着窗外。"</p>
+        <p style="font-size:13px;color:#888;margin-bottom:6px">"静静地"修饰动词"看"，表示程度/状态，词性是：</p>
+        <input type="text" class="fill-input" id="fill1" placeholder="输入词性…" />
+        <button class="check-btn" onclick="checkFill('fill1','fillFeed1',['副词'],'✅ 正确！"静静地"是副词，修饰动词"看"，表示动作的状态。')">检查</button>
+        <div class="feedback" id="fillFeed1"></div>
+      </div>
+      <div>
+        <p style="font-size:16px;margin-bottom:8px">② "一<strong>（条）</strong>小鱼游过来。"</p>
+        <p style="font-size:13px;color:#888;margin-bottom:6px">"条"用来计量鱼的数量，词性是：</p>
+        <input type="text" class="fill-input" id="fill2" placeholder="输入词性…" />
+        <button class="check-btn" onclick="checkFill('fill2','fillFeed2',['量词'],'✅ 正确！"条"是量词，专门用来计量细长形状的事物（鱼、河、路等）。')">检查</button>
+        <div class="feedback" id="fillFeed2"></div>
+      </div>
+    </div>
+
+    <!-- Context clue quiz -->
+    <div class="quiz-card">
+      <div class="quiz-q">🧩 语境判断："快"的词性可以随语境变化，判断下面的"快"是什么词性？</div>
+      <div style="background:#fff9e6;border-radius:12px;padding:14px;margin-bottom:14px">
+        <p>"他跑得很<strong>快</strong>。"</p>
+      </div>
+      <div class="options" id="opts3">
+        <button class="option" onclick="checkOpt(this,'opts3',false,'feed3','副词修饰动词或形容词，"快"这里描述"跑"的状态，但语法位置是在动词后作补语，通常归为形容词。')">副词</button>
+        <button class="option" onclick="checkOpt(this,'opts3',true,'feed3','✅ 正确！"快"在这里描述"跑"的性质，作补语，属于形容词。注意：同一个词在不同语境中词性不同！+1⭐')">形容词</button>
+        <button class="option" onclick="checkOpt(this,'opts3',false,'feed3','动词表示动作，"快"在这里不表示动作。')">动词</button>
+        <button class="option" onclick="checkOpt(this,'opts3',false,'feed3','名词是事物名称，"快"在这里不是事物名称。')">名词</button>
+      </div>
+      <div class="feedback" id="feed3"></div>
+    </div>
+  </div>
+
+  <!-- SECTION: BOSS -->
+  <div class="section" id="sec-boss">
+    <div class="boss-card">
+      <h2 style="font-size:24px;margin-bottom:8px">👾 Boss关卡：词性综合挑战</h2>
+      <p style="opacity:0.85;margin-bottom:20px">用词性知识来分析和修改句子，这才是学词性的终极意义！</p>
+
+      <div class="quiz-card" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2)">
+        <div class="quiz-q" style="color:#fff">👾 Boss Q1：请为这句话中所有词语标注词性（写在框内）</div>
+        <div style="background:rgba(255,255,255,0.1);border-radius:12px;padding:14px;margin-bottom:12px;font-size:18px;color:#fff">
+          "小鸟在树枝上轻轻地唱歌。"
+        </div>
+        <textarea id="bossAnalysis" style="width:100%;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.3);border-radius:12px;padding:12px;color:#fff;font-size:14px;resize:vertical;min-height:100px;outline:none;font-family:inherit" placeholder="例：小鸟=名词，在=介词，树枝=名词，上=方位词，轻轻地=副词，唱歌=动词"></textarea>
+        <button class="check-btn" onclick="checkBossAnalysis()" style="margin-top:10px;background:var(--accent);color:#333">提交分析 🔍</button>
+        <div class="feedback" id="bossFeed1"></div>
+      </div>
+
+      <div class="quiz-card" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);margin-top:16px">
+        <div class="quiz-q" style="color:#fff">👾 Boss Q2：下面这句话中词性使用有误，请找出并修改</div>
+        <div style="background:rgba(255,255,255,0.1);border-radius:12px;padding:14px;margin-bottom:12px;font-size:18px;color:#fff">
+          "他非常地爱喝水。"（"非常"后面接"地"对吗？）
+        </div>
+        <div class="options" id="bossOpts">
+          <button class="option" style="background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.2)" onclick="checkOpt(this,'bossOpts',false,'bossFeed2','提示：副词修饰动词，通常不需要加"地"。"非常地爱"这种说法在规范语法中是错的。')">没有问题，完全正确</button>
+          <button class="option" style="background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.2)" onclick="checkOpt(this,'bossOpts',true,'bossFeed2','✅ Boss Q2 击破！"非常"是副词，副词直接修饰动词，不需要加"地"（"地"用于形容词或少数副词后）。正确：他非常爱喝水。+2⭐')">有问题，"非常地"应改为"非常"</button>
+          <button class="option" style="background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.2)" onclick="checkOpt(this,'bossOpts',false,'bossFeed2','问题不在"爱"，"爱"是动词，使用正确。')">有问题，"爱"应改为"喜欢"</button>
+        </div>
+        <div class="feedback" id="bossFeed2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: REPORT -->
+  <div class="section" id="sec-report">
+    <div class="section-title">📊 学习成绩单</div>
+    <div class="card report-center">
+      <div class="score-circle" id="scoreCircle"><span id="scoreNum">?</span></div>
+      <h3 style="font-size:20px;margin-bottom:6px" id="reportTitle">完成学习后生成成绩单！</h3>
+      <p style="color:var(--text-light);margin-bottom:16px" id="reportMsg"></p>
+      <div class="stats-row">
+        <div class="stat-box"><div class="stat-num" id="statStars">0</div><div class="stat-label">⭐ 获得星星</div></div>
+        <div class="stat-box"><div class="stat-num" id="statCorrect">0</div><div class="stat-label">✅ 答对题数</div></div>
+        <div class="stat-box"><div class="stat-num" id="statBadges">0</div><div class="stat-label">🏅 成就数量</div></div>
+      </div>
+      <button class="diag-btn" onclick="generateReport()" style="margin-top:20px">生成成绩单 📋</button>
+    </div>
+
+    <div style="margin-top:24px">
+      <div class="section-title">🏅 成就墙</div>
+      <div class="achievements-grid">
+        <div class="badge-item" id="badge-start"><span class="badge-icon">🌱</span><div class="badge-name">初出茅庐</div><div class="badge-desc">开始第一题</div></div>
+        <div class="badge-item locked" id="badge-drag"><span class="badge-icon">🎯</span><div class="badge-name">分类达人</div><div class="badge-desc">完成拖拽分类</div></div>
+        <div class="badge-item locked" id="badge-context"><span class="badge-icon">🧩</span><div class="badge-name">语境高手</div><div class="badge-desc">理解词性随语境变化</div></div>
+        <div class="badge-item locked" id="badge-match"><span class="badge-icon">🤝</span><div class="badge-name">配对王</div><div class="badge-desc">完成配对游戏</div></div>
+        <div class="badge-item locked" id="badge-boss"><span class="badge-icon">👾</span><div class="badge-name">Boss猎手</div><div class="badge-desc">击败Boss关卡</div></div>
+        <div class="badge-item locked" id="badge-analyst"><span class="badge-icon">🔬</span><div class="badge-name">句子分析师</div><div class="badge-desc">完成词性标注</div></div>
+        <div class="badge-item locked" id="badge-combo"><span class="badge-icon">🔥</span><div class="badge-name">连击大师</div><div class="badge-desc">连续答对4题</div></div>
+        <div class="badge-item locked" id="badge-master"><span class="badge-icon">👑</span><div class="badge-name">词性大师</div><div class="badge-desc">完成全部关卡</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: EXTEND -->
+  <div class="section" id="sec-extend">
+    <div class="section-title">🚀 拓展探究</div>
+    <div class="expand-item">
+      <div class="expand-header" onclick="toggleExpand(this)"><span>🔄 一词多性：同一个词，不同词性</span><span class="expand-arrow">▼</span></div>
+      <div class="expand-body">
+        <p style="margin-bottom:12px">汉语中很多词可以在不同语境下充当不同词性：</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">
+          <div style="background:#fff9e6;border-radius:12px;padding:14px">
+            <strong>"快"</strong><br>
+            <span style="font-size:13px">• 快点吃（副词）<br>• 跑得很快（形容词）<br>• 飞快（形容词）</span>
+          </div>
+          <div style="background:#f0fff8;border-radius:12px;padding:14px">
+            <strong>"了"</strong><br>
+            <span style="font-size:13px">• 学了很久（助词/动态）<br>• 来了三个人（助词/动态）</span>
+          </div>
+          <div style="background:#f0f4ff;border-radius:12px;padding:14px">
+            <strong>"好"</strong><br>
+            <span style="font-size:13px">• 真好看（副词）<br>• 她很好（形容词）<br>• 好，我去（感叹词）</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="expand-item">
+      <div class="expand-header" onclick="toggleExpand(this)"><span>📝 词性与写作：为什么要学词性？</span><span class="expand-arrow">▼</span></div>
+      <div class="expand-body">
+        <ul style="margin-left:16px;line-height:2.2">
+          <li>修改病句：搭配不当往往是词性搭配错误（如用形容词修饰动词）</li>
+          <li>丰富表达：多用形容词和副词让描写更生动</li>
+          <li>学外语：英语、日语等也有词性系统，了解中文词性让学外语更容易</li>
+          <li>阅读理解：知道词性有助于理解句子结构和文章逻辑</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- AI BUDDY -->
+<div class="ai-buddy">
+  <div class="buddy-popup" id="buddyPopup">
+    <span class="buddy-name">🐛 小虫虫老师</span>
+    <div class="buddy-tip" id="buddyTip">嗨！我是词性专家小虫虫🐛<br>点击词语卡片看分析，遇到难题问我！</div>
+  </div>
+  <button class="buddy-btn" onclick="toggleBuddy()">🐛</button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="mainToast"></div>
+
+<script>
+const COURSE_ID = 'chn-e-parts-of-speech';
+const state = { stars:0, correct:0, total:0, badges:new Set(), combo:0, maxCombo:0, dragDone:false, matchDone:false, bossHit:false, analystDone:false };
+
+// WEB AUDIO
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+function getAudio(){ if(!audioCtx) audioCtx = new AudioCtx(); return audioCtx; }
+function playBeep(freq,dur,type='sine',vol=0.3){
+  try{ const ctx=getAudio(),osc=ctx.createOscillator(),gain=ctx.createGain();
+  osc.connect(gain);gain.connect(ctx.destination);osc.type=type;osc.frequency.value=freq;
+  gain.gain.setValueAtTime(vol,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
+  osc.start();osc.stop(ctx.currentTime+dur);}catch(e){}
+}
+function playSuccess(){ playBeep(523,0.1);setTimeout(()=>playBeep(659,0.1),100);setTimeout(()=>playBeep(784,0.2),200); }
+function playError(){ playBeep(200,0.3,'sawtooth',0.2); }
+function playClick(){ playBeep(800,0.05,'square',0.1); }
+function playAchieve(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>playBeep(f,0.2),i*80)); }
+
+// PROGRESS
+function updateProgress(completed, total=7){
+  const pct = Math.round((completed/total)*100);
+  document.getElementById('mainProgress').style.width = pct+'%';
+  document.getElementById('progressText').textContent = completed+' / '+total+' 关';
+}
+function addStars(n){ state.stars+=n; document.getElementById('starCount').textContent=state.stars; showToast('⭐ +'+n+' 获得星星！'); }
+
+// DRAG-DROP (click-based)
+let selectedChip = null;
+function selectChip(chip){
+  playClick();
+  if(chip.classList.contains('placed')) return;
+  if(selectedChip) selectedChip.style.outline = '';
+  if(selectedChip === chip){ selectedChip = null; return; }
+  selectedChip = chip;
+  chip.style.outline = '3px solid var(--primary)';
+  showToast('已选中「' + chip.dataset.word + '」，点击分类区域放置');
+}
+function dropToZone(zone){
+  if(!selectedChip) return;
+  const word = selectedChip.dataset.word;
+  const wordType = selectedChip.dataset.type;
+  const zoneType = zone.dataset.type;
+  
+  selectedChip.style.outline = '';
+  
+  const zoneItems = document.getElementById('zone-' + zoneType);
+  const item = document.createElement('span');
+  item.className = 'zone-item';
+  item.textContent = word;
+  zoneItems.appendChild(item);
+  selectedChip.classList.add('placed');
+  selectedChip.style.opacity = '0.35';
+  
+  // Check answer immediately
+  if(wordType === zoneType){
+    zone.classList.add('correct-zone');
+    playSuccess();
+    state.correct++;
+    state.stars++;
+    document.getElementById('starCount').textContent=state.stars;
+    item.style.background = '#e8fdf8';
+    item.style.color = '#0a7060';
+  } else {
+    playError();
+    item.style.background = '#fff5f5';
+    item.style.color = '#c0392b';
+    item.title = '正确应放：'+wordType;
+  }
+  selectedChip = null;
+  
+  // Check if all placed
+  const remaining = document.querySelectorAll('.word-chip:not(.placed)');
+  if(remaining.length === 0){ 
+    state.dragDone = true;
+    checkBadges('drag');
+  }
+}
+function checkAllDrag(){
+  playClick();
+  const correct = document.querySelectorAll('.drop-zone.correct-zone').length;
+  const total = document.querySelectorAll('.word-chip').length;
+  const fb = document.getElementById('dragFeedback');
+  if(correct >= total*0.8){
+    fb.className='feedback good show';
+    fb.innerHTML='🎉 分类得分：'+correct+'/'+total+'！你掌握了基本词性分类！';
+    addStars(2);
+    state.dragDone = true;
+    checkBadges('drag');
+  } else {
+    fb.className='feedback bad show';
+    fb.innerHTML='💪 正确：'+correct+'/'+total+'。红色的词语放错了，对照上面的词性卡片再想想！';
+  }
+  updateSectionProgress();
+}
+
+// WORD ANNOTATION
+function annotateWord(el){
+  playClick();
+  el.classList.add('annotated');
+  const wordAnnot = document.getElementById('wordAnnotation');
+  const typeMap = {
+    '代词':'代替名词，避免重复。这里"我们"代替了具体的人名。',
+    '副词':'修饰动词或形容词，表示程度、时间、范围。"都"表示全部，"非常"表示程度高。',
+    '形容词':'描述状态或性质。"认真"描述学习的态度。',
+    '动词':'表示动作行为。"学习"是核心动作。',
+    '名词':'"语文"是学科名称，属于名词。',
+    '量词':'"课"是量词，计量"语文课"的数量单位。'
+  };
+  wordAnnot.style.display = 'block';
+  wordAnnot.innerHTML = `<strong style="color:var(--primary)">「${el.dataset.word}」</strong> — <span style="color:#2c4abf;font-weight:700">${el.dataset.type}</span><br><span style="font-size:14px;color:#555">${typeMap[el.dataset.type]||''}</span>`;
+  state.analystDone = true;
+  checkBadges('analyst');
+}
+
+// QUIZ
+function checkOpt(btn, groupId, isCorrect, feedbackId, msg){
+  playClick();
+  const group = document.getElementById(groupId);
+  if(!group) return;
+  group.querySelectorAll('.option').forEach(b=>{b.disabled=true;b.onclick=null;});
+  state.total++;
+  const fb = document.getElementById(feedbackId);
+  if(isCorrect){
+    btn.classList.add('correct');
+    state.correct++;
+    state.combo++;
+    state.maxCombo = Math.max(state.maxCombo, state.combo);
+    addStars(1);
+    playSuccess();
+    if(fb){fb.className='feedback good show';fb.innerHTML='🎉 '+msg;}
+    if(groupId==='bossOpts') state.bossHit=true;
+    checkBadges(groupId);
+  } else {
+    btn.classList.add('wrong');
+    state.combo=0;
+    playError();
+    if(fb){fb.className='feedback bad show';fb.innerHTML='💪 '+msg;}
+  }
+  updateSectionProgress();
+}
+
+function checkFill(inputId, feedbackId, acceptList, explanation){
+  playClick();
+  const input = document.getElementById(inputId);
+  const fb = document.getElementById(feedbackId);
+  if(!input||!fb) return;
+  const val = input.value.trim();
+  const found = acceptList.some(a => val.includes(a));
+  state.total++;
+  if(found){
+    input.classList.add('correct-input');
+    state.correct++;
+    state.combo++;
+    addStars(1);
+    playSuccess();
+    fb.className='feedback good show';
+    fb.innerHTML='🎉 '+explanation;
+    checkBadges('fill');
+  } else {
+    input.classList.add('wrong-input');
+    state.combo=0;
+    playError();
+    fb.className='feedback bad show';
+    fb.innerHTML='💪 还不对。'+explanation;
+  }
+  updateSectionProgress();
+}
+
+// MATCHING
+let matchSelected = {left:null, right:null};
+function matchClick(el, side){
+  playClick();
+  if(el.classList.contains('matched')) return;
+  if(matchSelected[side]) matchSelected[side].classList.remove('selected');
+  matchSelected[side] = el;
+  el.classList.add('selected');
+  
+  if(matchSelected.left && matchSelected.right){
+    const lPair = matchSelected.left.dataset.pair;
+    const rPair = matchSelected.right.dataset.pair;
+    if(lPair === rPair){
+      matchSelected.left.classList.remove('selected');
+      matchSelected.right.classList.remove('selected');
+      matchSelected.left.classList.add('matched');
+      matchSelected.right.classList.add('matched');
+      matchSelected.left.style.background='#e8fdf8';
+      matchSelected.right.style.background='#e8fdf8';
+      playSuccess();
+      addStars(1);
+      state.correct++;
+      // Check all matched
+      const allMatched = document.querySelectorAll('.match-item.matched').length;
+      if(allMatched >= 10){
+        state.matchDone = true;
+        checkBadges('match');
+        const fb = document.getElementById('matchFeedback');
+        fb.className='feedback good show';
+        fb.innerHTML='🎉 全部配对正确！你太厉害了！+2⭐';
+        addStars(2);
+      }
+    } else {
+      matchSelected.left.classList.add('wrong-flash');
+      matchSelected.right.classList.add('wrong-flash');
+      playError();
+      setTimeout(()=>{
+        matchSelected.left?.classList.remove('selected','wrong-flash');
+        matchSelected.right?.classList.remove('selected','wrong-flash');
+        matchSelected = {left:null, right:null};
+      }, 500);
+      return;
+    }
+    matchSelected = {left:null, right:null};
+  }
+}
+
+// BOSS ANALYSIS
+function checkBossAnalysis(){
+  const val = document.getElementById('bossAnalysis').value.trim();
+  const fb = document.getElementById('bossFeed1');
+  if(val.length < 10){
+    fb.className='feedback bad show';
+    fb.innerHTML='💪 请写得更完整一些！';
+    return;
+  }
+  fb.className='feedback good show';
+  fb.innerHTML='✅ 参考答案：小鸟（名词）+ 在（介词）+ 树枝（名词）+ 上（方位词）+ 轻轻地（副词）+ 唱歌（动词）。<br>你写对了哪几个？';
+  state.analystDone = true;
+  addStars(2);
+  playSuccess();
+  checkBadges('analyst');
+  state.total++;
+  state.correct++;
+  updateSectionProgress();
+}
+
+// BADGES
+function checkBadges(context){
+  if(!state.badges.has('start')) unlockBadge('badge-start','start','🌱 初出茅庐 解锁！');
+  if(state.dragDone && !state.badges.has('drag')) unlockBadge('badge-drag','drag','🎯 分类达人 解锁！');
+  if(state.matchDone && !state.badges.has('match')) unlockBadge('badge-match','match','🤝 配对王 解锁！');
+  if(state.bossHit && !state.badges.has('boss')) unlockBadge('badge-boss','boss','👾 Boss猎手 解锁！');
+  if(state.analystDone && !state.badges.has('analyst')) unlockBadge('badge-analyst','analyst','🔬 句子分析师 解锁！');
+  if(state.maxCombo >= 4 && !state.badges.has('combo')) unlockBadge('badge-combo','combo','🔥 连击大师 解锁！');
+  if(state.correct>=2 && !state.badges.has('context')) unlockBadge('badge-context','context','🧩 语境高手 解锁！');
+}
+function unlockBadge(elemId, key, msg){
+  state.badges.add(key);
+  const el = document.getElementById(elemId);
+  if(el) el.classList.remove('locked');
+  showToast('🏅 '+msg);
+  playAchieve();
+  document.getElementById('statBadges').textContent = state.badges.size;
+}
+
+// REPORT
+function generateReport(){
+  const pct = state.total>0 ? Math.round((state.correct/state.total)*100) : 0;
+  document.getElementById('scoreNum').textContent=pct+'%';
+  document.getElementById('scoreCircle').style.setProperty('--pct',pct+'%');
+  document.getElementById('statStars').textContent=state.stars;
+  document.getElementById('statCorrect').textContent=state.correct+'/'+state.total;
+  document.getElementById('statBadges').textContent=state.badges.size;
+  
+  if(pct>=85){ document.getElementById('reportTitle').textContent='👑 词性大师！'; document.getElementById('reportMsg').textContent='太厉害了！8大词性难不倒你，你真的是词性小达人！'; unlockBadge('badge-master','master','👑 词性大师 解锁！'); }
+  else if(pct>=65){ document.getElementById('reportTitle').textContent='🌟 词性高手！'; document.getElementById('reportMsg').textContent='掌握得很好！继续练习拖拽和配对，你会更上一层楼！'; }
+  else { document.getElementById('reportTitle').textContent='💪 继续加油！'; document.getElementById('reportMsg').textContent='词性需要多接触多练习。回头看看词性卡片，再来一遍试试！'; }
+  
+  playAchieve();
+}
+
+// EXPAND
+function toggleExpand(header){
+  playClick();
+  header.nextElementSibling.classList.toggle('open');
+  header.querySelector('.expand-arrow').classList.toggle('open');
+}
+
+// BUDDY
+const tips = [
+  '💡 判断词性最快的方法：名词前可以加"一个"，动词前可以加"能/要"，形容词前可以加"很"！',
+  '🎯 量词千万不能和动词搞混！量词是"个、只、条、张"，动词是"跑、写、看"。',
+  '🔍 副词超级常见：非常、很、也、都、已经、马上、一定……见到它们记得标记！',
+  '🌟 遇到不确定的词，想想它在句子里的作用：修饰别人=副词/形容词，被修饰=名词/动词！',
+];
+let tipIdx=0; let buddyOpen=false;
+function toggleBuddy(){
+  playClick();
+  buddyOpen=!buddyOpen;
+  document.getElementById('buddyPopup').classList.toggle('open',buddyOpen);
+  if(buddyOpen){ document.getElementById('buddyTip').innerHTML=tips[tipIdx%tips.length]; tipIdx++; }
+}
+
+// TOAST
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('mainToast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// SECTION PROGRESS
+function updateSectionProgress(){
+  const secs=['sec-obj','sec-warm','sec-lv1','sec-lv2','sec-lv3','sec-boss','sec-report'];
+  let done=0;
+  secs.forEach((sid,i)=>{
+    const sec=document.getElementById(sid);
+    if(!sec) return;
+    if(sec.querySelectorAll('.option[disabled],.fill-input.correct-input,.fill-input.wrong-input,.zone-item').length>0){
+      done++;
+      document.getElementById('step'+i)?.classList.add('done');
+    }
+  });
+  updateProgress(done,7);
+}
+
+// INIT
+document.addEventListener('DOMContentLoaded',()=>{
+  let scrollTimer;
+  window.addEventListener('scroll',()=>{ clearTimeout(scrollTimer); scrollTimer=setTimeout(()=>{ try{localStorage.setItem('teachany_scroll_'+COURSE_ID,String(window.scrollY));}catch(e){} },500); });
+  try{ const pos=localStorage.getItem('teachany_scroll_'+COURSE_ID); if(pos) requestAnimationFrame(()=>window.scrollTo(0,parseInt(pos))); }catch(e){}
+  setTimeout(()=>{ if(!state.badges.has('start')) unlockBadge('badge-start','start','🌱 欢迎来到词性课堂！'); },1500);
+  updateProgress(0);
+});
+</script>
+</body>
+</html>

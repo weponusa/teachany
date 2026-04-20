@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>查字典 | 二年级语文 🔍</title>
+<style>
+  :root {
+    --bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--card:#fff;
+    --text:#2d3436;--muted:#636e72;--radius:20px;--shadow:0 8px 32px rgba(0,0,0,0.10);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  
+  /* ===== STARS / PROGRESS ===== */
+  #hud{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(255,251,240,0.95);backdrop-filter:blur(8px);padding:10px 20px;display:flex;align-items:center;gap:16px;box-shadow:0 2px 12px rgba(0,0,0,0.08);}
+  #stars-display{font-size:1.2rem;font-weight:700;color:#f9ca24;}
+  .progress-bar{flex:1;height:12px;background:#ffe0e0;border-radius:999px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:999px;transition:width 0.6s cubic-bezier(.34,1.56,.64,1);}
+  #section-label{font-size:0.9rem;color:var(--muted);font-weight:600;}
+
+  /* ===== SECTIONS ===== */
+  .section{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px 40px;opacity:0;transform:translateY(30px);transition:opacity 0.6s,transform 0.6s;pointer-events:none;}
+  .section.active{opacity:1;transform:translateY(0);pointer-events:all;}
+
+  /* ===== HERO ===== */
+  #s-hero{background:linear-gradient(135deg,#ff6b6b22,#4ecdc422,#ffe66d22);}
+  .hero-emoji{font-size:6rem;animation:bounce 1.5s infinite;}
+  @keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-16px);}
+  .hero-title{font-size:2.8rem;font-weight:900;background:linear-gradient(135deg,var(--primary),#a29bfe);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:16px 0 8px;text-align:center;}
+  .hero-sub{font-size:1.2rem;color:var(--muted);text-align:center;margin-bottom:24px;}
+  .hero-badges{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:32px;}
+  .badge{padding:6px 16px;border-radius:999px;font-size:0.85rem;font-weight:700;}
+  .badge-grade{background:#dfe6e9;color:#2d3436;}
+  .badge-sub{background:#fd79a822;color:#d63031;}
+  .badge-time{background:#00b89422;color:#00b894;}
+
+  /* ===== BUTTONS ===== */
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;border:none;border-radius:var(--radius);font-size:1.1rem;font-weight:700;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;box-shadow:var(--shadow);}
+  .btn:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,0.15);}
+  .btn:active{transform:translateY(0);}
+  .btn-primary{background:linear-gradient(135deg,var(--primary),#e84393);color:#fff;}
+  .btn-secondary{background:linear-gradient(135deg,var(--secondary),#26de81);color:#fff;}
+  .btn-accent{background:linear-gradient(135deg,var(--accent),#fd9644);color:#fff;}
+  .btn-ghost{background:var(--card);color:var(--primary);border:2px solid var(--primary);}
+
+  /* ===== CARD ===== */
+  .card{background:var(--card);border-radius:var(--radius);padding:28px;box-shadow:var(--shadow);width:100%;max-width:700px;margin-bottom:20px;}
+  .card-title{font-size:1.3rem;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+
+  /* ===== OBJECTIVE ===== */
+  .obj-list{list-style:none;display:flex;flex-direction:column;gap:12px;}
+  .obj-list li{display:flex;align-items:center;gap:12px;font-size:1.05rem;padding:10px 16px;background:#f8f9fa;border-radius:12px;}
+  .obj-icon{font-size:1.5rem;}
+
+  /* ===== WARMUP ===== */
+  .warmup-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;max-width:700px;}
+  .warmup-card{background:var(--card);border-radius:var(--radius);padding:20px;text-align:center;cursor:pointer;box-shadow:var(--shadow);transition:transform 0.2s,background 0.2s;font-size:1.8rem;}
+  .warmup-card:hover{transform:scale(1.05);}
+  .warmup-card.selected{background:#ff6b6b22;border:3px solid var(--primary);}
+  .warmup-card p{font-size:0.9rem;color:var(--muted);margin-top:6px;}
+
+  /* ===== DICTIONARY SIMULATOR ===== */
+  .dict-container{width:100%;max-width:760px;}
+  .dict-book{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+  .dict-tabs{display:flex;background:#f1f2f6;}
+  .dict-tab{flex:1;padding:12px;text-align:center;cursor:pointer;font-weight:600;font-size:0.95rem;transition:background 0.2s;border-radius:0;}
+  .dict-tab.active{background:var(--card);color:var(--primary);border-bottom:3px solid var(--primary);}
+  .dict-panel{padding:24px;display:none;}
+  .dict-panel.active{display:block;}
+
+  /* Radical lookup */
+  .radical-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin-bottom:16px;}
+  .radical-btn{padding:8px 4px;border:2px solid #dfe6e9;border-radius:10px;text-align:center;cursor:pointer;font-size:1.1rem;transition:all 0.2s;background:var(--card);}
+  .radical-btn:hover,.radical-btn.active{border-color:var(--primary);background:#ff6b6b11;color:var(--primary);}
+  .stroke-selector{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+  .stroke-btn{padding:6px 14px;border:2px solid #dfe6e9;border-radius:10px;cursor:pointer;font-size:0.9rem;background:var(--card);transition:all 0.2s;}
+  .stroke-btn:hover,.stroke-btn.active{border-color:var(--secondary);background:#4ecdc422;color:var(--secondary);}
+  .dict-result{background:#f8f9fa;border-radius:14px;padding:20px;margin-top:16px;display:none;}
+  .dict-result.show{display:block;animation:fadeIn 0.4s;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  .dict-char{font-size:3rem;font-weight:900;color:var(--primary);text-align:center;margin-bottom:12px;}
+  .dict-info{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .dict-info-item{background:var(--card);border-radius:10px;padding:10px;font-size:0.9rem;}
+  .dict-info-item strong{color:var(--primary);display:block;font-size:0.75rem;margin-bottom:4px;}
+
+  /* Pinyin lookup */
+  .pinyin-keyboard{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
+  .pinyin-row{display:flex;gap:6px;justify-content:center;}
+  .pinyin-key{padding:8px 12px;border:2px solid #dfe6e9;border-radius:10px;cursor:pointer;font-size:0.9rem;background:var(--card);min-width:40px;text-align:center;transition:all 0.2s;}
+  .pinyin-key:hover,.pinyin-key.active{border-color:var(--accent);background:#ffe66d33;}
+  .pinyin-input{width:100%;padding:10px 16px;border:2px solid #dfe6e9;border-radius:12px;font-size:1.1rem;margin-bottom:12px;outline:none;transition:border-color 0.2s;}
+  .pinyin-input:focus{border-color:var(--secondary);}
+
+  /* Stroke count */
+  .stroke-count-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px;}
+  .count-btn{padding:10px;border:2px solid #dfe6e9;border-radius:10px;text-align:center;cursor:pointer;font-size:0.9rem;background:var(--card);transition:all 0.2s;}
+  .count-btn:hover,.count-btn.active{border-color:var(--primary);background:#ff6b6b11;}
+  .char-list{display:flex;flex-wrap:wrap;gap:8px;padding:12px;background:#f8f9fa;border-radius:12px;}
+  .char-item{padding:8px 14px;background:var(--card);border-radius:10px;cursor:pointer;font-size:1.2rem;border:2px solid transparent;transition:all 0.2s;}
+  .char-item:hover{border-color:var(--primary);background:#ff6b6b11;}
+
+  /* ===== GAME / EXERCISES ===== */
+  .exercise-area{width:100%;max-width:700px;}
+  .question-card{background:var(--card);border-radius:var(--radius);padding:28px;box-shadow:var(--shadow);margin-bottom:16px;}
+  .q-text{font-size:1.15rem;font-weight:600;margin-bottom:20px;line-height:1.6;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option-btn{padding:12px 20px;border:2px solid #dfe6e9;border-radius:14px;background:var(--card);cursor:pointer;font-size:1rem;text-align:left;transition:all 0.2s;}
+  .option-btn:hover{border-color:var(--secondary);background:#4ecdc411;}
+  .option-btn.correct{border-color:#00b894;background:#00b89422;color:#00b894;}
+  .option-btn.wrong{border-color:var(--primary);background:#ff6b6b22;color:var(--primary);}
+  .feedback{padding:14px 20px;border-radius:14px;font-weight:600;margin-top:12px;display:none;}
+  .feedback.show{display:block;animation:fadeIn 0.3s;}
+  .feedback.correct{background:#00b89422;color:#00b894;}
+  .feedback.wrong{background:#ff6b6b22;color:#e17055;}
+
+  /* ===== BOSS CHALLENGE ===== */
+  .boss-container{width:100%;max-width:700px;}
+  .boss-char{font-size:6rem;text-align:center;margin:20px 0;animation:wobble 2s infinite;}
+  @keyframes wobble{0%,100%{transform:rotate(-3deg);}50%{transform:rotate(3deg);}}
+  .boss-progress{width:100%;height:16px;background:#ffe0e0;border-radius:999px;overflow:hidden;margin:12px 0;}
+  .boss-fill{height:100%;background:linear-gradient(90deg,#ff6b6b,#fd79a8);border-radius:999px;transition:width 0.5s;}
+  .boss-q{font-size:1.2rem;font-weight:700;text-align:center;margin:16px 0;}
+  .boss-options{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .boss-opt{padding:16px;border:3px solid #dfe6e9;border-radius:var(--radius);background:var(--card);cursor:pointer;font-size:1.1rem;text-align:center;transition:all 0.2s;font-weight:600;}
+  .boss-opt:hover{border-color:var(--primary);transform:scale(1.03);}
+
+  /* ===== SCORECARD ===== */
+  .score-section{width:100%;max-width:600px;text-align:center;}
+  .score-big{font-size:5rem;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .achievements-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0;}
+  .achievement{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);text-align:center;opacity:0.4;transition:all 0.3s;}
+  .achievement.unlocked{opacity:1;animation:pop 0.5s;}
+  @keyframes pop{0%{transform:scale(0);}60%{transform:scale(1.15);}100%{transform:scale(1);}}
+  .ach-icon{font-size:2rem;}
+  .ach-name{font-size:0.75rem;font-weight:700;color:var(--muted);margin-top:4px;}
+
+  /* ===== EXPAND ===== */
+  .expand-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;max-width:700px;}
+  .expand-card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);cursor:pointer;transition:transform 0.2s;}
+  .expand-card:hover{transform:translateY(-4px);}
+  .expand-card h3{font-size:1rem;font-weight:700;margin-bottom:8px;}
+  .expand-card p{font-size:0.9rem;color:var(--muted);}
+
+  /* ===== AI COMPANION ===== */
+  #companion{position:fixed;bottom:20px;right:20px;z-index:200;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+  .companion-bubble{background:var(--card);border-radius:16px;padding:12px 16px;box-shadow:var(--shadow);max-width:240px;font-size:0.9rem;line-height:1.4;display:none;animation:fadeIn 0.3s;}
+  .companion-bubble.show{display:block;}
+  .companion-avatar{width:60px;height:60px;background:linear-gradient(135deg,#4ecdc4,#45b7d1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;cursor:pointer;box-shadow:var(--shadow);animation:float 3s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+
+  /* ===== STAR BURST ===== */
+  .star-burst{position:fixed;pointer-events:none;z-index:999;font-size:2rem;animation:burst 0.8s forwards;}
+  @keyframes burst{0%{opacity:1;transform:scale(0) rotate(0deg);}100%{opacity:0;transform:scale(2.5) rotate(180deg) translateY(-60px);}}
+
+  /* ===== SECTION TITLES ===== */
+  .section-title{font-size:2rem;font-weight:900;text-align:center;margin-bottom:8px;}
+  .section-sub{font-size:1rem;color:var(--muted);text-align:center;margin-bottom:28px;}
+
+  /* ===== RESPONSIVE ===== */
+  @media(max-width:480px){
+    .achievements-grid{grid-template-columns:repeat(2,1fr);}
+    .expand-cards{grid-template-columns:1fr;}
+    .boss-options{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<!-- HUD -->
+<div id="hud">
+  <div id="stars-display">⭐ 0</div>
+  <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+  <div id="section-label">开始学习</div>
+</div>
+
+<!-- AI Companion -->
+<div id="companion">
+  <div class="companion-bubble" id="comp-bubble">👋 嗨！我是小书虫🐛，点我获取提示！</div>
+  <div class="companion-avatar" id="comp-avatar" onclick="toggleCompanion()">🐛</div>
+</div>
+
+<!-- ======== SECTION 1: HERO ======== -->
+<div class="section active" id="s-hero">
+  <div style="text-align:center;">
+    <div class="hero-emoji">🔍</div>
+    <h1 class="hero-title">查字典大冒险</h1>
+    <p class="hero-sub">二年级语文 · 掌握三种查字典方法</p>
+    <div class="hero-badges">
+      <span class="badge badge-grade">📚 二年级</span>
+      <span class="badge badge-sub">🇨🇳 语文</span>
+      <span class="badge badge-time">⏱ 约30分钟</span>
+      <span class="badge" style="background:#a29bfe22;color:#6c5ce7;">⭐ 最高100分</span>
+    </div>
+    <button class="btn btn-primary" onclick="goTo('s-objective')">开始冒险 🚀</button>
+  </div>
+</div>
+
+<!-- ======== SECTION 2: OBJECTIVE ======== -->
+<div class="section" id="s-objective">
+  <h2 class="section-title">🎯 今天的目标</h2>
+  <p class="section-sub">学完这节课，你能做到↓</p>
+  <div class="card">
+    <ul class="obj-list">
+      <li><span class="obj-icon">🔤</span>用<strong>拼音查字法</strong>找到不认识的字</li>
+      <li><span class="obj-icon">🖊️</span>用<strong>部首查字法</strong>按偏旁找汉字</li>
+      <li><span class="obj-icon">🔢</span>用<strong>笔画查字法</strong>按笔画数查字</li>
+      <li><span class="obj-icon">📖</span>读懂字典里的字的解释</li>
+      <li><span class="obj-icon">🏆</span>挑战Boss关并获得全部成就！</li>
+    </ul>
+  </div>
+  <button class="btn btn-secondary" onclick="addStars(5);goTo('s-warmup')">我准备好了！💪</button>
+</div>
+
+<!-- ======== SECTION 3: WARMUP ======== -->
+<div class="section" id="s-warmup">
+  <h2 class="section-title">🔥 热身时间</h2>
+  <p class="section-sub">你已经认识哪些查字方法？点击选择</p>
+  <div class="warmup-grid">
+    <div class="warmup-card" onclick="selectWarmup(this,'a')">
+      🔤
+      <p>拼音查字法</p>
+    </div>
+    <div class="warmup-card" onclick="selectWarmup(this,'b')">
+      🖊️
+      <p>部首查字法</p>
+    </div>
+    <div class="warmup-card" onclick="selectWarmup(this,'c')">
+      🔢
+      <p>笔画查字法</p>
+    </div>
+    <div class="warmup-card" onclick="selectWarmup(this,'d')">
+      ❓
+      <p>我都不知道</p>
+    </div>
+  </div>
+  <div id="warmup-feedback" style="margin-top:16px;display:none;text-align:center;font-size:1rem;color:var(--secondary);font-weight:600;"></div>
+  <button class="btn btn-primary" style="margin-top:20px" onclick="goTo('s-level1')">进入第一关 📖</button>
+</div>
+
+<!-- ======== SECTION 4: LEVEL 1 – 拼音查字法 ======== -->
+<div class="section" id="s-level1">
+  <h2 class="section-title">📖 第一关：拼音查字法</h2>
+  <p class="section-sub">知道读音，用拼音查！</p>
+  <div class="dict-container">
+    <!-- Intro card -->
+    <div class="card" style="border-left:5px solid var(--primary);">
+      <div class="card-title">📌 方法口诀</div>
+      <p style="font-size:1.1rem;line-height:1.8;color:#2d3436;">
+        知道读音用拼音，<br>
+        先找声母再韵母，<br>
+        在音节表里找一找，<br>
+        翻到页码字就在！
+      </p>
+    </div>
+    <!-- Interactive pinyin lookup -->
+    <div class="card">
+      <div class="card-title">🎮 模拟查字典：查"苹"字</div>
+      <p style="margin-bottom:14px;color:var(--muted);">第一步：输入拼音 <strong>píng</strong></p>
+      <div class="pinyin-keyboard">
+        <div class="pinyin-row" id="initial-row">
+          <span style="font-size:0.8rem;color:var(--muted);align-self:center;min-width:48px;">声母：</span>
+          <button class="pinyin-key" onclick="selectInitial(this,'b')">b</button>
+          <button class="pinyin-key" onclick="selectInitial(this,'p')">p</button>
+          <button class="pinyin-key" onclick="selectInitial(this,'m')">m</button>
+          <button class="pinyin-key" onclick="selectInitial(this,'f')">f</button>
+          <button class="pinyin-key" onclick="selectInitial(this,'d')">d</button>
+          <button class="pinyin-key" onclick="selectInitial(this,'t')">t</button>
+          <button class="pinyin-key" onclick="selectInitial(this,'n')">n</button>
+          <button class="pinyin-key" onclick="selectInitial(this,'l')">l</button>
+        </div>
+        <div class="pinyin-row" id="final-row">
+          <span style="font-size:0.8rem;color:var(--muted);align-self:center;min-width:48px;">韵母：</span>
+          <button class="pinyin-key" onclick="selectFinal(this,'ing')">ing</button>
+          <button class="pinyin-key" onclick="selectFinal(this,'an')">an</button>
+          <button class="pinyin-key" onclick="selectFinal(this,'en')">en</button>
+          <button class="pinyin-key" onclick="selectFinal(this,'ang')">ang</button>
+          <button class="pinyin-key" onclick="selectFinal(this,'eng')">eng</button>
+          <button class="pinyin-key" onclick="selectFinal(this,'ong')">ong</button>
+        </div>
+        <div class="pinyin-row">
+          <span style="font-size:0.8rem;color:var(--muted);align-self:center;min-width:48px;">声调：</span>
+          <button class="pinyin-key" onclick="selectTone(this,'1')">ˉ (1声)</button>
+          <button class="pinyin-key" onclick="selectTone(this,'2')">ˊ (2声)</button>
+          <button class="pinyin-key" onclick="selectTone(this,'3')">ˇ (3声)</button>
+          <button class="pinyin-key" onclick="selectTone(this,'4')">ˋ (4声)</button>
+        </div>
+      </div>
+      <div id="pinyin-composed" style="font-size:1.4rem;font-weight:700;color:var(--primary);text-align:center;margin:8px 0;min-height:36px;"></div>
+      <button class="btn btn-secondary" style="width:100%" onclick="lookupPinyin()">🔍 在字典里查找</button>
+      <div class="dict-result" id="pinyin-result">
+        <div class="dict-char">苹</div>
+        <div class="dict-info">
+          <div class="dict-info-item"><strong>拼音</strong>píng</div>
+          <div class="dict-info-item"><strong>部首</strong>艹（草字头）</div>
+          <div class="dict-info-item"><strong>笔画</strong>8画</div>
+          <div class="dict-info-item"><strong>词语</strong>苹果、苹果树</div>
+        </div>
+        <p style="margin-top:12px;font-size:0.95rem;color:var(--muted);">🎉 找到了！苹果的"苹"，读 píng，是草字头！</p>
+        <button class="btn btn-primary" style="margin-top:12px" onclick="addStars(10);playCorrect();checkL1()">✅ 太棒了！+10⭐</button>
+      </div>
+    </div>
+    <!-- Quiz -->
+    <div class="card" id="l1-quiz" style="display:none;">
+      <div class="card-title">🧩 小测试</div>
+      <p class="q-text">用拼音查字法查"马"字，第一步应该：</p>
+      <div class="options">
+        <button class="option-btn" onclick="answerL1(this,'a')">A. 先数笔画</button>
+        <button class="option-btn" onclick="answerL1(this,'b')">B. 先找声母 m，再找韵母 a</button>
+        <button class="option-btn" onclick="answerL1(this,'c')">C. 先找部首</button>
+        <button class="option-btn" onclick="answerL1(this,'d')">D. 直接翻字典</button>
+      </div>
+      <div class="feedback" id="l1-fb"></div>
+    </div>
+  </div>
+  <button class="btn btn-accent" style="margin-top:16px" onclick="goTo('s-level2')">进入第二关 🖊️</button>
+</div>
+
+<!-- ======== SECTION 5: LEVEL 2 – 部首查字法 ======== -->
+<div class="section" id="s-level2">
+  <h2 class="section-title">🖊️ 第二关：部首查字法</h2>
+  <p class="section-sub">认识偏旁，按部首查！</p>
+  <div class="dict-container">
+    <div class="card" style="border-left:5px solid var(--secondary);">
+      <div class="card-title">📌 查字步骤</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:center;gap:12px;padding:10px;background:#f8f9fa;border-radius:12px;">
+          <span style="font-size:1.5rem;">1️⃣</span>
+          <span>找出这个字的<strong>部首</strong>（偏旁）</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:10px;background:#f8f9fa;border-radius:12px;">
+          <span style="font-size:1.5rem;">2️⃣</span>
+          <span>数部首的<strong>笔画数</strong>，在部首目录里找</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:10px;background:#f8f9fa;border-radius:12px;">
+          <span style="font-size:1.5rem;">3️⃣</span>
+          <span>找到部首后，数<strong>除部首外</strong>的剩余笔画</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:10px;background:#f8f9fa;border-radius:12px;">
+          <span style="font-size:1.5rem;">4️⃣</span>
+          <span>在相应笔画数里找到这个字，<strong>翻到页码</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎮 模拟查字典：查"清"字</div>
+      <p style="margin-bottom:16px;color:var(--muted);">点击正确的部首：</p>
+      <div class="radical-grid" id="radical-grid">
+        <div class="radical-btn" onclick="selectRadical(this,'氵')">氵</div>
+        <div class="radical-btn" onclick="selectRadical(this,'木')">木</div>
+        <div class="radical-btn" onclick="selectRadical(this,'日')">日</div>
+        <div class="radical-btn" onclick="selectRadical(this,'口')">口</div>
+        <div class="radical-btn" onclick="selectRadical(this,'土')">土</div>
+        <div class="radical-btn" onclick="selectRadical(this,'人')">亻</div>
+        <div class="radical-btn" onclick="selectRadical(this,'女')">女</div>
+        <div class="radical-btn" onclick="selectRadical(this,'手')">扌</div>
+      </div>
+      <p style="margin-bottom:10px;color:var(--muted);">除部首外还有几画？</p>
+      <div class="stroke-selector" id="stroke-sel">
+        <button class="stroke-btn" onclick="selectStroke(this,'6')">6画</button>
+        <button class="stroke-btn" onclick="selectStroke(this,'7')">7画</button>
+        <button class="stroke-btn" onclick="selectStroke(this,'8')">8画</button>
+        <button class="stroke-btn" onclick="selectStroke(this,'9')">9画</button>
+        <button class="stroke-btn" onclick="selectStroke(this,'10')">10画</button>
+      </div>
+      <button class="btn btn-secondary" style="width:100%" onclick="lookupRadical()">🔍 查找结果</button>
+      <div class="dict-result" id="radical-result">
+        <div class="dict-char">清</div>
+        <div class="dict-info">
+          <div class="dict-info-item"><strong>拼音</strong>qīng</div>
+          <div class="dict-info-item"><strong>部首</strong>氵（三点水）3画</div>
+          <div class="dict-info-item"><strong>总笔画</strong>11画</div>
+          <div class="dict-info-item"><strong>词语</strong>清水、清楚、清晨</div>
+        </div>
+        <p style="margin-top:12px;font-size:0.95rem;color:var(--muted);">✅ 氵是部首，剩余8画，找到"清"！</p>
+        <button class="btn btn-primary" style="margin-top:12px" onclick="addStars(10);playCorrect();checkL2()">✅ 太棒了！+10⭐</button>
+      </div>
+    </div>
+    <div class="card" id="l2-quiz" style="display:none;">
+      <div class="card-title">🧩 小测试</div>
+      <p class="q-text">"明"字的部首是哪个？</p>
+      <div class="options">
+        <button class="option-btn" onclick="answerL2(this,'a')">A. 月</button>
+        <button class="option-btn" onclick="answerL2(this,'b')">B. 日</button>
+        <button class="option-btn" onclick="answerL2(this,'c')">C. 明</button>
+        <button class="option-btn" onclick="answerL2(this,'d')">D. 口</button>
+      </div>
+      <div class="feedback" id="l2-fb"></div>
+    </div>
+  </div>
+  <button class="btn btn-accent" style="margin-top:16px" onclick="goTo('s-level3')">进入第三关 🔢</button>
+</div>
+
+<!-- ======== SECTION 6: LEVEL 3 – 笔画查字法 ======== -->
+<div class="section" id="s-level3">
+  <h2 class="section-title">🔢 第三关：笔画查字法</h2>
+  <p class="section-sub">数笔画，查难认的字！</p>
+  <div class="dict-container">
+    <div class="card" style="border-left:5px solid var(--accent);">
+      <div class="card-title">📌 五种基本笔画</div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;text-align:center;">
+        <div style="padding:12px;background:#ff6b6b22;border-radius:12px;"><div style="font-size:2rem;">一</div><div style="font-size:0.8rem;color:var(--muted);">横 héng</div></div>
+        <div style="padding:12px;background:#4ecdc422;border-radius:12px;"><div style="font-size:2rem;">丨</div><div style="font-size:0.8rem;color:var(--muted);">竖 shù</div></div>
+        <div style="padding:12px;background:#ffe66d44;border-radius:12px;"><div style="font-size:2rem;">丿</div><div style="font-size:0.8rem;color:var(--muted);">撇 piě</div></div>
+        <div style="padding:12px;background:#a29bfe22;border-radius:12px;"><div style="font-size:2rem;">乀</div><div style="font-size:0.8rem;color:var(--muted);">捺 nà</div></div>
+        <div style="padding:12px;background:#fd79a822;border-radius:12px;"><div style="font-size:2rem;">乙</div><div style="font-size:0.8rem;color:var(--muted);">折 zhé</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🎮 数一数，查一查</div>
+      <p style="margin-bottom:16px;color:var(--muted);">"王"字有几画？选择后查找！</p>
+      <div class="stroke-count-grid">
+        <div class="count-btn" onclick="selectCount(this,'3')">3画</div>
+        <div class="count-btn" onclick="selectCount(this,'4')">4画</div>
+        <div class="count-btn" onclick="selectCount(this,'5')">5画</div>
+        <div class="count-btn" onclick="selectCount(this,'6')">6画</div>
+        <div class="count-btn" onclick="selectCount(this,'7')">7画</div>
+        <div class="count-btn" onclick="selectCount(this,'8')">8画</div>
+      </div>
+      <div class="char-list" id="char-list" style="display:none;"></div>
+      <div class="dict-result" id="count-result">
+        <div class="dict-char">王</div>
+        <div class="dict-info">
+          <div class="dict-info-item"><strong>拼音</strong>wáng</div>
+          <div class="dict-info-item"><strong>笔画</strong>4画</div>
+          <div class="dict-info-item"><strong>部首</strong>王</div>
+          <div class="dict-info-item"><strong>词语</strong>王子、国王</div>
+        </div>
+        <button class="btn btn-primary" style="margin-top:12px" onclick="addStars(10);playCorrect();checkL3()">✅ 找到了！+10⭐</button>
+      </div>
+    </div>
+    <div class="card" id="l3-quiz" style="display:none;">
+      <div class="card-title">🧩 小测试</div>
+      <p class="q-text">"山"字是几笔？</p>
+      <div class="options">
+        <button class="option-btn" onclick="answerL3(this,'a')">A. 2画</button>
+        <button class="option-btn" onclick="answerL3(this,'b')">B. 3画</button>
+        <button class="option-btn" onclick="answerL3(this,'c')">C. 4画</button>
+        <button class="option-btn" onclick="answerL3(this,'d')">D. 5画</button>
+      </div>
+      <div class="feedback" id="l3-fb"></div>
+    </div>
+  </div>
+  <button class="btn btn-primary" style="margin-top:16px" onclick="goTo('s-boss')">挑战Boss关 👾</button>
+</div>
+
+<!-- ======== SECTION 7: BOSS ======== -->
+<div class="section" id="s-boss">
+  <h2 class="section-title">👾 Boss关：神秘字挑战</h2>
+  <p class="section-sub">连闯5题，满分通关！</p>
+  <div class="boss-container">
+    <div class="boss-char" id="boss-char">🔍</div>
+    <div class="boss-progress"><div class="boss-fill" id="boss-fill" style="width:0%"></div></div>
+    <p style="text-align:center;font-size:0.9rem;color:var(--muted);" id="boss-progress-text">第 1 / 5 题</p>
+    <div class="card">
+      <div class="boss-q" id="boss-q">准备好了吗？</div>
+      <div class="boss-options" id="boss-opts">
+        <button class="boss-opt" id="bopt-a" onclick="answerBoss('a')"></button>
+        <button class="boss-opt" id="bopt-b" onclick="answerBoss('b')"></button>
+        <button class="boss-opt" id="bopt-c" onclick="answerBoss('c')"></button>
+        <button class="boss-opt" id="bopt-d" onclick="answerBoss('d')"></button>
+      </div>
+      <div class="feedback" id="boss-fb"></div>
+    </div>
+    <button class="btn btn-primary" id="boss-start" onclick="startBoss()">开始挑战！⚡</button>
+  </div>
+</div>
+
+<!-- ======== SECTION 8: SCORECARD ======== -->
+<div class="section" id="s-score">
+  <div class="score-section">
+    <div style="font-size:3rem;margin-bottom:8px;">🎉</div>
+    <h2 class="section-title">学习完成！</h2>
+    <div class="score-big" id="final-score">0</div>
+    <p style="font-size:1.1rem;color:var(--muted);margin-bottom:24px;">总得分</p>
+    <div class="achievements-grid" id="ach-grid">
+      <div class="achievement" id="ach-start"><div class="ach-icon">🚀</div><div class="ach-name">开启冒险</div></div>
+      <div class="achievement" id="ach-pinyin"><div class="ach-icon">🔤</div><div class="ach-name">拼音达人</div></div>
+      <div class="achievement" id="ach-radical"><div class="ach-icon">🖊️</div><div class="ach-name">部首专家</div></div>
+      <div class="achievement" id="ach-stroke"><div class="ach-icon">🔢</div><div class="ach-name">笔画高手</div></div>
+      <div class="achievement" id="ach-boss"><div class="ach-icon">👾</div><div class="ach-name">Boss终结者</div></div>
+      <div class="achievement" id="ach-speed"><div class="ach-icon">⚡</div><div class="ach-name">闪电查字</div></div>
+      <div class="achievement" id="ach-perfect"><div class="ach-icon">💯</div><div class="ach-name">满分状元</div></div>
+      <div class="achievement" id="ach-bug"><div class="ach-icon">🐛</div><div class="ach-name">小书虫之友</div></div>
+    </div>
+    <button class="btn btn-primary" onclick="goTo('s-expand')">查看拓展内容 📚</button>
+    <button class="btn btn-ghost" style="margin-left:12px" onclick="restartAll()">再来一次 🔄</button>
+  </div>
+</div>
+
+<!-- ======== SECTION 9: EXPAND ======== -->
+<div class="section" id="s-expand">
+  <h2 class="section-title">📚 拓展学习</h2>
+  <p class="section-sub">继续探索，成为查字典小达人！</p>
+  <div class="expand-cards">
+    <div class="expand-card">
+      <div style="font-size:2.5rem;">📖</div>
+      <h3>字典小故事</h3>
+      <p>古代没有字典，人们怎么查字？《说文解字》是中国第一本字典！</p>
+    </div>
+    <div class="expand-card">
+      <div style="font-size:2.5rem;">🎯</div>
+      <h3>查字小游戏</h3>
+      <p>每天查5个不认识的字，用三种方法各查一遍，成为查字达人！</p>
+    </div>
+    <div class="expand-card">
+      <div style="font-size:2.5rem;">🌟</div>
+      <h3>认识更多字典</h3>
+      <p>《新华字典》《现代汉语词典》《成语词典》，各有各的用途！</p>
+    </div>
+    <div class="expand-card">
+      <div style="font-size:2.5rem;">✏️</div>
+      <h3>家庭作业</h3>
+      <p>找出课本里3个不认识的字，分别用三种方法查一查，记录下来。</p>
+    </div>
+  </div>
+  <div style="margin-top:24px;text-align:center;">
+    <p style="font-size:1.2rem;font-weight:700;color:var(--primary);">🎊 恭喜！你已掌握查字典的三种方法！</p>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+const state = {
+  stars: 0,
+  sections: ['s-hero','s-objective','s-warmup','s-level1','s-level2','s-level3','s-boss','s-score','s-expand'],
+  current: 0,
+  achievements: {},
+  pinyinInitial: '', pinyinFinal: '', pinyinTone: '',
+  selectedRadical: '', selectedStroke: '',
+  selectedCount: '',
+  bossIdx: 0, bossScore: 0,
+  companionShown: false,
+  startTime: Date.now(),
+  l1done: false, l2done: false, l3done: false
+};
+
+const bossQuestions = [
+  {q:'查"花"字最快的方法是？（已知读音 huā）',opts:['笔画查字法','部首查字法','拼音查字法','随便翻'],ans:'c',char:'花'},
+  {q:'"木"字旁的字应该用哪种查字法？',opts:['拼音查字法','部首查字法','笔画查字法','偏旁查字法'],ans:'b',char:'树'},
+  {q:'"一"字有几画？',opts:['2画','1画','3画','0画'],ans:'b',char:'一'},
+  {q:'部首查字法，第一步是什么？',opts:['数总笔画','找部首','查音节表','翻字典'],ans:'b',char:'🔍'},
+  {q:'"字"字的部首是？',opts:['子','宀','字','田'],ans:'b',char:'字'}
+];
+
+// ===== AUDIO =====
+let actx = null;
+function getACtx(){if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();return actx;}
+function playTone(freq,dur,type='sine'){
+  try{const a=getACtx();const o=a.createOscillator();const g=a.createGain();
+  o.connect(g);g.connect(a.destination);o.type=type;o.frequency.value=freq;
+  g.gain.setValueAtTime(0.3,a.currentTime);g.gain.exponentialRampToValueAtTime(0.001,a.currentTime+dur);
+  o.start();o.stop(a.currentTime+dur);}catch(e){}
+}
+function playCorrect(){playTone(523,0.1);setTimeout(()=>playTone(659,0.1),100);setTimeout(()=>playTone(784,0.2),200);}
+function playWrong(){playTone(220,0.3,'sawtooth');}
+function playStarSound(){playTone(880,0.08);setTimeout(()=>playTone(1047,0.08),80);setTimeout(()=>playTone(1319,0.15),160);}
+
+// ===== STARS =====
+function addStars(n){
+  state.stars+=n;
+  document.getElementById('stars-display').textContent='⭐ '+state.stars;
+  playStarSound();
+  burstStars();
+}
+function burstStars(){
+  for(let i=0;i<3;i++){
+    const el=document.createElement('div');
+    el.className='star-burst';el.textContent='⭐';
+    el.style.left=Math.random()*80+10+'vw';
+    el.style.top=Math.random()*60+20+'vh';
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),900);
+  }
+}
+
+// ===== NAVIGATION =====
+function goTo(id){
+  const idx=state.sections.indexOf(id);
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  const target=document.getElementById(id);
+  if(target){target.classList.add('active');target.scrollIntoView({behavior:'smooth',block:'start'});}
+  state.current=idx;
+  updateHUD(id);
+  updateCompanionHint(id);
+}
+function updateHUD(id){
+  const labels={'s-hero':'开始','s-objective':'目标','s-warmup':'热身',
+    's-level1':'第一关','s-level2':'第二关','s-level3':'第三关',
+    's-boss':'Boss关','s-score':'成绩单','s-expand':'拓展'};
+  document.getElementById('section-label').textContent=labels[id]||'';
+  const pct=Math.round((state.sections.indexOf(id)/8)*100);
+  document.getElementById('prog-fill').style.width=pct+'%';
+}
+
+// ===== WARMUP =====
+function selectWarmup(el,key){
+  document.querySelectorAll('.warmup-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  const fb=document.getElementById('warmup-feedback');
+  const msgs={a:'✅ 你已经认识拼音查字法，很棒！',b:'✅ 你知道部首查字法，今天我们深入学习！',c:'✅ 了解笔画查字法！今天我们都会复习的。',d:'😊 没关系！今天我们一起学三种方法！'};
+  fb.textContent=msgs[key];fb.style.display='block';
+  addStars(2);unlockAch('ach-start');
+}
+
+// ===== LEVEL 1 – PINYIN =====
+function selectInitial(el,v){document.querySelectorAll('#initial-row .pinyin-key').forEach(k=>k.classList.remove('active'));el.classList.add('active');state.pinyinInitial=v;updateComposed();}
+function selectFinal(el,v){document.querySelectorAll('#final-row .pinyin-key').forEach(k=>k.classList.remove('active'));el.classList.add('active');state.pinyinFinal=v;updateComposed();}
+function selectTone(el,v){document.querySelectorAll('.pinyin-key[onclick*="selectTone"]').forEach(k=>k.classList.remove('active'));el.classList.add('active');state.pinyinTone=v;updateComposed();}
+function updateComposed(){
+  const tones=['','ˉ','ˊ','ˇ','ˋ'];
+  const t=parseInt(state.pinyinTone)||0;
+  document.getElementById('pinyin-composed').textContent=state.pinyinInitial+(state.pinyinFinal||'')+(tones[t]||'');
+}
+function lookupPinyin(){
+  if(state.pinyinInitial==='p'&&state.pinyinFinal==='ing'&&state.pinyinTone==='2'){
+    document.getElementById('pinyin-result').classList.add('show');
+    playCorrect();
+  }else{
+    setCompanion('🐛 提示：找声母 p，韵母 ing，第2声哦！');
+    playWrong();
+  }
+}
+function checkL1(){document.getElementById('l1-quiz').style.display='block';unlockAch('ach-pinyin');}
+function answerL1(el,ans){
+  document.querySelectorAll('#l1-quiz .option-btn').forEach(b=>b.disabled=true);
+  const fb=document.getElementById('l1-fb');
+  if(ans==='b'){el.classList.add('correct');fb.textContent='🎉 正确！拼音查字法先找声母再找韵母！';fb.className='feedback correct show';addStars(5);playCorrect();}
+  else{el.classList.add('wrong');document.querySelectorAll('#l1-quiz .option-btn')[1].classList.add('correct');fb.textContent='🤔 应该先找声母 m，再找韵母 a！';fb.className='feedback wrong show';playWrong();}
+  state.l1done=true;
+}
+
+// ===== LEVEL 2 – RADICAL =====
+function selectRadical(el,v){document.querySelectorAll('.radical-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');state.selectedRadical=v;}
+function selectStroke(el,v){document.querySelectorAll('.stroke-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');state.selectedStroke=v;}
+function lookupRadical(){
+  if(state.selectedRadical==='氵'&&state.selectedStroke==='8'){
+    document.getElementById('radical-result').classList.add('show');playCorrect();
+  }else{setCompanion('🐛 提示："清"的部首是氵（三点水），剩余8画！');playWrong();}
+}
+function checkL2(){document.getElementById('l2-quiz').style.display='block';unlockAch('ach-radical');}
+function answerL2(el,ans){
+  document.querySelectorAll('#l2-quiz .option-btn').forEach(b=>b.disabled=true);
+  const fb=document.getElementById('l2-fb');
+  if(ans==='b'){el.classList.add('correct');fb.textContent='🎉 正确！"明"的部首是日！';fb.className='feedback correct show';addStars(5);playCorrect();}
+  else{el.classList.add('wrong');document.querySelectorAll('#l2-quiz .option-btn')[1].classList.add('correct');fb.textContent='💡 "明"字，左边的"日"是部首！';fb.className='feedback wrong show';playWrong();}
+  state.l2done=true;
+}
+
+// ===== LEVEL 3 – STROKE COUNT =====
+function selectCount(el,v){
+  document.querySelectorAll('.count-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');state.selectedCount=v;
+  const charList=document.getElementById('char-list');
+  const chars={
+    '3':['口','山','土','大','小','万','千'],
+    '4':['王','天','不','中','五','手','木'],
+    '5':['白','目','石','田','立','玉','平'],
+    '6':['米','字','安','先','年','好','有']
+  };
+  const list=chars[v]||['...'];
+  charList.innerHTML=list.map(c=>`<div class="char-item" onclick="charClick(this,'${c}')">${c}</div>`).join('');
+  charList.style.display='flex';
+}
+function charClick(el,c){
+  if(c==='王'&&state.selectedCount==='4'){
+    document.getElementById('count-result').classList.add('show');playCorrect();
+    document.querySelectorAll('.char-item').forEach(i=>i.style.pointerEvents='none');
+  }else{setCompanion('🐛 提示：找到"王"字，它是4画！');playWrong();}
+}
+function checkL3(){document.getElementById('l3-quiz').style.display='block';unlockAch('ach-stroke');}
+function answerL3(el,ans){
+  document.querySelectorAll('#l3-quiz .option-btn').forEach(b=>b.disabled=true);
+  const fb=document.getElementById('l3-fb');
+  if(ans==='b'){el.classList.add('correct');fb.textContent='🎉 正确！山字3画：竖、竖折竖、竖！';fb.className='feedback correct show';addStars(5);playCorrect();}
+  else{el.classList.add('wrong');document.querySelectorAll('#l3-quiz .option-btn')[1].classList.add('correct');fb.textContent='💡 "山"字共3画！';fb.className='feedback wrong show';playWrong();}
+  state.l3done=true;
+}
+
+// ===== BOSS =====
+function startBoss(){
+  document.getElementById('boss-start').style.display='none';
+  state.bossIdx=0;state.bossScore=0;
+  showBossQ();
+}
+function showBossQ(){
+  if(state.bossIdx>=bossQuestions.length){endBoss();return;}
+  const q=bossQuestions[state.bossIdx];
+  document.getElementById('boss-char').textContent=q.char;
+  document.getElementById('boss-q').textContent=q.q;
+  document.getElementById('boss-progress-text').textContent=`第 ${state.bossIdx+1} / 5 题`;
+  document.getElementById('boss-fill').style.width=(state.bossIdx/5*100)+'%';
+  ['a','b','c','d'].forEach((k,i)=>{
+    const b=document.getElementById('bopt-'+k);
+    b.textContent=String.fromCharCode(65+i)+'. '+q.opts[i];
+    b.className='boss-opt';b.disabled=false;
+  });
+  document.getElementById('boss-fb').className='feedback';
+}
+function answerBoss(ans){
+  const q=bossQuestions[state.bossIdx];
+  ['a','b','c','d'].forEach(k=>document.getElementById('bopt-'+k).disabled=true);
+  const fb=document.getElementById('boss-fb');
+  if(ans===q.ans){
+    document.getElementById('bopt-'+ans).style.background='#00b89422';
+    document.getElementById('bopt-'+ans).style.borderColor='#00b894';
+    fb.textContent='🎉 正确！+10分';fb.className='feedback correct show';
+    state.bossScore+=10;addStars(5);playCorrect();
+  }else{
+    document.getElementById('bopt-'+ans).style.background='#ff6b6b22';
+    document.getElementById('bopt-'+ans).style.borderColor='#ff6b6b';
+    document.getElementById('bopt-'+q.ans).style.background='#00b89422';
+    fb.textContent='❌ 答错了，正确答案已标出';fb.className='feedback wrong show';playWrong();
+  }
+  state.bossIdx++;
+  setTimeout(()=>showBossQ(),1200);
+}
+function endBoss(){
+  document.getElementById('boss-q').textContent='🎊 Boss关挑战完成！得了'+state.bossScore+'分！';
+  document.getElementById('boss-opts').style.display='none';
+  document.getElementById('boss-fill').style.width='100%';
+  unlockAch('ach-boss');
+  if(state.bossScore===50)unlockAch('ach-perfect');
+  const elapsed=(Date.now()-state.startTime)/1000;
+  if(elapsed<600)unlockAch('ach-speed');
+  addStars(state.bossScore/2);
+  setTimeout(()=>{goTo('s-score');showScoreCard();},1500);
+}
+
+// ===== SCORE =====
+function showScoreCard(){
+  document.getElementById('final-score').textContent=state.stars;
+  unlockAch('ach-start');
+  if(state.l1done)unlockAch('ach-pinyin');
+  if(state.l2done)unlockAch('ach-radical');
+  if(state.l3done)unlockAch('ach-stroke');
+}
+function restartAll(){state.stars=0;state.current=0;document.getElementById('stars-display').textContent='⭐ 0';document.getElementById('prog-fill').style.width='0%';goTo('s-hero');}
+
+// ===== ACHIEVEMENTS =====
+function unlockAch(id){
+  if(state.achievements[id])return;
+  state.achievements[id]=true;
+  const el=document.getElementById(id);
+  if(el){el.classList.add('unlocked');playStarSound();}
+}
+
+// ===== COMPANION =====
+function setCompanion(msg){
+  const b=document.getElementById('comp-bubble');
+  b.textContent=msg;b.classList.add('show');
+  state.companionShown=true;
+  unlockAch('ach-bug');
+  setTimeout(()=>b.classList.remove('show'),5000);
+}
+function toggleCompanion(){
+  const b=document.getElementById('comp-bubble');
+  if(b.classList.contains('show')){b.classList.remove('show');}
+  else{
+    const hints={'s-hero':'👋 点"开始冒险"按钮出发吧！','s-level1':'💡 记住：知道读音用拼音查！','s-level2':'💡 找部首是第一步！看偏旁！','s-level3':'💡 数清楚每一笔，一笔不少！','s-boss':'⚡ 加油！你已经学会三种方法了！'};
+    const sec=state.sections[state.current]||'s-hero';
+    b.textContent=hints[sec]||'😊 有什么我能帮你的吗？';
+    b.classList.add('show');unlockAch('ach-bug');
+    setTimeout(()=>b.classList.remove('show'),4000);
+  }
+}
+function updateCompanionHint(id){
+  const autoHints={'s-level1':'🐛 第一关：拼音查字法！知道读音就能查！','s-level2':'🐛 第二关：部首查字法，先找偏旁！','s-boss':'🐛 Boss关来了！用上所有方法！'};
+  if(autoHints[id])setTimeout(()=>setCompanion(autoHints[id]),1500);
+}
+</script>
+</body>
+</html>

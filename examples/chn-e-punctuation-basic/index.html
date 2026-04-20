@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>基础标点符号 · 一年级语文</title>
+<style>
+  :root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--card:#fff;
+    --text:#333;--radius:20px;--shadow:0 8px 32px rgba(0,0,0,.10);}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);font-family:'Microsoft YaHei',sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden;}
+  .hidden{display:none!important;}
+  #progress-bar{position:fixed;top:0;left:0;width:100%;height:8px;background:#eee;z-index:999;}
+  #progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--primary),var(--secondary));transition:width .5s;}
+  #stars-hud{position:fixed;top:14px;right:16px;background:var(--card);border-radius:50px;padding:8px 18px;
+    box-shadow:var(--shadow);font-size:1.3rem;z-index:998;display:flex;align-items:center;gap:8px;}
+  #stars-hud span{font-weight:900;color:var(--primary);font-size:1.4rem;}
+  .section{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:90px 16px 50px;max-width:700px;margin:0 auto;}
+  #hero{background:linear-gradient(135deg,#ffe5d0 0%,#d0f7e8 100%);min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    padding:40px 16px;max-width:100%;width:100%;}
+  .hero-emoji{font-size:6rem;margin-bottom:16px;animation:wobble 2s infinite;}
+  @keyframes wobble{0%,100%{transform:rotate(0);}25%{transform:rotate(-8deg);}75%{transform:rotate(8deg);}}
+  .hero-title{font-size:3rem;font-weight:900;color:var(--primary);margin-bottom:12px;line-height:1.2;}
+  .hero-sub{font-size:1.4rem;color:#666;margin-bottom:24px;}
+  .hero-grade{background:var(--accent);color:#333;border-radius:50px;padding:10px 28px;
+    font-size:1.2rem;font-weight:700;display:inline-block;margin-bottom:32px;}
+  .btn{background:var(--primary);color:#fff;border:none;border-radius:var(--radius);padding:18px 44px;
+    font-size:1.4rem;font-weight:900;cursor:pointer;box-shadow:0 4px 18px rgba(255,107,107,.3);
+    transition:transform .15s;border:3px solid rgba(255,255,255,.5);}
+  .btn:hover{transform:translateY(-4px);}
+  .btn:active{transform:scale(.97);}
+  .btn-teal{background:var(--secondary);}
+  .btn-yellow{background:var(--accent);color:#333;}
+  .card{background:var(--card);border-radius:var(--radius);padding:30px;box-shadow:var(--shadow);width:100%;margin-bottom:22px;}
+  .card-title{font-size:1.6rem;font-weight:900;color:var(--primary);margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+  .section-title{font-size:2.2rem;font-weight:900;color:var(--primary);text-align:center;margin-bottom:10px;}
+  .section-sub{font-size:1.15rem;color:#888;text-align:center;margin-bottom:28px;}
+  .level-badge{display:inline-flex;align-items:center;gap:10px;background:var(--primary);color:#fff;
+    border-radius:50px;padding:10px 24px;font-size:1.2rem;font-weight:900;margin-bottom:22px;}
+
+  /* ===== PUNCTUATION INTRO CARDS ===== */
+  .punct-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;width:100%;}
+  .punct-card{border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;
+    transition:transform .2s;position:relative;overflow:hidden;}
+  .punct-card:hover{transform:scale(1.05);}
+  .punct-symbol{font-size:4rem;font-weight:900;display:block;margin-bottom:8px;
+    animation:bounce 2s infinite;}
+  @keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+  .punct-name{font-size:1.4rem;font-weight:900;margin-bottom:6px;}
+  .punct-use{font-size:1rem;line-height:1.5;opacity:.85;}
+  .punct-example{font-size:1rem;margin-top:8px;font-style:italic;opacity:.8;}
+
+  /* ===== DRAG AND DROP ===== */
+  .drag-sentence{font-size:1.5rem;line-height:2.5;background:linear-gradient(135deg,#fffde7,#fff9c4);
+    border-radius:var(--radius);padding:24px;margin-bottom:18px;position:relative;text-align:center;
+    border:3px dashed var(--accent);}
+  .drag-blank{display:inline-block;width:60px;height:52px;border-radius:12px;
+    background:rgba(255,107,107,.1);border:3px dashed var(--primary);vertical-align:middle;
+    text-align:center;line-height:48px;font-size:1.8rem;font-weight:900;cursor:pointer;
+    transition:background .2s;position:relative;}
+  .drag-blank.over{background:rgba(255,107,107,.25);border-color:var(--primary);}
+  .drag-blank.filled{background:rgba(78,205,196,.15);border-color:var(--secondary);border-style:solid;}
+  .drag-blank.correct{background:rgba(76,175,80,.15);border-color:#4caf50;border-style:solid;}
+  .drag-blank.wrong{background:rgba(244,67,54,.15);border-color:#f44336;border-style:solid;animation:shake .4s;}
+  @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-5px);}75%{transform:translateX(5px);}}
+  .punct-token{display:inline-flex;align-items:center;justify-content:center;
+    width:64px;height:64px;border-radius:50%;font-size:2rem;font-weight:900;cursor:grab;
+    box-shadow:0 4px 12px rgba(0,0,0,.15);transition:transform .2s;user-select:none;
+    border:3px solid rgba(255,255,255,.6);}
+  .punct-token:hover{transform:scale(1.12);}
+  .punct-token:active{cursor:grabbing;transform:scale(.95);}
+  .token-pool{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;padding:20px;
+    background:#f8f8f8;border-radius:var(--radius);margin:16px 0;}
+
+  /* ===== MATCH GAME ===== */
+  .match-container{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .match-col{display:flex;flex-direction:column;gap:10px;}
+  .match-item{border-radius:14px;padding:16px 20px;cursor:pointer;font-size:1.2rem;font-weight:700;
+    text-align:center;border:3px solid transparent;transition:all .2s;user-select:none;}
+  .match-item.symbol{background:linear-gradient(135deg,var(--primary),#ff9a9a);color:#fff;font-size:2rem;}
+  .match-item.meaning{background:linear-gradient(135deg,var(--secondary),#87e6e0);color:#fff;}
+  .match-item.selected{transform:scale(1.05);box-shadow:0 4px 16px rgba(0,0,0,.2);}
+  .match-item.matched{opacity:.5;cursor:default;transform:none;}
+  .match-item.correct-flash{animation:correctFlash .6s;}
+  @keyframes correctFlash{0%,100%{background:initial;}50%{background:#e8faf0;}}
+
+  /* ===== SENTENCE READ ===== */
+  .read-sentence{font-size:1.8rem;font-weight:700;line-height:2.4;text-align:center;
+    background:linear-gradient(135deg,#e8f5e9,#fffde7);border-radius:var(--radius);
+    padding:28px;margin-bottom:16px;position:relative;}
+  .punct-highlight{color:var(--primary);font-size:2rem;font-weight:900;}
+  .read-question{font-size:1.3rem;margin-bottom:12px;text-align:center;font-weight:700;}
+  .read-choices{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+  .read-choice{border-radius:50px;padding:14px 28px;font-size:1.2rem;font-weight:700;cursor:pointer;
+    border:3px solid transparent;transition:all .2s;}
+  .read-choice:hover{transform:scale(1.05);}
+  .read-choice.correct{background:#4caf50;color:#fff;}
+  .read-choice.wrong{background:#f44336;color:#fff;}
+
+  /* ===== BOSS ===== */
+  .boss-card{background:linear-gradient(135deg,#ff6b6b,#ffe66d);border-radius:var(--radius);
+    padding:28px;text-align:center;margin-bottom:20px;box-shadow:0 8px 32px rgba(255,107,107,.3);}
+  .boss-icon{font-size:5rem;animation:spin 4s linear infinite;}
+  @keyframes spin{from{transform:rotate(0);}to{transform:rotate(360deg);}}
+  .boss-text-box{background:#fffbf0;border-radius:14px;padding:20px;font-size:1.4rem;
+    line-height:2.4;text-align:center;margin:16px 0;border:3px dashed var(--accent);}
+  .boss-blank{display:inline-block;width:55px;height:50px;border-radius:10px;
+    background:rgba(255,107,107,.1);border:3px dashed var(--primary);vertical-align:middle;
+    text-align:center;line-height:46px;font-size:1.6rem;font-weight:900;cursor:pointer;
+    transition:all .2s;}
+  .boss-blank.filled{background:rgba(78,205,196,.15);border-color:var(--secondary);border-style:solid;}
+
+  /* ===== SCORE ===== */
+  .score-big{width:180px;height:180px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));
+    display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 20px;
+    box-shadow:0 8px 32px rgba(255,107,107,.3);animation:scaleIn .6s;}
+  @keyframes scaleIn{from{transform:scale(0);}to{transform:scale(1);}}
+  .score-big .sn{font-size:3.5rem;font-weight:900;color:#fff;}
+  .score-big .sl{font-size:1.1rem;color:rgba(255,255,255,.85);}
+  .achievements{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:18px 0;}
+  .badge{background:var(--card);border-radius:14px;padding:10px 16px;display:flex;align-items:center;gap:8px;
+    box-shadow:var(--shadow);font-size:1rem;opacity:.35;transition:opacity .5s;}
+  .badge.earned{opacity:1;animation:pop .4s;}
+  @keyframes pop{0%{transform:scale(0);}70%{transform:scale(1.15);}100%{transform:scale(1);}}
+  .badge-icon{font-size:1.5rem;}
+
+  /* ===== AI ===== */
+  #ai-companion{position:fixed;bottom:20px;left:20px;z-index:997;}
+  .ai-body{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+    max-width:260px;padding:14px;display:none;animation:slideUp .3s;}
+  @keyframes slideUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+  .ai-bubble{background:var(--secondary);color:#fff;border-radius:12px 12px 12px 4px;
+    padding:12px 14px;font-size:1rem;line-height:1.7;margin-bottom:8px;}
+  .ai-toggle{width:60px;height:60px;border-radius:50%;background:var(--secondary);border:none;
+    font-size:2rem;cursor:pointer;box-shadow:0 4px 14px rgba(78,205,196,.4);transition:transform .2s;}
+  .ai-toggle:hover{transform:scale(1.1);}
+
+  .celebrate{animation:celeb .6s;}
+  @keyframes celeb{0%{transform:scale(1);}30%{transform:scale(1.2);}60%{transform:scale(.95);}100%{transform:scale(1);}}
+  #nav-dots{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:996;}
+  .dot{width:12px;height:12px;border-radius:50%;background:#ccc;transition:all .3s;}
+  .dot.active{background:var(--primary);transform:scale(1.4);}
+
+  /* ===== EXPAND ===== */
+  .expand-box{border-radius:var(--radius);padding:22px;text-align:center;color:#fff;margin-bottom:14px;}
+  .expand-box .eb-icon{font-size:3rem;margin-bottom:8px;}
+  .expand-box .eb-title{font-size:1.4rem;font-weight:900;margin-bottom:6px;}
+  .expand-box .eb-desc{font-size:1.05rem;line-height:1.6;}
+
+  @media(max-width:500px){
+    .hero-title{font-size:2.2rem;}
+    .punct-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div id="progress-bar"><div id="progress-fill"></div></div>
+<div id="stars-hud">⭐ <span id="star-count">0</span></div>
+
+<!-- HERO -->
+<section id="s0" class="section" style="max-width:100%;width:100%;padding:0;">
+<div id="hero">
+  <div class="hero-emoji">！</div>
+  <div class="hero-title">标点符号大冒险</div>
+  <div class="hero-sub">一年级语文 · 认识标点小符号</div>
+  <div class="hero-grade">🌈 超级简单 · 小朋友专属</div>
+  <button class="btn" onclick="goSection(1);playClick()">出发！🚀</button>
+  <p style="margin-top:20px;color:#aaa;font-size:1.1rem;">⭐ 答对一道题 得一颗星 ⭐</p>
+</div>
+</section>
+
+<!-- OBJECTIVES -->
+<section id="s1" class="section">
+  <div class="section-title">📋 今天学什么？</div>
+  <div class="section-sub">认识这4个标点小伙伴！</div>
+  <div style="display:flex;flex-direction:column;gap:14px;width:100%;">
+    <div style="background:#fff3e0;border-radius:var(--radius);padding:20px;display:flex;align-items:center;gap:16px;font-size:1.3rem;font-weight:700;border-left:6px solid var(--primary);">
+      <span style="font-size:2.5rem;">。</span>句号——句子说完了
+    </div>
+    <div style="background:#e0f7fa;border-radius:var(--radius);padding:20px;display:flex;align-items:center;gap:16px;font-size:1.3rem;font-weight:700;border-left:6px solid var(--secondary);">
+      <span style="font-size:2.5rem;">，</span>逗号——句子没说完
+    </div>
+    <div style="background:#fce4ec;border-radius:var(--radius);padding:20px;display:flex;align-items:center;gap:16px;font-size:1.3rem;font-weight:700;border-left:6px solid #e91e63;">
+      <span style="font-size:2.5rem;">？</span>问号——在问问题
+    </div>
+    <div style="background:#f3e5f5;border-radius:var(--radius);padding:20px;display:flex;align-items:center;gap:16px;font-size:1.3rem;font-weight:700;border-left:6px solid #9c27b0;">
+      <span style="font-size:2.5rem;">！</span>感叹号——特别激动
+    </div>
+  </div>
+  <button class="btn" style="margin-top:24px;" onclick="goSection(2);playClick()">我记住了！</button>
+</section>
+
+<!-- WARMUP: INTRO CARDS -->
+<section id="s2" class="section">
+  <div class="section-title">🔥 认识标点朋友</div>
+  <div class="section-sub">点击每个标点，听听它的故事！</div>
+  <div class="punct-grid">
+    <div class="punct-card" style="background:linear-gradient(135deg,#ff6b6b,#ff9999);color:#fff;" onclick="showPunct('period');playClick()">
+      <span class="punct-symbol" style="animation-delay:0s;">。</span>
+      <div class="punct-name">句号</div>
+      <div class="punct-use">一句话说完了！<br>就用句号。</div>
+      <div class="punct-example">我爱学习。</div>
+    </div>
+    <div class="punct-card" style="background:linear-gradient(135deg,#4ecdc4,#87e6e0);color:#fff;" onclick="showPunct('comma');playClick()">
+      <span class="punct-symbol" style="animation-delay:.3s;">，</span>
+      <div class="punct-name">逗号</div>
+      <div class="punct-use">话没说完，<br>停一下。</div>
+      <div class="punct-example">我吃饭，你喝水。</div>
+    </div>
+    <div class="punct-card" style="background:linear-gradient(135deg,#a78bfa,#c4b5fd);color:#fff;" onclick="showPunct('question');playClick()">
+      <span class="punct-symbol" style="animation-delay:.6s;">？</span>
+      <div class="punct-name">问号</div>
+      <div class="punct-use">有问题想问，<br>就用问号！</div>
+      <div class="punct-example">你叫什么名字？</div>
+    </div>
+    <div class="punct-card" style="background:linear-gradient(135deg,#fbbf24,#f97316);color:#fff;" onclick="showPunct('exclaim');playClick()">
+      <span class="punct-symbol" style="animation-delay:.9s;">！</span>
+      <div class="punct-name">感叹号</div>
+      <div class="punct-use">很惊喜、很开心、<br>大声说！</div>
+      <div class="punct-example">太好啦！</div>
+    </div>
+  </div>
+  <div id="punct-tip" style="background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);
+    margin-top:16px;font-size:1.2rem;text-align:center;display:none;animation:fadeIn .3s;width:100%;">
+  </div>
+  <button class="btn" style="margin-top:20px;" onclick="goSection(3);playClick()">开始闯关 ⚔️</button>
+</section>
+
+<!-- LEVEL 1: DRAG AND DROP -->
+<section id="s3" class="section">
+  <div class="level-badge">⚔️ 第一关：拖放标点</div>
+  <div class="section-title" style="font-size:1.7rem;">把标点拖到正确的地方！</div>
+  <div class="section-sub">把下面的标点符号拖到句子空白处</div>
+  
+  <div class="card" id="drag-card">
+    <div class="drag-sentence" id="drag-s1">
+      <span id="pre1">小猫喜欢喝牛奶</span><span class="drag-blank" id="blank1" 
+        ondragover="event.preventDefault();this.classList.add('over')"
+        ondragleave="this.classList.remove('over')"
+        ondrop="dropPunct(event,'blank1','。')">　</span>
+    </div>
+    <div class="drag-sentence" id="drag-s2" style="display:none;">
+      <span>今天，</span><span>我们去公园玩</span><span class="drag-blank" id="blank2"
+        ondragover="event.preventDefault();this.classList.add('over')"
+        ondragleave="this.classList.remove('over')"
+        ondrop="dropPunct(event,'blank2','。')">　</span>
+    </div>
+    <div class="drag-sentence" id="drag-s3" style="display:none;">
+      <span>你吃早饭了吗</span><span class="drag-blank" id="blank3"
+        ondragover="event.preventDefault();this.classList.add('over')"
+        ondragleave="this.classList.remove('over')"
+        ondrop="dropPunct(event,'blank3','？')">　</span>
+    </div>
+    <div class="drag-sentence" id="drag-s4" style="display:none;">
+      <span>哇，下雪了</span><span class="drag-blank" id="blank4"
+        ondragover="event.preventDefault();this.classList.add('over')"
+        ondragleave="this.classList.remove('over')"
+        ondrop="dropPunct(event,'blank4','！')">　</span>
+    </div>
+    <div class="drag-sentence" id="drag-s5" style="display:none;">
+      <span>我有一个哥哥</span><span class="drag-blank" id="blank5"
+        ondragover="event.preventDefault();this.classList.add('over')"
+        ondragleave="this.classList.remove('over')"
+        ondrop="dropPunct(event,'blank5','，')">　</span><span>一个妹妹。</span>
+    </div>
+    <div class="token-pool" id="token-pool">
+      <div class="punct-token" style="background:linear-gradient(135deg,#ff6b6b,#ff9999);color:#fff;" 
+        draggable="true" ondragstart="dragStart(event,'。')" onclick="touchDrop('。')">。</div>
+      <div class="punct-token" style="background:linear-gradient(135deg,#4ecdc4,#87e6e0);color:#fff;"
+        draggable="true" ondragstart="dragStart(event,'，')" onclick="touchDrop('，')">，</div>
+      <div class="punct-token" style="background:linear-gradient(135deg,#a78bfa,#c4b5fd);color:#fff;"
+        draggable="true" ondragstart="dragStart(event,'？')" onclick="touchDrop('？')">？</div>
+      <div class="punct-token" style="background:linear-gradient(135deg,#fbbf24,#f97316);color:#fff;"
+        draggable="true" ondragstart="dragStart(event,'！')" onclick="touchDrop('！')">！</div>
+    </div>
+    <div class="feedback" id="drag-fb"></div>
+  </div>
+  <div style="text-align:center;font-size:1rem;color:#aaa;margin-bottom:10px;">
+    💡 小提示：点击标点也可以填入空格哦！
+  </div>
+  <button class="btn hidden" id="next-l1" onclick="goSection(4);playClick()">进入第二关 →</button>
+</section>
+
+<!-- LEVEL 2: MATCH -->
+<section id="s4" class="section">
+  <div class="level-badge">⚔️ 第二关：配对游戏</div>
+  <div class="section-title" style="font-size:1.7rem;">给标点找朋友！</div>
+  <div class="section-sub">点击左边的标点，再点右边的意思，配成一对！</div>
+  <div class="card">
+    <div class="match-container">
+      <div class="match-col" id="left-col">
+        <div class="match-item symbol" data-val="。" onclick="matchSelect('left','。')">。</div>
+        <div class="match-item symbol" data-val="，" onclick="matchSelect('left','，')">，</div>
+        <div class="match-item symbol" data-val="？" onclick="matchSelect('left','？')">？</div>
+        <div class="match-item symbol" data-val="！" onclick="matchSelect('left','！')">！</div>
+      </div>
+      <div class="match-col" id="right-col">
+        <div class="match-item meaning" data-val="！" onclick="matchSelect('right','！')">很激动！大声说！</div>
+        <div class="match-item meaning" data-val="。" onclick="matchSelect('right','。')">一句话说完了</div>
+        <div class="match-item meaning" data-val="，" onclick="matchSelect('right','，')">停一下，没说完</div>
+        <div class="match-item meaning" data-val="？" onclick="matchSelect('right','？')">在问问题吗？</div>
+      </div>
+    </div>
+    <div class="feedback" id="match-fb" style="margin-top:14px;"></div>
+  </div>
+  <button class="btn hidden" id="next-l2" onclick="goSection(5);playClick()">进入第三关 →</button>
+</section>
+
+<!-- LEVEL 3: READ & IDENTIFY -->
+<section id="s5" class="section">
+  <div class="level-badge">⚔️ 第三关：句子情绪</div>
+  <div class="section-title" style="font-size:1.7rem;">这个标点用对了吗？</div>
+  <div class="section-sub">读一读句子，判断标点对不对！</div>
+  <div id="read-container">
+    <!-- built by JS -->
+  </div>
+  <button class="btn hidden" id="next-l3" onclick="goSection(6);playClick()">迎战 Boss 关 👾</button>
+</section>
+
+<!-- BOSS -->
+<section id="s6" class="section">
+  <div class="boss-card">
+    <div class="boss-icon" style="display:block;">🌟</div>
+    <div style="font-size:2rem;font-weight:900;margin:10px 0;color:#333;">Boss 关！给文章加标点</div>
+    <div style="font-size:1.15rem;color:#555;">把下面的句子补全，填上正确的标点！</div>
+  </div>
+  <div class="card">
+    <div class="boss-text-box" id="boss-text">
+      今天是我的生日<span class="boss-blank" id="bb1" onclick="pickBossBlank('bb1')">　</span>
+      妈妈给我买了一个大蛋糕<span class="boss-blank" id="bb2" onclick="pickBossBlank('bb2')">　</span>
+      我好开心<span class="boss-blank" id="bb3" onclick="pickBossBlank('bb3')">　</span>
+      爸爸问我<span class="boss-blank" id="bb4" onclick="pickBossBlank('bb4')">　</span>
+      生日快乐吗<span class="boss-blank" id="bb5" onclick="pickBossBlank('bb5')">？</span>
+    </div>
+    <div id="boss-active" style="text-align:center;font-size:1.1rem;color:#888;margin-bottom:12px;">
+      点击空格，选择标点！
+    </div>
+    <div class="token-pool">
+      <div class="punct-token" style="background:linear-gradient(135deg,#ff6b6b,#ff9999);color:#fff;"
+        onclick="bossPickToken('。')">。</div>
+      <div class="punct-token" style="background:linear-gradient(135deg,#4ecdc4,#87e6e0);color:#fff;"
+        onclick="bossPickToken('，')">，</div>
+      <div class="punct-token" style="background:linear-gradient(135deg,#a78bfa,#c4b5fd);color:#fff;"
+        onclick="bossPickToken('？')">？</div>
+      <div class="punct-token" style="background:linear-gradient(135deg,#fbbf24,#f97316);color:#fff;"
+        onclick="bossPickToken('！')">！</div>
+    </div>
+    <button class="btn" style="width:100%;margin-top:12px;" onclick="checkBoss();playClick()">检查答案 ✅</button>
+  </div>
+</section>
+
+<!-- SCOREBOARD -->
+<section id="s7" class="section" style="text-align:center;">
+  <div class="section-title">🏆 我的成绩</div>
+  <div class="score-big">
+    <div class="sn" id="final-score">0</div>
+    <div class="sl">⭐ 颗星</div>
+  </div>
+  <div id="stars-display" style="font-size:2.5rem;margin:14px 0;letter-spacing:8px;"></div>
+  <div class="card">
+    <div class="card-title">🏅 我的小勋章</div>
+    <div class="achievements">
+      <div class="badge" id="b-first"><span class="badge-icon">🎯</span>初战告捷</div>
+      <div class="badge" id="b-drag"><span class="badge-icon">✋</span>拖放高手</div>
+      <div class="badge" id="b-match"><span class="badge-icon">🔗</span>配对达人</div>
+      <div class="badge" id="b-read"><span class="badge-icon">👀</span>火眼金睛</div>
+      <div class="badge" id="b-boss"><span class="badge-icon">🌟</span>Boss终结者</div>
+      <div class="badge" id="b-period"><span class="badge-icon">。</span>句号小专家</div>
+      <div class="badge" id="b-question"><span class="badge-icon">？</span>问号小专家</div>
+      <div class="badge" id="b-perfect"><span class="badge-icon">💎</span>全部正确！</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:8px;">
+    <button class="btn btn-teal" onclick="goSection(8);playClick()">看更多知识 📚</button>
+    <button class="btn btn-yellow" onclick="restart();playClick()">再玩一次 🔄</button>
+  </div>
+</section>
+
+<!-- EXPAND -->
+<section id="s8" class="section">
+  <div class="section-title">📚 更多标点朋友</div>
+  <div class="section-sub">以后你还会认识更多标点！</div>
+  <div class="expand-box" style="background:linear-gradient(135deg,#667eea,#764ba2);">
+    <div class="eb-icon">""</div>
+    <div class="eb-title">引号</div>
+    <div class="eb-desc">把别人说的话放在里面。<br>如：妈妈说："你真棒！"</div>
+  </div>
+  <div class="expand-box" style="background:linear-gradient(135deg,#f093fb,#f5576c);">
+    <div class="eb-icon">…</div>
+    <div class="eb-title">省略号</div>
+    <div class="eb-desc">说话没说完，用省略号。<br>如：我想……算了吧。</div>
+  </div>
+  <div class="expand-box" style="background:linear-gradient(135deg,#4ecdc4,#44a08d);">
+    <div class="eb-icon">—</div>
+    <div class="eb-title">破折号</div>
+    <div class="eb-desc">用来解释说明。<br>如：小明——我的好朋友。</div>
+  </div>
+  <div class="card" style="background:linear-gradient(135deg,#e8f5e9,#fffde7);">
+    <div class="card-title">📝 今天的小任务</div>
+    <ol style="padding-left:20px;line-height:2.5;font-size:1.2rem;">
+      <li>在书上找5个句号画圈！</li>
+      <li>找一个问号和一个感叹号！</li>
+      <li>自己写一句有逗号的话！</li>
+    </ol>
+  </div>
+  <button class="btn" style="margin-top:20px;" onclick="restart();playClick()">🔄 再玩一次</button>
+</section>
+
+<div id="nav-dots"></div>
+<div id="ai-companion">
+  <div class="ai-body" id="ai-body">
+    <div class="ai-bubble" id="ai-msg">我是虫虫🐛！标点符号是句子的小伙伴，缺了它们可不行哦！</div>
+  </div>
+  <button class="ai-toggle" onclick="toggleAI()">🐛</button>
+</div>
+
+<script>
+// STATE
+let currentSection=0,totalSections=9,stars=0,startTime=Date.now();
+let dragStep=1,dragTotal=5;
+let matchLeft=null,matchRight=null,matchDone=0;
+let readIdx=0;
+let bossFills={bb1:null,bb2:null,bb3:null,bb4:null};
+let activeBossBlank=null;
+let correctAll=true;
+
+// AUDIO
+const AC=window.AudioContext||window.webkitAudioContext;let ac;
+function getAC(){if(!ac)ac=new AC();return ac;}
+function playClick(){try{const a=getAC(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=880;g.gain.setValueAtTime(.3,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.1);o.start();o.stop(a.currentTime+.1);}catch(e){}}
+function playSuccess(){try{const a=getAC();[523,659,784,1047].forEach((f,i)=>{const o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=f;g.gain.setValueAtTime(.25,a.currentTime+i*.1);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+i*.1+.18);o.start(a.currentTime+i*.1);o.stop(a.currentTime+i*.1+.18);});}catch(e){}}
+function playError(){try{const a=getAC(),o=a.createOscillator(),g=a.createGain();o.type='square';o.connect(g);g.connect(a.destination);o.frequency.value=150;g.gain.setValueAtTime(.2,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.4);o.start();o.stop(a.currentTime+.4);}catch(e){}}
+function playBoop(freq=600){try{const a=getAC(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=freq;g.gain.setValueAtTime(.2,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.15);o.start();o.stop(a.currentTime+.15);}catch(e){}}
+
+// NAV
+function goSection(n){
+  document.querySelectorAll('.section').forEach((s,i)=>s.classList.toggle('hidden',i!==n));
+  currentSection=n;
+  document.getElementById('progress-fill').style.width=(n/(totalSections-1)*100)+'%';
+  document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===n));
+  window.scrollTo({top:0,behavior:'smooth'});
+  showAITip(n);
+}
+function addStar(n=1){
+  stars+=n;
+  document.getElementById('star-count').textContent=stars;
+  document.getElementById('stars-hud').classList.add('celebrate');
+  setTimeout(()=>document.getElementById('stars-hud').classList.remove('celebrate'),600);
+}
+function earnBadge(id){const el=document.getElementById(id);if(el&&!el.classList.contains('earned')){el.classList.add('earned');playBoop(1000);}}
+
+// PUNCT TIP
+const punctTips={
+  period:'🔴 句号说：<strong>"我表示一句话说完了！"</strong><br>例句：今天天气真好。',
+  comma:'🟢 逗号说：<strong>"我让你在句子中间停一下！"</strong><br>例句：我爱读书，也爱画画。',
+  question:'🔵 问号说：<strong>"有问题来找我！"</strong><br>例句：今天吃什么？',
+  exclaim:'🟡 感叹号说：<strong>"我表示惊喜和激动！"</strong><br>例句：好漂亮啊！'
+};
+function showPunct(type){
+  const el=document.getElementById('punct-tip');
+  el.innerHTML='<div style="font-size:1.2rem;">'+punctTips[type]+'</div>';
+  el.style.display='block';
+  playBoop(880);
+}
+
+// DRAG DROP
+let dragging=null;
+function dragStart(e,p){dragging=p;}
+function dropPunct(e,blankId,correct){
+  e.preventDefault();
+  const blank=document.getElementById(blankId);
+  blank.classList.remove('over');
+  const p=dragging||window._touchDrag;
+  if(!p)return;
+  blank.textContent=p;
+  if(p===correct){
+    blank.className='drag-blank correct';
+    playSuccess();addStar(1);
+    if(blankId.includes('1'))earnBadge('b-first');
+    earnBadge('b-drag');
+    dragStep++;
+    setTimeout(()=>nextDragStep(),900);
+  } else {
+    blank.className='drag-blank wrong';
+    playError();correctAll=false;
+    setTimeout(()=>{blank.className='drag-blank';blank.textContent='　';},1000);
+  }
+}
+let _touchDrag=null;
+function touchDrop(p){
+  _touchDrag=p;
+  // find active blank
+  const blanks=['blank1','blank2','blank3','blank4','blank5'];
+  const corrects=['。','。','？','！','，'];
+  const idx=dragStep-1;
+  if(idx<blanks.length){
+    const blankId=blanks[idx];
+    const blank=document.getElementById(blankId);
+    if(blank&&!blank.classList.contains('correct')){
+      blank.textContent=p;
+      if(p===corrects[idx]){
+        blank.className='drag-blank correct';
+        playSuccess();addStar(1);
+        if(idx===0)earnBadge('b-first');
+        earnBadge('b-drag');
+        dragStep++;
+        setTimeout(()=>nextDragStep(),900);
+      } else {
+        blank.className='drag-blank wrong';
+        playError();correctAll=false;
+        setTimeout(()=>{blank.className='drag-blank';blank.textContent='　';},1000);
+      }
+    }
+  }
+}
+function nextDragStep(){
+  const ids=['drag-s1','drag-s2','drag-s3','drag-s4','drag-s5'];
+  ids.forEach((id,i)=>{
+    const el=document.getElementById(id);
+    if(el)el.style.display=i<dragStep?'block':'none';
+  });
+  if(dragStep>5){
+    document.getElementById('next-l1').classList.remove('hidden');
+    const fb=document.getElementById('drag-fb');
+    fb.className='feedback correct';fb.style.display='block';
+    fb.textContent='🎉 全部正确！你太厉害了！';
+  }
+}
+
+// MATCH
+function matchSelect(side,val){
+  playClick();
+  if(side==='left'){
+    // deselect prev
+    document.querySelectorAll('#left-col .match-item').forEach(el=>el.classList.remove('selected'));
+    const el=document.querySelector(`#left-col [data-val="${val}"]`);
+    if(el&&!el.classList.contains('matched')){el.classList.add('selected');matchLeft=val;}
+  } else {
+    document.querySelectorAll('#right-col .match-item').forEach(el=>el.classList.remove('selected'));
+    const el=document.querySelector(`#right-col [data-val="${val}"]`);
+    if(el&&!el.classList.contains('matched')){el.classList.add('selected');matchRight=val;}
+  }
+  if(matchLeft&&matchRight){
+    if(matchLeft===matchRight){
+      const lEl=document.querySelector(`#left-col [data-val="${matchLeft}"]`);
+      const rEl=document.querySelector(`#right-col [data-val="${matchRight}"]`);
+      lEl.classList.remove('selected');rEl.classList.remove('selected');
+      lEl.classList.add('matched');rEl.classList.add('matched');
+      playSuccess();addStar(1);
+      if(matchLeft==='。')earnBadge('b-period');
+      if(matchLeft==='？')earnBadge('b-question');
+      earnBadge('b-match');
+      matchDone++;
+      if(matchDone>=4){
+        document.getElementById('next-l2').classList.remove('hidden');
+        const fb=document.getElementById('match-fb');
+        fb.className='feedback correct';fb.style.display='block';
+        fb.textContent='✅ 全部配对成功！你真聪明！';
+      }
+    } else {
+      playError();correctAll=false;
+      document.querySelectorAll('.match-item.selected').forEach(el=>el.classList.remove('selected'));
+    }
+    matchLeft=null;matchRight=null;
+  }
+}
+
+// READ & IDENTIFY
+const readSentences=[
+  {text:'今天的太阳好大呀',punct:'！',options:['。','！','？'],correct:'！',why:'感叹号——很惊喜，很激动！'},
+  {text:'你喜欢吃什么水果',punct:'？',options:['。','，','？'],correct:'？',why:'问号——这是一个问句！'},
+  {text:'妈妈，我回来了',punct:'。',options:['。','？','！'],correct:'。',why:'句号——一句话说完了。'},
+  {text:'我有一只小猫',punct:'。',options:['！','，','。'],correct:'。',why:'句号——平静地说完了这句话。'},
+];
+function buildRead(){
+  const c=document.getElementById('read-container');
+  if(readIdx>=readSentences.length){
+    document.getElementById('next-l3').classList.remove('hidden');
+    earnBadge('b-read');c.innerHTML='<div style="text-align:center;font-size:1.4rem;font-weight:700;color:var(--primary);padding:20px;">🎉 全对！真厉害！</div>';
+    return;
+  }
+  const s=readSentences[readIdx];
+  c.innerHTML=`
+    <div class="card">
+      <div style="font-size:1rem;color:#aaa;text-align:center;margin-bottom:10px;">第 ${readIdx+1}/${readSentences.length} 句</div>
+      <div class="read-sentence">${s.text}<span class="punct-highlight">_</span></div>
+      <div class="read-question">句子末尾应该用哪个标点？</div>
+      <div class="read-choices">
+        ${s.options.map(o=>`<button class="read-choice" style="background:${o==='。'?'#ff6b6b':o==='？'?'#a78bfa':o==='！'?'#fbbf24':o==='，'?'#4ecdc4':'#ccc'};color:#fff;" onclick="checkRead(this,'${o}','${s.correct}','${s.why.replace(/'/g,"\\'")}')">${o}</button>`).join('')}
+      </div>
+      <div class="feedback" id="read-fb-${readIdx}"></div>
+    </div>`;
+}
+function checkRead(btn,ans,correct,why){
+  const fb=document.getElementById('read-fb-'+readIdx);
+  btn.parentNode.querySelectorAll('.read-choice').forEach(b=>b.disabled=true);
+  if(ans===correct){
+    btn.classList.add('correct');playSuccess();addStar(1);
+    fb.className='feedback correct';fb.style.display='block';
+    fb.textContent='✅ 对了！'+why;
+    readIdx++;
+    setTimeout(buildRead,1200);
+  } else {
+    btn.classList.add('wrong');playError();correctAll=false;
+    fb.className='feedback wrong';fb.style.display='block';
+    fb.textContent='❌ 再想想！'+why;
+  }
+}
+
+// BOSS
+const bossAnswers={bb1:'，',bb2:'，',bb3:'！',bb4:'：'};
+// simplified: bb4 accepts any (teach kids what colon is outside scope)
+function pickBossBlank(id){
+  activeBossBlank=id;
+  document.getElementById('boss-active').textContent='请选择标点填入"空格'+id.replace('bb','')+'"';
+  document.querySelectorAll('.boss-blank').forEach(b=>b.style.outline='none');
+  const b=document.getElementById(id);
+  if(b)b.style.outline='3px solid var(--primary)';
+  playBoop(700);
+}
+function bossPickToken(p){
+  if(!activeBossBlank)return;
+  const el=document.getElementById(activeBossBlank);
+  if(el){el.textContent=p;el.classList.add('filled');bossFills[activeBossBlank]=p;}
+  document.getElementById('boss-active').textContent='点击空格，选择标点！';
+  document.querySelectorAll('.boss-blank').forEach(b=>b.style.outline='none');
+  activeBossBlank=null;
+  playClick();
+}
+function checkBoss(){
+  // Simplified check: bb1=，,bb2=，or。,bb3=！
+  const ok1=bossFills.bb1&&(bossFills.bb1==='，'||bossFills.bb1==='。');
+  const ok2=bossFills.bb2&&(bossFills.bb2==='，'||bossFills.bb2==='。');
+  const ok3=bossFills.bb3&&bossFills.bb3==='！';
+  const ok4=bossFills.bb4!==null;
+  if(ok1&&ok2&&ok3&&ok4){
+    addStar(3);playSuccess();earnBadge('b-boss');
+    if(correctAll&&stars>=8)earnBadge('b-perfect');
+    showFinal();
+    setTimeout(()=>goSection(7),1200);
+  } else {
+    playError();
+    alert('还有空格没填好，再检查一下！记得：结尾很开心用！，话没说完用，');
+  }
+}
+function showFinal(){
+  document.getElementById('final-score').textContent=stars;
+  const starStr=stars>=8?'⭐⭐⭐⭐⭐':stars>=5?'⭐⭐⭐⭐☆':stars>=3?'⭐⭐⭐☆☆':'⭐⭐☆☆☆';
+  document.getElementById('stars-display').textContent=starStr;
+}
+
+// AI
+const aiTips=[
+  '我是虫虫🐛！标点符号是句子的小伙伴！',
+  '今天学句号、逗号、问号和感叹号！',
+  '🔥点击标点卡片，看看它们说什么！',
+  '第一关：把标点拖到正确的位置！',
+  '第二关：给标点符号找对应的意思！',
+  '第三关：判断句子最后用哪个标点！',
+  '👾Boss关！给整段文字加上标点！',
+  '太棒了！你认识所有标点了！',
+  '📚还有更多标点等你学习，加油！'
+];
+let aiOpen=false;
+function toggleAI(){aiOpen=!aiOpen;document.getElementById('ai-body').style.display=aiOpen?'block':'none';}
+function showAITip(n){
+  document.getElementById('ai-msg').textContent=aiTips[n]||aiTips[0];
+  document.getElementById('ai-body').style.display='block';aiOpen=true;
+  setTimeout(()=>{document.getElementById('ai-body').style.display='none';aiOpen=false;},4000);
+}
+
+// RESTART
+function restart(){
+  stars=0;startTime=Date.now();dragStep=1;matchLeft=null;matchRight=null;matchDone=0;
+  readIdx=0;bossFills={bb1:null,bb2:null,bb3:null,bb4:null};activeBossBlank=null;correctAll=true;
+  document.getElementById('star-count').textContent='0';
+  document.querySelectorAll('.drag-blank').forEach(b=>{b.className='drag-blank';b.textContent='　';});
+  document.querySelectorAll('.match-item').forEach(m=>m.classList.remove('matched','selected'));
+  document.querySelectorAll('.boss-blank').forEach(b=>{b.classList.remove('filled');b.style.outline='none';
+    if(b.id!=='bb5')b.textContent='　';});
+  document.getElementById('next-l1').classList.add('hidden');
+  document.getElementById('next-l2').classList.add('hidden');
+  document.getElementById('next-l3').classList.add('hidden');
+  document.querySelectorAll('.feedback').forEach(f=>f.style.display='none');
+  document.querySelectorAll('.badge').forEach(b=>b.classList.remove('earned'));
+  ['drag-s1','drag-s2','drag-s3','drag-s4','drag-s5'].forEach((id,i)=>{
+    const el=document.getElementById(id);if(el)el.style.display=i===0?'block':'none';
+  });
+  document.getElementById('match-fb').style.display='none';
+  buildRead();
+  goSection(0);
+}
+
+// INIT
+function init(){
+  const dots=document.getElementById('nav-dots');
+  for(let i=0;i<totalSections;i++){const d=document.createElement('div');d.className='dot';dots.appendChild(d);}
+  document.querySelectorAll('.section').forEach((s,i)=>s.classList.toggle('hidden',i!==0));
+  document.querySelectorAll('.dot')[0].classList.add('active');
+  buildRead();
+  ['drag-s2','drag-s3','drag-s4','drag-s5'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.style.display='none';
+  });
+}
+init();
+</script>
+</body>
+</html>

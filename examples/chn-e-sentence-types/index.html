@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>句子类型 · 二年级语文</title>
+<style>
+  :root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--card:#fff;
+    --text:#333;--radius:20px;--shadow:0 8px 32px rgba(0,0,0,.10);}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);font-family:'Microsoft YaHei',sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden;}
+  .hidden{display:none!important;}
+  #progress-bar{position:fixed;top:0;left:0;width:100%;height:7px;background:#eee;z-index:999;}
+  #progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--primary),var(--secondary));transition:width .5s;}
+  #stars-hud{position:fixed;top:12px;right:16px;background:var(--card);border-radius:50px;padding:7px 18px;
+    box-shadow:var(--shadow);font-size:1.2rem;z-index:998;display:flex;align-items:center;gap:8px;}
+  #stars-hud span{font-weight:900;color:var(--primary);font-size:1.25rem;}
+  .section{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:85px 18px 44px;max-width:760px;margin:0 auto;}
+  #hero{background:linear-gradient(135deg,#fff3e0 0%,#e8f5e9 100%);min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    padding:40px 18px;max-width:100%;width:100%;}
+  .hero-emoji{font-size:5.5rem;margin-bottom:14px;animation:pop 1.5s ease-in-out infinite;}
+  @keyframes pop{0%,100%{transform:scale(1);}50%{transform:scale(1.12) rotate(5deg);}}
+  .hero-title{font-size:2.7rem;font-weight:900;color:var(--primary);margin-bottom:10px;line-height:1.2;}
+  .hero-sub{font-size:1.25rem;color:#666;margin-bottom:20px;}
+  .btn{background:var(--primary);color:#fff;border:none;border-radius:var(--radius);padding:16px 40px;
+    font-size:1.3rem;font-weight:900;cursor:pointer;box-shadow:0 4px 16px rgba(255,107,107,.3);
+    transition:transform .15s;}
+  .btn:hover{transform:translateY(-3px);}
+  .btn:active{transform:scale(.97);}
+  .btn-teal{background:var(--secondary);}
+  .btn-yellow{background:var(--accent);color:#333;}
+  .btn-purple{background:#a855f7;}
+  .card{background:var(--card);border-radius:var(--radius);padding:28px;box-shadow:var(--shadow);width:100%;margin-bottom:20px;}
+  .card-title{font-size:1.45rem;font-weight:900;color:var(--primary);margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+  .section-title{font-size:2rem;font-weight:900;color:var(--primary);text-align:center;margin-bottom:8px;}
+  .section-sub{font-size:1.05rem;color:#888;text-align:center;margin-bottom:26px;}
+  .level-badge{display:inline-flex;align-items:center;gap:8px;background:var(--primary);color:#fff;
+    border-radius:50px;padding:9px 22px;font-size:1.1rem;font-weight:900;margin-bottom:20px;}
+
+  /* ===== SENTENCE TYPE INTRO ===== */
+  .type-card{border-radius:var(--radius);padding:22px;margin-bottom:16px;display:flex;align-items:flex-start;gap:16px;}
+  .type-icon-big{font-size:3.5rem;min-width:60px;text-align:center;animation:bounce 2s infinite;}
+  @keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+  .type-content .type-name{font-size:1.5rem;font-weight:900;margin-bottom:4px;}
+  .type-content .type-desc{font-size:1.1rem;line-height:1.7;margin-bottom:8px;}
+  .type-content .type-example{background:rgba(255,255,255,.6);border-radius:10px;padding:8px 14px;
+    font-size:1.1rem;font-style:italic;}
+
+  /* ===== DRAG SORT ===== */
+  .sort-container{display:grid;grid-template-columns:1fr;gap:16px;}
+  .sort-lane{border-radius:var(--radius);padding:16px;min-height:90px;}
+  .sort-label{font-size:1.15rem;font-weight:900;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+  .drop-area{min-height:60px;border-radius:14px;border:2px dashed rgba(255,255,255,.6);
+    display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px;transition:border .2s;}
+  .drop-area.over{border-color:#fff;background:rgba(255,255,255,.2);}
+  .sort-card-item{background:rgba(255,255,255,.9);color:#333;border-radius:12px;padding:10px 16px;
+    font-size:1.1rem;font-weight:700;cursor:grab;user-select:none;box-shadow:0 2px 8px rgba(0,0,0,.1);
+    transition:transform .15s;border:2px solid transparent;}
+  .sort-card-item:hover{transform:scale(1.04);}
+  .sort-card-item:active{cursor:grabbing;}
+  .sort-card-item.placed{cursor:default;}
+  .sort-bank{background:#f5f5f5;border-radius:var(--radius);padding:16px;margin-bottom:20px;
+    display:flex;flex-wrap:wrap;gap:10px;justify-content:center;}
+
+  /* ===== QUIZ ===== */
+  .q-sentence{font-size:1.3rem;font-weight:700;background:linear-gradient(135deg,#fffde7,#fff9c4);
+    border-radius:14px;padding:20px;margin-bottom:16px;border-left:5px solid var(--accent);line-height:1.8;}
+  .q-text{font-size:1.15rem;margin-bottom:14px;font-weight:700;}
+  .choices{display:flex;flex-direction:column;gap:10px;}
+  .choice-btn{background:#f5f5f5;border:2px solid transparent;border-radius:14px;padding:14px 18px;
+    font-size:1.1rem;cursor:pointer;text-align:left;transition:all .2s;font-weight:600;}
+  .choice-btn:hover{background:#fff0f0;border-color:var(--primary);}
+  .choice-btn.correct{background:#e8faf0;border-color:#4caf50;color:#2e7d32;}
+  .choice-btn.wrong{background:#fff0f0;border-color:#f44336;color:#c62828;}
+  .feedback{border-radius:14px;padding:12px 18px;font-size:1.05rem;margin-top:12px;display:none;animation:fadeIn .3s;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .feedback.correct{background:#e8faf0;color:#2e7d32;border:2px solid #4caf50;}
+  .feedback.wrong{background:#fff0f0;color:#c62828;border:2px solid #f44336;}
+
+  /* ===== TRANSFORM ===== */
+  .transform-box{background:#f9f9f9;border-radius:14px;padding:20px;margin-bottom:16px;}
+  .original-sent{font-size:1.2rem;background:linear-gradient(135deg,#e8f5e9,#fffde7);border-radius:10px;
+    padding:14px 18px;margin-bottom:12px;font-weight:700;border-left:4px solid var(--secondary);}
+  .transform-q{font-size:1.1rem;margin-bottom:10px;color:#555;font-weight:600;}
+  .transform-input{width:100%;border:2px solid var(--secondary);border-radius:12px;padding:12px 16px;
+    font-size:1.1rem;font-family:inherit;outline:none;transition:border .2s;}
+  .transform-input:focus{border-color:var(--primary);}
+  .transform-input.correct{border-color:#4caf50;background:#e8faf0;}
+  .transform-hint{font-size:.9rem;color:#aaa;margin-top:6px;}
+
+  /* ===== BOSS ===== */
+  .boss-stage{background:linear-gradient(135deg,#ff6b6b,#4ecdc4);border-radius:var(--radius);
+    padding:28px;text-align:center;margin-bottom:22px;box-shadow:0 8px 32px rgba(255,107,107,.3);}
+  .boss-icon{font-size:4.5rem;display:block;animation:wave 1.5s infinite;}
+  @keyframes wave{0%,100%{transform:rotate(0);}25%{transform:rotate(-10deg);}75%{transform:rotate(10deg);}}
+  .boss-section{background:rgba(255,255,255,.15);border-radius:14px;padding:18px;margin-bottom:14px;}
+  .boss-sentence{font-size:1.2rem;font-weight:700;color:#fff;margin-bottom:10px;line-height:1.7;}
+  .boss-input{width:100%;border:none;border-radius:10px;padding:10px 14px;font-size:1.05rem;
+    background:rgba(255,255,255,.9);margin-top:8px;}
+  .type-tag-row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:10px;}
+  .type-tag{border-radius:50px;padding:10px 22px;font-size:1.05rem;font-weight:700;cursor:pointer;
+    border:3px solid rgba(255,255,255,.5);color:#fff;transition:all .2s;}
+  .type-tag:hover{transform:scale(1.08);}
+  .type-tag.selected{border-color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.5);}
+
+  /* ===== SCORE ===== */
+  .score-ring{width:165px;height:165px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));
+    display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 20px;
+    box-shadow:0 8px 32px rgba(255,107,107,.3);animation:scaleIn .6s;}
+  @keyframes scaleIn{from{transform:scale(0);}to{transform:scale(1);}}
+  .score-ring .sn{font-size:3.2rem;font-weight:900;color:#fff;}
+  .score-ring .sl{font-size:1rem;color:rgba(255,255,255,.85);}
+  .achievements{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:18px 0;}
+  .badge{background:var(--card);border-radius:14px;padding:10px 16px;display:flex;align-items:center;gap:8px;
+    box-shadow:var(--shadow);font-size:.95rem;opacity:.35;transition:opacity .5s;}
+  .badge.earned{opacity:1;animation:popp .4s;}
+  @keyframes popp{0%{transform:scale(0);}70%{transform:scale(1.15);}100%{transform:scale(1);}}
+  .badge-icon{font-size:1.4rem;}
+
+  /* ===== AI ===== */
+  #ai-companion{position:fixed;bottom:20px;left:20px;z-index:997;}
+  .ai-body{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+    max-width:270px;padding:14px;display:none;animation:slideUp .3s;}
+  @keyframes slideUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+  .ai-bubble{background:var(--secondary);color:#fff;border-radius:12px 12px 12px 4px;
+    padding:10px 14px;font-size:.98rem;line-height:1.6;margin-bottom:8px;}
+  .ai-toggle{width:56px;height:56px;border-radius:50%;background:var(--secondary);border:none;
+    font-size:1.8rem;cursor:pointer;box-shadow:0 4px 14px rgba(78,205,196,.4);transition:transform .2s;}
+  .ai-toggle:hover{transform:scale(1.1);}
+
+  .celebrate{animation:celeb .6s;}
+  @keyframes celeb{0%{transform:scale(1);}30%{transform:scale(1.2);}60%{transform:scale(.95);}100%{transform:scale(1);}}
+  #nav-dots{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:996;}
+  .dot{width:10px;height:10px;border-radius:50%;background:#ccc;transition:all .3s;}
+  .dot.active{background:var(--primary);transform:scale(1.4);}
+
+  /* ===== EXPAND ===== */
+  .exp-card{border-radius:var(--radius);padding:22px;color:#fff;text-align:center;margin-bottom:14px;}
+  .exp-card .ei{font-size:2.5rem;margin-bottom:8px;}
+  .exp-card .et{font-size:1.2rem;font-weight:900;margin-bottom:6px;}
+  .exp-card .ed{font-size:1rem;line-height:1.6;opacity:.92;}
+
+  @media(max-width:500px){
+    .hero-title{font-size:2rem;}
+    .sort-container{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div id="progress-bar"><div id="progress-fill"></div></div>
+<div id="stars-hud">⭐ <span id="star-count">0</span> 颗星</div>
+
+<!-- HERO -->
+<section id="s0" class="section" style="max-width:100%;width:100%;padding:0;">
+<div id="hero">
+  <div class="hero-emoji">💬</div>
+  <div class="hero-title">句子类型大闯关</div>
+  <div class="hero-sub">二年级语文 · 认识不同句型</div>
+  <div style="background:var(--accent);color:#333;border-radius:50px;padding:10px 26px;
+    font-size:1.1rem;font-weight:700;display:inline-block;margin-bottom:28px;">
+    🌈 闯关模式 · 认识4种句子
+  </div>
+  <button class="btn" onclick="goSection(1);playClick()">开始闯关 🚀</button>
+  <p style="margin-top:18px;color:#aaa;font-size:1rem;">⭐ 答对题目得星星 · 集齐成就！</p>
+</div>
+</section>
+
+<!-- OBJECTIVES -->
+<section id="s1" class="section">
+  <div class="section-title">📋 今天要学什么</div>
+  <div class="section-sub">4种句子类型，记住它们！</div>
+  <div style="display:flex;flex-direction:column;gap:12px;width:100%;">
+    <div style="background:#fff3e0;border-radius:var(--radius);padding:18px;display:flex;align-items:center;gap:16px;
+      font-size:1.2rem;font-weight:700;border-left:6px solid var(--primary);">
+      <span style="font-size:2.5rem;">📢</span>
+      <div><div style="font-size:.9rem;font-weight:400;color:#888;">陈述句</div>说一件事情，告诉别人</div>
+    </div>
+    <div style="background:#e0f7fa;border-radius:var(--radius);padding:18px;display:flex;align-items:center;gap:16px;
+      font-size:1.2rem;font-weight:700;border-left:6px solid var(--secondary);">
+      <span style="font-size:2.5rem;">❓</span>
+      <div><div style="font-size:.9rem;font-weight:400;color:#888;">疑问句</div>提问题、想知道答案</div>
+    </div>
+    <div style="background:#fce4ec;border-radius:var(--radius);padding:18px;display:flex;align-items:center;gap:16px;
+      font-size:1.2rem;font-weight:700;border-left:6px solid #e91e63;">
+      <span style="font-size:2.5rem;">😊</span>
+      <div><div style="font-size:.9rem;font-weight:400;color:#888;">感叹句</div>表示惊喜、激动的感受</div>
+    </div>
+    <div style="background:#f3e5f5;border-radius:var(--radius);padding:18px;display:flex;align-items:center;gap:16px;
+      font-size:1.2rem;font-weight:700;border-left:6px solid #9c27b0;">
+      <span style="font-size:2.5rem;">👉</span>
+      <div><div style="font-size:.9rem;font-weight:400;color:#888;">祈使句</div>叫别人做什么事</div>
+    </div>
+  </div>
+  <button class="btn" style="margin-top:22px;" onclick="goSection(2);playClick()">继续！</button>
+</section>
+
+<!-- WARMUP -->
+<section id="s2" class="section">
+  <div class="section-title">🔥 热身：认识句型</div>
+  <div class="section-sub">点击每种句子，看看例子！</div>
+  <div class="type-card" style="background:linear-gradient(135deg,#ff6b6b,#ff9999);" onclick="flashType('type1');playClick()">
+    <div class="type-icon-big" style="animation-delay:0s;">📢</div>
+    <div class="type-content" style="color:#fff;">
+      <div class="type-name">陈述句</div>
+      <div class="type-desc">说明、描述一件事。句子平静，用句号。</div>
+      <div class="type-example">今天是星期一。/ 我喜欢踢足球。</div>
+    </div>
+  </div>
+  <div class="type-card" style="background:linear-gradient(135deg,#4ecdc4,#87e6e0);" onclick="flashType('type2');playClick()">
+    <div class="type-icon-big" style="animation-delay:.3s;">❓</div>
+    <div class="type-content" style="color:#fff;">
+      <div class="type-name">疑问句</div>
+      <div class="type-desc">问问题，想知道答案。用问号，常有"吗、呢、吧"。</div>
+      <div class="type-example">你吃饭了吗？/ 小鸟在哪里呢？</div>
+    </div>
+  </div>
+  <div class="type-card" style="background:linear-gradient(135deg,#f093fb,#f5576c);" onclick="flashType('type3');playClick()">
+    <div class="type-icon-big" style="animation-delay:.6s;">😊</div>
+    <div class="type-content" style="color:#fff;">
+      <div class="type-name">感叹句</div>
+      <div class="type-desc">表达强烈感情，很高兴或很惊讶。用感叹号。</div>
+      <div class="type-example">这朵花真美啊！/ 太棒了！</div>
+    </div>
+  </div>
+  <div class="type-card" style="background:linear-gradient(135deg,#a78bfa,#7c3aed);" onclick="flashType('type4');playClick()">
+    <div class="type-icon-big" style="animation-delay:.9s;">👉</div>
+    <div class="type-content" style="color:#fff;">
+      <div class="type-name">祈使句</div>
+      <div class="type-desc">请求或命令别人做某事。</div>
+      <div class="type-example">请坐下。/ 快来看这里！</div>
+    </div>
+  </div>
+  <div id="flash-info" class="card hidden" style="text-align:center;font-size:1.2rem;"></div>
+  <button class="btn" onclick="goSection(3);playClick()">开始闯关 ⚔️</button>
+</section>
+
+<!-- LEVEL 1: CLASSIFY (DRAG) -->
+<section id="s3" class="section">
+  <div class="level-badge">⚔️ 第一关：分类拖拽</div>
+  <div class="section-title">给句子分类！</div>
+  <div class="section-sub">把句子拖到正确的类型框里！</div>
+
+  <div class="sort-bank" id="sort-bank">
+    <!-- Items injected by JS -->
+  </div>
+
+  <div class="sort-container">
+    <div class="sort-lane" style="background:rgba(255,107,107,.12);border:2px dashed var(--primary);">
+      <div class="sort-label" style="color:var(--primary);">📢 陈述句</div>
+      <div class="drop-area" id="zone-述"
+        ondragover="event.preventDefault();this.classList.add('over')"
+        ondragleave="this.classList.remove('over')"
+        ondrop="dropSort(event,'述')"></div>
+    </div>
+    <div class="sort-lane" style="background:rgba(78,205,196,.12);border:2px dashed var(--secondary);">
+      <div class="sort-label" style="color:var(--secondary);">❓ 疑问句</div>
+      <div class="drop-area" id="zone-疑"
+        ondragover="event.preventDefault();this.classList.add('over')"
+        ondragleave="this.classList.remove('over')"
+        ondrop="dropSort(event,'疑')"></div>
+    </div>
+    <div class="sort-lane" style="background:rgba(240,147,251,.12);border:2px dashed #f093fb;">
+      <div class="sort-label" style="color:#f093fb;">😊 感叹句</div>
+      <div class="drop-area" id="zone-叹"
+        ondragover="event.preventDefault();this.classList.add('over')"
+        ondragleave="this.classList.remove('over')"
+        ondrop="dropSort(event,'叹')"></div>
+    </div>
+    <div class="sort-lane" style="background:rgba(167,139,250,.12);border:2px dashed #a78bfa;">
+      <div class="sort-label" style="color:#a78bfa;">👉 祈使句</div>
+      <div class="drop-area" id="zone-祈"
+        ondragover="event.preventDefault();this.classList.add('over')"
+        ondragleave="this.classList.remove('over')"
+        ondrop="dropSort(event,'祈')"></div>
+    </div>
+  </div>
+  <div class="feedback" id="sort-fb" style="margin-top:14px;"></div>
+  <button class="btn btn-teal hidden" style="margin-top:10px;" id="next-l1" onclick="goSection(4);playClick()">进入第二关 →</button>
+</section>
+
+<!-- LEVEL 2: IDENTIFY -->
+<section id="s4" class="section">
+  <div class="level-badge">⚔️ 第二关：快速判断</div>
+  <div class="section-title">这是什么句子？</div>
+  <div class="section-sub">快速判断每个句子的类型！</div>
+  <div id="quiz-container"></div>
+  <button class="btn btn-purple hidden" id="next-l2" onclick="goSection(5);playClick()">进入第三关 →</button>
+</section>
+
+<!-- LEVEL 3: TRANSFORM -->
+<section id="s5" class="section">
+  <div class="level-badge">⚔️ 第三关：句型转换</div>
+  <div class="section-title">句子大变身！</div>
+  <div class="section-sub">把陈述句改成疑问句或感叹句！</div>
+  <div class="transform-box">
+    <div class="original-sent">今天天气很好。（陈述句）</div>
+    <div class="transform-q">把它改成疑问句：</div>
+    <input class="transform-input" id="t1" placeholder="今天天气...？">
+    <div class="transform-hint">💡 提示：加上"吗？"或"呢？"</div>
+  </div>
+  <div class="transform-box">
+    <div class="original-sent">这条鱼很大。（陈述句）</div>
+    <div class="transform-q">把它改成感叹句：</div>
+    <input class="transform-input" id="t2" placeholder="这条鱼真...！">
+    <div class="transform-hint">💡 提示：加上"真…啊！"或"多么…啊！"</div>
+  </div>
+  <div class="transform-box">
+    <div class="original-sent">请大家安静下来。（祈使句）</div>
+    <div class="transform-q">说说这是什么句子？它表达什么意思？</div>
+    <input class="transform-input" id="t3" placeholder="这是______句，意思是______">
+    <div class="transform-hint">💡 提示：请求/命令别人做某事 = 祈使句</div>
+  </div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:8px;">
+    <button class="btn btn-teal" onclick="checkTransform();playClick()">检查答案 ✅</button>
+    <button class="btn hidden" id="next-l3" onclick="goSection(6);playClick()">迎战 Boss 关 👾</button>
+  </div>
+</section>
+
+<!-- BOSS -->
+<section id="s6" class="section">
+  <div class="boss-stage">
+    <span class="boss-icon">🎯</span>
+    <div style="font-size:1.9rem;font-weight:900;color:#fff;margin:10px 0;">Boss 关：综合大挑战！</div>
+    <div style="font-size:1.1rem;color:rgba(255,255,255,.9);">判断每个句子的类型，并完成转换！</div>
+  </div>
+  <div class="card">
+    <div class="card-title">📖 判断句型 + 改写</div>
+    <div id="boss-qs" style="display:flex;flex-direction:column;gap:16px;">
+      
+      <div class="boss-section">
+        <div class="boss-sentence">1. "妈妈，今天我可以去公园玩吗？"</div>
+        <div style="color:rgba(255,255,255,.85);margin-bottom:8px;font-size:1rem;">这是什么句子？</div>
+        <div class="type-tag-row">
+          <button class="type-tag" style="background:var(--primary);" onclick="selectBossType(this,'boss-t1','疑问句')">❓ 疑问句</button>
+          <button class="type-tag" style="background:var(--secondary);" onclick="selectBossType(this,'boss-t1','陈述句')">📢 陈述句</button>
+          <button class="type-tag" style="background:#f093fb;" onclick="selectBossType(this,'boss-t1','感叹句')">😊 感叹句</button>
+          <button class="type-tag" style="background:#a78bfa;" onclick="selectBossType(this,'boss-t1','祈使句')">👉 祈使句</button>
+        </div>
+        <input type="hidden" id="boss-t1">
+      </div>
+
+      <div class="boss-section">
+        <div class="boss-sentence">2. "哇，这座山真高啊！"</div>
+        <div style="color:rgba(255,255,255,.85);margin-bottom:8px;font-size:1rem;">这是什么句子？</div>
+        <div class="type-tag-row">
+          <button class="type-tag" style="background:var(--primary);" onclick="selectBossType(this,'boss-t2','疑问句')">❓ 疑问句</button>
+          <button class="type-tag" style="background:var(--secondary);" onclick="selectBossType(this,'boss-t2','陈述句')">📢 陈述句</button>
+          <button class="type-tag" style="background:#f093fb;" onclick="selectBossType(this,'boss-t2','感叹句')">😊 感叹句</button>
+          <button class="type-tag" style="background:#a78bfa;" onclick="selectBossType(this,'boss-t2','祈使句')">👉 祈使句</button>
+        </div>
+        <input type="hidden" id="boss-t2">
+      </div>
+
+      <div class="boss-section">
+        <div class="boss-sentence">3. 把"小鸟会唱歌。"改成感叹句：</div>
+        <input class="boss-input" id="boss-t3" placeholder="小鸟...！">
+      </div>
+
+      <div class="boss-section">
+        <div class="boss-sentence">4. 自己写一个疑问句（关于动物）：</div>
+        <input class="boss-input" id="boss-t4" placeholder="大象会...吗？">
+      </div>
+    </div>
+    <button class="btn" style="width:100%;margin-top:18px;background:var(--accent);color:#333;" onclick="checkBoss();playClick()">提交答案 🚀</button>
+  </div>
+</section>
+
+<!-- SCOREBOARD -->
+<section id="s7" class="section" style="text-align:center;">
+  <div class="section-title">🏆 闯关成绩单</div>
+  <div class="score-ring">
+    <div class="sn" id="final-score">0</div>
+    <div class="sl">⭐ 颗星</div>
+  </div>
+  <div id="stars-display" style="font-size:2.2rem;margin:14px 0;letter-spacing:6px;"></div>
+  <div class="card">
+    <div class="card-title">🏅 获得的成就</div>
+    <div class="achievements">
+      <div class="badge" id="b-first"><span class="badge-icon">🎯</span>开门红</div>
+      <div class="badge" id="b-sort"><span class="badge-icon">🗂️</span>分类达人</div>
+      <div class="badge" id="b-quiz"><span class="badge-icon">⚡</span>快速判断</div>
+      <div class="badge" id="b-transform"><span class="badge-icon">🔄</span>句型变变变</div>
+      <div class="badge" id="b-boss"><span class="badge-icon">🎯</span>Boss征服者</div>
+      <div class="badge" id="b-write"><span class="badge-icon">✍️</span>造句小作家</div>
+      <div class="badge" id="b-4types"><span class="badge-icon">🌈</span>四型全知</div>
+      <div class="badge" id="b-perfect"><span class="badge-icon">💎</span>完美通关</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:8px;">
+    <button class="btn btn-teal" onclick="goSection(8);playClick()">看拓展知识 📚</button>
+    <button class="btn btn-yellow" onclick="restart();playClick()">再来一次 🔄</button>
+  </div>
+</section>
+
+<!-- EXPAND -->
+<section id="s8" class="section">
+  <div class="section-title">📚 拓展：句子的更多变化</div>
+  <div class="section-sub">学会了4种句型，还有更多玩法！</div>
+  <div class="exp-card" style="background:linear-gradient(135deg,#667eea,#764ba2);">
+    <div class="ei">🔄</div>
+    <div class="et">陈述句 ↔ 疑问句</div>
+    <div class="ed">今天很冷。→ 今天冷吗？<br>加"吗？呢？吧？"就能变成疑问句！</div>
+  </div>
+  <div class="exp-card" style="background:linear-gradient(135deg,#f093fb,#f5576c);">
+    <div class="ei">💪</div>
+    <div class="et">陈述句 ↔ 感叹句</div>
+    <div class="ed">这朵花很美。→ 这朵花真美啊！<br>加"真…啊！多么…啊！"就变感叹句！</div>
+  </div>
+  <div class="exp-card" style="background:linear-gradient(135deg,#4ecdc4,#44a08d);">
+    <div class="ei">📝</div>
+    <div class="et">把字句和被字句</div>
+    <div class="ed">小明打了小花。（把字句：小明把小花打了）<br>（被字句：小花被小明打了）</div>
+  </div>
+  <div class="card" style="background:linear-gradient(135deg,#e8f5e9,#e3f2fd);margin-top:14px;">
+    <div class="card-title">🎯 回家作业</div>
+    <ol style="padding-left:20px;line-height:2.3;font-size:1.1rem;">
+      <li>在课本里各找一种句型各1句，抄在本子上</li>
+      <li>把"春天来了。"改成疑问句和感叹句</li>
+      <li>自己造4种句子，每种1句</li>
+    </ol>
+  </div>
+  <button class="btn" style="margin-top:18px;" onclick="restart();playClick()">🔄 重新挑战</button>
+</section>
+
+<div id="nav-dots"></div>
+<div id="ai-companion">
+  <div class="ai-body" id="ai-body">
+    <div class="ai-bubble" id="ai-msg">我是虫虫🐛！认识句子类型，写作文就更容易了！</div>
+  </div>
+  <button class="ai-toggle" onclick="toggleAI()">🐛</button>
+</div>
+
+<script>
+// STATE
+let currentSection=0,totalSections=9,stars=0,startTime=Date.now();
+let sortDone=0,sortCorrect=true;
+let quizIdx=0;
+let bossTypes={};
+
+// AUDIO
+const AC=window.AudioContext||window.webkitAudioContext;let ac;
+function getAC(){if(!ac)ac=new AC();return ac;}
+function playClick(){try{const a=getAC(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=900;g.gain.setValueAtTime(.25,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.09);o.start();o.stop(a.currentTime+.09);}catch(e){}}
+function playSuccess(){try{const a=getAC();[523,659,784,1047].forEach((f,i)=>{const o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=f;g.gain.setValueAtTime(.22,a.currentTime+i*.1);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+i*.1+.16);o.start(a.currentTime+i*.1);o.stop(a.currentTime+i*.1+.16);});}catch(e){}}
+function playError(){try{const a=getAC(),o=a.createOscillator(),g=a.createGain();o.type='sawtooth';o.connect(g);g.connect(a.destination);o.frequency.value=190;g.gain.setValueAtTime(.2,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.3);o.start();o.stop(a.currentTime+.3);}catch(e){}}
+
+// NAV
+function goSection(n){
+  document.querySelectorAll('.section').forEach((s,i)=>s.classList.toggle('hidden',i!==n));
+  currentSection=n;
+  document.getElementById('progress-fill').style.width=(n/(totalSections-1)*100)+'%';
+  document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===n));
+  window.scrollTo({top:0,behavior:'smooth'});
+  showAITip(n);
+}
+function addStar(n=1){stars+=n;document.getElementById('star-count').textContent=stars;
+  document.getElementById('stars-hud').classList.add('celebrate');
+  setTimeout(()=>document.getElementById('stars-hud').classList.remove('celebrate'),600);}
+function earnBadge(id){const el=document.getElementById(id);if(el&&!el.classList.contains('earned')){el.classList.add('earned');}}
+
+// WARMUP FLASH
+const flashData={
+  type1:{title:'📢 陈述句',desc:'平静地说明、描述一件事。<br>如：今天是晴天。我有一只小狗。'},
+  type2:{title:'❓ 疑问句',desc:'问别人问题，想得到答案。<br>如：你叫什么名字？小猫在哪里呢？'},
+  type3:{title:'😊 感叹句',desc:'表达强烈的感情，很惊喜或很高兴。<br>如：这朵花真美啊！太棒了！'},
+  type4:{title:'👉 祈使句',desc:'请求或命令别人做事。<br>如：请安静。快来帮我！'}
+};
+function flashType(key){
+  const info=document.getElementById('flash-info');
+  info.classList.remove('hidden');
+  const d=flashData[key];
+  info.innerHTML=`<div style="font-size:1.3rem;font-weight:900;color:var(--primary);margin-bottom:8px;">${d.title}</div><div style="font-size:1.1rem;line-height:1.8;">${d.desc}</div>`;
+}
+
+// SORT DRAG
+const sortItems=[
+  {text:'小鸟在树上唱歌。',type:'述',label:'陈述句'},
+  {text:'你看过《西游记》吗？',type:'疑',label:'疑问句'},
+  {text:'这个故事真有趣啊！',type:'叹',label:'感叹句'},
+  {text:'请大家保持安静。',type:'祈',label:'祈使句'},
+  {text:'小明今天没来上学。',type:'述',label:'陈述句'},
+  {text:'妈妈在哪里呢？',type:'疑',label:'疑问句'},
+];
+let draggingItem=null;
+function buildSortBank(){
+  const bank=document.getElementById('sort-bank');
+  bank.innerHTML='';
+  // shuffle
+  const shuffled=[...sortItems].sort(()=>Math.random()-.5);
+  shuffled.forEach((item,i)=>{
+    const el=document.createElement('div');
+    el.className='sort-card-item';
+    el.textContent=item.text;
+    el.dataset.type=item.type;
+    el.id='si'+i;
+    el.draggable=true;
+    el.addEventListener('dragstart',()=>draggingItem=el);
+    el.addEventListener('click',()=>touchSortDrop(el));
+    bank.appendChild(el);
+  });
+}
+let activeSortItem=null;
+function touchSortDrop(el){
+  if(!activeSortItem){
+    activeSortItem=el;
+    el.style.outline='3px solid var(--primary)';
+    playClick();
+  } else {
+    el.style.outline='none';
+    activeSortItem=null;
+  }
+}
+function dropSort(event,zoneType){
+  event.preventDefault();
+  document.querySelector(`#zone-${zoneType}`).classList.remove('over');
+  const item=draggingItem||activeSortItem;
+  if(!item)return;
+  item.style.outline='none';
+  const itemType=item.dataset.type;
+  if(itemType===zoneType){
+    // correct
+    item.classList.add('placed');
+    item.draggable=false;
+    document.querySelector(`#zone-${zoneType}`).appendChild(item);
+    playSuccess();addStar(1);
+    if(sortDone===0)earnBadge('b-first');
+    sortDone++;
+    if(sortDone>=sortItems.length){
+      earnBadge('b-sort');earnBadge('b-4types');
+      document.getElementById('sort-fb').className='feedback correct';
+      document.getElementById('sort-fb').style.display='block';
+      document.getElementById('sort-fb').textContent='🎉 全部分类正确！你太棒了！';
+      setTimeout(()=>document.getElementById('next-l1').classList.remove('hidden'),600);
+    }
+  } else {
+    item.style.animation='shake .4s';
+    setTimeout(()=>item.style.animation='',500);
+    playError();sortCorrect=false;
+    const fb=document.getElementById('sort-fb');
+    fb.className='feedback wrong';fb.style.display='block';
+    fb.textContent='❌ 分类不对，再想想这个句子是在说明？提问？感叹？还是请求？';
+    setTimeout(()=>fb.style.display='none',2500);
+  }
+  draggingItem=null;activeSortItem=null;
+}
+
+// QUIZ
+const quizData=[
+  {sent:'妈妈买了一束花。',type:'陈述句',why:'这句话在告诉我们一件事，用句号，是陈述句！'},
+  {sent:'你有没有看过这部电影？',type:'疑问句',why:'这句话在问问题，末尾用问号，是疑问句！'},
+  {sent:'快把作业写完！',type:'祈使句',why:'这句话在叫别人做事，是祈使句！'},
+  {sent:'这片雪地真漂亮啊！',type:'感叹句',why:'这句话表达惊喜的感情，用感叹号，是感叹句！'},
+  {sent:'小猫睡着了。',type:'陈述句',why:'说明事情，用句号，陈述句！'},
+];
+function buildQuiz(){
+  const c=document.getElementById('quiz-container');
+  if(quizIdx>=quizData.length){
+    earnBadge('b-quiz');
+    document.getElementById('next-l2').classList.remove('hidden');
+    c.innerHTML='<div style="text-align:center;font-size:1.3rem;font-weight:700;color:var(--primary);padding:20px;">🎉 全部答完！你是句子类型小专家！</div>';
+    return;
+  }
+  const q=quizData[quizIdx];
+  const opts=['陈述句','疑问句','感叹句','祈使句'].sort(()=>Math.random()-.5);
+  c.innerHTML=`
+    <div class="card">
+      <div style="font-size:.95rem;color:#aaa;text-align:center;margin-bottom:10px;">第 ${quizIdx+1}/${quizData.length} 题</div>
+      <div class="q-sentence">"${q.sent}"</div>
+      <div class="q-text">这是什么句子？</div>
+      <div class="choices">
+        ${opts.map(o=>`<button class="choice-btn" onclick="checkQuiz(this,'${o}','${q.type}','${q.why.replace(/'/g,"\\'")}')">${o}</button>`).join('')}
+      </div>
+      <div class="feedback" id="qfb-${quizIdx}"></div>
+    </div>`;
+}
+function checkQuiz(btn,ans,correct,why){
+  const fb=document.getElementById('qfb-'+quizIdx);
+  btn.parentNode.querySelectorAll('.choice-btn').forEach(b=>b.disabled=true);
+  if(ans===correct){
+    btn.classList.add('correct');playSuccess();addStar(1);
+    fb.className='feedback correct';fb.style.display='block';
+    fb.textContent='✅ 答对了！'+why;
+    quizIdx++;setTimeout(buildQuiz,1200);
+  } else {
+    btn.classList.add('wrong');playError();
+    fb.className='feedback wrong';fb.style.display='block';
+    fb.textContent='❌ 再想想！'+why;
+  }
+}
+
+// TRANSFORM
+function checkTransform(){
+  const t1=document.getElementById('t1').value.trim();
+  const t2=document.getElementById('t2').value.trim();
+  const t3=document.getElementById('t3').value.trim();
+  let ok=true;
+  if(t1.length>3&&(t1.includes('？')||t1.includes('吗')||t1.includes('?'))){
+    document.getElementById('t1').classList.add('correct');
+  } else {
+    document.getElementById('t1').classList.add('wrong');ok=false;
+  }
+  if(t2.length>3&&(t2.includes('！')||t2.includes('啊')||t2.includes('!'))){
+    document.getElementById('t2').classList.add('correct');
+  } else {
+    document.getElementById('t2').classList.add('wrong');ok=false;
+  }
+  if(t3.length>3){
+    document.getElementById('t3').classList.add('correct');
+  } else {
+    document.getElementById('t3').classList.add('wrong');ok=false;
+  }
+  if(ok){
+    addStar(2);playSuccess();earnBadge('b-transform');
+    document.getElementById('next-l3').classList.remove('hidden');
+  } else {
+    playError();
+    alert('有的答案还不完整！疑问句要有问号，感叹句要有感叹号哦！');
+  }
+}
+
+// BOSS
+function selectBossType(btn,fieldId,type){
+  btn.closest('.type-tag-row').querySelectorAll('.type-tag').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById(fieldId).value=type;
+  playClick();
+}
+function checkBoss(){
+  const t1=document.getElementById('boss-t1').value;
+  const t2=document.getElementById('boss-t2').value;
+  const t3=document.getElementById('boss-t3').value.trim();
+  const t4=document.getElementById('boss-t4').value.trim();
+  if(t1==='疑问句'&&t2==='感叹句'&&t3.length>3&&t4.length>4){
+    addStar(3);playSuccess();earnBadge('b-boss');earnBadge('b-write');
+    if(stars>=10)earnBadge('b-perfect');
+    showFinal();
+    setTimeout(()=>goSection(7),1200);
+  } else {
+    playError();
+    let msg='还有问题没答完！';
+    if(!t1)msg='第1题：请选择句子类型！';
+    else if(!t2)msg='第2题：请选择句子类型！';
+    else if(t3.length<3)msg='第3题：请改写感叹句！';
+    else if(t4.length<4)msg='第4题：请写出一个疑问句！';
+    alert(msg);
+  }
+}
+function showFinal(){
+  document.getElementById('final-score').textContent=stars;
+  const s=stars>=10?'⭐⭐⭐⭐⭐':stars>=7?'⭐⭐⭐⭐☆':stars>=4?'⭐⭐⭐☆☆':'⭐⭐☆☆☆';
+  document.getElementById('stars-display').textContent=s;
+}
+
+// AI
+const aiTips=[
+  '我是虫虫🐛！认识4种句子，写文章会更精彩！',
+  '四种句型：陈述、疑问、感叹、祈使！记住它们！',
+  '🔥点击每种句子，看看例子！',
+  '第一关：把句子拖到正确的类型框！',
+  '第二关：快速判断每个句子的类型！',
+  '第三关：把陈述句改成其他句型！',
+  '👾Boss关！用上所有技能，最后一冲！',
+  '太厉害了！你掌握了所有句子类型！',
+  '💡学会句子类型，写作文时可以变换句型，更生动！'
+];
+let aiOpen=false;
+function toggleAI(){aiOpen=!aiOpen;document.getElementById('ai-body').style.display=aiOpen?'block':'none';}
+function showAITip(n){
+  document.getElementById('ai-msg').textContent=aiTips[n]||aiTips[0];
+  document.getElementById('ai-body').style.display='block';aiOpen=true;
+  setTimeout(()=>{document.getElementById('ai-body').style.display='none';aiOpen=false;},4000);
+}
+
+// RESTART
+function restart(){
+  stars=0;startTime=Date.now();sortDone=0;sortCorrect=true;quizIdx=0;bossTypes={};
+  document.getElementById('star-count').textContent='0';
+  document.querySelectorAll('.choice-btn').forEach(b=>{b.disabled=false;b.className='choice-btn';});
+  document.querySelectorAll('.feedback').forEach(f=>f.style.display='none');
+  document.querySelectorAll('.transform-input').forEach(i=>{i.value='';i.className='transform-input';});
+  document.querySelectorAll('.boss-input').forEach(i=>i.value='');
+  document.querySelectorAll('input[type=hidden]').forEach(i=>i.value='');
+  document.querySelectorAll('.type-tag').forEach(t=>t.classList.remove('selected'));
+  document.getElementById('next-l1').classList.add('hidden');
+  document.getElementById('next-l2').classList.add('hidden');
+  document.getElementById('next-l3').classList.add('hidden');
+  document.querySelectorAll('.badge').forEach(b=>b.classList.remove('earned'));
+  document.querySelectorAll('.drop-area').forEach(a=>a.innerHTML='');
+  buildSortBank();
+  buildQuiz();
+  document.getElementById('flash-info').classList.add('hidden');
+  goSection(0);
+}
+
+// INIT
+function init(){
+  const dots=document.getElementById('nav-dots');
+  for(let i=0;i<totalSections;i++){const d=document.createElement('div');d.className='dot';dots.appendChild(d);}
+  document.querySelectorAll('.section').forEach((s,i)=>s.classList.toggle('hidden',i!==0));
+  document.querySelectorAll('.dot')[0].classList.add('active');
+  buildSortBank();
+  buildQuiz();
+}
+init();
+</script>
+</body>
+</html>

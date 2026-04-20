@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>联系上下文理解词义 · 四年级语文</title>
+<style>
+  :root {
+    --bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--card:#fff;
+    --text:#333;--radius:20px;--shadow:0 8px 32px rgba(0,0,0,0.10);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);font-family:'Microsoft YaHei',sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden;}
+  .hidden{display:none!important;}
+
+  /* ===== PROGRESS BAR ===== */
+  #progress-bar{position:fixed;top:0;left:0;width:100%;height:6px;background:#eee;z-index:999;}
+  #progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--primary),var(--secondary));transition:width .5s;}
+
+  /* ===== STARS HUD ===== */
+  #stars-hud{position:fixed;top:12px;right:16px;background:var(--card);border-radius:50px;padding:6px 16px;
+    box-shadow:var(--shadow);font-size:1.1rem;z-index:998;display:flex;align-items:center;gap:6px;}
+  #stars-hud span{font-weight:700;color:var(--primary);}
+
+  /* ===== SECTION ===== */
+  .section{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:80px 20px 40px;max-width:800px;margin:0 auto;}
+
+  /* ===== HERO ===== */
+  #hero{background:linear-gradient(135deg,#fff5e6 0%,#ffe0e0 100%);min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 20px;}
+  .hero-emoji{font-size:5rem;margin-bottom:16px;animation:bounce 2s infinite;}
+  @keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-16px);}}
+  .hero-title{font-size:2.6rem;font-weight:900;color:var(--primary);margin-bottom:12px;line-height:1.2;}
+  .hero-sub{font-size:1.2rem;color:#777;margin-bottom:32px;}
+  .hero-badge{background:var(--accent);color:#333;border-radius:50px;padding:8px 24px;font-size:1rem;font-weight:700;display:inline-block;margin-bottom:32px;}
+  .btn{background:var(--primary);color:#fff;border:none;border-radius:var(--radius);padding:16px 40px;
+    font-size:1.2rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(255,107,107,.3);
+    transition:transform .15s,box-shadow .15s;}
+  .btn:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(255,107,107,.4);}
+  .btn:active{transform:translateY(0);}
+  .btn-secondary{background:var(--secondary);}
+  .btn-accent{background:var(--accent);color:#333;}
+
+  /* ===== CARD ===== */
+  .card{background:var(--card);border-radius:var(--radius);padding:32px;box-shadow:var(--shadow);width:100%;margin-bottom:24px;}
+  .card-title{font-size:1.5rem;font-weight:800;color:var(--primary);margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+  .section-title{font-size:2rem;font-weight:900;color:var(--primary);text-align:center;margin-bottom:8px;}
+  .section-sub{font-size:1rem;color:#888;text-align:center;margin-bottom:32px;}
+
+  /* ===== OBJECTIVES ===== */
+  .obj-list{list-style:none;display:flex;flex-direction:column;gap:12px;}
+  .obj-item{background:#f8f8ff;border-radius:14px;padding:14px 20px;display:flex;align-items:center;gap:14px;
+    font-size:1.1rem;border-left:5px solid var(--secondary);}
+  .obj-icon{font-size:1.5rem;}
+
+  /* ===== WARMUP ===== */
+  .warmup-sentence{font-size:1.3rem;line-height:2.1;background:linear-gradient(135deg,#fff9e6,#fff);
+    border-radius:var(--radius);padding:24px;border-left:6px solid var(--accent);margin-bottom:20px;}
+  .highlight{color:var(--primary);font-weight:700;background:rgba(255,107,107,.12);
+    border-radius:6px;padding:2px 6px;cursor:pointer;transition:background .2s;}
+  .highlight:hover{background:rgba(255,107,107,.25);}
+  .tooltip{background:var(--primary);color:#fff;border-radius:12px;padding:10px 16px;font-size:.95rem;
+    margin-top:12px;display:none;animation:fadeIn .3s;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  /* ===== STRATEGY CARDS ===== */
+  .strategy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin:20px 0;}
+  .strategy-card{background:linear-gradient(135deg,var(--secondary),#43e0d5);color:#fff;border-radius:var(--radius);
+    padding:20px;text-align:center;cursor:pointer;transition:transform .2s;box-shadow:0 4px 16px rgba(78,205,196,.3);}
+  .strategy-card:hover{transform:translateY(-4px);}
+  .strategy-card .s-icon{font-size:2.2rem;margin-bottom:8px;}
+  .strategy-card .s-name{font-size:1rem;font-weight:700;}
+  .strategy-card .s-desc{font-size:.85rem;opacity:.9;margin-top:4px;}
+
+  /* ===== QUIZ / LEVEL ===== */
+  .level-badge{display:inline-flex;align-items:center;gap:8px;background:var(--primary);color:#fff;
+    border-radius:50px;padding:8px 20px;font-size:1rem;font-weight:700;margin-bottom:20px;}
+  .passage{font-size:1.15rem;line-height:2;background:#fffde7;border-radius:14px;padding:20px;margin-bottom:20px;border:2px dashed var(--accent);}
+  .question-text{font-size:1.2rem;font-weight:700;margin-bottom:16px;color:var(--text);}
+  .choices{display:flex;flex-direction:column;gap:10px;}
+  .choice-btn{background:#f5f5f5;border:2px solid transparent;border-radius:14px;padding:14px 20px;
+    font-size:1.1rem;cursor:pointer;text-align:left;transition:all .2s;}
+  .choice-btn:hover{background:#fff0f0;border-color:var(--primary);}
+  .choice-btn.correct{background:#e8faf0;border-color:#4caf50;color:#2e7d32;}
+  .choice-btn.wrong{background:#fff0f0;border-color:#f44336;color:#c62828;}
+  .feedback{border-radius:14px;padding:14px 20px;font-size:1.1rem;margin-top:16px;display:none;animation:fadeIn .3s;}
+  .feedback.correct{background:#e8faf0;color:#2e7d32;border:2px solid #4caf50;}
+  .feedback.wrong{background:#fff0f0;color:#c62828;border:2px solid #f44336;}
+
+  /* ===== FILL BLANK ===== */
+  .fill-input{border:2px solid var(--secondary);border-radius:10px;padding:8px 14px;font-size:1.1rem;
+    width:140px;outline:none;transition:border .2s;}
+  .fill-input:focus{border-color:var(--primary);}
+  .fill-input.correct{border-color:#4caf50;background:#e8faf0;}
+  .fill-input.wrong{border-color:#f44336;background:#fff0f0;}
+  .fill-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:10px 0;font-size:1.1rem;line-height:2;}
+
+  /* ===== BOSS ===== */
+  .boss-card{background:linear-gradient(135deg,#ff6b6b 0%,#ffd166 100%);border-radius:var(--radius);
+    padding:32px;color:#fff;text-align:center;margin-bottom:24px;box-shadow:0 8px 32px rgba(255,107,107,.3);}
+  .boss-emoji{font-size:4rem;margin-bottom:12px;animation:spin 3s linear infinite;}
+  @keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+  .boss-title{font-size:1.8rem;font-weight:900;margin-bottom:8px;}
+  .boss-desc{font-size:1.05rem;opacity:.92;}
+  .boss-passage{background:rgba(255,255,255,.2);border-radius:14px;padding:20px;margin:20px 0;
+    font-size:1.1rem;line-height:2;text-align:left;}
+  .boss-qs{display:flex;flex-direction:column;gap:14px;}
+  .boss-q{background:rgba(255,255,255,.15);border-radius:14px;padding:16px;font-size:1.05rem;}
+  .boss-input{width:100%;border:none;border-radius:10px;padding:10px 14px;font-size:1.05rem;margin-top:8px;
+    background:rgba(255,255,255,.85);outline:none;}
+
+  /* ===== SCOREBOARD ===== */
+  #scoreboard{text-align:center;}
+  .score-circle{width:160px;height:160px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));
+    display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 24px;
+    box-shadow:0 8px 32px rgba(255,107,107,.3);animation:scaleIn .6s;}
+  @keyframes scaleIn{from{transform:scale(0);}to{transform:scale(1);}}
+  .score-num{font-size:3rem;font-weight:900;color:#fff;}
+  .score-label{font-size:1rem;color:rgba(255,255,255,.8);}
+  .stars-row{font-size:2.5rem;margin:16px 0;letter-spacing:8px;}
+  .achievements{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:24px 0;}
+  .badge{background:var(--card);border-radius:14px;padding:12px 18px;display:flex;align-items:center;gap:8px;
+    box-shadow:var(--shadow);font-size:.95rem;opacity:.4;transition:opacity .5s;}
+  .badge.earned{opacity:1;animation:pop .4s;}
+  @keyframes pop{0%{transform:scale(0);}70%{transform:scale(1.15);}100%{transform:scale(1);}}
+  .badge-icon{font-size:1.5rem;}
+
+  /* ===== AI COMPANION ===== */
+  #ai-companion{position:fixed;bottom:20px;left:20px;z-index:997;}
+  .ai-body{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+    max-width:280px;padding:16px;display:none;animation:slideUp .3s;}
+  @keyframes slideUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+  .ai-bubble{background:var(--secondary);color:#fff;border-radius:14px 14px 14px 4px;
+    padding:12px 16px;font-size:.95rem;line-height:1.6;margin-bottom:10px;}
+  .ai-toggle{width:56px;height:56px;border-radius:50%;background:var(--secondary);border:none;
+    font-size:1.8rem;cursor:pointer;box-shadow:0 4px 16px rgba(78,205,196,.4);
+    transition:transform .2s;}
+  .ai-toggle:hover{transform:scale(1.1);}
+
+  /* ===== EXPAND ===== */
+  .expand-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;}
+  .expand-item{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-radius:var(--radius);
+    padding:24px;text-align:center;}
+  .expand-item .e-icon{font-size:2.5rem;margin-bottom:10px;}
+  .expand-item .e-title{font-size:1.1rem;font-weight:700;margin-bottom:6px;}
+  .expand-item .e-desc{font-size:.9rem;opacity:.88;}
+
+  /* Celebration */
+  .celebrate{animation:celebrate .6s ease;}
+  @keyframes celebrate{0%{transform:scale(1);}30%{transform:scale(1.2);}60%{transform:scale(.95);}100%{transform:scale(1);}}
+
+  /* Navigation Dots */
+  #nav-dots{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:996;}
+  .dot{width:10px;height:10px;border-radius:50%;background:#ccc;transition:background .3s,transform .3s;}
+  .dot.active{background:var(--primary);transform:scale(1.4);}
+</style>
+</head>
+<body>
+
+<div id="progress-bar"><div id="progress-fill"></div></div>
+<div id="stars-hud">⭐ <span id="star-count">0</span> 颗星</div>
+
+<!-- ===== HERO ===== -->
+<section id="s0" class="section" style="max-width:100%;width:100%;padding:0;">
+<div id="hero">
+  <div class="hero-emoji">📖</div>
+  <div class="hero-title">联系上下文理解词义</div>
+  <div class="hero-sub">四年级语文 · 阅读理解核心技能</div>
+  <div class="hero-badge">🌈 闯关模式 · 5关挑战</div>
+  <button class="btn" onclick="goSection(1);playClick()">开始冒险 🚀</button>
+  <p style="margin-top:20px;color:#aaa;font-size:.9rem;">预计用时 15 分钟 · 获得最多 10 ⭐</p>
+</div>
+</section>
+
+<!-- ===== OBJECTIVES ===== -->
+<section id="s1" class="section">
+  <div class="section-title">📋 今日学习目标</div>
+  <div class="section-sub">看看我们要学什么，心中有数才能冲关！</div>
+  <div class="card">
+    <ul class="obj-list">
+      <li class="obj-item"><span class="obj-icon">🔍</span>能根据上下文猜测陌生词语的意思</li>
+      <li class="obj-item"><span class="obj-icon">🧩</span>掌握4种理解词义的策略方法</li>
+      <li class="obj-item"><span class="obj-icon">✍️</span>能用自己的话解释词语含义</li>
+      <li class="obj-item"><span class="obj-icon">💡</span>独立完成阅读中的词义推断题</li>
+    </ul>
+  </div>
+  <div class="card" style="background:linear-gradient(135deg,#fffde7,#fff9c4);">
+    <div class="card-title">🏆 挑战奖励预览</div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;">
+      <span style="background:var(--accent);border-radius:50px;padding:6px 16px;font-size:.95rem;">⭐ 答对得星</span>
+      <span style="background:var(--secondary);color:#fff;border-radius:50px;padding:6px 16px;font-size:.95rem;">🏅 词语侦探</span>
+      <span style="background:var(--primary);color:#fff;border-radius:50px;padding:6px 16px;font-size:.95rem;">🎖️ 阅读大师</span>
+    </div>
+  </div>
+  <button class="btn" onclick="goSection(2);playClick()">我准备好了！</button>
+</section>
+
+<!-- ===== WARMUP ===== -->
+<section id="s2" class="section">
+  <div class="section-title">🔥 热身活动</div>
+  <div class="section-sub">点击红色词语，看看能不能猜出意思！</div>
+  <div class="card">
+    <div class="card-title">🌟 尝试一下</div>
+    <div class="warmup-sentence">
+      小明昨天去爬山，回来后说自己<span class="highlight" onclick="showTip('tip1')">精疲力竭</span>，
+      连饭都懒得吃就直接睡觉了。
+    </div>
+    <div class="tooltip" id="tip1">💡 <b>精疲力竭</b>：形容非常疲劳，体力消耗殆尽。<br>联系上下文：爬完山、懒得吃饭、直接睡觉——这些都说明他非常累！</div>
+    <div class="warmup-sentence" style="margin-top:16px;">
+      雨后，空气<span class="highlight" onclick="showTip('tip2')">清新</span>怡人，
+      就像刚刚洗过的衣服一样，带着淡淡的清香。
+    </div>
+    <div class="tooltip" id="tip2">💡 <b>清新</b>：空气新鲜、清爽宜人。<br>联系上下文：雨后、洗过的衣服、清香——这些比喻帮助我们理解！</div>
+  </div>
+  <div class="card" style="background:linear-gradient(135deg,#e8f5e9,#fff9c4);">
+    <div class="card-title">🗺️ 解词4大策略</div>
+    <div class="strategy-grid">
+      <div class="strategy-card" onclick="playClick()">
+        <div class="s-icon">📍</div>
+        <div class="s-name">替换法</div>
+        <div class="s-desc">用同义词替换，看是否说得通</div>
+      </div>
+      <div class="strategy-card" style="background:linear-gradient(135deg,#ff6b6b,#ff9999);" onclick="playClick()">
+        <div class="s-icon">🔗</div>
+        <div class="s-name">联系法</div>
+        <div class="s-desc">联系前后句，找线索推意思</div>
+      </div>
+      <div class="strategy-card" style="background:linear-gradient(135deg,#ffe66d,#ffb347);" onclick="playClick()">
+        <div class="s-icon">🔢</div>
+        <div class="s-name">拆字法</div>
+        <div class="s-desc">把词拆开，理解每个字的意思</div>
+      </div>
+      <div class="strategy-card" style="background:linear-gradient(135deg,#a29bfe,#6c5ce7);" onclick="playClick()">
+        <div class="s-icon">🖼️</div>
+        <div class="s-name">想象法</div>
+        <div class="s-desc">根据描述在脑中画出画面</div>
+      </div>
+    </div>
+  </div>
+  <button class="btn" onclick="goSection(3);playClick()">开始闯关 ⚔️</button>
+</section>
+
+<!-- ===== LEVEL 1 ===== -->
+<section id="s3" class="section">
+  <div class="level-badge">⚔️ 第一关：选择词义</div>
+  <div class="section-title">词义选择挑战</div>
+  <div class="section-sub">读懂上下文，选出正确的词义！</div>
+
+  <div id="q1-panel" class="card">
+    <div class="passage">
+      蝴蝶在花丛中<span style="color:var(--primary);font-weight:700;">翩翩起舞</span>，
+      它那美丽的翅膀忽上忽下，像是在随着风声表演着优雅的舞蹈。
+    </div>
+    <div class="question-text">联系上下文，"翩翩起舞"的意思是：</div>
+    <div class="choices">
+      <button class="choice-btn" onclick="checkChoice(this,'wrong','q1')">A. 在地面上快速奔跑</button>
+      <button class="choice-btn" onclick="checkChoice(this,'correct','q1')">B. 轻盈地飞舞，动作优美</button>
+      <button class="choice-btn" onclick="checkChoice(this,'wrong','q1')">C. 停在花朵上一动不动</button>
+      <button class="choice-btn" onclick="checkChoice(this,'wrong','q1')">D. 用翅膀拍打花朵</button>
+    </div>
+    <div class="feedback" id="fb-q1"></div>
+  </div>
+
+  <div id="q2-panel" class="card hidden">
+    <div class="passage">
+      老奶奶家的院子里种满了花，每逢春天，<span style="color:var(--primary);font-weight:700;">花团锦簇</span>，
+      红的、黄的、紫的，把整个院子装扮得像一幅美丽的画。
+    </div>
+    <div class="question-text">"花团锦簇"在文中的意思是：</div>
+    <div class="choices">
+      <button class="choice-btn" onclick="checkChoice(this,'wrong','q2')">A. 只有一两朵花</button>
+      <button class="choice-btn" onclick="checkChoice(this,'wrong','q2')">B. 花朵凋谢了</button>
+      <button class="choice-btn" onclick="checkChoice(this,'correct','q2')">C. 花朵聚集，形容花儿开得茂盛又艳丽</button>
+      <button class="choice-btn" onclick="checkChoice(this,'wrong','q2')">D. 院子里乱糟糟的</button>
+    </div>
+    <div class="feedback" id="fb-q2"></div>
+  </div>
+
+  <div id="q3-panel" class="card hidden">
+    <div class="passage">
+      这道数学题真是<span style="color:var(--primary);font-weight:700;">刁钻古怪</span>，
+      小红想了整整一节课也没做出来，最后请教了老师才明白。
+    </div>
+    <div class="question-text">"刁钻古怪"在这里的意思是：</div>
+    <div class="choices">
+      <button class="choice-btn" onclick="checkChoice(this,'wrong','q3')">A. 题目又短又简单</button>
+      <button class="choice-btn" onclick="checkChoice(this,'correct','q3')">B. 题目非常奇特，难以解答</button>
+      <button class="choice-btn" onclick="checkChoice(this,'wrong','q3')">C. 题目有趣好玩</button>
+      <button class="choice-btn" onclick="checkChoice(this,'wrong','q3')">D. 题目写错了</button>
+    </div>
+    <div class="feedback" id="fb-q3"></div>
+  </div>
+
+  <button class="btn hidden" id="next-l1" onclick="goSection(4);playClick()">进入第二关 →</button>
+</section>
+
+<!-- ===== LEVEL 2 ===== -->
+<section id="s4" class="section">
+  <div class="level-badge">⚔️ 第二关：填空词义</div>
+  <div class="section-title">用自己的话解释词义</div>
+  <div class="section-sub">联系上下文，在方框中填入词语的意思！</div>
+
+  <div class="card">
+    <div class="card-title">✍️ 解释词义</div>
+    <div class="passage">
+      冬天来了，北风呼呼地刮着，树叶全部落光了，
+      街上的行人都<span style="color:var(--primary);font-weight:700;">缩手缩脚</span>，
+      走路也加快了速度，想快点回到温暖的家。
+    </div>
+    <div class="fill-row">
+      "缩手缩脚"的意思是：
+      <input class="fill-input" id="fill1" placeholder="写出意思..." />
+    </div>
+    <div style="margin-top:8px;font-size:.9rem;color:#aaa;">参考：因为寒冷而把手脚收起来缩在一起，形容怕冷的样子</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">✍️ 解释词义</div>
+    <div class="passage">
+      参加运动会那天，小刚站在起跑线上，心里<span style="color:var(--primary);font-weight:700;">忐忑不安</span>，
+      手心里全是汗，腿也微微发抖。
+    </div>
+    <div class="fill-row">
+      "忐忑不安"的意思是：
+      <input class="fill-input" id="fill2" placeholder="写出意思..." />
+    </div>
+    <div style="margin-top:8px;font-size:.9rem;color:#aaa;">参考：心神不宁，感到很担心、不安定</div>
+  </div>
+
+  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+    <button class="btn btn-secondary" onclick="checkFills();playClick()">检查答案 ✅</button>
+    <button class="btn" id="next-l2" onclick="goSection(5);playClick()" style="display:none">进入第三关 →</button>
+  </div>
+</section>
+
+<!-- ===== LEVEL 3 ===== -->
+<section id="s5" class="section">
+  <div class="level-badge">⚔️ 第三关：段落分析</div>
+  <div class="section-title">从段落中推断词义</div>
+  <div class="section-sub">综合运用策略，分析完整段落！</div>
+
+  <div class="card">
+    <div class="passage">
+      这位老爷爷已经八十多岁了，但身体依然<span style="color:var(--primary);font-weight:700;">矍铄</span>，
+      每天早上都会到公园打太极拳，声音洪亮，步伐稳健，看起来比六十岁的人还精神。
+    </div>
+    <div class="question-text">1. "矍铄"的意思是什么？你用了哪种策略？</div>
+    <div class="choices">
+      <button class="choice-btn" onclick="checkChoice(this,'wrong','q4')">A. 非常衰老，行动不便</button>
+      <button class="choice-btn" onclick="checkChoice(this,'correct','q4')">B. 老年人精神健旺、身体强壮</button>
+      <button class="choice-btn" onclick="checkChoice(this,'wrong','q4')">C. 性格严肃，不苟言笑</button>
+      <button class="choice-btn" onclick="checkChoice(this,'wrong','q4')">D. 声音很大，很吵</button>
+    </div>
+    <div class="feedback" id="fb-q4"></div>
+  </div>
+
+  <div id="l3-2" class="card hidden">
+    <div class="passage">
+      小动物们听说森林里来了一位陌生的客人，
+      都<span style="color:var(--primary);font-weight:700;">噤若寒蝉</span>，
+      躲在树后面，大气都不敢出，生怕发出一点声音。
+    </div>
+    <div class="question-text">2. "噤若寒蝉"是什么意思？</div>
+    <div class="choices">
+      <button class="choice-btn" onclick="checkChoice(this,'wrong','q5')">A. 像蝉一样唱歌</button>
+      <button class="choice-btn" onclick="checkChoice(this,'correct','q5')">B. 像深秋的蝉一样不敢出声，形容害怕沉默</button>
+      <button class="choice-btn" onclick="checkChoice(this,'wrong','q5')">C. 非常开心地跳来跳去</button>
+      <button class="choice-btn" onclick="checkChoice(this,'wrong','q5')">D. 大声呼叫，传递消息</button>
+    </div>
+    <div class="feedback" id="fb-q5"></div>
+  </div>
+
+  <button class="btn hidden" id="next-l3" onclick="goSection(6);playClick()">迎战 Boss 关 👾</button>
+</section>
+
+<!-- ===== BOSS ===== -->
+<section id="s6" class="section">
+  <div class="boss-card">
+    <div class="boss-emoji">👾</div>
+    <div class="boss-title">Boss 关：综合挑战！</div>
+    <div class="boss-desc">挑战一段完整的阅读，独立推断多个词语的意思！</div>
+  </div>
+  <div class="card">
+    <div class="boss-passage">
+      &nbsp;&nbsp;&nbsp;&nbsp;秋天的公园里，枫叶如同一团团跳跃的火焰，把整个公园染成了金红色。
+      一位老人<span style="color:#fff;background:rgba(255,100,100,.5);border-radius:6px;padding:0 4px;">踽踽独行</span>，
+      踩着落叶，发出沙沙的声响。他时不时停下来，弯腰拾起一片特别漂亮的枫叶，
+      <span style="color:#fff;background:rgba(100,200,200,.5);border-radius:6px;padding:0 4px;">端详</span>良久，
+      似乎在那片叶子里看到了什么<span style="color:#fff;background:rgba(255,220,50,.5);border-radius:6px;padding:0 4px;">珍贵</span>的东西。
+    </div>
+    <div class="boss-qs">
+      <div class="boss-q">
+        <div>1. "踽踽独行"的意思是：（联系"一位老人""时不时停下来"等描写）</div>
+        <input class="boss-input" id="boss1" placeholder="写出你的理解...">
+        <div style="font-size:.85rem;margin-top:6px;opacity:.8;">提示：独自一人缓慢行走，孤单的样子</div>
+      </div>
+      <div class="boss-q">
+        <div>2. "端详"在这里是什么意思？（联系"弯腰拾起""看到了什么"）</div>
+        <input class="boss-input" id="boss2" placeholder="写出你的理解...">
+        <div style="font-size:.85rem;margin-top:6px;opacity:.8;">提示：仔细地观察、打量</div>
+      </div>
+      <div class="boss-q">
+        <div>3. 你觉得老人为什么觉得那片叶子"珍贵"？（联系整段描写）</div>
+        <input class="boss-input" id="boss3" placeholder="写出你的想法...">
+      </div>
+    </div>
+    <button class="btn" style="margin-top:20px;width:100%;" onclick="bossDone();playSuccess()">提交答案 🚀</button>
+  </div>
+</section>
+
+<!-- ===== SCOREBOARD ===== -->
+<section id="s7" class="section" id="scoreboard">
+  <div class="section-title">🏆 闯关成绩单</div>
+  <div class="score-circle">
+    <div class="score-num" id="final-score">0</div>
+    <div class="score-label">总得分</div>
+  </div>
+  <div class="stars-row" id="stars-display">☆☆☆☆☆</div>
+  <div class="card">
+    <div class="card-title">🏅 获得成就</div>
+    <div class="achievements">
+      <div class="badge" id="badge-first" title="第一题答对"><span class="badge-icon">🎯</span>神准一击</div>
+      <div class="badge" id="badge-word-detective" title="完成词义挑战"><span class="badge-icon">🔍</span>词语侦探</div>
+      <div class="badge" id="badge-strategy" title="掌握策略"><span class="badge-icon">🧩</span>策略达人</div>
+      <div class="badge" id="badge-fill" title="完成填空"><span class="badge-icon">✍️</span>妙笔生花</div>
+      <div class="badge" id="badge-passage" title="完成段落分析"><span class="badge-icon">📖</span>段落高手</div>
+      <div class="badge" id="badge-boss" title="击败Boss"><span class="badge-icon">👾</span>Boss终结者</div>
+      <div class="badge" id="badge-speed" title="快速作答"><span class="badge-icon">⚡</span>闪电手</div>
+      <div class="badge" id="badge-perfect" title="满分完成"><span class="badge-icon">💎</span>无懈可击</div>
+    </div>
+  </div>
+  <button class="btn btn-secondary" onclick="goSection(8);playClick()">看看拓展知识 📚</button>
+  <button class="btn btn-accent" style="margin-top:10px;" onclick="restart();playClick()">再闯一次 🔄</button>
+</section>
+
+<!-- ===== EXPANSION ===== -->
+<section id="s8" class="section">
+  <div class="section-title">📚 拓展知识</div>
+  <div class="section-sub">学得更多，理解更深！</div>
+  <div class="expand-grid">
+    <div class="expand-item">
+      <div class="e-icon">📖</div>
+      <div class="e-title">词典查词法</div>
+      <div class="e-desc">遇到不懂的词，学会使用工具书查词义</div>
+    </div>
+    <div class="expand-item" style="background:linear-gradient(135deg,#f093fb,#f5576c);">
+      <div class="e-icon">🔄</div>
+      <div class="e-title">一词多义</div>
+      <div class="e-desc">同一个词在不同语境中意思不同，要联系上下文判断</div>
+    </div>
+    <div class="expand-item" style="background:linear-gradient(135deg,#4ecdc4,#44a08d);">
+      <div class="e-icon">🌱</div>
+      <div class="e-title">积累词汇</div>
+      <div class="e-desc">每天积累5个新词，记在词语本上并造句</div>
+    </div>
+    <div class="expand-item" style="background:linear-gradient(135deg,#ffe66d,#ffb347);">
+      <div class="e-icon">📝</div>
+      <div class="e-title">读写结合</div>
+      <div class="e-desc">把学到的词语用在自己的作文里，活学活用</div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:24px;background:linear-gradient(135deg,#e8f5e9,#f3e5f5);">
+    <div class="card-title">🎯 回家作业</div>
+    <ol style="padding-left:20px;line-height:2.2;font-size:1.1rem;">
+      <li>找一篇课外文章，画出3个不理解的词语并用上下文推断意思</li>
+      <li>用今天学到的4种策略，各找一个例子</li>
+      <li>把5个积累词语写成一段通顺的话</li>
+    </ol>
+  </div>
+  <button class="btn" style="margin-top:24px;" onclick="restart();playClick()">🔄 重新挑战</button>
+</section>
+
+<!-- ===== NAV DOTS ===== -->
+<div id="nav-dots"></div>
+
+<!-- ===== AI COMPANION ===== -->
+<div id="ai-companion">
+  <div class="ai-body" id="ai-body">
+    <div class="ai-bubble" id="ai-msg">嗨！我是学伴虫虫🐛<br>遇到不懂的词，记住：先看前后句，找找线索！</div>
+  </div>
+  <button class="ai-toggle" onclick="toggleAI()" title="AI学伴">🐛</button>
+</div>
+
+<script>
+// ===== STATE =====
+let currentSection = 0;
+let totalSections = 9;
+let stars = 0;
+let correctCount = 0;
+let q1Done=false,q2Done=false,q3Done=false,q4Done=false,q5Done=false;
+let fillsDone=false;
+let bossDoneFlag=false;
+let startTime = Date.now();
+
+// ===== WEB AUDIO =====
+const AC = window.AudioContext || window.webkitAudioContext;
+let ac;
+function getAC(){if(!ac){ac=new AC();}return ac;}
+function playClick(){
+  try{const a=getAC(),o=a.createOscillator(),g=a.createGain();
+  o.connect(g);g.connect(a.destination);o.frequency.value=800;g.gain.setValueAtTime(.3,a.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.1);o.start();o.stop(a.currentTime+.1);}catch(e){}
+}
+function playSuccess(){
+  try{const a=getAC();
+  [523,659,784,1047].forEach((f,i)=>{
+    const o=a.createOscillator(),g=a.createGain();
+    o.connect(g);g.connect(a.destination);o.frequency.value=f;
+    g.gain.setValueAtTime(.2,a.currentTime+i*.12);
+    g.gain.exponentialRampToValueAtTime(.001,a.currentTime+i*.12+.15);
+    o.start(a.currentTime+i*.12);o.stop(a.currentTime+i*.12+.15);
+  });}catch(e){}
+}
+function playError(){
+  try{const a=getAC(),o=a.createOscillator(),g=a.createGain();
+  o.type='sawtooth';o.connect(g);g.connect(a.destination);o.frequency.value=200;
+  g.gain.setValueAtTime(.2,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.3);
+  o.start();o.stop(a.currentTime+.3);}catch(e){}
+}
+
+// ===== NAVIGATION =====
+function goSection(n){
+  document.querySelectorAll('.section').forEach((s,i)=>{
+    s.classList.toggle('hidden',i!==n);
+  });
+  currentSection=n;
+  updateProgress();
+  updateDots();
+  window.scrollTo({top:0,behavior:'smooth'});
+  showAITip(n);
+}
+function updateProgress(){
+  document.getElementById('progress-fill').style.width=(currentSection/(totalSections-1)*100)+'%';
+}
+function updateDots(){
+  document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===currentSection));
+}
+
+// ===== STARS =====
+function addStar(n=1){
+  stars+=n;
+  document.getElementById('star-count').textContent=stars;
+  document.getElementById('stars-hud').classList.add('celebrate');
+  setTimeout(()=>document.getElementById('stars-hud').classList.remove('celebrate'),600);
+}
+
+// ===== CHOICE CHECKING =====
+function checkChoice(btn,result,qid){
+  const panel=btn.closest('.card');
+  panel.querySelectorAll('.choice-btn').forEach(b=>b.disabled=true);
+  const fb=document.getElementById('fb-'+qid);
+  if(result==='correct'){
+    btn.classList.add('correct');
+    fb.className='feedback correct';fb.style.display='block';
+    fb.textContent='✅ 答对了！很棒，你读懂了上下文！';
+    addStar(1);playSuccess();correctCount++;
+    earnBadge('badge-word-detective');
+    if(qid==='q1'&&!q1Done){q1Done=true;earnBadge('badge-first');setTimeout(()=>{document.getElementById('q2-panel').classList.remove('hidden');},800);}
+    if(qid==='q2'&&!q2Done){q2Done=true;setTimeout(()=>{document.getElementById('q3-panel').classList.remove('hidden');},800);}
+    if(qid==='q3'&&!q3Done){q3Done=true;setTimeout(()=>{document.getElementById('next-l1').classList.remove('hidden');earnBadge('badge-strategy');},800);}
+    if(qid==='q4'&&!q4Done){q4Done=true;earnBadge('badge-passage');setTimeout(()=>{document.getElementById('l3-2').classList.remove('hidden');},800);}
+    if(qid==='q5'&&!q5Done){q5Done=true;setTimeout(()=>{document.getElementById('next-l3').classList.remove('hidden');},800);}
+  } else {
+    btn.classList.add('wrong');
+    fb.className='feedback wrong';fb.style.display='block';
+    fb.textContent='❌ 再看看上下文中的线索，想想每个关键词的含义！';
+    playError();
+  }
+}
+
+// ===== FILL CHECKS =====
+function checkFills(){
+  const f1=document.getElementById('fill1').value.trim();
+  const f2=document.getElementById('fill2').value.trim();
+  let ok=true;
+  if(f1.length<4){document.getElementById('fill1').classList.add('wrong');ok=false;}
+  else{document.getElementById('fill1').classList.add('correct');}
+  if(f2.length<4){document.getElementById('fill2').classList.add('wrong');ok=false;}
+  else{document.getElementById('fill2').classList.add('correct');}
+  if(ok){addStar(2);playSuccess();fillsDone=true;earnBadge('badge-fill');
+    document.getElementById('next-l2').style.display='block';}
+  else{playError();}
+}
+
+// ===== BOSS =====
+function bossDone(){
+  const b1=document.getElementById('boss1').value.trim();
+  const b2=document.getElementById('boss2').value.trim();
+  const b3=document.getElementById('boss3').value.trim();
+  if(b1.length>2&&b2.length>2){
+    addStar(3);playSuccess();bossDoneFlag=true;
+    earnBadge('badge-boss');
+    if(stars>=8)earnBadge('badge-perfect');
+    const elapsed=(Date.now()-startTime)/1000;
+    if(elapsed<600)earnBadge('badge-speed');
+    setTimeout(()=>goSection(7),1000);
+    showFinalScore();
+  } else {
+    playError();
+    alert('请在前两题写出词语的意思再提交哦！');
+  }
+}
+
+// ===== SCOREBOARD =====
+function showFinalScore(){
+  document.getElementById('final-score').textContent=stars;
+  const starStr=stars>=8?'⭐⭐⭐⭐⭐':stars>=5?'⭐⭐⭐⭐☆':stars>=3?'⭐⭐⭐☆☆':'⭐⭐☆☆☆';
+  document.getElementById('stars-display').textContent=starStr;
+}
+
+// ===== ACHIEVEMENTS =====
+function earnBadge(id){
+  const el=document.getElementById(id);
+  if(el&&!el.classList.contains('earned')){
+    el.classList.add('earned');
+    playSuccess();
+  }
+}
+
+// ===== AI COMPANION =====
+const aiTips=[
+  '嗨！我是学伴虫虫🐛 准备好冒险了吗？',
+  '今天要学联系上下文理解词义，这是阅读的超级技能！',
+  '🔥 热身一下，点击红色词语，看能不能猜出意思！',
+  '第一关：仔细读上下文，找关键词！用替换法试试～',
+  '第二关：用自己的话解释，写出主要意思就好，不用完整句子！',
+  '第三关：越来越难啦！记住4种策略，综合运用！',
+  '👾 Boss关！把所有技能用上，你一定行的！🐛加油！',
+  '太棒了！你完成了所有挑战！继续积累词汇，阅读会越来越强！',
+  '💡 拓展知识：每天读一本好书，认识更多生词，大脑会更聪明！'
+];
+let aiOpen=false;
+function toggleAI(){
+  aiOpen=!aiOpen;
+  document.getElementById('ai-body').style.display=aiOpen?'block':'none';
+}
+function showAITip(n){
+  document.getElementById('ai-msg').textContent=aiTips[n]||aiTips[0];
+  document.getElementById('ai-body').style.display='block';
+  aiOpen=true;
+  setTimeout(()=>{document.getElementById('ai-body').style.display='none';aiOpen=false;},4000);
+}
+
+// ===== WARMUP TIPS =====
+function showTip(id){
+  playClick();
+  const el=document.getElementById(id);
+  el.style.display=el.style.display==='block'?'none':'block';
+}
+
+// ===== RESTART =====
+function restart(){
+  stars=0;correctCount=0;q1Done=q2Done=q3Done=q4Done=q5Done=fillsDone=bossDoneFlag=false;
+  startTime=Date.now();
+  document.getElementById('star-count').textContent='0';
+  document.querySelectorAll('.choice-btn').forEach(b=>{b.disabled=false;b.className='choice-btn';});
+  document.querySelectorAll('.feedback').forEach(f=>f.style.display='none');
+  document.querySelectorAll('.fill-input').forEach(i=>{i.value='';i.className='fill-input';});
+  document.querySelectorAll('.boss-input').forEach(i=>i.value='');
+  document.getElementById('q2-panel').classList.add('hidden');
+  document.getElementById('q3-panel').classList.add('hidden');
+  document.getElementById('next-l1').classList.add('hidden');
+  document.getElementById('l3-2').classList.add('hidden');
+  document.getElementById('next-l3').classList.add('hidden');
+  document.getElementById('next-l2').style.display='none';
+  document.querySelectorAll('.badge').forEach(b=>b.classList.remove('earned'));
+  goSection(0);
+}
+
+// ===== INIT =====
+function init(){
+  const dots=document.getElementById('nav-dots');
+  for(let i=0;i<totalSections;i++){
+    const d=document.createElement('div');d.className='dot';dots.appendChild(d);
+  }
+  document.querySelectorAll('.section').forEach((s,i)=>s.classList.toggle('hidden',i!==0));
+  updateDots();updateProgress();
+}
+init();
+</script>
+</body>
+</html>

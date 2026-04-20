@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>扩句与缩句 · 三年级语文闯关</title>
+<style>
+  :root {
+    --bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--card:#fff;
+    --radius:20px;--shadow:0 8px 32px rgba(0,0,0,0.10);
+    --green:#6bcb77;--purple:#a78bfa;--orange:#ffa94d;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;overflow-x:hidden;}
+
+  /* ── HERO ── */
+  #hero{
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,#ffebe8 0%,#e8fffe 100%);
+    padding:40px 20px;text-align:center;position:relative;overflow:hidden;
+  }
+  #hero::before{
+    content:'🌈';font-size:120px;position:absolute;top:-20px;left:-30px;opacity:.15;animation:spin 20s linear infinite;
+  }
+  #hero::after{
+    content:'✨';font-size:80px;position:absolute;bottom:20px;right:20px;opacity:.2;animation:bounce 2s ease-in-out infinite;
+  }
+  .hero-title{font-size:clamp(2rem,6vw,4rem);font-weight:900;color:var(--primary);text-shadow:3px 3px 0 #ffe66d;margin-bottom:12px;}
+  .hero-sub{font-size:1.2rem;color:#666;margin-bottom:30px;}
+  .hero-badge{display:inline-flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:30px;}
+  .badge{background:var(--card);border-radius:50px;padding:8px 20px;font-size:.9rem;font-weight:700;box-shadow:var(--shadow);color:var(--primary);}
+  .start-btn{
+    background:linear-gradient(135deg,var(--primary),#ff9a8b);
+    color:#fff;border:none;border-radius:50px;padding:18px 50px;font-size:1.3rem;font-weight:800;
+    cursor:pointer;box-shadow:0 6px 20px rgba(255,107,107,.4);transition:all .3s;
+  }
+  .start-btn:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(255,107,107,.5);}
+
+  /* ── SECTIONS ── */
+  .section{display:none;padding:30px 16px;max-width:860px;margin:0 auto;}
+  .section.active{display:block;}
+  .section-title{
+    font-size:1.8rem;font-weight:900;color:var(--primary);text-align:center;
+    margin-bottom:20px;position:relative;
+  }
+  .section-title::after{content:'';display:block;width:60px;height:4px;background:var(--accent);border-radius:4px;margin:8px auto 0;}
+
+  /* ── PROGRESS ── */
+  #progress-bar-wrap{
+    position:fixed;top:0;left:0;right:0;height:6px;background:#eee;z-index:999;
+  }
+  #progress-bar{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));width:0%;transition:width .5s;}
+
+  /* ── CARD ── */
+  .card{background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:20px;}
+  .card h3{font-size:1.1rem;color:#444;margin-bottom:14px;}
+
+  /* ── OBJECTIVES ── */
+  .obj-list{list-style:none;display:flex;flex-direction:column;gap:12px;}
+  .obj-list li{
+    display:flex;align-items:center;gap:12px;background:linear-gradient(90deg,#fff8f0,#fff);
+    border-radius:12px;padding:14px 18px;border-left:4px solid var(--primary);font-size:1rem;
+  }
+  .obj-icon{font-size:1.5rem;}
+
+  /* ── SENTENCE ANIMATION ── */
+  .sentence-demo{text-align:center;margin:20px 0;}
+  .sentence-track{
+    display:inline-flex;flex-wrap:wrap;gap:6px;justify-content:center;
+    min-height:60px;align-items:center;font-size:1.3rem;font-weight:700;
+  }
+  .word-token{
+    background:var(--primary);color:#fff;border-radius:10px;padding:6px 14px;
+    transition:all .5s cubic-bezier(.34,1.56,.64,1);display:inline-block;
+    box-shadow:0 4px 12px rgba(255,107,107,.3);
+  }
+  .word-token.expand{
+    background:var(--secondary);transform:scale(1.1);
+    box-shadow:0 6px 18px rgba(78,205,196,.4);
+  }
+  .word-token.shrink{
+    background:var(--orange);transform:scale(.9);
+    box-shadow:0 4px 10px rgba(255,169,77,.3);
+  }
+  .word-token.added{animation:popIn .5s cubic-bezier(.34,1.56,.64,1);}
+  .word-token.removed{animation:fadeOut .3s forwards;}
+  .demo-btn{
+    background:var(--secondary);color:#fff;border:none;border-radius:50px;
+    padding:10px 28px;font-size:1rem;font-weight:700;cursor:pointer;margin:6px;
+    transition:all .3s;box-shadow:0 4px 12px rgba(78,205,196,.3);
+  }
+  .demo-btn:hover{transform:translateY(-2px);}
+  .demo-btn.active{background:var(--primary);}
+
+  /* ── QUIZ ── */
+  .quiz-area{margin:20px 0;}
+  .quiz-q{font-size:1.1rem;color:#333;margin-bottom:14px;line-height:1.6;}
+  .quiz-q strong{color:var(--primary);}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt-btn{
+    background:#f8f8f8;border:2px solid #eee;border-radius:14px;
+    padding:12px 18px;font-size:1rem;cursor:pointer;text-align:left;transition:all .3s;
+  }
+  .opt-btn:hover{border-color:var(--secondary);background:#e8fffd;}
+  .opt-btn.correct{background:#d4ffd4;border-color:var(--green);color:#2d6a2d;}
+  .opt-btn.wrong{background:#ffe0e0;border-color:var(--primary);color:#a00;}
+  .feedback{font-size:1rem;margin-top:10px;font-weight:700;min-height:24px;}
+  .feedback.ok{color:var(--green);}
+  .feedback.err{color:var(--primary);}
+
+  /* ── DRAG DROP ── */
+  .drag-words{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0;}
+  .drag-word{
+    background:var(--accent);color:#333;border-radius:12px;padding:8px 18px;
+    font-size:1.1rem;font-weight:700;cursor:grab;border:2px dashed #ccc;
+    transition:all .2s;user-select:none;
+  }
+  .drag-word:hover{transform:scale(1.05);box-shadow:var(--shadow);}
+  .drag-word.dragging{opacity:.5;transform:scale(.95);}
+  .drop-zone{
+    display:inline-block;min-width:80px;height:40px;border:2px dashed var(--secondary);
+    border-radius:10px;vertical-align:middle;margin:0 6px;text-align:center;
+    line-height:38px;font-size:1rem;color:#aaa;transition:all .3s;
+  }
+  .drop-zone.over{background:#e8fffd;border-color:var(--primary);}
+  .drop-zone.filled{background:var(--secondary);color:#fff;border-style:solid;font-weight:700;}
+  .fill-sentence{font-size:1.2rem;line-height:2.5;color:#333;margin:12px 0;}
+
+  /* ── BOSS ── */
+  .boss-area{text-align:center;}
+  .boss-avatar{font-size:80px;animation:wobble 2s ease-in-out infinite;display:inline-block;}
+  .boss-hp{background:#eee;border-radius:50px;height:20px;margin:12px 0;overflow:hidden;}
+  .boss-hp-fill{background:linear-gradient(90deg,var(--primary),#ff9a8b);height:100%;transition:width .5s;}
+  .boss-msg{font-size:1.1rem;color:#555;margin:10px 0;min-height:30px;}
+  .boss-input-wrap{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px;}
+  .boss-input{
+    border:2px solid var(--secondary);border-radius:14px;padding:10px 16px;
+    font-size:1rem;width:220px;outline:none;transition:border-color .3s;
+  }
+  .boss-input:focus{border-color:var(--primary);}
+  .submit-btn{
+    background:var(--primary);color:#fff;border:none;border-radius:14px;
+    padding:10px 28px;font-size:1rem;font-weight:700;cursor:pointer;transition:all .3s;
+  }
+  .submit-btn:hover{background:#e05555;transform:translateY(-2px);}
+
+  /* ── BUDDY ── */
+  #buddy{
+    position:fixed;bottom:20px;right:20px;z-index:888;
+    display:flex;flex-direction:column;align-items:flex-end;gap:8px;
+  }
+  .buddy-bubble{
+    background:var(--card);border-radius:16px;padding:12px 16px;
+    box-shadow:var(--shadow);max-width:220px;font-size:.9rem;
+    animation:popIn .3s ease;display:none;border:2px solid var(--accent);
+  }
+  .buddy-bubble.show{display:block;}
+  .buddy-icon{font-size:3rem;cursor:pointer;filter:drop-shadow(0 4px 8px rgba(0,0,0,.2));}
+
+  /* ── STARS ── */
+  #stars-hud{
+    position:fixed;top:14px;right:16px;z-index:998;
+    background:var(--card);border-radius:50px;padding:6px 16px;
+    box-shadow:var(--shadow);font-size:1rem;font-weight:700;color:#f59e0b;
+  }
+
+  /* ── SCORE ── */
+  .score-card{text-align:center;padding:30px;}
+  .score-big{font-size:5rem;font-weight:900;color:var(--primary);animation:bounce 1s ease-in-out;}
+  .score-label{font-size:1.2rem;color:#888;margin-top:8px;}
+  .achievements{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:20px;}
+  .ach-badge{
+    background:linear-gradient(135deg,var(--accent),#ffcc02);
+    border-radius:14px;padding:12px 18px;text-align:center;min-width:120px;
+    box-shadow:0 4px 12px rgba(255,204,0,.3);
+  }
+  .ach-icon{font-size:2rem;display:block;}
+  .ach-name{font-size:.8rem;font-weight:700;color:#555;margin-top:4px;}
+  .ach-locked{filter:grayscale(1);opacity:.5;}
+
+  /* ── NAV ── */
+  .nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:10px;flex-wrap:wrap;}
+  .nav-btn{
+    background:var(--secondary);color:#fff;border:none;border-radius:50px;
+    padding:12px 30px;font-size:1rem;font-weight:700;cursor:pointer;transition:all .3s;
+  }
+  .nav-btn:hover{opacity:.85;transform:translateY(-2px);}
+  .nav-btn.back{background:#ccc;color:#555;}
+
+  /* ── EXTENSION ── */
+  .ext-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;}
+  .ext-card{
+    background:linear-gradient(135deg,#e8f4ff,#fff);
+    border-radius:var(--radius);padding:20px;text-align:center;
+    box-shadow:var(--shadow);transition:transform .3s;
+  }
+  .ext-card:hover{transform:translateY(-4px);}
+  .ext-card .icon{font-size:2.5rem;margin-bottom:8px;}
+  .ext-card h4{color:var(--primary);font-size:1rem;margin-bottom:6px;}
+  .ext-card p{font-size:.85rem;color:#666;}
+
+  /* ── ANIMATIONS ── */
+  @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  @keyframes wobble{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+  @keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+  @keyframes fadeOut{to{transform:scale(0);opacity:0}}
+  @keyframes starPop{0%{transform:scale(0) rotate(-30deg)}70%{transform:scale(1.3) rotate(10deg)}100%{transform:scale(1) rotate(0)}}
+  .star-pop{animation:starPop .4s cubic-bezier(.34,1.56,.64,1);}
+
+  /* ── LEVEL INDICATOR ── */
+  .level-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+  .level-chip{
+    border-radius:50px;padding:4px 14px;font-size:.85rem;font-weight:700;
+    background:#f0f0f0;color:#999;transition:all .3s;
+  }
+  .level-chip.done{background:var(--green);color:#fff;}
+  .level-chip.current{background:var(--primary);color:#fff;animation:bounce 1.5s infinite;}
+
+  /* mobile */
+  @media(max-width:600px){
+    .hero-title{font-size:2rem;}
+    .section{padding:20px 12px;}
+    .boss-input{width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<div id="progress-bar-wrap"><div id="progress-bar"></div></div>
+<div id="stars-hud">⭐ <span id="star-count">0</span></div>
+
+<!-- HERO -->
+<div id="hero">
+  <div class="hero-title">🔍 扩句与缩句</div>
+  <div class="hero-sub">三年级语文 · 句子变变变大冒险</div>
+  <div class="hero-badge">
+    <span class="badge">🏆 8个成就</span>
+    <span class="badge">⭐ 星星奖励</span>
+    <span class="badge">🐛 AI学伴</span>
+    <span class="badge">🎮 3关卡+Boss战</span>
+  </div>
+  <button class="start-btn" onclick="goSection('objectives')">🚀 开始闯关！</button>
+</div>
+
+<!-- OBJECTIVES -->
+<div class="section" id="objectives">
+  <div class="section-title">📋 学习目标</div>
+  <div class="card">
+    <ul class="obj-list">
+      <li><span class="obj-icon">🔬</span>理解扩句的方法：在核心词前后添加修饰语</li>
+      <li><span class="obj-icon">✂️</span>掌握缩句方法：保留主干，去掉修饰成分</li>
+      <li><span class="obj-icon">🎯</span>能判断句子的主干（谁/什么 + 做什么/是什么）</li>
+      <li><span class="obj-icon">✏️</span>独立完成扩句和缩句练习</li>
+    </ul>
+  </div>
+  <div class="nav-row">
+    <button class="nav-btn back" onclick="goSection('hero')">← 返回</button>
+    <button class="nav-btn" onclick="goSection('warmup')">热身运动 →</button>
+  </div>
+</div>
+
+<!-- WARMUP -->
+<div class="section" id="warmup">
+  <div class="section-title">🔥 热身运动</div>
+  <div class="card">
+    <h3>👀 观察句子变化——句子伸缩动画</h3>
+    <div class="sentence-demo">
+      <div class="sentence-track" id="sent-track"></div>
+    </div>
+    <div style="text-align:center;margin-top:10px;">
+      <button class="demo-btn" onclick="demoExpand()">➕ 扩句演示</button>
+      <button class="demo-btn" onclick="demoShrink()">➖ 缩句演示</button>
+      <button class="demo-btn" onclick="demoReset()">🔄 重置</button>
+    </div>
+    <div id="demo-explain" style="text-align:center;font-size:.95rem;color:#666;margin-top:10px;min-height:24px;"></div>
+  </div>
+  <div class="card">
+    <h3>🧠 扩句规则口诀</h3>
+    <div style="background:linear-gradient(90deg,#fff8e1,#fff);border-radius:14px;padding:16px;border-left:4px solid var(--accent);">
+      <p style="font-size:1.1rem;line-height:2;color:#333;">
+        <strong>扩句口诀：</strong>找到主干，前加什么样，后加怎么样。<br>
+        <em>小鸟飞 → 美丽的小鸟快乐地飞翔在蓝天上</em>
+      </p>
+    </div>
+  </div>
+  <div class="card">
+    <h3>🧠 缩句规则口诀</h3>
+    <div style="background:linear-gradient(90deg,#fff0f0,#fff);border-radius:14px;padding:16px;border-left:4px solid var(--primary);">
+      <p style="font-size:1.1rem;line-height:2;color:#333;">
+        <strong>缩句口诀：</strong>抓住"谁/什么"和"做什么/是什么"，其余全删掉！<br>
+        <em>美丽的花儿开放了 → 花儿开放了</em>
+      </p>
+    </div>
+  </div>
+  <div class="nav-row">
+    <button class="nav-btn back" onclick="goSection('objectives')">← 返回</button>
+    <button class="nav-btn" onclick="startLevel(1)">第1关：认识句子主干 →</button>
+  </div>
+</div>
+
+<!-- LEVEL 1 -->
+<div class="section" id="level1">
+  <div class="level-chips" id="lvl-chips1">
+    <span class="level-chip current" id="chip-l1">第1关</span>
+    <span class="level-chip" id="chip-l2">第2关</span>
+    <span class="level-chip" id="chip-l3">第3关</span>
+  </div>
+  <div class="section-title">⚔️ 第1关：找出句子主干</div>
+  <div class="card">
+    <h3>🎯 找出下面句子的主干（缩句）</h3>
+    <div id="l1-quiz"></div>
+    <div class="feedback" id="l1-fb"></div>
+  </div>
+  <div class="nav-row">
+    <button class="nav-btn back" onclick="goSection('warmup')">← 返回</button>
+    <button class="nav-btn" id="l1-next" onclick="startLevel(2)" style="display:none">第2关 →</button>
+  </div>
+</div>
+
+<!-- LEVEL 2 -->
+<div class="section" id="level2">
+  <div class="level-chips">
+    <span class="level-chip done">第1关 ✓</span>
+    <span class="level-chip current">第2关</span>
+    <span class="level-chip" id="chip-l3b">第3关</span>
+  </div>
+  <div class="section-title">⚔️ 第2关：句子伸缩拖拽</div>
+  <div class="card">
+    <h3>🧩 把下面的词语拖到正确位置，完成扩句！</h3>
+    <div id="l2-drag-area"></div>
+    <div class="feedback" id="l2-fb"></div>
+    <button class="demo-btn" onclick="checkDrag()" style="margin-top:12px;">✅ 检查答案</button>
+    <button class="demo-btn" onclick="resetDrag()" style="background:#ccc;color:#555;">🔄 重置</button>
+  </div>
+  <div class="nav-row">
+    <button class="nav-btn back" onclick="startLevel(1)">← 返回</button>
+    <button class="nav-btn" id="l2-next" onclick="startLevel(3)" style="display:none">第3关 →</button>
+  </div>
+</div>
+
+<!-- LEVEL 3 -->
+<div class="section" id="level3">
+  <div class="level-chips">
+    <span class="level-chip done">第1关 ✓</span>
+    <span class="level-chip done">第2关 ✓</span>
+    <span class="level-chip current">第3关</span>
+  </div>
+  <div class="section-title">⚔️ 第3关：缩句挑战</div>
+  <div class="card">
+    <h3>✂️ 请给下面的句子"瘦身"！写出缩句</h3>
+    <div id="l3-quiz"></div>
+    <div class="feedback" id="l3-fb"></div>
+  </div>
+  <div class="nav-row">
+    <button class="nav-btn back" onclick="startLevel(2)">← 返回</button>
+    <button class="nav-btn" id="l3-next" onclick="goSection('boss')" style="display:none">Boss战 →</button>
+  </div>
+</div>
+
+<!-- BOSS -->
+<div class="section" id="boss">
+  <div class="section-title">👾 Boss战：句子变换大师</div>
+  <div class="card boss-area">
+    <div class="boss-avatar" id="boss-avatar">🧌</div>
+    <div class="boss-hp"><div class="boss-hp-fill" id="boss-hp-fill" style="width:100%"></div></div>
+    <div style="font-size:.9rem;color:#888;margin-bottom:8px;">Boss血量 <span id="boss-hp-text">5</span>/5</div>
+    <div class="boss-msg" id="boss-msg">哈哈哈！你能打败我吗？来，扩写这个句子！</div>
+    <div id="boss-q" style="font-size:1.2rem;font-weight:700;color:var(--primary);margin:14px 0;"></div>
+    <div class="boss-input-wrap">
+      <input class="boss-input" id="boss-input" placeholder="在这里输入你的答案..." />
+      <button class="submit-btn" onclick="submitBoss()">⚔️ 攻击！</button>
+    </div>
+    <div class="feedback" id="boss-fb"></div>
+  </div>
+  <div class="nav-row">
+    <button class="nav-btn back" onclick="startLevel(3)">← 返回</button>
+    <button class="nav-btn" id="boss-next" onclick="goSection('score')" style="display:none">查看成绩 →</button>
+  </div>
+</div>
+
+<!-- SCORE -->
+<div class="section" id="score">
+  <div class="section-title">🏆 闯关成绩单</div>
+  <div class="card score-card">
+    <div class="score-big" id="final-score">0</div>
+    <div class="score-label">总得分（满分100）</div>
+    <div style="font-size:1rem;color:#888;margin-top:8px;" id="star-final">⭐ 0 颗星</div>
+  </div>
+  <div class="card">
+    <h3>🏅 解锁的成就</h3>
+    <div class="achievements" id="achievements-grid"></div>
+  </div>
+  <div class="nav-row" style="justify-content:center;">
+    <button class="nav-btn" onclick="goSection('extension')">📚 拓展学习 →</button>
+    <button class="nav-btn back" onclick="restartGame()">🔄 再玩一次</button>
+  </div>
+</div>
+
+<!-- EXTENSION -->
+<div class="section" id="extension">
+  <div class="section-title">📚 拓展学习</div>
+  <div class="ext-cards">
+    <div class="ext-card">
+      <div class="icon">📖</div>
+      <h4>阅读理解中的缩句</h4>
+      <p>在读长句子时，先缩句找主干，再理解整句意思，效果更好！</p>
+    </div>
+    <div class="ext-card">
+      <div class="icon">✍️</div>
+      <h4>作文中的扩句</h4>
+      <p>写作文时，在普通句子里加上表示颜色、形状、数量的词，让文章更生动！</p>
+    </div>
+    <div class="ext-card">
+      <div class="icon">🎯</div>
+      <h4>经典例句练习</h4>
+      <p>每天练习3个扩缩句，一个月后你的语感会大大提升！</p>
+    </div>
+    <div class="ext-card">
+      <div class="icon">🌟</div>
+      <h4>修饰词大收集</h4>
+      <p>收集10个你喜欢的形容词和副词，为扩句做准备！</p>
+    </div>
+  </div>
+  <div class="nav-row" style="justify-content:center;">
+    <button class="nav-btn back" onclick="goSection('score')">← 返回成绩单</button>
+  </div>
+</div>
+
+<!-- BUDDY -->
+<div id="buddy">
+  <div class="buddy-bubble" id="buddy-bubble">嗨！我是学伴小虫🐛<br>有不懂的随时问我！</div>
+  <div class="buddy-icon" onclick="toggleBuddy()">🐛</div>
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────
+const state = {
+  stars: 0,
+  score: 0,
+  progress: 0,
+  l1Done: false,
+  l2Done: false,
+  l3Done: false,
+  bossDone: false,
+  bossHp: 5,
+  bossQ: 0,
+  achievements: [],
+  l1Correct: 0,
+  l2Correct: 0,
+  l3Correct: 0,
+};
+
+const ACHIEVEMENTS = [
+  {id:'first_step', icon:'👣', name:'第一步'},
+  {id:'main_trunk', icon:'🌳', name:'主干大师'},
+  {id:'expand_pro', icon:'🔍', name:'扩句达人'},
+  {id:'shrink_pro', icon:'✂️', name:'缩句高手'},
+  {id:'no_miss_l1', icon:'💯', name:'完美第1关'},
+  {id:'no_miss_l2', icon:'🎯', name:'完美第2关'},
+  {id:'boss_slayer', icon:'⚔️', name:'Boss终结者'},
+  {id:'full_star',  icon:'🌟', name:'满星闯关'},
+];
+
+// ─── AUDIO ───────────────────────────────────────────────
+let audioCtx;
+function getAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function playTone(freq=440,dur=0.15,type='sine',gain=0.3){
+  try{
+    const ctx=getAudio();const o=ctx.createOscillator();const g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);o.type=type;o.frequency.value=freq;
+    g.gain.setValueAtTime(gain,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
+    o.start();o.stop(ctx.currentTime+dur);
+  }catch(e){}
+}
+function playCorrect(){playTone(523,.1);setTimeout(()=>playTone(659,.1),120);setTimeout(()=>playTone(784,.2),240);}
+function playWrong(){playTone(200,.3,'sawtooth');}
+function playStar(){playTone(880,.08);setTimeout(()=>playTone(1047,.08),100);setTimeout(()=>playTone(1319,.15),200);}
+
+// ─── NAVIGATION ──────────────────────────────────────────
+function goSection(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id)?.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  updateProgress();
+  buddyComment(id);
+}
+
+const SECTION_ORDER = ['hero','objectives','warmup','level1','level2','level3','boss','score','extension'];
+function updateProgress(){
+  const done = (state.l1Done?1:0)+(state.l2Done?1:0)+(state.l3Done?1:0)+(state.bossDone?1:0);
+  const pct = Math.round(done/4*100);
+  document.getElementById('progress-bar').style.width=pct+'%';
+}
+
+// ─── STARS ───────────────────────────────────────────────
+function addStar(n=1){
+  state.stars+=n;state.score=Math.min(100,state.score+n*10);
+  const el=document.getElementById('star-count');
+  el.textContent=state.stars;
+  el.classList.remove('star-pop');void el.offsetWidth;el.classList.add('star-pop');
+  playStar();
+}
+
+// ─── ACHIEVEMENTS ────────────────────────────────────────
+function unlock(id){
+  if(!state.achievements.includes(id)){
+    state.achievements.push(id);
+    const a=ACHIEVEMENTS.find(x=>x.id===id);
+    if(a){showAchievementToast(a);addStar(1);}
+  }
+}
+function showAchievementToast(a){
+  const d=document.createElement('div');
+  d.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#ffe66d,#ffcc02);border-radius:16px;padding:12px 24px;font-weight:700;font-size:1rem;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.15);animation:popIn .4s ease;';
+  d.innerHTML=`🏅 解锁成就：${a.icon} ${a.name}`;
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(),2500);
+}
+
+// ─── SENTENCE DEMO ───────────────────────────────────────
+const BASE_WORDS = ['小鸟','飞'];
+const EXPANDED  = ['美丽的','小鸟','快乐地','飞翔','在蓝天上'];
+let demoState = 'base';
+function renderTrack(words, state='base'){
+  const track=document.getElementById('sent-track');
+  track.innerHTML='';
+  words.forEach(w=>{
+    const span=document.createElement('span');
+    span.className='word-token'+(state==='expand'?' expand':state==='shrink'?' shrink':'');
+    span.textContent=w;
+    track.appendChild(span);
+  });
+}
+function demoReset(){
+  renderTrack(BASE_WORDS,'base');
+  demoState='base';
+  document.getElementById('demo-explain').textContent='';
+}
+function demoExpand(){
+  if(demoState==='base'){
+    renderTrack(EXPANDED,'expand');
+    demoState='expand';
+    document.getElementById('demo-explain').textContent='✨ 扩句：在"小鸟"前加"美丽的"，在"飞"前加"快乐地"，后加"在蓝天上"';
+    addStar(0);
+  }
+}
+function demoShrink(){
+  renderTrack(['小鸟','飞'],'shrink');
+  demoState='base';
+  document.getElementById('demo-explain').textContent='✂️ 缩句：去掉所有修饰词，只保留"小鸟飞"这个主干';
+}
+
+// ─── LEVEL 1 ─────────────────────────────────────────────
+const L1_QS = [
+  {q:'美丽的花儿慢慢地开放了。', opts:['美丽的花儿开放了','花儿开放了','花儿慢慢地开放','美丽的花儿慢慢开放'], ans:1, explain:'去掉"美丽的"和"慢慢地"，主干是：花儿开放了'},
+  {q:'可爱的小猫在柔软的草地上玩耍。', opts:['小猫在草地上','可爱的小猫玩耍','小猫玩耍','小猫在柔软的草地上玩耍'], ans:2, explain:'"谁"=小猫，"做什么"=玩耍，答案：小猫玩耍'},
+  {q:'勤劳的小蜜蜂采集着甜甜的花蜜。', opts:['小蜜蜂采花蜜','勤劳的蜜蜂采蜜','小蜜蜂采集花蜜','蜜蜂采集着'], ans:0, explain:'主干：小蜜蜂采花蜜'},
+];
+let l1Idx=0;
+function renderL1(){
+  const q=L1_QS[l1Idx];
+  const area=document.getElementById('l1-quiz');
+  area.innerHTML=`<div class="quiz-q">第${l1Idx+1}题（共${L1_QS.length}题）：<br>把下面的句子缩句：<strong>"${q.q}"</strong></div>
+    <div class="options">
+      ${q.opts.map((o,i)=>`<button class="opt-btn" onclick="answerL1(${i})">${String.fromCharCode(65+i)}. ${o}</button>`).join('')}
+    </div>`;
+  document.getElementById('l1-fb').textContent='';
+}
+function answerL1(i){
+  const q=L1_QS[l1Idx];
+  const btns=document.querySelectorAll('#l1-quiz .opt-btn');
+  btns.forEach(b=>b.onclick=null);
+  const fb=document.getElementById('l1-fb');
+  if(i===q.ans){
+    btns[i].classList.add('correct');
+    fb.textContent='✅ 正确！'+q.explain;fb.className='feedback ok';
+    playCorrect();addStar(1);state.l1Correct++;
+    unlock('first_step');
+    if(state.l1Correct===L1_QS.length)unlock('main_trunk');
+    setTimeout(()=>{
+      l1Idx++;
+      if(l1Idx<L1_QS.length){renderL1();}
+      else{
+        state.l1Done=true;unlock('no_miss_l1');
+        document.getElementById('l1-next').style.display='inline-block';
+        fb.textContent='🎉 第1关完成！获得成就：主干大师';
+      }
+    },1200);
+  } else {
+    btns[i].classList.add('wrong');btns[q.ans].classList.add('correct');
+    fb.textContent='❌ 错了！'+q.explain;fb.className='feedback err';
+    playWrong();
+    setTimeout(()=>{l1Idx++;if(l1Idx<L1_QS.length)renderL1();else{state.l1Done=true;document.getElementById('l1-next').style.display='inline-block';}},1500);
+  }
+}
+
+// ─── LEVEL 2 DRAG ────────────────────────────────────────
+const L2_EXERCISES = [
+  {
+    base:'小狗叫。',
+    answer:['可爱的','小狗','汪汪地','叫'],
+    template:'___ 小狗 ___ 叫。',
+    drops:['可爱的','汪汪地'],
+    words:['可爱的','汪汪地','飞快地','美丽的'],
+    slots:[0,2],
+  }
+];
+let dragExIdx=0;let dragData={};
+function initDrag(){
+  const ex=L2_EXERCISES[dragExIdx];
+  dragData={filled:{}};
+  const area=document.getElementById('l2-drag-area');
+  // build sentence with drop zones
+  const parts=ex.template.split('___');
+  let html='<div class="fill-sentence">';
+  parts.forEach((p,i)=>{
+    html+=p;
+    if(i<parts.length-1){
+      html+=`<span class="drop-zone" id="dz-${i}" data-idx="${i}" 
+        ondragover="ev.preventDefault();this.classList.add('over')" 
+        ondragleave="this.classList.remove('over')"
+        ondrop="dropWord(event,${i})">
+        ${dragData.filled[i]||'拖到这里'}
+      </span>`;
+    }
+  });
+  html+='</div>';
+  html+='<div class="drag-words">';
+  ex.words.forEach(w=>{
+    html+=`<span class="drag-word" draggable="true" 
+      ondragstart="dragData.current='${w}';this.classList.add('dragging')"
+      ondragend="this.classList.remove('dragging')"
+      id="dw-${w}">${w}</span>`;
+  });
+  html+='</div>';
+  area.innerHTML=html;
+  document.getElementById('l2-fb').textContent='';
+}
+function dropWord(ev,idx){
+  ev.preventDefault();
+  const w=dragData.current;
+  dragData.filled[idx]=w;
+  const dz=document.getElementById(`dz-${idx}`);
+  dz.textContent=w;dz.classList.add('filled');dz.classList.remove('over');
+  document.getElementById(`dw-${w}`)?.remove();
+}
+function checkDrag(){
+  const ex=L2_EXERCISES[dragExIdx];
+  const fb=document.getElementById('l2-fb');
+  let correct=true;
+  ex.slots.forEach((s,i)=>{
+    if(dragData.filled[s]!==ex.drops[i])correct=false;
+  });
+  if(correct){
+    fb.textContent='🎉 太棒了！句子扩写成功！';fb.className='feedback ok';
+    playCorrect();addStar(2);state.l2Done=true;
+    unlock('expand_pro');unlock('no_miss_l2');
+    document.getElementById('l2-next').style.display='inline-block';
+  } else {
+    fb.textContent='❌ 还不对哦，再想想！';fb.className='feedback err';playWrong();
+  }
+}
+function resetDrag(){initDrag();}
+
+// ─── LEVEL 3 ─────────────────────────────────────────────
+const L3_QS = [
+  {q:'金黄色的麦子在微风中轻轻地摇摆。', keys:['麦子','摇摆'], hint:'去掉颜色词和方式词'},
+  {q:'聪明可爱的同学们认真地完成了作业。', keys:['同学们','完成','作业'], hint:'去掉修饰词，找到"谁+做什么"'},
+  {q:'蓝色的天空中飘着朵朵白云。', keys:['天空','飘','白云','云'], hint:'"谁/什么"=天空，"做什么"=飘白云'},
+];
+let l3Idx=0;
+function renderL3(){
+  const q=L3_QS[l3Idx];
+  const area=document.getElementById('l3-quiz');
+  area.innerHTML=`
+    <div class="quiz-q">第${l3Idx+1}题（共${L3_QS.length}题）：<br>
+    请缩写：<strong>"${q.q}"</strong><br>
+    <span style="font-size:.85rem;color:#aaa;">提示：${q.hint}</span></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
+      <input class="boss-input" id="l3-input" placeholder="写出缩句..." style="flex:1;min-width:180px;" />
+      <button class="submit-btn" onclick="checkL3()">✅ 提交</button>
+    </div>`;
+  document.getElementById('l3-fb').textContent='';
+  const inp=document.getElementById('l3-input');
+  if(inp)inp.onkeydown=e=>{if(e.key==='Enter')checkL3();};
+}
+function checkL3(){
+  const q=L3_QS[l3Idx];
+  const val=document.getElementById('l3-input')?.value.trim()||'';
+  const fb=document.getElementById('l3-fb');
+  const matched=q.keys.some(k=>val.includes(k));
+  if(val.length>2&&matched){
+    fb.textContent='✅ 很好！主干抓得准！';fb.className='feedback ok';
+    playCorrect();addStar(1);state.l3Correct++;
+    unlock('shrink_pro');
+    setTimeout(()=>{
+      l3Idx++;
+      if(l3Idx<L3_QS.length){renderL3();}
+      else{
+        state.l3Done=true;
+        document.getElementById('l3-next').style.display='inline-block';
+        fb.textContent='🎉 第3关全部完成！去挑战Boss吧！';
+      }
+    },1200);
+  } else {
+    fb.textContent='❌ 再想想，提示：'+q.hint;fb.className='feedback err';playWrong();
+  }
+}
+
+// ─── BOSS ────────────────────────────────────────────────
+const BOSS_QS = [
+  {type:'expand',q:'猫跑。', hint:'加修饰词', check:(v)=>v.length>4&&v.includes('猫')&&v.includes('跑')},
+  {type:'shrink',q:'五颜六色的蝴蝶在花丛中翩翩起舞。', hint:'主干：蝴蝶起舞/飞', check:(v)=>v.includes('蝴蝶')&&v.length<12},
+  {type:'expand',q:'风吹。', hint:'加颜色/方式词', check:(v)=>v.length>4&&v.includes('风')&&v.includes('吹')},
+  {type:'shrink',q:'远处高大的山峰上覆盖着洁白的雪。', hint:'主干：山峰覆盖雪', check:(v)=>v.includes('山')&&v.length<12},
+  {type:'expand',q:'雨落。', hint:'加修饰词', check:(v)=>v.length>4&&v.includes('雨')&&v.includes('落')},
+];
+const BOSS_MSGS = ['😤 还差得远！','😰 不错嘛……','😱 你……你这家伙！','😤 勉强合格！','💥 不！我败了！'];
+function initBoss(){
+  state.bossHp=5;state.bossQ=0;
+  renderBossQ();
+}
+function renderBossQ(){
+  const q=BOSS_QS[state.bossQ];
+  const type=q.type==='expand'?'扩句':'缩句';
+  document.getElementById('boss-q').textContent=`请给"${q.q}"做${type}（提示：${q.hint}）`;
+  document.getElementById('boss-fb').textContent='';
+  document.getElementById('boss-input').value='';
+}
+function submitBoss(){
+  const val=document.getElementById('boss-input').value.trim();
+  const q=BOSS_QS[state.bossQ];
+  const fb=document.getElementById('boss-fb');
+  if(!val){fb.textContent='请输入答案！';fb.className='feedback err';return;}
+  if(q.check(val)){
+    fb.textContent='✅ 命中！Boss受伤了！';fb.className='feedback ok';
+    playCorrect();addStar(1);
+    state.bossHp--;state.bossQ++;
+    const pct=state.bossHp/5*100;
+    document.getElementById('boss-hp-fill').style.width=pct+'%';
+    document.getElementById('boss-hp-text').textContent=state.bossHp;
+    const idx=5-state.bossHp-1;
+    document.getElementById('boss-msg').textContent=BOSS_MSGS[idx]||'😱 不！';
+    if(state.bossHp<=0){
+      document.getElementById('boss-avatar').textContent='💀';
+      document.getElementById('boss-msg').textContent='💥 Boss被你打败了！！！';
+      fb.textContent='🎉 你赢了！Boss战全胜！';
+      playCorrect();addStar(3);state.bossDone=true;
+      unlock('boss_slayer');
+      if(state.stars>=10)unlock('full_star');
+      document.getElementById('boss-next').style.display='inline-block';
+    } else {
+      setTimeout(renderBossQ,1200);
+    }
+  } else {
+    fb.textContent='❌ 未命中！再努力！';fb.className='feedback err';playWrong();
+  }
+}
+
+// ─── SCORE RENDER ────────────────────────────────────────
+function renderScore(){
+  const s=Math.min(100,state.stars*8+state.score);
+  document.getElementById('final-score').textContent=s;
+  document.getElementById('star-final').textContent=`⭐ ${state.stars} 颗星`;
+  const grid=document.getElementById('achievements-grid');
+  grid.innerHTML='';
+  ACHIEVEMENTS.forEach(a=>{
+    const unlocked=state.achievements.includes(a.id);
+    grid.innerHTML+=`<div class="ach-badge ${unlocked?'':'ach-locked'}">
+      <span class="ach-icon">${a.icon}</span>
+      <div class="ach-name">${a.name}</div>
+    </div>`;
+  });
+}
+
+// ─── BUDDY ───────────────────────────────────────────────
+const BUDDY_TIPS = {
+  hero:'嗨！准备好学扩句和缩句了吗？🐛',
+  objectives:'记住：扩句=加修饰，缩句=找主干！',
+  warmup:'看动画，感受句子变长变短的奥秘！',
+  level1:'找主干：问"谁/什么 + 做什么"',
+  level2:'把词拖进去，让句子变丰富！',
+  level3:'缩句就是帮句子"减肥"，留下骨架！',
+  boss:'加油！你一定能打败Boss！⚔️',
+  score:'你真棒！今天学到了很多！',
+  extension:'每天多练习，很快就是扩缩句大师！',
+};
+function toggleBuddy(){
+  const b=document.getElementById('buddy-bubble');
+  b.classList.toggle('show');
+}
+function buddyComment(section){
+  const b=document.getElementById('buddy-bubble');
+  const tip=BUDDY_TIPS[section]||'继续加油！🐛';
+  b.textContent=tip;
+  b.classList.add('show');
+  setTimeout(()=>b.classList.remove('show'),3000);
+}
+
+// ─── LEVEL START ─────────────────────────────────────────
+function startLevel(n){
+  if(n===1){l1Idx=0;renderL1();goSection('level1');}
+  else if(n===2){dragExIdx=0;initDrag();goSection('level2');}
+  else if(n===3){l3Idx=0;renderL3();goSection('level3');}
+}
+
+function restartGame(){
+  Object.assign(state,{stars:0,score:0,progress:0,l1Done:false,l2Done:false,l3Done:false,
+    bossDone:false,bossHp:5,bossQ:0,achievements:[],l1Correct:0,l2Correct:0,l3Correct:0});
+  document.getElementById('star-count').textContent='0';
+  goSection('hero');
+}
+
+// ─── INIT ────────────────────────────────────────────────
+window.addEventListener('load',()=>{
+  demoReset();
+  document.getElementById('hero').style.display='flex';
+  // make hero visible initially
+  document.getElementById('hero').classList.remove('section');
+});
+</script>
+</body>
+</html>

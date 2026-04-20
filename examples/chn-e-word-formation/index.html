@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>词语构成 | 二年级语文 🧩</title>
+<style>
+  :root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--card:#fff;--text:#2d3436;--muted:#636e72;--radius:20px;--shadow:0 8px 32px rgba(0,0,0,0.10);}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  #hud{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(255,251,240,0.95);backdrop-filter:blur(8px);padding:10px 20px;display:flex;align-items:center;gap:16px;box-shadow:0 2px 12px rgba(0,0,0,0.08);}
+  #stars-display{font-size:1.2rem;font-weight:700;color:#f9ca24;}
+  .progress-bar{flex:1;height:12px;background:#ffe0e0;border-radius:999px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:999px;transition:width 0.6s ease;}
+  #section-label{font-size:0.9rem;color:var(--muted);font-weight:600;}
+
+  .section{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px 60px;opacity:0;transform:translateY(30px);transition:opacity 0.6s,transform 0.6s;pointer-events:none;}
+  .section.active{opacity:1;transform:translateY(0);pointer-events:all;}
+
+  /* HERO */
+  #s-hero{background:linear-gradient(135deg,#ff6b6b11,#4ecdc411,#ffe66d22);}
+  .hero-emoji{font-size:5.5rem;animation:bounce 1.8s infinite;}
+  @keyframes bounce{0%,100%{transform:translateY(0)scale(1);}50%{transform:translateY(-14px)scale(1.05);}}
+  .hero-title{font-size:2.6rem;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center;margin:12px 0 8px;}
+  .badge{padding:6px 16px;border-radius:999px;font-size:0.85rem;font-weight:700;}
+  .hero-badges{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:12px 0 28px;}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;border:none;border-radius:var(--radius);font-size:1.1rem;font-weight:700;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;box-shadow:var(--shadow);}
+  .btn:hover{transform:translateY(-3px);}
+  .btn-primary{background:linear-gradient(135deg,var(--primary),#e84393);color:#fff;}
+  .btn-secondary{background:linear-gradient(135deg,var(--secondary),#26de81);color:#fff;}
+  .btn-accent{background:linear-gradient(135deg,var(--accent),#fd9644);color:#fff;}
+  .btn-ghost{background:var(--card);color:var(--primary);border:2px solid var(--primary);}
+
+  .card{background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);width:100%;max-width:720px;margin-bottom:20px;}
+  .card-title{font-size:1.2rem;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+  .section-title{font-size:2rem;font-weight:900;text-align:center;margin-bottom:8px;}
+  .section-sub{font-size:1rem;color:var(--muted);text-align:center;margin-bottom:24px;}
+
+  /* WORD STRUCTURE TYPES */
+  .types-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;width:100%;max-width:720px;}
+  .type-card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;border:3px solid transparent;}
+  .type-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,0.12);}
+  .type-card.selected{border-color:var(--primary);}
+  .type-icon{font-size:2.5rem;margin-bottom:8px;}
+  .type-name{font-size:1.1rem;font-weight:700;margin-bottom:4px;}
+  .type-example{font-size:0.9rem;color:var(--muted);}
+
+  /* WORD BUILDER */
+  .builder-area{width:100%;max-width:720px;}
+  .builder-slots{display:flex;align-items:center;justify-content:center;gap:12px;margin:20px 0;flex-wrap:wrap;}
+  .char-slot{width:70px;height:70px;border:3px dashed #dfe6e9;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;cursor:pointer;transition:all 0.2s;background:var(--card);}
+  .char-slot.filled{border-style:solid;border-color:var(--secondary);background:#4ecdc411;}
+  .char-slot.target{border-color:var(--accent);background:#ffe66d22;animation:pulse 1.5s infinite;}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 #ffe66d88;}50%{box-shadow:0 0 0 8px transparent;}}
+  .char-bank{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:16px 0;}
+  .char-tile{padding:12px 18px;background:linear-gradient(135deg,var(--primary),#e84393);color:#fff;border-radius:14px;font-size:1.4rem;font-weight:700;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;box-shadow:var(--shadow);}
+  .char-tile:hover{transform:translateY(-3px) scale(1.05);}
+  .char-tile.used{opacity:0.3;cursor:not-allowed;transform:none;}
+  .plus-sign{font-size:2rem;color:var(--muted);}
+  .equals-sign{font-size:2rem;color:var(--primary);}
+  .result-slot{width:100px;height:70px;border:3px solid var(--primary);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:900;color:var(--primary);background:#ff6b6b11;}
+
+  /* WORD CHAIN GAME */
+  .chain-container{width:100%;max-width:720px;}
+  .chain-display{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;min-height:60px;margin:16px 0;padding:12px;background:#f8f9fa;border-radius:16px;}
+  .chain-word{padding:8px 16px;background:linear-gradient(135deg,var(--secondary),#45b7d1);color:#fff;border-radius:10px;font-size:1rem;font-weight:700;animation:fadeIn 0.3s;}
+  @keyframes fadeIn{from{opacity:0;transform:scale(0.8);}to{opacity:1;transform:scale(1);}}
+  .chain-arrow{align-self:center;font-size:1.2rem;color:var(--muted);}
+  .chain-input-area{display:flex;gap:10px;align-items:center;margin-top:12px;}
+  .chain-input{flex:1;padding:12px 20px;border:3px solid #dfe6e9;border-radius:14px;font-size:1.2rem;font-weight:600;outline:none;transition:border-color 0.2s;}
+  .chain-input:focus{border-color:var(--secondary);}
+  .chain-hint{padding:10px 16px;background:#f8f9fa;border-radius:12px;font-size:0.9rem;color:var(--muted);margin-top:8px;}
+  .chain-words{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+  .chain-option{padding:10px 16px;border:2px solid #dfe6e9;border-radius:12px;cursor:pointer;font-size:1rem;font-weight:600;background:var(--card);transition:all 0.2s;}
+  .chain-option:hover{border-color:var(--secondary);background:#4ecdc411;}
+
+  /* CLASSIFICATION */
+  .classify-container{width:100%;max-width:720px;}
+  .type-boxes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;}
+  .type-box{min-height:120px;background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border-top:5px solid transparent;transition:border-color 0.2s;}
+  .type-box.t1{border-color:#ff6b6b;}
+  .type-box.t2{border-color:#4ecdc4;}
+  .type-box.t3{border-color:#ffe66d;}
+  .type-box h4{font-size:0.9rem;font-weight:700;margin-bottom:10px;color:var(--muted);}
+  .dropped-words{display:flex;flex-wrap:wrap;gap:6px;min-height:40px;}
+  .word-chip{padding:6px 12px;border-radius:10px;font-size:0.9rem;font-weight:600;cursor:grab;}
+  .word-chip-draggable{background:linear-gradient(135deg,#fd79a8,#e84393);color:#fff;cursor:grab;}
+  .draggable-words{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:16px;background:#f8f9fa;border-radius:var(--radius);margin-bottom:16px;}
+
+  /* QUIZ */
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option-btn{padding:12px 20px;border:2px solid #dfe6e9;border-radius:14px;background:var(--card);cursor:pointer;font-size:1rem;text-align:left;transition:all 0.2s;}
+  .option-btn:hover{border-color:var(--secondary);background:#4ecdc411;}
+  .option-btn.correct{border-color:#00b894;background:#00b89422;color:#00b894;}
+  .option-btn.wrong{border-color:var(--primary);background:#ff6b6b22;color:var(--primary);}
+  .feedback{padding:14px 20px;border-radius:14px;font-weight:600;margin-top:12px;display:none;}
+  .feedback.show{display:block;animation:fadeIn 0.3s;}
+  .feedback.correct{background:#00b89422;color:#00b894;}
+  .feedback.wrong{background:#ff6b6b22;color:#e17055;}
+
+  /* BOSS */
+  .boss-char{font-size:5rem;text-align:center;margin:12px 0;animation:spin 4s linear infinite;}
+  @keyframes spin{0%,100%{transform:rotate(-5deg);}50%{transform:rotate(5deg);}}
+  .boss-progress-bar{width:100%;height:14px;background:#ffe0e0;border-radius:999px;overflow:hidden;}
+  .boss-prog{height:100%;background:linear-gradient(90deg,var(--primary),#fd79a8);border-radius:999px;transition:width 0.5s;}
+  .boss-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;}
+  .boss-opt{padding:14px;border:3px solid #dfe6e9;border-radius:var(--radius);background:var(--card);cursor:pointer;font-size:1rem;text-align:center;transition:all 0.2s;font-weight:700;}
+  .boss-opt:hover{border-color:var(--primary);}
+
+  /* SCORE */
+  .score-big{font-size:5rem;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center;}
+  .ach-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0;}
+  .achievement{background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);text-align:center;opacity:0.4;transition:all 0.3s;}
+  .achievement.unlocked{opacity:1;animation:pop 0.5s;}
+  @keyframes pop{0%{transform:scale(0);}60%{transform:scale(1.15);}100%{transform:scale(1);}}
+  .ach-icon{font-size:2rem;}
+  .ach-name{font-size:0.7rem;font-weight:700;color:var(--muted);margin-top:4px;}
+
+  /* EXPAND */
+  .expand-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;max-width:720px;}
+  .expand-card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);transition:transform 0.2s;}
+  .expand-card:hover{transform:translateY(-4px);}
+
+  /* AI COMPANION */
+  #companion{position:fixed;bottom:20px;right:20px;z-index:200;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+  .comp-bubble{background:var(--card);border-radius:16px;padding:12px 16px;box-shadow:var(--shadow);max-width:240px;font-size:0.9rem;line-height:1.4;display:none;}
+  .comp-bubble.show{display:block;animation:fadeIn 0.3s;}
+  .comp-avatar{width:60px;height:60px;background:linear-gradient(135deg,#fd79a8,#fdcb6e);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;cursor:pointer;box-shadow:var(--shadow);animation:float 3s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+
+  .star-burst{position:fixed;pointer-events:none;z-index:999;font-size:2rem;animation:burst 0.8s forwards;}
+  @keyframes burst{0%{opacity:1;transform:scale(0);}100%{opacity:0;transform:scale(2.5)translateY(-60px);}}
+
+  @media(max-width:480px){.types-grid{grid-template-columns:1fr;}.type-boxes{grid-template-columns:1fr;}.ach-grid{grid-template-columns:repeat(2,1fr);}.expand-grid{grid-template-columns:1fr;}.boss-opts{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div id="hud">
+  <div id="stars-display">⭐ 0</div>
+  <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+  <div id="section-label">开始学习</div>
+</div>
+
+<div id="companion">
+  <div class="comp-bubble" id="comp-bubble">👋 我是词语虫🐛！来帮你拼词语！</div>
+  <div class="comp-avatar" onclick="toggleComp()">🐛</div>
+</div>
+
+<!-- ====== HERO ====== -->
+<div class="section active" id="s-hero">
+  <div style="text-align:center;">
+    <div class="hero-emoji">🧩</div>
+    <h1 class="hero-title">词语构成大挑战</h1>
+    <p style="color:var(--muted);font-size:1.1rem;margin-bottom:12px;">二年级语文 · 探秘汉语词语构成方式</p>
+    <div class="hero-badges">
+      <span class="badge" style="background:#dfe6e9;color:#2d3436;">📚 二年级</span>
+      <span class="badge" style="background:#fd79a822;color:#d63031;">🇨🇳 语文</span>
+      <span class="badge" style="background:#00b89422;color:#00b894;">⏱ 约30分钟</span>
+      <span class="badge" style="background:#a29bfe22;color:#6c5ce7;">🧩 6种构成方式</span>
+    </div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="goTo('s-objective')">出发！🚀</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== OBJECTIVE ====== -->
+<div class="section" id="s-objective">
+  <h2 class="section-title">🎯 学习目标</h2>
+  <p class="section-sub">今天你将学会↓</p>
+  <div class="card">
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:12px;">
+      <li style="display:flex;align-items:center;gap:12px;padding:10px;background:#f8f9fa;border-radius:12px;"><span style="font-size:1.4rem;">🔤</span>认识词语的6种构成方式</li>
+      <li style="display:flex;align-items:center;gap:12px;padding:10px;background:#f8f9fa;border-radius:12px;"><span style="font-size:1.4rem;">🧩</span>能判断一个词语属于哪种结构</li>
+      <li style="display:flex;align-items:center;gap:12px;padding:10px;background:#f8f9fa;border-radius:12px;"><span style="font-size:1.4rem;">🔗</span>玩词语接龙，扩大词汇量</li>
+      <li style="display:flex;align-items:center;gap:12px;padding:10px;background:#f8f9fa;border-radius:12px;"><span style="font-size:1.4rem;">🏆</span>挑战Boss关，获得8个成就！</li>
+    </ul>
+  </div>
+  <button class="btn btn-secondary" onclick="addStars(5);goTo('s-warmup')">我知道了！💪</button>
+</div>
+
+<!-- ====== WARMUP ====== -->
+<div class="section" id="s-warmup">
+  <h2 class="section-title">🔥 热身：词语大脑洞</h2>
+  <p class="section-sub">你觉得"美丽"这个词是怎么构成的？</p>
+  <div class="types-grid">
+    <div class="type-card" onclick="warmupPick(this,'a')">
+      <div class="type-icon">🪞</div>
+      <div class="type-name">两个意思相近的字</div>
+      <div class="type-example">如：美+丽（都表示好看）</div>
+    </div>
+    <div class="type-card" onclick="warmupPick(this,'b')">
+      <div class="type-icon">🔄</div>
+      <div class="type-name">一个字修饰另一个字</div>
+      <div class="type-example">如：大+海</div>
+    </div>
+    <div class="type-card" onclick="warmupPick(this,'c')">
+      <div class="type-icon">🔢</div>
+      <div class="type-name">数字+名词</div>
+      <div class="type-example">如：千+里</div>
+    </div>
+    <div class="type-card" onclick="warmupPick(this,'d')">
+      <div class="type-icon">🔁</div>
+      <div class="type-name">重复一个字</div>
+      <div class="type-example">如：高+高</div>
+    </div>
+  </div>
+  <div id="warmup-fb" style="display:none;margin-top:12px;text-align:center;font-size:1rem;font-weight:600;color:var(--secondary);"></div>
+  <button class="btn btn-primary" style="margin-top:20px" onclick="goTo('s-level1')">进入第一关 🧩</button>
+</div>
+
+<!-- ====== LEVEL 1: 认识词语结构 ====== -->
+<div class="section" id="s-level1">
+  <h2 class="section-title">🧩 第一关：认识词语结构</h2>
+  <p class="section-sub">汉语词语有6种常见的构成方式</p>
+  <div style="width:100%;max-width:720px;">
+    <div class="card">
+      <div class="card-title">📌 六种构成方式速记</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="padding:12px;background:#ff6b6b11;border-radius:12px;border-left:4px solid var(--primary);">
+          <strong>① 并列式</strong>：两个意思相同/相近的字组合 <span style="color:var(--primary);">→ 美丽、快乐、高大</span>
+        </div>
+        <div style="padding:12px;background:#4ecdc411;border-radius:12px;border-left:4px solid var(--secondary);">
+          <strong>② 偏正式</strong>：修饰词+中心词 <span style="color:var(--secondary);">→ 大海、白雪、春天</span>
+        </div>
+        <div style="padding:12px;background:#ffe66d44;border-radius:12px;border-left:4px solid var(--accent);">
+          <strong>③ 动补式</strong>：动作+结果/程度 <span style="color:#e17055;">→ 跑步、写字、唱歌</span>
+        </div>
+        <div style="padding:12px;background:#a29bfe22;border-radius:12px;border-left:4px solid #6c5ce7;">
+          <strong>④ 主谓式</strong>：主语+谓语 <span style="color:#6c5ce7;">→ 地震、心跳、年轻</span>
+        </div>
+        <div style="padding:12px;background:#fd79a822;border-radius:12px;border-left:4px solid #e84393;">
+          <strong>⑤ 重叠式</strong>：同字重叠 <span style="color:#e84393;">→ 高高、慢慢、妈妈</span>
+        </div>
+        <div style="padding:12px;background:#00b89422;border-radius:12px;border-left:4px solid #00b894;">
+          <strong>⑥ 附加式</strong>：加前缀/后缀 <span style="color:#00b894;">→ 老师、桌子、石头</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- INTERACTIVE WORD BUILDER -->
+    <div class="card">
+      <div class="card-title">🎮 词语拼一拼</div>
+      <p style="color:var(--muted);margin-bottom:16px;">把下面的字拼成词语，点击字块放入方格：</p>
+      <div id="builder-section">
+        <div id="builder-question" style="font-size:1.1rem;font-weight:700;text-align:center;margin-bottom:12px;color:var(--primary);"></div>
+        <div class="builder-slots" id="builder-slots"></div>
+        <div class="char-bank" id="char-bank"></div>
+        <div style="text-align:center;margin-top:4px;">
+          <div id="builder-result" class="result-slot" style="display:inline-flex;">?</div>
+        </div>
+        <div class="feedback" id="builder-fb"></div>
+      </div>
+      <button class="btn btn-secondary" style="margin-top:12px" onclick="nextBuilderQ()">下一题 ▶</button>
+    </div>
+  </div>
+  <button class="btn btn-accent" onclick="goTo('s-level2')">进入第二关 🔗</button>
+</div>
+
+<!-- ====== LEVEL 2: 词语接龙 ====== -->
+<div class="section" id="s-level2">
+  <h2 class="section-title">🔗 第二关：词语接龙</h2>
+  <p class="section-sub">用上一个词语的最后一个字，接出新词语！</p>
+  <div class="chain-container">
+    <div class="card">
+      <div class="card-title">🎮 接龙游戏</div>
+      <p style="color:var(--muted);margin-bottom:12px;">当前词链（点击词语可查看提示）：</p>
+      <div class="chain-display" id="chain-display">
+        <span class="chain-word" id="chain-start">春天</span>
+      </div>
+      <p style="font-size:0.9rem;color:var(--muted);" id="chain-hint">请接"天"开头的词语↓</p>
+      <div class="chain-words" id="chain-words">
+        <!-- Options generated by JS -->
+      </div>
+      <div style="margin-top:12px;font-size:0.9rem;color:var(--muted);">也可以自己输入：</div>
+      <div class="chain-input-area">
+        <input class="chain-input" id="chain-input" placeholder="输入词语…" maxlength="6"/>
+        <button class="btn btn-primary" onclick="submitChain()">接！</button>
+      </div>
+      <div class="feedback" id="chain-fb"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📊 接龙记录</div>
+      <div id="chain-score-display" style="text-align:center;font-size:1.8rem;font-weight:900;color:var(--primary);">0 步</div>
+      <p style="text-align:center;color:var(--muted);font-size:0.9rem;margin-top:4px;">目标：接龙5步以上！</p>
+    </div>
+  </div>
+  <button class="btn btn-accent" onclick="goTo('s-level3')">进入第三关 🗂️</button>
+</div>
+
+<!-- ====== LEVEL 3: 词语分类 ====== -->
+<div class="section" id="s-level3">
+  <h2 class="section-title">🗂️ 第三关：词语分类大比拼</h2>
+  <p class="section-sub">把词语拖到正确的结构类型框里！</p>
+  <div class="classify-container">
+    <div class="card">
+      <div class="card-title">🎮 拖拽分类（点击词语选择，再点类型框放入）</div>
+      <div class="draggable-words" id="drag-words"></div>
+      <div class="type-boxes">
+        <div class="type-box t1" onclick="dropToBox('并列式')">
+          <h4>🔴 并列式</h4>
+          <div class="dropped-words" id="box-parallel"></div>
+        </div>
+        <div class="type-box t2" onclick="dropToBox('偏正式')">
+          <h4>🟢 偏正式</h4>
+          <div class="dropped-words" id="box-modifier"></div>
+        </div>
+        <div class="type-box t3" onclick="dropToBox('重叠式')">
+          <h4>🟡 重叠式</h4>
+          <div class="dropped-words" id="box-repeat"></div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="checkClassify()">检查答案 ✅</button>
+      <div class="feedback" id="classify-fb"></div>
+    </div>
+  </div>
+  <button class="btn btn-primary" style="margin-top:8px" onclick="goTo('s-boss')">挑战Boss! 👾</button>
+</div>
+
+<!-- ====== BOSS ====== -->
+<div class="section" id="s-boss">
+  <h2 class="section-title">👾 Boss关：词语大师考验</h2>
+  <p class="section-sub">5道题，每题10分！</p>
+  <div style="width:100%;max-width:700px;">
+    <div class="boss-char" id="boss-char">🧩</div>
+    <div class="boss-progress-bar"><div class="boss-prog" id="boss-prog" style="width:0%"></div></div>
+    <p style="text-align:center;color:var(--muted);font-size:0.9rem;margin:6px 0;" id="boss-pt">第 1/5 题</p>
+    <div class="card">
+      <div id="boss-q" style="font-size:1.15rem;font-weight:700;text-align:center;margin-bottom:16px;">准备好了吗？</div>
+      <div class="boss-opts" id="boss-opts"></div>
+      <div class="feedback" id="boss-fb"></div>
+    </div>
+    <div style="text-align:center;margin-top:8px;">
+      <button class="btn btn-primary" id="boss-start-btn" onclick="startBoss()">开始挑战 ⚡</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SCORE ====== -->
+<div class="section" id="s-score">
+  <div style="width:100%;max-width:620px;text-align:center;">
+    <div style="font-size:3rem;">🎊</div>
+    <h2 class="section-title">学习完成！</h2>
+    <div class="score-big" id="final-score">0</div>
+    <p style="color:var(--muted);margin-bottom:20px;">总得分</p>
+    <div class="ach-grid" id="ach-grid">
+      <div class="achievement" id="ach-start"><div class="ach-icon">🚀</div><div class="ach-name">勇敢出发</div></div>
+      <div class="achievement" id="ach-builder"><div class="ach-icon">🧩</div><div class="ach-name">拼词达人</div></div>
+      <div class="achievement" id="ach-chain"><div class="ach-icon">🔗</div><div class="ach-name">接龙高手</div></div>
+      <div class="achievement" id="ach-classify"><div class="ach-icon">🗂️</div><div class="ach-name">分类专家</div></div>
+      <div class="achievement" id="ach-boss"><div class="ach-icon">👾</div><div class="ach-name">Boss终结</div></div>
+      <div class="achievement" id="ach-speed"><div class="ach-icon">⚡</div><div class="ach-name">快如闪电</div></div>
+      <div class="achievement" id="ach-perfect"><div class="ach-icon">💯</div><div class="ach-name">词语大师</div></div>
+      <div class="achievement" id="ach-bug"><div class="ach-icon">🐛</div><div class="ach-name">虫虫好友</div></div>
+    </div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="goTo('s-expand')">查看拓展 📚</button>
+      <button class="btn btn-ghost" onclick="location.reload()">再来一次 🔄</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== EXPAND ====== -->
+<div class="section" id="s-expand">
+  <h2 class="section-title">📚 拓展学习</h2>
+  <p class="section-sub">词语的世界无比丰富！</p>
+  <div class="expand-grid">
+    <div class="expand-card">
+      <div style="font-size:2.5rem;">📖</div>
+      <h3>词语大家族</h3>
+      <p>汉语有数十万个词语，每天学习3-5个，一年就多认识上千个词！</p>
+    </div>
+    <div class="expand-card">
+      <div style="font-size:2.5rem;">✏️</div>
+      <h3>仿写练习</h3>
+      <p>模仿今天学的结构造词：找3个并列式、3个偏正式词语写下来。</p>
+    </div>
+    <div class="expand-card">
+      <div style="font-size:2.5rem;">🎲</div>
+      <h3>家庭接龙</h3>
+      <p>和家人一起玩词语接龙，看谁接得最长！</p>
+    </div>
+    <div class="expand-card">
+      <div style="font-size:2.5rem;">🌱</div>
+      <h3>词语日记</h3>
+      <p>每天记录一个今天学到的新词语，写它的构成方式和造句。</p>
+    </div>
+  </div>
+  <p style="margin-top:24px;font-size:1.2rem;font-weight:700;color:var(--primary);text-align:center;">🎉 恭喜你！已经掌握词语构成的秘密！</p>
+</div>
+
+<script>
+// ===== STATE =====
+const S={stars:0,sections:['s-hero','s-objective','s-warmup','s-level1','s-level2','s-level3','s-boss','s-score','s-expand'],cur:0,achs:{},chainCount:0,chainCurrent:'天',bossIdx:0,bossScore:0,builderIdx:0,classifyDone:false,l1done:false,l2done:false,l3done:false,startTime:Date.now(),selectedDrag:null};
+
+// ===== AUDIO =====
+let actx=null;
+function gc(){if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();return actx;}
+function tone(f,d,t='sine'){try{const a=gc(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.type=t;o.frequency.value=f;g.gain.setValueAtTime(0.25,a.currentTime);g.gain.exponentialRampToValueAtTime(0.001,a.currentTime+d);o.start();o.stop(a.currentTime+d);}catch(e){}}
+function playOK(){tone(523,0.1);setTimeout(()=>tone(659,0.1),100);setTimeout(()=>tone(784,0.2),200);}
+function playBad(){tone(220,0.3,'sawtooth');}
+function playStar(){tone(880,0.06);setTimeout(()=>tone(1047,0.06),60);setTimeout(()=>tone(1319,0.12),120);}
+
+// ===== STARS =====
+function addStars(n){S.stars+=n;document.getElementById('stars-display').textContent='⭐ '+S.stars;playStar();burst();}
+function burst(){for(let i=0;i<3;i++){const el=document.createElement('div');el.className='star-burst';el.textContent='⭐';el.style.left=Math.random()*80+10+'vw';el.style.top=Math.random()*50+20+'vh';document.body.appendChild(el);setTimeout(()=>el.remove(),900);}}
+
+// ===== NAV =====
+function goTo(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  const t=document.getElementById(id);if(t){t.classList.add('active');t.scrollIntoView({behavior:'smooth',block:'start'});}
+  S.cur=S.sections.indexOf(id);
+  const pct=Math.round((S.cur/8)*100);document.getElementById('prog-fill').style.width=pct+'%';
+  const labels={'s-hero':'开始','s-objective':'目标','s-warmup':'热身','s-level1':'第一关','s-level2':'第二关','s-level3':'第三关','s-boss':'Boss关','s-score':'成绩单','s-expand':'拓展'};
+  document.getElementById('section-label').textContent=labels[id]||'';
+  if(id==='s-level1')initBuilder();
+  if(id==='s-level2')initChain();
+  if(id==='s-level3')initClassify();
+  if(id==='s-score')showScore();
+}
+
+// ===== WARMUP =====
+function warmupPick(el,k){
+  document.querySelectorAll('.type-card').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');
+  const msgs={a:'🎉 对了！"美丽"是并列式！美和丽都表示好看。',b:'😊 偏正式也很常见，但"美丽"其实是并列式哦！',c:'🤔 不对哦！"美丽"不包含数字。',d:'🤔 不对！"美丽"两个字不同。'};
+  document.getElementById('warmup-fb').textContent=msgs[k];document.getElementById('warmup-fb').style.display='block';
+  addStars(2);unlockAch('ach-start');
+}
+
+// ===== BUILDER =====
+const builderQs=[
+  {q:'并列式：找到两个"意思相近"的字拼成词语',chars:['美','丽','大','跑'],answer:'美丽',type:'并列式'},
+  {q:'偏正式：修饰词+中心词',chars:['大','海','小','鱼'],answer:'大海',type:'偏正式'},
+  {q:'重叠式：同一个字重复',chars:['高','低','高','快'],answer:'高高',type:'重叠式'},
+];
+function initBuilder(){loadBuilderQ();}
+function loadBuilderQ(){
+  const q=builderQs[S.builderIdx%builderQs.length];
+  document.getElementById('builder-question').textContent='题目：'+q.q;
+  const slots=document.getElementById('builder-slots');
+  const bank=document.getElementById('char-bank');
+  const n=q.answer.length;
+  slots.innerHTML='';
+  for(let i=0;i<n;i++){
+    const d=document.createElement('div');d.className='char-slot';d.dataset.idx=i;d.dataset.char='';d.textContent='?';
+    d.onclick=()=>removeFromSlot(i);slots.appendChild(d);
+  }
+  bank.innerHTML='';
+  S.bankSelected=null;
+  q.chars.forEach((c,i)=>{
+    const t=document.createElement('div');t.className='char-tile';t.textContent=c;t.dataset.ci=i;
+    t.onclick=()=>selectTile(t,c,i,q);bank.appendChild(t);
+  });
+  document.getElementById('builder-result').textContent='?';
+  document.getElementById('builder-fb').className='feedback';
+}
+function selectTile(el,c,idx,q){
+  if(el.classList.contains('used'))return;
+  const slots=document.querySelectorAll('#builder-slots .char-slot');
+  for(let s of slots){if(s.dataset.char===''){s.dataset.char=c;s.textContent=c;s.classList.add('filled');el.classList.add('used');break;}}
+  checkBuilderComplete(q);
+}
+function removeFromSlot(i){
+  const slots=document.querySelectorAll('#builder-slots .char-slot');
+  const s=slots[i];if(!s.dataset.char)return;
+  const c=s.dataset.char;s.dataset.char='';s.textContent='?';s.classList.remove('filled');
+  document.querySelectorAll('#char-bank .char-tile').forEach(t=>{if(t.textContent===c&&t.classList.contains('used')){t.classList.remove('used');}});
+}
+function checkBuilderComplete(q){
+  const slots=document.querySelectorAll('#builder-slots .char-slot');
+  const formed=[...slots].map(s=>s.dataset.char).join('');
+  if([...slots].every(s=>s.dataset.char!=='')){
+    document.getElementById('builder-result').textContent=formed;
+    const fb=document.getElementById('builder-fb');
+    if(formed===q.answer){fb.textContent='🎉 正确！"'+formed+'"是'+q.type+'！';fb.className='feedback correct show';addStars(8);playOK();unlockAch('ach-builder');S.l1done=true;}
+    else{fb.textContent='❌ "'+formed+'"不对哦，正确答案是"'+q.answer+'"';fb.className='feedback wrong show';playBad();}
+  }
+}
+function nextBuilderQ(){S.builderIdx++;loadBuilderQ();}
+
+// ===== CHAIN =====
+const chainData={
+  '天':['天空','天气','天使','天亮','天边'],
+  '空':['空气','空白','空中','空旷','空间'],
+  '气':['气球','气候','气温','气象','气息'],
+  '球':['球场','球员','球赛','球鞋','球队'],
+  '场':['场所','场地','场景','场合'],
+  '地':['地球','地图','地方','地面','地道'],
+  '图':['图书','图画','图案'],
+  '书':['书本','书包','书房'],
+  '本':['本来','本领','本事'],
+};
+function initChain(){
+  S.chainCount=0;S.chainCurrent='天';
+  document.getElementById('chain-display').innerHTML='<span class="chain-word">春天</span>';
+  renderChainOptions();
+}
+function renderChainOptions(){
+  const opts=chainData[S.chainCurrent]||['天空','天气','天使'];
+  const el=document.getElementById('chain-words');
+  el.innerHTML=opts.slice(0,4).map(w=>`<div class="chain-option" onclick="pickChain('${w}')">${w}</div>`).join('');
+  document.getElementById('chain-hint').textContent='请接"'+S.chainCurrent+'"开头的词语↓';
+}
+function pickChain(w){addToChain(w);}
+function submitChain(){const v=document.getElementById('chain-input').value.trim();if(v)addToChain(v);document.getElementById('chain-input').value='';}
+function addToChain(w){
+  const fb=document.getElementById('chain-fb');
+  if(w[0]!==S.chainCurrent){fb.textContent='❌ 必须以"'+S.chainCurrent+'"开头！';fb.className='feedback wrong show';playBad();return;}
+  if(w.length<2){fb.textContent='❌ 至少要2个字！';fb.className='feedback wrong show';playBad();return;}
+  S.chainCurrent=w[w.length-1];S.chainCount++;
+  const display=document.getElementById('chain-display');
+  display.innerHTML+=`<span class="chain-arrow">→</span><span class="chain-word">${w}</span>`;
+  document.getElementById('chain-score-display').textContent=S.chainCount+' 步';
+  fb.textContent='✅ "'+w+'"接龙成功！共'+S.chainCount+'步！';fb.className='feedback correct show';
+  addStars(4);playOK();
+  if(S.chainCount>=5){unlockAch('ach-chain');S.l2done=true;}
+  renderChainOptions();
+}
+
+// ===== CLASSIFY =====
+const classifyWords=[
+  {w:'快乐',type:'并列式'},{w:'高高',type:'重叠式'},{w:'大树',type:'偏正式'},
+  {w:'聪明',type:'并列式'},{w:'慢慢',type:'重叠式'},{w:'小鸟',type:'偏正式'},
+];
+const typeMap={'并列式':'box-parallel','偏正式':'box-modifier','重叠式':'box-repeat'};
+function initClassify(){
+  S.selectedDrag=null;
+  const el=document.getElementById('drag-words');
+  el.innerHTML=classifyWords.map(w=>`<div class="word-chip word-chip-draggable" id="drag-${w.w}" onclick="selectDrag('${w.w}')">${w.w}</div>`).join('');
+  ['box-parallel','box-modifier','box-repeat'].forEach(id=>document.getElementById(id).innerHTML='');
+}
+function selectDrag(w){
+  document.querySelectorAll('.word-chip-draggable').forEach(c=>c.style.boxShadow='');
+  const el=document.getElementById('drag-'+w);
+  if(el){el.style.boxShadow='0 0 0 3px var(--primary)';S.selectedDrag=w;}
+}
+function dropToBox(type){
+  if(!S.selectedDrag){setComp('💡 先点击一个词语，再点击分类框！');return;}
+  const boxId=typeMap[type];
+  const box=document.getElementById(boxId);
+  const orig=document.getElementById('drag-'+S.selectedDrag);
+  if(orig){orig.remove();}
+  const chip=document.createElement('div');chip.className='word-chip';chip.style.background='linear-gradient(135deg,'+['#ff6b6b','#4ecdc4','#fdcb6e'][Object.keys(typeMap).indexOf(type)]+'99,transparent)';chip.style.padding='6px 12px';chip.style.borderRadius='10px';chip.textContent=S.selectedDrag;box.appendChild(chip);
+  S.selectedDrag=null;addStars(2);playOK();
+}
+function checkClassify(){
+  let correct=0;let total=classifyWords.length;
+  classifyWords.forEach(item=>{
+    const boxId=typeMap[item.type];
+    const box=document.getElementById(boxId);
+    const chips=[...box.querySelectorAll('.word-chip')].map(c=>c.textContent);
+    if(chips.includes(item.w))correct++;
+  });
+  const fb=document.getElementById('classify-fb');
+  if(correct===total){fb.textContent='🎉 全部正确！词语分类大师！';fb.className='feedback correct show';addStars(15);playOK();unlockAch('ach-classify');S.l3done=true;}
+  else{fb.textContent='🤔 答对了'+correct+'/'+total+'个，再检查一下吧！';fb.className='feedback wrong show';playBad();}
+}
+
+// ===== BOSS =====
+const bossQs=[
+  {q:'"高大"属于哪种构成方式？',opts:['偏正式','并列式','重叠式','主谓式'],ans:1,char:'💪'},
+  {q:'"大山"属于哪种构成方式？',opts:['并列式','重叠式','偏正式','附加式'],ans:2,char:'⛰️'},
+  {q:'"慢慢"属于哪种构成方式？',opts:['并列式','偏正式','附加式','重叠式'],ans:3,char:'🐢'},
+  {q:'词语接龙：春天→天空→空气→？',opts:['气球','球气','气气','天气'],ans:0,char:'🎈'},
+  {q:'下面哪个是并列式词语？',opts:['小花','聪明','妈妈','红色'],ans:1,char:'🌸'},
+];
+function startBoss(){
+  document.getElementById('boss-start-btn').style.display='none';
+  S.bossIdx=0;S.bossScore=0;showBossQ();
+}
+function showBossQ(){
+  if(S.bossIdx>=bossQs.length){endBoss();return;}
+  const q=bossQs[S.bossIdx];
+  document.getElementById('boss-char').textContent=q.char;
+  document.getElementById('boss-q').textContent=q.q;
+  document.getElementById('boss-pt').textContent='第 '+(S.bossIdx+1)+'/5 题';
+  document.getElementById('boss-prog').style.width=(S.bossIdx/5*100)+'%';
+  document.getElementById('boss-opts').innerHTML=q.opts.map((o,i)=>`<button class="boss-opt" onclick="answerBoss(${i})">${String.fromCharCode(65+i)}. ${o}</button>`).join('');
+  document.getElementById('boss-fb').className='feedback';
+}
+function answerBoss(i){
+  const q=bossQs[S.bossIdx];
+  document.querySelectorAll('.boss-opt').forEach(b=>b.disabled=true);
+  const btns=document.querySelectorAll('.boss-opt');
+  const fb=document.getElementById('boss-fb');
+  if(i===q.ans){btns[i].style.background='#00b89422';btns[i].style.borderColor='#00b894';fb.textContent='🎉 正确！+10分';fb.className='feedback correct show';S.bossScore+=10;addStars(5);playOK();}
+  else{btns[i].style.background='#ff6b6b22';btns[i].style.borderColor='#ff6b6b';btns[q.ans].style.background='#00b89422';fb.textContent='❌ 答错了！';fb.className='feedback wrong show';playBad();}
+  S.bossIdx++;setTimeout(showBossQ,1300);
+}
+function endBoss(){
+  document.getElementById('boss-q').textContent='🎊 Boss关完成！得了'+S.bossScore+'分！';
+  document.getElementById('boss-opts').innerHTML='';
+  document.getElementById('boss-prog').style.width='100%';
+  unlockAch('ach-boss');if(S.bossScore>=40)unlockAch('ach-perfect');
+  if((Date.now()-S.startTime)/1000<500)unlockAch('ach-speed');
+  addStars(S.bossScore/2);
+  setTimeout(()=>{goTo('s-score');},1500);
+}
+function showScore(){
+  document.getElementById('final-score').textContent=S.stars;
+  if(S.l1done)unlockAch('ach-builder');
+  if(S.l2done)unlockAch('ach-chain');
+  if(S.l3done)unlockAch('ach-classify');
+  unlockAch('ach-start');
+}
+
+// ===== ACHIEVEMENTS =====
+function unlockAch(id){if(S.achs[id])return;S.achs[id]=true;const el=document.getElementById(id);if(el){el.classList.add('unlocked');playStar();}}
+
+// ===== COMPANION =====
+function setComp(msg){const b=document.getElementById('comp-bubble');b.textContent=msg;b.classList.add('show');unlockAch('ach-bug');setTimeout(()=>b.classList.remove('show'),5000);}
+function toggleComp(){const b=document.getElementById('comp-bubble');if(b.classList.contains('show')){b.classList.remove('show');}else{const hints={0:'😊 点"出发！"开始吧！',1:'🔤 选择你熟悉的词语类型！',2:'🧩 把字块拖放到方格里！',3:'🔗 用上一个词语最后一个字开头！',4:'🗂️ 先点词语，再点类型框放入！'};b.textContent=hints[S.cur]||'😊 有什么我能帮你的？';b.classList.add('show');unlockAch('ach-bug');setTimeout(()=>b.classList.remove('show'),4000);}}
+</script>
+</body>
+</html>

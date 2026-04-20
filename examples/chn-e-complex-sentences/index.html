@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>复句与关联词 · 四年级语文闯关</title>
+<style>
+  :root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--card:#fff;
+    --radius:20px;--shadow:0 8px 32px rgba(0,0,0,.10);
+    --green:#6bcb77;--purple:#a78bfa;--orange:#ffa94d;--blue:#4facfe;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;overflow-x:hidden;}
+
+  #hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,#e8fff8 0%,#fff0e8 100%);
+    padding:40px 20px;text-align:center;position:relative;overflow:hidden;}
+  #hero::before{content:'🔗';font-size:150px;position:absolute;top:-30px;left:-30px;opacity:.08;animation:float 6s ease-in-out infinite;}
+  #hero::after{content:'✨';font-size:80px;position:absolute;bottom:20px;right:20px;opacity:.15;animation:bounce 2.5s ease-in-out infinite;}
+  .hero-title{font-size:clamp(2rem,6vw,4rem);font-weight:900;color:var(--primary);text-shadow:3px 3px 0 var(--accent);margin-bottom:12px;}
+  .hero-sub{font-size:1.2rem;color:#666;margin-bottom:30px;}
+  .hero-badge{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:30px;}
+  .badge{background:var(--card);border-radius:50px;padding:8px 20px;font-size:.9rem;font-weight:700;box-shadow:var(--shadow);color:var(--primary);}
+  .start-btn{background:linear-gradient(135deg,var(--primary),#ff9a8b);color:#fff;border:none;border-radius:50px;
+    padding:18px 50px;font-size:1.3rem;font-weight:800;cursor:pointer;box-shadow:0 6px 20px rgba(255,107,107,.4);transition:all .3s;}
+  .start-btn:hover{transform:translateY(-3px);}
+
+  .section{display:none;padding:30px 16px;max-width:860px;margin:0 auto;}
+  .section.active{display:block;}
+  .section-title{font-size:1.8rem;font-weight:900;color:var(--primary);text-align:center;margin-bottom:20px;}
+  .section-title::after{content:'';display:block;width:60px;height:4px;background:var(--accent);border-radius:4px;margin:8px auto 0;}
+
+  #progress-bar-wrap{position:fixed;top:0;left:0;right:0;height:6px;background:#eee;z-index:999;}
+  #progress-bar{height:100%;background:linear-gradient(90deg,var(--secondary),var(--purple));width:0%;transition:width .5s;}
+  #stars-hud{position:fixed;top:14px;right:16px;z-index:998;background:var(--card);
+    border-radius:50px;padding:6px 16px;box-shadow:var(--shadow);font-size:1rem;font-weight:700;color:#f59e0b;}
+
+  .card{background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:20px;}
+  .card h3{font-size:1.1rem;color:#444;margin-bottom:14px;}
+
+  /* complex sentence types */
+  .cs-type-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;}
+  .cs-card{border-radius:16px;padding:16px;cursor:pointer;transition:all .3s;border:2px solid transparent;text-align:center;}
+  .cs-card:hover{transform:translateY(-3px);box-shadow:var(--shadow);}
+  .cs-icon{font-size:2rem;margin-bottom:6px;}
+  .cs-card h4{font-size:1rem;font-weight:700;margin-bottom:4px;}
+  .cs-card p{font-size:.8rem;color:#666;}
+  .cs-card .keywords{font-size:.75rem;color:#888;margin-top:6px;font-style:italic;}
+
+  /* keyword highlight */
+  .kw{color:var(--primary);font-weight:900;background:rgba(255,107,107,.1);border-radius:6px;padding:1px 6px;}
+  .kw2{color:var(--secondary);font-weight:900;background:rgba(78,205,196,.1);border-radius:6px;padding:1px 6px;}
+  .kw3{color:var(--purple);font-weight:900;background:rgba(167,139,250,.1);border-radius:6px;padding:1px 6px;}
+  .kw4{color:var(--orange);font-weight:900;background:rgba(255,169,77,.1);border-radius:6px;padding:1px 6px;}
+
+  /* linking animation */
+  .link-demo{background:linear-gradient(135deg,#e8fff8,#fff8ff);border-radius:16px;padding:20px;margin:14px 0;}
+  .clause-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0;}
+  .clause-box{background:var(--card);border-radius:12px;padding:10px 16px;font-size:1rem;
+    border:2px solid #eee;flex:1;min-width:120px;text-align:center;transition:all .3s;}
+  .clause-box.active{border-color:var(--secondary);background:#e8fffd;}
+  .link-word{background:var(--primary);color:#fff;border-radius:50px;padding:6px 16px;
+    font-size:1rem;font-weight:700;white-space:nowrap;transition:all .3s;cursor:pointer;}
+  .link-word:hover{background:var(--secondary);}
+  .link-arrow{font-size:1.5rem;color:var(--secondary);}
+
+  /* drag fill */
+  .df-pool{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;}
+  .df-chip{background:var(--accent);color:#333;border-radius:12px;padding:7px 16px;
+    font-size:1rem;font-weight:700;cursor:grab;border:2px dashed #ccc;transition:all .2s;user-select:none;}
+  .df-chip:hover{transform:scale(1.05);}
+  .df-drop{display:inline-block;min-width:70px;height:34px;border:2px dashed var(--primary);
+    border-radius:8px;vertical-align:middle;margin:0 4px;text-align:center;line-height:32px;
+    font-size:.95rem;font-weight:700;transition:all .3s;color:#aaa;}
+  .df-drop.over{background:#ffe8e8;}
+  .df-drop.filled{background:var(--secondary);color:#fff;border-style:solid;color:#fff;}
+  .fill-line{font-size:1.1rem;line-height:2.8;color:#333;margin:10px 0;}
+
+  /* quiz */
+  .quiz-q{font-size:1.1rem;color:#333;margin-bottom:14px;line-height:1.7;}
+  .quiz-q strong{color:var(--primary);}
+  .opts{display:flex;flex-direction:column;gap:10px;}
+  .opt-btn{background:#f8f8f8;border:2px solid #eee;border-radius:14px;padding:12px 18px;
+    font-size:1rem;cursor:pointer;text-align:left;transition:all .3s;}
+  .opt-btn:hover{border-color:var(--secondary);background:#e8fffd;}
+  .opt-btn.correct{background:#d4ffd4;border-color:var(--green);}
+  .opt-btn.wrong{background:#ffe0e0;border-color:var(--primary);}
+  .feedback{font-size:1rem;margin-top:10px;font-weight:700;min-height:24px;}
+  .feedback.ok{color:var(--green);}
+  .feedback.err{color:var(--primary);}
+
+  /* boss */
+  .boss-area{text-align:center;}
+  .boss-avatar{font-size:80px;animation:wobble 2s ease-in-out infinite;display:inline-block;}
+  .boss-hp{background:#eee;border-radius:50px;height:20px;margin:12px 0;overflow:hidden;}
+  .boss-hp-fill{background:linear-gradient(90deg,var(--purple),var(--secondary));height:100%;transition:width .5s;}
+  .boss-msg{font-size:1.1rem;color:#555;margin:10px 0;}
+  .boss-sent{font-size:1.1rem;font-weight:700;color:#333;background:#f8f0ff;
+    border-radius:14px;padding:14px;border:2px solid var(--purple);margin:12px 0;}
+  .boss-opts{display:flex;flex-direction:column;gap:8px;}
+  .kw-input{border:2px solid var(--secondary);border-radius:12px;padding:10px 14px;
+    font-size:1rem;width:200px;outline:none;transition:border-color .3s;}
+  .kw-input:focus{border-color:var(--primary);}
+
+  /* score */
+  .score-card{text-align:center;padding:30px;}
+  .score-big{font-size:5rem;font-weight:900;color:var(--primary);}
+  .achievements{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:20px;}
+  .ach-badge{background:linear-gradient(135deg,var(--accent),#ffcc02);border-radius:14px;
+    padding:12px 18px;text-align:center;min-width:110px;box-shadow:0 4px 12px rgba(255,204,0,.3);}
+  .ach-icon{font-size:2rem;display:block;}
+  .ach-name{font-size:.8rem;font-weight:700;color:#555;margin-top:4px;}
+  .ach-locked{filter:grayscale(1);opacity:.5;}
+
+  .nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:10px;flex-wrap:wrap;}
+  .nav-btn{background:var(--secondary);color:#fff;border:none;border-radius:50px;
+    padding:12px 30px;font-size:1rem;font-weight:700;cursor:pointer;transition:all .3s;}
+  .nav-btn:hover{opacity:.85;transform:translateY(-2px);}
+  .nav-btn.back{background:#ccc;color:#555;}
+  .demo-btn{background:var(--secondary);color:#fff;border:none;border-radius:50px;
+    padding:10px 24px;font-size:.95rem;font-weight:700;cursor:pointer;margin:4px;transition:all .3s;}
+  .submit-btn{background:var(--primary);color:#fff;border:none;border-radius:14px;
+    padding:10px 28px;font-size:1rem;font-weight:700;cursor:pointer;transition:all .3s;}
+
+  .obj-list{list-style:none;display:flex;flex-direction:column;gap:12px;}
+  .obj-list li{display:flex;align-items:center;gap:12px;background:linear-gradient(90deg,#e8fff8,#fff);
+    border-radius:12px;padding:14px 18px;border-left:4px solid var(--secondary);font-size:1rem;}
+  .obj-icon{font-size:1.5rem;}
+  .level-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+  .level-chip{border-radius:50px;padding:4px 14px;font-size:.85rem;font-weight:700;background:#f0f0f0;color:#999;}
+  .level-chip.done{background:var(--green);color:#fff;}
+  .level-chip.current{background:var(--secondary);color:#fff;animation:bounce 1.5s infinite;}
+  .ext-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;}
+  .ext-card{background:linear-gradient(135deg,#e8fff8,#fff);border-radius:var(--radius);
+    padding:20px;text-align:center;box-shadow:var(--shadow);transition:transform .3s;}
+  .ext-card:hover{transform:translateY(-4px);}
+  .ext-card .icon{font-size:2.5rem;margin-bottom:8px;}
+  .ext-card h4{color:var(--secondary);font-size:1rem;margin-bottom:6px;}
+  .ext-card p{font-size:.85rem;color:#666;}
+
+  #buddy{position:fixed;bottom:20px;right:20px;z-index:888;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+  .buddy-bubble{background:var(--card);border-radius:16px;padding:12px 16px;box-shadow:var(--shadow);
+    max-width:220px;font-size:.9rem;display:none;border:2px solid var(--accent);}
+  .buddy-bubble.show{display:block;}
+  .buddy-icon{font-size:3rem;cursor:pointer;}
+
+  /* relation map */
+  .rel-map{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0;}
+  .rel-item{border-radius:12px;padding:10px 14px;font-size:.9rem;border:2px solid transparent;}
+  .rel-item.cause{background:#ffe8e8;border-color:var(--primary);}
+  .rel-item.condition{background:#e8ffe8;border-color:var(--green);}
+  .rel-item.progress{background:#e8f4ff;border-color:var(--blue);}
+  .rel-item.select{background:#fff3e0;border-color:var(--orange);}
+  .rel-item.turn{background:#f3e8ff;border-color:var(--purple);}
+  .rel-item.parallel{background:#fff8e0;border-color:#f59e0b;}
+  .rel-label{font-size:.75rem;font-weight:700;margin-bottom:4px;opacity:.7;}
+  .rel-kws{font-size:.85rem;color:#333;font-weight:600;}
+
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  @keyframes wobble{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+  @keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+  @keyframes starPop{0%{transform:scale(0)}70%{transform:scale(1.3)}100%{transform:scale(1)}}
+  .star-pop{animation:starPop .4s cubic-bezier(.34,1.56,.64,1);}
+  @media(max-width:600px){.hero-title{font-size:2rem;}.section{padding:20px 12px;}}
+</style>
+</head>
+<body>
+<div id="progress-bar-wrap"><div id="progress-bar"></div></div>
+<div id="stars-hud">⭐ <span id="star-count">0</span></div>
+
+<!-- HERO -->
+<div id="hero">
+  <div class="hero-title">🔗 复句与关联词</div>
+  <div class="hero-sub">四年级语文 · 句子连接大师养成记</div>
+  <div class="hero-badge">
+    <span class="badge">🏆 8个成就</span>
+    <span class="badge">🔗 6种关系</span>
+    <span class="badge">🐛 AI学伴</span>
+    <span class="badge">🎮 3关卡+Boss</span>
+  </div>
+  <button class="start-btn" onclick="goSection('objectives')">🚀 连接出发！</button>
+</div>
+
+<!-- OBJECTIVES -->
+<div class="section" id="objectives">
+  <div class="section-title">📋 学习目标</div>
+  <div class="card">
+    <ul class="obj-list">
+      <li><span class="obj-icon">🔗</span>理解复句的定义：由两个或以上单句组成</li>
+      <li><span class="obj-icon">📋</span>掌握6种常见复句关系类型及关联词</li>
+      <li><span class="obj-icon">🎯</span>能根据语境选择合适的关联词</li>
+      <li><span class="obj-icon">✏️</span>能运用关联词造句和完成填空</li>
+    </ul>
+  </div>
+  <div class="nav-row">
+    <button class="nav-btn back" onclick="goSection('hero')">← 返回</button>
+    <button class="nav-btn" onclick="goSection('warmup')">热身 →</button>
+  </div>
+</div>
+
+<!-- WARMUP -->
+<div class="section" id="warmup">
+  <div class="section-title">🔥 热身：认识关联词</div>
+  <div class="card">
+    <h3>🗺️ 关联词地图（点击类型了解详情）</h3>
+    <div class="rel-map">
+      <div class="rel-item cause" onclick="showRelDetail('cause')">
+        <div class="rel-label">因果关系</div>
+        <div class="rel-kws">因为…所以… | 既然…就…</div>
+      </div>
+      <div class="rel-item condition" onclick="showRelDetail('condition')">
+        <div class="rel-label">条件/假设</div>
+        <div class="rel-kws">如果…就… | 只要…就… | 只有…才…</div>
+      </div>
+      <div class="rel-item progress" onclick="showRelDetail('progress')">
+        <div class="rel-label">递进关系</div>
+        <div class="rel-kws">不但…而且… | 不仅…还…</div>
+      </div>
+      <div class="rel-item select" onclick="showRelDetail('select')">
+        <div class="rel-label">选择关系</div>
+        <div class="rel-kws">或者…或者… | 要么…要么… | 不是…就是…</div>
+      </div>
+      <div class="rel-item turn" onclick="showRelDetail('turn')">
+        <div class="rel-label">转折关系</div>
+        <div class="rel-kws">虽然…但是… | 尽管…还是…</div>
+      </div>
+      <div class="rel-item parallel" onclick="showRelDetail('parallel')">
+        <div class="rel-label">并列关系</div>
+        <div class="rel-kws">一边…一边… | 既…又… | 一方面…另一方面…</div>
+      </div>
+    </div>
+    <div id="rel-detail" style="background:#f8f8f8;border-radius:14px;padding:14px;margin-top:10px;font-size:.95rem;color:#555;min-height:40px;transition:all .3s;"></div>
+  </div>
+
+  <div class="card">
+    <h3>🎬 关联词连接动画演示</h3>
+    <div class="link-demo">
+      <div class="clause-row">
+        <div class="clause-box" id="cb1">天下大雨</div>
+        <div class="link-word" id="lw" onclick="nextLinkDemo()">虽然…但是…</div>
+        <div class="clause-box" id="cb2">他还是来上学了</div>
+      </div>
+      <div style="text-align:center;font-size:.85rem;color:#888;margin-top:8px;">
+        👆 点击关联词切换不同例子
+      </div>
+    </div>
+    <div id="link-explain" style="text-align:center;font-size:.9rem;color:#666;min-height:20px;"></div>
+  </div>
+
+  <div class="card">
+    <h3>⚡ 快速记忆口诀</h3>
+    <div style="background:linear-gradient(90deg,#e8fff8,#fff);border-radius:14px;padding:16px;border-left:4px solid var(--secondary);">
+      <p style="font-size:1rem;line-height:2.2;color:#333;">
+        <strong>🔴 因果</strong>：因为…所以…（有原因就有结果）<br>
+        <strong>🟢 条件</strong>：只要/只有/如果…就/才…（有条件才成立）<br>
+        <strong>🔵 递进</strong>：不但…而且…（越说越强）<br>
+        <strong>🟠 选择</strong>：要么…要么…（二选一或多选一）<br>
+        <strong>🟣 转折</strong>：虽然…但是…（前后相反）<br>
+        <strong>🟡 并列</strong>：既…又…（同时做两件事）
+      </p>
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <button class="nav-btn back" onclick="goSection('objectives')">← 返回</button>
+    <button class="nav-btn" onclick="startLevel(1)">第1关 →</button>
+  </div>
+</div>
+
+<!-- LEVEL 1 -->
+<div class="section" id="level1">
+  <div class="level-chips">
+    <span class="level-chip current">第1关</span>
+    <span class="level-chip">第2关</span>
+    <span class="level-chip">第3关</span>
+  </div>
+  <div class="section-title">⚔️ 第1关：判断关系类型</div>
+  <div class="card">
+    <h3>🎯 判断下面复句的关系类型</h3>
+    <div id="l1-area"></div>
+    <div class="feedback" id="l1-fb"></div>
+  </div>
+  <div class="nav-row">
+    <button class="nav-btn back" onclick="goSection('warmup')">← 返回</button>
+    <button class="nav-btn" id="l1-next" style="display:none" onclick="startLevel(2)">第2关 →</button>
+  </div>
+</div>
+
+<!-- LEVEL 2 -->
+<div class="section" id="level2">
+  <div class="level-chips">
+    <span class="level-chip done">第1关 ✓</span>
+    <span class="level-chip current">第2关</span>
+    <span class="level-chip">第3关</span>
+  </div>
+  <div class="section-title">⚔️ 第2关：关联词填空拖拽</div>
+  <div class="card">
+    <h3>🧩 把关联词拖到正确位置完成句子！</h3>
+    <div id="l2-area"></div>
+    <div class="feedback" id="l2-fb"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
+      <button class="demo-btn" onclick="checkL2()">✅ 检查</button>
+      <button class="demo-btn" onclick="initL2()" style="background:#ccc;color:#555;">🔄 重置</button>
+    </div>
+  </div>
+  <div class="nav-row">
+    <button class="nav-btn back" onclick="startLevel(1)">← 返回</button>
+    <button class="nav-btn" id="l2-next" style="display:none" onclick="startLevel(3)">第3关 →</button>
+  </div>
+</div>
+
+<!-- LEVEL 3 -->
+<div class="section" id="level3">
+  <div class="level-chips">
+    <span class="level-chip done">第1关 ✓</span>
+    <span class="level-chip done">第2关 ✓</span>
+    <span class="level-chip current">第3关</span>
+  </div>
+  <div class="section-title">⚔️ 第3关：造句练习</div>
+  <div class="card">
+    <h3>✏️ 用给定的关联词造句</h3>
+    <div id="l3-area"></div>
+    <div class="feedback" id="l3-fb"></div>
+  </div>
+  <div class="nav-row">
+    <button class="nav-btn back" onclick="startLevel(2)">← 返回</button>
+    <button class="nav-btn" id="l3-next" style="display:none" onclick="goSection('boss')">Boss战 →</button>
+  </div>
+</div>
+
+<!-- BOSS -->
+<div class="section" id="boss">
+  <div class="section-title">👾 Boss战：关联词大师</div>
+  <div class="card boss-area">
+    <div class="boss-avatar" id="boss-avatar">🧝</div>
+    <div class="boss-hp"><div class="boss-hp-fill" id="boss-hp-fill" style="width:100%"></div></div>
+    <div style="font-size:.9rem;color:#888;margin-bottom:8px;">Boss血量 <span id="boss-hp-txt">5</span>/5</div>
+    <div class="boss-msg" id="boss-msg">哈！你能判断这些复句关系吗？</div>
+    <div class="boss-sent" id="boss-sent"></div>
+    <div class="boss-opts" id="boss-opts"></div>
+    <div class="feedback" id="boss-fb"></div>
+  </div>
+  <div class="nav-row">
+    <button class="nav-btn back" onclick="startLevel(3)">← 返回</button>
+    <button class="nav-btn" id="boss-next" style="display:none" onclick="goSection('score')">成绩单 →</button>
+  </div>
+</div>
+
+<!-- SCORE -->
+<div class="section" id="score">
+  <div class="section-title">🏆 闯关成绩单</div>
+  <div class="card score-card">
+    <div class="score-big" id="final-score">0</div>
+    <div style="font-size:1.1rem;color:#888;margin-top:6px;">总得分</div>
+    <div style="font-size:1rem;color:#f59e0b;margin-top:8px;" id="star-final">⭐ 0颗星</div>
+  </div>
+  <div class="card"><h3>🏅 我的成就</h3><div class="achievements" id="ach-grid"></div></div>
+  <div class="nav-row" style="justify-content:center;">
+    <button class="nav-btn" onclick="goSection('extension')">拓展 →</button>
+    <button class="nav-btn back" onclick="restartGame()">🔄 再来</button>
+  </div>
+</div>
+
+<!-- EXTENSION -->
+<div class="section" id="extension">
+  <div class="section-title">📚 拓展学习</div>
+  <div class="ext-cards">
+    <div class="ext-card"><div class="icon">📝</div><h4>关联词配套原则</h4><p>"虽然"一定要配"但是"，"因为"一定要配"所以"，别单独使用！</p></div>
+    <div class="ext-card"><div class="icon">✍️</div><h4>作文中的复句</h4><p>多用"不但…而且…"和"虽然…但是…"，能让文章逻辑更严密，表达更有力！</p></div>
+    <div class="ext-card"><div class="icon">🔍</div><h4>阅读中识别复句</h4><p>读文章时找到关联词，就能快速理解句子之间的逻辑关系！</p></div>
+    <div class="ext-card"><div class="icon">🎯</div><h4>每日练习</h4><p>每天用一种关联词造3个句子，坚持一周，你会发现写作越来越流畅！</p></div>
+  </div>
+  <div class="nav-row" style="justify-content:center;"><button class="nav-btn back" onclick="goSection('score')">← 返回</button></div>
+</div>
+
+<div id="buddy">
+  <div class="buddy-bubble" id="buddy-bubble">嗨！关联词是把两个句子连起来的"桥梁"！🐛</div>
+  <div class="buddy-icon" onclick="toggleBuddy()">🐛</div>
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────
+const state={stars:0,score:0,l1Done:false,l2Done:false,l3Done:false,bossDone:false,bossHp:5,bossQ:0,achievements:[],l1c:0,l3c:0};
+const ACHIEVEMENTS=[
+  {id:'start',icon:'🚀',name:'连接出发'},
+  {id:'type_pro',icon:'🗺️',name:'类型专家'},
+  {id:'drag_master',icon:'🧩',name:'填空大师'},
+  {id:'compose',icon:'✍️',name:'造句达人'},
+  {id:'perfect_l1',icon:'💯',name:'完美第1关'},
+  {id:'perfect_l3',icon:'🌟',name:'完美第3关'},
+  {id:'boss_win',icon:'⚔️',name:'关联词大师'},
+  {id:'full_star',icon:'🌈',name:'满星连接'},
+];
+
+let audioCtx;
+function getAC(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function playTone(f,d,t='sine',g=.3){try{const c=getAC();const o=c.createOscillator();const gn=c.createGain();o.connect(gn);gn.connect(c.destination);o.type=t;o.frequency.value=f;gn.gain.setValueAtTime(g,c.currentTime);gn.gain.exponentialRampToValueAtTime(.001,c.currentTime+d);o.start();o.stop(c.currentTime+d);}catch(e){}}
+function playOK(){playTone(523,.08);setTimeout(()=>playTone(659,.08),90);setTimeout(()=>playTone(784,.15),180);}
+function playErr(){playTone(180,.3,'sawtooth');}
+function playStar(){playTone(880,.08);setTimeout(()=>playTone(1047,.08),90);setTimeout(()=>playTone(1319,.15),180);}
+
+function goSection(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id)?.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  updateProgress();buddyTip(id);
+  if(id==='score')renderScore();
+}
+function updateProgress(){
+  const d=(state.l1Done?1:0)+(state.l2Done?1:0)+(state.l3Done?1:0)+(state.bossDone?1:0);
+  document.getElementById('progress-bar').style.width=(d/4*100)+'%';
+}
+function addStar(n=1){state.stars+=n;state.score=Math.min(100,state.score+n*8);const e=document.getElementById('star-count');e.textContent=state.stars;e.classList.remove('star-pop');void e.offsetWidth;e.classList.add('star-pop');playStar();}
+function unlock(id){if(!state.achievements.includes(id)){state.achievements.push(id);const a=ACHIEVEMENTS.find(x=>x.id===id);if(a){showToast(a);addStar(1);}}}
+function showToast(a){const d=document.createElement('div');d.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--accent),#ffcc02);border-radius:16px;padding:12px 24px;font-weight:700;font-size:1rem;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.15);';d.textContent=`🏅 解锁：${a.icon} ${a.name}`;document.body.appendChild(d);setTimeout(()=>d.remove(),2500);}
+
+// RELATION DETAIL
+const REL_DETAILS={
+  cause:'因果关系：前句说原因，后句说结果。常用关联词：因为…所以… / 既然…就…\n例：因为天下雨，所以运动会推迟了。',
+  condition:'条件关系：前句说条件，后句说结果。\n只要…就…（充分条件）/ 只有…才…（必要条件）/ 如果…就…（假设）\n例：只要努力，就能成功。',
+  progress:'递进关系：后句比前句程度更深，范围更广。\n不但…而且… / 不仅…还… / 不光…也…\n例：她不但学习好，而且体育也棒。',
+  select:'选择关系：在几种情况中选择一种。\n或者…或者… / 要么…要么… / 不是…就是…\n例：要么你去，要么我去。',
+  turn:'转折关系：后句与前句意思相反。\n虽然…但是… / 尽管…还是… / 可是 / 然而\n例：虽然天很冷，但是他还是坚持跑步。',
+  parallel:'并列关系：两件事同时发生或同等地位。\n既…又… / 一边…一边… / 一方面…另一方面…\n例：他一边听音乐，一边做作业。',
+};
+function showRelDetail(t){
+  const d=document.getElementById('rel-detail');
+  d.innerHTML='<strong>📖 详解：</strong><br>'+REL_DETAILS[t].replace(/\n/g,'<br>');
+}
+
+// LINK DEMO
+const LINK_DEMOS=[
+  {kw:'虽然…但是…',c1:'天下大雨',c2:'他还是来上学了',explain:'转折：前后意思相反，体现了坚持精神'},
+  {kw:'不但…而且…',c1:'他学习很好',c2:'运动也很棒',explain:'递进：后句比前句更进一步'},
+  {kw:'因为…所以…',c1:'下了大雪',c2:'学校停课了',explain:'因果：前是原因，后是结果'},
+  {kw:'如果…就…',c1:'明天天晴',c2:'我们就去爬山',explain:'假设条件：以某条件成立为前提'},
+  {kw:'一边…一边…',c1:'他唱着歌',c2:'走回了家',explain:'并列：两件事同时进行'},
+];
+let linkIdx=0;
+function nextLinkDemo(){
+  linkIdx=(linkIdx+1)%LINK_DEMOS.length;
+  const d=LINK_DEMOS[linkIdx];
+  const c1=document.getElementById('cb1');const c2=document.getElementById('cb2');const lw=document.getElementById('lw');
+  c1.classList.add('active');c2.classList.add('active');lw.textContent=d.kw;
+  c1.textContent=d.c1;c2.textContent=d.c2;
+  document.getElementById('link-explain').textContent='💡 '+d.explain;
+  setTimeout(()=>{c1.classList.remove('active');c2.classList.remove('active');},600);
+  unlock('start');
+}
+
+// LEVEL 1
+const L1_QS=[
+  {q:'因为下了大雪，所以学校放假了。',ans:'因果关系',opts:['因果关系','转折关系','并列关系','递进关系'],explain:'"因为…所以…"是因果关系的标志'},
+  {q:'虽然他生病了，但是他还是坚持上学。',ans:'转折关系',opts:['因果关系','转折关系','条件关系','选择关系'],explain:'"虽然…但是…"是转折关系'},
+  {q:'她不但画画好，而且唱歌也很棒。',ans:'递进关系',opts:['并列关系','递进关系','转折关系','因果关系'],explain:'"不但…而且…"是递进关系，越说越强'},
+  {q:'只要努力学习，就能取得好成绩。',ans:'条件关系',opts:['因果关系','条件关系','并列关系','选择关系'],explain:'"只要…就…"是充分条件关系'},
+  {q:'他一边听音乐，一边做作业。',ans:'并列关系',opts:['因果关系','递进关系','并列关系','转折关系'],explain:'"一边…一边…"表示两件事同时进行，是并列关系'},
+];
+let l1Idx=0;
+function renderL1(){
+  const q=L1_QS[l1Idx];
+  document.getElementById('l1-area').innerHTML=`
+    <div class="quiz-q">第${l1Idx+1}题（共${L1_QS.length}题）：<br>
+    判断：<strong>"${q.q}"</strong><br>的关系类型</div>
+    <div class="opts">${q.opts.map(o=>`<button class="opt-btn" onclick="ansL1('${o}')">${o}</button>`).join('')}</div>`;
+  document.getElementById('l1-fb').textContent='';
+}
+function ansL1(a){
+  const q=L1_QS[l1Idx];const fb=document.getElementById('l1-fb');
+  document.querySelectorAll('#l1-area .opt-btn').forEach(b=>{b.onclick=null;if(b.textContent===q.ans)b.classList.add('correct');});
+  if(a===q.ans){
+    fb.textContent='✅ '+q.explain;fb.className='feedback ok';playOK();addStar(1);state.l1c++;
+    unlock('type_pro');
+    setTimeout(()=>{l1Idx++;if(l1Idx<L1_QS.length)renderL1();else{state.l1Done=true;if(state.l1c>=L1_QS.length)unlock('perfect_l1');document.getElementById('l1-next').style.display='inline-block';fb.textContent='🎉 第1关完成！';}},1300);
+  } else {
+    document.querySelectorAll('#l1-area .opt-btn').forEach(b=>{if(b.textContent===a)b.classList.add('wrong');});
+    fb.textContent='❌ '+q.explain;fb.className='feedback err';playErr();
+    setTimeout(()=>{l1Idx++;if(l1Idx<L1_QS.length)renderL1();else{state.l1Done=true;document.getElementById('l1-next').style.display='inline-block';}},1600);
+  }
+}
+
+// LEVEL 2 DRAG FILL
+const L2_EXERCISES=[
+  {
+    template:['___','努力练习，','___','能弹好钢琴。'],
+    drops:[0,2],answers:['只有','才'],
+    words:['只有','才','因为','所以','虽然','但是'],
+    hint:'表示必要条件：___才___（只有这样才能实现）'
+  },
+  {
+    template:['___','她学习努力，','___','她考了第一名。'],
+    drops:[0,2],answers:['因为','所以'],
+    words:['因为','所以','虽然','但是','只要','才'],
+    hint:'前句是原因，后句是结果'
+  },
+];
+let l2Idx=0;let l2Data={filled:{}};
+function initL2(){
+  l2Data={filled:{}};
+  const ex=L2_EXERCISES[l2Idx];
+  let html='<div class="fill-line">';
+  ex.template.forEach((part,i)=>{
+    if(ex.drops.includes(i)){
+      html+=`<span class="df-drop" id="dfd-${i}" data-idx="${i}"
+        ondragover="event.preventDefault();this.classList.add('over')"
+        ondragleave="this.classList.remove('over')"
+        ondrop="dropKW(event,${i})">${l2Data.filled[i]||'　　'}</span>`;
+    } else {
+      html+=part;
+    }
+  });
+  html+='</div>';
+  html+=`<p style="font-size:.85rem;color:#aaa;margin-bottom:10px;">提示：${ex.hint}</p>`;
+  html+='<div class="df-pool">';
+  ex.words.forEach(w=>{
+    html+=`<span class="df-chip" draggable="true" id="dfc-${w}"
+      ondragstart="l2Data.current='${w}';this.style.opacity='.5'"
+      ondragend="this.style.opacity='1'">${w}</span>`;
+  });
+  html+='</div>';
+  document.getElementById('l2-area').innerHTML=html;
+  document.getElementById('l2-fb').textContent='';
+}
+function dropKW(ev,idx){
+  ev.preventDefault();const w=l2Data.current;
+  l2Data.filled[idx]=w;
+  const d=document.getElementById(`dfd-${idx}`);
+  d.textContent=w;d.classList.add('filled');d.classList.remove('over');
+}
+function checkL2(){
+  const ex=L2_EXERCISES[l2Idx];const fb=document.getElementById('l2-fb');
+  let ok=true;
+  ex.drops.forEach((pos,i)=>{if(l2Data.filled[pos]!==ex.answers[i])ok=false;});
+  if(ok){
+    fb.textContent='🎉 完全正确！';fb.className='feedback ok';playOK();addStar(2);
+    unlock('drag_master');
+    l2Idx++;
+    if(l2Idx<L2_EXERCISES.length){
+      setTimeout(()=>{initL2();fb.textContent='';},1200);
+    } else {
+      state.l2Done=true;document.getElementById('l2-next').style.display='inline-block';
+      fb.textContent='🎉 第2关全部完成！';
+    }
+  } else {
+    fb.textContent='❌ 还有错误！检查关联词是否配套';fb.className='feedback err';playErr();
+  }
+}
+
+// LEVEL 3
+const L3_QS=[
+  {kw:'虽然…但是…',hint:'举一个做事坚持的例子',check:v=>v.includes('虽然')&&v.includes('但是')&&v.length>8},
+  {kw:'不但…而且…',hint:'说一个人的两个优点',check:v=>v.includes('不但')&&v.includes('而且')&&v.length>8},
+  {kw:'只要…就…',hint:'设定一个条件和结果',check:v=>v.includes('只要')&&v.includes('就')&&v.length>8},
+];
+let l3Idx=0;
+function renderL3(){
+  const q=L3_QS[l3Idx];
+  document.getElementById('l3-area').innerHTML=`
+    <div style="background:#e8fff8;border-radius:14px;padding:14px;margin-bottom:12px;">
+      <p style="font-weight:700;">第${l3Idx+1}题（共${L3_QS.length}题）</p>
+      <p style="margin-top:6px;">请用关联词 <strong class="kw">${q.kw}</strong> 造一个句子</p>
+      <p style="font-size:.85rem;color:#aaa;margin-top:4px;">提示：${q.hint}</p>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <input class="kw-input" id="l3-inp" style="flex:1;min-width:180px;" placeholder="在这里写你的句子..." />
+      <button class="submit-btn" onclick="checkL3()">✅ 提交</button>
+    </div>`;
+  document.getElementById('l3-fb').textContent='';
+  document.getElementById('l3-inp')?.addEventListener('keydown',e=>{if(e.key==='Enter')checkL3();});
+}
+function checkL3(){
+  const q=L3_QS[l3Idx];const v=document.getElementById('l3-inp')?.value.trim()||'';
+  const fb=document.getElementById('l3-fb');
+  if(q.check(v)){
+    fb.textContent='✅ 造句成功！关联词用得很好！';fb.className='feedback ok';playOK();addStar(1);state.l3c++;
+    unlock('compose');
+    setTimeout(()=>{l3Idx++;if(l3Idx<L3_QS.length)renderL3();else{state.l3Done=true;if(state.l3c>=L3_QS.length)unlock('perfect_l3');document.getElementById('l3-next').style.display='inline-block';fb.textContent='🎉 第3关完成！';}},1200);
+  } else {
+    fb.textContent=`❌ 句子需要包含"${q.kw.replace('…',''…'')}"这两个词，且句子要完整`;fb.className='feedback err';playErr();
+  }
+}
+
+// BOSS
+const BOSS_QS=[
+  {q:'他很聪明，他不爱学习，所以成绩不好。（画线部分是什么关系？）',opts:['因果关系','转折关系','递进关系','并列关系'],ans:0,explain:'虽然他聪明，但不学习，结果成绩差——整体是因果'},
+  {q:'（ ）他生病了，（ ）他坚持参加了比赛。括号应填：',opts:['因为…所以…','只要…就…','虽然…但是…','不但…而且…'],ans:2,explain:'前后意思相反（生病却参加），是转折关系：虽然…但是…'},
+  {q:'"只有坚持练习，才能弹好钢琴。"属于什么条件关系？',opts:['充分条件','必要条件','假设条件','并列关系'],ans:1,explain:'"只有…才…"表示必要条件——没有这个条件就不能实现'},
+  {q:'"她不但歌唱得好，而且舞也跳得棒。"属于什么关系？',opts:['并列关系','递进关系','转折关系','因果关系'],ans:1,explain:'"不但…而且…"是递进关系，越来越强'},
+  {q:'"一边吃饭，一边看书"是什么关系？',opts:['因果关系','条件关系','并列关系','选择关系'],ans:2,explain:'"一边…一边…"两件事同时进行，是并列关系'},
+];
+const BOSS_MSGS=['😤 哼，运气！','😰 不错嘛……','😱 你懂的真多！','💢 继续来！','💥 我……认输了！'];
+function initBoss(){state.bossHp=5;state.bossQ=0;renderBossQ();}
+function renderBossQ(){
+  const q=BOSS_QS[state.bossQ];
+  document.getElementById('boss-sent').textContent=q.q;
+  document.getElementById('boss-opts').innerHTML=`<div class="opts">${q.opts.map((o,i)=>`<button class="opt-btn" onclick="answerBoss(${i})">${String.fromCharCode(65+i)}. ${o}</button>`).join('')}</div>`;
+  document.getElementById('boss-fb').textContent='';
+}
+function answerBoss(i){
+  const q=BOSS_QS[state.bossQ];
+  document.querySelectorAll('#boss-opts .opt-btn').forEach(b=>b.onclick=null);
+  document.querySelectorAll('#boss-opts .opt-btn')[q.ans].classList.add('correct');
+  const fb=document.getElementById('boss-fb');
+  if(i===q.ans){
+    fb.textContent='✅ '+q.explain;fb.className='feedback ok';playOK();addStar(1);
+    state.bossHp--;state.bossQ++;
+    document.getElementById('boss-hp-fill').style.width=(state.bossHp/5*100)+'%';
+    document.getElementById('boss-hp-txt').textContent=state.bossHp;
+    document.getElementById('boss-msg').textContent=BOSS_MSGS[5-state.bossHp-1]||'💥';
+    if(state.bossHp<=0){document.getElementById('boss-avatar').textContent='💀';document.getElementById('boss-msg').textContent='💥 Boss认输了！';fb.textContent='🎉 恭喜！关联词大师！';state.bossDone=true;unlock('boss_win');if(state.stars>=8)unlock('full_star');document.getElementById('boss-next').style.display='inline-block';}
+    else{setTimeout(renderBossQ,1400);}
+  } else {
+    document.querySelectorAll('#boss-opts .opt-btn')[i].classList.add('wrong');
+    fb.textContent='❌ '+q.explain;fb.className='feedback err';playErr();
+    setTimeout(()=>{state.bossQ++;if(state.bossQ<BOSS_QS.length)renderBossQ();else{state.bossDone=true;document.getElementById('boss-next').style.display='inline-block';}},1600);
+  }
+}
+
+function renderScore(){
+  document.getElementById('final-score').textContent=Math.min(100,state.stars*9);
+  document.getElementById('star-final').textContent=`⭐ ${state.stars}颗星`;
+  const g=document.getElementById('ach-grid');g.innerHTML='';
+  ACHIEVEMENTS.forEach(a=>{const u=state.achievements.includes(a.id);g.innerHTML+=`<div class="ach-badge ${u?'':'ach-locked'}"><span class="ach-icon">${a.icon}</span><div class="ach-name">${a.name}</div></div>`;});
+}
+
+const BUDDY_TIPS={hero:'关联词是连接句子的桥梁！🐛',objectives:'6种关系：因果/条件/递进/选择/转折/并列',warmup:'点击地图上的关系类型，学学关联词！',level1:'看关联词，就能判断关系类型！',level2:'注意关联词都是配对使用的，缺一不可！',level3:'造句关键：两个关联词都要用进去！',boss:'最后冲刺！你是关联词大师！⚔️',score:'太棒了！复句学得非常好！',extension:'多用关联词，作文会更有条理！'};
+function toggleBuddy(){document.getElementById('buddy-bubble').classList.toggle('show');}
+function buddyTip(s){const b=document.getElementById('buddy-bubble');b.textContent=BUDDY_TIPS[s]||'继续加油🐛';b.classList.add('show');setTimeout(()=>b.classList.remove('show'),3000);}
+
+function startLevel(n){
+  if(n===1){l1Idx=0;renderL1();goSection('level1');}
+  else if(n===2){l2Idx=0;initL2();goSection('level2');}
+  else if(n===3){l3Idx=0;renderL3();goSection('level3');}
+}
+function restartGame(){Object.assign(state,{stars:0,score:0,l1Done:false,l2Done:false,l3Done:false,bossDone:false,bossHp:5,bossQ:0,achievements:[],l1c:0,l3c:0});l2Idx=0;document.getElementById('star-count').textContent='0';goSection('hero');}
+
+window.addEventListener('load',()=>{document.getElementById('hero').classList.remove('section');});
+</script>
+</body>
+</html>

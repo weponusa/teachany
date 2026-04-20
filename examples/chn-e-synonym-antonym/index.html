@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>近义词与反义词 | 三年级语文 🔄</title>
+<style>
+  :root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--card:#fff;--text:#2d3436;--muted:#636e72;--radius:20px;--shadow:0 8px 32px rgba(0,0,0,0.10);}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  #hud{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(255,251,240,0.95);backdrop-filter:blur(8px);padding:10px 20px;display:flex;align-items:center;gap:16px;box-shadow:0 2px 12px rgba(0,0,0,0.08);}
+  #stars-display{font-size:1.2rem;font-weight:700;color:#f9ca24;}
+  .progress-bar{flex:1;height:12px;background:#ffe0e0;border-radius:999px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:999px;transition:width 0.6s ease;}
+  #section-label{font-size:0.9rem;color:var(--muted);font-weight:600;}
+
+  .section{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px 60px;opacity:0;transform:translateY(30px);transition:opacity 0.6s,transform 0.6s;pointer-events:none;}
+  .section.active{opacity:1;transform:translateY(0);pointer-events:all;}
+
+  /* HERO */
+  .hero-emoji{font-size:5.5rem;animation:sway 2s ease-in-out infinite;}
+  @keyframes sway{0%,100%{transform:rotate(-8deg);}50%{transform:rotate(8deg);}}
+  .hero-title{font-size:2.6rem;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center;margin:12px 0 8px;}
+  .badge{padding:6px 16px;border-radius:999px;font-size:0.85rem;font-weight:700;}
+  .hero-badges{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:12px 0 28px;}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;border:none;border-radius:var(--radius);font-size:1.1rem;font-weight:700;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;box-shadow:var(--shadow);}
+  .btn:hover{transform:translateY(-3px);}
+  .btn-primary{background:linear-gradient(135deg,var(--primary),#e84393);color:#fff;}
+  .btn-secondary{background:linear-gradient(135deg,var(--secondary),#26de81);color:#fff;}
+  .btn-accent{background:linear-gradient(135deg,var(--accent),#fd9644);color:#fff;}
+  .btn-ghost{background:var(--card);color:var(--primary);border:2px solid var(--primary);}
+  .section-title{font-size:2rem;font-weight:900;text-align:center;margin-bottom:8px;}
+  .section-sub{font-size:1rem;color:var(--muted);text-align:center;margin-bottom:24px;}
+  .card{background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);width:100%;max-width:740px;margin-bottom:20px;}
+  .card-title{font-size:1.2rem;font-weight:800;margin-bottom:16px;}
+  .feedback{padding:14px 20px;border-radius:14px;font-weight:600;margin-top:12px;display:none;}
+  .feedback.show{display:block;animation:fd 0.3s;}
+  @keyframes fd{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .feedback.correct{background:#00b89422;color:#00b894;}
+  .feedback.wrong{background:#ff6b6b22;color:#e17055;}
+
+  /* ====== CONCEPT CARDS ====== */
+  .concept-pair{display:grid;grid-template-columns:1fr 60px 1fr;gap:0;width:100%;max-width:740px;align-items:center;margin-bottom:20px;}
+  .concept-card{border-radius:var(--radius);padding:20px;text-align:center;box-shadow:var(--shadow);}
+  .concept-syn{background:linear-gradient(135deg,#4ecdc4,#45b7d1);color:#fff;}
+  .concept-ant{background:linear-gradient(135deg,#ff6b6b,#e84393);color:#fff;}
+  .concept-arrow{text-align:center;font-size:2rem;}
+  .concept-word{font-size:2.5rem;font-weight:900;margin-bottom:4px;}
+  .concept-label{font-size:0.85rem;opacity:0.85;}
+  .concept-examples{font-size:0.9rem;opacity:0.9;margin-top:8px;}
+
+  /* ====== FLIP CARDS ====== */
+  .flip-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:100%;max-width:740px;}
+  .flip-card-wrap{perspective:600px;height:130px;cursor:pointer;}
+  .flip-card{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 0.5s;}
+  .flip-card-wrap:hover .flip-card{transform:rotateY(180deg);}
+  .flip-face{position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:var(--shadow);}
+  .flip-front{background:linear-gradient(135deg,#ff6b6b,#fd79a8);color:#fff;}
+  .flip-back-syn{background:linear-gradient(135deg,#4ecdc4,#26de81);color:#fff;transform:rotateY(180deg);}
+  .flip-back-ant{background:linear-gradient(135deg,#a29bfe,#6c5ce7);color:#fff;transform:rotateY(180deg);}
+  .flip-word{font-size:1.8rem;font-weight:900;}
+  .flip-hint{font-size:0.75rem;opacity:0.85;margin-top:4px;}
+  .flip-pair{font-size:1.2rem;font-weight:700;}
+  .flip-type{font-size:0.75rem;margin-top:4px;}
+
+  /* ====== DRAG & MATCH ====== */
+  .match-container{width:100%;max-width:740px;}
+  .match-columns{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .match-col{display:flex;flex-direction:column;gap:10px;}
+  .match-col-title{font-size:1rem;font-weight:700;text-align:center;padding:8px;border-radius:12px;}
+  .match-source{padding:14px 20px;border-radius:14px;background:linear-gradient(135deg,#ff6b6b,#fd79a8);color:#fff;font-size:1.2rem;font-weight:700;text-align:center;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;box-shadow:var(--shadow);}
+  .match-source:hover{transform:scale(1.04);}
+  .match-source.selected{box-shadow:0 0 0 4px var(--accent),var(--shadow);transform:scale(1.06);}
+  .match-source.matched{opacity:0.5;cursor:default;transform:none;}
+  .match-target{padding:14px 20px;border-radius:14px;border:3px dashed #dfe6e9;background:var(--card);font-size:1.2rem;font-weight:700;text-align:center;cursor:pointer;transition:all 0.2s;}
+  .match-target:hover{border-color:var(--secondary);background:#4ecdc411;}
+  .match-target.correct-match{border-style:solid;border-color:#00b894;background:#00b89422;color:#00b894;}
+  .match-target.wrong-match{border-color:var(--primary);background:#ff6b6b22;animation:shake 0.3s;}
+  @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+
+  /* ====== SENTENCE FILL ====== */
+  .sentence-area{width:100%;max-width:740px;}
+  .sentence-row{padding:16px;background:var(--card);border-radius:var(--radius);margin-bottom:12px;box-shadow:var(--shadow);}
+  .sentence-text{font-size:1.1rem;margin-bottom:10px;line-height:1.8;}
+  .blank{display:inline-block;min-width:60px;border-bottom:2px solid var(--primary);padding:0 8px;font-weight:700;color:var(--primary);text-align:center;}
+  .word-choices{display:flex;gap:8px;flex-wrap:wrap;}
+  .word-choice{padding:8px 16px;border:2px solid #dfe6e9;border-radius:10px;cursor:pointer;font-size:0.95rem;font-weight:600;background:var(--card);transition:all 0.2s;}
+  .word-choice:hover{border-color:var(--secondary);}
+  .word-choice.chosen{border-color:var(--secondary);background:#4ecdc422;}
+  .word-choice.wrong-choice{border-color:var(--primary);background:#ff6b6b22;}
+
+  /* ====== BOSS ====== */
+  .boss-char{font-size:5rem;text-align:center;animation:bob 1.5s infinite;}
+  @keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+  .boss-prog-bar{width:100%;height:14px;background:#ffe0e0;border-radius:999px;overflow:hidden;margin:8px 0;}
+  .boss-prog{height:100%;background:linear-gradient(90deg,#ff6b6b,#fdcb6e);border-radius:999px;transition:width 0.5s;}
+  .boss-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+  .boss-opt{padding:14px;border:3px solid #dfe6e9;border-radius:var(--radius);background:var(--card);cursor:pointer;font-size:1rem;text-align:center;font-weight:700;transition:all 0.2s;}
+  .boss-opt:hover{border-color:var(--primary);}
+
+  /* SCORE */
+  .score-big{font-size:5rem;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center;}
+  .ach-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0;}
+  .achievement{background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);text-align:center;opacity:0.4;transition:all 0.3s;}
+  .achievement.unlocked{opacity:1;animation:pop 0.5s;}
+  @keyframes pop{0%{transform:scale(0);}60%{transform:scale(1.2);}100%{transform:scale(1);}}
+  .ach-icon{font-size:2rem;}
+  .ach-name{font-size:0.7rem;font-weight:700;color:var(--muted);margin-top:4px;}
+
+  /* EXPAND */
+  .expand-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;max-width:740px;}
+  .exp-card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);}
+
+  /* AI COMPANION */
+  #companion{position:fixed;bottom:20px;right:20px;z-index:200;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+  .comp-bub{background:var(--card);border-radius:16px;padding:12px 16px;box-shadow:var(--shadow);max-width:240px;font-size:0.9rem;line-height:1.4;display:none;}
+  .comp-bub.show{display:block;animation:fd 0.3s;}
+  .comp-av{width:60px;height:60px;background:linear-gradient(135deg,#a29bfe,#6c5ce7);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;cursor:pointer;box-shadow:var(--shadow);animation:float 3s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+  .star-burst{position:fixed;pointer-events:none;z-index:999;font-size:2rem;animation:burst 0.8s forwards;}
+  @keyframes burst{0%{opacity:1;transform:scale(0);}100%{opacity:0;transform:scale(2.5) translateY(-60px);}}
+
+  @media(max-width:480px){.flip-grid{grid-template-columns:1fr 1fr;}.match-columns{grid-template-columns:1fr;}.ach-grid{grid-template-columns:repeat(2,1fr);}.expand-grid{grid-template-columns:1fr;}.boss-opts{grid-template-columns:1fr;}.concept-pair{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div id="hud">
+  <div id="stars-display">⭐ 0</div>
+  <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+  <div id="section-label">开始</div>
+</div>
+
+<div id="companion">
+  <div class="comp-bub" id="comp-bub">👋 近反义词小达人🐛来了！</div>
+  <div class="comp-av" onclick="toggleComp()">🐛</div>
+</div>
+
+<!-- ====== HERO ====== -->
+<div class="section active" id="s-hero">
+  <div style="text-align:center;">
+    <div class="hero-emoji">🔄</div>
+    <h1 class="hero-title">近义词反义词闯关</h1>
+    <p style="color:var(--muted);font-size:1.1rem;margin-bottom:12px;">三年级语文 · 掌握同义与对立关系</p>
+    <div class="hero-badges">
+      <span class="badge" style="background:#dfe6e9;color:#2d3436;">📚 三年级</span>
+      <span class="badge" style="background:#fd79a822;color:#d63031;">🇨🇳 语文</span>
+      <span class="badge" style="background:#00b89422;color:#00b894;">⏱ 约35分钟</span>
+      <span class="badge" style="background:#a29bfe22;color:#6c5ce7;">🔄 拖拽互动</span>
+    </div>
+    <button class="btn btn-primary" onclick="goTo('s-objective')">开始冒险 🚀</button>
+  </div>
+</div>
+
+<!-- ====== OBJECTIVE ====== -->
+<div class="section" id="s-objective">
+  <h2 class="section-title">🎯 学习目标</h2>
+  <p class="section-sub">学完这节课，你能做到↓</p>
+  <div class="card">
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:12px;">
+      <li style="display:flex;align-items:center;gap:12px;padding:10px;background:#f8f9fa;border-radius:12px;"><span style="font-size:1.4rem;">🟢</span>理解近义词的含义，能举例说明</li>
+      <li style="display:flex;align-items:center;gap:12px;padding:10px;background:#f8f9fa;border-radius:12px;"><span style="font-size:1.4rem;">🔴</span>理解反义词的含义，能举例说明</li>
+      <li style="display:flex;align-items:center;gap:12px;padding:10px;background:#f8f9fa;border-radius:12px;"><span style="font-size:1.4rem;">🃏</span>完成词语对对碰，找出近/反义词对</li>
+      <li style="display:flex;align-items:center;gap:12px;padding:10px;background:#f8f9fa;border-radius:12px;"><span style="font-size:1.4rem;">📝</span>在句子中选择恰当的近义词</li>
+      <li style="display:flex;align-items:center;gap:12px;padding:10px;background:#f8f9fa;border-radius:12px;"><span style="font-size:1.4rem;">🏆</span>解锁8个成就，获得最高分！</li>
+    </ul>
+  </div>
+  <button class="btn btn-secondary" onclick="addStars(5);goTo('s-warmup')">出发！💪</button>
+</div>
+
+<!-- ====== WARMUP ====== -->
+<div class="section" id="s-warmup">
+  <h2 class="section-title">🔥 热身：直觉测试</h2>
+  <p class="section-sub">"快"的反义词是什么？凭直觉选！</p>
+  <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-bottom:20px;">
+    <button class="btn" style="background:#ff6b6b22;color:var(--primary);border:2px solid var(--primary);font-size:1.3rem;padding:16px 32px;" onclick="warmupAns(this,'慢')">慢</button>
+    <button class="btn" style="background:#4ecdc422;color:var(--secondary);border:2px solid var(--secondary);font-size:1.3rem;padding:16px 32px;" onclick="warmupAns(this,'大')">大</button>
+    <button class="btn" style="background:#ffe66d44;color:#e17055;border:2px solid var(--accent);font-size:1.3rem;padding:16px 32px;" onclick="warmupAns(this,'高')">高</button>
+    <button class="btn" style="background:#a29bfe22;color:#6c5ce7;border:2px solid #a29bfe;font-size:1.3rem;padding:16px 32px;" onclick="warmupAns(this,'冷')">冷</button>
+  </div>
+  <div id="warmup-fb" style="display:none;font-size:1.1rem;font-weight:700;text-align:center;padding:16px;border-radius:16px;"></div>
+  <button class="btn btn-primary" style="margin-top:20px" onclick="goTo('s-level1')">进入第一关 📖</button>
+</div>
+
+<!-- ====== LEVEL 1: CONCEPT ====== -->
+<div class="section" id="s-level1">
+  <h2 class="section-title">📖 第一关：概念与例子</h2>
+  <p class="section-sub">翻转卡片，发现近义词和反义词的秘密！</p>
+
+  <!-- Concept Cards -->
+  <div class="concept-pair">
+    <div class="concept-card concept-syn">
+      <div class="concept-word">🟢</div>
+      <div style="font-size:1.3rem;font-weight:900;margin:6px 0;">近义词</div>
+      <div class="concept-label">意思相同或相近的词</div>
+      <div class="concept-examples">美丽 ≈ 漂亮<br>高兴 ≈ 快乐<br>聪明 ≈ 聪颖</div>
+    </div>
+    <div class="concept-arrow">↔️</div>
+    <div class="concept-card concept-ant">
+      <div class="concept-word">🔴</div>
+      <div style="font-size:1.3rem;font-weight:900;margin:6px 0;">反义词</div>
+      <div class="concept-label">意思完全相反的词</div>
+      <div class="concept-examples">大 ↔ 小<br>快 ↔ 慢<br>热 ↔ 冷</div>
+    </div>
+  </div>
+
+  <!-- Flip Cards -->
+  <p style="font-size:1rem;color:var(--muted);margin-bottom:12px;text-align:center;">🃏 悬停翻卡片，查看近义词/反义词对！</p>
+  <div class="flip-grid">
+    <div class="flip-card-wrap">
+      <div class="flip-card">
+        <div class="flip-face flip-front"><div class="flip-word">高兴</div><div class="flip-hint">近义词 →</div></div>
+        <div class="flip-face flip-back-syn"><div class="flip-pair">快乐</div><div class="flip-type">近义词</div></div>
+      </div>
+    </div>
+    <div class="flip-card-wrap">
+      <div class="flip-card">
+        <div class="flip-face flip-front"><div class="flip-word">冷</div><div class="flip-hint">反义词 →</div></div>
+        <div class="flip-face flip-back-ant"><div class="flip-pair">热</div><div class="flip-type">反义词</div></div>
+      </div>
+    </div>
+    <div class="flip-card-wrap">
+      <div class="flip-card">
+        <div class="flip-face flip-front"><div class="flip-word">美丽</div><div class="flip-hint">近义词 →</div></div>
+        <div class="flip-face flip-back-syn"><div class="flip-pair">漂亮</div><div class="flip-type">近义词</div></div>
+      </div>
+    </div>
+    <div class="flip-card-wrap">
+      <div class="flip-card">
+        <div class="flip-face flip-front"><div class="flip-word">大</div><div class="flip-hint">反义词 →</div></div>
+        <div class="flip-face flip-back-ant"><div class="flip-pair">小</div><div class="flip-type">反义词</div></div>
+      </div>
+    </div>
+    <div class="flip-card-wrap">
+      <div class="flip-card">
+        <div class="flip-face flip-front"><div class="flip-word">聪明</div><div class="flip-hint">近义词 →</div></div>
+        <div class="flip-face flip-back-syn"><div class="flip-pair">聪颖</div><div class="flip-type">近义词</div></div>
+      </div>
+    </div>
+    <div class="flip-card-wrap">
+      <div class="flip-card">
+        <div class="flip-face flip-front"><div class="flip-word">黑暗</div><div class="flip-hint">反义词 →</div></div>
+        <div class="flip-face flip-back-ant"><div class="flip-pair">光明</div><div class="flip-type">反义词</div></div>
+      </div>
+    </div>
+  </div>
+  <button class="btn btn-primary" style="margin-top:24px" onclick="addStars(5);unlockAch('ach-concept');goTo('s-level2')">进入第二关 🧲</button>
+</div>
+
+<!-- ====== LEVEL 2: DRAG MATCH ====== -->
+<div class="section" id="s-level2">
+  <h2 class="section-title">🧲 第二关：词语对对碰</h2>
+  <p class="section-sub">点击左侧词语，再点击右侧对应词语配对！</p>
+  <div class="match-container">
+    <!-- SYNONYM MATCH -->
+    <div class="card">
+      <div class="card-title">🟢 找近义词（点击配对）</div>
+      <div class="match-columns">
+        <div class="match-col">
+          <div class="match-col-title" style="background:#4ecdc422;color:var(--secondary);">词语</div>
+          <div class="match-source" id="ms-高兴" onclick="selectSource(this,'高兴')">高兴</div>
+          <div class="match-source" id="ms-勇敢" onclick="selectSource(this,'勇敢')">勇敢</div>
+          <div class="match-source" id="ms-美丽" onclick="selectSource(this,'美丽')">美丽</div>
+          <div class="match-source" id="ms-安静" onclick="selectSource(this,'安静')">安静</div>
+        </div>
+        <div class="match-col">
+          <div class="match-col-title" style="background:#4ecdc422;color:var(--secondary);">近义词</div>
+          <div class="match-target" data-word="漂亮" onclick="hitTarget(this)">漂亮</div>
+          <div class="match-target" data-word="快乐" onclick="hitTarget(this)">快乐</div>
+          <div class="match-target" data-word="宁静" onclick="hitTarget(this)">宁静</div>
+          <div class="match-target" data-word="英勇" onclick="hitTarget(this)">英勇</div>
+        </div>
+      </div>
+      <div class="feedback" id="syn-match-fb"></div>
+    </div>
+    <!-- ANTONYM MATCH -->
+    <div class="card">
+      <div class="card-title">🔴 找反义词（点击配对）</div>
+      <div class="match-columns">
+        <div class="match-col">
+          <div class="match-col-title" style="background:#ff6b6b22;color:var(--primary);">词语</div>
+          <div class="match-source" id="ma-快" onclick="selectSourceAnt(this,'快')">快</div>
+          <div class="match-source" id="ma-热" onclick="selectSourceAnt(this,'热')">热</div>
+          <div class="match-source" id="ma-黑" onclick="selectSourceAnt(this,'黑')">黑</div>
+          <div class="match-source" id="ma-长" onclick="selectSourceAnt(this,'长')">长</div>
+        </div>
+        <div class="match-col">
+          <div class="match-col-title" style="background:#ff6b6b22;color:var(--primary);">反义词</div>
+          <div class="match-target" data-ant="白" onclick="hitTargetAnt(this)">白</div>
+          <div class="match-target" data-ant="慢" onclick="hitTargetAnt(this)">慢</div>
+          <div class="match-target" data-ant="短" onclick="hitTargetAnt(this)">短</div>
+          <div class="match-target" data-ant="冷" onclick="hitTargetAnt(this)">冷</div>
+        </div>
+      </div>
+      <div class="feedback" id="ant-match-fb"></div>
+    </div>
+    <div style="text-align:center;">
+      <button class="btn btn-secondary" onclick="checkAllMatches()">检查答案 ✅</button>
+    </div>
+    <div class="feedback" id="all-match-fb"></div>
+  </div>
+  <button class="btn btn-accent" style="margin-top:12px" onclick="goTo('s-level3')">进入第三关 📝</button>
+</div>
+
+<!-- ====== LEVEL 3: SENTENCE FILL ====== -->
+<div class="section" id="s-level3">
+  <h2 class="section-title">📝 第三关：选词填空</h2>
+  <p class="section-sub">在句子中选择最合适的词语！</p>
+  <div class="sentence-area">
+    <div class="card">
+      <div class="card-title">🔤 选词填空</div>
+      <div id="sentence-list"></div>
+      <div style="margin-top:12px;text-align:center;">
+        <button class="btn btn-primary" onclick="checkSentences()">检查答案 ✅</button>
+      </div>
+      <div class="feedback" id="sentence-fb"></div>
+    </div>
+  </div>
+  <button class="btn btn-primary" style="margin-top:8px" onclick="goTo('s-boss')">挑战Boss! 👾</button>
+</div>
+
+<!-- ====== BOSS ====== -->
+<div class="section" id="s-boss">
+  <h2 class="section-title">👾 Boss关：近反义词大师</h2>
+  <p class="section-sub">6道混合考题，满分通关！</p>
+  <div style="width:100%;max-width:700px;">
+    <div class="boss-char" id="boss-char">🔄</div>
+    <div class="boss-prog-bar"><div class="boss-prog" id="boss-prog" style="width:0%"></div></div>
+    <p style="text-align:center;color:var(--muted);font-size:0.85rem;" id="boss-pt">第 1/6 题</p>
+    <div class="card">
+      <div id="boss-q" style="font-size:1.1rem;font-weight:700;text-align:center;margin-bottom:14px;">准备好了吗？</div>
+      <div class="boss-opts" id="boss-opts"></div>
+      <div class="feedback" id="boss-fb"></div>
+    </div>
+    <div style="text-align:center;margin-top:8px;">
+      <button class="btn btn-primary" id="boss-start-btn" onclick="startBoss()">开始挑战 ⚡</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SCORE ====== -->
+<div class="section" id="s-score">
+  <div style="width:100%;max-width:620px;text-align:center;">
+    <div style="font-size:3rem;">🎊</div>
+    <h2 class="section-title">太棒了！</h2>
+    <div class="score-big" id="final-score">0</div>
+    <p style="color:var(--muted);margin-bottom:20px;">总得分</p>
+    <div class="ach-grid">
+      <div class="achievement" id="ach-start"><div class="ach-icon">🚀</div><div class="ach-name">勇敢出发</div></div>
+      <div class="achievement" id="ach-concept"><div class="ach-icon">🃏</div><div class="ach-name">翻卡达人</div></div>
+      <div class="achievement" id="ach-syn"><div class="ach-icon">🟢</div><div class="ach-name">近义专家</div></div>
+      <div class="achievement" id="ach-ant"><div class="ach-icon">🔴</div><div class="ach-name">反义达人</div></div>
+      <div class="achievement" id="ach-fill"><div class="ach-icon">📝</div><div class="ach-name">造句高手</div></div>
+      <div class="achievement" id="ach-boss"><div class="ach-icon">👾</div><div class="ach-name">Boss终结</div></div>
+      <div class="achievement" id="ach-perfect"><div class="ach-icon">💯</div><div class="ach-name">近反义大师</div></div>
+      <div class="achievement" id="ach-bug"><div class="ach-icon">🐛</div><div class="ach-name">小虫好友</div></div>
+    </div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="goTo('s-expand')">查看拓展 📚</button>
+      <button class="btn btn-ghost" onclick="location.reload()">再来一次 🔄</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== EXPAND ====== -->
+<div class="section" id="s-expand">
+  <h2 class="section-title">📚 拓展学习</h2>
+  <p class="section-sub">成为近反义词小达人！</p>
+  <div class="expand-grid">
+    <div class="exp-card">
+      <div style="font-size:2.5rem;">🌈</div>
+      <h3 style="margin:8px 0;">近义词辨析</h3>
+      <p style="color:var(--muted);font-size:0.9rem;">近义词也有细微差别！"看"和"望"都是近义词，但"望"更有期待感。</p>
+    </div>
+    <div class="exp-card">
+      <div style="font-size:2.5rem;">🔄</div>
+      <h3 style="margin:8px 0;">反义词练习</h3>
+      <p style="color:var(--muted);font-size:0.9rem;">每个形容词都有反义词吗？试试找"圆"的反义词！</p>
+    </div>
+    <div class="exp-card">
+      <div style="font-size:2.5rem;">✏️</div>
+      <h3 style="margin:8px 0;">造句练习</h3>
+      <p style="color:var(--muted);font-size:0.9rem;">用"美丽/漂亮"各造一个句子，体会它们的细微差别。</p>
+    </div>
+    <div class="exp-card">
+      <div style="font-size:2.5rem;">📖</div>
+      <h3 style="margin:8px 0;">词语积累</h3>
+      <p style="color:var(--muted);font-size:0.9rem;">每天记录5对近义词和5对反义词，一个月后你的词汇量会大增！</p>
+    </div>
+  </div>
+  <p style="margin-top:24px;font-size:1.2rem;font-weight:700;color:var(--primary);text-align:center;">🎉 你已经掌握近义词和反义词的奥秘！</p>
+</div>
+
+<script>
+// ===== STATE =====
+const S={stars:0,sections:['s-hero','s-objective','s-warmup','s-level1','s-level2','s-level3','s-boss','s-score','s-expand'],cur:0,achs:{},bossIdx:0,bossScore:0,synSelected:null,antSelected:null,synMatches:{},antMatches:{},sentenceAnswers:{},l2done:false,l3done:false,startTime:Date.now()};
+
+// ===== AUDIO =====
+let actx=null;
+function gc(){if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();return actx;}
+function tone(f,d,t='sine'){try{const a=gc(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.type=t;o.frequency.value=f;g.gain.setValueAtTime(0.25,a.currentTime);g.gain.exponentialRampToValueAtTime(0.001,a.currentTime+d);o.start();o.stop(a.currentTime+d);}catch(e){}}
+function playOK(){tone(523,0.1);setTimeout(()=>tone(659,0.1),100);setTimeout(()=>tone(784,0.2),200);}
+function playBad(){tone(220,0.3,'sawtooth');}
+function playStar(){tone(880,0.06);setTimeout(()=>tone(1047,0.06),60);setTimeout(()=>tone(1319,0.12),120);}
+
+// ===== STARS =====
+function addStars(n){S.stars+=n;document.getElementById('stars-display').textContent='⭐ '+S.stars;playStar();burst();}
+function burst(){for(let i=0;i<3;i++){const el=document.createElement('div');el.className='star-burst';el.textContent='⭐';el.style.left=Math.random()*80+10+'vw';el.style.top=Math.random()*50+20+'vh';document.body.appendChild(el);setTimeout(()=>el.remove(),900);}}
+
+// ===== NAV =====
+function goTo(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  const t=document.getElementById(id);if(t){t.classList.add('active');t.scrollIntoView({behavior:'smooth',block:'start'});}
+  S.cur=S.sections.indexOf(id);
+  const pct=Math.round((S.cur/8)*100);document.getElementById('prog-fill').style.width=pct+'%';
+  const labels={'s-hero':'开始','s-objective':'目标','s-warmup':'热身','s-level1':'第一关','s-level2':'第二关','s-level3':'第三关','s-boss':'Boss关','s-score':'成绩单','s-expand':'拓展'};
+  document.getElementById('section-label').textContent=labels[id]||'';
+  if(id==='s-level3')initSentences();
+  if(id==='s-score')showScore();
+}
+
+// ===== WARMUP =====
+function warmupAns(el,w){
+  const fb=document.getElementById('warmup-fb');
+  document.querySelectorAll('#s-warmup .btn').forEach(b=>b.disabled=true);
+  if(w==='慢'){fb.textContent='🎉 正确！"快"的反义词是"慢"！你的直觉很好！';fb.style.background='#00b89422';fb.style.color='#00b894';}
+  else{fb.textContent='💡 不对哦！"快"的反义词是"慢"，速度的反义！';fb.style.background='#ff6b6b22';fb.style.color='#e17055';}
+  fb.style.display='block';addStars(3);unlockAch('ach-start');
+  if(w==='慢'){playOK();}else{playBad();}
+}
+
+// ===== SYNONYM MATCH =====
+const synPairs={'高兴':'快乐','勇敢':'英勇','美丽':'漂亮','安静':'宁静'};
+const antPairs={'快':'慢','热':'冷','黑':'白','长':'短'};
+
+function selectSource(el,w){
+  document.querySelectorAll('[id^="ms-"]').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');S.synSelected=w;
+}
+function hitTarget(el){
+  if(!S.synSelected){setComp('💡 先点击左侧的词语，再点击右侧匹配！');return;}
+  const target=el.dataset.word;
+  const correct=synPairs[S.synSelected];
+  if(correct===target){
+    el.classList.add('correct-match');el.textContent='✅ '+target;
+    document.getElementById('ms-'+S.synSelected).classList.add('matched');
+    S.synMatches[S.synSelected]=true;
+    addStars(5);playOK();
+    const fb=document.getElementById('syn-match-fb');fb.textContent='"'+S.synSelected+'"的近义词是"'+target+'"，正确！';fb.className='feedback correct show';
+    if(Object.keys(S.synMatches).length>=4)unlockAch('ach-syn');
+  }else{
+    el.classList.add('wrong-match');setTimeout(()=>el.classList.remove('wrong-match'),500);
+    const fb=document.getElementById('syn-match-fb');fb.textContent='❌ "'+S.synSelected+'"的近义词不是"'+target+'"，再想想！';fb.className='feedback wrong show';playBad();
+  }
+  S.synSelected=null;document.querySelectorAll('[id^="ms-"]').forEach(b=>b.classList.remove('selected'));
+}
+
+function selectSourceAnt(el,w){
+  document.querySelectorAll('[id^="ma-"]').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');S.antSelected=w;
+}
+function hitTargetAnt(el){
+  if(!S.antSelected){setComp('💡 先点击左侧的词语，再点击右侧匹配！');return;}
+  const target=el.dataset.ant;
+  const correct=antPairs[S.antSelected];
+  if(correct===target){
+    el.classList.add('correct-match');el.textContent='✅ '+target;
+    document.getElementById('ma-'+S.antSelected).classList.add('matched');
+    S.antMatches[S.antSelected]=true;
+    addStars(5);playOK();
+    const fb=document.getElementById('ant-match-fb');fb.textContent='"'+S.antSelected+'"的反义词是"'+target+'"，正确！';fb.className='feedback correct show';
+    if(Object.keys(S.antMatches).length>=4)unlockAch('ach-ant');
+  }else{
+    el.classList.add('wrong-match');setTimeout(()=>el.classList.remove('wrong-match'),500);
+    const fb=document.getElementById('ant-match-fb');fb.textContent='❌ "'+S.antSelected+'"的反义词不是"'+target+'"，再想想！';fb.className='feedback wrong show';playBad();
+  }
+  S.antSelected=null;document.querySelectorAll('[id^="ma-"]').forEach(b=>b.classList.remove('selected'));
+}
+function checkAllMatches(){
+  const synDone=Object.keys(S.synMatches).length===4;
+  const antDone=Object.keys(S.antMatches).length===4;
+  const fb=document.getElementById('all-match-fb');
+  if(synDone&&antDone){fb.textContent='🎉 全部配对成功！近义词和反义词大师！';fb.className='feedback correct show';addStars(10);S.l2done=true;}
+  else{fb.textContent='🤔 还没有全部配对完成，继续加油！已完成 '+(Object.keys(S.synMatches).length+Object.keys(S.antMatches).length)+'/8 对';fb.className='feedback wrong show';}
+}
+
+// ===== SENTENCE FILL =====
+const sentences=[
+  {text:'今天天气很（），大家都不想出门。',choices:['热','温暖','冷','凉'],ans:2,hint:'反义词"热"的对面是？'},
+  {text:'这朵花开得真（），让人忍不住多看几眼。',choices:['大','漂亮','重','高'],ans:1,hint:'和"美丽"意思相近的词是？'},
+  {text:'图书馆里非常（），大家都在专心看书。',choices:['热闹','安静','快乐','好看'],ans:1,hint:'"安静"的近义词是？'},
+  {text:'弟弟跑得很（），一下子就跑到了终点。',choices:['慢','轻','快','小'],ans:2,hint:'"慢"的反义词是？'},
+];
+function initSentences(){
+  const el=document.getElementById('sentence-list');
+  el.innerHTML=sentences.map((s,i)=>`
+    <div class="sentence-row">
+      <div class="sentence-text">${i+1}. ${s.text}</div>
+      <div class="word-choices">${s.choices.map((c,j)=>`<div class="word-choice" onclick="pickSentence(${i},${j},this)">${c}</div>`).join('')}</div>
+    </div>
+  `).join('');
+}
+function pickSentence(si,ci,el){
+  const row=el.closest('.sentence-row');
+  row.querySelectorAll('.word-choice').forEach(c=>c.classList.remove('chosen','wrong-choice'));
+  el.classList.add('chosen');S.sentenceAnswers[si]=ci;
+}
+function checkSentences(){
+  let correct=0;
+  sentences.forEach((s,i)=>{
+    const chosen=S.sentenceAnswers[i];
+    if(chosen===undefined)return;
+    const row=document.querySelectorAll('.sentence-row')[i];
+    const choices=row.querySelectorAll('.word-choice');
+    if(chosen===s.ans){correct++;choices[chosen].style.borderColor='#00b894';choices[chosen].style.background='#00b89422';}
+    else{if(choices[chosen])choices[chosen].classList.add('wrong-choice');if(choices[s.ans]){choices[s.ans].style.borderColor='#00b894';choices[s.ans].style.background='#00b89422';}}
+  });
+  const fb=document.getElementById('sentence-fb');
+  if(correct===sentences.length){fb.textContent='🎉 全对！选词填空高手！';fb.className='feedback correct show';addStars(15);playOK();unlockAch('ach-fill');S.l3done=true;}
+  else{fb.textContent='🤔 答对了'+correct+'/'+sentences.length+'题，再检查一下吧！';fb.className='feedback wrong show';playBad();}
+}
+
+// ===== BOSS =====
+const bossQs=[
+  {q:'"高兴"的近义词是？',opts:['难过','快乐','生气','害怕'],ans:1,char:'😊'},
+  {q:'"冷"的反义词是？',opts:['凉','暖','热','温'],ans:2,char:'🔥'},
+  {q:'下面哪对是反义词？',opts:['美丽—漂亮','高兴—难过','快乐—开心','聪明—聪颖'],ans:1,char:'🔄'},
+  {q:'"勇敢"的近义词是？',opts:['胆小','英勇','害怕','懦弱'],ans:1,char:'💪'},
+  {q:'"安静"的反义词是？',opts:['宁静','幽静','热闹','寂静'],ans:2,char:'📢'},
+  {q:'在句子"今天天气很（），大家都去游泳"中，括号填？',opts:['冷','凉','热','暖'],ans:2,char:'☀️'},
+];
+function startBoss(){
+  document.getElementById('boss-start-btn').style.display='none';
+  S.bossIdx=0;S.bossScore=0;showBossQ();
+}
+function showBossQ(){
+  if(S.bossIdx>=bossQs.length){endBoss();return;}
+  const q=bossQs[S.bossIdx];
+  document.getElementById('boss-char').textContent=q.char;
+  document.getElementById('boss-q').textContent=q.q;
+  document.getElementById('boss-pt').textContent='第 '+(S.bossIdx+1)+'/6 题';
+  document.getElementById('boss-prog').style.width=(S.bossIdx/6*100)+'%';
+  document.getElementById('boss-opts').innerHTML=q.opts.map((o,i)=>`<button class="boss-opt" onclick="answerBoss(${i})">${String.fromCharCode(65+i)}. ${o}</button>`).join('');
+  document.getElementById('boss-fb').className='feedback';
+}
+function answerBoss(i){
+  const q=bossQs[S.bossIdx];
+  document.querySelectorAll('.boss-opt').forEach(b=>b.disabled=true);
+  const btns=document.querySelectorAll('.boss-opt');
+  const fb=document.getElementById('boss-fb');
+  if(i===q.ans){btns[i].style.background='#00b89422';btns[i].style.borderColor='#00b894';fb.textContent='🎉 正确！+10分';fb.className='feedback correct show';S.bossScore+=10;addStars(5);playOK();}
+  else{btns[i].style.background='#ff6b6b22';btns[i].style.borderColor='#ff6b6b';btns[q.ans].style.background='#00b89422';fb.textContent='❌ 答错了！正确答案已标出。';fb.className='feedback wrong show';playBad();}
+  S.bossIdx++;setTimeout(showBossQ,1300);
+}
+function endBoss(){
+  document.getElementById('boss-q').textContent='🎊 Boss关完成！得了'+S.bossScore+'分！';
+  document.getElementById('boss-opts').innerHTML='';
+  document.getElementById('boss-prog').style.width='100%';
+  unlockAch('ach-boss');if(S.bossScore>=50)unlockAch('ach-perfect');
+  if((Date.now()-S.startTime)/1000<600)addStars(10);
+  addStars(S.bossScore/2);
+  setTimeout(()=>goTo('s-score'),1500);
+}
+function showScore(){
+  document.getElementById('final-score').textContent=S.stars;
+  unlockAch('ach-start');
+  if(S.l2done){unlockAch('ach-syn');unlockAch('ach-ant');}
+  if(S.l3done)unlockAch('ach-fill');
+}
+
+// ===== ACH =====
+function unlockAch(id){if(S.achs[id])return;S.achs[id]=true;const el=document.getElementById(id);if(el){el.classList.add('unlocked');playStar();}}
+
+// ===== COMPANION =====
+function setComp(msg){const b=document.getElementById('comp-bub');b.textContent=msg;b.classList.add('show');unlockAch('ach-bug');setTimeout(()=>b.classList.remove('show'),5000);}
+function toggleComp(){const b=document.getElementById('comp-bub');if(b.classList.contains('show')){b.classList.remove('show');}else{const hints={0:'😊 点开始冒险出发吧！',2:'💡 近义词=意思相近，反义词=意思相反！',3:'🃏 悬停翻卡片，发现更多词对！',4:'🧲 先点左边，再点右边配对！',5:'📝 根据句意选择最合适的词语！'};b.textContent=hints[S.cur]||'😊 有什么我能帮你？';b.classList.add('show');unlockAch('ach-bug');setTimeout(()=>b.classList.remove('show'),4000);}}
+</script>
+</body>
+</html>

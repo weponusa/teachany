@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>句式变换 · 三年级语文闯关</title>
+<style>
+  :root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--card:#fff;
+    --radius:20px;--shadow:0 8px 32px rgba(0,0,0,.10);
+    --green:#6bcb77;--purple:#a78bfa;--orange:#ffa94d;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;overflow-x:hidden;}
+
+  #hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,#ffe8f5 0%,#e8f0ff 100%);padding:40px 20px;text-align:center;
+    position:relative;overflow:hidden;}
+  #hero::before{content:'🔄';font-size:140px;position:absolute;top:-20px;right:-20px;opacity:.1;animation:spinY 8s linear infinite;}
+  #hero::after{content:'🌈';font-size:80px;position:absolute;bottom:10px;left:10px;opacity:.15;animation:bounce 3s ease-in-out infinite;}
+  .hero-title{font-size:clamp(2rem,6vw,4rem);font-weight:900;color:var(--primary);text-shadow:3px 3px 0 var(--accent);margin-bottom:12px;}
+  .hero-sub{font-size:1.2rem;color:#666;margin-bottom:30px;}
+  .hero-badge{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:30px;}
+  .badge{background:var(--card);border-radius:50px;padding:8px 20px;font-size:.9rem;font-weight:700;box-shadow:var(--shadow);color:var(--primary);}
+  .start-btn{background:linear-gradient(135deg,var(--primary),#ff9a8b);color:#fff;border:none;border-radius:50px;
+    padding:18px 50px;font-size:1.3rem;font-weight:800;cursor:pointer;
+    box-shadow:0 6px 20px rgba(255,107,107,.4);transition:all .3s;}
+  .start-btn:hover{transform:translateY(-3px);}
+
+  .section{display:none;padding:30px 16px;max-width:860px;margin:0 auto;}
+  .section.active{display:block;}
+  .section-title{font-size:1.8rem;font-weight:900;color:var(--primary);text-align:center;margin-bottom:20px;}
+  .section-title::after{content:'';display:block;width:60px;height:4px;background:var(--accent);border-radius:4px;margin:8px auto 0;}
+
+  #progress-bar-wrap{position:fixed;top:0;left:0;right:0;height:6px;background:#eee;z-index:999;}
+  #progress-bar{height:100%;background:linear-gradient(90deg,var(--purple),var(--secondary));width:0%;transition:width .5s;}
+
+  .card{background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:20px;}
+  .card h3{font-size:1.1rem;color:#444;margin-bottom:14px;}
+
+  #stars-hud{position:fixed;top:14px;right:16px;z-index:998;background:var(--card);
+    border-radius:50px;padding:6px 16px;box-shadow:var(--shadow);font-size:1rem;font-weight:700;color:#f59e0b;}
+
+  /* sentence transform animation */
+  .transform-stage{text-align:center;min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
+  .sent-box{
+    background:linear-gradient(135deg,#e8f4ff,#f0fff4);
+    border-radius:16px;padding:16px 24px;font-size:1.2rem;font-weight:700;
+    border:2px solid #ddd;max-width:500px;width:100%;transition:all .5s;
+    position:relative;
+  }
+  .sent-box.highlight{border-color:var(--primary);background:linear-gradient(135deg,#ffe8e8,#fff0ff);transform:scale(1.03);}
+  .sent-type{
+    font-size:.75rem;color:#fff;background:var(--purple);border-radius:50px;
+    padding:2px 10px;position:absolute;top:-12px;left:16px;font-weight:700;
+  }
+  .arrow{font-size:2rem;color:var(--secondary);animation:bounce .8s ease-in-out infinite;}
+  .transform-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:12px;}
+  .trans-btn{background:var(--card);border:2px solid var(--primary);color:var(--primary);
+    border-radius:50px;padding:8px 20px;font-size:.95rem;font-weight:700;cursor:pointer;transition:all .3s;}
+  .trans-btn:hover,.trans-btn.active{background:var(--primary);color:#fff;}
+
+  /* type cards */
+  .type-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:14px 0;}
+  .type-card{border-radius:16px;padding:16px;border:2px solid transparent;transition:all .3s;cursor:pointer;text-align:center;}
+  .type-card:hover{transform:translateY(-3px);}
+  .type-card h4{font-size:1rem;margin:8px 0 4px;}
+  .type-card p{font-size:.85rem;color:#666;}
+  .type-card.judan{background:#ffe8e8;border-color:#ff6b6b;}
+  .type-card.wenju{background:#e8f4ff;border-color:#4facfe;}
+  .type-card.gan{background:#fff3e0;border-color:#ffa94d;}
+  .type-card.fou{background:#f3e8ff;border-color:#a78bfa;}
+  .type-icon{font-size:2rem;}
+
+  /* quiz */
+  .quiz-q{font-size:1.1rem;color:#333;margin-bottom:14px;line-height:1.7;}
+  .quiz-q strong{color:var(--primary);}
+  .opts{display:flex;flex-direction:column;gap:10px;}
+  .opt-btn{background:#f8f8f8;border:2px solid #eee;border-radius:14px;padding:12px 18px;
+    font-size:1rem;cursor:pointer;text-align:left;transition:all .3s;}
+  .opt-btn:hover{border-color:var(--secondary);background:#e8fffd;}
+  .opt-btn.correct{background:#d4ffd4;border-color:var(--green);}
+  .opt-btn.wrong{background:#ffe0e0;border-color:var(--primary);}
+  .feedback{font-size:1rem;margin-top:10px;font-weight:700;min-height:24px;}
+  .feedback.ok{color:var(--green);}
+  .feedback.err{color:var(--primary);}
+
+  /* fill blank */
+  .fill-q{font-size:1.15rem;line-height:2.2;color:#333;margin:10px 0;}
+  .blank-input{border:none;border-bottom:2px solid var(--primary);background:transparent;
+    font-size:1.1rem;font-weight:700;color:var(--primary);width:80px;outline:none;text-align:center;}
+
+  /* drag match */
+  .match-row{display:flex;align-items:center;gap:12px;margin:10px 0;flex-wrap:wrap;}
+  .match-left{font-size:1rem;font-weight:700;color:#333;min-width:180px;}
+  .match-drop{min-width:120px;height:40px;border:2px dashed var(--secondary);border-radius:10px;
+    display:inline-flex;align-items:center;justify-content:center;font-size:.9rem;color:#aaa;transition:all .3s;}
+  .match-drop.over{background:#e8fffd;border-color:var(--primary);}
+  .match-drop.filled{background:var(--secondary);color:#fff;border-style:solid;font-weight:700;}
+  .drag-pool{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0;}
+  .drag-chip{background:var(--accent);color:#333;border-radius:12px;padding:8px 16px;
+    font-size:.95rem;font-weight:700;cursor:grab;border:2px dashed #ccc;transition:all .2s;user-select:none;}
+  .drag-chip:hover{transform:scale(1.05);}
+  .drag-chip.used{opacity:.4;pointer-events:none;}
+
+  /* boss */
+  .boss-area{text-align:center;}
+  .boss-avatar{font-size:80px;animation:wobble 2s ease-in-out infinite;display:inline-block;}
+  .boss-hp{background:#eee;border-radius:50px;height:20px;margin:12px 0;overflow:hidden;}
+  .boss-hp-fill{background:linear-gradient(90deg,var(--purple),#818cf8);height:100%;transition:width .5s;}
+  .boss-msg{font-size:1.1rem;color:#555;margin:10px 0;min-height:30px;}
+  .boss-q-box{font-size:1.1rem;font-weight:700;color:var(--primary);margin:14px 0;
+    background:#fff8ff;border-radius:14px;padding:14px 18px;border:2px solid var(--purple);}
+  .boss-opts{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+
+  /* achievements */
+  .achievements{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:20px;}
+  .ach-badge{background:linear-gradient(135deg,var(--accent),#ffcc02);border-radius:14px;
+    padding:12px 18px;text-align:center;min-width:110px;box-shadow:0 4px 12px rgba(255,204,0,.3);}
+  .ach-icon{font-size:2rem;display:block;}
+  .ach-name{font-size:.8rem;font-weight:700;color:#555;margin-top:4px;}
+  .ach-locked{filter:grayscale(1);opacity:.5;}
+  .score-card{text-align:center;padding:30px;}
+  .score-big{font-size:5rem;font-weight:900;color:var(--primary);animation:bounce 1s ease-in-out;}
+
+  .nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:10px;flex-wrap:wrap;}
+  .nav-btn{background:var(--secondary);color:#fff;border:none;border-radius:50px;
+    padding:12px 30px;font-size:1rem;font-weight:700;cursor:pointer;transition:all .3s;}
+  .nav-btn:hover{opacity:.85;transform:translateY(-2px);}
+  .nav-btn.back{background:#ccc;color:#555;}
+  .submit-btn{background:var(--primary);color:#fff;border:none;border-radius:14px;
+    padding:10px 28px;font-size:1rem;font-weight:700;cursor:pointer;transition:all .3s;}
+  .submit-btn:hover{background:#e05555;}
+  .demo-btn{background:var(--secondary);color:#fff;border:none;border-radius:50px;
+    padding:10px 24px;font-size:.95rem;font-weight:700;cursor:pointer;margin:4px;transition:all .3s;}
+  .demo-btn:hover{opacity:.85;}
+  .obj-list{list-style:none;display:flex;flex-direction:column;gap:12px;}
+  .obj-list li{display:flex;align-items:center;gap:12px;background:linear-gradient(90deg,#fff8f0,#fff);
+    border-radius:12px;padding:14px 18px;border-left:4px solid var(--purple);font-size:1rem;}
+  .obj-icon{font-size:1.5rem;}
+  .ext-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;}
+  .ext-card{background:linear-gradient(135deg,#f0e8ff,#fff);border-radius:var(--radius);
+    padding:20px;text-align:center;box-shadow:var(--shadow);transition:transform .3s;}
+  .ext-card:hover{transform:translateY(-4px);}
+  .ext-card .icon{font-size:2.5rem;margin-bottom:8px;}
+  .ext-card h4{color:var(--purple);font-size:1rem;margin-bottom:6px;}
+  .ext-card p{font-size:.85rem;color:#666;}
+  .level-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+  .level-chip{border-radius:50px;padding:4px 14px;font-size:.85rem;font-weight:700;background:#f0f0f0;color:#999;transition:all .3s;}
+  .level-chip.done{background:var(--green);color:#fff;}
+  .level-chip.current{background:var(--purple);color:#fff;animation:bounce 1.5s infinite;}
+
+  #buddy{position:fixed;bottom:20px;right:20px;z-index:888;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+  .buddy-bubble{background:var(--card);border-radius:16px;padding:12px 16px;box-shadow:var(--shadow);
+    max-width:220px;font-size:.9rem;animation:popIn .3s ease;display:none;border:2px solid var(--accent);}
+  .buddy-bubble.show{display:block;}
+  .buddy-icon{font-size:3rem;cursor:pointer;filter:drop-shadow(0 4px 8px rgba(0,0,0,.2));}
+
+  @keyframes spinY{from{transform:rotateY(0)}to{transform:rotateY(360deg)}}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  @keyframes wobble{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+  @keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+  @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  @keyframes starPop{0%{transform:scale(0) rotate(-30deg)}70%{transform:scale(1.3)}100%{transform:scale(1)}}
+  .star-pop{animation:starPop .4s cubic-bezier(.34,1.56,.64,1);}
+
+  @media(max-width:600px){.hero-title{font-size:2rem;}.section{padding:20px 12px;}}
+</style>
+</head>
+<body>
+<div id="progress-bar-wrap"><div id="progress-bar"></div></div>
+<div id="stars-hud">⭐ <span id="star-count">0</span></div>
+
+<!-- HERO -->
+<div id="hero">
+  <div class="hero-title">🔄 句式变换</div>
+  <div class="hero-sub">三年级语文 · 句子大变身冒险</div>
+  <div class="hero-badge">
+    <span class="badge">🏆 8个成就</span>
+    <span class="badge">🔄 4种句式</span>
+    <span class="badge">🐛 AI学伴</span>
+    <span class="badge">🎮 3关卡+Boss</span>
+  </div>
+  <button class="start-btn" onclick="goSection('objectives')">🚀 变身出发！</button>
+</div>
+
+<!-- OBJECTIVES -->
+<div class="section" id="objectives">
+  <div class="section-title">📋 学习目标</div>
+  <div class="card">
+    <ul class="obj-list">
+      <li><span class="obj-icon">📝</span>了解陈述句、疑问句、感叹句、否定句的特点</li>
+      <li><span class="obj-icon">🔄</span>掌握4种句式的互相转换方法</li>
+      <li><span class="obj-icon">🎯</span>能准确判断句子类型</li>
+      <li><span class="obj-icon">✏️</span>独立完成句式变换练习</li>
+    </ul>
+  </div>
+  <div class="nav-row">
+    <button class="nav-btn back" onclick="goSection('hero')">← 返回</button>
+    <button class="nav-btn" onclick="goSection('warmup')">热身 →</button>
+  </div>
+</div>
+
+<!-- WARMUP -->
+<div class="section" id="warmup">
+  <div class="section-title">🔥 热身：认识句式</div>
+  <div class="card">
+    <h3>👀 点击查看句式变换动画</h3>
+    <div class="transform-stage" id="trans-stage">
+      <div class="sent-box" id="s-original"><span class="sent-type">陈述句</span>今天天气很好。</div>
+      <div class="arrow" id="s-arrow" style="display:none">⬇️</div>
+      <div class="sent-box" id="s-result" style="display:none;"></div>
+    </div>
+    <div class="transform-btns">
+      <button class="trans-btn" onclick="doTransform('question')">➡️ 变疑问句</button>
+      <button class="trans-btn" onclick="doTransform('exclaim')">➡️ 变感叹句</button>
+      <button class="trans-btn" onclick="doTransform('negative')">➡️ 变否定句</button>
+      <button class="trans-btn" onclick="resetTransform()">🔄 重置</button>
+    </div>
+  </div>
+  <div class="card">
+    <h3>📌 四种句式快速识别</h3>
+    <div class="type-grid">
+      <div class="type-card judan" onclick="showTip('judan')">
+        <div class="type-icon">📝</div>
+        <h4>陈述句</h4>
+        <p>表达事实，句末用句号。<br><em>"小明在跑步。"</em></p>
+      </div>
+      <div class="type-card wenju" onclick="showTip('wenju')">
+        <div class="type-icon">❓</div>
+        <h4>疑问句</h4>
+        <p>提出问题，句末用问号。<br><em>"小明在跑步吗？"</em></p>
+      </div>
+      <div class="type-card gan" onclick="showTip('gan')">
+        <div class="type-icon">❗</div>
+        <h4>感叹句</h4>
+        <p>表达强烈感情，句末用叹号。<br><em>"小明跑得真快啊！"</em></p>
+      </div>
+      <div class="type-card fou" onclick="showTip('fou')">
+        <div class="type-icon">🚫</div>
+        <h4>否定句</h4>
+        <p>表示否定，含"不""没"等。<br><em>"小明没有跑步。"</em></p>
+      </div>
+    </div>
+    <div id="type-tip" style="background:var(--bg);border-radius:12px;padding:12px;font-size:.95rem;color:#555;min-height:20px;margin-top:8px;"></div>
+  </div>
+  <div class="nav-row">
+    <button class="nav-btn back" onclick="goSection('objectives')">← 返回</button>
+    <button class="nav-btn" onclick="startLevel(1)">第1关 →</button>
+  </div>
+</div>
+
+<!-- LEVEL 1 -->
+<div class="section" id="level1">
+  <div class="level-chips">
+    <span class="level-chip current" id="chip1">第1关</span>
+    <span class="level-chip" id="chip2">第2关</span>
+    <span class="level-chip" id="chip3">第3关</span>
+  </div>
+  <div class="section-title">⚔️ 第1关：识别句式类型</div>
+  <div class="card">
+    <h3>🎯 判断下面句子属于哪种句式？</h3>
+    <div id="l1-area"></div>
+    <div class="feedback" id="l1-fb"></div>
+  </div>
+  <div class="nav-row">
+    <button class="nav-btn back" onclick="goSection('warmup')">← 返回</button>
+    <button class="nav-btn" id="l1-next" style="display:none" onclick="startLevel(2)">第2关 →</button>
+  </div>
+</div>
+
+<!-- LEVEL 2 -->
+<div class="section" id="level2">
+  <div class="level-chips">
+    <span class="level-chip done">第1关 ✓</span>
+    <span class="level-chip current">第2关</span>
+    <span class="level-chip" id="chip3b">第3关</span>
+  </div>
+  <div class="section-title">⚔️ 第2关：句式转换填空</div>
+  <div class="card">
+    <h3>✏️ 按要求变换句式，填写完整</h3>
+    <div id="l2-area"></div>
+    <div class="feedback" id="l2-fb"></div>
+    <button class="submit-btn" onclick="checkL2()" style="margin-top:14px;">✅ 提交</button>
+  </div>
+  <div class="nav-row">
+    <button class="nav-btn back" onclick="startLevel(1)">← 返回</button>
+    <button class="nav-btn" id="l2-next" style="display:none" onclick="startLevel(3)">第3关 →</button>
+  </div>
+</div>
+
+<!-- LEVEL 3 -->
+<div class="section" id="level3">
+  <div class="level-chips">
+    <span class="level-chip done">第1关 ✓</span>
+    <span class="level-chip done">第2关 ✓</span>
+    <span class="level-chip current">第3关</span>
+  </div>
+  <div class="section-title">⚔️ 第3关：配对拖拽</div>
+  <div class="card">
+    <h3>🧩 把句子和对应的句式类型配对！</h3>
+    <div id="l3-area"></div>
+    <div class="feedback" id="l3-fb"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
+      <button class="demo-btn" onclick="checkL3()">✅ 检查配对</button>
+      <button class="demo-btn" onclick="resetL3()" style="background:#ccc;color:#555;">🔄 重置</button>
+    </div>
+  </div>
+  <div class="nav-row">
+    <button class="nav-btn back" onclick="startLevel(2)">← 返回</button>
+    <button class="nav-btn" id="l3-next" style="display:none" onclick="goSection('boss')">Boss战 →</button>
+  </div>
+</div>
+
+<!-- BOSS -->
+<div class="section" id="boss">
+  <div class="section-title">👾 Boss战：变换大师</div>
+  <div class="card boss-area">
+    <div class="boss-avatar" id="boss-avatar">🧙</div>
+    <div class="boss-hp"><div class="boss-hp-fill" id="boss-hp-fill" style="width:100%"></div></div>
+    <div style="font-size:.9rem;color:#888;margin-bottom:8px;">Boss血量 <span id="boss-hp-txt">5</span>/5</div>
+    <div class="boss-msg" id="boss-msg">哼！变换句式难不倒你？来试试！</div>
+    <div class="boss-q-box" id="boss-q"></div>
+    <div class="boss-opts" id="boss-opts"></div>
+    <div class="feedback" id="boss-fb"></div>
+  </div>
+  <div class="nav-row">
+    <button class="nav-btn back" onclick="startLevel(3)">← 返回</button>
+    <button class="nav-btn" id="boss-next" style="display:none" onclick="goSection('score')">成绩单 →</button>
+  </div>
+</div>
+
+<!-- SCORE -->
+<div class="section" id="score">
+  <div class="section-title">🏆 闯关成绩单</div>
+  <div class="card score-card">
+    <div class="score-big" id="final-score">0</div>
+    <div style="font-size:1.1rem;color:#888;margin-top:6px;">总得分（满分100）</div>
+    <div style="font-size:1rem;color:#f59e0b;margin-top:8px;" id="star-final">⭐ 0颗星</div>
+  </div>
+  <div class="card">
+    <h3>🏅 我的成就</h3>
+    <div class="achievements" id="ach-grid"></div>
+  </div>
+  <div class="nav-row" style="justify-content:center;">
+    <button class="nav-btn" onclick="goSection('extension')">拓展 →</button>
+    <button class="nav-btn back" onclick="restartGame()">🔄 再来一次</button>
+  </div>
+</div>
+
+<!-- EXTENSION -->
+<div class="section" id="extension">
+  <div class="section-title">📚 拓展学习</div>
+  <div class="ext-cards">
+    <div class="ext-card"><div class="icon">📚</div><h4>反问句 vs 疑问句</h4><p>反问句也是疑问句的一种，但表达的是肯定意思，如"这不是很好吗？"</p></div>
+    <div class="ext-card"><div class="icon">🎭</div><h4>感叹句的力量</h4><p>在作文中适当用感叹句，可以让文章更有感情、更生动有力！</p></div>
+    <div class="ext-card"><div class="icon">🔀</div><h4>双重否定=肯定</h4><p>"不得不"、"没有不"等双重否定表达肯定意思，要注意哦！</p></div>
+    <div class="ext-card"><div class="icon">✍️</div><h4>多练转换</h4><p>每天找一句话，尝试转换成其他3种句式，一周后你会发现明显进步！</p></div>
+  </div>
+  <div class="nav-row" style="justify-content:center;">
+    <button class="nav-btn back" onclick="goSection('score')">← 返回</button>
+  </div>
+</div>
+
+<div id="buddy">
+  <div class="buddy-bubble" id="buddy-bubble">嗨！我是小虫🐛 句式变换我最拿手！</div>
+  <div class="buddy-icon" onclick="toggleBuddy()">🐛</div>
+</div>
+
+<script>
+const state={stars:0,score:0,l1Done:false,l2Done:false,l3Done:false,bossDone:false,bossHp:5,bossQ:0,achievements:[],l1c:0};
+const ACHIEVEMENTS=[
+  {id:'start',icon:'🚀',name:'出发了'},
+  {id:'type_master',icon:'🎯',name:'识别大师'},
+  {id:'transform_pro',icon:'🔄',name:'变换达人'},
+  {id:'drag_wizard',icon:'🧩',name:'配对高手'},
+  {id:'perfect_l1',icon:'💯',name:'完美第1关'},
+  {id:'perfect_l2',icon:'🌟',name:'完美第2关'},
+  {id:'boss_win',icon:'⚔️',name:'Boss克星'},
+  {id:'full_star',icon:'🌈',name:'星光满满'},
+];
+
+let audioCtx;
+function getAC(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function playTone(f=440,d=.15,t='sine',g=.3){try{const c=getAC();const o=c.createOscillator();const gn=c.createGain();o.connect(gn);gn.connect(c.destination);o.type=t;o.frequency.value=f;gn.gain.setValueAtTime(g,c.currentTime);gn.gain.exponentialRampToValueAtTime(.001,c.currentTime+d);o.start();o.stop(c.currentTime+d);}catch(e){}}
+function playOK(){playTone(523,.1);setTimeout(()=>playTone(659,.1),100);setTimeout(()=>playTone(784,.2),200);}
+function playErr(){playTone(180,.3,'sawtooth');}
+function playStar(){playTone(880,.08);setTimeout(()=>playTone(1047,.08),90);setTimeout(()=>playTone(1319,.15),180);}
+
+function goSection(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id)?.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  updateProgress();buddyTip(id);
+}
+function updateProgress(){
+  const d=(state.l1Done?1:0)+(state.l2Done?1:0)+(state.l3Done?1:0)+(state.bossDone?1:0);
+  document.getElementById('progress-bar').style.width=(d/4*100)+'%';
+}
+function addStar(n=1){state.stars+=n;state.score=Math.min(100,state.score+n*8);const e=document.getElementById('star-count');e.textContent=state.stars;e.classList.remove('star-pop');void e.offsetWidth;e.classList.add('star-pop');playStar();}
+function unlock(id){if(!state.achievements.includes(id)){state.achievements.push(id);const a=ACHIEVEMENTS.find(x=>x.id===id);if(a){showToast(a);addStar(1);}}}
+function showToast(a){const d=document.createElement('div');d.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--accent),#ffcc02);border-radius:16px;padding:12px 24px;font-weight:700;font-size:1rem;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.15);';d.textContent=`🏅 解锁：${a.icon} ${a.name}`;document.body.appendChild(d);setTimeout(()=>d.remove(),2500);}
+
+// TRANSFORM DEMO
+const TRANSFORMS={
+  question:{type:'疑问句',text:'今天天气很好吗？',color:'#4facfe'},
+  exclaim:{type:'感叹句',text:'今天天气真好啊！',color:'var(--orange)'},
+  negative:{type:'否定句',text:'今天天气不差。',color:'var(--purple)'},
+};
+function doTransform(t){
+  const r=TRANSFORMS[t];
+  const arrow=document.getElementById('s-arrow');const result=document.getElementById('s-result');
+  arrow.style.display='block';
+  result.innerHTML=`<span class="sent-type" style="background:${r.color}">${r.type}</span>${r.text}`;
+  result.style.display='block';result.classList.add('highlight');
+  document.getElementById('s-original').classList.remove('highlight');
+  setTimeout(()=>result.classList.remove('highlight'),800);
+  unlock('start');
+}
+function resetTransform(){
+  document.getElementById('s-arrow').style.display='none';
+  document.getElementById('s-result').style.display='none';
+  document.getElementById('s-original').classList.remove('highlight');
+}
+const TYPE_TIPS={
+  judan:'陈述句：平静地叙述一件事或说明道理，语气平和，句末用句号（。）',
+  wenju:'疑问句：提出问题或请求回答，语气上扬，句末用问号（？）',
+  gan:'感叹句：表达强烈的喜怒哀乐等情感，语气激动，句末用叹号（！）',
+  fou:'否定句：表示否定意义，常用"不、没、别、不是、没有"等词语',
+};
+function showTip(t){document.getElementById('type-tip').textContent=TYPE_TIPS[t]||'';}
+
+// LEVEL 1
+const L1_QS=[
+  {q:'这朵花真漂亮！',ans:'感叹句',opts:['陈述句','疑问句','感叹句','否定句']},
+  {q:'小鸟在枝头唱歌。',ans:'陈述句',opts:['陈述句','疑问句','感叹句','否定句']},
+  {q:'你吃饭了吗？',ans:'疑问句',opts:['陈述句','疑问句','感叹句','否定句']},
+  {q:'他今天没有来上学。',ans:'否定句',opts:['陈述句','疑问句','感叹句','否定句']},
+  {q:'这道题真难啊！',ans:'感叹句',opts:['陈述句','疑问句','感叹句','否定句']},
+];
+let l1Idx=0;
+function renderL1(){
+  const q=L1_QS[l1Idx];
+  document.getElementById('l1-area').innerHTML=`
+    <div class="quiz-q">第${l1Idx+1}题（共${L1_QS.length}题）：<br>
+    判断：<strong>"${q.q}"</strong> 是哪种句式？</div>
+    <div class="opts">${q.opts.map(o=>`<button class="opt-btn" onclick="ansL1('${o}')">${o}</button>`).join('')}</div>`;
+  document.getElementById('l1-fb').textContent='';
+}
+function ansL1(a){
+  const q=L1_QS[l1Idx];const fb=document.getElementById('l1-fb');
+  const btns=document.querySelectorAll('#l1-area .opt-btn');
+  btns.forEach(b=>{b.onclick=null;if(b.textContent===q.ans)b.classList.add('correct');});
+  if(a===q.ans){
+    fb.textContent='✅ 正确！';fb.className='feedback ok';playOK();addStar(1);state.l1c++;
+    unlock('type_master');
+    setTimeout(()=>{l1Idx++;if(l1Idx<L1_QS.length)renderL1();else{state.l1Done=true;if(state.l1c>=L1_QS.length)unlock('perfect_l1');document.getElementById('l1-next').style.display='inline-block';fb.textContent='🎉 第1关完成！';}},1100);
+  } else {
+    document.querySelectorAll('#l1-area .opt-btn').forEach(b=>{if(b.textContent===a)b.classList.add('wrong');});
+    fb.textContent=`❌ 是${q.ans}哦！`;fb.className='feedback err';playErr();
+    setTimeout(()=>{l1Idx++;if(l1Idx<L1_QS.length)renderL1();else{state.l1Done=true;document.getElementById('l1-next').style.display='inline-block';}},1400);
+  }
+}
+
+// LEVEL 2
+const L2_TASKS=[
+  {original:'天空很蓝。',task:'变成疑问句',hint:'天空很蓝___？',key:'吗',checks:v=>v.includes('吗')&&v.endsWith('？')},
+  {original:'这首歌很好听。',task:'变成感叹句',hint:'这首歌___好听___！',key:'真 啊',checks:v=>v.includes('！')||v.includes('!')},
+  {original:'她去学校了。',task:'变成否定句',hint:'她___去学校___。',key:'没 没有',checks:v=>v.includes('没')||v.includes('不')},
+];
+let l2Idx=0;
+function renderL2(){
+  const t=L2_TASKS[l2Idx];
+  document.getElementById('l2-area').innerHTML=`
+    <div class="quiz-q">第${l2Idx+1}题（共${L2_TASKS.length}题）</div>
+    <div style="background:#f8f8f8;border-radius:12px;padding:14px;margin:10px 0;">
+      <p>原句：<strong>"${t.original}"</strong></p>
+      <p style="margin-top:6px;color:var(--purple);">要求：${t.task}</p>
+      <p style="font-size:.85rem;color:#aaa;margin-top:4px;">提示：${t.hint}</p>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">
+      <input class="blank-input" id="l2-inp" style="width:100%;border:2px solid var(--secondary);border-radius:10px;padding:10px;font-size:1rem;" placeholder="写出变换后的句子..." />
+    </div>`;
+  document.getElementById('l2-fb').textContent='';
+  document.getElementById('l2-inp').onkeydown=e=>{if(e.key==='Enter')checkL2();};
+}
+function checkL2(){
+  const t=L2_TASKS[l2Idx];const v=document.getElementById('l2-inp')?.value.trim()||'';
+  const fb=document.getElementById('l2-fb');
+  if(v.length>4&&t.checks(v)){
+    fb.textContent='✅ 变换成功！';fb.className='feedback ok';playOK();addStar(1);
+    unlock('transform_pro');
+    setTimeout(()=>{l2Idx++;if(l2Idx<L2_TASKS.length)renderL2();else{state.l2Done=true;unlock('perfect_l2');document.getElementById('l2-next').style.display='inline-block';fb.textContent='🎉 第2关完成！';}},1200);
+  } else {
+    fb.textContent=`❌ 再想想！关键词：${t.key}`;fb.className='feedback err';playErr();
+  }
+}
+
+// LEVEL 3 DRAG MATCH
+const L3_PAIRS=[
+  {sent:'今天下雨了。',type:'陈述句'},
+  {sent:'这里的风景多美啊！',type:'感叹句'},
+  {sent:'你想去哪里玩？',type:'疑问句'},
+  {sent:'他没有回家。',type:'否定句'},
+];
+const TYPE_COLORS={'陈述句':'#ff6b6b','感叹句':'#ffa94d','疑问句':'#4facfe','否定句':'#a78bfa'};
+let l3DragData={current:null,filled:{}};
+function initL3(){
+  l3DragData={current:null,filled:{}};
+  const types=['陈述句','感叹句','疑问句','否定句'];
+  let html='<div style="margin-bottom:12px;">';
+  L3_PAIRS.forEach((p,i)=>{
+    html+=`<div class="match-row">
+      <div class="match-left">"${p.sent}"</div>
+      <div class="match-drop" id="md-${i}" data-idx="${i}"
+        ondragover="event.preventDefault();this.classList.add('over')"
+        ondragleave="this.classList.remove('over')"
+        ondrop="dropType(event,${i})">
+        ${l3DragData.filled[i]||'拖到这里'}
+      </div>
+    </div>`;
+  });
+  html+='</div><div class="drag-pool">';
+  types.forEach(t=>{
+    html+=`<span class="drag-chip" draggable="true" id="dc-${t}"
+      ondragstart="l3DragData.current='${t}';this.style.opacity='.5'"
+      ondragend="this.style.opacity='1'"
+      style="background:${TYPE_COLORS[t]}20;border-color:${TYPE_COLORS[t]};">${t}</span>`;
+  });
+  html+='</div>';
+  document.getElementById('l3-area').innerHTML=html;
+  document.getElementById('l3-fb').textContent='';
+}
+function dropType(ev,idx){
+  ev.preventDefault();const t=l3DragData.current;
+  l3DragData.filled[idx]=t;
+  const d=document.getElementById(`md-${idx}`);
+  d.textContent=t;d.classList.add('filled');d.classList.remove('over');
+  d.style.background=TYPE_COLORS[t]+'30';d.style.borderColor=TYPE_COLORS[t];
+}
+function checkL3(){
+  let ok=true;
+  L3_PAIRS.forEach((p,i)=>{if(l3DragData.filled[i]!==p.type)ok=false;});
+  const fb=document.getElementById('l3-fb');
+  if(ok){fb.textContent='🎉 全部配对正确！';fb.className='feedback ok';playOK();addStar(2);state.l3Done=true;unlock('drag_wizard');document.getElementById('l3-next').style.display='inline-block';}
+  else{fb.textContent='❌ 有不对的，再看看！';fb.className='feedback err';playErr();}
+}
+function resetL3(){initL3();}
+
+// BOSS
+const BOSS_QS=[
+  {q:'把陈述句变为疑问句："教室里很安静。"',opts:['教室里很安静吗？','教室里真安静啊！','教室里不安静。','教室里安静不安静？'],ans:0},
+  {q:'把陈述句变为感叹句："这本书写得很好。"',opts:['这本书写得怎么样？','这本书写得真好啊！','这本书没有写好。','这本书写得好吗？'],ans:1},
+  {q:'把陈述句变为否定句："他完成了作业。"',opts:['他没有完成作业。','他完成作业了吗？','他真的完成了！','他完成了作业。'],ans:0},
+  {q:'下面是感叹句的是哪个？',opts:['外面下雨了。','你出去了吗？','外面的雨真大啊！','他没有打伞。'],ans:2},
+  {q:'下面是疑问句的是哪个？',opts:['小鸭子在游泳。','你见过小鸭子吗？','小鸭子游得真快！','小鸭子没有停下来。'],ans:1},
+];
+const BOSS_MSGS=['😤 运气好！','😰 哼……','😱 你……怎么这么厉害！','💢 接着来！','💥 我……输了！'];
+function initBoss(){
+  state.bossHp=5;state.bossQ=0;
+  renderBossQ();
+}
+function renderBossQ(){
+  const q=BOSS_QS[state.bossQ];
+  document.getElementById('boss-q').textContent=q.q;
+  document.getElementById('boss-opts').innerHTML=q.opts.map((o,i)=>
+    `<button class="opt-btn" onclick="answerBoss(${i})">${String.fromCharCode(65+i)}. ${o}</button>`
+  ).join('');
+  document.getElementById('boss-fb').textContent='';
+}
+function answerBoss(i){
+  const q=BOSS_QS[state.bossQ];
+  const btns=document.querySelectorAll('#boss-opts .opt-btn');
+  btns.forEach(b=>b.onclick=null);
+  const fb=document.getElementById('boss-fb');
+  if(i===q.ans){
+    btns[i].classList.add('correct');fb.textContent='✅ 命中！';fb.className='feedback ok';playOK();addStar(1);
+    state.bossHp--;state.bossQ++;
+    document.getElementById('boss-hp-fill').style.width=(state.bossHp/5*100)+'%';
+    document.getElementById('boss-hp-txt').textContent=state.bossHp;
+    document.getElementById('boss-msg').textContent=BOSS_MSGS[5-state.bossHp-1]||'💥';
+    if(state.bossHp<=0){
+      document.getElementById('boss-avatar').textContent='💀';
+      document.getElementById('boss-msg').textContent='💥 Boss被打败了！';
+      fb.textContent='🎉 恭喜！全部过关！';state.bossDone=true;unlock('boss_win');
+      if(state.stars>=8)unlock('full_star');
+      document.getElementById('boss-next').style.display='inline-block';
+    } else {setTimeout(renderBossQ,1200);}
+  } else {
+    btns[i].classList.add('wrong');btns[q.ans].classList.add('correct');
+    fb.textContent='❌ 错了！';fb.className='feedback err';playErr();
+    setTimeout(()=>{state.bossQ++;if(state.bossQ<BOSS_QS.length)renderBossQ();else{state.bossDone=true;document.getElementById('boss-next').style.display='inline-block';}},1400);
+  }
+}
+
+function renderScore(){
+  const s=Math.min(100,state.stars*10);
+  document.getElementById('final-score').textContent=s;
+  document.getElementById('star-final').textContent=`⭐ ${state.stars}颗星`;
+  const g=document.getElementById('ach-grid');g.innerHTML='';
+  ACHIEVEMENTS.forEach(a=>{const u=state.achievements.includes(a.id);g.innerHTML+=`<div class="ach-badge ${u?'':'ach-locked'}"><span class="ach-icon">${a.icon}</span><div class="ach-name">${a.name}</div></div>`;});
+}
+
+const BUDDY_TIPS={hero:'嗨！一共4种句式要学哦！🐛',objectives:'陈述、疑问、感叹、否定——记住这4种！',warmup:'点点看，看句子怎么变身！',level1:'看句末标点，最容易判断句式！',level2:'变感叹句加"真/多/太…啊"，变疑问句加"吗/呢"',level3:'颜色提示：红=陈述，橙=感叹，蓝=疑问，紫=否定',boss:'最后冲刺！你可以的！⚔️',score:'太棒了！句式变换大师！',extension:'学了这些，写作文会更生动！'};
+function toggleBuddy(){const b=document.getElementById('buddy-bubble');b.classList.toggle('show');}
+function buddyTip(s){const b=document.getElementById('buddy-bubble');b.textContent=BUDDY_TIPS[s]||'继续加油🐛';b.classList.add('show');setTimeout(()=>b.classList.remove('show'),3000);}
+
+function startLevel(n){
+  if(n===1){l1Idx=0;renderL1();goSection('level1');}
+  else if(n===2){l2Idx=0;renderL2();goSection('level2');}
+  else if(n===3){initL3();goSection('level3');}
+}
+function restartGame(){
+  Object.assign(state,{stars:0,score:0,l1Done:false,l2Done:false,l3Done:false,bossDone:false,bossHp:5,bossQ:0,achievements:[],l1c:0});
+  document.getElementById('star-count').textContent='0';
+  goSection('hero');
+}
+
+window.addEventListener('load',()=>{document.getElementById('hero').classList.remove('section');});
+</script>
+</body>
+</html>

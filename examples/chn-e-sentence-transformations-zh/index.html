@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="course-id" content="chn-e-sentence-transformations-zh">
+<meta name="course-node" content="sentence-transformations">
+<meta name="course-subject" content="chinese">
+<meta name="course-title" content="句式转换综合">
+<meta name="course-prereqs" content="chn-e-parts-of-speech">
+<meta name="course-next" content="chn-e-paragraph-structure">
+<title>🔄 句式转换综合 | 四至九年级语文</title>
+<style>
+:root{
+  --bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--card:#fff;
+  --text:#2d2d2d;--text-light:#666;--radius:20px;--shadow:0 4px 20px rgba(255,107,107,0.1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'PingFang SC','Microsoft YaHei',system-ui,sans-serif;font-size:16px;line-height:1.8;}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,#667eea,#764ba2,#ff6b6b);padding:60px 20px 80px;text-align:center;position:relative;overflow:hidden;}
+.hero::after{content:'🔄';position:absolute;right:-10px;bottom:-20px;font-size:200px;opacity:0.06;transform:rotate(15deg);}
+.hero-emoji{font-size:72px;display:block;margin-bottom:16px;animation:rotatePulse 3s ease-in-out infinite;}
+@keyframes rotatePulse{0%,100%{transform:rotate(0deg) scale(1)}50%{transform:rotate(180deg) scale(1.1)}}
+.hero h1{font-size:clamp(26px,5vw,46px);font-weight:900;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,0.2);}
+.hero-sub{color:rgba(255,255,255,0.9);font-size:17px;margin-top:8px;}
+.hero-tags{display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap;}
+.tag{background:rgba(255,255,255,0.25);color:#fff;border-radius:30px;padding:5px 16px;font-size:14px;backdrop-filter:blur(4px);}
+
+/* STICKY */
+.progress-wrap{background:rgba(255,255,255,0.9);padding:14px 20px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,0.08);backdrop-filter:blur(8px);}
+.progress-inner{max-width:900px;margin:0 auto;display:flex;align-items:center;gap:12px;}
+.progress-bar{flex:1;height:10px;background:#f0e8dc;border-radius:10px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,#667eea,#764ba2,#ff6b6b);border-radius:10px;transition:width 0.5s ease;width:0%;}
+.progress-text{font-size:13px;font-weight:700;color:var(--primary);white-space:nowrap;}
+.star-counter{display:flex;align-items:center;gap:4px;font-weight:700;color:#f59e0b;}
+
+/* CONTAINER */
+.container{max-width:900px;margin:0 auto;padding:30px 20px 100px;}
+.section{margin-bottom:44px;}
+.section-title{font-size:22px;font-weight:800;color:var(--primary);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.card{background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:16px;}
+
+/* TRANSFORM DEMO */
+.transform-demo{background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:16px;}
+.sent-original{font-size:18px;font-weight:700;background:#fff9e6;border-radius:12px;padding:14px 18px;margin-bottom:12px;border-left:4px solid var(--accent);}
+.transform-arrow{text-align:center;font-size:24px;margin:10px 0;color:var(--primary);}
+.sent-transformed{font-size:18px;font-weight:700;background:#e8fdf8;border-radius:12px;padding:14px 18px;border-left:4px solid var(--secondary);opacity:0;transition:opacity 0.5s ease;}
+.sent-transformed.show{opacity:1;}
+.transform-label{display:inline-block;background:var(--primary);color:#fff;border-radius:20px;padding:4px 14px;font-size:13px;font-weight:700;margin-bottom:8px;}
+.transform-btn{padding:12px 28px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:30px;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.25s;display:inline-flex;align-items:center;gap:6px;margin-top:12px;}
+.transform-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(102,126,234,0.4);}
+
+/* STEP-BY-STEP */
+.steps-list{margin-top:12px;}
+.step-row{
+  display:flex;align-items:flex-start;gap:14px;padding:12px 16px;
+  border-radius:12px;background:#f8f4ec;margin-bottom:8px;
+  opacity:0;transform:translateY(8px);transition:all 0.4s;
+}
+.step-row.appear{opacity:1;transform:translateY(0);}
+.step-num{width:30px;height:30px;border-radius:50%;background:var(--primary);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;flex-shrink:0;}
+.step-content{font-size:14px;line-height:1.7;}
+
+/* QUIZ */
+.quiz-card{background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:20px;}
+.quiz-q{font-size:17px;font-weight:700;margin-bottom:16px;color:var(--text);}
+.options{display:flex;flex-direction:column;gap:10px;}
+.option{padding:12px 18px;border-radius:14px;border:2px solid #f0e8dc;cursor:pointer;font-size:15px;transition:all 0.2s;background:var(--card);text-align:left;}
+.option:hover{border-color:var(--primary);background:#fff5f5;}
+.option.correct{border-color:var(--secondary);background:#e8fdf8;color:#0a7060;}
+.option.wrong{border-color:var(--primary);background:#fff5f5;color:#c0392b;}
+.feedback{margin-top:12px;padding:12px 16px;border-radius:12px;font-size:14px;display:none;}
+.feedback.show{display:block;animation:fadeInUp 0.3s ease;}
+.feedback.good{background:#e8fdf8;color:#0a7060;border-left:3px solid var(--secondary);}
+.feedback.bad{background:#fff5f5;color:#c0392b;border-left:3px solid var(--primary);}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* FILL */
+.fill-input{border:2px solid #f0e8dc;border-radius:10px;padding:8px 14px;font-size:16px;outline:none;transition:border 0.2s;width:100%;margin-top:8px;font-family:inherit;}
+.fill-input:focus{border-color:var(--secondary);}
+.fill-input.correct-input{border-color:var(--secondary);background:#e8fdf8;}
+.fill-input.wrong-input{border-color:var(--primary);background:#fff5f5;}
+.check-btn{margin-top:10px;padding:10px 24px;background:var(--secondary);color:#fff;border:none;border-radius:20px;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.check-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(78,205,196,0.4);}
+
+/* LEVEL HEADER */
+.level-header{display:flex;align-items:center;gap:14px;margin-bottom:20px;padding:16px 20px;border-radius:var(--radius);color:#fff;}
+.level-num{font-size:28px;font-weight:900;}
+.level-info h3{font-size:18px;margin-bottom:2px;}
+.level-info p{font-size:13px;opacity:0.85;}
+
+/* TRANSFORM TYPE CARDS */
+.type-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:16px;}
+.type-card{border-radius:var(--radius);padding:18px;cursor:pointer;transition:all 0.25s;border:2px solid transparent;}
+.type-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,0.15);}
+.type-card.active{border-color:var(--primary);}
+.type-icon{font-size:28px;margin-bottom:8px;}
+.type-name{font-size:15px;font-weight:800;margin-bottom:4px;}
+.type-desc{font-size:12px;opacity:0.8;}
+
+/* BEFORE AFTER */
+.before-after{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin:16px 0;}
+.ba-box{border-radius:14px;padding:14px;font-size:16px;font-weight:600;}
+.ba-before{background:#fff9e6;border:2px solid var(--accent);}
+.ba-after{background:#e8fdf8;border:2px solid var(--secondary);}
+.ba-arrow{font-size:24px;color:var(--primary);text-align:center;}
+
+/* BOSS */
+.boss-card{background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:var(--radius);padding:30px;color:#fff;position:relative;overflow:hidden;}
+.boss-card::before{content:'🔄';position:absolute;right:20px;top:20px;font-size:80px;opacity:0.08;}
+
+/* ACHIEVEMENTS */
+.achievements-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;}
+.badge-item{background:var(--card);border-radius:16px;padding:16px;text-align:center;box-shadow:var(--shadow);transition:transform 0.2s;}
+.badge-item:hover{transform:translateY(-3px);}
+.badge-item.locked{opacity:0.4;filter:grayscale(0.8);}
+.badge-icon{font-size:32px;display:block;margin-bottom:6px;}
+.badge-name{font-size:13px;font-weight:700;color:var(--text);}
+.badge-desc{font-size:11px;color:var(--text-light);margin-top:3px;}
+
+/* REPORT */
+.score-circle{width:140px;height:140px;border-radius:50%;margin:0 auto 20px;background:conic-gradient(#667eea var(--pct,0%),#f0e8dc var(--pct,0%));display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:900;color:#667eea;box-shadow:0 0 0 8px var(--bg),0 0 0 12px #f0e8dc;}
+.stats-row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:16px;}
+.stat-box{background:var(--card);border-radius:14px;padding:14px 20px;box-shadow:var(--shadow);text-align:center;}
+.stat-num{font-size:28px;font-weight:900;color:#667eea;}
+.stat-label{font-size:12px;color:var(--text-light);margin-top:4px;}
+
+/* EXPAND */
+.expand-item{border-radius:14px;background:var(--card);margin-bottom:12px;box-shadow:var(--shadow);overflow:hidden;}
+.expand-header{padding:16px 20px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:700;}
+.expand-header:hover{background:#fff9f0;}
+.expand-body{padding:0 20px;max-height:0;overflow:hidden;transition:max-height 0.4s ease,padding 0.3s;}
+.expand-body.open{max-height:800px;padding:0 20px 16px;}
+.expand-arrow{transition:transform 0.3s;}
+.expand-arrow.open{transform:rotate(180deg);}
+
+/* TOAST */
+.toast{position:fixed;top:20px;right:-320px;z-index:9999;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#1a1a2e;padding:14px 20px;border-radius:14px;font-weight:700;box-shadow:0 6px 24px rgba(251,191,36,0.4);transition:right 0.4s cubic-bezier(0.34,1.56,0.64,1);}
+.toast.show{right:20px;}
+
+/* AI BUDDY */
+.ai-buddy{position:fixed;bottom:90px;right:20px;z-index:500;}
+.buddy-btn{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);border:none;font-size:28px;cursor:pointer;box-shadow:0 4px 16px rgba(102,126,234,0.4);transition:all 0.3s;}
+.buddy-btn:hover{transform:scale(1.1);}
+.buddy-popup{position:absolute;bottom:70px;right:0;width:260px;background:var(--card);border-radius:20px;padding:18px;box-shadow:0 8px 32px rgba(0,0,0,0.15);display:none;}
+.buddy-popup.open{display:block;animation:popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);}
+@keyframes popIn{from{transform:scale(0.7) translateY(20px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+
+/* STEPS NAV */
+.steps{display:flex;gap:0;margin-bottom:30px;overflow-x:auto;padding-bottom:4px;}
+.step{flex:1;min-width:72px;text-align:center;padding:10px 4px;font-size:12px;font-weight:600;color:var(--text-light);}
+.step.active{color:#667eea;}
+.step.done{color:var(--secondary);}
+.step-dot{width:28px;height:28px;border-radius:50%;background:#f0e8dc;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;font-size:14px;transition:all 0.3s;}
+.step.active .step-dot{background:#667eea;color:#fff;}
+.step.done .step-dot{background:var(--secondary);color:#fff;}
+
+/* HIGHLIGHT KEYWORD */
+.kw{background:rgba(255,107,107,0.15);border-radius:6px;padding:2px 6px;font-weight:700;color:#c0392b;}
+.kw-g{background:rgba(78,205,196,0.15);border-radius:6px;padding:2px 6px;font-weight:700;color:#0a7060;}
+
+@media(max-width:600px){
+  .hero{padding:40px 16px 60px;}
+  .hero-emoji{font-size:52px;}
+  .container{padding:20px 14px 60px;}
+  .before-after{grid-template-columns:1fr;}.ba-arrow{transform:rotate(90deg);}
+  .type-grid{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <span class="hero-emoji">🔄</span>
+  <h1>句式转换综合</h1>
+  <p class="hero-sub">把握8种句式变换，让你的写作更灵活、更有力！</p>
+  <div class="hero-tags">
+    <span class="tag">📚 四至九年级语文</span>
+    <span class="tag">🔄 句式变身</span>
+    <span class="tag">🏆 8枚成就</span>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-wrap">
+  <div class="progress-inner">
+    <div class="progress-bar"><div class="progress-fill" id="mainProgress"></div></div>
+    <div class="progress-text" id="progressText">0 / 7 关</div>
+    <div class="star-counter">⭐ <span id="starCount">0</span></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- STEPS NAV -->
+  <div class="steps">
+    <div class="step active" id="step0"><div class="step-dot">🎯</div>目标</div>
+    <div class="step" id="step1"><div class="step-dot">🔥</div>热身</div>
+    <div class="step" id="step2"><div class="step-dot">1️⃣</div>关卡1</div>
+    <div class="step" id="step3"><div class="step-dot">2️⃣</div>关卡2</div>
+    <div class="step" id="step4"><div class="step-dot">3️⃣</div>关卡3</div>
+    <div class="step" id="step5"><div class="step-dot">👾</div>Boss</div>
+    <div class="step" id="step6"><div class="step-dot">📊</div>成绩</div>
+  </div>
+
+  <!-- SECTION: OBJECTIVES -->
+  <div class="section" id="sec-obj">
+    <div class="section-title">🎯 学习目标</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
+      <div class="card" style="text-align:center">
+        <div style="font-size:32px;margin-bottom:8px">🔄</div>
+        <strong>掌握8种句式转换</strong>
+        <p style="font-size:13px;color:var(--text-light);margin-top:4px">陈述/疑问/感叹/祈使 + 把字句/被字句/肯定/否定</p>
+      </div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:32px;margin-bottom:8px">✏️</div>
+        <strong>灵活转换</strong>
+        <p style="font-size:13px;color:var(--text-light);margin-top:4px">根据语境需要，在各种句式之间自由切换</p>
+      </div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:32px;margin-bottom:8px">💡</div>
+        <strong>理解差异</strong>
+        <p style="font-size:13px;color:var(--text-light);margin-top:4px">知道不同句式在语气、强调、情感上的区别</p>
+      </div>
+    </div>
+    <div class="card" style="border-left:4px solid var(--secondary);margin-top:16px">
+      <strong>🤔 先想一想：</strong>"我完成了作业"——这句话可以变成几种不同的说法？试试！
+    </div>
+  </div>
+
+  <!-- SECTION: WARMUP -->
+  <div class="section" id="sec-warm">
+    <div class="level-header" style="background:linear-gradient(135deg,#667eea,#764ba2)">
+      <div class="level-num">🔥</div>
+      <div class="level-info">
+        <h3>热身：8种句式速览</h3>
+        <p>你已经会写句子了（And），但总是用同一种句式（But），所以学转换让表达更丰富（Therefore）！</p>
+      </div>
+    </div>
+
+    <!-- 8 type cards -->
+    <div class="type-grid">
+      <div class="type-card" style="background:#fff0f0">
+        <div class="type-icon">📢</div>
+        <div class="type-name" style="color:#c0392b">陈述句</div>
+        <div class="type-desc" style="color:#e74c3c">平铺直叙，告知事实</div>
+        <div style="font-size:12px;margin-top:6px;color:#888">例：他完成了作业。</div>
+      </div>
+      <div class="type-card" style="background:#f0f4ff">
+        <div class="type-icon">❓</div>
+        <div class="type-name" style="color:#3498db">疑问句</div>
+        <div class="type-desc" style="color:#5b8cff">提问，寻求信息或确认</div>
+        <div style="font-size:12px;margin-top:6px;color:#888">例：他完成了作业吗？</div>
+      </div>
+      <div class="type-card" style="background:#fffde0">
+        <div class="type-icon">❗</div>
+        <div class="type-name" style="color:#f39c12">感叹句</div>
+        <div class="type-desc" style="color:#e67e22">表达强烈情感</div>
+        <div style="font-size:12px;margin-top:6px;color:#888">例：他竟然完成了作业！</div>
+      </div>
+      <div class="type-card" style="background:#f0fff8">
+        <div class="type-icon">🙏</div>
+        <div class="type-name" style="color:#27ae60">祈使句</div>
+        <div class="type-desc" style="color:#2ecc71">命令、请求、劝说</div>
+        <div style="font-size:12px;margin-top:6px;color:#888">例：请完成你的作业！</div>
+      </div>
+      <div class="type-card" style="background:#fff5f0">
+        <div class="type-icon">🤲</div>
+        <div class="type-name" style="color:#e67e22">把字句</div>
+        <div class="type-desc" style="color:#d35400">强调主动处置宾语</div>
+        <div style="font-size:12px;margin-top:6px;color:#888">例：他把作业完成了。</div>
+      </div>
+      <div class="type-card" style="background:#fdf0ff">
+        <div class="type-icon">🎯</div>
+        <div class="type-name" style="color:#9b59b6">被字句</div>
+        <div class="type-desc" style="color:#8e44ad">强调被动受到影响</div>
+        <div style="font-size:12px;margin-top:6px;color:#888">例：作业被他完成了。</div>
+      </div>
+      <div class="type-card" style="background:#f0fff8">
+        <div class="type-icon">✅</div>
+        <div class="type-name" style="color:#16a085">肯定句</div>
+        <div class="type-desc" style="color:#1abc9c">直接确认某事为真</div>
+        <div style="font-size:12px;margin-top:6px;color:#888">例：他确实完成了作业。</div>
+      </div>
+      <div class="type-card" style="background:#fff9f0">
+        <div class="type-icon">❌</div>
+        <div class="type-name" style="color:#c0392b">否定句</div>
+        <div class="type-desc" style="color:#e74c3c">否认或反对某事</div>
+        <div style="font-size:12px;margin-top:6px;color:#888">例：他没有完成作业。</div>
+      </div>
+    </div>
+
+    <!-- Demo transformation -->
+    <div class="transform-demo" style="margin-top:24px">
+      <div class="section-title" style="font-size:17px">🎬 句式变身动画演示</div>
+      <p style="font-size:14px;color:var(--text-light);margin-bottom:14px">选择一种转换类型，看看句子如何变身！</p>
+      
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+        <button class="check-btn" onclick="showTransform('把字句')" style="background:#e67e22">→ 把字句</button>
+        <button class="check-btn" onclick="showTransform('被字句')" style="background:#9b59b6">→ 被字句</button>
+        <button class="check-btn" onclick="showTransform('疑问句')" style="background:#3498db">→ 疑问句</button>
+        <button class="check-btn" onclick="showTransform('感叹句')" style="background:#f39c12">→ 感叹句</button>
+        <button class="check-btn" onclick="showTransform('反问句')" style="background:#c0392b">→ 反问句</button>
+      </div>
+      
+      <div class="sent-original" id="demoOriginal">🌸 原句：她认真地完成了这次作业。</div>
+      <div class="transform-arrow" id="demoArrow" style="display:none">↓ <span id="demoType"></span></div>
+      <div class="sent-transformed" id="demoTransformed"></div>
+      
+      <div class="steps-list" id="demoSteps"></div>
+    </div>
+  </div>
+
+  <!-- SECTION: LEVEL 1 - 把字句 & 被字句 -->
+  <div class="section" id="sec-lv1">
+    <div class="level-header" style="background:linear-gradient(135deg,#ff6b6b,#ff8e53)">
+      <div class="level-num">1️⃣</div>
+      <div class="level-info">
+        <h3>关卡一：把字句 ↔ 被字句</h3>
+        <p>⭐ 这两种句式最常考，掌握核心结构是关键！</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title" style="font-size:17px">🔍 结构对比图</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px">
+        <div style="background:#fff5f0;border-radius:14px;padding:16px">
+          <p style="font-weight:800;color:#e67e22;margin-bottom:10px">🤲 把字句</p>
+          <p style="font-family:monospace;font-size:14px;background:#fff;border-radius:8px;padding:8px">
+            <span class="kw">主语</span> + <span style="color:#e67e22;font-weight:700">把</span> + <span class="kw">宾语</span> + <span class="kw-g">谓语</span>
+          </p>
+          <p style="font-size:13px;color:#888;margin-top:8px">强调：主语主动处置宾语<br>例：猫<span style="color:#e67e22">把</span>鱼<span style="color:#27ae60">吃掉了</span>。</p>
+        </div>
+        <div style="background:#fdf0ff;border-radius:14px;padding:16px">
+          <p style="font-weight:800;color:#9b59b6;margin-bottom:10px">🎯 被字句</p>
+          <p style="font-family:monospace;font-size:14px;background:#fff;border-radius:8px;padding:8px">
+            <span class="kw">宾语</span> + <span style="color:#9b59b6;font-weight:700">被</span> + <span class="kw">主语</span> + <span class="kw-g">谓语</span>
+          </p>
+          <p style="font-size:13px;color:#888;margin-top:8px">强调：宾语被动受到影响<br>例：鱼<span style="color:#9b59b6">被</span>猫<span style="color:#27ae60">吃掉了</span>。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q1 -->
+    <div class="quiz-card">
+      <div class="quiz-q">🔄 练习1：将下面的陈述句改为"把字句"</div>
+      <div class="before-after">
+        <div class="ba-box ba-before">妈妈把菜做好了。<br><span style="font-size:12px;color:#888">等等，这已经是把字句了！先找原句……</span></div>
+        <div class="ba-arrow">→</div>
+        <div class="ba-box ba-after">等等，题目改了！请看下面👇</div>
+      </div>
+      <p style="margin-bottom:10px">原句：<strong style="font-size:17px">"老师表扬了小明。"</strong> → 改为把字句</p>
+      <div class="options" id="opts1">
+        <button class="option" onclick="checkOpt(this,'opts1',false,'feed1','提示：把字句的结构是"主语+把+宾语+谓语"，谁是主语？谁是宾语？')">A. 小明被老师表扬了。</button>
+        <button class="option" onclick="checkOpt(this,'opts1',true,'feed1','✅ 正确！把字句：老师（主语）+把+小明（宾语）+表扬了（谓语）。主语主动，宾语被处置。+1⭐')">B. 老师把小明表扬了。</button>
+        <button class="option" onclick="checkOpt(this,'opts1',false,'feed1','这句话结构不完整，"把老师"后面需要动词。')">C. 小明把老师……（结构错误）</button>
+        <button class="option" onclick="checkOpt(this,'opts1',false,'feed1','这已经是被字句了，题目要求是把字句。')">D. 小明被老师表扬了。</button>
+      </div>
+      <div class="feedback" id="feed1"></div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="quiz-card">
+      <div class="quiz-q">🔄 练习2：把字句 ↔ 被字句互转</div>
+      <p style="background:#fff9e6;border-radius:12px;padding:12px;font-size:17px;margin-bottom:14px">把字句：<strong>"小狗把骨头藏起来了。"</strong> → 改为被字句</p>
+      <input type="text" class="fill-input" id="fill1" placeholder="写出被字句…" />
+      <button class="check-btn" onclick="checkFillST('fill1','fillFeed1',['骨头被小狗藏起来了','骨头被小狗藏了起来'],'被字句：骨头（原宾语）+被+小狗（原主语）+藏起来了。')">检查 ✅</button>
+      <div class="feedback" id="fillFeed1"></div>
+    </div>
+
+    <!-- Q3 识别把/被字句 -->
+    <div class="quiz-card">
+      <div class="quiz-q">❓ 判断：下面哪句话是被字句？</div>
+      <div class="options" id="opts2">
+        <button class="option" onclick="checkOpt(this,'opts2',false,'feed2','这是陈述句，没有"把"或"被"。')">A. 他今天没有去学校。</button>
+        <button class="option" onclick="checkOpt(this,'opts2',false,'feed2','有"把"字，但句子是错的？不对，这是把字句，不是被字句。')">B. 她把书桌整理干净了。</button>
+        <button class="option" onclick="checkOpt(this,'opts2',true,'feed2','✅ 正确！"教室被同学们打扫得干干净净"中，教室是被动的，用了"被"字，是被字句。+1⭐')">C. 教室被同学们打扫得干干净净。</button>
+        <button class="option" onclick="checkOpt(this,'opts2',false,'feed2','这是反问句，用了"难道"和"？"，没有被字结构。')">D. 难道这道题你不会做吗？</button>
+      </div>
+      <div class="feedback" id="feed2"></div>
+    </div>
+  </div>
+
+  <!-- SECTION: LEVEL 2 - 陈述/疑问/感叹/反问 -->
+  <div class="section" id="sec-lv2">
+    <div class="level-header" style="background:linear-gradient(135deg,#f093fb,#f5576c)">
+      <div class="level-num">2️⃣</div>
+      <div class="level-info">
+        <h3>关卡二：四大语气句式</h3>
+        <p>⭐⭐ 陈述句、疑问句、感叹句、反问句的区别与转换</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title" style="font-size:17px">🔍 特别关注：反问句 ≠ 疑问句</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px">
+        <div style="background:#f0f4ff;border-radius:14px;padding:14px">
+          <p style="font-weight:800;color:#3498db">❓ 一般疑问句</p>
+          <p style="font-size:14px;margin-top:6px">真的在问问题，期待回答</p>
+          <p style="font-size:14px;margin-top:4px;color:#888">例："你做完作业了吗？"<br>→ 不知道你是否做完，想知道答案</p>
+        </div>
+        <div style="background:#fff0f0;border-radius:14px;padding:14px">
+          <p style="font-weight:800;color:#e74c3c">❓！反问句</p>
+          <p style="font-size:14px;margin-top:6px">用问句强调某个肯定/否定意思</p>
+          <p style="font-size:14px;margin-top:4px;color:#888">例："难道你没做完作业吗？"<br>→ 其实知道答案，在强调/责问</p>
+        </div>
+      </div>
+      <div style="margin-top:12px;background:#fff9e6;border-radius:12px;padding:12px">
+        <strong>🌟 规律：</strong>反问句含有<span class="kw">否定词</span>→改为陈述句要变<span class="kw-g">肯定</span>；反问句是<span class="kw-g">肯定形式</span>→改为陈述句要变<span class="kw">否定</span>
+      </div>
+    </div>
+
+    <!-- Reverse question exercise -->
+    <div class="quiz-card">
+      <div class="quiz-q">🔄 反问句→陈述句：将反问句改为陈述句，意思不变</div>
+      <p style="background:#fff9e6;border-radius:12px;padding:12px;font-size:17px;margin-bottom:14px">
+        "<strong>难道我们不应该爱护环境吗？</strong>"→ 陈述句
+      </p>
+      <div class="options" id="opts3">
+        <button class="option" onclick="checkOpt(this,'opts3',false,'feed3','方向相反了。原反问句含否定"不"，改陈述应该是肯定。')">A. 我们不应该爱护环境。</button>
+        <button class="option" onclick="checkOpt(this,'opts3',true,'feed3','✅ 正确！反问句"难道…不…吗"是强调肯定，改为陈述句去掉"难道"和"不"，改为"我们应该爱护环境。" +2⭐')">B. 我们应该爱护环境。</button>
+        <button class="option" onclick="checkOpt(this,'opts3',false,'feed3','这是加强了否定，意思变了。')">C. 我们绝对不应该不爱护环境。</button>
+        <button class="option" onclick="checkOpt(this,'opts3',false,'feed3','这仍然是反问句，没有完成转换。')">D. 难道我们应该爱护环境吗？</button>
+      </div>
+      <div class="feedback" id="feed3"></div>
+    </div>
+
+    <!-- Fill: 陈述→感叹 -->
+    <div class="quiz-card">
+      <div class="quiz-q">✏️ 陈述句→感叹句：改写下面的句子，使情感更强烈</div>
+      <p style="background:#fff9e6;border-radius:12px;padding:12px;font-size:17px;margin-bottom:10px">原句：<strong>"这朵花很美丽。"</strong></p>
+      <p style="font-size:13px;color:#888;margin-bottom:8px">💡 提示：用"多么……啊！"或"真……啊！"的结构</p>
+      <input type="text" class="fill-input" id="fill2" placeholder="写出感叹句…" />
+      <button class="check-btn" onclick="checkFillST('fill2','fillFeed2',['多么美丽','真美丽','好美丽','这朵花多么美丽啊','这朵花真美丽啊','这朵花真美啊'],'感叹句常用"多么…啊！"、"真…啊！"、"好…啊！"结构，最后用"！"号。')">检查 ✅</button>
+      <div class="feedback" id="fillFeed2"></div>
+    </div>
+
+    <!-- Q: 陈述→疑问 -->
+    <div class="quiz-card">
+      <div class="quiz-q">❓ 下面哪个选项是将陈述句正确改为一般疑问句？</div>
+      <p style="background:#fff9e6;border-radius:12px;padding:12px;font-size:17px;margin-bottom:14px">原句：<strong>"这道题很难。"</strong></p>
+      <div class="options" id="opts4">
+        <button class="option" onclick="checkOpt(this,'opts4',false,'feed4','这是反问句，不是一般疑问句。')">A. 这道题难道不难吗？</button>
+        <button class="option" onclick="checkOpt(this,'opts4',true,'feed4','✅ 正确！一般疑问句在句尾加"吗？"或改变语序，这里直接加"吗？"即可。+1⭐')">B. 这道题很难吗？</button>
+        <button class="option" onclick="checkOpt(this,'opts4',false,'feed4','这是感叹句，不是疑问句。')">C. 这道题真的很难啊！</button>
+        <button class="option" onclick="checkOpt(this,'opts4',false,'feed4','这是反问/强调句，语气过于强烈，不是普通疑问句。')">D. 这道题怎么会这么难？！</button>
+      </div>
+      <div class="feedback" id="feed4"></div>
+    </div>
+  </div>
+
+  <!-- SECTION: LEVEL 3 - 肯定/否定 + 综合 -->
+  <div class="section" id="sec-lv3">
+    <div class="level-header" style="background:linear-gradient(135deg,#43e97b,#38f9d7)">
+      <div class="level-num">3️⃣</div>
+      <div class="level-info">
+        <h3>关卡三：肯定/否定 + 综合应用</h3>
+        <p>⭐⭐⭐ 双重否定=肯定；综合练习灵活转换</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title" style="font-size:17px">💡 双重否定 = 肯定（但语气更强！）</div>
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin-top:12px">
+        <div style="background:#f0fff8;border-radius:12px;padding:14px;text-align:center">
+          <p style="font-weight:700;color:#27ae60">肯定句</p>
+          <p style="margin-top:6px">他必须去参加。</p>
+        </div>
+        <div style="text-align:center;font-size:24px;color:var(--secondary)">⇌</div>
+        <div style="background:#fff5f5;border-radius:12px;padding:14px;text-align:center">
+          <p style="font-weight:700;color:#c0392b">双重否定（语气更强）</p>
+          <p style="margin-top:6px">他<span class="kw">不得不</span>去参加。<br>他<span class="kw">不能不</span>去参加。</p>
+        </div>
+      </div>
+      <p style="font-size:13px;color:#888;margin-top:12px">注意：双重否定句意思与肯定句相同，但<strong>语气更加肯定、强调</strong>。</p>
+    </div>
+
+    <!-- Q5 -->
+    <div class="quiz-card">
+      <div class="quiz-q">🔄 将下面的肯定句改为双重否定句</div>
+      <p style="background:#fff9e6;border-radius:12px;padding:12px;font-size:17px;margin-bottom:10px">原句：<strong>"我们一定要保护环境。"</strong></p>
+      <div class="options" id="opts5">
+        <button class="option" onclick="checkOpt(this,'opts5',false,'feed5','这是否定句，只有一重否定，不是双重否定。')">A. 我们不要保护环境。</button>
+        <button class="option" onclick="checkOpt(this,'opts5',true,'feed5','✅ 正确！"不能不"包含两个否定词，双重否定=肯定，语气更强烈。+2⭐')">B. 我们不能不保护环境。</button>
+        <button class="option" onclick="checkOpt(this,'opts5',false,'feed5','虽然用了否定词，但"绝不可不"结构略显奇怪，"不能不"更自然。')">C. 我们绝不可以不保护环境。</button>
+        <button class="option" onclick="checkOpt(this,'opts5',false,'feed5','这意思变了，"什么理由都不保护"不是原意。')">D. 我们没有任何理由不保护环境。</button>
+      </div>
+      <div class="feedback" id="feed5"></div>
+    </div>
+
+    <!-- Comprehensive fill -->
+    <div class="quiz-card">
+      <div class="quiz-q">🎯 综合挑战：根据要求改写句子</div>
+      
+      <div style="margin-bottom:20px">
+        <p style="font-size:16px;font-weight:700;margin-bottom:8px">① 将"同学们都完成了作业"改为<span class="kw">反问句</span>：</p>
+        <input type="text" class="fill-input" id="fill3" placeholder="写出反问句…" />
+        <button class="check-btn" onclick="checkFillST('fill3','fillFeed3',['难道同学们没有完成作业吗','难道同学们都没完成作业吗','同学们难道没完成作业吗'],'反问句常用"难道…吗？"结构，注意加了"没有"（否定），意思仍是肯定（同学们都完成了）。')">检查 ✅</button>
+        <div class="feedback" id="fillFeed3"></div>
+      </div>
+
+      <div>
+        <p style="font-size:16px;font-weight:700;margin-bottom:8px">② 将"风把花瓣吹落了"改为<span class="kw">被字句</span>：</p>
+        <input type="text" class="fill-input" id="fill4" placeholder="写出被字句…" />
+        <button class="check-btn" onclick="checkFillST('fill4','fillFeed4',['花瓣被风吹落了','花瓣被风给吹落了'],'被字句：花瓣（原宾语）+被+风（原主语）+吹落了（谓语）。')">检查 ✅</button>
+        <div class="feedback" id="fillFeed4"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: BOSS -->
+  <div class="section" id="sec-boss">
+    <div class="boss-card">
+      <h2 style="font-size:24px;margin-bottom:8px">👾 Boss关卡：连续句式变换</h2>
+      <p style="opacity:0.85;margin-bottom:20px">一句话，连续变成4种句式！考验你对句式的综合掌握！</p>
+
+      <div style="background:rgba(255,255,255,0.1);border-radius:16px;padding:20px;margin-bottom:20px">
+        <p style="font-size:18px;font-weight:700;color:#fff;margin-bottom:6px">原句：</p>
+        <p style="font-size:20px;color:#ffe66d;font-weight:800">"同学们认真地学习了这篇课文。"</p>
+      </div>
+
+      <div class="quiz-card" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);margin-bottom:16px">
+        <div class="quiz-q" style="color:#fff">① 改为<span style="color:var(--accent)">把字句</span>：</div>
+        <input type="text" class="fill-input" id="bossQ1" style="background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.3)" placeholder="写出把字句…" />
+        <button class="check-btn" onclick="checkBossQ(1)" style="background:var(--accent);color:#333">检查 ✅</button>
+        <div class="feedback" id="bossFeed1"></div>
+      </div>
+
+      <div class="quiz-card" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);margin-bottom:16px">
+        <div class="quiz-q" style="color:#fff">② 改为<span style="color:#a29bfe">被字句</span>：</div>
+        <input type="text" class="fill-input" id="bossQ2" style="background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.3)" placeholder="写出被字句…" />
+        <button class="check-btn" onclick="checkBossQ(2)" style="background:#a29bfe;color:#fff">检查 ✅</button>
+        <div class="feedback" id="bossFeed2"></div>
+      </div>
+
+      <div class="quiz-card" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2)">
+        <div class="quiz-q" style="color:#fff">③ 改为<span style="color:#fd79a8">反问句</span>（强调同学们确实认真学习了）：</div>
+        <div class="options" id="bossOpts3">
+          <button class="option" style="background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.2)" onclick="checkOpt(this,'bossOpts3',false,'bossFeed3','这反问句的方向反了，"难道认真学习了吗"暗示"没认真学习"。')">A. 难道同学们认真地学习了这篇课文吗？</button>
+          <button class="option" style="background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.2)" onclick="checkOpt(this,'bossOpts3',true,'bossFeed3','✅ Boss 击破！"难道…没有…吗"是肯定意思的反问，强调同学们确实认真学习了。+3⭐')">B. 难道同学们没有认真地学习这篇课文吗？</button>
+          <button class="option" style="background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.2)" onclick="checkOpt(this,'bossOpts3',false,'bossFeed3','这是一般疑问句，不是反问句，它真的在问是否学了。')">C. 同学们认真地学习了这篇课文吗？</button>
+        </div>
+        <div class="feedback" id="bossFeed3"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: REPORT -->
+  <div class="section" id="sec-report">
+    <div class="section-title">📊 学习成绩单</div>
+    <div class="card" style="text-align:center">
+      <div class="score-circle" id="scoreCircle"><span id="scoreNum">?</span></div>
+      <h3 style="font-size:20px;margin-bottom:6px" id="reportTitle">完成学习后生成成绩单！</h3>
+      <p style="color:var(--text-light);margin-bottom:16px" id="reportMsg"></p>
+      <div class="stats-row">
+        <div class="stat-box"><div class="stat-num" id="statStars">0</div><div class="stat-label">⭐ 获得星星</div></div>
+        <div class="stat-box"><div class="stat-num" id="statCorrect">0</div><div class="stat-label">✅ 答对题数</div></div>
+        <div class="stat-box"><div class="stat-num" id="statBadges">0</div><div class="stat-label">🏅 成就数量</div></div>
+      </div>
+      <button class="transform-btn" onclick="generateReport()" style="margin-top:20px;border:none">生成成绩单 📋</button>
+    </div>
+
+    <div style="margin-top:24px">
+      <div class="section-title">🏅 成就墙</div>
+      <div class="achievements-grid">
+        <div class="badge-item" id="badge-start"><span class="badge-icon">🌱</span><div class="badge-name">初出茅庐</div><div class="badge-desc">完成第一题</div></div>
+        <div class="badge-item locked" id="badge-bz"><span class="badge-icon">🤲</span><div class="badge-name">把字高手</div><div class="badge-desc">掌握把字句转换</div></div>
+        <div class="badge-item locked" id="badge-beiز"><span class="badge-icon">🎯</span><div class="badge-name">被字高手</div><div class="badge-desc">掌握被字句转换</div></div>
+        <div class="badge-item locked" id="badge-rp"><span class="badge-icon">❓</span><div class="badge-name">反问达人</div><div class="badge-desc">正确转换反问句</div></div>
+        <div class="badge-item locked" id="badge-double"><span class="badge-icon">✖️</span><div class="badge-name">双否大师</div><div class="badge-desc">掌握双重否定</div></div>
+        <div class="badge-item locked" id="badge-boss"><span class="badge-icon">👾</span><div class="badge-name">Boss猎手</div><div class="badge-desc">完成Boss关卡</div></div>
+        <div class="badge-item locked" id="badge-combo"><span class="badge-icon">🔥</span><div class="badge-name">连击大师</div><div class="badge-desc">连续答对4题</div></div>
+        <div class="badge-item locked" id="badge-transformer"><span class="badge-icon">🔄</span><div class="badge-name">句式变形金刚</div><div class="badge-desc">完成全部关卡</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXTEND -->
+  <div class="section" id="sec-extend">
+    <div class="section-title">🚀 拓展探究</div>
+    <div class="expand-item">
+      <div class="expand-header" onclick="toggleExpand(this)"><span>📝 写作中的句式选择技巧</span><span class="expand-arrow">▼</span></div>
+      <div class="expand-body">
+        <ul style="margin-left:16px;line-height:2.2">
+          <li><strong>表强调</strong>：用反问句或双重否定句</li>
+          <li><strong>表被动/受害</strong>：用被字句（"被风吹走了"）</li>
+          <li><strong>表主动处置</strong>：用把字句（"把纸揉皱了"）</li>
+          <li><strong>表情感</strong>：用感叹句（"多美丽啊！"）</li>
+          <li><strong>表命令/请求</strong>：用祈使句（"请保持安静。"）</li>
+        </ul>
+      </div>
+    </div>
+    <div class="expand-item">
+      <div class="expand-header" onclick="toggleExpand(this)"><span>🔄 特殊句式：互文、排比、对偶</span><span class="expand-arrow">▼</span></div>
+      <div class="expand-body">
+        <p style="margin-bottom:10px">除了基本句式，修辞手法也会影响句式效果：</p>
+        <div style="background:#fff9e6;border-radius:12px;padding:14px">
+          <p><strong>排比句：</strong>"我要学习，我要成长，我要为祖国做贡献。"（增强气势）</p>
+          <p style="margin-top:6px"><strong>对偶句：</strong>"春蚕到死丝方尽，蜡炬成灰泪始干。"（对称美感）</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- AI BUDDY -->
+<div class="ai-buddy">
+  <div class="buddy-popup" id="buddyPopup">
+    <span style="font-weight:700;color:#667eea;display:block;margin-bottom:6px;font-size:14px">🐛 小虫虫老师</span>
+    <div style="font-size:14px;line-height:1.6;color:var(--text)" id="buddyTip">嗨！我是句式转换专家🐛<br>遇到难题点我，我来帮你分析！</div>
+  </div>
+  <button class="buddy-btn" onclick="toggleBuddy()">🐛</button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="mainToast"></div>
+
+<script>
+const COURSE_ID = 'chn-e-sentence-transformations-zh';
+const state = { stars:0, correct:0, total:0, badges:new Set(), combo:0, maxCombo:0, bossHit:false, bossCount:0 };
+
+// AUDIO
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx=null;
+function getAudio(){ if(!audioCtx) audioCtx=new AudioCtx(); return audioCtx; }
+function playBeep(freq,dur,type='sine',vol=0.3){
+  try{ const ctx=getAudio(),osc=ctx.createOscillator(),gain=ctx.createGain();
+  osc.connect(gain);gain.connect(ctx.destination);osc.type=type;osc.frequency.value=freq;
+  gain.gain.setValueAtTime(vol,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
+  osc.start();osc.stop(ctx.currentTime+dur);}catch(e){}
+}
+function playSuccess(){ playBeep(523,0.1);setTimeout(()=>playBeep(659,0.1),100);setTimeout(()=>playBeep(784,0.2),200); }
+function playError(){ playBeep(200,0.3,'sawtooth',0.2); }
+function playClick(){ playBeep(800,0.05,'square',0.1); }
+function playAchieve(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>playBeep(f,0.2),i*80)); }
+
+function addStars(n){ state.stars+=n; document.getElementById('starCount').textContent=state.stars; showToast('⭐ +'+n+' 获得星星！'); }
+function updateProgress(c,t=7){ document.getElementById('mainProgress').style.width=Math.round(c/t*100)+'%'; document.getElementById('progressText').textContent=c+' / '+t+' 关'; }
+
+// TRANSFORM DEMO
+const transforms = {
+  '把字句': { label:'→ 把字句', result:'她把这次作业认真地完成了。', steps:['1. 找主语：她', '2. 找宾语：这次作业', '3. 找动词：完成了', '4. 加入"把"：主语+把+宾语+动词 = 她+把+这次作业+认真地完成了'] },
+  '被字句': { label:'→ 被字句', result:'这次作业被她认真地完成了。', steps:['1. 找原宾语：这次作业（变为主语）', '2. 找原主语：她（变为"被"的宾语）', '3. 加入"被"：宾语+被+主语+动词 = 这次作业+被+她+认真地完成了'] },
+  '疑问句': { label:'→ 疑问句', result:'她认真地完成了这次作业吗？', steps:['1. 保持原句意思', '2. 在句末加上"吗"', '3. 句号改为问号', '4. 结果：她认真地完成了这次作业吗？'] },
+  '感叹句': { label:'→ 感叹句', result:'她多么认真地完成了这次作业啊！', steps:['1. 找形容词/副词（认真）', '2. 在前面加"多么"或"真"', '3. 在句末加"啊！"', '4. 结果：她多么认真地完成了这次作业啊！'] },
+  '反问句': { label:'→ 反问句', result:'难道她没有认真地完成这次作业吗？', steps:['1. 加入"难道"（句首）', '2. 加入否定词"没有"', '3. 句末加"吗？"', '4. 意思不变：仍表示"她确实认真完成了"'] }
+};
+function showTransform(type){
+  playClick();
+  const t = transforms[type];
+  if(!t) return;
+  document.getElementById('demoArrow').style.display = 'block';
+  document.getElementById('demoType').textContent = t.label;
+  const tr = document.getElementById('demoTransformed');
+  tr.textContent = t.result;
+  tr.classList.add('show');
+  
+  const stepsEl = document.getElementById('demoSteps');
+  stepsEl.innerHTML = '';
+  t.steps.forEach((s,i) => {
+    const row = document.createElement('div');
+    row.className = 'step-row';
+    row.innerHTML = `<div class="step-num">${i+1}</div><div class="step-content">${s}</div>`;
+    stepsEl.appendChild(row);
+    setTimeout(()=>row.classList.add('appear'), i*150);
+  });
+  playBeep(440,0.1);setTimeout(()=>playBeep(550,0.15),150);
+}
+
+// QUIZ
+function checkOpt(btn, groupId, isCorrect, feedbackId, msg){
+  playClick();
+  const group=document.getElementById(groupId);
+  if(!group) return;
+  group.querySelectorAll('.option').forEach(b=>{b.disabled=true;b.onclick=null;});
+  state.total++;
+  const fb=document.getElementById(feedbackId);
+  if(isCorrect){
+    btn.classList.add('correct');
+    state.correct++;
+    state.combo++;
+    state.maxCombo=Math.max(state.maxCombo,state.combo);
+    addStars(1);
+    playSuccess();
+    if(fb){fb.className='feedback good show';fb.innerHTML='🎉 '+msg;}
+    if(groupId.startsWith('boss')) { state.bossCount++; if(state.bossCount>=2) state.bossHit=true; }
+    checkBadges(groupId);
+  } else {
+    btn.classList.add('wrong');
+    state.combo=0;
+    playError();
+    if(fb){fb.className='feedback bad show';fb.innerHTML='💪 '+msg;}
+  }
+  updateSectionProgress();
+}
+
+function checkFillST(inputId, feedbackId, acceptList, explanation){
+  playClick();
+  const input=document.getElementById(inputId);
+  const fb=document.getElementById(feedbackId);
+  if(!input||!fb) return;
+  const val=input.value.trim().replace(/[，。！？,\.!?\s]/g,'');
+  const found=acceptList.some(a=>val.includes(a.replace(/[，。！？,\.!?\s]/g,'')));
+  state.total++;
+  if(found){
+    input.classList.add('correct-input');
+    state.correct++;
+    state.combo++;
+    addStars(1);
+    playSuccess();
+    fb.className='feedback good show';
+    fb.innerHTML='🎉 '+explanation;
+    checkBadges('fill_'+inputId);
+  } else {
+    input.classList.add('wrong-input');
+    state.combo=0;
+    playError();
+    fb.className='feedback bad show';
+    fb.innerHTML='💪 还不太对。'+explanation;
+  }
+  updateSectionProgress();
+}
+
+function checkBossQ(n){
+  const bossData = [
+    null,
+    {accepts:['同学们把这篇课文认真地学习了','同学们把这篇课文认真学习了'],exp:'把字句：同学们（主语）+把+这篇课文（宾语）+认真地学习了（动词）。'},
+    {accepts:['这篇课文被同学们认真地学习了','这篇课文被同学们认真学习了'],exp:'被字句：这篇课文（原宾语）+被+同学们（原主语）+认真地学习了。'}
+  ];
+  if(n>2) return;
+  const d=bossData[n];
+  const input=document.getElementById('bossQ'+n);
+  const fb=document.getElementById('bossFeed'+n);
+  const val=input.value.trim().replace(/[，。！？,\.!?\s]/g,'');
+  const found=d.accepts.some(a=>val.includes(a.replace(/[，。！？,\.!?\s]/g,'')));
+  state.total++;
+  if(found){
+    input.classList.add('correct-input');
+    state.correct++;
+    state.combo++;
+    state.bossCount++;
+    if(state.bossCount>=2) state.bossHit=true;
+    addStars(2);
+    playSuccess();
+    fb.className='feedback good show';
+    fb.innerHTML='✅ Boss Q'+n+' 击破！'+d.exp+' +2⭐';
+    checkBadges('boss');
+  } else {
+    input.classList.add('wrong-input');
+    playError();
+    fb.className='feedback bad show';
+    fb.innerHTML='💪 '+d.exp;
+  }
+  updateSectionProgress();
+}
+
+// BADGES
+function checkBadges(context){
+  if(!state.badges.has('start')) unlockBadge('badge-start','start','🌱 初出茅庐 解锁！');
+  if((state.correct>=1) && !state.badges.has('bz')) unlockBadge('badge-bz','bz','🤲 把字高手 解锁！');
+  if((state.correct>=2) && !state.badges.has('beiز')) unlockBadge('badge-beiز','beiز','🎯 被字高手 解锁！');
+  if((state.correct>=3) && !state.badges.has('rp')) unlockBadge('badge-rp','rp','❓ 反问达人 解锁！');
+  if((state.correct>=4) && !state.badges.has('double')) unlockBadge('badge-double','double','✖️ 双否大师 解锁！');
+  if(state.bossHit && !state.badges.has('boss')) unlockBadge('badge-boss','boss','👾 Boss猎手 解锁！');
+  if(state.maxCombo>=4 && !state.badges.has('combo')) unlockBadge('badge-combo','combo','🔥 连击大师 解锁！');
+}
+function unlockBadge(elemId, key, msg){
+  state.badges.add(key);
+  const el=document.getElementById(elemId);
+  if(el) el.classList.remove('locked');
+  showToast('🏅 '+msg);
+  playAchieve();
+  document.getElementById('statBadges').textContent=state.badges.size;
+}
+
+// REPORT
+function generateReport(){
+  const pct=state.total>0?Math.round(state.correct/state.total*100):0;
+  document.getElementById('scoreNum').textContent=pct+'%';
+  document.getElementById('scoreCircle').style.setProperty('--pct',pct+'%');
+  document.getElementById('statStars').textContent=state.stars;
+  document.getElementById('statCorrect').textContent=state.correct+'/'+state.total;
+  document.getElementById('statBadges').textContent=state.badges.size;
+  if(pct>=85){document.getElementById('reportTitle').textContent='🔄 句式变形金刚！';document.getElementById('reportMsg').textContent='太厉害了！8种句式难不倒你，你能灵活变换各种句式！';unlockBadge('badge-transformer','transformer','🔄 句式变形金刚 解锁！');}
+  else if(pct>=65){document.getElementById('reportTitle').textContent='🌟 句式小达人！';document.getElementById('reportMsg').textContent='掌握得很好！把字句和被字句是基础，反问句需要多练习！';}
+  else{document.getElementById('reportTitle').textContent='💪 继续加油！';document.getElementById('reportMsg').textContent='句式转换需要多练。记住各种结构，多做例题你会越来越好！';}
+  playAchieve();
+}
+
+// EXPAND
+function toggleExpand(h){ h.nextElementSibling.classList.toggle('open'); h.querySelector('.expand-arrow').classList.toggle('open'); }
+
+// BUDDY
+const tips=['💡 把字句=主动，被字句=被动。找"把"=主语在前，找"被"=宾语在前！','🔍 反问句≠疑问句！反问句是强调，不需要真正的回答。','🎯 双重否定=肯定，但语气更强。"不得不去"比"必须去"语气更强烈！','✏️ 改反问句口诀：肯定句→加"难道"+"不"+"吗"；否定句→去掉"不"加"难道"+"吗"！'];
+let tIdx=0,buddyOpen=false;
+function toggleBuddy(){ playClick(); buddyOpen=!buddyOpen; document.getElementById('buddyPopup').classList.toggle('open',buddyOpen); if(buddyOpen){document.getElementById('buddyTip').innerHTML=tips[tIdx%tips.length];tIdx++;} }
+
+// TOAST
+let toastTimer;
+function showToast(msg){ const t=document.getElementById('mainToast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2800); }
+
+// SECTION PROGRESS
+function updateSectionProgress(){
+  const secs=['sec-obj','sec-warm','sec-lv1','sec-lv2','sec-lv3','sec-boss','sec-report'];
+  let done=0;
+  secs.forEach((sid,i)=>{ const sec=document.getElementById(sid); if(!sec) return; if(sec.querySelectorAll('.option[disabled],.fill-input.correct-input,.fill-input.wrong-input').length>0){done++;document.getElementById('step'+i)?.classList.add('done');} });
+  updateProgress(done,7);
+}
+
+// INIT
+document.addEventListener('DOMContentLoaded',()=>{
+  let st;
+  window.addEventListener('scroll',()=>{clearTimeout(st);st=setTimeout(()=>{try{localStorage.setItem('teachany_scroll_'+COURSE_ID,String(window.scrollY));}catch(e){}},500);});
+  try{const pos=localStorage.getItem('teachany_scroll_'+COURSE_ID);if(pos)requestAnimationFrame(()=>window.scrollTo(0,parseInt(pos)));}catch(e){}
+  setTimeout(()=>{ if(!state.badges.has('start')) unlockBadge('badge-start','start','🌱 欢迎来到句式转换课堂！'); },1500);
+  updateProgress(0);
+});
+</script>
+</body>
+</html>
