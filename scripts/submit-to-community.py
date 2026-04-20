@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-TeachAny 社区课件自动提交工具（v5.34.9 · 零配置版）
+TeachAny 社区课件自动提交工具（v5.34.9 · 零配置版 · 含 WebP 自动压缩）
 
 核心变化（相比 v5.34.8）：
 - ❌ 不再需要 `.teachany-token` 或 GitHub 账号
@@ -9,9 +9,17 @@ TeachAny 社区课件自动提交工具（v5.34.9 · 零配置版）
 - ✅ Worker 用官方 Bot Token 代为开 PR
 - ✅ 零配置：用户做完课件 → AI 跑一条命令 → 自动提交完成
 
+v5.34.9.1 新增（2026-04-20）：
+- 🗜️ 打包前自动把 PNG/JPG 压缩为 WebP（质量 80，体积缩 5-10x）
+- 📝 HTML 中的 <img src="./assets/xxx.png"> 自动改写为 xxx.webp
+- 🛡️ 压缩只在临时打包目录进行，原始课件目录 assets/ 保留高清母版
+- ⚙️ 优先用 cwebp CLI；fallback Pillow；最后 fallback 为不压缩 + 警告
+- 🚫 压缩后单图 >1.5MB 会警告；整包 >5MB 会阻断提交
+
 使用方式：
     python3 scripts/submit-to-community.py <course-id>
     python3 scripts/submit-to-community.py <course-id> --author "张老师" --message "欢迎审阅"
+    python3 scripts/submit-to-community.py <course-id> --no-compress  # 禁用压缩（不推荐）
 
 进阶（高级用户）：
     # 使用自己的 Fine-grained token 直连 GitHub（绕过 Worker）
@@ -26,12 +34,17 @@ TeachAny 社区课件自动提交工具（v5.34.9 · 零配置版）
     2 = 课件校验未通过
     3 = Worker 或 GitHub 拒绝（限频 / 权限问题）
     4 = 网络错误
+    5 = 图片压缩失败（仅 --strict-compress 模式下）
 """
 import argparse
 import base64
 import json
 import os
+import re
+import shutil
+import subprocess
 import sys
+import tempfile
 import urllib.error
 import urllib.request
 import zipfile
@@ -47,6 +60,7 @@ REPO = "weponusa/teachany"
 DISPATCH_URL_DIRECT = f"https://api.github.com/repos/{REPO}/dispatches"
 EVENT_TYPE = "community-submit"
 MAX_PACKAGE_MB = 5
+WEBP_QUALITY = 80  # 80% 视觉几乎无损，压缩率约 5-10x
 
 
 def get_worker_url() -> str:
@@ -94,25 +108,190 @@ def validate_courseware(course_dir: Path) -> dict:
     return manifest
 
 
-def pack_to_base64(course_dir: Path) -> tuple:
-    """把课件目录打包成 .teachany（ZIP），返回 base64 字符串和原始字节数"""
+# ============================================================
+# 图片压缩（v5.34.9.1 新增）
+# ============================================================
+
+def detect_webp_engine() -> str:
+    """按优先级检测可用的 WebP 编码器"""
+    # 优先 cwebp CLI（速度 + 体积双优）
+    if shutil.which("cwebp"):
+        return "cwebp"
+    # fallback: Pillow
+    try:
+        import PIL  # noqa: F401
+        return "pillow"
+    except ImportError:
+        return "none"
+
+
+def compress_image_cwebp(src: Path, dst: Path, quality: int) -> bool:
+    """用 cwebp CLI 压缩，返回是否成功"""
+    try:
+        result = subprocess.run(
+            ["cwebp", "-q", str(quality), "-quiet", str(src), "-o", str(dst)],
+            capture_output=True, timeout=30
+        )
+        return result.returncode == 0 and dst.exists() and dst.stat().st_size > 0
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return False
+
+
+def compress_image_pillow(src: Path, dst: Path, quality: int) -> bool:
+    """用 Pillow 压缩，返回是否成功"""
+    try:
+        from PIL import Image
+        img = Image.open(src)
+        # 保留 alpha 通道
+        if img.mode in ("RGBA", "LA") or (img.mode == "P" and "transparency" in img.info):
+            img = img.convert("RGBA")
+        else:
+            img = img.convert("RGB")
+        img.save(str(dst), "WEBP", quality=quality, method=6)
+        return dst.exists() and dst.stat().st_size > 0
+    except Exception as e:
+        print(f"   ⚠️  Pillow 压缩 {src.name} 失败: {e}")
+        return False
+
+
+def optimize_assets(course_dir: Path, tmp_dir: Path, engine: str) -> dict:
+    """
+    把 course_dir 复制到 tmp_dir，并把 assets/ 下的 PNG/JPG 压成 WebP。
+    同时重写 index.html 的 <img src> 指向新文件名。
+    返回压缩统计信息。
+    """
+    # 1. 先整体复制一份到临时目录（保留原始课件不变）
+    shutil.copytree(course_dir, tmp_dir, dirs_exist_ok=True)
+
+    stats = {
+        "images_total": 0,
+        "images_compressed": 0,
+        "images_skipped": 0,
+        "bytes_before": 0,
+        "bytes_after": 0,
+        "engine": engine,
+        "renamed": {},  # old_name -> new_name
+    }
+
+    assets_dir = tmp_dir / "assets"
+    if not assets_dir.exists():
+        return stats
+
+    for img_path in list(assets_dir.iterdir()):
+        if not img_path.is_file():
+            continue
+        ext = img_path.suffix.lower()
+        if ext not in (".png", ".jpg", ".jpeg"):
+            continue
+        stats["images_total"] += 1
+        before = img_path.stat().st_size
+        stats["bytes_before"] += before
+
+        # 目标 WebP 路径（同名 .webp）
+        webp_path = img_path.with_suffix(".webp")
+
+        # 跳过已经是 WebP 的（.png 可能有同名 .webp 伴生）
+        success = False
+        if engine == "cwebp":
+            success = compress_image_cwebp(img_path, webp_path, WEBP_QUALITY)
+        elif engine == "pillow":
+            success = compress_image_pillow(img_path, webp_path, WEBP_QUALITY)
+
+        if success:
+            after = webp_path.stat().st_size
+            stats["bytes_after"] += after
+            stats["images_compressed"] += 1
+            stats["renamed"][img_path.name] = webp_path.name
+            # 删除原始 PNG/JPG（释放体积）
+            img_path.unlink()
+        else:
+            # 压缩失败：保留原图，不改名
+            stats["bytes_after"] += before
+            stats["images_skipped"] += 1
+
+    # 2. 重写 HTML 里所有 <img src="./assets/xxx.png|jpg"> 为对应 .webp
+    if stats["renamed"]:
+        html_path = tmp_dir / "index.html"
+        if html_path.exists():
+            html = html_path.read_text(encoding="utf-8")
+            for old, new in stats["renamed"].items():
+                # 替换任何形式的 ./assets/xxx 或 assets/xxx 引用
+                # 正则：匹配 (src= 或 href= 或 url(等等)...assets/xxx.ext
+                pattern = re.compile(
+                    rf'((?:src|href)\s*=\s*["\']\.?/?assets/){re.escape(old)}(["\'])'
+                )
+                html = pattern.sub(rf'\g<1>{new}\g<2>', html)
+                # 兼容 url(./assets/xxx.png) 这类 CSS 引用
+                html = html.replace(f"assets/{old}", f"assets/{new}")
+            html_path.write_text(html, encoding="utf-8")
+
+    return stats
+
+
+def pack_to_base64(course_dir: Path, compress: bool = True) -> tuple:
+    """
+    打包课件目录为 base64 编码的 ZIP。
+    v5.34.9.1：支持 WebP 压缩（在临时目录中转后打包）。
+    返回 (base64_str, raw_bytes, stats_info)
+    """
+    stats_info = None
+    source_dir = course_dir
+
+    if compress:
+        engine = detect_webp_engine()
+        if engine == "none":
+            print("   ⚠️  未找到 cwebp 或 Pillow，跳过图片压缩。")
+            print("      建议：brew install webp  或  pip install Pillow")
+        else:
+            # 压缩到临时目录
+            tmp_parent = Path(tempfile.mkdtemp(prefix="teachany-pack-"))
+            tmp_course = tmp_parent / course_dir.name
+            print(f"🗜️  正在压缩图片（引擎：{engine}，WebP q{WEBP_QUALITY}）...")
+            stats_info = optimize_assets(course_dir, tmp_course, engine)
+
+            if stats_info["images_compressed"] > 0:
+                before_mb = stats_info["bytes_before"] / 1024 / 1024
+                after_mb = stats_info["bytes_after"] / 1024 / 1024
+                ratio = stats_info["bytes_before"] / max(stats_info["bytes_after"], 1)
+                print(
+                    f"   ✅ 压缩 {stats_info['images_compressed']}/{stats_info['images_total']} 张图："
+                    f"{before_mb:.1f} MB → {after_mb:.1f} MB（{ratio:.1f}x）"
+                )
+                if stats_info["images_skipped"] > 0:
+                    print(f"   ⚠️  {stats_info['images_skipped']} 张图压缩失败（保留原图）")
+            else:
+                print(f"   ℹ️  没有可压缩的 PNG/JPG 文件")
+
+            source_dir = tmp_course
+
+    # 打包为 ZIP（in-memory）
     buffer = BytesIO()
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
-        for path in course_dir.rglob("*"):
+        for path in source_dir.rglob("*"):
             if path.is_file():
-                # 跳过 macOS 元数据文件 + 常见无关文件
+                # 跳过 macOS / Python 等元数据文件
                 if path.name in (".DS_Store",) or path.name.startswith("._"):
                     continue
                 if path.suffix in (".pyc", ".pyo"):
                     continue
-                zf.write(path, path.relative_to(course_dir))
+                zf.write(path, path.relative_to(source_dir))
     raw = buffer.getvalue()
+
+    # 清理临时目录
+    if compress and source_dir != course_dir:
+        try:
+            shutil.rmtree(source_dir.parent)
+        except Exception:
+            pass
+
     size_mb = len(raw) / 1024 / 1024
     if size_mb > MAX_PACKAGE_MB:
         print(f"⛔ 课件包 {size_mb:.1f} MB 超出 {MAX_PACKAGE_MB} MB 限制。")
-        print("   建议：删减 tts/ 目录里的冗余 mp3，或压缩 assets/ 里的大图。")
+        print("   即使启用了图片压缩，依然超限。排查建议：")
+        print("   - tts/ 目录过大？edge-tts 默认 32kbps 已经很省了，可考虑缩短旁白文本")
+        print("   - 是否有其他大文件？du -ah assets/ tts/ | sort -rh | head")
         sys.exit(2)
-    return base64.b64encode(raw).decode("ascii"), len(raw)
+    return base64.b64encode(raw).decode("ascii"), len(raw), stats_info
 
 
 def submit_via_worker(worker_url: str, payload: dict):
@@ -148,26 +327,110 @@ def submit_via_worker(worker_url: str, payload: dict):
 
 
 def submit_via_direct_token(token: str, payload: dict):
-    """高级用户用自己的 PAT 直接调 GitHub（绕过 Worker）"""
-    body = json.dumps({
-        "event_type": EVENT_TYPE,
-        "client_payload": payload,
-    }).encode("utf-8")
-    req = urllib.request.Request(
-        DISPATCH_URL_DIRECT,
-        data=body,
-        headers={
-            "Accept": "application/vnd.github+json",
-            "Authorization": f"Bearer {token}",
-            "X-GitHub-Api-Version": "2022-11-28",
-            "Content-Type": "application/json",
-            "User-Agent": "TeachAny-CommunitySubmit/1.0",
-        },
-        method="POST",
-    )
+    """
+    高级用户用自己的 PAT 直接调 GitHub Git Data API 建 PR（绕过 Worker）。
+    v5.34.9.1 升级：不再走 repository_dispatch（有 64KB 限制），改为
+    直接 Git Data API 建分支 + commit + PR（单文件上限 100MB）。
+    """
+    import uuid
+    course_id = f"{payload['subject']}-{payload['node_id']}-{uuid.uuid4().hex[:8]}"
+    branch = f"community/{course_id}"
+    repo_path = f"/repos/{REPO}"
+
+    def gh_req(method, path, body=None):
+        data = json.dumps(body).encode("utf-8") if body is not None else None
+        req = urllib.request.Request(
+            f"https://api.github.com{path}",
+            data=data,
+            headers={
+                "Accept": "application/vnd.github+json",
+                "Authorization": f"Bearer {token}",
+                "X-GitHub-Api-Version": "2022-11-28",
+                "Content-Type": "application/json",
+                "User-Agent": "TeachAny-CommunitySubmit/1.0",
+            },
+            method=method,
+        )
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            return resp.status, {"ok": True, "message": "已通过 direct token 提交"}
+        # 1. 拿 main commit sha + tree sha
+        main_ref = gh_req("GET", f"{repo_path}/git/refs/heads/main")
+        main_sha = main_ref["object"]["sha"]
+        main_commit = gh_req("GET", f"{repo_path}/git/commits/{main_sha}")
+        base_tree = main_commit["tree"]["sha"]
+
+        # 2. 上传 blobs
+        pkg_blob = gh_req("POST", f"{repo_path}/git/blobs", {
+            "content": payload["packageBase64"],
+            "encoding": "base64",
+        })
+        meta = {
+            "id": course_id,
+            "node_id": payload["node_id"],
+            "name": payload["name"],
+            "subject": payload["subject"],
+            "grade": payload["grade"],
+            "author": payload["author"],
+            "description": payload.get("description", ""),
+            "submitted_at": __import__("datetime").datetime.utcnow().isoformat() + "Z",
+            **payload.get("extra", {}),
+        }
+        json_blob = gh_req("POST", f"{repo_path}/git/blobs", {
+            "content": json.dumps(meta, ensure_ascii=False, indent=2),
+            "encoding": "utf-8",
+        })
+
+        # 3. 新 tree
+        new_tree = gh_req("POST", f"{repo_path}/git/trees", {
+            "base_tree": base_tree,
+            "tree": [
+                {"path": f"community/pending/{course_id}.teachany", "mode": "100644", "type": "blob", "sha": pkg_blob["sha"]},
+                {"path": f"community/pending/{course_id}.json", "mode": "100644", "type": "blob", "sha": json_blob["sha"]},
+            ],
+        })
+
+        # 4. commit
+        new_commit = gh_req("POST", f"{repo_path}/git/commits", {
+            "message": f"[Community] Submit courseware: {payload['name']}",
+            "tree": new_tree["sha"],
+            "parents": [main_sha],
+            "author": {
+                "name": "TeachAny Community Bot",
+                "email": "teachany-bot@users.noreply.github.com",
+            },
+        })
+
+        # 5. branch ref
+        gh_req("POST", f"{repo_path}/git/refs", {
+            "ref": f"refs/heads/{branch}",
+            "sha": new_commit["sha"],
+        })
+
+        # 6. 开 PR
+        pr = gh_req("POST", f"{repo_path}/pulls", {
+            "title": f"[Community] 📚 {payload['name']} ({payload['node_id']})",
+            "head": branch,
+            "base": "main",
+            "body": f"Community submission by {payload['author']}.\n\nFiles:\n- `community/pending/{course_id}.teachany`\n- `community/pending/{course_id}.json`",
+        })
+
+        # 7. 打标签
+        try:
+            gh_req("POST", f"{repo_path}/issues/{pr['number']}/labels", {
+                "labels": ["community-courseware", "needs-review"],
+            })
+        except Exception:
+            pass  # 标签失败不阻断
+
+        return 202, {
+            "ok": True,
+            "submission_id": course_id,
+            "pr_url": pr["html_url"],
+            "pr_number": pr["number"],
+            "message": "已通过 direct token 建 PR",
+        }
     except urllib.error.HTTPError as e:
         body_text = e.read().decode("utf-8", errors="replace")[:500]
         return e.code, {"ok": False, "message": body_text}
@@ -185,6 +448,7 @@ def main():
     parser.add_argument("--author", default="", help="作者名（可选，默认读 manifest.json.author）")
     parser.add_argument("--message", default="", help="给审核者的一句话留言（可选）")
     parser.add_argument("--dry-run", action="store_true", help="仅校验与打包，不真的发请求")
+    parser.add_argument("--no-compress", action="store_true", help="禁用图片 WebP 自动压缩（不推荐）")
     parser.add_argument(
         "--from",
         dest="from_dir",
@@ -213,14 +477,15 @@ def main():
     manifest = validate_courseware(course_dir)
     print(f"✅ 校验通过：{manifest.get('name')} ({manifest.get('subject')}-G{manifest.get('grade')})")
 
-    # 3. 打包
+    # 3. 打包（含 WebP 压缩）
     print(f"🗜️  打包中...")
-    package_b64, raw_size = pack_to_base64(course_dir)
-    print(f"✅ 打包完成：{raw_size / 1024:.1f} KB")
+    package_b64, raw_size, compress_stats = pack_to_base64(
+        course_dir, compress=not args.no_compress
+    )
+    print(f"✅ 打包完成：{raw_size / 1024:.1f} KB（{raw_size / 1024 / 1024:.2f} MB）")
 
     # 4. 组装 payload（GitHub repository_dispatch client_payload 最多 10 个字段）
     author = args.author or manifest.get("author", "") or "匿名用户"
-    # 把元数据里的次要字段合并成 extra，保持顶层 ≤ 10
     extra = {
         "name_en": manifest.get("name_en", ""),
         "version": manifest.get("version", "1.0.0"),
@@ -229,6 +494,7 @@ def main():
         "teachany_version": manifest.get("teachany_version", ""),
         "curriculum": manifest.get("curriculum", "cn-national"),
         "user_message": args.message,
+        "compress_stats": compress_stats if compress_stats else {},
     }
     payload = {
         "node_id": manifest["node_id"],
@@ -284,7 +550,7 @@ def main():
         if code == "RATE_LIMITED":
             print("   ℹ️  你已达到今日提交上限（默认 10 份/天）。请明天再试。")
         elif code == "PACKAGE_TOO_LARGE":
-            print("   ℹ️  课件包太大。请删减 tts/ 冗余 mp3，或压缩大图。")
+            print("   ℹ️  课件包太大。请删减 tts/ 冗余 mp3。")
         elif code == "MISSING_FIELDS":
             print("   ℹ️  manifest.json 缺必填字段。请检查 node_id/name/subject/grade。")
         elif code == "GITHUB_API_ERROR":

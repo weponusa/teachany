@@ -1,14 +1,12 @@
 /**
- * TeachAny Community Submit Worker
+ * TeachAny Community Submit Worker (v2 · 直接建 PR · 突破 64KB 限制)
  * =================================
  *
- * Cloudflare Worker 脚本，作为 submit-to-community.py 和 GitHub API 之间的中转。
+ * v1（旧版）走 GitHub repository_dispatch，client_payload 硬上限 64KB，
+ * 压缩后的课件包仍会超限。
  *
- * 设计目标：
- * 1. 用户零配置：submit-to-community.py 直接 POST 到此 Worker，不需要 GitHub token
- * 2. Token 隔离：GitHub Bot Token 存在 Worker secret 里，用户看不到
- * 3. 限频防刷：同一 IP 每天最多提交 10 份课件
- * 4. 基础校验：payload 字段完整性 + 包大小上限 + manifest 必填字段
+ * v2（本版）改为：Worker 用 Bot Token 直接走 Git Data API 建分支 + commit
+ * 文件 + 开 PR，突破 64KB 限制（单文件上限 100 MB，但我们仍限 5 MB 避免滥用）。
  *
  * 请求格式（POST /api/submit）：
  * {
@@ -17,27 +15,17 @@
  *   "subject":       "history",
  *   "grade":         9,
  *   "author":        "张老师",
- *   "description":   "初中历史...",
- *   "version":       "1.0.0",
- *   "file_count":    12,
- *   "tags":          ["历史", "工业革命"],
- *   "user_message":  "欢迎审阅",
+ *   "description":   "...",
+ *   "extra":         { "name_en": "...", "version": "1.0.0", ... },
  *   "packageBase64": "<base64-encoded .teachany zip>"
  * }
- *
- * 响应格式：
- * { "ok": true,  "pr_url": "https://...", "message": "..." }
- * { "ok": false, "code": "RATE_LIMITED", "message": "..." }
- *
- * 环境变量（wrangler.toml 或 secret）：
- * - GITHUB_TOKEN: Fine-grained PAT，权限 Contents+PR+Metadata
- * - GITHUB_REPO:  "weponusa/teachany"
- * - RATE_LIMIT_KV: KV namespace binding（用于限频计数）
  */
 
-const REPO = "weponusa/teachany";
-const EVENT_TYPE = "community-submit";
-const MAX_PACKAGE_BYTES = 5 * 1024 * 1024; // 5MB
+const REPO_OWNER = "weponusa";
+const REPO_NAME = "teachany";
+const REPO = `${REPO_OWNER}/${REPO_NAME}`;
+const BASE_BRANCH = "main";
+const MAX_PACKAGE_BYTES = 5 * 1024 * 1024; // 5 MB
 const RATE_LIMIT_PER_IP_PER_DAY = 10;
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -48,20 +36,19 @@ const CORS_HEADERS = {
 
 export default {
   async fetch(request, env) {
-    // CORS preflight
     if (request.method === "OPTIONS") {
       return new Response(null, { headers: CORS_HEADERS });
     }
 
     const url = new URL(request.url);
 
-    // 健康检查
     if (url.pathname === "/" || url.pathname === "/health") {
       return jsonResponse({
         ok: true,
         service: "TeachAny Community Submit API",
-        version: "1.0.0",
+        version: "2.0.0",
         repo: REPO,
+        mode: "direct-pr",
       });
     }
 
@@ -73,7 +60,7 @@ export default {
       return jsonResponse({ ok: false, code: "METHOD_NOT_ALLOWED", message: "Use POST" }, 405);
     }
 
-    // 1. 限频检查
+    // 1. 限频
     const ip = request.headers.get("CF-Connecting-IP") || "unknown";
     const rlCheck = await checkRateLimit(env, ip);
     if (!rlCheck.ok) {
@@ -87,26 +74,19 @@ export default {
       );
     }
 
-    // 2. 解析 + 基础校验
+    // 2. 解析 payload
     let payload;
     try {
       payload = await request.json();
     } catch {
-      return jsonResponse(
-        { ok: false, code: "INVALID_JSON", message: "请求体不是合法 JSON" },
-        400
-      );
+      return jsonResponse({ ok: false, code: "INVALID_JSON", message: "请求体不是合法 JSON" }, 400);
     }
 
     const required = ["node_id", "name", "subject", "grade", "packageBase64"];
     const missing = required.filter((k) => !payload[k]);
     if (missing.length) {
       return jsonResponse(
-        {
-          ok: false,
-          code: "MISSING_FIELDS",
-          message: `缺少必填字段：${missing.join(", ")}`,
-        },
+        { ok: false, code: "MISSING_FIELDS", message: `缺少必填字段：${missing.join(", ")}` },
         400
       );
     }
@@ -118,74 +98,241 @@ export default {
         {
           ok: false,
           code: "PACKAGE_TOO_LARGE",
-          message: `课件包 ${(pkgBytes / 1024 / 1024).toFixed(1)} MB 超过 5 MB 限制`,
+          message: `课件包 ${(pkgBytes / 1024 / 1024).toFixed(1)} MB 超过 ${MAX_PACKAGE_BYTES / 1024 / 1024} MB 限制`,
         },
         413
       );
     }
 
-    // 4. 内容安全粗筛（可扩展）
+    // 4. 恶意内容粗筛
     if (containsSuspiciousContent(payload)) {
       return jsonResponse(
-        {
-          ok: false,
-          code: "CONTENT_REJECTED",
-          message: "提交内容含有可疑信息，已拒绝",
-        },
+        { ok: false, code: "CONTENT_REJECTED", message: "提交内容含有可疑信息，已拒绝" },
         400
       );
     }
 
-    // 5. 调用 GitHub repository_dispatch 触发 workflow
-    const githubResp = await fetch(`https://api.github.com/repos/${REPO}/dispatches`, {
-      method: "POST",
-      headers: {
-        Accept: "application/vnd.github+json",
-        Authorization: `Bearer ${env.GITHUB_TOKEN}`,
-        "X-GitHub-Api-Version": "2022-11-28",
-        "Content-Type": "application/json",
-        "User-Agent": "TeachAny-CommunityWorker/1.0",
-      },
-      body: JSON.stringify({
-        event_type: EVENT_TYPE,
-        client_payload: payload,
-      }),
-    });
-
-    if (!githubResp.ok) {
-      const errBody = await githubResp.text();
-      console.error(`GitHub API error ${githubResp.status}: ${errBody}`);
+    // 5. 直接走 Git Data API 建分支 + 上传文件 + 开 PR
+    try {
+      const result = await createPR(env, payload);
+      await incrementRateLimit(env, ip);
+      return jsonResponse(
+        {
+          ok: true,
+          submission_id: result.courseId,
+          pr_url: result.prUrl,
+          pr_number: result.prNumber,
+          message: "课件已成功提交！validate.yml 将在几秒后自动运行质检。",
+          actions_url: `https://github.com/${REPO}/actions`,
+        },
+        202
+      );
+    } catch (err) {
+      console.error("createPR failed:", err);
       return jsonResponse(
         {
           ok: false,
           code: "GITHUB_API_ERROR",
-          message: `GitHub 返回 ${githubResp.status}，请联系管理员。`,
-          detail: errBody.slice(0, 300),
+          message: `GitHub API 错误：${err.message}`,
+          detail: String(err).slice(0, 500),
         },
         502
       );
     }
-
-    // 6. 记录限频 + 返回成功
-    await incrementRateLimit(env, ip);
-    const submissionId = generateSubmissionId(payload);
-
-    return jsonResponse(
-      {
-        ok: true,
-        submission_id: submissionId,
-        message: "课件已成功提交！GitHub Actions 正在处理，约 1-2 分钟后 PR 会自动创建。",
-        actions_url: `https://github.com/${REPO}/actions`,
-        pulls_url: `https://github.com/${REPO}/pulls`,
-      },
-      202
-    );
   },
 };
 
-// ========================================================================
+// ===================================================================
+// GitHub Git Data API：建分支 + 上传文件 + 开 PR
+// ===================================================================
+
+async function createPR(env, payload) {
+  const token = env.GITHUB_TOKEN;
+  const courseId = buildCourseId(payload);
+  const branch = `community/${courseId}`;
+
+  // 5.1 拿到 main 分支的 commit SHA
+  const mainRef = await ghGet(
+    token,
+    `/repos/${REPO}/git/refs/heads/${BASE_BRANCH}`
+  );
+  const mainSha = mainRef.object.sha;
+
+  // 5.2 拿到 main commit 对应的 tree SHA
+  const mainCommit = await ghGet(token, `/repos/${REPO}/git/commits/${mainSha}`);
+  const baseTreeSha = mainCommit.tree.sha;
+
+  // 5.3 创建 blobs
+  //   - community/pending/<course-id>.teachany  (课件 zip 包)
+  //   - community/pending/<course-id>.json      (元数据)
+  const metaJson = JSON.stringify(buildMetaJson(payload, courseId), null, 2);
+
+  const [teachanyBlob, jsonBlob] = await Promise.all([
+    ghPost(token, `/repos/${REPO}/git/blobs`, {
+      content: payload.packageBase64,
+      encoding: "base64",
+    }),
+    ghPost(token, `/repos/${REPO}/git/blobs`, {
+      content: metaJson,
+      encoding: "utf-8",
+    }),
+  ]);
+
+  // 5.4 创建 tree（在 main 之上追加这两个文件）
+  const newTree = await ghPost(token, `/repos/${REPO}/git/trees`, {
+    base_tree: baseTreeSha,
+    tree: [
+      {
+        path: `community/pending/${courseId}.teachany`,
+        mode: "100644",
+        type: "blob",
+        sha: teachanyBlob.sha,
+      },
+      {
+        path: `community/pending/${courseId}.json`,
+        mode: "100644",
+        type: "blob",
+        sha: jsonBlob.sha,
+      },
+    ],
+  });
+
+  // 5.5 创建 commit
+  const newCommit = await ghPost(token, `/repos/${REPO}/git/commits`, {
+    message: `[Community] Submit courseware: ${payload.name}`,
+    tree: newTree.sha,
+    parents: [mainSha],
+    author: {
+      name: "TeachAny Community Bot",
+      email: "teachany-bot@users.noreply.github.com",
+    },
+  });
+
+  // 5.6 创建分支 ref
+  await ghPost(token, `/repos/${REPO}/git/refs`, {
+    ref: `refs/heads/${branch}`,
+    sha: newCommit.sha,
+  });
+
+  // 5.7 开 PR
+  const author = payload.author || "匿名用户";
+  const prBody = buildPRBody(payload, courseId);
+  const pr = await ghPost(token, `/repos/${REPO}/pulls`, {
+    title: `[Community] 📚 ${payload.name} (${payload.node_id})`,
+    head: branch,
+    base: BASE_BRANCH,
+    body: prBody,
+  });
+
+  // 5.8 给 PR 打标签（community-courseware + needs-review）
+  try {
+    await ghPost(token, `/repos/${REPO}/issues/${pr.number}/labels`, {
+      labels: ["community-courseware", "needs-review"],
+    });
+  } catch (e) {
+    // 标签可能不存在，忽略
+    console.warn("Add label failed (non-fatal):", e.message);
+  }
+
+  return {
+    courseId,
+    prUrl: pr.html_url,
+    prNumber: pr.number,
+  };
+}
+
+function buildCourseId(payload) {
+  const ts = Math.floor(Date.now() / 1000).toString(16);
+  return `${payload.subject}-${payload.node_id}-${ts}`;
+}
+
+function buildMetaJson(payload, courseId) {
+  const extra = payload.extra || {};
+  return {
+    id: courseId,
+    node_id: payload.node_id,
+    name: payload.name,
+    name_en: extra.name_en || "",
+    subject: payload.subject,
+    grade: payload.grade,
+    author: payload.author || "匿名用户",
+    description: payload.description || "",
+    version: extra.version || "1.0.0",
+    submitted_at: new Date().toISOString(),
+    file_count: extra.file_count || 0,
+    tags: extra.tags || [],
+    user_message: extra.user_message || "",
+    teachany_version: extra.teachany_version || "",
+    curriculum: extra.curriculum || "cn-national",
+    compress_stats: extra.compress_stats || {},
+  };
+}
+
+function buildPRBody(payload, courseId) {
+  const extra = payload.extra || {};
+  const fileCount = extra.file_count || "?";
+  const compress = extra.compress_stats || {};
+  let compressLine = "";
+  if (compress.images_compressed) {
+    const beforeMB = (compress.bytes_before / 1024 / 1024).toFixed(1);
+    const afterMB = (compress.bytes_after / 1024 / 1024).toFixed(1);
+    const ratio = (compress.bytes_before / Math.max(compress.bytes_after, 1)).toFixed(1);
+    compressLine = `\n- **WebP 压缩**: ${compress.images_compressed} 张图 ${beforeMB} → ${afterMB} MB（${ratio}x）`;
+  }
+  return `## Community Courseware Submission
+
+- **Name**: ${payload.name}
+- **Subject**: ${payload.subject}
+- **Grade**: ${payload.grade}
+- **Node ID**: \`${payload.node_id}\`
+- **Author**: ${payload.author || "匿名用户"}
+- **Files**: ${fileCount}${compressLine}
+
+### Files in this PR:
+- \`community/pending/${courseId}.json\` — 课件元数据
+- \`community/pending/${courseId}.teachany\` — 课件 ZIP 包
+
+### User Message
+${extra.user_message || "（无留言）"}
+
+---
+*Submitted via TeachAny Community Submit Worker v2 · 2026-04-20*`;
+}
+
+// ===================================================================
+// GitHub API Helpers
+// ===================================================================
+
+async function ghGet(token, path) {
+  const resp = await fetch(`https://api.github.com${path}`, {
+    headers: ghHeaders(token),
+  });
+  if (!resp.ok) throw new Error(`GET ${path} → ${resp.status} ${await resp.text()}`);
+  return resp.json();
+}
+
+async function ghPost(token, path, body) {
+  const resp = await fetch(`https://api.github.com${path}`, {
+    method: "POST",
+    headers: { ...ghHeaders(token), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!resp.ok) throw new Error(`POST ${path} → ${resp.status} ${await resp.text()}`);
+  return resp.json();
+}
+
+function ghHeaders(token) {
+  return {
+    Accept: "application/vnd.github+json",
+    Authorization: `Bearer ${token}`,
+    "X-GitHub-Api-Version": "2022-11-28",
+    "User-Agent": "TeachAny-CommunityWorker/2.0",
+  };
+}
+
+// ===================================================================
 // Helpers
-// ========================================================================
+// ===================================================================
 
 function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body, null, 2), {
@@ -215,12 +362,10 @@ async function incrementRateLimit(env, ip) {
   const key = `rl:${today}:${ip}`;
   const raw = await env.RATE_LIMIT_KV.get(key);
   const count = raw ? parseInt(raw, 10) : 0;
-  // 48h TTL（覆盖跨时区）
   await env.RATE_LIMIT_KV.put(key, String(count + 1), { expirationTtl: 172800 });
 }
 
 function containsSuspiciousContent(payload) {
-  // 超级保守的关键词黑名单。命中即拒绝。
   const blacklist = [
     "<script>alert",
     "eval(atob(",
@@ -228,30 +373,15 @@ function containsSuspiciousContent(payload) {
     "onerror=",
     "javascript:",
   ];
-  // 注意：packageBase64 不扫（base64 无意义），扫文本字段
   const textFields = [
     payload.name,
     payload.description,
     payload.author,
     payload.user_message,
-    (payload.tags || []).join(" "),
+    (payload.extra && payload.extra.tags ? payload.extra.tags : []).join(" "),
   ]
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
   return blacklist.some((kw) => textFields.includes(kw.toLowerCase()));
-}
-
-function generateSubmissionId(payload) {
-  const ts = Date.now().toString(36);
-  const hash = simpleHash(`${payload.node_id}${payload.name}${ts}`);
-  return `${payload.subject}-${hash}`;
-}
-
-function simpleHash(str) {
-  let h = 0;
-  for (let i = 0; i < str.length; i++) {
-    h = (h * 31 + str.charCodeAt(i)) | 0;
-  }
-  return Math.abs(h).toString(36).padStart(6, "0");
 }
