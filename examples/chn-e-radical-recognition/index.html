@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>部首识别 - 一年级语文</title>
+<style>
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--card:#fff;--ink:#1a1a2e;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);font-family:'楷体','KaiTi','STKaiti',serif;color:var(--ink);overflow-x:hidden;}
+
+/* HERO */
+#hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#fce4ec,#f8bbd0,#f48fb1);position:relative;overflow:hidden;}
+#hero h1{font-size:clamp(2.5rem,8vw,4.5rem);color:#c62828;text-shadow:3px 3px 0 rgba(0,0,0,.1);}
+#hero .subtitle{font-size:1.3rem;color:#e53935;margin-bottom:2rem;}
+.grade-badge{background:var(--accent);color:var(--ink);padding:.4rem 1.2rem;border-radius:20px;font-size:1rem;font-weight:bold;margin-bottom:1.5rem;}
+.btn-start{background:var(--primary);color:#fff;border:none;padding:1rem 3rem;font-size:1.3rem;
+  border-radius:50px;cursor:pointer;box-shadow:0 6px 20px rgba(255,107,107,.4);transition:all .3s;font-family:inherit;}
+.btn-start:hover{transform:translateY(-3px);}
+.float-radical{position:absolute;font-size:4rem;opacity:.1;animation:fr 5s ease-in-out infinite;}
+@keyframes fr{0%,100%{transform:translateY(0);}50%{transform:translateY(-15px);}}
+
+/* PROGRESS */
+#progress-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(255,255,255,.92);
+  backdrop-filter:blur(10px);padding:.5rem 1.5rem;display:flex;align-items:center;gap:1rem;
+  box-shadow:0 2px 10px rgba(0,0,0,.1);}
+.progress-track{flex:1;height:8px;background:#eee;border-radius:4px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:4px;transition:width .5s;}
+
+/* SECTIONS */
+section{min-height:100vh;padding:80px 20px 40px;max-width:950px;margin:0 auto;}
+.section-title{font-size:2rem;color:var(--primary);margin-bottom:1.5rem;text-align:center;}
+.section-title::after{content:'';display:block;width:60px;height:4px;background:var(--accent);margin:.5rem auto 0;border-radius:2px;}
+nav.snav{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-top:2rem;}
+nav.snav button{background:#fff;border:2px solid #eee;padding:.5rem 1.2rem;border-radius:20px;
+  cursor:pointer;font-family:inherit;transition:all .2s;}
+nav.snav button:hover{background:var(--primary);color:#fff;border-color:var(--primary);}
+
+/* RADICAL CARDS */
+.radical-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1.2rem;margin-bottom:1.5rem;}
+.radical-card{background:var(--card);border-radius:20px;padding:1.5rem;text-align:center;cursor:pointer;
+  box-shadow:0 4px 15px rgba(0,0,0,.08);border:3px solid transparent;transition:all .3s;position:relative;overflow:hidden;}
+.radical-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:20px 20px 0 0;}
+.radical-card.r-water::before{background:#2196f3;}
+.radical-card.r-fire::before{background:#f44336;}
+.radical-card.r-wood::before{background:#4caf50;}
+.radical-card.r-person::before{background:#9c27b0;}
+.radical-card.r-heart::before{background:#e91e63;}
+.radical-card.r-mouth::before{background:#ff9800;}
+.radical-card.r-sun::before{background:#ffc107;}
+.radical-card.r-earth::before{background:#795548;}
+.radical-card:hover,.radical-card.active{border-color:var(--primary);transform:translateY(-4px);box-shadow:0 8px 25px rgba(0,0,0,.15);}
+.radical-char{font-size:3.5rem;margin-bottom:.5rem;line-height:1;}
+.radical-name{font-size:1.1rem;font-weight:bold;color:var(--ink);margin-bottom:.2rem;}
+.radical-meaning{font-size:.8rem;color:#888;}
+.radical-count{position:absolute;top:8px;right:8px;background:var(--accent);border-radius:50%;
+  width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:bold;}
+
+/* DETAIL PANEL */
+.detail-panel{background:var(--card);border-radius:20px;padding:2rem;box-shadow:0 6px 25px rgba(0,0,0,.12);margin-bottom:1.5rem;}
+.detail-header{display:flex;gap:1.5rem;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;}
+.detail-char-big{font-size:6rem;color:var(--primary);line-height:1;}
+.detail-info h2{font-size:1.6rem;color:var(--ink);margin-bottom:.4rem;}
+.detail-info p{font-size:.95rem;color:#666;line-height:1.6;}
+.detail-examples{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:.8rem;margin-top:1rem;}
+.example-word{background:#f5f5f5;border-radius:12px;padding:.8rem;text-align:center;cursor:pointer;
+  transition:all .2s;border:2px solid transparent;}
+.example-word:hover{background:var(--accent);border-color:var(--primary);}
+.example-word .word-char{font-size:1.8rem;color:var(--ink);}
+.example-word .word-meaning{font-size:.75rem;color:#888;margin-top:.2rem;}
+.example-word .radical-highlight{color:var(--primary);font-weight:bold;}
+
+/* MATCHING GAME */
+.match-game{background:var(--card);border-radius:20px;padding:2rem;box-shadow:0 6px 25px rgba(0,0,0,.12);}
+.match-instructions{font-size:1rem;color:#666;text-align:center;margin-bottom:1.5rem;}
+.match-columns{display:grid;grid-template-columns:1fr 1fr;gap:2rem;}
+.match-col{display:flex;flex-direction:column;gap:.8rem;}
+.match-col-title{text-align:center;font-size:1rem;color:var(--secondary);margin-bottom:.5rem;font-weight:bold;}
+.match-item{background:#f5f5f5;border:2px solid #eee;border-radius:12px;padding:.8rem 1rem;
+  text-align:center;cursor:pointer;transition:all .2s;user-select:none;}
+.match-item:hover{border-color:var(--secondary);}
+.match-item.selected{background:var(--accent);border-color:var(--primary);}
+.match-item.matched-ok{background:#c8f7c5;border-color:#4caf50;}
+.match-item.matched-no{background:#ffd7d7;border-color:#f44;}
+.match-item .mi-char{font-size:2rem;margin-bottom:.2rem;}
+.match-item .mi-label{font-size:.8rem;color:#666;}
+.match-score{text-align:center;margin-top:1rem;font-size:1.1rem;color:var(--primary);}
+
+/* FLASH CARDS */
+.flashcard-wrap{perspective:600px;width:200px;height:200px;margin:0 auto;cursor:pointer;}
+.flashcard{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .6s;}
+.flashcard.flipped{transform:rotateY(180deg);}
+.flashcard-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:20px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  box-shadow:0 8px 25px rgba(0,0,0,.15);}
+.flashcard-front{background:linear-gradient(135deg,var(--primary),#e53935);color:#fff;}
+.flashcard-back{background:linear-gradient(135deg,var(--secondary),#26a69a);color:#fff;transform:rotateY(180deg);}
+.flashcard-face .fc-char{font-size:5rem;margin-bottom:.5rem;}
+.flashcard-face .fc-hint{font-size:.9rem;opacity:.8;}
+.flashcard-face .fc-meaning{font-size:1.2rem;font-weight:bold;}
+.fc-nav{display:flex;gap:1rem;justify-content:center;margin-top:1rem;}
+
+/* FIND RADICAL */
+.find-game{background:var(--card);border-radius:20px;padding:2rem;box-shadow:0 6px 25px rgba(0,0,0,.12);}
+.find-question{font-size:1.1rem;color:var(--ink);margin-bottom:1rem;text-align:center;}
+.find-chars{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin:1.5rem 0;}
+.find-char-item{background:#f5f5f5;border:3px solid transparent;border-radius:16px;padding:1rem 1.5rem;
+  font-size:2.5rem;cursor:pointer;transition:all .2s;}
+.find-char-item:hover{border-color:var(--secondary);}
+.find-char-item.correct-pick{border-color:#4caf50;background:#c8f7c5;animation:correct .4s ease;}
+.find-char-item.wrong-pick{border-color:#f44;background:#ffd7d7;animation:wrong .4s ease;}
+@keyframes correct{0%,100%{transform:scale(1);}50%{transform:scale(1.2);}}
+@keyframes wrong{0%,100%{transform:scale(1);}25%,75%{transform:translateX(-5px);}50%{transform:translateX(5px);}}
+.find-progress{display:flex;gap:4px;justify-content:center;margin:1rem 0;}
+.find-dot{width:12px;height:12px;border-radius:50%;background:#eee;}
+.find-dot.done{background:var(--secondary);}
+.find-dot.current{background:var(--primary);}
+
+/* LEVEL HEADER */
+.level-header{background:linear-gradient(135deg,var(--primary),#c62828);color:#fff;
+  border-radius:16px 16px 0 0;padding:1rem 1.5rem;display:flex;align-items:center;gap:.8rem;}
+.level-num{background:rgba(255,255,255,.3);border-radius:50%;width:36px;height:36px;
+  display:flex;align-items:center;justify-content:center;font-weight:bold;}
+.level-body{background:var(--card);border-radius:0 0 16px 16px;padding:1.5rem;
+  box-shadow:0 6px 20px rgba(0,0,0,.1);margin-bottom:2rem;}
+.ctrl-btn{background:#fff;border:2px solid var(--secondary);color:var(--secondary);padding:.5rem 1.2rem;
+  border-radius:20px;cursor:pointer;font-family:inherit;transition:all .2s;}
+.ctrl-btn:hover{background:var(--secondary);color:#fff;}
+.ctrl-btn.primary{background:var(--primary);border-color:var(--primary);color:#fff;}
+
+/* BOSS */
+#boss-section{background:linear-gradient(135deg,#4a148c,#7b1fa2);}
+#boss-section .section-title{color:#ffe66d;}
+.boss-box{background:rgba(255,255,255,.08);border-radius:20px;padding:2rem;border:2px solid rgba(255,230,110,.3);}
+.timer-bar{height:8px;background:rgba(255,255,255,.2);border-radius:4px;overflow:hidden;margin:1rem 0;}
+.timer-fill{height:100%;background:linear-gradient(90deg,#4ecdc4,#ffe66d);transition:width .1s linear;}
+.boss-q-char{font-size:5rem;color:#ffe66d;text-align:center;text-shadow:0 0 20px rgba(255,230,110,.5);margin:1rem 0;}
+.boss-opts-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.8rem;max-width:400px;margin:0 auto;}
+.boss-opt{background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.3);color:#fff;
+  padding:.8rem;border-radius:12px;cursor:pointer;font-size:1.5rem;transition:all .2s;font-family:inherit;}
+.boss-opt:hover{background:rgba(255,255,255,.25);}
+.boss-opt.b-ok{background:rgba(100,200,100,.4);border-color:#4caf50;}
+.boss-opt.b-no{background:rgba(255,100,100,.3);border-color:#f44;}
+#boss-section .ctrl-btn{border-color:#ffe66d;color:#ffe66d;}
+#boss-section .ctrl-btn:hover{background:#ffe66d;color:#4a148c;}
+
+/* SCORECARD */
+#scorecard{background:linear-gradient(135deg,#e8f5e9,#c8e6c9);}
+.big-score{font-size:5rem;color:var(--primary);font-weight:bold;text-align:center;}
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin:2rem 0;}
+.ach-card{background:#fff;border-radius:16px;padding:1.2rem;text-align:center;
+  box-shadow:0 4px 12px rgba(0,0,0,.08);border:2px solid #eee;}
+.ach-card.unlocked{border-color:#ffe66d;}
+.ach-card.locked{opacity:.4;filter:grayscale(1);}
+
+/* AI BUDDY */
+#ai-buddy{position:fixed;bottom:20px;right:20px;z-index:200;}
+.buddy-btn{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#f48fb1,#e91e63);
+  border:none;font-size:1.8rem;cursor:pointer;box-shadow:0 4px 15px rgba(233,30,99,.4);transition:transform .2s;}
+.buddy-btn:hover{transform:scale(1.1);}
+.buddy-chat{position:absolute;bottom:70px;right:0;width:250px;background:#fff;
+  border-radius:16px;padding:1rem;box-shadow:0 8px 30px rgba(0,0,0,.15);display:none;}
+.buddy-chat.open{display:block;animation:su .3s ease;}
+@keyframes su{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.buddy-tip-list{list-style:none;margin-top:.5rem;}
+.buddy-tip-list li{font-size:.8rem;color:#555;padding:.3rem 0;border-bottom:1px solid #f5f5f5;}
+.buddy-tip-list li:last-child{border:none;}
+.buddy-tip-list li::before{content:'💡 ';}
+
+#toast{position:fixed;top:80px;left:50%;transform:translateX(-50%) translateY(-100px);
+  background:linear-gradient(135deg,#ff6b6b,#e53935);color:#fff;padding:.8rem 2rem;
+  border-radius:50px;z-index:300;transition:transform .4s;white-space:nowrap;}
+#toast.show{transform:translateX(-50%) translateY(0);}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;
+  justify-content:center;z-index:400;padding:20px;}
+.modal.open{display:flex;}
+.modal-box{background:#fff;border-radius:24px;padding:2rem;max-width:380px;width:100%;
+  text-align:center;animation:popIn .3s ease;}
+@keyframes popIn{from{transform:scale(.8);opacity:0;}to{transform:scale(1);opacity:1;}}
+.modal-btn{background:var(--primary);color:#fff;border:none;padding:.8rem 2rem;border-radius:50px;font-size:1rem;cursor:pointer;font-family:inherit;}
+
+.xp-display{font-size:.9rem;color:#666;}
+.stars-display{font-size:1.1rem;}
+</style>
+</head>
+<body>
+
+<div id="progress-bar" style="display:none;">
+  <span>🌟</span>
+  <div class="progress-track"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+  <div class="xp-display" id="xp-disp">XP: 0</div>
+  <div class="stars-display" id="stars-disp">⭐⭐⭐⭐⭐</div>
+</div>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="float-radical" style="top:10%;left:5%;">氵</div>
+  <div class="float-radical" style="top:15%;right:8%;animation-delay:1s;">木</div>
+  <div class="float-radical" style="bottom:25%;left:10%;animation-delay:2.5s;">亻</div>
+  <div class="float-radical" style="bottom:15%;right:6%;animation-delay:4s;">口</div>
+  <div class="grade-badge">📚 一年级语文</div>
+  <h1>部首识别</h1>
+  <p class="subtitle">认识汉字家族，找到字的"密码"</p>
+  <button class="btn-start" onclick="startCourse()">🌟 开始探索</button>
+</section>
+
+<!-- OBJECTIVES -->
+<section id="objectives" style="display:none;">
+  <h2 class="section-title">学习目标</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;">
+    <div style="background:#fff;border-radius:16px;padding:1.5rem;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.08);border-top:4px solid #2196f3;">
+      <div style="font-size:3rem;margin-bottom:.8rem;">🔍</div><h3>认识部首</h3>
+      <p style="font-size:.85rem;color:#666;margin-top:.3rem;">认识8种常见部首，了解含义</p>
+    </div>
+    <div style="background:#fff;border-radius:16px;padding:1.5rem;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.08);border-top:4px solid #4caf50;">
+      <div style="font-size:3rem;margin-bottom:.8rem;">🃏</div><h3>图文配对</h3>
+      <p style="font-size:.85rem;color:#666;margin-top:.3rem;">通过图片理解部首的含义</p>
+    </div>
+    <div style="background:#fff;border-radius:16px;padding:1.5rem;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.08);border-top:4px solid #ff9800;">
+      <div style="font-size:3rem;margin-bottom:.8rem;">🎯</div><h3>找部首</h3>
+      <p style="font-size:.85rem;color:#666;margin-top:.3rem;">在汉字中准确识别部首位置</p>
+    </div>
+    <div style="background:#fff;border-radius:16px;padding:1.5rem;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.08);border-top:4px solid #9c27b0;">
+      <div style="font-size:3rem;margin-bottom:.8rem;">📖</div><h3>扩展字族</h3>
+      <p style="font-size:.85rem;color:#666;margin-top:.3rem;">记住每个部首下的常用汉字</p>
+    </div>
+  </div>
+  <nav class="snav"><button onclick="goSection('warmup')">热身活动 →</button></nav>
+</section>
+
+<!-- WARMUP -->
+<section id="warmup" style="display:none;">
+  <h2 class="section-title">认识部首大家族</h2>
+  <p style="text-align:center;color:#666;margin-bottom:1.5rem;">点击部首卡片，了解它的故事 👇</p>
+  <div class="radical-grid">
+    <div class="radical-card r-water" onclick="showRadicalDetail('water')">
+      <div class="radical-count">10+</div>
+      <div class="radical-char">氵</div>
+      <div class="radical-name">三点水</div>
+      <div class="radical-meaning">与水有关</div>
+    </div>
+    <div class="radical-card r-fire" onclick="showRadicalDetail('fire')">
+      <div class="radical-count">8+</div>
+      <div class="radical-char">火</div>
+      <div class="radical-name">火字旁</div>
+      <div class="radical-meaning">与火有关</div>
+    </div>
+    <div class="radical-card r-wood" onclick="showRadicalDetail('wood')">
+      <div class="radical-count">12+</div>
+      <div class="radical-char">木</div>
+      <div class="radical-name">木字旁</div>
+      <div class="radical-meaning">与树木有关</div>
+    </div>
+    <div class="radical-card r-person" onclick="showRadicalDetail('person')">
+      <div class="radical-count">15+</div>
+      <div class="radical-char">亻</div>
+      <div class="radical-name">单人旁</div>
+      <div class="radical-meaning">与人有关</div>
+    </div>
+    <div class="radical-card r-heart" onclick="showRadicalDetail('heart')">
+      <div class="radical-count">10+</div>
+      <div class="radical-char">忄</div>
+      <div class="radical-name">竖心旁</div>
+      <div class="radical-meaning">与心情有关</div>
+    </div>
+    <div class="radical-card r-mouth" onclick="showRadicalDetail('mouth')">
+      <div class="radical-count">12+</div>
+      <div class="radical-char">口</div>
+      <div class="radical-name">口字旁</div>
+      <div class="radical-meaning">与嘴巴有关</div>
+    </div>
+    <div class="radical-card r-sun" onclick="showRadicalDetail('sun')">
+      <div class="radical-count">8+</div>
+      <div class="radical-char">日</div>
+      <div class="radical-name">日字旁</div>
+      <div class="radical-meaning">与太阳有关</div>
+    </div>
+    <div class="radical-card r-earth" onclick="showRadicalDetail('earth')">
+      <div class="radical-count">10+</div>
+      <div class="radical-char">土</div>
+      <div class="radical-name">土字旁</div>
+      <div class="radical-meaning">与土地有关</div>
+    </div>
+  </div>
+  <div id="radical-detail-panel" style="display:none;">
+    <div class="detail-panel">
+      <div class="detail-header">
+        <div class="detail-char-big" id="dp-char">氵</div>
+        <div class="detail-info">
+          <h2 id="dp-name">三点水</h2>
+          <p id="dp-origin">起源说明</p>
+          <p id="dp-meaning">含义解释</p>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:.95rem;color:#888;margin-bottom:.8rem;">📚 认识这些字：</div>
+        <div class="detail-examples" id="dp-examples"></div>
+      </div>
+    </div>
+  </div>
+  <nav class="snav"><button onclick="goSection('level1')">第一关：认识 →</button></nav>
+</section>
+
+<!-- LEVEL 1: Flashcards -->
+<section id="level1" style="display:none;">
+  <div class="level-header">
+    <div class="level-num">1</div>
+    <div><div style="font-size:1.1rem;font-weight:bold;">第一关：记忆卡片</div>
+    <div style="font-size:.85rem;opacity:.8;">翻转卡片，记住部首和含义</div></div>
+    <div style="margin-left:auto;">⭐×25</div>
+  </div>
+  <div class="level-body">
+    <p style="text-align:center;color:#666;margin-bottom:1.5rem;">👆 点击卡片翻转，查看部首含义</p>
+    <div class="flashcard-wrap" onclick="flipCard()">
+      <div class="flashcard" id="flashcard">
+        <div class="flashcard-face flashcard-front">
+          <div class="fc-char" id="fc-front-char">氵</div>
+          <div class="fc-hint">这个部首是什么？</div>
+        </div>
+        <div class="flashcard-face flashcard-back">
+          <div class="fc-char" id="fc-back-char">💧</div>
+          <div class="fc-meaning" id="fc-back-meaning">三点水 = 与水有关</div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;color:#666;font-size:.9rem;margin:1rem 0;" id="fc-counter">第 1 / 8 张</div>
+    <div class="fc-nav">
+      <button class="ctrl-btn" onclick="prevCard()">← 上一张</button>
+      <button class="ctrl-btn primary" onclick="nextCard()">下一张 →</button>
+    </div>
+    <div style="text-align:center;margin-top:1rem;">
+      <button class="ctrl-btn primary" onclick="completeLevel1()">✓ 全部记住了！</button>
+    </div>
+  </div>
+  <nav class="snav"><button onclick="goSection('level2')">第二关：配对 →</button></nav>
+</section>
+
+<!-- LEVEL 2: Matching -->
+<section id="level2" style="display:none;">
+  <div class="level-header" style="background:linear-gradient(135deg,var(--secondary),#26a69a);">
+    <div class="level-num">2</div>
+    <div><div style="font-size:1.1rem;font-weight:bold;">第二关：图文配对</div>
+    <div style="font-size:.85rem;opacity:.8;">将部首与图片意思配对</div></div>
+    <div style="margin-left:auto;">⭐×30</div>
+  </div>
+  <div class="level-body">
+    <div class="match-game">
+      <div class="match-instructions">👆 先点击左边的部首，再点击右边对应的意思</div>
+      <div class="match-columns">
+        <div class="match-col">
+          <div class="match-col-title">部首</div>
+          <div id="left-items"></div>
+        </div>
+        <div class="match-col">
+          <div class="match-col-title">意思</div>
+          <div id="right-items"></div>
+        </div>
+      </div>
+      <div class="match-score">配对正确：<span id="match-count">0</span> / 6</div>
+      <div style="display:flex;gap:.8rem;justify-content:center;margin-top:1rem;">
+        <button class="ctrl-btn" onclick="resetMatch()">↺ 重置</button>
+        <button class="ctrl-btn primary" onclick="completeLevel2()">✓ 完成配对</button>
+      </div>
+    </div>
+  </div>
+  <nav class="snav"><button onclick="goSection('level3')">第三关：找部首 →</button></nav>
+</section>
+
+<!-- LEVEL 3: Find Radical -->
+<section id="level3" style="display:none;">
+  <div class="level-header" style="background:linear-gradient(135deg,#f4a261,#e76f51);">
+    <div class="level-num">3</div>
+    <div><div style="font-size:1.1rem;font-weight:bold;">第三关：找一找</div>
+    <div style="font-size:.85rem;opacity:.8;">找出含有指定部首的汉字</div></div>
+    <div style="margin-left:auto;">⭐×35</div>
+  </div>
+  <div class="level-body">
+    <div class="find-game">
+      <div class="find-question" id="find-q">找出含有 <b id="find-radical" style="color:var(--primary);font-size:1.5rem;">氵</b> 的字：</div>
+      <div class="find-chars" id="find-chars"></div>
+      <div class="find-progress" id="find-prog"></div>
+      <div style="display:flex;gap:.8rem;justify-content:center;margin-top:1rem;">
+        <button class="ctrl-btn" onclick="nextFindQ()">→ 下一题</button>
+        <button class="ctrl-btn primary" onclick="completeLevel3()">✓ 完成</button>
+      </div>
+    </div>
+  </div>
+  <nav class="snav"><button onclick="goSection('boss-section')">挑战Boss关 →</button></nav>
+</section>
+
+<!-- BOSS -->
+<section id="boss-section" style="display:none;">
+  <h2 class="section-title">⚔️ Boss关：部首大考验</h2>
+  <div class="boss-box">
+    <p style="color:#ccc;text-align:center;margin-bottom:1rem;">看汉字，选正确的部首！50秒内尽量多答题！</p>
+    <div class="timer-bar"><div class="timer-fill" id="boss-tf" style="width:100%"></div></div>
+    <div id="boss-time-d" style="color:#ffe66d;text-align:center;margin-bottom:1rem;">50秒</div>
+    <div id="boss-q-char" class="boss-q-char">—</div>
+    <p style="color:#aaa;text-align:center;margin-bottom:1rem;" id="boss-q-ask">这个字的部首是？</p>
+    <div class="boss-opts-grid" id="boss-opts-grid"></div>
+    <div style="color:#ffe66d;text-align:center;margin-top:1rem;font-size:1rem;">
+      ✅ <span id="boss-ok">0</span> &nbsp;❌ <span id="boss-no">0</span>
+    </div>
+    <div style="text-align:center;margin-top:1.5rem;">
+      <button class="ctrl-btn" onclick="startBoss()">🚀 开始挑战</button>
+    </div>
+  </div>
+  <nav class="snav"><button onclick="goSection('scorecard')">查看成绩 →</button></nav>
+</section>
+
+<!-- SCORECARD -->
+<section id="scorecard" style="display:none;">
+  <h2 class="section-title">🏆 成绩单</h2>
+  <div class="big-score" id="final-score">0</div>
+  <div style="text-align:center;margin-bottom:2rem;color:#666;font-size:1.2rem;">总分</div>
+  <div style="text-align:center;font-size:2rem;margin-bottom:1rem;" id="final-stars">⭐⭐⭐</div>
+  <div class="ach-grid" id="ach-grid"></div>
+  <div style="text-align:center;margin-top:1.5rem;">
+    <button class="btn-start" onclick="goSection('extension')" style="font-size:1rem;padding:.8rem 2rem;">继续学习 →</button>
+  </div>
+</section>
+
+<!-- EXTENSION -->
+<section id="extension" style="display:none;">
+  <h2 class="section-title">🌈 拓展：部首大全</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;">
+    <div style="background:#fff;border-radius:16px;padding:1.5rem;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.08);" onclick="showExtR('more')">
+      <div style="font-size:2.5rem;margin-bottom:.8rem;">📚</div>
+      <h3 style="color:var(--primary);">更多部首</h3>
+      <p style="font-size:.85rem;color:#666;">认识更多常见部首</p>
+    </div>
+    <div style="background:#fff;border-radius:16px;padding:1.5rem;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.08);" onclick="showExtR('history')">
+      <div style="font-size:2.5rem;margin-bottom:.8rem;">🏺</div>
+      <h3 style="color:var(--primary);">部首演变</h3>
+      <p style="font-size:.85rem;color:#666;">部首从象形到现代的变化</p>
+    </div>
+    <div style="background:#fff;border-radius:16px;padding:1.5rem;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.08);" onclick="showExtR('trick')">
+      <div style="font-size:2.5rem;margin-bottom:.8rem;">🧠</div>
+      <h3 style="color:var(--primary);">记忆小窍门</h3>
+      <p style="font-size:.85rem;color:#666;">用联想记忆法学部首</p>
+    </div>
+  </div>
+  <div id="ext-r-box" style="margin-top:2rem;background:#fff;border-radius:16px;padding:1.5rem;display:none;box-shadow:0 4px 12px rgba(0,0,0,.08);"></div>
+</section>
+
+<!-- AI BUDDY -->
+<div id="ai-buddy">
+  <div class="buddy-chat" id="buddy-chat">
+    <div style="font-size:.9rem;"><strong>🐛 小虫说：</strong></div>
+    <ul class="buddy-tip-list" id="buddy-tips">
+      <li>部首是汉字的"家族标志"</li>
+      <li>认识部首能猜出字的意思</li>
+    </ul>
+  </div>
+  <button class="buddy-btn" onclick="toggleBuddy()">🐛</button>
+</div>
+
+<div id="toast"></div>
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <div style="font-size:3.5rem;margin-bottom:1rem;" id="modal-icon">🎉</div>
+    <div style="font-size:1.4rem;color:var(--primary);margin-bottom:.5rem;" id="modal-title">太棒了！</div>
+    <div style="color:#666;margin-bottom:1.5rem;" id="modal-msg"></div>
+    <button class="modal-btn" onclick="closeModal()">继续 →</button>
+  </div>
+</div>
+
+<script>
+// STATE
+const S={xp:0,stars:0,section:'hero',achievements:[],fcIndex:0,fcFlipped:false,
+  matchSelected:null,matchDone:0,findQIndex:0,findDone:[],
+  bossTimer:null,bossTime:50,bossOk:0,bossNo:0,currentBossQ:null};
+
+// DATA
+const radicals={
+  water:{char:'氵',name:'三点水',emoji:'💧',origin:'古代"水"字演变而来',meaning:'与水、液体有关',
+    examples:[{c:'河',r:'氵',m:'河流'},{c:'海',r:'氵',m:'大海'},{c:'湖',r:'氵',m:'湖泊'},{c:'游',r:'氵',m:'游泳'},{c:'泡',r:'氵',m:'泡泡'},{c:'泳',r:'氵',m:'游泳'}]},
+  fire:{char:'火',name:'火字旁',emoji:'🔥',origin:'象形字，像火焰的形状',meaning:'与火、热有关',
+    examples:[{c:'灯',r:'火',m:'灯光'},{c:'炸',r:'火',m:'爆炸'},{c:'烧',r:'火',m:'燃烧'},{c:'炮',r:'火',m:'炮竹'},{c:'炉',r:'火',m:'炉子'}]},
+  wood:{char:'木',name:'木字旁',emoji:'🌲',origin:'象形字，像一棵树',meaning:'与树木、植物有关',
+    examples:[{c:'林',r:'木',m:'树林'},{c:'桌',r:'木',m:'桌子'},{c:'椅',r:'木',m:'椅子'},{c:'树',r:'木',m:'树木'},{c:'柴',r:'木',m:'柴火'},{c:'板',r:'木',m:'木板'}]},
+  person:{char:'亻',name:'单人旁',emoji:'🧍',origin:'人字的变体，站立的人形',meaning:'与人、人的行为有关',
+    examples:[{c:'你',r:'亻',m:'你好'},{c:'他',r:'亻',m:'他/她'},{c:'们',r:'亻',m:'们（复数）'},{c:'休',r:'亻',m:'休息'},{c:'住',r:'亻',m:'住所'}]},
+  heart:{char:'忄',name:'竖心旁',emoji:'❤️',origin:'心字的变体，表示心脏',meaning:'与心情、感情有关',
+    examples:[{c:'快',r:'忄',m:'快乐'},{c:'慢',r:'忄',m:'缓慢'},{c:'怕',r:'忄',m:'害怕'},{c:'忙',r:'忄',m:'忙碌'},{c:'愉',r:'忄',m:'愉快'}]},
+  mouth:{char:'口',name:'口字旁',emoji:'👄',origin:'象形字，嘴巴的形状',meaning:'与嘴、说话、味道有关',
+    examples:[{c:'吃',r:'口',m:'吃东西'},{c:'喝',r:'口',m:'喝水'},{c:'唱',r:'口',m:'唱歌'},{c:'叫',r:'口',m:'叫声'},{c:'吗',r:'口',m:'疑问'}]},
+  sun:{char:'日',name:'日字旁',emoji:'☀️',origin:'象形字，圆形太阳',meaning:'与太阳、时间、光有关',
+    examples:[{c:'明',r:'日',m:'明亮'},{c:'晴',r:'日',m:'晴天'},{c:'早',r:'日',m:'早上'},{c:'时',r:'日',m:'时间'},{c:'晚',r:'日',m:'晚上'}]},
+  earth:{char:'土',name:'土字旁',emoji:'🌍',origin:'象形字，地面的形状',meaning:'与土地、地方有关',
+    examples:[{c:'地',r:'土',m:'土地'},{c:'场',r:'土',m:'广场'},{c:'坐',r:'土',m:'坐下'},{c:'坏',r:'土',m:'坏了'},{c:'块',r:'土',m:'一块'}]},
+};
+
+// FLASHCARD DATA
+const flashCards=[
+  {front:'氵',back:'💧',meaning:'三点水 = 与水有关'},
+  {front:'火',back:'🔥',meaning:'火字旁 = 与火有关'},
+  {front:'木',back:'🌲',meaning:'木字旁 = 与树木有关'},
+  {front:'亻',back:'🧍',meaning:'单人旁 = 与人有关'},
+  {front:'忄',back:'❤️',meaning:'竖心旁 = 与心情有关'},
+  {front:'口',back:'👄',meaning:'口字旁 = 与嘴巴有关'},
+  {front:'日',back:'☀️',meaning:'日字旁 = 与太阳有关'},
+  {front:'土',back:'🌍',meaning:'土字旁 = 与土地有关'},
+];
+
+// MATCH DATA
+const matchData=[
+  {radical:'氵',meaning:'与水有关 💧'},
+  {radical:'火',meaning:'与火有关 🔥'},
+  {radical:'木',meaning:'与树木有关 🌲'},
+  {radical:'亻',meaning:'与人有关 🧍'},
+  {radical:'忄',meaning:'与心情有关 ❤️'},
+  {radical:'口',meaning:'与嘴巴有关 👄'},
+];
+
+// FIND DATA
+const findQuestions=[
+  {radical:'氵',chars:['河','树','火','海','人','湖','大'],correct:['河','海','湖']},
+  {radical:'木',chars:['桌','山','水','林','心','椅','明'],correct:['桌','林','椅']},
+  {radical:'亻',chars:['你','日','他','土','们','火','地'],correct:['你','他','们']},
+  {radical:'口',chars:['吃','海','喝','木','唱','人','叫'],correct:['吃','喝','唱','叫']},
+  {radical:'日',chars:['明','人','晴','水','早','火','林'],correct:['明','晴','早']},
+];
+
+// BOSS DATA
+const bossQ=[
+  {char:'河',opts:['氵','火','木','亻'],ans:0},
+  {char:'桌',opts:['忄','木','口','土'],ans:1},
+  {char:'你',opts:['日','土','亻','口'],ans:2},
+  {char:'吃',opts:['氵','木','火','口'],ans:3},
+  {char:'明',opts:['日','亻','土','忄'],ans:0},
+  {char:'烧',opts:['氵','火','木','口'],ans:1},
+  {char:'他',opts:['土','日','口','亻'],ans:3},
+  {char:'海',opts:['氵','火','木','亻'],ans:0},
+  {char:'休',opts:['口','土','亻','忄'],ans:2},
+  {char:'晴',opts:['木','日','口','氵'],ans:1},
+];
+
+// ACHIEVEMENTS
+const ACHIEVEMENTS=[
+  {id:'explorer',icon:'🔍',name:'小小探索家',desc:'认识第一个部首',xp:10},
+  {id:'flashmaster',icon:'🃏',name:'记忆达人',desc:'完成所有闪卡',xp:20},
+  {id:'matcher',icon:'🎯',name:'配对高手',desc:'正确完成配对',xp:25},
+  {id:'finder',icon:'🔎',name:'侦探之眼',desc:'找出全部部首',xp:30},
+  {id:'boss_beater',icon:'⚔️',name:'Boss终结者',desc:'完成Boss关',xp:35},
+  {id:'speed_radical',icon:'⚡',name:'部首达人',desc:'Boss关答对8题',xp:40},
+  {id:'all_explored',icon:'🌟',name:'部首全知',desc:'探索全部8个部首',xp:30},
+  {id:'champion',icon:'🏆',name:'识字小冠军',desc:'完成全部课程',xp:50},
+];
+
+// AUDIO
+let audioCtx;
+function getAC(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function playTone(f,d,t='sine',v=.25){try{const c=getAC();const o=c.createOscillator();const g=c.createGain();
+  o.connect(g);g.connect(c.destination);o.type=t;o.frequency.value=f;
+  g.gain.setValueAtTime(v,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+d);
+  o.start();o.stop(c.currentTime+d);}catch(e){}}
+function playSuccess(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,.15,'triangle',.2),i*80));}
+function playClick(){playTone(800,.05,'square',.1);}
+function playWrong(){playTone(200,.3,'sawtooth',.2);}
+function playAch(){[784,988,1175,1568].forEach((f,i)=>setTimeout(()=>playTone(f,.2,'triangle',.3),i*100));}
+
+// CORE
+function startCourse(){document.getElementById('progress-bar').style.display='flex';goSection('objectives');addXP(5);playClick();}
+function goSection(id){
+  document.querySelectorAll('section').forEach(s=>s.style.display='none');
+  const el=document.getElementById(id);if(el){el.style.display='block';el.scrollIntoView({behavior:'smooth'});}
+  S.section=id;updateProg();updateBuddy(id);
+  if(id==='level2')initMatch();
+  if(id==='level3')initFind();
+  if(id==='scorecard')buildScorecard();
+}
+function updateProg(){
+  const ss=['objectives','warmup','level1','level2','level3','boss-section','scorecard','extension'];
+  const i=ss.indexOf(S.section);const p=Math.round((i+1)/ss.length*100);
+  document.getElementById('prog-fill').style.width=p+'%';
+}
+function addXP(n){S.xp+=n;document.getElementById('xp-disp').textContent='XP: '+S.xp;
+  const s=Math.min(5,Math.floor(S.xp/30));S.stars=s;
+  document.getElementById('stars-disp').textContent='⭐'.repeat(s)+'☆'.repeat(5-s);}
+function unlockAch(id){if(S.achievements.includes(id))return;S.achievements.push(id);
+  const a=ACHIEVEMENTS.find(x=>x.id===id);if(!a)return;addXP(a.xp);playAch();
+  showToast(a.icon+' 成就：'+a.name);}
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function showModal(icon,title,msg){document.getElementById('modal-icon').textContent=icon;
+  document.getElementById('modal-title').textContent=title;document.getElementById('modal-msg').textContent=msg;
+  document.getElementById('modal').classList.add('open');}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+
+// WARMUP
+let exploredCount=0;
+function showRadicalDetail(key){
+  const r=radicals[key];if(!r)return;
+  document.getElementById('dp-char').textContent=r.char;
+  document.getElementById('dp-name').textContent=r.name;
+  document.getElementById('dp-origin').textContent='📖 起源：'+r.origin;
+  document.getElementById('dp-meaning').textContent='💡 含义：'+r.meaning;
+  const ex=document.getElementById('dp-examples');
+  ex.innerHTML=r.examples.map(e=>`<div class="example-word" onclick="playTone(523,.15,'triangle',.2)">
+    <div class="word-char">${e.c}</div><div class="word-meaning">${e.m}</div></div>`).join('');
+  document.getElementById('radical-detail-panel').style.display='block';
+  document.getElementById('radical-detail-panel').scrollIntoView({behavior:'smooth'});
+  exploredCount++;
+  if(exploredCount===1)unlockAch('explorer');
+  if(exploredCount>=8)unlockAch('all_explored');
+  addXP(3);playClick();
+}
+
+// FLASHCARDS
+function updateFlashcard(){
+  const fc=flashCards[S.fcIndex];
+  document.getElementById('fc-front-char').textContent=fc.front;
+  document.getElementById('fc-back-char').textContent=fc.back;
+  document.getElementById('fc-back-meaning').textContent=fc.meaning;
+  document.getElementById('fc-counter').textContent='第 '+(S.fcIndex+1)+' / '+flashCards.length+' 张';
+  const el=document.getElementById('flashcard');el.classList.remove('flipped');S.fcFlipped=false;
+}
+function flipCard(){
+  const el=document.getElementById('flashcard');el.classList.toggle('flipped');S.fcFlipped=!S.fcFlipped;
+  playTone(S.fcFlipped?660:440,.1,'triangle',.2);
+}
+function nextCard(){
+  if(S.fcIndex<flashCards.length-1){S.fcIndex++;updateFlashcard();playClick();}
+  else{unlockAch('flashmaster');showToast('🃏 全部卡片看完了！');}
+}
+function prevCard(){if(S.fcIndex>0){S.fcIndex--;updateFlashcard();playClick();}}
+function completeLevel1(){addXP(25);unlockAch('flashmaster');showToast('✅ 第一关完成！');playSuccess();goSection('level2');}
+
+// MATCH
+function initMatch(){
+  const leftEl=document.getElementById('left-items');const rightEl=document.getElementById('right-items');
+  leftEl.innerHTML='';rightEl.innerHTML='';
+  const shuffledRight=[...matchData].sort(()=>Math.random()-.5);
+  matchData.forEach(m=>{
+    const d=document.createElement('div');d.className='match-item';
+    d.innerHTML=`<div class="mi-char">${m.radical}</div>`;
+    d.dataset.key=m.radical;d.dataset.type='left';d.onclick=()=>selectMatch(d);leftEl.appendChild(d);
+  });
+  shuffledRight.forEach(m=>{
+    const d=document.createElement('div');d.className='match-item';
+    d.innerHTML=`<div class="mi-label">${m.meaning}</div>`;
+    d.dataset.key=m.radical;d.dataset.type='right';d.onclick=()=>selectMatch(d);rightEl.appendChild(d);
+  });
+  S.matchSelected=null;S.matchDone=0;document.getElementById('match-count').textContent=0;
+}
+function selectMatch(el){
+  if(el.classList.contains('matched-ok'))return;
+  if(S.matchSelected&&S.matchSelected.dataset.type===el.dataset.type){
+    S.matchSelected.classList.remove('selected');S.matchSelected=el;el.classList.add('selected');return;
+  }
+  if(!S.matchSelected){S.matchSelected=el;el.classList.add('selected');playClick();return;}
+  const a=S.matchSelected,b=el;
+  if(a.dataset.key===b.dataset.key){
+    a.classList.remove('selected');a.classList.add('matched-ok');b.classList.add('matched-ok');
+    S.matchDone++;document.getElementById('match-count').textContent=S.matchDone;
+    addXP(5);playSuccess();if(S.matchDone>=6){unlockAch('matcher');showToast('🎯 全部配对正确！');}
+  }else{
+    a.classList.add('matched-no');b.classList.add('matched-no');
+    setTimeout(()=>{a.classList.remove('matched-no','selected');b.classList.remove('matched-no');},600);
+    playWrong();
+  }
+  S.matchSelected=null;
+}
+function resetMatch(){initMatch();playClick();}
+function completeLevel2(){if(S.matchDone>0){addXP(30);showToast('✅ 第二关完成！');playSuccess();goSection('level3');}else{showToast('请先完成配对！');}}
+
+// FIND
+function initFind(){
+  const q=findQuestions[S.findQIndex%findQuestions.length];
+  document.getElementById('find-radical').textContent=q.radical;
+  document.getElementById('find-q').innerHTML='找出含有 <b style="color:var(--primary);font-size:1.5rem;">'+q.radical+'</b> 的字：';
+  const charsEl=document.getElementById('find-chars');charsEl.innerHTML='';
+  const shuffled=[...q.chars].sort(()=>Math.random()-.5);
+  shuffled.forEach(ch=>{
+    const d=document.createElement('div');d.className='find-char-item';d.textContent=ch;
+    d.onclick=()=>pickFindChar(d,ch,q);charsEl.appendChild(d);
+  });
+  // dots
+  const prog=document.getElementById('find-prog');prog.innerHTML='';
+  for(let i=0;i<findQuestions.length;i++){
+    const dot=document.createElement('div');dot.className='find-dot'+(i<S.findQIndex?' done':i===S.findQIndex?' current':'');
+    prog.appendChild(dot);
+  }
+}
+function pickFindChar(el,ch,q){
+  if(el.classList.contains('correct-pick')||el.classList.contains('wrong-pick'))return;
+  if(q.correct.includes(ch)){el.classList.add('correct-pick');addXP(3);playTone(660,.1,'triangle',.2);}
+  else{el.classList.add('wrong-pick');setTimeout(()=>el.classList.remove('wrong-pick'),500);playWrong();}
+}
+function nextFindQ(){S.findQIndex++;if(S.findQIndex>=findQuestions.length){unlockAch('finder');showToast('🔎 全部题目完成！');}initFind();playClick();}
+function completeLevel3(){addXP(35);unlockAch('finder');showToast('✅ 第三关完成！');playSuccess();goSection('boss-section');}
+
+// BOSS
+let bossIdx=0;
+function startBoss(){
+  bossIdx=0;S.bossOk=0;S.bossNo=0;S.bossTime=50;
+  document.getElementById('boss-ok').textContent=0;document.getElementById('boss-no').textContent=0;
+  if(S.bossTimer)clearInterval(S.bossTimer);
+  S.bossTimer=setInterval(()=>{
+    S.bossTime--;document.getElementById('boss-tf').style.width=(S.bossTime/50*100)+'%';
+    document.getElementById('boss-time-d').textContent=S.bossTime+'秒';
+    if(S.bossTime<=0){clearInterval(S.bossTimer);endBoss();}
+  },1000);
+  showBossQ();
+}
+function showBossQ(){
+  const q=bossQ[bossIdx%bossQ.length];S.currentBossQ=q;
+  document.getElementById('boss-q-char').textContent=q.char;
+  const grid=document.getElementById('boss-opts-grid');grid.innerHTML='';
+  q.opts.forEach((opt,i)=>{
+    const b=document.createElement('button');b.className='boss-opt';b.textContent=opt;
+    b.onclick=()=>answerBoss(i,b);grid.appendChild(b);
+  });
+}
+function answerBoss(idx,btn){
+  const q=S.currentBossQ;if(!q)return;
+  if(idx===q.ans){S.bossOk++;btn.classList.add('b-ok');addXP(3);playTone(660,.1,'triangle',.2);
+    document.getElementById('boss-ok').textContent=S.bossOk;}
+  else{S.bossNo++;btn.classList.add('b-no');playWrong();
+    document.getElementById('boss-no').textContent=S.bossNo;}
+  bossIdx++;setTimeout(showBossQ,300);
+}
+function endBoss(){
+  if(S.bossTimer)clearInterval(S.bossTimer);
+  unlockAch('boss_beater');if(S.bossOk>=8)unlockAch('speed_radical');
+  if(S.achievements.length>=7)unlockAch('champion');
+  showModal('⚔️','Boss关完成！','答对 '+S.bossOk+' 题！你真棒！');playSuccess();
+}
+
+// SCORECARD
+function buildScorecard(){
+  document.getElementById('final-score').textContent=S.xp;
+  const s=Math.min(5,Math.floor(S.xp/40));
+  document.getElementById('final-stars').textContent='⭐'.repeat(s)+'☆'.repeat(5-s);
+  const g=document.getElementById('ach-grid');g.innerHTML='';
+  ACHIEVEMENTS.forEach(a=>{const d=document.createElement('div');const u=S.achievements.includes(a.id);
+    d.className='ach-card '+(u?'unlocked':'locked');
+    d.innerHTML=`<div style="font-size:2.5rem;margin-bottom:.5rem;">${a.icon}</div>
+      <div style="font-size:.85rem;font-weight:bold;">${a.name}</div>
+      <div style="font-size:.75rem;color:#888;margin-top:.2rem;">${a.desc}</div>`;g.appendChild(d);});
+}
+
+// EXTENSION
+const extR={
+  more:'<h3 style="color:var(--primary);margin-bottom:1rem;">📚 更多常见部首</h3><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;text-align:center;">'+'讠(言) 纟(糸) 宀(宀) 艹(艹) 扌(手) 犭(犬)'.split(' ').map(r=>`<div style="background:#fff9f0;padding:.8rem;border-radius:8px;font-size:1.3rem;">${r}</div>`).join('')+'</div>',
+  history:'<h3 style="color:var(--primary);margin-bottom:1rem;">🏺 部首演变</h3><p style="line-height:1.8;color:#555;">部首起源于古代象形文字：<br>• <b>氵</b> 由古代"水"字演变<br>• <b>火</b> 象形，像燃烧的火焰<br>• <b>木</b> 象形，像一棵大树<br>• <b>亻</b> 是"人"字侧放的形态<br><br>认识这些演变，有助于理解汉字的意义！</p>',
+  trick:'<h3 style="color:var(--primary);margin-bottom:1rem;">🧠 记忆小窍门</h3><ul style="line-height:2;color:#555;list-style:none;"><li>💡 氵 = 三滴水 → 想象水流</li><li>💡 火 = 火苗形 → 想象篝火</li><li>💡 亻 = 人侧站 → 想象人形</li><li>💡 忄 = 心跳动 → 想象心情</li><li>💡 口 = 嘴张开 → 想象说话</li><li>💡 联想记忆法：把部首和图片联系起来！</li></ul>'
+};
+function showExtR(k){const el=document.getElementById('ext-r-box');el.style.display='block';el.innerHTML=extR[k];el.scrollIntoView({behavior:'smooth'});playClick();}
+
+// BUDDY
+const buddyMap={
+  hero:['部首是汉字的家族标志！','认识部首，认识更多字！'],
+  objectives:['今天学8个最常用的部首','认识部首可以猜出字的意思哦！'],
+  warmup:['三点水的字都和水有关','看图想部首，更容易记住'],
+  level1:['翻转卡片，记住每个部首','多看几遍，印象更深'],
+  level2:['配对时先看部首的形状','想想部首的意思，再配对'],
+  level3:['找到部首的位置，通常在左边或上方','注意区分相似的部首'],
+  'boss-section':['Boss关！快速判断，不要慌！','先看字形，再想部首含义'],
+  scorecard:['太厉害了！成就解锁真多！','继续学更多部首，你会越来越棒！'],
+  extension:['更多部首等着你去探索！','联想记忆法很有效哦！']
+};
+function toggleBuddy(){document.getElementById('buddy-chat').classList.toggle('open');playClick();}
+function updateBuddy(s){const tips=buddyMap[s]||buddyMap.hero;
+  document.getElementById('buddy-tips').innerHTML=tips.map(t=>`<li>${t}</li>`).join('');}
+
+// INIT
+document.addEventListener('DOMContentLoaded',()=>{updateFlashcard();});
+</script>
+</body>
+</html>

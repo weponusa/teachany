@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中位数与众数 | 五年级数学 | TeachAny</title>
+<style>
+:root {
+  --bg: #fffbf0;
+  --primary: #ff6b6b;
+  --secondary: #4ecdc4;
+  --accent: #ffe66d;
+  --card: #fff;
+  --purple: #a29bfe;
+  --orange: #fd9644;
+  --green: #26de81;
+  --pink: #fd79a8;
+  --teal: #00cec9;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; background: var(--bg); min-height: 100vh; overflow-x: hidden; }
+
+.hero {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 30%, #fd79a8 60%, #feca57 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 2rem; position: relative; overflow: hidden;
+}
+.hero-title {
+  font-size: clamp(2rem, 7vw, 4.5rem);
+  font-weight: 900;
+  background: linear-gradient(90deg, #fff 0%, #ffe66d 50%, #fff 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+  animation: bounceIn 0.8s cubic-bezier(0.175,0.885,0.32,1.275);
+}
+@keyframes bounceIn { from{transform:scale(0.3);opacity:0} to{transform:scale(1);opacity:1} }
+@keyframes bounce { from{transform:translateY(0)} to{transform:translateY(-10px)} }
+@keyframes float { 0%,100%{transform:translateY(0) rotate(0)} 50%{transform:translateY(-15px) rotate(5deg)} }
+.hero-emoji { font-size: 4rem; animation: float 3s ease-in-out infinite; }
+.start-btn {
+  background: white; color: #6c5ce7; border: none; border-radius: 50px;
+  padding: 1rem 3rem; font-size: 1.3rem; font-weight: 800; cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15); margin-top: 1.5rem;
+  animation: pulse 2s ease infinite; transition: transform 0.2s;
+}
+.start-btn:hover { transform: scale(1.08); }
+@keyframes pulse { 0%,100%{box-shadow:0 8px 20px rgba(0,0,0,0.15)} 50%{box-shadow:0 8px 30px rgba(108,92,231,0.4)} }
+
+.section { display: none; min-height: 100vh; padding: 2rem 1.5rem 6rem; background: var(--bg); }
+.section.active { display: block; }
+
+.section-header {
+  text-align: center; margin-bottom: 2rem; border-radius: 20px;
+  padding: 1.5rem; color: white;
+}
+.section-header h2 { font-size: 1.8rem; font-weight: 800; }
+.section-header p { font-size: 1rem; margin-top: 0.4rem; opacity: 0.9; }
+
+.card { background: var(--card); border-radius: 20px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+
+.btn { background: linear-gradient(135deg,var(--primary),var(--orange)); color:white; border:none; border-radius:50px; padding:0.8rem 2rem; font-size:1rem; font-weight:700; cursor:pointer; transition:transform 0.2s; margin:0.3rem; }
+.btn:hover { transform:scale(1.05); }
+.btn-purple { background: linear-gradient(135deg,var(--purple),#6c5ce7); }
+.btn-teal { background: linear-gradient(135deg,var(--teal),var(--secondary)); }
+.btn-accent { background: linear-gradient(135deg,var(--accent),var(--orange)); color:#333; }
+
+.stars-display { position:fixed; top:1rem; right:1rem; z-index:1000; background:white; border-radius:50px; padding:0.5rem 1rem; box-shadow:0 4px 15px rgba(0,0,0,0.15); font-size:1.1rem; font-weight:700; }
+
+.achievement-popup { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0); background:linear-gradient(135deg,var(--purple),#6c5ce7); border-radius:20px; padding:2rem; text-align:center; z-index:2000; box-shadow:0 20px 60px rgba(0,0,0,0.3); transition:transform 0.3s cubic-bezier(0.175,0.885,0.32,1.275); min-width:280px; color:white; }
+.achievement-popup.show { transform:translate(-50%,-50%) scale(1); }
+
+.feedback { border-radius:15px; padding:1rem; margin:0.5rem 0; font-weight:600; font-size:1rem; text-align:center; }
+.feedback.correct { background:#e8fff4; color:#00b894; }
+.feedback.wrong { background:#fff5f5; color:var(--primary); }
+
+.answer-input { border:3px solid var(--secondary); border-radius:12px; padding:0.7rem 1rem; font-size:1.2rem; font-weight:700; width:120px; text-align:center; outline:none; }
+.answer-input:focus { border-color:var(--primary); }
+
+/* Number cards for sorting */
+.num-card { display:inline-flex; align-items:center; justify-content:center; width:56px; height:56px; border-radius:15px; font-size:1.3rem; font-weight:800; cursor:grab; margin:0.3rem; user-select:none; transition:all 0.2s; box-shadow:0 3px 10px rgba(0,0,0,0.1); }
+.num-card:active { cursor:grabbing; transform:scale(1.15); }
+.num-card.selected { outline:3px solid var(--primary); transform:scale(1.1); }
+.num-card.median-hl { background:linear-gradient(135deg,#ffe66d,#feca57) !important; animation:bounce 0.5s ease; }
+.num-card.mode-hl { background:linear-gradient(135deg,var(--green),#20bf6b) !important; color:white; animation:bounce 0.5s ease 0.1s; }
+
+/* Sort track */
+.sort-track { min-height: 80px; border: 3px dashed var(--secondary); border-radius: 15px; padding: 0.8rem; display:flex; flex-wrap:wrap; align-items:center; gap:0.3rem; transition:background 0.2s; }
+.sort-track.over { background:rgba(78,205,196,0.1); }
+
+/* Options */
+.opt-btn { background:white; border:3px solid #eee; border-radius:15px; padding:0.8rem; font-size:1.05rem; font-weight:600; cursor:pointer; transition:all 0.2s; text-align:center; margin:0.3rem; flex:1; min-width:140px; }
+.opt-btn:hover { border-color:var(--purple); transform:translateY(-2px); }
+.opt-btn.correct { border-color:var(--green); background:#e8fff4; color:#00b894; }
+.opt-btn.wrong { border-color:var(--primary); background:#fff5f5; color:var(--primary); }
+
+/* Progress */
+.progress-bar-container { background:#eee; border-radius:50px; height:12px; margin:1rem 0; overflow:hidden; }
+.progress-bar { height:100%; background:linear-gradient(90deg,var(--purple),var(--pink)); border-radius:50px; transition:width 0.5s ease; }
+
+/* Canvas */
+canvas { border-radius:15px; max-width:100%; }
+
+/* Badges */
+.badge { background:linear-gradient(135deg,var(--accent),var(--orange)); border-radius:15px; padding:0.8rem 1.2rem; text-align:center; font-size:0.85rem; font-weight:700; color:#333; min-width:90px; box-shadow:0 3px 10px rgba(0,0,0,0.1); opacity:0.3; transition:opacity 0.5s; }
+.badge.earned { opacity:1; animation:badgePop 0.4s ease; }
+@keyframes badgePop { 0%{transform:scale(0)} 70%{transform:scale(1.2)} 100%{transform:scale(1)} }
+
+.badges-grid { display:flex; flex-wrap:wrap; gap:1rem; justify-content:center; margin:1rem 0; }
+
+/* Score */
+.score-circle { width:150px; height:150px; border-radius:50%; background:linear-gradient(135deg,var(--purple),var(--pink)); display:flex; flex-direction:column; align-items:center; justify-content:center; margin:1.5rem auto; color:white; font-weight:800; box-shadow:0 8px 30px rgba(108,92,231,0.4); animation:scaleIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275); }
+@keyframes scaleIn { from{transform:scale(0)} to{transform:scale(1)} }
+.score-circle .score-num { font-size:3rem; }
+
+/* Dot plot */
+.dot-plot { display:flex; flex-direction:column; gap:0.2rem; margin:1rem 0; }
+.dot-row { display:flex; align-items:center; gap:0.3rem; }
+.dot-label { width:30px; font-size:0.85rem; font-weight:700; text-align:right; color:#555; }
+.dot { width:22px; height:22px; border-radius:50%; background:var(--purple); margin:0.1rem; }
+
+/* AI */
+.ai-companion { position:fixed; bottom:1.5rem; right:1.5rem; z-index:999; width:70px; height:70px; border-radius:50%; background:linear-gradient(135deg,var(--purple),#6c5ce7); display:flex; align-items:center; justify-content:center; font-size:2rem; cursor:pointer; box-shadow:0 4px 20px rgba(0,0,0,0.2); animation:companionBounce 2s ease infinite; }
+@keyframes companionBounce { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-8px) scale(1.05)} }
+.ai-speech { position:fixed; bottom:5.5rem; right:1.5rem; z-index:999; background:white; border-radius:15px 15px 5px 15px; padding:1rem; max-width:220px; font-size:0.9rem; box-shadow:0 4px 15px rgba(0,0,0,0.1); display:none; font-weight:500; }
+.ai-speech.show { display:block; animation:fadeIn 0.3s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+nav.bottom-nav { position:fixed; bottom:0; left:0; right:0; background:white; border-top:2px solid #eee; display:flex; justify-content:center; gap:0.5rem; padding:0.5rem; z-index:500; flex-wrap:wrap; }
+nav.bottom-nav button { background:none; border:2px solid #eee; border-radius:50px; padding:0.3rem 0.8rem; font-size:0.8rem; cursor:pointer; font-weight:600; transition:all 0.2s; }
+nav.bottom-nav button.active, nav.bottom-nav button:hover { background:var(--purple); color:white; border-color:var(--purple); }
+
+.compare-table { width:100%; border-collapse:collapse; margin:1rem 0; }
+.compare-table th { background:linear-gradient(135deg,var(--purple),#6c5ce7); color:white; padding:0.7rem; text-align:center; font-weight:700; }
+.compare-table td { padding:0.7rem; text-align:center; border-bottom:1px solid #eee; }
+.compare-table tr:nth-child(even) { background:#f8f4ff; }
+
+@media(max-width:600px){.opt-btn{min-width:100px}}
+</style>
+</head>
+<body>
+
+<div class="stars-display">⭐ <span id="starCount">0</span></div>
+<div class="ai-companion" id="aiCompanion" onclick="toggleAISpeech()">🦊</div>
+<div class="ai-speech" id="aiSpeech">我是小狐狸老师！今天学中位数和众数！🎯</div>
+
+<div class="achievement-popup" id="achievePopup">
+  <div style="font-size:3rem" id="achieveEmoji">🏆</div>
+  <div style="font-size:1.3rem;font-weight:800;margin:0.5rem 0" id="achieveTitle">成就解锁！</div>
+  <div style="font-size:1rem" id="achieveDesc">太棒了！</div>
+</div>
+
+<!-- HERO -->
+<section class="section active" id="sec-hero">
+  <div class="hero">
+    <div class="hero-emoji">🔢</div>
+    <h1 class="hero-title">中位数 & 众数</h1>
+    <p style="color:rgba(255,255,255,0.9);font-size:1.2rem;margin:0.8rem 0;font-weight:600">五年级数学 · 数据侦探时间！🕵️</p>
+    <p style="color:rgba(255,255,255,0.85);font-size:1rem;max-width:380px;line-height:1.6">
+      中间那个是谁？出现最多的又是谁？<br>学会这两招，数据分析难不倒你！
+    </p>
+    <button class="start-btn" onclick="goSection('sec-goals')">🚀 开始侦探之旅！</button>
+    <div style="position:absolute;top:15%;left:5%;font-size:2rem;opacity:0.2;animation:float 4s ease-in-out infinite">1,2,3,4,5</div>
+    <div style="position:absolute;bottom:20%;right:8%;font-size:2rem;opacity:0.15;animation:float 3.5s ease-in-out infinite 1s">📊</div>
+  </div>
+</section>
+
+<!-- GOALS -->
+<section class="section" id="sec-goals">
+  <div class="section-header" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe)">
+    <h2>🎯 学习目标</h2>
+    <p>三个技能全解锁，你就是数据侦探！</p>
+  </div>
+  <div class="card">
+    <div style="display:flex;align-items:start;gap:1rem;margin:0.8rem 0">
+      <span style="font-size:1.8rem">📍</span>
+      <div><strong>中位数</strong>：把数据从小到大排列，最中间的那个数！</div>
+    </div>
+    <div style="display:flex;align-items:start;gap:1rem;margin:0.8rem 0">
+      <span style="font-size:1.8rem">👑</span>
+      <div><strong>众数</strong>：出现次数最多的那个数！（可以有多个）</div>
+    </div>
+    <div style="display:flex;align-items:start;gap:1rem;margin:0.8rem 0">
+      <span style="font-size:1.8rem">🔍</span>
+      <div><strong>区别</strong>：中位数关心"位置"，众数关心"频率"</div>
+    </div>
+    <div style="display:flex;align-items:start;gap:1rem;margin:0.8rem 0">
+      <span style="font-size:1.8rem">🏆</span>
+      <div>闯过5关，收集 <strong>8个成就</strong>！</div>
+    </div>
+  </div>
+  <div style="text-align:center;margin:1.5rem 0">
+    <button class="btn btn-purple" onclick="goSection('sec-warmup')">开始热身 🔥</button>
+  </div>
+</section>
+
+<!-- WARMUP -->
+<section class="section" id="sec-warmup">
+  <div class="section-header" style="background:linear-gradient(135deg,#fd79a8,#e84393)">
+    <h2>⚡ 热身：排排站找中间</h2>
+    <p>先把数字排好队，中间的就是中位数！</p>
+  </div>
+  <div class="card">
+    <p style="font-size:1.1rem;font-weight:700;margin-bottom:1rem">
+      🎪 把下面的数字<strong>拖拽到正确顺序</strong>（从小到大排列）！
+    </p>
+    <p style="font-size:0.9rem;color:#888;margin-bottom:0.5rem">数字牌（可以拖拽）：</p>
+    <div id="warmupNumbers" style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-bottom:1rem"></div>
+    <p style="font-size:0.9rem;color:#888;margin-bottom:0.5rem">⬇️ 从小到大排到这里：</p>
+    <div id="warmupSorted" class="sort-track" ondrop="warmupDrop(event)" ondragover="allowDrop(event)" ondragleave="removeDragOver(event)">拖到这里排序</div>
+    <div id="warmupResult" style="margin-top:1rem;min-height:2rem"></div>
+    <div style="text-align:center;margin-top:1rem">
+      <button class="btn btn-teal" onclick="checkWarmupSort()">✅ 检查排序</button>
+      <button class="btn btn-accent" onclick="initWarmup()">🔄 重置</button>
+      <button class="btn btn-purple" onclick="autoSortWarmup()">✨ 自动排序看效果</button>
+    </div>
+  </div>
+  <div style="text-align:center;margin:1.5rem 0">
+    <button class="btn btn-purple" onclick="goSection('sec-level1')">去关卡1！🌟</button>
+  </div>
+</section>
+
+<!-- LEVEL 1: Find Median -->
+<section class="section" id="sec-level1">
+  <div class="section-header" style="background:linear-gradient(135deg,#a29bfe,#6c5ce7)">
+    <h2>🌟 关卡1：找中位数</h2>
+    <p>奇数个 vs 偶数个，方法不一样哦！</p>
+  </div>
+  <div class="progress-bar-container"><div class="progress-bar" id="l1prog" style="width:0%"></div></div>
+
+  <div class="card" style="background:linear-gradient(135deg,#f8f4ff,#e8e0ff);border-radius:20px">
+    <h3 style="font-weight:800;margin-bottom:0.5rem">📖 方法卡片</h3>
+    <p style="line-height:1.8;font-size:1rem">
+      ➡️ <strong>奇数个数字</strong>：排好序，取最中间一个<br>
+      例：1,3,<span style="color:var(--primary);font-weight:800">5</span>,7,9 → 中位数=<strong>5</strong><br><br>
+      ➡️ <strong>偶数个数字</strong>：排好序，取中间两个的平均数<br>
+      例：2,4,<span style="color:var(--primary);font-weight:800">6,8</span>,10,12 → 中位数=(6+8)÷2=<strong>7</strong>
+    </p>
+  </div>
+
+  <div id="l1-content"></div>
+  <div id="l1-feedback" class="feedback" style="display:none"></div>
+  <div style="text-align:center;margin:1rem 0">
+    <button class="btn btn-purple" onclick="checkL1Median()">✅ 提交答案</button>
+    <button class="btn btn-teal" onclick="nextL1Median()">下一题 ➡️</button>
+  </div>
+</section>
+
+<!-- LEVEL 2: Find Mode -->
+<section class="section" id="sec-level2">
+  <div class="section-header" style="background:linear-gradient(135deg,var(--teal),var(--secondary))">
+    <h2>🌟🌟 关卡2：找众数</h2>
+    <p>数一数，谁出现最多？</p>
+  </div>
+  <div id="l2-content" class="card"></div>
+  <div class="card">
+    <p style="font-weight:700;margin-bottom:0.5rem">点击图中出现最多的那个数字！</p>
+    <canvas id="dotCanvas" width="480" height="220"></canvas>
+    <div id="l2-feedback" class="feedback" style="display:none"></div>
+    <div style="text-align:center;margin-top:1rem">
+      <button class="btn btn-teal" onclick="newModeQ()">换一道题 🔄</button>
+      <button class="btn btn-purple" onclick="goSection('sec-level3')">下一关 ➡️</button>
+    </div>
+  </div>
+</section>
+
+<!-- LEVEL 3: Compare -->
+<section class="section" id="sec-level3">
+  <div class="section-header" style="background:linear-gradient(135deg,#fd9644,#e17055)">
+    <h2>🌟🌟🌟 关卡3：中位数 vs 众数</h2>
+    <p>分清楚，各自有什么用！</p>
+  </div>
+  <div class="card">
+    <table class="compare-table">
+      <tr><th>比较项</th><th>中位数</th><th>众数</th></tr>
+      <tr><td>定义</td><td>最中间的数</td><td>出现最多的数</td></tr>
+      <tr><td>需要排序？</td><td>✅ 需要</td><td>❌ 不需要</td></tr>
+      <tr><td>可以有几个？</td><td>一个</td><td>可以多个</td></tr>
+      <tr><td>受极端值影响？</td><td>较小</td><td>较小</td></tr>
+    </table>
+  </div>
+  <div id="l3-quiz" class="card"></div>
+  <div id="l3-feedback" class="feedback" style="display:none"></div>
+</section>
+
+<!-- LEVEL BOSS -->
+<section class="section" id="sec-boss">
+  <div class="section-header" style="background:linear-gradient(135deg,#2d3436,#636e72)">
+    <h2>👾 Boss关：综合挑战</h2>
+    <p>中位数+众数，一起来！</p>
+  </div>
+  <div id="boss-content" class="card"></div>
+  <div id="boss-feedback" class="feedback" style="display:none"></div>
+  <div style="text-align:center;margin:1rem 0">
+    <button class="btn" style="background:linear-gradient(135deg,#2d3436,#636e72)" onclick="checkBoss()">⚔️ 提交！</button>
+  </div>
+</section>
+
+<!-- SCORE -->
+<section class="section" id="sec-score">
+  <div style="text-align:center;padding:2rem">
+    <div style="font-size:3rem">🎊</div>
+    <h2 style="font-size:2rem;font-weight:800;background:linear-gradient(90deg,var(--purple),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0.5rem 0">
+      侦探任务完成！
+    </h2>
+    <div class="score-circle">
+      <div class="score-num" id="finalScore">0</div>
+      <div style="font-size:0.9rem;opacity:0.9">颗星星</div>
+    </div>
+    <p style="font-size:1.1rem;font-weight:600;margin:1rem 0" id="scoreMotto"></p>
+    <h3 style="font-size:1.2rem;font-weight:800;margin:1rem 0">🏆 成就徽章</h3>
+    <div class="badges-grid" id="badgesGrid"></div>
+    <button class="btn btn-purple" onclick="goSection('sec-extend')">🌈 拓展学习</button>
+    <button class="btn btn-teal" onclick="location.reload()">🔄 再来一次</button>
+  </div>
+</section>
+
+<!-- EXTEND -->
+<section class="section" id="sec-extend">
+  <div class="section-header" style="background:linear-gradient(135deg,var(--purple),#6c5ce7)">
+    <h2>🌈 拓展：什么时候用哪个？</h2>
+    <p>平均数、中位数、众数各有用处！</p>
+  </div>
+  <div class="card" style="background:linear-gradient(135deg,#ffe66d33,#feca5733);border:2px solid var(--accent)">
+    <h3 style="font-weight:800;margin-bottom:0.8rem">🏠 房价用中位数</h3>
+    <p style="line-height:1.8">一个城市大多数房子100万，少数豪宅1000万。<br>
+    用<strong>平均数</strong>会偏高，用<strong>中位数</strong>更能反映普通人的情况！</p>
+  </div>
+  <div class="card" style="background:linear-gradient(135deg,#a29bfe33,#6c5ce733);border:2px solid var(--purple)">
+    <h3 style="font-weight:800;margin-bottom:0.8rem">👕 服装用众数</h3>
+    <p style="line-height:1.8">服装厂生产T恤，要知道<strong>哪个尺码卖得最多</strong>，<br>这就要用众数！多生产M码还是L码？</p>
+  </div>
+  <div class="card" style="background:linear-gradient(135deg,#26de8133,#20bf6b33);border:2px solid var(--green)">
+    <h3 style="font-weight:800;margin-bottom:0.8rem">📊 成绩用平均数</h3>
+    <p style="line-height:1.8">班级整体成绩情况用<strong>平均分</strong>，<br>个人成绩排在哪里用<strong>中位数</strong>！</p>
+  </div>
+  <div class="card">
+    <h3 style="font-weight:800;margin-bottom:0.8rem">🧩 思考题</h3>
+    <p style="line-height:1.8">数据：1, 1, 1, 2, 3, 4, 5, 100<br>
+    平均数 ≈ 14.6，中位数 = 2.5，众数 = 1<br>
+    如果要了解"大多数人"的情况，用哪个最合适？</p>
+    <button class="btn btn-accent" onclick="toggleAnswer('extAns')">🔓 揭晓答案</button>
+    <div id="extAns" style="display:none;margin-top:1rem;padding:1rem;background:#e8fff4;border-radius:12px;color:#00b894;font-weight:600">
+      ✅ 用<strong>中位数 = 2.5</strong>或<strong>众数 = 1</strong>更合适！<br>
+      因为100这个极端值把平均数拉高了很多，不能代表"大多数人"。
+    </div>
+  </div>
+  <div style="text-align:center;margin:1.5rem 0">
+    <button class="btn btn-purple" onclick="goSection('sec-score')">📊 查看成绩单</button>
+  </div>
+</section>
+
+<nav class="bottom-nav">
+  <button onclick="goSection('sec-hero')">🏠首页</button>
+  <button onclick="goSection('sec-warmup')">⚡热身</button>
+  <button onclick="goSection('sec-level1')">🌟中位数</button>
+  <button onclick="goSection('sec-level2')">🌟众数</button>
+  <button onclick="goSection('sec-level3')">🌟比较</button>
+  <button onclick="goSection('sec-boss')">👾Boss</button>
+  <button onclick="goSection('sec-score')">🏆成绩</button>
+</nav>
+
+<script>
+// ===== State =====
+const state = {
+  stars: 0, achievements: [],
+  l1Idx: 0, l1Correct: 0,
+  modeData: [], modeAns: null,
+  bossIdx: 0, bossCorrect: 0,
+};
+
+const ACHIEVEMENTS = [
+  { id:'start', emoji:'🚀', title:'出发啦', desc:'开始学习！' },
+  { id:'warmup', emoji:'🔥', title:'热身完成', desc:'掌握排序！' },
+  { id:'median_first', emoji:'📍', title:'中位初学', desc:'第一次找到中位数！' },
+  { id:'median_even', emoji:'📐', title:'偶数达人', desc:'算出了偶数中位数！' },
+  { id:'mode_found', emoji:'👑', title:'众数侦探', desc:'找到了众数！' },
+  { id:'compare_ace', emoji:'🔍', title:'比较大师', desc:'区分了中位数和众数！' },
+  { id:'boss_done', emoji:'👾', title:'Boss终结者', desc:'击败了Boss！' },
+  { id:'all_stars', emoji:'💫', title:'全明星', desc:'收集满20颗星！' },
+];
+
+const audioCtx = (() => { try { return new (window.AudioContext || window.webkitAudioContext)(); } catch(e){return null;} })();
+function playSound(type) {
+  if (!audioCtx) return;
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.connect(g); g.connect(audioCtx.destination);
+  if (type === 'correct') { o.frequency.setValueAtTime(523,audioCtx.currentTime); o.frequency.setValueAtTime(784,audioCtx.currentTime+0.15); }
+  else if (type === 'wrong') { o.frequency.setValueAtTime(300,audioCtx.currentTime); o.frequency.setValueAtTime(250,audioCtx.currentTime+0.15); }
+  else if (type === 'achieve') { [659,784,1047].forEach((f,i)=>o.frequency.setValueAtTime(f,audioCtx.currentTime+i*0.1)); }
+  g.gain.setValueAtTime(0.3,audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.5);
+  o.start(); o.stop(audioCtx.currentTime+0.5);
+}
+
+function addStars(n) {
+  state.stars += n;
+  document.getElementById('starCount').textContent = state.stars;
+  playSound('star');
+  if (state.stars >= 20) unlockAchievement('all_stars');
+}
+function unlockAchievement(id) {
+  if (state.achievements.includes(id)) return;
+  state.achievements.push(id);
+  const a = ACHIEVEMENTS.find(x=>x.id===id); if (!a) return;
+  const p = document.getElementById('achievePopup');
+  document.getElementById('achieveEmoji').textContent = a.emoji;
+  document.getElementById('achieveTitle').textContent = '🏆 '+a.title;
+  document.getElementById('achieveDesc').textContent = a.desc;
+  p.classList.add('show'); playSound('achieve');
+  setTimeout(()=>p.classList.remove('show'),2500);
+  updateBadges();
+}
+function updateBadges() {
+  const g = document.getElementById('badgesGrid');
+  if (!g) return;
+  g.innerHTML = ACHIEVEMENTS.map(a=>`<div class="badge ${state.achievements.includes(a.id)?'earned':''}"><div style="font-size:1.5rem">${a.emoji}</div><div>${a.title}</div></div>`).join('');
+}
+function goSection(id) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  if (id==='sec-warmup') initWarmup();
+  if (id==='sec-level1') initL1Median();
+  if (id==='sec-level2') initModeSection();
+  if (id==='sec-level3') initCompare();
+  if (id==='sec-boss') initBoss();
+  if (id==='sec-score') showScore();
+  unlockAchievement('start');
+}
+function toggleAnswer(id) {
+  const el = document.getElementById(id);
+  el.style.display = el.style.display==='none'?'block':'none';
+}
+
+// ===== Warmup =====
+const warmupNums = [7,3,9,1,5];
+let warmupDropped = [];
+function initWarmup() {
+  warmupDropped = [];
+  document.getElementById('warmupNumbers').innerHTML = warmupNums.map((n,i)=>`
+    <div class="num-card" draggable="true" id="wn${i}"
+      style="background:linear-gradient(135deg,${['#ff6b6b','#4ecdc4','#ffe66d','#a29bfe','#fd9644'][i]},${['#e17055','#45b7d1','#feca57','#6c5ce7','#e67e22'][i]});color:white"
+      ondragstart="warmupDragStart(event,'${n}','wn${i}')">
+      ${n}
+    </div>`).join('');
+  document.getElementById('warmupSorted').innerHTML = '拖到这里排序';
+  document.getElementById('warmupResult').innerHTML = '';
+}
+let dragW = null;
+function warmupDragStart(e,v,id) { e.dataTransfer.setData('v',v); e.dataTransfer.setData('id',id); dragW={v:parseInt(v),id}; }
+function allowDrop(e) { e.preventDefault(); e.currentTarget.classList.add('over'); }
+function removeDragOver(e) { e.currentTarget.classList.remove('over'); }
+function warmupDrop(e) {
+  e.preventDefault(); e.currentTarget.classList.remove('over');
+  if (!dragW) return;
+  warmupDropped.push(dragW.v);
+  const el = document.getElementById(dragW.id);
+  if (el) { el.style.opacity='0.3'; el.setAttribute('draggable','false'); }
+  e.currentTarget.innerHTML = warmupDropped.map((v,i)=>`<div class="num-card" style="background:linear-gradient(135deg,#a29bfe,#6c5ce7);color:white">${v}</div>`).join('');
+}
+function checkWarmupSort() {
+  const sorted = [...warmupNums].sort((a,b)=>a-b);
+  const correct = JSON.stringify(warmupDropped) === JSON.stringify(sorted);
+  const r = document.getElementById('warmupResult');
+  if (warmupDropped.length < warmupNums.length) {
+    r.innerHTML = '<span style="color:var(--orange);font-weight:700">还没拖完哦！把所有数字都拖过来！</span>';
+    return;
+  }
+  if (correct) {
+    const mid = warmupDropped[Math.floor(warmupDropped.length/2)];
+    r.innerHTML = `<span style="color:var(--green);font-weight:700">🎉 排序正确！中位数是 <strong style="font-size:1.3rem;color:var(--purple)">${mid}</strong>！+3⭐</span>`;
+    addStars(3); unlockAchievement('warmup'); playSound('correct');
+  } else {
+    r.innerHTML = `<span style="color:var(--primary);font-weight:700">💪 顺序不对，正确顺序是 ${sorted.join(' < ')}，再试试！</span>`;
+    playSound('wrong');
+  }
+}
+function autoSortWarmup() {
+  const sorted = [...warmupNums].sort((a,b)=>a-b);
+  warmupDropped = sorted;
+  document.getElementById('warmupNumbers').querySelectorAll('.num-card').forEach(el=>{ el.style.opacity='0.3'; el.setAttribute('draggable','false'); });
+  const mid = sorted[Math.floor(sorted.length/2)];
+  document.getElementById('warmupSorted').innerHTML = sorted.map((v,i)=>`<div class="num-card" style="background:linear-gradient(135deg,${i===Math.floor(sorted.length/2)?'#ffe66d,#feca57':'#a29bfe,#6c5ce7'});color:${i===Math.floor(sorted.length/2)?'#333':'white'}">${v}</div>`).join('');
+  document.getElementById('warmupResult').innerHTML = `<span style="color:var(--purple);font-weight:700">✨ 看！最中间那个 <strong>${mid}</strong> 就是中位数！黄色高亮！</span>`;
+  addStars(1); unlockAchievement('warmup');
+}
+
+// ===== Level 1: Median =====
+const medianQs = [
+  { nums:[3,7,1,9,5], q:'小组5人身高(cm)：3,7,1,9,5，中位数是多少？(先排序)', ans:5, even:false },
+  { nums:[4,8,2,6], q:'4位同学的零花钱(元)：4,8,2,6，中位数是多少？', ans:5, even:true },
+  { nums:[10,30,20,50,40], q:'5次测试成绩：10,30,20,50,40，中位数是多少？', ans:30, even:false },
+  { nums:[1,3,5,7,9,11], q:'6个奇数排列，中位数是多少？', ans:6, even:true },
+];
+function initL1Median() {
+  state.l1Idx = 0; state.l1Correct = 0; showL1Q();
+}
+function showL1Q() {
+  const q = medianQs[state.l1Idx];
+  const sorted = [...q.nums].sort((a,b)=>a-b);
+  let hint = `排序后：${sorted.join(', ')}`;
+  if (q.even) hint += `<br>偶数个，取中间两个 (${sorted[sorted.length/2-1]}, ${sorted[sorted.length/2]}) 的平均数`;
+  else hint += `<br>奇数个，最中间是第${Math.ceil(sorted.length/2)}个`;
+  document.getElementById('l1-content').innerHTML = `
+    <div class="card">
+      <p style="font-weight:800;font-size:1rem;margin-bottom:0.5rem">第${state.l1Idx+1}题（共${medianQs.length}题）</p>
+      <p style="font-size:1.1rem;line-height:1.8;margin-bottom:0.8rem">${q.q}</p>
+      <div style="background:#f8f4ff;border-radius:12px;padding:0.8rem;margin-bottom:0.8rem;font-size:0.9rem;color:#6c5ce7;font-weight:600">${hint}</div>
+      <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+        <label style="font-weight:700">中位数 = </label>
+        <input class="answer-input" id="l1input" type="number" step="0.5" placeholder="?">
+      </div>
+    </div>`;
+  document.getElementById('l1-feedback').style.display='none';
+  document.getElementById('l1prog').style.width=(state.l1Idx/medianQs.length*100)+'%';
+}
+function checkL1Median() {
+  const val = parseFloat(document.getElementById('l1input')?.value);
+  const q = medianQs[state.l1Idx];
+  const fb = document.getElementById('l1-feedback');
+  fb.style.display='block';
+  if (val === q.ans) {
+    fb.className='feedback correct';
+    fb.textContent=`🎉 正确！中位数 = ${q.ans}，+3⭐`;
+    addStars(3); state.l1Correct++;
+    if (state.l1Correct===1) unlockAchievement('median_first');
+    if (q.even) unlockAchievement('median_even');
+    playSound('correct');
+  } else {
+    fb.className='feedback wrong';
+    fb.textContent=`💪 再想想！正确答案是 ${q.ans}`;
+    playSound('wrong');
+  }
+}
+function nextL1Median() {
+  state.l1Idx++;
+  if (state.l1Idx >= medianQs.length) { addStars(5); goSection('sec-level2'); }
+  else showL1Q();
+}
+
+// ===== Level 2: Mode =====
+let modeQData = null;
+function initModeSection() {
+  newModeQ();
+}
+function newModeQ() {
+  const pools = [
+    [3,5,3,7,3,5,9],
+    [2,4,2,4,2,6,8,4],
+    [1,1,2,3,4,5,5,5],
+    [6,7,6,8,6,9,7],
+  ];
+  const d = pools[Math.floor(Math.random()*pools.length)];
+  const freq = {};
+  d.forEach(v=>freq[v]=(freq[v]||0)+1);
+  const maxFreq = Math.max(...Object.values(freq));
+  const modes = Object.keys(freq).filter(k=>freq[k]===maxFreq).map(Number);
+  state.modeData = d; state.modeAns = modes;
+  modeQData = {data:d,freq,modes,maxFreq};
+  document.getElementById('l2-content').innerHTML = `
+    <p style="font-weight:700;font-size:1.1rem;margin-bottom:0.5rem">数据：${d.join(', ')}</p>
+    <p style="font-size:1rem;color:#888">每个数字出现几次？点击出现次数最多的那个数字（在图中点击）</p>`;
+  drawDotPlot(d,freq);
+  document.getElementById('l2-feedback').style.display='none';
+}
+function drawDotPlot(data,freq) {
+  const canvas = document.getElementById('dotCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,480,220);
+  const vals = [...new Set(data)].sort((a,b)=>a-b);
+  const maxF = Math.max(...Object.values(freq));
+  const step = 480/(vals.length+1);
+  const colors = ['#ff6b6b','#4ecdc4','#ffe66d','#a29bfe','#fd9644','#fd79a8','#26de81'];
+  // axis
+  ctx.strokeStyle='#ddd'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(30,200); ctx.lineTo(460,200); ctx.stroke();
+  vals.forEach((v,i) => {
+    const x = (i+1)*step;
+    const cnt = freq[v] || 0;
+    ctx.fillStyle = colors[i%colors.length];
+    for (let j=0;j<cnt;j++) {
+      ctx.beginPath(); ctx.arc(x,195-(j+1)*22,9,0,Math.PI*2); ctx.fill();
+    }
+    ctx.fillStyle='#333'; ctx.font='bold 13px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(v, x, 218);
+    ctx.fillText('×'+cnt, x, 175-cnt*22);
+  });
+  // click handler
+  canvas.onclick = function(e) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX-rect.left)*(480/rect.width);
+    let clicked = null;
+    vals.forEach((v,i) => {
+      const cx = (i+1)*step;
+      if (Math.abs(mx-cx)<step/2) clicked=v;
+    });
+    if (clicked!==null) checkModeClick(clicked);
+  };
+}
+function checkModeClick(v) {
+  const fb = document.getElementById('l2-feedback');
+  fb.style.display='block';
+  if (state.modeAns.includes(v)) {
+    fb.className='feedback correct';
+    fb.textContent=`👑 正确！众数是 ${state.modeAns.join(' 和 ')}，出现了 ${modeQData.maxFreq} 次！+3⭐`;
+    addStars(3); unlockAchievement('mode_found'); playSound('correct');
+  } else {
+    fb.className='feedback wrong';
+    fb.textContent=`💪 ${v} 出现了 ${modeQData.freq[v]||0} 次，不是最多的，再找找！`;
+    playSound('wrong');
+  }
+}
+
+// ===== Level 3: Compare =====
+const compareQs = [
+  { q:'购买鞋子时，商家想知道哪个尺码最受欢迎，应该用什么？', opts:['平均数','中位数','众数'], ans:2, reason:'众数告诉我们出现最多的尺码！' },
+  { q:'了解一个班同学体重的"中间水平"，用什么最好？', opts:['平均数','中位数','众数'], ans:1, reason:'中位数不受极端体重影响，更能代表"中间水平"！' },
+  { q:'计算全班平均成绩，用什么？', opts:['平均数','中位数','众数'], ans:0, reason:'求整体平均情况用平均数！' },
+];
+let compareIdx = 0;
+function initCompare() {
+  compareIdx = 0; showCompareQ();
+}
+function showCompareQ() {
+  if (compareIdx >= compareQs.length) {
+    document.getElementById('l3-quiz').innerHTML = '<p style="font-size:1.2rem;font-weight:700;text-align:center;color:var(--green)">🎉 全部答完！真是比较大师！</p>';
+    unlockAchievement('compare_ace'); addStars(5);
+    setTimeout(()=>goSection('sec-boss'),2000);
+    return;
+  }
+  const q = compareQs[compareIdx];
+  document.getElementById('l3-quiz').innerHTML = `
+    <p style="font-weight:800;font-size:1.1rem;margin-bottom:1rem">第${compareIdx+1}题：${q.q}</p>
+    <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+      ${q.opts.map((o,i)=>`<button class="opt-btn" onclick="checkCompare(${i})">${o}</button>`).join('')}
+    </div>`;
+  document.getElementById('l3-feedback').style.display='none';
+}
+function checkCompare(idx) {
+  const q = compareQs[compareIdx];
+  const fb = document.getElementById('l3-feedback');
+  fb.style.display='block';
+  document.querySelectorAll('#l3-quiz .opt-btn').forEach((b,i)=>{
+    if (i===q.ans) b.classList.add('correct');
+    else if (i===idx && i!==q.ans) b.classList.add('wrong');
+  });
+  if (idx === q.ans) {
+    fb.className='feedback correct';
+    fb.textContent=`✅ 正确！${q.reason} +3⭐`;
+    addStars(3); playSound('correct');
+    setTimeout(()=>{ compareIdx++; showCompareQ(); }, 2000);
+  } else {
+    fb.className='feedback wrong';
+    fb.textContent=`💪 不对哦！${q.reason}`;
+    playSound('wrong');
+  }
+}
+
+// ===== Boss =====
+const bossQs = [
+  { q:'数据：5,8,3,8,6,8,2。求：(1)中位数 (2)众数', type:'text', ans:'中位数=6，众数=8',
+    check: v => { const vl = v.replace(/\s/g,''); return vl.includes('6')&&vl.includes('8'); } },
+  { q:'8人考试成绩：70,80,90,70,85,75,70,95。众数是多少？', type:'number', ans:70, check: v=>parseInt(v)===70 },
+  { q:'6位同学零花钱(元)：10,20,15,25,20,30。中位数是多少？', type:'number', ans:20, check: v=>parseInt(v)===20 },
+];
+let bossIdx2 = 0;
+function initBoss() {
+  bossIdx2 = 0; state.bossCorrect = 0; showBossQ2();
+}
+function showBossQ2() {
+  if (bossIdx2 >= bossQs.length) {
+    unlockAchievement('boss_done'); addStars(15);
+    document.getElementById('boss-content').innerHTML = '<p style="font-size:1.3rem;font-weight:800;text-align:center;color:var(--green)">🎉 Boss被打败了！你太厉害了！</p>';
+    document.querySelector('[onclick="checkBoss()"]').style.display='none';
+    setTimeout(()=>goSection('sec-score'),2000);
+    return;
+  }
+  const q = bossQs[bossIdx2];
+  document.getElementById('boss-content').innerHTML = `
+    <p style="font-weight:800;font-size:1.1rem;margin-bottom:1rem">👾 Boss问题 ${bossIdx2+1}/${bossQs.length}</p>
+    <p style="font-size:1.1rem;line-height:1.8;margin-bottom:1rem">${q.q}</p>
+    ${q.type==='text'
+      ? `<textarea style="width:100%;border:3px solid var(--secondary);border-radius:12px;padding:0.7rem;font-size:1rem;font-weight:600;min-height:80px;outline:none" id="bossInput" placeholder="在这里输入你的答案..."></textarea>`
+      : `<div style="display:flex;align-items:center;gap:1rem"><label style="font-weight:700">答案：</label><input class="answer-input" id="bossInput" type="number" placeholder="?"></div>`}`;
+  document.getElementById('boss-feedback').style.display='none';
+}
+function checkBoss() {
+  const q = bossQs[bossIdx2];
+  const val = document.getElementById('bossInput')?.value;
+  const fb = document.getElementById('boss-feedback');
+  fb.style.display='block';
+  if (q.check(val)) {
+    fb.className='feedback correct';
+    fb.textContent=`⚔️ 命中！+5⭐`;
+    addStars(5); state.bossCorrect++; playSound('correct');
+    setTimeout(()=>{ bossIdx2++; showBossQ2(); }, 1500);
+  } else {
+    fb.className='feedback wrong';
+    fb.textContent=`💪 正确答案是：${q.ans}`;
+    playSound('wrong');
+    setTimeout(()=>{ bossIdx2++; showBossQ2(); }, 2500);
+  }
+}
+
+// ===== Score =====
+function showScore() {
+  document.getElementById('finalScore').textContent=state.stars;
+  const pct=Math.min(100,(state.stars/50)*100);
+  const mottos=['继续努力！💪','不错哦！🌟','太棒了！🏆','完美！👑'];
+  document.getElementById('scoreMotto').textContent=mottos[pct<40?0:pct<70?1:pct<95?2:3];
+  updateBadges();
+}
+
+// AI
+const aiMsgs=['中位数一定要先排序！🔢','众数可以有多个哦！👑','遇到偶数个数字，取中间两个的平均！📐','生活中很多地方用中位数哦！🏠','你做得很棒！⭐'];
+let aiIdx=0;
+function toggleAISpeech(){const sp=document.getElementById('aiSpeech');if(sp.classList.contains('show'))sp.classList.remove('show');else{sp.textContent=aiMsgs[aiIdx++%aiMsgs.length];sp.classList.add('show');}}
+setInterval(()=>{const sp=document.getElementById('aiSpeech');sp.textContent=aiMsgs[aiIdx++%aiMsgs.length];sp.classList.add('show');setTimeout(()=>sp.classList.remove('show'),4000);},35000);
+
+window.onload=()=>{ updateBadges(); };
+</script>
+</body>
+</html>

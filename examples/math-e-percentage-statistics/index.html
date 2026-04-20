@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>百分数与统计 | 六年级数学 | TeachAny</title>
+<style>
+:root {
+  --bg: #fffbf0;
+  --primary: #ff6b6b;
+  --secondary: #4ecdc4;
+  --accent: #ffe66d;
+  --card: #fff;
+  --purple: #a29bfe;
+  --orange: #fd9644;
+  --green: #26de81;
+  --pink: #fd79a8;
+  --indigo: #5f27cd;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; background: var(--bg); min-height: 100vh; overflow-x: hidden; }
+
+.hero {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #5f27cd 0%, #ff6b6b 40%, #feca57 70%, #48dbfb 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 2rem; position: relative; overflow: hidden;
+}
+.hero-title {
+  font-size: clamp(2rem, 7vw, 4rem);
+  font-weight: 900;
+  background: linear-gradient(90deg, #fff, #ffe66d, #fff);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+  animation: bounceTitle 1s ease;
+}
+@keyframes bounceTitle { 0%{transform:scale(0) rotate(-10deg)} 70%{transform:scale(1.1) rotate(2deg)} 100%{transform:scale(1) rotate(0)} }
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-15px)} }
+@keyframes bounce { from{transform:translateY(0)} to{transform:translateY(-8px)} }
+.hero-emoji { font-size: 4rem; animation: spin 4s linear infinite; }
+.start-btn {
+  background: white; color: var(--indigo); border: none; border-radius: 50px;
+  padding: 1rem 3rem; font-size: 1.3rem; font-weight: 800; cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15); margin-top: 1.5rem; transition: transform 0.2s;
+  animation: glow 2s ease infinite;
+}
+.start-btn:hover { transform: scale(1.08); }
+@keyframes glow { 0%,100%{box-shadow:0 8px 20px rgba(0,0,0,0.15)} 50%{box-shadow:0 8px 30px rgba(95,39,205,0.5)} }
+
+.section { display:none; min-height:100vh; padding:2rem 1.5rem 6rem; background:var(--bg); }
+.section.active { display:block; }
+
+.section-header { text-align:center; margin-bottom:2rem; border-radius:20px; padding:1.5rem; color:white; }
+.section-header h2 { font-size:1.8rem; font-weight:800; }
+.section-header p { font-size:1rem; margin-top:0.4rem; opacity:0.9; }
+
+.card { background:var(--card); border-radius:20px; padding:1.5rem; margin-bottom:1.5rem; box-shadow:0 4px 15px rgba(0,0,0,0.08); }
+
+.btn { background:linear-gradient(135deg,var(--primary),var(--orange)); color:white; border:none; border-radius:50px; padding:0.8rem 2rem; font-size:1rem; font-weight:700; cursor:pointer; transition:transform 0.2s; margin:0.3rem; }
+.btn:hover { transform:scale(1.05); }
+.btn-indigo { background:linear-gradient(135deg,var(--indigo),var(--purple)); }
+.btn-teal { background:linear-gradient(135deg,var(--secondary),#00cec9); }
+.btn-green { background:linear-gradient(135deg,var(--green),#20bf6b); color:white; }
+.btn-accent { background:linear-gradient(135deg,var(--accent),var(--orange)); color:#333; }
+
+.stars-display { position:fixed; top:1rem; right:1rem; z-index:1000; background:white; border-radius:50px; padding:0.5rem 1rem; box-shadow:0 4px 15px rgba(0,0,0,0.15); font-size:1.1rem; font-weight:700; }
+
+.achievement-popup { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0); background:linear-gradient(135deg,var(--indigo),var(--purple)); color:white; border-radius:20px; padding:2rem; text-align:center; z-index:2000; box-shadow:0 20px 60px rgba(0,0,0,0.3); transition:transform 0.3s cubic-bezier(0.175,0.885,0.32,1.275); min-width:280px; }
+.achievement-popup.show { transform:translate(-50%,-50%) scale(1); }
+
+.feedback { border-radius:15px; padding:1rem; margin:0.5rem 0; font-weight:600; font-size:1rem; text-align:center; }
+.feedback.correct { background:#e8fff4; color:#00b894; }
+.feedback.wrong { background:#fff5f5; color:var(--primary); }
+
+.answer-input { border:3px solid var(--secondary); border-radius:12px; padding:0.7rem 1rem; font-size:1.2rem; font-weight:700; width:140px; text-align:center; outline:none; }
+.answer-input:focus { border-color:var(--indigo); }
+
+/* Pie chart */
+canvas { border-radius:15px; max-width:100%; }
+
+/* Percent bar */
+.pct-bar-outer { background:#eee; border-radius:50px; height:36px; overflow:hidden; position:relative; margin:0.5rem 0; }
+.pct-bar-inner { height:100%; border-radius:50px; display:flex; align-items:center; padding-left:0.8rem; font-weight:700; font-size:0.9rem; color:white; transition:width 1.2s cubic-bezier(0.25,0.46,0.45,0.94); }
+.pct-label { display:flex; justify-content:space-between; font-size:0.9rem; font-weight:600; color:#555; margin-bottom:0.2rem; }
+
+/* Drag */
+.drag-item { background:linear-gradient(135deg,var(--indigo),var(--purple)); color:white; border-radius:12px; padding:0.6rem 1.2rem; font-size:1.1rem; font-weight:700; cursor:grab; box-shadow:0 3px 8px rgba(0,0,0,0.15); user-select:none; transition:transform 0.2s; display:inline-flex; align-items:center; justify-content:center; min-width:80px; }
+.drag-item:active { cursor:grabbing; transform:scale(1.1); }
+.drop-zone { border:3px dashed var(--secondary); border-radius:15px; min-height:55px; padding:0.5rem; display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center; justify-content:center; transition:background 0.2s; min-width:120px; }
+.drop-zone.over { background:rgba(78,205,196,0.1); }
+
+/* Options */
+.opt-btn { background:white; border:3px solid #eee; border-radius:15px; padding:0.8rem; font-size:1.05rem; font-weight:600; cursor:pointer; transition:all 0.2s; text-align:center; margin:0.3rem; flex:1; min-width:140px; }
+.opt-btn:hover { border-color:var(--indigo); transform:translateY(-2px); }
+.opt-btn.correct { border-color:var(--green); background:#e8fff4; color:#00b894; }
+.opt-btn.wrong { border-color:var(--primary); background:#fff5f5; color:var(--primary); }
+
+/* Progress */
+.progress-bar-container { background:#eee; border-radius:50px; height:12px; margin:1rem 0; overflow:hidden; }
+.progress-bar { height:100%; background:linear-gradient(90deg,var(--indigo),var(--pink)); border-radius:50px; transition:width 0.5s ease; }
+
+/* Badges */
+.badge { background:linear-gradient(135deg,var(--accent),var(--orange)); border-radius:15px; padding:0.8rem 1.2rem; text-align:center; font-size:0.85rem; font-weight:700; color:#333; min-width:90px; opacity:0.3; transition:opacity 0.5s; }
+.badge.earned { opacity:1; animation:badgePop 0.4s ease; }
+@keyframes badgePop { 0%{transform:scale(0)} 70%{transform:scale(1.2)} 100%{transform:scale(1)} }
+.badges-grid { display:flex; flex-wrap:wrap; gap:1rem; justify-content:center; margin:1rem 0; }
+
+/* Score circle */
+.score-circle { width:150px; height:150px; border-radius:50%; background:linear-gradient(135deg,var(--indigo),var(--pink)); display:flex; flex-direction:column; align-items:center; justify-content:center; margin:1.5rem auto; color:white; font-weight:800; animation:scaleIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275); }
+@keyframes scaleIn { from{transform:scale(0)} to{transform:scale(1)} }
+
+/* AI */
+.ai-companion { position:fixed; bottom:1.5rem; right:1.5rem; z-index:999; width:70px; height:70px; border-radius:50%; background:linear-gradient(135deg,var(--indigo),var(--purple)); display:flex; align-items:center; justify-content:center; font-size:2rem; cursor:pointer; box-shadow:0 4px 20px rgba(0,0,0,0.2); animation:compAnim 2s ease infinite; }
+@keyframes compAnim { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-8px) scale(1.05)} }
+.ai-speech { position:fixed; bottom:5.5rem; right:1.5rem; z-index:999; background:white; border-radius:15px 15px 5px 15px; padding:1rem; max-width:220px; font-size:0.9rem; box-shadow:0 4px 15px rgba(0,0,0,0.1); display:none; font-weight:500; }
+.ai-speech.show { display:block; animation:fadeIn 0.3s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+nav.bottom-nav { position:fixed; bottom:0; left:0; right:0; background:white; border-top:2px solid #eee; display:flex; justify-content:center; gap:0.5rem; padding:0.5rem; z-index:500; flex-wrap:wrap; }
+nav.bottom-nav button { background:none; border:2px solid #eee; border-radius:50px; padding:0.3rem 0.8rem; font-size:0.8rem; cursor:pointer; font-weight:600; transition:all 0.2s; }
+nav.bottom-nav button.active, nav.bottom-nav button:hover { background:var(--indigo); color:white; border-color:var(--indigo); }
+
+/* Pie legend */
+.pie-legend { display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.8rem; }
+.pie-legend-item { display:flex; align-items:center; gap:0.4rem; font-size:0.9rem; font-weight:600; }
+.pie-legend-color { width:14px; height:14px; border-radius:3px; }
+
+/* Conversion table */
+.conv-table { width:100%; border-collapse:collapse; font-size:1rem; }
+.conv-table th { background:linear-gradient(135deg,var(--indigo),var(--purple)); color:white; padding:0.7rem; text-align:center; }
+.conv-table td { padding:0.7rem; text-align:center; border-bottom:1px solid #eee; }
+.conv-table tr:nth-child(even) { background:#f5f3ff; }
+
+@media(max-width:600px){ .opt-btn{min-width:100px} }
+</style>
+</head>
+<body>
+
+<div class="stars-display">⭐ <span id="starCount">0</span></div>
+<div class="ai-companion" onclick="toggleAISpeech()">🦉</div>
+<div class="ai-speech" id="aiSpeech">我是猫头鹰博士！百分数是数学高手必学技能！</div>
+<div class="achievement-popup" id="achievePopup">
+  <div style="font-size:3rem" id="achieveEmoji">🏆</div>
+  <div style="font-size:1.3rem;font-weight:800;margin:0.5rem 0" id="achieveTitle">成就解锁！</div>
+  <div style="font-size:1rem" id="achieveDesc">厉害！</div>
+</div>
+
+<!-- HERO -->
+<section class="section active" id="sec-hero">
+  <div class="hero">
+    <div class="hero-emoji">📈</div>
+    <h1 class="hero-title">百分数 & 统计</h1>
+    <p style="color:rgba(255,255,255,0.9);font-size:1.2rem;margin:0.8rem 0;font-weight:600">六年级数学 · 数字背后的秘密！🔍</p>
+    <p style="color:rgba(255,255,255,0.85);font-size:1rem;max-width:380px;line-height:1.6;margin-bottom:1rem">
+      打折优惠、达标率、全班成绩分析...<br>百分数让我们更好地理解世界！
+    </p>
+    <button class="start-btn" onclick="goSection('sec-goals')">🚀 开始学习！</button>
+    <div style="position:absolute;top:10%;left:5%;font-size:2rem;opacity:0.2;animation:float 3s ease-in-out infinite">50%</div>
+    <div style="position:absolute;top:25%;right:8%;font-size:2rem;opacity:0.15;animation:float 4s ease-in-out infinite 0.5s">75%</div>
+    <div style="position:absolute;bottom:20%;left:10%;font-size:2rem;opacity:0.15;animation:float 3.5s ease-in-out infinite 1s">100%</div>
+  </div>
+</section>
+
+<!-- GOALS -->
+<section class="section" id="sec-goals">
+  <div class="section-header" style="background:linear-gradient(135deg,var(--indigo),var(--purple))">
+    <h2>🎯 今日目标</h2>
+    <p>征服百分数，成为数据分析小达人！</p>
+  </div>
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:1rem;margin:0.8rem 0"><span style="font-size:1.8rem">💯</span><div><strong>理解百分数</strong>：什么是百分比？怎么读怎么写？</div></div>
+    <div style="display:flex;align-items:center;gap:1rem;margin:0.8rem 0"><span style="font-size:1.8rem">🔄</span><div><strong>互相转化</strong>：百分数⟺分数⟺小数</div></div>
+    <div style="display:flex;align-items:center;gap:1rem;margin:0.8rem 0"><span style="font-size:1.8rem">📊</span><div><strong>读懂图表</strong>：扇形图、条形图中的百分数</div></div>
+    <div style="display:flex;align-items:center;gap:1rem;margin:0.8rem 0"><span style="font-size:1.8rem">🛒</span><div><strong>生活应用</strong>：打折、达标率、增减率</div></div>
+  </div>
+  <div style="text-align:center;margin:1.5rem 0">
+    <button class="btn btn-indigo" onclick="goSection('sec-warmup')">开始热身 🔥</button>
+  </div>
+</section>
+
+<!-- WARMUP -->
+<section class="section" id="sec-warmup">
+  <div class="section-header" style="background:linear-gradient(135deg,var(--secondary),#00cec9)">
+    <h2>⚡ 热身：百分数是什么？</h2>
+    <p>用进度条直观感受百分数！</p>
+  </div>
+  <div class="card">
+    <p style="font-size:1.1rem;font-weight:700;margin-bottom:1rem">📊 点击滑块，感受不同的百分比！</p>
+    <div id="pctBars">
+      <div class="pct-label"><span>🎮 游戏进度</span><span id="pct1val">60%</span></div>
+      <div class="pct-bar-outer"><div class="pct-bar-inner" id="bar1" style="width:60%;background:linear-gradient(90deg,var(--primary),var(--orange))">60%</div></div>
+      <input type="range" min="0" max="100" value="60" style="width:100%;margin:0.5rem 0" oninput="updateBar(1,this.value)">
+
+      <div class="pct-label" style="margin-top:0.8rem"><span>💧 水箱容量</span><span id="pct2val">35%</span></div>
+      <div class="pct-bar-outer"><div class="pct-bar-inner" id="bar2" style="width:35%;background:linear-gradient(90deg,var(--secondary),#00cec9)">35%</div></div>
+      <input type="range" min="0" max="100" value="35" style="width:100%;margin:0.5rem 0" oninput="updateBar(2,this.value)">
+
+      <div class="pct-label" style="margin-top:0.8rem"><span>🌱 植物生长</span><span id="pct3val">80%</span></div>
+      <div class="pct-bar-outer"><div class="pct-bar-inner" id="bar3" style="width:80%;background:linear-gradient(90deg,var(--green),#20bf6b)">80%</div></div>
+      <input type="range" min="0" max="100" value="80" style="width:100%;margin:0.5rem 0" oninput="updateBar(3,this.value)">
+    </div>
+    <p style="font-size:1rem;font-weight:600;color:#555;margin-top:1rem">💡 百分数就是"以100为分母"的分数！75% = 75/100 = 0.75</p>
+  </div>
+  <div class="card">
+    <p style="font-weight:700;margin-bottom:0.8rem">🤔 以下说法，哪个是正确的？</p>
+    <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+      <button class="opt-btn" onclick="checkWarmup(this,'w')">100% 表示全部，所以等于无穷大</button>
+      <button class="opt-btn" onclick="checkWarmup(this,'c')">50% 就是一半，等于分数 1/2</button>
+      <button class="opt-btn" onclick="checkWarmup(this,'w')">百分数只能在0到100之间</button>
+    </div>
+    <div id="warmupFb" class="feedback" style="display:none"></div>
+  </div>
+  <div style="text-align:center;margin:1.5rem 0">
+    <button class="btn btn-indigo" onclick="goSection('sec-level1')">去关卡1 🌟</button>
+  </div>
+</section>
+
+<!-- LEVEL 1: Conversion -->
+<section class="section" id="sec-level1">
+  <div class="section-header" style="background:linear-gradient(135deg,var(--indigo),var(--purple))">
+    <h2>🌟 关卡1：互相转化</h2>
+    <p>百分数 ⟺ 分数 ⟺ 小数，轻松搞定！</p>
+  </div>
+  <div class="card" style="background:linear-gradient(135deg,#f5f3ff,#ece0ff)">
+    <h3 style="font-weight:800;margin-bottom:0.8rem">📖 转化口诀</h3>
+    <table class="conv-table">
+      <tr><th>百分数</th><th>分数</th><th>小数</th></tr>
+      <tr><td><strong>75%</strong></td><td>75/100 = 3/4</td><td>0.75</td></tr>
+      <tr><td><strong>50%</strong></td><td>50/100 = 1/2</td><td>0.5</td></tr>
+      <tr><td><strong>25%</strong></td><td>25/100 = 1/4</td><td>0.25</td></tr>
+      <tr><td><strong>20%</strong></td><td>20/100 = 1/5</td><td>0.2</td></tr>
+    </table>
+    <p style="font-size:0.9rem;margin-top:0.8rem;color:#666">规律：百分数 → 小数：去掉%，除以100（小数点左移2位）</p>
+  </div>
+  <div class="progress-bar-container"><div class="progress-bar" id="l1prog" style="width:0%"></div></div>
+  <div id="l1-content" class="card"></div>
+  <div id="l1-feedback" class="feedback" style="display:none"></div>
+  <div style="text-align:center;margin:1rem 0">
+    <button class="btn btn-indigo" onclick="checkL1()">✅ 提交</button>
+    <button class="btn btn-teal" onclick="nextL1()">下一题 ➡️</button>
+  </div>
+</section>
+
+<!-- LEVEL 2: Pie Chart -->
+<section class="section" id="sec-level2">
+  <div class="section-header" style="background:linear-gradient(135deg,var(--orange),var(--primary))">
+    <h2>🌟🌟 关卡2：读懂扇形图</h2>
+    <p>饼图中藏着百分数的秘密！</p>
+  </div>
+  <div class="card">
+    <p style="font-weight:700;font-size:1.1rem;margin-bottom:0.5rem" id="pieTitle">📊 全班100人最喜欢的课外活动调查</p>
+    <div style="display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:center">
+      <canvas id="pieCanvas" width="240" height="240"></canvas>
+      <div>
+        <div id="pieLegend" class="pie-legend"></div>
+        <div style="margin-top:1rem;font-size:0.9rem;color:#888">💡 扇形角度 = 百分比 × 360°</div>
+      </div>
+    </div>
+  </div>
+  <div class="card" id="pieQuiz">
+    <p style="font-weight:700;margin-bottom:0.8rem" id="pieQtext"></p>
+    <div id="pieOpts" style="display:flex;flex-wrap:wrap;gap:0.5rem"></div>
+    <div id="pie-feedback" class="feedback" style="display:none"></div>
+  </div>
+  <div style="text-align:center">
+    <button class="btn" onclick="nextPieQ()">下一题 ➡️</button>
+    <button class="btn btn-teal" onclick="goSection('sec-level3')">关卡3 ⏭️</button>
+  </div>
+</section>
+
+<!-- LEVEL 3: Application -->
+<section class="section" id="sec-level3">
+  <div class="section-header" style="background:linear-gradient(135deg,var(--green),#20bf6b)">
+    <h2>🌟🌟🌟 关卡3：百分数应用</h2>
+    <p>打折、达标率、增减率！生活数学！</p>
+  </div>
+  <div class="card" style="background:linear-gradient(135deg,#e8fff4,#d5f5e3)">
+    <h3 style="font-weight:800;margin-bottom:0.8rem">🛒 生活中的百分数</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;font-size:0.95rem">
+      <div style="background:white;border-radius:12px;padding:0.8rem">
+        <div style="font-size:1.5rem">🏷️</div>
+        <strong>打折</strong><br>8折 = 80%<br>原价×80% = 现价
+      </div>
+      <div style="background:white;border-radius:12px;padding:0.8rem">
+        <div style="font-size:1.5rem">🎯</div>
+        <strong>达标率</strong><br>达标÷总数×100%<br>例：80/100=80%
+      </div>
+      <div style="background:white;border-radius:12px;padding:0.8rem">
+        <div style="font-size:1.5rem">📈</div>
+        <strong>增长率</strong><br>(新值-旧值)÷旧值×100%
+      </div>
+    </div>
+  </div>
+  <div class="progress-bar-container"><div class="progress-bar" id="l3prog" style="width:0%"></div></div>
+  <div id="l3-content" class="card"></div>
+  <div id="l3-feedback" class="feedback" style="display:none"></div>
+  <div style="text-align:center;margin:1rem 0">
+    <button class="btn btn-green" onclick="checkL3()">✅ 提交</button>
+    <button class="btn btn-indigo" onclick="nextL3()">下一题 ➡️</button>
+  </div>
+</section>
+
+<!-- BOSS -->
+<section class="section" id="sec-boss">
+  <div class="section-header" style="background:linear-gradient(135deg,#2d3436,#636e72)">
+    <h2>👾 Boss关：综合挑战</h2>
+    <p>百分数统计全方位测试！</p>
+  </div>
+  <div id="boss-content" class="card"></div>
+  <div id="boss-feedback" class="feedback" style="display:none"></div>
+  <div style="text-align:center;margin:1rem 0">
+    <button class="btn" style="background:linear-gradient(135deg,#2d3436,#636e72)" onclick="checkBoss()">⚔️ 攻击！</button>
+  </div>
+</section>
+
+<!-- SCORE -->
+<section class="section" id="sec-score">
+  <div style="text-align:center;padding:2rem">
+    <div style="font-size:3rem">🎊</div>
+    <h2 style="font-size:2rem;font-weight:800;background:linear-gradient(90deg,var(--indigo),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0.5rem 0">统计小达人！</h2>
+    <div class="score-circle">
+      <div style="font-size:3rem;font-weight:800" id="finalScore">0</div>
+      <div style="font-size:0.9rem;opacity:0.9">颗星星</div>
+    </div>
+    <p style="font-size:1.1rem;font-weight:600;margin:1rem 0" id="scoreMotto"></p>
+    <div class="badges-grid" id="badgesGrid"></div>
+    <button class="btn btn-indigo" onclick="goSection('sec-extend')">🌈 拓展学习</button>
+    <button class="btn btn-teal" onclick="location.reload()">🔄 再来一次</button>
+  </div>
+</section>
+
+<!-- EXTEND -->
+<section class="section" id="sec-extend">
+  <div class="section-header" style="background:linear-gradient(135deg,var(--indigo),var(--purple))">
+    <h2>🌈 拓展：百分数的世界</h2>
+    <p>看看生活中哪些地方用到了百分数！</p>
+  </div>
+  <div class="card" style="background:linear-gradient(135deg,#ffe66d33,#feca5733);border:2px solid var(--accent)">
+    <h3 style="font-weight:800;margin-bottom:0.8rem">🌡️ 体温与健康</h3>
+    <p style="line-height:1.8">正常体温约36.5°C，发烧是超过37.5°C。<br>医生说"氧饱和度98%"——这个百分数告诉我们血氧很充足！</p>
+  </div>
+  <div class="card" style="background:linear-gradient(135deg,#a29bfe33,#6c5ce733);border:2px solid var(--purple)">
+    <h3 style="font-weight:800;margin-bottom:0.8rem">📱 手机电量</h3>
+    <p style="line-height:1.8">手机电量20%时要充电，100%满电。<br>如果充电速度是每分钟2%，从20%充到100%需要多少分钟？</p>
+    <button class="btn btn-accent" onclick="toggleAnswer('ans1')">🔓 揭晓</button>
+    <div id="ans1" style="display:none;margin-top:0.8rem;background:white;border-radius:12px;padding:0.8rem;font-weight:600;color:var(--indigo)">
+      需要充 80%，每分钟充 2%，所以需要 80÷2 = <strong>40分钟</strong>！
+    </div>
+  </div>
+  <div class="card">
+    <h3 style="font-weight:800;margin-bottom:0.8rem">🎮 拓展挑战</h3>
+    <p style="line-height:1.8;margin-bottom:0.8rem">全校500人参加体育比赛，男生占60%，女生占40%。<br>
+    ①男生有多少人？②女生有多少人？③比男生多多少人？</p>
+    <button class="btn btn-accent" onclick="toggleAnswer('ans2')">🔓 揭晓答案</button>
+    <div id="ans2" style="display:none;margin-top:0.8rem;background:#e8fff4;border-radius:12px;padding:0.8rem;font-weight:600;color:#00b894">
+      ①男生：500×60% = 300人<br>
+      ②女生：500×40% = 200人<br>
+      ③男比女多：300-200 = 100人
+    </div>
+  </div>
+  <div style="text-align:center;margin:1.5rem 0">
+    <button class="btn btn-indigo" onclick="goSection('sec-score')">📊 查看成绩单</button>
+  </div>
+</section>
+
+<nav class="bottom-nav">
+  <button onclick="goSection('sec-hero')">🏠首页</button>
+  <button onclick="goSection('sec-warmup')">⚡热身</button>
+  <button onclick="goSection('sec-level1')">🌟转化</button>
+  <button onclick="goSection('sec-level2')">🌟饼图</button>
+  <button onclick="goSection('sec-level3')">🌟应用</button>
+  <button onclick="goSection('sec-boss')">👾Boss</button>
+  <button onclick="goSection('sec-score')">🏆成绩</button>
+</nav>
+
+<script>
+// State
+const state = { stars:0, achievements:[], l1Idx:0, l1Correct:0, l3Idx:0, l3Correct:0, bossIdx:0, bossCorrect:0, pieQIdx:0 };
+const ACHIEVEMENTS = [
+  { id:'start', emoji:'🚀', title:'开始啦', desc:'启动学习！' },
+  { id:'warmup', emoji:'💡', title:'百分入门', desc:'理解了百分数！' },
+  { id:'convert1', emoji:'🔄', title:'转化初学', desc:'第一次转化成功！' },
+  { id:'convert_all', emoji:'🌟', title:'转化达人', desc:'全部转化题答对！' },
+  { id:'pie_reader', emoji:'📊', title:'图表侦探', desc:'读懂了扇形图！' },
+  { id:'apply', emoji:'🛒', title:'生活达人', desc:'会用百分数解决生活问题！' },
+  { id:'boss', emoji:'👾', title:'Boss终结者', desc:'击败了Boss！' },
+  { id:'all_stars', emoji:'💫', title:'满星王者', desc:'收集满20颗星！' },
+];
+
+const audioCtx = (() => { try { return new (window.AudioContext || window.webkitAudioContext)(); } catch(e){return null;} })();
+function playSound(type) {
+  if (!audioCtx) return;
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.connect(g); g.connect(audioCtx.destination);
+  const t = audioCtx.currentTime;
+  if (type==='correct') { o.frequency.setValueAtTime(523,t); o.frequency.setValueAtTime(659,t+0.1); o.frequency.setValueAtTime(784,t+0.2); }
+  else if (type==='wrong') { o.frequency.setValueAtTime(330,t); o.frequency.setValueAtTime(261,t+0.15); }
+  else if (type==='achieve') { [659,784,1047].forEach((f,i)=>o.frequency.setValueAtTime(f,t+i*0.1)); }
+  g.gain.setValueAtTime(0.3,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.5);
+  o.start(); o.stop(t+0.5);
+}
+function addStars(n) {
+  state.stars+=n; document.getElementById('starCount').textContent=state.stars;
+  if(state.stars>=20) unlockAchievement('all_stars');
+}
+function unlockAchievement(id) {
+  if(state.achievements.includes(id)) return;
+  state.achievements.push(id);
+  const a=ACHIEVEMENTS.find(x=>x.id===id); if(!a) return;
+  const p=document.getElementById('achievePopup');
+  document.getElementById('achieveEmoji').textContent=a.emoji;
+  document.getElementById('achieveTitle').textContent='🏆 '+a.title;
+  document.getElementById('achieveDesc').textContent=a.desc;
+  p.classList.add('show'); playSound('achieve');
+  setTimeout(()=>p.classList.remove('show'),2500);
+  updateBadges();
+}
+function updateBadges() {
+  const g=document.getElementById('badgesGrid'); if(!g) return;
+  g.innerHTML=ACHIEVEMENTS.map(a=>`<div class="badge ${state.achievements.includes(a.id)?'earned':''}"><div style="font-size:1.5rem">${a.emoji}</div><div>${a.title}</div></div>`).join('');
+}
+function goSection(id) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  unlockAchievement('start');
+  if(id==='sec-level1') initL1();
+  if(id==='sec-level2') initPieSection();
+  if(id==='sec-level3') initL3();
+  if(id==='sec-boss') initBoss();
+  if(id==='sec-score') showScore();
+}
+function toggleAnswer(id) { const el=document.getElementById(id); el.style.display=el.style.display==='none'?'block':'none'; }
+
+// Warmup
+function updateBar(n,v) {
+  const bar=document.getElementById('bar'+n);
+  bar.style.width=v+'%'; bar.textContent=v+'%';
+  document.getElementById('pct'+n+'val').textContent=v+'%';
+}
+function checkWarmup(el,type) {
+  const fb=document.getElementById('warmupFb');
+  fb.style.display='block';
+  if(type==='c') {
+    el.classList.add('correct'); fb.className='feedback correct';
+    fb.textContent='🎉 正确！50% = 50/100 = 1/2，就是一半！+3⭐';
+    addStars(3); unlockAchievement('warmup'); playSound('correct');
+  } else {
+    el.classList.add('wrong'); fb.className='feedback wrong';
+    fb.textContent='💪 再想想！百分数可以超过100%（比如增长了120%）';
+    playSound('wrong');
+  }
+}
+
+// Level 1: Conversion
+const l1Qs = [
+  { q:'把 <strong>0.75</strong> 转化为百分数', ans:'75%', check: v=>/75\s*%/.test(v) },
+  { q:'把 <strong>40%</strong> 转化为小数', ans:'0.4', check: v=>parseFloat(v)===0.4 },
+  { q:'把 <strong>3/5</strong> 转化为百分数', ans:'60%', check: v=>/60\s*%/.test(v) },
+  { q:'把 <strong>125%</strong> 转化为小数', ans:'1.25', check: v=>parseFloat(v)===1.25 },
+  { q:'把 <strong>0.08</strong> 转化为百分数', ans:'8%', check: v=>/8\s*%/.test(v) },
+];
+function initL1() { state.l1Idx=0; state.l1Correct=0; showL1Q(); }
+function showL1Q() {
+  const q=l1Qs[state.l1Idx];
+  document.getElementById('l1-content').innerHTML=`
+    <p style="font-weight:800;font-size:1rem;margin-bottom:0.5rem">第${state.l1Idx+1}题（共${l1Qs.length}题）</p>
+    <p style="font-size:1.2rem;line-height:2;margin-bottom:1rem">${q.q}</p>
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+      <label style="font-weight:700">答案 = </label>
+      <input class="answer-input" id="l1input" type="text" placeholder="?" style="width:160px">
+    </div>`;
+  document.getElementById('l1-feedback').style.display='none';
+  document.getElementById('l1prog').style.width=(state.l1Idx/l1Qs.length*100)+'%';
+}
+function checkL1() {
+  const v=document.getElementById('l1input')?.value||'';
+  const q=l1Qs[state.l1Idx];
+  const fb=document.getElementById('l1-feedback');
+  fb.style.display='block';
+  if(q.check(v)) {
+    fb.className='feedback correct';
+    fb.textContent=`🎉 正确！答案是 ${q.ans}，+3⭐`;
+    addStars(3); state.l1Correct++;
+    if(state.l1Correct===1) unlockAchievement('convert1');
+    playSound('correct');
+  } else {
+    fb.className='feedback wrong';
+    fb.textContent=`💪 正确答案是 ${q.ans}，再练练！`;
+    playSound('wrong');
+  }
+}
+function nextL1() {
+  state.l1Idx++;
+  if(state.l1Idx>=l1Qs.length) {
+    if(state.l1Correct>=l1Qs.length-1) unlockAchievement('convert_all');
+    addStars(5); goSection('sec-level2');
+  } else showL1Q();
+}
+
+// Level 2: Pie Chart
+const pieData = {
+  labels:['阅读','运动','游戏','音乐','绘画'],
+  values:[30,25,20,15,10],
+  colors:['#ff6b6b','#4ecdc4','#a29bfe','#ffe66d','#fd79a8'],
+};
+const pieQs = [
+  { q:'阅读的同学占总人数的百分之几？', ans:30, unit:'%' },
+  { q:'运动和游戏合起来占多少百分比？', ans:45, unit:'%' },
+  { q:'如果全校500人做同样调查，喜欢音乐的有多少人？', ans:75, unit:'人' },
+];
+function initPieSection() {
+  state.pieQIdx=0;
+  drawPie();
+  showPieQ();
+}
+function drawPie() {
+  const canvas=document.getElementById('pieCanvas'); if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  const cx=120,cy=120,r=100;
+  let angle=-Math.PI/2;
+  const total=pieData.values.reduce((a,b)=>a+b,0);
+  pieData.values.forEach((v,i)=>{
+    const slice=(v/total)*Math.PI*2;
+    ctx.beginPath(); ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,angle,angle+slice); ctx.closePath();
+    ctx.fillStyle=pieData.colors[i]; ctx.fill();
+    ctx.strokeStyle='white'; ctx.lineWidth=2; ctx.stroke();
+    // label
+    const midAngle=angle+slice/2;
+    const lx=cx+Math.cos(midAngle)*65, ly=cy+Math.sin(midAngle)*65;
+    ctx.fillStyle='white'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(v+'%',lx,ly);
+    angle+=slice;
+  });
+  const legend=document.getElementById('pieLegend');
+  if(legend) legend.innerHTML=pieData.labels.map((l,i)=>`
+    <div class="pie-legend-item">
+      <div class="pie-legend-color" style="background:${pieData.colors[i]}"></div>
+      <span>${l}: ${pieData.values[i]}%</span>
+    </div>`).join('');
+}
+function showPieQ() {
+  if(state.pieQIdx>=pieQs.length) {
+    document.getElementById('pieQuiz').innerHTML='<p style="font-size:1.2rem;font-weight:700;text-align:center;color:var(--green)">🎉 扇形图题目全部完成！</p>';
+    unlockAchievement('pie_reader'); addStars(5); return;
+  }
+  const q=pieQs[state.pieQIdx];
+  document.getElementById('pieQtext').textContent='Q: '+q.q;
+  document.getElementById('pieOpts').innerHTML='';
+  document.getElementById('pie-feedback').style.display='none';
+}
+function nextPieQ() {
+  const q=pieQs[state.pieQIdx];
+  const ans=q.ans;
+  // generate options
+  const opts=[ans,ans+5,ans-5,ans+10].sort(()=>Math.random()-0.5);
+  document.getElementById('pieOpts').innerHTML=opts.map(o=>`
+    <button class="opt-btn" onclick="checkPieQ(this,${o},${ans})">${o}${q.unit}</button>`).join('');
+}
+function checkPieQ(el,val,ans) {
+  const fb=document.getElementById('pie-feedback');
+  fb.style.display='block';
+  document.querySelectorAll('#pieOpts .opt-btn').forEach(b=>{
+    if(parseInt(b.textContent)===ans) b.classList.add('correct');
+    else if(b===el) b.classList.add('wrong');
+  });
+  if(val===ans) {
+    fb.className='feedback correct';
+    fb.textContent=`✅ 正确！+3⭐`;
+    addStars(3); unlockAchievement('pie_reader'); playSound('correct');
+    setTimeout(()=>{ state.pieQIdx++; showPieQ(); nextPieQ(); },1800);
+  } else {
+    fb.className='feedback wrong';
+    fb.textContent=`💪 正确答案是 ${ans}${pieQs[state.pieQIdx].unit}`;
+    playSound('wrong');
+  }
+}
+
+// Level 3: Application
+const l3Qs = [
+  { q:'一件衣服原价200元，打8折出售，现价是多少元？', ans:160, hint:'8折 = 80%，现价 = 200×80%' },
+  { q:'全班50人参加长跑，45人达标，达标率是多少？', ans:90, unit:'%', hint:'达标率 = 45÷50×100%', check:v=>/90\s*%?/.test(v.toString())||parseInt(v)===90 },
+  { q:'某村去年收入100万，今年120万，增长了多少百分比？', ans:20, unit:'%', hint:'(120-100)÷100×100%=20%', check:v=>/20\s*%?/.test(v.toString())||parseInt(v)===20 },
+  { q:'一瓶果汁含糖量是15%，这瓶果汁500g，含糖多少克？', ans:75, hint:'500×15%=75g' },
+];
+function initL3() { state.l3Idx=0; state.l3Correct=0; showL3Q(); }
+function showL3Q() {
+  const q=l3Qs[state.l3Idx];
+  document.getElementById('l3-content').innerHTML=`
+    <p style="font-weight:800;font-size:1rem;margin-bottom:0.5rem">第${state.l3Idx+1}题（共${l3Qs.length}题）</p>
+    <p style="font-size:1.1rem;line-height:1.8;margin-bottom:0.8rem">${q.q}</p>
+    <p style="font-size:0.9rem;color:#666;background:#f0f4ff;border-radius:8px;padding:0.5rem;margin-bottom:0.8rem">💡 ${q.hint}</p>
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+      <label style="font-weight:700">答案 = </label>
+      <input class="answer-input" id="l3input" type="text" placeholder="?">
+    </div>`;
+  document.getElementById('l3-feedback').style.display='none';
+  document.getElementById('l3prog').style.width=(state.l3Idx/l3Qs.length*100)+'%';
+}
+function checkL3() {
+  const v=document.getElementById('l3input')?.value||'';
+  const q=l3Qs[state.l3Idx];
+  const fb=document.getElementById('l3-feedback');
+  fb.style.display='block';
+  const ok=q.check ? q.check(v) : parseFloat(v)===q.ans;
+  if(ok) {
+    fb.className='feedback correct';
+    fb.textContent=`🎉 正确！+3⭐`;
+    addStars(3); state.l3Correct++;
+    unlockAchievement('apply'); playSound('correct');
+  } else {
+    fb.className='feedback wrong';
+    fb.textContent=`💪 正确答案是 ${q.ans}${q.unit||''}，${q.hint}`;
+    playSound('wrong');
+  }
+}
+function nextL3() {
+  state.l3Idx++;
+  if(state.l3Idx>=l3Qs.length) { addStars(5); goSection('sec-boss'); }
+  else showL3Q();
+}
+
+// Boss
+const bossQs = [
+  { q:'某超市橙汁原价12元/瓶，打七折，现价多少元？', ans:8.4, check:v=>Math.abs(parseFloat(v)-8.4)<0.01 },
+  { q:'全班40人，数学考试优秀（90分以上）有28人，优秀率是多少？(填数字，如70)', ans:70, check:v=>parseInt(v)===70 },
+  { q:'小明去年零花钱每月200元，今年每月240元，增长了百分之几？(填数字)', ans:20, check:v=>parseInt(v)===20 },
+];
+let bossIdx2=0;
+function initBoss() { bossIdx2=0; state.bossCorrect=0; showBossQ2(); }
+function showBossQ2() {
+  if(bossIdx2>=bossQs.length) {
+    unlockAchievement('boss'); addStars(15);
+    document.getElementById('boss-content').innerHTML='<p style="font-size:1.3rem;font-weight:800;text-align:center;color:var(--green)">🎉 Boss倒下了！你是百分数大师！</p>';
+    document.querySelector('[onclick="checkBoss()"]').style.display='none';
+    setTimeout(()=>goSection('sec-score'),2000); return;
+  }
+  const q=bossQs[bossIdx2];
+  document.getElementById('boss-content').innerHTML=`
+    <p style="font-weight:800;font-size:1.1rem;margin-bottom:1rem">👾 第${bossIdx2+1}/${bossQs.length}题</p>
+    <p style="font-size:1.1rem;line-height:1.8;margin-bottom:1rem">${q.q}</p>
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+      <label style="font-weight:700">答案：</label>
+      <input class="answer-input" id="bossInput" type="text" placeholder="?">
+    </div>`;
+  document.getElementById('boss-feedback').style.display='none';
+}
+function checkBoss() {
+  const v=document.getElementById('bossInput')?.value||'';
+  const q=bossQs[bossIdx2];
+  const fb=document.getElementById('boss-feedback');
+  fb.style.display='block';
+  if(q.check(v)) {
+    fb.className='feedback correct';
+    fb.textContent=`⚔️ 命中！+5⭐`;
+    addStars(5); state.bossCorrect++; playSound('correct');
+    setTimeout(()=>{ bossIdx2++; showBossQ2(); },1500);
+  } else {
+    fb.className='feedback wrong';
+    fb.textContent=`💪 答案是 ${q.ans}，继续冲！`;
+    playSound('wrong');
+    setTimeout(()=>{ bossIdx2++; showBossQ2(); },2500);
+  }
+}
+
+function showScore() {
+  document.getElementById('finalScore').textContent=state.stars;
+  const pct=Math.min(100,state.stars/50*100);
+  const m=['努力就是胜利💪','棒棒的！🌟','太厉害了！🏆','无敌满分！👑'];
+  document.getElementById('scoreMotto').textContent=m[pct<40?0:pct<70?1:pct<95?2:3];
+  updateBadges();
+}
+
+// AI
+const aiMsgs=['百分数 = 以100为分母的分数！','打折记得用百分数乘以原价！🏷️','扇形图里各部分加起来是100%！📊','百分数可以超过100%哦！📈','你学得很棒！⭐'];
+let aiIdx=0;
+function toggleAISpeech(){const sp=document.getElementById('aiSpeech');if(sp.classList.contains('show'))sp.classList.remove('show');else{sp.textContent=aiMsgs[aiIdx++%aiMsgs.length];sp.classList.add('show');}}
+setInterval(()=>{const sp=document.getElementById('aiSpeech');sp.textContent=aiMsgs[aiIdx++%aiMsgs.length];sp.classList.add('show');setTimeout(()=>sp.classList.remove('show'),4000);},35000);
+
+window.onload=()=>{ updateBadges(); };
+</script>
+</body>
+</html>

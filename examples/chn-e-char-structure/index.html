@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>汉字结构探秘 🏗️</title>
+<style>
+:root {
+  --bg: #fffbf0;
+  --primary: #ff6b6b;
+  --secondary: #4ecdc4;
+  --accent: #ffe66d;
+  --card: #fff;
+  --text: #333;
+  --shadow: 0 4px 20px rgba(0,0,0,0.12);
+  --radius: 16px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); font-family: 'Microsoft YaHei','微软雅黑',sans-serif; color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+/* HERO */
+#hero { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:linear-gradient(135deg,#a8edea,#fed6e3,#ffeaa7); text-align:center; padding:20px; position:relative; overflow:hidden; }
+.hero-deco { position:absolute; font-size:4rem; opacity:0.15; animation:spin 20s linear infinite; }
+.hero-deco:nth-child(1){top:5%;left:5%} .hero-deco:nth-child(2){top:5%;right:5%;animation-direction:reverse}
+.hero-deco:nth-child(3){bottom:5%;left:5%;animation-duration:15s} .hero-deco:nth-child(4){bottom:5%;right:5%;animation-direction:reverse}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.hero-title{font-size:clamp(2rem,6vw,3.5rem);font-weight:900;color:#333;margin:16px 0}
+.hero-subtitle{font-size:clamp(1rem,3vw,1.4rem);color:#666;margin-bottom:32px}
+.hero-emoji{font-size:clamp(3rem,8vw,5rem);animation:float 2s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}
+.start-btn{background:var(--primary);color:#fff;font-size:1.3rem;font-weight:800;padding:16px 48px;border:none;border-radius:50px;cursor:pointer;box-shadow:var(--shadow);transition:all 0.2s}
+.start-btn:hover{transform:translateY(-3px) scale(1.05);box-shadow:0 8px 30px rgba(255,107,107,0.4)}
+
+/* PROGRESS */
+.progress-wrap{position:fixed;top:0;left:0;width:100%;z-index:100;background:rgba(255,255,255,0.95);backdrop-filter:blur(8px);padding:8px 20px;display:none;box-shadow:0 2px 10px rgba(0,0,0,0.1)}
+.progress-wrap.visible{display:block}
+.progress-info{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:0.85rem;font-weight:700;color:var(--primary)}
+.progress-bar{height:8px;background:#eee;border-radius:10px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:10px;transition:width 0.5s}
+
+/* LAYOUT */
+.section{display:none;min-height:100vh;padding:80px 20px 40px;max-width:960px;margin:0 auto}
+.section.active{display:block}
+.sec-header{text-align:center;margin-bottom:32px}
+.level-tag{display:inline-block;padding:6px 18px;background:var(--accent);border-radius:50px;font-size:0.9rem;font-weight:800;margin-bottom:12px}
+.sec-title{font-size:clamp(1.6rem,4vw,2.4rem);font-weight:900;color:var(--primary)}
+.sec-sub{font-size:0.95rem;color:#888;margin-top:6px}
+
+/* CARD */
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;margin-bottom:20px}
+
+/* ─── STRUCTURE DISPLAY ─── */
+.struct-showcase{display:flex;flex-direction:column;gap:24px}
+.struct-item{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;cursor:pointer;transition:transform 0.2s}
+.struct-item:hover{transform:translateY(-4px)}
+.struct-label{font-size:1.1rem;font-weight:800;color:var(--primary);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.struct-label-badge{padding:3px 10px;border-radius:20px;font-size:0.8rem;font-weight:700}
+.struct-label-badge.lr{background:#ffe0e0;color:#e53935}
+.struct-label-badge.tb{background:#e0f4ff;color:#1565c0}
+.struct-label-badge.surround{background:#e8f5e9;color:#2e7d32}
+.struct-chars-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+
+/* ─── SPLIT ANIMATION ─── */
+.split-container{display:flex;align-items:center;justify-content:center;gap:0;font-size:3.5rem;min-height:100px;overflow:hidden;position:relative}
+.split-whole{font-size:3.5rem;color:var(--primary);transition:all 0.5s ease;font-weight:900}
+.split-arrow{font-size:1.5rem;opacity:0;transition:opacity 0.3s;margin:0 12px}
+.split-left{color:#e53935;font-size:3.5rem;transform:translateX(50px);opacity:0;transition:all 0.5s ease;font-weight:900}
+.split-right{color:#1565c0;font-size:3.5rem;transform:translateX(-50px);opacity:0;transition:all 0.5s ease;font-weight:900}
+.split-top{color:#e53935;font-size:3.5rem;transform:translateY(30px);opacity:0;transition:all 0.5s ease;font-weight:900}
+.split-bottom{color:#1565c0;font-size:3.5rem;transform:translateY(-30px);opacity:0;transition:all 0.5s ease;font-weight:900}
+.split-outer{color:#2e7d32;font-size:3.5rem;opacity:0;transition:all 0.5s ease;font-weight:900;position:relative}
+.split-inner{color:#e65100;font-size:2rem;opacity:0;transition:all 0.5s ease;font-weight:900;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+
+.split-container.split-active .split-whole{transform:translateX(-200px);opacity:0}
+.split-container.split-active .split-arrow{opacity:1}
+.split-container.split-active .split-left{transform:translateX(0);opacity:1}
+.split-container.split-active .split-right{transform:translateX(0);opacity:1}
+.split-container.split-active-tb .split-whole{transform:translateY(-100px);opacity:0}
+.split-container.split-active-tb .split-arrow{opacity:1}
+.split-container.split-active-tb .split-top{transform:translateY(0);opacity:1}
+.split-container.split-active-tb .split-bottom{transform:translateY(0);opacity:1}
+.split-container.split-active-surround .split-whole{transform:scale(0);opacity:0}
+.split-container.split-active-surround .split-arrow{opacity:1}
+.split-container.split-active-surround .split-outer{opacity:1}
+.split-container.split-active-surround .split-inner{opacity:1}
+
+.split-demo-card{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:24px;margin-bottom:16px;text-align:center}
+.split-btn{background:var(--secondary);color:#fff;border:none;padding:10px 28px;border-radius:50px;cursor:pointer;font-size:1rem;font-weight:700;margin-top:12px;transition:all 0.2s}
+.split-btn:hover{background:#3dbdb6;transform:scale(1.05)}
+
+/* ─── QUIZ ─── */
+.quiz-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px}
+.quiz-char-big{font-size:5rem;text-align:center;color:var(--primary);margin:16px 0;text-shadow:3px 3px 0 rgba(255,107,107,0.15)}
+.quiz-question{font-size:1.2rem;font-weight:700;text-align:center;margin-bottom:20px}
+.struct-options{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.struct-opt{padding:16px 12px;background:var(--card);border:3px solid #eee;border-radius:12px;cursor:pointer;font-size:1rem;font-weight:700;text-align:center;transition:all 0.2s}
+.struct-opt:hover{border-color:var(--secondary);transform:scale(1.03)}
+.struct-opt.correct{border-color:#00b894;background:#d4f5e9;color:#00b894}
+.struct-opt.wrong{border-color:var(--primary);background:#ffe5e5;color:var(--primary)}
+
+/* ─── SORT GAME ─── */
+.sort-char-display{font-size:4rem;text-align:center;color:var(--primary);padding:20px 0;font-weight:900}
+.sort-buckets{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin:20px 0}
+.sort-bucket{background:#f8f8f8;border:3px dashed #ccc;border-radius:12px;padding:12px;min-height:120px;transition:all 0.2s}
+.sort-bucket:hover,.sort-bucket.drag-over{border-color:var(--secondary);background:#e0fafa}
+.sort-bucket-label{font-size:0.85rem;font-weight:700;color:#888;text-align:center;margin-bottom:8px}
+.sort-chars{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.sort-char-chip{padding:8px 14px;background:var(--card);border-radius:8px;cursor:grab;font-size:1.3rem;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,0.1);transition:all 0.2s;user-select:none;border:2px solid transparent}
+.sort-char-chip:hover{transform:scale(1.1);border-color:var(--secondary)}
+.sort-char-chip.dragging{opacity:0.5;transform:scale(1.2)}
+.sort-source{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:16px 0;min-height:60px}
+
+/* ─── IDENTIFY QUIZ ─── */
+.identify-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:12px;margin:16px 0}
+.id-char{background:var(--card);border-radius:12px;box-shadow:var(--shadow);padding:16px;text-align:center;cursor:pointer;transition:all 0.2s;border:3px solid transparent}
+.id-char:hover{border-color:var(--secondary);transform:translateY(-3px)}
+.id-char .c{font-size:2.5rem;font-weight:900;color:var(--primary)}
+.id-char .t{font-size:0.75rem;color:#aaa;margin-top:4px}
+.id-char.correct{border-color:#00b894;background:#e0fff4}
+.id-char.wrong{border-color:var(--primary);background:#fff0f0}
+
+/* ─── BOSS ─── */
+.boss-split-challenge{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:24px}
+.boss-char-q{font-size:5rem;text-align:center;color:var(--primary);margin:16px 0;font-weight:900}
+.decompose-slots{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin:20px 0}
+.slot{width:70px;height:70px;border:3px dashed #ccc;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:2rem;cursor:pointer;transition:all 0.2s;font-weight:900}
+.slot:hover{border-color:var(--secondary)}
+.slot.filled{border-color:var(--primary);background:#fff5f5;color:var(--primary)}
+.slot.correct{border-color:#00b894;background:#e0fff4;color:#00b894}
+.slot.wrong{border-color:var(--primary);background:#fff0f0;animation:shake 0.4s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.decompose-options{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:12px 0}
+.decompose-opt{padding:10px 18px;background:var(--accent);border-radius:50px;cursor:pointer;font-size:1.2rem;font-weight:700;transition:all 0.2s}
+.decompose-opt:hover{transform:scale(1.1);background:var(--primary);color:#fff}
+.decompose-opt.used{opacity:0.4;pointer-events:none}
+
+/* SCOREBOARD */
+#scoreboard{background:linear-gradient(135deg,#134e5e,#71b280);color:#fff;min-height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 20px}
+#scoreboard.active{display:flex}
+.score-big{font-size:5rem;font-weight:900;color:var(--accent);margin:20px 0}
+.achievements-wrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;max-width:600px;width:100%;margin:20px 0}
+.ach{background:rgba(255,255,255,0.1);border-radius:12px;padding:14px 10px;text-align:center}
+.ach.on{background:rgba(255,230,109,0.25);border:2px solid var(--accent)}
+.ach-ic{font-size:1.8rem}
+.ach-nm{font-size:0.75rem;font-weight:700;margin-top:4px}
+.retry-btn{background:var(--accent);color:#333;font-size:1.1rem;font-weight:800;padding:14px 40px;border:none;border-radius:50px;cursor:pointer;margin-top:20px;transition:all 0.2s}
+.retry-btn:hover{transform:scale(1.05)}
+
+/* AI + TOAST + STARS */
+.ai-comp{position:fixed;bottom:20px;right:20px;z-index:200;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.ai-av{width:60px;height:60px;background:linear-gradient(135deg,#a8edea,#fed6e3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;cursor:pointer;box-shadow:var(--shadow);animation:aiFloat 3s ease-in-out infinite;border:3px solid #fff}
+@keyframes aiFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.ai-bub{background:#fff;border-radius:14px 14px 4px 14px;padding:10px 14px;max-width:200px;font-size:0.85rem;box-shadow:var(--shadow);display:none}
+.ai-bub.show{display:block;animation:fadeUp 0.3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.toast{position:fixed;top:76px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 22px;border-radius:50px;font-size:0.95rem;font-weight:700;z-index:300;opacity:0;transition:opacity 0.3s;pointer-events:none}
+.toast.show{opacity:1}.toast.ok{background:#00b894}.toast.err{background:var(--primary)}
+.star-pop{position:fixed;pointer-events:none;z-index:400}
+.sp{position:absolute;font-size:1.5rem;animation:sfx 1s ease forwards}
+@keyframes sfx{0%{opacity:1;transform:translate(0,0)}100%{opacity:0;transform:translate(var(--dx),var(--dy))}}
+.btn{padding:12px 32px;border:none;border-radius:50px;cursor:pointer;font-size:1rem;font-weight:700;transition:all 0.2s}
+.btn-p{background:var(--primary);color:#fff}
+.btn-p:hover{background:#ff5252;transform:translateY(-2px);box-shadow:0 6px 20px rgba(255,107,107,0.4)}
+.btn-s{background:var(--secondary);color:#fff}
+.btn-s:hover{background:#3dbdb6;transform:translateY(-2px)}
+.btn-c{text-align:center;margin-top:20px}
+nav.snav{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.nd{width:12px;height:12px;border-radius:50%;background:#ddd;cursor:pointer;transition:all 0.2s}
+.nd.a{background:var(--primary);transform:scale(1.3)}.nd.d{background:var(--secondary)}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-deco">汉</div><div class="hero-deco">字</div>
+  <div class="hero-deco">结</div><div class="hero-deco">构</div>
+  <div class="hero-emoji">🏗️</div>
+  <h1 class="hero-title">汉字结构探秘</h1>
+  <p class="hero-subtitle">二年级语文 · 拆开汉字看结构！</p>
+  <button class="start-btn" onclick="goTo('objectives')">开始探秘 🔍</button>
+</section>
+
+<!-- PROGRESS -->
+<div class="progress-wrap" id="pb">
+  <div class="progress-info">
+    <span id="pbLabel">学习目标</span>
+    <span id="pbStars">⭐ 0</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="pbFill" style="width:0%"></div></div>
+</div>
+
+<!-- OBJECTIVES -->
+<section class="section" id="objectives">
+  <nav class="snav" id="nav0"></nav>
+  <div class="sec-header">
+    <div class="level-tag">📋 学习目标</div>
+    <h2 class="sec-title">汉字结构是什么？</h2>
+  </div>
+  <div class="card">
+    <p style="font-size:1.1rem;line-height:1.8;margin-bottom:16px;">汉字按部件的组合方式，可以分成三种结构：</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;">
+      <div style="background:#fff0f0;border-radius:12px;padding:16px;text-align:center;">
+        <div style="font-size:2.5rem;margin-bottom:8px;">林</div>
+        <div style="font-weight:800;color:#e53935;">左右结构</div>
+        <div style="font-size:0.85rem;color:#888;margin-top:4px;">左部件 + 右部件</div>
+      </div>
+      <div style="background:#e0f4ff;border-radius:12px;padding:16px;text-align:center;">
+        <div style="font-size:2.5rem;margin-bottom:8px;">森</div>
+        <div style="font-weight:800;color:#1565c0;">上下结构</div>
+        <div style="font-size:0.85rem;color:#888;margin-top:4px;">上部件 + 下部件</div>
+      </div>
+      <div style="background:#e8f5e9;border-radius:12px;padding:16px;text-align:center;">
+        <div style="font-size:2.5rem;margin-bottom:8px;">国</div>
+        <div style="font-weight:800;color:#2e7d32;">包围结构</div>
+        <div style="font-size:0.85rem;color:#888;margin-top:4px;">外部件 包住 内部件</div>
+      </div>
+    </div>
+  </div>
+  <div class="btn-c"><button class="btn btn-p" onclick="goTo('warmup')">去看动画演示 🎬</button></div>
+</section>
+
+<!-- WARMUP: SPLIT ANIMATION DEMO -->
+<section class="section" id="warmup">
+  <nav class="snav" id="nav1"></nav>
+  <div class="sec-header">
+    <div class="level-tag">🎬 动画演示</div>
+    <h2 class="sec-title">拆开看一看！</h2>
+    <p class="sec-sub">点击"分解"按钮，看汉字怎么拆！</p>
+  </div>
+  
+  <!-- Left-Right demo -->
+  <div class="split-demo-card">
+    <div style="font-weight:800;color:#e53935;font-size:1.1rem;margin-bottom:8px;">左右结构 ←→</div>
+    <div class="split-container" id="splitLR">
+      <span class="split-whole" id="splitLRWhole">明</span>
+      <span class="split-arrow">→</span>
+      <span class="split-left" id="splitLRLeft">日</span>
+      <span style="font-size:1.5rem;opacity:0;transition:opacity 0.3s" id="splitLRPlus">+</span>
+      <span class="split-right" id="splitLRRight">月</span>
+    </div>
+    <p style="color:#888;font-size:0.9rem;margin:8px 0;">明 = 日（太阳）+ 月（月亮）= 光明</p>
+    <button class="split-btn" onclick="doSplitLR()">✂️ 分解</button>
+    <button class="split-btn" style="background:var(--primary);margin-left:8px" onclick="resetSplitLR()">🔁 还原</button>
+  </div>
+
+  <!-- Top-Bottom demo -->
+  <div class="split-demo-card">
+    <div style="font-weight:800;color:#1565c0;font-size:1.1rem;margin-bottom:8px;">上下结构 ↕</div>
+    <div class="split-container" id="splitTB" style="flex-direction:column;gap:4px;">
+      <span class="split-whole" id="splitTBWhole">笑</span>
+      <span class="split-arrow" id="tbArrow" style="margin:0">↓</span>
+      <span class="split-top" id="splitTBTop">⺮</span>
+      <span style="font-size:1.2rem;opacity:0;transition:opacity 0.3s;color:#aaa" id="splitTBPlus">+</span>
+      <span class="split-bottom" id="splitTBBottom">夭</span>
+    </div>
+    <p style="color:#888;font-size:0.9rem;margin:8px 0;">笑 = ⺮（竹字头）+ 夭（弯腰貌）</p>
+    <button class="split-btn" onclick="doSplitTB()">✂️ 分解</button>
+    <button class="split-btn" style="background:var(--primary);margin-left:8px" onclick="resetSplitTB()">🔁 还原</button>
+  </div>
+
+  <!-- Surround demo -->
+  <div class="split-demo-card">
+    <div style="font-weight:800;color:#2e7d32;font-size:1.1rem;margin-bottom:8px;">包围结构 ⬡</div>
+    <div class="split-container" id="splitSurr" style="position:relative;min-height:120px;">
+      <span class="split-whole" id="splitSurrWhole">国</span>
+      <span class="split-arrow">→</span>
+      <span class="split-outer" id="splitSurrOuter" style="display:inline-block;width:80px;height:80px;border:5px solid #2e7d32;border-radius:8px;line-height:70px;font-size:2rem;text-align:center;position:relative;">
+        <span class="split-inner" id="splitSurrInner" style="font-size:1.8rem;color:#e65100;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0">玉</span>
+      </span>
+    </div>
+    <p style="color:#888;font-size:0.9rem;margin:8px 0;">国 = □（外框）+ 玉（玉石）</p>
+    <button class="split-btn" onclick="doSplitSurr()">✂️ 分解</button>
+    <button class="split-btn" style="background:var(--primary);margin-left:8px" onclick="resetSplitSurr()">🔁 还原</button>
+  </div>
+
+  <div class="btn-c"><button class="btn btn-p" onclick="goTo('level1')">去第一关 →</button></div>
+</section>
+
+<!-- LEVEL 1: 判断结构 -->
+<section class="section" id="level1">
+  <nav class="snav" id="nav2"></nav>
+  <div class="sec-header">
+    <div class="level-tag">⚔️ 第一关</div>
+    <h2 class="sec-title">判断汉字结构</h2>
+    <p class="sec-sub">看字，说出它是什么结构！</p>
+  </div>
+  <div class="quiz-card">
+    <div id="l1p" style="text-align:center;color:#aaa;font-size:0.9rem;margin-bottom:8px">第 1 题 / 共 6 题</div>
+    <div class="quiz-char-big" id="l1Char">林</div>
+    <p class="quiz-question">这个字是什么结构？</p>
+    <div class="struct-options" id="l1Opts"></div>
+    <div id="l1Feedback" style="text-align:center;margin-top:16px;font-size:1rem;font-weight:700;min-height:24px"></div>
+  </div>
+</section>
+
+<!-- LEVEL 2: 排序分组 -->
+<section class="section" id="level2">
+  <nav class="snav" id="nav3"></nav>
+  <div class="sec-header">
+    <div class="level-tag">🗂️ 第二关</div>
+    <h2 class="sec-title">汉字分组</h2>
+    <p class="sec-sub">把字拖到正确的结构框里！</p>
+  </div>
+  <div class="card">
+    <p style="text-align:center;color:#888;font-size:0.9rem;margin-bottom:12px">点击字，再点击正确的框</p>
+    <div class="sort-source" id="sortSource"></div>
+    <div class="sort-buckets">
+      <div class="sort-bucket" id="bucket-lr" onclick="dropTo('lr')">
+        <div class="sort-bucket-label">左右结构</div>
+        <div class="sort-chars" id="bucket-lr-chars"></div>
+      </div>
+      <div class="sort-bucket" id="bucket-tb" onclick="dropTo('tb')">
+        <div class="sort-bucket-label">上下结构</div>
+        <div class="sort-chars" id="bucket-tb-chars"></div>
+      </div>
+      <div class="sort-bucket" id="bucket-surr" onclick="dropTo('surr')">
+        <div class="sort-bucket-label">包围结构</div>
+        <div class="sort-chars" id="bucket-surr-chars"></div>
+      </div>
+    </div>
+    <div id="sortScore" style="text-align:center;color:#888;font-size:1rem">已放对 0 / 9 个</div>
+  </div>
+</section>
+
+<!-- LEVEL 3: 看图识结构 -->
+<section class="section" id="level3">
+  <nav class="snav" id="nav4"></nav>
+  <div class="sec-header">
+    <div class="level-tag">🔍 第三关</div>
+    <h2 class="sec-title">找出同结构的字</h2>
+    <p class="sec-sub">找出所有"左右结构"的汉字！</p>
+  </div>
+  <div class="card">
+    <div id="l3Target" style="font-size:1.1rem;font-weight:700;text-align:center;color:var(--primary);margin-bottom:16px">点击所有左右结构的汉字 →</div>
+    <div class="identify-grid" id="identGrid"></div>
+    <div id="l3Score" style="text-align:center;margin-top:12px;color:#888">已找到 0 个</div>
+    <div id="l3Feedback" style="text-align:center;margin-top:8px;font-size:1rem;font-weight:700;min-height:24px"></div>
+  </div>
+</section>
+
+<!-- BOSS LEVEL -->
+<section class="section" id="bossLevel">
+  <nav class="snav" id="nav5"></nav>
+  <div class="sec-header">
+    <div class="level-tag" style="background:var(--primary);color:#fff">👾 终极挑战</div>
+    <h2 class="sec-title">汉字大拆解</h2>
+    <p class="sec-sub">选出正确的两个部件，拼成这个字！</p>
+  </div>
+  <div class="boss-split-challenge">
+    <div id="bossP" style="text-align:center;color:#aaa;font-size:0.9rem;margin-bottom:8px">第 1 题 / 共 5 题</div>
+    <div class="boss-char-q" id="bossChar">明</div>
+    <p style="text-align:center;color:#666;font-size:1rem;margin-bottom:8px">结构：<strong id="bossStructHint">左右</strong> — 选出两个部件</p>
+    <div class="decompose-slots" id="decompSlots">
+      <div class="slot" id="slot0" onclick="clearSlot(0)"></div>
+      <span style="font-size:2rem;color:#aaa">+</span>
+      <div class="slot" id="slot1" onclick="clearSlot(1)"></div>
+    </div>
+    <div class="decompose-options" id="decompOpts"></div>
+    <div id="bossFb" style="text-align:center;font-size:1.1rem;font-weight:700;min-height:28px;margin-top:8px"></div>
+    <div class="btn-c"><button class="btn btn-s" onclick="checkDecomp()">确认答案 ✓</button></div>
+  </div>
+</section>
+
+<!-- SCOREBOARD -->
+<section id="scoreboard">
+  <div style="font-size:3rem;font-weight:900">🎊 结构大师！</div>
+  <div class="score-big" id="fScore">0</div>
+  <p style="font-size:1.2rem;opacity:0.9">颗星星！</p>
+  <div class="achievements-wrap" id="achWrap"></div>
+  <p style="opacity:0.8;margin:12px 0" id="fMsg"></p>
+  <button class="retry-btn" onclick="location.reload()">🔄 再来一次</button>
+</section>
+
+<!-- AI -->
+<div class="ai-comp" id="aiComp" style="display:none">
+  <div class="ai-bub" id="aiBub"></div>
+  <div class="ai-av" onclick="tapAI()">🐛</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ──
+const STRUCT_CHARS = {
+  lr: ['明','林','好','妈','把','桌','跑','唱','读'],
+  tb: ['笑','草','花','男','尖','看','想','字','家'],
+  surr: ['国','圆','园','回','囚','因','团','固','围'],
+};
+
+const L1_Q = [
+  {char:'明',ans:'lr'},{char:'笑',ans:'tb'},{char:'国',ans:'surr'},
+  {char:'好',ans:'lr'},{char:'草',ans:'tb'},{char:'回',ans:'surr'},
+];
+
+const IDENT_ALL = [
+  {char:'明',struct:'lr'},{char:'笑',struct:'tb'},{char:'国',struct:'surr'},
+  {char:'好',struct:'lr'},{char:'草',struct:'tb'},{char:'林',struct:'lr'},
+  {char:'回',struct:'surr'},{char:'花',struct:'tb'},{char:'把',struct:'lr'},
+  {char:'园',struct:'surr'},{char:'男',struct:'tb'},{char:'桌',struct:'lr'},
+];
+
+const BOSS_Q = [
+  {char:'明',struct:'左右',parts:['日','月','木','火','水'],ans:['日','月']},
+  {char:'好',struct:'左右',parts:['女','子','马','山','石'],ans:['女','子']},
+  {char:'笑',struct:'上下',parts:['⺮','夭','日','月','山'],ans:['⺮','夭']},
+  {char:'草',struct:'上下',parts:['艹','早','木','火','土'],ans:['艹','早']},
+  {char:'国',struct:'包围',parts:['□','玉','日','月','土'],ans:['□','玉']},
+];
+
+const ACHIEVEMENTS = [
+  {id:'start',icon:'🚀',name:'出发啦',on:false},
+  {id:'anim_done',icon:'🎬',name:'动画达人',on:false},
+  {id:'l1_done',icon:'⚔️',name:'第一关通过',on:false},
+  {id:'l1_perfect',icon:'🎯',name:'一关全对',on:false},
+  {id:'sort_done',icon:'🗂️',name:'分组高手',on:false},
+  {id:'ident_done',icon:'🔍',name:'结构猎人',on:false},
+  {id:'boss_done',icon:'👾',name:'终极挑战者',on:false},
+  {id:'all_done',icon:'🏆',name:'结构大师',on:false},
+];
+
+// ── STATE ──
+let stars=0, l1Idx=0, l1Ok=0, sortSelected=null, sortOk=0;
+let l3Target='lr', l3Found=0, l3Correct=3;
+let bossIdx=0, bossSlots=['',''], bossFillIdx=0;
+const SECS=['objectives','warmup','level1','level2','level3','bossLevel'];
+const LBLS=['目标','演示','第1关','第2关','第3关','Boss'];
+let curSec='hero';
+
+// ── AUDIO ──
+const ac=new(window.AudioContext||window.webkitAudioContext)();
+function tone(f,d,t='sine',g=0.3){const o=ac.createOscillator(),gn=ac.createGain();o.connect(gn);gn.connect(ac.destination);o.type=t;o.frequency.value=f;gn.gain.setValueAtTime(g,ac.currentTime);gn.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+d);o.start();o.stop(ac.currentTime+d);}
+function playOk(){tone(523,0.1);setTimeout(()=>tone(659,0.1),100);setTimeout(()=>tone(784,0.2),200);}
+function playNg(){tone(200,0.3,'sawtooth',0.2);}
+function playClick(){tone(440,0.07,'square',0.15);}
+function playStar(){[523,587,659,698,784].forEach((f,i)=>setTimeout(()=>tone(f,0.15),i*80));}
+
+// ── NAV ──
+function buildNavs(){
+  SECS.forEach((id,i)=>{
+    const c=document.getElementById('nav'+i);
+    if(!c)return;
+    SECS.forEach((nid,ni)=>{
+      const d=document.createElement('div');
+      d.className='nd'+(i===ni?' a':'');
+      d.title=LBLS[ni];
+      d.onclick=()=>{playClick();goTo(nid);};
+      c.appendChild(d);
+    });
+  });
+}
+
+function goTo(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('scoreboard').style.display='none';
+  const s=document.getElementById(id);
+  if(s){s.classList.add('active');curSec=id;}
+  const pb=document.getElementById('pb');
+  if(id==='hero'){pb.classList.remove('visible');document.getElementById('aiComp').style.display='none';}
+  else{pb.classList.add('visible');document.getElementById('aiComp').style.display='flex';}
+  updatePB();
+  const msgs={
+    objectives:'你好！今天我们要探秘汉字结构，看看汉字是怎么拼成的！🐛',
+    warmup:'点击分解按钮，看字怎么变成两个部分！',
+    level1:'看字猜结构！想想它是左右、上下还是包围？',
+    level2:'拖拽游戏！把字放进正确的框里！',
+    level3:'侦探游戏！找出所有左右结构的字！',
+    bossLevel:'终极挑战！把字拆开，选出正确的两个部件！',
+  };
+  if(msgs[id]) showAI(msgs[id]);
+  if(id==='level1') initL1();
+  if(id==='level2') initSort();
+  if(id==='level3') initIdent();
+  if(id==='bossLevel') initBoss();
+  unlock('start');
+}
+
+function updatePB(){
+  const idx=SECS.indexOf(curSec);
+  document.getElementById('pbFill').style.width=(Math.max(0,idx)/SECS.length*100)+'%';
+  document.getElementById('pbLabel').textContent=LBLS[Math.max(0,idx)]||'开始';
+  document.getElementById('pbStars').textContent='⭐ '+stars;
+}
+
+// ── SPLIT ANIMATIONS ──
+let lrSplit=false,tbSplit=false,surrSplit=false;
+function doSplitLR(){
+  if(lrSplit)return;
+  lrSplit=true;
+  const c=document.getElementById('splitLR');
+  c.classList.add('split-active');
+  document.getElementById('splitLRPlus').style.opacity='1';
+  playClick(); addStar(1); unlock('anim_done');
+}
+function resetSplitLR(){
+  lrSplit=false;
+  const c=document.getElementById('splitLR');
+  c.classList.remove('split-active');
+  document.getElementById('splitLRPlus').style.opacity='0';
+}
+function doSplitTB(){
+  if(tbSplit)return;
+  tbSplit=true;
+  const c=document.getElementById('splitTB');
+  c.classList.add('split-active-tb');
+  document.getElementById('tbArrow').style.opacity='1';
+  document.getElementById('splitTBPlus').style.opacity='1';
+  playClick(); addStar(1);
+}
+function resetSplitTB(){
+  tbSplit=false;
+  document.getElementById('splitTB').classList.remove('split-active-tb');
+  document.getElementById('tbArrow').style.opacity='0';
+  document.getElementById('splitTBPlus').style.opacity='0';
+}
+function doSplitSurr(){
+  if(surrSplit)return;
+  surrSplit=true;
+  document.getElementById('splitSurrWhole').style.opacity='0';
+  document.getElementById('splitSurrWhole').style.transform='scale(0)';
+  document.getElementById('splitSurrOuter').style.opacity='1';
+  document.getElementById('splitSurrInner').style.opacity='1';
+  document.querySelector('#splitSurr .split-arrow').style.opacity='1';
+  playClick(); addStar(1);
+}
+function resetSplitSurr(){
+  surrSplit=false;
+  document.getElementById('splitSurrWhole').style.opacity='1';
+  document.getElementById('splitSurrWhole').style.transform='scale(1)';
+  document.getElementById('splitSurrOuter').style.opacity='0';
+  document.getElementById('splitSurrInner').style.opacity='0';
+  document.querySelector('#splitSurr .split-arrow').style.opacity='0';
+}
+
+// ── LEVEL 1 ──
+function initL1(){l1Idx=0;l1Ok=0;renderL1();}
+function renderL1(){
+  if(l1Idx>=L1_Q.length){l1Done();return;}
+  const q=L1_Q[l1Idx];
+  document.getElementById('l1p').textContent=`第 ${l1Idx+1} 题 / 共 ${L1_Q.length} 题`;
+  document.getElementById('l1Char').textContent=q.char;
+  document.getElementById('l1Feedback').textContent='';
+  const opts=document.getElementById('l1Opts');
+  opts.innerHTML='';
+  [{v:'lr',t:'左右结构'},{v:'tb',t:'上下结构'},{v:'surr',t:'包围结构'}].forEach(o=>{
+    const b=document.createElement('button');
+    b.className='struct-opt';
+    b.textContent=o.t;
+    b.onclick=()=>ansL1(b,o.v,q.ans);
+    opts.appendChild(b);
+  });
+}
+function ansL1(btn,chosen,ans){
+  document.querySelectorAll('.struct-opt').forEach(b=>b.disabled=true);
+  if(chosen===ans){
+    btn.classList.add('correct');
+    playOk();addStar(2);l1Ok++;
+    document.getElementById('l1Feedback').innerHTML='✅ 答对了！';
+    spawnStars(btn);
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('.struct-opt').forEach(b=>{
+      if(b.textContent.includes(ans==='lr'?'左右':ans==='tb'?'上下':'包围'))b.classList.add('correct');
+    });
+    playNg();
+    document.getElementById('l1Feedback').innerHTML='❌ 再想想，结构看仔细！';
+  }
+  l1Idx++;
+  setTimeout(renderL1,1200);
+}
+function l1Done(){
+  unlock('l1_done');
+  if(l1Ok===L1_Q.length)unlock('l1_perfect');
+  toast(`第一关完成！答对 ${l1Ok}/${L1_Q.length} 🎊`,'ok');
+  setTimeout(()=>goTo('level2'),1500);
+}
+
+// ── LEVEL 2: SORT ──
+function initSort(){
+  sortSelected=null;sortOk=0;
+  ['bucket-lr-chars','bucket-tb-chars','bucket-surr-chars'].forEach(id=>{
+    document.getElementById(id).innerHTML='';
+  });
+  document.getElementById('sortScore').textContent='已放对 0 / 9 个';
+  const src=document.getElementById('sortSource');
+  src.innerHTML='';
+  const all=[...STRUCT_CHARS.lr,...STRUCT_CHARS.tb,...STRUCT_CHARS.surr].sort(()=>Math.random()-0.5);
+  all.forEach(ch=>{
+    const el=document.createElement('div');
+    el.className='sort-char-chip';
+    el.textContent=ch;
+    el.dataset.char=ch;
+    el.dataset.struct=STRUCT_CHARS.lr.includes(ch)?'lr':STRUCT_CHARS.tb.includes(ch)?'tb':'surr';
+    el.onclick=()=>selectSortChar(el);
+    src.appendChild(el);
+  });
+}
+function selectSortChar(el){
+  if(sortSelected)sortSelected.classList.remove('selected');
+  sortSelected=el;
+  el.classList.add('selected');
+  playClick();
+}
+function dropTo(type){
+  if(!sortSelected)return;
+  const el=sortSelected;
+  const correct=el.dataset.struct===type;
+  if(correct){
+    el.classList.remove('selected');
+    el.style.pointerEvents='none';
+    const target=document.getElementById(`bucket-${type}-chars`);
+    const clone=el.cloneNode(true);
+    clone.style.background='#d4f5e9';
+    clone.style.borderColor='#00b894';
+    clone.style.pointerEvents='none';
+    target.appendChild(clone);
+    el.remove();
+    playOk();addStar(1);
+    sortOk++;
+    document.getElementById('sortScore').textContent=`已放对 ${sortOk} / 9 个`;
+    spawnStars(clone);
+    if(sortOk===9){unlock('sort_done');addStar(5);toast('分组全对！🎊','ok');setTimeout(()=>goTo('level3'),1500);}
+  } else {
+    el.classList.remove('selected');
+    el.style.animation='wrongFlash 0.4s ease';
+    playNg();
+    toast('放错了，再想想！','err');
+    setTimeout(()=>{el.style.animation='';},500);
+  }
+  sortSelected=null;
+}
+
+// ── LEVEL 3 ──
+function initIdent(){
+  l3Found=0;
+  const correct=IDENT_ALL.filter(x=>x.struct==='lr');
+  l3Correct=correct.length;
+  document.getElementById('l3Target').textContent='点击所有 左右结构 的汉字 →（共'+l3Correct+'个）';
+  document.getElementById('l3Score').textContent=`已找到 0 / ${l3Correct} 个`;
+  document.getElementById('l3Feedback').textContent='';
+  const grid=document.getElementById('identGrid');
+  grid.innerHTML='';
+  const shuffled=[...IDENT_ALL].sort(()=>Math.random()-0.5);
+  shuffled.forEach(item=>{
+    const el=document.createElement('div');
+    el.className='id-char';
+    el.innerHTML=`<div class="c">${item.char}</div><div class="t">?</div>`;
+    el.dataset.struct=item.struct;
+    el.onclick=()=>clickIdent(el,item);
+    grid.appendChild(el);
+  });
+}
+function clickIdent(el,item){
+  if(el.classList.contains('correct')||el.classList.contains('wrong'))return;
+  playClick();
+  if(item.struct==='lr'){
+    el.classList.add('correct');
+    el.querySelector('.t').textContent='左右';
+    playOk();addStar(2);
+    spawnStars(el);
+    l3Found++;
+    document.getElementById('l3Score').textContent=`已找到 ${l3Found} / ${l3Correct} 个`;
+    if(l3Found===l3Correct){
+      unlock('ident_done');addStar(3);
+      toast('全找到了！🎉','ok');
+      setTimeout(()=>goTo('bossLevel'),1500);
+    }
+  } else {
+    el.classList.add('wrong');
+    el.querySelector('.t').textContent='非左右';
+    playNg();
+    document.getElementById('l3Feedback').textContent='这个不是左右结构，再找找！';
+    setTimeout(()=>{el.classList.remove('wrong');el.querySelector('.t').textContent='?';},800);
+  }
+}
+
+// ── BOSS ──
+function initBoss(){bossIdx=0;bossSlots=['',''];renderBoss();}
+function renderBoss(){
+  if(bossIdx>=BOSS_Q.length){bossDone();return;}
+  const q=BOSS_Q[bossIdx];
+  bossSlots=['',''];bossFillIdx=0;
+  document.getElementById('bossP').textContent=`第 ${bossIdx+1} 题 / 共 ${BOSS_Q.length} 题`;
+  document.getElementById('bossChar').textContent=q.char;
+  document.getElementById('bossStructHint').textContent=q.struct;
+  document.getElementById('bossFb').textContent='';
+  const s0=document.getElementById('slot0'),s1=document.getElementById('slot1');
+  s0.textContent='';s1.textContent='';
+  s0.className='slot';s1.className='slot';
+  const opts=document.getElementById('decompOpts');
+  opts.innerHTML='';
+  const shuffled=[...q.parts].sort(()=>Math.random()-0.5);
+  shuffled.forEach(p=>{
+    const el=document.createElement('div');
+    el.className='decompose-opt';
+    el.textContent=p;
+    el.onclick=()=>selectPart(p,el);
+    opts.appendChild(el);
+  });
+}
+function selectPart(p,el){
+  if(bossFillIdx>=2)return;
+  playClick();
+  bossSlots[bossFillIdx]=p;
+  document.getElementById('slot'+bossFillIdx).textContent=p;
+  document.getElementById('slot'+bossFillIdx).classList.add('filled');
+  el.classList.add('used');
+  bossFillIdx++;
+}
+function clearSlot(i){
+  if(!bossSlots[i])return;
+  const removed=bossSlots[i];
+  bossSlots[i]='';
+  bossFillIdx=Math.min(bossFillIdx,i);
+  document.getElementById('slot'+i).textContent='';
+  document.getElementById('slot'+i).classList.remove('filled','correct','wrong');
+  document.querySelectorAll('.decompose-opt').forEach(el=>{
+    if(el.textContent===removed)el.classList.remove('used');
+  });
+}
+function checkDecomp(){
+  if(bossSlots[0]===''||bossSlots[1]===''){toast('先选两个部件！','err');return;}
+  const q=BOSS_Q[bossIdx];
+  const correct=bossSlots[0]===q.ans[0]&&bossSlots[1]===q.ans[1];
+  const s0=document.getElementById('slot0'),s1=document.getElementById('slot1');
+  if(correct){
+    s0.classList.add('correct');s1.classList.add('correct');
+    playOk();addStar(3);
+    document.getElementById('bossFb').innerHTML='✅ 完全正确！';
+    spawnStars(s0);
+    bossIdx++;
+    setTimeout(renderBoss,1500);
+  } else {
+    s0.classList.add('wrong');s1.classList.add('wrong');
+    playNg();
+    document.getElementById('bossFb').innerHTML=`❌ 正确部件是：${q.ans[0]} + ${q.ans[1]}`;
+    bossIdx++;
+    setTimeout(renderBoss,2000);
+  }
+}
+function bossDone(){
+  unlock('boss_done');unlock('all_done');addStar(5);
+  setTimeout(showScore,1000);
+}
+
+// ── SCORE ──
+function showScore(){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('pb').classList.remove('visible');
+  const sb=document.getElementById('scoreboard');
+  sb.style.display='flex';
+  document.getElementById('aiComp').style.display='none';
+  document.getElementById('fScore').textContent=stars;
+  document.getElementById('fMsg').textContent=stars>25?'汉字结构大师！太厉害了！':'非常努力！继续加油！';
+  const wrap=document.getElementById('achWrap');
+  wrap.innerHTML='';
+  ACHIEVEMENTS.forEach(a=>{
+    const el=document.createElement('div');
+    el.className='ach'+(a.on?' on':'');
+    el.innerHTML=`<div class="ach-ic">${a.icon}</div><div class="ach-nm">${a.name}</div>`;
+    wrap.appendChild(el);
+  });
+  playStar();
+}
+
+// ── HELPERS ──
+function addStar(n){stars+=n;document.getElementById('pbStars').textContent='⭐ '+stars;}
+function unlock(id){
+  const a=ACHIEVEMENTS.find(x=>x.id===id);
+  if(a&&!a.on){a.on=true;toast('🏆 成就：'+a.name,'ok');playStar();}
+}
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show '+type;
+  setTimeout(()=>t.className='toast',2500);
+}
+function spawnStars(el){
+  const rect=el.getBoundingClientRect?el.getBoundingClientRect():{left:200,top:200};
+  const burst=document.createElement('div');
+  burst.className='star-pop';
+  burst.style.left=rect.left+rect.width/2+'px';
+  burst.style.top=rect.top+rect.height/2+'px';
+  for(let i=0;i<6;i++){
+    const s=document.createElement('div');
+    s.className='sp';
+    s.textContent='⭐';
+    const a=(i/6)*Math.PI*2;
+    s.style.setProperty('--dx',Math.cos(a)*70+'px');
+    s.style.setProperty('--dy',Math.sin(a)*70+'px');
+    burst.appendChild(s);
+  }
+  document.body.appendChild(burst);
+  setTimeout(()=>burst.remove(),1000);
+}
+let aiOn=false;
+function showAI(msg){
+  const b=document.getElementById('aiBub');
+  b.textContent=msg;b.classList.add('show');aiOn=true;
+  setTimeout(()=>{b.classList.remove('show');aiOn=false;},4000);
+}
+function tapAI(){
+  if(aiOn){document.getElementById('aiBub').classList.remove('show');aiOn=false;}
+  else{
+    const tips=['汉字的结构就像搭积木！🧱','左右结构最多，要多认！','包围结构像一个方框！⬡','遇到不会的，多分解练习！'];
+    showAI(tips[Math.floor(Math.random()*tips.length)]);
+  }
+}
+
+// INIT
+buildNavs();
+</script>
+</body>
+</html>

@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>平均数 | 四年级数学 | TeachAny</title>
+<style>
+:root {
+  --bg: #fffbf0;
+  --primary: #ff6b6b;
+  --secondary: #4ecdc4;
+  --accent: #ffe66d;
+  --card: #fff;
+  --purple: #a29bfe;
+  --orange: #fd9644;
+  --green: #26de81;
+  --pink: #fd79a8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; background: var(--bg); min-height: 100vh; overflow-x: hidden; }
+
+/* Hero */
+.hero {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #ff6b6b 0%, #feca57 40%, #48dbfb 70%, #ff9ff3 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 2rem; position: relative; overflow: hidden;
+}
+.hero-title {
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  font-weight: 900;
+  background: linear-gradient(90deg, #fff 0%, #ffe66d 50%, #fff 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  text-shadow: none; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+  animation: bounce 1s ease infinite alternate;
+}
+@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-10px); } }
+.hero-subtitle { font-size: 1.4rem; color: rgba(255,255,255,0.95); margin: 1rem 0 2rem; font-weight: 600; }
+.hero-emoji { font-size: 4rem; margin-bottom: 1rem; animation: spin 3s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.start-btn {
+  background: white; color: var(--primary); border: none; border-radius: 50px;
+  padding: 1rem 3rem; font-size: 1.3rem; font-weight: 800; cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15); transition: transform 0.2s;
+  animation: pulse 2s ease infinite;
+}
+.start-btn:hover { transform: scale(1.08); }
+@keyframes pulse { 0%,100% { box-shadow: 0 8px 20px rgba(0,0,0,0.15); } 50% { box-shadow: 0 8px 30px rgba(255,107,107,0.5); } }
+.floating-nums { position: absolute; font-size: 2rem; opacity: 0.15; animation: floatUp 4s ease-in-out infinite; }
+
+/* Section */
+.section { display: none; min-height: 100vh; padding: 2rem; background: var(--bg); }
+.section.active { display: block; }
+.section-header {
+  text-align: center; margin-bottom: 2rem;
+  background: linear-gradient(135deg, var(--primary), var(--purple));
+  border-radius: 20px; padding: 1.5rem; color: white;
+}
+.section-header h2 { font-size: 2rem; font-weight: 800; }
+.section-header p { font-size: 1.1rem; margin-top: 0.5rem; opacity: 0.9; }
+
+/* Cards */
+.card {
+  background: var(--card); border-radius: 20px;
+  padding: 1.5rem; margin-bottom: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  border: 2px solid transparent;
+}
+.card-colored { border-color: var(--secondary); }
+
+/* Progress */
+.progress-bar-container { background: #eee; border-radius: 50px; height: 14px; margin: 1rem 0; overflow: hidden; }
+.progress-bar { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 50px; transition: width 0.5s ease; }
+
+/* Stars */
+.stars-display {
+  position: fixed; top: 1rem; right: 1rem; z-index: 1000;
+  background: white; border-radius: 50px; padding: 0.5rem 1rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15); font-size: 1.1rem; font-weight: 700;
+}
+
+/* Achievements */
+.achievement-popup {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
+  background: linear-gradient(135deg, var(--accent), var(--orange));
+  border-radius: 20px; padding: 2rem; text-align: center; z-index: 2000;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3); transition: transform 0.3s cubic-bezier(0.175,0.885,0.32,1.275);
+  min-width: 280px;
+}
+.achievement-popup.show { transform: translate(-50%, -50%) scale(1); }
+
+/* Buttons */
+.btn {
+  background: linear-gradient(135deg, var(--primary), var(--orange));
+  color: white; border: none; border-radius: 50px;
+  padding: 0.8rem 2rem; font-size: 1rem; font-weight: 700; cursor: pointer;
+  transition: transform 0.2s; margin: 0.3rem;
+}
+.btn:hover { transform: scale(1.05); }
+.btn-secondary { background: linear-gradient(135deg, var(--secondary), var(--purple)); }
+.btn-accent { background: linear-gradient(135deg, var(--accent), var(--orange)); color: #333; }
+
+/* Canvas area */
+canvas { border-radius: 15px; max-width: 100%; }
+
+/* Warmup */
+.warmup-items { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; margin: 1.5rem 0; }
+.warmup-item {
+  background: linear-gradient(135deg, var(--secondary), #74b9ff);
+  border-radius: 15px; padding: 1rem 1.5rem; font-size: 1.2rem;
+  font-weight: 700; color: white; cursor: pointer; transition: transform 0.2s;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.warmup-item:hover { transform: scale(1.1) rotate(-2deg); }
+
+/* Drag drop */
+.drag-container { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin: 1rem 0; }
+.drag-item {
+  background: linear-gradient(135deg, var(--primary), var(--pink));
+  color: white; border-radius: 12px; padding: 0.6rem 1.2rem;
+  font-size: 1.1rem; font-weight: 700; cursor: grab;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15); user-select: none; transition: transform 0.2s;
+}
+.drag-item:active { cursor: grabbing; transform: scale(1.1); }
+.drop-zone {
+  border: 3px dashed var(--secondary); border-radius: 15px;
+  min-height: 60px; padding: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.5rem;
+  align-items: center; justify-content: center; transition: background 0.2s; min-width: 200px;
+}
+.drop-zone.over { background: rgba(78,205,196,0.1); }
+
+/* Options */
+.options-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin: 1rem 0; }
+.option-btn {
+  background: white; border: 3px solid #eee; border-radius: 15px;
+  padding: 1rem; font-size: 1.1rem; font-weight: 600; cursor: pointer;
+  transition: all 0.2s; text-align: center;
+}
+.option-btn:hover { border-color: var(--primary); background: #fff5f5; transform: translateY(-2px); }
+.option-btn.correct { border-color: var(--green); background: #e8fff4; color: #00b894; }
+.option-btn.wrong { border-color: var(--primary); background: #fff5f5; color: var(--primary); }
+
+/* AI Companion */
+.ai-companion {
+  position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 999;
+  width: 70px; height: 70px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--secondary), var(--purple));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  animation: companionBounce 2s ease infinite;
+}
+@keyframes companionBounce { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-8px) scale(1.05); } }
+.ai-speech {
+  position: fixed; bottom: 5.5rem; right: 1.5rem; z-index: 999;
+  background: white; border-radius: 15px 15px 5px 15px;
+  padding: 1rem; max-width: 220px; font-size: 0.9rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: none; font-weight: 500;
+}
+.ai-speech.show { display: block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Input */
+.answer-input {
+  border: 3px solid var(--secondary); border-radius: 12px;
+  padding: 0.7rem 1rem; font-size: 1.2rem; font-weight: 700;
+  width: 120px; text-align: center; outline: none;
+}
+.answer-input:focus { border-color: var(--primary); }
+
+/* Scorecard */
+.scorecard { text-align: center; padding: 2rem; }
+.score-circle {
+  width: 150px; height: 150px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  margin: 1.5rem auto; color: white; font-weight: 800;
+  box-shadow: 0 8px 30px rgba(255,107,107,0.4);
+  animation: scaleIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275);
+}
+@keyframes scaleIn { from { transform: scale(0); } to { transform: scale(1); } }
+.score-circle .score-num { font-size: 3rem; }
+.score-circle .score-label { font-size: 0.9rem; opacity: 0.9; }
+
+/* Feedback */
+.feedback { border-radius: 15px; padding: 1rem; margin: 0.5rem 0; font-weight: 600; font-size: 1rem; text-align: center; }
+.feedback.correct { background: #e8fff4; color: #00b894; }
+.feedback.wrong { background: #fff5f5; color: var(--primary); }
+
+/* Achievement badges */
+.badges-grid { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; margin: 1rem 0; }
+.badge {
+  background: linear-gradient(135deg, var(--accent), var(--orange));
+  border-radius: 15px; padding: 0.8rem 1.2rem; text-align: center;
+  font-size: 0.85rem; font-weight: 700; color: #333; min-width: 90px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1); opacity: 0.3; transition: opacity 0.5s;
+}
+.badge.earned { opacity: 1; animation: badgePop 0.4s ease; }
+@keyframes badgePop { 0% { transform: scale(0); } 70% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+nav.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: white; border-top: 2px solid #eee;
+  display: flex; justify-content: center; gap: 0.5rem; padding: 0.5rem;
+  z-index: 500; flex-wrap: wrap;
+}
+nav.bottom-nav button {
+  background: none; border: 2px solid #eee; border-radius: 50px;
+  padding: 0.3rem 0.8rem; font-size: 0.8rem; cursor: pointer; font-weight: 600;
+  transition: all 0.2s;
+}
+nav.bottom-nav button.active, nav.bottom-nav button:hover {
+  background: var(--primary); color: white; border-color: var(--primary);
+}
+
+.bar-chart-container { position: relative; margin: 1rem 0; }
+.bar-row { display: flex; align-items: center; margin: 0.4rem 0; gap: 0.5rem; }
+.bar-label { width: 60px; font-size: 0.9rem; font-weight: 600; text-align: right; }
+.bar-track { flex: 1; background: #f0f0f0; border-radius: 50px; height: 32px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 50px; transition: width 1s ease; display: flex; align-items: center; padding-left: 0.5rem; color: white; font-weight: 700; font-size: 0.9rem; }
+.bar-val { width: 40px; font-size: 0.9rem; font-weight: 700; color: #333; }
+.avg-line { position: absolute; top: 0; bottom: 0; width: 3px; background: var(--primary); border-radius: 2px; transition: left 1s ease; }
+
+@media (max-width: 600px) { .options-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<!-- Stars display -->
+<div class="stars-display">⭐ <span id="starCount">0</span></div>
+
+<!-- AI Companion -->
+<div class="ai-companion" id="aiCompanion" onclick="toggleAISpeech()">🐼</div>
+<div class="ai-speech" id="aiSpeech">你好！我是小熊猫老师，今天一起学平均数吧！🎉</div>
+
+<!-- Achievement popup -->
+<div class="achievement-popup" id="achievePopup">
+  <div style="font-size:3rem" id="achieveEmoji">🏆</div>
+  <div style="font-size:1.3rem;font-weight:800;margin:0.5rem 0" id="achieveTitle">成就解锁！</div>
+  <div style="font-size:1rem" id="achieveDesc">太棒了！</div>
+</div>
+
+<!-- HERO -->
+<section class="section active" id="sec-hero">
+  <div class="hero">
+    <div class="hero-emoji">📊</div>
+    <h1 class="hero-title">平均数</h1>
+    <p class="hero-subtitle">四年级数学 · 让数字更公平！✨</p>
+    <p style="color:rgba(255,255,255,0.85);font-size:1rem;margin-bottom:1.5rem;max-width:400px">
+      平均分苹果🍎、平均分糖果🍬，用平均数让一切更公平！今天你将解锁超能力！
+    </p>
+    <button class="start-btn" onclick="goSection('sec-goals')">🚀 开始探险！</button>
+    <div style="position:absolute;top:10%;left:5%;font-size:2.5rem;opacity:0.2;animation:floatUp 3s ease-in-out infinite">1+2+3</div>
+    <div style="position:absolute;top:30%;right:8%;font-size:2rem;opacity:0.2;animation:floatUp 3.5s ease-in-out infinite 0.5s">÷3=2</div>
+    <div style="position:absolute;bottom:20%;left:10%;font-size:2rem;opacity:0.15;animation:floatUp 4s ease-in-out infinite 1s">📊</div>
+  </div>
+</section>
+
+<!-- GOALS -->
+<section class="section" id="sec-goals">
+  <div class="section-header" style="background:linear-gradient(135deg,#ff6b6b,#feca57)">
+    <h2>🎯 今天的学习目标</h2>
+    <p>完成这些，你就是平均数小达人！</p>
+  </div>
+  <div class="card card-colored">
+    <div style="display:flex;align-items:center;gap:1rem;margin:0.8rem 0">
+      <span style="font-size:1.5rem">🧠</span>
+      <div><strong>理解平均数</strong>的意义——什么是平均？</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:1rem;margin:0.8rem 0">
+      <span style="font-size:1.5rem">✏️</span>
+      <div><strong>计算平均数</strong>：总和 ÷ 个数</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:1rem;margin:0.8rem 0">
+      <span style="font-size:1.5rem">🌍</span>
+      <div><strong>应用平均数</strong>：分东西、比高低、做判断</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:1rem;margin:0.8rem 0">
+      <span style="font-size:1.5rem">🏆</span>
+      <div>收集 <strong>8个成就徽章</strong>，成为统计小英雄！</div>
+    </div>
+  </div>
+  <div class="card" style="background:linear-gradient(135deg,#ffe66d,#feca57);border-radius:20px">
+    <p style="font-size:1.1rem;font-weight:600;color:#333">🔓 关卡地图</p>
+    <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.8rem;font-size:0.9rem;font-weight:600">
+      <span style="background:white;border-radius:50px;padding:0.3rem 0.8rem">⚡热身</span>
+      <span>→</span>
+      <span style="background:white;border-radius:50px;padding:0.3rem 0.8rem">🌟关卡1</span>
+      <span>→</span>
+      <span style="background:white;border-radius:50px;padding:0.3rem 0.8rem">🌟关卡2</span>
+      <span>→</span>
+      <span style="background:white;border-radius:50px;padding:0.3rem 0.8rem">🌟关卡3</span>
+      <span>→</span>
+      <span style="background:white;border-radius:50px;padding:0.3rem 0.8rem">👾Boss关</span>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:1.5rem">
+    <button class="btn" onclick="goSection('sec-warmup')">开始热身 💪</button>
+  </div>
+</section>
+
+<!-- WARMUP -->
+<section class="section" id="sec-warmup">
+  <div class="section-header" style="background:linear-gradient(135deg,#4ecdc4,#45b7d1)">
+    <h2>⚡ 热身：什么是平均？</h2>
+    <p>用眼睛感受"平均"的力量！</p>
+  </div>
+  <div class="card">
+    <p style="font-size:1.1rem;font-weight:700;margin-bottom:1rem">
+      🍎 小明、小红、小华各有苹果，点击"移多补少"让大家一样多！
+    </p>
+    <canvas id="appleCanvas" width="500" height="220"></canvas>
+    <div style="margin:1rem 0;text-align:center">
+      <button class="btn btn-secondary" onclick="animateEvenOut()">✨ 移多补少！</button>
+      <button class="btn btn-accent" onclick="resetApples()">🔄 重置</button>
+    </div>
+    <div id="appleMsg" style="text-align:center;font-size:1.1rem;font-weight:700;color:var(--primary);min-height:1.5rem"></div>
+  </div>
+  <div class="card card-colored">
+    <p style="font-size:1rem;font-weight:600;color:#333;margin-bottom:0.8rem">
+      🤔 点击下面说法，看看哪个是平均数的正确理解：
+    </p>
+    <div class="warmup-items">
+      <div class="warmup-item" onclick="checkWarmup(this,'wrong')" data-type="wrong">最大的那个数 ❌</div>
+      <div class="warmup-item" onclick="checkWarmup(this,'right')" data-type="right">总和除以个数 ✅</div>
+      <div class="warmup-item" onclick="checkWarmup(this,'wrong')" data-type="wrong">中间那个数 🤔</div>
+      <div class="warmup-item" onclick="checkWarmup(this,'wrong')" data-type="wrong">出现最多的数 💭</div>
+    </div>
+    <div id="warmupMsg" style="text-align:center;font-size:1.1rem;font-weight:700;min-height:1.5rem"></div>
+  </div>
+  <div style="text-align:center;margin:1.5rem 0">
+    <button class="btn" onclick="goSection('sec-level1')">去关卡1！🌟</button>
+  </div>
+</section>
+
+<!-- LEVEL 1 -->
+<section class="section" id="sec-level1">
+  <div class="section-header" style="background:linear-gradient(135deg,#a29bfe,#6c5ce7)">
+    <h2>🌟 关卡1：动手算平均数</h2>
+    <p>用公式：平均数 = 总和 ÷ 个数</p>
+  </div>
+  <div class="progress-bar-container"><div class="progress-bar" id="l1progress" style="width:0%"></div></div>
+  <div id="l1-questions"></div>
+  <div id="l1-feedback" class="feedback" style="display:none"></div>
+  <div style="text-align:center;margin:1rem 0">
+    <button class="btn" onclick="checkL1()">✅ 确认答案</button>
+    <button class="btn btn-secondary" onclick="nextL1()">下一题 ➡️</button>
+  </div>
+</section>
+
+<!-- LEVEL 2 -->
+<section class="section" id="sec-level2">
+  <div class="section-header" style="background:linear-gradient(135deg,#fd9644,#e17055)">
+    <h2>🌟🌟 关卡2：拖拽分配游戏</h2>
+    <p>把数字拖到正确的"均等堆"里！</p>
+  </div>
+  <div class="card">
+    <p style="font-size:1rem;font-weight:700;margin-bottom:1rem">
+      🎮 班级同学的跳绳个数分别是：<strong id="ropesData"></strong><br>
+      把这些数字拖到"总数格"里，然后算平均数！
+    </p>
+    <p style="font-size:0.9rem;color:#888;margin-bottom:1rem">⬇️ 将数字拖入框中</p>
+    <div class="drag-container" id="dragItems"></div>
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin:1rem 0">
+      <span style="font-weight:700">总数框：</span>
+      <div class="drop-zone" id="dropTotal" ondrop="drop(event,'total')" ondragover="allowDrop(event)" ondragleave="removeDragOver(event)">拖到这里</div>
+      <span style="font-size:1.2rem;font-weight:700">=</span>
+      <span id="totalResult" style="font-size:1.5rem;font-weight:800;color:var(--primary)">?</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin:1rem 0">
+      <span style="font-weight:700">平均数 = 总和 ÷ 个数 = </span>
+      <input class="answer-input" id="l2answer" type="number" placeholder="?">
+      <button class="btn" onclick="checkL2()">✅ 验证</button>
+    </div>
+    <div id="l2-feedback" class="feedback" style="display:none"></div>
+  </div>
+</section>
+
+<!-- LEVEL 3 - Bar chart -->
+<section class="section" id="sec-level3">
+  <div class="section-header" style="background:linear-gradient(135deg,#26de81,#20bf6b)">
+    <h2>🌟🌟🌟 关卡3：柱形图中找平均数</h2>
+    <p>从图表中读取信息，算出平均数！</p>
+  </div>
+  <div class="card">
+    <p style="font-size:1rem;font-weight:700;margin-bottom:0.5rem">📊 下图是5个同学的数学成绩，找出他们的平均分！</p>
+    <canvas id="barCanvas" width="500" height="280"></canvas>
+    <div id="barData" style="margin:1rem 0;font-size:0.95rem;font-weight:600;color:#555"></div>
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin:1rem 0">
+      <label style="font-weight:700">平均分 = </label>
+      <input class="answer-input" id="l3answer" type="number" placeholder="?">
+      <button class="btn" onclick="checkL3()">✅ 提交</button>
+    </div>
+    <div id="l3-feedback" class="feedback" style="display:none"></div>
+    <button class="btn btn-secondary" onclick="drawBarChart()">🔄 换一组数据</button>
+  </div>
+  <div style="text-align:center;margin:1rem 0">
+    <button class="btn" onclick="goSection('sec-boss')">挑战Boss关！👾</button>
+  </div>
+</section>
+
+<!-- BOSS -->
+<section class="section" id="sec-boss">
+  <div class="section-header" style="background:linear-gradient(135deg,#2d3436,#636e72)">
+    <h2>👾 Boss关：综合挑战！</h2>
+    <p>集齐智慧和技巧，打败Boss！</p>
+  </div>
+  <div id="boss-questions" class="card"></div>
+  <div id="boss-feedback" class="feedback" style="display:none"></div>
+  <div style="text-align:center;margin:1rem 0">
+    <button class="btn" style="background:linear-gradient(135deg,#2d3436,#636e72)" onclick="checkBoss()">⚔️ 攻击Boss！</button>
+  </div>
+  <div id="bossProgress" style="text-align:center;margin:1rem;font-size:1rem;font-weight:600"></div>
+</section>
+
+<!-- SCORECARD -->
+<section class="section" id="sec-score">
+  <div class="scorecard">
+    <div style="font-size:3rem;margin-bottom:1rem">🎊</div>
+    <h2 style="font-size:2rem;font-weight:800;background:linear-gradient(90deg,var(--primary),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent">
+      太厉害了！
+    </h2>
+    <div class="score-circle">
+      <div class="score-num" id="finalScore">0</div>
+      <div class="score-label">颗星星</div>
+    </div>
+    <div class="progress-bar-container" style="max-width:300px;margin:0 auto">
+      <div class="progress-bar" id="finalProgress" style="width:0%"></div>
+    </div>
+    <p style="margin:1rem 0;font-size:1.1rem;font-weight:600" id="scoreMotto"></p>
+    <h3 style="font-size:1.3rem;font-weight:800;margin:1.5rem 0 1rem">🏆 我的成就徽章</h3>
+    <div class="badges-grid" id="badgesGrid"></div>
+    <button class="btn" onclick="goSection('sec-extend')">🌈 拓展学习</button>
+    <button class="btn btn-secondary" onclick="location.reload()">🔄 再来一次</button>
+  </div>
+</section>
+
+<!-- EXTEND -->
+<section class="section" id="sec-extend">
+  <div class="section-header" style="background:linear-gradient(135deg,var(--primary),var(--purple))">
+    <h2>🌈 拓展：平均数的秘密</h2>
+    <p>了解更多，成为统计小专家！</p>
+  </div>
+  <div class="card" style="background:linear-gradient(135deg,#ffe66d,#feca57);border-radius:20px">
+    <h3 style="font-size:1.2rem;font-weight:800;margin-bottom:0.5rem">🔍 平均数 vs 真实数据</h3>
+    <p style="font-size:1rem;line-height:1.6">
+      班级平均分80分，但有同学得了60分，有同学得了100分。<br>
+      平均数只是"整体水平"的代表，不代表每个人都是80分哦！
+    </p>
+  </div>
+  <div class="card" style="background:linear-gradient(135deg,#a29bfe,#6c5ce7);color:white;border-radius:20px">
+    <h3 style="font-size:1.2rem;font-weight:800;margin-bottom:0.5rem">🌍 生活中的平均数</h3>
+    <ul style="line-height:2;font-size:1rem;padding-left:1.5rem">
+      <li>🌡️ 月平均气温</li>
+      <li>💰 平均工资</li>
+      <li>🏃 平均速度</li>
+      <li>📚 平均成绩</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3 style="font-size:1.2rem;font-weight:800;margin-bottom:0.5rem">🧩 思考题</h3>
+    <p style="font-size:1rem;line-height:1.8">
+      小明5次数学测试成绩：70, 80, 90, 85, 75。<br>
+      他的平均成绩是多少？如果第6次要把平均成绩提高到85分，第6次要考多少分？
+    </p>
+    <button class="btn btn-accent" onclick="showThinkingAnswer()">🔓 揭晓答案</button>
+    <div id="thinkingAns" style="display:none;margin-top:1rem;padding:1rem;background:#e8fff4;border-radius:12px;font-weight:600;color:#00b894">
+      前5次平均：(70+80+90+85+75)÷5 = 400÷5 = 80分<br>
+      要达到6次平均85分，6次总分需要 85×6=510分<br>
+      第6次需要 510-400 = <strong>110分</strong>！（咦，超过100分了？所以不可能哦😄）
+    </div>
+  </div>
+  <div style="text-align:center;margin:1.5rem 0">
+    <button class="btn" onclick="goSection('sec-score')">📊 查看成绩单</button>
+  </div>
+</section>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <button onclick="goSection('sec-hero')">🏠首页</button>
+  <button onclick="goSection('sec-goals')">🎯目标</button>
+  <button onclick="goSection('sec-warmup')">⚡热身</button>
+  <button onclick="goSection('sec-level1')">🌟L1</button>
+  <button onclick="goSection('sec-level2')">🌟L2</button>
+  <button onclick="goSection('sec-level3')">🌟L3</button>
+  <button onclick="goSection('sec-boss')">👾Boss</button>
+  <button onclick="goSection('sec-score')">🏆成绩</button>
+</nav>
+
+<script>
+// ===== State =====
+const state = {
+  stars: 0,
+  achievements: [],
+  l1Index: 0,
+  l1Correct: 0,
+  l2Data: [],
+  l3Data: [],
+  bossAnswers: [],
+  bossCorrect: 0,
+};
+
+const ACHIEVEMENTS = [
+  { id:'start', emoji:'🚀', title:'勇于起航', desc:'开始学习平均数！' },
+  { id:'warmup', emoji:'🔥', title:'热身达人', desc:'完成热身练习！' },
+  { id:'l1_first', emoji:'✏️', title:'首次计算', desc:'第一次算出平均数！' },
+  { id:'l1_all', emoji:'🌟', title:'计算高手', desc:'关卡1全部答对！' },
+  { id:'l2_drag', emoji:'🎮', title:'拖拽达人', desc:'完成拖拽分配游戏！' },
+  { id:'l3_chart', emoji:'📊', title:'图表侦探', desc:'从图表中找出平均数！' },
+  { id:'boss_done', emoji:'👾', title:'Boss终结者', desc:'击败了大Boss！' },
+  { id:'all_stars', emoji:'💫', title:'全明星', desc:'收集满20颗星！' },
+];
+
+// Audio
+const audioCtx = (() => { try { return new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { return null; } })();
+
+function playSound(type) {
+  if (!audioCtx) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.connect(g); g.connect(audioCtx.destination);
+  if (type === 'correct') { o.frequency.setValueAtTime(523, audioCtx.currentTime); o.frequency.setValueAtTime(659, audioCtx.currentTime+0.1); o.frequency.setValueAtTime(784, audioCtx.currentTime+0.2); }
+  else if (type === 'wrong') { o.frequency.setValueAtTime(330, audioCtx.currentTime); o.frequency.setValueAtTime(261, audioCtx.currentTime+0.15); }
+  else if (type === 'achieve') { o.frequency.setValueAtTime(659, audioCtx.currentTime); o.frequency.setValueAtTime(784, audioCtx.currentTime+0.1); o.frequency.setValueAtTime(1047, audioCtx.currentTime+0.2); }
+  else if (type === 'star') { o.frequency.setValueAtTime(880, audioCtx.currentTime); o.frequency.setValueAtTime(1100, audioCtx.currentTime+0.05); }
+  g.gain.setValueAtTime(0.3, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+0.5);
+  o.start(); o.stop(audioCtx.currentTime+0.5);
+}
+
+function addStars(n) {
+  state.stars += n;
+  document.getElementById('starCount').textContent = state.stars;
+  playSound('star');
+  if (state.stars >= 20 && !state.achievements.includes('all_stars')) {
+    unlockAchievement('all_stars');
+  }
+}
+
+function unlockAchievement(id) {
+  if (state.achievements.includes(id)) return;
+  state.achievements.push(id);
+  const ach = ACHIEVEMENTS.find(a => a.id === id);
+  if (!ach) return;
+  const pop = document.getElementById('achievePopup');
+  document.getElementById('achieveEmoji').textContent = ach.emoji;
+  document.getElementById('achieveTitle').textContent = '🏆 ' + ach.title;
+  document.getElementById('achieveDesc').textContent = ach.desc;
+  pop.classList.add('show');
+  playSound('achieve');
+  setTimeout(() => pop.classList.remove('show'), 2500);
+  updateBadges();
+}
+
+function updateBadges() {
+  const grid = document.getElementById('badgesGrid');
+  if (!grid) return;
+  grid.innerHTML = ACHIEVEMENTS.map(a => `
+    <div class="badge ${state.achievements.includes(a.id)?'earned':''}">
+      <div style="font-size:1.5rem">${a.emoji}</div>
+      <div>${a.title}</div>
+    </div>`).join('');
+}
+
+function goSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+  if (id === 'sec-level1' && state.l1Index === 0) initL1();
+  if (id === 'sec-level2') initL2();
+  if (id === 'sec-level3') drawBarChart();
+  if (id === 'sec-boss') initBoss();
+  if (id === 'sec-score') showScore();
+  if (id === 'sec-goals' || id === 'sec-warmup') unlockAchievement('start');
+  updateNavBtns(id);
+}
+
+function updateNavBtns(id) {
+  document.querySelectorAll('nav.bottom-nav button').forEach(b => b.classList.remove('active'));
+  // match by onclick
+  document.querySelectorAll('nav.bottom-nav button').forEach(b => {
+    if (b.getAttribute('onclick') === `goSection('${id}')`) b.classList.add('active');
+  });
+}
+
+// ===== Apple Canvas =====
+let appleState = { vals: [6,2,4], animated: false };
+function drawApples() {
+  const canvas = document.getElementById('appleCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,500,220);
+  const colors = ['#ff6b6b','#4ecdc4','#ffe66d'];
+  const names = ['小明','小红','小华'];
+  const vals = appleState.animated ? [4,4,4] : appleState.vals;
+  for (let i=0;i<3;i++) {
+    ctx.fillStyle = colors[i];
+    ctx.beginPath(); ctx.roundRect(30+i*160, 10, 130, 200, 15); ctx.fill();
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(names[i], 95+i*160, 35);
+    for (let j=0;j<vals[i];j++) {
+      ctx.font = '22px serif';
+      ctx.fillText('🍎', 60+i*160+(j%3)*30, 65+(Math.floor(j/3)*35));
+    }
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.fillText(vals[i]+'个', 95+i*160, 190);
+  }
+}
+function animateEvenOut() {
+  appleState.animated = true; drawApples();
+  document.getElementById('appleMsg').textContent = '✨ 移多补少后，每人4个苹果！平均数就是4！';
+  unlockAchievement('warmup');
+  addStars(2);
+}
+function resetApples() { appleState.animated = false; drawApples(); document.getElementById('appleMsg').textContent = ''; }
+
+function checkWarmup(el, type) {
+  if (type === 'right') {
+    el.style.background = 'linear-gradient(135deg,#26de81,#20bf6b)';
+    document.getElementById('warmupMsg').textContent = '🎉 正确！平均数 = 总和 ÷ 个数！';
+    document.getElementById('warmupMsg').style.color = '#20bf6b';
+    addStars(3); unlockAchievement('warmup');
+    playSound('correct');
+  } else {
+    el.style.background = 'linear-gradient(135deg,#ff6b6b,#e17055)';
+    document.getElementById('warmupMsg').textContent = '💪 再想想！平均数是怎么算的？';
+    document.getElementById('warmupMsg').style.color = 'var(--primary)';
+    playSound('wrong');
+  }
+}
+
+// ===== Level 1 =====
+const L1_QS = [
+  { nums:[3,5,7], q:'小明三天分别跑了 3、5、7 圈，平均每天跑多少圈？', ans:5 },
+  { nums:[10,20,30], q:'三个书包重量分别是 10、20、30 斤，平均重多少斤？', ans:20 },
+  { nums:[8,6,4,10,2], q:'5只小猫的体重(斤)是8、6、4、10、2，平均体重是多少？', ans:6 },
+  { nums:[90,80,70,60], q:'小红四次考试成绩：90、80、70、60，平均分是多少？', ans:75 },
+];
+let l1CurrentAns = null;
+function initL1() {
+  state.l1Index = 0; state.l1Correct = 0; showL1Q();
+}
+function showL1Q() {
+  const q = L1_QS[state.l1Index];
+  l1CurrentAns = q.ans;
+  document.getElementById('l1-questions').innerHTML = `
+    <div class="card">
+      <p style="font-size:1.1rem;font-weight:700;margin-bottom:1rem">第${state.l1Index+1}题（共${L1_QS.length}题）</p>
+      <p style="font-size:1.1rem;line-height:1.8;margin-bottom:1rem">${q.q}</p>
+      <p style="font-size:0.95rem;color:#888;margin-bottom:0.8rem">💡 提示：先求总和，再除以个数</p>
+      <p style="font-size:1rem;font-weight:600">总和 = ${q.nums.join(' + ')} = <strong>${q.nums.reduce((a,b)=>a+b,0)}</strong></p>
+      <p style="font-size:1rem;font-weight:600;margin:0.5rem 0">平均数 = ${q.nums.reduce((a,b)=>a+b,0)} ÷ ${q.nums.length} = ?</p>
+      <div style="display:flex;align-items:center;gap:1rem;margin-top:1rem;flex-wrap:wrap">
+        <label style="font-weight:700">你的答案：</label>
+        <input class="answer-input" id="l1input" type="number" placeholder="?">
+      </div>
+    </div>`;
+  document.getElementById('l1-feedback').style.display = 'none';
+  const pct = (state.l1Index / L1_QS.length) * 100;
+  document.getElementById('l1progress').style.width = pct + '%';
+}
+function checkL1() {
+  const val = parseFloat(document.getElementById('l1input')?.value);
+  const fb = document.getElementById('l1-feedback');
+  fb.style.display = 'block';
+  if (val === l1CurrentAns) {
+    fb.className = 'feedback correct';
+    fb.textContent = '🎉 正确！太棒了！+3⭐';
+    addStars(3); state.l1Correct++;
+    playSound('correct');
+    if (state.l1Correct === 1) unlockAchievement('l1_first');
+  } else {
+    fb.className = 'feedback wrong';
+    fb.textContent = `💪 再试试！正确答案是 ${l1CurrentAns}`;
+    playSound('wrong');
+  }
+}
+function nextL1() {
+  state.l1Index++;
+  if (state.l1Index >= L1_QS.length) {
+    if (state.l1Correct >= L1_QS.length) unlockAchievement('l1_all');
+    addStars(5);
+    goSection('sec-level2');
+  } else { showL1Q(); }
+}
+
+// ===== Level 2 - Drag =====
+function initL2() {
+  const data = [15, 18, 12, 21, 14];
+  state.l2Data = data;
+  document.getElementById('ropesData').textContent = data.join('、') + ' 个';
+  const items = document.getElementById('dragItems');
+  items.innerHTML = data.map((v,i) => `
+    <div class="drag-item" draggable="true" id="di${i}" ondragstart="dragStart(event,'${v}','di${i}')">
+      🎯 ${v}
+    </div>`).join('');
+  document.getElementById('dropTotal').innerHTML = '拖到这里';
+  document.getElementById('totalResult').textContent = '?';
+  document.getElementById('l2answer').value = '';
+  document.getElementById('l2-feedback').style.display = 'none';
+}
+let draggedId = null;
+function dragStart(e, val, id) { e.dataTransfer.setData('value', val); e.dataTransfer.setData('id', id); draggedId = id; }
+function allowDrop(e) { e.preventDefault(); e.currentTarget.classList.add('over'); }
+function removeDragOver(e) { e.currentTarget.classList.remove('over'); }
+let droppedVals = [];
+function drop(e, zone) {
+  e.preventDefault(); e.currentTarget.classList.remove('over');
+  const val = parseInt(e.dataTransfer.getData('value'));
+  const id = e.dataTransfer.getData('id');
+  const el = document.getElementById(id);
+  if (el) el.style.opacity = '0.3';
+  droppedVals.push(val);
+  const total = droppedVals.reduce((a,b)=>a+b,0);
+  e.currentTarget.innerHTML = droppedVals.map(v=>`<span style="background:var(--primary);color:white;border-radius:8px;padding:0.2rem 0.5rem;font-weight:700">${v}</span>`).join(' + ');
+  document.getElementById('totalResult').textContent = total;
+}
+function checkL2() {
+  const ans = parseFloat(document.getElementById('l2answer').value);
+  const correct = state.l2Data.reduce((a,b)=>a+b,0) / state.l2Data.length;
+  const fb = document.getElementById('l2-feedback');
+  fb.style.display = 'block';
+  if (ans === correct) {
+    fb.className = 'feedback correct';
+    fb.textContent = `🎉 完美！平均数 = ${correct}，+5⭐`;
+    addStars(5); unlockAchievement('l2_drag'); playSound('correct');
+    setTimeout(() => goSection('sec-level3'), 1500);
+  } else {
+    fb.className = 'feedback wrong';
+    fb.textContent = `💪 算一下：总和 = ${state.l2Data.reduce((a,b)=>a+b,0)}，个数 = ${state.l2Data.length}，答案是 ${correct}`;
+    playSound('wrong');
+  }
+}
+
+// ===== Level 3 - Bar Chart =====
+let l3Vals = [];
+function drawBarChart() {
+  const names = ['小明','小红','小华','小李','小王'];
+  const scores = names.map(() => 60 + Math.floor(Math.random()*40));
+  l3Vals = scores;
+  const avg = scores.reduce((a,b)=>a+b,0)/scores.length;
+  const canvas = document.getElementById('barCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const colors = ['#ff6b6b','#4ecdc4','#ffe66d','#a29bfe','#fd9644'];
+  ctx.clearRect(0,0,w,h);
+  // axes
+  ctx.strokeStyle = '#ddd'; ctx.lineWidth = 1;
+  for (let i=0;i<=10;i++) { const y=h-30-(i*20); ctx.beginPath(); ctx.moveTo(50,y); ctx.lineTo(w-20,y); ctx.stroke(); }
+  ctx.strokeStyle = '#aaa'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(50,10); ctx.lineTo(50,h-30); ctx.lineTo(w-20,h-30); ctx.stroke();
+  const barW = (w-80)/names.length - 10;
+  for (let i=0;i<names.length;i++) {
+    const x = 60 + i*((w-80)/names.length);
+    const barH = (scores[i]/100)*(h-50);
+    // animate
+    ctx.fillStyle = colors[i];
+    const grad = ctx.createLinearGradient(x,h-30-barH,x,h-30);
+    grad.addColorStop(0,colors[i]); grad.addColorStop(1,colors[i]+'88');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.roundRect(x, h-30-barH, barW, barH, 6); ctx.fill();
+    ctx.fillStyle = '#333'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(names[i], x+barW/2, h-10);
+    ctx.fillStyle = 'white'; ctx.font = 'bold 13px sans-serif';
+    ctx.fillText(scores[i], x+barW/2, h-35-barH+20);
+  }
+  // avg line
+  const avgY = h-30-(avg/100*(h-50));
+  ctx.strokeStyle = 'var(--primary)'; ctx.lineWidth = 3; ctx.setLineDash([8,4]);
+  ctx.beginPath(); ctx.moveTo(50,avgY); ctx.lineTo(w-20,avgY); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'var(--primary)'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign='right';
+  ctx.fillText('平均线', w-22, avgY-4);
+
+  document.getElementById('barData').textContent =
+    `成绩：${names.map((n,i)=>n+'→'+scores[i]).join('、')}`;
+  document.getElementById('l3answer').value = '';
+  document.getElementById('l3-feedback').style.display = 'none';
+}
+function checkL3() {
+  const ans = parseFloat(document.getElementById('l3answer').value);
+  const correct = Math.round(l3Vals.reduce((a,b)=>a+b,0)/l3Vals.length);
+  const fb = document.getElementById('l3-feedback');
+  fb.style.display = 'block';
+  if (Math.abs(ans-correct)<=1) {
+    fb.className = 'feedback correct';
+    fb.textContent = `🎉 正确！平均分约为 ${correct}，+5⭐`;
+    addStars(5); unlockAchievement('l3_chart'); playSound('correct');
+  } else {
+    fb.className = 'feedback wrong';
+    fb.textContent = `💪 总分是 ${l3Vals.reduce((a,b)=>a+b,0)}，除以 ${l3Vals.length} 得 ${correct.toFixed(1)}`;
+    playSound('wrong');
+  }
+}
+
+// ===== Boss =====
+const BOSS_QS = [
+  { q:'某工厂工人月工资为：3000、3500、4000、2500，平均工资是多少元？', ans:3250, hint:'总和÷4' },
+  { q:'小刚5次语文成绩：85、90、78、92、80，平均成绩是多少分？', ans:85, hint:'425÷5' },
+  { q:'已知4个数的平均数是10，则这4个数的总和是多少？', ans:40, hint:'平均数×个数' },
+];
+let bossIdx = 0;
+function initBoss() {
+  bossIdx = 0; state.bossCorrect = 0; showBossQ();
+}
+function showBossQ() {
+  const q = BOSS_QS[bossIdx];
+  document.getElementById('boss-questions').innerHTML = `
+    <p style="font-size:1.1rem;font-weight:800;margin-bottom:1rem">👾 Boss问题 ${bossIdx+1}/${BOSS_QS.length}</p>
+    <p style="font-size:1.1rem;line-height:1.8;margin-bottom:1rem">${q.q}</p>
+    <p style="font-size:0.9rem;color:#888;margin-bottom:0.8rem">💡 提示：${q.hint}</p>
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+      <label style="font-weight:700">答案：</label>
+      <input class="answer-input" id="bossInput" type="number" placeholder="?">
+    </div>`;
+  document.getElementById('boss-feedback').style.display = 'none';
+  document.getElementById('bossProgress').textContent = `Boss血量: ${'❤️'.repeat(BOSS_QS.length-state.bossCorrect)}`;
+}
+function checkBoss() {
+  const val = parseFloat(document.getElementById('bossInput')?.value);
+  const q = BOSS_QS[bossIdx];
+  const fb = document.getElementById('boss-feedback');
+  fb.style.display = 'block';
+  if (val === q.ans) {
+    state.bossCorrect++;
+    fb.className = 'feedback correct';
+    fb.textContent = `⚔️ 命中！Boss受到伤害！+5⭐`;
+    addStars(5); playSound('correct');
+    document.getElementById('bossProgress').textContent = `Boss血量: ${'❤️'.repeat(BOSS_QS.length-state.bossCorrect)}`;
+    setTimeout(() => {
+      bossIdx++;
+      if (bossIdx >= BOSS_QS.length) {
+        unlockAchievement('boss_done');
+        addStars(10);
+        goSection('sec-score');
+      } else { showBossQ(); }
+    }, 1500);
+  } else {
+    fb.className = 'feedback wrong';
+    fb.textContent = `💪 差一点！正确答案是 ${q.ans}，再努力！`;
+    playSound('wrong');
+  }
+}
+
+// ===== Score =====
+function showScore() {
+  document.getElementById('finalScore').textContent = state.stars;
+  const pct = Math.min(100, (state.stars / 50)*100);
+  document.getElementById('finalProgress').style.width = pct + '%';
+  const mottos = ['继续加油！💪', '非常棒！🌟', '太厉害了！🏆', '完美满分！👑'];
+  const idx = pct < 40 ? 0 : pct < 70 ? 1 : pct < 95 ? 2 : 3;
+  document.getElementById('scoreMotto').textContent = mottos[idx];
+  updateBadges();
+}
+
+function showThinkingAnswer() { document.getElementById('thinkingAns').style.display = 'block'; }
+
+// AI Companion
+const aiMsgs = [
+  '平均数 = 总和 ÷ 个数，记住了吗？😊',
+  '遇到困难别怕，一步一步来！💪',
+  '看图表也能找平均数哦！📊',
+  '你真的很棒！继续加油！⭐',
+  '生活中到处都有平均数！🌍',
+];
+let aiIdx = 0;
+function toggleAISpeech() {
+  const sp = document.getElementById('aiSpeech');
+  if (sp.classList.contains('show')) { sp.classList.remove('show'); }
+  else { sp.textContent = aiMsgs[aiIdx++ % aiMsgs.length]; sp.classList.add('show'); }
+}
+
+// Auto-show AI speech periodically
+setInterval(() => {
+  const sp = document.getElementById('aiSpeech');
+  sp.textContent = aiMsgs[aiIdx++ % aiMsgs.length];
+  sp.classList.add('show');
+  setTimeout(() => sp.classList.remove('show'), 4000);
+}, 30000);
+
+// Init
+window.onload = () => { drawApples(); updateBadges(); };
+</script>
+</body>
+</html>

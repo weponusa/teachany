@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>同音字与多义词 🎭</title>
+<style>
+:root {
+  --bg: #fffbf0;
+  --primary: #ff6b6b;
+  --secondary: #4ecdc4;
+  --accent: #ffe66d;
+  --card: #fff;
+  --text: #333;
+  --shadow: 0 4px 20px rgba(0,0,0,0.12);
+  --radius: 16px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); font-family: 'Microsoft YaHei','微软雅黑',sans-serif; color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+/* HERO */
+#hero { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:linear-gradient(135deg,#667eea,#764ba2,#f093fb,#fda085); padding:24px; text-align:center; position:relative; overflow:hidden; }
+.hero-chars { position:absolute; width:100%; height:100%; top:0; left:0; pointer-events:none; }
+.hc { position:absolute; font-size:clamp(2rem,5vw,4rem); font-weight:900; opacity:0.1; color:#fff; animation:floatRand 6s ease-in-out infinite; }
+@keyframes floatRand{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-20px) rotate(10deg)}}
+.hero-title{font-size:clamp(2rem,5.5vw,3.8rem);font-weight:900;color:#fff;text-shadow:2px 2px 0 rgba(0,0,0,0.15);margin:12px 0}
+.hero-sub{font-size:clamp(1rem,2.5vw,1.3rem);color:rgba(255,255,255,0.9);margin-bottom:30px}
+.hero-badge{display:flex;gap:12px;justify-content:center;margin-bottom:20px;flex-wrap:wrap}
+.hbadge{padding:8px 20px;background:rgba(255,255,255,0.2);border-radius:50px;color:#fff;font-size:0.9rem;font-weight:700;border:2px solid rgba(255,255,255,0.4)}
+.start-btn{background:#fff;color:#764ba2;font-size:1.3rem;font-weight:800;padding:14px 48px;border:none;border-radius:50px;cursor:pointer;box-shadow:var(--shadow);transition:all 0.2s}
+.start-btn:hover{transform:translateY(-3px) scale(1.05)}
+
+/* PROGRESS */
+.pgw{position:fixed;top:0;left:0;width:100%;z-index:100;background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);padding:8px 20px;display:none;box-shadow:0 2px 10px rgba(0,0,0,0.08)}
+.pgw.on{display:block}
+.pgrow{display:flex;justify-content:space-between;font-size:0.85rem;font-weight:700;color:var(--primary);margin-bottom:6px}
+.pgt{height:8px;background:#eee;border-radius:10px;overflow:hidden}
+.pgf{height:100%;background:linear-gradient(90deg,#667eea,#764ba2,#f093fb);border-radius:10px;transition:width 0.5s}
+
+/* LAYOUT */
+.sec{display:none;min-height:100vh;padding:80px 20px 40px;max-width:960px;margin:0 auto}
+.sec.on{display:block}
+.sh{text-align:center;margin-bottom:28px}
+.ltag{display:inline-block;padding:5px 16px;border-radius:50px;font-size:0.85rem;font-weight:800;margin-bottom:10px;background:var(--accent)}
+.st{font-size:clamp(1.5rem,4vw,2.3rem);font-weight:900;color:var(--primary)}
+.ss{font-size:0.9rem;color:#888;margin-top:6px}
+
+/* CARD */
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px;margin-bottom:18px}
+
+/* HOMOPHONE COMPARE CARDS */
+.homo-pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+.homo-card{border-radius:14px;padding:18px;text-align:center;cursor:pointer;transition:all 0.2s;border:3px solid transparent;position:relative}
+.homo-card.left{background:linear-gradient(135deg,#ffecd2,#fcb69f)}
+.homo-card.right{background:linear-gradient(135deg,#a1c4fd,#c2e9fb)}
+.homo-card:hover{transform:translateY(-4px);box-shadow:0 8px 25px rgba(0,0,0,0.15)}
+.homo-char{font-size:3.5rem;font-weight:900;display:block}
+.homo-card.left .homo-char{color:#e55a2b}
+.homo-card.right .homo-char{color:#1a73e8}
+.homo-pinyin{font-size:1rem;color:#666;margin:4px 0;font-weight:700}
+.homo-meaning{font-size:0.85rem;color:#777;line-height:1.5}
+.homo-example{font-size:0.85rem;font-style:italic;color:#999;margin-top:6px;padding:6px 8px;background:rgba(255,255,255,0.5);border-radius:8px}
+.same-sound-badge{display:flex;align-items:center;justify-content:center;gap:8px;margin:8px 0;color:#888;font-size:0.9rem}
+.sound-eq{padding:4px 12px;background:var(--accent);border-radius:20px;font-size:0.85rem;font-weight:800;color:#333}
+
+/* POLYSEMY DISPLAY */
+.poly-char{font-size:4rem;font-weight:900;color:var(--primary);text-align:center;margin:12px 0}
+.poly-meanings{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin:16px 0}
+.poly-meaning-card{background:var(--bg);border-radius:12px;padding:14px;border-left:4px solid var(--primary)}
+.poly-meaning-num{font-size:0.75rem;font-weight:800;color:var(--primary);margin-bottom:4px}
+.poly-meaning-text{font-size:0.95rem;font-weight:700;margin-bottom:4px}
+.poly-meaning-eg{font-size:0.85rem;color:#888;font-style:italic}
+.poly-selector{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:12px 0}
+.poly-sel-btn{padding:8px 20px;background:var(--card);border:3px solid #eee;border-radius:50px;cursor:pointer;font-size:1rem;font-weight:700;transition:all 0.2s}
+.poly-sel-btn:hover{border-color:var(--secondary)}
+.poly-sel-btn.active{border-color:var(--primary);background:#fff5f5;color:var(--primary)}
+
+/* CONTEXT FILL */
+.context-box{background:#f8f8f8;border-radius:12px;padding:20px;margin:12px 0}
+.context-sentence{font-size:1.2rem;line-height:2.2;text-align:center}
+.ctx-blank{display:inline-block;min-width:44px;height:36px;border-bottom:3px solid var(--primary);text-align:center;font-size:1.4rem;font-weight:900;color:var(--primary);vertical-align:bottom;padding:0 4px;transition:all 0.3s}
+.ctx-opts{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px 0}
+.ctx-opt{padding:8px 22px;border-radius:50px;cursor:pointer;font-size:1rem;font-weight:700;transition:all 0.2s;border:3px solid transparent;background:var(--card);box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.ctx-opt:hover{transform:scale(1.05);border-color:var(--secondary)}
+.ctx-opt.ok{border-color:#00b894;background:#e0fff4;color:#00b894}
+.ctx-opt.ng{border-color:var(--primary);background:#fff0f0;color:var(--primary)}
+
+/* QUIZ */
+.qchar{font-size:5rem;text-align:center;color:var(--primary);margin:16px 0;font-weight:900;text-shadow:3px 3px 0 rgba(255,107,107,0.15)}
+.qq{font-size:1.1rem;font-weight:700;text-align:center;margin-bottom:18px}
+.qopts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.qo{padding:14px;background:var(--card);border:3px solid #eee;border-radius:12px;cursor:pointer;font-size:1rem;font-weight:600;text-align:center;transition:all 0.2s}
+.qo:hover{border-color:var(--secondary);transform:translateY(-2px)}
+.qo.ok{border-color:#00b894;background:#d4f5e9;color:#00b894}
+.qo.ng{border-color:var(--primary);background:#ffe5e5;color:var(--primary)}
+
+/* DISTINCTION CHALLENGE */
+.dist-pair{display:flex;gap:12px;align-items:stretch;justify-content:center;flex-wrap:wrap;margin:16px 0}
+.dist-card{flex:1;min-width:140px;max-width:200px;border-radius:14px;padding:16px;text-align:center;cursor:pointer;transition:all 0.3s;border:4px solid transparent}
+.dist-card:hover{transform:scale(1.05)}
+.dist-card.selected{border-color:var(--primary);box-shadow:0 0 0 3px rgba(255,107,107,0.3)}
+.dist-card.correct{border-color:#00b894;background:#d4f5e9!important}
+.dist-card.wrong{border-color:var(--primary);animation:shk 0.4s ease}
+@keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.dist-char{font-size:2.8rem;font-weight:900;display:block;margin-bottom:8px}
+.dist-hint{font-size:0.85rem;color:#888;line-height:1.5}
+
+/* BOSS LEVEL */
+.boss-sentence{font-size:1.25rem;line-height:2.5;text-align:center;margin:16px 0;padding:16px;background:#f8f8f8;border-radius:12px}
+.boss-word-opts{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:12px 0}
+.bwo{padding:10px 24px;background:var(--accent);border-radius:50px;cursor:pointer;font-size:1rem;font-weight:700;transition:all 0.2s}
+.bwo:hover{transform:scale(1.08);background:var(--primary);color:#fff}
+.bwo.used{opacity:0.3;pointer-events:none}
+
+/* SCOREBOARD */
+#sb{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;min-height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 20px}
+#sb.on{display:flex}
+.sb-num{font-size:5rem;font-weight:900;color:var(--accent);margin:16px 0}
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;max-width:600px;width:100%;margin:20px 0}
+.ach{background:rgba(255,255,255,0.1);border-radius:12px;padding:12px 8px;text-align:center}
+.ach.on{background:rgba(255,230,109,0.25);border:2px solid var(--accent)}
+.ach-ic{font-size:1.8rem}.ach-nm{font-size:0.75rem;font-weight:700;margin-top:4px}
+.retry-btn{background:var(--accent);color:#333;font-size:1.1rem;font-weight:800;padding:13px 40px;border:none;border-radius:50px;cursor:pointer;margin-top:20px;transition:all 0.2s}
+.retry-btn:hover{transform:scale(1.05)}
+
+/* AI TOAST STARS */
+.ai{position:fixed;bottom:20px;right:20px;z-index:200;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.ai-av{width:60px;height:60px;background:linear-gradient(135deg,#667eea,#f093fb);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;cursor:pointer;box-shadow:var(--shadow);animation:af 3s ease-in-out infinite;border:3px solid #fff}
+@keyframes af{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.ai-bub{background:#fff;border-radius:14px 14px 4px 14px;padding:10px 14px;max-width:210px;font-size:0.85rem;box-shadow:var(--shadow);display:none}
+.ai-bub.on{display:block;animation:fu 0.3s ease}
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.toast{position:fixed;top:74px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 22px;border-radius:50px;font-size:0.9rem;font-weight:700;z-index:300;opacity:0;transition:opacity 0.3s;pointer-events:none}
+.toast.on{opacity:1}.toast.ok{background:#00b894}.toast.ng{background:var(--primary)}
+.spop{position:fixed;pointer-events:none;z-index:400}
+.sp{position:absolute;font-size:1.4rem;animation:sf 1s ease forwards}
+@keyframes sf{0%{opacity:1;transform:translate(0,0)}100%{opacity:0;transform:translate(var(--dx),var(--dy))}}
+.btn{padding:12px 32px;border:none;border-radius:50px;cursor:pointer;font-size:1rem;font-weight:700;transition:all 0.2s}
+.btnp{background:var(--primary);color:#fff}
+.btnp:hover{background:#ff5252;transform:translateY(-2px)}
+.btns{background:var(--secondary);color:#fff}
+.btns:hover{background:#3dbdb6;transform:translateY(-2px)}
+.bc{text-align:center;margin-top:20px}
+nav.sn{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.nd{width:11px;height:11px;border-radius:50%;background:#ddd;cursor:pointer;transition:all 0.2s}
+.nd.a{background:var(--primary);transform:scale(1.3)}.nd.d{background:var(--secondary)}
+.progress-dots{display:flex;gap:6px;justify-content:center;margin:8px 0}
+.pdot{width:10px;height:10px;border-radius:50%;background:#eee;transition:background 0.3s}
+.pdot.done{background:var(--secondary)}.pdot.cur{background:var(--primary)}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-chars">
+    <span class="hc" style="top:8%;left:8%;animation-delay:0s">音</span>
+    <span class="hc" style="top:12%;right:8%;animation-delay:1s">字</span>
+    <span class="hc" style="bottom:12%;left:12%;animation-delay:2s">义</span>
+    <span class="hc" style="bottom:8%;right:12%;animation-delay:3s">词</span>
+    <span class="hc" style="top:45%;left:3%;animation-delay:1.5s">同</span>
+    <span class="hc" style="top:45%;right:3%;animation-delay:2.5s">多</span>
+  </div>
+  <div style="font-size:clamp(3rem,8vw,5rem);margin-bottom:12px;animation:af 3s ease-in-out infinite">🎭</div>
+  <h1 class="hero-title">同音字与多义词</h1>
+  <p class="hero-sub">三年级语文 · 声音相同，意义不同！</p>
+  <div class="hero-badge">
+    <span class="hbadge">🔊 同音字</span>
+    <span class="hbadge">📖 多义词</span>
+    <span class="hbadge">✏️ 语境填空</span>
+  </div>
+  <button class="start-btn" onclick="go('obj')">开始挑战 🚀</button>
+</section>
+
+<!-- PROGRESS -->
+<div class="pgw" id="pgw">
+  <div class="pgrow"><span id="pglb">学习目标</span><span id="pgst">⭐ 0</span></div>
+  <div class="pgt"><div class="pgf" id="pgf" style="width:0%"></div></div>
+</div>
+
+<!-- OBJECTIVES -->
+<section class="sec" id="obj">
+  <nav class="sn" id="sn0"></nav>
+  <div class="sh">
+    <div class="ltag">📋 学习目标</div>
+    <h2 class="st">今天学什么？</h2>
+  </div>
+  <div class="card">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div style="background:linear-gradient(135deg,#ffecd2,#fcb69f);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:2rem;margin-bottom:8px">🔊</div>
+        <div style="font-weight:800;font-size:1.1rem;color:#e55a2b">同音字</div>
+        <div style="font-size:0.85rem;color:#888;margin-top:6px;line-height:1.5">读音相同，字形和意思不同的字</div>
+        <div style="display:flex;gap:8px;justify-content:center;margin-top:10px">
+          <span style="font-size:2rem;font-weight:900;color:#e55a2b">己</span>
+          <span style="font-size:1.5rem;color:#aaa;line-height:2rem">vs</span>
+          <span style="font-size:2rem;font-weight:900;color:#1a73e8">已</span>
+        </div>
+        <div style="font-size:0.8rem;color:#888;margin-top:4px">都读 jǐ / yǐ</div>
+      </div>
+      <div style="background:linear-gradient(135deg,#a1c4fd,#c2e9fb);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:2rem;margin-bottom:8px">📖</div>
+        <div style="font-weight:800;font-size:1.1rem;color:#1a73e8">多义词</div>
+        <div style="font-size:0.85rem;color:#888;margin-top:6px;line-height:1.5">同一个词，在不同语境有不同意思</div>
+        <div style="font-size:2rem;font-weight:900;color:#1a73e8;margin-top:10px">打</div>
+        <div style="font-size:0.8rem;color:#888;margin-top:4px">打球·打电话·打人</div>
+      </div>
+    </div>
+    <div style="background:#f8f8f8;border-radius:10px;padding:12px;font-size:0.9rem;color:#666;line-height:1.7">
+      💡 <strong>学习提示：</strong>同音字要结合字形和意思来辨别；多义词要根据句子语境来判断！
+    </div>
+  </div>
+  <div class="bc"><button class="btn btnp" onclick="go('warmup')">去学习同音字 →</button></div>
+</section>
+
+<!-- WARMUP: 同音字对比卡片 -->
+<section class="sec" id="warmup">
+  <nav class="sn" id="sn1"></nav>
+  <div class="sh">
+    <div class="ltag">🔥 热身学习</div>
+    <h2 class="st">同音字大对比</h2>
+    <p class="ss">看看这些读音相同，意思不同的字！</p>
+  </div>
+  <div id="homoPairs"></div>
+  <div class="bc"><button class="btn btnp" onclick="go('level1')">去第一关 →</button></div>
+</section>
+
+<!-- LEVEL 1: 同音字辨析 -->
+<section class="sec" id="level1">
+  <nav class="sn" id="sn2"></nav>
+  <div class="sh">
+    <div class="ltag">⚔️ 第一关</div>
+    <h2 class="st">同音字辨析</h2>
+    <p class="ss">读一读句子，选出正确的字！</p>
+  </div>
+  <div class="card">
+    <div id="l1p" style="text-align:center;color:#aaa;font-size:0.9rem;margin-bottom:8px">第 1 题 / 共 6 题</div>
+    <div class="context-box" id="l1Context"></div>
+    <div class="ctx-opts" id="l1Opts"></div>
+    <div id="l1Fb" style="text-align:center;font-size:1rem;font-weight:700;min-height:24px;margin-top:8px"></div>
+  </div>
+</section>
+
+<!-- LEVEL 2: 多义词学习+填空 -->
+<section class="sec" id="level2">
+  <nav class="sn" id="sn3"></nav>
+  <div class="sh">
+    <div class="ltag">📖 第二关</div>
+    <h2 class="st">多义词探索</h2>
+    <p class="ss">同一个词，不同语境，不同意思！</p>
+  </div>
+  <div class="card" id="polyCard">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <button onclick="prevPoly()" style="background:none;border:2px solid #ddd;border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:1.2rem">←</button>
+      <span id="polyCounter" style="font-size:0.9rem;color:#aaa">1 / 5</span>
+      <button onclick="nextPoly()" style="background:var(--secondary);color:#fff;border:none;border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:1.2rem">→</button>
+    </div>
+    <div class="poly-char" id="polyChar">打</div>
+    <div class="poly-meanings" id="polyMeanings"></div>
+  </div>
+  <div class="bc"><button class="btn btnp" onclick="go('level3')">去第三关 →</button></div>
+</section>
+
+<!-- LEVEL 3: 语境填空 -->
+<section class="sec" id="level3">
+  <nav class="sn" id="sn4"></nav>
+  <div class="sh">
+    <div class="ltag">✏️ 第三关</div>
+    <h2 class="st">语境填空</h2>
+    <p class="ss">看句子，想意思，填正确的字！</p>
+  </div>
+  <div class="card">
+    <div id="l3p" style="text-align:center;color:#aaa;font-size:0.9rem;margin-bottom:8px">第 1 题 / 共 6 题</div>
+    <div id="l3Hint" style="text-align:center;background:var(--accent);padding:8px 16px;border-radius:50px;font-size:0.9rem;font-weight:700;margin-bottom:12px;display:inline-block;left:50%;transform:translateX(-50%);position:relative"></div>
+    <div class="context-box" id="l3Context"></div>
+    <div class="ctx-opts" id="l3Opts"></div>
+    <div id="l3Fb" style="text-align:center;font-size:1rem;font-weight:700;min-height:24px;margin-top:8px"></div>
+  </div>
+</section>
+
+<!-- BOSS LEVEL -->
+<section class="sec" id="boss">
+  <nav class="sn" id="sn5"></nav>
+  <div class="sh">
+    <div class="ltag" style="background:var(--primary);color:#fff">👾 终极挑战</div>
+    <h2 class="st">辨字大挑战</h2>
+    <p class="ss">同音字混在一起，选出对的那个！</p>
+  </div>
+  <div class="card">
+    <div id="bp" style="text-align:center;color:#aaa;font-size:0.9rem;margin-bottom:8px">第 1 题 / 共 5 题</div>
+    <div class="boss-sentence" id="bSentence"></div>
+    <div id="bHint" style="text-align:center;font-size:0.85rem;color:#888;margin:8px 0"></div>
+    <div class="boss-word-opts" id="bOpts"></div>
+    <div id="bFb" style="text-align:center;font-size:1rem;font-weight:700;min-height:28px;margin-top:8px"></div>
+  </div>
+</section>
+
+<!-- SCOREBOARD -->
+<section id="sb">
+  <div style="font-size:2.8rem;font-weight:900">🎭 辨字大师！</div>
+  <div class="sb-num" id="sbNum">0</div>
+  <p style="font-size:1.1rem;opacity:0.9">颗星星！</p>
+  <div class="ach-grid" id="achGrid"></div>
+  <p style="opacity:0.8;margin:12px 0" id="sbMsg"></p>
+  <button class="retry-btn" onclick="location.reload()">🔄 再来一次</button>
+</section>
+
+<!-- AI -->
+<div class="ai" id="aiComp" style="display:none">
+  <div class="ai-bub" id="aiBub"></div>
+  <div class="ai-av" onclick="tapAI()">🐛</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ──
+const HOMO_PAIRS = [
+  {
+    pinyin:'gōng',
+    left:{char:'工',meaning:'工作；劳动',example:'他每天努力工作。'},
+    right:{char:'弓',meaning:'弓箭的弓',example:'古代的弓射得很远。'},
+  },
+  {
+    pinyin:'jī',
+    left:{char:'鸡',meaning:'一种家禽',example:'院子里有几只鸡。'},
+    right:{char:'机',meaning:'机器；机会',example:'这台机器很好用。'},
+  },
+  {
+    pinyin:'zhī',
+    left:{char:'知',meaning:'知道；了解',example:'我知道这个答案。'},
+    right:{char:'枝',meaning:'树枝',example:'小鸟站在树枝上。'},
+  },
+  {
+    pinyin:'shí',
+    left:{char:'时',meaning:'时间；时候',example:'上课时要认真听。'},
+    right:{char:'石',meaning:'石头；岩石',example:'河里有很多石头。'},
+  },
+  {
+    pinyin:'yì',
+    left:{char:'意',meaning:'意思；意义',example:'这个词的意思是？'},
+    right:{char:'易',meaning:'容易；简单',example:'这道题很容易。'},
+  },
+  {
+    pinyin:'huā',
+    left:{char:'花',meaning:'花朵；植物',example:'春天花儿开了。'},
+    right:{char:'华',meaning:'华丽；中华',example:'中华文化很悠久。'},
+  },
+];
+
+const L1_Q = [
+  {sentence:'我___道他家在哪里。',opts:['知','枝','支','直'],ans:0,exp:'知道：了解，明白'},
+  {sentence:'树上有一根___条弯弯的。',opts:['知','枝','支','之'],ans:1,exp:'枝条：树的分支'},
+  {sentence:'这道数学题很容___。',opts:['意','易','亿','艺'],ans:1,exp:'容易：简单不难'},
+  {sentence:'他的发言很有___义。',opts:['意','易','亿','艺'],ans:0,exp:'意义：价值，重要性'},
+  {sentence:'我每天坚持锻___身体。',opts:['炼','联','连','练'],ans:0,exp:'锻炼：运动，训练'},
+  {sentence:'这两位同学手___手走路。',opts:['炼','联','连','练'],ans:2,exp:'手连手：互相拉着手'},
+];
+
+const POLY_WORDS = [
+  {char:'打',meanings:[
+    {num:'①',text:'用手击打',eg:'他打了一下桌子。'},
+    {num:'②',text:'用电话联系',eg:'我给妈妈打电话。'},
+    {num:'③',text:'进行某种活动',eg:'我们去打篮球吧。'},
+    {num:'④',text:'制作，制造',eg:'铁匠打了一把刀。'},
+  ]},
+  {char:'看',meanings:[
+    {num:'①',text:'用眼睛观察',eg:'我在看书。'},
+    {num:'②',text:'拜访，探望',eg:'我们去看奶奶。'},
+    {num:'③',text:'认为，判断',eg:'我看这道题不难。'},
+  ]},
+  {char:'开',meanings:[
+    {num:'①',text:'打开（相反是关）',eg:'请开门。'},
+    {num:'②',text:'开始',eg:'比赛开始了。'},
+    {num:'③',text:'离开，分开',eg:'他已经离开了。'},
+  ]},
+  {char:'上',meanings:[
+    {num:'①',text:'位置在高处',eg:'书在桌子上面。'},
+    {num:'②',text:'前往，去',eg:'我上学去了。'},
+    {num:'③',text:'向上，往上',eg:'他爬上了大树。'},
+  ]},
+  {char:'白',meanings:[
+    {num:'①',text:'颜色，雪的颜色',eg:'白云飘在天上。'},
+    {num:'②',text:'没有用，徒劳',eg:'白跑了一趟。'},
+    {num:'③',text:'清楚，明白',eg:'这件事说清白了。'},
+  ]},
+];
+
+const L3_Q = [
+  {word:'打',sentence:'他每天放学后都和同学___篮球。',hint:'动作，进行一种运动',opts:['打','开','来','做'],ans:0,meaning:'进行活动'},
+  {word:'看',sentence:'妈妈让我去医院___看望生病的奶奶。',hint:'动作，去拜访某人',opts:['看','见','望','视'],ans:0,meaning:'拜访探望'},
+  {word:'开',sentence:'天亮了，___门窗让空气进来吧！',hint:'动作，使闭合的变开',opts:['关','开','进','来'],ans:1,meaning:'打开'},
+  {word:'上',sentence:'每天早晨七点，我准时___学。',hint:'前往某个地方',opts:['上','下','走','来'],ans:0,meaning:'前往'},
+  {word:'白',sentence:'他忘带钥匙，白___了一趟。',hint:'表示没有效果，徒劳',opts:['白','红','去','跑'],ans:0,meaning:'徒劳无功'},
+  {word:'看',sentence:'我认为，我___这道题很简单。',hint:'认为，判断',opts:['见','看','想','说'],ans:1,meaning:'认为判断'},
+];
+
+const BOSS_Q = [
+  {sentence:'小红____(zhī)道答案，举起手来。',blank:'知',opts:['知','枝','之','支'],ans:0,exp:'知道：明白，了解'},
+  {sentence:'春天，树上的_____(zhī)条长出了嫩芽。',blank:'枝',opts:['知','枝','之','支'],ans:1,exp:'枝条：树的分支'},
+  {sentence:'妈妈叫我去超市_____(mǎi)东西。',blank:'买',opts:['买','卖','迈','麦'],ans:0,exp:'买：花钱换商品'},
+  {sentence:'小贩在街上_____(mài)水果。',blank:'卖',opts:['买','卖','迈','麦'],ans:1,exp:'卖：用商品换钱'},
+  {sentence:'运动会上，他跑得非常_____(kuài)。',blank:'快',opts:['快','块','筷','宽'],ans:0,exp:'快：速度很大'},
+];
+
+const ACHIEVEMENTS = [
+  {id:'start',ic:'🎭',nm:'出发啦',on:false},
+  {id:'homo_view',ic:'🔊',nm:'同音达人',on:false},
+  {id:'l1_done',ic:'⚔️',nm:'一关通过',on:false},
+  {id:'l1_all',ic:'🎯',nm:'全对好厉害',on:false},
+  {id:'poly_done',ic:'📖',nm:'多义探索者',on:false},
+  {id:'l3_done',ic:'✏️',nm:'填空高手',on:false},
+  {id:'boss_done',ic:'👾',nm:'终极胜利',on:false},
+  {id:'all_done',ic:'🏆',nm:'辨字大师',on:false},
+  {id:'combo',ic:'💥',nm:'连击达人',on:false},
+];
+
+// ── STATE ──
+let stars=0,curSec='hero';
+let l1Idx=0,l1Ok=0;
+let polyIdx=0;
+let l3Idx=0,l3Ok=0;
+let bossIdx=0,bossOk=0;
+let combo=0;
+const SECS=['obj','warmup','level1','level2','level3','boss'];
+const LBLS=['目标','热身','第1关','第2关','第3关','Boss'];
+
+// ── AUDIO ──
+const ac=new(window.AudioContext||window.webkitAudioContext)();
+function tone(f,d,t='sine',g=0.3){const o=ac.createOscillator(),gn=ac.createGain();o.connect(gn);gn.connect(ac.destination);o.type=t;o.frequency.value=f;gn.gain.setValueAtTime(g,ac.currentTime);gn.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+d);o.start();o.stop(ac.currentTime+d);}
+function sOk(){tone(523,0.1);setTimeout(()=>tone(659,0.1),100);setTimeout(()=>tone(784,0.2),200);}
+function sNg(){tone(200,0.3,'sawtooth',0.2);}
+function sClick(){tone(440,0.07,'square',0.15);}
+function sStar(){[523,587,659,698,784].forEach((f,i)=>setTimeout(()=>tone(f,0.15),i*80));}
+
+// ── NAV ──
+function buildNavs(){
+  SECS.forEach((id,i)=>{
+    const c=document.getElementById('sn'+i);
+    if(!c)return;
+    SECS.forEach((nid,ni)=>{
+      const d=document.createElement('div');
+      d.className='nd'+(i===ni?' a':'');
+      d.title=LBLS[ni];
+      d.onclick=()=>{sClick();go(nid);};
+      c.appendChild(d);
+    });
+  });
+}
+
+function go(id){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.getElementById('sb').style.display='none';
+  const s=document.getElementById(id);
+  if(s){s.classList.add('on');curSec=id;}
+  const pw=document.getElementById('pgw');
+  if(id==='hero'){pw.classList.remove('on');document.getElementById('aiComp').style.display='none';}
+  else{pw.classList.add('on');document.getElementById('aiComp').style.display='flex';}
+  updatePB();
+  const msgs={
+    obj:'今天我们学同音字和多义词，和语言捉迷藏！🐛',
+    warmup:'看看这些音相同但字不同的字，记住它们的区别！',
+    level1:'看句子，想意思，选出正确的同音字！',
+    level2:'多义词一个字有好几个意思，真有趣！',
+    level3:'根据句子里的意思，填入正确的字！',
+    boss:'终极挑战！同音字混在一起，你能分清吗？',
+  };
+  if(msgs[id]) showAI(msgs[id]);
+  if(id==='warmup') initWarmup();
+  if(id==='level1') initL1();
+  if(id==='level2') initPoly();
+  if(id==='level3') initL3();
+  if(id==='boss') initBoss();
+  unlock('start');
+}
+
+function updatePB(){
+  const i=SECS.indexOf(curSec);
+  document.getElementById('pgf').style.width=(Math.max(0,i)/SECS.length*100)+'%';
+  document.getElementById('pglb').textContent=LBLS[Math.max(0,i)]||'开始';
+  document.getElementById('pgst').textContent='⭐ '+stars;
+}
+
+// ── WARMUP: HOMO PAIRS ──
+function initWarmup(){
+  const container=document.getElementById('homoPairs');
+  container.innerHTML='';
+  HOMO_PAIRS.forEach(pair=>{
+    const div=document.createElement('div');
+    div.className='card';
+    div.innerHTML=`
+      <div class="same-sound-badge">
+        <span class="sound-eq">🔊 ${pair.pinyin}</span>
+        <span>读音相同</span>
+      </div>
+      <div class="homo-pair">
+        <div class="homo-card left" onclick="sClick();addStar(1)">
+          <span class="homo-char">${pair.left.char}</span>
+          <div class="homo-pinyin">${pair.pinyin}</div>
+          <div class="homo-meaning">${pair.left.meaning}</div>
+          <div class="homo-example">"${pair.left.example}"</div>
+        </div>
+        <div class="homo-card right" onclick="sClick();addStar(1)">
+          <span class="homo-char">${pair.right.char}</span>
+          <div class="homo-pinyin">${pair.pinyin}</div>
+          <div class="homo-meaning">${pair.right.meaning}</div>
+          <div class="homo-example">"${pair.right.example}"</div>
+        </div>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+  unlock('homo_view');
+}
+
+// ── LEVEL 1 ──
+function initL1(){l1Idx=0;l1Ok=0;combo=0;renderL1();}
+function renderL1(){
+  if(l1Idx>=L1_Q.length){l1Done();return;}
+  const q=L1_Q[l1Idx];
+  document.getElementById('l1p').textContent=`第 ${l1Idx+1} 题 / 共 ${L1_Q.length} 题`;
+  const sent=q.sentence.replace('___',`<span class="ctx-blank" id="ctxB">___</span>`);
+  document.getElementById('l1Context').innerHTML=`<div class="context-sentence">${sent}</div>`;
+  document.getElementById('l1Fb').textContent='';
+  const opts=document.getElementById('l1Opts');
+  opts.innerHTML='';
+  q.opts.forEach((o,i)=>{
+    const el=document.createElement('div');
+    el.className='ctx-opt';
+    el.textContent=o;
+    el.onclick=()=>ansL1(el,i,q);
+    opts.appendChild(el);
+  });
+}
+function ansL1(el,chosen,q){
+  document.querySelectorAll('.ctx-opt').forEach(b=>b.style.pointerEvents='none');
+  const blank=document.getElementById('ctxB');
+  if(blank)blank.textContent=q.opts[chosen];
+  if(chosen===q.ans){
+    el.classList.add('ok');
+    if(blank){blank.style.color='#00b894';blank.style.borderBottomColor='#00b894';}
+    sOk();addStar(2);l1Ok++;combo++;
+    if(combo>=3) unlock('combo');
+    document.getElementById('l1Fb').innerHTML=`✅ 正确！${q.exp}`;
+    spawnStars(el);
+  }else{
+    el.classList.add('ng');
+    document.querySelectorAll('.ctx-opt')[q.ans].classList.add('ok');
+    sNg();combo=0;
+    document.getElementById('l1Fb').innerHTML=`❌ 正确答案：${q.opts[q.ans]}（${q.exp}）`;
+  }
+  l1Idx++;
+  setTimeout(renderL1,1600);
+}
+function l1Done(){
+  unlock('l1_done');
+  if(l1Ok===L1_Q.length)unlock('l1_all');
+  toast(`第一关完成！答对 ${l1Ok}/${L1_Q.length} 🎊`,'ok');
+  setTimeout(()=>go('level2'),1500);
+}
+
+// ── LEVEL 2: POLY ──
+function initPoly(){polyIdx=0;renderPoly();}
+function renderPoly(){
+  const p=POLY_WORDS[polyIdx];
+  document.getElementById('polyCounter').textContent=`${polyIdx+1} / ${POLY_WORDS.length}`;
+  document.getElementById('polyChar').textContent=p.char;
+  const ml=document.getElementById('polyMeanings');
+  ml.innerHTML='';
+  p.meanings.forEach(m=>{
+    const div=document.createElement('div');
+    div.className='poly-meaning-card';
+    div.innerHTML=`<div class="poly-meaning-num">${m.num}</div><div class="poly-meaning-text">${m.text}</div><div class="poly-meaning-eg">"${m.eg}"</div>`;
+    ml.appendChild(div);
+  });
+  addStar(1);
+  if(polyIdx===POLY_WORDS.length-1) unlock('poly_done');
+}
+function prevPoly(){if(polyIdx>0){polyIdx--;renderPoly();sClick();}}
+function nextPoly(){if(polyIdx<POLY_WORDS.length-1){polyIdx++;renderPoly();sClick();}else{showAI('多义词全部学完了！去第三关填空吧！');}}
+
+// ── LEVEL 3 ──
+function initL3(){l3Idx=0;l3Ok=0;renderL3();}
+function renderL3(){
+  if(l3Idx>=L3_Q.length){l3Done();return;}
+  const q=L3_Q[l3Idx];
+  document.getElementById('l3p').textContent=`第 ${l3Idx+1} 题 / 共 ${L3_Q.length} 题`;
+  document.getElementById('l3Hint').textContent='📌 提示：'+q.hint;
+  const sent=q.sentence.replace('___',`<span class="ctx-blank" id="l3b">___</span>`);
+  document.getElementById('l3Context').innerHTML=`<div class="context-sentence">${sent}</div>`;
+  document.getElementById('l3Fb').textContent='';
+  const opts=document.getElementById('l3Opts');
+  opts.innerHTML='';
+  q.opts.forEach((o,i)=>{
+    const el=document.createElement('div');
+    el.className='ctx-opt';
+    el.textContent=o;
+    el.onclick=()=>ansL3(el,i,q);
+    opts.appendChild(el);
+  });
+}
+function ansL3(el,chosen,q){
+  document.querySelectorAll('.ctx-opt').forEach(b=>b.style.pointerEvents='none');
+  const b=document.getElementById('l3b');
+  if(b)b.textContent=q.opts[chosen];
+  if(chosen===q.ans){
+    el.classList.add('ok');
+    if(b){b.style.color='#00b894';b.style.borderBottomColor='#00b894';}
+    sOk();addStar(2);l3Ok++;
+    document.getElementById('l3Fb').innerHTML=`✅ 正确！这里"${q.word}"的意思是：${q.meaning}`;
+    spawnStars(el);
+  }else{
+    el.classList.add('ng');
+    document.querySelectorAll('.ctx-opt')[q.ans].classList.add('ok');
+    sNg();
+    document.getElementById('l3Fb').innerHTML=`❌ 这里"${q.word}"表示：${q.meaning}`;
+  }
+  l3Idx++;
+  setTimeout(renderL3,1800);
+}
+function l3Done(){
+  unlock('l3_done');addStar(3);
+  toast(`第三关完成！答对 ${l3Ok}/${L3_Q.length} 🎊`,'ok');
+  setTimeout(()=>go('boss'),1500);
+}
+
+// ── BOSS ──
+function initBoss(){bossIdx=0;bossOk=0;renderBoss();}
+function renderBoss(){
+  if(bossIdx>=BOSS_Q.length){bossDone();return;}
+  const q=BOSS_Q[bossIdx];
+  document.getElementById('bp').textContent=`第 ${bossIdx+1} 题 / 共 ${BOSS_Q.length} 题`;
+  const sent=q.sentence.replace('____',`<span class="ctx-blank" id="bbl">____</span>`);
+  document.getElementById('bSentence').innerHTML=sent;
+  document.getElementById('bHint').textContent='📌 括号里的拼音是这个字的读音，结合意思选字！';
+  document.getElementById('bFb').textContent='';
+  const opts=document.getElementById('bOpts');
+  opts.innerHTML='';
+  q.opts.forEach((o,i)=>{
+    const el=document.createElement('div');
+    el.className='bwo';
+    el.textContent=o;
+    el.onclick=()=>answerBoss(i,q,o);
+    opts.appendChild(el);
+  });
+}
+function answerBoss(chosen,q,word){
+  document.querySelectorAll('.bwo').forEach(e=>e.style.pointerEvents='none');
+  const bl=document.getElementById('bbl');
+  if(bl)bl.textContent=word;
+  if(chosen===q.ans){
+    if(bl){bl.style.color='#00b894';bl.style.borderBottomColor='#00b894';}
+    sOk();addStar(3);bossOk++;
+    document.getElementById('bFb').innerHTML=`✅ 完全正确！${q.exp}`;
+    spawnStars(document.getElementById('bp'));
+  }else{
+    if(bl){bl.style.color='var(--primary)';bl.style.borderBottomColor='var(--primary)';}
+    sNg();
+    document.getElementById('bFb').innerHTML=`❌ 正确答案是"${q.blank}"：${q.exp}`;
+  }
+  bossIdx++;
+  setTimeout(renderBoss,1800);
+}
+function bossDone(){unlock('boss_done');unlock('all_done');addStar(5);setTimeout(showScore,1000);}
+
+// ── SCORE ──
+function showScore(){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.getElementById('pgw').classList.remove('on');
+  const sb=document.getElementById('sb');
+  sb.style.display='flex';
+  document.getElementById('aiComp').style.display='none';
+  document.getElementById('sbNum').textContent=stars;
+  document.getElementById('sbMsg').textContent=stars>28?'辨字大师！同音字难不倒你！🏆':'继续练习，辨字越来越准！';
+  const grid=document.getElementById('achGrid');
+  grid.innerHTML='';
+  ACHIEVEMENTS.forEach(a=>{
+    const el=document.createElement('div');
+    el.className='ach'+(a.on?' on':'');
+    el.innerHTML=`<div class="ach-ic">${a.ic}</div><div class="ach-nm">${a.nm}</div>`;
+    grid.appendChild(el);
+  });
+  sStar();
+}
+
+// ── HELPERS ──
+function addStar(n){stars+=n;document.getElementById('pgst').textContent='⭐ '+stars;}
+function unlock(id){
+  const a=ACHIEVEMENTS.find(x=>x.id===id);
+  if(a&&!a.on){a.on=true;toast('🏆 成就：'+a.nm,'ok');sStar();}
+}
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast on '+type;
+  setTimeout(()=>t.className='toast',2500);
+}
+function spawnStars(el){
+  if(!el)return;
+  const r=el.getBoundingClientRect?el.getBoundingClientRect():{left:200,top:200};
+  const b=document.createElement('div');
+  b.className='spop';
+  b.style.left=r.left+r.width/2+'px';
+  b.style.top=r.top+r.height/2+'px';
+  for(let i=0;i<7;i++){
+    const s=document.createElement('div');
+    s.className='sp';s.textContent=['⭐','🌟','✨'][i%3];
+    const a=(i/7)*Math.PI*2;
+    s.style.setProperty('--dx',Math.cos(a)*75+'px');
+    s.style.setProperty('--dy',Math.sin(a)*75+'px');
+    b.appendChild(s);
+  }
+  document.body.appendChild(b);
+  setTimeout(()=>b.remove(),1000);
+}
+let aiOn=false;
+function showAI(msg){
+  const b=document.getElementById('aiBub');
+  b.textContent=msg;b.classList.add('on');aiOn=true;
+  setTimeout(()=>{b.classList.remove('on');aiOn=false;},4000);
+}
+function tapAI(){
+  if(aiOn){document.getElementById('aiBub').classList.remove('on');aiOn=false;}
+  else{
+    const tips=['同音字要结合字形记忆！🎭','看句子的意思，再选字！📖','多义词要联系语境来理解！✏️','多读例句，就能分清了！💪'];
+    showAI(tips[Math.floor(Math.random()*tips.length)]);
+  }
+}
+
+buildNavs();
+</script>
+</body>
+</html>

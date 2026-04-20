@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>可能性 | 四年级数学 | TeachAny</title>
+<style>
+:root {
+  --bg: #fffbf0;
+  --primary: #ff6b6b;
+  --secondary: #4ecdc4;
+  --accent: #ffe66d;
+  --card: #fff;
+  --purple: #a29bfe;
+  --orange: #fd9644;
+  --green: #26de81;
+  --pink: #fd79a8;
+  --blue: #74b9ff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; background: var(--bg); min-height: 100vh; overflow-x: hidden; }
+
+.hero {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #ff6b6b 0%, #feca57 30%, #48dbfb 60%, #a29bfe 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 2rem; position: relative; overflow: hidden;
+}
+.hero-title {
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  font-weight: 900;
+  background: linear-gradient(90deg, #fff, #ffe66d, #fff);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+  animation: heroIn 0.8s ease;
+}
+@keyframes heroIn { from{opacity:0;transform:translateY(-30px)} to{opacity:1;transform:translateY(0)} }
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+@keyframes float { 0%,100%{transform:translateY(0) rotate(0)} 50%{transform:translateY(-15px) rotate(10deg)} }
+@keyframes shake { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-10deg)} 75%{transform:rotate(10deg)} }
+.hero-emoji { font-size: 5rem; animation: spin 3s linear infinite; }
+.start-btn {
+  background: white; color: var(--primary); border: none; border-radius: 50px;
+  padding: 1rem 3rem; font-size: 1.3rem; font-weight: 800; cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15); margin-top: 1.5rem; transition: transform 0.2s;
+  animation: pulse 2s ease infinite;
+}
+.start-btn:hover { transform: scale(1.08); }
+@keyframes pulse { 0%,100%{box-shadow:0 8px 20px rgba(0,0,0,0.15)} 50%{box-shadow:0 8px 30px rgba(255,107,107,0.5)} }
+
+.section { display:none; min-height:100vh; padding:2rem 1.5rem 6rem; background:var(--bg); }
+.section.active { display:block; }
+
+.section-header { text-align:center; margin-bottom:2rem; border-radius:20px; padding:1.5rem; color:white; }
+.section-header h2 { font-size:1.8rem; font-weight:800; }
+.section-header p { font-size:1rem; margin-top:0.4rem; opacity:0.9; }
+
+.card { background:var(--card); border-radius:20px; padding:1.5rem; margin-bottom:1.5rem; box-shadow:0 4px 15px rgba(0,0,0,0.08); }
+
+.btn { background:linear-gradient(135deg,var(--primary),var(--orange)); color:white; border:none; border-radius:50px; padding:0.8rem 2rem; font-size:1rem; font-weight:700; cursor:pointer; transition:transform 0.2s; margin:0.3rem; }
+.btn:hover { transform:scale(1.05); }
+.btn-blue { background:linear-gradient(135deg,var(--blue),#0984e3); }
+.btn-purple { background:linear-gradient(135deg,var(--purple),#6c5ce7); }
+.btn-teal { background:linear-gradient(135deg,var(--secondary),#00cec9); }
+.btn-accent { background:linear-gradient(135deg,var(--accent),var(--orange)); color:#333; }
+.btn-green { background:linear-gradient(135deg,var(--green),#20bf6b); color:white; }
+
+.stars-display { position:fixed; top:1rem; right:1rem; z-index:1000; background:white; border-radius:50px; padding:0.5rem 1rem; box-shadow:0 4px 15px rgba(0,0,0,0.15); font-size:1.1rem; font-weight:700; }
+
+.achievement-popup { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0); background:linear-gradient(135deg,var(--orange),var(--primary)); border-radius:20px; padding:2rem; text-align:center; z-index:2000; box-shadow:0 20px 60px rgba(0,0,0,0.3); transition:transform 0.3s cubic-bezier(0.175,0.885,0.32,1.275); min-width:280px; color:white; }
+.achievement-popup.show { transform:translate(-50%,-50%) scale(1); }
+
+.feedback { border-radius:15px; padding:1rem; margin:0.5rem 0; font-weight:600; font-size:1rem; text-align:center; }
+.feedback.correct { background:#e8fff4; color:#00b894; }
+.feedback.wrong { background:#fff5f5; color:var(--primary); }
+
+.answer-input { border:3px solid var(--secondary); border-radius:12px; padding:0.7rem 1rem; font-size:1.2rem; font-weight:700; width:120px; text-align:center; outline:none; }
+.answer-input:focus { border-color:var(--primary); }
+
+/* Spinner */
+#spinnerCanvas { border-radius:50%; cursor:pointer; }
+.spinner-result { font-size:1.5rem; font-weight:800; text-align:center; margin:0.5rem 0; min-height:2rem; }
+
+/* Ball bag */
+.ball-bag { position:relative; width:200px; height:200px; border-radius:50%; background:linear-gradient(135deg,#8B4513,#A0522D); margin:0 auto; overflow:hidden; cursor:pointer; box-shadow:0 8px 20px rgba(0,0,0,0.3); border:4px solid #654321; display:flex; align-items:center; justify-content:center; }
+.ball { width:36px; height:36px; border-radius:50%; position:absolute; cursor:pointer; transition:transform 0.2s; font-size:1.2rem; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(0,0,0,0.2); }
+.ball:hover { transform:scale(1.2); }
+
+/* Coin */
+.coin { width:100px; height:100px; border-radius:50%; margin:1rem auto; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:2.5rem; font-weight:900; box-shadow:0 6px 15px rgba(0,0,0,0.2); transition:transform 0.3s; user-select:none; }
+.coin:active { transform:scale(0.9); }
+
+/* Histogram */
+.hist-bar { display:flex; align-items:flex-end; gap:0.5rem; justify-content:center; height:140px; margin:1rem 0; }
+.hist-col { display:flex; flex-direction:column; align-items:center; gap:0.3rem; }
+.hist-bar-fill { width:40px; border-radius:8px 8px 0 0; transition:height 0.5s ease; min-height:4px; }
+.hist-bar-label { font-size:0.85rem; font-weight:700; }
+
+/* Likelihood scale */
+.likelihood-scale { display:flex; justify-content:space-between; align-items:center; background:linear-gradient(90deg,#ff6b6b,#ffe66d,#26de81); border-radius:50px; padding:0.5rem 1.5rem; margin:1rem 0; position:relative; }
+.likelihood-scale span { font-size:0.8rem; font-weight:700; color:white; }
+.likelihood-arrow { position:absolute; transition:left 0.5s ease; font-size:1.5rem; }
+
+/* Options */
+.opt-btn { background:white; border:3px solid #eee; border-radius:15px; padding:0.8rem; font-size:1.05rem; font-weight:600; cursor:pointer; transition:all 0.2s; text-align:center; margin:0.3rem; flex:1; min-width:120px; }
+.opt-btn:hover { border-color:var(--primary); transform:translateY(-2px); }
+.opt-btn.correct { border-color:var(--green); background:#e8fff4; color:#00b894; }
+.opt-btn.wrong { border-color:var(--primary); background:#fff5f5; color:var(--primary); }
+
+/* Progress */
+.progress-bar-container { background:#eee; border-radius:50px; height:12px; margin:1rem 0; overflow:hidden; }
+.progress-bar { height:100%; background:linear-gradient(90deg,var(--primary),var(--accent)); border-radius:50px; transition:width 0.5s ease; }
+
+/* Badges */
+.badge { background:linear-gradient(135deg,var(--accent),var(--orange)); border-radius:15px; padding:0.8rem 1.2rem; text-align:center; font-size:0.85rem; font-weight:700; color:#333; min-width:90px; opacity:0.3; transition:opacity 0.5s; }
+.badge.earned { opacity:1; animation:badgePop 0.4s ease; }
+@keyframes badgePop { 0%{transform:scale(0)} 70%{transform:scale(1.2)} 100%{transform:scale(1)} }
+.badges-grid { display:flex; flex-wrap:wrap; gap:1rem; justify-content:center; margin:1rem 0; }
+
+/* Score circle */
+.score-circle { width:150px; height:150px; border-radius:50%; background:linear-gradient(135deg,var(--primary),var(--accent)); display:flex; flex-direction:column; align-items:center; justify-content:center; margin:1.5rem auto; color:white; font-weight:800; animation:scaleIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275); }
+@keyframes scaleIn { from{transform:scale(0)} to{transform:scale(1)} }
+
+/* AI companion */
+.ai-companion { position:fixed; bottom:1.5rem; right:1.5rem; z-index:999; width:70px; height:70px; border-radius:50%; background:linear-gradient(135deg,var(--orange),var(--primary)); display:flex; align-items:center; justify-content:center; font-size:2rem; cursor:pointer; box-shadow:0 4px 20px rgba(0,0,0,0.2); animation:compAnim 2s ease infinite; }
+@keyframes compAnim { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-8px) scale(1.05)} }
+.ai-speech { position:fixed; bottom:5.5rem; right:1.5rem; z-index:999; background:white; border-radius:15px 15px 5px 15px; padding:1rem; max-width:220px; font-size:0.9rem; box-shadow:0 4px 15px rgba(0,0,0,0.1); display:none; font-weight:500; }
+.ai-speech.show { display:block; animation:fadeIn 0.3s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+nav.bottom-nav { position:fixed; bottom:0; left:0; right:0; background:white; border-top:2px solid #eee; display:flex; justify-content:center; gap:0.5rem; padding:0.5rem; z-index:500; flex-wrap:wrap; }
+nav.bottom-nav button { background:none; border:2px solid #eee; border-radius:50px; padding:0.3rem 0.8rem; font-size:0.8rem; cursor:pointer; font-weight:600; transition:all 0.2s; }
+nav.bottom-nav button.active, nav.bottom-nav button:hover { background:var(--primary); color:white; border-color:var(--primary); }
+
+.drag-item { background:linear-gradient(135deg,var(--primary),var(--pink)); color:white; border-radius:12px; padding:0.6rem 1.2rem; font-size:1.1rem; font-weight:700; cursor:grab; box-shadow:0 3px 8px rgba(0,0,0,0.15); user-select:none; transition:transform 0.2s; display:inline-flex; align-items:center; gap:0.3rem; }
+.drag-item:active { cursor:grabbing; transform:scale(1.1); }
+.drop-zone { border:3px dashed var(--secondary); border-radius:15px; min-height:55px; padding:0.5rem; display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center; justify-content:center; transition:background 0.2s; min-width:140px; }
+.drop-zone.over { background:rgba(78,205,196,0.1); }
+
+@media(max-width:600px){ .opt-btn{min-width:100px} }
+</style>
+</head>
+<body>
+
+<div class="stars-display">⭐ <span id="starCount">0</span></div>
+<div class="ai-companion" onclick="toggleAISpeech()">🐰</div>
+<div class="ai-speech" id="aiSpeech">我是小兔老师！今天研究幸运转盘和摸球！🎰</div>
+<div class="achievement-popup" id="achievePopup">
+  <div style="font-size:3rem" id="achieveEmoji">🏆</div>
+  <div style="font-size:1.3rem;font-weight:800;margin:0.5rem 0" id="achieveTitle">成就解锁！</div>
+  <div style="font-size:1rem" id="achieveDesc">太棒了！</div>
+</div>
+
+<!-- HERO -->
+<section class="section active" id="sec-hero">
+  <div class="hero">
+    <div class="hero-emoji">🎰</div>
+    <h1 class="hero-title">可能性</h1>
+    <p style="color:rgba(255,255,255,0.9);font-size:1.2rem;margin:0.8rem 0;font-weight:600">四年级数学 · 猜猜会发生什么？🎲</p>
+    <p style="color:rgba(255,255,255,0.85);font-size:1rem;max-width:380px;line-height:1.6;margin-bottom:1rem">
+      摸球、抛硬币、转转盘...<br>有的事确定发生，有的事可能发生，有的事不可能发生！
+    </p>
+    <button class="start-btn" onclick="goSection('sec-goals')">🚀 开始玩转概率！</button>
+    <div style="position:absolute;top:10%;left:5%;font-size:2.5rem;opacity:0.2;animation:float 3s ease-in-out infinite">🎲</div>
+    <div style="position:absolute;top:30%;right:8%;font-size:2.5rem;opacity:0.15;animation:float 4s ease-in-out infinite 0.5s">🎡</div>
+    <div style="position:absolute;bottom:25%;left:8%;font-size:2rem;opacity:0.15;animation:float 3.5s ease-in-out infinite 1s">🪙</div>
+  </div>
+</section>
+
+<!-- GOALS -->
+<section class="section" id="sec-goals">
+  <div class="section-header" style="background:linear-gradient(135deg,var(--primary),var(--orange))">
+    <h2>🎯 今天要学什么？</h2>
+    <p>三个词，搞懂概率世界！</p>
+  </div>
+  <div class="card">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;text-align:center">
+      <div style="background:linear-gradient(135deg,#ff6b6b,#e17055);border-radius:15px;padding:1rem;color:white">
+        <div style="font-size:2rem">🚫</div>
+        <div style="font-weight:800;font-size:1.1rem">不可能</div>
+        <div style="font-size:0.85rem;opacity:0.9;margin-top:0.3rem">一定不会发生</div>
+        <div style="font-size:0.85rem;margin-top:0.3rem">例：猪会飞 ❌</div>
+      </div>
+      <div style="background:linear-gradient(135deg,#ffe66d,#feca57);border-radius:15px;padding:1rem;color:#333">
+        <div style="font-size:2rem">🤔</div>
+        <div style="font-weight:800;font-size:1.1rem">可能</div>
+        <div style="font-size:0.85rem;margin-top:0.3rem">也许会也许不会</div>
+        <div style="font-size:0.85rem;margin-top:0.3rem">例：明天下雨 🌧️</div>
+      </div>
+      <div style="background:linear-gradient(135deg,#26de81,#20bf6b);border-radius:15px;padding:1rem;color:white">
+        <div style="font-size:2rem">✅</div>
+        <div style="font-weight:800;font-size:1.1rem">一定</div>
+        <div style="font-size:0.85rem;opacity:0.9;margin-top:0.3rem">一定会发生</div>
+        <div style="font-size:0.85rem;margin-top:0.3rem">例：太阳升起 ☀️</div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="background:linear-gradient(135deg,#a29bfe33,#6c5ce733);border:2px solid var(--purple)">
+    <p style="font-size:1rem;font-weight:700;line-height:1.8">
+      📊 今天还要学习：<strong>用分数表示可能性大小</strong><br>
+      例：1个红球2个蓝球，摸到红球的可能性 = <strong>1/3</strong>
+    </p>
+  </div>
+  <div style="text-align:center;margin:1.5rem 0">
+    <button class="btn" onclick="goSection('sec-warmup')">开始热身！🔥</button>
+  </div>
+</section>
+
+<!-- WARMUP -->
+<section class="section" id="sec-warmup">
+  <div class="section-header" style="background:linear-gradient(135deg,var(--secondary),#00cec9)">
+    <h2>⚡ 热身：是一定、可能还是不可能？</h2>
+    <p>把事件拖到正确的位置！</p>
+  </div>
+  <div class="card">
+    <p style="font-weight:700;margin-bottom:0.8rem">把下面的事件拖到对应的位置！</p>
+    <div style="display:flex;flex-wrap:wrap;gap:0.8rem;margin-bottom:1rem" id="eventItems">
+      <div class="drag-item" draggable="true" id="ev1" ondragstart="evDrag(event,'一定','ev1')">☀️ 太阳从东方升起</div>
+      <div class="drag-item" draggable="true" id="ev2" ondragstart="evDrag(event,'不可能','ev2')" style="background:linear-gradient(135deg,#74b9ff,#0984e3)">🐟 鱼在陆地生活</div>
+      <div class="drag-item" draggable="true" id="ev3" ondragstart="evDrag(event,'可能','ev3')" style="background:linear-gradient(135deg,#ffe66d,#feca57);color:#333">🌧️ 明天下雨</div>
+      <div class="drag-item" draggable="true" id="ev4" ondragstart="evDrag(event,'不可能','ev4')" style="background:linear-gradient(135deg,#a29bfe,#6c5ce7)">🐖 猪会飞</div>
+      <div class="drag-item" draggable="true" id="ev5" ondragstart="evDrag(event,'可能','ev5')" style="background:linear-gradient(135deg,#26de81,#20bf6b)">🎲 骰子点数是3</div>
+      <div class="drag-item" draggable="true" id="ev6" ondragstart="evDrag(event,'一定','ev6')" style="background:linear-gradient(135deg,#fd79a8,#e84393)">1+1=2 ✓</div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:1rem;justify-content:center">
+      <div>
+        <p style="text-align:center;font-weight:700;color:var(--primary)">🚫 不可能</p>
+        <div class="drop-zone" id="dz不可能" ondrop="evDrop(event,'不可能')" ondragover="allowDrop(event)" ondragleave="removeDragOver(event)">拖到这里</div>
+      </div>
+      <div>
+        <p style="text-align:center;font-weight:700;color:var(--orange)">🤔 可能</p>
+        <div class="drop-zone" id="dz可能" ondrop="evDrop(event,'可能')" ondragover="allowDrop(event)" ondragleave="removeDragOver(event)">拖到这里</div>
+      </div>
+      <div>
+        <p style="text-align:center;font-weight:700;color:var(--green)">✅ 一定</p>
+        <div class="drop-zone" id="dz一定" ondrop="evDrop(event,'一定')" ondragover="allowDrop(event)" ondragleave="removeDragOver(event)">拖到这里</div>
+      </div>
+    </div>
+    <div id="warmupResult" style="text-align:center;margin-top:1rem;font-weight:700;font-size:1.1rem;min-height:1.5rem"></div>
+    <div style="text-align:center;margin-top:1rem">
+      <button class="btn btn-teal" onclick="checkWarmup()">✅ 检查</button>
+      <button class="btn btn-accent" onclick="resetWarmup()">🔄 重置</button>
+    </div>
+  </div>
+  <div style="text-align:center;margin:1.5rem 0">
+    <button class="btn" onclick="goSection('sec-level1')">去关卡1 🌟</button>
+  </div>
+</section>
+
+<!-- LEVEL 1: Spinner -->
+<section class="section" id="sec-level1">
+  <div class="section-header" style="background:linear-gradient(135deg,var(--purple),#6c5ce7)">
+    <h2>🌟 关卡1：转转盘实验</h2>
+    <p>点击转盘，记录结果，发现规律！</p>
+  </div>
+  <div class="card">
+    <p style="font-weight:700;font-size:1.1rem;margin-bottom:0.5rem">🎡 点击转盘旋转！</p>
+    <p style="font-size:0.9rem;color:#888;margin-bottom:1rem" id="spinDesc">红色占一半，蓝色占四分之一，黄色占四分之一</p>
+    <div style="display:flex;flex-wrap:wrap;gap:1.5rem;align-items:center;justify-content:center">
+      <div>
+        <canvas id="spinnerCanvas" width="200" height="200" onclick="spinWheel()"></canvas>
+        <div class="spinner-result" id="spinResult"></div>
+      </div>
+      <div style="min-width:200px">
+        <p style="font-weight:700;margin-bottom:0.5rem">📊 实验统计（点击转盘旋转）：</p>
+        <div id="spinStats">
+          <div style="display:flex;justify-content:space-between;margin:0.3rem 0"><span>🔴 红色：</span><span id="spinRed">0</span>次</div>
+          <div style="display:flex;justify-content:space-between;margin:0.3rem 0"><span>🔵 蓝色：</span><span id="spinBlue">0</span>次</div>
+          <div style="display:flex;justify-content:space-between;margin:0.3rem 0"><span>🟡 黄色：</span><span id="spinYellow">0</span>次</div>
+          <div style="display:flex;justify-content:space-between;margin:0.3rem 0;font-weight:700;border-top:1px solid #eee;padding-top:0.3rem"><span>总计：</span><span id="spinTotal">0</span>次</div>
+        </div>
+        <div id="spinHist" class="hist-bar" style="align-items:flex-end">
+          <div class="hist-col"><div class="hist-bar-fill" id="hRed" style="height:4px;background:#ff6b6b"></div><span class="hist-bar-label">红</span></div>
+          <div class="hist-col"><div class="hist-bar-fill" id="hBlue" style="height:4px;background:#74b9ff"></div><span class="hist-bar-label">蓝</span></div>
+          <div class="hist-col"><div class="hist-bar-fill" id="hYellow" style="height:4px;background:#ffe66d"></div><span class="hist-bar-label">黄</span></div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;margin:0.8rem 0">
+      <button class="btn btn-purple" onclick="spinWheel()">🎡 转一下！</button>
+      <button class="btn btn-teal" onclick="spinMany(10)">⚡ 快速转10次</button>
+      <button class="btn btn-accent" onclick="resetSpinner()">🔄 重置</button>
+    </div>
+  </div>
+  <div class="card">
+    <p style="font-weight:700;margin-bottom:0.8rem">🤔 根据实验，回答问题：</p>
+    <p style="font-size:1rem;line-height:1.8;margin-bottom:0.8rem">
+      这个转盘中，红色占整体的 <strong>1/2</strong>，那么转到红色的可能性是多少？
+    </p>
+    <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+      <button class="opt-btn" onclick="checkL1Q(this,'w')">1/3</button>
+      <button class="opt-btn" onclick="checkL1Q(this,'c')">1/2</button>
+      <button class="opt-btn" onclick="checkL1Q(this,'w')">1/4</button>
+      <button class="opt-btn" onclick="checkL1Q(this,'w')">2/3</button>
+    </div>
+    <div id="l1-feedback" class="feedback" style="display:none"></div>
+  </div>
+  <div style="text-align:center;margin:1rem 0">
+    <button class="btn" onclick="goSection('sec-level2')">关卡2 ➡️</button>
+  </div>
+</section>
+
+<!-- LEVEL 2: Ball Bag -->
+<section class="section" id="sec-level2">
+  <div class="section-header" style="background:linear-gradient(135deg,var(--orange),var(--primary))">
+    <h2>🌟🌟 关卡2：摸球实验</h2>
+    <p>袋子里摸球，算算可能性！</p>
+  </div>
+  <div class="card">
+    <p style="font-weight:700;margin-bottom:0.5rem">🎒 点击袋子摸一个球！</p>
+    <p style="font-size:0.9rem;color:#888;margin-bottom:1rem" id="bagDesc">袋子里有3个红球、2个蓝球、1个绿球</p>
+    <div style="display:flex;flex-wrap:wrap;gap:1.5rem;align-items:center;justify-content:center">
+      <div>
+        <div class="ball-bag" id="ballBag" onclick="pickBall()">
+          <span style="font-size:3rem;position:relative;z-index:2">👜</span>
+        </div>
+        <div id="bagResult" style="text-align:center;font-size:1.5rem;font-weight:800;margin-top:0.8rem;min-height:2rem"></div>
+      </div>
+      <div style="min-width:180px">
+        <p style="font-weight:700;margin-bottom:0.5rem">📊 摸球记录：</p>
+        <div id="bagStats">
+          <div style="display:flex;justify-content:space-between;margin:0.3rem 0"><span>🔴 红球：</span><span id="bagRed">0</span>次</div>
+          <div style="display:flex;justify-content:space-between;margin:0.3rem 0"><span>🔵 蓝球：</span><span id="bagBlue">0</span>次</div>
+          <div style="display:flex;justify-content:space-between;margin:0.3rem 0"><span>🟢 绿球：</span><span id="bagGreen">0</span>次</div>
+          <div style="font-weight:700;border-top:1px solid #eee;padding-top:0.3rem;margin-top:0.3rem">总共：<span id="bagTotal">0</span>次</div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;margin:1rem 0">
+      <button class="btn" onclick="pickBall()">🤚 摸一个球</button>
+      <button class="btn btn-teal" onclick="pickMany(10)">⚡ 摸10次</button>
+      <button class="btn btn-accent" onclick="resetBag()">🔄 重置</button>
+    </div>
+  </div>
+  <div class="card">
+    <p style="font-weight:700;margin-bottom:0.5rem">🧮 计算可能性</p>
+    <p style="font-size:1rem;margin-bottom:0.8rem;line-height:1.8">袋中有3红2蓝1绿，共6个球。<br>
+    <strong>摸到红球的可能性 = 红球数 ÷ 总球数 = 3 ÷ 6 = 1/2</strong></p>
+    <div class="progress-bar-container"><div class="progress-bar" id="ballProg" style="width:0%"></div></div>
+    <div id="ballQuizContent"></div>
+    <div id="ball-feedback" class="feedback" style="display:none"></div>
+    <div style="text-align:center;margin-top:1rem">
+      <button class="btn btn-orange" onclick="checkBallQ()">✅ 提交</button>
+      <button class="btn btn-teal" onclick="nextBallQ()">下一题 ➡️</button>
+    </div>
+  </div>
+</section>
+
+<!-- LEVEL 3: Coin -->
+<section class="section" id="sec-level3">
+  <div class="section-header" style="background:linear-gradient(135deg,var(--green),#20bf6b)">
+    <h2>🌟🌟🌟 关卡3：抛硬币实验</h2>
+    <p>正面还是反面？各有多大可能性？</p>
+  </div>
+  <div class="card">
+    <p style="font-weight:700;margin-bottom:0.5rem">🪙 点击硬币，进行抛硬币实验！</p>
+    <div style="text-align:center">
+      <div class="coin" id="coinEl" onclick="flipCoin()" style="background:linear-gradient(135deg,#ffe66d,#feca57);color:#333">🪙</div>
+      <div id="coinResult" style="font-size:1.3rem;font-weight:800;min-height:2rem;margin:0.5rem 0"></div>
+      <div style="display:flex;justify-content:center;gap:2rem;font-size:1rem;font-weight:600;margin:0.5rem 0">
+        <span>正面(H)：<strong id="coinH">0</strong></span>
+        <span>反面(T)：<strong id="coinT">0</strong></span>
+        <span>总计：<strong id="coinTotal">0</strong></span>
+      </div>
+    </div>
+    <div id="coinHistContainer" style="margin:1rem 0">
+      <div class="hist-bar">
+        <div class="hist-col"><div class="hist-bar-fill" id="hH" style="height:4px;background:linear-gradient(135deg,#ffe66d,#feca57)"></div><span class="hist-bar-label">正面</span></div>
+        <div class="hist-col"><div class="hist-bar-fill" id="hT" style="height:4px;background:linear-gradient(135deg,#74b9ff,#0984e3)"></div><span class="hist-bar-label">反面</span></div>
+      </div>
+    </div>
+    <div style="text-align:center">
+      <button class="btn btn-green" onclick="flipCoin()">🪙 抛一次</button>
+      <button class="btn btn-teal" onclick="flipMany(20)">⚡ 抛20次</button>
+      <button class="btn btn-accent" onclick="resetCoin()">🔄 重置</button>
+    </div>
+  </div>
+  <div class="card" id="coinQuizCard">
+    <p style="font-weight:700;margin-bottom:0.8rem">🤔 思考问题：</p>
+    <p style="font-size:1rem;line-height:1.8;margin-bottom:0.8rem">
+      抛一枚硬币，正面朝上的可能性是多少？<br>
+      如果抛了100次，大概有多少次正面朝上？
+    </p>
+    <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+      <button class="opt-btn" onclick="checkCoinQ(this,'c')">可能性1/2，大约50次</button>
+      <button class="opt-btn" onclick="checkCoinQ(this,'w')">可能性1/4，大约25次</button>
+      <button class="opt-btn" onclick="checkCoinQ(this,'w')">可能性1，一定100次</button>
+    </div>
+    <div id="coin-feedback" class="feedback" style="display:none"></div>
+  </div>
+  <div style="text-align:center;margin:1rem 0">
+    <button class="btn" onclick="goSection('sec-boss')">Boss关！👾</button>
+  </div>
+</section>
+
+<!-- BOSS -->
+<section class="section" id="sec-boss">
+  <div class="section-header" style="background:linear-gradient(135deg,#2d3436,#636e72)">
+    <h2>👾 Boss关：综合挑战！</h2>
+    <p>可能性大全考验来了！</p>
+  </div>
+  <div id="boss-content" class="card"></div>
+  <div id="boss-feedback" class="feedback" style="display:none"></div>
+  <div style="text-align:center;margin:1rem 0">
+    <button class="btn" style="background:linear-gradient(135deg,#2d3436,#636e72)" onclick="checkBoss()">⚔️ 提交！</button>
+  </div>
+</section>
+
+<!-- SCORE -->
+<section class="section" id="sec-score">
+  <div style="text-align:center;padding:2rem">
+    <div style="font-size:3rem">🎊</div>
+    <h2 style="font-size:2rem;font-weight:800;background:linear-gradient(90deg,var(--primary),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0.5rem 0">概率小达人！</h2>
+    <div class="score-circle">
+      <div style="font-size:3rem;font-weight:800" id="finalScore">0</div>
+      <div style="font-size:0.9rem;opacity:0.9">颗星星</div>
+    </div>
+    <p style="font-size:1.1rem;font-weight:600;margin:1rem 0" id="scoreMotto"></p>
+    <div class="badges-grid" id="badgesGrid"></div>
+    <button class="btn" onclick="goSection('sec-extend')">🌈 拓展学习</button>
+    <button class="btn btn-teal" onclick="location.reload()">🔄 再来一次</button>
+  </div>
+</section>
+
+<!-- EXTEND -->
+<section class="section" id="sec-extend">
+  <div class="section-header" style="background:linear-gradient(135deg,var(--primary),var(--purple))">
+    <h2>🌈 拓展：概率的神奇世界</h2>
+    <p>生活中处处有概率！</p>
+  </div>
+  <div class="card" style="background:linear-gradient(135deg,#ffe66d33,#feca5733);border:2px solid var(--accent)">
+    <h3 style="font-weight:800;margin-bottom:0.8rem">🎲 骰子游戏</h3>
+    <p style="line-height:1.8">一个骰子有6个面：1,2,3,4,5,6<br>
+    掷到每个数字的可能性都是 <strong>1/6</strong><br>
+    掷到偶数（2,4,6）的可能性是 <strong>3/6 = 1/2</strong></p>
+  </div>
+  <div class="card" style="background:linear-gradient(135deg,#a29bfe33,#6c5ce733);border:2px solid var(--purple)">
+    <h3 style="font-weight:800;margin-bottom:0.8rem">☔ 天气预报</h3>
+    <p style="line-height:1.8">天气预报说"降雨概率30%"<br>
+    这意味着：<strong>同样天气情况下，约30次里有10次会下雨</strong><br>
+    不是说今天一定下雨或一定不下雨！</p>
+  </div>
+  <div class="card">
+    <h3 style="font-weight:800;margin-bottom:0.8rem">🎮 互动骰子模拟器</h3>
+    <div style="text-align:center">
+      <div id="diceDisplay" style="font-size:4rem;margin:1rem 0">🎲</div>
+      <div id="diceStats" style="font-size:1rem;font-weight:600;margin-bottom:0.8rem"></div>
+      <button class="btn" onclick="rollDice()">🎲 掷骰子！</button>
+      <button class="btn btn-teal" onclick="rollMany(30)">⚡ 掷30次</button>
+      <button class="btn btn-accent" onclick="resetDice()">🔄 重置</button>
+    </div>
+  </div>
+  <div style="text-align:center;margin:1.5rem 0">
+    <button class="btn" onclick="goSection('sec-score')">📊 查看成绩单</button>
+  </div>
+</section>
+
+<nav class="bottom-nav">
+  <button onclick="goSection('sec-hero')">🏠首页</button>
+  <button onclick="goSection('sec-warmup')">⚡热身</button>
+  <button onclick="goSection('sec-level1')">🌟转盘</button>
+  <button onclick="goSection('sec-level2')">🌟摸球</button>
+  <button onclick="goSection('sec-level3')">🌟硬币</button>
+  <button onclick="goSection('sec-boss')">👾Boss</button>
+  <button onclick="goSection('sec-score')">🏆成绩</button>
+</nav>
+
+<script>
+// ===== State =====
+const state = {
+  stars:0, achievements:[],
+  spin:{ red:0, blue:0, yellow:0, total:0, spinning:false, angle:0, targetAngle:0 },
+  bag:{ red:0, blue:0, green:0, total:0 },
+  coin:{ h:0, t:0, total:0 },
+  ballQIdx:0, ballQCorrect:0,
+  bossIdx:0, bossCorrect:0,
+  dice:{ counts:[0,0,0,0,0,0], total:0 },
+};
+
+const ACHIEVEMENTS = [
+  { id:'start', emoji:'🚀', title:'开始探索', desc:'启动概率之旅！' },
+  { id:'warmup', emoji:'📋', title:'分类达人', desc:'正确分类了事件！' },
+  { id:'spinner', emoji:'🎡', title:'转盘玩家', desc:'完成了转盘实验！' },
+  { id:'ball', emoji:'🎒', title:'摸球专家', desc:'完成了摸球实验！' },
+  { id:'coin', emoji:'🪙', title:'硬币侦探', desc:'理解了硬币可能性！' },
+  { id:'fraction', emoji:'🔢', title:'分数达人', desc:'用分数表示可能性！' },
+  { id:'boss', emoji:'👾', title:'Boss终结者', desc:'击败了Boss！' },
+  { id:'all_stars', emoji:'💫', title:'满星王者', desc:'收集满20颗星！' },
+];
+
+// Audio
+const audioCtx = (() => { try { return new (window.AudioContext || window.webkitAudioContext)(); } catch(e){return null;} })();
+function playSound(type) {
+  if(!audioCtx) return;
+  const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+  o.connect(g); g.connect(audioCtx.destination);
+  const t=audioCtx.currentTime;
+  if(type==='correct'){o.frequency.setValueAtTime(523,t);o.frequency.setValueAtTime(659,t+0.1);o.frequency.setValueAtTime(784,t+0.2);}
+  else if(type==='wrong'){o.frequency.setValueAtTime(330,t);o.frequency.setValueAtTime(261,t+0.15);}
+  else if(type==='spin'){o.type='sawtooth';o.frequency.setValueAtTime(200,t);o.frequency.exponentialRampToValueAtTime(50,t+0.3);}
+  else if(type==='achieve'){[659,784,1047].forEach((f,i)=>o.frequency.setValueAtTime(f,t+i*0.1));}
+  g.gain.setValueAtTime(0.3,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.5);
+  o.start(); o.stop(t+0.5);
+}
+function addStars(n) {
+  state.stars+=n; document.getElementById('starCount').textContent=state.stars;
+  if(state.stars>=20) unlockAchievement('all_stars');
+}
+function unlockAchievement(id) {
+  if(state.achievements.includes(id)) return;
+  state.achievements.push(id);
+  const a=ACHIEVEMENTS.find(x=>x.id===id); if(!a) return;
+  const p=document.getElementById('achievePopup');
+  document.getElementById('achieveEmoji').textContent=a.emoji;
+  document.getElementById('achieveTitle').textContent='🏆 '+a.title;
+  document.getElementById('achieveDesc').textContent=a.desc;
+  p.classList.add('show'); playSound('achieve');
+  setTimeout(()=>p.classList.remove('show'),2500);
+  updateBadges();
+}
+function updateBadges() {
+  const g=document.getElementById('badgesGrid'); if(!g) return;
+  g.innerHTML=ACHIEVEMENTS.map(a=>`<div class="badge ${state.achievements.includes(a.id)?'earned':''}"><div style="font-size:1.5rem">${a.emoji}</div><div>${a.title}</div></div>`).join('');
+}
+function goSection(id) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  unlockAchievement('start');
+  if(id==='sec-level1') { drawSpinner(state.spin.angle); }
+  if(id==='sec-level2') { initBallQuiz(); }
+  if(id==='sec-boss') initBoss();
+  if(id==='sec-score') showScore();
+}
+
+// ===== Warmup Drag =====
+const evMap = { ev1:'一定',ev2:'不可能',ev3:'可能',ev4:'不可能',ev5:'可能',ev6:'一定' };
+const dzDropped = { '不可能':[], '可能':[], '一定':[] };
+let currentEvId = null;
+function evDrag(e,cat,id) { e.dataTransfer.setData('cat',cat); e.dataTransfer.setData('id',id); currentEvId=id; }
+function allowDrop(e) { e.preventDefault(); e.currentTarget.classList.add('over'); }
+function removeDragOver(e) { e.currentTarget.classList.remove('over'); }
+function evDrop(e,zone) {
+  e.preventDefault(); e.currentTarget.classList.remove('over');
+  const cat=e.dataTransfer.getData('cat');
+  const id=e.dataTransfer.getData('id');
+  dzDropped[zone].push(id);
+  const el=document.getElementById(id);
+  if(el) el.style.opacity='0.3';
+  e.currentTarget.innerHTML=[...dzDropped[zone]].map(eid=>`<div style="font-size:0.8rem;background:white;border-radius:8px;padding:0.3rem 0.5rem;font-weight:600">${document.getElementById(eid)?.textContent||eid}</div>`).join('');
+}
+function checkWarmup() {
+  let correct=0, total=Object.keys(evMap).length;
+  for(const [id,cat] of Object.entries(evMap)) {
+    let found=false;
+    for(const [zone,ids] of Object.entries(dzDropped)) {
+      if(ids.includes(id) && zone===cat) { found=true; correct++; break; }
+    }
+  }
+  const r=document.getElementById('warmupResult');
+  if(correct===total) {
+    r.innerHTML='<span style="color:var(--green)">🎉 全部正确！太棒了！+5⭐</span>';
+    addStars(5); unlockAchievement('warmup'); playSound('correct');
+  } else {
+    r.innerHTML=`<span style="color:var(--primary)">💪 答对了${correct}/${total}个，再仔细想想！</span>`;
+    playSound('wrong');
+  }
+}
+function resetWarmup() {
+  Object.keys(dzDropped).forEach(k=>dzDropped[k]=[]);
+  document.querySelectorAll('#eventItems .drag-item').forEach(el=>{ el.style.opacity='1'; el.setAttribute('draggable','true'); });
+  ['不可能','可能','一定'].forEach(k=>{ document.getElementById('dz'+k).innerHTML='拖到这里'; });
+  document.getElementById('warmupResult').innerHTML='';
+}
+
+// ===== Spinner =====
+const spinColors = [{color:'#ff6b6b',label:'红',start:0,end:Math.PI},{color:'#74b9ff',label:'蓝',start:Math.PI,end:Math.PI*1.5},{color:'#ffe66d',label:'黄',start:Math.PI*1.5,end:Math.PI*2}];
+function drawSpinner(angle) {
+  const canvas=document.getElementById('spinnerCanvas'); if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  const cx=100,cy=100,r=90;
+  ctx.clearRect(0,0,200,200);
+  spinColors.forEach(seg=>{
+    ctx.beginPath(); ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,seg.start+angle,seg.end+angle); ctx.closePath();
+    ctx.fillStyle=seg.color; ctx.fill();
+    ctx.strokeStyle='white'; ctx.lineWidth=3; ctx.stroke();
+    const mid=(seg.start+seg.end)/2+angle;
+    const lx=cx+Math.cos(mid)*55, ly=cy+Math.sin(mid)*55;
+    ctx.fillStyle='white'; ctx.font='bold 14px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(seg.label,lx,ly);
+  });
+  // arrow
+  ctx.fillStyle='#333';
+  ctx.beginPath(); ctx.moveTo(cx-8,cy-r-5); ctx.lineTo(cx+8,cy-r-5); ctx.lineTo(cx,cy-r+10); ctx.closePath(); ctx.fill();
+  // center
+  ctx.beginPath(); ctx.arc(cx,cy,10,0,Math.PI*2); ctx.fillStyle='white'; ctx.fill();
+  ctx.strokeStyle='#ddd'; ctx.lineWidth=2; ctx.stroke();
+}
+function spinWheel() {
+  if(state.spin.spinning) return;
+  state.spin.spinning=true;
+  playSound('spin');
+  const extraSpins=3+Math.random()*3;
+  const finalAngle=Math.random()*Math.PI*2;
+  const totalAngle=extraSpins*Math.PI*2+finalAngle;
+  let elapsed=0;
+  const duration=2000;
+  const startAngle=state.spin.angle;
+  const start=performance.now();
+  function animate(now) {
+    elapsed=now-start;
+    const t=Math.min(elapsed/duration,1);
+    const ease=t<0.5?4*t*t*t:(t-1)*(2*t-2)*(2*t-2)+1;
+    state.spin.angle=startAngle+totalAngle*ease;
+    drawSpinner(state.spin.angle);
+    if(t<1) { requestAnimationFrame(animate); return; }
+    state.spin.spinning=false;
+    // Determine result
+    const norm=((state.spin.angle%(Math.PI*2))+Math.PI*2)%(Math.PI*2);
+    // Arrow at top = angle PI*1.5 from start, pointing at top
+    // Pointer is at -PI/2 (top). Sector the pointer lands in
+    const pointer=(Math.PI*3/2-state.spin.angle%(Math.PI*2)+Math.PI*4)%(Math.PI*2);
+    let result;
+    if(pointer<Math.PI) result='红';
+    else if(pointer<Math.PI*1.5) result='蓝';
+    else result='黄';
+    state.spin.total++;
+    if(result==='红') state.spin.red++;
+    else if(result==='蓝') state.spin.blue++;
+    else state.spin.yellow++;
+    updateSpinDisplay(result);
+    playSound('correct');
+    if(state.spin.total>=5) { addStars(2); unlockAchievement('spinner'); }
+  }
+  requestAnimationFrame(animate);
+}
+function updateSpinDisplay(result) {
+  const emojis={红:'🔴',蓝:'🔵',黄:'🟡'};
+  const colors={红:'var(--primary)',蓝:'var(--blue)',黄:'var(--orange)'};
+  document.getElementById('spinResult').innerHTML=`<span style="color:${colors[result]}">${emojis[result]} ${result}色！</span>`;
+  document.getElementById('spinRed').textContent=state.spin.red;
+  document.getElementById('spinBlue').textContent=state.spin.blue;
+  document.getElementById('spinYellow').textContent=state.spin.yellow;
+  document.getElementById('spinTotal').textContent=state.spin.total;
+  // update hist
+  const max=Math.max(state.spin.red,state.spin.blue,state.spin.yellow,1);
+  document.getElementById('hRed').style.height=(state.spin.red/max*100)+'px';
+  document.getElementById('hBlue').style.height=(state.spin.blue/max*100)+'px';
+  document.getElementById('hYellow').style.height=(state.spin.yellow/max*100)+'px';
+}
+function spinMany(n) { let i=0; const t=setInterval(()=>{ if(i++>=n||state.spin.spinning) { clearInterval(t); return; } spinWheel(); },300); }
+function resetSpinner() {
+  state.spin={red:0,blue:0,yellow:0,total:0,spinning:false,angle:0,targetAngle:0};
+  drawSpinner(0); updateSpinDisplay('');
+  document.getElementById('spinResult').innerHTML='';
+  ['spinRed','spinBlue','spinYellow','spinTotal'].forEach(id=>document.getElementById(id).textContent='0');
+  ['hRed','hBlue','hYellow'].forEach(id=>document.getElementById(id).style.height='4px');
+}
+function checkL1Q(el,type) {
+  const fb=document.getElementById('l1-feedback');
+  fb.style.display='block';
+  document.querySelectorAll('#sec-level1 .opt-btn').forEach(b=>b.classList.remove('correct','wrong'));
+  if(type==='c') {
+    el.classList.add('correct');
+    fb.className='feedback correct';
+    fb.textContent='🎉 正确！红色占1/2，可能性就是1/2！+3⭐';
+    addStars(3); unlockAchievement('fraction'); playSound('correct');
+  } else {
+    el.classList.add('wrong');
+    fb.className='feedback wrong';
+    fb.textContent='💪 不对！可能性 = 红色占的份数/总份数 = 1/2';
+    playSound('wrong');
+  }
+}
+
+// ===== Ball Bag =====
+const ballBag = { items:['红','红','红','蓝','蓝','绿'], colors:{红:'#ff6b6b',蓝:'#74b9ff',绿:'#26de81'}, emojis:{红:'🔴',蓝:'🔵',绿:'🟢'} };
+function pickBall() {
+  const idx=Math.floor(Math.random()*ballBag.items.length);
+  const b=ballBag.items[idx];
+  state.bag.total++;
+  if(b==='红') state.bag.red++;
+  else if(b==='蓝') state.bag.blue++;
+  else state.bag.green++;
+  const em=ballBag.emojis[b];
+  const col=ballBag.colors[b];
+  document.getElementById('bagResult').innerHTML=`<span style="color:${col};font-size:2rem">${em}</span> <span style="color:${col}">${b}球！</span>`;
+  document.getElementById('bagRed').textContent=state.bag.red;
+  document.getElementById('bagBlue').textContent=state.bag.blue;
+  document.getElementById('bagGreen').textContent=state.bag.green;
+  document.getElementById('bagTotal').textContent=state.bag.total;
+  document.getElementById('bagBag').style.animation='shake 0.3s ease';
+  setTimeout(()=>document.getElementById('bagBag').style.animation='',400);
+  playSound('spin');
+  if(state.bag.total>=5) { addStars(2); unlockAchievement('ball'); }
+}
+function pickMany(n) { for(let i=0;i<n;i++) setTimeout(()=>pickBall(),i*150); }
+function resetBag() {
+  state.bag={red:0,blue:0,green:0,total:0};
+  ['bagRed','bagBlue','bagGreen','bagTotal'].forEach(id=>document.getElementById(id).textContent='0');
+  document.getElementById('bagResult').innerHTML='';
+}
+const ballQs = [
+  { q:'袋中3红2蓝1绿共6个，摸到蓝球的可能性是？', ans:'1/3', check:v=>v==='1/3'||v==='2/6', hint:'2÷6=1/3' },
+  { q:'袋中3红2蓝1绿，摸到绿球的可能性是？', ans:'1/6', check:v=>v==='1/6', hint:'1÷6=1/6' },
+  { q:'袋中3红2蓝1绿，摸到红球或蓝球的可能性是？', ans:'5/6', check:v=>v==='5/6', hint:'(3+2)÷6=5/6' },
+];
+function initBallQuiz() { state.ballQIdx=0; state.ballQCorrect=0; showBallQ(); }
+function showBallQ() {
+  if(state.ballQIdx>=ballQs.length) {
+    document.getElementById('ballQuizContent').innerHTML='<p style="color:var(--green);font-weight:700;text-align:center;font-size:1.1rem">🎉 全部答完！+5⭐</p>';
+    addStars(5); unlockAchievement('fraction'); return;
+  }
+  const q=ballQs[state.ballQIdx];
+  document.getElementById('ballQuizContent').innerHTML=`
+    <p style="font-weight:800;font-size:1rem;margin:0.5rem 0">第${state.ballQIdx+1}题：${q.q}</p>
+    <p style="font-size:0.9rem;color:#888;margin-bottom:0.5rem">💡 提示：${q.hint}</p>
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+      <label style="font-weight:700">可能性 = </label>
+      <input class="answer-input" id="ballInput" type="text" placeholder="如 1/3" style="width:100px">
+    </div>`;
+  document.getElementById('ball-feedback').style.display='none';
+  document.getElementById('ballProg').style.width=(state.ballQIdx/ballQs.length*100)+'%';
+}
+function checkBallQ() {
+  const v=document.getElementById('ballInput')?.value||'';
+  const q=ballQs[state.ballQIdx];
+  const fb=document.getElementById('ball-feedback');
+  fb.style.display='block';
+  if(q.check(v.trim())) {
+    fb.className='feedback correct';
+    fb.textContent=`🎉 正确！${q.ans}，+3⭐`;
+    addStars(3); state.ballQCorrect++; playSound('correct');
+  } else {
+    fb.className='feedback wrong';
+    fb.textContent=`💪 正确答案是 ${q.ans}，${q.hint}`;
+    playSound('wrong');
+  }
+}
+function nextBallQ() { state.ballQIdx++; showBallQ(); }
+
+// ===== Coin =====
+function flipCoin() {
+  const result=Math.random()<0.5?'H':'T';
+  state.coin.total++;
+  if(result==='H') state.coin.h++;
+  else state.coin.t++;
+  const coinEl=document.getElementById('coinEl');
+  coinEl.style.animation='shake 0.3s ease';
+  setTimeout(()=>coinEl.style.animation='',400);
+  if(result==='H') { coinEl.textContent='☀️'; coinEl.style.background='linear-gradient(135deg,#ffe66d,#feca57)'; coinEl.style.color='#333'; }
+  else { coinEl.textContent='🌙'; coinEl.style.background='linear-gradient(135deg,#74b9ff,#0984e3)'; coinEl.style.color='white'; }
+  document.getElementById('coinResult').innerHTML=result==='H'?'<span style="color:var(--orange)">☀️ 正面！</span>':'<span style="color:var(--blue)">🌙 反面！</span>';
+  document.getElementById('coinH').textContent=state.coin.h;
+  document.getElementById('coinT').textContent=state.coin.t;
+  document.getElementById('coinTotal').textContent=state.coin.total;
+  const max=Math.max(state.coin.h,state.coin.t,1);
+  document.getElementById('hH').style.height=(state.coin.h/max*100)+'px';
+  document.getElementById('hT').style.height=(state.coin.t/max*100)+'px';
+  playSound('spin');
+  if(state.coin.total>=5) { addStars(2); unlockAchievement('coin'); }
+}
+function flipMany(n) { for(let i=0;i<n;i++) setTimeout(()=>flipCoin(),i*80); }
+function resetCoin() {
+  state.coin={h:0,t:0,total:0};
+  document.getElementById('coinH').textContent='0';
+  document.getElementById('coinT').textContent='0';
+  document.getElementById('coinTotal').textContent='0';
+  document.getElementById('hH').style.height='4px';
+  document.getElementById('hT').style.height='4px';
+  document.getElementById('coinResult').innerHTML='';
+  document.getElementById('coinEl').textContent='🪙';
+  document.getElementById('coinEl').style.background='linear-gradient(135deg,#ffe66d,#feca57)';
+  document.getElementById('coinEl').style.color='#333';
+}
+function checkCoinQ(el,type) {
+  const fb=document.getElementById('coin-feedback');
+  fb.style.display='block';
+  document.querySelectorAll('#coinQuizCard .opt-btn').forEach(b=>b.classList.remove('correct','wrong'));
+  if(type==='c') {
+    el.classList.add('correct');
+    fb.className='feedback correct';
+    fb.textContent='🎉 完全正确！可能性1/2，大约50次！+3⭐';
+    addStars(3); unlockAchievement('fraction'); playSound('correct');
+  } else {
+    el.classList.add('wrong');
+    fb.className='feedback wrong';
+    fb.textContent='💪 硬币两面机会相等，各占1/2，100次大约50次！';
+    playSound('wrong');
+  }
+}
+
+// ===== Boss =====
+const bossQs = [
+  { q:'袋中有4个红球和1个蓝球，共5个。摸到蓝球的可能性是多少？', ans:'1/5', check:v=>v.trim()==='1/5' },
+  { q:'一个转盘等分成3份，其中2份红色1份蓝色。转到红色的可能性是？', ans:'2/3', check:v=>v.trim()==='2/3' },
+  { q:'"抛一枚硬币，一定出现正面"，这句话正确吗？(填"正确"或"不正确")', ans:'不正确', check:v=>v.includes('不正确')||v.includes('错')||v.includes('不对') },
+];
+let bossIdx2=0;
+function initBoss() { bossIdx2=0; state.bossCorrect=0; showBossQ2(); }
+function showBossQ2() {
+  if(bossIdx2>=bossQs.length) {
+    unlockAchievement('boss'); addStars(15);
+    document.getElementById('boss-content').innerHTML='<p style="font-size:1.3rem;font-weight:800;text-align:center;color:var(--green)">🎉 Boss被消灭！你是概率小达人！</p>';
+    document.querySelector('[onclick="checkBoss()"]').style.display='none';
+    setTimeout(()=>goSection('sec-score'),2000); return;
+  }
+  const q=bossQs[bossIdx2];
+  document.getElementById('boss-content').innerHTML=`
+    <p style="font-weight:800;font-size:1.1rem;margin-bottom:1rem">👾 Boss题 ${bossIdx2+1}/${bossQs.length}</p>
+    <p style="font-size:1.1rem;line-height:1.8;margin-bottom:1rem">${q.q}</p>
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+      <label style="font-weight:700">答案：</label>
+      <input class="answer-input" id="bossInput" type="text" placeholder="?" style="width:150px">
+    </div>`;
+  document.getElementById('boss-feedback').style.display='none';
+}
+function checkBoss() {
+  const v=document.getElementById('bossInput')?.value||'';
+  const q=bossQs[bossIdx2];
+  const fb=document.getElementById('boss-feedback');
+  fb.style.display='block';
+  if(q.check(v)) {
+    fb.className='feedback correct';
+    fb.textContent=`⚔️ 命中！+5⭐`;
+    addStars(5); state.bossCorrect++; playSound('correct');
+    setTimeout(()=>{ bossIdx2++; showBossQ2(); },1500);
+  } else {
+    fb.className='feedback wrong';
+    fb.textContent=`💪 答案是 ${q.ans}`;
+    playSound('wrong');
+    setTimeout(()=>{ bossIdx2++; showBossQ2(); },2500);
+  }
+}
+
+// ===== Dice (Extend) =====
+const diceEmojis=['⚀','⚁','⚂','⚃','⚄','⚅'];
+function rollDice() {
+  const r=Math.floor(Math.random()*6);
+  state.dice.total++;
+  state.dice.counts[r]++;
+  document.getElementById('diceDisplay').textContent=diceEmojis[r];
+  updateDiceStats();
+  playSound('spin');
+}
+function rollMany(n) { for(let i=0;i<n;i++) setTimeout(()=>rollDice(),i*60); }
+function resetDice() { state.dice={counts:[0,0,0,0,0,0],total:0}; document.getElementById('diceDisplay').textContent='🎲'; updateDiceStats(); }
+function updateDiceStats() {
+  const stats=state.dice;
+  if(stats.total===0) { document.getElementById('diceStats').textContent='还没有投掷记录'; return; }
+  document.getElementById('diceStats').innerHTML=stats.counts.map((c,i)=>`${diceEmojis[i]}:${c}次`).join(' | ')+'<br>总计 '+stats.total+'次';
+}
+
+// ===== Score =====
+function showScore() {
+  document.getElementById('finalScore').textContent=state.stars;
+  const pct=Math.min(100,state.stars/50*100);
+  const m=['继续加油💪','很棒哦！🌟','太厉害了！🏆','无敌概率王！👑'];
+  document.getElementById('scoreMotto').textContent=m[pct<40?0:pct<70?1:pct<95?2:3];
+  updateBadges();
+}
+
+// AI
+const aiMsgs=['可能性=有利结果÷总结果！🎲','做实验次数越多，越接近理论概率！📊','不可能、可能、一定——三种情况！🔍','生活中处处有概率哦！🌍','你做得非常棒！⭐'];
+let aiIdx=0;
+function toggleAISpeech(){const sp=document.getElementById('aiSpeech');if(sp.classList.contains('show'))sp.classList.remove('show');else{sp.textContent=aiMsgs[aiIdx++%aiMsgs.length];sp.classList.add('show');}}
+setInterval(()=>{const sp=document.getElementById('aiSpeech');sp.textContent=aiMsgs[aiIdx++%aiMsgs.length];sp.classList.add('show');setTimeout(()=>sp.classList.remove('show'),4000);},35000);
+
+window.onload=()=>{ updateBadges(); drawSpinner(0); updateDiceStats(); };
+</script>
+</body>
+</html>
