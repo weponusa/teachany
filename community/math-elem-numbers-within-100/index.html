@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>100以内数的认识 · 小学数学 G1 · TeachAny v5.27</title>
+<meta name="teachany-node" content="numbers-within-100">
+<meta name="teachany-subject" content="math">
+<meta name="teachany-domain" content="numbers">
+<meta name="teachany-grade" content="1">
+<meta name="teachany-difficulty" content="1">
+<meta name="teachany-version" content="2.0">
+<meta name="teachany-author" content="weponusa">
+<meta name="teachany-prerequisites" content="numbers-within-20,numbers-within-10">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+:root{--bg:#fffbf0;--primary:#ff6b6b;--secondary:#4ecdc4;--accent:#ffe66d;--success:#51cf66;--card:#fff;--purple:#cc5de8;--blue:#339af0;--orange:#ff922b;--text:#2b2b2b;--dim:#666;--border:rgba(0,0,0,0.06);}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;padding-bottom:60px;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 10% 20%,rgba(255,107,107,.06),transparent 50%),radial-gradient(circle at 90% 80%,rgba(78,205,196,.06),transparent 50%);pointer-events:none;z-index:-1;}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-bottom:3px solid var(--accent);padding:0 20px;display:flex;align-items:center;height:62px;gap:4px;overflow-x:auto;}
+.nav-brand{font-size:20px;font-weight:900;margin-right:16px;white-space:nowrap;background:linear-gradient(135deg,var(--primary),var(--orange),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;transition:all .25s;white-space:nowrap;}
+.nav a:hover,.nav a.active{color:#fff;background:linear-gradient(135deg,var(--primary),var(--orange));}
+.container{max-width:960px;margin:0 auto;padding:80px 20px 60px;}
+.hero{text-align:center;padding:36px 0 30px;}
+.hero h1{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--orange),var(--success),var(--blue));background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbowShift 6s ease infinite;margin-bottom:10px;}
+@keyframes rainbowShift{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}
+.hero .subtitle{font-size:18px;color:var(--dim);margin-bottom:16px;}
+.hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+.hero .meta span{background:#fff;border:2px solid var(--border);border-radius:24px;padding:6px 18px;font-size:14px;font-weight:700;color:var(--dim);}
+.section{margin:40px 0;}
+.section-title{font-size:26px;font-weight:900;margin-bottom:18px;padding:10px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(255,107,107,.1),rgba(255,230,109,.2));display:inline-block;}
+.card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 26px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,.04);transition:transform .25s,box-shadow .25s;}
+.card:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(255,107,107,.12);}
+.card h3{font-size:20px;font-weight:900;margin-bottom:10px;}
+.card p,.card li{font-size:16px;line-height:1.9;color:var(--dim);}
+.highlight{color:var(--primary);font-weight:900;}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;}
+
+/* ===== 生活场景 ===== */
+#life-scene{background:linear-gradient(135deg,#fff9c4,#e8f5e9);border-radius:24px;padding:32px;}
+.bead-stage{display:flex;flex-direction:column;align-items:center;gap:12px;}
+.bead-row{display:flex;gap:4px;align-items:center;}
+.bead{width:32px;height:32px;border-radius:50%;animation:beadPop .4s cubic-bezier(.34,1.56,.64,1) backwards;}
+@keyframes beadPop{from{transform:scale(0);}to{transform:scale(1);}}
+.bead-label{font-size:13px;font-weight:700;color:var(--dim);margin-left:8px;min-width:40px;}
+/* 数字火车动画 */
+.train-wrap{overflow:hidden;width:100%;position:relative;height:60px;margin-top:16px;}
+.train{display:flex;gap:4px;position:absolute;animation:trainMove 8s linear infinite;}
+.train-car{background:var(--primary);color:#fff;font-size:14px;font-weight:900;padding:8px 10px;border-radius:8px;white-space:nowrap;}
+.train-car:nth-child(even){background:var(--secondary);}
+@keyframes trainMove{from{left:100%;}to{left:-600px;}}
+/* 操场跑道 */
+.track-scene{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px;}
+.track-num{padding:6px 10px;border-radius:8px;font-size:13px;font-weight:700;animation:numGlow 2s ease-in-out infinite;}
+@keyframes numGlow{0%,100%{opacity:.7;}50%{opacity:1;transform:scale(1.08);}}
+
+/* ===== 数字表格 ===== */
+.hundred-table{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;}
+.hundred-cell{padding:8px 4px;text-align:center;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;background:#f9f9f9;color:var(--dim);}
+.hundred-cell:hover{background:var(--accent);color:var(--text);transform:scale(1.1);}
+.hundred-cell.even-num{background:rgba(78,205,196,.1);}
+.hundred-cell.odd-num{background:rgba(255,107,107,.08);}
+.hundred-cell.selected{background:var(--primary);color:#fff;transform:scale(1.15);}
+.hundred-cell.range-highlight{background:var(--accent);color:var(--text);}
+
+/* ===== 互动实验台 ===== */
+#interactive-lab{padding:28px;border-radius:24px;background:linear-gradient(135deg,#e8f5e9,#fff9c4);}
+.slider-row{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+.slider-row label{font-weight:700;min-width:80px;}
+input[type=range]{flex:1;min-width:120px;accent-color:var(--primary);}
+.slider-val{min-width:50px;font-weight:900;color:var(--primary);font-size:22px;}
+.num-decompose{background:#fff;border-radius:14px;padding:16px;text-align:center;font-size:20px;line-height:2.2;}
+.big-show{font-size:72px;font-weight:900;color:var(--primary);text-align:center;padding:16px 0;animation:popIn .3s cubic-bezier(.34,1.56,.64,1);}
+@keyframes popIn{from{transform:scale(.8);opacity:0;}to{transform:scale(1);opacity:1;}}
+
+/* 拖拽 */
+.drag-area{display:flex;gap:20px;flex-wrap:wrap;margin-top:14px;}
+.drag-items,.drop-zones{flex:1;min-width:160px;}
+.drag-item{padding:10px 14px;background:#fff;border:2.5px dashed var(--secondary);border-radius:14px;margin-bottom:8px;cursor:grab;font-weight:900;text-align:center;font-size:16px;transition:all .2s;}
+.drag-item:hover{background:rgba(78,205,196,.12);transform:scale(1.04);}
+.drop-zone{padding:14px;border:2.5px dashed #ccc;border-radius:14px;margin-bottom:8px;min-height:50px;text-align:center;transition:all .2s;color:#999;font-size:15px;}
+.drop-zone.over{border-color:var(--primary);background:rgba(255,107,107,.06);}
+.drop-zone.matched{border-color:var(--success);background:rgba(81,207,102,.1);color:var(--success);font-weight:700;}
+.drop-zone.wrong-match{animation:shake .4s;}
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+
+/* 知识图谱 */
+#knowledge-graph{background:#fff;border-radius:24px;padding:24px;}
+#kg-svg{width:100%;height:320px;display:block;}
+.kg-legend{display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;}
+.kg-legend-item{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;}
+.kg-dot{width:14px;height:14px;border-radius:50%;}
+
+/* 互动题 */
+.quiz-step{display:none;}
+.quiz-step.active{display:block;animation:fadeIn .4s;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.quiz-q{font-size:18px;font-weight:900;margin-bottom:18px;}
+.quiz-option{display:block;width:100%;padding:14px 20px;margin:8px 0;border-radius:16px;background:#fff;border:2.5px solid #e8e8e8;cursor:pointer;font-size:17px;font-weight:700;text-align:left;transition:all .25s;}
+.quiz-option:hover{background:rgba(78,205,196,.08);border-color:var(--secondary);}
+.quiz-option.correct{background:rgba(81,207,102,.12);border-color:var(--success);color:#2b8a3e;}
+.quiz-option.wrong{background:rgba(255,107,107,.1);border-color:var(--primary);color:#c92a2a;}
+.quiz-feedback{padding:12px 18px;border-radius:14px;margin-top:10px;font-size:15px;font-weight:700;display:none;}
+.quiz-feedback.show{display:block;animation:popIn .35s cubic-bezier(.34,1.56,.64,1);}
+.quiz-feedback.ok{background:rgba(81,207,102,.15);color:#2b8a3e;}
+.quiz-feedback.err{background:rgba(255,107,107,.12);color:#c92a2a;}
+.quiz-next{margin-top:14px;padding:10px 28px;background:linear-gradient(135deg,var(--primary),var(--orange));color:#fff;border:none;border-radius:20px;font-size:16px;font-weight:900;cursor:pointer;display:none;}
+.progress-bar{height:8px;background:#f0f0f0;border-radius:4px;margin-bottom:18px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--orange));border-radius:4px;transition:width .4s;}
+.step-indicator{font-size:13px;color:var(--dim);margin-bottom:8px;font-weight:700;}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <span class="nav-brand">💯 100以内的数</span>
+  <a href="#life-scene">生活场景</a>
+  <a href="#hundred-table">百数表</a>
+  <a href="#interactive-lab">互动实验</a>
+  <a href="#knowledge-graph">知识图谱</a>
+  <a href="#quiz">互动练习</a>
+</nav>
+
+<div class="container">
+  <div class="hero">
+    <h1>💯 100以内数的认识</h1>
+    <p class="subtitle">认识100以内的数，理解十位和个位，学会读写和比较</p>
+    <div class="meta">
+      <span>📚 一年级</span><span>🔢 数与代数</span><span>⏱️ 40分钟</span><span>⭐ 入门</span>
+    </div>
+  </div>
+
+  <!-- 生活场景 -->
+  
+
+<!-- #02 前测 -->
+<section id="pretest" class="section" style="margin:30px 0;">
+  <div class="section-title">📝 前测：你已经知道什么？</div>
+  <div class="card" style="padding:24px;">
+    <p style="color:#666;margin-bottom:20px;font-size:14px;">在学习新内容之前，先测测你的基础知识！</p>
+    
+    <div class="quiz-item" style="margin-bottom:20px;padding:16px;background:#f8f9fa;border-radius:12px;border-left:4px solid var(--secondary,#4ecdc4);">
+      <p style="font-weight:700;margin-bottom:10px;">Q1：数字35中，3在哪个数位？</p>
+      <div class="options" style="display:flex;flex-direction:column;gap:8px;">
+        
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;border-radius:8px;background:#fff;border:2px solid #e9ecef;transition:all .2s;"
+          onmouseover="this.style.borderColor='var(--secondary,#4ecdc4)'" onmouseout="this.style.borderColor='#e9ecef'">
+          <input type="radio" name="pre_q0" value="0" style="accent-color:var(--secondary,#4ecdc4);">
+          <span>A. 个位</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;border-radius:8px;background:#fff;border:2px solid #e9ecef;transition:all .2s;"
+          onmouseover="this.style.borderColor='var(--secondary,#4ecdc4)'" onmouseout="this.style.borderColor='#e9ecef'">
+          <input type="radio" name="pre_q0" value="1" style="accent-color:var(--secondary,#4ecdc4);">
+          <span>B. 十位</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;border-radius:8px;background:#fff;border:2px solid #e9ecef;transition:all .2s;"
+          onmouseover="this.style.borderColor='var(--secondary,#4ecdc4)'" onmouseout="this.style.borderColor='#e9ecef'">
+          <input type="radio" name="pre_q0" value="2" style="accent-color:var(--secondary,#4ecdc4);">
+          <span>C. 百位</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;border-radius:8px;background:#fff;border:2px solid #e9ecef;transition:all .2s;"
+          onmouseover="this.style.borderColor='var(--secondary,#4ecdc4)'" onmouseout="this.style.borderColor='#e9ecef'">
+          <input type="radio" name="pre_q0" value="3" style="accent-color:var(--secondary,#4ecdc4);">
+          <span>D. 千位</span>
+        </label>
+      </div>
+      <div class="pre-explain-0" style="display:none;margin-top:10px;padding:10px;background:#d4edda;border-radius:8px;color:#155724;font-size:14px;">
+        ✅ 35中，3在十位，5在个位
+      </div>
+    </div>
+    <div class="quiz-item" style="margin-bottom:20px;padding:16px;background:#f8f9fa;border-radius:12px;border-left:4px solid var(--secondary,#4ecdc4);">
+      <p style="font-weight:700;margin-bottom:10px;">Q2：20以内最大的数是多少？</p>
+      <div class="options" style="display:flex;flex-direction:column;gap:8px;">
+        
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;border-radius:8px;background:#fff;border:2px solid #e9ecef;transition:all .2s;"
+          onmouseover="this.style.borderColor='var(--secondary,#4ecdc4)'" onmouseout="this.style.borderColor='#e9ecef'">
+          <input type="radio" name="pre_q1" value="0" style="accent-color:var(--secondary,#4ecdc4);">
+          <span>A. 19</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;border-radius:8px;background:#fff;border:2px solid #e9ecef;transition:all .2s;"
+          onmouseover="this.style.borderColor='var(--secondary,#4ecdc4)'" onmouseout="this.style.borderColor='#e9ecef'">
+          <input type="radio" name="pre_q1" value="1" style="accent-color:var(--secondary,#4ecdc4);">
+          <span>B. 20</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;border-radius:8px;background:#fff;border:2px solid #e9ecef;transition:all .2s;"
+          onmouseover="this.style.borderColor='var(--secondary,#4ecdc4)'" onmouseout="this.style.borderColor='#e9ecef'">
+          <input type="radio" name="pre_q1" value="2" style="accent-color:var(--secondary,#4ecdc4);">
+          <span>C. 18</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;border-radius:8px;background:#fff;border:2px solid #e9ecef;transition:all .2s;"
+          onmouseover="this.style.borderColor='var(--secondary,#4ecdc4)'" onmouseout="this.style.borderColor='#e9ecef'">
+          <input type="radio" name="pre_q1" value="3" style="accent-color:var(--secondary,#4ecdc4);">
+          <span>D. 21</span>
+        </label>
+      </div>
+      <div class="pre-explain-1" style="display:none;margin-top:10px;padding:10px;background:#d4edda;border-radius:8px;color:#155724;font-size:14px;">
+        ✅ 20以内最大的数是20（包含20）
+      </div>
+    </div>
+    <button onclick="(function(){var score=0;
+    var sel0 = document.querySelector('input[name="pre_q0"]:checked');
+    if(sel0) {
+      var exp = document.querySelector('.pre-explain-0');
+      if(exp) { exp.style.display='block'; }
+      if(parseInt(sel0.value)===1) score++;
+    }
+    var sel1 = document.querySelector('input[name="pre_q1"]:checked');
+    if(sel1) {
+      var exp = document.querySelector('.pre-explain-1');
+      if(exp) { exp.style.display='block'; }
+      if(parseInt(sel1.value)===1) score++;
+    }alert('前测结果：'+score+'/2分！'+(score===2?'👏基础扎实，来看看新内容吧！':'💪继续学习，打好基础！'));})();"
+      style="margin-top:16px;padding:12px 32px;background:linear-gradient(135deg,var(--secondary,#4ecdc4),var(--blue,#339af0));color:#fff;border:none;border-radius:24px;font-size:16px;font-weight:700;cursor:pointer;">
+      提交前测 ✓
+    </button>
+  </div>
+</section>
+<!-- #01 ABT引入 -->
+<section class="section" id="abt-intro" style="margin:20px 0;">
+  <div class="card" style="background:linear-gradient(135deg,#fff9e6,#fff3cd);border:2px solid #ffc107;border-radius:16px;padding:24px;">
+    <div style="font-size:22px;font-weight:900;margin-bottom:12px;color:#e67e00;">🤔 为什么学100以内数的认识？</div>
+    <p style="font-size:16px;line-height:1.8;color:#333;">我们已经会数20以内的数了（And），但超市里商品价格、班级人数这些数字往往比20大（But），所以我们要学习100以内的数，认识十位和个位！（Therefore）</p>
+  </div>
+</section>
+<section class="section" id="life-scene">
+    <div class="section-title">🎬 生活场景：珠算与数数</div>
+    <div class="bead-stage">
+      <div class="bead-row" id="beadRow1">
+        <!-- 10颗珠子 -->
+      </div>
+      <div class="bead-row" id="beadRow2"></div>
+      <div style="font-size:16px;font-weight:700;color:var(--dim);margin-top:8px;">每行10颗，2行 = <span class="highlight">20</span> 颗</div>
+    </div>
+    <div class="train-wrap">
+      <div class="train" id="numTrain"></div>
+    </div>
+    <div class="track-scene" id="trackScene"></div>
+  </section>
+
+  <!-- 百数表 -->
+  <section class="section" id="hundred-table">
+    <div class="section-title">📊 互动百数表</div>
+    <div class="card">
+      <div class="hundred-table" id="hundredTable"></div>
+      <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap;">
+        <button onclick="highlightEvens()" style="padding:8px 18px;border:2px solid var(--secondary);background:#fff;border-radius:14px;font-weight:700;cursor:pointer;">偶数</button>
+        <button onclick="highlightOdds()" style="padding:8px 18px;border:2px solid var(--primary);background:#fff;border-radius:14px;font-weight:700;cursor:pointer;">奇数</button>
+        <button onclick="resetTable()" style="padding:8px 18px;border:2px solid var(--dim);background:#fff;border-radius:14px;font-weight:700;cursor:pointer;">重置</button>
+      </div>
+      <p style="color:var(--dim);font-size:14px;margin-top:8px;">👆 点击数字可选中；点击"偶数/奇数"按钮高亮显示</p>
+    </div>
+  </section>
+
+  <!-- 互动实验台 -->
+  <section class="section" id="interactive-lab">
+    <div class="section-title">🧪 互动实验台</div>
+    <div class="card">
+      <h3>🎛️ 数的分解</h3>
+      <div class="slider-row">
+        <label>选个数</label>
+        <input type="range" id="numSlider" min="11" max="99" value="35" step="1">
+        <span class="slider-val" id="numSliderVal">35</span>
+      </div>
+      <div class="num-decompose" id="numDecompose"></div>
+    </div>
+
+    <div class="card">
+      <h3>🎯 拖拽配对：十位和个位</h3>
+      <div class="drag-area">
+        <div class="drag-items">
+          <div class="drag-item" draggable="true" data-answer="56">5个十6个一</div>
+          <div class="drag-item" draggable="true" data-answer="30">3个十</div>
+          <div class="drag-item" draggable="true" data-answer="78">7个十8个一</div>
+          <div class="drag-item" draggable="true" data-answer="40">4个十</div>
+        </div>
+        <div class="drop-zones">
+          <div class="drop-zone" data-key="30">30</div>
+          <div class="drop-zone" data-key="40">40</div>
+          <div class="drop-zone" data-key="56">56</div>
+          <div class="drop-zone" data-key="78">78</div>
+        </div>
+      </div>
+      <button onclick="resetDrag()" style="margin-top:12px;padding:8px 22px;background:var(--secondary);color:#fff;border:none;border-radius:16px;font-weight:700;cursor:pointer;">🔄 重置</button>
+    </div>
+  </section>
+
+  <!-- 知识图谱 -->
+  <section class="section" id="knowledge-graph">
+    <div class="section-title">🕸️ 知识图谱</div>
+    <div class="card">
+      <svg id="kg-svg"></svg>
+      <div class="kg-legend">
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#51cf66"></div>前置知识</div>
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#ff6b6b"></div>当前主题</div>
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#4ecdc4"></div>后续学习</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 互动练习 -->
+  <section class="section" id="quiz">
+    <div class="section-title">✏️ 互动练习</div>
+    <div class="card">
+      <div class="step-indicator" id="stepInd">第 1 题 / 共 5 题</div>
+      <div class="progress-bar"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
+
+      <div class="quiz-step active" id="q1">
+        <div class="quiz-q">1. 45 里面有几个十几个一？</div>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 45：十位是4，个位是5，所以4个十5个一。')">5个十4个一</button>
+        <button class="quiz-option" onclick="answer(this,'correct','✅ 正确！45 = 4个十 + 5个一。')">4个十5个一</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 再看看45的十位和个位。')">40个十5个一</button>
+        <div class="quiz-feedback" id="fb1"></div>
+        <button class="quiz-next" onclick="nextStep(1)">下一题 →</button>
+      </div>
+
+      <div class="quiz-step" id="q2">
+        <div class="quiz-q">2. 7个十是多少？</div>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 7是7个一，7个十要在后面加0。')">7</button>
+        <button class="quiz-option" onclick="answer(this,'correct','✅ 正确！7个十就是70，十位是7，个位是0。')">70</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 700是7个百，不是7个十。')">700</button>
+        <div class="quiz-feedback" id="fb2"></div>
+        <button class="quiz-next" onclick="nextStep(2)">下一题 →</button>
+      </div>
+
+      <div class="quiz-step" id="q3">
+        <div class="quiz-q">3. 哪个数比67大，比70小？</div>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 65比67小，不符合条件。')">65</button>
+        <button class="quiz-option" onclick="answer(this,'correct','✅ 正确！67 < 68 < 70，68符合条件！')">68</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 72比70大，不符合条件。')">72</button>
+        <div class="quiz-feedback" id="fb3"></div>
+        <button class="quiz-next" onclick="nextStep(3)">下一题 →</button>
+      </div>
+
+      <div class="quiz-step" id="q4">
+        <div class="quiz-q">4. 从88数到100，中间还有几个数（不包括88和100）？</div>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 数一数：89、90、91、92、93、94、95、96、97、98、99，共11个。')">10个</button>
+        <button class="quiz-option" onclick="answer(this,'correct','✅ 正确！89到99一共11个数字。')">11个</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 12个太多了，只有89~99共11个。')">12个</button>
+        <div class="quiz-feedback" id="fb4"></div>
+        <button class="quiz-next" onclick="nextStep(4)">下一题 →</button>
+      </div>
+
+      <div class="quiz-step" id="q5">
+        <div class="quiz-q">5. 班上有92名同学，接近哪个整十数？</div>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 92离90更近（差2），离100差8。')">100</button>
+        <button class="quiz-option" onclick="answer(this,'correct','✅ 正确！92 - 90 = 2，100 - 92 = 8，所以92更接近90。')">90</button>
+        <button class="quiz-option" onclick="answer(this,'wrong','❌ 92不接近80，差了12。')">80</button>
+        <div class="quiz-feedback" id="fb5"></div>
+        <button class="quiz-next" onclick="showResult()">查看结果 🎉</button>
+      </div>
+
+      <div class="quiz-step" id="result">
+        <div style="text-align:center;padding:20px;">
+          <div style="font-size:64px;margin-bottom:16px;">💯</div>
+          <div style="font-size:24px;font-weight:900;color:var(--primary);" id="scoreText"></div>
+          <button onclick="restartQuiz()" style="margin-top:20px;padding:12px 32px;background:linear-gradient(135deg,var(--primary),var(--orange));color:#fff;border:none;border-radius:20px;font-size:16px;font-weight:900;cursor:pointer;">🔄 再练一次</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+// 珠算动画
+const beadColors = ['#ff6b6b','#ff922b','#ffe66d','#51cf66','#4ecdc4','#339af0','#cc5de8','#f06595','#a9e34b','#74c0fc'];
+[1,2].forEach(row => {
+  const rowEl = document.getElementById('beadRow'+row);
+  for (let i = 0; i < 10; i++) {
+    const bead = document.createElement('div');
+    bead.className = 'bead';
+    bead.style.background = beadColors[i];
+    bead.style.animationDelay = ((row-1)*10+i)*0.06+'s';
+    rowEl.appendChild(bead);
+  }
+});
+
+// 数字火车
+const train = document.getElementById('numTrain');
+for (let i = 1; i <= 50; i++) {
+  const car = document.createElement('div');
+  car.className = 'train-car';
+  car.textContent = i;
+  train.appendChild(car);
+}
+
+// 轨道数字
+const track = document.getElementById('trackScene');
+for (let i = 10; i <= 100; i += 10) {
+  const el = document.createElement('div');
+  el.className = 'track-num';
+  el.style.background = beadColors[(i/10-1)%10];
+  el.style.color = '#fff';
+  el.style.animationDelay = (i/10*0.2)+'s';
+  el.textContent = i;
+  track.appendChild(el);
+}
+
+// 百数表
+const table = document.getElementById('hundredTable');
+for (let i = 1; i <= 100; i++) {
+  const cell = document.createElement('div');
+  cell.className = 'hundred-cell ' + (i % 2 === 0 ? 'even-num' : 'odd-num');
+  cell.textContent = i;
+  cell.dataset.n = i;
+  cell.onclick = () => {
+    document.querySelectorAll('.hundred-cell').forEach(c => c.classList.remove('selected'));
+    cell.classList.add('selected');
+    updateNumDecompose(i);
+    document.getElementById('numSlider').value = Math.min(99, Math.max(11, i));
+    document.getElementById('numSliderVal').textContent = document.getElementById('numSlider').value;
+    updateDecompose(parseInt(document.getElementById('numSlider').value));
+  };
+  table.appendChild(cell);
+}
+function highlightEvens() {
+  document.querySelectorAll('.hundred-cell').forEach(c => {
+    c.classList.remove('selected','range-highlight');
+    if (parseInt(c.dataset.n) % 2 === 0) c.classList.add('range-highlight');
+  });
+}
+function highlightOdds() {
+  document.querySelectorAll('.hundred-cell').forEach(c => {
+    c.classList.remove('selected','range-highlight');
+    if (parseInt(c.dataset.n) % 2 !== 0) c.classList.add('range-highlight');
+  });
+}
+function resetTable() {
+  document.querySelectorAll('.hundred-cell').forEach(c => c.classList.remove('selected','range-highlight'));
+}
+
+// 数的分解
+const numSlider = document.getElementById('numSlider');
+const numSliderVal = document.getElementById('numSliderVal');
+const numDecompose = document.getElementById('numDecompose');
+function updateDecompose(n) {
+  const tens = Math.floor(n/10), ones = n%10;
+  numDecompose.innerHTML = `
+    <span style="font-size:48px;font-weight:900;color:var(--primary);">${n}</span><br>
+    <span style="color:var(--orange);font-weight:700;font-size:18px;">${tens}个十</span>
+    <span style="font-size:18px;color:var(--dim);font-weight:700;"> + </span>
+    <span style="color:var(--blue);font-weight:700;font-size:18px;">${ones}个一</span><br>
+    <span style="font-size:14px;color:var(--dim);">${tens}×10 + ${ones}×1 = ${tens*10+ones}</span>
+  `;
+}
+numSlider.addEventListener('input', () => {
+  const v = parseInt(numSlider.value);
+  numSliderVal.textContent = v;
+  updateDecompose(v);
+});
+updateDecompose(35);
+
+// 拖拽
+let dragSrc = null;
+document.querySelectorAll('.drag-item').forEach(item => {
+  item.addEventListener('dragstart', () => dragSrc = item);
+});
+document.querySelectorAll('.drop-zone').forEach(zone => {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('over');
+    if (!dragSrc) return;
+    if (dragSrc.dataset.answer === zone.dataset.key) {
+      zone.classList.add('matched'); dragSrc.style.opacity='0.3'; dragSrc.draggable=false;
+      zone.textContent = zone.dataset.key + ' ✅';
+    } else {
+      zone.classList.add('wrong-match'); setTimeout(()=>zone.classList.remove('wrong-match'),500);
+    }
+  });
+});
+function resetDrag() {
+  document.querySelectorAll('.drag-item').forEach(i=>{i.style.opacity='1';i.draggable=true;});
+  document.querySelectorAll('.drop-zone').forEach(z=>{z.classList.remove('matched','wrong-match');z.textContent=z.dataset.key;});
+}
+
+// D3 知识图谱
+const kgData={nodes:[{id:"1to10",name:"1~10的数",type:"prereq"},{id:"count10",name:"数数到10",type:"prereq"},{id:"cur",name:"100以内的数",type:"current"},{id:"add20",name:"20以内加减",type:"next"},{id:"add100",name:"100以内加减",type:"next"},{id:"placevalue",name:"位置值",type:"next"}],links:[{source:"1to10",target:"cur"},{source:"count10",target:"cur"},{source:"cur",target:"add20"},{source:"cur",target:"add100"},{source:"cur",target:"placevalue"}]};
+const colorMap={current:"#ff6b6b",prereq:"#51cf66",next:"#4ecdc4"};
+const svgEl=document.getElementById('kg-svg');
+const W=(svgEl.parentElement.offsetWidth||600)-48,H=320;
+svgEl.setAttribute('viewBox',`0 0 ${W} ${H}`);
+const kgSvg=d3.select('#kg-svg');
+kgSvg.append('defs').append('marker').attr('id','arrow').attr('viewBox','0 -5 10 10').attr('refX',22).attr('refY',0).attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto').append('path').attr('d','M0,-5L10,0L0,5').attr('fill','#aaa');
+const sim=d3.forceSimulation(kgData.nodes).force('link',d3.forceLink(kgData.links).id(d=>d.id).distance(110)).force('charge',d3.forceManyBody().strength(-280)).force('center',d3.forceCenter(W/2,H/2));
+const linkEl=kgSvg.append('g').selectAll('line').data(kgData.links).join('line').attr('stroke','#ccc').attr('stroke-width',2).attr('marker-end','url(#arrow)');
+const nodeEl=kgSvg.append('g').selectAll('g').data(kgData.nodes).join('g').call(d3.drag().on('start',(e,d)=>{if(!e.active)sim.alphaTarget(.3).restart();d.fx=d.x;d.fy=d.y;}).on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y;}).on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}));
+nodeEl.append('circle').attr('r',28).attr('fill',d=>colorMap[d.type]).attr('stroke','#fff').attr('stroke-width',3).style('filter','drop-shadow(0 2px 6px rgba(0,0,0,.15))');
+nodeEl.append('text').attr('text-anchor','middle').attr('dy','0.35em').attr('font-size','12px').attr('font-weight','700').attr('fill','#fff').text(d=>d.name);
+sim.on('tick',()=>{linkEl.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);nodeEl.attr('transform',d=>`translate(${d.x},${d.y})`);});
+
+let score=0,answered=[false,false,false,false,false];
+function answer(btn,type,msg){const step=btn.closest('.quiz-step');const fb=step.querySelector('.quiz-feedback');const nxt=step.querySelector('.quiz-next');if(step.querySelector('.correct')||step.querySelector('.wrong'))return;btn.classList.add(type==='correct'?'correct':'wrong');fb.textContent=msg;fb.className='quiz-feedback show '+(type==='correct'?'ok':'err');nxt.style.display='inline-block';const idx=parseInt(step.id.replace('q',''))-1;if(type==='correct'&&!answered[idx]){score++;answered[idx]=true;}}
+function nextStep(n){document.getElementById('q'+n).classList.remove('active');const next=document.getElementById('q'+(n+1));if(next){next.classList.add('active');document.getElementById('stepInd').textContent=`第 ${n+1} 题 / 共 5 题`;document.getElementById('progFill').style.width=(n*20)+'%';}}
+function showResult(){document.getElementById('q5').classList.remove('active');document.getElementById('result').classList.add('active');document.getElementById('progFill').style.width='100%';const msgs=['继续加油！','还不错哦！','做得好！','非常棒！','满分！太厉害了！'];document.getElementById('scoreText').textContent=`得了 ${score} / 5 分 — ${msgs[score]}`;}
+function restartQuiz(){score=0;answered=[false,false,false,false,false];document.querySelectorAll('.quiz-step').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.quiz-option').forEach(o=>o.classList.remove('correct','wrong'));document.querySelectorAll('.quiz-feedback').forEach(f=>f.className='quiz-feedback');document.querySelectorAll('.quiz-next').forEach(b=>b.style.display='none');document.getElementById('q1').classList.add('active');document.getElementById('stepInd').textContent='第 1 题 / 共 5 题';document.getElementById('progFill').style.width='0%';}
+</script>
+
+<!-- #05 后测 -->
+<section id="posttest" class="section" style="margin:40px 0;">
+  <div class="section-title">🎯 后测：学会了吗？</div>
+  <div class="card" style="padding:24px;">
+    <p style="color:#666;margin-bottom:20px;font-size:14px;">完成学习后，用这两道题检验你的掌握程度！</p>
+    
+    <div class="quiz-item" style="margin-bottom:20px;padding:16px;background:#f8f9fa;border-radius:12px;border-left:4px solid var(--primary,#ff6b6b);">
+      <p style="font-weight:700;margin-bottom:10px;">Q1：68的十位数字是几？表示多少？</p>
+      <div class="options" style="display:flex;flex-direction:column;gap:8px;">
+        
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;border-radius:8px;background:#fff;border:2px solid #e9ecef;transition:all .2s;"
+          onmouseover="this.style.borderColor='var(--primary,#ff6b6b)'" onmouseout="this.style.borderColor='#e9ecef'">
+          <input type="radio" name="post_q0" value="0" style="accent-color:var(--primary,#ff6b6b);">
+          <span>A. 8个十</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;border-radius:8px;background:#fff;border:2px solid #e9ecef;transition:all .2s;"
+          onmouseover="this.style.borderColor='var(--primary,#ff6b6b)'" onmouseout="this.style.borderColor='#e9ecef'">
+          <input type="radio" name="post_q0" value="1" style="accent-color:var(--primary,#ff6b6b);">
+          <span>B. 6个十</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;border-radius:8px;background:#fff;border:2px solid #e9ecef;transition:all .2s;"
+          onmouseover="this.style.borderColor='var(--primary,#ff6b6b)'" onmouseout="this.style.borderColor='#e9ecef'">
+          <input type="radio" name="post_q0" value="2" style="accent-color:var(--primary,#ff6b6b);">
+          <span>C. 8个一</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;border-radius:8px;background:#fff;border:2px solid #e9ecef;transition:all .2s;"
+          onmouseover="this.style.borderColor='var(--primary,#ff6b6b)'" onmouseout="this.style.borderColor='#e9ecef'">
+          <input type="radio" name="post_q0" value="3" style="accent-color:var(--primary,#ff6b6b);">
+          <span>D. 6个一</span>
+        </label>
+      </div>
+      <div class="post-explain-0" style="display:none;margin-top:10px;padding:10px;background:#d4edda;border-radius:8px;color:#155724;font-size:14px;">
+        ✅ 68十位是6，表示6个十，即60
+      </div>
+    </div>
+    <div class="quiz-item" style="margin-bottom:20px;padding:16px;background:#f8f9fa;border-radius:12px;border-left:4px solid var(--primary,#ff6b6b);">
+      <p style="font-weight:700;margin-bottom:10px;">Q2：比56大，比60小的数有哪些？</p>
+      <div class="options" style="display:flex;flex-direction:column;gap:8px;">
+        
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;border-radius:8px;background:#fff;border:2px solid #e9ecef;transition:all .2s;"
+          onmouseover="this.style.borderColor='var(--primary,#ff6b6b)'" onmouseout="this.style.borderColor='#e9ecef'">
+          <input type="radio" name="post_q1" value="0" style="accent-color:var(--primary,#ff6b6b);">
+          <span>A. 57,58,59</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;border-radius:8px;background:#fff;border:2px solid #e9ecef;transition:all .2s;"
+          onmouseover="this.style.borderColor='var(--primary,#ff6b6b)'" onmouseout="this.style.borderColor='#e9ecef'">
+          <input type="radio" name="post_q1" value="1" style="accent-color:var(--primary,#ff6b6b);">
+          <span>B. 55,56,57</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;border-radius:8px;background:#fff;border:2px solid #e9ecef;transition:all .2s;"
+          onmouseover="this.style.borderColor='var(--primary,#ff6b6b)'" onmouseout="this.style.borderColor='#e9ecef'">
+          <input type="radio" name="post_q1" value="2" style="accent-color:var(--primary,#ff6b6b);">
+          <span>C. 60,61,62</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;border-radius:8px;background:#fff;border:2px solid #e9ecef;transition:all .2s;"
+          onmouseover="this.style.borderColor='var(--primary,#ff6b6b)'" onmouseout="this.style.borderColor='#e9ecef'">
+          <input type="radio" name="post_q1" value="3" style="accent-color:var(--primary,#ff6b6b);">
+          <span>D. 54,55,56</span>
+        </label>
+      </div>
+      <div class="post-explain-1" style="display:none;margin-top:10px;padding:10px;background:#d4edda;border-radius:8px;color:#155724;font-size:14px;">
+        ✅ 56<57<58<59<60，所以57、58、59在56和60之间
+      </div>
+    </div>
+    <button onclick="(function(){var score=0;
+    var sel0 = document.querySelector('input[name="post_q0"]:checked');
+    if(sel0) {
+      var exp = document.querySelector('.post-explain-0');
+      if(exp) { exp.style.display='block'; }
+      if(parseInt(sel0.value)===1) score++;
+    }
+    var sel1 = document.querySelector('input[name="post_q1"]:checked');
+    if(sel1) {
+      var exp = document.querySelector('.post-explain-1');
+      if(exp) { exp.style.display='block'; }
+      if(parseInt(sel1.value)===0) score++;
+    }var msg=score===2?'🌟完全掌握！你已经学会100以内数的认识了！':score===1?'💡部分掌握，再复习一下易错点吧！':'🔁需要再学一遍，别担心，多练习就能掌握！';alert('后测结果：'+score+'/2分！'+msg);})();"
+      style="margin-top:16px;padding:12px 32px;background:linear-gradient(135deg,var(--primary,#ff6b6b),var(--orange,#ff922b));color:#fff;border:none;border-radius:24px;font-size:16px;font-weight:700;cursor:pointer;">
+      提交后测 ✓
+    </button>
+  </div>
+</section>
+
+<!-- #17 记忆锚点 -->
+<section class="section" id="memory-anchor" style="margin:30px 0;">
+  <div class="section-title">🧠 记忆锚点</div>
+  <div class="card" style="background:linear-gradient(135deg,#f3e5f5,#e8d5f0);border:2px solid #ab47bc;border-radius:16px;padding:24px;">
+    <p style="font-size:16px;line-height:2;color:#4a148c;">记忆口诀：十位表示多少个十，个位表示多少个一。助记：35=3个十+5个一=30+5。口诀：高位是几十，低位是几一，合起来就是这个数。记住：百以内数都由十位和个位组成。</p>
+  </div>
+</section>
+
+<!-- #04 诊断性反馈 -->
+<section class="section" id="diagnosis-feedback" style="margin:30px 0;">
+  <div class="section-title">🔎 错因诊断</div>
+  <div class="card" style="padding:24px;background:linear-gradient(135deg,#fff8e1,#fff3cd);border:2px solid #ffc107;">
+    <p style="font-weight:700;color:#e67e00;margin-bottom:12px;">⚠️ 如果你做错了，看看错在哪里：</p>
+    <p style="font-size:15px;line-height:1.9;color:#333;">如果你认为35中3表示3个一，你忘记了位值原理。在数35中，3在十位，表示3个十=30；5在个位，表示5个一=5。位置决定数值！</p>
+    <div style="margin-top:16px;padding:12px;background:#fff;border-radius:10px;border-left:4px solid #ffc107;">
+      <p style="font-size:14px;color:#666;">💡 自查方法：把答案代回原题验证，如果算出矛盾就说明中间有错误！</p>
+    </div>
+  </div>
+</section>
+
+<!-- #06 Bloom层级练习 -->
+<section class="section" id="bloom-exercises" style="margin:30px 0;">
+  <div class="section-title">🎓 多层次思维训练</div>
+  <div class="card" style="padding:24px;">
+    <p style="color:#666;margin-bottom:16px;font-size:14px;">从记忆→理解→应用→分析，逐步深化你的理解！</p>
+    <div style="background:#e8f5e9;border-radius:12px;padding:16px;margin-bottom:12px;">
+      <p style="font-weight:700;color:#2e7d32;margin-bottom:8px;">📌 记忆层（识别）：选出下面哪个是100以内数的认识的正确说法：</p>
+      <p style="font-size:14px;color:#333;line-height:1.8;">解释：35中的3为什么表示30而不是3？</p>
+    </div>
+    <div style="background:#e3f2fd;border-radius:12px;padding:16px;margin-bottom:12px;">
+      <p style="font-weight:700;color:#1565c0;margin-bottom:8px;">🔍 理解层（解释）：用自己的话解释概念，并比较区别</p>
+      <p style="font-size:14px;color:#333;line-height:1.8;">分析：为什么同一个数字在不同位置代表不同的值？</p>
+    </div>
+    <div style="background:#fce4ec;border-radius:12px;padding:16px;">
+      <p style="font-weight:700;color:#880e4f;margin-bottom:8px;">⚡ 分析层（判断）：判断以下说法是否正确，并说明理由</p>
+      <p style="font-size:14px;color:#333;line-height:1.8;"></p>
+    </div>
+  </div>
+</section>
+
+<!-- #08 五镜头深层理解 -->
+<section class="section" id="deep-understanding" style="margin:30px 0;">
+  <div class="section-title">🔭 深层理解</div>
+  <div class="insight-box card" style="padding:24px;background:linear-gradient(135deg,#e8eaf6,#e3f2fd);border:2px solid #3f51b5;border-radius:16px;">
+    <p style="font-weight:900;font-size:18px;color:#1a237e;margin-bottom:12px;">💡 背后的原理</p>
+    <p style="font-size:16px;line-height:2;color:#333;">🔍 本质：这是"位值制"——数字的值取决于它的位置。35=3×10+5×1。正是因为有位值制，我们才能用10个数字（0-9）表示任意大的数！</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;">
+      <div style="padding:12px;background:rgba(255,255,255,.7);border-radius:10px;text-align:center;">
+        <div style="font-size:24px;margin-bottom:6px;">🔍</div>
+        <div style="font-size:13px;font-weight:700;color:#3f51b5;">看见它</div>
+        <div style="font-size:12px;color:#666;margin-top:4px;">在生活中找到100以内数的认识的例子</div>
+      </div>
+      <div style="padding:12px;background:rgba(255,255,255,.7);border-radius:10px;text-align:center;">
+        <div style="font-size:24px;margin-bottom:6px;">🔄</div>
+        <div style="font-size:13px;font-weight:700;color:#3f51b5;">迁移它</div>
+        <div style="font-size:12px;color:#666;margin-top:4px;">把100以内数的认识用到新情境中</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TTS 音频 #TeachAny Edge-TTS -->
+<div class="teachany-audio-intro" style="position:fixed;bottom:20px;right:20px;z-index:9999;">
+  <button onclick="document.getElementById('ta-audio').play()" 
+    style="background:linear-gradient(135deg,#ff6b6b,#ee5a24);color:#fff;border:none;
+    width:52px;height:52px;border-radius:50%;font-size:22px;cursor:pointer;
+    box-shadow:0 4px 16px rgba(255,107,107,0.4);display:flex;align-items:center;justify-content:center;"
+    title="播放课程介绍">🔊</button>
+  <audio id="ta-audio" src="audio/intro.mp3" preload="auto"></audio>
+</div>
+
+</body>
+</html>

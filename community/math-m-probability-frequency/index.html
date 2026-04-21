@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="course-id" content="math-m-probability-frequency">
+<meta name="course-subject" content="math">
+<title>用频率估计概率 · 九年级数学</title>
+<style>
+:root {
+  --bg:#f8fafc; --primary:#3b82f6; --secondary:#06b6d4; --accent:#f59e0b;
+  --card:#fff; --text:#1e293b; --muted:#64748b; --success:#10b981; --error:#ef4444;
+  --radius:14px; --shadow:0 4px 24px rgba(59,130,246,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;}
+.container{max-width:900px;margin:0 auto;padding:0 16px 60px;}
+.hero{background:linear-gradient(135deg,#059669,#10b981);color:#fff;padding:60px 40px 50px;border-radius:0 0 var(--radius) var(--radius);text-align:center;position:relative;overflow:hidden;}
+.hero::before{content:'🎰';font-size:120px;position:absolute;right:-20px;top:-20px;opacity:.15;}
+.hero h1{font-size:2.2rem;font-weight:800;margin-bottom:8px;}
+.hero p{font-size:1.1rem;opacity:.9;}
+.badge{display:inline-block;background:rgba(255,255,255,.2);border-radius:20px;padding:4px 16px;font-size:.85rem;margin-top:12px;}
+.progress-wrap{background:#e2e8f0;border-radius:10px;height:10px;margin:28px 0 8px;}
+.progress-bar{height:10px;background:linear-gradient(90deg,#059669,#10b981);border-radius:10px;transition:width .6s ease;}
+.section{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:32px;margin-top:24px;}
+.section-title{font-size:1.4rem;font-weight:700;color:#059669;margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+.section-title span{font-size:1.5rem;}
+.obj-list{list-style:none;display:grid;gap:10px;}
+.obj-list li{background:linear-gradient(90deg,#ecfdf5,#fff);border-left:4px solid #059669;border-radius:8px;padding:12px 16px;display:flex;align-items:flex-start;gap:10px;}
+.obj-list li::before{content:'✓';color:#059669;font-weight:700;flex-shrink:0;}
+.quiz-block{margin-bottom:20px;}
+.quiz-q{font-weight:600;margin-bottom:12px;font-size:1rem;}
+.quiz-opts{display:grid;gap:8px;}
+.opt-btn{border:2px solid #e2e8f0;background:#fff;border-radius:10px;padding:10px 16px;cursor:pointer;text-align:left;font-size:.95rem;transition:all .2s;}
+.opt-btn:hover{border-color:#059669;background:#ecfdf5;}
+.opt-btn.correct{border-color:var(--success);background:#d1fae5;color:#065f46;}
+.opt-btn.wrong{border-color:var(--error);background:#fee2e2;color:#7f1d1d;}
+.feedback{font-size:.9rem;margin-top:8px;padding:8px 12px;border-radius:8px;display:none;}
+.feedback.show{display:block;}
+.feedback.correct{background:#d1fae5;color:#065f46;}
+.feedback.wrong{background:#fee2e2;color:#7f1d1d;}
+.module{border:1px solid #e2e8f0;border-radius:var(--radius);overflow:hidden;margin-bottom:20px;}
+.module-head{background:linear-gradient(90deg,#059669,#10b981);color:#fff;padding:14px 20px;font-weight:700;font-size:1.05rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
+.module-body{padding:24px;display:none;}
+.module-body.open{display:block;}
+.abt{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:16px;margin-bottom:16px;}
+.abt-label{font-size:.75rem;font-weight:700;color:var(--accent);text-transform:uppercase;margin-bottom:6px;}
+.formula{background:#ecfdf5;border-radius:10px;padding:14px 20px;font-size:1.1rem;text-align:center;margin:12px 0;font-family:'Courier New',monospace;border-left:4px solid #059669;}
+canvas{display:block;margin:16px auto;border-radius:10px;}
+.check-btn{background:#059669;color:#fff;border:none;border-radius:8px;padding:8px 18px;cursor:pointer;font-size:.95rem;transition:background .2s;}
+.check-btn:hover{background:#047857;}
+.achievement-bar{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;}
+.ach{background:#fff;border:2px solid #e2e8f0;border-radius:12px;padding:10px 16px;font-size:.85rem;display:flex;align-items:center;gap:8px;transition:all .3s;}
+.ach.unlocked{border-color:var(--accent);background:#fffbeb;}
+.ach .ach-icon{font-size:1.3rem;}
+.score-display{text-align:center;padding:20px;font-size:1.8rem;font-weight:800;color:#059669;}
+.task-card{background:linear-gradient(135deg,#ecfdf5,#eff6ff);border:1px solid #6ee7b7;border-radius:var(--radius);padding:24px;}
+.task-step{display:flex;gap:14px;margin-bottom:14px;}
+.step-num{width:30px;height:30px;background:#059669;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;}
+.expand-card{background:linear-gradient(135deg,#f0fdf4,#eff6ff);border:1px solid #bbf7d0;border-radius:var(--radius);padding:24px;}
+.submit-btn{background:linear-gradient(90deg,#059669,#10b981);color:#fff;border:none;border-radius:10px;padding:12px 32px;font-size:1rem;font-weight:700;cursor:pointer;display:block;margin:20px auto 0;transition:transform .2s;}
+.submit-btn:hover{transform:scale(1.04);}
+/* Experiment controls */
+.exp-panel{border:2px dashed #6ee7b7;border-radius:var(--radius);padding:20px;margin:16px 0;}
+.exp-btn{background:#059669;color:#fff;border:none;border-radius:8px;padding:10px 22px;cursor:pointer;font-size:.95rem;margin:5px;transition:all .2s;}
+.exp-btn:hover{background:#047857;transform:scale(1.04);}
+.exp-btn.danger{background:#ef4444;}
+.exp-btn.danger:hover{background:#dc2626;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin:14px 0;}
+.stat-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;text-align:center;}
+.stat-box .stat-num{font-size:1.4rem;font-weight:700;color:#059669;}
+.stat-box .stat-label{font-size:.8rem;color:var(--muted);}
+/* Ball pit */
+.ball-pit{display:flex;flex-wrap:wrap;gap:4px;background:#f1f5f9;border-radius:10px;padding:10px;min-height:60px;max-height:200px;overflow-y:auto;}
+.ball-sm{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;color:#fff;}
+/* Frequency table */
+.freq-table{width:100%;border-collapse:collapse;margin:12px 0;}
+.freq-table th{background:#059669;color:#fff;padding:9px 12px;font-size:.9rem;}
+.freq-table td{padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:.9rem;text-align:center;}
+.freq-table tr:nth-child(even) td{background:#f0fdf4;}
+.freq-table .total-row td{font-weight:700;background:#ecfdf5;}
+@media(max-width:600px){
+  .hero{padding:40px 20px;}
+  .hero h1{font-size:1.6rem;}
+  .section{padding:20px;}
+  .stats-grid{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="container">
+    <div class="badge">📐 九年级数学 · 第25章</div>
+    <h1>用频率估计概率</h1>
+    <p>频率与概率的关系 · 大数定律 · 模拟实验</p>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Progress -->
+  <div class="section" style="padding:20px 24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <span style="font-weight:600;">学习进度</span>
+      <span id="progress-pct" style="color:#059669;font-weight:700;">0%</span>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
+    <div id="progress-label" style="font-size:.8rem;color:var(--muted);text-align:right;">开始学习！</div>
+  </div>
+
+  <!-- Objectives -->
+  <div class="section">
+    <div class="section-title"><span>🎯</span> 学习目标</div>
+    <ul class="obj-list">
+      <li>理解频率与概率的联系：频率是概率的近似值</li>
+      <li>掌握大数定律：实验次数越多，频率越接近概率</li>
+      <li>能用模拟实验的频率估计事件的概率</li>
+      <li>会用频率估计概率解决实际问题（天气、质检等）</li>
+    </ul>
+  </div>
+
+  <!-- Pre-test -->
+  <div class="section">
+    <div class="section-title"><span>🔍</span> 前测</div>
+    <div class="quiz-block" id="pre1">
+      <div class="quiz-q">1. 频率的定义是？</div>
+      <div class="quiz-opts">
+        <button class="opt-btn" onclick="checkOpt(this,'pre1','A','B')">A. 事件发生的次数</button>
+        <button class="opt-btn" onclick="checkOpt(this,'pre1','B','B')">B. 事件发生次数 / 实验总次数</button>
+        <button class="opt-btn" onclick="checkOpt(this,'pre1','C','B')">C. 事件发生的概率</button>
+        <button class="opt-btn" onclick="checkOpt(this,'pre1','D','B')">D. 总次数 / 事件次数</button>
+      </div>
+      <div class="feedback" id="fb-pre1"></div>
+    </div>
+    <div class="quiz-block" id="pre2">
+      <div class="quiz-q">2. 抛硬币100次，正面出现47次，正面频率为？</div>
+      <div class="quiz-opts">
+        <button class="opt-btn" onclick="checkOpt(this,'pre2','A','C')">A. 47</button>
+        <button class="opt-btn" onclick="checkOpt(this,'pre2','B','C')">B. 53/100</button>
+        <button class="opt-btn" onclick="checkOpt(this,'pre2','C','C')">C. 0.47</button>
+        <button class="opt-btn" onclick="checkOpt(this,'pre2','D','C')">D. 0.5</button>
+      </div>
+      <div class="feedback" id="fb-pre2"></div>
+    </div>
+    <div class="quiz-block" id="pre3">
+      <div class="quiz-q">3. 频率随实验次数增多会怎样变化？</div>
+      <div class="quiz-opts">
+        <button class="opt-btn" onclick="checkOpt(this,'pre3','A','C')">A. 越来越大</button>
+        <button class="opt-btn" onclick="checkOpt(this,'pre3','B','C')">B. 越来越小</button>
+        <button class="opt-btn" onclick="checkOpt(this,'pre3','C','C')">C. 趋近于概率（稳定）</button>
+        <button class="opt-btn" onclick="checkOpt(this,'pre3','D','C')">D. 无规律变化</button>
+      </div>
+      <div class="feedback" id="fb-pre3"></div>
+    </div>
+  </div>
+
+  <!-- Module 1: 频率vs概率 -->
+  <div class="section">
+    <div class="section-title"><span>📘</span> 知识模块一：频率与概率</div>
+    <div class="module">
+      <div class="module-head" onclick="toggleModule('m1')">
+        1.1 概念辨析 <span id="m1-arrow">▶</span>
+      </div>
+      <div class="module-body" id="m1">
+        <div class="abt">
+          <div class="abt-label">📖 ABT 故事</div>
+          <strong>And：</strong>历史上，数学家蒲丰做了2048次抛针实验，统计针与地板缝交叉的频率。<br>
+          <strong>But：</strong>但实验不可能无限做，如何用有限实验估计理论概率？<br>
+          <strong>Therefore：</strong>因此，大数定律告诉我们：<em>当实验次数足够大时，频率趋近于概率</em>！
+        </div>
+        <div class="formula">频率 = 事件发生次数(m) / 实验总次数(n)</div>
+        <table class="freq-table">
+          <thead><tr><th>概念</th><th>本质</th><th>是否固定</th><th>依赖什么</th></tr></thead>
+          <tbody>
+            <tr><td><strong>概率 P</strong></td><td>理论值，客观存在</td><td>✅ 固定</td><td>事件本身</td></tr>
+            <tr><td><strong>频率 f</strong></td><td>实验值，观察所得</td><td>❌ 每次不同</td><td>实验次数</td></tr>
+            <tr class="total-row"><td colspan="4">关系：n→∞时，f→P（大数定律）</td></tr>
+          </tbody>
+        </table>
+        <div class="quiz-block" id="q-diff">
+          <div class="quiz-q">下列说法正确的是？</div>
+          <div class="quiz-opts">
+            <button class="opt-btn" onclick="checkOpt(this,'q-diff','A','D')">A. 频率就是概率</button>
+            <button class="opt-btn" onclick="checkOpt(this,'q-diff','B','D')">B. 频率一定等于0.5（硬币）</button>
+            <button class="opt-btn" onclick="checkOpt(this,'q-diff','C','D')">C. 频率随次数增多一定越来越准确</button>
+            <button class="opt-btn" onclick="checkOpt(this,'q-diff','D','D')">D. 当实验次数足够大时，频率近似等于概率</button>
+          </div>
+          <div class="feedback" id="fb-q-diff"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Module 2: 大数定律模拟 -->
+  <div class="section">
+    <div class="section-title"><span>📗</span> 知识模块二：大数定律实验室</div>
+    <div class="module">
+      <div class="module-head" onclick="toggleModule('m2')">
+        2.1 🪙 抛硬币实验（模拟大数定律） <span id="m2-arrow">▶</span>
+      </div>
+      <div class="module-body" id="m2">
+        <div class="exp-panel">
+          <p><strong>实验目标：</strong>验证正面频率随次数增多趋近于0.5</p>
+          <div style="margin:12px 0;">
+            <button class="exp-btn" onclick="doFlip(10)">+10次</button>
+            <button class="exp-btn" onclick="doFlip(50)">+50次</button>
+            <button class="exp-btn" onclick="doFlip(200)">+200次</button>
+            <button class="exp-btn" onclick="doFlip(1000)">+1000次</button>
+            <button class="exp-btn danger" onclick="resetFlip()">重置</button>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-box"><div class="stat-num" id="flip-total">0</div><div class="stat-label">总次数</div></div>
+            <div class="stat-box"><div class="stat-num" id="flip-heads">0</div><div class="stat-label">正面次数</div></div>
+            <div class="stat-box"><div class="stat-num" id="flip-freq" style="font-size:1.2rem;">—</div><div class="stat-label">正面频率</div></div>
+            <div class="stat-box"><div class="stat-num" style="color:#94a3b8;">0.500</div><div class="stat-label">理论概率</div></div>
+          </div>
+          <canvas id="flip-chart" width="560" height="180"></canvas>
+          <p style="text-align:center;font-size:.85rem;color:var(--muted);">蓝线=频率，红虚线=理论概率0.5</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="module">
+      <div class="module-head" onclick="toggleModule('m3')">
+        2.2 🎲 掷骰子实验（验证等可能性） <span id="m3-arrow">▶</span>
+      </div>
+      <div class="module-body" id="m3">
+        <div class="exp-panel">
+          <p><strong>实验目标：</strong>验证每个点数出现频率趋近于1/6≈0.167</p>
+          <div style="margin:12px 0;">
+            <button class="exp-btn" onclick="rollDice(60)">掷60次</button>
+            <button class="exp-btn" onclick="rollDice(300)">掷300次</button>
+            <button class="exp-btn" onclick="rollDice(1200)">掷1200次</button>
+            <button class="exp-btn danger" onclick="resetDice()">重置</button>
+          </div>
+          <div id="dice-stats" style="margin:10px 0;"></div>
+          <canvas id="dice-chart" width="560" height="200"></canvas>
+          <p style="text-align:center;font-size:.85rem;color:var(--muted);">每个点数频率（红线=理论1/6）</p>
+        </div>
+        <div class="abt" style="margin-top:14px;">
+          <div class="abt-label">💡 结论</div>
+          无论掷多少次，每个点数频率都会趋近于1/6。这就是大数定律的威力——实验越多，越接近真实概率！
+        </div>
+      </div>
+    </div>
+
+    <div class="module">
+      <div class="module-head" onclick="toggleModule('m4')">
+        2.3 🎱 摸球实验（估计未知概率） <span id="m4-arrow">▶</span>
+      </div>
+      <div class="module-body" id="m4">
+        <div class="abt">
+          <div class="abt-label">📖 情景</div>
+          箱中有若干红球和白球，比例未知。通过反复抽取（放回）来估计红球概率！
+        </div>
+        <div id="box-info" style="background:#f0fdf4;border-radius:10px;padding:14px;margin:12px 0;font-weight:600;display:none;"></div>
+        <div class="exp-panel">
+          <p>🔒 袋中球的构成对你保密，通过摸球来猜测！</p>
+          <div style="margin:12px 0;">
+            <button class="exp-btn" onclick="drawBall(1)">摸1个球</button>
+            <button class="exp-btn" onclick="drawBall(20)">摸20个</button>
+            <button class="exp-btn" onclick="drawBall(100)">摸100个</button>
+            <button class="exp-btn danger" onclick="resetBalls()">重置</button>
+          </div>
+          <div class="ball-pit" id="ball-pit"></div>
+          <div class="stats-grid" style="margin-top:10px;">
+            <div class="stat-box"><div class="stat-num" id="ball-total">0</div><div class="stat-label">总次数</div></div>
+            <div class="stat-box"><div class="stat-num" id="ball-red" style="color:#ef4444;">0</div><div class="stat-label">红球次数</div></div>
+            <div class="stat-box"><div class="stat-num" id="ball-freq" style="font-size:1.2rem;">—</div><div class="stat-label">红球频率</div></div>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <span>你估计红球概率是：</span>
+            <input type="text" id="ball-guess" placeholder="如0.4或2/5" style="border:2px solid #6ee7b7;border-radius:8px;padding:7px 10px;font-size:.95rem;width:120px;outline:none;">
+            <button class="check-btn" onclick="revealBalls()">揭晓答案</button>
+          </div>
+          <div class="feedback" id="fb-balls"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Module 3: 应用 -->
+  <div class="section">
+    <div class="section-title"><span>📙</span> 知识模块三：实际应用</div>
+    <div class="module">
+      <div class="module-head" onclick="toggleModule('m5')">
+        3.1 用频率估计概率解题 <span id="m5-arrow">▶</span>
+      </div>
+      <div class="module-body" id="m5">
+        <div class="abt">
+          <div class="abt-label">📖 典型题型</div>
+          某地气象局统计近100年的7月份降雨情况，下雨天共1840天。
+        </div>
+        <p><strong>计算：</strong>7月份总天数 = 100×31 = 3100天</p>
+        <div class="formula">P(7月某天下雨) ≈ f = 1840/3100 ≈ 0.594</div>
+        <p>即该地7月下雨的概率约为<strong>59.4%</strong>。</p>
+        <div class="quiz-block" id="q-apply">
+          <div class="quiz-q">某工厂检测了500件产品，发现15件次品。估计该产品的次品率约为？</div>
+          <div class="quiz-opts">
+            <button class="opt-btn" onclick="checkOpt(this,'q-apply','A','B')">A. 15%</button>
+            <button class="opt-btn" onclick="checkOpt(this,'q-apply','B','B')">B. 3%</button>
+            <button class="opt-btn" onclick="checkOpt(this,'q-apply','C','B')">C. 0.3%</button>
+            <button class="opt-btn" onclick="checkOpt(this,'q-apply','D','B')">D. 30%</button>
+          </div>
+          <div class="feedback" id="fb-q-apply"></div>
+        </div>
+        <div class="abt" style="background:#fee2e2;border-color:#fca5a5;margin-top:12px;">
+          <div class="abt-label" style="color:var(--error);">💡 错误诊断</div>
+          <strong>常见错误：</strong>频率=次数本身（如写15，而非15/500）<br>
+          <strong>记忆：</strong>频率是<em>比值</em>，分母是总次数，结果在0到1之间
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 综合任务 -->
+  <div class="section">
+    <div class="section-title"><span>🏆</span> 综合任务：蒲丰投针实验估计π</div>
+    <div class="task-card">
+      <p>历史上，蒲丰通过投针实验估计π值：</p>
+      <ul style="margin:10px 0 10px 20px;">
+        <li>将平行线间距设为2，针长为1</li>
+        <li>针与线相交的概率 = 1/π</li>
+        <li>因此 π ≈ 总投次数 / 相交次数</li>
+      </ul>
+      <canvas id="buffon-canvas" width="500" height="200"></canvas>
+      <div style="text-align:center;margin:10px 0;">
+        <button class="exp-btn" onclick="buffonThrow(100)">投100根针</button>
+        <button class="exp-btn" onclick="buffonThrow(1000)">投1000根针</button>
+        <button class="exp-btn danger" onclick="buffonReset()">重置</button>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-box"><div class="stat-num" id="buf-n">0</div><div class="stat-label">投针次数</div></div>
+        <div class="stat-box"><div class="stat-num" id="buf-cross">0</div><div class="stat-label">相交次数</div></div>
+        <div class="stat-box"><div class="stat-num" id="buf-pi">—</div><div class="stat-label">估计π值</div></div>
+        <div class="stat-box"><div class="stat-num" style="color:#94a3b8;">3.1416</div><div class="stat-label">真实π值</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Post-test -->
+  <div class="section">
+    <div class="section-title"><span>📝</span> 后测</div>
+    <div class="quiz-block" id="post1">
+      <div class="quiz-q">1. 以下关于大数定律说法正确的是？</div>
+      <div class="quiz-opts">
+        <button class="opt-btn" onclick="checkPost(this,'post1','A','D',1)">A. 实验次数越多，频率一定等于概率</button>
+        <button class="opt-btn" onclick="checkPost(this,'post1','B','D',1)">B. 只要实验10次频率就接近概率</button>
+        <button class="opt-btn" onclick="checkPost(this,'post1','C','D',1)">C. 频率总是等于概率</button>
+        <button class="opt-btn" onclick="checkPost(this,'post1','D','D',1)">D. 实验次数越多，频率越趋近于概率</button>
+      </div>
+      <div class="feedback" id="fb-post1"></div>
+    </div>
+    <div class="quiz-block" id="post2">
+      <div class="quiz-q">2. 某射手射击200次，命中160次，估计命中率约为？</div>
+      <div class="quiz-opts">
+        <button class="opt-btn" onclick="checkPost(this,'post2','A','C',2)">A. 0.5</button>
+        <button class="opt-btn" onclick="checkPost(this,'post2','B','C',2)">B. 0.75</button>
+        <button class="opt-btn" onclick="checkPost(this,'post2','C','C',2)">C. 0.8</button>
+        <button class="opt-btn" onclick="checkPost(this,'post2','D','C',2)">D. 0.9</button>
+      </div>
+      <div class="feedback" id="fb-post2"></div>
+    </div>
+    <div class="quiz-block" id="post3">
+      <div class="quiz-q">3. 概率与频率最本质的区别是？</div>
+      <div class="quiz-opts">
+        <button class="opt-btn" onclick="checkPost(this,'post3','A','B',3)">A. 概率比频率大</button>
+        <button class="opt-btn" onclick="checkPost(this,'post3','B','B',3)">B. 概率是固定的，频率随实验变化</button>
+        <button class="opt-btn" onclick="checkPost(this,'post3','C','B',3)">C. 频率是理论值，概率是实验值</button>
+        <button class="opt-btn" onclick="checkPost(this,'post3','D','B',3)">D. 两者没有区别</button>
+      </div>
+      <div class="feedback" id="fb-post3"></div>
+    </div>
+    <div class="quiz-block" id="post4">
+      <div class="quiz-q">4. 掷骰子1次出现1点，能说明出现1点的概率是1吗？</div>
+      <div class="quiz-opts">
+        <button class="opt-btn" onclick="checkPost(this,'post4','A','B',4)">A. 能，因为出现了1点</button>
+        <button class="opt-btn" onclick="checkPost(this,'post4','B','B',4)">B. 不能，一次实验不能确定概率</button>
+        <button class="opt-btn" onclick="checkPost(this,'post4','C','B',4)">C. 能，频率等于概率</button>
+        <button class="opt-btn" onclick="checkPost(this,'post4','D','B',4)">D. 不能，骰子概率是0</button>
+      </div>
+      <div class="feedback" id="fb-post4"></div>
+    </div>
+    <div id="post-score" class="score-display" style="display:none;"></div>
+    <button class="submit-btn" onclick="submitPost()">提交后测 🎯</button>
+  </div>
+
+  <!-- Achievements -->
+  <div class="section">
+    <div class="section-title"><span>🏅</span> 成就系统</div>
+    <div class="achievement-bar">
+      <div class="ach" id="ach-start"><span class="ach-icon">🌟</span><span>课程启动</span></div>
+      <div class="ach" id="ach-pretest"><span class="ach-icon">🔍</span><span>前测完成</span></div>
+      <div class="ach" id="ach-flip"><span class="ach-icon">🪙</span><span>硬币实验</span></div>
+      <div class="ach" id="ach-dice"><span class="ach-icon">🎲</span><span>骰子实验</span></div>
+      <div class="ach" id="ach-pi"><span class="ach-icon">π</span><span>估计π值</span></div>
+      <div class="ach" id="ach-master"><span class="ach-icon">🎓</span><span>频率大师</span></div>
+    </div>
+  </div>
+
+  <!-- Expand -->
+  <div class="section">
+    <div class="section-title"><span>🚀</span> 拓展思考</div>
+    <div class="expand-card">
+      <p><strong>蒙特卡洛方法：</strong>用随机实验估计圆周率π——向正方形内随机投点，落在内切圆里的比例趋近于π/4！</p>
+      <p style="margin-top:10px;">这就是"用频率估计概率"在现代计算机科学中的应用，称为蒙特卡洛模拟。</p>
+      <p style="margin-top:14px;"><strong>思考题：</strong>为什么不能用"掷骰子3次出现2次6点"就说P(6点)=2/3？</p>
+      <button class="check-btn" style="margin-top:12px;" onclick="document.getElementById('exp-ans').style.display='block'">💡 查看分析</button>
+      <div id="exp-ans" style="display:none;margin-top:10px;background:#d1fae5;padding:10px 14px;border-radius:8px;color:#065f46;">
+        3次太少！大数定律需要足够大的n。小样本频率波动极大，不能代表概率。至少需要几百次甚至更多。
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const COURSE_ID = 'math-m-probability-frequency';
+const Progress = {
+  data: JSON.parse(localStorage.getItem('tap_'+COURSE_ID)||'{"score":0,"modules":[]}'),
+  save(){localStorage.setItem('tap_'+COURSE_ID,JSON.stringify(this.data));},
+  addScore(n){this.data.score=Math.min(100,this.data.score+n);this.save();updateProgress();},
+  markModule(id){if(!this.data.modules.includes(id)){this.data.modules.push(id);this.addScore(5);}},
+};
+const Achievements={
+  unlock(id){const el=document.getElementById(id);if(el&&!el.classList.contains('unlocked')){el.classList.add('unlocked');}}
+};
+Achievements.unlock('ach-start');
+
+function updateProgress(){
+  const pct=Math.min(Progress.data.score,100);
+  document.getElementById('progress-bar').style.width=pct+'%';
+  document.getElementById('progress-pct').textContent=pct+'%';
+  document.getElementById('progress-label').textContent=pct<30?'加油💪':pct<70?'进展很好！':'🎉出色！';
+}
+updateProgress();
+
+const answered={};
+function checkOpt(btn,blockId,selected,correct){
+  if(answered[blockId])return;
+  answered[blockId]=true;
+  const opts=btn.parentNode.querySelectorAll('.opt-btn');
+  opts.forEach(b=>b.disabled=true);
+  const ok=selected===correct;
+  btn.classList.add(ok?'correct':'wrong');
+  if(!ok)opts.forEach(b=>{if(b.textContent.startsWith(correct))b.classList.add('correct');});
+  const fb=document.getElementById('fb-'+blockId);
+  const exp={
+    'pre1':'频率=发生次数/总次数，是一个比值（0到1之间）。',
+    'pre2':'频率=47/100=0.47，不是47也不是0.5（0.5是理论概率）。',
+    'pre3':'大数定律：次数越多，频率趋近于概率。',
+    'q-diff':'频率是实验值，概率是理论值，当n足够大时两者近似相等。',
+    'q-apply':'次品率=15/500=3%=0.03。',
+  };
+  fb.textContent=(ok?'✅ 正确！':'❌ 错误。')+' '+(exp[blockId]||'');
+  fb.className='feedback show '+(ok?'correct':'wrong');
+  if(ok)Progress.addScore(3);
+  if(['pre1','pre2','pre3'].every(id=>answered[id]))Achievements.unlock('ach-pretest');
+}
+
+function toggleModule(id){
+  const body=document.getElementById(id);
+  const arrow=document.getElementById(id+'-arrow');
+  const isOpen=body.classList.contains('open');
+  body.classList.toggle('open');
+  arrow.textContent=isOpen?'▶':'▼';
+  if(!isOpen){
+    Progress.markModule(id);
+    if(id==='m2')initFlipChart();
+    if(id==='m3')resetDice();
+    if(id==='m4')resetBalls();
+  }
+}
+
+// ===== Coin flip =====
+let flipData={h:0,t:0,hist:[]};
+function initFlipChart(){drawFlipChart();}
+function doFlip(n){
+  for(let i=0;i<n;i++){
+    const h=Math.random()<0.5;
+    flipData.h+=h?1:0; flipData.t+=h?0:1;
+    flipData.hist.push(h?1:0);
+  }
+  const total=flipData.h+flipData.t;
+  document.getElementById('flip-total').textContent=total;
+  document.getElementById('flip-heads').textContent=flipData.h;
+  document.getElementById('flip-freq').textContent=total?(flipData.h/total).toFixed(4):'—';
+  drawFlipChart();
+  Achievements.unlock('ach-flip');
+  Progress.addScore(2);
+}
+function resetFlip(){flipData={h:0,t:0,hist:[]};doFlip(0);}
+function drawFlipChart(){
+  const c=document.getElementById('flip-chart');if(!c)return;
+  const ctx=c.getContext('2d'),w=c.width,h=c.height;
+  ctx.clearRect(0,0,w,h);ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,w,h);
+  const hist=flipData.hist;
+  if(hist.length<2){ctx.fillStyle='#94a3b8';ctx.font='14px sans-serif';ctx.textAlign='center';ctx.fillText('执行实验后显示图表',w/2,h/2);return;}
+  const pad={l:50,r:20,t:15,b:25};
+  // running freq
+  const rf=[];let s=0;
+  hist.forEach((v,i)=>{s+=v;rf.push(s/(i+1));});
+  // axes
+  ctx.strokeStyle='#cbd5e1';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,h-pad.b);ctx.lineTo(w-pad.r,h-pad.b);ctx.stroke();
+  // ref 0.5
+  ctx.strokeStyle='#ef4444';ctx.lineWidth=1.5;ctx.setLineDash([5,5]);
+  const y05=pad.t+(h-pad.b-pad.t)*0.5;
+  ctx.beginPath();ctx.moveTo(pad.l,y05);ctx.lineTo(w-pad.r,y05);ctx.stroke();
+  ctx.setLineDash([]);
+  // freq line
+  ctx.strokeStyle='#059669';ctx.lineWidth=2;ctx.beginPath();
+  rf.forEach((f,i)=>{
+    const x=pad.l+(w-pad.l-pad.r)*i/(hist.length-1);
+    const y=pad.t+(h-pad.b-pad.t)*(1-f);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });ctx.stroke();
+  [0,0.25,0.5,0.75,1].forEach(v=>{
+    const y=pad.t+(h-pad.b-pad.t)*(1-v);
+    ctx.fillStyle='#94a3b8';ctx.font='10px sans-serif';ctx.textAlign='right';ctx.fillText(v,pad.l-4,y+4);
+  });
+}
+
+// ===== Dice =====
+let diceData={counts:[0,0,0,0,0,0],n:0};
+function rollDice(n){
+  for(let i=0;i<n;i++){const r=Math.floor(Math.random()*6);diceData.counts[r]++;diceData.n++;}
+  const info=diceData.counts.map((c,i)=>`点${i+1}:${(c/diceData.n*100).toFixed(1)}%`).join('  ');
+  document.getElementById('dice-stats').textContent='总次数:'+diceData.n+' | '+info;
+  drawDiceChart();
+  Achievements.unlock('ach-dice');
+}
+function resetDice(){diceData={counts:[0,0,0,0,0,0],n:0};document.getElementById('dice-stats').textContent='';drawDiceChart();}
+function drawDiceChart(){
+  const c=document.getElementById('dice-chart');if(!c)return;
+  const ctx=c.getContext('2d'),w=c.width,h=c.height;
+  ctx.clearRect(0,0,w,h);ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,w,h);
+  const pad={l:50,r:20,t:15,b:30};
+  const bw=(w-pad.l-pad.r)/6-4;
+  const maxH=0.25;
+  // ref line
+  const yRef=pad.t+(h-pad.b-pad.t)*(1-1/6/maxH);
+  ctx.strokeStyle='#ef4444';ctx.lineWidth=1.5;ctx.setLineDash([5,5]);
+  ctx.beginPath();ctx.moveTo(pad.l,yRef);ctx.lineTo(w-pad.r,yRef);ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#ef4444';ctx.font='10px sans-serif';ctx.textAlign='left';ctx.fillText('1/6=0.167',pad.l+2,yRef-3);
+  const colors=['#3b82f6','#06b6d4','#059669','#f59e0b','#ef4444','#a855f7'];
+  diceData.counts.forEach((cnt,i)=>{
+    const freq=diceData.n?cnt/diceData.n:0;
+    const bh=(h-pad.b-pad.t)*freq/maxH;
+    const x=pad.l+(w-pad.l-pad.r)/6*i+2;
+    const y=h-pad.b-bh;
+    ctx.fillStyle=colors[i];
+    ctx.beginPath();ctx.roundRect(x,Math.max(y,pad.t),bw,Math.min(bh,h-pad.b-pad.t),4);ctx.fill();
+    ctx.fillStyle='#1e293b';ctx.font='10px sans-serif';ctx.textAlign='center';
+    if(diceData.n)ctx.fillText((freq*100).toFixed(1)+'%',x+bw/2,Math.max(y,pad.t)-4);
+    ctx.fillStyle='#64748b';ctx.fillText('●'+(i+1),x+bw/2,h-pad.b+16);
+  });
+  ctx.strokeStyle='#cbd5e1';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,h-pad.b);ctx.lineTo(w-pad.r,h-pad.b);ctx.stroke();
+  [0,0.05,0.1,0.15,0.2,0.25].forEach(v=>{
+    const y=pad.t+(h-pad.b-pad.t)*(1-v/maxH);
+    ctx.fillStyle='#94a3b8';ctx.font='10px sans-serif';ctx.textAlign='right';ctx.fillText(v.toFixed(2),pad.l-4,y+4);
+  });
+}
+
+// ===== Ball drawing =====
+const SECRET_RED=3,SECRET_TOTAL=8; // 3 red, 5 white
+let ballData={red:0,n:0};
+function resetBalls(){ballData={red:0,n:0};document.getElementById('ball-pit').innerHTML='';updateBallStats();}
+function drawBall(n){
+  const pit=document.getElementById('ball-pit');
+  for(let i=0;i<n;i++){
+    const isRed=Math.random()<SECRET_RED/SECRET_TOTAL;
+    ballData.red+=isRed?1:0; ballData.n++;
+    const b=document.createElement('div');
+    b.className='ball-sm';
+    b.style.background=isRed?'#ef4444':'#e2e8f0';
+    b.style.color=isRed?'#fff':'#64748b';
+    b.textContent=isRed?'红':'白';
+    pit.appendChild(b);
+  }
+  updateBallStats();
+}
+function updateBallStats(){
+  document.getElementById('ball-total').textContent=ballData.n;
+  document.getElementById('ball-red').textContent=ballData.red;
+  document.getElementById('ball-freq').textContent=ballData.n?(ballData.red/ballData.n).toFixed(4):'—';
+}
+function revealBalls(){
+  const guess=document.getElementById('ball-guess').value;
+  const actualFreq=ballData.n?(ballData.red/ballData.n).toFixed(4):'未实验';
+  const fb=document.getElementById('fb-balls');
+  fb.innerHTML=`<strong>揭晓！</strong>袋中有${SECRET_RED}红${SECRET_TOTAL-SECRET_RED}白，红球概率=3/8=<strong>0.375</strong><br>
+    你的实验频率：${actualFreq}<br>你的猜测：${guess||'未填写'}`;
+  fb.className='feedback show correct';
+  document.getElementById('box-info').textContent='袋中：3红5白，概率=3/8=0.375';
+  document.getElementById('box-info').style.display='block';
+  Progress.addScore(8);
+}
+
+// ===== Buffon's Needle =====
+let bufData={n:0,cross:0};
+const BUF_W=500,BUF_H=200,LINE_SPACING=40;
+function buffonReset(){bufData={n:0,cross:0};updateBuf();drawBuffon([]);}
+let needles=[];
+function buffonThrow(n){
+  for(let i=0;i<n;i++){
+    const x=Math.random()*BUF_W;
+    const y=Math.random()*BUF_H;
+    const angle=Math.random()*Math.PI;
+    const halfLen=20;
+    const x1=x-Math.cos(angle)*halfLen,y1=y-Math.sin(angle)*halfLen;
+    const x2=x+Math.cos(angle)*halfLen,y2=y+Math.sin(angle)*halfLen;
+    // check crossing (needle length=halfLen*2, line spacing=LINE_SPACING)
+    // simplified: crossing if center within LINE_SPACING/2 of a line
+    const lines=[];
+    for(let l=0;l<=BUF_H;l+=LINE_SPACING)lines.push(l);
+    let crosses=false;
+    lines.forEach(ly=>{if(Math.min(y1,y2)<=ly&&Math.max(y1,y2)>=ly)crosses=true;});
+    bufData.n++;if(crosses)bufData.cross++;
+    if(needles.length<500)needles.push({x1,y1,x2,y2,crosses});
+  }
+  updateBuf();
+  drawBuffon(needles.slice(-200));
+  Achievements.unlock('ach-pi');
+  Progress.addScore(3);
+}
+function updateBuf(){
+  document.getElementById('buf-n').textContent=bufData.n;
+  document.getElementById('buf-cross').textContent=bufData.cross;
+  const piEst=bufData.cross?((2*20*bufData.n)/(LINE_SPACING*bufData.cross)).toFixed(5):'—';
+  document.getElementById('buf-pi').textContent=piEst;
+}
+function drawBuffon(nds){
+  const c=document.getElementById('buffon-canvas');if(!c)return;
+  const ctx=c.getContext('2d'),w=c.width,h=c.height;
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle='#f0fdf4';ctx.fillRect(0,0,w,h);
+  // lines
+  ctx.strokeStyle='#059669';ctx.lineWidth=1.5;
+  for(let y=0;y<=h;y+=LINE_SPACING){
+    ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();
+  }
+  // needles
+  nds.forEach(({x1,y1,x2,y2,crosses})=>{
+    ctx.strokeStyle=crosses?'#ef4444':'#94a3b8';
+    ctx.lineWidth=1.2;
+    ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+  });
+}
+drawBuffon([]);
+
+const postAns={},correctPost={1:'D',2:'C',3:'B',4:'B'};
+function checkPost(btn,blockId,selected,correct,num){
+  if(postAns[num])return;
+  postAns[num]=selected;
+  const opts=btn.parentNode.querySelectorAll('.opt-btn');
+  opts.forEach(b=>b.disabled=true);
+  const ok=selected===correct;
+  btn.classList.add(ok?'correct':'wrong');
+  if(!ok)opts.forEach(b=>{if(b.textContent.startsWith(correct))b.classList.add('correct');});
+  const fb=document.getElementById('fb-post'+num);
+  const exp={1:'大数定律说"趋近"，不是"等于"。10次太少，需要足够大的n。',2:'160/200=0.8。',3:'概率是固定的理论值；频率每次实验都可能不同。',4:'只有1次不构成统计意义，需要大量实验。'};
+  fb.textContent=(ok?'✅ 正确！':'❌ 错误。')+' '+exp[num];
+  fb.className='feedback show '+(ok?'correct':'wrong');
+}
+function submitPost(){
+  let score=0;
+  [1,2,3,4].forEach(n=>{if(postAns[n]===correctPost[n])score+=25;});
+  document.getElementById('post-score').textContent='后测得分：'+score+'分';
+  document.getElementById('post-score').style.display='block';
+  if(score>=75)Achievements.unlock('ach-master');
+  Progress.addScore(15);
+}
+</script>
+</body>
+</html>

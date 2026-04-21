@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="course-id" content="math-m-probability-basic">
+<meta name="course-subject" content="math">
+<title>概率初步 · 九年级数学</title>
+<style>
+:root {
+  --bg:#f8fafc; --primary:#3b82f6; --secondary:#06b6d4; --accent:#f59e0b;
+  --card:#fff; --text:#1e293b; --muted:#64748b; --success:#10b981; --error:#ef4444;
+  --radius:14px; --shadow:0 4px 24px rgba(59,130,246,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;}
+.container{max-width:900px;margin:0 auto;padding:0 16px 60px;}
+.hero{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;padding:60px 40px 50px;border-radius:0 0 var(--radius) var(--radius);text-align:center;position:relative;overflow:hidden;}
+.hero::before{content:'🎲';font-size:120px;position:absolute;right:-20px;top:-20px;opacity:.15;}
+.hero h1{font-size:2.2rem;font-weight:800;margin-bottom:8px;}
+.hero p{font-size:1.1rem;opacity:.9;}
+.badge{display:inline-block;background:rgba(255,255,255,.2);border-radius:20px;padding:4px 16px;font-size:.85rem;margin-top:12px;}
+.progress-wrap{background:#e2e8f0;border-radius:10px;height:10px;margin:28px 0 8px;}
+.progress-bar{height:10px;background:linear-gradient(90deg,#7c3aed,#a855f7);border-radius:10px;transition:width .6s ease;}
+.section{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:32px;margin-top:24px;}
+.section-title{font-size:1.4rem;font-weight:700;color:#7c3aed;margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+.section-title span{font-size:1.5rem;}
+.obj-list{list-style:none;display:grid;gap:10px;}
+.obj-list li{background:linear-gradient(90deg,#f5f3ff,#fff);border-left:4px solid #7c3aed;border-radius:8px;padding:12px 16px;display:flex;align-items:flex-start;gap:10px;}
+.obj-list li::before{content:'✓';color:#7c3aed;font-weight:700;flex-shrink:0;}
+.quiz-block{margin-bottom:20px;}
+.quiz-q{font-weight:600;margin-bottom:12px;font-size:1rem;}
+.quiz-opts{display:grid;gap:8px;}
+.opt-btn{border:2px solid #e2e8f0;background:#fff;border-radius:10px;padding:10px 16px;cursor:pointer;text-align:left;font-size:.95rem;transition:all .2s;}
+.opt-btn:hover{border-color:#7c3aed;background:#f5f3ff;}
+.opt-btn.correct{border-color:var(--success);background:#d1fae5;color:#065f46;}
+.opt-btn.wrong{border-color:var(--error);background:#fee2e2;color:#7f1d1d;}
+.feedback{font-size:.9rem;margin-top:8px;padding:8px 12px;border-radius:8px;display:none;}
+.feedback.show{display:block;}
+.feedback.correct{background:#d1fae5;color:#065f46;}
+.feedback.wrong{background:#fee2e2;color:#7f1d1d;}
+.module{border:1px solid #e2e8f0;border-radius:var(--radius);overflow:hidden;margin-bottom:20px;}
+.module-head{background:linear-gradient(90deg,#7c3aed,#a855f7);color:#fff;padding:14px 20px;font-weight:700;font-size:1.05rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
+.module-body{padding:24px;display:none;}
+.module-body.open{display:block;}
+.abt{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:16px;margin-bottom:16px;}
+.abt-label{font-size:.75rem;font-weight:700;color:var(--accent);text-transform:uppercase;margin-bottom:6px;}
+.formula{background:#f5f3ff;border-radius:10px;padding:14px 20px;font-size:1.15rem;text-align:center;margin:12px 0;font-family:'Courier New',monospace;border-left:4px solid #7c3aed;}
+canvas{display:block;margin:16px auto;border-radius:10px;}
+.check-btn{background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:8px 18px;cursor:pointer;font-size:.95rem;transition:background .2s;}
+.check-btn:hover{background:#6d28d9;}
+.achievement-bar{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;}
+.ach{background:#fff;border:2px solid #e2e8f0;border-radius:12px;padding:10px 16px;font-size:.85rem;display:flex;align-items:center;gap:8px;transition:all .3s;}
+.ach.unlocked{border-color:var(--accent);background:#fffbeb;}
+.ach .ach-icon{font-size:1.3rem;}
+.score-display{text-align:center;padding:20px;font-size:1.8rem;font-weight:800;color:#7c3aed;}
+.task-card{background:linear-gradient(135deg,#f5f3ff,#eff6ff);border:1px solid #ddd6fe;border-radius:var(--radius);padding:24px;}
+.task-step{display:flex;gap:14px;margin-bottom:14px;}
+.step-num{width:30px;height:30px;background:#7c3aed;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;}
+.expand-card{background:linear-gradient(135deg,#fdf4ff,#eff6ff);border:1px solid #e9d5ff;border-radius:var(--radius);padding:24px;}
+.submit-btn{background:linear-gradient(90deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:10px;padding:12px 32px;font-size:1rem;font-weight:700;cursor:pointer;display:block;margin:20px auto 0;transition:transform .2s;}
+.submit-btn:hover{transform:scale(1.04);}
+.sample-space{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0;}
+.event-item{background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;padding:5px 10px;font-size:.85rem;}
+.event-item.favorable{background:#d1fae5;border-color:#6ee7b7;}
+/* Coin flip animation */
+.coin-container{text-align:center;margin:16px 0;}
+.coin{width:80px;height:80px;border-radius:50%;display:inline-block;font-size:2.5rem;line-height:80px;cursor:pointer;transition:transform .1s;box-shadow:0 4px 16px rgba(0,0,0,.2);user-select:none;}
+.coin:hover{transform:scale(1.05);}
+.coin.heads{background:linear-gradient(135deg,#fbbf24,#f59e0b);}
+.coin.tails{background:linear-gradient(135deg,#94a3b8,#64748b);}
+.flip-btn{background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:10px 24px;cursor:pointer;font-size:1rem;margin:10px;transition:all .2s;}
+.flip-btn:hover{background:#6d28d9;transform:scale(1.05);}
+.stats-row{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin:12px 0;}
+.stat-box{background:#f5f3ff;border-radius:10px;padding:12px 20px;text-align:center;min-width:80px;}
+.stat-box .stat-num{font-size:1.5rem;font-weight:700;color:#7c3aed;}
+.stat-box .stat-label{font-size:.8rem;color:var(--muted);}
+/* Die display */
+.die{width:60px;height:60px;background:#fff;border:2px solid #e2e8f0;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:2rem;margin:4px;box-shadow:0 2px 8px rgba(0,0,0,.1);}
+.die.selected{border-color:#7c3aed;background:#f5f3ff;}
+/* Probability calc display */
+.prob-display{font-size:1.2rem;font-weight:600;text-align:center;padding:12px;background:#f5f3ff;border-radius:10px;margin:12px 0;}
+@media(max-width:600px){
+  .hero{padding:40px 20px;}
+  .hero h1{font-size:1.6rem;}
+  .section{padding:20px;}
+}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="container">
+    <div class="badge">📐 九年级数学 · 第25章</div>
+    <h1>概率初步</h1>
+    <p>随机事件 · 古典概型 · 概率的基本性质</p>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Progress -->
+  <div class="section" style="padding:20px 24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <span style="font-weight:600;">学习进度</span>
+      <span id="progress-pct" style="color:#7c3aed;font-weight:700;">0%</span>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
+    <div id="progress-label" style="font-size:.8rem;color:var(--muted);text-align:right;">开始学习！</div>
+  </div>
+
+  <!-- Objectives -->
+  <div class="section">
+    <div class="section-title"><span>🎯</span> 学习目标</div>
+    <ul class="obj-list">
+      <li>区分确定性事件与随机事件，理解概率的含义</li>
+      <li>理解古典概型的特征，掌握古典概型概率公式</li>
+      <li>能列举样本空间，计算随机事件的概率</li>
+      <li>掌握互斥事件与对立事件，能用加法公式计算</li>
+    </ul>
+  </div>
+
+  <!-- Pre-test -->
+  <div class="section">
+    <div class="section-title"><span>🔍</span> 前测</div>
+    <div class="quiz-block" id="pre1">
+      <div class="quiz-q">1. 下列哪个是随机事件？</div>
+      <div class="quiz-opts">
+        <button class="opt-btn" onclick="checkOpt(this,'pre1','A','C')">A. 太阳从东方升起</button>
+        <button class="opt-btn" onclick="checkOpt(this,'pre1','B','C')">B. 三角形内角和为180°</button>
+        <button class="opt-btn" onclick="checkOpt(this,'pre1','C','C')">C. 明天下雨</button>
+        <button class="opt-btn" onclick="checkOpt(this,'pre1','D','C')">D. 水在100°C沸腾</button>
+      </div>
+      <div class="feedback" id="fb-pre1"></div>
+    </div>
+    <div class="quiz-block" id="pre2">
+      <div class="quiz-q">2. 掷一枚均匀骰子，出现6点的概率是？</div>
+      <div class="quiz-opts">
+        <button class="opt-btn" onclick="checkOpt(this,'pre2','A','B')">A. 1/3</button>
+        <button class="opt-btn" onclick="checkOpt(this,'pre2','B','B')">B. 1/6</button>
+        <button class="opt-btn" onclick="checkOpt(this,'pre2','C','B')">C. 1/2</button>
+        <button class="opt-btn" onclick="checkOpt(this,'pre2','D','B')">D. 1</button>
+      </div>
+      <div class="feedback" id="fb-pre2"></div>
+    </div>
+  </div>
+
+  <!-- Module 1: 随机事件 -->
+  <div class="section">
+    <div class="section-title"><span>📘</span> 知识模块一：随机事件与概率</div>
+    <div class="module">
+      <div class="module-head" onclick="toggleModule('m1')">
+        1.1 三类事件 <span id="m1-arrow">▶</span>
+      </div>
+      <div class="module-body" id="m1">
+        <div class="abt">
+          <div class="abt-label">📖 ABT 故事</div>
+          <strong>And：</strong>我们生活中每天都在面对各种各样的事情。<br>
+          <strong>But：</strong>但有些事一定发生，有些不可能发生，有些则可能发生也可能不发生……<br>
+          <strong>Therefore：</strong>因此，我们把事件分为：<em>必然事件、不可能事件、随机事件</em>。
+        </div>
+        <table style="width:100%;border-collapse:collapse;margin:12px 0;">
+          <thead><tr style="background:#7c3aed;color:#fff;">
+            <th style="padding:10px;border-radius:4px;">事件类型</th><th style="padding:10px;">定义</th><th style="padding:10px;">概率</th><th style="padding:10px;">例子</th>
+          </tr></thead>
+          <tbody>
+            <tr><td style="padding:9px 10px;border-bottom:1px solid #e2e8f0;font-weight:600;">必然事件</td><td style="padding:9px 10px;border-bottom:1px solid #e2e8f0;">一定发生</td><td style="padding:9px 10px;border-bottom:1px solid #e2e8f0;color:var(--success);font-weight:700;">P=1</td><td style="padding:9px 10px;border-bottom:1px solid #e2e8f0;">太阳明天升起</td></tr>
+            <tr style="background:#f8fafc;"><td style="padding:9px 10px;border-bottom:1px solid #e2e8f0;font-weight:600;">不可能事件</td><td style="padding:9px 10px;border-bottom:1px solid #e2e8f0;">一定不发生</td><td style="padding:9px 10px;border-bottom:1px solid #e2e8f0;color:var(--error);font-weight:700;">P=0</td><td style="padding:9px 10px;border-bottom:1px solid #e2e8f0;">掷骰子出现7</td></tr>
+            <tr><td style="padding:9px 10px;font-weight:600;">随机事件</td><td style="padding:9px 10px;">可能发生，也可能不发生</td><td style="padding:9px 10px;color:#7c3aed;font-weight:700;">0&lt;P&lt;1</td><td style="padding:9px 10px;">抛硬币得正面</td></tr>
+          </tbody>
+        </table>
+        <div class="quiz-block" id="q-events">
+          <div class="quiz-q">概率P的取值范围是？</div>
+          <div class="quiz-opts">
+            <button class="opt-btn" onclick="checkOpt(this,'q-events','A','C')">A. P &gt; 0</button>
+            <button class="opt-btn" onclick="checkOpt(this,'q-events','B','C')">B. 0 &lt; P &lt; 1</button>
+            <button class="opt-btn" onclick="checkOpt(this,'q-events','C','C')">C. 0 ≤ P ≤ 1</button>
+            <button class="opt-btn" onclick="checkOpt(this,'q-events','D','C')">D. P ≥ 1</button>
+          </div>
+          <div class="feedback" id="fb-q-events"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Module 2: 古典概型 -->
+  <div class="section">
+    <div class="section-title"><span>📗</span> 知识模块二：古典概型</div>
+    <div class="module">
+      <div class="module-head" onclick="toggleModule('m2')">
+        2.1 古典概型的定义与公式 <span id="m2-arrow">▶</span>
+      </div>
+      <div class="module-body" id="m2">
+        <div class="abt">
+          <div class="abt-label">📖 两个条件</div>
+          古典概型成立的前提：<br>
+          ① <strong>有限性</strong>：样本空间中的基本事件数目有限<br>
+          ② <strong>等可能性</strong>：每个基本事件发生的概率相等
+        </div>
+        <div class="formula">P(A) = 事件A包含的基本事件数 / 样本空间基本事件总数 = m/n</div>
+        <p><strong>例：</strong>掷一枚骰子，样本空间 Ω = {1,2,3,4,5,6}，n=6</p>
+        <p>事件A"出现偶数" = {2,4,6}，m=3</p>
+        <div class="formula">P(A) = 3/6 = 1/2</div>
+        <p style="margin-top:12px;"><strong>🎮 互动：骰子样本空间</strong></p>
+        <p>标记"事件B：出现的点数 &gt; 4"：</p>
+        <div class="sample-space" id="dice-space"></div>
+        <div class="prob-display" id="dice-prob">P(B) = ?</div>
+        <p style="font-size:.85rem;color:var(--muted);">点击格子标记属于事件B的结果</p>
+        <button class="check-btn" onclick="checkDice()">检验</button>
+        <div class="feedback" id="fb-dice"></div>
+      </div>
+    </div>
+
+    <div class="module">
+      <div class="module-head" onclick="toggleModule('m3')">
+        2.2 抛硬币模拟实验 <span id="m3-arrow">▶</span>
+      </div>
+      <div class="module-body" id="m3">
+        <div class="abt">
+          <div class="abt-label">🪙 互动模拟</div>
+          理论上，抛均匀硬币正面概率P=1/2。让我们通过模拟验证！
+        </div>
+        <div class="coin-container">
+          <div class="coin heads" id="the-coin">👑</div>
+        </div>
+        <div style="text-align:center;">
+          <button class="flip-btn" onclick="flipOnce()">🪙 抛一次</button>
+          <button class="flip-btn" onclick="flipMany(50)">⚡ 抛50次</button>
+          <button class="flip-btn" onclick="flipMany(200)">🚀 抛200次</button>
+          <button class="flip-btn" style="background:#ef4444;" onclick="resetCoin()">重置</button>
+        </div>
+        <div class="stats-row">
+          <div class="stat-box"><div class="stat-num" id="n-heads">0</div><div class="stat-label">正面次数</div></div>
+          <div class="stat-box"><div class="stat-num" id="n-tails">0</div><div class="stat-label">反面次数</div></div>
+          <div class="stat-box"><div class="stat-num" id="n-total">0</div><div class="stat-label">总次数</div></div>
+          <div class="stat-box"><div class="stat-num" id="freq-heads">—</div><div class="stat-label">正面频率</div></div>
+        </div>
+        <canvas id="coin-chart" width="560" height="160"></canvas>
+        <p style="text-align:center;font-size:.85rem;color:var(--muted);">蓝线：正面频率 | 红虚线：理论概率0.5</p>
+      </div>
+    </div>
+
+    <div class="module">
+      <div class="module-head" onclick="toggleModule('m4')">
+        2.3 两事件的概率：互斥与对立 <span id="m4-arrow">▶</span>
+      </div>
+      <div class="module-body" id="m4">
+        <div class="abt">
+          <div class="abt-label">📖 关键定义</div>
+          <strong>互斥事件：</strong>两事件不能同时发生（无公共结果）<br>
+          P(A∪B) = P(A) + P(B)<br><br>
+          <strong>对立事件（互补）：</strong>两事件互斥且合并为全集（恰好一个发生）<br>
+          P(A) + P(Ā) = 1 → P(Ā) = 1 - P(A)
+        </div>
+        <p><strong>例：</strong>掷骰子，A={1,2}，B={3,4}，两者互斥：</p>
+        <div class="formula">P(A∪B) = P(A)+P(B) = 2/6+2/6 = 2/3</div>
+        <p><strong>对立事件例：</strong>A="出现奇数"，Ā="出现偶数"</p>
+        <div class="formula">P(A) = 1/2，P(Ā) = 1-1/2 = 1/2</div>
+        <div class="quiz-block" id="q-contra">
+          <div class="quiz-q">掷骰子，A="出现1或2"，P(A)=1/3，则P(Ā)=？</div>
+          <div class="quiz-opts">
+            <button class="opt-btn" onclick="checkOpt(this,'q-contra','A','C')">A. 1/3</button>
+            <button class="opt-btn" onclick="checkOpt(this,'q-contra','B','C')">B. 1/2</button>
+            <button class="opt-btn" onclick="checkOpt(this,'q-contra','C','C')">C. 2/3</button>
+            <button class="opt-btn" onclick="checkOpt(this,'q-contra','D','C')">D. 1/6</button>
+          </div>
+          <div class="feedback" id="fb-q-contra"></div>
+        </div>
+        <div class="abt" style="background:#fee2e2;border-color:#fca5a5;margin-top:12px;">
+          <div class="abt-label" style="color:var(--error);">💡 错误诊断</div>
+          <strong>常见混淆：</strong>互斥≠对立！对立事件一定互斥，互斥事件不一定对立。<br>
+          <strong>例：</strong>A={1}和B={2}互斥，但不是对立（对立应该是 Ā={2,3,4,5,6}）。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Module 3: 概率计算 -->
+  <div class="section">
+    <div class="section-title"><span>📙</span> 知识模块三：概率计算练习</div>
+    <div class="module">
+      <div class="module-head" onclick="toggleModule('m5')">
+        3.1 摸球问题 <span id="m5-arrow">▶</span>
+      </div>
+      <div class="module-body" id="m5">
+        <div class="abt">
+          <div class="abt-label">🎱 问题设置</div>
+          袋中有3个红球、2个蓝球、1个黄球（共6个，外观相同）。随机摸1个球：
+        </div>
+        <div id="bag-balls" style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;"></div>
+        <p>① P(摸到红球) = <span style="color:#ef4444;font-weight:700;">3/6 = 1/2</span></p>
+        <p>② P(摸到蓝球) = <span style="color:#3b82f6;font-weight:700;">2/6 = 1/3</span></p>
+        <p>③ P(摸到黄球) = <span style="color:#f59e0b;font-weight:700;">1/6</span></p>
+        <p style="margin-top:8px;">④ P(非红球) = 1 - P(红球) = 1 - 1/2 = <strong>1/2</strong></p>
+        <div class="quiz-block" id="q-ball">
+          <div class="quiz-q">从上述袋中摸球，P(红球或蓝球)=？（红蓝互斥）</div>
+          <div class="quiz-opts">
+            <button class="opt-btn" onclick="checkOpt(this,'q-ball','A','C')">A. 1/2</button>
+            <button class="opt-btn" onclick="checkOpt(this,'q-ball','B','C')">B. 1/3</button>
+            <button class="opt-btn" onclick="checkOpt(this,'q-ball','C','C')">C. 5/6</button>
+            <button class="opt-btn" onclick="checkOpt(this,'q-ball','D','C')">D. 1/6</button>
+          </div>
+          <div class="feedback" id="fb-q-ball"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 综合任务 -->
+  <div class="section">
+    <div class="section-title"><span>🏆</span> 综合任务：转盘概率</div>
+    <div class="task-card">
+      <p>一个转盘被分成6等份，标注：1,1,2,3,4,5（等概率）</p>
+      <canvas id="spinner-canvas" width="200" height="200"></canvas>
+      <div style="text-align:center;">
+        <button class="flip-btn" onclick="spinWheel()">🎯 旋转转盘</button>
+      </div>
+      <div id="spin-result" style="text-align:center;margin:10px 0;font-size:1.1rem;font-weight:600;"></div>
+      <div class="task-step" style="margin-top:16px;">
+        <div class="step-num">1</div>
+        <div>P(出现1) = <span id="ans1" style="color:#7c3aed;">?</span></div>
+      </div>
+      <div class="task-step">
+        <div class="step-num">2</div>
+        <div>P(出现偶数) = <span id="ans2" style="color:#7c3aed;">?</span></div>
+      </div>
+      <div class="task-step">
+        <div class="step-num">3</div>
+        <div>P(出现数字 ≥ 3) = <span id="ans3" style="color:#7c3aed;">?</span></div>
+      </div>
+      <button class="check-btn" onclick="revealSpinner()">📊 查看计算过程</button>
+      <div class="feedback" id="fb-spinner"></div>
+    </div>
+  </div>
+
+  <!-- Post-test -->
+  <div class="section">
+    <div class="section-title"><span>📝</span> 后测</div>
+    <div class="quiz-block" id="post1">
+      <div class="quiz-q">1. 掷两枚硬币，共有几种等可能基本事件？</div>
+      <div class="quiz-opts">
+        <button class="opt-btn" onclick="checkPost(this,'post1','A','C',1)">A. 2</button>
+        <button class="opt-btn" onclick="checkPost(this,'post1','B','C',1)">B. 3</button>
+        <button class="opt-btn" onclick="checkPost(this,'post1','C','C',1)">C. 4</button>
+        <button class="opt-btn" onclick="checkPost(this,'post1','D','C',1)">D. 6</button>
+      </div>
+      <div class="feedback" id="fb-post1"></div>
+    </div>
+    <div class="quiz-block" id="post2">
+      <div class="quiz-q">2. 袋中5个球：2红3白，随机取1球，P(白球)=？</div>
+      <div class="quiz-opts">
+        <button class="opt-btn" onclick="checkPost(this,'post2','A','C',2)">A. 2/5</button>
+        <button class="opt-btn" onclick="checkPost(this,'post2','B','C',2)">B. 1/2</button>
+        <button class="opt-btn" onclick="checkPost(this,'post2','C','C',2)">C. 3/5</button>
+        <button class="opt-btn" onclick="checkPost(this,'post2','D','C',2)">D. 1/3</button>
+      </div>
+      <div class="feedback" id="fb-post2"></div>
+    </div>
+    <div class="quiz-block" id="post3">
+      <div class="quiz-q">3. P(A)=0.3，P(B)=0.4，A与B互斥，则P(A∪B)=？</div>
+      <div class="quiz-opts">
+        <button class="opt-btn" onclick="checkPost(this,'post3','A','B',3)">A. 0.12</button>
+        <button class="opt-btn" onclick="checkPost(this,'post3','B','B',3)">B. 0.7</button>
+        <button class="opt-btn" onclick="checkPost(this,'post3','C','B',3)">C. 0.5</button>
+        <button class="opt-btn" onclick="checkPost(this,'post3','D','B',3)">D. 0.3</button>
+      </div>
+      <div class="feedback" id="fb-post3"></div>
+    </div>
+    <div class="quiz-block" id="post4">
+      <div class="quiz-q">4. 某事件概率为0.75，则其对立事件概率为？</div>
+      <div class="quiz-opts">
+        <button class="opt-btn" onclick="checkPost(this,'post4','A','B',4)">A. 0.5</button>
+        <button class="opt-btn" onclick="checkPost(this,'post4','B','B',4)">B. 0.25</button>
+        <button class="opt-btn" onclick="checkPost(this,'post4','C','B',4)">C. 0.75</button>
+        <button class="opt-btn" onclick="checkPost(this,'post4','D','B',4)">D. 1</button>
+      </div>
+      <div class="feedback" id="fb-post4"></div>
+    </div>
+    <div class="quiz-block" id="post5">
+      <div class="quiz-q">5. 古典概型的两个条件是？</div>
+      <div class="quiz-opts">
+        <button class="opt-btn" onclick="checkPost(this,'post5','A','C',5)">A. 概率相等+无限样本空间</button>
+        <button class="opt-btn" onclick="checkPost(this,'post5','B','C',5)">B. 有限样本+结果不同</button>
+        <button class="opt-btn" onclick="checkPost(this,'post5','C','C',5)">C. 有限性+等可能性</button>
+        <button class="opt-btn" onclick="checkPost(this,'post5','D','C',5)">D. 对称性+独立性</button>
+      </div>
+      <div class="feedback" id="fb-post5"></div>
+    </div>
+    <div id="post-score" class="score-display" style="display:none;"></div>
+    <button class="submit-btn" onclick="submitPost()">提交后测 🎯</button>
+  </div>
+
+  <!-- Achievements -->
+  <div class="section">
+    <div class="section-title"><span>🏅</span> 成就系统</div>
+    <div class="achievement-bar">
+      <div class="ach" id="ach-start"><span class="ach-icon">🌟</span><span>课程启动</span></div>
+      <div class="ach" id="ach-pretest"><span class="ach-icon">🔍</span><span>前测完成</span></div>
+      <div class="ach" id="ach-coin"><span class="ach-icon">🪙</span><span>硬币达人</span></div>
+      <div class="ach" id="ach-spinner"><span class="ach-icon">🎯</span><span>转盘专家</span></div>
+      <div class="ach" id="ach-module"><span class="ach-icon">📚</span><span>模块探索者</span></div>
+      <div class="ach" id="ach-master"><span class="ach-icon">🎓</span><span>概率高手</span></div>
+    </div>
+  </div>
+
+  <!-- Expand -->
+  <div class="section">
+    <div class="section-title"><span>🚀</span> 拓展思考</div>
+    <div class="expand-card">
+      <p><strong>生日悖论：</strong>一个班只需要23人，两人同生日的概率就超过50%！</p>
+      <p style="margin-top:10px;">这是因为"至少2人同生日"用对立事件计算更简单：P = 1 - P(所有人生日不同)</p>
+      <p style="margin-top:14px;"><strong>挑战题：</strong>掷两枚骰子，P(点数之和为7) = ？</p>
+      <button class="check-btn" style="margin-top:12px;" onclick="document.getElementById('exp-ans').style.display='block'">💡 查看答案</button>
+      <div id="exp-ans" style="display:none;margin-top:10px;background:#d1fae5;padding:10px 14px;border-radius:8px;color:#065f46;">
+        样本空间共6×6=36种，和为7的：(1,6)(2,5)(3,4)(4,3)(5,2)(6,1)共6种。<br>
+        P = 6/36 = <strong>1/6</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const COURSE_ID = 'math-m-probability-basic';
+const Progress = {
+  data: JSON.parse(localStorage.getItem('tap_'+COURSE_ID)||'{"score":0,"modules":[]}'),
+  save(){localStorage.setItem('tap_'+COURSE_ID,JSON.stringify(this.data));},
+  addScore(n){this.data.score=Math.min(100,this.data.score+n);this.save();updateProgress();},
+  markModule(id){if(!this.data.modules.includes(id)){this.data.modules.push(id);this.addScore(5);}},
+};
+const Achievements={
+  unlock(id){const el=document.getElementById(id);if(el&&!el.classList.contains('unlocked')){el.classList.add('unlocked');}}
+};
+Achievements.unlock('ach-start');
+
+function updateProgress(){
+  const pct=Math.min(Progress.data.score,100);
+  document.getElementById('progress-bar').style.width=pct+'%';
+  document.getElementById('progress-pct').textContent=pct+'%';
+  document.getElementById('progress-label').textContent=pct<30?'加油！':pct<60?'进展不错！':pct<90?'即将完成！':'🎉完成！';
+}
+updateProgress();
+
+const answered={};
+function checkOpt(btn,blockId,selected,correct){
+  if(answered[blockId])return;
+  answered[blockId]=true;
+  const opts=btn.parentNode.querySelectorAll('.opt-btn');
+  opts.forEach(b=>b.disabled=true);
+  const ok=selected===correct;
+  btn.classList.add(ok?'correct':'wrong');
+  if(!ok)opts.forEach(b=>{if(b.textContent.startsWith(correct))b.classList.add('correct');});
+  const fb=document.getElementById('fb-'+blockId);
+  const exp={
+    'pre1':'随机事件可能发生也可能不发生，如天气预报。其他3个是必然事件。',
+    'pre2':'骰子6面等可能，出现6点概率=1/6。',
+    'q-events':'概率范围是[0,1]，必然事件P=1，不可能P=0，随机事件0<P<1。',
+    'q-contra':'P(Ā)=1-P(A)=1-1/3=2/3。',
+    'q-ball':'P(红∪蓝)=P(红)+P(蓝)=3/6+2/6=5/6（互斥加法）。',
+  };
+  fb.textContent=(ok?'✅ 正确！':'❌ 错误。')+' '+(exp[blockId]||'');
+  fb.className='feedback show '+(ok?'correct':'wrong');
+  if(ok)Progress.addScore(3);
+  if(['pre1','pre2'].every(id=>answered[id]))Achievements.unlock('ach-pretest');
+}
+
+function toggleModule(id){
+  const body=document.getElementById(id);
+  const arrow=document.getElementById(id+'-arrow');
+  const isOpen=body.classList.contains('open');
+  body.classList.toggle('open');
+  arrow.textContent=isOpen?'▶':'▼';
+  if(!isOpen){
+    Progress.markModule(id);
+    if(Progress.data.modules.length>=3)Achievements.unlock('ach-module');
+    if(id==='m2')initDiceSpace();
+    if(id==='m3')initCoinChart();
+    if(id==='m5')initBagBalls();
+  }
+}
+
+// Dice sample space
+function initDiceSpace(){
+  const sp=document.getElementById('dice-space');
+  if(!sp||sp.children.length>0)return;
+  for(let i=1;i<=6;i++){
+    const el=document.createElement('div');
+    el.className='event-item';
+    el.textContent='面'+i;
+    el.dataset.val=i;
+    el.style.cursor='pointer';
+    el.addEventListener('click',function(){
+      this.classList.toggle('favorable');
+      const sel=document.querySelectorAll('#dice-space .event-item.favorable').length;
+      document.getElementById('dice-prob').textContent='P(B) = '+sel+'/6 = '+(sel/6).toFixed(4);
+    });
+    sp.appendChild(el);
+  }
+}
+
+function checkDice(){
+  const sel=document.querySelectorAll('#dice-space .event-item.favorable');
+  const vals=[...sel].map(e=>parseInt(e.dataset.val));
+  const correct=vals.includes(5)&&vals.includes(6)&&vals.length===2;
+  const fb=document.getElementById('fb-dice');
+  fb.textContent=correct?'✅ 正确！B={5,6}，P(B)=2/6=1/3':'❌ 事件B"大于4"包含{5,6}，P(B)=2/6=1/3';
+  fb.className='feedback show '+(correct?'correct':'wrong');
+  if(correct)Progress.addScore(5);
+}
+
+// Coin flip
+let coinData={heads:0,tails:0,history:[]};
+function initCoinChart(){
+  const c=document.getElementById('coin-chart');if(!c)return;
+  drawCoinChart();
+}
+function flipOnce(){
+  const h=Math.random()<0.5;
+  coinData.heads+=h?1:0;
+  coinData.tails+=h?0:1;
+  coinData.history.push(h?1:0);
+  const coin=document.getElementById('the-coin');
+  coin.className='coin '+(h?'heads':'tails');
+  coin.textContent=h?'👑':'🦅';
+  updateCoinStats();
+  Achievements.unlock('ach-coin');
+  if(coinData.history.length>=10)Progress.addScore(3);
+}
+function flipMany(n){
+  for(let i=0;i<n;i++)flipOnce();
+}
+function resetCoin(){coinData={heads:0,tails:0,history:[]};updateCoinStats();}
+function updateCoinStats(){
+  const total=coinData.heads+coinData.tails;
+  document.getElementById('n-heads').textContent=coinData.heads;
+  document.getElementById('n-tails').textContent=coinData.tails;
+  document.getElementById('n-total').textContent=total;
+  document.getElementById('freq-heads').textContent=total?((coinData.heads/total).toFixed(3)):'—';
+  drawCoinChart();
+}
+function drawCoinChart(){
+  const c=document.getElementById('coin-chart');if(!c)return;
+  const ctx=c.getContext('2d');
+  const w=c.width,h=c.height;
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,w,h);
+  const hist=coinData.history;
+  if(hist.length<2){
+    ctx.fillStyle='#94a3b8';ctx.font='14px sans-serif';ctx.textAlign='center';
+    ctx.fillText('抛硬币后显示频率折线图',w/2,h/2);return;
+  }
+  const pad={l:50,r:20,t:20,b:30};
+  // running freq
+  const runFreq=[];
+  let sum=0;
+  hist.forEach((v,i)=>{sum+=v;runFreq.push(sum/(i+1));});
+  // axes
+  ctx.strokeStyle='#cbd5e1';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,h-pad.b);ctx.lineTo(w-pad.r,h-pad.b);ctx.stroke();
+  // ref line 0.5
+  ctx.strokeStyle='#ef4444';ctx.lineWidth=1.5;ctx.setLineDash([5,5]);
+  const y05=pad.t+(h-pad.b-pad.t)*(1-0.5);
+  ctx.beginPath();ctx.moveTo(pad.l,y05);ctx.lineTo(w-pad.r,y05);ctx.stroke();
+  ctx.setLineDash([]);
+  // freq line
+  ctx.strokeStyle='#7c3aed';ctx.lineWidth=2;ctx.beginPath();
+  runFreq.forEach((f,i)=>{
+    const x=pad.l+(w-pad.l-pad.r)*i/(hist.length-1);
+    const y=pad.t+(h-pad.b-pad.t)*(1-f);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  // y labels
+  [0,0.25,0.5,0.75,1].forEach(v=>{
+    const y=pad.t+(h-pad.b-pad.t)*(1-v);
+    ctx.fillStyle='#94a3b8';ctx.font='10px sans-serif';ctx.textAlign='right';ctx.fillText(v,pad.l-4,y+4);
+  });
+}
+
+// Bag balls
+function initBagBalls(){
+  const el=document.getElementById('bag-balls');
+  if(!el||el.children.length>0)return;
+  const balls=[{c:'red',n:3,col:'#ef4444'},{c:'blue',n:2,col:'#3b82f6'},{c:'yellow',n:1,col:'#f59e0b'}];
+  balls.forEach(({c,n,col})=>{
+    for(let i=0;i<n;i++){
+      const b=document.createElement('div');
+      b.style.cssText=`width:36px;height:36px;border-radius:50%;background:${col};display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:.75rem;font-weight:700;`;
+      b.textContent=c[0].toUpperCase();
+      el.appendChild(b);
+    }
+  });
+}
+
+// Spinner
+const spinNums=[1,1,2,3,4,5];
+let spinAngle=0,spinning=false;
+function drawSpinner(angle){
+  const c=document.getElementById('spinner-canvas');if(!c)return;
+  const ctx=c.getContext('2d');
+  const w=c.width,h=c.height;
+  ctx.clearRect(0,0,w,h);
+  const cx=w/2,cy=h/2,r=85;
+  const colors=['#7c3aed','#a855f7','#3b82f6','#06b6d4','#f59e0b','#10b981'];
+  const n=spinNums.length;
+  for(let i=0;i<n;i++){
+    const start=angle+i*2*Math.PI/n;
+    const end=angle+(i+1)*2*Math.PI/n;
+    ctx.fillStyle=colors[i];
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,start,end);ctx.closePath();ctx.fill();
+    ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
+    const mid=start+(end-start)/2;
+    ctx.fillStyle='#fff';ctx.font='bold 18px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(spinNums[i],cx+Math.cos(mid)*r*0.65,cy+Math.sin(mid)*r*0.65);
+  }
+  // pointer
+  ctx.fillStyle='#1e293b';
+  ctx.beginPath();ctx.moveTo(cx,cy-r-5);ctx.lineTo(cx-8,cy-r+15);ctx.lineTo(cx+8,cy-r+15);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(cx,cy,8,0,Math.PI*2);ctx.fill();
+}
+drawSpinner(0);
+
+function spinWheel(){
+  if(spinning)return;
+  spinning=true;
+  const totalRot=Math.PI*2*5+Math.random()*Math.PI*2;
+  const duration=2000;
+  const start=performance.now();
+  const startAngle=spinAngle;
+  function frame(t){
+    const elapsed=t-start;
+    const progress=Math.min(elapsed/duration,1);
+    const ease=1-Math.pow(1-progress,3);
+    spinAngle=startAngle+totalRot*ease;
+    drawSpinner(spinAngle);
+    if(progress<1){requestAnimationFrame(frame);}
+    else{
+      spinning=false;
+      // determine result
+      const normAngle=(((-spinAngle)%(Math.PI*2))+Math.PI*2)%(Math.PI*2);
+      const idx=Math.floor(normAngle/(Math.PI*2/spinNums.length))%spinNums.length;
+      document.getElementById('spin-result').textContent='🎯 结果：'+spinNums[idx];
+      Achievements.unlock('ach-spinner');
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+function revealSpinner(){
+  document.getElementById('ans1').textContent='2/6=1/3（有两个"1"）';
+  document.getElementById('ans2').textContent='2/6=1/3（偶数={2,4}）';
+  document.getElementById('ans3').textContent='3/6=1/2（≥3={3,4,5}）';
+  const fb=document.getElementById('fb-spinner');
+  fb.innerHTML='样本空间={1,1,2,3,4,5}，共6个等可能结果<br>P(1)=2/6=1/3 | P(偶)=2/6=1/3 | P(≥3)=3/6=1/2';
+  fb.className='feedback show correct';
+  Progress.addScore(8);
+}
+
+const postAns={},correctPost={1:'C',2:'C',3:'B',4:'B',5:'C'};
+function checkPost(btn,blockId,selected,correct,num){
+  if(postAns[num])return;
+  postAns[num]=selected;
+  const opts=btn.parentNode.querySelectorAll('.opt-btn');
+  opts.forEach(b=>b.disabled=true);
+  const ok=selected===correct;
+  btn.classList.add(ok?'correct':'wrong');
+  if(!ok)opts.forEach(b=>{if(b.textContent.startsWith(correct))b.classList.add('correct');});
+  const fb=document.getElementById('fb-post'+num);
+  const exp={1:'两枚硬币：{正正,正反,反正,反反}=4种。',2:'P(白)=3/5。',3:'互斥加法：0.3+0.4=0.7。',4:'P(Ā)=1-0.75=0.25。',5:'古典概型=有限+等可能。'};
+  fb.textContent=(ok?'✅ 正确！':'❌ 错误。')+' '+exp[num];
+  fb.className='feedback show '+(ok?'correct':'wrong');
+}
+function submitPost(){
+  let score=0;
+  [1,2,3,4,5].forEach(n=>{if(postAns[n]===correctPost[n])score+=20;});
+  document.getElementById('post-score').textContent='后测得分：'+score+'分';
+  document.getElementById('post-score').style.display='block';
+  if(score>=80)Achievements.unlock('ach-master');
+  Progress.addScore(15);
+}
+</script>
+</body>
+</html>
