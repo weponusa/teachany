@@ -662,11 +662,21 @@ function rebuildSubjectTabs() {
     return (en && en !== zh) ? { zh, en } : { zh, en: '' };
   });
 
-  // treeStage —— 用文件名 basename 做词边界匹配（v5.34.1 已修）
+  // treeStage —— 从完整路径提取学段（v5.35：支持新的 curriculum/stage/subject 目录结构）
   function treeStage(treeFile) {
     const full = treeFile || '';
     const base = (full.split('/').pop() || '').replace(/\.json$/i, '');
     const parts = base.split('-');
+    // 1) 新结构：路径里直接有学段段（如 data/trees/cn/elementary/math.json）
+    //    用路径段做严格匹配，优先级最高
+    const pathSegs = full.split('/').map(s => s.toLowerCase());
+    for (let i = 0; i < stages.length; i++) {
+      const s = stages[i];
+      const k = (s.key || '').toLowerCase();
+      if (!k) continue;
+      if (pathSegs.includes(k)) return i;
+    }
+    // 2) 兼容旧结构：basename 里用连字符分隔的 token
     for (let i = 0; i < stages.length; i++) {
       const s = stages[i];
       const k = (s.key || '').toLowerCase();
