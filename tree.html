@@ -1225,12 +1225,16 @@ function findExcerptsForNode(excerptsData, nodeId) {
   const list = Array.isArray(excerptsData) ? excerptsData : (excerptsData.excerpts || []);
   if (!list.length) return [];
   return list.filter(ex => {
-    // 支持多种可能的字段：node_id, kp_ids（后者是数组）
+    // 1. 直接 node_id 匹配
     if (ex.node_id === nodeId) return true;
     if (Array.isArray(ex.node_ids) && ex.node_ids.includes(nodeId)) return true;
-    // kp_ids 里可能是 kp-xxx-xxx-{nodeId} 格式
+    // 2. kp_id 字段匹配（后端生成的 excerpts 使用 kp_id 字符串，且以 nodeId 结尾）
+    if (typeof ex.kp_id === 'string') {
+      if (ex.kp_id === nodeId || ex.kp_id.endsWith(nodeId)) return true;
+    }
+    // 3. kp_ids 数组匹配（兼容旧格式）
     if (Array.isArray(ex.kp_ids)) {
-      return ex.kp_ids.some(kp => typeof kp === 'string' && kp.includes(nodeId));
+      return ex.kp_ids.some(kp => typeof kp === 'string' && (kp === nodeId || kp.includes(nodeId)));
     }
     return false;
   });
