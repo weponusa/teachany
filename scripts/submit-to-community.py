@@ -52,9 +52,13 @@ from io import BytesIO
 from pathlib import Path
 
 
-# TeachAny 官方公共提交端点（Cloudflare Worker）
-# v5.34.9 部署完成，2026-04-19
-DEFAULT_WORKER_URL = "https://teachany-submit.weponusa.workers.dev/api/submit"
+# TeachAny 官方公共提交端点（Cloudflare Pages Functions）
+# v5.34.11 迁移到 Pages Functions（2026-04-23）
+# 原因：中国大陆对 *.workers.dev SNI 阻断，*.pages.dev 可通
+DEFAULT_WORKER_URL = "https://teachany-community.pages.dev/api/submit"
+
+# 旧 Worker URL（保留以便 fallback；但国内大部分用户无法访问）
+LEGACY_WORKER_URL = "https://teachany-submit.weponusa.workers.dev/api/submit"
 
 REPO = "weponusa/teachany"
 DISPATCH_URL_DIRECT = f"https://api.github.com/repos/{REPO}/dispatches"
