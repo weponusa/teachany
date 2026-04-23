@@ -134,11 +134,43 @@ jobs:
               print("\nNo new courses to add")
           PYEOF
 
+      # v6.1: 解包 .teachany 到 community/<id>/ 并跑 rebuild-index 挂知识图谱
+      - name: Unpack .teachany and rebuild knowledge graph
+        if: steps.find_new.outputs.has_new == 'true'
+        run: |
+          set -e
+          # 1. 解包 pending/*.teachany → community/<id>/
+          for zip in community/pending/*.teachany; do
+            [ -f "$zip" ] || continue
+            base=$(basename "$zip" .teachany)
+            # 从 JSON 读真实 course_id
+            json_file="community/pending/$base.json"
+            [ -f "$json_file" ] || { echo "  ⚠️  $json_file 缺失，跳过"; continue; }
+            course_id=$(python3 -c "import json; print(json.load(open('$json_file'))['id'])")
+            target="community/$course_id"
+            if [ -d "$target" ] && [ -f "$target/index.html" ]; then
+              echo "  ℹ️  $target 已存在（非 workflow 内解包），跳过"
+              continue
+            fi
+            mkdir -p "$target"
+            unzip -o -q "$zip" -d "$target/"
+            echo "  📦 解包 $zip → $target"
+            ls -la "$target" | head -5
+          done
+
+          # 2. 跑 rebuild-index.py（需 .teachany-admin 标记）
+          if [ ! -f .teachany-admin ]; then
+            touch .teachany-admin
+            echo "  🔖 临时创建 .teachany-admin（CI 中自动生成，仓库 .gitignore 已排除）"
+          fi
+          python3 scripts/rebuild-index.py 2>&1 | tail -20 || echo "  ⚠️ rebuild-index 失败但不阻塞 workflow"
+
       - name: Commit updated index
         if: steps.find_new.outputs.has_new == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add community/index.json
-          git diff --cached --quiet || git commit -m "[bot] Update community courseware index"
+          # v6.1: 一并提交解包的 community/<id>/ + registry + 知识树更新
+          git add community/index.json community/ registry.json data/trees/ 2>&1 | tail -3 || true
+          git diff --cached --quiet || git commit -m "[bot] Update community index, unpack courseware, rebuild knowledge graph"
           git push
