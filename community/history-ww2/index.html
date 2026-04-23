@@ -1004,18 +1004,15 @@ window.addEventListener('scroll', () => {
 //   - WorkBuddy/<父>/<子>/index.html  → ../../data/
 //   - 线上（community 或 examples）   → https://weponusa.github.io/teachany/data/
 // ═══════════════════════════════════════════════════
-const TEACHANY_MAP_BASE = (function() {
-  // 线上：GitHub Pages 根路径
-  if (location.hostname.endsWith('github.io') || location.hostname.endsWith('weponusa.github.io')) {
-    return '/teachany/data';
-  }
-  // 线上自定义域名（以后可能用）
-  if (location.hostname.includes('teachany')) {
-    return '/data';
-  }
-  // 本地：尝试 ../data（课件在一层子目录时）
-  return '../data';
-})();
+// v6.4: 课件自包含。所有地图资源就在 ./assets/maps/，永不 404
+const TEACHANY_MAP_BASE_LOCAL = './assets/maps';
+// 回退顺序 fallback list：先自身 assets → 再线上全局 → 再本地 dev
+const TEACHANY_MAP_FALLBACKS = [
+  '/teachany/data/geography',
+  '/teachany/data/_legacy/resources/geography',
+  '../data/geography',
+  '../../data/geography',
+];
 
 let ww2Map = null;
 let ww2CurrentLayer = null;
@@ -1031,7 +1028,7 @@ function initWw2Map() {
     worldCopyJump: false,
   });
   L.imageOverlay(
-    `${TEACHANY_MAP_BASE}/geography/hillshade/global-hillshade-4k.jpg`,
+    `${TEACHANY_MAP_BASE_LOCAL}/hillshade.jpg`,
     [[-90, -180], [90, 180]],
     { opacity: 0.5, attribution: 'Natural Earth · historical-basemaps' }
   ).addTo(ww2Map);
@@ -1051,20 +1048,20 @@ async function loadWw2Map(btn, sliceId, label) {
   if (btn) btn.style.fontWeight = 'bold';
 
   try {
-    let url = `${TEACHANY_MAP_BASE}/geography/historical-world/${sliceId}.geojson`;
-    let res = await fetch(url);
-
-    // 本地开发时 ../data 不通再试 ../../data（课件在两层子目录时）
-    if (!res.ok && TEACHANY_MAP_BASE === '../data') {
-      url = `../../data/geography/historical-world/${sliceId}.geojson`;
-      res = await fetch(url);
+    // v6.4 优先从课件自身 ./assets/maps/ 加载（保证 100% 自包含）
+    const candidates = [
+      `${TEACHANY_MAP_BASE_LOCAL}/${sliceId}.geojson`,
+      ...TEACHANY_MAP_FALLBACKS.map(b => `${b}/historical-world/${sliceId}.geojson`),
+    ];
+    let res = null;
+    let finalUrl = null;
+    for (const url of candidates) {
+      try {
+        const r = await fetch(url);
+        if (r.ok) { res = r; finalUrl = url; break; }
+      } catch (_) { /* network error, try next */ }
     }
-    // 仍然不通 → 回退到线上绝对 URL
-    if (!res.ok) {
-      url = `https://weponusa.github.io/teachany/data/geography/historical-world/${sliceId}.geojson`;
-      res = await fetch(url);
-    }
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    if (!res) throw new Error(`所有候选 URL 都失败：${candidates.join(', ')}`);
 
     const data = await res.json();
     if (ww2CurrentLayer) ww2Map.removeLayer(ww2CurrentLayer);
@@ -1091,8 +1088,7 @@ async function loadWw2Map(btn, sliceId, label) {
   } catch (e) {
     document.getElementById('ww2-map').innerHTML =
       '<div style="padding:40px;color:#94a3b8;text-align:center">' +
-      '地图资源未找到。请在父目录运行：<br/>' +
-      '<code>bash ~/.codebuddy/skills/teachany/scripts/install_map_resources.sh .</code></div>';
+      '地图加载失败：' + (e.message || e) + '<br/>请刷新页面或检查网络。</div>';
   }
 }
 
