@@ -3,33 +3,70 @@
 TeachAny 课件索引重建工具
 
 原则：以实际存在的课件文件为唯一信源（single source of truth）
-1. 扫描 examples/ 下所有课件
+1. 扫描 examples/ 和 community/ 下所有课件（v6.1 起同时支持两个通道）
 2. 读取每个课件的 manifest.json
 3. 根据 manifest 中的 subject + node_id 反查知识树
 4. 修复知识树中的 courses 数组和 status
 5. 清理重复节点
 6. 重建 registry.json
+
+v6.1 变更（2026-04-24）:
+- scan_courses() 同时扫 examples/ 和 community/（除 drafts/ 和 pending/）
+- registry.path 根据实际位置生成（examples/xxx 或 community/xxx）
+- 课件同名冲突时 examples/ 优先（视为官方升级版）
 """
 import json
 from pathlib import Path
 from collections import defaultdict
 import copy
 
+# 需要扫描的课件目录；每个项是 (目录, 是否 official 候选)
+# v6.1: examples/ 仍是官方通道，community/ 加入扫描（skip drafts/ 和 pending/）
+COURSE_DIRS = [
+    ('examples',  True),   # 官方示例课件
+    ('community', False),  # 社区课件（PR 合并后进这里）
+]
+
+# community/ 下忽略的子目录（这些不是课件）
+COMMUNITY_SKIP = {'drafts', 'pending', 'README.md'}
+
+
 def scan_courses():
-    """扫描所有实际存在的课件"""
-    courses = {}
-    for d in Path('examples').iterdir():
-        if not d.is_dir() or d.name.startswith('_'):
+    """扫描 examples/ 和 community/ 下所有实际存在的课件
+
+    返回: { course_id: (manifest_dict, source_dir) }
+    source_dir: 'examples' 或 'community'
+    同名冲突时 examples/ 优先
+    """
+    courses = {}  # course_id -> (manifest, source_dir)
+    for base_dir, _is_official in COURSE_DIRS:
+        base = Path(base_dir)
+        if not base.exists():
             continue
-        manifest_path = d / 'manifest.json'
-        index_path = d / 'index.html'
-        if manifest_path.exists() and index_path.exists():
+        for d in base.iterdir():
+            if not d.is_dir():
+                continue
+            if d.name.startswith('_') or d.name.startswith('.'):
+                continue
+            if base_dir == 'community' and d.name in COMMUNITY_SKIP:
+                continue
+            manifest_path = d / 'manifest.json'
+            index_path = d / 'index.html'
+            if not (manifest_path.exists() and index_path.exists()):
+                continue
             try:
                 with open(manifest_path, encoding='utf-8') as f:
                     manifest = json.load(f)
-                courses[d.name] = manifest
             except json.JSONDecodeError:
-                print(f"  ⚠️  {d.name}: manifest.json 格式错误，跳过")
+                print(f"  ⚠️  {base_dir}/{d.name}: manifest.json 格式错误，跳过")
+                continue
+            # 冲突处理：如果 examples/ 已有同名，community/ 版本跳过
+            if d.name in courses:
+                existing_src = courses[d.name][1]
+                if existing_src == 'examples':
+                    print(f"  ℹ️  {d.name}: community/ 版本被 examples/ 覆盖（正常）")
+                    continue
+            courses[d.name] = (manifest, base_dir)
     return courses
 
 
@@ -124,15 +161,39 @@ def main():
 
     # 2. 建立课件→知识节点的映射
     print('\n🔗 步骤2: 建立课件→知识节点映射...')
+
+    # v6.1 先一次性加载旧 registry + 探测 legacy 课件（index.html 存在但无 manifest）
+    old_registry = {}
+    try:
+        with open('registry.json', encoding='utf-8') as f:
+            old_data = json.load(f)
+            for c in old_data.get('courses', []):
+                old_registry[c['id']] = c
+    except (FileNotFoundError, json.JSONDecodeError):
+        pass
+
+    legacy_preserved = []  # [(course_id, old_entry)]
+    for cid, old_entry in old_registry.items():
+        if cid in courses:
+            continue
+        old_path = old_entry.get('path', '')
+        if old_path and Path(old_path, 'index.html').exists():
+            legacy_preserved.append((cid, old_entry))
+    legacy_ids = {cid for cid, _ in legacy_preserved}
+    if legacy_ids:
+        print(f'   🧰 遗留兼容：{len(legacy_ids)} 个旧课件无 manifest.json 但 index.html 存在，视为存在')
+
     # 按 (subject, node_id) 分组
     node_courses = defaultdict(list)  # (subject, node_id) -> [course_id]
-    for course_id, manifest in courses.items():
+    for course_id, (manifest, _src) in courses.items():
         subject = manifest.get('subject', '')
         node_id = manifest.get('node_id', '')
         if subject and node_id:
             node_courses[(subject, node_id)].append(course_id)
         else:
             print(f'  ⚠️  {course_id}: 缺少 subject 或 node_id')
+    # legacy 课件：保留它们在树里已有的引用，不强制新挂
+    # （因无 manifest 知识点信息可能不准，只保留旧树节点已引用的关联）
 
     print(f'   {len(node_courses)} 个知识节点有课件')
 
@@ -185,9 +246,9 @@ def main():
                     normalized_current.append(c)
             current_courses = normalized_current
 
-            # 过滤掉不存在的课件引用
-            valid_current = [c for c in current_courses if c in courses]
-            invalid_current = [c for c in current_courses if c not in courses]
+            # 过滤掉不存在的课件引用（legacy 也算"存在"）
+            valid_current = [c for c in current_courses if c in courses or c in legacy_ids]
+            invalid_current = [c for c in current_courses if c not in courses and c not in legacy_ids]
 
             if invalid_current:
                 print(f'  🗑️  {tree_name}/{node_id}: 移除无效引用 {invalid_current}')
@@ -228,22 +289,13 @@ def main():
 
     # 4. 重建注册表
     print('\n📋 步骤4: 重建注册表...')
-    
-    # 加载旧注册表以保留 status 等手动设置的字段
-    old_registry = {}
-    try:
-        with open('registry.json', encoding='utf-8') as f:
-            old_data = json.load(f)
-            for c in old_data.get('courses', []):
-                old_registry[c['id']] = c
-    except (FileNotFoundError, json.JSONDecodeError):
-        pass
+    # 注：old_registry 和 legacy_preserved 已在步骤 2 加载，此处复用
     
     registry_courses = []
     official_count = 0
     community_count = 0
     course_count = 0
-    for course_id, manifest in sorted(courses.items()):
+    for course_id, (manifest, src_dir) in sorted(courses.items()):
         # 保留旧注册表中的 status（official/community/course），默认 community
         # ⭐ v5.34.8 防污染：新增课件（旧 registry 中没有）默认一律为 community，
         #    严禁仅凭位于 examples/ 目录就自动打成 official —— 这是导致用户生成
@@ -278,7 +330,8 @@ def main():
             'version': manifest.get('version', '1.0'),
             'license': manifest.get('license', 'MIT'),
             'status': status,
-            'path': f'examples/{course_id}',
+            # ⭐ v6.1: path 根据课件实际目录生成（examples/xxx 或 community/xxx）
+            'path': f'{src_dir}/{course_id}',
             'has_tts': manifest.get('has_tts', False),
             'has_video': manifest.get('has_video', False),
             'has_en': manifest.get('has_en', False),
@@ -293,6 +346,21 @@ def main():
             course_count += 1
         else:
             community_count += 1
+
+    # v6.1: 把遗留课件（无 manifest 但 index.html 存在）追加进 registry
+    legacy_count = 0
+    for cid, old_entry in legacy_preserved:
+        registry_courses.append(old_entry)
+        legacy_count += 1
+        st = old_entry.get('status', 'community')
+        if st == 'official':
+            official_count += 1
+        elif st == 'course':
+            course_count += 1
+        else:
+            community_count += 1
+    if legacy_count:
+        print(f'   ➕ 遗留课件已并入 registry: {legacy_count}')
 
     registry = {
         'version': '1.0',
@@ -325,7 +393,8 @@ def main():
         collect(td)
 
     reg_set = set(c['id'] for c in registry_courses)
-    file_set = set(courses.keys())
+    # v6.1: "文件存在"含 legacy（有 index.html 但缺 manifest）
+    file_set = set(courses.keys()) | legacy_ids
 
     print(f'\n  文件存在:   {len(file_set)}')
     print(f'  已注册:     {len(reg_set)}')
