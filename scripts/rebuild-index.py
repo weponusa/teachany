@@ -192,8 +192,17 @@ def main():
             node_courses[(subject, node_id)].append(course_id)
         else:
             print(f'  ⚠️  {course_id}: 缺少 subject 或 node_id')
-    # legacy 课件：保留它们在树里已有的引用，不强制新挂
-    # （因无 manifest 知识点信息可能不准，只保留旧树节点已引用的关联）
+    # v6.5: legacy 课件（无 manifest 但 index.html 存在）也反向挂到树节点
+    # 用旧 registry 里记录的 subject + node_id
+    legacy_mounted = 0
+    for cid, old_entry in legacy_preserved:
+        sub = old_entry.get('subject', '')
+        nid = old_entry.get('node_id', '')
+        if sub and nid:
+            node_courses[(sub, nid)].append(cid)
+            legacy_mounted += 1
+    if legacy_mounted:
+        print(f'   🔗 legacy 课件已通过 old_registry 信息反向挂载: {legacy_mounted}')
 
     print(f'   {len(node_courses)} 个知识节点有课件')
 
