@@ -139,22 +139,42 @@ jobs:
         if: steps.find_new.outputs.has_new == 'true'
         run: |
           set -e
-          # 1. 解包 pending/*.teachany → community/<id>/
+          # 1. 解包 pending/*.teachany → community/<node_id>/  (v6.6: 用 node_id 而非 JSON.id)
           for zip in community/pending/*.teachany; do
             [ -f "$zip" ] || continue
             base=$(basename "$zip" .teachany)
-            # 从 JSON 读真实 course_id
             json_file="community/pending/$base.json"
             [ -f "$json_file" ] || { echo "  ⚠️  $json_file 缺失，跳过"; continue; }
-            course_id=$(python3 -c "import json; print(json.load(open('$json_file'))['id'])")
+            # v6.6: 优先用 node_id（清洁、与知识树对齐），兜底用 id
+            # 先解包到临时目录看 manifest.json 里怎么写
+            tmp_unpack=$(mktemp -d)
+            unzip -o -q "$zip" -d "$tmp_unpack/"
+            manifest_file="$tmp_unpack/manifest.json"
+            course_id=""
+            if [ -f "$manifest_file" ]; then
+              # 优先级：manifest.node_id > JSON.node_id > JSON.id（兜底）
+              course_id=$(python3 -c "import json; m=json.load(open('$manifest_file')); print(m.get('node_id') or '')" 2>/dev/null)
+            fi
+            if [ -z "$course_id" ]; then
+              course_id=$(python3 -c "import json; m=json.load(open('$json_file')); print(m.get('node_id') or m.get('id') or '')")
+            fi
+            if [ -z "$course_id" ]; then
+              echo "  ❌ $zip: 无法确定 course_id（manifest 和 JSON 都没有 node_id/id），跳过"
+              rm -rf "$tmp_unpack"
+              continue
+            fi
+
             target="community/$course_id"
             if [ -d "$target" ] && [ -f "$target/index.html" ]; then
               echo "  ℹ️  $target 已存在（非 workflow 内解包），跳过"
+              rm -rf "$tmp_unpack"
               continue
             fi
             mkdir -p "$target"
-            unzip -o -q "$zip" -d "$target/"
-            echo "  📦 解包 $zip → $target"
+            # 从临时目录 mv 过去
+            cp -R "$tmp_unpack/"* "$target/"
+            rm -rf "$tmp_unpack"
+            echo "  📦 解包 $zip → $target (course_id=$course_id)"
             ls -la "$target" | head -5
           done
 
