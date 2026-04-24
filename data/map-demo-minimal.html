@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<!-- 这是 skill historical-maps.md §3.1 代码模板的最小可运行 demo -->
+<!-- 教师只需改 DYNASTY 常量就可以切换朝代 -->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>历史地图课件 · 最小 demo</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  body { margin: 0; padding: 20px; background: #0f172a; color: #f8fafc; font-family: -apple-system, 'PingFang SC', sans-serif; }
+  h1 { text-align: center; margin: 0 0 16px 0; font-size: 24px; }
+  #map { width: 100%; height: 600px; background: #0c1526; border-radius: 12px; }
+  .leaflet-container { background: #0c1526; }
+  .leaflet-popup-content-wrapper { background: #1e293b; color: #f8fafc; }
+  .leaflet-popup-tip { background: #1e293b; }
+  .leaflet-popup-content { margin: 10px 14px; font-size: 13px; }
+  .leaflet-popup-content b { color: #fbbf24; }
+  .info { text-align: center; color: #94a3b8; font-size: 13px; margin-top: 12px; }
+  .info code { background: #334155; padding: 2px 6px; border-radius: 4px; color: #fbbf24; }
+</style>
+</head>
+<body>
+<h1 id="title">⏳ 加载中...</h1>
+<div id="map"></div>
+<p class="info">引擎：Leaflet <code>CRS.EPSG4326</code> · 底图：Natural Earth hillshade · 数据：CHGIS V6 + historical-basemaps</p>
+
+<script>
+// ⭐ 改这一行即可切换朝代
+const DYNASTY = 'tang-dynasty';
+
+// 1. 初始化地图（必须用 EPSG:4326）
+const map = L.map('map', {
+  crs: L.CRS.EPSG4326,
+  center: [34, 104],
+  zoom: 3,
+  minZoom: 1,
+  maxZoom: 8,
+});
+
+// 2. 铺地形底图
+L.imageOverlay(
+  'geography/hillshade/global-color-hillshade-4k.jpg',
+  [[-90, -180], [90, 180]],
+  { opacity: 0.65, attribution: 'Natural Earth (Public Domain)' }
+).addTo(map);
+
+// 3. 政权配色
+const POWER_COLORS = {
+  '秦':'#8B008B','秦（疆域轮廓用同期汉帝国近似）':'#8B008B',
+  '西汉':'#DC143C','东汉':'#CD5C5C','汉':'#DC143C',
+  '魏':'#A52A2A','蜀':'#20B2AA','吴':'#3CB371',
+  '西晋':'#808000','东晋':'#9ACD32','北方十六国':'#B22222',
+  '北魏':'#B22222','北魏（拓跋）':'#B22222','南朝':'#6B8E23','南齐':'#6B8E23',
+  '隋':'#B8860B','唐':'#FFD700',
+  '北宋':'#4169E1','南宋':'#1E90FF','宋':'#4169E1',
+  '辽':'#483D8B','金':'#8B4513','西夏':'#B8860B',
+  '吐蕃':'#A0A0A0','高丽':'#66CDAA','日本':'#E74C3C',
+  '元':'#20B2AA','明':'#FF4500','清':'#FFD700',
+};
+function powerColor(p) { return POWER_COLORS[p] || '#64748b'; }
+
+// 4. 加载朝代数据
+fetch(`geography/historical-china/${DYNASTY}.geojson`)
+  .then(r => r.json())
+  .then(data => {
+    const meta = data.metadata || {};
+    document.getElementById('title').textContent =
+      `🗺️ ${DYNASTY}（${meta.period || ''}） · ${data.features.length} 个政区`;
+
+    const countryFeats = data.features.filter(f => f.properties.LEVEL === 'country');
+    const prefFeats = data.features.filter(f => f.properties.LEVEL !== 'country');
+
+    // 中层：国家疆域轮廓（半透明 + 粗边）
+    L.geoJSON(countryFeats, {
+      style: f => ({
+        color: powerColor(f.properties.POWER),
+        weight: 2.5, opacity: 0.95,
+        fillColor: powerColor(f.properties.POWER),
+        fillOpacity: 0.22,
+      }),
+      onEachFeature: (f, l) => l.bindPopup(
+        `<b>${f.properties.NAME_CH}</b>（疆域轮廓）<br/>政权: ${f.properties.POWER}`
+      ),
+    }).addTo(map);
+
+    // 上层：府级细节
+    L.geoJSON(prefFeats, {
+      style: f => ({
+        color: '#1e293b', weight: 0.3, opacity: 0.6,
+        fillColor: powerColor(f.properties.POWER),
+        fillOpacity: 0.55,
+      }),
+      onEachFeature: (f, l) => {
+        const p = f.properties;
+        l.bindPopup(
+          `<b>${p.NAME_CH}</b>（${p.TYPE_CH || '府'}）<br/>` +
+          `政权: ${p.POWER}<br/>` +
+          `存续: ${p.BEG_YR}~${p.END_YR}`
+        );
+      },
+    }).addTo(map);
+
+    // 用 metadata.recommended_bbox 锁定东亚视野
+    const bbox = meta.recommended_bbox || [70, 15, 145, 55];
+    map.fitBounds([[bbox[1], bbox[0]], [bbox[3], bbox[2]]]);
+  })
+  .catch(e => {
+    document.getElementById('title').textContent = '❌ 加载失败: ' + e.message;
+  });
+</script>
+</body>
+</html>
