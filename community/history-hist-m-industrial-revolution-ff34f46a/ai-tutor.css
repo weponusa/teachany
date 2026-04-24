@@ -1,0 +1,389 @@
+/*!
+ * TeachAny AI 学伴悬浮球样式（v5.34）
+ * 右下角 FAB + API Key 配置 Modal + 问答对话面板
+ *
+ * 使用方式：
+ *   <link rel="stylesheet" href="./ai-tutor.css">
+ *   <script src="./ai-tutor.js" defer></script>
+ *   <script>window.__TEACHANY_TUTOR_CONFIG__ = { ... };</script>
+ *
+ * 设计原则：
+ *   - 不依赖任何外部 CSS 框架
+ *   - 所有颜色通过 CSS 变量可被学段模板覆盖
+ *   - z-index 9998/9999 高于所有业务内容（音频条 100-200）
+ */
+
+/* ═══ CSS 变量（可被课件学段模板覆盖） ═══ */
+:root {
+  --tutor-primary: #6366f1;        /* 靛青主色 */
+  --tutor-primary-dark: #4f46e5;
+  --tutor-accent: #ec4899;         /* 粉色点缀 */
+  --tutor-bg: #ffffff;
+  --tutor-bg-soft: #f8fafc;
+  --tutor-border: #e2e8f0;
+  --tutor-text: #1e293b;
+  --tutor-text-soft: #64748b;
+  --tutor-bubble-ai: #eef2ff;
+  --tutor-bubble-user: #6366f1;
+  --tutor-bubble-user-text: #ffffff;
+  --tutor-shadow: 0 20px 40px -12px rgba(99, 102, 241, 0.35);
+}
+
+/* ═══ FAB 悬浮球 ═══ */
+.ai-tutor-fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--tutor-primary), var(--tutor-accent));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  cursor: pointer;
+  box-shadow: var(--tutor-shadow);
+  z-index: 9998;
+  transition: transform .2s ease, box-shadow .2s ease;
+  border: none;
+  user-select: none;
+}
+.ai-tutor-fab:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 28px 50px -12px rgba(99, 102, 241, 0.55);
+}
+.ai-tutor-fab.has-unread::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #f59e0b;
+  border: 2px solid #fff;
+}
+
+/* ═══ Modal 遮罩（Key 配置时使用） ═══ */
+.ai-tutor-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* ═══ API Key 配置弹窗 ═══ */
+.ai-tutor-config {
+  background: var(--tutor-bg);
+  border-radius: 20px;
+  padding: 28px;
+  width: min(440px, 100%);
+  box-shadow: 0 30px 60px -20px rgba(15, 23, 42, 0.35);
+  color: var(--tutor-text);
+  font-family: system-ui, -apple-system, "Helvetica Neue", sans-serif;
+}
+.ai-tutor-config h2 {
+  margin: 0 0 6px 0;
+  font-size: 20px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--tutor-primary), var(--tutor-accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.ai-tutor-config .subtitle {
+  margin: 0 0 18px 0;
+  font-size: 13px;
+  color: var(--tutor-text-soft);
+  line-height: 1.5;
+}
+.ai-tutor-config label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 12px 0 6px 0;
+  color: var(--tutor-text);
+}
+.ai-tutor-config input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--tutor-border);
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--tutor-text);
+  background: var(--tutor-bg-soft);
+  transition: border-color .15s ease;
+  box-sizing: border-box;
+}
+.ai-tutor-config input:focus {
+  outline: none;
+  border-color: var(--tutor-primary);
+}
+.ai-tutor-config .privacy {
+  margin: 14px 0 4px 0;
+  font-size: 12px;
+  color: var(--tutor-text-soft);
+  padding: 10px 12px;
+  background: #fef3c7;
+  border-left: 3px solid #f59e0b;
+  border-radius: 6px;
+  line-height: 1.55;
+}
+.ai-tutor-config .actions {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.ai-tutor-config button {
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.ai-tutor-config .btn-cancel {
+  background: var(--tutor-bg-soft);
+  color: var(--tutor-text-soft);
+  border: 1px solid var(--tutor-border);
+}
+.ai-tutor-config .btn-save {
+  background: linear-gradient(135deg, var(--tutor-primary), var(--tutor-primary-dark));
+  color: #fff;
+  box-shadow: 0 8px 16px -8px rgba(99, 102, 241, 0.6);
+}
+.ai-tutor-config .btn-save:hover {
+  transform: translateY(-1px);
+}
+.ai-tutor-config .btn-save:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ═══ 对话面板 ═══ */
+.ai-tutor-panel {
+  position: fixed;
+  right: 24px;
+  bottom: 96px;
+  width: 360px;
+  height: 520px;
+  max-width: calc(100vw - 48px);
+  max-height: calc(100vh - 120px);
+  background: var(--tutor-bg);
+  border-radius: 18px;
+  box-shadow: 0 24px 48px -16px rgba(15, 23, 42, 0.32);
+  z-index: 9998;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, "Helvetica Neue", sans-serif;
+  color: var(--tutor-text);
+  transform: translateY(16px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease;
+}
+.ai-tutor-panel.open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* 面板头部 */
+.ai-tutor-header {
+  padding: 14px 16px;
+  background: linear-gradient(135deg, var(--tutor-primary), var(--tutor-accent));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ai-tutor-header .title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.ai-tutor-header .title .subtitle {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  opacity: .85;
+  margin-top: 2px;
+}
+.ai-tutor-header button {
+  background: rgba(255,255,255,.2);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.ai-tutor-header button:hover {
+  background: rgba(255,255,255,.32);
+}
+
+/* 上下文条（显示当前学习 section） */
+.ai-tutor-context-bar {
+  padding: 8px 14px;
+  background: var(--tutor-bg-soft);
+  border-bottom: 1px solid var(--tutor-border);
+  font-size: 11px;
+  color: var(--tutor-text-soft);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.4;
+}
+.ai-tutor-context-bar .pill {
+  background: var(--tutor-primary);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 10px;
+}
+
+/* 消息区 */
+.ai-tutor-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--tutor-bg);
+}
+.ai-tutor-messages::-webkit-scrollbar { width: 6px; }
+.ai-tutor-messages::-webkit-scrollbar-thumb {
+  background: var(--tutor-border);
+  border-radius: 3px;
+}
+.ai-tutor-bubble {
+  max-width: 82%;
+  padding: 9px 13px;
+  border-radius: 14px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+.ai-tutor-bubble.ai {
+  align-self: flex-start;
+  background: var(--tutor-bubble-ai);
+  color: var(--tutor-text);
+  border-bottom-left-radius: 4px;
+}
+.ai-tutor-bubble.user {
+  align-self: flex-end;
+  background: var(--tutor-bubble-user);
+  color: var(--tutor-bubble-user-text);
+  border-bottom-right-radius: 4px;
+}
+.ai-tutor-bubble.error {
+  align-self: stretch;
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  font-size: 12px;
+}
+.ai-tutor-bubble.loading::after {
+  content: "●";
+  display: inline-block;
+  animation: ai-tutor-blink 1.2s infinite;
+  margin-left: 4px;
+}
+@keyframes ai-tutor-blink {
+  0%, 100% { opacity: .3; }
+  50% { opacity: 1; }
+}
+
+/* 输入区 */
+.ai-tutor-input-wrap {
+  border-top: 1px solid var(--tutor-border);
+  padding: 10px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  background: var(--tutor-bg);
+}
+.ai-tutor-input-wrap textarea {
+  flex: 1;
+  resize: none;
+  border: 1.5px solid var(--tutor-border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 13.5px;
+  font-family: inherit;
+  color: var(--tutor-text);
+  background: var(--tutor-bg-soft);
+  max-height: 100px;
+  line-height: 1.4;
+  min-height: 36px;
+  box-sizing: border-box;
+}
+.ai-tutor-input-wrap textarea:focus {
+  outline: none;
+  border-color: var(--tutor-primary);
+}
+.ai-tutor-input-wrap button {
+  height: 36px;
+  min-width: 54px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--tutor-primary), var(--tutor-primary-dark));
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform .15s;
+}
+.ai-tutor-input-wrap button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.ai-tutor-input-wrap button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+/* 移动端适配 */
+@media (max-width: 560px) {
+  .ai-tutor-panel {
+    right: 12px;
+    bottom: 84px;
+    width: calc(100vw - 24px);
+    height: calc(100vh - 120px);
+    max-height: 560px;
+  }
+  .ai-tutor-fab {
+    right: 16px;
+    bottom: 16px;
+  }
+}
+
+/* 深色学段（高中）兼容 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --tutor-bg: #1e293b;
+    --tutor-bg-soft: #0f172a;
+    --tutor-border: #334155;
+    --tutor-text: #f1f5f9;
+    --tutor-text-soft: #94a3b8;
+    --tutor-bubble-ai: #334155;
+  }
+}
