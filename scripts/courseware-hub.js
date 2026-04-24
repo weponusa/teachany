@@ -355,12 +355,35 @@ function getStats() {
 }
 
 /* ─── 导出 ────────────────────────────────────── */
+
+/**
+ * v6.6: 按 course.id 查课件（返回包含 url 字段的 UnifiedCourse）
+ * @param {string} courseId
+ * @returns {UnifiedCourse|null}
+ */
+function getCourseById(courseId) {
+  if (!courseId) return null;
+  // 优先 registry（官方+社区都在）
+  let hit = _registryCourses.find(c => c.id === courseId);
+  if (hit) return hit;
+  // 再查 community 下载链接
+  hit = _communityCourses.find(c => c.id === courseId);
+  if (hit) return hit;
+  // 再查 _nodeIndex 里合并后的（含 user courses）
+  for (const arr of _nodeIndex.values()) {
+    hit = arr.find(c => c.id === courseId);
+    if (hit) return hit;
+  }
+  return null;
+}
+
 window.TeachAnyHub = {
   init,
   getAllCoursesForNode,
   getBestCourseForNode,
   getNodeCourseCount,
   hasAnyCourseware,
+  getCourseById,  // v6.6: 新增
   refreshIndex,
   getAllCoveredNodeIds,
   getStats,
