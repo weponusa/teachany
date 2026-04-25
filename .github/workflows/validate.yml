@@ -61,13 +61,15 @@ jobs:
         id: changed
         run: |
           set -e
-          # union of: unpacked PR submissions + diff-detected examples changes
+          # union of: unpacked PR submissions + diff-detected examples/community changes
           IDS="${{ steps.unpack.outputs.unpacked_ids }}"
           if [ -n "${{ github.event.pull_request.base.sha }}" ]; then
             base="${{ github.event.pull_request.base.sha }}"
             head="${{ github.event.pull_request.head.sha }}"
-            diff_ids=$(git diff --name-only "$base" "$head" | grep '^examples/' | awk -F/ '{print $2}' | sort -u || true)
-            IDS="${IDS} ${diff_ids}"
+            # v6.6: 同时扫 examples/ 和 community/ 改动（之前漏了 community → 劣质课件可绕过）
+            ex_ids=$(git diff --name-only "$base" "$head" | grep '^examples/' | awk -F/ '{print $2}' | sort -u || true)
+            comm_ids=$(git diff --name-only "$base" "$head" | grep '^community/' | grep -v '^community/pending/\|^community/drafts/\|^community/index.json\|^community/README' | awk -F/ '{print $2}' | sort -u || true)
+            IDS="${IDS} ${ex_ids} ${comm_ids}"
           fi
           # 去重
           IDS=$(echo "$IDS" | tr ' ' '\n' | sort -u | tr '\n' ' ')
