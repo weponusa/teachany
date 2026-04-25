@@ -35,29 +35,21 @@ echo "════════════════════════�
 echo "课件目录: $COURSE_DIR"
 echo
 
-# 1. 资源源优先级
+# 1. 资源源：只从 skill 自包含的 assets/ 读（v6.9 起不再依赖仓库 data/_legacy）
 SKILL_ASSETS="$(cd "$(dirname "$0")/.." && pwd)/assets"
-# 定位 teachany-opensource 仓库（用于 _legacy 资源）
-REPO=""
-for c in "$HOME/CodeBuddy/一次函数/teachany-opensource" "$HOME/teachany-opensource" "$HOME/CodeBuddy/teachany-opensource"; do
-  [ -d "$c/data/_legacy/resources/geography" ] && { REPO="$c"; break; }
-done
-if [ -z "$REPO" ] && [ -d "$COURSE_DIR/../.." ]; then
-  candidate=$(cd "$COURSE_DIR/../.." && pwd)
-  [ -d "$candidate/data/_legacy/resources/geography" ] && REPO="$candidate"
-fi
 
 SOURCES=(
   "$SKILL_ASSETS/historical-china"
   "$SKILL_ASSETS/historical-world"
   "$SKILL_ASSETS/hillshade"
+  "$SKILL_ASSETS/timelines"
 )
-if [ -n "$REPO" ]; then
-  SOURCES+=(
-    "$REPO/data/_legacy/resources/geography/historical-china"
-    "$REPO/data/_legacy/resources/geography/historical-world"
-    "$REPO/data/_legacy/resources/geography/hillshade"
-  )
+
+# 自检：skill/assets 必须在（clone teachany 后正常都在）
+if [ ! -d "$SKILL_ASSETS" ]; then
+  echo "❌ skill/assets 目录不存在: $SKILL_ASSETS"
+  echo "   请确认你已 clone https://github.com/weponusa/teachany 且 skill/assets/ 完整"
+  exit 2
 fi
 
 echo "[1/3] 资源源目录:"
