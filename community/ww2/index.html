@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="course-id" content="history-ww2">
+<meta name="course-node" content="ww2">
+<meta name="course-subject" content="history">
+<meta name="course-title" content="第二次世界大战">
+<meta name="course-prereqs" content="ww1,versailles-treaty,great-depression">
+<meta name="course-next" content="cold-war">
+<title>第二次世界大战 · TeachAny 历史课件</title>
+
+<!-- Leaflet for WW2 map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+  :root {
+    --bg: #f8fafc;
+    --primary: #3b82f6;
+    --secondary: #06b6d4;
+    --accent: #f59e0b;
+    --card: #ffffff;
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --success: #22c55e;
+    --danger: #ef4444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.8;
+    font-size: 15px;
+  }
+  /* Hero */
+  .hero {
+    background: linear-gradient(135deg, #1e3a5f 0%, #3b82f6 100%);
+    color: white;
+    padding: 60px 24px 48px;
+    text-align: center;
+  }
+  .hero h1 { font-size: 2.2em; margin-bottom: 8px; }
+  .hero p { opacity: 0.85; font-size: 1.05em; margin-bottom: 4px; }
+  .hero .meta { display: flex; justify-content: center; gap: 16px; margin-top: 16px; flex-wrap: wrap; }
+  .hero .meta span {
+    background: rgba(255,255,255,0.15); border-radius: 20px;
+    padding: 4px 14px; font-size: 0.85em;
+  }
+  /* Nav */
+  .nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(255,255,255,0.95); backdrop-filter: blur(8px);
+    border-bottom: 1px solid #e2e8f0;
+    padding: 10px 24px; display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .nav a {
+    color: var(--text-secondary); text-decoration: none;
+    padding: 6px 14px; border-radius: 8px; font-size: 0.9em;
+    transition: all 0.2s;
+  }
+  .nav a:hover, .nav a.active { background: var(--primary); color: white; }
+  /* Container */
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+  /* Section */
+  .section { margin-bottom: 48px; }
+  .section-title {
+    font-size: 1.4em; font-weight: 700;
+    border-left: 4px solid var(--primary);
+    padding-left: 14px; margin-bottom: 20px;
+  }
+  /* Card */
+  .card {
+    background: var(--card); border-radius: 14px;
+    padding: 24px; margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    border-top: 3px solid var(--primary);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+  .card h3 { font-size: 1.1em; margin-bottom: 12px; color: var(--primary); }
+  .card p, .card li { color: var(--text); font-size: 0.95em; line-height: 1.85; }
+  .card ul, .card ol { padding-left: 20px; margin-top: 8px; }
+  .card li { margin-bottom: 6px; }
+  /* ABT Intro */
+  .abt-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin: 20px 0; }
+  .abt-box {
+    padding: 18px; border-radius: 12px; text-align: center;
+  }
+  .abt-box.and { background: #f0fdf4; border: 1px solid #22c55e; }
+  .abt-box.but { background: #fef2f2; border: 1px solid #ef4444; }
+  .abt-box.therefore { background: #eff6ff; border: 1px solid #3b82f6; }
+  .abt-box .label { font-weight: 700; font-size: 0.85em; margin-bottom: 6px; }
+  .abt-box.and .label { color: #16a34a; }
+  .abt-box.but .label { color: #dc2626; }
+  .abt-box.therefore .label { color: #1d4ed; }
+  /* Timeline */
+  .timeline { position: relative; padding-left: 32px; margin: 20px 0; }
+  .timeline::before {
+    content: ''; position: absolute; left: 10px; top: 0; bottom: 0;
+    width: 3px; background: linear-gradient(to bottom, var(--primary), var(--secondary));
+    border-radius: 2px;
+  }
+  .tl-item { position: relative; margin-bottom: 24px; }
+  .tl-dot {
+    position: absolute; left: -26px; top: 4px;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--primary); border: 3px solid white;
+    box-shadow: 0 0 0 2px var(--primary);
+  }
+  .tl-year {
+    display: inline-block; background: var(--primary); color: white;
+    padding: 2px 10px; border-radius: 6px; font-size: 0.85em;
+    font-weight: 600; margin-bottom: 4px;
+  }
+  .tl-content { color: var(--text); font-size: 0.95em; line-height: 1.7; }
+  .tl-content strong { color: var(--primary); }
+  /* Map placeholder */
+  .map-placeholder {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-radius: 12px; padding: 32px; text-align: center;
+    color: #94a3b8; margin: 16px 0;
+  }
+  .map-placeholder .icon { font-size: 3em; margin-bottom: 12px; }
+  /* Quiz */
+  .quiz-card {
+    background: #f8fafc; border: 1px solid #e2e8f0;
+    border-radius: 12px; padding: 20px; margin-bottom: 16px;
+  }
+  .quiz-q { font-weight: 600; margin-bottom: 12px; font-size: 1em; }
+  .quiz-opts { display: flex; flex-direction: column; gap: 8px; }
+  .quiz-opt {
+    padding: 10px 14px; border-radius: 8px;
+    border: 1px solid #e2e8f0; background: white;
+    cursor: pointer; transition: all 0.2s; font-size: 0.95em;
+  }
+  .quiz-opt:hover { border-color: var(--primary); background: #eff6ff; }
+  .quiz-opt.selected { border-color: var(--primary); background: #dbeafe; }
+  .quiz-opt.correct { border-color: var(--success); background: #dcfce7; }
+  .quiz-opt.wrong { border-color: var(--danger); background: #fee2e2; }
+  .quiz-feedback {
+    margin-top: 12px; padding: 12px; border-radius: 8px;
+    font-size: 0.9em; display: none;
+  }
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.correct { background: #dcfce7; color: #166534; }
+  .quiz-feedback.wrong { background: #fee2e2; color: #991b1b; }
+  /* Button */
+  .btn {
+    display: inline-block; padding: 10px 24px; border-radius: 10px;
+    border: none; cursor: pointer; font-size: 0.95em; font-weight: 600;
+    transition: all 0.2s;
+  }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: #2563eb; }
+  .btn-secondary { background: #e2e8f0; color: var(--text); }
+  .btn-secondary:hover { background: #cbd5e1; }
+  /* Progress bar */
+  .progress-wrap {
+    background: #e2e8f0; border-radius: 8px;
+    height: 8px; margin: 24px 0 8px; overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary));
+    border-radius: 8px; transition: width 0.5s; width: 0%;
+  }
+  .progress-text { font-size: 0.85em; color: var(--text-secondary); margin-bottom: 20px; }
+  /* Completion */
+  .completion {
+    text-align: center; padding: 40px 24px; display: none;
+  }
+  .completion.show { display: block; }
+  .completion .icon { font-size: 4em; margin-bottom: 16px; }
+  /* Responsive */
+  @media (max-width: 640px) {
+    .abt-grid { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 1.6em; }
+  }
+  /* Source card */
+  .source-card {
+    background: #fefce8; border-left: 4px solid var(--accent);
+    padding: 16px; border-radius: 0 10px 10px 0; margin: 12px 0;
+    font-size: 0.9em; color: #92400e;
+  }
+  .source-card .source-title { font-weight: 700; margin-bottom: 6px; }
+  /* Comparison table */
+  .compare-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.9em; }
+  .compare-table th {
+    background: var(--primary); color: white;
+    padding: 10px 12px; text-align: left;
+  }
+  .compare-table td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
+  .compare-table tr:nth-child(even) { background: #f8fafc; }
+  /* Tag */
+  .tag {
+    display: inline-block; padding: 2px 8px; border-radius: 6px;
+    font-size: 0.8em; font-weight: 600; margin-right: 6px;
+  }
+  .tag-blue { background: #dbeafe; color: #1e40af; }
+  .tag-green { background: #dcfce7; color: #166534; }
+  .tag-amber { background: #fefce8; color: #92400e; }
+  .tag-red { background: #fee2e2; color: #991b1b; }
+
+  /* ═══ v6 基线补丁：地图、学伴、TTS、游戏化、知识图谱 ═══ */
+  .map-container {
+    width: 100%; height: 500px; background: #0c1526;
+    border-radius: 12px; margin: 20px 0; overflow: hidden;
+  }
+  .leaflet-container { background: #0c1526; }
+  .leaflet-popup-content-wrapper { background: #1e293b; color: #f8fafc; border-radius: 8px; }
+  .leaflet-popup-tip { background: #1e293b; }
+  .leaflet-popup-content { margin: 10px 14px; font-size: 12px; line-height: 1.6; }
+  .leaflet-popup-content b { color: #fbbf24; }
+  .leaflet-control-attribution { background: rgba(30,41,59,0.85) !important; color: #94a3b8 !important; font-size: 10px !important; }
+
+  /* 游戏化：轴心国/同盟国分类 */
+  .sort-game { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+  .sort-zone {
+    border: 2px dashed #cbd5e1; border-radius: 10px; padding: 16px; min-height: 120px;
+    background: #f8fafc;
+  }
+  .sort-zone.axis { border-color: #ef4444; background: #fef2f2; }
+  .sort-zone.allies { border-color: #3b82f6; background: #eff6ff; }
+  .sort-zone h4 { margin: 0 0 12px 0; font-size: 0.95em; }
+  .sort-pool {
+    display: flex; flex-wrap: wrap; gap: 8px; padding: 12px;
+    background: #fffbeb; border: 1px dashed #f59e0b; border-radius: 10px; margin-top: 16px;
+  }
+  .sort-chip {
+    padding: 6px 14px; background: white; border: 1px solid #e2e8f0;
+    border-radius: 999px; font-size: 0.9em; cursor: pointer;
+    transition: all .2s; user-select: none;
+  }
+  .sort-chip:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+  .sort-chip.placed-axis { background: #fee2e2; border-color: #ef4444; }
+  .sort-chip.placed-allies { background: #dbeafe; border-color: #3b82f6; }
+  .sort-feedback { margin-top: 12px; font-weight: 600; font-size: 0.95em; }
+  .sort-feedback.correct { color: var(--success); }
+  .sort-feedback.wrong { color: var(--danger); }
+
+  /* 知识图谱 */
+  .km-grid {
+    display: grid; grid-template-columns: 1fr 1.5fr 1fr;
+    gap: 20px; align-items: center; margin: 32px 0;
+  }
+  .km-col { text-align: center; }
+  .km-col h4 {
+    color: var(--text-secondary); font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 10px 0;
+  }
+  .km-node {
+    display: inline-block; padding: 12px 18px;
+    border: 2px solid #e2e8f0; border-radius: 12px;
+    background: white; color: var(--text); text-decoration: none;
+    font-size: 14px; transition: all .2s;
+  }
+  .km-node:hover { border-color: var(--primary); transform: translateY(-2px); }
+  .km-node.current {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white; border-color: transparent;
+    font-size: 16px; font-weight: 700; padding: 16px 24px;
+    box-shadow: 0 8px 24px rgba(59,130,246,0.4);
+  }
+  @media (max-width: 768px) {
+    .km-grid { grid-template-columns: 1fr; }
+    .sort-game { grid-template-columns: 1fr; }
+  }
+
+  /* TTS 段落高亮 */
+  .tts-active {
+    background: linear-gradient(180deg, transparent 60%, rgba(251,191,36,0.25) 60%);
+    transition: background .3s;
+  }
+
+  /* AI 学伴 左下 */
+  #ai-assistant {
+    position: fixed; left: 20px; bottom: 20px; z-index: 9998;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+    color: white; border: none; font-size: 26px; cursor: pointer;
+    box-shadow: 0 8px 24px rgba(139,92,246,0.5);
+    display: flex; align-items: center; justify-content: center;
+  }
+  #ai-assistant-panel {
+    position: fixed; left: 20px; bottom: 90px; z-index: 9998;
+    width: 320px; max-height: 400px;
+    background: white; border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    border: 1px solid #e2e8f0; display: none;
+    flex-direction: column; overflow: hidden;
+  }
+  #ai-assistant-panel.open { display: flex; }
+  #ai-assistant-panel .panel-header {
+    padding: 16px; background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+    color: white; font-weight: 600;
+  }
+  #ai-assistant-panel .panel-body {
+    padding: 16px; overflow-y: auto; font-size: 14px; line-height: 1.7;
+  }
+  #ai-assistant-panel .hint {
+    background: #f0f9ff; border-left: 3px solid #3b82f6;
+    padding: 10px 14px; margin: 8px 0; border-radius: 0 6px 6px 0;
+    font-size: 13px;
+  }
+
+  /* 全局 TTS 右下 */
+  #tts-controller {
+    position: fixed; right: 20px; bottom: 20px; z-index: 9999;
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 14px; background: white;
+    border: 1px solid #e2e8f0; border-radius: 999px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  }
+  #tts-controller button {
+    background: transparent; color: var(--text);
+    border: none; cursor: pointer; font-size: 18px;
+    padding: 4px 6px;
+  }
+  #tts-controller .tts-status {
+    font-size: 11px; color: var(--text-secondary);
+    min-width: 70px; text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero" data-tts="hero">
+  <h1>⚔️ 第二次世界大战</h1>
+  <p>初中历史 · 世界现代史</p>
+  <p>八年级/九年级 · 课标匹配</p>
+  <div class="meta">
+    <span>📖 新授课</span>
+    <span>⏱️ 约 35 分钟</span>
+    <span>🎯 理解 · 分析 · 评价</span>
+  </div>
+</div>
+
+<!-- Nav -->
+<div class="nav" id="mainNav">
+  <a href="#objectives">目标</a>
+  <a href="#intro">引入</a>
+  <a href="#module1">起因</a>
+  <a href="#module2">战场</a>
+  <a href="#module3">转折</a>
+  <a href="#module4">影响</a>
+  <a href="#game">互动</a>
+  <a href="#quiz">测试</a>
+  <a href="#knowledge-map-section">图谱</a>
+</div>
+
+<div class="container">
+
+  <!-- Learning Objectives -->
+  <div class="section" id="objectives" data-tts="objectives">
+    <div class="section-title">📋 本课学习目标</div>
+    <div class="card" style="border-top-color:var(--accent)">
+      <p>学完本课后，你应该能够：</p>
+      <ul>
+        <li><strong>识记</strong>：二战的主要起因、关键时间节点和重大事件</li>
+        <li><strong>理解</strong>：中国战场在世界反法西斯战争中的地位和贡献</li>
+        <li><strong>分析</strong>：斯大林格勒战役、诺曼底登陆等转折点的意义</li>
+        <li><strong>评价</strong>：二战对战后世界格局的影响，思考和平的价值</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- NEW · B-6: 引入叙事 -->
+  <div class="section" id="intro" data-tts="introduction">
+    <div class="section-title">📖 引入：一张合影背后的世界</div>
+    <div class="card" style="border-top-color:#8b5cf6">
+      <img src="assets/hero-scene.webp" alt="二战欧洲战场战壕黄昏场景"
+           style="width:100%;border-radius:12px;margin-bottom:16px;box-shadow:0 8px 24px rgba(0,0,0,0.15)">
+      <h3>1945 年 2 月，克里米亚半岛雅尔塔</h3>
+      <p>三位老人坐在一起拍照。左边是英国首相<strong>丘吉尔</strong>，中间是美国总统<strong>罗斯福</strong>——
+      病重且将在两个月后去世，右边是苏联领导人<strong>斯大林</strong>。</p>
+      <p>他们刚刚决定了之后几十年的世界版图——<strong>冷战</strong>就从这张照片里开始孕育。</p>
+      <p style="margin-top:16px">但是，在这张照片发生的 6 年之前，
+      没有人会相信：纳粹德国会被打败，日本军国主义会被粉碎，中国会以战胜国的身份坐上联合国常任理事国的位置。</p>
+      <p><strong>这节课的问题是：为什么二战成为了人类历史的一个转折点？中国在其中扮演了什么角色？</strong></p>
+    </div>
+  </div>
+
+  <!-- Module 1: Causes -->
+  <div class="section" id="module1" data-tts="module1">
+    <div class="section-title">🔍 模块一：二战为什么会爆发？</div>
+
+    <!-- ABT Intro -->
+    <div class="card">
+      <h3>📌 我们先想一想</h3>
+      <div class="abt-grid">
+        <div class="abt-box and">
+          <div class="label">✅ And（已知）</div>
+          <p>你已经学过：第一次世界大战结束于1918年，《凡尔赛和约》惩罚了德国。</p>
+        </div>
+        <div class="abt-box but">
+          <div class="label">❌ But（矛盾）</div>
+          <p>可是：经济大危机让德、意、日走上法西斯道路，凡尔赛体系反而埋下新仇恨。</p>
+        </div>
+        <div class="abt-box therefore">
+          <div class="label">💡 Therefore（本课）</div>
+          <p>所以：我们要系统理解二战的多重起因，以及中国战场是如何与世界连成一片的。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Core content -->
+    <div class="card">
+      <h3>📖 核心知识：二战的三重起因</h3>
+      <img src="assets/concept-causes.webp" alt="战争三重起因：经济危机+体系崩溃+绥靖妥协示意图"
+           style="width:100%;border-radius:12px;margin:12px 0;box-shadow:0 8px 24px rgba(0,0,0,0.1)">
+      <p>历史学家通常从三个层面分析二战起因：</p>
+      <table class="compare-table">
+        <tr><th>层面</th><th>关键因素</th><th>具体表现</th></tr>
+        <tr>
+          <td><span class="tag tag-red">根本原因</span></td>
+          <td>经济大危机的冲击</td>
+          <td>1929年经济大危机 → 德、意、日法西斯上台 → 对外扩张</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-amber">历史原因</span></td>
+          <td>凡尔赛—华盛顿体系的矛盾</td>
+          <td>《凡尔赛和约》过度惩罚德国；《九国公约》限制日本 → 复仇情绪</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-blue">直接原因</span></td>
+          <td>绥靖政策的纵容</td>
+          <td>英、法对德意日侵略采取妥协政策 → 1939年德国入侵波兰，二战全面爆发</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>🗺️ 法西斯扩张时间线</h3>
+      <div class="timeline">
+        <div class="tl-item">
+          <div class="tl-dot" style="background:#ef4444"></div>
+          <div class="tl-year" style="background:#ef4444">1931年</div>
+          <div class="tl-content"><strong>九一八事变</strong>：日本侵占中国东北，亚洲战争策源地形成。</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot" style="background:#f59e0b"></div>
+          <div class="tl-year" style="background:#f59e0b">1935年</div>
+          <div class="tl-content"><strong>意大利入侵埃塞俄比亚</strong>：国联制裁不力，绥靖政策暴露。</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot" style="background:#3b82f6"></div>
+          <div class="tl-year" style="background:#3b82f6">1937年</div>
+          <div class="tl-content"><strong>七七事变（卢沟桥事变）</strong>：日本全面侵华，中国全民族抗战开始。<br>⚠️ <em>中国战场由此成为世界反法西斯战争的东方主战场。</em></div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot" style="background:#ef4444"></div>
+          <div class="tl-year" style="background:#ef4444">1939年</div>
+          <div class="tl-content"><strong>德国入侵波兰</strong>：英、法对德宣战，<strong>第二次世界大战全面爆发</strong>。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Source analysis -->
+    <div class="card">
+      <h3>📜 史料分析：为什么绥靖政策失败了？</h3>
+      <div class="source-card">
+        <div class="source-title">📖 史料原文（节选）</div>
+        "我们对一个在强大邻邦压境下的小国，不论如何同情，总不能仅仅为了它而不顾一切地使整个大英帝国去卷入一场战争。"<br>
+        —— 1938年，英国首相张伯伦为《慕尼黑协定》辩护时的讲话
+      </div>
+      <p><strong>🤔 思考：</strong></p>
+      <ul>
+        <li>张伯伦的"妥协"针对的是哪个国家？牺牲的是哪个国家？</li>
+        <li>这种政策的最终结果是什么？（提示：1939年发生了什么？）</li>
+        <li>对中国抗战来说，欧洲战场爆发是好事还是坏事？为什么？</li>
+      </ul>
+    </div>
+
+    <!-- Immediate practice -->
+    <div class="quiz-card" id="quiz1">
+      <div class="quiz-q">✏️ 练习1：第二次世界大战全面爆发的标志是？</div>
+      <div class="quiz-opts">
+        <div class="quiz-opt" onclick="selectOpt(this,false)">A. 1931年九一八事变</div>
+        <div class="quiz-opt" onclick="selectOpt(this,false)">B. 1937年七七事变</div>
+        <div class="quiz-opt" onclick="selectOpt(this,true)">C. 1939年德国入侵波兰</div>
+        <div class="quiz-opt" onclick="selectOpt(this,false)">D. 1941年珍珠港事件</div>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+  </div>
+
+  <!-- Module 2: Major Theaters -->
+  <div class="section" id="module2" data-tts="module2">
+    <div class="section-title">🌍 模块二：二战的三大战场</div>
+
+    <!-- NEW · B-4: 世界地图（1939 二战爆发前夜）-->
+    <div class="card" style="border-top-color:var(--primary)">
+      <h3>🗺️ 战争前夜：1914 vs 1939 vs 1945 的世界</h3>
+      <p>下面的交互地图展示了二战爆发前、战时、战后三个关键时刻的世界政权分布。
+      <strong>点击顶部按钮切换不同时间切片</strong>，观察轴心国（德/意/日）如何在 1939 年前完成扩张。</p>
+      <div style="display:flex;gap:8px;margin:12px 0;flex-wrap:wrap">
+        <button class="btn" data-map="ce-1914-wwi" onclick="loadWw2Map(this,'ce-1914-wwi','1914 一战前')" style="padding:8px 14px;background:#e0e7ff;color:#3730a3;border:0;border-radius:999px;cursor:pointer;font-size:0.85em">1914 一战前</button>
+        <button class="btn" data-map="ce-1945-wwii" onclick="loadWw2Map(this,'ce-1945-wwii','1945 二战结束')" style="padding:8px 14px;background:#dbeafe;color:#1e40af;border:0;border-radius:999px;cursor:pointer;font-size:0.85em">1945 二战结束</button>
+        <button class="btn" data-map="ce-2000" onclick="loadWw2Map(this,'ce-2000','2000 当代')" style="padding:8px 14px;background:#f0fdf4;color:#166534;border:0;border-radius:999px;cursor:pointer;font-size:0.85em">2000 当代</button>
+      </div>
+      <div class="map-container" id="ww2-map"></div>
+      <p style="font-size:0.85em;color:var(--text-secondary);margin-top:12px">
+        🗺️ 数据来源：<strong>historical-basemaps</strong>（aourednik, GPL-3.0）+ <strong>Natural Earth</strong> 地形底图（Public Domain）
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>🗺️ 二战是真正的"世界大战"</h3>
+      <p>二战不同于第一次世界大战，它的战场遍布三大洲：</p>
+      <table class="compare-table">
+        <tr><th>战场</th><th>时间</th><th>主要交战国</th><th>关键战役</th></tr>
+        <tr>
+          <td><span class="tag tag-red">欧洲战场</span></td>
+          <td>1939–1945</td>
+          <td>德国 vs 英、法、苏、美等盟国</td>
+          <td>不列颠空战、斯大林格勒、诺曼底登陆</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-amber">亚太战场</span></td>
+          <td>1937–1945（中国）<br>1941–1945（太平洋）</td>
+          <td>日本 vs 中国、美国等</td>
+          <td>台儿庄战役、百团大战、中途岛海战</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-blue">北非战场</span></td>
+          <td>1940–1943</td>
+          <td>德意 vs 英、美</td>
+          <td>阿拉曼战役</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="card" style="border-top-color:var(--accent)">
+      <h3>🇨🇳 重点：中国战场在世界反法西斯战争中的地位</h3>
+      <div class="source-card" style="background:#eff6ff;border-color:var(--primary)">
+        <div class="source-title" style="color:#1e40af">📖 课标要求（中国课标）</div>
+        "认识中国战场是世界反法西斯战争的东方主战场，理解中国人民抗日战争对世界反法西斯战争胜利的重大贡献。"
+      </div>
+      <p><strong>为什么中国战场至关重要？</strong></p>
+      <ul>
+        <li>📅 <strong>开始时间最早</strong>：1937年全面抗战爆发，比欧洲战场早2年</li>
+        <li>⏳ <strong>持续时间最长</strong>：14年抗战（1931–1945），牵制日军主力</li>
+        <li>💀 <strong>牺牲最为惨重</strong>：军民伤亡超过3500万人</li>
+        <li>🤝 <strong>战略配合</strong>：中国战场拖住日本陆军主力，使日本无法配合德国夹击苏联</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>📖 核心事件：珍珠港事件（1941年12月）</h3>
+      <p>日本偷袭美国珍珠港，<strong>太平洋战争爆发</strong>。</p>
+      <p>这意味着：</p>
+      <ul>
+        <li>美国正式参战 → 反法西斯同盟力量大大增强</li>
+        <li>二战真正成为"全球性"战争</li>
+        <li>中国不再是"独自抗战"——有了更强大的国际盟友</li>
+      </ul>
+    </div>
+
+    <!-- Practice -->
+    <div class="quiz-card" id="quiz2">
+      <div class="quiz-q">✏️ 练习2：下列关于中国战场的说法，正确的是？</div>
+      <div class="quiz-opts">
+        <div class="quiz-opt" onclick="selectOpt(this,false)">A. 中国战场是二战中最晚开始的战场</div>
+        <div class="quiz-opt" onclick="selectOpt(this,false)">B. 珍珠港事件后中国才开始抗战</div>
+        <div class="quiz-opt" onclick="selectOpt(this,true)">C. 中国战场牵制了日本陆军主力，配合了世界反法西斯战争</div>
+        <div class="quiz-opt" onclick="selectOpt(this,false)">D. 中国的抗战对欧洲战场没有实质影响</div>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+  </div>
+
+  <!-- Module 3: Turning Points -->
+  <div class="section" id="module3" data-tts="module3">
+    <div class="section-title">⚡ 模块三：二战的转折点</div>
+
+    <div class="card">
+      <h3>💡 什么是"转折点"？</h3>
+      <p>转折点的标志是：<strong>战争主动权从轴心国转移到同盟国</strong>。在此之前，法西斯国家节节胜利；在此之后，同盟国开始战略反攻。</p>
+    </div>
+
+    <div class="card" style="border-top-color:var(--success)">
+      <h3>🇷🇷 斯大林格勒战役（1942–1943）</h3>
+      <div class="timeline">
+        <div class="tl-item">
+          <div class="tl-dot" style="background:var(--danger)"></div>
+          <div class="tl-year" style="background:var(--danger)">1942.7</div>
+          <div class="tl-content">德军进攻斯大林格勒，企图切断苏联的粮食和石油供应。</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot" style="background:var(--primary)"></div>
+          <div class="tl-year" style="background:var(--primary)">1942.11</div>
+          <div class="tl-content"><strong>苏军"天王星行动"</strong>：包围德军第6集团军。</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot" style="background:var(--success)"></div>
+          <div class="tl-year" style="background:var(--success)">1943.2</div>
+          <div class="tl-content"><strong>德军投降</strong>：约33万德军被歼。这是<strong>二战欧洲战场的根本转折点</strong>。</div>
+        </div>
+      </div>
+      <div class="source-card" style="background:#dcfce7;border-color:var(--success)">
+        <div class="source-title" style="color:#166534">📖 意义</div>
+        ➤ 德军从此失去战略主动权，开始大撤退。<br>
+        ➤ 鼓舞了所有被法西斯侵略的国家。<br>
+        ➤ 毛泽东评价："这一战，是二战的转折点。"
+      </div>
+    </div>
+
+    <div class="card" style="border-top-color:var(--secondary)">
+      <h3>🇺🇸 中途岛海战（1942年6月）</h3>
+      <p><strong>太平洋战场的转折点。</strong></p>
+      <p>美国破译日军密码，提前设伏，以损失1艘航母的代价击沉日本4艘主力航母。从此，日本在太平洋战场由攻转守。</p>
+    </div>
+
+    <div class="card" style="border-top-color:var(--accent)">
+      <h3>🇬🇧 诺曼底登陆（1944年6月6日）</h3>
+      <p><strong>"D日"——欧洲第二战场开辟。</strong></p>
+      <p>美、英联军在法国诺曼底登陆，使德国陷入<strong>东西两线作战</strong>的困境。这与<strong>苏联在东线的反攻</strong>形成战略配合。</p>
+      <div class="source-card">
+        <div class="source-title">🤔 深度思考</div>
+        为什么"第二战场"迟迟直到1944年才开辟？这对中苏两国的抗战/卫国战争意味着什么？
+      </div>
+    </div>
+
+    <!-- Practice -->
+    <div class="quiz-card" id="quiz3">
+      <div class="quiz-q">✏️ 练习3：欧洲战场根本转折点是下列哪一战役？</div>
+      <div class="quiz-opts">
+        <div class="quiz-opt" onclick="selectOpt(this,false)">A. 不列颠空战</div>
+        <div class="quiz-opt" onclick="selectOpt(this,true)">B. 斯大林格勒战役</div>
+        <div class="quiz-opt" onclick="selectOpt(this,false)">C. 诺曼底登陆</div>
+        <div class="quiz-opt" onclick="selectOpt(this,false)">D. 柏林战役</div>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+  </div>
+
+  <!-- Module 4: Outcome & Impact -->
+  <div class="section" id="module4" data-tts="module4">
+    <div class="section-title">🕊️ 模块四：二战的结果与深远影响</div>
+
+    <div class="card">
+      <h3>📅 二战的结束时间线</h3>
+      <div class="timeline">
+        <div class="tl-item">
+          <div class="tl-dot" style="background:#3b82f6"></div>
+          <div class="tl-year" style="background:#3b82f6">1945.5.8</div>
+          <div class="tl-content"><strong>德国签署无条件投降书</strong>，欧洲战场战事结束。</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot" style="background:#ef4444"></div>
+          <div class="tl-year" style="background:#ef4444">1945.8.6 & 9</div>
+          <div class="tl-content">美国在日本<strong>广岛和长崎</strong>投下原子弹（此为<em>争议性事件</em>，课件中需引导学生多角度思考）。</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot" style="background:#22c55e"></div>
+          <div class="tl-year" style="background:#22c55e">1945.8.15</div>
+          <div class="tl-content"><strong>日本宣布无条件投降</strong>。<strong>9月2日</strong>，日本签署投降书，二战正式结束。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="border-top-color:var(--accent)">
+      <h3>🌐 二战对世界格局的三大影响</h3>
+      <table class="compare-table">
+        <tr><th>影响</th><th>具体表现</th><th>对今天的意义</th></tr>
+        <tr>
+          <td><span class="tag tag-blue">联合国成立</span></td>
+          <td>1945年10月，《联合国宪章》生效，联合国正式成立</td>
+          <td>今天仍在维护世界和平中发挥核心作用；中国是其创始会员国和常任理事国</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-red">两极格局形成</span></td>
+          <td>欧洲衰落，美苏两个超级大国崛起 → 冷战开始</td>
+          <td>理解了今天的国际新闻，才能看懂美俄（苏）关系的历史根源</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-green">民族解放运动高涨</span></td>
+          <td>亚、非、拉许多殖民地国家独立 → 殖民体系瓦解</td>
+          <td>中国作为最大的发展中国家，与这些国家有深厚传统友谊</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="card" style="border-top-color:var(--success)">
+      <h3>🇨🇳 中国人民抗日战争的胜利意义</h3>
+      <div class="source-card" style="background:#dcfce7;border-color:var(--success)">
+        <div class="source-title" style="color:#166534">📖 课标核心结论（务必记住！）</div>
+        <strong>中国人民抗日战争</strong>是近代以来中国反抗外敌入侵第一次取得完全胜利的民族解放战争，为世界反法西斯战争胜利作出了重大贡献。
+      </div>
+      <ul>
+        <li>✅ 中国近代史上<strong>第一次</strong>完全胜利的反侵略战争</li>
+        <li>✅ 重新确立了中国在世界上的<strong>大国地位</strong>（联合国创始会员国、常任理事国）</li>
+        <li>✅ 促进了<strong>中华民族的觉醒</strong>和民族团结</li>
+        <li>✅ 对世界反法西斯战争的胜利作出了<strong>不可磨灭的贡献</strong></li>
+      </ul>
+    </div>
+
+    <!-- Synthesis task -->
+    <div class="card" style="border-top-color:#8b5cf6">
+      <h3>✍️ 综合任务（Bloom 第5级：评价）</h3>
+      <p><strong>题目：</strong>结合本课所学，谈谈你对"中国是二战东方主战场"这一论断的理解（150字左右）。</p>
+      <p>💡 <strong>提示：</strong>可以从"开始时间、持续时间、牺牲规模、战略配合"四个角度展开。</p>
+      <textarea style="width:100%;height:120px;margin-top:12px;padding:12px;border-radius:8px;border:1px solid #e2e8f0;font-family:inherit;font-size:0.95em" placeholder="在此写下你的思考……"></textarea>
+      <p style="font-size:0.85em;color:var(--text-secondary);margin-top:8px">💬 完成本题后，可以和同桌互相交流，看看对方的思路是否和你一致。</p>
+    </div>
+  </div>
+
+  <!-- NEW · B-3 游戏化互动 + B-6 例题分析 -->
+  <div class="section" id="game" data-tts="game">
+    <div class="section-title">🎮 互动：给国家归队——轴心国 vs 同盟国</div>
+    <div class="card" style="border-top-color:#8b5cf6">
+      <p>下面是 10 个二战中的重要国家/势力。<strong>点击每个名字，把它归类到对应的阵营</strong>——轴心国或同盟国。</p>
+      <div class="sort-pool" id="sortPool">
+        <span class="sort-chip" data-side="axis">🇩🇪 德国</span>
+        <span class="sort-chip" data-side="axis">🇮🇹 意大利</span>
+        <span class="sort-chip" data-side="axis">🇯🇵 日本</span>
+        <span class="sort-chip" data-side="allies">🇨🇳 中国</span>
+        <span class="sort-chip" data-side="allies">🇺🇸 美国</span>
+        <span class="sort-chip" data-side="allies">🇬🇧 英国</span>
+        <span class="sort-chip" data-side="allies">🇷🇺 苏联</span>
+        <span class="sort-chip" data-side="allies">🇫🇷 法国</span>
+        <span class="sort-chip" data-side="axis">🇭🇺 匈牙利</span>
+        <span class="sort-chip" data-side="allies">🇨🇦 加拿大</span>
+      </div>
+      <div class="sort-game">
+        <div class="sort-zone axis" id="zone-axis">
+          <h4>🟥 轴心国 (Axis)</h4>
+          <div class="zone-content"></div>
+        </div>
+        <div class="sort-zone allies" id="zone-allies">
+          <h4>🟦 同盟国 (Allies)</h4>
+          <div class="zone-content"></div>
+        </div>
+      </div>
+      <div class="sort-feedback" id="sortFeedback"></div>
+      <p style="margin-top:12px;font-size:0.9em;color:var(--text-secondary)">
+        💡 <strong>小贴士</strong>：轴心国三大主力是<strong>德、意、日</strong>（1940 年签订《三国同盟条约》），
+        同盟国由中、美、英、苏为核心，1942 年 26 国签署《联合国家宣言》。
+      </p>
+    </div>
+  </div>
+
+  <!-- Comprehensive Quiz -->
+  <div class="section" id="quiz" data-tts="quiz">
+    <div class="section-title">📝 综合练习</div>
+
+    <div class="progress-wrap"><div class="progress-bar" id="progBar"></div></div>
+    <div class="progress-text" id="progText">已完成 0 / 5 题</div>
+
+    <div class="quiz-card" id="cquiz1">
+      <div class="quiz-q">1️⃣ 加速二战爆发的重要历史背景是？</div>
+      <div class="quiz-opts">
+        <div class="quiz-opt" onclick="selectCOpt(this,false)">A. 美国加入国际联盟</div>
+        <div class="quiz-opt" onclick="selectCOpt(this,true)">B. 1929年经济大危机打击下，德、意、日法西斯上台</div>
+        <div class="quiz-opt" onclick="selectCOpt(this,false)">C. 十月革命胜利</div>
+        <div class="quiz-opt" onclick="selectCOpt(this,false)">D. 万隆会议成功召开</div>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+
+    <div class="quiz-card" id="cquiz2">
+      <div class="quiz-q">2️⃣ 世界反法西斯同盟正式形成的标志是？</div>
+      <div class="quiz-opts">
+        <div class="quiz-opt" onclick="selectCOpt(this,false)">A. 英法对德宣战</div>
+        <div class="quiz-opt" onclick="selectCOpt(this,false)">B. 苏联参战</div>
+        <div class="quiz-opt" onclick="selectCOpt(this,true)">C. 1942年《联合国家宣言》签署</div>
+        <div class="quiz-opt" onclick="selectCOpt(this,false)">D. 诺曼底登陆</div>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+
+    <div class="quiz-card" id="cquiz3">
+      <div class="quiz-q">3️⃣ 下列关于二战影响的表述，不正确的是？</div>
+      <div class="quiz-opts">
+        <div class="quiz-opt" onclick="selectCOpt(this,false)">A. 联合国在战后成立，维护世界和平</div>
+        <div class="quiz-opt" onclick="selectCOpt(this,false)">B. 欧洲中心地位动摇，美苏崛起</div>
+        <div class="quiz-opt" onclick="selectCOpt(this,true)">C. 二战结束后，世界各国立即实现了持久和平</div>
+        <div class="quiz-opt" onclick="selectCOpt(this,false)">D. 亚非拉民族解放运动高涨</div>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+
+    <div class="quiz-card" id="cquiz4">
+      <div class="quiz-q">4️⃣【史料实证】阅读下列材料，回答问题：<br>"1945年9月2日，在东京湾美国密苏里号战列舰上，日本代表正式签署投降书。中国战区受降仪式于9月9日在南京举行。"<br>以上材料说明？</div>
+      <div class="quiz-opts">
+        <div class="quiz-opt" onclick="selectCOpt(this,false)">A. 中国战区的受降仪式早于日本正式签署投降书</div>
+        <div class="quiz-opt" onclick="selectCOpt(this,true)">B. 日本于1945年9月2日正式签署投降书，二战结束</div>
+        <div class="quiz-opt" onclick="selectCOpt(this,false)">C. 二战于1945年8月15日立即完全结束</div>
+        <div class="quiz-opt" onclick="selectCOpt(this,false)">D. 受降仪式在东京湾举行</div>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+
+    <div class="quiz-card" id="cquiz5">
+      <div class="quiz-q">5️⃣【家国情怀】今天，我们仍然纪念抗日战争胜利，主要是因为？</div>
+      <div class="quiz-opts">
+        <div class="quiz-opt" onclick="selectCOpt(this,false)">A. 为了记住仇恨，反对日本</div>
+        <div class="quiz-opt" onclick="selectCOpt(this,false)">B. 为了展示中国的军事力量</div>
+        <div class="quiz-opt" onclick="selectCOpt(this,true)">C. 铭记历史、缅怀先烈、珍爱和平、开创未来</div>
+        <div class="quiz-opt" onclick="selectCOpt(this,false)">D. 为了向世界证明中国是最强大的国家</div>
+      </div>
+      <div class="quiz-feedback"></div>
+    </div>
+
+    <div style="text-align:center;margin-top:24px">
+      <button class="btn btn-primary" onclick="showResult()">查看成绩 📊</button>
+    </div>
+  </div>
+
+  <!-- Completion -->
+  <div class="completion" id="completion" data-tts="summary">
+    <div class="icon">🎉</div>
+    <h2>本课学习完成！</h2>
+    <img src="assets/extension-peace.webp" alt="白鸽与和平：战后新生"
+         style="width:100%;max-width:640px;border-radius:12px;margin:20px auto;display:block;box-shadow:0 8px 24px rgba(0,0,0,0.12)">
+    <p id="resultText" style="margin:16px 0;font-size:1.1em"></p>
+    <p style="color:var(--text-secondary);font-size:0.9em;margin-bottom:20px">记住：历史不是用来记住仇恨的，而是用来防止悲剧重演的。<br>珍爱和平，开创未来。🕊️</p>
+    <button class="btn btn-secondary" onclick="window.scrollTo({top:0,behavior:'smooth'})">回到顶部 ↑</button>
+  </div>
+
+  <!-- NEW · B-5 知识图谱 -->
+  <div class="section" id="knowledge-map-section" data-tts="knowledge-map">
+    <div class="section-title">🗺️ 知识图谱：本课在历史知识树中的位置</div>
+    <div class="card" style="border-top-color:var(--primary)">
+      <p style="text-align:center;color:var(--text-secondary)">
+        学二战之前需要打好哪些基础？学完之后应该衔接到什么？
+      </p>
+      <div class="km-grid">
+        <div class="km-col">
+          <h4>前置知识</h4>
+          <a class="km-node prerequisite"
+             href="https://weponusa.github.io/teachany/knowledge-graph.html?node=ww1"
+             target="_blank">← 第一次世界大战</a>
+          <div style="margin-top:8px">
+            <a class="km-node prerequisite"
+               href="https://weponusa.github.io/teachany/knowledge-graph.html?node=versailles-treaty"
+               target="_blank">← 凡尔赛体系</a>
+          </div>
+          <div style="margin-top:8px">
+            <a class="km-node prerequisite"
+               href="https://weponusa.github.io/teachany/knowledge-graph.html?node=great-depression"
+               target="_blank">← 经济大危机</a>
+          </div>
+        </div>
+        <div class="km-col">
+          <h4>当前课程</h4>
+          <a class="km-node current"
+             href="https://weponusa.github.io/teachany/knowledge-graph.html?node=ww2"
+             target="_blank">第二次世界大战</a>
+        </div>
+        <div class="km-col">
+          <h4>后续知识</h4>
+          <a class="km-node next-step"
+             href="https://weponusa.github.io/teachany/knowledge-graph.html?node=cold-war"
+             target="_blank">冷战开始 →</a>
+          <div style="margin-top:8px">
+            <a class="km-node next-step"
+               href="https://weponusa.github.io/teachany/knowledge-graph.html?node=united-nations"
+               target="_blank">联合国成立 →</a>
+          </div>
+          <div style="margin-top:8px">
+            <a class="km-node next-step"
+               href="https://weponusa.github.io/teachany/knowledge-graph.html?node=china-recovery"
+               target="_blank">中国的崛起 →</a>
+          </div>
+        </div>
+      </div>
+      <p style="text-align:center;color:var(--text-secondary);font-size:13px">
+        <a href="https://weponusa.github.io/teachany/knowledge-graph.html"
+           target="_blank" style="color:var(--primary)">查看完整初中历史知识树 →</a>
+      </p>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<!-- NEW · B-7 AI 学伴（左下）-->
+<button id="ai-assistant" aria-label="AI 学伴" title="AI 学伴 · 有疑问问我" onclick="toggleAssistant()">🤖</button>
+<div id="ai-assistant-panel">
+  <div class="panel-header">🤖 AI 历史学伴</div>
+  <div class="panel-body">
+    <p>你好！我是你的历史学伴。本节课学完后，这里有几个可以帮你思考得更深的问题：</p>
+    <div class="hint">💭 <strong>思考一</strong>：假如绥靖政策没有出现，二战会不会以另一种方式爆发？</div>
+    <div class="hint">💭 <strong>思考二</strong>：为什么说中国是东方主战场？比较中国、苏联、美国在二战中的牺牲数据。</div>
+    <div class="hint">💭 <strong>思考三</strong>：联合国是二战留给人类的最重要遗产吗？还是核武器？</div>
+    <p style="color:var(--text-secondary);font-size:12px;margin-top:12px">
+      💡 在 CodeBuddy / Claude 侧边栏里继续和 AI 对话，探索这些问题。
+    </p>
+  </div>
+</div>
+
+<!-- NEW · B-2/B-7 全局 TTS 控制器（右下）-->
+<div id="tts-controller" aria-label="语音讲解">
+  <button id="tts-play" title="播放/暂停">▶️</button>
+  <span class="tts-status" id="tts-status">准备中...</span>
+  <button id="tts-mute" title="开关自动播放">🔇</button>
+</div>
+<audio id="tts-audio" preload="auto"></audio>
+
+<script>
+// === Quiz logic ===
+const feedback = {
+  correct: "✅ 回答正确！你已掌握这一知识点。",
+  wrong: (correctText) => `❌ 回答不正确。正确答案是：${correctText}。建议回顾相关模块内容。`
+};
+
+function selectOpt(el, isCorrect) {
+  const parent = el.parentElement;
+  if (parent.querySelector('.selected')) return; // already answered
+  el.classList.add('selected');
+  const fb = parent.nextElementSibling;
+  fb.classList.add('show');
+  if (isCorrect) {
+    el.classList.add('correct');
+    fb.textContent = feedback.correct;
+    fb.className = 'quiz-feedback show correct';
+  } else {
+    el.classList.add('wrong');
+    const correctOpt = parent.querySelector('[onclick*="true"]');
+    const correctText = correctOpt ? correctOpt.textContent.replace(/^[A-D]\.\s*/, '') : '';
+    fb.textContent = feedback.wrong(correctText);
+    fb.className = 'quiz-feedback show wrong';
+    correctOpt.classList.add('correct');
+  }
+}
+
+let cScore = 0;
+let cAnswered = 0;
+const cTotal = 5;
+
+function selectCOpt(el, isCorrect) {
+  const parent = el.parentElement;
+  if (parent.querySelector('.selected')) return;
+  el.classList.add('selected');
+  cAnswered++;
+
+  const correctText = parent.querySelector('[onclick*="true"]').textContent.replace(/^[A-D]\.\s*/, '');
+  const fb = parent.nextElementSibling;
+  fb.classList.add('show');
+
+  if (isCorrect) {
+    el.classList.add('correct');
+    fb.textContent = feedback.correct;
+    fb.className = 'quiz-feedback show correct';
+    cScore++;
+  } else {
+    el.classList.add('wrong');
+    fb.textContent = feedback.wrong(correctText);
+    fb.className = 'quiz-feedback show wrong';
+    parent.querySelector('[onclick*="true"]').classList.add('correct');
+  }
+
+  updateProgress();
+}
+
+function updateProgress() {
+  const pct = Math.round((cAnswered / cTotal) * 100);
+  document.getElementById('progBar').style.width = pct + '%';
+  document.getElementById('progText').textContent = `已完成 ${cAnswered} / ${cTotal} 题`;
+  if (cAnswered >= cTotal) {
+    setTimeout(showResult, 600);
+  }
+}
+
+function showResult() {
+  const el = document.getElementById('completion');
+  el.classList.add('show');
+  const rText = document.getElementById('resultText');
+  let msg = '';
+  if (cScore === cTotal) {
+    msg = `🌟 完美！你答对了全部 ${cTotal} 道题，对二战有了完整而准确的理解！`;
+  } else if (cScore >= cTotal * 0.6) {
+    msg = `👍 不错！你答对了 ${cScore}/${cTotal} 道题。建议再回顾一下错题对应的模块哦。`;
+  } else {
+    msg = `💪 你答对了 ${cScore}/${cTotal} 道题，建议重新学习本课内容后再来做题。`;
+  }
+  rText.textContent = msg;
+  el.scrollIntoView({behavior: 'smooth'});
+}
+
+// === Nav highlight on scroll ===
+const sections = document.querySelectorAll('.section, .completion');
+const navLinks = document.querySelectorAll('.nav a');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(sec => {
+    const top = sec.offsetTop - 80;
+    if (window.scrollY >= top) current = sec.id;
+  });
+  navLinks.forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+  });
+});
+
+// ═══════════════════════════════════════════════════
+// B-4 · Leaflet 世界历史地图（EPSG:4326 与底图对齐）
+// ═══════════════════════════════════════════════════
+// 🗺️ 地图资源路径自动适配
+// 本地开发、community/、examples/ 三种部署环境都能工作：
+//   - WorkBuddy/<子目录>/index.html   → ../data/
+//   - WorkBuddy/<父>/<子>/index.html  → ../../data/
+//   - 线上（community 或 examples）   → https://weponusa.github.io/teachany/data/
+// ═══════════════════════════════════════════════════
+const TEACHANY_MAP_BASE = (function() {
+  // 线上：GitHub Pages 根路径
+  if (location.hostname.endsWith('github.io') || location.hostname.endsWith('weponusa.github.io')) {
+    return '/teachany/data';
+  }
+  // 线上自定义域名（以后可能用）
+  if (location.hostname.includes('teachany')) {
+    return '/data';
+  }
+  // 本地：尝试 ../data（课件在一层子目录时）
+  return '../data';
+})();
+
+let ww2Map = null;
+let ww2CurrentLayer = null;
+
+function initWw2Map() {
+  if (ww2Map) return;
+  ww2Map = L.map('ww2-map', {
+    crs: L.CRS.EPSG4326,
+    center: [30, 20],
+    zoom: 1,
+    minZoom: 1,
+    maxZoom: 6,
+    worldCopyJump: false,
+  });
+  L.imageOverlay(
+    `${TEACHANY_MAP_BASE}/geography/hillshade/global-hillshade-4k.jpg`,
+    [[-90, -180], [90, 180]],
+    { opacity: 0.5, attribution: 'Natural Earth · historical-basemaps' }
+  ).addTo(ww2Map);
+}
+
+function hashColor(s) {
+  if (!s) return '#64748b';
+  let h = 0;
+  for (const c of s) h = c.charCodeAt(0) + ((h << 5) - h);
+  return `hsl(${Math.abs(h) % 360}, 55%, 52%)`;
+}
+
+async function loadWw2Map(btn, sliceId, label) {
+  initWw2Map();
+  // 切换按钮 active
+  document.querySelectorAll('[data-map]').forEach(b => b.style.fontWeight = 'normal');
+  if (btn) btn.style.fontWeight = 'bold';
+
+  try {
+    let url = `${TEACHANY_MAP_BASE}/geography/historical-world/${sliceId}.geojson`;
+    let res = await fetch(url);
+
+    // 本地开发时 ../data 不通再试 ../../data（课件在两层子目录时）
+    if (!res.ok && TEACHANY_MAP_BASE === '../data') {
+      url = `../../data/geography/historical-world/${sliceId}.geojson`;
+      res = await fetch(url);
+    }
+    // 仍然不通 → 回退到线上绝对 URL
+    if (!res.ok) {
+      url = `https://weponusa.github.io/teachany/data/geography/historical-world/${sliceId}.geojson`;
+      res = await fetch(url);
+    }
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+
+    const data = await res.json();
+    if (ww2CurrentLayer) ww2Map.removeLayer(ww2CurrentLayer);
+    ww2CurrentLayer = L.geoJSON(data, {
+      style: f => {
+        // 二战期间：轴心国红色高亮，其他按 hash
+        const name = (f.properties.NAME || f.properties.SUBJECTO || '').toLowerCase();
+        let fill = hashColor(f.properties.SUBJECTO || f.properties.NAME);
+        if (sliceId === 'ce-1945-wwii') {
+          if (/germany|italy|japan|hungary|romania|bulgaria/.test(name)) {
+            fill = '#dc2626'; // 轴心国 + 附庸 = 红
+          } else if (/soviet|united states|united kingdom|china|france|canada|australia/.test(name)) {
+            fill = '#2563eb'; // 同盟国 = 蓝
+          }
+        }
+        return { color: '#0f172a', weight: 0.5, opacity: 0.7, fillColor: fill, fillOpacity: 0.6 };
+      },
+      onEachFeature: (f, l) => {
+        const p = f.properties;
+        l.bindPopup(`<b>${p.NAME || '未命名'}</b><br/>宗主: ${p.SUBJECTO || '-'}<br/>属于: ${p.PARTOF || '-'}`);
+      },
+    }).addTo(ww2Map);
+    ww2Map.fitBounds([[-60, -180], [75, 180]]);
+  } catch (e) {
+    document.getElementById('ww2-map').innerHTML =
+      '<div style="padding:40px;color:#94a3b8;text-align:center">' +
+      '地图资源未找到。请在父目录运行：<br/>' +
+      '<code>bash ~/.codebuddy/skills/teachany/scripts/install_map_resources.sh .</code></div>';
+  }
+}
+
+// 默认加载 1945 二战结束
+setTimeout(() => loadWw2Map(document.querySelector('[data-map="ce-1945-wwii"]'), 'ce-1945-wwii', '1945 二战结束'), 500);
+
+// ═══════════════════════════════════════════════════
+// B-3 · 游戏化：轴心国/同盟国分类
+// ═══════════════════════════════════════════════════
+(function() {
+  const chips = document.querySelectorAll('.sort-chip');
+  const axisZone = document.querySelector('#zone-axis .zone-content');
+  const alliesZone = document.querySelector('#zone-allies .zone-content');
+  const feedback = document.getElementById('sortFeedback');
+  const total = chips.length;
+  let placed = 0;
+  let correct = 0;
+
+  function judge() {
+    feedback.className = 'sort-feedback';
+    if (placed === total) {
+      feedback.textContent = correct === total
+        ? `🎉 全部正确！你对二战两大阵营的划分掌握得很清楚。`
+        : `完成！正确 ${correct}/${total}。复习提示：点击已归类的国家可撤销。`;
+      feedback.classList.add(correct === total ? 'correct' : 'wrong');
+    } else {
+      feedback.textContent = `已分类 ${placed}/${total}`;
+    }
+  }
+
+  chips.forEach(chip => {
+    chip.onclick = () => {
+      if (chip.dataset.placed === 'yes') {
+        // 撤销
+        const wasCorrect = chip.dataset.correct === 'yes';
+        if (wasCorrect) correct--;
+        placed--;
+        chip.dataset.placed = '';
+        chip.dataset.correct = '';
+        chip.classList.remove('placed-axis', 'placed-allies');
+        document.getElementById('sortPool').appendChild(chip);
+        judge();
+        return;
+      }
+      // 让用户选阵营
+      const choice = confirm(`【${chip.textContent.trim()}】\n\n点"确定"= 🟥 轴心国\n点"取消"= 🟦 同盟国`);
+      const side = choice ? 'axis' : 'allies';
+      const zone = side === 'axis' ? axisZone : alliesZone;
+      const isCorrect = chip.dataset.side === side;
+      chip.dataset.placed = 'yes';
+      chip.dataset.correct = isCorrect ? 'yes' : 'no';
+      chip.classList.add(side === 'axis' ? 'placed-axis' : 'placed-allies');
+      zone.appendChild(chip);
+      placed++;
+      if (isCorrect) correct++;
+      judge();
+    };
+  });
+})();
+
+// ═══════════════════════════════════════════════════
+// B-2 · 自动触发 TTS + 段落高亮
+// ═══════════════════════════════════════════════════
+(async function() {
+  const audio = document.getElementById('tts-audio');
+  const statusEl = document.getElementById('tts-status');
+  const playBtn = document.getElementById('tts-play');
+  const muteBtn = document.getElementById('tts-mute');
+
+  let manifest = null;
+  let autoPlayEnabled = true;
+  let currentSection = null;
+
+  try {
+    const res = await fetch('tts/manifest.json');
+    if (res.ok) manifest = await res.json();
+  } catch (e) { /* no tts yet */ }
+
+  if (!manifest) {
+    statusEl.textContent = '⚠️ 无语音';
+    playBtn.disabled = true; muteBtn.disabled = true;
+    playBtn.style.opacity = 0.4; muteBtn.style.opacity = 0.4;
+    return;
+  }
+
+  const ttsMap = manifest.sections || manifest;
+  statusEl.textContent = '自动播放中';
+
+  function playSection(key, sectionEl) {
+    if (!autoPlayEnabled) return;
+    const src = ttsMap[key];
+    if (!src) return;
+    if (audio.src && audio.src.includes(src) && !audio.paused) return;
+    document.querySelectorAll('.tts-active').forEach(el => el.classList.remove('tts-active'));
+    audio.src = src;
+    audio.play().then(() => {
+      statusEl.textContent = `🔊 ${key.substring(0, 10)}`;
+      playBtn.textContent = '⏸️';
+      currentSection = sectionEl;
+      sectionEl.classList.add('tts-active');
+    }).catch(() => { statusEl.textContent = '点击▶️开始'; });
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && entry.intersectionRatio > 0.35) {
+        playSection(entry.target.dataset.tts, entry.target);
+      }
+    });
+  }, { threshold: [0.35] });
+
+  document.querySelectorAll('[data-tts]').forEach(el => observer.observe(el));
+
+  playBtn.onclick = () => {
+    if (audio.paused) {
+      audio.play().then(() => { playBtn.textContent = '⏸️'; statusEl.textContent = '🔊 播放中'; });
+    } else {
+      audio.pause();
+      playBtn.textContent = '▶️';
+      statusEl.textContent = '⏸️ 已暂停';
+    }
+  };
+  muteBtn.onclick = () => {
+    autoPlayEnabled = !autoPlayEnabled;
+    muteBtn.textContent = autoPlayEnabled ? '🔇' : '🔊';
+    statusEl.textContent = autoPlayEnabled ? '自动播放中' : '已关闭自动';
+    if (!autoPlayEnabled) { audio.pause(); playBtn.textContent = '▶️'; }
+  };
+  audio.addEventListener('ended', () => {
+    if (currentSection) currentSection.classList.remove('tts-active');
+    playBtn.textContent = '▶️';
+    if (autoPlayEnabled) statusEl.textContent = '自动播放中';
+  });
+})();
+
+// ═══════════════════════════════════════════════════
+// AI 学伴面板开关
+// ═══════════════════════════════════════════════════
+function toggleAssistant() {
+  document.getElementById('ai-assistant-panel').classList.toggle('open');
+}
+</script>
+
+</body>
+</html>
