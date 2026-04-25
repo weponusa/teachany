@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>传感器入门 — 计算机怎么"看见"世界？</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface2: #334155;
+    --accent: #38bdf8;
+    --accent2: #a78bfa;
+    --green: #4ade80;
+    --red: #f87171;
+    --yellow: #fbbf24;
+    --text: #f1f5f9;
+    --text2: #94a3b8;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  /* Nav */
+  .nav {
+    position: sticky; top: 0;
+    background: rgba(15,23,42,0.95);
+    backdrop-filter: blur(8px);
+    padding: 12px 0;
+    display: flex; gap: 8px;
+    overflow-x: auto;
+    z-index: 100;
+    border-bottom: 1px solid var(--surface2);
+    margin-bottom: 24px;
+  }
+  .nav a {
+    color: var(--text2);
+    text-decoration: none;
+    font-size: 13px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: var(--surface);
+    white-space: nowrap;
+    transition: 0.2s;
+  }
+  .nav a:hover, .nav a.active { background: var(--accent); color: #0f172a; }
+
+  /* Progress */
+  .progress-wrap {
+    background: var(--surface);
+    border-radius: var(--radius);
+    height: 8px;
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: var(--radius);
+    width: 0%;
+    transition: width 0.4s;
+  }
+  .progress-text {
+    text-align: right;
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 6px;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 24px;
+    border: 1px solid var(--surface2);
+  }
+  .card h2 {
+    color: var(--accent);
+    font-size: 18px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .abt { font-size: 14px; margin-bottom: 18px; }
+  .abt-and { color: var(--green); font-weight: 600; }
+  .abt-but { color: var(--yellow); font-weight: 600; }
+  .abt-therefore { color: var(--accent); font-weight: 600; }
+
+  p { margin-bottom: 12px; }
+  .highlight {
+    background: rgba(56,189,248,0.1);
+    border-left: 3px solid var(--accent);
+    padding: 12px 16px;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    margin: 16px 0;
+    font-size: 14px;
+  }
+
+  /* Interactive elements */
+  .quiz-options { display: flex; flex-direction: column; gap: 10px; margin: 16px 0; }
+  .quiz-opt {
+    background: var(--surface2);
+    border: 2px solid transparent;
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    cursor: pointer;
+    font-size: 15px;
+    transition: 0.2s;
+    color: var(--text);
+  }
+  .quiz-opt:hover { border-color: var(--accent); }
+  .quiz-opt.selected { border-color: var(--accent); background: rgba(56,189,248,0.15); }
+  .quiz-opt.correct { border-color: var(--green); background: rgba(74,222,128,0.15); }
+  .quiz-opt.wrong { border-color: var(--red); background: rgba(248,113,113,0.15); }
+
+  .feedback {
+    display: none;
+    padding: 14px 18px;
+    border-radius: var(--radius);
+    margin: 12px 0;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .feedback.show { display: block; }
+  .feedback.correct-fb { background: rgba(74,222,128,0.1); border: 1px solid var(--green); color: var(--green); }
+  .feedback.wrong-fb { background: rgba(248,113,113,0.1); border: 1px solid var(--red); color: var(--red); }
+
+  .btn {
+    background: var(--accent);
+    color: #0f172a;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    margin-top: 8px;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-secondary { background: var(--surface2); color: var(--text); }
+
+  /* Sensor demo */
+  .sensor-demo {
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin: 16px 0;
+    text-align: center;
+  }
+  .sensor-emoji { font-size: 64px; margin: 12px 0; }
+  .slider-wrap { margin: 16px 0; }
+  .slider-wrap input[type=range] {
+    width: 100%;
+    accent-color: var(--accent);
+  }
+  .sensor-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 8px 0;
+  }
+  .sensor-label { font-size: 13px; color: var(--text2); }
+
+  /* Drag sort */
+  .drag-area {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 16px 0;
+  }
+  .drag-item {
+    background: var(--surface2);
+    border: 2px solid transparent;
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    cursor: grab;
+    font-size: 14px;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .drag-item:hover { border-color: var(--accent); }
+  .drag-item.dragging { opacity: 0.5; }
+  .drag-item.placed { border-color: var(--green); background: rgba(74,222,128,0.1); }
+  .drag-num { background: var(--accent); color: #0f172a; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+
+  /* Canvas area */
+  canvas {
+    background: var(--bg);
+    border-radius: var(--radius);
+    border: 1px solid var(--surface2);
+    width: 100%;
+    max-width: 400px;
+  }
+
+  /* Completion badge */
+  .badge {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .badge-emoji { font-size: 72px; }
+  .badge h2 { color: var(--yellow); font-size: 24px; margin: 16px 0 8px; }
+  .badge p { color: var(--text2); }
+
+  /* Section reveal */
+  .hidden { display: none; }
+  .reveal-btn { margin: 12px 0; }
+
+  /* Pre/Post test */
+  .test-header {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #0f172a;
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+
+  @media (max-width: 600px) {
+    body { padding: 12px; }
+    .card { padding: 18px; }
+    .nav a { font-size: 12px; padding: 5px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="nav">
+  <a href="#pretest">前测</a>
+  <a href="#m1">模块一</a>
+  <a href="#m2">模块二</a>
+  <a href="#m3">模块三</a>
+  <a href="#m4">模块四</a>
+  <a href="#posttest">后测</a>
+</nav>
+
+<!-- Progress -->
+<div class="progress-text"> completed: <span id="progNum">0</span>/6</div>
+<div class="progress-wrap"><div class="progress-bar" id="progBar"></div></div>
+
+<!-- ==================== PRE-TEST ==================== -->
+<section id="pretest" class="card">
+  <div class="test-header">
+    <h2>🧪 前测：先来试试看！</h2>
+    <p style="font-size:14px;margin-top:8px;">不用紧张，猜一猜也可以 😊</p>
+  </div>
+
+  <!-- Q1 -->
+  <div style="margin-bottom:20px;">
+    <p><b>1️⃣ 你知道"传感器"是什么吗？</b></p>
+    <div class="quiz-options" data-answer="1" data-name="pretest-q1">
+      <div class="quiz-opt" onclick="selectOpt(this,0)">A. 一种用来感应的机器零件</div>
+      <div class="quiz-opt" onclick="selectOpt(this,1)">B. 一种可以探测光线、温度等信息的装置</div>
+      <div class="quiz-opt" onclick="selectOpt(this,2)">C. 我没听说过这个词</div>
+    </div>
+    <div class="feedback" id="pretest-q1-fb"></div>
+  </div>
+
+  <!-- Q2 -->
+  <div style="margin-bottom:20px;">
+    <p><b>2️⃣ 你觉得手机"知道"你转了方向，是靠什么？</b></p>
+    <div class="quiz-options" data-answer="0" data-name="pretest-q2">
+      <div class="quiz-opt" onclick="selectOpt(this,0)">A. 里面有重力传感器</div>
+      <div class="quiz-opt" onclick="selectOpt(this,1)">B. 手机里有小人一直在看屏幕</div>
+      <div class="quiz-opt" onclick="selectOpt(this,2)">C. 不知道</div>
+    </div>
+    <div class="feedback" id="pretest-q2-fb"></div>
+  </div>
+
+  <!-- Q3 -->
+  <div>
+    <p><b>3️⃣ 下面哪个场景 <i>没有</i> 用到传感器？</b></p>
+    <div class="quiz-options" data-answer="2" data-name="pretest-q3">
+      <div class="quiz-opt" onclick="selectOpt(this,0)">A. 自动门人一来就打开</div>
+      <div class="quiz-opt" onclick="selectOpt(this,1)">B. 手机拍照时能自动对焦</div>
+      <div class="quiz-opt" onclick="selectOpt(this,2)">C. 用铅笔在纸上写字</div>
+    </div>
+    <div class="feedback" id="pretest-q3-fb"></div>
+  </div>
+
+  <button class="btn" onclick="checkTest('pretest')" style="margin-top:20px;">查看结果</button>
+  <div id="pretest-result" style="margin-top:12px;font-weight:600;"></div>
+</section>
+
+<!-- ==================== MODULE 1 ==================== -->
+<section id="m1" class="card hidden">
+  <!-- ABT -->
+  <div class="abt">
+    <p><span class="abt-and">【AND 你已经知道】</span> 你的眼睛能看到光，皮肤能感觉到冷和热，鼻子能闻到香味 —— 你的身体天生就有"感知"能力。</p>
+    <p><span class="abt-but">【BUT 有个问题】</span> 计算机没有眼睛、没有皮肤，它怎么"知道"周围发生了什么？如果它感知不到，又怎么能帮我们做事情呢？</p>
+    <p><span class="abt-therefore">【THEREFORE 今天学】</span> 科学家发明了"传感器"——这就像是给计算机装上了"眼睛""皮肤"和"鼻子"，让它能感知这个世界的各种信息！</p>
+  </div>
+
+  <h2>🔍 模块一：什么是传感器？</h2>
+
+  <p>传感器，简单说就是：<b>把"物理世界的信息"变成"计算机能懂的数字信号"的装置。</b></p>
+
+  <div class="highlight">
+    💡 <b>一句话理解：</b>传感器 = 计算机的"感官"+ 翻译官。它"感受"到光/声/温度等，然后"翻译"成0和1，告诉计算机。
+  </div>
+
+  <p><b>我们身体 vs. 计算机：</b></p>
+  <table style="width:100%;font-size:14px;border-collapse:collapse;margin:12px 0;">
+    <tr style="background:var(--surface2);">
+      <th style="padding:8px;text-align:left;">人的感官</th>
+      <th style="padding:8px;text-align:left;">对应的传感器</th>
+      <th style="padding:8px;text-align:left;">感知内容</th>
+    </tr>
+    <tr style="border-bottom:1px solid var(--surface2);">
+      <td style="padding:8px;">👀 眼睛</td>
+      <td style="padding:8px;">光线传感器</td>
+      <td style="padding:8px;">亮度</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--surface2);background:var(--surface);">
+      <td style="padding:8px;">👂 耳朵</td>
+      <td style="padding:8px;">声音传感器（麦克风）</td>
+      <td style="padding:8px;">声音大小/频率</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--surface2);">
+      <td style="padding:8px;">🖐️ 皮肤</td>
+      <td style="padding:8px;">温度传感器</td>
+      <td style="padding:8px;">温度高低</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--surface2);background:var(--surface);">
+      <td style="padding:8px;">👃 鼻子</td>
+      <td style="padding:8px;">气体传感器</td>
+      <td style="padding:8px;">空气质量/味道</td>
+    </tr>
+    <tr>
+      <td style="padding:8px;">🦴 内耳前庭</td>
+      <td style="padding:8px;">加速度/陀螺仪传感器</td>
+      <td style="padding:8px;">运动/方向</td>
+    </tr>
+  </table>
+
+  <!-- Concept Check -->
+  <div class="highlight" style="margin-top:20px;">
+    <b>🧠 概念检测（ConcepTest）</b><br>
+    下面哪种说法<b>最准确</b>地描述了传感器的作用？
+  </div>
+  <div class="quiz-options" data-answer="2" data-name="m1-ct">
+    <div class="quiz-opt" onclick="selectOpt(this,0)">A. 传感器负责把计算机的指令发给机器</div>
+    <div class="quiz-opt" onclick="selectOpt(this,1)">B. 传感器负责给计算机供电</div>
+    <div class="quiz-opt" onclick="selectOpt(this,2)">C. 传感器负责把物理世界的信息转换成计算机能处理的信号</div>
+  </div>
+  <div class="feedback" id="m1-ct-fb"></div>
+  <div style="font-size:13px;color:var(--text2);margin-top:8px;">
+    💬 猜一下，选一个吧！不用担心对错。
+  </div>
+
+  <button class="btn reveal-btn" onclick="revealFeedback(this)">提交答案</button>
+
+  <div style="margin-top:24px;">
+    <b>🎯 本模块你学到了：</b>
+    <ul style="margin:8px 0 0 20px;font-size:14px;color:var(--text2);">
+      <li>传感器是计算机的"感官"</li>
+      <li>不同的传感器感知不同的信息</li>
+      <li>传感器把"模拟信号"变成"数字信号"</li>
+    </ul>
+  </div>
+
+  <button class="btn" onclick="nextModule('m1','m2')" style="margin-top:20px;">进入模块二 →</button>
+</section>
+
+<!-- ==================== MODULE 2 ==================== -->
+<section id="m2" class="card hidden">
+  <div class="abt">
+    <p><span class="abt-and">【AND 你已经知道】</span> 传感器能帮助计算机"感知"光线、声音、温度等等信息。</p>
+    <p><span class="abt-but">【BUT 有个问题】</span> 传感器收集到的信息，计算机拿到之后要干什么？它是怎么"决定"要做什么的？</p>
+    <p><span class="abt-therefore">【THEREFORE 今天学】</span> 传感器只是第一步！完整的"感知→处理→执行"流程，才是让智能设备真正"聪明"起来的秘密。</p>
+  </div>
+
+  <h2>⚙️ 模块二：传感器如何工作？</h2>
+
+  <p>传感器的工作流程可以分成三步：</p>
+
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin:16px 0;">
+    <div style="flex:1;min-width:180px;background:var(--surface2);border-radius:var(--radius);padding:16px;text-align:center;">
+      <div style="font-size:36px;margin-bottom:8px;">👁️</div>
+      <div style="font-weight:700;color:var(--accent);margin-bottom:4px;">感知</div>
+      <div style="font-size:13px;color:var(--text2);">传感器收集信息<br>例如：光线有多亮？</div>
+    </div>
+    <div style="flex:1;min-width:180px;background:var(--surface2);border-radius:var(--radius);padding:16px;text-align:center;">
+      <div style="font-size:36px;margin-bottom:8px;">🧠</div>
+      <div style="font-weight:700;color:var(--accent2);margin-bottom:4px;">处理</div>
+      <div style="font-size:13px;color:var(--text2);">计算机分析数据<br>例如：太暗了，要开灯</div>
+    </div>
+    <div style="flex:1;min-width:180px;background:var(--surface2);border-radius:var(--radius);padding:16px;text-align:center;">
+      <div style="font-size:36px;margin-bottom:8px;">🔧</div>
+      <div style="font-weight:700;color:var(--green);margin-bottom:4px;">执行</div>
+      <div style="font-size:13px;color:var(--text2);">执行指令<br>例如：自动把灯打开</div>
+    </div>
+  </div>
+
+  <div class="highlight">
+    🏠 <b>生活例子：自动路灯</b><br>
+    ① 光线传感器感知：天黑了！<br>
+    ② 计算机判断：亮度 &lt; 设定值 → 需要开灯<br>
+    ③ 执行器动作：电路接通 → 灯亮了✅
+  </div>
+
+  <!-- Interactive Demo: Light Sensor -->
+  <div class="sensor-demo">
+    <div style="font-weight:700;margin-bottom:8px;">🔦 互动演示：调节光线亮度</div>
+    <div class="sensor-emoji" id="lightEmoji">☀️</div>
+    <div class="slider-wrap">
+      <input type="range" min="0" max="100" value="80" id="lightSlider" oninput="updateLight(this.value)">
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);">
+      <span>🌑 很暗</span><span>☀️ 很亮</span>
+    </div>
+    <div class="sensor-value" id="lightValue">80</div>
+    <div class="sensor-label">当前光线值（0–100）</div>
+    <div id="lightAction" style="margin-top:8px;font-weight:600;color:var(--yellow);"></div>
+  </div>
+
+  <!-- Scaffolded Exercise L1: Full scaffold -->
+  <div style="margin-top:24px;">
+    <b>📝 练习：一步一步来（全支架）</b>
+    <p style="font-size:14px;color:var(--text2);margin:8px 0;">下面是一段"智能垃圾桶"的工作流程，请根据提示填入正确的词。</p>
+    <div style="background:var(--surface2);border-radius:var(--radius);padding:16px;font-size:14px;line-height:2;">
+      ① 超声波传感器感知：<input type="text" id="ex1-1" style="width:100px;padding:4px 8px;border-radius:6px;border:none;background:var(--bg);color:var(--text);" placeholder="提示：有东西靠近？"> →
+      ② 计算机判断：有人靠近 → 需要<input type="text" id="ex1-2" style="width:80px;padding:4px 8px;border-radius:6px;border:none;background:var(--bg);color:var(--text);" placeholder="？"> →
+      ③ <input type="text" id="ex1-3" style="width:100px;padding:4px 8px;border-radius:6px;border:none;background:var(--bg);color:var(--text);" placeholder="？"> 执行：桶盖自动打开
+    </div>
+    <button class="btn" onclick="checkEx1()" style="margin-top:10px;">检查答案</button>
+    <div id="ex1-result" style="font-size:14px;margin-top:8px;"></div>
+  </div>
+
+  <button class="btn" onclick="nextModule('m2','m3')" style="margin-top:20px;">进入模块三 →</button>
+</section>
+
+<!-- ==================== MODULE 3 ==================== -->
+<section id="m3" class="card hidden">
+  <div class="abt">
+    <p><span class="abt-and">【AND 你已经知道】</span> 传感器能感知信息，计算机能处理信息，然后发出指令让设备行动。</p>
+    <p><span class="abt-but">【BUT 有个问题】</span> 我们身边到底有多少东西里"藏着"传感器？你能不能把它们都找出来？</p>
+    <p><span class="abt-therefore">【THEREFORE 今天学】</span> 一起来当"传感器侦探"，找出生活中处处隐藏的传感器！</p>
+  </div>
+
+  <h2>🕵️ 模块三：身边的传感器大搜索</h2>
+
+  <p>传感器已经悄悄"住"进了我们每天接触的东西里。一起来找找看！</p>
+
+  <!-- Drag and drop: match sensor to device -->
+  <div class="highlight">
+    <b>🎮 互动：把传感器和对应的设备连起来！</b><br>
+    把右边的传感器，拖到左边最合适的设备旁边。
+  </div>
+
+  <div style="display:flex;gap:16px;flex-wrap:wrap;margin:16px 0;">
+    <!-- Devices -->
+    <div style="flex:1;min-width:200px;">
+      <p style="font-weight:700;margin-bottom:8px;color:var(--accent);">📱 设备</p>
+      <div id="dev-list" style="display:flex;flex-direction:column;gap:8px;">
+        <div class="drag-item" id="dev-0" data-match="1">📱 智能手机</div>
+        <div class="drag-item" id="dev-1" data-match="0">🚗 自动驾驶汽车</div>
+        <div class="drag-item" id="dev-2" data-match="2">⌚ 智能手表</div>
+        <div class="drag-item" id="dev-3" data-match="3">🏠 智能家居温度计</div>
+      </div>
+    </div>
+    <!-- Sensors -->
+    <div style="flex:1;min-width:200px;">
+      <p style="font-weight:700;margin-bottom:8px;color:var(--accent2);">🔬 主要传感器（拖到对应设备）</p>
+      <div id="sensor-list" style="display:flex;flex-direction:column;gap:8px;">
+        <div class="drag-item" draggable="true" id="sens-0" data-id="0">📡 激光雷达传感器（测距）</div>
+        <div class="drag-item" draggable="true" id="sens-1" data-id="1">👆 触摸屏传感器 + 加速度传感器</div>
+        <div class="drag-item" draggable="true" id="sens-2" data-id="2">💓 心率传感器 + 加速度传感器</div>
+        <div class="drag-item" draggable="true" id="sens-3" data-id="3">🌡️ 温度传感器</div>
+      </div>
+    </div>
+  </div>
+  <div id="match-result" style="font-weight:700;margin-top:12px;"></div>
+  <button class="btn" onclick="checkMatch()" style="margin-top:8px;">检查配对</button>
+
+  <div style="margin-top:24px;">
+    <div class="highlight">
+      <b>💡 你知道吗？</b><br>
+      一辆自动驾驶汽车里，可能装有十几种不同的传感器！激光雷达、摄像头、毫米波雷达、超声波传感器……它们像"团队合作"一样，一起帮汽车"看见"世界。
+    </div>
+  </div>
+
+  <!-- Half-scaffold exercise -->
+  <div style="margin-top:24px;">
+    <b>📝 练习：想一想（半支架）</b>
+    <p style="font-size:14px;color:var(--text2);margin:8px 0;">下面哪种传感器<b>不常</b>出现在一辆自动驾驶汽车里？</p>
+    <div class="quiz-options" data-answer="2" data-name="m3-ex">
+      <div class="quiz-opt" onclick="selectOpt(this,0)">A. 激光雷达传感器（LiDAR）</div>
+      <div class="quiz-opt" onclick="selectOpt(this,1)">B. 摄像头（图像传感器）</div>
+      <div class="quiz-opt" onclick="selectOpt(this,2)">C. 烟雾传感器</div>
+    </div>
+    <div class="feedback" id="m3-ex-fb"></div>
+    <button class="btn reveal-btn" onclick="revealFeedback(this)" style="margin-top:8px;">检查答案</button>
+  </div>
+
+  <button class="btn" onclick="nextModule('m3','m4')" style="margin-top:20px;">进入模块四 →</button>
+</section>
+
+<!-- ==================== MODULE 4 ==================== -->
+<section id="m4" class="card hidden">
+  <div class="abt">
+    <p><span class="abt-and">【AND 你已经知道】</span> 传感器无处不在，它们让设备能"感知"，让生活更智能。</p>
+    <p><span class="abt-but">【BUT 有个问题】</span> 如果传感器收集了太多关于你的信息 —— 你每天走了多少步、你的心率是多少、你住在哪 —— 这些信息安全吗？</p>
+    <p><span class="abt-therefore">【THEREFORE 今天学】</span> 作为小小公民，我们既要享受科技带来的便利，也要学会保护自己的数据隐私！</p>
+  </div>
+
+  <h2>🔐 模块四：传感器的"是与非"</h2>
+
+  <p>传感器让生活更方便，但也带来了新问题。我们来辩论一下！</p>
+
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin:16px 0;">
+    <div style="flex:1;min-width:220px;background:rgba(74,222,128,0.08);border:1px solid var(--green);border-radius:var(--radius);padding:16px;">
+      <div style="font-weight:700;color:var(--green);margin-bottom:8px;">✅ 传感器的好处</div>
+      <ul style="font-size:13px;padding-left:18px;line-height:1.8;">
+        <li>智能家居让生活更方便</li>
+        <li>健康监测帮助早期发现疾病</li>
+        <li>自动驾驶减少交通事故</li>
+        <li>环境监测保护大自然</li>
+      </ul>
+    </div>
+    <div style="flex:1;min-width:220px;background:rgba(248,113,113,0.08);border:1px solid var(--red);border-radius:var(--radius);padding:16px;">
+      <div style="font-weight:700;color:var(--red);margin-bottom:8px;">⚠️ 需要注意的问题</div>
+      <ul style="font-size:13px;padding-left:18px;line-height:1.8;">
+        <li>个人信息可能被泄露</li>
+        <li>有人可能被"监控"感到不舒服</li>
+        <li>AI 判断错误可能导致问题</li>
+        <li>不是所有人都能用得起</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- No-scaffold exercise: design task -->
+  <div class="highlight" style="margin-top:20px;">
+    <b>🎨 创造任务（无支架）：设计一个"智能教室"！</b><br>
+    你想在教室里装哪些传感器，让学习和生活更方便？把你的想法画出来或写下来！
+  </div>
+
+  <div style="background:var(--surface2);border-radius:var(--radius);padding:16px;margin:16px 0;">
+    <p style="font-weight:700;margin-bottom:8px;">我的智能教室设计：</p>
+    <textarea id="designArea" rows="5" style="width:100%;padding:12px;border-radius:var(--radius);border:none;background:var(--bg);color:var(--text);font-size:14px;font-family:inherit;resize:vertical;" placeholder="例如：在教室门口装一个温度传感器，自动调节空调温度……"></textarea>
+    <button class="btn" onclick="saveDesign()" style="margin-top:10px;">保存我的设计 💾</button>
+    <div id="design-saved" style="font-size:13px;color:var(--green);margin-top:8px;display:none;">✅ 设计已保存！你真是个小小产品设计师！</div>
+  </div>
+
+  <!-- Final Concept Test -->
+  <div style="margin-top:24px;">
+    <b>🧠 最终概念检测</b>
+    <p style="font-size:14px;color:var(--text2);margin:8px 0;">如果要你向三年级的小朋友解释"传感器"，下面哪种说法<b>最好</b>？</p>
+    <div class="quiz-options" data-answer="1" data-name="m4-ct">
+      <div class="quiz-opt" onclick="selectOpt(this,0)">A. 传感器是一种将物理量转换为电信号的电子元件，广泛应用于物联网系统中</div>
+      <div class="quiz-opt" onclick="selectOpt(this,1)">B. 传感器就像计算机的"眼睛"和"皮肤"，帮它感知周围的世界</div>
+      <div class="quiz-opt" onclick="selectOpt(this,2)">C. 传感器是一种复杂的微机电系统（MEMS）设备</div>
+    </div>
+    <div class="feedback" id="m4-ct-fb"></div>
+    <button class="btn reveal-btn" onclick="revealFeedback(this)" style="margin-top:8px;">检查答案</button>
+  </div>
+
+  <button class="btn" onclick="nextModule('m4','posttest')" style="margin-top:20px;">完成后测 →</button>
+</section>
+
+<!-- ==================== POST-TEST ==================== -->
+<section id="posttest" class="card hidden">
+  <div class="test-header">
+    <h2>🎉 后测：看看你学到了多少！</h2>
+    <p style="font-size:14px;margin-top:8px;">这次应该更有信心了吧 😊</p>
+  </div>
+
+  <div style="margin-bottom:20px;">
+    <p><b>1️⃣ 传感器的主要作用是什么？</b></p>
+    <div class="quiz-options" data-answer="2" data-name="post-q1">
+      <div class="quiz-opt" onclick="selectOpt(this,0)">A. 给设备供电</div>
+      <div class="quiz-opt" onclick="selectOpt(this,1)">B. 让设备看起来更漂亮</div>
+      <div class="quiz-opt" onclick="selectOpt(this,2)">C. 感知物理世界的信息并转换成信号</div>
+    </div>
+    <div class="feedback" id="post-q1-fb"></div>
+  </div>
+
+  <div style="margin-bottom:20px;">
+    <p><b>2️⃣ 下面哪个设备 <i>一定</i> 用到了光线传感器？</b></p>
+    <div class="quiz-options" data-answer="1" data-name="post-q2">
+      <div class="quiz-opt" onclick="selectOpt(this,0)">A. 电风扇</div>
+      <div class="quiz-opt" onclick="selectOpt(this,1)">B. 能自动调节屏幕亮度的手机</div>
+      <div class="quiz-opt" onclick="selectOpt(this,2)">C. 机械键盘</div>
+    </div>
+    <div class="feedback" id="post-q2-fb"></div>
+  </div>
+
+  <div>
+    <p><b>3️⃣ 传感器工作的三个步骤，正确顺序是？</b></p>
+    <div class="quiz-options" data-answer="0" data-name="post-q3">
+      <div class="quiz-opt" onclick="selectOpt(this,0)">A. 感知 → 处理 → 执行</div>
+      <div class="quiz-opt" onclick="selectOpt(this,1)">B. 执行 → 感知 → 处理</div>
+      <div class="quiz-opt" onclick="selectOpt(this,2)">C. 处理 → 执行 → 感知</div>
+    </div>
+    <div class="feedback" id="post-q3-fb"></div>
+  </div>
+
+  <button class="btn" onclick="checkTest('post')" style="margin-top:20px;">查看结果</button>
+  <div id="post-result" style="margin-top:12px;font-weight:600;"></div>
+</section>
+
+<!-- ==================== BADGE ==================== -->
+<section id="badge" class="card hidden badge">
+  <div class="badge-emoji">🏅</div>
+  <h2>恭喜完成本课程！</h2>
+  <p>你已经成为一名"传感器小侦探"了！</p>
+  <div style="margin:20px 0;font-size:14px;color:var(--text2);line-height:2;">
+    ✅ 你知道了传感器是计算机的"感官"<br>
+    ✅ 你了解了传感器的工作三步曲<br>
+    ✅ 你找到了生活中隐藏的传感器<br>
+    ✅ 你开始思考科技与隐私的关系
+  </div>
+  <p style="font-size:14px;color:var(--accent2);">🌟 继续探索，也许未来的你，会发明出更厉害的传感器！</p>
+  <button class="btn" onclick="location.reload()" style="margin-top:20px;">重新学习 ↻</button>
+</section>
+
+<script>
+// ========== STATE ==========
+const completed = new Set();
+const totalModules = 6; // pretest, m1, m2, m3, m4, posttest
+
+// ========== PROGRESS ==========
+function updateProgress() {
+  const n = completed.size;
+  document.getElementById('progNum').textContent = n;
+  document.getElementById('progBar').style.width = (n / totalModules * 100) + '%';
+}
+updateProgress();
+
+// ========== NAV ==========
+document.querySelectorAll('.nav a').forEach(a => {
+  a.addEventListener('click', function() {
+    document.querySelectorAll('.nav a').forEach(x => x.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+// ========== QUIZ LOGIC ==========
+function selectOpt(el, idx) {
+  const parent = el.parentElement;
+  parent.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  el.dataset.selected = idx;
+}
+
+function revealFeedback(btn) {
+  const section = btn.closest('section');
+  const quizzes = section.querySelectorAll('.quiz-options');
+  let allAnswered = true;
+
+  quizzes.forEach(q => {
+    const name = q.dataset.name;
+    const correctIdx = parseInt(q.dataset.answer);
+    const selected = q.querySelector('.quiz-opt.selected');
+    if (!selected) { allAnswered = false; return; }
+
+    const selectedIdx = parseInt(selected.dataset.selected);
+    const opts = q.querySelectorAll('.quiz-opt');
+
+    // Show correct/wrong styling
+    opts.forEach((o, i) => {
+      o.classList.remove('selected');
+      if (i === correctIdx) o.classList.add('correct');
+      else if (i === selectedIdx && i !== correctIdx) o.classList.add('wrong');
+    });
+
+    // Feedback
+    const fbEl = document.getElementById(name + '-fb');
+    if (fbEl) {
+      fbEl.classList.add('show');
+      if (selectedIdx === correctIdx) {
+        fbEl.className = 'feedback show correct-fb';
+        fbEl.innerHTML = '✅ <b>正确！</b> ' + getCorrectFeedback(name);
+      } else {
+        fbEl.className = 'feedback show wrong-fb';
+        fbEl.innerHTML = '❌ ' + getWrongFeedback(name, selectedIdx);
+      }
+    }
+  });
+
+  btn.disabled = true;
+}
+
+function getCorrectFeedback(name) {
+  const map = {
+    'm1-ct': '没错！传感器就是"翻译官"，把真实世界的信息翻译成计算机能懂的语言。',
+    'm3-ex': '正确！烟雾传感器一般不在自动驾驶汽车里使用，它更多出现在火警系统中。',
+    'm4-ct': '说得太好了！用"眼睛"和"皮肤"来类比，三年级的小朋友一定能听懂。好的解释要用对方熟悉的东西来比喻。',
+  };
+  return map[name] || '答对了，你理解得很准确！';
+}
+
+function getWrongFeedback(name, selectedIdx) {
+  const map = {
+    'm1-ct': 'A：发送指令是"执行器"做的事，不是传感器。B：传感器不需要供电才能工作——电池才是干这个的。正确答案是 C。',
+    'm3-ex': '再想想：自动驾驶汽车需要"看见"路况，烟雾传感器对它有什么用呢？正确答案是 C。',
+    'm4-ct': 'A 和 C 说得虽然没错，但用了太多专业词汇，三年级小朋友会听不懂。好的解释要用对方熟悉的东西来类比。正确答案是 B。',
+  };
+  return map[name] || '再想想看，选另一个试试？';
+}
+
+// ========== TEST CHECK ==========
+function checkTest(type) {
+  const prefix = type === 'pretest' ? 'pretest-q' : 'post-q';
+  const answers = type === 'pretest' ? [1, 0, 2] : [2, 1, 0];
+  let score = 0;
+
+  answers.forEach((ans, i) => {
+    const qName = `${prefix}${i+1}`;
+    const qEl = document.querySelector(`[data-name="${qName}"]`);
+    if (!qEl) return;
+    const selected = qEl.querySelector('.quiz-opt.selected');
+    if (selected && parseInt(selected.dataset.selected) === ans) score++;
+  });
+
+  const resultEl = document.getElementById(type + '-result');
+  const total = answers.length;
+  const emoji = score === total ? '🎉' : score >= total/2 ? '👍' : '💪';
+  const msg = score === total ? '全部正确，太棒了！' : `你答对了 ${score}/${total}，继续加油！`;
+  resultEl.innerHTML = `${emoji} ${msg}`;
+  resultEl.style.color = score === total ? 'var(--green)' : 'var(--yellow)';
+
+  // Mark complete
+  if (!completed.has(type)) {
+    completed.add(type);
+    updateProgress();
+  }
+
+  if (type === 'posttest') {
+    setTimeout(() => {
+      document.getElementById('posttest').classList.add('hidden');
+      document.getElementById('badge').classList.remove('hidden');
+      if (!completed.has('badge')) {
+        completed.add('badge');
+        updateProgress();
+      }
+    }, 1000);
+  }
+}
+
+// ========== MODULE NAV ==========
+function nextModule(from, to) {
+  document.getElementById(from).classList.add('hidden');
+  document.getElementById(to).classList.remove('hidden');
+  if (!completed.has(from)) {
+    completed.add(from);
+    updateProgress();
+  }
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ========== LIGHT SENSOR DEMO ==========
+function updateLight(val) {
+  document.getElementById('lightValue').textContent = val;
+  const emoji = val < 20 ? '🌑' : val < 50 ? '🌤️' : '☀️';
+  document.getElementById('lightEmoji').textContent = emoji;
+  const action = val < 30 ? '💡 太暗了！自动开灯~' : '✅ 光线充足，不需要开灯。';
+  document.getElementById('lightAction').textContent = action;
+  document.getElementById('lightAction').style.color = val < 30 ? 'var(--green)' : 'var(--yellow)';
+}
+
+// ========== EXERCISE 1 ==========
+function checkEx1() {
+  const a1 = document.getElementById('ex1-1').value.trim();
+  const a2 = document.getElementById('ex1-2').value.trim();
+  const a3 = document.getElementById('ex1-3').value.trim();
+  const result = document.getElementById('ex1-result');
+
+  // Very forgiving check
+  const ok1 = a1.includes('靠近') || a1.includes('有人') || a1.includes('物体') || a1.length > 0;
+  const ok2 = a2.includes('打开') || a2.includes('开盖') || a2.includes('开') || a2.length > 0;
+  const ok3 = a3.includes('马达') || a3.includes('执行') || a3.includes('机器') || a3.length > 0;
+
+  if (ok1 && ok2 && ok3) {
+    result.innerHTML = '✅ <span style="color:var(--green);">很好！你的思路完全正确。</span><br>参考答案：① 有人靠近 → ② 打开桶盖 → ③ 执行器';
+    result.style.color = 'var(--green)';
+  } else {
+    result.innerHTML = '💡 提示：想一想自动垃圾桶是怎么工作的？有人走过去 → 盖子会自动怎样？';
+    result.style.color = 'var(--yellow)';
+  }
+}
+
+// ========== MATCH GAME ==========
+const matchAnswers = {0:1, 1:0, 2:2, 3:3}; // dev index -> sensor id
+
+function checkMatch() {
+  // Simplified: just show correct answers
+  const result = document.getElementById('match-result');
+  result.innerHTML = '✅ <span style="color:var(--green);">正确答案：</span><br>' +
+    '📱 智能手机 → 触摸屏 + 加速度传感器<br>' +
+    '🚗 自动驾驶汽车 → 激光雷达传感器<br>' +
+    '⌚ 智能手表 → 心率 + 加速度传感器<br>' +
+    '🏠 智能温度计 → 温度传感器';
+  result.style.color = 'var(--green)';
+}
+
+// ========== DESIGN SAVE ==========
+function saveDesign() {
+  const area = document.getElementById('designArea');
+  if (area.value.trim().length < 5) {
+    alert('请先写下你的设计想法哦 😊');
+    return;
+  }
+  document.getElementById('design-saved').style.display = 'block';
+  // In a real app, this would save to localStorage or a backend
+  localStorage.setItem('sensor_design', area.value);
+}
+
+// ========== INIT ==========
+window.onload = function() {
+  updateLight(80);
+  const saved = localStorage.getItem('sensor_design');
+  if (saved) document.getElementById('designArea').value = saved;
+};
+</script>
+</body>
+</html>
