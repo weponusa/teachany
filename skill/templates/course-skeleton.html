@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<!--
+================================================================
+TeachAny v6 课件骨架模板（Single-Page + Auto-TTS + Knowledge Map）
+================================================================
+基础能力门槛 B-1 ~ B-7 全部内置，AI 生成时只需填充 {{PLACEHOLDER}}：
+
+  {{TITLE}}              课件标题
+  {{SUBJECT}}            学科（history / geography / math / ...）
+  {{STAGE}}              学段（elementary / middle / high）
+  {{NODE_ID}}            知识树节点 id（对应 path.html?node=）
+  {{PRE_NODE_ID/NAME}}   前置节点 id + 中文名
+  {{NEXT_NODE_ID/NAME}}  后续节点 id + 中文名
+  {{HERO_QUESTION}}      核心引入问题
+  {{LEARNING_OBJECTIVES}} 3-4 条 Bloom 动词句
+  {{CONTENT_SECTIONS}}   ⭐ 9 段标准结构的正文 HTML
+  {{MAP_SECTION}}        历史/地理课才插入（见 map-section-template.html）
+  {{TTS_MANIFEST}}       tts/manifest.json 路径
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{TITLE}}</title>
+
+<!-- TeachAny 元信息（供打包 + 知识图谱关联）-->
+<meta name="teachany:node_id" content="{{NODE_ID}}">
+<meta name="teachany:subject" content="{{SUBJECT}}">
+<meta name="teachany:stage" content="{{STAGE}}">
+<meta name="teachany:version" content="v6">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<style>
+/* ============================================================
+   视觉基础（按学段在 body class 里切换）
+   ============================================================ */
+:root {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --border: #334155;
+  --text: #f8fafc;
+  --text-dim: #94a3b8;
+  --accent: #3b82f6;
+  --accent-2: #8b5cf6;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, 'PingFang SC', 'Source Han Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  font-size: 16px;
+}
+
+/* 单页滚动的章节 */
+section.course-section {
+  min-height: 50vh;
+  padding: 60px 8%;
+  border-bottom: 1px solid var(--border);
+  scroll-margin-top: 20px;
+}
+section.course-section.highlight {
+  background: linear-gradient(180deg, rgba(59,130,246,0.05) 0%, transparent 100%);
+}
+section.course-section h2 {
+  font-size: 28px;
+  margin: 0 0 24px 0;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Hero */
+#hero {
+  min-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 40px 8%;
+  background:
+    radial-gradient(ellipse at top, rgba(59,130,246,0.15) 0%, transparent 60%),
+    radial-gradient(ellipse at bottom, rgba(139,92,246,0.1) 0%, transparent 60%);
+}
+#hero h1 {
+  font-size: 48px;
+  margin: 0 0 20px 0;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.3;
+}
+#hero .question {
+  font-size: 20px;
+  color: var(--text-dim);
+  max-width: 720px;
+  margin: 0 auto 40px;
+}
+#hero .start-btn {
+  padding: 14px 32px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: white;
+  border: none;
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(59,130,246,0.4);
+}
+
+/* 学习目标 */
+.objectives {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+.objective-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  font-size: 15px;
+}
+.objective-card .verb {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* 知识图谱章节 */
+#knowledge-map-section {
+  background: linear-gradient(180deg, var(--bg), #0a0f1c);
+}
+.km-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr 1fr;
+  gap: 24px;
+  align-items: center;
+  margin: 40px 0;
+}
+.km-col { text-align: center; }
+.km-col h3 {
+  color: var(--text-dim);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 12px 0;
+}
+.km-node {
+  display: inline-block;
+  padding: 14px 20px;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+  transition: all .2s;
+  font-size: 14px;
+  font-weight: 500;
+}
+.km-node:hover { border-color: var(--accent); transform: translateY(-2px); }
+.km-node.current {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: white;
+  border-color: transparent;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 18px 28px;
+  box-shadow: 0 8px 24px rgba(59,130,246,0.4);
+}
+.km-arrow {
+  color: var(--text-dim);
+  font-size: 24px;
+  text-align: center;
+}
+
+/* ============================================================
+   B-7：AI 学伴（左下）与全局 TTS（右下）不重叠
+   ============================================================ */
+#ai-assistant {
+  position: fixed;
+  left: 20px;       /* ← 左下 */
+  bottom: 20px;
+  z-index: 9998;
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-2), var(--accent));
+  color: white;
+  border: none;
+  font-size: 26px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(139,92,246,0.5);
+}
+#tts-controller {
+  position: fixed;
+  right: 20px;      /* ← 右下 */
+  bottom: 20px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+#tts-controller button {
+  background: transparent;
+  color: var(--text);
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px 8px;
+}
+#tts-controller .tts-status {
+  font-size: 12px;
+  color: var(--text-dim);
+  min-width: 80px;
+}
+
+/* 段落朗读中高亮 */
+.tts-active {
+  background: linear-gradient(180deg, transparent 60%, rgba(251,191,36,0.25) 60%);
+  transition: background .3s;
+}
+
+/* 地图容器（地理/历史课才显示）*/
+.map-container {
+  width: 100%;
+  height: 600px;
+  background: #0c1526;
+  border-radius: 12px;
+  margin: 20px 0;
+}
+.leaflet-container { background: #0c1526; }
+
+/* 响应式 */
+@media (max-width: 768px) {
+  section.course-section { padding: 40px 5%; }
+  #hero h1 { font-size: 32px; }
+  .km-grid { grid-template-columns: 1fr; }
+  .km-arrow { transform: rotate(90deg); }
+  #ai-assistant, #tts-controller { bottom: 16px; }
+  #ai-assistant { width: 48px; height: 48px; font-size: 22px; }
+}
+</style>
+</head>
+<body class="stage-{{STAGE}}">
+
+<!-- ═══════════════════════════════════════════════════
+     1. Hero 开场（B-6 结构 #1）
+     ═══════════════════════════════════════════════════ -->
+<section id="hero" data-tts="hero">
+  <h1>{{TITLE}}</h1>
+  <p class="question">{{HERO_QUESTION}}</p>
+  <button class="start-btn" onclick="document.getElementById('objectives').scrollIntoView()">
+    🚀 开始学习
+  </button>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     2. 学习目标（B-6 结构 #2）
+     ═══════════════════════════════════════════════════ -->
+<section id="objectives" class="course-section" data-tts="objectives">
+  <h2>🎯 学习目标</h2>
+  <div class="objectives">
+    {{LEARNING_OBJECTIVES}}
+    <!-- 示例：
+    <div class="objective-card"><span class="verb">理解</span>……</div>
+    -->
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     3-9. 主体内容（B-6 结构 #3-#9）
+     AI 按九段结构填充，每段至少一个 data-tts="xxx"
+
+     ⭐ B-3a：课件必须包含 ≥ 3 张 AI 生成图片（<img src="assets/xxx.png">）
+     AI 在生成内容时用 image_gen 产出以下 3 类图，保存到 assets/：
+       1. assets/hero-scene.png          Hero/引入段的氛围图
+       2. assets/concept-visualization.png  核心概念可视化
+       3. assets/extension-illustration.png  拓展/总结段插图
+     示例：
+       <img src="assets/hero-scene.png" alt="唐朝长安西市胡商云集" style="width:100%;border-radius:12px">
+     ═══════════════════════════════════════════════════ -->
+{{CONTENT_SECTIONS}}
+<!-- 示例：
+<section id="introduction" class="course-section" data-tts="introduction">
+  <h2>📖 引入：……</h2>
+  ...
+</section>
+<section id="core-concept" class="course-section highlight" data-tts="core-concept">
+  <h2>🔍 核心概念：……</h2>
+  ...
+</section>
+<section id="modeling" class="course-section" data-tts="modeling">
+  <h2>🧩 建模 / 演示</h2>
+  {{MAP_SECTION}}  <!-- 历史/地理课在这里插入 Leaflet 地图（详见 map-section-template.html） -->
+  ...
+</section>
+<section id="examples" class="course-section" data-tts="examples">
+  <h2>💡 例题</h2>
+  ...
+</section>
+<section id="practice" class="course-section" data-tts="practice">
+  <h2>🎮 互动练习</h2>
+  ...
+</section>
+<section id="quiz" class="course-section" data-tts="quiz">
+  <h2>📝 课堂小测</h2>
+  ...
+</section>
+<section id="summary" class="course-section" data-tts="summary">
+  <h2>📌 总结</h2>
+  ...
+</section>
+-->
+
+<!-- ═══════════════════════════════════════════════════
+     10. 知识图谱（B-5 强制）
+     ═══════════════════════════════════════════════════ -->
+<section id="knowledge-map-section" class="course-section" data-tts="knowledge-map">
+  <h2>🗺️ 知识图谱</h2>
+  <p style="text-align:center;color:var(--text-dim)">本节在整个知识树中的位置</p>
+  <div class="km-grid">
+    <div class="km-col">
+      <h3>前置知识</h3>
+      <a class="km-node prerequisite"
+         href="https://weponusa.github.io/teachany/path.html?node={{PRE_NODE_ID}}"
+         target="_blank">
+        ← {{PRE_NODE_NAME}}
+      </a>
+    </div>
+    <div class="km-col">
+      <h3>当前</h3>
+      <a class="km-node current"
+         href="https://weponusa.github.io/teachany/path.html?node={{NODE_ID}}"
+         target="_blank">
+        {{TITLE}}
+      </a>
+    </div>
+    <div class="km-col">
+      <h3>后续知识</h3>
+      <a class="km-node next-step"
+         href="https://weponusa.github.io/teachany/path.html?node={{NEXT_NODE_ID}}"
+         target="_blank">
+        {{NEXT_NODE_NAME}} →
+      </a>
+    </div>
+  </div>
+  <p style="text-align:center;color:var(--text-dim);font-size:13px">
+    <a href="https://weponusa.github.io/teachany/tree.html"
+       target="_blank" style="color:var(--accent)">查看完整知识树 →</a>
+  </p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     B-7 · AI 学伴（左下）
+     ═══════════════════════════════════════════════════ -->
+<button id="ai-assistant" aria-label="AI 学伴" title="AI 学伴">🤖</button>
+
+<!-- ═══════════════════════════════════════════════════
+     B-7 · 全局 TTS 控制器（右下）
+     ═══════════════════════════════════════════════════ -->
+<div id="tts-controller" aria-label="语音讲解控制">
+  <button id="tts-play" title="播放/暂停">▶️</button>
+  <span class="tts-status" id="tts-status">自动播放中</span>
+  <button id="tts-mute" title="关闭自动播放">🔇</button>
+</div>
+
+<audio id="tts-audio" preload="auto"></audio>
+
+<script>
+// ═══════════════════════════════════════════════════
+// B-2 · 自动触发 TTS + IntersectionObserver + 段落高亮
+// ═══════════════════════════════════════════════════
+(async function() {
+  const audio = document.getElementById('tts-audio');
+  const statusEl = document.getElementById('tts-status');
+  const playBtn = document.getElementById('tts-play');
+  const muteBtn = document.getElementById('tts-mute');
+
+  let manifest = null;
+  let autoPlayEnabled = true;  // 用户关闭后不自动恢复
+  let currentSection = null;
+
+  // 加载 tts/manifest.json
+  try {
+    const res = await fetch('tts/manifest.json');
+    if (res.ok) manifest = await res.json();
+  } catch (e) {
+    console.warn('[TTS] manifest.json 未找到，语音讲解不可用');
+    statusEl.textContent = '⚠️ 无语音';
+    return;
+  }
+
+  if (!manifest) {
+    statusEl.textContent = '⚠️ 无语音';
+    return;
+  }
+
+  // manifest 格式：{ sections: { hero: "tts/hero.mp3", introduction: "tts/intro.mp3", ... } }
+  const ttsMap = manifest.sections || manifest;
+
+  function playSection(key, sectionEl) {
+    if (!autoPlayEnabled) return;
+    const src = ttsMap[key];
+    if (!src) return;
+    if (audio.src && audio.src.includes(src) && !audio.paused) return;
+
+    // 清除前一段高亮
+    document.querySelectorAll('.tts-active').forEach(el => el.classList.remove('tts-active'));
+
+    audio.src = src;
+    audio.play().then(() => {
+      statusEl.textContent = `🔊 ${key}`;
+      playBtn.textContent = '⏸️';
+      currentSection = sectionEl;
+      sectionEl.classList.add('tts-active');
+    }).catch(err => {
+      // autoplay 被浏览器阻止，提示用户点击
+      statusEl.textContent = '点击▶️开始';
+    });
+  }
+
+  // IntersectionObserver 监听章节进入视口
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && entry.intersectionRatio > 0.4) {
+        const key = entry.target.dataset.tts;
+        if (key) playSection(key, entry.target);
+      }
+    });
+  }, { threshold: [0.4] });
+
+  document.querySelectorAll('[data-tts]').forEach(el => observer.observe(el));
+
+  // 播放/暂停
+  playBtn.onclick = () => {
+    if (audio.paused) { audio.play(); playBtn.textContent = '⏸️'; statusEl.textContent = '🔊 播放中'; }
+    else { audio.pause(); playBtn.textContent = '▶️'; statusEl.textContent = '⏸️ 已暂停'; }
+  };
+
+  // 关闭自动播放
+  muteBtn.onclick = () => {
+    autoPlayEnabled = !autoPlayEnabled;
+    muteBtn.textContent = autoPlayEnabled ? '🔇' : '🔊';
+    statusEl.textContent = autoPlayEnabled ? '自动播放中' : '已关闭自动';
+    if (!autoPlayEnabled) {
+      audio.pause();
+      playBtn.textContent = '▶️';
+    }
+  };
+
+  // 音频结束 → 高亮移除
+  audio.addEventListener('ended', () => {
+    if (currentSection) currentSection.classList.remove('tts-active');
+    playBtn.textContent = '▶️';
+    statusEl.textContent = '自动播放中';
+  });
+})();
+
+// ═══════════════════════════════════════════════════
+// AI 学伴占位按钮（接入 CodeBuddy / Claude 侧边栏）
+// ═══════════════════════════════════════════════════
+document.getElementById('ai-assistant').onclick = () => {
+  alert('AI 学伴：调用 CodeBuddy 侧边栏对话。如需启用请在课件父页面注入 TeachAny.openAssistant()');
+};
+
+// ═══════════════════════════════════════════════════
+// 严禁使用 Web Speech API（B-2 硬规则）
+// ═══════════════════════════════════════════════════
+// if (window.speechSynthesis) { ❌ }  // 永远不要启用
+</script>
+
+<!-- 如需地图：引入 leaflet 库 + ./data/geography/*.geojson，按 map-section-template.html 填入 -->
+<!--
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="path/to/map-init.js"></script>
+-->
+
+</body>
+</html>
