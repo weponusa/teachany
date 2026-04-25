@@ -93,6 +93,78 @@ def detect_html_level(html_head):
     return None, None
 
 
+def check_baseline_quality(course_dir, html_text):
+    """v6.6 新增：内容质量硬门槛（防止劣质课件混入 community）
+
+    检查：
+    - tts/*.mp3 ≥ 5（B-2 完整版要 10，server 端宽松要 5）
+    - <img src=...> ≥ 3 张（B-3a）
+    - 标准 section 至少覆盖 5/8（hero/objectives/intro/concept/example/practice/summary/kg）
+    - 末尾必须有 知识图谱/相关知识点 章节（B-5）
+    - 课件文件总数 ≥ 8（防止只交一个 HTML 蒙混）
+
+    返回 (errors, warns) 列表
+    """
+    import re
+    errors = []
+    warns = []
+
+    # 1. TTS 文件数
+    tts_dir = course_dir / 'tts'
+    mp3_count = len(list(tts_dir.glob('*.mp3'))) if tts_dir.exists() else 0
+    if mp3_count < 5:
+        errors.append(('error',
+            f'{course_dir.name}: TTS 不足（{mp3_count} 个 mp3，至少需 5）— 课件应有完整音频讲解，缺 tts/ 目录或 mp3 不足'))
+
+    # 2. 图片数（HTML 引用 + 实际文件）
+    img_refs = len(re.findall(r"<img[^>]+src=['\"][^'\"]+['\"]", html_text))
+    img_files = sum(1 for ext in ('png', 'jpg', 'jpeg', 'webp')
+                    for _ in course_dir.rglob(f'*.{ext}'))
+    if img_refs < 3:
+        errors.append(('error',
+            f'{course_dir.name}: HTML 仅引用 {img_refs} 张图（B-3a 要求 ≥3）— 课件应至少有 3 张可视化图'))
+    if img_files < 3:
+        errors.append(('error',
+            f'{course_dir.name}: 课件目录仅有 {img_files} 张图文件（assets/ 至少 3 张）'))
+
+    # 3. 标准 section 覆盖（弱化的 B-6）
+    section_keywords = {
+        'hero': r'(hero|英雄|首屏)',
+        'objectives': r'(objectives|学习目标|目标)',
+        'introduction': r'(introduction|引入|导入)',
+        'core-concept': r'(核心概念|core[- ]concept|principle)',
+        'example': r'(example|例题|案例|示例)',
+        'practice': r'(practice|练习|测试|quiz|pretest|posttest)',
+        'summary': r'(summary|总结|小结)',
+        'knowledge-map': r'(知识图谱|相关知识|knowledge[- ]map|前置|后续|延伸)',
+    }
+    h_lower = html_text.lower()
+    found = [k for k, pat in section_keywords.items() if re.search(pat, h_lower)]
+    if len(found) < 5:
+        errors.append(('error',
+            f'{course_dir.name}: 标准结构覆盖 {len(found)}/8（缺 {set(section_keywords)-set(found)}），至少需 5 个'))
+
+    # 4. 末尾知识图谱/相关章节（B-5）
+    tail = html_text[-3000:]  # 末尾 3KB
+    if not re.search(r'知识图谱|相关知识|前置知识|后续知识|knowledge[- ]map|延伸', tail, re.IGNORECASE):
+        errors.append(('error',
+            f'{course_dir.name}: 课件末尾缺知识图谱章节（B-5），需有"前置知识/后续知识/相关知识"卡片'))
+
+    # 5. 课件文件总数（防止 1-2 文件蒙混）
+    file_count = sum(1 for f in course_dir.rglob('*') if f.is_file())
+    if file_count < 8:
+        errors.append(('error',
+            f'{course_dir.name}: 课件文件总数 {file_count}（至少 8 个）— 完整课件应含 HTML + manifest + tts/*.mp3 + assets/*'))
+
+    # 6. 必须有锚点跳转（导航）
+    anchors = len(re.findall(r"href=['\"]#[a-zA-Z][^'\"# ]+['\"]", html_text))
+    if anchors < 3:
+        warns.append(('warn',
+            f'{course_dir.name}: HTML 内锚点跳转 {anchors} 个（B-6 推荐 ≥3 段间跳转），课件应可前后翻页'))
+
+    return errors + warns
+
+
 def validate_one(course_dir):
     mf = course_dir / 'manifest.json'
     html = course_dir / 'index.html'
@@ -378,18 +450,35 @@ def validate_one(course_dir):
                 f'{course_dir.name}: 检测到 createElement("video") 动态视频注入'
                 f'（硬规则 #25 · 推荐直接写 <video> 标签，便于无 JS 环境与打印）'))
 
+    # v6.6: 内容质量硬门槛（防止劣质课件混入 community）
+    # 仅对 community/ 课件强制（examples/ 是历史保留，包含老格式课件）
+    if html.exists() and full_html and 'community' in str(course_dir):
+        quality_issues = check_baseline_quality(course_dir, full_html)
+        issues.extend(quality_issues)
+
     return issues
 
 
 def main():
     only = sys.argv[1] if len(sys.argv) > 1 else None
     examples = Path('examples')
+    community = Path('community')  # v6.6: server 端必须扫 community/
     all_issues = []
     scanned = 0
     # v5.29：收集 (course_id, node_id, status) 做跨课件冲突检测
     node_to_courses = defaultdict(list)
 
-    for d in sorted(examples.iterdir()):
+    # v6.6: 同时扫 examples/ 和 community/（不含 drafts/pending）
+    scan_dirs = []
+    if examples.exists():
+        scan_dirs.extend(sorted(examples.iterdir()))
+    if community.exists():
+        for d in sorted(community.iterdir()):
+            if d.name in ('drafts', 'pending', 'README.md'):
+                continue
+            scan_dirs.append(d)
+
+    for d in scan_dirs:
         if not d.is_dir() or d.name.startswith('_') or d.name.startswith('course-'):
             continue
         if only and d.name != only:
