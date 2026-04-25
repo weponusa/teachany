@@ -5,6 +5,21 @@
 这是 [TeachAny 主仓](https://github.com/weponusa/teachany) 里的 skill 子目录，
 让 AI 能按**教学设计 + 课件工程**的完整规范为 K-12 学生生成互动课件。
 
+## ⚡ 自包含架构（v6.9）
+
+skill 现在**完全自包含**：所有地图、地形、历史时间线数据都在 `skill/assets/` 里，
+不再依赖主仓 `data/_legacy/resources/`。
+
+| skill 功能 | 资源来源 | 无需安装 |
+|:---|:---|:---:|
+| 中国历代疆域地图 | `skill/assets/historical-china/` | ✅ |
+| 世界历史分期地图 | `skill/assets/historical-world/` | ✅ |
+| 地形底图（hillshade） | `skill/assets/hillshade/` | ✅ |
+| 历史时间线 | `skill/assets/timelines/` | ✅ |
+| 知识树（K-12 学科节点） | 主仓 `data/trees/` | ✅ 主仓 clone 即得 |
+
+**不依赖**主仓 `community/` 和 `examples/`，它们只用于线上 Gallery 展示。
+
 ## 🚀 一键安装
 
 先克隆整个 TeachAny 主仓（课件站点 + skill + 知识树数据一并拿到）：

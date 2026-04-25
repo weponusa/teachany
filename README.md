@@ -32,15 +32,33 @@
 
 ## 🚀 One-Click Install
 
-### For International Users (GitHub)
+### 🎯 Skill Only · 推荐给 AI 用户（~156MB，不含课件素材）
+
+Clone 主仓但只拉 skill + 知识树，跳过 300+ 课件素材：
+
 ```bash
-/install-skill https://github.com/weponusa/teachany-opensource
+git clone --depth 1 --filter=blob:none --sparse https://github.com/weponusa/teachany.git
+cd teachany
+git sparse-checkout set --no-cone '/*' '!/community' '!/examples'
+# macOS / Linux
+ln -sfn "$PWD/skill" ~/.codebuddy/skills/teachany   # CodeBuddy
+ln -sfn "$PWD/skill" ~/.agents/skills/teachany      # Claude Code / Cursor / Codex CLI
+```
+
+> 🧠 **AI 用户必看**：[skill/README.md](./skill/README.md) · [skill/SKILL_CN.md](./skill/SKILL_CN.md)
+
+### 📚 Full Clone · 含 300+ 课件素材（~280MB）
+
+用于本地完整预览站点、翻阅官方样板、贡献新课件：
+
+```bash
+git clone https://github.com/weponusa/teachany.git
 ```
 
 ### For Chinese Users 🇨🇳 (Gitee Mirror)
 **国内用户请使用 Gitee 镜像（无需翻墙，高速访问）：**
 ```bash
-/install-skill https://gitee.com/weponusa/teachany
+git clone https://gitee.com/weponusa/teachany.git
 ```
 
 **详细安装指南**：
