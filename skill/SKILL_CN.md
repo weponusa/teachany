@@ -1136,6 +1136,9 @@ Hero 区（课题名称 + 学科/年级/课型标签）
   <meta name="teachany-difficulty" content="【1-5】">
   <meta name="teachany-version" content="2.0">
   <meta name="teachany-author" content="teachany">
+  <!-- v6.10 新增：教材章节（从 find_nodes.py 输出或 data/node-chapter-map.json 获取） -->
+  <meta name="teachany-chapter" content="【如「第11章 一次函数」或「必修一 第3章」，未录入时用 web_fetch ChinaTextbook 查】">
+  <meta name="teachany-semester" content="【上 或 下】">
   <!-- ⭐ v5.34 强制：AI 学伴样式（公共资源，打包时随 .teachany 分发） -->
   <link rel="stylesheet" href="./ai-tutor.css">
   <style>
@@ -2459,6 +2462,28 @@ Step 4：主 Agent 执行打包（Phase 3.5）并交付
    - 怎么知道学会了？（评估方式：前后测 / 产出任务 / 量规）
 
 2. **明确学科与学段**：不可假设，必须显式确认。
+2.5. **选节点 + 查章节（v6.10 新增 · 必做）** ⛔ 不许编造 node_id
+
+   **操作**（跑命令，不许跳过）：
+   ```bash
+   python3 ~/.codebuddy/skills/teachany/scripts/find_nodes.py \
+     --stage <elementary|middle|high> \
+     --subject <math|chinese|english|physics|...> \
+     --keyword "<学生要学的知识点关键词>"
+   ```
+
+   **读输出**：脚本会打印每个候选节点的 `node_id` + **教材章节**（如「上·第11章 一次函数」）。
+
+   **三种情况**：
+   - ✅ **章节已录入**（如 `上·第11章 一次函数`）：直接采用，课件 HTML `<meta>` 同时写 `teachany-node` / `teachany-chapter` / `teachany-semester`
+   - ⚠️ **显示 `(待录入)`**：AI 必须自行补齐——用 `web_fetch` 查 ChinaTextbook 教材对应年级章节目录，找到本知识点所在章节号；或查 `data/_legacy/resources/<subject>/**/_graph.json` 里对应中文名的 `unit` 字段
+   - ❌ **关键词查无**：说明节点不存在，考虑 free_mode（不挂树，`teachany-free-mode="true"`）
+
+   **章节信息的用途**：
+   - 课件 hero 区写「第 N 章 · X节」让学生立刻知道教材定位
+   - Phase 0.5 教材内容注入时拼 ChinaTextbook URL 更精确
+   - 发布后 Gallery 可按章节排序展示
+
 3. **判断课型**：新授 / 复习 / 专题 / 习题 / 实验 / 项目制 / 跨学科融合 — 课型决定后续结构选择。
 4. **选择驱动模式**：根据 Section 3.2-3.3 的决策树，选择问题驱动 / 项目驱动 / 活动驱动 / 问题链驱动。
 5. **预判需求**：是否需要前测、是否需要动画（L2）、是否需要开放任务。AI 多模态互动区**默认需要**（仅纯计算/纯习题/纯复习课标注跳过理由）。

@@ -247,22 +247,36 @@ def main():
             print(f"🔍 关键词: '{args.keyword}'  返回前 {len(results)} 个候选\n")
         else:
             print(f"📋 列出前 {len(results)} 个节点（用 --keyword 精准匹配）\n")
-        print(f"  {'node_id':40s} {'grade':5s} {'domain':25s} {'名称'}")
-        print(f"  {'-'*40} {'-'*5} {'-'*25} {'-'*30}")
+        print(f"  {'node_id':40s} {'grade':5s} {'教材章节':28s} {'名称'}")
+        print(f"  {'-'*40} {'-'*5} {'-'*28} {'-'*30}")
         for r in results:
             n = r['node']
             d = r['domain']
             tag = '✅' if n.get('courses') else ('🆕' if n.get('status') == 'placeholder' else '  ')
-            print(f"  {tag} {n.get('id',''):40s} G{n.get('grade','?'):4} {d.get('id',''):25s} {n.get('name','')}")
+            # v6.10: 显示教材章节（若节点带 textbook_chapter 字段）
+            chapter = n.get('textbook_chapter', '')
+            semester = n.get('textbook_semester', '')
+            if chapter:
+                sem_str = f"{semester}·" if semester else ""
+                chapter_cell = f"{sem_str}{chapter}"[:28]
+            else:
+                chapter_cell = '(待录入)'
+            print(f"  {tag} {n.get('id',''):40s} G{n.get('grade','?'):4} {chapter_cell:28s} {n.get('name','')}")
         print()
         print(f"💡 选好后在课件 HTML 头部加：")
         if results:
             r = results[0]
-            print(f'  <meta name="teachany-node" content="{r["node"]["id"]}">')
+            n = r['node']
+            print(f'  <meta name="teachany-node" content="{n["id"]}">')
             print(f'  <meta name="teachany-subject" content="{subject}">')
-            print(f'  <meta name="teachany-grade" content="{r["node"].get("grade", 0)}">')
+            print(f'  <meta name="teachany-grade" content="{n.get("grade", 0)}">')
+            if n.get('textbook_chapter'):
+                print(f'  <meta name="teachany-chapter" content="{n["textbook_chapter"]}">')
+                if n.get('textbook_semester'):
+                    print(f'  <meta name="teachany-semester" content="{n["textbook_semester"]}">')
         print()
         print(f"图例: ✅ 已有课件  🆕 placeholder 待课件   (空) 无活跃")
+        print(f"说明: 教材章节=(待录入) 时，AI 可用 web_fetch 查 ChinaTextbook 原教材补齐")
     sys.exit(0)
 
 
