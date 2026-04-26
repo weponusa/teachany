@@ -24,10 +24,20 @@
   const STORAGE_KEY = 'teachany_tutor_config';
   const HISTORY_KEY = 'teachany_tutor_history';
   const DEFAULTS = {
-    baseUrl: 'https://api.openai.com/v1',
+    baseUrl: 'https://api.deepseek.com/v1',
     apiKey: '',
-    model: 'gpt-4o-mini'
+    model: 'deepseek-chat'
   };
+
+  // v6.11 新增：服务商预设（首次配置一键填表）
+  const PRESETS = [
+    { id: 'deepseek',   name: '🇨🇳 DeepSeek（推荐 · 便宜稳定）', baseUrl: 'https://api.deepseek.com/v1',     model: 'deepseek-chat' },
+    { id: 'moonshot',   name: '🇨🇳 Moonshot Kimi（中文好）',     baseUrl: 'https://api.moonshot.cn/v1',      model: 'moonshot-v1-8k' },
+    { id: 'openrouter', name: '🌐 OpenRouter（多模型聚合）',     baseUrl: 'https://openrouter.ai/api/v1',    model: 'deepseek/deepseek-chat' },
+    { id: 'openai',     name: '🌐 OpenAI（官方）',                baseUrl: 'https://api.openai.com/v1',       model: 'gpt-4o-mini' },
+    { id: 'paratera',   name: '🇨🇳 并行超算（机构）',             baseUrl: 'https://llmapi.paratera.com/v1',  model: 'DeepSeek-V3.2' },
+    { id: 'custom',     name: '⚙️  自定义（任何 OpenAI 兼容 API）', baseUrl: '', model: '' }
+  ];
 
   function readUserConfig() {
     try {
@@ -183,16 +193,21 @@
   function createConfigModal(initial, onSave, onCancel) {
     const mask = document.createElement('div');
     mask.className = 'ai-tutor-mask';
+    const presetOptions = PRESETS.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
     mask.innerHTML = `
       <div class="ai-tutor-config" role="dialog" aria-labelledby="aitutor-title">
         <h2 id="aitutor-title">🎓 启用你的 AI 学伴</h2>
-        <p class="subtitle">输入一个 OpenAI 兼容的 API Key，就可以在这个课件里向学伴提问啦。支持自建兼容接口（Ollama/vLLM/Azure OpenAI/国内代理）。</p>
+        <p class="subtitle">选一个 AI 服务商，填上 API Key 就能用。Key 仅保存在你的浏览器里。</p>
+        <label>选择服务商（一键填默认值）</label>
+        <select name="preset">
+          ${presetOptions}
+        </select>
         <label>API Base URL</label>
-        <input type="text" name="baseUrl" value="${escapeAttr(initial.baseUrl)}" placeholder="https://api.openai.com/v1">
-        <label>API Key</label>
+        <input type="text" name="baseUrl" value="${escapeAttr(initial.baseUrl)}" placeholder="https://api.deepseek.com/v1">
+        <label>API Key <span style="color:#dc2626">*</span></label>
         <input type="password" name="apiKey" value="${escapeAttr(initial.apiKey)}" placeholder="sk-...">
         <label>模型</label>
-        <input type="text" name="model" value="${escapeAttr(initial.model)}" placeholder="gpt-4o-mini">
+        <input type="text" name="model" value="${escapeAttr(initial.model)}" placeholder="deepseek-chat">
         <div class="privacy">
           🔒 你的 API Key 仅保存在此浏览器的 localStorage，关闭页面或清浏览器数据后失效。TeachAny 不会收集、上传、或把 Key 发给任何第三方。
         </div>
@@ -204,11 +219,21 @@
     `;
     document.body.appendChild(mask);
 
+    const nodePreset = mask.querySelector('select[name="preset"]');
     const nodeBaseUrl = mask.querySelector('input[name="baseUrl"]');
     const nodeApiKey = mask.querySelector('input[name="apiKey"]');
     const nodeModel = mask.querySelector('input[name="model"]');
     const btnSave = mask.querySelector('.btn-save');
     const btnCancel = mask.querySelector('.btn-cancel');
+
+    // 预设切换：自动填表
+    nodePreset.addEventListener('change', () => {
+      const p = PRESETS.find(x => x.id === nodePreset.value);
+      if (p && p.baseUrl) {
+        nodeBaseUrl.value = p.baseUrl;
+        nodeModel.value = p.model;
+      }
+    });
 
     function updateSaveBtn() {
       btnSave.disabled = !nodeApiKey.value.trim();

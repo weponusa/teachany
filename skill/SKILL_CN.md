@@ -1139,7 +1139,7 @@ Hero 区（课题名称 + 学科/年级/课型标签）
   <!-- v6.10 新增：教材章节（从 find_nodes.py 输出或 data/node-chapter-map.json 获取） -->
   <meta name="teachany-chapter" content="【如「第11章 一次函数」或「必修一 第3章」，未录入时用 web_fetch ChinaTextbook 查】">
   <meta name="teachany-semester" content="【上 或 下】">
-  <!-- ⭐ v5.34 强制：AI 学伴样式（公共资源，打包时随 .teachany 分发） -->
+  <!-- ⭐ v6.11 强制：AI 学伴样式（公共资源，打包时随 .teachany 分发） -->
   <link rel="stylesheet" href="./ai-tutor.css">
   <style>
     /* ═══ 1. 学段模板 CSS 变量（从 10.3 选取对应学段） ═══ */
@@ -1391,7 +1391,7 @@ Hero 区（课题名称 + 学科/年级/课型标签）
   <!-- ═══ AI 多模态互动区 ═══ 文科默认插入，见 10.4 -->
 
   <script>
-    // ⭐ v5.34 强制：AI 学伴配置（必须在 ai-tutor.js 加载前定义）
+    // ⭐ v6.11 强制：AI 学伴配置（必须在 ai-tutor.js 加载前定义）
     window.__TEACHANY_TUTOR_CONFIG__ = {
       courseTitle: '【课件标题】',
       subject: '【学科ID】',         // chn/math/eng/phy/chem/bio/hist/geo/it
@@ -1751,7 +1751,7 @@ Hero 区（课题名称 + 学科/年级/课型标签）
       });
     })();
   </script>
-  <!-- ⭐ v5.34 强制：AI 学伴脚本（必须放在 </body> 前，defer 保证 DOM 已就绪） -->
+  <!-- ⭐ v6.11 强制：AI 学伴脚本（必须放在 </body> 前，defer 保证 DOM 已就绪） -->
   <script src="./ai-tutor.js" defer></script>
 </body>
 </html>
@@ -1979,14 +1979,14 @@ AI 在 L3 完成后，必须在 `<script>` 标签最前面注入 `audioPlaylist`
 | 字幕显示 | ✅ | 当前段落的文字内容（在控制条内） |
 | 自动连播 | ✅ | 一段播完自动播放下一段 |
 
-#### 10.2.6 AI 学伴悬浮球规范（v5.34 强制）
+#### 10.2.6 AI 学伴悬浮球规范（v6.11 强制 · 左下角）
 
-> ⚠️ **铁律**：自 v5.34 起，**所有 HTML 课件必须内置"AI 学伴"悬浮球**（屏幕右下角）。学生首次点击可输入 OpenAI 兼容的 API Key 激活，随后可针对当前正在学习的内容提问，AI 以匹配学段的难度简短答复（小学 2-3 句、初中 3-5 句、高中 5-8 句）。违反此规则 = Completeness Gate #28 不通过。
+> ⚠️ **铁律**：自 v6.11 起，**所有 HTML 课件必须内置"AI 学伴"悬浮球**（屏幕左下角）。学生首次点击可输入 OpenAI 兼容的 API Key 激活，随后可针对当前正在学习的内容提问，AI 以匹配学段的难度简短答复（小学 2-3 句、初中 3-5 句、高中 5-8 句）。违反此规则 = Completeness Gate #28 不通过。
 
 **架构与分层**：
 
 ```
-┌─ 屏幕右下角 ──────────────────────────────────────┐
+┌─ 屏幕左下角 ──────────────────────────────────────┐
 │                                    [💡 学伴]    │ ← FAB 悬浮球（56×56 px 圆形按钮）
 └───────────────────────────────────────────────────┘
           点击 →
@@ -2005,7 +2005,7 @@ AI 在 L3 完成后，必须在 `<script>` 标签最前面注入 `audioPlaylist`
 │  └─────────────────────────────────────────┘    │
 └───────────────────────────────────────────────────┘
           配置完成 →
-┌─ 对话面板（360 × 520 px，右下角停驻） ────────────┐
+┌─ 对话面板（360 × 520 px，左下角停驻） ────────────┐
 │  🎓 学伴 · 二次函数的顶点式           [×] 清空    │
 │  ┌─────────────────────────────────────────┐    │
 │  │ 📍 当前学习：模块 3 - 顶点式推导          │    │
@@ -2046,7 +2046,7 @@ window.__TEACHANY_TUTOR_CONFIG__ = {
 
 **JS 运行时行为（由 `ai-tutor.js` 实现）**：
 
-1. **FAB 渲染**：`DOMContentLoaded` 后在 `<body>` 末尾注入 `<div class="ai-tutor-fab">💡</div>` + `<div class="ai-tutor-panel">...</div>`；右下距离 24px / 底部 24px，`z-index: 9998`（高于音频控制条 `audio-bar`）
+1. **FAB 渲染**：`DOMContentLoaded` 后在 `<body>` 末尾注入 `<div class="ai-tutor-fab">💡</div>` + `<div class="ai-tutor-panel">...</div>`；左下距离 24px / 底部 24px，`z-index: 9998`（高于音频控制条 `audio-bar`）
 2. **首次点击**：检查 `localStorage.teachany_tutor_config`，若为空则弹出 API Key 配置面板（覆盖全屏 modal）；配置面板含 3 字段（`baseUrl` 默认 `https://api.openai.com/v1`、`apiKey`、`model` 默认 `gpt-4o-mini`）；保存到 `localStorage`（⚠️ 明确告知学生 Key 仅本地存储，不上传）
 3. **后续点击**：直接展开对话面板
 4. **发送消息**：
@@ -2065,7 +2065,7 @@ window.__TEACHANY_TUTOR_CONFIG__ = {
    - 头部显示当前"📍 正在学习：<section title>"；
    - 底部输入框 `Enter` 发送、`Shift+Enter` 换行；
    - 右上角"清空"按钮清空 history（不清 API Key）；
-   - 面板可被关闭按钮收回、再次点击 FAB 恢复。
+   - 面板可被关闭按钮收回、再次点击 FAB 恢复（FAB 在左下，避开右下 TTS 控制条）。
 
 **安全与隐私**：
 - ⚠️ **API Key 仅保存在 `localStorage`**，课件不得上传到任何远程服务器
@@ -3097,7 +3097,7 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
 
 **3.8 通用能力注入（v5.34 新增，所有 HTML 课件默认执行）**：
 
-> 自 v5.34 起，所有 HTML 课件必须默认内置 **AI 学伴悬浮球**（右下角智能助手），允许学生基于当前课件内容提问。
+> 自 v5.34 起，所有 HTML 课件必须默认内置 **AI 学伴悬浮球**（左下角智能助手），允许学生基于当前课件内容提问。
 
 1. **引入公共资源**（见 Section 10.2.6）：
    - `<link rel="stylesheet" href="./ai-tutor.css">`（课件本地副本，或 `../scripts/ai-tutor.css` 的项目共享路径）
@@ -4916,7 +4916,7 @@ curl -sI -m 5 "https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded
 - v5.29：**清理废弃 admin skill + 删除重复课件 + 新增硬规则 #44 节点挂载基线（v5.29.1 修订：community 允许多份）**——(1) 用户反馈"admin-skillhub-package 这个 admin skill 已经没有了，在各处清理"：删除 `admin-skillhub-package/` 目录（能力已于 v6.0 并入基础 Skill），同步清理 `README.md` / `README_CN.md` 的 `Option 1b` / `方式 1b` 段落和项目结构树条目，`CHANGELOG.md` 的 v1.4.0 条目标注为 superseded。(2) 用户进一步反馈"液体压强与流速关系，存在两个一样的课件，删掉比较旧的"，对 `examples/phy-mid-fluid-flow` 与 `examples/teachany-phy-mid-fluid-flow` 做逐字节对比（index.html 29639 字节完全一致、6 个 TTS 同名同内容），保留较新且命名规范的前者。(3) 进一步核实后发现另外 3 组潜在冲突：①`phy-mid-pressure`（community, 24KB 单页简版） vs `teachany-phy-mid-pressure`（**official**, 66KB 深色完整版 + 8 part 源文件 + 配套 TTS）—— 两者挂同一 node `phy-m-pressure`，保留 official 完整版、删除 community 简版；②`phy-mid-atmospheric-pressure` vs `teachany-phy-mid-atmospheric-pressure`（40904 字节逐字节一致），保留命名规范的前者；③`teachany-phy-mid-pressure-buoyancy` 只有 7 个 mp3、无 `index.html` / `manifest.json` / 不在 registry，属孤儿音频包，直接删除。(4) **v5.29.1 修订语义**：用户澄清"一个节点是可以有多个社区课件的，按心标排序即可"——原硬规则 #44 "同节点严禁多份" 表述过严，修正为"**同 node_id 最多 1 份 official，community 允许多份并按 `likes` 降序展示**"；`courseware-hub.js` 早已实现该排序（`b.likes - a.likes` 降序 + 源优先级 `official > community_reg > community_shared > user`）。(5) **升级 `scripts/validate-courseware.py`** 的第 5 层跨课件校验：仅当 `len(officials) > 1` 时报错退出码 1；多份 community 仅打印 `ℹ️ 信息`不阻断；warn/info/error 三级分层输出。(6) **新增硬规则 #44 节点挂载基线**：明确 official 唯一 + community 可多份 + 冲突三原则（内容相同保留命名规范 / 内容不同合并或降级 community / 孤儿资源直接删）。(7) 最终指标：课件数 138→136，validate-courseware 0 错误 + 1 项无关警告（`it-programming-basics` 无 manifest）；硬规则从 43 条扩到 44 条。
 - v5.31：**11 棵国际课标树全部构建完成 · IB DP × 4 + A-Level × 3 + AP × 4**——(1) 承接 v5.30 的多课标基础设施，按 `data/curricula.json` 登记清单一次性构建全部 11 棵国际课标知识树。(2) **权威来源**：每棵树基于对应体系最新官方文档构建——IB 四科用 2025 first assessment 新大纲（Physics/Chemistry/Biology 2023 first teaching 新课纲 + Math AA 2021 课纲），Cambridge 三科用 9709/9702/9701 syllabus 2025-2027 版，AP 四科用 College Board 最新 CED（Physics 1 为 2025 修订版）。(3) **树结构明细**：①`ib-dp-math-aa.json`（5 topics / 29 节点，含 HL 深化）；②`ib-dp-physics.json`（5 themes A-E / 21 节点，Space-Time-Motion → Matter → Waves → Fields → Nuclear-Quantum）；③`ib-dp-chemistry.json`（6 域 Structure 1-3 + Reactivity 1-3 / 19 节点，concept-based 教学）；④`ib-dp-biology.json`（4 themes A-D / 23 节点，Unity-Diversity → Form-Function → Interaction → Continuity-Change）；⑤`cam-al-math.json`（P1 + P3 + M1 + S1/S2 / 28 节点）；⑥`cam-al-physics.json`（Topics 1-25 AS+A2 / 22 节点）；⑦`cam-al-chemistry.json`（AS 物理+无机+有机 + A2 进阶 / 25 节点）；⑧`ap-calculus.json`（CED 10 units / 10 节点，BC 独有 Unit 9-10）；⑨`ap-physics-1.json`（2025 修订 8 units / 8 节点）；⑩`ap-chemistry.json`（9 units / 9 节点）；⑪`ap-biology.json`（8 units / 8 节点）。(4) **节点 id 命名示例**：`math-ib-dp-calculus`、`phy-cam-al-oscillations`、`chem-ap-equilibrium`、`bio-ib-dp-photosynthesis`——全部符合硬规则 #45 的"subject + curriculum_infix + topic"约定。(5) **质量指标**：11 棵树共 **47 个域 / 202 个节点 / 0 id 冲突 / 0 悬空 prereq**；Node 端到端测试 4 个课标 31 棵树全部 HTTP 200 可加载。(6) **设计哲学**：树结构忠实映射官方 Subject Guide 的 themes/topics/units 组织方式，不做"中国风"的再归类；节点名采用"中文名 + 英文括注"或"英文 topic ID + 中文解释"双语呈现，方便国际学校老师定位课标位置的同时让中国学生也能理解。(7) 全部节点 `status=placeholder`，`courses=[]`——等待国际学校老师提交首批课件来"点亮"这些节点。(8) 硬规则保持 45 条不变（本版本只是填充数据，无新规则引入）。
 
-- v5.34：**⭐ 新增 PPTX 导出层 L5 + 所有课件强制内置右下角 AI 学伴悬浮球**——(1) 用户需求：①在 skill 中加入输出 pptx 课件的能力，建立时可选格式，默认为 html；②在生成的 HTML 课件页面右下角增加一个智能学伴小图标，用户第一次点击可以输入 OpenAI 格式的 API Key 激活，就当前学习内容提问，以适当的难度简短回答问题。(2) **PPTX 导出（L5 新层级，可选）**：Section 10.1 新增 PPTX 为推荐技术组合；Section 12 输出层级增加 L5 行（默认跳过，仅在 Phase 0 第 8 步命中"PPT/PPTX/幻灯片/投影版/讲义版/打印讲义"关键词时触发）；Phase 0 第 8 步新增"输出格式选择"步骤，记录 `output_formats` 变量（默认 `["html"]`）；Phase 3 新增 3.7 PPTX 导出执行步骤；新建 `scripts/export-pptx.py` 从 HTML 自动派生 .pptx（按 section 切分幻灯片、提取 `<img src="./assets/*.png">` 作为主图、互动组件降级为扫码/URL 占位页）；`python-pptx` 缺失时自动 `pip3 install`，安装失败不阻断 HTML 交付。(3) **AI 学伴悬浮球（v5.34 强制基线）**：新增 Section 10.2.6《AI 学伴悬浮球规范》，定义右下角 FAB → 首次点击弹 API Key 配置（baseUrl/apiKey/model 三字段，默认 `https://api.openai.com/v1` + `gpt-4o-mini`）→ 配置后展开 360×520 对话面板（头部显示当前 section 标题 + 历史气泡 + 输入框）；答复难度按 `grade` 动态 system prompt（小学 2-3 句口语化 / 初中 3-5 句结构化 / 高中 5-8 句可含公式专业词）；API Key 仅 localStorage 保存、严禁硬编码或上传。(4) **公共资源分发**：新建 `scripts/ai-tutor.css`（FAB + 配置 modal + 对话面板样式，支持深浅色学段变量）+ `scripts/ai-tutor.js`（FAB 注入 / localStorage 读写 / SSE 流式调用 / 学段话术映射）；课件打包时 `pack-courseware.cjs` 自动复制到 `.teachany` 包内（相对路径 `./ai-tutor.css` / `./ai-tutor.js`）。(5) **HTML 骨架模板升级（Section 10.2.1）**：`<head>` 新增 `<link rel="stylesheet" href="./ai-tutor.css">`；`<script>` 最前面注入 `window.__TEACHANY_TUTOR_CONFIG__`（含 `courseTitle/subject/grade/learningObjectives/getContext`）；`</body>` 前新增 `<script src="./ai-tutor.js" defer></script>`。(6) **Completeness Gate 扩充**：从 27 项扩充至 29 项——新增 #28 AI 学伴悬浮球（引用 + 配置 + FAB + API Key 安全）、#29 PPTX 导出（output_formats 含 pptx 时检查切分/插图/降级）。(7) **硬规则扩充**：从 44 条扩充至 46 条——新增 #45 AI 学伴基线（必须引入 ai-tutor.css/js + TUTOR_CONFIG + 打包带资源 + 严禁硬编码 Key + 答复难度按 grade）、#46 PPTX 导出基线（触发规则 + 执行要求 + 互动组件降级 + 安装失败不阻断 HTML）；Section 十三标题从 "44 条" 改为 "46 条"。(8) **validate-courseware.py 升级**：新增 4 项 AI 学伴相关校验（① 引用 ai-tutor.css；② 引用 ai-tutor.js；③ 含 TUTOR_CONFIG；④ 无 `sk-xxx` 明文 Key）。(9) **设计哲学**：PPTX 是派生件而非替代品（线下投影/打印讲义场景），HTML 始终是主交付物；AI 学伴把"课件即学习闭环"升级为"课件 + 陪伴式答疑"，学生在 HTML 课件内部就能就地提问，不用切到 ChatGPT 或其他 App，教学连续性和专注度显著提升。
+- v5.34：**⭐ 新增 PPTX 导出层 L5 + 所有课件强制内置右下角 AI 学伴悬浮球**——(1) 用户需求：①在 skill 中加入输出 pptx 课件的能力，建立时可选格式，默认为 html；②在生成的 HTML 课件页面右下角增加一个智能学伴小图标，用户第一次点击可以输入 OpenAI 格式的 API Key 激活，就当前学习内容提问，以适当的难度简短回答问题。(2) **PPTX 导出（L5 新层级，可选）**：Section 10.1 新增 PPTX 为推荐技术组合；Section 12 输出层级增加 L5 行（默认跳过，仅在 Phase 0 第 8 步命中"PPT/PPTX/幻灯片/投影版/讲义版/打印讲义"关键词时触发）；Phase 0 第 8 步新增"输出格式选择"步骤，记录 `output_formats` 变量（默认 `["html"]`）；Phase 3 新增 3.7 PPTX 导出执行步骤；新建 `scripts/export-pptx.py` 从 HTML 自动派生 .pptx（按 section 切分幻灯片、提取 `<img src="./assets/*.png">` 作为主图、互动组件降级为扫码/URL 占位页）；`python-pptx` 缺失时自动 `pip3 install`，安装失败不阻断 HTML 交付。(3) **AI 学伴悬浮球（v5.34 强制基线）**：新增 Section 10.2.6《AI 学伴悬浮球规范》，定义左下角 FAB → 首次点击弹 API Key 配置（baseUrl/apiKey/model 三字段，默认 `https://api.openai.com/v1` + `gpt-4o-mini`）→ 配置后展开 360×520 对话面板（头部显示当前 section 标题 + 历史气泡 + 输入框）；答复难度按 `grade` 动态 system prompt（小学 2-3 句口语化 / 初中 3-5 句结构化 / 高中 5-8 句可含公式专业词）；API Key 仅 localStorage 保存、严禁硬编码或上传。(4) **公共资源分发**：新建 `scripts/ai-tutor.css`（FAB + 配置 modal + 对话面板样式，支持深浅色学段变量）+ `scripts/ai-tutor.js`（FAB 注入 / localStorage 读写 / SSE 流式调用 / 学段话术映射）；课件打包时 `pack-courseware.cjs` 自动复制到 `.teachany` 包内（相对路径 `./ai-tutor.css` / `./ai-tutor.js`）。(5) **HTML 骨架模板升级（Section 10.2.1）**：`<head>` 新增 `<link rel="stylesheet" href="./ai-tutor.css">`；`<script>` 最前面注入 `window.__TEACHANY_TUTOR_CONFIG__`（含 `courseTitle/subject/grade/learningObjectives/getContext`）；`</body>` 前新增 `<script src="./ai-tutor.js" defer></script>`。(6) **Completeness Gate 扩充**：从 27 项扩充至 29 项——新增 #28 AI 学伴悬浮球（引用 + 配置 + FAB + API Key 安全）、#29 PPTX 导出（output_formats 含 pptx 时检查切分/插图/降级）。(7) **硬规则扩充**：从 44 条扩充至 46 条——新增 #45 AI 学伴基线（必须引入 ai-tutor.css/js + TUTOR_CONFIG + 打包带资源 + 严禁硬编码 Key + 答复难度按 grade）、#46 PPTX 导出基线（触发规则 + 执行要求 + 互动组件降级 + 安装失败不阻断 HTML）；Section 十三标题从 "44 条" 改为 "46 条"。(8) **validate-courseware.py 升级**：新增 4 项 AI 学伴相关校验（① 引用 ai-tutor.css；② 引用 ai-tutor.js；③ 含 TUTOR_CONFIG；④ 无 `sk-xxx` 明文 Key）。(9) **设计哲学**：PPTX 是派生件而非替代品（线下投影/打印讲义场景），HTML 始终是主交付物；AI 学伴把"课件即学习闭环"升级为"课件 + 陪伴式答疑"，学生在 HTML 课件内部就能就地提问，不用切到 ChatGPT 或其他 App，教学连续性和专注度显著提升。
 
 - v5.34.6：**⭐ 注入课标基本要求 · 新增小学科学 · SKILL 课标速查表**——(1) 用户反馈"现在小学没有科学课和图谱，要根据新课标补上"→"同时在 skill 知识库中注入课标内容，尤其是新加入的小学科学"。(2) **数据层**：新建 `data/trees/science-elementary.json`（48 节点、4 领域、`#3b82f6/#10b981/#f59e0b/#8b5cf6` 配色、覆盖 1-6 年级），严格对齐《义务教育科学课程标准（2022 年版）》4 领域 × 13 核心概念结构；在 `data/curricula.json` v1.3 的 cn-national.trees 注册为第 21 棵树（🔬 label_zh "小学科学"）；tree.html 中文课标下新增"🔬 小学科学"按钮并能正确渲染 48 circle + 192 text（Playwright 实测通过）。(3) **SKILL 知识库注入**：新增 Section 17.7「各学科课标速查表」——① 17.7.1 总览表列出 21 棵国内课标树各自的《标准全名》《核心素养（一级）》《年级范围》《颁布机构》《修订版本》，AI 生成课件时可直接定位；② 17.7.2《小学科学课标详细要求》展开该学科的学段划分（第一/二/三学段 3 条目标）、4 大领域对应 13 核心概念、学科前缀约定（`sci-e-*` ⭐ 新增）、探究实践 6 步、探究深度分层（L1→L3）、4 件必做事项、4 种禁用模板；③ 17.7.3 `manifest.curriculum_standards` 字段 7 种 category 引用范式；④ 17.7.4 每棵树的 `metadata.curriculum` / `domain.curriculum_goal` / `node.curriculum_points` 三层 schema 与注入工具说明。(4) **硬规则 #42 扩充**：学科前缀清单从 9 个扩为 10 个，新增 `sci` 小学科学前缀；`manifest.subject: "science"` 被正式纳入合法值；v5.34.6 增量标注"补 `sci`"。(5) **8.3.1 小学科学专属节奏（新小节）**：明确 1-2 / 3-4 / 5-6 年级三学段的设计重点、典型互动、探究深度上限；列出 4 件必做事项（观察入手 / 记录单可填 / 生活联想 / 技术工程收尾）；列出 4 种禁用模板（公式推导 / 题海 / 纯抽象 / 应试导向），防止 AI 把"小学数学模板"套到科学上。(6) **rebuild-index.py 映射扩充**：`subject_to_tree_prefix()` 的 mapping 新增 `'science': ['science-elementary']` 和 `'info_tech': ['info-tech-high']`，让小学科学课件和信息技术课件能被 rebuild-index 正确关联到对应知识树（之前 rebuild-index 漏配就会卡在"文件存在但知识树未引用"警告）。(7) **设计哲学**：课标不只是数据层属性，还应该是 AI 生成课件时的"宪法"——SKILL 知识库里有完整的课标速查表，AI 在 Phase 0.5 知识查询时就能优先引用课标条款而非编造，Phase 3 生成的 HTML 课件也能在 manifest in 准确标注课标依据，形成"课标 → 知识树 → 课件"的完整可追溯链路。
 

@@ -168,6 +168,103 @@ if [ -f "$SKILL_SCRIPTS/bundle_map_assets.sh" ]; then
   fi
 fi
 
+# ─── 1.7. AI 学伴自动注入（v6.11 新增 · 硬规则）──────
+# 所有课件必须自带 ai-tutor.css/js 与 __TEACHANY_TUTOR_CONFIG__
+# - 自动复制公共资源到课件目录（自包含，离线可用）
+# - 自动注入 <link> + <script> + 默认 config（如果 HTML 中缺失）
+echo ""
+echo "[1.7/5] AI 学伴自动注入"
+
+# 定位仓库公共资源（从当前脚本路径推 → ../../scripts）
+AI_TUTOR_JS=""
+AI_TUTOR_CSS=""
+for cand in \
+  "$SKILL_SCRIPTS/../../scripts" \
+  "$HOME/CodeBuddy/一次函数/teachany-opensource/scripts" \
+  "$HOME/teachany-opensource/scripts"; do
+  if [ -f "$cand/ai-tutor.js" ] && [ -f "$cand/ai-tutor.css" ]; then
+    AI_TUTOR_JS="$cand/ai-tutor.js"
+    AI_TUTOR_CSS="$cand/ai-tutor.css"
+    break
+  fi
+done
+
+if [ -z "$AI_TUTOR_JS" ]; then
+  echo "  ⚠️  未找到 ai-tutor.js/css 公共资源，跳过自动注入"
+  echo "     课件可能不通过基线检查 #28（AI 学伴硬规则）"
+else
+  # 1) 复制资源到课件目录（如果缺）
+  copied_count=0
+  for asset in "$AI_TUTOR_CSS" "$AI_TUTOR_JS"; do
+    target="$SRC_DIR/$(basename $asset)"
+    if [ ! -f "$target" ]; then
+      cp "$asset" "$target"
+      copied_count=$((copied_count + 1))
+    fi
+  done
+  if [ $copied_count -gt 0 ]; then
+    echo "  ✅ 已复制 $copied_count 个公共资源（ai-tutor.css/js）"
+  else
+    echo "  ✅ 课件已自带 ai-tutor.css/js"
+  fi
+
+  # 2) 自动注入 <link> + <script> 引用（如果 HTML 中缺）
+  python3 - "$SRC_DIR/index.html" <<'INJECT_PY' || true
+import re, sys
+from pathlib import Path
+
+p = Path(sys.argv[1])
+html = p.read_text(encoding='utf-8')
+changed = False
+
+# 注入 CSS link（如缺）
+if 'ai-tutor.css' not in html:
+    css_tag = '\n  <link rel="stylesheet" href="./ai-tutor.css">'
+    if '</head>' in html:
+        html = html.replace('</head>', css_tag + '\n</head>', 1)
+        changed = True
+        print('  🔧 已注入 <link rel="stylesheet" href="./ai-tutor.css">')
+
+# 注入 script + 默认 config（如缺）
+if 'ai-tutor.js' not in html:
+    # 提取课件元信息
+    title_m = re.search(r'<title[^>]*>([^<·\|]+)', html)
+    title = title_m.group(1).strip() if title_m else '本课件'
+    title = re.sub(r'^[《<]|[》>]$', '', title).strip()
+
+    subj_m = re.search(r'<meta[^>]*name="teachany-subject"[^>]*content="([^"]+)"', html)
+    subject = subj_m.group(1) if subj_m else 'general'
+
+    grade_m = re.search(r'<meta[^>]*name="teachany-grade"[^>]*content="([^"]+)"', html)
+    grade = int(grade_m.group(1)) if grade_m and grade_m.group(1).isdigit() else 9
+
+    inject = f"""
+<!-- ⭐ v6.11 AI 学伴配置（必须在 ai-tutor.js 加载前定义） -->
+<script>
+window.__TEACHANY_TUTOR_CONFIG__ = {{
+  courseTitle: {title!r},
+  subject: {subject!r},
+  grade: {grade},
+  learningObjectives: []
+}};
+</script>
+<!-- ⭐ v6.11 AI 学伴脚本（左下角 FAB · 首次点击引导配置 API） -->
+<script src="./ai-tutor.js" defer></script>
+"""
+    if '</body>' in html:
+        html = html.replace('</body>', inject + '\n</body>', 1)
+        changed = True
+        print(f'  🔧 已注入 ai-tutor.js + __TEACHANY_TUTOR_CONFIG__ '
+              f'(title={title!r}, subject={subject!r}, grade={grade})')
+
+if changed:
+    p.write_text(html, encoding='utf-8')
+    print('  ✅ HTML 已更新')
+else:
+    print('  ✅ HTML 已自带 ai-tutor 引用')
+INJECT_PY
+fi
+
 # ─── 2. 定位仓库 ──────────────────────────────
 echo ""
 echo "[2/5] 定位 teachany-opensource"
