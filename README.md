@@ -32,28 +32,39 @@
 
 ## 🚀 One-Click Install
 
-### 🎯 Skill Only · 推荐给 AI 用户（~156MB，不含课件素材）
+### Choose your download size (v6.12 progressive loading)
 
-Clone 主仓但只拉 skill + 知识树，跳过 300+ 课件素材：
+| Preset | Size | What's included | Best for |
+|---|---|---|---|
+| **minimal** | ~20MB | Skill core + knowledge trees | Non-map courses (math, physics, chemistry, etc.) |
+| **standard** ⭐ | ~40MB | + world history maps + modern borders | Most courses (incl. world history, basic geography) |
+| **full-maps** | ~140MB | + Chinese dynasty maps + physical geography | Chinese history / terrain / advanced geography |
+| **full** | ~690MB | + 305 community courses + examples | Review / study / batch operations |
 
 ```bash
-git clone --depth 1 --filter=blob:none --sparse https://github.com/weponusa/teachany.git
+# Clone with sparse checkout (skip blobs you don't need)
+git clone --filter=blob:none --sparse https://github.com/weponusa/teachany.git
 cd teachany
-git sparse-checkout set --no-cone '/*' '!/community' '!/examples'
-# macOS / Linux
+
+# Pick one preset
+git sparse-checkout set --from-file .sparse-checkout-presets/minimal.txt      # 20MB
+git sparse-checkout set --from-file .sparse-checkout-presets/standard.txt     # 40MB ⭐
+git sparse-checkout set --from-file .sparse-checkout-presets/full-maps.txt    # 140MB
+git sparse-checkout disable                                                    # 690MB (full)
+
+# Link skill to your AI tool
 ln -sfn "$PWD/skill" ~/.codebuddy/skills/teachany   # CodeBuddy
 ln -sfn "$PWD/skill" ~/.agents/skills/teachany      # Claude Code / Cursor / Codex CLI
 ```
 
-> 🧠 **AI 用户必看**：[skill/README.md](./skill/README.md) · [skill/SKILL_CN.md](./skill/SKILL_CN.md)
+> 💡 **Why not download the community courses?**
+> All 305 community courses are live on GitHub Pages — browse them directly in your browser at
+> **https://weponusa.github.io/teachany/**. No local clone needed.
 
-### 📚 Full Clone · 含 300+ 课件素材（~280MB）
-
-用于本地完整预览站点、翻阅官方样板、贡献新课件：
-
-```bash
-git clone https://github.com/weponusa/teachany.git
-```
+> 🧠 **AI users** see: [skill/README.md](./skill/README.md) · [skill/SKILL_CN.md](./skill/SKILL_CN.md)
+>
+> **Progressive loading**: SKILL_CN.md is now only 1,430 lines (was 5,905). 5 large chapters
+> moved to `references/*.md` — loaded only when triggered.
 
 ### For Chinese Users 🇨🇳 (Gitee Mirror)
 **国内用户请使用 Gitee 镜像（无需翻墙，高速访问）：**

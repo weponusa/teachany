@@ -35,20 +35,33 @@ echo "════════════════════════�
 echo "课件目录: $COURSE_DIR"
 echo
 
-# 1. 资源源：只从 skill 自包含的 assets/ 读（v6.9 起不再依赖仓库 data/_legacy）
+# 1. 资源源：v6.12 起统一从 assets/maps/ 读（时空索引化）
+#    兼容：旧版 skill/assets/historical-* 若还在也可用
+REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+MAPS_ROOT="$REPO_ROOT/assets/maps"
 SKILL_ASSETS="$(cd "$(dirname "$0")/.." && pwd)/assets"
 
 SOURCES=(
+  "$MAPS_ROOT/chrono-cn"
+  "$MAPS_ROOT/chrono-world"
+  "$MAPS_ROOT/physical/hillshade"
+  "$MAPS_ROOT/physical/coastline"
+  "$MAPS_ROOT/physical/rivers"
+  "$MAPS_ROOT/physical/lakes"
+  "$MAPS_ROOT/political/world"
+  "$MAPS_ROOT/political/china-modern"
+  "$MAPS_ROOT/political/admin-boundaries"
+  # 向后兼容旧路径
   "$SKILL_ASSETS/historical-china"
   "$SKILL_ASSETS/historical-world"
   "$SKILL_ASSETS/hillshade"
   "$SKILL_ASSETS/timelines"
 )
 
-# 自检：skill/assets 必须在（clone teachany 后正常都在）
-if [ ! -d "$SKILL_ASSETS" ]; then
-  echo "❌ skill/assets 目录不存在: $SKILL_ASSETS"
-  echo "   请确认你已 clone https://github.com/weponusa/teachany 且 skill/assets/ 完整"
+# 自检：至少要有 assets/maps 或 skill/assets
+if [ ! -d "$MAPS_ROOT" ] && [ ! -d "$SKILL_ASSETS" ]; then
+  echo "❌ 找不到地图资源目录"
+  echo "   请确认仓库包含 assets/maps/ 或 skill/assets/"
   exit 2
 fi
 
@@ -103,10 +116,21 @@ for f in $GEOJSONS; do
   fi
   found=""
   for src in "${SOURCES[@]}"; do
+    # 精确匹配
     if [ -f "$src/$f" ]; then
       cp "$src/$f" "$DST/$f"
       size=$(du -h "$DST/$f" | awk '{print $1}')
       echo "  ✅ $f ($size) ← $(basename "$src")"
+      found=1
+      copied=$((copied + 1))
+      break
+    fi
+    # 模糊匹配：chrono-cn/chrono-world 下带时序前缀（001-xxx.geojson）
+    match=$(find "$src" -maxdepth 1 -name "[0-9][0-9][0-9]-$f" 2>/dev/null | head -1)
+    if [ -n "$match" ]; then
+      cp "$match" "$DST/$f"
+      size=$(du -h "$DST/$f" | awk '{print $1}')
+      echo "  ✅ $f ($size) ← $(basename "$match") [时序匹配]"
       found=1
       copied=$((copied + 1))
       break
