@@ -20,6 +20,11 @@ TeachAny v6 课件骨架模板（Single-Page + Auto-TTS + Knowledge Map）
   {{CONTENT_SECTIONS}}   ⭐ 9 段标准结构的正文 HTML
   {{MAP_SECTION}}        历史/地理课才插入（见 map-section-template.html）
   {{TTS_MANIFEST}}       tts/manifest.json 路径
+
+  v6.11 新增（AI 学伴 · 必填）：
+  {{COURSE_TITLE}}       课件简短标题（不含"《》"和"· TeachAny"后缀）
+  {{GRADE}}              年级数字（1-12，决定答复难度）
+  {{OBJECTIVE_1/2/3}}    3 条学习目标（用于 AI 学伴系统提示词）
 -->
 <html lang="zh-CN">
 <head>
@@ -37,6 +42,8 @@ TeachAny v6 课件骨架模板（Single-Page + Auto-TTS + Knowledge Map）
 <meta name="teachany-semester" content="{{SEMESTER}}">
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<!-- ⭐ v6.11 强制：AI 学伴样式（publish_course.sh 自动复制 ai-tutor.css 到课件目录） -->
+<link rel="stylesheet" href="./ai-tutor.css">
 
 <style>
 /* ============================================================
@@ -371,9 +378,11 @@ section.course-section h2 {
 </section>
 
 <!-- ═══════════════════════════════════════════════════
-     B-7 · AI 学伴（左下）
-     ═══════════════════════════════════════════════════ -->
-<button id="ai-assistant" aria-label="AI 学伴" title="AI 学伴">🤖</button>
+     B-7 · AI 学伴（左下角，由 ai-tutor.js 自动注入 FAB）
+     ═══════════════════════════════════════════════════
+     无需手写 button：DOMContentLoaded 时 ai-tutor.js 会自动在 body
+     末尾创建 .ai-tutor-fab + .ai-tutor-panel + 配置 modal。
+     -->
 
 <!-- ═══════════════════════════════════════════════════
      B-7 · 全局 TTS 控制器（右下）
@@ -477,11 +486,9 @@ section.course-section h2 {
 })();
 
 // ═══════════════════════════════════════════════════
-// AI 学伴占位按钮（接入 CodeBuddy / Claude 侧边栏）
+// AI 学伴：由 ai-tutor.js 自动注入（左下角 FAB）
+// 配置见 </script> 后的 __TEACHANY_TUTOR_CONFIG__
 // ═══════════════════════════════════════════════════
-document.getElementById('ai-assistant').onclick = () => {
-  alert('AI 学伴：调用 CodeBuddy 侧边栏对话。如需启用请在课件父页面注入 TeachAny.openAssistant()');
-};
 
 // ═══════════════════════════════════════════════════
 // 严禁使用 Web Speech API（B-2 硬规则）
@@ -494,6 +501,24 @@ document.getElementById('ai-assistant').onclick = () => {
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="path/to/map-init.js"></script>
 -->
+
+<!-- ⭐ v6.11 强制 · AI 学伴配置（必须在 ai-tutor.js 加载前定义） -->
+<script>
+window.__TEACHANY_TUTOR_CONFIG__ = {
+  courseTitle: '{{COURSE_TITLE}}',         // 例："古诗里的秘密节奏《小池》与《池上》"
+  subject: '{{SUBJECT}}',                  // 例："chinese" / "math" / "physics"
+  grade: {{GRADE}},                        // 例：1（小学一年级）/ 8（初二）/ 11（高二）
+  learningObjectives: [
+    '{{OBJECTIVE_1}}',
+    '{{OBJECTIVE_2}}',
+    '{{OBJECTIVE_3}}'
+  ],
+  // 自动从可视区域抓取 section 文本作为对话上下文（默认实现已足够）
+  // 如需精准控制可重写：getContext: () => '...'
+};
+</script>
+<!-- ⭐ v6.11 强制 · AI 学伴脚本（左下角 FAB · 首次点击引导配置 API） -->
+<script src="./ai-tutor.js" defer></script>
 
 </body>
 </html>
