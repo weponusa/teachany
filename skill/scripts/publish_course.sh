@@ -78,6 +78,47 @@ if [ -f "$SKILL_SCRIPTS/check_baseline.sh" ]; then
   echo "  ✅ 基线通过（$pass_count PASS）"
 fi
 
+# ─── 1.1. 双语命名校验（v6.10 新增 · 硬规则）─────
+# Gallery 卡片必须能渲染中英双语标题。
+# manifest.json 必须同时含非空的 name（中文）和 name_en（英文）。
+echo ""
+echo "[1.1/5] 双语命名校验"
+MANIFEST_PRECHECK="$SRC_DIR/manifest.json"
+if [ -f "$MANIFEST_PRECHECK" ]; then
+  bilingual_check=$(python3 -c "
+import json, re, sys
+try:
+    m = json.load(open('$MANIFEST_PRECHECK'))
+except Exception as e:
+    print(f'MANIFEST_BROKEN: {e}'); sys.exit(0)
+name = m.get('name', '').strip()
+en = m.get('name_en', '').strip()
+has_zh = bool(re.search(r'[\u4e00-\u9fff]', name)) if name else False
+problems = []
+if not has_zh: problems.append(f'name 缺中文（当前: {name!r}）')
+if not en: problems.append('name_en 缺英文')
+if problems: print(' | '.join(problems))
+else: print('OK')
+" 2>&1)
+  if [ "$bilingual_check" = "OK" ]; then
+    echo "  ✅ 中文 name + 英文 name_en 都齐全"
+  else
+    echo "  ❌ 双语命名 FAIL: $bilingual_check"
+    echo ""
+    echo "  📋 修复指引："
+    echo "     1) 在 manifest.json 中确保两个字段都非空："
+    echo "        \"name\":     \"百分数大冒险\"          ← 中文（必须）"
+    echo "        \"name_en\":  \"Percentage Adventure\"   ← 英文（必须）"
+    echo "     2) 也可在仓库根目录运行批量翻译："
+    echo "        python3 scripts/translate-names-via-llm.py --apply"
+    echo ""
+    echo "  ⛔ 双语命名缺失会导致 Gallery 卡片渲染异常，禁止发布"
+    exit 11
+  fi
+else
+  echo "  ⚠️  尚无 manifest.json（首次发布会自动生成，本次跳过双语校验）"
+fi
+
 # ─── 1.2. node_id 预校验（v6.5 新增 / v6.6 支持 free_mode）─────
 # 确保 node_id 在知识树里存在，否则前端无法显示
 # free_mode：课件写 <meta name="teachany-free-mode" content="true"> 跳过校验
