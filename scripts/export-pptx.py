@@ -153,21 +153,43 @@ def find_images_in_section(section, course_dir: Path, max_n=2):
 
 
 def course_hero_image(course_dir: Path):
-    """封面图：优先 assets/hero-*.{png,jpg,webp}，否则 assets/ 下第一张图"""
-    assets = course_dir / 'assets'
-    if not assets.exists():
+    """封面图：统一检测逻辑（v6.2 规范）
+    优先级：
+      1. *-hero.{png,jpg,webp}   后缀匹配（主流模式）
+      2. hero-*.{png,jpg,webp}   前缀匹配（兼容旧命名）
+      3. hero.{png,jpg,webp}     纯名称匹配
+      4. 图片目录下第一张图       兜底
+    搜索 assets/ 和 images/ 两个目录
+    """
+    img_exts = ('.png', '.jpg', '.jpeg', '.webp')
+    img_dir = None
+    for name in ('assets', 'images'):
+        candidate = course_dir / name
+        if candidate.exists() and candidate.is_dir():
+            img_dir = candidate
+            break
+    if img_dir is None:
         return None
-    # hero 优先
-    for p in sorted(assets.iterdir()):
-        if p.is_file() and p.stem.lower().startswith('hero') and p.suffix.lower() in (
-            '.png', '.jpg', '.jpeg', '.webp'
-        ):
+    all_imgs = sorted([
+        p for p in img_dir.iterdir()
+        if p.is_file() and p.suffix.lower() in img_exts
+    ])
+    if not all_imgs:
+        return None
+    # 1. 后缀匹配：*-hero.ext（主流模式，如 linear-hero.png）
+    for p in all_imgs:
+        if p.stem.lower().endswith('-hero'):
             return p
-    # 降级：assets 下第一张
-    for p in sorted(assets.iterdir()):
-        if p.is_file() and p.suffix.lower() in ('.png', '.jpg', '.jpeg', '.webp'):
+    # 2. 前缀匹配：hero-*.ext（兼容旧命名，如 hero-denglouque.png）
+    for p in all_imgs:
+        if p.stem.lower().startswith('hero-'):
             return p
-    return None
+    # 3. 纯名称匹配：hero.ext
+    for p in all_imgs:
+        if p.stem.lower() == 'hero':
+            return p
+    # 4. 兜底：第一张图
+    return all_imgs[0] if all_imgs else None
 
 
 def detect_interactive_components(section):
