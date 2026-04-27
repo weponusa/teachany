@@ -26,11 +26,12 @@ bash ~/.codebuddy/skills/teachany/scripts/install_map_resources.sh
 
 历史地理类课件除了地图之外，**必须再补 ≥ 3 张 AI 生成的插图**（B-3a 基线）：
 
-- **Hero / 引入段** 1 张：氛围图，纪录片风或油画感
+- **Hero / 引入段** 1 张：知识结构信息图，展示本课完整知识点及层级关系（思维导图/概念图风格）
 - **核心概念 / 建模段** 1 张：历史事件复原、地貌示意
 - **拓展 / 总结段** 1 张：人物、遗迹、文化符号
 
 用 WorkBuddy 原生 `image_gen`，保存到 `assets/`，HTML 用 `<img>` 真实引用。**仅放 `data-suggested-prompt` 占位符不算数**。
+⚠️ **Prompt 语言规则**：中国课标的历史/地理课件，所有 prompt 必须用**中文**，图中标注必须是中文。
 
 ## 🗺️ 地图路径自适应（本地/线上都要能跑）
 

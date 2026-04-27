@@ -1,36 +1,39 @@
 #!/usr/bin/env bash
 # ============================================================
-# TeachAny Map Resources Checker v6.9 · 自包含架构
+# TeachAny Map Resources Checker (轻量，秒级)
 # ============================================================
-# 判断 skill 自带的 assets/ 地图资源是否完整（开箱即用验证）。
-# v6.9 变化：skill 不再依赖仓库 data/_legacy，直接用 skill/assets/。
-#
+# 判断当前项目是否已安装完整的地图资源。
 # 用法：
-#   bash ~/.codebuddy/skills/teachany/scripts/check_map_resources.sh
+#   bash ~/.codebuddy/skills/teachany/scripts/check_map_resources.sh [项目目录]
 # 退出码：
-#   0 = 完整
-#   1 = 缺失
-#   2 = skill 结构损坏
+#   0 = 完整（可直接制作历史/地理课件）
+#   1 = 缺失（需要跑 install_map_resources.sh）
+#   2 = 项目路径未找到
 # ============================================================
 
-SKILL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-SKILL_ASSETS="$SKILL_DIR/assets"
+locate_project() {
+  local p="$1"
+  [ -n "$p" ] && [ -d "$p" ] && { echo "$p"; return; }
+  [ -d "teachany-opensource/data" ] && { echo "$(pwd)/teachany-opensource"; return; }
+  [ -d "data/_legacy/resources" ] || [ -d "data/geography" ] || [ -f "registry.json" ] && { echo "$(pwd)"; return; }
+  echo ""
+}
 
-if [ ! -d "$SKILL_ASSETS" ]; then
-  echo "SKILL_BROKEN: $SKILL_ASSETS 不存在"
+PROJECT_ROOT="$(locate_project "$1")"
+if [ -z "$PROJECT_ROOT" ]; then
+  echo "PROJECT_NOT_FOUND"
   exit 2
 fi
 
-HC="$SKILL_ASSETS/historical-china"
-HW="$SKILL_ASSETS/historical-world"
-HS="$SKILL_ASSETS/hillshade"
-TL="$SKILL_ASSETS/timelines"
+GEO="$PROJECT_ROOT/data/geography"
+HIST="$PROJECT_ROOT/data/history"
 
-# 关键核心资源（至少要有的代表性文件，覆盖古今中外）
+# 关键核心资源（有其中一个就能跑基础课件）
 CORE_FILES=(
-  "$HC/tang-dynasty.geojson"
-  "$HW/ce-1300-mongol-peak.geojson"
-  "$TL/chinese-dynasties.json"
+  "$GEO/hillshade/global-color-hillshade-4k.jpg"
+  "$GEO/historical-china/tang-dynasty.geojson"
+  "$GEO/historical-world/ce-1300-mongol-peak.geojson"
+  "$HIST/timelines/chinese-dynasties.json"
 )
 
 missing=()
@@ -40,21 +43,18 @@ for f in "${CORE_FILES[@]}"; do
   fi
 done
 
-# 统计（按数量粗筛）
-hs_count=$(ls "$HS"/*.jpg 2>/dev/null | wc -l | tr -d ' ')
-hc_count=$(ls "$HC"/*.geojson 2>/dev/null | wc -l | tr -d ' ')
-hw_count=$(ls "$HW"/*.geojson 2>/dev/null | wc -l | tr -d ' ')
-tl_count=$(ls "$TL"/*.json 2>/dev/null | wc -l | tr -d ' ')
+# 统计
+hs=$(ls "$GEO"/hillshade/*.jpg 2>/dev/null | wc -l | tr -d ' ')
+hc=$(ls "$GEO"/historical-china/*.geojson 2>/dev/null | wc -l | tr -d ' ')
+hw=$(ls "$GEO"/historical-world/*.geojson 2>/dev/null | wc -l | tr -d ' ')
 
-if [ ${#missing[@]} -eq 0 ] && [ "$hc_count" -ge 15 ] && [ "$hw_count" -ge 15 ]; then
-  echo "OK hillshade=$hs_count china=$hc_count world=$hw_count timelines=$tl_count"
+if [ ${#missing[@]} -eq 0 ] && [ "$hs" -ge 3 ] && [ "$hc" -ge 15 ] && [ "$hw" -ge 18 ]; then
+  echo "OK hillshade=$hs china=$hc world=$hw"
   exit 0
 fi
 
-echo "MISSING hillshade=$hs_count china=$hc_count world=$hw_count timelines=$tl_count"
+echo "MISSING hillshade=$hs china=$hc world=$hw"
 for f in "${missing[@]}"; do
-  echo "  - 缺: $f"
+  echo "  - $f"
 done
-echo ""
-echo "修复：cd \$(你的 teachany clone 目录) && git pull  # 确保 skill/assets/ 完整"
 exit 1

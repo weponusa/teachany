@@ -5,25 +5,6 @@ description: "K-12 interactive courseware development skill. Triggered when user
 
 # TeachAny: K-12 Interactive Courseware Development Skill
 
-## 🚀 Progressive Loading (v6.12)
-
-To save context, 5 large chapters were moved to `references/*.md`. Load them on demand:
-
-| Topic | Trigger | File |
-|---|---|---|
-| HTML/CSS/JS code templates | Writing courseware code | `references/technical-implementation.md` |
-| Workflow + baseline check | Starting a new lesson, publish/CI | `references/workflow-development.md` |
-| TTS audio + narration video | Generating TTS / video / SRT | `references/media-pipeline.md` |
-| Packaging + distribution | Publish, registry, git push, PR | `references/packaging-distribution.md` |
-| Maps, GeoJSON, Leaflet | Geography/history courses | `references/map-resources.md` |
-
-> **AI Rule**: When the trigger condition is met, **MUST read the corresponding file first**.
-> Don't guess "I remember it should be..."
-
-The full Chinese handbook is `skill/SKILL_CN.md` (also uses progressive loading).
-
----
-
 A skill for developing interactive courseware across all K-12 subjects. The goal is not to "dump knowledge onto a page" but to design a lesson as **a learning experience with motivation, rhythm, interaction, and an assessment loop**.
 
 This skill is applicable to:
@@ -629,7 +610,7 @@ These examples show the full path from "6 Questions to courseware structure" for
 ### 10.2 Interactive Web Standard Structure
 
 ```text
-Hero area (lesson title + subject/grade/type tags)
+Hero area (lesson title + subject/grade/type tags + Knowledge Structure Infographic)
 Navigation (anchor links)
 Learning objectives
 Pre-test
