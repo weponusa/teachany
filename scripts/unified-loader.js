@@ -1,5 +1,5 @@
 /**
- * TeachAny 统一课件加载器 v3.1
+ * TeachAny 统一课件加载器 v3.4
  *
  * 功能：
  * 1. 从 registry.json 读取所有课件（官方+社区）
@@ -7,24 +7,32 @@
  * 3. 支持筛选、搜索、点赞功能
  * 4. 本地缓存（localStorage + 过期机制）
  *
- * v3.1 修复：
- * - 卡片添加 data-course-name / data-course-desc 以支持搜索
- * - initGallery 加载完成后主动触发 applyFilters 解决异步时序问题
- * - 清除旧缓存避免首次加载空白
+ * v3.4 修复：
+ * - 启动时暴力清除所有 teachany_registry* 缓存，彻底解决浏览器缓存导致中文标题不显示的问题
+ * - 每次从服务器加载 registry.json（带时间戳防 HTTP 缓存）
  */
+
+// ── 启动时立即清除所有 teachany 注册表缓存 ──
+// 这段代码必须在最前面执行，确保不管旧版 JS 怎么缓存，新版一定能清干净
+(function _purgeAllRegistryCache() {
+  try {
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('teachany_registry')) keys.push(k);
+    }
+    keys.forEach(k => {
+      localStorage.removeItem(k);
+      console.log('[TeachAny v3.4] 清除注册表缓存:', k);
+    });
+  } catch(e) { /* ignore */ }
+})();
 
 /* ─── 常量 ───────────────────────────────────── */
 const REGISTRY_URL = './registry.json';
-const CACHE_KEY = 'teachany_registry_v3_2'; // v3.2: 强制刷新 (v5.34 Gallery 空白修复)
+const CACHE_KEY = 'teachany_registry_v3_4'; // v3.4: 暴力清缓存 + 彻底修复中文标题
 const CACHE_TTL = 30 * 60 * 1000; // 30 分钟缓存
 const LIKES_KEY = 'teachany_likes';
-// 旧版 CACHE_KEY 列表，启动时主动清除，避免用户停留在坏缓存上
-const LEGACY_CACHE_KEYS = [
-  'teachany_registry',
-  'teachany_registry_v2',
-  'teachany_registry_v3',
-  'teachany_registry_v3_1',
-];
 
 /* ─── 辅助工具 ──────────────────────────────── */
 function escapeHtml(value) {
@@ -387,31 +395,7 @@ window.TeachAnyUnifiedLoader = {
   clearCache: () => localStorage.removeItem(CACHE_KEY)
 };
 
-// 启动时清除可能的坏缓存 + 所有旧版本缓存（v5.34 修复 Gallery 空白）
-(function() {
-  // 1. 清除所有历史版本的缓存 key
-  try {
-    LEGACY_CACHE_KEYS.forEach(k => {
-      if (localStorage.getItem(k) !== null) {
-        localStorage.removeItem(k);
-        console.log(`[TeachAny] 清除了旧缓存: ${k}`);
-      }
-    });
-  } catch {}
-  // 2. 当前版本如果是空/损坏的缓存，也清掉
-  try {
-    const cached = localStorage.getItem(CACHE_KEY);
-    if (cached) {
-      const { data } = JSON.parse(cached);
-      if (!data || !data.courses || data.courses.length === 0) {
-        localStorage.removeItem(CACHE_KEY);
-        console.log('[TeachAny] 清除了空的当前缓存');
-      }
-    }
-  } catch {
-    localStorage.removeItem(CACHE_KEY);
-  }
-})();
+// 注：缓存清理已在文件顶部的 _purgeAllRegistryCache() 中完成
 
 // 自动初始化
 if (document.readyState === 'loading') {

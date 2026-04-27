@@ -14,6 +14,11 @@ v6.1 变更（2026-04-24）:
 - scan_courses() 同时扫 examples/ 和 community/（除 drafts/ 和 pending/）
 - registry.path 根据实际位置生成（examples/xxx 或 community/xxx）
 - 课件同名冲突时 examples/ 优先（视为官方升级版）
+
+v6.2 变更（2026-04-27）:
+- name 字段回退：优先 name → title_zh → title（兼容旧 manifest）
+- 新增 detect_images() 自动检测 hero_image / scene_image
+- registry entry 增加 hero_image / scene_image 字段
 """
 import json
 from pathlib import Path
@@ -29,6 +34,69 @@ COURSE_DIRS = [
 
 # community/ 下忽略的子目录（这些不是课件）
 COMMUNITY_SKIP = {'drafts', 'pending', 'README.md'}
+
+# v6.2: 图片后缀白名单
+IMG_EXTS = {'.png', '.jpg', '.jpeg', '.webp'}
+
+
+def detect_images(course_dir: Path):
+    """自动检测课件的 hero 和 scene 图片（v6.2 统一命名规范）
+
+    检测优先级：
+      1. *-hero.{png,jpg,webp}   后缀匹配（主流模式）
+      2. hero-*.{png,jpg,webp}   前缀匹配（兼容旧命名）
+      3. hero.{png,jpg,webp}     纯名称匹配
+      4. assets/ 下字母序第一张  兜底
+
+    同理检测 *-scene / scene-* / scene。
+    返回: (hero_image_rel, scene_image_rel)  相对于 course_dir 的路径字符串
+    """
+    # 搜索 assets/ 和 images/ 两个可能的目录
+    img_dir = None
+    for name in ('assets', 'images'):
+        candidate = course_dir / name
+        if candidate.exists() and candidate.is_dir():
+            img_dir = candidate
+            break
+    if img_dir is None:
+        return '', ''
+
+    all_imgs = sorted([
+        p for p in img_dir.iterdir()
+        if p.is_file() and p.suffix.lower() in IMG_EXTS
+    ])
+    if not all_imgs:
+        return '', ''
+
+    def find_typed(keyword):
+        """按优先级查找指定类型的图片"""
+        # 1. 后缀匹配：*-keyword.ext（主流模式）
+        for p in all_imgs:
+            if p.stem.lower().endswith(f'-{keyword}'):
+                return p
+        # 2. 前缀匹配：keyword-*.ext（兼容旧命名）
+        for p in all_imgs:
+            if p.stem.lower().startswith(f'{keyword}-'):
+                return p
+        # 3. 纯名称匹配：keyword.ext
+        for p in all_imgs:
+            if p.stem.lower() == keyword:
+                return p
+        return None
+
+    hero = find_typed('hero')
+    scene = find_typed('scene')
+
+    def to_rel(p):
+        if p is None:
+            return ''
+        return str(p.relative_to(course_dir))
+
+    # hero 兜底：取第一张图
+    if hero is None and all_imgs:
+        hero = all_imgs[0]
+
+    return to_rel(hero), to_rel(scene)
 
 
 def scan_courses():
@@ -320,16 +388,31 @@ def main():
         if manifest.get('category') == 'course' and status not in ('official',):
             status = 'course'
         
+        # v6.2: name 字段回退：优先 name，次选 title_zh / title（兼容旧 manifest）
+        course_name = manifest.get('name', '') or manifest.get('title_zh', '') or manifest.get('title', '')
+        course_name_en = manifest.get('name_en', '') or manifest.get('title', '')
+        # 避免 name_en 和 name 完全相同（发生在旧 manifest 只有 title 字段时）
+        if course_name_en == course_name:
+            course_name_en = ''
+        # v6.2: description_zh 智能回退：如果 description_zh 为空但 description 含中文，则复用
+        desc_zh = manifest.get('description_zh', '')
+        desc = manifest.get('description', '')
+        if not desc_zh and desc and any('\u4e00' <= ch <= '\u9fff' for ch in desc):
+            desc_zh = desc
+        # v6.2: 自动检测图片资产
+        course_path = Path(src_dir) / course_id
+        hero_image, scene_image = detect_images(course_path)
+
         entry = {
             'id': course_id,
-            'name': manifest.get('name', ''),
-            'name_en': manifest.get('name_en', ''),
+            'name': course_name,
+            'name_en': course_name_en,
             'subject': manifest.get('subject', ''),
             'grade': manifest.get('grade', 0),
             'node_id': manifest.get('node_id', ''),
             'domain': manifest.get('domain', ''),
             'description': manifest.get('description', ''),
-            'description_zh': manifest.get('description_zh', ''),
+            'description_zh': desc_zh,
             'emoji': manifest.get('emoji', '📚'),
             'tags': manifest.get('tags', []),
             'difficulty': manifest.get('difficulty', 1),
@@ -347,6 +430,9 @@ def main():
             'author': manifest.get('author', ''),
             'teachany_version': manifest.get('teachany_version', ''),
             'curriculum': manifest.get('curriculum', 'cn-national'),
+            # ⭐ v6.2: 图片资产字段（自动检测）
+            'hero_image': hero_image,
+            'scene_image': scene_image,
         }
         registry_courses.append(entry)
         if status == 'official':
