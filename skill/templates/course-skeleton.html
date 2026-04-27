@@ -5,14 +5,10 @@ TeachAny v6 课件骨架模板（Single-Page + Auto-TTS + Knowledge Map）
 ================================================================
 基础能力门槛 B-1 ~ B-7 全部内置，AI 生成时只需填充 {{PLACEHOLDER}}：
 
-  {{TITLE}}              课件标题（⚠️ 必须用标准格式：《课件名》 · 《学段》《学科》 G{grade} · TeachAny v6.9
-                          示例："一次函数的图像 · 初中数学 G8 · TeachAny v6.9"
-                          ⛔ 禁止 "课件名 · 教学课件" 等简写，否则 publish 校验会拒）
+  {{TITLE}}              课件标题
   {{SUBJECT}}            学科（history / geography / math / ...）
   {{STAGE}}              学段（elementary / middle / high）
   {{NODE_ID}}            知识树节点 id（对应 path.html?node=）
-  {{CHAPTER}}            教材章节编号（如"第11章 一次函数"，从 find_nodes.py 输出抄）
-  {{SEMESTER}}           学期（"上" 或 "下"）
   {{PRE_NODE_ID/NAME}}   前置节点 id + 中文名
   {{NEXT_NODE_ID/NAME}}  后续节点 id + 中文名
   {{HERO_QUESTION}}      核心引入问题
@@ -20,11 +16,6 @@ TeachAny v6 课件骨架模板（Single-Page + Auto-TTS + Knowledge Map）
   {{CONTENT_SECTIONS}}   ⭐ 9 段标准结构的正文 HTML
   {{MAP_SECTION}}        历史/地理课才插入（见 map-section-template.html）
   {{TTS_MANIFEST}}       tts/manifest.json 路径
-
-  v6.11 新增（AI 学伴 · 必填）：
-  {{COURSE_TITLE}}       课件简短标题（不含"《》"和"· TeachAny"后缀）
-  {{GRADE}}              年级数字（1-12，决定答复难度）
-  {{OBJECTIVE_1/2/3}}    3 条学习目标（用于 AI 学伴系统提示词）
 -->
 <html lang="zh-CN">
 <head>
@@ -36,14 +27,9 @@ TeachAny v6 课件骨架模板（Single-Page + Auto-TTS + Knowledge Map）
 <meta name="teachany:node_id" content="{{NODE_ID}}">
 <meta name="teachany:subject" content="{{SUBJECT}}">
 <meta name="teachany:stage" content="{{STAGE}}">
-<meta name="teachany:version" content="v6.10">
-<!-- v6.10 新增: 教材章节定位（find_nodes.py 输出可直接抄，或查 data/node-chapter-map.json）-->
-<meta name="teachany-chapter" content="{{CHAPTER}}">
-<meta name="teachany-semester" content="{{SEMESTER}}">
+<meta name="teachany:version" content="v6">
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<!-- ⭐ v6.11 强制：AI 学伴样式（publish_course.sh 自动复制 ai-tutor.css 到课件目录） -->
-<link rel="stylesheet" href="./ai-tutor.css">
 
 <style>
 /* ============================================================
@@ -300,12 +286,14 @@ section.course-section h2 {
 
      ⭐ B-3a：课件必须包含 ≥ 3 张 AI 生成图片（<img src="assets/xxx.png">）
      AI 在生成内容时用 image_gen 产出以下 3 类图，保存到 assets/：
-       1. assets/<abbrev>-hero.png     Hero/引入段的氛围图（abbrev = 课件ID核心词）
-       2. assets/<abbrev>-scene.png    核心概念可视化
-       3. assets/<abbrev>-ext.png      拓展/总结段插图
-     命名规范详见 docs/IMAGE-NAMING-SPEC.md
-     示例（假设课件ID为 math-linear-function，abbrev 为 linear）：
-       <img src="assets/linear-hero.png" alt="一次函数概念图" style="width:100%;border-radius:12px">
+       1. assets/hero-infographic.png      Hero 区知识结构信息图（展示本课完整知识点及层级关系）
+       2. assets/concept-visualization.png  核心概念可视化
+       3. assets/extension-illustration.png  拓展/总结段插图
+     ⚠️ Prompt 语言规则：中国课标课程（除英语课）用中文 prompt，英语课和国际课程用英文 prompt。
+     示例（中国课标）：
+       <img src="assets/hero-infographic.png" alt="一次函数知识结构信息图" style="width:100%;border-radius:12px">
+     示例（国际课程）：
+       <img src="assets/hero-infographic.png" alt="IB Chemistry Periodic Table Concept Map" style="width:100%;border-radius:12px">
      ═══════════════════════════════════════════════════ -->
 {{CONTENT_SECTIONS}}
 <!-- 示例：
@@ -379,11 +367,9 @@ section.course-section h2 {
 </section>
 
 <!-- ═══════════════════════════════════════════════════
-     B-7 · AI 学伴（左下角，由 ai-tutor.js 自动注入 FAB）
-     ═══════════════════════════════════════════════════
-     无需手写 button：DOMContentLoaded 时 ai-tutor.js 会自动在 body
-     末尾创建 .ai-tutor-fab + .ai-tutor-panel + 配置 modal。
-     -->
+     B-7 · AI 学伴（左下）
+     ═══════════════════════════════════════════════════ -->
+<button id="ai-assistant" aria-label="AI 学伴" title="AI 学伴">🤖</button>
 
 <!-- ═══════════════════════════════════════════════════
      B-7 · 全局 TTS 控制器（右下）
@@ -487,9 +473,11 @@ section.course-section h2 {
 })();
 
 // ═══════════════════════════════════════════════════
-// AI 学伴：由 ai-tutor.js 自动注入（左下角 FAB）
-// 配置见 </script> 后的 __TEACHANY_TUTOR_CONFIG__
+// AI 学伴占位按钮（接入 CodeBuddy / Claude 侧边栏）
 // ═══════════════════════════════════════════════════
+document.getElementById('ai-assistant').onclick = () => {
+  alert('AI 学伴：调用 CodeBuddy 侧边栏对话。如需启用请在课件父页面注入 TeachAny.openAssistant()');
+};
 
 // ═══════════════════════════════════════════════════
 // 严禁使用 Web Speech API（B-2 硬规则）
@@ -502,24 +490,6 @@ section.course-section h2 {
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="path/to/map-init.js"></script>
 -->
-
-<!-- ⭐ v6.11 强制 · AI 学伴配置（必须在 ai-tutor.js 加载前定义） -->
-<script>
-window.__TEACHANY_TUTOR_CONFIG__ = {
-  courseTitle: '{{COURSE_TITLE}}',         // 例："古诗里的秘密节奏《小池》与《池上》"
-  subject: '{{SUBJECT}}',                  // 例："chinese" / "math" / "physics"
-  grade: {{GRADE}},                        // 例：1（小学一年级）/ 8（初二）/ 11（高二）
-  learningObjectives: [
-    '{{OBJECTIVE_1}}',
-    '{{OBJECTIVE_2}}',
-    '{{OBJECTIVE_3}}'
-  ],
-  // 自动从可视区域抓取 section 文本作为对话上下文（默认实现已足够）
-  // 如需精准控制可重写：getContext: () => '...'
-};
-</script>
-<!-- ⭐ v6.11 强制 · AI 学伴脚本（左下角 FAB · 首次点击引导配置 API） -->
-<script src="./ai-tutor.js" defer></script>
 
 </body>
 </html>

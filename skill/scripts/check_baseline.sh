@@ -328,52 +328,6 @@ else
 fi
 echo ""
 
-# ─── B-8 · AI 学伴硬性检查（v6.11 新增 · 硬规则）──────────
-echo "[B-8] AI 学伴（左下角 FAB · 自带 ai-tutor.js）"
-
-# 1) HTML 必须引用 ai-tutor.js
-if grep -qE "src=[\"'][^\"']*ai-tutor\.js" "$HTML"; then
-  pass "HTML 引用了 ai-tutor.js"
-else
-  fail "HTML 未引用 ai-tutor.js（应在 </body> 前加 <script src=./ai-tutor.js defer>）"
-fi
-
-# 2) HTML 必须引用 ai-tutor.css
-if grep -qE "href=[\"'][^\"']*ai-tutor\.css" "$HTML"; then
-  pass "HTML 引用了 ai-tutor.css"
-else
-  fail "HTML 未引用 ai-tutor.css（应在 <head> 加 <link rel=stylesheet href=./ai-tutor.css>）"
-fi
-
-# 3) 课件目录必须自带 ai-tutor.js（自包含原则）
-if [ -f "$COURSE_DIR/ai-tutor.js" ]; then
-  pass "课件目录自带 ai-tutor.js"
-else
-  fail "课件目录缺 ai-tutor.js（请运行 publish_course.sh 自动注入或手动复制）"
-fi
-
-# 4) 课件目录必须自带 ai-tutor.css
-if [ -f "$COURSE_DIR/ai-tutor.css" ]; then
-  pass "课件目录自带 ai-tutor.css"
-else
-  fail "课件目录缺 ai-tutor.css（请运行 publish_course.sh 自动注入或手动复制）"
-fi
-
-# 5) HTML 中必须配置 __TEACHANY_TUTOR_CONFIG__
-if grep -qE "__TEACHANY_TUTOR_CONFIG__" "$HTML"; then
-  pass "已配置 __TEACHANY_TUTOR_CONFIG__"
-else
-  warn "未发现 __TEACHANY_TUTOR_CONFIG__（AI 学伴将用默认配置）"
-fi
-
-# 6) 严禁硬编码 API Key
-if grep -qE "apiKey:[[:space:]]*[\"']sk-[a-zA-Z0-9]{20,}" "$HTML"; then
-  fail "检测到 HTML 中硬编码 API Key，立即移除！B-8 安全硬规则"
-else
-  pass "无硬编码 API Key（符合安全规范）"
-fi
-echo ""
-
 # ─── 汇总 ─────────────────────────────────────
 echo "================================================"
 echo "检查汇总"

@@ -116,9 +116,10 @@ def subject_alias_map() -> Dict[str, str]:
         "english": ["english", "英语"],
         "physics": ["physics", "物理"],
         "chemistry": ["chemistry", "化学"],
-        "biology": ["biology", "生物"],
-        "geography": ["geography", "地理"],
-        "history": ["history", "历史"],
+        "biology": ["biology", "bio", "生物", "生物学"],
+        "science": ["science", "sci", "科学", "小学科学"],
+        "geography": ["geography", "geo", "地理"],
+        "history": ["history", "hist", "历史"],
         "info-tech": ["info-tech", "信息技术", "信息", "编程", "ai"],
     }
     result: Dict[str, str] = {}
@@ -578,11 +579,15 @@ def load_all_trees(trees_dir: Path = TREES_DIR) -> List[Dict[str, Any]]:
     trees = []
     if not trees_dir.exists():
         return trees
-    for tree_file in sorted(trees_dir.glob("*.json")):
+    for tree_file in sorted(trees_dir.rglob("*.json")):
+        if tree_file.name.startswith("_"):
+            continue
         try:
             tree = load_json(tree_file)
+            if not isinstance(tree, dict) or "domains" not in tree:
+                continue
             tree["_file_path"] = tree_file
-            tree["_file_name"] = tree_file.name
+            tree["_file_name"] = str(tree_file.relative_to(trees_dir))
             trees.append(tree)
         except (json.JSONDecodeError, OSError):
             continue

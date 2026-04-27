@@ -35,34 +35,29 @@ echo "════════════════════════�
 echo "课件目录: $COURSE_DIR"
 echo
 
-# 1. 资源源：v6.12 起统一从 assets/maps/ 读（时空索引化）
-#    兼容：旧版 skill/assets/historical-* 若还在也可用
-REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-MAPS_ROOT="$REPO_ROOT/assets/maps"
+# 1. 资源源优先级
 SKILL_ASSETS="$(cd "$(dirname "$0")/.." && pwd)/assets"
+# 定位 teachany-opensource 仓库（用于 _legacy 资源）
+REPO=""
+for c in "$HOME/CodeBuddy/一次函数/teachany-opensource" "$HOME/teachany-opensource" "$HOME/CodeBuddy/teachany-opensource"; do
+  [ -d "$c/data/_legacy/resources/geography" ] && { REPO="$c"; break; }
+done
+if [ -z "$REPO" ] && [ -d "$COURSE_DIR/../.." ]; then
+  candidate=$(cd "$COURSE_DIR/../.." && pwd)
+  [ -d "$candidate/data/_legacy/resources/geography" ] && REPO="$candidate"
+fi
 
 SOURCES=(
-  "$MAPS_ROOT/chrono-cn"
-  "$MAPS_ROOT/chrono-world"
-  "$MAPS_ROOT/physical/hillshade"
-  "$MAPS_ROOT/physical/coastline"
-  "$MAPS_ROOT/physical/rivers"
-  "$MAPS_ROOT/physical/lakes"
-  "$MAPS_ROOT/political/world"
-  "$MAPS_ROOT/political/china-modern"
-  "$MAPS_ROOT/political/admin-boundaries"
-  # 向后兼容旧路径
   "$SKILL_ASSETS/historical-china"
   "$SKILL_ASSETS/historical-world"
   "$SKILL_ASSETS/hillshade"
-  "$SKILL_ASSETS/timelines"
 )
-
-# 自检：至少要有 assets/maps 或 skill/assets
-if [ ! -d "$MAPS_ROOT" ] && [ ! -d "$SKILL_ASSETS" ]; then
-  echo "❌ 找不到地图资源目录"
-  echo "   请确认仓库包含 assets/maps/ 或 skill/assets/"
-  exit 2
+if [ -n "$REPO" ]; then
+  SOURCES+=(
+    "$REPO/data/_legacy/resources/geography/historical-china"
+    "$REPO/data/_legacy/resources/geography/historical-world"
+    "$REPO/data/_legacy/resources/geography/hillshade"
+  )
 fi
 
 echo "[1/3] 资源源目录:"
@@ -116,21 +111,10 @@ for f in $GEOJSONS; do
   fi
   found=""
   for src in "${SOURCES[@]}"; do
-    # 精确匹配
     if [ -f "$src/$f" ]; then
       cp "$src/$f" "$DST/$f"
       size=$(du -h "$DST/$f" | awk '{print $1}')
       echo "  ✅ $f ($size) ← $(basename "$src")"
-      found=1
-      copied=$((copied + 1))
-      break
-    fi
-    # 模糊匹配：chrono-cn/chrono-world 下带时序前缀（001-xxx.geojson）
-    match=$(find "$src" -maxdepth 1 -name "[0-9][0-9][0-9]-$f" 2>/dev/null | head -1)
-    if [ -n "$match" ]; then
-      cp "$match" "$DST/$f"
-      size=$(du -h "$DST/$f" | awk '{print $1}')
-      echo "  ✅ $f ($size) ← $(basename "$match") [时序匹配]"
       found=1
       copied=$((copied + 1))
       break
