@@ -2407,6 +2407,59 @@ def resolve_image(node_id, slot, subject, tags=[]):
 <p class="video-caption">🎬 电解水实验过程演示</p>
 ```
 
+#### 10.4.3 Pillow 本地生图字体规范（v6.1 新增）
+
+> ⚠️ **本节仅适用于 AI 使用 Python Pillow 库在本地生成教学配图的场景**（如 Hero 图、反应对比图、概念可视化图等）。`image_gen` 工具生图不受此规则约束。
+
+**问题背景**：部分中文字体（如 Hiragino Sans GB、STHeiti）不包含 Unicode 上下标字符（₂₃⁺⁻↑↓等），Pillow 渲染时会产生 `.notdef` 方框（⊠），导致化学公式、数学公式在图片中显示为乱码。
+
+**字体选择铁律**：
+
+| 优先级 | 字体 | 路径（macOS） | Unicode 上下标 | 中文支持 | 适用场景 |
+|:---:|:---|:---|:---:|:---:|:---|
+| 🥇 | **Arial Unicode MS** | `/Library/Fonts/Arial Unicode.ttf` | ✅ 完美 | ✅ | **理科课件首选**（化学/物理/数学公式） |
+| 🥈 | **Noto Sans CJK SC** | 系统安装或 `fonts-noto-cjk` | ✅ | ✅ | Linux 环境首选 |
+| 🥉 | **PingFang SC** | `/System/Library/Fonts/PingFang.ttc` | ⚠️ 部分 | ✅ | 文科课件（无公式符号时可用） |
+| ❌ | ~~Hiragino Sans GB~~ | — | ❌ 方框 | ✅ | **禁用于含公式的图片** |
+| ❌ | ~~STHeiti~~ | — | ❌ 方框 | ✅ | **禁用于含公式的图片** |
+
+**禁用字体清单**（含公式/下标符号时 ⛔ 禁用）：
+- `Hiragino Sans GB`（U+2082 ₂、U+2083 ₃、U+207A ⁺、U+207B ⁻ 等全部渲染为 ⊠）
+- `STHeiti Light` / `STHeiti Medium`（同上）
+- `Heiti SC`（同上）
+
+**字体降级链（跨平台）**：
+
+```python
+# TeachAny Pillow 字体降级链 —— 理科课件（含化学/数学公式符号）
+FONT_FALLBACK_CHAIN_STEM = [
+    "/Library/Fonts/Arial Unicode.ttf",           # macOS 首选
+    "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",  # macOS 备选
+    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",  # Ubuntu/Debian
+    "/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc",       # Fedora/Arch
+    "/System/Library/Fonts/PingFang.ttc",          # macOS 保底（文科）
+]
+
+def get_pillow_font(size=36):
+    """按降级链查找第一个可用字体"""
+    from PIL import ImageFont
+    for path in FONT_FALLBACK_CHAIN_STEM:
+        try:
+            return ImageFont.truetype(path, size)
+        except (OSError, IOError):
+            continue
+    raise RuntimeError("未找到支持 Unicode 上下标的中文字体，请安装 Arial Unicode 或 Noto Sans CJK")
+```
+
+**四场景字体对照表**：
+
+| 场景 | 推荐字体 | 备注 |
+|:---|:---|:---|
+| **HTML 课件** | CSS `font-family` 降级链：`'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif` | 浏览器自动处理 Unicode 字符，无需额外关注 |
+| **Pillow 本地生图** | Arial Unicode MS → Noto Sans CJK → PingFang SC | ⚠️ **本节重点**：含公式时必须用 Arial Unicode |
+| **Remotion 渲染** | `fontFamily: "'Noto Sans SC', 'Noto Sans CJK SC', 'PingFang SC', sans-serif"` | Linux CI 需预装 `fonts-noto-cjk` |
+| **PPTX 导出** | `python-pptx` 默认用系统字体，中文指定"宋体"或"微软雅黑" | 导出脚本不生图，只消费 assets/ |
+
 ### 10.5 WorkBuddy 多 Agent 协作流水线
 
 > ⚠️ **本节定义 AI 在生成课件时如何利用 `task` 工具调用多个 subagent 并行协作，大幅提升课件质量和生成效率。**
@@ -3425,6 +3478,7 @@ L3 已默认执行，无需建议。以下规则仅适用于 L2 教学动画。�
 | 48 | **社区自动提交基线 · 零配置 + 质检驱动自动合并**（v5.34.9 重写，迭代自 v5.34.8 双轨制）。**完整链路**：AI 生成课件 → `community/drafts/<course-id>/` 落地 → AI 询问用户意向 → 用户选"提交社区"→ AI 跑 `python3 scripts/submit-to-community.py <course-id>` → POST 到 TeachAny 官方 Cloudflare Worker（`DEFAULT_WORKER_URL`）→ Worker 用 Bot Token 调 GitHub `repository_dispatch` → `community-submit.yml` 自动创建分支 + `community/pending/*.teachany` + `*.json` + 开 PR → `validate.yml` 自动跑 `validate-courseware.py` → 0 错误打 `passed-validation` 标签 + PR 评论展示检测结果 → `auto-merge.yml` 监听 `passed-validation + community-courseware` 双标签 → squash merge 到 main → `community-publish.yml` 注册到 registry + Gallery → GitHub Pages 自动部署 → 5-10 分钟后课件在 Gallery 可见。**用户零门槛**：不需要 GitHub 账号、不需要 token、不需要任何配置文件，只需要"做完课件 + 说一声提交"。**质检严守**：validate-courseware.py 覆盖的硬规则就是发布闸门，缺音频/缺图/缺 AI 学伴/node_id 错挂都会被自动 `needs-revision` 打回，PR 评论直接列出具体错误让用户自己修，不需要管理员人工审核。**心标排序**：社区课件（status=community）允许多份挂同一 node_id，按 localStorage 心标数降序展示（unified-loader.js + courseware-hub.js 已实现）。**审核豁免**：自 v5.34.9 起"人工审核"**不是**默认路径——质检通过即合并，由机器校验 + 社区心标双层过滤保证质量。**"质检通过"= "发布成功"**：v5.34.9 起对"审核"的定义从"人工看"升级为"validate-courseware.py 机器校验"，质检通过即视为审核通过。**AI 绝对禁止**：(a) 未询问用户就直接 push（硬规则一票否决）；(b) 默认把课件写入 `examples/`（任何新课件必须落 `community/drafts/`）；(c) 跳过 submit-to-community.py 直接调 `git push`（绕过质检）；(d) 要求用户自己配 GitHub token（Worker 是唯一官方入口）；(e) 新课件 registry.json 自己打 `status=official`——该状态位是由硬规则 #49 定义的"管理员独立升级通道"唯一写入的。 | AI 未询问用户就 push / 默认写入 examples/ / 跳过 submit-to-community.py / 让用户自己配 token / 新课件 registry 标 official → Gate 直接不通过（发布失败不是警告是 exit 1） |
 | 49 | **官方课件写入基线 · `examples/` 禁止任何形式的直推，只能通过"用户 skill 上传"或"管理员独立升级命令"落入**（v5.34.10 新增）。**强制规则**：(a) 创建、修改、删除 `examples/<id>/` 下的任何文件都被视为"官方课件写入"；(b) 上述写入**只允许**由以下两条合法路径产生：① `github-actions[bot]` 自动产生的 merge / publish commit（来自 community PR auto-merge 链路）；② commit message 末尾含 Git trailer `TeachAny-Promote: <course-id>` 的 commit（由未来独立的管理员升级命令写入）；(c) 以上两条之外的 commit 统称"直推"，一律拒绝。**双层护栏**：① 本地 `scripts/pre-push.sh` 在 `git push` 前检查，对本次 push 中涉及 `examples/` 的每个 commit 做白名单校验，命中直推立即 exit 1 拒绝 push；② 服务端 `.github/workflows/block-direct-push.yml` 在 push 到 main 后再次校验，发现直推则打红叉 + 自动开 `direct-push-violation` 标签 issue 提醒回滚。**紧急绕过条件**：仅在非课件改动（README / CI / 脚本本身）的极端 hotfix 场景下，owner 可用 `TEACHANY_ADMIN_BYPASS=1 git push` 绕过本地 hook，但服务端 workflow 仍会独立校验——若该 push 仍动到 `examples/` 则照样打红叉。**AI 绝对禁止**：(a) 教用户 `TEACHANY_ADMIN_BYPASS=1`；(b) 手动在 commit message 里伪造 `TeachAny-Promote:` trailer（只有管理员升级命令能合法生成）；(c) 在未安装 hook 的环境下直接 `git push` 含 `examples/` 变更；(d) 告诉用户"关掉 hook"或改 `.git/hooks/pre-push` 脚本；(e) 向 CI workflow 添加 `paths-ignore: ['examples/**']`。**hook 安装校验**：AI 在执行任何涉及 git push 的自动化流程前，若发现 `.git/hooks/pre-push` 不是指向 `scripts/pre-push.sh` 的软链，必须先执行 `ln -sf ../../scripts/pre-push.sh .git/hooks/pre-push && chmod +x scripts/pre-push.sh` 安装；安装失败时必须停止 push 并报告用户。**协议稳定性承诺**：`TeachAny-Promote:` trailer 是本仓库公开的管理员升级协议，任何实现管理员升级命令的工具（CLI / slash command / admin skill）都应在 commit message 里追加该 trailer 才算合法。 | 直推 examples/（无 trailer、非 bot commit）/ 伪造 trailer / 教用户绕过 hook / 卸载或篡改 pre-push hook / 给 block-direct-push workflow 加 paths-ignore → Gate 直接不通过（本地 hook exit 1 + 服务端 workflow 打红叉 + 自动开 violation issue） |
 | 50 | **工具链自检基线 · Phase 0 必须先跑 `preflight-check.py`，工具不齐禁止进入 Phase 1**（v5.34.11 新增，专治国产模型静默跳过 L2/L3/image_gen）。**执行要求**：(a) Phase 0 开头（读完 SKILL_CN.md 之后，进入 Phase 0.5 知识层查阅之前）AI **必须**执行 `python3 scripts/preflight-check.py --json`，读取 `.teachany-preflight.json` 中的 `capabilities` 字段，据此宣告本次生成的实际能力范围；(b) `exit_code in {20, 30}` 时**必须**立刻停止并报告用户，绝不擅自进入 Phase 1；(c) `exit_code == 10` 时已自动安装部分依赖，必须在生成报告中列出"本次自愈安装了哪些工具"；(d) 无法自动安装的工具，AI 必须给出**具体一行命令**（从 `preflight-check.py` 输出的 `hint` 字段中取）让用户 copy-paste，而不是一句"请你自己装一下 Node"。**image_gen 探针**：Phase 0.5 结束前 AI **必须**调用 `image_gen` 工具生成一张最小探针图（prompt 可简单为 `"test pixel art 8x8"`），成功后写入 `.teachany-image-gen-probe.json`；连续 3 次失败方可按硬规则 #34 降级为占位符，并在 Generation Gate 中显式声明"image_gen 不可用降级"。**bootstrap 自愈**：当 `preflight-check.py` 报告多个缺失时，AI 可以先跑一次 `bash scripts/bootstrap-tools.sh` 做跨平台一键装齐，再重跑 preflight。**严禁静默跳过**：(a) ⛔ 严禁看到 "edge-tts 不可用" 就跳 L3 而不报告用户；(b) ⛔ 严禁看到 "Node 不可用" 就用 Canvas/SVG 冒充 Remotion（Canvas 只能是 L1 补充，不能顶替 L2）；(c) ⛔ 严禁看到 "image_gen 探针失败" 就把插图全换成 emoji/占位色块而不进 Gate 声明；(d) ⛔ 严禁把 `preflight-check.py` 报告的 error 降级为 warn 然后继续；(e) ⛔ 严禁在 `--json` 输出之外自己硬写 `capabilities` 值。**validator 硬校验**：`validate-courseware.py` 已同步增强——Canvas 必选（#33）、Remotion mp4（#32 warn）、知识图谱 section（#24 warn）、地图 XYZ 瓦片（#35 warn + L.imageOverlay 全球铺图 error）、video 标签规范（#25 warn），这些校验与 preflight 的 capabilities 字段形成闭环：preflight 宣告"L2 可用"却交付无 mp4 课件 → validator warn；preflight 宣告"地图 CDN 可用"却用了 L.imageOverlay 全球铺图 → validator error。 | AI 未跑 preflight 就 Phase 1 / AI 把 exit 20/30 报告当 warn 忽略 / AI 用 Canvas 冒充 Remotion mp4 / AI 见 image_gen 不可用就静默换 emoji / 把 preflight 的 error 硬降为 warn 继续 → Gate 直接不通过（含 validator error 即阻断发布） |
+| 51 | **Pillow 生图字体基线 · 含化学/数学公式符号的本地生图必须使用支持 Unicode 上下标的字体**（v6.1 新增，见 Section 10.4.3）。**强制规则**：(a) AI 使用 Pillow 生成含 Unicode 上下标字符（₂₃⁺⁻↑↓等）的教学配图时，**必须使用 Arial Unicode MS 或 Noto Sans CJK** 字体，禁止使用 Hiragino Sans GB / STHeiti / Heiti SC（这些字体对上下标字符渲染为 .notdef 方框 ⊠）；(b) 生图脚本必须使用 Section 10.4.3 定义的字体降级链 `FONT_FALLBACK_CHAIN_STEM`，按优先级查找可用字体，降级链全部失败时必须报错终止（不可静默使用不支持的字体）；(c) `check_baseline.sh` 的 B-3a+ 检查会对 PNG 图片做 `.notdef` 方框抽检——若检测到大量方框像素，判定为字体不兼容，WARN。**典型故障**：使用 `Hiragino Sans GB` 生成含 `Al₂O₃`、`H₂O`、`Fe²⁺` 等化学公式的图片，所有下标/上标显示为方框，用户反馈"图片有乱码"。 | Pillow 生图含方框乱码 / 使用禁用字体清单中的字体生成含公式图片 / 字体降级链全部失败仍静默继续 → Gate 直接不通过 |
 
 ---
 
@@ -4930,8 +4984,8 @@ curl -sI -m 5 "https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded
 
 ---
 
-**技能版本**：v6.0（持续演进中，最新改动见 changelog v5.34）  
-**更新日期**：2026-04-19  
+**技能版本**：v6.1（持续演进中，最新改动见 changelog v6.1）  
+**更新日期**：2026-04-27  
 **变更摘要**：
 - v1.0：数理课件版
 - v2.0：拆成通用底座+学科适配层
@@ -4944,6 +4998,11 @@ curl -sI -m 5 "https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded
   * **本地打包优先**：生成 .teachany 文件保存到本地，用户拖入 Gallery 即可使用
   * **去中心化分享**：支持 GitHub PR、邮件提交、网盘分享等多种社区贡献方式
   * **零权限要求**：普通用户无需 GITHUB_TOKEN 即可制作和使用课件
+- **v6.1**：**Pillow 本地生图字体规范 + 基线检查增强**
+  * **新增 Section 10.4.3**：Pillow 本地生图字体规范——定义字体选择铁律、禁用字体清单（Hiragino Sans GB / STHeiti 对 Unicode 上下标渲染为方框 ⊠）、跨平台字体降级链、HTML/Pillow/Remotion/PPTX 四场景字体对照表
+  * **新增硬规则 #51**：Pillow 生图字体基线——含化学/数学公式符号的本地生图必须使用 Arial Unicode MS 或 Noto Sans CJK，字体降级链全部失败必须报错终止
+  * **check_baseline.sh 新增 B-3a+**：PNG 图片文字完整性抽检——用 Pillow 检测 assets/ 下图片是否存在 .notdef 方框特征，防止字体不兼容导致化学公式显示为乱码
+  * **背景**：铝课件（chem-h-aluminum-compounds）使用 Hiragino Sans GB 字体生成配图，所有化学下标（₂₃⁺⁻）显示为方框 ⊠，用户反馈"图片有乱码"。改用 Arial Unicode 后问题解决，遂将经验固化为 Skill 规范
 - v4.0：新增视频与音频制作流水线（Remotion 自动安装、Edge TTS 集成、双语字幕系统、语言配置）、Token 与成本估算
 - v5.3：新增例题配图硬性规范（Section 13）——涉及空间/几何/图形推理的例题和练习必须配图；详见英文版 SKILL.md Section 18.8 完整实现指南。
 - v5.4：新增课件打包与分发（Section 17）——定义 .teachany 课件包格式、打包脚本、Gallery/知识地图导入功能。

@@ -133,6 +133,59 @@ if [ "$img_files" -lt 3 ] && grep -qE "ai-media-zone|data-suggested-prompt" "$HT
   warn "  发现 AI 多模态互动区占位符，但占位符不算真实图片（B-3a FAIL）"
 fi
 
+# B-3a+ · PNG 图片文字完整性抽检（检测 .notdef 方框，v6.1 新增）
+# 当图片中大量像素集中在极少颜色时，可能是字体不支持导致方框渲染
+if command -v python3 &>/dev/null && [ "$img_files" -ge 1 ]; then
+  notdef_warn=$(python3 -c "
+import sys, os
+try:
+    from PIL import Image
+except ImportError:
+    sys.exit(0)  # Pillow 未安装则跳过
+course_dir = '$COURSE_DIR'
+assets_dir = os.path.join(course_dir, 'assets')
+if not os.path.isdir(assets_dir):
+    sys.exit(0)
+issues = []
+for f in os.listdir(assets_dir):
+    if not f.lower().endswith(('.png','.jpg','.jpeg','.webp')):
+        continue
+    fpath = os.path.join(assets_dir, f)
+    try:
+        img = Image.open(fpath).convert('RGBA')
+        # 抽样检测：取中间 1/4 区域的像素
+        w, h = img.size
+        crop = img.crop((w//4, h//4, 3*w//4, 3*h//4))
+        pixels = list(crop.getdata())
+        total = len(pixels)
+        if total == 0:
+            continue
+        # 检测是否有大量 .notdef 方框特征：
+        # 方框通常是细线条+大面积背景，颜色种类极少（<20）
+        unique_colors = len(set(pixels))
+        # 检测文本区域是否有方框字符的特征模式
+        # 方框在 Pillow 中通常渲染为矩形轮廓，检查是否有大量完全相同的非背景像素
+        from collections import Counter
+        color_counts = Counter(pixels)
+        top2 = color_counts.most_common(2)
+        if len(top2) >= 2:
+            bg_ratio = top2[0][1] / total
+            # 如果 95% 以上都是同一颜色，且文件名暗示应有文字内容
+            # 这表明图片可能只有背景没有有效文字渲染
+            text_hints = ['hero','reaction','equation','formula','concept','amphoteric','thermite']
+            has_text_hint = any(h in f.lower() for h in text_hints)
+            if bg_ratio > 0.98 and has_text_hint and unique_colors < 15:
+                issues.append(f)
+    except Exception:
+        continue
+if issues:
+    print(','.join(issues))
+" 2>/dev/null)
+  if [ -n "$notdef_warn" ]; then
+    warn "  B-3a+ 图片文字完整性疑似问题：$notdef_warn（可能使用了不支持 Unicode 上下标的字体，详见硬规则 #51）"
+  fi
+fi
+
 # B-3 · TTS
 tts_mp3_count=0
 if [ -d "$TTS_DIR" ]; then
