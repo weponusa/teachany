@@ -118,7 +118,7 @@ def check_baseline_quality(course_dir, html_text):
 
     # 2. 图片数（HTML 引用 + 实际文件）
     img_refs = len(re.findall(r"<img[^>]+src=['\"][^'\"]+['\"]", html_text))
-    img_files = sum(1 for ext in ('png', 'jpg', 'jpeg', 'webp')
+    img_files = sum(1 for ext in ('png', 'jpg', 'jpeg', 'webp', 'svg')
                     for _ in course_dir.rglob(f'*.{ext}'))
     if img_refs < 3:
         errors.append(('error',
@@ -301,6 +301,16 @@ def validate_one(course_dir):
                 issues.append(('error',
                     f'{course_dir.name}: HTML 疑似硬编码 OpenAI API Key（{key_leak.group(0)[:20]}…）— 严禁任何形式把 Key 写入代码（v5.34 强制 · 硬规则 #45）'))
 
+    # 6b. 幽灵引用检测（v6.1.1 新增）——HTML 引用了 ai-tutor 文件但文件不存在
+    #     根因：2026-04 批量上传的 10 个生物课件 HTML 引用了 ai-tutor.js/css 但未复制实际文件
+    if html.exists() and full_html:
+        if 'ai-tutor.css' in full_html and not (course_dir / 'ai-tutor.css').exists():
+            issues.append(('error',
+                f'{course_dir.name}: HTML 引用了 ai-tutor.css 但文件不存在（幽灵引用 · 需从 scripts/ai-tutor.css 复制）'))
+        if 'ai-tutor.js' in full_html and not (course_dir / 'ai-tutor.js').exists():
+            issues.append(('error',
+                f'{course_dir.name}: HTML 引用了 ai-tutor.js 但文件不存在（幽灵引用 · 需从 scripts/ai-tutor.js 复制）'))
+
     # 7. L3 TTS 语音基线（v5.34.6 新增，硬规则 #16/#31）
     #    每个课件必须有 tts/*.mp3 语音文件 + 课件 HTML 必须有音频播放器 UI 元素
     tts_dir = course_dir / 'tts'
@@ -318,12 +328,23 @@ def validate_one(course_dir):
                 issues.append(('error',
                     f'{course_dir.name}: tts/ 已有 mp3 但 HTML 缺音频播放器 UI（需 audioBadge/audioPanel/audioPlaylist 任一，v5.34.6 强制 · 硬规则 #26）'))
 
+    # 7b. TTS 幽灵引用检测（v6.1.1 新增）——HTML audioPlaylist 引用的 mp3 但文件不存在
+    if html.exists() and full_html:
+        tts_refs = re.findall(r'''(?:src|file|url)\s*[:=]\s*['"]\.?/?tts/([^'"]+\.mp3)['"]''', full_html)
+        if not tts_refs:
+            # 也尝试 audioPlaylist 数组中的路径
+            tts_refs = re.findall(r'''['"]\.?/?tts/([^'"]+\.mp3)['"]''', full_html)
+        for mp3_ref in set(tts_refs):
+            if not (course_dir / 'tts' / mp3_ref).exists():
+                issues.append(('error',
+                    f'{course_dir.name}: HTML 引用了 tts/{mp3_ref} 但文件不存在（TTS 幽灵引用 · 需用 edge-tts 生成）'))
+
     # 8. AI 生图基线（v5.34.6 新增，硬规则 #34）
     #    文/理/工/社科课件必须有 ≥2 张 assets/*.png/jpg 插图，并在 HTML <img> 引用
     assets_dir = course_dir / 'assets'
     img_files = []
     if assets_dir.exists():
-        img_files = [f for f in assets_dir.iterdir() if f.suffix.lower() in ('.png', '.jpg', '.jpeg', '.webp')]
+        img_files = [f for f in assets_dir.iterdir() if f.suffix.lower() in ('.png', '.jpg', '.jpeg', '.webp', '.svg')]
     if html.exists() and full_html:
         img_tags = re.findall(r'<img[^>]+src=[\'"]\.?/?assets/[^\'"]+[\'"]', full_html)
         # 仅纯计算题课可豁免（subject=math 且 node_id 含 "calculation"/"operation"）
@@ -335,6 +356,14 @@ def validate_one(course_dir):
             if len(img_tags) < 2:
                 issues.append(('error',
                     f'{course_dir.name}: HTML 中 <img src="./assets/..."> 引用仅 {len(img_tags)} 处 < 2（硬规则 #34 强制 · 生成的图必须嵌入 HTML 对应 section）'))
+
+    # 8b. 图片幽灵引用检测（v6.1.1 新增）——HTML <img> 引用的 assets 图但文件不存在
+    if html.exists() and full_html:
+        img_src_refs = re.findall(r'<img[^>]+src=[\'"]\.?/?assets/([^\'"]+)[\'"]', full_html)
+        for img_ref in set(img_src_refs):
+            if not (course_dir / 'assets' / img_ref).exists():
+                issues.append(('error',
+                    f'{course_dir.name}: HTML 引用了 assets/{img_ref} 但文件不存在（图片幽灵引用 · 需生成对应图片）'))
 
     # 9. PPTX 基线（v5.34.6 新增，硬规则 #47）
     #    若课件存在 *.pptx，则 PPTX 必须包含图（否则是简陋 PPTX，直接 Gate 不通过）
