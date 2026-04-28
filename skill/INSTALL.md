@@ -45,10 +45,14 @@ git clone https://github.com/weponusa/teachany-skill.git <your-skill-dir>/teacha
 # 在任意目录跑这三条命令，确认 skill 可用
 ls ~/.codebuddy/skills/teachany/scripts/publish_course.sh  # 或 ~/.agents/...
 head -5 ~/.codebuddy/skills/teachany/scripts/publish_course.sh | grep "v6"
-ls ~/.codebuddy/skills/teachany/assets/historical-china/   # 43MB 资源已到位
+cat ~/.codebuddy/skills/teachany/assets/image-registry.json | head -3  # CDN 索引已到位
 ```
 
 若 3 条全部有输出，skill 就绪。
+
+> **注**：v5.37 起，图片和地图资源（~43MB）不再捆绑在 skill 中，
+> 而是通过 jsDelivr CDN 按需下载（来源：`weponusa/teachany-images` 仓库）。
+> Skill 本体仅 ~1.4MB，首次制作历史/地理课件时会自动下载所需地图资源。
 
 ## 四、如何使用
 
@@ -103,8 +107,8 @@ A: 确认你的 AI Agent 已识别 skills 目录。可手动 `cat ~/.codebuddy/s
 **Q: 想用自己的私有课件仓怎么办？**
 A: 编辑 `scripts/publish_course.sh` 开头的 `REPO_URL`，改为你的仓库地址。
 
-**Q: 43MB 资源太大能不能不装？**
-A: 如果你不做历史、地理类课件，可以 `rm -rf assets/historical-*` 瘦身到 1MB，不影响其他学科。
+**Q: skill 下载体积多大？**
+A: v5.37 起 skill 本体仅 ~1.4MB（文档 + 脚本 + CDN 索引）。图片和地图资源通过 jsDelivr CDN 按需下载，无需提前安装。如需离线使用历史/地理课件，可运行 `bash ~/.codebuddy/skills/teachany/scripts/install_map_resources.sh` 预下载全部地图资源（~43MB）。
 
 ---
 
