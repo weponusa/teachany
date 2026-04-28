@@ -1,18 +1,16 @@
 #!/bin/bash
-# bundle_map_assets.sh · v6.4
+# bundle_map_assets.sh · v7.0 (CDN-first)
 # 作用：把课件 index.html 里引用的地图 GeoJSON + hillshade 拷到 ./assets/maps/
 #       让课件完全自包含，不依赖仓库 data/ 或线上 fallback URL。
 # 原则：所有依赖要跟成果始终一起。
 #
+# 资源来源优先级（v5.37 重构）：
+#   1. skill 本地缓存 / 仓库 data/_legacy/ ← 秒级 cp
+#   2. jsDelivr CDN ← cdn.jsdelivr.net/gh/weponusa/teachany-images@main/
+#   3. GitHub raw ← raw.githubusercontent.com fallback
+#
 # 用法：
 #   bash bundle_map_assets.sh <课件目录>
-#
-# 流程：
-#   1. 扫描 index.html 提取所有 .geojson 文件名（去重）
-#   2. 从 skill assets/historical-{china,world}/ 和仓库 data/_legacy/.../geography/
-#      中依次查找这些 geojson
-#   3. 拷贝到 <课件目录>/assets/maps/
-#   4. 如果课件用了 hillshade，也拷贝（优先 global-hillshade-4k.jpg → hillshade.jpg）
 
 set -e
 
@@ -30,12 +28,16 @@ if [ ! -f "$HTML" ]; then
 fi
 
 echo "═════════════════════════════════════"
-echo "  Bundle Map Assets · v6.4"
+echo "  Bundle Map Assets · v7.0 (CDN-first)"
 echo "═════════════════════════════════════"
 echo "课件目录: $COURSE_DIR"
 echo
 
-# 1. 资源源优先级
+# CDN 基础 URL（v5.37: 地图资源统一存储在 teachany-images 仓库）
+CDN_BASE="https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main"
+CDN_FALLBACK="https://raw.githubusercontent.com/weponusa/teachany-images/main"
+
+# 1. 资源源优先级（本地目录列表）
 SKILL_ASSETS="$(cd "$(dirname "$0")/.." && pwd)/assets"
 # 定位 teachany-opensource 仓库（用于 _legacy 资源）
 REPO=""
@@ -60,6 +62,21 @@ if [ -n "$REPO" ]; then
   )
 fi
 
+# 工具函数：从 CDN 下载（带 fallback）
+download_from_cdn() {
+  local rel_path="$1"
+  local dst="$2"
+  # 尝试 jsDelivr CDN
+  if curl -fsSL --max-time 30 -o "$dst" "$CDN_BASE/$rel_path" 2>/dev/null; then
+    return 0
+  fi
+  # 尝试 GitHub raw fallback
+  if curl -fsSL --max-time 30 -o "$dst" "$CDN_FALLBACK/$rel_path" 2>/dev/null; then
+    return 0
+  fi
+  return 1
+}
+
 echo "[1/3] 资源源目录:"
 for s in "${SOURCES[@]}"; do
   if [ -d "$s" ]; then
@@ -67,6 +84,7 @@ for s in "${SOURCES[@]}"; do
     echo "  ✓ $s ($count 文件)"
   fi
 done
+echo "  ☁️  CDN: $CDN_BASE"
 echo
 
 # 2. 扫描 HTML 提取所有 .geojson 文件名（去掉路径）
