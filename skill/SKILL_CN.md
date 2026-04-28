@@ -1800,7 +1800,7 @@ Hero 区（课题名称 + 学科/年级/课型标签）
 **数据来源**：
 1. 从 `_graph.json` 的 `prerequisites` 和 `leads_to` 字段提取前序/后续节点
 2. 从当前课件的教学模块（section）拆解出核心子知识点
-3. 查询 `data/trees/*.json` 中的 `status` 字段判断 `hasCourseware`：仅 `status: "active"` 且 `courses` 非空的节点为 `true`
+3. 查询 `data/trees/**/*.json`（递归扫描所有子目录）中的 `status` 字段判断 `hasCourseware`：仅 `status: "active"` 且 `courses` 非空的节点为 `true`
 
 **数据注入格式**：
 
@@ -4249,12 +4249,22 @@ Step 3️⃣ 课件落地 + 社区提交（v5.34.8 双轨制）
   1. 把课件从 `community/drafts/<course-id>/` 移动到 `examples/<course-id>/`
   2. 手工编辑 `registry.json`，把该课件的 `status` 从 `community` 改为 `official`
   3. 重建索引：`python3 scripts/rebuild-index.py`（脚本自身也会检查 `.teachany-admin`）
-  4. 提交并双推：
+  4. 注入知识图谱跨课件链接：
+     ```bash
+     python3 scripts/inject-graph-links.py
+     ```
+     > ⚠️ 此步骤**必须在 `rebuild-index.py` 之后执行**（依赖最新的 `registry.json`）。脚本会：
+     > - 递归扫描 `data/trees/**/*.json` 获取所有知识节点中文名
+     > - 读取 `registry.json` 获取 `node_id → 课件路径` 映射
+     > - 为 DIV 布局课件注入 `COURSEWARE_MAP` + click 事件处理
+     > - 为 SVG 布局课件更新 `knowledgeGraphData` 中的 `hasCourseware` / `url` 字段
+     > - 同时扫描 `examples/` 和 `community/` 两个通道的所有课件
+  5. 提交并双推：
      ```bash
      git add -A && git commit -m "feat: 新增官方课件 <course-id>"
      git push origin main && git push gitee main
      ```
-  5. 输出在线地址：`https://weponusa.github.io/teachany/examples/<course-id>/`
+  6. 输出在线地址：`https://weponusa.github.io/teachany/examples/<course-id>/`
   
   > ⛔ **绝对不能**：未经用户明确选项 ②/③ 就自动 `git push`、默认写入 `examples/`、在 `registry.json` 里把新课件打成 `status=official`。这是 v5.34.8 前的历史严重漏洞（实测 138 份课件中 124 份未经审核就被自动推成 community/official，污染了官方 Gallery）。"质检通过 ≠ 发布成功" —— 质检只保证课件本身合格，不代表可以进入官方索引，发布权必须由人（用户或管理员）明确点头。
 
