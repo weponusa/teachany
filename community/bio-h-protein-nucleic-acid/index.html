@@ -12,6 +12,7 @@
   <meta name="teachany-difficulty" content="3">
   <meta name="teachany-version" content="2.0">
   <meta name="teachany-author" content="teachany">
+  <link rel="stylesheet" href="./ai-tutor.css">
   <style>
     :root {
       --primary: #00d4aa;
@@ -1334,27 +1335,6 @@
     <span class="subtitle" id="audioSubtitle"></span>
   </div>
 
-  <!-- AI Tutor FAB -->
-  <div id="ai-tutor-fab" style="position:fixed; bottom:80px; right:24px; z-index:500;">
-    <button onclick="toggleTutor()" title="AI学伴" style="width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg, var(--primary), var(--blue)); border:none; cursor:pointer; font-size:24px; box-shadow:0 4px 16px rgba(0,212,170,0.4); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-      💡
-    </button>
-  </div>
-  <div id="tutor-panel" style="display:none; position:fixed; bottom:150px; right:24px; z-index:500; width:320px; background:var(--card); border-radius:16px; border:1px solid var(--border); box-shadow:0 8px 32px rgba(0,0,0,0.4); overflow:hidden;">
-    <div style="background:rgba(0,212,170,0.1); padding:14px 18px; display:flex; justify-content:space-between; align-items:center;">
-      <strong style="color:var(--primary);">💡 AI学伴</strong>
-      <button onclick="toggleTutor()" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:18px;">×</button>
-    </div>
-    <div style="padding:14px 18px;">
-      <p style="font-size:13px; color:var(--text-secondary); margin-bottom:12px;">对当前学习内容有疑问？输入你的问题（需要API Key）：</p>
-      <input type="text" id="tutor-question" placeholder="例如：肽键是什么？" style="width:100%; padding:10px; border-radius:8px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text); font-family:inherit; font-size:14px; margin-bottom:10px;">
-      <button onclick="askTutor()" style="width:100%; padding:10px; border-radius:8px; background:rgba(0,212,170,0.15); border:1px solid var(--primary); color:var(--primary); cursor:pointer; font-family:inherit; font-size:14px;">
-        提问 →
-      </button>
-      <div id="tutor-answer" style="margin-top:12px; font-size:13px; color:var(--text-secondary); max-height:200px; overflow-y:auto;"></div>
-    </div>
-  </div>
-
   <script>
   // ═══════════════════════════════════════════════
   //  KNOWLEDGE GRAPH DATA
@@ -2160,19 +2140,28 @@
   }
 
   // ═══════════════════════════════════════════════
-  //  AI TUTOR (STUB)
+  //  AI 学伴配置
   // ═══════════════════════════════════════════════
-  function toggleTutor() {
-    const p = document.getElementById('tutor-panel');
-    p.style.display = p.style.display === 'none' ? 'block' : 'none';
-  }
-
-  function askTutor() {
-    const q = document.getElementById('tutor-question').value;
-    if (!q.trim()) return;
-    const ans = document.getElementById('tutor-answer');
-    ans.innerHTML = '<span style="color:var(--primary)">💡 AI学伴：</span> 需要配置API Key才能使用AI学伴功能。本课件内已包含完整的互动练习和即时反馈，可以帮助你检验理解。';
-  }
+  window.__TEACHANY_TUTOR_CONFIG__ = {
+    courseTitle: '蛋白质与核酸',
+    subject: 'bio',
+    grade: 10,
+    learningObjectives: [
+      '说明氨基酸的结构特点，及脱水缩合反应形成多肽链的过程',
+      '概述蛋白质的结构和功能多样性',
+      '说出核酸的种类及在细胞中的分布，理解核酸是遗传信息的携带者'
+    ],
+    getContext: () => {
+      const current = document.querySelector('section.current-section');
+      if (current) return current.innerText.slice(0, 3000);
+      if (location.hash) {
+        const el = document.querySelector(location.hash);
+        if (el) return el.innerText.slice(0, 3000);
+      }
+      return document.body.innerText.slice(0, 3000);
+    }
+  };
   </script>
+  <script src="./ai-tutor.js" defer></script>
 </body>
 </html>

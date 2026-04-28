@@ -12,6 +12,7 @@
   <meta name="teachany-difficulty" content="3">
   <meta name="teachany-version" content="2.0">
   <meta name="teachany-author" content="teachany">
+  <link rel="stylesheet" href="./ai-tutor.css">
   <style>
     :root {
       --bg: #0f172a;
@@ -238,53 +239,7 @@
     .audio-bar .speed-btn { background: var(--primary); color: #fff; border: none; border-radius: 12px; font-size: 12px; padding: 2px 8px; cursor: pointer; font-weight: 600; }
     .audio-bar .audio-subtitle { font-size: 12px; color: var(--text-secondary); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     body.audio-playing { padding-bottom: 64px; }
-    /* AI Tutor FAB */
-    .ai-tutor-fab {
-      position: fixed; right: 24px; bottom: 80px; z-index: 9998;
-      width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--secondary));
-      display: flex; align-items: center; justify-content: center; cursor: pointer;
-      box-shadow: 0 4px 20px rgba(96,165,250,0.4); font-size: 24px; border: none; color: white;
-      transition: transform 0.2s; font-family: inherit;
-    }
-    .ai-tutor-fab:hover { transform: scale(1.1); }
-    .ai-tutor-panel {
-      position: fixed; right: 24px; bottom: 150px; z-index: 9997;
-      width: 360px; height: 520px; background: rgba(15,23,42,0.97);
-      border: 1px solid var(--border); border-radius: 16px;
-      display: none; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-      backdrop-filter: blur(16px);
-    }
-    .ai-tutor-panel.open { display: flex; }
-    .ai-panel-header {
-      padding: 14px 16px; border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
-    }
-    .ai-panel-title { font-weight: 700; color: var(--primary); font-size: 14px; }
-    .ai-panel-close { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 18px; }
-    .ai-panel-clear { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 12px; text-decoration: underline; }
-    .ai-chat-messages { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
-    .ai-msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 1.6; }
-    .ai-msg.ai { background: var(--card); border: 1px solid var(--border); align-self: flex-start; color: var(--text); }
-    .ai-msg.user { background: var(--primary); color: white; align-self: flex-end; }
-    .ai-chat-input { padding: 12px; border-top: 1px solid var(--border); display: flex; gap: 8px; flex-shrink: 0; }
-    .ai-chat-input input { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; color: var(--text); font-size: 13px; font-family: inherit; outline: none; }
-    .ai-chat-input input:focus { border-color: var(--primary); }
-    .ai-chat-input button { background: var(--primary); border: none; border-radius: 8px; padding: 8px 14px; color: white; cursor: pointer; font-size: 13px; font-family: inherit; }
-    .ai-config-modal {
-      position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,0.7);
-      display: none; align-items: center; justify-content: center;
-    }
-    .ai-config-modal.open { display: flex; }
-    .ai-config-box { background: rgba(15,23,42,0.98); border: 1px solid var(--border); border-radius: 16px; padding: 28px; width: 400px; }
-    .ai-config-box h3 { color: var(--accent); margin-bottom: 18px; font-size: 1.1rem; }
-    .ai-config-box label { font-size: 13px; color: var(--text-secondary); display: block; margin-bottom: 4px; }
-    .ai-config-box input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); font-family: inherit; font-size: 14px; margin-bottom: 14px; outline: none; }
-    .ai-config-box input:focus { border-color: var(--primary); }
-    .ai-config-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px; }
-    .ai-config-actions button { padding: 9px 22px; border-radius: 8px; font-family: inherit; font-size: 14px; cursor: pointer; }
-    .btn-cancel { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); }
-    .btn-save { background: var(--primary); border: none; color: white; }
-    .ai-config-hint { font-size: 12px; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.5; }
+
     /* Knowledge graph */
     #kg-svg .kg-node { cursor: default; }
     #kg-svg .kg-node.has-cw { cursor: pointer; }
@@ -975,43 +930,6 @@
     </div>
   </section>
 
-  <!-- AI Tutor FAB -->
-  <button class="ai-tutor-fab" id="aiFab" onclick="toggleAiPanel()">💡</button>
-  <div class="ai-tutor-panel" id="aiPanel">
-    <div class="ai-panel-header">
-      <span class="ai-panel-title">🎓 学伴 · 生物膜系统</span>
-      <div style="display:flex;gap:8px;align-items:center">
-        <button class="ai-panel-clear" onclick="clearAiChat()">清空</button>
-        <button class="ai-panel-close" onclick="toggleAiPanel()">✕</button>
-      </div>
-    </div>
-    <div class="ai-chat-messages" id="aiChatMessages">
-      <div class="ai-msg ai">你好！我是你的生物学伴 🧬<br>关于生物膜系统，有什么想问的？</div>
-    </div>
-    <div class="ai-chat-input">
-      <input id="aiInput" type="text" placeholder="针对当前内容提问..." onkeydown="if(event.key==='Enter')sendAiMsg()">
-      <button onclick="sendAiMsg()">发送</button>
-    </div>
-  </div>
-
-  <!-- AI Config Modal -->
-  <div class="ai-config-modal" id="aiConfigModal">
-    <div class="ai-config-box">
-      <h3>🎓 启用你的 AI 学伴</h3>
-      <p class="ai-config-hint">⚠️ API Key 仅保存在你当前浏览器中，关闭页面/清浏览器数据后失效；TeachAny 不会收集或上传你的 Key</p>
-      <label>API Base URL</label>
-      <input id="cfgBaseUrl" type="text" value="https://api.openai.com/v1" placeholder="https://api.openai.com/v1">
-      <label>API Key</label>
-      <input id="cfgKey" type="password" placeholder="sk-xxxxxxxxxxxxxxxx">
-      <label>模型</label>
-      <input id="cfgModel" type="text" value="gpt-4o-mini">
-      <div class="ai-config-actions">
-        <button class="btn-cancel" onclick="closeAiConfig()">取消</button>
-        <button class="btn-save" onclick="saveAiConfig()">保存并开始对话</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Audio bar -->
   <div class="audio-bar" id="audioBar">
     <span class="audio-track-title" id="audioTitle"></span>
@@ -1677,73 +1595,6 @@
       });
     })();
 
-    // ===== AI Tutor =====
-    let aiHistory = [];
-    function toggleAiPanel() {
-      const panel = document.getElementById('aiPanel');
-      const config = localStorage.getItem('teachany_tutor_config');
-      if (!config && !panel.classList.contains('open')) {
-        document.getElementById('aiConfigModal').classList.add('open');
-        return;
-      }
-      panel.classList.toggle('open');
-    }
-    function closeAiConfig() { document.getElementById('aiConfigModal').classList.remove('open'); }
-    function saveAiConfig() {
-      const baseUrl = document.getElementById('cfgBaseUrl').value.trim();
-      const apiKey = document.getElementById('cfgKey').value.trim();
-      const model = document.getElementById('cfgModel').value.trim();
-      if (!apiKey) { alert('请输入 API Key'); return; }
-      localStorage.setItem('teachany_tutor_config', JSON.stringify({ baseUrl, apiKey, model }));
-      closeAiConfig();
-      document.getElementById('aiPanel').classList.add('open');
-    }
-    function clearAiChat() {
-      aiHistory = [];
-      document.getElementById('aiChatMessages').innerHTML = '<div class="ai-msg ai">你好！我是你的生物学伴 🧬<br>关于生物膜系统，有什么想问的？</div>';
-    }
-    async function sendAiMsg() {
-      const input = document.getElementById('aiInput');
-      const text = input.value.trim();
-      if (!text) return;
-      input.value = '';
-      const msgBox = document.getElementById('aiChatMessages');
-      msgBox.innerHTML += `<div class="ai-msg user">${text}</div>`;
-      msgBox.scrollTop = msgBox.scrollHeight;
-
-      const configStr = localStorage.getItem('teachany_tutor_config');
-      if (!configStr) { document.getElementById('aiConfigModal').classList.add('open'); return; }
-      const { baseUrl, apiKey, model } = JSON.parse(configStr);
-      const ctx = window.__TEACHANY_TUTOR_CONFIG__.getContext();
-
-      aiHistory.push({ role: 'user', content: text });
-      const messages = [
-        { role: 'system', content: '你是高中生物学伴，面向高一学生（Grade 10）。用5-8句话、结构化答复，可适度引入生物学专业术语。当前课件主题：生物膜系统（内膜系统与分泌蛋白）。' },
-        { role: 'user', content: `[当前正在学习的内容]\n${ctx.slice(0,2000)}` },
-        ...aiHistory
-      ];
-
-      const loadingEl = document.createElement('div');
-      loadingEl.className = 'ai-msg ai'; loadingEl.textContent = '思考中…';
-      msgBox.appendChild(loadingEl);
-
-      try {
-        const resp = await fetch(`${baseUrl}/chat/completions`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-          body: JSON.stringify({ model, messages, max_tokens: 400, stream: false })
-        });
-        const data = await resp.json();
-        const reply = data.choices?.[0]?.message?.content || '抱歉，发生了错误，请检查 API 配置。';
-        aiHistory.push({ role: 'assistant', content: reply });
-        loadingEl.innerHTML = reply.replace(/\n/g, '<br>');
-      } catch(e) {
-        loadingEl.innerHTML = `❌ 连接失败：${e.message}。请检查 API 地址和 Key。`;
-        loadingEl.style.color = '#f87171';
-      }
-      msgBox.scrollTop = msgBox.scrollHeight;
-    }
-
     // Upload media to zone
     function uploadToZone(input) {
       if (input.files && input.files[0]) {
@@ -1754,5 +1605,6 @@
       }
     }
   </script>
+  <script src="./ai-tutor.js" defer></script>
 </body>
 </html>
