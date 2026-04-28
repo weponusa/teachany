@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-通用知识图谱跳转注入脚本 v2.0
+通用知识图谱跳转注入脚本 v2.1
 
 为所有课件的知识图谱节点注入/更新点击跳转功能。
 支持两种图谱实现：
@@ -9,7 +9,11 @@
 
 数据源：
   - registry.json: courseware_id → { node_id, path, subject }
-  - data/trees/*.json: node_id → 中文名（用于 DIV 布局模糊匹配）
+  - data/trees/**/*.json: node_id → 中文名（递归扫描嵌套目录）
+
+v2.1 变更（2026-04-28）:
+  - 修复知识树扫描：支持 data/trees/cn/high/*.json 等嵌套目录结构
+  - 修复课件扫描：同时处理 examples/ 和 community/ 两个通道
 
 用法：
   python3 scripts/inject-graph-links.py          # 处理所有课件
@@ -50,12 +54,19 @@ for c in reg['courses']:
         node_to_info[nid] = info
 
 # 1b. 所有知识树 JSON → node_id → 中文名
+#     v2.1: 支持嵌套目录结构 data/trees/cn/high/*.json 等
 tree_dir = os.path.join(ROOT, 'data', 'trees')
 node_to_name = {}   # node_id → 中文名
 
-for tree_file in sorted(glob.glob(os.path.join(tree_dir, '*.json'))):
-    with open(tree_file, 'r', encoding='utf-8') as f:
-        tree = json.load(f)
+for tree_file in sorted(glob.glob(os.path.join(tree_dir, '**', '*.json'), recursive=True)):
+    # 跳过模板文件
+    if os.path.basename(tree_file) == '_template.json':
+        continue
+    try:
+        with open(tree_file, 'r', encoding='utf-8') as f:
+            tree = json.load(f)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        continue
     for domain in tree.get('domains', []):
         for node in domain.get('nodes', []):
             nid = node.get('id', '')
@@ -303,8 +314,13 @@ def update_svg_graph_data(html_path):
 # 4. 批量处理所有课件
 # ════════════════════════════════════════════════════════════════
 
+# v2.1: 同时扫描 examples/ 和 community/ 两个通道
 examples_dir = os.path.join(ROOT, 'examples')
-all_html = sorted(glob.glob(os.path.join(examples_dir, '*/index.html')))
+community_dir = os.path.join(ROOT, 'community')
+all_html = sorted(
+    glob.glob(os.path.join(examples_dir, '*/index.html')) +
+    glob.glob(os.path.join(community_dir, '*/index.html'))
+)
 
 div_count = 0
 svg_count = 0
