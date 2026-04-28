@@ -2300,77 +2300,181 @@ AI **默认在以下位置自动插入** AI 多模态互动区：
 | **生物结构/过程** | 结构讲解区 | "【生物结构/过程】科学插图，标注清晰" | "植物细胞结构图，标注细胞壁、叶绿体、液泡，教育风格" |
 | **角色任务型情境** | 角色介绍卡 | "一个【角色身份】的卡通形象，友好亲切" | "一个穿着探险服的中学生卡通形象，手持放大镜" |
 
-**🖼️ Image Vault — 预制图片库优先查找（v5.35 新增）**：
+**🖼️ Image Vault — 远程预制图片库优先查找（v5.37 重构）**：
 
-> 📌 **核心原则**：TeachAny skill 在 `assets/image-vault/` 目录下维护了一批**预生成的高质量教学插图**，按学科分目录存储，由 `assets/image-registry.json` 索引。**制作课件时必须优先使用预制图，未命中时才降级到 `image_gen` 实时生成**。这样做的好处：节省用户积分、保证图片质量一致、加快课件生产速度。
+> 📌 **核心原则**：TeachAny 为每个知识点预生成 **1 张 Hero 知识结构主图 + 3-4 张插图**（scene / experiment / concept / abt-intro），由项目维护者统一生成并存储在**独立的远程图片仓库**中，通过 jsDelivr CDN 全球加速分发。**Skill 安装包只携带轻量索引文件 `image-registry.json`（~50KB），不捆绑任何图片二进制文件。** 制作课件时 AI 按索引按需从 CDN 拉取图片，保证：
+> - 🚀 Skill 安装体积极小（不到 100KB 的索引 vs 之前 42MB 的图片目录）
+> - 🎨 图片质量一致、风格统一（项目维护者集中把控）
+> - 💰 节省用户 `image_gen` 积分（已有预制图无需重新生成）
+> - 🌍 全球 CDN 边缘节点加速，任何地区用户秒级获取
 
-**Image Vault 目录结构**：
+**远程存储架构**：
 ```
-teachany-skill/assets/
-├── image-vault/
-│   ├── math/            # 数学课件图
-│   ├── physics/         # 物理课件图
-│   ├── biology/         # 生物课件图
-│   ├── history/         # 历史课件图
-│   ├── geography/       # 地理课件图
-│   ├── chemistry/       # 化学课件图
-│   ├── chinese/         # 语文课件图
-│   ├── english/         # 英语课件图
-│   └── science/         # 科学课件图
-└── image-registry.json  # 图片索引（含 match_nodes、slot、tags）
+┌─────────────────────────────────────────────────────────────┐
+│  GitHub 仓库: weponusa/teachany-images（独立仓库）          │
+│  ├── math/quadratic-hero.png                                │
+│  ├── math/quadratic-scene.png                               │
+│  ├── math/linear-hero.png                                   │
+│  ├── biology/photosynthesis-hero.png                        │
+│  ├── ...（按学科/知识点组织，预计 1500+ 图片）               │
+│  └── README.md（图片清单与生成记录）                         │
+└──────────────────────┬──────────────────────────────────────┘
+                       │ jsDelivr CDN 加速
+                       ▼
+  https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/
+  例：.../math/quadratic-hero.png
+                       │
+                       ▼
+┌─────────────────────────────────────────────────────────────┐
+│  TeachAny Skill（用户安装的部分）                            │
+│  └── assets/image-registry.json  ← 轻量索引（~50KB）        │
+│       每条记录包含 url 字段指向 CDN 地址                     │
+└──────────────────────┬──────────────────────────────────────┘
+                       │ AI 制作课件时按需 fetch
+                       ▼
+┌─────────────────────────────────────────────────────────────┐
+│  课件目录                                                    │
+│  └── assets/quadratic-hero.png  ← 下载到课件本地             │
+│  └── index.html  ← <img src="./assets/quadratic-hero.png">  │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-**image-registry.json 关键字段**：
+**CDN URL 构成规则**：
+```
+https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/{subject}/{filename}
+```
+| 变量 | 说明 | 示例 |
+|:---|:---|:---|
+| `{subject}` | 学科目录名 | `math`, `biology`, `history` |
+| `{filename}` | 图片文件名 | `quadratic-hero.png`, `photosynthesis-experiment.png` |
+
+> 📌 **备用 CDN**（jsDelivr 不可用时自动切换）：
+> - `https://raw.githubusercontent.com/weponusa/teachany-images/main/{subject}/{filename}`
+> - `https://ghfast.top/https://raw.githubusercontent.com/weponusa/teachany-images/main/{subject}/{filename}`（中国大陆加速）
+
+**image-registry.json 关键字段（v5.37 新增 `url` 字段）**：
 | 字段 | 说明 | 示例 |
 |:---|:---|:---|
 | `id` | 图片唯一标识 | `"math-quadratic-hero"` |
-| `file` | 相对路径（相对于 `assets/`） | `"image-vault/math/quadratic-hero.png"` |
+| `url` | **CDN 完整地址（v5.37 新增，首选）** | `"https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/math/quadratic-hero.png"` |
+| `file` | 远程仓库内相对路径（用于构建 URL） | `"math/quadratic-hero.png"` |
 | `match_nodes` | 匹配的课件 node_id 列表 | `["math-m-quadratic-function"]` |
-| `slot` | 图片用途位置 | `"hero"`（知识结构信息图） / `"scene"` / `"poster"` / `"experiment"` |
+| `slot` | 图片用途位置 | `"hero"` / `"scene"` / `"experiment"` / `"concept"` / `"abt-intro"` |
 | `tags` | 模糊匹配标签 | `["quadratic-function", "parabola"]` |
 | `prompt` | 生成时使用的 prompt | 中国课标课程用中文 prompt，国际课程用英文 prompt（见 Prompt 语言规则） |
 
-**生图执行流程（三级查找）**：
+**生图执行流程（三级降级）**：
 ```text
-1. AI 在编写 HTML 课件时识别需要插图的位置和 slot 类型（hero/scene/poster/experiment）
-2. 【优先】读取 assets/image-registry.json，按 match_nodes + slot 精确匹配
-   → 命中：将 image-vault/ 下对应图片复制到课件的 assets/ 目录，直接嵌入 HTML
-3. 【次选】若精确匹配未命中，按 subject + tags 模糊匹配
-   → 命中：同上，复制 + 嵌入
-4. 【降级】若 Image Vault 完全未命中，调用 image_gen 工具实时生成（prompt 遵循上表策略）
+1. AI 在编写 HTML 课件时识别需要插图的位置和 slot 类型（hero/scene/experiment/concept/abt-intro）
+
+2. 【第一级：远程 Image Vault 预制图】
+   读取 assets/image-registry.json，按 match_nodes + slot 精确匹配
+   → 命中：使用 web_fetch 或 curl 从 url 字段下载图片到课件 assets/ 目录
+   → 若精确匹配未命中，按 subject + tags 模糊匹配
+   → 命中：同上下载 + 嵌入
+   → 若 CDN 主域不可达，自动切换备用域（见上方备用 CDN 列表）
+
+3. 【第二级：image_gen 实时生成】
+   若 Image Vault 完全未命中（该知识点尚未预制图片），调用 image_gen 工具实时生成
+   → prompt 遵循上方 Prompt 语言规则和 Hero 图定义
    → 图片保存到课件目录下的 assets/ 文件夹
-5. 在 HTML 中以 <img src="./assets/xxx.png" alt="描述文字"> 嵌入
+
+4. 【第三级：代码生成 SVG 信息图 + 多模态交互区】
+   若 Image Vault 和 image_gen 均不可用（离线环境 / 积分耗尽 / 工具不存在），
+   AI 必须用 HTML 内联代码生成静态信息图（SVG / Canvas / CSS），同时保留 AI 多模态互动区：
+   
+   a) SVG 知识结构图：用 <svg> 标签在 HTML 中直接绘制知识结构信息图，
+      包含核心知识点节点、层级关系连线、关键公式文字，
+      视觉效果参照思维导图/概念图，配色与课件主题一致
+   b) 多模态交互区：保留 teachany-media-zone 占位符供后续升级
+   
+   ⚠️ 第三级不再使用"空白占位符 + data-suggested-prompt"的被动等待模式，
+   而是主动生成有信息量的 SVG 视觉内容，确保课件开箱即可用。
+
+5. 在 HTML 中以 <img src="./assets/xxx.png" alt="描述文字"> 嵌入（第一级/第二级）
+   或以 <svg>...</svg> 内联嵌入（第三级）
 6. 同时保留 AI 多模态互动区的占位符（供教师/学生二次创作）
 ```
 
+**第三级 SVG 信息图生成规范**：
+```html
+<!-- 第三级降级：代码生成的 SVG 知识结构图 -->
+<div class="teachany-svg-infographic" data-node-id="math-m-linear-function">
+  <svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg" 
+       style="width:100%;max-width:800px;margin:0 auto;display:block;">
+    <!-- 中心主题节点 -->
+    <rect x="300" y="250" width="200" height="60" rx="12" fill="#4A90D9" />
+    <text x="400" y="285" text-anchor="middle" fill="#fff" font-size="18" font-weight="bold">y = kx + b</text>
+    <!-- 分支节点（至少4个核心知识点） -->
+    <!-- 连接线 -->
+    <!-- 关键公式/术语标注 -->
+  </svg>
+</div>
+```
+
+| SVG 规范 | 要求 |
+|:---|:---|
+| **最少节点数** | 中心主题 1 个 + 分支节点 ≥ 4 个 |
+| **必含元素** | 核心概念、层级关系连线、关键公式/术语 |
+| **配色** | 与课件 `--primary-color` 一致，渐变色区分层级 |
+| **字体** | `font-family: system-ui, -apple-system, sans-serif` |
+| **尺寸** | `viewBox="0 0 800 600"`，`width: 100%; max-width: 800px` |
+| **适用场景** | Hero 区知识结构图、概念关系图、流程图 |
+
 **Image Vault 匹配伪代码**：
 ```python
+CDN_BASE = "https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main"
+CDN_FALLBACKS = [
+    "https://raw.githubusercontent.com/weponusa/teachany-images/main",
+    "https://ghfast.top/https://raw.githubusercontent.com/weponusa/teachany-images/main",
+]
+
 def resolve_image(node_id, slot, subject, tags=[]):
     registry = load_json("assets/image-registry.json")
+    
     # Step 1: 精确匹配 node_id + slot
     for img in registry["images"]:
         if node_id in img["match_nodes"] and img["slot"] == slot:
-            return copy_vault_image(img["file"], courseware_assets_dir)
+            return download_from_cdn(img["url"], courseware_assets_dir)
+    
     # Step 2: 模糊匹配 subject + tags
     for img in registry["images"]:
         if img["subject"] == subject and img["slot"] == slot:
             if any(t in img["tags"] for t in tags):
-                return copy_vault_image(img["file"], courseware_assets_dir)
-    # Step 3: 降级 → 实时生成
-    return call_image_gen(prompt=build_prompt(node_id, slot))
+                return download_from_cdn(img["url"], courseware_assets_dir)
+    
+    # Step 3: 降级 → image_gen 实时生成
+    if image_gen_available():
+        return call_image_gen(prompt=build_prompt(node_id, slot))
+    
+    # Step 4: 最终降级 → 代码生成 SVG 信息图
+    return generate_svg_infographic(node_id, slot, subject)
+
+def download_from_cdn(url, dest_dir):
+    """从 CDN 下载图片，支持自动 fallback"""
+    for base in [CDN_BASE] + CDN_FALLBACKS:
+        try:
+            # 用 web_fetch / curl / fetch API 下载
+            filepath = download(url, dest_dir)
+            return filepath
+        except NetworkError:
+            continue
+    raise ImageUnavailable("所有 CDN 节点不可达")
 ```
 
-**生图质量参数**（实时生成时使用）：
+**生图质量参数**（第二级 `image_gen` 实时生成时使用）：
 | 参数 | 推荐值 | 说明 |
 |:---|:---|:---|
 | `size` | `1024x1024` | 正方形插图 |
 | `quality` | `medium` | 平衡质量与速度 |
 | `style` | `natural` | 教育场景优先自然风格 |
 
-**降级策略**：
-- **优先级**：Image Vault 预制图 → `image_gen` 实时生成 → 占位符 + `data-suggested-prompt`
-- 如果 Image Vault 和 `image_gen` 均不可用（环境限制），保留 AI 多模态互动区占位符 + `data-suggested-prompt`，并在课件中添加提示："此处建议插入 AI 生成的插图，参考提示词：..."
-- 绝不因为生图不可用而省略整个互动区
+**降级策略总结**：
+- **第一级（首选）**：Image Vault 远程预制图 — 从 CDN 按需下载，零积分消耗
+- **第二级（次选）**：`image_gen` 实时生成 — 消耗用户积分，但保证 AI 级图片质量
+- **第三级（保底）**：代码生成 SVG 信息图 + 多模态交互区 — 零网络依赖、零积分消耗，课件开箱即有信息量
+- ⚠️ **绝不因为图片不可用而省略整个视觉区域** — 第三级确保任何环境下课件都有可用的知识可视化内容
+- ⚠️ **绝不使用空白占位符 + "此处建议插入..."的被动模式** — 这是 v5.37 废弃的旧行为
 
 #### 10.4.2 AI 主动生视频规范（课件生成阶段）
 
