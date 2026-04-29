@@ -1,10 +1,10 @@
 /*!
- * TeachAny AI 学伴（v7.0）
+ * TeachAny AI 学伴（v7.1）
  *
  * 特性：
  *   - 独立模块，不依赖特定课件
- *   - 默认预填 OpenRouter + Tencent Hy3 Preview（开箱即用，无需配置）
- *   - API 配置可动态替换（localStorage 或开发者接口）
+ *   - 用户首次使用需选择服务商并填入 API Key（配置弹窗引导）
+ *   - API Key 严禁硬编码（安全规范 #28），仅保存于用户浏览器 localStorage
  *   - 中英文界面一键切换（localStorage 持久化）
  *   - OpenAI 兼容 API（baseUrl + apiKey + model）
  *   - 支持流式（SSE）答复
@@ -26,16 +26,16 @@
   const HISTORY_KEY = 'teachany_tutor_history';
   const LANG_KEY = 'teachany_tutor_lang';
 
-  // 默认配置：OpenRouter + Tencent Hy3 Preview（开箱即用）
+  // 默认配置：用户首次使用需选择服务商并填入 API Key
+  // ⚠️ API Key 严禁硬编码（Completeness Gate #28），必须由用户在配置弹窗中自行填入
   const DEFAULTS = {
-    baseUrl: 'https://openrouter.ai/api/v1',
-    apiKey: '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',
-    model: 'tencent/hy3-preview:free'
+    baseUrl: 'https://api.deepseek.com/v1',
+    apiKey: '',
+    model: 'deepseek-chat'
   };
 
   // 服务商预设（配置弹窗一键填表）
   const PRESETS = [
-    { id: 'openrouter-hy3', name: '🌐 OpenRouter · Tencent Hy3（默认免费）', baseUrl: 'https://openrouter.ai/api/v1', model: 'tencent/hy3-preview:free' },
     { id: 'deepseek',   name: '🇨🇳 DeepSeek（推荐 · 便宜稳定）', baseUrl: 'https://api.deepseek.com/v1',     model: 'deepseek-chat' },
     { id: 'moonshot',   name: '🇨🇳 Moonshot Kimi（中文好）',     baseUrl: 'https://api.moonshot.cn/v1',      model: 'moonshot-v1-8k' },
     { id: 'openrouter', name: '🌐 OpenRouter（多模型聚合）',     baseUrl: 'https://openrouter.ai/api/v1',    model: 'deepseek/deepseek-chat' },
@@ -570,7 +570,12 @@ Rules:
       if (isPending) return;
       const text = (inputEl.value || '').trim();
       if (!text) return;
-      // v7.0：直接使用生效配置（DEFAULTS 已有 key，不再强制弹窗）
+      // v7.1：若用户未配置 API Key，先弹出配置窗口引导设置
+      const cfg = getEffectiveConfig();
+      if (!cfg.apiKey) {
+        showConfigModal();
+        return;
+      }
       doSend(text);
     }
 
@@ -620,8 +625,13 @@ Rules:
       }
     }
 
-    // FAB 点击：v7.0 直接开关面板（不弹配置，因为已有默认 key）
+    // FAB 点击：v7.1 若无 API Key 先弹配置，有 Key 则开关面板
     fab.addEventListener('click', () => {
+      const cfg = getEffectiveConfig();
+      if (!cfg.apiKey) {
+        showConfigModal();
+        return;
+      }
       togglePanel(!(panel && panel.classList.contains('open')));
     });
   }
@@ -662,6 +672,6 @@ Rules:
     /** 获取当前语言 */
     getLang: getLang,
     /** 版本号 */
-    version: '7.0'
+    version: '7.1'
   };
 })();

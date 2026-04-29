@@ -1020,74 +1020,107 @@ const ttsObserver = new IntersectionObserver((entries) => {
   canvas.addEventListener('mouseleave', () => draw(-1));
 })();
 
-// ─── Leaflet 地图：三大战役位置 ───
+// ─── v7.0 地图基础设施 ───
+const GEO_CDN_BASE = 'https://cdn.jsdelivr.net/gh/weponusa/teachany@main';
+const GEO_LOCAL_BASE = '../..';
+function geoAssetUrl(p)  { return `${GEO_LOCAL_BASE}/${p}`; }
+function geoAssetCdn(p)  { return `${GEO_CDN_BASE}/${p}`; }
+async function geoFetchJson(p) {
+  try { const r = await fetch(geoAssetUrl(p)); if (!r.ok) throw 0; return await r.json(); }
+  catch(e) { const r = await fetch(geoAssetCdn(p)); return await r.json(); }
+}
+function addBaseTiles(map, opts = {}) {
+  const tO = opts.terrainOpacity ?? 0.35, dO = opts.darkOpacity ?? 0.85;
+  L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', {
+    subdomains: 'abcd', maxZoom: 19, opacity: dO, attribution: '© CartoDB · © OpenStreetMap'
+  }).addTo(map);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 13, opacity: tO, attribution: 'Esri · Shaded Relief'
+  }).addTo(map);
+}
+
+// ─── Leaflet 地图：解放战争战役位置 ───
 (function() {
   const mapEl = document.getElementById('campaigns-map');
   if (!mapEl || typeof L === 'undefined') return;
   try {
-    const map = L.map('campaigns-map', { crs: L.CRS.EPSG4326 }).setView([38, 115], 4);
+    const map = L.map('campaigns-map', {
+      center: [35, 115],
+      zoom: 5,
+      minZoom: 3,
+      maxZoom: 10,
+      zoomControl: true,
+      attributionControl: false
+    });
 
-    // 使用 OSM 地图（在线）
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 10
-    }).addTo(map);
+    addBaseTiles(map, { terrainOpacity: 0.3, darkOpacity: 0.88 });
 
+    // 加载 1945 年历史行政边界 GeoJSON（解放战争 1946-1949 年，以 1945 年版世界地图为底）
+    geoFetchJson('data/geography/historical-world/ce-1945-wwii.geojson')
+      .then(geoJson => {
+        const powerColors = {
+          'China':      { color: '#fbbf24', weight: 2,   fillColor: 'rgba(251,191,36,0.25)',  fillOpacity: 0.30 },
+          'Manchuria':  { color: '#fb923c', weight: 1.8, fillColor: 'rgba(251,146,60,0.18)',  fillOpacity: 0.22 },
+          'Taiwan':     { color: '#a78bfa', weight: 1.5, fillColor: 'rgba(167,139,250,0.15)', fillOpacity: 0.20 },
+          'Mongolia':   { color: '#67e8f9', weight: 1,   fillColor: 'rgba(103,232,249,0.10)', fillOpacity: 0.14 },
+          'Tibet':      { color: '#c084fc', weight: 1,   fillColor: 'rgba(192,132,252,0.10)', fillOpacity: 0.14 },
+          'Korea (USSR)':{ color: '#94a3b8', weight: 1,  fillColor: 'rgba(148,163,184,0.10)', fillOpacity: 0.14 },
+          'Korea (USA)':{ color: '#94a3b8', weight: 1,   fillColor: 'rgba(148,163,184,0.10)', fillOpacity: 0.14 },
+          'USSR':       { color: '#4ade80', weight: 1.5, fillColor: 'rgba(74,222,128,0.12)',  fillOpacity: 0.16 },
+          'Japan (USA)':{ color: '#f87171', weight: 1.5, fillColor: 'rgba(248,113,113,0.12)', fillOpacity: 0.16 },
+        };
+        const defaultStyle = { color: 'rgba(148,163,184,0.12)', weight: 0.4, fillColor: 'rgba(26,58,42,0.10)', fillOpacity: 0.08 };
+        const nameCN = {
+          'China': '中国', 'Manchuria': '东北（满洲）', 'Taiwan': '台湾',
+          'Mongolia': '蒙古', 'Tibet': '西藏', 'Korea (USSR)': '朝鲜',
+          'Korea (USA)': '韩国', 'USSR': '苏联', 'Japan (USA)': '日本',
+        };
+
+        L.geoJSON(geoJson, {
+          style: function(f) {
+            const n = f.properties?.NAME || f.properties?.SUBJECTO;
+            return powerColors[n] || defaultStyle;
+          },
+          onEachFeature: function(f, layer) {
+            const p = f.properties || {};
+            const name = p.NAME || p.SUBJECTO || '';
+            const cn = nameCN[name] || '';
+            if (cn || name) {
+              const label = cn ? `<b>${cn}</b><br/>${name}` : `<b>${name}</b>`;
+              layer.bindPopup(label);
+            }
+            const saved = powerColors[name] || defaultStyle;
+            layer.on({
+              mouseover: e => e.target.setStyle({ color: '#60a5fa', weight: 2, fillOpacity: (saved.fillOpacity||0.1) + 0.15 }),
+              mouseout:  e => e.target.setStyle(saved)
+            });
+          }
+        }).addTo(map);
+      });
+
+    // 战役标注点
     const campaigns = [
-      {
-        name: '辽沈战役',
-        lat: 41.8,
-        lng: 123.4,
-        color: '#3b82f6',
-        info: '辽沈战役（1948.9—11）\n指挥：林彪、罗荣桓\n歼敌：47万\n解放东北全境'
-      },
-      {
-        name: '淮海战役',
-        lat: 34.3,
-        lng: 117.2,
-        color: '#10b981',
-        info: '淮海战役（1948.11—1949.1）\n指挥：刘伯承、陈毅等\n歼敌：55万\n以徐州为中心'
-      },
-      {
-        name: '平津战役',
-        lat: 39.9,
-        lng: 116.4,
-        color: '#f59e0b',
-        info: '平津战役（1948.11—1949.1）\n指挥：林彪、罗荣桓、聂荣臻\n歼灭改编：52万\n北平和平解放'
-      },
-      {
-        name: '大别山（反攻起点）',
-        lat: 31.4,
-        lng: 115.5,
-        color: '#f87171',
-        info: '1947年6月，刘邓大军千里挺进大别山\n揭开战略反攻序幕'
-      },
-      {
-        name: '南京（渡江战役）',
-        lat: 32.1,
-        lng: 118.8,
-        color: '#a78bfa',
-        info: '1949.4.23 解放南京\n国民政府覆灭'
-      },
+      { name: '辽沈战役',         lat: 41.8, lng: 123.4, color: '#3b82f6', info: '辽沈战役（1948.9—11）\n指挥：林彪、罗荣桓\n歼敌：47万\n解放东北全境' },
+      { name: '淮海战役',         lat: 34.3, lng: 117.2, color: '#10b981', info: '淮海战役（1948.11—1949.1）\n指挥：刘伯承、陈毅等\n歼敌：55万\n以徐州为中心' },
+      { name: '平津战役',         lat: 39.9, lng: 116.4, color: '#f59e0b', info: '平津战役（1948.11—1949.1）\n指挥：林彪、罗荣桓、聂荣臻\n歼灭改编：52万\n北平和平解放' },
+      { name: '大别山（反攻起点）', lat: 31.4, lng: 115.5, color: '#f87171', info: '1947年6月，刘邓大军千里挺进大别山\n揭开战略反攻序幕' },
+      { name: '南京（渡江战役）',   lat: 32.1, lng: 118.8, color: '#a78bfa', info: '1949.4.23 解放南京\n国民政府覆灭' },
     ];
 
     campaigns.forEach(c => {
-      const circleMarker = L.circleMarker([c.lat, c.lng], {
-        radius: 10,
-        fillColor: c.color,
-        color: '#fff',
-        weight: 2,
-        opacity: 0.9,
-        fillOpacity: 0.85
+      L.circleMarker([c.lat, c.lng], {
+        radius: 8, fillColor: c.color, color: '#fff', weight: 2, opacity: 0.9, fillOpacity: 0.85
+      }).addTo(map).bindPopup(
+        '<div style="font-family:\'Noto Sans SC\',\'Microsoft YaHei\',sans-serif;min-width:180px">' +
+        '<strong style="color:' + c.color + ';font-size:14px">' + c.name + '</strong><br>' +
+        '<pre style="font-size:12px;margin:6px 0 0;color:#94a3b8;white-space:pre-wrap">' + c.info + '</pre></div>'
+      );
+      L.marker([c.lat, c.lng], {
+        icon: L.divIcon({
+          html: '<div style="color:#fff;font-size:11px;font-weight:700;white-space:nowrap;text-shadow:1px 1px 2px rgba(0,0,0,.8);background:rgba(15,23,42,.7);padding:2px 6px;border-radius:4px">' + c.name.split('（')[0] + '</div>',
+          className: '', iconAnchor: [-12, 10]
+        })
       }).addTo(map);
-
-      const label = L.divIcon({
-        html: '<div style="color:#fff;font-size:11px;font-weight:700;white-space:nowrap;text-shadow:1px 1px 2px rgba(0,0,0,.8);background:rgba(15,23,42,.7);padding:2px 6px;border-radius:4px">' + c.name + '</div>',
-        className: '',
-        iconAnchor: [-12, 10]
-      });
-      L.marker([c.lat, c.lng], { icon: label }).addTo(map);
-      circleMarker.bindPopup('<strong style="color:#fbbf24">' + c.name + '</strong><br><pre style="font-size:12px;margin:6px 0 0;color:#94a3b8">' + c.info + '</pre>');
     });
   } catch(e) {
     mapEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text2)">地图加载中...</div>';

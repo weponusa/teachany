@@ -1155,43 +1155,112 @@ function sendToAI() {
 <!-- Leaflet 地图 -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+// === v7.0 地图基础设施 ===
+const GEO_CDN_BASE = 'https://cdn.jsdelivr.net/gh/weponusa/teachany@main';
+const GEO_LOCAL_BASE = '../..';
+function geoAssetUrl(p)  { return `${GEO_LOCAL_BASE}/${p}`; }
+function geoAssetCdn(p)  { return `${GEO_CDN_BASE}/${p}`; }
+async function geoFetchJson(p) {
+  try { const r = await fetch(geoAssetUrl(p)); if (!r.ok) throw 0; return await r.json(); }
+  catch(e) { const r = await fetch(geoAssetCdn(p)); return await r.json(); }
+}
+function addBaseTiles(map, opts = {}) {
+  const tO = opts.terrainOpacity ?? 0.35, dO = opts.darkOpacity ?? 0.85;
+  L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', {
+    subdomains: 'abcd', maxZoom: 19, opacity: dO, attribution: '© CartoDB · © OpenStreetMap'
+  }).addTo(map);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 13, opacity: tO, attribution: 'Esri · Shaded Relief'
+  }).addTo(map);
+}
+
 window.addEventListener('load', () => {
   if (typeof L === 'undefined') return;
-  const map = L.map('war-map', {
-    crs: L.CRS.EPSG4326
-  }).setView([32, 112], 4);
+  const el = document.getElementById('war-map');
+  if (!el) return;
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors',
-    opacity: 0.3,
-    crs: L.CRS.EPSG4326
-  }).addTo(map);
+  const map = L.map(el, {
+    center: [33, 110],
+    zoom: 5,
+    minZoom: 3,
+    maxZoom: 10,
+    zoomControl: true,
+    attributionControl: false
+  });
 
+  addBaseTiles(map, { terrainOpacity: 0.3, darkOpacity: 0.88 });
+
+  // 加载 1945 年历史行政边界 GeoJSON（二战末期，227 个政治实体）
+  geoFetchJson('data/geography/historical-world/ce-1945-wwii.geojson')
+    .then(geoJson => {
+      const powerColors = {
+        'China':      { color: '#fbbf24', weight: 2,   fillColor: 'rgba(251,191,36,0.25)',  fillOpacity: 0.30 },
+        'Japan (USA)':{ color: '#f87171', weight: 2,   fillColor: 'rgba(248,113,113,0.20)', fillOpacity: 0.25 },
+        'Manchuria':  { color: '#fb923c', weight: 1.8, fillColor: 'rgba(251,146,60,0.18)',  fillOpacity: 0.22 },
+        'Taiwan':     { color: '#a78bfa', weight: 1.5, fillColor: 'rgba(167,139,250,0.15)', fillOpacity: 0.20 },
+        'Mongolia':   { color: '#67e8f9', weight: 1,   fillColor: 'rgba(103,232,249,0.10)', fillOpacity: 0.14 },
+        'Tibet':      { color: '#c084fc', weight: 1,   fillColor: 'rgba(192,132,252,0.10)', fillOpacity: 0.14 },
+        'Korea (USSR)':{ color: '#94a3b8', weight: 1,  fillColor: 'rgba(148,163,184,0.10)', fillOpacity: 0.14 },
+        'Korea (USA)':{ color: '#94a3b8', weight: 1,   fillColor: 'rgba(148,163,184,0.10)', fillOpacity: 0.14 },
+        'USSR':       { color: '#4ade80', weight: 1.5, fillColor: 'rgba(74,222,128,0.12)',  fillOpacity: 0.16 },
+      };
+      const defaultStyle = { color: 'rgba(148,163,184,0.12)', weight: 0.4, fillColor: 'rgba(26,58,42,0.10)', fillOpacity: 0.08 };
+      const nameCN = {
+        'China': '中国', 'Japan (USA)': '日本', 'Manchuria': '满洲（日占）',
+        'Taiwan': '台湾（日占）', 'Mongolia': '蒙古', 'Tibet': '西藏',
+        'Korea (USSR)': '朝鲜（苏占区）', 'Korea (USA)': '韩国（美占区）', 'USSR': '苏联',
+      };
+
+      L.geoJSON(geoJson, {
+        style: function(f) {
+          const n = f.properties?.NAME || f.properties?.SUBJECTO;
+          return powerColors[n] || defaultStyle;
+        },
+        onEachFeature: function(f, layer) {
+          const p = f.properties || {};
+          const name = p.NAME || p.SUBJECTO || '';
+          const cn = nameCN[name] || '';
+          if (cn || name) {
+            const label = cn ? `<b>${cn}</b><br/>${name}` : `<b>${name}</b>`;
+            layer.bindPopup(label);
+          }
+          const saved = powerColors[name] || defaultStyle;
+          layer.on({
+            mouseover: e => e.target.setStyle({ color: '#60a5fa', weight: 2, fillOpacity: (saved.fillOpacity||0.1) + 0.15 }),
+            mouseout:  e => e.target.setStyle(saved)
+          });
+        }
+      }).addTo(map);
+    });
+
+  // 战役标注点
   const warSites = [
     { latlng: [41.8, 123.4], label: '九一八事变（沈阳）', color: '#f87171', info: '1931年9月18日，日军炮轰北大营，东北沦陷' },
     { latlng: [39.9, 116.3], label: '七七事变（卢沟桥）', color: '#f87171', info: '1937年7月7日，全面抗战爆发' },
     { latlng: [31.2, 121.5], label: '淞沪会战（上海）', color: '#fbbf24', info: '1937年8-11月，中国军队浴血奋战' },
-    { latlng: [32.1, 118.8], label: '南京大屠杀', color: '#ef4444', info: '1937年12月，30万军民罹难' },
-    { latlng: [34.8, 117.3], label: '台儿庄战役', color: '#34d399', info: '1938年3-4月，正面战场重大胜利' },
-    { latlng: [30.6, 114.3], label: '武汉会战', color: '#fbbf24', info: '1938年6-10月，抗战进入相持阶段' },
-    { latlng: [39.0, 113.4], label: '平型关大捷', color: '#34d399', info: '1937年9月，八路军第一次大捷' },
-    { latlng: [37.5, 112.6], label: '百团大战（华北）', color: '#60a5fa', info: '1940年8-12月，破坏日军交通线' },
+    { latlng: [32.1, 118.8], label: '南京大屠杀',       color: '#ef4444', info: '1937年12月，30万军民罹难' },
+    { latlng: [34.8, 117.3], label: '台儿庄战役',       color: '#34d399', info: '1938年3-4月，正面战场重大胜利' },
+    { latlng: [30.6, 114.3], label: '武汉会战',         color: '#fbbf24', info: '1938年6-10月，抗战进入相持阶段' },
+    { latlng: [39.0, 113.4], label: '平型关大捷',       color: '#34d399', info: '1937年9月，八路军第一次大捷' },
+    { latlng: [37.5, 112.6], label: '百团大战（华北）',  color: '#60a5fa', info: '1940年8-12月，破坏日军交通线' },
   ];
 
   warSites.forEach(site => {
-    const marker = L.circleMarker(site.latlng, {
-      radius: 10,
-      color: site.color,
-      fillColor: site.color,
-      fillOpacity: 0.75,
-      weight: 2
-    }).addTo(map);
-    marker.bindPopup(`
-      <div style="font-family:'Microsoft YaHei',sans-serif;min-width:160px">
-        <strong style="color:${site.color}">${site.label}</strong><br>
-        <span style="font-size:12px;color:#555">${site.info}</span>
+    L.circleMarker(site.latlng, {
+      radius: 8, color: '#fff', fillColor: site.color, fillOpacity: 0.85, weight: 2
+    }).addTo(map).bindPopup(`
+      <div style="font-family:'Noto Sans SC','Microsoft YaHei',sans-serif;min-width:180px">
+        <strong style="color:${site.color};font-size:14px">${site.label}</strong><br>
+        <span style="font-size:12px;color:#94a3b8">${site.info}</span>
       </div>
     `);
+    // 文字标签
+    L.marker(site.latlng, {
+      icon: L.divIcon({
+        html: '<div style="color:#fff;font-size:11px;font-weight:700;white-space:nowrap;text-shadow:1px 1px 2px rgba(0,0,0,.8);background:rgba(15,23,42,.7);padding:2px 6px;border-radius:4px">' + site.label.split('（')[0] + '</div>',
+        className: '', iconAnchor: [-12, 8]
+      })
+    }).addTo(map);
   });
 });
 </script>
