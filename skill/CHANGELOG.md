@@ -1,6 +1,6 @@
 # TeachAny 版本变更日志
 
-**当前版本**：v7.1（持续演进中）  
+**当前版本**：v7.2（持续演进中）  
 **更新日期**：2026-04-30
 
 ---
@@ -15,10 +15,30 @@
 - **v6.0**：简化发布流程（移除 Admin skill 依赖、内置质检、本地打包优先、去中心化分享、零权限要求）
 - **v6.1**：Pillow 本地生图字体规范 + 基线检查增强
 - **v7.1**：Hero 图补充机制 — 修复新知识点课件永远没有 Hero 图的架构缺陷
+- **v7.2**：Hero 图批量修复 + 质检强化 — 全量 312 课件 hero 图覆盖率从 34% 提升至 100%
 
 ---
 
 ## 详细变更记录
+
+### v7.2
+⭐ Hero 图批量修复 + SKILL 规范强化
+- **问题诊断**：对全量 312 个 community 课件进行质量审计，发现 207 个课件的 hero 区域缺少 `<img>` 标签引用 hero 图片（尽管 206 个已有图片文件在 `assets/` 中）
+- **根因分析**：
+  1. 批量课件生成流程未调用 hero 图注入脚本
+  2. 课件模板中 hero 区域未自动插入 `<img>` 标签
+  3. Hero 图文件存放位置不统一（`assets/hero/` vs `assets/` 根目录），导致检测逻辑不一致
+- **修复执行**：
+  - 编写 `batch_inject_hero_img.py` 批量注入脚本，为 206 个有图片但缺标签的课件注入 `<img class="hero-cover-img">` 标签
+  - 从 `teachany-images/` 复制 2 个缺失的图片到对应课件 `assets/`
+  - 为 1 个完全无图片的课件（`hist-h-song-yuan-ming-qing-h`）使用 `image_gen` 生成 hero 图
+  - **最终结果：312/312 课件全部有 hero 图片覆盖**
+- **SKILL 规范变更**：
+  - CSS 模板新增 `.hero-cover-img` 样式定义（宽度 100%、最大高度 320px、object-fit cover）
+  - Hero 图命名规则兼容 `assets/` 根目录放置（批量注入脚本和历史课件使用此模式）
+  - HTML 引用铁律新增"方式 B"：hero 图可放在 hero 容器闭合标签之后，用 `<!-- hero-cover -->` 标记
+  - Completeness Gate 第 30 项强化：同时检查 `hero-img` 和 `hero-cover-img` 两种 class
+  - 质检清单新增"Hero 图"检查项
 
 ### v7.1
 ⭐ Hero 图空缺检测与维护者补充 SOP（修复架构缺陷）
