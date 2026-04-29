@@ -1106,30 +1106,47 @@ function initGreeceMap() {
   // v5.22: XYZ tiles base (Web Mercator，天然对齐 GeoJSON)
   addBaseTiles(map, { terrainOpacity: 0.45, darkOpacity: 0.9 });
 
-  // Load countries GeoJSON
-  geoFetchJson('data/geography/world/countries.geojson')
+  // v7.0: 加载历史行政边界 GeoJSON（公元前500年·轴心时代，含希腊城邦、波斯帝国等189个政治实体）
+  geoFetchJson('data/geography/historical-world/bce-500.geojson')
     .then(geoJson => {
-      // Highlight rules per country
-      const highlight = {
-        'Greece':    { color: '#4ade80', weight: 2.5, fillColor: 'rgba(74,222,128,0.18)', fillOpacity: 0.25 },
-        'Italy':     { color: '#fbbf24', weight: 1.8, fillColor: 'rgba(251,191,36,0.10)', fillOpacity: 0.18 },
-        'Turkey':    { color: '#a78bfa', weight: 1.2, fillColor: 'rgba(167,139,250,0.08)', fillOpacity: 0.14 },
-        'Albania':   { color: '#4ade80', weight: 1,   fillColor: 'rgba(74,222,128,0.08)', fillOpacity: 0.10 },
-        'Bulgaria':  { color: '#4ade80', weight: 1,   fillColor: 'rgba(74,222,128,0.08)', fillOpacity: 0.10 },
-        'Macedonia': { color: '#4ade80', weight: 1,   fillColor: 'rgba(74,222,128,0.08)', fillOpacity: 0.10 }
+      // 历史政权配色（按 NAME 属性匹配）
+      const powerColors = {
+        'Greek city-states':   { color: '#4ade80', weight: 2.5, fillColor: 'rgba(74,222,128,0.30)', fillOpacity: 0.35 },
+        'Achaemenid Empire':   { color: '#a78bfa', weight: 2,   fillColor: 'rgba(167,139,250,0.20)', fillOpacity: 0.28 },
+        'Carthaginian Empire': { color: '#f87171', weight: 1.8, fillColor: 'rgba(248,113,113,0.15)', fillOpacity: 0.22 },
+        'Rome':                { color: '#fbbf24', weight: 1.8, fillColor: 'rgba(251,191,36,0.18)', fillOpacity: 0.22 },
+        'Etrurians':           { color: '#fb923c', weight: 1.5, fillColor: 'rgba(251,146,60,0.12)', fillOpacity: 0.18 },
+        'Illyrians':           { color: '#67e8f9', weight: 1,   fillColor: 'rgba(103,232,249,0.10)', fillOpacity: 0.14 },
+        'Zhou states':         { color: '#dc143c', weight: 1.5, fillColor: 'rgba(220,20,60,0.12)',  fillOpacity: 0.18 },
+        'Meroe':               { color: '#c084fc', weight: 1,   fillColor: 'rgba(192,132,252,0.10)', fillOpacity: 0.14 },
+        'Saba':                { color: '#d4a574', weight: 1,   fillColor: 'rgba(212,165,116,0.10)', fillOpacity: 0.14 },
       };
-      const defaultStyle = { color: 'rgba(148,163,184,0.2)', weight: 0.8, fillColor: 'rgba(26,58,42,0.3)', fillOpacity: 0.2 };
-      const hoverStyle   = { color: '#60a5fa', weight: 1.5, fillColor: 'rgba(96,165,250,0.15)', fillOpacity: 0.25 };
+      const defaultStyle = { color: 'rgba(148,163,184,0.15)', weight: 0.5, fillColor: 'rgba(26,58,42,0.15)', fillOpacity: 0.12 };
+
+      // 政权中文名映射（用于 popup）
+      const nameCN = {
+        'Greek city-states': '希腊城邦', 'Achaemenid Empire': '波斯帝国（阿契美尼德）',
+        'Carthaginian Empire': '迦太基帝国', 'Rome': '罗马共和国', 'Etrurians': '伊特鲁里亚',
+        'Illyrians': '伊利里亚', 'Zhou states': '东周列国', 'Meroe': '麦罗埃（库施）',
+        'Saba': '萨巴王国',
+      };
 
       L.geoJSON(geoJson, {
         style: function(feature) {
-          const name = feature.properties?.name;
-          return highlight[name] || defaultStyle;
+          const name = feature.properties?.NAME || feature.properties?.SUBJECTO;
+          return powerColors[name] || defaultStyle;
         },
         onEachFeature: function(feature, layer) {
+          const p = feature.properties || {};
+          const name = p.NAME || p.SUBJECTO || '未命名';
+          const cn = nameCN[name] || '';
+          const label = cn ? `<b>${cn}</b><br/>${name}` : `<b>${name}</b>`;
+          const extra = p.PARTOF && p.PARTOF !== name ? `<br/>属于: ${p.PARTOF}` : '';
+          layer.bindPopup(label + extra);
+          const savedStyle = powerColors[name] || defaultStyle;
           layer.on({
-            mouseover: function(e) { e.target.setStyle(hoverStyle); },
-            mouseout:  function(e) { e.target.setStyle(highlight[feature.properties?.name] || defaultStyle); }
+            mouseover: function(e) { e.target.setStyle({ color: '#60a5fa', weight: 2, fillOpacity: savedStyle.fillOpacity + 0.15 }); },
+            mouseout:  function(e) { e.target.setStyle(savedStyle); }
           });
         }
       }).addTo(map);
@@ -1220,9 +1237,11 @@ function initGreeceMap() {
   legend.onAdd = function() {
     var div = L.DomUtil.create('div', '');
     div.style.cssText = 'background:rgba(15,23,42,0.88);padding:8px 12px;border-radius:8px;font-size:11px;color:#94a3b8;line-height:1.8;border:1px solid rgba(148,163,184,0.15);';
-    div.innerHTML = '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#4ade80;margin-right:4px;vertical-align:middle;"></span>希腊城邦区域<br/>' +
-                    '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#fbbf24;margin-right:4px;vertical-align:middle;"></span>雅典（民主制）<br/>' +
-                    '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f87171;margin-right:4px;vertical-align:middle;"></span>斯巴达（寡头制）';
+    div.innerHTML = '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#4ade80;margin-right:4px;vertical-align:middle;"></span>希腊城邦<br/>' +
+                    '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#a78bfa;margin-right:4px;vertical-align:middle;"></span>波斯帝国<br/>' +
+                    '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f87171;margin-right:4px;vertical-align:middle;"></span>迦太基<br/>' +
+                    '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#fbbf24;margin-right:4px;vertical-align:middle;"></span>罗马<br/>' +
+                    '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#94a3b8;margin-right:6px;margin-left:2px;vertical-align:middle;"></span><i style="font-size:10px">公元前500年·轴心时代</i>';
     return div;
   };
   legend.addTo(map);
@@ -1248,35 +1267,52 @@ function initRomeMap() {
   // v5.22: XYZ tiles base (Web Mercator，天然对齐 GeoJSON)
   addBaseTiles(map, { terrainOpacity: 0.4, darkOpacity: 0.88 });
 
-  // Load countries GeoJSON
-  geoFetchJson('data/geography/world/countries.geojson')
+  // v7.0: 加载历史行政边界 GeoJSON（公元前200年·汉罗马共和国时期，183个政治实体）
+  geoFetchJson('data/geography/historical-world/bce-200.geojson')
     .then(geoJson => {
-      // Roman Empire territories
-      const romanTerritories = ['Italy','Greece','Spain','Turkey','Egypt','Tunisia','Albania','Bulgaria','Macedonia','Libya'];
-      const defaultStyle = { color: 'rgba(148,163,184,0.15)', weight: 0.6, fillColor: 'rgba(26,42,58,0.3)', fillOpacity: 0.15 };
+      // 历史政权配色（按 NAME 属性匹配）
+      const powerColors = {
+        'Rome':                      { color: '#fbbf24', weight: 2.5, fillColor: 'rgba(251,191,36,0.30)', fillOpacity: 0.35 },
+        'Carthage':                  { color: '#f87171', weight: 2,   fillColor: 'rgba(248,113,113,0.22)', fillOpacity: 0.28 },
+        'Macedon and Hellenic League':{ color: '#4ade80', weight: 1.8, fillColor: 'rgba(74,222,128,0.20)', fillOpacity: 0.25 },
+        'Ptolemaic Kingdom':         { color: '#a78bfa', weight: 1.8, fillColor: 'rgba(167,139,250,0.18)', fillOpacity: 0.22 },
+        'Seleucid Kingdom':          { color: '#c084fc', weight: 1.5, fillColor: 'rgba(192,132,252,0.15)', fillOpacity: 0.20 },
+        'Parthia':                   { color: '#fb923c', weight: 1.5, fillColor: 'rgba(251,146,60,0.12)', fillOpacity: 0.18 },
+        'Han Empire':                { color: '#dc143c', weight: 1.8, fillColor: 'rgba(220,20,60,0.15)', fillOpacity: 0.22 },
+        'Mauryan Empire':            { color: '#2dd4bf', weight: 1.5, fillColor: 'rgba(45,212,191,0.12)', fillOpacity: 0.18 },
+        'Bosporan Kingdom':          { color: '#67e8f9', weight: 1,   fillColor: 'rgba(103,232,249,0.10)', fillOpacity: 0.14 },
+        'Xiongnu':                   { color: '#a0a0a0', weight: 1.2, fillColor: 'rgba(160,160,160,0.10)', fillOpacity: 0.14 },
+        'Pergamon':                  { color: '#86efac', weight: 1.2, fillColor: 'rgba(134,239,172,0.10)', fillOpacity: 0.16 },
+        'Celts':                     { color: '#a3e635', weight: 1,   fillColor: 'rgba(163,230,53,0.10)', fillOpacity: 0.14 },
+        'Meroe':                     { color: '#d4a574', weight: 1,   fillColor: 'rgba(212,165,116,0.10)', fillOpacity: 0.14 },
+      };
+      const defaultStyle = { color: 'rgba(148,163,184,0.12)', weight: 0.4, fillColor: 'rgba(26,42,58,0.15)', fillOpacity: 0.12 };
+
+      // 政权中文名映射
+      const nameCN = {
+        'Rome': '罗马共和国', 'Carthage': '迦太基', 'Macedon and Hellenic League': '马其顿与希腊联盟',
+        'Ptolemaic Kingdom': '托勒密埃及', 'Seleucid Kingdom': '塞琉古王国', 'Parthia': '帕提亚（安息）',
+        'Han Empire': '西汉帝国', 'Mauryan Empire': '孔雀帝国', 'Bosporan Kingdom': '博斯普鲁斯王国',
+        'Xiongnu': '匈奴', 'Pergamon': '帕加马王国', 'Celts': '凯尔特人', 'Meroe': '麦罗埃（库施）',
+      };
 
       L.geoJSON(geoJson, {
         style: function(feature) {
-          const name = feature.properties?.name;
-          if (romanTerritories.includes(name)) {
-            const isCore = (name === 'Italy');
-            return {
-              color: isCore ? '#fbbf24' : 'rgba(251,191,36,0.4)',
-              weight: isCore ? 2.5 : 1.2,
-              fillColor: isCore ? 'rgba(251,191,36,0.22)' : 'rgba(251,191,36,0.10)',
-              fillOpacity: isCore ? 0.3 : 0.18
-            };
-          }
-          return defaultStyle;
+          const name = feature.properties?.NAME || feature.properties?.SUBJECTO;
+          return powerColors[name] || defaultStyle;
         },
         onEachFeature: function(feature, layer) {
-          const name = feature.properties?.name;
-          if (romanTerritories.includes(name)) {
-            layer.on({
-              mouseover: function(e) { e.target.setStyle({ color: '#fbbf24', weight: 2, fillColor: 'rgba(251,191,36,0.2)', fillOpacity: 0.3 }); },
-              mouseout: function(e) { layer.setStyle(layer.defaultOptions?.style || {}); }
-            });
-          }
+          const p = feature.properties || {};
+          const name = p.NAME || p.SUBJECTO || '未命名';
+          const cn = nameCN[name] || '';
+          const label = cn ? `<b>${cn}</b><br/>${name}` : `<b>${name}</b>`;
+          const extra = p.PARTOF && p.PARTOF !== name ? `<br/>属于: ${p.PARTOF}` : '';
+          layer.bindPopup(label + extra);
+          const savedStyle = powerColors[name] || defaultStyle;
+          layer.on({
+            mouseover: function(e) { e.target.setStyle({ color: '#60a5fa', weight: 2, fillOpacity: savedStyle.fillOpacity + 0.15 }); },
+            mouseout:  function(e) { e.target.setStyle(savedStyle); }
+          });
         }
       }).addTo(map);
     });
@@ -1340,9 +1376,11 @@ function initRomeMap() {
   legend.onAdd = function() {
     var div = L.DomUtil.create('div', '');
     div.style.cssText = 'background:rgba(15,23,42,0.88);padding:8px 12px;border-radius:8px;font-size:11px;color:#94a3b8;line-height:1.8;border:1px solid rgba(148,163,184,0.15);';
-    div.innerHTML = '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:rgba(251,191,36,0.4);border:1px solid #fbbf24;margin-right:4px;vertical-align:middle;"></span>罗马帝国核心疆域<br/>' +
-                    '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#fbbf24;margin-right:4px;vertical-align:middle;"></span>罗马（首都）<br/>' +
-                    '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f87171;margin-right:4px;vertical-align:middle;"></span>迦太基（宿敌）';
+    div.innerHTML = '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#fbbf24;margin-right:4px;vertical-align:middle;"></span>罗马共和国<br/>' +
+                    '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f87171;margin-right:4px;vertical-align:middle;"></span>迦太基<br/>' +
+                    '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#4ade80;margin-right:4px;vertical-align:middle;"></span>马其顿<br/>' +
+                    '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#a78bfa;margin-right:4px;vertical-align:middle;"></span>托勒密埃及<br/>' +
+                    '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#94a3b8;margin-right:6px;margin-left:2px;vertical-align:middle;"></span><i style="font-size:10px">公元前200年·布匿战争后</i>';
     return div;
   };
   legend.addTo(map);
