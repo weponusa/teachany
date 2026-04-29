@@ -29,7 +29,7 @@
   // 默认配置：OpenRouter + Tencent Hy3 Preview（开箱即用）
   const DEFAULTS = {
     baseUrl: 'https://openrouter.ai/api/v1',
-    apiKey: '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',
+    apiKey: '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',
     model: 'tencent/hy3-preview:free'
   };
 
