@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>《解放战争 — TeachAny 初中历史》 · 历史 初中 G8 · TeachAny v7</title>
+  <!-- TeachAny 课件元数据 -->
+  <meta name="course-id" content="hist-m-liberation-war">
+  <meta name="course-node" content="hist-m-liberation-war">
+  <meta name="course-subject" content="history">
+  <meta name="course-grade" content="8">
+  <meta name="course-title" content="解放战争">
+  <meta name="course-prereqs" content="hist-m-anti-japan-war">
+  <meta name="course-next" content="hist-m-new-democratic-revolution">
+  <meta name="course-domain" content="中国近代史">
+  <meta name="teachany-id" content="hist-m-liberation-war">
+  <meta name="teachany-name" content="解放战争 — TeachAny 初中历史">
+  <meta name="teachany-node" content="hist-m-liberation-war">
+  <meta name="teachany-subject" content="history">
+  <meta name="teachany-grade" content="8">
+  <meta name="teachany-version" content="v7">
+  <meta name="teachany-author" content="TeachAny">
+  <meta name="teachany-curriculum" content="cn-national">
+
+  <link rel="stylesheet" href="./ai-tutor.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --primary: #60a5fa;
+      --secondary: #a78bfa;
+      --accent: #fbbf24;
+      --card: rgba(30,41,59,0.65);
+      --border: rgba(255,255,255,0.08);
+      --text: #f1f5f9;
+      --text2: #94a3b8;
+      --hist: #f59e0b;
+      --green: #34d399;
+      --red: #f87171;
+      --radius: 12px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei','微软雅黑',sans-serif;line-height:1.7;overflow-x:hidden}
+    a{color:var(--primary);text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    /* 进度条 */
+    #progress-bar{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,#60a5fa,#a78bfa);z-index:9999;transition:width .2s}
+
+    /* 容器 */
+    .container{max-width:900px;margin:0 auto;padding:0 20px}
+    section{padding:48px 0 24px}
+
+    /* Hero */
+    .hero{padding:56px 20px 40px;background:linear-gradient(135deg,rgba(248,113,113,.08),rgba(245,158,11,.06));border-bottom:1px solid var(--border);text-align:center}
+    .hero h1{font-size:2.6rem;line-height:1.2;margin-bottom:10px;font-weight:900;background:linear-gradient(135deg,#f87171,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .hero .subtitle{font-size:1rem;color:var(--text2);margin-bottom:18px}
+    .hero-tags{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:22px}
+    .tag{padding:4px 12px;border-radius:20px;font-size:.78rem;font-weight:600;border:1px solid}
+    .tag-grade{background:rgba(96,165,250,.12);border-color:rgba(96,165,250,.3);color:#93c5fd}
+    .tag-hist{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.3);color:#fde68a}
+    .tag-domain{background:rgba(167,139,250,.12);border-color:rgba(167,139,250,.3);color:#c4b5fd}
+    .hero-quote{font-size:.95rem;font-style:italic;color:var(--text2);max-width:580px;margin:0 auto;border-left:3px solid var(--hist);padding-left:14px;text-align:left}
+
+    /* 标题 */
+    .section-title{font-size:1.4rem;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+    .section-title::before{content:'';width:4px;height:1.4rem;border-radius:2px;background:var(--primary);flex-shrink:0}
+    .module-header{font-size:1.15rem;font-weight:700;color:var(--accent);margin:28px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+
+    /* 卡片 */
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;backdrop-filter:blur(8px);margin-bottom:16px}
+    .card-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    @media(max-width:620px){.card-grid{grid-template-columns:1fr}}
+
+    /* 学习目标 */
+    .obj-list{list-style:none;display:flex;flex-direction:column;gap:10px}
+    .obj-list li{display:flex;align-items:flex-start;gap:10px;font-size:.95rem}
+    .obj-icon{width:28px;height:28px;border-radius:50%;background:rgba(96,165,250,.15);border:1px solid rgba(96,165,250,.3);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#93c5fd;flex-shrink:0;margin-top:2px}
+
+    /* ABT */
+    .abt-block{background:linear-gradient(135deg,rgba(96,165,250,.06),rgba(167,139,250,.04));border:1px solid rgba(96,165,250,.18);border-radius:var(--radius);padding:18px 22px;margin-bottom:20px}
+    .abt-block .abt-label{font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--primary);margin-bottom:6px}
+    .abt-block p{color:var(--text2);font-size:.95rem}
+    .abt-block strong{color:var(--text)}
+
+    /* 题目 */
+    .q-block{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin-bottom:14px}
+    .q-num{font-size:.72rem;font-weight:700;letter-spacing:.08em;color:var(--secondary);display:block;margin-bottom:6px}
+    .q-stem{font-size:.97rem;font-weight:600;margin-bottom:14px;line-height:1.6}
+    .q-options{display:flex;flex-direction:column;gap:8px}
+    .q-opt{padding:10px 14px;border-radius:8px;border:1px solid var(--border);cursor:pointer;transition:all .18s;font-size:.9rem;display:flex;align-items:flex-start;gap:10px}
+    .q-opt:hover{border-color:var(--primary);background:rgba(96,165,250,.08)}
+    .q-opt.correct{background:rgba(52,211,153,.1);border-color:#34d399;color:#a7f3d0}
+    .q-opt.wrong{background:rgba(248,113,113,.1);border-color:#f87171;color:#fca5a5}
+    .opt-key{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0}
+    .q-feedback{display:none;margin-top:12px;padding:10px 14px;border-radius:8px;font-size:.88rem;line-height:1.6}
+    .feedback-correct{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);color:#a7f3d0}
+    .feedback-wrong{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:#fca5a5}
+
+    /* 按钮 */
+    .btn{padding:9px 20px;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;border:none;transition:all .18s;font-family:inherit}
+    .btn-primary{background:var(--primary);color:#0f172a}
+    .btn-primary:hover{background:#3b82f6}
+    .btn-outline{background:transparent;color:var(--text);border:1px solid var(--border)}
+    .btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+    .btn-hist{background:var(--hist);color:#0f172a}
+    .btn-hist:hover{background:#d97706}
+
+    /* TTS 播放器 */
+    .tts-player{background:rgba(96,165,250,.06);border:1px solid rgba(96,165,250,.18);border-radius:var(--radius);padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:18px}
+    .tts-btn{width:36px;height:36px;border-radius:50%;background:var(--primary);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#0f172a;font-size:1rem;flex-shrink:0;transition:all .18s}
+    .tts-btn:hover{background:#3b82f6;transform:scale(1.08)}
+    .tts-label{font-size:.85rem;color:var(--text2)}
+    .tts-progress{flex:1;height:3px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden}
+    .tts-progress-bar{height:100%;background:var(--primary);width:0;transition:width .3s}
+
+    /* Canvas */
+    canvas{border-radius:var(--radius);border:1px solid var(--border);display:block;max-width:100%}
+    .canvas-wrap{position:relative;margin:16px 0}
+
+    /* 地图 */
+    #campaigns-map{height:380px;border-radius:var(--radius);border:1px solid var(--border);margin:16px 0}
+
+    /* 关键词卡 */
+    .keyword-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin:16px 0}
+    .keyword-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:all .18s}
+    .keyword-card:hover{border-color:var(--primary);transform:translateY(-2px)}
+    .keyword-card h4{font-size:.92rem;font-weight:700;color:var(--accent);margin-bottom:4px}
+    .keyword-card p{font-size:.82rem;color:var(--text2);line-height:1.5}
+
+    /* 对比表 */
+    .compare-table{width:100%;border-collapse:collapse;font-size:.88rem;margin:16px 0}
+    .compare-table th{background:rgba(96,165,250,.12);color:var(--primary);padding:10px 14px;text-align:left;border:1px solid var(--border)}
+    .compare-table td{padding:9px 14px;border:1px solid var(--border);vertical-align:top}
+    .compare-table tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+
+    /* 记忆锚 */
+    .anchor-box{background:linear-gradient(135deg,rgba(245,158,11,.1),rgba(167,139,250,.08));border:1px solid rgba(245,158,11,.3);border-radius:var(--radius);padding:20px 24px;text-align:center}
+    .anchor-box .anchor-text{font-size:1.3rem;font-weight:700;color:var(--accent);letter-spacing:.02em}
+    .anchor-box .anchor-sub{font-size:.88rem;color:var(--text2);margin-top:8px}
+
+    /* 易错 */
+    .mistake-item{background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.2);border-radius:var(--radius);padding:16px 20px;margin-bottom:12px}
+    .mistake-item .m-label{font-size:.72rem;font-weight:700;color:#f87171;letter-spacing:.08em;margin-bottom:6px}
+    .mistake-item .m-wrong{font-size:.9rem;color:#fca5a5;margin-bottom:6px;text-decoration:line-through}
+    .mistake-item .m-right{font-size:.9rem;color:#a7f3d0}
+
+    /* 知识图谱 */
+    .kg-wrap{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap;margin:24px 0}
+    .kg-node{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 18px;text-align:center;min-width:120px;transition:all .18s}
+    .kg-node:hover{border-color:var(--primary);transform:translateY(-2px)}
+    .kg-node.active{border-color:var(--accent);background:rgba(245,158,11,.1)}
+    .kg-node .kn-sub{font-size:.7rem;color:var(--text2);margin-bottom:2px}
+    .kg-node .kn-name{font-size:.9rem;font-weight:700}
+    .kg-arrow{font-size:1.4rem;color:var(--border);padding:0 6px}
+
+    /* 视频 */
+    video{width:100%;border-radius:var(--radius);border:1px solid var(--border)}
+
+    /* 综合任务 */
+    .task-level{border-left:3px solid;padding:14px 18px;margin-bottom:14px;border-radius:0 var(--radius) var(--radius) 0}
+    .task-level.l1{border-color:#34d399;background:rgba(52,211,153,.05)}
+    .task-level.l2{border-color:var(--primary);background:rgba(96,165,250,.05)}
+    .task-level.l3{border-color:var(--secondary);background:rgba(167,139,250,.05)}
+    .task-level .t-label{font-size:.72rem;font-weight:700;letter-spacing:.08em;margin-bottom:6px}
+    .task-level.l1 .t-label{color:#34d399}
+    .task-level.l2 .t-label{color:var(--primary)}
+    .task-level.l3 .t-label{color:var(--secondary)}
+
+    /* 全局 TTS 控制器 */
+    #tts-controller{position:fixed;bottom:22px;right:20px;z-index:9990;background:rgba(15,23,42,.92);border:1px solid var(--border);border-radius:50px;padding:8px 16px;display:flex;align-items:center;gap:8px;backdrop-filter:blur(8px);cursor:pointer}
+    #tts-controller:hover{border-color:var(--primary)}
+    #tts-controller span{font-size:.82rem;color:var(--text2)}
+
+    /* AI 学伴 */
+    #ai-assistant{position:fixed;bottom:22px;left:20px;z-index:9990}
+
+    /* 插图 */
+    .illustration{width:100%;border-radius:var(--radius);border:1px solid var(--border);margin:16px 0;display:block}
+
+    .timeline-item{display:flex;gap:16px;margin-bottom:18px;align-items:flex-start}
+    .timeline-dot{width:14px;height:14px;border-radius:50%;background:var(--primary);flex-shrink:0;margin-top:6px}
+    .timeline-year{font-weight:700;color:var(--accent);min-width:90px}
+    .timeline-content{flex:1}
+
+    @media(max-width:620px){
+      .hero h1{font-size:1.8rem}
+      .anchor-text{font-size:1.1rem}
+      .kg-wrap{gap:4px}
+      .kg-arrow{display:none}
+    }
+  </style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<!-- ═══ HERO ═══ -->
+<div class="hero">
+  <!-- hero 图：暂留空 -->
+  <div class="hero-tags">
+    <span class="tag tag-grade">初中 · 8年级</span>
+    <span class="tag tag-hist">中国近代史</span>
+    <span class="tag tag-domain">解放战争</span>
+  </div>
+  <h1>解放战争</h1>
+  <p class="subtitle">人民的选择与新中国的诞生（1945—1949）</p>
+  <p class="hero-quote">
+    "钟山风雨起苍黄，百万雄师过大江。"——毛泽东《七律·人民解放军占领南京》<br>
+    为什么在短短四年之内，国民党的八百万军队会全面溃败？
+  </p>
+</div>
+
+<div class="container">
+
+<!-- ═══ 核心概念 ═══ -->
+<section id="core-concepts">
+  <h2 class="section-title">核心概念</h2>
+  <div class="keyword-grid">
+    <div class="keyword-card"><h4>重庆谈判</h4><p>1945年8—10月，毛泽东赴重庆与蒋介石谈判，签订《双十协定》，中共争取和平</p></div>
+    <div class="keyword-card"><h4>双十协定</h4><p>1945年10月10日签订，确定和平建国方针，但国民党随后背弃承诺</p></div>
+    <div class="keyword-card"><h4>全面内战爆发</h4><p>1946年6月，国民党进攻中原解放区，标志全面内战开始</p></div>
+    <div class="keyword-card"><h4>挺进大别山</h4><p>1947年，刘邓大军千里跃进大别山，揭开战略反攻序幕</p></div>
+    <div class="keyword-card"><h4>三大战役</h4><p>辽沈、淮海、平津战役，共歼敌154万，国民党主力基本被消灭</p></div>
+    <div class="keyword-card"><h4>渡江战役</h4><p>1949年4月，百万雄师渡长江，解放南京，国民政府覆灭</p></div>
+  </div>
+</section>
+
+<!-- ═══ 学习目标 ═══ -->
+<section id="objectives">
+  <h2 class="section-title">学习目标</h2>
+  <div class="card">
+    <ul class="obj-list">
+      <li><div class="obj-icon">知道</div><span><strong>知道</strong>重庆谈判的经过、双十协定的内容，理解中国共产党为争取和平所做的努力</span></li>
+      <li><div class="obj-icon">理解</div><span><strong>理解</strong>战略防御阶段到战略反攻的转变，掌握刘邓大军挺进大别山的历史意义</span></li>
+      <li><div class="obj-icon">掌握</div><span><strong>掌握</strong>辽沈、淮海、平津三大战役的时间、地点、指挥者和歼敌数量</span></li>
+      <li><div class="obj-icon">认识</div><span><strong>认识</strong>新民主主义革命胜利的历史意义和基本经验，理解"没有共产党就没有新中国"</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══ 前测 ═══ -->
+<section id="pretest">
+  <h2 class="section-title">前测·三题热身</h2>
+  <p style="color:var(--text2);font-size:.9rem;margin-bottom:16px">先测一测你对抗日战争基础知识的掌握程度。</p>
+
+  <div class="q-block" id="pre1">
+    <span class="q-num">前测 1</span>
+    <p class="q-stem">中国抗日战争正式胜利的标志是什么？</p>
+    <div class="q-options">
+      <div class="q-opt" onclick="answer(this,'pre1','A','B')"><div class="opt-key">A</div>日本发动太平洋战争</div>
+      <div class="q-opt" onclick="answer(this,'pre1','B','B')"><div class="opt-key">B</div>1945年9月2日日本正式签署投降书</div>
+      <div class="q-opt" onclick="answer(this,'pre1','C','B')"><div class="opt-key">C</div>美国向日本投放原子弹</div>
+      <div class="q-opt" onclick="answer(this,'pre1','D','B')"><div class="opt-key">D</div>苏联对日宣战</div>
+    </div>
+    <div class="q-feedback feedback-correct" id="pre1-fb-correct">✅ 正确！1945年9月2日，日本代表在投降书上签字，抗日战争以及世界反法西斯战争最终胜利。</div>
+    <div class="q-feedback feedback-wrong" id="pre1-fb-wrong">❌ 不对。抗日战争胜利的标志是1945年9月2日日本正式签署投降书，而非其他事件。</div>
+  </div>
+
+  <div class="q-block" id="pre2">
+    <span class="q-num">前测 2</span>
+    <p class="q-stem">全民族抗战开始的标志是什么？</p>
+    <div class="q-options">
+      <div class="q-opt" onclick="answer(this,'pre2','A','A')"><div class="opt-key">A</div>卢沟桥事变（七七事变），1937年</div>
+      <div class="q-opt" onclick="answer(this,'pre2','B','A')"><div class="opt-key">B</div>九一八事变，1931年</div>
+      <div class="q-opt" onclick="answer(this,'pre2','C','A')"><div class="opt-key">C</div>南京大屠杀，1937年</div>
+      <div class="q-opt" onclick="answer(this,'pre2','D','A')"><div class="opt-key">D</div>平型关大捷，1937年</div>
+    </div>
+    <div class="q-feedback feedback-correct" id="pre2-fb-correct">✅ 正确！1937年7月7日，卢沟桥事变爆发，全民族抗日战争开始。</div>
+    <div class="q-feedback feedback-wrong" id="pre2-fb-wrong">❌ 不对。全民族抗战的开始标志是1937年7月7日的卢沟桥事变（七七事变）。</div>
+  </div>
+
+  <div class="q-block" id="pre3">
+    <span class="q-num">前测 3</span>
+    <p class="q-stem">抗战期间，中国共产党领导敌后战场的主要依托是什么？</p>
+    <div class="q-options">
+      <div class="q-opt" onclick="answer(this,'pre3','A','C')"><div class="opt-key">A</div>国民革命军</div>
+      <div class="q-opt" onclick="answer(this,'pre3','B','C')"><div class="opt-key">B</div>游击大队</div>
+      <div class="q-opt" onclick="answer(this,'pre3','C','C')"><div class="opt-key">C</div>抗日根据地</div>
+      <div class="q-opt" onclick="answer(this,'pre3','D','C')"><div class="opt-key">D</div>国共联合军</div>
+    </div>
+    <div class="q-feedback feedback-correct" id="pre3-fb-correct">✅ 正确！中国共产党在抗战中建立了大量抗日根据地，如陕甘宁边区、晋察冀等，成为敌后战场的战略依托。</div>
+    <div class="q-feedback feedback-wrong" id="pre3-fb-wrong">❌ 不对。中共主要依托抗日根据地开展敌后游击战争，是全面抗战的重要力量。</div>
+  </div>
+</section>
+
+<!-- ═══ 模块一：重庆谈判与内战爆发 ═══ -->
+<section id="module1">
+  <h2 class="section-title">模块一 · 重庆谈判与内战爆发</h2>
+
+  <div class="abt-block">
+    <div class="abt-label">引入情境 (ABT Narrative)</div>
+    <p>
+      1945年抗战胜利，中国人民盼望和平已久。<strong>然而</strong>，两种不同的中国前途摆在面前：一是和平民主的新中国，一是独裁内战的旧中国。<strong>因此</strong>，中国共产党接受邀请，毛泽东亲赴重庆谈判，以实际行动争取和平，揭开了解放战争的序幕。
+    </p>
+  </div>
+
+  <!-- TTS 播放器 -->
+  <div class="tts-player" id="tts-m1">
+    <button class="tts-btn" onclick="playTTS('tts/module1.mp3','tts-m1')">▶</button>
+    <div class="tts-label">🔊 模块一语音讲解</div>
+    <div class="tts-progress"><div class="tts-progress-bar" id="tts-m1-bar"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="module-header">重庆谈判（1945年8—10月）</div>
+    <div class="timeline-item">
+      <div class="timeline-dot" style="background:#60a5fa"></div>
+      <div class="timeline-content">
+        <span class="timeline-year">1945年8月</span>
+        <p>抗战胜利后，蒋介石三次电邀毛泽东赴重庆谈判。毛泽东为了争取和平、揭露国民党阴谋，毅然前往重庆。</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot" style="background:#fbbf24"></div>
+      <div class="timeline-content">
+        <span class="timeline-year">1945年10月10日</span>
+        <p>经过43天谈判，国共双方签订<strong>《双十协定》</strong>，确定了和平建国的基本方针，同意避免内战，召开政治协商会议。</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot" style="background:#f87171"></div>
+      <div class="timeline-content">
+        <span class="timeline-year">1946年1月</span>
+        <p><strong>政治协商会议</strong>在重庆召开，通过了有利于人民的协议。但国民党随后撕毁协定，拒绝执行协议内容。</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot" style="background:#ef4444"></div>
+      <div class="timeline-content">
+        <span class="timeline-year">1946年6月</span>
+        <p>国民党军队大举进攻中原解放区，<strong>全面内战爆发</strong>。国共两党的和平谈判彻底破裂。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="module-header">重庆谈判的历史意义</div>
+    <p>中国共产党通过参加谈判，充分揭露了国民党假和平、真内战的阴谋，<strong>在政治上取得了主动权</strong>，赢得了人民群众的广泛支持。同时，《双十协定》的签订也表明国民党在政治上已陷入被动。</p>
+  </div>
+
+  <!-- 即时练习 -->
+  <div class="q-block" id="m1q1">
+    <span class="q-num">即时练习 1-1</span>
+    <p class="q-stem">毛泽东赴重庆谈判的根本目的是什么？</p>
+    <div class="q-options">
+      <div class="q-opt" onclick="answer(this,'m1q1','A','B')"><div class="opt-key">A</div>与国民党共同分享政权</div>
+      <div class="q-opt" onclick="answer(this,'m1q1','B','B')"><div class="opt-key">B</div>争取国内和平，揭露国民党独裁内战阴谋</div>
+      <div class="q-opt" onclick="answer(this,'m1q1','C','B')"><div class="opt-key">C</div>接受蒋介石的邀请，表示诚意</div>
+      <div class="q-opt" onclick="answer(this,'m1q1','D','B')"><div class="opt-key">D</div>讨论国共军队整编方案</div>
+    </div>
+    <div class="q-feedback feedback-correct" id="m1q1-fb-correct">✅ 正确！共产党参加谈判是为了争取和平，同时揭露国民党的阴谋，赢得政治主动权。</div>
+    <div class="q-feedback feedback-wrong" id="m1q1-fb-wrong">❌ 不对。毛泽东赴渝谈判的根本目的是为争取和平，揭露国民党假和平、真内战的阴谋。</div>
+  </div>
+</section>
+
+<!-- ═══ 模块二：战略防御与战略反攻 ═══ -->
+<section id="module2">
+  <h2 class="section-title">模块二 · 战略防御与战略反攻</h2>
+
+  <div class="abt-block">
+    <div class="abt-label">引入情境 (ABT Narrative)</div>
+    <p>
+      内战初期，国民党凭借800万军队和美国援助，气焰嚣张。<strong>然而</strong>，人民解放军凭借灵活机动的战略战术和人民群众的支持，粉碎了国民党的全面进攻，转而在1947年以一支孤军千里跃进大别山，<strong>因此</strong>从根本上扭转了战场局势，揭开了战略反攻的序幕。
+    </p>
+  </div>
+
+  <div class="tts-player" id="tts-m2">
+    <button class="tts-btn" onclick="playTTS('tts/module2.mp3','tts-m2')">▶</button>
+    <div class="tts-label">🔊 模块二语音讲解</div>
+    <div class="tts-progress"><div class="tts-progress-bar" id="tts-m2-bar"></div></div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="module-header">战略防御阶段（1946—1947）</div>
+      <p style="font-size:.92rem">内战初期，国民党军队约<strong>430万人</strong>，而人民解放军约<strong>120万人</strong>，敌强我弱。</p>
+      <br>
+      <p style="font-size:.92rem">人民解放军采取<strong>积极防御</strong>策略：以歼灭敌人有生力量为主要目标，不以保守地方为目的，以运动战为主要作战形式。</p>
+      <br>
+      <p style="font-size:.92rem">1946年至1947年上半年，人民解放军共歼敌<strong>112万人</strong>，粉碎了国民党的全面进攻和重点进攻。</p>
+    </div>
+    <div class="card">
+      <div class="module-header">战略反攻：挺进大别山</div>
+      <p style="font-size:.92rem"><strong>1947年6月</strong>，刘伯承、邓小平率领晋冀鲁豫野战军主力，千里跃进<strong>大别山</strong>。</p>
+      <br>
+      <p style="font-size:.92rem">大别山位于湖北、安徽、河南三省交界处，直接威胁南京和武汉，像一把<strong>"尖刀"插入国民党统治区心脏</strong>。</p>
+      <br>
+      <p style="font-size:.92rem">这一行动揭开了人民解放军<strong>战略反攻的序幕</strong>，战争形势开始向有利于人民解放军的方向转变。</p>
+    </div>
+  </div>
+
+  <!-- 战略演变插图 -->
+  <img src="assets/illustrations/strategy-shift.png" alt="解放战争战略演变图" class="illustration">
+
+  <!-- 即时练习 -->
+  <div class="q-block" id="m2q1">
+    <span class="q-num">即时练习 2-1</span>
+    <p class="q-stem">刘邓大军挺进大别山的历史意义是什么？</p>
+    <div class="q-options">
+      <div class="q-opt" onclick="answer(this,'m2q1','A','C')"><div class="opt-key">A</div>消灭了国民党50万军队</div>
+      <div class="q-opt" onclick="answer(this,'m2q1','B','C')"><div class="opt-key">B</div>标志着解放战争战略决战阶段开始</div>
+      <div class="q-opt" onclick="answer(this,'m2q1','C','C')"><div class="opt-key">C</div>揭开了人民解放军战略反攻的序幕</div>
+      <div class="q-opt" onclick="answer(this,'m2q1','D','C')"><div class="opt-key">D</div>解放了整个华中地区</div>
+    </div>
+    <div class="q-feedback feedback-correct" id="m2q1-fb-correct">✅ 正确！刘邓大军挺进大别山，揭开了人民解放军战略反攻的序幕，是解放战争的重大转折点。</div>
+    <div class="q-feedback feedback-wrong" id="m2q1-fb-wrong">❌ 不对。刘邓大军挺进大别山的意义在于：揭开战略反攻序幕，威胁国民党统治核心，改变战争形势。</div>
+  </div>
+</section>
+
+<!-- ═══ 模块三：三大战役 ═══ -->
+<section id="module3">
+  <h2 class="section-title">模块三 · 三大战役</h2>
+
+  <div class="abt-block">
+    <div class="abt-label">引入情境 (ABT Narrative)</div>
+    <p>
+      1948年秋，战争形势已发生根本转变，人民解放军的力量已超过国民党军队。<strong>然而</strong>，要彻底消灭国民党的战略力量，还需要进行几场大规模的歼灭战。<strong>因此</strong>，从1948年9月至1949年1月，人民解放军先后发动了辽沈、淮海、平津三大战役，歼敌154万，从根本上摧毁了国民党的主要军事力量。
+    </p>
+  </div>
+
+  <div class="tts-player" id="tts-m3">
+    <button class="tts-btn" onclick="playTTS('tts/module3.mp3','tts-m3')">▶</button>
+    <div class="tts-label">🔊 模块三语音讲解</div>
+    <div class="tts-progress"><div class="tts-progress-bar" id="tts-m3-bar"></div></div>
+  </div>
+
+  <!-- 三大战役对比插图 -->
+  <img src="assets/illustrations/three-campaigns.png" alt="三大战役对比图" class="illustration">
+
+  <!-- 三大战役对比表 -->
+  <div class="card">
+    <div class="module-header">三大战役详情对比</div>
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>战役</th>
+          <th>时间</th>
+          <th>地区</th>
+          <th>指挥者</th>
+          <th>歼敌</th>
+          <th>意义</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color:#93c5fd;font-weight:700">辽沈战役</td>
+          <td>1948.9—11</td>
+          <td>东北地区</td>
+          <td>林彪、罗荣桓</td>
+          <td>47万</td>
+          <td>解放东北全境；解放军数量首次超过国民党</td>
+        </tr>
+        <tr>
+          <td style="color:#6ee7b7;font-weight:700">淮海战役</td>
+          <td>1948.11—1949.1</td>
+          <td>以徐州为中心</td>
+          <td>刘伯承、陈毅、邓小平等</td>
+          <td>55万</td>
+          <td>解放长江中下游以北地区；规模最大的战役</td>
+        </tr>
+        <tr>
+          <td style="color:#fde68a;font-weight:700">平津战役</td>
+          <td>1948.11—1949.1</td>
+          <td>华北地区</td>
+          <td>林彪、罗荣桓、聂荣臻</td>
+          <td>52万</td>
+          <td>华北全境解放；北平和平解放，保护了古都文化</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="color:#f87171;font-weight:700;text-align:center;margin-top:12px">三大战役共歼灭国民党军队154万人，国民党主力基本被消灭</p>
+  </div>
+
+  <!-- Canvas 互动：三大战役战果统计图 -->
+  <div class="card">
+    <div class="module-header">📊 三大战役战果统计图（互动）</div>
+    <p style="color:var(--text2);font-size:.88rem;margin-bottom:12px">点击柱状图可查看详细信息</p>
+    <div class="canvas-wrap">
+      <canvas id="campaignChart" width="800" height="320"></canvas>
+    </div>
+    <div id="chart-detail" style="margin-top:12px;padding:12px;border-radius:8px;background:rgba(96,165,250,.06);border:1px solid rgba(96,165,250,.18);display:none;font-size:.9rem;color:var(--text2)"></div>
+  </div>
+
+  <!-- Leaflet 地图 -->
+  <div class="card">
+    <div class="module-header">🗺️ 三大战役地理位置</div>
+    <div id="campaigns-map"></div>
+  </div>
+
+  <!-- 即时练习 -->
+  <div class="q-block" id="m3q1">
+    <span class="q-num">即时练习 3-1</span>
+    <p class="q-stem">三大战役中，歼敌人数最多的是哪场战役？</p>
+    <div class="q-options">
+      <div class="q-opt" onclick="answer(this,'m3q1','A','B')"><div class="opt-key">A</div>辽沈战役（歼敌47万）</div>
+      <div class="q-opt" onclick="answer(this,'m3q1','B','B')"><div class="opt-key">B</div>淮海战役（歼敌55万）</div>
+      <div class="q-opt" onclick="answer(this,'m3q1','C','B')"><div class="opt-key">C</div>平津战役（歼灭改编52万）</div>
+      <div class="q-opt" onclick="answer(this,'m3q1','D','B')"><div class="opt-key">D</div>渡江战役</div>
+    </div>
+    <div class="q-feedback feedback-correct" id="m3q1-fb-correct">✅ 正确！淮海战役歼敌55万，是三大战役中规模最大、歼敌最多的战役，被称为"小车推出来的胜利"。</div>
+    <div class="q-feedback feedback-wrong" id="m3q1-fb-wrong">❌ 不对。三大战役中，淮海战役歼敌55万，人数最多；辽沈47万，平津52万。</div>
+  </div>
+
+  <div class="q-block" id="m3q2">
+    <span class="q-num">即时练习 3-2</span>
+    <p class="q-stem">平津战役中，北平是如何解放的？</p>
+    <div class="q-options">
+      <div class="q-opt" onclick="answer(this,'m3q2','A','C')"><div class="opt-key">A</div>经过激烈的城市攻坚战</div>
+      <div class="q-opt" onclick="answer(this,'m3q2','B','C')"><div class="opt-key">B</div>通过外交途径谈判解决</div>
+      <div class="q-opt" onclick="answer(this,'m3q2','C','C')"><div class="opt-key">C</div>国民党将领傅作义率部接受和平改编</div>
+      <div class="q-opt" onclick="answer(this,'m3q2','D','C')"><div class="opt-key">D</div>苏联军队协助解放</div>
+    </div>
+    <div class="q-feedback feedback-correct" id="m3q2-fb-correct">✅ 正确！傅作义接受中共和平谈判条件，率部接受改编，北平和平解放，保护了这座千年古都。</div>
+    <div class="q-feedback feedback-wrong" id="m3q2-fb-wrong">❌ 不对。北平是通过国民党将领傅作义接受和平改编方式解放的，避免了战争破坏。</div>
+  </div>
+</section>
+
+<!-- ═══ 模块四：新民主主义革命胜利 ═══ -->
+<section id="module4">
+  <h2 class="section-title">模块四 · 新民主主义革命胜利</h2>
+
+  <div class="abt-block">
+    <div class="abt-label">引入情境 (ABT Narrative)</div>
+    <p>
+      三大战役后，国民党的主要军事力量被消灭。<strong>然而</strong>，蒋介石仍试图依托长江天堑重整旗鼓。<strong>因此</strong>，1949年4月，人民解放军百万雄师强渡长江，解放南京，宣告统治中国22年的国民政府覆灭，新民主主义革命取得了基本胜利，中华人民共和国宣告成立。
+    </p>
+  </div>
+
+  <div class="tts-player" id="tts-m4">
+    <button class="tts-btn" onclick="playTTS('tts/module4.mp3','tts-m4')">▶</button>
+    <div class="tts-label">🔊 模块四语音讲解</div>
+    <div class="tts-progress"><div class="tts-progress-bar" id="tts-m4-bar"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="module-header">渡江战役与南京解放</div>
+    <div class="timeline-item">
+      <div class="timeline-dot" style="background:#34d399"></div>
+      <div class="timeline-content">
+        <span class="timeline-year">1949年4月21日</span>
+        <p>毛泽东、朱德发布《向全国进军的命令》，<strong>百万雄师强渡长江</strong>，突破国民党苦心经营的长江防线。</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot" style="background:#34d399"></div>
+      <div class="timeline-content">
+        <span class="timeline-year">1949年4月23日</span>
+        <p>人民解放军解放<strong>南京</strong>，宣告统治中国22年的<strong>国民政府覆灭</strong>。</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot" style="background:#fbbf24"></div>
+      <div class="timeline-content">
+        <span class="timeline-year">1949年10月1日</span>
+        <p>毛泽东在北京天安门城楼上向全世界宣告：<strong>中华人民共和国成立</strong>，"中国人民从此站起来了"。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 解放战争时间线插图 -->
+  <img src="assets/illustrations/liberation-timeline.png" alt="解放战争时间线" class="illustration">
+
+  <!-- 教学动画视频 -->
+  <div class="card">
+    <div class="module-header">🎬 教学动画：解放战争三幕</div>
+    <video controls preload="metadata">
+      <source src="assets/video/liberation-war-animation.mp4" type="video/mp4">
+      您的浏览器不支持 HTML5 视频播放。
+    </video>
+    <p style="color:var(--text2);font-size:.82rem;margin-top:8px">动画包含：从谈判到内战 · 三大战役时间线 · 新民主主义革命的胜利</p>
+  </div>
+
+  <div class="card">
+    <div class="module-header">新民主主义革命胜利的历史意义</div>
+    <div class="card-grid">
+      <div style="background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.2);border-radius:10px;padding:16px">
+        <h4 style="color:#34d399;margin-bottom:8px">国内意义</h4>
+        <p style="font-size:.88rem">结束了近代以来中国半殖民地半封建社会的历史，实现了中华民族的独立和人民的解放</p>
+      </div>
+      <div style="background:rgba(96,165,250,.06);border:1px solid rgba(96,165,250,.2);border-radius:10px;padding:16px">
+        <h4 style="color:#60a5fa;margin-bottom:8px">国际意义</h4>
+        <p style="font-size:.88rem">改变了世界政治格局，壮大了世界和平、民主和社会主义力量，鼓舞了被压迫民族的解放斗争</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="module-header">新民主主义革命胜利的基本经验</div>
+    <ul class="obj-list">
+      <li><div class="obj-icon">1</div><span><strong>中国共产党的正确领导</strong>——最根本原因，党始终代表人民利益</span></li>
+      <li><div class="obj-icon">2</div><span><strong>马克思主义与中国实际相结合</strong>——形成了毛泽东思想，找到了正确的革命道路</span></li>
+      <li><div class="obj-icon">3</div><span><strong>人民群众的广泛支持</strong>——人民战争思想，"人民军队爱人民"</span></li>
+      <li><div class="obj-icon">4</div><span><strong>建立最广泛的统一战线</strong>——团结一切可以团结的力量</span></li>
+    </ul>
+  </div>
+
+  <!-- 即时练习 -->
+  <div class="q-block" id="m4q1">
+    <span class="q-num">即时练习 4-1</span>
+    <p class="q-stem">渡江战役后，人民解放军于1949年4月23日解放了哪座城市，宣告国民政府覆灭？</p>
+    <div class="q-options">
+      <div class="q-opt" onclick="answer(this,'m4q1','A','C')"><div class="opt-key">A</div>上海</div>
+      <div class="q-opt" onclick="answer(this,'m4q1','B','C')"><div class="opt-key">B</div>武汉</div>
+      <div class="q-opt" onclick="answer(this,'m4q1','C','C')"><div class="opt-key">C</div>南京</div>
+      <div class="q-opt" onclick="answer(this,'m4q1','D','C')"><div class="opt-key">D</div>广州</div>
+    </div>
+    <div class="q-feedback feedback-correct" id="m4q1-fb-correct">✅ 正确！1949年4月23日，人民解放军解放南京，国民政府覆灭，统治中国22年的国民党政权垮台。</div>
+    <div class="q-feedback feedback-wrong" id="m4q1-fb-wrong">❌ 不对。1949年4月23日解放南京，南京是当时国民政府所在地，南京解放标志国民政府覆灭。</div>
+  </div>
+</section>
+
+<!-- ═══ 例题精讲 ═══ -->
+<section id="examples">
+  <h2 class="section-title">例题精讲</h2>
+
+  <div class="card">
+    <div class="module-header">📝 例题一（中考常考题型）</div>
+    <p style="margin-bottom:12px"><strong>题目：</strong>下列关于解放战争时期三大战役的说法，正确的是（  ）</p>
+    <p style="color:var(--text2);font-size:.9rem;margin-bottom:8px">A. 辽沈战役的关键是攻克锦州，切断东北敌军的退路</p>
+    <p style="color:var(--text2);font-size:.9rem;margin-bottom:8px">B. 淮海战役后，人民解放军在数量上首次超过国民党军队</p>
+    <p style="color:var(--text2);font-size:.9rem;margin-bottom:8px">C. 平津战役中，北平经过激烈战斗被攻克</p>
+    <p style="color:var(--text2);font-size:.9rem;margin-bottom:16px">D. 三大战役中，渡江战役歼敌人数最多</p>
+    <div style="background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.3);border-radius:8px;padding:14px">
+      <p style="color:#34d399;font-weight:700;margin-bottom:8px">✅ 答案：A</p>
+      <p style="font-size:.9rem;color:var(--text2)">
+        <strong style="color:var(--text)">解题思路：</strong><br>
+        A项正确：辽沈战役的关键是先打锦州，"关门打狗"，切断东北敌军南逃和援军进入的通道。<br>
+        B项错误：辽沈战役（非淮海）结束后，解放军数量首次超过国民党。<br>
+        C项错误：北平是和平解放的，傅作义接受改编，避免了战争破坏。<br>
+        D项错误：渡江战役不属于三大战役；三大战役中歼敌最多的是淮海战役（55万）。
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="module-header">📝 例题二（材料分析题）</div>
+    <p style="margin-bottom:12px"><strong>材料：</strong>"淮海战役的胜利，是人民群众用小车推出来的。"——陈毅</p>
+    <p style="margin-bottom:12px"><strong>问题：</strong>结合材料，分析人民解放军能够取得解放战争胜利的原因。</p>
+    <div style="background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.3);border-radius:8px;padding:14px">
+      <p style="color:#60a5fa;font-weight:700;margin-bottom:8px">✅ 参考答案要点</p>
+      <p style="font-size:.9rem;color:var(--text2)">
+        ①<strong style="color:var(--text)">人民群众的广泛支持</strong>：淮海战役中，华东、中原解放区共出动民工543万人，推小车88万辆运送物资，体现了人民战争的伟大力量。<br><br>
+        ②<strong style="color:var(--text)">中国共产党的正确领导</strong>：党始终坚持为人民服务，深得人心。<br><br>
+        ③<strong style="color:var(--text)">正确的战略战术</strong>：灵活机动，集中优势兵力各个歼灭敌人。<br><br>
+        ④<strong style="color:var(--text)">国民党政权腐败失民心</strong>：国民党腐败专制，失去广大人民支持，是失败的根本原因。
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 记忆锚点 ═══ -->
+<section id="memory-anchor">
+  <h2 class="section-title">记忆锚点</h2>
+  <div class="anchor-box">
+    <div class="anchor-text">🎯 "两谈一战三战渡江"</div>
+    <div class="anchor-sub">
+      <strong>两谈</strong>：重庆谈判 + 政治协商会议<br>
+      <strong>一战</strong>：挺进大别山（战略反攻转折点）<br>
+      <strong>三战</strong>：辽沈（47万）+ 淮海（55万）+ 平津（52万）= 154万<br>
+      <strong>渡江</strong>：百万雄师渡长江，解放南京，1949.10.1建国
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 易错提示 ═══ -->
+<section id="common-mistakes">
+  <h2 class="section-title">易错提示（3条）</h2>
+
+  <div class="mistake-item">
+    <div class="m-label">❌ 易错点 1</div>
+    <div class="m-wrong">辽沈战役后解放军在数量上超过国民党 → 容易与淮海战役混淆</div>
+    <div class="m-right">✅ 正确：辽沈战役（1948.9—11）歼敌47万后，解放军数量首次超过国民党军队，此后敌我力量对比发生根本转变。</div>
+  </div>
+
+  <div class="mistake-item">
+    <div class="m-label">❌ 易错点 2</div>
+    <div class="m-wrong">平津战役中北平是经过激烈战斗攻占的</div>
+    <div class="m-right">✅ 正确：北平是和平解放的，国民党将领傅作义率20余万人接受和平改编，避免了古都遭受战争破坏。天津则是通过军事进攻解放的。</div>
+  </div>
+
+  <div class="mistake-item">
+    <div class="m-label">❌ 易错点 3</div>
+    <div class="m-wrong">《双十协定》签订后，双方真正实现了和平</div>
+    <div class="m-right">✅ 正确：《双十协定》签订于1945年10月10日，但国民党随后撕毁协定，1946年6月仍发动内战。协定的签订只是暂时的，国民党从未真正放弃发动内战的企图。</div>
+  </div>
+</section>
+
+<!-- ═══ AI 学伴 ═══ -->
+<section id="ai-companion">
+  <h2 class="section-title">AI 学伴</h2>
+  <div class="card" style="text-align:center;padding:24px">
+    <p style="font-size:1rem;margin-bottom:8px">🤖 有不懂的地方？</p>
+    <p style="color:var(--text2);font-size:.9rem">点击右下角 <strong style="color:var(--primary)">AI 学伴</strong> 提问，随时获得解答！</p>
+  </div>
+</section>
+
+<!-- ═══ 综合任务 ═══ -->
+<section id="tasks">
+  <h2 class="section-title">综合任务（3级）</h2>
+
+  <div class="task-level l1">
+    <div class="t-label">L1 · 基础级（能做到）</div>
+    <p>完成一张"解放战争大事年表"，按时间顺序列出：重庆谈判、《双十协定》、政协会议、全面内战爆发、挺进大别山、三大战役（各战役时间、地点、结果）、渡江战役、南京解放、新中国成立。</p>
+  </div>
+
+  <div class="task-level l2">
+    <div class="t-label">L2 · 提高级（能分析）</div>
+    <p>以"为什么说解放战争的胜利是人民的选择？"为题，从军事、政治、经济三个角度，分析国民党失败和共产党胜利的原因，写一篇200字左右的短论文。</p>
+  </div>
+
+  <div class="task-level l3">
+    <div class="t-label">L3 · 挑战级（能评价）</div>
+    <p>研究比较：毛泽东为什么要亲赴重庆谈判？谈判对共产党有什么利弊？结合史实，评价重庆谈判在解放战争中的历史地位，写一篇不少于300字的历史小论文，要有论点、论据和结论。</p>
+  </div>
+</section>
+
+<!-- ═══ 后测 ═══ -->
+<section id="quiz">
+  <h2 class="section-title">后测·五题测验</h2>
+
+  <div class="q-block" id="post1">
+    <span class="q-num">后测 1</span>
+    <p class="q-stem">1945年，毛泽东赴重庆与蒋介石谈判，双方签订的协议是？</p>
+    <div class="q-options">
+      <div class="q-opt" onclick="answer(this,'post1','A','B')"><div class="opt-key">A</div>《停战协定》</div>
+      <div class="q-opt" onclick="answer(this,'post1','B','B')"><div class="opt-key">B</div>《双十协定》</div>
+      <div class="q-opt" onclick="answer(this,'post1','C','B')"><div class="opt-key">C</div>《国共合作宣言》</div>
+      <div class="q-opt" onclick="answer(this,'post1','D','B')"><div class="opt-key">D</div>《中苏友好同盟互助条约》</div>
+    </div>
+    <div class="q-feedback feedback-correct" id="post1-fb-correct">✅ 正确！1945年10月10日，国共双方签订《双十协定》（因日期是10月10日），确定和平建国方针。</div>
+    <div class="q-feedback feedback-wrong" id="post1-fb-wrong">❌ 不对。重庆谈判的结果是签订《双十协定》（1945年10月10日），内容是确定和平建国方针。</div>
+  </div>
+
+  <div class="q-block" id="post2">
+    <span class="q-num">后测 2</span>
+    <p class="q-stem">1947年，揭开人民解放军战略反攻序幕的军事行动是？</p>
+    <div class="q-options">
+      <div class="q-opt" onclick="answer(this,'post2','A','C')"><div class="opt-key">A</div>平型关大捷</div>
+      <div class="q-opt" onclick="answer(this,'post2','B','C')"><div class="opt-key">B</div>辽沈战役</div>
+      <div class="q-opt" onclick="answer(this,'post2','C','C')"><div class="opt-key">C</div>刘邓大军千里挺进大别山</div>
+      <div class="q-opt" onclick="answer(this,'post2','D','C')"><div class="opt-key">D</div>百万雄师渡长江</div>
+    </div>
+    <div class="q-feedback feedback-correct" id="post2-fb-correct">✅ 正确！1947年6月，刘邓大军千里挺进大别山，揭开战略反攻序幕，是解放战争重大转折点。</div>
+    <div class="q-feedback feedback-wrong" id="post2-fb-wrong">❌ 不对。1947年刘邓大军挺进大别山揭开战略反攻序幕，而非其他军事行动。</div>
+  </div>
+
+  <div class="q-block" id="post3">
+    <span class="q-num">后测 3</span>
+    <p class="q-stem">三大战役按时间顺序，正确的排列是？</p>
+    <div class="q-options">
+      <div class="q-opt" onclick="answer(this,'post3','A','B')"><div class="opt-key">A</div>淮海→辽沈→平津</div>
+      <div class="q-opt" onclick="answer(this,'post3','B','B')"><div class="opt-key">B</div>辽沈→淮海（与平津同期）→渡江</div>
+      <div class="q-opt" onclick="answer(this,'post3','C','B')"><div class="opt-key">C</div>平津→辽沈→淮海</div>
+      <div class="q-opt" onclick="answer(this,'post3','D','B')"><div class="opt-key">D</div>辽沈→平津→淮海</div>
+    </div>
+    <div class="q-feedback feedback-correct" id="post3-fb-correct">✅ 正确！辽沈（1948.9—11）→ 淮海与平津几乎同期（1948.11—1949.1）→ 渡江战役（1949.4）。</div>
+    <div class="q-feedback feedback-wrong" id="post3-fb-wrong">❌ 不对。辽沈（1948年9—11月）最先，然后是淮海和平津几乎同时（1948年11月至1949年1月）。</div>
+  </div>
+
+  <div class="q-block" id="post4">
+    <span class="q-num">后测 4</span>
+    <p class="q-stem">1949年4月，人民解放军渡江战役后，解放了哪座城市，宣告国民政府灭亡？</p>
+    <div class="q-options">
+      <div class="q-opt" onclick="answer(this,'post4','A','B')"><div class="opt-key">A</div>上海</div>
+      <div class="q-opt" onclick="answer(this,'post4','B','B')"><div class="opt-key">B</div>南京</div>
+      <div class="q-opt" onclick="answer(this,'post4','C','B')"><div class="opt-key">C</div>北平</div>
+      <div class="q-opt" onclick="answer(this,'post4','D','B')"><div class="opt-key">D</div>武汉</div>
+    </div>
+    <div class="q-feedback feedback-correct" id="post4-fb-correct">✅ 正确！1949年4月23日解放南京，国民政府覆灭，统治中国22年的国民党政权垮台。</div>
+    <div class="q-feedback feedback-wrong" id="post4-fb-wrong">❌ 不对。1949年4月23日，人民解放军解放南京（国民政府所在地），宣告国民政府覆灭。</div>
+  </div>
+
+  <div class="q-block" id="post5">
+    <span class="q-num">后测 5</span>
+    <p class="q-stem">新民主主义革命胜利的最根本原因是？</p>
+    <div class="q-options">
+      <div class="q-opt" onclick="answer(this,'post5','A','B')"><div class="opt-key">A</div>人民解放军的英勇善战</div>
+      <div class="q-opt" onclick="answer(this,'post5','B','B')"><div class="opt-key">B</div>中国共产党的正确领导</div>
+      <div class="q-opt" onclick="answer(this,'post5','C','B')"><div class="opt-key">C</div>国民党军事部署失误</div>
+      <div class="q-opt" onclick="answer(this,'post5','D','B')"><div class="opt-key">D</div>苏联的大力援助</div>
+    </div>
+    <div class="q-feedback feedback-correct" id="post5-fb-correct">✅ 正确！中国共产党的正确领导是新民主主义革命胜利的最根本原因，党始终代表人民利益，深得人心。</div>
+    <div class="q-feedback feedback-wrong" id="post5-fb-wrong">❌ 不对。最根本原因是中国共产党的正确领导——坚持马克思主义，代表人民利益，赢得人民支持。</div>
+  </div>
+</section>
+
+<!-- ═══ 总结 ═══ -->
+<section id="summary">
+  <h2 class="section-title">课程总结</h2>
+  <div class="card">
+    <p style="font-size:.95rem;line-height:2">
+      解放战争（1946—1949年）是中国近现代史上决定性的历史时期。中国共产党领导人民解放军，经过<strong>战略防御</strong>（1946—1947）、<strong>战略反攻</strong>（1947年）和<strong>战略决战</strong>（1948—1949年）三个阶段，以辽沈、淮海、平津三大战役歼灭国民党主力154万人，最终以渡江战役推翻国民政府，建立了中华人民共和国。
+    </p>
+    <br>
+    <p style="font-size:.95rem;color:var(--text2)">
+      解放战争的胜利，是历史的必然选择——国民党失民心，共产党得民心；腐败政权终将被推翻，代表人民的政党必将胜利。这场战争深刻证明了"得民心者得天下"的历史规律。
+    </p>
+  </div>
+</section>
+
+<!-- ═══ 知识图谱 ═══ -->
+<section id="knowledge-map" class="knowledge-map-section">
+  <h2 class="section-title">知识图谱</h2>
+  <div class="kg-wrap">
+    <a href="https://weponusa.github.io/teachany/knowledge-graph.html?node=hist-m-anti-japan-war" class="kg-node" target="_blank">
+      <div class="kn-sub">前置</div>
+      <div class="kn-name">抗日战争</div>
+    </a>
+    <div class="kg-arrow">→</div>
+    <div class="kg-node active">
+      <div class="kn-sub">当前</div>
+      <div class="kn-name">解放战争</div>
+    </div>
+    <div class="kg-arrow">→</div>
+    <a href="https://weponusa.github.io/teachany/knowledge-graph.html?node=hist-m-new-democratic-revolution" class="kg-node" target="_blank">
+      <div class="kn-sub">后续</div>
+      <div class="kn-name">新民主主义革命</div>
+    </a>
+    <div class="kg-arrow">→</div>
+    <a href="https://weponusa.github.io/teachany/knowledge-graph.html?node=hist-m-modern-china-development" class="kg-node" target="_blank">
+      <div class="kn-sub">后续</div>
+      <div class="kn-name">新中国的成立与发展</div>
+    </a>
+  </div>
+  <p style="text-align:center;color:var(--text2);font-size:.85rem;margin-top:8px">
+    点击节点可跳转至主站知识图谱，查看完整学习路径
+  </p>
+</section>
+
+</div><!-- /container -->
+
+<!-- 全局 TTS 控制器 -->
+<div id="tts-controller" title="全局TTS控制">
+  <button onclick="stopAllTTS()" style="background:none;border:none;cursor:pointer;color:var(--text2);font-size:1rem" title="停止播放">⏹</button>
+  <span>音频控制</span>
+</div>
+
+<!-- AI 学伴 -->
+<div id="ai-assistant"></div>
+
+<script src="./ai-tutor.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ─── 进度条 ───
+window.addEventListener('scroll', () => {
+  const docH = document.documentElement.scrollHeight - window.innerHeight;
+  const prog = (window.scrollY / docH) * 100;
+  document.getElementById('progress-bar').style.width = prog + '%';
+});
+
+// ─── 答题逻辑 ───
+function answer(el, qid, chosen, correct) {
+  const block = document.getElementById(qid);
+  if (block.dataset.answered) return;
+  block.dataset.answered = '1';
+  block.querySelectorAll('.q-opt').forEach(o => o.style.pointerEvents = 'none');
+  if (chosen === correct) {
+    el.classList.add('correct');
+    const fb = document.getElementById(qid + '-fb-correct');
+    if (fb) { fb.style.display = 'block'; }
+  } else {
+    el.classList.add('wrong');
+    const fb = document.getElementById(qid + '-fb-wrong');
+    if (fb) { fb.style.display = 'block'; }
+    // 标记正确选项
+    block.querySelectorAll('.q-opt').forEach(o => {
+      if (o.textContent.trim().startsWith(correct)) o.classList.add('correct');
+    });
+  }
+}
+
+// ─── TTS 播放 ───
+let currentAudio = null;
+function playTTS(src, playerId) {
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+  const audio = new Audio(src);
+  currentAudio = audio;
+  const bar = document.getElementById(playerId + '-bar');
+  const btn = document.querySelector('#' + playerId + ' .tts-btn');
+  if (btn) btn.textContent = '⏸';
+  audio.addEventListener('timeupdate', () => {
+    if (bar && audio.duration) {
+      bar.style.width = (audio.currentTime / audio.duration * 100) + '%';
+    }
+  });
+  audio.addEventListener('ended', () => {
+    if (bar) bar.style.width = '0';
+    if (btn) btn.textContent = '▶';
+    currentAudio = null;
+  });
+  audio.play().catch(e => console.warn('TTS play failed:', e));
+}
+
+function stopAllTTS() {
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  document.querySelectorAll('.tts-btn').forEach(b => b.textContent = '▶');
+  document.querySelectorAll('.tts-progress-bar').forEach(b => b.style.width = '0');
+}
+
+// ─── IntersectionObserver 自动触发 TTS ───
+const ttsMap = {
+  'module1': 'tts/module1.mp3',
+  'module2': 'tts/module2.mp3',
+  'module3': 'tts/module3.mp3',
+  'module4': 'tts/module4.mp3',
+};
+const ttsObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting && !entry.target.dataset.ttsPlayed) {
+      entry.target.dataset.ttsPlayed = '1';
+      const id = entry.target.id;
+      const src = ttsMap[id];
+      if (src) {
+        setTimeout(() => { if (!currentAudio) playTTS(src, 'tts-' + id.replace('module','m')); }, 800);
+      }
+    }
+  });
+}, { threshold: 0.4 });
+['module1','module2','module3','module4'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) ttsObserver.observe(el);
+});
+
+// ─── Canvas 三大战役战果统计图 ───
+(function() {
+  const canvas = document.getElementById('campaignChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const data = [
+    { name: '辽沈战役', value: 47, color: '#3b82f6', detail: '辽沈战役（1948.9—11）：歼敌47万，解放东北全境，解放军数量首次超过国民党。关键：先打锦州，关门打狗。' },
+    { name: '淮海战役', value: 55, color: '#10b981', detail: '淮海战役（1948.11—1949.1）：歼敌55万，规模最大，解放长江中下游以北。"人民群众用小车推出来的胜利"。' },
+    { name: '平津战役', value: 52, color: '#f59e0b', detail: '平津战役（1948.11—1949.1）：歼灭改编52万，北平和平解放，保护千年古都。傅作义率部接受改编。' },
+  ];
+  const maxVal = 60;
+  const W = canvas.width, H = canvas.height;
+  const padL = 60, padR = 20, padT = 30, padB = 50;
+  const barW = (W - padL - padR) / data.length * 0.55;
+  const gap = (W - padL - padR) / data.length;
+
+  function draw(hoverIdx) {
+    ctx.clearRect(0, 0, W, H);
+    // 背景
+    ctx.fillStyle = 'rgba(15,23,42,0.0)';
+    ctx.fillRect(0, 0, W, H);
+    // Y轴网格
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    for (let v = 0; v <= maxVal; v += 10) {
+      const y = padT + (H - padT - padB) * (1 - v / maxVal);
+      ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+      ctx.fillStyle = '#475569'; ctx.font = '12px sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText(v + '万', padL - 6, y + 4);
+    }
+    // 柱状
+    data.forEach((d, i) => {
+      const x = padL + i * gap + (gap - barW) / 2;
+      const barH = (d.value / maxVal) * (H - padT - padB);
+      const y = H - padB - barH;
+      ctx.fillStyle = i === hoverIdx ? '#f1f5f9' : d.color;
+      ctx.globalAlpha = i === hoverIdx ? 1 : 0.82;
+      // 圆角矩形
+      const r = 6;
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + barW - r, y);
+      ctx.quadraticCurveTo(x + barW, y, x + barW, y + r);
+      ctx.lineTo(x + barW, y + barH);
+      ctx.lineTo(x, y + barH);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      // 数值标签
+      ctx.fillStyle = '#f1f5f9'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(d.value + '万', x + barW / 2, y - 8);
+      // X轴标签
+      ctx.fillStyle = i === hoverIdx ? '#fbbf24' : '#94a3b8';
+      ctx.font = '13px sans-serif';
+      ctx.fillText(d.name, x + barW / 2, H - padB + 20);
+    });
+    // 总计
+    ctx.fillStyle = '#f87171'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('合计歼敌 154万', W / 2, H - 6);
+  }
+
+  draw(-1);
+
+  canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX - rect.left) * (W / rect.width);
+    let hovered = -1;
+    data.forEach((d, i) => {
+      const x = padL + i * gap + (gap - barW) / 2;
+      if (mx >= x && mx <= x + barW) hovered = i;
+    });
+    draw(hovered);
+    canvas.style.cursor = hovered >= 0 ? 'pointer' : 'default';
+  });
+
+  canvas.addEventListener('click', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX - rect.left) * (W / rect.width);
+    data.forEach((d, i) => {
+      const x = padL + i * gap + (gap - barW) / 2;
+      if (mx >= x && mx <= x + barW) {
+        const detailEl = document.getElementById('chart-detail');
+        detailEl.style.display = 'block';
+        detailEl.innerHTML = '<strong style="color:#fbbf24">' + d.name + '</strong><br>' + d.detail;
+      }
+    });
+  });
+
+  canvas.addEventListener('mouseleave', () => draw(-1));
+})();
+
+// ─── Leaflet 地图：三大战役位置 ───
+(function() {
+  const mapEl = document.getElementById('campaigns-map');
+  if (!mapEl || typeof L === 'undefined') return;
+  try {
+    const map = L.map('campaigns-map', { crs: L.CRS.EPSG4326 }).setView([38, 115], 4);
+
+    // 使用 OSM 地图（在线）
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 10
+    }).addTo(map);
+
+    const campaigns = [
+      {
+        name: '辽沈战役',
+        lat: 41.8,
+        lng: 123.4,
+        color: '#3b82f6',
+        info: '辽沈战役（1948.9—11）\n指挥：林彪、罗荣桓\n歼敌：47万\n解放东北全境'
+      },
+      {
+        name: '淮海战役',
+        lat: 34.3,
+        lng: 117.2,
+        color: '#10b981',
+        info: '淮海战役（1948.11—1949.1）\n指挥：刘伯承、陈毅等\n歼敌：55万\n以徐州为中心'
+      },
+      {
+        name: '平津战役',
+        lat: 39.9,
+        lng: 116.4,
+        color: '#f59e0b',
+        info: '平津战役（1948.11—1949.1）\n指挥：林彪、罗荣桓、聂荣臻\n歼灭改编：52万\n北平和平解放'
+      },
+      {
+        name: '大别山（反攻起点）',
+        lat: 31.4,
+        lng: 115.5,
+        color: '#f87171',
+        info: '1947年6月，刘邓大军千里挺进大别山\n揭开战略反攻序幕'
+      },
+      {
+        name: '南京（渡江战役）',
+        lat: 32.1,
+        lng: 118.8,
+        color: '#a78bfa',
+        info: '1949.4.23 解放南京\n国民政府覆灭'
+      },
+    ];
+
+    campaigns.forEach(c => {
+      const circleMarker = L.circleMarker([c.lat, c.lng], {
+        radius: 10,
+        fillColor: c.color,
+        color: '#fff',
+        weight: 2,
+        opacity: 0.9,
+        fillOpacity: 0.85
+      }).addTo(map);
+
+      const label = L.divIcon({
+        html: '<div style="color:#fff;font-size:11px;font-weight:700;white-space:nowrap;text-shadow:1px 1px 2px rgba(0,0,0,.8);background:rgba(15,23,42,.7);padding:2px 6px;border-radius:4px">' + c.name + '</div>',
+        className: '',
+        iconAnchor: [-12, 10]
+      });
+      L.marker([c.lat, c.lng], { icon: label }).addTo(map);
+      circleMarker.bindPopup('<strong style="color:#fbbf24">' + c.name + '</strong><br><pre style="font-size:12px;margin:6px 0 0;color:#94a3b8">' + c.info + '</pre>');
+    });
+  } catch(e) {
+    mapEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text2)">地图加载中...</div>';
+  }
+})();
+</script>
+</body>
+</html>
