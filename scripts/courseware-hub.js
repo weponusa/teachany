@@ -24,7 +24,7 @@
 /* ─── 常量 ────────────────────────────────────── */
 const HUB_REGISTRY_URL = './registry.json';
 const HUB_COMMUNITY_URL = './community/index.json';
-const HUB_CACHE_KEY = 'teachany_hub_cache_v1';
+const HUB_CACHE_KEY = 'teachany_hub_cache_v2'; // v2: 强制刷新含英国革命课件
 const HUB_CACHE_TTL = 15 * 60 * 1000; // 15 分钟
 
 /* ─── 内部状态 ────────────────────────────────── */
