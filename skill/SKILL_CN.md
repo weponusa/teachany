@@ -2402,10 +2402,20 @@ AI **仅在以下情况添加** AI 多模态互动区：
 > 5. **有且仅有精确匹配**：不接受部分匹配、模糊匹配、同学科替代
 > 6. ⛔ **绝对禁止**：使用其他课件的 Hero 图、模糊匹配其他课件的 Hero 图、从任何数据源中选一个"看起来像"的 Hero 图凑数
 >
-> **为什么不用 image_gen 自动生成？**
+> **为什么课件生成阶段不用 image_gen 自动生成？**
 > Hero 图是**知识结构信息图**，包含完整的知识点层级和关键术语。AI 实时生成的图片无法保证知识结构的准确性和一致性。
-> Hero 图只能由**项目维护者统一预生成并审核**后录入知识点 JSON 的 `images.hero` 字段。
+> **课件生成阶段**（Phase 3）中，Hero 图只能从预制图库精确匹配下载，未命中则留空。
 > 如果某个 node_id 还没有预制 Hero 图，就留空等待后续补充，**不要自动生成凑数**。
+>
+> **⭐ 维护者补充 Hero 图的 SOP（v7.1 新增）**：
+> 当课件发布时发现 Hero 图留空（Phase 3.6 步骤⑤自动检测），**维护者（非普通课件制作者）** 应执行以下流程：
+> 1. 使用 `image_gen` 工具生成 Hero 知识结构信息图，prompt 参照本 Section 的 prompt 策略表
+> 2. 将生成的图片上传到 `weponusa/teachany-images` 仓库的 `{subject}/` 目录下
+> 3. 运行 `python3 scripts/image_resolver.py register --node-id {node_id} --slot hero --subject {subject} --file {cdn_path}` 注册到 `image-registry.json`
+> 4. 将图片下载到课件目录 `assets/hero/{node_id}-hero.png`，并在 `index.html` 的 `<section class="hero">` 中插入 `<img>` 标签
+> 5. 重新 commit + push
+>
+> **区分**：课件生成阶段（AI Skill 自动化）严禁 image_gen 生成 Hero 图；维护者补充阶段（人工/半自动）允许 image_gen 生成后审核注册。
 
 > ⚠️ **HTML 引用铁律（v6.3 新增）**：当 Hero 图精确命中时，**必须以 `<img>` 标签嵌入** `<section class="hero">` 内部，放在 `<h1>` 标题之前。
 >
@@ -4958,6 +4968,31 @@ Step 4️⃣ 发布完成后告知用户
    知识地图节点入口：
    https://weponusa.github.io/teachany/knowledge-tree.html?subject=<subject>&node=<node_id>
    ```
+
+⑤ Hero 图空缺检测与补充（v7.1 新增）
+   ```bash
+   # 检测新发布课件是否缺少 hero 图
+   COURSE_DIR="community/<course-id>"  # 或 examples/<course-id>
+   NODE_ID=$(jq -r .node_id ${COURSE_DIR}/manifest.json)
+   
+   if [ ! -f "${COURSE_DIR}/assets/hero/${NODE_ID}-hero.png" ]; then
+     echo "⚠️ Hero 图缺失：${NODE_ID}"
+     echo "   需要维护者执行 Hero 图补充 SOP（见 Section 10.4.1）"
+   fi
+   ```
+   
+   **自动补充流程**（维护者模式下执行）：
+   a. 检测 `assets/hero/{node_id}-hero.png` 是否存在
+   b. 不存在 → 使用 `image_gen` 生成 Hero 知识结构信息图
+      - prompt 模板："【课题名】知识结构信息图，中心主题为【核心概念】，分支包括【要点1】【要点2】...，清晰教育信息图风格，配色明快"
+   c. 保存到 `assets/hero/{node_id}-hero.png`
+   d. 在 `index.html` 的 `<section class="hero">` 中 `<h1>` 标签前插入：
+      `<img src="./assets/hero/{node_id}-hero.png" class="hero-img" alt="【课题名】知识结构图">`
+   e. 注册到 `image-registry.json`（使用 `image_resolver.py register`）
+   f. 重新 commit（hero 图补充可与步骤③合并提交）
+   
+   ⛔ 此步骤仅限维护者（管理员）执行，普通课件制作阶段（Phase 3）不得触发。
+   ⛔ 生成的 hero 图必须经维护者肉眼确认知识结构正确后再 push。
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
