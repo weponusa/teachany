@@ -2347,16 +2347,17 @@ AI **仅在以下情况添加** AI 多模态互动区：
 > | `hist-m-english-revolution` | `hist-m-english-revolution-hero.png` | `<img src="./assets/hero/hist-m-english-revolution-hero.png" class="hero-img">` |
 > | `bio-photosynthesis` | `bio-photosynthesis-hero.png` | `<img src="./assets/hero/bio-photosynthesis-hero.png" class="hero-img">` |
 >
-> **查找规则（写死，不可更改）**：
-> 1. 在 `image-registry.json` 中查找 `slot=hero` **且** `match_nodes` 数组**包含**当前课件的 `node_id` 的记录
-> 2. **有且仅有精确匹配**：`match_nodes` 必须包含完整的 `node_id` 字符串，不接受部分匹配、模糊匹配、同学科替代
-> 3. **精确命中** → 从 CDN `url` 字段下载到 `assets/hero/{node_id}-hero.png`
-> 4. **未命中** → **留空**（Hero 区 `<img>` 标签的 `src` 设为空字符串或不插入 `<img>` 标签），在 Completeness Gate 中标注"Hero 图未命中，需人工补充"
-> 5. ⛔ **绝对禁止**：使用其他课件的 Hero 图、模糊匹配其他课件的 Hero 图、从 `image-registry.json` 中选一个"看起来像"的 Hero 图凑数
+> **查找规则（v7.0 重构，写死，不可更改）**：
+> 1. **第一入口（知识点 JSON）**：读取当前课件对应的知识点 JSON 文件（`data/knowledge-points/{curriculum}/{stage}/{subject}.json`），找到 `node_id` 匹配的知识点，读取其 `images.hero` 字段
+> 2. **`images.hero` 非 null** → 拼接 CDN URL：`https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/{images.hero}`，下载到 `assets/hero/{node_id}-hero.png`
+> 3. **`images.hero` 为 null** → **备查 `image-registry.json`**：在 `image-registry.json` 中查找 `slot=hero` 且 `match_nodes` 包含当前 `node_id` 的记录（兼容新增图片尚未注入 JSON 的过渡期）
+> 4. **两处均未命中** → **留空**（Hero 区 `<img>` 标签的 `src` 设为空字符串或不插入 `<img>` 标签），在 Completeness Gate 中标注"Hero 图未命中，需人工补充"
+> 5. **有且仅有精确匹配**：不接受部分匹配、模糊匹配、同学科替代
+> 6. ⛔ **绝对禁止**：使用其他课件的 Hero 图、模糊匹配其他课件的 Hero 图、从任何数据源中选一个"看起来像"的 Hero 图凑数
 >
 > **为什么不用 image_gen 自动生成？**
 > Hero 图是**知识结构信息图**，包含完整的知识点层级和关键术语。AI 实时生成的图片无法保证知识结构的准确性和一致性。
-> Hero 图只能由**项目维护者统一预生成并审核**后录入 `image-registry.json`。
+> Hero 图只能由**项目维护者统一预生成并审核**后录入知识点 JSON 的 `images.hero` 字段。
 > 如果某个 node_id 还没有预制 Hero 图，就留空等待后续补充，**不要自动生成凑数**。
 
 > ⚠️ **HTML 引用铁律（v6.3 新增）**：当 Hero 图精确命中时，**必须以 `<img>` 标签嵌入** `<section class="hero">` 内部，放在 `<h1>` 标题之前。
@@ -2402,11 +2403,31 @@ AI **仅在以下情况添加** AI 多模态互动区：
 | **生物结构/过程** | 结构讲解区 | "【生物结构/过程】科学插图，标注清晰" | "植物细胞结构图，标注细胞壁、叶绿体、液泡，教育风格" |
 | **角色任务型情境** | 角色介绍卡 | "一个【角色身份】的卡通形象，友好亲切" | "一个穿着探险服的中学生卡通形象，手持放大镜" |
 
-**🖼️ Image Vault — 远程预制图片库优先查找（v5.37 重构）**：
+**🖼️ Image Vault — 远程预制图片库（v7.0 架构重构）**：
 
-> 📌 **核心原则**：TeachAny 为每个知识点预生成 **1 张 Hero 知识结构主图 + 3-4 张插图**（scene / experiment / concept / abt-intro），由项目维护者统一生成并存储在**独立的远程图片仓库**中，通过 jsDelivr CDN 全球加速分发。**Skill 安装包只携带轻量索引文件 `image-registry.json`（~50KB），不捆绑任何图片二进制文件。** 制作课件时 AI 按索引按需从 CDN 拉取图片，保证：
-> - 🚀 Skill 安装体积极小（不到 100KB 的索引 vs 之前 42MB 的图片目录）
-> - 🎨 图片质量一致、风格统一（项目维护者集中把控）
+> 📌 **核心原则**：TeachAny 为每个知识点预生成 **1 张 Hero 知识结构主图 + 3-4 张插图**（scene / experiment / concept / abt-intro），由项目维护者统一生成并存储在**独立的远程图片仓库**中，通过 jsDelivr CDN 全球加速分发。
+>
+> **v7.0 架构变更**：图片与知识点**强绑定**。每个知识点 JSON（`data/knowledge-points/{curriculum}/{stage}/{subject}.json`）的每个知识点新增 `images` 字段：
+> ```json
+> {
+>   "node_id": "math-m-rational-number",
+>   "name_zh": "有理数",
+>   "images": {
+>     "hero": "math/rational-number-hero.png",     // CDN 相对路径，null 表示无
+>     "illustrations": [
+>       { "slot": "scene", "file": "math/xxx-scene.png", "prompt": "..." }
+>     ]
+>   }
+> }
+> ```
+>
+> **数据源优先级**：
+> 1. **知识点 JSON `images` 字段**（第一入口） — AI 查图首选
+> 2. **`image-registry.json`**（全局备查） — 兼容新增图片尚未注入 JSON 的过渡期
+>
+> **好处**：
+> - 🎯 图片与知识点一一绑定，不存在误解和错连
+> - 🚀 AI 不需要遍历全量 registry，直接从知识点读取
 > - 💰 节省用户 `image_gen` 积分（已有预制图无需重新生成）
 > - 🌍 全球 CDN 边缘节点加速，任何地区用户秒级获取
 
@@ -2455,7 +2476,7 @@ https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/{subject}/{filename}
 > - `https://raw.githubusercontent.com/weponusa/teachany-images/main/{subject}/{filename}`
 > - `https://ghfast.top/https://raw.githubusercontent.com/weponusa/teachany-images/main/{subject}/{filename}`（中国大陆加速）
 
-**image-registry.json 关键字段（v5.37 新增 `url` 字段）**：
+**image-registry.json 关键字段（v7.0 角色：全局索引/备查，非第一入口）**：
 | 字段 | 说明 | 示例 |
 |:---|:---|:---|
 | `id` | 图片唯一标识 | `"math-quadratic-hero"` |
@@ -2466,39 +2487,45 @@ https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/{subject}/{filename}
 | `tags` | 模糊匹配标签 | `["quadratic-function", "parabola"]` |
 | `prompt` | 生成时使用的 prompt | 中国课标课程用中文 prompt，国际课程用英文 prompt（见 Prompt 语言规则） |
 
-**生图执行流程（v6.9 分类降级）**：
+**生图执行流程（v7.0 重构 — 知识点 JSON 优先）**：
 ```text
 1. AI 在编写 HTML 课件时识别需要图片的位置和 slot 类型
 
 2. 【Hero 图（slot=hero）—— 严格一一对应，不降级】
-   读取 assets/image-registry.json，查找 slot=hero 且 match_nodes 包含当前 node_id 的记录
-   → 精确命中：从 CDN url 字段下载到课件 assets/hero/{node_id}-hero.png
-   → 未命中：**留空**，不生成、不模糊匹配、不用别的课件的 hero 图
+   第一入口：读取知识点 JSON 的 images.hero 字段
+   → images.hero 非 null：拼接 CDN URL 下载到课件 assets/hero/{node_id}-hero.png
+   → images.hero 为 null：备查 image-registry.json（slot=hero + match_nodes 精确匹配）
+   → 两处均未命中：**留空**，不生成、不模糊匹配、不用别的课件的 hero 图
    → HTML 中不插入 <img>，在注释中标注"hero 图待补充"
    → Completeness Gate 中标注"Hero 图未命中，需人工补充"
    ⛔ Hero 图绝对不走 image_gen 生成、不走 SVG 降级、不走模糊匹配
 
 3. 【插图（slot=scene/experiment/concept/abt-intro）—— 完整降级链】
-   3a. 【第一级：远程 Image Vault 预制图】
-       读取 assets/image-registry.json，按 match_nodes + slot 精确匹配
+   3a. 【第一级：知识点 JSON 预制插图】
+       读取知识点 JSON 的 images.illustrations 数组
+       → 有匹配 slot 的记录：拼接 CDN URL 下载到课件 assets/illustrations/{知识点ID}-{slot}.png
+       → 无匹配：进入 3b
+
+   3b. 【第二级：image-registry.json 备查】
+       读取 image-registry.json，按 match_nodes + slot 精确匹配
        → 命中：从 CDN url 字段下载到课件 assets/illustrations/{知识点ID}-{slot}.png
        → 若精确未命中，按 subject + tags 模糊匹配
        → 命中：同上下载 + 嵌入（在注释中标注"模糊匹配，建议人工确认"）
        → 若 CDN 主域不可达，自动切换备用域（见上方备用 CDN 列表）
 
-   3b. 【第二级：image_gen 实时生成】
-       若 Image Vault 完全未命中，调用 image_gen 工具实时生成
+   3c. 【第三级：image_gen 实时生成】
+       若知识点 JSON 和 Image Vault 均未命中，调用 image_gen 工具实时生成
        → prompt 遵循上方 Prompt 语言规则
        → 图片保存到课件 assets/illustrations/{知识点ID}-{slot}.png
        → 每张插图必须明确绑定到课件中的具体知识点
 
-   3c. 【第三级：代码生成 SVG 信息图】
-       若 Image Vault 和 image_gen 均不可用（离线环境 / 积分耗尽 / 工具不存在），
+   3d. 【第四级：代码生成 SVG 信息图】
+       若以上三级均不可用（离线环境 / 积分耗尽 / 工具不存在），
        AI 必须用 HTML 内联代码生成静态信息图（SVG / Canvas / CSS）
 
 4. 在 HTML 中以 <img src="./assets/hero/{node_id}-hero.png"> 嵌入 Hero 图
    以 <img src="./assets/illustrations/{知识点ID}-{slot}.png"> 嵌入插图
-   或以 <svg>...</svg> 内联嵌入（第三级）
+   或以 <svg>...</svg> 内联嵌入（第四级）
 ```
 
 **第三级 SVG 信息图生成规范**：
@@ -2530,50 +2557,48 @@ https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/{subject}/{filename}
 
 > 📌 **核心变更**：伪代码已实现为可执行脚本 `scripts/image_resolver.py`，与 `knowledge_layer.py` 采用相同的多评分匹配 + 别名支持 + 降级链设计。详细规范见 `docs/IMAGE-DISCOVERY-SPEC.md`。
 
-**AI 制作课件时的图片发现流程（Phase 0.5 必做）**：
+**AI 制作课件时的图片发现流程（Phase 0.5 必做，v7.0 重构）**：
 
 ```text
-1. 读取课件 manifest.json → 获取 node_id, subject, grade
-2. 读取 skill/assets/image-registry.json
-3. 分两类处理图片需求：
+1. 读取课件 manifest.json → 获取 node_id, subject, grade, curriculum, stage
+2. 【第一入口】读取知识点 JSON：data/knowledge-points/{curriculum}/{stage}/{subject}.json
+   → 找到 node_id 匹配的知识点，读取 images 字段
+   → images.hero  : Hero 图相对路径（如 "math/rational-number-hero.png"）或 null
+   → images.illustrations : 插图数组 [{ slot, file, prompt? }] 或空数组
+3. 【备查入口】读取 skill/assets/image-registry.json（知识点 JSON 未命中时使用）
+4. 分两类处理图片需求：
 
    ┌─────────────────────────────────────────────────────────────────┐
    │ A. Hero 图（slot=hero）—— 严格一一对应，不降级                  │
    ├─────────────────────────────────────────────────────────────────┤
-   │ 查找条件：slot=hero 且 match_nodes 包含当前 node_id             │
+   │ 优先：images.hero 非 null → 拼 CDN URL 下载                    │
+   │ 备查：image-registry.json slot=hero + match_nodes 精确匹配     │
    │ 命中 → 下载到 assets/hero/{node_id}-hero.png                   │
    │ 未命中 → 留空，不生成、不模糊匹配                               │
    └─────────────────────────────────────────────────────────────────┘
    
    ┌─────────────────────────────────────────────────────────────────┐
-   │ B. 插图（slot≠hero）—— 评分匹配 + 完整降级链                    │
+   │ B. 插图（slot≠hero）—— 知识点 JSON 优先 + 完整降级链            │
    ├──────────┬──────────────────────────────────────┬───────┐       │
-   │ 优先级   │ 匹配条件                              │ 分数  │       │
+   │ 优先级   │ 匹配条件                              │ 来源  │       │
    ├──────────┼──────────────────────────────────────┼───────┤       │
-   │ 精确匹配 │ node_id + slot 完全匹配 match_nodes  │  500  │       │
-   │ 别名匹配 │ NODE_ID_ALIASES 映射后 + slot 匹配   │  480  │       │
-   │ 跨slot   │ node_id 精确但 slot 不同              │  300  │       │
-   │ 模糊匹配 │ subject + slot + tags 交集            │ 200+  │       │
-   │ 学科匹配 │ subject + slot 仅学科一致             │  100  │       │
-   │ 交叉匹配 │ node_id 部分词出现在 tags 中          │  40+  │       │
-   │ 年级加分 │ grade 一致                            │  +30  │       │
+   │ 第一级   │ 知识点 JSON images.illustrations      │ JSON  │       │
+   │ 第二级   │ image-registry 精确匹配（node+slot）  │ 备查  │       │
+   │ 第三级   │ image-registry 模糊匹配（subject+tags）│ 备查  │       │
+   │ 第四级   │ image_gen 实时生成                     │ 生成  │       │
+   │ 第五级   │ SVG 代码内联                           │ 降级  │       │
    └──────────┴──────────────────────────────────────┴───────┘       │
-   │ 降级链：                                                        │
-   │ a. score ≥ 500 → 精确命中，下载到 assets/illustrations/         │
-   │ b. score ≥ 200 → 模糊命中，下载+标注"模糊匹配，建议人工确认"    │
-   │ c. 无匹配 → image_gen 实时生成 → 保存到 assets/illustrations/   │
-   │ d. image_gen 不可用 → 生成 SVG 代码内联                         │
    └─────────────────────────────────────────────────────────────────┘
 
-4. 每张插图必须绑定到课件中的具体知识点，文件名格式：
+5. 每张插图必须绑定到课件中的具体知识点，文件名格式：
    {知识点ID}-{slot}.png（如 taxi-meter-scene.png、photosynthesis-experiment.png）
 
-5. 在 HTML 中：
+6. 在 HTML 中：
    Hero 图 → <img src="./assets/hero/{node_id}-hero.png" class="hero-img">
    插图 → <img src="./assets/illustrations/{知识点ID}-{slot}.png" alt="描述">
    SVG → <svg>...</svg> 内联嵌入
 
-6. ⚠️ 新生成的插图（c步骤）自动反哺 image-registry.json
+7. ⚠️ 新生成的插图（第四级）自动反哺 image-registry.json + 知识点 JSON 的 images.illustrations
    → 下次同 node_id 课件不再重复生成
 ```
 
@@ -4367,12 +4392,12 @@ if __name__ == "__main__":
     └── *.mp4
 ```
 
-> ⚠️ **图片目录隔离铁律（v6.9 新增）**：
+> ⚠️ **图片目录隔离铁律（v7.0 更新）**：
 >
 > | 目录 | 存放内容 | 命名规则 | 来源 |
 > |:---|:---|:---|:---|
-> | `assets/hero/` | Hero 知识结构信息图 | `{node_id}-hero.png`（写死，只有一张） | 只从 `image-registry.json` 精确匹配下载，未命中则留空 |
-> | `assets/illustrations/` | 课件插图（scene/experiment/concept/abt-intro） | `{知识点ID}-{slot}.png`（每张绑定知识点） | 从 `image-registry.json` 匹配下载，或 `image_gen` 实时生成 |
+> | `assets/hero/` | Hero 知识结构信息图 | `{node_id}-hero.png`（写死，只有一张） | 优先查知识点 JSON `images.hero`，备查 `image-registry.json`，未命中则留空 |
+> | `assets/illustrations/` | 课件插图（scene/experiment/concept/abt-intro） | `{知识点ID}-{slot}.png`（每张绑定知识点） | 优先查知识点 JSON `images.illustrations`，备查 `image-registry.json`，或 `image_gen` 实时生成，或 SVG 降级 |
 > | `assets/video/` | Remotion 渲染的教学动画 | `{知识点ID}-{描述}.mp4` | Remotion 渲染输出 |
 >
 > ⛔ **严禁**：
