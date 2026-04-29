@@ -39,9 +39,9 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 | 能力 | 强制要求 | 实现方式 | 降级底线 |
 |:---|:---|:---|:---|
 | **① Edge-TTS 语音讲解** | 必须为每个知识模块生成独立 mp3 + 同步字幕；禁用浏览器 `speechSynthesis` | `pip install edge-tts` → 按 audioPlaylist 生成 `tts/*.mp3` + `*.srt` → HTML 内置滚动自动播放器（IntersectionObserver） | 至少保留 `tts/narration.json` 脚本 + 后续补录说明，不得整体省略 |
-| **② Remotion 程序化动画** | 课件必须含 **≥1 段真正用 Remotion 渲染的教学动画 mp4**（演示过程性变化），且 mp4 **必须三轨合一：画面 + 氛围音效/配乐 + TTS 语音朗读**（可选但强烈推荐） | Remotion + React + TS 渲染 1920×1080 @30fps → 输出 `assets/*.mp4` → 嵌入对应 section；音频通过 `<Audio src={staticFile(...)}/>` 叠加，ffmpeg 合成背景音效/edge-tts 生成语音旁白，放 `remotion/public/audio/` | ⛔ **无降级**。Canvas/SVG/CSS 动画不得替代 Remotion 基线；**仅有画面而无音频轨的哑片 mp4 视为不合规**（除非主题为纯视觉抽象且用户书面豁免音频）。缺 Remotion = 直接 Gate 不通过。特殊情况（无 Node 环境且无法安装）必须在 Gate 中明确声明并由用户书面豁免 |
+| **② Remotion 程序化动画** | 课件必须含 **≥1 段真正用 Remotion 渲染的教学动画 mp4**（演示过程性变化），且 mp4 **必须三轨合一：画面 + 氛围音效/配乐 + TTS 语音朗读**（可选但强烈推荐） | Remotion + React + TS 渲染 1920×1080 @30fps → 输出 `assets/video/*.mp4` → 嵌入对应 section；音频通过 `<Audio src={staticFile(...)}/>` 叠加，ffmpeg 合成背景音效/edge-tts 生成语音旁白，放 `remotion/public/audio/` | ⛔ **无降级**。Canvas/SVG/CSS 动画不得替代 Remotion 基线；**仅有画面而无音频轨的哑片 mp4 视为不合规**（除非主题为纯视觉抽象且用户书面豁免音频）。缺 Remotion = 直接 Gate 不通过。特殊情况（无 Node 环境且无法安装）必须在 Gate 中明确声明并由用户书面豁免 |
 | **③ Canvas 互动组件** | 课件必须含 **≥1 个 Canvas 互动组件**（拖拽、画板、参数调节、实时绘图） | 原生 `<canvas>` + JS 事件 → 学生可拖动/点击/滑动改变参数并实时反馈 | 若主题确实无合适 Canvas 场景（如纯文言字词课），必须用 SVG 交互动画替代，并在 Gate 中说明理由 |
-| **④ AI 生图 + 生视频** | 课件必须含 **≥2 张 image_gen 生成的情境/意境插图**；过程性学科（理/化/生/地/史）必须评估生视频需求 | Phase 3 阶段调用 `image_gen` → 存 `assets/*.png` → `<img>` 嵌入；必要时调用生视频工具产出 `assets/*.mp4` | 若完全纯计算题课，可在 Gate 标注"跳过生图"并附理由，但**文科、科学、工程、社科课件一律不得跳过生图** |
+| **④ AI 生图 + 生视频** | 课件必须含 **≥2 张 image_gen 生成的情境/意境插图**；过程性学科（理/化/生/地/史）必须评估生视频需求 | Phase 3 阶段调用 `image_gen` → 存 `assets/illustrations/*.png` → `<img>` 嵌入；必要时调用生视频工具产出 `assets/video/*.mp4` | 若完全纯计算题课，可在 Gate 标注"跳过生图"并附理由，但**文科、科学、工程、社科课件一律不得跳过生图** |
 
 ### 0.1 启用触发表
 
@@ -62,7 +62,7 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 2. **Phase 0.5**：必须自动检测 Node.js/npm/ffmpeg（Remotion 的前置依赖）；缺失则自动安装（见 Section 15.2），**不等待用户确认**
 3. **Generation Gate**：基线四项任一标注"跳过"必须附理由，且理由会被 Completeness Gate 二次审查；**Remotion 的跳过仅限 Node 环境完全不可用且安装失败，必须有用户书面豁免**
 4. **Phase 3（制作）**：若环境支持 `task` 工具，必须并行分发 Agent C（生图）+ Agent D（TTS）+ **Agent R（Remotion 渲染，默认必选）**
-5. **Completeness Gate**：四项全部校验（Remotion 必须检查 `assets/*.mp4` 真实存在、**含音频流**（`ffprobe` 可见 `codec_type=audio`）、且已嵌入 HTML `<video>` + 合理 `poster`），缺一不通过
+5. **Completeness Gate**：四项全部校验（Remotion 必须检查 `assets/video/*.mp4` 真实存在、**含音频流**（`ffprobe` 可见 `codec_type=audio`）、且已嵌入 HTML `<video>` + 合理 `poster`），缺一不通过
 
 ### 0.3 违反示例（禁止）
 
@@ -1328,8 +1328,8 @@ Hero 区（Hero 知识结构图 + 课题名称 + 学科/年级/课型标签）
 
   <!-- ═══ Hero 区 ═══ 必选 -->
   <section class="hero" id="hero">
-    <!-- ⭐ v6.3 强制：Hero 知识结构图（<img> 必须存在，降级链见 Section 10.4） -->
-    <img src="./assets/【节点ID】-hero.png" class="hero-img" alt="【课题名称】知识结构图">
+    <!-- ⭐ v6.9 强制：Hero 知识结构图（一一对应，精确匹配否则留空，见 Section 10.4） -->
+    <img src="./assets/hero/【节点ID】-hero.png" class="hero-img" alt="【课题名称】知识结构图">
     <h1>【课题名称】</h1>
     <div class="tags">
       <span class="tag">【学科】</span>
@@ -1787,7 +1787,7 @@ Hero 区（Hero 知识结构图 + 课题名称 + 学科/年级/课型标签）
 | **音频播放器** | L3 语音生成后，注入 `audioPlaylist` 数组（含 `sectionId` 字段关联对应 section）并确保骨架中的音频播放器引擎正常工作（IntersectionObserver 滚动自动播放 + 底部悬浮控制条：播放/暂停+进度条+调速+字幕）。**禁止**只添加隐藏 `<audio>` 标签而不提供播放 UI |
 | **视频播放器** | 视频**必须嵌入到对应知识模块的 section 内部**（而非集中放置），使用 `<video controls preload="metadata" playsinline>` + `<source>` 标签嵌入，外包 `.video-player` 容器 + `.video-caption` 说明。**优先使用 CSS/JS/Canvas/SVG 交互动画**演示过程性变化，仅当交互无法覆盖时才用 `<video>` 嵌入静态视频。**禁止**仅用 JS 动态创建视频元素 |
 | **知识图谱** | 必须注入 `knowledgeGraphData` 对象（从 `_graph.json` 的 `prerequisites` + `leads_to` 提取节点和边），当前节点高亮、有课件节点可点击跳转、无课件节点显示虚线框 |
-| **AI 生成的插图** | 使用 `image_gen` 生成后，以 `<img src="./assets/xxx.png">` 嵌入（详见 10.4.1） |
+| **AI 生成的插图** | 使用 `image_gen` 生成后，以 `<img src="./assets/illustrations/xxx.png">` 嵌入；Hero 图以 `<img src="./assets/hero/{node_id}-hero.png">` 嵌入（详见 10.4.1） |
 
 #### 10.2.2 统一导航规范
 
@@ -1922,7 +1922,7 @@ AI 在生成课件时，必须在 `<script>` 标签**最前面**（骨架 JS 之
 ```html
 <div class="video-player">
   <video controls preload="metadata" playsinline width="100%">
-    <source src="./assets/experiment-demo.mp4" type="video/mp4">
+    <source src="./assets/video/experiment-demo.mp4" type="video/mp4">
     您的浏览器不支持视频播放。
   </video>
 </div>
@@ -1939,7 +1939,7 @@ AI 在生成课件时，必须在 `<script>` 标签**最前面**（骨架 JS 之
 | `.video-player` 外包容器 | ✅ | 统一圆角和阴影样式 |
 | `.video-caption` 说明文字 | ✅ | 视频下方居中说明 |
 
-**Remotion 生成的视频**：L2 渲染完成后，将 `out/*.mp4` 复制到课件的 `assets/` 目录，然后在 HTML 中用上述模板嵌入。
+**Remotion 生成的视频**：L2 渲染完成后，将 `out/*.mp4` 复制到课件的 `assets/video/` 目录，然后在 HTML 中用上述模板嵌入。
 
 #### 10.2.5 音频播放器规范（L3 强制）
 
@@ -2292,24 +2292,53 @@ AI **仅在以下情况添加** AI 多模态互动区：
 >
 > Hero 图应包含：本课所有核心知识点、它们之间的层级/并列/因果关系、关键公式或术语、学习路径。视觉呈现为**思维导图 / 概念图 / 信息图**风格，让学生一眼看到本课的知识全貌。
 
-> ⚠️ **唯一性铁律（v6.8 新增）**：每个课件的 Hero 图必须是**专门为本课生成的知识结构图**。**严禁使用其他课件的 Hero 图**，即使是同一学科、相近知识点。Hero 图的知识结构与课件内容一一对应，错配会导致学生看到错误的知识全貌。
+> ⚠️ **一一对应铁律（v6.9 重写）**：Hero 图与课件 `node_id` 是**严格一一对应**关系。
 >
-> 从 Image Vault 查找 Hero 图时，**只接受精确匹配**（`match_nodes` 包含当前课件的 `node_id`，score ≥ 500）。如果精确未命中，必须跳过模糊匹配，直接用 `image_gen` 实时生成或 SVG 内联生成。**绝对不要用别的课件的 hero 图凑数。**
+> **命名规则（写死，不可更改）**：
+> - **文件名**：`{node_id}-hero.png`（node_id 中的分隔符保持原样）
+> - **存放目录**：课件根目录下的 `assets/hero/` 文件夹（v6.9 分目录结构）
+> - **HTML 引用**：`<img src="./assets/hero/{node_id}-hero.png" class="hero-img">`
+>
+> **示例**：
+> | node_id | Hero 图文件名 | HTML 引用 |
+> |:---|:---|:---|
+> | `math-m-linear-function` | `math-m-linear-function-hero.png` | `<img src="./assets/hero/math-m-linear-function-hero.png" class="hero-img">` |
+> | `hist-m-english-revolution` | `hist-m-english-revolution-hero.png` | `<img src="./assets/hero/hist-m-english-revolution-hero.png" class="hero-img">` |
+> | `bio-photosynthesis` | `bio-photosynthesis-hero.png` | `<img src="./assets/hero/bio-photosynthesis-hero.png" class="hero-img">` |
+>
+> **查找规则（写死，不可更改）**：
+> 1. 在 `image-registry.json` 中查找 `slot=hero` **且** `match_nodes` 数组**包含**当前课件的 `node_id` 的记录
+> 2. **有且仅有精确匹配**：`match_nodes` 必须包含完整的 `node_id` 字符串，不接受部分匹配、模糊匹配、同学科替代
+> 3. **精确命中** → 从 CDN `url` 字段下载到 `assets/hero/{node_id}-hero.png`
+> 4. **未命中** → **留空**（Hero 区 `<img>` 标签的 `src` 设为空字符串或不插入 `<img>` 标签），在 Completeness Gate 中标注"Hero 图未命中，需人工补充"
+> 5. ⛔ **绝对禁止**：使用其他课件的 Hero 图、模糊匹配其他课件的 Hero 图、从 `image-registry.json` 中选一个"看起来像"的 Hero 图凑数
+>
+> **为什么不用 image_gen 自动生成？**
+> Hero 图是**知识结构信息图**，包含完整的知识点层级和关键术语。AI 实时生成的图片无法保证知识结构的准确性和一致性。
+> Hero 图只能由**项目维护者统一预生成并审核**后录入 `image-registry.json`。
+> 如果某个 node_id 还没有预制 Hero 图，就留空等待后续补充，**不要自动生成凑数**。
 
-> ⚠️ **HTML 引用铁律（v6.3 新增）**：Hero 图**必须以 `<img>` 标签嵌入** `<section class="hero">` 内部，放在 `<h1>` 标题之前。无论通过哪一级降级策略获得图片，最终 HTML 中**必须存在** `<img src="./assets/【节点ID】-hero.png" class="hero-img">` 标签。仅将图片文件放入 `assets/` 目录而不在 HTML 中引用 = **不合格**。
+> ⚠️ **HTML 引用铁律（v6.3 新增）**：当 Hero 图精确命中时，**必须以 `<img>` 标签嵌入** `<section class="hero">` 内部，放在 `<h1>` 标题之前。
 >
 > ```html
-> <!-- ✅ 正确：hero 区包含 <img> 引用 -->
+> <!-- ✅ 正确：hero 图精确命中，引用下载到本地的文件 -->
 > <section class="hero" id="hero">
->   <img src="./assets/math-mid-linear-function-hero.png" class="hero-img" alt="一次函数知识结构图">
+>   <img src="./assets/hero/math-m-linear-function-hero.png" class="hero-img" alt="一次函数知识结构图">
 >   <h1>一次函数</h1>
 >   ...
 > </section>
 >
-> <!-- ❌ 错误：hero 区只有文字，没有 <img>（图片文件虽存在但未引用） -->
+> <!-- ✅ 正确：hero 图未命中，不插入 img 标签，留空等待补充 -->
 > <section class="hero" id="hero">
 >   <h1>一次函数</h1>
+>   <!-- hero 图待补充：node_id=math-m-linear-function -->
 >   ...
+> </section>
+>
+> <!-- ❌ 错误：使用了别的课件的 hero 图 -->
+> <section class="hero" id="hero">
+>   <img src="./assets/hero/math-m-quadratic-function-hero.png" class="hero-img">
+>   <h1>一次函数</h1>
 > </section>
 > ```
 
@@ -2344,9 +2373,9 @@ AI **仅在以下情况添加** AI 多模态互动区：
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  GitHub 仓库: weponusa/teachany-images（独立仓库）          │
-│  ├── math/quadratic-hero.png                                │
+│  ├── math/quadratic-function-hero.png                       │
 │  ├── math/quadratic-scene.png                               │
-│  ├── math/linear-hero.png                                   │
+│  ├── math/linear-function-hero.png                          │
 │  ├── biology/photosynthesis-hero.png                        │
 │  ├── ...（按学科/知识点组织，预计 1500+ 图片）               │
 │  └── README.md（图片清单与生成记录）                         │
@@ -2354,7 +2383,7 @@ AI **仅在以下情况添加** AI 多模态互动区：
                        │ jsDelivr CDN 加速
                        ▼
   https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/
-  例：.../math/quadratic-hero.png
+  例：.../math/quadratic-function-hero.png
                        │
                        ▼
 ┌─────────────────────────────────────────────────────────────┐
@@ -2365,9 +2394,10 @@ AI **仅在以下情况添加** AI 多模态互动区：
                        │ AI 制作课件时按需 fetch
                        ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  课件目录                                                    │
-│  └── assets/quadratic-hero.png  ← 下载到课件本地             │
-│  └── index.html  ← <img src="./assets/quadratic-hero.png">  │
+│  课件目录（v6.9 分目录结构）                                 │
+│  ├── assets/hero/{node_id}-hero.png  ← Hero 图专用          │
+│  ├── assets/illustrations/*.png      ← 插图专用              │
+│  └── index.html  ← <img src="./assets/hero/...">           │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -2395,37 +2425,38 @@ https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/{subject}/{filename}
 | `tags` | 模糊匹配标签 | `["quadratic-function", "parabola"]` |
 | `prompt` | 生成时使用的 prompt | 中国课标课程用中文 prompt，国际课程用英文 prompt（见 Prompt 语言规则） |
 
-**生图执行流程（三级降级）**：
+**生图执行流程（v6.9 分类降级）**：
 ```text
-1. AI 在编写 HTML 课件时识别需要插图的位置和 slot 类型（hero/scene/experiment/concept/abt-intro）
+1. AI 在编写 HTML 课件时识别需要图片的位置和 slot 类型
 
-2. 【第一级：远程 Image Vault 预制图】
-   读取 assets/image-registry.json，按 match_nodes + slot 精确匹配
-   → 命中：使用 web_fetch 或 curl 从 url 字段下载图片到课件 assets/ 目录
-   → 若精确匹配未命中，按 subject + tags 模糊匹配
-   → 命中：同上下载 + 嵌入
-   ⛔ **Hero 图禁止模糊匹配**：slot=hero 时，只接受精确匹配（match_nodes 包含当前 node_id）。
-      Hero 图是知识结构信息图，每个课件的知识点不同，用别的课件的 hero 图会造成内容错配。
-      精确未命中 → 直接跳到第二级（实时生成），不要用别的课件的 hero 图凑数。
-   → 若 CDN 主域不可达，自动切换备用域（见上方备用 CDN 列表）
+2. 【Hero 图（slot=hero）—— 严格一一对应，不降级】
+   读取 assets/image-registry.json，查找 slot=hero 且 match_nodes 包含当前 node_id 的记录
+   → 精确命中：从 CDN url 字段下载到课件 assets/hero/{node_id}-hero.png
+   → 未命中：**留空**，不生成、不模糊匹配、不用别的课件的 hero 图
+   → HTML 中不插入 <img>，在注释中标注"hero 图待补充"
+   → Completeness Gate 中标注"Hero 图未命中，需人工补充"
+   ⛔ Hero 图绝对不走 image_gen 生成、不走 SVG 降级、不走模糊匹配
 
-3. 【第二级：image_gen 实时生成】
-   若 Image Vault 完全未命中（该知识点尚未预制图片），调用 image_gen 工具实时生成
-   → prompt 遵循上方 Prompt 语言规则和 Hero 图定义
-   → 图片保存到课件目录下的 assets/ 文件夹
+3. 【插图（slot=scene/experiment/concept/abt-intro）—— 完整降级链】
+   3a. 【第一级：远程 Image Vault 预制图】
+       读取 assets/image-registry.json，按 match_nodes + slot 精确匹配
+       → 命中：从 CDN url 字段下载到课件 assets/illustrations/{知识点ID}-{slot}.png
+       → 若精确未命中，按 subject + tags 模糊匹配
+       → 命中：同上下载 + 嵌入（在注释中标注"模糊匹配，建议人工确认"）
+       → 若 CDN 主域不可达，自动切换备用域（见上方备用 CDN 列表）
 
-4. 【第三级：代码生成 SVG 信息图】
-   若 Image Vault 和 image_gen 均不可用（离线环境 / 积分耗尽 / 工具不存在），
-   AI 必须用 HTML 内联代码生成静态信息图（SVG / Canvas / CSS）：
-   
-   用 <svg> 标签在 HTML 中直接绘制知识结构信息图，
-   包含核心知识点节点、层级关系连线、关键公式文字，
-   视觉效果参照思维导图/概念图，配色与课件主题一致。
-   
-   ⚠️ 第三级不再使用"空白占位符 + data-suggested-prompt"的被动等待模式，
-   而是主动生成有信息量的 SVG 视觉内容，确保课件开箱即可用。
+   3b. 【第二级：image_gen 实时生成】
+       若 Image Vault 完全未命中，调用 image_gen 工具实时生成
+       → prompt 遵循上方 Prompt 语言规则
+       → 图片保存到课件 assets/illustrations/{知识点ID}-{slot}.png
+       → 每张插图必须明确绑定到课件中的具体知识点
 
-5. 在 HTML 中以 <img src="./assets/xxx.png" alt="描述文字"> 嵌入（第一级/第二级）
+   3c. 【第三级：代码生成 SVG 信息图】
+       若 Image Vault 和 image_gen 均不可用（离线环境 / 积分耗尽 / 工具不存在），
+       AI 必须用 HTML 内联代码生成静态信息图（SVG / Canvas / CSS）
+
+4. 在 HTML 中以 <img src="./assets/hero/{node_id}-hero.png"> 嵌入 Hero 图
+   以 <img src="./assets/illustrations/{知识点ID}-{slot}.png"> 嵌入插图
    或以 <svg>...</svg> 内联嵌入（第三级）
 ```
 
@@ -2463,33 +2494,45 @@ https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/{subject}/{filename}
 ```text
 1. 读取课件 manifest.json → 获取 node_id, subject, grade
 2. 读取 skill/assets/image-registry.json
-3. 对每个需要插图的位置（hero / scene / experiment / concept / abt-intro），按以下评分匹配：
+3. 分两类处理图片需求：
 
-   ┌──────────┬──────────────────────────────────────┬───────┐
-   │ 优先级   │ 匹配条件                              │ 分数  │
-   ├──────────┼──────────────────────────────────────┼───────┤
-   │ 精确匹配 │ node_id + slot 完全匹配 match_nodes  │  500  │
-   │ 别名匹配 │ NODE_ID_ALIASES 映射后 + slot 匹配   │  480  │
-   │ 跨slot   │ node_id 精确但 slot 不同              │  300  │
-   │ 模糊匹配 │ subject + slot + tags 交集            │ 200+  │
-   │ 学科匹配 │ subject + slot 仅学科一致             │  100  │
-   │ 交叉匹配 │ node_id 部分词出现在 tags 中          │  40+  │
-   │ 年级加分 │ grade 一致                            │  +30  │
-   └──────────┴──────────────────────────────────────┴───────┘
+   ┌─────────────────────────────────────────────────────────────────┐
+   │ A. Hero 图（slot=hero）—— 严格一一对应，不降级                  │
+   ├─────────────────────────────────────────────────────────────────┤
+   │ 查找条件：slot=hero 且 match_nodes 包含当前 node_id             │
+   │ 命中 → 下载到 assets/hero/{node_id}-hero.png                   │
+   │ 未命中 → 留空，不生成、不模糊匹配                               │
+   └─────────────────────────────────────────────────────────────────┘
+   
+   ┌─────────────────────────────────────────────────────────────────┐
+   │ B. 插图（slot≠hero）—— 评分匹配 + 完整降级链                    │
+   ├──────────┬──────────────────────────────────────┬───────┐       │
+   │ 优先级   │ 匹配条件                              │ 分数  │       │
+   ├──────────┼──────────────────────────────────────┼───────┤       │
+   │ 精确匹配 │ node_id + slot 完全匹配 match_nodes  │  500  │       │
+   │ 别名匹配 │ NODE_ID_ALIASES 映射后 + slot 匹配   │  480  │       │
+   │ 跨slot   │ node_id 精确但 slot 不同              │  300  │       │
+   │ 模糊匹配 │ subject + slot + tags 交集            │ 200+  │       │
+   │ 学科匹配 │ subject + slot 仅学科一致             │  100  │       │
+   │ 交叉匹配 │ node_id 部分词出现在 tags 中          │  40+  │       │
+   │ 年级加分 │ grade 一致                            │  +30  │       │
+   └──────────┴──────────────────────────────────────┴───────┘       │
+   │ 降级链：                                                        │
+   │ a. score ≥ 500 → 精确命中，下载到 assets/illustrations/         │
+   │ b. score ≥ 200 → 模糊命中，下载+标注"模糊匹配，建议人工确认"    │
+   │ c. 无匹配 → image_gen 实时生成 → 保存到 assets/illustrations/   │
+   │ d. image_gen 不可用 → 生成 SVG 代码内联                         │
+   └─────────────────────────────────────────────────────────────────┘
 
-4. 根据最高分结果执行降级链：
-   a. score ≥ 500 → 精确命中，从 CDN url 字段下载到课件 assets/ 目录
-   b. score ≥ 200 → 模糊命中，下载但在注释中标注"模糊匹配，建议人工确认"
-      ⛔ **Hero 图例外**：slot=hero 时**禁止模糊匹配**。Hero 图是知识结构信息图，
-      每个课件的知识点不同，用别的课件的 hero 图会造成内容错配。
-      Hero 图只接受 score ≥ 500 的精确匹配，否则直接跳到 c 步骤（实时生成）。
-   c. 无匹配 → 调用 image_gen 实时生成 → 保存到 assets/
-   d. image_gen 不可用 → 生成 SVG 代码内联
+4. 每张插图必须绑定到课件中的具体知识点，文件名格式：
+   {知识点ID}-{slot}.png（如 taxi-meter-scene.png、photosynthesis-experiment.png）
 
-5. 在 HTML 中以 <img src="./assets/xxx.png" alt="描述"> 嵌入（a/b/c）
-   或以 <svg>...</svg> 内联嵌入（d）
+5. 在 HTML 中：
+   Hero 图 → <img src="./assets/hero/{node_id}-hero.png" class="hero-img">
+   插图 → <img src="./assets/illustrations/{知识点ID}-{slot}.png" alt="描述">
+   SVG → <svg>...</svg> 内联嵌入
 
-6. ⚠️ 新生成的图片（c步骤）自动反哺 image-registry.json
+6. ⚠️ 新生成的插图（c步骤）自动反哺 image-registry.json
    → 下次同 node_id 课件不再重复生成
 ```
 
@@ -2508,10 +2551,14 @@ python3 scripts/image_resolver.py audit
 python3 scripts/image_resolver.py migrate [--execute]
 ```
 
-**CDN 下载到课件目录的方法**：
+**CDN 下载到课件目录的方法（v6.9 分目录）**：
 ```bash
-# 用 curl 下载（推荐）
-curl -fsSL "{url}" -o "assets/{filename}"
+# Hero 图下载到 assets/hero/（推荐）
+mkdir -p assets/hero assets/illustrations
+curl -fsSL "{url}" -o "assets/hero/{node_id}-hero.png"
+
+# 插图下载到 assets/illustrations/
+curl -fsSL "{url}" -o "assets/illustrations/{知识点ID}-{slot}.png"
 
 # 备用 CDN（jsDelivr 不可用时自动切换）
 # 1. https://raw.githubusercontent.com/weponusa/teachany-images/main/{subject}/{filename}
@@ -2561,7 +2608,7 @@ curl -fsSL "{url}" -o "assets/{filename}"
 <!-- ⚠️ 优先用 CSS/JS/Canvas/SVG 交互动画代替静态视频 -->
 <div class="video-player" data-context="物理·电解水·实验过程">
   <video controls preload="metadata" playsinline width="100%">
-    <source src="./assets/experiment-demo.mp4" type="video/mp4">
+    <source src="./assets/video/experiment-demo.mp4" type="video/mp4">
     您的浏览器不支持视频播放。
   </video>
 </div>
@@ -2664,7 +2711,7 @@ def get_pillow_font(size=36):
 | **主 Agent（Orchestrator）** | Phase 0-2 教学设计 + Generation Gate + 最终审查 | 用户需求 + 知识图谱数据 | 教学骨架 JSON（含 ABT、问题链、练习设计等） | 始终执行 |
 | **Agent A：中文课件** | 生成 `index.html` | 教学骨架 + HTML 骨架模板 + 学段 CSS | 完整中文课件 HTML | 始终执行 |
 | **Agent B：英文课件** | 生成 `index_en.html` | 教学骨架 + HTML 骨架模板 + 学段 CSS | 完整英文课件 HTML | 用户明确要求双语时执行（默认跳过） |
-| **Agent C：插图生成** | 调用 `image_gen` 生成课件配图 | ABT 场景描述 + 生图 prompt 列表 | `assets/*.png` 图片文件 | 文科课件或 Gate 标注"需要插图" |
+| **Agent C：插图生成** | 调用 `image_gen` 生成课件配图 | ABT 场景描述 + 生图 prompt 列表 | `assets/illustrations/*.png` 图片文件 | 文科课件或 Gate 标注"需要插图" |
 | **Agent D：TTS 语音** | 安装 edge-tts + 生成语音 + 字幕 | 旁白脚本 JSON | `tts/*.mp3` + `*.srt` | 默认执行（用户拒绝时跳过） |
 | **Agent E：质量审查**（可选） | 对 Agent A/B 产出的 HTML 做 Completeness Gate 审查 | 课件 HTML + 审查清单 | 审查报告 + 修复建议 | 环境支持 ≥ 5 并行 Agent 时 |
 
@@ -2702,7 +2749,7 @@ Step 4：主 Agent 执行打包（Phase 3.5）并交付
 2. CSS 变量使用 {学段} 模板配色
 3. 必选 section 不可删除：Hero、学习目标、前测、知识模块×{N}、综合任务、后测、小结、**知识图谱**
 4. 每个模块遵循 6 块结构（ABT→讲解→深层理解→练习→纠错→小结）
-5. 插图位置用 <img src="./assets/placeholder-{N}.png" alt="..."> 占位（Agent C 会生成实际图片）
+5. 插图位置用 <img src="./assets/illustrations/placeholder-{N}.png" alt="..."> 占位（Agent C 会生成实际图片到 assets/illustrations/ 目录）
 6. 音频：注入 audioPlaylist 数组（每个条目含 sectionId 对应 HTML 中 section 的 id），骨架内置的音频引擎会自动实现滚动播放+底部控制条
 7. 视频：优先使用 CSS/JS/Canvas/SVG 交互动画演示过程性变化；仅交互无法覆盖时用 <video controls preload="metadata" playsinline> 标签嵌入（见 10.2.4）。视频必须嵌入到对应模块 section 内部
 8. 知识图谱：在 <script> 最前面注入 knowledgeGraphData 对象（见 10.2.3），数据从教学骨架中的 prerequisites/leads_to 提取
@@ -2719,7 +2766,8 @@ Step 4：主 Agent 执行打包（Phase 3.5）并交付
 2. 文件名: module1-intro.png | prompt: "{模块1情境描述}" | size: 1024x1024 | quality: medium
 ...
 
-请依次调用 image_gen 工具生成每张图片，保存到 {课件目录}/assets/ 下。
+请依次调用 image_gen 工具生成每张图片，保存到 {课件目录}/assets/illustrations/ 下。
+⚠️ 注意：Hero 图不由 Agent C 生成，Hero 图从 Image Vault 精确匹配下载到 assets/hero/，未命中则留空。
 ```
 
 #### 降级策略
@@ -3358,13 +3406,13 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
 2. **运行导出脚本**：`python3 scripts/export-pptx.py <课件目录>`
    - 脚本读取 `<课件目录>/index.html` + `<课件目录>/manifest.json`
    - 按 `section` 切分幻灯片（Hero / 学习目标 / 前测 / 每个知识模块 / 综合任务 / 后测 / 小结）
-   - 自动抓取 `<img src="./assets/*.png">` 作为幻灯片主图
+   - 自动抓取 `<img src="./assets/hero/*.png">` 和 `<img src="./assets/illustrations/*.png">` 作为幻灯片主图
    - 文本保留标题层级（h1→大标题；h2→小标题；p→正文），练习题保留题干+正确答案（供教师参考）
    - 互动组件（Canvas、知识图谱、音频播放器、AI 学伴）**在 PPTX 版中降级为"线上互动入口"占位页**，附一个二维码或 URL 指向 HTML 课件的对应 section
 3. **产出文件**：`<课件目录>/<课件名>.pptx`（与 `index.html` 同目录）
 4. **降级策略**：
    - `python-pptx` 安装失败 → 保留 HTML 课件正常交付，在最终报告中标注"PPTX 导出失败"
-   - 课件无 `assets/*.png` → 自动用纯文字版式，不阻断
+   - 课件无 `assets/hero/*.png` 和 `assets/illustrations/*.png` → 自动用纯文字版式，不阻断
    - PPTX 视为**派生件而非主交付物**，HTML 始终为主。
 
 **3.8 通用能力注入（v5.34 新增，所有 HTML 课件默认执行）**：
@@ -3456,7 +3504,7 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
      → ✅/❌ ___
 □ 29. PPTX 导出（仅 `output_formats` 含 "pptx" 时检查）：是否执行了 `python3 scripts/export-pptx.py`？`<课件目录>/<课件名>.pptx` 是否已生成？幻灯片是否按 section 切分、保留标题层级与关键插图、互动组件降级为"扫码/URL 回链"占位页？
      → ✅/❌/N/A（output_formats 仅含 html） ___
-□ 30. Hero 图引用（v6.3 强制）：`<section class="hero">` 内部是否包含 `<img class="hero-img" src="./assets/【节点ID】-hero.png">` 标签？图片文件是否存在于 `assets/` 目录？Hero 图是否放在 `<h1>` 之前？
+□ 30. Hero 图引用（v6.9 强制）：`<section class="hero">` 内部是否包含 `<img class="hero-img" src="./assets/hero/【节点ID】-hero.png">` 标签（或因未命中而留空）？若有 Hero 图，图片文件是否存在于 `assets/hero/` 目录？Hero 图是否放在 `<h1>` 之前？插图是否全部在 `assets/illustrations/` 目录下？
      → ✅/❌ ___
 
 【总评】___ / 30 通过（#14 仅纯计算/纯习题/纯复习课可标 N/A；#15 用户未要求双语时可标 N/A；#19 纯理科计算课可标 N/A；#22 无视频内容可标 N/A；#23 用户拒绝 L3 可标 N/A；#24 未执行 L2 可标 N/A；#26-#27 无探究要求时可标 N/A；#29 未要求 PPTX 时可标 N/A）
@@ -3540,7 +3588,7 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
 - `src/SubtitleTrack.tsx`：双语字幕叠加组件
 - `generate-sfx.js`：音效生成器
 - `package.json` / `tsconfig.json` / `remotion.config.ts`：项目配置
-- **`assets/*.mp4`：渲染产出，必须被 HTML `<video>` 标签嵌入到对应 section**
+- **`assets/video/*.mp4`：渲染产出，必须被 HTML `<video>` 标签嵌入到对应 section**
 
 ### L3 — AI 语音讲解（默认必选，自动执行）
 
@@ -3624,7 +3672,7 @@ TeachAny 在互动 HTML 课件之上，支持可选的**视频 + AI 配音**增�
 | 层级 | 产物 | 依赖 | AI 自动安装 | 是否必选 |
 |:-----|:-----|:-----|:------|:---------|
 | **L1 — 互动课件** | `index.html`（+ 用户要求时 `index_en.html`） | 无（零依赖） | 不需要 | ✅ 始终提供（默认仅中文） |
-| **L2 — 教学动画** | `assets/*.mp4`（Remotion 渲染） | Node.js ≥ 18、npm、ffmpeg | ✅ AI 自动检测安装 | ✅ **默认必选**（v5.12 起升级，Section 0 硬规则 #32） |
+| **L2 — 教学动画** | `assets/video/*.mp4`（Remotion 渲染） | Node.js ≥ 18、npm、ffmpeg | ✅ AI 自动检测安装 | ✅ **默认必选**（v5.12 起升级，Section 0 硬规则 #32） |
 | **L3 — AI 语音讲解** | `tts/*.mp3` + `tts/*.srt` | Python 3.8+、edge-tts | ✅ AI 自动检测安装 | ✅ **默认必选** |
 | **L4 — 课件打包** | `*.teachany` 包 | Node.js（pack-courseware.cjs） | ✅ AI 自动执行 | ✅ **默认必选** |
 
@@ -4101,8 +4149,17 @@ if __name__ == "__main__":
 │   ├── ...
 │   ├── subtitles_zh.srt
 │   └── subtitles_en.srt               # （双语时生成）
-├── assets/                             # 插图/图片（按需）
-│   └── *.png
+├── assets/                             # 所有图片/视频资源的根目录
+│   ├── hero/                           # ⭐ Hero 图专用目录（一一对应，写死命名）
+│   │   └── {node_id}-hero.png          # 只有一张，文件名 = node_id + "-hero.png"
+│   ├── illustrations/                  # ⭐ 课件插图目录（每张图绑定知识点）
+│   │   ├── {知识点ID}-scene.png        # 情境/应用场景图
+│   │   ├── {知识点ID}-experiment.png   # 实验/观察图
+│   │   ├── {知识点ID}-concept.png      # 概念可视化图
+│   │   ├── {知识点ID}-abt-intro.png    # ABT 情境导入图
+│   │   └── ...                         # 每张图必须绑定到具体知识点
+│   └── video/                          # Remotion 渲染的教学视频
+│       └── *.mp4
 ├── sfx/                                # 音效文件（L2 需要时）
 │   ├── pop.wav
 │   ├── step.wav
@@ -4120,6 +4177,39 @@ if __name__ == "__main__":
 └── out/                                # L2：渲染输出视频（按需）
     └── *.mp4
 ```
+
+> ⚠️ **图片目录隔离铁律（v6.9 新增）**：
+>
+> | 目录 | 存放内容 | 命名规则 | 来源 |
+> |:---|:---|:---|:---|
+> | `assets/hero/` | Hero 知识结构信息图 | `{node_id}-hero.png`（写死，只有一张） | 只从 `image-registry.json` 精确匹配下载，未命中则留空 |
+> | `assets/illustrations/` | 课件插图（scene/experiment/concept/abt-intro） | `{知识点ID}-{slot}.png`（每张绑定知识点） | 从 `image-registry.json` 匹配下载，或 `image_gen` 实时生成 |
+> | `assets/video/` | Remotion 渲染的教学动画 | `{知识点ID}-{描述}.mp4` | Remotion 渲染输出 |
+>
+> ⛔ **严禁**：
+> - 课件插图放到 `assets/hero/` 目录
+> - 从 `assets/hero/` 目录取图片当作课件插图使用
+> - Hero 图和插图混放在同一个扁平 `assets/` 目录下（v6.9 起废弃旧的扁平结构）
+>
+> **插图命名规则（每张图必须绑定知识点）**：
+> ```
+> {知识点ID}-scene.png        # 情境图：如 linear-function-taxi-scene.png
+> {知识点ID}-experiment.png   # 实验图：如 photosynthesis-experiment.png
+> {知识点ID}-concept.png      # 概念图：如 pressure-snowshoe-concept.png
+> {知识点ID}-abt-intro.png    # ABT 导入图：如 silk-road-abt-intro.png
+> ```
+>
+> **HTML 引用路径（v6.9 起）**：
+> ```html
+> <!-- Hero 图 -->
+> <img src="./assets/hero/{node_id}-hero.png" class="hero-img">
+>
+> <!-- 课件插图 -->
+> <img src="./assets/illustrations/{知识点ID}-scene.png" alt="...">
+>
+> <!-- 教学视频 -->
+> <video><source src="./assets/video/{知识点ID}-demo.mp4" type="video/mp4"></video>
+> ```
 
 > **⚠️ 重要**：课件文件**不使用 `public/` 子目录**。`index.html`、`tts/`、`assets/` 等直接放在课件根目录下。这确保课件推送到 GitHub 仓库后，GitHub Pages 能正确服务所有文件。`registry.json` 中的 `path` 字段直接指向课件根目录（如 `examples/math-linear-function`），Gallery 会拼接为 `./examples/math-linear-function/index.html` 来访问课件。
 >
