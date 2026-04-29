@@ -22,6 +22,8 @@
 """
 import json
 import re
+import shutil
+import subprocess
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -163,6 +165,45 @@ def check_baseline_quality(course_dir, html_text):
             f'{course_dir.name}: HTML 内锚点跳转 {anchors} 个（B-6 推荐 ≥3 段间跳转），课件应可前后翻页'))
 
     return errors + warns
+
+
+def run_teaching_quality_gate(course_dir):
+    """v7.3：调用反空壳教学质量闸门。"""
+    script = Path(__file__).with_name('validate-teaching-quality.py')
+    if not script.exists():
+        return [('error', f'{course_dir.name}: 缺少 validate-teaching-quality.py，无法执行 v7.3 教学质量闸门')]
+    result = subprocess.run(
+        [sys.executable, str(script), str(course_dir), '--json'],
+        capture_output=True,
+        text=True,
+    )
+    try:
+        payload = json.loads(result.stdout or '{}')
+    except json.JSONDecodeError:
+        return [('error', f'{course_dir.name}: v7.3 教学质量闸门输出无法解析：{result.stdout[:200]} {result.stderr[:200]}')]
+    issues = []
+    for item in payload.get('issues', []):
+        level = item.get('level', 'error')
+        msg = item.get('message', '')
+        if level in ('error', 'warn') and msg:
+            issues.append((level, msg))
+    if result.returncode != 0 and not any(i[0] == 'error' for i in issues):
+        issues.append(('error', f'{course_dir.name}: v7.3 教学质量闸门失败，但未返回明确错误'))
+    return issues
+
+
+def has_audio_stream(mp4_path):
+    """用 ffprobe 检查 mp4 是否有音频流；ffprobe 不存在时返回 None。"""
+    if not shutil.which('ffprobe'):
+        return None
+    result = subprocess.run(
+        ['ffprobe', '-v', 'error', '-show_entries', 'stream=codec_type', '-of', 'csv=p=0', str(mp4_path)],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return False
+    return any(line.strip() == 'audio' for line in result.stdout.splitlines())
 
 
 def validate_one(course_dir):
@@ -365,6 +406,19 @@ def validate_one(course_dir):
                 issues.append(('error',
                     f'{course_dir.name}: HTML 引用了 assets/{img_ref} 但文件不存在（图片幽灵引用 · 需生成对应图片）'))
 
+    # 8c. Hero 图硬校验（v7.3）——不能只有 hero 文案而无知识结构主图
+    if html.exists() and full_html:
+        hero_refs = re.findall(r'<img[^>]+class=[\'"][^\'"]*(?:hero-img|hero-cover-img)[^\'"]*[\'"][^>]+src=[\'"]([^\'"]+)[\'"]', full_html, re.IGNORECASE)
+        hero_refs += re.findall(r'<img[^>]+src=[\'"]([^\'"]*hero[^\'"]*)[\'"][^>]+class=[\'"][^\'"]*(?:hero-img|hero-cover-img)[^\'"]*[\'"]', full_html, re.IGNORECASE)
+        if not hero_refs:
+            issues.append(('error',
+                f'{course_dir.name}: 缺少 hero-img/hero-cover-img 知识结构主图引用（v7.3 阻断）'))
+        for ref in set(hero_refs):
+            clean_ref = ref.lstrip('./')
+            if clean_ref.startswith('assets/') and not (course_dir / clean_ref).exists():
+                issues.append(('error',
+                    f'{course_dir.name}: Hero 图引用 {ref} 但文件不存在'))
+
     # 9. PPTX 基线（v5.34.6 新增，硬规则 #47）
     #    若课件存在 *.pptx，则 PPTX 必须包含图（否则是简陋 PPTX，直接 Gate 不通过）
     pptx_files = list(course_dir.glob('*.pptx'))
@@ -402,26 +456,32 @@ def validate_one(course_dir):
             issues.append(('error',
                 f'{course_dir.name}: HTML 无原生 <canvas> 交互组件（硬规则 #33 强制 · 拖拽/画板/参数滑块/实时绘图任一；纯文言字词可用 SVG 替代但需在 manifest 声明）'))
 
-    # 11. Remotion 教学动画基线（v5.34.11 新增，硬规则 #32）
-    #     每个课件必须有 ≥1 段真实 Remotion 渲染的 mp4（Canvas/SVG 动画不得替代）
-    mp4_files = list(course_dir.glob('assets/*.mp4')) + list(course_dir.glob('videos/*.mp4'))
-    # HTML 中是否嵌入 <video src> 指向本地 mp4
-    video_tags = []
+    # 11. Remotion 教学动画基线（v7.3 强化，硬规则 #32）
+    #     每个课件必须有 ≥1 段真实 Remotion 渲染的 mp4，且必须带 audio 流。
+    mp4_files = list(course_dir.glob('assets/*.mp4')) + list(course_dir.glob('assets/video/*.mp4')) + list(course_dir.glob('videos/*.mp4'))
+    video_refs = []
     if html.exists() and full_html:
-        video_tags = re.findall(r'<video[^>]+src=[\'"][^\'\"]+\.mp4[\'"]', full_html, re.IGNORECASE)
-        # 也接受 <source src="xxx.mp4">
-        source_tags = re.findall(r'<source[^>]+src=[\'"][^\'\"]+\.mp4[\'"]', full_html, re.IGNORECASE)
-        video_tags.extend(source_tags)
-    # L2 视频缺失仅 warn（国产模型环境下 Remotion 常无法跑），给出自愈指引
-    if not mp4_files and not video_tags:
-        issues.append(('warn',
-            f'{course_dir.name}: 无真实 mp4 教学动画（硬规则 #32 · L2 Remotion 基线）；'
-            f'Canvas/SVG 动画不得作为唯一过程性可视化——请跑 `python3 scripts/preflight-check.py` 核实 L2 能力，'
-            f'若 Node/ffmpeg 就位则必须补至少 1 段 Remotion mp4'))
-    elif not mp4_files and video_tags:
-        # HTML 引用了 mp4 但文件不存在 → error（死链）
+        video_refs = re.findall(r'<(?:source|video)[^>]+src=[\'"]([^\'\"]+\.mp4)[\'"]', full_html, re.IGNORECASE)
+    if not mp4_files:
         issues.append(('error',
-            f'{course_dir.name}: HTML 引用了 mp4 但 assets/*.mp4 或 videos/*.mp4 均不存在（视频死链）'))
+            f'{course_dir.name}: 无真实 mp4 教学动画（硬规则 #32 · v7.3 阻断）；'
+            f'Canvas/SVG/CSS 动画不得替代 Remotion，必须补 assets/video/*.mp4'))
+    if mp4_files and not video_refs:
+        issues.append(('error',
+            f'{course_dir.name}: 已有 mp4 文件但 HTML 未用 <video>/<source> 静态嵌入'))
+    for ref in set(video_refs):
+        clean_ref = ref.lstrip('./')
+        if not (course_dir / clean_ref).exists():
+            issues.append(('error',
+                f'{course_dir.name}: HTML 引用了 {ref} 但文件不存在（视频死链）'))
+    for mp4 in mp4_files:
+        audio_state = has_audio_stream(mp4)
+        if audio_state is False:
+            issues.append(('error',
+                f'{course_dir.name}: {mp4.relative_to(course_dir)} 无 audio 流（哑片 mp4 不合规）'))
+        elif audio_state is None:
+            issues.append(('warn',
+                f'{course_dir.name}: 未找到 ffprobe，无法验证 {mp4.relative_to(course_dir)} 是否含 audio 流'))
 
     # 12. 知识图谱基线（v5.34.11 新增，硬规则 #24）
     #     课件必须含交互式 #knowledge-graph section 或相应 SVG 图
@@ -429,7 +489,7 @@ def validate_one(course_dir):
         has_kg_section = bool(re.search(r'id=[\'"]knowledge-graph[\'"]', full_html))
         has_kg_data = 'knowledgeGraphData' in full_html or '_graph.json' in full_html
         if not has_kg_section and not has_kg_data:
-            issues.append(('warn',
+            issues.append(('error',
                 f'{course_dir.name}: HTML 缺 #knowledge-graph section 或 knowledgeGraphData 数据'
                 f'（硬规则 #24 · 每个课件必须含交互式知识图谱）'))
 
@@ -439,24 +499,23 @@ def validate_one(course_dir):
     if needs_map and html.exists() and full_html:
         has_tile_layer = bool(re.search(r'L\.tileLayer\s*\(', full_html))
         has_fit_bounds = bool(re.search(r'\.fitBounds\s*\(|\.setView\s*\(', full_html))
-        has_image_overlay_full = bool(re.search(
-            r'L\.imageOverlay\s*\([^)]*?\[\s*\[\s*-?90', full_html))
+        has_image_overlay = bool(re.search(r'L\.imageOverlay\s*\(', full_html))
         has_echarts_graphic_image = bool(re.search(
             r'graphic\s*:\s*\[[^\]]*?type\s*:\s*[\'"]image[\'"]', full_html))
-        if has_image_overlay_full:
+        if has_image_overlay:
             issues.append(('error',
-                f'{course_dir.name}: 检测到 L.imageOverlay 全球铺图（[-90,-180]..[90,180]）'
-                f'（硬规则 #35 严禁 · 必定在中高纬度错位 · 改用 L.tileLayer XYZ 瓦片）'))
+                f'{course_dir.name}: 检测到 L.imageOverlay 旧底图方案'
+                f'（硬规则 #35 严禁 · v7.3 起统一改用 L.tileLayer XYZ 瓦片）'))
         if has_echarts_graphic_image:
             issues.append(('error',
                 f'{course_dir.name}: 检测到 ECharts graphic type:"image" 铺底图'
                 f'（硬规则 #35 严禁 · DOM 绝对定位不跟随 geo 变换，必定错位）'))
         if not has_tile_layer:
-            issues.append(('warn',
+            issues.append(('error',
                 f'{course_dir.name}: 历史/地理课件 HTML 缺 L.tileLayer XYZ 瓦片底图调用'
-                f'（硬规则 #35 · 请用 cartodb-basemaps + arcgisonline hillshade 双层）'))
-        if has_tile_layer and not has_fit_bounds:
-            issues.append(('warn',
+                f'（硬规则 #35 · 必须用 cartodb-basemaps + arcgisonline hillshade 双层）'))
+        if not has_fit_bounds:
+            issues.append(('error',
                 f'{course_dir.name}: 地图初始化未调用 fitBounds/setView 聚焦核心区域'
                 f'（硬规则 #36 · 禁止停留在 [0,0] 默认中心）'))
 
@@ -479,11 +538,12 @@ def validate_one(course_dir):
                 f'{course_dir.name}: 检测到 createElement("video") 动态视频注入'
                 f'（硬规则 #25 · 推荐直接写 <video> 标签，便于无 JS 环境与打印）'))
 
-    # v6.6: 内容质量硬门槛（防止劣质课件混入 community）
+    # v6.6/v7.3: 内容质量硬门槛（防止劣质课件混入 community）
     # 仅对 community/ 课件强制（examples/ 是历史保留，包含老格式课件）
     if html.exists() and full_html and 'community' in str(course_dir):
         quality_issues = check_baseline_quality(course_dir, full_html)
         issues.extend(quality_issues)
+        issues.extend(run_teaching_quality_gate(course_dir))
 
     return issues
 

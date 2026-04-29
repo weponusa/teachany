@@ -260,6 +260,7 @@ def compact_node_summary(
             "prerequisites": summarize_refs(node.get("prerequisites", []), node_index, node_home),
             "leads_to": summarize_refs(node.get("leads_to", []), node_index, node_home),
             "real_world": node.get("real_world", []),
+            "curriculum_standards": node.get("curriculum_standards", []),
             "memory_anchors": node.get("memory_anchors", []),
             "bloom_verbs": node.get("bloom_verbs", {}),
         },

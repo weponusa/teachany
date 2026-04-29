@@ -196,14 +196,26 @@ if [ "$tts_mp3_count" -ge 3 ]; then
   multi_count=$((multi_count+1))
 fi
 
-# B-3 · 视频
-video_files=$(find "$COURSE_DIR" -maxdepth 3 \( -name "*.mp4" -o -name "*.webm" \) 2>/dev/null | wc -l | tr -d ' ')
-if [ "$video_files" -ge 1 ]; then
-  pass "✓ 视频资源 $video_files 个"
-  multi_count=$((multi_count+1))
-elif grep -qE "<video\b[^>]*src" "$HTML" 2>/dev/null; then
-  pass "✓ 包含 <video> 播放器"
-  multi_count=$((multi_count+1))
+# B-3 · 视频（v7.3：真实 mp4 + HTML 嵌入 + 音频流）
+video_files=$(find "$COURSE_DIR" -maxdepth 4 \( -name "*.mp4" -o -name "*.webm" \) 2>/dev/null | wc -l | tr -d ' ')
+video_refs=$(grep -oE "<(video|source)[^>]+src=['\"][^'\"]+\.(mp4|webm)['\"]" "$HTML" 2>/dev/null | wc -l | tr -d ' ')
+if [ "$video_files" -ge 1 ] && [ "$video_refs" -ge 1 ]; then
+  if command -v ffprobe >/dev/null 2>&1; then
+    first_video=$(find "$COURSE_DIR" -maxdepth 4 \( -name "*.mp4" -o -name "*.webm" \) 2>/dev/null | head -1)
+    if ffprobe -v error -show_entries stream=codec_type -of csv=p=0 "$first_video" 2>/dev/null | grep -qx "audio"; then
+      pass "✓ 视频资源 $video_files 个，HTML 引用 $video_refs 处，且含 audio 流"
+      multi_count=$((multi_count+1))
+    else
+      fail "✗ 视频资源存在但未检测到 audio 流（哑片 mp4 不合规）"
+    fi
+  else
+    pass "✓ 视频资源 $video_files 个，HTML 引用 $video_refs 处（未安装 ffprobe，跳过音轨抽检）"
+    multi_count=$((multi_count+1))
+  fi
+elif [ "$video_files" -ge 1 ]; then
+  fail "✗ 有视频文件但 HTML 未用 <video>/<source> 嵌入"
+elif [ "$video_refs" -ge 1 ]; then
+  fail "✗ HTML 引用了视频但未找到本地 mp4/webm 文件"
 fi
 
 # B-3 · 地图
@@ -245,15 +257,20 @@ for kw in history geography 历史 地理 dynasty 朝代 map 地图 疆域 文�
 done
 
 if [ "$is_geo_course" = true ]; then
-  if grep -qE "data/geography|data/history|historical-china|historical-world|hillshade" "$HTML"; then
-    pass "历史/地理课件正确引用了本地地图资源"
-    if grep -qE "L\.CRS\.EPSG4326" "$HTML"; then
-      pass "Leaflet 正确使用 EPSG:4326 投影"
-    else
-      fail "Leaflet 缺少 crs: L.CRS.EPSG4326（必然导致与底图错位）"
-    fi
+  if grep -qE "L\.tileLayer\s*\(" "$HTML"; then
+    pass "历史/地理课件使用 v7 XYZ 瓦片底图"
   else
-    warn "疑似历史/地理课件但未使用本地地图资源（data/geography/*.geojson）"
+    fail "历史/地理课件缺 L.tileLayer XYZ 瓦片底图（v7.3 要求 CartoDB + Esri Shaded Relief）"
+  fi
+
+  if grep -qE "fitBounds\s*\(|setView\s*\(" "$HTML"; then
+    pass "地图已设置 fitBounds/setView 聚焦教学核心区域"
+  else
+    fail "地图未调用 fitBounds/setView 聚焦核心区域，不能停在默认世界视图"
+  fi
+
+  if grep -qE "L\.imageOverlay\s*\(|L\.CRS\.EPSG4326" "$HTML"; then
+    fail "检测到旧地图方案 L.imageOverlay / L.CRS.EPSG4326，v7.3 已废弃"
   fi
 
   if grep -qE "DataV|datav|amap|map\.baidu|lbs\.qq\.com|tianditu" "$HTML"; then

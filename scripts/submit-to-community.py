@@ -109,6 +109,18 @@ def validate_courseware(course_dir: Path) -> dict:
         print("   这些字段用于在社区仓的知识树上挂载课件，缺一不可。")
         sys.exit(2)
 
+    quality_script = Path(__file__).with_name("validate-teaching-quality.py")
+    if quality_script.exists():
+        result = subprocess.run(
+            [sys.executable, str(quality_script), str(course_dir)],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            print("⛔ v7.3 教学质量闸门未通过，拒绝提交社区：")
+            print(result.stdout.strip() or result.stderr.strip())
+            sys.exit(2)
+
     return manifest
 
 
