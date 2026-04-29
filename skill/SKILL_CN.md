@@ -2424,48 +2424,68 @@ https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/{subject}/{filename}
 | **尺寸** | `viewBox="0 0 800 600"`，`width: 100%; max-width: 800px` |
 | **适用场景** | Hero 区知识结构图、概念关系图、流程图 |
 
-**Image Vault 匹配伪代码**：
-```python
-CDN_BASE = "https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main"
-CDN_FALLBACKS = [
-    "https://raw.githubusercontent.com/weponusa/teachany-images/main",
-    "https://ghfast.top/https://raw.githubusercontent.com/weponusa/teachany-images/main",
-]
+**Image Vault 统一图片发现（v6.3 重构 — 与 `knowledge_layer.py` 同构）**：
 
-def resolve_image(node_id, slot, subject, tags=[]):
-    registry = load_json("assets/image-registry.json")
-    
-    # Step 1: 精确匹配 node_id + slot
-    for img in registry["images"]:
-        if node_id in img["match_nodes"] and img["slot"] == slot:
-            return download_from_cdn(img["url"], courseware_assets_dir)
-    
-    # Step 2: 模糊匹配 subject + tags
-    for img in registry["images"]:
-        if img["subject"] == subject and img["slot"] == slot:
-            if any(t in img["tags"] for t in tags):
-                return download_from_cdn(img["url"], courseware_assets_dir)
-    
-    # Step 3: 降级 → image_gen 实时生成
-    if image_gen_available():
-        return call_image_gen(prompt=build_prompt(node_id, slot))
-    
-    # Step 4: 最终降级 → 代码生成 SVG 信息图
-    return generate_svg_infographic(node_id, slot, subject)
+> 📌 **核心变更**：伪代码已实现为可执行脚本 `scripts/image_resolver.py`，与 `knowledge_layer.py` 采用相同的多评分匹配 + 别名支持 + 降级链设计。详细规范见 `docs/IMAGE-DISCOVERY-SPEC.md`。
 
-def download_from_cdn(url, dest_dir):
-    """从 CDN 下载图片，支持自动 fallback"""
-    for base in [CDN_BASE] + CDN_FALLBACKS:
-        try:
-            # 用 web_fetch / curl / fetch API 下载
-            filepath = download(url, dest_dir)
-            return filepath
-        except NetworkError:
-            continue
-    raise ImageUnavailable("所有 CDN 节点不可达")
+**AI 制作课件时的图片发现流程（Phase 0.5 必做）**：
+
+```text
+1. 读取课件 manifest.json → 获取 node_id, subject, grade
+2. 读取 skill/assets/image-registry.json
+3. 对每个需要插图的位置（hero / scene / experiment / concept / abt-intro），按以下评分匹配：
+
+   ┌──────────┬──────────────────────────────────────┬───────┐
+   │ 优先级   │ 匹配条件                              │ 分数  │
+   ├──────────┼──────────────────────────────────────┼───────┤
+   │ 精确匹配 │ node_id + slot 完全匹配 match_nodes  │  500  │
+   │ 别名匹配 │ NODE_ID_ALIASES 映射后 + slot 匹配   │  480  │
+   │ 跨slot   │ node_id 精确但 slot 不同              │  300  │
+   │ 模糊匹配 │ subject + slot + tags 交集            │ 200+  │
+   │ 学科匹配 │ subject + slot 仅学科一致             │  100  │
+   │ 交叉匹配 │ node_id 部分词出现在 tags 中          │  40+  │
+   │ 年级加分 │ grade 一致                            │  +30  │
+   └──────────┴──────────────────────────────────────┴───────┘
+
+4. 根据最高分结果执行降级链：
+   a. score ≥ 500 → 精确命中，从 CDN url 字段下载到课件 assets/ 目录
+   b. score ≥ 200 → 模糊命中，下载但在注释中标注"模糊匹配，建议人工确认"
+   c. 无匹配 → 调用 image_gen 实时生成 → 保存到 assets/
+   d. image_gen 不可用 → 生成 SVG 代码内联
+
+5. 在 HTML 中以 <img src="./assets/xxx.png" alt="描述"> 嵌入（a/b/c）
+   或以 <svg>...</svg> 内联嵌入（d）
+
+6. ⚠️ 新生成的图片（c步骤）自动反哺 image-registry.json
+   → 下次同 node_id 课件不再重复生成
 ```
 
-**生图质量参数**（第二级 `image_gen` 实时生成时使用）：
+**脚本工具链**（与 `knowledge_layer.py` 同级）：
+```bash
+# 查找匹配图片（核心）
+python3 scripts/image_resolver.py resolve --node-id {node_id} --slot hero --subject {subject} --json
+
+# 注册新生成的图片（反哺 registry）
+python3 scripts/image_resolver.py register --node-id {node_id} --slot hero --subject {subject} --file {cdn_path}
+
+# 审计 registry 覆盖率
+python3 scripts/image_resolver.py audit
+
+# 迁移旧格式图片
+python3 scripts/image_resolver.py migrate [--execute]
+```
+
+**CDN 下载到课件目录的方法**：
+```bash
+# 用 curl 下载（推荐）
+curl -fsSL "{url}" -o "assets/{filename}"
+
+# 备用 CDN（jsDelivr 不可用时自动切换）
+# 1. https://raw.githubusercontent.com/weponusa/teachany-images/main/{subject}/{filename}
+# 2. https://ghfast.top/https://raw.githubusercontent.com/weponusa/teachany-images/main/{subject}/{filename}
+```
+
+**生图质量参数**（Level 2 `image_gen` 实时生成时使用）：
 | 参数 | 推荐值 | 说明 |
 |:---|:---|:---|
 | `size` | `1024x1024` | 正方形插图 |
@@ -2473,11 +2493,12 @@ def download_from_cdn(url, dest_dir):
 | `style` | `natural` | 教育场景优先自然风格 |
 
 **降级策略总结**：
-- **第一级（首选）**：Image Vault 远程预制图 — 从 CDN 按需下载，零积分消耗
-- **第二级（次选）**：`image_gen` 实时生成 — 消耗用户积分，但保证 AI 级图片质量
-- **第三级（保底）**：代码生成 SVG 信息图 — 零网络依赖、零积分消耗，课件开箱即有信息量
-- ⚠️ **绝不因为图片不可用而省略整个视觉区域** — 第三级确保任何环境下课件都有可用的知识可视化内容
+- **Level 1（首选）**：Image Vault 远程预制图 — 从 CDN 按需下载，零积分消耗
+- **Level 2（次选）**：`image_gen` 实时生成 — 消耗用户积分，但保证 AI 级图片质量；**生成后自动反哺 registry**
+- **Level 3（保底）**：代码生成 SVG 信息图 — 零网络依赖、零积分消耗，课件开箱即有信息量
+- ⚠️ **绝不因为图片不可用而省略整个视觉区域** — Level 3 确保任何环境下课件都有可用的知识可视化内容
 - ⚠️ **绝不使用空白占位符 + "此处建议插入..."的被动模式** — 这是 v5.37 废弃的旧行为
+- ⚠️ **禁止在 HTML 中硬编码不存在的图片路径** — 必须先通过 registry 发现或 image_gen 生成
 
 #### 10.4.2 AI 主动生视频规范（课件生成阶段）
 
