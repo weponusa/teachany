@@ -30,7 +30,7 @@
 
 /* ─── 常量 ───────────────────────────────────── */
 const REGISTRY_URL = './registry.json';
-const CACHE_KEY = 'teachany_registry_v3_4'; // v3.4: 暴力清缓存 + 彻底修复中文标题
+const CACHE_KEY = 'teachany_registry_v3_5'; // v3.5: 强制刷新，含英国革命课件v6.1
 const CACHE_TTL = 30 * 60 * 1000; // 30 分钟缓存
 const LIKES_KEY = 'teachany_likes';
 
