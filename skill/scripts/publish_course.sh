@@ -78,6 +78,19 @@ if [ -f "$SKILL_SCRIPTS/check_baseline.sh" ]; then
   echo "  ✅ 基线通过（$pass_count PASS）"
 fi
 
+# ─── 1.1. v7.3 反空壳教学质量闸门 ─────────────────
+QUALITY_GATE="$SKILL_SCRIPTS/../../scripts/validate-teaching-quality.py"
+if [ -f "$QUALITY_GATE" ]; then
+  echo ""
+  echo "[1.1/5] v7.3 教学质量闸门"
+  if ! python3 "$QUALITY_GATE" "$SRC_DIR" > /tmp/teaching_quality.log 2>&1; then
+    echo "  ❌ 教学质量闸门 FAIL，不能发布"
+    tail -30 /tmp/teaching_quality.log
+    exit 1
+  fi
+  echo "  ✅ 教学质量闸门通过"
+fi
+
 # ─── 1.2. node_id 预校验（v6.5 新增 / v6.6 支持 free_mode）─────
 # 确保 node_id 在知识树里存在，否则前端无法显示
 # free_mode：课件写 <meta name="teachany-free-mode" content="true"> 跳过校验
