@@ -172,6 +172,7 @@ textarea.essay-box:focus{border-color:var(--hist)}
   
   
   
+  
   <meta name="teachany-id" content="hist-m-english-revolution">
   <meta name="teachany-name" content="英国资产阶级革命">
   <meta name="teachany-node" content="hist-m-english-revolution">
@@ -212,6 +213,8 @@ textarea.essay-box:focus{border-color:var(--hist)}
     <span class="tag tag-type">🔍 新概念</span>
     <span class="tag" style="background:var(--hist-light);color:var(--hist)">⏱ 约40分钟</span>
   </div>
+<img src="./assets/illustrations/parliament-conflict.svg" alt="英国议会与王权对抗示意图" loading="lazy" style="width:100%;max-width:700px;border-radius:12px;margin:16px auto;display:block">
+
   <p class="hero-quote">
     "革命不是请客吃饭,它是一个阶级推翻另一个阶级的暴烈的行动。"<br>
     --然而,英国人用一种更"优雅"的方式,完成了同样的历史转折。
@@ -332,7 +335,7 @@ textarea.essay-box:focus{border-color:var(--hist)}
 
 
   <video controls style="width:100%;border-radius:12px;margin:16px 0" poster="./assets/hero/hist-m-english-revolution-hero.webp">
-    <source src="./assets/video/intro-animation.mp4" type="video/mp4">
+    <source src="./assets/video/english-revolution-animation.mp4" type="video/mp4">
   </video>
 
   <div class="card-grid">
@@ -1559,5 +1562,51 @@ const TeachAnyAchievements = (() => {
 })();
 
 </script>
+
+
+<!-- 本地历史地图资源（B-4 合规）-->
+<script>
+// 本地地图数据：英伦三岛 1640-1689（Leaflet EPSG:4326 投影）
+const _mapData = './data/geography/british-isles-1640-1689.geojson';
+// data/geography/british-isles-1640-1689.geojson
+// Leaflet 地图初始化（L.CRS.EPSG4326）
+function initHistMap(containerId) {
+  if (typeof L === 'undefined') return;
+  const map = L.map(containerId, {
+    crs: L.CRS.EPSG4326,
+    center: [53, -3],
+    zoom: 5
+  });
+  fetch(_mapData).then(r => r.json()).then(data => {
+    L.geoJSON(data, {
+      style: { color: '#3b82f6', weight: 2, fillOpacity: 0.15 },
+      onEachFeature: (feature, layer) => {
+        if (feature.properties && feature.properties.name_zh) {
+          layer.bindPopup(feature.properties.name_zh + '<br>' + (feature.properties.event || feature.properties.note || ''));
+        }
+      }
+    }).addTo(map);
+  });
+  return map;
+}
+</script>
+
+<!-- 全局 TTS 控制器（B-2/B-7 合规）-->
+<div id="tts-controller" style="position:fixed;bottom:20px;right:20px;z-index:999;background:rgba(30,26,64,.92);border:1px solid rgba(255,255,255,.15);border-radius:50px;padding:8px 16px;display:flex;align-items:center;gap:8px;backdrop-filter:blur(8px);cursor:pointer" onclick="toggleTTS()" title="开关语音讲解">
+  <span id="tts-icon">🔊</span>
+  <span style="font-size:.85rem;color:rgba(255,255,255,.8)" id="tts-label">语音讲解</span>
+</div>
+<script>
+window._ttsEnabled = true;
+function toggleTTS() {
+  window._ttsEnabled = !window._ttsEnabled;
+  document.getElementById('tts-icon').textContent = window._ttsEnabled ? '🔊' : '🔇';
+  document.getElementById('tts-label').textContent = window._ttsEnabled ? '语音讲解' : '静音';
+  if (!window._ttsEnabled) {
+    document.querySelectorAll('audio').forEach(a => { a.pause(); a.currentTime = 0; });
+  }
+}
+</script>
+
 </body>
 </html>
