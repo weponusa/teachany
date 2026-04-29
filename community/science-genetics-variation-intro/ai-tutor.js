@@ -1,257 +1,667 @@
-/* === TeachAny AI 学伴 v1.0（零依赖单文件）=== */
+/*!
+ * TeachAny AI 学伴（v7.0）
+ *
+ * 特性：
+ *   - 独立模块，不依赖特定课件
+ *   - 默认预填 OpenRouter + Tencent Hy3 Preview（开箱即用，无需配置）
+ *   - API 配置可动态替换（localStorage 或开发者接口）
+ *   - 中英文界面一键切换（localStorage 持久化）
+ *   - OpenAI 兼容 API（baseUrl + apiKey + model）
+ *   - 支持流式（SSE）答复
+ *   - 自动从 IntersectionObserver 或 URL hash 抓取当前 section 作为上下文
+ *   - 答复难度按 grade 分级（小学 2-3 句 / 初中 3-5 句 / 高中 5-8 句）
+ *
+ * 安全：
+ *   - 不发送任何遥测数据
+ *   - 不把 Key 传给课件以外的任何 endpoint
+ *   - localStorage key 加前缀 `teachany_tutor_` 便于用户自清
+ */
 (function () {
   'use strict';
 
-  const CONFIG = window.__TEACHANY_TUTOR_CONFIG__ || {};
-  const STORAGE_KEY = 'teachany_tutor_key';
+  // ───────────────────────────────────────────────────────
+  // 1. 配置与默认值
+  // ───────────────────────────────────────────────────────
+  const STORAGE_KEY = 'teachany_tutor_config';
+  const HISTORY_KEY = 'teachany_tutor_history';
+  const LANG_KEY = 'teachany_tutor_lang';
 
-  /* ---------- 初始化 ---------- */
-  function init() {
-    injectStyles();
-    createFab();
-    const savedKey = localStorage.getItem(STORAGE_KEY);
-    if (!savedKey) {
-      showConfigPanel();
+  // 默认配置：OpenRouter + Tencent Hy3 Preview（开箱即用）
+  const DEFAULTS = {
+    baseUrl: 'https://openrouter.ai/api/v1',
+    apiKey: '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',
+    model: 'tencent/hy3-preview:free'
+  };
+
+  // 服务商预设（配置弹窗一键填表）
+  const PRESETS = [
+    { id: 'openrouter-hy3', name: '🌐 OpenRouter · Tencent Hy3（默认免费）', baseUrl: 'https://openrouter.ai/api/v1', model: 'tencent/hy3-preview:free' },
+    { id: 'deepseek',   name: '🇨🇳 DeepSeek（推荐 · 便宜稳定）', baseUrl: 'https://api.deepseek.com/v1',     model: 'deepseek-chat' },
+    { id: 'moonshot',   name: '🇨🇳 Moonshot Kimi（中文好）',     baseUrl: 'https://api.moonshot.cn/v1',      model: 'moonshot-v1-8k' },
+    { id: 'openrouter', name: '🌐 OpenRouter（多模型聚合）',     baseUrl: 'https://openrouter.ai/api/v1',    model: 'deepseek/deepseek-chat' },
+    { id: 'openai',     name: '🌐 OpenAI（官方）',                baseUrl: 'https://api.openai.com/v1',       model: 'gpt-4o-mini' },
+    { id: 'paratera',   name: '🇨🇳 并行超算（机构）',             baseUrl: 'https://llmapi.paratera.com/v1',  model: 'DeepSeek-V3.2' },
+    { id: 'custom',     name: '⚙️  自定义（任何 OpenAI 兼容 API）', baseUrl: '', model: '' }
+  ];
+
+  // ───────────────────────────────────────────────────────
+  // 1b. 国际化（i18n）
+  // ───────────────────────────────────────────────────────
+  const I18N = {
+    zh: {
+      title: 'AI 学伴',
+      fabTitle: 'AI 学伴 · 问点什么吧',
+      clear: '清空',
+      close: '✕',
+      send: '发送',
+      placeholder: '针对当前内容提问... (Enter 发送, Shift+Enter 换行)',
+      contextLabel: '当前学习：',
+      contextLoading: '定位中...',
+      configTitle: '🎓 启用你的 AI 学伴',
+      configSubtitle: '选一个 AI 服务商，填上 API Key 就能用。Key 仅保存在你的浏览器里。',
+      presetLabel: '选择服务商（一键填默认值）',
+      baseUrlLabel: 'API Base URL',
+      apiKeyLabel: 'API Key',
+      modelLabel: '模型',
+      privacy: '🔒 你的 API Key 仅保存在此浏览器的 localStorage，关闭页面或清浏览器数据后失效。TeachAny 不会收集、上传、或把 Key 发给任何第三方。',
+      cancel: '取消',
+      save: '保存并开始对话',
+      settings: '⚙️',
+      settingsTitle: '切换 API 配置',
+      langSwitch: 'EN',
+      langSwitchTitle: '切换为英文',
+      welcomeP: '你好呀！我是你的学伴 🎓\n正在陪你学《{title}》。\n有什么不明白的，就问我吧～',
+      welcomeM: '嗨！我是你的 AI 学伴 🎓\n正在陪你学《{title}》。\n关于课件里的概念、步骤、例题，任意提问。',
+      welcomeH: '你好，我是你的 AI 学伴 🎓\n当前课件：《{title}》。\n关于原理、推导、易错点、题型归类，欢迎探讨。',
+      errorHint: '\n\n提示：请检查 API Key、Base URL、网络，或点击 ⚙️ 重新配置。',
+      currentSection: '当前课件'
+    },
+    en: {
+      title: 'AI Tutor',
+      fabTitle: 'AI Tutor · Ask me anything',
+      clear: 'Clear',
+      close: '✕',
+      send: 'Send',
+      placeholder: 'Ask about this section... (Enter to send, Shift+Enter for newline)',
+      contextLabel: 'Studying: ',
+      contextLoading: 'Locating...',
+      configTitle: '🎓 Set Up Your AI Tutor',
+      configSubtitle: 'Choose a provider and enter your API Key. Key is only stored in your browser.',
+      presetLabel: 'Choose provider (auto-fill defaults)',
+      baseUrlLabel: 'API Base URL',
+      apiKeyLabel: 'API Key',
+      modelLabel: 'Model',
+      privacy: '🔒 Your API Key is stored only in this browser\'s localStorage. It is cleared when you close the page or clear browser data. TeachAny never collects, uploads, or shares your Key.',
+      cancel: 'Cancel',
+      save: 'Save & Start',
+      settings: '⚙️',
+      settingsTitle: 'Change API settings',
+      langSwitch: '中',
+      langSwitchTitle: 'Switch to Chinese',
+      welcomeP: 'Hi there! I\'m your AI Tutor 🎓\nI\'m here to help you with "{title}".\nFeel free to ask anything!',
+      welcomeM: 'Hey! I\'m your AI Tutor 🎓\nStudying: "{title}"\nAsk about concepts, steps, or examples.',
+      welcomeH: 'Hello, I\'m your AI Tutor 🎓\nCourse: "{title}"\nAsk about proofs, derivations, common mistakes, or problem types.',
+      errorHint: '\n\nTip: Check your API Key, Base URL, and network, or click ⚙️ to reconfigure.',
+      currentSection: 'Current page'
+    }
+  };
+
+  function getLang() {
+    try {
+      const saved = localStorage.getItem(LANG_KEY);
+      if (saved === 'en' || saved === 'zh') return saved;
+    } catch (e) {}
+    // 自动检测：若课件 HTML lang 属性为 en 则默认英文
+    const htmlLang = (document.documentElement.lang || '').toLowerCase();
+    if (htmlLang.startsWith('en')) return 'en';
+    return 'zh';
+  }
+
+  function setLang(lang) {
+    const valid = (lang === 'en' || lang === 'zh') ? lang : 'zh';
+    try { localStorage.setItem(LANG_KEY, valid); } catch (e) {}
+    return valid;
+  }
+
+  function t(key) {
+    const lang = getLang();
+    return (I18N[lang] && I18N[lang][key]) || (I18N.zh[key]) || key;
+  }
+
+  // ───────────────────────────────────────────────────────
+  // 1c. API 配置读写
+  // ───────────────────────────────────────────────────────
+  function readUserConfig() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed.apiKey) return null;
+      return Object.assign({}, DEFAULTS, parsed);
+    } catch (e) {
+      return null;
     }
   }
 
-  /* ---------- 样式注入 ---------- */
-  function injectStyles() {
-    if (document.getElementById('teachany-tutor-styles')) return;
-    const css = `
-      #tutor-fab {
-        position:fixed; bottom:24px; right:24px; z-index:9999;
-        width:56px; height:56px; border-radius:50%;
-        background:linear-gradient(135deg,#6366f1,#8b5cf6);
-        border:none; color:#fff; font-size:24px;
-        box-shadow:0 4px 20px rgba(99,102,241,0.4);
-        cursor:pointer; transition:transform 0.2s;
-      }
-      #tutor-fab:hover { transform:scale(1.1); }
-      #tutor-panel {
-        position:fixed; bottom:90px; right:24px; z-index:10000;
-        width:360px; max-height:480px; border-radius:16px;
-        background:#1e293b; color:#e2e8f0;
-        box-shadow:0 8px 32px rgba(0,0,0,0.3);
-        display:none; flex-direction:column; overflow:hidden;
-        font-family:system-ui,sans-serif;
-      }
-      #tutor-panel.open { display:flex; }
-      .tutor-header {
-        background:linear-gradient(135deg,#6366f1,#8b5cf6);
-        padding:16px; color:#fff;
-        display:flex; justify-content:space-between; align-items:center;
-      }
-      .tutor-header h3 { margin:0; font-size:16px; }
-      .tutor-close { background:none; border:none; color:#fff; font-size:20px; cursor:pointer; }
-      .tutor-messages {
-        flex:1; padding:16px; overflow-y:auto;
-        display:flex; flex-direction:column; gap:12px;
-      }
-      .tutor-msg {
-        padding:10px 14px; border-radius:12px;
-        font-size:14px; line-height:1.6; max-width:85%;
-      }
-      .tutor-msg.bot { background:rgba(99,102,241,0.15); align-self:flex-start; border-bottom-left-radius:4px; }
-      .tutor-msg.user { background:#6366f1; align-self:flex-end; border-bottom-right-radius:4px; }
-      .tutor-input-area {
-        display:flex; padding:12px; gap:8px;
-        border-top:1px solid rgba(255,255,255,0.1);
-      }
-      .tutor-input-area input {
-        flex:1; padding:10px 14px; border-radius:8px;
-        border:1px solid rgba(255,255,255,0.15);
-        background:rgba(255,255,255,0.05); color:#fff;
-        font-size:14px; outline:none;
-      }
-      .tutor-input-area button {
-        padding:10px 16px; border-radius:8px; border:none;
-        background:#6366f1; color:#fff; cursor:pointer; font-size:14px;
-      }
-      .tutor-config {
-        padding:20px; color:#e2e8f0;
-      }
-      .tutor-config h4 { margin:0 0 8px 0; font-size:15px; }
-      .tutor-config p { font-size:13px; color:#94a3b8; margin-bottom:16px; }
-      .tutor-config label { display:block; font-size:13px; color:#94a3b8; margin-bottom:4px; }
-      .tutor-config input {
-        width:100%; padding:10px 14px; border-radius:8px;
-        border:1px solid rgba(255,255,255,0.15);
-        background:rgba(255,255,255,0.05); color:#fff;
-        font-size:14px; margin-bottom:16px; box-sizing:border-box;
-      }
-      .tutor-config button {
-        width:100%; padding:12px; border-radius:8px; border:none;
-        background:#6366f1; color:#fff; cursor:pointer;
-        font-size:14px; font-weight:600;
-      }
-      .tutor-save-msg { font-size:12px; color:#22c55e; margin-top:8px; display:none; }
-    `;
-    const style = document.createElement('style');
-    style.id = 'teachany-tutor-styles';
-    style.textContent = css;
-    document.head.appendChild(style);
+  /** 获取生效配置：用户配置优先，否则用 DEFAULTS */
+  function getEffectiveConfig() {
+    return readUserConfig() || DEFAULTS;
   }
 
-  /* ---------- FAB ---------- */
+  function saveUserConfig(cfg) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      baseUrl: cfg.baseUrl || DEFAULTS.baseUrl,
+      apiKey: cfg.apiKey || DEFAULTS.apiKey,
+      model: cfg.model || DEFAULTS.model
+    }));
+  }
+
+  function clearUserConfig() {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(HISTORY_KEY);
+  }
+
+  // ───────────────────────────────────────────────────────
+  // 2. 课件元信息（来自 window.__TEACHANY_TUTOR_CONFIG__）
+  // ───────────────────────────────────────────────────────
+  function readCourseMeta() {
+    const fromWindow = window.__TEACHANY_TUTOR_CONFIG__ || {};
+    return {
+      courseTitle: fromWindow.courseTitle || document.title || '本课件',
+      subject: fromWindow.subject || (document.querySelector('meta[name="teachany-subject"]')?.content || 'general'),
+      grade: Number(fromWindow.grade || document.querySelector('meta[name="teachany-grade"]')?.content || 9),
+      learningObjectives: Array.isArray(fromWindow.learningObjectives) ? fromWindow.learningObjectives : [],
+      getContext: typeof fromWindow.getContext === 'function' ? fromWindow.getContext : defaultGetContext
+    };
+  }
+
+  function defaultGetContext() {
+    const current = document.querySelector('section.current-section, section.active, .section.current');
+    if (current && current.innerText) return current.innerText.slice(0, 3000);
+    if (location.hash) {
+      const target = document.querySelector(location.hash);
+      if (target && target.innerText) return target.innerText.slice(0, 3000);
+    }
+    const visible = Array.from(document.querySelectorAll('section')).find(s => {
+      const r = s.getBoundingClientRect();
+      return r.top >= 0 && r.top < window.innerHeight * 0.5;
+    });
+    if (visible && visible.innerText) return visible.innerText.slice(0, 3000);
+    return document.body.innerText.slice(0, 3000);
+  }
+
+  function getCurrentSectionTitle() {
+    const current = document.querySelector('section.current-section, section.active');
+    if (current) {
+      const h = current.querySelector('h1, h2, h3');
+      if (h) return h.innerText.trim().slice(0, 40);
+    }
+    if (location.hash) {
+      const target = document.querySelector(location.hash);
+      if (target) {
+        const h = target.querySelector('h1, h2, h3');
+        if (h) return h.innerText.trim().slice(0, 40);
+      }
+    }
+    const visible = Array.from(document.querySelectorAll('section')).find(s => {
+      const r = s.getBoundingClientRect();
+      return r.top >= 0 && r.top < window.innerHeight * 0.5;
+    });
+    if (visible) {
+      const h = visible.querySelector('h1, h2, h3');
+      if (h) return h.innerText.trim().slice(0, 40);
+    }
+    return t('currentSection');
+  }
+
+  // ───────────────────────────────────────────────────────
+  // 3. 按学段构造 system prompt（根据语言切换）
+  // ───────────────────────────────────────────────────────
+  function buildSystemPrompt(meta) {
+    const grade = meta.grade;
+    const lang = getLang();
+    let style;
+
+    if (lang === 'en') {
+      if (grade <= 6) {
+        style = 'You are a friendly elementary school tutor.\n- Answer in 2-3 sentences, use simple language and everyday analogies.\n- Avoid jargon; if you must use a term, explain it immediately.\n- Use concrete examples.\n- Encourage the student to keep asking.';
+      } else if (grade <= 9) {
+        style = 'You are a patient middle school tutor.\n- Answer in 3-5 sentences with clear structure (conclusion first, then reasoning).\n- You may use key terms with brief explanations.\n- Relate to common applications or problem types.\n- Point out any misconceptions briefly.';
+      } else {
+        style = 'You are a rigorous high school tutor.\n- Answer in 5-8 sentences with clear logic and layered reasoning.\n- You may use mathematical symbols, formulas, and English technical terms.\n- Provide derivation hints or problem type classifications when needed.\n- Give targeted reminders for common mistakes.';
+      }
+    } else {
+      if (grade <= 6) {
+        style = '你是一位亲切友好的小学学伴。\n- 用 2-3 句话回答，口语化、生活化比喻。\n- 不用专业术语；如果必须提到术语，立刻用"就是..."解释。\n- 多用具体例子，少用抽象定义。\n- 鼓励学生继续提问。';
+      } else if (grade <= 9) {
+        style = '你是一位耐心的初中学伴。\n- 用 3-5 句话回答，结构化表达（先结论再原因）。\n- 可适度引入关键术语，必要时一句话解释。\n- 结合常见应用场景或题型举例。\n- 若学生的问题有深层误区，简短指出。';
+      } else {
+        style = '你是一位严谨的高中学伴。\n- 用 5-8 句话回答，逻辑清晰、有层次。\n- 可使用数学符号、公式和英文专业词。\n- 必要时给出推导思路或题型归类。\n- 对易错点给出针对性提醒。';
+      }
+    }
+
+    const objectives = meta.learningObjectives.length
+      ? (lang === 'en'
+        ? `\nLearning objectives:\n${meta.learningObjectives.map(o => '- ' + o).join('\n')}`
+        : `\n学习目标：\n${meta.learningObjectives.map(o => '- ' + o).join('\n')}`)
+      : '';
+
+    if (lang === 'en') {
+      return `${style}
+
+Course: "${meta.courseTitle}" (Subject: ${meta.subject}, Grade: G${meta.grade})${objectives}
+
+Rules:
+1. Stay relevant to the course content; prioritize examples and definitions from the course.
+2. If the student's question goes beyond the scope, briefly redirect to the course topic.
+3. Keep answers strictly within the sentence count above.
+4. No chain-of-thought or "Let me think..." preambles. Give the most useful answer directly.`;
+    }
+
+    return `${style}
+
+你正在辅导的课件：《${meta.courseTitle}》（学科：${meta.subject}，年级：G${meta.grade}）${objectives}
+
+回答规则：
+1. 紧扣课件上下文，优先用课件中提到的例子、定义、方法。
+2. 学生问的若超出课件范围，用一句话引回到课件主题。
+3. 禁止长篇大论。每次答复严格控制在上述字数范围内。
+4. 禁止展示思维链或"让我思考..."等冗余文本，直接给学生最有用的答复。`;
+  }
+
+  // ───────────────────────────────────────────────────────
+  // 4. UI 构造
+  // ───────────────────────────────────────────────────────
   function createFab() {
     const fab = document.createElement('button');
-    fab.id = 'tutor-fab';
-    fab.innerHTML = '🤖';
-    fab.title = 'AI 学伴';
-    fab.onclick = togglePanel;
+    fab.className = 'ai-tutor-fab';
+    fab.type = 'button';
+    fab.setAttribute('aria-label', t('title'));
+    fab.title = t('fabTitle');
+    fab.textContent = '💡';
     document.body.appendChild(fab);
+    return fab;
   }
 
-  function togglePanel() {
-    let panel = document.getElementById('tutor-panel');
-    if (!panel) { panel = createPanel(); }
-    panel.classList.toggle('open');
-  }
-
-  /* ---------- 面板 ---------- */
-  function createPanel() {
+  function createPanel(meta) {
     const panel = document.createElement('div');
-    panel.id = 'tutor-panel';
-
+    panel.className = 'ai-tutor-panel';
     panel.innerHTML = `
-      <div class="tutor-header">
-        <h3>🤖 AI 学伴</h3>
-        <button class="tutor-close" onclick="document.getElementById('tutor-panel').classList.remove('open')">✕</button>
+      <div class="ai-tutor-header">
+        <div class="title">
+          🎓 ${escapeHtml(t('title'))}
+          <span class="subtitle">${escapeHtml(meta.courseTitle)} · G${meta.grade}</span>
+        </div>
+        <button type="button" class="btn-lang" title="${escapeAttr(t('langSwitchTitle'))}">${escapeHtml(t('langSwitch'))}</button>
+        <button type="button" class="btn-settings" title="${escapeAttr(t('settingsTitle'))}">${t('settings')}</button>
+        <button type="button" class="btn-clear" title="${escapeAttr(t('clear'))}">${escapeHtml(t('clear'))}</button>
+        <button type="button" class="btn-close" title="${escapeAttr(t('close'))}">${t('close')}</button>
       </div>
-      <div class="tutor-messages" id="tutorMessages"></div>
-      <div class="tutor-input-area">
-        <input type="text" id="tutorInput" placeholder="输入问题…" onkeydown="if(event.key==='Enter')window.__tutorSend()">
-        <button onclick="window.__tutorSend()">发送</button>
+      <div class="ai-tutor-context-bar">
+        <span class="pill">📍</span>
+        <span class="ctx-title">${escapeHtml(t('contextLabel'))}<span class="ctx-section">${escapeHtml(t('contextLoading'))}</span></span>
+      </div>
+      <div class="ai-tutor-messages"></div>
+      <div class="ai-tutor-input-wrap">
+        <textarea placeholder="${escapeAttr(t('placeholder'))}" rows="1"></textarea>
+        <button type="button" class="btn-send">${escapeHtml(t('send'))}</button>
       </div>
     `;
     document.body.appendChild(panel);
-
-    // 显示欢迎语
-    addMessage('bot', getWelcome());
     return panel;
   }
 
-  function getWelcome() {
-    const msgs = {
-      elementary: '你好！我是你的 AI 学伴 🤖 对当前课件有疑问就问我吧～（2-3句话就能说清楚！）',
-      middle: '你好！我是你的 AI 学伴 🤖 有任何关于本课的问题都可以问我，我会用结构化的方式帮你解答。',
-      high: 'Hello! I\'m your AI tutor 🤖 Feel free to ask any questions about this lesson. I\'ll provide detailed explanations with professional terminology when needed.'
-    };
-    return msgs[CONFIG.grade] || msgs.elementary;
+  function createConfigModal(initial, onSave, onCancel) {
+    const mask = document.createElement('div');
+    mask.className = 'ai-tutor-mask';
+    const presetOptions = PRESETS.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+    mask.innerHTML = `
+      <div class="ai-tutor-config" role="dialog" aria-labelledby="aitutor-title">
+        <h2 id="aitutor-title">${t('configTitle')}</h2>
+        <p class="subtitle">${escapeHtml(t('configSubtitle'))}</p>
+        <label>${escapeHtml(t('presetLabel'))}</label>
+        <select name="preset">
+          ${presetOptions}
+        </select>
+        <label>${escapeHtml(t('baseUrlLabel'))}</label>
+        <input type="text" name="baseUrl" value="${escapeAttr(initial.baseUrl)}" placeholder="https://openrouter.ai/api/v1">
+        <label>${escapeHtml(t('apiKeyLabel'))}</label>
+        <input type="password" name="apiKey" value="${escapeAttr(initial.apiKey)}" placeholder="sk-...">
+        <label>${escapeHtml(t('modelLabel'))}</label>
+        <input type="text" name="model" value="${escapeAttr(initial.model)}" placeholder="tencent/hy3-preview:free">
+        <div class="privacy">
+          ${escapeHtml(t('privacy'))}
+        </div>
+        <div class="actions">
+          <button type="button" class="btn-cancel">${escapeHtml(t('cancel'))}</button>
+          <button type="button" class="btn-save">${escapeHtml(t('save'))}</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(mask);
+
+    const nodePreset = mask.querySelector('select[name="preset"]');
+    const nodeBaseUrl = mask.querySelector('input[name="baseUrl"]');
+    const nodeApiKey = mask.querySelector('input[name="apiKey"]');
+    const nodeModel = mask.querySelector('input[name="model"]');
+    const btnSave = mask.querySelector('.btn-save');
+    const btnCancel = mask.querySelector('.btn-cancel');
+
+    // 预设切换：自动填表
+    nodePreset.addEventListener('change', () => {
+      const p = PRESETS.find(x => x.id === nodePreset.value);
+      if (p && p.baseUrl) {
+        nodeBaseUrl.value = p.baseUrl;
+        nodeModel.value = p.model;
+      }
+    });
+
+    btnSave.addEventListener('click', () => {
+      const cfg = {
+        baseUrl: (nodeBaseUrl.value || DEFAULTS.baseUrl).trim().replace(/\/$/, ''),
+        apiKey: (nodeApiKey.value || DEFAULTS.apiKey).trim(),
+        model: (nodeModel.value || DEFAULTS.model).trim()
+      };
+      saveUserConfig(cfg);
+      mask.remove();
+      onSave(cfg);
+    });
+
+    btnCancel.addEventListener('click', () => {
+      mask.remove();
+      onCancel && onCancel();
+    });
+
+    mask.addEventListener('click', (e) => {
+      if (e.target === mask) {
+        mask.remove();
+        onCancel && onCancel();
+      }
+    });
+    return mask;
   }
 
-  function addMessage(who, text) {
-    const container = document.getElementById('tutorMessages');
-    if (!container) return;
-    const div = document.createElement('div');
-    div.className = 'tutor-msg ' + who;
-    div.textContent = text;
-    container.appendChild(div);
+  // ───────────────────────────────────────────────────────
+  // 5. HTML 转义工具
+  // ───────────────────────────────────────────────────────
+  function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+  function escapeAttr(s) {
+    return escapeHtml(s);
+  }
+
+  // ───────────────────────────────────────────────────────
+  // 6. 消息渲染
+  // ───────────────────────────────────────────────────────
+  function renderBubble(container, role, text, opts = {}) {
+    const bubble = document.createElement('div');
+    bubble.className = 'ai-tutor-bubble ' + role + (opts.error ? ' error' : '') + (opts.loading ? ' loading' : '');
+    bubble.textContent = text || '';
+    container.appendChild(bubble);
     container.scrollTop = container.scrollHeight;
+    return bubble;
   }
 
-  /* ---------- 发送消息 ---------- */
-  window.__tutorSend = function () {
-    const input = document.getElementById('tutorInput');
-    const text = input?.value?.trim();
-    if (!text) return;
-    addMessage('user', text);
-    input.value = '';
-    const apiKey = localStorage.getItem(STORAGE_KEY);
-    if (!apiKey) { showConfigPanel(); return; }
-    callAPI(text);
-  };
+  function appendToBubble(bubble, deltaText) {
+    bubble.textContent = (bubble.textContent || '') + deltaText;
+    const container = bubble.parentElement;
+    if (container) container.scrollTop = container.scrollHeight;
+  }
 
-  async function callAPI(userMsg) {
-    const apiKey = localStorage.getItem(STORAGE_KEY);
-    const context = CONFIG.getContext ? CONFIG.getContext() : '';
-    const gradeLabel = { elementary: '小学', middle: '初中', high: '高中' }[CONFIG.grade] || '小学';
+  // ───────────────────────────────────────────────────────
+  // 7. API 调用（OpenAI 兼容，支持流式）
+  // ───────────────────────────────────────────────────────
+  async function callChatAPI(cfg, messages, onDelta) {
+    const endpoint = cfg.baseUrl.replace(/\/$/, '') + '/chat/completions';
+    const resp = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + cfg.apiKey
+      },
+      body: JSON.stringify({
+        model: cfg.model,
+        messages,
+        stream: true,
+        temperature: 0.7,
+        max_tokens: 600
+      })
+    });
 
-    const systemPrompt = `你是${CONFIG.courseTitle || '本课'}的AI学伴，面向${gradeLabel}学生。回答长度：${gradeLabel === '小学' ? '2-3句口语化' : gradeLabel === '初中' ? '3-5句结构化' : '5-8句可含专业术语'}。不要使用复杂公式或长篇大论。`;
+    if (!resp.ok) {
+      let errText = (getLang() === 'en' ? 'Request failed (' : '请求失败（') + resp.status + (getLang() === 'en' ? ')' : '）');
+      try {
+        const errJson = await resp.json();
+        errText += '：' + (errJson?.error?.message || JSON.stringify(errJson).slice(0, 200));
+      } catch (e) {}
+      throw new Error(errText);
+    }
 
-    addMessage('bot', '🤔 思考中…');
-
-    try {
-      const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + apiKey
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: `课件上下文：${context}\n\n学生问题：${userMsg}` }
-          ],
-          max_tokens: 300
-        })
-      });
-      const data = await resp.json();
-      // 移除"思考中"
-      const container = document.getElementById('tutorMessages');
-      const thinking = container?.lastElementChild;
-      if (thinking) thinking.remove();
-
-      const reply = data.choices?.[0]?.message?.content || '抱歉，暂时无法回答，请稍后再试。';
-      addMessage('bot', reply);
-    } catch (e) {
-      const container = document.getElementById('tutorMessages');
-      const thinking = container?.lastElementChild;
-      if (thinking) thinking.remove();
-      addMessage('bot', '⚠️ 网络错误或 API Key 无效，请检查配置。');
+    const ct = resp.headers.get('content-type') || '';
+    if (ct.includes('text/event-stream') || ct.includes('stream')) {
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || !trimmed.startsWith('data:')) continue;
+          const data = trimmed.replace(/^data:\s*/, '');
+          if (data === '[DONE]') return;
+          try {
+            const json = JSON.parse(data);
+            const delta = json.choices?.[0]?.delta?.content || '';
+            if (delta) onDelta(delta);
+          } catch (e) { /* ignore parse errors */ }
+        }
+      }
+    } else {
+      const json = await resp.json();
+      const full = json.choices?.[0]?.message?.content || '';
+      if (full) onDelta(full);
     }
   }
 
-  /* ---------- 配置面板 ---------- */
-  function showConfigPanel() {
-    let panel = document.getElementById('tutor-panel');
-    if (!panel) panel = createPanel();
-    const messages = panel.querySelector('.tutor-messages');
-    if (!messages) return;
+  // ───────────────────────────────────────────────────────
+  // 8. 主控制器
+  // ───────────────────────────────────────────────────────
+  function boot() {
+    const meta = readCourseMeta();
+    const fab = createFab();
+    let panel = null;
+    let messagesEl = null;
+    let inputEl = null;
+    let sendBtn = null;
+    let ctxSectionEl = null;
+    let isPending = false;
+    let history = [];
 
-    messages.innerHTML = '';
-    const config = document.createElement('div');
-    config.className = 'tutor-config';
-    config.innerHTML = `
-      <h4>🔑 配置 API Key</h4>
-      <p>API Key 仅保存在本浏览器（localStorage），不会上传到任何服务器。<br>支持 OpenAI 兼容接口（OpenAI、DeepSeek 等）。</p>
-      <label>API Key（sk-...）</label>
-      <input type="password" id="tutorApiKey" placeholder="sk-...">
-      <label>API 地址（可选，默认 OpenAI）</label>
-      <input type="text" id="tutorApiBase" placeholder="https://api.openai.com/v1">
-      <button onclick="window.__tutorSaveKey()">保存并开始</button>
-      <div class="tutor-save-msg" id="tutorSaveMsg">✅ 已保存！可以开始提问了。</div>
-    `;
-    messages.appendChild(config);
-    panel.classList.add('open');
-  }
+    function getWelcomeMessage() {
+      const grade = meta.grade;
+      const title = meta.courseTitle;
+      let key;
+      if (grade <= 6) key = 'welcomeP';
+      else if (grade <= 9) key = 'welcomeM';
+      else key = 'welcomeH';
+      return t(key).replace('{title}', title);
+    }
 
-  window.__tutorSaveKey = function () {
-    const key = document.getElementById('tutorApiKey')?.value?.trim();
-    if (!key) { alert('请输入 API Key！'); return; }
-    localStorage.setItem(STORAGE_KEY, key);
-    const base = document.getElementById('tutorApiBase')?.value?.trim();
-    if (base) localStorage.setItem('teachany_tutor_base', base);
-    const msg = document.getElementById('tutorSaveMsg');
-    if (msg) { msg.style.display = 'block'; }
-    setTimeout(() => {
-      const panel = document.getElementById('tutor-panel');
-      if (panel) {
-        const msgs = panel.querySelector('.tutor-messages');
-        if (msgs) {
-          msgs.innerHTML = '';
-          addMessage('bot', getWelcome());
+    function ensurePanel() {
+      if (panel) return panel;
+      panel = createPanel(meta);
+      messagesEl = panel.querySelector('.ai-tutor-messages');
+      inputEl = panel.querySelector('textarea');
+      sendBtn = panel.querySelector('.btn-send');
+      ctxSectionEl = panel.querySelector('.ctx-section');
+
+      // 初始 AI 欢迎语
+      const welcome = getWelcomeMessage();
+      renderBubble(messagesEl, 'ai', welcome);
+
+      // 关闭按钮
+      panel.querySelector('.btn-close').addEventListener('click', () => togglePanel(false));
+      // 清空按钮
+      panel.querySelector('.btn-clear').addEventListener('click', () => {
+        messagesEl.innerHTML = '';
+        history = [];
+        renderBubble(messagesEl, 'ai', getWelcomeMessage());
+      });
+      // 语言切换按钮
+      panel.querySelector('.btn-lang').addEventListener('click', () => {
+        const current = getLang();
+        const next = current === 'zh' ? 'en' : 'zh';
+        setLang(next);
+        // 重建面板
+        panel.remove();
+        panel = null;
+        ensurePanel();
+        togglePanel(true);
+      });
+      // 设置按钮（打开配置弹窗）
+      panel.querySelector('.btn-settings').addEventListener('click', () => {
+        const current = getEffectiveConfig();
+        createConfigModal(current, () => {}, () => {});
+      });
+      // 发送
+      sendBtn.addEventListener('click', handleSend);
+      inputEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          handleSend();
         }
-      }
-    }, 1000);
-  };
+      });
+      inputEl.addEventListener('input', () => {
+        inputEl.style.height = 'auto';
+        inputEl.style.height = Math.min(100, inputEl.scrollHeight) + 'px';
+      });
 
-  /* ---------- 启动 ---------- */
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
+      // 定时刷新上下文显示
+      updateContextDisplay();
+      setInterval(updateContextDisplay, 1500);
+
+      return panel;
+    }
+
+    function updateContextDisplay() {
+      if (!ctxSectionEl) return;
+      ctxSectionEl.textContent = getCurrentSectionTitle();
+    }
+
+    function togglePanel(open) {
+      ensurePanel();
+      if (open) {
+        panel.classList.add('open');
+        setTimeout(() => inputEl && inputEl.focus(), 200);
+      } else {
+        panel.classList.remove('open');
+      }
+    }
+
+    async function handleSend() {
+      if (isPending) return;
+      const text = (inputEl.value || '').trim();
+      if (!text) return;
+      // v7.0：直接使用生效配置（DEFAULTS 已有 key，不再强制弹窗）
+      doSend(text);
+    }
+
+    async function doSend(text) {
+      const cfg = getEffectiveConfig();
+
+      inputEl.value = '';
+      inputEl.style.height = '36px';
+
+      renderBubble(messagesEl, 'user', text);
+
+      const contextText = (meta.getContext() || '').slice(0, 3000);
+      const sectionTitle = getCurrentSectionTitle();
+      const system = buildSystemPrompt(meta);
+
+      const lang = getLang();
+      const userPayload = lang === 'en'
+        ? `[Currently studying: ${sectionTitle}]\n\n[Course context]\n${contextText}\n\n[Student question]\n${text}`
+        : `[当前正在学习：${sectionTitle}]\n\n[课件上下文片段]\n${contextText}\n\n[学生提问]\n${text}`;
+
+      const messages = [
+        { role: 'system', content: system },
+        ...history.slice(-6),
+        { role: 'user', content: userPayload }
+      ];
+
+      const aiBubble = renderBubble(messagesEl, 'ai', '', { loading: true });
+      isPending = true;
+      sendBtn.disabled = true;
+
+      try {
+        await callChatAPI(cfg, messages, (delta) => {
+          if (aiBubble.classList.contains('loading')) {
+            aiBubble.classList.remove('loading');
+          }
+          appendToBubble(aiBubble, delta);
+        });
+        history.push({ role: 'user', content: text });
+        history.push({ role: 'assistant', content: aiBubble.textContent || '' });
+      } catch (err) {
+        aiBubble.remove();
+        renderBubble(messagesEl, 'ai', '😥 ' + (err.message || (lang === 'en' ? 'Request failed' : '请求失败')) + t('errorHint'), { error: true });
+      } finally {
+        isPending = false;
+        sendBtn.disabled = false;
+        inputEl.focus();
+      }
+    }
+
+    // FAB 点击：v7.0 直接开关面板（不弹配置，因为已有默认 key）
+    fab.addEventListener('click', () => {
+      togglePanel(!(panel && panel.classList.contains('open')));
+    });
   }
+
+  // ───────────────────────────────────────────────────────
+  // 9. 启动（DOM 就绪后）
+  // ───────────────────────────────────────────────────────
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+
+  // ───────────────────────────────────────────────────────
+  // 10. 开发者接口
+  // ───────────────────────────────────────────────────────
+  window.TeachAnyTutor = {
+    /** 清除用户自定义配置（恢复使用 DEFAULTS） */
+    clearKey: clearUserConfig,
+    /** 设置 API 配置（运行时替换） */
+    setConfig: function (cfg) {
+      if (cfg && typeof cfg === 'object') {
+        saveUserConfig({
+          baseUrl: cfg.baseUrl || DEFAULTS.baseUrl,
+          apiKey: cfg.apiKey || DEFAULTS.apiKey,
+          model: cfg.model || DEFAULTS.model
+        });
+      }
+    },
+    /** 获取当前生效配置 */
+    getConfig: getEffectiveConfig,
+    /** 设置界面语言：'zh' | 'en' */
+    setLang: function (lang) {
+      setLang(lang);
+      // 提示需刷新面板
+      console.log('[TeachAnyTutor] Language set to:', lang, '- please reopen the panel to see changes.');
+    },
+    /** 获取当前语言 */
+    getLang: getLang,
+    /** 版本号 */
+    version: '7.0'
+  };
 })();
