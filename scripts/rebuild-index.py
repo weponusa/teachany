@@ -19,6 +19,11 @@ v6.2 变更（2026-04-27）:
 - name 字段回退：优先 name → title_zh → title（兼容旧 manifest）
 - 新增 detect_images() 自动检测 hero_image / scene_image
 - registry entry 增加 hero_image / scene_image 字段
+
+v6.3 变更（2026-04-29）:
+- 集成 image_resolver.py 的统一图片发现机制
+- detect_images_unified() 先查 image-registry.json（CDN 预制图），再查本地 assets/
+- hero_image 字段可能为 CDN URL（以 "cdn:" 前缀标记）或本地相对路径
 """
 import json
 from pathlib import Path
@@ -37,6 +42,30 @@ COMMUNITY_SKIP = {'drafts', 'pending', 'README.md'}
 
 # v6.2: 图片后缀白名单
 IMG_EXTS = {'.png', '.jpg', '.jpeg', '.webp'}
+
+# v6.3: image-registry.json 路径
+IMAGE_REGISTRY_PATH = Path(__file__).resolve().parents[1] / "skill" / "assets" / "image-registry.json"
+
+
+def load_image_registry():
+    """加载 image-registry.json 图片索引"""
+    if IMAGE_REGISTRY_PATH.exists():
+        with open(IMAGE_REGISTRY_PATH, encoding='utf-8') as f:
+            return json.load(f)
+    return {"images": []}
+
+
+def resolve_image_from_registry(node_id, slot, subject=None):
+    """从 image-registry.json 中查找匹配的图片（轻量版 resolve，无需导入 image_resolver.py）
+
+    与 image_resolver.py 的 resolve_image() 逻辑一致，但只做精确匹配（score ≥ 500）
+    返回: (url, local_filename) 或 (None, None)
+    """
+    registry = load_image_registry()
+    for img in registry.get("images", []):
+        if node_id in img.get("match_nodes", []) and img.get("slot") == slot:
+            return img.get("url", ""), Path(img.get("file", "")).name
+    return None, None
 
 
 def detect_images(course_dir: Path):
@@ -399,9 +428,21 @@ def main():
         desc = manifest.get('description', '')
         if not desc_zh and desc and any('\u4e00' <= ch <= '\u9fff' for ch in desc):
             desc_zh = desc
-        # v6.2: 自动检测图片资产
+        # v6.3: 统一图片发现 — 先查 image-registry.json，再查本地 assets/
         course_path = Path(src_dir) / course_id
-        hero_image, scene_image = detect_images(course_path)
+        node_id = manifest.get('node_id', '')
+        m_subject = manifest.get('subject', '')
+
+        # 1. 查 image-registry.json（CDN 预制图）
+        cdn_hero_url, cdn_hero_file = resolve_image_from_registry(node_id, 'hero', m_subject)
+        cdn_scene_url, cdn_scene_file = resolve_image_from_registry(node_id, 'scene', m_subject)
+
+        # 2. 查本地 assets/（与 v6.2 兼容）
+        local_hero, local_scene = detect_images(course_path)
+
+        # 3. 合并：CDN 优先，本地兜底
+        hero_image = local_hero or (f"cdn:{cdn_hero_url}" if cdn_hero_url else '')
+        scene_image = local_scene or (f"cdn:{cdn_scene_url}" if cdn_scene_url else '')
 
         entry = {
             'id': course_id,
