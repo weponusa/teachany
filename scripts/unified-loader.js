@@ -30,7 +30,7 @@
 
 /* ─── 常量 ───────────────────────────────────── */
 const REGISTRY_URL = './registry.json';
-const CACHE_KEY = 'teachany_registry_v3_5'; // v3.5: 强制刷新，含英国革命课件v6.1
+const CACHE_KEY = 'teachany_registry_v3_6'; // v3.6: card hero 图支持
 const CACHE_TTL = 30 * 60 * 1000; // 30 分钟缓存
 const LIKES_KEY = 'teachany_likes';
 
@@ -270,9 +270,21 @@ function renderCourseCard(course) {
     ? `<button class="ta-export-btn" onclick="event.preventDefault();event.stopPropagation();window.TeachAnyExport.exportCourseware({url:'${escapeHtml(url)}',courseName:'${escapeHtml(courseName)}',onProgress:(s,m)=>console.log(m)})" title="导出离线课件包">📦 导出</button>`
     : '';
 
+  // Hero 图（从 hero_image 字段读取，支持 cdn: 前缀）
+  let heroCover = '';
+  if (course.hero_image) {
+    const heroUrl = course.hero_image.startsWith('cdn:')
+      ? course.hero_image.slice(4)
+      : course.hero_image;
+    heroCover = `<img class="card-cover" src="${escapeHtml(heroUrl)}" alt="${escapeHtml(courseName)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="card-cover-emoji" style="display:none">${escapeHtml(course.emoji || '📚')}</div>`;
+  } else {
+    heroCover = `<div class="card-cover-emoji">${escapeHtml(course.emoji || '📚')}</div>`;
+  }
+
   return `<a href="${escapeHtml(url)}" class="course-card" data-subject="${escapeHtml(course.subject)}" data-course-id="${escapeHtml(course.id)}" data-grade="${course.grade || ''}" data-level="${level}" data-status="${course.status || 'community'}" data-curriculum="${escapeHtml(course.curriculum || 'cn-national')}" data-course-name="${escapeHtml(courseName)}" data-course-desc="${escapeHtml(courseDesc)}">
+      ${heroCover}
       <div class="card-header">
-        <div class="card-emoji">${escapeHtml(course.emoji || '📚')}</div>
         <h3 class="card-title">${escapeHtml(courseName)}</h3>
         ${courseNameEn ? `<h4 class="card-title-en">${escapeHtml(courseNameEn)}</h4>` : ''}
         <p class="card-desc">${escapeHtml(courseDesc)}</p>
