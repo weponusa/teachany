@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>《宋元明清 — TeachAny 高中历史》 · 历史 高中 G10 · TeachAny v6</title>
+  <!-- TeachAny 课件元数据 -->
+  <meta name="course-id" content="hist-h-song-yuan-ming-qing-h">
+  <meta name="course-node" content="hist-h-song-yuan-ming-qing-h">
+  <meta name="course-subject" content="history">
+  <meta name="course-grade" content="10">
+  <meta name="course-title" content="宋元明清">
+  <meta name="course-prereqs" content="hist-h-wei-jin-tang">
+  <meta name="course-next" content="hist-h-ancient-civ-h">
+  <meta name="course-domain" content="中国古代史">
+  
+  
+  
+  
+  
+  <link rel="stylesheet" href="./ai-tutor.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --primary: #60a5fa;
+      --secondary: #a78bfa;
+      --accent: #fbbf24;
+      --card: rgba(30,41,59,0.65);
+      --border: rgba(255,255,255,0.08);
+      --text: #f1f5f9;
+      --text2: #94a3b8;
+      --hist: #f59e0b;
+      --green: #34d399;
+      --red: #f87171;
+      --radius: 12px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei','微软雅黑',sans-serif;line-height:1.7;overflow-x:hidden}
+    a{color:var(--primary);text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    /* 进度条 */
+    #progress-bar{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,#60a5fa,#a78bfa);z-index:9999;transition:width .2s}
+
+    /* 容器 */
+    .container{max-width:900px;margin:0 auto;padding:0 20px}
+    section{padding:48px 0 24px}
+
+    /* Hero */
+    .hero{padding:56px 20px 40px;background:linear-gradient(135deg,rgba(96,165,250,.08),rgba(167,139,250,.06));border-bottom:1px solid var(--border);text-align:center}
+    .hero h1{font-size:2.6rem;line-height:1.2;margin-bottom:10px;font-weight:900;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .hero .subtitle{font-size:1rem;color:var(--text2);margin-bottom:18px}
+    .hero-tags{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:22px}
+    .tag{padding:4px 12px;border-radius:20px;font-size:.78rem;font-weight:600;border:1px solid}
+    .tag-grade{background:rgba(96,165,250,.12);border-color:rgba(96,165,250,.3);color:#93c5fd}
+    .tag-hist{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.3);color:#fde68a}
+    .tag-domain{background:rgba(167,139,250,.12);border-color:rgba(167,139,250,.3);color:#c4b5fd}
+    .hero-quote{font-size:.95rem;font-style:italic;color:var(--text2);max-width:580px;margin:0 auto;border-left:3px solid var(--hist);padding-left:14px;text-align:left}
+
+    /* 标题 */
+    .section-title{font-size:1.4rem;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+    .section-title::before{content:'';width:4px;height:1.4rem;border-radius:2px;background:var(--primary);flex-shrink:0}
+    .module-header{font-size:1.15rem;font-weight:700;color:var(--accent);margin:28px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+
+    /* 卡片 */
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;backdrop-filter:blur(8px);margin-bottom:16px}
+    .card-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    @media(max-width:620px){.card-grid{grid-template-columns:1fr}}
+
+    /* 学习目标 */
+    .obj-list{list-style:none;display:flex;flex-direction:column;gap:10px}
+    .obj-list li{display:flex;align-items:flex-start;gap:10px;font-size:.95rem}
+    .obj-icon{width:28px;height:28px;border-radius:50%;background:rgba(96,165,250,.15);border:1px solid rgba(96,165,250,.3);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#93c5fd;flex-shrink:0;margin-top:2px}
+
+    /* ABT */
+    .abt-block{background:linear-gradient(135deg,rgba(96,165,250,.06),rgba(167,139,250,.04));border:1px solid rgba(96,165,250,.18);border-radius:var(--radius);padding:18px 22px;margin-bottom:20px}
+    .abt-block .abt-label{font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--primary);margin-bottom:6px}
+    .abt-block p{color:var(--text2);font-size:.95rem}
+    .abt-block strong{color:var(--text)}
+
+    /* 题目 */
+    .q-block{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin-bottom:14px}
+    .q-num{font-size:.72rem;font-weight:700;letter-spacing:.08em;color:var(--secondary);display:block;margin-bottom:6px}
+    .q-stem{font-size:.97rem;font-weight:600;margin-bottom:14px;line-height:1.6}
+    .q-options{display:flex;flex-direction:column;gap:8px}
+    .q-opt{padding:10px 14px;border-radius:8px;border:1px solid var(--border);cursor:pointer;transition:all .18s;font-size:.9rem;display:flex;align-items:flex-start;gap:10px}
+    .q-opt:hover{border-color:var(--primary);background:rgba(96,165,250,.08)}
+    .q-opt.correct{background:rgba(52,211,153,.1);border-color:#34d399;color:#a7f3d0}
+    .q-opt.wrong{background:rgba(248,113,113,.1);border-color:#f87171;color:#fca5a5}
+    .opt-key{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0}
+    .q-feedback{display:none;margin-top:12px;padding:10px 14px;border-radius:8px;font-size:.88rem;line-height:1.6}
+    .feedback-correct{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);color:#a7f3d0}
+    .feedback-wrong{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:#fca5a5}
+
+    /* 按钮 */
+    .btn{padding:9px 20px;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;border:none;transition:all .18s;font-family:inherit}
+    .btn-primary{background:var(--primary);color:#0f172a}
+    .btn-primary:hover{background:#3b82f6}
+    .btn-outline{background:transparent;color:var(--text);border:1px solid var(--border)}
+    .btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+    .btn-hist{background:var(--hist);color:#0f172a}
+    .btn-hist:hover{background:#d97706}
+
+    /* TTS 播放器 */
+    .tts-player{background:rgba(96,165,250,.06);border:1px solid rgba(96,165,250,.18);border-radius:var(--radius);padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:18px}
+    .tts-btn{width:36px;height:36px;border-radius:50%;background:var(--primary);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#0f172a;font-size:1rem;flex-shrink:0;transition:all .18s}
+    .tts-btn:hover{background:#3b82f6;transform:scale(1.08)}
+    .tts-label{font-size:.85rem;color:var(--text2)}
+    .tts-progress{flex:1;height:3px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden}
+    .tts-progress-bar{height:100%;background:var(--primary);width:0;transition:width .3s}
+
+    /* Canvas */
+    canvas{border-radius:var(--radius);border:1px solid var(--border);display:block;max-width:100%}
+    .canvas-wrap{position:relative;margin:16px 0}
+    .slider-wrap{display:flex;align-items:center;gap:12px;margin-top:10px}
+    .slider-wrap input[type=range]{flex:1;accent-color:var(--primary)}
+    .slider-label{font-size:.82rem;color:var(--text2);width:120px}
+
+    /* 地图 */
+    #dynasty-map{height:360px;border-radius:var(--radius);border:1px solid var(--border);margin:16px 0}
+
+    /* 关键词卡 */
+    .keyword-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin:16px 0}
+    .keyword-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:all .18s}
+    .keyword-card:hover{border-color:var(--primary);transform:translateY(-2px)}
+    .keyword-card h4{font-size:.92rem;font-weight:700;color:var(--accent);margin-bottom:4px}
+    .keyword-card p{font-size:.82rem;color:var(--text2);line-height:1.5}
+
+    /* 对比表 */
+    .compare-table{width:100%;border-collapse:collapse;font-size:.88rem;margin:16px 0}
+    .compare-table th{background:rgba(96,165,250,.12);color:var(--primary);padding:10px 14px;text-align:left;border:1px solid var(--border)}
+    .compare-table td{padding:9px 14px;border:1px solid var(--border);vertical-align:top}
+    .compare-table tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+
+    /* 记忆锚 */
+    .anchor-box{background:linear-gradient(135deg,rgba(245,158,11,.1),rgba(167,139,250,.08));border:1px solid rgba(245,158,11,.3);border-radius:var(--radius);padding:20px 24px;text-align:center}
+    .anchor-box .anchor-text{font-size:1.3rem;font-weight:700;color:var(--accent);letter-spacing:.02em}
+    .anchor-box .anchor-sub{font-size:.88rem;color:var(--text2);margin-top:8px}
+
+    /* 易错 */
+    .mistake-item{background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.2);border-radius:var(--radius);padding:16px 20px;margin-bottom:12px}
+    .mistake-item .m-label{font-size:.72rem;font-weight:700;color:#f87171;letter-spacing:.08em;margin-bottom:6px}
+    .mistake-item .m-wrong{font-size:.9rem;color:#fca5a5;margin-bottom:6px;text-decoration:line-through}
+    .mistake-item .m-right{font-size:.9rem;color:#a7f3d0}
+
+    /* 知识图谱 */
+    .kg-wrap{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap;margin:24px 0}
+    .kg-node{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 18px;text-align:center;min-width:120px;transition:all .18s}
+    .kg-node:hover{border-color:var(--primary);transform:translateY(-2px)}
+    .kg-node.active{border-color:var(--accent);background:rgba(245,158,11,.1)}
+    .kg-node .kn-sub{font-size:.7rem;color:var(--text2);margin-bottom:2px}
+    .kg-node .kn-name{font-size:.9rem;font-weight:700}
+    .kg-arrow{font-size:1.4rem;color:var(--border);padding:0 6px}
+
+    /* 视频 */
+    video{width:100%;border-radius:var(--radius);border:1px solid var(--border)}
+
+    /* 综合任务 */
+    .task-level{border-left:3px solid;padding:14px 18px;margin-bottom:14px;border-radius:0 var(--radius) var(--radius) 0}
+    .task-level.l1{border-color:#34d399;background:rgba(52,211,153,.05)}
+    .task-level.l2{border-color:var(--primary);background:rgba(96,165,250,.05)}
+    .task-level.l3{border-color:var(--secondary);background:rgba(167,139,250,.05)}
+    .task-level .t-label{font-size:.72rem;font-weight:700;letter-spacing:.08em;margin-bottom:6px}
+    .task-level.l1 .t-label{color:#34d399}
+    .task-level.l2 .t-label{color:var(--primary)}
+    .task-level.l3 .t-label{color:var(--secondary)}
+
+    /* 全局 TTS 控制器 */
+    #tts-global{position:fixed;bottom:22px;right:80px;z-index:9990;background:rgba(15,23,42,.92);border:1px solid var(--border);border-radius:50px;padding:8px 16px;display:flex;align-items:center;gap:8px;backdrop-filter:blur(8px);cursor:pointer}
+    #tts-global:hover{border-color:var(--primary)}
+    #tts-global span{font-size:.82rem;color:var(--text2)}
+
+    @media(max-width:620px){
+      .hero h1{font-size:1.8rem}
+      .anchor-text{font-size:1.1rem}
+      .kg-wrap{gap:4px}
+      .kg-arrow{display:none}
+    }
+  </style>
+
+  <meta name="teachany-id" content="hist-h-song-yuan-ming-qing-h">
+  <meta name="teachany-name" content="宋元明清 — TeachAny 高中历史">
+  <meta name="teachany-node" content="hist-h-song-yuan-ming-qing-h">
+  <meta name="teachany-subject" content="history">
+  <meta name="teachany-grade" content="10">
+  <meta name="teachany-version" content="v6">
+  <meta name="teachany-author" content="TeachAny">
+  <meta name="teachany-curriculum" content="cn-national">
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<!-- ═══ HERO ═══ -->
+<div class="hero">
+  <!-- hero 图：hist-h-song-yuan-ming-qing-h 暂无预制图，留空 -->
+  <div class="hero-tags">
+    <span class="tag tag-grade">高中 · 10年级</span>
+    <span class="tag tag-hist">中国古代史</span>
+    <span class="tag tag-domain">专制主义中央集权</span>
+  </div>
+  <h1>宋元明清</h1>
+  <p class="subtitle">封建王朝的盛世与危机（960—1912）</p>
+  <p class="hero-quote">
+    "天下兴亡，匹夫有责。"——顾炎武<br>
+    为什么封建王朝的最后阶段，盛世与危机并存？
+  </p>
+</div>
+
+<div class="container">
+
+
+<!-- ═══ 核心概念 ═══ -->
+<section id="core-concepts">
+  <h2 class="section-title">核心概念</h2>
+  <div class="keyword-grid">
+    <div class="keyword-card"><h4>重文轻武</h4><p>宋代抑制武将、重用文官的政治政策，根源于防止藩镇割据</p></div>
+    <div class="keyword-card"><h4>行省制</h4><p>元朝开创的地方行政制度，为明清"省"制度的前身</p></div>
+    <div class="keyword-card"><h4>丞相废除</h4><p>1380年明太祖废除丞相，皇权高度集中，延续1600余年的丞相制度终结</p></div>
+    <div class="keyword-card"><h4>军机处</h4><p>1729年清雍正设立，军国大事由皇帝独裁，标志专制顶峰</p></div>
+    <div class="keyword-card"><h4>资本主义萌芽</h4><p>明清出现雇佣劳动关系，但受封建制度压制，未能发展为资本主义</p></div>
+    <div class="keyword-card"><h4>经世致用</h4><p>顾炎武等明清思想家倡导的学风，反对空谈，注重实学与社会责任</p></div>
+  </div>
+</section>
+
+<!-- ═══ 学习目标 ═══ -->
+<section id="objectives">
+  <h2 class="section-title">学习目标</h2>
+  <div class="card">
+    <ul class="obj-list">
+      <li><div class="obj-icon">分析</div><span><strong>分析</strong>两宋政治与军事特征，理解"重文轻武"政策的历史背景与影响</span></li>
+      <li><div class="obj-icon">比较</div><span><strong>比较</strong>辽、夏、金、元等北方少数民族政权的建立与制度建设特点</span></li>
+      <li><div class="obj-icon">评价</div><span><strong>评价</strong>明清专制主义中央集权制度达到顶峰的历史意义与局限</span></li>
+      <li><div class="obj-icon">论述</div><span><strong>论述</strong>明清社会经济变化与思想启蒙运动，理解"资本主义萌芽"的含义</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══ 前测 ═══ -->
+<section id="pretest">
+  <h2 class="section-title">前测·三题热身</h2>
+  <p style="color:var(--text2);font-size:.9rem;margin-bottom:16px">先测一测你对隋唐制度的掌握程度。</p>
+
+  <div class="q-block" id="pre1">
+    <span class="q-num">前测 1</span>
+    <p class="q-stem">唐朝实行三省六部制，三省分别是？</p>
+    <div class="q-options">
+      <div class="q-opt" data-correct="false" onclick="preSelect(this,'pre1')"><span class="opt-key">A</span>内阁、六部、御史台</div>
+      <div class="q-opt" data-correct="true" onclick="preSelect(this,'pre1')"><span class="opt-key">B</span>中书省、门下省、尚书省</div>
+      <div class="q-opt" data-correct="false" onclick="preSelect(this,'pre1')"><span class="opt-key">C</span>参知政事、枢密院、三司</div>
+      <div class="q-opt" data-correct="false" onclick="preSelect(this,'pre1')"><span class="opt-key">D</span>军机处、内阁、六部</div>
+    </div>
+    <div class="q-feedback feedback-correct" id="pre1-ok">✅ 正确！唐朝三省六部制：中书省（决策）、门下省（审议）、尚书省（执行），分散了丞相权力。</div>
+    <div class="q-feedback feedback-wrong" id="pre1-no">❌ 唐朝三省是中书省、门下省、尚书省。选项C的"参知政事"是宋代官职，选项D则是明清的制度。</div>
+  </div>
+
+  <div class="q-block" id="pre2">
+    <span class="q-num">前测 2</span>
+    <p class="q-stem">隋唐科举制的主要历史意义是？</p>
+    <div class="q-options">
+      <div class="q-opt" data-correct="false" onclick="preSelect(this,'pre2')"><span class="opt-key">A</span>彻底消除了门阀贵族的影响</div>
+      <div class="q-opt" data-correct="true" onclick="preSelect(this,'pre2')"><span class="opt-key">B</span>打破门第限制，扩大了统治基础，促进社会阶层流动</div>
+      <div class="q-opt" data-correct="false" onclick="preSelect(this,'pre2')"><span class="opt-key">C</span>取代了九品中正制后立即选拔出大量人才</div>
+      <div class="q-opt" data-correct="false" onclick="preSelect(this,'pre2')"><span class="opt-key">D</span>是中国第一个公平的选官制度</div>
+    </div>
+    <div class="q-feedback feedback-correct" id="pre2-ok">✅ 正确！科举制打破门第限制，寒门子弟可以通过读书入仕，扩大了统治基础，有利于社会稳定。</div>
+    <div class="q-feedback feedback-wrong" id="pre2-no">❌ 科举制并未彻底消除门阀影响（唐代仍有世家大族），但确实打破了门第限制，扩大了统治基础。</div>
+  </div>
+
+  <div class="q-block" id="pre3">
+    <span class="q-num">前测 3</span>
+    <p class="q-stem">唐末藩镇割据导致五代十国的分裂，北宋建立后最担心的是？</p>
+    <div class="q-options">
+      <div class="q-opt" data-correct="false" onclick="preSelect(this,'pre3')"><span class="opt-key">A</span>北方游牧民族的南侵</div>
+      <div class="q-opt" data-correct="false" onclick="preSelect(this,'pre3')"><span class="opt-key">B</span>农民起义的威胁</div>
+      <div class="q-opt" data-correct="true" onclick="preSelect(this,'pre3')"><span class="opt-key">C</span>武将专权、藩镇再度割据</div>
+      <div class="q-opt" data-correct="false" onclick="preSelect(this,'pre3')"><span class="opt-key">D</span>外戚和宦官干政</div>
+    </div>
+    <div class="q-feedback feedback-correct" id="pre3-ok">✅ 正确！宋太祖"杯酒释兵权"正是为了防止武将专权，理解这一点，就能理解宋代"重文轻武"政策的根本原因。</div>
+    <div class="q-feedback feedback-wrong" id="pre3-no">❌ 北宋建立后，赵匡胤最担心的是武将专权（重蹈唐末覆辙），这直接导致了"重文轻武"政策的实施。</div>
+  </div>
+</section>
+
+<!-- ═══ 模块一：两宋政治与军事 ═══ -->
+<section id="module1">
+  <h2 class="section-title">模块一：两宋政治与军事</h2>
+
+  <!-- TTS -->
+  <div class="tts-player" id="tts1-player">
+    <button class="tts-btn" onclick="playTTS('tts/module1.mp3','tts1-player')" id="tts1-btn">▶</button>
+    <div style="flex:1">
+      <div class="tts-label">🎙 语音讲解 · 模块一</div>
+      <div class="tts-progress"><div class="tts-progress-bar" id="tts1-bar"></div></div>
+    </div>
+  </div>
+  <audio id="tts1-audio" src="./tts/module1.mp3" preload="none"></audio>
+
+  <div class="abt-block">
+    <div class="abt-label">ABT 引入</div>
+    <p>五代十国时期武将乱政，<strong>赵匡胤建立北宋后</strong>极力限制武将权力，推行"重文轻武"——<strong>但</strong>这个保稳定的政策却带来了军事积弱，使宋朝长期受到辽、夏的威胁，最终导致"靖康之变"。<strong>因此</strong>，王安石变法试图打破这一困局，却以失败告终。</p>
+  </div>
+
+  <h3 class="module-header">重文轻武政策</h3>
+  <div class="card-grid">
+    <div class="card">
+      <h4 style="color:var(--primary);margin-bottom:8px">🎯 核心措施</h4>
+      <ul style="color:var(--text2);font-size:.9rem;line-height:2;padding-left:16px">
+        <li>杯酒释兵权：收回武将兵权</li>
+        <li>文官担任地方行政长官</li>
+        <li>禁军统兵权与调兵权分离</li>
+        <li>设参知政事分割宰相权</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4 style="color:var(--accent);margin-bottom:8px">⚖️ 影响</h4>
+      <ul style="color:var(--text2);font-size:.9rem;line-height:2;padding-left:16px">
+        <li>✅ 防止了武将割据，稳定政治</li>
+        <li>✅ 文官政治发展，科举繁荣</li>
+        <li>❌ 军事积弱，对外战争屡败</li>
+        <li>❌ 冗官冗兵冗费，财政危机</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="module-header">王安石变法（1069年）</h3>
+  <div class="card">
+    <table class="compare-table">
+      <tr>
+        <th>变法内容</th>
+        <th>目的</th>
+        <th>结果</th>
+      </tr>
+      <tr>
+        <td>青苗法</td>
+        <td>政府贷款给农民，抑制高利贷</td>
+        <td>执行中强制摊派，农民受害</td>
+      </tr>
+      <tr>
+        <td>募役法</td>
+        <td>纳钱代役，减轻劳役负担</td>
+        <td>贫民仍难承受，争议较大</td>
+      </tr>
+      <tr>
+        <td>将兵法</td>
+        <td>固定军队编制，提高战斗力</td>
+        <td>有一定成效</td>
+      </tr>
+      <tr>
+        <td>保甲法</td>
+        <td>乡兵组织，维护地方治安</td>
+        <td>加重了农民负担</td>
+      </tr>
+    </table>
+    <p style="color:var(--text2);font-size:.85rem;margin-top:8px">
+      变法失败的根本原因：触动了大地主、大官僚的利益，遭到保守派强烈反对，且新法执行过程中弊端较多。
+    </p>
+  </div>
+
+  <!-- Canvas 朝代时间轴 -->
+  <h3 class="module-header">🖱 互动：朝代时间轴（拖动滑块）</h3>
+  <div class="canvas-wrap">
+    <canvas id="dynasty-canvas" width="860" height="200"></canvas>
+    <div class="slider-wrap">
+      <span class="slider-label" id="dynasty-year-label">960年 · 北宋建立</span>
+      <input type="range" id="dynasty-slider" min="0" max="5" step="1" value="0" oninput="updateDynastyCanvas(this.value)">
+    </div>
+  </div>
+
+  <!-- 即时练习 -->
+  <div class="q-block" id="q1">
+    <span class="q-num">即时练习 1</span>
+    <p class="q-stem">北宋实行"重文轻武"政策，其根本目的是？</p>
+    <div class="q-options">
+      <div class="q-opt" data-correct="false" onclick="selectOpt(this,'q1')"><span class="opt-key">A</span>发展经济，提高文化水平</div>
+      <div class="q-opt" data-correct="true" onclick="selectOpt(this,'q1')"><span class="opt-key">B</span>防止武将专权，巩固中央集权统治</div>
+      <div class="q-opt" data-correct="false" onclick="selectOpt(this,'q1')"><span class="opt-key">C</span>加强对外防御，抵抗辽夏入侵</div>
+      <div class="q-opt" data-correct="false" onclick="selectOpt(this,'q1')"><span class="opt-key">D</span>推行科举制度，选拔优秀人才</div>
+    </div>
+    <div class="q-feedback feedback-correct" id="q1-ok">✅ 正确！北宋吸取唐末藩镇割据教训，根本目的是防止武将专权、巩固中央集权，而非军事目的。</div>
+    <div class="q-feedback feedback-wrong" id="q1-no">❌ 注意区分"直接目的"和"根本目的"。重文轻武的根本目的是巩固中央集权，防止武将割据，是政治制度的需要。</div>
+  </div>
+</section>
+
+<!-- ═══ 模块二：辽夏金元 ═══ -->
+<section id="module2">
+  <h2 class="section-title">模块二：辽、夏、金、元</h2>
+
+  <div class="tts-player" id="tts2-player">
+    <button class="tts-btn" onclick="playTTS('tts/module2.mp3','tts2-player')" id="tts2-btn">▶</button>
+    <div style="flex:1">
+      <div class="tts-label">🎙 语音讲解 · 模块二</div>
+      <div class="tts-progress"><div class="tts-progress-bar" id="tts2-bar"></div></div>
+    </div>
+  </div>
+  <audio id="tts2-audio" src="./tts/module2.mp3" preload="none"></audio>
+
+  <div class="abt-block">
+    <div class="abt-label">ABT 引入</div>
+    <p>北方少数民族长期与中原并立，<strong>辽、西夏、金相继崛起</strong>，与宋朝形成南北对峙——<strong>但</strong>元朝却一举统一全国，建立前所未有的大帝国。<strong>因此</strong>，这些少数民族政权在中国统一多民族封建国家的发展中扮演了不可忽视的角色。</p>
+  </div>
+
+  <img src="./assets/illustrations/song-political-system.png"
+    alt="两宋政治制度与少数民族政权对比"
+    loading="lazy"
+    style="width:100%;max-width:860px;border-radius:var(--radius);margin:12px 0;display:block">
+
+  <h3 class="module-header">四大政权对比</h3>
+  <div class="card">
+    <table class="compare-table">
+      <tr>
+        <th>政权</th>
+        <th>建立者</th>
+        <th>时间</th>
+        <th>民族</th>
+        <th>制度特点</th>
+      </tr>
+      <tr>
+        <td><strong style="color:#60a5fa">辽</strong></td>
+        <td>耶律阿保机</td>
+        <td>916年</td>
+        <td>契丹族</td>
+        <td>南北面官制（双轨制）</td>
+      </tr>
+      <tr>
+        <td><strong style="color:#a78bfa">西夏</strong></td>
+        <td>元昊</td>
+        <td>1038年</td>
+        <td>党项族</td>
+        <td>模仿北宋，兼有本族特色</td>
+      </tr>
+      <tr>
+        <td><strong style="color:#fbbf24">金</strong></td>
+        <td>完颜阿骨打</td>
+        <td>1115年</td>
+        <td>女真族</td>
+        <td>猛安谋克制（军政合一）</td>
+      </tr>
+      <tr>
+        <td><strong style="color:#34d399">元</strong></td>
+        <td>忽必烈</td>
+        <td>1271年</td>
+        <td>蒙古族</td>
+        <td>行省制度（开创地方制度先例）</td>
+      </tr>
+    </table>
+  </div>
+
+  <img src="./assets/illustrations/yuan-dynasty-territory.png"
+    alt="元朝统一多民族国家版图"
+    loading="lazy"
+    style="width:100%;max-width:860px;border-radius:var(--radius);margin:12px 0;display:block">
+
+  <h3 class="module-header">🗺 历史版图地图</h3>
+  <div id="dynasty-map"></div>
+  <p style="color:var(--text2);font-size:.82rem;margin-top:6px">拖动地图可查看宋元时期主要政权分布区域</p>
+
+  <div class="q-block" id="q2">
+    <span class="q-num">即时练习 2</span>
+    <p class="q-stem">元朝实行行省制度，其最深远的历史意义是？</p>
+    <div class="q-options">
+      <div class="q-opt" data-correct="false" onclick="selectOpt(this,'q2')"><span class="opt-key">A</span>加强了对少数民族的压迫和剥削</div>
+      <div class="q-opt" data-correct="false" onclick="selectOpt(this,'q2')"><span class="opt-key">B</span>使元朝成为当时世界上最强大的国家</div>
+      <div class="q-opt" data-correct="true" onclick="selectOpt(this,'q2')"><span class="opt-key">C</span>开创了中国地方行政制度的新模式，为后世明清所继承</div>
+      <div class="q-opt" data-correct="false" onclick="selectOpt(this,'q2')"><span class="opt-key">D</span>解决了中央和地方的矛盾</div>
+    </div>
+    <div class="q-feedback feedback-correct" id="q2-ok">✅ 正确！行省制度是中国地方行政制度的重大创新，明清的布政使司（省）直接继承自元代行省，影响延续至今。</div>
+    <div class="q-feedback feedback-wrong" id="q2-no">❌ 行省制的最深远意义在于开创了省级行政区划制度，为明清乃至今日的地方行政格局奠定了基础。</div>
+  </div>
+</section>
+
+<!-- ═══ 模块三：明清政治制度 ═══ -->
+<section id="module3">
+  <h2 class="section-title">模块三：明清政治制度与版图奠定</h2>
+
+  <div class="tts-player" id="tts3-player">
+    <button class="tts-btn" onclick="playTTS('tts/module3.mp3','tts3-player')" id="tts3-btn">▶</button>
+    <div style="flex:1">
+      <div class="tts-label">🎙 语音讲解 · 模块三</div>
+      <div class="tts-progress"><div class="tts-progress-bar" id="tts3-bar"></div></div>
+    </div>
+  </div>
+  <audio id="tts3-audio" src="./tts/module3.mp3" preload="none"></audio>
+
+  <div class="abt-block">
+    <div class="abt-label">ABT 引入</div>
+    <p>历朝皇帝都在削弱相权，<strong>明太祖朱元璋直接废除了延续1600年的丞相制度</strong>——<strong>但</strong>皇帝一人处理全国政务不堪重负，因此设立内阁。<strong>因此</strong>，清朝雍正皇帝进一步设立军机处，皇权专制达到中国封建社会的顶峰。</p>
+  </div>
+
+  <!-- Canvas 权力演变 -->
+  <h3 class="module-header">🖱 互动：皇权集中演变过程</h3>
+  <div class="canvas-wrap">
+    <canvas id="power-canvas" width="860" height="260"></canvas>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px">
+      <button class="btn btn-outline" onclick="showPowerStage(0)">秦汉·三公九卿</button>
+      <button class="btn btn-outline" onclick="showPowerStage(1)">隋唐·三省六部</button>
+      <button class="btn btn-outline" onclick="showPowerStage(2)">宋·二府三司</button>
+      <button class="btn btn-outline" onclick="showPowerStage(3)">明·废丞相·内阁</button>
+      <button class="btn btn-outline" onclick="showPowerStage(4)">清·军机处顶峰</button>
+    </div>
+  </div>
+
+  <h3 class="module-header">专制主义中央集权演变</h3>
+  <div class="card">
+    <table class="compare-table">
+      <tr><th>朝代</th><th>核心制度</th><th>皇权程度</th><th>备注</th></tr>
+      <tr>
+        <td>秦汉</td>
+        <td>三公九卿制</td>
+        <td>⚡⚡</td>
+        <td>丞相有一定权力</td>
+      </tr>
+      <tr>
+        <td>隋唐</td>
+        <td>三省六部制</td>
+        <td>⚡⚡⚡</td>
+        <td>分散相权，皇权加强</td>
+      </tr>
+      <tr>
+        <td>宋</td>
+        <td>二府三司制</td>
+        <td>⚡⚡⚡</td>
+        <td>相权进一步分割</td>
+      </tr>
+      <tr>
+        <td><strong style="color:#a78bfa">明</strong></td>
+        <td><strong>废丞相·设内阁</strong></td>
+        <td>⚡⚡⚡⚡</td>
+        <td>1380年朱元璋废丞相</td>
+      </tr>
+      <tr>
+        <td><strong style="color:#fbbf24">清</strong></td>
+        <td><strong>军机处</strong></td>
+        <td>⚡⚡⚡⚡⚡（顶峰）</td>
+        <td>1729年雍正设军机处</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- 视频 -->
+  <h3 class="module-header">📽 教学动画：宋元明清历史演变</h3>
+  <video controls preload="metadata"
+    poster=""
+    style="width:100%;border-radius:var(--radius)">
+    <source src="./assets/video/song-yuan-ming-qing-animation.mp4" type="video/mp4">
+    您的浏览器不支持 video 标签。
+  </video>
+
+  <div class="q-block" id="q3">
+    <span class="q-num">即时练习 3</span>
+    <p class="q-stem">明太祖废除丞相制度后，皇权加强但也产生了弊端。为此后来的措施是？</p>
+    <div class="q-options">
+      <div class="q-opt" data-correct="false" onclick="selectOpt(this,'q3')"><span class="opt-key">A</span>恢复了丞相制度</div>
+      <div class="q-opt" data-correct="true" onclick="selectOpt(this,'q3')"><span class="opt-key">B</span>设立内阁，充当皇帝的顾问和秘书机构</div>
+      <div class="q-opt" data-correct="false" onclick="selectOpt(this,'q3')"><span class="opt-key">C</span>扩大六部权力，分担皇帝政务</div>
+      <div class="q-opt" data-correct="false" onclick="selectOpt(this,'q3')"><span class="opt-key">D</span>设立军机处，专门处理国家大事</div>
+    </div>
+    <div class="q-feedback feedback-correct" id="q3-ok">✅ 正确！明成祖朱棣正式设立内阁，内阁是皇帝的顾问咨询机构，没有法定权力，与丞相制度有本质区别。</div>
+    <div class="q-feedback feedback-wrong" id="q3-no">❌ 废丞相后，明成祖设立内阁作为顾问机构（非丞相）；军机处是清朝雍正设立的，请注意区分朝代。</div>
+  </div>
+</section>
+
+<!-- ═══ 模块四：明清经济与思想 ═══ -->
+<section id="module4">
+  <h2 class="section-title">模块四：明清社会经济与思想文化</h2>
+
+  <div class="tts-player" id="tts4-player">
+    <button class="tts-btn" onclick="playTTS('tts/module4.mp3','tts4-player')" id="tts4-btn">▶</button>
+    <div style="flex:1">
+      <div class="tts-label">🎙 语音讲解 · 模块四</div>
+      <div class="tts-progress"><div class="tts-progress-bar" id="tts4-bar"></div></div>
+    </div>
+  </div>
+  <audio id="tts4-audio" src="./tts/module4.mp3" preload="none"></audio>
+
+  <div class="abt-block">
+    <div class="abt-label">ABT 引入</div>
+    <p>明清时期商品经济高度发展，<strong>出现了资本主义萌芽</strong>——<strong>但</strong>封建专制制度的重重压制，加上闭关锁国政策，使这一萌芽无法茁壮成长。<strong>因此</strong>，一批思想家对封建专制制度发出了批判的声音，成为中国近代民主启蒙的先声。</p>
+  </div>
+
+  <h3 class="module-header">资本主义萌芽</h3>
+  <div class="card">
+    <p style="margin-bottom:12px;color:var(--text2);font-size:.9rem">资本主义萌芽的核心特征：<strong style="color:var(--text)">雇佣劳动关系</strong>——机户出资，机工出力，"机户出资，机工出力，相互依存"（苏州纺织业）。</p>
+    <div class="card-grid">
+      <div>
+        <h4 style="color:#34d399;margin-bottom:8px">出现原因</h4>
+        <ul style="color:var(--text2);font-size:.88rem;line-height:1.9;padding-left:14px">
+          <li>商品经济高度发展</li>
+          <li>城市工商业繁荣</li>
+          <li>手工业技术进步</li>
+        </ul>
+      </div>
+      <div>
+        <h4 style="color:#f87171;margin-bottom:8px">发展受阻</h4>
+        <ul style="color:var(--text2);font-size:.88rem;line-height:1.9;padding-left:14px">
+          <li>重农抑商政策</li>
+          <li>闭关锁国，市场狭小</li>
+          <li>封建剥削，资金积累难</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="module-header">明清四大思想家</h3>
+  <img src="./assets/illustrations/ming-qing-enlightenment.png"
+    alt="明清四大思想启蒙家"
+    loading="lazy"
+    style="width:100%;max-width:860px;border-radius:var(--radius);margin:12px 0;display:block">
+
+  <div class="keyword-grid">
+    <div class="keyword-card">
+      <h4>李贽（1527-1602）</h4>
+      <p>挑战儒家权威，批判"存天理灭人欲"，提倡个性解放，著《焚书》《藏书》</p>
+    </div>
+    <div class="keyword-card">
+      <h4>黄宗羲（1610-1695）</h4>
+      <p>抨击君主专制，主张"天下为主，君为客"，民本思想，著《明夷待访录》</p>
+    </div>
+    <div class="keyword-card">
+      <h4>顾炎武（1613-1682）</h4>
+      <p>"天下兴亡，匹夫有责"，倡导经世致用，反对空谈，著《日知录》</p>
+    </div>
+    <div class="keyword-card">
+      <h4>王夫之（1619-1692）</h4>
+      <p>唯物主义哲学，反对禁欲主义，强调物质第一性，著《船山遗书》</p>
+    </div>
+  </div>
+
+  <div class="q-block" id="q4">
+    <span class="q-num">即时练习 4</span>
+    <p class="q-stem">明清启蒙思想与欧洲启蒙运动的主要区别是？</p>
+    <div class="q-options">
+      <div class="q-opt" data-correct="false" onclick="selectOpt(this,'q4')"><span class="opt-key">A</span>欧洲启蒙运动有科学支撑，明清没有</div>
+      <div class="q-opt" data-correct="true" onclick="selectOpt(this,'q4')"><span class="opt-key">B</span>明清思想在儒学框架内批判，未能突破封建制度；欧洲启蒙运动提出了系统的民主制度方案</div>
+      <div class="q-opt" data-correct="false" onclick="selectOpt(this,'q4')"><span class="opt-key">C</span>明清思想家人数更少，影响更小</div>
+      <div class="q-opt" data-correct="false" onclick="selectOpt(this,'q4')"><span class="opt-key">D</span>明清启蒙发生更早，是欧洲的先驱</div>
+    </div>
+    <div class="q-feedback feedback-correct" id="q4-ok">✅ 正确！明清思想家在儒学框架内批判，缺乏对封建制度的系统性替代方案；欧洲启蒙运动则直接提出了民主共和、权力分立等制度设计，推动了资产阶级革命。</div>
+    <div class="q-feedback feedback-wrong" id="q4-no">❌ 关键区别在于：明清启蒙未能突破封建思想框架，而欧洲启蒙运动提出了系统的近代民主政治理论，推动了社会革命。</div>
+  </div>
+</section>
+
+
+<!-- ═══ 例题示范 ═══ -->
+<section id="examples">
+  <h2 class="section-title">例题示范</h2>
+  <div class="card">
+    <p style="color:var(--text2);font-size:.85rem;margin-bottom:12px">【高考真题改编】阅读材料：</p>
+    <div style="background:rgba(255,255,255,.04);border-left:3px solid var(--hist);padding:12px 16px;border-radius:0 8px 8px 0;margin-bottom:14px;color:var(--text2);font-size:.9rem;line-height:1.8">
+      "机务及用兵皆军机大臣承旨，天子无日不与（军机）大臣相见……即承旨诸臣亦只供传述缮撰，而不能稍有赞画于其间也。"<br>——《清史稿·军机大臣年序表》
+    </div>
+    <p style="font-size:.92rem;font-weight:600;margin-bottom:10px">据材料，军机处的特点是？（分析题·4分）</p>
+    <div style="background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.2);border-radius:8px;padding:14px 16px;font-size:.88rem;line-height:1.8">
+      <strong style="color:#34d399">参考答案：</strong><br>
+      ①军机大臣直接承旨皇帝，军国大事由皇帝独断（皇权高度集中）<br>
+      ②军机大臣只负责传达和缮写，无决策权（军机处是执行机构，非决策机构）<br>
+      ③皇帝与军机大臣每日相见，提高了行政效率，但实质是君主专制的工具
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 记忆锚点 ═══ -->
+<section id="anchor">
+  <h2 class="section-title">记忆锚点</h2>
+  <div class="anchor-box">
+    <div class="anchor-text">宋弱元大明清专，思想启蒙问苍天</div>
+    <div class="anchor-sub">
+      宋代重文轻武→积贫积弱 | 元代统一→行省制 | 明清废相设阁（军机）→专制顶峰 | 四大思想家→近代启蒙先声
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 易错点诊断室 ═══ -->
+<section id="mistakes">
+  <h2 class="section-title">易错点诊断室</h2>
+
+  <div class="mistake-item">
+    <div class="m-label">⚠️ 易错 01</div>
+    <div class="m-wrong">❌ "重文轻武就是不重视军事，所以宋朝军队战斗力弱"</div>
+    <div class="m-right">✅ 重文轻武的核心是<strong>政治上限制武将权力</strong>，而非不投入军事。宋朝军事支出庞大（冗兵），但军队管理混乱（禁军"将不知兵，兵不知将"），才导致积弱。</div>
+  </div>
+
+  <div class="mistake-item">
+    <div class="m-label">⚠️ 易错 02</div>
+    <div class="m-wrong">❌ "元朝统治破坏了中华文明，是历史的倒退"</div>
+    <div class="m-right">✅ 元朝行省制度是地方行政制度的重大创新，促进了民族交融，奠定了中国多民族统一国家的版图基础。应辩证评价少数民族政权的历史作用。</div>
+  </div>
+
+  <div class="mistake-item">
+    <div class="m-label">⚠️ 易错 03</div>
+    <div class="m-wrong">❌ "明清出现了资本主义萌芽，就是说中国当时进入了资本主义社会"</div>
+    <div class="m-right">✅ "萌芽"意味着雇佣劳动关系的出现，但由于封建制度阻碍，这一萌芽十分微弱，中国并未进入资本主义社会。不能混淆"萌芽"与"建立"。</div>
+  </div>
+</section>
+
+<!-- ═══ AI 学伴 ═══ -->
+<section id="ai-zone">
+  <h2 class="section-title">🤖 AI 学伴·互动提问</h2>
+  <div class="card" style="background:linear-gradient(135deg,rgba(96,165,250,.05),rgba(167,139,250,.04));border:1px solid rgba(96,165,250,.2)">
+    <p style="font-size:.9rem;margin-bottom:14px;color:var(--text2)">
+      把你的疑问、思考或论述片段输入下方，AI 学伴帮你深化理解。点击右下角 💡 悬浮球也可随时提问。
+    </p>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <textarea id="ai-prompt" placeholder="例如："宋代积贫积弱和重文轻武有什么关系？"或粘贴你的小论文草稿请 AI 点评……" style="width:100%;min-height:90px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 14px;font-size:.9rem;font-family:inherit;resize:vertical"></textarea>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-hist" onclick="sendToAI()">AI 分析 →</button>
+        <button class="btn btn-outline" onclick="fillAIPrompt('请分析王安石变法失败的原因，从多角度论述')">+ 王安石变法</button>
+        <button class="btn btn-outline" onclick="fillAIPrompt('请比较明朝内阁与英国内阁的异同')">+ 内阁对比</button>
+        <button class="btn btn-outline" onclick="fillAIPrompt('为什么明清资本主义萌芽无法发展为资本主义社会')">+ 萌芽受阻</button>
+      </div>
+      <div id="ai-response" style="display:none;padding:14px 18px;background:var(--card);border-radius:8px;border:1px solid var(--border);font-size:.9rem;line-height:1.8"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 综合任务 ═══ -->
+<section id="tasks">
+  <h2 class="section-title">综合学习任务</h2>
+  <div class="task-level l1">
+    <div class="t-label">LEVEL 1 · 基础记忆</div>
+    <p>制作一张"宋元明清制度演变"时间轴卡片，标注各朝代的核心制度创新（重文轻武/行省制/废丞相/军机处），并简述各制度的历史背景（200字以内）。</p>
+  </div>
+  <div class="task-level l2">
+    <div class="t-label">LEVEL 2 · 材料分析</div>
+    <p>阅读史料："天下之治乱，不在一姓之兴亡，而在万民之忧乐。"（黄宗羲《明夷待访录》）<br>
+    请分析：①这句话反映了黄宗羲的什么思想？②与同时代欧洲启蒙思想（如卢梭的社会契约论）有何异同？结合时代背景论述（400字以内）。</p>
+  </div>
+  <div class="task-level l3">
+    <div class="t-label">LEVEL 3 · 小论文</div>
+    <p>题目：<strong>"论明清专制主义中央集权对中国历史发展的双重影响"</strong><br>
+    要求：运用史实，从政治稳定、经济发展、文化思想、对外关系四个维度，辩证评价明清专制制度，字数600字以上，史论结合。</p>
+  </div>
+</section>
+
+<!-- ═══ 后测 ═══ -->
+<section id="posttest">
+  <h2 class="section-title">后测·五题验收</h2>
+  <p style="color:var(--text2);font-size:.9rem;margin-bottom:16px">完成四大模块学习后，用五题检验成果。</p>
+
+  <div class="q-block" id="pq1">
+    <span class="q-num">后测 1</span>
+    <p class="q-stem">北宋"二府三司"制度中，"二府"是指？</p>
+    <div class="q-options">
+      <div class="q-opt" data-correct="true" onclick="postSelect(this,'pq1')"><span class="opt-key">A</span>中书门下（政事堂）和枢密院</div>
+      <div class="q-opt" data-correct="false" onclick="postSelect(this,'pq1')"><span class="opt-key">B</span>丞相府和御史台</div>
+      <div class="q-opt" data-correct="false" onclick="postSelect(this,'pq1')"><span class="opt-key">C</span>内阁和六部</div>
+      <div class="q-opt" data-correct="false" onclick="postSelect(this,'pq1')"><span class="opt-key">D</span>中书省和门下省</div>
+    </div>
+    <div class="q-feedback feedback-correct" id="pq1-ok">✅ 正确！北宋二府：中书门下（主政）+ 枢密院（主军），三司（盐铁、度支、户部）主财，将宰相行政、军事、财政权分开。</div>
+    <div class="q-feedback feedback-wrong" id="pq1-no">❌ 北宋二府是中书门下（政事堂）和枢密院，分别掌管行政和军事，这是宋代分割相权的重要举措。</div>
+  </div>
+
+  <div class="q-block" id="pq2">
+    <span class="q-num">后测 2</span>
+    <p class="q-stem">辽朝实行"南北面官制"，其设立的目的是？</p>
+    <div class="q-options">
+      <div class="q-opt" data-correct="false" onclick="postSelect(this,'pq2')"><span class="opt-key">A</span>彰显契丹族的传统文化</div>
+      <div class="q-opt" data-correct="true" onclick="postSelect(this,'pq2')"><span class="opt-key">B</span>因俗而治，分别管理契丹牧民和汉族农民</div>
+      <div class="q-opt" data-correct="false" onclick="postSelect(this,'pq2')"><span class="opt-key">C</span>加强对汉族的控制和压迫</div>
+      <div class="q-opt" data-correct="false" onclick="postSelect(this,'pq2')"><span class="opt-key">D</span>模仿北宋的行政制度</div>
+    </div>
+    <div class="q-feedback feedback-correct" id="pq2-ok">✅ 正确！辽朝南北面官制体现了"因俗而治"的治理智慧：北面官管契丹等游牧民族（部落制），南面官管汉族农业区（仿唐制）。</div>
+    <div class="q-feedback feedback-wrong" id="pq2-no">❌ 南北面官制的核心是"因俗而治"：北面管理游牧民族，南面管理汉族，体现了少数民族政权在治理上的灵活性。</div>
+  </div>
+
+  <div class="q-block" id="pq3">
+    <span class="q-num">后测 3</span>
+    <p class="q-stem">明朝废除丞相制度发生在哪一年？废除的根本原因是？</p>
+    <div class="q-options">
+      <div class="q-opt" data-correct="false" onclick="postSelect(this,'pq3')"><span class="opt-key">A</span>1368年，建立明朝之初为加强统治</div>
+      <div class="q-opt" data-correct="true" onclick="postSelect(this,'pq3')"><span class="opt-key">B</span>1380年，以胡惟庸案为契机，根本原因是专制皇权与相权矛盾的激化</div>
+      <div class="q-opt" data-correct="false" onclick="postSelect(this,'pq3')"><span class="opt-key">C</span>1402年，朱棣发动靖难之役后改革政治制度</div>
+      <div class="q-opt" data-correct="false" onclick="postSelect(this,'pq3')"><span class="opt-key">D</span>1424年，朱棣设立内阁时顺便废除</div>
+    </div>
+    <div class="q-feedback feedback-correct" id="pq3-ok">✅ 正确！1380年胡惟庸案是直接原因，根本原因是专制皇权与相权之间的长期矛盾。朱元璋废相后亲掌六部，皇权大大加强。</div>
+    <div class="q-feedback feedback-wrong" id="pq3-no">❌ 废丞相是1380年（洪武十三年），胡惟庸案是导火索，根本是皇权与相权的矛盾。内阁是1402年以后明成祖设立的，与废相不同时。</div>
+  </div>
+
+  <div class="q-block" id="pq4">
+    <span class="q-num">后测 4</span>
+    <p class="q-stem">顾炎武的名言"天下兴亡，匹夫有责"体现了什么思想？</p>
+    <div class="q-options">
+      <div class="q-opt" data-correct="false" onclick="postSelect(this,'pq4')"><span class="opt-key">A</span>民族主义：汉族要反抗满清统治</div>
+      <div class="q-opt" data-correct="false" onclick="postSelect(this,'pq4')"><span class="opt-key">B</span>爱国主义：每个人对国家都有义务</div>
+      <div class="q-opt" data-correct="true" onclick="postSelect(this,'pq4')"><span class="opt-key">C</span>经世致用：知识分子要关注现实，承担社会责任</div>
+      <div class="q-opt" data-correct="false" onclick="postSelect(this,'pq4')"><span class="opt-key">D</span>民主思想：天下是全体人民的，不是皇帝的</div>
+    </div>
+    <div class="q-feedback feedback-correct" id="pq4-ok">✅ 正确！顾炎武的核心思想是"经世致用"——反对明末空谈理学，强调学问要联系实际，知识分子要承担社会责任。这句话强调的是社会责任感，而非单纯的爱国主义。</div>
+    <div class="q-feedback feedback-wrong" id="pq4-no">❌ 顾炎武的核心是"经世致用"思想，反对空谈，强调实学和社会责任。"天下兴亡，匹夫有责"体现的是每个人（尤其是知识分子）对社会的责任担当。</div>
+  </div>
+
+  <div class="q-block" id="pq5">
+    <span class="q-num">后测 5</span>
+    <p class="q-stem">综合判断：以下关于明清历史的表述，正确的是？</p>
+    <div class="q-options">
+      <div class="q-opt" data-correct="false" onclick="postSelect(this,'pq5')"><span class="opt-key">A</span>明清资本主义萌芽说明当时中国进入了资本主义发展阶段</div>
+      <div class="q-opt" data-correct="false" onclick="postSelect(this,'pq5')"><span class="opt-key">B</span>清朝军机处是最高行政机构，拥有独立决策权</div>
+      <div class="q-opt" data-correct="true" onclick="postSelect(this,'pq5')"><span class="opt-key">C</span>明清专制主义中央集权空前强化，既维护了统一，也阻碍了社会进步</div>
+      <div class="q-opt" data-correct="false" onclick="postSelect(this,'pq5')"><span class="opt-key">D</span>明清四大思想家的主张与欧洲启蒙思想基本相同</div>
+    </div>
+    <div class="q-feedback feedback-correct" id="pq5-ok">✅ 正确！对明清专制制度要辩证评价：它维护了多民族国家的统一和社会稳定，但也压制了思想自由、阻碍了资本主义发展，最终使中国在近代落后于西方。</div>
+    <div class="q-feedback feedback-wrong" id="pq5-no">❌ A错——萌芽≠资本主义社会；B错——军机处只执行皇帝旨意，无独立决策权；D错——中国启蒙思想在儒学框架内，与欧洲系统理论有本质区别。C是正确的辩证评价。</div>
+  </div>
+</section>
+
+<!-- ═══ 知识图谱 ═══ -->
+<section id="knowledge-graph">
+  <h2 class="section-title">知识图谱</h2>
+  <div class="kg-wrap">
+    <a href="#" class="kg-node" onclick="return false" title="前置知识">
+      <div class="kn-sub">前置</div>
+      <div class="kn-name">隋唐制度</div>
+    </a>
+    <div class="kg-arrow">→</div>
+    <div class="kg-node active">
+      <div class="kn-sub">本节</div>
+      <div class="kn-name" style="color:var(--accent)">宋元明清</div>
+    </div>
+    <div class="kg-arrow">→</div>
+    <a href="#" class="kg-node" onclick="return false" title="后续知识">
+      <div class="kn-sub">下一节</div>
+      <div class="kn-name">古代亚非欧文明</div>
+    </a>
+  </div>
+  <div style="text-align:center;margin-top:12px">
+    <p style="color:var(--text2);font-size:.85rem">
+      关键词：重文轻武 · 行省制 · 废丞相 · 内阁 · 军机处 · 资本主义萌芽 · 经世致用
+    </p>
+  </div>
+</section>
+
+
+<!-- ═══ 总结 ═══ -->
+<section id="summary">
+  <h2 class="section-title">本课总结</h2>
+  <div class="card">
+    <p style="margin-bottom:16px;color:var(--text2);font-size:.9rem">宋元明清是中国封建制度走向成熟并开始衰落的时期，可以从三条主线把握：</p>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="border-left:3px solid #60a5fa;padding:10px 16px;background:rgba(96,165,250,.05);border-radius:0 8px 8px 0">
+        <strong style="color:#60a5fa">主线一：政治制度</strong>
+        <p style="color:var(--text2);font-size:.88rem;margin-top:4px">从分权（三省六部）→削权（二府三司）→废相（明）→顶峰（清军机处），专制主义中央集权不断强化。</p>
+      </div>
+      <div style="border-left:3px solid #34d399;padding:10px 16px;background:rgba(52,211,153,.05);border-radius:0 8px 8px 0">
+        <strong style="color:#34d399">主线二：民族关系</strong>
+        <p style="color:var(--text2);font-size:.88rem;margin-top:4px">辽夏金元的崛起与统一，少数民族政权推动了民族交融，元朝行省制奠定了多民族统一国家格局。</p>
+      </div>
+      <div style="border-left:3px solid #fbbf24;padding:10px 16px;background:rgba(245,158,11,.05);border-radius:0 8px 8px 0">
+        <strong style="color:#fbbf24">主线三：经济思想</strong>
+        <p style="color:var(--text2);font-size:.88rem;margin-top:4px">明清商品经济繁荣→资本主义萌芽（受阻）→思想启蒙，这一矛盾揭示了封建制度的根本局限性。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div><!-- /container -->
+
+<!-- 全局 TTS 控制器 -->
+<div id="tts-global" onclick="toggleGlobalTTS()">
+  <span id="tts-global-icon">🔊</span>
+  <span>语音讲解</span>
+</div>
+
+<!-- AI 学伴配置 -->
+<script>
+window.__TEACHANY_TUTOR_CONFIG__ = {
+  grade: 10,
+  subject: 'history',
+  topic: '宋元明清',
+  objectives: [
+    '分析两宋政治军事特征，理解重文轻武政策的历史背景与影响',
+    '比较辽夏金元北方政权的建立与制度建设',
+    '评价明清专制主义中央集权达到顶峰的历史意义',
+    '论述明清社会经济变化与思想启蒙'
+  ],
+  lang: 'zh-CN'
+};
+</script>
+
+<script>
+// ─── 进度条 ───────────────────────────────
+window.addEventListener('scroll', () => {
+  const scrolled = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+  document.getElementById('progress-bar').style.width = (scrolled * 100) + '%';
+});
+
+// ─── 前测 ───────────────────────────────────
+function preSelect(opt, qid) {
+  const block = document.getElementById(qid);
+  if (block.dataset.answered) return;
+  block.dataset.answered = '1';
+  const isCorrect = opt.dataset.correct === 'true';
+  opt.classList.add(isCorrect ? 'correct' : 'wrong');
+  if (!isCorrect) {
+    block.querySelectorAll('.q-opt').forEach(o => {
+      if (o.dataset.correct === 'true') o.classList.add('correct');
+    });
+  }
+  document.getElementById(qid + '-ok').style.display = isCorrect ? 'block' : 'none';
+  document.getElementById(qid + '-no').style.display = isCorrect ? 'none' : 'block';
+}
+
+// ─── 即时练习 ────────────────────────────────
+function selectOpt(opt, qid) {
+  const block = document.getElementById(qid);
+  if (block.dataset.answered) return;
+  block.dataset.answered = '1';
+  const isCorrect = opt.dataset.correct === 'true';
+  opt.classList.add(isCorrect ? 'correct' : 'wrong');
+  if (!isCorrect) {
+    block.querySelectorAll('.q-opt').forEach(o => {
+      if (o.dataset.correct === 'true') o.classList.add('correct');
+    });
+  }
+  document.getElementById(qid + '-ok').style.display = isCorrect ? 'block' : 'none';
+  document.getElementById(qid + '-no').style.display = isCorrect ? 'none' : 'block';
+}
+
+// ─── 后测 ─────────────────────────────────────
+function postSelect(opt, qid) { selectOpt(opt, qid); }
+
+// ─── TTS 播放器 ────────────────────────────────
+let _currentAudio = null;
+function playTTS(src, playerId) {
+  const audio = document.getElementById(playerId.replace('-player', '-audio'));
+  const btn = document.getElementById(playerId.replace('-player', '-btn'));
+  const bar = document.getElementById(playerId.replace('-player', '-bar'));
+  if (!audio) return;
+  if (_currentAudio && _currentAudio !== audio) { _currentAudio.pause(); }
+  if (audio.paused) {
+    audio.play().catch(() => {});
+    btn.textContent = '⏸';
+    _currentAudio = audio;
+  } else {
+    audio.pause();
+    btn.textContent = '▶';
+  }
+  audio.ontimeupdate = () => {
+    if (audio.duration) bar.style.width = (audio.currentTime / audio.duration * 100) + '%';
+  };
+  audio.onended = () => { btn.textContent = '▶'; bar.style.width = '0'; };
+}
+
+// 全局 TTS 控制
+window._ttsEnabled = true;
+function toggleGlobalTTS() {
+  window._ttsEnabled = !window._ttsEnabled;
+  document.getElementById('tts-global-icon').textContent = window._ttsEnabled ? '🔊' : '🔇';
+  if (!window._ttsEnabled) {
+    document.querySelectorAll('audio').forEach(a => { a.pause(); a.currentTime = 0; });
+    document.querySelectorAll('.tts-btn').forEach(b => b.textContent = '▶');
+  }
+}
+
+// IntersectionObserver 自动播放（B-2 合规）
+const ttsMap = {
+  'module1': 'tts1', 'module2': 'tts2', 'module3': 'tts3', 'module4': 'tts4'
+};
+const autoPlayObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting || !window._ttsEnabled) return;
+    const id = entry.target.id;
+    if (ttsMap[id]) {
+      const prefix = ttsMap[id];
+      const audio = document.getElementById(prefix + '-audio');
+      if (audio && audio.paused && !audio.dataset.played) {
+        audio.dataset.played = '1';
+        audio.play().catch(() => {});
+        document.getElementById(prefix + '-btn').textContent = '⏸';
+        _currentAudio = audio;
+      }
+    }
+  });
+}, { threshold: 0.5 });
+
+['module1','module2','module3','module4'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) autoPlayObserver.observe(el);
+});
+
+// ─── Canvas：朝代时间轴 ─────────────────────────
+const dynastyData = [
+  { year: '960年', name: '北宋建立', desc: '赵匡胤建宋，杯酒释兵权，重文轻武', color: '#60a5fa' },
+  { year: '1038年', name: '西夏建立', desc: '党项元昊称帝，宋夏并立', color: '#a78bfa' },
+  { year: '1127年', name: '靖康之变', desc: '金军攻破汴京，北宋灭亡，南宋建立', color: '#f87171' },
+  { year: '1271年', name: '元朝建立', desc: '忽必烈改国号为元，1279年统一全国', color: '#34d399' },
+  { year: '1368年', name: '明朝建立', desc: '朱元璋建明，废丞相，皇权独揽', color: '#fbbf24' },
+  { year: '1644年', name: '清朝入关', desc: '清取代明，1729年设军机处，专制顶峰', color: '#fb923c' },
+];
+
+function updateDynastyCanvas(idx) {
+  const canvas = document.getElementById('dynasty-canvas');
+  const ctx = canvas.getContext('2d');
+  const d = dynastyData[parseInt(idx)];
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // 背景
+  ctx.fillStyle = '#1e293b';
+  ctx.roundRect(0, 0, canvas.width, canvas.height, 12);
+  ctx.fill();
+
+  // 时间轴线
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(40, 100); ctx.lineTo(820, 100);
+  ctx.stroke();
+
+  // 所有节点
+  dynastyData.forEach((item, i) => {
+    const x = 40 + i * 156;
+    ctx.fillStyle = i == idx ? item.color : 'rgba(255,255,255,0.2)';
+    ctx.beginPath();
+    ctx.arc(x, 100, i == idx ? 12 : 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '11px "Noto Sans SC", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(item.year, x, i % 2 === 0 ? 130 : 70);
+  });
+
+  // 当前节点信息
+  const x = 40 + parseInt(idx) * 156;
+  ctx.fillStyle = d.color;
+  ctx.font = 'bold 22px "Noto Sans SC", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(d.name, canvas.width / 2, 170);
+  ctx.fillStyle = 'rgba(255,255,255,0.65)';
+  ctx.font = '14px "Noto Sans SC", sans-serif';
+  ctx.fillText(d.desc, canvas.width / 2, 190);
+
+  document.getElementById('dynasty-year-label').textContent = `${d.year} · ${d.name}`;
+}
+updateDynastyCanvas(0);
+
+// ─── Canvas：皇权演变 ─────────────────────────────
+const powerStages = [
+  { name: '秦汉 · 三公九卿', power: 40, desc: '丞相主政，皇帝共治', color: '#60a5fa' },
+  { name: '隋唐 · 三省六部', power: 60, desc: '三省分权，相权分散', color: '#a78bfa' },
+  { name: '宋 · 二府三司',   power: 70, desc: '政军财三分，相权削弱', color: '#34d399' },
+  { name: '明 · 废丞相·内阁', power: 88, desc: '无丞相，皇帝直辖六部', color: '#fbbf24' },
+  { name: '清 · 军机处',    power: 100, desc: '军机处跪受笔录，专制顶峰', color: '#f87171' },
+];
+
+function showPowerStage(idx) {
+  const canvas = document.getElementById('power-canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = '#1e293b';
+  ctx.roundRect(0, 0, canvas.width, canvas.height, 12);
+  ctx.fill();
+
+  const stage = powerStages[idx];
+  // 仪表盘
+  const cx = 430, cy = 130, r = 90;
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 14;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, Math.PI, 2 * Math.PI);
+  ctx.stroke();
+
+  const angle = Math.PI + (stage.power / 100) * Math.PI;
+  ctx.strokeStyle = stage.color;
+  ctx.lineWidth = 14;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, Math.PI, angle);
+  ctx.stroke();
+
+  ctx.fillStyle = stage.color;
+  ctx.font = 'bold 28px "Noto Sans SC"';
+  ctx.textAlign = 'center';
+  ctx.fillText(stage.power + '%', cx, cy + 10);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.font = 'bold 18px "Noto Sans SC"';
+  ctx.fillText(stage.name, cx, cy + 50);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.font = '14px "Noto Sans SC"';
+  ctx.fillText(stage.desc, cx, cy + 72);
+
+  // 左侧历史排列
+  powerStages.forEach((s, i) => {
+    const y = 30 + i * 44;
+    ctx.fillStyle = i === idx ? s.color : 'rgba(255,255,255,0.25)';
+    ctx.font = i === idx ? 'bold 14px "Noto Sans SC"' : '13px "Noto Sans SC"';
+    ctx.textAlign = 'left';
+    ctx.fillText((i + 1) + '. ' + s.name, 20, y + 16);
+    // mini bar
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.roundRect(20, y + 22, 160, 6, 3);
+    ctx.fill();
+    ctx.fillStyle = i === idx ? s.color : 'rgba(255,255,255,0.2)';
+    ctx.roundRect(20, y + 22, 160 * s.power / 100, 6, 3);
+    ctx.fill();
+  });
+}
+showPowerStage(0);
+
+// ─── Leaflet 地图 ─────────────────────────────────
+window.addEventListener('load', () => {
+  if (typeof L === 'undefined') return;
+  const map = L.map('dynasty-map').setView([35, 108], 4);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    opacity: 0.35
+  }).addTo(map);
+
+  // 标注主要城市/事件
+  const places = [
+    { latlng: [39.9, 116.4], label: '燕京（元大都）', color: '#34d399' },
+    { latlng: [34.8, 113.7], label: '汴京（北宋都城）', color: '#60a5fa' },
+    { latlng: [32.1, 118.8], label: '南京（明都）', color: '#fbbf24' },
+    { latlng: [30.3, 120.2], label: '临安（南宋都城）', color: '#a78bfa' },
+    { latlng: [41.8, 123.4], label: '辽上京区域', color: '#94a3b8' },
+  ];
+  places.forEach(p => {
+    const marker = L.circleMarker(p.latlng, {
+      radius: 8, color: p.color, fillColor: p.color, fillOpacity: 0.8, weight: 2
+    }).addTo(map);
+    marker.bindPopup(`<b style="color:${p.color}">${p.label}</b>`);
+  });
+});
+
+// ─── AI 互动 ──────────────────────────────────────
+function fillAIPrompt(text) {
+  document.getElementById('ai-prompt').value = text;
+  document.getElementById('ai-prompt').focus();
+}
+function sendToAI() {
+  const q = document.getElementById('ai-prompt').value.trim();
+  if (!q) return;
+  const resp = document.getElementById('ai-response');
+  resp.style.display = 'block';
+  resp.innerHTML = '<span style="color:var(--text2)">⏳ 正在思考中……（请在右下角 💡 学伴中配置 API Key 后使用 AI 回答功能）</span>';
+  // 触发 ai-tutor.js 的对话
+  if (window.__teachAnyTutor && window.__teachAnyTutor.ask) {
+    window.__teachAnyTutor.ask(q).then(ans => { resp.innerHTML = ans; }).catch(() => {});
+  }
+}
+</script>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="./ai-tutor.js" defer></script>
+</body>
+</html>
