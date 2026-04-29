@@ -26,7 +26,7 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 | [`RULES.md`](./RULES.md) | 51 条硬规则完整列表 | Completeness Gate 阶段按需查阅 |
 | [`curriculum-standards.md`](./curriculum-standards.md) | 课标速查表（21 棵国内课标树） | Phase 0.5 知识查询阶段 |
 | [`historical-maps.md`](./historical-maps.md) | 地图资源完整规范 | 制作历史/地理课件时 |
-| [`CHANGELOG.md`](./CHANGELOG.md) | 版本变更日志（v1.0 → v6.1） | 仅需了解版本演进时 |
+| [`CHANGELOG.md`](./CHANGELOG.md) | 版本变更日志（v1.0 → v7.2） | 仅需了解版本演进时 |
 
 ---
 
@@ -1192,6 +1192,10 @@ Hero 区（Hero 知识结构图 + 课题名称 + 学科/年级/课型标签）
     .hero-img {
       width: 100%; max-width: 700px; border-radius: 16px; margin-bottom: 24px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    }
+    .hero-cover-img {
+      width: 100%; max-height: 320px; object-fit: cover;
+      border-radius: 0 0 18px 18px; display: block; margin-top: 0;
     }
     .hero .tags { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
     .hero .tag {
@@ -2383,9 +2387,9 @@ AI **仅在以下情况添加** AI 多模态互动区：
 > ⚠️ **一一对应铁律（v6.9 重写）**：Hero 图与课件 `node_id` 是**严格一一对应**关系。
 >
 > **命名规则（写死，不可更改）**：
-> - **文件名**：`{node_id}-hero.png`（node_id 中的分隔符保持原样）
-> - **存放目录**：课件根目录下的 `assets/hero/` 文件夹（v6.9 分目录结构）
-> - **HTML 引用**：`<img src="./assets/hero/{node_id}-hero.png" class="hero-img">`
+> - **文件名**：`{node_id}-hero.png`（node_id 中的分隔符保持原样）或 `{关键词}-hero.png`（批量生成时使用）
+> - **存放目录**：课件根目录下的 `assets/hero/` 文件夹（v6.9 分目录结构）；**v7.2 兼容**：`assets/` 根目录也可接受（批量注入脚本和历史课件使用此模式）
+> - **HTML 引用**：`<img src="./assets/hero/{filename}" class="hero-img">` 或 `<img src="assets/{filename}" class="hero-cover-img">`
 >
 > **示例**：
 > | node_id | Hero 图文件名 | HTML 引用 |
@@ -2417,15 +2421,25 @@ AI **仅在以下情况添加** AI 多模态互动区：
 >
 > **区分**：课件生成阶段（AI Skill 自动化）严禁 image_gen 生成 Hero 图；维护者补充阶段（人工/半自动）允许 image_gen 生成后审核注册。
 
-> ⚠️ **HTML 引用铁律（v6.3 新增）**：当 Hero 图精确命中时，**必须以 `<img>` 标签嵌入** `<section class="hero">` 内部，放在 `<h1>` 标题之前。
+> ⚠️ **HTML 引用铁律（v6.3 新增，v7.2 扩展）**：当 Hero 图精确命中时，**必须以 `<img>` 标签嵌入**。支持两种嵌入方式：
+>
+> - **方式 A**（推荐新建课件）：放在 `<section class="hero">` 内部，`<h1>` 之前，class 为 `hero-img`
+> - **方式 B**（批量注入兼容）：放在 hero 容器闭合标签之后，class 为 `hero-cover-img`，用 `<!-- hero-cover -->` 标记
 >
 > ```html
-> <!-- ✅ 正确：hero 图精确命中，引用下载到本地的文件 -->
+> <!-- ✅ 方式 A：hero 图在容器内部 -->
 > <section class="hero" id="hero">
 >   <img src="./assets/hero/math-m-linear-function-hero.png" class="hero-img" alt="一次函数知识结构图">
 >   <h1>一次函数</h1>
 >   ...
 > </section>
+>
+> <!-- ✅ 方式 B：hero 图在容器外部（批量注入脚本使用） -->
+> <section class="hero" id="hero">
+>   <h1>一次函数</h1>
+>   ...
+> </section>
+> <!-- hero-cover --><img class="hero-cover-img" src="assets/xxx-hero.png" alt="hero" loading="lazy"><!-- /hero-cover -->
 >
 > <!-- ✅ 正确：hero 图未命中，不插入 img 标签，留空等待补充 -->
 > <section class="hero" id="hero">
@@ -3872,7 +3886,7 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
      → ✅/❌ ___
 □ 29. PPTX 导出（仅 `output_formats` 含 "pptx" 时检查）：是否执行了 `python3 scripts/export-pptx.py`？`<课件目录>/<课件名>.pptx` 是否已生成？幻灯片是否按 section 切分、保留标题层级与关键插图、互动组件降级为"扫码/URL 回链"占位页？
      → ✅/❌/N/A（output_formats 仅含 html） ___
-□ 30. Hero 图引用（⛔ v7.1 强化）：Phase 0.5 步骤 3.8 的图片查找报告是否已执行？`<section class="hero">` 内部是否包含 `<img class="hero-img" src="./assets/hero/【节点ID】-hero.png">` 标签（或因未命中而留空+注释标注）？若有 Hero 图，图片文件是否存在于 `assets/hero/` 目录？Hero 图是否放在 `<h1>` 之前？是否存在模糊匹配或跨 node_id 借用的 Hero 图？
+□ 30. Hero 图引用（⛔ v7.2 强化）：Phase 0.5 步骤 3.8 的图片查找报告是否已执行？`<section class="hero">` 或 `<div class="hero">` 内部（或紧随其后）是否包含 `<img>` 标签引用 hero 图片（class 为 `hero-img` 或 `hero-cover-img`，src 指向 `assets/hero/` 或 `assets/` 下的 hero 文件）？若有 Hero 图，图片文件是否真实存在于课件目录？Hero 图是否存在模糊匹配或跨 node_id 借用？
      → ✅/❌ ___
 □ 31. 插图质量审查（v6.9 强制）：
      a) 数量达标：文科课件 ≥ 3 张、理科/英语/信息技术 ≥ 2 张插图（存放于 `assets/illustrations/`）？
@@ -4574,6 +4588,7 @@ if __name__ == "__main__":
 > | 目录 | 存放内容 | 命名规则 | 来源 |
 > |:---|:---|:---|:---|
 > | `assets/hero/` | Hero 知识结构信息图 | `{node_id}-hero.png`（写死，只有一张） | 优先查知识点 JSON `images.hero`，备查 `image-registry.json`，未命中则留空 |
+> | `assets/` 根目录 | **v7.2 兼容**：批量注入脚本和历史课件的 Hero 图 | `{关键词}-hero.png` 或 `hero-{描述}.png` | 同上，与 `assets/hero/` 等效 |
 > | `assets/illustrations/` | 课件插图（scene/experiment/concept/abt-intro） | `{知识点ID}-{slot}.png`（每张绑定知识点） | 优先查知识点 JSON `images.illustrations`，备查 `image-registry.json`，或 `image_gen` 实时生成，或 SVG 降级 |
 > | `assets/video/` | Remotion 渲染的教学动画 | `{知识点ID}-{描述}.mp4` | Remotion 渲染输出 |
 >
@@ -5373,6 +5388,7 @@ curl -sI -m 5 "https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded
 | **前测/后测** | pretest/posttest 模块 | 搜索：`pretest\|posttest\|前测\|后测` |
 | **音频资源** | .mp3 文件存在性 | 检查 `<audio>` 标签或 `tts/` 目录 |
 | **响应式布局** | viewport meta 标签 | 检查 `<meta name="viewport">` |
+| **Hero 图** | hero 区域含 `<img>` 标签引用 hero 图片 | 搜索 hero 区域内的 `<img>`，检查 `assets/` 下是否有 `*hero*` 文件 |
 
 #### 输出反馈模板
 
@@ -5445,8 +5461,8 @@ curl -sI -m 5 "https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded
 
 ---
 
-**技能版本**：v6.1（持续演进中）
-**更新日期**：2026-04-27
+**技能版本**：v7.2（持续演进中）
+**更新日期**：2026-04-30
 
 > 📖 完整的版本变更日志已拆分到独立文档，详见 [`CHANGELOG.md`](./CHANGELOG.md)。
 
