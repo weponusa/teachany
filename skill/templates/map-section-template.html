@@ -1,6 +1,6 @@
 <!--
 ================================================================
-地图段模板 v6.4（Leaflet EPSG:4326 · 自包含 · 三层对齐）
+地图段模板 v7.0（Leaflet XYZ 瓦片 · Web Mercator · 自包含 · 三层对齐）
 ================================================================
 用法：粘贴到 course-skeleton.html 的 {{MAP_SECTION}} 占位处。
 填充变量：
@@ -9,7 +9,13 @@
                       或世界切片 id（ce-1300-mongol-peak / ce-1945-wwii / ...）
   {{MAP_SCOPE}}       "china" 或 "world"
 
-⭐ v6.4 自包含原则：'所有依赖要跟成果始终一起'
+⭐ v7.0 重大变更：
+  - 弃用 L.CRS.EPSG4326 + L.imageOverlay（equirectangular hillshade JPG）
+  - 改用标准 XYZ 瓦片底图（Web Mercator）：CartoDB Dark + Esri Shaded Relief
+  - GeoJSON 与瓦片底图原生对齐，无需投影转换
+  - 保留自包含原则：GeoJSON 优先从课件自身 assets 加载
+
+⭐ v6.4 自包含原则保留：'所有依赖要跟成果始终一起'
    课件要求：配套跑 bundle_map_assets.sh 把依赖拷进 ./assets/maps/
    加载顺序：
    1. 课件自身 ./assets/maps/{{DYNASTY}}.geojson  ← 永远 200
@@ -28,7 +34,7 @@
   const dynasty = "{{DYNASTY}}";
   const dir = mapScope === 'china' ? 'historical-china' : 'historical-world';
 
-  // v6.4 自包含 fetch：第一优先从课件自身 assets 加载
+  // v7.0 自包含 fetch：第一优先从课件自身 assets 加载
   const LOCAL_BASE = './assets/maps';
   const FALLBACKS = [
     `/teachany/data/geography/${dir}`,
@@ -53,42 +59,39 @@
     throw new Error(`地图加载失败：${id}`);
   }
 
-  async function findBasemapUrl() {
-    const name = mapScope === 'china' ? 'global-color-hillshade-4k.jpg' : 'global-hillshade-4k.jpg';
-    // 优先自身 assets
-    const candidates = [
-      `${LOCAL_BASE}/hillshade.jpg`,   // 本地化后统一名
-      `${LOCAL_BASE}/${name}`,          // 或保留原名
-      `/teachany/data/geography/hillshade/${name}`,
-      `/teachany/data/_legacy/resources/geography/hillshade/${name}`,
-      `../data/geography/hillshade/${name}`,
-      `../../data/geography/hillshade/${name}`,
-      `https://weponusa.github.io/teachany/data/geography/hillshade/${name}`,
-      `https://weponusa.github.io/teachany/data/_legacy/resources/geography/hillshade/${name}`,
-    ];
-    for (const url of candidates) {
-      try {
-        const r = await fetch(url, { method: 'HEAD' });
-        if (r.ok) return url;
-      } catch (_) {}
-    }
-    return candidates[candidates.length - 1];
+  // ⭐ v7.0 XYZ 瓦片底图（Web Mercator 原生对齐）
+  function addBaseTiles(map, opts = {}) {
+    const terrainOpacity = opts.terrainOpacity ?? 0.4;
+    const darkOpacity    = opts.darkOpacity    ?? 0.88;
+
+    // 底层：CartoDB Dark —— 海陆分界+国界+地名
+    L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', {
+      subdomains: 'abcd',
+      maxZoom: 19,
+      opacity: darkOpacity,
+      attribution: '© CartoDB · © OpenStreetMap'
+    }).addTo(map);
+
+    // 叠加层：Esri Shaded Relief —— 山脉纹理（地形浮雕）
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 13,
+      opacity: terrainOpacity,
+      attribution: 'Esri · Shaded Relief'
+    }).addTo(map);
   }
 
-  // 1. 创建 Leaflet map（⭐ 必须 EPSG:4326）
+  // 1. 创建 Leaflet map（⭐ v7.0：使用默认 Web Mercator CRS，不再用 EPSG:4326）
   const map = L.map('{{MAP_ID}}', {
-    crs: L.CRS.EPSG4326,
     center: mapScope === 'china' ? [34, 104] : [20, 30],
-    zoom: mapScope === 'china' ? 3 : 2,
-    minZoom: 1, maxZoom: 8,
+    zoom: mapScope === 'china' ? 4 : 2,
+    minZoom: 2, maxZoom: 10,
   });
 
-  // 2. 地形底图
-  const basemapUrl = await findBasemapUrl();
-  L.imageOverlay(basemapUrl, [[-90, -180], [90, 180]], {
-    opacity: 0.6,
-    attribution: 'Natural Earth (Public Domain)',
-  }).addTo(map);
+  // 2. ⭐ v7.0：XYZ 瓦片地形底图（替代旧版 imageOverlay hillshade JPG）
+  addBaseTiles(map, {
+    terrainOpacity: mapScope === 'china' ? 0.45 : 0.35,
+    darkOpacity: mapScope === 'china' ? 0.9 : 0.85,
+  });
 
   // 3. 政权配色
   const CHINA_POWER_COLORS = {
@@ -98,6 +101,9 @@
     '辽':'#483D8B','金':'#8B4513','西夏':'#B8860B',
     '元':'#20B2AA','明':'#FF4500','清':'#FFD700',
     '吐蕃':'#A0A0A0','高丽':'#66CDAA','日本':'#E74C3C',
+    '北方十六国':'#B22222','北魏':'#B22222','南朝':'#6B8E23',
+    '隋':'#B8860B','西晋':'#808000','东晋':'#9ACD32',
+    '蒙古':'#5D4037','大理':'#FF6B6B',
   };
   const chinaColor = p => CHINA_POWER_COLORS[p] || '#64748b';
   const hashColor = s => {
@@ -106,7 +112,7 @@
     return `hsl(${Math.abs(h) % 360}, 55%, 48%)`;
   };
 
-  // 4. 加载 GeoJSON
+  // 4. 加载 GeoJSON（⭐ v7.0：与 XYZ 瓦片原生对齐，无需投影转换）
   try {
     const { data } = await fetchGeojson(dynasty);
 
@@ -114,6 +120,7 @@
       const countryFeats = data.features.filter(f => f.properties.LEVEL === 'country');
       const prefFeats = data.features.filter(f => f.properties.LEVEL !== 'country');
 
+      // 中层：国家疆域轮廓（半透明底色+粗边）
       L.geoJSON(countryFeats, {
         style: f => ({
           color: chinaColor(f.properties.POWER),
@@ -126,6 +133,7 @@
         ),
       }).addTo(map);
 
+      // 上层：府级细节（饱和色+细边）
       L.geoJSON(prefFeats, {
         style: f => ({
           color: '#1e293b', weight: 0.3, opacity: 0.6,
@@ -140,6 +148,10 @@
           );
         },
       }).addTo(map);
+
+      // ⭐ 用 metadata.recommended_bbox 锁定视野
+      const bbox = data.metadata?.recommended_bbox || [70, 15, 145, 55];
+      map.fitBounds([[bbox[1], bbox[0]], [bbox[3], bbox[2]]]);
     } else {
       L.geoJSON(data, {
         style: f => ({
@@ -151,6 +163,8 @@
           `<b>${f.properties.NAME || '未命名'}</b><br/>宗主: ${f.properties.SUBJECTO || '-'}`
         ),
       }).addTo(map);
+
+      map.fitBounds([[-60, -180], [85, 180]]);
     }
   } catch (e) {
     document.getElementById('{{MAP_ID}}').innerHTML =

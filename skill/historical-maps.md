@@ -1,8 +1,10 @@
-# 📜 历史地理课件地图使用规范（TeachAny · v6）
+# 📜 历史地理课件地图使用规范（TeachAny · v7.0）
 
 > 本文档是**制作历史/地理类课件时必读的唯一权威**。SKILL_CN.md 第 18 章是简要索引，详细规范、完整资产清单、可复用代码模板，全部汇总在此。
 >
-> **核心原则**：三层资产（地形底图 + 历史疆域 + 行政/府级细节），一个投影（EPSG:4326），一个引擎（Leaflet CRS.EPSG4326），彻底杜绝"地图错位 / 投影错乱 / 世界地图感"。
+> **核心原则（v7.0 重构）**：双层底图（CartoDB Dark 暗色瓦片 + Esri Shaded Relief 地形纹理）+ 历史疆域 GeoJSON，标准 Web Mercator 投影（Leaflet 默认 CRS），彻底杜绝"无底图 / 投影错乱 / 白板地图"。
+>
+> ⚠️ **v7.0 变更**：不再使用 `L.CRS.EPSG4326` + `L.imageOverlay` 方案。改用 XYZ 瓦片服务（免费、无需 API Key、全球 CDN 加速），与 GeoJSON 坐标原生对齐，无投影错位问题。
 
 ---
 
@@ -172,20 +174,45 @@ async function fetchMap(relPath) {
 
 ## 二、核心调用原则（不遵守课件必翻车）
 
-### 2.1 投影必须统一：EPSG:4326
+### 2.1 底图方案：XYZ 瓦片双层叠加（v7.0）
 
-**所有预置资产都是 EPSG:4326（WGS84 经纬度）**：
-- 地形底图 JPG：等距圆柱投影
-- 所有 GeoJSON：经纬度坐标
-- **Leaflet 默认是 EPSG:3857（Web Mercator），必须显式切换到 `L.CRS.EPSG4326`**，否则纬度越高错位越严重（北京处 GeoJSON 会比 JPG 偏北约 30%）
+**v7.0 起使用 XYZ 瓦片服务替代本地 imageOverlay**：
 
-### 2.2 历史地图必须三层架构
+| 图层 | 服务 | 作用 | 不透明度 | API Key |
+|:---|:---|:---|:---|:---|
+| 暗色底图 | CartoDB Dark (basemaps-{s}.global.ssl.fastly.net) | 海洋/陆地/国界线/地名标注 | 0.85-0.9 | 无需 |
+| 地形纹理 | Esri World Shaded Relief (arcgisonline.com) | 山脉/河流/地形起伏 | 0.35-0.45 | 无需 |
 
-1. **底层**：`hillshade` 地形 JPG（提供地理常识：山脉/沙漠/海洋）
-2. **中层**：同朝代的 `historical-*/` 国家级疆域轮廓（`LEVEL=country`）
-3. **上层**：CHGIS 府级政区 或 现代省界（`LEVEL=prefecture`，可选）
+**代码（直接使用 `templates/map-section-template.html` 的 `addBaseTiles` 函数）**：
+```javascript
+function addBaseTiles(map, opts = {}) {
+  const terrainOpacity = opts.terrainOpacity ?? 0.4;
+  const darkOpacity    = opts.darkOpacity    ?? 0.88;
+  L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', {
+    subdomains: 'abcd', maxZoom: 19, opacity: darkOpacity,
+    attribution: '© CartoDB · © OpenStreetMap'
+  }).addTo(map);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 13, opacity: terrainOpacity,
+    attribution: 'Esri · Shaded Relief'
+  }).addTo(map);
+}
+```
 
-缺少中层 → 视觉出现"世界地图感"（CHGIS 对早期朝代采集不均导致大片留白）；缺少底层 → 学生看不出疆域的自然边界（为什么长城在这条线、为什么丝绸之路这么走）。
+**优势**：
+- ✅ 无投影错位（XYZ 瓦片与 GeoJSON 都是 Web Mercator / WGS84）
+- ✅ 无需下载本地文件（全球 CDN，无离线资源安装步骤）
+- ✅ 多级缩放（z2-z19），细节丰富
+- ✅ Leaflet 默认 CRS，无需设置 `L.CRS.EPSG4326`
+
+> ⚠️ **废弃**：v6 的 `L.CRS.EPSG4326` + `L.imageOverlay` + hillshade JPG 方案已废弃。如遇旧课件仍用此方案，应迁移到 v7.0 XYZ 瓦片方案。
+
+### 2.2 历史地图必须双层架构（v7.0 简化）
+
+1. **底层**：XYZ 瓦片底图（CartoDB Dark + Esri Shaded Relief，提供地理常识：山脉/沙漠/海洋/现代边界）
+2. **上层**：历史疆域 GeoJSON（`historical-*/` 国家级疆域轮廓 + 可选府级政区）
+
+缺少底层 → 学生看到白板地图，无地理参照；缺少上层 → 无历史信息。
 
 ### 2.3 视野必须锁定
 
@@ -195,7 +222,9 @@ async function fetchMap(relPath) {
 
 ## 三、标准代码模板（复制即用）
 
-### 3.1 ⭐ 完整中国历代课件模板（Leaflet EPSG:4326，三层对齐）
+### 3.1 ⭐ 完整中国历代课件模板（v7.0 XYZ 瓦片底图 + GeoJSON）
+
+> ⚠️ **权威模板**：`templates/map-section-template.html` 是最新实现。以下为精简版，AI 生成课件时应以 template 文件为准。
 
 ```html
 <!DOCTYPE html>
@@ -213,32 +242,41 @@ async function fetchMap(relPath) {
 <body>
 <div id="map"></div>
 <script>
-// ⭐ 关键 1：用 EPSG:4326，与 Natural Earth JPG 完美对齐
+// ⭐ v7.0：使用 Leaflet 默认 CRS（Web Mercator），不设 L.CRS.EPSG4326
 const map = L.map('map', {
-  crs: L.CRS.EPSG4326,
   center: [34, 104],
-  zoom: 3,
-  minZoom: 1,
-  maxZoom: 8,
+  zoom: 4,
+  minZoom: 2,
+  maxZoom: 10,
 });
 
-// ⭐ 关键 2：地形底图 imageOverlay 覆盖全球
-const basemap = L.imageOverlay(
-  './data/geography/hillshade/global-color-hillshade-4k.jpg',
-  [[-90, -180], [90, 180]],
-  { opacity: 0.65, attribution: 'Natural Earth (Public Domain)' }
-).addTo(map);
+// ⭐ v7.0 关键：双层 XYZ 瓦片底图（免费、无 API Key）
+function addBaseTiles(map, opts = {}) {
+  const terrainOpacity = opts.terrainOpacity ?? 0.4;
+  const darkOpacity    = opts.darkOpacity    ?? 0.88;
+  // 暗色底图：海洋/陆地/国界/地名
+  L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', {
+    subdomains: 'abcd', maxZoom: 19, opacity: darkOpacity,
+    attribution: '© CartoDB · © OpenStreetMap'
+  }).addTo(map);
+  // 地形纹理：山脉/河流
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 13, opacity: terrainOpacity,
+    attribution: 'Esri · Shaded Relief'
+  }).addTo(map);
+}
+addBaseTiles(map);
 
-// 加载朝代数据，三层渲染
+// 加载朝代数据
 const DYNASTY = 'tang-dynasty';  // ← 换朝代改这里
 fetch(`./data/geography/historical-china/${DYNASTY}.geojson`)
   .then(r => r.json())
   .then(data => {
-    // ⭐ 关键 3：按 LEVEL 分层
+    // 按 LEVEL 分层
     const countryFeats = data.features.filter(f => f.properties.LEVEL === 'country');
     const prefFeats = data.features.filter(f => f.properties.LEVEL !== 'country');
 
-    // 中层：国家疆域轮廓（半透明底色 + 粗边）
+    // 国家疆域轮廓（半透明底色 + 粗边）
     L.geoJSON(countryFeats, {
       style: f => ({
         color: powerColor(f.properties.POWER),
@@ -249,7 +287,7 @@ fetch(`./data/geography/historical-china/${DYNASTY}.geojson`)
       onEachFeature: (f, l) => l.bindPopup(`<b>${f.properties.NAME_CH}</b><br/>政权: ${f.properties.POWER}`),
     }).addTo(map);
 
-    // 上层：府级细节（饱和色 + 细边）
+    // 府级细节（饱和色 + 细边）
     L.geoJSON(prefFeats, {
       style: f => ({
         color: '#1e293b', weight: 0.3, opacity: 0.6,
@@ -262,7 +300,7 @@ fetch(`./data/geography/historical-china/${DYNASTY}.geojson`)
       },
     }).addTo(map);
 
-    // ⭐ 关键 4：用 metadata.recommended_bbox 锁定视野
+    // 用 metadata.recommended_bbox 锁定视野
     const bbox = data.metadata?.recommended_bbox || [70, 15, 145, 55];
     map.fitBounds([[bbox[1], bbox[0]], [bbox[3], bbox[2]]]);
   });
@@ -274,6 +312,9 @@ const POWER_COLORS = {
   '唐':'#FFD700','北宋':'#4169E1','南宋':'#1E90FF',
   '辽':'#483D8B','金':'#8B4513','西夏':'#B8860B',
   '元':'#20B2AA','明':'#FF4500','清':'#FFD700',
+  '北方十六国':'#9370DB','北魏':'#B22222','南朝':'#2E8B57',
+  '隋':'#FF6347','西晋':'#DAA520','东晋':'#20B2AA',
+  '蒙古':'#20B2AA','大理':'#DEB887',
 };
 function powerColor(p) { return POWER_COLORS[p] || '#64748b'; }
 </script>
@@ -281,16 +322,14 @@ function powerColor(p) { return POWER_COLORS[p] || '#64748b'; }
 </html>
 ```
 
-### 3.2 完整世界历代课件模板
+### 3.2 完整世界历代课件模板（v7.0）
 
 ```javascript
-const map = L.map('map', { crs: L.CRS.EPSG4326, center: [20, 30], zoom: 2 });
+// v7.0：使用默认 CRS + XYZ 瓦片底图
+const map = L.map('map', { center: [20, 30], zoom: 2, minZoom: 2, maxZoom: 10 });
 
-// 世界课件可选地形底图（通常建议灰度，避免与彩色国家色冲突）
-L.imageOverlay(
-  './data/geography/hillshade/global-hillshade-4k.jpg',
-  [[-90, -180], [90, 180]], { opacity: 0.4 }
-).addTo(map);
+// 双层瓦片底图
+addBaseTiles(map, { terrainOpacity: 0.35, darkOpacity: 0.9 });
 
 const PERIOD = 'ce-1300-mongol-peak';
 fetch(`./data/geography/historical-world/${PERIOD}.geojson`)
@@ -439,6 +478,8 @@ Q4：需要 3D 地形吗？
 | 宋辽夏金对峙 | `north-song-dynasty.geojson`（已含所有并立政权） | 3.1 |
 | 蒙古帝国扩张 | `ce-1200-mongol-rise` → `ce-1300-mongol-peak`（动画切换） | 3.3 世界版 |
 | 大航海时代 | `ce-1492-age-of-discovery.geojson` | 3.2 |
+| 古典文明（希腊·罗马·波斯） | `bce-500`（希腊城邦/波斯帝国）+ `bce-200`（罗马共和/迦太基）+ 自定义城市标注层 + 贸易航线 | 3.2 + 城市/航线标注 |
+| 亚历山大帝国 | `bce-323-alexander.geojson` | 3.2 |
 | 汉武帝 vs 罗马共和 | `west-han-dynasty` + `bce-200` 同屏 | 3.4 |
 | 省级人口分布 | `modern-china/provinces.geojson` + ECharts map | 3.5 |
 | 我国地形三级阶梯 | hillshade-8k + 阶梯 polygon + SRTM DEM | 3D（见 terrain-3d） |
@@ -449,11 +490,12 @@ Q4：需要 3D 地形吗？
 
 | 症状 | 根因 | 修复 |
 |:---|:---|:---|
-| **地图错位（GeoJSON 比底图偏北）** | Leaflet 默认 EPSG:3857 Web Mercator，与 JPG EPSG:4326 不匹配 | 显式 `crs: L.CRS.EPSG4326` |
+| **地图无底图（白板/纯黑）** | 使用了旧版 v6 的 `L.imageOverlay` 但本地无 JPG 文件 | 迁移到 v7.0 XYZ 瓦片方案（`addBaseTiles` 函数，无需本地文件） |
+| **地图错位（GeoJSON 比底图偏北）** | 旧版使用 `L.CRS.EPSG4326` + JPG，与 Leaflet 默认 EPSG:3857 不匹配 | v7.0 方案使用默认 CRS + XYZ 瓦片，无此问题 |
+| **历史地图使用现代国界** | 用了 `countries.geojson`（当代国界）代替 `historical-world/bce-*.geojson` | 按课件时代选择对应的世界时间切片 GeoJSON（见 1.4 清单），用 `NAME`/`SUBJECTO` 属性配色 |
 | **画面像"世界地图里一小块"** | CHGIS 对早期朝代府级稀疏，auto-fit 后 bbox 过小 | 读取 `metadata.recommended_bbox` 强制 `fitBounds` |
 | **宋朝只看见宋，没看见辽金** | 用了旧版 CHGIS 数据，没用新 `north-song-dynasty.geojson` | 用本文档 1.3 表里的新文件（含 LEVEL=country 轮廓） |
 | **秦朝地图只有南方** | CHGIS 秦代数据只有 13 个南方郡；需要 country 轮廓层兜底 | 新版 `qin-dynasty.geojson` 已含 country feature |
-| **课件加载慢** | 用了 8k 底图 + 多个大 geojson | 改用 4k 底图；世界 1492 切片 > 1.4MB，延迟加载 |
 | **浏览器 CORS 报错** | 直接双击 HTML 打开，走 file:// 协议 | 用 `python3 -m http.server 8080` 或部署到 GitHub Pages |
 
 ---
@@ -462,7 +504,9 @@ Q4：需要 3D 地形吗？
 
 | 资产 | 许可证 | 引用格式 |
 |:---|:---|:---|
-| Natural Earth hillshade | Public Domain | "Basemap: Natural Earth" |
+| CartoDB Dark Basemap | CC BY 3.0 | "© CartoDB · © OpenStreetMap contributors" |
+| Esri World Shaded Relief | Esri Master License | "Esri · Shaded Relief" |
+| Natural Earth hillshade（旧版备用） | Public Domain | "Basemap: Natural Earth" |
 | CHGIS V6 | Free for Academic Use | "China Historical GIS V6, CHGIS 2016" |
 | historical-basemaps | GPL-3.0 | "Ourednik, A. (2016). Historical-basemaps. GitHub." |
 
@@ -472,12 +516,19 @@ Q4：需要 3D 地形吗？
 
 ## 八、版本历史
 
+- **v7.0 (2026-04-29)**：底图架构重构
+  - ⛔ 废弃 `L.CRS.EPSG4326` + `L.imageOverlay` + hillshade JPG 方案
+  - 改用 XYZ 瓦片双层底图（CartoDB Dark + Esri Shaded Relief）
+  - 使用 Leaflet 默认 Web Mercator CRS，与 GeoJSON 原生对齐
+  - 无需下载本地 hillshade 文件，全球 CDN 加速
+  - 新增更多朝代配色（北方十六国、北魏、南朝、隋、西晋、东晋、蒙古、大理）
+  - Completeness Gate 新增 #36 地图规范检查
 - **v6 (2026-04-23)**：双资产完整重构
   - 中国 17 朝代 + 世界 21 切片
   - 每个中国朝代补国家级疆域轮廓（解决 CHGIS 早期稀疏）
   - metadata.recommended_bbox 锁定东亚视野
-  - Leaflet 强制 EPSG:4326 CRS
-  - 三层架构（地形 + 疆域 + 细节）
+  - ~~Leaflet 强制 EPSG:4326 CRS~~（已被 v7.0 废弃）
+  - ~~三层架构（地形 + 疆域 + 细节）~~（v7.0 简化为双层）
 - v5.13：首次引入 hillshade 地形底图
 - v5.12：外部数据源清单
 - v5.11：三层架构规范
