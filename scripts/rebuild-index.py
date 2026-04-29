@@ -26,6 +26,7 @@ v6.3 变更（2026-04-29）:
 - hero_image 字段可能为 CDN URL（以 "cdn:" 前缀标记）或本地相对路径
 """
 import json
+import re
 from pathlib import Path
 from collections import defaultdict
 import copy
@@ -66,6 +67,26 @@ def resolve_image_from_registry(node_id, slot, subject=None):
         if node_id in img.get("match_nodes", []) and img.get("slot") == slot:
             return img.get("url", ""), Path(img.get("file", "")).name
     return None, None
+
+
+def extract_teachany_version_from_html(course_dir: Path):
+    """从 index.html 的 <meta name="teachany-version"> 中提取版本号
+
+    v6.3 新增：当 manifest.json 中没有 teachany_version 字段时，
+    从课件 HTML 的 meta 标签中解析版本号作为回退。
+    """
+    index_path = course_dir / 'index.html'
+    if not index_path.exists():
+        return ''
+    try:
+        html = index_path.read_text(encoding='utf-8', errors='ignore')
+        # 匹配 <meta name="teachany-version" content="6.1">
+        m = re.search(r'<meta\s+name=["\']teachany-version["\']\s+content=["\']([\d.]+)["\']', html, re.IGNORECASE)
+        if m:
+            return m.group(1)
+    except Exception:
+        pass
+    return ''
 
 
 def detect_images(course_dir: Path):
@@ -428,8 +449,17 @@ def main():
         desc = manifest.get('description', '')
         if not desc_zh and desc and any('\u4e00' <= ch <= '\u9fff' for ch in desc):
             desc_zh = desc
-        # v6.3: 统一图片发现 — 先查 image-registry.json，再查本地 assets/
+        # v6.3: teachany_version 三级回退：
+        #   1. manifest.teachany_version（显式声明）
+        #   2. manifest.version（多数 manifest 用这个字段）
+        #   3. index.html <meta name="teachany-version">（最后兜底）
         course_path = Path(src_dir) / course_id
+        ta_version = (
+            manifest.get('teachany_version', '')
+            or manifest.get('version', '')
+            or extract_teachany_version_from_html(course_path)
+        )
+        # v6.3: 统一图片发现 — 先查 image-registry.json，再查本地 assets/
         node_id = manifest.get('node_id', '')
         m_subject = manifest.get('subject', '')
 
@@ -469,7 +499,7 @@ def main():
             'has_video': manifest.get('has_video', False),
             'has_en': manifest.get('has_en', False),
             'author': manifest.get('author', ''),
-            'teachany_version': manifest.get('teachany_version', ''),
+            'teachany_version': ta_version,
             'curriculum': manifest.get('curriculum', 'cn-national'),
             # ⭐ v6.2: 图片资产字段（自动检测）
             'hero_image': hero_image,
