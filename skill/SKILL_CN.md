@@ -2292,6 +2292,10 @@ AI **仅在以下情况添加** AI 多模态互动区：
 >
 > Hero 图应包含：本课所有核心知识点、它们之间的层级/并列/因果关系、关键公式或术语、学习路径。视觉呈现为**思维导图 / 概念图 / 信息图**风格，让学生一眼看到本课的知识全貌。
 
+> ⚠️ **唯一性铁律（v6.8 新增）**：每个课件的 Hero 图必须是**专门为本课生成的知识结构图**。**严禁使用其他课件的 Hero 图**，即使是同一学科、相近知识点。Hero 图的知识结构与课件内容一一对应，错配会导致学生看到错误的知识全貌。
+>
+> 从 Image Vault 查找 Hero 图时，**只接受精确匹配**（`match_nodes` 包含当前课件的 `node_id`，score ≥ 500）。如果精确未命中，必须跳过模糊匹配，直接用 `image_gen` 实时生成或 SVG 内联生成。**绝对不要用别的课件的 hero 图凑数。**
+
 > ⚠️ **HTML 引用铁律（v6.3 新增）**：Hero 图**必须以 `<img>` 标签嵌入** `<section class="hero">` 内部，放在 `<h1>` 标题之前。无论通过哪一级降级策略获得图片，最终 HTML 中**必须存在** `<img src="./assets/【节点ID】-hero.png" class="hero-img">` 标签。仅将图片文件放入 `assets/` 目录而不在 HTML 中引用 = **不合格**。
 >
 > ```html
@@ -2400,6 +2404,9 @@ https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/{subject}/{filename}
    → 命中：使用 web_fetch 或 curl 从 url 字段下载图片到课件 assets/ 目录
    → 若精确匹配未命中，按 subject + tags 模糊匹配
    → 命中：同上下载 + 嵌入
+   ⛔ **Hero 图禁止模糊匹配**：slot=hero 时，只接受精确匹配（match_nodes 包含当前 node_id）。
+      Hero 图是知识结构信息图，每个课件的知识点不同，用别的课件的 hero 图会造成内容错配。
+      精确未命中 → 直接跳到第二级（实时生成），不要用别的课件的 hero 图凑数。
    → 若 CDN 主域不可达，自动切换备用域（见上方备用 CDN 列表）
 
 3. 【第二级：image_gen 实时生成】
@@ -2473,6 +2480,9 @@ https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/{subject}/{filename}
 4. 根据最高分结果执行降级链：
    a. score ≥ 500 → 精确命中，从 CDN url 字段下载到课件 assets/ 目录
    b. score ≥ 200 → 模糊命中，下载但在注释中标注"模糊匹配，建议人工确认"
+      ⛔ **Hero 图例外**：slot=hero 时**禁止模糊匹配**。Hero 图是知识结构信息图，
+      每个课件的知识点不同，用别的课件的 hero 图会造成内容错配。
+      Hero 图只接受 score ≥ 500 的精确匹配，否则直接跳到 c 步骤（实时生成）。
    c. 无匹配 → 调用 image_gen 实时生成 → 保存到 assets/
    d. image_gen 不可用 → 生成 SVG 代码内联
 
