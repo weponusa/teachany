@@ -1,10 +1,20 @@
-# 📜 历史地理课件地图使用规范（TeachAny · v7.0）
+# 📜 历史地理课件地图使用规范（TeachAny · v7.2）
 
 > 本文档是**制作历史/地理类课件时必读的唯一权威**。SKILL_CN.md 第 18 章是简要索引，详细规范、完整资产清单、可复用代码模板，全部汇总在此。
 >
-> **核心原则（v7.0 重构）**：双层底图（CartoDB Dark 暗色瓦片 + Esri Shaded Relief 地形纹理）+ 历史疆域 GeoJSON，标准 Web Mercator 投影（Leaflet 默认 CRS），彻底杜绝"无底图 / 投影错乱 / 白板地图"。
+> **核心原则（v7.2 重构）**：本地地图资源优先（`assets/maps/` 的地形底图、行政边界 GeoJSON + 本地地形瓦片），标准 Web Mercator 投影（Leaflet 默认 CRS），彻底杜绝"无底图 / 投影错乱 / 白板地图"。
 >
-> ⚠️ **v7.0 变更**：不再使用 `L.CRS.EPSG4326` + `L.imageOverlay` 方案。改用 XYZ 瓦片服务（免费、无需 API Key、全球 CDN 加速），与 GeoJSON 坐标原生对齐，无投影错位问题。
+> ⛔ **严禁直接使用在线 XYZ 瓦片切片**（CartoDB / Esri / OpenStreetMap 等）作为地图底图。必须使用 `assets/maps/` 下的本地资源，确保课件离线可用、加载稳定、无外部依赖。
+>
+> ⚠️ **v7.2 变更**：不再使用在线 XYZ 瓦片服务。改用 `assets/maps/physical/` 本地地形瓦片 + `assets/maps/political/` 行政边界 GeoJSON + `assets/maps/chrono-*/` 历史疆域 GeoJSON。在线瓦片仅作最终降级回退。
+>
+> **v7.0 → v7.2 迁移要点**：
+> - ❌ `L.tileLayer('https://{s}.basemaps.cartocdn.com/...')` → 禁止
+> - ❌ `L.tileLayer('https://server.arcgisonline.com/...')` → 禁止
+> - ✅ `L.tileLayer('./data/maps/physical/terrain-tiles/{z}/{x}/{y}.png')` → 本地瓦片
+> - ✅ `L.imageOverlay('./data/maps/physical/hillshade/global-color-hillshade-4k.jpg', bounds)` → 本地地形阴影
+> - ✅ `fetch('./data/maps/political/world/countries.geojson')` → 本地行政边界
+> - ✅ `fetch('./data/maps/physical/coastline/ne_10m_coastline.json')` → 本地海岸线
 
 ---
 
