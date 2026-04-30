@@ -183,87 +183,78 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 
 ---
 
-### 0.5 Hero 图基线详解（Hero Cover Image — 先查后生）⛔ 必读
+### 0.5 Hero 图基线详解（Hero Cover Image — CDN 优先）⛔ 必读
 
 > ⛔ **每个 TeachAny 课件必须有 1 张主题专属 hero 封面图**——这是 Gallery 卡片缩略图、课件首屏视觉锚点、用户决定"是否打开学习"的第一眼信号。无 Hero 图 = 无品牌识别 = Gate 直接不通过。
 >
-> 🔑 **核心原则：先查后生**。优先复用已有 hero 资源，找不到再调 image_gen 生成新图。这样省 token、保视觉一致性、提升交付速度。
+> 🔑 **核心原则：CDN 优先、按命名规则调用、不随 skill 下载图片**。所有 hero 图片存储在独立图床仓库 `weponusa/teachany-images`，通过 jsDelivr CDN 全球加速分发。Skill 安装包只携带 `image-registry.json` 索引文件（~224KB），制作课件时按需从 CDN 拉取。
 
-#### Hero 获取四层降级链（按顺序尝试，命中即停）
+#### 架构概览
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Skill 安装包 (~15MB)                                       │
+│  ├── skill/assets/image-registry.json  ← 图片索引（224KB）   │
+│  ├── scripts/find-hero.py              ← CDN URL 查找       │
+│  └── scripts/check-hero.py             ← 校验 CDN 引用      │
+├─────────────────────────────────────────────────────────────┤
+│  CDN 图床 (jsDelivr，不下载)                                 │
+│  └── cdn.jsdelivr.net/gh/weponusa/teachany-images@main/     │
+│      ├── math/quadratic-function-hero.png                   │
+│      ├── biology/cell-structure-hero.png                    │
+│      └── ... 391+ 张按学科分类的 hero 图                     │
+├─────────────────────────────────────────────────────────────┤
+│  社区课件 (服务器在线访问，不下载)                             │
+│  └── teachany.ai / GitHub Pages                             │
+│      └── HTML 中 <img src="CDN_URL"> 引用 hero              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### Hero 查找三层降级链（CDN 优先，命中即停）
 
 | 层级 | 资源池 | 命中后动作 | 命中率参考 |
 |:---|:---|:---|:---:|
-| **L1** | 课件目录本地 `assets/*hero*` | 已存在直接用，无需任何操作 | 老课件 ≈99% |
-| **L2** | `teachany-images/<subject>/<topic>-hero.png`（独立 git 仓库 / CDN） | 复制到课件 `assets/` 或用 jsDelivr CDN 链接 | 主流学科 ≈40% |
-| **L3** | `hero-review/<subject>_grade<N>_<course-id>.png`（精选评审版） | 复制到课件 `assets/<course-id>-hero.png` | 精选课件 ≈10% |
-| **L4** | `image_gen` 调用（按学段差异化 prompt 模板） | 仅在 L1-L3 全部未命中时执行 | 新课件 ≈50% |
+| **L1** | `image-registry.json` 索引 → CDN URL | HTML 中直接引用 CDN URL | 主流学科 ≈60% |
+| **L2** | CDN 命名规则探测（`{subject}/{keyword}-hero.png`） | HTML 中引用 CDN URL | 补充 ≈20% |
+| **L3** | `image_gen` 兜底生成（按学段差异化 prompt） | 生成 → 上传图床 → 引用 CDN URL | 新课件 ≈20% |
 
-#### 自动化查找（必跑）
+> ⚠️ **不再复制图片到课件 `assets/` 目录**。HTML 直接引用 CDN URL，由浏览器从 jsDelivr 加载。如需离线使用（如导出 PPTX），脚本会在打包阶段按需下载到本地。
 
-Phase 3 末（HTML 完成后、Completeness Gate 之前）必须执行：
+#### L1：image-registry.json 索引查找（首选）
 
-```bash
-# 自动按四层降级链查找/生成 hero
-python3 scripts/find-hero.py <课件目录> --subject <学科> --grade <年级>
-
-# 输出示例：
-#   ✅ L1 命中: assets/may-fourth-movement-hero.png（已存在）
-#   ✅ L2 命中: 从 teachany-images/history/ 复制 ww2-hero.png
-#   ✅ L3 命中: 从 hero-review/ 复制评审版
-#   ⚠️  L1-L3 未命中，进入 L4: 调用 image_gen 生成新图
-```
-
-#### L1：本地优先（已存在直接用）
-
-检查 `<课件目录>/assets/` 下是否已有任何 `*hero*.{png,jpg,webp,svg}` 文件：
+`skill/assets/image-registry.json` 包含所有已注册图片的 CDN URL 和匹配规则：
 
 ```bash
-find <课件目录>/assets/ -maxdepth 2 -type f -iname "*hero*" \
-  \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.webp" -o -iname "*.svg" \)
+# 使用 image_resolver.py 查找
+python3 scripts/image_resolver.py resolve --node math-m-linear-function --slot hero
+# 输出: https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/math/linear-function-hero.png
+
+# 或使用 find-hero.py（更简单）
+python3 scripts/find-hero.py <课件目录> --subject math --grade 8
+# 输出: ✅ CDN: https://cdn.jsdelivr.net/.../linear-function-hero.png
 ```
 
-**命中** → 直接使用，确保 HTML 已正确引用即可，**不重新生成**。
+**学科目录约定**：`biology` / `chinese` / `english` / `history` / `math` / `physics` / `science` / `geography` / `chemistry`
 
-#### L2：teachany-images 独立图床（学科分类）
+**主题关键词映射**：从课件 `course_id` 提取核心词 → 匹配 `image-registry.json` 的 `match_nodes` 或 `tags`。例如：
+- 课件 `bio-h-cell-membrane` → 匹配 `match_nodes: ["bio-h-cell-membrane"]` → CDN URL
+- 课件 `math-m-quadratic-function` → 匹配 `tags: ["quadratic", "function"]` → CDN URL
 
-仓库地址：`git@github.com:weponusa/teachany-images.git`
+#### L2：CDN 命名规则探测（补充）
 
-按学科查找：
+当 `image-registry.json` 中未找到时，按命名规则构造 CDN URL 并 HEAD 探测：
 
 ```bash
-# 在线查找（无需 clone）
-curl -sI "https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/<subject>/<topic>-hero.png" | head -1
-# HTTP/2 200 → 命中
+# CDN URL 命名规则
+# https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/{subject}/{keyword}-hero.png
 
-# 本地查找（已 clone 在 ~/CodeBuddy/一次函数/teachany-images/）
-find ~/CodeBuddy/一次函数/teachany-images/<subject>/ -iname "*<keyword>*hero*"
+# 示例：课件 hist-m-ww2
+curl -sI "https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/history/ww2-hero.png" | head -1
+# HTTP/2 200 → 命中，直接用此 CDN URL
+# HTTP/2 404 → 未命中，进入 L3
 ```
 
-**学科目录约定**：`biology` / `chinese` / `english` / `history` / `math` / `physics` / `science`
-
-**主题关键词映射**：从课件 `node_id` 或 `<title>` 提取核心词，模糊匹配。例如：
-- 课件 `bio-h-cell-membrane` → 关键词 `cell-membrane` → 命中 `biology/cell-membrane-hero.png`
-- 课件 `hist-m-ww2` → 关键词 `ww2` 或 `world-war-2` → 命中 `history/ww2-hero.png`
-- 课件 `math-m-quadratic-function` → 关键词 `quadratic` → 命中 `math/quadratic-function-hero.png`
-
-**命中后的两种使用方式**：
-- **A. 复制到本地**（推荐，无 CDN 依赖）：`cp ~/CodeBuddy/一次函数/teachany-images/<sub>/<topic>-hero.png <课件目录>/assets/`
-- **B. CDN 引用**（节省仓库体积）：HTML 中 `<img src="https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/<sub>/<topic>-hero.png">`
-
-#### L3：hero-review 精选评审版
-
-路径：`~/CodeBuddy/一次函数/hero-review/`
-
-命名模式：`<subject>_grade<N>_<course-id>.png`
-
-按课件 ID 精确匹配：
-```bash
-ls ~/CodeBuddy/一次函数/hero-review/ | grep "<course-id>"
-```
-
-**命中** → 复制到 `<课件目录>/assets/<course-id>-hero.png`
-
-#### L4：image_gen 兜底生成（按学段差异化）
+#### L3：image_gen 兜底生成（按学段差异化）
 
 | 学段 | 视觉风格 | Prompt 模板 |
 |:---|:---|:---|
@@ -271,30 +262,32 @@ ls ~/CodeBuddy/一次函数/hero-review/ | grep "<course-id>"
 | **初中** (G7-9) | 半写实插画 + 信息图元素 | `<主题中文>, semi-realistic illustration with infographic elements, clear visual hierarchy, educational textbook style for middle school, 16:9 horizontal banner` |
 | **高中** (G10-12) | 学术几何插画，深色专业风 | `<主题中文>, academic geometric illustration, professional dark blue palette, conceptual diagram aesthetic, suitable for high school textbook cover, 16:9 horizontal layout` |
 
-**生成后必须**：
-1. 存为 `<课件目录>/assets/<course-id>-hero.png`
-2. **同步贡献回 teachany-images 仓库**：`cp <课件目录>/assets/<course-id>-hero.png ~/CodeBuddy/一次函数/teachany-images/<subject>/<topic>-hero.png`，下次同主题课件可直接 L2 命中
-3. 更新 teachany-images 仓库的 README index（可选）
+**生成后必须（三步闭环）**：
+1. 上传到 teachany-images 图床仓库：`git add <subject>/<topic>-hero.png && git commit && git push`
+2. 注册到 `image-registry.json`：`python3 scripts/image_resolver.py register --id <id> --file <subject>/<topic>-hero.png --subject <学科> --slot hero --match-nodes <course-id>`
+3. HTML 引用 CDN URL：`https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/<subject>/<topic>-hero.png`
+
+> ⚠️ **不再存到课件 `assets/` 目录**。图片统一上图床，HTML 统一引用 CDN。
 
 **失败重试策略**：image_gen 失败 → 重试 1（换 prompt 风格）→ 重试 2（简化主题词）→ 重试 3（用通用学科 prompt）；3 次都失败才允许在 Generation Gate 中标注"Hero 生成失败，需用户书面豁免"
 
-#### 文件规范（无论哪一层来源）
+#### CDN 命名规则
 
-| 项 | 标准 |
+| 规则 | 示例 |
 |:---|:---|
-| **文件路径** | `<课件目录>/assets/<course-id>-hero.png`（推荐）或 `assets/hero-<topic>.png`（兼容） |
-| **分辨率** | ≥ 1280×720（16:9 横版）；理想 1920×1080；`image_gen` 默认 size=`1024x1024` 时改为 `1024x1536` 横切上半部分 |
-| **格式** | `.png`（首选）/ `.jpg`（文件 > 1MB 时）/ `.webp`（极致压缩）|
-| **文件大小** | < 2 MB（Gallery 加载性能）；> 10 KB（防占位符）|
-| **唯一性** | ⛔ **每张 hero 必须主题专属**——但 L2/L3 命中的复用是合理的（同一主题不同版本课件可共用）|
+| **CDN URL 格式** | `https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/{subject}/{keyword}-hero.png` |
+| **学科映射** | `math` / `biology` / `physics` / `chemistry` / `history` / `chinese` / `english` / `geography` / `science` |
+| **关键词提取** | 从 `course_id` 中去掉学科前缀：`bio-h-cell-membrane` → `cell-membrane` |
+| **回退 CDN** | 主 CDN 不可用时：① `raw.githubusercontent.com/weponusa/teachany-images/main/` ② `ghfast.top/https://raw.githubusercontent.com/...` |
 
-#### HTML 引用标准（两种模式）
+#### HTML 引用标准（CDN 优先，onerror 降级）
 
-**模式 A：`<img>` 标签（推荐）**
+**默认模式：CDN `<img>` + onerror 降级（推荐）**
 ```html
 <section class="hero">
   <img class="hero-cover-img"
-       src="./assets/<course-id>-hero.png"
+       src="https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/{subject}/{keyword}-hero.png"
+       onerror="this.onerror=null;this.src='./assets/{course-id}-hero.png'"
        alt="《<课件标题>》课件封面"
        loading="eager"
        decoding="async">
@@ -305,55 +298,62 @@ ls ~/CodeBuddy/一次函数/hero-review/ | grep "<course-id>"
 </section>
 ```
 
-**模式 B：CSS background-image（适合视觉抽象主题）**
+**CSS background-image 模式（视觉抽象主题）**
 ```html
-<section class="hero" style="background-image: url('./assets/<course-id>-hero.png');">
+<section class="hero"
+  style="background-image: url('https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/{subject}/{keyword}-hero.png');">
   <div class="hero-overlay">
     <h1>《<课件标题>》</h1>
   </div>
 </section>
 ```
 
-**模式 C：CDN 引用（L2 命中且无需本地文件时）**
-```html
-<img class="hero-cover-img"
-     src="https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/<subject>/<topic>-hero.png"
-     alt="《<课件标题>》课件封面">
-```
+> 💡 **离线/导出场景**：`export-pptx.py` 等打包脚本会在构建阶段将 CDN 图片下载到本地 `assets/`，确保离线可用。HTML 的 `onerror` 降级自然兜底。
 
 #### Phase 3 完整流程（必跑）
 
 ```
 1. HTML 生成完成 → 提取课件元信息（course-id, subject, grade, title）
-2. 调用 python3 scripts/find-hero.py <课件目录>
-   → L1 检查本地 assets/ ─┬─ 命中：完成 ✅
-                          └─ 未命中：进入 L2
-   → L2 查 teachany-images ─┬─ 命中：复制到本地 ✅
+2. 调用 python3 scripts/find-hero.py <课件目录> --cdn
+   → L1 查 image-registry.json ─┬─ 命中：返回 CDN URL ✅
+                                  └─ 未命中：进入 L2
+   → L2 CDN 命名规则探测 ─┬─ 命中：返回 CDN URL ✅
                             └─ 未命中：进入 L3
-   → L3 查 hero-review ─┬─ 命中：复制到本地 ✅
-                        └─ 未命中：进入 L4
-   → L4 调用 image_gen ─┬─ 成功：保存 + 回写 teachany-images ✅
-                        └─ 失败 3 次：Gate 声明豁免
-3. 验证 HTML 引用了正确的 hero 路径
+   → L3 image_gen 生成 ─┬─ 成功：上传图床 + 注册索引 + 返回 CDN URL ✅
+                          └─ 失败 3 次：Gate 声明豁免
+3. 将 CDN URL 写入 HTML 的 <img src="...">
 4. 跑 python3 scripts/check-hero.py <课件目录> 校验通过
 ```
 
 #### 校验脚本（必须通过）
 
 ```bash
-# 单课件检查
+# 单课件检查（接受 CDN URL 和本地路径）
 python3 scripts/check-hero.py <课件目录>
 
 # 批量检查（发布前必跑）
 python3 scripts/check-hero.py community/
 
 # 输出预期：
-#   ✅ PASS: 314 courseware checked, all have valid hero images
+#   ✅ PASS: 314 courseware checked, all have valid hero references
 ```
 
 #### 与硬规则 #57 的关系
 
 本节的所有要求都映射到 RULES.md 的硬规则 #57，发布流程中由 `validate-courseware.py` 调用 `check-hero.py` 强制校验。任一课件不通过 = 发布流程 exit 1，rebuild-index 拒绝执行。
+
+#### Skill 安装体积控制
+
+| 内容 | 是否随 skill 下载 | 说明 |
+|:---|:---:|:---|
+| `skill/assets/image-registry.json` | ✅ | 图片索引（224KB），CDN URL 映射表 |
+| `scripts/find-hero.py` | ✅ | Hero 查找脚本 |
+| `scripts/check-hero.py` | ✅ | Hero 校验脚本 |
+| `community/` (313课件) | ❌ | 服务器在线访问，不下载 |
+| `teachany-images/` (685MB) | ❌ | CDN 按需加载，不下载 |
+| Hero 图片文件 | ❌ | 通过 CDN URL 引用，不下载 |
+
+> 📌 使用 `git sparse-checkout set --from-file .sparse-checkout-presets/minimal.txt` 安装 skill，只需约 **15MB**。
 
 ---
 

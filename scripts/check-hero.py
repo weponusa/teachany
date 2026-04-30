@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-TeachAny Hero 图基线校验脚本 (v6.3)
+TeachAny Hero 图基线校验脚本 (v7.0 — CDN 优先版)
 
 对应硬规则 #57 / SKILL_CN Section 0.5：
-每个课件必须有 hero 封面图，HTML 必须真实引用，文件必须真实存在。
+每个课件必须有 hero 封面图，HTML 必须真实引用。
+CDN URL 和本地路径均视为有效引用。
 
 用法:
     python3 scripts/check-hero.py <课件目录>          # 检查单个课件
@@ -24,16 +25,18 @@ from pathlib import Path
 
 # Hero 文件命名模式
 HERO_FILE_PATTERN = re.compile(r'.*hero.*\.(png|jpg|jpeg|webp|svg)$', re.IGNORECASE)
-# HTML 中 hero 图引用模式：匹配 src="..." 或 url(...) 中含 hero 的图片路径
+# HTML 中 hero 图引用模式：匹配 src="..." 或 url(...) 中含 hero 的图片路径（含 CDN URL）
 HERO_REF_PATTERN = re.compile(
     r'''(?:src\s*=\s*['"]|url\(\s*['"]?)([^'")\s]*hero[^'")\s]*\.(?:png|jpg|jpeg|webp|svg))''',
     re.IGNORECASE
 )
+# CDN URL 模式
+CDN_URL_PATTERN = re.compile(r'^https?://', re.IGNORECASE)
+# 教学图片 CDN 域名
+TEACHANY_CDN_PATTERN = re.compile(r'cdn\.jsdelivr\.net/gh/weponusa/teachany-images', re.IGNORECASE)
 
 # 最小文件大小（避免 0 字节占位符）
 MIN_FILE_SIZE = 10 * 1024  # 10 KB
-# 推荐最小尺寸（仅 warn 不 error）
-MIN_WIDTH = 1024
 
 
 def find_hero_files(course_dir: Path):
@@ -46,14 +49,17 @@ def find_hero_files(course_dir: Path):
 
 
 def find_hero_refs_in_html(html_path: Path):
-    """从 HTML 中提取所有 hero 图引用路径"""
+    """从 HTML 中提取所有 hero 图引用路径（含 CDN URL 和本地路径）"""
     if not html_path.exists():
-        return []
+        return [], []
     try:
         text = html_path.read_text(encoding='utf-8', errors='replace')
     except Exception:
-        return []
-    return HERO_REF_PATTERN.findall(text)
+        return [], []
+    all_refs = HERO_REF_PATTERN.findall(text)
+    local_refs = [r for r in all_refs if not CDN_URL_PATTERN.match(r)]
+    cdn_refs = [r for r in all_refs if CDN_URL_PATTERN.match(r)]
+    return local_refs, cdn_refs
 
 
 def check_courseware(course_dir: Path):
@@ -65,42 +71,45 @@ def check_courseware(course_dir: Path):
 
     html_path = course_dir / 'index.html'
     if not html_path.exists():
-        # 无 index.html → 不是真课件，跳过
         return 'skip', [], []
 
     hero_files = find_hero_files(course_dir)
-    hero_refs = find_hero_refs_in_html(html_path)
+    local_refs, cdn_refs = find_hero_refs_in_html(html_path)
+    all_refs = local_refs + cdn_refs
 
-    # 检查 1: 必须有 hero 文件
-    if not hero_files:
-        errors.append(f'缺 hero 图文件（assets/ 下无任何 *hero*.png/jpg/webp/svg）')
-
-    # 检查 2: 必须有 HTML 引用
-    if not hero_refs:
+    # 检查 1: 必须有 hero 引用（CDN URL 或本地路径均可）
+    if not all_refs:
         errors.append(f'HTML 未引用任何 hero 图（src/url 中无 *hero*.* 路径）')
 
-    # 检查 3: HTML 引用的本地路径必须真实存在（外链 URL 不检查，由用户确保 CDN 可用）
-    if hero_refs and hero_files:
+    # 检查 2: 本地路径引用的文件必须存在
+    if local_refs:
         hero_filenames = {f.name for f in hero_files}
         broken_refs = []
-        for ref in hero_refs:
-            # 跳过外链 URL（http/https 开头）
-            if re.match(r'^https?://', ref, re.IGNORECASE):
+        for ref in local_refs:
+            # 跳过绝对路径（系统路径）
+            if ref.startswith('/'):
                 continue
             ref_filename = os.path.basename(ref)
             if ref_filename not in hero_filenames:
-                broken_refs.append(ref)
+                # 也检查完整相对路径
+                ref_path = course_dir / ref.lstrip('./')
+                if not ref_path.exists():
+                    broken_refs.append(ref)
         if broken_refs:
             errors.append(f'HTML 引用了 {len(broken_refs)} 个不存在的本地 hero 路径: {broken_refs[:3]}')
 
-    # 如果只有外链引用且没本地文件，warn（CDN 不可控，建议本地化）
-    if hero_refs and not hero_files:
-        external_only = all(re.match(r'^https?://', r, re.IGNORECASE) for r in hero_refs)
-        if external_only:
-            warns.append(f'HTML 仅用外链 hero 图（{len(hero_refs)} 处），建议下载到本地 assets/ 防止 CDN 失效')
-        # 如果有本地引用但本地无文件，已在上面 errors 处理过
+    # 检查 3: CDN URL 必须是 teachany-images CDN
+    if cdn_refs:
+        non_teachany_cdn = [r for r in cdn_refs if not TEACHANY_CDN_PATTERN.search(r)]
+        if non_teachany_cdn:
+            warns.append(f'{len(non_teachany_cdn)} 处 CDN URL 不在 teachany-images 域名下: {[r[:60] for r in non_teachany_cdn[:3]]}')
 
-    # 检查 4: 文件大小不能太小（避免占位符）
+    # 检查 4: 仅 CDN 引用且无本地文件 → 不再警告（CDN-first 策略）
+    # 但如果没有本地文件也没有 CDN 引用，才是错误
+    if not hero_files and not cdn_refs and not local_refs:
+        errors.append(f'无 hero 图（本地文件和 CDN URL 均无）')
+
+    # 检查 5: 本地文件大小不能太小
     if hero_files:
         small_files = [f for f in hero_files if f.stat().st_size < MIN_FILE_SIZE]
         if small_files:
@@ -115,7 +124,7 @@ def check_courseware(course_dir: Path):
 
 
 def check_duplicate_heroes(courseware_results: dict, root: Path):
-    """跨课件检查：禁止多个课件共用同一张 hero 图（按 md5 hash 比对）"""
+    """跨课件检查：禁止多个课件共用同一张 hero 图（按 md5 hash 比对，仅比对本地文件）"""
     md5_to_paths = {}
     for cdir, result in courseware_results.items():
         if result['status'] not in ('pass', 'warn'):
@@ -152,11 +161,9 @@ def main():
 
     # 收集要检查的课件目录
     if (target / 'index.html').exists():
-        # 单个课件
         courseware_dirs = [target]
         root = target.parent
     else:
-        # 批量：找所有含 index.html 的子目录
         courseware_dirs = sorted({p.parent for p in target.rglob('index.html')
                                   if 'node_modules' not in str(p)})
         root = target
@@ -184,7 +191,7 @@ def main():
         else:
             skip_count += 1
 
-    # 跨课件查重
+    # 跨课件查重（仅本地文件）
     duplicates = check_duplicate_heroes(results, root) if len(courseware_dirs) > 1 else {}
     if duplicates:
         for md5, paths in duplicates.items():
@@ -208,7 +215,7 @@ def main():
         }
         print(json.dumps(out, ensure_ascii=False, indent=2))
     else:
-        print(f'\n=== TeachAny Hero 图基线校验 ===')
+        print(f'\n=== TeachAny Hero 图基线校验 (v7.0 CDN 优先版) ===')
         print(f'目标: {target}')
         print(f'检查课件总数: {len(courseware_dirs)}')
         print(f'  ✅ 通过: {pass_count}')
@@ -226,9 +233,9 @@ def main():
                     for e in r['errors']:
                         print(f'    - {e}')
             print(f'\n💡 修复建议：')
-            print(f'   1. 用 image_gen 生成主题专属 hero 图（参考 SKILL_CN Section 0.5 prompt 模板）')
-            print(f'   2. 存为 <课件目录>/assets/<course-id>-hero.png')
-            print(f'   3. 在 HTML Hero section 添加 <img class="hero-cover-img" src="./assets/...-hero.png" alt="...">')
+            print(f'   1. 查找 CDN 上的 hero 图：python3 scripts/find-hero.py <课件目录>')
+            print(f'   2. 若 CDN 无此图，调用 image_gen 生成并上传图床')
+            print(f'   3. HTML 添加: <img class="hero-cover-img" src="CDN_URL" alt="...">')
             print(f'   4. 重新跑本脚本验证')
 
         if fail_count == 0:
