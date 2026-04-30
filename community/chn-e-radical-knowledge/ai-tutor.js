@@ -759,7 +759,10 @@
   // 7. API 调用（OpenAI 兼容，支持流式）
   // ───────────────────────────────────────────────────────
   async function callChatAPI(cfg, messages, onDelta) {
-    const endpoint = cfg.baseUrl.replace(/\/$/, '') + '/chat/completions';
+    // 防御：apiKey 含全角空格、Base URL 含中文等都会导致 fetch 抛 TypeError
+    const cleanKey = String(cfg.apiKey || '').trim().replace(/[\u3000\s]+/g, '');
+    const cleanBaseUrl = String(cfg.baseUrl || '').trim();
+    const endpoint = cleanBaseUrl.replace(/\/$/, '') + '/chat/completions';
 
     // 工具函数：把任何字符串安全转换为 ISO-8859-1 兼容的 ASCII（浏览器 fetch header 的硬性要求）
     const toAsciiSafe = (s, fallback) => {
@@ -770,12 +773,24 @@
       return fallback;
     };
 
+    // Pre-check: API Key 必须 ASCII 安全
+    if (/[^\x00-\xff]/.test(cleanKey)) {
+      throw new Error(getLang() === 'en'
+        ? 'API Key contains non-ASCII characters. Please paste a clean key via ⚙️.'
+        : 'API Key 含非 ASCII 字符（中文/全角符号），请点 ⚙️ 重新粘贴干净的 Key。');
+    }
+    if (/[^\x00-\xff]/.test(cleanBaseUrl)) {
+      throw new Error(getLang() === 'en'
+        ? 'Base URL contains non-ASCII characters. Please re-enter via ⚙️.'
+        : 'Base URL 含非 ASCII 字符，请点 ⚙️ 重新输入。');
+    }
+
     const headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + toAsciiSafe(cfg.apiKey, '')
+      'Authorization': 'Bearer ' + cleanKey
     };
     // OpenRouter 推荐附带 HTTP-Referer 和 X-OpenRouter-Title（用于排行榜，可选但稳定）
-    if (cfg.baseUrl.includes('openrouter.ai')) {
+    if (cleanBaseUrl.includes('openrouter.ai')) {
       try {
         headers['HTTP-Referer'] = toAsciiSafe(location.origin, 'https://teachany.app');
         const safeTitle = toAsciiSafe(document.title, 'TeachAny Course').slice(0, 100);
@@ -791,24 +806,44 @@
         delete headers[k];
       }
     }
-    // 设置 30 秒整体超时 + 每次 10 秒无数据超时
+    // 设置 30 秒整体超时
     const ac = new AbortController();
     const overallTimeout = setTimeout(() => ac.abort('overall-timeout'), 30000);
 
-    const resp = await fetch(endpoint, {
-      method: 'POST',
-      headers: headers,
-      signal: ac.signal,
-      body: JSON.stringify({
-        model: cfg.model,
-        messages,
-        stream: true,
-        temperature: 0.7,
-        max_tokens: 600
-        // 注：不传 reasoning 参数。推理模型（Hy3、DeepSeek-R1）会在 delta.reasoning 里输出思考；
-        // 客户端只显示 delta.content，推理过程静默丢弃。
-      })
-    });
+    // fetch 本身可能因 CORS、header 编码、网络等抛 TypeError
+    let resp;
+    try {
+      resp = await fetch(endpoint, {
+        method: 'POST',
+        headers: headers,
+        signal: ac.signal,
+        body: JSON.stringify({
+          model: cfg.model,
+          messages,
+          stream: true,
+          temperature: 0.7,
+          max_tokens: 600
+          // 注：不传 reasoning 参数。推理模型（Hy3、DeepSeek-R1）会在 delta.reasoning 里输出思考；
+          // 客户端只显示 delta.content，推理过程静默丢弃。
+        })
+      });
+    } catch (fetchErr) {
+      clearTimeout(overallTimeout);
+      console.error('[TeachAnyTutor] fetch threw:', fetchErr, 'headers used:', headers);
+      const detail = (fetchErr && (fetchErr.name + ': ' + fetchErr.message)) || String(fetchErr);
+      // 常见原因诊断
+      let hint = '';
+      if (/non ISO-8859-1|code point/i.test(detail)) {
+        hint = getLang() === 'en'
+          ? '（Header contains non-ASCII chars, possibly your API Key/Base URL has invalid characters - re-enter via ⚙️）'
+          : '（请求头含非 ASCII 字符，可能是 API Key 或 Base URL 含中文/全角符号——点 ⚙️ 重新输入）';
+      } else if (/Failed to fetch|NetworkError/i.test(detail)) {
+        hint = getLang() === 'en'
+          ? '（Network/CORS error. Check Base URL and your network.）'
+          : '（网络错误或被 CORS 拦截。请检查 Base URL 和网络连接。）';
+      }
+      throw new Error((getLang() === 'en' ? 'Network error: ' : '网络错误：') + detail + hint);
+    }
 
     if (!resp.ok) {
       clearTimeout(overallTimeout);
