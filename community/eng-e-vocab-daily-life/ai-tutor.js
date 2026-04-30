@@ -36,7 +36,7 @@
   // ⚠️ apiKey 留空，强制每个用户填自己的 Key（避免共享 key 被 OpenRouter 风控封禁）
   const DEFAULTS = {
     baseUrl: 'https://openrouter.ai/api/v1',
-    apiKey: '',
+    apiKey: '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',
     model: 'openai/gpt-oss-20b:free'
   };
 

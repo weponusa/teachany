@@ -243,6 +243,11 @@ class PBLPathBuilder {
 
   // ─── LLM 配置管理 ─────────────────────────────
 
+  // 默认内置 Key（开箱即用）
+  static BUILTIN_KEY = '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';
+  static BUILTIN_MODEL = 'qwen/qwen3-coder:free';
+  static BUILTIN_BASE_URL = 'https://openrouter.ai/api/v1';
+
   _loadLLMConfig() {
     try {
       const saved = localStorage.getItem('teachany_pbl_config');
@@ -252,12 +257,12 @@ class PBLPathBuilder {
         return;
       }
     } catch (e) { /* ignore */ }
-    // 默认配置
+    // 默认配置：内置 Key，开箱即用
     this._llmConfig = {
       providerId: 'openrouter-free',
-      apiKey: '',
-      model: '',
-      baseUrl: ''
+      apiKey: PBLPathBuilder.BUILTIN_KEY,
+      model: PBLPathBuilder.BUILTIN_MODEL,
+      baseUrl: PBLPathBuilder.BUILTIN_BASE_URL
     };
   }
 
@@ -268,9 +273,9 @@ class PBLPathBuilder {
   getLLMConfig() {
     const provider = this.providers.find(p => p.id === this._llmConfig.providerId) || this.providers[0];
     return {
-      baseUrl: this._llmConfig.baseUrl || provider.baseUrl,
-      apiKey: this._llmConfig.apiKey,
-      model: this._llmConfig.model || provider.model,
+      baseUrl: this._llmConfig.baseUrl || provider.baseUrl || PBLPathBuilder.BUILTIN_BASE_URL,
+      apiKey: this._llmConfig.apiKey || PBLPathBuilder.BUILTIN_KEY,
+      model: this._llmConfig.model || provider.model || PBLPathBuilder.BUILTIN_MODEL,
       providerId: this._llmConfig.providerId || provider.id,
       providerName: provider.name
     };
