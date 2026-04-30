@@ -7,8 +7,8 @@
 <meta name="course-node" content="medieval-europe">
 <meta name="course-subject" content="history">
 <meta name="course-title" content="中世纪欧洲">
-<meta name="course-prereqs" content="ancient-rome,christianity-origin">
-<meta name="course-next" content="renaissance,reformation">
+<meta name="course-prereqs" content="hist-m-greece-rome">
+<meta name="course-next" content="hist-m-renaissance,hist-h-age-of-exploration">
 <meta name="teachany-node" content="hist-m-medieval-europe">
 <title>中世纪欧洲 · TeachAny 历史课件</title>
 
@@ -739,9 +739,8 @@
     <div class="km-grid">
       <div class="km-col">
         <h4>前置知识</h4>
-        <a class="km-node" href="#">古希腊文明</a>
-        <a class="km-node" href="#">罗马帝国</a>
-        <a class="km-node" href="#">基督教起源</a>
+        <a class="km-node" href="../../hist-m-greece-rome/index.html">古希腊与古罗马</a>
+        <a class="km-node" style="opacity:0.5;cursor:default" title="课件制作中">基督教起源</a>
       </div>
       <div class="km-col">
         <h4>本课</h4>
@@ -749,9 +748,8 @@
       </div>
       <div class="km-col">
         <h4>后续衔接</h4>
-        <a class="km-node" href="#">文艺复兴</a>
-        <a class="km-node" href="#">宗教改革</a>
-        <a class="km-node" href="#">新航路开辟</a>
+        <a class="km-node" href="../../hist-m-renaissance/index.html">文艺复兴与宗教改革</a>
+        <a class="km-node" style="opacity:0.5;cursor:default" title="课件制作中">新航路开辟</a>
       </div>
     </div>
   </div>
@@ -797,12 +795,15 @@ const ERA_COLORS = {
 
 const map = L.map('medievalMap', {
   center: [48, 15], zoom: 4,
-  maxBounds: [[20, -20], [70, 80]], zoomControl: true
+  maxBounds: [[20, -20], [70, 80]], zoomControl: true,
+  minZoom: 3, maxZoom: 7
 });
 
-// Local hillshade base
-const hillshadeBounds = [[-60, -180], [85, 180]];
-L.imageOverlay('./assets/maps/hillshade.jpg', hillshadeBounds, { opacity: 0.5 }).addTo(map);
+// 初始聚焦欧洲核心区域
+map.fitBounds([[35, -10], [65, 45]]);
+
+// Local hillshade base (必须使用 [[-90,-180],[90,180]] 与 GeoJSON WGS84 坐标对齐)
+L.imageOverlay('./assets/maps/hillshade.jpg', [[-90, -180], [90, 180]], { opacity: 0.5 }).addTo(map);
 
 let currentEraLayer = null;
 let currentEra = 'ce-500';
@@ -872,37 +873,69 @@ document.querySelectorAll('.feudal-node').forEach(node => {
 });
 
 // ═══════════════════════════════════════════
-// Sort Game
+// Sort Game (click-to-select + drag support)
 // ═══════════════════════════════════════════
 let selectedChip = null;
 
+function isPlaced(chip) {
+  return chip.classList.contains('placed-politics') || chip.classList.contains('placed-economy') || chip.classList.contains('placed-culture');
+}
+
+function getZoneClass(zoneId) {
+  if (zoneId === 'zonePolitics') return 'placed-politics';
+  if (zoneId === 'zoneEconomy') return 'placed-economy';
+  if (zoneId === 'zoneCulture') return 'placed-culture';
+  return '';
+}
+
+function placeChip(chip, zone) {
+  const placedClass = getZoneClass(zone.id);
+  // 清除旧的放置状态
+  chip.classList.remove('placed-politics', 'placed-economy', 'placed-culture');
+  chip.classList.add(placedClass);
+  zone.appendChild(chip);
+  chip.style.outline = '';
+  selectedChip = null;
+}
+
+function returnToPool(chip) {
+  chip.classList.remove('placed-politics', 'placed-economy', 'placed-culture');
+  chip.style.outline = '';
+  document.getElementById('sortPool').appendChild(chip);
+}
+
 document.querySelectorAll('.sort-chip').forEach(chip => {
+  // 点击选择/取消
   chip.addEventListener('click', () => {
-    if (chip.classList.contains('placed-politics') || chip.classList.contains('placed-economy') || chip.classList.contains('placed-culture')) {
-      // Return to pool
-      chip.classList.remove('placed-politics', 'placed-economy', 'placed-culture');
-      document.getElementById('sortPool').appendChild(chip);
-      return;
-    }
+    if (isPlaced(chip)) { returnToPool(chip); return; }
+    if (selectedChip === chip) { chip.style.outline = ''; selectedChip = null; return; }
     if (selectedChip) selectedChip.style.outline = '';
     selectedChip = chip;
     chip.style.outline = '2px solid var(--primary)';
   });
+  // 拖拽支持
+  chip.draggable = true;
+  chip.addEventListener('dragstart', e => {
+    e.dataTransfer.setData('text/plain', '');
+    chip.style.opacity = '0.5';
+    selectedChip = chip;
+  });
+  chip.addEventListener('dragend', () => { chip.style.opacity = '1'; });
 });
 
 document.querySelectorAll('.sort-zone').forEach(zone => {
+  // 点击放置
   zone.addEventListener('click', () => {
-    if (!selectedChip) return;
-    const answer = selectedChip.dataset.answer;
-    const zoneId = zone.id;
-    let placedClass = '';
-    if (zoneId === 'zonePolitics') placedClass = 'placed-politics';
-    else if (zoneId === 'zoneEconomy') placedClass = 'placed-economy';
-    else if (zoneId === 'zoneCulture') placedClass = 'placed-culture';
-    selectedChip.classList.add(placedClass);
-    zone.appendChild(selectedChip);
-    selectedChip.style.outline = '';
-    selectedChip = null;
+    if (!selectedChip || isPlaced(selectedChip)) return;
+    placeChip(selectedChip, zone);
+  });
+  // 拖拽放置
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.outline = '2px dashed var(--primary)'; });
+  zone.addEventListener('dragleave', () => { zone.style.outline = ''; });
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.style.outline = '';
+    if (selectedChip) placeChip(selectedChip, zone);
   });
 });
 
