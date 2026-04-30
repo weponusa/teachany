@@ -760,22 +760,36 @@
   // ───────────────────────────────────────────────────────
   async function callChatAPI(cfg, messages, onDelta) {
     const endpoint = cfg.baseUrl.replace(/\/$/, '') + '/chat/completions';
+
+    // 工具函数：把任何字符串安全转换为 ISO-8859-1 兼容的 ASCII（浏览器 fetch header 的硬性要求）
+    const toAsciiSafe = (s, fallback) => {
+      if (s == null) return fallback;
+      const str = String(s);
+      if (!/[^\x00-\xff]/.test(str)) return str;  // 已是 Latin-1 兼容
+      // 含非 ASCII 字符（如中文）→ 用 fallback
+      return fallback;
+    };
+
     const headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + cfg.apiKey
+      'Authorization': 'Bearer ' + toAsciiSafe(cfg.apiKey, '')
     };
     // OpenRouter 推荐附带 HTTP-Referer 和 X-OpenRouter-Title（用于排行榜，可选但稳定）
     if (cfg.baseUrl.includes('openrouter.ai')) {
       try {
-        headers['HTTP-Referer'] = location.origin || 'https://teachany.app';
-        // ⚠️ HTTP header 值必须是 ISO-8859-1 (ASCII)，document.title 含中文会报错
-        // 用 encodeURIComponent + slice 或者直接用固定英文标题
-        const rawTitle = document.title || 'TeachAny';
-        const safeTitle = /[^\x00-\xff]/.test(rawTitle) ? 'TeachAny Course' : rawTitle.slice(0, 100);
+        headers['HTTP-Referer'] = toAsciiSafe(location.origin, 'https://teachany.app');
+        const safeTitle = toAsciiSafe(document.title, 'TeachAny Course').slice(0, 100);
         headers['X-OpenRouter-Title'] = safeTitle;
-        // 兼容旧字段
         headers['X-Title'] = safeTitle;
       } catch (e) { /* ignore */ }
+    }
+
+    // 最终保险：遍历所有 header 值，再过一遍 ASCII 检查
+    for (const k of Object.keys(headers)) {
+      if (/[^\x00-\xff]/.test(headers[k])) {
+        console.warn('[TeachAnyTutor] Removing non-ASCII header:', k, headers[k]);
+        delete headers[k];
+      }
     }
     // 设置 30 秒整体超时 + 每次 10 秒无数据超时
     const ac = new AbortController();
