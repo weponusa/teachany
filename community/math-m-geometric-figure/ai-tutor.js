@@ -768,9 +768,13 @@
     if (cfg.baseUrl.includes('openrouter.ai')) {
       try {
         headers['HTTP-Referer'] = location.origin || 'https://teachany.app';
-        headers['X-OpenRouter-Title'] = (document.title || 'TeachAny').slice(0, 100);
+        // ⚠️ HTTP header 值必须是 ISO-8859-1 (ASCII)，document.title 含中文会报错
+        // 用 encodeURIComponent + slice 或者直接用固定英文标题
+        const rawTitle = document.title || 'TeachAny';
+        const safeTitle = /[^\x00-\xff]/.test(rawTitle) ? 'TeachAny Course' : rawTitle.slice(0, 100);
+        headers['X-OpenRouter-Title'] = safeTitle;
         // 兼容旧字段
-        headers['X-Title'] = headers['X-OpenRouter-Title'];
+        headers['X-Title'] = safeTitle;
       } catch (e) { /* ignore */ }
     }
     // 设置 30 秒整体超时 + 每次 10 秒无数据超时
