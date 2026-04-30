@@ -758,12 +758,20 @@
   // ───────────────────────────────────────────────────────
   async function callChatAPI(cfg, messages, onDelta) {
     const endpoint = cfg.baseUrl.replace(/\/$/, '') + '/chat/completions';
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + cfg.apiKey
+    };
+    // OpenRouter 要求附带 HTTP-Referer 和 X-Title 才能稳定路由免费模型
+    if (cfg.baseUrl.includes('openrouter.ai')) {
+      try {
+        headers['HTTP-Referer'] = location.origin || 'https://teachany.app';
+        headers['X-Title'] = (document.title || 'TeachAny').slice(0, 100);
+      } catch (e) { /* ignore */ }
+    }
     const resp = await fetch(endpoint, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + cfg.apiKey
-      },
+      headers: headers,
       body: JSON.stringify({
         model: cfg.model,
         messages,
@@ -783,7 +791,7 @@
     }
 
     const ct = resp.headers.get('content-type') || '';
-    if (ct.includes('text/event-stream') || ct.includes('stream')) {
+    if ((ct.includes('text/event-stream') || ct.includes('stream')) && resp.body && typeof resp.body.getReader === 'function') {
       const reader = resp.body.getReader();
       const decoder = new TextDecoder('utf-8');
       let buffer = '';
@@ -800,7 +808,7 @@
           if (data === '[DONE]') return;
           try {
             const json = JSON.parse(data);
-            const choice = json.choices?.[0] || {};
+            const choice = (json && json.choices && json.choices[0]) || {};
             const delta = choice.delta || {};
             // Hy3 模型内容可能在 content 或 reasoning 字段
             const text = (delta.content || '') + (delta.reasoning || '');
@@ -809,11 +817,20 @@
         }
       }
     } else {
+      // 非流式 fallback：OpenRouter 有时会返回普通 JSON
       const json = await resp.json();
-      const choice = json.choices?.[0] || {};
+      const choice = (json && json.choices && json.choices[0]) || {};
       const msg = choice.message || {};
       const full = (msg.content || '') + (msg.reasoning || '');
-      if (full) onDelta(full);
+      if (full) {
+        onDelta(full);
+      } else {
+        // 没有任何内容返回时给一个友好的提示
+        const err = new Error(getLang() === 'en'
+          ? 'Empty response from model. Try a different model or check your provider quota.'
+          : '模型返回空内容。可能是免费模型用量超限或上游异常，请换个模型试试。');
+        throw err;
+      }
     }
   }
 
@@ -977,8 +994,10 @@
         history.push({ role: 'user', content: text });
         history.push({ role: 'assistant', content: aiBubble.textContent || '' });
       } catch (err) {
+        console.error('[TeachAnyTutor] Request failed:', err);
         aiBubble.remove();
-        renderBubble(messagesEl, 'ai', '😥 ' + (err.message || (lang === 'en' ? 'Request failed' : '请求失败')) + t('errorHint'), { error: true });
+        const errMsg = err && err.message ? err.message : (lang === 'en' ? 'Request failed' : '请求失败');
+        renderBubble(messagesEl, 'ai', '😥 ' + errMsg + t('errorHint'), { error: true });
       } finally {
         isPending = false;
         sendBtn.disabled = false;
