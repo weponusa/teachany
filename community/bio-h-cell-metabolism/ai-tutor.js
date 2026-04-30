@@ -779,7 +779,12 @@
         messages,
         stream: true,
         temperature: 0.7,
-        max_tokens: 600
+        max_tokens: 600,
+        // 推理模型（Hy3、DeepSeek-R1、Qwen-Thinking 等）默认会输出大段思考过程
+        // reasoning.max_tokens=1 强制压缩推理预算到 1 token，几乎跳过思考直接输出答案
+        // 普通模型不认识此参数会自动忽略，不影响兼容性
+        // 注：实测 OpenRouter 不要用 reasoning.exclude=true（与 stream=true 同用时会返回空）
+        reasoning: { max_tokens: 1 }
       })
     });
 
@@ -797,7 +802,8 @@
       const reader = resp.body.getReader();
       const decoder = new TextDecoder('utf-8');
       let buffer = '';
-      let gotAnyText = false;
+      let gotContent = false;       // 是否收到过正式 content
+      let reasoningBuffer = '';     // 暂存 reasoning，仅作兜底
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
@@ -814,7 +820,11 @@
           if (!trimmed.startsWith('data:')) continue;
           const data = trimmed.replace(/^data:\s*/, '');
           // 4) 终止标记
-          if (data === '[DONE]') return;
+          if (data === '[DONE]') {
+            // 没收到任何 content 但收到了 reasoning（说明 exclude 没生效），用 reasoning 兜底
+            if (!gotContent && reasoningBuffer) onDelta(reasoningBuffer);
+            return;
+          }
           // 5) 解析 JSON
           let json;
           try {
@@ -828,17 +838,24 @@
             const msg = (json.error && json.error.message) || JSON.stringify(json.error);
             throw new Error((getLang() === 'en' ? 'Stream error: ' : '流式错误：') + msg);
           }
-          // 7) 提取增量文本（兼容 content 和 reasoning 两种字段）
+          // 7) 提取增量：只显示 content；reasoning 只静默累积作为兜底
           const choice = (json && json.choices && json.choices[0]) || {};
           const delta = choice.delta || {};
-          const text = (delta.content || '') + (delta.reasoning || '');
-          if (text) {
-            gotAnyText = true;
-            onDelta(text);
+          if (delta.content) {
+            gotContent = true;
+            onDelta(delta.content);
+          } else if (delta.reasoning && !gotContent) {
+            // 仅在没拿到正式 content 时缓存推理，作为兜底
+            reasoningBuffer += delta.reasoning;
           }
         }
       }
-      if (!gotAnyText) {
+      // 流结束但没碰到 [DONE]：同上兜底
+      if (!gotContent && reasoningBuffer) {
+        onDelta(reasoningBuffer);
+        return;
+      }
+      if (!gotContent) {
         throw new Error(getLang() === 'en'
           ? 'Empty response from model. Try a different model or check provider quota.'
           : '模型返回空内容。可能是免费模型上游异常或用量超限，请换个模型试试。');
@@ -852,7 +869,8 @@
       }
       const choice = (json && json.choices && json.choices[0]) || {};
       const msg = choice.message || {};
-      const full = (msg.content || '') + (msg.reasoning || '');
+      // 优先 content；为空时用 reasoning 兜底
+      const full = msg.content || msg.reasoning || '';
       if (full) {
         onDelta(full);
       } else {
