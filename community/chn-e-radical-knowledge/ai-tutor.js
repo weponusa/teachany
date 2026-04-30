@@ -22,6 +22,9 @@
 (function () {
   'use strict';
 
+  // 版本标识 - 加载时立即打印到 console，方便排查浏览器缓存问题
+  console.log('%c[TeachAnyTutor] v7.1.5 loaded - default model: openai/gpt-oss-20b:free', 'color:#10b981;font-weight:bold;');
+
   // ───────────────────────────────────────────────────────
   // 1. 配置与默认值
   // ───────────────────────────────────────────────────────
