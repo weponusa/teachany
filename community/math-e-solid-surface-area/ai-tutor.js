@@ -762,11 +762,13 @@
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + cfg.apiKey
     };
-    // OpenRouter 要求附带 HTTP-Referer 和 X-Title 才能稳定路由免费模型
+    // OpenRouter 推荐附带 HTTP-Referer 和 X-OpenRouter-Title（用于排行榜，可选但稳定）
     if (cfg.baseUrl.includes('openrouter.ai')) {
       try {
         headers['HTTP-Referer'] = location.origin || 'https://teachany.app';
-        headers['X-Title'] = (document.title || 'TeachAny').slice(0, 100);
+        headers['X-OpenRouter-Title'] = (document.title || 'TeachAny').slice(0, 100);
+        // 兼容旧字段
+        headers['X-Title'] = headers['X-OpenRouter-Title'];
       } catch (e) { /* ignore */ }
     }
     const resp = await fetch(endpoint, {
@@ -795,6 +797,7 @@
       const reader = resp.body.getReader();
       const decoder = new TextDecoder('utf-8');
       let buffer = '';
+      let gotAnyText = false;
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
@@ -803,33 +806,59 @@
         buffer = lines.pop() || '';
         for (const line of lines) {
           const trimmed = line.trim();
-          if (!trimmed || !trimmed.startsWith('data:')) continue;
+          // 1) 空行 → 跳过
+          if (!trimmed) continue;
+          // 2) SSE 注释（OpenRouter keep-alive: ": OPENROUTER PROCESSING"）→ 跳过，不能 JSON.parse
+          if (trimmed.startsWith(':')) continue;
+          // 3) 只处理 data: 行
+          if (!trimmed.startsWith('data:')) continue;
           const data = trimmed.replace(/^data:\s*/, '');
+          // 4) 终止标记
           if (data === '[DONE]') return;
+          // 5) 解析 JSON
+          let json;
           try {
-            const json = JSON.parse(data);
-            const choice = (json && json.choices && json.choices[0]) || {};
-            const delta = choice.delta || {};
-            // Hy3 模型内容可能在 content 或 reasoning 字段
-            const text = (delta.content || '') + (delta.reasoning || '');
-            if (text) onDelta(text);
-          } catch (e) { /* ignore parse errors */ }
+            json = JSON.parse(data);
+          } catch (e) {
+            // 解析失败，跳过该行（可能是不完整数据）
+            continue;
+          }
+          // 6) mid-stream error（HTTP 200 但 chunk 含顶层 error 字段）
+          if (json && json.error) {
+            const msg = (json.error && json.error.message) || JSON.stringify(json.error);
+            throw new Error((getLang() === 'en' ? 'Stream error: ' : '流式错误：') + msg);
+          }
+          // 7) 提取增量文本（兼容 content 和 reasoning 两种字段）
+          const choice = (json && json.choices && json.choices[0]) || {};
+          const delta = choice.delta || {};
+          const text = (delta.content || '') + (delta.reasoning || '');
+          if (text) {
+            gotAnyText = true;
+            onDelta(text);
+          }
         }
+      }
+      if (!gotAnyText) {
+        throw new Error(getLang() === 'en'
+          ? 'Empty response from model. Try a different model or check provider quota.'
+          : '模型返回空内容。可能是免费模型上游异常或用量超限，请换个模型试试。');
       }
     } else {
       // 非流式 fallback：OpenRouter 有时会返回普通 JSON
       const json = await resp.json();
+      if (json && json.error) {
+        const msg = (json.error && json.error.message) || JSON.stringify(json.error);
+        throw new Error((getLang() === 'en' ? 'API error: ' : 'API 错误：') + msg);
+      }
       const choice = (json && json.choices && json.choices[0]) || {};
       const msg = choice.message || {};
       const full = (msg.content || '') + (msg.reasoning || '');
       if (full) {
         onDelta(full);
       } else {
-        // 没有任何内容返回时给一个友好的提示
-        const err = new Error(getLang() === 'en'
-          ? 'Empty response from model. Try a different model or check your provider quota.'
-          : '模型返回空内容。可能是免费模型用量超限或上游异常，请换个模型试试。');
-        throw err;
+        throw new Error(getLang() === 'en'
+          ? 'Empty response from model. Try a different model or check provider quota.'
+          : '模型返回空内容。可能是免费模型上游异常或用量超限，请换个模型试试。');
       }
     }
   }
