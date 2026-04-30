@@ -23,7 +23,7 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 | 文档 | 内容 | 何时读取 |
 |:---|:---|:---|
 | **本文（SKILL_CN.md）** | 核心规范：基线、教学设计、Phase 流程、技术实现 | 每次生成课件必读 |
-| [`RULES.md`](./RULES.md) | 51 条硬规则完整列表 | Completeness Gate 阶段按需查阅 |
+| [`RULES.md`](./RULES.md) | 56 条硬规则完整列表（含严谨度铁律 #52~#56） | Completeness Gate 阶段按需查阅 |
 | [`curriculum-standards.md`](./curriculum-standards.md) | 课标速查表（21 棵国内课标树） | Phase 0.5 知识查询阶段 |
 | [`historical-maps.md`](./historical-maps.md) | 地图资源完整规范 | 制作历史/地理课件时 |
 | [`CHANGELOG.md`](./CHANGELOG.md) | 版本变更日志（v1.0 → v7.2） | 仅需了解版本演进时 |
@@ -78,6 +78,103 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 - ❌ 用浏览器 `speechSynthesis` 代替 edge-tts → 直接 Gate 不通过
 
 > 📌 **一句话记住**：语音 + 动画 + 互动 + 图像，四项齐全才是 TeachAny 课件。缺一不是 TeachAny，是普通网页。
+
+---
+
+### 0.4 严谨度铁律（Rigor Discipline — 五条红线）⛔ 必读
+
+> ⛔ **课件开发是工程任务，不是写作任务**。每一次"差不多"、"应该可以"、"我猜是"，最后都会变成学生看到的 bug。以下五条铁律适用于**所有需要执行/验证/修复的环节**（生成 HTML、调 API、跑 Remotion、生图、Edge-TTS、批量改课件、git 推送）。**违反任一条触发 Gate 不通过，必须返工。**
+
+#### 红线一·闭环验证（声称完成必须贴执行输出）
+
+声明"已完成"、"已修复"、"应该没问题"之前，**必须实际跑命令并贴出执行输出作为证据**。课件开发场景下的强制证据清单：
+
+| 操作 | 必须贴的证据 |
+|:---|:---|
+| 生成 HTML | `head -50 output.html` 输出 + 浏览器打开成功的 console 截图 / `puppeteer` 截图 |
+| Remotion 渲染 mp4 | `ffprobe -show_streams assets/video/*.mp4` 显示 `codec_type=video` 且 `codec_type=audio` |
+| Edge-TTS 生成 | `ls -la tts/*.mp3` + `file tts/*.mp3` 显示 MPEG audio + `wc -l tts/*.srt` ≥ 总段落数 |
+| image_gen 生成 | `ls -la assets/illustrations/*.png` + 至少 1 张人工 review 通过的截图 |
+| 批量改 N 个课件 | `find ... -exec md5 -q {} \\; \| sort -u \| wc -l` = 1（确认 N 个文件 hash 一致）|
+| 修 ai-tutor.js / 互动逻辑 | curl 实测 API + Node 模拟流式解析 + 浏览器 Console 实测 |
+| 推送到 Git | `git log -1` + `git rev-parse HEAD` + `git ls-remote origin main` 三个 hash 一致 |
+
+**没有输出的"完成"叫自嗨，不是交付。** 用户接手的第一件事就是发现你撒谎。
+
+#### 红线二·事实驱动（归因前必须用工具验证）
+
+说出以下任何一类话之前，**必须先用工具验证**：
+
+| 禁止说出口的猜测 | 必须先做的验证 |
+|:---|:---|
+| "可能是浏览器缓存问题" | 让用户贴 Console 第一行版本号 / 用 curl 模拟浏览器 fetch |
+| "API key 应该过期了" | `curl -H "Authorization: Bearer ..." {endpoint}` 实测 |
+| "这个模型应该不支持流式" | curl 加 `-N` 实测 SSE 输出 |
+| "字体应该装上了" | `fc-list \| grep <fontname>` 验证 |
+| "ffmpeg 应该可以用" | `ffmpeg -version` 验证 |
+| "这个 prompt 应该能让模型理解" | 实际跑一次 image_gen / chat 看结果 |
+| "课件应该可以在手机上打开" | `puppeteer` 设 viewport 375×667 截图 |
+| "改完所有课件了" | 用 `grep -L` 找漏改的 |
+
+未经验证的归因 = **甩锅**。猜的越多，用户来回的次数越多，浪费的时间越多。**先工具，再开口。**
+
+#### 红线三·穷尽一切（说"无法解决"前必须走完五步）
+
+声称"我无法解决"、"建议你手动处理"、"这超出能力范围"、"已尝试所有方法"之前，**必须走完通用方法论 5 步**：
+
+1. **闻味道**：列出已试过的所有方案，看是否在原地打转（同一思路反复改参数 = 没换方案）
+2. **揪头发**：
+   - 用 web_search 搜官方文档原文（不是猜文档应该怎么写）
+   - read_file 读源码上下文 50 行（不是只看报错那一行）
+   - 反转假设（一直认为"是 A 的问题"→ 试着假设"不是 A"）
+3. **照镜子**：是否在重复？是否该搜文档却凭记忆？是否忽略了最简单的可能（如重启服务、清缓存）？
+4. **执行本质不同的新方案**（详见红线四）
+5. **复盘**：检查同类问题（详见红线五）
+
+**步骤 1-4 完成前不要向用户提问**——除非需求本身模糊，那先澄清。
+
+#### 红线四·失败 2 次必换"本质不同"的方案
+
+**反复改同一处的参数 = 原地打转**，不是"尝试新方案"。课件开发的典型反例：
+
+| 原地打转（错） | 本质不同（对） |
+|:---|:---|
+| Remotion 渲染失败 → 反复改 `fps` / `durationInFrames` | 改用 `<Sequence>` 重构时间轴 / 改用 `headless` 渲染 / 拆成多个短 Composition |
+| 字体不显示 → 反复改 CSS `font-family` 写法 | 用 `@font-face` 显式注册 / 改用 base64 内嵌 / 验证 fc-list / 换字体路径 |
+| TTS 朗读断句不对 → 反复改 voice 参数 | 在文本里加 SSML `<break>` 标签 / 拆成多段录 / 换 voice |
+| API 报 400 → 反复改 prompt 措辞 | 验证 model id / 检查请求 body schema / 看 official 错误码文档 |
+| ECharts 地图错位 → 反复调 `geo.zoom`/`center` | 换实现方案：从 `geo` 组件改用 `Leaflet imageOverlay` |
+| OpenRouter 返回空 → 反复改 reasoning 参数 | 直接换非推理模型 / 换非流式 / 换服务商 |
+
+**第 2 次失败 = 立即停下，换思路；第 3 次还失败 = 必须读官方源码或文档原文。**
+
+#### 红线五·修一个 bug 顺手扫同类问题（一类问题端到端解决）
+
+发现并修复 X 后，**必须立即扫描同类问题**，一次性全部修掉。课件开发的标准动作：
+
+| 发现 | 必须顺手扫的同类 |
+|:---|:---|
+| 一个课件的 ai-tutor.js 有 bug | 313 个课件全部 `find ... -exec cp` 同步 + md5 验证一致 |
+| 一个课件的中文标题导致 fetch header 报错 | 检查所有 header 字段（Authorization / Referer / Title）+ Base URL / API Key 是否同样含中文 |
+| 一个课件的 Remotion mp4 是哑片 | 用 `ffprobe` 批量扫所有 `assets/video/*.mp4`，找出全部哑片 |
+| 一个课件的 image alt 缺失 | grep 全部 `<img>` 找无 alt 的 |
+| 一个课件的 SSE 流式解析有问题 | 同步检查非流式 fallback 分支 + 错误处理分支 |
+| 一处发现 localStorage 坏数据 | 加自动迁移逻辑（启动检测 + 读取清洗 + 保存拒绝）三层防御 |
+| 一段 Edge-TTS 朗读速度不对 | 全部 mp3 用 `ffprobe -show_format` 检查时长是否合理 |
+
+**"修完一个就交付" = 留坑给下一次。** P8 格局是"一个问题进来，一类问题出去"。
+
+#### 适用范围声明
+
+| 任务类型 | 是否强制执行五条铁律 |
+|:---|:---:|
+| Phase 3 生成 HTML / Remotion / TTS / 生图 | ✅ 全部强制 |
+| 课件批改 / API 联调 / 部署 / 推送 | ✅ 全部强制 |
+| 修 bug / 调 ai-tutor / 配置文件改写 | ✅ 全部强制 |
+| Phase 1 教学设计文档创作 | ⚠️ 仅强制红线一（验证教学设计是否真的覆盖了用户提的知识点） |
+| Phase 0 需求确认 | ⚠️ 仅强制红线二（不要猜用户意图，问清楚再开始） |
+
+> 📌 **一句话记住**：跑命令贴输出 / 用工具不靠猜 / 走完五步再放弃 / 第二次失败必换思路 / 修完一个扫一片。课件是给真实学生看的，每一处偷工都会变成课堂事故。
 
 ---
 
@@ -4038,11 +4135,12 @@ L3 已默认执行，无需建议。以下规则仅适用于 L2 教学动画。�
 
 ---
 
-## 十三、51 条硬规则（违反任何一条 = Completeness Gate 不通过）
+## 十三、56 条硬规则（违反任何一条 = Completeness Gate 不通过）
 
-> 📋 完整的 51 条硬规则列表已拆分到独立文档，详见 [`RULES.md`](./RULES.md)。
+> 📋 完整的 56 条硬规则列表已拆分到独立文档，详见 [`RULES.md`](./RULES.md)。
 >
 > Completeness Gate 阶段必须逐条检查，任何一条违反即判定不通过。
+> v6.2 新增 #52~#56 严谨度铁律（来自 Section 0.4），是对所有"执行/验证/修复"环节的硬性约束。
 
 ## 十四、理论基础
 
