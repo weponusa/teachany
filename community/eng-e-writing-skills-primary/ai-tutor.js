@@ -263,6 +263,11 @@
       if (!raw) return null;
       const parsed = JSON.parse(raw);
       if (!parsed.apiKey) return null;
+      // v7.1：自检 model 字段合法性，防止旧版本把 PRESETS 的 name（带空格/括号）误存为 model
+      if (parsed.model && /[\s()（）：，,]/.test(parsed.model)) {
+        console.warn('[TeachAnyTutor] Detected invalid model id in localStorage, falling back to DEFAULTS:', parsed.model);
+        parsed.model = DEFAULTS.model;
+      }
       return Object.assign({}, DEFAULTS, parsed);
     } catch (e) {
       return null;
@@ -275,10 +280,16 @@
   }
 
   function saveUserConfig(cfg) {
+    // v7.1：保存前再校验一次 model 字段合法性
+    let modelToSave = (cfg.model || DEFAULTS.model || '').trim();
+    if (/[\s()（）：，,]/.test(modelToSave)) {
+      console.warn('[TeachAnyTutor] Refusing to save invalid model id:', modelToSave);
+      modelToSave = DEFAULTS.model;
+    }
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       baseUrl: cfg.baseUrl || DEFAULTS.baseUrl,
       apiKey: cfg.apiKey || DEFAULTS.apiKey,
-      model: cfg.model || DEFAULTS.model
+      model: modelToSave
     }));
   }
 
@@ -810,6 +821,19 @@
   // 8. 主控制器
   // ───────────────────────────────────────────────────────
   function boot() {
+    // v7.1：启动时自检 localStorage，如果发现坏的 model 字段（含空格/括号），自动迁移
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.model && /[\s()（）：，,]/.test(parsed.model)) {
+          console.warn('[TeachAnyTutor v7.1] Migrating broken model id:', parsed.model, '→', DEFAULTS.model);
+          parsed.model = DEFAULTS.model;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+        }
+      }
+    } catch (e) { /* ignore */ }
+
     const meta = readCourseMeta();
     const fab = createFab();
     let panel = null;
