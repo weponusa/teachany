@@ -26,16 +26,17 @@
   const HISTORY_KEY = 'teachany_tutor_history';
   const LANG_KEY = 'teachany_tutor_lang';
 
-  // 默认配置：OpenRouter + Tencent Hy3 Preview（开箱即用）
+  // 默认配置：OpenRouter + Qwen3 Coder（开箱即用，免费最强）
   const DEFAULTS = {
     baseUrl: 'https://openrouter.ai/api/v1',
     apiKey: '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',
-    model: 'tencent/hy3-preview:free'
+    model: 'qwen/qwen3-coder:free'
   };
 
   // 服务商预设（配置弹窗一键填表）
   const PRESETS = [
-    { id: 'openrouter-hy3', name: '🌐 OpenRouter · Tencent Hy3（默认免费）', baseUrl: 'https://openrouter.ai/api/v1', model: 'tencent/hy3-preview:free' },
+    { id: 'openrouter-free', name: '🌐 OpenRouter · Qwen3 Coder（默认免费最强）', baseUrl: 'https://openrouter.ai/api/v1', model: 'qwen/qwen3-coder:free' },
+    { id: 'openrouter-hy3', name: '🌐 OpenRouter · Tencent Hy3（免费）', baseUrl: 'https://openrouter.ai/api/v1', model: 'qwen/qwen3-coder:free' },
     { id: 'deepseek',   name: '🇨🇳 DeepSeek（推荐 · 便宜稳定）', baseUrl: 'https://api.deepseek.com/v1',     model: 'deepseek-chat' },
     { id: 'moonshot',   name: '🇨🇳 Moonshot Kimi（中文好）',     baseUrl: 'https://api.moonshot.cn/v1',      model: 'moonshot-v1-8k' },
     { id: 'openrouter', name: '🌐 OpenRouter（多模型聚合）',     baseUrl: 'https://openrouter.ai/api/v1',    model: 'deepseek/deepseek-chat' },
