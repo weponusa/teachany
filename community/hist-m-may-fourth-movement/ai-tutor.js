@@ -40,7 +40,7 @@
     { id: 'moonshot',   name: '🇨🇳 Moonshot Kimi（中文好）',     baseUrl: 'https://api.moonshot.cn/v1',      model: 'moonshot-v1-8k' },
     { id: 'openrouter', name: '🌐 OpenRouter（多模型聚合）',     baseUrl: 'https://openrouter.ai/api/v1',    model: 'deepseek/deepseek-chat' },
     { id: 'openai',     name: '🌐 OpenAI（官方）',                baseUrl: 'https://api.openai.com/v1',       model: 'gpt-4o-mini' },
-    { id: 'paratera',   name: '🇨🇳 并行超算（机构）',             baseUrl: 'https://llmapi.paratera.com/v1',  model: 'DeepSeek-V3.2' },
+    { id: 'paratera',   name: '🇨🇳 并行超算 · Hy3 Preview',      baseUrl: 'https://llmapi.paratera.com/v1',  model: 'hy3-preview' },
     { id: 'custom',     name: '⚙️  自定义（任何 OpenAI 兼容 API）', baseUrl: '', model: '' }
   ];
 

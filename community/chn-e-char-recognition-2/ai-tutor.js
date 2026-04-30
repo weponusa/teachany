@@ -40,7 +40,7 @@
     { id: 'moonshot',   name: '🇨🇳 Moonshot Kimi（中文好）',     baseUrl: 'https://api.moonshot.cn/v1',      model: 'moonshot-v1-8k' },
     { id: 'openrouter', name: '🌐 OpenRouter（多模型聚合）',     baseUrl: 'https://openrouter.ai/api/v1',    model: 'deepseek/deepseek-chat' },
     { id: 'openai',     name: '🌐 OpenAI（官方）',                baseUrl: 'https://api.openai.com/v1',       model: 'gpt-4o-mini' },
-    { id: 'paratera',   name: '🇨🇳 并行超算（机构）',             baseUrl: 'https://llmapi.paratera.com/v1',  model: 'DeepSeek-V3.2' },
+    { id: 'paratera',   name: '🇨🇳 并行超算 · Hy3 Preview',      baseUrl: 'https://llmapi.paratera.com/v1',  model: 'hy3-preview' },
     { id: 'custom',     name: '⚙️  自定义（任何 OpenAI 兼容 API）', baseUrl: '', model: '' }
   ];
 
@@ -459,14 +459,19 @@ Rules:
           if (data === '[DONE]') return;
           try {
             const json = JSON.parse(data);
-            const delta = json.choices?.[0]?.delta?.content || '';
-            if (delta) onDelta(delta);
+            const choice = json.choices?.[0] || {};
+            const delta = choice.delta || {};
+            // Hy3 模型内容可能在 content 或 reasoning 字段
+            const text = (delta.content || '') + (delta.reasoning || '');
+            if (text) onDelta(text);
           } catch (e) { /* ignore parse errors */ }
         }
       }
     } else {
       const json = await resp.json();
-      const full = json.choices?.[0]?.message?.content || '';
+      const choice = json.choices?.[0] || {};
+      const msg = choice.message || {};
+      const full = (msg.content || '') + (msg.reasoning || '');
       if (full) onDelta(full);
     }
   }
