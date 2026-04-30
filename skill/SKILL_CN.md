@@ -183,28 +183,110 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 
 ---
 
-### 0.5 Hero 图基线详解（Hero Cover Image — MUST HAVE）⛔ 必读
+### 0.5 Hero 图基线详解（Hero Cover Image — 先查后生）⛔ 必读
 
 > ⛔ **每个 TeachAny 课件必须有 1 张主题专属 hero 封面图**——这是 Gallery 卡片缩略图、课件首屏视觉锚点、用户决定"是否打开学习"的第一眼信号。无 Hero 图 = 无品牌识别 = Gate 直接不通过。
+>
+> 🔑 **核心原则：先查后生**。优先复用已有 hero 资源，找不到再调 image_gen 生成新图。这样省 token、保视觉一致性、提升交付速度。
 
-#### 文件规范
+#### Hero 获取四层降级链（按顺序尝试，命中即停）
 
-| 项 | 标准 |
-|:---|:---|
-| **文件路径** | `<课件目录>/assets/<course-id>-hero.png`（推荐）或 `assets/hero-<topic>.png`（兼容） |
-| **分辨率** | ≥ 1280×720（16:9 横版）；理想 1920×1080；`image_gen` 默认 size=`1024x1024` 时改为 `1024x1536` 横切上半部分 |
-| **格式** | `.png`（首选）或 `.jpg`（文件 > 1MB 时）|
-| **文件大小** | < 2 MB（Gallery 加载性能）|
-| **唯一性** | ⛔ **每张 hero 必须主题专属，禁止多课件复用同一张** |
+| 层级 | 资源池 | 命中后动作 | 命中率参考 |
+|:---|:---|:---|:---:|
+| **L1** | 课件目录本地 `assets/*hero*` | 已存在直接用，无需任何操作 | 老课件 ≈99% |
+| **L2** | `teachany-images/<subject>/<topic>-hero.png`（独立 git 仓库 / CDN） | 复制到课件 `assets/` 或用 jsDelivr CDN 链接 | 主流学科 ≈40% |
+| **L3** | `hero-review/<subject>_grade<N>_<course-id>.png`（精选评审版） | 复制到课件 `assets/<course-id>-hero.png` | 精选课件 ≈10% |
+| **L4** | `image_gen` 调用（按学段差异化 prompt 模板） | 仅在 L1-L3 全部未命中时执行 | 新课件 ≈50% |
 
-#### Image_gen Prompt 模板（按学段差异化）
+#### 自动化查找（必跑）
+
+Phase 3 末（HTML 完成后、Completeness Gate 之前）必须执行：
+
+```bash
+# 自动按四层降级链查找/生成 hero
+python3 scripts/find-hero.py <课件目录> --subject <学科> --grade <年级>
+
+# 输出示例：
+#   ✅ L1 命中: assets/may-fourth-movement-hero.png（已存在）
+#   ✅ L2 命中: 从 teachany-images/history/ 复制 ww2-hero.png
+#   ✅ L3 命中: 从 hero-review/ 复制评审版
+#   ⚠️  L1-L3 未命中，进入 L4: 调用 image_gen 生成新图
+```
+
+#### L1：本地优先（已存在直接用）
+
+检查 `<课件目录>/assets/` 下是否已有任何 `*hero*.{png,jpg,webp,svg}` 文件：
+
+```bash
+find <课件目录>/assets/ -maxdepth 2 -type f -iname "*hero*" \
+  \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.webp" -o -iname "*.svg" \)
+```
+
+**命中** → 直接使用，确保 HTML 已正确引用即可，**不重新生成**。
+
+#### L2：teachany-images 独立图床（学科分类）
+
+仓库地址：`git@github.com:weponusa/teachany-images.git`
+
+按学科查找：
+
+```bash
+# 在线查找（无需 clone）
+curl -sI "https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/<subject>/<topic>-hero.png" | head -1
+# HTTP/2 200 → 命中
+
+# 本地查找（已 clone 在 ~/CodeBuddy/一次函数/teachany-images/）
+find ~/CodeBuddy/一次函数/teachany-images/<subject>/ -iname "*<keyword>*hero*"
+```
+
+**学科目录约定**：`biology` / `chinese` / `english` / `history` / `math` / `physics` / `science`
+
+**主题关键词映射**：从课件 `node_id` 或 `<title>` 提取核心词，模糊匹配。例如：
+- 课件 `bio-h-cell-membrane` → 关键词 `cell-membrane` → 命中 `biology/cell-membrane-hero.png`
+- 课件 `hist-m-ww2` → 关键词 `ww2` 或 `world-war-2` → 命中 `history/ww2-hero.png`
+- 课件 `math-m-quadratic-function` → 关键词 `quadratic` → 命中 `math/quadratic-function-hero.png`
+
+**命中后的两种使用方式**：
+- **A. 复制到本地**（推荐，无 CDN 依赖）：`cp ~/CodeBuddy/一次函数/teachany-images/<sub>/<topic>-hero.png <课件目录>/assets/`
+- **B. CDN 引用**（节省仓库体积）：HTML 中 `<img src="https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/<sub>/<topic>-hero.png">`
+
+#### L3：hero-review 精选评审版
+
+路径：`~/CodeBuddy/一次函数/hero-review/`
+
+命名模式：`<subject>_grade<N>_<course-id>.png`
+
+按课件 ID 精确匹配：
+```bash
+ls ~/CodeBuddy/一次函数/hero-review/ | grep "<course-id>"
+```
+
+**命中** → 复制到 `<课件目录>/assets/<course-id>-hero.png`
+
+#### L4：image_gen 兜底生成（按学段差异化）
 
 | 学段 | 视觉风格 | Prompt 模板 |
 |:---|:---|:---|
 | **小学** (G1-6) | 温暖卡通插画，鲜艳明快色彩 | `<主题中文>, warm cartoon illustration for elementary school students, bright vivid colors, friendly characters, simple shapes, educational poster style, 16:9 horizontal composition` |
 | **初中** (G7-9) | 半写实插画 + 信息图元素 | `<主题中文>, semi-realistic illustration with infographic elements, clear visual hierarchy, educational textbook style for middle school, 16:9 horizontal banner` |
 | **高中** (G10-12) | 学术几何插画，深色专业风 | `<主题中文>, academic geometric illustration, professional dark blue palette, conceptual diagram aesthetic, suitable for high school textbook cover, 16:9 horizontal layout` |
-| **跨学段** | 主题适配 | 根据课件目标学段选择上述对应模板 |
+
+**生成后必须**：
+1. 存为 `<课件目录>/assets/<course-id>-hero.png`
+2. **同步贡献回 teachany-images 仓库**：`cp <课件目录>/assets/<course-id>-hero.png ~/CodeBuddy/一次函数/teachany-images/<subject>/<topic>-hero.png`，下次同主题课件可直接 L2 命中
+3. 更新 teachany-images 仓库的 README index（可选）
+
+**失败重试策略**：image_gen 失败 → 重试 1（换 prompt 风格）→ 重试 2（简化主题词）→ 重试 3（用通用学科 prompt）；3 次都失败才允许在 Generation Gate 中标注"Hero 生成失败，需用户书面豁免"
+
+#### 文件规范（无论哪一层来源）
+
+| 项 | 标准 |
+|:---|:---|
+| **文件路径** | `<课件目录>/assets/<course-id>-hero.png`（推荐）或 `assets/hero-<topic>.png`（兼容） |
+| **分辨率** | ≥ 1280×720（16:9 横版）；理想 1920×1080；`image_gen` 默认 size=`1024x1024` 时改为 `1024x1536` 横切上半部分 |
+| **格式** | `.png`（首选）/ `.jpg`（文件 > 1MB 时）/ `.webp`（极致压缩）|
+| **文件大小** | < 2 MB（Gallery 加载性能）；> 10 KB（防占位符）|
+| **唯一性** | ⛔ **每张 hero 必须主题专属**——但 L2/L3 命中的复用是合理的（同一主题不同版本课件可共用）|
 
 #### HTML 引用标准（两种模式）
 
@@ -232,14 +314,29 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 </section>
 ```
 
-#### Phase 3 制作流程
+**模式 C：CDN 引用（L2 命中且无需本地文件时）**
+```html
+<img class="hero-cover-img"
+     src="https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/<subject>/<topic>-hero.png"
+     alt="《<课件标题>》课件封面">
+```
 
-1. **HTML 生成完成时**：自动从 `<title>` 提取课件标题、学科、学段
-2. **构造 image_gen prompt**：用上面的学段模板 + 课件主题关键词
-3. **调用 image_gen**：output_dir=`<课件目录>/assets/`，filename=`<course-id>-hero.png`
-4. **验证生成**：`ls -la assets/<course-id>-hero.png` 确认存在 + size > 50 KB
-5. **注入 HTML**：在 Hero section 的 `<img>` 或 `style="background-image"` 中引用
-6. **失败重试**：image_gen 失败 → 重试 1（换 prompt 风格）→ 重试 2（简化主题词）→ 重试 3（用通用学科 prompt）；3 次都失败才允许在 Generation Gate 中标注"Hero 生成失败，需用户书面豁免"
+#### Phase 3 完整流程（必跑）
+
+```
+1. HTML 生成完成 → 提取课件元信息（course-id, subject, grade, title）
+2. 调用 python3 scripts/find-hero.py <课件目录>
+   → L1 检查本地 assets/ ─┬─ 命中：完成 ✅
+                          └─ 未命中：进入 L2
+   → L2 查 teachany-images ─┬─ 命中：复制到本地 ✅
+                            └─ 未命中：进入 L3
+   → L3 查 hero-review ─┬─ 命中：复制到本地 ✅
+                        └─ 未命中：进入 L4
+   → L4 调用 image_gen ─┬─ 成功：保存 + 回写 teachany-images ✅
+                        └─ 失败 3 次：Gate 声明豁免
+3. 验证 HTML 引用了正确的 hero 路径
+4. 跑 python3 scripts/check-hero.py <课件目录> 校验通过
+```
 
 #### 校验脚本（必须通过）
 
@@ -252,8 +349,6 @@ python3 scripts/check-hero.py community/
 
 # 输出预期：
 #   ✅ PASS: 314 courseware checked, all have valid hero images
-# 任一失败：
-#   ❌ FAIL: <课件目录> - reason=<missing_file|missing_html_ref|broken_path|duplicate_hero>
 ```
 
 #### 与硬规则 #57 的关系
