@@ -164,6 +164,32 @@ def check_baseline_quality(course_dir, html_text):
         warns.append(('warn',
             f'{course_dir.name}: HTML 内锚点跳转 {anchors} 个（B-6 推荐 ≥3 段间跳转），课件应可前后翻页'))
 
+    # 7. Hero 图基线（v6.3 新增 - 硬规则 #57）
+    hero_file_pattern = re.compile(r'.*hero.*\.(png|jpg|jpeg|webp|svg)$', re.IGNORECASE)
+    hero_ref_pattern = re.compile(
+        r'''(?:src\s*=\s*['"]|url\(\s*['"]?)([^'")\s]*hero[^'")\s]*\.(?:png|jpg|jpeg|webp|svg))''',
+        re.IGNORECASE
+    )
+    hero_files = [f for f in course_dir.rglob('*') if f.is_file() and hero_file_pattern.match(f.name)]
+    hero_refs = hero_ref_pattern.findall(html_text)
+    if not hero_files:
+        errors.append(('error',
+            f'{course_dir.name}: 缺 hero 封面图（assets/ 下无任何 *hero*.png/jpg/webp）— 硬规则 #57 / SKILL_CN Section 0.5'))
+    if not hero_refs:
+        errors.append(('error',
+            f'{course_dir.name}: HTML 未引用 hero 图（Hero section 必须有 <img class="hero-cover-img" src="./assets/...-hero.png">）— 硬规则 #57'))
+    if hero_refs and hero_files:
+        hero_filenames = {f.name for f in hero_files}
+        broken = []
+        for ref in hero_refs:
+            if re.match(r'^https?://', ref, re.IGNORECASE):
+                continue
+            if Path(ref).name not in hero_filenames:
+                broken.append(ref)
+        if broken:
+            errors.append(('error',
+                f'{course_dir.name}: HTML 引用了 {len(broken)} 个不存在的 hero 路径 → broken image 404 — 硬规则 #57'))
+
     return errors + warns
 
 
