@@ -459,14 +459,19 @@ Rules:
           if (data === '[DONE]') return;
           try {
             const json = JSON.parse(data);
-            const delta = json.choices?.[0]?.delta?.content || '';
-            if (delta) onDelta(delta);
+            const choice = json.choices?.[0] || {};
+            const delta = choice.delta || {};
+            // Hy3 模型内容可能在 content 或 reasoning 字段
+            const text = (delta.content || '') + (delta.reasoning || '');
+            if (text) onDelta(text);
           } catch (e) { /* ignore parse errors */ }
         }
       }
     } else {
       const json = await resp.json();
-      const full = json.choices?.[0]?.message?.content || '';
+      const choice = json.choices?.[0] || {};
+      const msg = choice.message || {};
+      const full = (msg.content || '') + (msg.reasoning || '');
       if (full) onDelta(full);
     }
   }
