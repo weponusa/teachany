@@ -1,15 +1,18 @@
 /*!
- * TeachAny AI 学伴（v7.0）
+ * TeachAny AI 学伴（v7.1）
  *
  * 特性：
  *   - 独立模块，不依赖特定课件
- *   - 默认预填 OpenRouter + Tencent Hy3 Preview（开箱即用，无需配置）
+ *   - 默认不预填 Key（避免共享 key 被风控封禁），但服务商 + 模型预设全部配好
+ *   - 配置弹窗：服务商一键切换 → 模型下拉选择（每个服务商列出推荐模型 + 自定义）
+ *   - 每个服务商显示 Key 申请链接，引导用户用自己的 Key
+ *   - 没有 Key 时点发送会自动弹出配置框，填完 Key 自动续发消息
  *   - API 配置可动态替换（localStorage 或开发者接口）
  *   - 中英文界面一键切换（localStorage 持久化）
  *   - OpenAI 兼容 API（baseUrl + apiKey + model）
- *   - 支持流式（SSE）答复
+ *   - 支持流式（SSE）答复，兼容 reasoning 字段
  *   - 自动从 IntersectionObserver 或 URL hash 抓取当前 section 作为上下文
- *   - 答复难度按 grade 分级（小学 2-3 句 / 初中 3-5 句 / 高中 5-8 句）
+ *   - System Prompt 含学段/学科/课标/知识难度边界，按学段定制语气和长度
  *
  * 安全：
  *   - 不发送任何遥测数据
@@ -26,22 +29,135 @@
   const HISTORY_KEY = 'teachany_tutor_history';
   const LANG_KEY = 'teachany_tutor_lang';
 
-  // 默认配置：OpenRouter + Tencent Hy3 Preview（开箱即用）
+  // 默认配置：OpenRouter + Tencent Hy3 Preview（置顶推荐 · 免费）
+  // ⚠️ apiKey 留空，强制每个用户填自己的 Key（避免共享 key 被 OpenRouter 风控封禁）
   const DEFAULTS = {
     baseUrl: 'https://openrouter.ai/api/v1',
-    apiKey: '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',
+    apiKey: '',
     model: 'tencent/hy3-preview:free'
   };
 
   // 服务商预设（配置弹窗一键填表）
+  // 每个预设包含 baseUrl + 推荐模型 + 该服务商的可选模型列表
   const PRESETS = [
-    { id: 'openrouter-hy3', name: '🌐 OpenRouter · Tencent Hy3（默认免费）', baseUrl: 'https://openrouter.ai/api/v1', model: 'tencent/hy3-preview:free' },
-    { id: 'deepseek',   name: '🇨🇳 DeepSeek（推荐 · 便宜稳定）', baseUrl: 'https://api.deepseek.com/v1',     model: 'deepseek-chat' },
-    { id: 'moonshot',   name: '🇨🇳 Moonshot Kimi（中文好）',     baseUrl: 'https://api.moonshot.cn/v1',      model: 'moonshot-v1-8k' },
-    { id: 'openrouter', name: '🌐 OpenRouter（多模型聚合）',     baseUrl: 'https://openrouter.ai/api/v1',    model: 'deepseek/deepseek-chat' },
-    { id: 'openai',     name: '🌐 OpenAI（官方）',                baseUrl: 'https://api.openai.com/v1',       model: 'gpt-4o-mini' },
-    { id: 'paratera',   name: '🇨🇳 并行超算 · Hy3 Preview',      baseUrl: 'https://llmapi.paratera.com/v1',  model: 'hy3-preview' },
-    { id: 'custom',     name: '⚙️  自定义（任何 OpenAI 兼容 API）', baseUrl: '', model: '' }
+    {
+      id: 'openrouter-hy3',
+      name: '🔝 OpenRouter · 腾讯 Hy3 Preview（免费推荐）',
+      baseUrl: 'https://openrouter.ai/api/v1',
+      model: 'tencent/hy3-preview:free',
+      models: [
+        'tencent/hy3-preview:free',
+        'deepseek/deepseek-chat-v3.1:free',
+        'qwen/qwen3-235b-a22b:free',
+        'meta-llama/llama-3.3-70b-instruct:free',
+        'google/gemini-2.0-flash-exp:free',
+        'mistralai/mistral-small-3.1-24b-instruct:free'
+      ],
+      keyHint: 'OpenRouter Key 申请：https://openrouter.ai/keys（免费注册即送额度）'
+    },
+    {
+      id: 'deepseek',
+      name: '🇨🇳 DeepSeek（最便宜 · 中文好）',
+      baseUrl: 'https://api.deepseek.com/v1',
+      model: 'deepseek-chat',
+      models: ['deepseek-chat', 'deepseek-reasoner'],
+      keyHint: 'DeepSeek Key 申请：https://platform.deepseek.com/api_keys'
+    },
+    {
+      id: 'moonshot',
+      name: '🇨🇳 月之暗面 Kimi（中文长文本）',
+      baseUrl: 'https://api.moonshot.cn/v1',
+      model: 'moonshot-v1-8k',
+      models: ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k', 'kimi-k2-0711-preview'],
+      keyHint: 'Moonshot Key 申请：https://platform.moonshot.cn/console/api-keys'
+    },
+    {
+      id: 'qwen',
+      name: '🇨🇳 阿里通义千问（百炼）',
+      baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+      model: 'qwen-plus',
+      models: ['qwen-plus', 'qwen-max', 'qwen-turbo', 'qwen3-235b-a22b-instruct-2507', 'qwen3-coder-plus'],
+      keyHint: '通义 Key 申请：https://bailian.console.aliyun.com/?apiKey=1'
+    },
+    {
+      id: 'zhipu',
+      name: '🇨🇳 智谱 AI（GLM 系列）',
+      baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+      model: 'glm-4-flash',
+      models: ['glm-4-flash', 'glm-4-plus', 'glm-4-air', 'glm-4.5', 'glm-4.6', 'glm-z1-air'],
+      keyHint: '智谱 Key 申请：https://open.bigmodel.cn/usercenter/apikeys（GLM-4-Flash 免费）'
+    },
+    {
+      id: 'openrouter',
+      name: '🌐 OpenRouter（多模型聚合 · 付费模型）',
+      baseUrl: 'https://openrouter.ai/api/v1',
+      model: 'anthropic/claude-3.5-sonnet',
+      models: [
+        'anthropic/claude-3.5-sonnet',
+        'anthropic/claude-3-opus',
+        'openai/gpt-4o',
+        'openai/gpt-4o-mini',
+        'google/gemini-2.5-pro',
+        'deepseek/deepseek-chat-v3.1',
+        'tencent/hy3-preview:free'
+      ],
+      keyHint: 'OpenRouter Key 申请：https://openrouter.ai/keys'
+    },
+    {
+      id: 'openai',
+      name: '🌐 OpenAI（官方）',
+      baseUrl: 'https://api.openai.com/v1',
+      model: 'gpt-4o-mini',
+      models: ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'],
+      keyHint: 'OpenAI Key 申请：https://platform.openai.com/api-keys'
+    },
+    {
+      id: 'anthropic',
+      name: '🌐 Anthropic Claude（官方）',
+      baseUrl: 'https://api.anthropic.com/v1',
+      model: 'claude-3-5-sonnet-20241022',
+      models: ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022', 'claude-3-opus-20240229'],
+      keyHint: 'Anthropic Key 申请：https://console.anthropic.com/settings/keys'
+    },
+    {
+      id: 'gemini',
+      name: '🌐 Google Gemini（官方）',
+      baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+      model: 'gemini-2.0-flash',
+      models: ['gemini-2.0-flash', 'gemini-2.5-pro', 'gemini-1.5-pro', 'gemini-1.5-flash'],
+      keyHint: 'Gemini Key 申请：https://aistudio.google.com/apikey'
+    },
+    {
+      id: 'siliconflow',
+      name: '🇨🇳 硅基流动 SiliconFlow（多开源模型）',
+      baseUrl: 'https://api.siliconflow.cn/v1',
+      model: 'Qwen/Qwen2.5-7B-Instruct',
+      models: [
+        'Qwen/Qwen2.5-7B-Instruct',
+        'Qwen/Qwen2.5-72B-Instruct',
+        'deepseek-ai/DeepSeek-V3',
+        'deepseek-ai/DeepSeek-R1',
+        'meta-llama/Meta-Llama-3.1-70B-Instruct',
+        'THUDM/glm-4-9b-chat'
+      ],
+      keyHint: '硅基流动 Key 申请：https://cloud.siliconflow.cn/account/ak（送 14 元额度）'
+    },
+    {
+      id: 'paratera',
+      name: '🇨🇳 并行超算（机构）',
+      baseUrl: 'https://llmapi.paratera.com/v1',
+      model: 'DeepSeek-V3.2',
+      models: ['DeepSeek-V3.2', 'GLM-4.7', 'GLM-5', 'Kimi-K2', 'MiniMax-M2.5', 'Qwen3-235B-A22B-Instruct-2507', 'ERNIE-5.0-Thinking-Preview'],
+      keyHint: '并行超算 Paratera 仅限机构用户'
+    },
+    {
+      id: 'custom',
+      name: '⚙️  自定义（任何 OpenAI 兼容 API）',
+      baseUrl: '',
+      model: '',
+      models: [],
+      keyHint: '填入任意 OpenAI 兼容 API 的 Base URL、Key、模型名'
+    }
   ];
 
   // ───────────────────────────────────────────────────────
@@ -58,11 +174,16 @@
       contextLabel: '当前学习：',
       contextLoading: '定位中...',
       configTitle: '🎓 启用你的 AI 学伴',
-      configSubtitle: '选一个 AI 服务商，填上 API Key 就能用。Key 仅保存在你的浏览器里。',
-      presetLabel: '选择服务商（一键填默认值）',
-      baseUrlLabel: 'API Base URL',
-      apiKeyLabel: 'API Key',
-      modelLabel: '模型',
+      configSubtitle: '选服务商 → 选模型 → 填上你自己的 API Key 即可。Key 仅保存在你的浏览器本地，TeachAny 不会上传或分享。',
+      presetLabel: '① 选择 AI 服务商（已预填 Base URL 和模型列表）',
+      baseUrlLabel: 'API Base URL（高级，一般无需修改）',
+      apiKeyLabel: '③ 填入你的 API Key',
+      apiKeyPlaceholder: '粘贴你自己申请的 sk-... Key',
+      modelLabel: '② 选择模型（可选自定义）',
+      modelPlaceholder: '输入自定义模型名',
+      customModelTitle: '改用自定义模型名',
+      customModelOption: '✏️ 自定义模型名…',
+      advancedLabel: '⚙️ 高级设置（修改 Base URL）',
       privacy: '🔒 你的 API Key 仅保存在此浏览器的 localStorage，关闭页面或清浏览器数据后失效。TeachAny 不会收集、上传、或把 Key 发给任何第三方。',
       cancel: '取消',
       save: '保存并开始对话',
@@ -86,11 +207,16 @@
       contextLabel: 'Studying: ',
       contextLoading: 'Locating...',
       configTitle: '🎓 Set Up Your AI Tutor',
-      configSubtitle: 'Choose a provider and enter your API Key. Key is only stored in your browser.',
-      presetLabel: 'Choose provider (auto-fill defaults)',
-      baseUrlLabel: 'API Base URL',
-      apiKeyLabel: 'API Key',
-      modelLabel: 'Model',
+      configSubtitle: 'Pick a provider → choose a model → paste your own API Key. Key is stored only in your browser; TeachAny never uploads it.',
+      presetLabel: '① Choose AI Provider (Base URL & model list pre-filled)',
+      baseUrlLabel: 'API Base URL (advanced, usually no need to change)',
+      apiKeyLabel: '③ Paste your API Key',
+      apiKeyPlaceholder: 'Paste your own sk-... key',
+      modelLabel: '② Choose Model (or customize)',
+      modelPlaceholder: 'Enter custom model name',
+      customModelTitle: 'Switch to custom model name',
+      customModelOption: '✏️ Custom model name…',
+      advancedLabel: '⚙️ Advanced (change Base URL)',
       privacy: '🔒 Your API Key is stored only in this browser\'s localStorage. It is cleared when you close the page or clear browser data. TeachAny never collects, uploads, or shares your Key.',
       cancel: 'Cancel',
       save: 'Save & Start',
@@ -456,6 +582,10 @@
     const mask = document.createElement('div');
     mask.className = 'ai-tutor-mask';
     const presetOptions = PRESETS.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+
+    // 根据 initial.baseUrl 自动猜出当前预设
+    const guessedPreset = PRESETS.find(p => p.baseUrl && initial.baseUrl && p.baseUrl === initial.baseUrl) || PRESETS[0];
+
     mask.innerHTML = `
       <div class="ai-tutor-config" role="dialog" aria-labelledby="aitutor-title">
         <h2 id="aitutor-title">${t('configTitle')}</h2>
@@ -464,12 +594,24 @@
         <select name="preset">
           ${presetOptions}
         </select>
-        <label>${escapeHtml(t('baseUrlLabel'))}</label>
-        <input type="text" name="baseUrl" value="${escapeAttr(initial.baseUrl)}" placeholder="https://openrouter.ai/api/v1">
-        <label>${escapeHtml(t('apiKeyLabel'))}</label>
-        <input type="password" name="apiKey" value="${escapeAttr(initial.apiKey)}" placeholder="sk-...">
+
         <label>${escapeHtml(t('modelLabel'))}</label>
-        <input type="text" name="model" value="${escapeAttr(initial.model)}" placeholder="tencent/hy3-preview:free">
+        <div class="model-row" style="display:flex; gap:6px; align-items:center;">
+          <select name="modelSelect" style="flex:1;"></select>
+          <button type="button" class="btn-custom-model" title="${escapeAttr(t('customModelTitle'))}" style="padding:6px 10px; border:1px solid #d0d7de; background:#fff; border-radius:6px; cursor:pointer; font-size:12px;">✏️</button>
+        </div>
+        <input type="text" name="model" value="${escapeAttr(initial.model)}" placeholder="${escapeAttr(t('modelPlaceholder'))}" style="display:none; margin-top:6px;">
+
+        <label>${escapeHtml(t('apiKeyLabel'))} <span class="key-required" style="color:#d1242f; font-weight:600;">*</span></label>
+        <input type="password" name="apiKey" value="${escapeAttr(initial.apiKey)}" placeholder="${escapeAttr(t('apiKeyPlaceholder'))}">
+        <div class="key-hint" style="font-size:12px; color:#57606a; margin-top:4px; line-height:1.5;"></div>
+
+        <details style="margin-top:10px;">
+          <summary style="cursor:pointer; font-size:13px; color:#57606a;">${escapeHtml(t('advancedLabel'))}</summary>
+          <label style="margin-top:8px;">${escapeHtml(t('baseUrlLabel'))}</label>
+          <input type="text" name="baseUrl" value="${escapeAttr(initial.baseUrl)}" placeholder="https://openrouter.ai/api/v1">
+        </details>
+
         <div class="privacy">
           ${escapeHtml(t('privacy'))}
         </div>
@@ -484,24 +626,71 @@
     const nodePreset = mask.querySelector('select[name="preset"]');
     const nodeBaseUrl = mask.querySelector('input[name="baseUrl"]');
     const nodeApiKey = mask.querySelector('input[name="apiKey"]');
-    const nodeModel = mask.querySelector('input[name="model"]');
+    const nodeModelSelect = mask.querySelector('select[name="modelSelect"]');
+    const nodeModelInput = mask.querySelector('input[name="model"]');
+    const btnCustomModel = mask.querySelector('.btn-custom-model');
+    const keyHint = mask.querySelector('.key-hint');
     const btnSave = mask.querySelector('.btn-save');
     const btnCancel = mask.querySelector('.btn-cancel');
 
-    // 预设切换：自动填表
-    nodePreset.addEventListener('change', () => {
-      const p = PRESETS.find(x => x.id === nodePreset.value);
-      if (p && p.baseUrl) {
-        nodeBaseUrl.value = p.baseUrl;
-        nodeModel.value = p.model;
+    // 渲染当前预设的模型列表 + Key 提示
+    function renderPreset(presetId, preserveModel) {
+      const p = PRESETS.find(x => x.id === presetId) || PRESETS[0];
+      // baseUrl
+      if (p.baseUrl) nodeBaseUrl.value = p.baseUrl;
+      // 模型下拉
+      if (p.models && p.models.length) {
+        nodeModelSelect.innerHTML = p.models.map(m => `<option value="${escapeAttr(m)}">${escapeHtml(m)}</option>`).join('') + `<option value="__custom__">${escapeHtml(t('customModelOption'))}</option>`;
+        const target = preserveModel && p.models.includes(preserveModel) ? preserveModel : p.model;
+        nodeModelSelect.value = target;
+        nodeModelInput.value = target;
+        nodeModelSelect.style.display = '';
+        nodeModelInput.style.display = 'none';
+      } else {
+        // 自定义预设：直接显示输入框
+        nodeModelSelect.style.display = 'none';
+        nodeModelInput.style.display = '';
+        if (!nodeModelInput.value) nodeModelInput.value = p.model || '';
+      }
+      // Key 提示
+      keyHint.textContent = p.keyHint || '';
+    }
+
+    nodeModelSelect.addEventListener('change', () => {
+      if (nodeModelSelect.value === '__custom__') {
+        nodeModelSelect.style.display = 'none';
+        nodeModelInput.style.display = '';
+        nodeModelInput.value = '';
+        nodeModelInput.focus();
+      } else {
+        nodeModelInput.value = nodeModelSelect.value;
       }
     });
 
+    btnCustomModel.addEventListener('click', () => {
+      nodeModelSelect.style.display = 'none';
+      nodeModelInput.style.display = '';
+      nodeModelInput.focus();
+    });
+
+    nodePreset.addEventListener('change', () => renderPreset(nodePreset.value, false));
+
+    // 初始化
+    nodePreset.value = guessedPreset.id;
+    renderPreset(guessedPreset.id, initial.model);
+
     btnSave.addEventListener('click', () => {
+      const apiKey = (nodeApiKey.value || '').trim();
+      if (!apiKey) {
+        nodeApiKey.style.borderColor = '#d1242f';
+        nodeApiKey.focus();
+        return;
+      }
+      const model = (nodeModelInput.style.display === 'none' ? nodeModelSelect.value : nodeModelInput.value).trim();
       const cfg = {
         baseUrl: (nodeBaseUrl.value || DEFAULTS.baseUrl).trim().replace(/\/$/, ''),
-        apiKey: (nodeApiKey.value || DEFAULTS.apiKey).trim(),
-        model: (nodeModel.value || DEFAULTS.model).trim()
+        apiKey: apiKey,
+        model: model || DEFAULTS.model
       };
       saveUserConfig(cfg);
       mask.remove();
@@ -716,7 +905,14 @@
       if (isPending) return;
       const text = (inputEl.value || '').trim();
       if (!text) return;
-      // v7.0：直接使用生效配置（DEFAULTS 已有 key，不再强制弹窗）
+      // v7.1：如果没有 API Key，先弹配置框；填完 Key 后自动继续发送
+      const cfg = getEffectiveConfig();
+      if (!cfg.apiKey) {
+        createConfigModal(cfg, (savedCfg) => {
+          if (savedCfg && savedCfg.apiKey) doSend(text);
+        }, () => {});
+        return;
+      }
       doSend(text);
     }
 
@@ -808,6 +1004,6 @@
     /** 获取当前语言 */
     getLang: getLang,
     /** 版本号 */
-    version: '7.0'
+    version: '7.1'
   };
 })();
