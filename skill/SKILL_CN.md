@@ -25,7 +25,7 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 | **本文（SKILL_CN.md）** | 核心规范：基线、教学设计、Phase 流程、技术实现 | 每次生成课件必读 |
 | [`RULES.md`](./RULES.md) | 57 条硬规则完整列表（含 #57 Hero 图基线、#52~#56 严谨度铁律） | Completeness Gate 阶段按需查阅 |
 | [`curriculum-standards.md`](./curriculum-standards.md) | 课标速查表（21 棵国内课标树） | Phase 0.5 知识查询阶段 |
-| [`historical-maps.md`](./historical-maps.md) | 地图资源完整规范 | 制作历史/地理课件时 |
+| [`historical-maps.md`](./historical-maps.md) | 地图资源完整规范（⛔ 本地资源优先，禁止在线瓦片） | 制作历史/地理课件时 |
 | [`CHANGELOG.md`](./CHANGELOG.md) | 版本变更日志（v1.0 → v7.2） | 仅需了解版本演进时 |
 
 ---
@@ -73,7 +73,8 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 - ❌ "用 SVG+CSS 时间线动画等效替代 Remotion" → **违反 ②**。Remotion 基线是真实 mp4 渲染，CSS 动画不算等效交付
 - ❌ **Remotion mp4 只有画面没有音频轨（哑片）** → **违反 ②**。真实课件视频必须带 TTS 朗读 + 氛围配乐/音效；`ffprobe -show_entries stream=codec_type` 必须能看到 `audio` 流
 - ❌ **视频 `<video poster="...">` 用了其他课件/其他主题的 hero 图** → **违反 ②**。每个 Remotion 视频必须配独立 poster 封面（建议用 `image_gen` 生成主题专属图），不得复用 hero-xxx.png 凑数
-- ❌ **地图底图用 ECharts `graphic` 组件铺底** → **违反 ③**。`graphic` 是 DOM 绝对定位覆盖层，**不参与 `geo` 组件的缩放/平移变换**，用户缩放或拖动时底图会与国界/城市点严重错位。地理/历史课件必须用 **Leaflet `L.imageOverlay(url, bounds)`** 实现底图与图层同步（详见 Section 18.2.5）
+- ❌ **地图底图使用在线 XYZ 瓦片切片**（CartoDB / Esri / OSM 等） → **违反 ③**。历史/地理课件必须使用 `assets/maps/` 下的本地地图资源（地形底图 GeoJSON + 行政边界 + 本地地形瓦片），严禁依赖外部切片服务。详见 `historical-maps.md`
+- ❌ **地图底图用 ECharts `graphic` 组件铺底** → **违反 ③**。`graphic` 是 DOM 绝对定位覆盖层，**不参与 `geo` 组件的缩放/平移变换**，用户缩放或拖动时底图会与国界/城市点严重错位
 - ❌ **地图初始视图未聚焦核心区域**（默认停在 `[0,0]` 世界中心 / 视口显示大片无关海洋或空白） → **违反 ③**。必须用 `map.fitBounds(coreBounds)` 或 `setView([lat,lng], zoom)` 将初始视图精确对准该课件的教学核心区域（如讲希腊必须聚焦爱琴海 + 伯罗奔尼撒半岛，讲罗马必须聚焦地中海盆地）
 - ❌ "用户没要求生图，就省略" → 违反 ④（生图/生视频/TTS/Remotion 均为**默认执行**，非用户触发）
 - ❌ 用浏览器 `speechSynthesis` 代替 edge-tts → 直接 Gate 不通过
@@ -4185,7 +4186,7 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
      → ✅/❌ ___
 □ 35. 认知负荷总控（⛔ v7.1 新增，Sweller）：是否存在单卡超过 100 字的"信息轰炸"？是否存在一个模块内引入 2 个以上全新概念的情况？外在认知负荷是否已最小化（无装饰性动画/无无关背景音/无冗余图标）？
      → ✅/❌ ___
-□ 36. 地图规范（⛔ v7.1 新增，历史/地理课必检）：地图是否使用 XYZ 瓦片底图（CartoDB Dark + Esri Shaded Relief）？是否存在使用 `L.CRS.EPSG4326` + `L.imageOverlay` 的旧方案？GeoJSON 历史边界是否正确加载？是否参照 `templates/map-section-template.html` v7.0 模板？
+□ 36. 地图规范（⛔ v7.2 更新，历史/地理课必检）：地图是否使用 `assets/maps/` 本地地图资源（地形底图 GeoJSON + 行政边界 + 本地地形瓦片）？是否严禁使用在线 XYZ 瓦片切片（CartoDB/Esri/OSM）？GeoJSON 历史边界是否正确加载？是否参照 `templates/map-section-template.html` 和 `historical-maps.md` v7.2 规范？
      → ✅/❌/N/A（非历史/地理课件） ___
 
 【总评】___ / 36 通过（#14 仅纯计算/纯习题/纯复习课可标 N/A；#15 用户未要求双语时可标 N/A；#19 纯理科计算课可标 N/A；#22 无视频内容可标 N/A；#23 用户拒绝 L3 可标 N/A；#24 未执行 L2 可标 N/A；#26-#27 无探究要求时可标 N/A；#29 未要求 PPTX 时可标 N/A；#31 纯计算课且 Gate 标注"跳过生图"时可标 N/A；#36 非历史/地理课件可标 N/A）
