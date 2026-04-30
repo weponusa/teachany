@@ -23,7 +23,7 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 | 文档 | 内容 | 何时读取 |
 |:---|:---|:---|
 | **本文（SKILL_CN.md）** | 核心规范：基线、教学设计、Phase 流程、技术实现 | 每次生成课件必读 |
-| [`RULES.md`](./RULES.md) | 56 条硬规则完整列表（含严谨度铁律 #52~#56） | Completeness Gate 阶段按需查阅 |
+| [`RULES.md`](./RULES.md) | 57 条硬规则完整列表（含 #57 Hero 图基线、#52~#56 严谨度铁律） | Completeness Gate 阶段按需查阅 |
 | [`curriculum-standards.md`](./curriculum-standards.md) | 课标速查表（21 棵国内课标树） | Phase 0.5 知识查询阶段 |
 | [`historical-maps.md`](./historical-maps.md) | 地图资源完整规范 | 制作历史/地理课件时 |
 | [`CHANGELOG.md`](./CHANGELOG.md) | 版本变更日志（v1.0 → v7.2） | 仅需了解版本演进时 |
@@ -42,27 +42,28 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 | **② Remotion 程序化动画** | 课件必须含 **≥1 段真正用 Remotion 渲染的教学动画 mp4**（演示过程性变化），且 mp4 **必须三轨合一：画面 + 氛围音效/配乐 + TTS 语音朗读**（可选但强烈推荐） | Remotion + React + TS 渲染 1920×1080 @30fps → 输出 `assets/video/*.mp4` → 嵌入对应 section；音频通过 `<Audio src={staticFile(...)}/>` 叠加，ffmpeg 合成背景音效/edge-tts 生成语音旁白，放 `remotion/public/audio/` | ⛔ **无降级**。Canvas/SVG/CSS 动画不得替代 Remotion 基线；**仅有画面而无音频轨的哑片 mp4 视为不合规**（除非主题为纯视觉抽象且用户书面豁免音频）。缺 Remotion = 直接 Gate 不通过。特殊情况（无 Node 环境且无法安装）必须在 Gate 中明确声明并由用户书面豁免 |
 | **③ Canvas 互动组件** | 课件必须含 **≥1 个 Canvas 互动组件**（拖拽、画板、参数调节、实时绘图） | 原生 `<canvas>` + JS 事件 → 学生可拖动/点击/滑动改变参数并实时反馈 | 若主题确实无合适 Canvas 场景（如纯文言字词课），必须用 SVG 交互动画替代，并在 Gate 中说明理由 |
 | **④ AI 生图 + 生视频** | 课件必须含 **≥2 张 image_gen 生成的情境/意境插图**；过程性学科（理/化/生/地/史）必须评估生视频需求 | Phase 3 阶段调用 `image_gen` → 存 `assets/illustrations/*.png` → `<img>` 嵌入；必要时调用生视频工具产出 `assets/video/*.mp4` | 若完全纯计算题课，可在 Gate 标注"跳过生图"并附理由，但**文科、科学、工程、社科课件一律不得跳过生图** |
+| **⑤ Hero 封面图** | 课件必须含 **1 张主题专属 hero 封面图** + Hero section 中真实引用 + 文件真实存在 + ≥1280×720（16:9）| Phase 3 末调用 `image_gen` 基于课件标题/学科/学段生成 → 存 `assets/<course-id>-hero.png` → HTML Hero section 用 `<img class="hero-cover-img" src="./assets/xxx-hero.png" alt="...课件封面">` 引用 → 发布前 `python3 scripts/check-hero.py` 校验 0 错误 | ⛔ **无降级**。无 Hero 图 = 直接 Gate 不通过。image_gen 失败必须重试 ≥3 次，仍失败需用户书面豁免；**严禁多课件复用同一张 hero**（每张 hero 必须主题专属） |
 
 ### 0.1 启用触发表
 
-| 课件类型 | TTS | Remotion | Canvas 互动 | 生图 | 生视频 |
-|:---|:---:|:---:|:---:|:---:|:---:|
-| 数学（代数/几何/函数） | ✅ | ✅ 函数变换/几何证明 | ✅ 拖点画板/参数滑块 | ✅ ≥2 张情境图 | 可选 |
-| 物理 | ✅ | ✅ 实验过程/力分析 | ✅ 受力图/电路模拟 | ✅ ≥2 张 | ✅ 实验过程 |
-| 化学 | ✅ | ✅ 反应过程/分子结构 | ✅ 配平/搭建分子 | ✅ ≥2 张 | ✅ 反应动画 |
-| 生物 | ✅ | ✅ 生命过程/分裂过程 | ✅ 标注器官/拖拽匹配 | ✅ ≥2 张 | ✅ 微观过程 |
-| 地理/历史 | ✅ | ✅ 演变过程/迁徙路线 | ✅ 地图互动/时间轴 | ✅ ≥2 张情境图 | 可选 |
-| 语文（古诗词/文言文） | ✅ 必须按韵律录 | ✅ 意境动画/诵读节奏可视化 | ✅ 平仄标注/对仗匹配/翻字卡 | ✅ ≥2 张意境图 | 可选 |
-| 英语 | ✅ 英文母语声线 | ✅ 对话情境/语法动画 | ✅ 词汇匹配/句型重组 | ✅ ≥2 张 | 可选 |
-| 信息技术 | ✅ | ✅ 算法过程可视化 | ✅ 代码沙盒/可视编程 | ✅ ≥2 张 | 可选 |
+| 课件类型 | TTS | Remotion | Canvas 互动 | 生图 | 生视频 | Hero 图 |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|
+| 数学（代数/几何/函数） | ✅ | ✅ 函数变换/几何证明 | ✅ 拖点画板/参数滑块 | ✅ ≥2 张情境图 | 可选 | ✅ 必须 |
+| 物理 | ✅ | ✅ 实验过程/力分析 | ✅ 受力图/电路模拟 | ✅ ≥2 张 | ✅ 实验过程 | ✅ 必须 |
+| 化学 | ✅ | ✅ 反应过程/分子结构 | ✅ 配平/搭建分子 | ✅ ≥2 张 | ✅ 反应动画 | ✅ 必须 |
+| 生物 | ✅ | ✅ 生命过程/分裂过程 | ✅ 标注器官/拖拽匹配 | ✅ ≥2 张 | ✅ 微观过程 | ✅ 必须 |
+| 地理/历史 | ✅ | ✅ 演变过程/迁徙路线 | ✅ 地图互动/时间轴 | ✅ ≥2 张情境图 | 可选 | ✅ 必须 |
+| 语文（古诗词/文言文） | ✅ 必须按韵律录 | ✅ 意境动画/诵读节奏可视化 | ✅ 平仄标注/对仗匹配/翻字卡 | ✅ ≥2 张意境图 | 可选 | ✅ 必须 |
+| 英语 | ✅ 英文母语声线 | ✅ 对话情境/语法动画 | ✅ 词汇匹配/句型重组 | ✅ ≥2 张 | 可选 | ✅ 必须 |
+| 信息技术 | ✅ | ✅ 算法过程可视化 | ✅ 代码沙盒/可视编程 | ✅ ≥2 张 | 可选 | ✅ 必须 |
 
 ### 0.2 执行时点（强制）
 
-1. **Phase 0（需求确认）末尾**：必须输出"基线能力开启清单"，明确声明 TTS/Remotion/Canvas/生图 四项全开（除非用户书面拒绝）
+1. **Phase 0（需求确认）末尾**：必须输出"基线能力开启清单"，明确声明 TTS/Remotion/Canvas/生图/Hero 五项全开（除非用户书面拒绝）
 2. **Phase 0.5**：必须自动检测 Node.js/npm/ffmpeg（Remotion 的前置依赖）；缺失则自动安装（见 Section 15.2），**不等待用户确认**
-3. **Generation Gate**：基线四项任一标注"跳过"必须附理由，且理由会被 Completeness Gate 二次审查；**Remotion 的跳过仅限 Node 环境完全不可用且安装失败，必须有用户书面豁免**
-4. **Phase 3（制作）**：若环境支持 `task` 工具，必须并行分发 Agent C（生图）+ Agent D（TTS）+ **Agent R（Remotion 渲染，默认必选）**
-5. **Completeness Gate**：四项全部校验（Remotion 必须检查 `assets/video/*.mp4` 真实存在、**含音频流**（`ffprobe` 可见 `codec_type=audio`）、且已嵌入 HTML `<video>` + 合理 `poster`），缺一不通过
+3. **Generation Gate**：基线五项任一标注"跳过"必须附理由，且理由会被 Completeness Gate 二次审查；**Remotion 的跳过仅限 Node 环境完全不可用且安装失败，必须有用户书面豁免**；**Hero 图无降级，image_gen 失败必须重试 ≥3 次**
+4. **Phase 3（制作）**：若环境支持 `task` 工具，必须并行分发 Agent C（生图含 Hero）+ Agent D（TTS）+ **Agent R（Remotion 渲染，默认必选）**；Hero 图必须在 Phase 3 末（HTML 完成前）完成生成
+5. **Completeness Gate**：五项全部校验（Remotion 必须检查 `assets/video/*.mp4` 真实存在、**含音频流**（`ffprobe` 可见 `codec_type=audio`）、且已嵌入 HTML `<video>` + 合理 `poster`；Hero 图必须运行 `python3 scripts/check-hero.py` 通过），缺一不通过
 
 ### 0.3 违反示例（禁止）
 
@@ -76,8 +77,12 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 - ❌ **地图初始视图未聚焦核心区域**（默认停在 `[0,0]` 世界中心 / 视口显示大片无关海洋或空白） → **违反 ③**。必须用 `map.fitBounds(coreBounds)` 或 `setView([lat,lng], zoom)` 将初始视图精确对准该课件的教学核心区域（如讲希腊必须聚焦爱琴海 + 伯罗奔尼撒半岛，讲罗马必须聚焦地中海盆地）
 - ❌ "用户没要求生图，就省略" → 违反 ④（生图/生视频/TTS/Remotion 均为**默认执行**，非用户触发）
 - ❌ 用浏览器 `speechSynthesis` 代替 edge-tts → 直接 Gate 不通过
+- ❌ **课件无 Hero 封面图，Hero section 只有文字标题** → **违反 ⑤**。每个课件必须有 1 张主题专属 hero 图，且 HTML 真实引用、文件真实存在
+- ❌ **HTML 引用了 `./assets/xxx-hero.png` 但文件根本不存在**（产生 broken image 404）→ **违反 ⑤**。发布前必须 `python3 scripts/check-hero.py` 0 错误
+- ❌ **多个课件复用同一张 hero 图**（如 5 个数学课件都用同一张 `math-hero.png`） → **违反 ⑤**。每张 hero 必须主题专属，由 image_gen 基于该课件主题专门生成
+- ❌ **image_gen 生成 hero 失败，AI 静默用 emoji 或纯色块替代** → **违反 ⑤**。失败必须重试 ≥3 次仍失败才能在 Gate 中声明并由用户豁免
 
-> 📌 **一句话记住**：语音 + 动画 + 互动 + 图像，四项齐全才是 TeachAny 课件。缺一不是 TeachAny，是普通网页。
+> 📌 **一句话记住**：语音 + 动画 + 互动 + 图像 + 封面，五项齐全才是 TeachAny 课件。缺一不是 TeachAny，是普通网页。
 
 ---
 
@@ -175,6 +180,85 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 | Phase 0 需求确认 | ⚠️ 仅强制红线二（不要猜用户意图，问清楚再开始） |
 
 > 📌 **一句话记住**：跑命令贴输出 / 用工具不靠猜 / 走完五步再放弃 / 第二次失败必换思路 / 修完一个扫一片。课件是给真实学生看的，每一处偷工都会变成课堂事故。
+
+---
+
+### 0.5 Hero 图基线详解（Hero Cover Image — MUST HAVE）⛔ 必读
+
+> ⛔ **每个 TeachAny 课件必须有 1 张主题专属 hero 封面图**——这是 Gallery 卡片缩略图、课件首屏视觉锚点、用户决定"是否打开学习"的第一眼信号。无 Hero 图 = 无品牌识别 = Gate 直接不通过。
+
+#### 文件规范
+
+| 项 | 标准 |
+|:---|:---|
+| **文件路径** | `<课件目录>/assets/<course-id>-hero.png`（推荐）或 `assets/hero-<topic>.png`（兼容） |
+| **分辨率** | ≥ 1280×720（16:9 横版）；理想 1920×1080；`image_gen` 默认 size=`1024x1024` 时改为 `1024x1536` 横切上半部分 |
+| **格式** | `.png`（首选）或 `.jpg`（文件 > 1MB 时）|
+| **文件大小** | < 2 MB（Gallery 加载性能）|
+| **唯一性** | ⛔ **每张 hero 必须主题专属，禁止多课件复用同一张** |
+
+#### Image_gen Prompt 模板（按学段差异化）
+
+| 学段 | 视觉风格 | Prompt 模板 |
+|:---|:---|:---|
+| **小学** (G1-6) | 温暖卡通插画，鲜艳明快色彩 | `<主题中文>, warm cartoon illustration for elementary school students, bright vivid colors, friendly characters, simple shapes, educational poster style, 16:9 horizontal composition` |
+| **初中** (G7-9) | 半写实插画 + 信息图元素 | `<主题中文>, semi-realistic illustration with infographic elements, clear visual hierarchy, educational textbook style for middle school, 16:9 horizontal banner` |
+| **高中** (G10-12) | 学术几何插画，深色专业风 | `<主题中文>, academic geometric illustration, professional dark blue palette, conceptual diagram aesthetic, suitable for high school textbook cover, 16:9 horizontal layout` |
+| **跨学段** | 主题适配 | 根据课件目标学段选择上述对应模板 |
+
+#### HTML 引用标准（两种模式）
+
+**模式 A：`<img>` 标签（推荐）**
+```html
+<section class="hero">
+  <img class="hero-cover-img"
+       src="./assets/<course-id>-hero.png"
+       alt="《<课件标题>》课件封面"
+       loading="eager"
+       decoding="async">
+  <div class="hero-text">
+    <h1 class="hero-title">《<课件标题>》</h1>
+    <p class="hero-subtitle"><学段><学科>·G<grade></p>
+  </div>
+</section>
+```
+
+**模式 B：CSS background-image（适合视觉抽象主题）**
+```html
+<section class="hero" style="background-image: url('./assets/<course-id>-hero.png');">
+  <div class="hero-overlay">
+    <h1>《<课件标题>》</h1>
+  </div>
+</section>
+```
+
+#### Phase 3 制作流程
+
+1. **HTML 生成完成时**：自动从 `<title>` 提取课件标题、学科、学段
+2. **构造 image_gen prompt**：用上面的学段模板 + 课件主题关键词
+3. **调用 image_gen**：output_dir=`<课件目录>/assets/`，filename=`<course-id>-hero.png`
+4. **验证生成**：`ls -la assets/<course-id>-hero.png` 确认存在 + size > 50 KB
+5. **注入 HTML**：在 Hero section 的 `<img>` 或 `style="background-image"` 中引用
+6. **失败重试**：image_gen 失败 → 重试 1（换 prompt 风格）→ 重试 2（简化主题词）→ 重试 3（用通用学科 prompt）；3 次都失败才允许在 Generation Gate 中标注"Hero 生成失败，需用户书面豁免"
+
+#### 校验脚本（必须通过）
+
+```bash
+# 单课件检查
+python3 scripts/check-hero.py <课件目录>
+
+# 批量检查（发布前必跑）
+python3 scripts/check-hero.py community/
+
+# 输出预期：
+#   ✅ PASS: 314 courseware checked, all have valid hero images
+# 任一失败：
+#   ❌ FAIL: <课件目录> - reason=<missing_file|missing_html_ref|broken_path|duplicate_hero>
+```
+
+#### 与硬规则 #57 的关系
+
+本节的所有要求都映射到 RULES.md 的硬规则 #57，发布流程中由 `validate-courseware.py` 调用 `check-hero.py` 强制校验。任一课件不通过 = 发布流程 exit 1，rebuild-index 拒绝执行。
 
 ---
 
@@ -4135,12 +4219,13 @@ L3 已默认执行，无需建议。以下规则仅适用于 L2 教学动画。�
 
 ---
 
-## 十三、56 条硬规则（违反任何一条 = Completeness Gate 不通过）
+## 十三、57 条硬规则（违反任何一条 = Completeness Gate 不通过）
 
-> 📋 完整的 56 条硬规则列表已拆分到独立文档，详见 [`RULES.md`](./RULES.md)。
+> 📋 完整的 57 条硬规则列表已拆分到独立文档，详见 [`RULES.md`](./RULES.md)。
 >
 > Completeness Gate 阶段必须逐条检查，任何一条违反即判定不通过。
 > v6.2 新增 #52~#56 严谨度铁律（来自 Section 0.4），是对所有"执行/验证/修复"环节的硬性约束。
+> v6.3 新增 #57 Hero 图基线（来自 Section 0.5），所有课件必须配主题专属 hero 封面图。
 
 ## 十四、理论基础
 
