@@ -29,12 +29,12 @@
   const HISTORY_KEY = 'teachany_tutor_history';
   const LANG_KEY = 'teachany_tutor_lang';
 
-  // 默认配置：OpenRouter + Tencent Hy3 Preview（置顶推荐 · 免费）
+  // 默认配置：OpenRouter + gpt-oss-20b（实测最稳的免费模型，非推理模型，首字快）
   // ⚠️ apiKey 留空，强制每个用户填自己的 Key（避免共享 key 被 OpenRouter 风控封禁）
   const DEFAULTS = {
     baseUrl: 'https://openrouter.ai/api/v1',
     apiKey: '',
-    model: 'tencent/hy3-preview:free'
+    model: 'openai/gpt-oss-20b:free'
   };
 
   // 服务商预设（配置弹窗一键填表）
@@ -42,16 +42,18 @@
   const PRESETS = [
     {
       id: 'openrouter-hy3',
-      name: '🔝 OpenRouter · 腾讯 Hy3 Preview（免费推荐）',
+      name: '🔝 OpenRouter（免费模型，推荐开箱用）',
       baseUrl: 'https://openrouter.ai/api/v1',
-      model: 'tencent/hy3-preview:free',
+      model: 'openai/gpt-oss-20b:free',
       models: [
-        'tencent/hy3-preview:free',
-        'deepseek/deepseek-chat-v3.1:free',
-        'qwen/qwen3-235b-a22b:free',
+        'openai/gpt-oss-20b:free',
+        'openai/gpt-oss-120b:free',
         'meta-llama/llama-3.3-70b-instruct:free',
-        'google/gemini-2.0-flash-exp:free',
-        'mistralai/mistral-small-3.1-24b-instruct:free'
+        'deepseek/deepseek-chat-v3.1:free',
+        'qwen/qwen3-next-80b-a3b-instruct:free',
+        'google/gemma-3-27b-it:free',
+        'z-ai/glm-4.5-air:free',
+        'tencent/hy3-preview:free'
       ],
       keyHint: 'OpenRouter Key 申请：https://openrouter.ai/keys（免费注册即送额度）'
     },
@@ -771,24 +773,27 @@
         headers['X-Title'] = headers['X-OpenRouter-Title'];
       } catch (e) { /* ignore */ }
     }
+    // 设置 30 秒整体超时 + 每次 10 秒无数据超时
+    const ac = new AbortController();
+    const overallTimeout = setTimeout(() => ac.abort('overall-timeout'), 30000);
+
     const resp = await fetch(endpoint, {
       method: 'POST',
       headers: headers,
+      signal: ac.signal,
       body: JSON.stringify({
         model: cfg.model,
         messages,
         stream: true,
         temperature: 0.7,
-        max_tokens: 600,
-        // 推理模型（Hy3、DeepSeek-R1、Qwen-Thinking 等）默认会输出大段思考过程
-        // reasoning.max_tokens=1 强制压缩推理预算到 1 token，几乎跳过思考直接输出答案
-        // 普通模型不认识此参数会自动忽略，不影响兼容性
-        // 注：实测 OpenRouter 不要用 reasoning.exclude=true（与 stream=true 同用时会返回空）
-        reasoning: { max_tokens: 1 }
+        max_tokens: 600
+        // 注：不传 reasoning 参数。推理模型（Hy3、DeepSeek-R1）会在 delta.reasoning 里输出思考；
+        // 客户端只显示 delta.content，推理过程静默丢弃。
       })
     });
 
     if (!resp.ok) {
+      clearTimeout(overallTimeout);
       let errText = (getLang() === 'en' ? 'Request failed (' : '请求失败（') + resp.status + (getLang() === 'en' ? ')' : '）');
       try {
         const errJson = await resp.json();
@@ -797,87 +802,105 @@
       throw new Error(errText);
     }
 
-    const ct = resp.headers.get('content-type') || '';
-    if ((ct.includes('text/event-stream') || ct.includes('stream')) && resp.body && typeof resp.body.getReader === 'function') {
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder('utf-8');
-      let buffer = '';
-      let gotContent = false;       // 是否收到过正式 content
-      let reasoningBuffer = '';     // 暂存 reasoning，仅作兜底
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-        for (const line of lines) {
-          const trimmed = line.trim();
-          // 1) 空行 → 跳过
-          if (!trimmed) continue;
-          // 2) SSE 注释（OpenRouter keep-alive: ": OPENROUTER PROCESSING"）→ 跳过，不能 JSON.parse
-          if (trimmed.startsWith(':')) continue;
-          // 3) 只处理 data: 行
-          if (!trimmed.startsWith('data:')) continue;
-          const data = trimmed.replace(/^data:\s*/, '');
-          // 4) 终止标记
-          if (data === '[DONE]') {
-            // 没收到任何 content 但收到了 reasoning（说明 exclude 没生效），用 reasoning 兜底
-            if (!gotContent && reasoningBuffer) onDelta(reasoningBuffer);
-            return;
-          }
-          // 5) 解析 JSON
-          let json;
-          try {
-            json = JSON.parse(data);
-          } catch (e) {
-            // 解析失败，跳过该行（可能是不完整数据）
-            continue;
-          }
-          // 6) mid-stream error（HTTP 200 但 chunk 含顶层 error 字段）
-          if (json && json.error) {
-            const msg = (json.error && json.error.message) || JSON.stringify(json.error);
-            throw new Error((getLang() === 'en' ? 'Stream error: ' : '流式错误：') + msg);
-          }
-          // 7) 提取增量：只显示 content；reasoning 只静默累积作为兜底
-          const choice = (json && json.choices && json.choices[0]) || {};
-          const delta = choice.delta || {};
-          if (delta.content) {
-            gotContent = true;
-            onDelta(delta.content);
-          } else if (delta.reasoning && !gotContent) {
-            // 仅在没拿到正式 content 时缓存推理，作为兜底
-            reasoningBuffer += delta.reasoning;
+    try {
+      const ct = resp.headers.get('content-type') || '';
+      if ((ct.includes('text/event-stream') || ct.includes('stream')) && resp.body && typeof resp.body.getReader === 'function') {
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+        let gotContent = false;       // 是否收到过正式 content
+        let reasoningBuffer = '';     // 暂存 reasoning，仅作兜底
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+          for (const line of lines) {
+            const trimmed = line.trim();
+            // 1) 空行 → 跳过
+            if (!trimmed) continue;
+            // 2) SSE 注释（OpenRouter keep-alive: ": OPENROUTER PROCESSING"）→ 跳过，不能 JSON.parse
+            if (trimmed.startsWith(':')) continue;
+            // 3) 只处理 data: 行
+            if (!trimmed.startsWith('data:')) continue;
+            const data = trimmed.replace(/^data:\s*/, '');
+            // 4) 终止标记
+            if (data === '[DONE]') {
+              clearTimeout(overallTimeout);
+              // 没收到任何 content 但收到了 reasoning（说明 exclude 没生效），用 reasoning 兜底
+              if (!gotContent && reasoningBuffer) onDelta(reasoningBuffer);
+              return;
+            }
+            // 5) 解析 JSON
+            let json;
+            try {
+              json = JSON.parse(data);
+            } catch (e) {
+              // 解析失败，跳过该行（可能是不完整数据）
+              continue;
+            }
+            // 6) mid-stream error（HTTP 200 但 chunk 含顶层 error 字段）
+            if (json && json.error) {
+              const msg = (json.error && json.error.message) || JSON.stringify(json.error);
+              throw new Error((getLang() === 'en' ? 'Stream error: ' : '流式错误：') + msg);
+            }
+            // 7) 提取增量：只显示 content；reasoning 只静默累积作为兜底
+            const choice = (json && json.choices && json.choices[0]) || {};
+            const delta = choice.delta || {};
+            if (delta.content) {
+              if (!gotContent) {
+                // 收到第一个 content：取消整体超时（已证明能出结果了）
+                gotContent = true;
+                clearTimeout(overallTimeout);
+              }
+              onDelta(delta.content);
+            } else if (delta.reasoning && !gotContent) {
+              // 仅在没拿到正式 content 时缓存推理，作为兜底
+              reasoningBuffer += delta.reasoning;
+            }
           }
         }
-      }
-      // 流结束但没碰到 [DONE]：同上兜底
-      if (!gotContent && reasoningBuffer) {
-        onDelta(reasoningBuffer);
-        return;
-      }
-      if (!gotContent) {
-        throw new Error(getLang() === 'en'
-          ? 'Empty response from model. Try a different model or check provider quota.'
-          : '模型返回空内容。可能是免费模型上游异常或用量超限，请换个模型试试。');
-      }
-    } else {
-      // 非流式 fallback：OpenRouter 有时会返回普通 JSON
-      const json = await resp.json();
-      if (json && json.error) {
-        const msg = (json.error && json.error.message) || JSON.stringify(json.error);
-        throw new Error((getLang() === 'en' ? 'API error: ' : 'API 错误：') + msg);
-      }
-      const choice = (json && json.choices && json.choices[0]) || {};
-      const msg = choice.message || {};
-      // 优先 content；为空时用 reasoning 兜底
-      const full = msg.content || msg.reasoning || '';
-      if (full) {
-        onDelta(full);
+        clearTimeout(overallTimeout);
+        // 流结束但没碰到 [DONE]：同上兜底
+        if (!gotContent && reasoningBuffer) {
+          onDelta(reasoningBuffer);
+          return;
+        }
+        if (!gotContent) {
+          throw new Error(getLang() === 'en'
+            ? 'Empty response from model. Try a different model or check provider quota.'
+            : '模型返回空内容。可能是免费模型上游异常或用量超限，请换个模型试试。');
+        }
       } else {
-        throw new Error(getLang() === 'en'
-          ? 'Empty response from model. Try a different model or check provider quota.'
-          : '模型返回空内容。可能是免费模型上游异常或用量超限，请换个模型试试。');
+        // 非流式 fallback：OpenRouter 有时会返回普通 JSON
+        const json = await resp.json();
+        clearTimeout(overallTimeout);
+        if (json && json.error) {
+          const msg = (json.error && json.error.message) || JSON.stringify(json.error);
+          throw new Error((getLang() === 'en' ? 'API error: ' : 'API 错误：') + msg);
+        }
+        const choice = (json && json.choices && json.choices[0]) || {};
+        const msg = choice.message || {};
+        // 优先 content；为空时用 reasoning 兜底
+        const full = msg.content || msg.reasoning || '';
+        if (full) {
+          onDelta(full);
+        } else {
+          throw new Error(getLang() === 'en'
+            ? 'Empty response from model. Try a different model or check provider quota.'
+            : '模型返回空内容。可能是免费模型上游异常或用量超限，请换个模型试试。');
+        }
       }
+    } catch (err) {
+      clearTimeout(overallTimeout);
+      // 识别超时/abort 错误，给友好提示
+      if (err.name === 'AbortError' || (err.message || '').includes('overall-timeout') || (err.message || '').includes('aborted')) {
+        throw new Error(getLang() === 'en'
+          ? 'Timeout: the model took too long. Please switch to another model (e.g. openai/gpt-oss-20b:free) and retry.'
+          : '请求超时（30秒）：模型响应太慢。建议换一个模型（比如 openai/gpt-oss-20b:free）再试。');
+      }
+      throw err;
     }
   }
 
