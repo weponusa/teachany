@@ -127,6 +127,40 @@
   .map-era-btn:hover, .map-era-btn.active {
     background: var(--primary); color: white; border-color: var(--primary);
   }
+  /* Map era description panel */
+  .map-era-desc {
+    background: linear-gradient(135deg, #1e293b, #334155); color: #e2e8f0;
+    border-radius: 10px; padding: 16px 20px; margin-top: 12px;
+    font-size: 14px; line-height: 1.7; border-left: 4px solid var(--accent);
+  }
+  .map-era-desc strong { color: #fbbf24; }
+  .map-era-desc .era-year-tag {
+    display: inline-block; background: var(--primary); color: white;
+    padding: 2px 10px; border-radius: 6px; font-size: 0.8em; font-weight: 600;
+    margin-right: 8px; vertical-align: middle;
+  }
+  /* Map legend */
+  .map-legend {
+    display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px;
+    padding: 10px 14px; background: #f8fafc; border-radius: 8px; font-size: 12px;
+  }
+  .map-legend-item { display: flex; align-items: center; gap: 6px; }
+  .map-legend-dot {
+    width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+  }
+  .map-legend-line {
+    width: 20px; height: 2px; flex-shrink: 0;
+  }
+  /* City marker custom style */
+  .city-marker-icon {
+    width: 8px; height: 8px; border-radius: 50%; border: 2px solid #fff;
+    box-shadow: 0 0 4px rgba(0,0,0,0.5);
+  }
+  .city-marker-label {
+    background: rgba(30,41,59,0.9); color: #f8fafc; padding: 2px 7px;
+    border-radius: 4px; font-size: 11px; font-weight: 600; white-space: nowrap;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
   /* Feudal Hierarchy SVG */
   .feudal-svg-wrap {
     background: linear-gradient(135deg, #fefce8 0%, #fff7ed 100%);
@@ -134,8 +168,8 @@
     text-align: center;
   }
   .feudal-svg-wrap svg { max-width: 100%; height: auto; }
-  .feudal-node { cursor: pointer; transition: all 0.2s; }
-  .feudal-node:hover { filter: brightness(1.15); transform: scale(1.03); }
+  .feudal-node { cursor: pointer; transition: filter 0.2s; }
+  .feudal-node:hover { filter: brightness(1.1); }
   /* Source card */
   .source-card {
     background: #fefce8; border-left: 4px solid var(--accent);
@@ -266,14 +300,17 @@
     .sort-game { grid-template-columns: 1fr; }
     .hero h1 { font-size: 1.6em; }
   }
-  /* Feudal interactive tooltip */
-  .feudal-tooltip {
-    position: absolute; background: #1e293b; color: #f8fafc; padding: 12px 16px;
-    border-radius: 8px; font-size: 13px; line-height: 1.6; max-width: 280px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.3); z-index: 50; display: none;
-    pointer-events: none;
+  /* Feudal interactive info panel */
+  .feudal-info-panel {
+    background: #1e293b; color: #f8fafc; padding: 16px 20px;
+    border-radius: 10px; font-size: 14px; line-height: 1.7; max-width: 640px;
+    margin: 12px auto 0; text-align: left;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15); display: none;
+    transition: all 0.3s;
   }
-  .feudal-tooltip.show { display: block; }
+  .feudal-info-panel.show { display: block; }
+  .feudal-info-panel .info-level { color: #fbbf24; font-weight: 700; font-size: 15px; margin-bottom: 6px; }
+  .feudal-node.active rect { stroke: #fbbf24; stroke-width: 3; filter: drop-shadow(0 0 6px rgba(251,191,36,0.5)); }
   /* ConcepTest */
   .concept-test {
     background: linear-gradient(135deg, #f5f3ff, #ede9fe); border: 2px solid #7c3aed;
@@ -435,7 +472,10 @@
         </g>
         <line x1="350" y1="230" x2="350" y2="270" stroke="#a8a29e" stroke-width="2" stroke-dasharray="4"/>
       </svg>
-      <div class="feudal-tooltip" id="feudalTooltip"></div>
+      <div class="feudal-info-panel" id="feudalInfoPanel">
+        <div class="info-level" id="feudalInfoLevel"></div>
+        <div id="feudalInfoText"></div>
+      </div>
     </div>
 
     <!-- ConcepTest -->
@@ -516,6 +556,14 @@
         <button class="map-era-btn" data-era="ce-1300">1300 年</button>
       </div>
       <div class="map-container" id="medievalMap"></div>
+      <div class="map-era-desc" id="mapEraDesc">
+        <!-- JS 动态填充 -->
+      </div>
+      <div class="map-legend">
+        <div class="map-legend-item"><div class="city-marker-icon" style="background:#ef4444"></div>重要城市</div>
+        <div class="map-legend-item"><div class="map-legend-line" style="background:#6366f1;border-radius:1px;"></div>疆域边界</div>
+        <div class="map-legend-item"><i style="font-style:normal;color:#94a3b8">点击城市标记查看详情，悬停区域高亮</i></div>
+      </div>
     </div>
 
     <!-- Byzantine vs Western Europe -->
@@ -793,83 +841,175 @@ const ERA_COLORS = {
   'ce-1300':  { fill: '#ef4444', stroke: '#dc2626' }
 };
 
+// 各时代说明文字
+const ERA_DESC = {
+  'ce-500': '<span class="era-year-tag">约公元 500 年</span><strong>西罗马灭亡后的欧洲</strong>：日耳曼诸王国（东哥特、西哥特、法兰克、汪达尔）瓜分了西罗马帝国领土。拜占庭帝国（东罗马）在君士坦丁堡延续着罗马法统。基督教正在向日耳曼人传播，教皇的权威逐步上升。',
+  'ce-800': '<span class="era-year-tag">约公元 800 年</span><strong>查理曼帝国与阿拉伯帝国的对峙</strong>：法兰克国王查理曼被教皇加冕为"罗马人的皇帝"，加洛林帝国达到鼎盛——几乎统一了西欧。同时，阿拉伯帝国（阿拔斯王朝）控制了西班牙和地中海南部，伊斯兰文明进入黄金时代。',
+  'ce-1000': '<span class="era-year-tag">约公元 1000 年</span><strong>封建制度全面确立</strong>：加洛林帝国分裂为法兰西、神圣罗马帝国（德意志）、意大利等封建王国。"诺曼征服"将法国的封建制度带到英国（1066年）。北欧维京人逐渐定居并改信基督教，形成斯堪的纳维亚各国。',
+  'ce-1200': '<span class="era-year-tag">约公元 1200 年</span><strong>中世纪盛期与蒙古威胁</strong>：十字军东征使欧洲与东方频繁接触，威尼斯、热那亚等地中海商业城市空前繁荣。大学在欧洲各地兴起（博洛尼亚、巴黎、牛津）。成吉思汗及其子孙的蒙古大军从东方压境，即将改变欧亚格局。',
+  'ce-1300': '<span class="era-year-tag">约公元 1300 年</span><strong>蒙古治下的欧亚通道与危机前夜</strong>：蒙古四大汗国横跨欧亚，丝绸之路畅通无阻——马可·波罗正是此时从中国返回欧洲。但好景不长：黑死疫（1347年起）将夺走欧洲三分之一人口，百年战争英法开战，中世纪走向终结。'
+};
+
+// 关键城市标注 [lat, lng, 中文名, 英文名, 描述]
+const CITIES = {
+  'ce-500': [
+    [41.90, 12.50, '罗马', 'Rome', '西罗马帝国故都，476年被废黜后成为宗教中心'],
+    [41.01, 28.98, '君士坦丁堡', 'Constantinople', '东罗马（拜占庭）首都，50万人口的超级大都市'],
+    [48.85, 2.35, '巴黎', 'Paris', '法兰克王国的核心区域，未来的法兰西首都'],
+    [43.30, 5.37, '马赛', 'Marseille', '地中海贸易港口，连接东西方的枢纽'],
+    [39.47, -0.38, '托莱多', 'Toledo', '西哥特王国首都（伊比利亚半岛）']
+  ],
+  'ce-800': [
+    [41.90, 12.50, '罗马', 'Rome', '教皇驻地，800年教皇利奥三世为查理曼加冕'],
+    [41.01, 28.98, '君士坦丁堡', 'Constantinople', '拜占庭帝国首都，艾琳女皇统治时期'],
+    [49.61, 6.13, '亚琛', 'Aachen', '查理曼帝国的皇宫所在地，加洛林文艺复兴中心'],
+    [37.88, -4.78, '科尔多瓦', 'Cordoba', '倭马亚王朝首都，当时世界最繁华的城市之一（人口50万）'],
+    [51.51, -0.13, '伦敦', 'London', '威塞克斯王国领地，阿尔弗雷大帝抵抗丹麦人的基地'],
+    [48.21, 16.37, '维也纳', 'Vienna', '查理曼帝国东部边陲，对抗阿瓦尔人的前线']
+  ],
+  'ce-1000': [
+    [48.86, 2.35, '巴黎', 'Paris', '卡佩王朝都城，法兰西王国政治中心'],
+    [51.51, -0.13, '伦敦', 'London', '诺曼征服前的英格兰，威撒克斯王朝末年'],
+    [55.68, 37.62, '基辅', 'Kiev', "罗斯公国首都，'罗斯诸城之母'，连接拜占庭与北欧"],
+    [41.01, 28.98, '君士坦丁堡', 'Constantinople', '巴西尔二世的拜占庭，军事力量巅峰'],
+    [45.44, 12.33, '威尼斯', 'Venice', '崛起中的海上共和国，拜占庭与西方贸易的中介'],
+    [64.15, -21.94, '雷克雅未克', 'Reykjavik', '维京人定居冰岛，北欧基督教化进程中']
+  ],
+  'ce-1200': [
+    [48.86, 2.35, '巴黎', '巴黎', '腓力二世建設中的法兰西王国首都'],
+    [45.44, 12.33, '威尼斯', 'Venezia', '第四次十字军从这里出发（1202年），海上霸主'],
+    [43.77, 11.25, '佛罗伦萨', 'Firenze', '羊毛纺织业兴起，文艺复兴的前奏'],
+    [51.51, -0.13, '伦敦', 'Londra', '约翰王统治时期，《大宪章》签署前夕（1215年）'],
+    [40.42, -3.70, '托莱多', 'Toledo', '被基督徒收复（1085），翻译运动中心—阿拉伯学问传入欧洲'],
+    [41.01, 28.98, '君士坦丁堡', 'Costantinopoli', '第四次十字军劫掠（1204年），拜由庭严重衰落'],
+    [55.76, 37.62, '莫斯科', 'Mosca', '莫斯科公国兴起，弗拉基米尔大公时期']
+  ],
+  'ce-1300': [
+    [45.44, 12.33, '威尼斯', 'Venezia', '马可·波罗故乡（1295年返回），丝绸之路上最富有的商业共和国'],
+    [43.77, 11.25, '佛罗伦萨', 'Firenze', '但丁创作《神曲》（1308-1321），人文主义萌芽'],
+    [48.86, 2.35, '巴黎', 'Parigi', '腓力四世与教皇博尼法斯八世冲突，圣殿骑士团覆灭前夕（1307）'],
+    [51.51, -0.13, '伦敦', 'Londra', '百年战争爆发前夕（1337），爱德华三世的英格兰'],
+    [41.01, 28.98, '君士坦丁堡', 'Costantinopoli', '拜占庭帝国苟延残喘，1453年将被奥斯曼攻陷'],
+    [47.60, 19.05, '布达', 'Buda', '匈牙利抵御蒙古入侵的前线'],
+    [39.97, 32.86, '安卡拉', 'Ankara', '1402年帖木儿在此击败奥斯曼，暂时延缓了拜占庭的灭亡']
+  ]
+};
+
 const map = L.map('medievalMap', {
-  center: [48, 15], zoom: 4,
-  maxBounds: [[20, -20], [70, 80]], zoomControl: true,
-  minZoom: 3, maxZoom: 7
+  center: [48, 15], zoom: 3,
+  crs: L.CRS.EPSG4326,
+  maxBounds: [[-90, -180], [90, 180]], zoomControl: true,
+  minZoom: 2, maxZoom: 8
 });
 
-// 初始聚焦欧洲核心区域
 map.fitBounds([[35, -10], [65, 45]]);
 
-// Local hillshade base (必须使用 [[-90,-180],[90,180]] 与 GeoJSON WGS84 坐标对齐)
-L.imageOverlay('./assets/maps/hillshade.jpg', [[-90, -180], [90, 180]], { opacity: 0.5 }).addTo(map);
+L.imageOverlay('./assets/maps/hillshade.jpg', [[-90, -180], [90, 180]], { opacity: 0.5, interactive: false }).addTo(map);
 
 let currentEraLayer = null;
+let currentCityLayer = null;
 let currentEra = 'ce-500';
 
 function loadEra(era) {
   if (currentEraLayer) { map.removeLayer(currentEraLayer); }
+  if (currentCityLayer) { map.removeLayer(currentCityLayer); }
   currentEra = era;
   const cfg = ERA_FILES[era];
   const colors = ERA_COLORS[era];
+
+  // 更新时代说明面板
+  document.getElementById('mapEraDesc').innerHTML = ERA_DESC[era] || '';
+
+  // 加载 GeoJSON 边界
   fetch(cfg.file)
     .then(r => r.json())
     .then(data => {
       currentEraLayer = L.geoJSON(data, {
         style: feature => ({
-          fillColor: colors.fill, fillOpacity: 0.35,
-          color: colors.stroke, weight: 1.5, opacity: 0.8
+          fillColor: colors.fill, fillOpacity: 0.25,
+          color: colors.stroke, weight: 1.2, opacity: 0.7
         }),
         onEachFeature: (feature, layer) => {
+          // 悬停高亮效果
+          layer.on({
+            mouseover: function(e) {
+              e.target.setStyle({ weight: 3, color: '#fbbf24', fillOpacity: 0.45 });
+              if (!L.Browser.ie && !L.Browser.opus) e.target.bringToFront();
+            },
+            mouseout: function(e) {
+              currentEraLayer.resetStyle(e.target);
+            }
+          });
           if (feature.properties) {
-            const name = feature.properties.name || feature.properties.NAME || feature.properties.title || '';
-            const desc = feature.properties.description || '';
+            const name = feature.properties.ABBREVN || feature.properties.name || feature.properties.NAME || feature.properties.title || '';
+            const partof = feature.properties.PARTOF || '';
             if (name) {
-              layer.bindPopup(`<b>${name}</b>${desc ? '<br>' + desc : ''}`);
+              layer.bindPopup(`<b style="color:#fbbf24">${name}</b>${partof ? '<br><i>隶属于：' + partof + '</i>' : ''}`);
             }
           }
         }
       }).addTo(map);
     })
     .catch(err => console.warn('Map load error:', err));
-  // Update buttons
+
+  // 添加城市标记层
+  const cities = CITIES[era] || [];
+  const cityGroup = L.layerGroup();
+  cities.forEach(([lat, lng, cn, en, desc]) => {
+    const icon = L.divIcon({
+      className: '', html: `<div class="city-marker-icon" style="background:${colors.stroke}"></div>`,
+      iconSize: [8, 8], iconAnchor: [4, 4]
+    });
+    const marker = L.marker([lat, lng], { icon })
+      .bindPopup(`<b style="color:#fbbf24;font-size:14px">📍 ${cn}</b> <span style="color:#94a3b8;font-size:11px">${en}</span><br><div style="margin-top:6px;color:#e2e8f0;font-size:12px;line-height:1.6">${desc}</div>`);
+    cityGroup.addLayer(marker);
+  });
+  currentCityLayer = cityGroup.addTo(map);
+
   document.querySelectorAll('.map-era-btn').forEach(b => b.classList.remove('active'));
   document.querySelector(`.map-era-btn[data-era="${era}"]`).classList.add('active');
 }
 
-// Era button listeners
 document.querySelectorAll('.map-era-btn').forEach(btn => {
   btn.addEventListener('click', () => loadEra(btn.dataset.era));
 });
 
-// Load initial era
 loadEra('ce-500');
 
 // ═══════════════════════════════════════════
-// Feudal Hierarchy Tooltip
+// Feudal Hierarchy Interactive (click to show info)
 // ═══════════════════════════════════════════
 const FEUDAL_INFO = {
-  king: '👑 国王：名义上的最高统治者，但实际权力有限——"我的附庸的附庸，不是我的附庸"',
-  lord: '🏰 领主/主教/伯爵：从国王获封土地，在自己的领地上几乎拥有全部权力——司法、税收、军事',
-  knight: '⚔️ 骑士：从领主获封小块土地，以军事服役为交换条件，是封建制度的基础武力'
+  king: { level: '👑 国王', text: '名义上的最高统治者，但实际权力有限——"我的附庸的附庸，不是我的附庸"。国王只能直接管辖自己的领地，对封臣的封臣没有约束力。' },
+  lord: { level: '🏰 领主/主教/伯爵', text: '从国王获封土地，在自己的领地上几乎拥有全部权力——司法、税收、军事。主教和修道院长也是大领主，教会拥有欧洲三分之一的土地。' },
+  knight: { level: '⚔️ 骑士', text: '从领主获封小块土地（骑士采邑），以军事服役为交换条件，是封建制度的基础武力。骑士也有自己的小庄园，由农奴耕种。' }
 };
 
-const tooltip = document.getElementById('feudalTooltip');
+const infoPanel = document.getElementById('feudalInfoPanel');
+const infoLevel = document.getElementById('feudalInfoLevel');
+const infoText = document.getElementById('feudalInfoText');
+let activeNode = null;
+
 document.querySelectorAll('.feudal-node').forEach(node => {
-  node.addEventListener('mouseenter', e => {
+  node.addEventListener('click', () => {
     const level = node.dataset.level;
-    if (FEUDAL_INFO[level]) {
-      tooltip.textContent = FEUDAL_INFO[level];
-      tooltip.classList.add('show');
+    if (!FEUDAL_INFO[level]) return;
+    // 如果点击同一个节点，切换显示/隐藏
+    if (activeNode === node) {
+      node.classList.remove('active');
+      infoPanel.classList.remove('show');
+      activeNode = null;
+      return;
     }
+    // 清除之前的选中状态
+    if (activeNode) activeNode.classList.remove('active');
+    // 显示信息
+    node.classList.add('active');
+    activeNode = node;
+    infoLevel.textContent = FEUDAL_INFO[level].level;
+    infoText.textContent = FEUDAL_INFO[level].text;
+    infoPanel.classList.add('show');
   });
-  node.addEventListener('mousemove', e => {
-    const rect = node.closest('.feudal-svg-wrap').getBoundingClientRect();
-    tooltip.style.left = (e.clientX - rect.left + 10) + 'px';
-    tooltip.style.top = (e.clientY - rect.top - 40) + 'px';
-  });
-  node.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
 });
 
 // ═══════════════════════════════════════════

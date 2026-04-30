@@ -4228,7 +4228,7 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
 □ 35. 认知负荷总控（⛔ v7.1 新增，Sweller）：是否存在单卡超过 100 字的"信息轰炸"？是否存在一个模块内引入 2 个以上全新概念的情况？外在认知负荷是否已最小化（无装饰性动画/无无关背景音/无冗余图标）？
      → ✅/❌ ___
 □ 36. 地图规范（⛔ v7.3 更新，历史/地理课必检）：地图是否使用 `assets/maps/` 本地地图资源（地形底图 GeoJSON + 行政边界 + 本地地形瓦片）？是否严禁使用在线 XYZ 瓦片切片（CartoDB/Esri/OSM）？GeoJSON 历史边界是否正确加载？是否参照 `templates/map-section-template.html` 和 `historical-maps.md` v7.2 规范？**⛔ v7.3 新增三子项**：
-     - 36a. 底图对齐：使用 `L.imageOverlay` 时，bounds **必须**为 `[[-90,-180],[90,180]]`（与 WGS84 GeoJSON 坐标系对齐），禁止使用 `[[-60,-180],[85,180]]` 等截断范围（会导致 GeoJSON 边界与底图错位）
+     - 36a. 底图对齐（⛔ v7.4 更新）：使用 `L.imageOverlay` 叠加等距圆柱投影（Equirectangular/Plate Carrée）底图（如 hillshade.jpg）时，**必须**同时满足：(1) bounds 为 `[[-90,-180],[90,180]]`；(2) Leaflet map 初始化**必须**设置 `crs: L.CRS.EPSG4326`（WGS84 Plate Carrée），**禁止**使用默认 Mercator（EPSG:3857）。原因：hillshade.jpg 是等距圆柱投影，Leaflet 默认 Mercator 会在高纬度拉伸图像，导致 GeoJSON 边界与底图严重错位。仅设 bounds 不设 CRS 无法解决对齐问题
      - 36b. 初始聚焦：地图初始视图**必须**用 `fitBounds` 或 `setView` 聚焦教学核心区域（如欧洲 `[35,-10],[65,45]`），禁止停留在 `[0,0]` 世界中心
      - 36c. 互动完备：拖拽分类等互动组件必须同时支持**点击选择+点击放置**和**HTML5 拖拽（dragstart/dragover/drop）**，已放置元素点击可返回
      → ✅/❌/N/A（非历史/地理课件） ___
