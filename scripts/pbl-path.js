@@ -14,25 +14,15 @@ class PBLPathBuilder {
 
     // LLM 服务商预设（复用 AI 学伴架构）
     this.providers = [
-      { id: 'openrouter-free', name: 'OpenRouter（免费模型，32个）', baseUrl: 'https://openrouter.ai/api/v1', model: 'openrouter/free', models: [
-        'openrouter/free',
-        'google/lyria-3-pro-preview','google/lyria-3-clip-preview',
-        'inclusionai/ling-2.6-1t:free','tencent/hy3-preview:free',
-        'google/gemma-4-26b-a4b-it:free','google/gemma-4-31b-it:free',
-        'nvidia/nemotron-3-super-120b-a12b:free','qwen/qwen3-next-80b-a3b-instruct:free','qwen/qwen3-coder:free',
-        'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free','nvidia/nemotron-3-nano-30b-a3b:free',
-        'minimax/minimax-m2.5:free',
-        'poolside/laguna-xs.2:free','poolside/laguna-m.1:free',
-        'openai/gpt-oss-120b:free','openai/gpt-oss-20b:free',
+      { id: 'openrouter-free', name: 'OpenRouter（默认免费最强 · 内置专用 Key）', baseUrl: 'https://openrouter.ai/api/v1', model: 'openai/gpt-oss-120b:free', models: [
+        'openai/gpt-oss-120b:free',
+        'openai/gpt-oss-20b:free',
+        'tencent/hy3-preview:free',
+        'qwen/qwen3-next-80b-a3b-instruct:free',
+        'qwen/qwen3-coder:free',
+        'meta-llama/llama-3.3-70b-instruct:free',
         'z-ai/glm-4.5-air:free',
-        'google/gemma-3-27b-it:free',
-        'meta-llama/llama-3.2-3b-instruct:free','nousresearch/hermes-3-llama-3.1-405b:free',
-        'nvidia/nemotron-nano-12b-v2-vl:free','nvidia/nemotron-nano-9b-v2:free',
-        'baidu/qianfan-ocr-fast:free','meta-llama/llama-3.3-70b-instruct:free',
-        'liquid/lfm-2.5-1.2b-thinking:free','liquid/lfm-2.5-1.2b-instruct:free',
-        'cognitivecomputations/dolphin-mistral-24b-venice-edition:free',
-        'google/gemma-3-4b-it:free','google/gemma-3-12b-it:free',
-        'google/gemma-3n-e2b-it:free','google/gemma-3n-e4b-it:free'
+        'google/gemma-3-27b-it:free'
       ] },
       { id: 'deepseek', name: 'DeepSeek', baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-chat', models: ['deepseek-chat','deepseek-reasoner'] },
       { id: 'moonshot', name: '月之暗面 Kimi', baseUrl: 'https://api.moonshot.cn/v1', model: 'moonshot-v1-8k', models: ['moonshot-v1-8k','moonshot-v1-32k','moonshot-v1-128k','kimi-latest'] },
@@ -243,9 +233,9 @@ class PBLPathBuilder {
 
   // ─── LLM 配置管理 ─────────────────────────────
 
-  // 默认内置 Key（开箱即用）
-  static BUILTIN_KEY = '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';
-  static BUILTIN_MODEL = 'qwen/qwen3-coder:free';
+  // 默认 OpenRouter 专用 Key（开箱即用）
+  static BUILTIN_KEY = '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';
+  static BUILTIN_MODEL = 'openai/gpt-oss-120b:free';
   static BUILTIN_BASE_URL = 'https://openrouter.ai/api/v1';
 
   _loadLLMConfig() {
@@ -253,11 +243,15 @@ class PBLPathBuilder {
       const saved = localStorage.getItem('teachany_pbl_config');
       if (saved) {
         const cfg = JSON.parse(saved);
-        this._llmConfig = cfg;
-        return;
+        if (cfg.apiKey && String(cfg.apiKey).startsWith('sk-or-v1-a4d900')) {
+          localStorage.removeItem('teachany_pbl_config');
+        } else {
+          this._llmConfig = cfg;
+          return;
+        }
       }
     } catch (e) { /* ignore */ }
-    // 默认配置：内置 Key，开箱即用
+    // 默认配置：OpenRouter 专用 Key，开箱即用
     this._llmConfig = {
       providerId: 'openrouter-free',
       apiKey: PBLPathBuilder.BUILTIN_KEY,
@@ -292,11 +286,11 @@ class PBLPathBuilder {
     const cfg = this.getLLMConfig();
     if (!cfg.apiKey) throw new Error('请先配置 API Key（点击右上角 ⚙️ 设置）');
 
-    const endpoint = cfg.baseUrl.replace(/\/$/, '') + '/chat/completions';
+    const endpoint = String(cfg.baseUrl || '').replace(/\/$/, '') + '/chat/completions';
     const headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + cfg.apiKey
+      'Content-Type': 'application/json'
     };
+    if (cfg.apiKey) headers.Authorization = 'Bearer ' + cfg.apiKey;
 
     // OpenRouter 专属 header
     if (cfg.baseUrl.includes('openrouter.ai')) {
@@ -332,7 +326,8 @@ class PBLPathBuilder {
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
 
-      const content = data.choices?.[0]?.message?.content || '';
+      const message = data.choices?.[0]?.message || {};
+      const content = message.content || message.reasoning || message.reasoning_content || '';
       return content;
     } finally {
       clearTimeout(timeout);

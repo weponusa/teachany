@@ -1,15 +1,18 @@
 /*!
- * TeachAny AI 学伴（v7.0）
+ * TeachAny AI 学伴（v7.2.1）
  *
  * 特性：
  *   - 独立模块，不依赖特定课件
- *   - 默认预填 OpenRouter + Tencent Hy3 Preview（开箱即用，无需配置）
+ *   - 默认使用 OpenRouter 专用 Key + 免费高质量模型（开箱即用）
+ *   - 配置弹窗：服务商一键切换 → 模型下拉选择（每个服务商列出推荐模型 + 自定义）
+ *   - 默认内置专用 Key，同时支持用户填自己的 OpenAI 兼容 API Key
+ *   - 当所选服务商需要 Key 时，点发送会自动弹出配置框，填完 Key 自动续发消息
  *   - API 配置可动态替换（localStorage 或开发者接口）
  *   - 中英文界面一键切换（localStorage 持久化）
  *   - OpenAI 兼容 API（baseUrl + apiKey + model）
- *   - 支持流式（SSE）答复
+ *   - 支持流式（SSE）答复，兼容 reasoning 字段
  *   - 自动从 IntersectionObserver 或 URL hash 抓取当前 section 作为上下文
- *   - 答复难度按 grade 分级（小学 2-3 句 / 初中 3-5 句 / 高中 5-8 句）
+ *   - System Prompt 含学段/学科/课标/知识难度边界，按学段定制语气和长度
  *
  * 安全：
  *   - 不发送任何遥测数据
@@ -19,6 +22,9 @@
 (function () {
   'use strict';
 
+  // 版本标识 - 加载时立即打印到 console，方便排查浏览器缓存问题
+  console.log('%c[TeachAnyTutor] v7.2.1 loaded - default model: openai/gpt-oss-120b:free', 'color:#10b981;font-weight:bold;');
+
   // ───────────────────────────────────────────────────────
   // 1. 配置与默认值
   // ───────────────────────────────────────────────────────
@@ -26,23 +32,136 @@
   const HISTORY_KEY = 'teachany_tutor_history';
   const LANG_KEY = 'teachany_tutor_lang';
 
-  // 默认配置：OpenRouter + Qwen3 Coder（开箱即用，免费最强）
+  // 默认配置：OpenRouter 专用 Key + 当前实测可用的高质量免费模型（开箱即用）
   const DEFAULTS = {
     baseUrl: 'https://openrouter.ai/api/v1',
-    apiKey: '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',
-    model: 'qwen/qwen3-coder:free'
+    apiKey: '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',
+    model: 'openai/gpt-oss-120b:free'
   };
 
   // 服务商预设（配置弹窗一键填表）
+  // 每个预设包含 baseUrl + 推荐模型 + 该服务商的可选模型列表
   const PRESETS = [
-    { id: 'openrouter-free', name: '🌐 OpenRouter · Qwen3 Coder（默认免费最强）', baseUrl: 'https://openrouter.ai/api/v1', model: 'qwen/qwen3-coder:free' },
-    { id: 'openrouter-hy3', name: '🌐 OpenRouter · Tencent Hy3（免费）', baseUrl: 'https://openrouter.ai/api/v1', model: 'qwen/qwen3-coder:free' },
-    { id: 'deepseek',   name: '🇨🇳 DeepSeek（推荐 · 便宜稳定）', baseUrl: 'https://api.deepseek.com/v1',     model: 'deepseek-chat' },
-    { id: 'moonshot',   name: '🇨🇳 Moonshot Kimi（中文好）',     baseUrl: 'https://api.moonshot.cn/v1',      model: 'moonshot-v1-8k' },
-    { id: 'openrouter', name: '🌐 OpenRouter（多模型聚合）',     baseUrl: 'https://openrouter.ai/api/v1',    model: 'deepseek/deepseek-chat' },
-    { id: 'openai',     name: '🌐 OpenAI（官方）',                baseUrl: 'https://api.openai.com/v1',       model: 'gpt-4o-mini' },
-    { id: 'paratera',   name: '🇨🇳 并行超算（机构）',             baseUrl: 'https://llmapi.paratera.com/v1',  model: 'DeepSeek-V3.2' },
-    { id: 'custom',     name: '⚙️  自定义（任何 OpenAI 兼容 API）', baseUrl: '', model: '' }
+    {
+      id: 'openrouter-hy3',
+      name: '🔝 OpenRouter（默认免费最强 · 内置专用 Key）',
+      baseUrl: 'https://openrouter.ai/api/v1',
+      model: 'openai/gpt-oss-120b:free',
+      models: [
+        'openai/gpt-oss-120b:free',
+        'openai/gpt-oss-20b:free',
+        'meta-llama/llama-3.3-70b-instruct:free',
+        'deepseek/deepseek-chat-v3.1:free',
+        'qwen/qwen3-next-80b-a3b-instruct:free',
+        'google/gemma-3-27b-it:free',
+        'z-ai/glm-4.5-air:free',
+        'tencent/hy3-preview:free'
+      ],
+      keyHint: '已内置 TeachAny 专用 OpenRouter Key；你也可以粘贴自己的 Key 覆盖。默认模型 openai/gpt-oss-120b:free。'
+    },
+    {
+      id: 'deepseek',
+      name: '🇨🇳 DeepSeek（最便宜 · 中文好）',
+      baseUrl: 'https://api.deepseek.com/v1',
+      model: 'deepseek-chat',
+      models: ['deepseek-chat', 'deepseek-reasoner'],
+      keyHint: 'DeepSeek Key 申请：https://platform.deepseek.com/api_keys'
+    },
+    {
+      id: 'moonshot',
+      name: '🇨🇳 月之暗面 Kimi（中文长文本）',
+      baseUrl: 'https://api.moonshot.cn/v1',
+      model: 'moonshot-v1-8k',
+      models: ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k', 'kimi-k2-0711-preview'],
+      keyHint: 'Moonshot Key 申请：https://platform.moonshot.cn/console/api-keys'
+    },
+    {
+      id: 'qwen',
+      name: '🇨🇳 阿里通义千问（百炼）',
+      baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+      model: 'qwen-plus',
+      models: ['qwen-plus', 'qwen-max', 'qwen-turbo', 'qwen3-235b-a22b-instruct-2507', 'qwen3-coder-plus'],
+      keyHint: '通义 Key 申请：https://bailian.console.aliyun.com/?apiKey=1'
+    },
+    {
+      id: 'zhipu',
+      name: '🇨🇳 智谱 AI（GLM 系列）',
+      baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+      model: 'glm-4-flash',
+      models: ['glm-4-flash', 'glm-4-plus', 'glm-4-air', 'glm-4.5', 'glm-4.6', 'glm-z1-air'],
+      keyHint: '智谱 Key 申请：https://open.bigmodel.cn/usercenter/apikeys（GLM-4-Flash 免费）'
+    },
+    {
+      id: 'openrouter',
+      name: '🌐 OpenRouter（多模型聚合 · 付费模型）',
+      baseUrl: 'https://openrouter.ai/api/v1',
+      model: 'anthropic/claude-3.5-sonnet',
+      models: [
+        'anthropic/claude-3.5-sonnet',
+        'anthropic/claude-3-opus',
+        'openai/gpt-4o',
+        'openai/gpt-4o-mini',
+        'google/gemini-2.5-pro',
+        'deepseek/deepseek-chat-v3.1',
+        'tencent/hy3-preview:free'
+      ],
+      keyHint: 'OpenRouter Key 申请：https://openrouter.ai/keys'
+    },
+    {
+      id: 'openai',
+      name: '🌐 OpenAI（官方）',
+      baseUrl: 'https://api.openai.com/v1',
+      model: 'gpt-4o-mini',
+      models: ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'],
+      keyHint: 'OpenAI Key 申请：https://platform.openai.com/api-keys'
+    },
+    {
+      id: 'anthropic',
+      name: '🌐 Anthropic Claude（官方）',
+      baseUrl: 'https://api.anthropic.com/v1',
+      model: 'claude-3-5-sonnet-20241022',
+      models: ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022', 'claude-3-opus-20240229'],
+      keyHint: 'Anthropic Key 申请：https://console.anthropic.com/settings/keys'
+    },
+    {
+      id: 'gemini',
+      name: '🌐 Google Gemini（官方）',
+      baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+      model: 'gemini-2.0-flash',
+      models: ['gemini-2.0-flash', 'gemini-2.5-pro', 'gemini-1.5-pro', 'gemini-1.5-flash'],
+      keyHint: 'Gemini Key 申请：https://aistudio.google.com/apikey'
+    },
+    {
+      id: 'siliconflow',
+      name: '🇨🇳 硅基流动 SiliconFlow（多开源模型）',
+      baseUrl: 'https://api.siliconflow.cn/v1',
+      model: 'Qwen/Qwen2.5-7B-Instruct',
+      models: [
+        'Qwen/Qwen2.5-7B-Instruct',
+        'Qwen/Qwen2.5-72B-Instruct',
+        'deepseek-ai/DeepSeek-V3',
+        'deepseek-ai/DeepSeek-R1',
+        'meta-llama/Meta-Llama-3.1-70B-Instruct',
+        'THUDM/glm-4-9b-chat'
+      ],
+      keyHint: '硅基流动 Key 申请：https://cloud.siliconflow.cn/account/ak（送 14 元额度）'
+    },
+    {
+      id: 'paratera',
+      name: '🇨🇳 并行超算（机构）',
+      baseUrl: 'https://llmapi.paratera.com/v1',
+      model: 'DeepSeek-V3.2',
+      models: ['DeepSeek-V3.2', 'GLM-4.7', 'GLM-5', 'Kimi-K2', 'MiniMax-M2.5', 'Qwen3-235B-A22B-Instruct-2507', 'ERNIE-5.0-Thinking-Preview'],
+      keyHint: '并行超算 Paratera 仅限机构用户'
+    },
+    {
+      id: 'custom',
+      name: '⚙️  自定义（任何 OpenAI 兼容 API）',
+      baseUrl: '',
+      model: '',
+      models: [],
+      keyHint: '填入任意 OpenAI 兼容 API 的 Base URL、Key、模型名'
+    }
   ];
 
   // ───────────────────────────────────────────────────────
@@ -59,12 +178,17 @@
       contextLabel: '当前学习：',
       contextLoading: '定位中...',
       configTitle: '🎓 启用你的 AI 学伴',
-      configSubtitle: '选一个 AI 服务商，填上 API Key 就能用。Key 仅保存在你的浏览器里。',
-      presetLabel: '选择服务商（一键填默认值）',
-      baseUrlLabel: 'API Base URL',
-      apiKeyLabel: 'API Key',
-      modelLabel: '模型',
-      privacy: '🔒 你的 API Key 仅保存在此浏览器的 localStorage，关闭页面或清浏览器数据后失效。TeachAny 不会收集、上传、或把 Key 发给任何第三方。',
+      configSubtitle: '默认已配置 OpenRouter 专用 Key，可直接用；也可以切换模型/服务商并填入你自己的 API Key。Key 仅保存在你的浏览器本地。',
+      presetLabel: '① 选择 AI 服务商（已预填 Base URL 和模型列表）',
+      baseUrlLabel: 'API Base URL（高级，一般无需修改）',
+      apiKeyLabel: '③ API Key（默认已预填，可替换）',
+      apiKeyPlaceholder: '默认使用内置专用 Key；也可粘贴你自己的 sk-... Key',
+      modelLabel: '② 选择模型（可选自定义）',
+      modelPlaceholder: '输入自定义模型名',
+      customModelTitle: '改用自定义模型名',
+      customModelOption: '✏️ 自定义模型名…',
+      advancedLabel: '⚙️ 高级设置（修改 Base URL）',
+      privacy: '🔒 API Key 仅保存在此浏览器的 localStorage。默认使用 TeachAny 专用 Key；你填入自己的 Key 后只在本机生效。',
       cancel: '取消',
       save: '保存并开始对话',
       settings: '⚙️',
@@ -87,12 +211,17 @@
       contextLabel: 'Studying: ',
       contextLoading: 'Locating...',
       configTitle: '🎓 Set Up Your AI Tutor',
-      configSubtitle: 'Choose a provider and enter your API Key. Key is only stored in your browser.',
-      presetLabel: 'Choose provider (auto-fill defaults)',
-      baseUrlLabel: 'API Base URL',
-      apiKeyLabel: 'API Key',
-      modelLabel: 'Model',
-      privacy: '🔒 Your API Key is stored only in this browser\'s localStorage. It is cleared when you close the page or clear browser data. TeachAny never collects, uploads, or shares your Key.',
+      configSubtitle: 'The default OpenRouter key is ready to use. You can switch models/providers and paste your own key, stored only in this browser.',
+      presetLabel: '① Choose AI Provider (Base URL & model list pre-filled)',
+      baseUrlLabel: 'API Base URL (advanced, usually no need to change)',
+      apiKeyLabel: '③ API Key (pre-filled by default, replaceable)',
+      apiKeyPlaceholder: 'Default key is pre-filled; paste your own sk-... key to override',
+      modelLabel: '② Choose Model (or customize)',
+      modelPlaceholder: 'Enter custom model name',
+      customModelTitle: 'Switch to custom model name',
+      customModelOption: '✏️ Custom model name…',
+      advancedLabel: '⚙️ Advanced (change Base URL)',
+      privacy: '🔒 Your API Key is stored only in this browser. The default TeachAny OpenRouter key is ready to use; your own key only applies locally.',
       cancel: 'Cancel',
       save: 'Save & Start',
       settings: '⚙️',
@@ -137,7 +266,13 @@
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return null;
       const parsed = JSON.parse(raw);
+      if (parsed.apiKey && String(parsed.apiKey).startsWith('sk-or-v1-a4d900')) return null;
       if (!parsed.apiKey) return null;
+      // v7.1：自检 model 字段合法性，防止旧版本把 PRESETS 的 name（带空格/括号）误存为 model
+      if (parsed.model && /[\s()（）：，,]/.test(parsed.model)) {
+        console.warn('[TeachAnyTutor] Detected invalid model id in localStorage, falling back to DEFAULTS:', parsed.model);
+        parsed.model = DEFAULTS.model;
+      }
       return Object.assign({}, DEFAULTS, parsed);
     } catch (e) {
       return null;
@@ -150,10 +285,16 @@
   }
 
   function saveUserConfig(cfg) {
+    // v7.1：保存前再校验一次 model 字段合法性
+    let modelToSave = (cfg.model || DEFAULTS.model || '').trim();
+    if (/[\s()（）：，,]/.test(modelToSave)) {
+      console.warn('[TeachAnyTutor] Refusing to save invalid model id:', modelToSave);
+      modelToSave = DEFAULTS.model;
+    }
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       baseUrl: cfg.baseUrl || DEFAULTS.baseUrl,
       apiKey: cfg.apiKey || DEFAULTS.apiKey,
-      model: cfg.model || DEFAULTS.model
+      model: modelToSave
     }));
   }
 
@@ -167,14 +308,52 @@
   // ───────────────────────────────────────────────────────
   function readCourseMeta() {
     const fromWindow = window.__TEACHANY_TUTOR_CONFIG__ || {};
+    const grade = Number(fromWindow.grade || document.querySelector('meta[name="teachany-grade"]')?.content || 9);
     return {
       courseTitle: fromWindow.courseTitle || document.title || '本课件',
       subject: fromWindow.subject || (document.querySelector('meta[name="teachany-subject"]')?.content || 'general'),
-      grade: Number(fromWindow.grade || document.querySelector('meta[name="teachany-grade"]')?.content || 9),
+      grade: grade,
+      stage: fromWindow.stage || inferStage(grade),
+      curriculumStandard: fromWindow.curriculumStandard || (document.querySelector('meta[name="teachany-curriculum"]')?.content || ''),
+      knowledgeScope: fromWindow.knowledgeScope || (document.querySelector('meta[name="teachany-scope"]')?.content || ''),
       learningObjectives: Array.isArray(fromWindow.learningObjectives) ? fromWindow.learningObjectives : [],
       getContext: typeof fromWindow.getContext === 'function' ? fromWindow.getContext : defaultGetContext
     };
   }
+
+  // 根据年级推断学段
+  function inferStage(grade) {
+    if (grade <= 6) return 'primary';   // 小学
+    if (grade <= 9) return 'junior';    // 初中
+    if (grade <= 12) return 'senior';   // 高中
+    return 'college';                   // 大学/成人
+  }
+
+  // 学段中文名
+  const STAGE_NAMES = {
+    zh: { primary: '小学', junior: '初中', senior: '高中', college: '大学' },
+    en: { primary: 'Elementary School', junior: 'Junior High', senior: 'Senior High', college: 'College' }
+  };
+
+  // 中国常见学科的课标知识范围（缺省时使用）
+  const SUBJECT_SCOPE = {
+    math: { zh: '义务教育数学课程标准（2022 版）/ 普通高中数学课程标准（2017 版 2020 修订）', en: 'China Math Curriculum Standards' },
+    physics: { zh: '普通高中物理课程标准（2017 版 2020 修订）', en: 'China Physics Curriculum Standards' },
+    chemistry: { zh: '普通高中化学课程标准（2017 版 2020 修订）', en: 'China Chemistry Curriculum Standards' },
+    biology: { zh: '普通高中生物学课程标准（2017 版 2020 修订）', en: 'China Biology Curriculum Standards' },
+    chinese: { zh: '义务教育语文课程标准（2022 版）/ 普通高中语文课程标准（2017 版 2020 修订）', en: 'China Chinese Language Curriculum Standards' },
+    english: { zh: '义务教育英语课程标准（2022 版）/ 普通高中英语课程标准（2017 版 2020 修订）', en: 'China English Curriculum Standards' },
+    history: { zh: '义务教育历史课程标准（2022 版）/ 普通高中历史课程标准（2017 版 2020 修订）', en: 'China History Curriculum Standards' },
+    geography: { zh: '义务教育地理课程标准（2022 版）/ 普通高中地理课程标准（2017 版 2020 修订）', en: 'China Geography Curriculum Standards' },
+    politics: { zh: '普通高中思想政治课程标准（2017 版 2020 修订）', en: 'China Politics Curriculum Standards' },
+    science: { zh: '义务教育科学课程标准（2022 版）', en: 'China Science Curriculum Standards' }
+  };
+
+  const SUBJECT_NAMES_ZH = {
+    math: '数学', physics: '物理', chemistry: '化学', biology: '生物',
+    chinese: '语文', english: '英语', history: '历史', geography: '地理',
+    politics: '政治', science: '科学', general: '通识'
+  };
 
   function defaultGetContext() {
     const current = document.querySelector('section.current-section, section.active, .section.current');
@@ -217,57 +396,160 @@
 
   // ───────────────────────────────────────────────────────
   // 3. 按学段构造 system prompt（根据语言切换）
+  //    包含：学段、年级、学科、课标、知识范围、语气、难度边界
   // ───────────────────────────────────────────────────────
   function buildSystemPrompt(meta) {
-    const grade = meta.grade;
     const lang = getLang();
-    let style;
+    const stage = meta.stage;
+    const grade = meta.grade;
+    const stageName = (STAGE_NAMES[lang] && STAGE_NAMES[lang][stage]) || (lang === 'en' ? 'School' : '学校');
+    const subjectKey = (meta.subject || 'general').toLowerCase();
+    const subjectName = lang === 'zh' ? (SUBJECT_NAMES_ZH[subjectKey] || meta.subject) : meta.subject;
+    const curriculum = meta.curriculumStandard || (SUBJECT_SCOPE[subjectKey] && SUBJECT_SCOPE[subjectKey][lang]) || '';
 
-    if (lang === 'en') {
-      if (grade <= 6) {
-        style = 'You are a friendly elementary school tutor.\n- Answer in 2-3 sentences, use simple language and everyday analogies.\n- Avoid jargon; if you must use a term, explain it immediately.\n- Use concrete examples.\n- Encourage the student to keep asking.';
-      } else if (grade <= 9) {
-        style = 'You are a patient middle school tutor.\n- Answer in 3-5 sentences with clear structure (conclusion first, then reasoning).\n- You may use key terms with brief explanations.\n- Relate to common applications or problem types.\n- Point out any misconceptions briefly.';
-      } else {
-        style = 'You are a rigorous high school tutor.\n- Answer in 5-8 sentences with clear logic and layered reasoning.\n- You may use mathematical symbols, formulas, and English technical terms.\n- Provide derivation hints or problem type classifications when needed.\n- Give targeted reminders for common mistakes.';
+    // 各学段的"角色 + 语气 + 长度 + 难度边界"
+    const STAGE_PROFILE = {
+      zh: {
+        primary: {
+          role: `你是一位亲切耐心的${subjectName}小学学伴`,
+          tone: '语气温暖鼓励，像在和小朋友聊天，多用"你看"、"我们一起"',
+          length: '答复严格控制在 2-3 句话',
+          vocab: '只用日常词汇和生活化比喻，避免任何专业术语；如果必须出现术语，立刻用"就是…"解释',
+          example: '多举具体例子（如水果、玩具、零花钱），不用抽象定义',
+          difficulty: `知识难度严格不超过小学${grade <= 3 ? '低年级' : '中高年级'}水平；不引入初中及以上概念（如负数、未知数方程、化学反应、复杂语法时态）`,
+          encouragement: '结尾用一句话鼓励孩子继续提问'
+        },
+        junior: {
+          role: `你是一位耐心专业的${subjectName}初中学伴`,
+          tone: '语气友善平等，像同学间讨论，可以用"咱们看看"、"想一想"',
+          length: '答复严格控制在 3-5 句话',
+          vocab: '可适度引入关键术语，但每个术语必须用一句话解释；中英文专业词都可以用',
+          example: '结合常见考点、典型题型或生活应用举例',
+          difficulty: `知识难度匹配初中（${grade}年级）课标范围，不超纲到高中竞赛或大学内容；如学生主动问到，可以提一句"这是高中会学的内容，初中只需了解…"`,
+          encouragement: '若发现学生有典型误区（如"负负得正"理解错），简短指出并纠正'
+        },
+        senior: {
+          role: `你是一位严谨深入的${subjectName}高中学伴`,
+          tone: '语气专业平和，像学长指导学弟，可使用"注意"、"关键点是"、"易错点"',
+          length: '答复严格控制在 5-8 句话',
+          vocab: '可使用专业术语、数学符号、公式、英文专业词、化学方程式等',
+          example: '必要时给出推导思路、题型归类、解题模板',
+          difficulty: `知识难度严格匹配高中（${grade <= 10 ? '高一' : grade === 11 ? '高二' : '高三'}）课标；区分"教材要求"、"高考常考"、"竞赛拓展"三档，默认聚焦前两档；不展开大学内容除非学生明确要求`,
+          encouragement: '对易错点和高考考点给针对性提醒'
+        },
+        college: {
+          role: `你是一位专业的${subjectName}大学学伴`,
+          tone: '语气学术严谨，可与学生讨论原理本质',
+          length: '答复控制在 6-10 句话',
+          vocab: '自由使用专业术语、英文文献术语、公式推导',
+          example: '必要时给出参考文献方向或前沿研究',
+          difficulty: '知识难度匹配本科水平；可适度引入研究生级别概念但需说明',
+          encouragement: '鼓励批判性思考，欢迎追问推导细节'
+        }
+      },
+      en: {
+        primary: {
+          role: `You are a friendly and patient ${subjectName} elementary school tutor`,
+          tone: 'Warm and encouraging, like chatting with a child; use "let\'s see" and "you see"',
+          length: 'Answer in strictly 2-3 sentences',
+          vocab: 'Use only everyday words and life analogies; avoid all jargon. If a term is necessary, immediately explain "that means..."',
+          example: 'Use concrete examples (fruits, toys, allowance), not abstract definitions',
+          difficulty: `Knowledge difficulty must not exceed Grade ${grade} elementary level; do NOT introduce middle school concepts (negative numbers, equations, chemical reactions, complex grammar)`,
+          encouragement: 'End with one sentence encouraging the child to ask more'
+        },
+        junior: {
+          role: `You are a patient and professional ${subjectName} junior high tutor`,
+          tone: 'Friendly peer-like, "let\'s look at this", "think about it"',
+          length: 'Answer in strictly 3-5 sentences',
+          vocab: 'May introduce key terms but explain each in one sentence; both Chinese and English terms are fine',
+          example: 'Relate to common exam topics, typical problem types, or real-life applications',
+          difficulty: `Knowledge strictly within junior high (Grade ${grade}) curriculum; do not extend into high school competition or college content. If asked, briefly note "this is high school content, here you only need to know..."`,
+          encouragement: 'If a typical misconception is detected, point it out briefly and correct it'
+        },
+        senior: {
+          role: `You are a rigorous ${subjectName} senior high tutor`,
+          tone: 'Professional and calm, like a senior mentoring a junior; use "note that", "the key point is", "common mistake"',
+          length: 'Answer in strictly 5-8 sentences',
+          vocab: 'May use technical terms, mathematical symbols, formulas, English jargon, chemical equations',
+          example: 'Provide derivation hints, problem type classifications, solution templates when needed',
+          difficulty: `Knowledge strictly matches senior high (Grade ${grade}) curriculum; distinguish "textbook requirement", "common Gaokao/exam", "competition extension"; default to the first two; do not expand into college content unless explicitly requested`,
+          encouragement: 'Give targeted reminders on common mistakes and exam hot points'
+        },
+        college: {
+          role: `You are a professional ${subjectName} college tutor`,
+          tone: 'Academic and rigorous, can discuss principles with the student',
+          length: 'Answer in 6-10 sentences',
+          vocab: 'Freely use technical terms, English literature jargon, formula derivations',
+          example: 'Provide reference directions or frontier research when relevant',
+          difficulty: 'Knowledge matches undergraduate level; may briefly touch graduate concepts with notes',
+          encouragement: 'Encourage critical thinking; welcome follow-up on derivation details'
+        }
       }
-    } else {
-      if (grade <= 6) {
-        style = '你是一位亲切友好的小学学伴。\n- 用 2-3 句话回答，口语化、生活化比喻。\n- 不用专业术语；如果必须提到术语，立刻用"就是..."解释。\n- 多用具体例子，少用抽象定义。\n- 鼓励学生继续提问。';
-      } else if (grade <= 9) {
-        style = '你是一位耐心的初中学伴。\n- 用 3-5 句话回答，结构化表达（先结论再原因）。\n- 可适度引入关键术语，必要时一句话解释。\n- 结合常见应用场景或题型举例。\n- 若学生的问题有深层误区，简短指出。';
-      } else {
-        style = '你是一位严谨的高中学伴。\n- 用 5-8 句话回答，逻辑清晰、有层次。\n- 可使用数学符号、公式和英文专业词。\n- 必要时给出推导思路或题型归类。\n- 对易错点给出针对性提醒。';
-      }
-    }
+    };
 
-    const objectives = meta.learningObjectives.length
+    const profile = (STAGE_PROFILE[lang] && STAGE_PROFILE[lang][stage]) || STAGE_PROFILE[lang].junior;
+
+    const objectivesBlock = meta.learningObjectives.length
       ? (lang === 'en'
         ? `\nLearning objectives:\n${meta.learningObjectives.map(o => '- ' + o).join('\n')}`
-        : `\n学习目标：\n${meta.learningObjectives.map(o => '- ' + o).join('\n')}`)
+        : `\n本课学习目标：\n${meta.learningObjectives.map(o => '- ' + o).join('\n')}`)
+      : '';
+
+    const curriculumBlock = curriculum
+      ? (lang === 'en' ? `\nCurriculum standard: ${curriculum}` : `\n对应课标：${curriculum}`)
+      : '';
+
+    const scopeBlock = meta.knowledgeScope
+      ? (lang === 'en' ? `\nKnowledge scope: ${meta.knowledgeScope}` : `\n知识范围：${meta.knowledgeScope}`)
       : '';
 
     if (lang === 'en') {
-      return `${style}
+      return `${profile.role}.
 
-Course: "${meta.courseTitle}" (Subject: ${meta.subject}, Grade: G${meta.grade})${objectives}
+【Student profile】
+- Stage: ${stageName}, Grade ${grade}
+- Subject: ${subjectName}
+- Course: "${meta.courseTitle}"${curriculumBlock}${scopeBlock}${objectivesBlock}
 
-Rules:
-1. Stay relevant to the course content; prioritize examples and definitions from the course.
-2. If the student's question goes beyond the scope, briefly redirect to the course topic.
-3. Keep answers strictly within the sentence count above.
-4. No chain-of-thought or "Let me think..." preambles. Give the most useful answer directly.`;
+【Style requirements】
+- Role: ${profile.role}
+- Tone: ${profile.tone}
+- Length: ${profile.length}
+- Vocabulary: ${profile.vocab}
+- Examples: ${profile.example}
+- Difficulty boundary: ${profile.difficulty}
+- Closing: ${profile.encouragement}
+
+【Hard rules】
+1. Stay strictly within the course context; prioritize examples and definitions from the course material.
+2. If the student's question goes beyond the course scope, redirect in one sentence.
+3. NEVER exceed the difficulty boundary for this stage. If the student asks something beyond their stage, briefly say so and give a stage-appropriate answer.
+4. NEVER show chain-of-thought, "Let me think...", or meta-commentary. Give the most useful answer directly.
+5. Strictly obey the sentence count limit above.`;
     }
 
-    return `${style}
+    return `${profile.role}。
 
-你正在辅导的课件：《${meta.courseTitle}》（学科：${meta.subject}，年级：G${meta.grade}）${objectives}
+【学生画像】
+- 学段：${stageName}（G${grade}）
+- 学科：${subjectName}
+- 当前课件：《${meta.courseTitle}》${curriculumBlock}${scopeBlock}${objectivesBlock}
 
-回答规则：
-1. 紧扣课件上下文，优先用课件中提到的例子、定义、方法。
-2. 学生问的若超出课件范围，用一句话引回到课件主题。
-3. 禁止长篇大论。每次答复严格控制在上述字数范围内。
-4. 禁止展示思维链或"让我思考..."等冗余文本，直接给学生最有用的答复。`;
+【风格要求】
+- 角色定位：${profile.role}
+- 语气：${profile.tone}
+- 长度：${profile.length}
+- 用词：${profile.vocab}
+- 举例：${profile.example}
+- 难度边界：${profile.difficulty}
+- 结尾处理：${profile.encouragement}
+
+【硬性规则】
+1. 紧扣当前课件上下文，优先使用课件中出现的例子、定义、方法、术语。
+2. 学生问题若超出课件范围，用一句话引回到课件主题。
+3. 严禁超出本学段的知识难度边界。若学生问到超纲内容，先简短说明"这是更高学段才会深入的内容"，再给出符合本学段的简化答复。
+4. 严禁展示思维链、"让我思考一下"、"首先我需要…"等冗余前置文字，直接给学生最有用的答复。
+5. 严格遵守上述句数/字数限制，不展开长篇大论。`;
   }
 
   // ───────────────────────────────────────────────────────
@@ -316,6 +598,10 @@ Rules:
     const mask = document.createElement('div');
     mask.className = 'ai-tutor-mask';
     const presetOptions = PRESETS.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+
+    // 根据 initial.baseUrl 自动猜出当前预设
+    const guessedPreset = PRESETS.find(p => p.baseUrl && initial.baseUrl && p.baseUrl === initial.baseUrl) || PRESETS[0];
+
     mask.innerHTML = `
       <div class="ai-tutor-config" role="dialog" aria-labelledby="aitutor-title">
         <h2 id="aitutor-title">${t('configTitle')}</h2>
@@ -324,12 +610,24 @@ Rules:
         <select name="preset">
           ${presetOptions}
         </select>
-        <label>${escapeHtml(t('baseUrlLabel'))}</label>
-        <input type="text" name="baseUrl" value="${escapeAttr(initial.baseUrl)}" placeholder="https://openrouter.ai/api/v1">
-        <label>${escapeHtml(t('apiKeyLabel'))}</label>
-        <input type="password" name="apiKey" value="${escapeAttr(initial.apiKey)}" placeholder="sk-...">
+
         <label>${escapeHtml(t('modelLabel'))}</label>
-        <input type="text" name="model" value="${escapeAttr(initial.model)}" placeholder="tencent/hy3-preview:free">
+        <div class="model-row" style="display:flex; gap:6px; align-items:center;">
+          <select name="modelSelect" style="flex:1;"></select>
+          <button type="button" class="btn-custom-model" title="${escapeAttr(t('customModelTitle'))}" style="padding:6px 10px; border:1px solid #d0d7de; background:#fff; border-radius:6px; cursor:pointer; font-size:12px;">✏️</button>
+        </div>
+        <input type="text" name="model" value="${escapeAttr(initial.model)}" placeholder="${escapeAttr(t('modelPlaceholder'))}" style="display:none; margin-top:6px;">
+
+        <label>${escapeHtml(t('apiKeyLabel'))} <span class="key-required" style="color:#d1242f; font-weight:600;">*</span></label>
+        <input type="password" name="apiKey" value="${escapeAttr(initial.apiKey)}" placeholder="${escapeAttr(t('apiKeyPlaceholder'))}">
+        <div class="key-hint" style="font-size:12px; color:#57606a; margin-top:4px; line-height:1.5;"></div>
+
+        <details style="margin-top:10px;">
+          <summary style="cursor:pointer; font-size:13px; color:#57606a;">${escapeHtml(t('advancedLabel'))}</summary>
+          <label style="margin-top:8px;">${escapeHtml(t('baseUrlLabel'))}</label>
+          <input type="text" name="baseUrl" value="${escapeAttr(initial.baseUrl)}" placeholder="https://openrouter.ai/api/v1">
+        </details>
+
         <div class="privacy">
           ${escapeHtml(t('privacy'))}
         </div>
@@ -344,24 +642,75 @@ Rules:
     const nodePreset = mask.querySelector('select[name="preset"]');
     const nodeBaseUrl = mask.querySelector('input[name="baseUrl"]');
     const nodeApiKey = mask.querySelector('input[name="apiKey"]');
-    const nodeModel = mask.querySelector('input[name="model"]');
+    const nodeModelSelect = mask.querySelector('select[name="modelSelect"]');
+    const nodeModelInput = mask.querySelector('input[name="model"]');
+    const btnCustomModel = mask.querySelector('.btn-custom-model');
+    const keyHint = mask.querySelector('.key-hint');
     const btnSave = mask.querySelector('.btn-save');
     const btnCancel = mask.querySelector('.btn-cancel');
 
-    // 预设切换：自动填表
-    nodePreset.addEventListener('change', () => {
-      const p = PRESETS.find(x => x.id === nodePreset.value);
-      if (p && p.baseUrl) {
-        nodeBaseUrl.value = p.baseUrl;
-        nodeModel.value = p.model;
+    // 渲染当前预设的模型列表 + Key 提示
+    function renderPreset(presetId, preserveModel) {
+      const p = PRESETS.find(x => x.id === presetId) || PRESETS[0];
+      // baseUrl
+      if (p.baseUrl) nodeBaseUrl.value = p.baseUrl;
+      // 模型下拉
+      if (p.models && p.models.length) {
+        nodeModelSelect.innerHTML = p.models.map(m => `<option value="${escapeAttr(m)}">${escapeHtml(m)}</option>`).join('') + `<option value="__custom__">${escapeHtml(t('customModelOption'))}</option>`;
+        const target = preserveModel && p.models.includes(preserveModel) ? preserveModel : p.model;
+        nodeModelSelect.value = target;
+        nodeModelInput.value = target;
+        nodeModelSelect.style.display = '';
+        nodeModelInput.style.display = 'none';
+      } else {
+        // 自定义预设：直接显示输入框
+        nodeModelSelect.style.display = 'none';
+        nodeModelInput.style.display = '';
+        if (!nodeModelInput.value) nodeModelInput.value = p.model || '';
+      }
+      // Key 提示
+      keyHint.textContent = p.keyHint || '';
+      const requiredMark = mask.querySelector('.key-required');
+      if (requiredMark) requiredMark.style.display = '';
+      nodeApiKey.required = true;
+      nodeApiKey.placeholder = t('apiKeyPlaceholder');
+    }
+
+    nodeModelSelect.addEventListener('change', () => {
+      if (nodeModelSelect.value === '__custom__') {
+        nodeModelSelect.style.display = 'none';
+        nodeModelInput.style.display = '';
+        nodeModelInput.value = '';
+        nodeModelInput.focus();
+      } else {
+        nodeModelInput.value = nodeModelSelect.value;
       }
     });
 
+    btnCustomModel.addEventListener('click', () => {
+      nodeModelSelect.style.display = 'none';
+      nodeModelInput.style.display = '';
+      nodeModelInput.focus();
+    });
+
+    nodePreset.addEventListener('change', () => renderPreset(nodePreset.value, false));
+
+    // 初始化
+    nodePreset.value = guessedPreset.id;
+    renderPreset(guessedPreset.id, initial.model);
+
     btnSave.addEventListener('click', () => {
+      const apiKey = (nodeApiKey.value || '').trim();
+      if (!apiKey) {
+        nodeApiKey.style.borderColor = '#d1242f';
+        nodeApiKey.focus();
+        return;
+      }
+      const model = (nodeModelInput.style.display === 'none' ? nodeModelSelect.value : nodeModelInput.value).trim();
       const cfg = {
         baseUrl: (nodeBaseUrl.value || DEFAULTS.baseUrl).trim().replace(/\/$/, ''),
-        apiKey: (nodeApiKey.value || DEFAULTS.apiKey).trim(),
-        model: (nodeModel.value || DEFAULTS.model).trim()
+        apiKey: apiKey,
+        model: model || DEFAULTS.model
       };
       saveUserConfig(cfg);
       mask.remove();
@@ -417,23 +766,94 @@ Rules:
   // 7. API 调用（OpenAI 兼容，支持流式）
   // ───────────────────────────────────────────────────────
   async function callChatAPI(cfg, messages, onDelta) {
-    const endpoint = cfg.baseUrl.replace(/\/$/, '') + '/chat/completions';
-    const resp = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + cfg.apiKey
-      },
-      body: JSON.stringify({
-        model: cfg.model,
-        messages,
-        stream: true,
-        temperature: 0.7,
-        max_tokens: 600
-      })
-    });
+    // 防御：apiKey 含全角空格、Base URL 含中文等都会导致 fetch 抛 TypeError
+    const cleanKey = String(cfg.apiKey || '').trim().replace(/[\u3000\s]+/g, '');
+    const cleanBaseUrl = String(cfg.baseUrl || '').trim();
+    const endpoint = cleanBaseUrl.replace(/\/$/, '') + '/chat/completions';
+
+    // 工具函数：把任何字符串安全转换为 ISO-8859-1 兼容的 ASCII（浏览器 fetch header 的硬性要求）
+    const toAsciiSafe = (s, fallback) => {
+      if (s == null) return fallback;
+      const str = String(s);
+      if (!/[^\x00-\xff]/.test(str)) return str;  // 已是 Latin-1 兼容
+      // 含非 ASCII 字符（如中文）→ 用 fallback
+      return fallback;
+    };
+
+    // Pre-check: API Key 必须 ASCII 安全
+    if (/[^\x00-\xff]/.test(cleanKey)) {
+      throw new Error(getLang() === 'en'
+        ? 'API Key contains non-ASCII characters. Please paste a clean key via ⚙️.'
+        : 'API Key 含非 ASCII 字符（中文/全角符号），请点 ⚙️ 重新粘贴干净的 Key。');
+    }
+    if (/[^\x00-\xff]/.test(cleanBaseUrl)) {
+      throw new Error(getLang() === 'en'
+        ? 'Base URL contains non-ASCII characters. Please re-enter via ⚙️.'
+        : 'Base URL 含非 ASCII 字符，请点 ⚙️ 重新输入。');
+    }
+
+    const headers = {
+      'Content-Type': 'application/json'
+    };
+    if (cleanKey) headers.Authorization = 'Bearer ' + cleanKey;
+    // OpenRouter 推荐附带 HTTP-Referer 和 X-OpenRouter-Title（用于排行榜，可选但稳定）
+    if (cleanBaseUrl.includes('openrouter.ai')) {
+      try {
+        headers['HTTP-Referer'] = toAsciiSafe(location.origin, 'https://teachany.app');
+        const safeTitle = toAsciiSafe(document.title, 'TeachAny Course').slice(0, 100);
+        headers['X-OpenRouter-Title'] = safeTitle;
+        headers['X-Title'] = safeTitle;
+      } catch (e) { /* ignore */ }
+    }
+
+    // 最终保险：遍历所有 header 值，再过一遍 ASCII 检查
+    for (const k of Object.keys(headers)) {
+      if (/[^\x00-\xff]/.test(headers[k])) {
+        console.warn('[TeachAnyTutor] Removing non-ASCII header:', k, headers[k]);
+        delete headers[k];
+      }
+    }
+    // 设置 30 秒整体超时
+    const ac = new AbortController();
+    const overallTimeout = setTimeout(() => ac.abort('overall-timeout'), 30000);
+
+    // fetch 本身可能因 CORS、header 编码、网络等抛 TypeError
+    let resp;
+    try {
+      resp = await fetch(endpoint, {
+        method: 'POST',
+        headers: headers,
+        signal: ac.signal,
+        body: JSON.stringify({
+          model: cfg.model || DEFAULTS.model,
+          messages,
+          stream: true,
+          temperature: 0.7,
+          max_tokens: 600
+          // 注：不传 reasoning 参数。推理模型（Hy3、DeepSeek-R1）会在 delta.reasoning 里输出思考；
+          // 客户端只显示 delta.content，推理过程静默丢弃。
+        })
+      });
+    } catch (fetchErr) {
+      clearTimeout(overallTimeout);
+      console.error('[TeachAnyTutor] fetch threw:', fetchErr, 'headers used:', headers);
+      const detail = (fetchErr && (fetchErr.name + ': ' + fetchErr.message)) || String(fetchErr);
+      // 常见原因诊断
+      let hint = '';
+      if (/non ISO-8859-1|code point/i.test(detail)) {
+        hint = getLang() === 'en'
+          ? '（Header contains non-ASCII chars, possibly your API Key/Base URL has invalid characters - re-enter via ⚙️）'
+          : '（请求头含非 ASCII 字符，可能是 API Key 或 Base URL 含中文/全角符号——点 ⚙️ 重新输入）';
+      } else if (/Failed to fetch|NetworkError/i.test(detail)) {
+        hint = getLang() === 'en'
+          ? '（Network/CORS error. Check Base URL and your network.）'
+          : '（网络错误或被 CORS 拦截。请检查 Base URL 和网络连接。）';
+      }
+      throw new Error((getLang() === 'en' ? 'Network error: ' : '网络错误：') + detail + hint);
+    }
 
     if (!resp.ok) {
+      clearTimeout(overallTimeout);
       let errText = (getLang() === 'en' ? 'Request failed (' : '请求失败（') + resp.status + (getLang() === 'en' ? ')' : '）');
       try {
         const errJson = await resp.json();
@@ -442,33 +862,105 @@ Rules:
       throw new Error(errText);
     }
 
-    const ct = resp.headers.get('content-type') || '';
-    if (ct.includes('text/event-stream') || ct.includes('stream')) {
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder('utf-8');
-      let buffer = '';
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed || !trimmed.startsWith('data:')) continue;
-          const data = trimmed.replace(/^data:\s*/, '');
-          if (data === '[DONE]') return;
-          try {
-            const json = JSON.parse(data);
-            const delta = json.choices?.[0]?.delta?.content || '';
-            if (delta) onDelta(delta);
-          } catch (e) { /* ignore parse errors */ }
+    try {
+      const ct = resp.headers.get('content-type') || '';
+      if ((ct.includes('text/event-stream') || ct.includes('stream')) && resp.body && typeof resp.body.getReader === 'function') {
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+        let gotContent = false;       // 是否收到过正式 content
+        let reasoningBuffer = '';     // 暂存 reasoning，仅作兜底
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+          for (const line of lines) {
+            const trimmed = line.trim();
+            // 1) 空行 → 跳过
+            if (!trimmed) continue;
+            // 2) SSE 注释（OpenRouter keep-alive: ": OPENROUTER PROCESSING"）→ 跳过，不能 JSON.parse
+            if (trimmed.startsWith(':')) continue;
+            // 3) 只处理 data: 行
+            if (!trimmed.startsWith('data:')) continue;
+            const data = trimmed.replace(/^data:\s*/, '');
+            // 4) 终止标记
+            if (data === '[DONE]') {
+              clearTimeout(overallTimeout);
+              // 没收到任何 content 但收到了 reasoning（说明 exclude 没生效），用 reasoning 兜底
+              if (!gotContent && reasoningBuffer) onDelta(reasoningBuffer);
+              return;
+            }
+            // 5) 解析 JSON
+            let json;
+            try {
+              json = JSON.parse(data);
+            } catch (e) {
+              // 解析失败，跳过该行（可能是不完整数据）
+              continue;
+            }
+            // 6) mid-stream error（HTTP 200 但 chunk 含顶层 error 字段）
+            if (json && json.error) {
+              const msg = (json.error && json.error.message) || JSON.stringify(json.error);
+              throw new Error((getLang() === 'en' ? 'Stream error: ' : '流式错误：') + msg);
+            }
+            // 7) 提取增量：只显示 content；reasoning 只静默累积作为兜底
+            const choice = (json && json.choices && json.choices[0]) || {};
+            const delta = choice.delta || {};
+            if (delta.content) {
+              if (!gotContent) {
+                // 收到第一个 content：取消整体超时（已证明能出结果了）
+                gotContent = true;
+                clearTimeout(overallTimeout);
+              }
+              onDelta(delta.content);
+            } else if (delta.reasoning && !gotContent) {
+              // 仅在没拿到正式 content 时缓存推理，作为兜底
+              reasoningBuffer += delta.reasoning;
+            }
+          }
+        }
+        clearTimeout(overallTimeout);
+        // 流结束但没碰到 [DONE]：同上兜底
+        if (!gotContent && reasoningBuffer) {
+          onDelta(reasoningBuffer);
+          return;
+        }
+        if (!gotContent) {
+          throw new Error(getLang() === 'en'
+            ? 'Empty response from model. Try a different model or check provider quota.'
+            : '模型返回空内容。可能是免费模型上游异常或用量超限，请换个模型试试。');
+        }
+      } else {
+        // 非流式 fallback：OpenRouter 有时会返回普通 JSON
+        const json = await resp.json();
+        clearTimeout(overallTimeout);
+        if (json && json.error) {
+          const msg = (json.error && json.error.message) || JSON.stringify(json.error);
+          throw new Error((getLang() === 'en' ? 'API error: ' : 'API 错误：') + msg);
+        }
+        const choice = (json && json.choices && json.choices[0]) || {};
+        const msg = choice.message || {};
+        // 优先 content；为空时用 reasoning 兜底
+        const full = msg.content || msg.reasoning || '';
+        if (full) {
+          onDelta(full);
+        } else {
+          throw new Error(getLang() === 'en'
+            ? 'Empty response from model. Try a different model or check provider quota.'
+            : '模型返回空内容。可能是免费模型上游异常或用量超限，请换个模型试试。');
         }
       }
-    } else {
-      const json = await resp.json();
-      const full = json.choices?.[0]?.message?.content || '';
-      if (full) onDelta(full);
+    } catch (err) {
+      clearTimeout(overallTimeout);
+      // 识别超时/abort 错误，给友好提示
+      if (err.name === 'AbortError' || (err.message || '').includes('overall-timeout') || (err.message || '').includes('aborted')) {
+        throw new Error(getLang() === 'en'
+          ? 'Timeout: the model took too long. Please retry later or switch to another free model in settings.'
+          : '请求超时（30秒）：模型响应太慢。请稍后重试，或在设置中切换另一个免费模型。');
+      }
+      throw err;
     }
   }
 
@@ -476,6 +968,19 @@ Rules:
   // 8. 主控制器
   // ───────────────────────────────────────────────────────
   function boot() {
+    // v7.1：启动时自检 localStorage，如果发现坏的 model 字段（含空格/括号），自动迁移
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.model && /[\s()（）：，,]/.test(parsed.model)) {
+          console.warn('[TeachAnyTutor v7.1] Migrating broken model id:', parsed.model, '→', DEFAULTS.model);
+          parsed.model = DEFAULTS.model;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+        }
+      }
+    } catch (e) { /* ignore */ }
+
     const meta = readCourseMeta();
     const fab = createFab();
     let panel = null;
@@ -571,7 +1076,14 @@ Rules:
       if (isPending) return;
       const text = (inputEl.value || '').trim();
       if (!text) return;
-      // v7.0：直接使用生效配置（DEFAULTS 已有 key，不再强制弹窗）
+      // v7.1：如果没有 API Key，先弹配置框；填完 Key 后自动继续发送
+      const cfg = getEffectiveConfig();
+      if (!cfg.apiKey) {
+        createConfigModal(cfg, (savedCfg) => {
+          if (savedCfg && savedCfg.apiKey) doSend(text);
+        }, () => {});
+        return;
+      }
       doSend(text);
     }
 
@@ -612,8 +1124,10 @@ Rules:
         history.push({ role: 'user', content: text });
         history.push({ role: 'assistant', content: aiBubble.textContent || '' });
       } catch (err) {
+        console.error('[TeachAnyTutor] Request failed:', err);
         aiBubble.remove();
-        renderBubble(messagesEl, 'ai', '😥 ' + (err.message || (lang === 'en' ? 'Request failed' : '请求失败')) + t('errorHint'), { error: true });
+        const errMsg = err && err.message ? err.message : (lang === 'en' ? 'Request failed' : '请求失败');
+        renderBubble(messagesEl, 'ai', '😥 ' + errMsg + t('errorHint'), { error: true });
       } finally {
         isPending = false;
         sendBtn.disabled = false;
@@ -621,7 +1135,7 @@ Rules:
       }
     }
 
-    // FAB 点击：v7.0 直接开关面板（不弹配置，因为已有默认 key）
+    // FAB 点击：直接开关面板；默认 OpenRouter 专用 Key 可开箱使用
     fab.addEventListener('click', () => {
       togglePanel(!(panel && panel.classList.contains('open')));
     });
@@ -663,6 +1177,6 @@ Rules:
     /** 获取当前语言 */
     getLang: getLang,
     /** 版本号 */
-    version: '7.0'
+    version: '7.2.1'
   };
 })();

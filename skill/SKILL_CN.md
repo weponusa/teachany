@@ -1418,7 +1418,7 @@ Hero 区（Hero 知识结构图 + 课题名称 + 学科/年级/课型标签）
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>【课题名称】- TeachAny 互动课件</title>
-  <!-- TeachAny 元信息（用于打包和知识地图关联） -->
+  <!-- TeachAny 元信息（用于打包和知识地图关联；不要添加 teachany-emoji，emoji 只写入 manifest.json） -->
   <meta name="teachany-node" content="【节点ID】">
   <meta name="teachany-subject" content="【学科ID】">
   <meta name="teachany-domain" content="【领域ID】">
@@ -5047,12 +5047,14 @@ my-course.teachany          ← ZIP 压缩，扩展名 .teachany
   "node_id": "linear-function",        // ⛔ v5.19/v5.20 必选 + 必须校验：必须是 data/trees/<subject>-<level>.json 中真实存在的节点 ID（tree.html 只读此文件）
   "domain": "function",                // 可选：所属领域
   "prerequisites": ["proportional-function"],  // 可选：前置知识
-  "emoji": "📏",                        // ⛔ 必选：展示 emoji
+  "emoji": "📏",                        // ⛔ 必选：展示 emoji；只在 manifest.json 定义，不要同步写成 HTML <meta name="teachany-emoji">
   "difficulty": 3,                      // ⛔ 必选：难度 1-5
   "teachany_spec": "1.0"               // ⛔ 必选：规范版本
 }
 ```
 
+> **字段边界**：`emoji` 是 `manifest.json` 字段，用于 Gallery/知识地图展示；`index.html` 只保留 `teachany-node/subject/domain/grade/prerequisites/difficulty/version/author` 等标准 meta，禁止新增 `teachany-emoji` 以免与 manifest/registry 产生双源不一致。
+>
 > **⛔ v5.19 核心变更 + v5.20 重大纠正**：`node_id` 从 "可选但推荐" 升级为 **"必选 + 必须校验"**，且校验目标是 `data/trees/*.json` 旧 schema（不是 `data/<subject>/<branch>/_graph.json` 新 schema）。
 > 
 > **校验命令**（发布前强制执行，v5.20 修订版）：
@@ -5765,7 +5767,7 @@ curl -sI -m 5 "https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded
 <meta name="teachany-author" content="weponusa">
 ```
 
-这些标签既用于知识地图关联，也用于自动生成 `manifest.json`。
+这些标签既用于知识地图关联，也用于自动生成 `manifest.json`。注意：不要在 HTML 中添加 `<meta name="teachany-emoji">`；展示 emoji 只在 `manifest.json` 的 `emoji` 字段维护，发布流程再同步到 registry。
 
 ### 17.6 导入方式
 

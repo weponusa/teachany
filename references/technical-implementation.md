@@ -46,7 +46,7 @@ Hero 区（课题名称 + 学科/年级/课型标签）
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>【课题名称】- TeachAny 互动课件</title>
-  <!-- TeachAny 元信息（用于打包和知识地图关联） -->
+  <!-- TeachAny 元信息（用于打包和知识地图关联；不要添加 teachany-emoji，emoji 只写入 manifest.json） -->
   <meta name="teachany-node" content="【节点ID】">
   <meta name="teachany-subject" content="【学科ID】">
   <meta name="teachany-domain" content="【领域ID】">
