@@ -761,7 +761,7 @@ class PBLGraphRenderer {
     this.svg = null;
     this.simulation = null;
     this.width = 0;
-    this.height = 600;
+    this.height = 600; // render() 中会根据节点数量动态覆盖
 
     // PBL 层颜色（节点描边用，内部填充用层颜色的半透明）
     this.colors = {
@@ -786,6 +786,19 @@ class PBLGraphRenderer {
     if (!container) return;
 
     this.width = container.clientWidth || 900;
+    const nodeCount = (graphData.nodes || []).length || 0;
+
+    // ── 根据节点数量动态计算 SVG 高度和力导向参数 ──
+    // 目标：让节点均匀分布在画布上，不挤在一起
+    const density = 8000; // 每个节点需要的像素面积（约 90x90 的舒适空间）
+    const minH = Math.max(600, window.innerHeight - 320); // 至少 600px 或减去顶部/底部栏
+    const calcH = Math.ceil(nodeCount * density / this.width);
+    this.height = Math.max(minH, Math.min(calcH, 3000)); // 上限 3000px 防止过高
+
+    // 力导向参数随节点数缩放
+    const baseLinkDist = Math.max(100, Math.min(220, 80 + nodeCount * 0.3));
+    const baseCharge = Math.max(-1500, Math.min(-200, -120 - nodeCount * 1.5));
+    const baseCollide = Math.max(70, Math.min(55, 35 + nodeCount * 0.1));
 
     // 清除旧内容
     container.innerHTML = '';
@@ -821,9 +834,10 @@ class PBLGraphRenderer {
 
     // 缩放
     const g = this.svg.append('g');
-    this.svg.call(d3.zoom()
-      .scaleExtent([0.3, 3])
-      .on('zoom', (event) => g.attr('transform', event.transform)));
+    const zoomBehavior = d3.zoom()
+      .scaleExtent([0.1, 4])
+      .on('zoom', (event) => g.attr('transform', event.transform));
+    this.svg.call(zoomBehavior);
 
     // 准备数据
     const nodes = graphData.nodes.map(n => ({ ...n }));
@@ -972,12 +986,14 @@ class PBLGraphRenderer {
       this._hideTooltip(tooltip);
     });
 
-    // ─── 力导向布局 ───
+    // ─── 力导向布局（参数随节点数量动态缩放） ───
     this.simulation = d3.forceSimulation(nodes)
-      .force('link', d3.forceLink(links).id(d => d.id).distance(120).strength(0.6))
-      .force('charge', d3.forceManyBody().strength(-400))
+      .force('link', d3.forceLink(links).id(d => d.id).distance(baseLinkDist).strength(0.5))
+      .force('charge', d3.forceManyBody().strength(baseCharge))
       .force('center', d3.forceCenter(this.width / 2, this.height / 2))
-      .force('collision', d3.forceCollide().radius(50))
+      .force('collision', d3.forceCollide().radius(baseCollide))
+      .force('x', d3.forceX(this.width / 2).strength(0.03))
+      .force('y', d3.forceY(this.height / 2).strength(0.03))
       .on('tick', () => {
         link
           .attr('x1', d => d.source.x)
@@ -987,6 +1003,33 @@ class PBLGraphRenderer {
 
         node.attr('transform', d => `translate(${d.x},${d.y})`);
       });
+
+    // ── Auto-fit zoom：模拟稳定后自动缩放至全貌可见 ──
+    let tickCount = 0;
+    const autoFitZoom = () => {
+      tickCount++;
+      // 等 120+ tick（约 3-4 秒）后执行一次 auto-fit
+      if (tickCount === 120) {
+        const gEl = g.node();
+        if (!gEl) return;
+        const bbox = gEl.getBBox();
+        if (bbox.width > 0 && bbox.height > 0) {
+          const padding = 80;
+          const scale = Math.min(
+            (this.width - padding * 2) / bbox.width,
+            (this.height - padding * 2) / bbox.height,
+            1.5 // 最大初始缩放不超过 1.5x
+          );
+          const tx = this.width / 2 - (bbox.x + bbox.width / 2) * scale;
+          const ty = this.height / 2 - (bbox.y + bbox.height / 2) * scale;
+          // 使用 d3.zoomIdentity 平滑过渡到 fit 视图
+          this.svg.transition()
+            .duration(600)
+            .call(zoomBehavior.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+        }
+      }
+    };
+    this.simulation.on('tick.autoFit', autoFitZoom);
   }
 
   // ─── Tooltip 内容（与 tree.html showTooltip 同结构） ───
