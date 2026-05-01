@@ -3,9 +3,9 @@
  *
  * 特性：
  *   - 独立模块，不依赖特定课件
- *   - 默认使用 OpenRouter 专用 Key + 免费高质量模型（开箱即用）
+ *   - 默认使用 OpenRouter 免费模型（需申请免费 Key，1 分钟搞定）
  *   - 配置弹窗：服务商一键切换 → 模型下拉选择（每个服务商列出推荐模型 + 自定义）
- *   - 默认内置专用 Key，同时支持用户填自己的 OpenAI 兼容 API Key
+ *   - 也支持用户填自己的 OpenAI 兼容 API Key（OpenRouter/DeepSeek/Kimi 等）
  *   - 当所选服务商需要 Key 时，点发送会自动弹出配置框，填完 Key 自动续发消息
  *   - API 配置可动态替换（localStorage 或开发者接口）
  *   - 中英文界面一键切换（localStorage 持久化）
@@ -17,13 +17,14 @@
  * 安全：
  *   - 不发送任何遥测数据
  *   - 不把 Key 传给课件以外的任何 endpoint
+ *   - 不在客户端 JS 中明文写 API Key（避免被盗用封号）
  *   - localStorage key 加前缀 `teachany_tutor_` 便于用户自清
  */
 (function () {
   'use strict';
 
   // 版本标识 - 加载时立即打印到 console，方便排查浏览器缓存问题
-  console.log('%c[TeachAnyTutor] v7.2.1 loaded - default model: openai/gpt-oss-120b:free', 'color:#10b981;font-weight:bold;');
+  console.log('%c[TeachAnyTutor] v7.3.1 loaded - default: OpenRouter free models (key required)', 'color:#10b981;font-weight:bold;');
 
   // ───────────────────────────────────────────────────────
   // 1. 配置与默认值
@@ -32,10 +33,11 @@
   const HISTORY_KEY = 'teachany_tutor_history';
   const LANG_KEY = 'teachany_tutor_lang';
 
-  // 默认配置：OpenRouter 专用 Key + 当前实测可用的高质量免费模型（开箱即用）
+  // 默认配置：OpenRouter 免费模型（需申请免费 Key）
+  // 不要在客户端 JS 里写任何 API Key 明文，否则会被盗用导致封号。
   const DEFAULTS = {
     baseUrl: 'https://openrouter.ai/api/v1',
-    apiKey: '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',
+    apiKey: '',
     model: 'openai/gpt-oss-120b:free'
   };
 
@@ -43,8 +45,8 @@
   // 每个预设包含 baseUrl + 推荐模型 + 该服务商的可选模型列表
   const PRESETS = [
     {
-      id: 'openrouter-hy3',
-      name: '🔝 OpenRouter（默认免费最强 · 内置专用 Key）',
+      id: 'openrouter-free',
+      name: '🆓 OpenRouter（免费模型 · 推荐首选）',
       baseUrl: 'https://openrouter.ai/api/v1',
       model: 'openai/gpt-oss-120b:free',
       models: [
@@ -57,7 +59,7 @@
         'z-ai/glm-4.5-air:free',
         'tencent/hy3-preview:free'
       ],
-      keyHint: '已内置 TeachAny 专用 OpenRouter Key；你也可以粘贴自己的 Key 覆盖。默认模型 openai/gpt-oss-120b:free。'
+      keyHint: '去 openrouter.ai/keys 注册免费拿 Key（1 分钟搞定，送免费额度）'
     },
     {
       id: 'deepseek',
@@ -178,17 +180,17 @@
       contextLabel: '当前学习：',
       contextLoading: '定位中...',
       configTitle: '🎓 启用你的 AI 学伴',
-      configSubtitle: '默认已配置 OpenRouter 专用 Key，可直接用；也可以切换模型/服务商并填入你自己的 API Key。Key 仅保存在你的浏览器本地。',
+      configSubtitle: '申请一个免费 API Key 即可使用 AI 学伴。选服务商 → 填 Key → 选模型，开始对话。Key 仅保存在你的浏览器本地。',
       presetLabel: '① 选择 AI 服务商（已预填 Base URL 和模型列表）',
       baseUrlLabel: 'API Base URL（高级，一般无需修改）',
-      apiKeyLabel: '③ API Key（默认已预填，可替换）',
-      apiKeyPlaceholder: '默认使用内置专用 Key；也可粘贴你自己的 sk-... Key',
+      apiKeyLabel: '③ 填入你的 API Key',
+      apiKeyPlaceholder: '粘贴你的 sk-... Key',
       modelLabel: '② 选择模型（可选自定义）',
       modelPlaceholder: '输入自定义模型名',
       customModelTitle: '改用自定义模型名',
       customModelOption: '✏️ 自定义模型名…',
       advancedLabel: '⚙️ 高级设置（修改 Base URL）',
-      privacy: '🔒 API Key 仅保存在此浏览器的 localStorage。默认使用 TeachAny 专用 Key；你填入自己的 Key 后只在本机生效。',
+      privacy: '🔒 你的 API Key 仅保存在此浏览器的 localStorage，关闭页面或清浏览器数据后失效。TeachAny 不会收集、上传、或把 Key 发给任何第三方。',
       cancel: '取消',
       save: '保存并开始对话',
       settings: '⚙️',
@@ -211,17 +213,17 @@
       contextLabel: 'Studying: ',
       contextLoading: 'Locating...',
       configTitle: '🎓 Set Up Your AI Tutor',
-      configSubtitle: 'The default OpenRouter key is ready to use. You can switch models/providers and paste your own key, stored only in this browser.',
+      configSubtitle: 'Get a free API key to start. Pick a provider → paste your key → choose a model. Key is stored only in your browser.',
       presetLabel: '① Choose AI Provider (Base URL & model list pre-filled)',
       baseUrlLabel: 'API Base URL (advanced, usually no need to change)',
-      apiKeyLabel: '③ API Key (pre-filled by default, replaceable)',
-      apiKeyPlaceholder: 'Default key is pre-filled; paste your own sk-... key to override',
+      apiKeyLabel: '③ Paste your API Key',
+      apiKeyPlaceholder: 'Paste your sk-... key',
       modelLabel: '② Choose Model (or customize)',
       modelPlaceholder: 'Enter custom model name',
       customModelTitle: 'Switch to custom model name',
       customModelOption: '✏️ Custom model name…',
       advancedLabel: '⚙️ Advanced (change Base URL)',
-      privacy: '🔒 Your API Key is stored only in this browser. The default TeachAny OpenRouter key is ready to use; your own key only applies locally.',
+      privacy: '🔒 Your API Key is stored only in this browser\'s localStorage. It is cleared when you close the page or clear browser data. TeachAny never collects, uploads, or shares your Key.',
       cancel: 'Cancel',
       save: 'Save & Start',
       settings: '⚙️',
@@ -266,7 +268,8 @@
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return null;
       const parsed = JSON.parse(raw);
-      if (parsed.apiKey && String(parsed.apiKey).startsWith('sk-or-v1-a4d900')) return null;
+      // 旧失效内置 Key 迁移
+      if (parsed.apiKey && (String(parsed.apiKey).startsWith('sk-or-v1-a4d900') || String(parsed.apiKey).startsWith('sk-or-v1-1dd402'))) return null;
       if (!parsed.apiKey) return null;
       // v7.1：自检 model 字段合法性，防止旧版本把 PRESETS 的 name（带空格/括号）误存为 model
       if (parsed.model && /[\s()（）：，,]/.test(parsed.model)) {
@@ -293,7 +296,7 @@
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       baseUrl: cfg.baseUrl || DEFAULTS.baseUrl,
-      apiKey: cfg.apiKey || DEFAULTS.apiKey,
+      apiKey: cfg.apiKey || '',
       model: modelToSave
     }));
   }
@@ -793,9 +796,9 @@
     }
 
     const headers = {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + cleanKey
     };
-    if (cleanKey) headers.Authorization = 'Bearer ' + cleanKey;
     // OpenRouter 推荐附带 HTTP-Referer 和 X-OpenRouter-Title（用于排行榜，可选但稳定）
     if (cleanBaseUrl.includes('openrouter.ai')) {
       try {
@@ -957,8 +960,8 @@
       // 识别超时/abort 错误，给友好提示
       if (err.name === 'AbortError' || (err.message || '').includes('overall-timeout') || (err.message || '').includes('aborted')) {
         throw new Error(getLang() === 'en'
-          ? 'Timeout: the model took too long. Please retry later or switch to another free model in settings.'
-          : '请求超时（30秒）：模型响应太慢。请稍后重试，或在设置中切换另一个免费模型。');
+          ? 'Timeout: the model took too long. Please retry later or switch to another model in settings.'
+          : '请求超时（30秒）：模型响应太慢。请稍后重试，或在设置中切换另一个模型。');
       }
       throw err;
     }
@@ -1135,7 +1138,7 @@
       }
     }
 
-    // FAB 点击：直接开关面板；默认 OpenRouter 专用 Key 可开箱使用
+    // FAB 点击：直接开关面板；首次需配置 API Key
     fab.addEventListener('click', () => {
       togglePanel(!(panel && panel.classList.contains('open')));
     });
@@ -1161,7 +1164,7 @@
       if (cfg && typeof cfg === 'object') {
         saveUserConfig({
           baseUrl: cfg.baseUrl || DEFAULTS.baseUrl,
-          apiKey: cfg.apiKey || DEFAULTS.apiKey,
+          apiKey: cfg.apiKey || '',
           model: cfg.model || DEFAULTS.model
         });
       }
@@ -1177,6 +1180,6 @@
     /** 获取当前语言 */
     getLang: getLang,
     /** 版本号 */
-    version: '7.2.1'
+    version: '7.3.1'
   };
 })();

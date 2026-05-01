@@ -14,15 +14,15 @@ class PBLPathBuilder {
 
     // LLM 服务商预设（复用 AI 学伴架构）
     this.providers = [
-      { id: 'openrouter-free', name: 'OpenRouter（默认免费最强 · 内置专用 Key）', baseUrl: 'https://openrouter.ai/api/v1', model: 'openai/gpt-oss-120b:free', models: [
+      { id: 'openrouter-free', name: 'OpenRouter（免费模型 · 推荐首选）', baseUrl: 'https://openrouter.ai/api/v1', model: 'openai/gpt-oss-120b:free', models: [
         'openai/gpt-oss-120b:free',
         'openai/gpt-oss-20b:free',
-        'tencent/hy3-preview:free',
         'qwen/qwen3-next-80b-a3b-instruct:free',
-        'qwen/qwen3-coder:free',
         'meta-llama/llama-3.3-70b-instruct:free',
         'z-ai/glm-4.5-air:free',
-        'google/gemma-3-27b-it:free'
+        'google/gemma-3-27b-it:free',
+        'deepseek/deepseek-chat-v3.1:free',
+        'tencent/hy3-preview:free'
       ] },
       { id: 'deepseek', name: 'DeepSeek', baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-chat', models: ['deepseek-chat','deepseek-reasoner'] },
       { id: 'moonshot', name: '月之暗面 Kimi', baseUrl: 'https://api.moonshot.cn/v1', model: 'moonshot-v1-8k', models: ['moonshot-v1-8k','moonshot-v1-32k','moonshot-v1-128k','kimi-latest'] },
@@ -233,8 +233,8 @@ class PBLPathBuilder {
 
   // ─── LLM 配置管理 ─────────────────────────────
 
-  // 默认 OpenRouter 专用 Key（开箱即用）
-  static BUILTIN_KEY = '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';
+  // 默认 OpenRouter 免费模型（需用户填 Key）
+  static BUILTIN_KEY = '';
   static BUILTIN_MODEL = 'openai/gpt-oss-120b:free';
   static BUILTIN_BASE_URL = 'https://openrouter.ai/api/v1';
 
@@ -243,7 +243,7 @@ class PBLPathBuilder {
       const saved = localStorage.getItem('teachany_pbl_config');
       if (saved) {
         const cfg = JSON.parse(saved);
-        if (cfg.apiKey && String(cfg.apiKey).startsWith('sk-or-v1-a4d900')) {
+        if (cfg.apiKey && (String(cfg.apiKey).startsWith('sk-or-v1-a4d900') || String(cfg.apiKey).startsWith('sk-or-v1-1dd402'))) {
           localStorage.removeItem('teachany_pbl_config');
         } else {
           this._llmConfig = cfg;
@@ -288,9 +288,9 @@ class PBLPathBuilder {
 
     const endpoint = String(cfg.baseUrl || '').replace(/\/$/, '') + '/chat/completions';
     const headers = {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + cfg.apiKey
     };
-    if (cfg.apiKey) headers.Authorization = 'Bearer ' + cfg.apiKey;
 
     // OpenRouter 专属 header
     if (cfg.baseUrl.includes('openrouter.ai')) {
