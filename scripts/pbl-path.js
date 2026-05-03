@@ -798,7 +798,7 @@ class PBLGraphRenderer {
     // 力导向参数随节点数缩放
     const baseLinkDist = Math.max(100, Math.min(220, 80 + nodeCount * 0.3));
     const baseCharge = Math.max(-1500, Math.min(-200, -120 - nodeCount * 1.5));
-    const baseCollide = Math.max(70, Math.min(55, 35 + nodeCount * 0.1));
+    const baseCollide = Math.max(55, Math.min(70, 35 + nodeCount * 0.1));
 
     // 清除旧内容
     container.innerHTML = '';
