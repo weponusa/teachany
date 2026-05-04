@@ -43,6 +43,7 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 | **③ Canvas 互动组件** | 课件必须含 **≥1 个 Canvas 互动组件**（拖拽、画板、参数调节、实时绘图） | 原生 `<canvas>` + JS 事件 → 学生可拖动/点击/滑动改变参数并实时反馈 | 若主题确实无合适 Canvas 场景（如纯文言字词课），必须用 SVG 交互动画替代，并在 Gate 中说明理由 |
 | **④ AI 生图 + 生视频** | 课件必须含 **≥2 张 image_gen 生成的情境/意境插图**；过程性学科（理/化/生/地/史）必须评估生视频需求 | Phase 3 阶段调用 `image_gen` → 存 `assets/illustrations/*.png` → `<img>` 嵌入；必要时调用生视频工具产出 `assets/video/*.mp4` | 若完全纯计算题课，可在 Gate 标注"跳过生图"并附理由，但**文科、科学、工程、社科课件一律不得跳过生图** |
 | **⑤ Hero 封面图** | 课件必须含 **1 张主题专属 hero 封面图** + Hero section 中真实引用 + 文件真实存在 + ≥1280×720（16:9）| Phase 3 末调用 `image_gen` 基于课件标题/学科/学段生成 → 存 `assets/<course-id>-hero.png` → HTML Hero section 用 `<img class="hero-cover-img" src="./assets/xxx-hero.png" alt="...课件封面">` 引用 → 发布前 `python3 scripts/check-hero.py` 校验 0 错误 | ⛔ **无降级**。无 Hero 图 = 直接 Gate 不通过。image_gen 失败必须重试 ≥3 次，仍失败需用户书面豁免；**严禁多课件复用同一张 hero**（每张 hero 必须主题专属） |
+| **⑥ 真实交互 + 连续音频** | 标题写“互动/实验/探究/画布/地图/跟读”的模块必须真的可操作；语音/拼音/英语/朗读课必须有独立连续音频播放器 | HTML 中必须有真实控件和反馈：`<canvas>`/`<input type="range">`/拖拽/地图事件/按钮状态反馈；音频用 `audioPlaylist` + 可见 `<audio controls>` 或悬浮播放器，`ended` 自动播放下一段 | ⛔ **严禁**用静态图片、SVG 截图、data:image 信息图伪装交互模块；⛔ 视频音轨不能替代独立连续音频；⛔ 单个“点我听”音效不能替代整课连续播放 |
 
 ### 0.1 启用触发表
 
@@ -82,6 +83,8 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 - ❌ **HTML 引用了 `./assets/xxx-hero.png` 但文件根本不存在**（产生 broken image 404）→ **违反 ⑤**。发布前必须 `python3 scripts/check-hero.py` 0 错误
 - ❌ **多个课件复用同一张 hero 图**（如 5 个数学课件都用同一张 `math-hero.png`） → **违反 ⑤**。每张 hero 必须主题专属，由 image_gen 基于该课件主题专门生成
 - ❌ **image_gen 生成 hero 失败，AI 静默用 emoji 或纯色块替代** → **违反 ⑤**。失败必须重试 ≥3 次仍失败才能在 Gate 中声明并由用户豁免
+- ❌ **把静态 PNG/SVG/data:image 放进“互动探究/互动实验/地图互动”模块** → **违反 ⑥**。只要标题或文案说“互动”，就必须有真实可操作控件、事件处理和反馈状态
+- ❌ **拼音/英语/朗读课只有单个“点我听”音效或视频音轨，没有独立连续音频播放器** → **违反 ⑥**。必须提供 `audioPlaylist` + 可见播放器，并支持顺序连续播放
 
 > 📌 **一句话记住**：语音 + 动画 + 互动 + 图像 + 封面，五项齐全才是 TeachAny 课件。缺一不是 TeachAny，是普通网页。
 
