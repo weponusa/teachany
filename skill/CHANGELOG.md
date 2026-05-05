@@ -21,6 +21,13 @@
 
 ## 详细变更记录
 
+### v7.6
+⭐ 标准知识图谱模块 · 视觉/布局对齐知识地图
+- 模块整体样式完全对齐 `tree.html`：深色底、域色渐变节点、实线/虚线边、悬停放大 + drop-shadow、tooltip 浮窗。
+- 节点根据真实课件存在性区分：有课件实心 + 点击可直接打开课件；无课件虚线框、不可点。
+- manifest 构建时对 `courses[].path` 做真实性校验，只保留 `examples/` 或 `community/` 下实际有 `index.html` 的课件。
+- 所有官方课件的图谱模块统一放到**最底部**（footer 之前），作为收尾。
+
 ### v7.5
 ⭐ 标准知识图谱模块
 - 新增 `scripts/teachany-knowledge-graph.{js,css}` + `scripts/teachany-kg-manifest.json`（由 `scripts/build-teachany-kg-manifest.py` 从 `data/trees` + `data/knowledge-points` 生成），提供稳定、可搜索、可筛选、可跳转的标准图谱模块。

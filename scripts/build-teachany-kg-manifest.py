@@ -136,15 +136,22 @@ def attach_courses(all_nodes):
     walk(registry)
     for nid, node in all_nodes.items():
         courses = node_courses.get(nid) or []
-        # 去重，优先 examples 源
+        # 只保留 examples/ 或 community/ 下实际有 index.html 的课件
+        real_courses = []
+        for c in courses:
+            pth = c.get("path")
+            if not pth:
+                continue
+            index_path = ROOT / pth / "index.html"
+            if index_path.exists():
+                real_courses.append(c)
         seen = set()
         final = []
-        def key(c): return c.get("id")
         def rank(c):
             src = c.get("source") or ""
             return 0 if src == "examples" else 1
-        for c in sorted(courses, key=rank):
-            k = key(c)
+        for c in sorted(real_courses, key=rank):
+            k = c.get("id")
             if k in seen:
                 continue
             seen.add(k)

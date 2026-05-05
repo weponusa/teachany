@@ -1,30 +1,32 @@
-/* TeachAny Standard Knowledge Graph Module · v1.0
-   ---------------------------------------------
-   只负责骨架样式，所有颜色通过 CSS 变量暴露。
-   课件只要有 --primary / --bg / --text 之类变量，
-   模块就能自动继承。
+/* TeachAny Standard Knowledge Graph Module · v2.0
+   --------------------------------------------------
+   视觉规范：复用知识地图 tree.html
+   · 深色底 + 同域配色 + 有课件实心高亮 / 无课件虚线
+   · 悬停放大 + tooltip
+   · 风格跟随课件：通过 CSS 变量覆盖
 */
 
 .tkg-root {
-  --tkg-primary: var(--kg-primary, var(--primary, #3b82f6));
-  --tkg-accent: var(--kg-accent, var(--accent, #f59e0b));
-  --tkg-success: var(--kg-success, var(--success, #10b981));
-  --tkg-danger: var(--kg-danger, var(--danger, #ef4444));
-  --tkg-bg: var(--kg-bg, transparent);
-  --tkg-card: var(--kg-card, var(--card, rgba(255,255,255,0.04)));
-  --tkg-border: var(--kg-border, var(--border, rgba(148,163,184,0.22)));
-  --tkg-text: var(--kg-text, var(--text, inherit));
-  --tkg-dim: var(--kg-dim, var(--dim, #94a3b8));
-  --tkg-muted: var(--kg-muted, var(--dimmer, #64748b));
+  --tkg-bg: var(--kg-bg, rgba(15, 23, 42, 0.96));
+  --tkg-card: var(--kg-card, rgba(30, 41, 59, 0.85));
+  --tkg-border: var(--kg-border, rgba(148, 163, 184, 0.22));
+  --tkg-text: var(--kg-text, #f8fafc);
+  --tkg-dim: var(--kg-dim, #94a3b8);
+  --tkg-muted: var(--kg-muted, #64748b);
+  --tkg-primary: var(--kg-primary, #3b82f6);
+  --tkg-accent: var(--kg-accent, #f59e0b);
+  --tkg-success: var(--kg-success, #10b981);
+  --tkg-danger: var(--kg-danger, #ef4444);
   --tkg-radius: var(--kg-radius, 18px);
 
   display: block;
   color: var(--tkg-text);
   background: var(--tkg-bg);
   border: 1px solid var(--tkg-border);
-  border-radius: calc(var(--tkg-radius) + 4px);
-  padding: 20px;
+  border-radius: calc(var(--tkg-radius) + 6px);
+  padding: 22px;
   box-sizing: border-box;
+  position: relative;
 }
 
 .tkg-root *, .tkg-root *::before, .tkg-root *::after { box-sizing: border-box; }
@@ -37,112 +39,290 @@
   justify-content: space-between;
   margin-bottom: 14px;
 }
-.tkg-title { font-size: 20px; font-weight: 800; margin: 0; }
-.tkg-title small { font-weight: 600; color: var(--tkg-dim); margin-left: 8px; font-size: 13px; }
+.tkg-title {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0;
+  color: var(--tkg-text);
+}
+.tkg-title small {
+  font-weight: 600;
+  color: var(--tkg-dim);
+  margin-left: 8px;
+  font-size: 13px;
+}
 .tkg-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .tkg-tools input[type="search"] {
-  padding: 8px 12px; border-radius: 999px; border: 1px solid var(--tkg-border);
-  background: var(--tkg-card); color: inherit; font-size: 14px; min-width: 180px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--tkg-border);
+  background: var(--tkg-card);
+  color: var(--tkg-text);
+  font-size: 14px;
+  min-width: 200px;
 }
+.tkg-tools input[type="search"]::placeholder { color: var(--tkg-muted); }
 .tkg-filter {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 6px 12px; border-radius: 999px; border: 1px solid var(--tkg-border);
-  background: var(--tkg-card); cursor: pointer; font-size: 13px; font-weight: 700; color: inherit;
-  transition: transform .15s, border-color .15s, color .15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--tkg-border);
+  background: var(--tkg-card);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tkg-dim);
+  transition: transform .15s, border-color .15s, color .15s, background .15s;
 }
-.tkg-filter:hover { transform: translateY(-1px); }
-.tkg-filter.active { color: #fff; border-color: transparent; background: linear-gradient(135deg, var(--tkg-primary), var(--tkg-accent)); }
+.tkg-filter:hover { transform: translateY(-1px); color: var(--tkg-text); }
+.tkg-filter.active {
+  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--tkg-primary), var(--tkg-accent));
+}
 
 .tkg-body {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
   gap: 16px;
 }
-@media (max-width: 860px) {
-  .tkg-body { grid-template-columns: 1fr; }
-}
+@media (max-width: 860px) { .tkg-body { grid-template-columns: 1fr; } }
 
+/* ─── SVG 画布：复用 tree.html 的 #tree-container 视觉 ─── */
 .tkg-canvas {
   position: relative;
   width: 100%;
-  min-height: 360px;
+  min-height: 420px;
+  height: 420px;
   border-radius: var(--tkg-radius);
-  background: var(--tkg-card);
-  border: 1px solid var(--tkg-border);
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.15);
   overflow: hidden;
 }
 .tkg-canvas svg { width: 100%; height: 100%; display: block; }
 .tkg-canvas-hint {
-  position: absolute; left: 12px; top: 10px; font-size: 12px; color: var(--tkg-muted);
-  pointer-events: none; user-select: none;
+  position: absolute;
+  left: 12px;
+  top: 10px;
+  font-size: 12px;
+  color: rgba(148, 163, 184, 0.6);
+  pointer-events: none;
+  user-select: none;
+}
+.tkg-canvas-stat {
+  position: absolute;
+  right: 12px;
+  top: 10px;
+  display: flex;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--tkg-muted);
+}
+.tkg-canvas-stat span {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--tkg-border);
 }
 
-.tkg-node {
-  cursor: pointer;
-  transition: transform .2s ease;
+/* ─── 节点：完全对齐 tree.html ─── */
+.tkg-node-group { cursor: pointer; transition: transform .2s ease; }
+.tkg-node-group:hover { transform: translate(0, -2px); }
+.tkg-node-circle {
+  stroke-width: 2.5;
+  transition: all 0.3s;
 }
-.tkg-node:hover { transform: translate(0, -2px); }
-.tkg-node circle { transition: stroke-width .15s, r .15s; }
-.tkg-node.selected circle { stroke-width: 4; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.25)); }
-.tkg-node text { pointer-events: none; font-weight: 700; fill: currentColor; }
-.tkg-node.dim { opacity: 0.35; }
-.tkg-link { stroke-opacity: 0.55; transition: stroke-opacity .2s; }
-.tkg-link.dim { stroke-opacity: 0.12; }
+.tkg-node-group:hover .tkg-node-circle {
+  stroke-width: 4;
+  filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.5));
+}
+.tkg-node-group.selected .tkg-node-circle {
+  stroke-width: 4;
+  filter: drop-shadow(0 4px 14px rgba(245, 158, 11, 0.45));
+}
+.tkg-node-label {
+  font-size: 12px;
+  font-family: 'PingFang SC', sans-serif;
+  fill: var(--tkg-text);
+  text-anchor: middle;
+  pointer-events: none;
+}
+.tkg-node-label-en {
+  font-size: 10px;
+  font-style: italic;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  fill: var(--tkg-dim);
+  opacity: 0.55;
+  text-anchor: middle;
+  pointer-events: none;
+}
+.tkg-node-grade {
+  font-size: 10px;
+  fill: var(--tkg-muted);
+  text-anchor: middle;
+  pointer-events: none;
+}
+.tkg-node-status-icon {
+  font-size: 14px;
+  text-anchor: middle;
+  pointer-events: none;
+}
+.tkg-node-group.dim { opacity: 0.3; }
+.tkg-node-group.no-course { cursor: default; }
 
+/* ─── 连接线 ─── */
+.tkg-link {
+  fill: none;
+  stroke: rgba(148, 163, 184, 0.3);
+  stroke-width: 2;
+  transition: stroke-opacity .2s;
+}
+.tkg-link.link-prereq { stroke: rgba(148, 163, 184, 0.3); stroke-width: 2; }
+.tkg-link.link-next { stroke: rgba(59, 130, 246, 0.45); stroke-width: 2; }
+.tkg-link.link-sibling { stroke: rgba(245, 158, 11, 0.3); stroke-dasharray: 3 3; }
+.tkg-link.link-extend { stroke: rgba(139, 92, 246, 0.35); stroke-dasharray: 6 3; }
+.tkg-link.dim { stroke-opacity: 0.1; }
+
+/* ─── Tooltip：对齐 tree.html ─── */
+.tkg-tooltip {
+  position: absolute;
+  background: rgba(30, 41, 59, 0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 12px;
+  padding: 14px 16px;
+  max-width: 320px;
+  max-height: 60vh;
+  overflow-y: auto;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 10;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  color: #f8fafc;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.tkg-tooltip.visible { opacity: 1; pointer-events: auto; }
+.tkg-tooltip h3 { font-size: 15px; margin: 0 0 6px; color: var(--tkg-text); }
+.tkg-tooltip .meta { font-size: 12px; color: var(--tkg-dim); margin-bottom: 8px; }
+.tkg-tooltip .status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.tkg-tooltip .badge-active { background: rgba(16, 185, 129, 0.22); color: var(--tkg-success); }
+.tkg-tooltip .badge-gap { background: rgba(239, 68, 68, 0.22); color: var(--tkg-danger); }
+.tkg-tooltip .chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+.tkg-tooltip .chip {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--tkg-border);
+  color: var(--tkg-dim);
+}
+.tkg-tooltip .course-link {
+  display: block;
+  margin-top: 10px;
+  padding: 7px 12px;
+  background: linear-gradient(135deg, var(--tkg-primary), var(--tkg-accent));
+  color: #fff;
+  border-radius: 8px;
+  text-align: center;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+  pointer-events: auto;
+}
+.tkg-tooltip .course-link:hover { filter: brightness(1.1); }
+.tkg-tooltip .gap-msg {
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--tkg-danger);
+  font-size: 12px;
+}
+
+/* ─── 详情面板 ─── */
 .tkg-panel {
-  display: flex; flex-direction: column; gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   padding: 16px;
   border-radius: var(--tkg-radius);
-  border: 1px solid var(--tkg-border);
   background: var(--tkg-card);
-  min-height: 360px;
+  border: 1px solid var(--tkg-border);
+  min-height: 420px;
 }
-.tkg-panel h3 { margin: 0; font-size: 18px; font-weight: 800; }
-.tkg-panel .meta { color: var(--tkg-dim); font-size: 13px; font-weight: 600; }
-.tkg-panel .desc { font-size: 14px; line-height: 1.7; }
+.tkg-panel h3 { margin: 0; font-size: 17px; font-weight: 800; }
+.tkg-panel .meta { color: var(--tkg-dim); font-size: 12px; font-weight: 600; }
 .tkg-panel ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
-.tkg-panel ul li { font-size: 13px; line-height: 1.6; }
+.tkg-panel ul li { font-size: 12.5px; line-height: 1.6; color: var(--tkg-dim); }
 
 .tkg-tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .tkg-tag {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700;
-  border: 1px solid var(--tkg-border); background: rgba(255,255,255,0.04); color: inherit;
-  text-decoration: none;
-}
-.tkg-tag.layer-prereq { border-color: rgba(16, 185, 129, 0.65); color: var(--tkg-success); }
-.tkg-tag.layer-next   { border-color: rgba(59, 130, 246, 0.65); color: var(--tkg-primary); }
-.tkg-tag.layer-sibling{ border-color: rgba(245, 158, 11, 0.55); color: var(--tkg-accent); }
-.tkg-tag.layer-extend { border-color: rgba(139, 92, 246, 0.55); color: #a855f7; }
-.tkg-tag.has-course::after { content: '📚'; margin-left: 2px; }
-.tkg-tag.no-course { opacity: 0.7; }
-
-.tkg-panel-links {
-  display: grid; gap: 8px;
-}
-.tkg-link-card {
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  padding: 10px 14px; border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
   border: 1px solid var(--tkg-border);
-  background: rgba(255,255,255,0.03);
-  font-size: 13px; color: inherit; text-decoration: none;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--tkg-text);
+  text-decoration: none;
+  cursor: pointer;
+}
+.tkg-tag:hover { background: rgba(59, 130, 246, 0.12); }
+.tkg-tag.layer-prereq { border-color: rgba(16, 185, 129, 0.6); color: var(--tkg-success); }
+.tkg-tag.layer-next { border-color: rgba(59, 130, 246, 0.6); color: var(--tkg-primary); }
+.tkg-tag.layer-sibling { border-color: rgba(245, 158, 11, 0.5); color: var(--tkg-accent); }
+.tkg-tag.layer-extend { border-color: rgba(139, 92, 246, 0.5); color: #c084fc; }
+.tkg-tag.has-course::after { content: '📚'; margin-left: 2px; }
+.tkg-tag.no-course { opacity: 0.7; cursor: default; }
+.tkg-tag.no-course:hover { background: rgba(255, 255, 255, 0.04); }
+
+.tkg-panel-links { display: grid; gap: 8px; }
+.tkg-link-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--tkg-border);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 13px;
+  color: var(--tkg-text);
+  text-decoration: none;
   transition: border-color .2s, transform .2s, background .2s;
 }
-.tkg-link-card:hover { border-color: var(--tkg-primary); transform: translateY(-1px); background: rgba(59,130,246,0.06); }
+.tkg-link-card:hover {
+  border-color: var(--tkg-primary);
+  transform: translateY(-1px);
+  background: rgba(59, 130, 246, 0.08);
+}
 .tkg-link-card strong { font-size: 14px; }
-.tkg-link-card em { font-style: normal; color: var(--tkg-muted); font-size: 12px; }
+.tkg-link-card em { font-style: normal; color: var(--tkg-muted); font-size: 11.5px; }
 
 .tkg-empty {
   padding: 16px;
   border-radius: var(--tkg-radius);
-  background: rgba(255,255,255,0.03);
+  background: rgba(255, 255, 255, 0.03);
   color: var(--tkg-dim);
   font-size: 14px;
   text-align: center;
 }
 
 .tkg-footer {
-  margin-top: 12px;
+  margin-top: 14px;
   font-size: 12px;
   color: var(--tkg-muted);
   display: flex;
@@ -150,10 +330,10 @@
   gap: 8px;
   flex-wrap: wrap;
 }
-
-.tkg-legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--tkg-dim); }
+.tkg-legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--tkg-dim); }
 .tkg-legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; }
 
+/* canvas 进度探针 */
 .tkg-probe {
   margin-top: 14px;
   padding: 14px;
@@ -161,17 +341,17 @@
   border: 1px solid var(--tkg-border);
   background: var(--tkg-card);
 }
-.tkg-probe-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--tkg-dim);
-  margin-bottom: 8px;
-}
+.tkg-probe-title { font-size: 13px; font-weight: 700; color: var(--tkg-dim); margin-bottom: 8px; }
 .tkg-probe canvas {
   width: 100%;
   height: auto;
-  max-height: 160px;
+  max-height: 150px;
   display: block;
   border-radius: 12px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* 当宿主课件是浅色主题时：自动切换深色 tooltip 到更亮的背景 */
+@media (prefers-color-scheme: light) {
+  .tkg-root { --tkg-text: inherit; }
 }
