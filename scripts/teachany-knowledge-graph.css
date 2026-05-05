@@ -1,0 +1,177 @@
+/* TeachAny Standard Knowledge Graph Module · v1.0
+   ---------------------------------------------
+   只负责骨架样式，所有颜色通过 CSS 变量暴露。
+   课件只要有 --primary / --bg / --text 之类变量，
+   模块就能自动继承。
+*/
+
+.tkg-root {
+  --tkg-primary: var(--kg-primary, var(--primary, #3b82f6));
+  --tkg-accent: var(--kg-accent, var(--accent, #f59e0b));
+  --tkg-success: var(--kg-success, var(--success, #10b981));
+  --tkg-danger: var(--kg-danger, var(--danger, #ef4444));
+  --tkg-bg: var(--kg-bg, transparent);
+  --tkg-card: var(--kg-card, var(--card, rgba(255,255,255,0.04)));
+  --tkg-border: var(--kg-border, var(--border, rgba(148,163,184,0.22)));
+  --tkg-text: var(--kg-text, var(--text, inherit));
+  --tkg-dim: var(--kg-dim, var(--dim, #94a3b8));
+  --tkg-muted: var(--kg-muted, var(--dimmer, #64748b));
+  --tkg-radius: var(--kg-radius, 18px);
+
+  display: block;
+  color: var(--tkg-text);
+  background: var(--tkg-bg);
+  border: 1px solid var(--tkg-border);
+  border-radius: calc(var(--tkg-radius) + 4px);
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.tkg-root *, .tkg-root *::before, .tkg-root *::after { box-sizing: border-box; }
+
+.tkg-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.tkg-title { font-size: 20px; font-weight: 800; margin: 0; }
+.tkg-title small { font-weight: 600; color: var(--tkg-dim); margin-left: 8px; font-size: 13px; }
+.tkg-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.tkg-tools input[type="search"] {
+  padding: 8px 12px; border-radius: 999px; border: 1px solid var(--tkg-border);
+  background: var(--tkg-card); color: inherit; font-size: 14px; min-width: 180px;
+}
+.tkg-filter {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 999px; border: 1px solid var(--tkg-border);
+  background: var(--tkg-card); cursor: pointer; font-size: 13px; font-weight: 700; color: inherit;
+  transition: transform .15s, border-color .15s, color .15s;
+}
+.tkg-filter:hover { transform: translateY(-1px); }
+.tkg-filter.active { color: #fff; border-color: transparent; background: linear-gradient(135deg, var(--tkg-primary), var(--tkg-accent)); }
+
+.tkg-body {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 16px;
+}
+@media (max-width: 860px) {
+  .tkg-body { grid-template-columns: 1fr; }
+}
+
+.tkg-canvas {
+  position: relative;
+  width: 100%;
+  min-height: 360px;
+  border-radius: var(--tkg-radius);
+  background: var(--tkg-card);
+  border: 1px solid var(--tkg-border);
+  overflow: hidden;
+}
+.tkg-canvas svg { width: 100%; height: 100%; display: block; }
+.tkg-canvas-hint {
+  position: absolute; left: 12px; top: 10px; font-size: 12px; color: var(--tkg-muted);
+  pointer-events: none; user-select: none;
+}
+
+.tkg-node {
+  cursor: pointer;
+  transition: transform .2s ease;
+}
+.tkg-node:hover { transform: translate(0, -2px); }
+.tkg-node circle { transition: stroke-width .15s, r .15s; }
+.tkg-node.selected circle { stroke-width: 4; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.25)); }
+.tkg-node text { pointer-events: none; font-weight: 700; fill: currentColor; }
+.tkg-node.dim { opacity: 0.35; }
+.tkg-link { stroke-opacity: 0.55; transition: stroke-opacity .2s; }
+.tkg-link.dim { stroke-opacity: 0.12; }
+
+.tkg-panel {
+  display: flex; flex-direction: column; gap: 12px;
+  padding: 16px;
+  border-radius: var(--tkg-radius);
+  border: 1px solid var(--tkg-border);
+  background: var(--tkg-card);
+  min-height: 360px;
+}
+.tkg-panel h3 { margin: 0; font-size: 18px; font-weight: 800; }
+.tkg-panel .meta { color: var(--tkg-dim); font-size: 13px; font-weight: 600; }
+.tkg-panel .desc { font-size: 14px; line-height: 1.7; }
+.tkg-panel ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.tkg-panel ul li { font-size: 13px; line-height: 1.6; }
+
+.tkg-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tkg-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700;
+  border: 1px solid var(--tkg-border); background: rgba(255,255,255,0.04); color: inherit;
+  text-decoration: none;
+}
+.tkg-tag.layer-prereq { border-color: rgba(16, 185, 129, 0.65); color: var(--tkg-success); }
+.tkg-tag.layer-next   { border-color: rgba(59, 130, 246, 0.65); color: var(--tkg-primary); }
+.tkg-tag.layer-sibling{ border-color: rgba(245, 158, 11, 0.55); color: var(--tkg-accent); }
+.tkg-tag.layer-extend { border-color: rgba(139, 92, 246, 0.55); color: #a855f7; }
+.tkg-tag.has-course::after { content: '📚'; margin-left: 2px; }
+.tkg-tag.no-course { opacity: 0.7; }
+
+.tkg-panel-links {
+  display: grid; gap: 8px;
+}
+.tkg-link-card {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px 14px; border-radius: 14px;
+  border: 1px solid var(--tkg-border);
+  background: rgba(255,255,255,0.03);
+  font-size: 13px; color: inherit; text-decoration: none;
+  transition: border-color .2s, transform .2s, background .2s;
+}
+.tkg-link-card:hover { border-color: var(--tkg-primary); transform: translateY(-1px); background: rgba(59,130,246,0.06); }
+.tkg-link-card strong { font-size: 14px; }
+.tkg-link-card em { font-style: normal; color: var(--tkg-muted); font-size: 12px; }
+
+.tkg-empty {
+  padding: 16px;
+  border-radius: var(--tkg-radius);
+  background: rgba(255,255,255,0.03);
+  color: var(--tkg-dim);
+  font-size: 14px;
+  text-align: center;
+}
+
+.tkg-footer {
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--tkg-muted);
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tkg-legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--tkg-dim); }
+.tkg-legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+
+.tkg-probe {
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: var(--tkg-radius);
+  border: 1px solid var(--tkg-border);
+  background: var(--tkg-card);
+}
+.tkg-probe-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tkg-dim);
+  margin-bottom: 8px;
+}
+.tkg-probe canvas {
+  width: 100%;
+  height: auto;
+  max-height: 160px;
+  display: block;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+}

@@ -21,6 +21,13 @@
 
 ## 详细变更记录
 
+### v7.5
+⭐ 标准知识图谱模块
+- 新增 `scripts/teachany-knowledge-graph.{js,css}` + `scripts/teachany-kg-manifest.json`（由 `scripts/build-teachany-kg-manifest.py` 从 `data/trees` + `data/knowledge-points` 生成），提供稳定、可搜索、可筛选、可跳转的标准图谱模块。
+- 课件接入只需：`<div data-teachany-kg="node_id"><canvas class="tkg-fallback-canvas" width="720" height="120"></canvas></div>` + 引入模块 `css/js`。
+- 新增硬规则 #59：禁止再手写图谱，主题样式只能通过 CSS 变量继承。
+- 17 个官方课件 `#knowledge-graph` 已批量切到标准模块，发布校验 0 错误。
+
 ### v7.4
 ⭐ 真实交互与连续音频基线
 - 新增硬规则 #58：禁止用静态图片、SVG 截图或 data:image 信息图伪装“互动/探究/实验/地图”模块。
