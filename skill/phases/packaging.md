@@ -174,8 +174,27 @@ Step 3️⃣ 课件落地 + 自动发布（v6.8 全自动端到端）
   - 条件 C：AI 已单独向用户复核一次"课件去向"（即 3.2 的询问），并收到明确选择 ③ 的回复
   
   三重条件全部成立后，才能执行：
-  1. 把课件从 `community/drafts/<course-id>/` 移动到 `examples/<course-id>/`
-  2. 手工编辑 `registry.json`，把该课件的 `status` 从 `community` 改为 `official`
+  1. **搬移课件到 examples/（完整搬移，不要只搬 index.html）**
+     ```bash
+     # 情形 A：课件本来在 community/drafts/，还没 PR 合并
+     mv community/drafts/<course-id> examples/<course-id>
+
+     # 情形 B：课件已在 community/<course-id>/（已合并到社区通道），现在要升级
+     #   ⛔ 必须完整搬移 manifest.json + assets/ + tts/，否则 rebuild-index 会把
+     #      examples/<course-id>/ 当成"缺 manifest.json 的残缺课件"跳过，
+     #      把 registry.path 写回 community/<course-id>（就是用户看到"图谱链接 404"的根因）
+     mv community/<course-id>/manifest.json examples/<course-id>/
+     mv community/<course-id>/assets        examples/<course-id>/ 2>/dev/null || true
+     mv community/<course-id>/tts           examples/<course-id>/ 2>/dev/null || true
+     rm -rf community/<course-id>
+     ```
+
+  2. **⛔ 不要手工编辑 `registry.json`**
+     `rebuild-index.py` 会扫描 `examples/` 和 `community/` 下实际存在的目录，
+     按**目录位置**自动生成 `registry.path`（`examples/xxx` 或 `community/xxx`），
+     并按 manifest.json 中的信息填充 `status/has_tts/has_video` 等字段。
+     手工写入的 path/status **会被下一步 rebuild-index 覆盖**（这是设计上的幂等性，不是 bug）。
+
   3. 重建索引：`python3 scripts/rebuild-index.py`（脚本自身也会检查 `.teachany-admin`）
   4. 注入知识图谱跨课件链接：
      ```bash

@@ -47,9 +47,29 @@
 
   function coursewareUrl(course) {
     if (!course || !course.path) return null;
-    var m = course.path.match(/^examples\/(.+)$/);
-    if (!m) return course.path;
-    return "../" + m[1] + "/index.html";
+    // 解析当前页面所在位置：examples/xxx 或 community/xxx 或其他
+    // 目标 course.path 格式：examples/xxx 或 community/xxx
+    var cur = window.location.pathname;
+    // 找到当前页面的 "examples/" 或 "community/" 位置
+    var curKind = null;
+    if (/\/examples\//.test(cur)) curKind = "examples";
+    else if (/\/community\//.test(cur)) curKind = "community";
+
+    var tgtMatch = course.path.match(/^(examples|community)\/(.+)$/);
+    if (!tgtMatch) return course.path; // 未识别的路径，原样返回
+    var tgtKind = tgtMatch[1], tgtSlug = tgtMatch[2];
+
+    // 规则：当前在 examples/xxx/index.html，距离 examples/ 是 ../, 距离 community/ 是 ../../community/
+    if (curKind === "examples") {
+      return tgtKind === "examples" ? "../" + tgtSlug + "/index.html"
+                                    : "../../community/" + tgtSlug + "/index.html";
+    }
+    if (curKind === "community") {
+      return tgtKind === "community" ? "../" + tgtSlug + "/index.html"
+                                     : "../../examples/" + tgtSlug + "/index.html";
+    }
+    // 其他页面（如 tree.html、根页面），按相对根路径返回
+    return course.path + "/index.html";
   }
 
   function hasCourse(node) {

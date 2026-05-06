@@ -59,7 +59,7 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 
 | 文档 | 内容 | 触发时机 |
 |:---|:---|:---|
-| [`RULES.md`](./RULES.md) | 57 条硬规则完整列表 | Completeness Gate 按需 |
+| [`RULES.md`](./RULES.md) | 66 条硬规则完整列表（含 #66 官方课件发布基线） | Completeness Gate 按需 |
 | [`curriculum-standards.md`](./curriculum-standards.md) | 课标速查表（21 棵国内课标树） | Phase 0.5 知识查询 |
 | [`historical-maps.md`](./historical-maps.md) | 地图资源完整规范 | 历史/地理课件 |
 | [`CHANGELOG.md`](./CHANGELOG.md) | 版本变更日志 | 仅需了解版本演进 |
