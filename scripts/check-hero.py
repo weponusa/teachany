@@ -64,7 +64,7 @@ def find_hero_refs_in_html(html_path: Path):
 
 def check_courseware(course_dir: Path):
     """检查单个课件，返回 (status, errors, warns)
-    status: 'pass' | 'fail' | 'warn'
+    status: 'pass' | 'fail' | 'warn' | 'l3-dropped'（L3 降级：主动去掉 hero 区块，合规）
     """
     errors = []
     warns = []
@@ -73,13 +73,80 @@ def check_courseware(course_dir: Path):
     if not html_path.exists():
         return 'skip', [], []
 
+    try:
+        html_text = html_path.read_text(encoding='utf-8', errors='replace')
+    except Exception:
+        html_text = ''
+
     hero_files = find_hero_files(course_dir)
     local_refs, cdn_refs = find_hero_refs_in_html(html_path)
     all_refs = local_refs + cdn_refs
 
+    # v7.9.1: 先判断是否 L3 降级（课件主动不使用 hero 区块）
+    # 判定标准：HTML 中无 <figure class="ta-standard-figure"> 且 hero_files 为空 且 无 hero 引用
+    has_figure_block = bool(re.search(
+        r'<figure[^>]*class\s*=\s*["\'][^"\']*ta-standard-figure[^"\']*["\']',
+        html_text, re.IGNORECASE
+    ))
+    if not has_figure_block and not hero_files and not all_refs:
+        # 明确 L3 降级：合规但标注
+        return 'l3-dropped', [], ['L3 降级：课件无 hero 区块，合规但 Gallery 封面将留空']
+
     # 检查 1: 必须有 hero 引用（CDN URL 或本地路径均可）
     if not all_refs:
         errors.append(f'HTML 未引用任何 hero 图（src/url 中无 *hero*.* 路径）')
+
+    # v7.9.1 新增检查：hero <img> 必须在 <figure class="ta-standard-figure"> 区块内
+    # 排除两种违规形态：(a) <img> 作为 hero section 的标题背景层；(b) 仅用 background-image
+    if all_refs:
+        # 提取所有 <img class="hero-cover-img" ...> 的上下文
+        img_hero_pattern = re.compile(
+            r'<img[^>]*class\s*=\s*["\'][^"\']*hero-cover-img[^"\']*["\'][^>]*>',
+            re.IGNORECASE
+        )
+        img_heroes = img_hero_pattern.findall(html_text)
+        # 同时检查是否在 <figure class="ta-standard-figure"> 内（父节点或兄弟节点）
+        # 用 regex 看 img 前 200 字符内是否有 <figure class="ta-standard-figure">
+        wrapped_count = 0
+        for m in img_hero_pattern.finditer(html_text):
+            before = html_text[max(0, m.start() - 300):m.start()]
+            # 找最近的 <figure 标签
+            last_figure_open = before.rfind('<figure')
+            last_figure_close = before.rfind('</figure>')
+            if last_figure_open > last_figure_close:
+                # 在某个 figure 内，检查 class
+                figure_tag = html_text[max(0, m.start() - 300) + last_figure_open:m.start()]
+                if 'ta-standard-figure' in figure_tag:
+                    wrapped_count += 1
+        if img_heroes and wrapped_count == 0:
+            errors.append(
+                f'hero `<img>` 未包裹在 `<figure class="ta-standard-figure">` 独立区块内'
+                f'（v7.9.1 规则 #57：hero 图必须是标题下独立区块的知识结构主图）'
+            )
+
+        # 检查 hero section 内是否还错误地把 hero 图作为标题背景
+        hero_section_match = re.search(
+            r'<section[^>]*class\s*=\s*["\'][^"\']*\bhero\b[^"\']*["\'][^>]*>(.*?)</section>',
+            html_text, re.IGNORECASE | re.DOTALL
+        )
+        if hero_section_match:
+            hero_sec_body = hero_section_match.group(1)
+            # hero section 内有 <img class=hero-cover-img>（违规：标题背景图）
+            if img_hero_pattern.search(hero_sec_body):
+                errors.append(
+                    f'hero section 内发现 `<img class="hero-cover-img">`'
+                    f'（违反 #57：hero section 应保持纯文字 + tag 徽章，不得叠加图片背景）'
+                )
+            # hero section 内 background-image: url(...hero...)（违规）
+            bg_hero = re.search(
+                r'background(?:-image)?\s*:\s*[^;]*url\([^)]*hero[^)]*\)',
+                hero_sec_body, re.IGNORECASE
+            )
+            if bg_hero:
+                errors.append(
+                    f'hero section 内使用 `background-image: url(...hero...)`'
+                    f'（违反 #57：禁止把 hero 图作为标题背景，应移到 <figure> 独立区块）'
+                )
 
     # 检查 2: 本地路径引用的文件必须存在
     if local_refs:
@@ -173,6 +240,7 @@ def main():
     fail_count = 0
     warn_count = 0
     skip_count = 0
+    l3_count = 0
 
     for cdir in courseware_dirs:
         status, errors, warns = check_courseware(cdir)
@@ -188,6 +256,8 @@ def main():
             fail_count += 1
         elif status == 'warn':
             warn_count += 1
+        elif status == 'l3-dropped':
+            l3_count += 1  # v7.9.1: L3 降级也算合规
         else:
             skip_count += 1
 
@@ -209,6 +279,7 @@ def main():
                 'fail': fail_count,
                 'warn': warn_count,
                 'skip': skip_count,
+                'l3_dropped': l3_count,
             },
             'results': results,
             'duplicates': {md5: paths for md5, paths in duplicates.items()},
@@ -222,6 +293,8 @@ def main():
         print(f'  ❌ 失败: {fail_count}')
         if warn_count:
             print(f'  ⚠️  警告: {warn_count}')
+        if l3_count:
+            print(f'  📭 L3 降级（无 hero 区块，合规）: {l3_count}')
         if skip_count:
             print(f'  ⏭️  跳过 (无 index.html): {skip_count}')
 
@@ -232,11 +305,18 @@ def main():
                     print(f'\n❌ {rel}')
                     for e in r['errors']:
                         print(f'    - {e}')
-            print(f'\n💡 修复建议：')
+            print(f'\n💡 修复建议 (v7.9.1 新规则 #57)：')
             print(f'   1. 查找 CDN 上的 hero 图：python3 scripts/find-hero.py <课件目录>')
-            print(f'   2. 若 CDN 无此图，调用 image_gen 生成并上传图床')
-            print(f'   3. HTML 添加: <img class="hero-cover-img" src="CDN_URL" alt="...">')
-            print(f'   4. 重新跑本脚本验证')
+            print(f'   2. 若 CDN 无此图，调用 image_gen 用"信息图"风格 prompt 生成并上传图床')
+            print(f'      （关键词：knowledge-structure infographic / flat poster / card nodes / dashed connectors，')
+            print(f'       严禁：warm cartoon / realistic scene）')
+            print(f'   3. HTML 用独立区块：<figure class="ta-standard-figure">')
+            print(f'        <img class="hero-cover-img" src="./assets/<id>-hero.png" alt="...">')
+            print(f'        <figcaption>课件标题·知识结构主图：...</figcaption>')
+            print(f'      </figure>')
+            print(f'      放在 hero section 之后、学习目标之前（不是贴在标题背景上）')
+            print(f'   4. 如无图床且无 image_gen 能力，采用 L3 降级：删除整个 <figure> 区块（合规）')
+            print(f'   5. 重新跑本脚本验证')
 
         if fail_count == 0:
             print(f'\n✅ PASS: 所有课件 hero 图基线校验通过')
