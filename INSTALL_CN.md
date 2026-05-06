@@ -4,6 +4,31 @@
 
 ---
 
+## ⚡ 最推荐：下载 Release ZIP（≤3MB，秒装）
+
+> **2026-05 起**，TeachAny 提供 3 档 Release ZIP，**按需下载，不占磁盘**：
+
+| 档位 | ZIP | 解压后 | 适用 |
+|---|---|---|---|
+| **minimal** ⭐ | **2.5MB** | 13MB | 语文/数学/物理/化学/生物/英语等非地图课 |
+| **standard** | 26MB | 54MB | + 世界史地图 + 现代政区 |
+| **full-maps** | 160MB | 240MB | + 中国通史地图 + 自然地理 |
+
+**下载地址**：
+- GitHub：https://github.com/weponusa/teachany/releases/latest
+- Gitee 镜像：https://gitee.com/weponusa/teachany/releases
+
+**安装步骤**：
+1. 下载对应档位的 ZIP
+2. 解压到 `~/.agents/skills/teachany/`（覆盖已有目录）
+3. 重启 CodeBuddy/WorkBuddy
+
+> 💡 Hero 图、社区课件、情境插图通过 CDN 按需加载，无需随 skill 下载。普通老师选 **minimal** 即可覆盖 95% 场景。
+>
+> ⚠️ 以下"方案一/二/三"会下载**完整仓库（700MB+，含 305 个成品课件）**，仅适合需要本地审阅全部成品课件的场景，普通制作不需要。
+
+---
+
 ## 🚀 快速安装（3分钟完成）
 
 ### 方案一：Gitee 镜像安装（推荐）⭐

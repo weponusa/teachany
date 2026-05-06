@@ -4,7 +4,32 @@
 
 ---
 
-## 🚀 一键安装（推荐）
+## ⚡ 最轻量安装（推荐 · ≤3MB）
+
+### 方法 A：下载 Release ZIP（体积最小，秒装）
+
+1. 打开：https://github.com/weponusa/teachany/releases/latest
+   （无法访问？用 Gitee 镜像：https://gitee.com/weponusa/teachany/releases）
+2. 下载 **`teachany-skill-minimal-*.zip`**（约 **2.5MB**，解压后 **13MB**）
+3. 解压到 `~/.agents/skills/teachany/`（覆盖已有目录）
+4. 重启 CodeBuddy/WorkBuddy
+
+### 📏 档位对照
+
+| 档位 | ZIP | 解压后 | 含什么 | 适用场景 |
+|---|---|---|---|---|
+| **minimal** ⭐ | **2.5MB** | 13MB | 制作器 + 知识树 + skill 文档 | 语文/数学/物理/化学/生物/英语等非地图课 |
+| **standard** | 26MB | 54MB | + 世界史地图 + 现代政区 | 含地理/世界历史的课 |
+| **full-maps** | 160MB | 240MB | + 中国通史地图 + 自然地理 | 中国史/地形/自然地理高阶课 |
+| ~~full~~ | ~~700MB+~~ | ~~1.4GB~~ | 含 305 个成品课件（审阅研究用） | 普通制作不需要 |
+
+> 💡 **Hero 图、社区课件、情境插图通过 CDN 按需加载**，不占用本地空间。普通老师选 **minimal** 即可覆盖 95% 场景。
+
+---
+
+## 🔧 方法 B：原有 `/install-skill` 路径（全量下载，约 700MB）
+
+> ⚠️ **不推荐**：此方式会下载完整仓库（含 305 个成品课件、图库、通史地图等），占用 ~1.4GB 磁盘空间。仅适合需要本地审阅全部成品课件的场景。
 
 ### 方法：复制链接 → 粘贴到 CodeBuddy
 

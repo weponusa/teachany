@@ -124,6 +124,20 @@ Level 1：给模板填空 → Level 2：只给提示 → Level 3：独立完成�
 
 ## 🚀 快速开始
 
+### ⚡ 最轻量安装（推荐，≤3MB）
+
+从 [GitHub Releases](https://github.com/weponusa/teachany/releases/latest)（或 [Gitee 镜像](https://gitee.com/weponusa/teachany/releases)）下载：
+
+| 档位 | ZIP | 解压后 | 适用 |
+|---|---|---|---|
+| **minimal** ⭐ | **2.5MB** | 13MB | 语文/数学/物理/化学/生物/英语 |
+| **standard** | 26MB | 54MB | + 世界史地图 + 现代政区 |
+| **full-maps** | 160MB | 240MB | + 中国通史地图 + 自然地理 |
+
+解压到 `~/.agents/skills/teachany/` 即可。Hero 图、社区课件通过 CDN 按需加载，不占本地空间。
+
+详见：[INSTALL_CN_SIMPLE.md](./INSTALL_CN_SIMPLE.md)
+
 ### 方式一：作为 AI Skill 使用（推荐）
 
 TeachAny 可以作为 **Skill** 嵌入 AI 编程助手（**推荐使用 [WorkBuddy](https://workbuddy.tencent.com/)**，也支持 CodeBuddy、Cursor、Windsurf、Claude 等）：

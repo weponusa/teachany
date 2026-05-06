@@ -32,25 +32,35 @@
 
 ## 🚀 One-Click Install
 
-### Choose your download size (v6.12 progressive loading)
+### ⚡ Recommended · Download Release ZIP (≤3MB)
 
-| Preset | Size | What's included | Best for |
-|---|---|---|---|
-| **minimal** | ~20MB | Skill core + knowledge trees | Non-map courses (math, physics, chemistry, etc.) |
-| **standard** ⭐ | ~40MB | + world history maps + modern borders | Most courses (incl. world history, basic geography) |
-| **full-maps** | ~140MB | + Chinese dynasty maps + physical geography | Chinese history / terrain / advanced geography |
-| **full** | ~690MB | + 305 community courses + examples | Review / study / batch operations |
+Grab the right preset from [GitHub Releases](https://github.com/weponusa/teachany/releases/latest) (or [Gitee mirror](https://gitee.com/weponusa/teachany/releases)):
+
+| Preset | ZIP | Extracted | What's included | Best for |
+|---|---|---|---|---|
+| **minimal** ⭐ | **2.5MB** | 13MB | Skill core + knowledge trees (CDN-driven hero/community) | Chinese / Math / Physics / Chemistry / Biology / English |
+| **standard** | 26MB | 54MB | + world history maps + modern political borders | Geography / world history courses |
+| **full-maps** | 160MB | 240MB | + Chinese dynasty maps + physical geography | Chinese history / terrain / advanced geography |
 
 ```bash
-# Clone with sparse checkout (skip blobs you don't need)
+# Download the ZIP, then extract to the skill directory
+unzip teachany-skill-minimal-*.zip
+mv teachany-minimal ~/.agents/skills/teachany       # Claude Code / Cursor / Codex CLI
+# or:  ~/.codebuddy/skills/teachany                 # CodeBuddy
+```
+
+> 💡 **Why this layout?** Hero images, community coursewares, and scene illustrations are served from jsDelivr CDN on-demand. Local install only needs the skill producer + knowledge trees.
+
+### Alternative · Sparse git clone (for contributors)
+
+```bash
+# Full history with selective checkout
 git clone --filter=blob:none --sparse https://github.com/weponusa/teachany.git
 cd teachany
-
-# Pick one preset
-git sparse-checkout set --from-file .sparse-checkout-presets/minimal.txt      # 20MB
-git sparse-checkout set --from-file .sparse-checkout-presets/standard.txt     # 40MB ⭐
-git sparse-checkout set --from-file .sparse-checkout-presets/full-maps.txt    # 140MB
-git sparse-checkout disable                                                    # 690MB (full)
+git sparse-checkout set --from-file .sparse-checkout-presets/minimal.txt      # ~13MB working tree
+git sparse-checkout set --from-file .sparse-checkout-presets/standard.txt     # ~54MB
+git sparse-checkout set --from-file .sparse-checkout-presets/full-maps.txt    # ~240MB
+git sparse-checkout disable                                                    # ~700MB (full)
 
 # Link skill to your AI tool
 ln -sfn "$PWD/skill" ~/.codebuddy/skills/teachany   # CodeBuddy

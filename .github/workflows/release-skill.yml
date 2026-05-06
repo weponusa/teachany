@@ -1,0 +1,68 @@
+name: Release Skill ZIPs
+
+on:
+  # 每当推送 skill-v* 标签时自动打包并发 Release
+  push:
+    tags:
+      - 'skill-v*'
+  # 允许手工触发（不建 Release，只上传 artifact）
+  workflow_dispatch:
+    inputs:
+      presets:
+        description: "打包哪些预设（逗号分隔：minimal,standard,full-maps,full，或 all）"
+        required: false
+        default: "all"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build skill release ZIPs
+        run: |
+          chmod +x scripts/build-skill-release.sh
+          bash scripts/build-skill-release.sh "${{ github.event.inputs.presets || 'all' }}"
+
+      - name: List artifacts
+        run: ls -lh dist/
+
+      - name: Upload as workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: teachany-skill-zips
+          path: dist/*.zip
+          retention-days: 30
+
+      - name: Publish GitHub Release (only on tag push)
+        if: startsWith(github.ref, 'refs/tags/skill-v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip
+          name: "TeachAny Skill ${{ github.ref_name }}"
+          body: |
+            ## TeachAny Skill Release · ${{ github.ref_name }}
+
+            按需选择档位下载。**推荐 minimal**（≤3MB，覆盖 95% 课件制作场景）：
+
+            | 档位 | ZIP 大小 | 解压后 | 适用 |
+            |---|---|---|---|
+            | `teachany-skill-minimal-*.zip` | ~3MB | ~13MB | 语文/数学/物理/化学/生物/英语等非地图课 |
+            | `teachany-skill-standard-*.zip` | ~26MB | ~54MB | 含世界史地图 + 现代政区（绝大多数课） |
+            | `teachany-skill-full-maps-*.zip` | ~160MB | ~240MB | 含中国通史地图 + 自然地理 |
+
+            ### 安装方法
+
+            1. 下载上面任一 ZIP
+            2. 解压到 `~/.agents/skills/teachany/`（覆盖已有目录）
+            3. 重启 CodeBuddy/WorkBuddy 即可
+
+            Hero 图、社区课件通过 CDN 按需加载，无需随 skill 下载。
+          draft: false
+          prerelease: false
