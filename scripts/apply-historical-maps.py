@@ -21,11 +21,24 @@ ROOT = Path(__file__).resolve().parent.parent
 MANIFEST = ROOT / "scripts/historical-maps-manifest.json"
 SKILL_CHINA = ROOT / "skill/assets/historical-china"
 SKILL_WORLD = ROOT / "skill/assets/historical-world"
+# v7.7.3: 全球彩色阴影地形底图（2k 版 205KB，满足地图容器显示需求）
+HILLSHADE_SRC = ROOT / "skill/assets/hillshade/global-color-hillshade-2k.jpg"
 
 LEAFLET_CSS = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">'
 LEAFLET_JS = '<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>'
 MODULE_CSS = '<link rel="stylesheet" href="../../scripts/teachany-historical-map.css">'
 MODULE_JS = '<script src="../../scripts/teachany-historical-map.js" defer></script>'
+
+def copy_hillshade(course_dir: Path) -> int:
+    """v7.7.3: 复制全球彩色阴影地形底图为课件本地 hillshade.jpg（统一默认底图）"""
+    if not HILLSHADE_SRC.exists():
+        return 0
+    target = course_dir / "assets" / "maps" / "hillshade.jpg"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    if target.exists() and target.stat().st_size == HILLSHADE_SRC.stat().st_size:
+        return 0  # 已是最新
+    shutil.copy2(HILLSHADE_SRC, target)
+    return 1
 
 def copy_geojson_files(course_dir: Path, scope: str, eras: list):
     """把 eras 中引用的 geojson 从 skill/assets 复制到 course/assets/maps/
@@ -155,6 +168,8 @@ def process(course_rel_path: str, cfg: dict):
 
     # 1. 复制 geojson（即使 HTML 已注入也要补漏）
     copied = copy_geojson_files(course_dir, cfg.get("scope", "china"), cfg["eras"])
+    # 1b. v7.7.3: 复制全球彩色阴影地形底图
+    hill = copy_hillshade(course_dir)
 
     # 2. 注入 HTML
     html = idx.read_text(encoding="utf-8")
@@ -165,9 +180,9 @@ def process(course_rel_path: str, cfg: dict):
 
     if html != orig:
         idx.write_text(html, encoding="utf-8")
-        return f"applied (geojson={copied}, section={inj_section})"
-    if copied > 0:
-        return f"geojson-only (copied={copied})"
+        return f"applied (geojson={copied}, hillshade={hill}, section={inj_section})"
+    if copied > 0 or hill > 0:
+        return f"assets-only (geojson={copied}, hillshade={hill})"
     return "no-change"
 
 def main():

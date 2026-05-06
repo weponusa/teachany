@@ -185,14 +185,22 @@
       try { map.fitBounds(cfg.fitBounds); } catch (e) {}
     }
 
-    // 可选：地形叠加（仅当 cfg.hillshade 显式提供时加载，避免无谓 404）
-    if (cfg.hillshade) {
-      var hillsrc = cfg.hillshade;
+    // v2.1: 地形底图默认加载（带阴影的全球彩色 hillshade）
+    // 路径优先级：cfg.hillshade 显式指定 > 课件本地 ./assets/maps/hillshade.jpg > 不加载
+    // 失败不报错、不阻塞疆域渲染
+    var hillsrc = cfg.hillshade === false ? null : (cfg.hillshade || "./assets/maps/hillshade.jpg");
+    if (hillsrc) {
       var img = new Image();
       img.onload = function () {
-        L.imageOverlay(hillsrc, [[-90, -180], [90, 180]], { opacity: 0.45, interactive: false }).addTo(map);
+        L.imageOverlay(hillsrc, [[-90, -180], [90, 180]], {
+          opacity: 0.55,
+          interactive: false,
+          zIndex: 200
+        }).addTo(map);
       };
-      img.onerror = function () { /* 没有就不显示 */ };
+      img.onerror = function () {
+        // 静默降级：无底图也能用，疆域和城市在纯深蓝底上显示
+      };
       img.src = hillsrc;
     }
 

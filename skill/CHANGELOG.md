@@ -1,6 +1,6 @@
 # TeachAny 版本变更日志
 
-**当前版本**：v7.7.2（持续演进中）
+**当前版本**：v7.7.3（持续演进中）
 **更新日期**：2026-05-06
 
 ---
@@ -22,6 +22,39 @@
 - **v7.7**：知识图谱稳定布局重构（去 force layout，确定性环形分层，零闪动）+ 三大标准模块上线：AI 学伴入口卡片、独立连续音频播放器、历史地图渲染器
 - **v7.7.1**：UI 可达性修复 — KG tooltip 可点击链接（延迟关闭+锚定节点）、AI 学伴卡片上移至 pretest 后（不再藏在底部）、FAB 自动避开底部音频条
 - **v7.7.2**：历史地图模块重写为 Leaflet 真地图引擎 — 自制 SVG 投影模块废弃，复用稳定标杆（`community/history-medieval-europe`），22 个历史/地理课件批量注入
+- **v7.7.3**：历史地图模块默认加载彩色阴影地形底图（205KB 全球 4096×2048 彩色阴影），22 个课件已复制本地 `assets/maps/hillshade.jpg`，地图不再出现"暗蓝空地"
+
+---
+
+## 🆕 v7.7.3 — 彩色阴影地形底图默认加载（2026-05-06）
+
+**背景**：v7.7.2 重写为 Leaflet 后，22 个历史课件地图虽然疆域与城市已对齐，但地图底色仍是纯深蓝（`#0c1526`），缺少地形参考，与 `community/history-medieval-europe` 的彩色阴影效果有显著差距。
+
+**对策**：
+
+**1. 模块默认加载本地 `assets/maps/hillshade.jpg`**
+- `scripts/teachany-historical-map.js`：Leaflet 初始化后立即探测本地 `./assets/maps/hillshade.jpg`，加载成功则以 `L.imageOverlay([[-90,-180],[90,180]], {opacity:0.55, interactive:false, zIndex:200})` 叠加覆盖全球；404 静默回退
+- 支持显式关闭：`<script data-teachany-map-config>{"hillshade":false}</script>`
+- 支持自定义路径：`{"hillshade":"./assets/maps/custom-terrain.jpg"}`
+
+**2. 批量注入脚本自动复制底图**
+- `scripts/apply-historical-maps.py`：新增 `HILLSHADE_SRC = skill/assets/hillshade/global-color-hillshade-2k.jpg` + `copy_hillshade(course_dir)` 函数
+- 每次注入地图模块时，自动把 205KB 的 2K 彩色阴影底图复制到 `<course>/assets/maps/hillshade.jpg`
+- 已对 22 个历史/地理课件批量执行完成
+
+**3. 浏览器实测验证**（`examples/imperial-unification/index.html`）
+```
+hillshade_overlays: 1
+src: "maps/hillshade.jpg"
+opacity: 0.55
+natural_size: 4096×2048
+visible: true
+geojson_paths: 17 (秦朝) → 78 (西汉切换后)
+```
+
+**4. 规范强化**
+- `skill/RULES.md` Rule #62 新增第 (d) 条：必须把 `skill/assets/hillshade/global-color-hillshade-2k.jpg` 复制为课件本地 `assets/maps/hillshade.jpg`
+- `skill/SKILL_CN.md` Baseline ⑩：更新历史地图模块集成步骤，明确 hillshade 为必需资源
 
 ---
 
