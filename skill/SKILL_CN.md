@@ -72,8 +72,8 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 
 | 能力 | 强制要求 | 实现方式 | 降级底线 |
 |:---|:---|:---|:---|
-| **① Edge-TTS 语音讲解** | 必须为每个知识模块生成独立 mp3 + 同步字幕；禁用浏览器 `speechSynthesis` | `pip install edge-tts` → 按 audioPlaylist 生成 `tts/*.mp3` + `*.srt` → HTML 内置滚动自动播放器（IntersectionObserver） | 至少保留 `tts/narration.json` 脚本 + 后续补录说明，不得整体省略 |
-| **② Remotion 程序化动画** | 课件必须含 **≥1 段真正用 Remotion 渲染的教学动画 mp4**（演示过程性变化），且 mp4 **必须三轨合一：画面 + 氛围音效/配乐 + TTS 语音朗读**（可选但强烈推荐） | Remotion + React + TS 渲染 1920×1080 @30fps → 输出 `assets/video/*.mp4` → 嵌入对应 section；音频通过 `<Audio src={staticFile(...)}/>` 叠加，ffmpeg 合成背景音效/edge-tts 生成语音旁白，放 `remotion/public/audio/` | ⛔ **无降级**。Canvas/SVG/CSS 动画不得替代 Remotion 基线；**仅有画面而无音频轨的哑片 mp4 视为不合规**（除非主题为纯视觉抽象且用户书面豁免音频）。缺 Remotion = 直接 Gate 不通过。特殊情况（无 Node 环境且无法安装）必须在 Gate 中明确声明并由用户书面豁免 |
+| **① Edge-TTS 语音讲解** | 必须为每个知识模块生成独立 mp3 + 同步字幕；⛔ **禁用浏览器 `speechSynthesis`**；⛔ **不可跳过** | `pip install edge-tts` → 按 audioPlaylist 生成 `tts/*.mp3` + `*.srt` → HTML 内置滚动自动播放器（IntersectionObserver） | ⛔ **严禁以任何理由整体省略**——包括"页面够丰富""用户没要求""环境复杂"。用户拒绝时仍须保留 `teachany-tts-narrator.js` 引用（零 mp3 回退模式），确保后续补录音频无需改 HTML |
+| **② Remotion 程序化动画** | 课件必须含 **≥1 段真正用 Remotion 渲染的教学动画 mp4**（演示过程性变化），且 mp4 **必须三轨合一：画面 + 氛围音效/配乐 + TTS 语音朗读**（可选但强烈推荐） | Remotion + React + TS 渲染 1920×1080 @30fps → 输出 `assets/video/*.mp4` → 嵌入对应 section；音频通过 `<Audio src={staticFile(...)}/>` 叠加，ffmpeg 合成背景音效/edge-tts 生成语音旁白，放 `remotion/public/audio/` | ⛔ **无降级**。Canvas/SVG/CSS 动画不得替代 Remotion 基线；**仅有画面而无音频轨的哑片 mp4 视为不合规**（除非主题为纯视觉抽象且用户书面豁免音频）。⛔ **"Node 环境不可用"不是跳过理由**——Phase 0 必须安装 Node（preflight-check.py 自动安装），安装失败必须报告用户等待解决，绝不可降级为"Canvas 动画够用了"。缺 Remotion = 直接 Gate 不通过。唯一豁免：用户在**当前对话中**主动说"不需要视频/动画"——即便如此仍须在 Gate 中显式标注"L2 用户豁免" |
 | **③ Canvas 互动组件** | 课件必须含 **≥1 个 Canvas 互动组件**（拖拽、画板、参数调节、实时绘图） | 原生 `<canvas>` + JS 事件 → 学生可拖动/点击/滑动改变参数并实时反馈 | 若主题确实无合适 Canvas 场景（如纯文言字词课），必须用 SVG 交互动画替代，并在 Gate 中说明理由 |
 | **④ AI 生图 + 生视频** | 课件必须含 **≥2 张 image_gen 生成的情境/意境插图**；过程性学科（理/化/生/地/史）必须评估生视频需求 | Phase 3 阶段调用 `image_gen` → 存 `assets/illustrations/*.png` → `<img>` 嵌入；必要时调用生视频工具产出 `assets/video/*.mp4` | 若完全纯计算题课，可在 Gate 标注"跳过生图"并附理由，但**文科、科学、工程、社科课件一律不得跳过生图** |
 | **⑤ Hero 知识结构主图**（v7.9.1 重新定义） | 课件**优先**在标题 hero section **下方**独立区块呈现 **1 张知识结构主图**（信息图/脑图/模块关系图，≥1280×720），**非装饰性情境插图**；无现成图且无生图能力时可 L3 降级（去掉区块） | Phase 3 末：① `python3 scripts/find-hero.py <课件目录>` L1 查图床 → ② 未命中且有 image_gen 则 L2 生成（prompt 必须强调 "knowledge-structure infographic / flat poster / card nodes"）→ ③ 仍无则 L3 去掉 `<figure>` 区块；HTML 用 `<figure class="ta-standard-figure"><img class="hero-cover-img" src="./assets/<id>-hero.png"><figcaption>知识结构主图：围绕核心问题呈现 X→Y→Z 学习模块</figcaption></figure>` 放在 hero section **之后**、学习目标 section **之前** | ⛔ **严禁**把 hero 图贴在 `<section class="hero">` 的标题背景/叠加层；⛔ **严禁**用驼队/实验室/卡通人物等装饰性情境图充当 hero（只能当正文插图用）；⛔ L2 生成必须用"信息图"风格，严禁 "warm cartoon / realistic illustration" 关键词；⛔ L3 降级必须删除整个 `<figure>` 标签，不得保留空占位 |
@@ -103,7 +103,7 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 
 1. **Phase 0（需求确认）末尾**：必须输出"基线能力开启清单"，明确声明 TTS/Remotion/Canvas/生图/Hero 五项全开（除非用户书面拒绝）
 2. **Phase 0.5**：必须自动检测 Node.js/npm/ffmpeg（Remotion 的前置依赖）；缺失则自动安装（详见 [`phases/video-audio.md`](./phases/video-audio.md) Section 15.2），**不等待用户确认**
-3. **Generation Gate**：基线五项任一标注"跳过"必须附理由，且理由会被 Completeness Gate 二次审查；**Remotion 的跳过仅限 Node 环境完全不可用且安装失败，必须有用户书面豁免**；**Hero 知识结构主图允许 L3 降级**（图床未命中 + 无 image_gen 能力 + 重试 ≥3 次均失败 → 删除 `<figure>` 区块即合规）
+3. **Generation Gate**：基线五项任一标注"跳过"必须附理由，且理由会被 Completeness Gate 二次审查；**Remotion 不可跳过**——"Node 环境不可用"必须先安装解决，不能当作跳过理由；**TTS 不可跳过**——即使用户拒绝也必须保留 `teachany-tts-narrator.js` 引用；**AI 学伴不可跳过**——是标准五件套之一；**知识图谱不可跳过**——是标准五件套之一；**历史/地理课件地图不可跳过**——地图是核心依赖，不存在"无地图版"；**Hero 知识结构主图允许 L3 降级**（图床未命中 + 无 image_gen 能力 + 重试 ≥3 次均失败 → 删除 `<figure>` 区块即合规）
 4. **Phase 3（制作）**：若环境支持 `task` 工具，必须并行分发 Agent C（生图含 Hero）+ Agent D（TTS）+ **Agent R（Remotion 渲染，默认必选）**；Hero 图必须在 Phase 3 末（HTML 完成前）完成生成
 5. **Completeness Gate**：五项全部校验（Remotion 必须检查 `assets/video/*.mp4` 真实存在、**含音频流**（`ffprobe` 可见 `codec_type=audio`）、且已嵌入 HTML `<video>` + 合理 `poster`；Hero 图必须运行 `python3 scripts/check-hero.py` 通过），缺一不通过
 
@@ -116,6 +116,8 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 - ❌ **Remotion mp4 只有画面没有音频轨（哑片）** → **违反 ②**。真实课件视频必须带 TTS 朗读 + 氛围配乐/音效；`ffprobe -show_entries stream=codec_type` 必须能看到 `audio` 流
 - ❌ **视频 `<video poster="...">` 用了其他课件/其他主题的 hero 图** → **违反 ②**。每个 Remotion 视频必须配独立 poster 封面（建议用 `image_gen` 生成主题专属图），不得复用 hero-xxx.png 凑数
 - ❌ **地图底图使用在线 XYZ 瓦片切片**（CartoDB / Esri / OSM 等） → **违反 ③**。历史/地理课件必须使用 `assets/maps/` 下的本地地图资源（地形底图 GeoJSON + 行政边界 + 本地地形瓦片），严禁依赖外部切片服务。详见 `historical-maps.md`
+- ❌ **历史/地理课件没有地图** → **违反硬规则 #62**。地图是历史/地理课件的核心依赖，不存在"无地图版"课件——严禁以"内容简单""省事""地图资源不可用"等理由省略地图模块
+- ❌ **地图底图缺失或降级为纯色背景** → **违反硬规则 #62**。hillshade.jpg 底图是教学必需，不可省略、不可用纯色背景替代
 - ❌ **地图底图用 ECharts `graphic` 组件铺底** → **违反 ③**。`graphic` 是 DOM 绝对定位覆盖层，**不参与 `geo` 组件的缩放/平移变换**，用户缩放或拖动时底图会与国界/城市点严重错位
 - ❌ **地图初始视图未聚焦核心区域**（默认停在 `[0,0]` 世界中心 / 视口显示大片无关海洋或空白） → **违反 ③**。必须用 `map.fitBounds(coreBounds)` 或 `setView([lat,lng], zoom)` 将初始视图精确对准该课件的教学核心区域（如讲希腊必须聚焦爱琴海 + 伯罗奔尼撒半岛，讲罗马必须聚焦地中海盆地）
 - ❌ "用户没要求生图，就省略" → 违反 ④（生图/生视频/TTS/Remotion 均为**默认执行**，非用户触发）
