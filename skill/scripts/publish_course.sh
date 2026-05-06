@@ -287,7 +287,7 @@ manifest = {
     "author": author,
     "description": description,
     "version": "1.0.0",
-    "teachany_version": "v6",
+    "teachany_version": "v7.9",
     "curriculum": "cn-national",
     "free_mode": free_mode,  # v6.6: 自由知识点模式（不挂树）
 }
@@ -319,7 +319,7 @@ elif grade <= 9:  stage_cn = f"初中 G{grade}"
 elif grade <= 12: stage_cn = f"高中 G{grade}"
 else:             stage_cn = f"G{grade}"
 
-new_title = f"《{title}》 · {subject_cn} {stage_cn} · TeachAny v6"
+new_title = f"《{title}》 · {subject_cn} {stage_cn} · TeachAny v7.9"
 title_re = re.compile(r"<title[^>]*>[^<]*</title>", re.IGNORECASE)
 if title_re.search(html):
     html = title_re.sub(f"<title>{new_title}</title>", html, count=1)
