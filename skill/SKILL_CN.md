@@ -5261,14 +5261,22 @@ Step 4️⃣ 发布完成后告知用户
    ⛔ 如果 node_id 错误，必须当场修正 manifest.json，禁止"先发再说"。
    ⛔ 不要去 grep `data/<subject>/<branch>/_graph.json`——知识地图 `tree.html` 根本不读该文件（v5.20 实测确认）。
 
-② 运行 rebuild-index.py 三件套
+② 运行 rebuild-index.py 三件套（v7.7 起自动串联社区索引 + 标准图谱索引）
    ```bash
    python3 scripts/rebuild-index.py
    ```
    
+   v7.7 后该命令会自动执行：
+   ```bash
+   python3 scripts/sync-community-index.py
+   python3 scripts/build-teachany-kg-manifest.py
+   ```
+   不得只跑其中一个脚本；否则会出现“registry 有、Gallery/知识地图/标准图谱没有”的断链。
+   
    产出文件（全部必须被 commit）：
-   - registry.json                                （全局课件索引，Gallery 读取）
-   - courseware-registry.json                     （Gallery 展示索引）
+   - registry.json                                （全局课件索引，Gallery/Hub 主读取）
+   - community/index.json                         （社区课件心标与下载入口索引）
+   - scripts/teachany-kg-manifest.json            （标准知识图谱模块读取）
    - data/trees/<subject>-<level>.json            （知识地图读取，⭐ 最关键！）
    - data/<subject>/<branch>/_graph.json          （次要数据源，tree.html 不读）
    

@@ -21,6 +21,13 @@
 
 ## 详细变更记录
 
+### v7.7
+⭐ 社区课件上传自动注册链路修复
+- `rebuild-index.py` 自动串联 `sync-community-index.py` 和 `build-teachany-kg-manifest.py`，一次命令同时更新 `registry.json`、`community/index.json`、`data/trees/**/*.json` 和 `scripts/teachany-kg-manifest.json`。
+- 新增 `scripts/sync-community-index.py`，从 `registry.json` 自动生成社区索引，修复“community/<course-id> 已存在但 Gallery/Hub 不显示”的问题。
+- `build-teachany-kg-manifest.py` 改为读取 `registry.json`，且只保留实际存在 `index.html` 的课件路径，避免标准图谱误判虚挂节点为“已有课件”。
+- `community/pending/` 中重复且未通过质量门的历史包已归档，避免重复注册同一 `node_id`。
+
 ### v7.6
 ⭐ 标准知识图谱模块 · 视觉/布局对齐知识地图
 - 模块整体样式完全对齐 `tree.html`：深色底、域色渐变节点、实线/虚线边、悬停放大 + drop-shadow、tooltip 浮窗。

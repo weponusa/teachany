@@ -117,7 +117,9 @@ def attach_siblings(all_nodes, domain_index):
             all_nodes[nid]["siblings"] = siblings[:8]
 
 def attach_courses(all_nodes):
-    registry = load_json(ROOT / "courseware-registry.json") or {}
+    # 以 registry.json 为准：rebuild-index.py 会扫描 examples/ + community/ 并写入所有实际存在课件。
+    # 不再依赖旧 courseware-registry.json，否则社区上传课件会在标准图谱中显示为“无课件”。
+    registry = load_json(ROOT / "registry.json") or {}
     node_courses = {}
     def walk(obj):
         if isinstance(obj, list):

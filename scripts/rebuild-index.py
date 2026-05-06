@@ -27,6 +27,8 @@ v6.3 变更（2026-04-29）:
 """
 import json
 import re
+import subprocess
+import sys
 from pathlib import Path
 from collections import defaultdict
 import copy
@@ -269,8 +271,21 @@ def main():
         print('   ℹ️  如你是仓库 owner，想重建索引：')
         print('      touch .teachany-admin   # 在仓库根目录创建空标记文件（已被 .gitignore）')
         print()
-        import sys
         sys.exit(2)
+
+    # 0. 规范化社区上传课件（修复中文 subject/grade、缺 node_id、树缺节点等上传断链）
+    print('\n🧩 步骤0: 规范化社区上传课件...')
+    helper0 = Path('scripts') / 'register-community-uploads.py'
+    if helper0.exists():
+        result0 = subprocess.run([sys.executable, str(helper0)], text=True, capture_output=True)
+        if result0.returncode != 0:
+            print('  ❌ register-community-uploads.py 执行失败')
+            if result0.stdout.strip(): print(result0.stdout.strip())
+            if result0.stderr.strip(): print(result0.stderr.strip())
+            raise SystemExit(result0.returncode)
+        print('  ' + ((result0.stdout.strip().splitlines() or ['✅ 完成'])[0]))
+    else:
+        print('  ⚠️  scripts/register-community-uploads.py 不存在，跳过')
 
     # 1. 扫描课件
     print('\n📦 步骤1: 扫描课件文件...')
@@ -539,6 +554,22 @@ def main():
         json.dump(registry, f, ensure_ascii=False, indent=2)
 
     print(f'   注册表已重建: {len(registry_courses)} 个课件 (官方={official_count}, 社区={community_count}, 课程={course_count})')
+
+    # v7.7: 同步派生索引，解决“社区课件已进 registry 但 Gallery/知识图谱不显示”的断链问题
+    print('\n🔄 步骤4.5: 同步社区索引和标准知识图谱索引...')
+    for helper in ['sync-community-index.py', 'build-teachany-kg-manifest.py']:
+        helper_path = Path('scripts') / helper
+        if not helper_path.exists():
+            print(f'  ⚠️  跳过 {helper}: 文件不存在')
+            continue
+        result = subprocess.run([sys.executable, str(helper_path)], text=True, capture_output=True)
+        if result.returncode != 0:
+            print(f'  ❌ {helper} 执行失败')
+            if result.stdout.strip(): print(result.stdout.strip())
+            if result.stderr.strip(): print(result.stderr.strip())
+            raise SystemExit(result.returncode)
+        first_line = (result.stdout.strip().splitlines() or ['完成'])[0]
+        print(f'  ✅ {helper}: {first_line}')
 
     # 5. 最终验证
     print('\n' + '='*70)
