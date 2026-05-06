@@ -388,6 +388,34 @@
     return html;
   }
 
+  // v2.4: tooltip 锚定到节点本身而不是鼠标，用户才能安全把鼠标移到 tooltip 上点击链接
+  function positionTooltipAtNode(tooltip, root, nodeEl) {
+    if (!nodeEl) return;
+    var rootRect = root.getBoundingClientRect();
+    var nodeRect = nodeEl.getBoundingClientRect();
+    // 默认：在节点右侧，垂直居中
+    var tw = tooltip.offsetWidth || 280;
+    var th = tooltip.offsetHeight || 200;
+    var x = nodeRect.right - rootRect.left + 8;
+    var y = nodeRect.top - rootRect.top + (nodeRect.height - th) / 2;
+    // 如果右侧放不下，放到左侧
+    if (x + tw > rootRect.width - 4) {
+      x = nodeRect.left - rootRect.left - tw - 8;
+    }
+    // 如果左侧也放不下（节点在最左），放到下方
+    if (x < 4) {
+      x = nodeRect.left - rootRect.left + (nodeRect.width - tw) / 2;
+      y = nodeRect.bottom - rootRect.top + 8;
+    }
+    // 垂直边界保护
+    if (y < 8) y = 8;
+    if (y + th > rootRect.height - 8) y = rootRect.height - th - 8;
+    if (x < 4) x = 4;
+    tooltip.style.left = x + "px";
+    tooltip.style.top = y + "px";
+  }
+
+  // 旧接口：退回旧逻辑作兜底（不再用，只保留兼容）
   function positionTooltip(tooltip, root, event) {
     var rootRect = root.getBoundingClientRect();
     var x = event.clientX - rootRect.left + 18;
@@ -716,15 +744,33 @@
       }
       focusNode(n.id);
     }
+    // v2.4: tooltip hover 延迟关闭 + 允许鼠标移入 tooltip 交互（点击"打开课件"按钮）
+    var hideTid = null;
+    function showTooltip() {
+      if (hideTid) { clearTimeout(hideTid); hideTid = null; }
+      tooltip.classList.add("visible");
+    }
+    function scheduleHide() {
+      if (hideTid) clearTimeout(hideTid);
+      hideTid = setTimeout(function () { tooltip.classList.remove("visible"); hideTid = null; }, 400);
+    }
+    // 鼠标进入 tooltip 时取消隐藏；离开 tooltip 时立即隐藏
+    tooltip.addEventListener("mouseenter", function () { showTooltip(); });
+    tooltip.addEventListener("mouseleave", function () { scheduleHide(); });
+
     function onHover(n, ev) {
       tooltip.innerHTML = buildTooltipContent(n);
-      tooltip.classList.add("visible");
-      positionTooltip(tooltip, canvasWrap, ev);
+      showTooltip();
+      // v2.4: 定位到节点本身而非鼠标位置，方便用户滑到 tooltip 上点按钮
+      var nodeEl = svg.querySelector('.tkg-node-group[data-id="' + n.id + '"]');
+      if (nodeEl) positionTooltipAtNode(tooltip, canvasWrap, nodeEl);
+      else positionTooltip(tooltip, canvasWrap, ev);
     }
     function onMove(n, ev) {
-      positionTooltip(tooltip, canvasWrap, ev);
+      // v2.4: tooltip 不再随鼠标移动，避免离开节点时被拖远；仅在节点切换时重新定位
+      // 没有操作
     }
-    function onLeave() { tooltip.classList.remove("visible"); }
+    function onLeave() { scheduleHide(); }
 
     [filterAll, filterPre, filterNext, filterSib].forEach(function (btn) {
       btn.addEventListener("click", function () {

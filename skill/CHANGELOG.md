@@ -1,6 +1,6 @@
 # TeachAny 版本变更日志
 
-**当前版本**：v7.7（持续演进中）
+**当前版本**：v7.7.1（持续演进中）
 **更新日期**：2026-05-06
 
 ---
@@ -20,12 +20,40 @@
 - **v7.5**：标准知识图谱模块（`scripts/teachany-knowledge-graph.{js,css}`）
 - **v7.6**：知识图谱视觉对齐 tree.html、底部位置规范、社区上传自动注册管线修复
 - **v7.7**：知识图谱稳定布局重构（去 force layout，确定性环形分层，零闪动）+ 三大标准模块上线：AI 学伴入口卡片、独立连续音频播放器、历史地图渲染器
+- **v7.7.1**：UI 可达性修复 — KG tooltip 可点击链接（延迟关闭+锚定节点）、AI 学伴卡片上移至 pretest 后（不再藏在底部）、FAB 自动避开底部音频条
 
 ---
 
 
 
 ## 详细变更记录
+
+### v7.7.1
+⭐ UI 可达性修复（v7.7 的模块"存在但够不到"问题）
+
+**1. KG Tooltip 三步交互（hover → 滑入 tooltip → 点击链接）**
+- 鼠标离开节点后**延迟 400ms 才隐藏 tooltip**；鼠标在此期间移入 tooltip → `showTooltip()` 清除计时器，tooltip 保持可见
+- Tooltip 鼠标离开时立即 `scheduleHide()`
+- Tooltip 不再紧跟鼠标位置，改为**锚定到节点本身**（`positionTooltipAtNode()`）：右侧 → 左侧 → 下方三级兜底，保证鼠标能稳定滑过去
+- CSS：`transition: opacity 0.12s`（缩短过渡，避免淡出期间无法点击），visible 时 `pointer-events: auto`
+- 实测硬证据：hover `✅ 已有课件`节点 → tooltip 在节点左侧显示 `🚀 打开课件：正比例函数` 可点按钮（320×247），tooltip.mouseenter 清除计时器保持可见
+
+**2. AI 学伴入口卡片迁移到课件顶部**
+- 新增 `scripts/relocate-tutor-card.py`：自动把 `#teachany-ai-tutor-card` 从底部迁到 `pretest` 之后（次选 `objectives` / `hero`）
+- 实测：math-linear-function 从文档 13426px → 2686px，向上挪 10740px
+- 批量应用：217 个课件迁移成功（3 无卡片 / 123 结构不标准 / 0 已在顶部）
+
+**3. FAB 避开底部音频条**
+- `ai-tutor.css` 追加：`body.tap-bar-on .ai-tutor-fab, body.audio-playing .ai-tutor-fab { bottom: 100px; transition: bottom 0.25s ease; }`
+- 实测：`tap-bar-on` 激活时 FAB computed `bottom: 100px` ≠ 默认 24px
+
+**4. 新增硬规则 #63（UI 可达性基线）**
+- (a) 学伴卡片必须在 pretest 之后（不得藏底部）
+- (b) FAB 必须自动避开音频条
+- (c) tooltip 必须支持"悬停—滑入—点击链接"三步
+- 发布前必须浏览器实测上述三条可达性
+
+---
 
 ### v7.7
 ⭐ 知识图谱稳定化 + 三大标准模块上线（AI 学伴卡片 / 独立音频 / 历史地图）
