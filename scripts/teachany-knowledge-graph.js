@@ -595,14 +595,7 @@
     var searchBox = h("div", { class: "tkg-panel-links", style: "margin-top:10px;" });
     el.appendChild(searchBox);
 
-    // Canvas probe
-    var probeWrap = h("div", { class: "tkg-probe" });
-    probeWrap.appendChild(h("div", { class: "tkg-probe-title", text: "🎯 学习足迹：点击图谱节点会在这里累积记录你探索过的知识点" }));
-    var probeCanvas = document.createElement("canvas");
-    probeCanvas.width = 720; probeCanvas.height = 130;
-    probeCanvas.setAttribute("aria-label", "知识点探索进度互动画布");
-    probeWrap.appendChild(probeCanvas);
-    el.appendChild(probeWrap);
+    // v7.7.5: 学习足迹模块已移除（教学价值低，且干扰主视觉）
 
     var footer = h("div", { class: "tkg-footer" });
     var legend = h("div", { class: "tkg-legend" });
@@ -625,53 +618,7 @@
     var currentFilter = "all";
     var currentGraph = null; // v2.1: 保存当前图谱引用，用于增量更新
 
-    function drawProbe() {
-      var ctx = probeCanvas.getContext("2d");
-      var w = probeCanvas.width, hpx = probeCanvas.height;
-      ctx.clearRect(0, 0, w, hpx);
-      var grad = ctx.createLinearGradient(0, 0, w, 0);
-      grad.addColorStop(0, "rgba(59,130,246,0.12)");
-      grad.addColorStop(1, "rgba(245,158,11,0.08)");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, w, hpx);
-      var items = Array.from(visited);
-      if (!items.length) {
-        ctx.fillStyle = "#94a3b8";
-        ctx.font = "14px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("点击知识图谱节点，这里会记录你已探索的学习足迹。", w / 2, hpx / 2);
-        return;
-      }
-      var baseY = hpx / 2 + 10;
-      ctx.strokeStyle = "rgba(59,130,246,0.7)";
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      items.forEach(function (id, i) {
-        var x = 40 + i * ((w - 80) / Math.max(1, items.length - 1));
-        if (i === 0) ctx.moveTo(x, baseY);
-        else ctx.lineTo(x, baseY);
-      });
-      ctx.stroke();
-      items.forEach(function (id, i) {
-        var node = manifest.nodes[id];
-        var x = 40 + i * ((w - 80) / Math.max(1, items.length - 1));
-        ctx.fillStyle = id === currentId ? "#f59e0b" : (hasCourse(node) ? "#10b981" : "#94a3b8");
-        ctx.beginPath();
-        ctx.arc(x, baseY, 10, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = "#0f172a";
-        ctx.font = "bold 12px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText(String(i + 1), x, baseY + 4);
-        ctx.fillStyle = "#e2e8f0";
-        ctx.font = "12px sans-serif";
-        ctx.fillText((node && node.name) || id, x, baseY - 16);
-      });
-      ctx.fillStyle = "rgba(226,232,240,0.75)";
-      ctx.font = "12px sans-serif";
-      ctx.textAlign = "left";
-      ctx.fillText("已探索 " + items.length + " 个节点", 20, 22);
-    }
+    // v7.7.5: drawProbe() 已移除（学习足迹模块下线）
 
     /**
      * v2.1: 聚焦节点 — 如果新焦点已在当前图谱中，仅更新高亮+详情面板
@@ -713,7 +660,7 @@
         svg.__graphNodes = graph.nodes;
       }
 
-      // 通用更新：详情面板、高亮、筛选、统计、足迹
+      // 通用更新：详情面板、高亮、筛选、统计
       renderDetailPanel(panel, id, manifest, el);
       applyFilter(el, currentFilter);
 
@@ -725,7 +672,7 @@
       var total = currentGraph.nodes.length;
       var withCourse = currentGraph.nodes.filter(hasCourse).length;
       statWrap.innerHTML = '<span>' + total + ' 节点</span><span>✅ ' + withCourse + ' 已有课件</span>';
-      drawProbe();
+      // v7.7.5: drawProbe() 已移除
 
       // 更新标题中的当前节点名
       var titleSmall = el.querySelector(".tkg-title small");
