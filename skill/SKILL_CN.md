@@ -407,7 +407,7 @@ python3 scripts/check-hero.py community/
 | `teachany-images/` (685MB) | ❌ | CDN 按需加载，不下载 |
 | Hero 图片文件 | ❌ | 通过 CDN URL 引用，不下载 |
 
-> 📌 使用 `git sparse-checkout set --from-file .sparse-checkout-presets/minimal.txt` 安装 skill，只需约 **15MB**。
+> 📌 使用 `git sparse-checkout set --from-file .sparse-checkout-presets/standard.txt` 安装 skill（含全部地图资产），约 **117MB**。
 
 ---
 

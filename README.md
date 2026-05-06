@@ -32,24 +32,22 @@
 
 ## 🚀 One-Click Install
 
-### ⚡ Recommended · Download Release ZIP (≤3MB)
+### ⚡ Recommended · Download Release ZIP (37MB)
 
-Grab the right preset from [GitHub Releases](https://github.com/weponusa/teachany/releases/latest) (Gitee does not support Release assets):
+Grab the standard preset from [GitHub Releases](https://github.com/weponusa/teachany/releases/latest) (Gitee does not support Release assets):
 
 | Preset | ZIP | Extracted | What's included | Best for |
 |---|---|---|---|---|
-| **minimal** ⭐ | **2.5MB** | 13MB | Skill core + knowledge trees (CDN-driven hero/community) | Chinese / Math / Physics / Chemistry / Biology / English |
-| **standard** | 26MB | 54MB | + world history maps + modern political borders | Geography / world history courses |
-| **full-maps** | 160MB | 240MB | + Chinese dynasty maps + physical geography | Chinese history / terrain / advanced geography |
+| **standard** ⭐ | **37MB** | 117MB | Skill core + knowledge trees + ALL maps (world history, Chinese dynasties, political, physical geography) | All subjects, all grades |
 
 ```bash
 # Download the ZIP, then extract to the skill directory
-unzip teachany-skill-minimal-*.zip
-mv teachany-minimal ~/.agents/skills/teachany       # Claude Code / Cursor / Codex CLI
+unzip teachany-skill-standard-*.zip
+mv teachany-standard ~/.agents/skills/teachany       # Claude Code / Cursor / Codex CLI
 # or:  ~/.codebuddy/skills/teachany                 # CodeBuddy
 ```
 
-> 💡 **Why this layout?** Hero images, community coursewares, and scene illustrations are served from jsDelivr CDN on-demand. Local install only needs the skill producer + knowledge trees.
+> 💡 **Why this layout?** Hero images, community coursewares, and scene illustrations are served from jsDelivr CDN on-demand. The standard preset includes all map assets so geography/history courses work out of the box.
 
 ### Alternative · Sparse git clone (for contributors)
 
@@ -57,9 +55,7 @@ mv teachany-minimal ~/.agents/skills/teachany       # Claude Code / Cursor / Cod
 # Full history with selective checkout
 git clone --filter=blob:none --sparse https://github.com/weponusa/teachany.git
 cd teachany
-git sparse-checkout set --from-file .sparse-checkout-presets/minimal.txt      # ~13MB working tree
-git sparse-checkout set --from-file .sparse-checkout-presets/standard.txt     # ~54MB
-git sparse-checkout set --from-file .sparse-checkout-presets/full-maps.txt    # ~240MB
+git sparse-checkout set --from-file .sparse-checkout-presets/standard.txt     # ~117MB (all maps included)
 git sparse-checkout disable                                                    # ~700MB (full)
 
 # Link skill to your AI tool

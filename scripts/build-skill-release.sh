@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# TeachAny Skill Release Builder · v7.9.2
-# 按 4 个预设档位打包 skill 发布 ZIP，放到 dist/
-# 用法：bash scripts/build-skill-release.sh [minimal|standard|full-maps|full|all]
+# TeachAny Skill Release Builder · v7.9.3
+# 按 2 个预设档位打包 skill 发布 ZIP，放到 dist/
+# 用法：bash scripts/build-skill-release.sh [standard|full|all]
 
 set -euo pipefail
 
@@ -116,17 +116,17 @@ build_preset() {
 }
 
 case "${1:-all}" in
-  minimal|standard|full-maps|full)
+  standard|full)
     build_preset "$1"
     ;;
   all)
-    for p in minimal standard full-maps; do
+    for p in standard; do
       build_preset "$p"
     done
     echo "ℹ️  'full' preset 包含所有内容 (~700MB)，不默认打包。如需：bash $0 full"
     ;;
   *)
-    echo "用法：$0 [minimal|standard|full-maps|full|all]"
+    echo "用法：$0 [standard|full|all]"
     exit 2
     ;;
 esac

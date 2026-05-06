@@ -124,19 +124,17 @@ Level 1：给模板填空 → Level 2：只给提示 → Level 3：独立完成�
 
 ## 🚀 快速开始
 
-### ⚡ 最轻量安装（推荐，≤3MB）
+### ⚡ 最轻量安装（推荐，37MB）
 
 从 [GitHub Releases](https://github.com/weponusa/teachany/releases/latest) 下载（Gitee 暂不支持 Release 下载）：
 
-| 档位 | ZIP | 解压后 | 适用 |
-|---|---|---|---|
-| **minimal** ⭐ | **2.5MB** | 13MB | 语文/数学/物理/化学/生物/英语 |
-| **standard** | 26MB | 54MB | + 世界史地图 + 现代政区 |
-| **full-maps** | 160MB | 240MB | + 中国通史地图 + 自然地理 |
+| 档位 | ZIP | 解压后 | 含什么 | 适用 |
+|---|---|---|---|---|
+| **standard** ⭐ | **37MB** | 117MB | 制作器 + 知识树 + 全部地图（世界史/中国史/政区/自然地理） | 所有学科、所有年级 |
 
 解压到 `~/.agents/skills/teachany/` 即可。Hero 图、社区课件通过 CDN 按需加载，不占本地空间。
 
-详见：[INSTALL_CN_SIMPLE.md](./INSTALL_CN_SIMPLE.md)
+> 💡 **为什么要含地图？** 地图资产是地理/历史课件的核心依赖，所有学科课件制作都需要。
 
 ### 方式一：作为 AI Skill 使用（推荐）
 
