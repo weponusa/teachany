@@ -217,6 +217,8 @@
     }
 
     // 全量重建（中心节点变了，邻居集合不同了）
+    // v2.3: 重建期间 SVG 设 visibility:hidden，避免"边建边看"的逐节点闪现
+    svg.style.visibility = "hidden";
     while (svg.firstChild) svg.removeChild(svg.firstChild);
     // v2.2: 用 canvas 容器尺寸而不是 svg 自身（svg 在初次未布局时 width 可能为 0）
     var canvasEl = svg.parentElement;
@@ -348,6 +350,12 @@
       nodeGroup.appendChild(g);
     });
     svg.appendChild(nodeGroup);
+    // v2.3: 所有节点/连线就位后再显现，避免"边建边看"的闪烁
+    if (typeof requestAnimationFrame === "function") {
+      requestAnimationFrame(function () { svg.style.visibility = "visible"; });
+    } else {
+      svg.style.visibility = "visible";
+    }
   }
 
   /* ─── Tooltip ─── */
@@ -542,7 +550,7 @@
     var svg = document.createElementNS(SVG_NS, "svg");
     svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
     canvasWrap.appendChild(svg);
-    canvasWrap.appendChild(h("div", { class: "tkg-canvas-hint", text: "悬停看详情 · 点击有课件节点可跳转 · 拖动整理布局" }));
+    canvasWrap.appendChild(h("div", { class: "tkg-canvas-hint", text: "悬停看详情 · 点击有课件节点跳转课件 / 无课件节点切换图谱焦点" }));
     var statWrap = h("div", { class: "tkg-canvas-stat" });
     canvasWrap.appendChild(statWrap);
     // Tooltip follows mouse
@@ -729,41 +737,38 @@
     el.addEventListener("tkg:focus", function (ev) { focusNode(ev.detail); });
     renderSearch(manifest, search, searchBox, el);
 
-    // Drag nodes
-    var dragging = null;
-    svg.addEventListener("mousedown", function (ev) {
-      var g = ev.target.closest(".tkg-node-group");
-      if (!g) return;
-      dragging = { el: g, id: g.getAttribute("data-id") };
-      ev.preventDefault();
-    });
-    window.addEventListener("mousemove", function (ev) {
-      if (!dragging) return;
-      var bb = svg.getBoundingClientRect();
-      var vb = svg.viewBox.baseVal;
-      var x = (ev.clientX - bb.left) / bb.width * vb.width;
-      var y = (ev.clientY - bb.top) / bb.height * vb.height;
-      dragging.el.setAttribute("transform", "translate(" + x + "," + y + ")");
-      svg.querySelectorAll(".tkg-link").forEach(function (line) {
-        var d = line.__data;
-        if (!d) return;
-        if (d.source === dragging.id) { line.setAttribute("x1", x); line.setAttribute("y1", y); }
-        if (d.target === dragging.id) { line.setAttribute("x2", x); line.setAttribute("y2", y); }
-      });
-    });
-    window.addEventListener("mouseup", function () { dragging = null; });
+    // v2.3 移除拖拽功能：确定性布局下节点位置已合理，拖拽会制造闪动（mousedown 后抖动鼠标即误触发，transform 通过 CSS transition 动画出现肉眼可感的"跳"）；
+    // 保留"按下 + 立即抬起 = 点击"逻辑（浏览器自带，无需代码）。
 
-    // 初次渲染（全量）
-    focusNode(nodeId);
+    // 初次渲染（全量）——用 rAF 延后一帧，等待样式 / 字体 / AudioBar 等注入稳定
+    if (typeof requestAnimationFrame === "function") {
+      requestAnimationFrame(function () { requestAnimationFrame(function () { focusNode(nodeId); }); });
+    } else {
+      setTimeout(function () { focusNode(nodeId); }, 16);
+    }
 
-    // Resize（防抖，全量重绘）
+    // Resize（防抖，全量重绘）——仅响应真实尺寸变化，且有阈值保护
+    var lastW = 0, lastH = 0;
+    function maybeRelayout() {
+      var bb = canvasWrap.getBoundingClientRect();
+      var dw = Math.abs(bb.width - lastW), dh = Math.abs(bb.height - lastH);
+      if (dw < 8 && dh < 8) return; // 小于 8px 变化忽略，避免 scrollbar/浮条来回
+      lastW = bb.width; lastH = bb.height;
+      currentGraph = null;
+      focusNode(currentId);
+    }
     window.addEventListener("resize", (function () {
       var tid = null;
-      return function () { clearTimeout(tid); tid = setTimeout(function () {
-        currentGraph = null; // 强制全量重绘
-        focusNode(currentId);
-      }, 250); };
+      return function () { clearTimeout(tid); tid = setTimeout(maybeRelayout, 250); };
     })());
+    // ResizeObserver 监测容器尺寸（TutorCard/AudioBar 注入后容器宽度可能微调）
+    if ("ResizeObserver" in window) {
+      var ro = new ResizeObserver((function () {
+        var tid = null;
+        return function () { clearTimeout(tid); tid = setTimeout(maybeRelayout, 180); };
+      })());
+      ro.observe(canvasWrap);
+    }
   }
 
   function init() {
