@@ -413,8 +413,10 @@ Hero 区（Hero 知识结构图 + 课题名称 + 学科/年级/课型标签）
       });
     });
 
-    // ═══ 知识图谱渲染（三列布局：前序 | 核心子知识点链 | 后续） ═══
-    // knowledgeGraphData 格式见 10.2.3 节
+    // ═══ 知识图谱渲染 ═══
+    // ⛔ v7.9.4 废弃：手写知识图谱渲染代码已废弃，必须用标准模块
+    // 新课件只需：<div data-teachany-kg="<node_id>"> + 引入 teachany-knowledge-graph.js
+    // 以下旧代码仅存档，禁止在新生成的课件中使用
     (function renderKnowledgeGraph() {
       if (typeof knowledgeGraphData === 'undefined') return;
       const svg = document.getElementById('kg-svg');
@@ -771,7 +773,11 @@ Hero 区（Hero 知识结构图 + 课题名称 + 学科/年级/课型标签）
 
 **数据注入格式**：
 
-AI 在生成课件时，必须在 `<script>` 标签**最前面**（骨架 JS 之前）注入以下数据对象：
+> ⛔ **v7.9.4 废弃：以下手写 `knowledgeGraphData` 方式已废弃，严禁使用。** 知识图谱必须且只能通过 `scripts/teachany-knowledge-graph.{css,js}` 标准模块渲染。AI 只需在 HTML 中写声明式标记 `<div data-teachany-kg="<node_id>">` 并引入模块 CSS/JS，无需手写任何数据对象。详见 SKILL_CN.md 基线⑦ 和 RULES.md #24。
+>
+> 以下旧代码仅作存档参考，**禁止在新生成的课件中使用**：
+
+~~AI 在生成课件时，必须在 `<script>` 标签**最前面**（骨架 JS 之前）注入以下数据对象~~（已废弃）：
 
 ```html
 <script>
