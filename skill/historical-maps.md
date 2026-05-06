@@ -1,18 +1,9 @@
 # 📜 历史地理课件地图使用规范（TeachAny · v7.9.4）
 
-> ⛔ **v7.9.4 强制规则：历史/地理课件只能用 `scripts/teachany-historical-map.{css,js}` 标准模块渲染地图，严禁自行造地图实现。**
->
-> 这意味着：
-> - ✅ 用 `<div data-teachany-map="..." data-teachany-map-scope="china|world">` + `data-teachany-map-config` JSON 声明式调用
-> - ❌ 禁止手写 `L.tileLayer` / `L.geoJSON` / `L.marker` 等底层 Leaflet 代码
-> - ❌ 禁止用 ECharts `geo` / `graphic` 组件
-> - ❌ 禁止用 Canvas / SVG / D3 自己画地图
-> - ❌ 禁止用在线 XYZ 瓦片服务（CartoDB / Esri / OSM）
->
-> **标准模块**自动处理：底图加载（hillshade.jpg）+ GeoJSON 疆域渲染 + 城市标注 + 朝代切换 + 描述面板 + 图例。
-> AI 只需要：(1) 复制 geojson + hillshade.jpg 到课件 `assets/maps/`；(2) 写 HTML 声明块。其他全部由模块完成。
->
-> 本文档是**制作历史/地理类课件时必读的唯一权威**。SKILL_CN.md 基线⑩是简要索引，详细规范、完整资产清单、可复用代码模板，全部汇总在此。
+> ⚠️ **AI 快速上手**：先读 `historical-maps-quickref.md`（完整 HTML 模板 + 路径约定 + 必做清单），再读本文档查完整资产清单。
+
+
+> 本文档是**制作历史/地理类课件时必读的唯一权威**。SKILL_CN.md 第 18 章是简要索引，详细规范、完整资产清单、可复用代码模板，全部汇总在此。
 >
 > **核心原则（v7.2 重构）**：本地地图资源优先（`assets/maps/` 的地形底图、行政边界 GeoJSON + 本地地形瓦片），标准 Web Mercator 投影（Leaflet 默认 CRS），彻底杜绝"无底图 / 投影错乱 / 白板地图"。
 >
