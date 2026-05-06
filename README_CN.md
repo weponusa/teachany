@@ -126,7 +126,7 @@ Level 1：给模板填空 → Level 2：只给提示 → Level 3：独立完成�
 
 ### ⚡ 最轻量安装（推荐，≤3MB）
 
-从 [GitHub Releases](https://github.com/weponusa/teachany/releases/latest)（或 [Gitee 镜像](https://gitee.com/weponusa/teachany/releases)）下载：
+从 [GitHub Releases](https://github.com/weponusa/teachany/releases/latest) 下载（Gitee 暂不支持 Release 下载）：
 
 | 档位 | ZIP | 解压后 | 适用 |
 |---|---|---|---|

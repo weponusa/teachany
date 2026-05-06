@@ -34,7 +34,7 @@
 
 ### ⚡ Recommended · Download Release ZIP (≤3MB)
 
-Grab the right preset from [GitHub Releases](https://github.com/weponusa/teachany/releases/latest) (or [Gitee mirror](https://gitee.com/weponusa/teachany/releases)):
+Grab the right preset from [GitHub Releases](https://github.com/weponusa/teachany/releases/latest) (Gitee does not support Release assets):
 
 | Preset | ZIP | Extracted | What's included | Best for |
 |---|---|---|---|---|

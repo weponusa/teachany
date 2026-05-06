@@ -16,7 +16,7 @@
 
 **下载地址**：
 - GitHub：https://github.com/weponusa/teachany/releases/latest
-- Gitee 镜像：https://gitee.com/weponusa/teachany/releases
+- Gitee 镜像：暂不支持 Release 下载，请从 GitHub Releases 获取
 
 **安装步骤**：
 1. 下载对应档位的 ZIP

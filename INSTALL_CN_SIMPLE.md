@@ -9,7 +9,7 @@
 ### 方法 A：下载 Release ZIP（体积最小，秒装）
 
 1. 打开：https://github.com/weponusa/teachany/releases/latest
-   （无法访问？用 Gitee 镜像：https://gitee.com/weponusa/teachany/releases）
+   （无法访问 GitHub？请用代理或 VPN，Gitee 暂不支持 Release 下载）
 2. 下载 **`teachany-skill-minimal-*.zip`**（约 **2.5MB**，解压后 **13MB**）
 3. 解压到 `~/.agents/skills/teachany/`（覆盖已有目录）
 4. 重启 CodeBuddy/WorkBuddy
