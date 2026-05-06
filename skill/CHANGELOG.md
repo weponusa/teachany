@@ -1,6 +1,6 @@
 # TeachAny 版本变更日志
 
-**当前版本**：v7.7.3（持续演进中）
+**当前版本**：v7.7.4（持续演进中）
 **更新日期**：2026-05-06
 
 ---
@@ -23,6 +23,62 @@
 - **v7.7.1**：UI 可达性修复 — KG tooltip 可点击链接（延迟关闭+锚定节点）、AI 学伴卡片上移至 pretest 后（不再藏在底部）、FAB 自动避开底部音频条
 - **v7.7.2**：历史地图模块重写为 Leaflet 真地图引擎 — 自制 SVG 投影模块废弃，复用稳定标杆（`community/history-medieval-europe`），22 个历史/地理课件批量注入
 - **v7.7.3**：历史地图模块默认加载彩色阴影地形底图（205KB 全球 4096×2048 彩色阴影），22 个课件已复制本地 `assets/maps/hillshade.jpg`，地图不再出现"暗蓝空地"
+- **v7.7.4**：**标准五件套默认基线**（Web Speech TTS + 情境气泡 + AI 学伴 FAB/卡片 + 知识图谱），标杆课件 `community/history-medieval-europe` 的自建悬浮播放器与情境提示抽成零配置标准模块，344 个课件批量注入，修复 2 个 HTML 标签截断的老课件
+
+---
+
+## 🆕 v7.7.4 — 标准五件套默认基线（2026-05-06）
+
+**背景**：`community/history-medieval-europe` 在 v7.7.3 完善后表现最佳，其中 3 个自建组件（底部悬浮 AI 学伴 FAB + hints 面板、右下角 Web Speech TTS 控制器、滚动情境感知气泡）被用户评价为"所有课件都应该默认有"。但这些组件原本只在该课件内以内联 CSS/JS 存在，其他 343 个课件既没有悬浮播放器、也没有情境气泡，知识图谱也只有部分课件挂了。本版本把这套"五件套"抽成零配置标准模块，批量注入全部课件。
+
+**对策**：
+
+**1. 三个新标准模块上线**
+
+| 模块 | 文件 | 功能 |
+|:---|:---|:---|
+| **Web Speech TTS 悬浮播放器** | `scripts/teachany-tts-narrator.{js,css}` | 自动收集 `[data-tts]` 段落 → 构建右下角 ⏮▶️⏭ 控制条 + 语速切换（0.85×/1.0×/1.15×/1.3×）。零 mp3 零配置：浏览器原生 `SpeechSynthesisUtterance`。可选同级 `./narration.json` 覆盖高质量文稿。无 `[data-tts]` 时零占位不插 UI。 |
+| **情境感知气泡** | `scripts/teachany-section-hints.{js,css}` | IntersectionObserver 监听 section 可见度 → 最可见 section 的提示文案自动弹出左下角气泡（挨着 ai-tutor FAB）。数据源：元素 `data-tsh="文案"` 或同级 `./section-hints.json` 的 `{sectionId: 文案}`。点击气泡 = 点 FAB 打开 AI 学伴。 |
+| **（复用）AI 学伴入口卡片** | `scripts/teachany-tutor-card.{js,css}` | v7.7 已上线，v7.7.4 纳入五件套标准 |
+
+**2. 标杆课件 `community/history-medieval-europe` 重构**
+
+- 删除原内联 `#tts-controller` + `#ai-assistant` 组件（CSS + HTML + JS 共 ~400 行）
+- 改用 3 个标准模块调用，配合已有 `ai-tutor.js` + `teachany-knowledge-graph.js` = 五件套齐全
+- 新增 `section-hints.json` 沉淀原 sectionHints 对象
+
+**3. 批量注入脚本 `scripts/apply-standard-modules.py`**
+
+- 幂等扫描 `examples/*/index.html` + `community/*/index.html`
+- `ensure_head_links()` 在 `</head>` 前注入缺失的 5 个 `<link>`
+- `ensure_tail_scripts()` 在 `</body>` 前注入缺失的 5 个 `<script>`（`ai-tutor.js` 外 4 个 `defer`）
+  - **fallback**：源 HTML 无 `</body>` 时直接追加到文件末尾
+- `ensure_tutor_card_section()` 保证 `<div data-teachany-tutor-card>` 存在
+- `ensure_kg_section()` 按 node_id 检测/替换/新增 `<section id="knowledge-graph">`
+- **node_id 解析双源**：优先读 `manifest.json` 的 `node_id`，fallback 到 `courseware-registry.json` 的 `courses[].id → node_id` 索引（消除 47 个老课件无 manifest 的 skip）
+
+**4. 修复 2 个 HTML 标签截断的老课件**
+
+批量扫描 `grep -c "</body>"` 发现 2 个课件源 HTML 存在正文 SVG/input 标签未闭合导致后续内容被浏览器解析器吞掉：
+
+| 课件 | 截断位置 | 影响 |
+|:---|:---|:---|
+| `community/math-m-isosceles-triangle/index.html` | 第 398 行 `<line ... stroke-width="1.8`（缺 `"/>`） | SVG 吞掉所有后续 HTML，ai-tutor.js 不执行，FAB 不出现 |
+| `community/math-m-statistics-probability-junior/index.html` | 第 347 行 `<input ... value="55,..,93"`（缺 `>`) | input 吞掉所有后续内容 |
+
+两个课件已补全 SVG/input 标签 + 追加 `</body></html>`，浏览器实测五件套全部挂载：`window.TeachAnyTutor/TTSNarrator/SectionHints` = object，`.ai-tutor-fab` = 1，KG SVG = 1。
+
+**5. 硬规则升级**
+
+新增 RULES.md 第 64 条：**标准五件套默认基线**——所有课件必须同时挂载 5 个标准模块（ai-tutor + tutor-card + tts-narrator + section-hints + knowledge-graph），禁止课件内再手写内联 TTS / IntersectionObserver hints 组件；浏览器实测必须全局对象全绿。
+
+**交付数据**：
+
+- 批量注入覆盖：344 个课件（examples/ + community/）
+- head links 新增：每课件 ≤5 个 `<link>`（已存在则跳过）
+- tail scripts 新增：每课件 ≤5 个 `<script>`
+- KG section node_id 解析：manifest 直读 + registry fallback，`skipped-no-node-id` 从 47 → 0
+- 标杆课件实测：FAB 1 个、TTS host 4 按钮齐、KG SVG 1 个、section-hint 气泡滚动触发"对比中国的郡县制——为什么中国能大一统而欧洲四分五裂？"显示在 (88,714)
 
 ---
 
