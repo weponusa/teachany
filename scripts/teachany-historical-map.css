@@ -1,116 +1,187 @@
-/* TeachAny Standard Historical Map · v1.0 */
+/* TeachAny Standard Historical Map · v2.0 (Leaflet)
+   ──────────────────────────────────────────────────
+   视觉风格参考：community/history-medieval-europe
+   · 深蓝底 + 金黄强调色 + 红色城市标记
+   · 朝代按钮 + 时代描述面板 + 图例 三位一体
+   · 暗色 Leaflet popup / tooltip */
+
 .thm-host {
   display: block;
   margin: 24px 0;
+  --thm-primary: var(--primary, #6366f1);
+  --thm-accent: var(--accent, #fbbf24);
   --thm-border: var(--border, #e2e8f0);
   --thm-text: var(--text, #1e293b);
   --thm-muted: var(--text-secondary, #64748b);
-  --thm-primary: var(--primary, #6366f1);
-  --thm-accent: var(--accent, #ec4899);
 }
 
-.thm-card {
-  background: #fff;
-  border: 1px solid var(--thm-border);
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 8px 24px -16px rgba(15, 23, 42, 0.18);
+.thm-header {
+  margin-bottom: 10px;
 }
-
-.thm-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 14px 18px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, rgba(236, 72, 153, 0.04) 100%);
-  border-bottom: 1px solid var(--thm-border);
-}
-.thm-title-wrap h3 { margin: 0; font-size: 16px; font-weight: 800; color: var(--thm-text); }
-.thm-title-wrap small { color: var(--thm-muted); font-size: 12px; margin-left: 4px; }
-
-.thm-toggles {
-  display: flex;
-  gap: 12px;
-  font-size: 12.5px;
-  color: var(--thm-muted);
-}
-.thm-toggles label { cursor: pointer; user-select: none; display: inline-flex; gap: 4px; align-items: center; }
-
-.thm-stage {
-  background: #f8fafc;
-  padding: 0;
-}
-.thm-svg { display: block; width: 100%; height: auto; max-height: 560px; }
-
-.thm-grid line {
-  stroke: rgba(148, 163, 184, 0.18);
-  stroke-width: 1;
-  stroke-dasharray: 2 3;
-}
-
-.thm-feature {
-  cursor: pointer;
-  transition: fill 0.18s, stroke-width 0.18s;
-}
-.thm-level-country {
-  fill: rgba(99, 102, 241, 0.16);
-  stroke: rgba(99, 102, 241, 0.85);
-  stroke-width: 1.6;
-}
-.thm-level-country:hover {
-  fill: rgba(99, 102, 241, 0.28);
-}
-.thm-level-prefecture {
-  fill: rgba(236, 72, 153, 0.05);
-  stroke: rgba(236, 72, 153, 0.4);
-  stroke-width: 0.7;
-}
-.thm-level-prefecture:hover {
-  fill: rgba(236, 72, 153, 0.18);
-}
-
-.thm-route {
-  fill: none;
-  stroke: #f59e0b;
-  stroke-width: 2.5;
-  stroke-dasharray: 6 4;
-  cursor: pointer;
-}
-
-.thm-marker { cursor: pointer; }
-.thm-marker circle { fill: #ef4444; stroke: #fff; stroke-width: 1.5; transition: r 0.15s; }
-.thm-marker:hover circle { r: 6; }
-.thm-marker text {
-  font-size: 11px;
-  fill: #1e293b;
-  font-weight: 600;
-  paint-order: stroke fill;
-  stroke: #fff;
-  stroke-width: 3px;
-  stroke-linejoin: round;
-}
-.thm-marker-capital circle { fill: #f59e0b; }
-.thm-marker-battle circle { fill: #dc2626; }
-.thm-marker-city circle { fill: #6366f1; }
-
-.thm-info {
-  padding: 12px 18px;
-  border-top: 1px solid var(--thm-border);
-  background: #fafafa;
-  font-size: 13px;
+.thm-title {
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 800;
   color: var(--thm-text);
-  min-height: 44px;
 }
-.thm-info strong { color: var(--thm-primary); }
 
-.thm-loading, .thm-error {
-  padding: 32px 16px;
-  text-align: center;
-  color: var(--thm-muted);
-  font-size: 14px;
-  background: #fafafa;
-  border-radius: 12px;
+.thm-era-btns {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
 }
-.thm-error { background: #fef2f2; color: #991b1b; }
+.thm-era-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid #64748b;
+  background: #1e293b;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+.thm-era-btn:hover {
+  color: #fff;
+  background: #334155;
+  border-color: #94a3b8;
+}
+.thm-era-btn.active {
+  background: var(--thm-primary);
+  color: #fff;
+  border-color: var(--thm-primary);
+  box-shadow: 0 6px 14px -4px rgba(99, 102, 241, 0.45);
+}
+
+/* ─── Leaflet 容器：深蓝底 ─── */
+.thm-map-container {
+  width: 100%;
+  height: 500px;
+  min-height: 380px;
+  background: #0c1526;
+  border-radius: 12px;
+  margin: 0 0 12px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid #1e293b;
+}
+@media (max-width: 600px) {
+  .thm-map-container { height: 380px; }
+}
+
+/* 覆盖 Leaflet 默认样式以贴合深色主题 */
+.thm-host .leaflet-container { background: #0c1526; }
+.thm-host .leaflet-control-zoom a {
+  background: rgba(30, 41, 59, 0.92);
+  color: #f8fafc;
+  border-color: #334155;
+}
+.thm-host .leaflet-control-zoom a:hover {
+  background: #1e293b;
+}
+.thm-host .leaflet-control-attribution {
+  background: rgba(30, 41, 59, 0.85) !important;
+  color: #94a3b8 !important;
+  font-size: 10px !important;
+}
+.thm-host .leaflet-popup-content-wrapper {
+  background: #1e293b;
+  color: #f8fafc;
+  border-radius: 8px;
+}
+.thm-host .leaflet-popup-tip { background: #1e293b; }
+.thm-host .leaflet-popup-content { margin: 10px 14px; font-size: 12.5px; line-height: 1.6; }
+.thm-host .leaflet-popup-content b { color: var(--thm-accent); }
+.thm-host .leaflet-popup-content i { color: #94a3b8; font-style: normal; }
+
+.thm-host .thm-feature-tip {
+  background: rgba(15, 23, 42, 0.92);
+  color: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+.thm-host .thm-feature-tip::before { border-right-color: rgba(15, 23, 42, 0.92) !important; }
+
+/* 城市标签（permanent tooltip） */
+.thm-host .thm-city-label {
+  background: rgba(239, 68, 68, 0.92);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.thm-host .thm-city-label::before { border: none !important; }
+
+/* 时代描述面板 */
+.thm-era-desc {
+  background: linear-gradient(135deg, #1e293b, #334155);
+  color: #e2e8f0;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-top: 12px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  border-left: 4px solid var(--thm-accent);
+  min-height: 48px;
+}
+.thm-era-desc strong { color: var(--thm-accent); }
+.thm-era-desc .era-year-tag,
+.thm-era-desc .thm-year-tag {
+  display: inline-block;
+  background: var(--thm-primary);
+  color: #fff;
+  padding: 2px 10px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+/* 图例 */
+.thm-legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border: 1px solid var(--thm-border);
+  border-radius: 8px;
+  font-size: 12.5px;
+  color: var(--thm-text);
+}
+.thm-legend-item { display: flex; align-items: center; gap: 6px; }
+.thm-legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; background: #ef4444; }
+.thm-legend-line { width: 20px; height: 2px; flex-shrink: 0; background: var(--thm-primary); border-radius: 1px; }
+.thm-legend-hint { color: var(--thm-muted); font-style: italic; }
+
+/* 错误状态 */
+.thm-error {
+  padding: 16px 18px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.thm-error code {
+  background: #fff;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: 'Menlo', monospace;
+  font-size: 12px;
+}
+
+/* City popup */
+.thm-host .thm-city-popup b { display: block; font-size: 14px; margin-bottom: 3px; }
+.thm-host .thm-city-popup span { color: #94a3b8; font-size: 12px; }

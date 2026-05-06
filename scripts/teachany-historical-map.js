@@ -1,265 +1,306 @@
-/*! TeachAny Standard Historical Map · v1.0
- * --------------------------------------------------
- * 用法（HTML）：
- *   <link rel="stylesheet" href="../../scripts/teachany-historical-map.css">
+/*! TeachAny Standard Historical Map · v2.0 (Leaflet based)
+ * ─────────────────────────────────────────────────────────
+ * 参考稳定实现：community/history-medieval-europe
+ * 特点：真 Leaflet 地图引擎 + 本地 geojson + 朝代切换 + 城市标注 + 暗色主题
  *
- *   <div data-teachany-map="qin-dynasty"
+ * 用法（HTML）：
+ *   <!-- 1. 引入 Leaflet + 本模块 -->
+ *   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+ *   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+ *   <link rel="stylesheet" href="../../scripts/teachany-historical-map.css">
+ *   <script src="../../scripts/teachany-historical-map.js" defer></script>
+ *
+ *   <!-- 2. 在课件任意位置声明 -->
+ *   <div data-teachany-map="my-map"
  *        data-teachany-map-scope="china"
- *        data-teachany-map-title="秦统一中国（前221）">
+ *        data-teachany-map-title="中国朝代演变">
  *     <script type="application/json" data-teachany-map-config>
- *       {
- *         "annotations": [
- *           {"type":"city","coord":[108.95,34.27],"label":"咸阳","role":"capital"},
- *           {"type":"battle","coord":[110,38],"label":"长平之战","year":-260},
- *           {"type":"route","coords":[[108.95,34.27],[120.6,30.27]],"label":"秦驰道"}
- *         ]
- *       }
+ *     {
+ *       "eras": [
+ *         {
+ *           "id": "qin", "label": "秦 (前221)",
+ *           "file": "qin-dynasty.geojson",
+ *           "desc": "<strong>秦统一中国</strong>：郡县制替代分封制…",
+ *           "fill": "#6366f1", "stroke": "#4f46e5",
+ *           "cities": [
+ *             [34.27, 108.95, "咸阳", "Xianyang", "秦都，中央集权起点"],
+ *             [34.75, 113.65, "郑州", "Zhengzhou", "中原要冲"]
+ *           ]
+ *         },
+ *         {
+ *           "id": "han", "label": "汉 (前202)",
+ *           "file": "han-dynasty.geojson",
+ *           "desc": "汉承秦制…",
+ *           "fill": "#f59e0b", "stroke": "#d97706",
+ *           "cities": [...]
+ *         }
+ *       ],
+ *       "center": [34, 108],
+ *       "zoom": 4,
+ *       "fitBounds": [[15, 70], [55, 145]]
+ *     }
  *     </script>
  *   </div>
  *
- *   <script src="../../scripts/teachany-historical-map.js" defer></script>
- *
- * 数据：自动加载 ../../skill/assets/historical-{china|world}/{id}.geojson
- *       feature.properties.LEVEL ∈ {country, prefecture}：分层渲染
+ * 注意：
+ *   - geojson 文件路径相对于课件目录的 `assets/maps/<file>` 或全局 `/skill/assets/historical-{scope}/<file>`
+ *   - scope 可选：china / world / custom
+ *   - hillshade 可选：`assets/maps/hillshade.jpg`（有则自动叠加）
  */
 (function () {
   "use strict";
   if (window.__TeachAnyMapInit) return;
   window.__TeachAnyMapInit = true;
 
-  var BASE_CHINA = [
-    "../../skill/assets/historical-china/",
-    "../skill/assets/historical-china/",
-    "/teachany/skill/assets/historical-china/"
-  ];
-  var BASE_WORLD = [
-    "../../skill/assets/historical-world/",
-    "../skill/assets/historical-world/",
-    "/teachany/skill/assets/historical-world/"
-  ];
+  if (typeof L === "undefined") {
+    console.error("[TeachAnyMap] Leaflet 未加载。请在引入本模块前先引入 leaflet.js 和 leaflet.css");
+    return;
+  }
 
-  function tryFetch(bases, file) {
+  var GEOJSON_SEARCH_PATHS = function (scope, file) {
+    // file 可能是 'qin-dynasty.geojson' 或 '009-ce-500.geojson' 或完整路径
+    if (file.startsWith("http") || file.startsWith("/") || file.startsWith("./") || file.startsWith("../")) {
+      return [file];
+    }
+    var bases = [];
+    // 优先课件本地 assets/maps/
+    bases.push("./assets/maps/" + file);
+    bases.push("assets/maps/" + file);
+    // 回退到 skill 仓库（相对路径）
+    var scopeDir = scope === "world" ? "historical-world" : scope === "china" ? "historical-china" : "historical-" + scope;
+    bases.push("../../skill/assets/" + scopeDir + "/" + file);
+    bases.push("../skill/assets/" + scopeDir + "/" + file);
+    bases.push("/teachany/skill/assets/" + scopeDir + "/" + file);
+    return bases;
+  };
+
+  function fetchGeoJSON(scope, file) {
+    var paths = GEOJSON_SEARCH_PATHS(scope, file);
     return (function next(list) {
-      if (!list.length) return Promise.reject(new Error("not-found:" + file));
-      return fetch(list[0] + file, { cache: "no-cache" })
+      if (!list.length) return Promise.reject(new Error("geojson-not-found:" + file));
+      return fetch(list[0], { cache: "force-cache" })
         .then(function (r) { if (!r.ok) throw 0; return r.json(); })
         .catch(function () { return next(list.slice(1)); });
-    })(bases.slice());
+    })(paths.slice());
   }
 
-  /* 简易 mercator-like 投影：把 [lon, lat] 映射到 [x, y]
-     根据 metadata.recommended_bbox 自动定缩放 */
-  function makeProjection(bbox, w, h, padding) {
-    padding = padding || 30;
-    var minLon = bbox[0], minLat = bbox[1], maxLon = bbox[2], maxLat = bbox[3];
-    var spanLon = maxLon - minLon, spanLat = maxLat - minLat;
-    var sx = (w - padding * 2) / spanLon;
-    var sy = (h - padding * 2) / spanLat;
-    var s = Math.min(sx, sy);
-    var ox = padding + (w - padding * 2 - spanLon * s) / 2;
-    var oy = padding + (h - padding * 2 - spanLat * s) / 2;
-    return function (lon, lat) {
-      return [ox + (lon - minLon) * s, h - (oy + (lat - minLat) * s)]; // 翻转 Y
-    };
-  }
-
-  function pathFromGeometry(geom, project) {
-    var d = "";
-    function ring(coords) {
-      coords.forEach(function (c, i) {
-        var p = project(c[0], c[1]);
-        d += (i === 0 ? "M" : "L") + p[0].toFixed(2) + "," + p[1].toFixed(2);
-      });
-      d += "Z";
+  function readConfig(host) {
+    var script = host.querySelector("script[type='application/json'][data-teachany-map-config]");
+    if (!script) return null;
+    try {
+      return JSON.parse(script.textContent.trim());
+    } catch (e) {
+      console.error("[TeachAnyMap] config JSON 解析失败", e);
+      return null;
     }
-    if (geom.type === "Polygon") {
-      geom.coordinates.forEach(ring);
-    } else if (geom.type === "MultiPolygon") {
-      geom.coordinates.forEach(function (poly) { poly.forEach(ring); });
-    } else if (geom.type === "LineString") {
-      geom.coordinates.forEach(function (c, i) {
-        var p = project(c[0], c[1]);
-        d += (i === 0 ? "M" : "L") + p[0].toFixed(2) + "," + p[1].toFixed(2);
-      });
-    }
-    return d;
   }
 
-  function renderMap(host, geo, scope, config) {
+  function buildHeader(title, eras, currentEraId, onSwitch) {
+    var wrap = document.createElement("div");
+    wrap.className = "thm-header";
+    if (title) {
+      var h = document.createElement("h3");
+      h.className = "thm-title";
+      h.textContent = "🗺️ " + title;
+      wrap.appendChild(h);
+    }
+    var btnBar = document.createElement("div");
+    btnBar.className = "thm-era-btns";
+    eras.forEach(function (e) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "thm-era-btn" + (e.id === currentEraId ? " active" : "");
+      btn.setAttribute("data-era", e.id);
+      btn.textContent = e.label || e.id;
+      btn.addEventListener("click", function () {
+        wrap.querySelectorAll(".thm-era-btn").forEach(function (b) { b.classList.remove("active"); });
+        btn.classList.add("active");
+        onSwitch(e.id);
+      });
+      btnBar.appendChild(btn);
+    });
+    wrap.appendChild(btnBar);
+    return wrap;
+  }
+
+  function buildLegend() {
+    var wrap = document.createElement("div");
+    wrap.className = "thm-legend";
+    wrap.innerHTML =
+      '<span class="thm-legend-item"><span class="thm-legend-dot" style="background:#ef4444"></span>重要城市</span>' +
+      '<span class="thm-legend-item"><span class="thm-legend-line" style="background:#6366f1"></span>疆域边界</span>' +
+      '<span class="thm-legend-item thm-legend-hint">点击城市查看详情 · 悬停区域高亮</span>';
+    return wrap;
+  }
+
+  function mount(host) {
+    var cfg = readConfig(host);
+    if (!cfg || !Array.isArray(cfg.eras) || !cfg.eras.length) {
+      host.innerHTML = '<div class="thm-error">⚠ 地图配置缺失：需要在 <code>&lt;script type="application/json" data-teachany-map-config&gt;</code> 中提供 eras 数组</div>';
+      return;
+    }
+    var mapId = host.getAttribute("data-teachany-map") || ("thm-map-" + Math.random().toString(36).slice(2, 8));
+    var scope = host.getAttribute("data-teachany-map-scope") || "china";
+    var title = host.getAttribute("data-teachany-map-title") || "";
+
     host.classList.add("thm-host");
     host.innerHTML = "";
 
-    var bbox = (geo.metadata && geo.metadata.recommended_bbox) || [70, 15, 140, 55];
-    if (scope === "world" && !(geo.metadata && geo.metadata.recommended_bbox)) {
-      bbox = [-180, -60, 180, 80];
-    }
+    // UI 骨架
+    var header = null;
+    var currentEra = cfg.eras[0].id;
+    var mapEl = document.createElement("div");
+    mapEl.className = "thm-map-container";
+    mapEl.id = mapId;
 
-    var card = document.createElement("section");
-    card.className = "thm-card";
+    var descEl = document.createElement("div");
+    descEl.className = "thm-era-desc";
 
-    // 标题
-    var title = host.getAttribute("data-teachany-map-title") ||
-      (geo.metadata && geo.metadata.dynasty_id) ||
-      "历史地图";
-    var period = geo.metadata && geo.metadata.period ? "（" + geo.metadata.period + "）" : "";
+    var legendEl = buildLegend();
 
-    var head = document.createElement("header");
-    head.className = "thm-head";
-    head.innerHTML =
-      '<div class="thm-title-wrap">' +
-        '<h3>🗺️ ' + title + '</h3>' +
-        '<small>' + period +
-          (geo.metadata && geo.metadata.sources ?
-            '· 数据来源：' + (geo.metadata.sources.country_outline || "GeoJSON") : '') +
-        '</small>' +
-      '</div>' +
-      '<div class="thm-toggles">' +
-        '<label><input type="checkbox" data-layer="country" checked> 疆域轮廓</label>' +
-        '<label><input type="checkbox" data-layer="prefecture" checked> 州府政区</label>' +
-        '<label><input type="checkbox" data-layer="annotation" checked> 标注点</label>' +
-      '</div>';
-    card.appendChild(head);
-
-    var stage = document.createElement("div");
-    stage.className = "thm-stage";
-    var w = 720, h = 460;
-    var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("viewBox", "0 0 " + w + " " + h);
-    svg.setAttribute("width", "100%");
-    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-    svg.classList.add("thm-svg");
-    stage.appendChild(svg);
-    card.appendChild(stage);
-
-    // 信息面板
-    var panel = document.createElement("div");
-    panel.className = "thm-info";
-    panel.innerHTML = '<p>悬停轮廓查看政权 / 政区名称；点击标注查看说明。</p>';
-    card.appendChild(panel);
-
-    host.appendChild(card);
-
-    var project = makeProjection(bbox, w, h, 30);
-
-    // 背景框
-    var bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    bg.setAttribute("width", w); bg.setAttribute("height", h);
-    bg.setAttribute("fill", "#f8fafc");
-    svg.appendChild(bg);
-
-    // 经纬网（简易）
-    var grid = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    grid.setAttribute("class", "thm-grid");
-    for (var lon = Math.ceil(bbox[0] / 10) * 10; lon <= bbox[2]; lon += 10) {
-      var p1 = project(lon, bbox[1]), p2 = project(lon, bbox[3]);
-      var line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-      line.setAttribute("x1", p1[0]); line.setAttribute("y1", p1[1]);
-      line.setAttribute("x2", p2[0]); line.setAttribute("y2", p2[1]);
-      grid.appendChild(line);
-    }
-    for (var lat = Math.ceil(bbox[1] / 10) * 10; lat <= bbox[3]; lat += 10) {
-      var q1 = project(bbox[0], lat), q2 = project(bbox[2], lat);
-      var ln = document.createElementNS("http://www.w3.org/2000/svg", "line");
-      ln.setAttribute("x1", q1[0]); ln.setAttribute("y1", q1[1]);
-      ln.setAttribute("x2", q2[0]); ln.setAttribute("y2", q2[1]);
-      grid.appendChild(ln);
-    }
-    svg.appendChild(grid);
-
-    // 分层组
-    var gCountry = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    gCountry.setAttribute("class", "thm-layer thm-country");
-    var gPref = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    gPref.setAttribute("class", "thm-layer thm-prefecture");
-    var gAnno = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    gAnno.setAttribute("class", "thm-layer thm-annotation");
-
-    (geo.features || []).forEach(function (f) {
-      var level = (f.properties && f.properties.LEVEL) || "country";
-      var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      path.setAttribute("d", pathFromGeometry(f.geometry, project));
-      path.setAttribute("class", "thm-feature thm-level-" + level);
-      var label = (f.properties && (f.properties.NAME_CH || f.properties.NAME_EN || f.properties.POWER)) || "";
-      path.setAttribute("data-label", label);
-      path.addEventListener("mouseenter", function (e) {
-        panel.innerHTML = '<strong>' + (label || "未命名") + '</strong>' +
-          (f.properties.LEVEL ? ' · ' + f.properties.LEVEL : '');
-      });
-      (level === "country" ? gCountry : gPref).appendChild(path);
+    header = buildHeader(title, cfg.eras, currentEra, function (eraId) {
+      currentEra = eraId;
+      loadEra(eraId);
     });
 
-    svg.appendChild(gCountry);
-    svg.appendChild(gPref);
+    host.appendChild(header);
+    host.appendChild(mapEl);
+    host.appendChild(descEl);
+    host.appendChild(legendEl);
 
-    // Annotations
-    var annotations = (config && config.annotations) || [];
-    annotations.forEach(function (a) {
-      if (a.type === "route" && a.coords) {
-        var line = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-        var pts = a.coords.map(function (c) { var p = project(c[0], c[1]); return p[0].toFixed(1) + "," + p[1].toFixed(1); }).join(" ");
-        line.setAttribute("points", pts);
-        line.setAttribute("class", "thm-route");
-        line.addEventListener("mouseenter", function () { panel.innerHTML = '<strong>路线：' + (a.label || "") + '</strong>'; });
-        gAnno.appendChild(line);
+    // Leaflet 地图初始化
+    var map = L.map(mapId, {
+      center: cfg.center || [34, 108],
+      zoom: cfg.zoom || 4,
+      crs: L.CRS.EPSG4326,
+      maxBounds: cfg.maxBounds || [[-90, -180], [90, 180]],
+      zoomControl: true,
+      minZoom: cfg.minZoom || 2,
+      maxZoom: cfg.maxZoom || 8,
+      worldCopyJump: false,
+      attributionControl: false
+    });
+
+    if (cfg.fitBounds) {
+      try { map.fitBounds(cfg.fitBounds); } catch (e) {}
+    }
+
+    // 可选：地形叠加（仅当 cfg.hillshade 显式提供时加载，避免无谓 404）
+    if (cfg.hillshade) {
+      var hillsrc = cfg.hillshade;
+      var img = new Image();
+      img.onload = function () {
+        L.imageOverlay(hillsrc, [[-90, -180], [90, 180]], { opacity: 0.45, interactive: false }).addTo(map);
+      };
+      img.onerror = function () { /* 没有就不显示 */ };
+      img.src = hillsrc;
+    }
+
+    // attribution 自定义
+    L.control.attribution({ prefix: false })
+      .addAttribution('数据 © TeachAny / Historical Basemaps · Leaflet')
+      .addTo(map);
+
+    var currentEraLayer = null;
+    var currentCityLayer = null;
+
+    function loadEra(eraId) {
+      var era = cfg.eras.find(function (e) { return e.id === eraId; }) || cfg.eras[0];
+      if (!era) return;
+
+      descEl.innerHTML = era.desc || "";
+
+      if (currentEraLayer) { map.removeLayer(currentEraLayer); currentEraLayer = null; }
+      if (currentCityLayer) { map.removeLayer(currentCityLayer); currentCityLayer = null; }
+
+      if (era.file) {
+        fetchGeoJSON(scope, era.file)
+          .then(function (data) {
+            var fill = era.fill || "#6366f1";
+            var stroke = era.stroke || "#4f46e5";
+            currentEraLayer = L.geoJSON(data, {
+              style: function (feature) {
+                // 尊重 feature.properties.LEVEL 分层：country 深色，prefecture 浅色
+                var lvl = feature.properties && feature.properties.LEVEL;
+                return {
+                  fillColor: fill,
+                  fillOpacity: lvl === "prefecture" ? 0.12 : 0.28,
+                  color: stroke,
+                  weight: lvl === "prefecture" ? 0.7 : 1.4,
+                  opacity: 0.75
+                };
+              },
+              onEachFeature: function (feature, layer) {
+                var name = (feature.properties && (feature.properties.NAME_CH || feature.properties.NAME_EN || feature.properties.POWER)) || "";
+                if (name) layer.bindTooltip(name, { sticky: true, className: "thm-feature-tip" });
+                layer.on({
+                  mouseover: function (e) {
+                    e.target.setStyle({ weight: 3, color: "#fbbf24", fillOpacity: 0.5 });
+                    if (!L.Browser.ie && !L.Browser.opera) e.target.bringToFront();
+                  },
+                  mouseout: function (e) {
+                    currentEraLayer.resetStyle(e.target);
+                  }
+                });
+              }
+            }).addTo(map);
+          })
+          .catch(function (err) {
+            console.error("[TeachAnyMap] geojson 加载失败：", era.file, err);
+            descEl.innerHTML = '<div class="thm-error">⚠ 地图数据 <code>' + era.file + '</code> 加载失败。请检查 <code>assets/maps/</code> 或 <code>skill/assets/historical-' + scope + '/</code> 是否存在该文件。</div>';
+          });
       }
-      if (a.coord) {
-        var p = project(a.coord[0], a.coord[1]);
-        var marker = document.createElementNS("http://www.w3.org/2000/svg", "g");
-        marker.setAttribute("transform", "translate(" + p[0] + "," + p[1] + ")");
-        marker.setAttribute("class", "thm-marker thm-marker-" + (a.type || "city"));
-        var dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        dot.setAttribute("r", a.role === "capital" ? 5 : 3.5);
-        marker.appendChild(dot);
-        if (a.label) {
-          var t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-          t.setAttribute("x", 8); t.setAttribute("y", 4);
-          t.textContent = a.label + (a.year ? "（" + a.year + "）" : "");
-          marker.appendChild(t);
-        }
-        marker.addEventListener("click", function () {
-          panel.innerHTML = '<strong>' + (a.label || a.type) + '</strong>' +
-            (a.year ? '<br>年份：' + a.year : '') +
-            (a.note ? '<br>' + a.note : '');
+
+      // 城市标注
+      if (Array.isArray(era.cities) && era.cities.length) {
+        var cityGroup = L.layerGroup();
+        era.cities.forEach(function (c) {
+          // c = [lat, lng, 中文名, 英文名, 描述]
+          var lat = c[0], lng = c[1], zh = c[2], en = c[3], note = c[4];
+          var marker = L.circleMarker([lat, lng], {
+            radius: 6,
+            fillColor: "#ef4444",
+            color: "#fff",
+            weight: 2,
+            fillOpacity: 0.95
+          });
+          var popup = '<div class="thm-city-popup">' +
+            '<b>' + zh + '</b>' + (en ? ' · <i>' + en + '</i>' : '') +
+            (note ? '<br><span>' + note + '</span>' : '') +
+            '</div>';
+          marker.bindPopup(popup, { className: "thm-popup" });
+          // 标签
+          var tooltip = L.tooltip({
+            permanent: true,
+            direction: "right",
+            offset: [8, 0],
+            className: "thm-city-label"
+          }).setContent(zh);
+          marker.bindTooltip(tooltip);
+          cityGroup.addLayer(marker);
         });
-        gAnno.appendChild(marker);
+        cityGroup.addTo(map);
+        currentCityLayer = cityGroup;
       }
-    });
-    svg.appendChild(gAnno);
-
-    // Toggles
-    head.querySelectorAll("input[data-layer]").forEach(function (chk) {
-      chk.addEventListener("change", function () {
-        var layer = chk.getAttribute("data-layer");
-        var g = svg.querySelector(".thm-" + layer);
-        if (g) g.style.display = chk.checked ? "" : "none";
-      });
-    });
-  }
-
-  function loadAndRender(host) {
-    var id = host.getAttribute("data-teachany-map");
-    var scope = host.getAttribute("data-teachany-map-scope") || "china";
-    var configScript = host.querySelector("script[type='application/json'][data-teachany-map-config]");
-    var config = {};
-    if (configScript) {
-      try { config = JSON.parse(configScript.textContent.trim()); }
-      catch (e) { console.error("[TeachAnyMap] config parse error", e); }
     }
 
-    var bases = scope === "world" ? BASE_WORLD : BASE_CHINA;
-    host.innerHTML = '<div class="thm-loading">正在加载历史地图：' + id + '…</div>';
-    tryFetch(bases, id + ".geojson")
-      .then(function (geo) { renderMap(host, geo, scope, config); })
-      .catch(function (err) {
-        host.innerHTML = '<div class="thm-error">⚠ 历史地图加载失败：' + id + '。' +
-          '请检查 skill/assets/historical-' + scope + '/ 下是否有对应 geojson。</div>';
-        console.error("[TeachAnyMap]", err);
+    // 初始加载
+    loadEra(currentEra);
+
+    // 响应容器 resize
+    if ("ResizeObserver" in window) {
+      var ro = new ResizeObserver(function () {
+        setTimeout(function () { map.invalidateSize(); }, 150);
       });
+      ro.observe(mapEl);
+    }
   }
 
   function init() {
-    document.querySelectorAll("[data-teachany-map]").forEach(loadAndRender);
+    document.querySelectorAll("[data-teachany-map]").forEach(mount);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
+
+  window.TeachAnyHistoricalMap = { __version: "2.0-leaflet", mount: mount };
 })();

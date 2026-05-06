@@ -1,6 +1,6 @@
 # TeachAny 版本变更日志
 
-**当前版本**：v7.7.1（持续演进中）
+**当前版本**：v7.7.2（持续演进中）
 **更新日期**：2026-05-06
 
 ---
@@ -21,12 +21,62 @@
 - **v7.6**：知识图谱视觉对齐 tree.html、底部位置规范、社区上传自动注册管线修复
 - **v7.7**：知识图谱稳定布局重构（去 force layout，确定性环形分层，零闪动）+ 三大标准模块上线：AI 学伴入口卡片、独立连续音频播放器、历史地图渲染器
 - **v7.7.1**：UI 可达性修复 — KG tooltip 可点击链接（延迟关闭+锚定节点）、AI 学伴卡片上移至 pretest 后（不再藏在底部）、FAB 自动避开底部音频条
+- **v7.7.2**：历史地图模块重写为 Leaflet 真地图引擎 — 自制 SVG 投影模块废弃，复用稳定标杆（`community/history-medieval-europe`），22 个历史/地理课件批量注入
 
 ---
 
 
 
 ## 详细变更记录
+
+### v7.7.2
+⭐ 历史地图模块重写为 Leaflet 真地图引擎（v7.7 的自制 SVG 方案废弃）
+
+**根因分析**：v7.7 写的 `teachany-historical-map.js` 是自制 SVG 投影渲染器——城市坐标和疆域 geojson 走两套投影，**会出现城市点漂在错误位置**；而且 22 个历史/地理课件实际**没有一个真正用上**该模块（`grep data-teachany-map` 计数 0）。
+
+**对策**：参考 `community/history-medieval-europe` 这个真稳定的实现（已部署在 https://weponusa.github.io/teachany/），把模块完全重写：
+
+**1. Leaflet 真地图引擎**
+- `<head>` 引入 Leaflet 1.9.4 CDN（leaflet.css + leaflet.js）
+- `EPSG:4326` 经纬度坐标系，城市 `circleMarker` 和 geojson `geoJSON` 用同一套投影 → 严丝合缝
+- 暗色主题：`background: #0c1526`，覆盖 `.leaflet-popup-content-wrapper` / `.leaflet-control-zoom` / `.leaflet-control-attribution`
+
+**2. 多朝代切换 UI（参考 history-medieval-europe）**
+- `.thm-era-btns` 朝代按钮组，`.active` 高亮当前
+- `.thm-era-desc` 时代说明面板，`<span class="thm-year-tag">前221</span><strong>...</strong>` 标准化
+- `.thm-legend` 图例：红点=城市 / 蓝线=边界 / 提示文字
+- 切换时自动 `removeLayer` 旧 era、加载新 geojson、重置 cities
+
+**3. 标准化数据架构**
+- 新增 `scripts/historical-maps-manifest.json` 集中维护 23 个课件的地图配置
+- 每个 era 含：`id` / `label` / `file` / `fill` / `stroke` / `desc` / `cities[[lat,lng,zh,en,note]]`
+- 自动 fallback：china scope 找不到的 geojson 会去 world 目录找（如 `ce-1945-wwii.geojson`）
+
+**4. 自包含部署**
+- 不再依赖跨目录 fetch `../../skill/assets/...`（GitHub Pages 部署后会 404）
+- 批量脚本把所需 geojson 复制到课件本地 `assets/maps/<file>.geojson`
+
+**5. 一键批量应用**
+- 新增 `scripts/apply-historical-maps.py`：
+  - 读 manifest → 复制 geojson → 注入 Leaflet CDN + 模块 CSS/JS → 在 `module-1` / `intro` / `objectives` / `pretest` 之后插入 `<section data-teachany-map>` 块
+  - 幂等：检测已注入则跳过
+- 实测注入成果：22 个课件 applied（1 skipped，因 history-medieval-europe 已自有同质量实现，不覆盖）
+- 复制 geojson 累计：约 50 个文件（每课件 1-4 个 era）
+
+**6. RULES #62 升级**
+- 强制：(a) Leaflet CDN 必须引入；(b) geojson 必须复制到课件本地；(c) ≥2 个 era；(d) 每个 era 必须有 desc
+- 列出全部 14 个 china dynasty + 21 个 world period 的可用 geojson
+
+**7. SKILL_CN 基线 ⑩ 升级**
+- 从"GeoJSON 渲染器"升级为"Leaflet 真地图引擎"
+- 完整 HTML 引入指南 + manifest 配置示例
+
+**实测结果**
+- math-linear-function 课件触发批量改造：22 changed
+- 标杆课件 history-medieval-europe 保持原貌（已是同等质量）
+- 所有课件的 city 标记现在和疆域 geojson 用同一套 EPSG:4326 投影，**坐标严丝合缝**
+
+---
 
 ### v7.7.1
 ⭐ UI 可达性修复（v7.7 的模块"存在但够不到"问题）
