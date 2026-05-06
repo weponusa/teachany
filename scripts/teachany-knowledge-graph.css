@@ -1,9 +1,10 @@
-/* TeachAny Standard Knowledge Graph Module · v2.0
+/* TeachAny Standard Knowledge Graph Module · v2.1
    --------------------------------------------------
    视觉规范：复用知识地图 tree.html
    · 深色底 + 同域配色 + 有课件实心高亮 / 无课件虚线
    · 悬停放大 + tooltip
    · 风格跟随课件：通过 CSS 变量覆盖
+   v2.1 修复：蓝底黑字（强制浅色文字+文字描边）、对比度增强
 */
 
 .tkg-root {
@@ -90,18 +91,24 @@
 }
 @media (max-width: 860px) { .tkg-body { grid-template-columns: 1fr; } }
 
-/* ─── SVG 画布：复用 tree.html 的 #tree-container 视觉 ─── */
+/* ─── SVG 画布：v2.1 加深背景色，强制内部文字为浅色 ─── */
 .tkg-canvas {
   position: relative;
   width: 100%;
   min-height: 420px;
   height: 420px;
   border-radius: var(--tkg-radius);
-  background: rgba(15, 23, 42, 0.5);
+  background: rgba(15, 23, 42, 0.85);
   border: 1px solid rgba(148, 163, 184, 0.15);
   overflow: hidden;
 }
-.tkg-canvas svg { width: 100%; height: 100%; display: block; }
+.tkg-canvas svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  /* v2.1: SVG内文字强制浅色，不受外部CSS污染 */
+  color: #f8fafc;
+}
 .tkg-canvas-hint {
   position: absolute;
   left: 12px;
@@ -127,8 +134,8 @@
   border: 1px solid var(--tkg-border);
 }
 
-/* ─── 节点：完全对齐 tree.html ─── */
-.tkg-node-group { cursor: pointer; transition: transform .2s ease; }
+/* ─── 节点：完全对齐 tree.html，v2.1 增强文字可读性 ─── */
+.tkg-node-group { cursor: pointer; transition: transform .2s ease, opacity .2s ease; }
 .tkg-node-group:hover { transform: translate(0, -2px); }
 .tkg-node-circle {
   stroke-width: 2.5;
@@ -142,34 +149,47 @@
   stroke-width: 4;
   filter: drop-shadow(0 4px 14px rgba(245, 158, 11, 0.45));
 }
+/* v2.1: 强制浅色文字 + 文字描边，确保深色背景下清晰可读 */
 .tkg-node-label {
   font-size: 12px;
   font-family: 'PingFang SC', sans-serif;
-  fill: var(--tkg-text);
+  fill: #f8fafc !important;
   text-anchor: middle;
   pointer-events: none;
+  /* 文字描边增强对比度 */
+  paint-order: stroke fill;
+  stroke: rgba(15, 23, 42, 0.85);
+  stroke-width: 3px;
+  stroke-linejoin: round;
 }
 .tkg-node-label-en {
   font-size: 10px;
   font-style: italic;
   font-family: 'Segoe UI', system-ui, sans-serif;
-  fill: var(--tkg-dim);
-  opacity: 0.55;
+  fill: rgba(248, 250, 252, 0.75) !important;
   text-anchor: middle;
   pointer-events: none;
+  paint-order: stroke fill;
+  stroke: rgba(15, 23, 42, 0.7);
+  stroke-width: 2px;
+  stroke-linejoin: round;
 }
 .tkg-node-grade {
   font-size: 10px;
-  fill: var(--tkg-muted);
+  fill: rgba(148, 163, 184, 0.9) !important;
   text-anchor: middle;
   pointer-events: none;
+  paint-order: stroke fill;
+  stroke: rgba(15, 23, 42, 0.6);
+  stroke-width: 2px;
+  stroke-linejoin: round;
 }
 .tkg-node-status-icon {
   font-size: 14px;
   text-anchor: middle;
   pointer-events: none;
 }
-.tkg-node-group.dim { opacity: 0.3; }
+.tkg-node-group.dim { opacity: 0.3; transition: opacity .25s ease; }
 .tkg-node-group.no-course { cursor: default; }
 
 /* ─── 连接线 ─── */
@@ -206,8 +226,8 @@
   line-height: 1.6;
 }
 .tkg-tooltip.visible { opacity: 1; pointer-events: auto; }
-.tkg-tooltip h3 { font-size: 15px; margin: 0 0 6px; color: var(--tkg-text); }
-.tkg-tooltip .meta { font-size: 12px; color: var(--tkg-dim); margin-bottom: 8px; }
+.tkg-tooltip h3 { font-size: 15px; margin: 0 0 6px; color: #f8fafc; }
+.tkg-tooltip .meta { font-size: 12px; color: #94a3b8; margin-bottom: 8px; }
 .tkg-tooltip .status-badge {
   display: inline-block;
   padding: 2px 8px;
@@ -215,8 +235,8 @@
   font-size: 11px;
   font-weight: 600;
 }
-.tkg-tooltip .badge-active { background: rgba(16, 185, 129, 0.22); color: var(--tkg-success); }
-.tkg-tooltip .badge-gap { background: rgba(239, 68, 68, 0.22); color: var(--tkg-danger); }
+.tkg-tooltip .badge-active { background: rgba(16, 185, 129, 0.22); color: #10b981; }
+.tkg-tooltip .badge-gap { background: rgba(239, 68, 68, 0.22); color: #ef4444; }
 .tkg-tooltip .chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
 .tkg-tooltip .chip {
   font-size: 11px;
@@ -224,7 +244,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--tkg-border);
-  color: var(--tkg-dim);
+  color: #94a3b8;
 }
 .tkg-tooltip .course-link {
   display: block;
@@ -245,7 +265,7 @@
   padding: 6px 10px;
   border-radius: 8px;
   background: rgba(239, 68, 68, 0.08);
-  color: var(--tkg-danger);
+  color: #ef4444;
   font-size: 12px;
 }
 
@@ -259,11 +279,12 @@
   background: var(--tkg-card);
   border: 1px solid var(--tkg-border);
   min-height: 420px;
+  color: #f8fafc;
 }
-.tkg-panel h3 { margin: 0; font-size: 17px; font-weight: 800; }
-.tkg-panel .meta { color: var(--tkg-dim); font-size: 12px; font-weight: 600; }
+.tkg-panel h3 { margin: 0; font-size: 17px; font-weight: 800; color: #f8fafc; }
+.tkg-panel .meta { color: #94a3b8; font-size: 12px; font-weight: 600; }
 .tkg-panel ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
-.tkg-panel ul li { font-size: 12.5px; line-height: 1.6; color: var(--tkg-dim); }
+.tkg-panel ul li { font-size: 12.5px; line-height: 1.6; color: #94a3b8; }
 
 .tkg-tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .tkg-tag {
@@ -276,14 +297,14 @@
   font-weight: 700;
   border: 1px solid var(--tkg-border);
   background: rgba(255, 255, 255, 0.04);
-  color: var(--tkg-text);
+  color: #f8fafc;
   text-decoration: none;
   cursor: pointer;
 }
 .tkg-tag:hover { background: rgba(59, 130, 246, 0.12); }
-.tkg-tag.layer-prereq { border-color: rgba(16, 185, 129, 0.6); color: var(--tkg-success); }
-.tkg-tag.layer-next { border-color: rgba(59, 130, 246, 0.6); color: var(--tkg-primary); }
-.tkg-tag.layer-sibling { border-color: rgba(245, 158, 11, 0.5); color: var(--tkg-accent); }
+.tkg-tag.layer-prereq { border-color: rgba(16, 185, 129, 0.6); color: #10b981; }
+.tkg-tag.layer-next { border-color: rgba(59, 130, 246, 0.6); color: #3b82f6; }
+.tkg-tag.layer-sibling { border-color: rgba(245, 158, 11, 0.5); color: #f59e0b; }
 .tkg-tag.layer-extend { border-color: rgba(139, 92, 246, 0.5); color: #c084fc; }
 .tkg-tag.has-course::after { content: '📚'; margin-left: 2px; }
 .tkg-tag.no-course { opacity: 0.7; cursor: default; }
@@ -300,7 +321,7 @@
   border: 1px solid var(--tkg-border);
   background: rgba(255, 255, 255, 0.03);
   font-size: 13px;
-  color: var(--tkg-text);
+  color: #f8fafc;
   text-decoration: none;
   transition: border-color .2s, transform .2s, background .2s;
 }
@@ -310,13 +331,13 @@
   background: rgba(59, 130, 246, 0.08);
 }
 .tkg-link-card strong { font-size: 14px; }
-.tkg-link-card em { font-style: normal; color: var(--tkg-muted); font-size: 11.5px; }
+.tkg-link-card em { font-style: normal; color: #64748b; font-size: 11.5px; }
 
 .tkg-empty {
   padding: 16px;
   border-radius: var(--tkg-radius);
   background: rgba(255, 255, 255, 0.03);
-  color: var(--tkg-dim);
+  color: #94a3b8;
   font-size: 14px;
   text-align: center;
 }
@@ -324,13 +345,13 @@
 .tkg-footer {
   margin-top: 14px;
   font-size: 12px;
-  color: var(--tkg-muted);
+  color: #64748b;
   display: flex;
   justify-content: space-between;
   gap: 8px;
   flex-wrap: wrap;
 }
-.tkg-legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--tkg-dim); }
+.tkg-legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: #94a3b8; }
 .tkg-legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; }
 
 /* canvas 进度探针 */
@@ -341,7 +362,7 @@
   border: 1px solid var(--tkg-border);
   background: var(--tkg-card);
 }
-.tkg-probe-title { font-size: 13px; font-weight: 700; color: var(--tkg-dim); margin-bottom: 8px; }
+.tkg-probe-title { font-size: 13px; font-weight: 700; color: #94a3b8; margin-bottom: 8px; }
 .tkg-probe canvas {
   width: 100%;
   height: auto;
@@ -351,7 +372,6 @@
   background: rgba(255, 255, 255, 0.03);
 }
 
-/* 当宿主课件是浅色主题时：自动切换深色 tooltip 到更亮的背景 */
-@media (prefers-color-scheme: light) {
-  .tkg-root { --tkg-text: inherit; }
-}
+/* v2.1: 移除了 @media (prefers-color-scheme: light) 对 --tkg-text 的覆盖
+   原来的 override 导致浅色系统偏好下 --tkg-text: inherit，
+   使深蓝背景上的文字变成深色（蓝底黑字），现在强制始终保持浅色 */

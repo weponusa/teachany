@@ -1,4 +1,4 @@
-/*! TeachAny Standard Knowledge Graph Module · v2.0
+/*! TeachAny Standard Knowledge Graph Module · v2.1
  * --------------------------------------------------
  *  <link rel="stylesheet" href="../../scripts/teachany-knowledge-graph.css">
  *  <div data-teachany-kg="chn-e-compound-vowel">
@@ -8,6 +8,7 @@
  *
  *  视觉风格：完全对齐 tree.html 的知识地图
  *  交互：hover 放大 + tooltip；有课件节点点击跳课件，无课件虚线框
+ *  v2.1 修复：闪动（增量更新SVG）、蓝底黑字（强制浅色文字）、节点交互（分离聚焦与重绘）
  */
 (function () {
   "use strict";
@@ -112,69 +113,124 @@
     return { center: center, nodes: arr, links: links };
   }
 
-  /* ─── 布局：轻量力导向 ─── */
-  function forceLayout(nodes, links, width, height) {
-    var padding = 70;
-    nodes.forEach(function (n, i) {
-      if (n._layer === "self") {
-        n.x = width / 2; n.y = height / 2; n.fx = true;
-      } else {
-        var angle = (i / Math.max(1, nodes.length - 1)) * Math.PI * 2;
-        var r = Math.min(width, height) * 0.34;
-        n.x = width / 2 + r * Math.cos(angle);
-        n.y = height / 2 + r * Math.sin(angle);
-      }
-      n.vx = 0; n.vy = 0;
-    });
-    var idx = new Map(nodes.map(function (n) { return [n.id, n]; }));
-    var linkObjs = links.map(function (l) { return { s: idx.get(l.source), t: idx.get(l.target), type: l.type }; }).filter(function (l) { return l.s && l.t; });
-    var idealLen = Math.min(width, height) * 0.24;
-    for (var k = 0; k < 240; k++) {
-      for (var i = 0; i < nodes.length; i++) {
-        var a = nodes[i];
-        for (var j = i + 1; j < nodes.length; j++) {
-          var b = nodes[j];
-          var dx = a.x - b.x, dy = a.y - b.y;
-          var dist = Math.sqrt(dx * dx + dy * dy) || 0.01;
-          var force = 2800 / (dist * dist);
-          var fx = (dx / dist) * force, fy = (dy / dist) * force;
-          a.vx += fx; a.vy += fy; b.vx -= fx; b.vy -= fy;
-        }
-      }
-      linkObjs.forEach(function (l) {
-        var dx = l.t.x - l.s.x, dy = l.t.y - l.s.y;
-        var dist = Math.sqrt(dx * dx + dy * dy) || 0.01;
-        var force = (dist - idealLen) * 0.08;
-        var fx = (dx / dist) * force, fy = (dy / dist) * force;
-        if (!l.s.fx) { l.s.vx += fx; l.s.vy += fy; }
-        if (!l.t.fx) { l.t.vx -= fx; l.t.vy -= fy; }
-      });
-      nodes.forEach(function (n) {
-        if (n.fx) return;
-        n.vx += (width / 2 - n.x) * 0.012;
-        n.vy += (height / 2 - n.y) * 0.012;
-      });
-      nodes.forEach(function (n) {
-        if (n.fx) { n.vx = 0; n.vy = 0; return; }
-        n.vx *= 0.78; n.vy *= 0.78;
-        n.x += n.vx; n.y += n.vy;
-        if (n.x < padding) { n.x = padding; n.vx *= -0.4; }
-        if (n.x > width - padding) { n.x = width - padding; n.vx *= -0.4; }
-        if (n.y < padding) { n.y = padding; n.vy *= -0.4; }
-        if (n.y > height - padding) { n.y = height - padding; n.vy *= -0.4; }
+  /* ─── 布局：确定性环形分层（v2.2 取代力导向，零闪动）
+   *  · self 居中
+   *  · prereq 在左半圆（180°±60°），按顺序均匀
+   *  · next 在右半圆（0°±60°），按顺序均匀
+   *  · sibling/extend 在上下两弧（90° / 270°）填空
+   *  · 所有坐标一次性算好，不需要迭代，不会有"先乱后稳"的视觉跳动
+   */
+  function deterministicLayout(nodes, links, width, height) {
+    var cx = width / 2, cy = height / 2;
+    var radius = Math.min(width, height) * 0.36;
+    var padding = 60;
+
+    var byLayer = { self: [], prereq: [], next: [], sibling: [], extend: [] };
+    nodes.forEach(function (n) { (byLayer[n._layer] || byLayer.sibling).push(n); });
+
+    function placeOnArc(group, centerAngleDeg, spanDeg, r) {
+      var n = group.length;
+      if (!n) return;
+      var startA = (centerAngleDeg - spanDeg / 2) * Math.PI / 180;
+      var endA = (centerAngleDeg + spanDeg / 2) * Math.PI / 180;
+      group.forEach(function (node, i) {
+        var t = n === 1 ? 0.5 : i / (n - 1);
+        var a = startA + t * (endA - startA);
+        node.x = cx + r * Math.cos(a);
+        node.y = cy + r * Math.sin(a);
       });
     }
+
+    // self 锚定
+    if (byLayer.self.length) { byLayer.self[0].x = cx; byLayer.self[0].y = cy; }
+
+    // 左半圆：前序（180°中心，跨度 130°）
+    placeOnArc(byLayer.prereq, 180, Math.min(130, byLayer.prereq.length * 35 + 20), radius);
+    // 右半圆：后续（0°中心，跨度 130°）
+    placeOnArc(byLayer.next, 0, Math.min(130, byLayer.next.length * 35 + 20), radius);
+    // 上弧：sibling
+    placeOnArc(byLayer.sibling, -90, Math.min(120, byLayer.sibling.length * 28 + 20), radius * 0.92);
+    // 下弧：extend
+    placeOnArc(byLayer.extend, 90, Math.min(120, byLayer.extend.length * 28 + 20), radius * 0.92);
+
+    // 边界保护
+    nodes.forEach(function (n) {
+      if (n.x < padding) n.x = padding;
+      if (n.x > width - padding) n.x = width - padding;
+      if (n.y < padding) n.y = padding;
+      if (n.y > height - padding) n.y = height - padding;
+    });
   }
 
-  /* ─── 绘制 SVG 图谱 ─── */
-  function renderGraph(svg, graph, handlers) {
-    while (svg.firstChild) svg.removeChild(svg.firstChild);
-    var bb = svg.getBoundingClientRect();
-    var width = bb.width || 600;
-    var height = bb.height || 400;
-    svg.setAttribute("viewBox", "0 0 " + width + " " + height);
+  /* ─── 绘制 SVG 图谱（v2.1: 支持增量更新，不再每次全量清除） ─── */
+  function renderGraph(svg, graph, handlers, existingGraph) {
+    // 如果新旧图谱节点集合一致，只更新高亮和详情面板，不清除重建
+    var oldNodeIds = existingGraph ? existingGraph.nodes.map(function(n){ return n.id; }).sort().join(',') : '';
+    var newNodeIds = graph.nodes.map(function(n){ return n.id; }).sort().join(',');
+    var sameGraph = oldNodeIds && oldNodeIds === newNodeIds;
 
-    forceLayout(graph.nodes, graph.links, width, height);
+    if (sameGraph) {
+      // 增量更新：只改高亮状态，不重建SVG
+      svg.querySelectorAll(".tkg-node-group").forEach(function (g) {
+        var nid = g.getAttribute("data-id");
+        var n = graph.nodes.find(function(x){ return x.id === nid; });
+        if (!n) return;
+        // 更新 _layer 可能变化了
+        var isSelf = n._layer === "self";
+        var hasCrs = hasCourse(n);
+        var radius = hasCrs ? 24 : 20;
+        if (isSelf) radius = 30;
+        var domainColor = n.domain_color || "#3b82f6";
+        var fill, stroke, dash;
+        if (isSelf) {
+          fill = hexToRgba(domainColor, 0.55);
+          stroke = domainColor;
+          dash = "none";
+        } else if (hasCrs) {
+          fill = hexToRgba(domainColor, 0.40);
+          stroke = domainColor;
+          dash = "none";
+        } else {
+          fill = hexToRgba(domainColor, 0.15);
+          stroke = hexToRgba(domainColor, 0.6);
+          dash = "4 3";
+        }
+        var circle = g.querySelector(".tkg-node-circle");
+        if (circle) {
+          circle.setAttribute("fill", fill);
+          circle.setAttribute("stroke", stroke);
+          circle.setAttribute("stroke-dasharray", dash);
+          circle.setAttribute("r", radius);
+        }
+        // 更新 status icon
+        var iconEl = g.querySelector(".tkg-node-status-icon");
+        if (iconEl) {
+          var icon = "📝";
+          if (isSelf) icon = "🎯";
+          else if (hasCrs) icon = "✅";
+          iconEl.textContent = icon;
+        }
+        // 更新 class
+        g.setAttribute("class", "tkg-node-group" + (hasCrs || isSelf ? "" : " no-course"));
+      });
+      return;
+    }
+
+    // 全量重建（中心节点变了，邻居集合不同了）
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    // v2.2: 用 canvas 容器尺寸而不是 svg 自身（svg 在初次未布局时 width 可能为 0）
+    var canvasEl = svg.parentElement;
+    var bb = (canvasEl || svg).getBoundingClientRect();
+    var width = bb.width || 600;
+    var height = bb.height || 420;
+    // 容器异常时给个保底
+    if (width < 100) width = 600;
+    if (height < 100) height = 420;
+    svg.setAttribute("viewBox", "0 0 " + width + " " + height);
+    svg.setAttribute("width", width);
+    svg.setAttribute("height", height);
+
+    deterministicLayout(graph.nodes, graph.links, width, height);
 
     // Arrow markers
     var defs = h("defs");
@@ -207,7 +263,7 @@
     });
     svg.appendChild(linkGroup);
 
-    // Nodes (tree.html 风格)
+    // Nodes (tree.html 风格，v2.1: 提高填充不透明度，增强可读性)
     var nodeGroup = h("g", { class: "tkg-nodes" });
     graph.nodes.forEach(function (n) {
       var hasCrs = hasCourse(n);
@@ -217,16 +273,16 @@
       var domainColor = n.domain_color || "#3b82f6";
       var fill, stroke, dash;
       if (isSelf) {
-        fill = hexToRgba(domainColor, 0.35);
+        fill = hexToRgba(domainColor, 0.55);
         stroke = domainColor;
         dash = "none";
       } else if (hasCrs) {
-        fill = hexToRgba(domainColor, 0.22);
+        fill = hexToRgba(domainColor, 0.40);
         stroke = domainColor;
         dash = "none";
       } else {
-        fill = hexToRgba(domainColor, 0.05);
-        stroke = hexToRgba(domainColor, 0.55);
+        fill = hexToRgba(domainColor, 0.15);
+        stroke = hexToRgba(domainColor, 0.6);
         dash = "4 3";
       }
       var g = h("g", {
@@ -410,19 +466,14 @@
   function applyFilter(root, filter) {
     var svg = root.querySelector(".tkg-canvas svg");
     if (!svg) return;
-    svg.querySelectorAll(".tkg-node-group").forEach(function (g) {
-      var layer = (g.getAttribute("class") || "").split(/\s+/).find(function (c) { return c.indexOf("layer-") === 0; }) || "";
-      // self always shown
-      var isSelf = g.querySelector(".tkg-node-status-icon") && g.querySelector(".tkg-node-status-icon").textContent === "🎯";
-      var show = filter === "all" || isSelf;
-      svg.querySelectorAll(".tkg-link").forEach(function (line) {
-        var t = (line.getAttribute("class") || "").split(/\s+/).find(function (c) { return c.indexOf("link-") === 0 && c !== "tkg-link"; }) || "";
-        var lk = t.replace("link-", "");
-        line.classList.toggle("dim", !(filter === "all" || lk === filter));
-      });
-    });
-    // Since we don't tag node-group with layer class, we re-compute by position reference.
     var nodes = svg.__graphNodes || [];
+    // Filter links
+    svg.querySelectorAll(".tkg-link").forEach(function (line) {
+      var t = (line.getAttribute("class") || "").split(/\s+/).find(function (c) { return c.indexOf("link-") === 0 && c !== "tkg-link"; }) || "";
+      var lk = t.replace("link-", "");
+      line.classList.toggle("dim", !(filter === "all" || lk === filter));
+    });
+    // Filter nodes
     nodes.forEach(function (n) {
       var g = svg.querySelector('.tkg-node-group[data-id="' + n.id + '"]');
       if (!g) return;
@@ -532,10 +583,11 @@
     footer.appendChild(h("div", { text: "数据：data/trees + data/knowledge-points · 风格：与 tree.html 一致" }));
     el.appendChild(footer);
 
-    // Render
+    // Render state
     var visited = new Set();
     var currentId = nodeId;
     var currentFilter = "all";
+    var currentGraph = null; // v2.1: 保存当前图谱引用，用于增量更新
 
     function drawProbe() {
       var ctx = probeCanvas.getContext("2d");
@@ -585,31 +637,47 @@
       ctx.fillText("已探索 " + items.length + " 个节点", 20, 22);
     }
 
-    function render(id) {
+    /**
+     * v2.1: 聚焦节点 — 如果新焦点已在当前图谱中，仅更新高亮+详情面板
+     * 如果新焦点不在当前图谱中，才触发完整重绘
+     */
+    function focusNode(id) {
       currentId = id;
       visited.add(id);
-      var graph = buildNeighborhood(manifest, id);
-      if (!graph) return;
-      renderGraph(svg, graph, {
-        onNodeClick: function (n, ev) {
-          // 有课件 → 打开课件；无课件 → 聚焦到详情面板
-          if (hasCourse(n) && n.id !== currentId) {
-            var url = coursewareUrl(n.courses[0]);
-            if (url) { window.open(url, "_top"); return; }
-          }
-          render(n.id);
-        },
-        onHover: function (n, ev) {
-          tooltip.innerHTML = buildTooltipContent(n);
-          tooltip.classList.add("visible");
-          positionTooltip(tooltip, canvasWrap, ev);
-        },
-        onMove: function (n, ev) {
-          positionTooltip(tooltip, canvasWrap, ev);
-        },
-        onLeave: function () { tooltip.classList.remove("visible"); }
-      });
-      svg.__graphNodes = graph.nodes;
+
+      // 检查新节点是否在当前图谱中
+      var alreadyInGraph = currentGraph && currentGraph.nodes.some(function(n) { return n.id === id; });
+
+      if (alreadyInGraph) {
+        // 增量更新：重建邻居关系（中心节点变了，_layer 要变），但不重绘整个SVG
+        var newGraph = buildNeighborhood(manifest, id);
+        if (!newGraph) return;
+
+        // 用 renderGraph 的增量模式：只更新节点样式/高亮，不重建SVG结构
+        renderGraph(svg, newGraph, {
+          onNodeClick: onNodeClick,
+          onHover: onHover,
+          onMove: onMove,
+          onLeave: onLeave
+        }, currentGraph);
+
+        currentGraph = newGraph;
+        svg.__graphNodes = newGraph.nodes;
+      } else {
+        // 全量重绘：新焦点不在当前图谱中
+        var graph = buildNeighborhood(manifest, id);
+        if (!graph) return;
+        renderGraph(svg, graph, {
+          onNodeClick: onNodeClick,
+          onHover: onHover,
+          onMove: onMove,
+          onLeave: onLeave
+        }, null);
+        currentGraph = graph;
+        svg.__graphNodes = graph.nodes;
+      }
+
+      // 通用更新：详情面板、高亮、筛选、统计、足迹
       renderDetailPanel(panel, id, manifest, el);
       applyFilter(el, currentFilter);
 
@@ -618,11 +686,37 @@
         g.classList.toggle("selected", g.getAttribute("data-id") === id);
       });
       // Stats
-      var total = graph.nodes.length;
-      var withCourse = graph.nodes.filter(hasCourse).length;
+      var total = currentGraph.nodes.length;
+      var withCourse = currentGraph.nodes.filter(hasCourse).length;
       statWrap.innerHTML = '<span>' + total + ' 节点</span><span>✅ ' + withCourse + ' 已有课件</span>';
       drawProbe();
+
+      // 更新标题中的当前节点名
+      var titleSmall = el.querySelector(".tkg-title small");
+      if (titleSmall) {
+        var node = manifest.nodes[id];
+        titleSmall.textContent = node ? (node.name || id) : id;
+      }
     }
+
+    // 事件处理器（提取为命名函数以便复用）
+    function onNodeClick(n, ev) {
+      // 有课件 → 打开课件；无课件 → 聚焦到详情面板
+      if (hasCourse(n) && n.id !== currentId) {
+        var url = coursewareUrl(n.courses[0]);
+        if (url) { window.open(url, "_top"); return; }
+      }
+      focusNode(n.id);
+    }
+    function onHover(n, ev) {
+      tooltip.innerHTML = buildTooltipContent(n);
+      tooltip.classList.add("visible");
+      positionTooltip(tooltip, canvasWrap, ev);
+    }
+    function onMove(n, ev) {
+      positionTooltip(tooltip, canvasWrap, ev);
+    }
+    function onLeave() { tooltip.classList.remove("visible"); }
 
     [filterAll, filterPre, filterNext, filterSib].forEach(function (btn) {
       btn.addEventListener("click", function () {
@@ -632,7 +726,7 @@
         applyFilter(el, currentFilter);
       });
     });
-    el.addEventListener("tkg:focus", function (ev) { render(ev.detail); });
+    el.addEventListener("tkg:focus", function (ev) { focusNode(ev.detail); });
     renderSearch(manifest, search, searchBox, el);
 
     // Drag nodes
@@ -659,12 +753,16 @@
     });
     window.addEventListener("mouseup", function () { dragging = null; });
 
-    render(nodeId);
+    // 初次渲染（全量）
+    focusNode(nodeId);
 
-    // Resize
+    // Resize（防抖，全量重绘）
     window.addEventListener("resize", (function () {
       var tid = null;
-      return function () { clearTimeout(tid); tid = setTimeout(function () { render(currentId); }, 180); };
+      return function () { clearTimeout(tid); tid = setTimeout(function () {
+        currentGraph = null; // 强制全量重绘
+        focusNode(currentId);
+      }, 250); };
     })());
   }
 

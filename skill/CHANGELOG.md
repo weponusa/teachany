@@ -1,7 +1,7 @@
 # TeachAny 版本变更日志
 
-**当前版本**：v7.2（持续演进中）  
-**更新日期**：2026-04-30
+**当前版本**：v7.7（持续演进中）
+**更新日期**：2026-05-06
 
 ---
 
@@ -16,17 +16,51 @@
 - **v6.1**：Pillow 本地生图字体规范 + 基线检查增强
 - **v7.1**：Hero 图补充机制 — 修复新知识点课件永远没有 Hero 图的架构缺陷
 - **v7.2**：Hero 图批量修复 + 质检强化 — 全量 312 课件 hero 图覆盖率从 34% 提升至 100%
+- **v7.4**：真实交互 + 连续音频基线（禁止图片伪装交互）
+- **v7.5**：标准知识图谱模块（`scripts/teachany-knowledge-graph.{js,css}`）
+- **v7.6**：知识图谱视觉对齐 tree.html、底部位置规范、社区上传自动注册管线修复
+- **v7.7**：知识图谱稳定布局重构（去 force layout，确定性环形分层，零闪动）+ 三大标准模块上线：AI 学伴入口卡片、独立连续音频播放器、历史地图渲染器
 
 ---
+
+
 
 ## 详细变更记录
 
 ### v7.7
-⭐ 社区课件上传自动注册链路修复
-- `rebuild-index.py` 自动串联 `sync-community-index.py` 和 `build-teachany-kg-manifest.py`，一次命令同时更新 `registry.json`、`community/index.json`、`data/trees/**/*.json` 和 `scripts/teachany-kg-manifest.json`。
-- 新增 `scripts/sync-community-index.py`，从 `registry.json` 自动生成社区索引，修复“community/<course-id> 已存在但 Gallery/Hub 不显示”的问题。
-- `build-teachany-kg-manifest.py` 改为读取 `registry.json`，且只保留实际存在 `index.html` 的课件路径，避免标准图谱误判虚挂节点为“已有课件”。
-- `community/pending/` 中重复且未通过质量门的历史包已归档，避免重复注册同一 `node_id`。
+⭐ 知识图谱稳定化 + 三大标准模块上线（AI 学伴卡片 / 独立音频 / 历史地图）
+
+**1. 知识图谱模块（`teachany-knowledge-graph.{js,css}` v2.2）**
+- 彻底废弃 240 轮力导向布局，改用**确定性环形分层布局**：self 居中 / prereq 在左半圆 / next 在右半圆 / sibling 在上弧 / extend 在下弧。一次算完，零迭代，**根除"先乱后稳"的视觉跳动**。
+- 增量更新：聚焦同一邻居集合中的另一个节点时只改高亮和 layer 样式，不再 `removeChild` 整棵 SVG。
+- 节点填充不透明度从 0.05/0.22/0.35 提升到 0.15/0.40/0.55，文字 `paint-order: stroke fill` + `stroke: rgba(15,23,42,0.85)` 描边，深色背景下也清晰可读。
+- 移除导致"蓝底黑字"的 `@media (prefers-color-scheme: light)` 覆盖；tooltip / panel / 链接卡片中的颜色全部硬编码为浅色，避免被宿主 CSS 变量污染。
+
+**2. 标准 AI 学伴入口卡片（新增 `teachany-tutor-card.{js,css}`）**
+- 课件不能仅依赖左下角 FAB（学生在长页面下经常看不到），必须在课件正文显式嵌入 `<div data-teachany-tutor-card></div>`。
+- 卡片包含标题、简介、4 个建议提问按钮，点击任一处都会唤起 ai-tutor.js 的对话面板。
+- 新增硬规则 #60：仅 FAB 无卡片 / 卡片硬编码 Key / 修改模块源码 → Gate 直接不通过。
+
+**3. 标准独立连续音频模块（新增 `teachany-audio-player.{js,css}`）**
+- 取代每个课件重复粘贴 80+ 行内联 audio-bar 代码，统一为：曲目卡片（列表 + 当前高亮 + 单曲点击播放）+ 全局底部连续播放条（▶/⏸/⏮/⏭/进度/速度）。
+- 滚动同步切轨（IntersectionObserver `threshold:0.5`）、`ended` 事件自动连播下一首、速度按钮在 1x/1.25x/1.5x/2x 循环。
+- playlist 通过 `<script type="application/json" data-teachany-audio-playlist>...</script>` 声明，零侵入。
+- 新增硬规则 #61：≥2 段音频未用模块 / 内联 audio-bar 复制 / 自动连播失效 / 拼音英语课段数<3 → Gate 直接不通过。
+
+**4. 标准历史地图模块（新增 `teachany-historical-map.{js,css}`）**
+- 历史/地理课件再也不允许用纯手画 SVG 方框拼接。统一调用模块加载 `skill/assets/historical-china/<dynasty>.geojson` 或 `historical-world/<period>.geojson`（已有 40 个规范文件覆盖秦至清 + 全球公元前 3000~ce 1945 重大节点）。
+- 自动按 `feature.properties.LEVEL=country/prefecture` 分层渲染、绘制都城/战役/路线标注、提供图层开关、悬停显示政权名/政区名。
+- 标注通过 `<script type="application/json" data-teachany-map-config>{"annotations":[...]}</script>` 声明，支持 type=city/battle/route，role=capital。
+- 新增硬规则 #62：用纯 SVG 示意图 / 朝代 ID 不存在 / 历史课件无地图 / 修改模块源码 → Gate 直接不通过。
+
+**5. SKILL_CN 基线表升级**
+- 基线清单从 ⑦ 扩展到 ⑩：⑧ AI 学伴入口卡片、⑨ 独立连续音频模块、⑩ 历史地图模块。
+- 每条基线明确强制要求、实现方式、降级底线。
+
+**6. 社区课件上传自动注册链路修复**
+- `rebuild-index.py` 自动串联 `register-community-uploads.py` → `sync-community-index.py` → `build-teachany-kg-manifest.py`，一次命令同时更新 `registry.json`、`community/index.json`、`data/trees/**/*.json` 和 `scripts/teachany-kg-manifest.json`。
+- `register-community-uploads.py` 自动归一化 `subject:"历史"`→`history`、`grade:"初二"`→`8`、补 `node_id`。
+- `build-teachany-kg-manifest.py` 改为读取 `registry.json`，且只保留实际存在 `index.html` 的课件路径，避免标准图谱误判虚挂节点为"已有课件"。
 
 ### v7.6
 ⭐ 标准知识图谱模块 · 视觉/布局对齐知识地图
