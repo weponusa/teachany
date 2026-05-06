@@ -103,7 +103,7 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 
 1. **Phase 0（需求确认）末尾**：必须输出"基线能力开启清单"，明确声明 TTS/Remotion/Canvas/生图/Hero 五项全开（除非用户书面拒绝）
 2. **Phase 0.5**：必须自动检测 Node.js/npm/ffmpeg（Remotion 的前置依赖）；缺失则自动安装（详见 [`phases/video-audio.md`](./phases/video-audio.md) Section 15.2），**不等待用户确认**
-3. **Generation Gate**：基线五项任一标注"跳过"必须附理由，且理由会被 Completeness Gate 二次审查；**Remotion 不可跳过**——"Node 环境不可用"必须先安装解决，不能当作跳过理由；**TTS 不可跳过**——即使用户拒绝也必须保留 `teachany-tts-narrator.js` 引用；**AI 学伴不可跳过**——是标准五件套之一；**知识图谱不可跳过**——是标准五件套之一；**历史/地理课件地图不可跳过**——地图是核心依赖，不存在"无地图版"；**Hero 知识结构主图允许 L3 降级**（图床未命中 + 无 image_gen 能力 + 重试 ≥3 次均失败 → 删除 `<figure>` 区块即合规）
+3. **Generation Gate**：基线五项任一标注"跳过"必须附理由，且理由会被 Completeness Gate 二次审查；**Remotion 不可跳过**——"Node 环境不可用"必须先安装解决，不能当作跳过理由；**TTS 不可跳过**——即使用户拒绝也必须保留 `teachany-tts-narrator.js` 引用；**AI 学伴不可跳过**——是标准五件套之一；**知识图谱不可跳过**——知识层必定有数据，不存在"空图谱"场景；**历史/地理课件地图不可跳过**——地图是核心依赖，不存在"无地图版"课件；**Hero 知识结构主图允许 L3 降级**（图床未命中 + 无 image_gen 能力 + 重试 ≥3 次均失败 → 删除 `<figure>` 区块即合规）
 4. **Phase 3（制作）**：若环境支持 `task` 工具，必须并行分发 Agent C（生图含 Hero）+ Agent D（TTS）+ **Agent R（Remotion 渲染，默认必选）**；Hero 图必须在 Phase 3 末（HTML 完成前）完成生成
 5. **Completeness Gate**：五项全部校验（Remotion 必须检查 `assets/video/*.mp4` 真实存在、**含音频流**（`ffprobe` 可见 `codec_type=audio`）、且已嵌入 HTML `<video>` + 合理 `poster`；Hero 图必须运行 `python3 scripts/check-hero.py` 通过），缺一不通过
 
