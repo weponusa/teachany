@@ -621,6 +621,36 @@ def main():
         print(f'  ✅ 所有课件都被知识树引用')
 
     print(f'\n  三者完全一致: {len(file_set & reg_set & tree_courses)}')
+
+    # 6. Hero 图基线校验（v7.9：发布流程强制）
+    print('\n🖼️ 步骤6: Hero 图基线校验（hero 文件存在 + HTML 真实引用）...')
+    check_hero_path = Path('scripts') / 'check-hero.py'
+    if check_hero_path.exists():
+        # 只校验 official 课件（examples/），社区课件历史遗留太多，单独治理
+        examples_dir = Path('examples')
+        hero_fail = []
+        if examples_dir.exists():
+            import sys as _sys
+            for d in sorted(examples_dir.iterdir()):
+                if not d.is_dir() or not (d / 'index.html').exists():
+                    continue
+                result = subprocess.run(
+                    [_sys.executable, str(check_hero_path), str(d)],
+                    text=True, capture_output=True
+                )
+                if result.returncode != 0:
+                    hero_fail.append(d.name)
+        if hero_fail:
+            print(f'  ❌ {len(hero_fail)} 个官方课件 hero 校验失败:')
+            for name in hero_fail[:10]:
+                print(f'     - examples/{name}')
+            print(f'  → 运行 python3 scripts/check-hero.py examples/<name> 查看详情')
+            # 非阻断：只告警不退出，避免小问题阻塞整个索引重建
+        else:
+            print(f'  ✅ 所有官方课件 hero 校验通过')
+    else:
+        print('  ⚠️  scripts/check-hero.py 不存在，跳过 hero 校验')
+
     print('\n✅ 重建完成！')
 
 
