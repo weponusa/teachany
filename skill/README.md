@@ -64,7 +64,7 @@ teachany-skill/
 │   ├── find_nodes.py        # 按 stage+subject+keyword 查知识树节点
 │   ├── check_baseline.sh    # 课件基线自检（TTS/图/章节/文件）
 │   ├── check_images.sh      # 图片资源完整性
-│   ├── publish_course.sh    # 一键发布到 TeachAny 社区（v6.8）
+│   ├── publish_course.sh    # 一键发布到 TeachAny 社区（v7.9.4）
 │   ├── generate-tts.py      # TTS 语音合成
 │   ├── check_map_resources.sh / install_map_resources.sh
 │   ├── build_chgis_dynasty_maps_v2.sh / rebuild_china_maps.py

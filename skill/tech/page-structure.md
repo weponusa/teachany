@@ -304,19 +304,20 @@ Hero 区（Hero 知识结构图 + 课题名称 + 学科/年级/课型标签）
     <h2 class="section-title">🚀 拓展资源</h2>
   </section>
 
-  <!-- ═══ 知识图谱 ═══ 必选 -->
+  <!-- ═══ 知识图谱 ═══ 必选（v7.9.4 标准模块声明式调用） -->
   <section class="section" id="knowledge-graph">
     <h2 class="section-title">🗺️ 知识图谱</h2>
-    <p style="color:var(--text-secondary,#64748b);margin-bottom:16px;">三列视图：前序知识 → 核心子知识点 → 后续知识。实线节点可点击跳转，虚线表示暂无课件。</p>
-    <div id="kg-container" style="width:100%;min-height:500px;border:1px solid var(--border,#e2e8f0);border-radius:12px;overflow:hidden;position:relative;">
-      <svg id="kg-svg" width="100%" height="100%" style="min-height:500px;"></svg>
+    <p style="color:var(--text-secondary,#64748b);margin-bottom:16px;">本节点的前序、后续和同域知识点（点击节点跳转到对应课件）。</p>
+    <!-- ⛔ v7.9.4 唯一标准调用方式：data-teachany-kg 声明式标记 + teachany-knowledge-graph.js 自动渲染 -->
+    <div data-teachany-kg="【节点ID】">
+      <canvas class="tkg-fallback-canvas" width="720" height="120"></canvas>
     </div>
   </section>
 
   <!-- ═══ AI 多模态互动区 ═══ 文科默认插入，见 10.4 -->
 
   <script>
-    // ⭐ v5.34 强制：AI 学伴配置（必须在 ai-tutor.js 加载前定义）
+    // ⭐ v7.9.4 标准五件套配置：AI 学伴配置（必须在 ai-tutor.js 加载前定义）
     window.__TEACHANY_TUTOR_CONFIG__ = {
       courseTitle: '【课件标题】',
       subject: '【学科ID】',         // chn/math/eng/phy/chem/bio/hist/geo/it
@@ -374,237 +375,9 @@ Hero 区（Hero 知识结构图 + 课题名称 + 学科/年级/课型标签）
       });
     });
 
-    // ═══ 知识图谱渲染 ═══
-    // ⛔ v7.9.4 废弃：手写知识图谱渲染代码已废弃，必须用标准模块
-    // 新课件只需：<div data-teachany-kg="<node_id>"> + 引入 teachany-knowledge-graph.js
-    // 以下旧代码仅存档，禁止在新生成的课件中使用
-    (function renderKnowledgeGraph() {
-      if (typeof knowledgeGraphData === 'undefined') return;
-      const svg = document.getElementById('kg-svg');
-      if (!svg) return;
-      const d = knowledgeGraphData;
-      const NS = 'http://www.w3.org/2000/svg';
-      const el = (tag) => document.createElementNS(NS, tag);
-
-      // —— 颜色配置 ——
-      const C = {
-        pre: '#06b6d4', core: '#f59e0b', sub: '#3b82f6', next: '#10b981',
-        preBg: 'rgba(6,182,212,0.12)', coreBg: 'rgba(245,158,11,0.18)',
-        subBg: 'rgba(59,130,246,0.12)', nextBg: 'rgba(16,185,129,0.12)',
-        noCw: '#94a3b8', noCwBg: 'rgba(148,163,184,0.08)'
-      };
-
-      // —— 布局参数 ——
-      const preNodes = d.prerequisites || [];
-      const subNodes = d.coreSubTopics || [];
-      const nextNodes = d.nextTopics || [];
-      const maxRows = Math.max(preNodes.length, subNodes.length + 1, nextNodes.length);
-      const ROW_H = 70, PAD_TOP = 60, NODE_H = 44, NODE_RX = 10;
-      const W = 1100, H = Math.max(500, PAD_TOP + maxRows * ROW_H + 40);
-      // 三列 X 中心
-      const COL = { pre: 120, core: 550, next: 970 };
-      const NW = { pre: 190, core: 270, next: 220 }; // 节点宽度
-
-      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-      svg.innerHTML = ''; // 清空
-
-      // —— defs：箭头 + 发光 ——
-      const defs = el('defs');
-      ['pre','core','sub','next'].forEach(k => {
-        const color = C[k];
-        const marker = el('marker');
-        marker.setAttribute('id', `kg-arr-${k}`);
-        marker.setAttribute('viewBox', '0 0 10 6');
-        marker.setAttribute('refX', '10'); marker.setAttribute('refY', '3');
-        marker.setAttribute('markerWidth', '8'); marker.setAttribute('markerHeight', '6');
-        marker.setAttribute('orient', 'auto');
-        const p = el('path'); p.setAttribute('d', 'M0,0 L10,3 L0,6Z'); p.setAttribute('fill', color);
-        marker.appendChild(p); defs.appendChild(marker);
-      });
-      // 发光滤镜
-      const filter = el('filter'); filter.setAttribute('id', 'kg-glow');
-      const blur = el('feGaussianBlur'); blur.setAttribute('stdDeviation', '3'); blur.setAttribute('result', 'blur');
-      const merge = el('feMerge');
-      const mn1 = el('feMergeNode'); mn1.setAttribute('in', 'blur');
-      const mn2 = el('feMergeNode'); mn2.setAttribute('in', 'SourceGraphic');
-      merge.appendChild(mn1); merge.appendChild(mn2);
-      filter.appendChild(blur); filter.appendChild(merge);
-      defs.appendChild(filter);
-      // 虚线无课件箭头
-      const noCwMarker = el('marker');
-      noCwMarker.setAttribute('id', 'kg-arr-nocw');
-      noCwMarker.setAttribute('viewBox', '0 0 10 6');
-      noCwMarker.setAttribute('refX', '10'); noCwMarker.setAttribute('refY', '3');
-      noCwMarker.setAttribute('markerWidth', '8'); noCwMarker.setAttribute('markerHeight', '6');
-      noCwMarker.setAttribute('orient', 'auto');
-      const np = el('path'); np.setAttribute('d', 'M0,0 L10,3 L0,6Z'); np.setAttribute('fill', C.noCw);
-      noCwMarker.appendChild(np); defs.appendChild(noCwMarker);
-      svg.appendChild(defs);
-
-      // —— 列标题 ——
-      function addTitle(x, y, text, color) {
-        const t = el('text');
-        t.setAttribute('x', x); t.setAttribute('y', y);
-        t.setAttribute('fill', color); t.setAttribute('font-size', '14');
-        t.setAttribute('text-anchor', 'middle'); t.setAttribute('font-weight', '600');
-        t.textContent = text; svg.appendChild(t);
-      }
-      addTitle(COL.pre, 30, '前序知识', '#64748b');
-      addTitle(COL.core, 30, '核心知识', C.core);
-      addTitle(COL.next, 30, '后续知识', '#64748b');
-
-      // —— 绘制节点的通用函数 ——
-      function drawNode(cx, cy, w, h, label, opts) {
-        const { fill, stroke, strokeW, fontSize, fontWeight, fontColor, rx, glow, dash, clickUrl } = Object.assign(
-          { fill: '#fff', stroke: '#ccc', strokeW: 1.5, fontSize: 14, fontWeight: '600', fontColor: '#333', rx: NODE_RX, glow: false, dash: false, clickUrl: '' }, opts);
-        const g = el('g');
-        g.setAttribute('class', 'kg-node' + (clickUrl ? ' has-cw' : (dash ? ' no-cw' : '')));
-        const rect = el('rect');
-        rect.setAttribute('x', cx - w/2); rect.setAttribute('y', cy - h/2);
-        rect.setAttribute('width', w); rect.setAttribute('height', h);
-        rect.setAttribute('rx', rx); rect.setAttribute('fill', fill);
-        rect.setAttribute('stroke', stroke); rect.setAttribute('stroke-width', strokeW);
-        if (dash) rect.setAttribute('stroke-dasharray', '6 3');
-        if (glow) rect.setAttribute('filter', 'url(#kg-glow)');
-        g.appendChild(rect);
-        const txt = el('text');
-        txt.setAttribute('x', cx); txt.setAttribute('y', cy + 5);
-        txt.setAttribute('fill', fontColor); txt.setAttribute('font-size', fontSize);
-        txt.setAttribute('text-anchor', 'middle'); txt.setAttribute('font-weight', fontWeight);
-        txt.textContent = label.length > 14 ? label.slice(0, 14) + '…' : label;
-        g.appendChild(txt);
-        if (clickUrl) {
-          g.style.cursor = 'pointer';
-          g.addEventListener('click', () => window.open(clickUrl, '_blank'));
-        }
-        svg.appendChild(g);
-        return { cx, cy, left: cx - w/2, right: cx + w/2, top: cy - h/2, bottom: cy + h/2 };
-      }
-
-      // —— 绘制贝塞尔曲线 ——
-      function drawCurve(x1, y1, x2, y2, color, markerKey) {
-        const cpX = (x1 + x2) / 2;
-        const path = el('path');
-        path.setAttribute('d', `M${x1},${y1} C${cpX},${y1} ${cpX},${y2} ${x2},${y2}`);
-        path.setAttribute('fill', 'none'); path.setAttribute('stroke', color);
-        path.setAttribute('stroke-width', '1.5'); path.setAttribute('opacity', '0.55');
-        path.setAttribute('class', 'kg-edge');
-        path.setAttribute('marker-end', `url(#kg-arr-${markerKey})`);
-        svg.appendChild(path);
-      }
-
-      // —— 绘制前序节点 ——
-      const prePos = {};
-      preNodes.forEach((n, i) => {
-        const cy = PAD_TOP + i * ROW_H + NODE_H/2;
-        const hasCw = n.hasCourseware && n.url;
-        const isDash = !n.hasCourseware;
-        prePos[n.id] = drawNode(COL.pre, cy, NW.pre, NODE_H, n.label, {
-          fill: isDash ? C.noCwBg : C.preBg,
-          stroke: isDash ? C.noCw : C.pre,
-          fontColor: isDash ? C.noCw : C.pre,
-          dash: isDash,
-          clickUrl: hasCw ? n.url : ''
-        });
-      });
-
-      // —— 绘制核心主节点 ——
-      const coreMainY = PAD_TOP + NODE_H/2;
-      const coreMain = drawNode(COL.core, coreMainY, NW.core + 10, NODE_H + 8, d.currentLabel || '当前课件', {
-        fill: C.coreBg, stroke: C.core, strokeW: 2.5,
-        fontSize: 17, fontWeight: '700', fontColor: C.core,
-        rx: 12, glow: true
-      });
-
-      // —— 绘制核心子节点链 ——
-      const subPos = {};
-      subNodes.forEach((n, i) => {
-        const cy = PAD_TOP + (i + 1) * ROW_H + NODE_H/2;
-        subPos[n.id] = drawNode(COL.core, cy, NW.core, NODE_H - 2, n.label, {
-          fill: C.subBg, stroke: C.sub,
-          fontColor: C.sub
-        });
-      });
-
-      // —— 核心内部链式连线（主节点 → 第一个子节点，子节点间竖直连线） ——
-      if (subNodes.length > 0) {
-        const firstSub = subPos[subNodes[0].id];
-        const chainLine = el('path');
-        chainLine.setAttribute('d', `M${COL.core},${coreMain.bottom} L${COL.core},${firstSub.top}`);
-        chainLine.setAttribute('fill', 'none'); chainLine.setAttribute('stroke', C.core);
-        chainLine.setAttribute('stroke-width', '1.5'); chainLine.setAttribute('opacity', '0.6');
-        chainLine.setAttribute('class', 'kg-chain');
-        chainLine.setAttribute('marker-end', `url(#kg-arr-core)`);
-        svg.appendChild(chainLine);
-      }
-      for (let i = 0; i < subNodes.length - 1; i++) {
-        const from = subPos[subNodes[i].id], to = subPos[subNodes[i+1].id];
-        const line = el('path');
-        line.setAttribute('d', `M${COL.core},${from.bottom} L${COL.core},${to.top}`);
-        line.setAttribute('fill', 'none'); line.setAttribute('stroke', C.sub);
-        line.setAttribute('stroke-width', '1.2'); line.setAttribute('opacity', '0.5');
-        line.setAttribute('class', 'kg-chain');
-        line.setAttribute('marker-end', `url(#kg-arr-sub)`);
-        svg.appendChild(line);
-      }
-
-      // —— 绘制后续节点 ——
-      const nextPos = {};
-      nextNodes.forEach((n, i) => {
-        const cy = PAD_TOP + i * ROW_H + NODE_H/2;
-        const hasCw = n.hasCourseware && n.url;
-        const isDash = !n.hasCourseware;
-        nextPos[n.id] = drawNode(COL.next, cy, NW.next, NODE_H, n.label, {
-          fill: isDash ? C.noCwBg : C.nextBg,
-          stroke: isDash ? C.noCw : C.next,
-          fontColor: isDash ? C.noCw : C.next,
-          dash: isDash,
-          clickUrl: hasCw ? n.url : ''
-        });
-      });
-
-      // —— 前序 → 核心：根据 connectsTo 精准连线 ——
-      preNodes.forEach(n => {
-        const from = prePos[n.id];
-        if (!from) return;
-        const targets = n.connectsTo || [];
-        const isDash = !n.hasCourseware;
-        const edgeColor = isDash ? C.noCw : C.pre;
-        const markerKey = isDash ? 'nocw' : 'pre';
-        if (targets.length === 0) {
-          // 无指定目标时，连到核心主节点
-          drawCurve(from.right, from.cy, coreMain.left, coreMain.cy, edgeColor, markerKey);
-        } else {
-          targets.forEach(tid => {
-            const to = subPos[tid] || coreMain;
-            drawCurve(from.right, from.cy, to.left, to.cy, edgeColor, markerKey);
-          });
-        }
-      });
-
-      // —— 核心 → 后续：根据 connectsFrom 精准连线 ——
-      nextNodes.forEach(n => {
-        const to = nextPos[n.id];
-        if (!to) return;
-        const sources = n.connectsFrom || [];
-        const isDash = !n.hasCourseware;
-        const edgeColor = isDash ? C.noCw : C.next;
-        const markerKey = isDash ? 'nocw' : 'next';
-        if (sources.length === 0) {
-          // 无指定来源时，从核心主节点连出
-          drawCurve(coreMain.right, coreMain.cy, to.left, to.cy, edgeColor, markerKey);
-        } else {
-          sources.forEach(sid => {
-            const from = subPos[sid] || coreMain;
-            drawCurve(from.right, from.cy, to.left, to.cy, edgeColor, markerKey);
-          });
-        }
-      });
-    })();
-
-    // ═══ 音频播放器 ═══
-    // ⛔ v7.9.4 废弃：手写 initAudioPlayer() 已废弃，必须用标准模块 teachany-audio-player.js
-    // 新课件只需：<div data-teachany-audio> + JSON playlist + 引入 teachany-audio-player.js
+    // ═══ 知识图谱 / 音频播放器 / TTS / AI学伴 / Section提示 ═══
+    // ⛔ v7.9.4：以上 5 个模块均由标准五件套（../../scripts/teachany-*.js）自动渲染
+    // 课件中只需写声明式标记（data-teachany-kg / data-teachany-audio / data-tts / data-teachany-tutor-card / data-tsh），无需手写任何 JS
   </script>
   <!-- ⭐ v7.9.4 标准五件套脚本（公共资源，打包时复制到课件本地） -->
   <script src="../../scripts/ai-tutor.js" defer></script>
@@ -670,6 +443,9 @@ Hero 区（Hero 知识结构图 + 课题名称 + 学科/年级/课型标签）
 > ⛔ **v7.9.4 废弃：以下手写 `knowledgeGraphData` 方式已废弃，严禁使用。** 知识图谱必须且只能通过 `scripts/teachany-knowledge-graph.{css,js}` 标准模块渲染。AI 只需在 HTML 中写声明式标记 `<div data-teachany-kg="<node_id>">` 并引入模块 CSS/JS，无需手写任何数据对象。详见 SKILL_CN.md 基线⑦ 和 RULES.md #24。
 >
 > 以下旧代码仅作存档参考，**禁止在新生成的课件中使用**：
+
+<details>
+<summary>旧版 knowledgeGraphData + renderKnowledgeGraph()（已废弃）</summary>
 
 ~~AI 在生成课件时，必须在 `<script>` 标签**最前面**（骨架 JS 之前）注入以下数据对象~~（已废弃）：
 
@@ -749,6 +525,8 @@ Hero 区（Hero 知识结构图 + 课题名称 + 学科/年级/课型标签）
 - 如果无法判断哪些节点有课件 → 所有前序/后续节点均渲染为"无课件"虚线框
 - 如果课件模块较少（< 3 个教学模块） → 核心子知识点至少拆出 3 个子节点
 - 绝不因为数据不完整而省略知识图谱 section
+
+</details>
 
 #### 10.2.4 视频播放器规范（强制）
 
@@ -1014,7 +792,7 @@ window.__TEACHANY_TUTOR_CONFIG__ = {
 - ❌ 把 API Key 上传到任何后端或第三方分析服务
 - ❌ 只注入 `<script>` 而不提供 FAB 或只提供 FAB 而不实现问答逻辑
 - ❌ 答复长度与学段严重不符（小学课件答一大段学术文 / 高中课件只说"对的！"）
+- ❌ 不提供"清空对话"和"修改 Key"的入口
 
 </details>
-- ❌ 不提供"清空对话"和"修改 Key"的入口
 

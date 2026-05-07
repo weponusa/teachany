@@ -905,9 +905,9 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
      → ✅/❌ ___
 □ 35. 认知负荷总控（⛔ v7.1 新增，Sweller）：是否存在单卡超过 100 字的"信息轰炸"？是否存在一个模块内引入 2 个以上全新概念的情况？外在认知负荷是否已最小化（无装饰性动画/无无关背景音/无冗余图标）？
      → ✅/❌ ___
-□ 36. 地图规范（⛔ v7.3 更新，历史/地理课必检）：地图是否使用 `assets/maps/` 本地地图资源（地形底图 GeoJSON + 行政边界 + 本地地形瓦片）？是否严禁使用在线 XYZ 瓦片切片（CartoDB/Esri/OSM）？GeoJSON 历史边界是否正确加载？是否参照 `templates/map-section-template.html` 和 `historical-maps.md` v7.2 规范？**⛔ v7.3 新增三子项**：
-     - 36a. 底图对齐（⛔ v7.4 更新）：使用 `L.imageOverlay` 叠加等距圆柱投影（Equirectangular/Plate Carrée）底图（如 hillshade.jpg）时，**必须**同时满足：(1) bounds 为 `[[-90,-180],[90,180]]`；(2) Leaflet map 初始化**必须**设置 `crs: L.CRS.EPSG4326`（WGS84 Plate Carrée），**禁止**使用默认 Mercator（EPSG:3857）。原因：hillshade.jpg 是等距圆柱投影，Leaflet 默认 Mercator 会在高纬度拉伸图像，导致 GeoJSON 边界与底图严重错位。仅设 bounds 不设 CRS 无法解决对齐问题
-     - 36b. 初始聚焦：地图初始视图**必须**用 `fitBounds` 或 `setView` 聚焦教学核心区域（如欧洲 `[35,-10],[65,45]`），禁止停留在 `[0,0]` 世界中心
+□ 36. 地图规范（⛔ v7.9.4 重写，历史/地理课必检）：地图是否使用标准模块 `scripts/teachany-historical-map.{css,js}`（声明式 `<div data-teachany-map>` 标记）？⛔ 严禁手写 `L.tileLayer` / `new L.Map` / ECharts geo / Canvas 自造地图。⛔ 严禁在线 XYZ 瓦片（CartoDB/Esri/OSM）。⛔ 严禁省略 `assets/maps/hillshade.jpg`（地图会变成"暗蓝空地"）。⛔ 严禁通过 `fetch('../../skill/assets/...')` 跨目录引用 GeoJSON（GitHub Pages 部署后 404），必须复制到课件本地 `assets/maps/`。详见 `historical-maps.md` 和 `historical-maps-quickref.md`（均为 v7.9.4 唯一权威，已废弃 v7.0 在线瓦片和 v7.2 本地瓦片方案）。
+     - 36a. 标准模块自动处理底图投影：`L.imageOverlay(hillshade.jpg, [[-90,-180],[90,180]], {opacity:0.55})` 叠加在 Web Mercator 地图上，由模块自动完成，无需 AI 干预 CRS。
+     - 36b. 初始聚焦：地图配置必须含 `fitBounds` 或 `center+zoom`，禁止停留在 `[0,0]` 世界中心。
      - 36c. 互动完备：拖拽分类等互动组件必须同时支持**点击选择+点击放置**和**HTML5 拖拽（dragstart/dragover/drop）**，已放置元素点击可返回
      → ✅/❌/N/A（非历史/地理课件） ___
 □ 37. 知识图谱链接（⛔ v7.3 新增）：知识图谱 section 中所有前置/后续节点是否**使用 node_id 链接到实际课件**？禁止使用 `href="#"` 占位。有课件的节点链接到 `../../<course-dir>/index.html`，暂无课件的节点显示虚线框+`cursor:default`+`title="课件制作中"`。`<meta name="course-prereqs">` 和 `<meta name="course-next">` 的值必须是 `node-index.json` 中的有效 node_id。
