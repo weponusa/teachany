@@ -62,7 +62,7 @@
 > ⚠️ **L3 与 L1 同为必选层级**。每个课件生成后，AI 必须自动安装 edge-tts 并生成语音文件，无需等待用户确认。
 > **唯一跳过条件**：用户在下达任务时明确说了"不要语音""不要配音""不要TTS""不需要音频"等拒绝性表述。
 >
-> ⛔ **严禁使用 Web Speech API（`window.speechSynthesis`）作为 TTS 方案**。浏览器内置语音合成质量极低、各设备表现不一致、无法离线使用。必须使用 edge-tts 生成独立的 mp3 文件存放在 `tts/` 目录下。任何在 HTML 中嵌入 `speechSynthesis` 的课件，Completeness Gate 直接判定 L3 不通过。
+> ⛔ **严禁在课件中自行手写 Web Speech API（`window.speechSynthesis`）代码块**。TTS 朗读必须通过标准模块 `teachany-tts-narrator.js` 实现（该模块内部使用 Web Speech API 作为零 mp3 回退是允许的，但 AI 不得在课件 HTML 中手写 `speechSynthesis` 代码）。L3 TTS 必须使用 edge-tts 生成独立的 mp3 文件存放在 `tts/` 目录下。任何在 HTML 中手写 `speechSynthesis` 代码块的课件，Completeness Gate 直接判定 L3 不通过。
 
 **自动执行流程**（L1 课件完成后立即执行）：
 1. 检测 Python → 缺失则自动安装

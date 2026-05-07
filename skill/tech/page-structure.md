@@ -46,8 +46,13 @@ Hero 区（Hero 知识结构图 + 课题名称 + 学科/年级/课型标签）
   <meta name="teachany-difficulty" content="【1-5】">
   <meta name="teachany-version" content="2.0">
   <meta name="teachany-author" content="teachany">
-  <!-- ⭐ v5.34 强制：AI 学伴样式（公共资源，打包时随 .teachany 分发） -->
-  <link rel="stylesheet" href="./ai-tutor.css">
+  <!-- ⭐ v7.9.4 标准五件套样式（公共资源，打包时复制到课件本地） -->
+  <link rel="stylesheet" href="../../scripts/ai-tutor.css">
+  <link rel="stylesheet" href="../../scripts/teachany-tutor-card.css">
+  <link rel="stylesheet" href="../../scripts/teachany-tts-narrator.css">
+  <link rel="stylesheet" href="../../scripts/teachany-audio-player.css">
+  <link rel="stylesheet" href="../../scripts/teachany-knowledge-graph.css">
+  <link rel="stylesheet" href="../../scripts/teachany-section-hints.css">
   <style>
     /* ═══ 1. 学段模板 CSS 变量（从 10.3 选取对应学段） ═══ */
     :root { /* ... 见 10.3 ... */ }
@@ -153,57 +158,13 @@ Hero 区（Hero 知识结构图 + 课题名称 + 学科/年级/课型标签）
       padding: 8px 0; margin: 0;
     }
 
-    /* ═══ 12. 音频播放器（底部悬浮控制条 + 滚动自动播放） ═══ */
-    .audio-bar {
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 300;
-      background: var(--card, #fff); border-top: 1px solid #e2e8f0;
-      box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
-      display: none; align-items: center; gap: 10px;
-      padding: 10px 18px; height: 56px;
-    }
-    .audio-bar.active { display: flex; }
-    .audio-bar .audio-track-title {
-      font-size: 13px; font-weight: 600; min-width: 80px; max-width: 200px;
-      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    }
-    .audio-bar .audio-ctrl-btn {
-      background: none; border: none; font-size: 18px; cursor: pointer;
-      color: var(--text, #334155); padding: 4px; flex-shrink: 0;
-    }
-    .audio-bar .progress-track {
-      flex: 1; height: 4px; background: #e2e8f0; border-radius: 2px;
-      position: relative; cursor: pointer; min-width: 60px;
-    }
-    .audio-bar .progress-fill {
-      height: 100%; background: var(--primary); border-radius: 2px;
-      transition: width 0.1s;
-    }
-    .audio-bar .time-display { font-size: 12px; min-width: 40px; text-align: center; }
-    .audio-bar .speed-btn {
-      background: var(--primary); color: #fff; border: none; border-radius: 12px;
-      font-size: 12px; padding: 2px 8px; cursor: pointer; font-weight: 600;
-    }
-    .audio-bar .audio-subtitle {
-      font-size: 12px; color: var(--text-secondary, #64748b);
-      max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    }
-    @media (max-width: 600px) {
-      .audio-bar { flex-wrap: wrap; height: auto; padding: 8px 12px; gap: 6px; }
-      .audio-bar .audio-subtitle { max-width: 100%; order: 10; width: 100%; }
-    }
-    /* 底部控制条占位：防止内容被遮挡 */
-    body.audio-playing { padding-bottom: 64px; }
+    /* ═══ 12. 音频播放器 ═══ */
+    /* ⛔ v7.9.4 废弃：手写 .audio-bar CSS 已废弃，必须用标准模块 teachany-audio-player.css */
+    /* 新课件只需引入标准模块 CSS/JS，无需手写任何样式 */
 
-    /* ═══ 13. 知识图谱（三列布局） ═══ */
-    #kg-svg .kg-node { cursor: default; transition: filter .2s; }
-    #kg-svg .kg-node.has-cw { cursor: pointer; }
-    #kg-svg .kg-node.has-cw:hover rect { filter: brightness(1.15); }
-    #kg-svg .kg-node.no-cw rect { stroke-dasharray: 6 3; }
-    #kg-svg .kg-edge { fill: none; stroke-width: 1.5; opacity: 0.55; }
-    #kg-svg .kg-chain { fill: none; stroke-width: 1.2; opacity: 0.5; }
-    @media (max-width: 600px) {
-      .audio-bar { flex-wrap: wrap; height: auto; }
-    }
+    /* ═══ 13. 知识图谱 ═══ */
+    /* ⛔ v7.9.4 废弃：手写知识图谱 CSS 已废弃，必须用标准模块 teachany-knowledge-graph.css */
+    /* 新课件只需引入标准模块 CSS/JS，无需手写任何样式 */
   </style>
 </head>
 <body>
@@ -641,84 +602,17 @@ Hero 区（Hero 知识结构图 + 课题名称 + 学科/年级/课型标签）
       });
     })();
 
-    // ═══ 音频播放器引擎（滚动自动播放 + 底部控制条） ═══
-    // audioPlaylist 由 AI 在 L3 完成后注入，格式：
-    // [{id, sectionId, title, src, subtitle}]
-    (function initAudioPlayer() {
-      if (typeof audioPlaylist === 'undefined' || !audioPlaylist.length) return;
-      // 创建底部悬浮控制条
-      const bar = document.createElement('div');
-      bar.className = 'audio-bar';
-      bar.innerHTML = `
-        <span class="audio-track-title"></span>
-        <button class="audio-ctrl-btn play-btn">▶</button>
-        <div class="progress-track"><div class="progress-fill" style="width:0%"></div></div>
-        <span class="time-display">0:00</span>
-        <button class="speed-btn">1x</button>
-        <span class="audio-subtitle"></span>
-      `;
-      document.body.appendChild(bar);
-      const audio = new Audio();
-      let currentIdx = -1;
-      const speeds = [0.5, 1, 1.25, 1.5, 2];
-      let speedIdx = 1; // 默认 1x
-      function playTrack(i, autoplay) {
-        if (i < 0 || i >= audioPlaylist.length) return;
-        currentIdx = i;
-        audio.src = audioPlaylist[i].src;
-        if (autoplay !== false) audio.play();
-        bar.classList.add('active');
-        document.body.classList.add('audio-playing');
-        bar.querySelector('.audio-track-title').textContent = audioPlaylist[i].title || '';
-        bar.querySelector('.play-btn').textContent = autoplay !== false ? '⏸' : '▶';
-        bar.querySelector('.audio-subtitle').textContent = audioPlaylist[i].subtitle || '';
-      }
-      // IntersectionObserver：滚动到 section 时自动播放对应音频
-      const observer = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-          if (!entry.isIntersecting) return;
-          const secId = entry.target.id;
-          const idx = audioPlaylist.findIndex(item => item.sectionId === secId);
-          if (idx !== -1 && idx !== currentIdx) playTrack(idx);
-        });
-      }, { threshold: 0.4 });
-      audioPlaylist.forEach(item => {
-        const sec = document.getElementById(item.sectionId);
-        if (sec) observer.observe(sec);
-      });
-      // 播放/暂停
-      bar.querySelector('.play-btn').addEventListener('click', () => {
-        if (audio.paused) { if (currentIdx < 0) playTrack(0); else audio.play(); bar.querySelector('.play-btn').textContent = '⏸'; }
-        else { audio.pause(); bar.querySelector('.play-btn').textContent = '▶'; }
-      });
-      // 调速
-      bar.querySelector('.speed-btn').addEventListener('click', () => {
-        speedIdx = (speedIdx + 1) % speeds.length;
-        audio.playbackRate = speeds[speedIdx];
-        bar.querySelector('.speed-btn').textContent = speeds[speedIdx] + 'x';
-      });
-      // 进度条
-      audio.addEventListener('timeupdate', () => {
-        const pct = audio.duration ? (audio.currentTime / audio.duration * 100) : 0;
-        bar.querySelector('.progress-fill').style.width = pct + '%';
-        const m = Math.floor(audio.currentTime / 60), s = Math.floor(audio.currentTime % 60);
-        bar.querySelector('.time-display').textContent = m + ':' + String(s).padStart(2, '0');
-      });
-      // 自动连播
-      audio.addEventListener('ended', () => {
-        if (currentIdx < audioPlaylist.length - 1) playTrack(currentIdx + 1);
-        else { bar.querySelector('.play-btn').textContent = '▶'; }
-      });
-      // 点击进度条跳转
-      bar.querySelector('.progress-track').addEventListener('click', e => {
-        if (!audio.duration) return;
-        const rect = e.currentTarget.getBoundingClientRect();
-        audio.currentTime = ((e.clientX - rect.left) / rect.width) * audio.duration;
-      });
-    })();
+    // ═══ 音频播放器 ═══
+    // ⛔ v7.9.4 废弃：手写 initAudioPlayer() 已废弃，必须用标准模块 teachany-audio-player.js
+    // 新课件只需：<div data-teachany-audio> + JSON playlist + 引入 teachany-audio-player.js
   </script>
-  <!-- ⭐ v5.34 强制：AI 学伴脚本（必须放在 </body> 前，defer 保证 DOM 已就绪） -->
-  <script src="./ai-tutor.js" defer></script>
+  <!-- ⭐ v7.9.4 标准五件套脚本（公共资源，打包时复制到课件本地） -->
+  <script src="../../scripts/ai-tutor.js" defer></script>
+  <script src="../../scripts/teachany-tutor-card.js" defer></script>
+  <script src="../../scripts/teachany-tts-narrator.js" defer></script>
+  <script src="../../scripts/teachany-audio-player.js" defer></script>
+  <script src="../../scripts/teachany-knowledge-graph.js" defer></script>
+  <script src="../../scripts/teachany-section-hints.js" defer></script>
 </body>
 </html>
 ```
@@ -733,9 +627,9 @@ Hero 区（Hero 知识结构图 + 课题名称 + 学科/年级/课型标签）
 | **CSS 变量替换** | 将 `:root` 中的变量替换为 10.3 对应学段模板的配色 |
 | **前后翻页** | 每两个相邻模块之间放一个 `.page-nav` 翻页条 |
 | **进度条** | 始终保留顶部进度条，让学生知道"学到了哪里" |
-| **音频播放器** | L3 语音生成后，注入 `audioPlaylist` 数组（含 `sectionId` 字段关联对应 section）并确保骨架中的音频播放器引擎正常工作（IntersectionObserver 滚动自动播放 + 底部悬浮控制条：播放/暂停+进度条+调速+字幕）。**禁止**只添加隐藏 `<audio>` 标签而不提供播放 UI |
+| **音频播放器** | ⛔ v7.9.4 统一技术路线：音频播放器必须且只能用 `teachany-audio-player.js` 标准模块。在课件中写 `<div data-teachany-audio><script type="application/json" data-teachany-audio-playlist>[{...}]</script></div>`。⛔ 严禁手写 `.audio-bar` / `initAudioPlayer()` / `audioPlaylist` 内联代码 |
 | **视频播放器** | 视频**必须嵌入到对应知识模块的 section 内部**（而非集中放置），使用 `<video controls preload="metadata" playsinline>` + `<source>` 标签嵌入，外包 `.video-player` 容器 + `.video-caption` 说明。**优先使用 CSS/JS/Canvas/SVG 交互动画**演示过程性变化，仅当交互无法覆盖时才用 `<video>` 嵌入静态视频。**禁止**仅用 JS 动态创建视频元素 |
-| **知识图谱** | 必须注入 `knowledgeGraphData` 对象（从 `_graph.json` 的 `prerequisites` + `leads_to` 提取节点和边），当前节点高亮、有课件节点可点击跳转、无课件节点显示虚线框 |
+| **知识图谱** | ⛔ v7.9.4 统一技术路线：知识图谱必须且只能用 `teachany-knowledge-graph.js` 标准模块。在 `<section id="knowledge-graph">` 内写 `<div data-teachany-kg="<node_id>">`。⛔ 严禁手写 `knowledgeGraphData` / SVG / d3 / ECharts |
 | **AI 生成的插图** | 使用 `image_gen` 生成后，以 `<img src="./assets/illustrations/xxx.png">` 嵌入；Hero 图以 `<img src="./assets/hero/{node_id}-hero.png">` 嵌入（详见 10.4.1） |
 
 #### 10.2.2 统一导航规范
@@ -894,11 +788,38 @@ Hero 区（Hero 知识结构图 + 课题名称 + 学科/年级/课型标签）
 
 **Remotion 生成的视频**：L2 渲染完成后，将 `out/*.mp4` 复制到课件的 `assets/video/` 目录，然后在 HTML 中用上述模板嵌入。
 
-#### 10.2.5 音频播放器规范（L3 强制）
+#### 10.2.5 音频播放器规范（L3 强制，v7.9.4 统一为标准模块）
 
-> ⚠️ **铁律**：L3 语音讲解生成后，课件**必须**包含完整的音频播放器 UI（底部悬浮控制条 + 滚动自动播放）。**禁止**只添加隐藏的 `<audio>` 标签而不提供任何播放控件。
+> ⛔ **v7.9.4 统一技术路线**：音频播放器必须且只能通过 `scripts/teachany-audio-player.{css,js}` 标准模块渲染。⛔ **严禁在课件 HTML 中手写内联 `.audio-bar` / `initAudioPlayer()` / `audioPlaylist` 代码**——这直接违反 RULES.md #61。
+>
+> 以下旧代码仅作存档参考，**禁止在新生成的课件中使用**。
 
-**标准音频播放器架构**（已内置于 HTML 骨架模板的 JS 中）：
+**唯一标准调用方式（禁止偏离）**：
+
+1. `<head>` 引入：`<link rel="stylesheet" href="../../scripts/teachany-audio-player.css">`
+2. `<section>` 内（或 body 末尾）写声明式标记：
+```html
+<div data-teachany-audio>
+  <script type="application/json" data-teachany-audio-playlist>
+  [
+    {"id":"seg01","sectionId":"module-1","title":"模块1：一次函数的定义","src":"./tts/seg01_zh.mp3"},
+    {"id":"seg02","sectionId":"module-2","title":"模块2：函数图像的画法","src":"./tts/seg02_zh.mp3"}
+  ]
+  </script>
+</div>
+```
+3. `</body>` 前：`<script src="../../scripts/teachany-audio-player.js" defer>`
+
+模块自动渲染：曲目卡片列表 + 底部悬浮播放条 + IntersectionObserver 滚动同步 + 自动连播。
+
+**TTS 悬浮朗读播放器**（零 mp3 回退模式）：
+
+课件还须引入 `scripts/teachany-tts-narrator.{css,js}`，对标注了 `<p data-tts>` 的段落自动生成浏览器原生朗读控制。⛔ 严禁在课件中手写 `speechSynthesis` 代码块。
+
+~~以下旧代码仅存档，禁止在新生成的课件中使用~~：
+
+<details>
+<summary>旧版手写 audioPlaylist + initAudioPlayer()（已废弃）</summary>
 
 ```
   用户滚动到 Section 3 → IntersectionObserver 触发 → 自动播放 seg03 音频
@@ -949,9 +870,48 @@ AI 在 L3 完成后，必须在 `<script>` 标签最前面注入 `audioPlaylist`
 | 字幕显示 | ✅ | 当前段落的文字内容（在控制条内） |
 | 自动连播 | ✅ | 一段播完自动播放下一段 |
 
-#### 10.2.6 AI 学伴悬浮球规范（v5.34 强制）
+</details>
 
-> ⚠️ **铁律**：自 v5.34 起，**所有 HTML 课件必须内置"AI 学伴"悬浮球**（屏幕右下角）。学生首次点击可输入 OpenAI 兼容的 API Key 激活，随后可针对当前正在学习的内容提问，AI 以匹配学段的难度简短答复（小学 2-3 句、初中 3-5 句、高中 5-8 句）。违反此规则 = Completeness Gate #28 不通过。
+#### 10.2.6 AI 学伴规范（v7.9.4 统一为标准模块）
+
+> ⛔ **v7.9.4 统一技术路线**：AI 学伴必须同时引入 `scripts/ai-tutor.{css,js}`（FAB 悬浮球 + 对话面板）和 `scripts/teachany-tutor-card.{css,js}`（可见入口卡片）。⛔ **严禁只引入 ai-tutor.js 不放 tutor-card 卡片**——学生在长页面下看不到右下角 FAB。
+>
+> 以下旧代码仅作存档参考，**禁止在新生成的课件中使用**。
+
+**唯一标准调用方式（禁止偏离）**：
+
+1. `<head>` 引入：
+   - `<link rel="stylesheet" href="../../scripts/ai-tutor.css">`
+   - `<link rel="stylesheet" href="../../scripts/teachany-tutor-card.css">`
+2. 课件正文（推荐放在"小结"或"前测"区附近）写一行：
+   ```html
+   <div data-teachany-tutor-card></div>
+   ```
+3. `</body>` 前：
+   - `<script src="../../scripts/ai-tutor.js" defer></script>`
+   - `<script src="../../scripts/teachany-tutor-card.js" defer></script>`
+4. 配置注入（`<script>` 最前面）：
+   ```javascript
+   window.__TEACHANY_TUTOR_CONFIG__ = {
+     courseTitle: '【课件标题】',
+     subject: 'math',
+     grade: 9,
+     learningObjectives: ['目标1', '目标2'],
+     getContext: () => {
+       const current = document.querySelector('section.current-section') ||
+                       document.querySelector('section:target') ||
+                       document.querySelector('section');
+       return current?.innerText?.slice(0, 3000) || '';
+     }
+   };
+   ```
+
+模块自动渲染：右下角 FAB 悬浮球 + 可见入口卡片（标题、简介、4个建议提问按钮）。点击任一处唤起对话面板。
+
+~~以下旧代码仅存档，禁止在新生成的课件中使用~~：
+
+<details>
+<summary>旧版 AI 学伴详细实现规范（已废弃）</summary>
 
 **架构与分层**：
 
@@ -1054,5 +1014,7 @@ window.__TEACHANY_TUTOR_CONFIG__ = {
 - ❌ 把 API Key 上传到任何后端或第三方分析服务
 - ❌ 只注入 `<script>` 而不提供 FAB 或只提供 FAB 而不实现问答逻辑
 - ❌ 答复长度与学段严重不符（小学课件答一大段学术文 / 高中课件只说"对的！"）
+
+</details>
 - ❌ 不提供"清空对话"和"修改 Key"的入口
 

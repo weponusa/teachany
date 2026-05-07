@@ -205,7 +205,7 @@ Step 3️⃣ 课件落地 + 自动发布（v6.8 全自动端到端，v7.9.4 强�
      > - 递归扫描 `data/trees/**/*.json` 获取所有知识节点中文名
      > - 读取 `registry.json` 获取 `node_id → 课件路径` 映射
      > - 为 DIV 布局课件注入 `COURSEWARE_MAP` + click 事件处理
-     > - 为 SVG 布局课件更新 `knowledgeGraphData` 中的 `hasCourseware` / `url` 字段
+     > - 为使用标准模块 `teachany-knowledge-graph.js` 的课件注入 `data-teachany-kg` 链接（由 `build-teachany-kg-manifest.py` 自动生成）
      > - 同时扫描 `examples/` 和 `community/` 两个通道的所有课件
   5. 提交并双推：
      ```bash

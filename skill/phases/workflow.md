@@ -656,7 +656,7 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
   └─────────────────────────────────────────────────────────────────┘
 
 【视频嵌入】✅有视频（___个，使用 <video> 标签） / ❌无视频内容
-【音频播放器】✅默认启用（audioPlaylist 含___段，每段含 sectionId 关联对应 section） / ❌用户拒绝 L3
+【音频播放器】✅默认启用（标准模块 `data-teachany-audio-playlist` 含___段） / ❌用户拒绝 L3
 【Agent 协作模式】✅多 Agent 并行（A+C+D，用户要求双语时+B） / 🔶部分并行（___） / ❌单 Agent 串行（环境不支持 task 工具）
 【双语课件】❌默认仅中文（用户明确要求双语时 → ✅生成英文版）
 【课件打包】✅默认执行
@@ -789,10 +789,10 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
 
 > 自 v5.34 起，所有 HTML 课件必须默认内置 **AI 学伴悬浮球**（右下角智能助手），允许学生基于当前课件内容提问。
 
-1. **引入公共资源**（见 Section 10.2.6）：
-   - `<link rel="stylesheet" href="./ai-tutor.css">`（课件本地副本，或 `../scripts/ai-tutor.css` 的项目共享路径）
-   - `<script src="./ai-tutor.js" defer></script>`
-   - 两个文件由 `scripts/ai-tutor.css` + `scripts/ai-tutor.js` 分发，课件打包时复制进包内
+1. **引入公共资源**（见 Section 10.2.6，v7.9.4 统一为标准模块）：
+   - `<link rel="stylesheet" href="../../scripts/ai-tutor.css">`
+   - `<link rel="stylesheet" href="../../scripts/teachany-tutor-card.css">`
+   - 两个文件由 `scripts/ai-tutor.css` + `scripts/teachany-tutor-card.css` 分发，课件打包时复制进包内
 2. **注入配置**：在课件 `<script>` 最前面增加 `window.__TEACHANY_TUTOR_CONFIG__`：
    ```js
    window.__TEACHANY_TUTOR_CONFIG__ = {
@@ -864,11 +864,11 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
      → ✅/❌/N/A ___
 □ 20. Agent 协作记录：是否标注了本次使用的协作模式（多 Agent 并行 / 单 Agent 串行）？
      → ✅/❌ ___
-□ 21. 知识图谱可视化：课件是否包含 `#knowledge-graph` section？`knowledgeGraphData` 是否已注入？当前节点是否高亮？有课件节点是否可点击跳转？无课件节点是否显示虚线框？
+□ 21. 知识图谱可视化：课件是否包含 `#knowledge-graph` section？是否使用标准模块 `data-teachany-kg` 声明式调用（⛔ 严禁手写 `knowledgeGraphData`）？当前节点是否高亮？
      → ✅/❌ ___
 □ 22. 视频嵌入规范：所有视频是否使用 `<video controls preload="metadata" playsinline>` + `<source>` 标签嵌入？是否有 `.video-player` 外包容器和 `.video-caption` 说明？是否存在仅用 JS 动态创建的视频？
      → ✅/❌/N/A（无视频内容） ___
-□ 23. 音频播放器 UI：L3 语音是否通过 `audioPlaylist`（含 `sectionId`）注入？是否有底部悬浮控制条（播放/暂停+进度条+调速+字幕）？IntersectionObserver 滚动自动播放是否正常？是否存在只有隐藏 `<audio>` 标签而无播放 UI 的情况？
+□ 23. 音频播放器 UI：L3 语音是否通过标准模块 `teachany-audio-player.js`（`data-teachany-audio-playlist` JSON 注入）渲染？⛔ 严禁手写 `audioPlaylist` / `initAudioPlayer()` / `.audio-bar` 内联代码。TTS 朗读是否通过标准模块 `teachany-tts-narrator.js`（`data-tts` 属性）渲染？⛔ 严禁手写 `speechSynthesis` 代码块。
      → ✅/❌/N/A（用户拒绝 L3） ___
 □ 24. Remotion 中文字体（仅 L2 执行时检查）：SubtitleTrack 的 fontFamily 是否包含 `'Noto Sans SC'` 降级？L2 环境是否执行了中文字体安装？
      → ✅/❌/N/A（未执行 L2） ___
@@ -878,7 +878,7 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
      → ✅/❌/N/A（无探究要求） ___
 □ 27. 探究认知冲突：探究活动是否设计了"认知冲突点"——学生的初始猜想与实际结果不一致的关键时刻？理科探究是否标注了控制变量三要素？
      → ✅/❌/N/A（无探究要求） ___
-□ 28. AI 学伴悬浮球（v5.34 强制）：课件是否引入 `ai-tutor.css` + `ai-tutor.js`？是否在 `<script>` 最前面注入了 `window.__TEACHANY_TUTOR_CONFIG__`（含 `courseTitle/subject/grade/learningObjectives/getContext`）？FAB 是否出现在右下角？首次点击是否弹出 API Key 配置面板？API Key 是否仅保存在 localStorage（严禁硬编码到 HTML）？
+□ 28. AI 学伴（v7.9.4 标准模块）：课件是否引入 `ai-tutor.{css,js}` + `teachany-tutor-card.{css,js}`？是否在课件正文写了 `<div data-teachany-tutor-card></div>`？是否在 `<script>` 最前面注入了 `window.__TEACHANY_TUTOR_CONFIG__`（含 `courseTitle/subject/grade/learningObjectives/getContext`）？API Key 是否仅保存在 localStorage（严禁硬编码到 HTML）？
      → ✅/❌ ___
 □ 29. PPTX 导出（仅 `output_formats` 含 "pptx" 时检查）：是否执行了 `python3 scripts/export-pptx.py`？`<课件目录>/<课件名>.pptx` 是否已生成？幻灯片是否按 section 切分、保留标题层级与关键插图、互动组件降级为"扫码/URL 回链"占位页？
      → ✅/❌/N/A（output_formats 仅含 html） ___
