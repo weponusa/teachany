@@ -429,9 +429,13 @@ def main():
         else:
             print(f'  ✓ {tree_name}.json: 无需修改')
 
-    # 3.5 (v7.9.6 新增) 填充"其他知识"虚拟树
-    #     收纳：(a) free_mode 课件；(b) node_id 不在任何官方课标树中的课件
-    print('\n✨ 步骤3.5: 填充"其他知识"虚拟树（收纳 free_mode / 未挂载课件）...')
+    # 3.5 (v7.9.6 新增，v7.9.7 扩展 ext-* 学习路径推荐课件)
+    #     填充"其他知识"虚拟树，收纳 4 类课件：
+    #       (a) manifest.free_mode = true
+    #       (b) manifest.node_id 不在任何官方课标树中
+    #       (c) manifest 缺 node_id
+    #       (d) 无 manifest 但属于 ext-* 学习路径推荐课件（从 HTML meta 提取元信息）
+    print('\n✨ 步骤3.5: 填充"其他知识"虚拟树（收纳 free_mode / 未挂载 / ext-* 学习路径推荐课件）...')
     virtual_tree_path = Path('data/trees/other/user-generated.json')
     if virtual_tree_path.exists():
         # 收集所有官方树中存在的 node_id
@@ -457,9 +461,10 @@ def main():
                         _collect_ids(item)
             _collect_ids(td)
 
-        # 扫描所有课件，找出应该放进"其他知识"的
+        # 扫描所有有 manifest 的课件，找出应该放进"其他知识"的
         virtual_nodes = []
-        orphan_reasons = {'free_mode': 0, 'node_not_found': 0, 'missing_node_id': 0}
+        orphan_reasons = {'free_mode': 0, 'node_not_found': 0, 'missing_node_id': 0,
+                          'ext_passed': 0, 'ext_rejected': 0}
         for cid, (manifest, src) in sorted(courses.items()):
             nid = manifest.get('node_id', '').strip()
             is_free = bool(manifest.get('free_mode'))
@@ -497,6 +502,94 @@ def main():
                 'excerpt_ids': []
             })
 
+        # v7.9.7 新增：扫描 ext-* 学习路径推荐课件（无 manifest，元信息在 HTML meta 里）
+        # 质检门槛：
+        #   (a) course-id 以 ext- 开头
+        #   (b) HTML ≥ 10 KB（避免空壳占位）
+        #   (c) HTML 含 <meta name="course-subject"> 和 <meta name="course-title">
+        #   (d) HTML 含 ≥ 5 个 <section>（保证有教学结构）
+        META_RE = re.compile(r'<meta\s+name="(course-[^"]+)"\s+content="([^"]*)"', re.I)
+        SECTION_RE = re.compile(r'<section[^>]*>', re.I)
+        EXT_MIN_SIZE = 10_240      # 10 KB
+        EXT_MIN_SECTIONS = 5
+
+        ext_dirs_scanned = 0
+        for base_dir in ('examples', 'community'):
+            base = Path(base_dir)
+            if not base.exists():
+                continue
+            for d in sorted(base.iterdir()):
+                if not d.is_dir() or not d.name.startswith('ext-'):
+                    continue
+                # 已经被 courses 收录（有 manifest）的跳过（已在上一段处理）
+                if d.name in courses:
+                    continue
+                index_path = d / 'index.html'
+                if not index_path.exists():
+                    continue
+                ext_dirs_scanned += 1
+                try:
+                    html = index_path.read_text(encoding='utf-8', errors='replace')
+                except OSError:
+                    continue
+
+                # 质检项 (b)(c)(d)
+                size = len(html.encode('utf-8'))
+                metas = dict(META_RE.findall(html))
+                section_count = len(SECTION_RE.findall(html))
+
+                reasons_reject = []
+                if size < EXT_MIN_SIZE:
+                    reasons_reject.append(f'size<{EXT_MIN_SIZE}({size})')
+                if 'course-subject' not in metas or not metas.get('course-subject'):
+                    reasons_reject.append('no course-subject')
+                if 'course-title' not in metas or not metas.get('course-title'):
+                    reasons_reject.append('no course-title')
+                if section_count < EXT_MIN_SECTIONS:
+                    reasons_reject.append(f'sections<{EXT_MIN_SECTIONS}({section_count})')
+
+                if reasons_reject:
+                    orphan_reasons['ext_rejected'] += 1
+                    print(f'  ⚠️ ext 课件未通过质检，跳过: {d.name} ({", ".join(reasons_reject)})')
+                    continue
+
+                # 通过质检：纳入虚拟树
+                orphan_reasons['ext_passed'] += 1
+                ext_subject = metas.get('course-subject', 'other')
+                ext_title = metas.get('course-title', d.name)
+                ext_node = metas.get('course-node', d.name)
+                # 虚拟节点 id：优先用 course-node（无学科前缀），否则用目录名
+                ext_vid = ext_node if ext_node and ext_node not in all_official_node_ids else f'other-{d.name}'
+                virtual_nodes.append({
+                    'id': ext_vid,
+                    'name': ext_title,
+                    'name_en': '',
+                    'grade': 0,
+                    'subject': ext_subject,
+                    'prerequisites': [],
+                    'extends': [],
+                    'parallel': [],
+                    'courses': [d.name],
+                    'status': 'active',
+                    'source': 'learning-path-ext',
+                    'curriculum_points': [f'学习路径推荐课件（ext-* 前缀，无 manifest.json，元信息来自 HTML meta）'],
+                    'excerpt_ids': []
+                })
+                # 同时把课件加入 courses 集合，供步骤 4 写入 registry
+                # 构造一个最小 manifest 供下游消费
+                synthetic_manifest = {
+                    'id': d.name,
+                    'name': ext_title,
+                    'title': ext_title,
+                    'subject': ext_subject,
+                    'node_id': ext_node or '',
+                    'grade': 0,
+                    'author': 'learning-path',
+                    'free_mode': True,  # 标记为 free_mode，让下游一致处理
+                    '_synthetic_from_ext_html': True
+                }
+                courses[d.name] = (synthetic_manifest, base_dir)
+
         # 按 subject 聚合去重（同一 virtual id 可能对应多个 cid）
         merged = {}
         for n in virtual_nodes:
@@ -518,6 +611,10 @@ def main():
         print(f'     free_mode: {orphan_reasons["free_mode"]}, '
               f'node 未找到: {orphan_reasons["node_not_found"]}, '
               f'缺 node_id: {orphan_reasons["missing_node_id"]}')
+        if ext_dirs_scanned:
+            print(f'     ext-* 学习路径课件: 扫描 {ext_dirs_scanned} 个，'
+                  f'质检通过 {orphan_reasons["ext_passed"]}，'
+                  f'拒绝 {orphan_reasons["ext_rejected"]}')
     else:
         print(f'  ⏭️ {virtual_tree_path} 不存在，跳过（可用 git pull 拉取）')
 

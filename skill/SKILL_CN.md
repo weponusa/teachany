@@ -86,7 +86,7 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 | **⑫ 标准情境感知气泡模块**（v7.7.4 新增 / v7.9.4 强化 FAB 依赖） | 学生滚动到某 section 时，左下角自动弹出对应的思考/讨论提示（挨着 AI 学伴 FAB），8 秒淡出。点击气泡 = 点击 FAB 打开 AI 学伴。| `<head>` 引入 `<link rel="stylesheet" href="../../scripts/teachany-section-hints.css">`；`</body>` 前 `<script src="../../scripts/teachany-section-hints.js" defer></script>`；**数据源三选一**：(a) 在 section 上写 `<section id="module-1" data-tsh="思考：为什么要这样证明？">`；(b) 在任意元素上写 `<div data-tsh-key="my-key">` 并在 JSON 里用 `my-key` 作 key；(c) 同级 `./section-hints.json` 写 `{"module-1": "思考：为什么要这样证明？"}`。IntersectionObserver 监控可见度（threshold 0.35/0.6），取最可见的 section 展示。`body.tap-bar-on` 时自动 `bottom: 114px` 避让底部音频条。⚠️ **依赖**：模块代码硬依赖 `.ai-tutor-fab` 选择器（点击气泡时唤起对话），因此 `ai-tutor.js` 必须正确渲染 class=`ai-tutor-fab` 的 FAB（基线⑧已强制）。**全局 API**：`window.TeachAnySectionHints.{show,hide}`。| ⛔ **严禁**再在课件里手写 IntersectionObserver 气泡逻辑——已全部迁到标准模块；⛔ 无 `[data-tsh]`/`[data-tsh-key]` 和 `./section-hints.json` 时模块静默不弹（零占位）；⛔ 提示文案控制在 ≤40 字，保持"一句话触发思考"的格调；⛔ 不要用"提醒学生记笔记"这种 meta 指令——应是学科性开放提问 |
 | **⑬ 五件套批量注入工具**（v7.7.4 新增，元规则）| 所有课件必须同时挂载五件套（ai-tutor + tutor-card + tts-narrator + section-hints + knowledge-graph）。管理员维护者可用批量脚本幂等注入。| `python3 scripts/apply-standard-modules.py [--dry-run] [--only <path>]` 扫描 `examples/*/index.html` + `community/*/index.html`，对每个课件检测并补齐 5 个 `<link>` + 5 个 `<script>` + tutor-card section + knowledge-graph section；node_id 解析双源（优先 `manifest.json.node_id`，fallback `courseware-registry.json.courses[].id → node_id`）；源 HTML 无 `</body>` 时 fallback 追加到文件末尾（同时提醒修复源文件的 HTML 截断问题）。| ⛔ **严禁**在批量脚本里埋"静默跳过无 manifest 课件"的分支——必须走 registry fallback 并报告 `skipped-no-node-id` 计数；⛔ 执行后必须对至少 2 个样本课件做浏览器实测验证 `window.TeachAnyTutor/TTSNarrator/SectionHints` 全部 = `object` |
 
-| **⑭ 未挂载课件入口 · "其他知识"虚拟树**（v7.9.6 新增）| 当 AI 生成的课件不属于任何现有课标体系时（如民间数学、思维方法、跨学科主题、课标未收录内容），**必须在 manifest.json 中标记 `free_mode: true`**，课件会自动出现在知识树的 ✨「其他知识 Other Knowledge」入口。| (1) 在 manifest.json 加 `"free_mode": true`；(2) `node_id` 可继续按 `<subject>-<level>-<topic>` 命名（便于 Gallery 分类）也可留空；(3) HTML `<head>` 可加 `<meta name="teachany-free-mode" content="true">` 辅助发布脚本识别；(4) `scripts/rebuild-index.py` 步骤 3.5 自动把以下三类课件收纳到 `data/trees/other/user-generated.json`：(a) `free_mode=true` 的课件、(b) `node_id` 不在任何官方课标树中的课件、(c) 缺 `node_id` 的课件；(5) 虚拟树自动挂到每个 curriculum 的"其他 Other"行，tree.html 零改动即可显示。| ⛔ **严禁**为"挂不上树"就删除 `node_id` 字段——应优先 (A) `find_nodes.py` 搜索相近节点、(B) `register_node.py` 注册新节点，确实无法归类时再 (C) `free_mode=true`；⛔ **严禁**在"其他知识"树中手工编辑 `domains[0].nodes[]`，该字段每次 rebuild 会被完全覆写；⛔ **严禁**把已经有对应官方节点的课件强行标 free_mode（会造成知识图谱遗漏） |
+| **⑭ 未挂载课件入口 · "其他知识"虚拟树**（v7.9.6 新增 / v7.9.7 支持 ext-* 学习路径课件）| 当 AI 生成的课件不属于任何现有课标体系时（如民间数学、思维方法、跨学科主题、课标未收录内容），**必须在 manifest.json 中标记 `free_mode: true`**，课件会自动出现在知识树的 ✨「其他知识 Other Knowledge」入口。| (1) 在 manifest.json 加 `"free_mode": true`；(2) `node_id` 可继续按 `<subject>-<level>-<topic>` 命名（便于 Gallery 分类）也可留空；(3) HTML `<head>` 可加 `<meta name="teachany-free-mode" content="true">` 辅助发布脚本识别；(4) `scripts/rebuild-index.py` 步骤 3.5 自动把以下四类课件收纳到 `data/trees/other/user-generated.json`：(a) `free_mode=true` 的课件、(b) `node_id` 不在任何官方课标树中的课件、(c) 缺 `node_id` 的课件、(d) **v7.9.7 新增**：`ext-*` 前缀的学习路径推荐课件（无 manifest.json，元信息从 HTML `<meta name="course-*">` 提取，通过质检的才纳入）；(5) 虚拟树自动挂到每个 curriculum 的"其他 Other"行，tree.html 零改动即可显示。**ext-\* 质检门槛**：① `course-id` 以 `ext-` 开头；② HTML ≥ 10 KB；③ 含 `<meta name="course-subject">` 和 `<meta name="course-title">`；④ 含 ≥ 5 个 `<section>`。任一不通过 → 跳过不入树，并打印 `⚠️ ext 课件未通过质检，跳过`。| ⛔ **严禁**为"挂不上树"就删除 `node_id` 字段——应优先 (A) `find_nodes.py` 搜索相近节点、(B) `register_node.py` 注册新节点，确实无法归类时再 (C) `free_mode=true`；⛔ **严禁**在"其他知识"树中手工编辑 `domains[0].nodes[]`，该字段每次 rebuild 会被完全覆写；⛔ **严禁**把已经有对应官方节点的课件强行标 free_mode（会造成知识图谱遗漏）；⛔ **严禁**绕过 ext-\* 质检门槛直接把不合格的空壳课件塞进仓库 |
 
 ### 0.0.1 其他知识入口使用指引（v7.9.6 新增）
 
@@ -96,13 +96,27 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 - 跨学科融合内容（如"音乐 × 数学：和弦与频率比"）
 - 用户自定义复习/拓展内容
 
-**正确做法**（3 选 1）：
+**正确做法**（4 选 1）：
 
 | 场景 | 处理方式 | 结果 |
 |:---|:---|:---|
 | 相近节点存在 | 用 `find_nodes.py` 找到后挂上该节点 | 出现在官方课标树 |
 | 无相近节点但课标有定位 | 用 `register_node.py` 注册新节点 | 出现在官方课标树（status=placeholder） |
 | **完全非课标内容** | manifest 加 `"free_mode": true`（+ 可选 `<meta name="teachany-free-mode" content="true">`） | **自动出现在 ✨ 其他知识树** |
+| **学习路径推荐课件**（`ext-*` 前缀，无 manifest） | 在 HTML 加 `<meta name="course-id" content="ext-xxx">` + `course-subject` + `course-title` + `course-node` 等 meta | **质检通过后自动出现在 ✨ 其他知识树** |
+
+**ext-\* 课件质检门槛**（v7.9.7 新增）：
+
+学习路径推荐课件无 manifest.json，元信息依赖 HTML meta 标签。`rebuild-index.py` 在收纳前会做 4 项质检：
+
+| 质检项 | 门槛 | 说明 |
+|:---|:---|:---|
+| 前缀 | `course-id` 以 `ext-` 开头 | 仅处理学习路径推荐课件 |
+| 体积 | HTML ≥ 10 KB | 避免空壳占位 |
+| 元信息 | 含 `course-subject` 和 `course-title` | 至少能分类和展示 |
+| 结构 | 含 ≥ 5 个 `<section>` | 保证有基础教学结构 |
+
+任一不通过 → 控制台打印 `⚠️ ext 课件未通过质检，跳过: <id> (<reasons>)` 并跳过，不入树不入 registry。
 
 **在 `scripts/rebuild-index.py` 运行后**，AI 无需任何额外操作，课件会自动：
 1. 进入 `data/trees/other/user-generated.json` 的 `domains[0].nodes[]`
