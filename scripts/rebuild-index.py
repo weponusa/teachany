@@ -429,6 +429,98 @@ def main():
         else:
             print(f'  ✓ {tree_name}.json: 无需修改')
 
+    # 3.5 (v7.9.6 新增) 填充"其他知识"虚拟树
+    #     收纳：(a) free_mode 课件；(b) node_id 不在任何官方课标树中的课件
+    print('\n✨ 步骤3.5: 填充"其他知识"虚拟树（收纳 free_mode / 未挂载课件）...')
+    virtual_tree_path = Path('data/trees/other/user-generated.json')
+    if virtual_tree_path.exists():
+        # 收集所有官方树中存在的 node_id
+        all_official_node_ids = set()
+        for tree_file in tree_files:
+            if tree_file == virtual_tree_path:
+                continue
+            try:
+                td = json.loads(tree_file.read_text(encoding='utf-8'))
+            except (OSError, json.JSONDecodeError):
+                continue
+
+            def _collect_ids(obj):
+                if isinstance(obj, dict):
+                    if 'id' in obj and 'name' in obj:
+                        all_official_node_ids.add(obj['id'])
+                    for k in ('domains', 'nodes', 'children'):
+                        if k in obj:
+                            for child in obj[k]:
+                                _collect_ids(child)
+                elif isinstance(obj, list):
+                    for item in obj:
+                        _collect_ids(item)
+            _collect_ids(td)
+
+        # 扫描所有课件，找出应该放进"其他知识"的
+        virtual_nodes = []
+        orphan_reasons = {'free_mode': 0, 'node_not_found': 0, 'missing_node_id': 0}
+        for cid, (manifest, src) in sorted(courses.items()):
+            nid = manifest.get('node_id', '').strip()
+            is_free = bool(manifest.get('free_mode'))
+            subject = manifest.get('subject', 'other')
+            name = manifest.get('title') or manifest.get('name') or cid
+            grade = manifest.get('grade', 0)
+
+            reason = None
+            if is_free:
+                reason = 'free_mode'
+            elif not nid:
+                reason = 'missing_node_id'
+            elif nid not in all_official_node_ids:
+                reason = 'node_not_found'
+
+            if not reason:
+                continue
+
+            orphan_reasons[reason] += 1
+            # 虚拟节点 id：free_mode 用 node_id 或 cid；未找到则用 other-<cid>
+            vid = nid if nid else f'other-{cid}'
+            virtual_nodes.append({
+                'id': vid,
+                'name': name,
+                'name_en': manifest.get('title_en', ''),
+                'grade': grade if isinstance(grade, int) else 0,
+                'subject': subject,
+                'prerequisites': [],
+                'extends': [],
+                'parallel': [],
+                'courses': [cid],
+                'status': 'active',
+                'source': f'user-generated({reason})',
+                'curriculum_points': [manifest.get('description_zh', '') or manifest.get('description', '')],
+                'excerpt_ids': []
+            })
+
+        # 按 subject 聚合去重（同一 virtual id 可能对应多个 cid）
+        merged = {}
+        for n in virtual_nodes:
+            if n['id'] in merged:
+                merged[n['id']]['courses'].extend(n['courses'])
+                merged[n['id']]['courses'] = sorted(set(merged[n['id']]['courses']))
+            else:
+                merged[n['id']] = n
+        virtual_nodes = sorted(merged.values(), key=lambda x: (x.get('subject', ''), x['id']))
+
+        # 回写虚拟树
+        virtual_tree = json.loads(virtual_tree_path.read_text(encoding='utf-8'))
+        virtual_tree['domains'][0]['nodes'] = virtual_nodes
+        virtual_tree_path.write_text(
+            json.dumps(virtual_tree, ensure_ascii=False, indent=2) + '\n',
+            encoding='utf-8'
+        )
+        print(f'  ✅ 已填充 {len(virtual_nodes)} 个虚拟节点到 {virtual_tree_path}')
+        print(f'     free_mode: {orphan_reasons["free_mode"]}, '
+              f'node 未找到: {orphan_reasons["node_not_found"]}, '
+              f'缺 node_id: {orphan_reasons["missing_node_id"]}')
+    else:
+        print(f'  ⏭️ {virtual_tree_path} 不存在，跳过（可用 git pull 拉取）')
+
     # 4. 重建注册表
     print('\n📋 步骤4: 重建注册表...')
     # 注：old_registry 和 legacy_preserved 已在步骤 2 加载，此处复用

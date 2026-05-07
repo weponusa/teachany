@@ -86,7 +86,38 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 | **⑫ 标准情境感知气泡模块**（v7.7.4 新增 / v7.9.4 强化 FAB 依赖） | 学生滚动到某 section 时，左下角自动弹出对应的思考/讨论提示（挨着 AI 学伴 FAB），8 秒淡出。点击气泡 = 点击 FAB 打开 AI 学伴。| `<head>` 引入 `<link rel="stylesheet" href="../../scripts/teachany-section-hints.css">`；`</body>` 前 `<script src="../../scripts/teachany-section-hints.js" defer></script>`；**数据源三选一**：(a) 在 section 上写 `<section id="module-1" data-tsh="思考：为什么要这样证明？">`；(b) 在任意元素上写 `<div data-tsh-key="my-key">` 并在 JSON 里用 `my-key` 作 key；(c) 同级 `./section-hints.json` 写 `{"module-1": "思考：为什么要这样证明？"}`。IntersectionObserver 监控可见度（threshold 0.35/0.6），取最可见的 section 展示。`body.tap-bar-on` 时自动 `bottom: 114px` 避让底部音频条。⚠️ **依赖**：模块代码硬依赖 `.ai-tutor-fab` 选择器（点击气泡时唤起对话），因此 `ai-tutor.js` 必须正确渲染 class=`ai-tutor-fab` 的 FAB（基线⑧已强制）。**全局 API**：`window.TeachAnySectionHints.{show,hide}`。| ⛔ **严禁**再在课件里手写 IntersectionObserver 气泡逻辑——已全部迁到标准模块；⛔ 无 `[data-tsh]`/`[data-tsh-key]` 和 `./section-hints.json` 时模块静默不弹（零占位）；⛔ 提示文案控制在 ≤40 字，保持"一句话触发思考"的格调；⛔ 不要用"提醒学生记笔记"这种 meta 指令——应是学科性开放提问 |
 | **⑬ 五件套批量注入工具**（v7.7.4 新增，元规则）| 所有课件必须同时挂载五件套（ai-tutor + tutor-card + tts-narrator + section-hints + knowledge-graph）。管理员维护者可用批量脚本幂等注入。| `python3 scripts/apply-standard-modules.py [--dry-run] [--only <path>]` 扫描 `examples/*/index.html` + `community/*/index.html`，对每个课件检测并补齐 5 个 `<link>` + 5 个 `<script>` + tutor-card section + knowledge-graph section；node_id 解析双源（优先 `manifest.json.node_id`，fallback `courseware-registry.json.courses[].id → node_id`）；源 HTML 无 `</body>` 时 fallback 追加到文件末尾（同时提醒修复源文件的 HTML 截断问题）。| ⛔ **严禁**在批量脚本里埋"静默跳过无 manifest 课件"的分支——必须走 registry fallback 并报告 `skipped-no-node-id` 计数；⛔ 执行后必须对至少 2 个样本课件做浏览器实测验证 `window.TeachAnyTutor/TTSNarrator/SectionHints` 全部 = `object` |
 
-### 0.1 启用触发表
+| **⑭ 未挂载课件入口 · "其他知识"虚拟树**（v7.9.6 新增）| 当 AI 生成的课件不属于任何现有课标体系时（如民间数学、思维方法、跨学科主题、课标未收录内容），**必须在 manifest.json 中标记 `free_mode: true`**，课件会自动出现在知识树的 ✨「其他知识 Other Knowledge」入口。| (1) 在 manifest.json 加 `"free_mode": true`；(2) `node_id` 可继续按 `<subject>-<level>-<topic>` 命名（便于 Gallery 分类）也可留空；(3) HTML `<head>` 可加 `<meta name="teachany-free-mode" content="true">` 辅助发布脚本识别；(4) `scripts/rebuild-index.py` 步骤 3.5 自动把以下三类课件收纳到 `data/trees/other/user-generated.json`：(a) `free_mode=true` 的课件、(b) `node_id` 不在任何官方课标树中的课件、(c) 缺 `node_id` 的课件；(5) 虚拟树自动挂到每个 curriculum 的"其他 Other"行，tree.html 零改动即可显示。| ⛔ **严禁**为"挂不上树"就删除 `node_id` 字段——应优先 (A) `find_nodes.py` 搜索相近节点、(B) `register_node.py` 注册新节点，确实无法归类时再 (C) `free_mode=true`；⛔ **严禁**在"其他知识"树中手工编辑 `domains[0].nodes[]`，该字段每次 rebuild 会被完全覆写；⛔ **严禁**把已经有对应官方节点的课件强行标 free_mode（会造成知识图谱遗漏） |
+
+### 0.0.1 其他知识入口使用指引（v7.9.6 新增）
+
+**场景**：AI 生成课件时，用户给的主题不在任何课标体系内，常见情况：
+- 民间学习方法（如"费曼学习法"、"思维导图制作"）
+- 课标未收录的主题（如"AI 提示词工程入门"、"Minecraft 电路原理"）
+- 跨学科融合内容（如"音乐 × 数学：和弦与频率比"）
+- 用户自定义复习/拓展内容
+
+**正确做法**（3 选 1）：
+
+| 场景 | 处理方式 | 结果 |
+|:---|:---|:---|
+| 相近节点存在 | 用 `find_nodes.py` 找到后挂上该节点 | 出现在官方课标树 |
+| 无相近节点但课标有定位 | 用 `register_node.py` 注册新节点 | 出现在官方课标树（status=placeholder） |
+| **完全非课标内容** | manifest 加 `"free_mode": true`（+ 可选 `<meta name="teachany-free-mode" content="true">`） | **自动出现在 ✨ 其他知识树** |
+
+**在 `scripts/rebuild-index.py` 运行后**，AI 无需任何额外操作，课件会自动：
+1. 进入 `data/trees/other/user-generated.json` 的 `domains[0].nodes[]`
+2. 出现在 `tree.html` 的"其他 Other"学段行 → "✨ 其他知识"按钮
+3. 被 `teachany-kg-manifest.json` 收录，使得 `teachany-knowledge-graph.js` 标准模块仍能正常渲染该节点的图谱区块
+4. 继续出现在 Gallery（按 manifest.subject 分类）
+
+**常见疑问**：
+
+- Q: free_mode 课件会影响知识图谱的前后衔接吗？
+  - A: 不会。虚拟节点 `prerequisites/extends/parallel` 默认为空数组，知识图谱模块会正常渲染"独立节点"视图。如希望与官方节点互联，请改为方式 (B) 注册新节点。
+- Q: 删掉课件后"其他知识"树会留空节点吗？
+  - A: 不会。`rebuild-index.py` 每次幂等重写 `domains[0].nodes[]`，仅收录**当前存在**的课件。
+
+
 
 | 课件类型 | TTS | Remotion | Canvas 互动 | 生图 | 生视频 | Hero 图 |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|

@@ -192,9 +192,10 @@ def main():
                 print(f"     {s}")
             print()
             print(f"💡 两种处理方式:")
-            print(f"   A) 自由模式（推荐）：课件无需挂树，manifest 加 \"free_mode\": true")
-            print(f"      生成的课件不会出现在知识图谱节点上，但会出现在 Gallery（按学科分类）")
-            print(f"   B) 先建树：联系管理员新建 {result['expected_path']}")
+        print(f"   A) 自由模式（推荐）：课件无需挂树，manifest 加 \"free_mode\": true")
+        print(f"      v7.9.6 起：free_mode 课件会自动出现在知识树的 ✨「其他知识 Other Knowledge」入口")
+        print(f"      同时也出现在 Gallery（按学科分类）")
+        print(f"   B) 先建树：联系管理员新建 {result['expected_path']}")
         sys.exit(2)
 
     # 收集所有节点

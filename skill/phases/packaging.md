@@ -63,6 +63,9 @@ my-course.teachany          ← ZIP 压缩，扩展名 .teachany
 > - rebuild-index.py 报 `⚠️ 文件存在但知识树未引用`（这是**真发布失败**，不是假报警）
 > - 课件可能进入 `registry.json` 和 Gallery，但**知识地图节点打不开该课件**
 > - 用户以为"推成功了"，实际 Gallery 看得到、知识地图看不到 → 发布失效
+>
+> **⭐ v7.9.6 新增：未挂载课件兜底入口**——若主题确实不在任何官方课标体系内（如民间学习方法、跨学科主题、课标未收录内容），改为在 manifest 加 `"free_mode": true`。`rebuild-index.py` 步骤 3.5 会自动把 `free_mode=true` / `node_id` 不在任何官方树中 / 缺 `node_id` 的课件收纳到 `data/trees/other/user-generated.json` 虚拟树，并自动出现在 `tree.html` 的 ✨「其他知识 Other Knowledge」入口。
+> 详见 `SKILL_CN.md` 基线⑭ + 0.0.1 节。优先级：(A) `find_nodes.py` 找相近节点 → (B) `register_node.py` 新建节点 → (C) `free_mode=true`。
 > 
 > **真实踩坑案例**（hist-classical-civilization，v5.20 当场发现）：
 > - v5.19 按"查 `data/history/world-history/_graph.json` 新 schema"的错误流程，manifest 写了 `"node_id": "classical-greece-rome"`
