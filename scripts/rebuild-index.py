@@ -465,6 +465,28 @@ def main():
         virtual_nodes = []
         orphan_reasons = {'free_mode': 0, 'node_not_found': 0, 'missing_node_id': 0,
                           'ext_passed': 0, 'ext_rejected': 0}
+
+        # v7.9.8 新增：学科前缀映射，用于"简写 node_id"自动探测
+        SUBJECT_PREFIX = {
+            'math': 'math', 'mathematics': 'math',
+            'chinese': 'chn', 'chn': 'chn',
+            'english': 'eng', 'eng': 'eng',
+            'physics': 'phy', 'phy': 'phy',
+            'chemistry': 'chem', 'chem': 'chem',
+            'biology': 'bio', 'bio': 'bio',
+            'history': 'hist', 'hist': 'hist',
+            'geography': 'geo', 'geo': 'geo',
+            'science': 'sci', 'sci': 'sci',
+            'info-tech': 'it', 'it': 'it',
+        }
+        def _level_from_grade(g):
+            try: g = int(g)
+            except (TypeError, ValueError): return None
+            if 1 <= g <= 6: return 'e'
+            if 7 <= g <= 9: return 'm'
+            if 10 <= g <= 12: return 'h'
+            return None
+
         for cid, (manifest, src) in sorted(courses.items()):
             nid = manifest.get('node_id', '').strip()
             is_free = bool(manifest.get('free_mode'))
@@ -478,6 +500,25 @@ def main():
             elif not nid:
                 reason = 'missing_node_id'
             elif nid not in all_official_node_ids:
+                # v7.9.8 智能探测：尝试补全 <subject_prefix>-<level>- 前缀
+                sp = SUBJECT_PREFIX.get(subject)
+                lv = _level_from_grade(grade)
+                candidate = None
+                if sp and lv:
+                    full = f'{sp}-{lv}-{nid}'
+                    if full in all_official_node_ids:
+                        candidate = full
+                # 也尝试去掉已有前缀（如果 nid 已经是完整格式但拼错）
+                if not candidate and sp:
+                    for lv2 in ('e', 'm', 'h'):
+                        full = f'{sp}-{lv2}-{nid}'
+                        if full in all_official_node_ids:
+                            candidate = full
+                            break
+
+                if candidate:
+                    print(f'  ⚠️ 检测到简写 node_id：{cid} "{nid}" 应为 "{candidate}"')
+                    print(f'     → 请修正 manifest.node_id 为 "{candidate}"（课件暂挂"其他知识"）')
                 reason = 'node_not_found'
 
             if not reason:
