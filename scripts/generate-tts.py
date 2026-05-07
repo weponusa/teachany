@@ -1,11 +1,29 @@
 #!/usr/bin/env python3
 """
-TeachAny TTS Generator
-为所有小学课件生成 Edge TTS 音频并注入播放按钮
+TeachAny TTS Generator（v7.9.5 重写）
+
+为所有小学课件生成 TTS 音频并注入播放按钮。
+
+⛔ 关键修复（v7.9.5）：
+  - 旧版仅检查 returncode==0，导致 wss 被防火墙拦截时 edge-tts
+    "成功"返回但写出 0 字节 mp3 而脚本误以为成功。
+  - 新版调用 scripts/tts-engine.py 的 multi-engine fallback：
+    edge-tts → edge-tts via proxy → macOS say → pyttsx3 → silent.mp3
+  - 强制校验文件大小 ≥ 200 字节，否则视为失败并回退。
 """
-import os, re, subprocess, json, sys
+import os, re, json, sys, subprocess
+
+# 注入 tts-engine 模块路径
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+try:
+    from tts_engine import synthesize, probe_edge_tts  # type: ignore
+except ImportError:
+    # 退回 hyphen 命名（CLI 调用）
+    synthesize = None
+    probe_edge_tts = None
 
 EXAMPLES_DIR = 'examples'
+MIN_VALID_SIZE = 200
 
 # 中英文声音配置
 VOICES = {
@@ -95,10 +113,32 @@ def get_tts_text(fid, subject, html):
 
 
 def generate_audio(text, voice, output_path):
-    """调用 edge-tts 生成音频"""
-    cmd = ['edge-tts', '--voice', voice, '--text', text, '--write-media', output_path]
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-    return result.returncode == 0
+    """生成音频。**v7.9.5 关键**：必须验证文件大小 + 多引擎自动回退。
+
+    返回 (ok, engine_used)
+        ok=True 当且仅当文件存在且大小 ≥ 200 字节
+        engine_used: 'edge-tts' / 'edge-tts-proxy(...)' / 'macos-say' / 'pyttsx3' / 'silent'
+    """
+    if synthesize is None:
+        # 兜底：直接 subprocess 调用 tts-engine.py CLI
+        cmd = [sys.executable, os.path.join(os.path.dirname(__file__), 'tts-engine.py'),
+               '--text', text, '--voice', voice, '--output', output_path]
+        try:
+            r = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+            ok = (r.returncode == 0 and os.path.exists(output_path)
+                  and os.path.getsize(output_path) >= MIN_VALID_SIZE)
+            engine = 'cli'
+            if ok:
+                # 从输出 stdout 中提取引擎名
+                m = re.search(r'引擎=(\S+?)\)', r.stdout or '')
+                if m:
+                    engine = m.group(1)
+            return ok, engine
+        except Exception as e:
+            return False, f'cli-error:{e}'
+
+    return synthesize(text, voice, output_path,
+                      allow_silent_fallback=True, verbose=False)
 
 
 def inject_audio_player(html, audio_filename, is_english):
@@ -162,9 +202,15 @@ def process_courseware(fid, args):
     if not skip_audio:
         tts_text, voice = get_tts_text(fid, subject, html)
         os.makedirs(audio_dir, exist_ok=True)
-        ok = generate_audio(tts_text, voice, audio_path)
+        ok, engine = generate_audio(tts_text, voice, audio_path)
         if not ok:
-            return 'fail', 'TTS generation failed'
+            return 'fail', f'TTS generation failed (all engines exhausted)'
+        # 把使用的引擎记录到 manifest，便于审计
+        try:
+            sz = os.path.getsize(audio_path)
+            print(f"    🔊 {fid}: {engine} → {sz} 字节")
+        except OSError:
+            pass
     
     # 注入播放按钮
     new_html, injected = inject_audio_player(html, 'audio/intro.mp3', is_english)
@@ -177,7 +223,19 @@ def process_courseware(fid, args):
 
 def main():
     targets = sys.argv[1:] if len(sys.argv) > 1 else None
-    
+
+    # v7.9.5 新增：开始前先探针 wss 连通性，提前告知用户实际走哪条路径
+    print(f"\n🎙️ TeachAny TTS Generator v7.9.5（多引擎自动回退）\n{'═'*50}")
+    if probe_edge_tts:
+        ok, msg = probe_edge_tts()
+        if ok:
+            print(f"🟢 Edge-TTS wss 连通性：{msg}")
+            print(f"   主要引擎：edge-tts（最佳音质）")
+        else:
+            print(f"🟡 Edge-TTS wss 连通性：{msg}")
+            print(f"   将自动回退到 macOS say / pyttsx3 / 静音占位（前端 Web Speech 朗读）")
+    print()
+
     if targets:
         ids = targets
     else:
@@ -185,8 +243,8 @@ def main():
             d for d in os.listdir(EXAMPLES_DIR)
             if re.match(r'^(math-e-|math-elem-|chn-e-|eng-e-|science-)', d)
         ])
-    
-    print(f"\n🎙️ TeachAny TTS Generator — {len(ids)} 个课件\n{'═'*50}")
+
+    print(f"📚 待处理课件：{len(ids)} 个\n{'─'*50}")
     
     ok = fail = skip = 0
     for fid in ids:

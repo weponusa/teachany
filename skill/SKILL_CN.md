@@ -72,7 +72,7 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 
 | 能力 | 强制要求 | 实现方式 | 降级底线 |
 |:---|:---|:---|:---|
-| **① Edge-TTS 语音讲解** | 必须为每个知识模块生成独立 mp3 + 同步字幕；⛔ **禁用浏览器 `speechSynthesis`**；⛔ **不可跳过** | `pip install edge-tts` → 按 audioPlaylist 生成 `tts/*.mp3` + `*.srt` → HTML 内置滚动自动播放器（IntersectionObserver） | ⛔ **严禁以任何理由整体省略**——包括"页面够丰富""用户没要求""环境复杂"。用户拒绝时仍须保留 `teachany-tts-narrator.js` 引用（零 mp3 回退模式），确保后续补录音频无需改 HTML |
+| **① 多引擎 TTS 语音讲解**（v7.9.5 升级）| 必须为每个知识模块生成独立 mp3 + 同步字幕；⛔ **禁用浏览器 `speechSynthesis` 手写**；⛔ **不可整体跳过 L3**——但允许引擎自动回退 | **唯一标准入口**：`python3 scripts/tts-engine.py --text "..." --voice zh-CN-XiaoxiaoNeural --output xxx.mp3`（或 `from tts_engine import synthesize`）。该模块按以下优先级**自动回退**：(1) edge-tts 直连 → (2) edge-tts via 系统 HTTPS_PROXY/常见本地代理 → (3) macOS `say` 离线 TTS（zh: Tingting / en: Samantha）+ ffmpeg 转 mp3 → (4) pyttsx3 跨平台离线 → (5) 1 秒静音占位（前端 `teachany-tts-narrator.js` 用 Web Speech 朗读）。**所有引擎都强制校验生成的 mp3 ≥ 200 字节**——这是为了规避旧版 bug：Edge-TTS 依赖的 `wss://speech.platform.bing.com:443` 在国内常被防火墙拦截，导致 edge-tts "成功"返回但写出 0 字节 mp3。preflight-check.py 现在会在 Phase 0 实际跑一次探针，把结果写入 `.teachany-preflight.json` 的 `capabilities.L3_tts_engine` 字段，AI 必须读取并据此宣告本次实际使用的引擎。 | ⛔ **严禁以"edge-tts 网络不通"为理由跳过 L3**——必须按上述链路自动回退，不存在"无音频版课件"。⛔ 严禁直接调用 `subprocess.run(['edge-tts', ...])` 而不验证文件大小；必须走 `tts-engine.py`。⛔ 用户拒绝音频时仍须保留 `teachany-tts-narrator.js` 引用（零 mp3 回退模式），确保后续补录无需改 HTML |
 | **② Remotion 程序化动画** | 课件必须含 **≥1 段真正用 Remotion 渲染的教学动画 mp4**（演示过程性变化），且 mp4 **必须三轨合一：画面 + 氛围音效/配乐 + TTS 语音朗读**（可选但强烈推荐） | Remotion + React + TS 渲染 1920×1080 @30fps → 输出 `assets/video/*.mp4` → 嵌入对应 section；音频通过 `<Audio src={staticFile(...)}/>` 叠加，ffmpeg 合成背景音效/edge-tts 生成语音旁白，放 `remotion/public/audio/` | ⛔ **无降级**。Canvas/SVG/CSS 动画不得替代 Remotion 基线；**仅有画面而无音频轨的哑片 mp4 视为不合规**（除非主题为纯视觉抽象且用户书面豁免音频）。⛔ **"Node 环境不可用"不是跳过理由**——Phase 0 必须安装 Node（preflight-check.py 自动安装），安装失败必须报告用户等待解决，绝不可降级为"Canvas 动画够用了"。缺 Remotion = 直接 Gate 不通过。唯一豁免：用户在**当前对话中**主动说"不需要视频/动画"——即便如此仍须在 Gate 中显式标注"L2 用户豁免" |
 | **③ Canvas 互动组件** | 课件必须含 **≥1 个 Canvas 互动组件**（拖拽、画板、参数调节、实时绘图） | 原生 `<canvas>` + JS 事件 → 学生可拖动/点击/滑动改变参数并实时反馈 | 若主题确实无合适 Canvas 场景（如纯文言字词课），必须用 SVG 交互动画替代，并在 Gate 中说明理由 |
 | **④ AI 生图 + 生视频** | 课件必须含 **≥2 张 image_gen 生成的情境/意境插图**；过程性学科（理/化/生/地/史）必须评估生视频需求 | Phase 3 阶段调用 `image_gen` → 存 `assets/illustrations/*.png` → `<img>` 嵌入；必要时调用生视频工具产出 `assets/video/*.mp4` | 若完全纯计算题课，可在 Gate 标注"跳过生图"并附理由，但**文科、科学、工程、社科课件一律不得跳过生图** |
@@ -121,7 +121,9 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 - ❌ **地图底图用 ECharts `graphic` 组件铺底** → **违反 ③**。`graphic` 是 DOM 绝对定位覆盖层，**不参与 `geo` 组件的缩放/平移变换**，用户缩放或拖动时底图会与国界/城市点严重错位
 - ❌ **地图初始视图未聚焦核心区域**（默认停在 `[0,0]` 世界中心 / 视口显示大片无关海洋或空白） → **违反 ③**。必须用 `map.fitBounds(coreBounds)` 或 `setView([lat,lng], zoom)` 将初始视图精确对准该课件的教学核心区域（如讲希腊必须聚焦爱琴海 + 伯罗奔尼撒半岛，讲罗马必须聚焦地中海盆地）
 - ❌ "用户没要求生图，就省略" → 违反 ④（生图/生视频/TTS/Remotion 均为**默认执行**，非用户触发）
-- ❌ 用浏览器 `speechSynthesis` 代替 edge-tts → 直接 Gate 不通过
+- ❌ 在课件 HTML 中手写 `speechSynthesis` 代码块代替 TTS mp3 → 直接 Gate 不通过（前端朗读由 `teachany-tts-narrator.js` 标准模块自动注入）
+- ❌ 直接 `subprocess.run(['edge-tts', ...])` 而不验证 mp3 文件大小 → 违反 ① v7.9.5。Edge-TTS 在 wss 被防火墙拦截时会"成功"返回但写出 0 字节 mp3，必须走 `python3 scripts/tts-engine.py` 或 `from tts_engine import synthesize`
+- ❌ "edge-tts 装好了但 wss 不通" 就跳过 L3 → 违反 ① v7.9.5。tts-engine 自动回退到 macOS say / pyttsx3 / 静音占位，不存在"无音频版课件"
 - ❌ **课件 Hero section 内 `<img class="hero-cover-img">` 贴在标题背景/叠加层** → **违反 ⑤ v7.9.1**。hero 图必须在 hero section **之后**用 `<figure class="ta-standard-figure">` 独立区块承载，不得与标题混合
 - ❌ **用驼队/实验室/卡通人物等装饰性情境图充当 hero 图** → **违反 ⑤ v7.9.1**。hero = 知识结构主图（信息图/脑图），情境图只能嵌在正文某个章节作为情境插图
 - ❌ **HTML 引用了 `./assets/xxx-hero.png` 但文件根本不存在**（产生 broken image 404）→ **违反 ⑤**。发布前必须 `python3 scripts/check-hero.py` 0 错误

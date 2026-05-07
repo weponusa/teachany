@@ -178,7 +178,9 @@ REPORT = {
     "capabilities": {
         "L1_html":       False,  # 基础 HTML 课件（总是 True）
         "L2_remotion":   False,  # Remotion mp4 教学动画
-        "L3_tts":        False,  # edge-tts 语音
+        "L3_tts":        False,  # edge-tts 语音（命令可用）
+        "L3_tts_wss":    False,  # edge-tts wss 实际连通（v7.9.5 新增，区分"装好了"vs"能生成"）
+        "L3_tts_engine": "none", # 实际可用引擎: edge-tts / macos-say / pyttsx3 / silent
         "L4_pack":       False,  # .teachany 打包
         "L5_pptx":       False,  # PPTX 导出
         "image_gen":     False,  # AI 生图（由上层 IDE 提供，探针校验）
@@ -261,36 +263,108 @@ def check_python_packages():
 
 
 def check_edge_tts():
+    """
+    v7.9.5 增强：除了"命令是否可用"，还实测 wss 连通性。
+    根因：Edge TTS 依赖的 wss://speech.platform.bing.com 在国内 443 端口
+    经常被防火墙拦截，导致 edge-tts "成功"返回但写出 0 字节 mp3。
+    """
     head("edge-tts（L3 语音基线）")
-    # 命令行可用性
+    cmd_available = False
+    invocation = None
+
     if which("edge-tts"):
         r = run(["edge-tts", "--version"], timeout=30)
         log(f"edge-tts 命令可用（{r.stdout.strip()})", "ok")
         REPORT["capabilities"]["L3_tts"] = True
         record("edge-tts", "ok", version=r.stdout.strip())
-        return True
-    # 退而求其次，通过 python -m
-    r = run([sys.executable, "-m", "edge_tts", "--version"], timeout=30)
-    if r.returncode == 0:
-        log(f"edge-tts 模块可用（python -m edge_tts）", "ok")
-        REPORT["capabilities"]["L3_tts"] = True
-        record("edge-tts", "ok", version="module mode", invocation="python -m edge_tts")
-        return True
-    # 都没有 → 安装
-    if ARGS.dry_run:
-        log("edge-tts 缺失（dry-run 跳过安装）", "warn")
-        record("edge-tts", "missing", hint="pip install edge-tts")
-        return False
-    log("edge-tts 缺失，pip 自动安装...", "warn")
-    if pip_install("edge-tts"):
-        log("edge-tts 安装成功", "ok")
-        REPORT["capabilities"]["L3_tts"] = True
-        record("edge-tts", "installed_now", hint="pip install edge-tts")
-        return True
-    log("edge-tts 安装失败——L3 语音将降级为'脚本保留 + 用户自行生成'", "err")
-    record("edge-tts", "fail",
-           hint="pip install --user edge-tts；若仍失败检查网络/代理")
-    return False
+        cmd_available = True
+        invocation = "edge-tts"
+    else:
+        # 退而求其次，通过 python -m
+        r = run([sys.executable, "-m", "edge_tts", "--version"], timeout=30)
+        if r.returncode == 0:
+            log(f"edge-tts 模块可用（python -m edge_tts）", "ok")
+            REPORT["capabilities"]["L3_tts"] = True
+            record("edge-tts", "ok", version="module mode", invocation="python -m edge_tts")
+            cmd_available = True
+            invocation = sys.executable + " -m edge_tts"
+
+    if not cmd_available:
+        # 都没有 → 安装
+        if ARGS.dry_run:
+            log("edge-tts 缺失（dry-run 跳过安装）", "warn")
+            record("edge-tts", "missing", hint="pip install edge-tts")
+            return False
+        log("edge-tts 缺失，pip 自动安装...", "warn")
+        if pip_install("edge-tts"):
+            log("edge-tts 安装成功", "ok")
+            REPORT["capabilities"]["L3_tts"] = True
+            record("edge-tts", "installed_now", hint="pip install edge-tts")
+            cmd_available = True
+            invocation = "edge-tts"
+        else:
+            log("edge-tts 安装失败——L3 语音将降级为 macOS say / pyttsx3 / 静音占位", "err")
+            record("edge-tts", "fail",
+                   hint="pip install --user edge-tts；若仍失败检查网络/代理")
+
+    # ============== v7.9.5 新增：wss 实测探针 ==============
+    # 即便 edge-tts 命令可用，也要实测 wss 连通性
+    # 失败时不阻断 L3，而是触发引擎回退
+    log("正在探测 Edge-TTS wss 连通性（实测生成 1 秒探针）...", "info")
+    try:
+        # 调用 tts-engine.py 的 probe 模式
+        tts_engine_script = SCRIPT_DIR / "tts-engine.py" if "SCRIPT_DIR" in globals() else None
+        if tts_engine_script is None:
+            tts_engine_script = Path(__file__).parent / "tts-engine.py"
+
+        if tts_engine_script.exists():
+            r = run([sys.executable, str(tts_engine_script), "--probe"], timeout=40)
+            if r.returncode == 0:
+                log("✅ wss 连通，将使用 edge-tts（最佳音质）", "ok")
+                REPORT["capabilities"]["L3_tts_wss"] = True
+                REPORT["capabilities"]["L3_tts_engine"] = "edge-tts"
+                record("edge-tts-wss", "ok",
+                       hint="wss://speech.platform.bing.com 实测可达")
+            else:
+                log("⚠️ wss 不通（防火墙拦截或网络问题），将自动回退引擎", "warn")
+                REPORT["capabilities"]["L3_tts_wss"] = False
+                # 探测可用的回退引擎
+                fallback = _detect_tts_fallback()
+                REPORT["capabilities"]["L3_tts_engine"] = fallback
+                if fallback == "macos-say":
+                    log("✅ macOS say 离线 TTS 可用，将作为 edge-tts 替代", "ok")
+                elif fallback == "pyttsx3":
+                    log("✅ pyttsx3 跨平台离线 TTS 可用", "ok")
+                elif fallback == "silent":
+                    log("⚠️ 无离线 TTS 引擎可用，将生成静音占位 mp3 +"
+                        " 前端 teachany-tts-narrator.js 用 Web Speech 朗读", "warn")
+                record("edge-tts-wss", "fail",
+                       hint=f"wss 被防火墙/网络拦截，已切换到 {fallback} 引擎；"
+                            f"用户如需 edge-tts 高质量音质，请配置 HTTPS_PROXY 重跑")
+        else:
+            log("tts-engine.py 不存在，跳过 wss 探针", "warn")
+    except Exception as e:
+        log(f"wss 探针执行异常：{e}", "warn")
+
+    return cmd_available
+
+
+def _detect_tts_fallback():
+    """探测可用的离线 TTS 引擎，返回 'macos-say' / 'pyttsx3' / 'silent' / 'none'。"""
+    # macOS say 优先（音质好且默认安装）
+    if sys.platform == "darwin" and which("say") and which("ffmpeg"):
+        return "macos-say"
+    # pyttsx3 跨平台
+    try:
+        import pyttsx3  # noqa
+        if which("ffmpeg"):
+            return "pyttsx3"
+    except ImportError:
+        pass
+    # 最后回退：能生成静音
+    if which("ffmpeg"):
+        return "silent"
+    return "none"
 
 
 def check_node_remotion():
