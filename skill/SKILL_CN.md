@@ -73,7 +73,7 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 | 能力 | 强制要求 | 实现方式 | 降级底线 |
 |:---|:---|:---|:---|
 | **① 多引擎 TTS 语音讲解**（v7.9.5 升级）| 必须为每个知识模块生成独立 mp3 + 同步字幕；⛔ **禁用浏览器 `speechSynthesis` 手写**；⛔ **不可整体跳过 L3**——但允许引擎自动回退 | **唯一标准入口**：`python3 scripts/tts-engine.py --text "..." --voice zh-CN-XiaoxiaoNeural --output xxx.mp3`（或 `from tts_engine import synthesize`）。该模块按以下优先级**自动回退**：(1) edge-tts 直连 → (2) edge-tts via 系统 HTTPS_PROXY/常见本地代理 → (3) macOS `say` 离线 TTS（zh: Tingting / en: Samantha）+ ffmpeg 转 mp3 → (4) pyttsx3 跨平台离线 → (5) 1 秒静音占位（前端 `teachany-tts-narrator.js` 用 Web Speech 朗读）。**所有引擎都强制校验生成的 mp3 ≥ 200 字节**——这是为了规避旧版 bug：Edge-TTS 依赖的 `wss://speech.platform.bing.com:443` 在国内常被防火墙拦截，导致 edge-tts "成功"返回但写出 0 字节 mp3。preflight-check.py 现在会在 Phase 0 实际跑一次探针，把结果写入 `.teachany-preflight.json` 的 `capabilities.L3_tts_engine` 字段，AI 必须读取并据此宣告本次实际使用的引擎。 | ⛔ **严禁以"edge-tts 网络不通"为理由跳过 L3**——必须按上述链路自动回退，不存在"无音频版课件"。⛔ 严禁直接调用 `subprocess.run(['edge-tts', ...])` 而不验证文件大小；必须走 `tts-engine.py`。⛔ 用户拒绝音频时仍须保留 `teachany-tts-narrator.js` 引用（零 mp3 回退模式），确保后续补录无需改 HTML |
-| **② Remotion 程序化动画** | 课件必须含 **≥1 段真正用 Remotion 渲染的教学动画 mp4**（演示过程性变化），且 mp4 **必须三轨合一：画面 + 氛围音效/配乐 + TTS 语音朗读**（可选但强烈推荐） | Remotion + React + TS 渲染 1920×1080 @30fps → 输出 `assets/video/*.mp4` → 嵌入对应 section；音频通过 `<Audio src={staticFile(...)}/>` 叠加，ffmpeg 合成背景音效/edge-tts 生成语音旁白，放 `remotion/public/audio/` | ⛔ **无降级**。Canvas/SVG/CSS 动画不得替代 Remotion 基线；**仅有画面而无音频轨的哑片 mp4 视为不合规**（除非主题为纯视觉抽象且用户书面豁免音频）。⛔ **"Node 环境不可用"不是跳过理由**——Phase 0 必须安装 Node（preflight-check.py 自动安装），安装失败必须报告用户等待解决，绝不可降级为"Canvas 动画够用了"。缺 Remotion = 直接 Gate 不通过。唯一豁免：用户在**当前对话中**主动说"不需要视频/动画"——即便如此仍须在 Gate 中显式标注"L2 用户豁免" |
+| **② Remotion 程序化动画**（v7.9.8 强化信息密度铁律）| 课件必须含 **≥1 段真正用 Remotion 渲染的教学动画 mp4**（演示过程性变化），且 mp4 **必须三轨合一：画面 + 氛围音效/配乐 + TTS 语音朗读**（强烈推荐）。⛔ **视频信息密度铁律（v7.9.8 新增）**：视频是核心概念的重要动态表达方法，**不是装饰**。每段视频必须满足：(1) **画面动态变化 ≥3 个 beat**（如：等级层层浮现、要素逐项标注、关系连线生长、对比左右切换）；(2) **每分钟 ≥4 个新画面信息单元**（数字/文字/图标/连线 onEnter）；(3) **画面与 TTS 语义同步**（不是音频在讲 A、画面停在 B）；(4) **互动/可暂停回看**（前端 `<video controls>` 必备，关键节点用 `chapters` 或时间锚点供学生跳转）。 | Remotion + React + TS 渲染 1920×1080 @30fps → 输出 `assets/video/*.mp4` → 嵌入对应 section；音频通过 `<Audio src={staticFile(...)}/>` 叠加，ffmpeg 合成背景音效/edge-tts 生成语音旁白，放 `remotion/public/audio/`；**画面层必须用 `interpolate/spring/Sequence` 编排过程性元素**（不是单张 PNG 铺满全程） | ⛔ **无降级**。Canvas/SVG/CSS 动画不得替代 Remotion 基线；**仅有画面而无音频轨的哑片 mp4 视为不合规**。⛔ **v7.9.8 新增·伪视频禁令**：**严禁"一张 hero/poster 图铺满全程 + 音频轨"的伪视频**——这等于把音频伪装成视频，零教学信息密度，与基线 ⑨ 独立连续音频模块完全重复，浪费学生流量与认知带宽。判定标准：用 `ffprobe -select_streams v:0 -show_entries frame=pict_type` 抽样 ≥10 帧，若所有帧 SSIM > 0.99（即画面几乎不变），直接 Gate 不通过。⛔ **"Node 环境不可用"不是跳过理由**——Phase 0 必须安装 Node（preflight-check.py 自动安装），安装失败必须报告用户等待解决，绝不可降级为"Canvas 动画够用了"，更不可降级为"hero 图配音频凑数"。缺 Remotion = 直接 Gate 不通过。唯一豁免：用户在**当前对话中**主动说"不需要视频/动画"——即便如此仍须在 Gate 中显式标注"L2 用户豁免" |
 | **③ Canvas 互动组件** | 课件必须含 **≥1 个 Canvas 互动组件**（拖拽、画板、参数调节、实时绘图） | 原生 `<canvas>` + JS 事件 → 学生可拖动/点击/滑动改变参数并实时反馈 | 若主题确实无合适 Canvas 场景（如纯文言字词课），必须用 SVG 交互动画替代，并在 Gate 中说明理由 |
 | **④ AI 生图 + 生视频** | 课件必须含 **≥2 张 image_gen 生成的情境/意境插图**；过程性学科（理/化/生/地/史）必须评估生视频需求 | Phase 3 阶段调用 `image_gen` → 存 `assets/illustrations/*.png` → `<img>` 嵌入；必要时调用生视频工具产出 `assets/video/*.mp4` | 若完全纯计算题课，可在 Gate 标注"跳过生图"并附理由，但**文科、科学、工程、社科课件一律不得跳过生图** |
 | **⑤ Hero 知识结构主图**（v7.9.1 重新定义） | 课件**优先**在标题 hero section **下方**独立区块呈现 **1 张知识结构主图**（信息图/脑图/模块关系图，≥1280×720），**非装饰性情境插图**；无现成图且无生图能力时可 L3 降级（去掉区块） | Phase 3 末：① `python3 scripts/find-hero.py <课件目录>` L1 查图床 → ② 未命中且有 image_gen 则 L2 生成（prompt 必须强调 "knowledge-structure infographic / flat poster / card nodes"）→ ③ 仍无则 L3 去掉 `<figure>` 区块；HTML 用 `<figure class="ta-standard-figure"><img class="hero-cover-img" src="./assets/<id>-hero.png"><figcaption>知识结构主图：围绕核心问题呈现 X→Y→Z 学习模块</figcaption></figure>` 放在 hero section **之后**、学习目标 section **之前** | ⛔ **严禁**把 hero 图贴在 `<section class="hero">` 的标题背景/叠加层；⛔ **严禁**用驼队/实验室/卡通人物等装饰性情境图充当 hero（只能当正文插图用）；⛔ L2 生成必须用"信息图"风格，严禁 "warm cartoon / realistic illustration" 关键词；⛔ L3 降级必须删除整个 `<figure>` 标签，不得保留空占位 |
@@ -159,6 +159,8 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 - ❌ "文科课件就不需要 Remotion" → 违反 ②（古诗词意境动画、文言文情境动画都是 Remotion 场景）
 - ❌ "用 SVG+CSS 时间线动画等效替代 Remotion" → **违反 ②**。Remotion 基线是真实 mp4 渲染，CSS 动画不算等效交付
 - ❌ **Remotion mp4 只有画面没有音频轨（哑片）** → **违反 ②**。真实课件视频必须带 TTS 朗读 + 氛围配乐/音效；`ffprobe -show_entries stream=codec_type` 必须能看到 `audio` 流
+- ❌ **"hero 图铺满全程 + 音频轨"的伪视频**（v7.9.8 新增） → **违反 ②**。视频是核心概念的**动态**表达方法，不是音频的容器。判定：`ffprobe` 抽样 10 帧 SSIM > 0.99 即判为静态伪视频。正确做法：用 `Sequence` 编排 ≥3 个画面 beat（要素层层浮现/连线生长/对比切换/数据走势），每分钟 ≥4 个新信息单元，画面与 TTS 严格语义同步
+- ❌ **视频里没有可见的过程性变化**（仅 fade-in 一张图后保持不变 4 分钟） → **违反 ②**。"过程性"是 Remotion 基线的本质——若主题确实只能用静态信息图表达，应直接放 `<figure>` + 独立音频模块 ⑨，**不要套个 mp4 壳**
 - ❌ **视频 `<video poster="...">` 用了其他课件/其他主题的 hero 图** → **违反 ②**。每个 Remotion 视频必须配独立 poster 封面（建议用 `image_gen` 生成主题专属图），不得复用 hero-xxx.png 凑数
 - ❌ **地图底图使用在线 XYZ 瓦片切片**（CartoDB / Esri / OSM 等） → **违反 ③**。历史/地理课件必须使用 `assets/maps/` 下的本地地图资源（地形底图 GeoJSON + 行政边界 + 本地地形瓦片），严禁依赖外部切片服务。详见 `historical-maps.md`
 - ❌ **历史/地理课件没有地图** → **违反硬规则 #62**。地图是历史/地理课件的核心依赖，不存在"无地图版"课件——严禁以"内容简单""省事""地图资源不可用"等理由省略地图模块
@@ -179,6 +181,16 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 - ❌ **拼音/英语/朗读课只有单个“点我听”音效或视频音轨，没有独立连续音频播放器** → **违反 ⑥**。必须提供 `audioPlaylist` + 可见播放器，并支持顺序连续播放
 
 > 📌 **一句话记住**：语音 + 动画 + 互动 + 图像 + 封面，五项齐全才是 TeachAny 课件。缺一不是 TeachAny，是普通网页。
+>
+> 🔒 **五件套铁律（v7.9.8 强化）**：每个新课件都必须**同时挂载并真实渲染**以下五件——任何一件缺失都视同基线不达标：
+>
+> 1. **AI 学伴**：`ai-tutor.js` + `teachany-tutor-card`（基线 ⑧）—— 不是只挂 FAB，必须有可见入口卡片
+> 2. **Hero 知识结构主图**：独立 `<figure class="ta-standard-figure">` 区块（基线 ⑤）—— 不是装饰性情境图，必须信息图风格
+> 3. **TTS 连续音频**：≥1 段 mp3 + 字幕（基线 ① + ⑨）—— 多段必须用 `teachany-audio-player.js`
+> 4. **Remotion 教学视频**：≥1 段**有真实信息密度**的 mp4（基线 ②）—— ⛔ 不是 hero 图配音频，必须 ≥3 个画面 beat、画面与 TTS 同步、可暂停回看
+> 5. **知识图谱**：`teachany-knowledge-graph.js` 标准模块（基线 ⑦）—— 不是手写 SVG 框框
+>
+> ⛔ 视频和交互动画是核心概念的重要**动态表达方法**，与"配套朗读音频"是两码事。一段教学视频如果换成 hero 图 + 同样的音频，学生体验完全不变 → 这就是伪视频，立刻返工。
 
 ---
 
