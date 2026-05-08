@@ -11,12 +11,13 @@
 | 知识点 | 调节与协调 |
 | 英文名 | Control & coordination |
 | 学科 | 生物 (biology) |
-| 学段 | al (al) |
+| 学段 | Cambridge A-Level（高中） (al) |
 | 年级 | 12 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | A2 · 能量与稳态 / A2 · Energy & Homeostasis / A2 · Energy & Homeostasis |
+| tree 源 | `data/trees/cambridge/al/biology.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 
@@ -37,9 +38,4 @@
 
 ## 课标摘要
 
-1 describe the structure of a chromosome, limited to:
-• DNA
-• histone proteins
-• sister chromatids
-• centromere
-• telomeres；4 outline the role of telomeres in preventing the loss of genes from the ends of chromosomes during DNA replication
+1 describe the structure of a chromosome, limited to: • DNA • histone proteins • sister chromatids • centromere • telomeres；4 outline the role of telomeres in preventing the loss of genes from the ends of chromosomes during DNA replication

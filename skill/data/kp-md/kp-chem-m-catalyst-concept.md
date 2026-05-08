@@ -1,46 +1,36 @@
-# 催化剂与催化作用
+# 催化剂与催化作用 / Catalysts
 
-<!-- TeachAny Knowledge Point -->
-<!-- kp_id: kp-chem-m-our-air-chem-m-catalyst-concept -->
-<!-- node_id: chem-m-catalyst-concept -->
-<!-- subject: chem -->
-<!-- stage: m -->
+<!-- TeachAny KP: kp_id=kp-chem-m-catalyst-concept node_id=chem-m-catalyst-concept subject=chemistry stage=middle -->
 
 ## 元数据
 
 | 字段 | 值 |
 | --- | --- |
-| kp_id | `kp-chem-m-our-air-chem-m-catalyst-concept` |
+| kp_id | `kp-chem-m-catalyst-concept` |
 | node_id | `chem-m-catalyst-concept` |
 | 知识点 | 催化剂与催化作用 |
-| 学科 | 化学 (chem) |
-| 学段 | 初中 (m) |
+| 英文名 | Catalysts |
+| 学科 | 化学 (chemistry) |
+| 学段 | 初中 (middle) |
 | 年级 | 9 |
+| 课标系统 | 中国国家课标 |
 | 领域 | 物质的化学变化 |
+| tree 源 | `data/trees/cn/middle/chemistry.json` |
 
-## 课标原文（2022年版）
+## 课标原文（义教/普高 2022年版）
 
-### 内容要求
+### 课标要点
 
-> 通过具体的化学实验探究活动，学习研究物质性质，探究物质组成和反应规律。
+探究过氧化氢分解反应中二氧化锰的催化作用。
 
-
-### 教学提示
-
-> 探究过氧化氢分解反应中二氧化锰的催化作用。
+通过具体的化学实验探究活动，学习研究物质性质，探究物质组成和反应规律。
 
 ## 知识图谱关系
 
 ### 前驱知识
 
-- `chem-m-oxygen-preparation`
+- `chem-m-chemical-equation`
 
 ## 课标摘要
 
-【内容要求】"认识催化剂的特征（"一变两不变"），了解催化剂在化工生产中的重要用途（如过氧化氢分解制氧气、合成氨、接触法制硫酸等）.；【学业要求】能说出催化剂的定义和特征（能改变反应速率，反应前后本身的质量和化学性质不变）；能举例说明催化剂在生产和生活中的应用；能设计实验验证某物质是否为催化剂.；【教学提示】（1）通过对比实验（有/无二氧化锰时过氧化氢分解速率），直观展示催化作用。
-
-（2）强调"一变两不变"——只说"改变"速率不说"加快"，因为也有减慢的情况。
-
-（3）介绍生物体内的酶催化，拓宽知识面。
-
-（4）讨论催化剂对化学工业节能降耗的重大贡献。
+探究过氧化氢分解反应中二氧化锰的催化作用。；通过具体的化学实验探究活动，学习研究物质性质，探究物质组成和反应规律。

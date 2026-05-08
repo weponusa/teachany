@@ -10,13 +10,14 @@
 | node_id | `physics-ap-1-electric-circuits-basic` |
 | 知识点 | 基本电路 |
 | 英文名 | Basic circuits |
-| 学科 | AP 物理 1 (physics-1) |
+| 学科 | 物理 1 (physics-1) |
 | 学段 | 高中 (high) |
 | 年级 | 11 |
-| 课标系统 | AP 大学先修 |
+| 课标系统 | AP 美国大学先修 |
 | 领域 | 电荷与电力 Electric Charge |
+| tree 源 | `data/trees/ap/high/physics-1.json` |
 
-## 课标原文（AP Course Description）
+## 课标原文（AP Course Framework）
 
 ### 课标原文
 

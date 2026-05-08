@@ -11,12 +11,13 @@
 | 知识点 | 12 氮和硫化学 |
 | 英文名 | 12 Nitrogen & sulfur chemistry |
 | 学科 | 化学 (chemistry) |
-| 学段 | al (al) |
+| 学段 | Cambridge A-Level（高中） (al) |
 | 年级 | 12 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | AS 无机化学 Inorganic Chemistry |
+| tree 源 | `data/trees/cambridge/al/chemistry.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 

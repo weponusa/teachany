@@ -13,10 +13,11 @@
 | 学科 | 生物 (biology) |
 | 学段 | 高中 (high) |
 | 年级 | 12 |
-| 课标系统 | AP 大学先修 |
+| 课标系统 | AP 美国大学先修 |
 | 领域 | Unit 7-8 进化与生态 Evolution & Ecology |
+| tree 源 | `data/trees/ap/high/biology.json` |
 
-## 课标原文（AP Course Description）
+## 课标原文（AP Course Framework）
 
 ### 课标原文
 
@@ -36,4 +37,4 @@ The hydrogen bonds between adjacent polar water molecules result in cohesion, ad
 
 ## 课标摘要
 
-Explain how the properties of water that result from its polarity and hydrogen bonding affect its biological function.；Living systems depend on the properties of water to sustain life.；Water has polarity, because of the formation of polar covalent bonds between hydrogen and oxygen within water molecules. This polarity contributes to hydrogen bonding between and within biological mol...；The hydrogen bonds between adjacent polar water molecules result in cohesion, adhesion, and surface tension.
+Explain how the properties of water that result from its polarity and hydrogen bonding affect its biological function.；Living systems depend on the properties of water to sustain life.；Water has polarity, because of the formation of polar covalent bonds between hydrogen and oxygen within water molecules. This polarity contributes to hydrogen bonding between and within biological molecules.；The hydrogen bonds between adjacent polar water molecules result in cohesion, adhesion, and surface tension.

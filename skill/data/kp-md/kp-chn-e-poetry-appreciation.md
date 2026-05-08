@@ -11,10 +11,11 @@
 | 知识点 | 古诗词赏析（意境/情感/手法） |
 | 英文名 | Classical Chinese Poetry |
 | 学科 | 语文 (chinese) |
-| 学段 | elementary (elementary) |
+| 学段 | 小学 (elementary) |
 | 年级 | 4 |
 | 课标系统 | 中国国家课标 |
 | 领域 | 古诗文 |
+| tree 源 | `data/trees/cn/elementary/chinese.json` |
 
 ## 课标原文（义教/普高 2022年版）
 
@@ -30,10 +31,6 @@
 
 - `chn-e-tang-poetry`
 
-### 后续延伸
-
-- `chn-e-classical-chinese-intro`
-
 ## 课标摘要
 
-【课标要点】诵读优秀诗文，注意在诵读过程中体验情感，展开想象，领悟诗文大意。；【课标要点】能初步把握文章的主要内容，体会文章表达的思想感情。
+诵读优秀诗文，注意在诵读过程中体验情感，展开想象，领悟诗文大意。；能初步把握文章的主要内容，体会文章表达的思想感情。

@@ -1,30 +1,29 @@
-# 工业革命
+# 工业革命 / Industrial Revolution
 
-<!-- TeachAny Knowledge Point -->
-<!-- kp_id: kp-hist-m-world-modern-hist-m-industrial-revolution -->
-<!-- node_id: hist-m-industrial-revolution -->
-<!-- subject: hist -->
-<!-- stage: m -->
+<!-- TeachAny KP: kp_id=kp-hist-m-industrial-revolution node_id=hist-m-industrial-revolution subject=history stage=middle -->
 
 ## 元数据
 
 | 字段 | 值 |
 | --- | --- |
-| kp_id | `kp-hist-m-world-modern-hist-m-industrial-revolution` |
+| kp_id | `kp-hist-m-industrial-revolution` |
 | node_id | `hist-m-industrial-revolution` |
 | 知识点 | 工业革命 |
-| 学科 | 历史 (hist) |
-| 学段 | 初中 (m) |
+| 英文名 | Industrial Revolution |
+| 学科 | 历史 (history) |
+| 学段 | 初中 (middle) |
 | 年级 | 9 |
+| 课标系统 | 中国国家课标 |
 | 领域 | 世界近现代史 |
+| tree 源 | `data/trees/cn/middle/history.json` |
 
-## 课标原文（2022年版）
+## 课标原文（义教/普高 2022年版）
 
-### 内容要求
+### 课标要点
 
-> 世界近代史内容要求：了解资本主义发展、社会主义运动和民族解放运动。
+世界近代史内容要求：了解资本主义发展、社会主义运动和民族解放运动。
 
-> 课程内容结构示意图显示，世界近代史的主题包括资本主义发展、社会主义运动和民族解放运动。
+课程内容结构示意图显示，世界近代史的主题包括资本主义发展、社会主义运动和民族解放运动。
 
 ## 知识图谱关系
 
@@ -32,10 +31,6 @@
 
 - `hist-m-english-revolution`
 
-### 后续延伸
-
-- `hist-m-ww1`
-
 ## 课标摘要
 
-【内容要求】通过了解珍妮机、蒸汽机、铁路和现代工厂制度，初步理解第一次工业革命的影响；通过了解早期工人阶级的斗争，马克思、恩格斯的革命活动和《共产党宣言》的发表，理解马克思主义诞生的历史意义；通过了解第一国际成立、巴黎公社，理解马克思主义的传播和国际工人运动的发展.；【学业要求】能够利用并分析可信史料，初步理解近代世界政治、经济和思想文化之间的关系.；【教学提示】举行辩论会，如围绕"工业革命带来的利与弊"等辩题，分小组查找材料，形成辩论各方的论点和论据，在班级开展辩驳论活动. 开展项目学习，深入探讨世界近代史上的重要问题，如"新航路的开辟对整个世界有哪些影响？""资产阶级是如何进行原始积累的？""马克思主义诞生的世界影响""世界资本主义体系的形成对世界格局的影响""近代科学和文化对人类社会发展的作用"等，以个人学习、小组讨论的方式，搜集、辨析史料，撰写研究
+世界近代史内容要求：了解资本主义发展、社会主义运动和民族解放运动。；课程内容结构示意图显示，世界近代史的主题包括资本主义发展、社会主义运动和民族解放运动。

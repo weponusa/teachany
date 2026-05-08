@@ -11,12 +11,13 @@
 | 知识点 | 舞台表演 |
 | 英文名 | Stage & performance |
 | 学科 | 英语 (english) |
-| 学段 | al (al) |
+| 学段 | Cambridge A-Level（高中） (al) |
 | 年级 | 12 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | 戏剧 / Drama / Drama |
+| tree 源 | `data/trees/cambridge/al/english.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 
@@ -36,4 +37,4 @@ Learners will explore the conventions of genres of texts and the contexts in whi
 
 ## 课标摘要
 
-The aims are to enable students to: • develop an appreciation of and an informed personal response to literature in English in a range of texts in different forms, and from different periods and cultu...；The key concepts for Cambridge International AS & A Level Literature in English are: • Context Exploring the relationship between a text and its historical, social and cultural backgrounds and the way...；Assessment objectives (AOs) are: AO1 Knowledge and understanding Respond with understanding to literary texts in a variety of forms, from different cultures; with an appreciation of relevant contexts ...；Learners will explore the conventions of genres of texts and the contexts in which works have been written, read and received.
+The aims are to enable students to: • develop an appreciation of and an informed personal response to literature in English in a range of texts in different forms, and from different periods and cultures；The key concepts for Cambridge International AS & A Level Literature in English are: • Context Exploring the relationship between a text and its historical, social and cultural backgrounds and the ways in which this can illuminate the reading of a text.；Assessment objectives (AOs) are: AO1 Knowledge and understanding Respond with understanding to literary texts in a variety of forms, from different cultures; with an appreciation of relevant contexts that illuminate readings of the texts.；Learners will explore the conventions of genres of texts and the contexts in which works have been written, read and received.

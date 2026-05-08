@@ -10,13 +10,14 @@
 | node_id | `physics-ap-c-biot-savart` |
 | 知识点 | 毕奥-萨伐尔定律 |
 | 英文名 | Biot-Savart law |
-| 学科 | AP 物理 C (physics-c) |
+| 学科 | 物理 C (physics-c) |
 | 学段 | 高中 (high) |
 | 年级 | 12 |
-| 课标系统 | AP 大学先修 |
+| 课标系统 | AP 美国大学先修 |
 | 领域 | 电磁-磁场与电磁感应 E&M: Magnetism |
+| tree 源 | `data/trees/ap/high/physics-c.json` |
 
-## 课标原文（AP Course Description）
+## 课标原文（AP Course Framework）
 
 ### 课标原文
 

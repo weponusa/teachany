@@ -1,36 +1,30 @@
 # 俄国十月革命
 
-<!-- TeachAny Knowledge Point -->
-<!-- kp_id: kp-hist-m-world-modern-hist-m-russian-revolution -->
-<!-- node_id: hist-m-russian-revolution -->
-<!-- subject: hist -->
-<!-- stage: m -->
+<!-- TeachAny KP: kp_id=kp-hist-m-russian-revolution node_id=hist-m-russian-revolution subject=history stage=middle -->
 
 ## 元数据
 
 | 字段 | 值 |
 | --- | --- |
-| kp_id | `kp-hist-m-world-modern-hist-m-russian-revolution` |
+| kp_id | `kp-hist-m-russian-revolution` |
 | node_id | `hist-m-russian-revolution` |
 | 知识点 | 俄国十月革命 |
-| 学科 | 历史 (hist) |
-| 学段 | 初中 (m) |
+| 学科 | 历史 (history) |
+| 学段 | 初中 (middle) |
 | 年级 | 9 |
+| 课标系统 | 中国国家课标 |
 | 领域 | 世界近现代史 |
+| tree 源 | `data/trees/cn/middle/history.json` |
 
-## 课标原文（2022年版）
+## 课标原文（义教/普高 2022年版）
 
-### 内容要求
+### 课标要点
 
-知道列宁领导的十月革命的背景与过程，理解十月革命胜利的重要历史意义.
+初中9年级学段目标：理解并掌握「俄国十月革命」的基本概念与方法
 
-### 学业要求
+学业要求：能在真实情境中识别、运用「俄国十月革命」解决问题
 
-能够结合语文、外语、地理等课程的学习，初步理解相关史料的含义.
-
-### 教学提示
-
-开展深度阅读活动，如阅读、理解论述革命领袖的资料，在读书会上阐述革命领袖在历史转折关头的重大作用.
+活动建议：通过观察、实验、练习、讨论等方式深化对「俄国十月革命」的理解
 
 ## 知识图谱关系
 
@@ -38,10 +32,6 @@
 
 - `hist-m-ww1`
 
-### 后续延伸
-
-- `hist-m-cold-war`
-
 ## 课标摘要
 
-【内容要求】知道列宁领导的十月革命的背景与过程，理解十月革命胜利的重要历史意义.；【学业要求】能够结合语文、外语、地理等课程的学习，初步理解相关史料的含义.；【教学提示】开展深度阅读活动，如阅读、理解论述革命领袖的资料，在读书会上阐述革命领袖在历史转折关头的重大作用.
+初中9年级学段目标：理解并掌握「俄国十月革命」的基本概念与方法；学业要求：能在真实情境中识别、运用「俄国十月革命」解决问题；活动建议：通过观察、实验、练习、讨论等方式深化对「俄国十月革命」的理解

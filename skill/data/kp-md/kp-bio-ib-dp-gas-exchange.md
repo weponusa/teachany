@@ -15,6 +15,7 @@
 | 年级 | 11 |
 | 课标系统 | IB 国际文凭 |
 | 领域 | 主题 B · 形式与功能 Form and Function |
+| tree 源 | `data/trees/ib/dp/biology.json` |
 
 ## 课标原文（IB Programme）
 
@@ -46,11 +47,4 @@ bases, or the numbers of hydrogen bonds.
 
 ## 课标摘要
 
-A1.2.1—DNA as the genetic material of all living organisms
-Some viruses use RNA as their genetic material but viruses are not considered to be living.；A1.2.2—Components of a nucleotide
-In diagrams of nucleotides use circles, pentagons and rectangles to represent relative positions of
-phosphates, pentose sugars and bases.；A1.2.3—Sugar–phosphate bonding and the sugar–phosphate “backbone” of DNA and RNA
-Sugar–phosphate bonding makes a continuous chain of covalently bonded atoms in each strand of DNA
-or RNA nucleotides, w...；A1.2.6—DNA as a double helix made of two antiparallel strands of nucleotides with two strands linked by
-hydrogen bonding between complementary base pairs
-In diagrams of DNA structure, students should ...
+A1.2.1—DNA as the genetic material of all living organisms Some viruses use RNA as their genetic material but viruses are not considered to be living.；A1.2.2—Components of a nucleotide In diagrams of nucleotides use circles, pentagons and rectangles to represent relative positions of phosphates, pentose sugars and bases.；A1.2.3—Sugar–phosphate bonding and the sugar–phosphate “backbone” of DNA and RNA Sugar–phosphate bonding makes a continuous chain of covalently bonded atoms in each strand of DNA or RNA nucleotides, which forms a strong “backbone” in the molecule.；A1.2.6—DNA as a double helix made of two antiparallel strands of nucleotides with two strands linked by hydrogen bonding between complementary base pairs In diagrams of DNA structure, students should draw the two strands antiparallel, but are not required to draw the helical shape. Students should show adenine (A) paired with thymine (T), and guanine (G) paired with cytosine (C). Students are not required to memorize the relative lengths of the purine and pyrimidine bases, or the numbers of hydrogen bonds.

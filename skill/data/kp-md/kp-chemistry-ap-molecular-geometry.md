@@ -13,10 +13,11 @@
 | 学科 | 化学 (chemistry) |
 | 学段 | 高中 (high) |
 | 年级 | 11 |
-| 课标系统 | AP 大学先修 |
+| 课标系统 | AP 美国大学先修 |
 | 领域 | Unit 1-2 原子与化学键 Atoms & Bonding |
+| tree 源 | `data/trees/ap/high/chemistry.json` |
 
-## 课标原文（AP Course Description）
+## 课标原文（AP Course Framework）
 
 ### 课标原文
 
@@ -42,11 +43,4 @@ SKILLS
 
 ## 课标摘要
 
-1.2.A Explain the quantitative relationship between the mass spectrum of an element and the masses of the element’s isotopes.
-
-ESSENTIAL KNOWLEDGE
-1.2.A.1 The mass spectrum of a sample containing a si...；SUGGESTED SKILL
-Mathematical Routines
-5.D Identify information presented graphically to solve a problem.；Practice 2 Question and Method
-SKILLS
-2.D Make observations or collect data from representations of laboratory setups or results, while attending to precision where appropriate.
+1.2.A Explain the quantitative relationship between the mass spectrum of an element and the masses of the element’s isotopes.  ESSENTIAL KNOWLEDGE 1.2.A.1 The mass spectrum of a sample containing a single element can be used to determine the identity of the isotopes of that element and the relative abundance of each isotope in nature. 1.2.A.2 The average atomic mass of an element can be estimated from the weighted average of the isotopic masses using the mass of each isotope and its relative abundance.；SUGGESTED SKILL Mathematical Routines 5.D Identify information presented graphically to solve a problem.；Practice 2 Question and Method SKILLS 2.D Make observations or collect data from representations of laboratory setups or results, while attending to precision where appropriate.

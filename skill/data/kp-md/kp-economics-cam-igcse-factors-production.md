@@ -10,13 +10,14 @@
 | node_id | `economics-cam-igcse-factors-production` |
 | 知识点 | 生产要素 |
 | 英文名 | Factors of production |
-| 学科 | 经济 (economics) |
-| 学段 | IGCSE (igcse) |
+| 学科 | 经济学 (economics) |
+| 学段 | Cambridge-IGCSE（初中/高中） (igcse) |
 | 年级 | 9 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | 基本经济问题 / Basic Economic Problem / Basic Economic Problem |
+| tree 源 | `data/trees/cambridge/igcse/economics.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 

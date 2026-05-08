@@ -11,12 +11,13 @@
 | 知识点 | 总结技巧 |
 | 英文名 | Summary skills |
 | 学科 | 英语 (english) |
-| 学段 | IGCSE (igcse) |
+| 学段 | Cambridge-IGCSE（初中/高中） (igcse) |
 | 年级 | 10 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | 阅读理解 / Reading / Reading |
+| tree 源 | `data/trees/cambridge/igcse/english.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 
@@ -36,4 +37,4 @@ This question tests the following reading assessment objectives (15 marks): R1 d
 
 ## 课标摘要
 
-Candidates will be assessed on their ability to: R1 demonstrate understanding of explicit meanings；Candidates will be assessed on their ability to: R2 demonstrate understanding of implicit meanings and attitudes；Comprehension task: this question requires candidates to respond to Text A. Candidates respond to a series of sub-questions. These include short answers testing understanding of both explicit and impl...；This question tests the following reading assessment objectives (15 marks): R1 demonstrate understanding of explicit meanings R2 demonstrate understanding of implicit meanings and attitudes R5 select ...
+Candidates will be assessed on their ability to: R1 demonstrate understanding of explicit meanings；Candidates will be assessed on their ability to: R2 demonstrate understanding of implicit meanings and attitudes；Comprehension task: this question requires candidates to respond to Text A. Candidates respond to a series of sub-questions. These include short answers testing understanding of both explicit and implicit meanings.；This question tests the following reading assessment objectives (15 marks): R1 demonstrate understanding of explicit meanings R2 demonstrate understanding of implicit meanings and attitudes R5 select and use information for specific purposes.

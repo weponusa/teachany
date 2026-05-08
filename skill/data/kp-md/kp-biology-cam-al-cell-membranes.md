@@ -11,20 +11,17 @@
 | 知识点 | 细胞膜 |
 | 英文名 | Cell membranes |
 | 学科 | 生物 (biology) |
-| 学段 | al (al) |
+| 学段 | Cambridge A-Level（高中） (al) |
 | 年级 | 11 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | AS · 细胞与分子 / AS · Cells & Molecules / AS · Cells & Molecules |
+| tree 源 | `data/trees/cambridge/al/biology.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 
 1.1 The microscope in cell studies Learning outcomes Candidates should be able to: 3 calculate magnifications of images and actual sizes of specimens from drawings, photomicrographs and electron micrographs (scanning and transmission)
-
-1.1 The microscope in cell studies Learning outcomes Candidates should be able to: 4 use an eyepiece graticule and stage micrometer scale to make measurements and use the appropriate units, millimetre (mm), micrometre (µm) and nanometre (nm)
-
-1.1 The microscope in cell studies Learning outcomes Candidates should be able to: 5 define resolution and magnification and explain the differences between these terms, with reference to light microscopy and electron microscopy
 
 ## 知识图谱关系
 
@@ -34,4 +31,4 @@
 
 ## 课标摘要
 
-1.1 The microscope in cell studies Learning outcomes Candidates should be able to: 3 calculate magnifications of images and actual sizes of specimens from drawings, photomicrographs and electron micro...；1.1 The microscope in cell studies Learning outcomes Candidates should be able to: 4 use an eyepiece graticule and stage micrometer scale to make measurements and use the appropriate units, millimetre...；1.1 The microscope in cell studies Learning outcomes Candidates should be able to: 5 define resolution and magnification and explain the differences between these terms, with reference to light micros...
+1.1 The microscope in cell studies Learning outcomes Candidates should be able to: 3 calculate magnifications of images and actual sizes of specimens from drawings, photomicrographs and electron micrographs (scanning and transmission)

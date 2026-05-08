@@ -11,12 +11,13 @@
 | 知识点 | 欧姆定律 |
 | 英文名 | Ohm's law |
 | 学科 | 物理 (physics) |
-| 学段 | IGCSE (igcse) |
+| 学段 | Cambridge-IGCSE（初中/高中） (igcse) |
 | 年级 | 10 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | 电与磁 / Electricity & Magnetism / Electricity & Magnetism |
+| tree 源 | `data/trees/cambridge/igcse/physics.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 

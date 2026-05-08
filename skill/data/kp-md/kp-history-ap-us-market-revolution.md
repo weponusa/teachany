@@ -10,13 +10,14 @@
 | node_id | `history-ap-us-market-revolution` |
 | 知识点 | 市场革命 |
 | 英文名 | Market revolution |
-| 学科 | 美国史 (us-history) |
+| 学科 | 美国历史 (us-history) |
 | 学段 | 高中 (high) |
 | 年级 | 11 |
-| 课标系统 | AP 大学先修 |
+| 课标系统 | AP 美国大学先修 |
 | 领域 | Period 4-5 扩张与内战 Expansion & Civil War (1800-1877) |
+| tree 源 | `data/trees/ap/high/us-history.json` |
 
-## 课标原文（AP Course Description）
+## 课标原文（AP Course Framework）
 
 ### 课标原文
 

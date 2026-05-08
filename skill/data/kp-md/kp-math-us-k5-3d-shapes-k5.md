@@ -1,22 +1,30 @@
-# 三维图形
-**3D shapes**
+# 三维图形 / 3D shapes
+
+<!-- TeachAny KP: kp_id=kp-math-us-k5-3d-shapes-k5 node_id=math-us-k5-3d-shapes-k5 subject=math stage=k5 -->
 
 ## 元数据
-- **学科**: math ()
-- **学段**: k5
-- **年级**: 2
-- **领域**: 几何与测量 / Geometry & Measurement / Geometry & Measurement
-- **知识点ID**: `math-us-k5-3d-shapes-k5`
 
-## 前置与扩展
-- **前置知识点**: math-us-k5-2d-shapes-k5
+| 字段 | 值 |
+| --- | --- |
+| kp_id | `kp-math-us-k5-3d-shapes-k5` |
+| node_id | `math-us-k5-3d-shapes-k5` |
+| 知识点 | 三维图形 |
+| 英文名 | 3D shapes |
+| 学科 | 数学 (math) |
+| 学段 | 小学 (K-5) (k5) |
+| 年级 | 2 |
+| 课标系统 | 美国 Common Core / NGSS |
+| 领域 | 几何与测量 / Geometry & Measurement / Geometry & Measurement |
+| tree 源 | `data/trees/us/k5/math.json` |
 
-## 一、课标原文
-*（本节暂无课标原文）*
+## 课标原文（Common Core / NGSS）
 
-## 二、教材资料
-### 2.2 核心概念与定义
-*（待补充：从参考书 OCR 文本抽取）*
+### 课标原文
 
-### 2.3 典型例题
-*（待补充：从参考书抽取，带解答）*
+（本节点暂未录入课标要点，欢迎贡献）
+
+## 知识图谱关系
+
+### 前驱知识
+
+- `math-us-k5-2d-shapes-k5`

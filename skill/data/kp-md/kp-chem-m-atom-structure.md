@@ -1,38 +1,31 @@
-# 原子的构成（质子/中子/电子）
+# 原子的结构 / Structure / Atom
 
-<!-- TeachAny Knowledge Point -->
-<!-- kp_id: kp-chem-m-matter-composition-chem-m-atom-structure -->
-<!-- node_id: chem-m-atom-structure -->
-<!-- subject: chem -->
-<!-- stage: m -->
+<!-- TeachAny KP: kp_id=kp-chem-m-atom-structure node_id=chem-m-atom-structure subject=chemistry stage=middle -->
 
 ## 元数据
 
 | 字段 | 值 |
 | --- | --- |
-| kp_id | `kp-chem-m-matter-composition-chem-m-atom-structure` |
+| kp_id | `kp-chem-m-atom-structure` |
 | node_id | `chem-m-atom-structure` |
-| 知识点 | 原子的构成（质子/中子/电子） |
-| 学科 | 化学 (chem) |
-| 学段 | 初中 (m) |
+| 知识点 | 原子的结构 |
+| 英文名 | Structure / Atom |
+| 学科 | 化学 (chemistry) |
+| 学段 | 初中 (middle) |
 | 年级 | 9 |
+| 课标系统 | 中国国家课标 |
 | 领域 | 物质的组成与结构 |
+| tree 源 | `data/trees/cn/middle/chemistry.json` |
 
-## 课标原文（2022年版）
+## 课标原文（义教/普高 2022年版）
 
-### 内容要求
+### 课标要点
 
-> 物质是由分子、原子构成的，物质结构决定性质，物质性质决定用途。
+物质是由分子、原子构成的，物质结构决定性质，物质性质决定用途。
 
+能从元素、原子、分子视角初步分析物质的组成及变化。
 
-### 学业要求
-
-> 能从元素、原子、分子视角初步分析物质的组成及变化。
-
-
-### 教学提示
-
-> 原子结构模型的建立和发展。
+原子结构模型的建立和发展。
 
 ## 知识图谱关系
 
@@ -40,17 +33,6 @@
 
 - `chem-m-atom-molecule`
 
-### 后续延伸
-
-- `chem-m-element-concept`
-- `chem-m-ion-concept`
-
 ## 课标摘要
 
-【内容要求】"知道原子是由原子核（质子和中子）和核外电子构成的；了解质子数、核外电子数与原子电性的关系；初步了解核外电子的排布规律；知道相对原子质量的含义.；【学业要求】能画出1-18号元素的原子结构示意图；能根据原子结构示意图判断元素的化学性质（最外层电子数）；能进行相对原子质量的简单计算；能说明离子形成的机理.；【教学提示】（1）借助原子结构模型教具或三维模型，让抽象概念可视化。
-
-（2）引导学生发现"最外层电子数决定元素化学性质"这一重要规律。
-
-（3）通过填表练习强化记忆：质子数=核电荷数=核外电子数=原子序数。
-
-（4）介绍原子结构发现的科学史（汤姆森、卢瑟福等）。
+物质是由分子、原子构成的，物质结构决定性质，物质性质决定用途。；能从元素、原子、分子视角初步分析物质的组成及变化。；原子结构模型的建立和发展。

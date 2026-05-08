@@ -1,44 +1,38 @@
-# 神经系统与反射
+# 神经系统 / Nervous System
 
-<!-- TeachAny Knowledge Point -->
-<!-- kp_id: kp-bio-m-human-body-bio-m-nervous-system-m -->
-<!-- node_id: bio-m-nervous-system-m -->
-<!-- subject: bio -->
-<!-- stage: m -->
+<!-- TeachAny KP: kp_id=kp-bio-m-nervous-system-m node_id=bio-m-nervous-system-m subject=biology stage=middle -->
 
 ## 元数据
 
 | 字段 | 值 |
 | --- | --- |
-| kp_id | `kp-bio-m-human-body-bio-m-nervous-system-m` |
+| kp_id | `kp-bio-m-nervous-system-m` |
 | node_id | `bio-m-nervous-system-m` |
-| 知识点 | 神经系统与反射 |
-| 学科 | 生物 (bio) |
-| 学段 | 初中 (m) |
+| 知识点 | 神经系统 |
+| 英文名 | Nervous System |
+| 学科 | 生物 (biology) |
+| 学段 | 初中 (middle) |
 | 年级 | 7 |
+| 课标系统 | 中国国家课标 |
 | 领域 | 人体结构与功能 |
+| tree 源 | `data/trees/cn/middle/biology.json` |
 
-## 课标原文（2022年版）
+## 课标原文（义教/普高 2022年版）
 
-### 内容要求
+### 课标要点
 
-人体各系统在神经系统和内分泌系统的调节下，相互联系和协调，共同完成各项生命活动，以适应机体内外环境的变化. 神经系统由脑、脊髓及与它们相连的神经构成. 反射是神经调节的基本方式，反射弧是反射的结构基础. 人体的运动是在神经系统支配下，由肌肉牵拉着骨围绕关节进行的.
+初中7年级学段目标：理解并掌握「神经系统」的基本概念与方法
 
-### 学业要求
+学业要求：能在真实情境中识别、运用「神经系统」解决问题
 
-结合具体实例，分析人体的神经系统、内分泌系统和免疫功能对机体内外环境变化所作出的反应.
+活动建议：通过观察、实验、练习、讨论等方式深化对「神经系统」的理解
 
 ## 知识图谱关系
 
 ### 前驱知识
 
-- `bio-m-excretory-system`
-
-### 后续延伸
-
-- `bio-m-endocrine-system-m`
-- `bio-m-reproduction-development`
+- `bio-m-urinary-nervous`
 
 ## 课标摘要
 
-【内容要求】人体各系统在神经系统和内分泌系统的调节下，相互联系和协调，共同完成各项生命活动，以适应机体内外环境的变化. 神经系统由脑、脊髓及与它们相连的神经构成. 反射是神经调节的基本方式，反射弧是反射的结构基础. 人体的运动是在神经系统支配下，由肌肉牵拉着骨围绕关节进行的.；【学业要求】结合具体实例，分析人体的神经系统、内分泌系统和免疫功能对机体内外环境变化所作出的反应.
+初中7年级学段目标：理解并掌握「神经系统」的基本概念与方法；学业要求：能在真实情境中识别、运用「神经系统」解决问题；活动建议：通过观察、实验、练习、讨论等方式深化对「神经系统」的理解

@@ -11,12 +11,13 @@
 | 知识点 | 指数与标准形式 |
 | 英文名 | Indices & standard form |
 | 学科 | 数学 (math) |
-| 学段 | IGCSE (igcse) |
+| 学段 | Cambridge-IGCSE（初中/高中） (igcse) |
 | 年级 | 10 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | 数 / Number / Number |
+| tree 源 | `data/trees/cambridge/igcse/math.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 
@@ -36,8 +37,4 @@ Know and use Pythagoras’ theorem.
 
 ## 课标摘要
 
-C6.1 Pythagoras’ theorem
-Notes and examples
-Know and use Pythagoras’ theorem.；E6.1 Pythagoras’ theorem
-Notes and examples
-Know and use Pythagoras’ theorem.
+C6.1 Pythagoras’ theorem Notes and examples Know and use Pythagoras’ theorem.；E6.1 Pythagoras’ theorem Notes and examples Know and use Pythagoras’ theorem.

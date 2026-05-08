@@ -11,12 +11,13 @@
 | 知识点 | 分子动理论 |
 | 英文名 | Kinetic particle model |
 | 学科 | 物理 (physics) |
-| 学段 | IGCSE (igcse) |
+| 学段 | Cambridge-IGCSE（初中/高中） (igcse) |
 | 年级 | 9 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | 热学 / Thermal Physics / Thermal Physics |
+| tree 源 | `data/trees/cambridge/igcse/physics.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 

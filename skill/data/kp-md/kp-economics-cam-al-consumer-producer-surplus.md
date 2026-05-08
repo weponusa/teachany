@@ -10,13 +10,14 @@
 | node_id | `economics-cam-al-consumer-producer-surplus` |
 | 知识点 | 消费者与生产者剩余 |
 | 英文名 | Consumer & producer surplus |
-| 学科 | 经济 (economics) |
-| 学段 | al (al) |
+| 学科 | 经济学 (economics) |
+| 学段 | Cambridge A-Level（高中） (al) |
 | 年级 | 11 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | 微观经济 / Microeconomics / Microeconomics |
+| tree 源 | `data/trees/cambridge/al/economics.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 
@@ -39,7 +40,4 @@
 
 ## 课标摘要
 
-2.2.1 definition of price elasticity, income elasticity and cross elasticity of demand (PED, YED, XED)；2.2.2 formulae for and calculation of price elasticity, income elasticity and cross elasticity of demand；2.2.3 significance of relative percentage changes, the size and sign of the coefficient of:
-• price elasticity of demand
-• income elasticity of demand
-• cross elasticity of demand；2.2.8 implications for decision-making of price elasticity, income elasticity and cross elasticity of demand
+2.2.1 definition of price elasticity, income elasticity and cross elasticity of demand (PED, YED, XED)；2.2.2 formulae for and calculation of price elasticity, income elasticity and cross elasticity of demand；2.2.3 significance of relative percentage changes, the size and sign of the coefficient of: • price elasticity of demand • income elasticity of demand • cross elasticity of demand；2.2.8 implications for decision-making of price elasticity, income elasticity and cross elasticity of demand

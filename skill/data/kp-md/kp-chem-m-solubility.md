@@ -1,33 +1,29 @@
-# 溶解度与溶解度曲线
+# 溶解度 / Solubility
 
-<!-- TeachAny Knowledge Point -->
-<!-- kp_id: kp-chem-m-water-solutions-chem-m-solubility -->
-<!-- node_id: chem-m-solubility -->
-<!-- subject: chem -->
-<!-- stage: m -->
+<!-- TeachAny KP: kp_id=kp-chem-m-solubility node_id=chem-m-solubility subject=chemistry stage=middle -->
 
 ## 元数据
 
 | 字段 | 值 |
 | --- | --- |
-| kp_id | `kp-chem-m-water-solutions-chem-m-solubility` |
+| kp_id | `kp-chem-m-solubility` |
 | node_id | `chem-m-solubility` |
-| 知识点 | 溶解度与溶解度曲线 |
-| 学科 | 化学 (chem) |
-| 学段 | 初中 (m) |
+| 知识点 | 溶解度 |
+| 英文名 | Solubility |
+| 学科 | 化学 (chemistry) |
+| 学段 | 初中 (middle) |
 | 年级 | 9 |
+| 课标系统 | 中国国家课标 |
 | 领域 | 物质的性质与应用 |
+| tree 源 | `data/trees/cn/middle/chemistry.json` |
 
-## 课标原文（2022年版）
+## 课标原文（义教/普高 2022年版）
 
-### 内容要求
+### 课标要点
 
-> 初步学会配制一定溶质质量分数的溶液。
+初步学会配制一定溶质质量分数的溶液。
 
-
-### 教学提示
-
-> 测定并比较氯化钠、硝酸铵、氢氧化钠在水中溶解时溶液的温度变化。
+测定并比较氯化钠、硝酸铵、氢氧化钠在水中溶解时溶液的温度变化。
 
 ## 知识图谱关系
 
@@ -35,16 +31,6 @@
 
 - `chem-m-solution-concept`
 
-### 后续延伸
-
-- `chem-m-solution-concentration`
-
 ## 课标摘要
 
-【内容要求】"了解饱和溶液和不饱和溶液的含义；了解溶解度的含义，能利用溶解度表查阅物质的溶解度；能绘制并解读溶解度曲线；认识影响固体物质溶解度的因素.；【学业要求】能判断给定条件下某溶液是否为饱和溶液；能利用溶解度曲线获取信息并进行简单计算；能解释结晶现象；能根据溶解度曲线选择分离混合物的方法.；【教学提示】（1）通过控制变量的实验设计，引导学生探究影响溶解性的因素。
-
-（2）重点训练学生解读溶解度曲线的能力，这是中考常考内容。
-
-（3）联系海水晒盐、冰糖制作结晶体等实际例子。
-
-（4）可采用小组合作学习的方式完成溶解度曲线的分析任务。
+初步学会配制一定溶质质量分数的溶液。；测定并比较氯化钠、硝酸铵、氢氧化钠在水中溶解时溶液的温度变化。

@@ -15,6 +15,7 @@
 | 年级 | 10 |
 | 课标系统 | IB 国际文凭 |
 | 领域 | 代数 / Algebra / Algebra |
+| tree 源 | `data/trees/ib/myp/mathematics.json` |
 
 ## 课标原文（IB Programme）
 
@@ -44,14 +45,4 @@ roots, no real roots.
 
 ## 课标摘要
 
-SL 2.6
-Content Guidance, clarification and syllabus links
-The quadratic function f(x)=ax2+bx+c: its
-graph, y -intercept (0,c). Axis of symmetry.
-The form f(x)=a(x−p)(x−q),
-x- intercepts (p,0) and (q,0...；SL 2.7
-Content Guidance, clarification and syllabus links
-Solution of quadratic equations and inequalities.
-The quadratic formula.
-The discriminant Δ=b2−4ac and the nature of the
-roots, that is, two d...
+SL 2.6 Content Guidance, clarification and syllabus links The quadratic function f(x)=ax2+bx+c: its graph, y -intercept (0,c). Axis of symmetry. The form f(x)=a(x−p)(x−q), x- intercepts (p,0) and (q,0). The form f(x)=a(x−h)2+k, vertex (h,k).；SL 2.7 Content Guidance, clarification and syllabus links Solution of quadratic equations and inequalities. The quadratic formula. The discriminant Δ=b2−4ac and the nature of the roots, that is, two distinct real roots, two equal real roots, no real roots.

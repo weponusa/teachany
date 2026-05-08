@@ -10,13 +10,14 @@
 | node_id | `economics-cam-igcse-demand-supply-igc` |
 | 知识点 | 需求与供给 |
 | 英文名 | Demand & supply |
-| 学科 | 经济 (economics) |
-| 学段 | IGCSE (igcse) |
+| 学科 | 经济学 (economics) |
+| 学段 | Cambridge-IGCSE（初中/高中） (igcse) |
 | 年级 | 10 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | 资源配置 / Allocation of Resources / Allocation of Resources |
+| tree 源 | `data/trees/cambridge/igcse/economics.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 

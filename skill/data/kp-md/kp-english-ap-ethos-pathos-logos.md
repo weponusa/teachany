@@ -13,10 +13,11 @@
 | 学科 | 英语 (english) |
 | 学段 | 高中 (high) |
 | 年级 | 11 |
-| 课标系统 | AP 大学先修 |
+| 课标系统 | AP 美国大学先修 |
 | 领域 | 修辞分析 Rhetorical Analysis |
+| tree 源 | `data/trees/ap/high/english.json` |
 
-## 课标原文（AP Course Description）
+## 课标原文（AP Course Framework）
 
 ### 课标原文
 

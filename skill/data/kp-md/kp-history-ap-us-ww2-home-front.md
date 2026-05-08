@@ -10,13 +10,14 @@
 | node_id | `history-ap-us-ww2-home-front` |
 | 知识点 | 二战与国内变化 |
 | 英文名 | WWII & home front |
-| 学科 | 美国史 (us-history) |
+| 学科 | 美国历史 (us-history) |
 | 学段 | 高中 (high) |
 | 年级 | 12 |
-| 课标系统 | AP 大学先修 |
+| 课标系统 | AP 美国大学先修 |
 | 领域 | Period 6-7 镀金时代与进步时代 Gilded Age & Progressive (1865-1945) |
+| tree 源 | `data/trees/ap/high/us-history.json` |
 
-## 课标原文（AP Course Description）
+## 课标原文（AP Course Framework）
 
 ### 课标原文
 

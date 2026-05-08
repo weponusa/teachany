@@ -10,13 +10,14 @@
 | node_id | `math-ap-cab-avg-value` |
 | 知识点 | 函数平均值 |
 | 英文名 | Average value |
-| 学科 | AP 微积分 AB (calculus-ab) |
+| 学科 | 微积分 AB (calculus-ab) |
 | 学段 | 高中 (high) |
 | 年级 | 12 |
-| 课标系统 | AP 大学先修 |
+| 课标系统 | AP 美国大学先修 |
 | 领域 | Unit 8 积分应用 Applications of Integration |
+| tree 源 | `data/trees/ap/high/calculus-ab.json` |
 
-## 课标原文（AP Course Description）
+## 课标原文（AP Course Framework）
 
 ### 课标原文
 
@@ -54,22 +55,4 @@ Recognizing opportunities to apply derivative rules can simplify differentiation
 
 ## 课标摘要
 
-SUGGESTED SKILL
-Implementing
-Mathematical
-Processes
-1.E
-Apply appropriate
-mathematical rules or
-procedures, with and
-without technology.；LEARNING OBJECTIVE
-FUN-3.A
-Calculate derivatives of
-familiar functions.；ESSENTIAL KNOWLEDGE
-FUN-3.A.4
-Calculate derivatives of
-familiar functions. Specific rules can be used to find the
-derivatives for sine, cosine, exponential, and
-logarithmic functions.；ENDURING UNDERSTANDING
-FUN-3
-Recognizing opportunities to apply derivative rules can simplify differentiation.
+SUGGESTED SKILL Implementing Mathematical Processes 1.E Apply appropriate mathematical rules or procedures, with and without technology.；LEARNING OBJECTIVE FUN-3.A Calculate derivatives of familiar functions.；ESSENTIAL KNOWLEDGE FUN-3.A.4 Calculate derivatives of familiar functions. Specific rules can be used to find the derivatives for sine, cosine, exponential, and logarithmic functions.；ENDURING UNDERSTANDING FUN-3 Recognizing opportunities to apply derivative rules can simplify differentiation.

@@ -1,38 +1,30 @@
 # 水的组成与净化
 
-<!-- TeachAny Knowledge Point -->
-<!-- kp_id: kp-chem-m-water-solutions-chem-m-water-properties -->
-<!-- node_id: chem-m-water-properties -->
-<!-- subject: chem -->
-<!-- stage: m -->
+<!-- TeachAny KP: kp_id=kp-chem-m-water-properties node_id=chem-m-water-properties subject=chemistry stage=middle -->
 
 ## 元数据
 
 | 字段 | 值 |
 | --- | --- |
-| kp_id | `kp-chem-m-water-solutions-chem-m-water-properties` |
+| kp_id | `kp-chem-m-water-properties` |
 | node_id | `chem-m-water-properties` |
 | 知识点 | 水的组成与净化 |
-| 学科 | 化学 (chem) |
-| 学段 | 初中 (m) |
+| 学科 | 化学 (chemistry) |
+| 学段 | 初中 (middle) |
 | 年级 | 9 |
+| 课标系统 | 中国国家课标 |
 | 领域 | 物质的性质与应用 |
+| tree 源 | `data/trees/cn/middle/chemistry.json` |
 
-## 课标原文（2022年版）
+## 课标原文（义教/普高 2022年版）
 
-### 内容要求
+### 课标要点
 
-> 初步学习使用过滤、蒸发的方法对混合物进行分离。
+水的组成及变化的探究。
 
+初步学习使用过滤、蒸发的方法对混合物进行分离。
 
-### 教学提示
-
-> 水的组成的探索；工业区污水的处理。
-
-
-### 其他原文
-
-> **[学生必做实验及实践活动]** 水的组成及变化的探究。
+水的组成的探索；工业区污水的处理。
 
 ## 知识图谱关系
 
@@ -40,16 +32,6 @@
 
 - `chem-m-atom-molecule`
 
-### 后续延伸
-
-- `chem-m-hydrogen-properties`
-
 ## 课标摘要
 
-【内容要求】"认识水的组成，知道水是由氢元素和氧元素组成的；了解吸附、沉淀、过滤和蒸馏等净化水的常用方法；认识水是宝贵的自然资源，形成保护水资源和节约用水的意识.；【学业要求】能通过电解水实验推断水的组成，能用化学方程式表示水的分解反应；能说出几种常用净水方法的原理和适用范围；能举例说明水污染的主要原因和保护措施.；【教学提示】（1）以电解水实验为核心，引导学生通过实验现象分析水的微观构成。
-
-（2）组织学生调查本地水源状况和水质情况，增强保护水资源的责任感。
-
-（3）可通过简易净水器制作等实践活动，加深学生对净水原理的理解。
-
-（4）结合世界水日、中国水周等主题开展教育活动。
+水的组成及变化的探究。；初步学习使用过滤、蒸发的方法对混合物进行分离。；水的组成的探索；工业区污水的处理。

@@ -10,13 +10,14 @@
 | node_id | `math-ap-cab-inverse-diff` |
 | 知识点 | 反函数求导 |
 | 英文名 | Inverse function derivatives |
-| 学科 | AP 微积分 AB (calculus-ab) |
+| 学科 | 微积分 AB (calculus-ab) |
 | 学段 | 高中 (high) |
 | 年级 | 12 |
-| 课标系统 | AP 大学先修 |
+| 课标系统 | AP 美国大学先修 |
 | 领域 | Unit 2-3 微分 Differentiation |
+| tree 源 | `data/trees/ap/high/calculus-ab.json` |
 
-## 课标原文（AP Course Description）
+## 课标原文（AP Course Framework）
 
 ### 课标原文
 
@@ -34,4 +35,4 @@ Practice 1: Implementing Mathematical Processes 1.C: Identify an appropriate mat
 
 ## 课标摘要
 
-FUN-3.C.1: The chain rule provides a way to differentiate composite functions.；FUN-3.C: Calculate derivatives of compositions of differentiable functions.；Practice 1: Implementing Mathematical Processes 1.C: Identify an appropriate mathematical rule or procedure based on the classification of a given expression (e.g., Use the chain rule to find the deri...
+FUN-3.C.1: The chain rule provides a way to differentiate composite functions.；FUN-3.C: Calculate derivatives of compositions of differentiable functions.；Practice 1: Implementing Mathematical Processes 1.C: Identify an appropriate mathematical rule or procedure based on the classification of a given expression (e.g., Use the chain rule to find the derivative of a composite function).

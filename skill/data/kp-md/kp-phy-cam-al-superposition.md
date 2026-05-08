@@ -11,12 +11,13 @@
 | 知识点 | 8 波的叠加（干涉/衍射/驻波） |
 | 英文名 | 8 Superposition |
 | 学科 | 物理 (physics) |
-| 学段 | al (al) |
+| 学段 | Cambridge A-Level（高中） (al) |
 | 年级 | 12 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | AS · 波与电学 Waves & Electricity (Topics 7-12) |
+| tree 源 | `data/trees/cambridge/al/physics.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 

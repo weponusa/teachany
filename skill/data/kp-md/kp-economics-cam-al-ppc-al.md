@@ -10,13 +10,14 @@
 | node_id | `economics-cam-al-ppc-al` |
 | 知识点 | 生产可能性曲线 |
 | 英文名 | PPC |
-| 学科 | 经济 (economics) |
-| 学段 | al (al) |
+| 学科 | 经济学 (economics) |
+| 学段 | Cambridge A-Level（高中） (al) |
 | 年级 | 11 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | 基础经济概念 / Basic Economic Ideas / Basic Economic Ideas |
+| tree 源 | `data/trees/cambridge/al/economics.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 

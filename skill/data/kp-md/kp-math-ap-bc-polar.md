@@ -13,10 +13,11 @@
 | 学科 | 微积分 (calculus) |
 | 学段 | 高中 (high) |
 | 年级 | 12 |
-| 课标系统 | AP 大学先修 |
+| 课标系统 | AP 美国大学先修 |
 | 领域 | Unit 9 参数/极坐标/向量 Parametric/Polar/Vector |
+| tree 源 | `data/trees/ap/high/calculus.json` |
 
-## 课标原文（AP Course Description）
+## 课标原文（AP Course Framework）
 
 ### 课标原文
 

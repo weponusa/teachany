@@ -10,13 +10,14 @@
 | node_id | `math-ap-cab-chain-rule` |
 | 知识点 | 链式法则 |
 | 英文名 | Chain rule |
-| 学科 | AP 微积分 AB (calculus-ab) |
+| 学科 | 微积分 AB (calculus-ab) |
 | 学段 | 高中 (high) |
 | 年级 | 11 |
-| 课标系统 | AP 大学先修 |
+| 课标系统 | AP 美国大学先修 |
 | 领域 | Unit 2-3 微分 Differentiation |
+| tree 源 | `data/trees/ap/high/calculus-ab.json` |
 
-## 课标原文（AP Course Description）
+## 课标原文（AP Course Framework）
 
 ### 课标原文
 

@@ -15,6 +15,7 @@
 | 年级 | 12 |
 | 课标系统 | IB 国际文凭 |
 | 领域 | 主题 D · 连续性与变化 Continuity and Change |
+| tree 源 | `data/trees/ib/dp/biology.json` |
 
 ## 课标原文（IB Programme）
 

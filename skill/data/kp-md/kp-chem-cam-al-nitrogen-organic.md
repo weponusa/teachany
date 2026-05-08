@@ -11,12 +11,13 @@
 | 知识点 | 17 含氮有机化合物（胺/氨基酸/酰胺） |
 | 英文名 | 17 Nitrogen compounds |
 | 学科 | 化学 (chemistry) |
-| 学段 | al (al) |
+| 学段 | Cambridge A-Level（高中） (al) |
 | 年级 | 12 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | AS 有机化学 Organic Chemistry |
+| tree 源 | `data/trees/cambridge/al/chemistry.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 

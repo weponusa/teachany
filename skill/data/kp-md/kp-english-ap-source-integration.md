@@ -13,10 +13,11 @@
 | 学科 | 英语 (english) |
 | 学段 | 高中 (high) |
 | 年级 | 12 |
-| 课标系统 | AP 大学先修 |
+| 课标系统 | AP 美国大学先修 |
 | 领域 | 综合论证 Synthesis |
+| tree 源 | `data/trees/ap/high/english.json` |
 
-## 课标原文（AP Course Description）
+## 课标原文（AP Course Framework）
 
 ### 课标原文
 

@@ -15,6 +15,7 @@
 | 年级 | 8 |
 | 课标系统 | IB 国际文凭 |
 | 领域 | 统计与概率 / Statistics & Probability / Statistics & Probability |
+| tree 源 | `data/trees/ib/myp/mathematics.json` |
 
 ## 课标原文（IB Programme）
 

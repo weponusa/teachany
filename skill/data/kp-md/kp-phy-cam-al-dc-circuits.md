@@ -11,12 +11,13 @@
 | 知识点 | 10 直流电路（基尔霍夫/分压） |
 | 英文名 | 10 DC circuits |
 | 学科 | 物理 (physics) |
-| 学段 | al (al) |
+| 学段 | Cambridge A-Level（高中） (al) |
 | 年级 | 12 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | AS · 波与电学 Waves & Electricity (Topics 7-12) |
+| tree 源 | `data/trees/cambridge/al/physics.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 
@@ -36,4 +37,4 @@
 
 ## 课标摘要
 
-1 define and use linear momentum as the product of mass and velocity；4 define and use force as rate of change of momentum；1 state the principle of conservation of momentum；2 apply the principle of conservation of momentum to solve simple problems, including elastic and inelastic interactions between objects in both one and two dimensions (knowledge of the concept of coe...
+1 define and use linear momentum as the product of mass and velocity；4 define and use force as rate of change of momentum；1 state the principle of conservation of momentum；2 apply the principle of conservation of momentum to solve simple problems, including elastic and inelastic interactions between objects in both one and two dimensions (knowledge of the concept of coefficient of restitution is not required)

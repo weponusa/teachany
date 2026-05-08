@@ -11,12 +11,13 @@
 | 知识点 | 标点与拼写 |
 | 英文名 | Punctuation & spelling |
 | 学科 | 英语 (english) |
-| 学段 | IGCSE (igcse) |
+| 学段 | Cambridge-IGCSE（初中/高中） (igcse) |
 | 年级 | 9 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | 语言运用 / Language Use / Language Use |
+| tree 源 | `data/trees/cambridge/igcse/english.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 

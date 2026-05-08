@@ -1,35 +1,30 @@
-# 酸碱的概念与通性
+# 酸和碱
 
-<!-- TeachAny Knowledge Point -->
-<!-- kp_id: kp-chem-m-acids-bases-salts-chem-m-acid-base-concept -->
-<!-- node_id: chem-m-acid-base-concept -->
-<!-- subject: chem -->
-<!-- stage: m -->
+<!-- TeachAny KP: kp_id=kp-chem-m-acid-base-concept node_id=chem-m-acid-base-concept subject=chemistry stage=middle -->
 
 ## 元数据
 
 | 字段 | 值 |
 | --- | --- |
-| kp_id | `kp-chem-m-acids-bases-salts-chem-m-acid-base-concept` |
+| kp_id | `kp-chem-m-acid-base-concept` |
 | node_id | `chem-m-acid-base-concept` |
-| 知识点 | 酸碱的概念与通性 |
-| 学科 | 化学 (chem) |
-| 学段 | 初中 (m) |
+| 知识点 | 酸和碱 |
+| 学科 | 化学 (chemistry) |
+| 学段 | 初中 (middle) |
 | 年级 | 9 |
+| 课标系统 | 中国国家课标 |
 | 领域 | 物质的性质与应用 |
+| tree 源 | `data/trees/cn/middle/chemistry.json` |
 
-## 课标原文（2022年版）
+## 课标原文（义教/普高 2022年版）
 
-### 内容要求
+### 课标要点
 
-> 学会用酸碱指示剂、pH试纸检验溶液的酸碱性。
+学会用酸碱指示剂、pH试纸检验溶液的酸碱性。
 
-> 常见酸、碱的化学性质。
+常见酸、碱的化学性质。
 
-
-### 教学提示
-
-> 探究氢氧化钠溶液和稀盐酸发生中和反应时的温度变化、pH变化。
+探究氢氧化钠溶液和稀盐酸发生中和反应时的温度变化、pH变化。
 
 ## 知识图谱关系
 
@@ -38,16 +33,6 @@
 - `chem-m-chemical-equation`
 - `chem-m-ion-concept`
 
-### 后续延伸
-
-- `chem-m-neutralization`
-
 ## 课标摘要
 
-【内容要求】"知道常见酸（盐酸、硫酸）的主要性质和用途；认识常见碱（氢氧化钠、氢氧化钙）的主要性质和用途；了解酸和碱的腐蚀性及使用安全常识；知道酸碱性对人体健康和农作物生长的影响.；【学业要求】能列举常见酸和碱的性质和用途；能写出酸的五条通性（与指示剂、金属、金属氧化物、碱、盐反应）对应的化学方程式；能解释酸和碱具有相似化学性质的原因；能安全使用常见酸和碱试剂.；【教学提示】（1）采用归纳法教学，通过多个实验归纳出酸的通性和碱的通性。
-
-（2）强调实验室安全教育，特别是浓硫酸的稀释操作。
-
-（3）联系人体胃液（盐酸）、熟石灰改良酸性土壤等实例。
-
-（4）可设计"酸碱大比拼"等活动增加趣味性。
+学会用酸碱指示剂、pH试纸检验溶液的酸碱性。；常见酸、碱的化学性质。；探究氢氧化钠溶液和稀盐酸发生中和反应时的温度变化、pH变化。

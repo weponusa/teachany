@@ -10,13 +10,14 @@
 | node_id | `physics-ap-1-angular-momentum` |
 | 知识点 | 角动量 |
 | 英文名 | Angular momentum |
-| 学科 | AP 物理 1 (physics-1) |
+| 学科 | 物理 1 (physics-1) |
 | 学段 | 高中 (high) |
 | 年级 | 11 |
-| 课标系统 | AP 大学先修 |
+| 课标系统 | AP 美国大学先修 |
 | 领域 | 振动与转动 Oscillation & Rotation |
+| tree 源 | `data/trees/ap/high/physics-1.json` |
 
-## 课标原文（AP Course Description）
+## 课标原文（AP Course Framework）
 
 ### 课标原文
 
@@ -40,9 +41,4 @@ Calculating average velocity or average acceleration over a very small time inte
 
 ## 课标摘要
 
-1.2.A.2
-Displacement is the change in an object’s position.
-Relevant equation:；1.2.B.2
-Average velocity is the displacement of an object divided by the interval of time in which that displacement occurs.
-Relevant equation:；1.2.B.5
-Calculating average velocity or average acceleration over a very small time interval yields a value that is very close to the instantaneous velocity or instantaneous acceleration.
+1.2.A.2 Displacement is the change in an object’s position. Relevant equation:；1.2.B.2 Average velocity is the displacement of an object divided by the interval of time in which that displacement occurs. Relevant equation:；1.2.B.5 Calculating average velocity or average acceleration over a very small time interval yields a value that is very close to the instantaneous velocity or instantaneous acceleration.

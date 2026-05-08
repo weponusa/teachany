@@ -11,12 +11,13 @@
 | 知识点 | 面积/体积 |
 | 英文名 | Mensuration |
 | 学科 | 数学 (math) |
-| 学段 | IGCSE (igcse) |
+| 学段 | Cambridge-IGCSE（初中/高中） (igcse) |
 | 年级 | 10 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | 几何与三角 / Geometry & Trig / Geometry & Trig |
+| tree 源 | `data/trees/cambridge/igcse/math.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 
@@ -60,26 +61,4 @@ familiarity with the symbols =, ≠, >, < , and .
 
 ## 课标摘要
 
-C1.1 Types of number
-Identify and use:
-• natural numbers
-• integers (positive, zero and negative)
-• prime numbers
-• square numbers
-• cube numbers
-• common factors
-• common multiples
-• rational and irr...；C1.5 Ordering
-Order quantities by magnitude and demonstrate
-familiarity with the symbols =, ≠, >, < , and .；E1.1 Types of number
-Identify and use:
-• natural numbers
-• integers (positive, zero and negative)
-• prime numbers
-• square numbers
-• cube numbers
-• common factors
-• common multiples
-• rational and irr...；E1.5 Ordering
-Order quantities by magnitude and demonstrate
-familiarity with the symbols =, ≠, >, < , and .
+C1.1 Types of number Identify and use: • natural numbers • integers (positive, zero and negative) • prime numbers • square numbers • cube numbers • common factors • common multiples • rational and irrational numbers • reciprocals.；C1.5 Ordering Order quantities by magnitude and demonstrate familiarity with the symbols =, ≠, >, < , and .；E1.1 Types of number Identify and use: • natural numbers • integers (positive, zero and negative) • prime numbers • square numbers • cube numbers • common factors • common multiples • rational and irrational numbers • reciprocals.；E1.5 Ordering Order quantities by magnitude and demonstrate familiarity with the symbols =, ≠, >, < , and .

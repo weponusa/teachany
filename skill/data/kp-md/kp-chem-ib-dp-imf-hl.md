@@ -15,6 +15,7 @@
 | 年级 | 12 |
 | 课标系统 | IB 国际文凭 |
 | 领域 | 结构 2 · 化学键与结构 Structure 2 · The Molecular World |
+| tree 源 | `data/trees/ib/dp/chemistry.json` |
 
 ## 课标原文（IB Programme）
 
@@ -34,6 +35,4 @@ Planck constant h 6.63 × 10−34 J s
 
 ## 课标摘要
 
-c (cid:31) f(cid:30)
-E =hf；Speed of light in vacuum c 3.00 × 108 m s−1
-Planck constant h 6.63 × 10−34 J s
+c (cid:31) f(cid:30) E =hf；Speed of light in vacuum c 3.00 × 108 m s−1 Planck constant h 6.63 × 10−34 J s

@@ -1,28 +1,27 @@
-# 氧气的性质与用途
+# 氧气的性质 / Properties
 
-<!-- TeachAny Knowledge Point -->
-<!-- kp_id: kp-chem-m-our-air-chem-m-oxygen-properties -->
-<!-- node_id: chem-m-oxygen-properties -->
-<!-- subject: chem -->
-<!-- stage: m -->
+<!-- TeachAny KP: kp_id=kp-chem-m-oxygen-properties node_id=chem-m-oxygen-properties subject=chemistry stage=middle -->
 
 ## 元数据
 
 | 字段 | 值 |
 | --- | --- |
-| kp_id | `kp-chem-m-our-air-chem-m-oxygen-properties` |
+| kp_id | `kp-chem-m-oxygen-properties` |
 | node_id | `chem-m-oxygen-properties` |
-| 知识点 | 氧气的性质与用途 |
-| 学科 | 化学 (chem) |
-| 学段 | 初中 (m) |
+| 知识点 | 氧气的性质 |
+| 英文名 | Properties |
+| 学科 | 化学 (chemistry) |
+| 学段 | 初中 (middle) |
 | 年级 | 9 |
+| 课标系统 | 中国国家课标 |
 | 领域 | 物质的性质与应用 |
+| tree 源 | `data/trees/cn/middle/chemistry.json` |
 
-## 课标原文（2022年版）
+## 课标原文（义教/普高 2022年版）
 
-### 内容要求
+### 课标要点
 
-> 氧气的实验室制取与性质。
+氧气的实验室制取与性质。
 
 ## 知识图谱关系
 
@@ -30,16 +29,6 @@
 
 - `chem-m-air-composition`
 
-### 后续延伸
-
-- `chem-m-oxygen-preparation`
-
 ## 课标摘要
 
-【内容要求】知道氧气的主要物理性质和化学性质，了解氧气的用途；能通过实验探究氧气的化学性质，认识氧气是一种化学性质比较活泼的气体；了解燃烧的条件和灭火的原理。；【学业要求】能描述氧气的物理性质和化学性质，能解释氧气能与许多物质发生化学反应的原因；能运用氧气的性质解释生活中的有关现象；能设计简单的实验验证氧气的性质。；【教学提示】（1）以实验为基础，通过演示实验和学生分组实验，让学生亲身观察氧气的性质实验现象，建立感性认识。
-
-（2）联系生活实际，讨论氧气在医疗急救、炼钢、气焊等领域的应用，体会化学与生活的密切关系。
-
-（3）通过对比实验（如木炭、硫、铁丝在氧气中燃烧），引导学生归纳氧气化学性质的共同特点。
-
-（4）结合燃烧条件的学习，渗透安全教育的意识。
+氧气的实验室制取与性质。

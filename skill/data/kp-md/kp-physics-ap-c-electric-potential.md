@@ -10,13 +10,14 @@
 | node_id | `physics-ap-c-electric-potential` |
 | 知识点 | 电势与电势能 |
 | 英文名 | Electric potential |
-| 学科 | AP 物理 C (physics-c) |
+| 学科 | 物理 C (physics-c) |
 | 学段 | 高中 (high) |
 | 年级 | 12 |
-| 课标系统 | AP 大学先修 |
+| 课标系统 | AP 美国大学先修 |
 | 领域 | 电磁-静电学 E&M: Electrostatics |
+| tree 源 | `data/trees/ap/high/physics-c.json` |
 
-## 课标原文（AP Course Description）
+## 课标原文（AP Course Framework）
 
 ### 课标原文
 
@@ -41,6 +42,4 @@ The velocity of a system’s center of mass will only change if a nonzero net ex
 
 ## 课标摘要
 
-2.5.A.2
-Newton’s second law of motion states that the acceleration of a system’s center of mass has a magnitude proportional to the magnitude of the net force exerted on the system and is in the same ...；2.5.A.3
-The velocity of a system’s center of mass will only change if a nonzero net external force is exerted on that system.
+2.5.A.2 Newton’s second law of motion states that the acceleration of a system’s center of mass has a magnitude proportional to the magnitude of the net force exerted on the system and is in the same direction as that net force. Relevant equation: ∑F F net a = =  sys m m sys sys；2.5.A.3 The velocity of a system’s center of mass will only change if a nonzero net external force is exerted on that system.

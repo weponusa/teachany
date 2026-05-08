@@ -13,10 +13,11 @@
 | 学科 | 微积分 (calculus) |
 | 学段 | 高中 (high) |
 | 年级 | 12 |
-| 课标系统 | AP 大学先修 |
+| 课标系统 | AP 美国大学先修 |
 | 领域 | Unit 4-5 导数应用 Applications of Derivatives |
+| tree 源 | `data/trees/ap/high/calculus.json` |
 
-## 课标原文（AP Course Description）
+## 课标原文（AP Course Framework）
 
 ### 课标原文
 
@@ -59,24 +60,4 @@ Functions
 
 ## 课标摘要
 
-SUGGESTED SKILL
-Implementing
-Mathematical
-Processes
-1.E
-Apply appropriate
-mathematical rules or
-procedures, with and
-without technology.
-
-Required Course Content
-
-ENDURING UNDERSTANDING
-
-FUN-3
-
-Recogn...；TOPIC 2.10
-Finding the Derivatives
-of Tangent, Cotangent,
-Secant, and/or Cosecant
-Functions
+SUGGESTED SKILL Implementing Mathematical Processes 1.E Apply appropriate mathematical rules or procedures, with and without technology.  Required Course Content  ENDURING UNDERSTANDING  FUN-3  Recognizing opportunities to apply derivative rules can simplify differentiation.  LEARNING OBJECTIVE ESSENTIAL KNOWLEDGE  FUN-3.B FUN-3.B.3 Calculate derivatives of Rearranging tangent, cotangent, secant, and products and quotients of cosecant functions using identities allows differentiable functions. differentiation using derivative rules.；TOPIC 2.10 Finding the Derivatives of Tangent, Cotangent, Secant, and/or Cosecant Functions

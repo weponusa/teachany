@@ -10,13 +10,14 @@
 | node_id | `economics-cam-al-market-failure-al` |
 | 知识点 | 市场失灵 |
 | 英文名 | Market failure |
-| 学科 | 经济 (economics) |
-| 学段 | al (al) |
+| 学科 | 经济学 (economics) |
+| 学段 | Cambridge A-Level（高中） (al) |
 | 年级 | 12 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | 微观经济 / Microeconomics / Microeconomics |
+| tree 源 | `data/trees/cambridge/al/economics.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 

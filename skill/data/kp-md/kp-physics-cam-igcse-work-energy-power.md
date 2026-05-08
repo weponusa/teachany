@@ -11,12 +11,13 @@
 | 知识点 | 功、能、功率 |
 | 英文名 | Work, energy, power |
 | 学科 | 物理 (physics) |
-| 学段 | IGCSE (igcse) |
+| 学段 | Cambridge-IGCSE（初中/高中） (igcse) |
 | 年级 | 10 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | 运动力与能量 / Motion, Forces & Energy / Motion, Forces & Energy |
+| tree 源 | `data/trees/cambridge/igcse/physics.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 
@@ -44,12 +45,4 @@ graph when an object is:
 
 ## 课标摘要
 
-1 Define speed as distance travelled per unit time; recall and use the equation
-s
-v =
-t；4 Sketch, plot and interpret distance–time and speed–time graphs；5 Determine, qualitatively, from given data or the shape of a distance–time graph or speed–time
-graph when an object is:
-(a) at rest
-(b) moving with constant speed
-(c) accelerating
-(d) decelerating；6 Calculate speed from the gradient of a straight-line section of a distance–time graph
+1 Define speed as distance travelled per unit time; recall and use the equation s v = t；4 Sketch, plot and interpret distance–time and speed–time graphs；5 Determine, qualitatively, from given data or the shape of a distance–time graph or speed–time graph when an object is: (a) at rest (b) moving with constant speed (c) accelerating (d) decelerating；6 Calculate speed from the gradient of a straight-line section of a distance–time graph

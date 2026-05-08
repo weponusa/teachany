@@ -15,6 +15,7 @@
 | 年级 | 12 |
 | 课标系统 | IB 国际文凭 |
 | 领域 | 反应性 3 · 电子转移 Reactivity 3 · Electron Transfer & Proton Transfer |
+| tree 源 | `data/trees/ib/dp/chemistry.json` |
 
 ## 课标原文（IB Programme）
 
@@ -39,9 +40,4 @@ w
 
 ## 课标摘要
 
-c = fλ
-E = hf；pH = −log [H O+]
-10 3
-or
-pH = −log [H+]；K = [H+] [OH−]
-w
+c = fλ E = hf；pH = −log [H O+] 10 3 or pH = −log [H+]；K = [H+] [OH−] w

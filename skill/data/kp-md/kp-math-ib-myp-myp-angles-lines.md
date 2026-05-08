@@ -15,6 +15,7 @@
 | 年级 | 6 |
 | 课标系统 | IB 国际文凭 |
 | 领域 | 几何与三角 / Geometry & Trig / Geometry & Trig |
+| tree 源 | `data/trees/ib/myp/mathematics.json` |
 
 ## 课标原文（IB Programme）
 
@@ -35,9 +36,4 @@ The product and quotient rules.
 
 ## 课标摘要
 
-The derivative of functions of the form
-f(x)=axn +bxn−1+
-. . .
-where all exponents are integers.；Derivative of xn (n∈ℚ), sinx, cosx, e x and lnx.
-Differentiation of a sum and a multiple of these
-functions.；The chain rule for composite functions.；The product and quotient rules.
+The derivative of functions of the form f(x)=axn +bxn−1+ . . . where all exponents are integers.；Derivative of xn (n∈ℚ), sinx, cosx, e x and lnx. Differentiation of a sum and a multiple of these functions.；The chain rule for composite functions.；The product and quotient rules.

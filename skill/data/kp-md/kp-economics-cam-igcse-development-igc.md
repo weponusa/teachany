@@ -10,13 +10,14 @@
 | node_id | `economics-cam-igcse-development-igc` |
 | 知识点 | 发展经济学 |
 | 英文名 | Development economics |
-| 学科 | 经济 (economics) |
-| 学段 | IGCSE (igcse) |
+| 学科 | 经济学 (economics) |
+| 学段 | Cambridge-IGCSE（初中/高中） (igcse) |
 | 年级 | 10 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | 国际经济 / International Economy / International Economy |
+| tree 源 | `data/trees/cambridge/igcse/economics.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 

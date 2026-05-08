@@ -15,6 +15,7 @@
 | 年级 | 11 |
 | 课标系统 | IB 国际文凭 |
 | 领域 | 结构 1 · 物质的模型 Structure 1 · Models of the Particulate Nature of Matter |
+| tree 源 | `data/trees/ib/dp/chemistry.json` |
 
 ## 课标原文（IB Programme）
 
@@ -37,14 +38,4 @@ Planck constant h 6.63 × 10−34 J s
 
 ## 课标摘要
 
-Equation
-c (cid:31) f(cid:30)
-E =hf；Quantity Symbol Approximate value
-Elementary charge e 1.602177 × 10−19 C
-Electron rest mass m 9.109384 × 10−31 kg
-e
-Proton rest mass m 1.672622 × 10−27 kg
-p
-Neutron rest mass m 1.674927 × 10−27 kg
-n
-S...
+Equation c (cid:31) f(cid:30) E =hf；Quantity Symbol Approximate value Elementary charge e 1.602177 × 10−19 C Electron rest mass m 9.109384 × 10−31 kg e Proton rest mass m 1.672622 × 10−27 kg p Neutron rest mass m 1.674927 × 10−27 kg n Speed of light in vacuum c 3.00 × 108 m s−1 Planck constant h 6.63 × 10−34 J s

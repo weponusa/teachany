@@ -1,48 +1,36 @@
-# 轴对称
+# 轴对称 / Symmetry
 
-<!-- TeachAny Knowledge Point -->
-<!-- kp_id: kp-math-m-geometry-transform-math-m-axial-symmetry -->
-<!-- node_id: math-m-axial-symmetry -->
-<!-- subject: math -->
-<!-- stage: m -->
+<!-- TeachAny KP: kp_id=kp-math-m-axial-symmetry node_id=math-m-axial-symmetry subject=math stage=middle -->
 
 ## 元数据
 
 | 字段 | 值 |
 | --- | --- |
-| kp_id | `kp-math-m-geometry-transform-math-m-axial-symmetry` |
+| kp_id | `kp-math-m-axial-symmetry` |
 | node_id | `math-m-axial-symmetry` |
 | 知识点 | 轴对称 |
+| 英文名 | Symmetry |
 | 学科 | 数学 (math) |
-| 学段 | 初中 (m) |
+| 学段 | 初中 (middle) |
 | 年级 | 7 |
+| 课标系统 | 中国国家课标 |
 | 领域 | 图形与几何 |
+| tree 源 | `data/trees/cn/middle/math.json` |
 
-## 课标原文（2022年版）
+## 课标原文（义教/普高 2022年版）
 
-### 内容要求
+### 课标要点
 
-> 图形与几何领域包括图形的性质、图形的变化、图形与坐标三个主题。
+能理解图形的变化（平移、旋转、轴对称、相似、位似）。
 
-
-### 学业要求
-
-> 能理解图形的变化（平移、旋转、轴对称、相似、位似）。
+图形与几何领域包括图形的性质、图形的变化、图形与坐标三个主题。
 
 ## 知识图谱关系
 
 ### 前驱知识
 
-- `math-m-geometric-figure`
-
-### 后续延伸
-
-- `math-m-rotation`
+- `math-m-line-angle`
 
 ## 课标摘要
 
-【内容要求】**【课标原文·第四学段（7～9年级）·图形的变化·图形的轴对称】**
-① 通过具体实例理解轴对称的概念，探索它的基本性质：成轴对称的两个图形中对应点的连线被对称轴垂直平分。
-② 能画出简单平面图形（点、线段、直线、三角形等）关于给定对称轴的对称图形。
-③ 理解轴对称图形的概念；探索等腰三角形、矩形、菱形、正多边形、圆的轴对称性质。
-④ 认识并欣赏自然界和现实生活中的轴对称图形。；【学业要求】学生能准确描述轴对称的相关概念，能进行基本的运算和推理，能解决与轴对称相关的实际问题，形成初步的数学思维和素养。；【教学提示】教学时应注重从学生熟悉的生活情境入手，引导学生通过具体操作、观察、归纳等方式理解轴对称的概念。注重知识的发生发展过程，帮助学生建立知识之间的联系。
+能理解图形的变化（平移、旋转、轴对称、相似、位似）。；图形与几何领域包括图形的性质、图形的变化、图形与坐标三个主题。

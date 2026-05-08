@@ -13,10 +13,11 @@
 | 学科 | 微积分 (calculus) |
 | 学段 | 高中 (high) |
 | 年级 | 12 |
-| 课标系统 | AP 大学先修 |
+| 课标系统 | AP 美国大学先修 |
 | 领域 | Unit 9 参数/极坐标/向量 Parametric/Polar/Vector |
+| tree 源 | `data/trees/ap/high/calculus.json` |
 
-## 课标原文（AP Course Description）
+## 课标原文（AP Course Framework）
 
 ### 课标原文
 
@@ -65,26 +66,4 @@ limits.
 
 ## 课标摘要
 
-SUGGESTED SKILL
-Connecting
-Representations
-2.B
-Identify mathematical information from graphical,
-numerical, analytical, and/or verbal representations.
-
-Required Course Content
-
-ENDURING UNDERSTANDING
-...；TOPIC 1.3
-Estimating Limit Values from Graphs
-...
-LEARNING OBJECTIVE ESSENTIAL KNOWLEDGE
-LIM-1.C LIM-1.C.2
-Estimate limits of functions. Graphical information about a function can be
-used to estimate ...；TOPIC 1.4
-Estimating Limit Values from Tables
-...
-LEARNING OBJECTIVE ESSENTIAL KNOWLEDGE
-LIM-1.C LIM-1.C.5
-Estimate limits of functions. Numerical information can be used to estimate
-limits.
+SUGGESTED SKILL Connecting Representations 2.B Identify mathematical information from graphical, numerical, analytical, and/or verbal representations.  Required Course Content  ENDURING UNDERSTANDING LIM-1 Reasoning with definitions, theorems, and properties can be used to justify claims about limits.  LEARNING OBJECTIVE ESSENTIAL KNOWLEDGE LIM-1.B LIM-1.B.1 Interpret limits expressed in A limit can be expressed in multiple ways, analytic notation. including graphically, numerically, and analytically.；TOPIC 1.3 Estimating Limit Values from Graphs ... LEARNING OBJECTIVE ESSENTIAL KNOWLEDGE LIM-1.C LIM-1.C.2 Estimate limits of functions. Graphical information about a function can be used to estimate limits.；TOPIC 1.4 Estimating Limit Values from Tables ... LEARNING OBJECTIVE ESSENTIAL KNOWLEDGE LIM-1.C LIM-1.C.5 Estimate limits of functions. Numerical information can be used to estimate limits.

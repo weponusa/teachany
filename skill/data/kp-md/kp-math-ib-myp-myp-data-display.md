@@ -15,6 +15,7 @@
 | 年级 | 6 |
 | 课标系统 | IB 国际文凭 |
 | 领域 | 统计与概率 / Statistics & Probability / Statistics & Probability |
+| tree 源 | `data/trees/ib/myp/mathematics.json` |
 
 ## 课标原文（IB Programme）
 
@@ -36,14 +37,4 @@ Applications.
 
 ## 课标摘要
 
-SL 1.2
-Content
-Arithmetic sequences and series.
-Use of the formulae for the nth term and the sum of the first n terms of the sequence.
-Use of sigma notation for sums of arithmetic sequences.
-Applicati...；SL 1.3
-Content
-Geometric sequences and series.
-Use of the formulae for the n th term and the sum of the first n terms of the sequence.
-Use of sigma notation for the sums of geometric sequences.
-Applic...
+SL 1.2 Content Arithmetic sequences and series. Use of the formulae for the nth term and the sum of the first n terms of the sequence. Use of sigma notation for sums of arithmetic sequences. Applications.；SL 1.3 Content Geometric sequences and series. Use of the formulae for the n th term and the sum of the first n terms of the sequence. Use of sigma notation for the sums of geometric sequences. Applications.

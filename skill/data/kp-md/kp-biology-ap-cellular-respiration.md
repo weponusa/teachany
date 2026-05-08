@@ -13,10 +13,11 @@
 | 学科 | 生物 (biology) |
 | 学段 | 高中 (high) |
 | 年级 | 11 |
-| 课标系统 | AP 大学先修 |
+| 课标系统 | AP 美国大学先修 |
 | 领域 | Unit 3-4 细胞能量与通讯 Energy & Communication |
+| tree 源 | `data/trees/ap/high/biology.json` |
 
-## 课标原文（AP Course Description）
+## 课标原文（AP Course Framework）
 
 ### 课标原文
 
@@ -40,7 +41,4 @@ Dehydration synthesis occurs when two smaller molecules are joined together thro
 
 ## 课标摘要
 
-1.2.A.1
-Atoms and molecules from the environment are necessary to build new molecules. Carbon, hydrogen, and oxygen are the most prevalent elements used to build biological molecules such as carbohydr...；1.3.A.1
-Hydrolysis is a chemical reaction involving the cleaving of covalent bonds. This type of reaction breaks down molecules into smaller molecules. When water is added to the bond between monomers...；1.3.A.2
-Dehydration synthesis occurs when two smaller molecules are joined together through covalent bonding. A hydrogen ion is removed from one monomer and a hydroxyl group is removed from the other....
+1.2.A.1 Atoms and molecules from the environment are necessary to build new molecules. Carbon, hydrogen, and oxygen are the most prevalent elements used to build biological molecules such as carbohydrates, proteins, lipids, and nucleic acids. Additionally: i. Sulfur is used in the building of proteins. ii. Phosphorus is used in the building of phospholipids (a type of lipid) and nucleic acids. iii. Nitrogen is used in the building of nucleic acids.；1.3.A.1 Hydrolysis is a chemical reaction involving the cleaving of covalent bonds. This type of reaction breaks down molecules into smaller molecules. When water is added to the bond between monomers in a polymer, the bond is broken. The hydrogen ion from a water molecule is added to one monomer and the hydroxyl group of the water molecule is added to the other monomer, completing the reaction.；1.3.A.2 Dehydration synthesis occurs when two smaller molecules are joined together through covalent bonding. A hydrogen ion is removed from one monomer and a hydroxyl group is removed from the other. This causes the loss of the equivalent of a water molecule from the reactants and the connection of the two remaining monomers. The connection of many monomers is known as polymerization.

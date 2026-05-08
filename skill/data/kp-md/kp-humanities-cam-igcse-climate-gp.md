@@ -11,12 +11,13 @@
 | 知识点 | 气候变化 |
 | 英文名 | Climate change |
 | 学科 | 全球视野 (global-persp) |
-| 学段 | IGCSE (igcse) |
+| 学段 | Cambridge-IGCSE（初中/高中） (igcse) |
 | 年级 | 10 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | 全球议题 / Global Issues / Global Issues |
+| tree 源 | `data/trees/cambridge/igcse/global-persp.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 
@@ -28,4 +29,4 @@ This is a skills-based subject and schools can make their own selection of globa
 
 ## 课标摘要
 
-Learners will develop skills of independent enquiry and learn about appropriate research methods and methodology.；Learners are encouraged to work both independently and collaboratively, with respect for and understanding of different cultures and perspectives.；This is a skills-based subject and schools can make their own selection of global topics to study. Learners can draw upon knowledge and understanding gained from studying other subjects. Learners will...
+Learners will develop skills of independent enquiry and learn about appropriate research methods and methodology.；Learners are encouraged to work both independently and collaboratively, with respect for and understanding of different cultures and perspectives.；This is a skills-based subject and schools can make their own selection of global topics to study. Learners can draw upon knowledge and understanding gained from studying other subjects. Learners will develop skills that are interdisciplinary and highly transferable to other subjects.

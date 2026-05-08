@@ -1,30 +1,29 @@
-# 古希腊罗马文明
+# 古希腊与古罗马文明 / Ancient Greece / Ancient Rome
 
-<!-- TeachAny Knowledge Point -->
-<!-- kp_id: kp-hist-m-world-ancient-hist-m-greece-rome -->
-<!-- node_id: hist-m-greece-rome -->
-<!-- subject: hist -->
-<!-- stage: m -->
+<!-- TeachAny KP: kp_id=kp-hist-m-greece-rome node_id=hist-m-greece-rome subject=history stage=middle -->
 
 ## 元数据
 
 | 字段 | 值 |
 | --- | --- |
-| kp_id | `kp-hist-m-world-ancient-hist-m-greece-rome` |
+| kp_id | `kp-hist-m-greece-rome` |
 | node_id | `hist-m-greece-rome` |
-| 知识点 | 古希腊罗马文明 |
-| 学科 | 历史 (hist) |
-| 学段 | 初中 (m) |
+| 知识点 | 古希腊与古罗马文明 |
+| 英文名 | Ancient Greece / Ancient Rome |
+| 学科 | 历史 (history) |
+| 学段 | 初中 (middle) |
 | 年级 | 9 |
+| 课标系统 | 中国国家课标 |
 | 领域 | 世界古代史 |
+| tree 源 | `data/trees/cn/middle/history.json` |
 
-## 课标原文（2022年版）
+## 课标原文（义教/普高 2022年版）
 
-### 内容要求
+### 课标要点
 
-> 世界古代史包括古代区域文明的多元发展，以及古代帝国的产生、发展与衰落。
+世界古代史包括古代区域文明的多元发展，以及古代帝国的产生、发展与衰落。
 
-> 通过了解古代希腊罗马文明，初步认识古代欧洲文明的发展特征。
+通过了解古代希腊罗马文明，初步认识古代欧洲文明的发展特征。
 
 ## 知识图谱关系
 
@@ -32,10 +31,6 @@
 
 - `hist-m-ancient-civilizations`
 
-### 后续延伸
-
-- `hist-m-medieval-europe`
-
 ## 课标摘要
 
-【内容要求】知道建立在奴隶制基础上的希腊城邦和罗马共和国，了解希腊、罗马的古典文化成就，以及亚历山大帝国、罗马帝国对文化传播和交流的作用.；【学业要求】能够在具体的时空条件下认识古代世界各个文明的发展状况和代表性成果.；【教学提示】教学中要充分利用考古发掘的实物材料、典型的图片材料和文字材料等，有选择地运用有关世界古代史的影视作品，进行情境创设，加强教学的直观性；联系地理课程，引导学生掌握世界古代历史地图的要素，认识古代世界不同区域的地理范围，加深对古代多元文明的理解.
+世界古代史包括古代区域文明的多元发展，以及古代帝国的产生、发展与衰落。；通过了解古代希腊罗马文明，初步认识古代欧洲文明的发展特征。

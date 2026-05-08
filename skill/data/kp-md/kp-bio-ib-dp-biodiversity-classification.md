@@ -15,6 +15,7 @@
 | 年级 | 11 |
 | 课标系统 | IB 国际文凭 |
 | 领域 | 主题 A · 统一性与多样性 Unity and Diversity |
+| tree 源 | `data/trees/ib/dp/biology.json` |
 
 ## 课标原文（IB Programme）
 
@@ -40,8 +41,4 @@ Students should be able to explain these relationships.
 
 ## 课标摘要
 
-C1.1.1—Enzymes as catalysts
-Students should understand the benefit of increasing rates of reaction in cells.；C1.1.4—Enzymes as globular proteins with an active site for catalysis
-Include that the active site is composed of a few amino acids only, but interactions between amino acids within the overall three-...；C1.1.5—Interactions between substrate and active site to allow induced-fit binding
-Students should recognize that both substrate and enzymes change shape when binding occurs.；C1.1.7—Relationships between the structure of the active site, enzyme–substrate specificity and denaturation
-Students should be able to explain these relationships.
+C1.1.1—Enzymes as catalysts Students should understand the benefit of increasing rates of reaction in cells.；C1.1.4—Enzymes as globular proteins with an active site for catalysis Include that the active site is composed of a few amino acids only, but interactions between amino acids within the overall three-dimensional structure of the enzyme ensure that the active site has the necessary properties for catalysis.；C1.1.5—Interactions between substrate and active site to allow induced-fit binding Students should recognize that both substrate and enzymes change shape when binding occurs.；C1.1.7—Relationships between the structure of the active site, enzyme–substrate specificity and denaturation Students should be able to explain these relationships.

@@ -11,12 +11,13 @@
 | 知识点 | P3.4 微分进阶（链/乘/商/隐/参数） |
 | 英文名 | P3.4 Differentiation (advanced) |
 | 学科 | 数学 (math) |
-| 学段 | al (al) |
+| 学段 | Cambridge A-Level（高中） (al) |
 | 年级 | 13 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | 纯数学 3 · Pure Mathematics 3 (P3) |
+| tree 源 | `data/trees/cambridge/al/math.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 

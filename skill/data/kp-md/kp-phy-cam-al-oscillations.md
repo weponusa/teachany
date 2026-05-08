@@ -11,12 +11,13 @@
 | 知识点 | 17 振动（SHM/阻尼/共振） |
 | 英文名 | 17 Oscillations |
 | 学科 | 物理 (physics) |
-| 学段 | al (al) |
+| 学段 | Cambridge A-Level（高中） (al) |
 | 年级 | 13 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | A2 · 力学进阶与场 Advanced Mechanics & Fields (Topics 13-18) |
+| tree 源 | `data/trees/cambridge/al/physics.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 

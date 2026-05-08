@@ -15,6 +15,7 @@
 | 年级 | 6 |
 | 课标系统 | IB 国际文凭 |
 | 领域 | 数 / Number / Number |
+| tree 源 | `data/trees/ib/myp/mathematics.json` |
 
 ## 课标原文（IB Programme）
 
@@ -53,12 +54,4 @@ Construction of labelled diagrams from written statements.
 
 ## 课标摘要
 
-SL 3.2
-Content Guidance, clarification and syllabus links
-Use of sine, cosine and tangent ratios to find the
-sides and angles of right-angled triangles. In all areas of this topic, students should be
-...；SL 3.3
-Content Guidance, clarification and syllabus links
-Applications of right and non-right angled trigonometry, including Pythagoras’s theorem.
-Angles of elevation and depression.
-Construction of l...
+SL 3.2 Content Guidance, clarification and syllabus links Use of sine, cosine and tangent ratios to find the sides and angles of right-angled triangles. In all areas of this topic, students should be encouraged to sketch well-labelled diagrams to support their solutions. Link to: inverse functions (SL2.2) when finding angles. a b c This section does not include the ambiguous case of the sine rule. The sine rule: = = . sinA sinB sinC the sine rule. The cosine rule: c2=a2+b2−2abcosC; a2+b2−c2 cosC= . 2ab Area of a triangle as absinC.；SL 3.3 Content Guidance, clarification and syllabus links Applications of right and non-right angled trigonometry, including Pythagoras’s theorem. Angles of elevation and depression. Construction of labelled diagrams from written statements.

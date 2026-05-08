@@ -11,12 +11,13 @@
 | 知识点 | 数列 |
 | 英文名 | Sequences |
 | 学科 | 数学 (math) |
-| 学段 | IGCSE (igcse) |
+| 学段 | Cambridge-IGCSE（初中/高中） (igcse) |
 | 年级 | 10 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | 代数与图像 / Algebra & Graphs / Algebra & Graphs |
+| tree 源 | `data/trees/cambridge/igcse/math.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 
@@ -38,8 +39,4 @@ E2.5 Equations Notes and examples
 
 ## 课标摘要
 
-E2.5 Equations Notes and examples
-1 Construct expressions, equations and formulas. e.g. write an expression for the product of two consecutive even numbers.
-Includes constructing simultaneous equation...；E2.5 Equations Notes and examples
-4 Solve simultaneous linear equations in two unknowns.；E2.5 Equations Notes and examples
-5 Solve simultaneous equations, involving one linear and one non-linear.
+E2.5 Equations Notes and examples 1 Construct expressions, equations and formulas. e.g. write an expression for the product of two consecutive even numbers. Includes constructing simultaneous equations.；E2.5 Equations Notes and examples 4 Solve simultaneous linear equations in two unknowns.；E2.5 Equations Notes and examples 5 Solve simultaneous equations, involving one linear and one non-linear.

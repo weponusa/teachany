@@ -11,12 +11,13 @@
 | 知识点 | 25 有机合成与光谱（IR/NMR/MS） |
 | 英文名 | 25 Organic synthesis & analysis |
 | 学科 | 化学 (chemistry) |
-| 学段 | al (al) |
+| 学段 | Cambridge A-Level（高中） (al) |
 | 年级 | 13 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | A2 进阶课程 Advanced Chemistry |
+| tree 源 | `data/trees/cambridge/al/chemistry.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 

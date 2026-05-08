@@ -1,30 +1,29 @@
-# 中国的人口与民族
+# 中国人口与民族 / Population
 
-<!-- TeachAny Knowledge Point -->
-<!-- kp_id: kp-geo-m-china-geography-geo-m-china-population -->
-<!-- node_id: geo-m-china-population -->
-<!-- subject: geo -->
-<!-- stage: m -->
+<!-- TeachAny KP: kp_id=kp-geo-m-china-population node_id=geo-m-china-population subject=geography stage=middle -->
 
 ## 元数据
 
 | 字段 | 值 |
 | --- | --- |
-| kp_id | `kp-geo-m-china-geography-geo-m-china-population` |
+| kp_id | `kp-geo-m-china-population` |
 | node_id | `geo-m-china-population` |
-| 知识点 | 中国的人口与民族 |
-| 学科 | 地理 (geo) |
-| 学段 | 初中 (m) |
+| 知识点 | 中国人口与民族 |
+| 英文名 | Population |
+| 学科 | 地理 (geography) |
+| 学段 | 初中 (middle) |
 | 年级 | 8 |
+| 课标系统 | 中国国家课标 |
 | 领域 | 中国地理 |
+| tree 源 | `data/trees/cn/middle/geography.json` |
 
-## 课标原文（2022年版）
+## 课标原文（义教/普高 2022年版）
 
-### 内容要求
+### 课标要点
 
-> 运用地图和相关资料，描述中国人口的基本状况和变化。
+运用地图和相关资料，描述中国人口的基本状况和变化。
 
-> 运用地图和相关资料，简要归纳中国的民族分布特点，树立中华民族共同体意识。
+运用地图和相关资料，简要归纳中国的民族分布特点，树立中华民族共同体意识。
 
 ## 知识图谱关系
 
@@ -32,10 +31,6 @@
 
 - `geo-m-china-location`
 
-### 后续延伸
-
-- `geo-m-china-agriculture`
-
 ## 课标摘要
 
-【内容要求】运用地图和相关资料，描述中国人口的基本状况和变化. 运用地图和相关资料，简要归纳中国的民族分布特点，树立中华民族共同体意识.；【学业要求】能够描述中国人口和民族的基本情况.；【教学提示】结合第七次全国人口普查数据，让学生了解我国人口发展的最新态势.
+运用地图和相关资料，描述中国人口的基本状况和变化。；运用地图和相关资料，简要归纳中国的民族分布特点，树立中华民族共同体意识。

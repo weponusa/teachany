@@ -13,18 +13,17 @@
 | 学科 | 生物 (biology) |
 | 学段 | 高中 (high) |
 | 年级 | 12 |
-| 课标系统 | AP 大学先修 |
+| 课标系统 | AP 美国大学先修 |
 | 领域 | Unit 7-8 进化与生态 Evolution & Ecology |
+| tree 源 | `data/trees/ap/high/biology.json` |
 
-## 课标原文（AP Course Description）
+## 课标原文（AP Course Framework）
 
 ### 课标原文
 
 1.4.A Describe the structure and function of carbohydrates. Monosaccharides (simple sugars) are the monomers for polysaccharides (complex carbohydrates). These monomers are connected by covalent bonds to form polymers such as complex carbohydrates, which may be linear or branched.
 
 1.3.A Describe the chemical reactions that build and break biological macromolecules. Dehydration synthesis occurs when two smaller molecules are joined together through covalent bonding. A hydrogen ion is removed from one monomer and a hydroxyl group is removed from the other. This causes the loss of the equivalent of a water molecule from the reactants and the connection of the two remaining monomers. The connection of many monomers is known as polymerization.
-
-1.3.A Describe the chemical reactions that build and break biological macromolecules. Hydrolysis is a chemical reaction involving the cleaving of covalent bonds. This type of reaction breaks down molecules into smaller molecules. When water is added to the bond between monomers in a polymer, the bond is broken. The hydrogen ion from a water molecule is added to one monomer and the hydroxyl group of the water molecule is added to the other monomer, completing the reaction.
 
 ## 知识图谱关系
 
@@ -34,4 +33,4 @@
 
 ## 课标摘要
 
-1.4.A Describe the structure and function of carbohydrates. Monosaccharides (simple sugars) are the monomers for polysaccharides (complex carbohydrates). These monomers are connected by covalent bonds...；1.3.A Describe the chemical reactions that build and break biological macromolecules. Dehydration synthesis occurs when two smaller molecules are joined together through covalent bonding. A hydrogen i...；1.3.A Describe the chemical reactions that build and break biological macromolecules. Hydrolysis is a chemical reaction involving the cleaving of covalent bonds. This type of reaction breaks down mole...
+1.4.A Describe the structure and function of carbohydrates. Monosaccharides (simple sugars) are the monomers for polysaccharides (complex carbohydrates). These monomers are connected by covalent bonds to form polymers such as complex carbohydrates, which may be linear or branched.；1.3.A Describe the chemical reactions that build and break biological macromolecules. Dehydration synthesis occurs when two smaller molecules are joined together through covalent bonding. A hydrogen ion is removed from one monomer and a hydroxyl group is removed from the other. This causes the loss of the equivalent of a water molecule from the reactants and the connection of the two remaining monomers. The connection of many monomers is known as polymerization.

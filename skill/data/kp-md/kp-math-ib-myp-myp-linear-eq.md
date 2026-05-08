@@ -15,6 +15,7 @@
 | 年级 | 8 |
 | 课标系统 | IB 国际文凭 |
 | 领域 | 代数 / Algebra / Algebra |
+| tree 源 | `data/trees/ib/myp/mathematics.json` |
 
 ## 课标原文（IB Programme）
 
@@ -47,11 +48,4 @@ Not required: Proof of binomial theorem.
 
 ## 课标摘要
 
-SL 1.9
-Content Guidance, clarification and syllabus links
-The binomial theorem: Counting principles may be used in the
-expansion of (a+b) n ,n∈ℕ. development of the theorem.
-Use of Pascal’s triangle a...；AHL 1.10
-Content Guidance, clarification and syllabus links
-Counting principles, including permutations and Not required: Permutations where some objects are
-combinations. identical. Circular arrangem...
+SL 1.9 Content Guidance, clarification and syllabus links The binomial theorem: Counting principles may be used in the expansion of (a+b) n ,n∈ℕ. development of the theorem. Use of Pascal’s triangle and n Cr . n Cr should be found using both the formula and technology. Example: Find r when 6Cr=20, using a table of values generated with technology.；AHL 1.10 Content Guidance, clarification and syllabus links Counting principles, including permutations and Not required: Permutations where some objects are combinations. identical. Circular arrangements. Extension of the binomial theorem to fractional and b n b n (a+b) n = (a(1+ )) = an (1+ ) , n∈ℚ negative indices, ie (a+b) n , n∈ℚ. a a Link to: power series expansions (AHL5.19) Not required: Proof of binomial theorem.

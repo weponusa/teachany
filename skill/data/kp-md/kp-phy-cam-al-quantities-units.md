@@ -11,12 +11,13 @@
 | 知识点 | 1 物理量与单位（SI/不确定度） |
 | 英文名 | 1 Physical quantities & units |
 | 学科 | 物理 (physics) |
-| 学段 | al (al) |
+| 学段 | Cambridge A-Level（高中） (al) |
 | 年级 | 12 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | AS · 物理量与力学 Physical Quantities & Mechanics (Topics 1-6) |
+| tree 源 | `data/trees/cambridge/al/physics.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 

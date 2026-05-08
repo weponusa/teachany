@@ -10,13 +10,14 @@
 | node_id | `physics-ap-1-work-energy` |
 | 知识点 | 功与能量 |
 | 英文名 | Work & energy |
-| 学科 | AP 物理 1 (physics-1) |
+| 学科 | 物理 1 (physics-1) |
 | 学段 | 高中 (high) |
 | 年级 | 11 |
-| 课标系统 | AP 大学先修 |
+| 课标系统 | AP 美国大学先修 |
 | 领域 | 能量与动量 Energy & Momentum |
+| tree 源 | `data/trees/ap/high/physics-1.json` |
 
-## 课标原文（AP Course Description）
+## 课标原文（AP Course Framework）
 
 ### 课标原文
 
@@ -34,4 +35,4 @@ The net acceleration of an object moving in a circle is the vector sum of the ce
 
 ## 课标摘要
 
-Describe the motion of an object traveling in a circular path. Centripetal acceleration is the component of an object’s acceleration directed toward the center of the object’s circular path. The magni...；Centripetal acceleration can result from a single force, more than one force, or components of forces exerted on an object in circular motion.；The net acceleration of an object moving in a circle is the vector sum of the centripetal acceleration and tangential acceleration.
+Describe the motion of an object traveling in a circular path. Centripetal acceleration is the component of an object’s acceleration directed toward the center of the object’s circular path. The magnitude of centripetal acceleration for an object moving in a circular path is the ratio of the object’s tangential speed squared to the radius of the circular path. Relevant equation: a_c = v^2 / r；Centripetal acceleration can result from a single force, more than one force, or components of forces exerted on an object in circular motion.；The net acceleration of an object moving in a circle is the vector sum of the centripetal acceleration and tangential acceleration.

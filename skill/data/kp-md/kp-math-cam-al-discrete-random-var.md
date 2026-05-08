@@ -11,12 +11,13 @@
 | 知识点 | S1.4 离散型随机变量（二项/几何） |
 | 英文名 | S1.4 Discrete random variables |
 | 学科 | 数学 (math) |
-| 学段 | al (al) |
+| 学段 | Cambridge A-Level（高中） (al) |
 | 年级 | 12 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | 概率与统计 · Probability & Statistics (S1/S2) |
+| tree 源 | `data/trees/cambridge/al/math.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 

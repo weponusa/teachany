@@ -10,13 +10,14 @@
 | node_id | `history-ap-us-constitution` |
 | 知识点 | 宪法与《权利法案》 |
 | 英文名 | Constitution & Bill of Rights |
-| 学科 | 美国史 (us-history) |
+| 学科 | 美国历史 (us-history) |
 | 学段 | 高中 (high) |
 | 年级 | 11 |
-| 课标系统 | AP 大学先修 |
+| 课标系统 | AP 美国大学先修 |
 | 领域 | Period 1-3 殖民与革命 Colonial & Revolution (1491-1800) |
+| tree 源 | `data/trees/ap/high/us-history.json` |
 
-## 课标原文（AP Course Description）
+## 课标原文（AP Course Framework）
 
 ### 课标原文
 

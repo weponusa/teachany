@@ -10,13 +10,14 @@
 | node_id | `economics-cam-al-national-income` |
 | 知识点 | 国民收入 |
 | 英文名 | National income |
-| 学科 | 经济 (economics) |
-| 学段 | al (al) |
+| 学科 | 经济学 (economics) |
+| 学段 | Cambridge A-Level（高中） (al) |
 | 年级 | 11 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | 宏观经济 / Macroeconomics / Macroeconomics |
+| tree 源 | `data/trees/cambridge/al/economics.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 

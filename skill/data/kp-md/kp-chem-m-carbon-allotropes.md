@@ -1,35 +1,30 @@
 # 碳的单质（金刚石/石墨/C60）
 
-<!-- TeachAny Knowledge Point -->
-<!-- kp_id: kp-chem-m-carbon-compounds-chem-m-carbon-allotropes -->
-<!-- node_id: chem-m-carbon-allotropes -->
-<!-- subject: chem -->
-<!-- stage: m -->
+<!-- TeachAny KP: kp_id=kp-chem-m-carbon-allotropes node_id=chem-m-carbon-allotropes subject=chemistry stage=middle -->
 
 ## 元数据
 
 | 字段 | 值 |
 | --- | --- |
-| kp_id | `kp-chem-m-carbon-compounds-chem-m-carbon-allotropes` |
+| kp_id | `kp-chem-m-carbon-allotropes` |
 | node_id | `chem-m-carbon-allotropes` |
 | 知识点 | 碳的单质（金刚石/石墨/C60） |
-| 学科 | 化学 (chem) |
-| 学段 | 初中 (m) |
+| 学科 | 化学 (chemistry) |
+| 学段 | 初中 (middle) |
 | 年级 | 9 |
+| 课标系统 | 中国国家课标 |
 | 领域 | 物质的性质与应用 |
+| tree 源 | `data/trees/cn/middle/chemistry.json` |
 
-## 课标原文（2022年版）
+## 课标原文（义教/普高 2022年版）
 
-### 内容要求
+### 课标要点
 
-> 物质是由分子、原子构成的，物质结构决定性质，物质性质决定用途。
+物质是由分子、原子构成的，物质结构决定性质，物质性质决定用途。
 
-> 认识物质性质的思路与方法。
+能通过实例认识物质的性质与应用的关系，形成合理利用物质的意识。
 
-
-### 学业要求
-
-> 能通过实例认识物质的性质与应用的关系，形成合理利用物质的意识。
+认识物质性质的思路与方法。
 
 ## 知识图谱关系
 
@@ -37,16 +32,6 @@
 
 - `chem-m-element-concept`
 
-### 后续延伸
-
-- `chem-m-co2-properties`
-
 ## 课标摘要
 
-【内容要求】"了解金刚石、石墨、C₆₀等碳单质的物理性质和用途；认识同素异形体的概念；知道碳单质在常温下的化学稳定性.；【学业要求】能解释金刚石硬度大而石墨质地软的原因（原子排列方式不同）；能写出碳单质在高温下与氧气、氧化铜等物质反应的化学方程式；能举例说明碳单质在生活和生产中的广泛应用.；【教学提示】（1）展示金刚石、石墨、C₆₀的实物或高清图片，形成直观对比。
-
-（2）用"同一个人穿不同衣服"类比同素异形体概念。
-
-（3）联系铅笔芯（石墨）、钻石饰品（金刚石）、纳米材料（C₆₀）等日常事物。
-
-（4）介绍我国在碳材料领域的科研进展（如石墨烯）。
+物质是由分子、原子构成的，物质结构决定性质，物质性质决定用途。；能通过实例认识物质的性质与应用的关系，形成合理利用物质的意识。；认识物质性质的思路与方法。

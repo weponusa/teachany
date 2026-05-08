@@ -11,12 +11,13 @@
 | 知识点 | 累积频率（E） |
 | 英文名 | Cumulative freq (E) |
 | 学科 | 数学 (math) |
-| 学段 | IGCSE (igcse) |
+| 学段 | Cambridge-IGCSE（初中/高中） (igcse) |
 | 年级 | 10 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | 统计与概率 / Stats & Probability / Stats & Prob |
+| tree 源 | `data/trees/cambridge/igcse/math.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 
@@ -24,11 +25,6 @@ Calculate the probability of combined events using, where appropriate:
 • sample space diagrams
 • Venn diagrams
 • tree diagrams.
-
-Calculate the probability of combined events using, where appropriate:
-• sample space diagrams
-• Venn diagrams Venn diagrams will be limited to two sets.
-• tree diagrams. In tree diagrams, outcomes will be written at the end of the branches and probabilities by the side of the branches.
 
 ## 知识图谱关系
 
@@ -38,10 +34,4 @@ Calculate the probability of combined events using, where appropriate:
 
 ## 课标摘要
 
-Calculate the probability of combined events using, where appropriate:
-• sample space diagrams
-• Venn diagrams
-• tree diagrams.；Calculate the probability of combined events using, where appropriate:
-• sample space diagrams
-• Venn diagrams Venn diagrams will be limited to two sets.
-• tree diagrams. In tree diagrams, outcomes wi...
+Calculate the probability of combined events using, where appropriate: • sample space diagrams • Venn diagrams • tree diagrams.

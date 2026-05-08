@@ -11,12 +11,13 @@
 | 知识点 | 语言分析 |
 | 英文名 | Language analysis |
 | 学科 | 英语 (english) |
-| 学段 | IGCSE (igcse) |
+| 学段 | Cambridge-IGCSE（初中/高中） (igcse) |
 | 年级 | 10 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | 阅读理解 / Reading / Reading |
+| tree 源 | `data/trees/cambridge/igcse/english.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 

@@ -1,34 +1,31 @@
-# 消化系统
+# 消化系统 / Digestive System
 
-<!-- TeachAny Knowledge Point -->
-<!-- kp_id: kp-bio-m-human-body-bio-m-digestion-system -->
-<!-- node_id: bio-m-digestion-system -->
-<!-- subject: bio -->
-<!-- stage: m -->
+<!-- TeachAny KP: kp_id=kp-bio-m-digestion-system node_id=bio-m-digestion-system subject=biology stage=middle -->
 
 ## 元数据
 
 | 字段 | 值 |
 | --- | --- |
-| kp_id | `kp-bio-m-human-body-bio-m-digestion-system` |
+| kp_id | `kp-bio-m-digestion-system` |
 | node_id | `bio-m-digestion-system` |
 | 知识点 | 消化系统 |
-| 学科 | 生物 (bio) |
-| 学段 | 初中 (m) |
+| 英文名 | Digestive System |
+| 学科 | 生物 (biology) |
+| 学段 | 初中 (middle) |
 | 年级 | 7 |
+| 课标系统 | 中国国家课标 |
 | 领域 | 人体结构与功能 |
+| tree 源 | `data/trees/cn/middle/biology.json` |
 
-## 课标原文（2022年版）
+## 课标原文（义教/普高 2022年版）
 
-### 内容要求
+### 课标要点
 
-> 5.1.1 水、无机盐、糖类、蛋白质、脂质和维生素是人体生命活动所需的主要营养物质
+初中7年级学段目标：理解并掌握「消化系统」的基本概念与方法
 
-> 5.1.2 消化系统由消化道和消化腺组成
+学业要求：能在真实情境中识别、运用「消化系统」解决问题
 
-> 5.1.3 消化系统能够将食物消化，并通过吸收将营养物质转运到血液中
-
-> 5.1.4 不合理的饮食习惯和饮食结构可能导致营养不良或肥胖
+活动建议：通过观察、实验、练习、讨论等方式深化对「消化系统」的理解
 
 ## 知识图谱关系
 
@@ -36,11 +33,6 @@
 
 - `bio-m-human-body-overview`
 
-### 后续延伸
-
-- `bio-m-circulatory-system`
-- `bio-m-respiratory-system`
-
 ## 课标摘要
 
-【内容要求】人体通过消化系统将摄入的食物分解为可被吸收的营养成分.；【学业要求】描述消化、循环、呼吸、泌尿、神经、内分泌等系统的构成和功能.；【教学提示】结合学生的生活经验，通过模型或实物展示、材料分析、探究实验等活动形式.
+初中7年级学段目标：理解并掌握「消化系统」的基本概念与方法；学业要求：能在真实情境中识别、运用「消化系统」解决问题；活动建议：通过观察、实验、练习、讨论等方式深化对「消化系统」的理解

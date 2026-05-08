@@ -11,12 +11,13 @@
 | 知识点 | 有丝分裂 |
 | 英文名 | Mitotic cycle |
 | 学科 | 生物 (biology) |
-| 学段 | al (al) |
+| 学段 | Cambridge A-Level（高中） (al) |
 | 年级 | 11 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | AS · 细胞与分子 / AS · Cells & Molecules / AS · Cells & Molecules |
+| tree 源 | `data/trees/cambridge/al/biology.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 

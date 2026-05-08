@@ -11,12 +11,13 @@
 | 知识点 | P1.7 积分（不定/定积分/面积体积） |
 | 英文名 | P1.7 Integration |
 | 学科 | 数学 (math) |
-| 学段 | al (al) |
+| 学段 | Cambridge A-Level（高中） (al) |
 | 年级 | 12 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | 纯数学 1 · Pure Mathematics 1 (P1) |
+| tree 源 | `data/trees/cambridge/al/math.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 

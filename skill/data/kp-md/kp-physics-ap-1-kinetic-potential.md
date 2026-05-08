@@ -10,13 +10,14 @@
 | node_id | `physics-ap-1-kinetic-potential` |
 | 知识点 | 动能与势能 |
 | 英文名 | Kinetic & potential energy |
-| 学科 | AP 物理 1 (physics-1) |
+| 学科 | 物理 1 (physics-1) |
 | 学段 | 高中 (high) |
 | 年级 | 11 |
-| 课标系统 | AP 大学先修 |
+| 课标系统 | AP 美国大学先修 |
 | 领域 | 能量与动量 Energy & Momentum |
+| tree 源 | `data/trees/ap/high/physics-1.json` |
 
-## 课标原文（AP Course Description）
+## 课标原文（AP Course Framework）
 
 ### 课标原文
 

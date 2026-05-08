@@ -10,13 +10,14 @@
 | node_id | `cs-cam-igcse-data-compression` |
 | 知识点 | 数据压缩 |
 | 英文名 | Data compression |
-| 学科 | 计算机 (cs) |
-| 学段 | IGCSE (igcse) |
+| 学科 | 计算机科学 (cs) |
+| 学段 | Cambridge-IGCSE（初中/高中） (igcse) |
 | 年级 | 10 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | 理论基础 / Theory / Theory |
+| tree 源 | `data/trees/cambridge/igcse/cs.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 

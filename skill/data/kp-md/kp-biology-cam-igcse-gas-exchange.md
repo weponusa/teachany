@@ -11,12 +11,13 @@
 | 知识点 | 气体交换 |
 | 英文名 | Gas exchange |
 | 学科 | 生物 (biology) |
-| 学段 | IGCSE (igcse) |
+| 学段 | Cambridge-IGCSE（初中/高中） (igcse) |
 | 年级 | 10 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | 营养与运输 / Nutrition & Transport / Nutrition & Transport |
+| tree 源 | `data/trees/cambridge/igcse/biology.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 
@@ -34,4 +35,4 @@ Investigate osmosis using materials such as dialysis tubing
 
 ## 课标摘要
 
-Describe osmosis as the net movement of water molecules from a region of higher water potential (dilute solution) to a region of lower water potential (concentrated solution), through a partially perm...；State that water moves into and out of cells by osmosis through the cell membrane；Investigate osmosis using materials such as dialysis tubing
+Describe osmosis as the net movement of water molecules from a region of higher water potential (dilute solution) to a region of lower water potential (concentrated solution), through a partially permeable membrane；State that water moves into and out of cells by osmosis through the cell membrane；Investigate osmosis using materials such as dialysis tubing

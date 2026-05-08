@@ -15,6 +15,7 @@
 | 年级 | 11 |
 | 课标系统 | IB 国际文凭 |
 | 领域 | 主题 B · 形式与功能 Form and Function |
+| tree 源 | `data/trees/ib/dp/biology.json` |
 
 ## 课标原文（IB Programme）
 
@@ -37,7 +38,4 @@ Students should be able to draw a two-dimensional representation of the model an
 
 ## 课标摘要
 
-B2.1.1—Lipid bilayers as the basis of cell membranes
-Phospholipids and other amphipathic lipids naturally form continuous sheet-like bilayers in water.；B2.1.2—Lipid bilayers as barriers
-Students should understand that the hydrophobic hydrocarbon chains that form the core of a membrane have low permeability to large molecules and hydrophilic particles...；B2.1.10—Fluid mosaic model of membrane structure
-Students should be able to draw a two-dimensional representation of the model and include peripheral and integral proteins, glycoproteins, phospholipid...
+B2.1.1—Lipid bilayers as the basis of cell membranes Phospholipids and other amphipathic lipids naturally form continuous sheet-like bilayers in water.；B2.1.2—Lipid bilayers as barriers Students should understand that the hydrophobic hydrocarbon chains that form the core of a membrane have low permeability to large molecules and hydrophilic particles, including ions and polar molecules, so membranes function as effective barriers between aqueous solutions.；B2.1.10—Fluid mosaic model of membrane structure Students should be able to draw a two-dimensional representation of the model and include peripheral and integral proteins, glycoproteins, phospholipids and cholesterol. They should also be able to indicate hydrophobic and hydrophilic regions.

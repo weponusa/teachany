@@ -1,19 +1,24 @@
-# 计数与基数
-**Counting & cardinality**
+# 计数与基数 / Counting & cardinality
+
+<!-- TeachAny KP: kp_id=kp-math-us-k5-counting-k5 node_id=math-us-k5-counting-k5 subject=math stage=k5 -->
 
 ## 元数据
-- **学科**: math ()
-- **学段**: k5
-- **年级**: 1
-- **领域**: 数与运算 / Number & Operations / Number & Operations
-- **知识点ID**: `math-us-k5-counting-k5`
 
-## 一、课标原文
-*（本节暂无课标原文）*
+| 字段 | 值 |
+| --- | --- |
+| kp_id | `kp-math-us-k5-counting-k5` |
+| node_id | `math-us-k5-counting-k5` |
+| 知识点 | 计数与基数 |
+| 英文名 | Counting & cardinality |
+| 学科 | 数学 (math) |
+| 学段 | 小学 (K-5) (k5) |
+| 年级 | 1 |
+| 课标系统 | 美国 Common Core / NGSS |
+| 领域 | 数与运算 / Number & Operations / Number & Operations |
+| tree 源 | `data/trees/us/k5/math.json` |
 
-## 二、教材资料
-### 2.2 核心概念与定义
-*（待补充：从参考书 OCR 文本抽取）*
+## 课标原文（Common Core / NGSS）
 
-### 2.3 典型例题
-*（待补充：从参考书抽取，带解答）*
+### 课标原文
+
+（本节点暂未录入课标要点，欢迎贡献）

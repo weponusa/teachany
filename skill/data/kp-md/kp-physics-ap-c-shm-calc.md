@@ -10,13 +10,14 @@
 | node_id | `physics-ap-c-shm-calc` |
 | 知识点 | 简谐振动(微分方程) |
 | 英文名 | SHM via ODE |
-| 学科 | AP 物理 C (physics-c) |
+| 学科 | 物理 C (physics-c) |
 | 学段 | 高中 (high) |
 | 年级 | 12 |
-| 课标系统 | AP 大学先修 |
+| 课标系统 | AP 美国大学先修 |
 | 领域 | 力学-转动与振动 Mechanics: Rotation/Oscillation |
+| tree 源 | `data/trees/ap/high/physics-c.json` |
 
-## 课标原文（AP Course Description）
+## 课标原文（AP Course Framework）
 
 ### 课标原文
 

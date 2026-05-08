@@ -11,12 +11,13 @@
 | 知识点 | 勾股 |
 | 英文名 | Pythagoras |
 | 学科 | 数学 (math) |
-| 学段 | IGCSE (igcse) |
+| 学段 | Cambridge-IGCSE（初中/高中） (igcse) |
 | 年级 | 9 |
-| 课标系统 | 剑桥国际课程 |
+| 课标系统 | Cambridge 剑桥国际 |
 | 领域 | 几何与三角 / Geometry & Trig / Geometry & Trig |
+| tree 源 | `data/trees/cambridge/igcse/math.json` |
 
-## 课标原文（Cambridge International）
+## 课标原文（Cambridge Syllabus）
 
 ### 课标原文
 
@@ -44,12 +45,4 @@ E6.2 Right-angled triangles
 
 ## 课标摘要
 
-C6.1 Pythagoras’ theorem
-Notes and examples
-Know and use Pythagoras’ theorem.；C6.2 Right-angled triangles
-1 Know and use the sine, cosine and tangent ratios for acute angles in calculations involving sides and angles of a right-angled triangle.
-2 Solve problems in two dimension...；E6.1 Pythagoras’ theorem
-Notes and examples
-Know and use Pythagoras’ theorem.；E6.2 Right-angled triangles
-1 Know and use the sine, cosine and tangent ratios for acute angles in calculations involving sides and angles of a right-angled triangle.
-2 Solve problems in two dimension...
+C6.1 Pythagoras’ theorem Notes and examples Know and use Pythagoras’ theorem.；C6.2 Right-angled triangles 1 Know and use the sine, cosine and tangent ratios for acute angles in calculations involving sides and angles of a right-angled triangle. 2 Solve problems in two dimensions using Pythagoras’ theorem and trigonometry.；E6.1 Pythagoras’ theorem Notes and examples Know and use Pythagoras’ theorem.；E6.2 Right-angled triangles 1 Know and use the sine, cosine and tangent ratios for acute angles in calculations involving sides and angles of a right-angled triangle. 2 Solve problems in two dimensions using Pythagoras’ theorem and trigonometry.
