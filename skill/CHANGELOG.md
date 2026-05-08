@@ -1,7 +1,90 @@
 # TeachAny 版本变更日志
 
-**当前版本**：v7.7.5（持续演进中）
-**更新日期**：2026-05-06
+**当前版本**：v7.9.13（持续演进中）
+**更新日期**：2026-05-08
+
+---
+
+## 🆕 v7.9.13 — 知识图谱公共模块合规闭环（2026-05-08）
+
+**背景**：用户反馈 `community/bio-h-nervous-regulation` 课件的"知识图谱"区块视觉一眼能看出不是标准模块——是 subagent 在 `#knowledge-graph` section 内手写的 `<svg><rect>×8 + <line>×6 + <text>×18` 静态矩形图，节点不可点击、无 tooltip、无前置/后续课件链接，**完全绕过了 v7.5 起就已存在的 `scripts/teachany-knowledge-graph.{js,css}` 标准公共模块**。这是 v7.9.11 #68 "策划先行"未完全堵住的漏洞——PLAN.md 即便存在，subagent 在写 HTML 时仍可能为了"看起来有图"自创一段 SVG 把这个区块"糊上"。
+
+**问题根因**：
+1. **PLAN.md M6 行约束太弱**：原模板只写"标准模块 / data-teachany-kg=\"<node_id>\" / 浏览器渲染 ≥3 节点"，没强制说明禁用手写 SVG，校验命令是模糊的"浏览器渲染"
+2. **缺自动化质检**：commit 前没有任何脚本扫课件内 `<svg>` 是否塞了节点框充图谱
+3. **examples/ 历史遗产**：早期 D3 实现的 examples/geography-earth-shape-size 等课件没有 `data-teachany-kg` 挂载点，盲扫 community 标准会把它们也判违规
+
+**对策**：
+
+**1. 新增 `scripts/check-knowledge-graph.py`** — 220 行自动化质检脚本
+
+| 违规类型 | 启发式判定 |
+|:---|:---|
+| `hardcoded-svg` | `<svg>` 内 `<rect>` ≥ 2 或 `<line>` ≥ 2 或 `<text>` ≥ 4 |
+| `missing-section` | 缺 `id="knowledge-graph"` 区块 |
+| `missing-data-attr` | 缺 `<div data-teachany-kg="...">` 挂载点 |
+| `missing-module-script` | head 缺 css 引用 或 body 缺 js 引用 |
+| `node-not-in-manifest` | `data-teachany-kg` 值不在 `scripts/teachany-kg-manifest.json` |
+
+支持 `--batch --json --strict`，对 `examples/` 走 lenient 模式（只严查 `hardcoded-svg`），对 `community/` 走 strict 模式（5 项全查）。退出码 0/1/2。
+
+**2. 升级 `scripts/pre-commit-courseware.sh` v7.9.13** — 三项质检 → 四项联动
+
+```bash
+[1/4] validate-courseware.py
+[2/4] check-plan.py
+[3/4] batch-quality-check.py
+[4/4] check-knowledge-graph.py  ← v7.9.13 新增
+```
+
+任一失败 exit 1 中止 commit。
+
+**3. 升级 `scripts/check-plan.py` v7.9.13** — 加退出码 4 + 知识图谱行合规函数
+
+`check_knowledge_graph_row()` 强制扫描 PLAN.md 第 2 节"模块级媒体策划表"中模块名含"知识图谱"的行：
+- 媒体形式 必须含"标准模块"或"标准公共模块"
+- 资产文件名 必须含 `data-teachany-kg`
+- 校验命令 必须含 `check-knowledge-graph`
+- 表内必须有"知识图谱"行（M6 不可跳）
+
+`FORBIDDEN_MEDIA_PATTERNS` 增加三条：
+- `r"手写\s*SVG.*图谱"` → "手写 SVG 画知识图谱"
+- `r"内联\s*SVG.*图谱"` → "内联 SVG 画知识图谱"
+- `r"自画.*图谱"` → "自画知识图谱"
+
+**4. 升级 `skill/phases/workflow.md` Phase 1.5 PLAN.md 模板** — M6 行精确化
+
+```
+| M6 | 知识图谱 | 导航 | 标准公共模块 ⛔ v7.9.13 #69 |
+  data-teachany-kg="<node_id>" + teachany-knowledge-graph.css + teachany-knowledge-graph.js |
+  python3 scripts/build-teachany-kg-manifest.py |
+  python3 scripts/check-knowledge-graph.py <dir>（退出码=0） |
+```
+
+填写规则的禁用清单加入"手写 `<svg><rect><line><text>` 画知识图谱"，Phase 1.5 Gate 阻断条目加入"M6 行不合规 = Gate 失败"。
+
+**5. 修复 `community/bio-h-nervous-regulation/index.html`** — 样板修复
+
+- L28 head 加 `<link rel="stylesheet" href="../../scripts/teachany-knowledge-graph.css">`
+- L1069-1131（60+ 行 SVG）替换为 8 行标准调用：`<div data-teachany-kg="bio-h-nervous-regulation"><canvas class="tkg-fallback-canvas">`
+- L2070 body 末加 `<script src="../../scripts/teachany-knowledge-graph.js" defer></script>`
+- 子节点关系（前置 `bio-h-internal-environment` / `bio-h-atp`，后续 `bio-h-humoral-regulation`）由 manifest 自动提供，丢弃 subagent 当时随手编的短名 `bio-h-internal-env` 等错误 id
+
+**6. 全仓批量验证**
+
+`python3 scripts/check-knowledge-graph.py --batch` 扫描 346 课件，违规数从首次扫的 4 → 修复后 0。
+
+**7. RULES.md 升级到 69 条**
+
+新增第 #69 条 "知识图谱必须用 teachany-knowledge-graph.js 公共模块"，配套硬规则文本约 1.5KB（详见 `skill/RULES.md`）。
+
+**核心交付物**：
+- 新文件：`scripts/check-knowledge-graph.py`
+- 修改：`scripts/pre-commit-courseware.sh` v7.9.11 → v7.9.13
+- 修改：`scripts/check-plan.py` v7.9.11 → v7.9.13
+- 修改：`skill/phases/workflow.md` Phase 1.5 + Phase 5 + PLAN.md 模板
+- 修改：`skill/RULES.md` 标题 68 条 v7.9.12 → 69 条 v7.9.13，追加第 #69 条
+- 修复：`community/bio-h-nervous-regulation/index.html`（去硬编码 SVG，挂公共模块）
 
 ---
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-check-plan.py（v7.9.11）—— Phase 1.5 PLAN.md 硬校验
+check-plan.py（v7.9.13）—— Phase 1.5 PLAN.md 硬校验
 
 用法:
     python3 scripts/check-plan.py <课件目录>
@@ -11,9 +11,10 @@ check-plan.py（v7.9.11）—— Phase 1.5 PLAN.md 硬校验
     0 = 通过
     1 = PLAN.md 缺失 / 第 2 节表格结构非法 / 五件套自检未勾选
     2 = 媒体策划表声明的资产文件在课件目录中不存在
-    3 = 媒体策划表使用了禁用的媒体形式（如 Web Speech / 内联 SVG 充 Hero）
+    3 = 媒体策划表使用了禁用的媒体形式（如 Web Speech / 内联 SVG 充 Hero / 手写 SVG 图谱）
+    4 = 知识图谱行未声明公共模块（v7.9.13 #69）
 
-校验逻辑（对照 RULES.md #68 + phases/workflow.md Phase 1.5）:
+校验逻辑（对照 RULES.md #68 #69 + phases/workflow.md Phase 1.5）:
     A. PLAN.md 存在且可读
     B. 必须包含 6 个章节锚点: "## 1."/"## 2."/"## 3."/"## 4."/"## 5."/"## 6."
     C. 第 2 节"模块级媒体策划表"是合法 Markdown table
@@ -23,10 +24,15 @@ check-plan.py（v7.9.11）—— Phase 1.5 PLAN.md 硬校验
     D. 媒体形式白名单过滤
        允许: Hero 图 / Remotion 视频 / Canvas 互动 / Edge TTS 音频 / 标准模块 /
              path.html 卡 / SVG 插图 / GeoJSON 地图 / Leaflet 地图
-       禁用: Web Speech / speechSynthesis / 内联 SVG（作 Hero）/ Canvas 动画（代替 Remotion）
+       禁用: Web Speech / speechSynthesis / 内联 SVG（作 Hero）/ Canvas 动画（代替 Remotion）/
+             手写 SVG 图谱（v7.9.13 #69）
     E. 第 3 节"五件套自检清单" 5 项必须全部勾选 [x]
     F. 资产文件存在性
        - 资产文件名指向课件本地文件（非 inline / 非 复用模块）必须真实存在
+    G. 知识图谱模块合规（v7.9.13 #69）
+       - 模块名含"知识图谱"的行：媒体形式必须含"标准模块"或"标准公共模块"
+       - 资产文件名必须含 "data-teachany-kg" 字样
+       - 校验命令必须含 "check-knowledge-graph"
 """
 
 import os
@@ -56,6 +62,9 @@ FORBIDDEN_MEDIA_PATTERNS = [
     (r"Canvas.*替代.*Remotion", "Canvas 动画替代 Remotion（违反 #32）"),
     (r"Canvas.*代替.*Remotion", "Canvas 动画代替 Remotion（违反 #32）"),
     (r"GIF.*代替.*视频", "GIF 代替视频（违反 #32）"),
+    (r"手写\s*SVG.*图谱", "手写 SVG 画知识图谱（违反 v7.9.13 #69，必须用 teachany-knowledge-graph.js 公共模块）"),
+    (r"内联\s*SVG.*图谱", "内联 SVG 画知识图谱（违反 v7.9.13 #69，必须用公共模块）"),
+    (r"自画.*图谱", "自画知识图谱（违反 v7.9.13 #69）"),
 ]
 
 # 资产路径前缀白名单（不作文件存在性检查的"虚拟路径"）
@@ -182,6 +191,52 @@ def check_forbidden_media(rows):
     return violations
 
 
+def check_knowledge_graph_row(rows):
+    """v7.9.13 #69：扫描"知识图谱"模块行，必须声明公共模块。
+
+    规则：
+      - 行.模块名 含 "知识图谱"
+      - 媒体形式 必须含 "标准模块" 或 "标准公共模块"
+      - 资产文件名 必须含 "data-teachany-kg"
+      - 校验命令 必须含 "check-knowledge-graph"
+
+    返回 (is_ok: bool, errors: list[str])
+    """
+    errors = []
+    kg_row_found = False
+    for i, row in enumerate(rows[1:], start=1):
+        if len(row) < 7:
+            continue
+        module_name = row[1]
+        if "知识图谱" not in module_name:
+            continue
+        kg_row_found = True
+        form = row[3]
+        asset = row[4]
+        check_cmd = row[6]
+
+        if not re.search(r"标准(公共)?模块", form):
+            errors.append(
+                f"第 {i} 行模块'{module_name}' 媒体形式='{form}'，"
+                f"但 v7.9.13 #69 要求知识图谱必须使用【标准公共模块】"
+            )
+        if "data-teachany-kg" not in asset:
+            errors.append(
+                f"第 {i} 行模块'{module_name}' 资产文件名='{asset}'，"
+                f"必须含 'data-teachany-kg=\"<node_id>\"'（v7.9.13 #69）"
+            )
+        if "check-knowledge-graph" not in check_cmd:
+            errors.append(
+                f"第 {i} 行模块'{module_name}' 校验命令='{check_cmd}'，"
+                f"必须含 'check-knowledge-graph.py'（v7.9.13 #69）"
+            )
+
+    if not kg_row_found:
+        errors.append("媒体策划表中缺少'知识图谱'模块行（v7.9.13 #69 要求 M6 必须列出）")
+
+    return len(errors) == 0, errors
+
+
 def main():
     if len(sys.argv) < 2:
         print("用法: python3 scripts/check-plan.py <课件目录>")
@@ -192,12 +247,12 @@ def main():
         die(1, f"目录不存在: {course_dir}")
 
     plan_path = course_dir / "PLAN.md"
-    print(bold(f"🔒 check-plan.py v7.9.11 —— 检查 {course_dir.name}"))
+    print(bold(f"🔒 check-plan.py v7.9.13 —— 检查 {course_dir.name}"))
     print(f"   PLAN.md 路径: {plan_path}")
 
     # A. 存在性
     if not plan_path.exists():
-        die(1, f"PLAN.md 不存在于课件目录（违反 Phase 1.5 MANDATORY CHECKPOINT / #68）")
+        die(1, f"PLAN.md 不存在于课件目录（违反 Phase 1.5 MANDATORY CHECKPOINT / #68 #69）")
 
     plan_text = plan_path.read_text(encoding="utf-8")
     ok(f"PLAN.md 存在（{len(plan_text)} 字节）")
@@ -250,8 +305,17 @@ def main():
         print(red("\n❌ 媒体形式白名单违规："))
         for i, module, form, reason in violations:
             print(red(f"   行 {i} 模块'{module}' 媒体='{form}' → {reason}"))
-        die(3, "PLAN.md 使用了禁用的媒体形式（违反 #68）")
-    ok("媒体形式白名单通过（无 Web Speech / 内联 SVG 充 Hero / Canvas 代替 Remotion）")
+        die(3, "PLAN.md 使用了禁用的媒体形式（违反 #68 #69）")
+    ok("媒体形式白名单通过（无 Web Speech / 内联 SVG 充 Hero / Canvas 代替 Remotion / 手写 SVG 图谱）")
+
+    # D.5 知识图谱行合规（v7.9.13 #69）
+    kg_ok, kg_errs = check_knowledge_graph_row(rows)
+    if not kg_ok:
+        print(red("\n❌ 知识图谱模块行违规（v7.9.13 #69）："))
+        for err in kg_errs:
+            print(red(f"   {err}"))
+        die(4, "PLAN.md 知识图谱行不合规（违反 #69）")
+    ok("知识图谱模块行合规（声明公共模块 + data-teachany-kg + check-knowledge-graph）")
 
     # E. 五件套自检
     five_pack_ok, five_pack_msg = check_five_pack(plan_text)

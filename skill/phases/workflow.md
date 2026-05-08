@@ -567,12 +567,12 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
 | M3 | <核心概念2> | <知识点> | Canvas 互动 | inline#canvas-xxx | HTML 内嵌 | 浏览器点击测试 |
 | M4 | <讲解旁白> | 全课程 | Edge TTS 音频 | assets/tts/narration.mp3 | python3 scripts/tts_engine.py | ls -lh assets/tts/*.mp3 |
 | M5 | AI 学伴 | 答疑 | 标准模块 | scripts/ai-tutor.js + tutor-card | 复用标准模块（禁改） | `<div data-teachany-tutor-card>` 存在 |
-| M6 | 知识图谱 | 导航 | 标准模块 | data-teachany-kg="<node_id>" | python3 scripts/build-teachany-kg-manifest.py | 浏览器渲染 ≥3 节点 |
+| M6 | 知识图谱 | 导航 | 标准公共模块 **⛔ v7.9.13 #69** | `data-teachany-kg="<node_id>"` + `teachany-knowledge-graph.css` + `teachany-knowledge-graph.js` | python3 scripts/build-teachany-kg-manifest.py | python3 scripts/check-knowledge-graph.py <dir>（退出码=0） |
 | M7 | 学习路径 | 跨课件 | path.html 卡 | 自动注册 | python3 scripts/rebuild-index.py | data/nodes-selector.json 含本节点 |
 
 > 填写规则：
 > - "媒体形式"只能从以下白名单选择：Hero 图 / Remotion 视频 / Canvas 互动 / Edge TTS 音频 / 标准模块 / path.html 卡 / SVG 插图 / GeoJSON 地图
-> - **禁用** "Web Speech API"（违反 #16 #64）、"手写内联 `<svg>` 塞 HTML 充 Hero"（违反 #57，独立 SVG 文件走 `gen-hero-svg.py` L3 兜底是合规的）、"Canvas 动画替代 Remotion"（违反 #32）
+> - **禁用** "Web Speech API"（违反 #16 #64）、"手写内联 `<svg>` 塞 HTML 充 Hero"（违反 #57，独立 SVG 文件走 `gen-hero-svg.py` L3 兜底是合规的）、"Canvas 动画替代 Remotion"（违反 #32）、**"手写 `<svg><rect><line><text>` 画知识图谱" ⛔ v7.9.13 #69**（必须且只能用公共模块 `teachany-knowledge-graph.js`；node_id 必须存在于 `scripts/teachany-kg-manifest.json`；`check-knowledge-graph.py` 必须通过）
 > - 历史/地理课件必须额外加一行 "地图模块"（违反 #62）
 > - 语音/拼音/英语/朗读课必须 ≥3 行 Edge TTS 音频（违反 #61）
 
@@ -598,6 +598,7 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
 - `python3 scripts/check-plan.py <dir>`（#68）
 - `python3 scripts/validate-courseware.py <dir>`（#68）
 - `python3 scripts/batch-quality-check.py <dir>`（五件套体检）
+- `python3 scripts/check-knowledge-graph.py <dir>`（#69 v7.9.13 知识图谱公共模块合规）
 - commit 双源推送（origin + gitee）
 
 ## 6. 版本与签字
@@ -613,8 +614,9 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
 > - PLAN.md 不存在 = Gate 失败，禁止进入 Phase 2
 > - 第 2 节有空单元/TBD = Gate 失败
 > - 五件套清单未勾选全 = Gate 失败
-> - 媒体形式使用了禁用白名单（Web Speech / 内联 SVG 充 Hero / Canvas 代替 Remotion）= Gate 失败
+> - 媒体形式使用了禁用白名单（Web Speech / 内联 SVG 充 Hero / Canvas 代替 Remotion / 手写 SVG 画知识图谱）= Gate 失败
 > - 历史地理课件未列地图模块 = Gate 失败
+> - **M6 知识图谱行"媒体形式"不是"标准公共模块"或"校验命令"不是 `check-knowledge-graph.py` = Gate 失败（v7.9.13 #69）**
 > - 主 agent 在未产 PLAN.md 的情况下直接用 task 工具派遣 subagent = **严重违规**，等同绕过流水线
 
 ### Phase 2：选择学科模式 ⛔ CHECKPOINT
