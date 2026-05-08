@@ -34,7 +34,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 TREES_DIR = ROOT / "data" / "trees"
 # v5.38（方案 Y+）：废弃 data/knowledge-points/*.json，
-# 知识点元信息改用 skill/data/kp-md-manifest.json，
+# v2026-05: 进一步删除 skill/data/kp-md/ 目录（1537 个 md 文件合并回 data/trees/**/*.json），
+#   不再依赖 kp-md-manifest.json 的 description / md_file 字段（仅保留做节点索引）。
 # Hero 图改用 skill/assets/image-registry.json 的 match_nodes 反查。
 KP_MD_MANIFEST = ROOT / "skill" / "data" / "kp-md-manifest.json"
 IMAGE_REGISTRY = ROOT / "skill" / "assets" / "image-registry.json"
@@ -89,10 +90,10 @@ def collect_trees():
     return all_nodes, domain_index
 
 def enrich_kp(all_nodes):
-    """从 skill/data/kp-md-manifest.json 取 description（暂未引入），
-    从 skill/assets/image-registry.json 的 match_nodes 反查 hero_image。
+    """从 skill/assets/image-registry.json 的 match_nodes 反查 hero_image。
+    v2026-05: skill/data/kp-md/ 目录已删除，所有课标内容统一在 data/trees/**/*.json 的 curriculum_points 字段。
     """
-    # 1) hero_image：image-registry → match_nodes 反向索引
+    # hero_image：image-registry → match_nodes 反向索引
     reg = load_json(IMAGE_REGISTRY) or {}
     images = reg.get("images") if isinstance(reg, dict) else None
     if isinstance(images, list):
@@ -112,18 +113,6 @@ def enrich_kp(all_nodes):
         for nid, (slot, file_) in node_to_img.items():
             if nid in all_nodes and file_:
                 all_nodes[nid]["hero_image"] = file_
-
-    # 2) description：从 kp-md-manifest 的 entries 字段取（当前 manifest 暂无该字段，留作扩展）
-    md_manifest = load_json(KP_MD_MANIFEST) or {}
-    entries = md_manifest.get("entries") if isinstance(md_manifest, dict) else None
-    if isinstance(entries, list):
-        for ent in entries:
-            nid = ent.get("node_id")
-            if not nid or nid not in all_nodes:
-                continue
-            desc = ent.get("description") or ent.get("name_zh")
-            if desc:
-                all_nodes[nid].setdefault("description", desc)
 
 def build_next_index(all_nodes):
     rev = {}
