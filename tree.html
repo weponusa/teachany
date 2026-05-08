@@ -1291,7 +1291,7 @@ function renderCurriculumSection(d) {
 
   let inner = '';
 
-  // 2a. 渲染 curriculum_points
+  // 2a. 渲染 curriculum_points（2026-05-08 后：课标原文已从 data/excerpts/ 迁入 skill/data/kp-md/，tree.html 只展示 curriculum_points 即可）
   if (points.length) {
     inner += `<div class="cs-block" data-type="curriculum-points">`;
     inner += `<div style="font-size:11px;color:var(--dimmer);margin:4px 0;">📖 课标原文要点</div>`;
@@ -1299,16 +1299,8 @@ function renderCurriculumSection(d) {
       inner += `<div class="cs-item">${escapeHtml(p)}</div>`;
     });
     inner += `</div>`;
-  }
-
-  // 2b. excerpts 占位（异步填充）
-  inner += `<div class="cs-block" data-type="excerpts" id="${sectionId}-excerpts">`;
-  inner += `<div class="cs-empty">正在加载教材片段...</div>`;
-  inner += `</div>`;
-
-  if (!points.length) {
-    // 没有 curriculum_points 时，先给个提示（等 excerpts 填充后会被替换）
-    // 只在 excerpts 占位块处理
+  } else {
+    inner += `<div class="cs-block"><div class="cs-empty">（本节点暂未录入课标要点）</div></div>`;
   }
 
   const html = `
@@ -1322,14 +1314,6 @@ function renderCurriculumSection(d) {
       </div>
     </div>
   `;
-
-  // 异步加载 excerpts（不阻塞渲染）
-  const treePath = inferTreePathForNode(d);
-  if (treePath) {
-    setTimeout(() => fillExcerptsIntoSection(sectionId, d, treePath), 0);
-  } else {
-    setTimeout(() => fillExcerptsIntoSection(sectionId, d, null), 0);
-  }
 
   return html;
 }
