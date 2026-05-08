@@ -64,7 +64,10 @@ def find_hero_refs_in_html(html_path: Path):
 
 def check_courseware(course_dir: Path):
     """检查单个课件，返回 (status, errors, warns)
-    status: 'pass' | 'fail' | 'warn' | 'l3-dropped'（L3 降级：主动去掉 hero 区块，合规）
+    status: 'pass' | 'fail' | 'warn' | 'l3-svg' | 'l3-dropped'
+       - 'l3-svg' (v7.9.12 新增): L3 SVG 兜底生成的知识结构图，合规
+       - 'l3-dropped' (v7.9.1 历史遗留): 完全无 hero 区块。v7.9.12 起不推荐，
+         仅对旧课件兼容。新课件必须 L1/L2/L3-SVG 三选一，不许再走 dropped。
     """
     errors = []
     warns = []
@@ -82,15 +85,17 @@ def check_courseware(course_dir: Path):
     local_refs, cdn_refs = find_hero_refs_in_html(html_path)
     all_refs = local_refs + cdn_refs
 
-    # v7.9.1: 先判断是否 L3 降级（课件主动不使用 hero 区块）
-    # 判定标准：HTML 中无 <figure class="ta-standard-figure"> 且 hero_files 为空 且 无 hero 引用
+    # v7.9.1 遗留: 判断是否 L3 dropped（课件主动不使用 hero 区块）
     has_figure_block = bool(re.search(
         r'<figure[^>]*class\s*=\s*["\'][^"\']*ta-standard-figure[^"\']*["\']',
         html_text, re.IGNORECASE
     ))
     if not has_figure_block and not hero_files and not all_refs:
-        # 明确 L3 降级：合规但标注
-        return 'l3-dropped', [], ['L3 降级：课件无 hero 区块，合规但 Gallery 封面将留空']
+        # v7.9.12: dropped 不再被视为推荐做法，但对存量课件给 warn 让他们补 SVG
+        return 'l3-dropped', [], [
+            'L3 dropped: 课件无 hero 区块。v7.9.12 起不推荐——应该用 '
+            'scripts/gen-hero-svg.py 生成 SVG 知识结构图兜底'
+        ]
 
     # 检查 1: 必须有 hero 引用（CDN URL 或本地路径均可）
     if not all_refs:
@@ -176,15 +181,24 @@ def check_courseware(course_dir: Path):
     if not hero_files and not cdn_refs and not local_refs:
         errors.append(f'无 hero 图（本地文件和 CDN URL 均无）')
 
-    # 检查 5: 本地文件大小不能太小
+    # 检查 5: 本地文件大小不能太小（SVG 豁免 10KB 下限，矢量天然小）
     if hero_files:
-        small_files = [f for f in hero_files if f.stat().st_size < MIN_FILE_SIZE]
+        small_files = [
+            f for f in hero_files
+            if f.suffix.lower() != '.svg' and f.stat().st_size < MIN_FILE_SIZE
+        ]
         if small_files:
             errors.append(f'{len(small_files)} 张 hero 图文件过小（< 10KB，可能是占位符）: {[f.name for f in small_files[:3]]}')
+
+    # v7.9.12: 判定是否为 L3-SVG 兜底（所有 hero 文件都是 SVG）
+    is_l3_svg = bool(hero_files) and all(f.suffix.lower() == '.svg' for f in hero_files)
 
     # 决定 status
     if errors:
         return 'fail', errors, warns
+    if is_l3_svg and not warns:
+        # L3 SVG 兜底：合规，但标注来源便于审计
+        return 'l3-svg', [], ['L3 SVG 兜底：使用 gen-hero-svg.py 生成的知识结构图（合规）']
     if warns:
         return 'warn', errors, warns
     return 'pass', errors, warns
@@ -241,6 +255,7 @@ def main():
     warn_count = 0
     skip_count = 0
     l3_count = 0
+    l3_svg_count = 0  # v7.9.12: L3 SVG 兜底
 
     for cdir in courseware_dirs:
         status, errors, warns = check_courseware(cdir)
@@ -256,8 +271,10 @@ def main():
             fail_count += 1
         elif status == 'warn':
             warn_count += 1
+        elif status == 'l3-svg':
+            l3_svg_count += 1  # v7.9.12: SVG 兜底合规
         elif status == 'l3-dropped':
-            l3_count += 1  # v7.9.1: L3 降级也算合规
+            l3_count += 1  # v7.9.1: 历史遗留 dropped，合规但不推荐
         else:
             skip_count += 1
 
@@ -279,6 +296,7 @@ def main():
                 'fail': fail_count,
                 'warn': warn_count,
                 'skip': skip_count,
+                'l3_svg': l3_svg_count,
                 'l3_dropped': l3_count,
             },
             'results': results,
@@ -286,15 +304,17 @@ def main():
         }
         print(json.dumps(out, ensure_ascii=False, indent=2))
     else:
-        print(f'\n=== TeachAny Hero 图基线校验 (v7.0 CDN 优先版) ===')
+        print(f'\n=== TeachAny Hero 图基线校验 (v7.9.12 - SVG 兜底) ===')
         print(f'目标: {target}')
         print(f'检查课件总数: {len(courseware_dirs)}')
-        print(f'  ✅ 通过: {pass_count}')
+        print(f'  ✅ 通过 (L1/L2 位图): {pass_count}')
         print(f'  ❌ 失败: {fail_count}')
         if warn_count:
             print(f'  ⚠️  警告: {warn_count}')
+        if l3_svg_count:
+            print(f'  🎨 L3 SVG 兜底（知识结构矢量图，合规）: {l3_svg_count}')
         if l3_count:
-            print(f'  📭 L3 降级（无 hero 区块，合规）: {l3_count}')
+            print(f'  📭 L3 dropped（无 hero 区块，历史遗留）: {l3_count}')
         if skip_count:
             print(f'  ⏭️  跳过 (无 index.html): {skip_count}')
 
@@ -305,18 +325,21 @@ def main():
                     print(f'\n❌ {rel}')
                     for e in r['errors']:
                         print(f'    - {e}')
-            print(f'\n💡 修复建议 (v7.9.1 新规则 #57)：')
-            print(f'   1. 查找 CDN 上的 hero 图：python3 scripts/find-hero.py <课件目录>')
-            print(f'   2. 若 CDN 无此图，调用 image_gen 用"信息图"风格 prompt 生成并上传图床')
-            print(f'      （关键词：knowledge-structure infographic / flat poster / card nodes / dashed connectors，')
-            print(f'       严禁：warm cartoon / realistic scene）')
-            print(f'   3. HTML 用独立区块：<figure class="ta-standard-figure">')
-            print(f'        <img class="hero-cover-img" src="./assets/<id>-hero.png" alt="...">')
+            print(f'\n💡 修复建议 (v7.9.12 新规则 #57)：Hero 图永不降级')
+            print(f'   1. L1 查 CDN 图床：python3 scripts/find-hero.py <课件目录>')
+            print(f'   2. L2 image_gen 生成位图（工具可用时首选）：')
+            print(f'      prompt = "knowledge-structure infographic / flat poster / card nodes"')
+            print(f'      文字必须与课件语言一致（中文课件用中文字符）')
+            print(f'   3. L3 SVG 兜底（image_gen 不可用时）：')
+            print(f'      python3 scripts/gen-hero-svg.py <课件目录> \\')
+            print(f'          --title "主标题" --nodes "模块1,模块2,模块3,模块4"')
+            print(f'      产出 assets/<course-id>-hero.svg，直接 HTML 引用即可')
+            print(f'   4. HTML 用独立区块：<figure class="ta-standard-figure">')
+            print(f'        <img class="hero-cover-img" src="./assets/<id>-hero.{{png|svg}}">')
             print(f'        <figcaption>课件标题·知识结构主图：...</figcaption>')
-            print(f'      </figure>')
-            print(f'      放在 hero section 之后、学习目标之前（不是贴在标题背景上）')
-            print(f'   4. 如无图床且无 image_gen 能力，采用 L3 降级：删除整个 <figure> 区块（合规）')
+            print(f'      </figure>（放在 hero section 之后、学习目标之前）')
             print(f'   5. 重新跑本脚本验证')
+            print(f'   ⛔ 不要再用 v7.9.1 的 L3 dropped（删 figure）——v7.9.12 已废除')
 
         if fail_count == 0:
             print(f'\n✅ PASS: 所有课件 hero 图基线校验通过')

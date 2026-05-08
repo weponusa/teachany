@@ -76,7 +76,7 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 | **② Remotion 程序化动画**（v7.9.8 强化信息密度铁律）| 课件必须含 **≥1 段真正用 Remotion 渲染的教学动画 mp4**（演示过程性变化），且 mp4 **必须三轨合一：画面 + 氛围音效/配乐 + TTS 语音朗读**（强烈推荐）。⛔ **视频信息密度铁律（v7.9.8 新增）**：视频是核心概念的重要动态表达方法，**不是装饰**。每段视频必须满足：(1) **画面动态变化 ≥3 个 beat**（如：等级层层浮现、要素逐项标注、关系连线生长、对比左右切换）；(2) **每分钟 ≥4 个新画面信息单元**（数字/文字/图标/连线 onEnter）；(3) **画面与 TTS 语义同步**（不是音频在讲 A、画面停在 B）；(4) **互动/可暂停回看**（前端 `<video controls>` 必备，关键节点用 `chapters` 或时间锚点供学生跳转）。 | Remotion + React + TS 渲染 1920×1080 @30fps → 输出 `assets/video/*.mp4` → 嵌入对应 section；音频通过 `<Audio src={staticFile(...)}/>` 叠加，ffmpeg 合成背景音效/edge-tts 生成语音旁白，放 `remotion/public/audio/`；**画面层必须用 `interpolate/spring/Sequence` 编排过程性元素**（不是单张 PNG 铺满全程） | ⛔ **无降级**。Canvas/SVG/CSS 动画不得替代 Remotion 基线；**仅有画面而无音频轨的哑片 mp4 视为不合规**。⛔ **v7.9.8 新增·伪视频禁令**：**严禁"一张 hero/poster 图铺满全程 + 音频轨"的伪视频**——这等于把音频伪装成视频，零教学信息密度，与基线 ⑨ 独立连续音频模块完全重复，浪费学生流量与认知带宽。判定标准：用 `ffprobe -select_streams v:0 -show_entries frame=pict_type` 抽样 ≥10 帧，若所有帧 SSIM > 0.99（即画面几乎不变），直接 Gate 不通过。⛔ **"Node 环境不可用"不是跳过理由**——Phase 0 必须安装 Node（preflight-check.py 自动安装），安装失败必须报告用户等待解决，绝不可降级为"Canvas 动画够用了"，更不可降级为"hero 图配音频凑数"。缺 Remotion = 直接 Gate 不通过。唯一豁免：用户在**当前对话中**主动说"不需要视频/动画"——即便如此仍须在 Gate 中显式标注"L2 用户豁免" |
 | **③ Canvas 互动组件** | 课件必须含 **≥1 个 Canvas 互动组件**（拖拽、画板、参数调节、实时绘图） | 原生 `<canvas>` + JS 事件 → 学生可拖动/点击/滑动改变参数并实时反馈 | 若主题确实无合适 Canvas 场景（如纯文言字词课），必须用 SVG 交互动画替代，并在 Gate 中说明理由 |
 | **④ AI 生图 + 生视频** | 课件必须含 **≥2 张 image_gen 生成的情境/意境插图**；过程性学科（理/化/生/地/史）必须评估生视频需求 | Phase 3 阶段调用 `image_gen` → 存 `assets/illustrations/*.png` → `<img>` 嵌入；必要时调用生视频工具产出 `assets/video/*.mp4` | 若完全纯计算题课，可在 Gate 标注"跳过生图"并附理由，但**文科、科学、工程、社科课件一律不得跳过生图** |
-| **⑤ Hero 知识结构主图**（v7.9.1 重新定义） | 课件**优先**在标题 hero section **下方**独立区块呈现 **1 张知识结构主图**（信息图/脑图/模块关系图，≥1280×720），**非装饰性情境插图**；无现成图且无生图能力时可 L3 降级（去掉区块） | Phase 3 末：① `python3 scripts/find-hero.py <课件目录>` L1 查图床 → ② 未命中且有 image_gen 则 L2 生成（prompt 必须强调 "knowledge-structure infographic / flat poster / card nodes"）→ ③ 仍无则 L3 去掉 `<figure>` 区块；HTML 用 `<figure class="ta-standard-figure"><img class="hero-cover-img" src="./assets/<id>-hero.png"><figcaption>知识结构主图：围绕核心问题呈现 X→Y→Z 学习模块</figcaption></figure>` 放在 hero section **之后**、学习目标 section **之前** | ⛔ **严禁**把 hero 图贴在 `<section class="hero">` 的标题背景/叠加层；⛔ **严禁**用驼队/实验室/卡通人物等装饰性情境图充当 hero（只能当正文插图用）；⛔ L2 生成必须用"信息图"风格，严禁 "warm cartoon / realistic illustration" 关键词；⛔ L3 降级必须删除整个 `<figure>` 标签，不得保留空占位 |
+| **⑤ Hero 知识结构主图**（v7.9.12 更新：永不降级） | 课件**必须**在标题 hero section **下方**独立区块呈现 **1 张知识结构主图**（信息图/脑图/模块关系图，≥1280×720），**非装饰性情境插图**；无现成图且无生图能力时走 L3 SVG 兜底（`gen-hero-svg.py` 自动生成知识结构矢量图，文字与课件语言一致），**不允许删除 figure 区块** | Phase 3 末：① `python3 scripts/find-hero.py <课件目录>` L1 查图床 → ② 未命中且有 image_gen 则 L2 生成位图（prompt 必须强调 "knowledge-structure infographic / flat poster / card nodes"，中文课件要求中文节点文字）→ ③ 仍无则 L3 `python3 scripts/gen-hero-svg.py <课件目录>` 生成 SVG；HTML 用 `<figure class="ta-standard-figure"><img class="hero-cover-img" src="./assets/<id>-hero.{png,svg}"><figcaption>知识结构主图：围绕核心问题呈现 X→Y→Z 学习模块</figcaption></figure>` 放在 hero section **之后**、学习目标 section **之前** | ⛔ **严禁**把 hero 图贴在 `<section class="hero">` 的标题背景/叠加层；⛔ **严禁**用驼队/实验室/卡通人物等装饰性情境图充当 hero（只能当正文插图用）；⛔ L2 生成必须用"信息图"风格，严禁 "warm cartoon / realistic illustration" 关键词；⛔ **v7.9.12 起严禁删除 `<figure>` 区块**——必须走 L3 SVG 兜底；⛔ 严禁手写内联 `<svg>` 塞进 HTML 代替 `<img>` 标签 |
 | **⑥ 真实交互 + 连续音频** | 标题写“互动/实验/探究/画布/地图/跟读”的模块必须真的可操作；语音/拼音/英语/朗读课必须有独立连续音频播放器 | HTML 中必须有真实控件和反馈：`<canvas>`/`<input type="range">`/拖拽/地图事件/按钮状态反馈；音频用 `audioPlaylist` + 可见 `<audio controls>` 或悬浮播放器，`ended` 自动播放下一段 | ⛔ **严禁**用静态图片、SVG 截图、data:image 信息图伪装交互模块；⛔ 视频音轨不能替代独立连续音频；⛔ 单个“点我听”音效不能替代整课连续播放 |
 | **⑦ 标准知识图谱模块**（v7.9.4 统一为唯一技术路线）| 课件**必须且只能**通过 `scripts/teachany-knowledge-graph.js` 标准模块挂载知识图谱，⛔ **严禁自造图谱实现** | **唯一标准调用方式（禁止偏离）**：(1) `<head>` 加入 `<link rel="stylesheet" href="../../scripts/teachany-knowledge-graph.css">`；(2) `<section id="knowledge-graph">` 内写 `<div data-teachany-kg="<node_id>"><canvas class="tkg-fallback-canvas" width="720" height="120"></canvas></div>`；(3) `</body>` 前引入 `<script src="../../scripts/teachany-knowledge-graph.js" defer>`。模块自动读取 `scripts/teachany-kg-manifest.json` 渲染本节点+前序+后续+同域，**无需手写任何数据**。⛔ **严禁手写 `knowledgeGraphData` 内联对象**；⛔ **严禁手写 SVG / d3 / ECharts / 纯 div / 静态图片版图谱**；⛔ 严禁改模块 JS/CSS 源文件（风格只覆盖 `--kg-primary/--kg-bg/--kg-card/--kg-border` 等 CSS 变量） |
 | **⑧ 标准 AI 学伴入口卡片**（v7.7 新增） | 课件必须显式嵌入一张可见的 AI 学伴入口卡片，不可只依赖左下角 FAB | 引入 `scripts/teachany-tutor-card.{css,js}` + 在课件正文（推荐放在"小结"或"前测"区附近）写一行 `<div data-teachany-tutor-card></div>`；卡片显示标题、简介、4 个建议提问按钮，点击任一处都会唤起 ai-tutor.js FAB 的对话面板 | ⛔ 不允许只引入 `ai-tutor.js` 不放卡片——学生在长页面下经常看不到左下角 FAB；⛔ 不允许在卡片里硬编码 API Key，配置仍由 ai-tutor.js 负责 |
@@ -148,7 +148,7 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 
 1. **Phase 0（需求确认）末尾**：必须输出"基线能力开启清单"，明确声明 TTS/Remotion/Canvas/生图/Hero 五项全开（除非用户书面拒绝）
 2. **Phase 0.5**：必须自动检测 Node.js/npm/ffmpeg（Remotion 的前置依赖）；缺失则自动安装（详见 [`phases/video-audio.md`](./phases/video-audio.md) Section 15.2），**不等待用户确认**
-3. **Generation Gate**：基线五项任一标注"跳过"必须附理由，且理由会被 Completeness Gate 二次审查；**Remotion 不可跳过**——"Node 环境不可用"必须先安装解决，不能当作跳过理由；**TTS 不可跳过**——即使用户拒绝也必须保留 `teachany-tts-narrator.js` 引用；**AI 学伴不可跳过**——是标准五件套之一；**知识图谱不可跳过**——知识层必定有数据，不存在"空图谱"场景；**历史/地理课件地图不可跳过**——地图是核心依赖，不存在"无地图版"课件；**Hero 知识结构主图允许 L3 降级**（图床未命中 + 无 image_gen 能力 + 重试 ≥3 次均失败 → 删除 `<figure>` 区块即合规）
+3. **Generation Gate**：基线五项任一标注"跳过"必须附理由，且理由会被 Completeness Gate 二次审查；**Remotion 不可跳过**——"Node 环境不可用"必须先安装解决，不能当作跳过理由；**TTS 不可跳过**——即使用户拒绝也必须保留 `teachany-tts-narrator.js` 引用；**AI 学伴不可跳过**——是标准五件套之一；**知识图谱不可跳过**——知识层必定有数据，不存在"空图谱"场景；**历史/地理课件地图不可跳过**——地图是核心依赖，不存在"无地图版"课件；**Hero 知识结构主图永不降级**（v7.9.12 起：L1 图床未命中 → L2 image_gen 生位图 → L3 `gen-hero-svg.py` 生 SVG 知识结构图兜底，始终保留 `<figure>` 区块）
 4. **Phase 3（制作）**：若环境支持 `task` 工具，必须并行分发 Agent C（生图含 Hero）+ Agent D（TTS）+ **Agent R（Remotion 渲染，默认必选）**；Hero 图必须在 Phase 3 末（HTML 完成前）完成生成
 
    ### ⛔ Subagent 派遣强制模板（v7.9.11 新增硬化）
@@ -180,7 +180,7 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
    - 产出后必须跑 PLAN.md 第 2 节中的"校验命令"自检通过
 
    【流水线工具链（禁止绕过）】
-   - Hero：python3 scripts/find-hero.py <dir> → image_gen 兜底 → L3 删 figure
+   - Hero：python3 scripts/find-hero.py <dir> → image_gen 兜底 → L3 scripts/gen-hero-svg.py 生 SVG（永不降级）
    - TTS：python3 scripts/tts_engine.py（Edge TTS + 多引擎回退）
    - Remotion：cd remotion && npx remotion render
    - 发布：python3 scripts/rebuild-index.py（禁手改 registry.json，#66 #67）
@@ -233,7 +233,9 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 - ❌ **HTML 引用了 `./assets/xxx-hero.png` 但文件根本不存在**（产生 broken image 404）→ **违反 ⑤**。发布前必须 `python3 scripts/check-hero.py` 0 错误
 - ❌ **多个课件复用同一张 hero 图**（如 5 个数学课件都用同一张 `math-hero.png`） → **违反 ⑤**。每张 hero 必须主题专属，由 image_gen 基于该课件主题专门生成（信息图风格）
 - ❌ **L2 生成 hero 用的是 "warm cartoon / realistic illustration" 装饰性 prompt** → **违反 ⑤ v7.9.1**。必须用 "knowledge-structure infographic / flat poster / card nodes radiating / dashed connectors" 信息图风格关键词
-- ❌ **L3 降级后 HTML 里仍残留空的 `<figure class="ta-standard-figure">` 标签** → **违反 ⑤**。降级必须整块删除
+- ❌ **L3 降级后 HTML 里仍残留空的 `<figure class="ta-standard-figure">` 标签** → **违反 ⑤**。v7.9.12 起已废除「删 figure」降级路径，必须走 SVG 兜底
+- ❌ **无生图能力就直接删除 `<figure>` 区块** → **违反 ⑤ v7.9.12**。应该调用 `python3 scripts/gen-hero-svg.py <课件目录>` 生成 SVG 知识结构图兜底
+- ❌ **手写内联 `<svg>` 塞进 HTML 代替 `<img src="./assets/xxx-hero.svg">`** → **违反 ⑤ v7.9.12**。SVG 必须作为独立文件由 `gen-hero-svg.py` 产出
 - ❌ **把静态 PNG/SVG/data:image 放进“互动探究/互动实验/地图互动”模块** → **违反 ⑥**。只要标题或文案说“互动”，就必须有真实可操作控件、事件处理和反馈状态
 - ❌ **拼音/英语/朗读课只有单个“点我听”音效或视频音轨，没有独立连续音频播放器** → **违反 ⑥**。必须提供 `audioPlaylist` + 可见播放器，并支持顺序连续播放
 
@@ -348,16 +350,18 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 
 ---
 
-### 0.5 Hero 图基线详解（Hero Knowledge-Structure Infographic — CDN 优先 + L3 降级）⛔ 必读
+### 0.5 Hero 图基线详解（Hero Knowledge-Structure Infographic — CDN 优先 + SVG 兜底，永不降级）⛔ 必读
 
 > 🔄 **v7.9.1 重大定义变更**：Hero 图不再是"装饰性封面插图"，而是 **知识结构主图（信息图 / 脑图 / 模块关系图）**。它的使命是让学生在学习开始前建立全局认知锚点，一眼看清"我要学什么、分几个模块、模块之间什么关系"。**情境插图（驼队 / 实验室 / 卡通场景）不再等于 hero 图**——只能嵌在正文某个章节作为情境引入。
 >
-> 📍 **位置**：Hero 图必须放在 `<section class="hero">`（标题 + 副标题 + tag 徽章）**之后**、学习目标 section **之前**的**独立区块**，使用标准结构 `<figure class="ta-standard-figure"><img class="hero-cover-img" src="./assets/<course-id>-hero.png"><figcaption>课件标题 · 知识结构主图：围绕"核心问题"展开，呈现 X→Y→Z 四大学习模块</figcaption></figure>`。⛔ **严禁**把 hero 图贴在 hero section 的标题背景上（`background-image` 或 `<img>` + overlay 叠加）。
+> 🆕 **v7.9.12 重大规则变更**：Hero 图**永不降级**。废除 v7.9.1 的"L3 去掉 figure 区块"路径，改为「L3 SVG 知识结构图兜底」——没有生图能力时调用 `python3 scripts/gen-hero-svg.py <课件目录>` 自动产出 SVG 矢量知识结构图（文字与课件语言一致）。**任何课件都必须有可见的 `<figure>` hero 区块**。
 >
-> 🔽 **三级降级链（找不到就下沉，最终可去掉）**：
+> 📍 **位置**：Hero 图必须放在 `<section class="hero">`（标题 + 副标题 + tag 徽章）**之后**、学习目标 section **之前**的**独立区块**，使用标准结构 `<figure class="ta-standard-figure"><img class="hero-cover-img" src="./assets/<course-id>-hero.{png,svg}"><figcaption>课件标题 · 知识结构主图：围绕"核心问题"展开，呈现 X→Y→Z 四大学习模块</figcaption></figure>`。⛔ **严禁**把 hero 图贴在 hero section 的标题背景上（`background-image` 或 `<img>` + overlay 叠加）。
+>
+> 🔽 **三级降级链（永不降级，最终用 SVG 知识结构图兜底）**：
 > 1. **L1 图床检索**：`python3 scripts/find-hero.py <课件目录>` → 查 image-registry.json → 命中则用 CDN URL
-> 2. **L2 image_gen 生成**（仅当会话有此工具）：用 "knowledge-structure infographic / flat poster / central title / card nodes radiating / dashed connectors / clean background" 风格 prompt，**严禁** "warm cartoon / realistic scene / friendly characters" 等装饰性关键词
-> 3. **L3 去掉**：L1 未命中 **且** image_gen 不可用 / 连续 3 次生成结果都是情境图风格 → **删除整个 `<figure>` 区块**，check-hero.py 会识别为 `l3-dropped` 状态（合规）
+> 2. **L2 image_gen 生成**（当会话有 CodeBuddy / OpenAI image / Gemini Nano Banana 等生图工具）：用 "knowledge-structure infographic / flat poster / central title / card nodes radiating / dashed connectors / clean background" 风格 prompt，**严禁** "warm cartoon / realistic scene / friendly characters" 等装饰性关键词；**中文课件要求模型生成中文节点文字**
+> 3. **L3 SVG 兜底**：L1 未命中 **且** image_gen 不可用 / 连续 3 次生成结果都是情境图风格 → **必须调用 `python3 scripts/gen-hero-svg.py <课件目录>`** 自动生成 `<course-id>-hero.svg`（viewBox 1280×720 + 中心主标题 + 副标题 + 2-6 节点环绕 + 虚线连接 + 6 色调色板，文字与课件语言一致），HTML 中 `<img src="./assets/<course-id>-hero.svg">` 正常引用，check-hero.py 会识别为 `l3-svg` 状态（合规，SVG 文件豁免 10KB 下限）
 >
 > 🔑 **核心原则：Hero/插图走 CDN、地图资源随 skill、知识点 MD 随 skill**。Hero 图片统一存储在独立图床仓库 `weponusa/teachany-images`，通过 jsDelivr CDN 全球加速分发；历史地图 geojson、地形底图、知识点 MD 库则随 skill 一起安装（课件制作时本地 `cp` 到课件目录）。
 

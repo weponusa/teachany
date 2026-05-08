@@ -398,10 +398,12 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
    ```
    **降级**：如果脚本不可用，直接读取 `skill/assets/image-registry.json`，在 `images[]` 中找 `match_nodes` 包含该 `node_id` 且 `slot=hero` 的条目；元数据可参考 `skill/data/kp-md-manifest.json` 中的 `entries[].md_file` 与 `has_excerpts` 字段。
 
-3. **Hero 图处理**：
-   - `image-registry` 命中 hero → 拼 CDN URL 下载到 `assets/hero/{node_id}-hero.png` → 记录 ✅
-   - 未命中 → **留空**，记录 ⚠️ `Hero 图未命中，留空待补`
-   - ⛔ **绝对禁止**：模糊匹配、跨 node_id 借用、image_gen 生成 Hero 图
+3. **Hero 图处理**（v7.9.12 升级：永不降级）：
+   - `image-registry` 命中 hero → 拼 CDN URL 下载到 `assets/<course-id>-hero.png` → 记录 ✅ L1
+   - 未命中且会话有 image_gen 工具 → 在 Phase 3 末调用 image_gen 生成"知识结构信息图"风格位图 → 存 `assets/<course-id>-hero.png` → 记录 ✅ L2（文字必须与课件语言一致）
+   - 未命中且无 image_gen 工具 → 在 Phase 3 末调用 `python3 scripts/gen-hero-svg.py <课件目录>` 生成 SVG 知识结构图 → 存 `assets/<course-id>-hero.svg` → 记录 ✅ L3-SVG
+   - ⛔ **v7.9.12 起严禁"留空"或"删除 figure 区块"**——三级降级链必须走到底
+   - ⛔ **绝对禁止**：模糊匹配、跨 node_id 借用装饰性情境图（驼队/卡通）、手写内联 `<svg>` 代替 `<img>`
 
 4. **插图处理**：
    - 按 Section 10.4.1 的五级降级链查找插图（知识点 JSON → registry 精确 → registry 模糊 → image_gen → SVG 内联）
@@ -410,8 +412,8 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
 5. **输出查找报告**（必须包含在 Phase 0.5 输出中）：
    ```
    ═══ 🖼️ 图片查找报告 ═══
-   Hero 图：✅ 已下载 assets/hero/{node_id}-hero.png（来源：知识点JSON / image-registry）
-           ⚠️ 未命中，Hero 区将留空待补
+   Hero 图：✅ L1 已下载 assets/<course-id>-hero.png（来源：image-registry CDN）
+           ⚠️ L1 未命中 → Phase 3 末 L2 image_gen 生成位图 / L3 gen-hero-svg.py 生成 SVG（v7.9.12 永不降级）
    插图：
      - scene: ✅ 已下载 / 🎨 已生成 / 📐 SVG 内联
      - experiment: ✅ 已下载 / ⚠️ 不需要
@@ -419,8 +421,8 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
    ═══════════════════════
    ```
 
-> ✅ **通过条件**：Hero 图状态已明确（下载成功 或 留空）；不存在未经查找就跳过的图片。
-> ❌ **阻断**：未执行图片查找就开始写 HTML = 违规；使用了模糊匹配的 Hero 图 = 违规。
+> ✅ **通过条件**：Hero 图状态已明确（L1 命中 或 记录待 L2/L3 兜底）；不存在未经查找就跳过的图片。
+> ❌ **阻断**：未执行图片查找就开始写 HTML = 违规；使用了模糊匹配的 Hero 图 = 违规；Phase 3 交付时 Hero 仍为"留空/删 figure" = 违规（v7.9.12 永不降级）。
 
 #### 步骤 4：补充读取（仅在摘要不够时）
 
@@ -560,7 +562,7 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
 
 | # | 模块名 | 知识点 | 媒体形式 | 资产文件名 | 生成命令 | 校验命令 |
 |:---|:---|:---|:---|:---|:---|:---|
-| M1 | Hero 知识地图 | 全局结构 | Hero 图（PNG） | assets/<course-id>-hero.png | python3 scripts/find-hero.py <dir> \|\| image_gen | python3 scripts/check-hero.py <dir> |
+| M1 | Hero 知识地图 | 全局结构 | Hero 图（PNG/SVG） | assets/<course-id>-hero.{png,svg} | L1: python3 scripts/find-hero.py <dir> → L2: image_gen → L3: python3 scripts/gen-hero-svg.py <dir> | python3 scripts/check-hero.py <dir> |
 | M2 | <核心概念1> | <知识点> | Remotion 视频 | assets/video/<name>.mp4 | cd remotion && npx remotion render <comp> | ffprobe -show_streams <mp4> \| grep codec_type=audio |
 | M3 | <核心概念2> | <知识点> | Canvas 互动 | inline#canvas-xxx | HTML 内嵌 | 浏览器点击测试 |
 | M4 | <讲解旁白> | 全课程 | Edge TTS 音频 | assets/tts/narration.mp3 | python3 scripts/tts_engine.py | ls -lh assets/tts/*.mp3 |
@@ -570,7 +572,7 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
 
 > 填写规则：
 > - "媒体形式"只能从以下白名单选择：Hero 图 / Remotion 视频 / Canvas 互动 / Edge TTS 音频 / 标准模块 / path.html 卡 / SVG 插图 / GeoJSON 地图
-> - **禁用** "Web Speech API"（违反 #16 #64）、"内联 SVG 充 Hero"（违反 #57）、"Canvas 动画替代 Remotion"（违反 #32）
+> - **禁用** "Web Speech API"（违反 #16 #64）、"手写内联 `<svg>` 塞 HTML 充 Hero"（违反 #57，独立 SVG 文件走 `gen-hero-svg.py` L3 兜底是合规的）、"Canvas 动画替代 Remotion"（违反 #32）
 > - 历史/地理课件必须额外加一行 "地图模块"（违反 #62）
 > - 语音/拼音/英语/朗读课必须 ≥3 行 Edge TTS 音频（违反 #61）
 

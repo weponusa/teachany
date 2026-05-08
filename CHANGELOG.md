@@ -4,6 +4,61 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v7.9.12] - 2026-05-08 —— Hero 图永不降级 + SVG 知识结构图兜底
+
+### 🚨 Changed — Hero 图降级策略重写（RULES #57 + #67）
+
+**根因**：v7.9.1 的"L3 = 删除 `<figure>` 区块"与 v7.9.11 新加的"Hero 图是标准五件套之一不可跳过"自相矛盾——subagent 看到"L3 删 figure 合规"就偷懒直接删，导致课件顶部缺少知识结构主图，学生打开课件看不到全局认知锚点。
+
+**用户原话**：> hero 图是必须的，如果模型和工具（比如 workbuddy）有生图能力，直接生成知识点结构的信息图（语言和课件语言一致），如果没有生图能力，则用 SVG 生成知识点结构图。
+
+**新规则**：Hero 图**永不降级**，三级降级链改为：
+
+| 级别 | 路径 | 触发条件 | 产物 |
+|:---:|:---|:---|:---|
+| **L1** | `find-hero.py` 查 image-registry.json | 图床命中 | CDN URL |
+| **L2** | `image_gen` 生成位图 | 会话有 CodeBuddy / OpenAI image / Gemini Nano Banana | `assets/<id>-hero.png`（文字与课件语言一致） |
+| **L3-SVG** | `gen-hero-svg.py` 生成矢量结构图 | 无生图能力 / image_gen 重试 ≥3 次失败 | `assets/<id>-hero.svg`（viewBox 1280×720，中心主标题+节点环绕+虚线连接，6 色调色板） |
+
+⛔ **废除 v7.9.1 的"L3 去掉 figure"路径**。任何课件都必须有可见的 `<figure>` hero 区块。
+
+### 🆕 Added — `scripts/gen-hero-svg.py`（250 行，L3 SVG 兜底生成器）
+
+- 从 `manifest.json` 读 title/sections/modules，或命令行传入 `--title --subtitle --nodes --lang`
+- viewBox 1280×720，中心主标题 + 副标题 + 装饰线 + 2-6 节点环绕 + 虚线连接
+- 6 色卡片调色板（靛蓝/橙/青/粉/紫/绿），随机分配
+- 语言参数 `--lang zh/en` 控制辅助文字语种，节点文字直接使用模块标题（中文课件产出中文 SVG）
+- 产物 `<course_dir>/assets/<course-id>-hero.svg`，典型大小 3-8 KB
+
+### 🆕 Changed — `scripts/check-hero.py` 加入 `l3-svg` status
+
+- 新增状态类型 `l3-svg`（以 SVG 结尾且合规）
+- SVG 文件豁免 MIN_FILE_SIZE 10KB 下限（SVG 天然小）
+- 旧 `l3-dropped`（删 figure）降级为 warn 提示："v7.9.12 起不推荐，应该用 gen-hero-svg.py 生成 SVG 兜底"
+- 批量模式输出新增 `🎨 L3 SVG 兜底（知识结构矢量图，合规）` 统计行
+- 修复建议改为「v7.9.12 新规则 #57：Hero 图永不降级」，给出 L1 → L2 → L3-SVG 三步指引
+
+### 🆕 Changed — `scripts/find-hero.py` 集成 L3 SVG 兜底
+
+- 新增 `--gen-svg` 参数。L1/L2 未命中时自动调用 `gen-hero-svg.py` 生成 SVG，实现端到端"永不降级"
+- 原 L3 分支改名为 L3-a（image_gen 提示），新增 L3-b（gen-hero-svg.py 执行）
+- `generate_l3_svg()` 新函数：subprocess 调 gen-hero-svg.py 并处理 timeout/失败，返回 `level: L3-svg`
+- 批量模式统计新增 `L3-svg` 列；单课件模式加 "若会话无 image_gen 工具，加 --gen-svg 走 L3 SVG 兜底" 提示
+
+### 📝 Changed — 同步更新文档
+
+- `skill/RULES.md`：#57 完整重写，#67 同步，标题改为「TeachAny 68 条硬规则（v7.9.12）」
+- `skill/SKILL_CN.md`：五件套基线表 ⑤、L76 Gate 描述、L151 subagent 派遣 Gate、L183 流水线、L236 反例、Section 0.5 Hero 详解全部更新
+- `skill/phases/workflow.md`：Phase 0.5 步骤 3.8 Hero 处理逻辑、PLAN.md 策划表 M1 Hero 行、禁用清单同步
+
+### 🧪 Tested
+
+- `gen-hero-svg.py` 独立运行产出 3.5KB SVG，文件级别结构正确
+- `find-hero.py --gen-svg` 端到端测试：L1 未命中 → L2 subject 空 skip → L3-svg 生成 3.3KB SVG 成功
+- `check-hero.py` 识别 SVG 文件为 `l3-svg` status，10KB 下限自动豁免
+
+---
+
 ## [v7.9.11] - 2026-05-08 —— 策划先行 + Pre-commit 质检
 
 ### 🚨 Added — Phase 1.5「策划文档 PLAN.md」⛔ MANDATORY CHECKPOINT
@@ -12,6 +67,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 五件套 0/5 —— 无 Hero 图、无 TTS mp3、无 Remotion mp4、registry 未注册。问题出在
 主 agent 派遣 subagent 时，prompt 里自行定义"TTS 用 Web Speech API / Hero 用内联
 SVG"，subagent 无状态，不会主动读 SKILL.md，于是忠实执行并绕过整个流水线。
+
 
 **v7.9.11 的对治**：在 Phase 1（教学设计）和 Phase 2（学科模式）之间插入
 **Phase 1.5 MANDATORY CHECKPOINT**，强制产出 `<课件目录>/PLAN.md`，结构固定包含：
