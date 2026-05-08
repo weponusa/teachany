@@ -33,7 +33,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 TREES_DIR = ROOT / "data" / "trees"
-KP_DIR = ROOT / "data" / "knowledge-points"
+# v5.38（方案 Y+）：废弃 data/knowledge-points/*.json，
+# 知识点元信息改用 skill/data/kp-md-manifest.json，
+# Hero 图改用 skill/assets/image-registry.json 的 match_nodes 反查。
+KP_MD_MANIFEST = ROOT / "skill" / "data" / "kp-md-manifest.json"
+IMAGE_REGISTRY = ROOT / "skill" / "assets" / "image-registry.json"
 OUT = ROOT / "scripts" / "teachany-kg-manifest.json"
 
 def load_json(path: Path):
@@ -85,22 +89,41 @@ def collect_trees():
     return all_nodes, domain_index
 
 def enrich_kp(all_nodes):
-    for path in sorted(KP_DIR.rglob("*.json")):
-        if path.name == "index.json":
-            continue
-        data = load_json(path)
-        if not data:
-            continue
-        for kp in data.get("points", []) if isinstance(data, dict) else []:
-            nid = kp.get("node_id") or kp.get("old_node_id")
+    """从 skill/data/kp-md-manifest.json 取 description（暂未引入），
+    从 skill/assets/image-registry.json 的 match_nodes 反查 hero_image。
+    """
+    # 1) hero_image：image-registry → match_nodes 反向索引
+    reg = load_json(IMAGE_REGISTRY) or {}
+    images = reg.get("images") if isinstance(reg, dict) else None
+    if isinstance(images, list):
+        # 同一个 node 可能命中多张，优先 slot=hero
+        node_to_img = {}
+        for img in images:
+            slot = img.get("slot") or ""
+            file_ = img.get("file") or ""
+            for nid in img.get("match_nodes") or []:
+                # 优先级：slot=hero > 其它
+                cur = node_to_img.get(nid)
+                if cur is None:
+                    node_to_img[nid] = (slot, file_)
+                else:
+                    if cur[0] != "hero" and slot == "hero":
+                        node_to_img[nid] = (slot, file_)
+        for nid, (slot, file_) in node_to_img.items():
+            if nid in all_nodes and file_:
+                all_nodes[nid]["hero_image"] = file_
+
+    # 2) description：从 kp-md-manifest 的 entries 字段取（当前 manifest 暂无该字段，留作扩展）
+    md_manifest = load_json(KP_MD_MANIFEST) or {}
+    entries = md_manifest.get("entries") if isinstance(md_manifest, dict) else None
+    if isinstance(entries, list):
+        for ent in entries:
+            nid = ent.get("node_id")
             if not nid or nid not in all_nodes:
                 continue
-            node = all_nodes[nid]
-            if kp.get("description"):
-                node.setdefault("description", kp["description"])
-            hero = (kp.get("images") or {}).get("hero")
-            if hero:
-                node["hero_image"] = hero
+            desc = ent.get("description") or ent.get("name_zh")
+            if desc:
+                all_nodes[nid].setdefault("description", desc)
 
 def build_next_index(all_nodes):
     rev = {}

@@ -1,0 +1,38 @@
+# P3.5 积分进阶（换元/分部/部分分式） / P3.5 Integration (advanced)
+
+<!-- TeachAny KP: kp_id=kp-math-cam-al-integration-p3 node_id=math-cam-al-integration-p3 subject=math stage=al -->
+
+## 元数据
+
+| 字段 | 值 |
+| --- | --- |
+| kp_id | `kp-math-cam-al-integration-p3` |
+| node_id | `math-cam-al-integration-p3` |
+| 知识点 | P3.5 积分进阶（换元/分部/部分分式） |
+| 英文名 | P3.5 Integration (advanced) |
+| 学科 | 数学 (math) |
+| 学段 | al (al) |
+| 年级 | 13 |
+| 课标系统 | 剑桥国际课程 |
+| 领域 | 纯数学 3 · Pure Mathematics 3 (P3) |
+
+## 课标原文（Cambridge International）
+
+### 课标原文
+
+• understand the definition of a radian, and use the relationship between radians and degrees
+
+• use the formulae s = rθ and A = ½r²θ in solving problems concerning the arc length and sector area of a circle.
+
+Including calculation of lengths and angles in triangles and areas of triangles.
+
+## 知识图谱关系
+
+### 前驱知识
+
+- `math-cam-al-integration-p1`
+- `math-cam-al-algebra`
+
+## 课标摘要
+
+• understand the definition of a radian, and use the relationship between radians and degrees；• use the formulae s = rθ and A = ½r²θ in solving problems concerning the arc length and sector area of a circle.；Including calculation of lengths and angles in triangles and areas of triangles.

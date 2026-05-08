@@ -290,22 +290,37 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 > 2. **L2 image_gen 生成**（仅当会话有此工具）：用 "knowledge-structure infographic / flat poster / central title / card nodes radiating / dashed connectors / clean background" 风格 prompt，**严禁** "warm cartoon / realistic scene / friendly characters" 等装饰性关键词
 > 3. **L3 去掉**：L1 未命中 **且** image_gen 不可用 / 连续 3 次生成结果都是情境图风格 → **删除整个 `<figure>` 区块**，check-hero.py 会识别为 `l3-dropped` 状态（合规）
 >
-> 🔑 **核心原则：CDN 优先、按命名规则调用、不随 skill 下载图片**。所有 hero 图片存储在独立图床仓库 `weponusa/teachany-images`，通过 jsDelivr CDN 全球加速分发。Skill 安装包只携带 `image-registry.json` 索引文件（~224KB），制作课件时按需从 CDN 拉取。
+> 🔑 **核心原则：Hero/插图走 CDN、地图资源随 skill、知识点 MD 随 skill**。Hero 图片统一存储在独立图床仓库 `weponusa/teachany-images`，通过 jsDelivr CDN 全球加速分发；历史地图 geojson、地形底图、知识点 MD 库则随 skill 一起安装（课件制作时本地 `cp` 到课件目录）。
 
 #### 架构概览
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  Skill 安装包 (~15MB)                                       │
-│  ├── skill/assets/image-registry.json  ← 图片索引（224KB）   │
-│  ├── scripts/find-hero.py              ← CDN URL 查找       │
-│  └── scripts/check-hero.py             ← 校验 CDN 引用      │
+│  Skill 安装包 · standard 姿势 ~160MB                         │
+│  ├── skill/ (~47.6MB)                                       │
+│  │   ├── assets/image-registry.json ← 图片 CDN 索引 (228KB) │
+│  │   ├── assets/historical-china/   ← 朝代 geojson (24MB)   │
+│  │   ├── assets/historical-world/   ← 世界史 geojson (16MB) │
+│  │   ├── assets/hillshade/          ← 彩色地形底图 (2.4MB)  │
+│  │   ├── assets/timelines/          ← 时代线 JSON           │
+│  │   ├── data/kp-md/                ← 知识点 MD 库 (6.1MB)  │
+│  │   ├── data/kp-md-manifest.json   ← MD 索引 (1.1MB)       │
+│  │   ├── scripts/                   ← find_nodes.py 等      │
+│  │   ├── phases/ tech/ templates/ guides/                   │
+│  │   └── SKILL_CN.md                                         │
+│  ├── assets/maps/ (~104MB)                                  │
+│  │   └── political / physical / chrono-cn / chrono-world   │
+│  ├── data/ (~3.8MB)                                         │
+│  │   ├── trees/ node-index.json curricula.json             │
+│  │   └── (excerpts 已并入 skill/data/kp-md/，方案 Y+ v5.38) │
+│  ├── scripts/ references/ docs/ (~4.7MB)                    │
+│  └── 根目录小文件 (LICENSE / manifest.json / .gitignore ...) │
 ├─────────────────────────────────────────────────────────────┤
 │  CDN 图床 (jsDelivr，不下载)                                 │
 │  └── cdn.jsdelivr.net/gh/weponusa/teachany-images@main/     │
 │      ├── math/quadratic-function-hero.png                   │
 │      ├── biology/cell-structure-hero.png                    │
-│      └── ... 391+ 张按学科分类的 hero 图                     │
+│      └── ... 356+ 张按学科分类的 hero 图                     │
 ├─────────────────────────────────────────────────────────────┤
 │  社区课件 (服务器在线访问，不下载)                             │
 │  └── teachany.ai / GitHub Pages                             │
@@ -445,18 +460,39 @@ python3 scripts/check-hero.py community/
 
 本节的所有要求都映射到 RULES.md 的硬规则 #57，发布流程中由 `validate-courseware.py` 调用 `check-hero.py` 强制校验。任一课件不通过 = 发布流程 exit 1，rebuild-index 拒绝执行。
 
-#### Skill 安装体积控制
+#### Skill 安装体积控制（v5.38 更新）
 
-| 内容 | 是否随 skill 下载 | 说明 |
-|:---|:---:|:---|
-| `skill/assets/image-registry.json` | ✅ | 图片索引（224KB），CDN URL 映射表 |
-| `scripts/find-hero.py` | ✅ | Hero 查找脚本 |
-| `scripts/check-hero.py` | ✅ | Hero 校验脚本 |
-| `community/` (313课件) | ❌ | 服务器在线访问，不下载 |
-| `teachany-images/` (685MB) | ❌ | CDN 按需加载，不下载 |
-| Hero 图片文件 | ❌ | 通过 CDN URL 引用，不下载 |
+**standard 姿势（推荐）约 160 MB**：
 
-> 📌 使用 `git sparse-checkout set --from-file .sparse-checkout-presets/standard.txt` 安装 skill（含全部地图资产），约 **117MB**。
+| 内容 | 是否随 skill 下载 | 大小 | 说明 |
+|:---|:---:|:---:|:---|
+| `skill/` 内核（phases/tech/templates/guides/scripts） | ✅ | ~0.5 MB | 核心制作规范与脚本 |
+| `skill/assets/image-registry.json` | ✅ | 228 KB | CDN 图片索引（356 条 hero/插图记录） |
+| `skill/assets/historical-china/*.geojson` | ✅ | 24 MB | 中国朝代疆域数据（秦~清 14 代） |
+| `skill/assets/historical-world/*.geojson` | ✅ | 16 MB | 世界历史疆域数据（BCE 3000~CE 2000，22 时代） |
+| `skill/assets/hillshade/*.jpg` | ✅ | 2.4 MB | 彩色阴影地形底图（标准历史地图模块必需） |
+| `skill/assets/timelines/*.json` | ✅ | 248 KB | 时代线元数据 |
+| `skill/data/kp-md/*.md` | ✅ | 6.1 MB | 知识点 MD 库（1537 个知识点，本地离线可用） |
+| `skill/data/kp-md-manifest.json` | ✅ | 1.1 MB | 知识点 MD 索引（2391 条 entries） |
+| `assets/maps/` | ✅ | 104 MB | 现代政区/自然地理/分代朝代地图（地理/历史课件核心依赖） |
+| `data/` 元数据（trees/ node-index.json v2.0/ curricula.json 等） | ✅ | 3.8 MB | 知识树与统一节点索引（excerpts 已并入 MD） |
+| ~~`data/excerpts/`~~ **(已废弃 v5.38)** | ❌ | — | 已删除，全部并入 `skill/data/kp-md/` 的「课标原文」小节 |
+| `scripts/` `references/` `docs/` | ✅ | 4.7 MB | 构建脚本与参考文档 |
+| `community/` (300+ 课件) | ❌ | — | 服务器在线访问，不下载 |
+| `examples/` / `screenshots/` | ❌ | — | 仅审阅/研究时可选 |
+| `teachany-images/` 图床 | ❌ | 685 MB | CDN 按需加载，不 clone 仓库 |
+| Hero 图片文件本体 | ❌ | — | 通过 jsDelivr CDN URL 引用，不下载到本地 |
+| `skill/assets/image-vault/` **(已废弃 v5.38)** | ❌ | — | 已删除，纳入 CDN 统一管理 |
+
+> 📌 **一键安装 standard 姿势**：
+> ```bash
+> git clone --filter=blob:none --sparse git@github.com:weponusa/teachany.git
+> cd teachany
+> git sparse-checkout set --from-file .sparse-checkout-presets/standard.txt
+> # 结果：~160 MB，含全套地图资源 + 知识点 MD 库，可立即开始制作
+> ```
+>
+> 💡 **full 姿势 ~700 MB**：`.sparse-checkout-presets/full.txt`，含 community/ + examples/，适用于审阅/研究/批量操作。
 
 ---
 

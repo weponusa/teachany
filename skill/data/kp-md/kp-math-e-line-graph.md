@@ -1,0 +1,36 @@
+# 条形统计图与折线统计图 / Statistics
+
+<!-- TeachAny KP: kp_id=kp-math-e-line-graph node_id=math-e-line-graph subject=math stage=elementary -->
+
+## 元数据
+
+| 字段 | 值 |
+| --- | --- |
+| kp_id | `kp-math-e-line-graph` |
+| node_id | `math-e-line-graph` |
+| 知识点 | 条形统计图与折线统计图 |
+| 英文名 | Statistics |
+| 学科 | 数学 (math) |
+| 学段 | elementary (elementary) |
+| 年级 | 4 |
+| 课标系统 | 中国国家课标 |
+| 领域 | 统计与概率 |
+
+## 课标原文（义教/普高 2022年版）
+
+### 课标要点
+
+经历收集、整理和表达数据的过程，会用条形统计图、折线统计图表达数据，并作出简单的判断。
+
+会用条形统计图、折线统计图表达数据，并作出简单的判断。
+
+## 知识图谱关系
+
+### 前驱知识
+
+- `math-e-pictograph`
+- `math-e-multi-digit-multiplication`
+
+## 课标摘要
+
+【课标要点】经历收集、整理和表达数据的过程，会用条形统计图、折线统计图表达数据，并作出简单的判断。；【课标要点】会用条形统计图、折线统计图表达数据，并作出简单的判断。

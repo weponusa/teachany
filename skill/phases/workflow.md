@@ -391,17 +391,16 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
 **执行逻辑（严格按顺序）**：
 
 1. **获取 `node_id`**：从 Phase 0 的 Q2 确认当前课件的 `node_id`（如 `math-m-linear-function`）
-2. **读取知识点 JSON 的 `images` 字段**：
+2. **读取 image-registry 的 hero 信息**：
    ```bash
-   # 第一入口：从知识点 JSON 获取预制图片信息
+   # 第一入口：从 image-registry 获取预制图片信息
    python3 scripts/image_resolver.py resolve --node-id {node_id} --slot hero --subject {subject} --json
    ```
-   **降级**：如果脚本不可用，直接读取 `data/knowledge-points/{curriculum}/{stage}/{subject}.json`，找到 `node_id` 匹配的知识点，检查 `images.hero` 字段。
+   **降级**：如果脚本不可用，直接读取 `skill/assets/image-registry.json`，在 `images[]` 中找 `match_nodes` 包含该 `node_id` 且 `slot=hero` 的条目；元数据可参考 `skill/data/kp-md-manifest.json` 中的 `entries[].md_file` 与 `has_excerpts` 字段。
 
 3. **Hero 图处理**：
-   - `images.hero` 非 null → 拼 CDN URL 下载到 `assets/hero/{node_id}-hero.png` → 记录 ✅
-   - `images.hero` 为 null → 查 `skill/assets/image-registry.json` 中 `slot=hero` + `match_nodes` 精确匹配 → 命中则下载 → 记录 ✅
-   - 两处均未命中 → **留空**，记录 ⚠️ `Hero 图未命中，留空待补`
+   - `image-registry` 命中 hero → 拼 CDN URL 下载到 `assets/hero/{node_id}-hero.png` → 记录 ✅
+   - 未命中 → **留空**，记录 ⚠️ `Hero 图未命中，留空待补`
    - ⛔ **绝对禁止**：模糊匹配、跨 node_id 借用、image_gen 生成 Hero 图
 
 4. **插图处理**：

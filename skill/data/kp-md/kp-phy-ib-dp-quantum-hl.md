@@ -1,0 +1,75 @@
+# 量子物理（HL：光电效应/玻尔模型/薛定谔） / Quantum physics (HL)
+
+<!-- TeachAny KP: kp_id=kp-phy-ib-dp-quantum-hl node_id=phy-ib-dp-quantum-hl subject=physics stage=dp -->
+
+## 元数据
+
+| 字段 | 值 |
+| --- | --- |
+| kp_id | `kp-phy-ib-dp-quantum-hl` |
+| node_id | `phy-ib-dp-quantum-hl` |
+| 知识点 | 量子物理（HL：光电效应/玻尔模型/薛定谔） |
+| 英文名 | Quantum physics (HL) |
+| 学科 | 物理 (physics) |
+| 学段 | IB-DP（高中） (dp) |
+| 年级 | 12 |
+| 课标系统 | IB 国际文凭 |
+| 领域 | 主题 E · 核与量子物理 Nuclear and Quantum Physics |
+
+## 课标原文（IB Programme）
+
+### 课标原文
+
+Students should understand:
+• the motion of bodies through space and time can be described and analysed in terms of position, velocity, and acceleration
+• velocity is the rate of change of position, and acceleration is the rate of change of velocity
+• the change in position is the displacement
+• the difference between distance and displacement
+• the difference between instantaneous and average values of velocity, speed and acceleration, and how to determine them
+• the equations of motion for solving problems with uniformly accelerated motion as given by
+  u+v
+  s= t
+  2
+  v=u+at
+  1
+  s=ut+ at2
+  2
+  v2=u2+2as
+• motion with uniform and non-uniform acceleration
+
+Students should understand:
+• that the motion of a body can be described and analysed in terms of position, velocity, and acceleration
+• velocity is the rate of change of position, and acceleration is the rate of change of velocity
+• the change in position is the displacement
+• the difference between distance and displacement
+• the difference between instantaneous and average values of velocity, speed and acceleration, and how to determine them
+• the equations of motion for solving problems with uniformly accelerated motion as given by
+  u+v
+  s= t
+  2
+  v=u+at
+  1
+  s=ut+ at2
+  2
+  v2=u2+2as
+• motion with uniform and non-uniform acceleration
+
+How can the motion of a body be described quantitatively and qualitatively?
+How can the position of a body in space and time be predicted?
+How can the analysis of motion in one and two dimensions be used to solve real-life problems?
+
+## 知识图谱关系
+
+### 前驱知识
+
+- `phy-ib-dp-atomic-structure`
+
+## 课标摘要
+
+Students should understand:
+• the motion of bodies through space and time can be described and analysed in terms of position, velocity, and acceleration
+• velocity is the rate of change of position, a...；Students should understand:
+• that the motion of a body can be described and analysed in terms of position, velocity, and acceleration
+• velocity is the rate of change of position, and acceleration is...；How can the motion of a body be described quantitatively and qualitatively?
+How can the position of a body in space and time be predicted?
+How can the analysis of motion in one and two dimensions be u...

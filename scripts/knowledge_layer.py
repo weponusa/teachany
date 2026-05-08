@@ -23,6 +23,126 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
+NODE_INDEX_PATH = ROOT / "data" / "node-index.json"
+MD_DIR = ROOT / "skill" / "data" / "kp-md"
+
+
+# ═══════════════════════════════════════════════════════════════
+#  v2 Lookup：基于 node-index.json + MD 的统一查询入口
+#  方案 Y+ 起，excerpts 已并入 MD，这里是唯一真相源的对外接口。
+# ═══════════════════════════════════════════════════════════════
+
+def load_node_index_v2() -> Optional[Dict[str, Any]]:
+    if not NODE_INDEX_PATH.exists():
+        return None
+    try:
+        data = json.load(open(NODE_INDEX_PATH, encoding='utf-8'))
+        if isinstance(data, dict) and isinstance(data.get("nodes"), dict):
+            return data
+    except Exception:
+        pass
+    return None
+
+
+def lookup_v2(topic: str, subject: Optional[str] = None, top: int = 3) -> Optional[Dict[str, Any]]:
+    """基于 node-index.json 的 lookup，返回与 v1 相似的 payload 结构"""
+    idx = load_node_index_v2()
+    if not idx:
+        return None
+
+    topic_norm = normalize_text(topic)
+    subj_norm = (subject or "").strip().lower()
+
+    scored = []
+    for nid, node in idx["nodes"].items():
+        if subj_norm:
+            if (node.get("subject","").lower() != subj_norm
+                and node.get("curriculum","").lower() != subj_norm):
+                continue
+        score = 0
+        name_zh = node.get("name_zh", "")
+        name_en = (node.get("name_en") or "").lower()
+        if topic_norm == normalize_text(name_zh): score += 100
+        elif topic_norm in normalize_text(name_zh): score += 40
+        if topic.lower() == name_en: score += 80
+        elif topic.lower() in name_en: score += 30
+        if topic_norm in normalize_text(nid): score += 10
+        if score > 0:
+            scored.append((score, nid, node))
+
+    scored.sort(key=lambda x: -x[0])
+    matches = []
+    for score, nid, node in scored[:top]:
+        md_excerpt = ""
+        md_sections = []
+        md_path = node.get("md_path")
+        if md_path:
+            abs_md = ROOT / md_path
+            if abs_md.exists():
+                md_text = abs_md.read_text(encoding='utf-8')
+                md_sections = re.findall(r'^##\s+([^\n]+)', md_text, re.M)
+                # 提取「课标原文」部分作为 excerpt preview
+                mm = re.search(
+                    r'^##\s+课标原文[^\n]*\n(.*?)(?=^##\s|\Z)',
+                    md_text, re.M | re.S
+                )
+                if mm:
+                    md_excerpt = mm.group(1).strip()[:500]
+        matches.append({
+            "score": score,
+            "node_id": nid,
+            "name_zh": node.get("name_zh"),
+            "name_en": node.get("name_en"),
+            "subject": node.get("subject"),
+            "stage": node.get("stage"),
+            "curriculum": node.get("curriculum"),
+            "domain": node.get("domain"),
+            "grade": node.get("grade"),
+            "md_path": md_path,
+            "md_status": node.get("md_status"),
+            "md_sections": md_sections,
+            "md_curriculum_excerpt": md_excerpt,
+            "hero_image": node.get("hero_image"),
+            "prereq_ids": node.get("prereq_ids", []),
+            "next_ids": node.get("next_ids", []),
+            "courses": node.get("courses", []),
+            "tree_path": node.get("tree_path"),
+        })
+
+    return {
+        "topic": topic,
+        "subject": subject,
+        "match_count": len(scored),
+        "matches": matches,
+        "_source": "node-index-v2",
+    }
+
+
+def print_lookup_v2_human(payload: Dict[str, Any]) -> None:
+    topic = payload.get("topic", "")
+    print(f"# Knowledge Layer Lookup (v2): {topic}")
+    print(f"# Source: {payload.get('_source')}, total_match={payload.get('match_count')}\n")
+    matches = payload.get("matches", [])
+    if not matches:
+        print("No matches found.")
+        return
+    for i, m in enumerate(matches, 1):
+        print(f"## Match {i}: {m['name_zh']}  ({m['subject']}/{m['stage']}/{m['curriculum']})")
+        print(f"- node_id: {m['node_id']}")
+        print(f"- domain:  {m.get('domain')}")
+        if m.get("md_path"):
+            print(f"- md:      {m['md_path']}  [{m.get('md_status')}]")
+        if m.get("hero_image"):
+            print(f"- hero:    {m['hero_image']}")
+        if m.get("prereq_ids"):
+            print(f"- 前驱:    {', '.join(m['prereq_ids'][:5])}")
+        if m.get("next_ids"):
+            print(f"- 后续:    {', '.join(m['next_ids'][:5])}")
+        if m.get("md_curriculum_excerpt"):
+            print("- 课标原文节选:")
+            for line in m["md_curriculum_excerpt"].splitlines()[:8]:
+                print(f"    {line}")
+        print()
 
 
 @dataclass
@@ -902,6 +1022,15 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 0
 
     if args.command == "lookup":
+        # 方案 Y+：优先使用基于 node-index.json + MD 的 v2 lookup
+        v2 = lookup_v2(args.topic, subject=args.subject, top=args.top)
+        if v2 and v2.get("match_count", 0) > 0:
+            if args.json:
+                print(json.dumps(v2, ensure_ascii=False, indent=2))
+            else:
+                print_lookup_v2_human(v2)
+            return 0
+        # v2 无结果时，回退到旧 bundles 路径（保留兼容）
         matches = find_matches(bundles, topic=args.topic, subject=args.subject)
         node_index, node_home = build_global_indices(bundles)
         compact = [
@@ -913,6 +1042,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             "subject": resolve_subject(args.subject) if args.subject else None,
             "match_count": len(matches),
             "matches": compact,
+            "_source": "legacy-bundles",
         }
         if args.json:
             print(json.dumps(payload, ensure_ascii=False, indent=2))

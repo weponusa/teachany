@@ -1,0 +1,49 @@
+# 向量 / Vectors
+
+<!-- TeachAny KP: kp_id=kp-math-cam-igcse-vectors-igcse node_id=math-cam-igcse-vectors-igcse subject=math stage=igcse -->
+
+## 元数据
+
+| 字段 | 值 |
+| --- | --- |
+| kp_id | `kp-math-cam-igcse-vectors-igcse` |
+| node_id | `math-cam-igcse-vectors-igcse` |
+| 知识点 | 向量 |
+| 英文名 | Vectors |
+| 学科 | 数学 (math) |
+| 学段 | IGCSE (igcse) |
+| 年级 | 10 |
+| 课标系统 | 剑桥国际课程 |
+| 领域 | 几何与三角 / Geometry & Trig / Geometry & Trig |
+
+## 课标原文（Cambridge International）
+
+### 课标原文
+
+C6.2 Right-angled triangles
+Notes and examples
+1 Know and use the sine, cosine and tangent
+ratios for acute angles in calculations involving
+sides and angles of a right-angled triangle.
+
+C6.2 Right-angled triangles
+Notes and examples
+2 Solve problems in two dimensions using
+Pythagoras’ theorem and trigonometry.
+
+## 知识图谱关系
+
+### 前驱知识
+
+- `math-cam-igcse-transformations-igcse`
+
+## 课标摘要
+
+C6.2 Right-angled triangles
+Notes and examples
+1 Know and use the sine, cosine and tangent
+ratios for acute angles in calculations involving
+sides and angles of a right-angled triangle.；C6.2 Right-angled triangles
+Notes and examples
+2 Solve problems in two dimensions using
+Pythagoras’ theorem and trigonometry.

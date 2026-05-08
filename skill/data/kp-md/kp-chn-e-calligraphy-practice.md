@@ -1,0 +1,35 @@
+# 硬笔书法与书写规范 / chn-e-calligraphy-practice
+
+<!-- TeachAny KP: kp_id=kp-chn-e-calligraphy-practice node_id=chn-e-calligraphy-practice subject=chinese stage=elementary -->
+
+## 元数据
+
+| 字段 | 值 |
+| --- | --- |
+| kp_id | `kp-chn-e-calligraphy-practice` |
+| node_id | `chn-e-calligraphy-practice` |
+| 知识点 | 硬笔书法与书写规范 |
+| 英文名 | chn-e-calligraphy-practice |
+| 学科 | 语文 (chinese) |
+| 学段 | elementary (elementary) |
+| 年级 | 3 |
+| 课标系统 | 中国国家课标 |
+| 领域 | 识字与写字 |
+
+## 课标原文（义教/普高 2022年版）
+
+### 课标要点
+
+写字姿势正确，养成良好的书写习惯。能用硬笔熟练地书写正楷字，做到规范、端正、整洁。
+
+掌握汉字的基本笔画和常用的偏旁部首，能按基本的笔顺规则用硬笔写字，注意间架结构，初步感受汉字的形体美。
+
+## 知识图谱关系
+
+### 前驱知识
+
+- `chn-e-char-structure`
+
+## 课标摘要
+
+【课标要点】写字姿势正确，养成良好的书写习惯。能用硬笔熟练地书写正楷字，做到规范、端正、整洁。；【课标要点】掌握汉字的基本笔画和常用的偏旁部首，能按基本的笔顺规则用硬笔写字，注意间架结构，初步感受汉字的形体美。

@@ -1,0 +1,37 @@
+# 半衰期 / Half-life
+
+<!-- TeachAny KP: kp_id=kp-physics-cam-igcse-half-life node_id=physics-cam-igcse-half-life subject=physics stage=igcse -->
+
+## 元数据
+
+| 字段 | 值 |
+| --- | --- |
+| kp_id | `kp-physics-cam-igcse-half-life` |
+| node_id | `physics-cam-igcse-half-life` |
+| 知识点 | 半衰期 |
+| 英文名 | Half-life |
+| 学科 | 物理 (physics) |
+| 学段 | IGCSE (igcse) |
+| 年级 | 10 |
+| 课标系统 | 剑桥国际课程 |
+| 领域 | 核物理 / Nuclear Physics / Nuclear Physics |
+
+## 课标原文（Cambridge International）
+
+### 课标原文
+
+1 Describe the use of rulers and measuring cylinders to find a length or a volume
+
+2 Describe how to measure a variety of time intervals using clocks and digital timers
+
+3 Determine an average value for a small distance and for a short interval of time by measuring multiples (including the period of oscillation of a pendulum)
+
+## 知识图谱关系
+
+### 前驱知识
+
+- `physics-cam-igcse-radioactivity`
+
+## 课标摘要
+
+1 Describe the use of rulers and measuring cylinders to find a length or a volume；2 Describe how to measure a variety of time intervals using clocks and digital timers；3 Determine an average value for a small distance and for a short interval of time by measuring multiples (including the period of oscillation of a pendulum)

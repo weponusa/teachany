@@ -1,0 +1,35 @@
+# 气体交换 / Gas exchange
+
+<!-- TeachAny KP: kp_id=kp-biology-cam-al-gas-exchange-al node_id=biology-cam-al-gas-exchange-al subject=biology stage=al -->
+
+## 元数据
+
+| 字段 | 值 |
+| --- | --- |
+| kp_id | `kp-biology-cam-al-gas-exchange-al` |
+| node_id | `biology-cam-al-gas-exchange-al` |
+| 知识点 | 气体交换 |
+| 英文名 | Gas exchange |
+| 学科 | 生物 (biology) |
+| 学段 | al (al) |
+| 年级 | 11 |
+| 课标系统 | 剑桥国际课程 |
+| 领域 | AS · 运输与免疫 / AS · Transport & Immunity / AS · Transport & Immunity |
+
+## 课标原文（Cambridge International）
+
+### 课标原文
+
+describe the formation of a glycosidic bond by condensation, with reference to disaccharides, including sucrose, and polysaccharides
+
+describe the breakage of a glycosidic bond in polysaccharides and disaccharides by hydrolysis, with reference to the non-reducing sugar test
+
+## 知识图谱关系
+
+### 前驱知识
+
+- `biology-cam-al-transport-mammals`
+
+## 课标摘要
+
+describe the formation of a glycosidic bond by condensation, with reference to disaccharides, including sucrose, and polysaccharides；describe the breakage of a glycosidic bond in polysaccharides and disaccharides by hydrolysis, with reference to the non-reducing sugar test
