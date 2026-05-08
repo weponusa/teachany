@@ -785,9 +785,16 @@ def main():
 
     print(f'   注册表已重建: {len(registry_courses)} 个课件 (官方={official_count}, 社区={community_count}, 课程={course_count})')
 
-    # v7.7: 同步派生索引，解决“社区课件已进 registry 但 Gallery/知识图谱不显示”的断链问题
+    # v7.7: 同步派生索引，解决"社区课件已进 registry 但 Gallery/知识图谱不显示"的断链问题
+    # v7.9.9: 新增 build-nodes-selector.py —— 修复 path.html 学习路径选择器的断链
+    # v7.9.10: 新增 build-nodes-metadata.py —— 修复 path.html 知识图谱网络加载（TeachAnyLearningPath.initialize 依赖）
     print('\n🔄 步骤4.5: 同步社区索引和标准知识图谱索引...')
-    for helper in ['sync-community-index.py', 'build-teachany-kg-manifest.py']:
+    for helper in [
+        'sync-community-index.py',
+        'build-teachany-kg-manifest.py',
+        'build-nodes-selector.py',
+        'build-nodes-metadata.py',
+    ]:
         helper_path = Path('scripts') / helper
         if not helper_path.exists():
             print(f'  ⚠️  跳过 {helper}: 文件不存在')
