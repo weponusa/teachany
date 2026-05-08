@@ -4,6 +4,78 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v7.9.11] - 2026-05-08 —— 策划先行 + Pre-commit 质检
+
+### 🚨 Added — Phase 1.5「策划文档 PLAN.md」⛔ MANDATORY CHECKPOINT
+
+**根因复盘**：v7.9.10 版本下 `community/bio-h-nervous-regulation/`（2026-05-08 产）
+五件套 0/5 —— 无 Hero 图、无 TTS mp3、无 Remotion mp4、registry 未注册。问题出在
+主 agent 派遣 subagent 时，prompt 里自行定义"TTS 用 Web Speech API / Hero 用内联
+SVG"，subagent 无状态，不会主动读 SKILL.md，于是忠实执行并绕过整个流水线。
+
+**v7.9.11 的对治**：在 Phase 1（教学设计）和 Phase 2（学科模式）之间插入
+**Phase 1.5 MANDATORY CHECKPOINT**，强制产出 `<课件目录>/PLAN.md`，结构固定包含：
+
+1. 教学骨架摘要（源自 Phase 1）
+2. **模块级媒体策划表**：7 列固定（#/模块名/知识点/媒体形式/资产文件名/生成命令/校验命令），
+   ≥5 行，每行 7 列必填（空单元/TBD/待定直接 Gate 失败）
+3. 五件套自检清单（5 项全部勾选）
+4. Subagent 派遣清单（Agent C/D/R 分工 + 必读硬规则）
+5. 发布动作清单
+6. 版本与签字
+
+**媒体形式白名单**：只能选 `Hero 图 / Remotion 视频 / Canvas 互动 / Edge TTS 音频 /
+标准模块 / path.html 卡 / SVG 插图 / GeoJSON 地图 / Leaflet 地图`。
+**禁用**：Web Speech API、内联 SVG 充 Hero、Canvas 动画代替 Remotion。
+
+### 🔒 Added — Subagent 派遣强制模板
+
+SKILL_CN.md Section 0.2 新增：每次 `task` 工具派遣 Agent C/D/R，`prompt` 必须以
+固定的 `<HARD_RULES>` 块开头（原样拷贝不得改写），内含：
+
+- 五件套铁律（AI 学伴 / Hero / TTS / Remotion / 知识图谱）
+- PLAN.md 合同（`{{PLAN_PATH}}` 占位，subagent 必须先读第 2 节再动手）
+- 流水线工具链（find-hero.py / tts_engine.py / remotion render / rebuild-index.py）
+- 失败处理（红线四：2 次失败必须换本质不同方案）
+- 交付前自检（红线一：必须贴执行输出作为证据）
+
+### 🔒 Added — 硬规则 #68：策划先行与 Pre-commit 质检
+
+规则手册 RULES.md 从 67 条扩展到 **68 条**。#68 明确：
+- 开写前必须产 PLAN.md 通过 Phase 1.5 Gate
+- subagent prompt 必须带 `<HARD_RULES>` 块
+- commit 前 `pre-commit-courseware.sh` 跑三项检查：
+  `validate-courseware.py` + `check-plan.py` + `batch-quality-check.py`
+- 紧急绕过开关 `TEACHANY_SKIP_PRECOMMIT=1`（会打印警告，不得常规使用）
+
+### 🔧 Added — 新脚本
+
+- **`scripts/check-plan.py`**（250 行）
+  校验逻辑：PLAN.md 存在 + 6 个章节锚点 + 第 2 节 Markdown 表格合法（7 列 ≥5 行） +
+  无禁用媒体形式 + 五件套自检 5/5 勾选 + 声明资产文件实际存在。
+  退出码 0/1/2/3 精准分类失败原因。
+
+- **`scripts/pre-commit-courseware.sh`** + **`.githooks/pre-commit`**
+  仅对 staged 区触及 `community/*/` 或 `examples/*/` 的 commit 触发三项质检；
+  失败 exit 1 中止 commit；通过 `TEACHANY_SKIP_PRECOMMIT=1` 可紧急绕过。
+  激活方式：`git config core.hooksPath .githooks`（本仓已激活）。
+
+### 🔧 Changed — Generation Gate 加固
+
+`phases/workflow.md` L556-666 的 Generation Gate 清单末尾追加 4 项：
+- PLAN.md 存在
+- 模块级媒体策划表 7 列全填
+- PLAN.md 与 Phase 3 产物一致
+- check-plan.py 退出码 = 0
+
+### 💡 Migration Note
+
+本次改动不破坏存量课件，但对新课件强制 Phase 1.5 Gate。bio-h-nervous-regulation
+（v7.9.10 遗留五件套 0/5 的课件）作为 v7.9.11 的**反面教材**保留，后续按新流程
+回头补做作为样板课件。
+
+---
+
 ## [Unreleased] - SKILL v5.34.12 - 2026-04-20
 
 ### 🎨 Changed — PPTX 导出改为"图文美观版"

@@ -527,6 +527,94 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
 > ✅ **通过条件**：每个模块有 ABT + 情境引入；驱动结构已设计（问题链/项目阶段/活动序列）；知识点已列出并做了三分法标注；有前测设计；有学习记录单规划；每个模块有核心问题；**Bloom 层级已标注且覆盖 ≥ 3 级；ConcepTest 位置已确定；认知负荷预控已完成**。
 > ❌ **阻断**：没有前测 = 不通过；ABT 引入缺失 = 不通过；驱动结构缺失 = 不通过；**Bloom 覆盖 < 3 级 = 不通过；无 ConcepTest 规划 = 不通过**。
 
+### Phase 1.5：策划文档 PLAN.md ⛔ MANDATORY CHECKPOINT（v7.9.11 新增）
+
+> 📌 **核心诉求（v7.9.11 根因反推）**：bio-h-nervous-regulation 案例表明——主 agent 在派遣 subagent 前如果没有**硬性交付物**把每个模块的媒体形式钉死，subagent 就会凭 prompt 自由发挥（把 Remotion 换成 Web Speech、把 Hero 图换成内联 SVG、跳过 rebuild-index）。Phase 1.5 的作用就是产出一份 `<课件目录>/PLAN.md`，让后续所有 subagent 都必须对着表执行，**没有策划表不许动手**。
+
+**必做动作**：
+
+1. **创建目录**：`mkdir -p community/<course-id>`（或 examples/）
+2. **产出 `PLAN.md`**：在课件目录下，按以下固定结构产出——**结构不允许精简，每节都必须填**
+3. **通过 Phase 1.5 Gate**：用 `python3 scripts/check-plan.py <课件目录>` 自检通过
+
+**PLAN.md 固定结构**（模板）：
+
+```markdown
+# PLAN.md —— <课件名> 策划文档
+
+> 本文件是开写前的硬性交付物。Phase 1.5 Gate 未通过不许进入 Phase 2。
+> 所有 subagent 必须先读本文件第 2 节和第 4 节再开始执行。
+
+## 1. 教学骨架摘要（源自 Phase 1）
+
+- **课件 ID**：<course-id>
+- **node_id**：<tree 中的 node_id>
+- **学段/学科**：<初中/高中> <生物/数学/...>
+- **ABT 叙事**：And... But... Therefore...
+- **Bloom 层级覆盖**：L1=__题 L2=__题 L3=__题 L4=__题 L5=__题 L6=__题（≥3 级）
+- **ConcepTest 锚点**：模块__ 的 __ 概念后
+- **认知负荷预算**：本征=__ 外在=__ 生成=__
+- **支架路径**：全支架(__处) → 半支架(__处) → 无支架(__处)
+
+## 2. 模块级媒体策划表 ⛔ 每行 7 列必填，空白 / TBD 直接 Gate 失败
+
+| # | 模块名 | 知识点 | 媒体形式 | 资产文件名 | 生成命令 | 校验命令 |
+|:---|:---|:---|:---|:---|:---|:---|
+| M1 | Hero 知识地图 | 全局结构 | Hero 图（PNG） | assets/<course-id>-hero.png | python3 scripts/find-hero.py <dir> \|\| image_gen | python3 scripts/check-hero.py <dir> |
+| M2 | <核心概念1> | <知识点> | Remotion 视频 | assets/video/<name>.mp4 | cd remotion && npx remotion render <comp> | ffprobe -show_streams <mp4> \| grep codec_type=audio |
+| M3 | <核心概念2> | <知识点> | Canvas 互动 | inline#canvas-xxx | HTML 内嵌 | 浏览器点击测试 |
+| M4 | <讲解旁白> | 全课程 | Edge TTS 音频 | assets/tts/narration.mp3 | python3 scripts/tts_engine.py | ls -lh assets/tts/*.mp3 |
+| M5 | AI 学伴 | 答疑 | 标准模块 | scripts/ai-tutor.js + tutor-card | 复用标准模块（禁改） | `<div data-teachany-tutor-card>` 存在 |
+| M6 | 知识图谱 | 导航 | 标准模块 | data-teachany-kg="<node_id>" | python3 scripts/build-teachany-kg-manifest.py | 浏览器渲染 ≥3 节点 |
+| M7 | 学习路径 | 跨课件 | path.html 卡 | 自动注册 | python3 scripts/rebuild-index.py | data/nodes-selector.json 含本节点 |
+
+> 填写规则：
+> - "媒体形式"只能从以下白名单选择：Hero 图 / Remotion 视频 / Canvas 互动 / Edge TTS 音频 / 标准模块 / path.html 卡 / SVG 插图 / GeoJSON 地图
+> - **禁用** "Web Speech API"（违反 #16 #64）、"内联 SVG 充 Hero"（违反 #57）、"Canvas 动画替代 Remotion"（违反 #32）
+> - 历史/地理课件必须额外加一行 "地图模块"（违反 #62）
+> - 语音/拼音/英语/朗读课必须 ≥3 行 Edge TTS 音频（违反 #61）
+
+## 3. 五件套自检清单
+
+- [ ] **AI 学伴**：`scripts/ai-tutor.js` + `<div data-teachany-tutor-card>` 已列入 M5
+- [ ] **Hero 图**：≥1 张 PNG 放 `assets/<course-id>-hero.png` 已列入 M1
+- [ ] **TTS 音频**：≥1 个 MP3 放 `assets/tts/*.mp3` 已列入 M4
+- [ ] **Remotion 视频**：≥1 个 MP4 放 `assets/video/*.mp4` 已列入 M2
+- [ ] **知识图谱**：`data-teachany-kg="<node_id>"` 已列入 M6
+
+## 4. Subagent 派遣清单
+
+| Agent | 负责模块 | 关键产出 | 必读硬规则 |
+|:---|:---|:---|:---|
+| Agent C（内容+HTML） | M1 M3 M5 M6 + index.html | index.html / 互动控件 / 标准模块挂载 | #45 #57 #59 #60 #64 #65 |
+| Agent D（资产生成） | M2 M4 | *.mp4 + *.mp3 实体文件 | #16 #32 #58 #61 |
+| Agent R（Remotion） | M2 的 Composition | remotion/src/compositions/*.tsx | #32 |
+
+## 5. 发布动作
+
+- `python3 scripts/rebuild-index.py`（#37 #66）
+- `python3 scripts/check-plan.py <dir>`（#68）
+- `python3 scripts/validate-courseware.py <dir>`（#68）
+- `python3 scripts/batch-quality-check.py <dir>`（五件套体检）
+- commit 双源推送（origin + gitee）
+
+## 6. 版本与签字
+
+- PLAN.md 版本：v1.0
+- 产出时间：YYYY-MM-DD HH:MM
+- 主 agent：<模型名>
+- 准入 Gate：Phase 1.5 ⛔
+```
+
+> ✅ **通过条件**：PLAN.md 文件存在；第 2 节表格 ≥5 行且 7 列全填；第 3 节五件套 5 项全部勾选；第 4 节 Agent 分工明确；`python3 scripts/check-plan.py <dir>` 退出码 = 0。
+> ❌ **阻断**：
+> - PLAN.md 不存在 = Gate 失败，禁止进入 Phase 2
+> - 第 2 节有空单元/TBD = Gate 失败
+> - 五件套清单未勾选全 = Gate 失败
+> - 媒体形式使用了禁用白名单（Web Speech / 内联 SVG 充 Hero / Canvas 代替 Remotion）= Gate 失败
+> - 历史地理课件未列地图模块 = Gate 失败
+> - 主 agent 在未产 PLAN.md 的情况下直接用 task 工具派遣 subagent = **严重违规**，等同绕过流水线
+
 ### Phase 2：选择学科模式 ⛔ CHECKPOINT
 
 必须完成以下全部项目：
@@ -659,11 +747,17 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
 【Agent 协作模式】✅多 Agent 并行（A+C+D，用户要求双语时+B） / 🔶部分并行（___） / ❌单 Agent 串行（环境不支持 task 工具）
 【双语课件】❌默认仅中文（用户明确要求双语时 → ✅生成英文版）
 【课件打包】✅默认执行
+
+【📋 PLAN.md 策划文档】⛔ v7.9.11 MANDATORY
+  - PLAN.md 存在：✅ <课件目录>/PLAN.md 已产出 / ❌ 缺失
+  - 模块级媒体策划表：✅ 7 列全填且 ≥5 行 / ❌ 有空单元或 TBD
+  - PLAN.md 与 Phase 3 产物一致：✅ 表中资产文件名与实际产物匹配 / ❌ 不一致
+  - check-plan.py 退出码：✅ 0 / ❌ 非 0
 ═══════════════════════════════════════════
 ```
 
-> ✅ **通过条件**：清单所有字段已填写；无"未确定"项；**🖼️ Hero 图查找结果已明确；六大教学法预设计表 6 项全部填写完整（ABT 每模块有 And/But/Therefore；Bloom 覆盖 ≥ 3 级；ConcepTest 位置和问题已确定；认知负荷控制措施已列出；Mayer 五原则逐项标注；脚手架路径已规划）**。
-> ❌ **阻断**：有任何字段为空或"待定" = 回到对应 Phase 补全；**六大教学法预设计表有任何一项为空 = 不允许进入 Phase 3**。
+> ✅ **通过条件**：清单所有字段已填写；无"未确定"项；**🖼️ Hero 图查找结果已明确；六大教学法预设计表 6 项全部填写完整（ABT 每模块有 And/But/Therefore；Bloom 覆盖 ≥ 3 级；ConcepTest 位置和问题已确定；认知负荷控制措施已列出；Mayer 五原则逐项标注；脚手架路径已规划）**；**📋 PLAN.md 四项全部 ✅（v7.9.11）**。
+> ❌ **阻断**：有任何字段为空或"待定" = 回到对应 Phase 补全；**六大教学法预设计表有任何一项为空 = 不允许进入 Phase 3**；**PLAN.md 缺失或 check-plan.py 不过 = 回到 Phase 1.5 补齐（v7.9.11）**。
 
 ### Phase 3：制作内容 ⛔ CHECKPOINT
 

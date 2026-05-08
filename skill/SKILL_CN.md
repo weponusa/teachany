@@ -150,6 +150,63 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 2. **Phase 0.5**：必须自动检测 Node.js/npm/ffmpeg（Remotion 的前置依赖）；缺失则自动安装（详见 [`phases/video-audio.md`](./phases/video-audio.md) Section 15.2），**不等待用户确认**
 3. **Generation Gate**：基线五项任一标注"跳过"必须附理由，且理由会被 Completeness Gate 二次审查；**Remotion 不可跳过**——"Node 环境不可用"必须先安装解决，不能当作跳过理由；**TTS 不可跳过**——即使用户拒绝也必须保留 `teachany-tts-narrator.js` 引用；**AI 学伴不可跳过**——是标准五件套之一；**知识图谱不可跳过**——知识层必定有数据，不存在"空图谱"场景；**历史/地理课件地图不可跳过**——地图是核心依赖，不存在"无地图版"课件；**Hero 知识结构主图允许 L3 降级**（图床未命中 + 无 image_gen 能力 + 重试 ≥3 次均失败 → 删除 `<figure>` 区块即合规）
 4. **Phase 3（制作）**：若环境支持 `task` 工具，必须并行分发 Agent C（生图含 Hero）+ Agent D（TTS）+ **Agent R（Remotion 渲染，默认必选）**；Hero 图必须在 Phase 3 末（HTML 完成前）完成生成
+
+   ### ⛔ Subagent 派遣强制模板（v7.9.11 新增硬化）
+
+   > **根因**：subagent 无状态，不会主动读 SKILL.md。主 agent 如果在 prompt 里自行重新定义"技术规范"（如"TTS 用 Web Speech"、"Hero 用内联 SVG"），subagent 会忠实执行并绕过硬规则。v7.9.11 起，**每次 task 工具派遣 Agent C/D/R，prompt 必须以下面的 `<HARD_RULES>` 块开头（原样拷贝，不得改写、不得精简、不得省略）**，否则视为绕过流水线。
+
+   ```
+   <HARD_RULES>
+   你是 TeachAny 课件子智能体，执行任务前必须遵守以下铁律。
+   任何违反 = 输出作废 + 主 agent 追责。
+
+   【五件套铁律（v7.9.8）】每份课件必须同时具备以下 5 件，缺一不得交付：
+   1. AI 学伴：scripts/ai-tutor.js + <div data-teachany-tutor-card>（#45 #60 #64）
+   2. Hero 图：assets/<course-id>-hero.png 至少 1 张 PNG/JPG（#57 #64 #67）
+      ⛔ 禁止用内联 SVG / 纯文字 hero 替代
+   3. TTS 音频：assets/tts/*.mp3 至少 1 个（#16 #58 #61 #64）
+      ⛔ 禁止用 Web Speech API (window.speechSynthesis) 代替实体 mp3
+      ⛔ 必须走 python3 scripts/tts_engine.py（多引擎自动回退）
+   4. Remotion 视频：assets/video/*.mp4 至少 1 个带音频轨（#32 #58 #64）
+      ⛔ 禁止用 Canvas 动画 / GIF / CSS timeline 代替
+      ⛔ 禁止"hero 图铺满 + 音频轨"伪视频（ffprobe SSIM>0.99 判死）
+   5. 知识图谱：<div data-teachany-kg="<node_id>"> 挂载（#59 #64）
+      ⛔ 禁止手写 SVG 伪装图谱
+
+   【PLAN.md 合同】
+   - 本次任务对应 PLAN.md 路径：{{PLAN_PATH}}
+   - 必须先读 PLAN.md 第 2 节"模块级媒体策划表"中你负责的行
+   - 你的产出物文件名必须与表中"资产文件名"完全一致
+   - 产出后必须跑 PLAN.md 第 2 节中的"校验命令"自检通过
+
+   【流水线工具链（禁止绕过）】
+   - Hero：python3 scripts/find-hero.py <dir> → image_gen 兜底 → L3 删 figure
+   - TTS：python3 scripts/tts_engine.py（Edge TTS + 多引擎回退）
+   - Remotion：cd remotion && npx remotion render
+   - 发布：python3 scripts/rebuild-index.py（禁手改 registry.json，#66 #67）
+
+   【失败处理（红线四 #55）】
+   - 同一处参数改 2 次失败 = 原地打转，必须换本质不同方案
+   - 3 次失败未读官方文档 = 红线三不通过
+
+   【交付前自检（红线一 #53）】
+   - 声称"已完成"前必须贴命令执行输出作为证据
+   - ls -lh 确认 mp4/mp3/png 实体文件存在
+   - ffprobe 确认 mp4 有 audio 流
+   - 浏览器/curl 确认链接无 404
+   </HARD_RULES>
+
+   <TASK>
+   <!-- 主 agent 填写：具体任务、输入、期望输出 -->
+   </TASK>
+   ```
+
+   **强制约束**：
+   - ⛔ 主 agent 调用 `task` 工具前必须先产出 PLAN.md 并通过 Phase 1.5 Gate
+   - ⛔ `task.prompt` 必须以 `<HARD_RULES>` 块开头，将 `{{PLAN_PATH}}` 替换为实际路径
+   - ⛔ 主 agent 不得在 prompt 中自行定义"技术规范替代方案"（如"用 Web Speech 即可"）
+   - ⛔ 违反任一条等同绕过 SKILL.md 流水线，`batch-quality-check.py` 会在 commit 前拦截
+
 5. **Completeness Gate**：五项全部校验（Remotion 必须检查 `assets/video/*.mp4` 真实存在、**含音频流**（`ffprobe` 可见 `codec_type=audio`）、且已嵌入 HTML `<video>` + 合理 `poster`；Hero 图必须运行 `python3 scripts/check-hero.py` 通过），缺一不通过
 
 ### 0.3 违反示例（禁止）
