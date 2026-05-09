@@ -1,50 +1,43 @@
 # TeachAny · Sparse Checkout Preset · standard ⭐ 推荐
-# 制作器内核 + 全部地图资产（含历史朝代 geojson 与彩色地形底图），约 160MB
-# 适用场景：所有课件制作（含地理/历史/政治/自然地理 + 标准历史地图模块）
-# Hero 图片通过 CDN 按需加载（来源：weponusa/teachany-images），社区课件在服务器访问
+# 制作器内核 + 历史地图 + 现代政区，约 60-65MB（工作目录）
+# 适用场景：所有课件制作（含历史/政治课件的标准地图模块）
 #
-# 用法：
-#   git sparse-checkout set --from-file .sparse-checkout-presets/standard.txt
+# ⚠️ 本文件仅使用 cone 模式兼容语法（纯目录/子目录路径）
+#   · 不使用 ! 否定（cone 模式不支持）
+#   · 不使用 * 通配符（cone 模式不支持）
+#   · 未列出的目录自动排除
+#
+# 用法（cone 模式）：
+#   git sparse-checkout init --cone
+#   git sparse-checkout set skill/ scripts/ data/trees/ data/knowledge-points/ data/geography/ data/editions/ data/textbook-supplements/ assets/maps/chrono-cn/ assets/maps/chrono-world/ assets/maps/political/ assets/maps/physical/hillshade/ references/ docs/ .sparse-checkout-presets/
+#
+# 地理课件需要自然地理底图时，执行：
+#   git sparse-checkout add assets/maps/physical/
+#   # 追加 coastline(21MB) + rivers(16MB) + lakes(7.7MB) + terrain-tiles(11MB)
 
-# 必需：制作器本体（含 skill/data/kp-md/ 本地知识点 MD 库 ~6.1MB）
+# ── 制作器核心 ──
 skill/
-# image-vault 已于 v5.38 废弃删除；如仓库仍有残留则排除
-!skill/assets/image-vault/
-# 保留：image-registry.json（CDN 索引）+ historical-china/world（朝代 geojson）
-#      + hillshade（彩色地形底图）+ timelines（时代线） + kp-md/（知识点 MD 库）
-
-# 必需：通用地图资产（~104MB，现代政区/自然地理/分代朝代线）
-assets/maps/
-
-# 必需：知识树 + node-index v2.0 + 制作配置
-# 注：v5.38 起 data/excerpts/ 已删除（全部并入 skill/data/kp-md/）
-data/
-!data/.venv/
-
 scripts/
 references/
 docs/
 
-# 必需：根目录关键文件（仅小文件）
-.gitignore
-.gitattributes
-LICENSE
-MANIFEST
-manifest.json
-.nojekyll
+# ── 知识树与知识点（不含 data/excerpts/ 课标摘录 26MB）──
+data/trees/
+data/knowledge-points/
+data/geography/
+data/editions/
+data/textbook-supplements/
 
-# 不需要：图片图床（通过 CDN 访问，见 skill/assets/image-registry.json）
-!teachany-images/
+# ── 地图资产（历史 + 政区 + hillshade 底图） ──
+assets/maps/chrono-cn/
+assets/maps/chrono-world/
+assets/maps/political/
+assets/maps/physical/hillshade/
 
-# 不需要：社区课件（服务器在线访问，不下载）
-!community/
+# ── sparse checkout 预设文件本身 ──
+.sparse-checkout-presets/
 
-# 不需要：示例课件、截图
-!examples/
-!screenshots/
-
-# 不需要：根目录大文件 + 历史归档
-!test-hero-*.png
-!_archive_*/
-!_p1_temp/
-!_excerpts_backup_*/
+# ── 以下目录按需追加 ──
+# 地理课件自然地理底图（+58MB）：git sparse-checkout add assets/maps/physical/
+# 课标原文摘录（+26MB）：git sparse-checkout add data/excerpts/
+# 全部成品课件（+700MB）：git sparse-checkout disable

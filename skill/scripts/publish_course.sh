@@ -179,11 +179,11 @@ if [ -z "$REPO" ]; then
   if git clone --depth 1 --filter=blob:none --sparse https://github.com/weponusa/teachany.git "$DEFAULT_CLONE" 2>&1 | tail -5; then
     cd "$DEFAULT_CLONE"
     git sparse-checkout init --cone
-    # 只拉取发布流程所需目录：scripts(发布脚本) + data(知识树) + skill(规范) + community/drafts(投稿目录)
-    git sparse-checkout set scripts/ data/ skill/ community/drafts/ .sparse-checkout-presets/
+    # 发布流程只需要 scripts(发布脚本) + data(知识树) + skill(规范) + community/drafts(投稿目录)
+    git sparse-checkout set scripts/ data/trees/ data/knowledge-points/ skill/ community/drafts/ .sparse-checkout-presets/
     cd - >/dev/null
     REPO="$DEFAULT_CLONE"
-    echo "  ✅ 仓库已克隆（sparse，约 120MB）: $REPO"
+    echo "  ✅ 仓库已克隆（sparse，约 15MB）: $REPO"
   else
     echo ""
     echo "  ❌ 自动克隆失败。请手动执行："

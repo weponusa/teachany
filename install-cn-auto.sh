@@ -71,14 +71,14 @@ main() {
     print_step "3/5" "从 Gitee 下载代码（国内高速，排除既有课件）"
     cd "${TEMP_DIR}"
     
-    # 使用 sparse checkout 排除既有课件（examples/ + community/ ~600MB）
+    # 使用 sparse checkout：只拉取制作器核心目录（排除 community/ examples/ 等成品课件）
     if git clone --depth 1 --filter=blob:none --sparse "${GITEE_URL}" teachany-opensource; then
         cd teachany-opensource
         git sparse-checkout init --cone
-        # 排除既有课件目录，只拉取制作器核心
-        git sparse-checkout set skill/ scripts/ data/ assets/ references/ docs/ styles/ worker/ worker-llm-proxy/ pages/ gallery/
+        # cone 模式：精确列出子目录，未列出的自动排除（含 community/ examples/ physical/ excerpts/）
+        git sparse-checkout set skill/ scripts/ data/trees/ data/knowledge-points/ data/geography/ data/editions/ data/textbook-supplements/ assets/maps/chrono-cn/ assets/maps/chrono-world/ assets/maps/political/ assets/maps/physical/hillshade/ references/ docs/ .sparse-checkout-presets/
         cd ..
-        print_success "代码下载成功（已排除既有课件，节省 ~600MB）"
+        print_success "代码下载成功（制作器核心 ~60MB，不含成品课件和自然地理大文件）"
     else
         print_error "从 Gitee 下载失败"
         echo "正在尝试备用下载方式..."
