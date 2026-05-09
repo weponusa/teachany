@@ -211,6 +211,93 @@
 
     var currentEraLayer = null;
     var currentCityLayer = null;
+    var overlayLayers = []; // v2.2: CHGIS 细节叠加层（关隘/河流/古城/丝路），不随朝代切换
+
+    // v2.2: overlays 叠加层渲染（关隘、历史河流、丝绸之路等 CHGIS 细节）
+    // 配置示例：overlays: [{id, file, label, style: {color, weight, radius, dashArray}, visible: true}]
+    function renderOverlays() {
+      if (!Array.isArray(cfg.overlays) || !cfg.overlays.length) return;
+      cfg.overlays.forEach(function (ov) {
+        if (!ov.file) return;
+        // overlays 文件默认在 details 子目录
+        var file = ov.file.indexOf("/") >= 0 ? ov.file : ("details/" + ov.file);
+        fetchGeoJSON(scope, file)
+          .then(function (data) {
+            var style = ov.style || {};
+            var color = style.color || "#dc2626";
+            var weight = style.weight || 2;
+            var radius = style.radius || 4;
+            var dash = style.dashArray || null;
+            var layer = L.geoJSON(data, {
+              pointToLayer: function (feature, latlng) {
+                // 点数据（关隘、古城扩充）
+                var featColor = (feature.properties && feature.properties.color) || color;
+                return L.circleMarker(latlng, {
+                  radius: radius,
+                  fillColor: featColor,
+                  color: "#fff",
+                  weight: 1.2,
+                  fillOpacity: 0.9
+                });
+              },
+              style: function (feature) {
+                // 线/面数据（河流、丝路）—— 允许每条 feature 自定义 color
+                var featColor = (feature.properties && feature.properties.color) || color;
+                return {
+                  color: featColor,
+                  weight: weight,
+                  opacity: 0.85,
+                  dashArray: dash,
+                  fillColor: featColor,
+                  fillOpacity: 0.15
+                };
+              },
+              onEachFeature: function (feature, l) {
+                var p = feature.properties || {};
+                var name = p.name || p.NAME_CH || p.NAME_EN || "";
+                var cat = p.category || p.period || p.dynasty || "";
+                var note = p.note || "";
+                if (name) {
+                  var html = '<div class="thm-city-popup"><b>' + name + '</b>' +
+                    (cat ? ' <span style="color:#fbbf24">· ' + cat + '</span>' : '') +
+                    (note ? '<br><span>' + note + '</span>' : '') + '</div>';
+                  l.bindPopup(html, { className: "thm-popup" });
+                  l.bindTooltip(name, { sticky: true, className: "thm-feature-tip" });
+                }
+              }
+            });
+            if (ov.visible !== false) layer.addTo(map);
+            overlayLayers.push({ id: ov.id, label: ov.label || ov.id, layer: layer, visible: ov.visible !== false });
+            refreshOverlayToggle();
+          })
+          .catch(function (err) {
+            console.warn("[TeachAnyMap] overlay 加载失败（不阻塞）：", ov.file, err);
+          });
+      });
+    }
+
+    // 叠加层开关 UI（在 legend 后追加）
+    var overlayToggleEl = null;
+    function refreshOverlayToggle() {
+      if (!overlayLayers.length) return;
+      if (!overlayToggleEl) {
+        overlayToggleEl = document.createElement("div");
+        overlayToggleEl.className = "thm-overlay-toggle";
+        host.appendChild(overlayToggleEl);
+      }
+      overlayToggleEl.innerHTML = '<span class="thm-overlay-label">细节图层：</span>';
+      overlayLayers.forEach(function (o) {
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "thm-overlay-btn" + (o.visible ? " active" : "");
+        btn.textContent = o.label;
+        btn.addEventListener("click", function () {
+          if (o.visible) { map.removeLayer(o.layer); o.visible = false; btn.classList.remove("active"); }
+          else { o.layer.addTo(map); o.visible = true; btn.classList.add("active"); }
+        });
+        overlayToggleEl.appendChild(btn);
+      });
+    }
 
     function loadEra(eraId) {
       var era = cfg.eras.find(function (e) { return e.id === eraId; }) || cfg.eras[0];
@@ -294,6 +381,8 @@
 
     // 初始加载
     loadEra(currentEra);
+    // v2.2: 一次性渲染 CHGIS 细节叠加层（与朝代独立）
+    renderOverlays();
 
     // 响应容器 resize
     if ("ResizeObserver" in window) {
@@ -310,5 +399,5 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
 
-  window.TeachAnyHistoricalMap = { __version: "2.0-leaflet", mount: mount };
+  window.TeachAnyHistoricalMap = { __version: "2.2-chgis-overlays", mount: mount };
 })();

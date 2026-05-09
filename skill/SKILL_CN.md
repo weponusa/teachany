@@ -54,6 +54,9 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 | [`tech/design-system.md`](./tech/design-system.md) | 视觉设计规范（按学段分级） | 写 CSS 样式时 |
 | [`tech/ai-multimodal.md`](./tech/ai-multimodal.md) | AI 多模态互动区（可选功能） | 做多模态互动 |
 | [`tech/workbuddy-agents.md`](./tech/workbuddy-agents.md) | WorkBuddy 多 Agent 协作流水线 | 启用多 Agent 并行 |
+| [`tech/science-simulations.md`](./tech/science-simulations.md) | PhET / Matter.js / 3Dmol.js 实验模拟 | 物理/化学/生物需交互实验 |
+| [`tech/math-animations.md`](./tech/math-animations.md) | GeoGebra / Desmos / p5.js / Manim 数学可视化 | 数学需函数图像/几何动画 |
+| [`tech/advanced-animations.md`](./tech/advanced-animations.md) | GSAP / Lottie / Konva 高级前端动画 | 需滚动动画/矢量动画/复杂拖拽 |
 
 ### 其他卫星文档（已存在）
 

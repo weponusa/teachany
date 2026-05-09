@@ -94,26 +94,56 @@ python3 scripts/apply-historical-maps.py
 
 ## 四、可用资产清单
 
-### 4.1 中国历史朝代 GeoJSON
+### 4.1 中国历史朝代 GeoJSON（v7.9.5 修订：文件名统一与 quickref 一致）
 
-位于 `skill/assets/historical-china/`：
+位于 `skill/assets/historical-china/`，共 **19 个** GeoJSON：
 
-| 文件 | 朝代 | 时间 |
+| 文件 | 朝代 | 时间 | 说明 |
+|---|---|---|---|
+| `qin-dynasty.geojson` | 秦 | 前 221–前 207 | |
+| `han-dynasty.geojson` | 汉（合并版） | 前 202–220 | 西汉+东汉合并疆域，用于综述课 |
+| `west-han-dynasty.geojson` | 西汉 | 前 202–8 | |
+| `east-han-dynasty.geojson` | 东汉 | 25–220 | |
+| `three-kingdoms.geojson` | 三国 | 220–280 | |
+| `jin-west-dynasty.geojson` | 西晋 | 266–316 | |
+| `jin-east-dynasty.geojson` | 东晋 | 317–420 | |
+| `northern-southern.geojson` | 南北朝 | 420–589 | |
+| `sui-dynasty.geojson` | 隋 | 581–618 | |
+| `tang-dynasty.geojson` | 唐 | 618–907 | |
+| `five-dynasties.geojson` | 五代十国 | 907–960 | |
+| `song-dynasty.geojson` | 宋（合并版） | 960–1279 | 北宋+南宋合并，用于综述课 |
+| `north-song-dynasty.geojson` | 北宋 | 960–1127 | |
+| `south-song-dynasty.geojson` | 南宋 | 1127–1279 | |
+| `liao-dynasty.geojson` | 辽 | 916–1125 | |
+| `jin-jurchen.geojson` | 金 | 1115–1234 | 女真金，区别于西晋/东晋 |
+| `yuan-dynasty.geojson` | 元 | 1271–1368 | |
+| `ming-dynasty.geojson` | 明 | 1368–1644 | |
+| `qing-dynasty.geojson` | 清 | 1636–1912 | |
+
+> **CHGIS 数据来源**：全部由 `scripts/build_chgis_dynasty_maps_v2.sh` 从 [CHGIS V6](https://sites.fas.harvard.edu/~chgis/) 按时间节点切片生成，疆域精度达**县级**。
+
+### 4.1.1 CHGIS 细节资产（v7.9.5 新增）
+
+除上述疆域面数据外，`skill/assets/historical-china/details/` 提供以下 CHGIS 细节点/线数据，**按需引入**（体积较大时可按朝代裁切后复制到课件本地）：
+
+| 文件 | 内容 | 用途 |
 |---|---|---|
-| `qin-dynasty.geojson` | 秦 | 前 221–前 207 |
-| `west-han-dynasty.geojson` | 西汉 | 前 202–8 |
-| `east-han-dynasty.geojson` | 东汉 | 25–220 |
-| `three-kingdoms-dynasty.geojson` | 三国 | 220–280 |
-| `northern-southern-dynasty.geojson` | 南北朝 | 420–589 |
-| `sui-dynasty.geojson` | 隋 | 581–618 |
-| `tang-dynasty.geojson` | 唐 | 618–907 |
-| `north-song-dynasty.geojson` | 北宋 | 960–1127 |
-| `south-song-dynasty.geojson` | 南宋 | 1127–1279 |
-| `liao-dynasty.geojson` | 辽 | 916–1125 |
-| `jin-jurchen-dynasty.geojson` | 金 | 1115–1234 |
-| `yuan-dynasty.geojson` | 元 | 1271–1368 |
-| `ming-dynasty.geojson` | 明 | 1368–1644 |
-| `qing-dynasty.geojson` | 清 | 1636–1912 |
+| `passes-ancient.geojson` | 主要关隘点位（函谷关、虎牢关、剑门关、山海关等 20+） | 军事地理课、长城课 |
+| `rivers-historical.geojson` | 黄河历代故道、京杭运河各朝走向 | 经济地理、漕运课 |
+| `capitals-extended.geojson` | 古都城址扩充（除现有 cities 外补充 30+ 陪都/方镇） | 政区沿革课 |
+| `silk-road.geojson` | 陆上丝绸之路主线+支线 | 对外交流课 |
+
+**HTML 调用方式**（与疆域面数据一致，走 `teachany-historical-map.js` 的 `overlays` 字段）：
+
+```json
+{
+  "eras": [...],
+  "overlays": [
+    {"id": "passes", "file": "passes-ancient.geojson", "style": {"color": "#dc2626", "radius": 4}, "label": "关隘"},
+    {"id": "rivers", "file": "rivers-historical.geojson", "style": {"color": "#0ea5e9", "weight": 2}, "label": "历史河流"}
+  ]
+}
+```
 
 ### 4.2 世界历史时段 GeoJSON
 
