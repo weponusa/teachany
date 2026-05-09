@@ -82,13 +82,18 @@ fi
 if [ -n "$REPO" ] && [ -d "$REPO" ]; then
   echo "  ✅ 已有仓库: $REPO"
 else
-  echo "  🔄 克隆到: $REPO_DEFAULT"
-  if git clone --depth 1 https://github.com/weponusa/teachany.git "$REPO_DEFAULT" 2>&1 | tail -4; then
+  echo "  🔄 克隆到: $REPO_DEFAULT（sparse 模式，排除既有课件）"
+  if git clone --depth 1 --filter=blob:none --sparse https://github.com/weponusa/teachany.git "$REPO_DEFAULT" 2>&1 | tail -4; then
+    cd "$REPO_DEFAULT"
+    git sparse-checkout init --cone
+    git sparse-checkout set scripts/ data/ skill/ assets/maps/ .sparse-checkout-presets/
+    cd - >/dev/null
     REPO="$REPO_DEFAULT"
-    echo "  ✅ 克隆完成: $REPO"
+    echo "  ✅ 克隆完成（sparse，约 120MB）: $REPO"
   else
     echo "  ❌ 克隆失败（网络问题？）"
-    echo "     请手动：git clone https://github.com/weponusa/teachany.git $REPO_DEFAULT"
+    echo "     请手动：git clone --filter=blob:none --sparse https://github.com/weponusa/teachany.git $REPO_DEFAULT"
+    echo "     cd $REPO_DEFAULT && git sparse-checkout set scripts/ data/ skill/ assets/maps/"
     exit 1
   fi
 fi

@@ -171,18 +171,24 @@ locate_repo() {
 
 REPO="$(locate_repo)"
 if [ -z "$REPO" ]; then
-  # ⭐ v6.3: 没找到就自动 clone 到 $HOME/teachany-opensource
+  # ⭐ v7.9.9: 使用 sparse checkout 只拉取发布所需目录，排除既有课件 (~600MB)
   DEFAULT_CLONE="$HOME/teachany-opensource"
   echo "  ℹ️  未找到 teachany-opensource 仓库"
-  echo "  🔄 自动克隆到: $DEFAULT_CLONE"
+  echo "  🔄 自动克隆到: $DEFAULT_CLONE（sparse 模式，排除既有课件）"
   echo ""
-  if git clone --depth 1 https://github.com/weponusa/teachany.git "$DEFAULT_CLONE" 2>&1 | tail -5; then
+  if git clone --depth 1 --filter=blob:none --sparse https://github.com/weponusa/teachany.git "$DEFAULT_CLONE" 2>&1 | tail -5; then
+    cd "$DEFAULT_CLONE"
+    git sparse-checkout init --cone
+    # 只拉取发布流程所需目录：scripts(发布脚本) + data(知识树) + skill(规范) + community/drafts(投稿目录)
+    git sparse-checkout set scripts/ data/ skill/ community/drafts/ .sparse-checkout-presets/
+    cd - >/dev/null
     REPO="$DEFAULT_CLONE"
-    echo "  ✅ 仓库已克隆: $REPO"
+    echo "  ✅ 仓库已克隆（sparse，约 120MB）: $REPO"
   else
     echo ""
     echo "  ❌ 自动克隆失败。请手动执行："
-    echo "     git clone https://github.com/weponusa/teachany.git $HOME/teachany-opensource"
+    echo "     git clone --filter=blob:none --sparse https://github.com/weponusa/teachany.git $HOME/teachany-opensource"
+    echo "     cd $HOME/teachany-opensource && git sparse-checkout set scripts/ data/ skill/"
     echo "  或设置环境变量：export TEACHANY_REPO=/path/to/teachany-opensource"
     exit 1
   fi
