@@ -13,7 +13,7 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 # 配置项
-GITEE_URL="https://gitee.com/weponusa/teachany.git"
+REPO_URL="https://github.com/weponusa/teachany.git"
 INSTALL_DIR="$HOME/.agents/skills/teachany-opensource"
 TEMP_DIR="/tmp/teachany-install-$$"
 
@@ -67,12 +67,12 @@ main() {
     mkdir -p "${TEMP_DIR}"
     print_success "临时目录已创建：${TEMP_DIR}"
     
-    # 步骤3：从 Gitee 克隆代码（排除课件目录，大幅减少体积）
-    print_step "3/5" "从 Gitee 下载代码（国内高速，排除既有课件）"
+    # 步骤3：从 GitHub 克隆代码（排除课件目录，大幅减少体积）
+    print_step "3/5" "从 GitHub 下载代码（已清理既有课件历史）"
     cd "${TEMP_DIR}"
     
     # 使用 sparse checkout：只拉取制作器核心目录（排除 community/ examples/ 等成品课件）
-    if git clone --depth 1 --filter=blob:none --sparse "${GITEE_URL}" teachany-opensource; then
+    if git clone --depth 1 --filter=blob:none --sparse "${REPO_URL}" teachany-opensource; then
         cd teachany-opensource
         git sparse-checkout init --cone
         # cone 模式：只列正向目录，community/ examples/ 自动排除
@@ -84,7 +84,7 @@ main() {
         echo "正在尝试备用下载方式..."
         
         # 备用：直接下载 ZIP（会包含全部内容，安装后清理）
-        curl -L "https://gitee.com/weponusa/teachany/repository/archive/main.zip" -o teachany.zip
+        curl -L "https://github.com/weponusa/teachany/archive/refs/heads/main.zip" -o teachany.zip
         unzip -q teachany.zip
         mv teachany-opensource-main teachany-opensource
         # 清理既有课件目录
@@ -136,7 +136,7 @@ main() {
     echo "  ${INSTALL_DIR}/INSTALL_CN.md"
     echo ""
     echo "❓ 遇到问题？"
-    echo "  - Gitee Issues: https://gitee.com/weponusa/teachany/issues"
+    echo "  - GitHub Issues: https://github.com/weponusa/teachany/issues"
     echo "  - 微信交流群：[扫码加入]"
     echo ""
 }

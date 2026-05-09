@@ -6,7 +6,7 @@
 # Requires -RunAsAdministrator
 
 # 配置项
-$GiteeURL = "https://gitee.com/weponusa/teachany/repository/archive/main.zip"
+$RepoZipURL = "https://github.com/weponusa/teachany/archive/refs/heads/main.zip"
 $InstallDir = "$env:USERPROFILE\.agents\skills\teachany-opensource"
 $TempDir = "$env:TEMP\teachany-install-$(Get-Random)"
 
@@ -63,12 +63,12 @@ function Main {
         Write-Success "临时目录已创建：$TempDir"
         
         # 步骤3：从 Gitee 下载 ZIP
-        Write-Step "3/5" "从 Gitee 下载代码（国内高速）"
+        Write-Step "3/5" "从 GitHub 下载代码（已清理既有课件历史）"
         $ZipPath = Join-Path $TempDir "teachany.zip"
         
         # 下载文件（带进度条）
         $ProgressPreference = 'SilentlyContinue'  # 隐藏进度条以提高速度
-        Invoke-WebRequest -Uri $GiteeURL -OutFile $ZipPath -UseBasicParsing
+        Invoke-WebRequest -Uri $RepoZipURL -OutFile $ZipPath -UseBasicParsing
         $ProgressPreference = 'Continue'
         
         Write-Success "代码下载成功（$(((Get-Item $ZipPath).Length / 1MB).ToString('0.00')) MB）"
@@ -131,7 +131,7 @@ function Main {
         Write-Host "  $InstallDir\INSTALL_CN.md"
         Write-Host ""
         Write-Host "❓ 遇到问题？"
-        Write-Host "  - Gitee Issues: https://gitee.com/weponusa/teachany/issues"
+        Write-Host "  - GitHub Issues: https://github.com/weponusa/teachany/issues"
         Write-Host "  - 微信交流群：[扫码加入]"
         Write-Host ""
         
@@ -146,8 +146,8 @@ function Main {
         Write-Host "请尝试以下解决方案："
         Write-Host "  1. 检查网络连接是否正常"
         Write-Host "  2. 关闭防火墙或杀毒软件后重试"
-        Write-Host "  3. 手动从 Gitee 下载 ZIP 并解压安装"
-        Write-Host "     https://gitee.com/weponusa/teachany"
+        Write-Host "  3. 手动从 GitHub 下载 ZIP 并解压安装"
+        Write-Host "     https://github.com/weponusa/teachany"
         Write-Host ""
         
         # 清理临时文件
