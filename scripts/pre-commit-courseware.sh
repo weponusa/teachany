@@ -51,6 +51,16 @@ for DIR in $CHANGED_DIRS; do
     continue
   fi
 
+  # v7.9.15：旧课件迁移后的轻量 redirect stub 不是课件本体，不跑四项课件质检。
+  # 判定标准：只有跳转页 index.html，且明确跳转到 teachany-courseware。
+  if [ -f "$DIR/index.html" ] \
+    && grep -q "TeachAny 课件已迁移" "$DIR/index.html" \
+    && grep -q "weponusa.github.io/teachany-courseware" "$DIR/index.html" \
+    && [ ! -f "$DIR/manifest.json" ]; then
+    echo "  ↪️  $DIR 是旧 URL 轻量跳转页，跳过课件四项质检"
+    continue
+  fi
+
   echo "───────────────────────────────────────────────"
   echo "📂 质检: $DIR"
   echo "───────────────────────────────────────────────"
