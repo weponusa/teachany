@@ -86,10 +86,10 @@ else
   if git clone --depth 1 --filter=blob:none --sparse https://github.com/weponusa/teachany.git "$REPO_DEFAULT" 2>&1 | tail -4; then
     cd "$REPO_DEFAULT"
     git sparse-checkout init --cone
-    git sparse-checkout set skill/ scripts/ data/trees/ data/knowledge-points/ data/geography/ data/editions/ data/textbook-supplements/ assets/maps/chrono-cn/ assets/maps/chrono-world/ assets/maps/political/ assets/maps/physical/hillshade/ references/ docs/ .sparse-checkout-presets/
+    git sparse-checkout set skill/ scripts/ data/ assets/maps/ references/ docs/ .sparse-checkout-presets/
     cd - >/dev/null
     REPO="$REPO_DEFAULT"
-    echo "  ✅ 克隆完成（sparse，约 60MB）: $REPO"
+    echo "  ✅ 克隆完成（sparse，约 110MB）: $REPO"
   else
     echo "  ❌ 克隆失败（网络问题？）"
     echo "     请手动：git clone --filter=blob:none --sparse https://github.com/weponusa/teachany.git $REPO_DEFAULT"

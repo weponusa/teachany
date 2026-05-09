@@ -75,10 +75,10 @@ main() {
     if git clone --depth 1 --filter=blob:none --sparse "${GITEE_URL}" teachany-opensource; then
         cd teachany-opensource
         git sparse-checkout init --cone
-        # cone 模式：精确列出子目录，未列出的自动排除（含 community/ examples/ physical/ excerpts/）
-        git sparse-checkout set skill/ scripts/ data/trees/ data/knowledge-points/ data/geography/ data/editions/ data/textbook-supplements/ assets/maps/chrono-cn/ assets/maps/chrono-world/ assets/maps/political/ assets/maps/physical/hillshade/ references/ docs/ .sparse-checkout-presets/
+        # cone 模式：只列正向目录，community/ examples/ 自动排除
+        git sparse-checkout set skill/ scripts/ data/ assets/maps/ references/ docs/ .sparse-checkout-presets/
         cd ..
-        print_success "代码下载成功（制作器核心 ~60MB，不含成品课件和自然地理大文件）"
+        print_success "代码下载成功（制作器 + 全部地图 ~110MB，已排除成品课件）"
     else
         print_error "从 Gitee 下载失败"
         echo "正在尝试备用下载方式..."
