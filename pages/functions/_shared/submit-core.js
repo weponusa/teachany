@@ -7,7 +7,7 @@
  */
 
 export const REPO_OWNER = "weponusa";
-export const REPO_NAME = "teachany";
+export const REPO_NAME = "teachany-courseware";
 export const REPO = `${REPO_OWNER}/${REPO_NAME}`;
 export const BASE_BRANCH = "main";
 export const MAX_PACKAGE_BYTES = 5 * 1024 * 1024; // 5 MB

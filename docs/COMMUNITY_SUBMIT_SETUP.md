@@ -126,8 +126,8 @@ python3 scripts/submit-to-community.py some-test-course \
 
 ### 3. GitHub 侧验证
 
-- 打开 `https://github.com/weponusa/teachany/actions` 应看到新建的 workflow run
-- 打开 `https://github.com/weponusa/teachany/pulls` 应看到新建的 PR
+- 打开 `https://github.com/weponusa/teachany-courseware/actions` 应看到新建的 workflow run
+- 打开 `https://github.com/weponusa/teachany-courseware/pulls` 应看到新建的 PR
 - 1-2 分钟后 PR 会自动加 `passed-validation` 或 `needs-revision` 标签
 - 如果加了 `passed-validation`，`auto-merge.yml` 会紧接着自动合并
 

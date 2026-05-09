@@ -95,7 +95,7 @@ rm -rf ~/.agents/skills/teachany
 | 仓库 | 用途 |
 |:---|:---|
 | **weponusa/teachany-skill**（本仓） | AI Agent 读取的 skill 规范、工具脚本、模板、资源 |
-| [weponusa/teachany](https://github.com/weponusa/teachany) | TeachAny 课件站点 + 官方样板课件 + 社区课件库 |
+| [weponusa/teachany-courseware](https://github.com/weponusa/teachany-courseware) | TeachAny 课件站点 + 官方样板课件 + 社区课件库 |
 
 做课件 → 用本仓 skill；发布课件 → 推到课件仓 `community/`。两者通过 `scripts/publish_course.sh` 自动衔接。
 

@@ -22,7 +22,7 @@
  */
 
 const REPO_OWNER = "weponusa";
-const REPO_NAME = "teachany";
+const REPO_NAME = "teachany-courseware";
 const REPO = `${REPO_OWNER}/${REPO_NAME}`;
 const BASE_BRANCH = "main";
 const MAX_PACKAGE_BYTES = 5 * 1024 * 1024; // 5 MB

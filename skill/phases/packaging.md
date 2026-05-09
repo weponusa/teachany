@@ -225,9 +225,9 @@ Step 4️⃣ 发布完成后告知用户
   
   **自动发布成功（publish_course.sh 退出码 0）**：
   - 课件已通过 PR 提交到社区仓库
-  - 查看 PR：`https://github.com/weponusa/teachany/pulls`
+  - 查看 PR：`https://github.com/weponusa/teachany-courseware/pulls`
   - 部署滞后 5-10 分钟（GitHub Actions + Pages 构建时间）
-  - 在线地址：`https://weponusa.github.io/teachany/community/drafts/<course-id>/`
+  - 在线地址：`https://weponusa.github.io/teachany-courseware/community/drafts/<course-id>/`
   
   **自动发布失败（publish_course.sh 退出非零码）**：
   - 课件已保存在 `community/drafts/<course-id>/index.html`，浏览器打开即可本地使用
@@ -758,8 +758,8 @@ curl -sI -m 5 "https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded
 🚀 自动发布结果
 
 ✅ publish_course.sh 执行成功
-   PR 地址：https://github.com/weponusa/teachany/pulls
-   在线地址：https://weponusa.github.io/teachany/community/drafts/<course-id>/
+   PR 地址：https://github.com/weponusa/teachany-courseware/pulls
+   在线地址：https://weponusa.github.io/teachany-courseware/community/drafts/<course-id>/
    （部署滞后约 5-10 分钟）
 
 --- 或 ---

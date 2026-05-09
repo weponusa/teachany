@@ -30,7 +30,30 @@
 
 /* ─── 常量 ───────────────────────────────────── */
 const REGISTRY_URL = './registry.json';
-const CACHE_KEY = 'teachany_registry_v3_6'; // v3.6: card hero 图支持
+const COURSEWARE_BASE_URL = 'https://weponusa.github.io/teachany-courseware';
+const CACHE_KEY = 'teachany_registry_v3_7'; // v3.7: 课件资产迁移到 teachany-courseware
+
+function resolveCoursewareUrl(path) {
+  if (!path) return COURSEWARE_BASE_URL + '/';
+  if (/^https?:\/\//i.test(path)) return path;
+  return COURSEWARE_BASE_URL + '/' + String(path).replace(/^\/+/, '');
+}
+
+function resolveCourseUrl(course) {
+  if (course && course.url) return course.url;
+  if (course && course.path) return resolveCoursewareUrl(course.path.replace(/\/$/, '') + '/index.html');
+  return COURSEWARE_BASE_URL + '/';
+}
+
+function resolveHeroUrl(course, heroImage) {
+  if (!heroImage) return '';
+  if (heroImage.startsWith('cdn:')) return heroImage.slice(4);
+  if (/^(https?:|data:)/i.test(heroImage)) return heroImage;
+  if (course && course.path && !heroImage.startsWith('/')) {
+    return resolveCoursewareUrl(course.path.replace(/\/$/, '') + '/' + heroImage);
+  }
+  return resolveCoursewareUrl(heroImage);
+}
 const CACHE_TTL = 30 * 60 * 1000; // 30 分钟缓存
 const LIKES_KEY = 'teachany_likes';
 
@@ -182,7 +205,7 @@ async function loadRegistry() {
 
 /* ─── 渲染课件卡片 ───────────────────────────── */
 function renderCourseCard(course) {
-  const url = course.url || `./${course.path}/index.html`;
+  const url = resolveCourseUrl(course);
   const level = gradeToLevel(course.grade);
   const isOfficial = course.status === 'official';
   const courseName = course.name || '';
@@ -273,9 +296,7 @@ function renderCourseCard(course) {
   // Hero 图（从 hero_image 字段读取，支持 cdn: 前缀）
   let heroCover = '';
   if (course.hero_image) {
-    const heroUrl = course.hero_image.startsWith('cdn:')
-      ? course.hero_image.slice(4)
-      : course.hero_image;
+    const heroUrl = resolveHeroUrl(course, course.hero_image);
     heroCover = `<img class="card-cover" src="${escapeHtml(heroUrl)}" alt="${escapeHtml(courseName)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
       <div class="card-cover-emoji" style="display:none">${escapeHtml(course.emoji || '📚')}</div>`;
   } else {

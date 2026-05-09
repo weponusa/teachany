@@ -489,8 +489,8 @@ grep -riE "(lorem ipsum|placeholder|TODO|FIXME|示例文本|待替换|xxx|TBD)" 
 │  └── .sparse-checkout-presets/                               │
 ├─────────────────────────────────────────────────────────────┤
 │  ❌ 不下载（cone 模式自动排除）                               │
-│  ├── community/ (328 课件, ~500MB)  ← Gallery 在线浏览      │
-│  ├── examples/ (18 示例, ~1.6MB)    ← 需要时 full 姿势      │
+│  ├── community/ (328 课件, ~4.4GB)  ← 已迁移到 weponusa/teachany-courseware，Gallery 在线浏览      │
+│  ├── examples/ (示范课件, ~1.2GB)    ← 已迁移到 weponusa/teachany-courseware      │
 │  └── teachany-images/ (685MB)       ← CDN 按需加载          │
 ├─────────────────────────────────────────────────────────────┤
 │  CDN 图床 (jsDelivr，运行时按需加载)                          │
@@ -646,9 +646,9 @@ python3 scripts/check-hero.py community/
 | `data/trees/` + `data/knowledge-points/` | ✅ | 4.1 MB | 知识树与知识点索引 |
 | `data/excerpts/` | ✅ | 26 MB | 课标原文摘录（8 学科管线 JSON） |
 | `scripts/` `references/` `docs/` | ✅ | 4.8 MB | 构建脚本与参考文档 |
-| `community/` (328 课件) | ❌ | — | Gallery 在线浏览，不下载 |
-| `examples/` (18 示例) | ❌ | — | 仅审阅/研究时 full 姿势 |
-| `teachany-images/` 图床 | ❌ | 685 MB | CDN 按需加载，不 clone 仓库 |
+| `community/` (328 课件) | ❌ | — | 已迁移到 `weponusa/teachany-courseware`，Gallery 在线浏览，不下载 |
+| `examples/` (示范课件) | ❌ | — | 已迁移到 `weponusa/teachany-courseware` |
+| `teachany-images/` 图床 | ❌ | — | 已迁移到 `weponusa/teachany-courseware`，CDN 按需加载 |
 
 > 📌 **一键安装 standard 姿势（⚠️ 必须用 cone 模式）**：
 > ```bash
@@ -663,7 +663,7 @@ python3 scripts/check-hero.py community/
 >
 > 💡 **full 姿势 ~1.7 GB**：`git sparse-checkout disable`，含 community/ + examples/，适用于审阅/研究/批量操作。
 >
-> ⛔ **既有课件不随 skill 安装（v7.9.9 铁律）**：`/install-skill` 和 `install-cn-auto.sh` **严禁**将 `examples/` 和 `community/`（328 个社区课件）拉到用户本地。理由：(1) 课件合计 ~700MB，严重拖慢安装速度；(2) 用户通过 Gallery 在线浏览即可；(3) 安装 skill 的目的是"制作新课件"，不是收藏旧课件。**cone 模式下只列正向目录即可自动排除——不需要也不能使用 `!` 否定语法。**
+> ⛔ **既有课件不随 skill 安装（v7.9.14 铁律）**：`/install-skill` 和 `install-cn-auto.sh` **严禁**将既有课件资产拉到用户本地；既有课件统一放在 `weponusa/teachany-courseware`。理由：(1) 课件合计 ~700MB，严重拖慢安装速度；(2) 用户通过 Gallery 在线浏览即可；(3) 安装 skill 的目的是"制作新课件"，不是收藏旧课件。**cone 模式下只列正向目录即可自动排除——不需要也不能使用 `!` 否定语法。**
 
 ---
 

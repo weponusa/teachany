@@ -108,15 +108,15 @@ Level 1：给模板填空 → Level 2：只给提示 → Level 3：独立完成�
 
 | 课件 | 学科 | 年级 | 互动特色 | 代码量 |
 |:-----|:-----|:-----|:---------|:-------|
-| [📐 二次函数](examples/math-quadratic-function/) | 数学 | 九年级 | Canvas 作图、顶点拖拽、分步配方 | 1,300+ 行 |
-| [📏 一次函数与正比例函数](examples/math-linear-function/) | 数学 | 八年级 | 斜率/截距滑块、实时图像 | 1,100+ 行 |
-| [📚 全等三角形](examples/math-congruent-triangles/) | 数学 | 八年级 | SVG 几何配图、判定定理对比、证明脚手架 | 1,200+ 行 |
-| [🧬 减数分裂与受精过程](examples/bio-meiosis/) | 生物 | 高一 | 细胞分裂模拟、染色体拖拽 | 1,400+ 行 |
-| [🌍 全球季风系统](examples/geo-monsoon/) | 地理 | 高一 | Leaflet 地图、风向可视化、区域对比 | 1,200+ 行 |
-| [💧 液体压强与浮力](examples/phy-pressure-buoyancy/) | 物理 | 八年级 | 实验模拟、参数调节 | 1,000+ 行 |
-| [🧬 光合作用](examples/bio-photosynthesis/) | 生物 | 七年级 | Canvas 动画、拖拽排方程式、叶绿体标注、AI 配音 | 1,950+ 行 |
-| [⚡ 欧姆定律](examples/phy-ohms-law/) | 物理 | 九年级 | 虚拟电路实验、V-I 作图、公式推导、AI 配音 | 2,630+ 行 |
-| [🔤 复韵母拼读](examples/chn-compound-vowel/) | 语文 | 一年级 | 拼音音频、口型提示、分步跟读训练 | 800+ 行 |
+| [📐 二次函数](https://weponusa.github.io/teachany-courseware/examples/math-quadratic-function/) | 数学 | 九年级 | Canvas 作图、顶点拖拽、分步配方 | 1,300+ 行 |
+| [📏 一次函数与正比例函数](https://weponusa.github.io/teachany-courseware/examples/math-linear-function/) | 数学 | 八年级 | 斜率/截距滑块、实时图像 | 1,100+ 行 |
+| [📚 全等三角形](https://weponusa.github.io/teachany-courseware/examples/math-congruent-triangles/) | 数学 | 八年级 | SVG 几何配图、判定定理对比、证明脚手架 | 1,200+ 行 |
+| [🧬 减数分裂与受精过程](https://weponusa.github.io/teachany-courseware/examples/bio-meiosis/) | 生物 | 高一 | 细胞分裂模拟、染色体拖拽 | 1,400+ 行 |
+| [🌍 全球季风系统](https://weponusa.github.io/teachany-courseware/examples/geo-monsoon/) | 地理 | 高一 | Leaflet 地图、风向可视化、区域对比 | 1,200+ 行 |
+| [💧 液体压强与浮力](https://weponusa.github.io/teachany-courseware/examples/phy-pressure-buoyancy/) | 物理 | 八年级 | 实验模拟、参数调节 | 1,000+ 行 |
+| [🧬 光合作用](https://weponusa.github.io/teachany-courseware/examples/bio-photosynthesis/) | 生物 | 七年级 | Canvas 动画、拖拽排方程式、叶绿体标注、AI 配音 | 1,950+ 行 |
+| [⚡ 欧姆定律](https://weponusa.github.io/teachany-courseware/examples/phy-ohms-law/) | 物理 | 九年级 | 虚拟电路实验、V-I 作图、公式推导、AI 配音 | 2,630+ 行 |
+| [🔤 复韵母拼读](https://weponusa.github.io/teachany-courseware/examples/chn-compound-vowel/) | 语文 | 一年级 | 拼音音频、口型提示、分步跟读训练 | 800+ 行 |
 
 > 所有课件均为**单文件 HTML**——无需构建，无需依赖，打开浏览器即可使用。
 
@@ -153,14 +153,16 @@ TeachAny 可以作为 **Skill** 嵌入 AI 编程助手（**推荐使用 [WorkBud
 ### 方式二：从模板开始
 
 ```bash
-cp -r examples/_template my-new-course
+# 模板已迁移到课件仓库：
+# https://github.com/weponusa/teachany-courseware/tree/main/examples/_template
+cp -r <teachany-courseware>/examples/_template my-new-course
 # 编辑 my-new-course/index.html，填入你的内容
 open my-new-course/index.html
 ```
 
 ### 方式三：浏览和改造
 
-1. 克隆本仓库
+1. 克隆课件仓库 `weponusa/teachany-courseware`
 2. 在浏览器中打开任意 `examples/*/index.html`
 3. 修改内容，制作你自己的课件
 
@@ -235,7 +237,7 @@ teachany/
 │   ├── design-system.md         # 视觉设计规范
 │   └── subject-guides/          # 各学科使用指南
 │
-├── examples/                    # 🌐 官方示范课件（仅网站展示，不随 skill 分发）
+├── examples/                    # 🌐 已迁移到 weponusa/teachany-courseware，不随 skill 分发
 │   ├── math-quadratic-function/ # 二次函数（数学，九年级）
 │   ├── math-linear-function/    # 一次函数（数学，八年级）
 │   ├── math-congruent-triangles/# 全等三角形（数学，八年级）
@@ -247,7 +249,7 @@ teachany/
 │   ├── chn-compound-vowel/      # 复韵母乐园（语文，一年级）
 │   └── _template/               # 空白模板（小学/初中/高中三套）
 │
-├── community/                   # 🌐 社区课件索引
+├── community/                   # 🌐 已迁移到 weponusa/teachany-courseware，不随 skill 分发
 │   └── index.json               # 社区审核通过的课件列表
 │
 ├── scripts/
@@ -279,22 +281,22 @@ TeachAny 采用**代码与课件分离**的存储架构：
 
 ```
 开发者工作流：
-  examples/ 本地开发 → pack-courseware.cjs 打包 → publish-courseware.cjs 发布到 Releases
+  teachany-courseware/examples/ 本地开发 → pack-courseware.cjs 打包 → publish-courseware.cjs 发布到 Releases
                                                      ↓
 Gallery 加载流程：                                    更新 registry
   index.html → registry-loader.js 读取 registry → 渲染课件卡片
                                                      ↓
-  用户点击卡片 → 本地 examples/ 预览 或 从 Releases 下载 .teachany 包
+  用户点击卡片 → teachany-courseware 在线预览 或 从 Releases 下载 .teachany 包
 ```
 
 **发布课件到 GitHub Releases：**
 
 ```bash
 # 打包单个课件（仅本地打包，不上传）
-node scripts/publish-courseware.cjs ./examples/math-linear-function --dry-run
+node scripts/publish-courseware.cjs ../teachany-courseware/examples/math-linear-function --dry-run
 
 # 发布单个课件到 GitHub Releases
-GITHUB_TOKEN=ghp_xxx node scripts/publish-courseware.cjs ./examples/math-linear-function
+GITHUB_TOKEN=ghp_xxx node scripts/publish-courseware.cjs ../teachany-courseware/examples/math-linear-function
 
 # 发布所有课件
 GITHUB_TOKEN=ghp_xxx node scripts/publish-courseware.cjs --all

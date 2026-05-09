@@ -92,7 +92,7 @@ export async function onRequestPost({ request, env }) {
         pr_url: result.prUrl,
         pr_number: result.prNumber,
         message: "课件已成功提交！validate.yml 将在几秒后自动运行质检。",
-        actions_url: `https://github.com/weponusa/teachany/actions`,
+        actions_url: `https://github.com/weponusa/teachany-courseware/actions`,
       },
       202
     );

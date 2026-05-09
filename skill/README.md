@@ -165,8 +165,9 @@ SKILL 文档里对 AI 设置了 40+ 条硬规则，最关键的几条：
 
 ## 🔗 Related Projects
 
-- **[weponusa/teachany](https://github.com/weponusa/teachany)** — TeachAny 课件站点 + 社区课件库
-- **Live Gallery** — [weponusa.github.io/teachany](https://weponusa.github.io/teachany/)
+- **[weponusa/teachany](https://github.com/weponusa/teachany)** — TeachAny Skill 制作器核心
+- **[weponusa/teachany-courseware](https://github.com/weponusa/teachany-courseware)** — TeachAny 课件站点 + 社区课件库
+- **Live Gallery** — [weponusa.github.io/teachany-courseware](https://weponusa.github.io/teachany-courseware/)
 
 ---
 

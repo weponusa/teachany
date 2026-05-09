@@ -183,7 +183,7 @@ Step 4️⃣ 提交成功后告知用户后续流程
   - 随时可以改主意：`python3 scripts/submit-to-community.py <course-id>` 一键提交
   
   **若选 ② 社区 PR**：
-  - PR 已自动创建，查看：`https://github.com/weponusa/teachany/pulls`
+  - PR 已自动创建，查看：`https://github.com/weponusa/teachany-courseware/pulls`
   - 会被打上 `community-courseware` + `needs-review` 标签
   - 管理员审阅后：`approved` = 进入社区 Gallery / `promote-to-official` = 升级官方 / `revision-needed` = 需修改
   - 部署滞后 5-10 分钟（GitHub Actions + Pages 构建时间）
