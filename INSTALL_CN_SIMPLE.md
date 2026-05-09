@@ -27,7 +27,7 @@
 
 ---
 
-## 🔧 方法 B：原有 `/install-skill` 路径（精简安装，约 140MB）
+## 🔧 方法 B：原有 `/install-skill` 路径（普通 clone 约 220MB）
 
 > ✅ **已优化（v7.9.13）**：课件资产已迁移到独立仓库 `weponusa/teachany-courseware`，安装源只保留制作器核心（规范 + 脚本 + 知识树 + 课标摘录 + 全部地图）。
 
