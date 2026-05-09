@@ -772,6 +772,130 @@ curl -sI -m 5 "https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded
 
 > ⚠️ **重要**：Phase 3.5 是**强制流程**，不需要用户主动要求。课件制作完成后 AI 必须自动执行质检、打包，然后自动调用 `publish_course.sh` 发布到社区。不需要询问用户是否发布。
 
+---
+
+## 17.4 基础设施/Skill 升级任务的推送铁律（v7.9.5 新增）
+
+> **填补原规范空白**：Phase 3.5 仅管 Phase 3 课件制作任务。但 TeachAny 还有大量"基础设施任务"（skill 文档升级、标准模块升级、manifest 配置改动、CHGIS 数据补充、scripts 脚本改动等），过去无明确推送规则导致 AI 做完不推，用户发现后手动兜底。本节补齐。
+
+### 17.4.1 什么算"基础设施任务"
+
+| 类型 | 示例 | 涉及仓库 |
+|:---|:---|:---|
+| **Skill 文档升级** | 新增/修改 `skill/*.md`、新增卫星文档 | opensource |
+| **标准模块升级** | 改 `scripts/teachany-*.{js,css,py}` | opensource + courseware（同步） |
+| **Manifest 升级** | 改 `scripts/historical-maps-manifest.json` 等 | opensource |
+| **地图/图片数据** | 新增朝代 geojson、hero 图、hillshade | **teachany-images** |
+| **脚本工具** | 新增 `scripts/*.py/sh` | opensource |
+| **Gate 规则改动** | 改 RULES.md、加新基线条目 | opensource |
+
+### 17.4.2 三种仓库的推送边界
+
+TeachAny 涉及 **3 个 Git 仓库**，写文件时必须先判断该文件该去哪个仓库：
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│ teachany-opensource                                         │
+│   · skill/**/*.md                                           │
+│   · scripts/*.{py,sh,js,css}                                │
+│   · community/<course>/index.html  （跳转占位页）           │
+│   · examples/<course>/  （非课件示例/样板工程，可含实体）   │
+│   ⛔ skill/assets/historical-*/ 被 .gitignore 排除          │
+├─────────────────────────────────────────────────────────────┤
+│ teachany-courseware                                         │
+│   · community/<course>/index.html  （实体课件）             │
+│   · community/<course>/assets/**  （含 maps/, tts/, images/）│
+│   · examples/<course>/  （官方实体课件）                    │
+│   · registry.json, data/trees/**  （由 rebuild-index 维护） │
+├─────────────────────────────────────────────────────────────┤
+│ teachany-images                                             │
+│   · historical-china/*.geojson                              │
+│   · historical-china/details/*.geojson  ← v7.9.5 新增路径   │
+│   · historical-world/*.geojson                              │
+│   · hillshade/*.jpg                                         │
+│   · <subject>/<course>-hero.png  （课件 hero 图）           │
+│   （所有大体积静态资产，课件通过 jsDelivr CDN 访问）        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 17.4.3 标准推送流程（基础设施任务完成后**自动执行**）
+
+```bash
+# Step 1 —— 对每个被改动的仓库独立处理：
+for REPO in <受影响的仓库>; do
+  cd $REPO
+  
+  # 1.1 先拉取最新远程（避免 non-fast-forward）
+  git fetch origin main
+  REMOTE_AHEAD=$(git log HEAD..origin/main --oneline | wc -l)
+  if [ $REMOTE_AHEAD -gt 0 ]; then
+    git stash -u 2>/dev/null  # 仅未 add 的改动才需要
+    git pull --rebase origin main
+    git stash pop 2>/dev/null
+  fi
+  
+  # 1.2 如果是 courseware：先跑 rebuild-index（其他仓库跳过）
+  if [ $REPO = "teachany-courseware" ]; then
+    [ -f .teachany-admin ] || touch .teachany-admin  # 权限标记
+    python3 scripts/rebuild-index.py
+  fi
+  
+  # 1.3 add + commit
+  git add -A
+  git status --short  # 让 AI 复核将要提交的文件
+  git commit -m "feat(<scope>): <简述>\n\n<详情>"
+  
+  # 1.4 push origin (GitHub) — 失败必须告知用户，不得静默
+  git push origin main || {
+    echo "⚠️ GitHub push 失败，错误原文已贴给用户"
+    git push origin main 2>&1 | tail -20
+  }
+  
+  # 1.5 push gitee (镜像) — 失败可降级为"稍后重试"
+  git -c core.sshCommand="ssh -F /dev/null -o StrictHostKeyChecking=accept-new" \
+      push gitee main 2>&1 | tail -5
+  # Gitee 失败常见原因：仓库未建、SSH config 老化、历史被 force-update
+  # 这些属于账号/环境问题，AI 不能擅自修改 ~/.ssh/config 或创建仓库
+  # 必须如实上报而非掩盖
+done
+```
+
+### 17.4.4 硬规则
+
+| 规则 | 内容 |
+|:---|:---|
+| **R1** | 基础设施任务做完后**默认自动执行**上述推送流程，不需要用户主动要求，除非用户明确说"不要提交"/"只改不推" |
+| **R2** | 改 `skill/assets/historical-*/` 或 `skill/assets/hillshade/` 下的文件时，必须同步到 **teachany-images** 仓库——因为这些路径在 opensource 被 gitignore，**只放本地等于没推** |
+| **R3** | 改标准模块（`teachany-*.{js,css}`）必须**同时**在 opensource 和 courseware 两个仓库更新 —— courseware 下的 scripts/ 是 opensource 的快照，不同步会造成运行时行为不一致 |
+| **R4** | 涉及 courseware 的改动（改实体课件、动 registry）必须先跑 `rebuild-index.py` 再 commit —— 否则 registry.json 与文件系统不一致 |
+| **R5** | 推送必须双远程（origin GitHub + gitee 镜像）。origin 失败 = 交付失败；gitee 失败可降级但必须在交付报告中如实告知 |
+| **R6** | **Gitee 仓库不存在（404）不得擅自创建**，必须告知用户，由用户在 Gitee 控制台手动创建后再推。AI 不能越权动用户账号 |
+| **R7** | 改 `~/.ssh/config`、`git config --global`、创建远程仓库等涉及**工作区外**操作，一律视为 Git 安全协议红线，必须告知用户由其决定，AI 不自动执行 |
+| **R8** | 推送后必须做**闭环验证**（至少执行以下之一）：① `git log -1 origin/main` 确认 hash；② CDN URL curl -I 返回 200；③ rebuild-index 的最终验证全绿 |
+
+### 17.4.5 交付报告模板（基础设施任务完成后必须输出）
+
+```markdown
+## Git 推送交付报告
+
+| 仓库 | GitHub origin | Gitee 镜像 | 关键 commit |
+|:---|:---:|:---:|:---|
+| teachany-opensource | ✅ <hash> | ⚠️ 未推（原因）| feat: xxx |
+| teachany-courseware | ✅ <hash> | ⚠️ 未推 | feat: xxx |
+| teachany-images     | ✅ <hash> | ⚠️ 未推 | feat: xxx |
+
+## CDN 可用性验证
+- [ ] jsdelivr @main: HTTP 200
+- [ ] GitHub raw: HTTP 200
+- [ ] rebuild-index 三者一致（仅 courseware 改动时）
+
+## 待用户处理事项
+- （如有 Gitee 404 / SSH config 老化 / push reject 等需人工介入的事项）
+```
+
+---
+
+
 ### 17.5 HTML meta 标签（已有规范，此处汇总）
 
 每个课件的 `index.html` 必须包含以下 meta 标签：

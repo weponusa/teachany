@@ -32,7 +32,7 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 | [`phases/workflow.md`](./phases/workflow.md) | 完整 Phase 0→4 执行细节 + Gate 检查点 | Phase 执行过程中逐步查阅 |
 | [`phases/deliverables.md`](./phases/deliverables.md) | L2/L3 触发条件与产物要求 | L2/L3 交付决策点 |
 | [`phases/video-audio.md`](./phases/video-audio.md) | Remotion/TTS/ffmpeg 流水线 | 做视频/语音基线时 |
-| [`phases/packaging.md`](./phases/packaging.md) | 课件打包 + registry + 发布 | L4 打包或发布时 |
+| [`phases/packaging.md`](./phases/packaging.md) | 课件打包 + registry + 发布 · **§17.4 基础设施任务推送铁律**（v7.9.5 新增）| L4 打包或发布时 · 改 skill/脚本/数据完成后 |
 | [`phases/token-cost.md`](./phases/token-cost.md) | 消耗估算与成本控制 | 规划长课件时 |
 
 ### 教学设计延伸
