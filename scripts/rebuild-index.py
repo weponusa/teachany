@@ -24,6 +24,13 @@ v6.3 变更（2026-04-29）:
 - 集成 image_resolver.py 的统一图片发现机制
 - detect_images_unified() 先查 image-registry.json（CDN 预制图），再查本地 assets/
 - hero_image 字段可能为 CDN URL（以 "cdn:" 前缀标记）或本地相对路径
+
+v7.0 变更（2026-05-09）:
+- 多版本课件支持：同 node_id 允许多个课件并列（不同 author）
+- 同 author+node_id 覆盖逻辑：保留 version 最高的那个（旧版本不挂载到树）
+- manifest.json 新增 variant 字段支持（如 "基础版"、"进阶版"）
+- 知识树 courses 数组新增结构化注释（带 author/variant 标识供前端选择器使用）
+- registry entry 新增 variant 字段
 """
 import json
 import re
@@ -327,6 +334,7 @@ def main():
             print(f'  ⚠️  {course_id}: 缺少 subject 或 node_id')
     # v6.5: legacy 课件（无 manifest 但 index.html 存在）也反向挂到树节点
     # 用旧 registry 里记录的 subject + node_id
+    # ⭐ v7.0: 移到覆盖逻辑之前，确保 legacy 也被同 author 覆盖
     legacy_mounted = 0
     for cid, old_entry in legacy_preserved:
         sub = old_entry.get('subject', '')
@@ -336,6 +344,66 @@ def main():
             legacy_mounted += 1
     if legacy_mounted:
         print(f'   🔗 legacy 课件已通过 old_registry 信息反向挂载: {legacy_mounted}')
+
+    # ⭐ v7.0 多版本课件覆盖逻辑：
+    # 同一知识点（node_id）+ 同一作者（author）→ 仅保留版本号最高的那个（覆盖旧版本）
+    # 同一知识点 + 不同作者 → 全部保留（并列展示）
+    # 版本号比较使用 tuple 化的数字版本（如 "2.1.0" → (2, 1, 0)）
+    def _parse_version(v):
+        """将版本字符串转为可比较的 tuple"""
+        if not v:
+            return (0,)
+        parts = re.split(r'[.\-]', str(v).strip())
+        result = []
+        for p in parts:
+            try:
+                result.append(int(p))
+            except ValueError:
+                result.append(0)
+        return tuple(result) if result else (0,)
+
+    overridden_courses = set()  # 被覆盖的课件 ID，不挂载到树
+    for key, cid_list in list(node_courses.items()):
+        if len(cid_list) <= 1:
+            continue
+        # 按 author 分组
+        author_groups = defaultdict(list)  # author -> [(course_id, version_tuple, version_str)]
+        for cid in cid_list:
+            # 从 courses（有 manifest）或 old_registry（legacy）中取元信息
+            if cid in courses:
+                manifest = courses[cid][0]
+                author = manifest.get('author', 'unknown')
+                version = manifest.get('version', '1.0')
+            elif cid in old_registry:
+                author = old_registry[cid].get('author', 'unknown')
+                version = old_registry[cid].get('version', '1.0')
+            else:
+                author = 'unknown'
+                version = '0.0'
+            author_groups[author].append((cid, _parse_version(version), version))
+
+        # 同一 author 下只保留最高版本
+        keep_ids = []
+        for author, versions in author_groups.items():
+            if len(versions) == 1:
+                keep_ids.append(versions[0][0])
+            else:
+                # 按版本号降序排列；版本相同时按 ID 长度升序（更短/更规范的 ID 优先）
+                sorted_v = sorted(versions, key=lambda x: (x[1], -len(x[0])), reverse=True)
+                winner = sorted_v[0]
+                keep_ids.append(winner[0])
+                # 标记被覆盖的课件
+                for loser in sorted_v[1:]:
+                    overridden_courses.add(loser[0])
+                    print(f'  🔄 {key[1]}: 同作者({author})版本覆盖 — '
+                          f'保留 {winner[0]}(v{winner[2]}), '
+                          f'覆盖 {loser[0]}(v{loser[2]})')
+
+        # 更新 node_courses 为去重后的列表
+        node_courses[key] = keep_ids
+
+    if overridden_courses:
+        print(f'   📌 多版本覆盖：{len(overridden_courses)} 个旧版本课件不再挂载到知识树')
 
     print(f'   {len(node_courses)} 个知识节点有课件')
 
@@ -411,6 +479,39 @@ def main():
             elif all_courses and node.get('status') != 'active':
                 node['status'] = 'active'
                 modified = True
+
+            # ⭐ v7.0: 多课件节点写入 course_variants 元信息（供前端选择器）
+            if len(all_courses) > 1:
+                variants_info = []
+                for cid in sorted(all_courses):
+                    if cid in courses:
+                        m = courses[cid][0]
+                        variants_info.append({
+                            'id': cid,
+                            'author': m.get('author', ''),
+                            'variant': m.get('variant', ''),
+                            'version': m.get('version', '1.0'),
+                            'difficulty': m.get('difficulty', 1),
+                        })
+                    elif cid in old_registry:
+                        oe = old_registry[cid]
+                        variants_info.append({
+                            'id': cid,
+                            'author': oe.get('author', ''),
+                            'variant': oe.get('variant', ''),
+                            'version': oe.get('version', '1.0'),
+                            'difficulty': oe.get('difficulty', 1),
+                        })
+                if variants_info:
+                    old_variants = node.get('course_variants', [])
+                    if old_variants != variants_info:
+                        node['course_variants'] = variants_info
+                        modified = True
+            else:
+                # 单课件节点：清除 course_variants（如果有的话）
+                if 'course_variants' in node:
+                    del node['course_variants']
+                    modified = True
 
             # 递归处理子节点
             for key in ['children', 'nodes', 'domains']:
@@ -749,6 +850,9 @@ def main():
             # ⭐ v6.2: 图片资产字段（自动检测）
             'hero_image': hero_image,
             'scene_image': scene_image,
+            # ⭐ v7.0: 多版本课件支持
+            'variant': manifest.get('variant', ''),  # 版本标识（如"基础版"、"进阶版"）
+            'overridden': course_id in overridden_courses,  # 是否被同作者更高版本覆盖
         }
         registry_courses.append(entry)
         if status == 'official':
