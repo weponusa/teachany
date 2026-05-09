@@ -109,10 +109,18 @@ def main():
     print("=" * 80)
     
     for course_id in course_ids:
-        # 查找课件路径
+        # 查找课件路径（支持 ID 或目录路径输入）
         with open(registry_path, 'r', encoding='utf-8') as f:
             registry = json.load(f)
         course = next((c for c in registry['courses'] if c['id'] == course_id), None)
+        
+        # 回退：输入可能是路径（如 examples/xxx），按 path 字段匹配
+        if not course:
+            course = next((c for c in registry['courses'] if c.get('path') == course_id), None)
+        # 再回退：按 path 末段匹配（如 examples/xxx → 匹配 local_path=xxx）
+        if not course and '/' in course_id:
+            dir_name = course_id.rstrip('/').split('/')[-1]
+            course = next((c for c in registry['courses'] if c.get('local_path') == dir_name or c.get('id') == dir_name), None)
         
         if not course:
             print(f"❌ {course_id}: 未在 registry 中找到")
