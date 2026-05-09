@@ -73,14 +73,14 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 | 能力 | 强制要求 | 实现方式 | 降级底线 |
 |:---|:---|:---|:---|
 | **① 多引擎 TTS 语音讲解**（v7.9.5 升级）| 必须为每个知识模块生成独立 mp3 + 同步字幕；⛔ **禁用浏览器 `speechSynthesis` 手写**；⛔ **不可整体跳过 L3**——但允许引擎自动回退 | **唯一标准入口**：`python3 scripts/tts-engine.py --text "..." --voice zh-CN-XiaoxiaoNeural --output xxx.mp3`（或 `from tts_engine import synthesize`）。该模块按以下优先级**自动回退**：(1) edge-tts 直连 → (2) edge-tts via 系统 HTTPS_PROXY/常见本地代理 → (3) macOS `say` 离线 TTS（zh: Tingting / en: Samantha）+ ffmpeg 转 mp3 → (4) pyttsx3 跨平台离线 → (5) 1 秒静音占位（前端 `teachany-tts-narrator.js` 用 Web Speech 朗读）。**所有引擎都强制校验生成的 mp3 ≥ 200 字节**——这是为了规避旧版 bug：Edge-TTS 依赖的 `wss://speech.platform.bing.com:443` 在国内常被防火墙拦截，导致 edge-tts "成功"返回但写出 0 字节 mp3。preflight-check.py 现在会在 Phase 0 实际跑一次探针，把结果写入 `.teachany-preflight.json` 的 `capabilities.L3_tts_engine` 字段，AI 必须读取并据此宣告本次实际使用的引擎。 | ⛔ **严禁以"edge-tts 网络不通"为理由跳过 L3**——必须按上述链路自动回退，不存在"无音频版课件"。⛔ 严禁直接调用 `subprocess.run(['edge-tts', ...])` 而不验证文件大小；必须走 `tts-engine.py`。⛔ 用户拒绝音频时仍须保留 `teachany-tts-narrator.js` 引用（零 mp3 回退模式），确保后续补录无需改 HTML |
-| **② Remotion 程序化动画**（v7.9.8 强化信息密度铁律）| 课件必须含 **≥1 段真正用 Remotion 渲染的教学动画 mp4**（演示过程性变化），且 mp4 **必须三轨合一：画面 + 氛围音效/配乐 + TTS 语音朗读**（强烈推荐）。⛔ **视频信息密度铁律（v7.9.8 新增）**：视频是核心概念的重要动态表达方法，**不是装饰**。每段视频必须满足：(1) **画面动态变化 ≥3 个 beat**（如：等级层层浮现、要素逐项标注、关系连线生长、对比左右切换）；(2) **每分钟 ≥4 个新画面信息单元**（数字/文字/图标/连线 onEnter）；(3) **画面与 TTS 语义同步**（不是音频在讲 A、画面停在 B）；(4) **互动/可暂停回看**（前端 `<video controls>` 必备，关键节点用 `chapters` 或时间锚点供学生跳转）。 | Remotion + React + TS 渲染 1920×1080 @30fps → 输出 `assets/video/*.mp4` → 嵌入对应 section；音频通过 `<Audio src={staticFile(...)}/>` 叠加，ffmpeg 合成背景音效/edge-tts 生成语音旁白，放 `remotion/public/audio/`；**画面层必须用 `interpolate/spring/Sequence` 编排过程性元素**（不是单张 PNG 铺满全程） | ⛔ **无降级**。Canvas/SVG/CSS 动画不得替代 Remotion 基线；**仅有画面而无音频轨的哑片 mp4 视为不合规**。⛔ **v7.9.8 新增·伪视频禁令**：**严禁"一张 hero/poster 图铺满全程 + 音频轨"的伪视频**——这等于把音频伪装成视频，零教学信息密度，与基线 ⑨ 独立连续音频模块完全重复，浪费学生流量与认知带宽。判定标准：用 `ffprobe -select_streams v:0 -show_entries frame=pict_type` 抽样 ≥10 帧，若所有帧 SSIM > 0.99（即画面几乎不变），直接 Gate 不通过。⛔ **"Node 环境不可用"不是跳过理由**——Phase 0 必须安装 Node（preflight-check.py 自动安装），安装失败必须报告用户等待解决，绝不可降级为"Canvas 动画够用了"，更不可降级为"hero 图配音频凑数"。缺 Remotion = 直接 Gate 不通过。唯一豁免：用户在**当前对话中**主动说"不需要视频/动画"——即便如此仍须在 Gate 中显式标注"L2 用户豁免" |
+| **② Remotion 程序化动画**（v7.9.8 强化信息密度铁律 / v7.9.9 强化帧级抽查）| 课件必须含 **≥1 段真正用 Remotion 渲染的教学动画 mp4**（演示过程性变化），且 mp4 **必须三轨合一：画面 + 氛围音效/配乐 + TTS 语音朗读**（强烈推荐）。⛔ **视频信息密度铁律（v7.9.8 新增）**：视频是核心概念的重要动态表达方法，**不是装饰**。每段视频必须满足：(1) **画面动态变化 ≥3 个 beat**（如：等级层层浮现、要素逐项标注、关系连线生长、对比左右切换）；(2) **每分钟 ≥4 个新画面信息单元**（数字/文字/图标/连线 onEnter）；(3) **画面与 TTS 语义同步**（不是音频在讲 A、画面停在 B）；(4) **互动/可暂停回看**（前端 `<video controls>` 必备，关键节点用 `chapters` 或时间锚点供学生跳转）。⛔ **v7.9.9 新增·帧级可读文字强制（详见 §0.4.1 硬杠一）**：渲染完成后必须抽帧验证——随机截取 10 帧，每帧必须含 ≥1 个人眼可读的学科信息文字元素（标注/标题/数据/术语）；纯色块/渐变/抽象粒子/光效动画帧 ≥3 帧 = Gate 直接不通过。**"好看但看不懂" = 零信息密度 = 不合规。** | Remotion + React + TS 渲染 1920×1080 @30fps → 输出 `assets/video/*.mp4` → 嵌入对应 section；音频通过 `<Audio src={staticFile(...)}/>` 叠加，ffmpeg 合成背景音效/edge-tts 生成语音旁白，放 `remotion/public/audio/`；**画面层必须用 `interpolate/spring/Sequence` 编排过程性元素**（不是单张 PNG 铺满全程） | ⛔ **无降级**。Canvas/SVG/CSS 动画不得替代 Remotion 基线；**仅有画面而无音频轨的哑片 mp4 视为不合规**。⛔ **v7.9.8 新增·伪视频禁令**：**严禁"一张 hero/poster 图铺满全程 + 音频轨"的伪视频**——这等于把音频伪装成视频，零教学信息密度，与基线 ⑨ 独立连续音频模块完全重复，浪费学生流量与认知带宽。判定标准：用 `ffprobe -select_streams v:0 -show_entries frame=pict_type` 抽样 ≥10 帧，若所有帧 SSIM > 0.99（即画面几乎不变），直接 Gate 不通过。⛔ **"Node 环境不可用"不是跳过理由**——Phase 0 必须安装 Node（preflight-check.py 自动安装），安装失败必须报告用户等待解决，绝不可降级为"Canvas 动画够用了"，更不可降级为"hero 图配音频凑数"。缺 Remotion = 直接 Gate 不通过。唯一豁免：用户在**当前对话中**主动说"不需要视频/动画"——即便如此仍须在 Gate 中显式标注"L2 用户豁免" |
 | **③ Canvas 互动组件** | 课件必须含 **≥1 个 Canvas 互动组件**（拖拽、画板、参数调节、实时绘图） | 原生 `<canvas>` + JS 事件 → 学生可拖动/点击/滑动改变参数并实时反馈 | 若主题确实无合适 Canvas 场景（如纯文言字词课），必须用 SVG 交互动画替代，并在 Gate 中说明理由 |
 | **④ AI 生图 + 生视频** | 课件必须含 **≥2 张 image_gen 生成的情境/意境插图**；过程性学科（理/化/生/地/史）必须评估生视频需求 | Phase 3 阶段调用 `image_gen` → 存 `assets/illustrations/*.png` → `<img>` 嵌入；必要时调用生视频工具产出 `assets/video/*.mp4` | 若完全纯计算题课，可在 Gate 标注"跳过生图"并附理由，但**文科、科学、工程、社科课件一律不得跳过生图** |
 | **⑤ Hero 知识结构主图**（v7.9.12 更新：永不降级） | 课件**必须**在标题 hero section **下方**独立区块呈现 **1 张知识结构主图**（信息图/脑图/模块关系图，≥1280×720），**非装饰性情境插图**；无现成图且无生图能力时走 L3 SVG 兜底（`gen-hero-svg.py` 自动生成知识结构矢量图，文字与课件语言一致），**不允许删除 figure 区块** | Phase 3 末：① `python3 scripts/find-hero.py <课件目录>` L1 查图床 → ② 未命中且有 image_gen 则 L2 生成位图（prompt 必须强调 "knowledge-structure infographic / flat poster / card nodes"，中文课件要求中文节点文字）→ ③ 仍无则 L3 `python3 scripts/gen-hero-svg.py <课件目录>` 生成 SVG；HTML 用 `<figure class="ta-standard-figure"><img class="hero-cover-img" src="./assets/<id>-hero.{png,svg}"><figcaption>知识结构主图：围绕核心问题呈现 X→Y→Z 学习模块</figcaption></figure>` 放在 hero section **之后**、学习目标 section **之前** | ⛔ **严禁**把 hero 图贴在 `<section class="hero">` 的标题背景/叠加层；⛔ **严禁**用驼队/实验室/卡通人物等装饰性情境图充当 hero（只能当正文插图用）；⛔ L2 生成必须用"信息图"风格，严禁 "warm cartoon / realistic illustration" 关键词；⛔ **v7.9.12 起严禁删除 `<figure>` 区块**——必须走 L3 SVG 兜底；⛔ 严禁手写内联 `<svg>` 塞进 HTML 代替 `<img>` 标签 |
-| **⑥ 真实交互 + 连续音频** | 标题写“互动/实验/探究/画布/地图/跟读”的模块必须真的可操作；语音/拼音/英语/朗读课必须有独立连续音频播放器 | HTML 中必须有真实控件和反馈：`<canvas>`/`<input type="range">`/拖拽/地图事件/按钮状态反馈；音频用 `audioPlaylist` + 可见 `<audio controls>` 或悬浮播放器，`ended` 自动播放下一段 | ⛔ **严禁**用静态图片、SVG 截图、data:image 信息图伪装交互模块；⛔ 视频音轨不能替代独立连续音频；⛔ 单个“点我听”音效不能替代整课连续播放 |
+| **⑥ 真实交互 + 连续音频** | 标题写"互动/实验/探究/画布/地图/跟读"的模块必须真的可操作；语音/拼音/英语/朗读课必须有独立连续音频播放器 | HTML 中必须有真实控件和反馈：`<canvas>`/`<input type="range">`/拖拽/地图事件/按钮状态反馈；音频用 `audioPlaylist` + 可见 `<audio controls>` 或悬浮播放器，`ended` 自动播放下一段 | ⛔ **严禁**用静态图片、SVG 截图、data:image 信息图伪装交互模块；⛔ 视频音轨不能替代独立连续音频；⛔ 单个"点我听"音效不能替代整课连续播放 |
 | **⑦ 标准知识图谱模块**（v7.9.4 统一为唯一技术路线）| 课件**必须且只能**通过 `scripts/teachany-knowledge-graph.js` 标准模块挂载知识图谱，⛔ **严禁自造图谱实现** | **唯一标准调用方式（禁止偏离）**：(1) `<head>` 加入 `<link rel="stylesheet" href="../../scripts/teachany-knowledge-graph.css">`；(2) `<section id="knowledge-graph">` 内写 `<div data-teachany-kg="<node_id>"><canvas class="tkg-fallback-canvas" width="720" height="120"></canvas></div>`；(3) `</body>` 前引入 `<script src="../../scripts/teachany-knowledge-graph.js" defer>`。模块自动读取 `scripts/teachany-kg-manifest.json` 渲染本节点+前序+后续+同域，**无需手写任何数据**。⛔ **严禁手写 `knowledgeGraphData` 内联对象**；⛔ **严禁手写 SVG / d3 / ECharts / 纯 div / 静态图片版图谱**；⛔ 严禁改模块 JS/CSS 源文件（风格只覆盖 `--kg-primary/--kg-bg/--kg-card/--kg-border` 等 CSS 变量） |
 | **⑧ 标准 AI 学伴入口卡片**（v7.7 新增） | 课件必须显式嵌入一张可见的 AI 学伴入口卡片，不可只依赖左下角 FAB | 引入 `scripts/teachany-tutor-card.{css,js}` + 在课件正文（推荐放在"小结"或"前测"区附近）写一行 `<div data-teachany-tutor-card></div>`；卡片显示标题、简介、4 个建议提问按钮，点击任一处都会唤起 ai-tutor.js FAB 的对话面板 | ⛔ 不允许只引入 `ai-tutor.js` 不放卡片——学生在长页面下经常看不到左下角 FAB；⛔ 不允许在卡片里硬编码 API Key，配置仍由 ai-tutor.js 负责 |
-| **⑨ 标准独立连续音频模块**（v7.7 新增） | 凡课件有 2 段及以上音频讲解时，必须用 `scripts/teachany-audio-player.js` 渲染统一的"曲目卡片 + 底部连续播放条"，不再手写 audio-bar | 引入 `scripts/teachany-audio-player.{css,js}`；在课件中加 `<div data-teachany-audio><script type="application/json" data-teachany-audio-playlist>[{"id":"seg01","sectionId":"module-1","title":"..","src":"./tts/seg01_zh.mp3"}, ...]</script></div>`；模块自动渲染播放列表 + 全局底部条 + IntersectionObserver 滚动同步 | ⛔ **禁止**每个课件继续重复粘贴 80+ 行内联 audio-bar 代码；⛔ 单段音频可直接用 `<audio controls>`，但有播放列表必须用模块；⛔ 不可破坏自动连播逻辑（`ended` 事件自动进入下一首） |
+| **⑨ 标准独立连续音频模块**（v7.7 新增 / v7.9.9 强化 UX 自解释） | 凡课件有 2 段及以上音频讲解时，必须用 `scripts/teachany-audio-player.js` 渲染统一的"曲目卡片 + 底部连续播放条"，不再手写 audio-bar。⛔ **v7.9.9 新增·UX 自解释铁律（详见 §0.4.1 硬杠二）**：音频模块在 UI 上**必须**让学生无需任何额外说明即可理解其用途——(1) 必须有醒目可见的中文标题（如"🎧 语音导学模式"、"📖 课文朗读"），不能是裸播放器；(2) 每个音频条目必须有描述性中文标题（不是 `seg01`/`audio_1`）；(3) 播放区域必须有 1-2 句使用引导文字。 | 引入 `scripts/teachany-audio-player.{css,js}`；在课件中加 `<div data-teachany-audio><script type="application/json" data-teachany-audio-playlist>[{"id":"seg01","sectionId":"module-1","title":"..","src":"./tts/seg01_zh.mp3"}, ...]</script></div>`；模块自动渲染播放列表 + 全局底部条 + IntersectionObserver 滚动同步 | ⛔ **禁止**每个课件继续重复粘贴 80+ 行内联 audio-bar 代码；⛔ 单段音频可直接用 `<audio controls>`，但有播放列表必须用模块；⛔ 不可破坏自动连播逻辑（`ended` 事件自动进入下一首） |
 | **⑩ 标准历史地图模块**（v7.7 新增 / v7.7.2 升级为 Leaflet / v7.9.4 统一为唯一技术路线）| 历史 / 地理课件提到"疆域 / 战役 / 路线 / 政区 / 朝代变迁"**必须且只能使用 `scripts/teachany-historical-map.js` 标准模块**，严禁自行造地图实现。 | **唯一标准调用方式（禁止偏离）**：(1) `<head>` 引入 3 行：`<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">` + `<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>` + `<link rel="stylesheet" href="../../scripts/teachany-historical-map.css">`；(2) `</body>` 前：`<script src="../../scripts/teachany-historical-map.js" defer>`；(3) 复制文件到课件本地：`cp skill/assets/historical-{china,world}/<file>.geojson <课件>/assets/maps/` + `cp skill/assets/hillshade/global-color-hillshade-2k.jpg <课件>/assets/maps/hillshade.jpg`；(4) 课件 HTML 中写：`<div data-teachany-map="my-map" data-teachany-map-scope="china|world" data-teachany-map-title="标题"><script type="application/json" data-teachany-map-config>{"eras":[{"id":"qin","label":"秦","file":"qin-dynasty.geojson","fill":"#6366f1","stroke":"#4f46e5","desc":"描述","cities":[[lat,lng,"中文名","En","描述"]]}],"center":[34,108],"zoom":4,"fitBounds":[[18,72],[52,140]]}</script></div>`。⛔ **严禁自行手写 Leaflet 代码、ECharts geo、Canvas 绘图、SVG 方框、D3 地图**——只能用标准模块。⛔ **严禁用在线 XYZ 瓦片服务**。可用 geojson 清单：`skill/assets/historical-china/{qin,west-han,east-han,three-kingdoms,northern-southern,sui,tang,north-song,south-song,liao,jin-jurchen,yuan,ming,qing}-dynasty.geojson` + `skill/assets/historical-world/{bce-3000~ce-2000 共 22 个}.geojson`。批量注入工具：`python3 scripts/apply-historical-maps.py`（读取 `scripts/historical-maps-manifest.json` 自动注入）。 |config>{"eras":[{"id":"qin","label":"秦","file":"qin-dynasty.geojson","fill":"#6366f1","stroke":"#4f46e5","desc":"...","cities":[[34.27,108.95,"咸阳","Xianyang","秦都"]]}], "center":[34,108], "zoom":4, "fitBounds":[[18,72],[52,140]]}</script></div>`。批量工具：`python3 scripts/apply-historical-maps.py` 读 `scripts/historical-maps-manifest.json` 自动注入+复制 geojson+复制 hillshade；(5) 模块自动渲染朝代切换按钮、彩色阴影地形底图、悬停金黄高亮、点击红色城市 popup、时代说明面板、图例。 | ⛔ **严禁**用纯手画 SVG / Canvas 方框拼接当作"历史地图"——城市坐标会和疆域错位；⛔ **严禁**不引入 Leaflet 自造投影；⛔ **严禁**直接 fetch 跨目录 `../../skill/assets/...`——GitHub Pages 部署后 404，必须复制到课件本地；⛔ **严禁**省略 hillshade.jpg——地图会变成"暗蓝空地"；⛔ **严禁**省略时代 `desc`（学生看不懂）；⛔ 新朝代必须先在 `skill/assets/historical-{china,world}/` 补 geojson |
 | **⑪ 标准 Web Speech 悬浮 TTS 播放器**（v7.7.4 新增） | 零 mp3、零配置的浏览器原生朗读控制器。课件正文中在关键段落加 `<p data-tts>...</p>` 即可自动生成右下角悬浮控制条。| `<head>` 引入 `<link rel="stylesheet" href="../../scripts/teachany-tts-narrator.css">`；`</body>` 前 `<script src="../../scripts/teachany-tts-narrator.js" defer></script>`；有 `[data-tts]` 段落时自动出现 ⏮▶️⏭ + 语速（0.85×/1.0×/1.15×/1.3×） + 当前段落高亮 + scrollIntoView；可选同级 `./narration.json`（`{"paraId": "高质量朗读稿"}`）用作 data-id 段落的替代文本；页面隐藏自动暂停；底部音频条/Tap Bar 激活时 `body.tap-bar-on` 自动上移 80px 避让。**全局 API**：`window.TeachAnyTTSNarrator.{play,stop,next,prev,toggle,cycleRate}`。| ⛔ **严禁**再在课件里手写 `speechSynthesis` 代码块和自建控制器——已全部迁到标准模块；⛔ 无 `[data-tts]` 时模块静默不插 UI（零占位）；⛔ 如同时使用 `teachany-audio-player.js` 标准音频模块，优先用后者（mp3 音质更好）；Web Speech TTS 适用于没有 mp3 脚本、但希望一键朗读正文的纯文本课件 |
 | **⑫ 标准情境感知气泡模块**（v7.7.4 新增 / v7.9.4 强化 FAB 依赖） | 学生滚动到某 section 时，左下角自动弹出对应的思考/讨论提示（挨着 AI 学伴 FAB），8 秒淡出。点击气泡 = 点击 FAB 打开 AI 学伴。| `<head>` 引入 `<link rel="stylesheet" href="../../scripts/teachany-section-hints.css">`；`</body>` 前 `<script src="../../scripts/teachany-section-hints.js" defer></script>`；**数据源三选一**：(a) 在 section 上写 `<section id="module-1" data-tsh="思考：为什么要这样证明？">`；(b) 在任意元素上写 `<div data-tsh-key="my-key">` 并在 JSON 里用 `my-key` 作 key；(c) 同级 `./section-hints.json` 写 `{"module-1": "思考：为什么要这样证明？"}`。IntersectionObserver 监控可见度（threshold 0.35/0.6），取最可见的 section 展示。`body.tap-bar-on` 时自动 `bottom: 114px` 避让底部音频条。⚠️ **依赖**：模块代码硬依赖 `.ai-tutor-fab` 选择器（点击气泡时唤起对话），因此 `ai-tutor.js` 必须正确渲染 class=`ai-tutor-fab` 的 FAB（基线⑧已强制）。**全局 API**：`window.TeachAnySectionHints.{show,hide}`。| ⛔ **严禁**再在课件里手写 IntersectionObserver 气泡逻辑——已全部迁到标准模块；⛔ 无 `[data-tsh]`/`[data-tsh-key]` 和 `./section-hints.json` 时模块静默不弹（零占位）；⛔ 提示文案控制在 ≤40 字，保持"一句话触发思考"的格调；⛔ 不要用"提醒学生记笔记"这种 meta 指令——应是学科性开放提问 |
@@ -236,8 +236,13 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 - ❌ **L3 降级后 HTML 里仍残留空的 `<figure class="ta-standard-figure">` 标签** → **违反 ⑤**。v7.9.12 起已废除「删 figure」降级路径，必须走 SVG 兜底
 - ❌ **无生图能力就直接删除 `<figure>` 区块** → **违反 ⑤ v7.9.12**。应该调用 `python3 scripts/gen-hero-svg.py <课件目录>` 生成 SVG 知识结构图兜底
 - ❌ **手写内联 `<svg>` 塞进 HTML 代替 `<img src="./assets/xxx-hero.svg">`** → **违反 ⑤ v7.9.12**。SVG 必须作为独立文件由 `gen-hero-svg.py` 产出
-- ❌ **把静态 PNG/SVG/data:image 放进“互动探究/互动实验/地图互动”模块** → **违反 ⑥**。只要标题或文案说“互动”，就必须有真实可操作控件、事件处理和反馈状态
-- ❌ **拼音/英语/朗读课只有单个“点我听”音效或视频音轨，没有独立连续音频播放器** → **违反 ⑥**。必须提供 `audioPlaylist` + 可见播放器，并支持顺序连续播放
+- ❌ **把静态 PNG/SVG/data:image 放进"互动探究/互动实验/地图互动"模块** → **违反 ⑥**。只要标题或文案说"互动"，就必须有真实可操作控件、事件处理和反馈状态
+- ❌ **拼音/英语/朗读课只有单个"点我听"音效或视频音轨，没有独立连续音频播放器** → **违反 ⑥**。必须提供 `audioPlaylist` + 可见播放器，并支持顺序连续播放
+- ❌ **视频全程只有渐变色块/抽象光晕/粒子效果，没有任何可读文字或数据标注** → **违反 ② v7.9.9 帧级信息密度**。视频的每一帧必须含学生可暂停后能读到的学科信息（详见 §0.4.1 硬杠一）
+- ❌ **音频播放器没有标题、没有使用说明，学生打开后不知道这是干嘛的** → **违反 ⑨ v7.9.9 UX 自解释铁律**。必须有醒目中文标题 + 每段条目中文命名 + 引导文字（详见 §0.4.1 硬杠二）
+- ❌ **Canvas 组件只有静态渲染（零事件监听），或只有 click 切换背景色的"伪互动"** → **违反 ③ + §0.4.1 硬杠三**。Canvas 必须有 ≥2 个真实输入 + 学科相关的画面响应
+- ❌ **插图/Hero 是"万能科技感背景"（宇宙星空/抽象光谱/彩色粒子），拿掉课件标题后分辨不出是什么学科** → **违反 ⑤ + §0.4.1 硬杠四**。图片必须含学科专属可识别元素
+- ❌ **AI 学伴卡片建议提问写着"问题1/问题2"、音频条目叫 seg01/audio_1、figcaption 写"图片说明"等未替换占位符** → **违反 §0.4.1 硬杠五**。发布前 grep 验证零 placeholder 残留
 
 > 📌 **一句话记住**：语音 + 动画 + 互动 + 图像 + 封面，五项齐全才是 TeachAny 课件。缺一不是 TeachAny，是普通网页。
 >
@@ -347,6 +352,103 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 | Phase 0 需求确认 | ⚠️ 仅强制红线二（不要猜用户意图，问清楚再开始） |
 
 > 📌 **一句话记住**：跑命令贴输出 / 用工具不靠猜 / 走完五步再放弃 / 第二次失败必换思路 / 修完一个扫一片。课件是给真实学生看的，每一处偷工都会变成课堂事故。
+
+---
+
+### 0.4.1 反偷懒铁律（Anti-Hollow Implementation Rules — 六条硬杠）⛔ 必读
+
+> ⛔ **核心原则：形式合规 ≠ 实质达标**。通过格式检查（文件存在、字节数达标、codec 正确）但内容为空壳/无意义/看不懂，视同未实现，Completeness Gate 直接不通过。
+>
+> 以下六条针对的是"技术上满足检查项、但学生打开后一脸懵"的偷懒行为——这比明确缺失更恶劣，因为它会骗过自动化质检，最终在学生手里暴露。
+
+#### 硬杠一·视频帧级信息密度（Anti-Blob Rule）
+
+**量化底线**：Remotion 渲染的每段 mp4 必须满足：
+1. **每帧至少含 1 个可读文字元素**（标题/标注/数据/时间轴文字/人名/术语）——随机抽 10 帧，若超过 3 帧零文字 = Gate 不通过
+2. **严禁全程抽象色块/渐变/粒子/光效**——无论多好看，若学生按暂停看不到任何可读学科信息 = 装饰品，不是教学视频
+3. **至少 3 个可辨别的画面 beat**——beat 定义：画面主体视觉元素发生结构性变化（不是颜色渐变、不是缩放动画、不是同一内容重复出现）
+4. **每个 beat 必须有对应的学科知识点**——不能是"第一个 beat 展示标题、后面全是装饰动画"
+
+**判定工具（Gate 阶段强制执行）**：
+```bash
+# 抽帧检查可读文字
+ffmpeg -i assets/video/*.mp4 -vf "select='not(mod(n\,30))'" -frames:v 10 -q:v 2 frame_%02d.png
+# 人工审核：每张 frame 必须能回答"学生看到了什么学科信息？"
+```
+
+**违反案例**：
+- ❌ 用 Pillow 逐像素渲染渐变色块 + 半透明圆形 → 视觉"好看"但信息密度 = 0
+- ❌ 粒子系统/流体模拟/分形图案填满全程 → 与学科内容无关
+- ❌ 全程只有一张背景图 + 文字淡入淡出 → 本质是幻灯片不是动画
+- ✅ 时间轴逐项浮现 + 数据卡片切换 + 文字标注 + 对比表格 = 有信息密度
+
+#### 硬杠二·音频模块必须对学生自解释（Purpose-Evident Rule）
+
+**底线要求**：任何出现在课件中的音频播放器，学生**不看源代码、不问老师**就必须知道：
+1. **这是什么**——必须有可见标题（如"🎧 语音导学模式"、"📖 课文朗读"、"🔊 重点段落精讲"）
+2. **怎么用**——必须有 1-2 句使用说明（如"点击播放，跟随语音逐段学习"）
+3. **每段是什么**——播放列表中每个条目必须有对应的中文标题（不能是 `seg01.mp3`、`audio_1`）
+
+**判定方法**：截图课件音频区域，遮住所有代码，只看 UI → 如果你自己都说不出"这个播放器是干嘛的" = 不通过。
+
+#### 硬杠三·Canvas 互动必须有真实计算逻辑（No-Static-Canvas Rule）
+
+**底线要求**：
+1. Canvas 组件**必须有至少 2 个用户可操作的输入**（拖拽手柄、滑块、点击切换、键盘输入）
+2. 用户操作后**必须触发可见的画面变化**（不是只改了 console.log）
+3. **画面变化必须与学科逻辑相关**（如改变 a 值 → 抛物线开口变化；拖动点 → 三角形面积实时更新）
+
+**违反案例**：
+- ❌ Canvas 只是用 JS 渲染了一张静态图（无事件监听） → 改用 `<img>` 就行了
+- ❌ 有 click 事件但只是切换背景色 → 不是"互动组件"，是"颜色按钮"
+- ❌ 用 Canvas 画了一张表格 → 应该用 HTML `<table>`
+- ✅ 拖动函数参数 → 图像实时重绘 + 数值标注同步更新 = 真互动
+
+#### 硬杠四·生成的图片/SVG 必须含学科内容（No-Generic-Art Rule）
+
+**底线要求**：
+1. `image_gen` 或手工制作的插图**必须含有与本课件学科主题直接相关的可识别元素**
+2. "抽象科技感/宇宙星空/彩色光谱" 等万能装饰图 → 任何课件都能用 = 任何课件都不该用
+3. Hero 知识结构图必须含**可读文字节点**（课件主题关键词），不能是纯图形
+
+**判定方法**：把图片给一个不知道课件主题的人看，如果他猜不出"这是什么学科的什么知识点" = 不通过。
+
+#### 硬杠五·所有 placeholder 必须在发布前替换（Anti-Lorem Rule）
+
+**强制扫描项**：Gate 阶段必须用以下命令确认无残留：
+```bash
+grep -riE "(lorem ipsum|placeholder|TODO|FIXME|示例文本|待替换|xxx|TBD)" examples/<course-id>/index.html
+# 输出必须为空
+```
+
+**违反案例**：
+- ❌ AI 学伴卡片的"建议提问"写着"问题1、问题2、问题3"
+- ❌ 音频标题写"segment 1, segment 2"而非中文知识点名
+- ❌ figcaption 写"图片说明"而非实际描述
+- ❌ section-hints 写"这里是思考提示"而非学科性提问
+
+#### 硬杠六·信息密度基准测试（"遮住代码只看 UI" 测试法）
+
+**总原则**：完成课件后，AI 必须对自己做一次"学生视角审查"——
+
+> 想象你是一个初次打开这个页面的学生。对着课件的每个模块问自己：
+> 1. **看得懂吗？** —— 这个模块在讲什么？我能从中学到什么？
+> 2. **用得了吗？** —— 按钮/控件点了之后会发生什么？有反馈吗？
+> 3. **区分得开吗？** —— 这个模块和上下文的其他模块是不同的东西吗？还是换了个壳的同一坨？
+
+如果对三个问题中的任何一个回答"不确定"、"说不清" → 该模块需要返工。
+
+**Gate 清单补充项（v7.9.9 新增）**：
+```
+[ ] 视频：随机截 3 帧，每帧能回答"学生看到了什么学科信息？"
+[ ] 音频播放器：不看代码，UI 上能看出"这是什么 + 怎么用"
+[ ] Canvas 互动：有 ≥2 个可操作输入 + 操作后画面有学科相关变化
+[ ] 插图/SVG：不知道课件主题的人能猜出这是什么学科
+[ ] 无 placeholder 残留（grep 验证通过）
+[ ] "学生视角审查"三问全部通过
+```
+
+> 📌 **一句话记住**：**学生打开课件后 3 秒内看不懂的东西 = 不存在**。技术上"有"但用户体验上"没有"，比真的没有更糟糕——因为它占用了屏幕空间、消耗了加载时间、还让学生困惑"这是啥？是我太笨了吗？"。**空壳比缺失更恶劣。**
 
 ---
 
@@ -566,6 +668,8 @@ python3 scripts/check-hero.py community/
 > ```
 >
 > 💡 **full 姿势 ~700 MB**：`.sparse-checkout-presets/full.txt`，含 community/ + examples/，适用于审阅/研究/批量操作。
+>
+> ⛔ **既有课件不随 skill 安装（v7.9.9 铁律）**：`/install-skill` 和 `install-cn-auto.sh` **严禁**将 `examples/`（305+ 个成品课件）和 `community/` 拉到用户本地。理由：(1) 课件合计 ~600MB，严重拖慢安装速度；(2) 学生/教师只需通过 Gallery 在线浏览既有课件，不需要源码；(3) 用户的使用场景是"制作新课件"，不是"下载别人的课件"。**standard 预设和安装脚本必须通过 sparse checkout 排除这两个目录。**
 
 ---
 

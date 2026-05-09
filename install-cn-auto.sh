@@ -67,22 +67,29 @@ main() {
     mkdir -p "${TEMP_DIR}"
     print_success "临时目录已创建：${TEMP_DIR}"
     
-    # 步骤3：从 Gitee 克隆代码
-    print_step "3/5" "从 Gitee 下载代码（国内高速）"
+    # 步骤3：从 Gitee 克隆代码（排除课件目录，大幅减少体积）
+    print_step "3/5" "从 Gitee 下载代码（国内高速，排除既有课件）"
     cd "${TEMP_DIR}"
     
-    # 尝试浅克隆（更快）
-    if git clone --depth 1 "${GITEE_URL}" teachany-opensource; then
-        print_success "代码下载成功"
+    # 使用 sparse checkout 排除既有课件（examples/ + community/ ~600MB）
+    if git clone --depth 1 --filter=blob:none --sparse "${GITEE_URL}" teachany-opensource; then
+        cd teachany-opensource
+        git sparse-checkout init --cone
+        # 排除既有课件目录，只拉取制作器核心
+        git sparse-checkout set skill/ scripts/ data/ assets/ references/ docs/ styles/ worker/ worker-llm-proxy/ pages/ gallery/
+        cd ..
+        print_success "代码下载成功（已排除既有课件，节省 ~600MB）"
     else
         print_error "从 Gitee 下载失败"
         echo "正在尝试备用下载方式..."
         
-        # 备用：直接下载 ZIP
+        # 备用：直接下载 ZIP（会包含全部内容，安装后清理）
         curl -L "https://gitee.com/weponusa/teachany/repository/archive/main.zip" -o teachany.zip
         unzip -q teachany.zip
         mv teachany-opensource-main teachany-opensource
-        print_success "使用备用方式下载成功"
+        # 清理既有课件目录
+        rm -rf teachany-opensource/examples teachany-opensource/community
+        print_success "使用备用方式下载成功（已清理既有课件）"
     fi
     
     # 步骤4：安装到 CodeBuddy
