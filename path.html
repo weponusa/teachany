@@ -979,14 +979,14 @@ body {
     <textarea id="pblGoalInput" class="pbl-textarea" placeholder="描述你的项目目标，如：设计一个智能家居温度控制系统、制作一个天气预报App、分析城市交通拥堵问题..."></textarea>
     <div class="pbl-examples">
       <span class="ex-label">示范项目：</span>
-      <span class="ex-chip" onclick="fillPBLExample(this)" data-goal="设计一个智能家居温度控制系统，利用传感器实时监测室温，自动调节空调或暖气，实现节能恒温">🏠 智能家居温控</span>
-      <span class="ex-chip" onclick="fillPBLExample(this)" data-goal="制作一个天气预报App，从公开API获取气象数据，展示温度、湿度、风速，并用图表展示7天趋势">🌤️ 天气预报App</span>
-      <span class="ex-chip" onclick="fillPBLExample(this)" data-goal="分析城市交通拥堵问题，收集高峰期车流量数据，建立拥堵模型，提出优化方案">🚗 城市交通分析</span>
-      <span class="ex-chip" onclick="fillPBLExample(this)" data-goal="设计一个自动浇花系统，通过土壤湿度传感器判断是否需要浇水，用微型水泵自动灌溉">🌱 自动浇花系统</span>
-      <span class="ex-chip" onclick="fillPBLExample(this)" data-goal="制作一个英文单词记忆游戏，利用间隔重复算法安排复习，追踪用户记忆曲线">🧠 英文单词记忆</span>
-      <span class="ex-chip" onclick="fillPBLExample(this)" data-goal="分析本地河流水质，采集pH值、溶解氧、浊度数据，评估污染程度并提出治理建议">💧 河流水质分析</span>
-      <span class="ex-chip" onclick="fillPBLExample(this)" data-goal="设计一个简易加密通信工具，实现凯撒密码和RSA加密，理解对称加密与非对称加密的原理">🔐 加密通信工具</span>
-      <span class="ex-chip" onclick="fillPBLExample(this)" data-goal="构建一个太阳系模拟器，用物理引擎模拟行星轨道运动，展示开普勒定律和万有引力">🪐 太阳系模拟器</span>
+      <span class="ex-chip" onclick="fillPBLExample(this)" data-key="smart-home-temp" data-goal="设计一个智能家居温度控制系统，利用传感器实时监测室温，自动调节空调或暖气，实现节能恒温">🏠 智能家居温控</span>
+      <span class="ex-chip" onclick="fillPBLExample(this)" data-key="weather-app" data-goal="制作一个天气预报App，从公开API获取气象数据，展示温度、湿度、风速，并用图表展示7天趋势">🌤️ 天气预报App</span>
+      <span class="ex-chip" onclick="fillPBLExample(this)" data-key="traffic-analysis" data-goal="分析城市交通拥堵问题，收集高峰期车流量数据，建立拥堵模型，提出优化方案">🚗 城市交通分析</span>
+      <span class="ex-chip" onclick="fillPBLExample(this)" data-key="auto-watering" data-goal="设计一个自动浇花系统，通过土壤湿度传感器判断是否需要浇水，用微型水泵自动灌溉">🌱 自动浇花系统</span>
+      <span class="ex-chip" onclick="fillPBLExample(this)" data-key="word-memory" data-goal="制作一个英文单词记忆游戏，利用间隔重复算法安排复习，追踪用户记忆曲线">🧠 英文单词记忆</span>
+      <span class="ex-chip" onclick="fillPBLExample(this)" data-key="water-quality" data-goal="分析本地河流水质，采集pH值、溶解氧、浊度数据，评估污染程度并提出治理建议">💧 河流水质分析</span>
+      <span class="ex-chip" onclick="fillPBLExample(this)" data-key="encryption-tool" data-goal="设计一个简易加密通信工具，实现凯撒密码和RSA加密，理解对称加密与非对称加密的原理">🔐 加密通信工具</span>
+      <span class="ex-chip" onclick="fillPBLExample(this)" data-key="solar-system" data-goal="构建一个太阳系模拟器，用物理引擎模拟行星轨道运动，展示开普勒定律和万有引力">🪐 太阳系模拟器</span>
     </div>
     <div class="pbl-actions">
       <button class="pbl-analyze-btn" id="pblAnalyzeBtn" onclick="analyzePBLGoal()">🔍 分析学习路径</button>
@@ -1163,8 +1163,24 @@ function getSelectedSystems() {
 
 async function fillPBLExample(el) {
   const goal = el.dataset.goal;
+  const key = el.dataset.key || el.textContent.trim().replace(/\s+/g,'_');
   document.getElementById('pblGoalInput').value = goal;
-  // 自动触发分析
+
+  // 先尝试加载预存结果（静态 JSON，无需 LLM/索引）
+  try {
+    const resp = await fetch(`./data/pbl-demos/${encodeURIComponent(key)}.json`);
+    if (resp.ok) {
+      const cached = await resp.json();
+      if (cached && cached.graphData) {
+        // 直接渲染，跳过分析
+        const statusEl = document.getElementById('pblStatus');
+        statusEl.style.display = 'none';
+        renderPBLResult(cached);
+        return;
+      }
+    }
+  } catch (e) { /* 无预存，走实时分析 */ }
+
   analyzePBLGoal();
 }
 
@@ -1223,6 +1239,12 @@ async function analyzePBLGoal() {
   } finally {
     btn.disabled = false;
   }
+}
+
+function renderPBLResult(result) {
+  pblResult = result;
+  renderPBLStats(result);
+  renderPBLGraph(result);
 }
 
 function renderPBLStats(result) {
@@ -1357,14 +1379,8 @@ function closeNodeDetail() {
 }
 
 function generateCourseware(nodeId, nodeName) {
-  // 1. 打开课件页面
-  const url = `./index.html?generate=1&node_id=${encodeURIComponent(nodeId)}&node_name=${encodeURIComponent(nodeName)}`;
-  window.open(url, '_blank');
-
-  // 2. 构造提示词
+  // 不再跳转 gallery，直接在侧栏展示提示词供用户复制
   const prompt = `帮我生成「${nodeName}」的课件，知识点 ID 为 ${nodeId}。请按照 TeachAny 技能规范，生成完整的交互式课件 HTML。`;
-
-  // 3. 在详情面板中显示提示词
   showCoursewarePrompt(nodeName, nodeId, prompt);
 }
 
