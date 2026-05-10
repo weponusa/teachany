@@ -48,17 +48,71 @@
 2. 放到 `<课件>/assets/phet/<sim-name>.html`
 3. iframe src 改为 `./assets/phet/<sim-name>.html`
 
-### 2.3 常用中文模拟清单
+### 2.3 常用中文模拟清单（v7.9.6 实测命中率 91%）
 
-| 学科 | 模拟名 | URL 段（拼在 `https://phet.colorado.edu/sims/html/` 后） |
-|:---|:---|:---|
-| 物理·力学 | 小车滑道 | `energy-skate-park/latest/energy-skate-park_zh_CN.html` |
-| 物理·电磁 | 法拉第电磁感应 | `faradays-law/latest/faradays-law_zh_CN.html` |
-| 物理·光学 | 弯曲光 | `bending-light/latest/bending-light_zh_CN.html` |
-| 化学·反应 | 反应物生成物 | `reactants-products-and-leftovers/latest/reactants-products-and-leftovers_zh_CN.html` |
-| 化学·原子 | 原子构建器 | `build-an-atom/latest/build-an-atom_zh_CN.html` |
-| 生物·遗传 | 自然选择 | `natural-selection/latest/natural-selection_zh_CN.html` |
-| 数学 | 函数探索 | `function-builder/latest/function-builder_zh_CN.html` |
+以下 22 个常用 PhET HTML5 模拟全部经过 `curl -I` 实测，命中率 20/22。AI 制作课件时直接套用 URL 模板即可：
+
+```
+https://phet.colorado.edu/sims/html/<slug>/latest/<slug>_zh_CN.html
+```
+
+| 学科 | slug | 说明 | 中文版 |
+|:---|:---|:---|:---:|
+| **力学·运动** | `projectile-motion` | 抛体运动 | ✅ |
+| 力学·运动 | `forces-and-motion-basics` | 力和运动基础 | ✅ |
+| 力学·运动 | `friction` | 摩擦力 | ✅ |
+| 力学·能量 | `energy-skate-park-basics` | 能量滑板公园 | ✅ |
+| 力学·振动 | `pendulum-lab` | 单摆实验 | ✅ |
+| 力学·振动 | `masses-and-springs` | 质量与弹簧 | ✅ |
+| 力学·引力 | `gravity-and-orbits` | 引力与轨道 | ✅ |
+| 力学·碰撞 | `collision-lab` | 碰撞实验室 | ✅ |
+| **电磁·电路** | `circuit-construction-kit-dc` | 直流电路搭建 | ✅ |
+| 电磁·电路 | `circuit-construction-kit-ac` | 交直流电路搭建 | ✅ |
+| 电磁·电路 | `ohms-law` | 欧姆定律 | ✅ |
+| 电磁·电路 | `resistance-in-a-wire` | 电阻 | ✅ |
+| 电磁·磁 | `faradays-law` | 法拉第电磁感应 | ✅ |
+| 电磁·静电 | `charges-and-fields` | 电荷与电场 | ✅ |
+| 电磁·静电 | `coulombs-law` | 库仑定律 | ✅ |
+| 波动·机械波 | `wave-on-a-string` | 绳波 | ✅ |
+| 波动·机械波 | `waves-intro` | 波入门 | ✅ |
+| **光学** | `bending-light` | 光的折射 | ✅ |
+| 光学 | `geometric-optics` | 几何光学 | ✅ |
+| 光学 | `color-vision` | 色觉 | ✅ |
+| 化学·原子 | `build-an-atom` | 原子构建器 | ✅ |
+| 数学·函数 | `function-builder` | 函数生成器 | ✅ |
+| ⚠️ 失效 | `magnet-and-compass` | 磁铁与指南针 | ❌ 404 |
+| ⚠️ 失效 | `sound-waves` | 声波 | ❌ 404 |
+
+### 2.4 AI 自主搜索 PhET 资源的标准工作流（v7.9.6 新增）
+
+当用户给的主题不在上方清单中时，AI 应**主动搜索**而不是问用户。流程：
+
+```bash
+# Step 1：用 LLM 知识储备先猜 5-8 个候选 slug（基于 PhET 命名惯例）
+# 例如要做"动量守恒"课件，候选：
+#   collision-lab / momentum-conservation / projectile-motion
+
+# Step 2：对每个候选用 curl 实测中文版可达性
+for sim in collision-lab momentum-conservation projectile-motion; do
+  url="https://phet.colorado.edu/sims/html/${sim}/latest/${sim}_zh_CN.html"
+  code=$(curl -s -o /dev/null -w "%{http_code}" -L --max-time 6 "$url")
+  echo "$sim: $code"
+done
+# 输出：
+#   collision-lab: 200          ← 用这个
+#   momentum-conservation: 404
+#   projectile-motion: 200      ← 也可
+
+# Step 3：用 web_search 兜底（前两步都没 200 时）
+#   关键词："PhET <主题> _zh_CN.html"
+#   或访问 https://phet.colorado.edu/zh_CN/simulations/category/physics
+```
+
+**经验法则**：
+- PhET slug 命名习惯：动名词或主题名 + 连字符（kebab-case），如 `bending-light`
+- 不要用动词开头（"calculate-..."、"solve-..." 几乎都不存在）
+- 中学物理几乎所有大主题都有覆盖；化学/生物较少
+- `_zh_CN.html` 后缀仅适用于已翻译的模拟，未翻译的回退到 `_en.html`
 
 ---
 

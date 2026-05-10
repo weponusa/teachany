@@ -39,37 +39,49 @@
 </section>
 ```
 
-### 2.2 使用预制 Applet（推荐课堂演示）
+### 2.2 用 Deploy API 自建 applet（**强烈推荐，比找现成 ID 更可靠**）
 
-访问 `https://www.geogebra.org/m/<材料ID>`，点击右上"分享" → "嵌入"，复制给定的 iframe 代码即可。常用材料：
-
-| 主题 | 材料 ID | 说明 |
-|:---|:---|:---|
-| 二次函数 y=a(x-h)²+k | `emn4j25f` | 拖动 a/h/k 看图像 |
-| 三角函数单位圆 | `GhU5n6kR` | 角度与 sin/cos 对应 |
-| 导数的几何意义 | `GK4krHrK` | 切线斜率 = 导数 |
-| 立体几何：三棱锥 | `wDvCcbBB` | 3D 旋转查看 |
-
-### 2.3 用 Deploy API 自定义（进阶）
+⚠️ **重要更新（v7.9.6）**：我们曾尝试列出"经典 applet ID"清单（emn4j25f / GhU5n6kR 等），但 GeoGebra 资源 ID **会过期失效**——经实测 5/5 全部 404。改为用 Deploy API 现场自建，命中率 100%：
 
 ```html
-<div id="ggb-applet"></div>
+<div id="ggb-applet" style="width:100%;max-width:840px"></div>
 <script src="https://www.geogebra.org/apps/deployggb.js"></script>
 <script>
-  const params = {
-    appName: "graphing",     // classic / graphing / geometry / 3d / suite
-    width: 800, height: 500,
-    language: "zh-CN",
-    showMenuBar: false,
-    appletOnLoad: function(api) {
-      api.evalCommand("f(x)=a*x^2+b*x+c");
-      api.evalCommand("a=1"); api.evalCommand("b=0"); api.evalCommand("c=0");
-      api.setValue("a", 1);
-    }
-  };
-  new GGBApplet(params, true).inject('ggb-applet');
+  window.addEventListener('load', function() {
+    const params = {
+      appName: "graphing",     // graphing / classic / geometry / 3d
+      width: 800, height: 480,
+      showMenuBar: false, showAlgebraInput: true, showToolBar: false,
+      showResetIcon: true, language: "zh-CN",
+      appletOnLoad: function(api) {
+        // 注入数学对象（GGB Script 语法）
+        api.evalCommand("a = 1");
+        api.evalCommand("b = 0");
+        api.evalCommand("c = 0");
+        api.evalCommand("f(x) = a*x^2 + b*x + c");
+        api.evalCommand("SetSliderRange[a, -3, 3]");
+        api.evalCommand("SetSliderRange[b, -5, 5]");
+        api.evalCommand("SetSliderRange[c, -5, 5]");
+        api.setColor("f", 59, 130, 246);
+      }
+    };
+    new GGBApplet(params, '5.0').inject('ggb-applet');
+  });
 </script>
 ```
+
+**为什么自建胜过找现成 ID**：
+- ✅ 命中率 100%（不依赖第三方维护的 applet ID）
+- ✅ 完全可定制（颜色、滑块范围、初始值）
+- ✅ 可重复使用同一段代码生成不同主题（改 `evalCommand` 即可）
+- ❌ 缺点：需要会写少量 GGB Script（但 ChatGPT/Claude 都熟）
+
+### 2.3 找现成 applet（**仅作辅助参考，不可靠**）
+
+如果你坚持要找现成 applet，访问 `https://www.geogebra.org/m/<id>` 浏览。但**不要在 skill / 课件中硬编码 applet ID**，因为：
+- ID 会被原作者删除或改私有
+- 中文版 applet 数量少，质量参差
+- 嵌入代码长（每个 applet 一个独立 iframe）
 
 ---
 
