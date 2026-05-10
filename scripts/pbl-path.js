@@ -46,6 +46,22 @@ class PBLPathBuilder {
     if (this.loaded) return this.unifiedIndex;
     if (this._loadPromise) return this._loadPromise;
 
+    // v7.9.14：尝试从 localStorage 恢复缓存（TTL 30分钟）
+    const CACHE_KEY = 'teachany_pbl_unified_index';
+    const CACHE_TTL = 1800000;
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const { ts, entries } = JSON.parse(cached);
+        if (Date.now() - ts < CACHE_TTL) {
+          entries.forEach(([k, v]) => this.unifiedIndex.set(k, v));
+          this.loaded = true;
+          console.log(`[PBL] ✅ 从缓存恢复: ${this.unifiedIndex.size} 节点`);
+          return this.unifiedIndex;
+        }
+      }
+    } catch (e) { /* 缓存失败忽略 */ }
+
     this._loadPromise = this._doLoad();
     return this._loadPromise;
   }
@@ -117,6 +133,15 @@ class PBLPathBuilder {
     this.loaded = true;
     const elapsed = (performance.now() - t0).toFixed(0);
     console.log(`[PBL] ✅ 统一索引就绪: ${totalNodes} 节点, ${elapsed}ms`);
+
+    // 写入缓存
+    try {
+      const CACHE_KEY = 'teachany_pbl_unified_index';
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        ts: Date.now(),
+        entries: [...this.unifiedIndex.entries()]
+      }));
+    } catch (e) { /* 存储满了忽略 */ }
     return this.unifiedIndex;
   }
 
@@ -181,18 +206,14 @@ class PBLPathBuilder {
   }
 
   async _discoverTreeFiles(dirPath) {
-    // 尝试加载已知学科文件
-    const subjects = ['math', 'physics', 'chemistry', 'biology', 'chinese', 'english', 'history', 'geography', 'info-tech', 'science', 'combined-science', 'computer-science'];
-    const validFiles = [];
-    const checkPromises = subjects.map(async subj => {
-      const url = dirPath + subj + '.json';
-      try {
-        const resp = await fetch(url, { method: 'HEAD' });
-        if (resp.ok) validFiles.push(url);
-      } catch (e) { /* skip */ }
-    });
-    await Promise.all(checkPromises);
-    return validFiles;
+    // v7.9.14：直接返回静态已知学科列表，不再做 HEAD 探测（消除 60+ 次网络请求）
+    const subjects = [
+      'math', 'physics', 'chemistry', 'biology', 'chinese', 'english',
+      'history', 'geography', 'info-tech', 'science', 'combined-science',
+      'computer-science', 'economics', 'psychology', 'art', 'music',
+      'pe', 'drama', 'design'
+    ];
+    return subjects.map(s => dirPath + s + '.json');
   }
 
   _extractNodesFromTree(tree, sysId, treePath) {
@@ -795,10 +816,10 @@ class PBLGraphRenderer {
     const calcH = Math.ceil(nodeCount * density / this.width);
     this.height = Math.max(minH, Math.min(calcH, 3000)); // 上限 3000px 防止过高
 
-    // 力导向参数随节点数缩放
-    const baseLinkDist = Math.max(100, Math.min(220, 80 + nodeCount * 0.3));
-    const baseCharge = Math.max(-1500, Math.min(-200, -120 - nodeCount * 1.5));
-    const baseCollide = Math.max(55, Math.min(70, 35 + nodeCount * 0.1));
+    // 力导向参数随节点数缩放（v7.9.14：增大排斥力避免节点重叠）
+    const baseLinkDist = Math.max(180, Math.min(320, 140 + nodeCount * 0.8));
+    const baseCharge   = Math.max(-4000, Math.min(-600, -400 - nodeCount * 5));
+    const baseCollide  = Math.max(70, Math.min(100, 55 + nodeCount * 0.2));
 
     // 清除旧内容
     container.innerHTML = '';

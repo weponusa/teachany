@@ -76,9 +76,25 @@ class LearningPathSystem {
   // ─── 数据加载 ─────────────────────────────────
 
   async _fetchJSON(url) {
-    const response = await fetch(url + '?t=' + Date.now());
+    // v7.9.14：对大文件（nodes-metadata / registry）加 localStorage 缓存，TTL 1小时
+    const CACHE_TTL = 3600000;
+    const cacheKey = 'teachany_lp_cache_' + url.replace(/[^a-z0-9]/gi, '_');
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const { ts, data } = JSON.parse(cached);
+        if (Date.now() - ts < CACHE_TTL) return data;
+      }
+    } catch (e) { /* localStorage 不可用，忽略 */ }
+
+    const response = await fetch(url);
     if (!response.ok) throw new Error(`Fetch ${url}: HTTP ${response.status}`);
-    return response.json();
+    const data = await response.json();
+
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data }));
+    } catch (e) { /* 存储满了，忽略 */ }
+    return data;
   }
 
   _buildNodeIndex(nodesData) {
