@@ -62,7 +62,7 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 
 | 文档 | 内容 | 触发时机 |
 |:---|:---|:---|
-| [`RULES.md`](./RULES.md) | 71 条硬规则完整列表（含 #57 v7.9.1 重写 Hero 定义、#66 官方课件发布基线、#67 Hero 文件与 Gallery 同源、#70 地图讲解锚定、#71 单线叙事） | Completeness Gate 按需 |
+| [`RULES.md`](./RULES.md) | 72 条硬规则完整列表（含 #57 Hero 定义、#66 官方课件发布基线、#67 Hero 文件与 Gallery 同源、#70 地图讲解锚定、#71 单线叙事、**#72 禁止环境约束清单跳过基线**） | Completeness Gate 按需 |
 | [`curriculum-standards.md`](./curriculum-standards.md) | 课标速查表（21 棵国内课标树） | Phase 0.5 知识查询 |
 | [`historical-maps.md`](./historical-maps.md) | 地图资源完整规范 | 历史/地理课件 |
 | [`CHANGELOG.md`](./CHANGELOG.md) | 版本变更日志 | 仅需了解版本演进 |
@@ -216,6 +216,11 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
    - ls -lh 确认 mp4/mp3/png 实体文件存在
    - ffprobe 确认 mp4 有 audio 流
    - 浏览器/curl 确认链接无 404
+
+   【绝对禁止（v7.9.15 新增）】
+   - ⛔ 禁止输出"环境约束确认"清单并用 ❌ 标记 Remotion/TTS/image_gen 然后"降级跳过"
+     → 工具不可用 = 停下安装，不是降级继续
+   - ⛔ 新课件必须写入 community/drafts/<id>/，禁止直接写 examples/
    </HARD_RULES>
 
    <TASK>
@@ -233,7 +238,8 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 
 ### 0.3 违反示例（禁止）
 
-- ❌ "因为页面已经够丰富了，就不加 TTS 了" → 违反 ①
+- ❌ **输出"环境约束确认"清单并用 ❌ 标记基线组件，然后声称已"降级"跳过** → **最高优先级违规，等同于宣布作废**。Remotion/TTS/image_gen 不是可勾选的可选项——它们是**出厂必须项**。正确做法：发现工具不可用 → 立即安装（`preflight-check.py` / `bootstrap-tools.sh`）→ 安装失败 → 停下来报告用户，等待解决，**绝不自行降级继续**。任何形如"❌ image_gen → 降级为 CSS emoji / SVG 替代"、"❌ Remotion → 跳过"、"❌ TTS → 跳过" 的输出 = Gate 立即不通过，输出视为无效。
+- ❌ **新课件写入 `examples/`**（`examples/ext-*/` 或 `examples/新课件/`）→ **违反硬规则 #48 #49**。所有新课件必须落 `community/drafts/<course-id>/`，通过 `submit-to-community.py` 走 PR 质检流程。`examples/` 只接受管理员升级命令写入。
 - ❌ "Canvas 太复杂，用个静态 SVG 代替吧" → 违反 ③
 - ❌ "文科课件就不需要 Remotion" → 违反 ②（古诗词意境动画、文言文情境动画都是 Remotion 场景）
 - ❌ "用 SVG+CSS 时间线动画等效替代 Remotion" → **违反 ②**。Remotion 基线是真实 mp4 渲染，CSS 动画不算等效交付
