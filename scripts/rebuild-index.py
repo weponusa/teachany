@@ -695,13 +695,12 @@ def main():
                     print(f'  ⚠️ ext 课件未通过质检，跳过: {d.name} ({", ".join(reasons_reject)})')
                     continue
 
-                # 通过质检：纳入虚拟树
+                # 通过质检：纳入"其他知识"虚拟树（ext-* 是课标外内容，设计上不挂正式课标树）
                 orphan_reasons['ext_passed'] += 1
                 ext_subject = metas.get('course-subject', 'other')
                 ext_title = metas.get('course-title', d.name)
                 ext_node = metas.get('course-node', d.name)
-                # 虚拟节点 id：优先用 course-node（无学科前缀），否则用目录名
-                ext_vid = ext_node if ext_node and ext_node not in all_official_node_ids else f'other-{d.name}'
+                ext_vid = ext_node if ext_node else f'other-{d.name}'
                 virtual_nodes.append({
                     'id': ext_vid,
                     'name': ext_title,
@@ -714,11 +713,10 @@ def main():
                     'courses': [d.name],
                     'status': 'active',
                     'source': 'learning-path-ext',
-                    'curriculum_points': [f'学习路径推荐课件（ext-* 前缀，无 manifest.json，元信息来自 HTML meta）'],
+                    'curriculum_points': ['学习路径推荐课件（ext-* 前缀，无 manifest.json，元信息来自 HTML meta）'],
                     'excerpt_ids': []
                 })
-                # 同时把课件加入 courses 集合，供步骤 4 写入 registry
-                # 构造一个最小 manifest 供下游消费
+                # 构造最小 manifest 供下游消费（registry 写入）
                 synthetic_manifest = {
                     'id': d.name,
                     'name': ext_title,
@@ -727,7 +725,7 @@ def main():
                     'node_id': ext_node or '',
                     'grade': 0,
                     'author': 'learning-path',
-                    'free_mode': True,  # 标记为 free_mode，让下游一致处理
+                    'free_mode': True,
                     '_synthetic_from_ext_html': True
                 }
                 courses[d.name] = (synthetic_manifest, base_dir)
