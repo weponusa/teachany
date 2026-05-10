@@ -872,6 +872,8 @@ done
 | **R6** | **Gitee 仓库不存在（404）不得擅自创建**，必须告知用户，由用户在 Gitee 控制台手动创建后再推。AI 不能越权动用户账号 |
 | **R7** | 改 `~/.ssh/config`、`git config --global`、创建远程仓库等涉及**工作区外**操作，一律视为 Git 安全协议红线，必须告知用户由其决定，AI 不自动执行 |
 | **R8** | 推送后必须做**闭环验证**（至少执行以下之一）：① `git log -1 origin/main` 确认 hash；② CDN URL curl -I 返回 200；③ rebuild-index 的最终验证全绿 |
+| **R9** | **课件实体化前必须先查 id 冲突**（v7.9.6 新增，根因：曾因未查冲突而创建孤儿课件）。在 `write_to_file` 创建任何 `<repo>/{examples,community}/<course-id>/index.html` **之前**，必须先执行：① `grep -r "<course-id>" teachany-courseware/registry.json` ② `ls teachany-courseware/examples/<course-id>/` 和 `ls teachany-courseware/community/<course-id>/` ③ 三处任一存在 = 已被占用。处置策略：(a) 已存在且要保留教学内容 → 改用新 id 或合并升级；(b) 已存在但需替换 → 必须明确告知用户、得到许可后才能覆盖 |
+| **R10** | **跨仓库改 manifest 时三处必须同步**（v7.9.6 新增）：(a) opensource 的 `scripts/historical-maps-manifest.json`（控制注入流程）；(b) courseware 实体课件的 HTML 内 `data-teachany-map-config`（运行时数据源）；(c) courseware 实体课件的 `manifest.json`（registry/tree 数据源）。三处不一致会导致"manifest 改了但课件没变"或"课件改了但 registry 不知道"等隐性 bug |
 
 ### 17.4.5 交付报告模板（基础设施任务完成后必须输出）
 
