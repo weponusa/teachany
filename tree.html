@@ -31,31 +31,44 @@ body {
   height: 100vh;
 }
 
-/* Top Bar */
+/* Top Bar — v7.9.14 紧凑合并版：logo + 课标 + 导航同行 */
 .top-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 24px;
+  gap: 10px;
+  padding: 6px 16px;
   background: var(--bg2);
   border-bottom: 1px solid var(--border);
   position: relative;
   z-index: 10;
+  flex-wrap: wrap;
+  min-height: 40px;
 }
 .top-bar h1 {
-  font-size: 20px;
+  font-size: 14px;
   font-weight: 700;
   background: linear-gradient(135deg, var(--primary), var(--secondary));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
-.nav-links { display: flex; gap: 8px; }
+/* 课标按钮区 — 内联在 top-bar */
+#curriculumTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  flex: 1;
+}
+/* 右侧导航链接 */
+.nav-links { display: flex; gap: 4px; flex-shrink: 0; margin-left: auto; }
 .nav-links a {
   color: var(--dim);
   text-decoration: none;
-  padding: 6px 14px;
+  padding: 4px 10px;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 12px;
   transition: all 0.2s;
 }
 .nav-links a:hover, .nav-links a.active {
@@ -63,41 +76,32 @@ body {
   background: rgba(59,130,246,0.15);
 }
 
-/* Subject Tabs —— v5.34.3 重构：每学段独占一行（grid 布局） */
+/* Subject Tabs —— v7.9.14 紧凑版：减小 padding/gap */
 .subject-tabs {
   display: flex;
-  flex-direction: column;  /* 课标行 + 多个学段行，纵向堆叠 */
-  gap: 4px;
-  padding: 8px 24px;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 16px;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
-  max-height: 40vh;
+  max-height: 30vh;
   overflow-y: auto;
 }
-/* 课标选择行（单独一行，不分段） */
-#curriculumTabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-  padding: 4px 0;
-  border-bottom: 1px dashed rgba(148,163,184,0.1);
-  margin-bottom: 2px;
-}
+/* 课标选择行：已移入 top-bar，此规则仅保留兼容占位 */
 /* 每个学段的一行 */
 .stage-row {
   display: grid;
-  grid-template-columns: 140px 1fr;
-  gap: 10px;
+  grid-template-columns: 110px 1fr;
+  gap: 6px;
   align-items: center;
-  padding: 4px 0;
-  min-height: 32px;
+  padding: 2px 0;
+  min-height: 26px;
 }
 .stage-row:not(:last-child) {
   border-bottom: 1px dashed rgba(148,163,184,0.08);
 }
 .stage-row-label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--primary);
   padding: 4px 10px;
@@ -111,20 +115,20 @@ body {
 .stage-row-subjects {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
+  gap: 4px;
   align-items: center;
 }
 .subject-tab {
-  padding: 4px 11px;
-  border-radius: 14px;
+  padding: 2px 9px;
+  border-radius: 12px;
   border: 1px solid var(--border);
   background: transparent;
   color: var(--dim);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 11px;
   white-space: nowrap;
   transition: all 0.2s;
-  line-height: 1.3;
+  line-height: 1.4;
 }
 .subject-tab:hover { border-color: var(--primary); color: var(--text); background: rgba(59,130,246,0.06); }
 .subject-tab.active {
@@ -143,14 +147,16 @@ body {
 }
 /* 响应式：窄屏把学段 label 改为独占上方一行 */
 @media (max-width: 720px) {
-  .stage-row { grid-template-columns: 1fr; gap: 4px; }
+  .top-bar { flex-wrap: wrap; gap: 6px; }
+  #curriculumTabs { order: 3; width: 100%; }
+  .stage-row { grid-template-columns: 1fr; gap: 3px; }
   .stage-row-label { align-self: start; display: inline-block; max-width: fit-content; }
 }
 
 /* SVG Canvas */
 #tree-container {
   width: 100%;
-  height: max(600px, calc(100vh - 100px));
+  height: max(600px, calc(100vh - 80px));
   min-height: 600px;
   position: relative;
   overflow: hidden;
@@ -408,17 +414,15 @@ svg { width: 100%; height: 100%; display: block; }
 <body>
 
 <div class="top-bar">
-  <h1>🗺️ TeachAny 知识地图 · K-12 全学科 <span style="font-size:11px;opacity:0.4;font-weight:400;">v20260411</span></h1>
+  <h1>🗺️ TeachAny <span style="opacity:0.4;font-weight:400;font-size:11px;">v20260411</span></h1>
+  <span class="stage-label" style="color:var(--primary);font-weight:600;font-size:11px;flex-shrink:0;">📚</span>
+  <div id="curriculumTabs"></div>
   <div class="nav-links">
-    <a href="index.html">📋 Gallery</a>
-    <a href="tree.html" class="active">🗺️ 知识地图</a>
-    <a href="path.html">🛤️ 学习路径</a>
-    <a href="commercial-license.html">💼 商业授权</a>
+    <a href="index.html">Gallery</a>
+    <a href="tree.html" class="active">🗺️</a>
+    <a href="path.html">路径</a>
+    <a href="commercial-license.html">授权</a>
   </div>
-</div>
-
-<div class="subject-tabs" id="curriculumTabs" style="padding:8px 24px 0;gap:8px;border-bottom:1px dashed var(--border);flex-direction:row;">
-  <span class="stage-label" style="color:var(--primary);font-weight:600;">📚 课标 Curriculum</span>
 </div>
 
 <div class="subject-tabs" id="subjectTabs"></div>
@@ -636,8 +640,8 @@ function switchCurriculum(currId) {
 function rebuildCurriculumTabs() {
   const el = document.getElementById('curriculumTabs');
   if (!el) return;
-  // 保留最前面那个"📚 课标 Curriculum"标签
-  el.innerHTML = '<span class="stage-label" style="color:var(--primary);font-weight:600;">📚 课标 Curriculum</span>';
+  // 只生成课标按钮，不添加标签（标签已在 HTML 写死）
+  el.innerHTML = '';
   CURRICULA.curricula.forEach(c => {
     const btn = document.createElement('button');
     btn.className = 'subject-tab';
@@ -656,6 +660,12 @@ function rebuildSubjectTabs() {
   const tabsEl = document.getElementById('subjectTabs');
   if (!tabsEl) return;
   tabsEl.innerHTML = '';
+
+  // 清除上次注入到 curriculumTabs 的"其他知识"按钮/分隔/标签
+  const currBar = document.getElementById('curriculumTabs');
+  if (currBar) {
+    currBar.querySelectorAll('.other-sep, .other-lbl, .other-btn').forEach(el => el.remove());
+  }
   // v5.34.3：学段分组 + 每学段独占一行（grid 布局）
   const stages = (CURRENT_CURRICULUM && CURRENT_CURRICULUM.stages) || [];
   const stageNames = stages.map(s => {
@@ -734,29 +744,33 @@ function rebuildSubjectTabs() {
     tabsEl.appendChild(row);
   });
 
-  // Step 3：未命中任何学段的树，放入"其他"行
+  // Step 3：未命中任何学段的树，追加到 curriculumTabs（top-bar 内）
   if (orphan.length) {
-    const row = document.createElement('div');
-    row.className = 'stage-row';
-    const labelEl = document.createElement('div');
-    labelEl.className = 'stage-row-label';
-    labelEl.style.color = 'var(--dimmer)';
-    labelEl.style.borderLeftColor = 'var(--dimmer)';
-    labelEl.style.background = 'rgba(100,116,139,0.08)';
-    labelEl.textContent = '其他 Other';
-    row.appendChild(labelEl);
-    const subjectsEl = document.createElement('div');
-    subjectsEl.className = 'stage-row-subjects';
-    orphan.forEach(({ tree: t, index: i }) => {
-      const btn = document.createElement('button');
-      btn.className = 'subject-tab';
-      btn.textContent = `${t.emoji || ''} ${(t.label_zh || t.label || '').trim()}`;
-      btn.dataset.treeIndex = String(i);
-      btn.onclick = () => loadTree(i);
-      subjectsEl.appendChild(btn);
-    });
-    row.appendChild(subjectsEl);
-    tabsEl.appendChild(row);
+    const currBar = document.getElementById('curriculumTabs');
+    if (currBar) {
+      // 分隔符
+      const sep = document.createElement('span');
+      sep.className = 'other-sep';
+      sep.style.cssText = 'color:var(--dimmer);font-size:10px;opacity:0.5;margin:0 2px;flex-shrink:0;';
+      sep.textContent = '·';
+      currBar.appendChild(sep);
+      // 其他知识标签
+      const lbl = document.createElement('span');
+      lbl.className = 'other-lbl';
+      lbl.style.cssText = 'font-size:10px;color:var(--dimmer);white-space:nowrap;flex-shrink:0;';
+      lbl.textContent = '✨ 其他';
+      currBar.appendChild(lbl);
+      // 按钮
+      orphan.forEach(({ tree: t, index: i }) => {
+        const btn = document.createElement('button');
+        btn.className = 'subject-tab other-btn';
+        btn.style.borderColor = 'rgba(100,116,139,0.3)';
+        btn.textContent = `${t.emoji || ''} ${(t.label_zh || t.label || '').trim()}`;
+        btn.dataset.treeIndex = String(i);
+        btn.onclick = () => loadTree(i);
+        currBar.appendChild(btn);
+      });
+    }
   }
 
   // 默认激活第一个按钮
