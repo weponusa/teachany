@@ -30,35 +30,30 @@ jobs:
 
       - name: Prepare static site
         run: |
-          set -e
           echo "=== 准备部署文件 ==="
-          
-          # 创建输出目录
           mkdir -p _site
-          
-          # 复制所有 HTML 文件
+
+          # 复制所有顶层 HTML/JSON
           cp *.html _site/ 2>/dev/null || true
-          
-          # 复制 JSON 数据文件
-          cp registry.json _site/ 2>/dev/null || true
-          cp registry-v2.json _site/ 2>/dev/null || true
-          cp manifest.json _site/ 2>/dev/null || true
-          cp courseware-registry.json _site/ 2>/dev/null || true
-          
-          # 复制必需目录
-          for dir in scripts data assets community gallery styles; do
-            [ -d "$dir" ] && cp -r "$dir" _site/
+          cp *.json _site/ 2>/dev/null || true
+
+          # 复制必需目录（存在才复制）
+          for dir in scripts data assets community gallery styles pages docs; do
+            if [ -d "$dir" ]; then
+              cp -r "$dir" _site/
+            fi
           done
-          
-          # .nojekyll 确保不触发 Jekyll 构建
+
+          # .nojekyll 确保不触发 Jekyll
           touch _site/.nojekyll
-          
-          echo "=== 部署内容 ==="
-          echo "HTML 文件: $(ls _site/*.html 2>/dev/null | wc -l)"
-          echo "registry.json: $([ -f _site/registry.json ] && echo YES || echo NO)"
+
+          echo "=== 部署摘要 ==="
+          echo "HTML files: $(find _site -maxdepth 1 -name '*.html' | wc -l)"
           echo "registry-v2.json: $([ -f _site/registry-v2.json ] && echo YES || echo NO)"
-          echo "unified-loader.js REGISTRY_URL: $(grep REGISTRY_URL _site/scripts/unified-loader.js 2>/dev/null | head -1)"
-          echo "总文件数: $(find _site -type f | wc -l)"
+          echo "user-generated.json: $([ -f _site/data/trees/other/user-generated.json ] && echo YES || echo NO)"
+          echo "Total files: $(find _site -type f | wc -l)"
+          echo "Total size: $(du -sh _site | cut -f1)"
+          # 不 set -e，防止任何非关键命令失败把整个 job 挂掉
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
