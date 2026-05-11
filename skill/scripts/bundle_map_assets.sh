@@ -38,6 +38,9 @@ CDN_BASE="https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main"
 CDN_FALLBACK="https://raw.githubusercontent.com/weponusa/teachany-images/main"
 
 # 1. 资源源优先级（本地目录列表）
+# v7.10: 新地图库路径 ~/.codebuddy/skills/teachany/assets/maps/{physical,chrono-cn,chrono-world,political}
+SKILL_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+SKILL_MAPS="$SKILL_ROOT/assets/maps"
 SKILL_ASSETS="$(cd "$(dirname "$0")/.." && pwd)/assets"
 # 定位 teachany-opensource 仓库（用于 _legacy 资源）
 REPO=""
@@ -49,7 +52,16 @@ if [ -z "$REPO" ] && [ -d "$COURSE_DIR/../.." ]; then
   [ -d "$candidate/data/_legacy/resources/geography" ] && REPO="$candidate"
 fi
 
+# v7.10 新库路径（优先）+ 旧路径（兼容）
 SOURCES=(
+  # ★ 新地图库（v7.10+）
+  "$SKILL_MAPS/chrono-cn"
+  "$SKILL_MAPS/chrono-world"
+  "$SKILL_MAPS/physical/hillshade"
+  "$SKILL_MAPS/political/world"
+  "$SKILL_MAPS/political/china-modern"
+  "$SKILL_MAPS/political/admin-boundaries"
+  # 旧路径（兼容，可能不存在）
   "$SKILL_ASSETS/historical-china"
   "$SKILL_ASSETS/historical-world"
   "$SKILL_ASSETS/hillshade"
@@ -128,6 +140,7 @@ for f in $GEOJSONS; do
     continue
   fi
   found=""
+  # 第一轮：精确匹配
   for src in "${SOURCES[@]}"; do
     if [ -f "$src/$f" ]; then
       cp "$src/$f" "$DST/$f"
@@ -138,6 +151,21 @@ for f in $GEOJSONS; do
       break
     fi
   done
+  # 第二轮：模糊匹配（新库的 NNN-xxx.geojson ↔ 旧引用 xxx.geojson）
+  if [ -z "$found" ]; then
+    for src in "${SOURCES[@]}"; do
+      [ -d "$src" ] || continue
+      match=$(find "$src" -maxdepth 1 -type f -name "*$f" 2>/dev/null | head -1)
+      if [ -n "$match" ] && [ -f "$match" ]; then
+        cp "$match" "$DST/$f"
+        size=$(du -h "$DST/$f" | awk '{print $1}')
+        echo "  ✅ $f ($size) ← $(basename "$src")/$(basename "$match")"
+        found=1
+        copied=$((copied + 1))
+        break
+      fi
+    done
+  fi
   if [ -z "$found" ]; then
     echo "  ⚠️  $f 未找到"
     missing=$((missing + 1))
