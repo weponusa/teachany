@@ -194,7 +194,10 @@ async function loadRegistry() {
 
   // 2. 从服务器加载
   console.log('[TeachAny] 从服务器加载 registry.json...');
-  const response = await fetch(REGISTRY_URL + '?t=' + Date.now()); // 加时间戳防缓存
+  const response = await fetch(REGISTRY_URL + '?t=' + Date.now(), {
+    cache: 'no-store',
+    headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' }
+  });
   if (!response.ok) throw new Error(`Failed to load registry: ${response.status}`);
   
   const registry = await response.json();
