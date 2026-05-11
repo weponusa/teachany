@@ -15,13 +15,40 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Deploy to gh-pages branch
+      - name: Build _site
+        run: |
+          set -e
+          mkdir -p _site
+
+          # HTML 页面
+          cp index.html _site/
+          cp tree.html _site/
+          cp path.html _site/
+          cp gallery/index.html _site/gallery.html 2>/dev/null || true
+          for f in *.html; do cp "$f" _site/ 2>/dev/null || true; done
+
+          # 核心配置文件
+          cp registry.json _site/
+          cp manifest.json _site/ 2>/dev/null || true
+          cp courseware-registry.json _site/ 2>/dev/null || true
+          touch _site/.nojekyll
+
+          # 目录
+          cp -r scripts _site/
+          cp -r data    _site/
+          [ -d styles ]      && cp -r styles      _site/
+          [ -d assets ]      && cp -r assets      _site/
+          [ -d gallery ]     && cp -r gallery     _site/
+          [ -d community ]   && cp -r community   _site/
+          [ -d screenshots ] && cp -r screenshots _site/
+
+          echo "✅ _site 文件数: $(find _site -type f | wc -l)"
+          echo "📄 HTML: $(ls _site/*.html | wc -l) 个"
+
+      - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./
+          publish_dir: ./_site
           publish_branch: gh-pages
-          force_orphan: false
-          keep_files: false
-          exclude_assets: '.github,skill,scripts/gen_*.cjs,*.py,*.sh'
-
+          force_orphan: true
