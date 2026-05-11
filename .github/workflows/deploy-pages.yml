@@ -19,54 +19,26 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Prepare static site
-        run: |
-          echo "=== 准备部署文件 ==="
-          mkdir -p _site
-
-          # 复制所有顶层 HTML/JSON
-          cp *.html _site/ 2>/dev/null || true
-          cp *.json _site/ 2>/dev/null || true
-
-          # 复制必需目录（存在才复制）
-          for dir in scripts data assets community gallery styles pages docs; do
-            if [ -d "$dir" ]; then
-              cp -r "$dir" _site/
-            fi
-          done
-
-          # .nojekyll 确保不触发 Jekyll
-          touch _site/.nojekyll
-
-          echo "=== 部署摘要 ==="
-          echo "HTML files: $(find _site -maxdepth 1 -name '*.html' | wc -l)"
-          echo "registry-v2.json: $([ -f _site/registry-v2.json ] && echo YES || echo NO)"
-          echo "user-generated.json: $([ -f _site/data/trees/other/user-generated.json ] && echo YES || echo NO)"
-          echo "Total files: $(find _site -type f | wc -l)"
-          echo "Total size: $(du -sh _site | cut -f1)"
-          # 不 set -e，防止任何非关键命令失败把整个 job 挂掉
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./_site
-
   deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    needs: build
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Add .nojekyll
+        run: touch .nojekyll
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
