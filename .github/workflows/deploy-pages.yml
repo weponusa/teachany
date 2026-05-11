@@ -7,6 +7,8 @@ on:
       - 'README.md'
       - 'LICENSE'
       - '.gitignore'
+      - 'skill/**'
+      - 'docs/**'
   workflow_dispatch:
 
 permissions:
@@ -28,21 +30,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build site
+      - name: Build site (whitelist only)
         run: |
           mkdir -p _site
-          # 用 rsync 排除 .git 等目录
-          rsync -a \
-            --exclude='.git' \
-            --exclude='.github' \
-            --exclude='_site' \
-            --exclude='node_modules' \
-            --exclude='.codebuddy' \
-            --exclude='.DS_Store' \
-            ./ _site/
+          # 仅复制网站运行必需的内容，避开 skill/、output/、references/ 等开发用大目录
+          cp -r assets _site/ 2>/dev/null || true
+          cp -r community _site/ 2>/dev/null || true
+          cp -r data _site/ 2>/dev/null || true
+          cp -r scripts _site/ 2>/dev/null || true
+          cp -r styles _site/ 2>/dev/null || true
+          cp -r gallery _site/ 2>/dev/null || true
+          cp -r pages _site/ 2>/dev/null || true
+          cp *.html _site/ 2>/dev/null || true
+          cp *.json _site/ 2>/dev/null || true
           touch _site/.nojekyll
-          echo "总文件数: $(find _site -type f | wc -l)"
-          echo "总大小: $(du -sh _site | cut -f1)"
+          echo "=== 部署摘要 ==="
+          echo "Total size: $(du -sh _site | cut -f1)"
+          echo "Total files: $(find _site -type f | wc -l)"
+          echo "registry-v2 total: $(python3 -c 'import json;print(json.load(open(\"_site/registry-v2.json\"))[\"total\"])' 2>/dev/null || echo N/A)"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
