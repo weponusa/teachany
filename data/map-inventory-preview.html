@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>历史地图清单（中国 · 世界）</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  body { font-family: -apple-system, 'PingFang SC', sans-serif; margin: 0; background: #0f172a; color: #f8fafc; padding: 20px; }
+  h1 { text-align: center; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 28px; margin-bottom: 4px; }
+  .sub { text-align: center; color: #94a3b8; font-size: 13px; margin-bottom: 20px; }
+
+  .scope-tabs { display: flex; justify-content: center; gap: 8px; margin-bottom: 12px; }
+  .scope-tab { padding: 10px 22px; background: #1e293b; color: #cbd5e1; border: 1px solid #334155; border-radius: 999px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all .2s; }
+  .scope-tab.active { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; border-color: transparent; box-shadow: 0 4px 14px rgba(59,130,246,0.4); }
+
+  .controls { background: #1e293b; padding: 12px 16px; border-radius: 12px; display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; align-items: center; margin-bottom: 12px; font-size: 13px; }
+  .ctrl-group { display: flex; gap: 8px; align-items: center; }
+  .ctrl-group label { color: #94a3b8; font-weight: 600; }
+  .ctrl-group select { background: #334155; color: white; border: 1px solid #475569; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; }
+  .ctrl-group input[type=range] { width: 100px; }
+  .ctrl-group .val { color: #fbbf24; font-size: 12px; min-width: 30px; }
+
+  .toolbar { background: #1e293b; padding: 14px; border-radius: 12px; display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-bottom: 12px; }
+  .btn { padding: 8px 12px; background: #334155; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; transition: all .2s; text-align: center; line-height: 1.3; min-width: 90px; }
+  .btn:hover { background: #475569; }
+  .btn.active { background: linear-gradient(135deg, #3b82f6, #8b5cf6); }
+  .btn .period { opacity: 0.7; font-size: 10px; display: block; margin-top: 2px; }
+
+  #map { width: 100%; height: 640px; background: #0c1526; border-radius: 12px; }
+  /* Leaflet 暗色调整 */
+  .leaflet-container { background: #0c1526; }
+  .leaflet-control-attribution { background: rgba(30,41,59,0.85) !important; color: #94a3b8 !important; font-size: 10px !important; }
+  .leaflet-control-attribution a { color: #93c5fd !important; }
+  .leaflet-popup-content-wrapper { background: #1e293b; color: #f8fafc; border-radius: 8px; }
+  .leaflet-popup-tip { background: #1e293b; }
+  .leaflet-popup-content { margin: 10px 14px; font-size: 12px; line-height: 1.6; }
+  .leaflet-popup-content b { color: #fbbf24; }
+
+  .info { background: #1e293b; padding: 14px 16px; border-radius: 12px; margin-top: 12px; font-size: 13px; color: #94a3b8; line-height: 1.7; }
+  .info b { color: #f8fafc; }
+  .legend { background: #1e293b; padding: 10px 14px; border-radius: 8px; margin-top: 10px; display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 14px; height: 14px; border-radius: 3px; }
+  .stat { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-top: 18px; }
+  .stat div { background: #1e293b; padding: 14px; border-radius: 10px; text-align: center; }
+  .stat .v { font-size: 22px; font-weight: 700; color: #fbbf24; }
+  .stat .l { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+  code { background: #334155; padding: 2px 6px; border-radius: 4px; font-size: 12px; color: #fbbf24; }
+</style>
+</head>
+<body>
+<h1>🗺️ 历史地图清单</h1>
+<p class="sub">两套独立资产：<b>中国历代疆域</b>（CHGIS V6）· <b>世界历代格局</b>（historical-basemaps）· 地形底图来自 Natural Earth</p>
+
+<div class="scope-tabs">
+  <div class="scope-tab active" data-scope="china">🇨🇳 中国历代</div>
+  <div class="scope-tab" data-scope="world">🌍 世界历代</div>
+</div>
+
+<div class="controls">
+  <div class="ctrl-group">
+    <label>🏔️ 地形底图</label>
+    <select id="basemap">
+      <option value="color-hillshade">彩色阴影（推荐）</option>
+      <option value="color-relief">彩色分层</option>
+      <option value="hillshade">灰度阴影</option>
+      <option value="none">无（纯色）</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label>透明度</label>
+    <input type="range" id="basemapOpacity" min="0" max="100" value="65">
+    <span class="val" id="basemapOpacityVal">65%</span>
+  </div>
+  <div class="ctrl-group">
+    <label>疆域填充</label>
+    <input type="range" id="fillOpacity" min="0" max="100" value="55">
+    <span class="val" id="fillOpacityVal">55%</span>
+  </div>
+</div>
+
+<div class="toolbar" id="toolbar"></div>
+<div id="map"></div>
+<div class="legend" id="legend"></div>
+<div class="info" id="info">点击上方按钮加载对应地图</div>
+
+<div class="stat">
+  <div><div class="v" id="sTotal">-</div><div class="l">当前套共有切片</div></div>
+  <div><div class="v" id="sFeatures">-</div><div class="l">政区 / 国家数</div></div>
+  <div><div class="v" id="sPowers">-</div><div class="l">并立政权数</div></div>
+  <div><div class="v" id="sSize">-</div><div class="l">数据大小</div></div>
+</div>
+
+<script>
+// ============================================================
+//  1. 数据清单
+// ============================================================
+const CHINA_DYNASTIES = [
+  { id:'qin-dynasty', name:'秦', years:'前221~前206' },
+  { id:'west-han-dynasty', name:'西汉', years:'前202~公元8' },
+  { id:'east-han-dynasty', name:'东汉', years:'25~220' },
+  { id:'han-dynasty', name:'汉（合并）', years:'前202~220' },
+  { id:'three-kingdoms', name:'三国', years:'220~280' },
+  { id:'jin-west-dynasty', name:'西晋', years:'265~316' },
+  { id:'jin-east-dynasty', name:'东晋', years:'317~420' },
+  { id:'northern-southern', name:'南北朝', years:'420~589' },
+  { id:'sui-dynasty', name:'隋', years:'581~618' },
+  { id:'tang-dynasty', name:'唐', years:'618~907' },
+  { id:'five-dynasties', name:'五代十国', years:'907~960' },
+  { id:'north-song-dynasty', name:'北宋+辽+西夏', years:'960~1127' },
+  { id:'south-song-dynasty', name:'南宋+金+西夏', years:'1127~1279' },
+  { id:'yuan-dynasty', name:'元', years:'1271~1368' },
+  { id:'ming-dynasty', name:'明', years:'1368~1644' },
+  { id:'qing-dynasty', name:'清', years:'1644~1912' },
+];
+
+const WORLD_PERIODS = [
+  { id:'bce-3000', name:'四大文明', years:'前3000' },
+  { id:'bce-1500', name:'青铜中期', years:'前1500' },
+  { id:'bce-1000', name:'铁器早期', years:'前1000' },
+  { id:'bce-500', name:'轴心时代', years:'前500' },
+  { id:'bce-323-alexander', name:'亚历山大', years:'前323' },
+  { id:'bce-200', name:'汉·罗马', years:'前200' },
+  { id:'bce-1', name:'公元之交', years:'前1' },
+  { id:'ce-200', name:'汉末·罗马', years:'200' },
+  { id:'ce-500', name:'西罗马灭亡后', years:'500' },
+  { id:'ce-800-caliphate-carolingian', name:'查理曼·阿拉伯', years:'800' },
+  { id:'ce-1000', name:'千年之交', years:'1000' },
+  { id:'ce-1200-mongol-rise', name:'蒙古崛起前夜', years:'1200' },
+  { id:'ce-1300-mongol-peak', name:'蒙古鼎盛', years:'1300' },
+  { id:'ce-1492-age-of-discovery', name:'大航海', years:'1492' },
+  { id:'ce-1600', name:'早期近代', years:'1600' },
+  { id:'ce-1700', name:'绝对王权', years:'1700' },
+  { id:'ce-1815-vienna', name:'维也纳体系', years:'1815' },
+  { id:'ce-1880', name:'瓜分非洲前夜', years:'1880' },
+  { id:'ce-1914-wwi', name:'一战前夜', years:'1914' },
+  { id:'ce-1945-wwii', name:'二战结束', years:'1945' },
+  { id:'ce-2000', name:'当代世界', years:'2000' },
+];
+
+// 中国政权配色
+const CHINA_POWER_COLORS = {
+  '秦':'#8B008B', '秦（疆域轮廓用同期汉帝国近似）':'#8B008B',
+  '西汉':'#DC143C', '东汉':'#CD5C5C', '汉':'#DC143C', '南匈奴':'#8B4513',
+  '魏':'#A52A2A', '蜀':'#20B2AA', '吴':'#3CB371',
+  '三国（疆域沿用汉末轮廓）':'#A52A2A',
+  '西晋':'#808000', '东晋':'#9ACD32', '北方十六国':'#B22222', '北魏（拓跋）':'#B22222',
+  '南齐':'#6B8E23', '北魏':'#B22222', '南朝':'#6B8E23',
+  '隋':'#B8860B', '隋（疆域轮廓用同期唐近似）':'#B8860B',
+  '唐':'#FFD700',
+  '后蜀':'#20B2AA', '南唐':'#4682B4', '吴越':'#1E90FF', '闽':'#5F9EA0',
+  '南汉':'#008B8B', '楚':'#9370DB', '荆南':'#BA55D3', '北汉':'#D2691E',
+  '中原五代':'#FF4500', '中原五代前身（近似）':'#FF4500', '辽（契丹）':'#483D8B',
+  '北宋':'#4169E1', '南宋':'#1E90FF', '宋':'#4169E1',
+  '辽':'#483D8B', '金':'#8B4513', '金（沿辽地）':'#8B4513',
+  '西夏':'#B8860B', '吐蕃':'#A0A0A0', '吐蕃（宣政院辖地）':'#A0A0A0', '吐蕃诸部':'#A0A0A0',
+  '大理':'#FF6B6B', '高丽':'#66CDAA', '日本':'#E74C3C', '蒙古':'#5D4037',
+  '元':'#20B2AA', '明':'#FF4500', '清':'#FFD700',
+};
+
+// 世界用 hash 色
+function hashColor(str) {
+  if (!str) return '#64748b';
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = str.charCodeAt(i) + ((h << 5) - h);
+  const hue = Math.abs(h) % 360;
+  return `hsl(${hue}, 55%, 48%)`;
+}
+
+// ============================================================
+//  2. Leaflet map 初始化
+//  关键：使用 EPSG:4326（等距圆柱），与 Natural Earth JPG 完全对齐
+//  默认 Leaflet 用 EPSG:3857 (Web Mercator)，会严重错位
+// ============================================================
+
+// 自定义 CRS：Plate Carrée / 等距圆柱 / EPSG:4326
+// Leaflet 内建 L.CRS.EPSG4326 可直接用
+const map = L.map('map', {
+  crs: L.CRS.EPSG4326,
+  center: [34, 104],
+  zoom: 3,
+  minZoom: 1,
+  maxZoom: 8,
+  worldCopyJump: false,
+  attributionControl: true,
+});
+
+// 地形底图（等距圆柱投影覆盖全球）
+// 本预览页位于 data/ 下，故相对路径去掉 data/
+const BASEMAPS = {
+  'color-hillshade': 'geography/hillshade/global-color-hillshade-4k.jpg',
+  'color-relief':    'geography/hillshade/global-color-relief-4k.jpg',
+  'hillshade':       'geography/hillshade/global-hillshade-4k.jpg',
+};
+
+// Natural Earth 等距圆柱投影覆盖 [-90,-180] 到 [90,180]
+const WORLD_BOUNDS = [[-90, -180], [90, 180]];
+let basemapLayer = null;
+function setBasemap(kind, opacity = 0.65) {
+  if (basemapLayer) { map.removeLayer(basemapLayer); basemapLayer = null; }
+  if (kind === 'none') return;
+  const url = BASEMAPS[kind];
+  if (!url) return;
+  basemapLayer = L.imageOverlay(url, WORLD_BOUNDS, {
+    opacity: opacity,
+    interactive: false,
+    attribution: 'Basemap: Natural Earth (Public Domain)',
+  });
+  basemapLayer.addTo(map);
+  basemapLayer.bringToBack();
+}
+setBasemap('color-hillshade', 0.65);
+
+// 当前 GeoJSON 层（country / prefecture 分两层）
+let countryLayer = null;
+let prefectureLayer = null;
+let currentData = null;
+let currentScope = 'china';
+let fillOpacity = 0.55;
+
+// ============================================================
+//  3. 渲染工具条 + 加载切片
+// ============================================================
+const toolbar = document.getElementById('toolbar');
+const infoEl = document.getElementById('info');
+const legendEl = document.getElementById('legend');
+const sTotal = document.getElementById('sTotal');
+
+function renderToolbar() {
+  toolbar.innerHTML = '';
+  const list = currentScope === 'china' ? CHINA_DYNASTIES : WORLD_PERIODS;
+  sTotal.textContent = list.length;
+  list.forEach(it => {
+    const b = document.createElement('button');
+    b.className = 'btn';
+    b.innerHTML = `${it.name}<span class="period">${it.years}</span>`;
+    b.onclick = () => loadItem(it, b);
+    toolbar.appendChild(b);
+  });
+  loadItem(list[0], toolbar.firstElementChild);
+}
+
+function clearGeoLayers() {
+  if (countryLayer) { map.removeLayer(countryLayer); countryLayer = null; }
+  if (prefectureLayer) { map.removeLayer(prefectureLayer); prefectureLayer = null; }
+}
+
+function featureColor(feat) {
+  if (currentScope === 'china') {
+    return CHINA_POWER_COLORS[feat.properties.POWER] || '#64748b';
+  }
+  return hashColor(feat.properties.SUBJECTO || feat.properties.NAME);
+}
+
+function popupContent(feat) {
+  const p = feat.properties;
+  if (currentScope === 'china') {
+    const parts = [`<b>${p.NAME_CH || p.NAME_EN || p.NAME_PY || '未命名'}</b>`];
+    if (p.TYPE_CH) parts.push(`${p.TYPE_CH}`);
+    if (p.POWER) parts.push(`政权: ${p.POWER}`);
+    if (p.LEVEL) parts.push(`层级: ${p.LEVEL === 'country' ? '国家轮廓' : '府级政区'}`);
+    if (p.BEG_YR != null) parts.push(`存续: ${p.BEG_YR} ~ ${p.END_YR}`);
+    return parts.join('<br/>');
+  }
+  const parts = [`<b>${p.NAME || '未命名'}</b>`];
+  if (p.SUBJECTO && p.SUBJECTO !== p.NAME) parts.push(`宗主: ${p.SUBJECTO}`);
+  if (p.PARTOF && p.PARTOF !== p.NAME) parts.push(`属于: ${p.PARTOF}`);
+  if (p.BORDERPRECISION) parts.push(`边界精度: ${p.BORDERPRECISION}`);
+  return parts.join('<br/>');
+}
+
+async function loadItem(item, btn) {
+  document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  infoEl.innerHTML = `⏳ 加载 ${item.name} (${item.years})...`;
+
+  const dir = currentScope === 'china' ? 'historical-china' : 'historical-world';
+  const url = `geography/${dir}/${item.id}.geojson`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const geojson = await res.json();
+    currentData = geojson;
+    const size = new TextEncoder().encode(JSON.stringify(geojson)).length;
+    const feats = geojson.features || [];
+
+    clearGeoLayers();
+
+    // 分层：country 底层（粗边半透明），prefecture 上层（精细）
+    const countryFeats = feats.filter(f => f.properties.LEVEL === 'country');
+    const prefFeats = feats.filter(f => f.properties.LEVEL !== 'country');
+
+    // 中国 tab 才做分层；世界 tab 全部当成一层
+    if (currentScope === 'china' && countryFeats.length > 0) {
+      countryLayer = L.geoJSON(countryFeats, {
+        style: f => ({
+          color: featureColor(f),
+          weight: 2.5,
+          opacity: 0.95,
+          fillColor: featureColor(f),
+          fillOpacity: fillOpacity * 0.5,
+        }),
+        onEachFeature: (f, layer) => layer.bindPopup(popupContent(f)),
+      }).addTo(map);
+    }
+
+    const layerFeats = currentScope === 'china' ? prefFeats : feats;
+    prefectureLayer = L.geoJSON(layerFeats, {
+      style: f => ({
+        color: currentScope === 'china' ? '#1e293b' : '#0f172a',
+        weight: currentScope === 'china' ? 0.3 : 0.6,
+        opacity: 0.6,
+        fillColor: featureColor(f),
+        fillOpacity: fillOpacity,
+      }),
+      onEachFeature: (f, layer) => layer.bindPopup(popupContent(f)),
+    }).addTo(map);
+
+    // 锁定视野
+    if (currentScope === 'china') {
+      const bbox = (geojson.metadata && geojson.metadata.recommended_bbox) || [70, 15, 145, 55];
+      map.fitBounds([[bbox[1], bbox[0]], [bbox[3], bbox[2]]]);
+    } else {
+      map.fitBounds([[-60, -180], [85, 180]]);
+    }
+
+    // 图例
+    const powerCounts = {};
+    feats.forEach(f => {
+      const key = currentScope === 'china'
+        ? (f.properties.POWER || '-')
+        : (f.properties.SUBJECTO || f.properties.NAME || '-');
+      powerCounts[key] = (powerCounts[key] || 0) + 1;
+    });
+    const powers = Object.keys(powerCounts).filter(p => p && p !== '-' && p !== 'null');
+    const topPowers = powers.slice(0, 15);
+    legendEl.innerHTML = topPowers.map(p => {
+      const color = currentScope === 'china'
+        ? (CHINA_POWER_COLORS[p] || '#64748b')
+        : hashColor(p);
+      return `<div class="legend-item"><div class="legend-dot" style="background:${color}"></div>${p} (${powerCounts[p]})</div>`;
+    }).join('') + (powers.length > 15 ? `<span style="color:#64748b">…还有 ${powers.length - 15} 个</span>` : '');
+
+    document.getElementById('sFeatures').textContent = feats.length;
+    document.getElementById('sPowers').textContent = powers.length;
+    document.getElementById('sSize').textContent = Math.round(size / 1024) + ' KB';
+
+    const srcMsg = currentScope === 'china'
+      ? `数据源：<b>CHGIS V6</b>（府级政区） + <b>historical-basemaps</b>（疆域轮廓）`
+      : `数据源：<b>historical-basemaps</b>（aourednik, GPL-3.0）`;
+    const meta = geojson.metadata || {};
+    const bboxMsg = meta.recommended_bbox ? ` · 推荐视野: [${meta.recommended_bbox.join(', ')}]` : '';
+    infoEl.innerHTML = `<b>${item.name}</b>（${item.years}）· ${feats.length} 个政区 · ${powers.length} 个主要政权${bboxMsg}<br/>` +
+      srcMsg + `<br/>调用: <code>fetch('./data/geography/${dir}/${item.id}.geojson')</code>` +
+      ` + <code>basemap: ./data/geography/hillshade/global-color-hillshade-4k.jpg</code>`;
+  } catch (e) {
+    infoEl.innerHTML = `❌ 加载失败: ${e.message}<br/>URL: ${url}`;
+  }
+}
+
+// ============================================================
+//  4. 控件事件
+// ============================================================
+document.querySelectorAll('.scope-tab').forEach(t => {
+  t.onclick = () => {
+    document.querySelectorAll('.scope-tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    currentScope = t.dataset.scope;
+    renderToolbar();
+  };
+});
+
+document.getElementById('basemap').addEventListener('change', e => {
+  const opacity = document.getElementById('basemapOpacity').value / 100;
+  setBasemap(e.target.value, opacity);
+});
+
+document.getElementById('basemapOpacity').addEventListener('input', e => {
+  const val = e.target.value;
+  document.getElementById('basemapOpacityVal').textContent = val + '%';
+  if (basemapLayer) basemapLayer.setOpacity(val / 100);
+});
+
+document.getElementById('fillOpacity').addEventListener('input', e => {
+  const val = e.target.value;
+  document.getElementById('fillOpacityVal').textContent = val + '%';
+  fillOpacity = val / 100;
+  // 重新应用样式，不重新加载
+  if (prefectureLayer) {
+    prefectureLayer.setStyle(f => ({
+      fillOpacity: fillOpacity,
+    }));
+  }
+  if (countryLayer) {
+    countryLayer.setStyle(f => ({
+      fillOpacity: fillOpacity * 0.5,
+    }));
+  }
+});
+
+renderToolbar();
+</script>
+</body>
+</html>

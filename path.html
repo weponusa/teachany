@@ -1,0 +1,1752 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>学习路径 Learning Path - TeachAny</title>
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script>
+if (!window.d3) {
+  document.write('<script src="https://unpkg.com/d3@7/dist/d3.min.js"><\/script>');
+}
+</script>
+<style>
+:root {
+  --bg: #0f172a;
+  --bg2: #1e293b;
+  --card: rgba(30, 41, 59, 0.8);
+  --border: rgba(148, 163, 184, 0.15);
+  --text: #f8fafc;
+  --dim: #94a3b8;
+  --dimmer: #64748b;
+  --primary: #3b82f6;
+  --secondary: #8b5cf6;
+  --accent: #f59e0b;
+  --success: #10b981;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'PingFang SC', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+}
+
+/* Top Bar */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+}
+.top-bar h1 {
+  font-size: 20px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.nav-links { display: flex; gap: 8px; }
+.nav-links a {
+  color: var(--dim);
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+.nav-links a:hover, .nav-links a.active {
+  color: var(--text);
+  background: rgba(59,130,246,0.15);
+}
+
+/* Header */
+.header {
+  text-align: center;
+  padding: 60px 24px 40px;
+  background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(139,92,246,0.06));
+}
+.header h1 {
+  font-size: 42px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 12px;
+}
+.header p {
+  font-size: 16px;
+  color: var(--dim);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Container */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+/* Search Section */
+.search-section {
+  margin-bottom: 40px;
+}
+
+/* Selector Group */
+.selector-group {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 180px;
+}
+
+.filter-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.subject-select,
+.grade-select,
+.node-select {
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  color: var(--text);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.subject-select:hover,
+.grade-select:hover,
+.node-select:hover {
+  border-color: var(--primary);
+}
+
+.subject-select:focus,
+.grade-select:focus,
+.node-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+}
+
+.node-select {
+  flex: 1;
+}
+
+.node-select option {
+  padding: 8px;
+}
+
+.search-btn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  align-self: stretch;
+}
+
+.search-btn:hover {
+  background: var(--secondary);
+  transform: scale(1.05);
+}
+
+.search-btn:active {
+  transform: scale(0.98);
+}
+
+/* ─── Init Progress Bar ─────────────────────── */
+.init-bar {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px 32px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+.init-bar .init-title {
+  font-size: 15px;
+  color: var(--dim);
+  margin-bottom: 12px;
+}
+.init-bar .progress-track {
+  height: 6px;
+  background: var(--bg);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.init-bar .progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+.init-bar .init-status {
+  font-size: 13px;
+  color: var(--dimmer);
+}
+.init-bar.done {
+  border-color: var(--success);
+}
+.init-bar.done .init-title {
+  color: var(--success);
+}
+
+/* ─── Path Visualization ────────────────────── */
+.learning-path-viz {
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.path-section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.path-section:last-child { margin-bottom: 0; }
+
+.section-header {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-icon { font-size: 22px; }
+.section-header .count {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 600;
+  background: rgba(59,130,246,0.15);
+  color: var(--primary);
+  padding: 2px 10px;
+  border-radius: 12px;
+}
+
+/* ─── Current Node Card ─────────────────────── */
+.current-node-card {
+  background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(139,92,246,0.06));
+  border: 2px solid var(--primary);
+  border-radius: 16px;
+  padding: 28px;
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+.current-info { flex: 1; }
+.current-info h2 {
+  font-size: 28px;
+  margin-bottom: 10px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.current-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.current-meta span {
+  font-size: 13px;
+  padding: 4px 12px;
+  background: var(--bg);
+  border-radius: 6px;
+  color: var(--dim);
+}
+.current-def {
+  font-size: 14px;
+  color: var(--dim);
+  line-height: 1.8;
+  margin-bottom: 12px;
+}
+.key-concepts {
+  font-size: 13px;
+  color: var(--dimmer);
+  line-height: 2;
+}
+.concept-tag {
+  display: inline-block;
+  background: rgba(245,158,11,0.1);
+  color: var(--accent);
+  padding: 2px 10px;
+  border-radius: 4px;
+  margin: 2px 4px;
+  font-size: 12px;
+}
+
+.current-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  min-width: 180px;
+}
+.stat-item {
+  text-align: center;
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 12px 8px;
+}
+.stat-val {
+  display: block;
+  font-size: 24px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.stat-lbl {
+  display: block;
+  font-size: 11px;
+  color: var(--dimmer);
+  margin-top: 2px;
+}
+
+/* ─── Courseware List ────────────────────────── */
+.courseware-list {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.cw-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--dim);
+}
+.cw-link {
+  display: inline-block;
+  margin: 4px 8px 4px 0;
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: rgba(59,130,246,0.12);
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+.cw-link:hover {
+  background: rgba(59,130,246,0.25);
+  transform: translateY(-2px);
+}
+
+/* ─── Badges ─────────────────────────────────── */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.badge-green { background: rgba(16,185,129,0.15); color: var(--success); }
+.badge-gray  { background: rgba(148,163,184,0.1); color: var(--dimmer); }
+.badge-red   { background: rgba(239,68,68,0.15); color: #f87171; }
+
+/* ─── Prerequisite Chain ────────────────────── */
+.prereq-chain {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 4px 0;
+}
+.chain-arrow {
+  font-size: 18px;
+  color: var(--dimmer);
+  flex-shrink: 0;
+}
+
+/* ─── Path Node ──────────────────────────────── */
+.path-node {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  min-width: 140px;
+  transition: all 0.25s;
+}
+.path-node.clickable:hover {
+  border-color: var(--primary);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+.path-node.current-marker {
+  border-color: var(--primary);
+  background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(139,92,246,0.08));
+}
+.node-grade-tag {
+  font-size: 11px;
+  color: var(--dimmer);
+  margin-bottom: 4px;
+}
+.node-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+/* ─── Next Steps Tree ────────────────────────── */
+.next-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.next-node-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 16px;
+  transition: all 0.25s;
+}
+.next-node-card.clickable:hover {
+  border-color: var(--success);
+  background: rgba(16,185,129,0.06);
+  transform: translateX(4px);
+}
+.tree-prefix {
+  color: var(--dimmer);
+  font-family: monospace;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+/* ─── Parallel Grid ──────────────────────────── */
+.parallel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+/* ─── Cross Grade Visualization ──────────────── */
+.cross-grade-viz {
+  text-align: center;
+}
+.grade-group {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 0 auto;
+  max-width: 800px;
+}
+.grade-label {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--dim);
+}
+.grade-nodes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.grade-node {
+  display: inline-block;
+  padding: 4px 12px;
+  background: rgba(59,130,246,0.1);
+  color: var(--primary);
+  border-radius: 6px;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+.grade-node:hover {
+  background: rgba(59,130,246,0.25);
+  transform: scale(1.05);
+}
+.mini-arrow {
+  color: var(--dimmer);
+  font-size: 12px;
+}
+.grade-connector {
+  font-size: 20px;
+  padding: 6px 0;
+  color: var(--dimmer);
+}
+
+/* ─── Empty & Hint ───────────────────────────── */
+.empty-hint {
+  text-align: center;
+  padding: 20px;
+  font-size: 14px;
+  color: var(--dimmer);
+  background: var(--bg);
+  border-radius: 10px;
+}
+
+.loading {
+  text-align: center;
+  padding: 60px 24px;
+  font-size: 16px;
+  color: var(--dim);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 80px 24px;
+}
+.empty-state .icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+.empty-state h2 {
+  font-size: 24px;
+  margin-bottom: 12px;
+  color: var(--dim);
+}
+.empty-state p {
+  font-size: 16px;
+  color: var(--dimmer);
+}
+
+@media (max-width: 768px) {
+  .header h1 { font-size: 32px; }
+  .selector-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filter-group { min-width: 100%; }
+  .current-node-card { flex-direction: column; }
+  .current-stats { grid-template-columns: repeat(4, 1fr); min-width: auto; }
+  .prereq-chain { flex-direction: column; }
+  .chain-arrow { transform: rotate(90deg); }
+  .parallel-grid { grid-template-columns: 1fr; }
+}
+
+/* ─── PBL Section ─────────────────────────────── */
+.pbl-section {
+  background: linear-gradient(135deg, rgba(59,130,246,0.06), rgba(139,92,246,0.04));
+  border: 2px solid rgba(59,130,246,0.2);
+  border-radius: 16px;
+  padding: 28px;
+  margin-bottom: 32px;
+  position: relative;
+}
+.pbl-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.pbl-desc {
+  font-size: 13px;
+  color: var(--dim);
+  line-height: 1.8;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  background: rgba(59,130,246,0.05);
+  border-radius: 8px;
+  border-left: 3px solid rgba(59,130,246,0.3);
+}
+.pbl-desc b { color: var(--text); font-weight: 600; }
+.pbl-examples {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 10px;
+}
+.pbl-examples .ex-label {
+  font-size: 12px;
+  color: var(--dimmer);
+  flex-shrink: 0;
+}
+.ex-chip {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  color: var(--dim);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.ex-chip:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(59,130,246,0.08);
+  transform: translateY(-1px);
+}
+.pbl-textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.pbl-textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+}
+.pbl-textarea::placeholder {
+  color: var(--dimmer);
+}
+.pbl-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.pbl-analyze-btn {
+  padding: 12px 28px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+  border: none;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.pbl-analyze-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 16px rgba(59,130,246,0.3);
+}
+.pbl-analyze-btn:active { transform: scale(0.98); }
+.pbl-analyze-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+.pbl-system-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.pbl-system-tags .tag-label {
+  font-size: 12px;
+  color: var(--dimmer);
+  margin-right: 4px;
+}
+.pbl-sys-tag {
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  color: var(--dim);
+  transition: all 0.2s;
+  user-select: none;
+}
+.pbl-sys-tag:hover { border-color: var(--primary); color: var(--text); }
+.pbl-sys-tag.active {
+  background: rgba(59,130,246,0.15);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.pbl-settings-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  color: var(--dim);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.pbl-settings-btn:hover { border-color: var(--primary); color: var(--text); }
+
+/* ─── PBL Status ──────────────────────────────── */
+.pbl-status {
+  text-align: center;
+  padding: 40px 24px;
+  margin-top: 16px;
+}
+.pbl-status .pulse {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: pulse 1.5s infinite;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+@keyframes pulse {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.2); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.pbl-status .status-text {
+  font-size: 16px;
+  color: var(--dim);
+}
+
+/* ─── PBL Stats Cards ─────────────────────────── */
+.pbl-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.pbl-stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+.pbl-stat-card .val {
+  font-size: 28px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.pbl-stat-card .lbl {
+  font-size: 12px;
+  color: var(--dimmer);
+  margin-top: 4px;
+}
+
+/* ─── PBL Graph Container ─────────────────────── */
+#pbl-graph-container {
+  min-height: 600px;
+  max-height: 85vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ─── Node Detail Panel ───────────────────────── */
+.node-detail-panel {
+  position: fixed;
+  top: 0;
+  right: -420px;
+  width: 400px;
+  height: 100vh;
+  background: var(--bg2);
+  border-left: 1px solid var(--border);
+  box-shadow: -4px 0 24px rgba(0,0,0,0.3);
+  z-index: 1000;
+  transition: right 0.3s ease;
+  overflow-y: auto;
+  padding: 24px;
+}
+.node-detail-panel.open { right: 0; }
+.node-detail-panel .close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--dim);
+  cursor: pointer;
+  font-size: 14px;
+}
+.node-detail-panel .close-btn:hover { color: var(--text); }
+.node-detail-panel h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+  padding-right: 40px;
+}
+.node-detail-panel .meta-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.node-detail-panel .meta-tag {
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  background: rgba(59,130,246,0.1);
+  color: var(--primary);
+}
+.node-detail-panel .definition {
+  font-size: 14px;
+  color: var(--dim);
+  line-height: 1.8;
+  margin-bottom: 16px;
+}
+.node-detail-panel .prereq-list {
+  margin-bottom: 16px;
+}
+.node-detail-panel .prereq-list h4 {
+  font-size: 13px;
+  color: var(--dimmer);
+  margin-bottom: 8px;
+}
+.node-detail-panel .prereq-item {
+  padding: 6px 12px;
+  margin-bottom: 4px;
+  border-radius: 6px;
+  background: var(--bg);
+  font-size: 13px;
+  color: var(--dim);
+}
+.generate-cw-btn {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--success), #059669);
+  color: white;
+  border: none;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  margin-top: 20px;
+}
+.generate-cw-btn:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 16px rgba(16,185,129,0.3);
+}
+
+/* ─── Settings Modal ──────────────────────────── */
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.settings-overlay.open { display: flex; }
+.settings-modal {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  width: 480px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.settings-modal h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 20px;
+}
+.settings-modal label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dim);
+  margin-bottom: 6px;
+  margin-top: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.settings-modal select,
+.settings-modal input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+}
+.settings-modal select:focus,
+.settings-modal input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+}
+.settings-modal .btn-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+.settings-modal .btn-row button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.settings-modal .btn-save {
+  background: var(--primary);
+  color: white;
+  border: none;
+}
+.settings-modal .btn-save:hover { background: #2563eb; }
+.settings-modal .btn-cancel {
+  background: var(--bg);
+  color: var(--dim);
+  border: 1px solid var(--border);
+}
+.settings-modal .btn-cancel:hover { color: var(--text); }
+.settings-modal .hint {
+  font-size: 12px;
+  color: var(--dimmer);
+  margin-top: 4px;
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <h1>🎓 TeachAny</h1>
+  <div class="nav-links">
+    <a href="index.html">📋 Gallery / 课件库</a>
+    <a href="tree.html">🗺️ Knowledge Map / 知识地图</a>
+    <a href="path.html" class="active">🛤️ Learning Path / 学习路径</a>
+    <a href="commercial-license.html">💼 商业授权</a>
+  </div>
+</div>
+
+<div class="header">
+  <h1>🛤️ 学习路径系统</h1>
+  <p>探索知识点的前后序关系，打通各学段知识体系，构建完整学习地图</p>
+</div>
+
+<div class="container">
+  <!-- PBL 项目式学习路径发现 -->
+  <div class="pbl-section">
+    <div class="pbl-title">🧭 PBL 项目式学习路径发现</div>
+    <button class="pbl-settings-btn" onclick="toggleSettings()">⚙️ API 设置</button>
+    <div class="pbl-desc">
+      用于项目式学习的个性化路径设计。只需描述你的项目目标，AI 将自动从全球课标体系中匹配所需知识点，生成完整的学习路径图谱。<br>
+      覆盖 <b>中国课标 / AP / Cambridge / IB / US CCSS</b> 五大体系，支持 K12 及以外的知识点。图谱中的每个知识点均可一键生成个性化课件。
+    </div>
+    <textarea id="pblGoalInput" class="pbl-textarea" placeholder="描述你的项目目标，如：设计一个智能家居温度控制系统、制作一个天气预报App、分析城市交通拥堵问题..."></textarea>
+    <div class="pbl-examples">
+      <span class="ex-label">示范项目：</span>
+      <span class="ex-chip" onclick="fillPBLExample(this)" data-key="smart-home-temp" data-goal="设计一个智能家居温度控制系统，利用传感器实时监测室温，自动调节空调或暖气，实现节能恒温">🏠 智能家居温控</span>
+      <span class="ex-chip" onclick="fillPBLExample(this)" data-key="weather-app" data-goal="制作一个天气预报App，从公开API获取气象数据，展示温度、湿度、风速，并用图表展示7天趋势">🌤️ 天气预报App</span>
+      <span class="ex-chip" onclick="fillPBLExample(this)" data-key="traffic-analysis" data-goal="分析城市交通拥堵问题，收集高峰期车流量数据，建立拥堵模型，提出优化方案">🚗 城市交通分析</span>
+      <span class="ex-chip" onclick="fillPBLExample(this)" data-key="auto-watering" data-goal="设计一个自动浇花系统，通过土壤湿度传感器判断是否需要浇水，用微型水泵自动灌溉">🌱 自动浇花系统</span>
+      <span class="ex-chip" onclick="fillPBLExample(this)" data-key="word-memory" data-goal="制作一个英文单词记忆游戏，利用间隔重复算法安排复习，追踪用户记忆曲线">🧠 英文单词记忆</span>
+      <span class="ex-chip" onclick="fillPBLExample(this)" data-key="water-quality" data-goal="分析本地河流水质，采集pH值、溶解氧、浊度数据，评估污染程度并提出治理建议">💧 河流水质分析</span>
+      <span class="ex-chip" onclick="fillPBLExample(this)" data-key="encryption-tool" data-goal="设计一个简易加密通信工具，实现凯撒密码和RSA加密，理解对称加密与非对称加密的原理">🔐 加密通信工具</span>
+      <span class="ex-chip" onclick="fillPBLExample(this)" data-key="solar-system" data-goal="构建一个太阳系模拟器，用物理引擎模拟行星轨道运动，展示开普勒定律和万有引力">🪐 太阳系模拟器</span>
+    </div>
+    <div class="pbl-actions">
+      <button class="pbl-analyze-btn" id="pblAnalyzeBtn" onclick="analyzePBLGoal()">🔍 分析学习路径</button>
+      <div class="pbl-system-tags">
+        <span class="tag-label">课标体系：</span>
+        <span class="pbl-sys-tag active" data-system="all" onclick="toggleSystemTag(this)">全部</span>
+        <span class="pbl-sys-tag" data-system="cn" onclick="toggleSystemTag(this)">🇨🇳 中国课标</span>
+        <span class="pbl-sys-tag" data-system="ap" onclick="toggleSystemTag(this)">🇺🇸 AP</span>
+        <span class="pbl-sys-tag" data-system="cambridge" onclick="toggleSystemTag(this)">🇬🇧 Cambridge</span>
+        <span class="pbl-sys-tag" data-system="ib" onclick="toggleSystemTag(this)">🌍 IB</span>
+        <span class="pbl-sys-tag" data-system="us" onclick="toggleSystemTag(this)">🇺🇸 US CCSS</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PBL 分析状态 -->
+  <div id="pblStatus" style="display:none" class="pbl-status">
+    <span class="pulse"></span>
+    <span class="status-text" id="pblStatusText">正在分析项目目标...</span>
+  </div>
+
+  <!-- PBL 统计卡片 -->
+  <div id="pblStatsContainer" style="display:none">
+    <div class="pbl-stats" id="pblStats"></div>
+  </div>
+
+  <!-- PBL 知识图谱容器 -->
+  <div id="pbl-graph-container"></div>
+
+  <!-- 初始化进度条 -->
+  <div class="init-bar" id="initBar">
+    <div class="init-title" id="initTitle">⏳ 正在加载知识图谱网络...</div>
+    <div class="progress-track"><div class="progress-fill" id="initProgress" style="width:0%"></div></div>
+    <div class="init-status" id="initStatus">准备中...</div>
+  </div>
+
+  <!-- 选择器 -->
+  <div class="search-section">
+    <div class="selector-group">
+      <!-- 学科筛选 -->
+      <div class="filter-group">
+        <label for="subjectFilter">📚 学科</label>
+        <select id="subjectFilter" class="subject-select" onchange="filterNodesBySubject()">
+          <option value="all">全部学科</option>
+          <option value="math">📐 数学 Math</option>
+          <option value="chinese">📖 语文 Chinese</option>
+          <option value="english">🔤 英语 English</option>
+          <option value="physics">⚡ 物理 Physics</option>
+          <option value="chemistry">🧪 化学 Chemistry</option>
+          <option value="biology">🧬 生物 Biology</option>
+          <option value="geography">🌍 地理 Geography</option>
+          <option value="history">🏛️ 历史 History</option>
+          <option value="info-tech">💻 信息技术 Info Tech</option>
+        </select>
+      </div>
+      
+      <!-- 年级筛选 -->
+      <div class="filter-group">
+        <label for="gradeFilter">🎓 年级</label>
+        <select id="gradeFilter" class="grade-select" onchange="filterNodesByGrade()">
+          <option value="all">全部年级</option>
+          <option value="elementary">🏫 小学 (1-6年级)</option>
+          <option value="middle">📘 初中 (7-9年级)</option>
+          <option value="high">🎓 高中 (10-12年级)</option>
+        </select>
+      </div>
+      
+      <!-- 知识点选择 -->
+      <div class="filter-group" style="flex: 2">
+        <label for="nodeSelect">🎯 选择知识点</label>
+        <select id="nodeSelect" class="node-select">
+          <option value="">请先选择学科和年级...</option>
+        </select>
+      </div>
+      
+      <button class="search-btn" onclick="showPathForNode()">📍 显示学习路径</button>
+    </div>
+  </div>
+
+  <!-- 统计卡片 -->
+  <div class="stats-cards">
+    <div class="stat-card">
+      <div class="stat-value" id="totalNodesCount">275</div>
+      <div class="stat-label">知识节点总数</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="coveredNodesCount">131</div>
+      <div class="stat-label">已有课件节点</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="coverageRate">47.6%</div>
+      <div class="stat-label">节点覆盖率</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="crossGradeChainsCount">12</div>
+      <div class="stat-label">跨学段知识链</div>
+    </div>
+  </div>
+
+  <!-- 学习路径可视化容器 -->
+  <div id="learning-path-container">
+    <div class="empty-state">
+      <div class="icon">🗺️</div>
+      <h2>选择知识点查看学习路径</h2>
+      <p>从上方选择器中选择学科、年级和知识点，或在顶部输入 PBL 项目目标</p>
+      <p style="margin-top:16px;font-size:14px">或者从<a href="tree.html" style="color:var(--primary)">知识地图</a>点击任意节点跳转</p>
+    </div>
+  </div>
+</div>
+
+<!-- 节点详情侧边面板 -->
+<div class="node-detail-panel" id="nodeDetailPanel">
+  <button class="close-btn" onclick="closeNodeDetail()">✕</button>
+  <div id="nodeDetailContent"></div>
+</div>
+
+<!-- API 设置弹窗 -->
+<div class="settings-overlay" id="settingsOverlay">
+  <div class="settings-modal">
+    <h2>⚙️ API 服务商设置</h2>
+    <label for="providerSelect">服务商</label>
+    <select id="providerSelect" onchange="onProviderChange()"></select>
+    <label for="modelSelect">模型</label>
+    <select id="modelSelect"></select>
+    <label for="apiKeyInput">API Key</label>
+    <input type="password" id="apiKeyInput" placeholder="粘贴你的 sk-... Key" />
+    <div class="hint" id="keyHint"></div>
+    <label for="baseUrlInput">Base URL（自定义时填写）</label>
+    <input type="text" id="baseUrlInput" placeholder="https://api.example.com/v1" />
+    <div class="btn-row">
+      <button class="btn-cancel" onclick="toggleSettings()">取消</button>
+      <button class="btn-save" onclick="saveSettings()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
+<script src="./scripts/learning-path.js"></script>
+<script src="./scripts/pbl-path.js"></script>
+<script>
+// ─── 全局状态 ──────────────────────────────────
+let currentSubject = 'all';
+let currentGrade = 'all';
+let allNodes = [];
+let nodesLoaded = false;
+let systemReady = false;
+let pblRenderer = null;
+let pblResult = null;
+
+// ─── PBL 相关函数 ─────────────────────────────────
+
+function toggleSystemTag(el) {
+  const system = el.dataset.system;
+  if (system === 'all') {
+    // "全部"互斥：点全部则取消其他，点其他则取消全部
+    document.querySelectorAll('.pbl-sys-tag').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  } else {
+    document.querySelector('.pbl-sys-tag[data-system="all"]').classList.remove('active');
+    el.classList.toggle('active');
+    // 如果没有任何选中，恢复"全部"
+    const anyActive = document.querySelectorAll('.pbl-sys-tag.active:not([data-system="all"])').length > 0;
+    if (!anyActive) {
+      document.querySelector('.pbl-sys-tag[data-system="all"]').classList.add('active');
+    }
+  }
+}
+
+function getSelectedSystems() {
+  const tags = document.querySelectorAll('.pbl-sys-tag.active');
+  const systems = [];
+  tags.forEach(t => systems.push(t.dataset.system));
+  return systems.includes('all') ? ['all'] : systems;
+}
+
+async function fillPBLExample(el) {
+  const goal = el.dataset.goal;
+  const key = el.dataset.key || el.textContent.trim().replace(/\s+/g,'_');
+  document.getElementById('pblGoalInput').value = goal;
+
+  // 先尝试加载预存结果（静态 JSON，无需 LLM/索引）
+  try {
+    const resp = await fetch(`./data/pbl-demos/${encodeURIComponent(key)}.json`);
+    if (resp.ok) {
+      const cached = await resp.json();
+      if (cached && cached.graphData) {
+        // 直接渲染，跳过分析
+        const statusEl = document.getElementById('pblStatus');
+        statusEl.style.display = 'none';
+        renderPBLResult(cached);
+        return;
+      }
+    }
+  } catch (e) { /* 无预存，走实时分析 */ }
+
+  analyzePBLGoal();
+}
+
+async function analyzePBLGoal() {
+  const goal = document.getElementById('pblGoalInput').value.trim();
+  if (!goal) {
+    alert('请输入项目目标描述');
+    return;
+  }
+
+  const systems = getSelectedSystems();
+  const btn = document.getElementById('pblAnalyzeBtn');
+  const statusEl = document.getElementById('pblStatus');
+  const statusText = document.getElementById('pblStatusText');
+
+  btn.disabled = true;
+  statusEl.style.display = 'block';
+  statusText.textContent = '正在加载多课标知识点索引...';
+
+  try {
+    const builder = window.PBLPathBuilder;
+
+    // 确保索引已加载
+    statusText.textContent = '正在加载多课标知识点索引（1300+ 节点）...';
+    await builder.loadUnifiedIndex();
+
+    // 默认 OpenRouter 免费模型，需配置 API Key；点击 ⚙️ 设置
+    const cfg = builder.getLLMConfig();
+
+    // LLM 分析
+    statusText.textContent = '正在分析项目目标（第一阶段：学科判断）...';
+    
+    let result;
+    try {
+      result = await builder.analyzePBLGoal(goal, systems);
+    } catch (llmError) {
+      console.warn('[PBL] LLM 调用失败，降级为关键词搜索:', llmError.message);
+      statusText.textContent = 'LLM 不可用，降级为关键词搜索...';
+      result = await builder.searchByKeywords(goal, systems);
+    }
+
+    pblResult = result;
+    statusText.textContent = '正在渲染知识路径图谱...';
+
+    // 渲染统计卡片
+    renderPBLStats(result);
+
+    // 渲染 D3 图谱
+    renderPBLGraph(result);
+
+    statusEl.style.display = 'none';
+  } catch (error) {
+    console.error('[PBL] 分析失败:', error);
+    statusText.textContent = '❌ ' + error.message;
+    statusEl.querySelector('.pulse').style.background = '#ef4444';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderPBLResult(result) {
+  pblResult = result;
+  renderPBLStats(result);
+  renderPBLGraph(result);
+}
+
+function renderPBLStats(result) {
+  const container = document.getElementById('pblStatsContainer');
+  const statsEl = document.getElementById('pblStats');
+  container.style.display = 'block';
+
+  const layerCounts = { prerequisite: 0, matched: 0, advanced: 0, parallel: 0, external: 0 };
+  result.graphData.nodes.forEach(n => { layerCounts[n.layer] = (layerCounts[n.layer] || 0) + 1; });
+
+  statsEl.innerHTML = `
+    <div class="pbl-stat-card"><div class="val">${result.graphData.nodes.length}</div><div class="lbl">知识点总数</div></div>
+    <div class="pbl-stat-card"><div class="val">${layerCounts.prerequisite}</div><div class="lbl">基础前置（需先学）</div></div>
+    <div class="pbl-stat-card"><div class="val">${layerCounts.matched}</div><div class="lbl">核心必需</div></div>
+    <div class="pbl-stat-card"><div class="val">${layerCounts.advanced}</div><div class="lbl">扩展高级</div></div>
+    <div class="pbl-stat-card"><div class="val">${layerCounts.external}</div><div class="lbl">外部补充</div></div>
+    <div class="pbl-stat-card"><div class="val">${result.graphData.links.length}</div><div class="lbl">关联路径</div></div>
+  `;
+}
+
+function renderPBLGraph(result) {
+  if (pblRenderer) pblRenderer.destroy();
+  pblRenderer = new window.PBLGraphRenderer('pbl-graph-container');
+  pblRenderer.render(result.graphData, onPBLNodeClick);
+}
+
+function onPBLNodeClick(node) {
+  const panel = document.getElementById('nodeDetailPanel');
+  const content = document.getElementById('nodeDetailContent');
+
+  const layerColors = {
+    prerequisite: '#10b981', matched: '#ef4444', advanced: '#8b5cf6', parallel: '#3b82f6', external: '#eab308'
+  };
+  const layerLabels = {
+    prerequisite: '基础前置', matched: '核心必需', advanced: '扩展高级', parallel: '平行关联', external: '外部补充'
+  };
+
+  const gradeLabel = (g) => {
+    if (!g || g === 0) return '通识';
+    if (g <= 6) return `小学${g}年级`;
+    if (g <= 9) return `初中${g-6}年级`;
+    if (g <= 12) return `高中${g-9}年级`;
+    return `G${g}`;
+  };
+
+  // 检查课件（与 tree.html 同逻辑）
+  const hasCourseware = (node.status === 'active' && node.courses && node.courses.length) ||
+    (window.TeachAnyHub && typeof TeachAnyHub.getAllCoursesForNode === 'function' && TeachAnyHub.getAllCoursesForNode(node.id).length > 0) ||
+    (window.TeachAnyImporter && typeof TeachAnyImporter.getTopCoursesForTreeNode === 'function' && TeachAnyImporter.getTopCoursesForTreeNode(node.id).length > 0);
+
+  // 课件列表 HTML
+  let coursewareHtml = '';
+  if (hasCourseware) {
+    const hubCourses = (window.TeachAnyHub && typeof TeachAnyHub.getAllCoursesForNode === 'function')
+      ? TeachAnyHub.getAllCoursesForNode(node.id) : [];
+    if (hubCourses.length > 0) {
+      coursewareHtml = `<div class="prereq-list"><h4>📖 已有课件</h4>` +
+        hubCourses.map(c => {
+          const sourceIcon = { official: '📋', community_registry: '🔖', community_shared: '🌐', user: '📂' }[c.source] || '📚';
+          const courseUrl = c.url || (c.path ? `./${c.path}/index.html` : '');
+          return courseUrl ? `<a href="${courseUrl}" target="_blank" style="display:block;padding:6px 12px;margin:3px 0;border-radius:6px;font-size:13px;color:var(--text);text-decoration:none;background:rgba(148,163,184,0.08);">${sourceIcon} ${c.name || c.id}</a>` : '';
+        }).join('') + `</div>`;
+    } else if (node.courses && node.courses.length) {
+      coursewareHtml = `<div class="prereq-list"><h4>📖 已有课件</h4>` +
+        node.courses.map(cid => {
+          const isStr = typeof cid === 'string';
+          let url = '';
+          if (window.TeachAnyHub && typeof TeachAnyHub.getCourseById === 'function') {
+            const hit = TeachAnyHub.getCourseById(cid);
+            if (hit && hit.url) url = hit.url;
+          }
+          if (!url && isStr) url = cid.startsWith('examples/') || cid.startsWith('community/') ? `https://weponusa.github.io/teachany-courseware/${cid}/index.html` : `https://weponusa.github.io/teachany-courseware/community/${cid}/index.html`;
+          return `<a href="${url}" target="_blank" style="display:block;padding:6px 12px;margin:3px 0;border-radius:6px;font-size:13px;color:var(--text);text-decoration:none;background:rgba(148,163,184,0.08);">📋 ${isStr ? cid.split('/').pop() : cid}</a>`;
+        }).join('') + `</div>`;
+    }
+  }
+
+  // 课标内容 HTML
+  const points = Array.isArray(node.curriculum_points) ? node.curriculum_points : [];
+  let curriculumHtml = '';
+  if (points.length) {
+    curriculumHtml = `<div style="margin-top:12px;padding:8px 10px;background:rgba(59,130,246,0.08);border-left:3px solid rgba(59,130,246,0.5);border-radius:4px;font-size:12px;">
+      <div style="font-weight:600;margin-bottom:6px;">📖 课标原文要点</div>
+      ${points.map(p => `<div style="margin:4px 0;padding:4px 6px;border-radius:4px;background:rgba(148,163,184,0.05);color:var(--dim);line-height:1.5;">${p}</div>`).join('')}
+    </div>`;
+  }
+
+  content.innerHTML = `
+    <h3>${node.name}</h3>
+    ${node.name_en ? `<p style="font-size:13px;color:var(--dimmer);margin-bottom:10px">${node.name_en}</p>` : ''}
+    <div class="meta-row">
+      <span class="meta-tag" style="background:${layerColors[node.layer]}22;color:${layerColors[node.layer]}">${layerLabels[node.layer]}</span>
+      <span class="meta-tag">${node.systemTag} ${node.systemLabel}</span>
+      ${node.grade ? `<span class="meta-tag">${gradeLabel(node.grade)}</span>` : ''}
+      ${node.subject ? `<span class="meta-tag">${node.subject}</span>` : ''}
+      ${node.domain ? `<span class="meta-tag">${node.domain}</span>` : ''}
+      ${node.confidence ? `<span class="meta-tag" style="background:rgba(245,158,11,0.15);color:var(--accent)">置信度 ${(node.confidence * 100).toFixed(0)}%</span>` : ''}
+      ${hasCourseware ? '<span class="meta-tag" style="background:rgba(16,185,129,0.15);color:var(--success)">✅ 有课件</span>' : '<span class="meta-tag" style="background:rgba(239,68,68,0.15);color:#f87171">📝 待创建</span>'}
+    </div>
+    ${node.matchReason ? `<p style="font-size:13px;color:var(--accent);margin-top:10px">匹配理由：${node.matchReason}</p>` : ''}
+    ${node.definition ? `<p class="definition">${node.definition}</p>` : ''}
+    ${curriculumHtml}
+    ${node.prerequisites && node.prerequisites.length > 0 ? `
+      <div class="prereq-list">
+        <h4>📚 前置知识</h4>
+        ${node.prerequisites.map(pid => {
+          const pn = window.PBLPathBuilder.unifiedIndex.get(pid);
+          return `<div class="prereq-item">${pn ? pn.name : pid}</div>`;
+        }).join('')}
+      </div>
+    ` : ''}
+    ${node.extends && node.extends.length > 0 ? `
+      <div class="prereq-list">
+        <h4>🚀 扩展方向</h4>
+        ${node.extends.map(eid => {
+          const en = window.PBLPathBuilder.unifiedIndex.get(eid);
+          return `<div class="prereq-item">${en ? en.name : eid}</div>`;
+        }).join('')}
+      </div>
+    ` : ''}
+    ${coursewareHtml}
+    <button class="generate-cw-btn" onclick="event.stopPropagation();event.preventDefault();generateCourseware('${node.id}', '${node.name.replace(/'/g, "\\'")}')">
+      📖 生成课件
+    </button>
+  `;
+
+  panel.classList.add('open');
+}
+
+function closeNodeDetail() {
+  document.getElementById('nodeDetailPanel').classList.remove('open');
+}
+
+function generateCourseware(nodeId, nodeName) {
+  // 不再跳转 gallery，直接在侧栏展示提示词供用户复制
+  const prompt = `帮我生成「${nodeName}」的课件，知识点 ID 为 ${nodeId}。请按照 TeachAny 技能规范，生成完整的交互式课件 HTML。`;
+  showCoursewarePrompt(nodeName, nodeId, prompt);
+}
+
+function showCoursewarePrompt(nodeName, nodeId, prompt) {
+  const panel = document.getElementById('nodeDetailPanel');
+  const content = document.getElementById('nodeDetailContent');
+
+  // 在已有内容末尾追加提示词区域
+  const existingHtml = content.innerHTML;
+
+  content.innerHTML = existingHtml + `
+    <div style="margin-top:20px;padding:16px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:10px;">
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px;">💡 使用 AI 工具生成课件</div>
+      <div style="font-size:12px;color:var(--dim);line-height:1.7;margin-bottom:10px;">
+        在 <b style="color:var(--text)">Workbuddy</b>、<b style="color:var(--text)">CodeBuddy</b>、<b style="color:var(--text)">QClaw</b> 等 AI智能体工具中，加载 <b style="color:var(--primary)">TeachAny Skill</b>，输入以下提示词即可生成课件：
+      </div>
+      <div style="position:relative;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--text);line-height:1.7;font-family:'SF Mono',Monaco,monospace;word-break:break-all;" id="cwPromptText">${prompt}</div>
+      <button onclick="copyCoursewarePrompt()" style="margin-top:8px;padding:8px 16px;border-radius:6px;background:var(--primary);color:white;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;">
+        📋 复制提示词
+      </button>
+      <span id="copyFeedback" style="margin-left:8px;font-size:12px;color:var(--success);opacity:0;transition:opacity 0.3s;">已复制!</span>
+    </div>
+  `;
+
+  // 滚动到底部显示提示词
+  panel.scrollTop = panel.scrollHeight;
+}
+
+function copyCoursewarePrompt() {
+  const promptEl = document.getElementById('cwPromptText');
+  if (!promptEl) return;
+  const text = promptEl.textContent;
+
+  navigator.clipboard.writeText(text).then(() => {
+    const feedback = document.getElementById('copyFeedback');
+    if (feedback) {
+      feedback.style.opacity = '1';
+      setTimeout(() => { feedback.style.opacity = '0'; }, 2000);
+    }
+  }).catch(() => {
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    const feedback = document.getElementById('copyFeedback');
+    if (feedback) {
+      feedback.style.opacity = '1';
+      setTimeout(() => { feedback.style.opacity = '0'; }, 2000);
+    }
+  });
+}
+
+// ─── 设置面板 ────────────────────────────────────
+
+function toggleSettings() {
+  const overlay = document.getElementById('settingsOverlay');
+  const isOpen = overlay.classList.contains('open');
+  if (isOpen) {
+    overlay.classList.remove('open');
+  } else {
+    populateSettingsForm();
+    overlay.classList.add('open');
+  }
+}
+
+function populateSettingsForm() {
+  const builder = window.PBLPathBuilder;
+  const cfg = builder.getLLMConfig();
+  const providers = builder.providers;
+
+  // 填充服务商下拉
+  const providerSel = document.getElementById('providerSelect');
+  providerSel.innerHTML = providers.map(p => 
+    `<option value="${p.id}" ${p.id === cfg.providerId ? 'selected' : ''}>${p.name}</option>`
+  ).join('');
+
+  onProviderChange();
+
+  // 填充已保存的值
+  document.getElementById('apiKeyInput').value = cfg.apiKey || '';
+  document.getElementById('baseUrlInput').value = cfg.baseUrl || '';
+}
+
+function onProviderChange() {
+  const builder = window.PBLPathBuilder;
+  const providerId = document.getElementById('providerSelect').value;
+  const provider = builder.providers.find(p => p.id === providerId) || builder.providers[0];
+
+  // 填充模型下拉
+  const modelSel = document.getElementById('modelSelect');
+  if (provider.models && provider.models.length > 0) {
+    modelSel.innerHTML = provider.models.map(m => 
+      `<option value="${m}" ${m === provider.model ? 'selected' : ''}>${m}</option>`
+    ).join('');
+    modelSel.style.display = 'block';
+  } else {
+    modelSel.innerHTML = '<option value="">输入自定义模型名</option>';
+    modelSel.style.display = 'block';
+  }
+
+  // 更新 Base URL
+  document.getElementById('baseUrlInput').value = provider.baseUrl || '';
+
+  // 提示
+  const hints = {
+    'openrouter-free': '去 openrouter.ai/keys 注册免费拿 Key（1 分钟搞定，送免费额度）',
+    'deepseek': '最便宜，中文理解好。去 platform.deepseek.com 注册。',
+    'openrouter': '聚合多个付费模型。去 openrouter.ai 注册。',
+    'openai': '需要 OpenAI API Key。',
+    'custom': '填写任何 OpenAI 兼容 API 的 Base URL 和 Key。'
+  };
+  const keyInput = document.getElementById('apiKeyInput');
+  keyInput.required = true;
+  keyInput.placeholder = 'sk-...';
+  document.getElementById('keyHint').textContent = hints[providerId] || '';
+}
+
+function saveSettings() {
+  const builder = window.PBLPathBuilder;
+  const providerId = document.getElementById('providerSelect').value;
+  const model = document.getElementById('modelSelect').value;
+  const apiKey = document.getElementById('apiKeyInput').value.trim();
+  const baseUrl = document.getElementById('baseUrlInput').value.trim();
+
+  builder.setLLMConfig({
+    providerId,
+    model,
+    apiKey,
+    baseUrl
+  });
+
+  toggleSettings();
+}
+
+// ─── 初始化进度UI ─────────────────────────────
+function updateInitProgress(pct, text) {
+  const bar = document.getElementById('initProgress');
+  const status = document.getElementById('initStatus');
+  if (bar) bar.style.width = pct + '%';
+  if (status) status.textContent = text;
+}
+
+function showInitDone(nodeCount, pathCount, elapsed) {
+  const bar = document.getElementById('initBar');
+  const title = document.getElementById('initTitle');
+  const status = document.getElementById('initStatus');
+  if (bar) bar.classList.add('done');
+  if (title) title.textContent = `✅ 知识图谱网络就绪`;
+  if (status) status.textContent = `${nodeCount} 个知识节点 · ${pathCount} 条路径已预计算 · ${elapsed}ms`;
+  document.getElementById('initProgress').style.width = '100%';
+  // 3秒后自动折叠
+  setTimeout(() => { if (bar) bar.style.display = 'none'; }, 3000);
+}
+
+// ─── 加载节点数据（给选择器用） ──────────────
+async function loadAllNodes() {
+  if (nodesLoaded) return allNodes;
+  const response = await fetch('./data/nodes-selector.json?t=' + Date.now());
+  allNodes = await response.json();
+  nodesLoaded = true;
+  return allNodes;
+}
+
+// ─── 选择器相关 ─────────────────────────────────
+function filterNodesBySubject() {
+  currentSubject = document.getElementById('subjectFilter').value;
+  updateNodeList();
+}
+
+function filterNodesByGrade() {
+  currentGrade = document.getElementById('gradeFilter').value;
+  updateNodeList();
+}
+
+function updateNodeList() {
+  const nodeSelect = document.getElementById('nodeSelect');
+  let filtered = allNodes;
+
+  if (currentSubject !== 'all') {
+    filtered = filtered.filter(n => n.subject === currentSubject);
+  }
+  if (currentGrade !== 'all') {
+    filtered = filtered.filter(n => {
+      const g = n.grade;
+      if (currentGrade === 'elementary') return g >= 1 && g <= 6;
+      if (currentGrade === 'middle') return g >= 7 && g <= 9;
+      if (currentGrade === 'high') return g >= 10 && g <= 12;
+      return true;
+    });
+  }
+
+  filtered.sort((a, b) => {
+    if (a.grade !== b.grade) return a.grade - b.grade;
+    return a.name.localeCompare(b.name, 'zh-CN');
+  });
+
+  nodeSelect.innerHTML = '';
+  if (filtered.length === 0) {
+    nodeSelect.innerHTML = '<option value="">该学科/年级暂无知识点</option>';
+    return;
+  }
+
+  nodeSelect.innerHTML = `<option value="">请选择知识点 (共${filtered.length}个)</option>`;
+
+  const gradeGroups = {};
+  filtered.forEach(node => {
+    const g = node.grade || 0;
+    if (!gradeGroups[g]) gradeGroups[g] = [];
+    gradeGroups[g].push(node);
+  });
+
+  Object.keys(gradeGroups).sort((a, b) => a - b).forEach(grade => {
+    const g = parseInt(grade);
+    const gradeLabel = g === 0 ? '通识' :
+                       g <= 6 ? `小学${g}年级` :
+                       g <= 9 ? `初中${g-6}年级` :
+                       `高中${g-9}年级`;
+
+    const optgroup = document.createElement('optgroup');
+    optgroup.label = gradeLabel;
+
+    gradeGroups[grade].forEach(node => {
+      const option = document.createElement('option');
+      option.value = node.id;
+      option.textContent = node.name;
+      optgroup.appendChild(option);
+    });
+    nodeSelect.appendChild(optgroup);
+  });
+}
+
+// ─── 显示学习路径（即时，从缓存） ────────────
+async function showPathForNode() {
+  const nodeSelect = document.getElementById('nodeSelect');
+  const nodeId = nodeSelect.value || new URLSearchParams(window.location.search).get('node');
+
+  if (!nodeId) {
+    alert('请先选择知识点');
+    return;
+  }
+
+  const container = document.getElementById('learning-path-container');
+
+  if (!systemReady) {
+    container.innerHTML = '<div class="loading">⏳ 系统正在初始化，请稍候...</div>';
+    // 等待初始化完成
+    await window.TeachAnyLearningPath.initialize();
+  }
+
+  // 从缓存即时显示（已预计算）
+  window.TeachAnyLearningPath.renderPathVisualization(nodeId, 'learning-path-container');
+  history.pushState(null, '', `?node=${nodeId}`);
+}
+
+// ─── 选择即显示：监听下拉框变化 ────────────────
+function onNodeSelectChange() {
+  const nodeSelect = document.getElementById('nodeSelect');
+  if (nodeSelect.value) {
+    showPathForNode();
+  }
+}
+
+// ─── 页面加载：并行初始化 ───────────────────────
+const urlParams = new URLSearchParams(window.location.search);
+const nodeIdFromURL = urlParams.get('node');
+
+window.addEventListener('DOMContentLoaded', async () => {
+  const t0 = performance.now();
+
+  // PBL 输入框回车触发
+  document.getElementById('pblGoalInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      analyzePBLGoal();
+    }
+  });
+
+  // 点击设置弹窗外部关闭
+  document.getElementById('settingsOverlay').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) toggleSettings();
+  });
+
+  // 点击图谱外部关闭详情面板（延迟检测，避免按钮点击事件冲突）
+  document.addEventListener('mousedown', (e) => {
+    const panel = document.getElementById('nodeDetailPanel');
+    if (panel.classList.contains('open') && !panel.contains(e.target) && !e.target.closest('svg')) {
+      closeNodeDetail();
+    }
+  });
+
+  // 预加载 PBL 索引（后台静默）
+  window.PBLPathBuilder.loadUnifiedIndex().catch(e => 
+    console.warn('[PBL] 后台预加载索引失败:', e.message)
+  );
+
+  // 第1步：加载选择器数据
+  updateInitProgress(10, '加载知识节点数据...');
+  const nodeSelect = document.getElementById('nodeSelect');
+  nodeSelect.innerHTML = '<option value="">⏳ 正在加载...</option>';
+
+  await loadAllNodes();
+  updateInitProgress(30, `已加载 ${allNodes.length} 个知识节点`);
+  updateNodeList();
+
+  // 添加选择即显示的事件监听
+  nodeSelect.addEventListener('change', onNodeSelectChange);
+
+  // 第2步：初始化学习路径系统（加载图谱网络 + 预计算路径）
+  updateInitProgress(40, '加载知识图谱网络...');
+
+  try {
+    const sys = window.TeachAnyLearningPath;
+    
+    // 简单的进度模拟(因为无法直接监听内部步骤)
+    const progressInterval = setInterval(() => {
+      const currentWidth = parseInt(document.getElementById('initProgress').style.width);
+      if (currentWidth < 95) {
+        updateInitProgress(Math.min(currentWidth + 5, 95), '正在处理...');
+      }
+    }, 100);
+    
+    // 执行初始化
+    await sys.initialize();
+    
+    // 完成
+    clearInterval(progressInterval);
+    systemReady = true;
+
+    const totalElapsed = (performance.now() - t0).toFixed(0);
+    showInitDone(sys.nodeIndex.size, sys.pathCache.size, totalElapsed);
+
+    // 第3步：如果URL有参数，自动显示路径
+    if (nodeIdFromURL) {
+      const node = allNodes.find(n => n.id === nodeIdFromURL);
+      if (node) {
+        document.getElementById('subjectFilter').value = node.subject;
+        currentSubject = node.subject;
+
+        if (node.grade >= 1 && node.grade <= 6) {
+          document.getElementById('gradeFilter').value = 'elementary';
+          currentGrade = 'elementary';
+        } else if (node.grade >= 7 && node.grade <= 9) {
+          document.getElementById('gradeFilter').value = 'middle';
+          currentGrade = 'middle';
+        } else if (node.grade >= 10) {
+          document.getElementById('gradeFilter').value = 'high';
+          currentGrade = 'high';
+        }
+
+        updateNodeList();
+        nodeSelect.value = nodeIdFromURL;
+      }
+      // 即时显示
+      sys.renderPathVisualization(nodeIdFromURL, 'learning-path-container');
+    }
+
+  } catch (error) {
+    console.error('[Path] 初始化失败:', error);
+    updateInitProgress(100, '❌ 初始化失败: ' + error.message);
+    document.getElementById('initBar').style.borderColor = '#f87171';
+  }
+});
+</script>
+
+</body>
+</html>

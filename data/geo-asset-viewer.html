@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TeachAny K12 空间资产浏览器</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root {
+  --bg: #0f172a; --surface: #1e293b; --surface2: #334155;
+  --text: #f1f5f9; --text2: #94a3b8; --accent: #38bdf8;
+  --green: #4ade80; --amber: #fbbf24; --rose: #fb7185;
+  --purple: #a78bfa; --cyan: #22d3ee; --orange: #fb923c;
+  --radius: 10px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; height: 100vh; }
+
+/* Layout */
+.app { display: flex; height: 100vh; }
+.sidebar { width: 340px; background: var(--surface); display: flex; flex-direction: column; border-right: 1px solid var(--surface2); z-index: 1000; flex-shrink: 0; }
+.map-wrap { flex: 1; position: relative; }
+#map { width: 100%; height: 100%; background: #1a1a2e; }
+
+/* Sidebar header */
+.sidebar-header { padding: 16px 20px; background: linear-gradient(135deg, #0ea5e9, #6366f1); }
+.sidebar-header h1 { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.sidebar-header p { font-size: 12px; opacity: .8; margin-top: 4px; }
+
+/* Category tabs */
+.tabs { display: flex; border-bottom: 1px solid var(--surface2); background: var(--surface); }
+.tab { flex: 1; padding: 10px 4px; text-align: center; font-size: 12px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--text2); transition: all .2s; }
+.tab:hover { color: var(--text); background: var(--surface2); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* Layer list */
+.layer-list { flex: 1; overflow-y: auto; padding: 8px; }
+.layer-list::-webkit-scrollbar { width: 4px; }
+.layer-list::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 2px; }
+
+.layer-card { background: var(--surface2); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 6px; cursor: pointer; transition: all .2s; border: 1px solid transparent; position: relative; }
+.layer-card:hover { border-color: var(--accent); transform: translateX(2px); }
+.layer-card.active { border-color: var(--accent); background: rgba(56,189,248,.1); }
+.layer-card.loading { opacity: .6; pointer-events: none; }
+
+.layer-top { display: flex; align-items: center; gap: 10px; }
+.layer-icon { font-size: 20px; width: 32px; text-align: center; flex-shrink: 0; }
+.layer-info { flex: 1; min-width: 0; }
+.layer-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.layer-meta { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.layer-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; flex-shrink: 0; }
+
+.layer-desc { font-size: 11px; color: var(--text2); margin-top: 6px; line-height: 1.5; display: none; }
+.layer-card.active .layer-desc { display: block; }
+
+/* Status bar */
+.status-bar { padding: 10px 16px; border-top: 1px solid var(--surface2); font-size: 11px; color: var(--text2); display: flex; justify-content: space-between; background: var(--surface); }
+
+/* Map overlay info */
+.map-info { position: absolute; top: 12px; right: 12px; background: rgba(15,23,42,.92); backdrop-filter: blur(8px); border-radius: var(--radius); padding: 14px 18px; z-index: 999; max-width: 320px; border: 1px solid var(--surface2); display: none; }
+.map-info.show { display: block; animation: fadeIn .3s; }
+.map-info h3 { font-size: 14px; margin-bottom: 6px; color: var(--accent); }
+.map-info p { font-size: 12px; color: var(--text2); line-height: 1.6; }
+.map-info .close { position: absolute; top: 8px; right: 10px; background: none; border: none; color: var(--text2); cursor: pointer; font-size: 16px; }
+
+/* Legend */
+.map-legend { position: absolute; bottom: 16px; right: 12px; background: rgba(15,23,42,.88); backdrop-filter: blur(8px); border-radius: var(--radius); padding: 10px 14px; z-index: 999; font-size: 11px; border: 1px solid var(--surface2); }
+.legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.legend-swatch { width: 16px; height: 4px; border-radius: 2px; }
+
+/* Zoom hint */
+.zoom-hint { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); background: rgba(15,23,42,.8); padding: 6px 16px; border-radius: 20px; font-size: 12px; color: var(--text2); z-index: 999; pointer-events: none; transition: opacity .5s; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 768px) { .sidebar { width: 280px; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h1>🌏 K12 空间资产浏览器</h1>
+      <p>TeachAny 开源地理数据 · 点击图层叠加到地图</p>
+    </div>
+    <div class="tabs" id="tabs"></div>
+    <div class="layer-list" id="layerList"></div>
+    <div class="status-bar">
+      <span id="statusText">就绪</span>
+      <span id="layerCount">0 个图层已加载</span>
+    </div>
+  </div>
+
+  <!-- Map -->
+  <div class="map-wrap">
+    <div id="map"></div>
+    <div class="map-info" id="mapInfo">
+      <button class="close" onclick="document.getElementById('mapInfo').classList.remove('show')">✕</button>
+      <h3 id="infoTitle"></h3>
+      <p id="infoContent"></p>
+    </div>
+    <div class="map-legend" id="mapLegend" style="display:none"></div>
+    <div class="zoom-hint" id="zoomHint">滚轮缩放 · 拖拽平移 · 点击图层</div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// Data Registry
+// ============================================================
+const CATEGORIES = [
+  { id: 'terrain', label: '🗺️ 地形', color: '#94a3b8' },
+  { id: 'admin',   label: '🏛️ 行政', color: '#38bdf8' },
+  { id: 'hydro',   label: '💧 水系', color: '#3b82f6' },
+  { id: 'dynasty', label: '👑 疆域', color: '#a78bfa' },
+  { id: 'history', label: '⚔️ 史迹', color: '#fb7185' },
+];
+
+const LAYERS = [
+  // Terrain
+  { id:'hillshade-color', cat:'terrain', name:'彩色阴影地形底图', icon:'🏔️',
+    path:'geography/hillshade/global-color-hillshade-4k.jpg', type:'image',
+    size:'835KB', source:'Natural Earth SR+HYP', license:'Public Domain',
+    desc:'彩色+阴影融合，绿色=湿润低地，棕色=干旱，灰白=高山。历史/地理课件默认底图。',
+    badge:'⭐ 推荐', badgeColor:'#fbbf24' },
+  { id:'hillshade-gray', cat:'terrain', name:'灰度阴影地形底图', icon:'🌑',
+    path:'geography/hillshade/global-hillshade-4k.jpg', type:'image',
+    size:'586KB', source:'Natural Earth SR', license:'Public Domain',
+    desc:'纯灰度阴影，适合叠加彩色数据层时不干扰配色。', badge:'底图', badgeColor:'#64748b' },
+  { id:'hillshade-relief', cat:'terrain', name:'纯彩色地形底图', icon:'🌈',
+    path:'geography/hillshade/global-color-relief-4k.jpg', type:'image',
+    size:'573KB', source:'Natural Earth HYP', license:'Public Domain',
+    desc:'Cross-blended Hypsometric Tints，颜色随气候带和海拔自然过渡。', badge:'底图', badgeColor:'#64748b' },
+
+  // Admin
+  { id:'china-provinces', cat:'admin', name:'中国省级行政区划', icon:'🇨🇳',
+    path:'geography/admin-boundaries/china-provinces.json', type:'polygon',
+    size:'568KB', features:35, source:'Natural Earth', license:'Public Domain',
+    desc:'34个省级行政区 + 台湾省，含省名、面积等属性。',
+    style:{ color:'#38bdf8', weight:1.5, fillColor:'#38bdf8', fillOpacity:0.08 },
+    badge:'35省', badgeColor:'#0ea5e9' },
+  { id:'china-lite', cat:'admin', name:'中国省级（极简版）', icon:'📍',
+    path:'geography/modern-china/provinces-ultra-lite.json', type:'polygon',
+    size:'27KB', features:35, source:'Natural Earth 简化', license:'Public Domain',
+    desc:'极度简化的省级边界，仅 27KB，适合快速加载和示意图。',
+    style:{ color:'#38bdf8', weight:1, fillColor:'#38bdf8', fillOpacity:0.05, dashArray:'4 2' },
+    badge:'27KB', badgeColor:'#22d3ee' },
+  { id:'world-countries', cat:'admin', name:'世界国家边界', icon:'🌍',
+    path:'geography/world/countries.geojson', type:'polygon',
+    size:'250KB', features:180, source:'Natural Earth 简化', license:'Public Domain',
+    desc:'180个国家/地区，轻量级世界地图。',
+    style:{ color:'#64748b', weight:0.8, fillColor:'#475569', fillOpacity:0.06 },
+    badge:'180国', badgeColor:'#64748b', fitBounds:[[-60,-170],[80,180]] },
+  { id:'beijing', cat:'admin', name:'北京市区县', icon:'🏙️',
+    path:'geography/modern-china/beijing.geojson', type:'polygon',
+    size:'100KB', source:'GADM', license:'Public Domain',
+    desc:'北京市各区县行政边界。',
+    style:{ color:'#f97316', weight:1.5, fillColor:'#f97316', fillOpacity:0.1 },
+    badge:'区县', badgeColor:'#f97316', center:[116.4,39.9], zoom:10 },
+  { id:'shanghai', cat:'admin', name:'上海市区县', icon:'🏙️',
+    path:'geography/modern-china/shanghai.geojson', type:'polygon',
+    size:'84KB', source:'GADM', license:'Public Domain',
+    desc:'上海市各区县行政边界。',
+    style:{ color:'#a855f7', weight:1.5, fillColor:'#a855f7', fillOpacity:0.1 },
+    badge:'区县', badgeColor:'#a855f7', center:[121.47,31.23], zoom:10 },
+
+  // Hydro
+  { id:'rivers-china', cat:'hydro', name:'中国河流水系', icon:'🌊',
+    path:'geography/rivers/ne_10m_rivers_china.json', type:'line',
+    size:'4.6MB', features:233, source:'Natural Earth 10m', license:'Public Domain',
+    desc:'233条主要河流，含长江、黄河、珠江、松花江等完整水系。',
+    style:{ color:'#3b82f6', weight:1.5, opacity:0.7 },
+    badge:'233条', badgeColor:'#3b82f6' },
+  { id:'lakes-china', cat:'hydro', name:'中国湖泊', icon:'💎',
+    path:'geography/lakes/ne_10m_lakes_china.json', type:'polygon',
+    size:'1.4MB', features:196, source:'Natural Earth 10m', license:'Public Domain',
+    desc:'196个主要湖泊，含青海湖、鄱阳湖、洞庭湖、太湖等。',
+    style:{ color:'#0ea5e9', weight:1, fillColor:'#0ea5e9', fillOpacity:0.3 },
+    badge:'196个', badgeColor:'#06b6d4' },
+  { id:'coast-china', cat:'hydro', name:'中国海岸线', icon:'🏖️',
+    path:'geography/coastline/ne_10m_coastline_china.json', type:'line',
+    size:'2.8MB', features:273, source:'Natural Earth 10m', license:'Public Domain',
+    desc:'273段海岸线，覆盖渤海、黄海、东海、南海。',
+    style:{ color:'#22d3ee', weight:2, opacity:0.6 },
+    badge:'273段', badgeColor:'#22d3ee' },
+
+  // Dynasty
+  { id:'qin', cat:'dynasty', name:'秦朝疆域 (前221–前206)', icon:'⚔️',
+    path:'geography/historical-china/qin-dynasty.geojson', type:'polygon',
+    size:'926KB', features:183, source:'CHGIS V6', license:'Academic',
+    desc:'秦始皇统一六国后的郡县制行政区划，183个郡县。',
+    style:{ color:'#ef4444', weight:1, fillColor:'#ef4444', fillOpacity:0.15 },
+    badge:'秦', badgeColor:'#ef4444' },
+  { id:'w-han', cat:'dynasty', name:'西汉疆域 (前206–8)', icon:'🏛️',
+    path:'geography/historical-china/west-han-dynasty.geojson', type:'polygon',
+    size:'936KB', features:233, source:'CHGIS V6', license:'Academic',
+    desc:'西汉鼎盛时期（汉武帝）的郡国行政区划。',
+    style:{ color:'#f97316', weight:1, fillColor:'#f97316', fillOpacity:0.15 },
+    badge:'西汉', badgeColor:'#f97316' },
+  { id:'e-han', cat:'dynasty', name:'东汉疆域 (25–220)', icon:'🏛️',
+    path:'geography/historical-china/east-han-dynasty.geojson', type:'polygon',
+    size:'1.1MB', features:440, source:'CHGIS V6', license:'Academic',
+    desc:'东汉时期的郡县行政区划，440个行政单元。',
+    style:{ color:'#eab308', weight:1, fillColor:'#eab308', fillOpacity:0.12 },
+    badge:'东汉', badgeColor:'#eab308' },
+  { id:'tang', cat:'dynasty', name:'唐朝疆域 (618–907)', icon:'👑',
+    path:'geography/historical-china/tang-dynasty.geojson', type:'polygon',
+    size:'954KB', features:225, source:'CHGIS V6', license:'Academic',
+    desc:'唐朝鼎盛时期的州府行政区划，版图辽阔。',
+    style:{ color:'#a855f7', weight:1, fillColor:'#a855f7', fillOpacity:0.15 },
+    badge:'唐', badgeColor:'#a855f7' },
+  { id:'n-song', cat:'dynasty', name:'北宋疆域 (960–1127)', icon:'📜',
+    path:'history/dynasties/north-song-dynasty.geojson', type:'polygon',
+    size:'6KB', features:15, source:'CHGIS V6', license:'Academic',
+    desc:'北宋的路级行政区划，15路。与辽、西夏并立。',
+    style:{ color:'#14b8a6', weight:1.5, fillColor:'#14b8a6', fillOpacity:0.15 },
+    badge:'北宋', badgeColor:'#14b8a6' },
+  { id:'s-song', cat:'dynasty', name:'南宋疆域 (1127–1279)', icon:'📜',
+    path:'history/dynasties/south-song-dynasty.geojson', type:'polygon',
+    size:'5KB', features:14, source:'CHGIS V6', license:'Academic',
+    desc:'南宋偏安江南的路级行政区划，14路。与金朝对峙。',
+    style:{ color:'#06b6d4', weight:1.5, fillColor:'#06b6d4', fillOpacity:0.15 },
+    badge:'南宋', badgeColor:'#06b6d4' },
+  { id:'yuan', cat:'dynasty', name:'元朝疆域 (1271–1368)', icon:'🐎',
+    path:'geography/historical-china/yuan-dynasty.geojson', type:'polygon',
+    size:'997KB', features:237, source:'CHGIS V6', license:'Academic',
+    desc:'元朝行省制度下的行政区划，版图为历代之最。',
+    style:{ color:'#6366f1', weight:1, fillColor:'#6366f1', fillOpacity:0.12 },
+    badge:'元', badgeColor:'#6366f1' },
+  { id:'ming', cat:'dynasty', name:'明朝疆域 (1368–1644)', icon:'🏯',
+    path:'geography/historical-china/ming-dynasty.geojson', type:'polygon',
+    size:'1.0MB', features:233, source:'CHGIS V6', license:'Academic',
+    desc:'明朝两京十三省的府州行政区划。',
+    style:{ color:'#ec4899', weight:1, fillColor:'#ec4899', fillOpacity:0.12 },
+    badge:'明', badgeColor:'#ec4899' },
+  { id:'qing', cat:'dynasty', name:'清朝疆域 (1644–1912)', icon:'🏯',
+    path:'geography/historical-china/qing-dynasty.geojson', type:'polygon',
+    size:'1.8MB', features:627, source:'CHGIS V6', license:'Academic',
+    desc:'清朝全盛时期的府县行政区划，627个行政单元，数据最精细。',
+    style:{ color:'#f43f5e', weight:0.8, fillColor:'#f43f5e', fillOpacity:0.1 },
+    badge:'清', badgeColor:'#f43f5e' },
+
+  // History
+  { id:'battles', cat:'history', name:'历史战役 (30场)', icon:'⚔️',
+    path:'history/battles/major-battles.geojson', type:'point',
+    size:'16KB', features:30, source:'史料整理', license:'Public Domain',
+    desc:'前260年~1948年的30场重要战役，含双方、结果、地形因素。',
+    style:{ radius:6, color:'#ef4444', fillColor:'#ef4444', fillOpacity:0.8, weight:2 },
+    badge:'30场', badgeColor:'#ef4444' },
+  { id:'capitals', cat:'history', name:'历代都城 (25座)', icon:'🏰',
+    path:'history/cities/ancient-capitals.geojson', type:'point',
+    size:'11KB', features:25, source:'CHGIS + 史料', license:'Academic',
+    desc:'从西周镐京到民国南京的25座都城，含朝代和时间。',
+    style:{ radius:7, color:'#fbbf24', fillColor:'#fbbf24', fillOpacity:0.9, weight:2 },
+    badge:'25座', badgeColor:'#fbbf24' },
+  { id:'strategic', cat:'history', name:'战略要地 (20处)', icon:'🛡️',
+    path:'history/cities/strategic-locations.geojson', type:'point',
+    size:'9.7KB', features:20, source:'CHGIS + 史料', license:'Academic',
+    desc:'函谷关、山海关、剑门关等20处军事要地和交通枢纽。',
+    style:{ radius:5, color:'#fb923c', fillColor:'#fb923c', fillOpacity:0.8, weight:2 },
+    badge:'20处', badgeColor:'#fb923c' },
+];
+
+// ============================================================
+// App State
+// ============================================================
+let map, activeLayers = {}, activeTab = 'terrain', loadedCount = 0;
+const BASE = 'geography/hillshade/global-color-hillshade-4k.jpg';
+
+// ============================================================
+// Initialize Map
+// ============================================================
+function initMap() {
+  // 使用 EPSG:4326（等距圆柱投影），与 hillshade 图片投影一致
+  // GeoJSON (WGS84) 也是 4326，三者统一，无变形
+  map = L.map('map', {
+    crs: L.CRS.EPSG4326,
+    center: [35, 105], zoom: 3, minZoom: 1, maxZoom: 10,
+    zoomControl: false, attributionControl: false,
+    maxBounds: [[-90, -240], [90, 240]],
+    maxBoundsViscosity: 0.8
+  });
+  L.control.zoom({ position: 'bottomright' }).addTo(map);
+  L.control.attribution({ position: 'bottomleft', prefix: false })
+    .addAttribution('数据: <a href="https://naturalearthdata.com">Natural Earth</a> · <a href="https://chgis.fas.harvard.edu">CHGIS V6</a>')
+    .addTo(map);
+
+  // Hillshade 底图（EPSG:4326 等距圆柱，与 CRS 匹配，无变形）
+  const bounds = [[-90, -180], [90, 180]];
+  L.imageOverlay(BASE, bounds, { opacity: 1, className: 'hillshade-base' }).addTo(map);
+
+  // Fade zoom hint
+  setTimeout(() => { const h = document.getElementById('zoomHint'); if(h) h.style.opacity = '0'; }, 4000);
+}
+
+// ============================================================
+// Render UI
+// ============================================================
+function renderTabs() {
+  const el = document.getElementById('tabs');
+  el.innerHTML = CATEGORIES.map(c =>
+    `<div class="tab${c.id===activeTab?' active':''}" onclick="switchTab('${c.id}')">${c.label}</div>`
+  ).join('');
+}
+
+function switchTab(catId) {
+  activeTab = catId;
+  renderTabs();
+  renderLayers();
+}
+
+function renderLayers() {
+  const el = document.getElementById('layerList');
+  const items = LAYERS.filter(l => l.cat === activeTab);
+  el.innerHTML = items.map(l => {
+    const isActive = !!activeLayers[l.id];
+    return `<div class="layer-card${isActive?' active':''}" id="card-${l.id}" onclick="toggleLayer('${l.id}')">
+      <div class="layer-top">
+        <span class="layer-icon">${l.icon}</span>
+        <div class="layer-info">
+          <div class="layer-name">${l.name}</div>
+          <div class="layer-meta">${l.size} · ${l.features?l.features+' features · ':''}${l.source}</div>
+        </div>
+        <span class="layer-badge" style="background:${l.badgeColor||'#475569'}; color:#fff">${l.badge||l.cat}</span>
+      </div>
+      <div class="layer-desc">${l.desc}<br><span style="color:#64748b">许可证: ${l.license}</span></div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// Toggle Layer
+// ============================================================
+async function toggleLayer(id) {
+  const layer = LAYERS.find(l => l.id === id);
+  if (!layer) return;
+
+  if (activeLayers[id]) {
+    // Remove
+    map.removeLayer(activeLayers[id]);
+    delete activeLayers[id];
+    loadedCount--;
+    updateStatus(`已移除: ${layer.name}`);
+  } else {
+    // Load
+    const card = document.getElementById('card-' + id);
+    if (card) card.classList.add('loading');
+    updateStatus(`加载中: ${layer.name}...`);
+
+    try {
+      if (layer.type === 'image') {
+        await loadImageLayer(layer);
+      } else {
+        await loadGeoJSONLayer(layer);
+      }
+      loadedCount++;
+      updateStatus(`已加载: ${layer.name}`);
+    } catch (e) {
+      updateStatus(`❌ 加载失败: ${layer.name} (${e.message})`);
+      console.error(e);
+    }
+    if (card) card.classList.remove('loading');
+  }
+
+  renderLayers();
+  document.getElementById('layerCount').textContent = `${loadedCount} 个图层已加载`;
+  updateLegend();
+}
+
+async function loadImageLayer(layer) {
+  const bounds = [[-90, -180], [90, 180]];
+  // Remove existing hillshade base first
+  map.eachLayer(l => { if (l instanceof L.ImageOverlay) map.removeLayer(l); });
+  const overlay = L.imageOverlay(layer.path, bounds, { opacity: 1 }).addTo(map);
+  activeLayers[layer.id] = overlay;
+  // Remove other image layers from active
+  LAYERS.filter(l => l.type === 'image' && l.id !== layer.id).forEach(l => {
+    if (activeLayers[l.id]) { delete activeLayers[l.id]; loadedCount--; }
+  });
+}
+
+async function loadGeoJSONLayer(layer) {
+  const res = await fetch(layer.path);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+
+  let leafletLayer;
+  if (layer.type === 'point') {
+    leafletLayer = L.geoJSON(data, {
+      pointToLayer: (f, ll) => L.circleMarker(ll, layer.style),
+      onEachFeature: (f, l) => bindPopup(f, l, layer)
+    }).addTo(map);
+  } else {
+    leafletLayer = L.geoJSON(data, {
+      style: () => layer.style,
+      onEachFeature: (f, l) => bindPopup(f, l, layer)
+    }).addTo(map);
+  }
+
+  activeLayers[layer.id] = leafletLayer;
+
+  // Fit bounds
+  if (layer.center) {
+    map.setView(layer.center, layer.zoom || 8);
+  } else if (layer.fitBounds) {
+    map.fitBounds(layer.fitBounds);
+  } else {
+    try { map.fitBounds(leafletLayer.getBounds().pad(0.1)); } catch {}
+  }
+}
+
+function bindPopup(feature, leafletLayer, layerDef) {
+  const p = feature.properties || {};
+  const name = p.name || p.NAME || p.NAME_ZH || p.admin || p.ADMIN || p.name_zh || '';
+  const extras = [];
+  if (p.year) extras.push(`年份: ${p.year < 0 ? '前'+(-p.year)+'年' : p.year+'年'}`);
+  if (p.dynasty) extras.push(`朝代: ${p.dynasty}`);
+  if (p.sides) extras.push(`双方: ${Array.isArray(p.sides) ? p.sides.join(' vs ') : p.sides}`);
+  if (p.result) extras.push(`结果: ${p.result}`);
+  if (p.terrainFactor) extras.push(`地形: ${p.terrainFactor}`);
+  if (p.type) extras.push(`类型: ${p.type}`);
+  if (p.description) extras.push(p.description);
+
+  const html = `<div style="max-width:220px">
+    <strong style="font-size:13px">${name || '(无名称)'}</strong>
+    ${extras.length ? '<div style="font-size:11px;color:#666;margin-top:4px;line-height:1.5">'+extras.join('<br>')+'</div>' : ''}
+    <div style="font-size:10px;color:#999;margin-top:4px">数据源: ${layerDef.source}</div>
+  </div>`;
+
+  leafletLayer.bindPopup(html, { maxWidth: 260 });
+
+  if (layerDef.type === 'point') {
+    leafletLayer.on('mouseover', function() { this.openPopup(); });
+  }
+}
+
+// ============================================================
+// Legend & Status
+// ============================================================
+function updateLegend() {
+  const el = document.getElementById('mapLegend');
+  const active = Object.keys(activeLayers).map(id => LAYERS.find(l => l.id === id)).filter(Boolean).filter(l => l.type !== 'image');
+  if (active.length === 0) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  el.innerHTML = '<div style="font-weight:600;margin-bottom:6px;font-size:12px">图例</div>' +
+    active.map(l => {
+      const c = l.style.color || l.style.fillColor || '#888';
+      return `<div class="legend-item">
+        <span class="legend-swatch" style="background:${c}; ${l.type==='point'?'width:8px;height:8px;border-radius:50%':''}"></span>
+        <span>${l.name}</span>
+      </div>`;
+    }).join('');
+}
+
+function updateStatus(text) {
+  document.getElementById('statusText').textContent = text;
+}
+
+// ============================================================
+// Init
+// ============================================================
+initMap();
+renderTabs();
+renderLayers();
+// Auto-load default hillshade
+activeLayers['hillshade-color'] = null; // mark as conceptually active (base layer)
+loadedCount = 1;
+document.getElementById('layerCount').textContent = '1 个图层已加载';
+renderLayers();
+</script>
+</body>
+</html>
