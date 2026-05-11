@@ -28,8 +28,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Add .nojekyll
-        run: touch .nojekyll
+      - name: Build site
+        run: |
+          mkdir -p _site
+          # 用 rsync 排除 .git 等目录
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='_site' \
+            --exclude='node_modules' \
+            --exclude='.codebuddy' \
+            --exclude='.DS_Store' \
+            ./ _site/
+          touch _site/.nojekyll
+          echo "总文件数: $(find _site -type f | wc -l)"
+          echo "总大小: $(du -sh _site | cut -f1)"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -37,7 +50,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: ./_site
 
       - name: Deploy to GitHub Pages
         id: deployment
