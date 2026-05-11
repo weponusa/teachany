@@ -24,7 +24,7 @@
 /* ─── 常量 ────────────────────────────────────── */
 const HUB_REGISTRY_URL = './registry.json';
 const HUB_COMMUNITY_URL = './community/index.json';
-const HUB_CACHE_KEY = 'teachany_hub_cache_v2'; // v2: 强制刷新含英国革命课件
+const HUB_CACHE_KEY = 'teachany_hub_cache_v3';
 const HUB_CACHE_TTL = 15 * 60 * 1000; // 15 分钟
 
 /* ─── 内部状态 ────────────────────────────────── */
@@ -109,11 +109,8 @@ async function _doInit() {
         fetchJSON(HUB_REGISTRY_URL),
         fetchJSON(HUB_COMMUNITY_URL),
       ]);
-
       registryData = regResult.status === 'fulfilled' ? regResult.value : { courses: [] };
       communityData = comResult.status === 'fulfilled' ? comResult.value : { courses: [] };
-
-      // 写入缓存
       setHubCache(registryData, communityData);
       console.log('[CoursewareHub] ✅ 从服务器加载数据');
     }
@@ -126,7 +123,7 @@ async function _doInit() {
       subject: c.subject || '',
       grade: c.grade || 0,
       emoji: c.emoji || '📚',
-      likes: 0,  // registry 本身无 likes 字段，从 localStorage 或 community 合并
+      likes: 0,
       source: c.status === 'official' ? SOURCE.OFFICIAL : SOURCE.COMMUNITY_REG,
       url: `./${c.path}/index.html`,
       path: c.path || '',
@@ -146,8 +143,8 @@ async function _doInit() {
       emoji: '🌐',
       likes: c.likes || 0,
       source: SOURCE.COMMUNITY_SHARED,
-      url: c.download_url || '',
-      path: '',
+      url: c.download_url || (c.path ? `./${c.path}/index.html` : `./community/${c.id}/index.html`),
+      path: c.path || '',
       has_tts: false,
       has_video: false,
       author: c.author || '',

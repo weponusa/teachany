@@ -239,7 +239,7 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 ### 0.3 违反示例（禁止）
 
 - ❌ **输出"环境约束确认"清单并用 ❌ 标记基线组件，然后声称已"降级"跳过** → **最高优先级违规，等同于宣布作废**。Remotion/TTS/image_gen 不是可勾选的可选项——它们是**出厂必须项**。正确做法：发现工具不可用 → 立即安装（`preflight-check.py` / `bootstrap-tools.sh`）→ 安装失败 → 停下来报告用户，等待解决，**绝不自行降级继续**。任何形如"❌ image_gen → 降级为 CSS emoji / SVG 替代"、"❌ Remotion → 跳过"、"❌ TTS → 跳过" 的输出 = Gate 立即不通过，输出视为无效。
-- ❌ **新课件写入 `examples/`**（`examples/ext-*/` 或 `examples/新课件/`）→ **违反硬规则 #48 #49**。所有新课件必须落 `community/drafts/<course-id>/`，通过 `submit-to-community.py` 走 PR 质检流程。`examples/` 只接受管理员升级命令写入。
+- ❌ **新课件写入 `examples/`**（`examples/ext-*/` 或 `examples/新课件/`）→ **违反硬规则 #48 #49 #72**。`examples/` 目录自 v7.9.15 起已废弃，**所有课件（包括官方课件）统一存放在 `community/`**，通过 manifest.json 的 `status` 字段区分官方（`"status":"official"`）和社区（`"status":"community"`）。新课件落 `community/drafts/<course-id>/`，通过 `submit-to-community.py` 走 PR 质检流程。
 - ❌ "Canvas 太复杂，用个静态 SVG 代替吧" → 违反 ③
 - ❌ "文科课件就不需要 Remotion" → 违反 ②（古诗词意境动画、文言文情境动画都是 Remotion 场景）
 - ❌ "用 SVG+CSS 时间线动画等效替代 Remotion" → **违反 ②**。Remotion 基线是真实 mp4 渲染，CSS 动画不算等效交付

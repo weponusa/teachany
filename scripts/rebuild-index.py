@@ -41,13 +41,15 @@ from collections import defaultdict
 import copy
 
 # 需要扫描的课件目录；每个项是 (目录, 是否 official 候选)
-# v6.1: examples/ 仍是官方通道，community/ 加入扫描（skip drafts/ 和 pending/）
+# v7.9.15: 统一只扫 community/，官方/社区用 manifest.json 的 status 字段区分
+# examples/ 目录已废弃，所有课件统一在 community/
 COURSE_DIRS = [
-    ('examples',  True),   # 官方示例课件
-    ('community', False),  # 社区课件（PR 合并后进这里）
+    ('community', False),  # 全部课件，status=official 为官方，status=community 为社区
 ]
 
 # community/ 下忽略的子目录（这些不是课件）
+
+
 COMMUNITY_SKIP = {'drafts', 'pending', 'README.md'}
 
 # v6.2: 图片后缀白名单
@@ -159,13 +161,11 @@ def detect_images(course_dir: Path):
 
 
 def scan_courses():
-    """扫描 examples/ 和 community/ 下所有实际存在的课件
+    """扫描 community/ 下所有实际存在的课件（v7.9.15：统一单目录）
 
     返回: { course_id: (manifest_dict, source_dir) }
-    source_dir: 'examples' 或 'community'
-    同名冲突时 examples/ 优先
     """
-    courses = {}  # course_id -> (manifest, source_dir)
+    courses = {}
     for base_dir, _is_official in COURSE_DIRS:
         base = Path(base_dir)
         if not base.exists():
@@ -187,12 +187,6 @@ def scan_courses():
             except json.JSONDecodeError:
                 print(f"  ⚠️  {base_dir}/{d.name}: manifest.json 格式错误，跳过")
                 continue
-            # 冲突处理：如果 examples/ 已有同名，community/ 版本跳过
-            if d.name in courses:
-                existing_src = courses[d.name][1]
-                if existing_src == 'examples':
-                    print(f"  ℹ️  {d.name}: community/ 版本被 examples/ 覆盖（正常）")
-                    continue
             courses[d.name] = (manifest, base_dir)
     return courses
 
@@ -444,16 +438,19 @@ def main():
             # 当前节点的 courses
             current_courses = node.get('courses', [])
 
-            # ⭐ 归一化：剥离 "examples/" 前缀（防止污染，参见 v5.34.5 fix）
+
+            # ⭐ v7.9.15 归一化：examples/ 前缀全部改为 community/（examples/ 已废弃）
             normalized_current = []
             for c in current_courses:
                 if isinstance(c, str) and c.startswith('examples/'):
-                    stripped = c.split('/', 1)[1]
-                    print(f'  🧹 {tree_name}/{node_id}: 归一化 "{c}" → "{stripped}"')
-                    normalized_current.append(stripped)
+                    new_path = 'community/' + c.split('/', 1)[1]
+                    print(f'  🧹 {tree_name}/{node_id}: 迁移 "{c}" → "{new_path}"')
+                    normalized_current.append(new_path)
                     modified = True
                 else:
                     normalized_current.append(c)
+
+
             current_courses = normalized_current
 
             # 过滤掉不存在的课件引用（legacy 也算"存在"）
@@ -656,7 +653,7 @@ def main():
         EXT_MIN_SECTIONS = 5
 
         ext_dirs_scanned = 0
-        for base_dir in ('examples', 'community'):
+        for base_dir in ('community',):
             base = Path(base_dir)
             if not base.exists():
                 continue
