@@ -1,6 +1,6 @@
 ---
 name: TeachAny
-description: "K-12 (elementary/middle/high school, ages 6–18, 小学初中高中) lesson and courseware creation. Use this skill whenever the user — including parents, teachers, or students — wants to build, design, or improve a teaching/learning artifact for a school-age student studying a specific subject topic. Concrete trigger scenarios: (1) creating an interactive web page that explains a school concept (math, physics, chemistry, biology, geography, history, Chinese 语文, English, IT); (2) designing a lesson plan or 一节课, 备课; (3) turning a static PPT or notes into an interactive page; (4) helping a parent/teacher whose specific student (儿子/女儿/学生) can't grasp a topic ('我儿子初二搞不懂浮力'); (5) making educational animations, 教学动画, micro-lectures, or 微课视频; (6) adding TTS narration / hero infographic / AI tutor (AI 学伴) / knowledge graph / 互动地图 to existing lesson content; (7) batch-maintaining a TeachAny courseware repository, debugging modules like TeachAnyTutor/TeachAnyAdaptive/TTSNarrator, working with course IDs (phy-light-refraction, hist-m-tang-dynasty, math-quadratic-vertex-form), publishing to TeachAny gallery, registering nodes, free_mode courseware, ext-* learning paths. Trigger keywords (any one helps): 课件, 互动课件, 教学动画, 教学设计, 给学生上课, 备课, 一节课, 讲一节, 这一课, AI 学伴, 知识图谱, hero 图, TTS 朗读, 互动地图, 历史地图, hillshade, 课标, IB, A-Level, AP, K-12, K12, lesson, courseware, micro-lecture, instructional design. Trigger even without explicit keywords when the request is fundamentally about helping a school-age student learn a specific topic — examples that all qualify: '我儿子初二搞不懂浮力，做个能玩的页面', '下周二讲细胞分裂这节课怎么上', '把这份讲二元一次方程组的 PPT 改造成可互动的', '做一节关于丝绸之路的初中历史课'. Do NOT trigger for: corporate/employee training (企业培训, 员工培训, 销售培训, 产品培训), adult skill education (成人编程教学, 30 岁学 Rust), tutoring chatbots / Q&A 客服 (AI 答疑客服, 24 小时辅导客服), student management systems (选课系统, 排课, 成绩数据分析), generic web/app development unrelated to teaching content, PPT-only document conversion (会议纪要转 PPT), or museum/exhibition pages targeting general visitors rather than K-12 students."
+description: "K-12 (elementary/middle/high school, ages 6–18, 小学初中高中) lesson and courseware creation. Use this skill whenever the user — including parents, teachers, or students — wants to build, design, or improve a teaching/learning artifact for a school-age student studying a specific subject topic. Concrete trigger scenarios: (1) creating an interactive web page that explains a school concept (math, physics, chemistry, biology, geography, history, Chinese 语文, English, IT); (2) designing a lesson plan or 一节课, 备课; (3) turning a static PPT or notes into an interactive page; (4) helping a parent/teacher whose specific student (儿子/女儿/学生) can't grasp a topic ('我儿子初二搞不懂浮力'); (5) making educational animations, 教学动画, micro-lectures, or 微课视频; (6) adding TTS narration / hero infographic / AI tutor (AI 学伴) / knowledge graph / 互动地图 to existing lesson content; (7) batch-maintaining a TeachAny courseware repository, debugging modules like TeachAnyTutor/TeachAnyAdaptive/TTSNarrator, working with course IDs (phy-light-refraction, hist-m-tang-dynasty, math-quadratic-vertex-form), publishing to TeachAny gallery, registering nodes, free_mode courseware, ext-* learning paths; (8) **publishing/registering/pushing an existing courseware to the gallery / knowledge graph / git remote** (发布课件, 注册到知识图谱, 上传到 gallery, 推送到 git, auto-publish, register-and-push, 三仓发布, rebuild-index). Trigger keywords (any one helps): 课件, 互动课件, 教学动画, 教学设计, 给学生上课, 备课, 一节课, 讲一节, 这一课, AI 学伴, 知识图谱, hero 图, TTS 朗读, 互动地图, 历史地图, hillshade, 课标, IB, A-Level, AP, K-12, K12, lesson, courseware, micro-lecture, instructional design, **发布课件, 注册课件, 上传课件, 推送课件, rebuild-index, 自动注册, 自动推送, auto-publish, 三仓发布**. Trigger even without explicit keywords when the request is fundamentally about helping a school-age student learn a specific topic — examples that all qualify: '我儿子初二搞不懂浮力，做个能玩的页面', '下周二讲细胞分裂这节课怎么上', '把这份讲二元一次方程组的 PPT 改造成可互动的', '做一节关于丝绸之路的初中历史课', '把这个课件发布到 gallery', '没有自动注册上传'. Do NOT trigger for: corporate/employee training (企业培训, 员工培训, 销售培训, 产品培训), adult skill education (成人编程教学, 30 岁学 Rust), tutoring chatbots / Q&A 客服 (AI 答疑客服, 24 小时辅导客服), student management systems (选课系统, 排课, 成绩数据分析), generic web/app development unrelated to teaching content, PPT-only document conversion (会议纪要转 PPT), or museum/exhibition pages targeting general visitors rather than K-12 students."
 ---
 
 # TeachAny: K-12 Interactive Courseware Development
@@ -41,11 +41,11 @@ For full Phase-by-Phase instructions, read `references/workflow.md`.
 
 ---
 
-## 16-item baseline (every courseware MUST have these)
+## 17-item baseline (every courseware MUST have these)
 
-A "complete" TeachAny courseware is not just an HTML file. It must ship with all 16 items below — these are non-negotiable because they together create the learning loop. Skipping any one of them produces a courseware that looks finished but doesn't teach.
+A "complete" TeachAny courseware is not just an HTML file. It must ship with all 17 items below — these are non-negotiable because they together create the learning loop **and the publishing loop**. Skipping any one of them produces a courseware that looks finished but doesn't teach OR doesn't reach students (orphaned local files don't count as published).
 
-> **Chinese aliases for triggering**: 16 项基线 / 16 件套 · TTS 旁白 · Remotion 视频 · Canvas 互动 · AI 插画 · Hero 图 · 音频播放器模块 · 知识图谱 · AI 学伴 / AI 导师卡片 · 五件套 (ai-tutor + tutor-card + tts-narrator + section-hints + knowledge-graph) · 顶部品牌栏 · 提及即配图
+> **Chinese aliases for triggering**: 17 项基线 / 17 件套 · TTS 旁白 · Remotion 视频 · Canvas 互动 · AI 插画 · Hero 图 · 音频播放器模块 · 知识图谱 · AI 学伴 / AI 导师卡片 · 五件套 · 顶部品牌栏 · 提及即配图 · 库优先地图 · 自动注册推送 / auto-register-and-push
 
 | # | Item | Chinese alias | Why it matters |
 |:-:|:---|:---|:---|
@@ -64,7 +64,8 @@ A "complete" TeachAny courseware is not just an HTML file. It must ship with all
 | ⑬ | All 5 modules (`ai-tutor` + `tutor-card` + `tts-narrator` + `section-hints` + `knowledge-graph`) loaded in `<head>` and `<body>` | 五件套 / Five-piece suite | They work as a system, not as separate widgets |
 | ⑭ | `manifest.json` with valid `node_id` (must exist in `data/trees/*.json`) | manifest 元信息 / node_id 入树 | Wiring into the global knowledge tree |
 | ⑮ | **Top brand bar**: TeachAny logo + Gallery link (`https://weponusa.github.io/teachany/`) + version (from `<meta name="course-version">`) — pinned above or at top of the hero | 顶部品牌栏 / 顶栏 | Students need to know what platform this is, navigate to other lessons, and see what version they're using. A courseware without brand identity looks like a random web page. |
-| ⑯ | **Real map base for history/geography courseware** — **library-first principle**: ALWAYS check the skill's bundled `assets/maps/` library FIRST (207 files, 104MB: 19 Chinese dynasties, 21 world eras, 6 hillshade variants, country/province boundaries, terrain tiles), only generate new resources if the library has no suitable match. Required output: `hillshade.jpg` terrain base + `boundaries.geojson` administrative borders + `places.geojson` city points — loaded via Leaflet or D3. **Pure hand-drawn SVG outline without terrain shading does NOT count** as a map. | 地图底图 / 地形阴影 / 行政边界 / 库优先 / 调取地图库 | Without terrain + real borders, students can't build spatial intuition. The library exists for reuse — generating new hillshade every time wastes tokens, produces inconsistent visuals, and leaves the library unused. |
+| ⑯ | **Real map base for history/geography courseware** — **library-first principle**: ALWAYS check the skill's bundled `assets/maps/` library FIRST (207 files, 104MB), only generate new if no library match. Output: `hillshade.jpg` + `boundaries.geojson` + `places.geojson` via Leaflet/D3. | 地图底图 / 库优先 | Real terrain + borders for spatial intuition. Library exists for reuse. |
+| ⑰ | **Auto-register and push** (DEFAULT, not optional) — after finishing/modifying ANY courseware, automatically execute the 3-repo publishing chain: (a) commit + push **courseware repo** (full HTML/TTS/assets/videos to `weponusa/teachany-courseware`); (b) generate 11-line redirect + copy `manifest.json` into **opensource repo**, run `python3 scripts/rebuild-index.py` to update registry + knowledge tree, commit + push to `weponusa/teachany`; (c) if skill itself was modified, push **skill repo** changes too. **Skip ONLY when user explicitly says "不要发布/不要上传/只做不推/don't publish/just local"**. | 自动注册推送 / auto-register-and-push / 三仓发布 | A courseware that exists only on your local disk doesn't reach students. The publishing loop is part of "completion", not an afterthought. The whole point of TeachAny is shared coursewareware. |
 
 **Key tooling**:
 - Hero image lookup: `python3 scripts/find-hero.py <course-id>` (CDN-first, image_gen fallback)
@@ -235,40 +236,123 @@ Stop and reconsider if you find yourself doing any of these:
 - ❌ **No top brand bar** (violates ⑮) — every courseware needs a pinned top row with TeachAny logo, Gallery link, and the course version visible. Without it, students have no way back to the gallery or to tell which version they're on.
 - ❌ **Hand-drawn SVG map outline as the "map"** (violates ⑯) — history/geography courseware needs `hillshade.jpg` terrain + real GeoJSON boundaries. A stylized shape with colored dots does not give students spatial intuition; it's decoration, not geography. Use `scripts/make-historical-map.py` or Leaflet + local tiles.
 - ❌ **Generating new hillshade/boundaries without first querying the library** (violates ⑯ library-first principle) — the skill ships with 207 maps in `assets/maps/` covering 19 Chinese dynasties, 21 world eras, and 6 hillshade variants. Always run `python3 scripts/find-map.py <keyword>` BEFORE invoking `image_gen` or `gdaldem`. Generating duplicates wastes tokens and produces visual inconsistency across coursewares.
+- ❌ **Finishing a courseware locally without auto-pushing to all 3 repos** (violates ⑰ auto-publish) — saying "课件做完了" while the files are only on local disk is incomplete. Run the 3-step Auto-publish flow (courseware → opensource redirect + rebuild-index → skill) immediately after every modification. The user should not have to ask "did you push?". Skip ONLY when user explicitly said "不要发布/不要上传/只做不推/don't publish/just local".
+- ❌ **Modifying a courseware (fix bug, add image, swap map) without re-pushing** — even single-file edits trigger ⑰. A courseware that's 2 commits behind production is broken for users. Fix-and-forget is a violation.
+- ❌ **Pushing courseware repo but skipping `rebuild-index.py`** — without rebuild, registry.json and knowledge tree don't pick up the new/changed courseware, so it won't appear in Gallery or knowledge graph even though Pages serves it. ⑦/⑭/⑰ all violated.
+- ❌ **Skipping `git push gitee` because origin succeeded** — dual remote (GitHub + Gitee) is for Mainland China users. If gitee push fails due to DNS/network, log the failure and continue, but don't silently drop it. Re-attempt later.
+- ❌ **Bypassing pre-commit hook silently** — `TEACHANY_SKIP_PRECOMMIT=1` is acceptable ONLY for known false-positives (e.g., hook treating opensource-repo redirect as full courseware). For real failures (incomplete courseware, missing knowledge graph data), fix the courseware first.
 
 ---
 
-## Output requirements
+## Output requirements & Auto-publish flow (baseline ⑰)
 
-A delivered courseware must include:
+A delivered courseware lives across **three repos** and must be pushed to all three before the work is "complete":
 
 ```
-community/<course-id>/                       # in teachany-courseware repo
-├── index.html                               # complete HTML with five-piece suite + 14 baselines
+weponusa/teachany-courseware/community/<course-id>/   # Full courseware (HTML + TTS + assets + videos)
+├── index.html                               # complete HTML with five-piece suite + 17 baselines
 ├── manifest.json                            # node_id, status, has_tts, has_video, etc.
 ├── README.md                                # description, learning objectives
-├── tts/
-│   ├── s01.mp3 ~ s0N.mp3                    # one per data-tts paragraph
-├── assets/
-│   ├── <course-id>-hero.png                 # OR CDN URL in <head>
-│   └── ... (illustrations, etc.)
+├── tts/s01.mp3 ~ s0N.mp3                    # one per data-tts paragraph
+├── assets/<course-id>-hero.png + ...        # illustrations, maps, etc.
 ├── videos/                                  # Remotion-rendered (≥1 MP4 with audio)
 └── (optional) src-remotion/                 # Remotion source if regenerable
 
-teachany-opensource/community/<course-id>/   # in skill repo
-└── index.html                               # 11-line redirect only
+weponusa/teachany/community/<course-id>/     # Skill-repo redirect (11 lines)
+├── index.html                               # 11-line redirect to courseware repo
+└── manifest.json                            # copy of courseware-repo manifest
+
+# (changes also automatically reflected in:)
+weponusa/teachany/registry.json
+weponusa/teachany/data/trees/<curriculum>/<subject>.json   # courses array updated
 ```
 
-After publishing:
+### ⛔ Auto-publish flow (DEFAULT, run after EVERY courseware modification)
+
+After **finishing or modifying** any courseware (creation, content change, asset update, even a single bug fix), automatically run this 3-step chain. Do NOT ask the user "should I publish now?" — just publish, unless the user explicitly told you not to.
 
 ```bash
-# In teachany-opensource repo
-python3 scripts/rebuild-index.py             # rebuilds registry + knowledge tree references
-git add -A && git commit -m "feat: add <course-id>"
-git push origin main && git push gitee main  # dual remote
+# ──────────────────────────────────────────────────────
+# Step 1: Push the courseware repo (full HTML + assets)
+# ──────────────────────────────────────────────────────
+cd ~/CodeBuddy/一次函数/teachany-courseware    # OR wherever the courseware repo is
+git add community/<course-id>/
+git commit -m "feat: <action> <course-id>（<topic>）
+
+- 16 项基线满足
+- <key changes>"
+git push origin main
+git push gitee main 2>&1 || echo "  ℹ️  gitee 推送失败（DNS/网络），origin 已成功"
+
+# ──────────────────────────────────────────────────────
+# Step 2: Sync redirect + register in opensource repo
+# ──────────────────────────────────────────────────────
+cd ~/CodeBuddy/一次函数/teachany-opensource
+
+# 2a. Build 11-line redirect
+mkdir -p community/<course-id>
+cat > community/<course-id>/index.html <<EOF
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<meta http-equiv="refresh" content="0;url=https://weponusa.github.io/teachany-courseware/community/<course-id>/">
+<title>Redirecting...</title>
+</head><body>
+<p>Redirecting to <a href="https://weponusa.github.io/teachany-courseware/community/<course-id>/">课件页</a></p>
+</body></html>
+EOF
+
+# 2b. Copy manifest (rebuild-index.py needs it)
+cp ~/CodeBuddy/一次函数/teachany-courseware/community/<course-id>/manifest.json \
+   community/<course-id>/manifest.json
+
+# 2c. Rebuild registry + knowledge tree references
+python3 scripts/rebuild-index.py
+# This updates: registry.json, data/trees/*/*.json, nodes-selector.json, kg-manifest.json, community/index.json
+
+# 2d. Commit + push
+git add -A
+# pre-commit hook may flag the redirect-only directory as "incomplete courseware";
+# in this case bypass with TEACHANY_SKIP_PRECOMMIT=1 (see anti-pattern below for justification)
+TEACHANY_SKIP_PRECOMMIT=1 git commit -m "feat: 注册 <course-id> 到知识图谱"
+git push origin main
+git push gitee main 2>&1 || echo "  ℹ️  gitee 推送失败（DNS/网络），origin 已成功"
+
+# ──────────────────────────────────────────────────────
+# Step 3: If skill itself was modified, push skill repo
+# ──────────────────────────────────────────────────────
+cd ~/.codebuddy/skills/teachany
+if [ -n "$(git status --short)" ]; then
+  git add skill/  # or specific files
+  git pull origin main --rebase 2>/dev/null
+  git commit -m "feat(skill): <change description>"
+  git push origin main
+fi
 ```
 
-For complete output spec (file naming, manifest schema), read `references/packaging.md`.
+### Verifying the publish
+
+```bash
+# Courseware reachable
+curl -sI "https://weponusa.github.io/teachany-courseware/community/<course-id>/" | head -1
+# Expected: HTTP/2 200 (Pages may take 1-3 minutes to deploy)
+
+# Knowledge tree picked it up
+python3 -c "
+import json
+t = json.load(open('~/CodeBuddy/一次函数/teachany-opensource/data/trees/<curriculum>/<subject>.json'))
+def walk(n):
+    if isinstance(n, dict):
+        if n.get('node_id') == '<course-id>':
+            print('挂载状态:', n.get('courses', []), '/ status:', n.get('status'))
+            return True
+        return any(walk(v) for v in n.values())
+    if isinstance(n, list):
+        return any(walk(x) for x in n)
+walk(t)"
+# Expected: 挂载状态: ['<course-id>'] / status: active
+```
+
+For full publishing details (drafts vs direct push, PR flow via Cloudflare Worker, examples/ deprecation), read `references/packaging.md`.
 
 ---
 
@@ -283,7 +367,14 @@ For complete output spec (file naming, manifest schema), read `references/packag
 
 ---
 
-**Version**: v7.10.0 · **Last update**: 2026-05-12 · See `CHANGELOG.md` for history.
+**Version**: v7.10.1 · **Last update**: 2026-05-12 · See `CHANGELOG.md` for history.
+
+**v7.10.1 changes** (auto-publish as baseline ⑰):
+- Baseline expanded from 16 → 17 items: ⑰ "Auto-register and push" is now a hard requirement
+- After ANY courseware creation/modification, must auto-push to 3 repos: courseware (full), opensource (redirect + rebuild-index), skill (if modified)
+- Added "Output requirements & Auto-publish flow" section with copy-paste-ready 3-step shell sequence
+- New anti-patterns: "finishing without auto-push", "fix-and-forget", "push without rebuild-index", "skipping gitee silently", "blind TEACHANY_SKIP_PRECOMMIT bypass"
+- Skip auto-publish ONLY when user explicitly says "不要发布/只做不推/don't publish"
 
 **v7.10.0 changes** (library-first map sourcing):
 - ⑯ Map baseline now requires querying the bundled library (`assets/maps/`, 207 files, 104 MB) before generating new resources
