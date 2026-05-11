@@ -3,44 +3,75 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - '.gitignore'
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout main
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Deploy gh-pages via git
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Prepare static site
         run: |
           set -e
+          echo "=== 准备部署文件 ==="
+          
+          # 创建输出目录
+          mkdir -p _site
+          
+          # 复制所有 HTML 文件
+          cp *.html _site/ 2>/dev/null || true
+          
+          # 复制 JSON 数据文件
+          cp registry.json _site/ 2>/dev/null || true
+          cp registry-v2.json _site/ 2>/dev/null || true
+          cp manifest.json _site/ 2>/dev/null || true
+          cp courseware-registry.json _site/ 2>/dev/null || true
+          
+          # 复制必需目录
+          for dir in scripts data assets community gallery styles; do
+            [ -d "$dir" ] && cp -r "$dir" _site/
+          done
+          
+          # .nojekyll 确保不触发 Jekyll 构建
+          touch _site/.nojekyll
+          
+          echo "=== 部署内容 ==="
+          echo "HTML 文件: $(ls _site/*.html 2>/dev/null | wc -l)"
+          echo "registry.json: $([ -f _site/registry.json ] && echo YES || echo NO)"
+          echo "registry-v2.json: $([ -f _site/registry-v2.json ] && echo YES || echo NO)"
+          echo "unified-loader.js REGISTRY_URL: $(grep REGISTRY_URL _site/scripts/unified-loader.js 2>/dev/null | head -1)"
+          echo "总文件数: $(find _site -type f | wc -l)"
 
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
 
-          # 切到 gh-pages 分支（orphan 保证干净）
-          git checkout --orphan gh-pages-tmp
-
-          # 删除不需要部署的目录/文件
-          rm -rf .github skill .git
-          find . -name "*.py" -delete
-          find . -name "*.sh" -delete
-
-          # 确保 .nojekyll 存在
-          touch .nojekyll
-
-          echo "📄 index.html 存在: $([ -f index.html ] && echo YES || echo NO)"
-          echo "📄 registry.json 存在: $([ -f registry.json ] && echo YES || echo NO)"
-          echo "📄 文件总数: $(find . -type f | wc -l)"
-
-          git add -A
-          git commit -m "deploy: $(git rev-parse --short HEAD~0 2>/dev/null || echo unknown)"
-
-          # 强制推送 gh-pages
-          git push origin gh-pages-tmp:gh-pages --force
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
