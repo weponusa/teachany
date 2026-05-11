@@ -12,43 +12,35 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout main
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Build _site
+      - name: Deploy gh-pages via git
         run: |
           set -e
-          mkdir -p _site
 
-          # HTML 页面
-          cp index.html _site/
-          cp tree.html _site/
-          cp path.html _site/
-          cp gallery/index.html _site/gallery.html 2>/dev/null || true
-          for f in *.html; do cp "$f" _site/ 2>/dev/null || true; done
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # 核心配置文件
-          cp registry.json _site/
-          cp manifest.json _site/ 2>/dev/null || true
-          cp courseware-registry.json _site/ 2>/dev/null || true
-          touch _site/.nojekyll
+          # 切到 gh-pages 分支（orphan 保证干净）
+          git checkout --orphan gh-pages-tmp
 
-          # 目录
-          cp -r scripts _site/
-          cp -r data    _site/
-          [ -d styles ]      && cp -r styles      _site/
-          [ -d assets ]      && cp -r assets      _site/
-          [ -d gallery ]     && cp -r gallery     _site/
-          [ -d community ]   && cp -r community   _site/
-          [ -d screenshots ] && cp -r screenshots _site/
+          # 删除不需要部署的目录/文件
+          rm -rf .github skill .git
+          find . -name "*.py" -delete
+          find . -name "*.sh" -delete
 
-          echo "✅ _site 文件数: $(find _site -type f | wc -l)"
-          echo "📄 HTML: $(ls _site/*.html | wc -l) 个"
+          # 确保 .nojekyll 存在
+          touch .nojekyll
 
-      - name: Deploy to gh-pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./_site
-          publish_branch: gh-pages
-          force_orphan: true
+          echo "📄 index.html 存在: $([ -f index.html ] && echo YES || echo NO)"
+          echo "📄 registry.json 存在: $([ -f registry.json ] && echo YES || echo NO)"
+          echo "📄 文件总数: $(find . -type f | wc -l)"
+
+          git add -A
+          git commit -m "deploy: $(git rev-parse --short HEAD~0 2>/dev/null || echo unknown)"
+
+          # 强制推送 gh-pages
+          git push origin gh-pages-tmp:gh-pages --force
