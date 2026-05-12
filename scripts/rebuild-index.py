@@ -536,8 +536,10 @@ def main():
     print('\n✨ 步骤3.5: 填充"其他知识"虚拟树（收纳 free_mode / 未挂载 / ext-* 学习路径推荐课件）...')
     virtual_tree_path = Path('data/trees/other/user-generated.json')
     if virtual_tree_path.exists():
-        # 收集所有官方树中存在的 node_id
+        # 收集所有官方树中存在的 node_id，以及已被官方树挂载的 course_id。
+        # v7.12.1: 未被任何正式树挂载的课件也要“捞回”到其他知识树，避免在 Gallery/检索中失踪。
         all_official_node_ids = set()
+        mounted_course_ids = set()
         for tree_file in tree_files:
             if tree_file == virtual_tree_path:
                 continue
@@ -550,6 +552,13 @@ def main():
                 if isinstance(obj, dict):
                     if 'id' in obj and 'name' in obj:
                         all_official_node_ids.add(obj['id'])
+                    for c in obj.get('courses') or []:
+                        if isinstance(c, str):
+                            mounted_course_ids.add(c.split('/')[-1])
+                        elif isinstance(c, dict):
+                            cid = c.get('id') or c.get('course_id') or c.get('path', '').split('/')[-1]
+                            if cid:
+                                mounted_course_ids.add(cid)
                     for k in ('domains', 'nodes', 'children'):
                         if k in obj:
                             for child in obj[k]:
@@ -562,6 +571,7 @@ def main():
         # 扫描所有有 manifest 的课件，找出应该放进"其他知识"的
         virtual_nodes = []
         orphan_reasons = {'free_mode': 0, 'node_not_found': 0, 'missing_node_id': 0,
+                          'unmounted': 0, 'inquiry_project': 0,
                           'ext_passed': 0, 'ext_rejected': 0}
 
         # v7.9.8 新增：学科前缀映射，用于"简写 node_id"自动探测
@@ -593,8 +603,12 @@ def main():
             grade = manifest.get('grade', 0)
 
             reason = None
+            lesson_type = (manifest.get('lesson_type') or '').strip()
             if is_free:
                 reason = 'free_mode'
+            elif lesson_type == 'inquiry-project':
+                # 探究课可同时挂在正式知识树和“其他知识/探究课”集合中，便于 PBL 入口发现。
+                reason = 'inquiry_project'
             elif not nid:
                 reason = 'missing_node_id'
             elif nid not in all_official_node_ids:
@@ -618,13 +632,18 @@ def main():
                     print(f'  ⚠️ 检测到简写 node_id：{cid} "{nid}" 应为 "{candidate}"')
                     print(f'     → 请修正 manifest.node_id 为 "{candidate}"（课件暂挂"其他知识"）')
                 reason = 'node_not_found'
+            elif cid not in mounted_course_ids:
+                reason = 'unmounted'
 
             if not reason:
                 continue
 
             orphan_reasons[reason] += 1
-            # 虚拟节点 id：free_mode 用 node_id 或 cid；未找到则用 other-<cid>
-            vid = nid if nid else f'other-{cid}'
+            # 虚拟节点 id：为避免与正式树节点 id 冲突，未挂载/探究课统一用 other-<course_id>
+            if reason in ('unmounted', 'inquiry_project'):
+                vid = f'other-{cid}'
+            else:
+                vid = nid if nid else f'other-{cid}'
             virtual_nodes.append({
                 'id': vid,
                 'name': name,
@@ -747,7 +766,9 @@ def main():
         print(f'  ✅ 已填充 {len(virtual_nodes)} 个虚拟节点到 {virtual_tree_path}')
         print(f'     free_mode: {orphan_reasons["free_mode"]}, '
               f'node 未找到: {orphan_reasons["node_not_found"]}, '
-              f'缺 node_id: {orphan_reasons["missing_node_id"]}')
+              f'缺 node_id: {orphan_reasons["missing_node_id"]}, '
+              f'未挂载: {orphan_reasons["unmounted"]}, '
+              f'探究课: {orphan_reasons["inquiry_project"]}')
         if ext_dirs_scanned:
             print(f'     ext-* 学习路径课件: 扫描 {ext_dirs_scanned} 个，'
                   f'质检通过 {orphan_reasons["ext_passed"]}，'
