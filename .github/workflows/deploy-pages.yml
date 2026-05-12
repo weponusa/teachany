@@ -31,21 +31,52 @@ jobs:
           rm -rf _site
           mkdir -p _site
           for dir in assets community data scripts styles gallery pages; do
-            [ -d "$dir" ] && cp -r "$dir" _site/
+            [ -d "$dir" ] && cp -rL "$dir" _site/
           done
           cp *.html _site/ 2>/dev/null || true
           cp *.json _site/ 2>/dev/null || true
+          find _site -type f \( -name "*.py" -o -name "*.pyc" -o -name "*.sh" -o -name "*.cjs" -o -name "*.log" \) -delete 2>/dev/null || true
+          find _site -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+          find _site -type d -name "node_modules" -exec rm -rf {} + 2>/dev/null || true
+          find _site -type l -delete 2>/dev/null || true
           touch _site/.nojekyll
           echo "size=$(du -sh _site | cut -f1)"
           echo "files=$(find _site -type f | wc -l)"
+          for f in index.html tree.html registry.json data/curricula.json data/trees/ib/pyp/who-we-are.json scripts/unified-loader.js; do
+            if [ -f "_site/$f" ]; then
+              echo "✓ $f"
+            else
+              echo "✗ $f MISSING"
+              exit 1
+            fi
+          done
 
-      - name: Deploy incrementally to gh-pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./_site
-          publish_branch: gh-pages
-          keep_files: false
-          user_name: 'github-actions[bot]'
-          user_email: 'github-actions[bot]@users.noreply.github.com'
-          commit_message: 'deploy: ${{ github.event.head_commit.message }}'
+      - name: Deploy _site to gh-pages
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+          DEPLOY_DIR="$(mktemp -d)"
+          git clone --depth 1 --branch gh-pages "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$DEPLOY_DIR" || {
+            git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$DEPLOY_DIR"
+            cd "$DEPLOY_DIR"
+            git checkout --orphan gh-pages
+            git rm -rf . || true
+          }
+
+          cd "$DEPLOY_DIR"
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -a "$GITHUB_WORKSPACE/_site/." .
+          touch .nojekyll
+
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to deploy"
+          else
+            git commit -m "deploy: ${GITHUB_SHA}"
+            git push origin gh-pages
+          fi
