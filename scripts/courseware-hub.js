@@ -24,8 +24,15 @@
 /* ─── 常量 ────────────────────────────────────── */
 const HUB_REGISTRY_URL = './registry.json';
 const HUB_COMMUNITY_URL = './community/index.json';
-const HUB_CACHE_KEY = 'teachany_hub_cache_v3';
+const HUB_COURSEWARE_BASE_URL = 'https://weponusa.github.io/teachany-courseware';
+const HUB_CACHE_KEY = 'teachany_hub_cache_v4'; // v4: registry links direct to teachany-courseware, no migration-page hop
 const HUB_CACHE_TTL = 15 * 60 * 1000; // 15 分钟
+
+function resolveCoursewareUrl(path) {
+  if (!path) return HUB_COURSEWARE_BASE_URL + '/';
+  if (/^https?:\/\//i.test(path)) return path;
+  return HUB_COURSEWARE_BASE_URL + '/' + String(path).replace(/^\/+/, '').replace(/\/$/, '') + '/index.html';
+}
 
 /* ─── 内部状态 ────────────────────────────────── */
 let _registryCourses = [];  // { id, node_id, name, subject, grade, likes, source, url, ... }
@@ -125,7 +132,7 @@ async function _doInit() {
       emoji: c.emoji || '📚',
       likes: 0,
       source: c.status === 'official' ? SOURCE.OFFICIAL : SOURCE.COMMUNITY_REG,
-      url: `./${c.path}/index.html`,
+      url: resolveCoursewareUrl(c.path || `community/${c.id}`),
       path: c.path || '',
       has_tts: c.has_tts || false,
       has_video: c.has_video || false,
@@ -143,7 +150,7 @@ async function _doInit() {
       emoji: '🌐',
       likes: c.likes || 0,
       source: SOURCE.COMMUNITY_SHARED,
-      url: c.download_url || (c.path ? `./${c.path}/index.html` : `./community/${c.id}/index.html`),
+      url: c.download_url || resolveCoursewareUrl(c.path || `community/${c.id}`),
       path: c.path || '',
       has_tts: false,
       has_video: false,

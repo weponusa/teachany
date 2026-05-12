@@ -1154,10 +1154,11 @@ class PBLGraphRenderer {
             if (hit && hit.url) courseUrl = hit.url;
           }
           if (!courseUrl) {
+            const base = 'https://weponusa.github.io/teachany-courseware';
             if (isStr && (courseId.startsWith('examples/') || courseId.startsWith('community/'))) {
-              courseUrl = `./${courseId}/index.html`;
+              courseUrl = `${base}/${courseId.replace(/^\/+/, '').replace(/\/$/, '')}/index.html`;
             } else if (isStr) {
-              courseUrl = `./community/${courseId}/index.html`;
+              courseUrl = `${base}/community/${courseId}/index.html`;
             }
           }
           html += `<a href="${courseUrl}" target="_blank" onclick="event.stopPropagation();" style="display:flex;align-items:center;gap:6px;padding:6px 10px;margin:3px 0;border-radius:6px;font-size:13px;color:#f8fafc;text-decoration:none;background:rgba(148,163,184,0.08);pointer-events:auto;">📋 ${isStr ? courseId.split('/').pop() : courseId}</a>`;
