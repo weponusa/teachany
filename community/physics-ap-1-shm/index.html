@@ -1,0 +1,1456 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AP Physics 1 · 简谐运动 (Simple Harmonic Motion)</title>
+  <link rel="canonical" href="https://weponusa.github.io/teachany/community/physics-ap-1-shm/">
+  <script src="../../scripts/teachany-knowledge-graph.js"></script>
+  <style>
+    :root {
+      --bg: #0a0e27;
+      --card: #111827;
+      --border: #1e3a5f;
+      --accent: #38bdf8;
+      --accent2: #a78bfa;
+      --green: #34d399;
+      --amber: #fbbf24;
+      --red: #f87171;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.7; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px 20px 80px; }
+
+    /* Header */
+    header { text-align: center; padding: 40px 0 32px; border-bottom: 1px solid var(--border); margin-bottom: 36px; }
+    header .badge { display: inline-block; background: var(--accent); color: #000; font-size: 12px; font-weight: 700; padding: 3px 12px; border-radius: 20px; margin-bottom: 12px; letter-spacing: 0.05em; }
+    header h1 { font-size: 2.2rem; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
+    header .subtitle { color: var(--muted); font-size: 1rem; margin-bottom: 16px; }
+    header .meta { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+    header .meta span { display: flex; align-items: center; gap: 5px; }
+
+    /* Nav pills */
+    .nav-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 32px; }
+    .nav-pill { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 14px; text-decoration: none; transition: all 0.2s; }
+    .nav-pill:hover, .nav-pill.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+
+    /* Section */
+    .section { margin-bottom: 40px; }
+    .section-title { font-size: 1.35rem; font-weight: 700; color: var(--accent); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 10px; }
+    .section-title .num { background: var(--accent); color: #000; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; flex-shrink: 0; }
+
+    /* Card */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+    .card h3 { font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+
+    /* Concept grid */
+    .concept-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 16px 0; }
+    .concept-chip { background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.25); border-radius: 8px; padding: 12px 16px; font-size: 14px; }
+    .concept-chip .label { font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; font-weight: 700; }
+    .concept-chip .value { font-size: 16px; font-weight: 700; color: var(--text); }
+    .concept-chip .eq { font-family: 'Times New Roman', serif; font-size: 15px; color: var(--green); }
+
+    /* Canvas container */
+    .sim-container { background: #080d1f; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin: 16px 0; }
+    .sim-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; background: rgba(56,189,248,0.05); border-bottom: 1px solid var(--border); }
+    .sim-title { font-size: 14px; font-weight: 700; color: var(--accent); }
+    .sim-badge { font-size: 11px; background: var(--accent); color: #000; padding: 2px 8px; border-radius: 4px; font-weight: 700; }
+    canvas.sim { display: block; width: 100%; }
+    .sim-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; padding: 16px 20px; background: rgba(0,0,0,0.2); border-top: 1px solid var(--border); }
+    .ctrl-group { display: flex; flex-direction: column; gap: 6px; }
+    .ctrl-group label { font-size: 12px; color: var(--muted); font-weight: 600; letter-spacing: 0.04em; }
+    .ctrl-group input[type=range] { width: 100%; accent-color: var(--accent); }
+    .ctrl-group .ctrl-val { font-size: 13px; color: var(--accent); font-weight: 700; font-family: monospace; }
+    .sim-graphs { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; padding: 16px 20px; background: rgba(0,0,0,0.15); border-top: 1px solid var(--border); }
+    .graph-panel canvas { width: 100%; height: 120px; display: block; }
+    .graph-panel .graph-title { font-size: 11px; color: var(--muted); text-align: center; margin-bottom: 6px; font-weight: 600; letter-spacing: 0.05em; }
+
+    /* Equations */
+    .eq-box { background: rgba(52,211,153,0.06); border: 1px solid rgba(52,211,153,0.2); border-radius: 8px; padding: 16px 20px; margin: 12px 0; font-family: 'Times New Roman', serif; font-size: 17px; line-height: 2; color: var(--green); text-align: center; }
+    .eq-box .main { font-size: 22px; font-weight: 700; }
+    .eq-box .sub { font-size: 14px; color: var(--muted); margin-top: 6px; }
+
+    /* Info box */
+    .info-box { background: rgba(56,189,248,0.06); border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0; padding: 14px 18px; margin: 14px 0; font-size: 14px; color: var(--text); }
+    .info-box.warning { background: rgba(251,191,36,0.06); border-left-color: var(--amber); }
+    .info-box.danger { background: rgba(248,113,113,0.06); border-left-color: var(--red); }
+
+    /* Table */
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+    th { background: rgba(56,189,248,0.08); color: var(--accent); padding: 10px 14px; text-align: left; font-weight: 700; border-bottom: 2px solid var(--border); }
+    td { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    tr:hover td { background: rgba(56,189,248,0.03); }
+
+    /* Quiz */
+    .quiz-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+    .quiz-q { font-size: 16px; font-weight: 700; margin-bottom: 14px; color: var(--text); }
+    .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+    .quiz-opt { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; cursor: pointer; transition: all 0.2s; font-size: 14px; }
+    .quiz-opt:hover { border-color: var(--accent); background: rgba(56,189,248,0.05); }
+    .quiz-opt.correct { border-color: var(--green); background: rgba(52,211,153,0.1); color: var(--green); font-weight: 700; }
+    .quiz-opt.wrong { border-color: var(--red); background: rgba(248,113,113,0.1); color: var(--red); }
+    .quiz-opt input { display: none; }
+    .quiz-feedback { margin-top: 10px; padding: 10px 14px; border-radius: 6px; font-size: 14px; display: none; }
+    .quiz-feedback.show { display: block; }
+    .quiz-feedback.correct { background: rgba(52,211,153,0.1); color: var(--green); border: 1px solid var(--green); }
+    .quiz-feedback.wrong { background: rgba(248,113,113,0.1); color: var(--red); border: 1px solid var(--red); }
+
+    /* AI Tutor Card */
+    .ai-tutor-card { background: linear-gradient(135deg, rgba(56,189,248,0.08), rgba(167,139,250,0.08)); border: 1px solid var(--border); border-radius: 16px; padding: 28px; margin: 24px 0; }
+    .ai-tutor-header { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+    .ai-avatar { width: 48px; height: 48px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+    .ai-tutor-info h3 { font-size: 16px; font-weight: 700; color: var(--text); }
+    .ai-tutor-info span { font-size: 12px; color: var(--muted); }
+    .ai-tutor-msg { background: rgba(0,0,0,0.3); border-radius: 12px; padding: 16px; font-size: 14px; line-height: 1.8; margin-bottom: 14px; }
+    .ai-tutor-msg strong { color: var(--accent); }
+    .ai-tutor-topics { display: flex; flex-wrap: wrap; gap: 8px; }
+    .ai-topic { background: rgba(56,189,248,0.12); border: 1px solid rgba(56,189,248,0.25); border-radius: 20px; padding: 5px 12px; font-size: 12px; color: var(--accent); font-weight: 600; }
+
+    /* Progress bar */
+    .progress-section { position: sticky; top: 0; z-index: 100; background: rgba(10,14,39,0.95); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); padding: 10px 0; margin-bottom: 28px; }
+    .progress-bar { height: 4px; background: rgba(56,189,248,0.15); border-radius: 2px; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; transition: width 0.3s; width: 0%; }
+    .progress-label { font-size: 11px; color: var(--muted); margin-top: 5px; text-align: right; }
+
+    /* Difficulty badge */
+    .diff-badge { display: inline-flex; gap: 3px; }
+    .diff-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
+    .diff-dot.active { background: var(--accent); }
+
+    /* KG node */
+    .kg-node { background: rgba(167,139,250,0.08); border: 1px solid rgba(167,139,250,0.2); border-radius: 10px; padding: 14px 18px; margin: 12px 0; font-size: 13px; }
+    .kg-node strong { color: var(--accent2); }
+    .kg-prereq { margin-top: 8px; font-size: 12px; color: var(--muted); }
+    .kg-prereq a { color: var(--accent); text-decoration: none; }
+    .kg-prereq a:hover { text-decoration: underline; }
+
+    /* Toggle button */
+    .toggle-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+    .toggle-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .toggle-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+    /* Collapsible */
+    .collapsible { background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
+    .collap-header { padding: 14px 20px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-weight: 700; font-size: 15px; transition: background 0.2s; }
+    .collap-header:hover { background: rgba(56,189,248,0.05); }
+    .collap-header .arrow { transition: transform 0.2s; font-size: 12px; color: var(--muted); }
+    .collap-header.open .arrow { transform: rotate(180deg); }
+    .collap-body { display: none; padding: 0 20px 16px; border-top: 1px solid var(--border); }
+    .collap-body.open { display: block; }
+
+    /* Bottom nav */
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(17,24,39,0.97); backdrop-filter: blur(10px); border-top: 1px solid var(--border); padding: 10px 20px; display: flex; justify-content: center; gap: 12px; z-index: 200; }
+    .bn-btn { background: var(--accent); color: #000; border: none; padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
+    .bn-btn.secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+
+    @media (max-width: 640px) {
+      header h1 { font-size: 1.6rem; }
+      .container { padding: 16px 14px 100px; }
+      .nav-pills { gap: 6px; }
+      .nav-pill { padding: 6px 12px; font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="progress-section">
+  <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
+  <div class="progress-label" id="progLabel">阅读进度: 0%</div>
+</div>
+
+<div class="container" id="mainContent">
+
+  <!-- HEADER -->
+  <header>
+    <div class="badge">AP Physics 1 · CRASH COURSE</div>
+    <h1>简谐运动 (Simple Harmonic Motion)</h1>
+    <p class="subtitle">AP Physics 1 | 振动与转动 · Oscillation & Rotation | Grade 11</p>
+    <div class="meta">
+      <span>⏱️ 90 分钟</span>
+      <span>📊 难度：
+        <span class="diff-badge">
+          <span class="diff-dot active"></span>
+          <span class="diff-dot active"></span>
+          <span class="diff-dot active"></span>
+          <span class="diff-dot active"></span>
+          <span class="diff-dot"></span>
+        </span>
+      </span>
+      <span>🔄 交互模拟</span>
+      <span>👤 weponusa</span>
+    </div>
+  </header>
+
+  <!-- KNOWLEDGE GRAPH NODE -->
+  <div class="kg-node">
+    <strong>📍 知识图谱节点</strong>
+    <div id="kg-node-physics-ap-1-shm" data-teachany-kg="physics-ap-1-shm"></div>
+    <div class="kg-prereq">📌 前置知识：<a href="#">physics-ap-1-work-energy（功与能量）</a></div>
+  </div>
+
+  <!-- NAV -->
+  <div class="nav-pills">
+    <a href="#sec1" class="nav-pill active" onclick="scrollToSection('sec1')">🎯 什么是SHM</a>
+    <a href="#sec2" class="nav-pill" onclick="scrollToSection('sec2')">📐 数学描述</a>
+    <a href="#sec3" class="nav-pill" onclick="scrollToSection('sec3')">⚡ 能量</a>
+    <a href="#sec4" class="nav-pill" onclick="scrollToSection('sec4')">🔧 弹簧振子</a>
+    <a href="#sec5" class="nav-pill" onclick="scrollToSection('sec5')">⏳ 单摆</a>
+    <a href="#sec6" class="nav-pill" onclick="scrollToSection('sec6')">🧪 练习</a>
+  </div>
+
+  <!-- SECTION 1: WHAT IS SHM -->
+  <div class="section" id="sec1">
+    <div class="section-title"><span class="num">1</span>什么是简谐运动 (What is SHM?)</div>
+
+    <div class="card">
+      <h3>📖 定义</h3>
+      <p>简谐运动 (Simple Harmonic Motion, SHM) 是最基本、最重要的振动形式。当物体偏离平衡位置时，所受的回复力与位移成正比，且方向指向平衡位置：</p>
+      <div class="eq-box">
+        <div class="main">F = −kx</div>
+        <div class="sub">k: 劲度系数 (N/m) | x: 相对平衡位置的位移 (m)</div>
+      </div>
+      <div class="info-box">
+        ⚡️ 这个"负号"至关重要——它表示回复力总是指向平衡位置，与位移方向相反。这正是简谐运动的本质特征！
+      </div>
+      <p style="margin-top:12px;">SHM 之所以"简单"，是因为它的位移-时间关系可以精确地用正弦或余弦函数描述。这种规律性使它成为理解所有复杂振动的基础。</p>
+    </div>
+
+    <div class="card">
+      <h3>🔑 核心物理量</h3>
+      <div class="concept-grid">
+        <div class="concept-chip">
+          <div class="label">振幅 Amplitude (A)</div>
+          <div class="value">最大位移</div>
+          <div class="eq">单位: m</div>
+        </div>
+        <div class="concept-chip">
+          <div class="label">周期 Period (T)</div>
+          <div class="value">完成一次全振动的时间</div>
+          <div class="eq">单位: s</div>
+        </div>
+        <div class="concept-chip">
+          <div class="label">频率 Frequency (f)</div>
+          <div class="value">每秒完成的振动次数</div>
+          <div class="eq">f = 1/T, 单位: Hz</div>
+        </div>
+        <div class="concept-chip">
+          <div class="label">角频率 Angular Freq. (ω)</div>
+          <div class="value">ω = 2πf = 2π/T</div>
+          <div class="eq">单位: rad/s</div>
+        </div>
+        <div class="concept-chip">
+          <div class="label">相位 Phase (φ)</div>
+          <div class="value">决定初始状态</div>
+          <div class="eq">单位: rad</div>
+        </div>
+        <div class="concept-chip">
+          <div class="label">劲度系数 k</div>
+          <div class="value">弹簧"硬度"</div>
+          <div class="eq">单位: N/m</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🔄 与匀速圆周运动的联系</h3>
+      <p>简谐运动与匀速圆周运动有着深刻的联系。想象一个物体做匀速圆周运动，它的投影在一条直径上所做的运动，就是简谐运动！</p>
+      <div class="info-box">
+        💡 这个"参考圆" (Reference Circle) 方法是分析 SHM 的强大工具——它把抽象的正弦运动映射到具体的圆周运动，从而用几何方法推导 SHM 公式。
+      </div>
+    </div>
+
+    <!-- Interactive: Reference Circle -->
+    <div class="sim-container">
+      <div class="sim-header">
+        <span class="sim-title">🔄 参考圆动画 — SHM 的几何本质</span>
+        <span class="sim-badge">交互</span>
+      </div>
+      <canvas id="refCircleCanvas" class="sim" width="800" height="260" style="height:260px;"></canvas>
+      <div class="sim-controls">
+        <div class="ctrl-group">
+          <label>角速度 ω (rad/s)</label>
+          <input type="range" min="5" max="30" value="15" step="1" id="rcOmega">
+          <span class="ctrl-val" id="rcOmegaVal">ω = 15 rad/s</span>
+        </div>
+        <div class="ctrl-group">
+          <label>振幅 A (m)</label>
+          <input type="range" min="50" max="150" value="100" step="10" id="rcAmp">
+          <span class="ctrl-val" id="rcAmpVal">A = 1.0 m</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="toggle-btn" id="rcPauseBtn" onclick="toggleRefCircle()">⏸ 暂停</button>
+          <button class="toggle-btn" onclick="resetRefCircle()">🔄 重置</button>
+        </div>
+      </div>
+      <div class="sim-graphs">
+        <div class="graph-panel">
+          <div class="graph-title">位移 x(t) vs 时间</div>
+          <canvas id="refCircleXGraph" width="400" height="120"></canvas>
+        </div>
+        <div class="graph-panel">
+          <div class="graph-title">速度 v(t) vs 时间</div>
+          <canvas id="refCircleVGraph" width="400" height="120"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: MATHEMATICAL DESCRIPTION -->
+  <div class="section" id="sec2">
+    <div class="section-title"><span class="num">2</span>数学描述 (Mathematical Description)</div>
+
+    <div class="card">
+      <h3>📐 位移、速度、加速度公式</h3>
+      <p>以余弦函数为例（正弦函数只是相位差 π/2）：</p>
+      <div class="eq-box">
+        <div class="main">x(t) = A cos(ωt + φ)</div>
+        <div class="sub">位移 — 时间关系</div>
+      </div>
+      <div class="eq-box">
+        <div class="main">v(t) = −Aω sin(ωt + φ)</div>
+        <div class="sub">速度 = 位移对时间的一阶导数</div>
+      </div>
+      <div class="eq-box">
+        <div class="main">a(t) = −Aω² cos(ωt + φ) = −ω²x</div>
+        <div class="sub">加速度 = 位移对时间的二阶导数，注意：a ∝ −x 正是 SHM 的定义！</div>
+      </div>
+      <div class="info-box warning">
+        ⚠️ 重要规律：速度最大值 v_max = Aω（在平衡位置，x=0）<br>
+        加速度最大值 a_max = Aω²（在最大位移处，x=±A）
+      </div>
+    </div>
+
+    <!-- SHM Graph Simulator -->
+    <div class="sim-container">
+      <div class="sim-header">
+        <span class="sim-title">📈 SHM 三量同步图 — 位移/速度/加速度</span>
+        <span class="sim-badge">交互</span>
+      </div>
+      <canvas id="shmGraphCanvas" class="sim" width="800" height="300" style="height:300px;"></canvas>
+      <div class="sim-controls">
+        <div class="ctrl-group">
+          <label>振幅 A (m)</label>
+          <input type="range" min="10" max="80" value="50" step="5" id="shmA">
+          <span class="ctrl-val" id="shmAVal">A = 0.5 m</span>
+        </div>
+        <div class="ctrl-group">
+          <label>角频率 ω (rad/s)</label>
+          <input type="range" min="1" max="20" value="8" step="0.5" id="shmW">
+          <span class="ctrl-val" id="shmWVal">ω = 8.0 rad/s</span>
+        </div>
+        <div class="ctrl-group">
+          <label>初相位 φ (rad)</label>
+          <input type="range" min="0" max="628" value="0" step="157" id="shmPhi">
+          <span class="ctrl-val" id="shmPhiVal">φ = 0.0 rad (0°)</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="toggle-btn" id="shmPauseBtn" onclick="toggleSHMGraph()">⏸ 暂停</button>
+          <button class="toggle-btn" onclick="resetSHMGraph()">🔄 重置</button>
+        </div>
+      </div>
+      <div class="sim-graphs" style="grid-template-columns:1fr;">
+        <div class="graph-panel">
+          <div class="graph-title">🔴 红色=x(t) &nbsp; 🔵 蓝色=v(t) &nbsp; 🟢 绿色=a(t)</div>
+          <canvas id="shmMultiGraph" width="800" height="160"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>📊 三大关键结论</h3>
+      <table>
+        <thead><tr><th>结论</th><th>表达式</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>回复力与位移正比反向</td>
+            <td>F = −kx 或 a = −ω²x</td>
+            <td>这是 SHM 的判定条件</td>
+          </tr>
+          <tr>
+            <td>速度与位移相位差 π/2</td>
+            <td>x 最小时 v 最大</td>
+            <td>能量转换的体现</td>
+          </tr>
+          <tr>
+            <td>加速度与位移反相</td>
+            <td>a = −ω²x</td>
+            <td>相位差 π，加速度总指向平衡位置</td>
+          </tr>
+          <tr>
+            <td>周期与振幅无关！</td>
+            <td>T = 2π√(m/k) 或 2π√(L/g)</td>
+            <td>等时性的体现，伽利略的发现</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SECTION 3: ENERGY IN SHM -->
+  <div class="section" id="sec3">
+    <div class="section-title"><span class="num">3</span>能量 (Energy in SHM)</div>
+
+    <div class="card">
+      <h3>⚡ 动能、势能与机械能</h3>
+      <p>在理想SHM中（无摩擦、无阻力），机械能守恒！</p>
+      <div class="eq-box">
+        <div class="main">KE = ½mv² = ½mA²ω²sin²(ωt+φ)</div>
+        <div class="sub">动能 — 随时间周期性变化</div>
+      </div>
+      <div class="eq-box">
+        <div class="main">PE = ½kx² = ½kA²cos²(ωt+φ)</div>
+        <div class="sub">弹性势能 — 也随时间周期性变化</div>
+      </div>
+      <div class="eq-box">
+        <div class="main">E_total = ½kA² = ½mA²ω² = 常数！</div>
+        <div class="sub">机械能守恒 — SHM 最重要的能量特征</div>
+      </div>
+      <div class="info-box">
+        💡 能量视角的威力：无论运动到哪个位置，总有 E = KE + PE = ½kA²。利用这一点可以直接求任意位置的速度：<br>
+        v = ±√[(k/m)(A²−x²)] = ±ω√(A²−x²)
+      </div>
+    </div>
+
+    <!-- Energy Graph -->
+    <div class="sim-container">
+      <div class="sim-header">
+        <span class="sim-title">⚡ 能量转化动画 — KE 与 PE 的此消彼长</span>
+        <span class="sim-badge">交互</span>
+      </div>
+      <canvas id="energyCanvas" class="sim" width="800" height="220" style="height:220px;"></canvas>
+      <div class="sim-controls">
+        <div class="ctrl-group">
+          <label>劲度系数 k (N/m)</label>
+          <input type="range" min="10" max="100" value="50" step="5" id="ek">
+          <span class="ctrl-val" id="ekVal">k = 50 N/m</span>
+        </div>
+        <div class="ctrl-group">
+          <label>振幅 A (m)</label>
+          <input type="range" min="20" max="100" value="60" step="5" id="eA">
+          <span class="ctrl-val" id="eAVal">A = 0.6 m</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="toggle-btn" id="enPauseBtn" onclick="toggleEnergy()">⏸ 暂停</button>
+          <button class="toggle-btn" onclick="resetEnergy()">🔄 重置</button>
+        </div>
+      </div>
+      <div class="sim-graphs" style="grid-template-columns:1fr;">
+        <div class="graph-panel">
+          <div class="graph-title">🔴 KE (动能) &nbsp; 🔵 PE (势能) &nbsp; 🟡 E_total (总能量 = 常数)</div>
+          <canvas id="energyGraph" width="800" height="130"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 4: SPRING-MASS SYSTEM -->
+  <div class="section" id="sec4">
+    <div class="section-title"><span class="num">4</span>弹簧振子 (Spring-Mass System)</div>
+
+    <div class="card">
+      <h3>🔧 弹簧振子公式</h3>
+      <p>弹簧振子是理想SHM的典型实例。胡克定律与惯性结合，产生简谐运动：</p>
+      <div class="eq-box">
+        <div class="main">ω = √(k/m)</div>
+        <div class="sub">角频率 — 由系统固有性质决定</div>
+      </div>
+      <div class="eq-box">
+        <div class="main">T = 2π√(m/k)</div>
+        <div class="sub">周期 — 注意：T 与振幅 A 无关！</div>
+      </div>
+      <div class="eq-box">
+        <div class="main">f = 1/(2π) · √(k/m)</div>
+        <div class="sub">频率</div>
+      </div>
+      <div class="info-box warning">
+        ⚠️ T = 2π√(m/k) 意味着：质量越大，周期越大（越慢）；弹簧越硬（k越大），周期越小（越快）。<br>
+        这个"与振幅无关"的性质叫做<strong>等时性</strong>，是伽利略在比萨大教堂发现的！
+      </div>
+    </div>
+
+    <!-- Spring-Mass Canvas Simulation -->
+    <div class="sim-container">
+      <div class="sim-header">
+        <span class="sim-title">🔧 弹簧振子互动模拟</span>
+        <span class="sim-badge">交互</span>
+      </div>
+      <canvas id="springMassCanvas" class="sim" width="800" height="200" style="height:200px;"></canvas>
+      <div class="sim-controls">
+        <div class="ctrl-group">
+          <label>质量 m (kg)</label>
+          <input type="range" min="1" max="20" value="5" step="0.5" id="smM">
+          <span class="ctrl-val" id="smMVal">m = 5.0 kg</span>
+        </div>
+        <div class="ctrl-group">
+          <label>劲度系数 k (N/m)</label>
+          <input type="range" min="10" max="100" value="40" step="5" id="smK">
+          <span class="ctrl-val" id="smKVal">k = 40 N/m</span>
+        </div>
+        <div class="ctrl-group">
+          <label>初始振幅 A (m)</label>
+          <input type="range" min="10" max="80" value="50" step="5" id="smA">
+          <span class="ctrl-val" id="smAVal">A = 0.5 m</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="toggle-btn" id="smPauseBtn" onclick="toggleSpringMass()">⏸ 暂停</button>
+          <button class="toggle-btn" onclick="resetSpringMass()">🔄 重置</button>
+          <span id="smInfo" style="font-size:13px;color:var(--muted);font-family:monospace;">T = -- s</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🔍 弹簧串并联</h3>
+      <table>
+        <thead><tr><th>连接方式</th><th>等效劲度系数</th><th>周期变化</th></tr></thead>
+        <tbody>
+          <tr><td>并联</td><td>k_eq = k₁ + k₂</td><td>周期变小（变快）</td></tr>
+          <tr><td>串联</td><td>1/k_eq = 1/k₁ + 1/k₂</td><td>周期变大（变慢）</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SECTION 5: SIMPLE PENDULUM -->
+  <div class="section" id="sec5">
+    <div class="section-title"><span class="num">5</span>单摆 (Simple Pendulum)</div>
+
+    <div class="card">
+      <h3>⏳ 单摆公式（小角度近似）</h3>
+      <p>当摆角 θ 很小时（θ &lt; 15°），单摆的运动近似为简谐运动：</p>
+      <div class="eq-box">
+        <div class="main">T = 2π · √(L/g)</div>
+        <div class="sub">周期只与摆长 L 和重力加速度 g 有关，与振幅和质量无关！</div>
+      </div>
+      <div class="eq-box">
+        <div class="main">ω = √(g/L)</div>
+        <div class="sub">角频率</div>
+      </div>
+      <div class="info-box danger">
+        ⚠️ <strong>前提条件：小角度近似</strong><br>
+        只有当 sin θ ≈ θ（θ 用弧度表示）时，单摆才近似做SHM。<br>
+        当 θ = 15° 时，sin(15°) = 0.259，误差约 1.7% — 仍在可接受范围。<br>
+        当 θ = 30° 时，误差约 9.7% — 已经相当显著！
+      </div>
+    </div>
+
+    <!-- Pendulum Canvas Simulation -->
+    <div class="sim-container">
+      <div class="sim-header">
+        <span class="sim-title">⏳ 单摆互动模拟</span>
+        <span class="sim-badge">交互</span>
+      </div>
+      <canvas id="pendulumCanvas" class="sim" width="800" height="280" style="height:280px;"></canvas>
+      <div class="sim-controls">
+        <div class="ctrl-group">
+          <label>摆长 L (m)</label>
+          <input type="range" min="20" max="150" value="100" step="5" id="pendL">
+          <span class="ctrl-val" id="pendLVal">L = 1.0 m</span>
+        </div>
+        <div class="ctrl-group">
+          <label>初始角度 θ₀ (°)</label>
+          <input type="range" min="5" max="45" value="20" step="1" id="pendTheta">
+          <span class="ctrl-val" id="pendThetaVal">θ₀ = 20°</span>
+        </div>
+        <div class="ctrl-group">
+          <label>重力 g (m/s²)</label>
+          <input type="range" min="1" max="20" value="98" step="1" id="pendG">
+          <span class="ctrl-val" id="pendGVal">g = 9.8 m/s²</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="toggle-btn" id="pendPauseBtn" onclick="togglePendulum()">⏸ 暂停</button>
+          <button class="toggle-btn" onclick="resetPendulum()">🔄 重置</button>
+          <span id="pendInfo" style="font-size:13px;color:var(--muted);font-family:monospace;">T = -- s</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Collapsible: Large Angle Pendulum -->
+    <div class="collapsible">
+      <div class="collap-header" onclick="toggleCollap(this)">
+        <span>🔬 大角度单摆 — 非线性效应（拓展内容）</span>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="collap-body">
+        <p>当摆角较大时，单摆不再满足简谐运动条件，其运动方程变为：</p>
+        <div class="eq-box">
+          <div class="main">d²θ/dt² = −(g/L)sinθ</div>
+          <div class="sub">精确方程（无法用初等函数解析求解）</div>
+        </div>
+        <p>大角度下单摆的运动出现以下有趣现象：</p>
+        <ul style="margin:10px 0 10px 20px;font-size:14px;color:var(--text);">
+          <li>周期随振幅增大而增大（不再等时）</li>
+          <li>运动变为非线性，可能出现混沌</li>
+          <li>可用椭圆积分精确求周期：T = 4√(L/g) · K(sin(θ₀/2))</li>
+        </ul>
+        <div class="info-box">💡 这正是物理学的魅力——简单系统在大参数下会产生复杂行为！</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 6: PRACTICE -->
+  <div class="section" id="sec6">
+    <div class="section-title"><span class="num">6</span>练习题 (Practice Problems)</div>
+
+    <!-- AI Tutor -->
+    <div class="ai-tutor-card">
+      <div class="ai-tutor-header">
+        <div class="ai-avatar">🤖</div>
+        <div class="ai-tutor-info">
+          <h3>AI 学伴 · Physics Coach</h3>
+          <span>AP Physics 1 · SHM 专项辅导</span>
+        </div>
+      </div>
+      <div class="ai-tutor-msg">
+        你好！我是你的 AP Physics 1 辅导老师 🎯。简谐运动是 AP Physics 1 中<strong>最数学化</strong>的章节之一，涉及三角函数、图像分析和能量守恒的综合运用。<br><br>
+        学习 SHM 的关键三问：<br>
+        <strong>① 回复力满足 F = −kx 吗？</strong>（这是 SHM 的定义）<br>
+        <strong>② 周期公式是什么？</strong>（弹簧：T=2π√(m/k)；单摆：T=2π√(L/g)）<br>
+        <strong>③ 能量如何转换？</strong>（KE + PE = ½kA² = 常数）<br><br>
+        记住：<strong>速度最大 ↔ 位移为零 ↔ 势能最小 ↔ 动能最大</strong>
+      </div>
+      <div class="ai-tutor-topics">
+        <span class="ai-topic">胡克定律</span>
+        <span class="ai-topic">能量守恒</span>
+        <span class="ai-topic">三角函数</span>
+        <span class="ai-topic">图像分析</span>
+        <span class="ai-topic">等时性</span>
+        <span class="ai-topic">相位关系</span>
+      </div>
+    </div>
+
+    <!-- Quiz 1 -->
+    <div class="quiz-card" id="q1">
+      <div class="quiz-q">📝 第1题：一个弹簧振子的质量 m = 2 kg，劲度系数 k = 200 N/m。它的周期 T 是多少？</div>
+      <div class="quiz-options">
+        <label class="quiz-opt" onclick="selectQuiz(this, 'q1', false)">
+          <input type="radio" name="q1" value="a"> A. T = 0.2π s
+        </label>
+        <label class="quiz-opt" onclick="selectQuiz(this, 'q1', true)">
+          <input type="radio" name="q1" value="b"> B. T = 0.2π s ≈ 0.628 s
+        </label>
+        <label class="quiz-opt" onclick="selectQuiz(this, 'q1', false)">
+          <input type="radio" name="q1" value="c"> C. T = 0.1π s
+        </label>
+        <label class="quiz-opt" onclick="selectQuiz(this, 'q1', false)">
+          <input type="radio" name="q1" value="d"> D. T = 0.4π s
+        </label>
+      </div>
+      <div class="quiz-feedback" id="q1-feedback"></div>
+    </div>
+
+    <!-- Quiz 2 -->
+    <div class="quiz-card" id="q2">
+      <div class="quiz-q">📝 第2题：单摆的周期 T = 2π√(L/g)。若将摆长 L 加长为原来的 4 倍，周期如何变化？</div>
+      <div class="quiz-options">
+        <label class="quiz-opt" onclick="selectQuiz(this, 'q2', false)">
+          <input type="radio" name="q2" value="a"> A. 周期变为原来的 2 倍
+        </label>
+        <label class="quiz-opt" onclick="selectQuiz(this, 'q2', false)">
+          <input type="radio" name="q2" value="b"> B. 周期变为原来的 1/2
+        </label>
+        <label class="quiz-opt" onclick="selectQuiz(this, 'q2', false)">
+          <input type="radio" name="q2" value="c"> C. 周期变为原来的 4 倍
+        </label>
+        <label class="quiz-opt" onclick="selectQuiz(this, 'q2', true)">
+          <input type="radio" name="q2" value="d"> D. 周期变为原来的 √4 = 2 倍
+        </label>
+      </div>
+      <div class="quiz-feedback" id="q2-feedback"></div>
+    </div>
+
+    <!-- Quiz 3 -->
+    <div class="quiz-card" id="q3">
+      <div class="quiz-q">📝 第3题：弹簧振子从平衡位置运动到最大位移处的过程中，以下说法正确的是？</div>
+      <div class="quiz-options">
+        <label class="quiz-opt" onclick="selectQuiz(this, 'q3', false)">
+          <input type="radio" name="q3" value="a"> A. 速度一直增大
+        </label>
+        <label class="quiz-opt" onclick="selectQuiz(this, 'q3', true)">
+          <input type="radio" name="q3" value="b"> B. 速度先增大后减小，在平衡位置速度最大
+        </label>
+        <label class="quiz-opt" onclick="selectQuiz(this, 'q3', false)">
+          <input type="radio" name="q3" value="c"> C. 加速度一直增大
+        </label>
+        <label class="quiz-opt" onclick="selectQuiz(this, 'q3', false)">
+          <input type="radio" name="q3" value="d"> D. 机械能逐渐减小
+        </label>
+      </div>
+      <div class="quiz-feedback" id="q3-feedback"></div>
+    </div>
+
+    <!-- Summary -->
+    <div class="card" style="background:linear-gradient(135deg,rgba(52,211,153,0.08),rgba(56,189,248,0.08));border-color:rgba(52,211,153,0.3);">
+      <h3>📋 章节总结 — SHM 核心公式速记卡</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
+        <div style="background:rgba(0,0,0,0.3);padding:10px 14px;border-radius:6px;font-size:13px;">
+          <strong style="color:var(--accent);">弹簧振子</strong><br>
+          T = 2π√(m/k)<br>
+          ω = √(k/m)<br>
+          F = −kx
+        </div>
+        <div style="background:rgba(0,0,0,0.3);padding:10px 14px;border-radius:6px;font-size:13px;">
+          <strong style="color:var(--accent);">单摆（小角度）</strong><br>
+          T = 2π√(L/g)<br>
+          ω = √(g/L)<br>
+          a = −(g/L)x
+        </div>
+        <div style="background:rgba(0,0,0,0.3);padding:10px 14px;border-radius:6px;font-size:13px;">
+          <strong style="color:var(--accent);">位移-速度-加速度</strong><br>
+          x = A cos(ωt+φ)<br>
+          v = −Aω sin(ωt+φ)<br>
+          a = −ω²x
+        </div>
+        <div style="background:rgba(0,0,0,0.3);padding:10px 14px;border-radius:6px;font-size:13px;">
+          <strong style="color:var(--accent);">能量守恒</strong><br>
+          E = ½kA²<br>
+          v = ±ω√(A²−x²)<br>
+          KE + PE = E（常数）
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<div class="bottom-nav">
+  <button class="bn-btn secondary" onclick="scrollTop()">⬆ 返回顶部</button>
+  <button class="bn-btn" onclick="markComplete()">✅ 标记完成</button>
+</div>
+
+<!-- AI TUTOR CARD (floating) -->
+<div id="tutorCardPlaceholder"></div>
+
+<script>
+// ============================================================
+// PROGRESS TRACKER
+// ============================================================
+const sections = document.querySelectorAll('.section');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const id = e.target.id;
+      document.querySelectorAll('.nav-pill').forEach(p => {
+        p.classList.toggle('active', p.getAttribute('href') === '#'+id);
+      });
+    }
+  });
+}, { threshold: 0.3 });
+sections.forEach(s => observer.observe(s));
+
+function scrollToSection(id) {
+  document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function scrollTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+// Progress bar
+window.addEventListener('scroll', () => {
+  const scrolled = window.scrollY + window.innerHeight;
+  const total = document.documentElement.scrollHeight;
+  const pct = Math.round((scrolled / total) * 100);
+  document.getElementById('progFill').style.width = pct + '%';
+  document.getElementById('progLabel').textContent = '阅读进度: ' + pct + '%';
+});
+
+// ============================================================
+// COLLAPSIBLE
+// ============================================================
+function toggleCollap(el) {
+  el.classList.toggle('open');
+  el.nextElementSibling.classList.toggle('open');
+}
+
+// ============================================================
+// QUIZ
+// ============================================================
+function selectQuiz(el, qId, correct) {
+  const card = document.getElementById(qId);
+  card.querySelectorAll('.quiz-opt').forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o === el) {
+      o.classList.add(correct ? 'correct' : 'wrong');
+    }
+  });
+  const fb = document.getElementById(qId + '-feedback');
+  fb.classList.add('show', correct ? 'correct' : 'wrong');
+  if (qId === 'q1') {
+    fb.innerHTML = correct
+      ? '✅ 正确！T = 2π√(m/k) = 2π√(2/200) = 2π×0.1 = 0.2π s ≈ 0.628 s'
+      : '❌ 错误。T = 2π√(m/k) = 2π√(2/200) = 2π×0.1 = 0.2π s ≈ 0.628 s';
+  } else if (qId === 'q2') {
+    fb.innerHTML = correct
+      ? '✅ 正确！T ∝ √L，L→4L 时，T→2T（周期翻倍）'
+      : '❌ 错误。T = 2π√(L/g)，T 与 √L 成正比。L 变为 4L 时，T 变为 2T。';
+  } else if (qId === 'q3') {
+    fb.innerHTML = correct
+      ? '✅ 正确！从平衡位置到最大位移：速度先增后减（中间最大），加速度从 0 增大到最大值。机械能守恒（理想情况）。'
+      : '❌ 错误。速度先增大后减小（平衡位最大），加速度从 0 开始增大（位移最大处最大）。机械能守恒。';
+  }
+}
+
+function markComplete() {
+  alert('🎉 恭喜完成《简谐运动》章节！Keep practicing with the simulations!');
+}
+
+// ============================================================
+// CANVAS UTILITIES
+// ============================================================
+function resizeCanvas(canvas) {
+  const parent = canvas.parentElement;
+  const w = parent.clientWidth;
+  canvas.width = w;
+}
+
+// ============================================================
+// SIMULATION STATE
+// ============================================================
+const simState = {
+  refCircle: { running: true, t: 0, omega: 15, A: 1.0, xHistory: [], vHistory: [] },
+  shm: { running: true, t: 0, A: 0.5, w: 8, phi: 0 },
+  energy: { running: true, t: 0, k: 50, A: 0.6, m: 5 },
+  springMass: { running: true, t: 0, m: 5, k: 40, A: 0.5 },
+  pendulum: { running: true, t: 0, L: 1.0, theta0: 20, g: 9.8, theta: 20 },
+};
+
+let animFrames = {};
+
+// ============================================================
+// REFERENCE CIRCLE SIMULATION
+// ============================================================
+function drawRefCircle() {
+  const canvas = document.getElementById('refCircleCanvas');
+  const ctx = canvas.getContext('2d');
+  resizeCanvas(canvas);
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const s = simState.refCircle;
+  const cx = W * 0.3, cy = H * 0.5;
+  const R = Math.min(W, H) * 0.35 * s.A;
+  const omega = s.omega;
+  const t = s.t;
+
+  // Reference circle
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(56,189,248,0.25)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Rotating point on circle
+  const theta = omega * t;
+  const px = cx + R * Math.cos(theta);
+  const py = cy - R * Math.sin(theta);
+
+  ctx.beginPath();
+  ctx.arc(px, py, 8, 0, Math.PI * 2);
+  ctx.fillStyle = '#38bdf8';
+  ctx.fill();
+
+  // Projection to x-axis (the SHM)
+  const projX = cx + R * Math.cos(theta);
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(px, py);
+  ctx.lineTo(projX, cy);
+  ctx.strokeStyle = 'rgba(56,189,248,0.4)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // SHM x-axis
+  const axisY = cy + R + 30;
+  ctx.beginPath();
+  ctx.moveTo(cx - R - 20, axisY);
+  ctx.lineTo(cx + R + 20, axisY);
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Equilibrium marker
+  ctx.beginPath();
+  ctx.moveTo(cx, axisY - 6);
+  ctx.lineTo(cx, axisY + 6);
+  ctx.strokeStyle = 'rgba(52,211,153,0.6)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = '#34d399';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('O', cx, axisY - 10);
+
+  // SHM dot on x-axis
+  ctx.beginPath();
+  ctx.arc(projX, axisY, 7, 0, Math.PI * 2);
+  ctx.fillStyle = '#fbbf24';
+  ctx.fill();
+
+  // Draw spring on top
+  const springY = 30;
+  const wallX = projX - 60;
+  const springStartX = wallX;
+  const springEndX = projX - 8;
+  // Wall
+  ctx.fillStyle = '#64748b';
+  ctx.fillRect(wallX - 10, springY - 40, 10, 80);
+  // Spring coils
+  const coils = 12;
+  const coilH = (springEndX - springStartX) / coils;
+  ctx.beginPath();
+  ctx.moveTo(springStartX, springY);
+  for (let i = 0; i < coils; i++) {
+    const x1 = springStartX + coilH * i + coilH * 0.25;
+    const x2 = springStartX + coilH * i + coilH * 0.75;
+    ctx.lineTo(x1, springY + (i % 2 === 0 ? -8 : 8));
+    ctx.lineTo(x2, springY + (i % 2 === 0 ? 8 : -8));
+  }
+  ctx.lineTo(springEndX, springY);
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Labels
+  ctx.fillStyle = '#64748b';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('wall', wallX - 9, springY - 45);
+  ctx.fillStyle = '#38bdf8';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`θ=${(theta*180/Math.PI).toFixed(0)}°`, px + 15, py - 10);
+  ctx.fillText(`x=${(projX - cx).toFixed(1)}m`, projX, axisY + 20);
+
+  // x(t) graph
+  const gxCanvas = document.getElementById('refCircleXGraph');
+  const gxCtx = gxCanvas.getContext('2d');
+  resizeCanvas(gxCanvas);
+  const GW = gxCanvas.width, GH = gxCanvas.height;
+  gxCtx.clearRect(0, 0, GW, GH);
+
+  s.xHistory.push({ t: t, x: R * Math.cos(theta) });
+  if (s.xHistory.length > GW) s.xHistory.shift();
+
+  gxCtx.beginPath();
+  gxCtx.strokeStyle = '#f87171';
+  gxCtx.lineWidth = 2;
+  s.xHistory.forEach((pt, i) => {
+    const gx = i;
+    const gy = GH / 2 - (pt.x / R) * (GH * 0.4);
+    i === 0 ? gxCtx.moveTo(gx, gy) : gxCtx.lineTo(gx, gy);
+  });
+  gxCtx.stroke();
+
+  // v(t) graph
+  const gvCanvas = document.getElementById('refCircleVGraph');
+  const gvCtx = gvCanvas.getContext('2d');
+  resizeCanvas(gvCanvas);
+  const VGW = gvCanvas.width, VGH = gvCanvas.height;
+  gvCtx.clearRect(0, 0, VGW, VGH);
+
+  s.vHistory.push({ t: t, v: -R * omega * Math.sin(theta) });
+  if (s.vHistory.length > VGW) s.vHistory.shift();
+
+  gvCtx.beginPath();
+  gvCtx.strokeStyle = '#60a5fa';
+  gvCtx.lineWidth = 2;
+  s.vHistory.forEach((pt, i) => {
+    const gx = i;
+    const gy = VGH / 2 - (pt.v / (R * omega)) * (VGH * 0.4);
+    i === 0 ? gvCtx.moveTo(gx, gy) : gvCtx.lineTo(gx, gy);
+  });
+  gvCtx.stroke();
+}
+
+function toggleRefCircle() {
+  simState.refCircle.running = !simState.refCircle.running;
+  document.getElementById('rcPauseBtn').textContent = simState.refCircle.running ? '⏸ 暂停' : '▶ 继续';
+}
+function resetRefCircle() {
+  simState.refCircle.t = 0;
+  simState.refCircle.xHistory = [];
+  simState.refCircle.vHistory = [];
+}
+
+// ============================================================
+// SHM MULTI-GRAPH SIMULATION
+// ============================================================
+function drawSHMGraph() {
+  const canvas = document.getElementById('shmMultiGraph');
+  const ctx = canvas.getContext('2d');
+  resizeCanvas(canvas);
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const s = simState.shm;
+  const t = s.t;
+  const A = s.A, w = s.w, phi = s.phi;
+
+  const period = 2 * Math.PI / w;
+  const displayT = t % (period * 2);
+  const startT = Math.max(0, displayT - 2 * period);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = H * i / 4;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  // Draw three curves
+  const curves = [
+    { fn: (tt) => A * Math.cos(w * tt + phi), color: '#f87171', label: 'x(t)' },
+    { fn: (tt) => -A * w * Math.sin(w * tt + phi), color: '#60a5fa', label: 'v(t)' },
+    { fn: (tt) => -A * w * w * Math.cos(w * tt + phi), color: '#34d399', label: 'a(t)' },
+  ];
+
+  // y-axis labels
+  const maxVal = Math.max(A, A * w, A * w * w);
+  curves.forEach((c, ci) => {
+    const yOffset = H * 0.15 + ci * H * 0.28;
+
+    // Label
+    ctx.fillStyle = c.color;
+    ctx.font = 'bold 11px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(c.label, 4, yOffset + 12);
+
+    // Curve
+    ctx.beginPath();
+    ctx.strokeStyle = c.color;
+    ctx.lineWidth = 2;
+    let first = true;
+    for (let px = 0; px < W; px++) {
+      const tt = startT + (px / W) * 2 * period;
+      const val = c.fn(tt);
+      const norm = val / (maxVal * 1.1);
+      const py = yOffset + 30 - norm * (H * 0.2);
+      first ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      first = false;
+    }
+    ctx.stroke();
+  });
+
+  // Phase marker at current time
+  const markerX = W - 10;
+  const tt = displayT;
+  const norm = (A * Math.cos(w * tt + phi)) / (maxVal * 1.1);
+  const markerY = H * 0.15 + 30 - norm * (H * 0.2);
+  ctx.beginPath();
+  ctx.arc(markerX, markerY, 5, 0, Math.PI * 2);
+  ctx.fillStyle = '#fbbf24';
+  ctx.fill();
+}
+
+function toggleSHMGraph() {
+  simState.shm.running = !simState.shm.running;
+  document.getElementById('shmPauseBtn').textContent = simState.shm.running ? '⏸ 暂停' : '▶ 继续';
+}
+function resetSHMGraph() { simState.shm.t = 0; }
+
+// ============================================================
+// ENERGY SIMULATION
+// ============================================================
+function drawEnergy() {
+  const canvas = document.getElementById('energyCanvas');
+  const ctx = canvas.getContext('2d');
+  resizeCanvas(canvas);
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const s = simState.energy;
+  const t = s.t;
+  const k = s.k, A = s.A;
+  const omega = Math.sqrt(k / s.m);
+
+  const period = 2 * Math.PI / omega;
+  const displayT = t % period;
+  const x = A * Math.cos(omega * t);
+  const v = -A * omega * Math.sin(omega * t);
+  const KE = 0.5 * s.m * v * v;
+  const PE = 0.5 * k * x * x;
+  const E = 0.5 * k * A * A;
+
+  const cx = W * 0.3, cy = H * 0.5;
+  const R = Math.min(W, H) * 0.3;
+
+  // Circle showing energy distribution
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // KE arc (from top, clockwise)
+  const keAngle = (KE / E) * Math.PI * 2;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.arc(cx, cy, R, -Math.PI / 2, -Math.PI / 2 + keAngle);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(248,113,113,0.6)';
+  ctx.fill();
+
+  // PE arc
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.arc(cx, cy, R * 0.7, -Math.PI / 2 + keAngle, -Math.PI / 2 + Math.PI * 2);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(96,165,250,0.6)';
+  ctx.fill();
+
+  // Legend
+  ctx.fillStyle = '#f87171';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('● KE (动能)', cx + R + 15, cy - 10);
+  ctx.fillStyle = '#60a5fa';
+  ctx.fillText('● PE (势能)', cx + R + 15, cy + 10);
+  ctx.fillStyle = '#fbbf24';
+  ctx.fillText(`总能量 = ${E.toFixed(1)} J`, cx + R + 15, cy + 30);
+
+  // Values
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '12px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText(`KE = ${KE.toFixed(1)} J`, cx + R + 15, cy + 55);
+  ctx.fillText(`PE = ${PE.toFixed(1)} J`, cx + R + 15, cy + 72);
+
+  // Energy bar at bottom
+  const barY = H * 0.85;
+  const barH = 12;
+  const keW = (KE / E) * (W * 0.6);
+  const peW = (PE / E) * (W * 0.6);
+  ctx.fillStyle = 'rgba(248,113,113,0.7)';
+  ctx.fillRect(W * 0.2, barY, keW, barH);
+  ctx.fillStyle = 'rgba(96,165,250,0.7)';
+  ctx.fillRect(W * 0.2 + keW, barY, peW, barH);
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.strokeRect(W * 0.2, barY, W * 0.6, barH);
+  ctx.fillStyle = '#64748b';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('KE', W * 0.2 + keW / 2, barY + barH + 12);
+  ctx.fillText('PE', W * 0.2 + keW + peW / 2, barY + barH + 12);
+}
+
+function toggleEnergy() {
+  simState.energy.running = !simState.energy.running;
+  document.getElementById('enPauseBtn').textContent = simState.energy.running ? '⏸ 暂停' : '▶ 继续';
+}
+function resetEnergy() { simState.energy.t = 0; }
+
+// ============================================================
+// SPRING MASS SIMULATION
+// ============================================================
+function drawSpringMass() {
+  const canvas = document.getElementById('springMassCanvas');
+  const ctx = canvas.getContext('2d');
+  resizeCanvas(canvas);
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const s = simState.springMass;
+  const t = s.t;
+  const omega = Math.sqrt(s.k / s.m);
+  const x = s.A * Math.cos(omega * t);
+
+  const wallX = W * 0.25;
+  const springEndX = wallX + 40 + x * 100;
+  const massX = springEndX;
+  const massY = H * 0.5;
+  const massW = 50, massH = 40;
+
+  // Wall
+  ctx.fillStyle = '#475569';
+  ctx.fillRect(wallX - 12, 0, 12, H);
+
+  // Spring coils
+  const springStartX = wallX;
+  const coils = 14;
+  const coilW = (massX - springStartX) / coils;
+  ctx.beginPath();
+  ctx.moveTo(springStartX, massY);
+  for (let i = 0; i < coils; i++) {
+    ctx.lineTo(springStartX + coilW * i + coilW * 0.25, massY + (i % 2 === 0 ? -12 : 12));
+    ctx.lineTo(springStartX + coilW * i + coilW * 0.75, massY + (i % 2 === 0 ? 12 : -12));
+  }
+  ctx.lineTo(massX - 2, massY);
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // Mass block
+  ctx.fillStyle = '#1e40af';
+  ctx.fillRect(massX, massY - massH / 2, massW, massH);
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(massX, massY - massH / 2, massW, massH);
+
+  // Velocity arrow
+  const vVal = -s.A * omega * Math.sin(omega * t);
+  const arrowScale = 3;
+  if (Math.abs(vVal) > 0.05) {
+    ctx.beginPath();
+    ctx.moveTo(massX + massW, massY);
+    ctx.lineTo(massX + massW + vVal * arrowScale * 20, massY);
+    ctx.strokeStyle = vVal > 0 ? '#34d399' : '#f87171';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    // Arrowhead
+    const ax = massX + massW + vVal * arrowScale * 20;
+    const dir = vVal > 0 ? 1 : -1;
+    ctx.beginPath();
+    ctx.moveTo(ax, massY);
+    ctx.lineTo(ax - 8 * dir, massY - 5);
+    ctx.lineTo(ax - 8 * dir, massY + 5);
+    ctx.closePath();
+    ctx.fillStyle = vVal > 0 ? '#34d399' : '#f87171';
+    ctx.fill();
+  }
+
+  // Labels
+  ctx.fillStyle = '#38bdf8';
+  ctx.font = 'bold 13px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(`x=${x.toFixed(3)}m`, massX + massW / 2, massY - massH / 2 - 10);
+  ctx.fillStyle = '#64748b';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`v=${vVal.toFixed(2)}m/s`, massX + massW / 2, massY + massH / 2 + 20);
+
+  // Period info
+  const T = 2 * Math.PI * Math.sqrt(s.m / s.k);
+  document.getElementById('smInfo').textContent = `T = ${T.toFixed(3)}s | f = ${(1/T).toFixed(2)}Hz`;
+
+  // Equilibrium line
+  const eqX = wallX + 40;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(eqX, 10);
+  ctx.lineTo(eqX, H - 10);
+  ctx.strokeStyle = 'rgba(52,211,153,0.3)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#34d399';
+  ctx.font = '10px sans-serif';
+  ctx.fillText('平衡', eqX + 3, 20);
+}
+
+function toggleSpringMass() {
+  simState.springMass.running = !simState.springMass.running;
+  document.getElementById('smPauseBtn').textContent = simState.springMass.running ? '⏸ 暂停' : '▶ 继续';
+}
+function resetSpringMass() { simState.springMass.t = 0; }
+
+// ============================================================
+// PENDULUM SIMULATION
+// ============================================================
+function drawPendulum() {
+  const canvas = document.getElementById('pendulumCanvas');
+  const ctx = canvas.getContext('2d');
+  resizeCanvas(canvas);
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const s = simState.pendulum;
+  const L = s.L;
+  const g = s.g;
+  const omega = Math.sqrt(g / L);
+  const thetaRad = s.theta0 * Math.PI / 180 * Math.cos(omega * s.t);
+
+  const pivotX = W * 0.4;
+  const pivotY = H * 0.15;
+  const bobX = pivotX + L * 100 * Math.sin(Math.abs(thetaRad));
+  const bobY = pivotY + L * 100 * Math.cos(thetaRad);
+  const sign = thetaRad >= 0 ? 1 : -1;
+
+  // Ceiling
+  ctx.fillStyle = '#475569';
+  ctx.fillRect(pivotX - 40, 0, 80, 20);
+
+  // String
+  ctx.beginPath();
+  ctx.moveTo(pivotX, pivotY);
+  ctx.lineTo(bobX, bobY);
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Bob
+  ctx.beginPath();
+  ctx.arc(bobX, bobY, 16, 0, Math.PI * 2);
+  const grad = ctx.createRadialGradient(bobX - 4, bobY - 4, 2, bobX, bobY, 16);
+  grad.addColorStop(0, '#818cf8');
+  grad.addColorStop(1, '#4f46e5');
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.strokeStyle = '#a5b4fc';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Angle arc
+  ctx.beginPath();
+  ctx.arc(pivotX, pivotY, 40, 0, thetaRad * sign, thetaRad >= 0 ? false : true);
+  ctx.strokeStyle = 'rgba(251,191,36,0.6)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Equilibrium line
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(pivotX, pivotY);
+  ctx.lineTo(pivotX, pivotY + L * 100);
+  ctx.strokeStyle = 'rgba(52,211,153,0.25)';
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Labels
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 13px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(`θ=${(thetaRad * 180 / Math.PI).toFixed(1)}°`, bobX + 25, bobY - 5);
+
+  ctx.fillStyle = '#64748b';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`θ₀=${s.theta0}°`, pivotX + 70, pivotY + 20);
+
+  // Period info
+  const T = 2 * Math.PI * Math.sqrt(L / g);
+  document.getElementById('pendInfo').textContent = `T = ${T.toFixed(3)}s (小角度) | f = ${(1/T).toFixed(2)}Hz`;
+
+  // Amplitude markers
+  const ampX1 = pivotX + L * 100 * Math.sin(s.theta0 * Math.PI / 180);
+  const ampX2 = pivotX - L * 100 * Math.sin(s.theta0 * Math.PI / 180);
+  ctx.fillStyle = 'rgba(251,191,36,0.3)';
+  ctx.beginPath();
+  ctx.arc(ampX1, bobY, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(ampX2, bobY, 4, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function togglePendulum() {
+  simState.pendulum.running = !simState.pendulum.running;
+  document.getElementById('pendPauseBtn').textContent = simState.pendulum.running ? '⏸ 暂停' : '▶ 继续';
+}
+function resetPendulum() { simState.pendulum.t = 0; }
+
+// ============================================================
+// ANIMATION LOOP
+// ============================================================
+let lastTime = 0;
+function animate(time) {
+  const dt = Math.min((time - lastTime) / 1000, 0.05);
+  lastTime = time;
+
+  // Update all running simulations
+  if (simState.refCircle.running) simState.refCircle.t += dt;
+  if (simState.shm.running) simState.shm.t += dt;
+  if (simState.energy.running) simState.energy.t += dt;
+  if (simState.springMass.running) simState.springMass.t += dt;
+  if (simState.pendulum.running) simState.pendulum.t += dt;
+
+  drawRefCircle();
+  drawSHMGraph();
+  drawEnergy();
+  drawSpringMass();
+  drawPendulum();
+
+  animFrames.main = requestAnimationFrame(animate);
+}
+
+// ============================================================
+// CONTROL WIRING
+// ============================================================
+document.getElementById('rcOmega').addEventListener('input', (e) => {
+  simState.refCircle.omega = parseFloat(e.target.value);
+  document.getElementById('rcOmegaVal').textContent = `ω = ${e.target.value} rad/s`;
+  resetRefCircle();
+});
+document.getElementById('rcAmp').addEventListener('input', (e) => {
+  simState.refCircle.A = parseFloat(e.target.value) / 100;
+  document.getElementById('rcAmpVal').textContent = `A = ${simState.refCircle.A.toFixed(2)} m`;
+  resetRefCircle();
+});
+
+document.getElementById('shmA').addEventListener('input', (e) => {
+  simState.shm.A = parseFloat(e.target.value) / 100;
+  document.getElementById('shmAVal').textContent = `A = ${simState.shm.A.toFixed(2)} m`;
+});
+document.getElementById('shmW').addEventListener('input', (e) => {
+  simState.shm.w = parseFloat(e.target.value);
+  document.getElementById('shmWVal').textContent = `ω = ${simState.shm.w.toFixed(1)} rad/s`;
+});
+document.getElementById('shmPhi').addEventListener('input', (e) => {
+  simState.shm.phi = parseFloat(e.target.value) / 100;
+  document.getElementById('shmPhiVal').textContent = `φ = ${(simState.shm.phi * 180 / Math.PI).toFixed(0)}°`;
+});
+
+document.getElementById('ek').addEventListener('input', (e) => {
+  simState.energy.k = parseFloat(e.target.value);
+  document.getElementById('ekVal').textContent = `k = ${e.target.value} N/m`;
+});
+document.getElementById('eA').addEventListener('input', (e) => {
+  simState.energy.A = parseFloat(e.target.value) / 100;
+  simState.energy.m = simState.energy.k / (simState.energy.A * 100);
+  document.getElementById('eAVal').textContent = `A = ${simState.energy.A.toFixed(2)} m`;
+});
+
+document.getElementById('smM').addEventListener('input', (e) => {
+  simState.springMass.m = parseFloat(e.target.value);
+  document.getElementById('smMVal').textContent = `m = ${simState.springMass.m.toFixed(1)} kg`;
+});
+document.getElementById('smK').addEventListener('input', (e) => {
+  simState.springMass.k = parseFloat(e.target.value);
+  document.getElementById('smKVal').textContent = `k = ${e.target.value} N/m`;
+});
+document.getElementById('smA').addEventListener('input', (e) => {
+  simState.springMass.A = parseFloat(e.target.value) / 100;
+  document.getElementById('smAVal').textContent = `A = ${simState.springMass.A.toFixed(2)} m`;
+});
+
+document.getElementById('pendL').addEventListener('input', (e) => {
+  simState.pendulum.L = parseFloat(e.target.value) / 100;
+  document.getElementById('pendLVal').textContent = `L = ${simState.pendulum.L.toFixed(2)} m`;
+  simState.pendulum.theta0 = parseFloat(document.getElementById('pendTheta').value);
+});
+document.getElementById('pendTheta').addEventListener('input', (e) => {
+  simState.pendulum.theta0 = parseFloat(e.target.value);
+  document.getElementById('pendThetaVal').textContent = `θ₀ = ${e.target.value}°`;
+});
+document.getElementById('pendG').addEventListener('input', (e) => {
+  simState.pendulum.g = parseFloat(e.target.value) / 10;
+  document.getElementById('pendGVal').textContent = `g = ${simState.pendulum.g.toFixed(1)} m/s²`;
+});
+
+// ============================================================
+// START
+// ============================================================
+window.addEventListener('load', () => {
+  requestAnimationFrame(animate);
+});
+</script>
+
+<!-- Knowledge Graph -->
+<script>
+if (typeof initTeachAnyKG === 'function') {
+  initTeachAnyKG({
+    nodeId: 'physics-ap-1-shm',
+    nodeName: '简谐运动 (SHM)',
+    nodeNameEn: 'Simple Harmonic Motion',
+    subject: 'physics',
+    curriculum: 'ap',
+    grade: 11,
+    difficulty: 4,
+    prerequisites: ['physics-ap-1-work-energy'],
+    parallel: ['physics-ap-1-shm', 'physics-ap-1-pendulum'],
+    related: ['physics-ap-1-angular-momentum', 'physics-ap-1-torque'],
+  });
+}
+</script>
+</body>
+</html>
