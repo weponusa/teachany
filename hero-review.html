@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TeachAny Hero 图审核</title>
+<style>
+body{font-family:system-ui,-apple-system,sans-serif;max-width:1400px;margin:0 auto;padding:20px;background:#f5f5f5}
+h1{text-align:center;color:#333;margin-bottom:8px}
+.subtitle{text-align:center;color:#666;margin-bottom:24px;font-size:14px}
+.stats{display:flex;justify-content:center;gap:24px;margin-bottom:24px;flex-wrap:wrap}
+.stat{background:#fff;border-radius:8px;padding:12px 20px;box-shadow:0 1px 4px rgba(0,0,0,0.08);text-align:center}
+.stat .num{font-size:24px;font-weight:700;color:#1a73e8}
+.stat .label{font-size:12px;color:#666;margin-top:4px}
+.filter-bar{display:flex;justify-content:center;gap:12px;margin-bottom:24px;flex-wrap:wrap}
+.filter-bar button{padding:8px 16px;border:1px solid #ddd;border-radius:20px;background:#fff;cursor:pointer;font-size:13px;transition:all 0.2s}
+.filter-bar button:hover{background:#f0f0f0}
+.filter-bar button.active{background:#1a73e8;color:#fff;border-color:#1a73e8}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:20px}
+.card{background:#fff;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.1);transition:transform 0.2s}
+.card:hover{transform:translateY(-2px)}
+.card h2{margin:0 0 8px;font-size:16px;color:#1a73e8;display:flex;align-items:center;gap:8px}
+.card .meta{color:#666;font-size:12px;margin-bottom:12px;display:flex;gap:12px;flex-wrap:wrap}
+.card .meta span{background:#f0f0f0;padding:2px 8px;border-radius:4px}
+.card img{width:100%;border-radius:8px;border:1px solid #ddd;display:block;min-height:200px;background:#fafafa}
+.card .actions{display:flex;gap:8px;margin-top:12px}
+.card .actions button{flex:1;padding:8px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:13px;transition:all 0.2s}
+.card .actions button:hover{background:#f0f0f0}
+.card .actions button.ok{border-color:#28a745;color:#28a745}
+.card .actions button.ok:hover{background:#d4edda}
+.card .actions button.bad{border-color:#dc3545;color:#dc3545}
+.card .actions button.bad:hover{background:#f8d7da}
+.status-tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;margin-left:auto}
+.status-ok{background:#d4edda;color:#155724}
+.status-bad{background:#f8d7da;color:#721c24}
+.status-pending{background:#fff3cd;color:#856404}
+.empty{text-align:center;color:#999;padding:60px 20px}
+.empty-icon{font-size:48px;margin-bottom:12px}
+</style>
+</head>
+<body>
+<h1>📊 TeachAny Hero 图审核</h1>
+<p class="subtitle">动态加载 image-registry.json，自动展示所有已注册图片</p>
+
+<div class="stats" id="stats">
+  <div class="stat"><div class="num" id="statTotal">-</div><div class="label">总图片数</div></div>
+  <div class="stat"><div class="num" id="statHero">-</div><div class="label">Hero 图</div></div>
+  <div class="stat"><div class="num" id="statScene">-</div><div class="label">Scene 图</div></div>
+  <div class="stat"><div class="num" id="statSubjects">-</div><div class="label">学科数</div></div>
+</div>
+
+<div class="filter-bar" id="filters">
+  <button class="active" data-filter="all">全部</button>
+  <button data-filter="hero">Hero</button>
+  <button data-filter="scene">Scene</button>
+  <button data-filter="experiment">Experiment</button>
+  <button data-filter="concept">Concept</button>
+</div>
+
+<div class="grid" id="grid">
+  <div class="empty">
+    <div class="empty-icon">⏳</div>
+    <div>正在加载 image-registry.json...</div>
+  </div>
+</div>
+
+<script>
+const CDN_BASE = 'https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main';
+let allImages = [];
+let reviewStatus = JSON.parse(localStorage.getItem('heroReviewStatus') || '{}');
+
+async function loadRegistry() {
+  try {
+    const res = await fetch('skill/assets/image-registry.json');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (e) {
+    // fallback: 尝试从根目录加载
+    try {
+      const res2 = await fetch('image-registry.json');
+      if (!res2.ok) throw new Error('HTTP ' + res2.status);
+      return await res2.json();
+    } catch (e2) {
+      console.error('无法加载 registry:', e, e2);
+      return null;
+    }
+  }
+}
+
+function getLocalPath(img) {
+  // 尝试从 file 字段推断本地路径
+  const file = img.file || '';
+  const filename = file.split('/').pop();
+  // 尝试匹配课件目录
+  const nodeId = (img.match_nodes && img.match_nodes[0]) || '';
+  // 常见前缀映射
+  const subjectDirs = {
+    math: 'examples', biology: 'examples', chemistry: 'examples',
+    physics: 'examples', geography: 'examples', history: 'examples',
+    chinese: 'examples', english: 'examples', science: 'examples'
+  };
+  // 如果有 node_id，尝试找对应课件目录
+  if (nodeId) {
+    // 简单推断：取 node_id 最后一段作为目录名（不准确但够用）
+    const parts = nodeId.split('-');
+    // 尝试几种常见的目录命名
+    const candidates = [
+      `examples/${nodeId}/assets/${filename}`,
+      `community/${nodeId}/assets/${filename}`,
+    ];
+    // 也尝试用 id 推断
+    if (img.id) {
+      const idParts = img.id.split('-');
+      const shortId = idParts.slice(0, -1).join('-'); // 去掉最后的 slot
+      candidates.push(`examples/${shortId}/assets/${filename}`);
+      candidates.push(`community/${shortId}/assets/${filename}`);
+    }
+    return candidates;
+  }
+  return [`examples/${filename}`, `community/${filename}`];
+}
+
+function renderCard(img) {
+  const id = img.id || 'unknown';
+  const url = img.url || `${CDN_BASE}/${img.file}`;
+  const slot = img.slot || 'unknown';
+  const subject = img.subject || 'unknown';
+  const nodes = (img.match_nodes || []).join(', ');
+  const status = reviewStatus[id] || 'pending';
+  const statusClass = status === 'ok' ? 'status-ok' : (status === 'bad' ? 'status-bad' : 'status-pending');
+  const statusText = status === 'ok' ? '✓ 通过' : (status === 'bad' ? '✗ 需重绘' : '⏳ 待审');
+
+  // 本地路径尝试
+  const localPaths = getLocalPath(img);
+  const localHint = localPaths.map(p => `<span>${p}</span>`).join('');
+
+  return `<div class="card" data-id="${id}" data-slot="${slot}" data-subject="${subject}">
+    <h2>${escapeHtml(img.id)}
+      <span class="status-tag ${statusClass}">${statusText}</span>
+    </h2>
+    <div class="meta">
+      <span>slot: ${slot}</span>
+      <span>subject: ${subject}</span>
+      ${nodes ? `<span>node: ${escapeHtml(nodes)}</span>` : ''}
+    </div>
+    <div class="meta">${localHint}</div>
+    <img src="${url}" alt="${escapeHtml(img.id)}" loading="lazy"
+         onerror="this.src='${CDN_BASE}/${img.file}'">
+    <div class="actions">
+      <button class="ok" onclick="markStatus('${id}', 'ok')">✓ 通过</button>
+      <button class="bad" onclick="markStatus('${id}', 'bad')">✗ 需重绘</button>
+    </div>
+  </div>`;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text || '';
+  return div.innerHTML;
+}
+
+function markStatus(id, status) {
+  reviewStatus[id] = status;
+  localStorage.setItem('heroReviewStatus', JSON.stringify(reviewStatus));
+  // 更新 UI
+  const card = document.querySelector(`[data-id="${id}"]`);
+  if (card) {
+    const tag = card.querySelector('.status-tag');
+    tag.className = `status-tag status-${status}`;
+    tag.textContent = status === 'ok' ? '✓ 通过' : '✗ 需重绘';
+  }
+}
+
+function filterImages(filter) {
+  const grid = document.getElementById('grid');
+  let filtered = allImages;
+  if (filter !== 'all') {
+    filtered = allImages.filter(img => img.slot === filter);
+  }
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><div>该分类下暂无图片</div></div>';
+    return;
+  }
+
+  grid.innerHTML = filtered.map(renderCard).join('');
+}
+
+function updateStats() {
+  const slots = {};
+  const subjects = new Set();
+  allImages.forEach(img => {
+    slots[img.slot] = (slots[img.slot] || 0) + 1;
+    subjects.add(img.subject);
+  });
+  document.getElementById('statTotal').textContent = allImages.length;
+  document.getElementById('statHero').textContent = slots['hero'] || 0;
+  document.getElementById('statScene').textContent = slots['scene'] || 0;
+  document.getElementById('statSubjects').textContent = subjects.size;
+}
+
+async function init() {
+  const registry = await loadRegistry();
+  if (!registry) {
+    document.getElementById('grid').innerHTML = '<div class="empty"><div class="empty-icon">❌</div><div>无法加载 image-registry.json</div></div>';
+    return;
+  }
+
+  allImages = registry.images || [];
+  // 按 slot 分组排序
+  const slotOrder = { hero: 0, scene: 1, experiment: 2, concept: 3, abt: 4 };
+  allImages.sort((a, b) => {
+    const sa = slotOrder[a.slot] || 99;
+    const sb = slotOrder[b.slot] || 99;
+    if (sa !== sb) return sa - sb;
+    return (a.id || '').localeCompare(b.id || '');
+  });
+
+  updateStats();
+  filterImages('all');
+
+  // 绑定筛选按钮
+  document.getElementById('filters').addEventListener('click', e => {
+    if (e.target.tagName !== 'BUTTON') return;
+    document.querySelectorAll('.filter-bar button').forEach(btn => btn.classList.remove('active'));
+    e.target.classList.add('active');
+    filterImages(e.target.dataset.filter);
+  });
+}
+
+init();
+</script>
+</body>
+</html>
