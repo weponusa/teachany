@@ -12,50 +12,40 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build site (whitelist only)
+      - name: Build site whitelist
+        shell: bash
         run: |
+          rm -rf _site
           mkdir -p _site
-          # 仅复制网站运行必需的内容，避开 skill/、output/、references/ 等开发用大目录
-          cp -r assets _site/ 2>/dev/null || true
-          cp -r community _site/ 2>/dev/null || true
-          cp -r data _site/ 2>/dev/null || true
-          cp -r scripts _site/ 2>/dev/null || true
-          cp -r styles _site/ 2>/dev/null || true
-          cp -r gallery _site/ 2>/dev/null || true
-          cp -r pages _site/ 2>/dev/null || true
+          for dir in assets community data scripts styles gallery pages; do
+            [ -d "$dir" ] && cp -r "$dir" _site/
+          done
           cp *.html _site/ 2>/dev/null || true
           cp *.json _site/ 2>/dev/null || true
           touch _site/.nojekyll
-          echo "=== 部署摘要 ==="
-          echo "Total size: $(du -sh _site | cut -f1)"
-          echo "Total files: $(find _site -type f | wc -l)"
+          echo "size=$(du -sh _site | cut -f1)"
+          echo "files=$(find _site -type f | wc -l)"
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy incrementally to gh-pages
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          path: ./_site
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_site
+          publish_branch: gh-pages
+          keep_files: false
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'deploy: ${{ github.event.head_commit.message }}'
