@@ -78,7 +78,8 @@ class LearningPathSystem {
   async _fetchJSON(url) {
     // v7.9.14：对大文件（nodes-metadata / registry）加 localStorage 缓存，TTL 1小时
     const CACHE_TTL = 3600000;
-    const cacheKey = 'teachany_lp_cache_' + url.replace(/[^a-z0-9]/gi, '_');
+    // v7.11.1: bump cache namespace after registry/courseware URL cleanup
+    const cacheKey = 'teachany_lp_cache_v2_' + url.replace(/[^a-z0-9]/gi, '_');
     try {
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
