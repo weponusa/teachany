@@ -31,7 +31,7 @@
 /* ─── 常量 ───────────────────────────────────── */
 const REGISTRY_URL = './registry-v2.json';
 const COURSEWARE_BASE_URL = 'https://weponusa.github.io/teachany-courseware';
-const CACHE_KEY = 'teachany_registry_v3_9'; // v3.9: 补全 31 个小学科学课件 sci-e-*
+const CACHE_KEY = 'teachany_registry_v3_10'; // v3.10: 清理迁移页空链，所有课件卡片直指 teachany-courseware
 
 function resolveCoursewareUrl(path) {
   if (!path) return COURSEWARE_BASE_URL + '/';
