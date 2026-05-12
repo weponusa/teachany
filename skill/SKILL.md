@@ -103,7 +103,7 @@ A "complete" TeachAny courseware is not just an HTML file. It must ship with all
 
 | # | Item | Chinese alias | Why it matters |
 |:-:|:---|:---|:---|
-| ① | TTS narration audio (`tts/s01.mp3` ~ `s0N.mp3`) + `data-tts` attributes. **Quality gate: must use edge-tts (L0) or macOS `say` (L2) — NEVER pyttsx3 (L3) or silent (L4)** | TTS 旁白 / 朗读 | Multimodal learning; helps non-readers and keeps attention. Silent/robotic voice defeats the purpose. |
+| ① | High-quality TTS narration audio (`tts/s01.mp3` ~ `s0N.mp3`) + `tts/manifest.json`. **Quality gate: must use Edge Neural TTS (`edge-tts`, L0/L1). macOS `say`, pyttsx3, silent placeholders, and browser Web Speech are NOT acceptable for published courseware.** | 高质量 TTS 旁白 / Edge Neural / 朗读 | Multimodal learning only works when the audio is pleasant and intelligible. Low-quality robotic/browser voices reduce trust and attention; if Edge TTS fails, fix the network/proxy instead of shipping degraded audio. |
 | ② | Remotion-rendered MP4 (≥1, with audio track) for the core dynamic concept | Remotion 视频 / 动画 | Process-oriented concepts need motion, not static infographics |
 | ③ | Canvas/SVG interactivity with real computation logic (not decorative) | Canvas 互动 / 真实计算 | Active learning > passive viewing |
 | ④ | AI-generated illustrations (≥2, subject-specific, not generic). **Mention-means-image rule: every specific artwork/figure/scene named in the text must have its own image** (e.g., text mentions "拉斐尔《椅中圣母》" → must embed that image). Use `image_gen` OR web search for public-domain references. | AI 插画 / 学科插图 / 提及即配图 | Concrete imagery anchors abstract concepts. Saying "look at this painting" without showing it breaks the learning chain. |
@@ -127,7 +127,7 @@ A "complete" TeachAny courseware is not just an HTML file. It must ship with all
 - Hero image lookup: `python3 scripts/find-hero.py <course-id>` (CDN-first, image_gen fallback)
 - **Map library lookup (USE THIS FIRST for ⑯)**: `python3 scripts/find-map.py <keyword>` — searches bundled library of 207 maps before any generation. Examples: `find-map.py 唐` (Tang dynasty), `find-map.py --era 1500` (world map ~1500 CE), `find-map.py --base hillshade` (terrain base), `find-map.py --boundary country` (national borders). Use `--copy <file> <dst>` to copy from library into courseware.
 - Map bundle into courseware: `bash scripts/bundle_map_assets.sh <course-dir>` (auto-scans HTML for `.geojson` references and copies from library)
-- TTS generation: `python3 scripts/tts-engine.py <text> <output.mp3>` — **set `TEACHANY_TTS_MIN_QUALITY=L2` env var to fail-fast if engine degrades to pyttsx3 or silent**
+- TTS generation: `python3 scripts/tts-engine.py --text "..." --voice zh-CN-XiaoxiaoNeural --output tts/s01.mp3` — **Edge Neural TTS is mandatory; low-quality fallback is disabled**
 - Five-piece batch injection: `python3 scripts/apply-standard-modules.py [--only <path>]`
 - Quality gate: `node scripts/validate-courseware.cjs ./community/<course-id>`
 - **Image sourcing decision tree for items ④⑯**: (a) Check `assets/image-registry.json` / `assets/maps/MANIFEST.json` / CDN first; (b) if no match and image is a **specific historical artwork** (e.g., Mona Lisa, David sculpture), search web for a public-domain scan — Wikimedia Commons is the canonical source; (c) if no match and image is an **educational concept illustration**, use `image_gen` with subject-specific prompt; (d) never fake "see this image" without an actual image.
@@ -333,7 +333,7 @@ Stop and reconsider if you find yourself doing any of these:
 - ❌ Generic AI art that doesn't show subject content (violates ④ — every illustration must teach)
 - ❌ **Text says "look at this painting" but no image is embedded** (violates ④ mention-means-image rule) — if you reference a specific artwork by name (e.g., 拉斐尔《椅中圣母》, Mona Lisa, Michelangelo's David), you MUST embed that image. Use `image_gen` for reconstruction OR web-search for public-domain reference (Wikimedia Commons is canonical).
 - ❌ **Empty `<section id="knowledge-graph">` with nothing inside and no data passed to the JS** (violates ⑦) — the graph JS needs prerequisites + next-courses data, either via `window.TeachAnyKnowledgeGraph.render({prereqs, current, next})` OR inline `<div data-kg-node="...">` markup.
-- ❌ **Accepting TTS engine degradation silently** — if `tts-engine.py` falls back to pyttsx3 (robotic) or silent.mp3, stop the build and report. Students should not hear machine-stuttery voice or total silence. Quality floor: edge-tts (L0) or macOS `say` (L2) is acceptable; below that is unacceptable.
+- ❌ **Accepting TTS engine degradation silently** — published courseware must use Edge Neural TTS MP3 (`engine=edge-tts`, `quality=L0-neural`). macOS `say`, pyttsx3, silent.mp3, and browser Web Speech are forbidden as published audio. If Edge TTS fails, stop and fix network/proxy instead of shipping degraded audio.
 - ❌ **No top brand bar** (violates ⑮) — every courseware needs a pinned top row with TeachAny logo, Gallery link, and the course version visible. Without it, students have no way back to the gallery or to tell which version they're on.
 - ❌ **Hand-drawn SVG map outline as the "map"** (violates ⑯) — history/geography courseware needs `hillshade.jpg` terrain + real GeoJSON boundaries. A stylized shape with colored dots does not give students spatial intuition; it's decoration, not geography. Use `scripts/make-historical-map.py` or Leaflet + local tiles.
 - ❌ **Hand-writing knowledge-graph HTML instead of using `<div data-teachany-kg="<node_id>">`** (violates ⑦) — every hand-written `.kg-container/.kg-row/.kg-node` is a maintenance time bomb: it doesn't pick up upstream visual updates from `teachany-knowledge-graph.js`, doesn't sync with `teachany-kg-manifest.json` data changes, and produces inconsistent UX across coursewares. Use the standard module API: `<div data-teachany-kg="hist-m-renaissance"><canvas class="tkg-fallback-canvas" width="720" height="120"></canvas></div>`.
@@ -527,6 +527,7 @@ For full publishing details (drafts vs direct push, PR flow via Cloudflare Worke
 
 **v7.12.0 changes** (mobile + Mini Program readiness):
 - Baseline expanded to 19 items: ⑲ Mobile + Mini Program WebView readiness
+- Audio quality tightened: published courseware must use Edge Neural TTS MP3; low-quality Web Speech / pyttsx3 / silent fallback is forbidden
 - Every new courseware must pass mobile viewport checks (375×667 / 390×844), touch targets ≥44px, safe-area padding, no hover-only core interactions
 - Added Mini Program `web-view` constraints: HTTPS business domain, one web-view per page, limited messaging, `#wechat_redirect`, encoded URLs
 - Added courseware repo Mini Program wrapper template requirement (`miniprogram/pages/courseware`)

@@ -26,20 +26,18 @@ Every new courseware must explicitly choose one `lesson_type` in `manifest.json`
 
 **How**:
 ```bash
-python3 scripts/tts-engine.py "narration text" tts/s01.mp3
-# Multi-engine fallback: edge-tts (L0) → proxy (L1) → macOS say (L2) → pyttsx3 (L3) → silent (L4)
+python3 scripts/tts-engine.py --text "narration text" --voice zh-CN-XiaoxiaoNeural --output tts/s01.mp3
+# v7.12.1: Edge Neural TTS only. Low-quality fallback is disabled.
 ```
 
-**Quality gate — HARD RULE**: Only L0 (`edge-tts`) or L2 (`macOS say`) are acceptable for published courseware. L3 (`pyttsx3`) sounds robotic/stuttery and L4 (silent) gives students zero audio — both defeat the purpose of multimodal learning.
+**Quality gate — HARD RULE (v7.12.1)**: Published courseware must use Edge Neural TTS (`edge-tts`, L0/L1) MP3 files. macOS `say`, `pyttsx3`, silent placeholders, and browser Web Speech are no longer acceptable fallbacks.
 
-Enforce by setting `TEACHANY_TTS_MIN_QUALITY=L2` before generation:
+Generate with:
 ```bash
-export TEACHANY_TTS_MIN_QUALITY=L2
-python3 scripts/tts-engine.py --text "..." --output tts/s01.mp3
-# Script exits non-zero if engine degrades below L2 — stop the build and fix the network/proxy
+python3 scripts/tts-engine.py --text "..." --voice zh-CN-XiaoxiaoNeural --output tts/s01.mp3
 ```
 
-If `edge-tts` is blocked (common in Mainland China without proxy), the script falls through to macOS `say`. Acceptable quality. But if you're on Linux/Windows with no `say` available and `pyttsx3` is the only option, **do NOT ship** — investigate proxy setup or generate on another machine.
+If `edge-tts` is blocked, stop and fix network/proxy or generate audio on another machine. **Do not ship degraded audio.**
 
 **Symptom of silent degradation (must catch)**: MP3 file is 0 bytes or ~10 KB (silent placeholder). Always check file sizes after generation:
 ```bash
@@ -280,6 +278,8 @@ window.__TeachAnyTutorCardInit          // → true (mounted)
 ### ⑬ All 5 mounted simultaneously
 
 ⛔ Cannot mount 4 of 5 and call it "done". They work as a system — `tutor-card` references `ai-tutor` for backend logic, `tts-narrator` references `section-hints` for highlighting, etc.
+
+**Audio exception**: `teachany-tts-narrator.js` may be loaded with `data-tts-disabled="true"` when the courseware uses the standard high-quality MP3 audio player (`data-teachany-audio`). Do not expose low-quality browser Web Speech controls as a published audio option.
 
 ### ⑭ Valid `manifest.json` with `node_id`
 

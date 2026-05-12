@@ -8,12 +8,12 @@ TeachAny TTS 多引擎抽象层（v7.9.5 新增）
 0 字节 mp3，脚本误以为成功 → L3 TTS 大量交付失败。
 ================================================================
 
-引擎优先级（自动回退）：
-  L0  edge-tts            ：质量最佳，但需要 wss 通畅
-  L1  edge-tts (代理重试) ：通过 HTTP_PROXY / HTTPS_PROXY 重试
-  L2  macOS say + ffmpeg  ：仅 macOS 系统可用，离线
-  L3  pyttsx3             ：跨平台离线（Windows SAPI / macOS NSSpeechSynth / Linux espeak）
-  L4  silent.mp3          ：1 秒静音占位（保证 audioPlaylist 完整，前端 TTS 模块零mp3 朗读）
+发布级引擎（v7.12.1 起强制）：
+  L0  edge-tts            ：高质量 Neural TTS，发布唯一合格来源
+  L1  edge-tts (代理重试) ：通过 HTTP_PROXY / HTTPS_PROXY 重试，仍属 Neural TTS
+
+已禁用低质量回退：macOS say / pyttsx3 / silent.mp3 不再作为发布音频兜底。
+如果 Edge TTS 不可用，构建必须失败，而不是交付低质量音频或浏览器 Web Speech。
 
 调用方式（CLI）：
     python3 scripts/tts-engine.py --text "你好" --voice zh-CN-XiaoxiaoNeural --output /tmp/test.mp3
@@ -24,7 +24,7 @@ TeachAny TTS 多引擎抽象层（v7.9.5 新增）
 
 返回值：
     ok=True        音频已生成且大小>=200B
-    engine='edge-tts' / 'edge-tts-proxy' / 'macos-say' / 'pyttsx3' / 'silent'
+    engine='edge-tts' / 'edge-tts-proxy'
 """
 from __future__ import annotations
 import argparse
@@ -256,25 +256,12 @@ def synthesize(text: str, voice: str, output: str,
                 print(f"  ✅ edge-tts 通过代理 {proxy} 成功")
             return True, f"edge-tts-proxy({proxy})"
 
-    # ---- L2: macOS say ----
-    if _try_macos_say(text, voice, output):
-        if verbose:
-            print(f"  ✅ macOS say 离线 TTS 成功")
-        return True, "macos-say"
-
-    # ---- L3: pyttsx3 ----
-    if _try_pyttsx3(text, voice, output):
-        if verbose:
-            print(f"  ✅ pyttsx3 离线 TTS 成功")
-        return True, "pyttsx3"
-
-    # ---- L4: 静音占位（前端 Web Speech 朗读） ----
-    if allow_silent_fallback and _generate_silent(output):
-        if verbose:
-            print(f"  ⚠️ 全部 TTS 引擎失败，已写入 1 秒静音占位（前端 teachany-tts-narrator.js 会用 Web Speech 朗读）")
-        return True, "silent"
-
-    return False, "none"
+    # v7.12.1: 发布音频必须是 Edge Neural TTS。
+    # 明确禁止 macOS say / pyttsx3 / silent.mp3 / Web Speech 作为“完成”的兜底，
+    # 避免低质量音频进入课件。Edge 不通就失败，让构建者修网络/代理。
+    if verbose:
+        print("  ❌ Edge Neural TTS 不可用：已禁用 macOS say / pyttsx3 / silent / Web Speech 低质量回退")
+    return False, "edge-neural-required"
 
 
 def probe_edge_tts() -> tuple[bool, str]:
@@ -306,7 +293,7 @@ def main():
     p.add_argument("--output", required=False, help="输出 mp3 路径")
     p.add_argument("--probe", action="store_true", help="只做 edge-tts wss 连通性探针")
     p.add_argument("--no-silent-fallback", action="store_true",
-                   help="禁用最后的静音占位回退（默认开启）")
+                   help="兼容旧参数；v7.12.1 起静音/低质量回退已永久禁用")
     p.add_argument("-v", "--verbose", action="store_true")
     args = p.parse_args()
 
@@ -327,7 +314,7 @@ def main():
         size = os.path.getsize(args.output)
         print(f"✅ 已生成 {args.output}（{size} 字节，引擎={engine}）")
         sys.exit(0)
-    print(f"❌ 全部引擎失败")
+    print(f"❌ Edge Neural TTS 失败；低质量回退已禁用")
     sys.exit(2)
 
 
