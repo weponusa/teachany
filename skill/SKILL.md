@@ -243,6 +243,8 @@ Stop and reconsider if you find yourself doing any of these:
 - ❌ **Finishing a courseware locally without auto-pushing to all 3 repos** (violates ⑰ auto-publish) — saying "课件做完了" while the files are only on local disk is incomplete. Run the 3-step Auto-publish flow (courseware → opensource redirect + rebuild-index → skill) immediately after every modification. The user should not have to ask "did you push?". Skip ONLY when user explicitly said "不要发布/不要上传/只做不推/don't publish/just local".
 - ❌ **Modifying a courseware (fix bug, add image, swap map) without re-pushing** — even single-file edits trigger ⑰. A courseware that's 2 commits behind production is broken for users. Fix-and-forget is a violation.
 - ❌ **Pushing courseware repo but skipping `rebuild-index.py`** — without rebuild, registry.json and knowledge tree don't pick up the new/changed courseware, so it won't appear in Gallery or knowledge graph even though Pages serves it. ⑦/⑭/⑰ all violated.
+- ❌ **Claiming "publish complete" while only verifying HTML URL=200** — a courseware whose 5-piece JS modules return 404 is broken at runtime: no AI tutor, no knowledge graph, no TTS narrator. Always run the 4-check verify (HTML + 5 JS + 5 CSS + knowledge tree) — see "Verifying the publish" section. The user-visible page might say "loading..." forever or render only static HTML; you'd never know unless you actually fetch every JS URL.
+- ❌ **Trusting `peaceiris/actions-gh-pages` exclude_assets glob to handle `scripts/` selectively** — the action's glob implementation has known issues with `scripts/*.py` patterns that end up excluding the entire `scripts/` directory. Either don't use exclude_assets at all, or use the `_publish/` staging-directory pattern (see `deploy-pages.yml` v4), or manually push gh-pages.
 - ❌ **Skipping `git push gitee` because origin succeeded** — dual remote (GitHub + Gitee) is for Mainland China users. If gitee push fails due to DNS/network, log the failure and continue, but don't silently drop it. Re-attempt later.
 - ❌ **Bypassing pre-commit hook silently** — `TEACHANY_SKIP_PRECOMMIT=1` is acceptable ONLY for known false-positives (e.g., hook treating opensource-repo redirect as full courseware). For real failures (incomplete courseware, missing knowledge graph data), fix the courseware first.
 
@@ -333,20 +335,45 @@ if [ -n "$(git status --short)" ]; then
 fi
 ```
 
-### Verifying the publish
+### Verifying the publish (⛔ MANDATORY — not optional)
+
+**HTML URL=200 is NOT enough**. A page that loads but whose 5-piece JS modules 404 looks "deployed" but is broken (no AI tutor, no knowledge graph, no TTS narrator, no section hints). The page silently fails at runtime.
+
+After every publish, run all 4 checks below. If ANY check fails, the publish is incomplete:
 
 ```bash
-# Courseware reachable
-curl -sI "https://weponusa.github.io/teachany-courseware/community/<course-id>/" | head -1
-# Expected: HTTP/2 200 (Pages may take 1-3 minutes to deploy)
+# Check 1: Courseware HTML reachable
+COURSE_ID=hist-m-renaissance
+URL="https://weponusa.github.io/teachany-courseware/community/$COURSE_ID/"
+HTML_CODE=$(curl -sI "$URL?_=$(date +%s)" | head -1 | grep -oE "[0-9]{3}")
+echo "Courseware HTML: $HTML_CODE"  # Expected: 200
 
-# Knowledge tree picked it up
+# Check 2: ⛔ All 5 standard module JS files reachable (五件套 JS)
+echo "─── 五件套 JS 验证（任何一个 404 都意味着标准模块在学生浏览器里不工作）───"
+for f in ai-tutor.js teachany-tutor-card.js teachany-knowledge-graph.js \
+         teachany-tts-narrator.js teachany-section-hints.js; do
+  code=$(curl -sI "https://weponusa.github.io/teachany-courseware/scripts/$f?_=$(date +%s)" | head -1 | grep -oE "[0-9]{3}")
+  size=$(curl -sI "https://weponusa.github.io/teachany-courseware/scripts/$f?_=$(date +%s)" | grep -i content-length | awk '{print $2}' | tr -d '\r')
+  echo "  $f: HTTP $code ($size bytes)"
+done
+# Expected: ALL 5 = HTTP 200, sizes ~3K-60K
+# If ANY = 404 → scripts/ not deployed to gh-pages → fix workflow OR manually push gh-pages
+
+# Check 3: Corresponding CSS files reachable
+for f in ai-tutor.css teachany-tutor-card.css teachany-knowledge-graph.css \
+         teachany-tts-narrator.css teachany-section-hints.css; do
+  code=$(curl -sI "https://weponusa.github.io/teachany-courseware/scripts/$f?_=$(date +%s)" | head -1 | grep -oE "[0-9]{3}")
+  echo "  $f: HTTP $code"
+done
+# Expected: ALL 5 = HTTP 200
+
+# Check 4: Knowledge tree picked it up
 python3 -c "
 import json
-t = json.load(open('~/CodeBuddy/一次函数/teachany-opensource/data/trees/<curriculum>/<subject>.json'))
+t = json.load(open('$HOME/CodeBuddy/一次函数/teachany-opensource/data/trees/<curriculum>/<subject>.json'))
 def walk(n):
     if isinstance(n, dict):
-        if n.get('node_id') == '<course-id>':
+        if n.get('node_id') == '$COURSE_ID':
             print('挂载状态:', n.get('courses', []), '/ status:', n.get('status'))
             return True
         return any(walk(v) for v in n.values())
@@ -355,6 +382,25 @@ def walk(n):
 walk(t)"
 # Expected: 挂载状态: ['<course-id>'] / status: active
 ```
+
+**If 五件套 JS/CSS 404** (Check 2 or 3 fails):
+1. The `scripts/` directory is missing from `gh-pages` branch
+2. Inspect courseware repo's `.github/workflows/deploy-pages.yml` — check `exclude_assets` is NOT excluding scripts
+3. **Quickest fix**: manually push scripts/ to gh-pages branch:
+   ```bash
+   cd <courseware-repo>
+   git worktree add -B gh-pages /tmp/ghp-wt origin/gh-pages
+   cd /tmp/ghp-wt
+   mkdir -p scripts
+   cp <main-repo>/scripts/*.js scripts/
+   cp <main-repo>/scripts/*.css scripts/
+   cp <main-repo>/scripts/*.json scripts/
+   git add scripts/
+   git commit -m "manual: inject scripts/ to gh-pages"
+   git push origin gh-pages
+   cd <main-repo> && git worktree remove /tmp/ghp-wt --force
+   ```
+4. Wait 90 seconds for `pages-build-deployment` to run, then re-run Check 2.
 
 For full publishing details (drafts vs direct push, PR flow via Cloudflare Worker, examples/ deprecation), read `references/packaging.md`.
 
@@ -371,14 +417,20 @@ For full publishing details (drafts vs direct push, PR flow via Cloudflare Worke
 
 ---
 
-**Version**: v7.10.2 · **Last update**: 2026-05-12 · See `CHANGELOG.md` for history.
+**Version**: v7.10.3 · **Last update**: 2026-05-12 · See `CHANGELOG.md` for history.
+
+**v7.10.3 changes** (real-URL verification — HTML 200 ≠ deployed):
+- ⑰ Verify-publish 升级为 4 步硬检查：HTML 200 + 5 个 JS URL=200 + 5 个 CSS URL=200 + 知识树挂载
+- 新增急救方案：scripts/ 没部署到 gh-pages 时用 `git worktree` 手动 push
+- auto-publish.sh 加 Step 4 自动跑五件套真实 URL 验证（任何一个 404 退出码 20）
+- 新增 anti-pattern：声称完成但 JS 404；信任 peaceiris exclude_assets glob 选择性排除 scripts
+- 根因记录：peaceiris/actions-gh-pages 的 exclude_assets 处理 'scripts/*.py' 这类带斜杠 glob 时把整个 scripts/ 排除（5 月 12 日实测）
 
 **v7.10.2 changes** (standard-module discipline + projection alignment):
-- ⑦ Knowledge graph MUST use standard module API `<div data-teachany-kg="<node_id>">`, NOT hand-written `.kg-container/.kg-row` HTML — hand-writing breaks visual consistency with `tree.html` and doesn't sync with manifest updates
-- ⑧ AI tutor card MUST use `<div data-teachany-tutor-card></div>` — standard module auto-derives subject/title/suggestions, hand-writing breaks subject awareness
-- ⑮ Brand bar MUST show DUAL VERSION: course version + skill version (separate `<meta>` tags drive separate `<span>` displays)
-- ⑯ Projection-alignment hard rule: library hillshade is global 4096×2048 Plate Carrée — `imageOverlay` bounds MUST be `[[-90,-180],[90,180]]`, then `fitBounds` to zoom; setting bounds to a region stretches the world into that region (terrain-borders mismatch)
-- 4 new anti-patterns covering all three issues
+- ⑦ Knowledge graph MUST use standard module API `<div data-teachany-kg="<node_id>">`, NOT hand-written HTML
+- ⑧ AI tutor card MUST use `<div data-teachany-tutor-card></div>`
+- ⑮ Brand bar MUST show DUAL VERSION: course version + skill version
+- ⑯ Projection-alignment hard rule: library hillshade is global Plate Carrée — `imageOverlay` bounds MUST be `[[-90,-180],[90,180]]`
 
 **v7.10.1 changes** (auto-publish as baseline ⑰):
 - Baseline expanded from 16 → 17 items: ⑰ "Auto-register and push" is now a hard requirement

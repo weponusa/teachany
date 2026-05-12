@@ -198,16 +198,84 @@ echo "════════════════════════�
 COURSE_URL="https://weponusa.github.io/teachany-courseware/community/$COURSE_ID/"
 GALLERY_URL="https://weponusa.github.io/teachany/"
 
+# ──────────────────────────────────────────────────
+# Step 4: 真实 URL 验证（五件套 JS/CSS 必须 200）
+# ──────────────────────────────────────────────────
+echo "[4/4] 真实 URL 验证（基线 ⑰ 强制 — HTML 200 不等于发布完成）"
+echo "  ⏳ 等 90 秒让 Pages 部署..."
+sleep 90
+
+# Check 1: HTML
+HTML_CODE=$(curl -sI --max-time 10 "$COURSE_URL?_=$(date +%s)" 2>&1 | head -1 | grep -oE "[0-9]{3}")
+if [ "$HTML_CODE" = "200" ]; then
+  echo "  ✅ HTML: HTTP 200"
+else
+  echo "  ⚠️  HTML: HTTP $HTML_CODE（可能 Pages 还在部署，再等几分钟重试）"
+fi
+
+# Check 2: 五件套 JS
+echo "  ─── 五件套 JS（任何一个 404 都意味着标准模块在浏览器里失效）───"
+JS_FAIL=0
+for f in ai-tutor.js teachany-tutor-card.js teachany-knowledge-graph.js \
+         teachany-tts-narrator.js teachany-section-hints.js; do
+  code=$(curl -sI --max-time 10 "https://weponusa.github.io/teachany-courseware/scripts/$f?_=$(date +%s)" 2>&1 | head -1 | grep -oE "[0-9]{3}")
+  if [ "$code" = "200" ]; then
+    echo "    ✅ $f: HTTP 200"
+  else
+    echo "    ❌ $f: HTTP $code"
+    JS_FAIL=$((JS_FAIL + 1))
+  fi
+done
+
+# Check 3: 五件套 CSS
+echo "  ─── 五件套 CSS ───"
+CSS_FAIL=0
+for f in ai-tutor.css teachany-tutor-card.css teachany-knowledge-graph.css \
+         teachany-tts-narrator.css teachany-section-hints.css; do
+  code=$(curl -sI --max-time 10 "https://weponusa.github.io/teachany-courseware/scripts/$f?_=$(date +%s)" 2>&1 | head -1 | grep -oE "[0-9]{3}")
+  if [ "$code" = "200" ]; then
+    echo "    ✅ $f: HTTP 200"
+  else
+    echo "    ❌ $f: HTTP $code"
+    CSS_FAIL=$((CSS_FAIL + 1))
+  fi
+done
+
+if [ "$JS_FAIL" -gt 0 ] || [ "$CSS_FAIL" -gt 0 ]; then
+  echo
+  echo "  🚨 五件套部署有问题（JS 缺 $JS_FAIL · CSS 缺 $CSS_FAIL）"
+  echo "  📌 这意味着 scripts/ 目录没部署到 gh-pages 分支"
+  echo "  🔧 急救方法（手动 push gh-pages）："
+  echo "      cd $COURSEWARE_REPO"
+  echo "      git worktree add -B gh-pages /tmp/ghp-wt origin/gh-pages"
+  echo "      mkdir -p /tmp/ghp-wt/scripts"
+  echo "      cp $COURSEWARE_REPO/scripts/*.{js,css,json} /tmp/ghp-wt/scripts/"
+  echo "      cd /tmp/ghp-wt && git add scripts/ && git commit -m 'manual: inject scripts/'"
+  echo "      git push origin gh-pages"
+  echo "      cd $COURSEWARE_REPO && git worktree remove /tmp/ghp-wt --force"
+  FAIL_OTHER=2
+fi
+echo
+
+# ──────────────────────────────────────────────────
+# 总结
+# ──────────────────────────────────────────────────
+echo "═══════════════════════════════════════════════"
+
 if [ "$FAIL_OTHER" = "0" ] && [ "$FAIL_GITEE" = "0" ]; then
-  echo "  ✅ 全部成功（origin + gitee）"
-  echo "  📚 课件 URL: $COURSE_URL（Pages 部署 1-3 分钟）"
+  echo "  ✅ 全部成功（origin + gitee + 五件套验证通过）"
+  echo "  📚 课件 URL: $COURSE_URL"
   echo "  📋 Gallery: $GALLERY_URL"
   exit 0
 elif [ "$FAIL_OTHER" = "0" ] && [ "$FAIL_GITEE" = "1" ]; then
-  echo "  🟡 origin 全部成功，gitee 失败（DNS/网络）"
+  echo "  🟡 origin 全部成功（含五件套验证），gitee 失败（DNS/网络）"
   echo "  📚 课件 URL: $COURSE_URL"
-  echo "  💡 稍后可单独重试: cd <repo> && git push gitee main"
+  echo "  💡 稍后单独重试: cd <repo> && git push gitee main"
   exit 10
+elif [ "$FAIL_OTHER" = "2" ]; then
+  echo "  🚨 推送已成功但五件套部署失败 — 急救步骤见上方提示"
+  echo "  📚 课件 URL: $COURSE_URL（HTML 可能能加载但标准模块全失效）"
+  exit 20
 else
   echo "  ❌ 有 fatal 错误，请检查上面的日志"
   exit 1
