@@ -47,11 +47,17 @@ class PBLPathBuilder {
   // ─── 多课标知识点索引 ──────────────────────────
 
   async loadUnifiedIndex() {
+    // 先初始化 CoursewareHub，保证 PBL tooltip 能拿到最新 registry 课件链接；
+    // 即使统一知识点索引用了缓存，课件覆盖状态也不再过期。
+    if (window.TeachAnyHub && typeof TeachAnyHub.init === 'function') {
+      try { await TeachAnyHub.init(); } catch (e) { console.warn('[PBL] CoursewareHub init failed:', e.message); }
+    }
+
     if (this.loaded) return this.unifiedIndex;
     if (this._loadPromise) return this._loadPromise;
 
-    // v7.9.14：尝试从 localStorage 恢复缓存（TTL 30分钟）
-    const CACHE_KEY = 'teachany_pbl_unified_index';
+    // v7.11.1：缓存 key 升级，避免旧 unified index 缓存里没有 courses/registry 覆盖导致“有课件”节点链接过期
+    const CACHE_KEY = 'teachany_pbl_unified_index_v2';
     const CACHE_TTL = 1800000;
     try {
       const cached = localStorage.getItem(CACHE_KEY);
@@ -140,7 +146,7 @@ class PBLPathBuilder {
 
     // 写入缓存
     try {
-      const CACHE_KEY = 'teachany_pbl_unified_index';
+      const CACHE_KEY = 'teachany_pbl_unified_index_v2';
       localStorage.setItem(CACHE_KEY, JSON.stringify({
         ts: Date.now(),
         entries: [...this.unifiedIndex.entries()]
