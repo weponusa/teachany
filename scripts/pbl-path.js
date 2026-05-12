@@ -36,6 +36,10 @@ class PBLPathBuilder {
       { id: 'custom', name: '自定义 API', baseUrl: '', model: '', models: [] }
     ];
 
+    // Tooltip 延迟隐藏：允许鼠标从节点移动到弹窗内点击课程链接
+    this._tooltipHideTimer = null;
+    this._tooltipHovered = false;
+
     // 加载已保存的 LLM 配置
     this._loadLLMConfig();
   }
@@ -834,13 +838,22 @@ class PBLGraphRenderer {
       tooltip = document.createElement('div');
       tooltip.className = 'pbl-tooltip';
       tooltip.style.cssText = `
-        position:absolute;background:rgba(30,41,59,0.92);backdrop-filter:blur(12px);
-        border:1px solid rgba(148,163,184,0.15);border-radius:12px;padding:16px;
+        position:absolute;background:rgba(30,41,59,0.94);backdrop-filter:blur(12px);
+        border:1px solid rgba(148,163,184,0.18);border-radius:12px;padding:16px;
         max-width:340px;max-height:70vh;overflow-y:auto;pointer-events:none;
-        opacity:0;transition:opacity 0.2s;z-index:100;box-shadow:0 8px 32px rgba(0,0,0,0.4);
+        opacity:0;transition:opacity 0.18s ease;z-index:1000;box-shadow:0 8px 32px rgba(0,0,0,0.4);
         font-family:-apple-system,BlinkMacSystemFont,'Inter','PingFang SC',sans-serif;
         color:#f8fafc;font-size:14px;line-height:1.6;
       `;
+      // 关键：弹窗本身可 hover，避免从节点移到弹窗时立即消失，里面的链接才可点击。
+      tooltip.addEventListener('mouseenter', () => {
+        this._tooltipHovered = true;
+        this._cancelTooltipHide();
+      });
+      tooltip.addEventListener('mouseleave', () => {
+        this._tooltipHovered = false;
+        this._scheduleTooltipHide(220);
+      });
       container.appendChild(tooltip);
     }
 
@@ -998,13 +1011,16 @@ class PBLGraphRenderer {
       });
     }
 
-    // ─── Tooltip 交互（与 tree.html 同逻辑） ───
+    // ─── Tooltip 交互 ───
+    // 不能在 node mouseleave 时立即隐藏，否则鼠标还没移到 tooltip，课程链接就消失了。
+    // 使用短延迟 + tooltip 自身 mouseenter 取消隐藏，保证弹窗内链接可点击。
     node.on('mouseenter', (event, d) => {
+      this._cancelTooltipHide();
       this._showTooltip(tooltip, container, event, d);
     }).on('mousemove', (event) => {
-      this._moveTooltip(tooltip, container, event);
+      if (!this._tooltipHovered) this._moveTooltip(tooltip, container, event);
     }).on('mouseleave', () => {
-      this._hideTooltip(tooltip);
+      this._scheduleTooltipHide(420);
     });
 
     // ─── 力导向布局（参数随节点数量动态缩放） ───
@@ -1162,9 +1178,28 @@ class PBLGraphRenderer {
     this._positionTooltip(tooltip, container, event);
   }
 
+  _cancelTooltipHide() {
+    if (this._tooltipHideTimer) {
+      clearTimeout(this._tooltipHideTimer);
+      this._tooltipHideTimer = null;
+    }
+  }
+
+  _scheduleTooltipHide(delay = 350) {
+    this._cancelTooltipHide();
+    this._tooltipHideTimer = setTimeout(() => {
+      if (this._tooltipHovered) return;
+      const tooltip = document.querySelector('.pbl-tooltip');
+      if (tooltip) this._hideTooltip(tooltip);
+      this._tooltipHideTimer = null;
+    }, delay);
+  }
+
   _hideTooltip(tooltip) {
+    this._cancelTooltipHide();
     tooltip.style.opacity = '0';
     tooltip.style.pointerEvents = 'none';
+    tooltip.classList.remove('visible');
   }
 
   _positionTooltip(tooltip, container, event) {
