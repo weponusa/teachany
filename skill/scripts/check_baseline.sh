@@ -257,24 +257,31 @@ for kw in history geography 历史 地理 dynasty 朝代 map 地图 疆域 文�
 done
 
 if [ "$is_geo_course" = true ]; then
-  if grep -qE "L\.tileLayer\s*\(" "$HTML"; then
-    pass "历史/地理课件使用 v7 XYZ 瓦片底图"
+  # v7.9.4+ 唯一标准路线：声明式 data-teachany-map + teachany-historical-map.js + 本地 assets/maps
+  if grep -qE "data-teachany-map=|teachany-historical-map\.js" "$HTML"; then
+    pass "历史/地理课件使用标准地图模块 data-teachany-map / teachany-historical-map.js"
+  elif grep -qE "L\.map\s*\(" "$HTML"; then
+    warn "发现手写 Leaflet 地图；新课件应迁移到标准 data-teachany-map 模块"
   else
-    fail "历史/地理课件缺 L.tileLayer XYZ 瓦片底图（v7.3 要求 CartoDB + Esri Shaded Relief）"
+    fail "历史/地理课件缺标准地图模块（应使用 data-teachany-map + teachany-historical-map.js）"
   fi
 
-  if grep -qE "fitBounds\s*\(|setView\s*\(" "$HTML"; then
-    pass "地图已设置 fitBounds/setView 聚焦教学核心区域"
+  map_geojson_count=0
+  [ -d "$COURSE_DIR/assets/maps" ] && map_geojson_count=$(find "$COURSE_DIR/assets/maps" -name "*.geojson" 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$map_geojson_count" -ge 1 ] || grep -qE "assets/maps/[^\"']+\.geojson|\.geojson" "$HTML"; then
+    pass "地图使用本地 GeoJSON 资源"
   else
-    fail "地图未调用 fitBounds/setView 聚焦核心区域，不能停在默认世界视图"
+    warn "未检测到本地 GeoJSON 资源；发布前需复制到 assets/maps/"
   fi
 
-  if grep -qE "L\.imageOverlay\s*\(|L\.CRS\.EPSG4326" "$HTML"; then
-    fail "检测到旧地图方案 L.imageOverlay / L.CRS.EPSG4326，v7.3 已废弃"
+  if [ -f "$COURSE_DIR/assets/maps/hillshade.jpg" ] || grep -qE "hillshade\.jpg|hillshade" "$HTML"; then
+    pass "地图配置包含本地 hillshade 地形底图"
+  else
+    warn "未检测到 hillshade.jpg；地理/历史地图建议使用本地地形底图"
   fi
 
-  if grep -qE "DataV|datav|amap|map\.baidu|lbs\.qq\.com|tianditu" "$HTML"; then
-    fail "检测到外部地图 API（DataV/高德/百度/天地图），B-4 严禁"
+  if grep -qE "L\.tileLayer\s*\(|DataV|datav|amap|map\.baidu|lbs\.qq\.com|tianditu|openstreetmap|cartodb|esri" "$HTML"; then
+    fail "检测到在线瓦片或外部地图 API；B-4 要求本地资源和标准模块"
   fi
 else
   pass "非历史/地理课件，跳过 B-4"

@@ -525,9 +525,18 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
    - 每个模块规划 1 个核心问题，不超过 1 个全新概念引入
    - 标记需要"预训练"的复杂概念（先预览术语/组件，再展开完整讲解）
    - 确认每卡字数上限 75 字的可行性（对密集公式推导模块可适当放宽至 100 字并分步展示）
+10. **Phase 1 标准问卷 ⛔ v7.12.1 MANDATORY**：
+   - 必须读取 `references/phase1-checklist.md`
+   - 完成 5 问：学习者画像、课型、ABT 三句话、问题锚点、核心交互
+   - 产出 `Phase 1 输出合同`，并把 `lesson_type`、问题锚点、主交互、section 顺序写清楚
+11. **模板选型 ⛔ v7.12.1 MANDATORY**：
+   - HTML 必须从 `templates/course-skeleton.html` 复制开始
+   - `manifest.json` 必须从 `templates/manifest-template.json` 复制开始
+   - `{{CONTENT_SECTIONS}}` 必须从 `templates/content-section-templates.html` 选择片段填充
+   - 禁止在 Phase 3 从空白 HTML 重写五件套、品牌栏、问题锚点、音频播放器、知识图谱、AI 学伴卡片
 
-> ✅ **通过条件**：每个模块有 ABT + 情境引入；驱动结构已设计（问题链/项目阶段/活动序列）；知识点已列出并做了三分法标注；有前测设计；有学习记录单规划；每个模块有核心问题；**Bloom 层级已标注且覆盖 ≥ 3 级；ConcepTest 位置已确定；认知负荷预控已完成**。
-> ❌ **阻断**：没有前测 = 不通过；ABT 引入缺失 = 不通过；驱动结构缺失 = 不通过；**Bloom 覆盖 < 3 级 = 不通过；无 ConcepTest 规划 = 不通过**。
+> ✅ **通过条件**：每个模块有 ABT + 情境引入；驱动结构已设计（问题链/项目阶段/活动序列）；知识点已列出并做了三分法标注；有前测设计；有学习记录单规划；每个模块有核心问题；**Bloom 层级已标注且覆盖 ≥ 3 级；ConcepTest 位置已确定；认知负荷预控已完成**；`references/phase1-checklist.md` 的 5 问已完成；已明确使用 `course-skeleton.html`、`manifest-template.json`、`content-section-templates.html`。
+> ❌ **阻断**：没有前测 = 不通过；ABT 引入缺失 = 不通过；驱动结构缺失 = 不通过；**Bloom 覆盖 < 3 级 = 不通过；无 ConcepTest 规划 = 不通过**；未完成 Phase 1 标准问卷 = 不通过；未使用标准模板 = 不通过。
 
 ### Phase 1.5：策划文档 PLAN.md ⛔ MANDATORY CHECKPOINT（v7.9.11 新增）
 
@@ -644,6 +653,30 @@ python3 scripts/knowledge_layer.py lookup --topic "主题" --subject 学科 --to
 
 > ✅ **通过条件**：学科模式已选择且与 4.1 表一致；五镜头组合已确定；脚手架策略已标记；知识层数据已融入设计。
 > ❌ **阻断**：使用了错误学科的讲解框架 = 不通过（如物理课用了数学的"图形直觉→算理推导"）。
+
+### Phase 2 Validation：学科模式与内容结构校验 ⛔ CHECKPOINT
+
+进入 Generation Gate 前，必须确认：
+
+- [ ] 学科模式与课题一致，不误用其他学科框架
+- [ ] `lesson_type` 与 section 顺序一致
+- [ ] 五镜头组合服务于具体知识点，不是介绍方法本身
+- [ ] 脚手架路径 `full → partial → none` 跨模块递减
+- [ ] 知识层数据已进入 ABT、前测、练习、反馈和后测
+- [ ] 学习目标顺序 = 内容 section 顺序
+- [ ] 全课只有一条主叙事线
+- [ ] 视频 / 动画 / Canvas / 地图与所在 section 语义一致
+- [ ] `{{CONTENT_SECTIONS}}` 使用 `templates/content-section-templates.html` 的标准片段填充
+- [ ] `manifest.json` 已由 `templates/manifest-template.json` 填充，且 `course_id`、`node_id` 与 HTML meta 一致
+
+生成 HTML 后、进入媒体生产或发布前，必须运行：
+
+```bash
+node scripts/validate-courseware.cjs <课件目录> --phase2
+```
+
+> ✅ **通过条件**：上述 10 项全部满足；`validate-courseware.cjs --phase2` 退出码为 0。
+> ❌ **阻断**：仍有 `{{PLACEHOLDER}}`、缺标准模块、manifest 与 meta 不一致、缺前测/后测/主交互/诊断反馈，均不得进入 Phase 3 媒体生产或发布。
 
 ### ⛔ Generation Gate：内容生成前预检
 

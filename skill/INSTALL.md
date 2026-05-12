@@ -42,13 +42,14 @@ git clone https://github.com/weponusa/teachany-skill.git <your-skill-dir>/teacha
 ## 三、首次验证
 
 ```bash
-# 在任意目录跑这三条命令，确认 skill 可用
+# 在任意目录跑这四条命令，确认 skill 可用
 ls ~/.codebuddy/skills/teachany/scripts/publish_course.sh  # 或 ~/.agents/...
-head -5 ~/.codebuddy/skills/teachany/scripts/publish_course.sh | grep "v6"
+grep -n "TeachAny v7.12" ~/.codebuddy/skills/teachany/templates/course-skeleton.html | head -1
+test -f ~/.codebuddy/skills/teachany/templates/manifest-template.json && echo "manifest template OK"
 cat ~/.codebuddy/skills/teachany/assets/image-registry.json | head -3  # CDN 索引已到位
 ```
 
-若 3 条全部有输出，skill 就绪。
+若 4 条全部有输出，skill 就绪。
 
 > **注**：v5.37 起，图片和地图资源（~43MB）不再捆绑在 skill 中，
 > 而是通过 jsDelivr CDN 按需下载（来源：`weponusa/teachany-images` 仓库）。
@@ -64,9 +65,10 @@ AI 会自动：
 
 1. 读取 `SKILL.md` / `SKILL_CN.md` 里的教学设计规范
 2. 跑 `scripts/find_nodes.py` 找知识树节点
-3. 按 `templates/course-skeleton.html` 搭建课件
-4. 跑 `scripts/check_baseline.sh` 自检
-5. （如配置 TeachAny 社区账号）`scripts/publish_course.sh` 发布
+3. 按 `templates/course-skeleton.html` + `templates/manifest-template.json` 搭建课件
+4. 从 `templates/content-section-templates.html` 选择主体内容片段填充 `{{CONTENT_SECTIONS}}`
+5. 跑 `node scripts/validate-courseware.cjs <课件目录> --phase2` 和 `scripts/check_baseline.sh` 自检
+6. （如配置 TeachAny 社区账号）`scripts/publish_course.sh` 发布
 
 详见：
 - 英文文档 [SKILL.md](./SKILL.md)

@@ -1,11 +1,26 @@
 # TeachAny 版本变更日志
 
-**当前版本**：v7.9.13（持续演进中）
-**更新日期**：2026-05-08
+**当前版本**：v7.12.1（持续演进中）
+**更新日期**：2026-05-12
 
 ---
 
-## 🆕 v7.9.13 — 知识图谱公共模块合规闭环（2026-05-08）
+## v7.12.1 — P0 标准化调用骨架（2026-05-12）
+
+**背景**：课件质量受模型能力影响较大，核心原因是模型每次都要同时决定教学结构、平台接线、五件套挂载、品牌栏、问题锚点、manifest 字段等。P0 的目标是把可标准化的调用全部前置到模板，模型只负责内容填充和学科交互设计。
+
+**改动**：
+
+- 升级 `templates/course-skeleton.html` 为 v7.12 标准化骨架，内置五件套、标准音频播放列表、知识图谱、AI 学伴卡片、顶部品牌栏双版本、问题锚点、移动端 safe-area 基线和本地 debug 自检。
+- 新增 `templates/manifest-template.json`，把 `manifest.json` 从自由生成改为字段填空，补齐 `lesson_type`、`stage`、`leads_to`、`learning_objectives`、资源声明和能力布尔字段。
+- 更新 `SKILL.md`、`SKILL_CN.md`、`INSTALL.md`、`README.md` 和 `scripts/setup.sh`，强制新课件先复制模板，再替换占位符。
+- 新增 `references/phase1-checklist.md`，把 Phase 1 设计压缩为学习者画像、课型、ABT、问题锚点、核心交互五问。
+- 新增 `templates/content-section-templates.html`，将前测、核心模块、ConcepTest、Canvas 互动、探究记录单、后测、小结等内容区块标准化。
+- 新增 `scripts/validate-courseware.cjs --phase2`，在媒体生产和发布前拦截缺标准模块、未填占位符、manifest/meta 不一致、缺前测/后测/主交互/诊断反馈等问题。
+
+---
+
+## v7.9.13 — 知识图谱公共模块合规闭环（2026-05-08）
 
 **背景**：用户反馈 `community/bio-h-nervous-regulation` 课件的"知识图谱"区块视觉一眼能看出不是标准模块——是 subagent 在 `#knowledge-graph` section 内手写的 `<svg><rect>×8 + <line>×6 + <text>×18` 静态矩形图，节点不可点击、无 tooltip、无前置/后续课件链接，**完全绕过了 v7.5 起就已存在的 `scripts/teachany-knowledge-graph.{js,css}` 标准公共模块**。这是 v7.9.11 #68 "策划先行"未完全堵住的漏洞——PLAN.md 即便存在，subagent 在写 HTML 时仍可能为了"看起来有图"自创一段 SVG 把这个区块"糊上"。
 

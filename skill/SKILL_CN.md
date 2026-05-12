@@ -14,6 +14,19 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 
 **默认原则**：先保证学习闭环，再考虑炫技效果；先保证学生学得会，再追求页面好看。
 
+## P0 标准化调用规则：先复制模板，再填内容
+
+每个新课件必须先复制 `templates/course-skeleton.html` 和 `templates/manifest-template.json`，再替换占位符。凡是模板已经提供标准调用的部分，一律不得让模型重新手写：
+
+- 五件套：`ai-tutor`、`teachany-tutor-card`、`teachany-tts-narrator`、`teachany-section-hints`、`teachany-knowledge-graph`
+- 标准音频播放列表：`<div data-teachany-audio>` + `data-teachany-audio-playlist`
+- 知识图谱：`<div data-teachany-kg="<node_id>">`
+- AI 学伴卡片：`<div data-teachany-tutor-card></div>`
+- 顶部品牌栏双版本：`course-version` + `teachany-version`
+- 问题锚点模块与手机 safe-area 基线
+
+模型只负责教学内容填充、学科交互设计和资源生产；平台接线归模板负责。
+
 ---
 
 ## 📖 文档路由（渐进披露）
@@ -29,7 +42,9 @@ description: "K12各学科互动教学课件开发技能。当用户需要制作
 
 | 文档 | 内容 | 触发时机 |
 |:---|:---|:---|
-| [`phases/workflow.md`](./phases/workflow.md) | 完整 Phase 0→4 执行细节 + Gate 检查点 | Phase 执行过程中逐步查阅 |
+| [`phases/workflow.md`](./phases/workflow.md) | 完整 Phase 0→4 执行细节 + Gate 检查点，含 Phase 1 标准问卷与 Phase 2 Validation | Phase 执行过程中逐步查阅 |
+| [`references/phase1-checklist.md`](./references/phase1-checklist.md) | Phase 1 五问强制问卷 + 输出合同 | Phase 1 搭骨架时必读 |
+| [`templates/content-section-templates.html`](./templates/content-section-templates.html) | `{{CONTENT_SECTIONS}}` 标准 HTML 片段库 | Phase 3 填充主体内容时必用 |
 | [`phases/deliverables.md`](./phases/deliverables.md) | L2/L3 触发条件与产物要求 | L2/L3 交付决策点 |
 | [`phases/video-audio.md`](./phases/video-audio.md) | Remotion/TTS/ffmpeg 流水线 | 做视频/语音基线时 |
 | [`phases/packaging.md`](./phases/packaging.md) | 课件打包 + registry + 发布 · **§17.4 基础设施任务推送铁律**（v7.9.5 新增）| L4 打包或发布时 · 改 skill/脚本/数据完成后 |

@@ -62,6 +62,7 @@ teachany-skill/
 ├── SKILL_CN.md           🧠 AI 读的中文规范（405KB, 完整版）
 ├── scripts/              🔧 15 个工具脚本
 │   ├── find_nodes.py        # 按 stage+subject+keyword 查知识树节点
+│   ├── validate-courseware.cjs # Phase 2 标准结构校验
 │   ├── check_baseline.sh    # 课件基线自检（TTS/图/章节/文件）
 │   ├── check_images.sh      # 图片资源完整性
 │   ├── publish_course.sh    # 一键发布到 TeachAny 社区（v7.9.4）
@@ -71,7 +72,9 @@ teachany-skill/
 │   │                        # 历史朝代地图生成
 │   └── ...
 ├── templates/            📋 3 套 HTML 课件骨架
-│   ├── course-skeleton.html     # 标准课件模板
+│   ├── course-skeleton.html      # v7.12 标准课件骨架：五件套/品牌栏/问题锚点固定调用
+│   ├── manifest-template.json    # 标准 manifest 填空模板
+│   ├── content-section-templates.html # 主体教学 section 片段库
 │   ├── example-tang-dynasty.html # 历史课件样板
 │   └── map-section-template.html # 地图章节模板
 ├── assets/               🗺️ 43MB 教学资源

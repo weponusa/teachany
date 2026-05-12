@@ -24,7 +24,7 @@ Activate when the user asks to:
 
 When the work involves both instructional design AND production (HTML/animation/audio/video), this skill leads. Combine with PPTX/Word skills only when export to those formats is the explicit final goal.
 
-For Chinese-speaking users or detailed Chinese explanations, also load `references/SKILL_CN.md`.
+For Chinese-speaking users or detailed Chinese explanations, also load `SKILL_CN.md`.
 
 ---
 
@@ -37,7 +37,21 @@ Phase 2: Build           → HTML + 19-item baseline (see below)
 Phase 3: Verify & Ship   → quality gate, package, publish
 ```
 
-For full Phase-by-Phase instructions, read `references/workflow.md`.
+For full Phase-by-Phase instructions, read `phases/workflow.md`.
+
+### P0 standardization rule: start from templates, not a blank page
+
+For every new courseware, copy `templates/course-skeleton.html` and `templates/manifest-template.json` first, then replace placeholders. Do not hand-write any of the following if the template already provides a standard call:
+
+- Five-piece suite: `ai-tutor`, `teachany-tutor-card`, `teachany-tts-narrator`, `teachany-section-hints`, `teachany-knowledge-graph`
+- Standard audio playlist: `<div data-teachany-audio>` + `data-teachany-audio-playlist`
+- Knowledge graph: `<div data-teachany-kg="<node_id>">`
+- AI tutor card: `<div data-teachany-tutor-card></div>`
+- Top brand bar with dual version
+- Problem anchor module
+- Mobile / Mini Program safe-area baseline
+
+The model's job is content filling and subject interaction design. Platform wiring is template-owned.
 
 ---
 
@@ -57,29 +71,7 @@ TeachAny supports five courseware types. Choose one explicitly in Phase 1 and wr
 
 ### v7.0 minimum rule: problem anchor in every new courseware
 
-Before the first explanation section, add:
-
-```html
-<section id="problem-anchor" data-tsh="问题锚点 - 先确定你今天想解决的问题">
-  <h2>今天的课件可以帮你解决什么问题？</h2>
-  <button data-anchor-choice="scenario-a">选项 A：预设真实场景</button>
-  <button data-anchor-choice="scenario-b">选项 B：预设真实场景</button>
-  <label>我有自己的问题
-    <input id="learner-question-input" placeholder="把你卡住的问题写在这里">
-  </label>
-</section>
-<script>
-window.__TEACHANY_LEARNER_QUESTION__ = '';
-document.querySelectorAll('[data-anchor-choice]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    window.__TEACHANY_LEARNER_QUESTION__ = btn.textContent.trim();
-  });
-});
-document.getElementById('learner-question-input')?.addEventListener('input', e => {
-  window.__TEACHANY_LEARNER_QUESTION__ = e.target.value.trim();
-});
-</script>
-```
+`templates/course-skeleton.html` already contains the problem-anchor section and learner-question wiring. For new courseware, only fill `{{PROBLEM_ANCHOR_CHOICES}}` with 2-3 real scenarios. Do not rewrite the event wiring unless you are fixing the standard template itself.
 
 ### AI tutor default strategy (v7.0+)
 
@@ -133,7 +125,7 @@ A "complete" TeachAny courseware is not just an HTML file. It must ship with all
 - **Image sourcing decision tree for items ④⑯**: (a) Check `assets/image-registry.json` / `assets/maps/MANIFEST.json` / CDN first; (b) if no match and image is a **specific historical artwork** (e.g., Mona Lisa, David sculpture), search web for a public-domain scan — Wikimedia Commons is the canonical source; (c) if no match and image is an **educational concept illustration**, use `image_gen` with subject-specific prompt; (d) never fake "see this image" without an actual image.
 - **Map sourcing decision tree for ⑯**: (a) `find-map.py <keyword>` to query bundled library; (b) if hit → `--copy` into courseware (seconds, no token cost); (c) only if library has zero match → check `naturalearthdata.com` / `cshapes.sgendata.com` / `historical-basemaps`; (d) only as last resort → generate hillshade with `gdaldem hillshade` from SRTM DEM. **Generating before searching the library is a violation of the library-first principle.**
 
-For details on each baseline item (CDN naming, fallback chain, validation scripts, audio-quality gate, map-base requirements, knowledge-graph data schema, brand bar template), read `references/baseline-rules.md`.
+For details on each baseline item (CDN naming, fallback chain, validation scripts, audio-quality gate, map-base requirements, knowledge-graph data schema, brand bar template), read `references/baseline-rules.md`. For Phase 2 structural validation, run `node scripts/validate-courseware.cjs <course-dir> --phase2`.
 
 ---
 
@@ -150,7 +142,7 @@ In addition to the 18 baseline items, every courseware MUST declare 6 meta tags 
 <meta name="course-next"     content="phy-lens-imaging">          <!-- Optional, single ID -->
 ```
 
-For the runtime system that consumes these tags (`TeachAnyAdaptive`, `TeachAnyProgress`, `TeachAnySR`, `TeachAnyAchievements`, `TeachAnyRouter`, PWA), read `references/frontend-runtime.md`.
+For runtime behavior that consumes these tags, keep the 6 meta tags in `templates/course-skeleton.html` intact and verify them with `node scripts/validate-courseware.cjs <dir> --phase2`.
 
 ---
 
@@ -183,7 +175,7 @@ The TeachAny project has **two repos**:
 
 ⛔ **Do NOT put complete (>2KB) HTML into the skill repo**. The skill repo (`teachany-opensource`) only stores redirects. Full courseware lives in the courseware repo.
 
-For dual-repo publishing flow + redirect page template + `rebuild-index.py` behavior, read `references/packaging.md`.
+For dual-repo publishing flow + redirect page template + `rebuild-index.py` behavior, read `phases/packaging.md`.
 
 ---
 
@@ -202,7 +194,7 @@ Not every courseware fits a national curriculum (CN/IB/A-Level/AP). For folk mat
 - ⛔ Don't mark `free_mode: true` if there IS a matching official node (creates orphans in the knowledge graph)
 - ⛔ Don't bypass `ext-*` quality gates (course-id starts with `ext-`, HTML ≥ 10KB, has `course-subject` + `course-title`, ≥ 5 `<section>` blocks)
 
-For full free_mode + ext-* mechanics, read `references/workflow.md` (Phase 0.5 section).
+For full free_mode + ext-* mechanics, read `phases/workflow.md` (Phase 0.5 section).
 
 ---
 
@@ -211,29 +203,32 @@ For full free_mode + ext-* mechanics, read `references/workflow.md` (Phase 0.5 s
 Read SKILL.md (this file) for triggering, baseline, and red lines. When you're working on a specific aspect, load the matching reference:
 
 ### Workflow & process
-- `references/workflow.md` — Full Phase 0 → Phase 3 instructions, Phase 0.5 knowledge lookup, validation gates
+
+- `phases/workflow.md` — Full Phase 0 → Phase 3 instructions, Phase 0.5 knowledge lookup, validation gates
+- `references/phase1-checklist.md` — Phase 1 five-question checklist and output contract
+- `templates/content-section-templates.html` — Standard HTML snippets for `{{CONTENT_SECTIONS}}`
 
 ### Standards & rules
 - `references/baseline-rules.md` — All 18 baseline items in detail, courseware type taxonomy, problem-anchor / inquiry rules, 5 red lines, 8 anti-shortcut rules, **adaptive 4-branch hard rules**
-- `references/SKILL_CN.md` — Chinese reference version (read when user writes in Chinese or asks for Chinese explanations)
+- `SKILL_CN.md` — Chinese reference version (read when user writes in Chinese or asks for Chinese explanations)
 - `RULES.md` — The full hard-rule list with violation examples
 
 ### Instructional design
-- `references/instructional-design.md` — ABT narrative, Bloom's taxonomy, cognitive load theory, scaffolding, **adaptive (4-branch) and inquiry-based (4-level) design**
-- `references/subject-adapters.md` — Per-subject adaptation matrix + **5-lens method**, **ConcepTest design**, peer-instruction patterns
+- `SKILL_CN.md` — ABT narrative, Bloom's taxonomy, cognitive load theory, scaffolding, adaptive and inquiry-based design
+- `guides/interaction-patterns.md` and `guides/assessment.md` — interaction selection, ConcepTest design, assessment patterns
 - `guides/project-based.md`, `guides/interaction-patterns.md`, `guides/assessment.md`, `guides/prerequisites.md`, `guides/examples.md` — Detailed teaching design patterns
 
 ### Technical implementation
-- `references/tech-stack.md` — Recommended stack, page structure, design system per grade level
-- `references/frontend-runtime.md` — **Frontend learning-loop runtime** (TeachAnyAdaptive · TeachAnyProgress · TeachAnySR · TeachAnyAchievements · TeachAnyRouter · PWA · 6 required `<meta>` tags). Read when implementing adaptive branching, progress tracking, spaced-repetition review, or cross-courseware navigation.
+- `tech/stack.md` — Recommended stack
+- `tech/page-structure.md` and `tech/design-system.md` — page structure and design system per grade level
 - `tech/page-structure.md` (42KB) — Full HTML standard structure with `data-tsh`/`data-tts` attributes
 - `tech/design-system.md` — Visual design specs (elementary/middle/high)
 - `tech/ai-multimodal.md` — AI multimodal interaction zones
 - `tech/math-animations.md`, `tech/science-simulations.md`, `tech/advanced-animations.md` — Subject-specific animation patterns
 
 ### Media production
-- `references/media-pipeline.md` — Hero infographic resolution chain, Remotion video setup, TTS engine, audio module
-- `phases/video-audio.md` — Full video/audio production pipeline (Remotion + ffmpeg + TTS)
+
+- `phases/video-audio.md` — Full video/audio production pipeline (Hero, Remotion + ffmpeg + TTS)
 
 ### Maps (geography & history)
 - `references/maps.md` — Local map assets (no XYZ tiles), hillshade base, GeoJSON administrative boundaries
@@ -241,11 +236,11 @@ Read SKILL.md (this file) for triggering, baseline, and red lines. When you're w
 - `terrain-3d-integration.md` — 3D terrain integration
 
 ### Packaging & publishing
-- `references/packaging.md` — Dual-repo publishing flow, redirect page generation, `rebuild-index.py`, `git push origin + gitee`
-- `phases/packaging.md` — Full L4 packaging workflow with `submit-to-community.py`
+
+- `phases/packaging.md` — Dual-repo publishing flow, redirect page generation, `rebuild-index.py`, `git push origin + gitee`, and `submit-to-community.py`
 
 ### Theory & cost
-- `references/theory.md` — Theoretical foundations (cognitive science, learning sciences research)
+
 - `phases/token-cost.md` — Token consumption per phase, cost estimation
 - `phases/deliverables.md` — L2/L3 trigger mechanism
 
@@ -261,10 +256,11 @@ Read SKILL.md (this file) for triggering, baseline, and red lines. When you're w
 When the user asks for a new courseware, in your first reply:
 
 1. **Acknowledge & clarify** — Confirm subject + grade + topic. If any is missing, ask in one batch (don't drip questions).
-2. **Read `references/workflow.md`** — Internalize the 4-phase flow.
+2. **Read `phases/workflow.md` and `references/phase1-checklist.md`** — Internalize the 4-phase flow and the Phase 1 output contract.
 3. **Run Phase 0.5 lookup** — Locate the `node_id` in `data/trees/<curriculum>/<subject>.json`. If not found, decide between (a) registering a new node, or (b) `free_mode: true` for "Other Knowledge" tree.
-4. **Show the user a 1-screen plan** — Lesson type, ABT narrative, baseline items you'll include. Get a "go" before building.
-5. **Build → verify → publish** — Phase 1-3 per `references/workflow.md`, gate with `validate-courseware.cjs`, publish per `references/packaging.md`.
+4. **Start from P0 templates** — Copy `templates/course-skeleton.html` to `community/<course-id>/index.html` and `templates/manifest-template.json` to `manifest.json`; fill placeholders instead of generating platform wiring from scratch. Fill `{{CONTENT_SECTIONS}}` from `templates/content-section-templates.html`.
+5. **Show the user a 1-screen plan** — Lesson type, ABT narrative, baseline items you'll include. Get a "go" before building.
+6. **Build → verify → publish** — Phase 1-3 per `phases/workflow.md`, gate with `node scripts/validate-courseware.cjs <dir> --phase2`, publish per `phases/packaging.md`.
 
 For tasks that are NOT new-courseware (e.g., batch update, migration, debugging), skip to the relevant reference directly. The 4-phase flow is for greenfield work; for maintenance work the red lines and dual-repo layout above are what you need.
 
@@ -508,22 +504,28 @@ walk(t)"
    ```
 4. Wait 90 seconds for `pages-build-deployment` to run, then re-run Check 2.
 
-For full publishing details (drafts vs direct push, PR flow via Cloudflare Worker, examples/ deprecation), read `references/packaging.md`.
+For full publishing details (drafts vs direct push, PR flow via Cloudflare Worker, examples/ deprecation), read `phases/packaging.md`.
 
 ---
 
 ## When in doubt
 
-- **Don't know which subject adapter applies?** → `references/subject-adapters.md`
+- **Don't know which interaction/assessment pattern applies?** → `guides/interaction-patterns.md` and `guides/assessment.md`
 - **Tool unavailable / TTS/Remotion fails?** → `phases/video-audio.md` for fallback chains
-- **node_id can't be found in tree?** → `references/workflow.md` Phase 0.5
+- **node_id can't be found in tree?** → `phases/workflow.md` Phase 0.5
 - **Quality gate fails?** → `references/baseline-rules.md` for which item failed and how to fix
-- **Publishing problems / git push fails?** → `references/packaging.md`
-- **Chinese-language conversation or detail needed?** → `references/SKILL_CN.md`
+- **Publishing problems / git push fails?** → `phases/packaging.md`
+- **Chinese-language conversation or detail needed?** → `SKILL_CN.md`
 
 ---
 
-**Version**: v7.12.0 · **Last update**: 2026-05-12 · See `CHANGELOG.md` for history.
+**Version**: v7.12.1 · **Last update**: 2026-05-12 · See `CHANGELOG.md` for history.
+
+**v7.12.1 changes** (P0 standardization):
+
+- `templates/course-skeleton.html` upgraded to standard-call-first skeleton: five-piece suite, audio playlist, knowledge graph, AI tutor card, brand bar, problem anchor, and mobile baseline are template-owned
+- Added `templates/manifest-template.json` so course metadata becomes field filling instead of free generation
+- New-courseware quick-start now requires copying both templates before content generation
 
 **v7.12.0 changes** (mobile + Mini Program readiness):
 - Baseline expanded to 19 items: ⑲ Mobile + Mini Program WebView readiness
