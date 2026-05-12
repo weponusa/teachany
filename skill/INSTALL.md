@@ -101,10 +101,14 @@ rm -rf ~/.agents/skills/teachany
 
 ## 八、普通用户如何提交课件
 
-普通用户无需 GitHub 写权限，制作完成并通过质检后运行：
+普通用户无需 GitHub 写权限。课件制作完成并通过质检后，把课件目录放在 `community/drafts/<course-id>/`，或直接传目录路径运行：
 
 ```bash
+# 方式 A：推荐，按 course id 提交（目录：community/drafts/<course-id>/ 或 community/<course-id>/）
 python3 scripts/submit-to-community.py <course-id> --author "你的名字" --message "提交说明"
+
+# 方式 B：直接传课件目录路径
+python3 scripts/submit-to-community.py /path/to/courseware-dir --from path --author "你的名字"
 ```
 
 自动链路如下：

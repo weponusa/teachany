@@ -469,17 +469,27 @@ def main():
         "--from",
         dest="from_dir",
         default="auto",
-        choices=["auto", "drafts", "examples"],
-        help="课件所在根目录：auto=自动探测（默认），drafts=community/drafts，examples=examples",
+        choices=["auto", "drafts", "community", "examples", "path"],
+        help="课件所在根目录：auto=自动探测（默认），drafts=community/drafts，community=community/<id>，examples=examples，path=第一个参数就是目录路径",
     )
     args = parser.parse_args()
 
     # 1. 定位课件目录
     candidates = []
-    if args.from_dir in ("auto", "drafts"):
-        candidates.append(Path("community") / "drafts" / args.course_id)
-    if args.from_dir in ("auto", "examples"):
-        candidates.append(Path("examples") / args.course_id)
+    if args.from_dir == "path":
+        candidates.append(Path(args.course_id))
+    elif args.from_dir == "community":
+        candidates.append(Path("community") / args.course_id)
+    else:
+        if args.from_dir in ("auto", "drafts"):
+            candidates.append(Path("community") / "drafts" / args.course_id)
+        if args.from_dir in ("auto", "community"):
+            candidates.append(Path("community") / args.course_id)
+        if args.from_dir in ("auto", "examples"):
+            candidates.append(Path("examples") / args.course_id)
+        # 允许第一个参数直接传目录路径，降低普通用户心智负担
+        if args.from_dir == "auto":
+            candidates.append(Path(args.course_id))
     course_dir = next((p for p in candidates if p.is_dir()), None)
     if not course_dir:
         print(f"⛔ 在以下位置都找不到课件目录：")
