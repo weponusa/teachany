@@ -419,12 +419,17 @@ For full publishing details (drafts vs direct push, PR flow via Cloudflare Worke
 
 **Version**: v7.10.3 · **Last update**: 2026-05-12 · See `CHANGELOG.md` for history.
 
+**v7.10.4 changes** (community direct-upload pipeline):
+- 普通用户提交路径固定为：`submit-to-community.py` → Pages Function → `weponusa/teachany-courseware` PR → merge 后自动解包到 `community/<course-id>/`
+- `teachany-courseware/.github/workflows/community-publish.yml` 负责解包 `.teachany`、提交到资产仓库、触发 Pages 增量部署
+- `weponusa/teachany` 新增 `courseware-published` registry sync workflow：收到通知后生成 redirect + manifest，跑 `rebuild-index.py`，同步 Gallery/知识图谱
+- 管理员只需在 `weponusa/teachany-courseware` 配置 `TEACHANY_REGISTRY_PAT`（对 `weponusa/teachany` 有 Contents/Actions 写权限）即可打通跨仓自动注册
+- Gallery 链接清理：`community/index.json` 直指 `teachany-courseware`，不再让用户先看到“课件已迁移”中转页
+
 **v7.10.3 changes** (real-URL verification — HTML 200 ≠ deployed):
 - ⑰ Verify-publish 升级为 4 步硬检查：HTML 200 + 5 个 JS URL=200 + 5 个 CSS URL=200 + 知识树挂载
-- 新增急救方案：scripts/ 没部署到 gh-pages 时用 `git worktree` 手动 push
 - auto-publish.sh 加 Step 4 自动跑五件套真实 URL 验证（任何一个 404 退出码 20）
-- 新增 anti-pattern：声称完成但 JS 404；信任 peaceiris exclude_assets glob 选择性排除 scripts
-- 根因记录：peaceiris/actions-gh-pages 的 exclude_assets 处理 'scripts/*.py' 这类带斜杠 glob 时把整个 scripts/ 排除（5 月 12 日实测）
+- 新增 anti-pattern：声称完成但 JS 404
 
 **v7.10.2 changes** (standard-module discipline + projection alignment):
 - ⑦ Knowledge graph MUST use standard module API `<div data-teachany-kg="<node_id>">`, NOT hand-written HTML

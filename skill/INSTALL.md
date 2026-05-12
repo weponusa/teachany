@@ -99,7 +99,32 @@ rm -rf ~/.agents/skills/teachany
 
 做课件 → 用本仓 skill；发布课件 → 推到课件仓 `community/`。两者通过 `scripts/publish_course.sh` 自动衔接。
 
-## 八、常见问题
+## 八、普通用户如何提交课件
+
+普通用户无需 GitHub 写权限，制作完成并通过质检后运行：
+
+```bash
+python3 scripts/submit-to-community.py <course-id> --author "你的名字" --message "提交说明"
+```
+
+自动链路如下：
+
+1. `submit-to-community.py` 打包 `.teachany` 并提交到 TeachAny Pages Function；
+2. Worker 在 `weponusa/teachany-courseware` 创建 `community/pending/**` PR；
+3. PR 质检通过并合并后，`teachany-courseware/.github/workflows/community-publish.yml` 自动解包到 `community/<course-id>/`；
+4. 课件站点增量部署到 `https://weponusa.github.io/teachany-courseware/community/<course-id>/`；
+5. 如管理员在 `weponusa/teachany-courseware` 配置了 secret `TEACHANY_REGISTRY_PAT`，会自动通知 `weponusa/teachany` 同步 Gallery 索引和知识图谱。
+
+管理员需要配置一次：
+
+- 仓库：`weponusa/teachany-courseware`
+- Settings → Secrets and variables → Actions → New repository secret
+- 名称：`TEACHANY_REGISTRY_PAT`
+- 权限：对 `weponusa/teachany` 有 `Contents: Read/Write` 和 `Actions: Read/Write`
+
+没有这个 secret 时，课件仍会进入资产仓库并上线，但 Gallery/知识图谱不会自动更新，需要管理员手动触发同步。
+
+## 九、常见问题
 
 **Q: 安装后 AI 还是不按 skill 做课件怎么办？**
 A: 确认你的 AI Agent 已识别 skills 目录。可手动 `cat ~/.codebuddy/skills/teachany/SKILL_CN.md | head` 检查。
