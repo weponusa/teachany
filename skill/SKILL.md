@@ -33,7 +33,7 @@ For Chinese-speaking users or detailed Chinese explanations, also load `referenc
 ```
 Phase 0: Define & Lookup → who/what/why, find node_id in knowledge tree
 Phase 1: Skeleton        → problem anchor, ABT narrative, lesson type, scaffolding plan
-Phase 2: Build           → HTML + 18-item baseline (see below)
+Phase 2: Build           → HTML + 19-item baseline (see below)
 Phase 3: Verify & Ship   → quality gate, package, publish
 ```
 
@@ -95,11 +95,11 @@ AI tutor must be **diagnostic-first**: when a student asks a question, first ask
 
 ---
 
-## 18-item baseline (every courseware MUST have these)
+## 19-item baseline (every courseware MUST have these)
 
-A "complete" TeachAny courseware is not just an HTML file. It must ship with all 18 items below — these are non-negotiable because they together create the learning loop **and the publishing loop**. Skipping any one of them produces a courseware that looks finished but doesn't teach OR doesn't reach students (orphaned local files don't count as published).
+A "complete" TeachAny courseware is not just an HTML file. It must ship with all 19 items below — these are non-negotiable because they together create the learning loop **and the publishing loop**. Skipping any one of them produces a courseware that looks finished but doesn't teach OR doesn't reach students (orphaned local files don't count as published).
 
-> **Chinese aliases for triggering**: 18 项基线 / 18 件套 · TTS 旁白 · Remotion 视频 · Canvas 互动 · AI 插画 · Hero 图 · 音频播放器模块 · 知识图谱 · AI 学伴 / AI 导师卡片 · 五件套 · 顶部品牌栏 · 提及即配图 · 库优先地图 · 自动注册推送 / auto-register-and-push · 问题锚点 / 探究课 / Inquiry Project
+> **Chinese aliases for triggering**: 19 项基线 / 19 件套 · TTS 旁白 · Remotion 视频 · Canvas 互动 · AI 插画 · Hero 图 · 音频播放器模块 · 知识图谱 · AI 学伴 / AI 导师卡片 · 五件套 · 顶部品牌栏 · 提及即配图 · 库优先地图 · 自动注册推送 / auto-register-and-push · 问题锚点 / 探究课 / Inquiry Project · 手机适配 / 小程序 web-view
 
 | # | Item | Chinese alias | Why it matters |
 |:-:|:---|:---|:---|
@@ -121,6 +121,7 @@ A "complete" TeachAny courseware is not just an HTML file. It must ship with all
 | ⑯ | **Real map base for history/geography courseware** — **library-first principle**: ALWAYS check the skill's bundled `assets/maps/` library FIRST (207 files, 104MB), only generate new if no library match. Output: `hillshade.jpg` + `boundaries.geojson` + `places.geojson` via Leaflet/D3. **⛔ Projection-alignment rule**: library hillshade is global 4096×2048 Plate Carrée — `L.imageOverlay` bounds MUST be `[[-90,-180],[90,180]]` (global), then use `map.fitBounds(<region-bounds>)` to zoom. Setting bounds directly to a region (e.g. `[[35,-10],[60,30]]` for Europe) stretches the global image into that frame and offsets every coordinate. | 地图底图 / 库优先 / 投影对齐 / Plate Carrée | Real terrain + borders for spatial intuition. Wrong bounds = terrain-and-border mismatch (mountains in wrong country, cities floating in sea). |
 | ⑰ | **Auto-register and push** (DEFAULT, not optional) — after finishing/modifying ANY courseware, automatically execute the 3-repo publishing chain: (a) commit + push **courseware repo** (full HTML/TTS/assets/videos to `weponusa/teachany-courseware`); (b) generate 11-line redirect + copy `manifest.json` into **opensource repo**, run `python3 scripts/rebuild-index.py` to update registry + knowledge tree, commit + push to `weponusa/teachany`; (c) if skill itself was modified, push **skill repo** changes too. **Skip ONLY when user explicitly says "不要发布/不要上传/只做不推/don't publish/just local"**. | 自动注册推送 / auto-register-and-push / 三仓发布 | A courseware that exists only on your local disk doesn't reach students. The publishing loop is part of "completion", not an afterthought. The whole point of TeachAny is shared coursewareware. |
 | ⑱ | **Problem anchor module** (v7.0 default for EVERY new courseware) — place the first interactive module before any explanation: “今天的课件可以帮你解决什么问题？” with 2–3 preset scenario choices + “我有自己的问题” input. Store the selected/typed question in `window.__TEACHANY_LEARNER_QUESTION__`, and make subsequent ABT narrative, section hints, examples, and AI tutor suggestions explicitly align to that question. For review/experiment/special-topic lessons, the anchor can be “我要解决/验证/复盘的问题”. | 问题锚点 / 学生问题 / 自驱学习 / learner question | Courseware must start from the learner’s own problem, not from a knowledge dump. This turns “I am pushed through content” into “I am learning to solve my question”. |
+| ⑲ | **Mobile + Mini Program WebView readiness** — every courseware must be usable on 375×667 and 390×844 mobile viewports and embeddable in WeChat Mini Program `web-view`. Required: `<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">`, safe-area padding, touch targets ≥44px, no hover-only interaction, responsive grids, local/HTTPS assets only, and no dependency on popups/new windows for core learning. For Mini Program, provide a `web-view` wrapper URL pattern `https://weponusa.github.io/teachany-courseware/community/<course-id>/index.html#wechat_redirect`. | 手机适配 / 小程序 / web-view / 触屏 / safe-area | Students often learn on phones and WeChat. A courseware that works only on desktop cannot be shipped as TeachAny. Mini Program embedding requires HTTPS business-domain readiness and mobile-first UX. |
 
 **Key tooling**:
 - Hero image lookup: `python3 scripts/find-hero.py <course-id>` (CDN-first, image_gen fallback)
@@ -269,6 +270,51 @@ For tasks that are NOT new-courseware (e.g., batch update, migration, debugging)
 
 ---
 
+## Mobile + Mini Program WebView readiness (baseline ⑲)
+
+Every courseware must be mobile-first enough to fit inside a WeChat Mini Program `web-view` page.
+
+**WeChat Mini Program facts to respect** (from official docs):
+- `web-view` loads H5 pages and automatically fills the page.
+- The H5 domain must be configured as a **business domain** in the Mini Program admin console.
+- The domain must use HTTPS and cannot be an IP address.
+- Each Mini Program page can contain only one `web-view`; it overlays normal native components.
+- Communication is limited to JSSDK-supported messaging; don't rely on arbitrary parent-window APIs.
+- Avoid Chinese characters in query URLs on iOS; encode URL parameters and use `#wechat_redirect` when needed.
+
+**Required courseware implementation**:
+
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<style>
+:root { --safe-top: env(safe-area-inset-top); --safe-bottom: env(safe-area-inset-bottom); }
+body { padding-top: var(--safe-top); padding-bottom: calc(16px + var(--safe-bottom)); }
+button, a, input, select, textarea { min-height: 44px; }
+@media (max-width: 600px) {
+  .teachany-brand-bar { position: sticky; top: 0; }
+  .hero, section { padding-left: 16px; padding-right: 16px; }
+  .grid, .cards, .objectives { grid-template-columns: 1fr !important; }
+  canvas, svg, video, img { max-width: 100%; height: auto; }
+}
+</style>
+```
+
+**Mini Program wrapper** lives in `weponusa/teachany-courseware/miniprogram/`. A typical page receives `id=<course-id>` and renders:
+
+```xml
+<web-view src="{{src}}" bindload="onLoad" binderror="onError"></web-view>
+```
+
+The generated `src` must be:
+
+```text
+https://weponusa.github.io/teachany-courseware/community/<course-id>/index.html#wechat_redirect
+```
+
+Admin setup required once: Mini Program admin → Development settings → business domain → add `weponusa.github.io` (or your own CNAME domain). Personal Mini Program accounts cannot use `web-view`.
+
+---
+
 ## Anti-patterns (immediate red flags)
 
 Stop and reconsider if you find yourself doing any of these:
@@ -295,6 +341,8 @@ Stop and reconsider if you find yourself doing any of these:
 - ❌ **Brand bar showing only course version** (violates ⑮) — must show BOTH course version AND skill version. Course version tells students "is this content updated?", skill version tells students "is this courseware using the latest TeachAny capabilities?". Both pieces of info matter.
 - ❌ **Setting Leaflet `imageOverlay` bounds to a region (Europe / China / etc.) when the source hillshade is global Plate Carrée** (violates ⑯ projection-alignment rule) — bounds tells Leaflet "this image spans these lat/lng coordinates"; if you tell it the global 4096×2048 image spans only Europe `[[35,-10],[60,30]]`, Leaflet will stretch the whole world into that frame, producing terrain-borders mismatch (Alps appear in Africa, Madrid floats in the Atlantic). Correct pattern: `L.imageOverlay(url, [[-90,-180],[90,180]])` + `map.fitBounds(regionBounds)`.
 - ❌ **Generating new hillshade/boundaries without first querying the library** (violates ⑯ library-first principle) — the skill ships with 207 maps in `assets/maps/` covering 19 Chinese dynasties, 21 world eras, and 6 hillshade variants. Always run `python3 scripts/find-map.py <keyword>` BEFORE invoking `image_gen` or `gdaldem`. Generating duplicates wastes tokens and produces visual inconsistency across coursewares.
+- ❌ **Desktop-only courseware** (violates ⑲) — if it cannot be used at 375×667 viewport or relies on hover-only interactions, it is not shippable. Test with mobile viewport before claiming done.
+- ❌ **Embedding in Mini Program without business-domain readiness** (violates ⑲) — `web-view` requires HTTPS business domain configuration; do not promise Mini Program availability before domain + wrapper path are verified.
 - ❌ **No problem anchor at the beginning of a new courseware** (violates ⑱) — starting immediately with definitions, formulas, or historical background turns the lesson into a knowledge dump. Always ask “今天的课件可以帮你解决什么问题？” before teaching.
 - ❌ **AI tutor answers before diagnosing** (violates v7.0 tutor strategy) — first ask where the student is stuck, locate the knowledge gap, provide the smallest hint, and let the student retry. Do not default to full worked solutions.
 - ❌ **Calling an Inquiry Project a normal linear lesson** — 探究课 must iterate question → attempt → gap → just-in-time knowledge → retry → artifact/reflection.
@@ -314,7 +362,7 @@ A delivered courseware lives across **three repos** and must be pushed to all th
 
 ```
 weponusa/teachany-courseware/community/<course-id>/   # Full courseware (HTML + TTS + assets + videos)
-├── index.html                               # complete HTML with five-piece suite + 18 baselines
+├── index.html                               # complete HTML with five-piece suite + 19 baselines
 ├── manifest.json                            # node_id, status, has_tts, has_video, etc.
 ├── README.md                                # description, learning objectives
 ├── tts/s01.mp3 ~ s0N.mp3                    # one per data-tts paragraph
@@ -475,7 +523,13 @@ For full publishing details (drafts vs direct push, PR flow via Cloudflare Worke
 
 ---
 
-**Version**: v7.11.0 · **Last update**: 2026-05-12 · See `CHANGELOG.md` for history.
+**Version**: v7.12.0 · **Last update**: 2026-05-12 · See `CHANGELOG.md` for history.
+
+**v7.12.0 changes** (mobile + Mini Program readiness):
+- Baseline expanded to 19 items: ⑲ Mobile + Mini Program WebView readiness
+- Every new courseware must pass mobile viewport checks (375×667 / 390×844), touch targets ≥44px, safe-area padding, no hover-only core interactions
+- Added Mini Program `web-view` constraints: HTTPS business domain, one web-view per page, limited messaging, `#wechat_redirect`, encoded URLs
+- Added courseware repo Mini Program wrapper template requirement (`miniprogram/pages/courseware`)
 
 **v7.11.0 changes** (Inquiry Project + problem-anchor baseline):
 - Added fifth courseware type: `inquiry-project` / 探究课, starting from learner questions rather than knowledge points

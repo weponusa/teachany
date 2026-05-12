@@ -128,7 +128,28 @@ python3 scripts/submit-to-community.py /path/to/courseware-dir --from path --aut
 
 没有这个 secret 时，课件仍会进入资产仓库并上线，但 Gallery/知识图谱不会自动更新，需要管理员手动触发同步。
 
-## 九、常见问题
+## 九、手机与小程序适配
+
+从 v7.12 起，新课件默认要求通过手机视口与小程序 `web-view` readiness：
+
+- 课件需包含 `viewport-fit=cover`、safe-area 处理、移动端单列布局、44px 以上触屏按钮；
+- 小程序嵌入使用 `weponusa/teachany-courseware/miniprogram/` 模板；
+- 小程序后台需将 `weponusa.github.io`（或自有 CNAME 域名）配置为业务域名；
+- 个人类型小程序不支持 `web-view`。
+
+示例小程序页面：
+
+```text
+/pages/courseware/courseware?id=hist-m-renaissance
+```
+
+对应 H5：
+
+```text
+https://weponusa.github.io/teachany-courseware/community/hist-m-renaissance/index.html#wechat_redirect
+```
+
+## 十、常见问题
 
 **Q: 安装后 AI 还是不按 skill 做课件怎么办？**
 A: 确认你的 AI Agent 已识别 skills 目录。可手动 `cat ~/.codebuddy/skills/teachany/SKILL_CN.md | head` 检查。

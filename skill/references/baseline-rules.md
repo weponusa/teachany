@@ -1,10 +1,10 @@
 # Baseline Capabilities & Red Lines (Detailed)
 
-The 18 baseline items, 5 red lines, and 8 anti-shortcut rules — these are non-negotiable for every TeachAny courseware.
+The 19 baseline items, 5 red lines, and 8 anti-shortcut rules — these are non-negotiable for every TeachAny courseware.
 
 ---
 
-## The 18 baseline items (detailed)
+## The 19 baseline items (detailed)
 
 ### Courseware type taxonomy (v7.11)
 
@@ -841,13 +841,52 @@ console.log('Prediction card:', hasPrediction ? '✅' : '⚠️ none (OK if non-
 
 ---
 
+## ⑲ Mobile + Mini Program WebView Readiness
+
+Every courseware must work on mobile and be embeddable in WeChat Mini Program `web-view`.
+
+### Hard requirements
+
+- Viewport: `<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">`
+- Safe area: use `env(safe-area-inset-top)` / `env(safe-area-inset-bottom)` for fixed bars and bottom controls.
+- Touch targets: all core buttons/links/inputs must be at least 44px tall.
+- Layout: cards/grids collapse to one column at `max-width: 600px`.
+- Media: `img`, `video`, `canvas`, `svg`, maps must fit within viewport width; no horizontal overflow.
+- Interaction: no hover-only core learning path; every tooltip/hover detail must also be reachable by tap/click.
+- Runtime resources: only HTTPS or local relative assets; no blocked mixed content.
+
+### WeChat Mini Program web-view constraints
+
+From official Mini Program docs:
+
+- `web-view` automatically fills the Mini Program page.
+- Only configured **business domains** can be loaded; domains must be HTTPS and cannot be IP addresses.
+- Personal Mini Program accounts do not support `web-view`.
+- One Mini Program page can contain only one `web-view`.
+- Communication between H5 and Mini Program is limited to JSSDK-supported APIs.
+- Avoid Chinese characters in `src` query on iOS; use `encodeURIComponent` and append `#wechat_redirect` if needed.
+
+### Audit
+
+```bash
+# Static checks
+grep -n 'viewport-fit=cover' index.html
+grep -nE '@media.*max-width|safe-area-inset|touch-action|min-height: ?44px' index.html
+
+# Runtime checks
+# Use browser automation at 375×667 and 390×844. No horizontal overflow allowed:
+document.documentElement.scrollWidth <= window.innerWidth + 1
+```
+
+---
+
 ## 🇨🇳 Chinese Term Glossary (中英术语对照)
 
 For Chinese-speaking AI sessions, here are the canonical term mappings used throughout TeachAny:
 
 | 英文 (English) | 中文 (Chinese) | Where to find |
 |:---|:---|:---|
-| 18-item baseline | 18 项基线 / 18 件套 | This file (above) |
+| 19-item baseline | 19 项基线 / 19 件套 | This file (above) |
 | Five-piece suite | 五件套 | This file, items ⑧–⑫ |
 | Five red lines | 五条红线 / 严谨度铁律 | `SKILL.md` § "Five red lines" |
 | Closed-loop verification | 闭环验证 | Red Line 1 |
@@ -874,6 +913,8 @@ For Chinese-speaking AI sessions, here are the canonical term mappings used thro
 | AI illustrations | AI 插画 / 学科插图 | Item ④ |
 | Quality gate | 质量门 / 完整性门 | `validate-courseware.cjs` |
 | Problem anchor | 问题锚点 | Item ⑱ |
+| Mobile readiness | 手机适配 / 移动端适配 | Item ⑲ |
+| Mini Program web-view | 小程序 web-view / 小程序容器 | Item ⑲ |
 | Inquiry Project | 探究课 / Inquiry Project | ⑱ + Inquiry Project section |
 | Knowledge-gap diagnosis | 知识缺口诊断 | ⑱ v7.1 |
 | Inquiry 6-step | 探究 6 步 | Inquiry section above |
