@@ -12,6 +12,7 @@ TeachAny v6 课件骨架模板（Single-Page + Auto-TTS + Knowledge Map）
   {{PRE_NODE_ID/NAME}}   前置节点 id + 中文名
   {{NEXT_NODE_ID/NAME}}  后续节点 id + 中文名
   {{HERO_QUESTION}}      核心引入问题
+  {{PROBLEM_ANCHOR_CHOICES}} 2-3 个问题锚点预设场景
   {{LEARNING_OBJECTIVES}} 3-4 条 Bloom 动词句
   {{CONTENT_SECTIONS}}   ⭐ 9 段标准结构的正文 HTML
   {{MAP_SECTION}}        历史/地理课才插入（见 map-section-template.html）
@@ -268,7 +269,22 @@ section.course-section h2 {
 </section>
 
 <!-- ═══════════════════════════════════════════════════
-     2. 学习目标（B-6 结构 #2）
+     2. 问题锚点（v7.0 强制：先确定学生今天想解决的问题）
+     ═══════════════════════════════════════════════════ -->
+<section id="problem-anchor" class="course-section highlight" data-tts="problem-anchor" data-tsh="问题锚点 - 先确定你今天想解决的问题">
+  <h2>今天的课件可以帮你解决什么问题？</h2>
+  <p style="color:var(--text-dim);max-width:720px">先选一个你关心的问题。后面的例子、提示和 AI 学伴都会围绕这个问题来帮你推进。</p>
+  <div class="objectives" id="problem-anchor-choices">
+    {{PROBLEM_ANCHOR_CHOICES}}
+    <!-- 示例：<button class="objective-card" data-anchor-choice="场景 A：我想解决……">场景 A：我想解决……</button> -->
+  </div>
+  <label style="display:block;margin-top:18px;color:var(--text-dim)">我有自己的问题
+    <input id="learner-question-input" style="display:block;width:100%;margin-top:8px;padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text)" placeholder="把你卡住的问题写在这里">
+  </label>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     3. 学习目标（B-6 结构 #2）
      ═══════════════════════════════════════════════════ -->
 <section id="objectives" class="course-section" data-tts="objectives">
   <h2>🎯 学习目标</h2>
@@ -383,6 +399,21 @@ section.course-section h2 {
 <audio id="tts-audio" preload="auto"></audio>
 
 <script>
+// ═══════════════════════════════════════════════════
+// v7.0 · 问题锚点：后续 ABT、提示和 AI 学伴应读取这个 learner question
+// ═══════════════════════════════════════════════════
+window.__TEACHANY_LEARNER_QUESTION__ = '';
+document.querySelectorAll('[data-anchor-choice]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    window.__TEACHANY_LEARNER_QUESTION__ = btn.getAttribute('data-anchor-choice') || btn.textContent.trim();
+    document.querySelectorAll('[data-anchor-choice]').forEach(x => x.classList.remove('selected'));
+    btn.classList.add('selected');
+  });
+});
+document.getElementById('learner-question-input')?.addEventListener('input', e => {
+  window.__TEACHANY_LEARNER_QUESTION__ = e.target.value.trim();
+});
+
 // ═══════════════════════════════════════════════════
 // B-2 · 自动触发 TTS + IntersectionObserver + 段落高亮
 // ═══════════════════════════════════════════════════

@@ -1,10 +1,24 @@
 # Baseline Capabilities & Red Lines (Detailed)
 
-The 14 baseline items, 5 red lines, and 8 anti-shortcut rules — these are non-negotiable for every TeachAny courseware.
+The 18 baseline items, 5 red lines, and 8 anti-shortcut rules — these are non-negotiable for every TeachAny courseware.
 
 ---
 
-## The 14 baseline items (detailed)
+## The 18 baseline items (detailed)
+
+### Courseware type taxonomy (v7.11)
+
+Every new courseware must explicitly choose one `lesson_type` in `manifest.json`:
+
+| `lesson_type` | 中文 | Starting point | Structure | Completion |
+|:---|:---|:---|:---|:---|
+| `new-concept` | 新概念课 | knowledge point | linear ABT | post-test mastery |
+| `review` | 复习课 | weak links / misconceptions | diagnose → repair → transfer | weak-link repair |
+| `experiment` | 实验课 | phenomenon / lab task | predict → observe → explain | evidence + explanation |
+| `special-topic` | 专题课 | cross-node theme | compare → connect → synthesize | synthesis |
+| `inquiry-project` | 探究课 | student question / confusion | question → attempt → gap → learn → retry | artifact + reflection |
+
+`inquiry-project` is not a renamed experiment lesson. Knowledge is triggered by exposed gaps, not front-loaded. AI acts as a questioner / failure analyst.
 
 ### ① TTS narration audio
 
@@ -690,6 +704,81 @@ A 45-min lesson has ONE story. Branching into "but also" / "by the way" / "addit
 
 ---
 
+## ⑱ Problem Anchor & Inquiry Project Rules
+
+### ⑱ Problem anchor module — mandatory for every new courseware
+
+**What**: Before any knowledge explanation, ask the learner what problem they want to solve today. This is the first interactive module, not a decorative intro.
+
+Required UI:
+
+```html
+<section id="problem-anchor" data-tsh="问题锚点 - 先确定你今天想解决的问题">
+  <h2>今天的课件可以帮你解决什么问题？</h2>
+  <button data-anchor-choice="scenario-a">选项 A：预设真实场景</button>
+  <button data-anchor-choice="scenario-b">选项 B：预设真实场景</button>
+  <label>我有自己的问题
+    <input id="learner-question-input" placeholder="把你卡住的问题写在这里">
+  </label>
+</section>
+<script>
+window.__TEACHANY_LEARNER_QUESTION__ = '';
+document.querySelectorAll('[data-anchor-choice]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    window.__TEACHANY_LEARNER_QUESTION__ = btn.textContent.trim();
+  });
+});
+document.getElementById('learner-question-input')?.addEventListener('input', e => {
+  window.__TEACHANY_LEARNER_QUESTION__ = e.target.value.trim();
+});
+</script>
+```
+
+Hard rules:
+- ⛔ Do not start with definitions, formulas, timelines, or background before the problem anchor.
+- ⛔ Do not ask a fake question that does not affect later content. The selected question must influence at least ABT intro, examples, section hints, and AI tutor suggested prompts.
+- ✅ For review lessons, phrase it as “我今天想修复哪个薄弱点？”
+- ✅ For experiment lessons, phrase it as “我今天想验证哪个猜想？”
+- ✅ For special-topic lessons, phrase it as “我今天想打通哪个主题问题？”
+
+Audit:
+
+```bash
+grep -nE 'id="problem-anchor"|__TEACHANY_LEARNER_QUESTION__|data-anchor-choice' index.html
+# Must show all three.
+```
+
+### v7.1 Knowledge-gap diagnosis path
+
+Add one special scaffold path that is not “you are weak, here is an easier version”, but:
+
+```text
+你遇到了什么具体问题？
+哪一步走不通？
+你现在的尝试是什么？
+```
+
+AI tutor must diagnose the missing step, give the smallest useful hint, and ask the learner to retry.
+
+### v7.2 Inquiry Project full structure
+
+For `lesson_type: inquiry-project`, use five phases:
+
+1. **问题确立** — real phenomenon, 2–3 investigable questions, AI checks scope.
+2. **假设与计划** — “我猜测是因为___，我打算用___验证”; AI checks feasibility, not answers.
+3. **探究执行** — student attempts first; knowledge modules trigger when a gap appears.
+4. **结果与反思** — hypothesis status, surprises, next attempt.
+5. **知识图谱更新** — touched nodes, blind spots, next recommended inquiry.
+
+### v7.3 Cross-course learning trajectory target
+
+Future runtime should persist:
+- learner knowledge map (seen / attempted / mastered)
+- learner question bank
+- recommendations based on questions, not just syllabus order
+
+---
+
 ## 🌳 Adaptive Learning — 4-Branch Hard Rules
 
 Every courseware MUST support 4 differentiated learning paths through `TeachAnyAdaptive.decideBranch()`. This is **not optional decoration** — adaptive learning is the core mechanism that lets one courseware serve students with vastly different prerequisite mastery.
@@ -758,7 +847,7 @@ For Chinese-speaking AI sessions, here are the canonical term mappings used thro
 
 | 英文 (English) | 中文 (Chinese) | Where to find |
 |:---|:---|:---|
-| 14-item baseline | 14 项基线 / 14 件套 | This file (above) |
+| 18-item baseline | 18 项基线 / 18 件套 | This file (above) |
 | Five-piece suite | 五件套 | This file, items ⑧–⑫ |
 | Five red lines | 五条红线 / 严谨度铁律 | `SKILL.md` § "Five red lines" |
 | Closed-loop verification | 闭环验证 | Red Line 1 |
@@ -784,6 +873,9 @@ For Chinese-speaking AI sessions, here are the canonical term mappings used thro
 | Section hints | 段落提示 | Item ⑨ |
 | AI illustrations | AI 插画 / 学科插图 | Item ④ |
 | Quality gate | 质量门 / 完整性门 | `validate-courseware.cjs` |
+| Problem anchor | 问题锚点 | Item ⑱ |
+| Inquiry Project | 探究课 / Inquiry Project | ⑱ + Inquiry Project section |
+| Knowledge-gap diagnosis | 知识缺口诊断 | ⑱ v7.1 |
 | Inquiry 6-step | 探究 6 步 | Inquiry section above |
 | Cognitive conflict | 认知冲突时刻 | Inquiry step 5 |
 | Other Knowledge tree | 其他知识树 / free_mode | `workflow.md` Phase 0.5 |

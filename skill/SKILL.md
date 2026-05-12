@@ -1,6 +1,6 @@
 ---
 name: TeachAny
-description: "K-12 (elementary/middle/high school, ages 6–18, 小学初中高中) lesson and courseware creation. Use this skill whenever the user — including parents, teachers, or students — wants to build, design, or improve a teaching/learning artifact for a school-age student studying a specific subject topic. Concrete trigger scenarios: (1) creating an interactive web page that explains a school concept (math, physics, chemistry, biology, geography, history, Chinese 语文, English, IT); (2) designing a lesson plan or 一节课, 备课; (3) turning a static PPT or notes into an interactive page; (4) helping a parent/teacher whose specific student (儿子/女儿/学生) can't grasp a topic ('我儿子初二搞不懂浮力'); (5) making educational animations, 教学动画, micro-lectures, or 微课视频; (6) adding TTS narration / hero infographic / AI tutor (AI 学伴) / knowledge graph / 互动地图 to existing lesson content; (7) batch-maintaining a TeachAny courseware repository, debugging modules like TeachAnyTutor/TeachAnyAdaptive/TTSNarrator, working with course IDs (phy-light-refraction, hist-m-tang-dynasty, math-quadratic-vertex-form), publishing to TeachAny gallery, registering nodes, free_mode courseware, ext-* learning paths; (8) **publishing/registering/pushing an existing courseware to the gallery / knowledge graph / git remote** (发布课件, 注册到知识图谱, 上传到 gallery, 推送到 git, auto-publish, register-and-push, 三仓发布, rebuild-index). Trigger keywords (any one helps): 课件, 互动课件, 教学动画, 教学设计, 给学生上课, 备课, 一节课, 讲一节, 这一课, AI 学伴, 知识图谱, hero 图, TTS 朗读, 互动地图, 历史地图, hillshade, 课标, IB, A-Level, AP, K-12, K12, lesson, courseware, micro-lecture, instructional design, **发布课件, 注册课件, 上传课件, 推送课件, rebuild-index, 自动注册, 自动推送, auto-publish, 三仓发布**. Trigger even without explicit keywords when the request is fundamentally about helping a school-age student learn a specific topic — examples that all qualify: '我儿子初二搞不懂浮力，做个能玩的页面', '下周二讲细胞分裂这节课怎么上', '把这份讲二元一次方程组的 PPT 改造成可互动的', '做一节关于丝绸之路的初中历史课', '把这个课件发布到 gallery', '没有自动注册上传'. Do NOT trigger for: corporate/employee training (企业培训, 员工培训, 销售培训, 产品培训), adult skill education (成人编程教学, 30 岁学 Rust), tutoring chatbots / Q&A 客服 (AI 答疑客服, 24 小时辅导客服), student management systems (选课系统, 排课, 成绩数据分析), generic web/app development unrelated to teaching content, PPT-only document conversion (会议纪要转 PPT), or museum/exhibition pages targeting general visitors rather than K-12 students."
+description: "K-12 (elementary/middle/high school, ages 6–18, 小学初中高中) lesson and courseware creation. Use this skill whenever the user — including parents, teachers, or students — wants to build, design, or improve a teaching/learning artifact for a school-age student studying a specific subject topic. Concrete trigger scenarios: (1) creating an interactive web page that explains a school concept (math, physics, chemistry, biology, geography, history, Chinese 语文, English, IT); (2) designing a lesson plan or 一节课, 备课; (3) turning a static PPT or notes into an interactive page; (4) helping a parent/teacher whose specific student (儿子/女儿/学生) can't grasp a topic ('我儿子初二搞不懂浮力'); (5) making educational animations, 教学动画, micro-lectures, or 微课视频; (6) adding TTS narration / hero infographic / AI tutor (AI 学伴) / knowledge graph / 互动地图 to existing lesson content; (7) batch-maintaining a TeachAny courseware repository, debugging modules like TeachAnyTutor/TeachAnyAdaptive/TTSNarrator, working with course IDs (phy-light-refraction, hist-m-tang-dynasty, math-quadratic-vertex-form), publishing to TeachAny gallery, registering nodes, free_mode courseware, ext-* learning paths; (8) **publishing/registering/pushing an existing courseware to the gallery / knowledge graph / git remote** (发布课件, 注册到知识图谱, 上传到 gallery, 推送到 git, auto-publish, register-and-push, 三仓发布, rebuild-index). Trigger keywords (any one helps): 课件, 互动课件, 教学动画, 教学设计, 给学生上课, 备课, 一节课, 讲一节, 这一课, AI 学伴, 知识图谱, hero 图, TTS 朗读, 互动地图, 历史地图, hillshade, 课标, IB, A-Level, AP, K-12, K12, lesson, courseware, micro-lecture, instructional design, **发布课件, 注册课件, 上传课件, 推送课件, rebuild-index, 自动注册, 自动推送, auto-publish, 三仓发布, 探究课, Inquiry Project, PBL, 问题锚点, 知识缺口诊断**. Trigger even without explicit keywords when the request is fundamentally about helping a school-age student learn a specific topic — examples that all qualify: '我儿子初二搞不懂浮力，做个能玩的页面', '下周二讲细胞分裂这节课怎么上', '把这份讲二元一次方程组的 PPT 改造成可互动的', '做一节关于丝绸之路的初中历史课', '把这个课件发布到 gallery', '没有自动注册上传'. Do NOT trigger for: corporate/employee training (企业培训, 员工培训, 销售培训, 产品培训), adult skill education (成人编程教学, 30 岁学 Rust), tutoring chatbots / Q&A 客服 (AI 答疑客服, 24 小时辅导客服), student management systems (选课系统, 排课, 成绩数据分析), generic web/app development unrelated to teaching content, PPT-only document conversion (会议纪要转 PPT), or museum/exhibition pages targeting general visitors rather than K-12 students."
 ---
 
 # TeachAny: K-12 Interactive Courseware Development
@@ -32,8 +32,8 @@ For Chinese-speaking users or detailed Chinese explanations, also load `referenc
 
 ```
 Phase 0: Define & Lookup → who/what/why, find node_id in knowledge tree
-Phase 1: Skeleton        → ABT narrative, lesson type, scaffolding plan
-Phase 2: Build           → HTML + 16-item baseline (see below)
+Phase 1: Skeleton        → problem anchor, ABT narrative, lesson type, scaffolding plan
+Phase 2: Build           → HTML + 18-item baseline (see below)
 Phase 3: Verify & Ship   → quality gate, package, publish
 ```
 
@@ -41,11 +41,65 @@ For full Phase-by-Phase instructions, read `references/workflow.md`.
 
 ---
 
-## 17-item baseline (every courseware MUST have these)
+## Courseware types (including Inquiry Project)
 
-A "complete" TeachAny courseware is not just an HTML file. It must ship with all 17 items below — these are non-negotiable because they together create the learning loop **and the publishing loop**. Skipping any one of them produces a courseware that looks finished but doesn't teach OR doesn't reach students (orphaned local files don't count as published).
+TeachAny supports five courseware types. Choose one explicitly in Phase 1 and write it into `manifest.json` as `lesson_type`.
 
-> **Chinese aliases for triggering**: 17 项基线 / 17 件套 · TTS 旁白 · Remotion 视频 · Canvas 互动 · AI 插画 · Hero 图 · 音频播放器模块 · 知识图谱 · AI 学伴 / AI 导师卡片 · 五件套 · 顶部品牌栏 · 提及即配图 · 库优先地图 · 自动注册推送 / auto-register-and-push
+| Type | Chinese | Starting point | Structure | Completion standard |
+|:---|:---|:---|:---|:---|
+| `new-concept` | 新概念课 | one curriculum node / new idea | linear ABT + scaffold | post-test mastery |
+| `review` | 复习课 | existing misconceptions / weak links | diagnose → repair → transfer | weak-link repair |
+| `experiment` | 实验课 | observable phenomenon / lab task | predict → observe → explain | evidence + explanation |
+| `special-topic` | 专题课 | cross-node theme | compare → connect → synthesize | thematic synthesis |
+| `inquiry-project` | **探究课 / Inquiry Project** | **student question / confusion** | **iterative: question → try → gap → learn → retry** | **artifact + reflection** |
+
+**Inquiry Project is fundamentally different**: knowledge is not front-loaded. It is triggered only when the student’s attempt exposes a gap. AI tutor acts as a questioner and failure analyst, not an answer machine.
+
+### v7.0 minimum rule: problem anchor in every new courseware
+
+Before the first explanation section, add:
+
+```html
+<section id="problem-anchor" data-tsh="问题锚点 - 先确定你今天想解决的问题">
+  <h2>今天的课件可以帮你解决什么问题？</h2>
+  <button data-anchor-choice="scenario-a">选项 A：预设真实场景</button>
+  <button data-anchor-choice="scenario-b">选项 B：预设真实场景</button>
+  <label>我有自己的问题
+    <input id="learner-question-input" placeholder="把你卡住的问题写在这里">
+  </label>
+</section>
+<script>
+window.__TEACHANY_LEARNER_QUESTION__ = '';
+document.querySelectorAll('[data-anchor-choice]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    window.__TEACHANY_LEARNER_QUESTION__ = btn.textContent.trim();
+  });
+});
+document.getElementById('learner-question-input')?.addEventListener('input', e => {
+  window.__TEACHANY_LEARNER_QUESTION__ = e.target.value.trim();
+});
+</script>
+```
+
+### AI tutor default strategy (v7.0+)
+
+AI tutor must be **diagnostic-first**: when a student asks a question, first ask where the student is stuck, identify the missing step, give the smallest useful hint, then invite another attempt. Do not jump straight to a full answer unless the student explicitly asks for “直接给答案”.
+
+### Inquiry Project full structure (v7.2 target)
+
+1. **Phase 1: 问题确立** — real phenomenon, 2–3 investigable questions, AI checks scope.
+2. **Phase 2: 假设与计划** — “我猜测是因为___，我打算用___验证”; AI checks feasibility, not answers.
+3. **Phase 3: 探究执行** — attempts expose knowledge gaps; trigger existing TeachAny knowledge modules as needed.
+4. **Phase 4: 结果与反思** — hypothesis status, surprises, next iteration.
+5. **Phase 5: 知识图谱更新** — touched nodes, remaining blind spots, next recommended inquiry.
+
+---
+
+## 18-item baseline (every courseware MUST have these)
+
+A "complete" TeachAny courseware is not just an HTML file. It must ship with all 18 items below — these are non-negotiable because they together create the learning loop **and the publishing loop**. Skipping any one of them produces a courseware that looks finished but doesn't teach OR doesn't reach students (orphaned local files don't count as published).
+
+> **Chinese aliases for triggering**: 18 项基线 / 18 件套 · TTS 旁白 · Remotion 视频 · Canvas 互动 · AI 插画 · Hero 图 · 音频播放器模块 · 知识图谱 · AI 学伴 / AI 导师卡片 · 五件套 · 顶部品牌栏 · 提及即配图 · 库优先地图 · 自动注册推送 / auto-register-and-push · 问题锚点 / 探究课 / Inquiry Project
 
 | # | Item | Chinese alias | Why it matters |
 |:-:|:---|:---|:---|
@@ -66,6 +120,7 @@ A "complete" TeachAny courseware is not just an HTML file. It must ship with all
 | ⑮ | **Top brand bar with DUAL version**: TeachAny logo + Gallery link (`https://weponusa.github.io/teachany/`) + **course version** (`<meta name="course-version">`, e.g. `v1.0.0`) + **skill version** (`<meta name="teachany-version">`, e.g. `·skill v7.10.1`) — both versions must be visible in the bar. Pinned at top of the page. | 顶部品牌栏 / 顶栏 / 双版本 / skill 版本 | Students need to know what platform this is, navigate to other lessons, and see BOTH which courseware version (for content updates) and which skill version (for capability/format updates) they're using. Showing only one version hides half the truth. |
 | ⑯ | **Real map base for history/geography courseware** — **library-first principle**: ALWAYS check the skill's bundled `assets/maps/` library FIRST (207 files, 104MB), only generate new if no library match. Output: `hillshade.jpg` + `boundaries.geojson` + `places.geojson` via Leaflet/D3. **⛔ Projection-alignment rule**: library hillshade is global 4096×2048 Plate Carrée — `L.imageOverlay` bounds MUST be `[[-90,-180],[90,180]]` (global), then use `map.fitBounds(<region-bounds>)` to zoom. Setting bounds directly to a region (e.g. `[[35,-10],[60,30]]` for Europe) stretches the global image into that frame and offsets every coordinate. | 地图底图 / 库优先 / 投影对齐 / Plate Carrée | Real terrain + borders for spatial intuition. Wrong bounds = terrain-and-border mismatch (mountains in wrong country, cities floating in sea). |
 | ⑰ | **Auto-register and push** (DEFAULT, not optional) — after finishing/modifying ANY courseware, automatically execute the 3-repo publishing chain: (a) commit + push **courseware repo** (full HTML/TTS/assets/videos to `weponusa/teachany-courseware`); (b) generate 11-line redirect + copy `manifest.json` into **opensource repo**, run `python3 scripts/rebuild-index.py` to update registry + knowledge tree, commit + push to `weponusa/teachany`; (c) if skill itself was modified, push **skill repo** changes too. **Skip ONLY when user explicitly says "不要发布/不要上传/只做不推/don't publish/just local"**. | 自动注册推送 / auto-register-and-push / 三仓发布 | A courseware that exists only on your local disk doesn't reach students. The publishing loop is part of "completion", not an afterthought. The whole point of TeachAny is shared coursewareware. |
+| ⑱ | **Problem anchor module** (v7.0 default for EVERY new courseware) — place the first interactive module before any explanation: “今天的课件可以帮你解决什么问题？” with 2–3 preset scenario choices + “我有自己的问题” input. Store the selected/typed question in `window.__TEACHANY_LEARNER_QUESTION__`, and make subsequent ABT narrative, section hints, examples, and AI tutor suggestions explicitly align to that question. For review/experiment/special-topic lessons, the anchor can be “我要解决/验证/复盘的问题”. | 问题锚点 / 学生问题 / 自驱学习 / learner question | Courseware must start from the learner’s own problem, not from a knowledge dump. This turns “I am pushed through content” into “I am learning to solve my question”. |
 
 **Key tooling**:
 - Hero image lookup: `python3 scripts/find-hero.py <course-id>` (CDN-first, image_gen fallback)
@@ -83,7 +138,7 @@ For details on each baseline item (CDN naming, fallback chain, validation script
 
 ## Required `<head>` meta tags (cross-courseware routing)
 
-In addition to the 14 baseline items, every courseware MUST declare 6 meta tags in `<head>`. These wire the courseware into the cross-courseware routing system (TeachAnyRouter), prerequisite warnings, and "next lesson" recommendations. Missing any of them = the courseware can't be reached from other courseware and won't appear in the recommended-next sidebar.
+In addition to the 18 baseline items, every courseware MUST declare 6 meta tags in `<head>`. These wire the courseware into the cross-courseware routing system (TeachAnyRouter), prerequisite warnings, and "next lesson" recommendations. Missing any of them = the courseware can't be reached from other courseware and won't appear in the recommended-next sidebar.
 
 ```html
 <meta name="course-id"       content="phy-light-refraction">      <!-- Must equal manifest.course_id -->
@@ -158,7 +213,7 @@ Read SKILL.md (this file) for triggering, baseline, and red lines. When you're w
 - `references/workflow.md` — Full Phase 0 → Phase 3 instructions, Phase 0.5 knowledge lookup, validation gates
 
 ### Standards & rules
-- `references/baseline-rules.md` — All 14 baseline items in detail, 5 red lines, 8 anti-shortcut rules, **adaptive 4-branch hard rules**, 57 hard rules
+- `references/baseline-rules.md` — All 18 baseline items in detail, courseware type taxonomy, problem-anchor / inquiry rules, 5 red lines, 8 anti-shortcut rules, **adaptive 4-branch hard rules**
 - `references/SKILL_CN.md` — Chinese reference version (read when user writes in Chinese or asks for Chinese explanations)
 - `RULES.md` — The full hard-rule list with violation examples
 
@@ -240,6 +295,9 @@ Stop and reconsider if you find yourself doing any of these:
 - ❌ **Brand bar showing only course version** (violates ⑮) — must show BOTH course version AND skill version. Course version tells students "is this content updated?", skill version tells students "is this courseware using the latest TeachAny capabilities?". Both pieces of info matter.
 - ❌ **Setting Leaflet `imageOverlay` bounds to a region (Europe / China / etc.) when the source hillshade is global Plate Carrée** (violates ⑯ projection-alignment rule) — bounds tells Leaflet "this image spans these lat/lng coordinates"; if you tell it the global 4096×2048 image spans only Europe `[[35,-10],[60,30]]`, Leaflet will stretch the whole world into that frame, producing terrain-borders mismatch (Alps appear in Africa, Madrid floats in the Atlantic). Correct pattern: `L.imageOverlay(url, [[-90,-180],[90,180]])` + `map.fitBounds(regionBounds)`.
 - ❌ **Generating new hillshade/boundaries without first querying the library** (violates ⑯ library-first principle) — the skill ships with 207 maps in `assets/maps/` covering 19 Chinese dynasties, 21 world eras, and 6 hillshade variants. Always run `python3 scripts/find-map.py <keyword>` BEFORE invoking `image_gen` or `gdaldem`. Generating duplicates wastes tokens and produces visual inconsistency across coursewares.
+- ❌ **No problem anchor at the beginning of a new courseware** (violates ⑱) — starting immediately with definitions, formulas, or historical background turns the lesson into a knowledge dump. Always ask “今天的课件可以帮你解决什么问题？” before teaching.
+- ❌ **AI tutor answers before diagnosing** (violates v7.0 tutor strategy) — first ask where the student is stuck, locate the knowledge gap, provide the smallest hint, and let the student retry. Do not default to full worked solutions.
+- ❌ **Calling an Inquiry Project a normal linear lesson** — 探究课 must iterate question → attempt → gap → just-in-time knowledge → retry → artifact/reflection.
 - ❌ **Finishing a courseware locally without auto-pushing to all 3 repos** (violates ⑰ auto-publish) — saying "课件做完了" while the files are only on local disk is incomplete. Run the 3-step Auto-publish flow (courseware → opensource redirect + rebuild-index → skill) immediately after every modification. The user should not have to ask "did you push?". Skip ONLY when user explicitly said "不要发布/不要上传/只做不推/don't publish/just local".
 - ❌ **Modifying a courseware (fix bug, add image, swap map) without re-pushing** — even single-file edits trigger ⑰. A courseware that's 2 commits behind production is broken for users. Fix-and-forget is a violation.
 - ❌ **Pushing courseware repo but skipping `rebuild-index.py`** — without rebuild, registry.json and knowledge tree don't pick up the new/changed courseware, so it won't appear in Gallery or knowledge graph even though Pages serves it. ⑦/⑭/⑰ all violated.
@@ -256,7 +314,7 @@ A delivered courseware lives across **three repos** and must be pushed to all th
 
 ```
 weponusa/teachany-courseware/community/<course-id>/   # Full courseware (HTML + TTS + assets + videos)
-├── index.html                               # complete HTML with five-piece suite + 17 baselines
+├── index.html                               # complete HTML with five-piece suite + 18 baselines
 ├── manifest.json                            # node_id, status, has_tts, has_video, etc.
 ├── README.md                                # description, learning objectives
 ├── tts/s01.mp3 ~ s0N.mp3                    # one per data-tts paragraph
@@ -285,7 +343,7 @@ cd ~/CodeBuddy/一次函数/teachany-courseware    # OR wherever the courseware 
 git add community/<course-id>/
 git commit -m "feat: <action> <course-id>（<topic>）
 
-- 16 项基线满足
+- 18 项基线满足（含问题锚点）
 - <key changes>"
 git push origin main
 git push gitee main 2>&1 || echo "  ℹ️  gitee 推送失败（DNS/网络），origin 已成功"
@@ -417,7 +475,14 @@ For full publishing details (drafts vs direct push, PR flow via Cloudflare Worke
 
 ---
 
-**Version**: v7.10.3 · **Last update**: 2026-05-12 · See `CHANGELOG.md` for history.
+**Version**: v7.11.0 · **Last update**: 2026-05-12 · See `CHANGELOG.md` for history.
+
+**v7.11.0 changes** (Inquiry Project + problem-anchor baseline):
+- Added fifth courseware type: `inquiry-project` / 探究课, starting from learner questions rather than knowledge points
+- Baseline expanded to 18 items: ⑱ Problem anchor module is mandatory for every new courseware
+- v7.0 rule: first module asks “今天的课件可以帮你解决什么问题？” with preset scenarios + custom input
+- AI tutor strategy changed to diagnostic-first: ask where the learner is stuck → locate gap → minimal hint → retry
+- Added staged roadmap: v7.1 knowledge-gap diagnosis, v7.2 full Inquiry Project structure, v7.3 cross-course learning trajectory
 
 **v7.10.4 changes** (community direct-upload pipeline):
 - 普通用户提交路径固定为：`submit-to-community.py` → Pages Function → `weponusa/teachany-courseware` PR → merge 后自动解包到 `community/<course-id>/`
