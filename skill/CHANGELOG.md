@@ -29,6 +29,7 @@
 - 新增 `references/phase1-checklist.md`，把 Phase 1 设计压缩为学习者画像、课型、ABT、问题锚点、核心交互五问。
 - 新增 `templates/content-section-templates.html`，将前测、核心模块、ConcepTest、Canvas 互动、探究记录单、后测、小结等内容区块标准化。
 - 新增 `scripts/validate-courseware.cjs --phase2`，在媒体生产和发布前拦截缺标准模块、未填占位符、manifest/meta 不一致、缺前测/后测/主交互/诊断反馈等问题。
+- 调整 `course-skeleton.html` 的音频交互：`data-teachany-audio-playlist` 默认只作为隐藏配置存在，不再渲染成集中音频 section，避免打断教学主线。
 
 ---
 

@@ -523,7 +523,7 @@ For full publishing details (drafts vs direct push, PR flow via Cloudflare Worke
 
 **v7.12.1 changes** (P0 standardization):
 
-- `templates/course-skeleton.html` upgraded to standard-call-first skeleton: five-piece suite, audio playlist, knowledge graph, AI tutor card, brand bar, problem anchor, and mobile baseline are template-owned
+- `templates/course-skeleton.html` upgraded to standard-call-first skeleton: five-piece suite, hidden audio playlist config with bottom player, knowledge graph, AI tutor card, brand bar, problem anchor, and mobile baseline are template-owned
 - Added `templates/manifest-template.json` so course metadata becomes field filling instead of free generation
 - New-courseware quick-start now requires copying both templates before content generation
 

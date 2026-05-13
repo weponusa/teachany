@@ -532,6 +532,7 @@ python3 skill/scripts/font_resolver.py --check --print-path
 | 场景 | 推荐字体 | 备注 |
 |:---|:---|:---|
 | **HTML 课件** | CSS `font-family` 降级链：`'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif` | 浏览器自动处理 Unicode 字符，无需额外关注 |
+| **连续音频** | 隐藏 `<div data-teachany-audio hidden>` 只放播放列表 JSON | 不再把全部音频集中渲染成一个大 section；底部播放条 + 滚动同步即可，避免打断教学主线 |
 | **Pillow 本地生图** | Arial Unicode MS → Noto Sans CJK → PingFang SC | ⚠️ **本节重点**：含公式时必须用 Arial Unicode |
 | **Remotion 渲染** | `fontFamily: "'Noto Sans SC', 'Noto Sans CJK SC', 'PingFang SC', sans-serif"` | Linux CI 需预装 `fonts-noto-cjk` |
 | **PPTX 导出** | `python-pptx` 默认用系统字体，中文指定"宋体"或"微软雅黑" | 导出脚本不生图，只消费 assets/ |
