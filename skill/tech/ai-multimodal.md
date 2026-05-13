@@ -505,28 +505,27 @@ curl -fsSL "{url}" -o "assets/illustrations/{知识点ID}-{slot}.png"
 - `STHeiti Light` / `STHeiti Medium`（同上）
 - `Heiti SC`（同上）
 
-**字体降级链（跨平台）**：
+**统一字体解析工具（强制）**：
 
 ```python
-# TeachAny Pillow 字体降级链 —— 理科课件（含化学/数学公式符号）
-FONT_FALLBACK_CHAIN_STEM = [
-    "/Library/Fonts/Arial Unicode.ttf",           # macOS 首选
-    "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",  # macOS 备选
-    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",  # Ubuntu/Debian
-    "/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc",       # Fedora/Arch
-    "/System/Library/Fonts/PingFang.ttc",          # macOS 保底（文科）
-]
+# ✅ 唯一推荐写法：不要在课件脚本里手写字体路径或静默 fallback 到 ImageFont.load_default()
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path("/path/to/teachany-opensource/skill/scripts")))
+from font_resolver import get_pillow_font, resolve_font_path
 
-def get_pillow_font(size=36):
-    """按降级链查找第一个可用字体"""
-    from PIL import ImageFont
-    for path in FONT_FALLBACK_CHAIN_STEM:
-        try:
-            return ImageFont.truetype(path, size)
-        except (OSError, IOError):
-            continue
-    raise RuntimeError("未找到支持 Unicode 上下标的中文字体，请安装 Arial Unicode 或 Noto Sans CJK")
+title_font = get_pillow_font(56, require_stem=True)
+body_font = get_pillow_font(24, require_stem=True)
+print("TeachAny font:", resolve_font_path(require_stem=True))
 ```
+
+命令行预检：
+
+```bash
+python3 skill/scripts/font_resolver.py --check --print-path
+```
+
+**硬规则**：如果 `font_resolver.py --check` 不通过，Pillow 生图必须停止，不能继续生成带乱码的图片；不能用 `ImageFont.load_default()` 兜底。
 
 **四场景字体对照表**：
 

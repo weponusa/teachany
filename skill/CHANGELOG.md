@@ -1,7 +1,19 @@
 # TeachAny 版本变更日志
 
-**当前版本**：v7.12.1（持续演进中）
-**更新日期**：2026-05-12
+**当前版本**：v7.12.2（持续演进中）
+**更新日期**：2026-05-13
+
+---
+
+## v7.12.2 — Pillow 生图字体解析器（2026-05-13）
+
+**背景**：原电池课件 Hero 图出现中文和理科符号乱码，根因是 Pillow 生图脚本手写了不存在或不完整的字体路径，随后静默 fallback 到默认位图字体。
+
+**改动**：
+
+- 新增 `scripts/font_resolver.py`，统一解析支持中文、上下标、箭头和化学符号的字体，优先使用 Arial Unicode MS / Source Han Sans / Noto Sans CJK。
+- 更新 `tech/ai-multimodal.md` 与 `RULES.md` #51：Pillow 生图必须先运行 `font_resolver.py --check --print-path`，脚本必须使用 `get_pillow_font()`，严禁 `ImageFont.load_default()` 兜底。
+- 更新 `SKILL_CN.md` Hero 图文字可读规则：图上文字 ≥18px 且不得出现 `.notdef` 方框，字体解析失败必须停止生成。
 
 ---
 

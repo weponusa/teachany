@@ -21,6 +21,7 @@ if [ ! -d "$COURSE_DIR" ]; then
 fi
 
 COURSE_DIR="$(cd "$COURSE_DIR" && pwd)"
+SKILL_SCRIPTS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HTML="$COURSE_DIR/index.html"
 
 if [ ! -f "$HTML" ]; then
@@ -131,6 +132,17 @@ fi
 # 是否只有占位符
 if [ "$img_files" -lt 3 ] && grep -qE "ai-media-zone|data-suggested-prompt" "$HTML" 2>/dev/null; then
   warn "  发现 AI 多模态互动区占位符，但占位符不算真实图片（B-3a FAIL）"
+fi
+
+# B-3a0 · Pillow 生图字体环境预检（v7.12.2）
+# 根因修复：禁止 Pillow 静默 fallback 到默认位图字体导致中文/理科符号乱码。
+FONT_RESOLVER="$SKILL_SCRIPTS/font_resolver.py"
+if command -v python3 &>/dev/null && [ -f "$FONT_RESOLVER" ] && [ "$img_files" -ge 1 ]; then
+  if python3 "$FONT_RESOLVER" --check >/tmp/teachany_font_check.log 2>&1; then
+    pass "✓ Pillow 中文/理科字体环境可用（font_resolver.py）"
+  else
+    fail "✗ Pillow 中文/理科字体环境不可用：$(cat /tmp/teachany_font_check.log | head -1)"
+  fi
 fi
 
 # B-3a+ · PNG 图片文字完整性抽检（检测 .notdef 方框，v6.1 新增）
