@@ -513,26 +513,34 @@ async function fetchTreeJSON(relativePath) {
       console.warn('[KnowledgeMap] API error, falling back:', e.message);
     }
 
-    // 策略 2：raw.githubusercontent.com — 有 5 分钟 CDN 缓存
-    try {
-      const rawUrl = TREE_RAW_BASE + relativePath + '?v=' + Date.now();
-      const resp = await fetch(rawUrl, { cache: 'no-store' });
-      if (resp.ok) {
-        console.log('[KnowledgeMap] ⚠️ via raw URL (may have ~5min cache)');
-        return resp.json();
-      }
-    } catch (e) {
-      console.warn('[KnowledgeMap] raw URL error:', e.message);
-    }
   }
 
-  // 策略 3：本地相对路径（本地开发 / 最终兜底）
-  const localUrl = relativePath + '?v=' + Date.now();
-  const resp = await fetch(localUrl, { cache: 'no-store' });
-  if (resp.ok) {
-    console.log('[KnowledgeMap] via local path');
-    return resp.json();
+  // 策略 2：站点相对路径（GitHub Pages / 本地开发）
+  // 说明：GitHub API 容易匿名限流 403；raw.githubusercontent.com 偶发 CDN 旧缓存。
+  // 对页面自身同源的 Pages 文件加时间戳，通常最稳定、也最符合当前部署版本。
+  try {
+    const localUrl = relativePath + '?v=' + Date.now();
+    const resp = await fetch(localUrl, { cache: 'no-store' });
+    if (resp.ok) {
+      console.log('[KnowledgeMap] ✅ via local path');
+      return resp.json();
+    }
+  } catch (e) {
+    console.warn('[KnowledgeMap] local path error:', e.message);
   }
+
+  // 策略 3：raw.githubusercontent.com — 最终兜底
+  try {
+    const rawUrl = TREE_RAW_BASE + relativePath + '?v=' + Date.now();
+    const resp = await fetch(rawUrl, { cache: 'no-store' });
+    if (resp.ok) {
+      console.log('[KnowledgeMap] ⚠️ via raw URL fallback');
+      return resp.json();
+    }
+  } catch (e) {
+    console.warn('[KnowledgeMap] raw URL error:', e.message);
+  }
+
   throw new Error('All fetch strategies failed for ' + relativePath);
 }
 
