@@ -669,6 +669,20 @@ async function addUserCourse(course) {
     saveLikes(likes);
   }
 
+  // ── TeachAny 历史上报：导入的课件入库（零侵入可选链） ──
+  try {
+    if (window.TeachAnyHistory && typeof window.TeachAnyHistory.recordCreated === 'function') {
+      window.TeachAnyHistory.recordCreated(id, {
+        source: 'import',
+        name: (course.manifest && (course.manifest.name || course.manifest.title)) || course.fileName || id,
+        subject: (course.manifest && course.manifest.subject) || '',
+        grade: (course.manifest && course.manifest.grade) || '',
+        node: (course.manifest && course.manifest.node_id) || '',
+        url: entry.viewerUrl || ''
+      });
+    }
+  } catch (_e) { /* ignore */ }
+
   return entry;
 }
 

@@ -1126,6 +1126,16 @@
         });
         history.push({ role: 'user', content: text });
         history.push({ role: 'assistant', content: aiBubble.textContent || '' });
+
+        // ── TeachAny 历史上报（零侵入可选链） ──
+        try {
+          const courseId = (document.querySelector('meta[name="teachany-courseware-id"]') || {}).content || '';
+          if (courseId && window.TeachAnyHistory && typeof window.TeachAnyHistory.recordTutorChat === 'function') {
+            const extra = { provider: (cfg && cfg.providerId) || '', model: (cfg && cfg.model) || '' };
+            window.TeachAnyHistory.recordTutorChat(courseId, 'user', text, extra);
+            window.TeachAnyHistory.recordTutorChat(courseId, 'assistant', aiBubble.textContent || '', extra);
+          }
+        } catch (_e) { /* ignore */ }
       } catch (err) {
         console.error('[TeachAnyTutor] Request failed:', err);
         aiBubble.remove();
