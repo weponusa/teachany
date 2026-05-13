@@ -1,7 +1,19 @@
 # TeachAny 版本变更日志
 
-**当前版本**：v7.12.2（持续演进中）
+**当前版本**：v7.12.3（持续演进中）
 **更新日期**：2026-05-13
+
+---
+
+## v7.12.3 — Hero 图优先生图高质量主视觉（2026-05-13）
+
+**背景**：Pillow / Canvas 程序绘图适合可控标注和结构节点，但直接用它做首屏 Hero 主视觉容易显得廉价。若当前模型和宿主工具具备生图能力，Hero 应优先使用高质量 AI 生图提升视觉信任感。
+
+**改动**：
+
+- 更新 `RULES.md` #57：L1 图床未命中且有 `image_gen` / Nano Banana / Gemini Image 等能力时，必须优先使用高质量 AI 生图，不再默认用 Pillow 低质封面。
+- 新增 Hero 推荐流程：“AI 高质量底图 + 可控文字/节点叠加”。生图负责质感、光影和构图；中文标题、公式、节点、箭头由 HTML/SVG/Pillow `font_resolver.py` 叠加，避免 AI 图中文字乱码。
+- 更新 `SKILL_CN.md`、`SKILL.md`、`tech/ai-multimodal.md`：Hero 生图默认使用 `quality=high`，宽幅优先 `1536x1024`，普通插图才可降为 `medium`。
 
 ---
 

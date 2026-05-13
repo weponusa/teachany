@@ -437,9 +437,11 @@ curl -fsSL "{url}" -o "assets/illustrations/{知识点ID}-{slot}.png"
 **生图质量参数**（Level 2 `image_gen` 实时生成时使用）：
 | 参数 | 推荐值 | 说明 |
 |:---|:---|:---|
-| `size` | `1024x1024` | 正方形插图 |
-| `quality` | `medium` | 平衡质量与速度 |
-| `style` | `natural` | 教育场景优先自然风格 |
+| `size` | Hero 用 `1536x1024` 或 `1024x1536`；普通插图用 `1024x1024` | Hero 应优先横向宽幅，适配桌面浏览器首屏和 Gallery 封面 |
+| `quality` | `high` | Hero 图必须优先高质量；普通插图可按成本降为 `medium` |
+| `style` | `natural` 或 `vivid` | 文科/地理/历史偏自然电影感，理科/工程偏高端教育信息图 |
+
+**Hero 生图硬规则（v7.12.3）**：有 `image_gen` 能力时，Hero 不应默认使用 Pillow 低质绘图。推荐生成“无随机文字的高质量主视觉底图”，再用 HTML/SVG/Pillow `font_resolver.py` 叠加中文标题、公式、节点和箭头；这样既保留生图质感，又避免 AI 图片中文字乱码。
 
 **降级策略总结**：
 - **Level 1（首选）**：Image Vault 远程预制图 — 从 CDN 按需下载，零积分消耗
