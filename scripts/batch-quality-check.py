@@ -90,7 +90,9 @@ def check_courseware(html_path):
 
 def main():
     script_dir = Path(__file__).parent.parent
-    registry_path = script_dir / 'courseware-registry.json'
+    registry_path = script_dir / 'registry.json'
+    if not registry_path.exists():
+        registry_path = script_dir / 'courseware-registry.json'
     
     if len(sys.argv) > 1:
         # 指定课件 ID 列表
@@ -128,14 +130,17 @@ def main():
             results.append({'id': course_id, 'passed': False, 'errors': ['未在 registry 中找到']})
             continue
         
+        course_path = course.get('path')
         local_path = course.get('local_path')
-        if not local_path:
-            print(f"❌ {course_id}: 无 local_path")
+        if course_path:
+            html_path = script_dir / course_path / 'index.html'
+        elif local_path:
+            html_path = script_dir / 'examples' / local_path / 'index.html'
+        else:
+            print(f"❌ {course_id}: 无 path/local_path")
             failed_count += 1
-            results.append({'id': course_id, 'passed': False, 'errors': ['无 local_path']})
+            results.append({'id': course_id, 'passed': False, 'errors': ['无 path/local_path']})
             continue
-        
-        html_path = script_dir / 'examples' / local_path / 'index.html'
         passed, errors, warnings = check_courseware(html_path)
         
         if passed:

@@ -117,92 +117,43 @@ Step 2️⃣ 打包（Packaging）
      cd <课件目录> && zip -r ../<course-id>.teachany . -x "*.DS_Store"
      ```
 
-Step 3️⃣ 课件落地 + 社区提交（v5.34.8 双轨制）
-  课件做完+打包+质检通过后，AI 按以下顺序执行：
-  
-  **3.1 本地落地（永远执行）**
-  1. 将课件文件写入 `community/drafts/<course-id>/`（index.html + manifest.json + assets + tts）
-     - ⛔ **禁止默认写入 `examples/`**：`examples/` 是官方策划课件目录，只能由仓库管理员 cherry-pick 审核后放入
-     - ⛔ **禁止默认修改 `registry.json` / `data/trees/*.json`**：这些是官方索引文件，由 `rebuild-index.py`（管理员专属）重建
-  2. 告知用户课件已保存到 `community/drafts/<course-id>/`，可直接浏览器打开预览
-  
-  **3.2 询问用户是否提交到社区（强制询问）**
-  AI 必须**明确询问**一次用户想怎么做，不要默认选项，不要跳过：
-  ```
-  课件已做好，保存在 community/drafts/<course-id>/。请问接下来：
-  ① 仅本地自用，不提交（默认）
-  ② 提交到 TeachAny 社区仓库（自动创建 PR，等管理员审核）
-  ③ 我是仓库管理员，直接升格为官方课件（需 .teachany-admin 标记）
-  ```
-  
-  **3.3 用户选 ② → 调用 `submit-to-community.py` 自动开 PR**
-  用户明确回复"提交社区" / "submit" / "开 PR" / "②" 等之一时，AI 执行：
+Step 3️⃣ 课件落地 + 用户身份上传
+  课件做完、打包、质检通过后，AI 默认按用户身份发布，不需要额外的本地权限标记文件。
+
+  **3.1 本地预览（可选）**
+  1. 可先将课件写入 `community/drafts/<course-id>/` 做本地预览。
+  2. 确认无误后移动到 `community/<course-id>/`。
+
+  **3.2 社区目录发布（默认执行）**
   ```bash
-  python3 scripts/submit-to-community.py <course-id> \
-      --author "<用户提供的作者名>" \
-      --message "<用户可选留言>"
+  mkdir -p community/<course-id>
+  cp -R <生成目录>/* community/<course-id>/
+  python3 scripts/rebuild-index.py
+  git add -A
+  git commit -m "feat: 新增课件 <course-id>"
+  git push origin main
+  git push gitee main
   ```
-  脚本会：(a) 校验 manifest 必填字段；(b) 打包成 .teachany；(c) 读取 `.teachany-token`；
-  (d) 通过 `repository_dispatch` 事件触发 `community-submit.yml` workflow；(e) GitHub Actions 自动创建分支 + 开 PR 到 `community/pending/`。
-  
-  **若用户没有 `.teachany-token`**：AI 必须引导用户一次性配置（只需 Fine-grained token + 最小权限 Contents/Metadata Read-only），配置一次终身有效；不能为了"方便"而直接 `git push` 绕开审批流程。
-  
-  **3.4 用户选 ③ 管理员直推（v5.34.8 三重门）**
-  AI 必须**依次**检查以下三重条件，任何一条不成立都必须退回到 3.1 本地落地，不要半自动执行：
-  
-  - 条件 A：工作区根目录必须存在 `.teachany-admin` 标记文件
-    ```bash
-    test -f .teachany-admin || { echo "非管理员工作区，退回本地草稿"; exit 0; }
-    ```
-    `.teachany-admin` 由仓库 owner 在本地手工创建，不会被 git 跟踪（已在 `.gitignore`）。⛔ 仅凭"工作区名叫 teachany-opensource"或"存在 scripts/rebuild-index.py"**不构成管理员身份**。
-  
-  - 条件 B：用户对话中出现明确发布关键词之一：
-    - "发布到官方"、"提升为官方"、"promote to official"、"合并到 examples"、"直推 origin"
-    - ⛔ "做好就行"、"完成了就推一下吧"等含糊指令**不满足**本条件
-  
-  - 条件 C：AI 已单独向用户复核一次"课件去向"（即 3.2 的询问），并收到明确选择 ③ 的回复
-  
-  三重条件全部成立后，才能执行：
-  1. 把课件从 `community/drafts/<course-id>/` 移动到 `examples/<course-id>/`
-  2. 手工编辑 `registry.json`，把该课件的 `status` 从 `community` 改为 `official`
-  3. 重建索引：`python3 scripts/rebuild-index.py`（脚本自身也会检查 `.teachany-admin`）
-  4. 提交并双推：
-     ```bash
-     git add -A && git commit -m "feat: 新增官方课件 <course-id>"
-     git push origin main && git push gitee main
-     ```
-  5. 输出在线地址：`https://weponusa.github.io/teachany/examples/<course-id>/`
-  
-  > ⛔ **绝对不能**：未经用户明确选项 ②/③ 就自动 `git push`、默认写入 `examples/`、在 `registry.json` 里把新课件打成 `status=official`。这是 v5.34.8 前的历史严重漏洞（实测 138 份课件中 124 份未经审核就被自动推成 community/official，污染了官方 Gallery）。"质检通过 ≠ 发布成功" —— 质检只保证课件本身合格，不代表可以进入官方索引，发布权必须由人（用户或管理员）明确点头。
+
+  **3.3 注册规则**
+  - `rebuild-index.py` 直接扫描 `community/` 和 `examples/`，以实际课件文件为唯一信源。
+  - 新增用户课件统一进入 `community/<course-id>/`。
+  - 不再区分多种上传身份或审批路径。
+  - `examples/` 仅保留存量官方示例，不作为课件制作默认写入目录。
 
 Step 4️⃣ 提交成功后告知用户后续流程
-  根据 Step 3 的选择分别告知用户：
-  
-  **若选 ① 仅本地**：
-  - 课件在 `community/drafts/<course-id>/index.html`，浏览器打开即可使用
-  - 随时可以改主意：`python3 scripts/submit-to-community.py <course-id>` 一键提交
-  
-  **若选 ② 社区 PR**：
-  - PR 已自动创建，查看：`https://github.com/weponusa/teachany-courseware/pulls`
-  - 会被打上 `community-courseware` + `needs-review` 标签
-  - 管理员审阅后：`approved` = 进入社区 Gallery / `promote-to-official` = 升级官方 / `revision-needed` = 需修改
-  - 部署滞后 5-10 分钟（GitHub Actions + Pages 构建时间）
-  
-  **若选 ③ 管理员直推**：
-  - 课件已在 `examples/<course-id>/`，registry + 知识树已更新
-  - 部署滞后 5-10 分钟后，验证：
-    ```bash
-    curl -I "https://weponusa.github.io/teachany/examples/<course-id>/"  # 200 = 已上线
-    ```
+  - 输出本地文件路径：`community/<course-id>/index.html`
+  - 输出在线地址：`https://weponusa.github.io/teachany/community/<course-id>/`
+  - 说明 GitHub Pages 可能有 5-10 分钟缓存延迟
 ```
 
 #### ⭐ Phase 3.6 发布成功率保障四件套（v5.19 新增）
 
-> **背景**：v5.18 以前发现一个高频失败模式——管理员执行了 `git push`，但 **Gallery 和知识地图都看不到新课件**。本节把这条路径拆成 4 个强制步骤，任何一步失败都**不算发布成功**。
+> **背景**：课件推送后，Gallery 和知识地图可能因为索引未重建、node_id 错误或部署延迟而看不到新课件。本节把发布路径拆成 4 个强制步骤，任何一步失败都**不算发布成功**。
 
 ```text
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⭐ 发布四件套（管理员模式强制执行，任何一步失败必须暴露给用户）
+⭐ 发布四件套（用户身份上传强制执行，任何一步失败必须暴露给用户）
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ① 校验 manifest.json 关键字段
@@ -211,8 +162,8 @@ Step 4️⃣ 提交成功后告知用户后续流程
    ⛔ 硬校验 node_id 真实存在（v5.20 修正：必须查 data/trees/*.json 旧 schema，不是 _graph.json）：
    ```bash
    # 以 manifest.json 中 subject=history, grade=高中, node_id=hist-h-classical-civ 为例
-   NODE_ID=$(jq -r .node_id examples/<course-id>/manifest.json)
-   SUBJECT=$(jq -r .subject examples/<course-id>/manifest.json)
+   NODE_ID=$(jq -r .node_id community/<course-id>/manifest.json)
+   SUBJECT=$(jq -r .subject community/<course-id>/manifest.json)
    # 注意：tree.html 只加载 data/trees/*.json，必须在这里能 grep 到
    if ! grep -rql "\"id\":\s*\"${NODE_ID}\"" data/trees/${SUBJECT}-*.json; then
      echo "⛔ node_id '${NODE_ID}' 在 data/trees/${SUBJECT}-*.json 中不存在，发布中断"
@@ -267,7 +218,7 @@ Step 4️⃣ 提交成功后告知用户后续流程
    ✅ 已完成 commit 和推送，但 GitHub Pages 部署需要 5–10 分钟才会生效。
    
    稍后可用以下命令验证课件是否已上线：
-   curl -I "https://weponusa.github.io/teachany/examples/<course-id>/"
+   curl -I "https://weponusa.github.io/teachany/community/<course-id>/"
    # 返回 HTTP/2 200 = 已生效
    # 返回 HTTP/2 404 = 仍在部署，再等 2 分钟
    
@@ -616,63 +567,34 @@ curl -sI -m 5 "https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded
    cd <课件目录> && zip -r ../<course-id>.teachany . -x "*.DS_Store"
    ```
 
-3. **课件落地 + 社区提交**（v5.34.8 双轨制）：
-   
-   **3.1 本地落地（永远执行）**：
+3. **课件落地 + 用户身份上传**：
+
    ```bash
-   # 课件只写到 community/drafts/<course-id>/，不改官方索引、不推送
+   # 可选：先保存草稿并本地预览
    mkdir -p community/drafts/<course-id>
    cp -r <生成目录>/* community/drafts/<course-id>/
-   ```
-   
-   **3.2 询问用户意向**（强制询问，不要默认跳过）：
-   ```
-   ① 仅本地自用（默认）
-   ② 提交到社区仓（自动开 PR）
-   ③ 管理员直推官方 examples/（需 .teachany-admin）
-   ```
-   
-   **3.3 用户选 ② 时，AI 调用自动提交脚本**：
-   ```bash
-   python3 scripts/submit-to-community.py <course-id> \
-       --author "<作者名>" --message "<可选留言>"
-   ```
-   脚本会自动校验 manifest、打包 .teachany、通过 `repository_dispatch` 事件触发
-   `community-submit.yml` workflow，GitHub Actions 会自动创建分支 + 开 PR 到 
-   `community/pending/`。**用户只需要一次性配置 `.teachany-token`**（Fine-grained 
-   token，最小权限 Contents+Metadata Read-only），配置方式见脚本自身的错误提示。
-   
-   **3.4 用户选 ③ 管理员直推触发条件**（v5.34.8 三重门，缺一不可）：
-   - 条件 A：工作区根目录存在 `.teachany-admin` 标记文件（owner 本地手工创建）
-   - 条件 B：用户对话中出现明确发布关键词（"发布到官方"/"promote to official"/"直推 origin"）
-   - 条件 C：AI 已单独向用户复核"课件去向"并收到明确选择 ③ 的回复
-   
-   三重条件全部成立时才允许执行：
-   ```bash
-   cd teachany-opensource
-   # 人工复核后从 drafts 搬到 examples
-   mv community/drafts/<course-id> examples/<course-id>
-   # 手工把 status 从 community 改为 official（如确属官方）
+
+   # 默认发布：进入 community 并自动注册
+   mkdir -p community/<course-id>
+   cp -r <生成目录>/* community/<course-id>/
    python3 scripts/rebuild-index.py
-   git add -A && git commit -m "feat: 新增官方课件 <course-id>"
-   git push origin main && git push gitee main
+   git add -A
+   git commit -m "feat: 新增课件 <course-id>"
+   git push origin main
+   git push gitee main
    ```
-   
-   ⛔ **绝对禁止**的行为（v5.34.8 之前的历史 bug）：
-   - 仅凭"工作区叫 teachany-opensource"或"存在 scripts/rebuild-index.py"就自动 push
-   - 把用户本地生成的课件默认写入 `examples/`（官方目录）
-   - 没询问用户（跳过 3.2）就自作主张走 ② 或 ③
-   - 在 `registry.json` 里把未审核课件标记为 `status=official`
-   - 用"git push 更方便"作为绕开社区提交脚本的理由
-   - 生成 .teachany 文件
-   - 质检通过 → 自动提交 PR 到 `community/<course-id>/`（无需审核，合并后直接上架）
-   - 告知用户也可手动拖入 Gallery 使用
+
+   规则：
+   - 不需要额外的本地权限标记文件。
+   - 不走额外审核流程。
+   - 新增用户课件统一写入 `community/<course-id>/`。
+   - `examples/` 仅保留存量官方示例，不作为课件制作默认写入目录。
 
 4. **输出结果**：
    - 质检通过率 + 未通过项列表
-   - .teachany 文件路径
-   - 管理员模式：推送状态 + 在线地址
-   - 普通用户模式：Gallery 使用说明
+   - .teachany 文件路径（如已打包）
+   - 本地路径：`community/<course-id>/index.html`
+   - 在线地址：`https://weponusa.github.io/teachany/community/<course-id>/`
 
 #### 质检项清单（内置，无需外部脚本）
 
@@ -714,11 +636,11 @@ curl -sI -m 5 "https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded
 3. 分享 .teachany 文件给其他用户
 
 注意：
-- 管理员模式：课件已推送到 GitHub，在线可访问
-- 普通用户模式：课件保存在本地，可拖入 Gallery 或提交 PR
+- 课件可先本地预览，也可发布到 `community/<course-id>/`。
+- 发布后需运行 `rebuild-index.py` 并以当前 Git 用户身份推送。
 ```
 
-> ⚠️ **重要**：Phase 3.5 是**强制流程**，不需要用户主动要求。课件制作完成后 AI 必须自动执行质检、打包和发布（管理员直推或普通用户引导）。
+> ⚠️ **重要**：Phase 3.5 是**强制流程**，不需要用户主动要求。课件制作完成后 AI 必须自动执行质检、打包、注册和用户身份上传。
 
 ### 17.5 HTML meta 标签（已有规范，此处汇总）
 
@@ -910,7 +832,7 @@ curl -sI -m 5 "https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded
 - v4.0：TTS 引擎切换为 Edge TTS
 - v5.0：知识图谱集成、社区课件机制
 - **v6.0**：**简化发布流程**
-  * **移除 Admin skill 依赖**：不再需要管理员权限和外部脚本
+  * **移除外部发布依赖**：不再需要额外权限或外部脚本
   * **内置质检功能**：AI 直接检查 meta 标签、ABT 叙事、互动元素等核心项
   * **本地打包优先**：生成 .teachany 文件保存到本地，用户拖入 Gallery 即可使用
   * **去中心化分享**：支持 GitHub PR、邮件提交、网盘分享等多种社区贡献方式
@@ -951,9 +873,8 @@ curl -sI -m 5 "https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded
 
 - v5.34.9.2：**⭐ 封堵"直推 examples/ 绕过质检"漏洞 · validator 严格化 · pre-push hook 双重护栏**——(1) 用户发现 2026-04-20 早上 `https://weponusa.github.io/teachany/examples/science-genetics-variation-intro/` 是一份**质量很差、没走社区流水线**的课件，追查发现：commit 记录 `wepon <weponusa@gmail.com>` 直接 `git push origin main` 推的（没走 PR），课件目录只有裸 `index.html`（34KB，0 张图、0 段 mp3、0 canvas、0 svg、0 AI 学伴配置、0 manifest.json），但 registry.json 里 status=official，放到 Gallery 的"官方课件"区。用户质问"质检失效了？"。(2) **根因**：`scripts/validate-courseware.py` 的 `validate_one()` 函数第一行遇到"无 manifest.json"就 `return [('warn', ...)]`——只给个警告然后直接返回，**跳过了后续 47 条硬规则的全部检查**。结果任何人（甚至包括 owner 自己图省事）往 `examples/` 塞一个裸 HTML 都能绕过整个发布闸门。v5.34.9 建的"零配置自动提交 + 自动质检 + 自动合并"流水线再漂亮也挡不住 owner 本地的 `git push`。(3) **修复（validator 严格化）**：`validate_one()` 改为：① 无 manifest.json → `error`（发布阻断）而非 warn；② 即使无 manifest，也继续检查 index.html 是否存在（一次性反馈所有错误）；③ `issues = list(errors)` 把早期致命错误带进主返回列表，供 exit code 判定。(4) **修复（pre-push hook 双重护栏）**：新增 `scripts/pre-push.sh`——每次 `git push` 时自动：① 找出本次 push 涉及的 `examples/<course-id>/` 课件；② 对每个课件跑 `validate-courseware.py`；③ 任何一个 error → 立即拒绝 push。用户需要 `ln -sf ../../scripts/pre-push.sh .git/hooks/pre-push` 一次性安装。紧急绕过：`TEACHANY_SKIP_VALIDATE=1 git push`（仅非课件 push 时用）。(5) **处置已有劣质课件**：删除 `examples/science-genetics-variation-intro/` 目录，从 `registry.json` 移除该条目（140 → 139），从 `data/trees/science-elementary.json` 的 courses[] 引用中清除（实际为 0 处引用，说明当时 rebuild-index 也没跑）。(6) **硬规则 #48 补丁**：在原有"AI 禁止未经用户同意就 push"之上，追加"**任何人（包括 owner）**向 examples/ 推新课件前都必须跑过 validate-courseware.py 0 错误，否则 pre-push hook 会拒绝；owner 紧急修复 README 等非课件文件时才能用 `TEACHANY_SKIP_VALIDATE=1` 绕过"。(7) **防御纵深**：validator 严格化（代码层）+ pre-push hook（本地 git 层）+ GitHub Actions validate.yml（远端 CI 层）三层守护，任何一层都能独立拦住劣质课件；owner 再想"临时图省事 push 一份"都必须要跑一次 validator 才行。(8) **设计哲学**："质检通过 = 发布成功"这条 v5.34.9 定下的规则，必须对**所有提交路径**（社区 PR / owner 直推 / CI 自动化）一视同仁执行，任何一条路径留后门，整个质量体系就崩塌。**Owner 不是免检特权用户，owner 是最应该以身作则的守门人**。
 
-- v5.34.9：**⭐ 社区自动提交 · 零配置 + 质检自动合并 · Cloudflare Worker 中转**——(1) 用户反馈"能不能用户用 skill 做完课件，自动上传到 git，我确认后自动注册"、"再简单点，不审核了，质检后直接上传，社区心标就好了"。(2) **v5.34.8 的硬伤**：submit-to-community.py 要求用户自己创建 `.teachany-token`（Fine-grained GitHub token），对普通老师几乎不可用——实测 14 天 `community/pending/` 空空如也，说明路径完全没跑通。(3) **解法：Cloudflare Worker 中转 + 官方 Bot Token**。用户侧**零配置**（只需要会说"提交到社区"），AI 调 `submit-to-community.py` → POST `https://teachany-submit.<owner>.workers.dev/api/submit` → Worker 用存在 secret 里的 Bot Token 代为调 GitHub → 创建 PR。Token 永不暴露给用户。(4) **新增 `worker/` 目录**：`submit-api.js` 完整 Worker 脚本（限频每 IP 每天 10 份 + 字段校验 + 恶意内容关键词过滤 + GitHub API 调用 + KV 存限频计数）、`wrangler.toml` 部署配置、`README.md` 架构说明。完全免费（Cloudflare Workers 免费版每天 10 万请求，对 TeachAny 绰绰有余）。(5) **改造 `scripts/submit-to-community.py`**：移除 `.teachany-token` 依赖，改为直接 POST Worker；保留 `TEACHANY_DIRECT_TOKEN` 环境变量作为"高级用户绕过 Worker"的逃生舱；新增 `--from drafts|examples|auto` 参数支持多目录源；错误处理覆盖 RATE_LIMITED / PACKAGE_TOO_LARGE / GITHUB_API_ERROR 等所有场景并给用户友好提示。(6) **新增 `.github/workflows/auto-merge.yml`**：监听 `passed-validation` 标签，配合 `community-courseware` 双标签触发 squash merge。带 `needs-revision` 或 `do-not-merge` 则跳过。合并后自动评论告知用户后续流程。(7) **重写 `.github/workflows/validate.yml`**：不再做粗糙的 `grep "学习目标"` 字面检查，改为**实际调用 `scripts/validate-courseware.py`**——找到本次 PR 涉及的所有课件 id、跑完整 47 条硬规则检查、0 错误打 `passed-validation` 标签（触发 auto-merge），有错误打 `needs-revision` 并在 PR 评论里列出具体错误引导用户修改。支持解包 `community/pending/*.teachany` 到 `examples/` 临时目录以便校验。(8) **新增 `docs/COMMUNITY_SUBMIT_SETUP.md`**：15 分钟零基础部署指南（注册 Cloudflare → 创建 GitHub Fine-grained token → wrangler 登录 + 创建 KV + put secret + deploy → 更新代码里的 WORKER_URL）、端到端验证流程、运维操作（撤销发布权、调限频、查日志）、常见问题。(9) **心标排序机制**：社区课件允许同一 node_id 多份共存，按 localStorage 心标数降序展示（`courseware-hub.js` 已实现），取代"人工审核"作为质量过滤手段。(10) **硬规则 #48 重写**：从"双轨制 + 三重门"升级为"零配置 + 质检自动合并"，明确 AI 绝对禁止让用户自己配 GitHub token（v5.34.8 旧路径已废弃），Worker 是唯一官方入口；强调"质检通过 = 发布成功"的新定义。(11) **设计哲学**：把 v5.34.8 的"人肉把关"升级为"机器把关 + 社区心标优胜劣汰"——validate-courseware.py 47 条规则做硬门槛，心标数做软排序，owner 只需要处理被机器拦住的异常 PR（几乎没有），完全放手让社区自治。用户真正做到"做完课件说一声提交 → 5 分钟后自己首页刷新看见" 的零摩擦体验。
+- v5.35：**用户身份上传与自动注册**——课件制作完成后统一写入 `community/<course-id>/`，运行 `scripts/rebuild-index.py` 自动更新 Registry 与知识树，再以当前 Git 用户身份提交并推送到远端；移除旧的多身份发布分支、额外权限标记和审批路径说明。
 
-- v5.34.8：**⭐ 发布权分离 · 双轨制：本地 drafts + 自动社区 PR · 新增硬规则 #48**——(1) 用户反馈"而且怎么用户直接上传成官方课件了？"+ "目前课件都是我做的，没有问题，但后面我希望用户也能自动推到社区课件"。(2) **根因诊断**：v5.34.8 之前的 SKILL Phase 3.5 存在双重漏洞——Step 3 直白写着"质检通过 = 直接上架，不需要管理员审核"，Step 4 用"工作区是否存在 `scripts/rebuild-index.py`"来判断"管理员模式"。结果任何克隆了 teachany-opensource 仓库的用户，在本地生成课件后 AI 都会**自动**把课件写入 `examples/`（官方目录）、修改 `registry.json`/`data/trees/*.json`、然后 `git push origin main && git push gitee main`。盘点 2026-04-19 数据：`registry.json` 中 138 份课件里 **124 份 status=community 实际上是用户本地 AI 自动推上来的**，完全跳过了 `community/README.md` 里明文规定的 PR 审批流程（路径 A/B/C）。(3) **双轨制设计**：AI 生成课件后一律先写到 `community/drafts/<course-id>/`（被 `.gitignore`），然后**强制询问**用户意向——① 仅本地自用 / ② 提交到社区仓（自动开 PR）/ ③ 管理员直推官方。(4) **新增 `scripts/submit-to-community.py`**：用户选 ② 时 AI 自动调用此脚本，脚本读取 `.teachany-token`（Fine-grained token 最小权限 Contents/Metadata Read-only）、打包成 `.teachany`、通过 `repository_dispatch` 事件触发已就位的 `community-submit.yml` workflow，GitHub Actions 自动创建分支 + 开 PR 到 `community/pending/`，后续走 `approved` / `promote-to-official` / `revision-needed` 三条标签路径。用户首次使用时脚本引导一次性配置 `.teachany-token`，零代码负担、零安全风险（Read-only + 最小仓库范围）。（⚠️ v5.34.9 纠正：实测发现"让用户自配 token"完全行不通，已改为 Cloudflare Worker 中转方案）(5) **管理员直推三重门**（用户选 ③ 时）：条件 A `.teachany-admin` 标记文件存在 + 条件 B 用户对话有明确发布关键词 + 条件 C AI 已向用户复核去向；缺一不可。(6) **`rebuild-index.py` 硬门槛**：脚本启动首先检查 `.teachany-admin`，不存在即 `exit 2`，打印三条友好提示引导普通用户去走 `submit-to-community.py`。新增课件默认 `status=community`，升格 `official` 必须管理员手工编辑 `registry.json`。(7) **SKILL Phase 3.5 Step 3/4 + Section 17.4 重写**：删掉"自动判断身份并发布"的诱导逻辑，改为"永远先询问 → 按用户回复执行"的双轨流程。(8) **新增 `community/drafts/README.md`**：解释双轨制 + 三条后续路径 + `.teachany-token` 配置步骤 + FAQ。(9) **新增硬规则 #48 发布权分离基线**（更新版）：明确"AI 生成课件后必须询问用户意向、用户选 ② 调用 `submit-to-community.py`、用户选 ③ 才允许 `git push`、绝不自作主张"；硬规则从 47 条扩到 **48 条**。(10) **双向保护设计哲学**：既保护仓库 owner（防止 AI 误污染 Gallery），也保护普通用户（防止 AI 未经同意公开可能含隐私/版权敏感的课件内容）。"质检通过"不等于"发布成功"——质检只保证课件本身合格，不代表可以进入官方索引。AI 的职责是做出好课件 + 落地 drafts + 询问用户 + 按用户意愿执行，发布决策权永远在用户手里。
 
 - v5.34.7：**⭐ L3/L4/PPTX 强制机器校验 · 新增硬规则 #47 PPTX 含图基线**——(1) 用户反馈"现在用户生成的还是没有音频视频互动，而且生成的 pptx 太简陋了，需要强制安装调用 ppt 相关 skill，还要保证有图"。(2) **根因诊断**：此前 L2/L3/L4/L5 都只在 SKILL_CN 文本层面要求"默认执行"，但缺乏 `validate-courseware.py` 层面的**机器校验**——AI 经常跳过就交付，没人能拦住；`examples/science-plant-life-cycle/` 就是典型（交付时无 tts/、无 assets/、PPTX 仅 41KB 且 0 张图）。(3) **validate-courseware.py 升级（5 层新校验）**：① 课件必须有 `tts/*.mp3` 文件（硬规则 #16/#31），缺失即 error；② 有 tts/ 时 HTML 必须含播放器 UI（audioBadge/audioPanel/audioPlaylist 任一），缺失即 error；③ 课件必须有 `assets/*.png|jpg ≥ 2` 张（硬规则 #34），纯计算题课可豁免；④ HTML 必须至少 2 处 `<img src="./assets/">` 引用，缺失即 error；⑤ PPTX 存在时大小必须 ≥ 100KB 且含图 ≥ 1（PPTX 简陋直接 error），图/slide 比 < 30% 报 warn。(4) **新增硬规则 #47 PPTX 含图基线**：量化版 #46，明确 PPTX ≥ 100KB + 图/slide ≥ 30% + 图必须 ≥ 1；校验失败直接 exit 1 阻断 rebuild-index 与 git push。(5) **SUBJECT_PREFIXES 补齐 `sci` 前缀**：配合 v5.34.6 小学科学，`science` 正式纳入 validate-courseware 合法学科。(6) **科学课件范例修复**：`examples/science-plant-life-cycle/` 一键补齐——调用 `image_gen` 生成 2 张课件图（植物生命周期总览 + 部位图）并嵌入 HTML、用 edge-tts 生成 6 段中文旁白 mp3、注入音频播放器 UI 及 `goSlide` 双向 hook、重跑 `export-pptx.py` 得到 3057KB / 10 slides / 2 images 的丰富版 PPTX（原版 41KB / 0 image 的简陋 PPTX 被彻底替换）。(7) **硬规则扩充**：从 46 条扩到 **47 条**；Section 十三标题同步更新。(8) **设计哲学**：把"默认执行"从纸面约束升级为脚本阻断——`validate-courseware.py` 现在能精确识别每一项缺失并报告具体路径，AI 交付前跑一遍就能看到 0 错误才敢 push，彻底终结"又没音频又没图还 PPTX 简陋"的体验问题。
 

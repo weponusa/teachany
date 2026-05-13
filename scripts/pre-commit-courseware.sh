@@ -30,6 +30,7 @@ fi
 # --- 收集 staged 区的课件目录 ---
 CHANGED_DIRS=$(git diff --cached --name-only \
   | grep -E '^(community|examples)/[^/]+/' \
+  | grep -vE '^community/(drafts|pending|archive)/' \
   | awk -F'/' '{print $1 "/" $2}' \
   | sort -u)
 

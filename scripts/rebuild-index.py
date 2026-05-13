@@ -41,15 +41,13 @@ from collections import defaultdict
 import copy
 
 # 需要扫描的课件目录；每个项是 (目录, 是否 official 候选)
-# v7.9.15: 统一只扫 community/，官方/社区用 manifest.json 的 status 字段区分
-# examples/ 目录已废弃，所有课件统一在 community/
+# v6.1: examples/ 仍是官方通道，community/ 加入扫描（skip drafts/ 和 pending/）
 COURSE_DIRS = [
-    ('community', False),  # 全部课件，status=official 为官方，status=community 为社区
+    ('examples',  True),   # 官方示例课件
+    ('community', False),  # 社区课件（PR 合并后进这里）
 ]
 
 # community/ 下忽略的子目录（这些不是课件）
-
-
 COMMUNITY_SKIP = {'drafts', 'pending', 'README.md'}
 
 # v6.2: 图片后缀白名单
@@ -161,11 +159,13 @@ def detect_images(course_dir: Path):
 
 
 def scan_courses():
-    """扫描 community/ 下所有实际存在的课件（v7.9.15：统一单目录）
+    """扫描 examples/ 和 community/ 下所有实际存在的课件
 
     返回: { course_id: (manifest_dict, source_dir) }
+    source_dir: 'examples' 或 'community'
+    同名冲突时 examples/ 优先
     """
-    courses = {}
+    courses = {}  # course_id -> (manifest, source_dir)
     for base_dir, _is_official in COURSE_DIRS:
         base = Path(base_dir)
         if not base.exists():
@@ -187,6 +187,12 @@ def scan_courses():
             except json.JSONDecodeError:
                 print(f"  ⚠️  {base_dir}/{d.name}: manifest.json 格式错误，跳过")
                 continue
+            # 冲突处理：如果 examples/ 已有同名，community/ 版本跳过
+            if d.name in courses:
+                existing_src = courses[d.name][1]
+                if existing_src == 'examples':
+                    print(f"  ℹ️  {d.name}: community/ 版本被 examples/ 覆盖（正常）")
+                    continue
             courses[d.name] = (manifest, base_dir)
     return courses
 
@@ -258,21 +264,7 @@ def main():
     print('TeachAny 课件索引重建工具')
     print('='*70)
 
-    # ⭐ v5.34.8 管理员身份校验：防止克隆仓库的普通用户误触发"重建官方索引"
-    admin_marker = Path('.teachany-admin')
-    if not admin_marker.exists():
-        print()
-        print('⛔ 本脚本只能由仓库管理员在本地运行。')
-        print('   未检测到 .teachany-admin 标记文件，已中止执行。')
-        print()
-        print('   ℹ️  如你是普通用户，想制作自己的课件：')
-        print('      - AI 会把课件保存到 community/drafts/ 下（仅本地）')
-        print('      - 如需贡献到社区，请按 community/README.md 的 PR 审批流程提交')
-        print()
-        print('   ℹ️  如你是仓库 owner，想重建索引：')
-        print('      touch .teachany-admin   # 在仓库根目录创建空标记文件（已被 .gitignore）')
-        print()
-        sys.exit(2)
+    # 用户身份即可重建索引：课件制作完成后直接扫描 community/ 并注册到 Gallery。
 
     # 0. 规范化社区上传课件（修复中文 subject/grade、缺 node_id、树缺节点等上传断链）
     print('\n🧩 步骤0: 规范化社区上传课件...')
@@ -438,19 +430,16 @@ def main():
             # 当前节点的 courses
             current_courses = node.get('courses', [])
 
-
-            # ⭐ v7.9.15 归一化：examples/ 前缀全部改为 community/（examples/ 已废弃）
+            # ⭐ 归一化：剥离 "examples/" 前缀（防止污染，参见 v5.34.5 fix）
             normalized_current = []
             for c in current_courses:
                 if isinstance(c, str) and c.startswith('examples/'):
-                    new_path = 'community/' + c.split('/', 1)[1]
-                    print(f'  🧹 {tree_name}/{node_id}: 迁移 "{c}" → "{new_path}"')
-                    normalized_current.append(new_path)
+                    stripped = c.split('/', 1)[1]
+                    print(f'  🧹 {tree_name}/{node_id}: 归一化 "{c}" → "{stripped}"')
+                    normalized_current.append(stripped)
                     modified = True
                 else:
                     normalized_current.append(c)
-
-
             current_courses = normalized_current
 
             # 过滤掉不存在的课件引用（legacy 也算"存在"）
@@ -536,9 +525,7 @@ def main():
     print('\n✨ 步骤3.5: 填充"其他知识"虚拟树（收纳 free_mode / 未挂载 / ext-* 学习路径推荐课件）...')
     virtual_tree_path = Path('data/trees/other/user-generated.json')
     if virtual_tree_path.exists():
-        # 收集所有官方树中存在的 node_id。
-        # 注意：不要把“有正式 node_id 但被同节点其他课件覆盖/未挂载”的课件放进其他知识；
-        # 它们应该留在原学科节点下处理，而不是污染“其他知识”。
+        # 收集所有官方树中存在的 node_id
         all_official_node_ids = set()
         for tree_file in tree_files:
             if tree_file == virtual_tree_path:
@@ -563,17 +550,7 @@ def main():
 
         # 扫描所有有 manifest 的课件，找出应该放进"其他知识"的
         virtual_nodes = []
-        # 强制放入“其他知识”的历史/探究课件：这些内容更适合作为跨课标/自由探究入口，
-        # 即使它们有一个近似的官方 node_id，也不应从“其他知识”消失。
-        OTHER_TREE_FORCE_COURSE_IDS = {
-            'math-m-linear-function-inquiry-phone-plan',  # v7.12 探究课试制件
-            'course-classical-poetry',                    # 古典诗词系统课程
-            'chn-pingze-grade1',                          # 古诗平仄启蒙
-            'ext-539f176d',                                # 民族文化与宗教研究
-        }
-
         orphan_reasons = {'free_mode': 0, 'node_not_found': 0, 'missing_node_id': 0,
-                          'forced_other': 0, 'inquiry_project': 0,
                           'ext_passed': 0, 'ext_rejected': 0}
 
         # v7.9.8 新增：学科前缀映射，用于"简写 node_id"自动探测
@@ -605,14 +582,8 @@ def main():
             grade = manifest.get('grade', 0)
 
             reason = None
-            lesson_type = (manifest.get('lesson_type') or '').strip()
-            if cid in OTHER_TREE_FORCE_COURSE_IDS:
-                reason = 'forced_other'
-            elif is_free:
+            if is_free:
                 reason = 'free_mode'
-            elif lesson_type == 'inquiry-project':
-                # 探究课可同时挂在正式知识树和“其他知识/探究课”集合中，便于 PBL 入口发现。
-                reason = 'inquiry_project'
             elif not nid:
                 reason = 'missing_node_id'
             elif nid not in all_official_node_ids:
@@ -641,11 +612,8 @@ def main():
                 continue
 
             orphan_reasons[reason] += 1
-            # 虚拟节点 id：forced_other / inquiry_project 统一用 other-<course_id>，避免与正式树节点 id 冲突
-            if reason in ('forced_other', 'inquiry_project'):
-                vid = f'other-{cid}'
-            else:
-                vid = nid if nid else f'other-{cid}'
+            # 虚拟节点 id：free_mode 用 node_id 或 cid；未找到则用 other-<cid>
+            vid = nid if nid else f'other-{cid}'
             virtual_nodes.append({
                 'id': vid,
                 'name': name,
@@ -674,7 +642,7 @@ def main():
         EXT_MIN_SECTIONS = 5
 
         ext_dirs_scanned = 0
-        for base_dir in ('community',):
+        for base_dir in ('examples', 'community'):
             base = Path(base_dir)
             if not base.exists():
                 continue
@@ -713,12 +681,13 @@ def main():
                     print(f'  ⚠️ ext 课件未通过质检，跳过: {d.name} ({", ".join(reasons_reject)})')
                     continue
 
-                # 通过质检：纳入"其他知识"虚拟树（ext-* 是课标外内容，设计上不挂正式课标树）
+                # 通过质检：纳入虚拟树
                 orphan_reasons['ext_passed'] += 1
                 ext_subject = metas.get('course-subject', 'other')
                 ext_title = metas.get('course-title', d.name)
                 ext_node = metas.get('course-node', d.name)
-                ext_vid = ext_node if ext_node else f'other-{d.name}'
+                # 虚拟节点 id：优先用 course-node（无学科前缀），否则用目录名
+                ext_vid = ext_node if ext_node and ext_node not in all_official_node_ids else f'other-{d.name}'
                 virtual_nodes.append({
                     'id': ext_vid,
                     'name': ext_title,
@@ -731,10 +700,11 @@ def main():
                     'courses': [d.name],
                     'status': 'active',
                     'source': 'learning-path-ext',
-                    'curriculum_points': ['学习路径推荐课件（ext-* 前缀，无 manifest.json，元信息来自 HTML meta）'],
+                    'curriculum_points': [f'学习路径推荐课件（ext-* 前缀，无 manifest.json，元信息来自 HTML meta）'],
                     'excerpt_ids': []
                 })
-                # 构造最小 manifest 供下游消费（registry 写入）
+                # 同时把课件加入 courses 集合，供步骤 4 写入 registry
+                # 构造一个最小 manifest 供下游消费
                 synthetic_manifest = {
                     'id': d.name,
                     'name': ext_title,
@@ -743,7 +713,7 @@ def main():
                     'node_id': ext_node or '',
                     'grade': 0,
                     'author': 'learning-path',
-                    'free_mode': True,
+                    'free_mode': True,  # 标记为 free_mode，让下游一致处理
                     '_synthetic_from_ext_html': True
                 }
                 courses[d.name] = (synthetic_manifest, base_dir)
@@ -768,9 +738,7 @@ def main():
         print(f'  ✅ 已填充 {len(virtual_nodes)} 个虚拟节点到 {virtual_tree_path}')
         print(f'     free_mode: {orphan_reasons["free_mode"]}, '
               f'node 未找到: {orphan_reasons["node_not_found"]}, '
-              f'缺 node_id: {orphan_reasons["missing_node_id"]}, '
-              f'强制保留: {orphan_reasons["forced_other"]}, '
-              f'探究课: {orphan_reasons["inquiry_project"]}')
+              f'缺 node_id: {orphan_reasons["missing_node_id"]}')
         if ext_dirs_scanned:
             print(f'     ext-* 学习路径课件: 扫描 {ext_dirs_scanned} 个，'
                   f'质检通过 {orphan_reasons["ext_passed"]}，'

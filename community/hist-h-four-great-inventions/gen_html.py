@@ -1,0 +1,477 @@
+#!/usr/bin/env python3
+"""Generate index.html for hist-h-four-great-inventions (Lesson 1 of 3)"""
+
+import os
+
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+# Read template CSS from existing course
+with open('../../scripts/teachany-knowledge-graph.css') as f:
+    kg_css = f.read()
+with open('../../scripts/teachany-tutor-card.css') as f:
+    tc_css = f.read()
+with open('../../scripts/ai-tutor.css') as f:
+    ai_css = f.read()
+with open('../../scripts/teachany-tts-narrator.css') as f:
+    tts_css = f.read()
+with open('../../scripts/teachany-section-hints.css') as f:
+    sh_css = f.read()
+
+# Combine external CSS
+external_css = kg_css + '\n' + tc_css + '\n' + ai_css + '\n' + tts_css + '\n' + sh_css
+
+html = f'''<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="course-id" content="hist-h-four-great-inventions">
+  <meta name="course-title" content="四大发明与中国古代科技">
+  <meta name="teachany-node" content="hist-h-science-technology-h">
+  <meta name="teachany-subject" content="history">
+  <meta name="teachany-grade" content="high">
+  <meta name="teachany-author" content="TeachAny">
+  <meta name="teachany-version" content="1.0.0">
+  <meta name="subject" content="历史">
+  <meta name="grade-level" content="高中">
+  <meta name="subject-code" content="HIST-H-01">
+  <meta name="lesson-type" content="new-concept">
+  <title>四大发明与中国古代科技 · 高中历史 G10 · TeachAny v1.0.0</title>
+  <style>
+    :root {{ --bg: #f8fafc; --primary: #7c3aed; --primary-dark: #5b21b6; --secondary: #f59e0b; --success: #10b981; --danger: #ef4444; --radius: 14px; --shadow: 0 4px 20px rgba(124,58,237,0.12); --text: #1e293b; --muted: #64748b; }}
+    * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+    body {{ background: var(--bg); font-family: 'PingFang SC','Microsoft YaHei',sans-serif; color: var(--text); min-height: 100vh; }}
+    header {{ background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 55%, #a78bfa 100%); color: white; padding: 28px 24px 22px; }}
+    header h1 {{ font-size: 1.6rem; font-weight: 700; margin-bottom: 6px; }}
+    header p {{ opacity: 0.9; font-size: 0.9rem; }}
+    .grade-badge {{ display: inline-block; background: rgba(255,255,255,0.2); border-radius: 20px; padding: 3px 12px; font-size: 0.8rem; margin-top: 8px; }}
+    .progress-bar-wrap {{ background: rgba(255,255,255,0.2); border-radius: 10px; height: 8px; margin-top: 14px; }}
+    .progress-bar {{ background: #fff; border-radius: 10px; height: 8px; transition: width 0.5s ease; }}
+    .progress-label {{ font-size: 0.8rem; opacity: 0.9; margin-top: 4px; }}
+    main {{ max-width: 900px; margin: 0 auto; padding: 24px 16px; }}
+    .section {{ display: block; margin-bottom: 24px; scroll-margin-top: 80px; border-bottom: 1px solid rgba(148,163,184,0.15); padding-bottom: 20px; }}
+    .card {{ background: white; border-radius: var(--radius); padding: 24px; margin-bottom: 20px; box-shadow: var(--shadow); }}
+    .abt-box {{ border-left: 5px solid #7c3aed; padding-left: 20px; margin-bottom: 20px; }}
+    .abt-box h2 {{ color: #4c1d95; font-size: 1.3rem; margin-bottom: 10px; }}
+    .abt-box p {{ line-height: 1.8; }}
+    .abt-label {{ display: inline-block; background: #7c3aed; color: white; font-weight: 700; font-size: 0.85rem; padding: 4px 10px; border-radius: 8px; margin-right: 8px; }}
+    .abt-label.but {{ background: #ef4444; }} .abt-label.therefore {{ background: #10b981; }}
+    .abt-text {{ font-size: 0.95rem; line-height: 1.7; color: var(--text); }}
+    .core-q {{ background: linear-gradient(135deg, #ede9fe, #e9d5ff); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; border: 2px solid #c4b5fd; }}
+    .core-q h3 {{ color: #4c1d95; font-size: 1rem; margin-bottom: 6px; }}
+    .core-q p {{ font-size: 1.05rem; font-weight: 600; color: var(--text); }}
+    .tab-bar {{ display: flex; gap: 8px; background: #e2e8f0; border-radius: 30px; padding: 4px; margin-bottom: 20px; }}
+    .tab {{ flex: 1; text-align: center; padding: 8px; border-radius: 24px; cursor: pointer; font-size: 0.9rem; font-weight: 600; color: var(--muted); transition: all 0.2s; }}
+    .tab.active {{ background: white; color: #7c3aed; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }}
+    h2.sec-title {{ font-size: 1.2rem; color: #4c1d95; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px solid #c4b5fd; }}
+    p.body-text {{ line-height: 1.9; font-size: 0.97rem; margin-bottom: 14px; }}
+    .quiz-box {{ background: #f8fafc; border-radius: var(--radius); padding: 20px; margin-top: 16px; }}
+    .quiz-box h4 {{ font-size: 1rem; margin-bottom: 14px; color: #4c1d95; }}
+    .options {{ display: flex; flex-direction: column; gap: 10px; }}
+    .opt-btn {{ background: white; border: 2px solid #cbd5e1; border-radius: 10px; padding: 12px 16px; cursor: pointer; text-align: left; font-size: 0.95rem; transition: all 0.2s; color: var(--text); }}
+    .opt-btn:hover {{ border-color: var(--primary); background: #faf5ff; }}
+    .opt-btn.correct {{ border-color: var(--success); background: #ecfdf5; color: #065f46; }}
+    .opt-btn.wrong {{ border-color: var(--danger); background: #fef2f2; color: #991b1b; }}
+    .feedback {{ margin-top: 12px; padding: 12px 16px; border-radius: 10px; font-size: 0.95rem; display: none; }}
+    .feedback.show {{ display: block; }}
+    .feedback.correct {{ background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }}
+    .feedback.wrong {{ background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }}
+    .btn-primary {{ background: #7c3aed; color: white; border: none; border-radius: 30px; padding: 12px 28px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; margin-top: 16px; }}
+    .btn-primary:hover {{ background: #6d28d9; transform: translateY(-1px); }}
+    .btn-primary.secondary {{ background: white; color: #7c3aed; border: 2px solid #7c3aed; }}
+    .btn-primary.secondary:hover {{ background: #faf5ff; }}
+    .bloom-tag {{ display: inline-block; background: #ede9fe; color: #5b21b6; border-radius: 20px; padding: 2px 10px; font-size: 0.78rem; margin: 2px; }}
+    .branch-badge {{ display: inline-block; background: #dbeafe; color: #1e40af; border-radius: 20px; padding: 3px 12px; font-size: 0.82rem; font-weight: 600; margin-bottom: 10px; }}
+    .summary-box {{ text-align: center; padding: 30px; }}
+    .summary-box h2 {{ font-size: 1.5rem; color: #4c1d95; margin-bottom: 12px; }}
+    .score-circle {{ width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #4c1d95); color: white; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; margin: 0 auto 16px; }}
+    .achievement {{ background: #ede9fe; border-radius: var(--radius); padding: 16px; margin: 12px 0; }}
+    .invent-cards {{ display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }}
+    .invent-card {{ background: linear-gradient(135deg, #ede9fe, white); border: 2px solid #c4b5fd; border-radius: var(--radius); padding: 16px; }}
+    .invent-card h4 {{ color: #4c1d95; font-size: 0.95rem; margin-bottom: 6px; }}
+    .invent-card p {{ font-size: 0.88rem; color: var(--text); line-height: 1.6; }}
+    .invent-card .tag {{ display: inline-block; background: #c4b5fd; color: white; font-size: 0.75rem; padding: 2px 8px; border-radius: 6px; margin-top: 8px; }}
+    .timeline {{ position: relative; padding: 10px 0; }}
+    .tl-item {{ display: flex; align-items: flex-start; gap: 14px; margin-bottom: 18px; }}
+    .tl-dot {{ width: 36px; height: 36px; border-radius: 50%; background: #7c3aed; color: white; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; margin-top: 2px; }}
+    .tl-line {{ width: 2px; background: #c4b5fd; margin-left: 17px; margin-top: 4px; }}
+    .tl-content {{ flex: 1; background: #f8fafc; border-radius: 10px; padding: 12px 14px; border: 1px solid #e2e8f0; }}
+    .tl-content h4 {{ font-size: 0.95rem; color: #4c1d95; margin-bottom: 4px; }}
+    .tl-content p {{ font-size: 0.88rem; color: var(--muted); line-height: 1.6; }}
+    .compare-table {{ width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 0.9rem; }}
+    .compare-table th {{ background: #7c3aed; color: white; padding: 10px 14px; text-align: left; font-weight: 600; }}
+    .compare-table td {{ padding: 10px 14px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }}
+    .compare-table tr:nth-child(even) {{ background: #faf5ff; }}
+    .compare-table tr:hover {{ background: #ede9fe; }}
+    .source-card {{ background: #ede9fe; border: 2px solid #c4b5fd; border-radius: var(--radius); padding: 16px; margin: 10px 0; }}
+    .source-card .source-text {{ font-style: italic; line-height: 1.8; font-size: 0.95rem; }}
+    .source-card .source-from {{ font-size: 0.82rem; color: var(--muted); margin-top: 8px; }}
+    .question-card {{ background: #fef3c7; border: 2px solid #fbbf24; border-radius: var(--radius); padding: 16px; margin: 14px 0; }}
+    .question-card h4 {{ color: #92400e; font-size: 0.95rem; margin-bottom: 8px; }}
+    .question-card p {{ font-size: 0.9rem; line-height: 1.7; }}
+    .tech-grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 12px 0; }}
+    .tech-card {{ background: white; border: 2px solid #e2e8f0; border-radius: 10px; padding: 12px; }}
+    .tech-card h5 {{ font-size: 0.88rem; color: #4c1d95; margin-bottom: 4px; }}
+    .tech-card p {{ font-size: 0.82rem; color: var(--muted); line-height: 1.5; }}
+    .route-svg {{ background: #f8fafc; border-radius: 12px; padding: 14px; margin: 16px 0; overflow-x: auto; }}
+    .route-svg svg {{ width: 100%; height: auto; display: block; min-width: 680px; }}
+    .highlight-box {{ background: linear-gradient(135deg, #fef3c7, #fde68a); border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0; padding: 16px; margin: 14px 0; }}
+    .highlight-box h4 {{ color: #92400e; font-size: 0.95rem; margin-bottom: 6px; }}
+    .highlight-box p {{ font-size: 0.9rem; line-height: 1.7; color: var(--text); }}
+    .nav-row {{ display: flex; justify-content: space-between; align-items: center; margin-top: 22px; }}
+    .nav-btn {{ background: #7c3aed; color: white; border: none; border-radius: 10px; padding: 10px 24px; font-size: 0.95rem; cursor: pointer; font-weight: 600; transition: background 0.2s; }}
+    .nav-btn:hover {{ background: #6d28d9; }}
+    .nav-btn.secondary {{ background: white; color: #7c3aed; border: 2px solid #7c3aed; }}
+    .nav-btn.secondary:hover {{ background: #faf5ff; }}
+    .mod-nav {{ display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0; }}
+    .mod-btn {{ padding: 6px 16px; border-radius: 20px; border: 1.5px solid #cbd5e1; background: white; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; color: var(--muted); }}
+    .mod-btn.active {{ background: #7c3aed; color: white; border-color: #7c3aed; }}
+    .mod-btn.done {{ background: #ecfdf5; color: #065f46; border-color: #10b981; }}
+    .summary-list {{ list-style: none; padding: 0; }}
+    .summary-list li {{ padding: 8px 0; padding-left: 24px; position: relative; font-size: 0.95rem; line-height: 1.7; }}
+    .summary-list li::before {{ content: "💡"; position: absolute; left: 0; }}
+    .kg-container {{ background: #f8fafc; border-radius: var(--radius); padding: 20px; margin: 16px 0; border: 1px solid #e2e8f0; }}
+    .kg-container h4 {{ color: #4c1d95; font-size: 1rem; margin-bottom: 12px; }}
+    .kp-tag {{ display: inline-block; background: #fef3c7; color: #92400e; border-radius: 20px; padding: 2px 10px; font-size: 0.75rem; margin: 2px; font-weight: 600; }}
+    .kp-tag.core {{ background: #f472b6; color: white; }}
+    .kp-tag.world {{ background: #60a5fa; color: #1e40af; }}
+    .kp-tag.why {{ background: #a78bfa; color: white; }}
+    .quiz-level {{ background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 14px; }}
+    .quiz-level-badge {{ display: inline-block; font-size: 0.78rem; font-weight: 700; padding: 2px 10px; border-radius: 10px; margin-bottom: 10px; }}
+    .badge-basic {{ background: #d1fae5; color: #065f46; }} .badge-apply {{ background: #dbeafe; color: #1e40af; }} .badge-transfer {{ background: #ede9fe; color: #5b21b6; }}
+    .quiz-q {{ font-size: 0.95rem; color: var(--text); margin-bottom: 12px; font-weight: 600; }}
+    .text-input {{ width: 100%; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 10px 14px; font-size: 0.9rem; outline: none; resize: vertical; min-height: 80px; font-family: inherit; }}
+    .text-input:focus {{ border-color: #7c3aed; }}
+    .submit-btn {{ margin-top: 10px; background: #7c3aed; color: white; border: none; border-radius: 10px; padding: 10px 24px; font-size: 0.9rem; cursor: pointer; font-weight: 600; transition: background 0.2s; }}
+    .submit-btn:hover {{ background: #6d28d9; }}
+    .kp-box {{ background: #fef3c7; border: 2px solid #fbbf24; border-radius: var(--radius); padding: 16px; margin: 14px 0; }}
+    .kp-box h4 {{ color: #92400e; font-size: 0.95rem; margin-bottom: 8px; }}
+    .kp-box p {{ font-size: 0.9rem; line-height: 1.7; }}
+    .kp-box .formula {{ background: white; border-radius: 8px; padding: 10px 14px; margin-top: 10px; font-family: Georgia, serif; font-size: 1.1rem; text-align: center; }}
+    .reason-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }}
+    .reason-card {{ background: white; border: 2px solid #e2e8f0; border-radius: 12px; padding: 16px; }}
+    .reason-card h5 {{ font-size: 0.9rem; color: #4c1d95; margin-bottom: 8px; }}
+    .reason-card p {{ font-size: 0.85rem; color: var(--muted); line-height: 1.6; }}
+    .reason-card strong {{ color: #7c3aed; }}
+    .compare-box {{ background: linear-gradient(135deg, #e0e7ff, #c7d2fe); border-radius: var(--radius); padding: 16px; margin: 14px 0; border: 2px solid #818cf8; }}
+    .compare-box h4 {{ color: #3730a3; font-size: 1rem; margin-bottom: 12px; }}
+    .compare-box table {{ width: 100%; border-collapse: collapse; font-size: 0.88rem; }}
+    .compare-box table th {{ background: #3730a3; color: white; padding: 8px 10px; text-align: left; }}
+    .compare-box table td {{ padding: 8px 10px; border-bottom: 1px solid #c4b5fd; }}
+    .compare-box table tr:nth-child(even) {{ background: rgba(255,255,255,0.5); }}
+    .route-svg svg {{ width: 100%; height: auto; display: block; min-width: 680px; }}
+  </style>
+  <link rel="stylesheet" href="../../scripts/teachany-knowledge-graph.css">
+  <link rel="stylesheet" href="../../scripts/teachany-tutor-card.css">
+  <link rel="stylesheet" href="../../scripts/ai-tutor.css">
+  <link rel="stylesheet" href="../../scripts/teachany-tts-narrator.css">
+  <link rel="stylesheet" href="../../scripts/teachany-section-hints.css">
+</head>
+<body>
+<!-- teachany-back-to-gallery -->
+<style>body{{padding-top:36px!important;}}</style>
+<div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:rgba(15,23,42,0.92);backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;gap:10px;padding:0 16px;height:36px;font-family:'PingFang SC','Microsoft YaHei',sans-serif;">
+  <a href="https://weponusa.github.io/teachany/" target="_top" style="display:flex;align-items:center;gap:6px;color:rgba(255,255,255,0.75);font-size:12px;text-decoration:none;padding:4px 10px;border-radius:6px;transition:all 0.2s;white-space:nowrap;" onmouseover="this.style.background='rgba(255,255,255,0.12)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.75)'">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    Gallery
+  </a>
+  <span style="color:rgba(255,255,255,0.2);font-size:14px;">|</span>
+  <a href="https://weponusa.github.io/teachany/tree.html" target="_top" style="display:flex;align-items:center;gap:5px;color:rgba(255,255,255,0.55);font-size:12px;text-decoration:none;padding:4px 10px;border-radius:6px;transition:all 0.2s;white-space:nowrap;" onmouseover="this.style.background='rgba(255,255,255,0.08)';this.style.color='rgba(255,255,255,0.85)'" onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.55)'">
+    🗺️ 知识地图
+  </a>
+  <a href="https://weponusa.github.io/teachany/path.html" target="_top" style="display:flex;align-items:center;gap:5px;color:rgba(255,255,255,0.55);font-size:12px;text-decoration:none;padding:4px 10px;border-radius:6px;transition:all 0.2s;white-space:nowrap;" onmouseover="this.style.background='rgba(255,255,255,0.08)';this.style.color='rgba(255,255,255,0.85)'" onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.55)'">
+    🛤️ 学习路径
+  </a>
+  <div style="flex:1;"></div>
+  <span style="color:rgba(255,255,255,0.3);font-size:11px;">TeachAny</span>
+</div>
+<!-- /teachany-back-to-gallery -->
+
+<header>
+  <h1>🔬 四大发明与中国古代科技</h1>
+  <p>从造纸到印刷，从罗盘到火药——理解科技史上的"中国之问"</p>
+  <div class="grade-badge">高中 · 历史 · 中外科技史</div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar" id="mainProgress" style="width:0%"></div>
+  </div>
+  <div class="progress-label" id="progressLabel">学习进度：0%</div>
+</header>
+
+<figure style="margin:16px 0;text-align:center;">
+  <img class="hero-cover-img" src="./assets/hist-h-four-great-inventions-hero.png" alt="四大发明与中国古代科技学习导图" style="max-width:100%;border-radius:16px;box-shadow:0 4px 18px rgba(0,0,0,0.10);">
+  <figcaption style="font-size:12px;color:#64748b;margin-top:6px;">四大发明与中国古代科技 · 核心问题：为什么四大发明诞生在中国，又为什么没能推动中国率先进入近代？</figcaption>
+</figure>
+
+<main>
+
+<!-- ===== 前测 ===== -->
+<div class="section active" id="sec-pretest">
+  <div class="card">
+    <div class="abt-box">
+      <h2>✨ 故事开场</h2>
+      <p>14世纪，一位意大利修道士在拆解一艘从中国来的沉船上，发现了一块能指引方向的小磁铁。他称之为"奇迹之器"。<strong>然而</strong>，这"奇迹之器"在发明它的中国，早在200年前就已是航海标配。<strong>因此</strong>，四大发明的传播本身就是一部中西科技交流史——它们从东方诞生，却在西方引发了文明的加速。</p>
+    </div>
+    <div class="core-q">
+      <h3>📌 核心问题</h3>
+      <p>为什么四大发明诞生在中国，又为什么没能推动中国率先进入近代？</p>
+    </div>
+    <h2 class="sec-title">📝 学前测验</h2>
+    <div class="branch-badge">🔀 TeachAnyAdaptive 触发点 #1</div>
+    <div class="quiz-box">
+      <h4>【前测】关于四大发明，下列说法正确的是？</h4>
+      <div class="options">
+        <button class="opt-btn" onclick="handlePretest(this, false)">A. 四大发明均在宋代发明</button>
+        <button class="opt-btn" onclick="handlePretest(this, true)">B. 造纸术和印刷术都与"信息传播"直接相关</button>
+        <button class="opt-btn" onclick="handlePretest(this, false)">C. 指南针在明代才开始用于航海</button>
+        <button class="opt-btn" onclick="handlePretest(this, false)">D. 火药在宋代已用于民用生产</button>
+      </div>
+      <div class="feedback" id="pretest-fb"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 模块1: 四大发明详解 ===== -->
+<div class="section active" id="sec-mod1">
+  <div class="card">
+    <div class="tab-bar">
+      <div class="tab active" onclick="goToMod(1)">① 四大发明详解</div>
+      <div class="tab" onclick="goToMod(2)">② 古代科技群星</div>
+      <div class="tab" onclick="goToMod(3)">③ 为什么没有近代科学？</div>
+    </div>
+    <h2 class="sec-title">模块一：四大发明详解</h2>
+    <div class="core-q">
+      <h3>📌 本模块问题</h3>
+      <p>四大发明各自经历了怎样的"发明→成熟→外传→世界影响"的完整链条？</p>
+    </div>
+    <p class="body-text">
+      四大发明不是孤立的技术突破，而是古代中国社会经济发展的产物。它们在各自领域解决了核心问题：造纸解决书写载体、印刷解决信息复制、指南针解决空间定位、火药解决军事攻防。每项发明都经历了从萌芽到成熟的漫长过程。
+    </p>
+    <span class="bloom-tag">记忆</span><span class="bloom-tag">理解</span>
+
+    <div class="invent-cards">
+      <div class="invent-card">
+        <h4>📜 造纸术</h4>
+        <p><strong>发明：</strong>西汉出现早期造纸技术，东汉蔡伦改进为"蔡侯纸"（约105年）。</p>
+        <p style="margin-top:6px;"><strong>成熟：</strong>唐代造纸技术成熟，纸张普及，书写材料从竹简帛绢转向廉价纸张。</p>
+        <p style="margin-top:6px;"><strong>外传：</strong>经中亚传入阿拉伯（751年怛罗斯之战），再传入欧洲（12世纪）。</p>
+        <p style="margin-top:6px;"><strong>世界影响：</strong>书写成本降低 90%以上，知识传播速度飞跃，为文艺复兴和宗教改革提供物质基础。</p>
+        <span class="tag">核心发明</span>
+      </div>
+      <div class="invent-card">
+        <h4>🖨️ 印刷术</h4>
+        <p><strong>发明：</strong>唐代出现雕版印刷（868年《金刚经》是现存最早标有日期的印刷品）。</p>
+        <p style="margin-top:6px;"><strong>成熟：</strong>北宋毕昇发明活字印刷（约1040年），文字可反复拆拼，成本再次骤降。</p>
+        <p style="margin-top:6px;"><strong>外传：</strong>经海上贸易传入欧洲，启发古腾堡印刷机（1440年）。</p>
+        <p style="margin-top:6px;"><strong>世界影响：</strong>信息复制革命，知识民主化，直接催生近代科学的传播条件。</p>
+        <span class="tag">核心发明</span>
+      </div>
+      <div class="invent-card">
+        <h4>🧭 指南针</h4>
+        <p><strong>发明：</strong>战国出现"司南"，北宋发明人工磁化技术，制成罗盘。</p>
+        <p style="margin-top:6px;"><strong>成熟：</strong>宋代海船普遍使用罗盘导航，海上贸易兴盛。</p>
+        <p style="margin-top:6px;"><strong>外传：</strong>随海上贸易传入阿拉伯（12世纪），再传入欧洲。</p>
+        <p style="margin-top:6px;"><strong>世界影响：</strong>大航海时代的核心技术，哥伦布（1492）、麦哲伦（1519-1522）环球探险的"眼睛"。</p>
+        <span class="tag">核心发明</span>
+      </div>
+      <div class="invent-card">
+        <h4>💥 火药</h4>
+        <p><strong>发明：</strong>唐代炼丹家发现火药配方（"硫磺伏火法"），最初用于烟火。</p>
+        <p style="margin-top:6px;"><strong>成熟：</strong>宋代军事广泛应用——火箭、突火枪、火炮相继出现。</p>
+        <p style="margin-top:6px;"><strong>外传：</strong>经陆上和海上丝绸之路传入阿拉伯和欧洲（13世纪）。</p>
+        <p style="margin-top:6px;"><strong>世界影响：</strong>摧毁封建城堡，打破骑士制度，加速欧洲封建社会解体，推动军队机械化。</p>
+        <span class="tag">核心发明</span>
+      </div>
+    </div>
+
+    <h3 style="margin:16px 0 10px; font-size:1rem; color:#4c1d95;">🗺️ 四大发明世界传播路线</h3>
+    <div class="route-svg">
+      <svg viewBox="0 0 720 140" xmlns="http://www.w3.org/2000/svg">
+        <defs><marker id="ah" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#7c3aed"/></marker></defs>
+        <rect x="20" y="45" width="70" height="50" rx="8" fill="#7c3aed" opacity="0.2" stroke="#7c3aed" stroke-width="2"/>
+        <text x="55" y="68" text-anchor="middle" fill="#4c1d95" font-size="13" font-weight="700">🇨🇳 中国</text>
+        <text x="55" y="84" text-anchor="middle" fill="#6d28d9" font-size="10">发明地</text>
+        <path d="M105 70 L200 70" stroke="#7c3aed" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+        <text x="150" y="56" fill="#7c3aed" font-size="9">陆海丝路</text>
+        <rect x="210" y="45" width="80" height="50" rx="8" fill="#f59e0b" opacity="0.2" stroke="#f59e0b" stroke-width="2"/>
+        <text x="250" y="68" text-anchor="middle" fill="#92400e" font-size="12" font-weight="700">🇦🇪 阿拉伯</text>
+        <text x="250" y="84" text-anchor="middle" fill="#b45309" font-size="9">中转站</text>
+        <path d="M295 70 L400 70" stroke="#7c3aed" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+        <text x="345" y="56" fill="#7c3aed" font-size="9">商路传播</text>
+        <rect x="410" y="45" width="80" height="50" rx="8" fill="#10b981" opacity="0.2" stroke="#10b981" stroke-width="2"/>
+        <text x="450" y="68" text-anchor="middle" fill="#065f46" font-size="12" font-weight="700">🇪🇺 欧洲</text>
+        <text x="450" y="84" text-anchor="middle" fill="#047857" font-size="9">变革地</text>
+        <text x="55" y="32" fill="#6d28d9" font-size="10">📜 造纸 🖨️ 印刷</text>
+        <text x="250" y="32" fill="#b45309" font-size="10">📜 🖨️ 🧭 💥</text>
+        <text x="450" y="32" fill="#047857" font-size="10">📖 文艺复兴 🚀 大航海 🔥 军事革命</text>
+      </svg>
+    </div>
+
+    <div class="quiz-box" style="margin-top:20px;">
+      <h4>【基础练习 🌱】四大发明的世界意义</h4>
+      <div class="quiz-level"><span class="quiz-level-badge badge-basic">基础</span>
+        <div class="quiz-q">造纸术和印刷术的传播，对欧洲产生了最直接的影响是？</div>
+        <div class="options">
+          <button class="opt-btn" onclick="handleQuiz(this,false,'q1a-fb','造纸术和印刷术降低了书写成本，但不能直接改变政治制度。')">A. 加速欧洲封建制度瓦解</button>
+          <button class="opt-btn" onclick="handleQuiz(this,true,'q1a-fb','正确！造纸术和印刷术使书籍成本骤降，知识得以大规模复制传播，直接催生了欧洲的思想解放运动。')">B. 知识传播革命，催生思想解放</button>
+          <button class="opt-btn" onclick="handleQuiz(this,false,'q1a-fb','造纸术和印刷术主要影响信息传播，与航海技术无关。')">C. 直接推动地理大发现</button>
+          <button class="opt-btn" onclick="handleQuiz(this,false,'q1a-fb','造纸术和印刷术是信息工具，不直接改变生产方式。')">D. 大幅提高农业产量</button>
+        </div>
+        <div class="feedback" id="q1a-fb"></div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="goToMod(2)">下一模块：古代科技群星 →</button>
+  </div>
+</div>
+
+<!-- ===== 模块2: 古代科技群星 ===== -->
+<div class="section active" id="sec-mod2">
+  <div class="card">
+    <div class="tab-bar">
+      <div class="tab" onclick="goToMod(1)">① 四大发明详解</div>
+      <div class="tab active" onclick="goToMod(2)">② 古代科技群星</div>
+      <div class="tab" onclick="goToMod(3)">③ 为什么没有近代科学？</div>
+    </div>
+    <h2 class="sec-title">模块二：古代科技群星</h2>
+    <div class="core-q">
+      <h3>📌 本模块问题</h3>
+      <p>除了四大发明，中国古代还有哪些科技成就？它们在世界科技史上处于什么地位？</p>
+    </div>
+    <p class="body-text">
+      中国古代科技成就远不止四大发明。在天文历法、数学、农学、医学等领域，中国曾长期领先世界。这些成就共同构成了一个"技术发达但科学未独立"的独特格局——技术层面的创新能力极强，但缺乏系统化的理论探究。
+    </p>
+    <span class="bloom-tag">理解</span><span class="bloom-tag">分析</span>
+
+    <div class="tech-grid">
+      <div class="tech-card">
+        <h5>🔭 天文历法</h5>
+        <p>《石氏星表》（前4世纪）记录121颗恒星位置，是世界上最早的星表。唐代僧一行测量子午线长度，比欧洲早约1000年。元代郭守敬编《授时历》，年周期误差仅26秒，领先欧洲300年。</p>
+      </div>
+      <div class="tech-card">
+        <h5>📐 数学</h5>
+        <p>《九章算术》（前1世纪）是东方数学的代表，包含分数运算、方程解法。祖冲之将圆周率精确到3.1415926-3.1415927之间（480年），领先欧洲近千年。杨辉三角（1261年）比欧洲帕斯卡早300多年。</p>
+      </div>
+      <div class="tech-card">
+        <h5>🌾 农学</h5>
+        <p>《齐民要术》（433年）是中国现存最早最完整的农书。《农政全书》（1628年，徐光启）融合中西农学知识。中国在育种、水利、农具等方面长期领先。</p>
+      </div>
+      <div class="tech-card">
+        <h5>💊 医学</h5>
+        <p>《黄帝内经》（前2世纪）奠定中医学理论基础。《本草纲目》（1578年，李时珍）收录1892种药物，被达尔文称为"东方医学巨典"。针灸术在宋代已有系统的经络学说。</p>
+      </div>
+    </div>
+
+    <div class="source-card">
+      <p class="source-text">"中国...数学、天文学、医学和其他科学都远胜于我们。"</p>
+      <p class="source-from">——伏尔泰《哲学辞典》（1764年）</p>
+    </div>
+    <p class="body-text" style="margin-top:12px;">朱载堉发明了"十二平均律"（将一个八度平均分成12个半音，1584年），比欧洲早约100年。巴赫的《平均律钢琴曲集》正是基于这套理论。</p>
+
+    <div class="quiz-box">
+      <div class="level-label">【应用练习 🌿】史料分析</div>
+      <div class="source-card">
+        <p class="source-text">"中国...数学、天文学、医学和其他科学都远胜于我们。"</p>
+        <p class="source-from">——伏尔泰《哲学辞典》（1764年）</p>
+      </div>
+      <h4 style="margin-top:10px;">伏尔泰的这一评价说明了什么？</h4>
+      <div class="options">
+        <button class="opt-btn" onclick="handleQuiz(this,false,'q2a-fb','伏尔泰是启蒙思想家，他的评价主要是基于对欧洲宗教神学的批判，不完全是客观的学术比较。')">A. 18世纪中国科技全面领先欧洲</button>
+        <button class="opt-btn" onclick="handleQuiz(this,true,'q2a-fb','正确！伏尔泰作为启蒙思想家，将中国科技成就作为批判欧洲中世纪蒙昧的证据，反映了18世纪欧洲对中国文明的仰慕。')">B. 中国科技成就成为欧洲启蒙运动的思想素材</button>
+        <button class="opt-btn" onclick="handleQuiz(this,false,'q2a-fb','伏尔泰的评价并不意味着中国在科学方法论上领先。')">C. 中国已建立了近代科学体系</button>
+        <button class="opt-btn" onclick="handleQuiz(this,false,'q2a-fb','伏尔泰关注的是实用技术，不是科学理论。')">D. 伏尔泰是当时唯一关注中国科技的欧洲人</button>
+      </div>
+      <div class="feedback" id="q2a-fb"></div>
+    </div>
+
+    <button class="btn-primary" onclick="goToMod(3)">下一模块：为什么没有产生近代科学？ →</button>
+  </div>
+</div>
+
+<!-- ===== 模块3: 李约瑟之问 ===== -->
+<div class="section active" id="sec-mod3">
+  <div class="card">
+    <div class="tab-bar">
+      <div class="tab" onclick="goToMod(1)">① 四大发明详解</div>
+      <div class="tab" onclick="goToMod(2)">② 古代科技群星</div>
+      <div class="tab active" onclick="goToMod(3)">③ 为什么没有近代科学？</div>
+    </div>
+    <h2 class="sec-title">模块三：为什么没有产生近代科学？</h2>
+    <div class="core-q">
+      <h3>📌 本模块问题</h3>
+      <p>古代中国科技如此发达，为何没有产生像欧洲那样的近代科学革命？"李约瑟之问"的答案是什么？</p>
+    </div>
+    <p class="body-text">
+      这是英国科技史家李约瑟在1940年代提出的著名问题。答案需要从多个维度来理解——不是"中国人不聪明"，而是古代中国的社会结构、经济形态和思想传统共同塑造了一种"技术优先、理论滞后"的科技发展模式。
+    </p>
+    <span class="bloom-tag">分析</span><span class="bloom-tag">评价</span><span class="bloom-tag">创造</span>
+
+    <div class="kp-box">
+      <h4>🔍 "李约瑟之问"的多维解读</h4>
+      <p><strong>维度一：社会结构——科举制度的导向作用</strong></p>
+      <p>科举以儒学经典为考试内容，科技人才的社会上升通道被阻塞。"万般皆下品，唯有读书高"的社会价值观，导致最优秀的人才流向仕途而非科技研究。</p>
+      <p style="margin-top:8px;"><strong>维度二：经济形态——小农经济的自给自足</strong></p>
+      <p>自然经济条件下，技术创新的动力不足。四大发明中的三项（造纸、印刷、指南针）都与商品经济和海外贸易有关，说明技术突破往往发生在经济活动最活跃的领域。</p>
+      <p style="margin-top:8px;"><strong>维度三：思想传统——实用理性与理论探究的失衡</strong></p>
+      <p>中国传统思维强调"经世致用"，重视技术解决实际问题，但轻视对自然规律的抽象探究。欧洲在古希腊时期就确立了"为知识而知识"的传统，这是近代科学的哲学基础。</p>
+      <p style="margin-top:8px;"><strong>维度四：交流环境——闭关锁国的封闭效应</strong></p>
+      <p>明清时期实行海禁和闭关锁国政策，阻断了与欧洲的科技交流。而欧洲在16世纪后通过大航海建立了全球联系，形成了跨文化的知识竞争和交流网络。</p>
+    </div>
+
+    <div class="compare-box">
+      <h4>⚖️ 中西科技发展路径对比</h4>
+      <table>
+        <tr><th>维度</th><th>中国传统科技</th><th>欧洲近代科学</th></tr>
+        <tr><td>核心特征</td><td>经验积累型，重实用</td><td>实验验证型，重理论</td></tr>
+        <tr><td>知识传承</td><td>师徒口传心授，保密性强</td><td>公开出版，学术共同体</td></tr>
+        <tr><td>创新动力</td><td>解决生产/生活问题</td><td>探索自然规律本身</td></tr>
+        <tr><td>方法论</td><td>归纳法为主，缺乏系统实验</td><td>归纳与演绎并重，强调实验</td></tr>
+        <tr><td>与权力关系</td><td>科技为皇权服务，受政治控制</td><td>科学独立于王权，形成自主传统</td></tr>
+      </table>
+    </div>
+
+    <div class="highlight-box">
+      <h4>💡 核心洞察</h4>
+      <p>"李约瑟之问"的深层答案是：古代中国在<strong>技术创新</strong>方面领先世界，但在<strong>科学方法论</strong>方面未能独立发展出实验科学。这不是民族智力问题，而是<strong>文明发展路径的差异</strong>——不同的社会结构、经济形态和思想传统，塑造了不同的科技发展模式。</p>
+    </div>
+
+    <div class="quiz-box">
+      <div class="level-label">【迁移挑战 💡】深度思考</div>
+      <div class="question-card">
+        <h4>如果中国在明清时期没有实行闭关锁国，而是像欧洲一样积极进行海上贸易和文化交流，科技发展路径会有什么不同？</h4>
+        <textarea class="text-input" id="q3-open" rows="4" placeholder="写下你的思考..."></textarea>
+        <button class="submit-btn" onclick="submitOpen('q3-open','q3-fb')">提交思考</button>
+      </div>
+      <div class="feedback" id="q3-fb"></div>
+    </div>
+
+    <section id="knowledge-graph" class="kg-container">
+      <h4>🧭 知识图谱：科技史中的四大发明</h4>
+      <div data-teachany-kg="hist-h-science-technology-h"></div>
+    </section>
+
+    <div class="summary-box">
+      <h2>🔬 本课小结</h2>
+      <div class="summary-list">
+        <li><strong>四大发明</strong>——造纸、印刷、指南针、火药，经历"发明→成熟→外传→世界影响"的完整链条，深刻改变了人类文明进程。</li>
+        <li><strong>古代科技群星</strong>——天文历法、数学、农学、医学等领域长期领先，证明中国在技术创新层面具有卓越能力。</li>
+        <li><strong>李约瑟之问</strong>——不是"中国人不聪明"，而是文明发展路径差异：技术创新领先，科学方法论独立发展滞后。</li>
+      </div>
+    </div>
+
+    <div class="nav-row">
+      <a class="nav-btn secondary" href="../hist-h-industrial-revolutions/index.html" target="_blank">← 上一课：四大发明与中国古代科技</a>
+      <a class="nav-btn" href="../hist-h-industrial-revolutions/index.html" target="_blank">下一课：科学革命与两次工业革命 →</a>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script src="../../scripts/teachany-knowledge-graph.js"></script>
+<script src="./assets/app.js"></script>
+</body>
+</html>'''
+
+with open('index.html', 'w') as f:
+    f.write(html)
+
+print('index.html generated successfully')
