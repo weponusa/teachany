@@ -550,7 +550,16 @@ def main():
 
         # 扫描所有有 manifest 的课件，找出应该放进"其他知识"的
         virtual_nodes = []
+        # 强制保留在“其他知识”的跨课标/探究课入口：这些内容即使挂了近似官方 node_id，
+        # 也需要在“其他知识”里保留一份发现入口，避免 rebuild-index 把该 Tab 清空。
+        OTHER_TREE_FORCE_COURSE_IDS = {
+            'math-m-linear-function-inquiry-phone-plan',  # 一次函数 PBL 探究课
+            'course-classical-poetry',                    # 古典诗词系统课程
+            'chn-pingze-grade1',                          # 古诗平仄启蒙
+            'ext-539f176d',                                # 民族文化与宗教研究
+        }
         orphan_reasons = {'free_mode': 0, 'node_not_found': 0, 'missing_node_id': 0,
+                          'forced_other': 0, 'inquiry_project': 0,
                           'ext_passed': 0, 'ext_rejected': 0}
 
         # v7.9.8 新增：学科前缀映射，用于"简写 node_id"自动探测
@@ -582,8 +591,14 @@ def main():
             grade = manifest.get('grade', 0)
 
             reason = None
-            if is_free:
+            lesson_type = (manifest.get('lesson_type') or '').strip()
+            if cid in OTHER_TREE_FORCE_COURSE_IDS:
+                reason = 'forced_other'
+            elif is_free:
                 reason = 'free_mode'
+            elif lesson_type == 'inquiry-project':
+                # 探究课可同时挂正式知识树和“其他知识/探究课”入口，便于 PBL 场景发现。
+                reason = 'inquiry_project'
             elif not nid:
                 reason = 'missing_node_id'
             elif nid not in all_official_node_ids:
@@ -612,8 +627,11 @@ def main():
                 continue
 
             orphan_reasons[reason] += 1
-            # 虚拟节点 id：free_mode 用 node_id 或 cid；未找到则用 other-<cid>
-            vid = nid if nid else f'other-{cid}'
+            # 强制保留 / 探究课统一使用 other-<course_id>，避免与正式树节点 id 冲突
+            if reason in ('forced_other', 'inquiry_project'):
+                vid = f'other-{cid}'
+            else:
+                vid = nid if nid else f'other-{cid}'
             virtual_nodes.append({
                 'id': vid,
                 'name': name,
@@ -738,7 +756,9 @@ def main():
         print(f'  ✅ 已填充 {len(virtual_nodes)} 个虚拟节点到 {virtual_tree_path}')
         print(f'     free_mode: {orphan_reasons["free_mode"]}, '
               f'node 未找到: {orphan_reasons["node_not_found"]}, '
-              f'缺 node_id: {orphan_reasons["missing_node_id"]}')
+              f'缺 node_id: {orphan_reasons["missing_node_id"]}, '
+              f'强制保留: {orphan_reasons["forced_other"]}, '
+              f'探究课: {orphan_reasons["inquiry_project"]}')
         if ext_dirs_scanned:
             print(f'     ext-* 学习路径课件: 扫描 {ext_dirs_scanned} 个，'
                   f'质检通过 {orphan_reasons["ext_passed"]}，'
