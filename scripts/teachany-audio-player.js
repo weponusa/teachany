@@ -46,33 +46,39 @@
       return;
     }
 
-    host.classList.add("tap-host");
+    var configOnly = host.hidden || host.hasAttribute("data-audio-config-only") || host.id === "audio-config";
+    if (!configOnly) host.classList.add("tap-host");
 
-    /* 1. 课件内独立卡片：曲目列表 */
-    var card = document.createElement("section");
-    card.className = "tap-card";
-    card.innerHTML =
-      '<header class="tap-card-head">' +
-        '<h3>🔊 连续音频讲解</h3>' +
-        '<span class="tap-card-meta">' + playlist.length + ' 段 · 自动连播 · 滚动同步</span>' +
-      '</header>' +
-      '<ol class="tap-tracklist"></ol>';
-    host.appendChild(card);
+    /* 1. 课件内独立卡片：曲目列表。
+       当 host 为 hidden / data-audio-config-only / #audio-config 时，只读取 playlist，
+       不渲染集中音频模块，避免打断教学主线。 */
+    var list = null;
+    if (!configOnly) {
+      var card = document.createElement("section");
+      card.className = "tap-card";
+      card.innerHTML =
+        '<header class="tap-card-head">' +
+          '<h3>🔊 连续音频讲解</h3>' +
+          '<span class="tap-card-meta">' + playlist.length + ' 段 · 自动连播 · 滚动同步</span>' +
+        '</header>' +
+        '<ol class="tap-tracklist"></ol>';
+      host.appendChild(card);
 
-    var list = card.querySelector(".tap-tracklist");
-    playlist.forEach(function (t, i) {
-      var li = document.createElement("li");
-      li.className = "tap-track-item";
-      li.dataset.idx = i;
-      li.innerHTML =
-        '<span class="tap-track-num">' + (i + 1) + '</span>' +
-        '<div class="tap-track-meta">' +
-          '<div class="tap-track-title">' + (t.title || ("第 " + (i + 1) + " 段")) + '</div>' +
-          (t.subtitle ? '<div class="tap-track-sub">' + t.subtitle + '</div>' : '') +
-        '</div>' +
-        '<button class="tap-track-play" type="button" aria-label="播放">▶</button>';
-      list.appendChild(li);
-    });
+      list = card.querySelector(".tap-tracklist");
+      playlist.forEach(function (t, i) {
+        var li = document.createElement("li");
+        li.className = "tap-track-item";
+        li.dataset.idx = i;
+        li.innerHTML =
+          '<span class="tap-track-num">' + (i + 1) + '</span>' +
+          '<div class="tap-track-meta">' +
+            '<div class="tap-track-title">' + (t.title || ("第 " + (i + 1) + " 段")) + '</div>' +
+            (t.subtitle ? '<div class="tap-track-sub">' + t.subtitle + '</div>' : '') +
+          '</div>' +
+          '<button class="tap-track-play" type="button" aria-label="播放">▶</button>';
+        list.appendChild(li);
+      });
+    }
 
     /* 2. 全局底部连续播放条 */
     var bar = document.createElement("div");
@@ -105,6 +111,7 @@
     var speedBtn = bar.querySelector(".tap-speed");
 
     function highlight() {
+      if (!list) return;
       list.querySelectorAll(".tap-track-item").forEach(function (li, i) {
         li.classList.toggle("active", i === idx);
       });
@@ -126,17 +133,19 @@
       highlight();
     }
 
-    list.addEventListener("click", function (ev) {
-      var li = ev.target.closest(".tap-track-item");
-      if (!li) return;
-      var i = parseInt(li.dataset.idx, 10);
-      if (i === idx && !audio.paused) {
-        audio.pause();
-        playBtn.textContent = "▶";
-      } else {
-        play(i, true);
-      }
-    });
+    if (list) {
+      list.addEventListener("click", function (ev) {
+        var li = ev.target.closest(".tap-track-item");
+        if (!li) return;
+        var i = parseInt(li.dataset.idx, 10);
+        if (i === idx && !audio.paused) {
+          audio.pause();
+          playBtn.textContent = "▶";
+        } else {
+          play(i, true);
+        }
+      });
+    }
 
     playBtn.addEventListener("click", function () {
       if (idx < 0) { play(0, true); return; }
