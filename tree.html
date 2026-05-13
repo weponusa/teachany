@@ -473,51 +473,13 @@ const TREE_RAW_BASE = 'https://raw.githubusercontent.com/weponusa/teachany/main/
 const IS_GITHUB_PAGES = location.hostname.includes('github.io');
 
 /**
- * 从 GitHub 获取 JSON 文件（零缓存延迟策略）
- * 优先级：GitHub API（无缓存） → raw URL（5分钟缓存） → Pages 相对路径
- * GitHub API 返回 base64 编码内容，无 CDN 缓存，push 后立即可读
+ * 获取知识树 JSON。
+ * 优先级：站点相对路径 → GitHub API → raw.githubusercontent.com
+ * 说明：GitHub API 匿名请求容易 403 限流；raw 偶发 CDN 旧缓存。
+ * tree 页面与 data 文件同源部署，优先读相对路径最稳定，也不会在控制台刷 403。
  */
 async function fetchTreeJSON(relativePath) {
-  if (IS_GITHUB_PAGES) {
-    // 策略 1：GitHub Contents API — 零缓存延迟
-    try {
-      const apiUrl = TREE_API_BASE + relativePath + '?t=' + Date.now();
-      const resp = await fetch(apiUrl, {
-        cache: 'no-store',
-        headers: { 'Accept': 'application/vnd.github.v3+json' }
-      });
-      if (resp.ok) {
-        const meta = await resp.json();
-        // API 返回 base64 编码的内容
-        if (meta.content) {
-          // atob 返回 Latin-1，需要用 TextDecoder 正确处理 UTF-8 中文
-          const binaryStr = atob(meta.content.replace(/\n/g, ''));
-          const bytes = new Uint8Array(binaryStr.length);
-          for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
-          const decoded = new TextDecoder('utf-8').decode(bytes);
-          console.log('[KnowledgeMap] ✅ via GitHub API (no cache delay)');
-          return JSON.parse(decoded);
-        }
-        // 文件过大时 API 不返回 content，回退到 download_url
-        if (meta.download_url) {
-          const rawResp = await fetch(meta.download_url, { cache: 'no-store' });
-          if (rawResp.ok) {
-            console.log('[KnowledgeMap] ✅ via API download_url');
-            return rawResp.json();
-          }
-        }
-      }
-      // API 限流（403）或其他错误，回退
-      console.warn('[KnowledgeMap] API fallback, status:', resp.status);
-    } catch (e) {
-      console.warn('[KnowledgeMap] API error, falling back:', e.message);
-    }
-
-  }
-
-  // 策略 2：站点相对路径（GitHub Pages / 本地开发）
-  // 说明：GitHub API 容易匿名限流 403；raw.githubusercontent.com 偶发 CDN 旧缓存。
-  // 对页面自身同源的 Pages 文件加时间戳，通常最稳定、也最符合当前部署版本。
+  // 策略 1：站点相对路径（GitHub Pages / 本地开发）
   try {
     const localUrl = relativePath + '?v=' + Date.now();
     const resp = await fetch(localUrl, { cache: 'no-store' });
@@ -527,6 +489,38 @@ async function fetchTreeJSON(relativePath) {
     }
   } catch (e) {
     console.warn('[KnowledgeMap] local path error:', e.message);
+  }
+
+  // 策略 2：GitHub Contents API（仅 GitHub Pages 上作为兜底，可能 403）
+  if (IS_GITHUB_PAGES) {
+    try {
+      const apiUrl = TREE_API_BASE + relativePath + '?t=' + Date.now();
+      const resp = await fetch(apiUrl, {
+        cache: 'no-store',
+        headers: { 'Accept': 'application/vnd.github.v3+json' }
+      });
+      if (resp.ok) {
+        const meta = await resp.json();
+        if (meta.content) {
+          const binaryStr = atob(meta.content.replace(/\n/g, ''));
+          const bytes = new Uint8Array(binaryStr.length);
+          for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+          const decoded = new TextDecoder('utf-8').decode(bytes);
+          console.log('[KnowledgeMap] ✅ via GitHub API');
+          return JSON.parse(decoded);
+        }
+        if (meta.download_url) {
+          const rawResp = await fetch(meta.download_url, { cache: 'no-store' });
+          if (rawResp.ok) {
+            console.log('[KnowledgeMap] ✅ via API download_url');
+            return rawResp.json();
+          }
+        }
+      }
+      console.warn('[KnowledgeMap] API fallback, status:', resp.status);
+    } catch (e) {
+      console.warn('[KnowledgeMap] API error, falling back:', e.message);
+    }
   }
 
   // 策略 3：raw.githubusercontent.com — 最终兜底
