@@ -958,6 +958,7 @@ body {
     <a href="index.html">📋 Gallery / 课件库</a>
     <a href="tree.html">🗺️ Knowledge Map / 知识地图</a>
     <a href="path.html" class="active">🛤️ Learning Path / 学习路径</a>
+    <a href="my.html">👤 我的</a>
     <a href="commercial-license.html">💼 商业授权</a>
   </div>
 </div>
@@ -1126,6 +1127,7 @@ body {
 <script src="./scripts/courseware-hub.js"></script>
 <script src="./scripts/learning-path.js"></script>
 <script src="./scripts/pbl-path.js"></script>
+<script src="./scripts/history-tracker.js" defer></script>
 <script>
 // ─── 全局状态 ──────────────────────────────────
 let currentSubject = 'all';
@@ -1231,6 +1233,15 @@ async function analyzePBLGoal() {
 
     // 渲染 D3 图谱
     renderPBLGraph(result);
+
+    // ── TeachAny 历史上报：PBL 分析入库（零侵入可选链） ──
+    try {
+      if (window.TeachAnyHistory && typeof window.TeachAnyHistory.recordPBL === 'function') {
+        const cfg = (builder && typeof builder.getLLMConfig === 'function') ? builder.getLLMConfig() : {};
+        const providers = { providerName: cfg.providerName || cfg.providerId || '', model: cfg.model || '' };
+        window.TeachAnyHistory.recordPBL(goal, { ...result.graphData, systems: result.systems }, providers);
+      }
+    } catch (_e) { /* ignore */ }
 
     statusEl.style.display = 'none';
   } catch (error) {
@@ -1383,6 +1394,24 @@ function generateCourseware(nodeId, nodeName) {
   // 不再跳转 gallery，直接在侧栏展示提示词供用户复制
   const prompt = `帮我生成「${nodeName}」的课件，知识点 ID 为 ${nodeId}。请按照 TeachAny 技能规范，生成完整的交互式课件 HTML。`;
   showCoursewarePrompt(nodeName, nodeId, prompt);
+
+  // ── TeachAny 历史上报：PBL 生成意图入库（零侵入可选链） ──
+  try {
+    if (window.TeachAnyHistory && typeof window.TeachAnyHistory.recordCreated === 'function') {
+      const node = window.PBLPathBuilder && window.PBLPathBuilder.unifiedIndex
+        ? window.PBLPathBuilder.unifiedIndex.get(nodeId) : null;
+      window.TeachAnyHistory.recordCreated('pbl-intent-' + nodeId, {
+        source: 'pbl',
+        name: nodeName + '（PBL 生成意图）',
+        subject: node && node.subject ? node.subject : '',
+        grade: node && node.grade ? String(node.grade) : '',
+        node: nodeId,
+        url: '',
+        prompt: prompt,
+        status: 'draft'
+      });
+    }
+  } catch (_e) { /* ignore */ }
 }
 
 function showCoursewarePrompt(nodeName, nodeId, prompt) {
