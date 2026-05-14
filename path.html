@@ -1257,10 +1257,37 @@ function getStoredPBLRun(id) {
   }
 }
 
-function restorePBLRunFromHistory(id) {
+function enrichPBLNode(node) {
+  if (!node || node.isExternal) return node;
+  const full = window.PBLPathBuilder && window.PBLPathBuilder.unifiedIndex
+    ? window.PBLPathBuilder.unifiedIndex.get(node.id) : null;
+  if (!full) return node;
+  return {
+    ...node,
+    ...full,
+    layer: node.layer || full.layer,
+    confidence: node.confidence ?? full.confidence,
+    matchReason: node.matchReason ?? full.matchReason,
+    isExternal: !!node.isExternal
+  };
+}
+
+function enrichPBLGraphData(graphData) {
+  if (!graphData) return { nodes: [], links: [] };
+  return {
+    ...graphData,
+    nodes: (graphData.nodes || []).map(enrichPBLNode),
+    links: (graphData.links || []).map(l => ({ ...l }))
+  };
+}
+
+async function restorePBLRunFromHistory(id) {
   const run = getStoredPBLRun(id);
   if (!run) return false;
-  const graphData = run.graphData || { nodes: run.nodes || [], links: run.links || [] };
+  if (window.PBLPathBuilder && typeof window.PBLPathBuilder.loadUnifiedIndex === 'function') {
+    try { await window.PBLPathBuilder.loadUnifiedIndex(); } catch (_e) { /* 允许无索引降级显示历史快照 */ }
+  }
+  const graphData = enrichPBLGraphData(run.graphData || { nodes: run.nodes || [], links: run.links || [] });
   if (!graphData.nodes || !graphData.nodes.length) return false;
   const result = {
     goal: run.goal || '',
@@ -1307,10 +1334,12 @@ function renderPBLStats(result) {
 function renderPBLGraph(result) {
   if (pblRenderer) pblRenderer.destroy();
   pblRenderer = new window.PBLGraphRenderer('pbl-graph-container');
+  result.graphData = enrichPBLGraphData(result.graphData);
   pblRenderer.render(result.graphData, onPBLNodeClick);
 }
 
 function onPBLNodeClick(node) {
+  node = enrichPBLNode(node);
   const panel = document.getElementById('nodeDetailPanel');
   const content = document.getElementById('nodeDetailContent');
 
@@ -1781,7 +1810,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // 第3步：如果 URL 有 PBL 历史参数，优先恢复已保存的图谱；否则按知识点参数显示路径
     if (pblIdFromURL) {
-      const restored = restorePBLRunFromHistory(pblIdFromURL);
+      const restored = await restorePBLRunFromHistory(pblIdFromURL);
       if (!restored) {
         const statusText = document.getElementById('pblStatusText');
         const statusEl = document.getElementById('pblStatus');

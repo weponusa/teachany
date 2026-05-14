@@ -979,8 +979,21 @@ class PBLGraphRenderer {
       .on('zoom', (event) => g.attr('transform', event.transform));
     this.svg.call(zoomBehavior);
 
-    // 准备数据
-    const nodes = graphData.nodes.map(n => ({ ...n }));
+    // 准备数据：历史图谱/旧缓存中的节点可能缺失课标、学段、年级等字段，渲染前用统一索引补齐。
+    const enrichNode = (n) => {
+      if (!n || n.isExternal) return { ...n };
+      const full = window.PBLPathBuilder?.unifiedIndex?.get(n.id);
+      if (!full) return { ...n };
+      return {
+        ...n,
+        ...full,
+        layer: n.layer || full.layer,
+        confidence: n.confidence ?? full.confidence,
+        matchReason: n.matchReason ?? full.matchReason,
+        isExternal: !!n.isExternal
+      };
+    };
+    const nodes = graphData.nodes.map(enrichNode);
     const links = graphData.links.map(l => ({ ...l }));
 
     // 箭头标记
