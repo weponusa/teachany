@@ -709,6 +709,39 @@ async function getUserCourseRecord(id) {
   return null;
 }
 
+async function pruneMissingCoursePayloads() {
+  const courses = readCourseIndex();
+  const kept = [];
+  const removed = [];
+
+  for (const course of courses) {
+    const id = course.id || buildCourseId(course.manifest || {}, course.fileName);
+    if (course.storage === 'legacy') {
+      if (course.htmlDataUrl) kept.push(course);
+      else removed.push(id);
+      continue;
+    }
+    try {
+      const payload = await getCoursePayload(id);
+      if (payload && payload.files && payload.files.length) kept.push(course);
+      else removed.push(id);
+    } catch (_e) {
+      removed.push(id);
+    }
+  }
+
+  if (removed.length > 0) {
+    saveCourseIndex(kept.filter((item) => item.storage !== 'legacy'));
+    try {
+      const likes = readLikes();
+      removed.forEach(id => { delete likes[id]; });
+      saveLikes(likes);
+    } catch (_e) { /* ignore */ }
+  }
+
+  return { kept, removed };
+}
+
 async function removeUserCourse(id) {
   const courses = getUserCourses();
   const target = courses.find((item) => item.id === id || buildCourseKey(item) === id);
@@ -1862,6 +1895,7 @@ window.TeachAnyImporter = {
   toggleLike,
   isLikedInSession,
   mountImportedCourseViewer,
+  pruneMissingCoursePayloads,
 
   // 导出功能
   exportCourseAsTeachany,

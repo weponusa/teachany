@@ -1248,6 +1248,44 @@ function renderPBLResult(result) {
   renderPBLGraph(result);
 }
 
+function getStoredPBLRun(id) {
+  try {
+    const runs = JSON.parse(localStorage.getItem('teachany_history_v1_pbl_runs') || '[]');
+    return Array.isArray(runs) ? runs.find(r => r && r.id === id) : null;
+  } catch (_e) {
+    return null;
+  }
+}
+
+function restorePBLRunFromHistory(id) {
+  const run = getStoredPBLRun(id);
+  if (!run) return false;
+  const graphData = run.graphData || { nodes: run.nodes || [], links: run.links || [] };
+  if (!graphData.nodes || !graphData.nodes.length) return false;
+  const result = {
+    goal: run.goal || '',
+    systems: run.systems || [],
+    graphData,
+    matched: graphData.nodes.filter(n => n.layer === 'matched'),
+    external: graphData.nodes.filter(n => n.layer === 'external'),
+    stats: {
+      graphNodes: graphData.nodes.length,
+      graphLinks: graphData.links.length,
+      matchedCount: run.matchedCount || graphData.nodes.filter(n => n.layer === 'matched').length,
+      externalCount: run.externalCount || graphData.nodes.filter(n => n.layer === 'external').length
+    },
+    restoredFromHistory: true
+  };
+  const input = document.getElementById('pblGoalInput');
+  if (input) input.value = result.goal;
+  const statusEl = document.getElementById('pblStatus');
+  if (statusEl) statusEl.style.display = 'none';
+  renderPBLResult(result);
+  const graph = document.getElementById('pbl-graph-container');
+  if (graph) graph.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  return true;
+}
+
 function renderPBLStats(result) {
   const container = document.getElementById('pblStatsContainer');
   const statsEl = document.getElementById('pblStats');
@@ -1668,12 +1706,18 @@ function onNodeSelectChange() {
 // ─── 页面加载：并行初始化 ───────────────────────
 const urlParams = new URLSearchParams(window.location.search);
 const nodeIdFromURL = urlParams.get('node');
+const pblIdFromURL = urlParams.get('pbl');
+const pblGoalFromURL = urlParams.get('goal');
 
 window.addEventListener('DOMContentLoaded', async () => {
   const t0 = performance.now();
 
   // PBL 输入只更新文本，不触发分析；必须点击“分析学习路径”按钮才开始计算
   document.getElementById('pblGoalInput').addEventListener('input', markPBLGoalDirty);
+  if (pblGoalFromURL) {
+    document.getElementById('pblGoalInput').value = pblGoalFromURL;
+    markPBLGoalDirty();
+  }
 
   // 点击设置弹窗外部关闭
   document.getElementById('settingsOverlay').addEventListener('click', (e) => {
@@ -1726,8 +1770,18 @@ window.addEventListener('DOMContentLoaded', async () => {
     const totalElapsed = (performance.now() - t0).toFixed(0);
     showInitDone(sys.nodeIndex.size, sys.pathCache.size, totalElapsed);
 
-    // 第3步：如果URL有参数，自动显示路径
-    if (nodeIdFromURL) {
+    // 第3步：如果 URL 有 PBL 历史参数，优先恢复已保存的图谱；否则按知识点参数显示路径
+    if (pblIdFromURL) {
+      const restored = restorePBLRunFromHistory(pblIdFromURL);
+      if (!restored) {
+        const statusText = document.getElementById('pblStatusText');
+        const statusEl = document.getElementById('pblStatus');
+        if (statusEl && statusText) {
+          statusEl.style.display = 'block';
+          statusText.textContent = '未找到这条 PBL 历史图谱，请重新点击“分析学习路径”。';
+        }
+      }
+    } else if (nodeIdFromURL) {
       const node = allNodes.find(n => n.id === nodeIdFromURL);
       if (node) {
         document.getElementById('subjectFilter').value = node.subject;
