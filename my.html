@@ -8,6 +8,7 @@
 <meta name="description" content="本地浏览器存储的全部 TeachAny 学习记录：制作课件、学过课件、答题记录、AI 学伴、PBL 路径分析、导入课件，可一键导出/导入备份。">
 <link rel="stylesheet" href="./scripts/history-tracker.css">
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="./scripts/courseware-importer.js" defer></script>
 <script src="./scripts/history-tracker.js" defer></script>
 </head>
 <body>
@@ -164,6 +165,56 @@ function buildViewerUrl(courseId, fallbackUrl) {
   return 'imported-course.html?id=' + encodeURIComponent(courseId);
 }
 
+function getImportedCoursesForMy() {
+  try {
+    if (window.TeachAnyImporter && typeof TeachAnyImporter.getUserCourses === 'function') {
+      return TeachAnyImporter.getUserCourses() || [];
+    }
+    const modern = localStorage.getItem('teachany_user_courses_index');
+    if (modern) return JSON.parse(modern) || [];
+    const legacy = localStorage.getItem('teachany_user_courses');
+    if (legacy) return JSON.parse(legacy) || [];
+    const oldA = localStorage.getItem('teachany.userCourses');
+    if (oldA) return JSON.parse(oldA) || [];
+    const oldB = localStorage.getItem('teachany.legacyCourses');
+    if (oldB) return JSON.parse(oldB) || [];
+  } catch (e) { /* ignore */ }
+  return [];
+}
+
+function normalizeCreatedItems(items) {
+  const imported = getImportedCoursesForMy();
+  const importedById = new Map(imported.map(c => [c.id, c]));
+  const importedByNode = new Map();
+  imported.forEach(c => {
+    const node = c.manifest && c.manifest.node_id;
+    if (node && !importedByNode.has(node)) importedByNode.set(node, c);
+  });
+  const sorted = (items || []).slice().sort((a, b) => (b.updatedAt || b.ts || 0) - (a.updatedAt || a.ts || 0));
+  const out = [];
+  const seen = new Set();
+  sorted.forEach(raw => {
+    if (!raw) return;
+    let it = { ...raw };
+    if (it.source === 'import') {
+      const current = importedById.get(it.courseId) || (it.node ? importedByNode.get(it.node) : null);
+      if (!current) return; // 已被替换或删除的导入课件，不再展示成“最新项目”
+      it.courseId = current.id;
+      it.url = current.viewerUrl || buildViewerUrl(current.id);
+      it.name = (current.manifest && (current.manifest.name || current.manifest.title)) || it.name || current.fileName || current.id;
+      it.subject = (current.manifest && current.manifest.subject) || it.subject;
+      it.grade = (current.manifest && current.manifest.grade) || it.grade;
+      it.node = (current.manifest && current.manifest.node_id) || it.node;
+      it.updatedAt = Date.parse(current.importedAt || '') || it.updatedAt || it.ts;
+    }
+    const key = (it.source || 'unknown') + '|' + (it.node || it.courseId || it.id);
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push(it);
+  });
+  return out;
+}
+
 function showToast(msg, kind) {
   const t = $('#toast');
   t.textContent = msg;
@@ -192,6 +243,7 @@ function emptyState(panel, icon, title, desc, ctaText, ctaHref) {
 }
 
 function renderCreated(grid, items) {
+  items = normalizeCreatedItems(items);
   if (!items.length) {
     grid.innerHTML = emptyState('created', '📚', '还没有制作的课件',
       '通过 PBL 学习路径或 TeachAny Skill 生成的课件会出现在这里。',
@@ -444,18 +496,7 @@ function renderPBLThumb(el, run) {
 
 function renderImported(grid) {
   // 复用 courseware-importer.js 的本地课件索引（如果存在）
-  let imported = [];
-  try {
-    if (window.TeachAnyImporter && typeof TeachAnyImporter.getUserCourses === 'function') {
-      imported = TeachAnyImporter.getUserCourses() || [];
-    } else {
-      // 降级：直接读 localStorage
-      const raw = localStorage.getItem('teachany.userCourses');
-      if (raw) imported = JSON.parse(raw) || [];
-      const legacy = localStorage.getItem('teachany.legacyCourses');
-      if (legacy && !imported.length) imported = JSON.parse(legacy) || [];
-    }
-  } catch (e) { /* ignore */ }
+  let imported = getImportedCoursesForMy();
 
   $('#cnt-imported').textContent = imported.length;
 
@@ -491,23 +532,25 @@ function refreshAll() {
   const all = TeachAnyHistory.getAll();
   const summary = TeachAnyHistory.getSummary();
 
+  const createdItems = normalizeCreatedItems(all.created || []);
+
   // 顶部统计
   $('#statViewed').textContent = summary.viewedCount;
-  $('#statCreated').textContent = summary.createdCount;
+  $('#statCreated').textContent = createdItems.length;
   $('#statAccuracy').textContent = summary.quizCount > 0 ? Math.round(summary.accuracy * 100) + '%' : '—';
   $('#statStreak').textContent = summary.streakDays + ' 天';
   $('#statQuiz').textContent = summary.quizCount;
   $('#statWeek').textContent = formatDuration(summary.weekDwellMs);
 
   // Tab 角标
-  $('#cnt-created').textContent = (all.created || []).length;
+  $('#cnt-created').textContent = createdItems.length;
   $('#cnt-views').textContent = (all.views || []).length;
   $('#cnt-quizzes').textContent = (all.quizzes || []).length;
   $('#cnt-tutor_chats').textContent = (all.tutor_chats || []).length;
   $('#cnt-pbl_runs').textContent = (all.pbl_runs || []).length;
 
   // 各 Tab 渲染
-  renderCreated($('#grid-created'), all.created || []);
+  renderCreated($('#grid-created'), createdItems);
   renderViews($('#grid-views'), all.views || [], all.quizzes || []);
   renderQuizzes($('#grid-quizzes'), all.quizzes || []);
   renderTutorChats($('#grid-tutor_chats'), all.tutor_chats || []);

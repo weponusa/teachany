@@ -333,12 +333,20 @@
       if (!courseId) return false;
       meta = meta || {};
       const t = now();
-      return upsertByMatch('created', x => x.courseId === courseId, prev => {
+      const stableNode = meta.node || meta.node_id || (meta.manifest && meta.manifest.node_id) || '';
+      const stableSource = meta.source || 'unknown';
+      return upsertByMatch('created', x => {
+        if (x.courseId === courseId) return true;
+        return !!stableNode && x.node === stableNode && (x.source || 'unknown') === stableSource;
+      }, prev => {
         if (prev) {
           return {
             ...prev,
             ...meta,
             courseId,
+            node: stableNode || meta.node || prev.node || '',
+            source: stableSource,
+            createdAt: prev.createdAt || prev.ts || t,
             updatedAt: t,
             ts: t
           };
@@ -347,10 +355,10 @@
           id: shortId(),
           courseId,
           name: meta.name || courseId,
-          source: meta.source || 'unknown', // skill / pbl / import / manual
+          source: stableSource, // skill / pbl / import / manual
           subject: meta.subject || '',
           grade: meta.grade || '',
-          node: meta.node || '',
+          node: stableNode || meta.node || '',
           url: meta.url || '',
           createdAt: t,
           updatedAt: t,
