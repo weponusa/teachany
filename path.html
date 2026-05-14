@@ -1321,13 +1321,19 @@ function onPBLNodeClick(node) {
     prerequisite: '基础前置', matched: '核心必需', advanced: '扩展高级', parallel: '平行关联', external: '外部补充'
   };
 
-  const gradeLabel = (g) => {
+  const gradeLabel = (nodeOrGrade) => {
+    if (nodeOrGrade && typeof nodeOrGrade === 'object') {
+      if (nodeOrGrade.gradeLabel) return nodeOrGrade.gradeLabel;
+      nodeOrGrade = nodeOrGrade.grade;
+    }
+    const g = parseInt(nodeOrGrade) || 0;
     if (!g || g === 0) return '通识';
     if (g <= 6) return `小学${g}年级`;
     if (g <= 9) return `初中${g-6}年级`;
     if (g <= 12) return `高中${g-9}年级`;
     return `G${g}`;
   };
+  const metaTag = (text) => text ? `<span class="meta-tag">${text}</span>` : '';
 
   // 检查课件（与 tree.html 同逻辑）
   const hasCourseware = (node.status === 'active' && node.courses && node.courses.length) ||
@@ -1376,10 +1382,11 @@ function onPBLNodeClick(node) {
     ${node.name_en ? `<p style="font-size:13px;color:var(--dimmer);margin-bottom:10px">${node.name_en}</p>` : ''}
     <div class="meta-row">
       <span class="meta-tag" style="background:${layerColors[node.layer]}22;color:${layerColors[node.layer]}">${layerLabels[node.layer]}</span>
-      <span class="meta-tag">${node.systemTag} ${node.systemLabel}</span>
-      ${node.grade ? `<span class="meta-tag">${gradeLabel(node.grade)}</span>` : ''}
-      ${node.subject ? `<span class="meta-tag">${node.subject}</span>` : ''}
-      ${node.domain ? `<span class="meta-tag">${node.domain}</span>` : ''}
+      <span class="meta-tag">${node.systemTag || ''} ${node.curriculumLabel || node.systemLabel || ''}</span>
+      ${metaTag(node.stageLabel)}
+      ${metaTag(gradeLabel(node))}
+      ${metaTag(node.subject)}
+      ${metaTag(node.domain)}
       ${node.confidence ? `<span class="meta-tag" style="background:rgba(245,158,11,0.15);color:var(--accent)">置信度 ${(node.confidence * 100).toFixed(0)}%</span>` : ''}
       ${hasCourseware ? '<span class="meta-tag" style="background:rgba(16,185,129,0.15);color:var(--success)">✅ 有课件</span>' : '<span class="meta-tag" style="background:rgba(239,68,68,0.15);color:#f87171">📝 待创建</span>'}
     </div>
@@ -1431,7 +1438,7 @@ function generateCourseware(nodeId, nodeName) {
         source: 'pbl',
         name: nodeName + '（PBL 生成意图）',
         subject: node && node.subject ? node.subject : '',
-        grade: node && node.grade ? String(node.grade) : '',
+        grade: node && node.gradeLabel ? node.gradeLabel : (node && node.grade ? String(node.grade) : ''),
         node: nodeId,
         url: '',
         prompt: prompt,
@@ -1625,9 +1632,10 @@ function updateNodeList() {
   if (currentGrade !== 'all') {
     filtered = filtered.filter(n => {
       const g = n.grade;
-      if (currentGrade === 'elementary') return g >= 1 && g <= 6;
-      if (currentGrade === 'middle') return g >= 7 && g <= 9;
-      if (currentGrade === 'high') return g >= 10 && g <= 12;
+      const stageText = `${n.stageLabel || ''} ${n.curriculumLabel || ''}`.toLowerCase();
+      if (currentGrade === 'elementary') return (g >= 1 && g <= 6) || /primary|pyp|k-5|小学/.test(stageText);
+      if (currentGrade === 'middle') return (g >= 7 && g <= 9) || /middle|myp|igcse|lower secondary|初中/.test(stageText);
+      if (currentGrade === 'high') return g >= 10 || /high|dp|ap|a level|高中/.test(stageText);
       return true;
     });
   }
@@ -1654,10 +1662,11 @@ function updateNodeList() {
 
   Object.keys(gradeGroups).sort((a, b) => a - b).forEach(grade => {
     const g = parseInt(grade);
-    const gradeLabel = g === 0 ? '通识' :
+    const firstNodeInGrade = gradeGroups[grade] && gradeGroups[grade][0];
+    const gradeLabel = firstNodeInGrade && firstNodeInGrade.gradeLabel ? firstNodeInGrade.gradeLabel : (g === 0 ? '通识' :
                        g <= 6 ? `小学${g}年级` :
                        g <= 9 ? `初中${g-6}年级` :
-                       `高中${g-9}年级`;
+                       `高中${g-9}年级`);
 
     const optgroup = document.createElement('optgroup');
     optgroup.label = gradeLabel;
