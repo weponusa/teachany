@@ -98,24 +98,26 @@ Phase 4  发布注册：仅在正式发布或用户要求时执行 Git/Registry/
 | 练习评估 | `guides/assessment.md` |
 | 页面结构与 CSS | `tech/page-structure.md`, `tech/design-system.md` |
 | 数学/科学仿真 | `tech/math-animations.md`, `tech/science-simulations.md` |
-| 历史/地理地图 | `historical-maps-quickref.md`, `historical-maps.md` |
+| 地图 / 3D / PPTX | `topics/maps-and-3d.md` |
 | 示例 | `guides/examples.md` |
 
 ## 常用脚本
 
-在 skill 根目录或仓库根目录按实际路径执行：
+假设 `TEACHANY_SKILL` 指向 skill 安装目录，`COURSE_DIR` 指向课件目录：
 
 ```bash
-python3 scripts/preflight-check.py
-python3 scripts/find_nodes.py "一次函数"
-python3 scripts/find-hero.py <course-id>
-python3 scripts/gen-hero-svg.py <course-dir>
-python3 scripts/tts-engine.py --text "讲解文本" --voice zh-CN-XiaoxiaoNeural --output tts/s01.mp3
-python3 scripts/apply-standard-modules.py --only community/<course-id>/index.html
-python3 scripts/find-map.py 唐
-python3 scripts/apply-historical-maps.py
-node scripts/validate-courseware.cjs community/<course-id>
-python3 scripts/rebuild-index.py
+export TEACHANY_SKILL=/path/to/teachany-skill
+export COURSE_DIR=/path/to/teachany-courseware/community/<course-id>
+python3 "$TEACHANY_SKILL/scripts/preflight-check.py"
+python3 "$TEACHANY_SKILL/scripts/find_nodes.py" "一次函数"
+python3 "$TEACHANY_SKILL/scripts/find-hero.py" <course-id>
+python3 "$TEACHANY_SKILL/scripts/gen-hero-svg.py" "$COURSE_DIR"
+python3 "$TEACHANY_SKILL/scripts/tts-engine.py" --text "讲解文本" --voice zh-CN-XiaoxiaoNeural --output "$COURSE_DIR/tts/s01.mp3"
+python3 "$TEACHANY_SKILL/scripts/apply-standard-modules.py" --only "$COURSE_DIR/index.html"
+python3 "$TEACHANY_SKILL/scripts/find-map.py" 唐
+python3 "$TEACHANY_SKILL/scripts/apply-historical-maps.py"
+node "$TEACHANY_SKILL/scripts/validate-courseware.cjs" "$COURSE_DIR"
+python3 "$TEACHANY_SKILL/scripts/rebuild-index.py"
 ```
 
 如果脚本不存在，先在仓库根 `scripts/` 与 `skill/scripts/` 中搜索；不要引用不存在的脚本名。

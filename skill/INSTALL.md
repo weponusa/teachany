@@ -46,10 +46,9 @@ git clone https://github.com/weponusa/teachany-skill.git <your-skill-dir>/teacha
 ls ~/.codebuddy/skills/teachany/scripts/publish_course.sh  # 或 ~/.agents/...
 grep -n "TeachAny v7.12" ~/.codebuddy/skills/teachany/templates/course-skeleton.html | head -1
 test -f ~/.codebuddy/skills/teachany/templates/manifest-template.json && echo "manifest template OK"
-cat ~/.codebuddy/skills/teachany/CDN/Gallery registry | head -3  # CDN 索引已到位
 ```
 
-若 4 条全部有输出，skill 就绪。
+若以上命令全部有输出，skill 就绪。
 
 > **注**：v5.37 起，图片和地图资源（~43MB）不再捆绑在 skill 中，
 > 而是通过 jsDelivr CDN 按需下载（来源：`weponusa/teachany-images` 仓库）。
@@ -67,15 +66,13 @@ AI 会自动：
 2. 跑 `scripts/find_nodes.py` 找知识树节点
 3. 按 `templates/course-skeleton.html` + `templates/manifest-template.json` 搭建课件
 4. 从 `templates/content-section-templates.html` 选择主体内容片段填充 `{{CONTENT_SECTIONS}}`
-5. 跑 `node scripts/validate-courseware.cjs <课件目录> --phase2` 和 `scripts/check_baseline.sh` 自检
-6. （如配置 TeachAny 社区账号）`scripts/publish_course.sh` 发布
+5. 跑 `node "$TEACHANY_SKILL/scripts/validate-courseware.cjs" "$COURSE_DIR" --phase2` 和 `$TEACHANY_SKILL/scripts/check_baseline.sh` 自检
+6. （如配置 TeachAny 社区账号）`$TEACHANY_SKILL/scripts/publish_course.sh` 发布
 
 详见：
 - 英文文档 [SKILL.md](./SKILL.md)
 - 中文文档 [SKILL_CN.md](./SKILL_CN.md)
-- 地图资源使用 [map-resources-guide.md](./map-resources-guide.md)
-- 历史课件专题 [historical-maps.md](./historical-maps.md)
-- 3D 地形 [terrain-3d-integration.md](./terrain-3d-integration.md)
+- 地图 / 3D / PPTX 主题 [topics/maps-and-3d.md](./topics/maps-and-3d.md)
 
 ## 五、升级
 
@@ -99,36 +96,13 @@ rm -rf ~/.agents/skills/teachany
 | **weponusa/teachany-skill**（本仓） | AI Agent 读取的 skill 规范、工具脚本、模板、资源 |
 | [weponusa/teachany-courseware](https://github.com/weponusa/teachany-courseware) | TeachAny 课件站点 + 官方样板课件 + 社区课件库 |
 
-做课件 → 用本仓 skill；发布课件 → 推到课件仓 `community/`。两者通过 `scripts/publish_course.sh` 自动衔接。
+做课件 → 用本仓 skill；发布课件 → 推到课件仓 `community/`。两者通过 `$TEACHANY_SKILL/scripts/publish_course.sh` 自动衔接。
 
 ## 八、普通用户如何提交课件
 
-普通用户无需 GitHub 写权限。课件制作完成并通过质检后，把课件目录放在 `community/drafts/<course-id>/`，或直接传目录路径运行：
+普通用户无需 GitHub 写权限。推荐把完成的课件目录打包发给维护者，或在 `weponusa/teachany-courseware` 发起 PR。
 
-```bash
-# 方式 A：推荐，按 course id 提交（目录：community/drafts/<course-id>/ 或 community/<course-id>/）
-python3 optional repo script `submit-to-community.py` <course-id> --author "你的名字" --message "提交说明"
-
-# 方式 B：直接传课件目录路径
-python3 optional repo script `submit-to-community.py` /path/to/courseware-dir --from path --author "你的名字"
-```
-
-自动链路如下：
-
-1. `submit-to-community.py` 打包 `.teachany` 并提交到 TeachAny Pages Function；
-2. Worker 在 `weponusa/teachany-courseware` 创建 `community/pending/**` PR；
-3. PR 质检通过并合并后，`teachany-courseware/.github/workflows/community-publish.yml` 自动解包到 `community/<course-id>/`；
-4. 课件站点增量部署到 `https://weponusa.github.io/teachany-courseware/community/<course-id>/`；
-5. 如管理员在 `weponusa/teachany-courseware` 配置了 secret `TEACHANY_REGISTRY_PAT`，会自动通知 `weponusa/teachany` 同步 Gallery 索引和知识图谱。
-
-管理员需要配置一次：
-
-- 仓库：`weponusa/teachany-courseware`
-- Settings → Secrets and variables → Actions → New repository secret
-- 名称：`TEACHANY_REGISTRY_PAT`
-- 权限：对 `weponusa/teachany` 有 `Contents: Read/Write` 和 `Actions: Read/Write`
-
-没有这个 secret 时，课件仍会进入资产仓库并上线，但 Gallery/知识图谱不会自动更新，需要管理员手动触发同步。
+如果你在完整 TeachAny 仓库中安装了可选提交脚本，可按完整仓库根的可选提交脚本 的说明执行；轻量 skill 包默认不包含该在线提交链路。
 
 ## 九、手机与小程序适配
 
@@ -157,7 +131,7 @@ https://weponusa.github.io/teachany-courseware/community/hist-m-renaissance/inde
 A: 确认你的 AI Agent 已识别 skills 目录。可手动 `cat ~/.codebuddy/skills/teachany/SKILL_CN.md | head` 检查。
 
 **Q: 想用自己的私有课件仓怎么办？**
-A: 编辑 `scripts/publish_course.sh` 开头的 `REPO_URL`，改为你的仓库地址。
+A: 编辑 `$TEACHANY_SKILL/scripts/publish_course.sh` 开头的 `REPO_URL`，改为你的仓库地址。
 
 **Q: skill 下载体积多大？**
 A: v5.37 起 skill 本体仅 ~1.4MB（文档 + 脚本 + CDN 索引）。图片和地图资源通过 jsDelivr CDN 按需下载，无需提前安装。如需离线使用历史/地理课件，可运行 `bash ~/.codebuddy/skills/teachany/scripts/install_map_resources.sh` 预下载全部地图资源（~43MB）。

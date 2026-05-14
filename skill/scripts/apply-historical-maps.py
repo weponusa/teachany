@@ -16,50 +16,32 @@ v7.9.5 批量为历史/地理课件注入 Leaflet 历史地图模块。
 import json
 import re
 import shutil
-import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-REPO_ROOT = ROOT.parent
 MANIFEST = ROOT / "scripts/historical-maps-manifest.json"
-MAP_ROOTS = [ROOT / "assets" / "maps", REPO_ROOT / "assets" / "maps"]
-REMOTE_MAP_BASE = "https://raw.githubusercontent.com/weponusa/teachany/main/assets/maps"
+SKILL_CHINA = ROOT / "skill/assets/historical-china"
+SKILL_WORLD = ROOT / "skill/assets/historical-world"
+# v7.9.5: CHGIS 细节数据目录（关隘/河流/古城/丝路）
+SKILL_DETAILS = ROOT / "skill/assets/historical-china/details"
+# v7.7.3: 全球彩色阴影地形底图（2k 版 205KB，满足地图容器显示需求）
+HILLSHADE_SRC = ROOT / "skill/assets/hillshade/global-color-hillshade-2k.jpg"
 
 LEAFLET_CSS = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">'
 LEAFLET_JS = '<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>'
 MODULE_CSS = '<link rel="stylesheet" href="../../scripts/teachany-historical-map.css">'
 MODULE_JS = '<script src="../../scripts/teachany-historical-map.js" defer></script>'
 
-
-def find_local_map(rel_path: str):
-    for root in MAP_ROOTS:
-        p = root / rel_path
-        if p.exists():
-            return p
-    return None
-
-
-def copy_or_download_map(rel_path: str, target: Path) -> bool:
-    src = find_local_map(rel_path)
-    target.parent.mkdir(parents=True, exist_ok=True)
-    if src:
-        if target.exists() and target.stat().st_size == src.stat().st_size:
-            return False
-        shutil.copy2(src, target)
-        return True
-    url = REMOTE_MAP_BASE + '/' + rel_path
-    try:
-        urllib.request.urlretrieve(url, target)
-        return True
-    except Exception as e:
-        print(f"  ⚠ 下载地图资源失败：{rel_path} ({e})")
-        return False
-
-
 def copy_hillshade(course_dir: Path) -> int:
-    """复制全球彩色阴影地形底图为课件本地 hillshade.jpg。"""
+    """v7.7.3: 复制全球彩色阴影地形底图为课件本地 hillshade.jpg（统一默认底图）"""
+    if not HILLSHADE_SRC.exists():
+        return 0
     target = course_dir / "assets" / "maps" / "hillshade.jpg"
-    return 1 if copy_or_download_map("physical/hillshade/global-color-hillshade-2k.jpg", target) else 0
+    target.parent.mkdir(parents=True, exist_ok=True)
+    if target.exists() and target.stat().st_size == HILLSHADE_SRC.stat().st_size:
+        return 0  # 已是最新
+    shutil.copy2(HILLSHADE_SRC, target)
+    return 1
 
 def copy_overlay_files(course_dir: Path, overlays: list) -> int:
     """v7.9.5: 把 overlays 中引用的 CHGIS 细节 geojson 从 skill/assets/historical-china/details/
@@ -74,34 +56,49 @@ def copy_overlay_files(course_dir: Path, overlays: list) -> int:
         raw = ov.get("file")
         if not raw:
             continue
-        rel = raw.replace('details/', 'chrono-cn/details/') if raw.startswith('details/') else raw
-        if '/' not in rel:
-            rel = 'chrono-cn/details/' + rel
-        fname = rel.split('/')[-1]
+        # 去掉可能的 details/ 前缀
+        fname = raw.split("/")[-1]
+        src = SKILL_DETAILS / fname
+        if not src.exists():
+            print(f"  ⚠ 缺失 overlay geojson：{fname}（期望在 {SKILL_DETAILS.relative_to(ROOT)}）")
+            continue
         dst = target / fname
-        if copy_or_download_map(rel, dst):
-            copied += 1
+        if dst.exists() and dst.stat().st_size == src.stat().st_size:
+            continue
+        shutil.copy2(src, dst)
+        copied += 1
     return copied
 
 def copy_geojson_files(course_dir: Path, scope: str, eras: list):
-    """把 eras 中引用的 geojson 从本地仓库地图库或远端复制到 course/assets/maps/。"""
+    """把 eras 中引用的 geojson 从 skill/assets 复制到 course/assets/maps/
+    优先在指定 scope 目录找，找不到则 fallback 另一个 scope（方便中国近现代史混用 world 时期文件）"""
     target = course_dir / "assets" / "maps"
     target.mkdir(parents=True, exist_ok=True)
     copied = 0
-    prefixes = ["chrono-cn", "chrono-world"] if scope == "china" else ["chrono-world", "chrono-cn"]
+    search_dirs = []
+    if scope == "china":
+        search_dirs = [SKILL_CHINA, SKILL_WORLD]
+    elif scope == "world":
+        search_dirs = [SKILL_WORLD, SKILL_CHINA]
+    else:
+        search_dirs = [SKILL_CHINA, SKILL_WORLD]
     for era in eras:
         fname = era.get("file")
-        if not fname:
-            continue
-        rels = [fname] if "/" in fname else [f"{prefix}/{fname}" for prefix in prefixes]
-        done = False
-        for rel in rels:
-            if copy_or_download_map(rel, target / Path(fname).name):
-                copied += 1
-                done = True
+        if not fname: continue
+        src = None
+        for d in search_dirs:
+            candidate = d / fname
+            if candidate.exists():
+                src = candidate
                 break
-        if not done:
+        if not src:
             print(f"  ⚠ 缺失 geojson：{fname}（scope={scope}）")
+            continue
+        dst = target / fname
+        if dst.exists() and dst.stat().st_size == src.stat().st_size:
+            continue
+        shutil.copy2(src, dst)
+        copied += 1
     return copied
 
 def inject_head(html: str) -> str:

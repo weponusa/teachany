@@ -43,9 +43,9 @@
 ## 常用验证
 
 ```bash
-node scripts/validate-courseware.cjs community/<course-id>
-python3 scripts/find_nodes.py "知识点"
-python3 scripts/find-map.py 唐
+node "$TEACHANY_SKILL/scripts/validate-courseware.cjs" "$COURSE_DIR"
+python3 "$TEACHANY_SKILL/scripts/find_nodes.py" "知识点"
+python3 "$TEACHANY_SKILL/scripts/find-map.py" 唐
 python3 scripts/find-hero.py <course-id>
 python3 scripts/rebuild-index.py
 ```

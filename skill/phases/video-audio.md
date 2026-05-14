@@ -32,7 +32,7 @@
 ```bash
 ffprobe -hide_banner assets/video/*.mp4
 ls -lh tts/*.mp3
-node scripts/validate-courseware.cjs community/<course-id>
+node "$TEACHANY_SKILL/scripts/validate-courseware.cjs" "$COURSE_DIR"
 ```
 
 ## 降级说明

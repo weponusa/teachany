@@ -13,8 +13,8 @@
 
 ```bash
 git status --short
-node scripts/validate-courseware.cjs community/<course-id>
-python3 scripts/find_nodes.py "知识点"
+node "$TEACHANY_SKILL/scripts/validate-courseware.cjs" "$COURSE_DIR"
+python3 "$TEACHANY_SKILL/scripts/find_nodes.py" "知识点"
 ```
 
 检查：

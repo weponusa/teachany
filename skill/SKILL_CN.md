@@ -15,7 +15,7 @@ allowed-tools: Read,Write,Edit,Bash,Glob,Grep
 按场景再读取卫星文档：
 
 | 场景 | 读取 |
-|---|---|
+| --- | --- |
 | 完整流程 | `phases/workflow.md` |
 | 发布与打包 | `phases/packaging.md` |
 | 视频/TTS | `phases/video-audio.md` |
@@ -23,6 +23,6 @@ allowed-tools: Read,Write,Edit,Bash,Glob,Grep
 | 互动设计 | `guides/interaction-patterns.md` |
 | PBL 探究课 | `guides/project-based.md` |
 | 页面结构 | `tech/page-structure.md` |
-| 历史地图 | `historical-maps-quickref.md` |
+| 地图 / 3D / PPTX | `topics/maps-and-3d.md` |
 
 执行时先读 `SKILL.md`，不要再把旧版中文长文整体加载进上下文。

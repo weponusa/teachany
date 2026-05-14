@@ -46,7 +46,7 @@
 
 ## F. 质量检查
 
-- **#28** 正式课件至少运行：`node scripts/validate-courseware.cjs <course-dir>`。
+- **#28** 正式课件至少运行：`node "$TEACHANY_SKILL/scripts/validate-courseware.cjs" "$COURSE_DIR"`。
 - **#29** 关键资源存在性需验证：HTML、manifest、assets、TTS/视频、Hero、知识图谱节点。
 - **#30** 浏览器验证至少检查：控制台无错误、核心互动可用、AI 学伴入口可见、知识图谱 tooltip 可点击。
 - **#31** 线上发布后用 `curl` 或 raw/GitHub Pages URL 验证可访问。

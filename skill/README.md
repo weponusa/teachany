@@ -63,13 +63,9 @@ teachany-skill/
 ├── scripts/              🔧 15 个工具脚本
 │   ├── find_nodes.py        # 按 stage+subject+keyword 查知识树节点
 │   ├── validate-courseware.cjs # Phase 2 标准结构校验
-│   ├── check_baseline.sh    # 课件基线自检（TTS/图/章节/文件）
-│   ├── check_images.sh      # 图片资源完整性
-│   ├── publish_course.sh    # 一键发布到 TeachAny 社区（v7.9.4）
-│   ├── generate-tts.py      # TTS 语音合成
-│   ├── check_map_resources.sh / install_map_resources.sh
-│   ├── build_chgis_dynasty_maps_v2.sh / rebuild_china_maps.py
-│   │                        # 历史朝代地图生成
+│   ├── find-map.py          # 地图资源查询 / 按需下载
+│   ├── tts-engine.py        # TTS 语音合成
+│   └── validate-courseware.cjs # 课件结构校验
 │   └── ...
 ├── templates/            📋 3 套 HTML 课件骨架
 │   ├── course-skeleton.html      # v7.12 标准课件骨架：五件套/品牌栏/问题锚点固定调用
@@ -83,10 +79,7 @@ teachany-skill/
 │   ├── hillshade/        # 3D 地形底图
 │   └── timelines/        # 历史时间线数据
 └── *.md                  📚 专题指南
-    ├── historical-maps.md         # 历史课件做法
-    ├── map-resources-guide.md     # 地图资源使用
-    ├── terrain-3d-integration.md  # 3D 地形集成
-    └── pptx-design-guide.md       # PPT 设计风格迁移
+    └── topics/maps-and-3d.md      # 地图、3D 与 PPTX 派生
 ```
 
 ## ✨ Features

@@ -47,8 +47,8 @@ PBL 课用：问题 → 假设 → 尝试 → 暴露知识缺口 → 学习 → 
 
 完整模式：
 ```bash
-node scripts/validate-courseware.cjs community/<course-id>
-python3 scripts/check_node_id.py <node_id>
+node "$TEACHANY_SKILL/scripts/validate-courseware.cjs" "$COURSE_DIR"
+python3 "$TEACHANY_SKILL/scripts/check_node_id.py" <node_id>
 ```
 必要时浏览器验证：AI 学伴可打开、知识图谱 tooltip 可点击、音频/视频可播放。
 
