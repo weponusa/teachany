@@ -979,6 +979,20 @@ class PBLGraphRenderer {
         this._tooltipHovered = false;
         this._scheduleTooltipHide(220);
       });
+      tooltip.addEventListener('click', (event) => {
+        const btn = event.target && event.target.closest ? event.target.closest('[data-pbl-make-course]') : null;
+        if (!btn) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const id = btn.getAttribute('data-pbl-make-course');
+        const node = (window.PBLPathBuilder && window.PBLPathBuilder.unifiedIndex && window.PBLPathBuilder.unifiedIndex.get(id))
+          || (Array.isArray(nodes) ? nodes.find(n => n.id === id) : null);
+        if (node && typeof onNodeClick === 'function') onNodeClick(node);
+        if (node && typeof window.generateCourseware === 'function') {
+          window.generateCourseware(node.id, node.name || node.id);
+        }
+        this._scheduleTooltipHide(80);
+      });
       container.appendChild(tooltip);
     }
 
@@ -1271,7 +1285,7 @@ class PBLGraphRenderer {
 
     // ─── 课件列表（与 tree.html 同） ───
     if (hasAnyCourse) {
-      html += `<div style="margin-top:8px;font-size:12px;color:#94a3b8;">课件列表：</div>`;
+      html += `<div style="margin-top:8px;font-size:12px;color:#94a3b8;">已有课件：</div>`;
       html += `<div style="max-height:120px;overflow-y:auto;margin-top:4px;">`;
 
       // 通过 Hub 或直接 courses 字段
@@ -1283,7 +1297,7 @@ class PBLGraphRenderer {
           const sourceIcon = { official: '📋', community_registry: '🔖', community_shared: '🌐', user: '📂' }[c.source] || '📚';
           const courseUrl = c.url || (c.path ? `./${c.path}/index.html` : '');
           if (courseUrl) {
-            html += `<a href="${courseUrl}" target="_blank" onclick="event.stopPropagation();" style="display:flex;align-items:center;gap:6px;padding:6px 10px;margin:3px 0;border-radius:6px;font-size:13px;color:#f8fafc;text-decoration:none;background:rgba(148,163,184,0.08);pointer-events:auto;">${sourceIcon} ${c.name || c.id}</a>`;
+            html += `<a href="${courseUrl}" target="_blank" onclick="event.stopPropagation();" style="display:flex;align-items:center;gap:6px;padding:6px 10px;margin:3px 0;border-radius:6px;font-size:13px;color:#f8fafc;text-decoration:none;background:rgba(148,163,184,0.08);pointer-events:auto;">${sourceIcon} 打开课件：${this._escapeHtml(c.name || c.id)}</a>`;
           }
         });
       } else if (d.courses && d.courses.length) {
@@ -1302,10 +1316,14 @@ class PBLGraphRenderer {
               courseUrl = `${base}/community/${courseId}/index.html`;
             }
           }
-          html += `<a href="${courseUrl}" target="_blank" onclick="event.stopPropagation();" style="display:flex;align-items:center;gap:6px;padding:6px 10px;margin:3px 0;border-radius:6px;font-size:13px;color:#f8fafc;text-decoration:none;background:rgba(148,163,184,0.08);pointer-events:auto;">📋 ${isStr ? courseId.split('/').pop() : courseId}</a>`;
+          html += `<a href="${courseUrl}" target="_blank" onclick="event.stopPropagation();" style="display:flex;align-items:center;gap:6px;padding:6px 10px;margin:3px 0;border-radius:6px;font-size:13px;color:#f8fafc;text-decoration:none;background:rgba(148,163,184,0.08);pointer-events:auto;">📋 打开课件：${this._escapeHtml(isStr ? courseId.split('/').pop() : courseId)}</a>`;
         });
       }
       html += `</div>`;
+    }
+
+    if (!d.isExternal) {
+      html += `<button type="button" data-pbl-make-course="${this._escapeHtml(d.id)}" style="display:block;width:100%;margin-top:10px;padding:8px 12px;border:none;border-radius:8px;background:linear-gradient(135deg,#10b981,#059669);color:white;font-size:13px;font-weight:700;cursor:pointer;pointer-events:auto;">✨ 制作新课件</button>`;
     }
 
     tooltip.innerHTML = html;
@@ -1391,6 +1409,12 @@ class PBLGraphRenderer {
   }
 
   // ─── 工具方法 ───
+
+  _metaLine(d) {
+    return [d.curriculumLabel || d.systemLabel, d.stageLabel, d.gradeLabel, d.subject, d.domain]
+      .filter(Boolean)
+      .join(' · ');
+  }
 
   _nodeHasAnyCourse(d) {
     if (d.isExternal) return false;
