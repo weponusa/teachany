@@ -56,8 +56,8 @@ class PBLPathBuilder {
     if (this.loaded) return this.unifiedIndex;
     if (this._loadPromise) return this._loadPromise;
 
-    // v7.11.2：缓存 key 升级，修复旧缓存把 IB/AP 等国际课标节点误标为 CN 中国课标
-    const CACHE_KEY = 'teachany_pbl_unified_index_v3';
+    // v7.11.3：缓存 key 升级，补全 curriculumLabel/stageLabel/gradeLabel，修复课标与学段显示混乱
+    const CACHE_KEY = 'teachany_pbl_unified_index_v4';
     const CACHE_TTL = 1800000;
     try {
       const cached = localStorage.getItem(CACHE_KEY);
@@ -108,6 +108,10 @@ class PBLPathBuilder {
         this.systemIndex.set(sysId, new Set());
       }
       nodes.forEach(node => {
+        const normalizedGrade = parseInt(node.grade) || 0;
+        const normalizedTreePath = node.treePath || node.graph_path || node.tree_file || '';
+        const curriculumLabel = this._inferCurriculumLabel(node, sysId, label, normalizedTreePath);
+        const stageLabel = this._inferStageLabel(node, sysId, normalizedTreePath, normalizedGrade);
         // 统一格式，同时保留树节点原始字段（status/courses/domainColor/curriculum_points 等）
         const unified = {
           ...node,                              // 保留所有原始字段
@@ -117,7 +121,7 @@ class PBLPathBuilder {
           subject: node.subject || '',
           domain: node.domain || '',
           domainColor: node.domainColor || '#3b82f6',
-          grade: parseInt(node.grade) || 0,
+          grade: normalizedGrade,
           difficulty: node.difficulty || 0,
           definition: node.definition || node.description || '',
           key_concepts: node.key_concepts || [],
@@ -130,7 +134,10 @@ class PBLPathBuilder {
           system: sysId,
           systemTag: tag,
           systemLabel: label,
-          treePath: node.treePath || '',
+          curriculumLabel,
+          stageLabel,
+          gradeLabel: this._formatGradeLabel(normalizedGrade, sysId, normalizedTreePath, node.stage),
+          treePath: normalizedTreePath,
           isExternal: false
         };
         this.unifiedIndex.set(node.id, unified);
@@ -146,7 +153,7 @@ class PBLPathBuilder {
 
     // 写入缓存
     try {
-      const CACHE_KEY = 'teachany_pbl_unified_index_v3';
+      const CACHE_KEY = 'teachany_pbl_unified_index_v4';
       localStorage.setItem(CACHE_KEY, JSON.stringify({
         ts: Date.now(),
         entries: [...this.unifiedIndex.entries()]
@@ -263,8 +270,94 @@ class PBLPathBuilder {
   _inferSubject(id) {
     if (!id) return '';
     const prefix = id.split('-')[0] || id.split('_')[0];
-    const map = { math: 'math', phys: 'physics', chem: 'chemistry', bio: 'biology', chi: 'chinese', eng: 'english', hist: 'history', geo: 'geography', info: 'info-tech' };
+    const map = { math: 'math', phys: 'physics', chem: 'chemistry', bio: 'biology', chi: 'chinese', eng: 'english', hist: 'history', geo: 'geography', info: 'info-tech', design: 'design' };
     return map[prefix] || '';
+  }
+
+  _inferCurriculumLabel(node, sysId, defaultLabel, treePath) {
+    const raw = String(node.curriculum || '').toLowerCase();
+    const path = String(treePath || '').toLowerCase();
+    if (sysId === 'cn') return '中国课标';
+    if (sysId === 'ap') return 'AP';
+    if (sysId === 'cambridge') {
+      if (path.includes('/primary/')) return 'Cambridge Primary';
+      if (path.includes('/lsec/')) return 'Cambridge Lower Secondary';
+      if (path.includes('/igcse/')) return 'Cambridge IGCSE';
+      if (path.includes('/al/')) return 'Cambridge A Level';
+      return 'Cambridge';
+    }
+    if (sysId === 'ib') {
+      if (raw.includes('pyp') || path.includes('/pyp/')) return 'IB PYP';
+      if (raw.includes('myp') || path.includes('/myp/')) return 'IB MYP';
+      if (raw.includes('dp') || path.includes('/dp/')) return 'IB DP';
+      return 'IB';
+    }
+    if (sysId === 'us') {
+      if (path.includes('/k5/')) return 'US CCSS K-5';
+      if (path.includes('/ms/')) return 'US CCSS Middle School';
+      if (path.includes('/hs/')) return 'US CCSS High School';
+      return 'US CCSS';
+    }
+    return defaultLabel || sysId || '';
+  }
+
+  _inferStageLabel(node, sysId, treePath, grade) {
+    const stage = String(node.stage || '').toLowerCase();
+    const path = String(treePath || '').toLowerCase();
+    if (sysId === 'cn') {
+      if (path.includes('/elementary/') || stage === 'elementary' || (grade >= 1 && grade <= 6)) return '小学';
+      if (path.includes('/middle/') || stage === 'middle' || (grade >= 7 && grade <= 9)) return '初中';
+      if (path.includes('/high/') || stage === 'high' || grade >= 10) return '高中';
+      return '中国 K12';
+    }
+    if (sysId === 'ap') return '高中 / AP';
+    if (sysId === 'cambridge') {
+      if (path.includes('/primary/')) return 'Primary';
+      if (path.includes('/lsec/')) return 'Lower Secondary';
+      if (path.includes('/igcse/')) return 'IGCSE';
+      if (path.includes('/al/')) return 'A Level';
+    }
+    if (sysId === 'ib') {
+      if (path.includes('/pyp/') || stage === 'pyp') return 'PYP';
+      if (path.includes('/myp/') || stage === 'myp') return 'MYP';
+      if (path.includes('/dp/') || stage === 'dp') return 'DP';
+    }
+    if (sysId === 'us') {
+      if (path.includes('/k5/')) return 'K-5';
+      if (path.includes('/ms/')) return 'Middle School';
+      if (path.includes('/hs/')) return 'High School';
+    }
+    return stage || '';
+  }
+
+  _formatGradeLabel(grade, sysId, treePath, stage) {
+    const g = parseInt(grade) || 0;
+    const path = String(treePath || '').toLowerCase();
+    const st = String(stage || '').toLowerCase();
+    if (!g) {
+      if (sysId === 'ib' && (st || path.includes('/ib/'))) return this._inferStageLabel({ stage }, sysId, treePath, g) || '通识';
+      return '通识';
+    }
+    if (sysId === 'cn') {
+      if (g <= 6) return `小学${g}年级`;
+      if (g <= 9) return `初中${g - 6}年级`;
+      if (g <= 12) return `高中${g - 9}年级`;
+    }
+    if (sysId === 'ib') {
+      if (path.includes('/myp/') || st === 'myp') return `IB MYP · G${g}`;
+      if (path.includes('/pyp/') || st === 'pyp') return `IB PYP · G${g}`;
+      if (path.includes('/dp/') || st === 'dp') return `IB DP · G${g}`;
+    }
+    if (sysId === 'ap') return `AP · G${g}`;
+    if (sysId === 'cambridge') return `${this._inferStageLabel({ stage }, sysId, treePath, g) || 'Cambridge'} · G${g}`;
+    if (sysId === 'us') return `${this._inferStageLabel({ stage }, sysId, treePath, g) || 'US'} · G${g}`;
+    return `G${g}`;
+  }
+
+  _metaLine(d) {
+    return [d.curriculumLabel || d.systemLabel, d.stageLabel, d.gradeLabel, d.subject, d.domain]
+      .filter(Boolean)
+      .join(' · ');
   }
 
   // ─── LLM 配置管理 ─────────────────────────────
@@ -482,8 +575,10 @@ ${summaryList}
     // 构建知识点候选列表文本（压缩表示）
     const candidateList = candidates.map((n, i) => {
       const prefix = n.systemTag;
-      const gradeStr = n.grade ? `G${n.grade}` : '';
-      return `[${i}] ${n.id} | ${n.name} | ${gradeStr} | ${prefix}`;
+      const gradeStr = n.gradeLabel || (n.grade ? `G${n.grade}` : '');
+      const curriculum = n.curriculumLabel || n.systemLabel || prefix;
+      const stage = n.stageLabel || '';
+      return `[${i}] ${n.id} | ${n.name} | ${gradeStr} | ${prefix}/${curriculum}${stage ? '/' + stage : ''}`;
     }).join('\n');
 
     const messages = [
@@ -1089,12 +1184,15 @@ class PBLGraphRenderer {
     const layerLabel = layerLabels[d.layer] || '';
 
     let html = `<h3 style="font-size:15px;margin:0 0 6px;">${d.name}</h3>`;
-    html += `<div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">${d.domain || ''} · ${d.grade ? d.grade + '年级' : ''}</div>`;
+    html += `<div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">${this._escapeHtml(this._metaLine(d))}</div>`;
 
     // PBL 层标签
     html += `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:${layerColor}22;color:${layerColor};">${layerLabel}</span> `;
     if (d.systemTag && !d.isExternal) {
-      html += `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:rgba(59,130,246,0.15);color:#3b82f6;">${d.systemTag} ${d.systemLabel}</span> `;
+      html += `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:rgba(59,130,246,0.15);color:#3b82f6;">${this._escapeHtml(d.systemTag)} ${this._escapeHtml(d.curriculumLabel || d.systemLabel)}</span> `;
+    }
+    if ((d.stageLabel || d.gradeLabel) && !d.isExternal) {
+      html += `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:rgba(148,163,184,0.14);color:#cbd5e1;">${this._escapeHtml([d.stageLabel, d.gradeLabel].filter(Boolean).join(' · '))}</span> `;
     }
 
     // 状态
