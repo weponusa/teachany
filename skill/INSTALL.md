@@ -46,7 +46,7 @@ git clone https://github.com/weponusa/teachany-skill.git <your-skill-dir>/teacha
 ls ~/.codebuddy/skills/teachany/scripts/publish_course.sh  # 或 ~/.agents/...
 grep -n "TeachAny v7.12" ~/.codebuddy/skills/teachany/templates/course-skeleton.html | head -1
 test -f ~/.codebuddy/skills/teachany/templates/manifest-template.json && echo "manifest template OK"
-cat ~/.codebuddy/skills/teachany/assets/image-registry.json | head -3  # CDN 索引已到位
+cat ~/.codebuddy/skills/teachany/CDN/Gallery registry | head -3  # CDN 索引已到位
 ```
 
 若 4 条全部有输出，skill 就绪。
@@ -107,10 +107,10 @@ rm -rf ~/.agents/skills/teachany
 
 ```bash
 # 方式 A：推荐，按 course id 提交（目录：community/drafts/<course-id>/ 或 community/<course-id>/）
-python3 scripts/submit-to-community.py <course-id> --author "你的名字" --message "提交说明"
+python3 optional repo script `submit-to-community.py` <course-id> --author "你的名字" --message "提交说明"
 
 # 方式 B：直接传课件目录路径
-python3 scripts/submit-to-community.py /path/to/courseware-dir --from path --author "你的名字"
+python3 optional repo script `submit-to-community.py` /path/to/courseware-dir --from path --author "你的名字"
 ```
 
 自动链路如下：

@@ -26,11 +26,19 @@ import json
 import re
 import shutil
 import sys
+import urllib.request
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-SKILL_ROOT = SCRIPT_DIR.parent.parent  # ~/.codebuddy/skills/teachany/
-MAPS_ROOT = SKILL_ROOT / "assets" / "maps"
+SKILL_ROOT = SCRIPT_DIR.parent  # skill root when script lives in skill/scripts/
+REPO_ROOT = SKILL_ROOT.parent
+LOCAL_MAP_ROOTS = [
+    SKILL_ROOT / "assets" / "maps",
+    REPO_ROOT / "assets" / "maps",
+    SKILL_ROOT / "assets",
+]
+REMOTE_MAP_BASE = "https://raw.githubusercontent.com/weponusa/teachany/main/assets/maps"
+MAPS_ROOT = next((p for p in LOCAL_MAP_ROOTS if (p / "MANIFEST.json").exists()), LOCAL_MAP_ROOTS[0])
 MANIFEST = MAPS_ROOT / "MANIFEST.json"
 
 # 关键词到资源的模糊映射表（中文/英文别名 → 库中文件 key）
@@ -53,10 +61,21 @@ KEYWORD_ALIASES = {
 
 
 def load_manifest():
-    if not MANIFEST.exists():
-        sys.exit(f"❌ 找不到 {MANIFEST}，请检查 skill 是否完整安装")
-    with open(MANIFEST) as f:
-        return json.load(f)
+    if MANIFEST.exists():
+        with open(MANIFEST) as f:
+            data = json.load(f)
+        data["_source"] = str(MANIFEST)
+        data["_remote"] = False
+        return data
+    url = REMOTE_MAP_BASE + "/MANIFEST.json"
+    try:
+        with urllib.request.urlopen(url, timeout=20) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        data["_source"] = url
+        data["_remote"] = True
+        return data
+    except Exception as e:
+        sys.exit(f"❌ 找不到本地地图 manifest，远端也加载失败：{e}")
 
 
 def format_file(entry, show_full=False):
@@ -156,30 +175,50 @@ def search_boundary(files, boundary_type):
 
 
 def copy_resource(filename, dst_dir):
-    """把一个或多个资源从库拷贝到课件目录"""
+    """把一个或多个资源从本地库拷贝到课件目录；本地无资源时从远端下载。"""
     dst = Path(dst_dir).resolve()
     dst.mkdir(parents=True, exist_ok=True)
 
-    # 先搜全路径匹配
-    candidates = list(MAPS_ROOT.rglob(f"*{filename}*"))
-    if not candidates:
-        print(f"❌ 在库中没找到 {filename}")
-        return 1
+    manifest = load_manifest()
+    matches = [f for f in manifest.get("files", []) if filename in f.get("path", "") or filename in f.get("key", "")]
+    local_candidates = list(MAPS_ROOT.rglob(f"*{filename}*")) if MAPS_ROOT.exists() else []
 
-    if len(candidates) > 1:
-        print(f"⚠️  找到 {len(candidates)} 个匹配：")
-        for c in candidates:
+    if len(local_candidates) > 1:
+        print(f"⚠️  找到 {len(local_candidates)} 个本地匹配：")
+        for c in local_candidates:
             print(f"   - {c.relative_to(MAPS_ROOT)}")
-        print(f"\n请提供更精确的文件名")
+        print("\n请提供更精确的文件名")
         return 2
 
-    src = candidates[0]
-    dst_file = dst / src.name
-    shutil.copy2(src, dst_file)
+    if local_candidates:
+        src = local_candidates[0]
+        dst_file = dst / src.name
+        shutil.copy2(src, dst_file)
+        source_label = str(src)
+    else:
+        if not matches:
+            print(f"❌ 在地图库 manifest 中没找到 {filename}")
+            return 1
+        if len(matches) > 1:
+            print(f"⚠️  找到 {len(matches)} 个远端匹配：")
+            for m in matches:
+                print(f"   - {m.get('path')}")
+            print("\n请提供更精确的文件名")
+            return 2
+        rel = matches[0]["path"]
+        url = REMOTE_MAP_BASE + "/" + rel
+        dst_file = dst / Path(rel).name
+        try:
+            urllib.request.urlretrieve(url, dst_file)
+        except Exception as e:
+            print(f"❌ 下载失败: {url}\n   {e}")
+            return 1
+        source_label = url
+
     size_kb = dst_file.stat().st_size / 1024
     size_str = f"{size_kb:.0f}KB" if size_kb < 1024 else f"{size_kb/1024:.1f}MB"
-    print(f"✅ 已拷贝:")
-    print(f"   源: {src.relative_to(SKILL_ROOT)}")
+    print("✅ 已拷贝:")
+    print(f"   源: {source_label}")
     print(f"   目标: {dst_file}")
     print(f"   大小: {size_str}")
     return 0
@@ -228,7 +267,7 @@ def main():
     else:
         # 默认：显示库的统计 + 分类提示
         print("🗺️  TeachAny 地图资源库")
-        print(f"   位置: {MAPS_ROOT.relative_to(SKILL_ROOT.parent)}")
+        print(f"   位置: {manifest.get('_source', str(MANIFEST))}")
         stats = manifest["stats"]
         print(f"   总数: {stats['total_files']} 个文件 · {stats['total_size_mb']:.1f} MB")
         print()

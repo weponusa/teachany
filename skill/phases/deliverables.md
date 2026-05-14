@@ -20,7 +20,7 @@
 | **L4** | 课件打包（.teachany） | ✅ **默认必选** | Phase 3.5 自动执行 |
 | **L5** | PPTX 导出 | 🔶 **显式触发** | 用户在 Phase 0 第 8 步要求 PPT/PPTX/幻灯片/讲义版时触发，默认跳过 |
 
-> 💡 **v5.34 起**：L5 为"离线讲解派生层"，由 `scripts/export-pptx.py` 从已完成的 HTML 课件派生生成，不替代 L1-L4 任何基线能力。互动组件（Canvas/知识图谱/AI 学伴/音频播放）在 PPTX 中自动降级为"扫码/点链接回到 HTML 版"的占位页。
+> 💡 **v5.34 起**：L5 为"离线讲解派生层"，由 `optional repo script `export-pptx.py`` 从已完成的 HTML 课件派生生成，不替代 L1-L4 任何基线能力。互动组件（Canvas/知识图谱/AI 学伴/音频播放）在 PPTX 中自动降级为"扫码/点链接回到 HTML 版"的占位页。
 
 ### L1 — 互动课件（必选，不可跳过）
 
@@ -85,7 +85,7 @@
 4. 从课件内容中提取各模块的讲解文案，生成旁白脚本 JSON
 5. **必须**调用 `python3 scripts/tts-engine.py --text "..." --voice "..." --output xxx.mp3` 或 `from tts_engine import synthesize`（自动按 L0→L4 回退）
 6. **强制校验**：每个 mp3 文件大小 ≥ 200 字节，否则视为失败必须回退引擎
-7. 执行 `python3 scripts/generate-srt.py zh` 生成 SRT 字幕
+7. 执行 `python3 optional repo script `generate-srt.py` zh` 生成 SRT 字幕
 8. 将语音文件路径嵌入课件 HTML 的 `<audio>` 标签或 `<div data-teachany-audio>` 标准模块
 
 **降级策略**（v7.9.5 重写）：
@@ -104,7 +104,7 @@
 - `scripts/generate-tts.py`：批量生成入口（已重写为调用 tts-engine.py）
 - `scripts/narration_zh.json`：中文旁白脚本（含帧时间戳）
 - `scripts/narration_en.json`：英文旁白脚本（含帧时间戳）
-- `scripts/generate-srt.py`：SRT 字幕导出脚本
+- `optional repo script `generate-srt.py``：SRT 字幕导出脚本
 - `tts/*.mp3`：生成的语音音频文件（必须 ≥ 200 字节）
 - `tts/*.srt`：生成的字幕文件
 
