@@ -3,10 +3,10 @@
  *
  * 特性：
  *   - 独立模块，不依赖特定课件
- *   - 默认使用 OpenRouter 免费模型（需申请免费 Key，1 分钟搞定）
+ *   - 默认使用 Pollinations 免费免 Key OpenAI 兼容接口
  *   - 配置弹窗：服务商一键切换 → 模型下拉选择（每个服务商列出推荐模型 + 自定义）
  *   - 也支持用户填自己的 OpenAI 兼容 API Key（OpenRouter/DeepSeek/Kimi 等）
- *   - 当所选服务商需要 Key 时，点发送会自动弹出配置框，填完 Key 自动续发消息
+ *   - 仅当所选服务商需要 Key 时才要求用户配置
  *   - API 配置可动态替换（localStorage 或开发者接口）
  *   - 中英文界面一键切换（localStorage 持久化）
  *   - OpenAI 兼容 API（baseUrl + apiKey + model）
@@ -24,7 +24,7 @@
   'use strict';
 
   // 版本标识 - 加载时立即打印到 console，方便排查浏览器缓存问题
-  console.log('%c[TeachAnyTutor] v7.3.1 loaded - default: OpenRouter free models (key required)', 'color:#10b981;font-weight:bold;');
+  console.log('%c[TeachAnyTutor] v7.4.0 loaded - default: Pollinations free no-key model', 'color:#10b981;font-weight:bold;');
 
   // ───────────────────────────────────────────────────────
   // 1. 配置与默认值
@@ -33,20 +33,29 @@
   const HISTORY_KEY = 'teachany_tutor_history';
   const LANG_KEY = 'teachany_tutor_lang';
 
-  // 默认配置：OpenRouter 免费模型（需申请免费 Key）
-  // 不要在客户端 JS 里写任何 API Key 明文，否则会被盗用导致封号。
+  // 默认配置：Pollinations 免费免 Key OpenAI 兼容接口
   const DEFAULTS = {
-    baseUrl: 'https://openrouter.ai/api/v1',
+    baseUrl: 'https://text.pollinations.ai/openai?referrer=teachany',
     apiKey: '',
-    model: 'openai/gpt-oss-120b:free'
+    model: 'openai',
+    noAuth: true
   };
 
   // 服务商预设（配置弹窗一键填表）
   // 每个预设包含 baseUrl + 推荐模型 + 该服务商的可选模型列表
   const PRESETS = [
     {
+      id: 'pollinations',
+      name: '🆓 Pollinations（免费免 Key · 默认）',
+      baseUrl: 'https://text.pollinations.ai/openai?referrer=teachany',
+      model: 'openai',
+      models: ['openai', 'gpt-oss-20b'],
+      keyHint: '免费免 Key，可直接使用；高峰期可能较慢。',
+      noAuth: true
+    },
+    {
       id: 'openrouter-free',
-      name: '🆓 OpenRouter（免费模型 · 推荐首选）',
+      name: '🆓 OpenRouter（免费模型 · 需 Key）',
       baseUrl: 'https://openrouter.ai/api/v1',
       model: 'openai/gpt-oss-120b:free',
       models: [
@@ -180,17 +189,17 @@
       contextLabel: '当前学习：',
       contextLoading: '定位中...',
       configTitle: '🎓 启用你的 AI 学伴',
-      configSubtitle: '申请一个免费 API Key 即可使用 AI 学伴。选服务商 → 填 Key → 选模型，开始对话。Key 仅保存在你的浏览器本地。',
+      configSubtitle: '默认使用免费免 Key 接口，可直接对话。也可以切换到 OpenRouter、DeepSeek 等服务商并填写自己的 Key。',
       presetLabel: '① 选择 AI 服务商（已预填 Base URL 和模型列表）',
       baseUrlLabel: 'API Base URL（高级，一般无需修改）',
-      apiKeyLabel: '③ 填入你的 API Key',
-      apiKeyPlaceholder: '粘贴你的 sk-... Key',
+      apiKeyLabel: '③ API Key（默认服务商免填）',
+      apiKeyPlaceholder: '默认 Pollinations 免 Key；其他服务商填 sk-...',
       modelLabel: '② 选择模型（可选自定义）',
       modelPlaceholder: '输入自定义模型名',
       customModelTitle: '改用自定义模型名',
       customModelOption: '✏️ 自定义模型名…',
       advancedLabel: '⚙️ 高级设置（修改 Base URL）',
-      privacy: '🔒 你的 API Key 仅保存在此浏览器的 localStorage，关闭页面或清浏览器数据后失效。TeachAny 不会收集、上传、或把 Key 发给任何第三方。',
+      privacy: '🔒 默认免 Key，不会保存密钥。若你切换到其他服务商，API Key 仅保存在此浏览器的 localStorage。TeachAny 不会收集或上传你的 Key。',
       cancel: '取消',
       save: '保存并开始对话',
       settings: '⚙️',
@@ -213,17 +222,17 @@
       contextLabel: 'Studying: ',
       contextLoading: 'Locating...',
       configTitle: '🎓 Set Up Your AI Tutor',
-      configSubtitle: 'Get a free API key to start. Pick a provider → paste your key → choose a model. Key is stored only in your browser.',
+      configSubtitle: 'The default free no-key provider works out of the box. You can still switch to OpenRouter, DeepSeek, or a custom provider with your own key.',
       presetLabel: '① Choose AI Provider (Base URL & model list pre-filled)',
       baseUrlLabel: 'API Base URL (advanced, usually no need to change)',
-      apiKeyLabel: '③ Paste your API Key',
-      apiKeyPlaceholder: 'Paste your sk-... key',
+      apiKeyLabel: '③ API Key (not needed for default provider)',
+      apiKeyPlaceholder: 'Default Pollinations needs no key; paste sk-... for other providers',
       modelLabel: '② Choose Model (or customize)',
       modelPlaceholder: 'Enter custom model name',
       customModelTitle: 'Switch to custom model name',
       customModelOption: '✏️ Custom model name…',
       advancedLabel: '⚙️ Advanced (change Base URL)',
-      privacy: '🔒 Your API Key is stored only in this browser\'s localStorage. It is cleared when you close the page or clear browser data. TeachAny never collects, uploads, or shares your Key.',
+      privacy: '🔒 The default provider needs no API key. If you switch providers, your key is stored only in this browser\'s localStorage. TeachAny never collects or uploads your key.',
       cancel: 'Cancel',
       save: 'Save & Start',
       settings: '⚙️',
@@ -270,13 +279,14 @@
       const parsed = JSON.parse(raw);
       // 旧失效内置 Key 迁移
       if (parsed.apiKey && (String(parsed.apiKey).startsWith('sk-or-v1-a4d900') || String(parsed.apiKey).startsWith('sk-or-v1-1dd402'))) return null;
-      if (!parsed.apiKey) return null;
+      const preset = PRESETS.find(p => p.baseUrl && parsed.baseUrl && p.baseUrl === parsed.baseUrl);
+      if (!parsed.apiKey && !(preset && preset.noAuth)) return null;
       // v7.1：自检 model 字段合法性，防止旧版本把 PRESETS 的 name（带空格/括号）误存为 model
       if (parsed.model && /[\s()（）：，,]/.test(parsed.model)) {
         console.warn('[TeachAnyTutor] Detected invalid model id in localStorage, falling back to DEFAULTS:', parsed.model);
         parsed.model = DEFAULTS.model;
       }
-      return Object.assign({}, DEFAULTS, parsed);
+      return Object.assign({}, DEFAULTS, parsed, { noAuth: !!(preset && preset.noAuth) });
     } catch (e) {
       return null;
     }
@@ -297,7 +307,8 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       baseUrl: cfg.baseUrl || DEFAULTS.baseUrl,
       apiKey: cfg.apiKey || '',
-      model: modelToSave
+      model: modelToSave,
+      noAuth: !!cfg.noAuth
     }));
   }
 
@@ -674,9 +685,11 @@
       // Key 提示
       keyHint.textContent = p.keyHint || '';
       const requiredMark = mask.querySelector('.key-required');
-      if (requiredMark) requiredMark.style.display = '';
-      nodeApiKey.required = true;
-      nodeApiKey.placeholder = t('apiKeyPlaceholder');
+      if (requiredMark) requiredMark.style.display = p.noAuth ? 'none' : '';
+      nodeApiKey.required = !p.noAuth;
+      nodeApiKey.disabled = !!p.noAuth;
+      if (p.noAuth) nodeApiKey.value = '';
+      nodeApiKey.placeholder = p.noAuth ? (getLang() === 'en' ? 'No key required' : '默认服务商免 Key') : t('apiKeyPlaceholder');
     }
 
     nodeModelSelect.addEventListener('change', () => {
@@ -704,7 +717,8 @@
 
     btnSave.addEventListener('click', () => {
       const apiKey = (nodeApiKey.value || '').trim();
-      if (!apiKey) {
+      const preset = PRESETS.find(p => p.id === nodePreset.value) || PRESETS[0];
+      if (!preset.noAuth && !apiKey) {
         nodeApiKey.style.borderColor = '#d1242f';
         nodeApiKey.focus();
         return;
@@ -712,8 +726,9 @@
       const model = (nodeModelInput.style.display === 'none' ? nodeModelSelect.value : nodeModelInput.value).trim();
       const cfg = {
         baseUrl: (nodeBaseUrl.value || DEFAULTS.baseUrl).trim().replace(/\/$/, ''),
-        apiKey: apiKey,
-        model: model || DEFAULTS.model
+        apiKey: preset.noAuth ? '' : apiKey,
+        model: model || DEFAULTS.model,
+        noAuth: !!preset.noAuth
       };
       saveUserConfig(cfg);
       mask.remove();
@@ -771,8 +786,10 @@
   async function callChatAPI(cfg, messages, onDelta) {
     // 防御：apiKey 含全角空格、Base URL 含中文等都会导致 fetch 抛 TypeError
     const cleanKey = String(cfg.apiKey || '').trim().replace(/[\u3000\s]+/g, '');
-    const cleanBaseUrl = String(cfg.baseUrl || '').trim();
-    const endpoint = cleanBaseUrl.replace(/\/$/, '') + '/chat/completions';
+    const cleanBaseUrl = String(cfg.baseUrl || '').trim().replace(/\/$/, '');
+    const endpoint = /\/(openai|chat\/completions)(?:\?.*)?$/i.test(cleanBaseUrl)
+      ? cleanBaseUrl
+      : cleanBaseUrl + '/chat/completions';
 
     // 工具函数：把任何字符串安全转换为 ISO-8859-1 兼容的 ASCII（浏览器 fetch header 的硬性要求）
     const toAsciiSafe = (s, fallback) => {
@@ -796,9 +813,9 @@
     }
 
     const headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + cleanKey
+      'Content-Type': 'application/json'
     };
+    if (!cfg.noAuth && cleanKey) headers['Authorization'] = 'Bearer ' + cleanKey;
     // OpenRouter 推荐附带 HTTP-Referer 和 X-OpenRouter-Title（用于排行榜，可选但稳定）
     if (cleanBaseUrl.includes('openrouter.ai')) {
       try {
@@ -1079,11 +1096,11 @@
       if (isPending) return;
       const text = (inputEl.value || '').trim();
       if (!text) return;
-      // v7.1：如果没有 API Key，先弹配置框；填完 Key 后自动继续发送
+      // 默认服务商免 Key；只有切换到需要 Key 的服务商且未填写时才弹配置框
       const cfg = getEffectiveConfig();
-      if (!cfg.apiKey) {
+      if (!cfg.noAuth && !cfg.apiKey) {
         createConfigModal(cfg, (savedCfg) => {
-          if (savedCfg && savedCfg.apiKey) doSend(text);
+          if (savedCfg && (savedCfg.noAuth || savedCfg.apiKey)) doSend(text);
         }, () => {});
         return;
       }
@@ -1126,6 +1143,16 @@
         });
         history.push({ role: 'user', content: text });
         history.push({ role: 'assistant', content: aiBubble.textContent || '' });
+
+        // ── TeachAny 历史上报（零侵入可选链） ──
+        try {
+          const courseId = (document.querySelector('meta[name="teachany-courseware-id"]') || {}).content || '';
+          if (courseId && window.TeachAnyHistory && typeof window.TeachAnyHistory.recordTutorChat === 'function') {
+            const extra = { provider: (cfg && cfg.providerId) || '', model: (cfg && cfg.model) || '' };
+            window.TeachAnyHistory.recordTutorChat(courseId, 'user', text, extra);
+            window.TeachAnyHistory.recordTutorChat(courseId, 'assistant', aiBubble.textContent || '', extra);
+          }
+        } catch (_e) { /* ignore */ }
       } catch (err) {
         console.error('[TeachAnyTutor] Request failed:', err);
         aiBubble.remove();

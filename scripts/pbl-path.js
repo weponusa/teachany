@@ -14,7 +14,11 @@ class PBLPathBuilder {
 
     // LLM 服务商预设（复用 AI 学伴架构）
     this.providers = [
-      { id: 'openrouter-free', name: 'OpenRouter（免费模型 · 推荐首选）', baseUrl: 'https://openrouter.ai/api/v1', model: 'openai/gpt-oss-120b:free', models: [
+      { id: 'pollinations', name: 'Pollinations（免费免 Key · 默认）', baseUrl: 'https://text.pollinations.ai/openai?referrer=teachany', model: 'openai', noAuth: true, models: [
+        'openai',
+        'gpt-oss-20b'
+      ] },
+      { id: 'openrouter-free', name: 'OpenRouter（免费模型 · 需 Key）', baseUrl: 'https://openrouter.ai/api/v1', model: 'openai/gpt-oss-120b:free', models: [
         'openai/gpt-oss-120b:free',
         'openai/gpt-oss-20b:free',
         'qwen/qwen3-next-80b-a3b-instruct:free',
@@ -362,17 +366,20 @@ class PBLPathBuilder {
 
   // ─── LLM 配置管理 ─────────────────────────────
 
-  // 默认 OpenRouter 免费模型（需用户填 Key）
+  // 默认 Pollinations 免费模型（免 Key，OpenAI 兼容接口）
   static BUILTIN_KEY = '';
-  static BUILTIN_MODEL = 'openai/gpt-oss-120b:free';
-  static BUILTIN_BASE_URL = 'https://openrouter.ai/api/v1';
+  static BUILTIN_MODEL = 'openai';
+  static BUILTIN_BASE_URL = 'https://text.pollinations.ai/openai?referrer=teachany';
 
   _loadLLMConfig() {
     try {
       const saved = localStorage.getItem('teachany_pbl_config');
       if (saved) {
         const cfg = JSON.parse(saved);
+        const savedProvider = this.providers.find(p => p.id === cfg.providerId || p.baseUrl === cfg.baseUrl);
         if (cfg.apiKey && (String(cfg.apiKey).startsWith('sk-or-v1-a4d900') || String(cfg.apiKey).startsWith('sk-or-v1-1dd402'))) {
+          localStorage.removeItem('teachany_pbl_config');
+        } else if (!cfg.apiKey && !(savedProvider && savedProvider.noAuth)) {
           localStorage.removeItem('teachany_pbl_config');
         } else {
           this._llmConfig = cfg;
@@ -380,9 +387,9 @@ class PBLPathBuilder {
         }
       }
     } catch (e) { /* ignore */ }
-    // 默认配置：OpenRouter 专用 Key，开箱即用
+    // 默认配置：Pollinations 免费免 Key，开箱即用
     this._llmConfig = {
-      providerId: 'openrouter-free',
+      providerId: 'pollinations',
       apiKey: PBLPathBuilder.BUILTIN_KEY,
       model: PBLPathBuilder.BUILTIN_MODEL,
       baseUrl: PBLPathBuilder.BUILTIN_BASE_URL
@@ -400,7 +407,8 @@ class PBLPathBuilder {
       apiKey: this._llmConfig.apiKey || PBLPathBuilder.BUILTIN_KEY,
       model: this._llmConfig.model || provider.model || PBLPathBuilder.BUILTIN_MODEL,
       providerId: this._llmConfig.providerId || provider.id,
-      providerName: provider.name
+      providerName: provider.name,
+      noAuth: !!provider.noAuth
     };
   }
 
@@ -413,16 +421,19 @@ class PBLPathBuilder {
 
   async callLLM(messages, options = {}) {
     const cfg = this.getLLMConfig();
-    if (!cfg.apiKey) throw new Error('请先配置 API Key（点击右上角 ⚙️ 设置）');
+    if (!cfg.noAuth && !cfg.apiKey) throw new Error('请先配置 API Key（点击右上角 ⚙️ 设置）');
 
-    const endpoint = String(cfg.baseUrl || '').replace(/\/$/, '') + '/chat/completions';
+    const cleanBaseUrl = String(cfg.baseUrl || '').replace(/\/$/, '');
+    const endpoint = /\/(openai|chat\/completions)(?:\?.*)?$/i.test(cleanBaseUrl)
+      ? cleanBaseUrl
+      : cleanBaseUrl + '/chat/completions';
     const headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + cfg.apiKey
+      'Content-Type': 'application/json'
     };
+    if (!cfg.noAuth && cfg.apiKey) headers['Authorization'] = 'Bearer ' + cfg.apiKey;
 
     // OpenRouter 专属 header
-    if (cfg.baseUrl.includes('openrouter.ai')) {
+    if (cleanBaseUrl.includes('openrouter.ai')) {
       headers['HTTP-Referer'] = location.origin || 'https://teachany.app';
       const safeTitle = 'TeachAny PBL Path Builder';
       headers['X-Title'] = safeTitle;
@@ -461,6 +472,14 @@ class PBLPathBuilder {
     } finally {
       clearTimeout(timeout);
     }
+  }
+
+  _extractJsonObject(text) {
+    const raw = String(text || '').replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    const start = raw.indexOf('{');
+    const end = raw.lastIndexOf('}');
+    if (start >= 0 && end > start) return raw.slice(start, end + 1);
+    return raw;
   }
 
   // ─── PBL 路径分析核心 ──────────────────────────
@@ -557,7 +576,7 @@ ${summaryList}
     ];
 
     const response = await this.callLLM(messages);
-    const jsonStr = response.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    const jsonStr = this._extractJsonObject(response);
     const filter = JSON.parse(jsonStr);
 
     // 根据筛选条件过滤候选集
@@ -614,7 +633,7 @@ ${candidateList}
     ];
 
     const response = await this.callLLM(messages, { maxTokens: 4000, temperature: 0.2 });
-    const jsonStr = response.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    const jsonStr = this._extractJsonObject(response);
     const result = JSON.parse(jsonStr);
 
     // 解析匹配结果
