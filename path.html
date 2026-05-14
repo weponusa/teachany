@@ -1113,8 +1113,8 @@ body {
     <select id="providerSelect" onchange="onProviderChange()"></select>
     <label for="modelSelect">模型</label>
     <select id="modelSelect"></select>
-    <label for="apiKeyInput">API Key</label>
-    <input type="password" id="apiKeyInput" placeholder="粘贴你的 sk-... Key" />
+    <label for="apiKeyInput">API Key（默认服务商免填）</label>
+    <input type="password" id="apiKeyInput" placeholder="默认 Pollinations 免 Key；其他服务商填 sk-..." />
     <div class="hint" id="keyHint"></div>
     <label for="baseUrlInput">Base URL（自定义时填写）</label>
     <input type="text" id="baseUrlInput" placeholder="https://api.example.com/v1" />
@@ -1127,7 +1127,7 @@ body {
 
 <script src="./scripts/courseware-hub.js"></script>
 <script src="./scripts/learning-path.js"></script>
-<script src="./scripts/pbl-path.js?v=20260514-pbl-system-fix"></script>
+<script src="./scripts/pbl-path.js?v=20260514-free-llm"></script>
 <script src="./scripts/history-tracker.js" defer></script>
 <script>
 // ─── 全局状态 ──────────────────────────────────
@@ -1199,7 +1199,7 @@ async function analyzePBLGoal() {
     statusText.textContent = '正在加载多课标知识点索引（1300+ 节点）...';
     await builder.loadUnifiedIndex();
 
-    // 默认 OpenRouter 免费模型，需配置 API Key；点击 ⚙️ 设置
+    // 默认 Pollinations 免费免 Key 模型，无需用户配置 API Key
     const cfg = builder.getLLMConfig();
 
     // LLM 分析
@@ -1582,15 +1582,18 @@ function onProviderChange() {
 
   // 提示
   const hints = {
-    'openrouter-free': '去 openrouter.ai/keys 注册免费拿 Key（1 分钟搞定，送免费额度）',
+    'pollinations': '默认免费免 Key 接口，可直接分析；如服务临时拥堵，可切换其他服务商。',
+    'openrouter-free': 'OpenRouter 免费模型仍需注册 Key。',
     'deepseek': '最便宜，中文理解好。去 platform.deepseek.com 注册。',
     'openrouter': '聚合多个付费模型。去 openrouter.ai 注册。',
     'openai': '需要 OpenAI API Key。',
     'custom': '填写任何 OpenAI 兼容 API 的 Base URL 和 Key。'
   };
   const keyInput = document.getElementById('apiKeyInput');
-  keyInput.required = true;
-  keyInput.placeholder = 'sk-...';
+  keyInput.required = !provider.noAuth;
+  keyInput.disabled = !!provider.noAuth;
+  keyInput.placeholder = provider.noAuth ? '默认服务商免 Key' : 'sk-...';
+  if (provider.noAuth) keyInput.value = '';
   document.getElementById('keyHint').textContent = hints[providerId] || '';
 }
 

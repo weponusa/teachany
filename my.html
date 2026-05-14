@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <title>我的学习历程 — TeachAny</title>
+<link rel="icon" href="data:,">
 <meta name="description" content="本地浏览器存储的全部 TeachAny 学习记录：制作课件、学过课件、答题记录、AI 学伴、PBL 路径分析、导入课件，可一键导出/导入备份。">
 <link rel="stylesheet" href="./scripts/history-tracker.css">
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
@@ -160,6 +161,103 @@ function escapeHtml(s) {
   return div.innerHTML;
 }
 
+let publishedCourseRecords = [];
+let publishedById = new Map();
+let publishedByNode = new Map();
+let publishedCatalogLoaded = false;
+
+function normalizeCourseText(s) {
+  return String(s || '')
+    .replace(/（PBL\s*生成意图）|\(PBL\s*生成意图\)|（知识图谱制作意图）|\(知识图谱制作意图\)/gi, '')
+    .replace(/[\s·:：—\-_/\\()（）「」《》,，.。]+/g, '')
+    .toLowerCase();
+}
+
+function courseTitleTokens(s) {
+  const text = String(s || '').toLowerCase();
+  const tokens = new Set();
+  (text.match(/[a-z0-9][a-z0-9+-]{1,}/g) || []).forEach(t => tokens.add(t));
+  (text.match(/[\u4e00-\u9fa5]{2,}/g) || []).forEach(chunk => {
+    if (chunk.length <= 4) tokens.add(chunk);
+    for (let i = 0; i <= chunk.length - 2; i++) tokens.add(chunk.slice(i, i + 2));
+    for (let i = 0; i <= chunk.length - 3; i++) tokens.add(chunk.slice(i, i + 3));
+  });
+  return [...tokens].filter(t => !['pbl','生成','意图','课件','基础','操作','界面'].includes(t));
+}
+
+function publishedUrlFromCourse(c) {
+  if (!c) return '';
+  const direct = c.url || c.viewerUrl || c.download_url || '';
+  if (direct && !/\.teachany(?:$|[?#])/i.test(direct)) {
+    return direct.endsWith('/') ? direct : direct.replace(/\/index\.html$/i, '') + '/';
+  }
+  const path = c.path || c.local_path || '';
+  if (path) return path.replace(/^\.\//, '').replace(/\/index\.html$/i, '') + '/';
+  if (c.id && (c.status === 'community' || c.source === 'community')) return 'community/' + c.id + '/';
+  return '';
+}
+
+function addPublishedCourse(c) {
+  if (!c || !c.id) return;
+  const url = publishedUrlFromCourse(c);
+  if (!url) return;
+  const item = { ...c, url };
+  publishedCourseRecords.push(item);
+  [item.id, item.course_id].filter(Boolean).forEach(id => {
+    if (!publishedById.has(id)) publishedById.set(id, item);
+  });
+  [item.node_id, item.node, item.teachany_node].filter(Boolean).forEach(id => {
+    if (!publishedByNode.has(id)) publishedByNode.set(id, item);
+  });
+}
+
+async function ensurePublishedCourseCatalog() {
+  if (publishedCatalogLoaded) return;
+  publishedCatalogLoaded = true;
+  publishedCourseRecords = [];
+  publishedById = new Map();
+  publishedByNode = new Map();
+  const urls = ['./community/index.json', './registry.json'];
+  for (const url of urls) {
+    try {
+      const resp = await fetch(url + '?t=' + Date.now(), { cache: 'no-store' });
+      if (!resp.ok) continue;
+      const data = await resp.json();
+      const courses = Array.isArray(data) ? data : (data.courses || []);
+      courses.forEach(addPublishedCourse);
+    } catch (_e) { /* ignore */ }
+  }
+}
+
+function findPublishedCourseForItem(it) {
+  if (!it) return null;
+  const ids = [it.courseId, it.id, it.node]
+    .filter(Boolean)
+    .flatMap(id => [id, String(id).replace(/^pbl-intent-/, '').replace(/^kg-intent-/, '')]);
+  for (const id of ids) {
+    if (publishedById.has(id)) return publishedById.get(id);
+    if (publishedByNode.has(id)) return publishedByNode.get(id);
+  }
+
+  const rawName = it.name || it.title || '';
+  const itemName = normalizeCourseText(rawName);
+  if (!itemName) return null;
+  let best = null;
+  let bestScore = 0;
+  const tokens = courseTitleTokens(rawName);
+  publishedCourseRecords.forEach(c => {
+    const names = [c.name, c.title, c.name_zh, c.description, c.description_zh].filter(Boolean);
+    const haystack = normalizeCourseText(names.join(' '));
+    let score = 0;
+    if (haystack && (haystack.includes(itemName) || itemName.includes(normalizeCourseText(c.name || c.title)))) score += 80;
+    tokens.forEach(t => {
+      if (t.length >= 2 && haystack.includes(normalizeCourseText(t))) score += /^[a-z0-9+-]+$/.test(t) ? 18 : 6;
+    });
+    if (score > bestScore) { best = c; bestScore = score; }
+  });
+  return bestScore >= 18 ? best : null;
+}
+
 function buildViewerUrl(courseId, fallbackUrl) {
   if (fallbackUrl) return fallbackUrl;
   return 'imported-course.html?id=' + encodeURIComponent(courseId);
@@ -168,6 +266,7 @@ function buildViewerUrl(courseId, fallbackUrl) {
 function getCreatedItemUrl(it) {
   if (!it) return 'index.html';
   if (it.url) return it.url;
+  if (it.publishedUrl) return it.publishedUrl;
   if (it.source === 'import') return buildViewerUrl(it.courseId);
   if ((it.source === 'pbl' || it.source === 'knowledge-graph') && it.node) {
     return 'path.html?node=' + encodeURIComponent(it.node);
@@ -217,6 +316,17 @@ function normalizeCreatedItems(items) {
       it.grade = (current.manifest && current.manifest.grade) || it.grade;
       it.node = (current.manifest && current.manifest.node_id) || it.node;
       it.updatedAt = Date.parse(current.importedAt || '') || it.updatedAt || it.ts;
+    } else if (it.source === 'pbl' || it.source === 'knowledge-graph' || it.status === 'draft') {
+      const published = findPublishedCourseForItem(it);
+      if (published) {
+        it.publishedUrl = published.url;
+        it.courseId = published.id || it.courseId;
+        it.name = published.name || published.title || it.name;
+        it.subject = published.subject || it.subject;
+        it.grade = published.grade || it.grade;
+        it.node = published.node_id || published.node || it.node;
+        it.status = 'published';
+      }
     }
     const key = (it.source || 'unknown') + '|' + (it.node || it.courseId || it.id);
     if (seen.has(key)) return;
@@ -556,6 +666,7 @@ async function refreshAll() {
       }
     } catch (_e) { /* ignore */ }
   }
+  await ensurePublishedCourseCatalog();
   const all = TeachAnyHistory.getAll();
   const summary = TeachAnyHistory.getSummary();
 
