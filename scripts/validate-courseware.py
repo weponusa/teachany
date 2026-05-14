@@ -26,7 +26,9 @@ import shutil
 import subprocess
 import sys
 from collections import defaultdict
+from html import unescape
 from pathlib import Path
+from urllib.parse import unquote, urlparse
 
 LEVEL_RANGE = {'elementary': (1,6), 'middle': (7,9), 'high': (10,12)}
 
@@ -95,6 +97,62 @@ def detect_html_level(html_head):
     return None, None
 
 
+LOCAL_ASSET_REF_RE = re.compile(
+    r'''(?:\b(?:src|href|poster)\s*=\s*['"]([^'"]+)['"]|url\(\s*['"]?([^'")]+)['"]?\s*\))''',
+    re.IGNORECASE,
+)
+
+
+def should_skip_asset_ref(ref):
+    ref = (ref or '').strip()
+    if not ref or ref.startswith(('#', '{{')):
+        return True
+    lowered = ref.lower()
+    return lowered.startswith((
+        'http://', 'https://', 'data:', 'blob:', 'mailto:', 'tel:',
+        'javascript:', 'about:', 'chrome:', 'edge:',
+    ))
+
+
+def find_missing_local_asset_refs(course_dir, html_text):
+    """检测 HTML 中会在本地/Pages 部署时产生 404 的相对静态资源引用。"""
+    repo_root = Path(__file__).resolve().parents[1]
+    missing = []
+    seen = set()
+
+    for match in LOCAL_ASSET_REF_RE.finditer(html_text):
+        raw_ref = match.group(1) or match.group(2) or ''
+        ref = unescape(raw_ref).strip()
+        if should_skip_asset_ref(ref):
+            continue
+
+        parsed = urlparse(ref)
+        if parsed.scheme or parsed.netloc:
+            continue
+        clean_ref = unquote(parsed.path)
+        if not clean_ref or clean_ref.startswith('#'):
+            continue
+
+        if clean_ref.startswith('/'):
+            target = (repo_root / clean_ref.lstrip('/')).resolve()
+        else:
+            target = (course_dir / clean_ref).resolve()
+
+        key = (ref, str(target))
+        if key in seen:
+            continue
+        seen.add(key)
+
+        if not target.exists():
+            try:
+                target_display = target.relative_to(repo_root)
+            except ValueError:
+                target_display = target
+            missing.append((ref, str(target_display)))
+
+    return missing
+
+
 def check_baseline_quality(course_dir, html_text):
     """v6.6 新增：内容质量硬门槛（防止劣质课件混入 community）
 
@@ -111,12 +169,11 @@ def check_baseline_quality(course_dir, html_text):
     errors = []
     warns = []
 
-    # 1. TTS 文件数
-    tts_dir = course_dir / 'tts'
-    mp3_count = len(list(tts_dir.glob('*.mp3'))) if tts_dir.exists() else 0
-    if mp3_count < 5:
+    # 1. TTS 文件数（支持 tts/ 与 assets/tts/ 两种标准目录）
+    mp3_count = len(list(course_dir.glob('tts/*.mp3'))) + len(list(course_dir.glob('assets/tts/*.mp3')))
+    if mp3_count < 3:
         errors.append(('error',
-            f'{course_dir.name}: TTS 不足（{mp3_count} 个 mp3，至少需 5）— 课件应有完整音频讲解，缺 tts/ 目录或 mp3 不足'))
+            f'{course_dir.name}: TTS 不足（{mp3_count} 个 mp3，至少需 3）— 课件应覆盖导入/核心模块/小结等关键讲解'))
 
     # 2. 图片数（HTML 引用 + 实际文件）
     img_refs = len(re.findall(r"<img[^>]+src=['\"][^'\"]+['\"]", html_text))
@@ -146,11 +203,10 @@ def check_baseline_quality(course_dir, html_text):
         errors.append(('error',
             f'{course_dir.name}: 标准结构覆盖 {len(found)}/8（缺 {set(section_keywords)-set(found)}），至少需 5 个'))
 
-    # 4. 末尾知识图谱/相关章节（B-5）
-    tail = html_text[-3000:]  # 末尾 3KB
-    if not re.search(r'知识图谱|相关知识|前置知识|后续知识|knowledge[- ]map|延伸', tail, re.IGNORECASE):
+    # 4. 知识图谱/相关章节（B-5）：允许标准模块在脚本前出现，不再只看尾部 3KB
+    if not re.search(r'id=[\'\"]knowledge-graph[\'\"]|data-teachany-kg|知识图谱|相关知识|前置知识|后续知识|knowledge[- ]map|延伸', html_text, re.IGNORECASE):
         errors.append(('error',
-            f'{course_dir.name}: 课件末尾缺知识图谱章节（B-5），需有"前置知识/后续知识/相关知识"卡片'))
+            f'{course_dir.name}: 缺知识图谱章节（B-5），需挂载标准 data-teachany-kg 模块或相关知识卡片'))
 
     # 5. 课件文件总数（防止 1-2 文件蒙混）
     file_count = sum(1 for f in course_dir.rglob('*') if f.is_file())
@@ -368,50 +424,39 @@ def validate_one(course_dir):
                 issues.append(('error',
                     f'{course_dir.name}: HTML 疑似硬编码 OpenAI API Key（{key_leak.group(0)[:20]}…）— 严禁任何形式把 Key 写入代码（v5.34 强制 · 硬规则 #45）'))
 
-    # 6b. 幽灵引用检测（v6.1.1 新增）——HTML 引用了 ai-tutor 文件但文件不存在
-    #     根因：2026-04 批量上传的 10 个生物课件 HTML 引用了 ai-tutor.js/css 但未复制实际文件
-    if html.exists() and full_html:
-        if 'ai-tutor.css' in full_html and not (course_dir / 'ai-tutor.css').exists():
-            issues.append(('error',
-                f'{course_dir.name}: HTML 引用了 ai-tutor.css 但文件不存在（幽灵引用 · 需从 scripts/ai-tutor.css 复制）'))
-        if 'ai-tutor.js' in full_html and not (course_dir / 'ai-tutor.js').exists():
-            issues.append(('error',
-                f'{course_dir.name}: HTML 引用了 ai-tutor.js 但文件不存在（幽灵引用 · 需从 scripts/ai-tutor.js 复制）'))
+    # 6b. 共享脚本幽灵引用由通用本地资源死链检测统一处理，支持 ../../scripts/*.js/css。
 
     # 7. L3 TTS 语音基线（v5.34.6 新增，硬规则 #16/#31）
-    #    每个课件必须有 tts/*.mp3 语音文件 + 课件 HTML 必须有音频播放器 UI 元素
-    tts_dir = course_dir / 'tts'
-    mp3_files = list(tts_dir.glob('*.mp3')) if tts_dir.exists() else []
+    #    每个课件必须有 tts/*.mp3 或 assets/tts/*.mp3 语音文件 + 可见音频播放器 UI
+    mp3_files = list(course_dir.glob('tts/*.mp3')) + list(course_dir.glob('assets/tts/*.mp3'))
     if not mp3_files:
         issues.append(('error',
-            f'{course_dir.name}: 缺少 tts/*.mp3 语音文件（硬规则 #16/#31 强制 · edge-tts 生成，仅用户明确拒绝时豁免）'))
+            f'{course_dir.name}: 缺少 tts/*.mp3 或 assets/tts/*.mp3 语音文件（硬规则 #16/#31 强制）'))
     else:
         if len(mp3_files) < 3:
-            issues.append(('warn',
-                f'{course_dir.name}: 仅 {len(mp3_files)} 个 mp3 文件（建议 ≥ 3 段，与 section/slide 数量对齐）'))
-        # 必须有播放器 UI（audioBadge + audioPanel + mainAudio 任一标志）
+            issues.append(('error',
+                f'{course_dir.name}: 仅 {len(mp3_files)} 个 mp3 文件 < 3（至少覆盖三个核心讲解段）'))
+        for mp3 in mp3_files:
+            if mp3.stat().st_size < 20 * 1024:
+                issues.append(('error',
+                    f'{course_dir.name}: {mp3.relative_to(course_dir)} 仅 {mp3.stat().st_size} 字节，疑似静音/占位/低质量音频'))
+        # 必须有播放器 UI（标准 audio player 或旧 audioPlaylist 任一标志）
         if html.exists():
-            if 'audioBadge' not in full_html and 'audioPanel' not in full_html and 'audioPlaylist' not in full_html:
+            has_audio_ui = any(marker in full_html for marker in (
+                'data-teachany-audio-playlist', 'teachany-audio-player.js', 'audioPlaylist', 'audioBadge', 'audioPanel'
+            ))
+            if not has_audio_ui:
                 issues.append(('error',
-                    f'{course_dir.name}: tts/ 已有 mp3 但 HTML 缺音频播放器 UI（需 audioBadge/audioPanel/audioPlaylist 任一，v5.34.6 强制 · 硬规则 #26）'))
+                    f'{course_dir.name}: 已有 mp3 但 HTML 缺标准连续音频播放器 UI（需 data-teachany-audio-playlist + teachany-audio-player.js）'))
 
-    # 7b. TTS 幽灵引用检测（v6.1.1 新增）——HTML audioPlaylist 引用的 mp3 但文件不存在
-    if html.exists() and full_html:
-        tts_refs = re.findall(r'''(?:src|file|url)\s*[:=]\s*['"]\.?/?tts/([^'"]+\.mp3)['"]''', full_html)
-        if not tts_refs:
-            # 也尝试 audioPlaylist 数组中的路径
-            tts_refs = re.findall(r'''['"]\.?/?tts/([^'"]+\.mp3)['"]''', full_html)
-        for mp3_ref in set(tts_refs):
-            if not (course_dir / 'tts' / mp3_ref).exists():
-                issues.append(('error',
-                    f'{course_dir.name}: HTML 引用了 tts/{mp3_ref} 但文件不存在（TTS 幽灵引用 · 需用 edge-tts 生成）'))
+    # 7b. TTS 幽灵引用检测已由通用本地资源死链检测覆盖，支持 tts/ 与 assets/tts/。
 
     # 8. AI 生图基线（v5.34.6 新增，硬规则 #34）
     #    文/理/工/社科课件必须有 ≥2 张 assets/*.png/jpg 插图，并在 HTML <img> 引用
     assets_dir = course_dir / 'assets'
     img_files = []
     if assets_dir.exists():
-        img_files = [f for f in assets_dir.iterdir() if f.suffix.lower() in ('.png', '.jpg', '.jpeg', '.webp', '.svg')]
+        img_files = [f for f in assets_dir.rglob('*') if f.is_file() and f.suffix.lower() in ('.png', '.jpg', '.jpeg', '.webp', '.svg')]
     if html.exists() and full_html:
         img_tags = re.findall(r'<img[^>]+src=[\'"]\.?/?assets/[^\'"]+[\'"]', full_html)
         # 仅纯计算题课可豁免（subject=math 且 node_id 含 "calculation"/"operation"）
@@ -424,13 +469,14 @@ def validate_one(course_dir):
                 issues.append(('error',
                     f'{course_dir.name}: HTML 中 <img src="./assets/..."> 引用仅 {len(img_tags)} 处 < 2（硬规则 #34 强制 · 生成的图必须嵌入 HTML 对应 section）'))
 
-    # 8b. 图片幽灵引用检测（v6.1.1 新增）——HTML <img> 引用的 assets 图但文件不存在
+    # 8b. 本地资源幽灵引用检测（v7.9.16 增强）——HTML 引用的本地文件不存在会导致 404
     if html.exists() and full_html:
-        img_src_refs = re.findall(r'<img[^>]+src=[\'"]\.?/?assets/([^\'"]+)[\'"]', full_html)
-        for img_ref in set(img_src_refs):
-            if not (course_dir / 'assets' / img_ref).exists():
-                issues.append(('error',
-                    f'{course_dir.name}: HTML 引用了 assets/{img_ref} 但文件不存在（图片幽灵引用 · 需生成对应图片）'))
+        missing_refs = find_missing_local_asset_refs(course_dir, full_html)
+        if missing_refs:
+            preview = '；'.join(f'{ref} → {target}' for ref, target in missing_refs[:8])
+            more = f'；另有 {len(missing_refs) - 8} 个' if len(missing_refs) > 8 else ''
+            issues.append(('error',
+                f'{course_dir.name}: HTML 有 {len(missing_refs)} 个本地资源引用不存在（会导致 404）：{preview}{more}'))
 
     # 8c. Hero 图硬校验（v7.3）——不能只有 hero 文案而无知识结构主图
     if html.exists() and full_html:
@@ -481,6 +527,13 @@ def validate_one(course_dir):
         if not canvas_tags and not is_pure_chn_char:
             issues.append(('error',
                 f'{course_dir.name}: HTML 无原生 <canvas> 交互组件（硬规则 #33 强制 · 拖拽/画板/参数滑块/实时绘图任一；纯文言字词可用 SVG 替代但需在 manifest 声明）'))
+        elif canvas_tags:
+            has_canvas_logic = bool(re.search(r'getContext\s*\(|draw\w*\s*\(', full_html))
+            has_canvas_event = bool(re.search(r'addEventListener\s*\(\s*[\'\"](?:pointer|mouse|touch|click|input|change)', full_html))
+            has_student_control = bool(re.search(r'<(?:input|select|button)\b', full_html, re.IGNORECASE))
+            if not (has_canvas_logic and has_canvas_event and has_student_control):
+                issues.append(('error',
+                    f'{course_dir.name}: Canvas 存在但缺少真实互动闭环（需 getContext/draw + pointer/click/input/change 事件 + 学生可操作控件）'))
 
     # 11. Remotion 教学动画基线（v7.3 强化，硬规则 #32）
     #     每个课件必须有 ≥1 段真实 Remotion 渲染的 mp4，且必须带 audio 流。
