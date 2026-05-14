@@ -165,6 +165,17 @@ function buildViewerUrl(courseId, fallbackUrl) {
   return 'imported-course.html?id=' + encodeURIComponent(courseId);
 }
 
+function getCreatedItemUrl(it) {
+  if (!it) return 'index.html';
+  if (it.url) return it.url;
+  if (it.source === 'import') return buildViewerUrl(it.courseId);
+  if ((it.source === 'pbl' || it.source === 'knowledge-graph') && it.node) {
+    return 'path.html?node=' + encodeURIComponent(it.node);
+  }
+  if (it.node) return 'path.html?node=' + encodeURIComponent(it.node);
+  return 'my.html#created';
+}
+
 function getImportedCoursesForMy() {
   try {
     if (window.TeachAnyImporter && typeof TeachAnyImporter.getUserCourses === 'function') {
@@ -252,10 +263,10 @@ function renderCreated(grid, items) {
   }
   items.sort((a, b) => (b.updatedAt || b.ts || 0) - (a.updatedAt || a.ts || 0));
   grid.innerHTML = items.map(it => {
-    const sourceMap = { skill: 'SKILL', pbl: 'PBL', import: 'IMPORT', manual: 'MANUAL' };
+    const sourceMap = { skill: 'SKILL', pbl: 'PBL', import: 'IMPORT', manual: 'MANUAL', 'knowledge-graph': 'KG' };
     const sourceClass = it.source === 'skill' ? 'skill' : it.source === 'pbl' ? 'pbl' : it.source === 'import' ? 'import' : 'unknown';
     const sourceLabel = sourceMap[it.source] || it.source || '本机';
-    const url = buildViewerUrl(it.courseId, it.url);
+    const url = getCreatedItemUrl(it);
     return '<a class="history-card" href="' + url + '" target="_blank" rel="noopener">'
       + '<span class="source-tag ' + sourceClass + '">' + sourceLabel + '</span>'
       + '<h3>' + escapeHtml(it.name || it.courseId) + '</h3>'
@@ -417,6 +428,13 @@ function renderTutorChats(grid, items) {
   }).join('');
 }
 
+function getPBLNodes(run) {
+  return (run && run.graphData && Array.isArray(run.graphData.nodes)) ? run.graphData.nodes : (run.nodes || []);
+}
+function getPBLLinks(run) {
+  return (run && run.graphData && Array.isArray(run.graphData.links)) ? run.graphData.links : (run.links || []);
+}
+
 function renderPBLRuns(grid, items) {
   if (!items.length) {
     grid.innerHTML = emptyState('pbl_runs', '🧭', '还没有 PBL 路径分析',
@@ -426,12 +444,13 @@ function renderPBLRuns(grid, items) {
   }
   items.sort((a, b) => (b.ts || 0) - (a.ts || 0));
   grid.innerHTML = items.map(it => {
-    const card = document.createElement('a');
-    return '<a class="history-card" href="path.html?goal=' + encodeURIComponent(it.goal || '') + '" target="_blank" rel="noopener">'
+    const nodes = getPBLNodes(it);
+    const links = getPBLLinks(it);
+    return '<a class="history-card" href="path.html?pbl=' + encodeURIComponent(it.id || '') + '" target="_blank" rel="noopener">'
       + '<h3>' + escapeHtml(it.goal || '未命名 PBL') + '</h3>'
       + '<div class="meta-row">'
-      + '<span class="pill info">' + (it.nodeCount || 0) + ' 节点</span>'
-      + '<span class="pill">' + (it.linkCount || 0) + ' 关联</span>'
+      + '<span class="pill info">' + (it.nodeCount || nodes.length || 0) + ' 节点</span>'
+      + '<span class="pill">' + (it.linkCount || links.length || 0) + ' 关联</span>'
       + (it.matchedCount ? '<span class="pill success">核心 ' + it.matchedCount + '</span>' : '')
       + (it.externalCount ? '<span class="pill warning">外部 ' + it.externalCount + '</span>' : '')
       + (it.provider ? '<span class="pill">' + escapeHtml(it.provider) + '</span>' : '')
@@ -454,8 +473,8 @@ function renderPBLRuns(grid, items) {
 }
 
 function renderPBLThumb(el, run) {
-  const nodes = (run.nodes || []).slice(0, 50);
-  const links = (run.links || []).filter(l => {
+  const nodes = getPBLNodes(run).slice(0, 50);
+  const links = getPBLLinks(run).filter(l => {
     return nodes.some(n => n.id === l.source) && nodes.some(n => n.id === l.target);
   }).slice(0, 100);
   if (!nodes.length || typeof d3 === 'undefined') {
@@ -524,10 +543,18 @@ function renderImported(grid) {
 }
 
 /* ── 主流程 ──────────────────────────────────────────── */
-function refreshAll() {
+async function refreshAll() {
   if (!window.TeachAnyHistory) {
     showToast('SDK 未加载', 'error');
     return;
+  }
+  if (window.TeachAnyImporter && typeof TeachAnyImporter.pruneMissingCoursePayloads === 'function') {
+    try {
+      const result = await TeachAnyImporter.pruneMissingCoursePayloads();
+      if (result && result.removed && result.removed.length) {
+        showToast('已隐藏 ' + result.removed.length + ' 条本地数据缺失的导入课件', 'warning');
+      }
+    } catch (_e) { /* ignore */ }
   }
   const all = TeachAnyHistory.getAll();
   const summary = TeachAnyHistory.getSummary();

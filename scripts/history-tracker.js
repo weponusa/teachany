@@ -312,6 +312,7 @@
         externalCount: nodes.filter(n => n.layer === 'external').length,
         nodes,
         links,
+        graphData: { nodes, links },
         provider: providers && providers.providerName ? providers.providerName : '',
         model: providers && providers.model ? providers.model : '',
         ts: now()
@@ -322,6 +323,13 @@
         if (size > MAX_BYTES_PER_ITEM) {
           item.nodes = item.nodes.slice(0, 60);
           item.links = item.links.slice(0, 120);
+          item.graphData = { nodes: item.nodes, links: item.links };
+          item.truncated = true;
+        }
+        while (JSON.stringify(item).length > MAX_BYTES_PER_ITEM && item.nodes.length > 20) {
+          item.nodes = item.nodes.slice(0, Math.floor(item.nodes.length * 0.75));
+          item.links = item.links.filter(l => item.nodes.some(n => n.id === l.source) && item.nodes.some(n => n.id === l.target)).slice(0, Math.max(30, Math.floor(item.links.length * 0.75)));
+          item.graphData = { nodes: item.nodes, links: item.links };
           item.truncated = true;
         }
       } catch {}
