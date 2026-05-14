@@ -57,6 +57,80 @@
     return node && node.courses && node.courses.length > 0;
   }
 
+  function escapeHtml(text) {
+    return String(text || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function coursewarePrompt(node) {
+    var name = node && (node.name || node.id) || "该知识点";
+    var id = node && node.id || "";
+    return "帮我生成「" + name + "」的 TeachAny 交互式课件，知识点 ID 为 " + id + "。请按 TeachAny skill 规范输出完整 HTML 课件，包含教学目标、前测、核心讲解、真实互动模块、音频/视频资源、后测、知识图谱和质量校验。";
+  }
+
+  function recordMakeCourseIntent(node, prompt) {
+    try {
+      if (window.TeachAnyHistory && typeof window.TeachAnyHistory.recordCreated === "function" && node) {
+        window.TeachAnyHistory.recordCreated("kg-intent-" + node.id, {
+          source: "knowledge-graph",
+          name: (node.name || node.id) + "（知识图谱制作意图）",
+          subject: node.subject || "",
+          grade: node.grade ? String(node.grade) : "",
+          node: node.id,
+          url: "",
+          prompt: prompt,
+          status: "draft"
+        });
+      }
+    } catch (_e) { /* ignore */ }
+  }
+
+  function renderMakeCourseBox(panel, node) {
+    if (!panel || !node) return;
+    var old = panel.querySelector(".tkg-make-course-box");
+    if (old) old.remove();
+    var prompt = coursewarePrompt(node);
+    var promptEl = h("div", { class: "tkg-prompt", text: prompt });
+    var feedback = h("span", { class: "tkg-copy-feedback", text: "已复制" });
+    var copyBtn = h("button", {
+      class: "tkg-make-course-btn secondary",
+      type: "button",
+      text: "📋 复制提示词",
+      on: {
+        click: function () {
+          var done = function () {
+            feedback.classList.add("visible");
+            setTimeout(function () { feedback.classList.remove("visible"); }, 1600);
+          };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(prompt).then(done).catch(done);
+          } else {
+            var ta = document.createElement("textarea");
+            ta.value = prompt;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand("copy");
+            document.body.removeChild(ta);
+            done();
+          }
+        }
+      }
+    });
+    var box = h("div", { class: "tkg-make-course-box" }, [
+      h("strong", { text: "✨ 制作课件" }),
+      h("p", { text: "复制下面提示词，在 CodeBuddy/TeachAny skill 中生成这个知识点的课件。" }),
+      promptEl,
+      h("div", { class: "tkg-make-actions" }, [copyBtn, feedback])
+    ]);
+    panel.appendChild(box);
+    panel.scrollTop = panel.scrollHeight;
+    recordMakeCourseIntent(node, prompt);
+  }
+
   function h(tag, attrs, children) {
     var svgTags = ["svg", "g", "circle", "line", "text", "path", "defs", "marker", "polygon", "rect"];
     var el = svgTags.indexOf(tag) >= 0 ? document.createElementNS(SVG_NS, tag) : document.createElement(tag);
@@ -381,11 +455,12 @@
     if (hasCrs && node.courses && node.courses[0]) {
       var url = coursewareUrl(node.courses[0]);
       if (url) {
-        html += '<a class="course-link" href="' + url + '" target="_top">🚀 打开课件：' + (node.courses[0].name || node.courses[0].id) + '</a>';
+        html += '<a class="course-link" href="' + url + '" target="_top">🚀 打开课件：' + escapeHtml(node.courses[0].name || node.courses[0].id) + '</a>';
       }
     } else {
       html += '<div class="gap-msg">该知识点暂无官方课件，欢迎贡献社区版本。</div>';
     }
+    html += '<button type="button" class="course-link tkg-make-course-btn" data-tkg-make-course="' + escapeHtml(node.id) + '">✨ 制作课件</button>';
     return html;
   }
 
@@ -492,11 +567,17 @@
         if (!url) return;
         list.appendChild(h("a", {
           class: "tkg-link-card", href: url, target: "_top",
-          html: "<div><strong>" + (c.name || c.id) + "</strong><br><em>" + (c.source || "") + "</em></div><span>→</span>"
+          html: "<div><strong>" + escapeHtml(c.name || c.id) + "</strong><br><em>" + escapeHtml(c.source || "") + "</em></div><span>→</span>"
         }));
       });
       if (list.children.length) panel.appendChild(list);
     }
+    panel.appendChild(h("button", {
+      class: "tkg-make-course-btn",
+      type: "button",
+      text: "✨ 制作课件",
+      on: { click: function () { renderMakeCourseBox(panel, node); } }
+    }));
   }
 
   /* ─── 筛选 / 搜索 ─── */
@@ -705,6 +786,18 @@
     // 鼠标进入 tooltip 时取消隐藏；离开 tooltip 时立即隐藏
     tooltip.addEventListener("mouseenter", function () { showTooltip(); });
     tooltip.addEventListener("mouseleave", function () { scheduleHide(); });
+    tooltip.addEventListener("click", function (ev) {
+      var btn = ev.target && ev.target.closest ? ev.target.closest("[data-tkg-make-course]") : null;
+      if (!btn) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      var node = manifest.nodes[btn.getAttribute("data-tkg-make-course")];
+      if (node) {
+        focusNode(node.id);
+        renderMakeCourseBox(panel, node);
+        scheduleHide();
+      }
+    });
 
     function onHover(n, ev) {
       tooltip.innerHTML = buildTooltipContent(n);

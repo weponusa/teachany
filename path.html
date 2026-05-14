@@ -1164,27 +1164,15 @@ function getSelectedSystems() {
   return systems.includes('all') ? ['all'] : systems;
 }
 
+function markPBLGoalDirty() {
+  const btn = document.getElementById('pblAnalyzeBtn');
+  if (btn) btn.textContent = '🔍 分析学习路径';
+}
+
 async function fillPBLExample(el) {
   const goal = el.dataset.goal;
-  const key = el.dataset.key || el.textContent.trim().replace(/\s+/g,'_');
   document.getElementById('pblGoalInput').value = goal;
-
-  // 先尝试加载预存结果（静态 JSON，无需 LLM/索引）
-  try {
-    const resp = await fetch(`./data/pbl-demos/${encodeURIComponent(key)}.json`);
-    if (resp.ok) {
-      const cached = await resp.json();
-      if (cached && cached.graphData) {
-        // 直接渲染，跳过分析
-        const statusEl = document.getElementById('pblStatus');
-        statusEl.style.display = 'none';
-        renderPBLResult(cached);
-        return;
-      }
-    }
-  } catch (e) { /* 无预存，走实时分析 */ }
-
-  analyzePBLGoal();
+  markPBLGoalDirty();
 }
 
 async function analyzePBLGoal() {
@@ -1683,13 +1671,8 @@ const nodeIdFromURL = urlParams.get('node');
 window.addEventListener('DOMContentLoaded', async () => {
   const t0 = performance.now();
 
-  // PBL 输入框回车触发
-  document.getElementById('pblGoalInput').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      analyzePBLGoal();
-    }
-  });
+  // PBL 输入只更新文本，不触发分析；必须点击“分析学习路径”按钮才开始计算
+  document.getElementById('pblGoalInput').addEventListener('input', markPBLGoalDirty);
 
   // 点击设置弹窗外部关闭
   document.getElementById('settingsOverlay').addEventListener('click', (e) => {
@@ -1704,10 +1687,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // 预加载 PBL 索引（后台静默）
-  window.PBLPathBuilder.loadUnifiedIndex().catch(e => 
-    console.warn('[PBL] 后台预加载索引失败:', e.message)
-  );
+  // PBL 索引不再后台预加载，避免输入项目前就开始大量计算/请求；点击“分析学习路径”后再加载。
 
   // 第1步：加载选择器数据
   updateInitProgress(10, '加载知识节点数据...');
