@@ -56,8 +56,8 @@ class PBLPathBuilder {
     if (this.loaded) return this.unifiedIndex;
     if (this._loadPromise) return this._loadPromise;
 
-    // v7.11.1：缓存 key 升级，避免旧 unified index 缓存里没有 courses/registry 覆盖导致“有课件”节点链接过期
-    const CACHE_KEY = 'teachany_pbl_unified_index_v2';
+    // v7.11.2：缓存 key 升级，修复旧缓存把 IB/AP 等国际课标节点误标为 CN 中国课标
+    const CACHE_KEY = 'teachany_pbl_unified_index_v3';
     const CACHE_TTL = 1800000;
     try {
       const cached = localStorage.getItem(CACHE_KEY);
@@ -146,7 +146,7 @@ class PBLPathBuilder {
 
     // 写入缓存
     try {
-      const CACHE_KEY = 'teachany_pbl_unified_index_v2';
+      const CACHE_KEY = 'teachany_pbl_unified_index_v3';
       localStorage.setItem(CACHE_KEY, JSON.stringify({
         ts: Date.now(),
         entries: [...this.unifiedIndex.entries()]
@@ -161,23 +161,19 @@ class PBLPathBuilder {
 
     // 用已有数据源
     if (sysId === 'cn') {
-      // 中国课标从 index.json 加载
+      // 中国课标直接从 nodes-metadata 过滤 cn/ 路径，避免旧 fallback 把 IB/AP 等国际节点误标为 CN。
       try {
-        const resp = await fetch('./data/knowledge-points/index.json?t=' + Date.now());
+        const resp = await fetch('./data/nodes-metadata.json?t=' + Date.now());
         const data = await resp.json();
-        const nodes = data.knowledge_points || data.nodes || data;
-        nodes.forEach(n => {
-          allNodes.push({ ...n, treePath: n.tree_file || '', subject: n.subject || this._inferSubject(n.id) });
-        });
+        (data.nodes || [])
+          .filter(n => String(n.graph_path || n.tree_file || '').startsWith('cn/'))
+          .forEach(n => allNodes.push({
+            ...n,
+            treePath: n.treePath || n.graph_path || n.tree_file || '',
+            subject: n.subject || this._inferSubject(n.id)
+          }));
       } catch (e) {
-        console.warn(`[PBL] CN index.json 加载失败，尝试从 nodes-metadata 加载`);
-        try {
-          const resp = await fetch('./data/nodes-metadata.json?t=' + Date.now());
-          const data = await resp.json();
-          (data.nodes || []).forEach(n => allNodes.push(n));
-        } catch (e2) {
-          console.warn(`[PBL] CN nodes-metadata.json 也加载失败`);
-        }
+        console.warn(`[PBL] CN nodes-metadata.json 加载失败`);
       }
     } else {
       // 国际课标从各树文件加载
@@ -204,26 +200,35 @@ class PBLPathBuilder {
   }
 
   async _discoverTreeDirs(basePath) {
-    // 静态站点无法列出目录，用已知目录列表
+    // 静态站点无法列出目录，用真实存在的目录列表，避免对不存在路径发起大量 404 请求。
     const knownDirs = {
-      ap: ['./data/trees/ap/al/', './data/trees/ap/'],
-      cambridge: ['./data/trees/cambridge/al/', './data/trees/cambridge/igcse/', './data/trees/cambridge/'],
-      ib: ['./data/trees/ib/dp/', './data/trees/ibmyp/', './data/trees/ib/'],
-      us: ['./data/trees/us/ccss/', './data/trees/us/']
+      ap: ['./data/trees/ap/high/'],
+      cambridge: ['./data/trees/cambridge/al/', './data/trees/cambridge/igcse/', './data/trees/cambridge/lsec/', './data/trees/cambridge/primary/'],
+      ib: ['./data/trees/ib/dp/', './data/trees/ib/myp/', './data/trees/ib/pyp/'],
+      us: ['./data/trees/us/hs/', './data/trees/us/ms/', './data/trees/us/k5/']
     };
     const sysId = basePath.split('/').filter(Boolean).pop();
     return knownDirs[sysId] || [basePath];
   }
 
   async _discoverTreeFiles(dirPath) {
-    // v7.9.14：直接返回静态已知学科列表，不再做 HEAD 探测（消除 60+ 次网络请求）
-    const subjects = [
-      'math', 'physics', 'chemistry', 'biology', 'chinese', 'english',
-      'history', 'geography', 'info-tech', 'science', 'combined-science',
-      'computer-science', 'economics', 'psychology', 'art', 'music',
-      'pe', 'drama', 'design'
-    ];
-    return subjects.map(s => dirPath + s + '.json');
+    // v7.11.2：按目录返回真实存在的树文件，避免 404 噪声，并覆盖 IB MYP/PYP、AP high、US hs/ms/k5。
+    const knownFilesByDir = {
+      './data/trees/ap/high/': ['biology','calculus-ab','calculus','chemistry','cs','english','physics-1','physics-c','us-history'],
+      './data/trees/cambridge/al/': ['biology','chemistry','economics','english','further-math','math','physics'],
+      './data/trees/cambridge/igcse/': ['biology','chemistry','cs','economics','english','global-persp','math','physics'],
+      './data/trees/cambridge/lsec/': ['english','humanities','ict','math','science'],
+      './data/trees/cambridge/primary/': ['computing','english','math','science'],
+      './data/trees/ib/dp/': ['biology','cas','chemistry','economics','ee','english-a','history','math-aa','math-ai','physics','tok'],
+      './data/trees/ib/myp/': ['arts','design','individuals-societies','language-acquisition','language-literature','mathematics','pe','sciences'],
+      './data/trees/ib/pyp/': ['how-we-express','how-we-organize','how-world-works','sharing-planet','where-we-are','who-we-are'],
+      './data/trees/us/hs/': ['algebra','biology','chemistry','ela','geometry','physics','precalc','us-history','world-history'],
+      './data/trees/us/ms/': ['ela','math','science','social-studies'],
+      './data/trees/us/k5/': ['ela','math','science','social-studies']
+    };
+    const files = knownFilesByDir[dirPath];
+    if (files) return files.map(s => dirPath + s + '.json');
+    return [];
   }
 
   _extractNodesFromTree(tree, sysId, treePath) {
