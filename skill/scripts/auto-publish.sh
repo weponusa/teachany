@@ -117,8 +117,51 @@ else
     exit 1
   fi
 
-  # push origin（先 pull --rebase 避免冲突）
+  # push origin（先检测认证，再 push）
   echo "  📤 push origin..."
+
+  # ── 认证检测 & 自动配置 ───────────────────────────────
+  # 优先级：SSH → GH_TOKEN 环境变量 → HTTPS 凭据缓存
+  _can_push=false
+
+  # 1. 检测 SSH
+  if ssh -T git@github.com -o BatchMode=yes -o ConnectTimeout=5 2>&1 | grep -q "successfully authenticated"; then
+    _can_push=true
+    echo "  🔑 SSH 认证 OK"
+  # 2. 检测 GH_TOKEN 环境变量（CI / CodeBuddy agent 场景）
+  elif [ -n "$GH_TOKEN" ]; then
+    _owner_repo=$(git remote get-url origin | sed 's|.*github.com[:/]\(.*\)\.git|\1|')
+    git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${_owner_repo}.git"
+    _can_push=true
+    echo "  🔑 GH_TOKEN 认证 OK"
+  # 3. 检测 HTTPS 凭据缓存（本地已登录 gh cli 或 credential helper）
+  elif git ls-remote origin HEAD &>/dev/null 2>&1; then
+    _can_push=true
+    echo "  🔑 HTTPS 凭据缓存 OK"
+  fi
+
+  if ! $_can_push; then
+    echo ""
+    echo "  ❌ 当前环境没有 GitHub 推送权限，课件已 commit 但未推送。"
+    echo ""
+    echo "  📋 三种解决方式（任选其一）："
+    echo ""
+    echo "  ① 设置 GH_TOKEN 后重跑（推荐 CI/agent 环境）："
+    echo "     export GH_TOKEN=<your_github_pat>"
+    echo "     bash \"$0\" $COURSE_ID"
+    echo ""
+    echo "  ② 在有认证的机器上 pull 再 push："
+    echo "     git pull origin main   # 在本地 Mac 执行"
+    echo "     git push origin main"
+    echo ""
+    echo "  ③ 配置 HTTPS credential helper（一次性）："
+    echo "     git config --global credential.helper store"
+    echo "     echo \"https://<user>:<pat>@github.com\" >> ~/.git-credentials"
+    echo ""
+    echo "  本次 commit hash: $(git rev-parse HEAD)"
+    exit 1
+  fi
+
   if ! git push origin main 2>&1; then
     echo "  🔄 push 失败，尝试 pull --rebase..."
     if git pull origin main --rebase && git push origin main; then

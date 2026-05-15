@@ -129,6 +129,13 @@ bash "$TEACHANY_SKILL/scripts/auto-publish.sh" <course-id>
 
 `auto-publish.sh` 完成：验证目录 → `rebuild-index.py`（注册+挂树）→ `git commit/push` → 验证线上 URL。
 
+**认证说明（push 前必须满足其一）**：
+- SSH 已配置（本地 Mac 默认走 SSH，无需额外操作）
+- CI / Agent 环境：`export GH_TOKEN=<github_pat>` 后再跑脚本，脚本会自动配置 HTTPS remote
+- HTTPS credential helper 已缓存（`gh auth login` 后自动生效）
+
+如果当前环境**没有任何认证**，脚本会提前报错并给出三条修复指引，不会让 commit 悄悄卡住。
+
 如果脚本不存在，先在仓库根 `scripts/` 与 `skill/scripts/` 中搜索；不要引用不存在的脚本名。
 
 ## 交付标准
