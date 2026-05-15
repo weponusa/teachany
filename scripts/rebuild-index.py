@@ -899,6 +899,10 @@ def main():
     with open('registry.json', 'w', encoding='utf-8') as f:
         json.dump(registry, f, ensure_ascii=False, indent=2)
 
+    # 同步 registry-v2.json（unified-loader.js Gallery 读取此文件）
+    with open('registry-v2.json', 'w', encoding='utf-8') as f:
+        json.dump(registry, f, ensure_ascii=False, indent=2)
+
     print(f'   注册表已重建: {len(registry_courses)} 个课件 (官方={official_count}, 社区={community_count}, 课程={course_count})')
 
     # v7.7: 同步派生索引，解决"社区课件已进 registry 但 Gallery/知识图谱不显示"的断链问题
