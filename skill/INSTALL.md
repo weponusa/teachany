@@ -112,7 +112,7 @@ rm -rf ~/.agents/skills/teachany
 从 v7.12 起，新课件默认要求通过手机视口与小程序 `web-view` readiness：
 
 - 课件需包含 `viewport-fit=cover`、safe-area 处理、移动端单列布局、44px 以上触屏按钮；
-- 小程序嵌入使用 `weponusa/teachany/miniprogram/` 模板（如有）；
+- 小程序嵌入使用 `weponusa/teachany/miniprogram/（如有）` 模板；
 - 小程序后台需将 `weponusa.github.io`（或自有 CNAME 域名）配置为业务域名；
 - 个人类型小程序不支持 `web-view`。
 

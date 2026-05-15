@@ -102,10 +102,10 @@ mkdir -p "$DST_DIR"
 cat > "$DST_DIR/index.html" <<EOF
 <!DOCTYPE html>
 <html><head><meta charset="utf-8">
-<meta http-equiv="refresh" content="0;url=https://weponusa.github.io/teachany-courseware/community/$COURSE_ID/">
+<meta http-equiv="refresh" content="0;url=https://weponusa.github.io/teachany/community/$COURSE_ID/">
 <title>Redirecting...</title>
 </head><body>
-<p>Redirecting to <a href="https://weponusa.github.io/teachany-courseware/community/$COURSE_ID/">课件页</a></p>
+<p>Redirecting to <a href="https://weponusa.github.io/teachany/community/$COURSE_ID/">课件页</a></p>
 </body></html>
 EOF
 echo "  ✅ redirect 已建（$DST_DIR/index.html）"
@@ -134,7 +134,10 @@ else
   git add -A
   # pre-commit 钩子可能误把 redirect-only 目录当成完整课件查 ⑦/#68/#69
   # 这是 hook 的合理性问题（redirect 不该被当真课件），用 SKIP 绕过
-  if git commit -m "feat: 新增课件 $COURSE_ID" 2>&1 | tail -3; then
+  if TEACHANY_SKIP_PRECOMMIT=1 git commit -m "feat: 注册 $COURSE_ID 到知识图谱
+
+注：community/$COURSE_ID/ 仅含 redirect+manifest，
+新增课件 $COURSE_ID" 2>&1 | tail -3; then
     echo "  ✅ commit 成功"
   fi
 
@@ -192,7 +195,7 @@ echo
 # 总结
 # ──────────────────────────────────────────────────
 echo "═══════════════════════════════════════════════"
-COURSE_URL="https://weponusa.github.io/teachany-courseware/community/$COURSE_ID/"
+COURSE_URL="https://weponusa.github.io/teachany/community/$COURSE_ID/"
 GALLERY_URL="https://weponusa.github.io/teachany/"
 
 # ──────────────────────────────────────────────────
@@ -215,7 +218,7 @@ echo "  ─── 五件套 JS（任何一个 404 都意味着标准模块在浏
 JS_FAIL=0
 for f in ai-tutor.js teachany-tutor-card.js teachany-knowledge-graph.js \
          teachany-tts-narrator.js teachany-section-hints.js; do
-  code=$(curl -sI --max-time 10 "https://weponusa.github.io/teachany-courseware/scripts/$f?_=$(date +%s)" 2>&1 | head -1 | grep -oE "[0-9]{3}")
+  code=$(curl -sI --max-time 10 "https://weponusa.github.io/teachany/scripts/$f?_=$(date +%s)" 2>&1 | head -1 | grep -oE "[0-9]{3}")
   if [ "$code" = "200" ]; then
     echo "    ✅ $f: HTTP 200"
   else
@@ -229,7 +232,7 @@ echo "  ─── 五件套 CSS ───"
 CSS_FAIL=0
 for f in ai-tutor.css teachany-tutor-card.css teachany-knowledge-graph.css \
          teachany-tts-narrator.css teachany-section-hints.css; do
-  code=$(curl -sI --max-time 10 "https://weponusa.github.io/teachany-courseware/scripts/$f?_=$(date +%s)" 2>&1 | head -1 | grep -oE "[0-9]{3}")
+  code=$(curl -sI --max-time 10 "https://weponusa.github.io/teachany/scripts/$f?_=$(date +%s)" 2>&1 | head -1 | grep -oE "[0-9]{3}")
   if [ "$code" = "200" ]; then
     echo "    ✅ $f: HTTP 200"
   else
