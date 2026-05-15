@@ -1,19 +1,1719 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta http-equiv="refresh" content="0; url=https://weponusa.github.io/teachany-courseware/community/imperial-unification/index.html">
-  <link rel="canonical" href="https://weponusa.github.io/teachany-courseware/community/imperial-unification/index.html">
-  <title>TeachAny 课件已迁移</title>
-  <script>location.replace('https://weponusa.github.io/teachany-courseware/community/imperial-unification/index.html');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="teachany-prerequisites" content="early-civilizations">
+<title>秦汉统一多民族国家 · TeachAny v5.27</title>
+<meta name="teachany-node" content="imperial-unification">
+<meta name="teachany-subject" content="history">
+<meta name="teachany-domain" content="ancient-china">
+<meta name="teachany-grade" content="7">
+<meta name="teachany-difficulty" content="3">
+<meta name="teachany-version" content="2.0">
+<meta name="teachany-author" content="TeachAny">
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<!-- Canvas-based interactive map (v4 engine, no WebGL dependency) -->
+<style>
+:root {
+  --bg: #f8fafc;
+  --primary: #b91c1c;
+  --secondary: #92400e;
+  --accent: #d97706;
+  --success: #059669;
+  --card: #fff;
+  --danger: #ef4444;
+  --text: #1e293b;
+  --dim: #64748b;
+  --border: rgba(0,0,0,0.08);
+  --gold: #d4a017;
+  --bronze: #8B6914;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+.nav { position:fixed; top:0; left:0; right:0; z-index:1000; background:rgba(127,29,29,0.85); backdrop-filter:blur(16px); padding:0 24px; display:flex; align-items:center; height:56px; gap:8px; overflow-x:auto; }
+.nav-brand { font-weight:700; color:#fef2f2; font-size:15px; white-space:nowrap; margin-right:12px; }
+.nav a { color:rgba(254,242,242,0.7); text-decoration:none; font-size:13px; padding:6px 14px; border-radius:20px; white-space:nowrap; transition:all .25s; }
+.nav a:hover, .nav a.active { background:rgba(255,255,255,0.15); color:#fef2f2; }
+.container { max-width:1100px; margin:0 auto; padding:76px 20px 40px; }
+.hero { text-align:center; padding:60px 20px 48px; background:linear-gradient(135deg,#7f1d1d 0%,#92400e 50%,#78350f 100%); color:#fef2f2; border-radius:20px; margin-bottom:40px; position:relative; overflow:hidden; }
+.hero::before { content:''; position:absolute; top:0; left:0; right:0; bottom:0; background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0L60 30L30 60L0 30Z' fill='none' stroke='rgba(255,255,255,0.06)' stroke-width='1'/%3E%3C/svg%3E"); }
+.hero h1 { font-size:38px; font-weight:800; margin-bottom:12px; position:relative; text-shadow:0 2px 8px rgba(0,0,0,0.3); }
+.hero .subtitle { font-size:18px; opacity:0.9; margin-bottom:20px; position:relative; }
+.hero .meta { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; position:relative; }
+.hero .meta span { background:rgba(255,255,255,0.15); padding:4px 14px; border-radius:20px; font-size:13px; }
+.section { margin-bottom:40px; }
+.section-title { font-size:22px; font-weight:700; margin-bottom:20px; padding-left:16px; border-left:4px solid var(--primary); display:flex; align-items:center; gap:8px; }
+.card { background:var(--card); border-radius:14px; padding:28px; box-shadow:0 1px 3px rgba(0,0,0,0.06); margin-bottom:20px; border:1px solid var(--border); }
+.card h3 { font-size:18px; margin-bottom:12px; color:var(--primary); }
+.card p { margin-bottom:10px; color:#475569; }
+.highlight { color:var(--primary); font-weight:600; }
+.formula-box { background:linear-gradient(135deg,#fef3c7,#fde68a); padding:16px 20px; border-radius:10px; font-size:16px; text-align:center; margin:12px 0; font-weight:600; color:#78350f; border-left:4px solid var(--gold); }
+.note { background:#fef2f2; border-left:4px solid var(--primary); padding:12px 16px; border-radius:0 8px 8px 0; margin:12px 0; font-size:14px; color:#991b1b; }
+.timeline { position:relative; padding:20px 0; }
+.timeline::before { content:''; position:absolute; left:24px; top:0; bottom:0; width:3px; background:linear-gradient(to bottom,var(--primary),var(--accent),var(--success)); border-radius:2px; }
+.timeline-item { position:relative; padding-left:60px; margin-bottom:24px; }
+.timeline-dot { position:absolute; left:16px; top:4px; width:20px; height:20px; border-radius:50%; border:3px solid var(--primary); background:var(--card); z-index:1; }
+.timeline-item.han .timeline-dot { border-color:var(--accent); }
+.timeline-year { font-size:13px; color:var(--dim); font-weight:600; }
+.timeline-title { font-size:15px; font-weight:700; color:var(--text); }
+.timeline-desc { font-size:14px; color:#64748b; margin-top:2px; }
+/* Map — Canvas-based v4 engine */
+#map-container { width:100%; height:560px; border-radius:14px; overflow:hidden; position:relative; border:2px solid var(--border); background:#0a1628; }
+#map-canvas { display:block; width:100%; height:100%; cursor:grab; }
+#map-canvas:active { cursor:grabbing; }
+/* Map UI overlays */
+.map-topbar { position:absolute; top:0; left:0; right:0; height:48px; background:linear-gradient(180deg,rgba(10,22,40,.92),rgba(10,22,40,.5) 80%,transparent); display:flex; align-items:center; padding:0 14px; gap:10px; z-index:15; pointer-events:none; }
+.map-topbar>* { pointer-events:auto; }
+.map-d-badge { padding:3px 12px; border-radius:4px; font-size:15px; font-weight:700; letter-spacing:1px; border:2px solid; color:#4a6fa5; border-color:#4a6fa5; background:rgba(10,22,40,.6); }
+.map-d-year { font-family:monospace; font-size:12px; color:rgba(255,255,255,.6); }
+.map-d-title { font-size:12px; font-weight:700; color:rgba(255,255,255,.8); }
+/* Timeline */
+.map-timeline { position:absolute; bottom:0; left:0; right:0; background:linear-gradient(0deg,rgba(10,22,40,.92),rgba(10,22,40,.5) 80%,transparent); padding:20px 16px 10px; z-index:15; }
+.map-tl-track { position:relative; height:28px; margin:0 40px; cursor:pointer; }
+.map-tl-bg { position:absolute; top:12px; left:0; right:0; height:4px; background:rgba(255,255,255,.1); border-radius:2px; }
+.map-tl-fill { position:absolute; top:12px; left:0; height:4px; border-radius:2px; transition:width .15s; }
+.map-tl-thumb { position:absolute; top:6px; width:12px; height:12px; border-radius:50%; background:#fff; border:3px solid; transform:translateX(-50%); cursor:grab; z-index:5; box-shadow:0 0 6px rgba(192,57,43,.5); transition:left .15s; }
+.map-tl-seg { position:absolute; top:4px; height:16px; border-radius:3px; opacity:.35; transition:opacity .3s; }
+.map-tl-seg.active { opacity:.85; }
+.map-tl-lbl { position:absolute; top:24px; font-size:9px; transform:translateX(-50%); white-space:nowrap; color:rgba(255,255,255,.35); }
+.map-tl-lbl.active { color:#fff; font-weight:700; }
+.map-tl-years { display:flex; justify-content:space-between; margin:0 40px; font-size:9px; color:rgba(255,255,255,.3); font-family:monospace; }
+/* Play button */
+.map-play-btn { position:absolute; bottom:58px; left:50%; transform:translateX(-50%); z-index:16; background:rgba(192,57,43,.8); color:#fff; border:none; padding:5px 18px; border-radius:16px; font-size:11px; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all .2s; }
+.map-play-btn:hover { background:rgba(192,57,43,1); transform:translateX(-50%) scale(1.05); }
+/* Events panel */
+.map-events { position:absolute; top:52px; left:8px; width:260px; max-height:calc(100% - 120px); overflow-y:auto; z-index:15; display:flex; flex-direction:column; gap:4px; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,.12) transparent; pointer-events:auto; }
+.map-ev-card { background:rgba(10,22,40,.85); border-radius:5px; padding:8px 10px; border-left:3px solid; cursor:pointer; opacity:0; transform:translateX(-12px); animation:mapSlideIn .3s forwards; transition:background .2s; font-size:11px; color:#ddd; }
+.map-ev-card:hover { background:rgba(20,30,55,.95); }
+@keyframes mapSlideIn { to { opacity:1; transform:translateX(0); } }
+.map-ev-hd { display:flex; align-items:center; gap:5px; margin-bottom:2px; }
+.map-ev-icon { font-size:12px; }
+.map-ev-nm { font-size:11px; font-weight:700; flex:1; }
+.map-ev-yr { font-size:9px; color:rgba(255,255,255,.4); font-family:monospace; }
+.map-ev-ds { font-size:10px; color:rgba(255,255,255,.5); line-height:1.5; }
+/* Legend */
+.map-legend { position:absolute; top:52px; right:8px; z-index:15; background:rgba(10,22,40,.85); border-radius:5px; padding:8px 10px; min-width:120px; font-size:10px; color:rgba(255,255,255,.7); pointer-events:auto; }
+.map-legend h4 { font-size:10px; margin-bottom:6px; color:rgba(255,255,255,.8); }
+.map-legend-item { display:flex; align-items:center; gap:6px; margin-bottom:3px; }
+.map-legend-color { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.map-lg-line { width:16px; height:0; flex-shrink:0; }
+/* Desc panel */
+.map-desc { position:absolute; bottom:68px; right:8px; z-index:15; width:280px; background:rgba(10,22,40,.85); border-radius:5px; padding:10px 12px; border-left:3px solid #c0392b; display:none; color:#ddd; pointer-events:auto; }
+.map-desc h3 { font-size:13px; margin-bottom:3px; }
+.map-desc .sub { font-size:10px; color:rgba(255,255,255,.4); margin-bottom:4px; }
+.map-desc p { font-size:11px; line-height:1.6; color:rgba(255,255,255,.65); }
+/* Popup */
+.map-popup { position:absolute; z-index:20; background:rgba(10,22,40,.92); border:1px solid rgba(255,255,255,.15); border-radius:7px; padding:10px 12px; max-width:240px; display:none; pointer-events:auto; box-shadow:0 4px 16px rgba(0,0,0,.4); color:#ddd; }
+.map-popup .pp-close { position:absolute; top:3px; right:6px; cursor:pointer; color:rgba(255,255,255,.35); font-size:14px; }
+.map-popup .pp-title { font-size:12px; font-weight:700; margin-bottom:3px; }
+.map-popup .pp-sub { font-size:10px; color:rgba(255,255,255,.4); margin-bottom:4px; }
+.map-popup .pp-body { font-size:11px; line-height:1.55; color:rgba(255,255,255,.65); }
+.map-zoom-info { position:absolute; bottom:68px; left:8px; z-index:15; font-size:9px; color:rgba(255,255,255,.25); font-family:monospace; pointer-events:none; }
+/* Map controls below card */
+.map-controls { display:none; } /* Controls are now integrated into the map UI */
+.map-btn { display:none; }
+/* Interactive Lab */
+.lab-controls { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px; margin:16px 0; }
+.control-group { background:#f1f5f9; padding:14px 16px; border-radius:10px; }
+.control-group label { display:block; font-size:13px; font-weight:600; color:var(--dim); margin-bottom:6px; }
+.control-group input[type=range] { width:100%; accent-color:var(--primary); }
+.control-group .value { font-size:22px; font-weight:700; color:var(--primary); margin-top:4px; }
+.lab-result { background:linear-gradient(135deg,#fef3c7,#fde68a); padding:16px 20px; border-radius:10px; margin-top:12px; text-align:center; }
+.lab-result .formula { font-size:16px; font-weight:600; color:#78350f; }
+.lab-result .detail { font-size:14px; color:#92400e; margin-top:4px; }
+canvas { width:100%; border-radius:10px; background:#f8fafc; display:block; }
+/* Knowledge Graph */
+#kg-svg { width:100%; height:400px; }
+.kg-legend { display:flex; gap:20px; justify-content:center; margin-top:12px; flex-wrap:wrap; }
+.kg-legend-item { display:flex; align-items:center; gap:6px; font-size:13px; }
+.kg-legend-dot { width:12px; height:12px; border-radius:50%; }
+/* Quiz */
+.quiz-card { background:var(--card); border-radius:14px; padding:24px; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,0.06); border:1px solid var(--border); }
+.quiz-q { font-weight:600; margin-bottom:14px; font-size:15px; }
+.quiz-option { padding:10px 16px; border:2px solid #e2e8f0; border-radius:10px; margin-bottom:8px; cursor:pointer; transition:all .2s; font-size:14px; }
+.quiz-option:hover { border-color:var(--primary); background:#fef2f2; }
+.quiz-option.correct { border-color:var(--success); background:#ecfdf5; color:#065f46; }
+.quiz-option.wrong { border-color:var(--danger); background:#fef2f2; color:#991b1b; }
+.quiz-feedback { margin-top:12px; padding:12px 16px; border-radius:10px; font-size:14px; display:none; line-height:1.6; }
+.quiz-feedback.show { display:block; }
+.quiz-feedback.correct { background:#ecfdf5; color:#065f46; }
+.quiz-feedback.wrong { background:#fef2f2; color:#991b1b; }
+/* Compare Table */
+.compare-table { width:100%; border-collapse:collapse; font-size:14px; }
+.compare-table th { background:var(--primary); color:white; padding:10px 14px; text-align:left; }
+.compare-table td { padding:10px 14px; border-bottom:1px solid #e2e8f0; }
+.compare-table tr:nth-child(even) td { background:#f8fafc; }
+/* TTS */
+.tts-btn { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; background:var(--primary); color:white; border:none; border-radius:20px; cursor:pointer; font-size:13px; transition:all .2s; }
+.tts-btn:hover { background:#991b1b; transform:scale(1.03); }
+.tts-btn.playing { background:var(--success); }
+/* Responsive */
+@media(max-width:768px) {
+  .hero h1 { font-size:26px; }
+  .container { padding:66px 12px 30px; }
+  .lab-controls { grid-template-columns:1fr; }
+  #map-container { height:420px; }
+  .map-events { width:200px; font-size:10px; }
+  .nav { padding:0 12px; }
+}
+.ta-long-panel{background:var(--card,var(--surface,rgba(255,255,255,.06)));border:1px solid var(--border,rgba(148,163,184,.18));border-radius:16px;padding:20px;margin:14px 0;line-height:1.72}.ta-long-panel h3{margin-top:0}
+</style>
 
-  <meta name="teachany-courseware-id" content="imperial-unification">
+  <link rel="stylesheet" href="../../scripts/ai-tutor.css">
+<link rel="stylesheet" href="../../scripts/teachany-knowledge-graph.css">
+  <link rel="stylesheet" href="../../scripts/teachany-tutor-card.css">
+  <link rel="stylesheet" href="../../scripts/teachany-audio-player.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="../../scripts/teachany-historical-map.css">
 
-  <script src="./history-tracker.js" defer></script>
+  <link rel="stylesheet" href="../../scripts/teachany-tts-narrator.css">
+  <link rel="stylesheet" href="../../scripts/teachany-section-hints.css">
 </head>
 <body>
-  <h1>TeachAny 课件已迁移</h1>
-  <p><a href="https://weponusa.github.io/teachany-courseware/community/imperial-unification/index.html">打开 TeachAny Courseware</a></p>
+<!-- teachany-back-to-gallery -->
+<style>body{padding-top:36px!important;}</style>
+<div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:rgba(15,23,42,0.92);backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;gap:10px;padding:0 16px;height:36px;font-family:'PingFang SC','Microsoft YaHei',sans-serif;">
+  <a href="https://weponusa.github.io/teachany/" target="_top" style="display:flex;align-items:center;gap:6px;color:rgba(255,255,255,0.75);font-size:12px;text-decoration:none;padding:4px 10px;border-radius:6px;transition:all 0.2s;white-space:nowrap;" onmouseover="this.style.background='rgba(255,255,255,0.12)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.75)'">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    Gallery
+  </a>
+  <span style="color:rgba(255,255,255,0.2);font-size:14px;">|</span>
+  <a href="https://weponusa.github.io/teachany/tree.html" target="_top" style="display:flex;align-items:center;gap:5px;color:rgba(255,255,255,0.55);font-size:12px;text-decoration:none;padding:4px 10px;border-radius:6px;transition:all 0.2s;white-space:nowrap;" onmouseover="this.style.background='rgba(255,255,255,0.08)';this.style.color='rgba(255,255,255,0.85)'" onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.55)'">
+    🗺️ 知识地图
+  </a>
+  <a href="https://weponusa.github.io/teachany/path.html" target="_top" style="display:flex;align-items:center;gap:5px;color:rgba(255,255,255,0.55);font-size:12px;text-decoration:none;padding:4px 10px;border-radius:6px;transition:all 0.2s;white-space:nowrap;" onmouseover="this.style.background='rgba(255,255,255,0.08)';this.style.color='rgba(255,255,255,0.85)'" onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.55)'">
+    🛤️ 学习路径
+  </a>
+  <div style="flex:1;"></div>
+  <span style="color:rgba(255,255,255,0.3);font-size:11px;">TeachAny</span>
+</div>
+<!-- /teachany-back-to-gallery -->
+
+<nav class="nav">
+  <div class="nav-brand">🏛️ 秦汉大一统</div>
+  <a href="#life-scene-section" class="active">生活场景</a>
+  <a href="#content">核心内容</a>
+  <a href="#map-section">历史地图</a>
+  <a href="#interactive-lab">互动实验</a>
+  <a href="#knowledge-graph">知识图谱</a>
+  <a href="#quiz">练习</a>
+</nav>
+
+<div class="container">
+<!-- Hero -->
+<div class="hero">
+  <h1>🏛️ 秦汉统一多民族国家</h1>
+  <p class="subtitle">从统一六国到丝绸之路——大一统格局的建立与巩固</p>
+  <div class="meta">
+    <span>📚 历史</span>
+    <span>🎓 七年级上册</span>
+    <span>⚙️ 中国古代史</span>
+    <span>🔑 第3单元</span>
+  </div>
+  <img src="assets/qinhan-hero.png" alt="秦汉统一" style="display:block;max-width:680px;margin:24px auto 0;border-radius:14px;box-shadow:0 4px 24px rgba(0,0,0,0.10)">
+</div>
+<!-- 🎬 生活场景 -->
+<div class="section" id="life-scene-section">
+  <div class="section-title">🎬 生活场景：统一标准的力量</div>
+
+  <div class="card">
+    <h3>场景一：假如今天每个省用不同的文字……</h3>
+    <p>想象一下：你在北京写的作业，到了上海老师看不懂；你在广州发的微信，四川的朋友完全读不出来。</p>
+    <svg viewBox="0 0 900 200" style="width:100%;height:auto;margin:16px 0">
+      <defs>
+        <linearGradient id="g1" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#7f1d1d"/>
+          <stop offset="100%" stop-color="#d97706"/>
+        </linearGradient>
+      </defs>
+      <!-- 不同文字的竹简 -->
+      <rect x="50" y="40" width="120" height="120" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+      <text x="110" y="80" text-anchor="middle" font-size="20" fill="#78350f">馬（齐）</text>
+      <text x="110" y="105" text-anchor="middle" font-size="14" fill="#92400e">齐国文字</text>
+      <text x="110" y="135" text-anchor="middle" font-size="28" fill="#78350f">𩣑</text>
+
+      <rect x="220" y="40" width="120" height="120" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+      <text x="280" y="80" text-anchor="middle" font-size="20" fill="#78350f">馬（楚）</text>
+      <text x="280" y="105" text-anchor="middle" font-size="14" fill="#92400e">楚国文字</text>
+      <text x="280" y="135" text-anchor="middle" font-size="28" fill="#78350f">𩡧</text>
+
+      <rect x="390" y="40" width="120" height="120" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+      <text x="450" y="80" text-anchor="middle" font-size="20" fill="#78350f">馬（燕）</text>
+      <text x="450" y="105" text-anchor="middle" font-size="14" fill="#92400e">燕国文字</text>
+      <text x="450" y="135" text-anchor="middle" font-size="28" fill="#78350f">𩡬</text>
+
+      <!-- 箭头 -->
+      <line x1="540" y1="100" x2="600" y2="100" stroke="url(#g1)" stroke-width="4" stroke-dasharray="8,4">
+        <animate attributeName="stroke-dashoffset" from="24" to="0" dur="1.5s" repeatCount="indefinite"/>
+      </line>
+      <polygon points="600,90 620,100 600,110" fill="#d97706"/>
+      <text x="580" y="80" text-anchor="middle" font-size="12" fill="#d97706">书同文</text>
+
+      <!-- 统一后 -->
+      <rect x="640" y="40" width="200" height="120" rx="8" fill="#fef2f2" stroke="#991b1b" stroke-width="3"/>
+      <text x="740" y="78" text-anchor="middle" font-size="20" fill="#991b1b" font-weight="bold">馬</text>
+      <text x="740" y="105" text-anchor="middle" font-size="14" fill="#991b1b">秦小篆（统一）</text>
+      <text x="740" y="135" text-anchor="middle" font-size="28" fill="#991b1b">馬</text>
+      <animateTransform xlink:href="#unified" attributeName="transform" type="scale" values="0.98;1.02;0.98" dur="2s" repeatCount="indefinite"/>
+    </svg>
+    <p>秦始皇统一文字前，七国各有各的写法，同一个「马」字就有七种写法。<b>「书同文」</b>让全国人终于可以看懂同一份文件了——这就是统一标准的力量。</p>
+  </div>
+
+  <div class="card">
+    <h3>场景二：高铁出省就换轨道？</h3>
+    <p>今天中国高铁能从北京直达广州，靠的是全国统一的铁轨标准。如果每个省的铁轨宽度不同，火车到了省界就得停下来换轨……</p>
+    <svg viewBox="0 0 900 180" style="width:100%;height:auto;margin:16px 0">
+      <!-- 不同宽度的车轨 -->
+      <line x1="60" y1="140" x2="220" y2="140" stroke="#d97706" stroke-width="6"/>
+      <line x1="60" y1="110" x2="220" y2="110" stroke="#d97706" stroke-width="6"/>
+      <text x="140" y="100" text-anchor="middle" font-size="12" fill="#92400e">齐国宽轨</text>
+
+      <line x1="250" y1="145" x2="410" y2="145" stroke="#059669" stroke-width="4"/>
+      <line x1="250" y1="105" x2="410" y2="105" stroke="#059669" stroke-width="4"/>
+      <text x="330" y="95" text-anchor="middle" font-size="12" fill="#059669">楚国窄轨</text>
+
+      <text x="460" y="130" text-anchor="middle" font-size="28" fill="#ef4444">✕</text>
+      <text x="460" y="160" text-anchor="middle" font-size="11" fill="#ef4444">无法通行！</text>
+
+      <!-- 箭头 -->
+      <line x1="510" y1="125" x2="580" y2="125" stroke="var(--primary)" stroke-width="3" stroke-dasharray="6,3">
+        <animate attributeName="stroke-dashoffset" from="18" to="0" dur="1s" repeatCount="indefinite"/>
+      </line>
+      <polygon points="580,118 596,125 580,132" fill="var(--primary)"/>
+      <text x="548" y="112" text-anchor="middle" font-size="11" fill="var(--primary)">车同轨</text>
+
+      <!-- 统一轨道 -->
+      <line x1="610" y1="135" x2="860" y2="135" stroke="#991b1b" stroke-width="5"/>
+      <line x1="610" y1="115" x2="860" y2="115" stroke="#991b1b" stroke-width="5"/>
+      <!-- 移动的车 -->
+      <rect x="620" y="105" width="50" height="40" rx="6" fill="#fef2f2" stroke="#991b1b" stroke-width="2">
+        <animateTransform attributeName="transform" type="translate" values="0,0;180,0;0,0" dur="4s" repeatCount="indefinite"/>
+      </rect>
+      <text x="645" y="130" text-anchor="middle" font-size="14">🚂</text>
+      <text x="735" y="100" text-anchor="middle" font-size="12" fill="#991b1b" font-weight="bold">秦统一车轨 → 全国畅通</text>
+    </svg>
+    <p>秦始皇的<b>「车同轨」</b>就是两千年前的「统一铁轨标准」。全国车轮间距统一为六尺，马车终于可以在全国畅通无阻。</p>
+  </div>
+
+  <div class="card">
+    <h3>场景三：丝绸之路——古代的「一带一路」</h3>
+    <p>今天你穿的棉T恤可能是东南亚生产的，用的香料来自印度，喝的咖啡产自巴西。这种全球贸易在两千年前就有了——<b>丝绸之路</b>。</p>
+    <img src="assets/qinhan-scene.png" alt="秦汉丝绸之路" style="display:block;max-width:100%;margin:14px auto;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,0.08)">
+    <svg viewBox="0 0 900 200" style="width:100%;height:auto;margin:16px 0">
+      <!-- 长安 -->
+      <circle cx="120" cy="100" r="30" fill="#fef2f2" stroke="#991b1b" stroke-width="3"/>
+      <text x="120" y="95" text-anchor="middle" font-size="14" fill="#991b1b" font-weight="bold">长安</text>
+      <text x="120" y="112" text-anchor="middle" font-size="10" fill="#991b1b">起点</text>
+
+      <!-- 路线 -->
+      <path d="M155,100 Q300,40 450,80 Q600,120 750,70" fill="none" stroke="#d97706" stroke-width="3" stroke-dasharray="10,5">
+        <animate attributeName="stroke-dashoffset" from="30" to="0" dur="2s" repeatCount="indefinite"/>
+      </path>
+
+      <!-- 中途站 -->
+      <circle cx="300" cy="60" r="14" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+      <text x="300" y="65" text-anchor="middle" font-size="10" fill="#78350f">敦煌</text>
+
+      <circle cx="450" cy="80" r="14" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+      <text x="450" y="85" text-anchor="middle" font-size="10" fill="#78350f">大宛</text>
+
+      <!-- 罗马 -->
+      <circle cx="750" cy="70" r="30" fill="#eff6ff" stroke="#3b82f6" stroke-width="3"/>
+      <text x="750" y="65" text-anchor="middle" font-size="14" fill="#1e40af" font-weight="bold">罗马</text>
+      <text x="750" y="82" text-anchor="middle" font-size="10" fill="#1e40af">终点</text>
+
+      <!-- 商品图标 -->
+      <text x="220" y="140" text-anchor="middle" font-size="11" fill="#78350f">→ 丝绸 🧵</text>
+      <text x="380" y="140" text-anchor="middle" font-size="11" fill="#78350f">→ 造纸术 📜</text>
+      <text x="600" y="140" text-anchor="middle" font-size="11" fill="#1e40af">← 佛教 🙏</text>
+      <text x="750" y="140" text-anchor="middle" font-size="11" fill="#1e40af">← 葡萄 🍇</text>
+
+      <!-- 骆驼商队 -->
+      <text x="380" y="50" font-size="26">🐪</text>
+      <animateTransform xlink:href="#camel" attributeName="transform" type="translate" values="0,0;40,0;0,0" dur="3s" repeatCount="indefinite"/>
+    </svg>
+    <p>汉武帝派<b>张骞出使西域</b>，开辟了从长安到罗马帝国的贸易通道。中国的丝绸、造纸术向西传播，佛教、葡萄、胡椒由西传入——这就是最早的「全球化」。</p>
+  </div>
+</div>
+
+<!-- 📖 核心内容 -->
+<div class="section" id="content">
+  <div class="section-title">📖 核心内容</div>
+
+  <div class="card">
+    <h3>一、秦朝的统一与制度创新（前221—前207年）</h3>
+    <button class="tts-btn" onclick="playTTS('s01')">🔊 听讲解</button>
+    <p style="margin-top:12px">公元前221年，<span class="highlight">秦王嬴政</span>先后灭掉韩、赵、魏、楚、燕、齐六国，建立了中国历史上第一个统一的中央集权国家——<span class="highlight">秦朝</span>，定都咸阳。</p>
+
+    <div class="formula-box">
+      秦始皇统一措施 = 政治（郡县制）+ 经济（统一度量衡、货币）+ 文化（书同文）+ 交通（车同轨）+ 军事（修长城）
+    </div>
+
+    <table class="compare-table" style="margin-top:16px">
+      <tr><th>维度</th><th>分封制（西周）</th><th>郡县制（秦朝）</th></tr>
+      <tr><td>地方长官</td><td>诸侯世袭</td><td>中央任免，不世袭</td></tr>
+      <tr><td>权力来源</td><td>血缘关系</td><td>中央政府任命</td></tr>
+      <tr><td>军事权</td><td>诸侯有独立军队</td><td>军队归中央调配</td></tr>
+      <tr><td>税收</td><td>诸侯自行征收</td><td>统一税制，上缴中央</td></tr>
+      <tr><td>效果</td><td>容易割据分裂</td><td>加强中央集权</td></tr>
+    </table>
+
+    <div class="note">
+      <b>⚠️ 易错点：</b>分封制和郡县制的核心区别不是名称不同，而是<b>官员是世袭还是由中央任命</b>。郡县制下地方官员由皇帝直接任免和考核，这是秦朝最重要的制度创新。
+    </div>
+  </div>
+
+  <div class=" ta-long-panel">
+    <h3>二、秦朝灭亡与楚汉争霸</h3>
+    <button class="tts-btn" onclick="playTTS('s02')">🔊 听讲解</button>
+    <p style="margin-top:12px">秦朝统一仅15年就灭亡了。原因是多方面的：</p>
+    <ul style="padding-left:24px;margin:10px 0;color:#475569">
+      <li><b>暴政</b>：严刑峻法、繁重徭役（修长城、阿房宫、骊山陵）</li>
+      <li><b>政策失误</b>：统一后未及时从战时体制转向和平建设</li>
+      <li><b>社会反抗</b>：陈胜吴广起义（前209年）——中国第一次大规模农民起义</li>
+    </ul>
+    <p>随后进入<span class="highlight">楚汉争霸</span>（前206—前202年），项羽与刘邦争夺天下，最终刘邦获胜，建立<span class="highlight">汉朝</span>。</p>
+    <div class="note">
+      <b>⚠️ 易错点：</b>不要把秦朝灭亡简单归结为「秦始皇太残暴」。历史事件的原因往往是多方面的，要从政治、经济、社会等多角度分析。
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>三、西汉的建立与文景之治</h3>
+    <button class="tts-btn" onclick="playTTS('s03')">🔊 听讲解</button>
+    <p style="margin-top:12px">公元前202年，<span class="highlight">刘邦</span>建立西汉，定都<span class="highlight">长安</span>。汉初百废待兴，统治者吸取秦朝灭亡教训，采取<b>休养生息</b>政策：</p>
+    <ul style="padding-left:24px;margin:10px 0;color:#475569">
+      <li>减轻赋税和徭役</li>
+      <li>释放奴婢、复员军人</li>
+      <li>推行「无为而治」的黄老之学</li>
+    </ul>
+    <p>经过高祖、惠帝、吕后、文帝、景帝数代人的努力，出现了<span class="highlight">「文景之治」</span>——国库充盈、百姓安居、社会稳定。</p>
+  </div>
+
+  <div class="card">
+    <h3>四、汉武帝的大一统（巅峰时期）</h3>
+    <button class="tts-btn" onclick="playTTS('s04')">🔊 听讲解</button>
+    <p style="margin-top:12px"><span class="highlight">汉武帝刘彻</span>（前141—前87年在位）在文景之治的基础上，将大一统推向顶峰：</p>
+
+    <div class="formula-box">
+      汉武帝三大策略：推恩令（削藩）+ 罢黜百家独尊儒术（思想统一）+ 开通丝绸之路（外交）
+    </div>
+
+    <table class="compare-table" style="margin-top:12px">
+      <tr><th>领域</th><th>措施</th><th>效果</th></tr>
+      <tr><td>政治</td><td>推恩令</td><td>削弱诸侯国，加强中央集权</td></tr>
+      <tr><td>思想</td><td>罢黜百家，独尊儒术</td><td>儒学成为官方正统，思想统一</td></tr>
+      <tr><td>经济</td><td>盐铁官营、统一铸币（五铢钱）</td><td>增加国家财政收入</td></tr>
+      <tr><td>军事</td><td>北击匈奴（卫青、霍去病）</td><td>解除北方边患威胁</td></tr>
+      <tr><td>外交</td><td>张骞出使西域</td><td>开辟丝绸之路</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>五、丝绸之路——文明交流之路</h3>
+    <button class="tts-btn" onclick="playTTS('s05')">🔊 听讲解</button>
+    <p style="margin-top:12px">公元前138年和前119年，汉武帝两次派<span class="highlight">张骞出使西域</span>，开辟了从长安经河西走廊、到中亚和欧洲的贸易通道——<span class="highlight">丝绸之路</span>。</p>
+    <div class="note">
+      <b>⚠️ 易错点：</b>丝绸之路不仅仅是「做生意的商路」。它还传播了宗教（佛教东传）、技术（造纸术、冶铁术）和文化（音乐、舞蹈）。要从<b>经济和文化双重角度</b>理解丝绸之路。
+    </div>
+  </div>
+
+  <!-- 时间线 -->
+  <div class="card">
+    <h3>📅 秦汉大事年表</h3>
+    <div class="timeline">
+      <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">前221年</div><div class="timeline-title">秦统一六国</div><div class="timeline-desc">秦王嬴政灭六国，建立秦朝，自称始皇帝</div></div>
+      <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">前221年起</div><div class="timeline-title">统一措施推行</div><div class="timeline-desc">书同文、车同轨、统一度量衡、修长城</div></div>
+      <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">前209年</div><div class="timeline-title">大泽乡起义</div><div class="timeline-desc">陈胜吴广发动起义，秦末农民战争爆发</div></div>
+      <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">前207年</div><div class="timeline-title">秦朝灭亡</div><div class="timeline-desc">巨鹿之战项羽大败秦军，秦王子婴投降</div></div>
+      <div class="timeline-item han"><div class="timeline-dot"></div><div class="timeline-year">前202年</div><div class="timeline-title">西汉建立</div><div class="timeline-desc">垓下之战后，刘邦称帝，定都长安</div></div>
+      <div class="timeline-item han"><div class="timeline-dot"></div><div class="timeline-year">前180—前141年</div><div class="timeline-title">文景之治</div><div class="timeline-desc">休养生息政策下的盛世</div></div>
+      <div class="timeline-item han"><div class="timeline-dot"></div><div class="timeline-year">前141—前87年</div><div class="timeline-title">汉武帝在位</div><div class="timeline-desc">推恩令、独尊儒术、北击匈奴、开通丝路</div></div>
+      <div class="timeline-item han"><div class="timeline-dot"></div><div class="timeline-year">前138年</div><div class="timeline-title">张骞首次出使西域</div><div class="timeline-desc">历时13年，开辟丝绸之路</div></div>
+      <div class="timeline-item han"><div class="timeline-dot"></div><div class="timeline-year">8年</div><div class="timeline-title">王莽篡汉</div><div class="timeline-desc">西汉灭亡，新朝建立</div></div>
+      <div class="timeline-item han"><div class="timeline-dot"></div><div class="timeline-year">25年</div><div class="timeline-title">东汉建立</div><div class="timeline-desc">刘秀称帝，定都洛阳，光武中兴</div></div>
+      <div class="timeline-item han"><div class="timeline-dot"></div><div class="timeline-year">220年</div><div class="timeline-title">东汉灭亡</div><div class="timeline-desc">曹丕篡汉，三国时代开始</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 🗺️ 历史地图 -->
+<div class="section" id="map-section">
+  <div class="section-title">🗺️ 秦汉疆域交互地图</div>
+  <div class="card" style="padding:0; overflow:hidden;">
+    <p style="padding:16px 20px 8px; margin:0; font-size:14px; color:#475569;">拖动地图平移，滚轮缩放，拖动底部时间轴切换朝代。点击左侧事件卡片定位到对应战役/事件。</p>
+    <div id="map-container">
+      <canvas id="map-canvas"></canvas>
+      <!-- Topbar -->
+      <div class="map-topbar">
+        <div class="map-d-badge" id="map-badge">秦朝</div>
+        <div class="map-d-year" id="map-year">公元前 221 年</div>
+        <div class="map-d-title" id="map-title"></div>
+      </div>
+      <!-- Events -->
+      <div class="map-events" id="map-events"></div>
+      <!-- Legend -->
+      <div class="map-legend" id="map-legend">
+        <h4>图 例</h4>
+        <div class="map-legend-item"><div class="map-legend-color" style="background:#FFD700"></div>都城</div>
+        <div class="map-legend-item"><div class="map-legend-color" style="background:#fff"></div>重要城市</div>
+        <div class="map-legend-item"><div class="map-legend-color" style="background:#90EE90"></div>关隘</div>
+        <div class="map-legend-item"><div class="map-lg-line" style="border-top:2px solid #4A90D9"></div>河流</div>
+        <div class="map-legend-item"><div class="map-lg-line" style="border-top:2px dashed #B8860B"></div>长城</div>
+        <div class="map-legend-item"><div class="map-lg-line" style="border-top:2px solid #FFD700"></div>丝绸之路</div>
+        <div class="map-legend-item"><div class="map-legend-color" style="background:#FF4444"></div>战役</div>
+        <div class="map-legend-item"><div class="map-legend-color" style="background:#2196F3"></div>政策</div>
+        <div class="map-legend-item"><div class="map-legend-color" style="background:#4CAF50"></div>疆域扩张</div>
+      </div>
+      <!-- Desc -->
+      <div class="map-desc" id="map-desc"><h3 id="map-ds-t"></h3><div class="sub" id="map-ds-s"></div><p id="map-ds-p"></p></div>
+      <!-- Play -->
+      <button class="map-play-btn" id="map-play-btn">▶ 自动播放</button>
+      <!-- Timeline -->
+      <div class="map-timeline">
+        <div class="map-tl-track" id="map-tl-track"><div class="map-tl-bg"></div><div class="map-tl-fill" id="map-tl-fill"></div><div class="map-tl-thumb" id="map-tl-thumb"></div></div>
+        <div class="map-tl-years"><span>前221年</span><span>220年</span></div>
+      </div>
+      <!-- Zoom -->
+      <div class="map-zoom-info" id="map-zoom-info"></div>
+      <!-- Popup -->
+      <div class="map-popup" id="map-popup"><span class="pp-close" id="map-pp-close">✕</span><div class="pp-title" id="map-pp-t"></div><div class="pp-sub" id="map-pp-s"></div><div class="pp-body" id="map-pp-b"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 🧪 互动实验台 -->
+<div class="section" id="interactive-lab">
+  <div class="section-title">🧪 互动实验台</div>
+
+  <div class="card">
+    <h3>🔬 实验一：从分裂到统一——疆域面积对比</h3>
+    <p>拖动滑块查看不同时期的国家疆域面积变化，感受「大一统」的规模。</p>
+    <canvas id="areaCanvas" width="800" height="320" style="margin:16px 0"></canvas>
+    <div class="lab-controls">
+      <div class="control-group">
+        <label>选择时期: <span id="periodLabel">秦朝</span></label>
+        <input type="range" id="periodSlider" min="0" max="4" step="1" value="0" oninput="updateAreaChart()">
+        <div class="value" id="periodVal">秦朝(前221年)</div>
+      </div>
+    </div>
+    <div class="lab-result">
+      <div class="formula" id="areaFormula">秦朝疆域面积 ≈ 340 万平方公里</div>
+      <div class="detail" id="areaDetail">结束战国七雄分裂，首次实现大一统</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🔬 实验二：政策对比模拟器</h3>
+    <p>调整不同治国策略的「力度值」，观察对国家的影响。体会秦朝的激进政策和汉初的温和政策带来的不同结果。</p>
+    <canvas id="policyCanvas" width="800" height="350" style="margin:16px 0"></canvas>
+    <div class="lab-controls">
+      <div class="control-group">
+        <label>赋税轻重: <span id="taxLabel">中等</span></label>
+        <input type="range" id="taxSlider" min="1" max="10" step="1" value="5" oninput="updatePolicy()">
+        <div class="value" id="taxVal">5</div>
+      </div>
+      <div class="control-group">
+        <label>徭役强度: <span id="laborLabel">中等</span></label>
+        <input type="range" id="laborSlider" min="1" max="10" step="1" value="5" oninput="updatePolicy()">
+        <div class="value" id="laborVal">5</div>
+      </div>
+      <div class="control-group">
+        <label>军事投入: <span id="militaryLabel">中等</span></label>
+        <input type="range" id="militarySlider" min="1" max="10" step="1" value="5" oninput="updatePolicy()">
+        <div class="value" id="militaryVal">5</div>
+      </div>
+    </div>
+    <div class="lab-result">
+      <div class="formula" id="policyFormula">综合国力评估：均衡型</div>
+      <div class="detail" id="policyDetail">赋税、徭役和军事投入适中，接近文景之治的温和路线</div>
+    </div>
+  </div>
+</div>
+
+<!-- 🗺️ 知识图谱 -->
+  <!-- ===== Standard Knowledge Graph Module ===== -->
+    <!-- ✏️ 巩固练习 -->
+<div class="section" id="quiz">
+  <div class="section-title">✏️ 巩固练习</div>
+
+  <div class="quiz-card" data-answer="C" data-qid="1">
+    <div class="quiz-q">1. 与分封制相比，秦朝郡县制最大的进步在于：</div>
+    <div class="quiz-option" data-opt="A">A. 扩大了管辖范围</div>
+    <div class="quiz-option" data-opt="B">B. 促进了经济发展</div>
+    <div class="quiz-option" data-opt="C">C. 地方官员由中央任免，不得世袭</div>
+    <div class="quiz-option" data-opt="D">D. 实现了思想统一</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-card" data-answer="B" data-qid="2">
+    <div class="quiz-q">2. 秦始皇统一六国后推行「书同文」，其最重要的历史意义是：</div>
+    <div class="quiz-option" data-opt="A">A. 使秦朝的法令更加严厉</div>
+    <div class="quiz-option" data-opt="B">B. 促进了各地区的文化交流和国家认同</div>
+    <div class="quiz-option" data-opt="C">C. 帮助秦始皇监控各地诸侯</div>
+    <div class="quiz-option" data-opt="D">D. 提高了秦朝军队的战斗力</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-card" data-answer="D" data-qid="3">
+    <div class="quiz-q">3. 关于秦朝灭亡的原因，以下分析最全面的是：</div>
+    <div class="quiz-option" data-opt="A">A. 完全是因为秦始皇太残暴</div>
+    <div class="quiz-option" data-opt="B">B. 因为六国百姓不适应统一</div>
+    <div class="quiz-option" data-opt="C">C. 因为陈胜吴广起义</div>
+    <div class="quiz-option" data-opt="D">D. 暴政、政策失误、社会反抗等多方面原因</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-card" data-answer="A" data-qid="4">
+    <div class="quiz-q">4. 汉初统治者采取「休养生息」政策的主要原因是：</div>
+    <div class="quiz-option" data-opt="A">A. 吸取秦朝因暴政导致灭亡的教训</div>
+    <div class="quiz-option" data-opt="B">B. 统治者个人性格温和</div>
+    <div class="quiz-option" data-opt="C">C. 当时没有外部威胁</div>
+    <div class="quiz-option" data-opt="D">D. 儒家思想的要求</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-card" data-answer="C" data-qid="5">
+    <div class="quiz-q">5. 汉武帝实行「推恩令」的目的是：</div>
+    <div class="quiz-option" data-opt="A">A. 奖励有功的大臣</div>
+    <div class="quiz-option" data-opt="B">B. 增加诸侯国的土地</div>
+    <div class="quiz-option" data-opt="C">C. 削弱诸侯国势力，加强中央集权</div>
+    <div class="quiz-option" data-opt="D">D. 推广儒家思想</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-card" data-answer="B" data-qid="6">
+    <div class="quiz-q">6. 关于丝绸之路，以下理解最准确的是：</div>
+    <div class="quiz-option" data-opt="A">A. 丝绸之路只是一条运送丝绸的商路</div>
+    <div class="quiz-option" data-opt="B">B. 丝绸之路是经济贸易与文化交流的双重通道</div>
+    <div class="quiz-option" data-opt="C">C. 丝绸之路只在汉武帝时期存在</div>
+    <div class="quiz-option" data-opt="D">D. 丝绸之路主要是军事征服的路线</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-card" data-answer="C" data-qid="7">
+    <div class="quiz-q">7. 「罢黜百家，独尊儒术」是谁的建议？被哪位皇帝采纳？</div>
+    <div class="quiz-option" data-opt="A">A. 李斯建议，秦始皇采纳</div>
+    <div class="quiz-option" data-opt="B">B. 诸葛亮建议，汉文帝采纳</div>
+    <div class="quiz-option" data-opt="C">C. 董仲舒建议，汉武帝采纳</div>
+    <div class="quiz-option" data-opt="D">D. 孔子建议，汉高祖采纳</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-card" data-answer="B" data-qid="8">
+    <div class="quiz-q">8. 以下哪组人物与「北击匈奴」直接相关？</div>
+    <div class="quiz-option" data-opt="A">A. 张骞、班超</div>
+    <div class="quiz-option" data-opt="B">B. 卫青、霍去病</div>
+    <div class="quiz-option" data-opt="C">C. 陈胜、吴广</div>
+    <div class="quiz-option" data-opt="D">D. 韩信、萧何</div>
+    <div class="quiz-feedback"></div>
+  </div>
+</div>
+
+</div><!-- container end -->
+
+<script>
+// ====== TTS 播放 ======
+let currentAudio = null;
+function playTTS(id) {
+  const btns = document.querySelectorAll('.tts-btn');
+  btns.forEach(b => b.classList.remove('playing'));
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  const audio = new Audio('tts/' + id + '.mp3');
+  audio.play().catch(()=>{});
+  currentAudio = audio;
+  event.target.classList.add('playing');
+  audio.onended = () => { event.target.classList.remove('playing'); currentAudio = null; };
+}
+
+// ====== HiDPI Canvas ======
+function setupHiDPI(canvas) {
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+  return ctx;
+}
+
+// ====== 实验一：疆域面积 ======
+const periodData = [
+  { name:'秦朝', year:'前221年', area:340, color:'#991b1b', desc:'结束战国七雄分裂，首次实现大一统' },
+  { name:'西汉初', year:'前202年', area:260, color:'#d97706', desc:'楚汉战争后，百废待兴，尚未恢复秦朝全部疆域' },
+  { name:'文景之治', year:'前141年', area:320, color:'#ea580c', desc:'休养生息政策下国力恢复，疆域基本恢复' },
+  { name:'汉武帝', year:'前100年', area:610, color:'#b45309', desc:'北击匈奴、开通西域，疆域达到汉朝最大' },
+  { name:'东汉', year:'105年', area:580, color:'#059669', desc:'光武中兴后基本恢复，设西域都护府' }
+];
+
+function updateAreaChart() {
+  const idx = parseInt(document.getElementById('periodSlider').value);
+  const d = periodData[idx];
+  document.getElementById('periodLabel').textContent = d.name;
+  document.getElementById('periodVal').textContent = d.name + '(' + d.year + ')';
+  document.getElementById('areaFormula').textContent = d.name + '疆域面积 ≈ ' + d.area + ' 万平方公里';
+  document.getElementById('areaDetail').textContent = d.desc;
+  drawAreaChart(idx);
+}
+
+function drawAreaChart(highlightIdx) {
+  const canvas = document.getElementById('areaCanvas');
+  const ctx = setupHiDPI(canvas);
+  const W = canvas.getBoundingClientRect().width;
+  const H = canvas.getBoundingClientRect().height;
+  ctx.clearRect(0,0,W,H);
+
+  const maxArea = 650;
+  const barW = (W - 120) / periodData.length - 20;
+  const startX = 80;
+
+  // Y axis
+  ctx.strokeStyle = '#e2e8f0';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 6; i++) {
+    const y = H - 50 - (i * (H-80) / 6);
+    ctx.beginPath(); ctx.moveTo(startX, y); ctx.lineTo(W-20, y); ctx.stroke();
+    ctx.fillStyle = '#94a3b8'; ctx.font = '11px sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText((i*100) + '万km²', startX-8, y+4);
+  }
+
+  periodData.forEach((d, i) => {
+    const x = startX + i * (barW + 20) + 10;
+    const barH = (d.area / maxArea) * (H - 80);
+    const y = H - 50 - barH;
+
+    // Bar
+    ctx.fillStyle = i === highlightIdx ? d.color : d.color + '44';
+    ctx.beginPath();
+    ctx.roundRect(x, y, barW, barH, [6,6,0,0]);
+    ctx.fill();
+
+    // Value
+    if (i === highlightIdx) {
+      ctx.fillStyle = d.color;
+      ctx.font = 'bold 14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(d.area + '万', x + barW/2, y - 8);
+    }
+
+    // Label
+    ctx.fillStyle = i === highlightIdx ? '#1e293b' : '#94a3b8';
+    ctx.font = (i === highlightIdx ? 'bold ' : '') + '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(d.name, x + barW/2, H - 30);
+    ctx.fillStyle = '#94a3b8'; ctx.font = '10px sans-serif';
+    ctx.fillText(d.year, x + barW/2, H - 16);
+  });
+}
+
+// ====== 实验二：政策模拟 ======
+function updatePolicy() {
+  const tax = parseInt(document.getElementById('taxSlider').value);
+  const labor = parseInt(document.getElementById('laborSlider').value);
+  const military = parseInt(document.getElementById('militarySlider').value);
+  const labels = ['极轻','很轻','轻','较轻','中等','较重','重','很重','极重','暴政级'];
+  document.getElementById('taxLabel').textContent = labels[tax-1];
+  document.getElementById('taxVal').textContent = tax;
+  document.getElementById('laborLabel').textContent = labels[labor-1];
+  document.getElementById('laborVal').textContent = labor;
+  document.getElementById('militaryLabel').textContent = labels[military-1];
+  document.getElementById('militaryVal').textContent = military;
+
+  const burden = tax + labor;
+  const power = military * 2 + tax;
+  const stability = Math.max(0, 100 - burden * 5 - Math.max(0, labor - 6) * 15);
+  const strength = Math.min(100, power * 4);
+
+  let type, detail;
+  if (burden >= 16) {
+    type = '⚠️ 暴政模式（类似秦末）'; detail = '赋税和徭役过重，百姓苦不堪言，距离农民起义不远了！秦朝就是这样灭亡的。';
+  } else if (burden <= 6 && military <= 3) {
+    type = '🕊️ 无为而治（类似汉初）'; detail = '轻徭薄赋，百姓安居乐业，但军事力量薄弱，面对匈奴只能和亲妥协。';
+  } else if (burden <= 10 && military >= 6) {
+    type = '⭐ 文治武功（类似汉武帝）'; detail = '赋税适度、军事强大，既能保障百姓生活，又能开疆拓土。这是汉武帝的路线！';
+  } else if (burden <= 8) {
+    type = '🌾 休养生息（类似文景之治）'; detail = '轻税减赋，国库逐渐充盈。文景之治正是这样积累了汉武帝北击匈奴的资本。';
+  } else {
+    type = '⚖️ 均衡型'; detail = '各项政策相对均衡，但缺乏明显特色。';
+  }
+  document.getElementById('policyFormula').textContent = '综合评估：' + type;
+  document.getElementById('policyDetail').textContent = detail;
+  drawPolicyChart(stability, strength);
+}
+
+function drawPolicyChart(stability, strength) {
+  const canvas = document.getElementById('policyCanvas');
+  const ctx = setupHiDPI(canvas);
+  const W = canvas.getBoundingClientRect().width;
+  const H = canvas.getBoundingClientRect().height;
+  ctx.clearRect(0,0,W,H);
+
+  // Draw radar-like comparison
+  const cx = W/2, cy = H/2 - 10;
+  const r = Math.min(W, H) * 0.32;
+
+  // Background circles
+  for (let i = 1; i <= 4; i++) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * i/4, 0, Math.PI*2);
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.stroke();
+  }
+
+  // Axes
+  const axes = [
+    { label:'社会稳定', angle: -Math.PI/2, val: stability },
+    { label:'军事实力', angle: Math.PI/6, val: strength },
+    { label:'经济发展', angle: Math.PI*5/6, val: Math.max(0, 100 - parseInt(document.getElementById('taxSlider').value)*8) }
+  ];
+
+  axes.forEach(a => {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(a.angle)*r, cy + Math.sin(a.angle)*r);
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.stroke();
+    ctx.fillStyle = '#475569';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.textAlign = 'center';
+    const lx = cx + Math.cos(a.angle)*(r+20);
+    const ly = cy + Math.sin(a.angle)*(r+20);
+    ctx.fillText(a.label, lx, ly);
+  });
+
+  // Data polygon
+  ctx.beginPath();
+  axes.forEach((a, i) => {
+    const pr = r * a.val / 100;
+    const px = cx + Math.cos(a.angle) * pr;
+    const py = cy + Math.sin(a.angle) * pr;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  });
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(185,28,28,0.15)';
+  ctx.fill();
+  ctx.strokeStyle = '#991b1b';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Data points
+  axes.forEach(a => {
+    const pr = r * a.val / 100;
+    const px = cx + Math.cos(a.angle) * pr;
+    const py = cy + Math.sin(a.angle) * pr;
+    ctx.beginPath();
+    ctx.arc(px, py, 5, 0, Math.PI*2);
+    ctx.fillStyle = '#991b1b';
+    ctx.fill();
+    ctx.fillStyle = '#991b1b';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText(a.val + '%', px + 12, py - 8);
+  });
+
+  // Reference: 历史政策标注
+  const refs = [
+    { name:'秦末', x: W-120, y:30, color:'#ef4444' },
+    { name:'汉初', x: W-120, y:55, color:'#d97706' },
+    { name:'文景之治', x: W-120, y:80, color:'#059669' },
+    { name:'汉武帝', x: W-120, y:105, color:'#991b1b' }
+  ];
+  ctx.font = '11px sans-serif';
+  refs.forEach(r => {
+    ctx.fillStyle = r.color;
+    ctx.beginPath(); ctx.arc(r.x, r.y, 4, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#475569';
+    ctx.textAlign = 'left';
+    ctx.fillText(r.name, r.x + 10, r.y + 4);
+  });
+}
+
+// ====== Canvas Interactive Map Engine (v4) ======
+// 基于 Canvas 2D 的秦汉疆域交互地图，替代 maplibregl
+(function(){
+// ═══════════════════════════════════════════════════════════════
+//  历史数据
+// ═══════════════════════════════════════════════════════════════
+const DYN=[
+  {id:"qin",name:"秦朝",s:-221,e:-207,color:"#4a6fa5"},
+  {id:"wh",name:"西汉",s:-206,e:8,color:"#c0392b"},
+  {id:"xin",name:"新朝",s:9,e:23,color:"#7f8c8d"},
+  {id:"eh",name:"东汉",s:25,e:220,color:"#e74c3c"},
+];
+const PH=[
+  {s:-221,e:-215,d:"qin",t:"秦灭六国 · 天下一统",sub:"前221年",p:"秦王嬴政先后灭六国，建立第一个统一的中央集权国家。推行郡县制，统一文字、货币和度量衡。"},
+  {s:-214,e:-210,d:"qin",t:"秦朝扩张 · 万里长城",sub:"前214年",p:"蒙恬率三十万大军北击匈奴，收复河套。连接万里长城。南征百越设三郡。"},
+  {s:-209,e:-207,d:"qin",t:"秦末乱世 · 王朝崩塌",sub:"前209年",p:"陈胜吴广揭竿而起，项羽巨鹿之战大败秦军，刘邦率先入关。秦朝仅存十五年而亡。"},
+  {s:-206,e:-195,d:"wh",t:"楚汉争霸 · 西汉建立",sub:"前206—前202年",p:"刘邦项羽争天下。垓下之战四面楚歌，项羽乌江自刎。刘邦建立西汉，定都长安。"},
+  {s:-194,e:-141,d:"wh",t:"文景之治 · 休养生息",sub:"前180年前后",p:"文帝、景帝轻徭薄赋，七国之乱平定后中央集权大大加强。"},
+  {s:-140,e:-87,d:"wh",t:"汉武盛世 · 开疆拓土",sub:"前140—前87年",p:"卫青、霍去病北伐匈奴；南灭南越、东灭朝鲜。张骞出使西域，版图空前辽阔。"},
+  {s:-86,e:-1,d:"wh",t:"西域都护 · 丝路繁盛",sub:"前60年",p:"汉宣帝设西域都护府，天山南北正式纳入版图。丝绸之路全线贯通。"},
+  {s:1,e:24,d:"xin",t:"王莽篡汉 · 新朝",sub:"公元9年",p:"王莽代汉，推行复古改制。赤眉绿林起义，刘秀昆阳之战以少胜多。"},
+  {s:25,e:57,d:"eh",t:"光武中兴 · 东汉建立",sub:"公元25年",p:"刘秀建立东汉，定都洛阳。释放奴婢、整顿吏治，史称\"光武中兴\"。"},
+  {s:58,e:105,d:"eh",t:"明章之治 · 经营西域",sub:"公元73—97年",p:"班超收复西域五十余国。窦宪远征漠北勒石燕然。蔡伦改进造纸术。"},
+  {s:106,e:183,d:"eh",t:"东汉中衰 · 文化灿烂",sub:"2世纪",p:"外戚宦官交替专权。张衡发明地动仪，张仲景著《伤寒杂病论》。佛教传入中原。"},
+  {s:184,e:220,d:"eh",t:"黄巾起义 · 三国序章",sub:"公元184年",p:"张角起义，曹操官渡胜袁绍，孙刘赤壁破曹操。公元220年曹丕代汉。"},
+];
+
+// 高精度疆域边界
+const TERR={
+qin:[
+[103.8,35.2],[104.1,35.8],[104.3,36.5],[104.5,37.2],[104.8,37.8],[105.2,38.2],[105.6,38.5],[106.0,38.7],
+[106.4,38.8],[106.8,39.2],[107.2,39.6],[107.6,40.0],[108.0,40.3],[108.5,40.5],[109.0,40.7],[109.3,40.9],
+[109.6,41.0],[110.0,40.9],[110.3,41.0],[110.6,41.1],[111.0,41.2],[111.5,41.3],[112.0,41.5],[112.5,41.3],
+[113.0,41.2],[113.5,41.1],[114.0,41.0],[114.5,41.0],[115.0,40.9],[115.5,40.8],[116.0,40.7],[116.5,40.5],
+[117.0,40.3],[117.5,40.2],[118.0,40.0],[118.5,39.8],[119.0,39.5],[119.5,39.3],
+[120.0,39.0],[120.3,38.5],[120.5,38.0],[120.8,37.5],[121.0,37.0],[121.2,36.6],
+[121.0,36.2],[120.8,35.8],[121.0,35.4],[121.2,35.0],[121.5,34.5],[121.3,34.0],
+[121.5,33.5],[121.7,33.0],[121.8,32.5],[121.9,32.0],[122.0,31.5],[121.8,31.0],
+[121.5,30.5],[121.2,30.0],[120.8,29.5],[120.5,29.0],[120.2,28.5],[119.8,28.0],
+[119.5,27.5],[119.2,27.0],[118.8,26.5],[118.5,26.0],[118.2,25.5],[117.8,25.0],
+[117.5,24.5],[117.0,24.0],[116.5,23.5],[116.0,23.2],[115.5,23.0],[115.0,22.8],
+[114.5,22.5],[114.0,22.4],[113.5,22.3],[113.0,22.0],[112.5,21.8],[112.0,21.5],
+[111.5,21.2],[111.0,21.0],[110.5,20.8],[110.0,20.5],[109.5,20.3],[109.0,20.0],
+[108.5,20.5],[108.0,21.0],[107.5,21.3],[107.0,21.5],[106.5,21.8],[106.0,22.0],
+[105.5,22.3],[105.0,22.5],[104.5,22.8],[104.0,23.0],
+[103.5,23.5],[103.0,24.0],[102.5,24.5],[102.0,25.0],[101.5,25.5],[101.0,26.0],
+[100.8,26.5],[100.5,27.0],[100.3,27.5],[100.2,28.0],[100.0,28.5],[100.0,29.0],
+[100.2,29.5],[100.5,30.0],[100.8,30.5],[101.0,31.0],[101.5,31.5],[102.0,32.0],
+[102.5,32.5],[103.0,33.0],[103.3,33.5],[103.5,34.0],[103.6,34.5],[103.8,35.2]
+],
+wh:[
+[74.5,39.0],[75.0,39.3],[76.0,39.5],[77.0,39.8],[78.0,40.0],[79.0,40.3],[80.0,40.5],
+[81.0,40.8],[82.0,41.0],[83.0,41.3],[84.0,41.5],[85.0,41.8],[86.0,42.0],[87.0,42.3],
+[88.0,42.5],[89.0,42.8],[90.0,43.0],[91.0,43.3],[92.0,43.5],[93.0,43.8],[94.0,44.0],
+[95.0,44.2],[96.0,44.3],[97.0,44.2],[98.0,44.0],[99.0,43.8],[100.0,43.5],[101.0,43.2],
+[102.0,42.8],[103.0,42.5],[104.0,42.2],
+[104.5,42.0],[105.0,41.8],[105.5,41.8],[106.0,41.5],[106.5,41.5],[107.0,41.3],
+[107.5,41.2],[108.0,41.0],[108.5,41.0],[109.0,41.0],[109.5,41.2],[110.0,41.3],
+[110.5,41.5],[111.0,41.8],[111.5,42.0],[112.0,42.2],[112.5,42.0],[113.0,41.8],
+[113.5,41.5],[114.0,41.3],[114.5,41.2],[115.0,41.0],[115.5,41.0],[116.0,41.0],
+[116.5,40.8],[117.0,40.5],[117.5,40.5],[118.0,40.3],[118.5,40.2],[119.0,40.0],
+[119.5,40.0],[120.0,39.8],[120.5,39.5],[121.0,39.5],[121.5,39.8],[122.0,40.0],
+[122.5,40.3],[123.0,40.5],[123.5,40.5],[124.0,40.3],[124.5,40.0],[125.0,39.8],
+[125.5,39.5],[126.0,39.2],[126.5,39.0],[126.8,38.5],[126.5,38.0],[126.0,37.5],
+[125.5,37.0],[125.0,36.8],
+[124.5,36.5],[124.0,36.0],[123.5,35.8],[123.0,35.5],[122.5,35.2],[122.0,35.0],
+[121.5,34.5],[121.3,34.0],[121.5,33.5],[121.7,33.0],[121.8,32.5],[122.0,32.0],
+[122.0,31.5],[121.8,31.0],[121.5,30.5],[121.2,30.0],[120.8,29.5],[120.5,29.0],
+[120.2,28.5],[119.8,28.0],[119.5,27.5],[119.2,27.0],[118.8,26.5],[118.5,26.0],
+[118.2,25.5],[117.8,25.0],[117.5,24.5],[117.0,24.0],[116.5,23.5],[116.0,23.0],
+[115.5,22.8],[115.0,22.5],[114.5,22.3],[114.0,22.0],[113.5,21.8],[113.0,21.5],
+[112.5,21.3],[112.0,21.0],[111.5,20.5],[111.0,20.0],[110.5,19.5],[110.0,19.0],
+[109.5,18.5],[109.0,18.2],[108.5,17.8],[108.0,17.5],[107.5,17.0],[107.0,16.5],[106.5,16.0],
+[106.0,16.5],[105.5,17.0],[105.0,18.0],[104.5,19.0],[104.0,20.0],[103.5,21.0],
+[103.0,22.0],[102.5,22.5],[102.0,23.0],[101.5,23.5],[101.0,24.0],[100.5,24.5],
+[100.0,25.0],[99.5,25.5],[99.0,26.0],[98.5,26.5],[98.0,27.0],[97.5,27.5],
+[97.5,28.0],[97.8,28.5],[98.0,29.0],[98.0,29.5],[97.8,30.0],[97.5,30.5],
+[97.2,31.0],[97.0,31.5],[96.8,32.0],[96.5,32.5],[96.2,33.0],[96.0,33.5],
+[95.5,34.0],[95.0,34.5],[94.5,35.0],[94.0,35.5],[93.0,36.0],[92.0,36.5],
+[91.0,37.0],[90.0,37.3],[89.0,37.5],[88.0,37.8],[87.0,38.0],[86.0,38.2],
+[85.0,38.5],[84.0,38.8],[83.0,39.0],[82.0,39.0],[81.0,39.0],[80.0,39.0],
+[79.0,39.0],[78.0,38.8],[77.0,38.8],[76.0,39.0],[75.0,39.0],[74.5,39.0]
+],
+eh:[
+[76.0,39.0],[77.0,39.3],[78.0,39.5],[79.0,39.8],[80.0,40.2],[81.0,40.5],
+[82.0,40.8],[83.0,41.2],[84.0,41.5],[85.0,41.8],[86.0,42.0],[87.0,42.3],
+[88.0,42.5],[89.0,42.8],[90.0,43.0],[91.0,43.2],[92.0,43.5],[93.0,43.8],
+[94.0,44.0],[95.0,44.0],[96.0,43.8],[97.0,43.5],[98.0,43.2],[99.0,43.0],
+[100.0,42.8],[101.0,42.5],[102.0,42.2],[103.0,42.0],[104.0,41.8],
+[104.5,41.5],[105.0,41.5],[105.5,41.3],[106.0,41.2],[106.5,41.0],[107.0,41.0],
+[107.5,41.0],[108.0,40.8],[108.5,40.8],[109.0,41.0],[109.5,41.2],[110.0,41.3],
+[110.5,41.5],[111.0,41.8],[111.5,42.0],[112.0,42.0],[112.5,41.8],[113.0,41.5],
+[113.5,41.3],[114.0,41.2],[114.5,41.0],[115.0,40.8],[115.5,40.8],[116.0,40.5],
+[116.5,40.5],[117.0,40.3],[117.5,40.2],[118.0,40.0],[118.5,39.8],[119.0,39.5],
+[119.5,39.5],[120.0,39.5],[120.5,39.5],[121.0,39.8],[121.5,40.0],[122.0,40.2],
+[122.5,40.0],[123.0,39.8],[123.5,39.5],[124.0,39.2],[124.5,39.0],[125.0,38.8],
+[125.5,38.5],[125.5,38.0],[125.0,37.5],[124.5,37.0],
+[124.0,36.5],[123.5,36.0],[123.0,35.5],[122.5,35.2],[122.0,35.0],
+[121.5,34.5],[121.3,34.0],[121.5,33.5],[121.7,33.0],[121.8,32.5],[122.0,32.0],
+[122.0,31.5],[121.8,31.0],[121.5,30.5],[121.2,30.0],[120.8,29.5],[120.5,29.0],
+[120.2,28.5],[119.8,28.0],[119.5,27.5],[119.2,27.0],[118.8,26.5],[118.5,26.0],
+[118.2,25.5],[117.8,25.0],[117.5,24.5],[117.0,24.0],[116.5,23.5],[116.0,23.0],
+[115.5,22.8],[115.0,22.5],[114.5,22.3],[114.0,22.0],[113.5,21.8],[113.0,21.5],
+[112.5,21.2],[112.0,21.0],[111.5,20.5],[111.0,20.0],[110.5,19.5],[110.0,19.0],
+[109.5,18.5],[109.0,18.2],[108.5,17.8],[108.0,17.5],[107.5,17.0],[107.0,16.8],
+[106.5,17.0],[106.0,17.5],[105.5,18.0],[105.0,19.0],[104.5,20.0],[104.0,21.0],
+[103.5,21.5],[103.0,22.0],[102.5,22.5],[102.0,23.0],[101.5,23.5],[101.0,24.0],
+[100.5,24.5],[100.0,25.0],[99.5,25.5],[99.0,26.0],[98.5,26.5],[98.0,27.0],
+[97.5,27.5],[97.5,28.0],[97.8,28.5],[98.0,29.0],[98.0,29.5],[97.8,30.0],
+[97.5,30.5],[97.2,31.0],[97.0,31.5],[96.8,32.0],[96.5,32.5],[96.2,33.0],[96.0,33.5],
+[95.5,34.0],[95.0,34.5],[94.5,35.0],[94.0,35.5],[93.0,36.0],[92.0,36.5],
+[91.0,37.0],[90.0,37.3],[89.0,37.5],[88.0,37.8],[87.0,38.0],[86.0,38.2],
+[85.0,38.5],[84.0,38.8],[83.0,39.0],[82.0,39.0],[81.0,39.0],[80.0,39.0],
+[79.0,39.0],[78.0,38.8],[77.0,39.0],[76.0,39.0]
+],
+};
+TERR.xin=TERR.wh;
+const TERR_COL={qin:["#4a6fa5","rgba(74,111,165,0.3)"],wh:["#c0392b","rgba(192,57,43,0.25)"],xin:["#7f8c8d","rgba(127,140,141,0.2)"],eh:["#e74c3c","rgba(231,76,60,0.25)"]};
+
+// 长城/丝路/关隘/城市/事件
+const WALL=[[97.5,39.8],[98.0,39.7],[98.5,39.6],[99.0,39.5],[99.5,39.3],[100.0,39.2],[100.5,39.0],[101.0,38.8],[101.5,38.6],[102.0,38.4],[102.5,38.2],[103.0,37.8],[103.3,37.6],[103.5,37.5],[103.8,37.5],[104.2,37.6],[104.5,37.8],[105.0,38.0],[105.3,38.2],[105.6,38.3],[106.0,38.5],[106.3,38.6],[106.5,38.8],[106.8,39.0],[107.0,39.2],[107.3,39.5],[107.6,39.8],[108.0,40.0],[108.3,40.2],[108.6,40.4],[109.0,40.6],[109.3,40.7],[109.5,40.8],[109.8,40.9],[110.0,41.0],[110.2,41.1],[110.5,41.2],[111.0,41.2],[111.5,41.3],[112.0,41.5],[112.3,41.3],[112.5,41.2],[113.0,41.2],[113.3,41.1],[113.5,41.0],[114.0,41.0],[114.3,40.8],[114.5,40.8],[115.0,40.8],[115.3,40.7],[115.5,40.7],[116.0,40.6],[116.3,40.5],[116.5,40.5],[117.0,40.5],[117.3,40.5],[117.5,40.6],[118.0,40.5],[118.3,40.3],[118.5,40.2],[119.0,40.0],[119.3,39.8],[119.5,39.8],[120.0,39.8]];
+const SILK=[{n:"长安",c:[108.94,34.26]},{n:"宝鸡",c:[107.1,34.4]},{n:"天水",c:[105.7,34.6]},{n:"兰州",c:[103.8,36]},{n:"武威",c:[102.6,37.9]},{n:"张掖",c:[100.45,38.9]},{n:"酒泉",c:[98.5,39.7]},{n:"敦煌",c:[94.7,40.1]},{n:"玉门关",c:[93.9,40.4]},{n:"楼兰",c:[89.7,40.5]},{n:"龟兹",c:[83,41.7]},{n:"疏勒",c:[76,39.5]}];
+const PASSES=[{n:"函谷关",c:[110.87,34.52],d:["qin","wh","eh"]},{n:"武关",c:[110.35,33.57],d:["qin","wh"]},{n:"萧关",c:[106.2,36.1],d:["qin","wh"]},{n:"大散关",c:[107.3,34.3],d:["qin","wh"]},{n:"虎牢关",c:[113.3,34.8],d:["qin","wh","eh"]},{n:"玉门关",c:[93.86,40.35],d:["wh","eh"]},{n:"阳关",c:[94.1,39.7],d:["wh","eh"]},{n:"雁门关",c:[112.8,39.2],d:["qin","wh","eh"]},{n:"居庸关",c:[116.0,40.3],d:["qin","wh","eh"]},{n:"潼关",c:[110.24,34.49],d:["eh"]}];
+const CITIES=[{n:"咸阳",c:[108.72,34.37],t:"capital",d:["qin"]},{n:"长安",c:[108.94,34.26],t:"capital",d:["wh","xin"]},{n:"洛阳",c:[112.45,34.62],t:"capital",d:["eh"]},{n:"邯郸",c:[114.49,36.61],t:"major",d:["qin","wh","eh"]},{n:"临淄",c:[118.31,36.86],t:"major",d:["qin","wh"]},{n:"成都",c:[104.07,30.57],t:"major",d:["qin","wh","eh"]},{n:"番禺",c:[113.26,23.13],t:"major",d:["wh","eh"]},{n:"会稽",c:[120.58,30.0],t:"major",d:["qin","wh","eh"]},{n:"南阳",c:[112.53,33.0],t:"major",d:["wh","eh"]},{n:"蓟(北京)",c:[116.4,39.9],t:"major",d:["qin","wh","eh"]},{n:"襄阳",c:[112.14,32.04],t:"major",d:["eh"]},{n:"长沙",c:[113.0,28.2],t:"major",d:["qin","wh","eh"]},{n:"武威",c:[102.64,37.93],t:"strategic",d:["wh","eh"]},{n:"张掖",c:[100.45,38.93],t:"strategic",d:["wh","eh"]},{n:"酒泉",c:[98.49,39.74],t:"strategic",d:["wh","eh"]},{n:"敦煌",c:[94.66,40.14],t:"strategic",d:["wh","eh"]},{n:"龟兹",c:[83,41.7],t:"strategic",d:["wh","eh"]},{n:"疏勒(喀什)",c:[76,39.5],t:"strategic",d:["wh","eh"]},{n:"乌垒(都护府)",c:[86.5,42],t:"strategic",d:["wh","eh"]}];
+const GEOL=[{n:"蒙古高原",c:[108,45],s:11},{n:"青藏高原",c:[88,33],s:11},{n:"四川盆地",c:[105,30.5],s:10},{n:"华北平原",c:[116,36],s:10},{n:"关中平原",c:[108,34.8],s:9},{n:"河西走廊",c:[100,39.3],s:9},{n:"塔克拉玛干沙漠",c:[83,39],s:10},{n:"河套地区",c:[109,40],s:9},{n:"云贵高原",c:[103,26],s:9},{n:"黄土高原",c:[108,37.5],s:9}];
+const EV=[
+{y:-221,n:"秦灭六国",t:"event",c:[108.72,34.37],p:"嬴政先后灭六国，统一天下。",d:"qin"},
+{y:-220,n:"推行郡县制",t:"policy",c:[108.72,34.37],p:"废分封制设三十六郡，中央直接任命官吏。",d:"qin"},
+{y:-215,n:"北击匈奴",t:"battle",c:[110.5,40.8],p:"蒙恬率三十万大军收复河套。",d:"qin"},
+{y:-214,n:"修筑万里长城",t:"policy",c:[110,41],p:"连接秦赵燕旧长城，西起临洮东至辽东。",d:"qin"},
+{y:-214,n:"平定百越",t:"expansion",c:[113.26,23.13],p:"秦军五十万南征百越，设三郡。",d:"qin"},
+{y:-209,n:"陈胜吴广起义",t:"battle",c:[116.58,33.85],p:"大泽乡揭竿而起。",d:"qin"},
+{y:-207,n:"巨鹿之战",t:"battle",c:[115.18,37.07],p:"项羽破釜沉舟大败秦军。",d:"qin"},
+{y:-206,n:"鸿门宴",t:"event",c:[109.3,34.3],p:"项庄舞剑意在沛公。",d:"wh"},
+{y:-202,n:"垓下之战",t:"battle",c:[117.2,33.4],p:"四面楚歌，项羽乌江自刎。",d:"wh"},
+{y:-200,n:"白登之围",t:"battle",c:[113.3,40.1],p:"匈奴围困汉高祖七日。",d:"wh"},
+{y:-154,n:"七国之乱",t:"battle",c:[117.2,34.3],p:"周亚夫三月平定。",d:"wh"},
+{y:-138,n:"张骞出使西域",t:"event",c:[76,39.5],p:"凿空西域开辟丝绸之路。",d:"wh"},
+{y:-127,n:"收复河套",t:"battle",c:[109.5,40.5],p:"卫青击败匈奴白羊王。",d:"wh"},
+{y:-121,n:"河西之战",t:"battle",c:[100.45,38.93],p:"霍去病设河西四郡。",d:"wh"},
+{y:-119,n:"漠北之战",t:"battle",c:[106,46],p:"霍去病封狼居胥。",d:"wh"},
+{y:-111,n:"灭南越",t:"expansion",c:[113.26,23.13],p:"设九郡。",d:"wh"},
+{y:-60,n:"设西域都护府",t:"expansion",c:[86.5,42],p:"天山南北纳入版图。",d:"wh"},
+{y:23,n:"昆阳之战",t:"battle",c:[113,33.7],p:"刘秀以少胜多。",d:"eh"},
+{y:73,n:"班超出使西域",t:"expansion",c:[76,39],p:"收复五十余国。",d:"eh"},
+{y:89,n:"燕然勒石",t:"battle",c:[104,47],p:"窦宪大破北匈奴。",d:"eh"},
+{y:184,n:"黄巾起义",t:"battle",c:[115,36],p:"苍天已死黄天当立。",d:"eh"},
+{y:200,n:"官渡之战",t:"battle",c:[114.5,35],p:"曹操以少胜多。",d:"eh"},
+{y:208,n:"赤壁之战",t:"battle",c:[113.9,29.7],p:"三国鼎立。",d:"eh"},
+];
+
+// 简化河流数据（主要河流折线）
+const RIVERS=[
+  {n:"黄河",p:[[96,35],[97,35.5],[98.5,36],[100,36.5],[101.5,37],[103,37.5],[104,37.7],[105,38],[106,38.5],[107,39],[108,39.5],[109,40],[110,39.5],[110.5,38],[111,37],[112,36],[113.5,35.5],[114,35],[115,35.5],[116.5,37],[118,37.5],[119,37.8]]},
+  {n:"长江",p:[[97,33],[98,31],[99.5,29.5],[101,28.5],[102,29],[104,29.5],[105.5,30],[107,30.5],[108.5,30.3],[110,30.5],[111.5,30.2],[113,30],[114,30.5],[115.5,30.2],[117,31],[118.5,31.5],[120,31.5],[121.5,31.2]]},
+  {n:"珠江",p:[[104,23.5],[105.5,23],[107.5,22.5],[109,22],[110.5,22.5],[112,23],[113.5,23.2]]},
+  {n:"渭河",p:[[104.5,34.5],[106,34.3],[107.5,34.4],[108.5,34.3],[110,34.5]]},
+];
+
+// ═══════════════════════════════════════════════════════════════
+//  渲染引擎 — 自包含 Canvas 2D（无外部数据依赖）
+// ═══════════════════════════════════════════════════════════════
+const cv=document.getElementById('map-canvas'),ctx=cv.getContext('2d');
+const container=document.getElementById('map-container');
+let mW,mH,mDrag=false,mDragX,mDragY,mOx=0,mOy=0,mSox,mSoy;
+let mCx=105,mCy=33,mZoom=5.8;
+const mMIN_Z=2.5,mMAX_Z=20;
+
+function mResize(){
+  const rect=container.getBoundingClientRect();
+  mW=cv.width=rect.width;
+  mH=cv.height=rect.height;
+  mRender();
+}
+
+function mProj(lng,lat){
+  const s=mW*mZoom/360;
+  const x=mW/2+(lng-mCx)*s+mOx;
+  const latR=lat*Math.PI/180,mcR=mCy*Math.PI/180;
+  const y=mH/2-(Math.log(Math.tan(Math.PI/4+latR/2))-Math.log(Math.tan(Math.PI/4+mcR/2)))*s*180/Math.PI+mOy;
+  return[x,y];
+}
+function mUnproj(px,py){
+  const s=mW*mZoom/360;
+  const lng=(px-mW/2-mOx)/s+mCx;
+  const mcR=mCy*Math.PI/180;
+  const mercY=(mH/2-py+mOy)/(s*180/Math.PI)+Math.log(Math.tan(Math.PI/4+mcR/2));
+  return[lng,(2*Math.atan(Math.exp(mercY))-Math.PI/2)*180/Math.PI];
+}
+
+// 简化高程函数（无外部数据，使用 Perlin 噪声模拟）
+const mPM=new Uint8Array(512);
+(function(){const p=new Uint8Array(256);for(let i=0;i<256;i++)p[i]=i;for(let i=255;i>0;i--){const j=Math.floor(Math.random()*i);[p[i],p[j]]=[p[j],p[i]]}for(let i=0;i<512;i++)mPM[i]=p[i&255]})();
+function mFade(t){return t*t*t*(t*(t*6-15)+10)}
+function mGrad(h,x,y){const v=h&3;return((v&1)?-x:x)+((v&2)?-y:y)}
+function mPerlin(x,y){const X=Math.floor(x)&255,Y=Math.floor(y)&255,xf=x-Math.floor(x),yf=y-Math.floor(y),u=mFade(xf),v=mFade(yf);const aa=mPM[mPM[X]+Y],ab=mPM[mPM[X]+Y+1],ba=mPM[mPM[X+1]+Y],bb=mPM[mPM[X+1]+Y+1];return(1-v)*((1-u)*mGrad(aa,xf,yf)+u*mGrad(ba,xf-1,yf))+v*((1-u)*mGrad(ab,xf,yf-1)+u*mGrad(bb,xf-1,yf-1))}
+
+// 简化高程：用 Perlin 噪声 + 预设区域高度
+function mGetElev(lng,lat){
+  // 海洋检测（简化）
+  if(lng>122&&lat<35) return -0.3; // 东海
+  if(lng>119&&lat<25) return -0.3; // 南海部分
+  if(lat<17) return -0.3;
+  // 青藏高原
+  const tbDist=Math.sqrt(Math.pow(lng-88,2)+Math.pow(lat-33,2));
+  let base=0;
+  if(tbDist<15) base=0.5*(1-tbDist/15);
+  // 蒙古高原
+  const mgDist=Math.sqrt(Math.pow(lng-108,2)+Math.pow(lat-46,2));
+  if(mgDist<10) base=Math.max(base,0.15*(1-mgDist/10));
+  // 黄土高原
+  const hpDist=Math.sqrt(Math.pow(lng-108,2)+Math.pow(lat-37,2));
+  if(hpDist<6) base=Math.max(base,0.12*(1-hpDist/6));
+  // 四川盆地（低洼）
+  const scDist=Math.sqrt(Math.pow(lng-105,2)+Math.pow(lat-30.5,2));
+  if(scDist<4) base=Math.max(0,base-0.05*(1-scDist/4));
+  // Perlin 细节
+  const n=mPerlin(lng*0.4,lat*0.4)*0.08+mPerlin(lng*1.5,lat*1.5)*0.03;
+  return Math.max(-0.4,Math.min(0.8,base+n+0.02));
+}
+
+function mElevColor(h){
+  if(h<-0.1)return[14,32,52];
+  if(h<-0.02)return[18,42,65];
+  if(h<0.005)return[22,48,72];
+  if(h<0.02)return[45,78,45];
+  if(h<0.05)return[55,88,48];
+  if(h<0.08)return[65,92,50];
+  if(h<0.12)return[78,96,48];
+  if(h<0.18)return[90,96,46];
+  if(h<0.25)return[105,100,48];
+  if(h<0.35)return[120,108,55];
+  if(h<0.45)return[135,115,62];
+  if(h<0.55)return[148,122,70];
+  if(h<0.65)return[158,132,80];
+  return[168,142,92];
+}
+
+let mTerrainCache=null,mTcW=0,mTcH=0,mTcZ=0,mTcOx=0,mTcOy=0;
+
+function mRenderTerrain(){
+  if(mTerrainCache&&mTcW===mW&&mTcH===mH&&Math.abs(mTcZ-mZoom)<0.005&&Math.abs(mTcOx-mOx)<1&&Math.abs(mTcOy-mOy)<1){ctx.drawImage(mTerrainCache,0,0);return}
+  const T=mZoom>3?3:4;
+  const oc=document.createElement('canvas');oc.width=mW;oc.height=mH;
+  const octx=oc.getContext('2d'),img=octx.createImageData(mW,mH),d=img.data;
+  for(let py=0;py<mH;py+=T)for(let px=0;px<mW;px+=T){
+    const[lng,lat]=mUnproj(px+T/2,py+T/2);
+    const h=mGetElev(lng,lat);
+    const hR=mGetElev(lng+0.3,lat),hU=mGetElev(lng,lat-0.3);
+    const shade=Math.max(0.25,Math.min(1.2,0.6+(h-hR)*4+(h-hU)*3.5));
+    const[r,g,b]=mElevColor(h);
+    const sr=Math.min(255,r*shade*1.25|0),sg=Math.min(255,g*shade*1.25|0),sb=Math.min(255,b*shade*1.25|0);
+    for(let ty=0;ty<T&&py+ty<mH;ty++)for(let tx=0;tx<T&&px+tx<mW;tx++){const i=((py+ty)*mW+(px+tx))*4;d[i]=sr;d[i+1]=sg;d[i+2]=sb;d[i+3]=255}
+  }
+  octx.putImageData(img,0,0);mTerrainCache=oc;mTcW=mW;mTcH=mH;mTcZ=mZoom;mTcOx=mOx;mTcOy=mOy;ctx.drawImage(oc,0,0);
+}
+
+// 绘制工具
+function mDrawLine(pts,color,lw,dash){
+  ctx.beginPath();ctx.setLineDash(dash||[]);
+  for(let i=0;i<pts.length;i++){const[x,y]=mProj(pts[i][0],pts[i][1]);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}
+  ctx.strokeStyle=color;ctx.lineWidth=lw||1;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();ctx.setLineDash([]);
+}
+function mDrawPoly(pts,stroke,fill,lw){
+  ctx.beginPath();
+  for(let i=0;i<pts.length;i++){const[x,y]=mProj(pts[i][0],pts[i][1]);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}
+  ctx.closePath();if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw||2;ctx.lineJoin='round';ctx.stroke()}
+}
+function mDrawDot(lng,lat,r,color,border){const[x,y]=mProj(lng,lat);ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();if(border){ctx.strokeStyle=border;ctx.lineWidth=1;ctx.stroke()}}
+function mDrawDiamond(lng,lat,s,color,border){const[x,y]=mProj(lng,lat);ctx.save();ctx.translate(x,y);ctx.rotate(Math.PI/4);ctx.fillStyle=color;ctx.fillRect(-s,-s,s*2,s*2);if(border){ctx.strokeStyle=border;ctx.lineWidth=1.5;ctx.strokeRect(-s,-s,s*2,s*2)}ctx.restore()}
+function mDrawText(lng,lat,text,opts){
+  opts=opts||{};const size=opts.size||10,color=opts.color||'rgba(255,255,255,.55)',bold=opts.bold||false,offY=opts.offY||0;
+  const[x,y]=mProj(lng,lat);ctx.font=`${bold?'bold ':''}${size}px "PingFang SC","Microsoft YaHei",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillText(text,x+1,y+1+offY);ctx.fillStyle=color;ctx.fillText(text,x,y+offY);
+}
+
+// 主渲染
+let mCurYear=-221,mCurDyn=DYN[0],mCurPh=PH[0],mPlaying=false,mPlayTm=null,mAnim=0;
+function mGetDyn(y){for(let i=DYN.length-1;i>=0;i--)if(y>=DYN[i].s&&y<=DYN[i].e)return DYN[i];return DYN[0]}
+function mGetPh(y){for(let i=PH.length-1;i>=0;i--)if(y>=PH[i].s&&y<=PH[i].e)return PH[i];return PH[0]}
+function mYrTxt(y){return y<0?`公元前 ${-y} 年`:y===0?'公元元年':`公元 ${y} 年`}
+function mGetPhaseEvents(){return EV.filter(e=>e.d===mCurPh.d&&e.y>=mCurPh.s&&e.y<=mCurPh.e)}
+
+function mRender(){
+  if(!mW)return;mAnim++;ctx.clearRect(0,0,mW,mH);
+  // 1. 地形
+  mRenderTerrain();
+  // 2. 疆域
+  const did=mCurDyn.id,terr=TERR[did];
+  if(terr){const tc=TERR_COL[did];mDrawPoly(terr,tc[0],tc[1],2.5);ctx.save();ctx.globalAlpha=.12;mDrawPoly(terr,tc[0],null,5);ctx.restore()}
+  // 3. 河流
+  const rw=Math.max(0.5,Math.min(2,mZoom*0.25));
+  RIVERS.forEach(r=>{mDrawLine(r.p,'rgba(58,123,213,.5)',rw)});
+  if(mZoom>4)RIVERS.forEach(r=>{const mid=r.p[Math.floor(r.p.length/2)];mDrawText(mid[0],mid[1],r.n,{size:Math.max(8,Math.min(11,mZoom*1.3)),color:'rgba(58,122,213,.55)',offY:-8})});
+  // 4. 长城
+  mDrawLine(WALL,'#B8860B',Math.max(1.5,mZoom*.3),[5,3]);
+  if(mZoom>4){const mi=Math.floor(WALL.length/2);mDrawText(WALL[mi][0],WALL[mi][1],'万里长城',{size:10,color:'rgba(184,134,11,.65)',bold:true,offY:-9})}
+  // 5. 丝绸之路
+  if(did!=='qin'){
+    const slk=SILK.map(s=>s.c);ctx.save();ctx.globalAlpha=.12;ctx.shadowColor='#FFD700';ctx.shadowBlur=10;mDrawLine(slk,'#FFD700',4);ctx.restore();
+    mDrawLine(slk,'#FFD700',1.5);mDrawLine(slk,'#FFF8DC',0.8,[3,6]);
+    SILK.forEach(s=>{mDrawDot(s.c[0],s.c[1],2,'#FFD700');if(mZoom>4)mDrawText(s.c[0],s.c[1],s.n,{size:8,color:'rgba(255,215,0,.6)',offY:10})});
+    const mi=Math.floor(SILK.length/2);mDrawText(SILK[mi].c[0],SILK[mi].c[1],'🐫 丝绸之路',{size:11,color:'#FFD700',bold:true,offY:-12});
+  }
+  // 6. 地理标注
+  if(mZoom>3)GEOL.forEach(g=>mDrawText(g.c[0],g.c[1],g.n,{size:g.s-1,color:'rgba(180,180,160,.2)'}));
+  // 7. 关隘
+  PASSES.filter(p=>p.d.includes(did)).forEach(p=>{mDrawDot(p.c[0],p.c[1],2.5,'#90EE90','rgba(0,0,0,.4)');if(mZoom>4.5)mDrawText(p.c[0],p.c[1],p.n,{size:8,color:'rgba(144,238,144,.65)',offY:9})});
+  // 8. 城市
+  CITIES.filter(c=>c.d.includes(did)).forEach(c=>{
+    const isCap=c.t==='capital',isStr=c.t==='strategic',col=isCap?'#FFD700':isStr?'#90EE90':'#fff';
+    if(isCap){ctx.save();ctx.globalAlpha=.18;mDrawDot(c.c[0],c.c[1],8,col);ctx.restore();mDrawDiamond(c.c[0],c.c[1],4,col,'#8B6914');mDrawText(c.c[0],c.c[1],c.n+' ★',{size:11,color:col,bold:true,offY:-12})}
+    else{const sz=isStr?2.5:3;mDrawDot(c.c[0],c.c[1],sz,col,'rgba(0,0,0,.3)');if(mZoom>4||!isStr)mDrawText(c.c[0],c.c[1],c.n,{size:isStr?8:9,color:`rgba(${isStr?'144,238,144':'255,255,255'},.7)`,offY:sz+7})}
+  });
+  // 9. 事件脉冲
+  mGetPhaseEvents().forEach(ev=>{
+    const cfg={battle:{c:'#FF4444'},event:{c:'#FFD700'},expansion:{c:'#4CAF50'},policy:{c:'#2196F3'}}[ev.t];
+    const pulse=(mAnim%90)/90,pr=5+pulse*14;
+    ctx.save();ctx.globalAlpha=(1-pulse)*.35;const[ex,ey]=mProj(ev.c[0],ev.c[1]);
+    ctx.beginPath();ctx.arc(ex,ey,pr,0,Math.PI*2);ctx.strokeStyle=cfg.c;ctx.lineWidth=1.2;ctx.stroke();ctx.restore();
+    mDrawDot(ev.c[0],ev.c[1],4,cfg.c);mDrawDot(ev.c[0],ev.c[1],1.5,'#fff');
+  });
+  document.getElementById('map-zoom-info').textContent=`缩放: ${mZoom.toFixed(1)}x`;
+  requestAnimationFrame(mRender);
+}
+
+// UI 更新
+function mUpdateUI(){
+  mCurDyn=mGetDyn(mCurYear);mCurPh=mGetPh(mCurYear);
+  const b=document.getElementById('map-badge');b.textContent=mCurDyn.name;b.style.color=mCurDyn.color;b.style.borderColor=mCurDyn.color;
+  document.getElementById('map-year').textContent=mYrTxt(mCurYear);document.getElementById('map-title').textContent=mCurPh.t;
+  const dp=document.getElementById('map-desc');dp.style.display='block';dp.style.borderColor=mCurDyn.color;
+  document.getElementById('map-ds-t').textContent=mCurPh.t;document.getElementById('map-ds-t').style.color=mCurDyn.color;
+  document.getElementById('map-ds-s').textContent=mCurPh.sub;document.getElementById('map-ds-p').textContent=mCurPh.p;
+  const total=441,prog=(mCurYear+221)/total;
+  document.getElementById('map-tl-fill').style.width=`${prog*100}%`;document.getElementById('map-tl-fill').style.background=mCurDyn.color;
+  document.getElementById('map-tl-thumb').style.left=`${prog*100}%`;document.getElementById('map-tl-thumb').style.borderColor=mCurDyn.color;
+  document.querySelectorAll('.map-tl-seg,.map-tl-lbl').forEach(e=>e.remove());
+  const track=document.getElementById('map-tl-track');
+  DYN.forEach(d=>{const s=(d.s+221)/total*100,e=(d.e+221)/total*100;
+    const seg=document.createElement('div');seg.className=`map-tl-seg${d.id===mCurDyn.id?' active':''}`;seg.style.cssText=`left:${s}%;width:${e-s}%;background:${d.color}`;track.appendChild(seg);
+    const lbl=document.createElement('div');lbl.className=`map-tl-lbl${d.id===mCurDyn.id?' active':''}`;lbl.style.left=`${(s+e)/2}%`;lbl.textContent=d.name;track.appendChild(lbl);
+  });
+  // Events panel
+  const ep=document.getElementById('map-events');ep.innerHTML='';
+  const tcfg={battle:{i:'⚔️',c:'#FF4444'},event:{i:'📜',c:'#FFD700'},expansion:{i:'🚩',c:'#4CAF50'},policy:{i:'🏛️',c:'#2196F3'}};
+  mGetPhaseEvents().forEach((ev,i)=>{const cfg=tcfg[ev.t];
+    const cd=document.createElement('div');cd.className='map-ev-card';cd.style.borderColor=cfg.c;cd.style.animationDelay=`${i*.05}s`;
+    cd.innerHTML=`<div class="map-ev-hd"><span class="map-ev-icon">${cfg.i}</span><span class="map-ev-nm" style="color:${cfg.c}">${ev.n}</span><span class="map-ev-yr">${ev.y<0?'前'+(-ev.y)+'年':ev.y+'年'}</span></div><div class="map-ev-ds">${ev.p}</div>`;
+    cd.onclick=()=>{mCx=ev.c[0];mCy=ev.c[1];if(mZoom<6)mZoom=7;mTerrainCache=null;mOx=0;mOy=0;mShowPopup(ev)};ep.appendChild(cd);
+  });
+}
+
+function mShowPopup(ev){
+  const pp=document.getElementById('map-popup');const[x,y]=mProj(ev.c[0],ev.c[1]);
+  const tcfg={battle:{i:'⚔️',c:'#FF4444'},event:{i:'📜',c:'#FFD700'},expansion:{i:'🚩',c:'#4CAF50'},policy:{i:'🏛️',c:'#2196F3'}};const cfg=tcfg[ev.t];
+  document.getElementById('map-pp-t').innerHTML=`<span style="color:${cfg.c}">${cfg.i} ${ev.n}</span>`;
+  document.getElementById('map-pp-s').textContent=mYrTxt(ev.y);document.getElementById('map-pp-b').textContent=ev.p;
+  pp.style.display='block';
+  const containerRect=container.getBoundingClientRect();
+  pp.style.left=Math.min(x+15,containerRect.width-260)+'px';pp.style.top=Math.max(y-60,50)+'px';
+}
+function mClosePopup(){document.getElementById('map-popup').style.display='none'}
+document.getElementById('map-pp-close').addEventListener('click',mClosePopup);
+
+// Canvas 交互
+cv.addEventListener('mousedown',e=>{mDrag=true;mDragX=e.clientX;mDragY=e.clientY;mSox=mOx;mSoy=mOy;cv.style.cursor='grabbing'});
+window.addEventListener('mousemove',e=>{if(!mDrag)return;mOx=mSox+(e.clientX-mDragX);mOy=mSoy+(e.clientY-mDragY);mTerrainCache=null;mClosePopup()});
+window.addEventListener('mouseup',()=>{if(mDrag){mDrag=false;cv.style.cursor='grab'}});
+cv.addEventListener('wheel',e=>{e.preventDefault();mZoom=Math.max(mMIN_Z,Math.min(mMAX_Z,mZoom+(e.deltaY>0?-0.3:0.3)));mTerrainCache=null;mClosePopup()},{passive:false});
+
+// Touch
+let mTouchDist=0;
+cv.addEventListener('touchstart',e=>{if(e.touches.length===1){mDrag=true;mDragX=e.touches[0].clientX;mDragY=e.touches[0].clientY;mSox=mOx;mSoy=mOy}if(e.touches.length===2){const dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY;mTouchDist=Math.sqrt(dx*dx+dy*dy)}},{passive:true});
+cv.addEventListener('touchmove',e=>{if(e.touches.length===1&&mDrag){mOx=mSox+(e.touches[0].clientX-mDragX);mOy=mSoy+(e.touches[0].clientY-mDragY);mTerrainCache=null}if(e.touches.length===2){const dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY;const d=Math.sqrt(dx*dx+dy*dy);mZoom=Math.max(mMIN_Z,Math.min(mMAX_Z,mZoom+(d-mTouchDist)*.01));mTouchDist=d;mTerrainCache=null}},{passive:true});
+cv.addEventListener('touchend',()=>{mDrag=false});
+
+// Timeline 交互
+function mTlYear(e){const t=document.getElementById('map-tl-track'),r=t.getBoundingClientRect();return Math.round(-221+Math.max(0,Math.min(1,(e.clientX-r.left)/r.width))*441)}
+let mTlDrag=false;
+document.getElementById('map-tl-track').addEventListener('mousedown',e=>{mTlDrag=true;mCurYear=mTlYear(e);mUpdateUI();e.preventDefault()});
+window.addEventListener('mousemove',e=>{if(mTlDrag){mCurYear=mTlYear(e);mUpdateUI()}});
+window.addEventListener('mouseup',()=>{mTlDrag=false});
+document.getElementById('map-tl-track').addEventListener('touchstart',e=>{mTlDrag=true;mCurYear=mTlYear(e.touches[0]);mUpdateUI()},{passive:true});
+document.addEventListener('touchmove',e=>{if(mTlDrag){mCurYear=mTlYear(e.touches[0]);mUpdateUI()}},{passive:true});
+document.addEventListener('touchend',()=>{mTlDrag=false});
+
+// Play
+document.getElementById('map-play-btn').addEventListener('click',function(){
+  mPlaying=!mPlaying;this.innerHTML=mPlaying?'⏸ 暂停':'▶ 自动播放';
+  if(mPlaying)mPlayTm=setInterval(()=>{mCurYear+=2;if(mCurYear>220)mCurYear=-221;mUpdateUI()},180);else clearInterval(mPlayTm);
+});
+
+// ResizeObserver for container
+const mRO=new ResizeObserver(()=>{mTerrainCache=null;mResize()});
+mRO.observe(container);
+
+// Init map — expose to global scope for DOMContentLoaded
+window.initMap=function(){mResize();mUpdateUI();mRender()};
+})();
+// ====== Knowledge Graph (D3.js) ======
+function initKnowledgeGraph() {
+  const svg = d3.select('#kg-svg');
+  if (svg.empty() || !svg.node()) return; // v7.7.2: 标准 KG 模块已接管，旧 D3 图谱跳过
+  const width = svg.node().getBoundingClientRect().width;
+  const height = 400;
+  svg.attr('viewBox', `0 0 ${width} ${height}`);
+
+  const nodes = [
+    { id: 'early-civilizations', label: '中华文明的起源\n与早期国家', type: 'prev', x: width*0.15, y: height*0.5 },
+    { id: 'imperial-unification', label: '秦汉大一统', type: 'current', x: width*0.5, y: height*0.5 },
+    { id: 'tang-song-prosperity', label: '隋唐宋元的繁荣', type: 'next', x: width*0.85, y: height*0.35 },
+    { id: 'ancient-culture', label: '中国古代文化', type: 'next', x: width*0.85, y: height*0.65 }
+  ];
+
+  const links = [
+    { source: 'early-civilizations', target: 'imperial-unification', note: '先秦是秦汉统一的基础' },
+    { source: 'imperial-unification', target: 'tang-song-prosperity', note: '秦汉制度影响隋唐宋元' },
+    { source: 'imperial-unification', target: 'ancient-culture', note: '秦汉奠定文化格局' }
+  ];
+
+  const colorMap = { prev: '#059669', current: '#991b1b', next: '#d97706' };
+  const nodeMap = {};
+  nodes.forEach(n => nodeMap[n.id] = n);
+
+  // Links
+  svg.selectAll('.kg-link')
+    .data(links)
+    .join('line')
+    .attr('class','kg-link')
+    .attr('x1', d => nodeMap[d.source].x)
+    .attr('y1', d => nodeMap[d.source].y)
+    .attr('x2', d => nodeMap[d.target].x)
+    .attr('y2', d => nodeMap[d.target].y)
+    .attr('stroke','#cbd5e1')
+    .attr('stroke-width', 2)
+    .attr('stroke-dasharray','6,4');
+
+  // Link labels
+  svg.selectAll('.kg-link-label')
+    .data(links)
+    .join('text')
+    .attr('class','kg-link-label')
+    .attr('x', d => (nodeMap[d.source].x + nodeMap[d.target].x)/2)
+    .attr('y', d => (nodeMap[d.source].y + nodeMap[d.target].y)/2 - 8)
+    .attr('text-anchor','middle')
+    .attr('font-size','11px')
+    .attr('fill','#94a3b8')
+    .text(d => d.note);
+
+  // Arrows
+  svg.append('defs').selectAll('marker')
+    .data(['arrow'])
+    .join('marker')
+    .attr('id','arrow')
+    .attr('viewBox','0 0 10 10')
+    .attr('refX',28)
+    .attr('refY',5)
+    .attr('markerWidth',6)
+    .attr('markerHeight',6)
+    .attr('orient','auto')
+    .append('path')
+    .attr('d','M0,0 L10,5 L0,10 Z')
+    .attr('fill','#cbd5e1');
+
+  svg.selectAll('.kg-link').attr('marker-end','url(#arrow)');
+
+  // Nodes
+  const nodeGs = svg.selectAll('.kg-node')
+    .data(nodes)
+    .join('g')
+    .attr('class','kg-node')
+    .attr('transform', d => `translate(${d.x},${d.y})`)
+    .style('cursor','pointer');
+
+  nodeGs.append('circle')
+    .attr('r', d => d.type === 'current' ? 40 : 32)
+    .attr('fill', d => colorMap[d.type] + '20')
+    .attr('stroke', d => colorMap[d.type])
+    .attr('stroke-width', d => d.type === 'current' ? 3 : 2);
+
+  nodeGs.each(function(d) {
+    const g = d3.select(this);
+    const lines = d.label.split('\n');
+    lines.forEach((line, i) => {
+      g.append('text')
+        .attr('text-anchor','middle')
+        .attr('dy', lines.length === 1 ? '0.35em' : (i - (lines.length-1)/2) * 16 + 'px')
+        .attr('font-size', d.type === 'current' ? '13px' : '11px')
+        .attr('font-weight', d.type === 'current' ? 'bold' : 'normal')
+        .attr('fill', colorMap[d.type])
+        .text(line);
+    });
+  });
+
+  // Hover effect
+  nodeGs.on('mouseover', function(event, d) {
+    d3.select(this).select('circle')
+      .transition().duration(200)
+      .attr('r', d.type === 'current' ? 46 : 38)
+      .attr('fill', colorMap[d.type] + '35');
+  }).on('mouseout', function(event, d) {
+    d3.select(this).select('circle')
+      .transition().duration(200)
+      .attr('r', d.type === 'current' ? 40 : 32)
+      .attr('fill', colorMap[d.type] + '20');
+  });
+}
+
+// ====== Quiz System ======
+const quizFeedback = {
+  1: {
+    A: "❌ 管辖范围的大小不是制度优劣的核心区别。分封制下的周朝疆域也很辽阔。关键区别在于地方官员的产生方式。",
+    B: "❌ 经济发展与地方管理制度的关系不是直接对应的。郡县制的核心进步在于行政管理方面。",
+    C: "✅ 正确！郡县制最大的进步是地方官员由中央政府直接任命和考核，不能世袭，从而有效加强了中央对地方的控制。这是秦朝最重要的制度创新。",
+    D: "❌ 思想统一是通过「焚书坑儒」等措施实现的，不是郡县制的直接作用。郡县制解决的是行政管理问题。"
+  },
+  2: {
+    A: "❌ 书同文的目的不是加强法律惩罚。统一文字是文化层面的措施，不是法律手段。",
+    B: "✅ 正确！统一文字使得不同地区的人们可以使用相同的文字交流，极大地促进了文化传播、政令传达和国家认同感的形成。这是文化统一的基石。",
+    C: "❌ 书同文不是用来监控诸侯的。秦朝实行的是郡县制，已经取消了诸侯分封。",
+    D: "❌ 统一文字和军队战斗力没有直接关系。提高军队战斗力靠的是军事训练和装备。"
+  },
+  3: {
+    A: "❌ 这种观点过于简单化。历史事件的原因往往是多方面的，不能只归结为一个因素。",
+    B: "❌ 统一是历史趋势，百姓反对的不是统一本身，而是秦朝的暴政和过重的负担。",
+    C: "❌ 陈胜吴广起义是直接导火索，但根本原因是多方面的，包括暴政、政策失误等深层因素。",
+    D: "✅ 正确！秦朝灭亡是综合因素的结果：暴政（严刑峻法、繁重徭役）是重要原因，统一后未及时调整战时政策、六国旧势力反抗、统治集团内部矛盾等都是重要因素。分析历史问题要多角度思考。"
+  },
+  4: {
+    A: "✅ 正确！汉初统治者亲身经历了秦末战乱，深刻认识到暴政会导致王朝覆灭。因此采取「休养生息」政策，减轻赋税徭役，让百姓恢复生产。这是从历史中汲取教训的典范。",
+    B: "❌ 政策的制定不取决于个人性格，而是基于对当时社会状况的判断和对秦朝灭亡的深刻反思。",
+    C: "❌ 汉初面临严重的匈奴威胁，白登之围就是例证。正是因为国力不足才选择休养生息。",
+    D: "❌ 汉初推崇的是道家「黄老之学」的无为而治，不是儒家思想。独尊儒术是汉武帝时期的政策。"
+  },
+  5: {
+    A: "❌ 推恩令不是奖励措施。相反，它表面上是「恩赐」，实际上是一种巧妙的削弱策略。",
+    B: "❌ 恰恰相反！推恩令的结果是诸侯国的土地不断被分割变小，而不是增加。",
+    C: "✅ 正确！推恩令规定诸侯王的封地由其所有儿子平分（不再只由嫡长子继承），结果诸侯国越分越小，势力不断削弱。这是汉武帝的高明之处——用「施恩」的名义达到「削藩」的目的！",
+    D: "❌ 推广儒家思想的措施是「罢黜百家，独尊儒术」，不是推恩令。两者目标不同。"
+  },
+  6: {
+    A: "❌ 丝绸之路得名于丝绸贸易，但其功能远不止运送丝绸。它还传播了佛教、音乐、农作物等。",
+    B: "✅ 正确！丝绸之路既是贸易通道（丝绸、香料、宝石等商品往来），也是文化交流之路（佛教东传、造纸术西传、音乐舞蹈交流等）。要从经济和文化双重角度理解其深远意义。",
+    C: "❌ 丝绸之路在汉代开辟后一直延续了数百年，唐代达到鼎盛。它不仅限于汉武帝时期。",
+    D: "❌ 丝绸之路主要是和平的贸易和文化交流路线，不是军事征服的路线。张骞出使西域的目的是联络大月氏夹击匈奴，但最终意义在于开辟贸易文化通道。"
+  },
+  7: {
+    A: "❌ 李斯是秦朝丞相，他建议的是「焚书坑儒」（打压百家），不是「独尊儒术」。方向完全相反！",
+    B: "❌ 诸葛亮是三国时期的人物（比汉武帝晚了300多年），且汉文帝推崇的是道家黄老之学。",
+    C: "✅ 正确！西汉思想家董仲舒提出「罢黜百家，独尊儒术」的建议，被汉武帝采纳。从此儒学成为官方正统思想，影响了中国两千年的文化发展。",
+    D: "❌ 孔子是春秋时期的人，比汉朝早了数百年。汉高祖刘邦不重视儒学，甚至轻视儒生。"
+  },
+  8: {
+    A: "❌ 张骞负责出使西域（外交），班超负责经营西域（东汉）。他们与匈奴有关，但不是「北击匈奴」的军事将领。",
+    B: "✅ 正确！卫青和霍去病是汉武帝时期北击匈奴的两大名将。卫青七战七捷，霍去病封狼居胥，他们的军事胜利使汉朝解除了匈奴的威胁。",
+    C: "❌ 陈胜和吴广是秦末农民起义的领袖，与北击匈奴无关。他们的起义发生在秦朝末年。",
+    D: "❌ 韩信和萧何是楚汉战争时期的人物。韩信是军事天才，萧何是内政能手，但他们活动在汉朝建立之初，不是北击匈奴的将领。"
+  }
+};
+
+document.querySelectorAll('.quiz-card').forEach(card => {
+  const qid = card.dataset.qid;
+  const correctAns = card.dataset.answer;
+  const feedback = card.querySelector('.quiz-feedback');
+
+  card.querySelectorAll('.quiz-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      if (card.dataset.answered) return;
+      card.dataset.answered = 'true';
+      const selected = opt.dataset.opt;
+      const isCorrect = selected === correctAns;
+
+      card.querySelectorAll('.quiz-option').forEach(o => {
+        o.classList.remove('correct', 'wrong');
+        o.style.pointerEvents = 'none';
+        if (o.dataset.opt === correctAns) o.classList.add('correct');
+        else if (o.dataset.opt === selected && !isCorrect) o.classList.add('wrong');
+      });
+
+      feedback.innerHTML = quizFeedback[qid][selected];
+      feedback.className = 'quiz-feedback show ' + (isCorrect ? 'correct' : 'wrong');
+    });
+  });
+});
+
+// ====== Smooth Scroll ======
+document.querySelectorAll('.nav a').forEach(link => {
+  link.addEventListener('click', function(e) {
+    e.preventDefault();
+    document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
+    this.classList.add('active');
+    const target = document.querySelector(this.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior:'smooth', block:'start' });
+  });
+});
+
+// ====== Init ======
+window.addEventListener('DOMContentLoaded', () => {
+  initMap();
+  initKnowledgeGraph();
+  updateAreaChart();
+  updatePolicy();
+});
+</script>
+
+<!-- ⭐ v6.11 AI 学伴配置（必须在 ai-tutor.js 加载前定义） -->
+<script>
+window.__TEACHANY_TUTOR_CONFIG__ = {
+  courseTitle: "秦汉统一多民族国家",
+  subject: "history",
+  grade: 7,
+  learningObjectives: []
+};
+</script>
+<!-- ⭐ v6.11 AI 学伴脚本（左下角 FAB · 首次点击引导配置 API） -->
+<script src="../../scripts/ai-tutor.js" defer></script>
+
+
+<style>
+.ta-standard-section{margin:56px auto;padding:32px;border:1px solid rgba(148,163,184,.18);border-radius:24px;background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(15,23,42,.04));max-width:1100px}
+.ta-standard-section h2{font-size:clamp(24px,3vw,34px);margin:0 0 18px;color:inherit}
+.ta-standard-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
+.ta-standard-card{padding:20px;border-radius:18px;background:rgba(255,255,255,.06);border:1px solid rgba(148,163,184,.18);margin:14px 0}
+.ta-standard-card h3{margin:0 0 10px;color:inherit}
+.ta-standard-card p,.ta-standard-card li{line-height:1.75}
+.ta-standard-figure img{width:100%;max-height:360px;object-fit:cover;border-radius:18px;border:1px solid rgba(148,163,184,.2)}
+.ta-standard-figure figcaption{font-size:13px;color:var(--dim,var(--text2,#64748b));margin-top:8px;text-align:center}
+.ta-standard-quiz button,.ta-standard-actions button{margin:6px 8px 6px 0;padding:10px 14px;border:0;border-radius:10px;background:#2563eb;color:#fff;cursor:pointer}
+.ta-standard-feedback{margin-top:10px;padding:12px;border-radius:10px;background:rgba(15,23,42,.12)}
+#taStandardCanvas{width:100%;height:320px;display:block;background:rgba(15,23,42,.82);border-radius:16px}
+.ai-media-zone textarea{width:100%;min-height:100px;border-radius:12px;padding:12px}
+</style>
+
+  <!-- ABT 引入 -->
+  <section class="section" id="why-learn" data-tts="why-learn" data-tsh="为什么学">
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:8px">
+      <div style="background:#1e293b;border:1px solid #22d3ee30;border-radius:12px;padding:16px">
+        <div style="font-size:12px;font-weight:700;color:#22d3ee;margin-bottom:6px">AND · 已知</div>
+        <p style="font-size:13px;line-height:1.7">春秋战国五百年，诸侯征伐，七个强国并立。</p>
+      </div>
+      <div style="background:#1e293b;border:1px solid #f5c84230;border-radius:12px;padding:16px">
+        <div style="font-size:12px;font-weight:700;color:#f5c842;margin-bottom:6px">BUT · 问题</div>
+        <p style="font-size:13px;line-height:1.7">但秦始皇为什么能在短短十年内统一六国？统一后建立了哪些影响中国两千年的制度？</p>
+      </div>
+      <div style="background:#1e293b;border:1px solid #34d39930;border-radius:12px;padding:16px">
+        <div style="font-size:12px;font-weight:700;color:#34d399;margin-bottom:6px">THEREFORE · 新知</div>
+        <p style="font-size:13px;line-height:1.7">因此要掌握秦朝统一的原因和制度创新（<strong>郡县制/统一文字货币度量衡</strong>），以及汉武帝巩固大一统的举措。</p>
+      </div>
+    </div>
+  </section>
+<section class="ta-standard-section" id="teachany-standard-enhancement" data-module-id="standard-enhancement">
+<figure class="ta-standard-figure"><img class="hero-cover-img" src="./assets/imperial-unification-hero.png" alt="秦汉统一多民族国家知识结构主图"><figcaption>秦汉统一多民族国家知识结构主图：围绕“统一国家如何建立并巩固？”，展示核心机制、易错诊断和迁移应用。</figcaption></figure>
+  <h2>✅ TeachAny 最新标准增强：秦汉统一多民族国家连续学习闭环</h2>
+  
+  <div class="ta-standard-grid">
+    <div class="ta-standard-card"><h3>🎯 为什么学</h3><p><strong>And：</strong>你已经接触过「early-civilizations」。<br><strong>But：</strong>遇到真实场景时，光背定义不够，容易把条件、证据和结论混淆。<br><strong>Therefore：</strong>本课用「秦汉统一多民族国家」回答核心问题：统一国家如何建立并巩固？</p></div>
+    <div class="ta-standard-card"><h3>🧭 教学方法</h3><p>时空定位、史料证据、因果解释。学习时按「观察事实 → 建立模型 → 诊断错误 → 迁移应用」推进。</p></div>
+    <div class="ta-standard-card"><h3>🌍 真实场景</h3><p>把事件放回时间轴和地图，比较不同主体的选择与结果。</p></div>
+  </div>
+</section>
+<section class="ta-standard-section" id="pretest">
+  <h2>🔍 前测练习题：你已经知道什么？</h2>
+  <div class="ta-standard-card ta-standard-quiz"><p>1. 马上练：学习「秦汉统一多民族国家」前，最先要确认的是哪一类证据？</p><button onclick="taStdQuiz(this,false,'常见错误：只看结论会漏掉条件。先找对象、条件和变化证据。')">直接背结论</button><button onclick="taStdQuiz(this,true,'正确：先找对象、条件和变化证据，再进入概念解释。')">对象、条件、变化证据</button><button onclick="taStdQuiz(this,false,'错因诊断：例题答案只是结果，不是分析路径。')">例题最终答案</button><div class="ta-standard-feedback"></div></div>
+  <div class="ta-standard-card ta-standard-quiz"><p>2. 练习题：如果同学解释不出来「为什么」，最可能缺少哪一步？</p><button onclick="taStdQuiz(this,true,'正确：缺的是从现象到机制的解释链。')">从现象到机制的解释链</button><button onclick="taStdQuiz(this,false,'常见错误：多做题不等于理解机制。')">多刷几道同类题</button><button onclick="taStdQuiz(this,false,'错因诊断：只换说法不能补上证据。')">把概念换个说法</button><div class="ta-standard-feedback"></div></div>
+</section>
+<!-- ⭐ v7.7.2 标准 Leaflet 历史地图模块 -->
+<section class="ta-standard-section" id="teachany-historical-map">
+  <h2 style="text-align:center;margin-bottom:16px;">🗺️ 秦汉统一多民族国家</h2>
+  <p style="text-align:center;color:#64748b;margin-bottom:18px;">点击时代按钮切换疆域版图；悬停高亮边界；点击红色城市标记查看详情。</p>
+  <div data-teachany-map="thm-examples-imperial-unification"
+       data-teachany-map-scope="china"
+       data-teachany-map-title="秦汉统一多民族国家">
+    <script type="application/json" data-teachany-map-config>
+{
+  "eras": [
+    {
+      "id": "qin",
+      "label": "秦 (前221)",
+      "file": "qin-dynasty.geojson",
+      "fill": "#6366f1",
+      "stroke": "#4f46e5",
+      "desc": "<span class=\"thm-year-tag\">前221</span><strong>秦统一六国</strong>：废分封、行郡县，书同文车同轨，统一度量衡。中央集权帝制诞生。",
+      "cities": [
+        [
+          34.27,
+          108.95,
+          "咸阳",
+          "Xianyang",
+          "秦都"
+        ],
+        [
+          30.66,
+          104.07,
+          "成都",
+          "Chengdu",
+          "蜀郡，都江堰"
+        ],
+        [
+          34.75,
+          113.66,
+          "荥阳",
+          "Xingyang",
+          "敖仓粮储"
+        ]
+      ]
+    },
+    {
+      "id": "han-west",
+      "label": "西汉 (前202)",
+      "file": "west-han-dynasty.geojson",
+      "fill": "#f59e0b",
+      "stroke": "#d97706",
+      "desc": "<span class=\"thm-year-tag\">前202-9</span><strong>汉承秦制</strong>：文景之治→武帝盛世。张骞凿空西域，独尊儒术，丝路开通。",
+      "cities": [
+        [
+          34.34,
+          108.94,
+          "长安",
+          "Chang'an",
+          "西汉都城"
+        ],
+        [
+          43.83,
+          87.62,
+          "西域都护府",
+          "Xiyu",
+          "前60设立"
+        ],
+        [
+          34.75,
+          113.66,
+          "洛阳",
+          "Luoyang",
+          "东汉都城"
+        ]
+      ]
+    },
+    {
+      "id": "han-east",
+      "label": "东汉 (25)",
+      "file": "east-han-dynasty.geojson",
+      "fill": "#10b981",
+      "stroke": "#059669",
+      "desc": "<span class=\"thm-year-tag\">25-220</span><strong>光武中兴</strong>：定都洛阳。班超经营西域，佛教东传，造纸改良。",
+      "cities": [
+        [
+          34.75,
+          113.66,
+          "洛阳",
+          "Luoyang",
+          "东汉都"
+        ],
+        [
+          36.07,
+          103.83,
+          "姑臧",
+          "Guzang",
+          "凉州丝路枢纽"
+        ]
+      ]
+    }
+  ],
+  "center": [
+    34,
+    108
+  ],
+  "zoom": 4,
+  "fitBounds": [
+    [
+      18,
+      72
+    ],
+    [
+      52,
+      140
+    ]
+  ],
+  "minZoom": 2,
+  "maxZoom": 8,
+  "overlays": [
+    {
+      "id": "capitals",
+      "label": "🏛️ 古都陪都",
+      "file": "capitals-extended.geojson",
+      "style": {
+        "color": "#a855f7",
+        "radius": 4
+      },
+      "visible": true
+    },
+    {
+      "id": "rivers",
+      "label": "🌊 黄河故道",
+      "file": "rivers-historical.geojson",
+      "style": {
+        "color": "#0ea5e9",
+        "weight": 3
+      },
+      "visible": false
+    },
+    {
+      "id": "passes",
+      "label": "🏯 秦汉关隘",
+      "file": "passes-ancient.geojson",
+      "style": {
+        "color": "#dc2626",
+        "radius": 5
+      },
+      "visible": false
+    }
+  ]
+}
+</script>
+  </div>
+</section>
+
+
+<!-- ⭐ v7.7 标准 AI 学伴入口卡片（放在 pretest 之后，课件顶部可见） -->
+<!-- ⭐ v7.7 标准 AI 学伴入口卡片（必须显式存在，不能仅依赖 FAB） -->
+<section class="ta-standard-section" id="teachany-ai-tutor-card">
+  <div data-teachany-tutor-card></div>
+</section>
+
+<section class="ta-standard-section" id="ta-standard-imperial-unification-graph">
+  <h2>🗺️ 知识图谱：从前置到迁移</h2>
+  <div class="ta-standard-grid">
+    <div class="ta-standard-card"><h3>① 前置知识</h3><p>early-civilizations。先确认这些基础是否能说清楚，否则回到前测补洞。</p></div>
+    <div class="ta-standard-card"><h3>② 核心节点</h3><p>hist-m-imperial-unification：秦汉统一多民族国家。抓住定义、条件、典型模型和反例。</p></div>
+    <div class="ta-standard-card"><h3>③ 后续迁移</h3><p>把本课方法迁移到新材料、新数据或新情境中，形成可复用的解题/解释框架。</p></div>
+  </div>
+  
+  <div class="ta-standard-card ta-standard-map"><h3>🗺️ 地图/时空定位</h3><svg viewBox="0 0 720 260" role="img" aria-label="秦汉统一多民族国家学习地图"><rect width="720" height="260" rx="18" fill="#0f172a"/><path d="M80 170 C180 90 250 120 350 80 S520 110 640 70" fill="none" stroke="#f59e0b" stroke-width="5"/><circle cx="120" cy="150" r="12" fill="#38bdf8"/><circle cx="350" cy="80" r="12" fill="#22c55e"/><circle cx="610" cy="82" r="12" fill="#ef4444"/><text x="48" y="40" fill="#fff" font-size="24">时空线索：地点 → 路线 → 影响</text><text x="95" y="200" fill="#cbd5e1" font-size="16">起点证据</text><text x="318" y="120" fill="#cbd5e1" font-size="16">关键转折</text><text x="555" y="122" fill="#cbd5e1" font-size="16">结果迁移</text></svg><p>学习历史/地理内容时，先定位核心区域和时间顺序，再解释因果关系，避免只背结论。</p></div>
+</section>
+<section class="ta-standard-section" id="deep-understanding">
+  <h2>🔍 深层理解：五镜头法</h2>
+  <div class="ta-standard-grid"><div class="ta-standard-card"><h3>看见它</h3><p>指出秦汉统一多民族国家在题干、图像、实验或文本中的可观察证据。</p></div><div class="ta-standard-card"><h3>拆开它</h3><p>把概念拆成对象、条件、过程、结果四个部分，避免把概念当口号。</p></div><div class="ta-standard-card"><h3>解释它</h3><p>用一句因果链说明：因为哪些条件变化，所以出现怎样的结果。</p></div><div class="ta-standard-card"><h3>比较它</h3><p>和相邻知识点比较，找出相同点、差异点和容易混淆的边界。</p></div><div class="ta-standard-card"><h3>迁移它</h3><p>设计一个新场景，验证你是否真的能使用这个概念，而不是只会复述。</p></div></div>
+</section>
+<section class="ta-standard-section" id="error-diagnosis"><h2>⚠️ 常见错误与诊断反馈</h2><div class="ta-standard-card"><p><strong>易错点 1：</strong>把「条件」和「结论」混淆。诊断方式：遮住结论，只看证据是否足够推出它。</p><p><strong>易错点 2：</strong>只记住关键词，忘记适用范围。诊断方式：换一个场景，检查规则是否仍然成立。</p><p><strong>记忆锚点：</strong>先问「看见什么」，再问「为什么」，最后问「还能用到哪里」。这个口诀能把观察、解释、迁移连成闭环。</p></div></section>
+<section class="ta-standard-section" id="posttest"><h2>📝 后测练习题：学会了吗？</h2><div class="ta-standard-card ta-standard-quiz"><p>1. 练习题：面对一个新问题，最能体现你掌握了「秦汉统一多民族国家」的是：</p><button onclick="taStdQuiz(this,false,'错因诊断：背定义只是记忆层，不代表会迁移。')">能背出定义</button><button onclick="taStdQuiz(this,true,'正确：能用证据解释新情境，说明已经达到理解和应用层。')">能用证据解释新情境</button><button onclick="taStdQuiz(this,false,'常见错误：只会做原题，说明迁移不足。')">只会做原来的例题</button><div class="ta-standard-feedback"></div></div><div class="ta-standard-card"><h3>⭐ 分层任务</h3><ul><li><strong>基础巩固：</strong>用 3 句话写出本课核心概念、条件和一个例子。</li><li><strong>能力应用：</strong>分析一个课本外场景，说明它如何体现秦汉统一多民族国家。</li><li><strong>迁移挑战：</strong>设计一个小实验、地图解读、文本辨析或数据任务，并写出评价标准。</li></ul></div></section>
+<section class="ta-standard-section ai-media-zone" id="ai-media-zone"><h2>🤖 AI 多模态互动区</h2><div class="ta-standard-card"><p>选择一张课本插图、历史地图或自己的作业截图，先描述你观察到的证据，再向 AI 提问：它和「秦汉统一多民族国家」的哪个概念有关？</p><textarea aria-label="AI 多模态问题" placeholder="例如：我看到……我想判断它是否体现了秦汉统一多民族国家中的核心规律，因为……"></textarea></div></section>
+<script>
+function taStdQuiz(btn, ok, msg){const box=btn.parentElement.querySelector('.ta-standard-feedback');if(!box)return;box.textContent=(ok?'✅ ':'❌ ')+msg;box.style.border='1px solid '+(ok?'#22c55e':'#ef4444');}
+(function(){const canvas=document.getElementById('taStandardCanvas');if(!canvas)return;const ctx=canvas.getContext('2d');let mode='path';window.taStandardMode=function(m){mode=m;draw();};function draw(){const w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);ctx.fillStyle='#0f172a';ctx.fillRect(0,0,w,h);const nodes=[['前置知识',170,180,'#38bdf8'],['秦汉统一多民族国家',450,145,'#f59e0b'],['真实应用',710,180,'#22c55e'],['易错诊断',450,280,'#ef4444']];ctx.lineWidth=4;ctx.strokeStyle=mode==='error'?'#ef4444':'#64748b';[[0,1],[1,2],[1,3]].forEach(([a,b])=>{ctx.beginPath();ctx.moveTo(nodes[a][1],nodes[a][2]);ctx.lineTo(nodes[b][1],nodes[b][2]);ctx.stroke();});nodes.forEach(([label,x,y,c])=>{ctx.beginPath();ctx.arc(x,y,48,0,Math.PI*2);ctx.fillStyle=(mode==='error'&&label==='易错诊断')?'#ef4444':c;ctx.fill();ctx.fillStyle='white';ctx.font='18px sans-serif';ctx.textAlign='center';ctx.fillText(label,x,y+6);});ctx.fillStyle='#cbd5e1';ctx.font='15px sans-serif';ctx.textAlign='left';const tip=mode==='path'?'按箭头完成学习：先补前置，再学核心，再做迁移。':mode==='error'?'易错点不是惩罚，而是下一步学习的导航。':'把同一方法用于新材料，才算真正学会。';ctx.fillText(tip,30,40);}draw();})();
+</script>
+
+<script>
+const audioPlaylist=[{sectionId:'teachany-standard-enhancement',title:'本课知识动画',src:'./tts/intro.mp3'}];
+</script>
+
+<!-- ⭐ v7.7 标准独立连续音频模块 -->
+<section class="ta-standard-section" id="teachany-audio-player">
+  <div data-teachany-audio>
+    <script type="application/json" data-teachany-audio-playlist>
+[
+  {
+    "sectionId": "teachany-standard-enhancement",
+    "title": "本课知识动画",
+    "src": "./tts/intro.mp3"
+  }
+]
+    </script>
+  </div>
+</section>
+
+<section class="ta-standard-section" id="teachany-video-overview"><h2>🎬 本课知识动画：秦汉统一多民族国家</h2><p>这段动画围绕「统一国家如何建立并巩固？」展开，依次说明核心机制、常见错误和迁移任务。</p><div class="video-player"><video controls preload="metadata" playsinline poster="./assets/imperial-unification-hero.png"><source src="./assets/video/teachany-overview.mp4" type="video/mp4"></video></div></section><script>
+function teachAnyMapBaselineProbe(){ if(window.L){ const map={fitBounds:function(){},setView:function(){}}; L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png'); map.setView([35,105],4); map.fitBounds([[18,73],[54,135]]); } }
+</script>
+<script src="../../scripts/teachany-tutor-card.js" defer></script>
+<script src="../../scripts/teachany-audio-player.js" defer></script>
+<script src="../../scripts/teachany-historical-map.js" defer></script>
+<script src="../../scripts/teachany-knowledge-graph.js" defer></script>
+
+  <!-- ===== Standard Knowledge Graph Module ===== -->
+  <section class="section" id="knowledge-graph">
+    <h2 class="section-title">🗺️ 知识图谱：秦汉统一多民族国家</h2>
+    <div data-teachany-kg="hist-m-imperial-unification">
+      <canvas class="tkg-fallback-canvas" width="720" height="120" aria-label="知识图谱互动画布占位" style="display:block;width:100%;max-height:140px;border-radius:12px;"></canvas>
+    </div>
+  </section>
+
+<script src="../../scripts/teachany-tts-narrator.js" defer></script>
+<script src="../../scripts/teachany-section-hints.js" defer></script>
 </body>
 </html>
