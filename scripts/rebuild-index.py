@@ -102,6 +102,7 @@ def detect_images(course_dir: Path):
     """自动检测课件的 hero 和 scene 图片（v6.2 统一命名规范）
 
     检测优先级：
+      0. assets/hero-infographic.svg  TeachAny 标准 SVG Hero（最高优先）
       1. *-hero.{png,jpg,webp}   后缀匹配（主流模式）
       2. hero-*.{png,jpg,webp}   前缀匹配（兼容旧命名）
       3. hero.{png,jpg,webp}     纯名称匹配
@@ -110,6 +111,11 @@ def detect_images(course_dir: Path):
     同理检测 *-scene / scene-* / scene。
     返回: (hero_image_rel, scene_image_rel)  相对于 course_dir 的路径字符串
     """
+    # 优先级 0：标准 SVG Hero
+    std_svg = course_dir / 'assets' / 'hero-infographic.svg'
+    if std_svg.exists():
+        return 'assets/hero-infographic.svg', ''
+
     # 搜索 assets/ 和 images/ 两个可能的目录
     img_dir = None
     for name in ('assets', 'images'):
