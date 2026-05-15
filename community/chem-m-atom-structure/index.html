@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="course-id" content="chem-m-atom-structure">
+  <meta name="course-title" content="原子的结构">
+  <meta name="course-subject" content="chemistry">
+  <meta name="course-grade" content="9">
+  <meta name="teachany-node" content="chem-m-atom-structure">
+  <meta name="teachany-subject" content="chemistry">
+  <meta name="teachany-domain" content="matter-structure">
+  <meta name="teachany-grade" content="9">
+  <meta name="teachany-prerequisites" content="chem-m-atom-molecule">
+  <meta name="teachany-difficulty" content="2">
+  <meta name="teachany-version" content="7.12.1">
+  <title>原子的结构 · TeachAny</title>
+  <link rel="stylesheet" href="../../scripts/ai-tutor.css">
+  <link rel="stylesheet" href="../../scripts/teachany-tutor-card.css">
+  <link rel="stylesheet" href="../../scripts/teachany-tts-narrator.css">
+  <link rel="stylesheet" href="../../scripts/teachany-section-hints.css">
+  <link rel="stylesheet" href="../../scripts/teachany-knowledge-graph.css">
+  <link rel="stylesheet" href="../../scripts/teachany-audio-player.css">
+  <style>
+    :root {
+      --primary: #38bdf8;
+      --nucleus: #f97316;
+      --electron: #a78bfa;
+      --gold: #f5c842;
+      --green: #34d399;
+      --bg: #0a0a1a;
+      --bg2: #1e293b;
+      --bg3: #334155;
+      --text1: #f1f5f9;
+      --text2: #94a3b8;
+      --border: #334155;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text1); font-family: 'PingFang SC','Helvetica Neue',sans-serif; font-size: 15px; line-height: 1.7; }
+    .container { max-width: 860px; margin: 0 auto; padding: 0 16px; }
+
+    .course-header { background: linear-gradient(135deg,#0f2027,#0a0a1a); border-bottom: 1px solid var(--border); padding: 24px 0 18px; text-align: center; }
+    .subject-badge { display:inline-block; background:#38bdf820; color:#38bdf8; border:1px solid #38bdf830; border-radius:20px; padding:3px 14px; font-size:12px; margin-bottom:10px; }
+    .course-header h1 { font-size: clamp(20px,4vw,28px); font-weight:700; color:var(--primary); margin-bottom:6px; }
+    .course-header p { color:var(--text2); font-size:13px; }
+    .nav-pills { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:14px; }
+    .nav-pill { background:var(--bg2); border:1px solid var(--border); color:var(--text2); border-radius:20px; padding:5px 14px; font-size:12px; cursor:pointer; transition:all .2s; text-decoration:none; }
+    .nav-pill:hover { border-color:var(--primary); color:var(--primary); }
+
+    .section { padding: 36px 0; border-bottom: 1px solid var(--border); }
+    .section:last-of-type { border-bottom: none; }
+    .section-title { font-size:18px; font-weight:700; color:var(--primary); margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+    .phase-tag { font-size:11px; background:var(--primary)20; color:var(--primary); border:1px solid var(--primary)40; border-radius:6px; padding:2px 8px; font-weight:500; }
+    .card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:14px; }
+    .card-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; }
+    .info-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:18px; }
+    .info-card .icon { font-size:28px; margin-bottom:8px; }
+    .info-card h3 { font-size:14px; font-weight:700; margin-bottom:8px; }
+    .info-card p { font-size:12px; color:var(--text2); line-height:1.7; }
+
+    .problem-anchor { background:linear-gradient(135deg,#1e293b,#0f172a); border:2px solid var(--gold); border-radius:var(--radius); padding:20px; margin-bottom:22px; }
+    .problem-anchor .q-label { color:var(--gold); font-size:12px; font-weight:700; letter-spacing:1px; margin-bottom:6px; }
+    .problem-anchor .q-text { font-size:15px; font-weight:600; }
+
+    /* 原子模型互动 Canvas */
+    #atom-canvas { display:block; width:100%; max-width:500px; margin:0 auto; cursor:pointer; border-radius:12px; background:#050d1a; }
+    .atom-controls { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:12px; }
+    .atom-btn { background:var(--bg3); border:1px solid var(--border); color:var(--text2); border-radius:8px; padding:7px 16px; cursor:pointer; font-size:12px; transition:all .2s; }
+    .atom-btn:hover, .atom-btn.active { border-color:var(--primary); color:var(--primary); background:var(--primary)10; }
+    #atom-info { min-height:40px; margin-top:12px; font-size:13px; color:var(--text2); text-align:center; }
+
+    /* 电子层拖拽沙盘 */
+    #shell-canvas { display:block; width:100%; max-width:480px; margin:0 auto; border-radius:12px; background:#050d1a; cursor:pointer; }
+    #shell-feedback { margin-top:10px; font-size:13px; text-align:center; min-height:24px; }
+
+    /* 同位素对比 */
+    .isotope-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+    .isotope-card { background:#0f172a; border:1px solid var(--border); border-radius:10px; padding:14px; text-align:center; cursor:pointer; transition:all .2s; }
+    .isotope-card:hover { border-color:var(--green); }
+    .isotope-card.active { border-color:var(--green); background:var(--green)10; }
+    .isotope-card .symbol { font-size:28px; font-weight:bold; color:var(--green); }
+    .isotope-card .sub { font-size:11px; color:var(--text2); margin-top:4px; }
+
+    /* 口诀卡 */
+    .mnemonic { background:linear-gradient(135deg,#1e293b,#0f172a); border:1px solid var(--gold)40; border-radius:var(--radius); padding:18px; margin:14px 0; }
+    .mnemonic .title { color:var(--gold); font-size:12px; font-weight:700; margin-bottom:8px; }
+    .mnemonic .content { font-size:14px; color:#fef9c3; line-height:2; }
+
+    /* Quiz */
+    .quiz-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:14px; }
+    .quiz-card .q-num { color:var(--primary); font-size:12px; font-weight:700; margin-bottom:8px; }
+    .quiz-card .q-text { font-size:14px; margin-bottom:14px; }
+    .options { display:flex; flex-direction:column; gap:8px; }
+    .option { background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:10px 14px; cursor:pointer; transition:all .2s; font-size:13px; }
+    .option:hover { border-color:var(--primary); background:var(--primary)10; }
+    .option.correct { border-color:#22c55e; background:#22c55e15; color:#86efac; }
+    .option.wrong { border-color:#ef4444; background:#ef444415; color:#fca5a5; }
+    .feedback { margin-top:10px; font-size:12px; display:none; padding:8px 12px; border-radius:8px; line-height:1.6; }
+    .feedback.show { display:block; }
+    .feedback.ok { background:#22c55e15; color:#86efac; border:1px solid #22c55e30; }
+    .feedback.no { background:#ef444415; color:#fca5a5; border:1px solid #ef444430; }
+
+    /* 填空 */
+    .fill-input { background:var(--bg3); border:1px solid var(--border); border-radius:6px; padding:4px 10px; color:var(--text1); font-size:14px; width:80px; text-align:center; outline:none; }
+    .fill-input:focus { border-color:var(--primary); }
+    .fill-btn { background:var(--primary)20; border:1px solid var(--primary)50; color:var(--primary); border-radius:6px; padding:4px 12px; cursor:pointer; font-size:12px; }
+
+    /* 表格 */
+    .chem-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .chem-table th { background:var(--bg3); padding:10px 12px; text-align:center; font-size:12px; color:var(--text2); }
+    .chem-table td { padding:10px 12px; border-bottom:1px solid var(--border); text-align:center; }
+    .chem-table tr:last-child td { border-bottom:none; }
+
+    /* score */
+    .score-bar { height:8px; background:var(--bg3); border-radius:4px; overflow:hidden; margin:8px 0; }
+    .score-fill { height:100%; background:linear-gradient(to right,var(--primary),var(--green)); border-radius:4px; transition:width .6s; }
+
+    .hero-img { width:100%; border-radius:var(--radius); display:block; }
+    @media(max-width:600px) { .card-grid{grid-template-columns:1fr} .isotope-grid{grid-template-columns:1fr 1fr} }
+  </style>
+</head>
+<body>
+
+<header class="course-header">
+  <div class="container">
+    <div class="subject-badge">初中化学 · 九年级上册</div>
+    <h1>⚛️ 原子的结构</h1>
+    <p>Structure of Atom · 从宏观物质到微观粒子</p>
+    <nav class="nav-pills">
+      <a class="nav-pill" href="#pretest">前测</a>
+      <a class="nav-pill" href="#model-history">模型发展</a>
+      <a class="nav-pill" href="#nucleus-section">原子核</a>
+      <a class="nav-pill" href="#electron-section">核外电子</a>
+      <a class="nav-pill" href="#atom-sim">原子模拟</a>
+      <a class="nav-pill" href="#isotope">同位素</a>
+      <a class="nav-pill" href="#posttest">后测</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- Hero -->
+  <section class="section" id="hero" data-tts="hero" data-tsh="知识地图">
+    <img src="assets/hero-infographic.svg" alt="原子结构知识图" class="hero-img">
+  </section>
+
+  <!-- ABT 引入 -->
+  <section class="section" id="why-learn" data-tts="why-learn" data-tsh="为什么学">
+    <div class="section-title"><span class="phase-tag">引入</span>为什么要了解原子内部？</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="background:var(--bg2);border:1px solid #22d3ee30;border-radius:12px;padding:16px">
+        <div style="font-size:12px;font-weight:700;color:#22d3ee;margin-bottom:6px">AND · 已知</div>
+        <p style="font-size:13px">你已经知道物质是由原子构成的，原子是化学变化中最小的粒子。</p>
+      </div>
+      <div style="background:var(--bg2);border:1px solid var(--gold)30;border-radius:12px;padding:16px">
+        <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:6px">BUT · 问题</div>
+        <p style="font-size:13px">但原子内部到底长什么样？为什么氧原子和氢原子的化学性质完全不同？原子还能再分吗？</p>
+      </div>
+      <div style="background:var(--bg2);border:1px solid var(--electron)30;border-radius:12px;padding:16px">
+        <div style="font-size:12px;font-weight:700;color:#c4b5fd;margin-bottom:6px">THEREFORE · 新知</div>
+        <p style="font-size:13px">因此需要深入原子内部：了解<strong style="color:#fb923c">原子核</strong>（质子+中子）和<strong style="color:#c4b5fd">核外电子</strong>的排布规律，才能理解元素化学性质的本质。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 前测 -->
+  <section class="section" id="pretest" data-tts="pretest" data-tsh="前测">
+    <div class="section-title"><span class="phase-tag">前测</span>先测一测</div>
+    <div class="problem-anchor">
+      <div class="q-label">📌 核心问题</div>
+      <div class="q-text">原子是由哪些更小的粒子构成的？什么决定了一个原子是氢、碳还是氧？</div>
+    </div>
+
+    <div class="quiz-card" data-bloom="remember">
+      <div class="q-num">第 1 题 <span style="font-size:10px;color:#64748b">L1·记忆</span></div>
+      <div class="q-text">原子是由什么构成的？</div>
+      <div class="options" id="pre-q1">
+        <div class="option" onclick="checkOpt(this,'pre-q1',false)">A. 只由电子构成</div>
+        <div class="option" onclick="checkOpt(this,'pre-q1',true)">B. 原子核（质子+中子）和核外电子</div>
+        <div class="option" onclick="checkOpt(this,'pre-q1',false)">C. 质子和中子，没有电子</div>
+        <div class="option" onclick="checkOpt(this,'pre-q1',false)">D. 原子是不可再分的实心球</div>
+      </div>
+      <div class="feedback" id="pre-q1-fb">✅ 正确！原子由居中的原子核（含质子和中子）和绕核运动的核外电子组成。D是道尔顿的旧模型，现在已被否定。</div>
+    </div>
+
+    <div class="quiz-card" data-bloom="understand">
+      <div class="q-num">第 2 题 <span style="font-size:10px;color:#64748b">L2·理解</span></div>
+      <div class="q-text">决定元素种类（即区分氢、碳、氧等不同元素）的是？</div>
+      <div class="options" id="pre-q2">
+        <div class="option" onclick="checkOpt(this,'pre-q2',false)">A. 中子数</div>
+        <div class="option" onclick="checkOpt(this,'pre-q2',true)">B. 质子数（核电荷数）</div>
+        <div class="option" onclick="checkOpt(this,'pre-q2',false)">C. 电子数</div>
+        <div class="option" onclick="checkOpt(this,'pre-q2',false)">D. 质量数</div>
+      </div>
+      <div class="feedback" id="pre-q2-fb">✅ 正确！质子数（核电荷数）是元素的"身份证"。同一元素的原子质子数必然相同。中子数不同则形成同位素（A错），电子数可变形成离子（C错）。</div>
+    </div>
+
+    <div class="quiz-card" data-bloom="remember">
+      <div class="q-num">第 3 题 <span style="font-size:10px;color:#64748b">L1·记忆</span></div>
+      <div class="q-text">在原子中，以下哪个等量关系是正确的？</div>
+      <div class="options" id="pre-q3">
+        <div class="option" onclick="checkOpt(this,'pre-q3',false)">A. 质子数 = 中子数</div>
+        <div class="option" onclick="checkOpt(this,'pre-q3',false)">B. 中子数 = 电子数</div>
+        <div class="option" onclick="checkOpt(this,'pre-q3',true)">C. 质子数 = 核外电子数</div>
+        <div class="option" onclick="checkOpt(this,'pre-q3',false)">D. 质子数 = 质量数</div>
+      </div>
+      <div class="feedback" id="pre-q3-fb">✅ 正确！原子整体不带电，所以质子数（正电）= 核外电子数（负电）。质子数和中子数不一定相等（如碳-12中各为6，但氢-1中子数为0），质量数 = 质子数+中子数（D错）。</div>
+    </div>
+  </section>
+
+  <!-- 模型发展史 -->
+  <section class="section" id="model-history" data-tts="model-history" data-tsh="原子模型发展史">
+    <div class="section-title"><span class="phase-tag">历史</span>原子模型的演变</div>
+    <div class="card" style="border-color:#38bdf830">
+      <p style="font-size:13px;color:#94a3b8;margin-bottom:16px">科学认识是不断深化的过程——每一代科学家都在前人基础上提出更精确的模型。</p>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <div style="min-width:64px;text-align:center">
+            <div style="width:40px;height:40px;background:#64748b;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:18px">⚫</div>
+            <div style="font-size:10px;color:#64748b;margin-top:4px">道尔顿</div>
+            <div style="font-size:9px;color:#475569">1803年</div>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#94a3b8">实心球模型</div>
+            <div style="font-size:12px;color:#64748b">原子是坚硬不可分割的实心小球，不同元素的原子大小和质量不同。<span style="color:#f97316">✗ 后被否定：原子可以再分</span></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <div style="min-width:64px;text-align:center">
+            <div style="width:40px;height:40px;background:#f59e0b30;border:2px solid #f59e0b;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:14px">🍮</div>
+            <div style="font-size:10px;color:#f59e0b;margin-top:4px">汤姆生</div>
+            <div style="font-size:9px;color:#475569">1897年</div>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#fbbf24">葡萄干蛋糕模型（枣糕模型）</div>
+            <div style="font-size:12px;color:#64748b">发现电子后，认为原子是带正电的"蛋糕"，电子嵌在其中。<span style="color:#f97316">✗ 后被否定：α粒子散射实验推翻</span></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <div style="min-width:64px;text-align:center">
+            <div style="width:40px;height:40px;background:#ef444430;border:2px solid #ef4444;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:14px">☀️</div>
+            <div style="font-size:10px;color:#ef4444;margin-top:4px">卢瑟福</div>
+            <div style="font-size:9px;color:#475569">1911年</div>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#fca5a5">行星轨道模型（核式结构模型）</div>
+            <div style="font-size:12px;color:#64748b">通过α粒子散射实验发现原子核：<strong style="color:#e2e8f0">原子中心有带正电的很小很重的核</strong>，电子绕核运动。这是目前初中阶段使用的模型。</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <div style="min-width:64px;text-align:center">
+            <div style="width:40px;height:40px;background:#38bdf830;border:2px solid #38bdf8;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:14px">🔵</div>
+            <div style="font-size:10px;color:#38bdf8;margin-top:4px">玻尔</div>
+            <div style="font-size:9px;color:#475569">1913年</div>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#7dd3fc">能级轨道模型</div>
+            <div style="font-size:12px;color:#64748b">电子在特定能量轨道（能层）上运动，不同轨道有不同能量。这是初中电子层排布的理论基础。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 卢瑟福实验 insight -->
+    <div class="card" style="border-color:#ef444430;margin-top:0">
+      <h3 style="font-size:14px;font-weight:700;color:#fca5a5;margin-bottom:10px">🔬 卢瑟福α粒子散射实验——三个现象与三个推断</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <div style="font-size:12px;color:#ef4444;font-weight:700;margin-bottom:6px">实验现象</div>
+          <p style="font-size:12px;color:#94a3b8">① 大多数α粒子直穿金箔<br>② 少数α粒子发生偏转<br>③ 极少数α粒子被弹回</p>
+        </div>
+        <div>
+          <div style="font-size:12px;color:#38bdf8;font-weight:700;margin-bottom:6px">科学推断</div>
+          <p style="font-size:12px;color:#94a3b8">① 原子内部<strong style="color:#e2e8f0">大部分是空的</strong><br>② 原子中有带正电的核<br>③ 原子核<strong style="color:#e2e8f0">体积很小但质量大</strong></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 原子核 -->
+  <section class="section" id="nucleus-section" data-tts="nucleus" data-tsh="原子核组成">
+    <div class="section-title"><span class="phase-tag" style="background:#f9731620;color:#f97316;border-color:#f9731640">⚛ 原子核</span>质子与中子</div>
+
+    <div class="card-grid">
+      <div class="info-card" style="border-color:#f9731630">
+        <div class="icon">🔴</div>
+        <h3 style="color:#fb923c">质子（Proton）</h3>
+        <p>• 带<strong style="color:#fef3c7">正</strong>电，每个质子带 +1 电荷<br>• 质子数 = 核电荷数 = 原子序数<br>• <strong style="color:#fb923c">决定元素的种类</strong><br>• 质量约为电子的 1836 倍</p>
+      </div>
+      <div class="info-card" style="border-color:#64748b">
+        <div class="icon">⚫</div>
+        <h3 style="color:#94a3b8">中子（Neutron）</h3>
+        <p>• <strong style="color:#fef3c7">不带电</strong>（中性粒子）<br>• 质量与质子相近<br>• 质子数 + 中子数 = 质量数<br>• 同一元素可有不同中子数（→同位素）</p>
+      </div>
+      <div class="info-card" style="border-color:#38bdf830">
+        <div class="icon">⚡</div>
+        <h3 style="color:#7dd3fc">核电荷数</h3>
+        <p>• 原子核所带的正电荷数<br>• = 质子数<br>• 原子整体<strong style="color:#fef3c7">不显电性</strong>，故<br>• 质子数 = 核外电子数</p>
+      </div>
+    </div>
+
+    <!-- 核心等量关系 -->
+    <div class="card" style="border-color:var(--gold)40;margin-top:14px">
+      <h3 style="font-size:14px;color:var(--gold);margin-bottom:14px">🔢 核心等量关系（必记）</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">
+        <div style="background:#0f172a;border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:15px;font-weight:bold;color:#fde047">质子数</div>
+          <div style="font-size:12px;color:#64748b;margin:4px 0">=</div>
+          <div style="font-size:13px;color:#fef08a">核电荷数 = 原子序数</div>
+          <div style="font-size:12px;color:#64748b">=</div>
+          <div style="font-size:13px;color:#fef08a">核外电子数（中性原子）</div>
+        </div>
+        <div style="background:#0f172a;border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:15px;font-weight:bold;color:#fde047">质量数</div>
+          <div style="font-size:12px;color:#64748b;margin:4px 0">=</div>
+          <div style="font-size:13px;color:#fef08a">质子数 + 中子数</div>
+          <div style="font-size:11px;color:#64748b;margin-top:8px">（电子质量极小可忽略）</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 常见原子数据表 -->
+    <div class="card" style="overflow-x:auto;margin-top:14px">
+      <h3 style="font-size:14px;font-weight:700;margin-bottom:12px">📊 常见原子的组成</h3>
+      <table class="chem-table">
+        <tr>
+          <th>元素</th><th>元素符号</th><th>质子数</th><th>中子数</th><th>电子数</th><th>质量数</th>
+        </tr>
+        <tr><td>氢</td><td style="color:#38bdf8">H</td><td>1</td><td>0</td><td>1</td><td>1</td></tr>
+        <tr><td>碳</td><td style="color:#38bdf8">C</td><td>6</td><td>6</td><td>6</td><td>12</td></tr>
+        <tr><td>氮</td><td style="color:#38bdf8">N</td><td>7</td><td>7</td><td>7</td><td>14</td></tr>
+        <tr><td>氧</td><td style="color:#38bdf8">O</td><td>8</td><td>8</td><td>8</td><td>16</td></tr>
+        <tr><td>钠</td><td style="color:#38bdf8">Na</td><td>11</td><td>12</td><td>11</td><td>23</td></tr>
+        <tr><td>铁</td><td style="color:#38bdf8">Fe</td><td>26</td><td>30</td><td>26</td><td>56</td></tr>
+      </table>
+    </div>
+
+    <div class="quiz-card" style="margin-top:14px" data-bloom="apply">
+      <div class="q-num">🎯 检测 <span style="font-size:10px;color:#64748b">L3·应用</span></div>
+      <div class="q-text">某原子的核电荷数为 8，质量数为 18，则该原子的中子数为？</div>
+      <div style="margin:10px 0;font-size:13px">中子数 = 质量数 - 质子数 = 18 - <input class="fill-input" id="fill-proton" placeholder="?"> = <input class="fill-input" id="fill-neutron" placeholder="?">
+        <button class="fill-btn" onclick="checkFill()" style="margin-left:8px">验证</button>
+      </div>
+      <div class="feedback" id="fill-fb"></div>
+    </div>
+  </section>
+
+  <!-- 核外电子 -->
+  <section class="section" id="electron-section" data-tts="electron" data-tsh="核外电子排布">
+    <div class="section-title"><span class="phase-tag" style="background:#a78bfa20;color:#a78bfa;border-color:#a78bfa40">☁ 核外电子</span>电子层排布规律</div>
+
+    <div class="card" style="border-color:#a78bfa30">
+      <p>电子不是随机分布在原子核周围，而是按<strong style="color:#c4b5fd">能量高低</strong>分层排布。能量低的电子在内层，能量高的在外层。这些层叫做<strong style="color:#c4b5fd">电子层</strong>（能层），由内到外依次为第一、二、三…层。</p>
+    </div>
+
+    <div class="card-grid" style="margin-top:14px">
+      <div class="info-card" style="border-color:#a78bfa30">
+        <div class="icon">1️⃣</div>
+        <h3 style="color:#c4b5fd">排布规则</h3>
+        <p>• 第一层最多容纳 <strong style="color:#fef3c7">2</strong> 个电子<br>• 第二层最多容纳 <strong style="color:#fef3c7">8</strong> 个电子<br>• 第三层最多容纳 <strong style="color:#fef3c7">18</strong> 个电子<br>• 最外层最多 <strong style="color:#fef3c7">8</strong> 个电子<br>• 先填满内层再填外层</p>
+      </div>
+      <div class="info-card" style="border-color:#34d39930">
+        <div class="icon">🔑</div>
+        <h3 style="color:#6ee7b7">最外层与化学性质</h3>
+        <p>• <strong style="color:#fef3c7">最外层电子数</strong>决定化学性质<br>• 最外层 = 8（第一层=2）：<strong style="color:#86efac">稳定，不易反应</strong>（稀有气体）<br>• 最外层 1~3：<strong style="color:#fca5a5">易失去电子</strong>→金属<br>• 最外层 5~7：<strong style="color:#93c5fd">易得到电子</strong>→非金属</p>
+      </div>
+    </div>
+
+    <div class="mnemonic">
+      <div class="title">💡 排布口诀</div>
+      <div class="content">
+        第一层，最多二；<br>
+        第二层，最多八；<br>
+        最外层，不超八；<br>
+        先填满，内后外。
+      </div>
+    </div>
+
+    <div class="quiz-card" data-bloom="apply">
+      <div class="q-num">🎯 检测 <span style="font-size:10px;color:#64748b">L3·应用</span></div>
+      <div class="q-text">硫原子（S）的质子数为 16，其核外电子排布是？</div>
+      <div class="options" id="e-q1">
+        <div class="option" onclick="checkOpt(this,'e-q1',false)">A. 第一层2个，第二层8个，第三层4个，第四层2个</div>
+        <div class="option" onclick="checkOpt(this,'e-q1',true)">B. 第一层2个，第二层8个，第三层6个</div>
+        <div class="option" onclick="checkOpt(this,'e-q1',false)">C. 第一层8个，第二层8个</div>
+        <div class="option" onclick="checkOpt(this,'e-q1',false)">D. 第一层2个，第二层14个</div>
+      </div>
+      <div class="feedback" id="e-q1-fb">✅ 正确！硫有16个电子：第一层填2个（满），第二层填8个（满），剩余16-2-8=6个填第三层。所以是2-8-6。最外层6个，易得2个电子→非金属（硫）。C/D违反了分层规则。</div>
+    </div>
+  </section>
+
+  <!-- 原子模拟互动 -->
+  <section class="section" id="atom-sim" data-tts="atom-sim" data-tsh="原子模拟器">
+    <div class="section-title"><span class="phase-tag">互动</span>原子结构模拟器</div>
+    <div class="card">
+      <p style="font-size:13px;color:#94a3b8;margin-bottom:14px">点击按钮切换不同元素，观察质子数、电子层数和最外层电子数的变化规律。</p>
+      <canvas id="atom-canvas" width="480" height="320"></canvas>
+      <div class="atom-controls">
+        <button class="atom-btn active" onclick="showAtom(1,'H','氢',1,0,[1])">H 氢 (1)</button>
+        <button class="atom-btn" onclick="showAtom(2,'He','氦',2,2,[2])">He 氦 (2)</button>
+        <button class="atom-btn" onclick="showAtom(6,'C','碳',6,6,[2,4])">C 碳 (6)</button>
+        <button class="atom-btn" onclick="showAtom(8,'O','氧',8,8,[2,6])">O 氧 (8)</button>
+        <button class="atom-btn" onclick="showAtom(11,'Na','钠',11,12,[2,8,1])">Na 钠 (11)</button>
+        <button class="atom-btn" onclick="showAtom(17,'Cl','氯',17,18,[2,8,7])">Cl 氯 (17)</button>
+        <button class="atom-btn" onclick="showAtom(18,'Ar','氩',18,22,[2,8,8])">Ar 氩 (18)</button>
+      </div>
+      <div id="atom-info"></div>
+    </div>
+  </section>
+
+  <!-- 同位素 -->
+  <section class="section" id="isotope" data-tts="isotope" data-tsh="同位素">
+    <div class="section-title"><span class="phase-tag" style="background:#34d39920;color:#34d399;border-color:#34d39940">🔬 同位素</span>质子同，中子异</div>
+
+    <div class="card" style="border-color:#34d39930">
+      <p><strong style="color:#6ee7b7">同位素</strong>：<strong style="color:#fef3c7">质子数相同、中子数不同</strong>的同种元素的不同原子互称同位素。</p>
+      <p style="margin-top:8px;font-size:13px;color:#94a3b8">同位素的质子数相同 → 是同一种元素；中子数不同 → 质量数不同；化学性质几乎相同（因最外层电子数相同）。</p>
+    </div>
+
+    <p style="font-size:13px;color:#94a3b8;margin:14px 0 10px">点击卡片查看氢的三种同位素：</p>
+    <div class="isotope-grid">
+      <div class="isotope-card active" id="iso-h1" onclick="selectIso('h1')">
+        <div class="symbol">¹H</div>
+        <div style="font-size:20px;margin:6px 0">氕（pī）</div>
+        <div class="sub">质子数：1<br>中子数：0<br>质量数：1<br>自然界含量：99.98%</div>
+      </div>
+      <div class="isotope-card" id="iso-h2" onclick="selectIso('h2')">
+        <div class="symbol" style="color:#38bdf8">²H</div>
+        <div style="font-size:20px;margin:6px 0">氘（dāo）</div>
+        <div class="sub">质子数：1<br>中子数：1<br>质量数：2<br>重水的氢，核聚变燃料</div>
+      </div>
+      <div class="isotope-card" id="iso-h3" onclick="selectIso('h3')">
+        <div class="symbol" style="color:#f97316">³H</div>
+        <div style="font-size:20px;margin:6px 0">氚（chuān）</div>
+        <div class="sub">质子数：1<br>中子数：2<br>质量数：3<br>放射性，半衰期约12年</div>
+      </div>
+    </div>
+
+    <div class="card" id="iso-detail" style="margin-top:14px;border-color:#34d39930">
+      <div id="iso-text">
+        <strong style="color:#6ee7b7">¹H（氕）</strong>：最普通的氢原子，无中子，是自然界丰度最高的同位素（99.98%）。水（H₂O）中的氢就是氕。三种同位素的化学性质几乎完全相同，因为它们的最外层电子数都是1。
+      </div>
+    </div>
+
+    <div class="quiz-card" style="margin-top:14px" data-bloom="analyze">
+      <div class="q-num">🎯 检测 <span style="font-size:10px;color:#64748b">L4·分析</span></div>
+      <div class="q-text">关于同位素，以下说法正确的是？</div>
+      <div class="options" id="iso-q1">
+        <div class="option" onclick="checkOpt(this,'iso-q1',false)">A. 同位素是不同元素的原子</div>
+        <div class="option" onclick="checkOpt(this,'iso-q1',false)">B. 同位素的化学性质完全不同</div>
+        <div class="option" onclick="checkOpt(this,'iso-q1',true)">C. 同位素质子数相同，中子数不同，化学性质几乎相同</div>
+        <div class="option" onclick="checkOpt(this,'iso-q1',false)">D. 同一元素只有一种同位素</div>
+      </div>
+      <div class="feedback" id="iso-q1-fb">✅ 正确！同位素的核心是"质子数相同（同种元素）+中子数不同"。化学性质由最外层电子数决定，同位素的电子数相同，所以化学性质几乎相同（B错）。自然界中大多数元素都有多种同位素（D错）。</div>
+    </div>
+  </section>
+
+  <!-- 深层理解 -->
+  <section class="section" id="deep-insight" data-tts="deep-insight" data-tsh="深层理解">
+    <div class="section-title"><span class="phase-tag">深层理解</span>🔍 多角度看原子结构</div>
+    <div class="card-grid">
+      <div class="info-card" style="border-color:#22d3ee30">
+        <div class="icon">👁️</div>
+        <h3 style="color:#22d3ee">看见它</h3>
+        <p>原子极其微小——氢原子直径约 0.1 纳米（1×10⁻¹⁰ 米）。而原子核比原子更小约十万倍。如果原子有足球场那么大，原子核只有球场中央的一粒沙子。</p>
+      </div>
+      <div class="info-card" style="border-color:#a78bfa30">
+        <div class="icon">🔩</div>
+        <h3 style="color:#c4b5fd">拆开它</h3>
+        <p>原子 = 原子核 + 核外电子<br>原子核 = 质子 + 中子<br>质子/中子还可以再分（夸克），但那是高中及以上内容。初中阶段以原子核为最小单位。</p>
+      </div>
+      <div class="info-card" style="border-color:#f5c84230">
+        <div class="icon">🔗</div>
+        <h3 style="color:var(--gold)">联系它</h3>
+        <p>最外层电子数 → 化学性质 → 元素周期律<br>质子数 → 元素种类 → 元素符号<br>这就是为什么元素周期表中原子序数就是质子数！</p>
+      </div>
+      <div class="info-card" style="border-color:#34d39930">
+        <div class="icon">🚀</div>
+        <h3 style="color:#6ee7b7">迁移它</h3>
+        <p>核聚变（氘+氚→氦+中子）、核裂变（铀-235）、放射性同位素治癌——这些技术的本质都是利用了原子核的结构变化。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 后测 -->
+  <section class="section" id="posttest" data-tts="posttest" data-tsh="后测">
+    <div class="section-title"><span class="phase-tag">后测</span>综合检测</div>
+
+    <div class="quiz-card" data-bloom="remember">
+      <div class="q-num">第 1 题 <span style="font-size:10px;color:#64748b">L1·记忆</span></div>
+      <div class="q-text">下列关于质子的描述，正确的是？</div>
+      <div class="options" id="post-q1">
+        <div class="option" onclick="checkOpt(this,'post-q1',false)">A. 质子不带电</div>
+        <div class="option" onclick="checkOpt(this,'post-q1',false)">B. 质子存在于原子核外</div>
+        <div class="option" onclick="checkOpt(this,'post-q1',true)">C. 质子带正电，存在于原子核内，质子数决定元素种类</div>
+        <div class="option" onclick="checkOpt(this,'post-q1',false)">D. 质子与中子的数量一定相等</div>
+      </div>
+      <div class="feedback" id="post-q1-fb">✅ 正确！质子带正电（A错），存在于原子核内（B错），质子数=元素种类（核心）。质子数和中子数不一定相等——如氢-1有1质子0中子（D错）。</div>
+    </div>
+
+    <div class="quiz-card" data-bloom="apply">
+      <div class="q-num">第 2 题 <span style="font-size:10px;color:#64748b">L3·应用</span></div>
+      <div class="q-text">某原子有 11 个质子、12 个中子，该原子的核外电子数和质量数分别是？</div>
+      <div class="options" id="post-q2">
+        <div class="option" onclick="checkOpt(this,'post-q2',false)">A. 12个电子，23</div>
+        <div class="option" onclick="checkOpt(this,'post-q2',true)">B. 11个电子，23</div>
+        <div class="option" onclick="checkOpt(this,'post-q2',false)">C. 11个电子，12</div>
+        <div class="option" onclick="checkOpt(this,'post-q2',false)">D. 12个电子，12</div>
+      </div>
+      <div class="feedback" id="post-q2-fb">✅ 正确！中性原子：核外电子数 = 质子数 = 11；质量数 = 质子数+中子数 = 11+12 = 23。这就是钠-23（²³Na）。注意电子数等于质子数而非中子数（A错）。</div>
+    </div>
+
+    <div class="quiz-card" data-bloom="analyze">
+      <div class="q-num">第 3 题 <span style="font-size:10px;color:#64748b">L4·分析</span></div>
+      <div class="q-text">氯原子（Cl）质子数为17，其核外电子排布为2-8-7。根据最外层电子数，氯的化学性质是？</div>
+      <div class="options" id="post-q3">
+        <div class="option" onclick="checkOpt(this,'post-q3',false)">A. 化学性质稳定，不易反应</div>
+        <div class="option" onclick="checkOpt(this,'post-q3',false)">B. 易失去电子，表现金属性</div>
+        <div class="option" onclick="checkOpt(this,'post-q3',true)">C. 易得到1个电子，表现非金属性</div>
+        <div class="option" onclick="checkOpt(this,'post-q3',false)">D. 最外层7个电子，比8少1，容易失去</div>
+      </div>
+      <div class="feedback" id="post-q3-fb">✅ 正确！最外层7个电子，距离"满8个稳定"只差1个，所以氯<strong>易得1个电子</strong>达到8电子稳定结构，表现非金属性。最外层1-3个才易失去（B错），7个是偏多，D的说法错误。</div>
+    </div>
+
+    <div class="quiz-card" data-bloom="understand">
+      <div class="q-num">第 4 题 <span style="font-size:10px;color:#64748b">L2·理解</span></div>
+      <div class="q-text">¹²C 和 ¹⁴C（碳-12和碳-14）是碳的同位素，下列说法正确的是？</div>
+      <div class="options" id="post-q4">
+        <div class="option" onclick="checkOpt(this,'post-q4',false)">A. 两者是不同元素</div>
+        <div class="option" onclick="checkOpt(this,'post-q4',false)">B. 两者中子数相同</div>
+        <div class="option" onclick="checkOpt(this,'post-q4',true)">C. 两者质子数相同（都是6），中子数不同（分别是6和8）</div>
+        <div class="option" onclick="checkOpt(this,'post-q4',false)">D. 两者化学性质完全不同</div>
+      </div>
+      <div class="feedback" id="post-q4-fb">✅ 正确！碳-12：6质子+6中子；碳-14：6质子+8中子。都是碳元素（A错），中子数不同（B错），化学性质几乎相同因为最外层电子数相同（D错）。碳-14是放射性同位素，用于考古年代测定。</div>
+    </div>
+
+    <div class="card" id="score-card" style="display:none;margin-top:14px">
+      <div style="font-size:15px;font-weight:700;margin-bottom:10px">📊 后测成绩</div>
+      <div class="score-bar"><div class="score-fill" id="score-fill" style="width:0%"></div></div>
+      <div id="score-text" style="font-size:14px;margin-top:8px"></div>
+    </div>
+  </section>
+
+  <!-- 知识图谱 -->
+  <section class="section" id="knowledge-graph" data-tts="knowledge-graph" data-tsh="知识图谱">
+    <div class="card">
+      <span class="phase-tag">Knowledge Graph</span>
+      <h2 style="font-size:16px;font-weight:700;margin:10px 0">知识图谱</h2>
+      <div data-teachany-kg="chem-m-atom-structure">
+        <canvas class="tkg-fallback-canvas" width="720" height="120" aria-label="知识图谱" style="display:block;width:100%;max-height:140px;border-radius:12px;"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI 学伴 -->
+  <section class="section" id="teachany-ai-tutor-card" data-tts="ai-tutor" data-tsh="AI 学伴">
+    <div data-teachany-tutor-card></div>
+  </section>
+  <section class="section" id="ai-tutor-section">
+    <h2 class="section-title">🤖 AI 学伴</h2>
+    <div data-teachany-tutor-config='{
+      "node": "chem-m-atom-structure",
+      "subject": "chemistry",
+      "grade": 9,
+      "persona": "智慧化学导师",
+      "context": "原子结构：原子核（质子+中子）、核外电子排布、核心等量关系（质子数=核外电子数=核电荷数=原子序数）、电子层排布规律、最外层电子数与化学性质、同位素概念",
+      "hints": ["质子数和中子数一定相等吗？", "为什么最外层电子数决定化学性质？", "稀有气体为什么不活泼？", "同位素的化学性质为什么几乎相同？", "卢瑟福实验是怎么证明原子核存在的？"]
+    }'></div>
+  </section>
+
+  <footer style="text-align:center;padding:40px 20px;color:var(--text2);font-size:13px;border-top:1px solid var(--border);margin-top:20px">
+    <p>TeachAny v7.12.1 · 原子的结构 · 初中化学九年级上册</p>
+    <p style="margin-top:6px">© 2024-2026 TeachAny · 基于义务教育化学课程标准（2022年版）</p>
+  </footer>
+</main>
+
+<script src="../../scripts/ai-tutor.js"></script>
+<script src="../../scripts/teachany-tutor-card.js" defer></script>
+<script src="../../scripts/teachany-tts-narrator.js" data-tts-disabled="true" defer></script>
+<script src="../../scripts/teachany-section-hints.js" defer></script>
+<script src="../../scripts/teachany-knowledge-graph.js" defer></script>
+<script src="../../scripts/teachany-audio-player.js" defer></script>
+<script>
+// ═══ 答题逻辑 ═══
+let scoreCount = 0, scoreTotal = 0;
+const answered = {};
+const DIAG = {
+  'pre-q1':{ ok:'✅ 正确！原子由原子核（质子+中子）和核外电子构成。道尔顿的实心球模型已被推翻。', no:'❌ 原子可以再分。原子核含质子和中子，核外有电子绕核运动。' },
+  'pre-q2':{ ok:'✅ 正确！质子数是元素的"身份证"，相同质子数=同种元素。', no:'❌ 中子数不同仍是同一元素（同位素），电子数可变（离子），质量数=质子+中子。只有质子数决定元素种类。' },
+  'pre-q3':{ ok:'✅ 正确！原子整体不带电→质子数（正）=核外电子数（负）。这是最重要的等量关系！', no:'❌ 质子数和中子数不一定相等（H-1中子为0），质量数=质子+中子≠质子数。正确关系：质子数=核外电子数。' },
+  'e-q1':  { ok:'✅ 正确！16个电子按层排：第一层2（满），第二层8（满），第三层6（16-2-8=6）。最外层6个→易得2电子→非金属硫。', no:'❌ 按规则排列：先填满第一层(2)，再填第二层(8)，剩余填第三层。16-2-8=6，第三层6个，不是4个，也不会无限塞在第二层。' },
+  'iso-q1':{ ok:'✅ 正确！同位素=质子数相同+中子数不同=同种元素+质量数不同。化学性质几乎相同（最外层电子数相同）。', no:'❌ 同位素是同种元素（质子数相同），不是不同元素（A错）。化学性质由最外层电子决定，同位素相同（B错）。' },
+  'post-q1':{ ok:'✅ 正确！质子带正电，存在于原子核内，质子数=元素种类（最核心知识点）。', no:'❌ 质子带正电（不是不带电），在原子核内（不在核外），质子数和中子数不一定相等（H-1无中子）。' },
+  'post-q2':{ ok:'✅ 正确！中性原子：电子数=质子数=11；质量数=11+12=23。这是钠-23（²³Na）。', no:'❌ 中性原子中，核外电子数=质子数（不是中子数），所以电子数=11而非12。质量数=质子+中子=11+12=23。' },
+  'post-q3':{ ok:'✅ 正确！最外层7个电子，再得1个就达到稳定的8电子结构，所以氯<strong>易得电子</strong>，表现非金属性。', no:'❌ 最外层7个电子，是偏多不偏少，距离满8只差1个→易得电子（非金属），而非失去。稳定结构需要8个（第一层为2）。' },
+  'post-q4':{ ok:'✅ 正确！碳-12和碳-14都是碳，质子数都是6；质量数12vs14→中子数分别是6和8。碳-14用于考古年代测定。', no:'❌ 同位素是同种元素，质子数相同（A错）；中子数不同（B错）；最外层电子数相同，化学性质几乎相同（D错）。' },
+};
+
+function checkOpt(el, qid, isCorrect) {
+  if (answered[qid]) return;
+  answered[qid] = true;
+  const container = document.getElementById(qid);
+  const fb = document.getElementById(qid+'-fb');
+  container.querySelectorAll('.option').forEach(o => o.style.pointerEvents='none');
+  if (isCorrect) {
+    el.classList.add('correct');
+    if (fb) { fb.innerHTML = DIAG[qid]?.ok || '✅ 正确！'; fb.className='feedback ok show'; }
+    scoreCount++;
+  } else {
+    el.classList.add('wrong');
+    [...container.querySelectorAll('.option')].find(o => o.getAttribute('onclick')?.includes('true'))?.classList.add('correct');
+    if (fb) { fb.innerHTML = DIAG[qid]?.no || '❌ 不对，请看正确答案。'; fb.className='feedback no show'; }
+  }
+  scoreTotal++;
+  const postIds = ['post-q1','post-q2','post-q3','post-q4'];
+  if (postIds.includes(qid) && postIds.every(id => answered[id])) {
+    const got = postIds.filter(id => document.getElementById(id)?.querySelector('.correct')).length;
+    const pct = Math.round(got/postIds.length*100);
+    const card = document.getElementById('score-card');
+    if (card) {
+      card.style.display = 'block';
+      document.getElementById('score-fill').style.width = pct + '%';
+      const msg = pct===100?'🏆 满分！':pct>=75?'⭐ 优秀！':pct>=50?'💪 不错，再复习一下':' 📚 建议重新阅读本课内容';
+      document.getElementById('score-text').textContent = `${got}/4 题正确（${pct}%）${msg}`;
+    }
+    try {
+      const p = JSON.parse(localStorage.getItem('teachany_progress')||'{}');
+      p['chem-m-atom-structure'] = { completed:pct>=60, post_test_score:pct, date:new Date().toISOString().slice(0,10), course_path:location.pathname };
+      localStorage.setItem('teachany_progress', JSON.stringify(p));
+    } catch(e) {}
+  }
+}
+
+// ═══ 填空题 ═══
+function checkFill() {
+  const p = document.getElementById('fill-proton')?.value?.trim();
+  const n = document.getElementById('fill-neutron')?.value?.trim();
+  const fb = document.getElementById('fill-fb');
+  if (p === '8' && n === '10') {
+    fb.textContent = '✅ 正确！质子数=8（即核电荷数），中子数=18-8=10。这是氧-18（¹⁸O），是氧的同位素之一。'; fb.className='feedback ok show';
+  } else {
+    fb.textContent = `❌ 再想想：质子数就是核电荷数（已知=8），中子数=质量数-质子数=18-8=10。你填的是 ${p||'?'} 和 ${n||'?'}。`; fb.className='feedback no show';
+  }
+}
+
+// ═══ 原子模拟 Canvas ═══
+let animId = null;
+let atomAngle = 0;
+let currentAtomData = null;
+
+function showAtom(protons, sym, name, neutrons, __, shells) {
+  document.querySelectorAll('.atom-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  currentAtomData = { protons, sym, name, neutrons, shells };
+  document.getElementById('atom-info').innerHTML =
+    `<strong style="color:var(--primary)">${sym} ${name}</strong> · 质子数: <span style="color:#fb923c">${protons}</span> · 中子数: <span style="color:#94a3b8">${neutrons}</span> · 核外电子: <span style="color:#a78bfa">${shells.join('-')}</span> · 最外层: <span style="color:#34d399">${shells[shells.length-1]}个</span>`;
+  if (animId) cancelAnimationFrame(animId);
+  animateAtom();
+}
+
+function animateAtom() {
+  const canvas = document.getElementById('atom-canvas');
+  if (!canvas || !currentAtomData) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W/2, cy = H/2;
+  const { protons, neutrons, shells } = currentAtomData;
+
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#050d1a';
+  ctx.fillRect(0,0,W,H);
+
+  // 电子层轨道
+  const radii = [55, 95, 135];
+  shells.forEach((count, li) => {
+    const r = radii[li] || (radii[2] + li*40);
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI*2);
+    ctx.strokeStyle = li===0 ? '#38bdf840' : li===1 ? '#a78bfa40' : '#34d39940';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // 电子
+    const eColor = li===0 ? '#38bdf8' : li===1 ? '#a78bfa' : '#34d399';
+    for (let i=0; i<count; i++) {
+      const angle = (i/count)*Math.PI*2 + atomAngle*(li%2===0?1:-1)*(1-li*0.2);
+      const ex = cx + r*Math.cos(angle);
+      const ey = cy + r*Math.sin(angle);
+      ctx.beginPath();
+      ctx.arc(ex, ey, 5, 0, Math.PI*2);
+      ctx.fillStyle = eColor;
+      ctx.shadowColor = eColor;
+      ctx.shadowBlur = 8;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+  });
+
+  // 原子核
+  const nuc_r = Math.min(22 + protons*0.5, 30);
+  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, nuc_r);
+  grad.addColorStop(0, '#ff8c42');
+  grad.addColorStop(1, '#c2410c');
+  ctx.beginPath();
+  ctx.arc(cx, cy, nuc_r, 0, Math.PI*2);
+  ctx.shadowColor = '#f97316';
+  ctx.shadowBlur = 20;
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold ${nuc_r > 24 ? 11 : 10}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText(`${protons}p`, cx, cy-2);
+  ctx.fillText(`${neutrons}n`, cx, cy+11);
+
+  atomAngle += 0.012;
+  animId = requestAnimationFrame(animateAtom);
+}
+
+// ═══ 同位素选择 ═══
+const ISO_TEXT = {
+  h1: '<strong style="color:#6ee7b7">¹H（氕）</strong>：最普通的氢原子，无中子，自然界丰度最高（99.98%）。水（H₂O）中的氢主要是氕。',
+  h2: '<strong style="color:#38bdf8">²H（氘）</strong>：重氢，含1个中子。氘水（D₂O，重水）是核反应堆减速剂，也是核聚变的燃料之一。',
+  h3: '<strong style="color:#f97316">³H（氚）</strong>：超重氢，含2个中子。具有放射性，半衰期约12.3年。是核聚变（氘-氚反应）的重要燃料。',
+};
+function selectIso(key) {
+  document.querySelectorAll('.isotope-card').forEach(c => c.classList.remove('active'));
+  document.getElementById('iso-'+key)?.classList.add('active');
+  document.getElementById('iso-text').innerHTML = ISO_TEXT[key];
+}
+
+// ═══ 初始化 ═══
+window.addEventListener('load', () => {
+  showAtom(1,'H','氢',1,0,[1]);
+});
+</script>
+</body>
+</html>
