@@ -42,7 +42,26 @@ git clone https://github.com/weponusa/teachany.git <work-dir>/teachany-src
 ln -s <work-dir>/teachany-src/skill <your-skill-dir>/teachany
 ```
 
-## 三、首次验证
+## 三、首次配置（一次性）
+
+安装完成后运行 setup.sh，配置 GitHub 推送凭据。**只需做一次，之后发布课件全程自动。**
+
+```bash
+bash ~/.codebuddy/skills/teachany/scripts/setup.sh
+# 或
+bash ~/.agents/skills/teachany/scripts/setup.sh
+```
+
+脚本会引导你：
+1. 检测 SSH 是否已配置（本地 Mac 通常已有，可跳过 token）
+2. 粘贴 GitHub Fine-grained Token（仅需 `Contents: Read & write` 权限）
+3. 确认本地仓库路径
+
+配置写入 `~/.teachany/config`，之后 `auto-publish.sh` 自动读取，无需每次手动 `export GH_TOKEN`。
+
+> 创建 Token：https://github.com/settings/tokens/new → Fine-grained → Repository: weponusa/teachany → Contents: Read and write
+
+## 四、首次验证
 
 ```bash
 # 在任意目录跑以下命令，确认 skill 可用
@@ -56,7 +75,7 @@ test -f ~/.codebuddy/skills/teachany/templates/manifest-template.json && echo "m
 > **注**：图片和地图资源不再捆绑在 skill 中，按需从仓库地图库或远端资源下载。
 > Skill 本体约 482KB；首次制作历史/地理课件时会自动获取所需地图资源。
 
-## 四、如何使用
+## 五、如何使用
 
 对 AI 说：
 
@@ -77,7 +96,7 @@ AI 会自动：
 - 中文文档 [SKILL_CN.md](./SKILL_CN.md)
 - 地图 / 3D / PPTX 主题 [topics/maps-and-3d.md](./topics/maps-and-3d.md)
 
-## 五、升级
+## 六、升级
 
 ```bash
 cd ~/.codebuddy/skills/teachany && git pull
@@ -85,14 +104,14 @@ cd ~/.codebuddy/skills/teachany && git pull
 cd ~/.agents/skills/teachany && git pull
 ```
 
-## 六、卸载
+## 七、卸载
 
 ```bash
 rm -rf ~/.codebuddy/skills/teachany
 rm -rf ~/.agents/skills/teachany
 ```
 
-## 七、仓库说明
+## 八、仓库说明
 
 课件与 Skill 现已统一到单仓库：
 
@@ -103,13 +122,13 @@ rm -rf ~/.agents/skills/teachany
 
 做课件 → 放到 `weponusa/teachany` 的 `community/<course-id>/`；发布课件 → 运行 `bash "$TEACHANY_SKILL/scripts/auto-publish.sh" <course-id>`，一键注册+挂树+推送。
 
-## 八、普通用户如何提交课件
+## 九、普通用户如何提交课件
 
 普通用户无需 GitHub 写权限。推荐把完成的课件目录打包发给维护者，或在 `weponusa/teachany` 发起 PR，PR 合并后自动挂树。
 
 如果你在完整 TeachAny 仓库中安装了可选提交脚本，可按完整仓库根的可选提交脚本 的说明执行；轻量 skill 包默认不包含该在线提交链路。
 
-## 九、手机与小程序适配
+## 十、手机与小程序适配
 
 从 v7.12 起，新课件默认要求通过手机视口与小程序 `web-view` readiness：
 
@@ -130,7 +149,7 @@ rm -rf ~/.agents/skills/teachany
 https://weponusa.github.io/teachany/community/hist-m-renaissance/
 ```
 
-## 十、常见问题
+## 十一、常见问题
 
 **Q: 安装后 AI 还是不按 skill 做课件怎么办？**
 A: 确认你的 AI Agent 已识别 skills 目录。可手动 `cat ~/.codebuddy/skills/teachany/SKILL_CN.md | head` 检查。

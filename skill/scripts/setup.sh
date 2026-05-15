@@ -1,184 +1,127 @@
 #!/usr/bin/env bash
 # ============================================================
-# TeachAny Skill · 一键初始化（v6.3）
+# TeachAny Setup · v1.0
 # ============================================================
-# 新用户首次使用 skill 时执行，完成所有必要准备：
+# 安装完 skill 后运行一次，配置 GitHub 推送凭据。
+# 之后 auto-publish.sh 自动读取，无需每次手动设置。
 #
-# 1. 检查系统依赖（python3 / node / git / curl）
-# 2. 安装 edge-tts（TTS 语音生成）
-# 3. 克隆 teachany-opensource 仓库到 ~/teachany-opensource
-# 4. 把 skill 自带的地图资源装到仓库 data/ 下
-# 5. 冒烟测试：check_baseline 脚本能跑
-# 6. 输出下一步指引
-#
-# 用法：
+# 使用方法：
 #   bash ~/.codebuddy/skills/teachany/scripts/setup.sh
-#
-# 环境变量：
-#   TEACHANY_REPO  指定仓库路径（默认 ~/teachany-opensource）
+#   bash ~/.agents/skills/teachany/scripts/setup.sh
 # ============================================================
 
-SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SKILL_SCRIPTS="$SKILL_DIR/scripts"
+set -e
 
-echo "================================================"
-echo "TeachAny Skill · 一键初始化（v6.3）"
-echo "================================================"
-echo "Skill 目录: $SKILL_DIR"
+CONFIG_DIR="$HOME/.teachany"
+CONFIG_FILE="$CONFIG_DIR/config"
+
+echo "══════════════════════════════════════════════"
+echo "  TeachAny Setup v1.0"
+echo "══════════════════════════════════════════════"
 echo ""
 
-# ─── 1. 检查基础依赖 ──────────────────────────
-echo "[1/6] 检查系统依赖"
-MISSING=()
-for cmd in python3 node git curl unzip; do
-  if command -v "$cmd" > /dev/null 2>&1; then
-    echo "  ✅ $cmd: $(command -v $cmd)"
-  else
-    echo "  ❌ $cmd: 未安装"
-    MISSING+=("$cmd")
-  fi
-done
-if [ ${#MISSING[@]} -gt 0 ]; then
+# ── 检测已有配置 ──────────────────────────────────
+if [ -f "$CONFIG_FILE" ]; then
+  echo "✅ 检测到已有配置: $CONFIG_FILE"
+  grep -v "TOKEN\|token" "$CONFIG_FILE" || true
   echo ""
-  echo "❌ 缺少依赖：${MISSING[*]}"
-  echo "  macOS: brew install ${MISSING[*]}"
-  echo "  Ubuntu: sudo apt install ${MISSING[*]}"
-  exit 1
+  read -r -p "重新配置？(y/N) " _ans
+  [[ "$_ans" =~ ^[Yy]$ ]] || { echo "跳过，保留原配置。"; exit 0; }
+  echo ""
+fi
+
+# ── 检测 SSH 是否已配置 ────────────────────────────
+echo "[1/3] 检测 SSH 认证..."
+if ssh -T git@github.com -o BatchMode=yes -o ConnectTimeout=5 2>&1 | grep -q "successfully authenticated"; then
+  echo "  ✅ SSH 已配置，发布时优先使用 SSH，无需 token。"
+  _ssh_ok=true
+else
+  echo "  ⚠️  SSH 未配置或无法连接 GitHub。"
+  _ssh_ok=false
 fi
 echo ""
 
-# ─── 2. 安装 edge-tts ─────────────────────────
-echo "[2/6] 检查 edge-tts（语音合成，B-2 基线必需）"
-if python3 -c "import edge_tts" 2>/dev/null; then
-  echo "  ✅ edge-tts 已安装"
-else
-  echo "  📦 未安装，尝试 pip install --user edge-tts"
-  if python3 -m pip install --user --quiet edge-tts 2>&1 | tail -3; then
-    echo "  ✅ edge-tts 安装成功"
+# ── 配置 GitHub Token ─────────────────────────────
+echo "[2/3] 配置 GitHub Token（用于 HTTPS 推送）..."
+echo ""
+echo "  前往 https://github.com/settings/tokens/new 创建 token："
+echo "  · 类型选 Fine-grained token"
+echo "  · Repository: weponusa/teachany（或你的 fork）"
+echo "  · 权限：Contents → Read and write"
+echo ""
+
+if $_ssh_ok; then
+  read -r -p "  已有 SSH，可跳过 token 配置。跳过？(Y/n) " _skip
+  [[ "$_skip" =~ ^[Nn]$ ]] || { echo "  跳过 token 配置。"; _token=""; }
+fi
+
+if [ -z "${_token+x}" ]; then
+  read -r -s -p "  粘贴 GitHub Token（输入不显示）: " _token
+  echo ""
+  if [ -z "$_token" ]; then
+    echo "  ⚠️  未输入 token，跳过。"
+    _token=""
   else
-    echo "  ⚠️  edge-tts 安装失败，生成 TTS 时会报错"
-    echo "     可稍后手动：pip3 install --user edge-tts"
+    # 验证 token
+    _http=$(curl -s -o /dev/null -w "%{http_code}" \
+      -H "Authorization: token $_token" \
+      "https://api.github.com/user")
+    if [ "$_http" = "200" ]; then
+      echo "  ✅ Token 有效"
+    else
+      echo "  ❌ Token 验证失败 (HTTP $_http)，请检查 token 是否正确或已过期。"
+      exit 1
+    fi
   fi
 fi
+
+# ── 配置仓库路径 ──────────────────────────────────
 echo ""
+echo "[3/3] 配置本地仓库路径..."
+_default_repo="$HOME/CodeBuddy/一次函数/teachany-opensource"
+if [ ! -d "$_default_repo" ]; then
+  _default_repo="$HOME/teachany"
+fi
+read -r -p "  TeachAny 仓库本地路径 [$_default_repo]: " _repo
+_repo="${_repo:-$_default_repo}"
 
-# ─── 3. Clone teachany-opensource ─────────────
-echo "[3/6] 准备 teachany-opensource 仓库"
-REPO_DEFAULT="$HOME/teachany-opensource"
-REPO="${TEACHANY_REPO:-}"
-
-# 先按 publish 脚本同款顺序找
-if [ -z "$REPO" ]; then
-  for c in \
-    "$HOME/CodeBuddy/一次函数/teachany-opensource" \
-    "$HOME/CodeBuddy/teachany-opensource" \
-    "$HOME/teachany-opensource" \
-    "$HOME/WorkBuddy/teachany-opensource"
-  do
-    [ -f "$c/scripts/submit-to-community.py" ] && { REPO="$c"; break; }
-  done
+if [ ! -d "$_repo/.git" ]; then
+  echo "  ⚠️  路径 $_repo 不是 Git 仓库，请先 clone："
+  echo "     git clone https://github.com/weponusa/teachany.git \"$_repo\""
+  echo "  配置已保存，路径可之后修改。"
 fi
 
-if [ -n "$REPO" ] && [ -d "$REPO" ]; then
-  echo "  ✅ 已有仓库: $REPO"
+# ── 写入配置文件 ──────────────────────────────────
+mkdir -p "$CONFIG_DIR"
+chmod 700 "$CONFIG_DIR"
+
+cat > "$CONFIG_FILE" << EOF
+# TeachAny 配置文件 — 由 setup.sh 自动生成
+# 修改后无需重新运行 setup.sh，直接生效。
+
+TEACHANY_REPO="$_repo"
+EOF
+
+if [ -n "$_token" ]; then
+  cat >> "$CONFIG_FILE" << EOF
+GH_TOKEN="$_token"
+EOF
+  chmod 600 "$CONFIG_FILE"
+  echo ""
+  echo "  🔒 Token 已写入 $CONFIG_FILE（仅本用户可读）"
 else
-  echo "  🔄 克隆到: $REPO_DEFAULT（sparse 模式，排除既有课件）"
-  if git clone --depth 1 --filter=blob:none --sparse https://github.com/weponusa/teachany.git "$REPO_DEFAULT" 2>&1 | tail -4; then
-    cd "$REPO_DEFAULT"
-    git sparse-checkout init --cone
-    git sparse-checkout set skill/ scripts/ data/ assets/maps/ references/ docs/ .sparse-checkout-presets/
-    cd - >/dev/null
-    REPO="$REPO_DEFAULT"
-    echo "  ✅ 克隆完成（sparse，约 110MB）: $REPO"
-  else
-    echo "  ❌ 克隆失败（网络问题？）"
-    echo "     请手动：git clone --filter=blob:none --sparse https://github.com/weponusa/teachany.git $REPO_DEFAULT"
-    echo "     cd $REPO_DEFAULT && git sparse-checkout set scripts/ data/ skill/ assets/maps/"
-    exit 1
-  fi
+  chmod 644 "$CONFIG_FILE"
 fi
-echo ""
 
-# ─── 4. 安装地图资源 ──────────────────────────
-echo "[4/6] 把 skill 自带地图资源装到仓库"
-if [ -x "$SKILL_SCRIPTS/install_map_resources.sh" ]; then
-  # install_map_resources.sh 幂等，已装则秒过
-  bash "$SKILL_SCRIPTS/install_map_resources.sh" "$REPO" 2>&1 | tail -8
-else
-  echo "  ⚠️  install_map_resources.sh 不存在或不可执行"
-fi
+# ── 完成 ──────────────────────────────────────────
 echo ""
-
-# ─── 5. 冒烟测试 ──────────────────────────────
-echo "[5/6] 冒烟测试：check_baseline.sh 能跑"
-# 建临时目录装 tang 示例 + 最低必要资源
-SMOKE_DIR=$(mktemp -d)
-cp "$SKILL_DIR/templates/example-tang-dynasty.html" "$SMOKE_DIR/index.html"
-mkdir -p "$SMOKE_DIR/tts" "$SMOKE_DIR/assets"
-for s in hero objectives introduction core-concept modeling examples practice quiz summary knowledge-map; do
-  echo "fake" > "$SMOKE_DIR/tts/$s.mp3"
-done
-echo '{"sections":{}}' > "$SMOKE_DIR/tts/manifest.json"
-for img in hero concept extension; do
-  echo "fake" > "$SMOKE_DIR/assets/$img.png"
-done
-# 插入 <img> 引用
-python3 -c "
-import re
-p = '$SMOKE_DIR/index.html'
-h = open(p).read()
-imgs = '<img src=\"assets/hero.png\"><img src=\"assets/concept.png\"><img src=\"assets/extension.png\">'
-h = h.replace('</body>', imgs + '</body>', 1)
-open(p, 'w').write(h)
-"
-
-if bash "$SKILL_SCRIPTS/check_baseline.sh" "$SMOKE_DIR" > /tmp/smoke.log 2>&1; then
-  pass_count=$(grep -c "✅ PASS" /tmp/smoke.log)
-  echo "  ✅ check_baseline 通过 $pass_count 项（B-1 ~ B-7 基线检查正常）"
-else
-  echo "  ⚠️  check_baseline 有 FAIL：$(grep -c "❌ FAIL" /tmp/smoke.log) 项"
-  echo "     这只是 skill 自身的冒烟验证，不影响你的课件"
-fi
-rm -rf "$SMOKE_DIR"
+echo "══════════════════════════════════════════════"
+echo "  ✅ 配置完成！"
 echo ""
-
-# ─── 6. 输出下一步 ────────────────────────────
-echo "[6/6] 下一步"
+echo "  配置文件: $CONFIG_FILE"
+echo "  仓库路径: $_repo"
+[ -n "$_token" ] && echo "  认证方式: GH_TOKEN (HTTPS)" || echo "  认证方式: SSH"
 echo ""
-echo "================================================"
-echo "✅ 初始化完成！"
-echo "================================================"
-echo ""
-echo "📁 仓库位置: $REPO"
-echo "📁 Skill 位置: $SKILL_DIR"
-echo ""
-echo "🎯 开始做课件："
-echo ""
-echo "  1. 拷贝标准模板开始："
-echo "     cp $SKILL_DIR/templates/course-skeleton.html my-course/index.html"
-echo "     cp $SKILL_DIR/templates/manifest-template.json my-course/manifest.json"
-echo "     # 主体内容从 $SKILL_DIR/templates/content-section-templates.html 选择片段填充"
-echo ""
-echo "  2. 或在 CodeBuddy/Claude 里告诉 AI："
-echo "     \"做一节初中历史关于秦朝统一的课\""
-echo ""
-echo "  3. 课件做完后发布："
-echo "     bash $SKILL_SCRIPTS/publish_course.sh <课件目录> <course-id>"
-echo ""
-echo "📚 关键文档："
-echo "   $SKILL_DIR/SKILL_CN.md                  课件制作完整规范"
-echo "   $SKILL_DIR/historical-maps.md           历史地理地图使用"
-echo "   $SKILL_DIR/templates/course-skeleton.html     标准化 HTML 骨架"
-echo "   $SKILL_DIR/templates/manifest-template.json   标准 manifest 模板"
-echo "   $SKILL_DIR/templates/content-section-templates.html  主体内容片段库"
-echo "   $SKILL_DIR/references/phase1-checklist.md     Phase 1 标准问卷"
-echo ""
-echo "🔧 有用脚本："
-echo "   validate-courseware.cjs  Phase 2 标准结构校验"
-echo "   check_baseline.sh       验证课件是否达标"
-echo "   check_images.sh         验证 ≥3 张 AI 图"
-echo "   generate-tts.py         生成语音"
-echo "   install_map_resources.sh  重装地图资源"
-echo ""
-echo "💬 需要 AI 帮你一步步制作？告诉它："
-echo "   \"读 teachany skill，做一节 XXX 课\""
+echo "  现在可以直接发布课件："
+echo "  bash \"\$TEACHANY_SKILL/scripts/auto-publish.sh\" <course-id>"
+echo "══════════════════════════════════════════════"

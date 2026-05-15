@@ -16,8 +16,17 @@
 
 set -e
 
+# ── 加载用户配置（由 setup.sh 生成）─────────────────
+_CONFIG="$HOME/.teachany/config"
+if [ -f "$_CONFIG" ]; then
+  # shellcheck source=/dev/null
+  source "$_CONFIG"
+  # 如果配置了仓库路径且命令行未指定，使用配置值
+  [ -n "$TEACHANY_REPO" ] && _DEFAULT_REPO="$TEACHANY_REPO"
+fi
+
 COURSE_ID="${1:-}"
-REPO="${2:-$HOME/CodeBuddy/一次函数/teachany-opensource}"
+REPO="${2:-${_DEFAULT_REPO:-$HOME/CodeBuddy/一次函数/teachany-opensource}}"
 
 if [ -z "$COURSE_ID" ]; then
   echo "用法: $0 <course-id> [repo-path]"
