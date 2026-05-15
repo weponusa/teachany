@@ -30,8 +30,9 @@
 
 /* ─── 常量 ───────────────────────────────────── */
 const REGISTRY_URL = './registry-v2.json';
-const COURSEWARE_BASE_URL = 'https://weponusa.github.io/teachany-courseware';
-const CACHE_KEY = 'teachany_registry_v3_10'; // v3.10: 清理迁移页空链，所有课件卡片直指 teachany-courseware
+const COURSEWARE_BASE_URL = 'https://weponusa.github.io/teachany-courseware'; // 旧课件内容仍在这里
+const SELF_BASE_URL = 'https://weponusa.github.io/teachany';                  // 新课件 + hero SVG 在这里
+const CACHE_KEY = 'teachany_registry_v3_11'; // v3.11: hero 图用 teachany，课件链接保持 courseware
 
 function resolveCoursewareUrl(path) {
   if (!path) return COURSEWARE_BASE_URL + '/';
@@ -39,20 +40,31 @@ function resolveCoursewareUrl(path) {
   return COURSEWARE_BASE_URL + '/' + String(path).replace(/^\/+/, '');
 }
 
-function resolveCourseUrl(course) {
-  if (course && course.url) return course.url;
-  if (course && course.path) return resolveCoursewareUrl(course.path.replace(/\/$/, '') + '/index.html');
-  return COURSEWARE_BASE_URL + '/';
-}
-
+// hero 图优先从 teachany（新仓库）读取，fallback courseware
 function resolveHeroUrl(course, heroImage) {
   if (!heroImage) return '';
   if (heroImage.startsWith('cdn:')) return heroImage.slice(4);
   if (/^(https?:|data:)/i.test(heroImage)) return heroImage;
-  if (course && course.path && !heroImage.startsWith('/')) {
-    return resolveCoursewareUrl(course.path.replace(/\/$/, '') + '/' + heroImage);
+  if (course && course.path) {
+    const rel = course.path.replace(/\/$/, '') + '/' + heroImage;
+    // 优先尝试 teachany（新仓库，放有 SVG）
+    return SELF_BASE_URL + '/' + rel.replace(/^\/+/, '');
   }
-  return resolveCoursewareUrl(heroImage);
+  return SELF_BASE_URL + '/' + heroImage.replace(/^\/+/, '');
+}
+
+// 课件点击链接：有真实内容的新课件用 teachany，旧 redirect 课件仍指向 courseware
+function resolveCourseUrl(course) {
+  if (course && course.url) return course.url;
+  if (course && course.path) {
+    const path = course.path.replace(/\/$/, '') + '/index.html';
+    // 新课件（非 redirect）放在 teachany；旧 redirect 课件内容在 courseware
+    // 判断依据：teachany_version >= 7（新课件） 或路径在 teachany Pages 可直接访问
+    const tv = parseFloat(course.teachany_version) || 0;
+    if (tv >= 7) return SELF_BASE_URL + '/' + path.replace(/^\/+/, '');
+    return COURSEWARE_BASE_URL + '/' + path.replace(/^\/+/, '');
+  }
+  return COURSEWARE_BASE_URL + '/';
 }
 const CACHE_TTL = 30 * 60 * 1000; // 30 分钟缓存
 const LIKES_KEY = 'teachany_likes';
