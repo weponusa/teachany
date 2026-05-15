@@ -56,13 +56,27 @@ python3 "$TEACHANY_SKILL/scripts/check_node_id.py" <node_id>
 
 仅在用户要求发布或任务本身是发布/维护时执行。
 
-1. courseware 仓库提交 full courseware。
-2. opensource 仓库放 redirect/manifest，运行：
+**单仓库架构（v7+）**：课件统一放 `weponusa/teachany` 的 `community/<course-id>/`，`teachany-courseware` 已废弃。
+
+**一键发布（推荐）**：
+```bash
+bash "$TEACHANY_SKILL/scripts/auto-publish.sh" <course-id>
+```
+等价于以下手动步骤：
+1. 确认 `community/<course-id>/index.html` 和 `manifest.json` 存在（非 redirect 页）。
+2. 运行注册：
    ```bash
+   cd ~/CodeBuddy/一次函数/teachany-opensource
    python3 scripts/rebuild-index.py
    ```
-3. 提交并推送。
-4. 用 GitHub Pages / raw URL 验证线上可访问。
+3. 提交并推送：
+   ```bash
+   git add -A
+   git commit -m "feat: 新增课件 <course-id>"
+   git push origin main
+   ```
+4. 等待 GitHub Actions 部署（约 1–2 分钟），用 `curl` 或浏览器验证线上可访问：
+   `https://weponusa.github.io/teachany/community/<course-id>/`
 
 ## Gate 输出格式
 
