@@ -42,7 +42,7 @@ git clone https://github.com/weponusa/teachany-skill.git <your-skill-dir>/teacha
 ## 三、首次验证
 
 ```bash
-# 在任意目录跑这四条命令，确认 skill 可用
+# 在任意目录跑以下命令，确认 skill 可用
 ls ~/.codebuddy/skills/teachany/scripts/publish_course.sh  # 或 ~/.agents/...
 grep -n "TeachAny v7.12" ~/.codebuddy/skills/teachany/templates/course-skeleton.html | head -1
 test -f ~/.codebuddy/skills/teachany/templates/manifest-template.json && echo "manifest template OK"
@@ -50,9 +50,8 @@ test -f ~/.codebuddy/skills/teachany/templates/manifest-template.json && echo "m
 
 若以上命令全部有输出，skill 就绪。
 
-> **注**：v5.37 起，图片和地图资源（~43MB）不再捆绑在 skill 中，
-> 而是通过 jsDelivr CDN 按需下载（来源：`weponusa/teachany-images` 仓库）。
-> Skill 本体仅 ~1.4MB，首次制作历史/地理课件时会自动下载所需地图资源。
+> **注**：图片和地图资源不再捆绑在 skill 中，按需从仓库地图库或远端资源下载。
+> Skill 本体约 482KB；首次制作历史/地理课件时会自动获取所需地图资源。
 
 ## 四、如何使用
 
@@ -70,6 +69,7 @@ AI 会自动：
 6. （如配置 TeachAny 社区账号）`$TEACHANY_SKILL/scripts/publish_course.sh` 发布
 
 详见：
+
 - 英文文档 [SKILL.md](./SKILL.md)
 - 中文文档 [SKILL_CN.md](./SKILL_CN.md)
 - 地图 / 3D / PPTX 主题 [topics/maps-and-3d.md](./topics/maps-and-3d.md)
@@ -92,7 +92,7 @@ rm -rf ~/.agents/skills/teachany
 ## 七、本仓与 TeachAny 课件仓的关系
 
 | 仓库 | 用途 |
-|:---|:---|
+| :--- | :--- |
 | **weponusa/teachany-skill**（本仓） | AI Agent 读取的 skill 规范、工具脚本、模板、资源 |
 | [weponusa/teachany-courseware](https://github.com/weponusa/teachany-courseware) | TeachAny 课件站点 + 官方样板课件 + 社区课件库 |
 
@@ -134,7 +134,7 @@ A: 确认你的 AI Agent 已识别 skills 目录。可手动 `cat ~/.codebuddy/s
 A: 编辑 `$TEACHANY_SKILL/scripts/publish_course.sh` 开头的 `REPO_URL`，改为你的仓库地址。
 
 **Q: skill 下载体积多大？**
-A: v5.37 起 skill 本体仅 ~1.4MB（文档 + 脚本 + CDN 索引）。图片和地图资源通过 jsDelivr CDN 按需下载，无需提前安装。如需离线使用历史/地理课件，可运行 `bash ~/.codebuddy/skills/teachany/scripts/install_map_resources.sh` 预下载全部地图资源（~43MB）。
+A: skill 本体约 482KB（文档 + 脚本 + 模板）。图片和地图资源按需下载，无需提前安装。如需离线使用历史/地理课件，可运行 `bash ~/.codebuddy/skills/teachany/scripts/install_map_resources.sh` 预下载地图资源。
 
 ---
 

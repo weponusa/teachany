@@ -128,12 +128,12 @@ SKILL 不教 AI 写漂亮页面，而是教 AI 想清楚：
 SKILL 文档里对 AI 设置了 40+ 条硬规则，最关键的几条：
 
 1. **做课前先找节点**，不许编 node_id（`find_nodes.py` 强制先查）
-2. **HTML title 必须含学段学科版本**：`《课件名》· 小学语文 G1 · TeachAny v6.8`
+2. **HTML title 必须含学段学科版本**：`《课件名》· 小学语文 G1 · TeachAny v7.12`
 3. **manifest.grade 与 node_id 前缀必须一致**，否则挂错树
 4. **同一节点最多 1 份官方课件**（社区课件可多份并按点赞排序）
 5. **发布后 URL 必须 200 才算完成**，不许用"缓存延迟"糊弄（18 条禁止话术）
 
-完整规则见 [SKILL_CN.md](./SKILL_CN.md) Section 5 · 硬规则清单。
+完整规则见 [RULES.md](./RULES.md) · 硬规则清单。
 
 ## 📊 Stats
 
