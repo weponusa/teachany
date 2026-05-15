@@ -109,7 +109,7 @@ Phase 4  发布注册：仅在正式发布或用户要求时执行 Git/Registry/
 
 ```bash
 export TEACHANY_SKILL=/path/to/teachany/skill
-export COURSE_DIR=/path/to/teachany/community/<course-id>
+export COURSE_DIR=~/CodeBuddy/一次函数/teachany-opensource/community/<course-id>
 python3 "$TEACHANY_SKILL/scripts/preflight-check.py"
 python3 "$TEACHANY_SKILL/scripts/find_nodes.py" "一次函数"
 python3 "$TEACHANY_SKILL/scripts/find-hero.py" <course-id>
@@ -119,8 +119,15 @@ python3 "$TEACHANY_SKILL/scripts/apply-standard-modules.py" --only "$COURSE_DIR/
 python3 "$TEACHANY_SKILL/scripts/find-map.py" 唐
 python3 "$TEACHANY_SKILL/scripts/apply-historical-maps.py"
 node "$TEACHANY_SKILL/scripts/validate-courseware.cjs" "$COURSE_DIR"
-python3 "$TEACHANY_SKILL/scripts/rebuild-index.py"
 ```
+
+**一键发布（注册 + 挂知识树 + 推送）**：
+```bash
+# 课件目录写好后，一条命令完成全部发布流程
+bash "$TEACHANY_SKILL/scripts/auto-publish.sh" <course-id>
+```
+
+`auto-publish.sh` 完成：验证目录 → `rebuild-index.py`（注册+挂树）→ `git commit/push` → 验证线上 URL。
 
 如果脚本不存在，先在仓库根 `scripts/` 与 `skill/scripts/` 中搜索；不要引用不存在的脚本名。
 
