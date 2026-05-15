@@ -32,7 +32,7 @@
 const REGISTRY_URL = './registry-v2.json';
 const COURSEWARE_BASE_URL = 'https://weponusa.github.io/teachany-courseware'; // 旧课件内容仍在这里
 const SELF_BASE_URL = 'https://weponusa.github.io/teachany';                  // 新课件 + hero SVG 在这里
-const CACHE_KEY = 'teachany_registry_v3_11'; // v3.11: hero 图用 teachany，课件链接保持 courseware
+const CACHE_KEY = 'teachany_registry_v3_12'; // v3.12: SVG hero 优先级修复
 
 function resolveCoursewareUrl(path) {
   if (!path) return COURSEWARE_BASE_URL + '/';
