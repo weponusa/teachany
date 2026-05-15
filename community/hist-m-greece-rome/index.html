@@ -474,19 +474,25 @@
   <section class="section" id="map-section" data-tts="map" data-tsh="地图探究">
     <div class="section-title"><span class="phase-tag">地图</span>地中海世界的扩张</div>
     <div class="map-section">
-      <h3>🗺️ 互动地图——点击查看各时期版图</h3>
-      <canvas id="greece-map" width="800" height="300" onclick="handleMapClick(event)"></canvas>
-      <div class="map-controls">
-        <button class="map-btn active" onclick="drawMap('greece')">前5世纪·雅典鼎盛</button>
-        <button class="map-btn" onclick="drawMap('alexander')">前323年·亚历山大帝国</button>
-        <button class="map-btn" onclick="drawMap('rome-rep')">前2世纪·罗马共和国</button>
-        <button class="map-btn" onclick="drawMap('rome-emp')">2世纪·罗马帝国全盛</button>
+      <h3>🗺️ 互动地图——点击查看各时期真实历史版图</h3>
+      <div id="map-container" style="width:100%;height:340px;border-radius:10px;background:#0d1b2a;position:relative;overflow:hidden">
+        <svg id="hist-map-svg" style="width:100%;height:100%"></svg>
+        <div id="map-tooltip" style="display:none;position:absolute;background:#1e293b;border:1px solid #a855f750;border-radius:8px;padding:8px 12px;font-size:12px;color:#e2e8f0;pointer-events:none;max-width:220px;line-height:1.5;z-index:10"></div>
+        <div id="map-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:13px">
+          <span>🗺️ 加载地图中...</span>
+        </div>
       </div>
-      <div class="map-legend">
-        <div class="legend-item"><div class="legend-dot" style="background:#a855f7"></div>希腊/马其顿</div>
-        <div class="legend-dot" style="background:#ef4444"></div><span style="font-size:11px;color:#94a3b8">罗马</span>
-        <div class="legend-item"><div class="legend-dot" style="background:#22d3ee"></div>地中海</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#f5c842"></div>重要城市</div>
+      <div class="map-controls">
+        <button class="map-btn active" onclick="loadHistMap('bce-500','greek')">前5世纪·希腊城邦</button>
+        <button class="map-btn" onclick="loadHistMap('bce-323-alexander','alexander')">前323年·亚历山大帝国</button>
+        <button class="map-btn" onclick="loadHistMap('bce-200','rome-rep')">前2世纪·罗马共和国</button>
+        <button class="map-btn" onclick="loadHistMap('ce-200','rome-emp')">2世纪·罗马帝国全盛</button>
+      </div>
+      <div class="map-legend" style="margin-top:10px">
+        <div class="legend-item"><div class="legend-dot" style="background:#a855f7"></div>希腊/马其顿/亚历山大</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>罗马</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>其他政权</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#334155"></div>未控制地区</div>
       </div>
     </div>
     <div class="card" style="margin-top:12px">
@@ -722,179 +728,176 @@ function toggleAcc(header) {
 }
 
 // ═══════════════════════════════════════════════
-// 地图 Canvas
+// 真实历史地图 (D3.js + GeoJSON from teachany-images)
 // ═══════════════════════════════════════════════
-const mapData = {
-  greece: {
-    title: '前 5 世纪·雅典城邦鼎盛时期',
-    color: '#a855f7',
-    regions: [
-      { x:340, y:100, w:120, h:80, label:'希腊本土', sub:'众多城邦' },
-      { x:420, y:60, w:80, h:50, label:'色雷斯', sub:'' },
-      { x:280, y:140, w:80, h:50, label:'伯罗奔尼撒', sub:'斯巴达' },
-      { x:480, y:90, w:100, h:60, label:'小亚细亚', sub:'希腊殖民地' },
-    ],
-    cities: [
-      { x:360, y:130, name:'雅典', main:true },
-      { x:310, y:165, name:'斯巴达', main:false },
-      { x:390, y:85, name:'马其顿', main:false },
-    ]
-  },
-  alexander: {
-    title: '前 323 年·亚历山大帝国',
-    color: '#f5c842',
-    regions: [
-      { x:280, y:70, w:400, h:160, label:'亚历山大帝国', sub:'横跨欧亚非' },
-    ],
-    cities: [
-      { x:340, y:120, name:'马其顿', main:true },
-      { x:400, y:150, name:'波斯波利斯', main:false },
-      { x:370, y:200, name:'亚历山大里亚(埃及)', main:false },
-      { x:540, y:130, name:'印度河', main:false },
-    ]
-  },
-  'rome-rep': {
-    title: '前 2 世纪·罗马共和国',
-    color: '#ef4444',
-    regions: [
-      { x:260, y:80, w:200, h:130, label:'罗马控制区', sub:'地中海西部' },
-    ],
-    cities: [
-      { x:310, y:130, name:'罗马', main:true },
-      { x:270, y:170, name:'迦太基', main:false },
-      { x:280, y:100, name:'高卢', main:false },
-    ]
-  },
-  'rome-emp': {
-    title: '2 世纪·罗马帝国全盛',
-    color: '#f97316',
-    regions: [
-      { x:180, y:60, w:520, h:180, label:'罗马帝国', sub:'地中海世界' },
-    ],
-    cities: [
-      { x:310, y:130, name:'罗马', main:true },
-      { x:250, y:170, name:'迦太基', main:false },
-      { x:480, y:110, name:'耶路撒冷', main:false },
-      { x:200, y:100, name:'伦底纽姆(伦敦)', main:false },
-      { x:540, y:150, name:'亚历山大里亚', main:false },
-    ]
-  }
+const CDN_BASE = 'https://cdn.jsdelivr.net/gh/weponusa/teachany-images@main/historical-world';
+
+const MAP_CONFIG = {
+  'bce-500':             { title:'前 500 年·希腊城邦时代', highlight:['Greek city-states'], color:'#a855f7', label:'希腊城邦' },
+  'bce-323-alexander':   { title:'前 323 年·亚历山大帝国', highlight:['Empire of Alexander','Bosporan Kingdom'], color:'#f5c842', label:'亚历山大帝国' },
+  'bce-200':             { title:'前 200 年·罗马共和国', highlight:['Rome','Roman Republic'], color:'#ef4444', label:'罗马共和国' },
+  'ce-200':              { title:'公元 200 年·罗马帝国全盛', highlight:['Roman Empire'], color:'#f97316', label:'罗马帝国' },
 };
 
-let currentMap = 'greece';
+const CITIES = {
+  'bce-500': [
+    { lon:23.7, lat:37.97, name:'雅典', tip:'雅典（Athens）：古希腊最重要城邦，伯里克利时代达到民主政治顶峰，帕特农神庙建于此。' },
+    { lon:22.4, lat:37.07, name:'斯巴达', tip:'斯巴达（Sparta）：军事城邦，男孩7岁入伍训练，是雅典的宿敌。' },
+    { lon:22.9, lat:40.6, name:'马其顿', tip:'马其顿（Macedonia）：亚历山大大帝的故乡。' },
+  ],
+  'bce-323-alexander': [
+    { lon:22.9, lat:40.6, name:'马其顿', tip:'马其顿（Macedonia）：亚历山大的起点，东征从这里出发。' },
+    { lon:29.9, lat:31.2, name:'亚历山大里亚', tip:'亚历山大里亚（Alexandria）：埃及港口城市，古代最大图书馆所在地。' },
+    { lon:52.7, lat:29.9, name:'波斯波利斯', tip:'波斯波利斯（Persepolis）：波斯帝国首都，亚历山大将其焚毁。' },
+    { lon:71.5, lat:30.2, name:'印度河', tip:'印度河：亚历山大东征最远边界，军队拒绝继续前进。' },
+  ],
+  'bce-200': [
+    { lon:12.5, lat:41.9, name:'罗马', tip:'罗马（Rome）：台伯河畔永恒之城，共和国都城。' },
+    { lon:10.3, lat:36.8, name:'迦太基', tip:'迦太基（Carthage）：北非强国，布匿战争中被罗马摧毁。' },
+    { lon:23.7, lat:37.97, name:'雅典', tip:'雅典（Athens）：此时已沦为罗马的文化城市。' },
+  ],
+  'ce-200': [
+    { lon:12.5, lat:41.9, name:'罗马', tip:'罗马（Rome）：帝国首都，百万人口的世界最大城市。' },
+    { lon:-0.1, lat:51.5, name:'伦底纽姆', tip:'伦底纽姆（Londinium，今伦敦）：帝国在不列颠的据点。' },
+    { lon:35.2, lat:31.8, name:'耶路撒冷', tip:'耶路撒冷：基督教在此诞生，后成为帝国国教圣城。' },
+    { lon:29.9, lat:31.2, name:'亚历山大里亚', tip:'亚历山大里亚（Alexandria）：帝国第二大城市，重要文化中心。' },
+  ]
+};
 
-function handleMapClick(e) {
-  const canvas = document.getElementById('greece-map');
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-  const cx = (e.clientX - rect.left) * scaleX;
-  const cy = (e.clientY - rect.top) * scaleY;
-  const d = mapData[currentMap];
-  if (!d) return;
-  // 检查是否点击了城市附近
-  for (const city of d.cities) {
-    if (Math.abs(cx - city.x) < 30 && Math.abs(cy - city.y) < 20) {
-      const tips = {
-        '雅典':'雅典（Athens）：古希腊最重要的城邦，伯里克利时代达到民主政治顶峰，帕特农神庙建于此。',
-        '斯巴达':'斯巴达（Sparta）：军事城邦，男孩7岁入伍训练，是雅典的宿敌。',
-        '马其顿':'马其顿（Macedonia）：亚历山大大帝的故乡，通过东征将希腊文化传播到亚欧大陆。',
-        '罗马':'罗马（Rome）：台伯河畔的永恒之城，从小城邦发展为统治地中海的帝国首都。',
-        '迦太基':'迦太基（Carthage）：北非强国，曾是罗马最强劲的对手，罗马在布匿战争中将其摧毁。',
-        '耶路撒冷':'耶路撒冷：基督教圣城，罗马帝国控制下基督教在此诞生，后成为帝国国教。',
-        '亚历山大里亚(埃及)':'亚历山大里亚（Alexandria）：亚历山大大帝建立的埃及港口城市，著名学术中心，拥有古代最大图书馆。',
-        '印度河':'印度河：亚历山大东征的最远边界，在此其军队拒绝继续前进，迫使亚历山大回师。',
-        '伦底纽姆(伦敦)':'伦底纽姆（Londinium）：今伦敦，罗马帝国在不列颠岛的重要据点。',
-      };
-      const tip = tips[city.name] || city.name;
-      const existing = document.getElementById('map-city-tip');
-      if (existing) existing.remove();
-      const div = document.createElement('div');
-      div.id = 'map-city-tip';
-      div.style.cssText = 'background:#1e293b;border:1px solid #a855f750;border-radius:8px;padding:10px 14px;font-size:12px;color:#e2e8f0;margin-top:8px;line-height:1.6';
-      div.innerHTML = `<strong style="color:#f5c842">${city.name}</strong> — ${tip}`;
-      canvas.parentElement.insertBefore(div, canvas.nextSibling);
-      return;
-    }
-  }
+let d3Loaded = false;
+let currentGeoKey = 'bce-500';
+let geoCache = {};
+
+function loadD3(cb) {
+  if (d3Loaded) { cb(); return; }
+  const s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js';
+  s.onload = () => { d3Loaded = true; cb(); };
+  document.head.appendChild(s);
 }
 
-function drawMap(key) {
-  currentMap = key;
+function loadHistMap(geoKey, _unused) {
+  currentGeoKey = geoKey;
   document.querySelectorAll('.map-btn').forEach(b => b.classList.remove('active'));
   event.target.classList.add('active');
+  document.getElementById('map-loading').style.display = 'flex';
 
-  const canvas = document.getElementById('greece-map');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height;
-
-  ctx.clearRect(0, 0, W, H);
-
-  // 背景（海洋）
-  ctx.fillStyle = '#0d2137';
-  ctx.fillRect(0, 0, W, H);
-
-  // 地中海
-  ctx.fillStyle = '#1e4a6e40';
-  ctx.fillRect(150, 50, 540, 200);
-  ctx.fillStyle = '#22d3ee20';
-  ctx.font = '11px sans-serif';
-  ctx.fillStyle = '#22d3ee50';
-  ctx.fillText('地中海 MEDITERRANEAN SEA', 270, 240);
-
-  const d = mapData[key];
-
-  // 绘制区域
-  d.regions.forEach(r => {
-    ctx.fillStyle = d.color + '30';
-    ctx.strokeStyle = d.color + '80';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.roundRect(r.x, r.y, r.w, r.h, 8);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = '#ffffff90';
-    ctx.font = 'bold 12px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(r.label, r.x + r.w/2, r.y + r.h/2 - 4);
-    if (r.sub) {
-      ctx.fillStyle = '#ffffff50';
-      ctx.font = '10px sans-serif';
-      ctx.fillText(r.sub, r.x + r.w/2, r.y + r.h/2 + 12);
-    }
+  loadD3(() => {
+    if (geoCache[geoKey]) { renderMap(geoKey, geoCache[geoKey]); return; }
+    const url = `${CDN_BASE}/${geoKey}.geojson`;
+    fetch(url)
+      .then(r => r.json())
+      .then(data => { geoCache[geoKey] = data; renderMap(geoKey, data); })
+      .catch(() => {
+        document.getElementById('map-loading').innerHTML = '<span style="color:#ef4444">⚠️ 地图加载失败，请检查网络连接</span>';
+      });
   });
+}
 
-  // 城市
-  d.cities.forEach(c => {
-    ctx.beginPath();
-    ctx.arc(c.x, c.y, c.main ? 6 : 4, 0, Math.PI*2);
-    ctx.fillStyle = c.main ? d.color : '#f5c842';
-    ctx.fill();
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    ctx.fillStyle = '#ffffff';
-    ctx.font = c.main ? 'bold 12px sans-serif' : '10px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText(c.name, c.x + 8, c.y + 4);
+function renderMap(geoKey, geojson) {
+  const cfg = MAP_CONFIG[geoKey];
+  const container = document.getElementById('map-container');
+  const svg = d3.select('#hist-map-svg');
+  const W = container.clientWidth || 800;
+  const H = container.clientHeight || 340;
+
+  svg.selectAll('*').remove();
+
+  // 投影：聚焦地中海区域 (-15°W ~ 55°E, 25°N ~ 55°N)
+  const projection = d3.geoMercator()
+    .center([20, 38])
+    .scale(Math.min(W, H) * 2.0)
+    .translate([W / 2, H / 2]);
+
+  const path = d3.geoPath().projection(projection);
+
+  // 海洋背景
+  svg.append('rect').attr('width', W).attr('height', H).attr('fill', '#0d1b2a');
+
+  // 绘制所有地块
+  const hset = new Set(cfg.highlight.map(s => s.toLowerCase()));
+
+  svg.selectAll('path.feature')
+    .data(geojson.features)
+    .enter().append('path')
+    .attr('class', 'feature')
+    .attr('d', path)
+    .attr('fill', d => {
+      const n = (d.properties.PARTOF || d.properties.NAME || '').toLowerCase();
+      if (hset.has(n)) return cfg.color + 'cc';
+      return '#1e3a5f55';
+    })
+    .attr('stroke', d => {
+      const n = (d.properties.PARTOF || d.properties.NAME || '').toLowerCase();
+      return hset.has(n) ? cfg.color : '#1e3a5f';
+    })
+    .attr('stroke-width', d => {
+      const n = (d.properties.PARTOF || d.properties.NAME || '').toLowerCase();
+      return hset.has(n) ? 1.0 : 0.3;
+    })
+    .on('mousemove', function(event, d) {
+      const n = d.properties.PARTOF || d.properties.NAME || '';
+      if (!n) return;
+      const tip = document.getElementById('map-tooltip');
+      tip.style.display = 'block';
+      tip.style.left = (event.offsetX + 12) + 'px';
+      tip.style.top  = (event.offsetY - 10) + 'px';
+      tip.textContent = n;
+    })
+    .on('mouseleave', () => {
+      document.getElementById('map-tooltip').style.display = 'none';
+    });
+
+  // 标注城市
+  const cities = CITIES[geoKey] || [];
+  cities.forEach(c => {
+    const [px, py] = projection([c.lon, c.lat]);
+    if (px < 0 || px > W || py < 0 || py > H) return;
+
+    svg.append('circle')
+      .attr('cx', px).attr('cy', py).attr('r', 5)
+      .attr('fill', '#f5c842').attr('stroke', '#fff').attr('stroke-width', 1.5)
+      .style('cursor', 'pointer')
+      .on('click', () => showCityTip(c));
+
+    svg.append('text')
+      .attr('x', px + 7).attr('y', py + 4)
+      .attr('font-size', '11px').attr('fill', '#f5c842')
+      .attr('font-weight', 'bold')
+      .attr('font-family', 'PingFang SC, sans-serif')
+      .text(c.name);
   });
 
   // 标题
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 13px sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText(d.title, 16, 22);
-  ctx.fillStyle = d.color;
-  ctx.fillRect(8, 28, 3, 0);
+  svg.append('text')
+    .attr('x', 12).attr('y', 22)
+    .attr('font-size', '13px').attr('fill', '#ffffff').attr('font-weight', 'bold')
+    .attr('font-family', 'PingFang SC, sans-serif')
+    .text(cfg.title);
+
+  // 隐藏 loading
+  document.getElementById('map-loading').style.display = 'none';
+}
+
+function showCityTip(city) {
+  const existing = document.getElementById('map-city-tip');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'map-city-tip';
+  div.style.cssText = 'background:#1e293b;border:1px solid #f5c84250;border-radius:8px;padding:10px 14px;font-size:12px;color:#e2e8f0;margin-top:8px;line-height:1.6';
+  div.innerHTML = `<strong style="color:#f5c842">📍 ${city.name}</strong> — ${city.tip}`;
+  document.querySelector('#map-section .map-section').appendChild(div);
 }
 
 // ═══════════════════════════════════════════════
 // 初始化
 // ═══════════════════════════════════════════════
 window.addEventListener('load', () => {
-  drawMap('greece');
+  // 模拟 btn click 触发第一张地图
+  const firstBtn = document.querySelector('.map-btn');
+  if (firstBtn) { const e = { target: firstBtn }; window.event = e; loadHistMap('bce-500', 'greek'); }
 });
 </script>
 </body>
 </html>
+
