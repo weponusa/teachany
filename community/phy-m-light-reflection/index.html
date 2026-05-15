@@ -335,10 +335,10 @@
 
     <!-- 平面镜成像互动 -->
     <div class="card" style="margin-top:14px">
-      <p style="font-size:13px;color:var(--text2);margin-bottom:12px">拖动左侧物体（蜡烛🕯️），观察镜中虚像位置的变化，验证成像规律。</p>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:12px">在左半区域<strong style="color:var(--text1)">自由拖动蜡烛</strong>（可上下左右移动），观察虚像位置如何随物体变化，验证"等距、等大"特征。</p>
       <canvas id="mirror-canvas" width="640" height="320"></canvas>
       <div id="mirror-info" style="text-align:center;font-size:13px;color:var(--text2);margin-top:8px"></div>
-      <div class="canvas-hint">⬅️ 在左半区域点击/拖动改变物体位置</div>
+      <div class="canvas-hint">🖱️ 在左半区域任意拖动蜡烛，虚像同步更新</div>
     </div>
 
     <!-- 四大特征 -->
@@ -747,70 +747,131 @@ function showCalcAns(el, label, ans) {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   const W = canvas.width, H = canvas.height;
-  let objY = H/2;
+  const MX = W / 2; // 镜面 X 固定在中央
+
+  let objX = MX - 160;
+  let objY = H / 2;
+  let dragging = false;
 
   function draw() {
-    ctx.clearRect(0,0,W,H); ctx.fillStyle='#050d1a'; ctx.fillRect(0,0,W,H);
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = '#050d1a';
+    ctx.fillRect(0,0,W,H);
 
-    const mx = W/2; // 镜面在中央
+    const objDist = MX - objX;   // 物距（像素）
+    const imgX = MX + objDist;   // 虚像 X（对称）
 
     // 镜面
-    ctx.strokeStyle='#7dd3fc'; ctx.lineWidth=3;
-    ctx.beginPath(); ctx.moveTo(mx, 20); ctx.lineTo(mx, H-20); ctx.stroke();
-    ctx.fillStyle='#38bdf850'; ctx.fillRect(mx, 20, 6, H-40);
-    ctx.fillStyle='#7dd3fc'; ctx.font='11px sans-serif'; ctx.textAlign='left';
-    ctx.fillText('平面镜', mx+10, 18);
+    ctx.strokeStyle = '#7dd3fc'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(MX, 20); ctx.lineTo(MX, H-20); ctx.stroke();
+    ctx.fillStyle = '#38bdf830'; ctx.fillRect(MX, 20, 6, H-40);
+    ctx.fillStyle = '#7dd3fc'; ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('平面镜', MX+10, 18);
 
-    // 物体（蜡烛）
-    const objX = mx - 160;
-    ctx.font='28px sans-serif'; ctx.textAlign='center';
-    ctx.fillText('🕯️', objX, objY+10);
-    ctx.fillStyle='#fbbf24'; ctx.font='11px sans-serif';
-    ctx.fillText('物体', objX, objY+30);
-    ctx.fillText(`物距=${mx-objX}px`, objX, objY+44);
+    // 水平辅助线（等距参考）
+    ctx.strokeStyle = '#fbbf2415'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(objX, objY); ctx.lineTo(imgX, objY); ctx.stroke();
+    ctx.setLineDash([]);
 
-    // 虚像
-    const imgX = mx + 160;
-    ctx.globalAlpha=0.4;
-    ctx.font='28px sans-serif'; ctx.textAlign='center';
-    ctx.fillText('🕯️', imgX, objY+10);
-    ctx.globalAlpha=1;
-    ctx.fillStyle='#34d39980'; ctx.font='11px sans-serif';
-    ctx.fillText('虚像', imgX, objY+30);
-    ctx.fillText(`像距=${imgX-mx}px`, imgX, objY+44);
+    // 物距/像距标注（双箭头）
+    const labelY = Math.min(objY + 55, H - 16);
+    ctx.strokeStyle = '#fbbf2460'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(objX, labelY); ctx.lineTo(MX, labelY); ctx.stroke();
+    ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(`物距 ${Math.round(objDist)}px`, (objX+MX)/2, labelY-4);
 
-    // 反射光线示意（两条）
-    const eyes = [objY-30, objY+20];
-    eyes.forEach(ey => {
-      const hitX = mx;
-      const hitY = ey + (objY - ey) * (mx-objX)/(imgX-objX); // 简化：hit on mirror
-      // 真实路径
-      ctx.strokeStyle='#fbbf2480'; ctx.lineWidth=1.2; ctx.setLineDash([3,3]);
-      ctx.beginPath(); ctx.moveTo(objX, objY); ctx.lineTo(hitX, hitY); ctx.stroke();
-      ctx.strokeStyle='#60a5fa80';
-      ctx.beginPath(); ctx.moveTo(hitX, hitY); ctx.lineTo(imgX-40, ey); ctx.stroke();
-      // 延长线（虚像方向）
-      ctx.strokeStyle='#34d39940';
-      ctx.beginPath(); ctx.moveTo(hitX, hitY); ctx.lineTo(imgX, objY); ctx.stroke();
+    ctx.strokeStyle = '#34d39960'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(MX, labelY); ctx.lineTo(imgX, labelY); ctx.stroke();
+    ctx.fillStyle = '#34d399'; ctx.font = 'bold 11px sans-serif';
+    ctx.fillText(`像距 ${Math.round(objDist)}px`, (MX+imgX)/2, labelY-4);
+
+    // 反射光线（两条，从观察者眼睛出发）
+    const eyeY1 = objY - 45, eyeY2 = objY + 45;
+    [[eyeY1, '#fbbf24','#60a5fa'], [eyeY2, '#f97316','#a78bfa']].forEach(([ey, cIn, cRef]) => {
+      // 光线从物体→镜面的反射点（镜面上 Y 坐标由几何关系决定）
+      // 平面镜成像：反射光线的反向延长线交于虚像位置
+      // 假设人眼在右侧某固定位置接收光
+      const eyeX = imgX + 80;
+      // 光路：物体(objX,objY) → 镜面(MX, hitY) → 观察者(eyeX, ey)
+      // hitY 由 objX/objY 和 eyeX/ey 共线（通过虚像点）决定
+      // 虚像在 (imgX, objY)，所以 hitY 是连线 eyeX,ey → imgX,objY 延长到 MX 处
+      const t = (MX - eyeX) / (imgX - eyeX);
+      const hitY = ey + t * (objY - ey);
+
+      if (hitY < 10 || hitY > H-10) return; // 超出镜面范围不画
+
+      // 入射光线：物体 → 镜面
+      ctx.strokeStyle = cIn + '90'; ctx.lineWidth = 1.5; ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(objX, objY); ctx.lineTo(MX, hitY); ctx.stroke();
+
+      // 反射光线：镜面 → 观察者眼睛
+      ctx.strokeStyle = cRef + '90'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(MX, hitY); ctx.lineTo(eyeX, ey); ctx.stroke();
+
+      // 虚延长线：镜面后 → 虚像
+      ctx.strokeStyle = '#34d39930'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+      ctx.beginPath(); ctx.moveTo(MX, hitY); ctx.lineTo(imgX, objY); ctx.stroke();
       ctx.setLineDash([]);
+
+      // 入射角/反射角弧（示意）
+      ctx.fillStyle = '#fbbf2480'; ctx.beginPath();
+      ctx.arc(MX, hitY, 14, Math.atan2(objY-hitY, objX-MX), Math.PI/2, true);
+      ctx.fill();
     });
 
+    // 物体（蜡烛）
+    ctx.font = '30px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('🕯️', objX, objY + 12);
+    ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 11px sans-serif';
+    ctx.fillText('物体', objX, objY + 32);
+
+    // 虚像（半透明）
+    ctx.globalAlpha = 0.35;
+    ctx.font = '30px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('🕯️', imgX, objY + 12);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#34d399'; ctx.font = 'bold 11px sans-serif';
+    ctx.fillText('虚像', imgX, objY + 32);
+
+    // 信息面板
     const info = document.getElementById('mirror-info');
-    if (info) info.textContent = `物距 = ${mx-objX} px | 像距 = ${imgX-mx} px | 物距 = 像距 ✅ | 像大小 = 物大小 ✅`;
+    if (info) {
+      const equal = Math.round(objDist) === Math.round(imgX - MX);
+      info.innerHTML = `物距 = <span style="color:#fbbf24;font-weight:bold">${Math.round(objDist)}px</span> &nbsp;=&nbsp; 像距 = <span style="color:#34d399;font-weight:bold">${Math.round(imgX-MX)}px</span> &nbsp; ✅ 等距 | ✅ 等大 | ✅ 虚像`;
+    }
   }
 
-  canvas.addEventListener('click', e => {
+  function getPos(e) {
     const rect = canvas.getBoundingClientRect();
-    const scaleY = H / rect.height;
-    const cx = (e.clientX - rect.left) * (W/rect.width);
-    if (cx < W/2) {
-      objY = (e.clientY - rect.top) * scaleY;
+    const scaleX = W / rect.width, scaleY = H / rect.height;
+    const src = e.touches ? e.touches[0] : e;
+    return {
+      x: (src.clientX - rect.left) * scaleX,
+      y: (src.clientY - rect.top) * scaleY,
+    };
+  }
+
+  function tryMove(e) {
+    const {x, y} = getPos(e);
+    // 只允许在左半区（镜面左侧，且距镜面至少 30px）
+    if (x < MX - 30) {
+      objX = Math.max(20, Math.min(MX - 30, x));
+      objY = Math.max(20, Math.min(H - 50, y));
       draw();
     }
-  });
+  }
+
+  canvas.addEventListener('mousedown', e => { dragging = true; tryMove(e); });
+  canvas.addEventListener('mousemove', e => { if (dragging) tryMove(e); });
+  canvas.addEventListener('mouseup',   () => { dragging = false; });
+  canvas.addEventListener('mouseleave',() => { dragging = false; });
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); dragging = true; tryMove(e); }, {passive:false});
+  canvas.addEventListener('touchmove',  e => { e.preventDefault(); if (dragging) tryMove(e); }, {passive:false});
+  canvas.addEventListener('touchend',   () => { dragging = false; });
 
   draw();
 })();
+
 </script>
 </body>
 </html>
