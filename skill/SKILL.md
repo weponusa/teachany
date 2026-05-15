@@ -107,7 +107,7 @@ Phase 4  发布注册：仅在正式发布或用户要求时执行 Git/Registry/
 
 ```bash
 export TEACHANY_SKILL=/path/to/teachany/skill
-export COURSE_DIR=/path/to/teachany-courseware/community/<course-id>
+export COURSE_DIR=/path/to/teachany/community/<course-id>
 python3 "$TEACHANY_SKILL/scripts/preflight-check.py"
 python3 "$TEACHANY_SKILL/scripts/find_nodes.py" "一次函数"
 python3 "$TEACHANY_SKILL/scripts/find-hero.py" <course-id>

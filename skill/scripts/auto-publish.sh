@@ -8,7 +8,7 @@
 #   bash auto-publish.sh <course-id> [<courseware-repo-path>] [<opensource-repo-path>]
 #
 # 默认路径：
-#   courseware: ~/CodeBuddy/一次函数/teachany-courseware
+#   courseware: ~/CodeBuddy/一次函数/teachany-opensource
 #   opensource: ~/CodeBuddy/一次函数/teachany-opensource
 #
 # 流程：
@@ -22,7 +22,7 @@
 set -e
 
 COURSE_ID="${1:-}"
-COURSEWARE_REPO="${2:-$HOME/CodeBuddy/一次函数/teachany-courseware}"
+COURSEWARE_REPO="${2:-$HOME/CodeBuddy/一次函数/teachany-opensource}"
 OPENSOURCE_REPO="${3:-$HOME/CodeBuddy/一次函数/teachany-opensource}"
 SKILL_REPO="${4:-$HOME/.codebuddy/skills/teachany}"
 
@@ -134,10 +134,7 @@ else
   git add -A
   # pre-commit 钩子可能误把 redirect-only 目录当成完整课件查 ⑦/#68/#69
   # 这是 hook 的合理性问题（redirect 不该被当真课件），用 SKIP 绕过
-  if TEACHANY_SKIP_PRECOMMIT=1 git commit -m "feat: 注册 $COURSE_ID 到知识图谱
-
-注：community/$COURSE_ID/ 仅含 redirect+manifest，
-真实课件在 teachany-courseware 仓库。" 2>&1 | tail -3; then
+  if git commit -m "feat: 新增课件 $COURSE_ID" 2>&1 | tail -3; then
     echo "  ✅ commit 成功"
   fi
 

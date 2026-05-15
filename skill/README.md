@@ -47,7 +47,7 @@ teachany-src/
 
 ```bash
 export TEACHANY_SKILL=~/.codebuddy/skills/teachany
-export COURSE_DIR=/path/to/teachany-courseware/community/<course-id>
+export COURSE_DIR=/path/to/teachany/community/<course-id>
 
 python3 "$TEACHANY_SKILL/scripts/find_nodes.py" "一次函数"
 python3 "$TEACHANY_SKILL/scripts/find-map.py" 唐
@@ -59,7 +59,7 @@ node "$TEACHANY_SKILL/scripts/validate-courseware.cjs" "$COURSE_DIR"
 | 仓库 | 用途 |
 | :--- | :--- |
 | `weponusa/teachany` | Skill 主仓、Gallery、知识树、Registry、脚本 |
-| `weponusa/teachany-courseware` | 完整课件内容与 GitHub Pages 站点 |
+| `weponusa/teachany` | Skill 包 + 完整课件内容与 GitHub Pages 站点（唯一主仓库） |
 
 ## 关键规则
 

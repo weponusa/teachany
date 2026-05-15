@@ -518,7 +518,7 @@ if [ $STATUS -eq 0 ]; then
     echo ""
     echo "  自检命令："
     echo "    curl -I '$COURSE_URL'    # 等几分钟再试"
-    echo "    gh pr view <PR号> --repo weponusa/teachany-courseware"
+    echo "    gh pr view <PR号> --repo weponusa/teachany"
     exit 11
   fi
 elif [ $STATUS -eq 10 ]; then

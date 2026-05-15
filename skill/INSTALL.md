@@ -103,7 +103,7 @@ rm -rf ~/.agents/skills/teachany
 
 ## 八、普通用户如何提交课件
 
-普通用户无需 GitHub 写权限。推荐把完成的课件目录打包发给维护者，或在 `weponusa/teachany-courseware` 发起 PR。
+普通用户无需 GitHub 写权限。推荐把完成的课件目录打包发给维护者，或在 `weponusa/teachany` 发起 PR。
 
 如果你在完整 TeachAny 仓库中安装了可选提交脚本，可按完整仓库根的可选提交脚本 的说明执行；轻量 skill 包默认不包含该在线提交链路。
 
@@ -112,7 +112,7 @@ rm -rf ~/.agents/skills/teachany
 从 v7.12 起，新课件默认要求通过手机视口与小程序 `web-view` readiness：
 
 - 课件需包含 `viewport-fit=cover`、safe-area 处理、移动端单列布局、44px 以上触屏按钮；
-- 小程序嵌入使用 `weponusa/teachany-courseware/miniprogram/` 模板；
+- 小程序嵌入使用 `weponusa/teachany/miniprogram/` 模板（如有）；
 - 小程序后台需将 `weponusa.github.io`（或自有 CNAME 域名）配置为业务域名；
 - 个人类型小程序不支持 `web-view`。
 

@@ -41,7 +41,7 @@
 - **#23** 优先匹配官方 `node_id`；没有则注册；确实不在课标内再用 `free_mode` 或 `ext-*`。
 - **#24** 不手改 `registry.json`、`community/index.json`、`teachany-kg-manifest.json`；由 `rebuild-index.py` 生成。
 - **#25** 正式发布前运行 `rebuild-index.py`，处理“未被知识树引用”等警告。
-- **#26** full HTML 放 `teachany-courseware/community/<course-id>/`；opensource 仓库只放 redirect、manifest 与索引。
+- **#26** full HTML 放 `weponusa/teachany` 仓库的 `community/<course-id>/`；`teachany-courseware` 仓库已废弃，不再使用。
 - **#27** 自动发布前先检测远端、权限、分支和用户是否要求跳过。
 
 ## F. 质量检查
