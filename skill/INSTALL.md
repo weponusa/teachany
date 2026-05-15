@@ -19,7 +19,8 @@
 # 克隆到 CodeBuddy 的 skills 目录
 mkdir -p ~/.codebuddy/skills
 cd ~/.codebuddy/skills
-git clone https://github.com/weponusa/teachany-skill.git teachany
+git clone https://github.com/weponusa/teachany.git teachany-src
+ln -s "$PWD/teachany-src/skill" teachany
 ```
 
 ### 2.2 安装到 Claude Code（~/.agents/skills）
@@ -27,7 +28,8 @@ git clone https://github.com/weponusa/teachany-skill.git teachany
 ```bash
 mkdir -p ~/.agents/skills
 cd ~/.agents/skills
-git clone https://github.com/weponusa/teachany-skill.git teachany
+git clone https://github.com/weponusa/teachany.git teachany-src
+ln -s "$PWD/teachany-src/skill" teachany
 ```
 
 ### 2.3 通用路径（自选）
@@ -36,7 +38,8 @@ Skill 文件结构固定，**目录名必须叫 `teachany`**，因为脚本里�
 或 `~/.agents/skills/teachany` 作为自定位根。
 
 ```bash
-git clone https://github.com/weponusa/teachany-skill.git <your-skill-dir>/teachany
+git clone https://github.com/weponusa/teachany.git <work-dir>/teachany-src
+ln -s <work-dir>/teachany-src/skill <your-skill-dir>/teachany
 ```
 
 ## 三、首次验证
@@ -93,10 +96,10 @@ rm -rf ~/.agents/skills/teachany
 
 | 仓库 | 用途 |
 | :--- | :--- |
-| **weponusa/teachany-skill**（本仓） | AI Agent 读取的 skill 规范、工具脚本、模板、资源 |
+| **weponusa/teachany** | Skill 主仓、Gallery、知识树、Registry、脚本 |
 | [weponusa/teachany-courseware](https://github.com/weponusa/teachany-courseware) | TeachAny 课件站点 + 官方样板课件 + 社区课件库 |
 
-做课件 → 用本仓 skill；发布课件 → 推到课件仓 `community/`。两者通过 `$TEACHANY_SKILL/scripts/publish_course.sh` 自动衔接。
+做课件 → 安装 `weponusa/teachany` 的 `skill/` 子目录；发布课件 → 推到课件仓 `community/`。两者通过 `$TEACHANY_SKILL/scripts/publish_course.sh` 自动衔接。
 
 ## 八、普通用户如何提交课件
 

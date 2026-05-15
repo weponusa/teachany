@@ -1,172 +1,75 @@
-<h1 align="center">🎓 TeachAny Skill</h1>
+# TeachAny Skill
 
-<p align="center">
-  <strong>An open-source Agent Skill that turns AI into a K-12 courseware designer.</strong><br>
-  把 AI 变成懂教学设计的 K-12 互动课件生成器。
-</p>
+TeachAny 是面向 K12 互动课件的 AI Agent skill。当前唯一主入口是 `weponusa/teachany` 仓库中的 `skill/` 子目录；不再要求用户使用独立 `teachany-skill` 仓库。
 
-<p align="center">
-  <a href="#-quick-install"><img src="https://img.shields.io/badge/Install-30s-brightgreen?style=flat-square" alt="Quick Install"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="MIT License"></a>
-  <img src="https://img.shields.io/badge/Size-43MB-orange?style=flat-square" alt="Size">
-  <img src="https://img.shields.io/badge/Scripts-15-purple?style=flat-square" alt="Scripts">
-  <a href="SKILL_CN.md"><img src="https://img.shields.io/badge/中文文档-点击查看-red?style=flat-square" alt="Chinese Doc"></a>
-</p>
-
-<p align="center">
-  <a href="#-what-is-it">What is it</a> ·
-  <a href="#-quick-install">Quick Install</a> ·
-  <a href="#-features">Features</a> ·
-  <a href="#-design-principles">Design Principles</a> ·
-  <a href="INSTALL.md">Full Install Guide</a> ·
-  <a href="SKILL_CN.md">中文完整文档</a>
-</p>
-
----
-
-## 🌟 What is it
-
-**TeachAny Skill** is an [Agent Skill](https://docs.anthropic.com/en/docs/build-with-claude/agents-and-tools/tool-use/overview)
-designed for AI coding assistants (Claude Code, CodeBuddy, Cursor, Codex CLI, etc.).
-It teaches your AI how to design and build **pedagogically-sound, interactive K-12 courseware** —
-not just "a page full of knowledge", but a complete learning experience with motivation,
-pacing, interaction, and assessment loops.
-
-**TeachAny Skill** 是一个开源 Agent Skill，适用于各类 AI 编程助手
-（Claude Code、CodeBuddy、Cursor、Codex CLI 等）。它让 AI 学会按 **教学设计**
-而不是"堆知识点"的方式，为 K-12 学生生成**有动机、有节奏、有互动、有评估闭环**的互动课件。
-
-## 🚀 Quick Install
+## Quick Install
 
 ```bash
 # CodeBuddy
-git clone https://github.com/weponusa/teachany-skill.git ~/.codebuddy/skills/teachany
+mkdir -p ~/.codebuddy/skills && cd ~/.codebuddy/skills
+git clone https://github.com/weponusa/teachany.git teachany-src
+ln -s "$PWD/teachany-src/skill" teachany
 
-# Claude Code
-git clone https://github.com/weponusa/teachany-skill.git ~/.agents/skills/teachany
+# Claude Code / 其他 Agent
+mkdir -p ~/.agents/skills && cd ~/.agents/skills
+git clone https://github.com/weponusa/teachany.git teachany-src
+ln -s "$PWD/teachany-src/skill" teachany
 ```
 
-Then talk to your AI:
+安装后让 AI 读取 `~/.codebuddy/skills/teachany/SKILL.md` 或 `~/.agents/skills/teachany/SKILL.md`。
 
-> "用 TeachAny 给我做一节《一次函数的图像》的八年级数学课"
->
-> "Use TeachAny to build an interactive lesson on photosynthesis for Grade 7 biology"
+## What's inside
 
-详细安装与首次验证：[INSTALL.md](./INSTALL.md)
-
-## 📦 What's inside
-
-```
-teachany-skill/
-├── SKILL.md              🧠 AI 读的英文规范（171KB, ~4500 行）
-├── SKILL_CN.md           🧠 AI 读的中文规范（405KB, 完整版）
-├── scripts/              🔧 15 个工具脚本
-│   ├── find_nodes.py        # 按 stage+subject+keyword 查知识树节点
-│   ├── validate-courseware.cjs # Phase 2 标准结构校验
-│   ├── find-map.py          # 地图资源查询 / 按需下载
-│   ├── tts-engine.py        # TTS 语音合成
-│   └── validate-courseware.cjs # 课件结构校验
-│   └── ...
-├── templates/            📋 3 套 HTML 课件骨架
-│   ├── course-skeleton.html      # v7.12 标准课件骨架：五件套/品牌栏/问题锚点固定调用
-│   ├── manifest-template.json    # 标准 manifest 填空模板
-│   ├── content-section-templates.html # 主体教学 section 片段库
-│   ├── example-tang-dynasty.html # 历史课件样板
-│   └── map-section-template.html # 地图章节模板
-├── assets/               🗺️ 43MB 教学资源
-│   ├── historical-china/ # 中国历代疆域 GeoJSON（基于 CHGIS）
-│   ├── historical-world/ # 世界历史分期 GeoJSON
-│   ├── hillshade/        # 3D 地形底图
-│   └── timelines/        # 历史时间线数据
-└── *.md                  📚 专题指南
-    └── topics/maps-and-3d.md      # 地图、3D 与 PPTX 派生
+```text
+teachany-src/
+└── skill/
+    ├── SKILL.md                 # 轻量执行摘要（v7.12.1）
+    ├── SKILL_CN.md              # 中文兼容入口
+    ├── RULES.md                 # 合并后的硬规则
+    ├── scripts/                 # find_nodes / validate / TTS / map 等工具
+    ├── templates/               # 课件骨架与 manifest 模板
+    ├── phases/                  # workflow / packaging / video-audio
+    ├── references/              # baseline 规则
+    ├── guides/                  # PBL、评估、互动示例
+    ├── tech/                    # 页面结构、设计、数学/科学仿真
+    └── topics/maps-and-3d.md    # 地图、3D、PPTX 派生
 ```
 
-## ✨ Features
+## Core workflow
 
-### 🎯 教学设计优先（不是技术优先）
+1. 先定位学生、学段、知识点与 `node_id`。
+2. 从 `templates/course-skeleton.html` 和 `manifest-template.json` 起步。
+3. 用问题锚点、真实互动、即时反馈构成学习闭环。
+4. 按需要启用 TTS、Hero、知识图谱、AI 学伴、地图等标准模块。
+5. 正式发布前运行验证脚本，并确认线上 URL 可访问。
 
-SKILL 不教 AI 写漂亮页面，而是教 AI 想清楚：
+## 常用命令
 
-- **这节课学生要学什么？** → 挂载到真实知识树节点（2500+ K-12 节点库）
-- **学生的认知负荷怎么管理？** → 8 个标准 section 覆盖 ≥5
-- **怎么判断学生学会了？** → 必须有交互评估，不只是读文字
-- **前置知识衔接了吗？** → 课件末尾必须给前置/后续章节
+```bash
+export TEACHANY_SKILL=~/.codebuddy/skills/teachany
+export COURSE_DIR=/path/to/teachany-courseware/community/<course-id>
 
-### 🛡️ 硬质量门槛（防劣质课件）
+python3 "$TEACHANY_SKILL/scripts/find_nodes.py" "一次函数"
+python3 "$TEACHANY_SKILL/scripts/find-map.py" 唐
+node "$TEACHANY_SKILL/scripts/validate-courseware.cjs" "$COURSE_DIR"
+```
 
-每次发布前强制自检：
+## 仓库分工
 
-| 指标 | 门槛 |
-|:---|:---|
-| TTS 语音段数 | ≥ 5 |
-| 配图数量 | ≥ 3 |
-| 章节数 | ≥ 5 |
-| 资源文件总数 | ≥ 8 |
-| 节点 ID 有效性 | 必须在知识树中存在（不许编） |
+| 仓库 | 用途 |
+| :--- | :--- |
+| `weponusa/teachany` | Skill 主仓、Gallery、知识树、Registry、脚本 |
+| `weponusa/teachany-courseware` | 完整课件内容与 GitHub Pages 站点 |
 
-### 🌍 学科覆盖
+## 关键规则
 
-- **数学** · 一次函数、二次函数、几何、概率……
-- **物理** · 欧姆定律、压强、运动学……
-- **化学** · 反应原理、物质分类、元素周期……
-- **生物** · 遗传变异、细胞、生态系统……
-- **历史** · 中国朝代 + 世界史（配套 42MB 历史地图）
-- **地理** · 地形、气候、人文（配 3D 地形）
-- **语文 / 英语** · 古诗、文言文、拼音、语法……
-- **信息技术 / 科学** · 算法、数据、物理探究……
+完整规则见 [`RULES.md`](./RULES.md)。
 
-### 🔗 一键社区发布（可选）
+- 不编造 `node_id`。
+- 不手写平台标准模块的重复实现。
+- 不把完整课件 HTML 放到 opensource 仓库。
+- 说“完成/修复”前必须给验证输出。
 
-配套 TeachAny 社区 (`github.com/weponusa/teachany`) 发布链路：
-`本地 baseline PASS → Worker API → PR 自动合并 → Pages 部署 → URL 200 自检`
+## 体积
 
-完全零配置：用户不需要 GitHub Token，token 在服务端。
-
-## 🧭 Design Principles（给 AI 看的硬规则）
-
-SKILL 文档里对 AI 设置了 40+ 条硬规则，最关键的几条：
-
-1. **做课前先找节点**，不许编 node_id（`find_nodes.py` 强制先查）
-2. **HTML title 必须含学段学科版本**：`《课件名》· 小学语文 G1 · TeachAny v7.12`
-3. **manifest.grade 与 node_id 前缀必须一致**，否则挂错树
-4. **同一节点最多 1 份官方课件**（社区课件可多份并按点赞排序）
-5. **发布后 URL 必须 200 才算完成**，不许用"缓存延迟"糊弄（18 条禁止话术）
-
-完整规则见 [RULES.md](./RULES.md) · 硬规则清单。
-
-## 📊 Stats
-
-- **源文件**：74 个
-- **脚本**：15 个（bash + python）
-- **模板**：3 套 HTML 骨架
-- **教学资源**：43MB（含 CHGIS 历史地图、Natural Earth 地理数据）
-- **文档体量**：SKILL.md 171KB + SKILL_CN.md 405KB，合计约 15 万字
-
-## 🤝 Contributing
-
-欢迎：
-
-- 提 Issue 报告 AI 按 skill 做课件时的问题
-- 提 PR 补充新学科的规范细节
-- 贡献新模板（templates/）
-- 补充资源数据集（assets/）
-
-目前维护重点：K-12 全学科覆盖、跨 AI Agent 兼容性、零配置发布链路。
-
-## 📜 License
-
-- **代码与文档**：MIT License
-- **教学资源**：基于 CHGIS（CC-BY 4.0）、Natural Earth（Public Domain）等开源数据集加工，使用时请保留原始数据集署名。详见 [LICENSE](./LICENSE) 第二部分。
-
-## 🔗 Related Projects
-
-- **[weponusa/teachany](https://github.com/weponusa/teachany)** — TeachAny Skill 制作器核心
-- **[weponusa/teachany-courseware](https://github.com/weponusa/teachany-courseware)** — TeachAny 课件站点 + 社区课件库
-- **Live Gallery** — [weponusa.github.io/teachany-courseware](https://weponusa.github.io/teachany-courseware/)
-
----
-
-<p align="center">
-  <sub>Made with ☕ by weponusa · Every teacher, every parent — your own AI teaching assistant.</sub>
-</p>
+当前 skill 包约 482KB。图片、地图等大资源不随 skill 打包，按需从 `weponusa/teachany` 的资源目录或远端地址获取。

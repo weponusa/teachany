@@ -106,7 +106,7 @@ Phase 4  发布注册：仅在正式发布或用户要求时执行 Git/Registry/
 假设 `TEACHANY_SKILL` 指向 skill 安装目录，`COURSE_DIR` 指向课件目录：
 
 ```bash
-export TEACHANY_SKILL=/path/to/teachany-skill
+export TEACHANY_SKILL=/path/to/teachany/skill
 export COURSE_DIR=/path/to/teachany-courseware/community/<course-id>
 python3 "$TEACHANY_SKILL/scripts/preflight-check.py"
 python3 "$TEACHANY_SKILL/scripts/find_nodes.py" "一次函数"
