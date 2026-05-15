@@ -437,10 +437,10 @@ if [ $STATUS -eq 0 ]; then
   PR_URL=$(grep -oE 'https://github.com/[^ ]+/pull/[0-9]+' /tmp/submit.log 2>/dev/null | head -1)
   [ -n "$PR_URL" ] && echo "" && echo "PR 地址: $PR_URL"
 
-  COURSE_URL="https://weponusa.github.io/teachany-courseware/community/$COURSE_ID/"
+  COURSE_URL="https://weponusa.github.io/teachany/community/$COURSE_ID/"
   # v6.8: 读 manifest 真实 node_id（Pages 实际用 manifest.node_id 作目录名）
   NODE_ID=$(python3 -c "import json; m=json.load(open('$MANIFEST')); print(m.get('node_id') or '$COURSE_ID')" 2>/dev/null || echo "$COURSE_ID")
-  [ -n "$NODE_ID" ] && [ "$NODE_ID" != "$COURSE_ID" ] && COURSE_URL="https://weponusa.github.io/teachany-courseware/community/$NODE_ID/"
+  [ -n "$NODE_ID" ] && [ "$NODE_ID" != "$COURSE_ID" ] && COURSE_URL="https://weponusa.github.io/teachany/community/$NODE_ID/"
 
   # ─── 6/6 自动验证（v6.8：修复 Pages 部署不触发问题）─────
   echo ""

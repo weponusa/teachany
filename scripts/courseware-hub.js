@@ -24,8 +24,8 @@
 /* ─── 常量 ────────────────────────────────────── */
 const HUB_REGISTRY_URL = './registry.json';
 const HUB_COMMUNITY_URL = './community/index.json';
-const HUB_COURSEWARE_BASE_URL = 'https://weponusa.github.io/teachany-courseware';
-const HUB_CACHE_KEY = 'teachany_hub_cache_v4'; // v4: registry links direct to teachany-courseware, no migration-page hop
+const HUB_COURSEWARE_BASE_URL = 'https://weponusa.github.io/teachany';
+const HUB_CACHE_KEY = 'teachany_hub_cache_v5'; // v5: migrated to teachany repo (teachany-courseware deprecated)
 const HUB_CACHE_TTL = 15 * 60 * 1000; // 15 分钟
 
 function resolveCoursewareUrl(path) {

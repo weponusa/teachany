@@ -55,10 +55,9 @@ def main():
             "subject": c.get("subject", ""),
             "grade": c.get("grade", 0),
             "author": c.get("author") or old_entry.get("author") or "TeachAny Community",
-            # v7.10.4: 社区课件实体已迁移到 teachany-courseware 仓库。
-            # download_url 必须直指资产仓库，不能再指向旧 teachany/community 迁移页，
-            # 否则 Gallery 会出现大量“TeachAny 课件已迁移”的中转空页。
-            "download_url": f"https://weponusa.github.io/teachany-courseware/{path}/",
+            # v7.10.4: 社区课件实体已迁移到 teachany 仓库（teachany-courseware 已废弃）。
+            # download_url 指向新仓库，不能再指向旧 teachany-courseware 仓库。
+            "download_url": f"https://weponusa.github.io/teachany/{path}/",
             "approved_at": old_entry.get("approved_at") or c.get("created") or datetime.now(timezone.utc).isoformat(),
             "likes": old_entry.get("likes", 0),
             "status": old_entry.get("status") or "active",
