@@ -77,7 +77,7 @@ Phase 4  发布注册：仅在正式发布或用户要求时执行 Git/Registry/
 4. **真实互动**：标题写“互动/实验/探究/地图/画布”就必须可操作；静态图不能伪装互动。
 5. **知识图谱入树**：优先匹配官方 `node_id`；没有则注册；确实无法归类才用 `free_mode` 或 `ext-*`。
 6. **地图库优先**：历史/地理先用 `scripts/find-map.py` 查 bundled map library，再考虑外部数据或生成。
-7. **数理化必须加载仿真工具文档**：制作**数学/物理/化学/生物**课件时，**在 Phase 2 开始前必须先读** `tech/science-simulations.md`（物理/化学/生物）和/或 `tech/math-animations.md`（数学），并在课件中嵌入至少 1 个外部交互工具（PhET / GeoGebra / Desmos / Matter.js / 3Dmol.js 等）。不得用纯静态图或简单 Canvas 代替已有成熟工具的场景。
+7. **数理化必须加载仿真工具文档**：制作**数学/物理/化学/生物**课件时，**在 Phase 2 开始前必须先读** `tech/iframe-resources.md`，按学科-工具快查表选择并嵌入至少 1 个外部交互工具（PhET / GeoGebra / Desmos / 3Dmol.js 等）。不得用纯静态图或简单 Canvas 代替已有成熟工具的场景。
 8. **依赖分级**：Python/Git/浏览器验证是核心依赖；Remotion、edge-tts、ffmpeg、image_gen 是增强依赖。快速模式允许增强依赖降级，完整发布必须补齐或明确用户豁免。
 8. **发布先检测环境**：没有目标仓库、权限或远端不可达时，不要假设 `weponusa/*` 可写；先提示 fork/跳过发布/本地交付。
 9. **闭环验证**：说“完成/修复/可用”前必须跑命令或浏览器验证，并给出关键输出。
@@ -99,6 +99,7 @@ Phase 4  发布注册：仅在正式发布或用户要求时执行 Git/Registry/
 | 练习评估 | `guides/assessment.md` |
 | 页面结构与 CSS | `tech/page-structure.md`, `tech/design-system.md` |
 | 数学/科学仿真 | `tech/math-animations.md`（数学课件**必读**）, `tech/science-simulations.md`（物理/化学/生物课件**必读**） |
+| **可嵌入 iframe 资源总目录** | `tech/iframe-resources.md`（**数理化必读**，PhET/GeoGebra/Desmos/3Dmol/LearningApps 等完整清单） |
 | 地图 / 3D / PPTX | `topics/maps-and-3d.md` |
 | 示例 | `guides/examples.md` |
 
