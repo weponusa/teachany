@@ -121,20 +121,24 @@ python3 "$TEACHANY_SKILL/scripts/apply-historical-maps.py"
 node "$TEACHANY_SKILL/scripts/validate-courseware.cjs" "$COURSE_DIR"
 ```
 
-**一键发布（注册 + 挂知识树 + 推送）**：
+**发布课件（两种路径）**：
+
 ```bash
-# 课件目录写好后，一条命令完成全部发布流程
+# ① 普通用户 / 社区投稿 — 走 Cloudflare Worker，无需 GitHub token
+bash "$TEACHANY_SKILL/scripts/publish_course.sh" "$COURSE_DIR" <course-id>
+
+# ② 仓库维护者直推 — 需要 SSH 或 GH_TOKEN
 bash "$TEACHANY_SKILL/scripts/auto-publish.sh" <course-id>
 ```
 
-`auto-publish.sh` 完成：验证目录 → `rebuild-index.py`（注册+挂树）→ `git commit/push` → 验证线上 URL。
+**默认走 ① `publish_course.sh`**：课件提交到 `teachany-community.pages.dev` Worker，Worker 自动走 PR 质检流程合并到仓库，用户无需任何 GitHub 凭据。
 
-**认证说明（push 前必须满足其一）**：
+`auto-publish.sh` 仅供仓库维护者使用，完成：验证目录 → `rebuild-index.py`（注册+挂树）→ `git commit/push` → 验证线上 URL。
+
+**认证说明（`auto-publish.sh` 专用，普通用户忽略）**：
 - SSH 已配置（本地 Mac 默认走 SSH，无需额外操作）
 - CI / Agent 环境：`export GH_TOKEN=<github_pat>` 后再跑脚本，脚本会自动配置 HTTPS remote
-- HTTPS credential helper 已缓存（`gh auth login` 后自动生效）
-
-如果当前环境**没有任何认证**，脚本会提前报错并给出三条修复指引，不会让 commit 悄悄卡住。
+- 也可运行一次 `bash "$TEACHANY_SKILL/scripts/setup.sh"` 永久配置
 
 如果脚本不存在，先在仓库根 `scripts/` 与 `skill/scripts/` 中搜索；不要引用不存在的脚本名。
 

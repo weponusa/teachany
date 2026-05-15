@@ -44,20 +44,25 @@ ln -s <work-dir>/teachany-src/skill <your-skill-dir>/teachany
 
 ## 三、首次配置（一次性）
 
-安装完成后运行 setup.sh，配置 GitHub 推送凭据。**只需做一次，之后发布课件全程自动。**
+### 普通用户 / 社区投稿 — 无需任何配置
+
+课件做好后直接发布，走 Cloudflare Worker 中转，**不需要 GitHub 账号或 token**：
+
+```bash
+bash "$TEACHANY_SKILL/scripts/publish_course.sh" "$COURSE_DIR" <course-id>
+```
+
+Worker 地址：`https://teachany-community.pages.dev/api/submit`，自动走 PR 质检流程。
+
+### 仓库维护者（weponusa）— 运行 setup.sh 一次
+
+如果你是仓库维护者，需要直推权限，运行一次 setup.sh 配置 GitHub Token：
 
 ```bash
 bash ~/.codebuddy/skills/teachany/scripts/setup.sh
-# 或
-bash ~/.agents/skills/teachany/scripts/setup.sh
 ```
 
-脚本会引导你：
-1. 检测 SSH 是否已配置（本地 Mac 通常已有，可跳过 token）
-2. 粘贴 GitHub Fine-grained Token（仅需 `Contents: Read & write` 权限）
-3. 确认本地仓库路径
-
-配置写入 `~/.teachany/config`，之后 `auto-publish.sh` 自动读取，无需每次手动 `export GH_TOKEN`。
+脚本引导：检测 SSH → 粘贴 GitHub Fine-grained Token → 写入 `~/.teachany/config`，之后 `auto-publish.sh` 自动读取。
 
 > 创建 Token：https://github.com/settings/tokens/new → Fine-grained → Repository: weponusa/teachany → Contents: Read and write
 
