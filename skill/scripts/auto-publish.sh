@@ -205,16 +205,19 @@ echo "  ⏳ 等待 GitHub Actions 部署（60秒）..."
 sleep 60
 
 CODE=$(curl -sI -L --max-time 10 "$COURSE_URL" 2>/dev/null | head -1 | grep -oE "[0-9]{3}" | head -1)
-if [ "$CODE" = "200" ]; then
-  echo "  ✅ 课件页面可访问 (HTTP 200)"
-else
-  echo "  ⚠️  HTTP $CODE（可能 Pages 还在部署，稍后再刷新）"
-fi
 
 echo
 echo "═══════════════════════════════════════════════"
-echo "  ✅ 发布完成！"
-echo "  📚 课件 URL:  $COURSE_URL"
-echo "  📋 Gallery:  $GALLERY_URL"
-echo "  🌳 tree.html: https://weponusa.github.io/teachany/tree.html"
+if [ "$CODE" = "200" ]; then
+  echo "  ✅ 发布完成！课件页面已上线 (HTTP 200)"
+  echo "  📚 课件 URL:  $COURSE_URL"
+  echo "  📋 Gallery:  $GALLERY_URL"
+  echo "  🌳 tree.html: https://weponusa.github.io/teachany/tree.html"
+else
+  echo "  ⏳ commit 已推送，等待 Pages 部署中 (HTTP $CODE)"
+  echo "  📚 课件 URL:  $COURSE_URL"
+  echo "  💡 通常 1-3 分钟后上线，可手动验证："
+  echo "     curl -sI \"$COURSE_URL\" | head -1"
+  echo "  ⚠️  在 URL 返回 200 之前，发布尚未完成。"
+fi
 echo "═══════════════════════════════════════════════"

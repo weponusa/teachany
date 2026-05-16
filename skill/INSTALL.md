@@ -125,7 +125,9 @@ rm -rf ~/.agents/skills/teachany
 | **weponusa/teachany** | Skill 主仓、Gallery、知识树、Registry、脚本、**全部课件** |
 | ~~weponusa/teachany-courseware~~ | ~~已废弃，仅保留历史数据~~ |
 
-做课件 → 放到 `weponusa/teachany` 的 `community/<course-id>/`；发布课件 → 运行 `bash "$TEACHANY_SKILL/scripts/auto-publish.sh" <course-id>`，一键注册+挂树+推送。
+做课件 → 放到 `weponusa/teachany` 的 `community/<course-id>/`；发布课件：
+- **普通用户**：`bash "$TEACHANY_SKILL/scripts/publish_course.sh" "$COURSE_DIR" <course-id>`（零配置，走 Worker）
+- **维护者**：`bash "$TEACHANY_SKILL/scripts/auto-publish.sh" <course-id>`（需 SSH 或 GH_TOKEN）
 
 ## 九、普通用户如何提交课件
 

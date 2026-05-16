@@ -2,7 +2,7 @@
 
 ## 标准页面顺序
 
-1. `<head>` meta：`course-id`、`course-title`、`course-subject`、`course-grade`、`course-prereqs`、`course-next`、`course-version`、`teachany-version`。
+1. `<head>` meta（现行标准）：`teachany-node`（node_id）、`teachany-id`（course-id）、`teachany-subject`、`teachany-grade`、`teachany-version`。旧版 `course-*` 命名已废弃，新课件不要使用。
 2. 顶部品牌栏：TeachAny + Gallery 链接 + course version + skill version。
 3. Hero 区：标题、对象、学习目标。
 4. Hero 知识结构图：独立 `<figure>`，不是背景图。

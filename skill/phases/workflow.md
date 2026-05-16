@@ -58,25 +58,35 @@ python3 "$TEACHANY_SKILL/scripts/check_node_id.py" <node_id>
 
 **单仓库架构（v7+）**：课件统一放 `weponusa/teachany` 的 `community/<course-id>/`，`teachany-courseware` 已废弃。
 
-**一键发布（推荐）**：
+### ① 普通用户 / 社区投稿（默认，零配置）
+
+**不需要 GitHub 账号或 token**，走 Cloudflare Worker 自动 PR 流程：
+
+```bash
+bash "$TEACHANY_SKILL/scripts/publish_course.sh" "$COURSE_DIR" <course-id>
+```
+
+脚本完成：打包课件 → 提交到 Worker → Worker 发起 PR → 合并后自动部署。
+约 2-10 分钟后可访问：`https://weponusa.github.io/teachany/community/<course-id>/`
+
+### ② 仓库维护者直推（需要 SSH 或 GH_TOKEN）
+
 ```bash
 bash "$TEACHANY_SKILL/scripts/auto-publish.sh" <course-id>
 ```
-等价于以下手动步骤：
-1. 确认 `community/<course-id>/index.html` 和 `manifest.json` 存在（非 redirect 页）。
-2. 运行注册：
-   ```bash
-   cd ~/CodeBuddy/一次函数/teachany-opensource
-   python3 scripts/rebuild-index.py
-   ```
-3. 提交并推送：
-   ```bash
-   git add -A
-   git commit -m "feat: 新增课件 <course-id>"
-   git push origin main
-   ```
-4. 等待 GitHub Actions 部署（约 1–2 分钟），用 `curl` 或浏览器验证线上可访问：
-   `https://weponusa.github.io/teachany/community/<course-id>/`
+
+等价手动步骤：`rebuild-index.py` → `git add -A` → `git commit` → `git push origin main`
+
+**注意**：直推会立即出现在主分支，跳过 PR 质检流程，仅限维护者使用。
+
+### 发布后验证（两条路径均需执行）
+
+```bash
+curl -sI "https://weponusa.github.io/teachany/community/<course-id>/" | head -1
+# 预期：HTTP/2 200
+```
+
+URL 未返回 200 时，不得声称"发布完成"。
 
 ## Gate 输出格式
 
