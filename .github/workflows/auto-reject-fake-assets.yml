@@ -1,0 +1,82 @@
+name: Auto Reject Fake Assets
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'community/pending/**'
+
+jobs:
+  check-assets:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for fake/placeholder assets
+        id: check
+        run: |
+          FAKE_FOUND=0
+          FAKE_LIST=""
+
+          # 检查所有新增的 PNG/JPG（< 5KB 视为假占位图）
+          for f in $(git diff --name-only origin/main HEAD | grep -E '\.(png|jpg|jpeg|webp)$'); do
+            if [ -f "$f" ]; then
+              SIZE=$(stat -c%s "$f" 2>/dev/null || stat -f%z "$f" 2>/dev/null)
+              if [ "$SIZE" -lt 5120 ]; then
+                FAKE_FOUND=1
+                FAKE_LIST="$FAKE_LIST\n- 图片 $(basename $f)（${SIZE} 字节，< 5KB，疑似占位图）"
+              fi
+            fi
+          done
+
+          # 检查所有新增的 MP3/音频（< 5KB 视为静音占位）
+          for f in $(git diff --name-only origin/main HEAD | grep -E '\.(mp3|wav|ogg|m4a)$'); do
+            if [ -f "$f" ]; then
+              SIZE=$(stat -c%s "$f" 2>/dev/null || stat -f%z "$f" 2>/dev/null)
+              if [ "$SIZE" -lt 5120 ]; then
+                FAKE_FOUND=1
+                FAKE_LIST="$FAKE_LIST\n- 音频 $(basename $f)（${SIZE} 字节，< 5KB，疑似静音占位）"
+              fi
+            fi
+          done
+
+          echo "fake_found=$FAKE_FOUND" >> $GITHUB_OUTPUT
+          # 转义换行符
+          FAKE_LIST_ESCAPED=$(echo -e "$FAKE_LIST" | sed ':a;N;$!ba;s/\n/\\n/g')
+          echo "fake_list=$FAKE_LIST_ESCAPED" >> $GITHUB_OUTPUT
+
+      - name: Close PR if fake assets detected
+        if: steps.check.outputs.fake_found == '1'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fakeList = `${{ steps.check.outputs.fake_list }}`.replace(/\\n/g, '\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `## ⛔ 自动拒绝：检测到假占位资产
+
+以下文件体积过小，疑似批量生成的占位文件，而非真实教学内容：
+
+${fakeList}
+
+**TeachAny 质量标准：**
+- 图片（PNG/JPG）：≥ 5KB，须包含真实教学内容（示意图、截图、知识结构图等）
+- 音频（MP3）：≥ 5KB，须为真实 TTS 语音（约 0.3 秒以上有声内容）
+
+请用真实内容替换后重新提交。如有疑问请联系维护者。`
+            });
+
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              state: 'closed'
+            });
+
+            core.setFailed('PR 已自动关闭：假占位资产');
