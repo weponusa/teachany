@@ -15,17 +15,26 @@ node "$TEACHANY_SKILL/scripts/validate-courseware.cjs" "$COURSE_DIR"
 
 ## 发布路径（二选一）
 
-### ① 普通用户 / 社区投稿（推荐，零配置）
+### ① 普通用户 / 社区投稿（默认，零配置）
 
 **不需要 GitHub 账号或 token**，走 Cloudflare Worker 自动 PR 流程：
 
 ```bash
+# 单个课件
 bash "$TEACHANY_SKILL/scripts/publish_course.sh" "$COURSE_DIR" <course-id>
+
+# 批量发布
+for id in <id1> <id2> <id3>; do
+  bash "$TEACHANY_SKILL/scripts/publish_course.sh" "$REPO/community/$id" "$id"
+done
 ```
 
 课件提交到 `teachany-community.pages.dev`，Worker 验证后自动合并到仓库并部署。
 
-### ② 仓库维护者直推
+> ⚠️ **在 CI / agent / 远程服务器等无 GitHub 凭据的环境中，必须且只能使用此路径。**
+> 禁止在这类环境中使用 `auto-publish.sh`——它需要 SSH key 或 GH_TOKEN，缺失时 commit 卡在本地，课件永久丢失，没有任何补救手段。
+
+### ② 仓库维护者直推（仅限本地 Mac，已配置 SSH）
 
 需要 SSH 或 GH_TOKEN，一条命令完成注册 + 挂树 + 推送：
 
@@ -44,6 +53,15 @@ git push origin main
 
 GitHub Actions 自动部署，约 1-2 分钟后可访问：
 `https://weponusa.github.io/teachany/community/<course-id>/`
+
+## 凭据检测（在发布前运行）
+
+```bash
+# 检测当前环境是否有 GitHub push 权限
+ssh -T git@github.com -o ConnectTimeout=5 2>&1 | grep -q "successfully" && echo "✅ SSH OK" || echo "❌ 无 SSH，请用 publish_course.sh"
+```
+
+若无 SSH 且无 GH_TOKEN → 只能用 `publish_course.sh`，不要尝试其他路径。
 
 ## Gitee 同步（可选，维护者）
 
