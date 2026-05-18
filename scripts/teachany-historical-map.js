@@ -172,7 +172,7 @@
     var map = L.map(mapId, {
       center: cfg.center || [34, 108],
       zoom: cfg.zoom || 4,
-      crs: L.CRS.EPSG4326,
+      // 使用默认 EPSG:3857（Web Mercator），与 CartoDB 瓦片底图匹配
       maxBounds: cfg.maxBounds || [[-90, -180], [90, 180]],
       zoomControl: true,
       minZoom: cfg.minZoom || 2,
@@ -424,5 +424,5 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
 
-  window.TeachAnyHistoricalMap = { __version: "2.3-tile-basemap", mount: mount };
+  window.TeachAnyHistoricalMap = { __version: "2.4-fix-crs", mount: mount };
 })();
