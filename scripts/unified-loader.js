@@ -33,7 +33,7 @@ const REGISTRY_URL = './registry.json';
 const COMMUNITY_INDEX_URL = 'https://weponusa.github.io/teachany-courseware/community/index.json';
 const COURSEWARE_BASE_URL = 'https://weponusa.github.io/teachany-courseware'; // 真实课件实体统一在课件仓库
 const SELF_BASE_URL = 'https://weponusa.github.io/teachany';                  // 主站入口与 hero fallback
-const CACHE_KEY = 'teachany_registry_v3_14'; // v3.14: registry loaded from courseware repo
+const CACHE_KEY = 'teachany_registry_v3_15'; // v3.15: fix community merge preserving official status
 
 function resolveCoursewareUrl(path) {
   if (!path) return COURSEWARE_BASE_URL + '/';
@@ -226,15 +226,17 @@ async function loadRegistry() {
   (registryData.courses || []).forEach(c => byId.set(c.id, c));
   (communityData.courses || []).forEach(c => {
     if (!c.id) return;
-    byId.set(c.id, {
-      ...byId.get(c.id),
+    const existing = byId.get(c.id);
+    const merged = {
+      ...existing,
       ...c,
-      status: 'community',
       path: c.path || `community/${c.id}`,
-      url: c.download_url || c.url,
-      has_tts: byId.get(c.id)?.has_tts || false,
-      has_video: byId.get(c.id)?.has_video || false,
-    });
+      url: c.download_url || c.url || (existing || {}).url,
+      has_tts: existing?.has_tts || c.has_tts || false,
+      has_video: existing?.has_video || c.has_video || false,
+    };
+    if (!existing) merged.status = 'community';
+    byId.set(c.id, merged);
   });
 
   const registry = { ...(registryData || {}), courses: Array.from(byId.values()) };
