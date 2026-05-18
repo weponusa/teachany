@@ -556,7 +556,6 @@ def main():
 
         # 扫描所有有 manifest 的课件，找出应该放进"其他知识"的
         virtual_nodes = []
-        learning_path_nodes = []  # v7.10: ext-* 学习路径课件分流到独立树
         # 强制保留在"其他知识"的跨课标/探究课入口：这些内容即使挂了近似官方 node_id，
         # 也需要在"其他知识"里保留一份发现入口，避免 rebuild-index 把该 Tab 清空。
         OTHER_TREE_FORCE_COURSE_IDS = {
@@ -658,11 +657,8 @@ def main():
                 'excerpt_ids': []
             }
 
-            # v7.10: ext-* 课件分流到学习路径树
-            if cid.startswith('ext-') or (nid and nid.startswith('ext-')):
-                learning_path_nodes.append(node_entry)
-            else:
-                virtual_nodes.append(node_entry)
+            # v7.10: ext-* 课件也归入"其他知识"统一展示
+            virtual_nodes.append(node_entry)
 
         # v7.9.7 新增：扫描 ext-* 学习路径推荐课件（无 manifest，元信息在 HTML meta 里）
         # 质检门槛：
@@ -715,14 +711,14 @@ def main():
                     print(f'  ⚠️ ext 课件未通过质检，跳过: {d.name} ({", ".join(reasons_reject)})')
                     continue
 
-                # 通过质检：纳入学习路径树（而非"其他知识"）
+                # 通过质检：纳入"其他知识"虚拟树
                 orphan_reasons['ext_passed'] += 1
                 ext_subject = metas.get('course-subject', 'other')
                 ext_title = metas.get('course-title', d.name)
                 ext_node = metas.get('course-node', d.name)
                 # 虚拟节点 id：优先用 course-node，否则用目录名
                 ext_vid = ext_node if ext_node and ext_node not in all_official_node_ids else d.name
-                learning_path_nodes.append({
+                virtual_nodes.append({
                     'id': ext_vid,
                     'name': ext_title,
                     'name_en': '',
@@ -775,26 +771,6 @@ def main():
               f'缺 node_id: {orphan_reasons["missing_node_id"]}, '
               f'强制保留: {orphan_reasons["forced_other"]}, '
               f'探究课: {orphan_reasons["inquiry_project"]}')
-
-        # v7.10: 回写学习路径树
-        lp_tree_path = Path('data/trees/other/learning-paths.json')
-        if lp_tree_path.exists():
-            # 聚合去重
-            lp_merged = {}
-            for n in learning_path_nodes:
-                if n['id'] in lp_merged:
-                    lp_merged[n['id']]['courses'].extend(n['courses'])
-                    lp_merged[n['id']]['courses'] = sorted(set(lp_merged[n['id']]['courses']))
-                else:
-                    lp_merged[n['id']] = n
-            lp_sorted = sorted(lp_merged.values(), key=lambda x: (x.get('subject', ''), x['id']))
-            lp_tree = json.loads(lp_tree_path.read_text(encoding='utf-8'))
-            lp_tree['domains'][0]['nodes'] = lp_sorted
-            lp_tree_path.write_text(
-                json.dumps(lp_tree, ensure_ascii=False, indent=2) + '\n',
-                encoding='utf-8'
-            )
-            print(f'  ✅ 已填充 {len(lp_sorted)} 个学习路径节点到 {lp_tree_path}')
 
         if ext_dirs_scanned:
             print(f'     ext-* 学习路径课件: 扫描 {ext_dirs_scanned} 个，'
