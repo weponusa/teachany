@@ -787,9 +787,12 @@
     // 防御：apiKey 含全角空格、Base URL 含中文等都会导致 fetch 抛 TypeError
     const cleanKey = String(cfg.apiKey || '').trim().replace(/[\u3000\s]+/g, '');
     const cleanBaseUrl = String(cfg.baseUrl || '').trim().replace(/\/$/, '');
-    const endpoint = /\/(openai|chat\/completions)(?:\?.*)?$/i.test(cleanBaseUrl)
-      ? cleanBaseUrl
-      : cleanBaseUrl + '/chat/completions';
+    // 拆分 URL path 和 query string，避免 ?referrer=xxx 干扰路径判断
+    const [urlPath, urlQuery] = cleanBaseUrl.split('?');
+    const qs = urlQuery ? '?' + urlQuery : '';
+    const endpoint = /\/chat\/completions$/i.test(urlPath)
+      ? cleanBaseUrl                              // 已含完整路径
+      : urlPath + '/chat/completions' + qs;       // 追加路径，保留 query string
 
     // 工具函数：把任何字符串安全转换为 ISO-8859-1 兼容的 ASCII（浏览器 fetch header 的硬性要求）
     const toAsciiSafe = (s, fallback) => {
