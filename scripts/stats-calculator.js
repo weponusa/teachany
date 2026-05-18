@@ -33,14 +33,22 @@ class StatsCalculator {
 
   /* ─── Load registry ─── */
   async loadRegistry() {
-    try {
-      const res = await fetch('https://weponusa.github.io/teachany-courseware/registry.json?t=' + Date.now());
-      this.registry = await res.json();
-      return this.registry;
-    } catch (e) {
-      console.error('[Stats] registry.json load failed:', e);
-      return null;
+    const urls = [
+      'https://weponusa.github.io/teachany-courseware/registry.json',
+      'https://weponusa.github.io/teachany-courseware/community/index.json',
+      './registry.json'
+    ];
+    for (const url of urls) {
+      try {
+        const res = await fetch(url + '?t=' + Date.now());
+        if (!res.ok) continue;
+        this.registry = await res.json();
+        return this.registry;
+      } catch (e) {
+        console.warn('[Stats] registry load failed:', url, e);
+      }
     }
+    return null;
   }
 
   /* ─── Load curricula + all trees ─── */
