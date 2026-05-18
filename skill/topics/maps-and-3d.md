@@ -19,8 +19,7 @@ python3 scripts/find-map.py --copy <file> <course-dir>/assets/maps/
 
 ## 3D / Terrain
 
-- 快速模式不强制 3D。
-- 只有二维无法表达空间关系时才启用 3D。
+- 3D 不是所有课件必需项；只有二维无法表达空间关系时才启用 3D。
 - 3D 组件必须有明确学习任务、可调参数和反馈，不做装饰。
 
 ## PPTX

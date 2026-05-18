@@ -1,13 +1,13 @@
 # TeachAny Video & Audio（精简版）
 
-## 快速模式
+## TTS 基线要求
 
-可先不生成 Remotion 视频和批量 mp3，但必须保留：
+所有课件必须包含：
 - `[data-tts]` 段落；
 - `teachany-tts-narrator.js` 标准模块；
 - 如有音频列表，使用标准 audio player。
 
-## 完整模式 TTS
+## TTS 生成流程
 
 1. 写旁白 JSON：`scripts/narration_zh.json` 或课件目录内 `narration.json`。
 2. 生成音频：
@@ -37,5 +37,5 @@ node "$TEACHANY_SKILL/scripts/validate-courseware.cjs" "$COURSE_DIR"
 
 ## 降级说明
 
-- 快速模式：可说明“视频/TTS 批量音频未启用”。
-- 完整发布：增强项失败必须修复、换方案或取得用户明确豁免。
+- Remotion 视频和批量 mp3 按课型需要补齐，非所有课件强制。
+- 增强项失败必须修复、换方案或取得用户明确豁免；不允许以"后续升级"为由跳过。
