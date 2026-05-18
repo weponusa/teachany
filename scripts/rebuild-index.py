@@ -918,6 +918,7 @@ def main():
     print('\n🔄 步骤4.5: 同步社区索引和标准知识图谱索引...')
     for helper in [
         'sync-community-index.py',
+        'check-courseware-links.py',
         'build-teachany-kg-manifest.py',
         'build-nodes-selector.py',
         'build-nodes-metadata.py',

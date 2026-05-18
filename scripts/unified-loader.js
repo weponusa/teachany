@@ -30,9 +30,9 @@
 
 /* ─── 常量 ───────────────────────────────────── */
 const REGISTRY_URL = './registry.json';
-const COURSEWARE_BASE_URL = 'https://weponusa.github.io/teachany-courseware'; // 旧课件内容仍在这里
-const SELF_BASE_URL = 'https://weponusa.github.io/teachany';                  // 新课件 + hero SVG 在这里
-const CACHE_KEY = 'teachany_registry_v3_12'; // v3.12: SVG hero 优先级修复
+const COURSEWARE_BASE_URL = 'https://weponusa.github.io/teachany-courseware'; // 真实课件实体统一在课件仓库
+const SELF_BASE_URL = 'https://weponusa.github.io/teachany';                  // 主站入口与 hero fallback
+const CACHE_KEY = 'teachany_registry_v3_13'; // v3.13: course links direct to courseware repo
 
 function resolveCoursewareUrl(path) {
   if (!path) return COURSEWARE_BASE_URL + '/';
@@ -53,15 +53,11 @@ function resolveHeroUrl(course, heroImage) {
   return SELF_BASE_URL + '/' + heroImage.replace(/^\/+/, '');
 }
 
-// 课件点击链接：有真实内容的新课件用 teachany，旧 redirect 课件仍指向 courseware
+// 课件点击链接：统一直指 teachany-courseware 实体仓库，主仓库只做轻量入口/索引
 function resolveCourseUrl(course) {
   if (course && course.url) return course.url;
   if (course && course.path) {
     const path = course.path.replace(/\/$/, '') + '/index.html';
-    // 新课件（非 redirect）放在 teachany；旧 redirect 课件内容在 courseware
-    // 判断依据：teachany_version >= 7（新课件） 或路径在 teachany Pages 可直接访问
-    const tv = parseFloat(course.teachany_version) || 0;
-    if (tv >= 7) return SELF_BASE_URL + '/' + path.replace(/^\/+/, '');
     return COURSEWARE_BASE_URL + '/' + path.replace(/^\/+/, '');
   }
   return COURSEWARE_BASE_URL + '/';

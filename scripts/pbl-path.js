@@ -1328,7 +1328,7 @@ class PBLGraphRenderer {
             if (hit && hit.url) courseUrl = hit.url;
           }
           if (!courseUrl) {
-            const base = 'https://weponusa.github.io/teachany';
+            const base = 'https://weponusa.github.io/teachany-courseware';
             if (isStr && (courseId.startsWith('examples/') || courseId.startsWith('community/'))) {
               courseUrl = `${base}/${courseId.replace(/^\/+/, '').replace(/\/$/, '')}/index.html`;
             } else if (isStr) {

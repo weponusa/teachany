@@ -55,9 +55,9 @@ def main():
             "subject": c.get("subject", ""),
             "grade": c.get("grade", 0),
             "author": c.get("author") or old_entry.get("author") or "TeachAny Community",
-            # v7.10.4: 社区课件实体已迁移到 teachany 仓库（teachany-courseware 已废弃）。
-            # download_url 指向新仓库，不能再指向旧 teachany-courseware 仓库。
-            "download_url": f"https://weponusa.github.io/teachany/{path}/",
+            # v7.12.2: 主仓库保持轻量，真实课件实体统一部署在 teachany-courseware。
+            # download_url 必须直指实体课件仓库，避免先跳转到主仓库再产生 404。
+            "download_url": f"https://weponusa.github.io/teachany-courseware/{path}/",
             "approved_at": old_entry.get("approved_at") or c.get("created") or datetime.now(timezone.utc).isoformat(),
             "likes": old_entry.get("likes", 0),
             "status": old_entry.get("status") or "active",
