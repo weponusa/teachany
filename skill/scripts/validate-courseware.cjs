@@ -436,6 +436,52 @@ const CHECKS = [
       };
     },
   },
+  {
+    id: 23,
+    name: '无占位图片',
+    desc: 'assets/ 下不得存在 <5KB 的占位 webp/png（纯色块或极低质量图）',
+    check: (html, meta, dir) => {
+      const assetsDir = path.join(dir, 'assets');
+      if (!fs.existsSync(assetsDir)) return { pass: true, detail: 'assets/ 不存在，跳过', fix: '' };
+      const files = fs.readdirSync(assetsDir).filter(f => /\.(webp|png|jpg|jpeg)$/i.test(f));
+      const placeholders = files.filter(f => {
+        const stat = fs.statSync(path.join(assetsDir, f));
+        // hero-infographic.svg 通常较小但合法，这里只检测 webp/png/jpg
+        return stat.size < 5 * 1024; // <5KB 视为占位
+      });
+      // 排除明确的图标类小图（如 favicon）
+      const suspicious = placeholders.filter(f => !/favicon|icon|logo/i.test(f));
+      return {
+        pass: suspicious.length === 0,
+        detail: suspicious.length === 0
+          ? `${files.length} 张图片，无占位文件`
+          : `发现 ${suspicious.length} 张疑似占位图（<5KB）: ${suspicious.slice(0, 5).join(', ')}`,
+        fix: '删除 <5KB 的占位图片，使用 gen-hero-svg.py 或 image_gen 生成真实内容图片。如果不需要这些图片，从 HTML 中也删除对应 <img> 标签。',
+      };
+    },
+  },
+  {
+    id: 24,
+    name: 'Hero 后无裸 img 堆叠',
+    desc: 'hero/header 区块与正文 section 之间不得有独立的裸 <img> 标签堆叠',
+    check: (html) => {
+      // 检测 </header> 之后、第一个 <section 或 <div class="tutor 之前是否有连续裸 img
+      const afterHero = html.split(/<\/header>/i)[1] || '';
+      const beforeContent = afterHero.split(/<(?:section|div\s+class=["'][^"']*tutor)/i)[0] || '';
+      // 计算裸 img 标签数量（不在 section/figure/div 内部的顶级 img）
+      const nakedImgs = (beforeContent.match(/<img\s[^>]*>/gi) || []).filter(img => {
+        // 排除 onerror="this.style.display='none'" 的 logo 类图片
+        return !/onerror.*display.*none/i.test(img);
+      });
+      return {
+        pass: nakedImgs.length === 0,
+        detail: nakedImgs.length === 0
+          ? 'hero 后无裸 img 堆叠'
+          : `hero 后发现 ${nakedImgs.length} 个裸 <img> 标签堆叠（会显示为空白区块）`,
+        fix: '删除 hero/header 与第一个 section 之间的独立 <img> 标签。概念图/示意图应嵌入对应教学 section 内部，或使用 <figure> 包裹并添加 figcaption。',
+      };
+    },
+  },
 ];
 
 // ─── 主函数 ───

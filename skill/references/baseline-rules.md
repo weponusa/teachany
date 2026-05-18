@@ -36,6 +36,8 @@ TeachAny 只有一套标准：所有课件必须完整包含以下 19 项基线�
 - 禁止在没有证据时声称线上可访问（URL 返回 200 才算发布完成）。
 - 禁止以"先做简版""用户只是看看""时间不够"为由跳过基线项。
 - 禁止用 <5KB 的空白图片或静音 MP3 作为资产占位。
+- **禁止在 hero/header 与第一个 section 之间放置裸 `<img>` 标签**。概念图、分层图、练习图等必须嵌入对应教学 section 内部，或用 `<figure>` 包裹并附带 `<figcaption>`。不得在页面顶部堆叠独立图片块。
+- **禁止 assets/ 下存在 <5KB 的 webp/png/jpg 占位文件**。所有图片资产必须是真实内容图（hero SVG、教学示意图、Canvas 截图等）。如果图片资源暂未生成，在 HTML 中不要引用它。
 
 ## 常用验证
 
@@ -60,3 +62,5 @@ python3 scripts/rebuild-index.py
 | 地图手写 Leaflet | 用 TeachAny 地图模块和 `find-map.py` |
 | TTS 用 <5KB 静音 MP3 | 用 `tts-engine.py` 生成真实语音 |
 | 图片用 <5KB 纯色占位 PNG | 生成真实 Hero SVG 或教学示意图 |
+| Hero 后堆叠裸 `<img>` 标签 | 图片嵌入对应 section 内部或用 `<figure>` 包裹 |
+| assets/ 放占位 webp/png 凑数 | 要么生成真实图片，要么不引用不放文件 |
