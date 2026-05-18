@@ -556,13 +556,13 @@ def main():
 
         # 扫描所有有 manifest 的课件，找出应该放进"其他知识"的
         virtual_nodes = []
-        # 强制保留在“其他知识”的跨课标/探究课入口：这些内容即使挂了近似官方 node_id，
-        # 也需要在“其他知识”里保留一份发现入口，避免 rebuild-index 把该 Tab 清空。
+        learning_path_nodes = []  # v7.10: ext-* 学习路径课件分流到独立树
+        # 强制保留在"其他知识"的跨课标/探究课入口：这些内容即使挂了近似官方 node_id，
+        # 也需要在"其他知识"里保留一份发现入口，避免 rebuild-index 把该 Tab 清空。
         OTHER_TREE_FORCE_COURSE_IDS = {
             'math-m-linear-function-inquiry-phone-plan',  # 一次函数 PBL 探究课
             'course-classical-poetry',                    # 古典诗词系统课程
             'chn-pingze-grade1',                          # 古诗平仄启蒙
-            'ext-539f176d',                                # 民族文化与宗教研究
         }
         orphan_reasons = {'free_mode': 0, 'node_not_found': 0, 'missing_node_id': 0,
                           'forced_other': 0, 'inquiry_project': 0,
@@ -601,9 +601,12 @@ def main():
             if cid in OTHER_TREE_FORCE_COURSE_IDS:
                 reason = 'forced_other'
             elif is_free:
+                # v7.10: free_mode 课件如果 node_id 已在正规课标树中，不重复放入"其他知识"
+                if nid and nid in all_official_node_ids:
+                    continue  # 已在正规树挂载，跳过
                 reason = 'free_mode'
             elif lesson_type == 'inquiry-project':
-                # 探究课可同时挂正式知识树和“其他知识/探究课”入口，便于 PBL 场景发现。
+                # 探究课可同时挂正式知识树和"其他知识/探究课"入口，便于 PBL 场景发现。
                 reason = 'inquiry_project'
             elif not nid:
                 reason = 'missing_node_id'
@@ -638,7 +641,8 @@ def main():
                 vid = f'other-{cid}'
             else:
                 vid = nid if nid else f'other-{cid}'
-            virtual_nodes.append({
+
+            node_entry = {
                 'id': vid,
                 'name': name,
                 'name_en': manifest.get('title_en', ''),
@@ -652,7 +656,13 @@ def main():
                 'source': f'user-generated({reason})',
                 'curriculum_points': [manifest.get('description_zh', '') or manifest.get('description', '')],
                 'excerpt_ids': []
-            })
+            }
+
+            # v7.10: ext-* 课件分流到学习路径树
+            if cid.startswith('ext-') or (nid and nid.startswith('ext-')):
+                learning_path_nodes.append(node_entry)
+            else:
+                virtual_nodes.append(node_entry)
 
         # v7.9.7 新增：扫描 ext-* 学习路径推荐课件（无 manifest，元信息在 HTML meta 里）
         # 质检门槛：
@@ -705,14 +715,14 @@ def main():
                     print(f'  ⚠️ ext 课件未通过质检，跳过: {d.name} ({", ".join(reasons_reject)})')
                     continue
 
-                # 通过质检：纳入虚拟树
+                # 通过质检：纳入学习路径树（而非"其他知识"）
                 orphan_reasons['ext_passed'] += 1
                 ext_subject = metas.get('course-subject', 'other')
                 ext_title = metas.get('course-title', d.name)
                 ext_node = metas.get('course-node', d.name)
-                # 虚拟节点 id：优先用 course-node（无学科前缀），否则用目录名
-                ext_vid = ext_node if ext_node and ext_node not in all_official_node_ids else f'other-{d.name}'
-                virtual_nodes.append({
+                # 虚拟节点 id：优先用 course-node，否则用目录名
+                ext_vid = ext_node if ext_node and ext_node not in all_official_node_ids else d.name
+                learning_path_nodes.append({
                     'id': ext_vid,
                     'name': ext_title,
                     'name_en': '',
@@ -724,7 +734,7 @@ def main():
                     'courses': [d.name],
                     'status': 'active',
                     'source': 'learning-path-ext',
-                    'curriculum_points': [f'学习路径推荐课件（ext-* 前缀，无 manifest.json，元信息来自 HTML meta）'],
+                    'curriculum_points': [f'学习路径推荐课件（ext-* 前缀，元信息来自 HTML meta）'],
                     'excerpt_ids': []
                 })
                 # 同时把课件加入 courses 集合，供步骤 4 写入 registry
@@ -752,7 +762,7 @@ def main():
                 merged[n['id']] = n
         virtual_nodes = sorted(merged.values(), key=lambda x: (x.get('subject', ''), x['id']))
 
-        # 回写虚拟树
+        # 回写虚拟树（"其他知识"）
         virtual_tree = json.loads(virtual_tree_path.read_text(encoding='utf-8'))
         virtual_tree['domains'][0]['nodes'] = virtual_nodes
         virtual_tree_path.write_text(
@@ -765,6 +775,27 @@ def main():
               f'缺 node_id: {orphan_reasons["missing_node_id"]}, '
               f'强制保留: {orphan_reasons["forced_other"]}, '
               f'探究课: {orphan_reasons["inquiry_project"]}')
+
+        # v7.10: 回写学习路径树
+        lp_tree_path = Path('data/trees/other/learning-paths.json')
+        if lp_tree_path.exists():
+            # 聚合去重
+            lp_merged = {}
+            for n in learning_path_nodes:
+                if n['id'] in lp_merged:
+                    lp_merged[n['id']]['courses'].extend(n['courses'])
+                    lp_merged[n['id']]['courses'] = sorted(set(lp_merged[n['id']]['courses']))
+                else:
+                    lp_merged[n['id']] = n
+            lp_sorted = sorted(lp_merged.values(), key=lambda x: (x.get('subject', ''), x['id']))
+            lp_tree = json.loads(lp_tree_path.read_text(encoding='utf-8'))
+            lp_tree['domains'][0]['nodes'] = lp_sorted
+            lp_tree_path.write_text(
+                json.dumps(lp_tree, ensure_ascii=False, indent=2) + '\n',
+                encoding='utf-8'
+            )
+            print(f'  ✅ 已填充 {len(lp_sorted)} 个学习路径节点到 {lp_tree_path}')
+
         if ext_dirs_scanned:
             print(f'     ext-* 学习路径课件: 扫描 {ext_dirs_scanned} 个，'
                   f'质检通过 {orphan_reasons["ext_passed"]}，'
