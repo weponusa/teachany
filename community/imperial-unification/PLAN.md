@@ -17,7 +17,7 @@
 | M1 | Hero 知识结构图 | 秦汉统一多民族国家整体结构 | Hero SVG | assets/hero-infographic.svg | 内嵌 SVG | test -f assets/hero-infographic.svg |
 | M2 | ABT 情境引入 | 已知/问题/新知 | 卡片式 HTML | inline#why-learn | HTML 内嵌 | grep -q why-learn index.html |
 | M3 | 核心内容模块 | 秦制度+汉武帝+丝路 | 信息卡+互动 | inline | HTML 内嵌 | node scripts/validate-courseware.cjs <dir> |
-| M4 | 互动仿真 | 无 | Canvas 动画 | inline（无外部仿真） | N/A | curl -I https://www.geogebra.org/apps/deployggb.js |
+| M4 | 互动仿真 | 历史地图交互 | Canvas 动画 | inline#historical-map | HTML 内嵌 | grep -q historical-map index.html |
 | M5 | 知识图谱 | 前置后续导航 | 标准公共模块 | data-teachany-kg="imperial-unification" | python3 scripts/build-teachany-kg-manifest.py | python3 scripts/check-knowledge-graph.py <dir> |
 | M6 | AI 学伴 | 诊断问答 | 标准模块 | scripts/ai-tutor.js + data-teachany-tutor-card | 复用标准模块 | grep -q data-teachany-tutor-card index.html |
 
