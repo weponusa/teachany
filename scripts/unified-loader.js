@@ -29,10 +29,10 @@
 })();
 
 /* ─── 常量 ───────────────────────────────────── */
-const REGISTRY_URL = './registry.json';
+const REGISTRY_URL = 'https://weponusa.github.io/teachany-courseware/registry.json';
 const COURSEWARE_BASE_URL = 'https://weponusa.github.io/teachany-courseware'; // 真实课件实体统一在课件仓库
 const SELF_BASE_URL = 'https://weponusa.github.io/teachany';                  // 主站入口与 hero fallback
-const CACHE_KEY = 'teachany_registry_v3_13'; // v3.13: course links direct to courseware repo
+const CACHE_KEY = 'teachany_registry_v3_14'; // v3.14: registry loaded from courseware repo
 
 function resolveCoursewareUrl(path) {
   if (!path) return COURSEWARE_BASE_URL + '/';
