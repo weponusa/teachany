@@ -185,21 +185,32 @@
       try { map.fitBounds(cfg.fitBounds); } catch (e) {}
     }
 
-    // v2.1: 地形底图默认加载（带阴影的全球彩色 hillshade）
-    // 路径优先级：cfg.hillshade 显式指定 > 课件本地 ./assets/maps/hillshade.jpg > 不加载
-    // 失败不报错、不阻塞疆域渲染
-    var hillsrc = cfg.hillshade === false ? null : (cfg.hillshade || "./assets/maps/hillshade.jpg");
-    if (hillsrc) {
+    // v2.3: 瓦片底图 + hillshade 叠加层
+    // 默认使用 CartoDB DarkMatter 瓦片作为地理参考底图
+    // 可选叠加 hillshade 影像增强地形感
+    var tileLayer = L.tileLayer(
+      "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",
+      {
+        subdomains: "abcd",
+        maxZoom: 19,
+        opacity: 0.7,
+        attribution: "© CARTO © OSM contributors"
+      }
+    ).addTo(map);
+
+    // hillshade 叠加层（可选，默认关闭，cfg.hillshade=true 时开启）
+    if (cfg.hillshade === true || cfg.hillshade) {
+      var hillsrc = typeof cfg.hillshade === "string" ? cfg.hillshade : "./assets/maps/hillshade.jpg";
       var img = new Image();
       img.onload = function () {
         L.imageOverlay(hillsrc, [[-90, -180], [90, 180]], {
-          opacity: 0.55,
+          opacity: 0.35,
           interactive: false,
           zIndex: 200
         }).addTo(map);
       };
       img.onerror = function () {
-        // 静默降级：无底图也能用，疆域和城市在纯深蓝底上显示
+        // 静默降级
       };
       img.src = hillsrc;
     }
@@ -317,6 +328,20 @@
               style: function (feature) {
                 // 尊重 feature.properties.LEVEL 分层：country 深色，prefecture 浅色
                 var lvl = feature.properties && feature.properties.LEVEL;
+                var nameCh = (feature.properties && feature.properties.NAME_CH) || "";
+                // 匈奴等周边政权用虚线边框、浅色填充，与主体疆域区分
+                var isNeighbor = /匈奴|鲜卑|乌桓|羌|哀牢|朝鲜|卫氏|高句丽|百济|新罗|倭/.test(nameCh);
+                var isNeighborEn = /^(Xiongnu|Southern Xiongnu|Xianbei|Wuhuan|Goguryeo|Baekje|Silla|Wa|Gojoseon)$/i.test((feature.properties && feature.properties.NAME) || "");
+                if (isNeighbor || isNeighborEn) {
+                  return {
+                    fillColor: "#94a3b8",
+                    fillOpacity: lvl === "prefecture" ? 0.06 : 0.12,
+                    color: "#64748b",
+                    weight: 1.2,
+                    opacity: 0.6,
+                    dashArray: "6,4"
+                  };
+                }
                 return {
                   fillColor: fill,
                   fillOpacity: lvl === "prefecture" ? 0.12 : 0.28,
@@ -399,5 +424,5 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
 
-  window.TeachAnyHistoricalMap = { __version: "2.2-chgis-overlays", mount: mount };
+  window.TeachAnyHistoricalMap = { __version: "2.3-tile-basemap", mount: mount };
 })();
