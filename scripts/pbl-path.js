@@ -1249,6 +1249,25 @@ class PBLGraphRenderer {
       html += `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:rgba(239,68,68,0.2);color:#f87171;">📝 待创建</span>`;
     }
 
+    // 课件列表（标准节点 + 外部节点均可展示）
+    if (hasAnyCourse) {
+      const courses = this._getCoursesForNode(d);
+      if (courses.length > 0) {
+        html += `<div style="margin-top:8px;padding:6px 8px;background:rgba(16,185,129,0.06);border-radius:6px;">`;
+        html += `<div style="font-size:11px;font-weight:600;color:#10b981;margin-bottom:4px;">📖 可用课件</div>`;
+        courses.slice(0, 5).forEach(c => {
+          const url = c.url || (c.path ? `./community/${c.id}/index.html` : '');
+          const name = c.name || c.id;
+          if (url) {
+            html += `<a href="${url}" target="_blank" style="display:block;padding:3px 6px;margin:2px 0;border-radius:4px;font-size:12px;color:#10b981;text-decoration:none;background:rgba(16,185,129,0.08);">${this._escapeHtml(name)}</a>`;
+          } else {
+            html += `<div style="padding:3px 6px;margin:2px 0;font-size:12px;color:#94a3b8;">${this._escapeHtml(name)}</div>`;
+          }
+        });
+        html += `</div>`;
+      }
+    }
+
     // 匹配置信度
     if (d.confidence) {
       html += `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:rgba(245,158,11,0.15);color:#f59e0b;">置信度 ${(d.confidence * 100).toFixed(0)}%</span>`;
@@ -1417,19 +1436,51 @@ class PBLGraphRenderer {
   }
 
   _nodeHasAnyCourse(d) {
-    if (d.isExternal) return false;
-    if (d.status === 'active' && d.courses && d.courses.length) return true;
-    // 检查 Hub
-    if (window.TeachAnyHub && typeof TeachAnyHub.getAllCoursesForNode === 'function') {
-      const hubCourses = TeachAnyHub.getAllCoursesForNode(d.id);
-      if (hubCourses.length > 0) return true;
+    // 1. 标准节点：按 id 精确匹配
+    if (!d.isExternal) {
+      if (d.status === 'active' && d.courses && d.courses.length) return true;
+      if (window.TeachAnyHub && typeof TeachAnyHub.getAllCoursesForNode === 'function') {
+        if (TeachAnyHub.getAllCoursesForNode(d.id).length > 0) return true;
+      }
+      if (window.TeachAnyImporter && typeof TeachAnyImporter.getTopCoursesForTreeNode === 'function') {
+        if (TeachAnyImporter.getTopCoursesForTreeNode(d.id).length > 0) return true;
+      }
+      return false;
     }
-    // 检查用户课件
-    if (window.TeachAnyImporter && typeof TeachAnyImporter.getTopCoursesForTreeNode === 'function') {
-      const userCourses = TeachAnyImporter.getTopCoursesForTreeNode(d.id);
-      if (userCourses.length > 0) return true;
+    // 2. 外部节点：先按 id 查（可能已挂入 user-generated 虚拟树），再按名称模糊匹配
+    if (window.TeachAnyHub && typeof TeachAnyHub.getAllCoursesForNode === 'function') {
+      if (TeachAnyHub.getAllCoursesForNode(d.id).length > 0) return true;
+    }
+    // 按名称搜索（外部节点的 name 可能匹配某个已有课件的标题关键词）
+    if (d.name && window.TeachAnyHub && typeof TeachAnyHub.searchByKeyword === 'function') {
+      const hits = TeachAnyHub.searchByKeyword(d.name);
+      if (hits && hits.length > 0) return true;
     }
     return false;
+  }
+
+  /** 获取外部节点关联的课件列表（用于 tooltip 展示） */
+  _getCoursesForNode(d) {
+    const courses = [];
+    if (window.TeachAnyHub && typeof TeachAnyHub.getAllCoursesForNode === 'function') {
+      courses.push(...TeachAnyHub.getAllCoursesForNode(d.id));
+    }
+    // 外部节点：按名称搜索补充
+    if (d.isExternal && d.name && window.TeachAnyHub && typeof TeachAnyHub.searchByKeyword === 'function') {
+      const hits = TeachAnyHub.searchByKeyword(d.name);
+      if (hits) {
+        hits.forEach(h => {
+          if (!courses.some(c => c.id === h.id)) courses.push(h);
+        });
+      }
+    }
+    if (window.TeachAnyImporter && typeof TeachAnyImporter.getTopCoursesForTreeNode === 'function') {
+      const userCourses = TeachAnyImporter.getTopCoursesForTreeNode(d.id);
+      userCourses.forEach(c => {
+        if (!courses.some(ex => ex.id === c.id)) courses.push(c);
+      });
+    }
+    return courses;
   }
 
   _dragStarted(event) {

@@ -1367,19 +1367,34 @@ function onPBLNodeClick(node) {
   };
   const metaTag = (text) => text ? `<span class="meta-tag">${text}</span>` : '';
 
-  // 检查课件（与 tree.html 同逻辑）
-  const hasCourseware = (node.status === 'active' && node.courses && node.courses.length) ||
+  // 检查课件（与 tree.html 同逻辑 + 外部节点按名称模糊搜索）
+  let hasCourseware = (node.status === 'active' && node.courses && node.courses.length) ||
     (window.TeachAnyHub && typeof TeachAnyHub.getAllCoursesForNode === 'function' && TeachAnyHub.getAllCoursesForNode(node.id).length > 0) ||
     (window.TeachAnyImporter && typeof TeachAnyImporter.getTopCoursesForTreeNode === 'function' && TeachAnyImporter.getTopCoursesForTreeNode(node.id).length > 0);
+  // 外部节点额外按名称搜索
+  let keywordHits = [];
+  if (!hasCourseware && node.isExternal && node.name && window.TeachAnyHub && typeof TeachAnyHub.searchByKeyword === 'function') {
+    keywordHits = TeachAnyHub.searchByKeyword(node.name);
+    if (keywordHits.length > 0) hasCourseware = true;
+  }
 
   // 课件列表 HTML
   let coursewareHtml = '';
   if (hasCourseware) {
+    // 收集所有来源的课件
+    let allCourses = [];
     const hubCourses = (window.TeachAnyHub && typeof TeachAnyHub.getAllCoursesForNode === 'function')
       ? TeachAnyHub.getAllCoursesForNode(node.id) : [];
-    if (hubCourses.length > 0) {
+    allCourses.push(...hubCourses);
+    // 外部节点名称搜索结果
+    if (keywordHits.length > 0) {
+      keywordHits.forEach(h => {
+        if (!allCourses.some(c => c.id === h.id)) allCourses.push(h);
+      });
+    }
+    if (allCourses.length > 0) {
       coursewareHtml = `<div class="prereq-list"><h4>📖 已有课件</h4>` +
-        hubCourses.map(c => {
+        allCourses.map(c => {
           const sourceIcon = { official: '📋', community_registry: '🔖', community_shared: '🌐', user: '📂' }[c.source] || '📚';
           const courseUrl = c.url || (c.path ? `./${c.path}/index.html` : '');
           return courseUrl ? `<a href="${courseUrl}" target="_blank" style="display:block;padding:6px 12px;margin:3px 0;border-radius:6px;font-size:13px;color:var(--text);text-decoration:none;background:rgba(148,163,184,0.08);">${sourceIcon} ${c.name || c.id}</a>` : '';

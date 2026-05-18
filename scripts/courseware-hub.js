@@ -381,6 +381,32 @@ function getCourseById(courseId) {
   return null;
 }
 
+/**
+ * v7.15: 按关键词搜索课件（用于 PBL 外部节点匹配已有课件）
+ * @param {string} keyword - 搜索关键词（如"锂离子电池技术"）
+ * @param {number} [limit=5] - 最多返回条数
+ * @returns {Array<UnifiedCourse>}
+ */
+function searchByKeyword(keyword, limit) {
+  if (!keyword || typeof keyword !== 'string') return [];
+  limit = limit || 5;
+  const kw = keyword.toLowerCase().replace(/[·\s]+/g, '');
+  const results = [];
+  const seen = new Set();
+  // 遍历 registry + community 课件，按名称模糊匹配
+  for (const c of [..._registryCourses, ..._communityCourses]) {
+    if (seen.has(c.id)) continue;
+    const name = ((c.name || '') + (c.name_en || '') + (c.id || '')).toLowerCase().replace(/[·\s]+/g, '');
+    // 关键词包含在名称中，或名称包含关键词
+    if (name.includes(kw) || kw.includes(name.slice(0, Math.max(4, kw.length)))) {
+      seen.add(c.id);
+      results.push(c);
+      if (results.length >= limit) break;
+    }
+  }
+  return results;
+}
+
 window.TeachAnyHub = {
   init,
   getAllCoursesForNode,
@@ -388,6 +414,7 @@ window.TeachAnyHub = {
   getNodeCourseCount,
   hasAnyCourseware,
   getCourseById,  // v6.6: 新增
+  searchByKeyword,  // v7.15: 新增
   refreshIndex,
   getAllCoveredNodeIds,
   getStats,
