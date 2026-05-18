@@ -2,10 +2,10 @@
 
 ## 仓库说明
 
-课件统一放入 `weponusa/teachany` 仓库（本地路径：`~/CodeBuddy/一次函数/teachany-opensource`），`teachany-courseware` 仓库已废弃。
+`weponusa/teachany` 是轻量主站与 Skill 仓库；真实课件统一放入 `weponusa/teachany-courseware`（本地路径：`~/CodeBuddy/一次函数/teachany-courseware`）。
 
 - 课件目录：`community/<course-id>/index.html`、`manifest.json`、`PLAN.md`、`assets/`
-- GitHub Pages 地址：`https://weponusa.github.io/teachany/community/<course-id>/`
+- GitHub Pages 地址：`https://weponusa.github.io/teachany-courseware/community/<course-id>/`
 
 ## 发布前检查
 
@@ -44,7 +44,7 @@ bash "$TEACHANY_SKILL/scripts/auto-publish.sh" <course-id>
 
 等价手动步骤：
 ```bash
-cd ~/CodeBuddy/一次函数/teachany-opensource
+cd ~/CodeBuddy/一次函数/teachany-courseware
 python3 scripts/rebuild-index.py
 git add -A
 git commit -m "feat: 新增课件 <course-id>"
@@ -52,7 +52,7 @@ git push origin main
 ```
 
 GitHub Actions 自动部署，约 1-2 分钟后可访问：
-`https://weponusa.github.io/teachany/community/<course-id>/`
+`https://weponusa.github.io/teachany-courseware/community/<course-id>/`
 
 ## 凭据检测（在发布前运行）
 

@@ -2,7 +2,7 @@
 # ============================================================
 # TeachAny Course Publisher (v6.8 · 全自动端到端验证 + Pages 自救)
 # ============================================================
-# 按 teachany-opensource 规范发布课件到 community/，并自动验证上线。
+# 按双仓库规范提交课件到 teachany-courseware，并自动验证上线。
 #
 # 流程（全自动，失败直接退非零码）：
 #   [1/5]   基线检查（check_baseline.sh，22 PASS 要求）
@@ -437,19 +437,13 @@ if [ $STATUS -eq 0 ]; then
   PR_URL=$(grep -oE 'https://github.com/[^ ]+/pull/[0-9]+' /tmp/submit.log 2>/dev/null | head -1)
   [ -n "$PR_URL" ] && echo "" && echo "PR 地址: $PR_URL"
 
-  COURSE_URL="https://weponusa.github.io/teachany/community/$COURSE_ID/"
-  # v6.8: 读 manifest 真实 node_id（Pages 实际用 manifest.node_id 作目录名）
-  NODE_ID=$(python3 -c "import json; m=json.load(open('$MANIFEST')); print(m.get('node_id') or '$COURSE_ID')" 2>/dev/null || echo "$COURSE_ID")
-  [ -n "$NODE_ID" ] && [ "$NODE_ID" != "$COURSE_ID" ] && COURSE_URL="https://weponusa.github.io/teachany/community/$NODE_ID/"
+  COURSE_URL="https://weponusa.github.io/teachany-courseware/community/$COURSE_ID/"
 
   # ─── 6/6 自动验证（v6.8：修复 Pages 部署不触发问题）─────
   echo ""
   echo "[6/6] 自动验证课件 URL 可访问"
-  # v6.8 核心修复：
-  #   GitHub 的默认 GITHUB_TOKEN 推送的 commit 不会触发其他 workflow（防循环），
-  #   所以 community-publish.yml 合并课件进 main 后，Deploy to GitHub Pages 不会自动跑，
-  #   导致 URL 永久 404。AI 误以为是"缓存延迟"，用户等一辈子都没用。
-  #   解决：轮询中发现 Pages 没动，主动 push 一个空 commit 触发 Deploy workflow。
+  # v7.14：真实课件统一发布到 teachany-courseware。
+  # courseware 的 community-publish.yml 会解包、rebuild-index 并部署 gh-pages。
   echo "  ⏳ 等 PR 合并 + 解包 + Pages 部署（最多 10 分钟，每 30s 检查一次）..."
   PAGES_KICKED=0  # 是否已主动触发过 Pages
   for attempt in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
@@ -465,13 +459,13 @@ if [ $STATUS -eq 0 ]; then
     if [ "$attempt" = "6" ] && [ "$PAGES_KICKED" = "0" ] && [ "$code" != "200" ]; then
       echo ""
       echo "  🔧 已等 3 分钟 URL 仍 404，检查是否为 Pages 未触发问题..."
-      REPO_DIR="${REPO:-$HOME/teachany-opensource}"
+      REPO_DIR="${TEACHANY_COURSEWARE_REPO:-$HOME/CodeBuddy/一次函数/teachany-courseware}"
       if [ -d "$REPO_DIR/.git" ]; then
         pushd "$REPO_DIR" > /dev/null
         git fetch origin main --quiet 2>&1
-        # 检查 main 里有没有这个课件目录
-        if git ls-tree -r origin/main --name-only 2>/dev/null | grep -q "community/${NODE_ID:-$COURSE_ID}/index.html"; then
-          echo "  ✅ main 里已有 community/${NODE_ID:-$COURSE_ID}/index.html"
+        # 检查 courseware main 里有没有这个课件目录
+        if git ls-tree -r origin/main --name-only 2>/dev/null | grep -q "community/$COURSE_ID/index.html"; then
+          echo "  ✅ courseware/main 里已有 community/$COURSE_ID/index.html"
           echo "  ⚠️  但 Pages 404 → 确认是 GITHUB_TOKEN commit 不触发 Deploy workflow 的已知问题"
           echo "  🚀 push 一个 empty commit 触发 Deploy to GitHub Pages..."
           git checkout main --quiet 2>&1
@@ -484,11 +478,11 @@ if [ $STATUS -eq 0 ]; then
             echo "  ❌ push 失败，可能需要手动处理"
           fi
         else
-          echo "  ⚠️  main 里还没有 community/${NODE_ID:-$COURSE_ID}/ 目录，PR 可能还在合并/解包中，继续等..."
+          echo "  ⚠️  courseware/main 里还没有 community/$COURSE_ID/ 目录，PR 可能还在合并/解包中，继续等..."
         fi
         popd > /dev/null
       else
-        echo "  ⚠️  未找到本地 teachany-opensource 仓库，无法主动触发 Pages；继续等..."
+        echo "  ⚠️  未找到本地 teachany-courseware 仓库，无法主动触发 Pages；继续等..."
       fi
     fi
   done
@@ -501,7 +495,8 @@ if [ $STATUS -eq 0 ]; then
     echo "🎉 课件已真上线（HTTP 200）"
     echo ""
     echo "  📚 课件地址: $COURSE_URL"
-    echo "  🗺️  知识图谱: https://weponusa.github.io/teachany/path.html?node=$(python3 -c "import json; print(json.load(open('$MANIFEST'))['node_id'])")"
+    NODE_ID_FINAL=$(python3 -c "import json; print(json.load(open('$MANIFEST')).get('node_id',''))" 2>/dev/null || true)
+    echo "  🗺️  知识图谱: https://weponusa.github.io/teachany/path.html?node=$NODE_ID_FINAL"
     echo "  📋 Gallery:  https://weponusa.github.io/teachany/index.html"
     [ -n "$PR_URL" ] && echo "  🔀 PR:       $PR_URL"
     exit 0
@@ -518,7 +513,7 @@ if [ $STATUS -eq 0 ]; then
     echo ""
     echo "  自检命令："
     echo "    curl -I '$COURSE_URL'    # 等几分钟再试"
-    echo "    gh pr view <PR号> --repo weponusa/teachany"
+    echo "    gh pr view <PR号> --repo weponusa/teachany-courseware"
     exit 11
   fi
 elif [ $STATUS -eq 10 ]; then

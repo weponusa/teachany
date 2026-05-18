@@ -54,7 +54,7 @@ python3 "$TEACHANY_SKILL/scripts/check_node_id.py" <node_id>
 
 19 项基线全部通过后执行发布。课件不发布不算完成。
 
-**单仓库架构（v7+）**：课件统一放 `weponusa/teachany` 的 `community/<course-id>/`，`teachany-courseware` 已废弃。
+**双仓库架构（v7.14+）**：`weponusa/teachany` 保持轻量，真实课件统一放 `weponusa/teachany-courseware` 的 `community/<course-id>/`。
 
 ### ⚠️ 发布铁律
 
@@ -75,7 +75,7 @@ bash "$TEACHANY_SKILL/scripts/publish_course.sh" "$COURSE_DIR" <course-id>
 ```
 
 脚本完成：打包课件 → 提交到 Worker → Worker 发起 PR → 合并后自动部署。
-约 2-10 分钟后可访问：`https://weponusa.github.io/teachany/community/<course-id>/`
+约 2-10 分钟后可访问：`https://weponusa.github.io/teachany-courseware/community/<course-id>/`
 
 ### ② 仓库维护者直推（需要 SSH 或 GH_TOKEN）
 
@@ -99,7 +99,7 @@ git push origin main
 ### 发布后验证（两条路径均需执行）
 
 ```bash
-curl -sI "https://weponusa.github.io/teachany/community/<course-id>/" | head -1
+curl -sI "https://weponusa.github.io/teachany-courseware/community/<course-id>/" | head -1
 # 预期：HTTP/2 200
 ```
 

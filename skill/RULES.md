@@ -40,7 +40,7 @@
 - **#23** 优先匹配官方 `node_id`；没有则注册；确实不在课标内再用 `free_mode` 或 `ext-*`。
 - **#24** 不手改 `registry.json`、`community/index.json`、`teachany-kg-manifest.json`；由 `rebuild-index.py` 生成。
 - **#25** 发布必须走 `auto-publish.sh`（维护者）或 `publish_course.sh`（社区）。**严禁直接 `git add && git commit && git push` 跳过 `rebuild-index.py`**——这会导致课件不挂知识树、registry 不更新、nodes-metadata 断链。如果手动发布，必须先 `python3 scripts/rebuild-index.py` 再 commit。
-- **#26** full HTML 放 `weponusa/teachany` 仓库的 `community/<course-id>/`；`teachany-courseware` 仓库已废弃，不再使用。
+- **#26** full HTML 放 `weponusa/teachany-courseware` 仓库的 `community/<course-id>/`；`weponusa/teachany` 只保留主站、Skill 和轻量索引。
 - **#27** 自动发布前先检测远端、权限、分支和用户是否要求跳过。
 
 ## F. 质量检查

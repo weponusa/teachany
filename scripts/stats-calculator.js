@@ -34,7 +34,7 @@ class StatsCalculator {
   /* ─── Load registry ─── */
   async loadRegistry() {
     try {
-      const res = await fetch('./registry.json?t=' + Date.now());
+      const res = await fetch('https://weponusa.github.io/teachany-courseware/registry.json?t=' + Date.now());
       this.registry = await res.json();
       return this.registry;
     } catch (e) {

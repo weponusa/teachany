@@ -118,22 +118,26 @@ rm -rf ~/.agents/skills/teachany
 
 ## 八、仓库说明
 
-课件与 Skill 现已统一到单仓库：
+TeachAny 采用双仓库架构：
 
 | 仓库 | 用途 |
 | :--- | :--- |
-| **weponusa/teachany** | Skill 主仓、Gallery、知识树、Registry、脚本、**全部课件** |
-| ~~weponusa/teachany-courseware~~ | ~~已废弃，仅保留历史数据~~ |
+| **weponusa/teachany** | Skill 主仓、Gallery、知识树、Registry、脚本、轻量入口 |
+| **weponusa/teachany-courseware** | 真实课件实体仓库（community/<course-id>/） |
 
-做课件 → 放到 `weponusa/teachany` 的 `community/<course-id>/`；发布课件：
+做课件 → 发布到 `weponusa/teachany-courseware` 的 `community/<course-id>/`；发布课件：
 - **普通用户**：`bash "$TEACHANY_SKILL/scripts/publish_course.sh" "$COURSE_DIR" <course-id>`（零配置，走 Worker）
 - **维护者**：`bash "$TEACHANY_SKILL/scripts/auto-publish.sh" <course-id>`（需 SSH 或 GH_TOKEN）
 
 ## 九、普通用户如何提交课件
 
-普通用户无需 GitHub 写权限。推荐把完成的课件目录打包发给维护者，或在 `weponusa/teachany` 发起 PR，PR 合并后自动挂树。
+普通用户无需 GitHub 写权限。推荐使用：
 
-如果你在完整 TeachAny 仓库中安装了可选提交脚本，可按完整仓库根的可选提交脚本 的说明执行；轻量 skill 包默认不包含该在线提交链路。
+```bash
+bash "$TEACHANY_SKILL/scripts/publish_course.sh" "$COURSE_DIR" <course-id>
+```
+
+脚本会提交到 TeachAny Community API，在 `weponusa/teachany-courseware` 自动开 PR；质检通过后自动合并、解包、重建索引并部署。
 
 ## 十、手机与小程序适配
 
@@ -153,7 +157,7 @@ rm -rf ~/.agents/skills/teachany
 对应 H5：
 
 ```text
-https://weponusa.github.io/teachany/community/hist-m-renaissance/
+https://weponusa.github.io/teachany-courseware/community/hist-m-renaissance/
 ```
 
 ## 十一、常见问题
