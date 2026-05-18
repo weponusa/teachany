@@ -39,7 +39,7 @@
 - **#22** `manifest.json.course_id`、`node_id`、HTML meta 必须一致。
 - **#23** 优先匹配官方 `node_id`；没有则注册；确实不在课标内再用 `free_mode` 或 `ext-*`。
 - **#24** 不手改 `registry.json`、`community/index.json`、`teachany-kg-manifest.json`；由 `rebuild-index.py` 生成。
-- **#25** 正式发布前运行 `rebuild-index.py`，处理“未被知识树引用”等警告。
+- **#25** 发布必须走 `auto-publish.sh`（维护者）或 `publish_course.sh`（社区）。**严禁直接 `git add && git commit && git push` 跳过 `rebuild-index.py`**——这会导致课件不挂知识树、registry 不更新、nodes-metadata 断链。如果手动发布，必须先 `python3 scripts/rebuild-index.py` 再 commit。
 - **#26** full HTML 放 `weponusa/teachany` 仓库的 `community/<course-id>/`；`teachany-courseware` 仓库已废弃，不再使用。
 - **#27** 自动发布前先检测远端、权限、分支和用户是否要求跳过。
 
@@ -54,5 +54,5 @@
 
 - **#32** 普通家长/教师同样走完整流程，减少多轮确认但不跳过基线项；所有课件必须完成上传注册。
 - **#33** 技术维护/批量任务直接走维护模式，不套课件制作长流程。
-- **#34** 输出要说明“已做什么、如何验证、还有什么增强项”。
+- **#34** 输出要说明"已做什么、如何验证、还有什么增强项"。
 - **#35** 不要把内部历史补丁、失败考古、长表格暴露给用户。

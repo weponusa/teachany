@@ -56,6 +56,16 @@ python3 "$TEACHANY_SKILL/scripts/check_node_id.py" <node_id>
 
 **单仓库架构（v7+）**：课件统一放 `weponusa/teachany` 的 `community/<course-id>/`，`teachany-courseware` 已废弃。
 
+### ⚠️ 发布铁律
+
+**严禁直接 `git add && git commit && git push` 跳过 `rebuild-index.py`。** 跳过会导致：
+- ❌ 课件不挂知识树（knowledge tree 节点 status 仍为 gap/placeholder）
+- ❌ registry.json 不更新（Gallery 不显示新课件）
+- ❌ nodes-metadata.json 断链（学习路径系统找不到新课件）
+- ❌ community/index.json 不更新（前端搜索缺失）
+
+必须使用以下两种发布路径之一：
+
 ### ① 普通用户 / 社区投稿（默认，零配置）
 
 **不需要 GitHub 账号或 token**，走 Cloudflare Worker 自动 PR 流程：
@@ -73,7 +83,16 @@ bash "$TEACHANY_SKILL/scripts/publish_course.sh" "$COURSE_DIR" <course-id>
 bash "$TEACHANY_SKILL/scripts/auto-publish.sh" <course-id>
 ```
 
-等价手动步骤：`rebuild-index.py` → `git add -A` → `git commit` → `git push origin main`
+脚本自动完成：验证目录 → `rebuild-index.py`（注册+挂树+更新 nodes-metadata） → `git commit/push` → 验证线上 URL。
+
+如果不用脚本手动发布，**必须**按此顺序：
+
+```bash
+python3 scripts/rebuild-index.py   # ← 绝不可省略！
+git add -A
+git commit -m "feat: 新增课件 <course-id>"
+git push origin main
+```
 
 **注意**：直推会立即出现在主分支，跳过 PR 质检流程，仅限维护者使用。
 
@@ -86,11 +105,21 @@ curl -sI "https://weponusa.github.io/teachany/community/<course-id>/" | head -1
 
 URL 未返回 200 时，不得声称"发布完成"。
 
+### 知识树挂载验证
+
+发布后应确认课件已挂树：
+```bash
+python3 -c "import json; t=json.load(open('data/trees/cn/middle/<subject>.json')); [print(n['id'],n['status'],n['courses']) for d in t['domains'] for n in d['nodes'] if '<node_id>' in n['id']]"
+```
+
+节点 `status` 应为 `active`，`courses` 数组应包含新课件 ID。
+
 ## Gate 输出格式
 
 交付时给出：
-- 模式：快速 / 完整 / 维护；
+- 模式：完整 / 维护；
 - 关键文件；
 - 验证命令与输出；
 - 发布 URL（如有）；
+- 知识树挂载确认（node_id + status=active）；
 - 未启用或降级项（如有）。
