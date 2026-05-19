@@ -110,6 +110,7 @@ TeachAny is not a prompt template — it's a **complete instructional design sys
 | **Subject Adaptation** | Same template for everything | 9 subject-specific frameworks |
 | **Theoretical Foundation** | None | 6+ learning science theories |
 | **Interaction** | Click next → read more | Canvas simulations, drag-and-drop, concept tests |
+| **PBL Decomposition** | "Here's a project idea, good luck" | Auto-decompose any PBL project into a systematic knowledge network mapped to curriculum standards |
 
 ### 🧠 Built on Learning Science
 
@@ -407,6 +408,7 @@ The following frameworks and methods are **original creations** of the TeachAny 
 
 | Contribution | Description |
 |:-------------|:------------|
+| **PBL Project Decomposition Engine** | Automatically breaks down any PBL project goal into a systematic knowledge network mapped to curriculum standards (CN / AP / Cambridge / IB / CCSS), making PBL the teaching *subject* rather than a supplement to disciplinary learning |
 | **Five-Lens Method** | A 5-perspective approach (See It → Break It → Explain It → Compare It → Transfer It) for teaching difficult concepts |
 | **Subject Adaptation Matrix** | 9 subject-specific teaching frameworks with tailored interaction types and assessment styles |
 | **6-Question Pre-Design Framework** | A structured pre-design checklist that ensures pedagogical completeness before any code is written |
