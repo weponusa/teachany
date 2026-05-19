@@ -40,6 +40,7 @@
 - **#23** 优先匹配官方 `node_id`；没有则注册；确实不在课标内再用 `free_mode` 或 `ext-*`。
 - **#24** 不手改 `registry.json`、`community/index.json`、`teachany-kg-manifest.json`；由 `rebuild-index.py` 生成。
 - **#25** 发布必须走 `auto-publish.sh`（维护者）或 `publish_course.sh`（社区）。**严禁直接 `git add && git commit && git push` 跳过 `rebuild-index.py`**——这会导致课件不挂知识树、registry 不更新、nodes-metadata 断链。如果手动发布，必须先 `python3 scripts/rebuild-index.py` 再 commit。
+- **#25a** **发布路径自动选择（强制）**：在执行发布前，**必须先运行凭据检测**（`ssh -T git@github.com` 或检查 `GH_TOKEN` 环境变量）。若无 GitHub 推送权限 → **只能用 `publish_course.sh`**（走 Worker API，零凭据）；禁止 `git commit` 后发现推不上去再告诉用户"需要 token"。批量升级多门课件后同样适用此规则——逐门跑 `publish_course.sh`，不要试图一次 git push 全部。
 - **#26** full HTML 放 `weponusa/teachany-courseware` 仓库的 `community/<course-id>/`；`weponusa/teachany` 只保留主站、Skill 和轻量索引。
 - **#27** 自动发布前先检测远端、权限、分支和用户是否要求跳过。
 

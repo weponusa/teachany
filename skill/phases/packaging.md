@@ -1,5 +1,18 @@
 # TeachAny Packaging & Publishing（精简版）
 
+## ⚠️ 发布路径选择（强制，任何发布前必读）
+
+```
+发布前先跑凭据检测 ──→ 有 SSH/GH_TOKEN ──→ auto-publish.sh（维护者直推）
+                     └─→ 无凭据 ──→ publish_course.sh（Worker API，零配置）
+```
+
+**硬规则**：
+- **先检测，再发布**。不要先 `git commit` 再发现推不上去。
+- **无凭据环境（CI / agent / 远程服务器）只能用 `publish_course.sh`**。
+- **批量升级 N 门课件后**：逐门跑 `publish_course.sh`，不要试图一次 `git push` 全部。
+- 违反以上规则会导致：commit 卡在本地无法推送，课件永久丢失，无补救手段。
+
 ## 仓库说明
 
 `weponusa/teachany` 是轻量主站与 Skill 仓库；真实课件统一放入 `weponusa/teachany-courseware`（本地路径：`~/CodeBuddy/一次函数/teachany-courseware`）。
