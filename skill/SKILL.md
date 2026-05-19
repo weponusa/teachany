@@ -110,7 +110,7 @@ Phase 4  发布注册：执行 Git/Registry/Gallery 流程，验证线上 URL
 
 ```bash
 export TEACHANY_SKILL=/path/to/teachany/skill
-export COURSE_DIR=~/CodeBuddy/一次函数/teachany-opensource/community/<course-id>
+export COURSE_DIR=~/CodeBuddy/一次函数/teachany-courseware/community/<course-id>
 python3 "$TEACHANY_SKILL/scripts/preflight-check.py"
 python3 "$TEACHANY_SKILL/scripts/find_nodes.py" "一次函数"
 python3 "$TEACHANY_SKILL/scripts/find-hero.py" <course-id>

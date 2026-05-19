@@ -352,6 +352,18 @@ elif re.search(r"<head[^>]*>", html, re.IGNORECASE):
     html = re.sub(r"(<head[^>]*>)", r"\1" + new_metas, html, count=1, flags=re.IGNORECASE)
 print(f"  ✅ teachany-* meta: 8 条已就位")
 
+# 4. 统一当前双仓架构路径：logo 用 courseware 最新资源；标准运行时用 courseware 根级 assets/scripts。
+#    这样即便课件来自旧模板，也不会继续引用已失效的 /teachany/assets 或顶层 /scripts。
+path_rewrites = {
+    "https://weponusa.github.io/teachany/assets/teachany-logo.png": "https://weponusa.github.io/teachany-courseware/assets/teachany-logo.png",
+    "https://weponusa.github.io/teachany-courseware/scripts/": "../../assets/scripts/",
+    "https://weponusa.github.io/teachany/scripts/": "../../assets/scripts/",
+    "../../scripts/": "../../assets/scripts/",
+}
+for old, new in path_rewrites.items():
+    html = html.replace(old, new)
+print("  ✅ 双仓路径修正：logo + 标准运行时路径已统一")
+
 html_path.write_text(html, encoding="utf-8")
 PYEOF
 
