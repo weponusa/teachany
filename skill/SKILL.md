@@ -1,6 +1,6 @@
 ---
 name: TeachAny
-version: 7.14.0
+version: 7.14.1
 description: "K-12 interactive courseware creation. Use for school-subject lesson pages, animations, AI tutor, TTS, knowledge graph, PBL learning paths, or TeachAny publishing."
 description_zh: "K12 互动课件开发技能：用于制作或优化学科课件、教学动画、AI 学伴、TTS、知识图谱、PBL 学习路径与 TeachAny 发布。"
 allowed-tools: Read,Write,Edit,Bash,Glob,Grep
