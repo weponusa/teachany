@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="#-quick-start"><img src="https://img.shields.io/badge/Quick_Start-30s-brightgreen?style=flat-square" alt="Quick Start"></a>
-  <a href="#-live-gallery"><img src="https://img.shields.io/badge/Live_Gallery-137_courses-blue?style=flat-square" alt="Gallery"></a>
+  <a href="#-live-gallery"><img src="https://img.shields.io/badge/Live_Gallery-420+_courses-blue?style=flat-square" alt="Gallery"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL--3.0%20%2B%20Commercial-blue?style=flat-square" alt="Dual License"></a>
   <a href="docs/TRADEMARK.md"><img src="https://img.shields.io/badge/TeachAny-trademark%20protected-orange?style=flat-square" alt="Trademark Policy"></a>
   <a href="README_CN.md"><img src="https://img.shields.io/badge/中文文档-点击查看-red?style=flat-square" alt="Chinese README"></a>
@@ -32,45 +32,33 @@
 
 ## 🚀 One-Click Install
 
-### ⚡ Recommended · Download Release ZIP (37MB)
+### ⚡ Recommended · Sparse Clone (Standard Preset)
 
-Grab the standard preset from [GitHub Releases](https://github.com/weponusa/teachany/releases/latest) (Gitee does not support Release assets):
-
-| Preset | ZIP | Extracted | What's included | Best for |
-|---|---|---|---|---|
-| **standard** ⭐ | **37MB** | 117MB | Skill core + knowledge trees + ALL maps (world history, Chinese dynasties, political, physical geography) | All subjects, all grades |
+The standard preset includes the Skill core, all knowledge trees, curriculum-aligned KP data, and geography/history map assets (~110 MB working directory):
 
 ```bash
-# Download the ZIP, then extract to the skill directory
-unzip teachany-skill-standard-*.zip
-mv teachany-standard ~/.agents/skills/teachany       # Claude Code / Cursor / Codex CLI
-# or:  ~/.codebuddy/skills/teachany                 # CodeBuddy
-```
-
-> 💡 **Why this layout?** Hero images, community coursewares, and scene illustrations are served from jsDelivr CDN on-demand. The standard preset includes all map assets so geography/history courses work out of the box.
-
-### Alternative · Sparse git clone (for contributors)
-
-```bash
-# Full history with selective checkout
 git clone --filter=blob:none --sparse https://github.com/weponusa/teachany.git
 cd teachany
-git sparse-checkout set --from-file .sparse-checkout-presets/standard.txt     # ~117MB (all maps included)
-git sparse-checkout disable                                                    # ~700MB (full)
+git sparse-checkout set --from-file .sparse-checkout-presets/standard.txt
 
 # Link skill to your AI tool
 ln -sfn "$PWD/skill" ~/.codebuddy/skills/teachany   # CodeBuddy
 ln -sfn "$PWD/skill" ~/.agents/skills/teachany      # Claude Code / Cursor / Codex CLI
 ```
 
-> 💡 **Why not download the community courses?**
-> All 305 community courses are live on GitHub Pages — browse them directly in your browser at
-> **https://weponusa.github.io/teachany/**. No local clone needed.
+> 💡 **Why sparse clone?** The full repo is ~1.6 GB (including 420+ community courseware with audio/video assets). The standard preset gives you everything needed for courseware creation without downloading community courseware.
 
-> 🧠 **AI users** see: [skill/README.md](./skill/README.md) · [skill/SKILL_CN.md](./skill/SKILL_CN.md)
->
-> **Progressive loading**: SKILL_CN.md is now only 1,430 lines (was 5,905). 5 large chapters
-> moved to `references/*.md` — loaded only when triggered.
+### Alternative · Full Clone (for contributors)
+
+```bash
+git clone https://github.com/weponusa/teachany.git
+cd teachany
+ln -sfn "$PWD/skill" ~/.codebuddy/skills/teachany
+```
+
+> 🌐 **Browse without cloning**: All 420+ community courses are live on GitHub Pages — browse them directly at **https://weponusa.github.io/teachany/**. No local clone needed.
+
+> 🧠 **AI users** see: [skill/README.md](./skill/README.md) — the Skill is modular: `skill/SKILL.md` (157 lines) is the entry point; heavy chapters load from `skill/references/`, `skill/guides/`, `skill/phases/` on demand.
 
 ### For Chinese Users 🇨🇳 (Gitee Mirror)
 **国内用户请使用 Gitee 镜像（无需翻墙，高速访问）：**
@@ -82,7 +70,7 @@ git clone https://gitee.com/weponusa/teachany.git
 - 🌐 国际用户：See [Getting Started](docs/getting-started.md)
 - 🇨🇳 国内用户：查看 [一键安装指南](INSTALL_CN_SIMPLE.md)（推荐）
 
-> **What's included**: 7 subjects (Math, Physics, Chemistry, Biology, History, Geography, Chinese), 178+ high-quality teaching materials, aligned with 2022 curriculum standards.
+> **What's included**: 14 subjects (Math, Physics, Chemistry, Biology, History, Geography, Chinese, English, Science, Info-Tech, Economics, CS, Humanities, Inquiry), 420+ courseware aligned with multiple curriculum standards.
 
 ---
 
@@ -161,21 +149,23 @@ Level 1: template/fill-in → Level 2: hints only → Level 3: independent work.
 
 ## 🖼️ Live Gallery
 
-Click any course below to experience it live:
+Browse and experience all courseware live at **[TeachAny Gallery](https://weponusa.github.io/teachany/)**.
 
-| Course | Subject | Grade | Interactions | Lines |
-|:-------|:--------|:------|:-------------|:------|
-| [📐 Quadratic Functions](examples/math-quadratic-function/) | Math | Grade 9 | Canvas graphing, vertex dragging, step-by-step derivation | 1,300+ |
-| [📏 Linear Functions](examples/math-linear-function/) | Math | Grade 8 | Slope/intercept sliders, real-time graph | 1,100+ |
-| [📚 Congruent Triangles](examples/math-congruent-triangles/) | Math | Grade 8 | SVG geometry diagrams, theorem comparison, proof scaffolding | 1,200+ |
-| [🧬 Meiosis & Fertilization](examples/bio-meiosis/) | Biology | Grade 10 | Cell division simulation, chromosome drag-and-drop | 1,400+ |
-| [🌍 Global Monsoon Systems](examples/geo-monsoon/) | Geography | Grade 10 | Leaflet map, wind pattern visualization, region comparison | 1,200+ |
-| [💧 Liquid Pressure & Buoyancy](examples/phy-pressure-buoyancy/) | Physics | Grade 8 | Experiment simulation, parameter adjustment | 1,000+ |
-| [🌿 Photosynthesis](examples/bio-photosynthesis/) | Biology | Grade 7 | Canvas animation, drag-and-drop equation, TTS narration | 1,950+ |
-| [⚡ Ohm's Law](examples/phy-ohms-law/) | Physics | Grade 9 | Virtual circuit lab, V-I graphing, formula derivation, TTS narration | 2,630+ |
-| [🔤 Compound Vowels](examples/chn-compound-vowel/) | Chinese | Grade 1 | Phonics audio, mouth-shape cues, guided pronunciation practice | 800+ |
+Featured official courseware:
 
-> All courses are **single-file HTML** — no build step, no dependencies. Open in any browser.
+| Course | Subject | Grade | Highlights |
+|:-------|:--------|:------|:-----------|
+| [📐 Quadratic Functions](community/math-quadratic-function/) | Math | Grade 9 | Canvas graphing, vertex dragging, step-by-step derivation |
+| [📏 Linear Functions](community/math-linear-function/) | Math | Grade 8 | Slope/intercept sliders, real-time graph |
+| [📚 Congruent Triangles](community/math-congruent-triangles/) | Math | Grade 8 | SVG geometry, theorem comparison, proof scaffolding |
+| [🧬 Bio: Photosynthesis](community/bio-photosynthesis/) | Biology | Grade 7 | Canvas animation, drag-and-drop equation, TTS narration |
+| [⚡ Ohm's Law](community/phy-ohms-law/) | Physics | Grade 9 | Virtual circuit lab, V-I graphing, formula derivation |
+| [🌍 Global Monsoon](community/geo-monsoon/) | Geography | Grade 10 | Leaflet map, wind pattern visualization |
+| [🔬 Chem: Daily Life](community/chem-daily-life/) | Chemistry | Grade 9 | PhET simulation, Canvas animation, resource links |
+| [📖 Classical Poetry](community/course-classical-poetry/) | Chinese | Grade 7 | Close reading, annotation, writing scaffolding |
+| [🏛️ Industrial Revolution](community/hist-m-industrial-revolution/) | History | Grade 9 | Source analysis, timeline, multi-perspective comparison |
+
+> **420+ courseware** across 14 subjects, 33 official + 390+ community. All are **single-file HTML** — no build step, no dependencies. Open in any browser.
 
 ---
 
@@ -183,33 +173,24 @@ Click any course below to experience it live:
 
 ### Option 1: Use as an AI Skill (Recommended)
 
-TeachAny works as a **Skill** for AI coding assistants ([WorkBuddy](https://workbuddy.tencent.com/) recommended; also works with CodeBuddy, Cursor, Windsurf, Claude, etc.):
+TeachAny works as a **Skill** for AI coding assistants (CodeBuddy recommended; also works with Cursor, Windsurf, Claude Code, etc.):
 
-1. Copy `skill/SKILL.md` (English) or `skill/SKILL_CN.md` (Chinese) to your AI assistant's skill directory
-2. Copy the `data/` directory alongside it — it contains knowledge trees, exercises, error banks, and concept graphs for all 9 subjects
-3. Start a conversation:
+1. Install TeachAny via sparse clone (see above) and symlink `skill/` to your AI tool's skill directory
+2. Start a conversation:
    ```
    Create an interactive courseware for "Photosynthesis" (Grade 7 Biology)
    ```
-4. The AI will follow TeachAny's methodology to produce a complete, interactive HTML courseware
+3. The AI will follow TeachAny's methodology to produce a complete, interactive HTML courseware
 
-> **Note**: The skill only needs `skill/` + `data/`. Official and community coursewares are available on the [TeachAny Gallery website](https://weponusa.github.io/teachany/) — they are NOT bundled with the skill.
+> **Note**: The skill only needs `skill/` + `data/`. Community coursewares are on the [TeachAny Gallery](https://weponusa.github.io/teachany/) — they are NOT bundled with the skill install.
 
 > **Note**: Since v6.0, TeachAny ships with built-in validation, packing, and community-sharing workflows inside the base skill. A separate "admin" skill and `GITHUB_TOKEN` are no longer required.
 
-### Option 2: Start from the Template
+### Option 2: Browse and Remix
 
-```bash
-cp -r examples/_template my-new-course
-# Edit my-new-course/index.html with your content
-open my-new-course/index.html
-```
-
-### Option 3: Browse and Remix
-
-1. Clone this repo
-2. Open any `examples/*/index.html` in your browser
-3. Modify the content for your own lesson
+1. Visit the [Live Gallery](https://weponusa.github.io/teachany/)
+2. Open any courseware you like
+3. View source or clone the repo to modify for your own lesson
 
 ---
 
@@ -268,6 +249,16 @@ For any difficult concept, select 2-3 lenses:
 🎯 Transfer It → Apply to new contexts to verify understanding
 ```
 
+### 🧩 PBL Project Decomposition
+
+TeachAny can automatically decompose any **Project-Based Learning** goal into a systematic knowledge network:
+
+- Input: a project description (e.g., "Design a smart greenhouse", "Build a weather App")
+- Output: a complete learning path mapped to curriculum standards (CN / AP / Cambridge / IB / US CCSS)
+- Philosophy: **PBL becomes the teaching subject** — not a supplement to disciplinary learning, but the core vehicle that drives knowledge acquisition
+
+This makes it possible to start from a real-world project and work backward to identify exactly which knowledge nodes students need, in what order, across which subjects.
+
 ---
 
 ## 🏗️ Project Structure
@@ -280,19 +271,56 @@ teachany/
 ├── CONTRIBUTING.md              # Contribution guide (bilingual)
 ├── CHANGELOG.md                 # Version history
 ├── index.html                   # Gallery homepage (dynamically loads courseware)
+├── path.html                    # Learning Path system (D3.js knowledge graph)
+├── tree.html                    # Knowledge tree browser
 ├── courseware-registry.json     # 📋 Courseware registry (metadata index)
 │
-├── skill/
-│   ├── SKILL.md                 # English Skill definition
-│   └── SKILL_CN.md              # Chinese Skill definition
+├── skill/                       # 🧠 TeachAny Skill (AI Prompt System)
+│   ├── SKILL.md                 # Entry point (157 lines, loads modules on demand)
+│   ├── README.md                # Skill installation guide
+│   ├── RULES.md                 # Quality rules and constraints
+│   ├── INSTALL.md               # Detailed install instructions
+│   ├── guides/                  # Subject-specific guides
+│   ├── phases/                  # 4-phase workflow definitions
+│   ├── references/              # Heavy reference chapters (loaded on demand)
+│   ├── scripts/                 # Skill-internal scripts (validate, pack, TTS, etc.)
+│   ├── templates/               # Courseware starter templates
+│   └── tech/                    # Technical implementation specs
 │
-├── data/                        # 📚 Knowledge Layer
-│   ├── README.md                # Architecture document
-│   ├── schema.md                # JSON schema specification
-│   ├── chinese/                 # Chinese Language
-│   │   └── pinyin/              # Pinyin (graph, errors, exercises)
-│   └── math/                    # Mathematics
-│       └── functions/           # Functions (graph, errors, exercises)
+├── data/                        # 📚 Knowledge Layer (~53 MB)
+│   ├── trees/                   # Knowledge trees (5 curriculum systems × 48 subjects = 98 JSON files)
+│   │   ├── cn/                  # 中国课标 (elementary / middle / high)
+│   │   ├── ap/                  # AP (US Advanced Placement)
+│   │   ├── cambridge/           # Cambridge IGCSE / A-Level
+│   │   ├── ib/                  # IB (MYP / DP)
+│   │   └── us/                  # US CCSS + NGSS
+│   ├── kp/                      # 2,399 knowledge-point detail files (curriculum_points, difficulty, resources)
+│   ├── geography/               # Geography map assets (world/China/terrain)
+│   ├── history/                 # Historical dynasty map overlays
+│   ├── curricula.json           # Curriculum system registry (v1.4)
+│   ├── nodes-metadata.json      # Node metadata index
+│   ├── node-index.json          # Fast node lookup index
+│   └── source-mapping.json      # KP ↔ textbook page mapping
+│
+├── community/                   # 🌐 Community courseware (412 courses, ~238 MB)
+│   └── <course-id>/            # Each course: index.html + manifest.json [+ audio/video]
+│
+├── scripts/                     # 🔧 Build & maintenance scripts
+│   ├── validate-courseware.cjs  # 18-point quality validator
+│   ├── validate-courseware.py   # Python validator (media checks)
+│   ├── pack-courseware.cjs      # Courseware packaging
+│   ├── publish-courseware.cjs   # Publish to registry
+│   ├── batch-validate.cjs      # Batch validation runner
+│   ├── knowledge_layer.py      # Knowledge layer audit CLI
+│   ├── learning-path.js        # Path system runtime
+│   ├── pbl-path.js             # PBL decomposition runtime
+│   └── ...                     # 130+ utility scripts
+│
+├── references/                  # 📖 Modular documentation chapters
+│   ├── media-pipeline.md
+│   ├── packaging-distribution.md
+│   ├── technical-implementation.md
+│   └── workflow-development.md
 │
 ├── docs/
 │   ├── methodology.md           # Deep dive into learning theories
@@ -300,57 +328,16 @@ teachany/
 │   ├── design-system.md         # Visual design specification
 │   └── subject-guides/          # Per-subject usage guides
 │
-├── examples/                    # 🌐 Official coursewares (website only, NOT part of skill)
-│   ├── math-quadratic-function/ # Quadratic functions (Math, Grade 9)
-│   ├── math-linear-function/    # Linear functions (Math, Grade 8)
-│   ├── math-congruent-triangles/# Congruent triangles (Math, Grade 8)
-│   ├── bio-meiosis/             # Meiosis (Biology, Grade 10)
-│   ├── bio-photosynthesis/      # Photosynthesis (Biology, Grade 7)
-│   ├── geo-monsoon/             # Monsoon systems (Geography, Grade 10)
-│   ├── phy-ohms-law/            # Ohm's Law (Physics, Grade 9)
-│   ├── phy-pressure-buoyancy/   # Pressure & buoyancy (Physics, Grade 8)
-│   ├── chn-compound-vowel/      # Compound vowels (Chinese, Grade 1)
-│   └── _template/               # Starter templates (elementary/middle/high)
+├── assets/                      # Logo, icons, shared assets
+├── styles/                      # Shared CSS
+├── gallery/                     # Gallery sub-page
+├── pages/                       # Cloudflare Pages deployment config
 │
-├── community/                   # 🌐 Community courseware index
-│   └── index.json
-│
-├── scripts/
-│   ├── registry-loader.js       # 🔄 Gallery dynamic loader (renders cards from registry)
-│   ├── courseware-importer.js   # 📥 Courseware importer (.teachany/.zip/.html)
-│   ├── community-loader.js     # 🌐 Community courseware loader
-│   ├── pack-courseware.cjs      # 📦 Courseware packing tool
-│   ├── publish-courseware.cjs   # 🚀 Publish to GitHub Releases + update registry
-│   ├── bootstrap-courseware.cjs # 🏆 Knowledge layer data extraction
-│   ├── validate-courseware.cjs  # ✅ 18-point courseware quality check
-│   └── knowledge_layer.py       # Audit + on-demand retrieval CLI
-│
-├── dist/                        # 📦 Build output (.gitignore'd)
+├── .sparse-checkout-presets/    # Sparse checkout presets (standard / full)
 │
 └── .github/
     ├── ISSUE_TEMPLATE/
     └── workflows/
-```
-
-### 📦 Courseware Storage Architecture
-
-TeachAny uses a **code-courseware separation** architecture:
-
-| Layer | Storage | Content | Size Budget |
-|:------|:--------|:--------|:------------|
-| **Code** | Git repo | Skill definitions, knowledge layer, scripts, templates | < 50 MB |
-| **Metadata** | `courseware-registry.json` | Course name, subject, grade, links | < 100 KB |
-| **Courseware** | GitHub Releases | `.teachany` packages (HTML + audio + video) | Unlimited |
-
-```bash
-# Dry-run: pack all courseware without uploading
-node scripts/publish-courseware.cjs --all --dry-run
-
-# Publish a single courseware to GitHub Releases
-GITHUB_TOKEN=ghp_xxx node scripts/publish-courseware.cjs ./examples/math-linear-function
-
-# Publish all courseware
-GITHUB_TOKEN=ghp_xxx node scripts/publish-courseware.cjs --all
 ```
 
 ---
