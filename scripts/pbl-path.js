@@ -1030,7 +1030,31 @@ class PBLGraphRenderer {
       };
     };
     const nodes = graphData.nodes.map(enrichNode);
-    const links = graphData.links.map(l => ({ ...l }));
+
+    // v7.9.16: 防御性过滤 — 移除引用了不存在节点的链接，避免 forceLink 崩溃
+    const nodeIdSet = new Set(nodes.map(n => n.id));
+    const links = graphData.links
+      .map(l => ({ ...l }))
+      .filter(l => {
+        const srcId = typeof l.source === 'object' ? l.source.id : l.source;
+        const tgtId = typeof l.target === 'object' ? l.target.id : l.target;
+        return nodeIdSet.has(srcId) && nodeIdSet.has(tgtId);
+      });
+    if (links.length < graphData.links.length) {
+      console.warn(`[PBL Graph] 过滤了 ${graphData.links.length - links.length} 条无效链接（引用了不存在的节点）`);
+    }
+
+    // v7.9.16: 随机化初始位置，避免所有节点从 (0,0) 开始导致力模拟无法展开
+    const cx = this.width / 2, cy = this.height / 2;
+    const initRadius = Math.min(this.width, this.height) * 0.3;
+    nodes.forEach((n, i) => {
+      if (n.x == null || n.y == null) {
+        const angle = (2 * Math.PI * i) / nodes.length + (Math.random() - 0.5) * 0.5;
+        const r = initRadius * (0.4 + Math.random() * 0.6);
+        n.x = cx + r * Math.cos(angle);
+        n.y = cy + r * Math.sin(angle);
+      }
+    });
 
     // 箭头标记
     this.svg.append('defs').selectAll('marker')
@@ -1187,6 +1211,8 @@ class PBLGraphRenderer {
       .force('collision', d3.forceCollide().radius(baseCollide))
       .force('x', d3.forceX(this.width / 2).strength(0.04))
       .force('y', d3.forceY(this.height / 2).strength(0.04))
+      .alphaDecay(0.015)  // v7.9.16: 降低衰减让模拟运行更久（默认0.0228），小图谱需要更多tick展开
+      .velocityDecay(0.3) // v7.9.16: 略微降低速度衰减，节点移动更流畅
       .on('tick', () => {
         link
           .attr('x1', d => d.source.x)
