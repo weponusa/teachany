@@ -945,10 +945,13 @@ class PBLGraphRenderer {
     const calcH = Math.ceil(nodeCount * density / this.width);
     this.height = Math.max(minH, Math.min(calcH, 3000)); // 上限 3000px 防止过高
 
-    // 力导向参数随节点数缩放（v7.9.14：增大排斥力避免节点重叠）
-    const baseLinkDist = Math.max(180, Math.min(320, 140 + nodeCount * 0.8));
-    const baseCharge   = Math.max(-4000, Math.min(-600, -400 - nodeCount * 5));
-    const baseCollide  = Math.max(70, Math.min(100, 55 + nodeCount * 0.2));
+    // 力导向参数随节点数缩放（v7.9.15：小图谱增大排斥力+碰撞半径，防止节点挤在一起）
+    const linkCount = (graphData.links || []).length || 0;
+    const linkDensity = linkCount / Math.max(nodeCount, 1); // 边/节点比
+    // 节点少时需要更大的排斥力来撑开；密度高（边多）也需要更大排斥
+    const baseLinkDist = Math.max(220, Math.min(400, 180 + nodeCount * 1.5 + linkDensity * 40));
+    const baseCharge   = Math.min(-1200, Math.max(-6000, -800 - nodeCount * 12 - linkDensity * 300));
+    const baseCollide  = Math.max(85, Math.min(130, 70 + nodeCount * 0.4 + linkDensity * 15));
 
     // 清除旧内容
     container.innerHTML = '';
@@ -1176,13 +1179,14 @@ class PBLGraphRenderer {
     });
 
     // ─── 力导向布局（参数随节点数量动态缩放） ───
+    const linkStrength = Math.max(0.15, Math.min(0.45, 0.55 - linkDensity * 0.15));
     this.simulation = d3.forceSimulation(nodes)
-      .force('link', d3.forceLink(links).id(d => d.id).distance(baseLinkDist).strength(0.5))
+      .force('link', d3.forceLink(links).id(d => d.id).distance(baseLinkDist).strength(linkStrength))
       .force('charge', d3.forceManyBody().strength(baseCharge))
       .force('center', d3.forceCenter(this.width / 2, this.height / 2))
       .force('collision', d3.forceCollide().radius(baseCollide))
-      .force('x', d3.forceX(this.width / 2).strength(0.03))
-      .force('y', d3.forceY(this.height / 2).strength(0.03))
+      .force('x', d3.forceX(this.width / 2).strength(0.04))
+      .force('y', d3.forceY(this.height / 2).strength(0.04))
       .on('tick', () => {
         link
           .attr('x1', d => d.source.x)
