@@ -700,7 +700,41 @@ function markPBLGoalDirty() {
 
 async function fillPBLExample(el) {
   const goal = el.dataset.goal;
+  const key = el.dataset.key;
   document.getElementById('pblGoalInput').value = goal;
+
+  // 尝试加载预制分析结果
+  const demoUrl = `./data/pbl-demos/${key}.json`;
+  const statusEl = document.getElementById('pblStatus');
+  const statusText = document.getElementById('pblStatusText');
+
+  try {
+    statusEl.style.display = 'block';
+    statusText.textContent = '加载示范案例分析结果...';
+
+    const resp = await fetch(demoUrl);
+    if (resp.ok) {
+      const result = await resp.json();
+      // 加载统一索引以补全节点信息
+      const builder = window.PBLPathBuilder;
+      try { await builder.loadUnifiedIndex(); } catch (_e) {}
+      pblResult = result;
+      statusText.textContent = '渲染知识路径图谱...';
+      renderPBLStats(result);
+      renderPBLGraph(result);
+      statusEl.style.display = 'none';
+
+      // 滚动到图谱
+      const graph = document.getElementById('pbl-graph-container');
+      if (graph) graph.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+  } catch (_e) {
+    console.warn('[PBL] 预制结果加载失败，回退到实时分析:', _e.message);
+  }
+
+  // 回退：预制不存在则用按钮文案提示用户点击分析
+  statusEl.style.display = 'none';
   markPBLGoalDirty();
 }
 
