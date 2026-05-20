@@ -689,16 +689,22 @@ footer a { color: var(--primary); text-decoration: none; }
     </div>
     <div class="course-grid" id="communityGrid"></div>
     <div class="gallery-section-empty" id="communityEmpty">😅 当前筛选条件下暂无社区课件 No community coursewares match current filters</div>
+    <div style="text-align:center;margin-top:20px;" id="communityToggleWrap">
+      <button id="communityToggleBtn" onclick="toggleCommunityExpand()" style="padding:10px 28px;border-radius:12px;border:1px solid var(--border);background:rgba(30,41,59,0.6);color:var(--dim);font-size:14px;cursor:pointer;transition:all 0.2s;">
+        展开更多 Show More ▼
+      </button>
+    </div>
   </div>
 
-  <!-- 📚 其他课程区（多章节系统课程） -->
+  <!-- 🧩 其他知识（课标外的用户生成课件） -->
   <div class="gallery-section" id="otherCoursesSection">
     <div class="gallery-section-header">
-      <h2 class="gallery-section-title">📚 其他课程 Other Courses</h2>
-      <span class="gallery-section-count" id="otherCoursesCount">0 个课程</span>
+      <h2 class="gallery-section-title">🧩 其他知识 Other Knowledge</h2>
+      <span class="gallery-section-count" id="otherCoursesCount">0 个课件</span>
+      <span style="font-size:12px;color:var(--dimmer);margin-left:8px;">课标外的 AI × 用户共创课件</span>
     </div>
     <div class="course-grid" id="otherCoursesGrid"></div>
-    <div class="gallery-section-empty" id="otherCoursesEmpty">😅 暂无其他课程 No other courses yet</div>
+    <div class="gallery-section-empty" id="otherCoursesEmpty">😅 暂无其他知识课件 No other knowledge coursewares yet</div>
   </div>
 </div>
 
@@ -764,7 +770,7 @@ footer a { color: var(--primary); text-decoration: none; }
 </footer>
 
 <script src="./scripts/export-courseware.js"></script>
-<script src="./scripts/unified-loader.js?v=13"></script>
+<script src="./scripts/unified-loader.js?v=14"></script>
 <script src="./scripts/stats-calculator.js?v=8"></script>
 <script src="./scripts/history-tracker.js" defer></script>
 <script src="./scripts/learning-path.js"></script>
@@ -805,7 +811,13 @@ function clearSearch() {
 
 /* ─── 统一应用所有筛选条件 ─── */
 function applyFilters() {
-  ['officialGrid', 'communityGrid'].forEach(gridId => {
+  const grids = [
+    { id: 'officialGrid', countId: 'officialCount', emptyId: 'officialEmpty' },
+    { id: 'communityGrid', countId: 'communityCount', emptyId: 'communityEmpty' },
+    { id: 'otherCoursesGrid', countId: 'otherCoursesCount', emptyId: 'otherCoursesEmpty' }
+  ];
+
+  grids.forEach(({ id: gridId, countId, emptyId }) => {
     const grid = document.getElementById(gridId);
     if (!grid) return;
     let visible = 0;
@@ -831,12 +843,14 @@ function applyFilters() {
     });
 
     // 更新计数和空状态提示
-    const isOfficial = gridId === 'officialGrid';
-    const countEl = document.getElementById(isOfficial ? 'officialCount' : 'communityCount');
-    const emptyEl = document.getElementById(isOfficial ? 'officialEmpty' : 'communityEmpty');
+    const countEl = document.getElementById(countId);
+    const emptyEl = document.getElementById(emptyId);
     if (countEl) countEl.textContent = `${visible} 个课件`;
     if (emptyEl) emptyEl.style.display = visible === 0 ? 'block' : 'none';
   });
+
+  // 社区课件折叠逻辑
+  applyCommunityCollapse();
 }
 
 /* ─── 统一筛选函数 ─── */
@@ -865,6 +879,52 @@ function filterCourses(subject) {
 
 // 初始化：unified-loader.js 会自动加载所有课件并在完成后触发 applyFilters
 // 此处无需额外操作，unified-loader.js 的 initGallery() 会处理一切
+
+/* ─── 社区课件折叠 ─── */
+const COMMUNITY_DEFAULT_SHOW = 12;
+let communityExpanded = false;
+
+function toggleCommunityExpand() {
+  communityExpanded = !communityExpanded;
+  applyFilters();
+  const btn = document.getElementById('communityToggleBtn');
+  if (btn) {
+    btn.textContent = communityExpanded ? '收起 Collapse ▲' : '展开更多 Show More ▼';
+  }
+}
+
+function applyCommunityCollapse() {
+  const grid = document.getElementById('communityGrid');
+  if (!grid) return;
+  const cards = grid.querySelectorAll('.course-card');
+  let visibleIdx = 0;
+  let totalVisible = 0;
+  cards.forEach(card => {
+    if (card.style.display === 'none') return; // already filtered out
+    totalVisible++;
+  });
+  // Re-pass: apply collapse
+  if (!communityExpanded && totalVisible > COMMUNITY_DEFAULT_SHOW) {
+    let idx = 0;
+    cards.forEach(card => {
+      if (card.style.display === 'none') return;
+      idx++;
+      if (idx > COMMUNITY_DEFAULT_SHOW) {
+        card.style.display = 'none';
+      }
+    });
+    const wrap = document.getElementById('communityToggleWrap');
+    if (wrap) wrap.style.display = 'block';
+    const btn = document.getElementById('communityToggleBtn');
+    if (btn) btn.textContent = `展开更多 Show More (${totalVisible - COMMUNITY_DEFAULT_SHOW}+) ▼`;
+    // update count to show partial
+    const countEl = document.getElementById('communityCount');
+    if (countEl) countEl.textContent = `显示 ${COMMUNITY_DEFAULT_SHOW} / ${totalVisible} 个课件`;
+  } else {
+    const wrap = document.getElementById('communityToggleWrap');
+    if (wrap) wrap.style.display = totalVisible > COMMUNITY_DEFAULT_SHOW ? 'block' : 'none';
+  }
+}
 </script>
 
 </body>
