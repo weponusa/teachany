@@ -27,7 +27,7 @@ TeachAny 的目标不是把知识堆进页面，而是把一节课做成**有问
 标准输出路径：
 
 1. 查 `node_id`：`python3 scripts/find_nodes.py "浮力"`。
-2. 复制 `templates/course-skeleton.html` 和 `templates/manifest-template.json`。
+2. 复制 `templates/course-skeleton-v2.html` 和 `templates/manifest-template.json`。
 3. 用"为什么沉浮不同？"做问题锚点，加入拖拽物体/液体密度的 Canvas 互动。
 4. 接入五件套：AI 学伴、TTS、section hints、知识图谱、导师卡片。
 5. 生成 Hero 知识结构图（`gen-hero-svg.py`）。
@@ -72,7 +72,7 @@ Phase 4  发布注册：执行 Git/Registry/Gallery 流程，验证线上 URL
 
 ## 核心规则（最终有效版）
 
-1. **模板优先**：新课件先复制 `templates/course-skeleton.html` 与 `templates/manifest-template.json`，不要从空白页手写平台接线。
+1. **模板优先**：新课件先复制 `templates/course-skeleton-v2.html`（分页模板）与 `templates/manifest-template.json`，不要从空白页手写平台接线。旧课件维护用 `course-skeleton.html`（v1 连续滚动）。
 2. **学习闭环优先**：每课必须有问题锚点、互动尝试、即时反馈、总结迁移；视觉炫技不能替代学习设计。
 3. **标准模块优先**：AI 学伴、导师卡片、TTS narrator、section hints、知识图谱优先用标准模块 API，不重复手写。
 4. **真实互动**：标题写"互动/实验/探究/地图/画布"就必须可操作；静态图不能伪装互动。
@@ -100,6 +100,7 @@ Phase 4  发布注册：执行 Git/Registry/Gallery 流程，验证线上 URL
 | PBL/探究课 | `guides/project-based.md` |
 | 练习评估 | `guides/assessment.md` |
 | 页面结构与 CSS | `tech/page-structure.md`, `tech/design-system.md` |
+| v2 分页模板 | `templates/course-skeleton-v2.html`, `templates/content-section-templates-v2.html` |
 | 数学/科学仿真 | `tech/math-animations.md`（数学课件**必读**）, `tech/science-simulations.md`（物理/化学/生物课件**必读**） |
 | **可嵌入 iframe 资源总目录** | `tech/iframe-resources.md`（**数理化必读**，PhET/GeoGebra/Desmos/3Dmol/LearningApps 等完整清单） |
 | 地图 / 3D / PPTX | `topics/maps-and-3d.md` |

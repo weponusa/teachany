@@ -44,15 +44,59 @@ fail() { echo "  ❌ FAIL  $1"; FAILED=$((FAILED+1)); }
 warn() { echo "  ⚠️  WARN  $1"; WARNS=$((WARNS+1)); }
 
 # ─── B-1 · 单页连续滚动 ────────────────────────
-echo "[B-1] 单页连续滚动（No Pagination）"
-html_count=$(find "$COURSE_DIR" -maxdepth 2 -name "*.html" | wc -l | tr -d ' ')
-if [ "$html_count" -le 2 ]; then
-  pass "只有 $html_count 个 HTML 文件（allowed ≤ 2，index + 可选 preview）"
-else
-  fail "课件目录有 $html_count 个 HTML，疑似多页翻页课件"
+echo "[B-1] 页面结构"
+# 检测是否为 v2 分页模板
+is_v2=false
+if grep -qE 'teachany-template-version.*content="2\.0"' "$HTML"; then
+  is_v2=true
 fi
 
-# 检查 iframe 嵌套
+html_count=$(find "$COURSE_DIR" -maxdepth 2 -name "*.html" | wc -l | tr -d ' ')
+if [ "$is_v2" = true ]; then
+  # v2 模板：分页结构合规
+  slide_count=$(grep -oE 'class="slide-page"' "$HTML" | wc -l | tr -d ' ')
+  if [ "$slide_count" -ge 12 ]; then
+    pass "v2 分页模板：$slide_count 个 slide-page（≥12）"
+  else
+    fail "v2 模板但 slide-page 只有 $slide_count 个（至少需要 12 页）"
+  fi
+
+  # v2 必须有 slide-container
+  if grep -q 'class="slide-container"' "$HTML"; then
+    pass "v2 slide-container 存在"
+  else
+    fail "v2 模板缺少 slide-container"
+  fi
+
+  # v2 必须有播放控制器
+  if grep -qE 'class="slide-toolbar"|id="slide-toolbar"' "$HTML"; then
+    pass "v2 播放控制栏存在"
+  else
+    fail "v2 模板缺少播放控制栏（slide-toolbar）"
+  fi
+
+  # v2 必须有侧边导航
+  if grep -qE 'class="slide-sidenav"|id="slide-sidenav"' "$HTML"; then
+    pass "v2 侧边导航存在"
+  else
+    warn "v2 模板缺少侧边导航（slide-sidenav）"
+  fi
+
+  if [ "$html_count" -le 2 ]; then
+    pass "v2 模板文件数 $html_count（allowed ≤ 2）"
+  else
+    warn "v2 课件目录有 $html_count 个 HTML，确认非冗余"
+  fi
+else
+  # v1 模板：原有逻辑
+  if [ "$html_count" -le 2 ]; then
+    pass "只有 $html_count 个 HTML 文件（allowed ≤ 2，index + 可选 preview）"
+  else
+    fail "课件目录有 $html_count 个 HTML，疑似多页翻页课件"
+  fi
+fi
+
+# 检查 iframe 嵌套（v1 和 v2 通用）
 if grep -q "<iframe" "$HTML"; then
   if grep -qE '<iframe[^>]*src="(video|audio|embed|preview)' "$HTML"; then
     pass "iframe 仅用于视频/音频/嵌入，非页面翻页"
@@ -63,11 +107,15 @@ else
   pass "无 iframe 翻页"
 fi
 
-# 检查 "下一页" 按钮
-if grep -qE 'class="[^"]*next-page|下一页|next-slide' "$HTML"; then
-  fail "发现'下一页'按钮样式，课件应为单页滚动"
+# 检查 "下一页" 按钮（v2 模板中 toolbar 的翻页按钮不算违规）
+if [ "$is_v2" = false ]; then
+  if grep -qE 'class="[^"]*next-page|下一页|next-slide' "$HTML"; then
+    fail "发现'下一页'按钮样式，v1 课件应为单页滚动"
+  else
+    pass "无翻页按钮"
+  fi
 else
-  pass "无翻页按钮"
+  pass "v2 模板：翻页控制器合规"
 fi
 echo ""
 
@@ -323,7 +371,7 @@ echo ""
 
 # ─── B-6 · 风格与结构标准 ──────────────────────
 echo "[B-6] 风格与结构标准"
-required_sections=("hero|开场|欢迎" "学习目标|learning.?objectives" "引入|introduction|intro" "核心概念|core.?concept" "例题|示范|演练" "互动|练习" "小测|测试|quiz" "总结|summary" "知识图谱|knowledge.?map")
+required_sections=("hero|开场|欢迎" "学习目标|learning.?objectives" "引入|introduction|intro" "核心概念|core.?concept" "例题|示范|演练" "习题讲解|解题|worked.?example|解析" "互动|练习" "小测|测试|quiz" "总结|summary" "知识图谱|knowledge.?map")
 sec_hit=0
 sec_miss=()
 for pat in "${required_sections[@]}"; do
@@ -334,10 +382,10 @@ for pat in "${required_sections[@]}"; do
     sec_miss+=("$label")
   fi
 done
-if [ "$sec_hit" -ge 7 ]; then
-  pass "标准结构 ${sec_hit}/9 段已覆盖"
+if [ "$sec_hit" -ge 8 ]; then
+  pass "标准结构 ${sec_hit}/10 段已覆盖"
 else
-  fail "标准结构仅覆盖 ${sec_hit}/9，缺失: ${sec_miss[*]}"
+  fail "标准结构仅覆盖 ${sec_hit}/10，缺失: ${sec_miss[*]}"
 fi
 
 # 字体

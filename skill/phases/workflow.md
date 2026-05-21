@@ -29,15 +29,55 @@ PBL 课用：问题 → 假设 → 尝试 → 暴露知识缺口 → 学习 → 
 
 ## Phase 2：构建
 
-1. 复制模板：
-   ```bash
-   cp templates/course-skeleton.html community/<course-id>/index.html
-   cp templates/manifest-template.json community/<course-id>/manifest.json
-   ```
+### 模板选择
+
+**新课件默认使用 v2 分页模板**：
+
+```bash
+cp templates/course-skeleton-v2.html community/<course-id>/index.html
+cp templates/manifest-template.json community/<course-id>/manifest.json
+```
+
+v2 模板特性：
+- 每个教学模块占一整屏（slide-page）
+- **最少 12 页**（Baseline B-1 强制），推荐 12-18 页
+- **必须包含习题讲解页**（worked example：完整解题思路展示）
+- 默认连续滚动浏览，可切换为逐页播放模式
+- 底部播放控制栏 + 侧边胶囊段式导航（页码计数器 + 条形指示器）
+- 每页对应独立音频，支持自动播放翻页
+- 不同页型有不同视觉渐变装饰
+
+**v2 必需页面清单（≥12 页）**：
+1. 封面（cover）
+2. 引入/问题锚点（interactive）
+3. 学习目标（objectives）
+4. 前测（quiz）
+5. 核心概念 × 2-3 页（concept）
+6. **习题讲解**（concept）—— 含完整解题步骤、思路分析、易错提示
+7. 互动探究（interactive）
+8. 概念测试（quiz）
+9. 后测（quiz）
+10. 总结（summary）
+11. 知识图谱（summary）
+12. AI 导师（summary）
+
+仅在维护/修复旧课件时使用 v1（`course-skeleton.html`）。
+
+### v2 内容区块模板
+
+使用 `templates/content-section-templates-v2.html` 中的片段填充 `{{CONTENT_SECTIONS}}`。每个片段已包含 `<section class="slide-page">` 容器，无需额外包裹。
+
+注意：每个 slide-page 必须有 `data-page-index` 属性（从 0 开始递增），并设置合适的 `data-page-type`。
+
+### 构建步骤
+
+1. 复制 v2 模板到课件目录。
 2. 填 `course-id`、`node_id`、学科、年级、先修/后续知识。
 3. 保留标准模块挂载，不重复手写平台代码。
-4. 加入问题锚点、主体 section、互动组件、练习反馈。
-5. 补齐 Hero（`gen-hero-svg.py`）、TTS（`tts-engine.py`）、视频/地图等资源。
+4. 从 v2 内容区块模板选择片段，填充主体教学页面（≥12 页）。
+5. **必须有一页完整的习题讲解**（解题步骤+思路+关键技巧）。
+6. 确保 `{{SLIDE_COUNT}}` 设为实际总页数。
+7. 补齐 Hero（`gen-hero-svg.py`）、TTS（`tts-engine.py`）、视频/地图等资源。
 
 ## Phase 3：验证
 
