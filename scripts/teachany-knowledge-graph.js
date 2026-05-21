@@ -45,7 +45,7 @@
     return "rgba(" + r + "," + g + "," + b + "," + alpha + ")";
   }
 
-  var COURSEWARE_BASE_URL = "https://weponusa.github.io/teachany";
+  var COURSEWARE_BASE_URL = "https://weponusa.github.io/teachany-courseware";
 
   function coursewareUrl(course) {
     if (!course || !course.path) return null;
