@@ -312,6 +312,7 @@
         externalCount: nodes.filter(n => n.layer === 'external').length,
         nodes,
         links,
+        graphData: { nodes, links },
         provider: providers && providers.providerName ? providers.providerName : '',
         model: providers && providers.model ? providers.model : '',
         ts: now()
@@ -322,6 +323,13 @@
         if (size > MAX_BYTES_PER_ITEM) {
           item.nodes = item.nodes.slice(0, 60);
           item.links = item.links.slice(0, 120);
+          item.graphData = { nodes: item.nodes, links: item.links };
+          item.truncated = true;
+        }
+        while (JSON.stringify(item).length > MAX_BYTES_PER_ITEM && item.nodes.length > 20) {
+          item.nodes = item.nodes.slice(0, Math.floor(item.nodes.length * 0.75));
+          item.links = item.links.filter(l => item.nodes.some(n => n.id === l.source) && item.nodes.some(n => n.id === l.target)).slice(0, Math.max(30, Math.floor(item.links.length * 0.75)));
+          item.graphData = { nodes: item.nodes, links: item.links };
           item.truncated = true;
         }
       } catch {}
@@ -333,12 +341,20 @@
       if (!courseId) return false;
       meta = meta || {};
       const t = now();
-      return upsertByMatch('created', x => x.courseId === courseId, prev => {
+      const stableNode = meta.node || meta.node_id || (meta.manifest && meta.manifest.node_id) || '';
+      const stableSource = meta.source || 'unknown';
+      return upsertByMatch('created', x => {
+        if (x.courseId === courseId) return true;
+        return !!stableNode && x.node === stableNode && (x.source || 'unknown') === stableSource;
+      }, prev => {
         if (prev) {
           return {
             ...prev,
             ...meta,
             courseId,
+            node: stableNode || meta.node || prev.node || '',
+            source: stableSource,
+            createdAt: prev.createdAt || prev.ts || t,
             updatedAt: t,
             ts: t
           };
@@ -347,10 +363,10 @@
           id: shortId(),
           courseId,
           name: meta.name || courseId,
-          source: meta.source || 'unknown', // skill / pbl / import / manual
+          source: stableSource, // skill / pbl / import / manual
           subject: meta.subject || '',
           grade: meta.grade || '',
-          node: meta.node || '',
+          node: stableNode || meta.node || '',
           url: meta.url || '',
           createdAt: t,
           updatedAt: t,
@@ -437,34 +453,39 @@
       const correct = quizzes.filter(q => q.correct).length;
       const accuracy = totalQuiz > 0 ? correct / totalQuiz : 0;
 
-      // 连续学习天数
-      const days = new Set();
-      views.forEach(v => {
-        if (v.lastVisitedAt) {
-          days.add(new Date(v.lastVisitedAt).toISOString().slice(0, 10));
-        }
-      });
-      const dayList = Array.from(days).sort();
-      let streak = 0;
-      if (dayList.length) {
-        let cursor = new Date();
-        cursor.setHours(0, 0, 0, 0);
-        while (true) {
-          const d = cursor.toISOString().slice(0, 10);
-          if (days.has(d)) {
-            streak++;
-            cursor.setDate(cursor.getDate() - 1);
-          } else if (streak === 0) {
-            cursor.setDate(cursor.getDate() - 1);
-            // 容忍今天没学但昨天学了：只允许首日跳过一次
-            const d2 = cursor.toISOString().slice(0, 10);
-            if (days.has(d2)) continue;
-            break;
-          } else {
-            break;
-          }
+    // 连续学习天数（使用本地时区日期，避免 UTC 偏移导致 0 天）
+    const toLocalYMD = (d) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const da = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${da}`;
+    };
+    const days = new Set();
+    views.forEach(v => {
+      if (v.lastVisitedAt) {
+        days.add(toLocalYMD(new Date(v.lastVisitedAt)));
+      }
+    });
+    let streak = 0;
+    if (days.size > 0) {
+      const cursor = new Date();
+      cursor.setHours(0, 0, 0, 0);
+      // 允许"今天没学但昨天学过"不算断（给 1 天缓冲），但从学过的那天开始累计
+      let buffer = 1;
+      while (true) {
+        const d = toLocalYMD(cursor);
+        if (days.has(d)) {
+          streak++;
+          cursor.setDate(cursor.getDate() - 1);
+        } else if (buffer > 0 && streak === 0) {
+          // 今日未学，允许跳过一次继续往前找
+          buffer--;
+          cursor.setDate(cursor.getDate() - 1);
+        } else {
+          break;
         }
       }
+    }
 
       // 本周学习时长
       const weekStart = new Date();
