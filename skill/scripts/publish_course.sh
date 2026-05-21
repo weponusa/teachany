@@ -79,7 +79,7 @@ if [ -f "$SKILL_SCRIPTS/check_baseline.sh" ]; then
 fi
 
 # ─── 1.1. v7.3 反空壳教学质量闸门 ─────────────────
-QUALITY_GATE="$SKILL_SCRIPTS/../../scripts/validate-teaching-quality.py"
+QUALITY_GATE="$SKILL_SCRIPTS/../../assets/scripts/validate-teaching-quality.py"
 if [ -f "$QUALITY_GATE" ]; then
   echo ""
   echo "[1.1/5] v7.3 教学质量闸门"
@@ -358,7 +358,7 @@ path_rewrites = {
     "https://weponusa.github.io/teachany/assets/teachany-logo.png": "https://weponusa.github.io/teachany-courseware/assets/teachany-logo.png",
     "https://weponusa.github.io/teachany-courseware/scripts/": "../../assets/scripts/",
     "https://weponusa.github.io/teachany/scripts/": "../../assets/scripts/",
-    "../../scripts/": "../../assets/scripts/",
+    "../../assets/scripts/": "../../assets/scripts/",
 }
 for old, new in path_rewrites.items():
     html = html.replace(old, new)

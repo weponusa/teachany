@@ -29,8 +29,8 @@ HILLSHADE_SRC = ROOT / "skill/assets/hillshade/global-color-hillshade-2k.jpg"
 
 LEAFLET_CSS = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">'
 LEAFLET_JS = '<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>'
-MODULE_CSS = '<link rel="stylesheet" href="../../scripts/teachany-historical-map.css">'
-MODULE_JS = '<script src="../../scripts/teachany-historical-map.js" defer></script>'
+MODULE_CSS = '<link rel="stylesheet" href="../../assets/scripts/teachany-historical-map.css">'
+MODULE_JS = '<script src="../../assets/scripts/teachany-historical-map.js" defer></script>'
 
 def copy_hillshade(course_dir: Path) -> int:
     """v7.7.3: 复制全球彩色阴影地形底图为课件本地 hillshade.jpg（统一默认底图）"""
@@ -119,7 +119,7 @@ def inject_script_bottom(html: str) -> str:
     if MODULE_JS in html:
         return html
     # 放在 knowledge-graph js 之前或 </body> 之前
-    kg_marker = '<script src="../../scripts/teachany-knowledge-graph.js"'
+    kg_marker = '<script src="../../assets/scripts/teachany-knowledge-graph.js"'
     if kg_marker in html:
         return html.replace(kg_marker, MODULE_JS + "\n" + kg_marker, 1)
     return html.replace("</body>", MODULE_JS + "\n</body>", 1)

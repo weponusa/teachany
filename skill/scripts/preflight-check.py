@@ -585,7 +585,7 @@ def check_git_hooks():
         if not ARGS.dry_run:
             os.makedirs(".git/hooks", exist_ok=True)
             try:
-                os.symlink("../../scripts/pre-push.sh", hook)
+                os.symlink("../../assets/scripts/pre-push.sh", hook)
                 os.chmod(target, 0o755)
                 log("pre-push hook 已安装", "ok")
                 record("pre_push_hook", "installed_now")
@@ -595,7 +595,7 @@ def check_git_hooks():
                 record("pre_push_hook", "fail", error=str(e))
                 return
         record("pre_push_hook", "missing",
-               hint="ln -sf ../../scripts/pre-push.sh .git/hooks/pre-push && chmod +x scripts/pre-push.sh")
+               hint="ln -sf ../../assets/scripts/pre-push.sh .git/hooks/pre-push && chmod +x scripts/pre-push.sh")
         return
     if hook.is_symlink() and str(hook.resolve()).endswith("pre-push.sh"):
         log("pre-push hook OK", "ok")
@@ -603,7 +603,7 @@ def check_git_hooks():
     else:
         log("pre-push hook 存在但不是标准软链（可能被旧版覆盖）", "warn")
         record("pre_push_hook", "non_standard",
-               hint="rm .git/hooks/pre-push && ln -sf ../../scripts/pre-push.sh .git/hooks/pre-push")
+               hint="rm .git/hooks/pre-push && ln -sf ../../assets/scripts/pre-push.sh .git/hooks/pre-push")
 
 
 def check_l4_pack():

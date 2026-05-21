@@ -13,7 +13,7 @@
   - 幂等：已存在的引用 / section 不重复插入
   - 最小侵入：只追加 `<link>` / `<script>` / tail-section，不动原业务
   - 兜底：没有 `manifest.node_id` 则跳过 KG 注入（日志标注）
-  - 路径：community/* 下使用 ../../scripts/，examples/* 下同样 ../../scripts/
+  - 路径：community/* 下使用 ../../assets/scripts/，examples/* 下同样 ../../assets/scripts/
 
 用法：
   python3 scripts/apply-standard-modules.py               # 全量
@@ -34,19 +34,19 @@ ROOT = Path(__file__).resolve().parent.parent
 # --------------------------------------------------------------------
 
 LINKS = [
-    ('<link rel="stylesheet" href="../../scripts/ai-tutor.css">', "ai-tutor.css"),
-    ('<link rel="stylesheet" href="../../scripts/teachany-tutor-card.css">', "teachany-tutor-card.css"),
-    ('<link rel="stylesheet" href="../../scripts/teachany-tts-narrator.css">', "teachany-tts-narrator.css"),
-    ('<link rel="stylesheet" href="../../scripts/teachany-section-hints.css">', "teachany-section-hints.css"),
-    ('<link rel="stylesheet" href="../../scripts/teachany-knowledge-graph.css">', "teachany-knowledge-graph.css"),
+    ('<link rel="stylesheet" href="../../assets/scripts/ai-tutor.css">', "ai-tutor.css"),
+    ('<link rel="stylesheet" href="../../assets/scripts/teachany-tutor-card.css">', "teachany-tutor-card.css"),
+    ('<link rel="stylesheet" href="../../assets/scripts/teachany-tts-narrator.css">', "teachany-tts-narrator.css"),
+    ('<link rel="stylesheet" href="../../assets/scripts/teachany-section-hints.css">', "teachany-section-hints.css"),
+    ('<link rel="stylesheet" href="../../assets/scripts/teachany-knowledge-graph.css">', "teachany-knowledge-graph.css"),
 ]
 
 SCRIPTS = [
-    ('<script src="../../scripts/ai-tutor.js"></script>', "ai-tutor.js"),
-    ('<script src="../../scripts/teachany-tutor-card.js" defer></script>', "teachany-tutor-card.js"),
-    ('<script src="../../scripts/teachany-tts-narrator.js" defer></script>', "teachany-tts-narrator.js"),
-    ('<script src="../../scripts/teachany-section-hints.js" defer></script>', "teachany-section-hints.js"),
-    ('<script src="../../scripts/teachany-knowledge-graph.js" defer></script>', "teachany-knowledge-graph.js"),
+    ('<script src="../../assets/scripts/ai-tutor.js"></script>', "ai-tutor.js"),
+    ('<script src="../../assets/scripts/teachany-tutor-card.js" defer></script>', "teachany-tutor-card.js"),
+    ('<script src="../../assets/scripts/teachany-tts-narrator.js" defer></script>', "teachany-tts-narrator.js"),
+    ('<script src="../../assets/scripts/teachany-section-hints.js" defer></script>', "teachany-section-hints.js"),
+    ('<script src="../../assets/scripts/teachany-knowledge-graph.js" defer></script>', "teachany-knowledge-graph.js"),
 ]
 
 TUTOR_CARD_SECTION_MARK = "teachany-ai-tutor-card"
