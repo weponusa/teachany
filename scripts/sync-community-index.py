@@ -55,8 +55,6 @@ def main():
             "subject": c.get("subject", ""),
             "grade": c.get("grade", 0),
             "author": c.get("author") or old_entry.get("author") or "TeachAny Community",
-            # v7.12.2: 主仓库保持轻量，真实课件实体统一部署在 teachany-courseware。
-            # download_url 必须直指实体课件仓库，避免先跳转到主仓库再产生 404。
             "download_url": f"https://weponusa.github.io/teachany-courseware/{path}/",
             "approved_at": old_entry.get("approved_at") or c.get("created") or datetime.now(timezone.utc).isoformat(),
             "likes": old_entry.get("likes", 0),
@@ -72,6 +70,24 @@ def main():
         "description": f"Community-contributed TeachAny coursewares - {len(courses)} indexed courses",
         "courses": courses,
     }
+
+    # v7.15: URL 合法性校验——拦截非法 download_url
+    VALID_PREFIX = "https://weponusa.github.io/teachany-courseware/"
+    ILLEGAL_PATTERNS = ["community/drafts/", "/courses/", "pages.dev/courses/"]
+    bad_urls = []
+    for c in courses:
+        url = c.get("download_url", "")
+        if not url.startswith(VALID_PREFIX):
+            bad_urls.append((c["id"], url, "不以 teachany-courseware 开头"))
+        for pat in ILLEGAL_PATTERNS:
+            if pat in url:
+                bad_urls.append((c["id"], url, f"包含非法模式 '{pat}'"))
+    if bad_urls:
+        print(f"❌ URL 合法性校验失败！发现 {len(bad_urls)} 个非法 URL：")
+        for cid, url, reason in bad_urls[:10]:
+            print(f"   {cid}: {url} ({reason})")
+        raise SystemExit(1)
+
     COMMUNITY_INDEX.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"✅ community/index.json 已同步：{len(courses)} 个社区课件")
 
