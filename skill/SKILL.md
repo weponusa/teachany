@@ -72,7 +72,7 @@ Phase 4  发布注册：执行 Git/Registry/Gallery 流程，验证线上 URL
 
 ## 核心规则（最终有效版）
 
-1. **模板优先**：新课件先复制 `templates/course-skeleton-v2.html`（分页模板）与 `templates/manifest-template.json`，不要从空白页手写平台接线。旧课件维护用 `course-skeleton.html`（v1 连续滚动）。
+1. **模板优先**：新课件先复制 `templates/course-skeleton-v2.html`（分页模板）与 `templates/manifest-template.json`，不要从空白页手写平台接线。旧课件维护用 `course-skeleton.html`（v1 连续滚动）。**复制后必须删除 `<head>` 内的占位符文档注释块**（`<!-- TeachAny v2 分页课件骨架 ... -->`），不得保留在最终课件产物中。
 2. **学习闭环优先**：每课必须有问题锚点、互动尝试、即时反馈、总结迁移；视觉炫技不能替代学习设计。
 3. **标准模块优先**：AI 学伴、导师卡片、TTS narrator、section hints、知识图谱优先用标准模块 API，不重复手写。
 4. **真实互动**：标题写"互动/实验/探究/地图/画布"就必须可操作；静态图不能伪装互动。
