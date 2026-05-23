@@ -16,6 +16,7 @@
 
   var SVG_NS = "http://www.w3.org/2000/svg";
   var BASE_PATH_CANDIDATES = [
+    "https://weponusa.github.io/teachany-courseware/scripts/teachany-kg-manifest.json",
     "../../assets/scripts/teachany-kg-manifest.json",
     "../../scripts/teachany-kg-manifest.json",
     "../assets/scripts/teachany-kg-manifest.json",
