@@ -397,7 +397,7 @@ function renderCourses(grid, courses, addCard = null) {
 /* ─── 加载"其他知识"图谱，提取课程ID ─── */
 async function loadOtherTreeCourseIds() {
   try {
-    const resp = await fetch('./data/trees/other/user-generated.json?t=' + Date.now(), { cache: 'no-store' });
+    const resp = await fetch('https://weponusa.github.io/teachany-courseware/data/trees/other/user-generated.json?t=' + Date.now(), { cache: 'no-store' });
     if (!resp.ok) return new Set();
     const tree = await resp.json();
     const ids = new Set();
