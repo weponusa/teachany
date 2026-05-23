@@ -37,7 +37,7 @@ const REGISTRY_FALLBACK_URL = './registry.json';
 const COMMUNITY_INDEX_URL = 'https://weponusa.github.io/teachany-courseware/community/index.json';
 const COURSEWARE_BASE_URL = 'https://weponusa.github.io/teachany-courseware'; // 真实课件实体统一在课件仓库
 const SELF_BASE_URL = 'https://weponusa.github.io/teachany';                  // 主站入口与 hero fallback
-const CACHE_KEY = 'teachany_registry_v3_17'; // v3.17: registry reads from teachany-courseware canonical source
+const CACHE_KEY = 'teachany_registry_v3_18'; // v3.18: Other Knowledge only follows canonical other tree
 
 function resolveCoursewareUrl(path) {
   if (!path) return COURSEWARE_BASE_URL + '/';
@@ -430,7 +430,7 @@ async function initGallery() {
       loadOtherTreeCourseIds()
     ]);
     
-    // 按 status + 知识图谱归属分组
+    // 按 status + 权威知识图谱归属分组
     const official = [];
     const community = [];
     const other = [];
@@ -439,10 +439,8 @@ async function initGallery() {
       if (c.status === 'official') {
         official.push(c);
       } else if (otherCourseIds.has(c.id)) {
-        // 属于"其他知识"图谱的课件，无论 status 是什么都归入 other
-        other.push(c);
-      } else if (c.status === 'course') {
-        // status=course 但不在图谱中的也归入 other（兼容旧数据）
+        // 只要属于权威 other/user-generated.json，才归入“其他知识”。
+        // 不再用 status=course 兜底，否则课标内节点（如古典诗词）会被误放入“其他知识”。
         other.push(c);
       } else {
         community.push(c);
