@@ -492,6 +492,8 @@ svg { width: 100%; height: 100%; display: block; }
 /* ─── 数据源配置 ─── */
 const TREE_API_BASE = 'https://api.github.com/repos/weponusa/teachany/contents/';
 const TREE_RAW_BASE = 'https://raw.githubusercontent.com/weponusa/teachany/main/';
+// v7.11: 知识树权威源迁到 teachany-courseware，主站只负责展示，避免两套 tree 分叉。
+const TREE_CANONICAL_BASE = 'https://weponusa.github.io/teachany-courseware/';
 const IS_GITHUB_PAGES = location.hostname.includes('github.io');
 
 /**
@@ -501,19 +503,32 @@ const IS_GITHUB_PAGES = location.hostname.includes('github.io');
  * tree 页面与 data 文件同源部署，优先读相对路径最稳定，也不会在控制台刷 403。
  */
 async function fetchTreeJSON(relativePath) {
-  // 策略 1：站点相对路径（GitHub Pages / 本地开发）
+  // 策略 1：权威源 teachany-courseware（主站不再维护第二套 data/trees）
+  try {
+    const canonicalUrl = TREE_CANONICAL_BASE + relativePath.replace(/^\/+/, '') + '?v=' + Date.now();
+    const resp = await fetch(canonicalUrl, { cache: 'no-store' });
+    if (resp.ok) {
+      console.log('[KnowledgeMap] ✅ via canonical courseware tree');
+      return resp.json();
+    }
+    console.warn('[KnowledgeMap] canonical tree status:', resp.status);
+  } catch (e) {
+    console.warn('[KnowledgeMap] canonical tree error:', e.message);
+  }
+
+  // 策略 2：站点相对路径（本地开发/旧部署兜底）
   try {
     const localUrl = relativePath + '?v=' + Date.now();
     const resp = await fetch(localUrl, { cache: 'no-store' });
     if (resp.ok) {
-      console.log('[KnowledgeMap] ✅ via local path');
+      console.log('[KnowledgeMap] ✅ via local path fallback');
       return resp.json();
     }
   } catch (e) {
     console.warn('[KnowledgeMap] local path error:', e.message);
   }
 
-  // 策略 2：GitHub Contents API（仅 GitHub Pages 上作为兜底，可能 403）
+  // 策略 3：GitHub Contents API（仅 GitHub Pages 上作为兜底，可能 403）
   if (IS_GITHUB_PAGES) {
     try {
       const apiUrl = TREE_API_BASE + relativePath + '?t=' + Date.now();
@@ -545,7 +560,7 @@ async function fetchTreeJSON(relativePath) {
     }
   }
 
-  // 策略 3：raw.githubusercontent.com — 最终兜底
+  // 策略 4：raw.githubusercontent.com — 最终兜底
   try {
     const rawUrl = TREE_RAW_BASE + relativePath + '?v=' + Date.now();
     const resp = await fetch(rawUrl, { cache: 'no-store' });
@@ -599,11 +614,24 @@ function escapeHtml(s) {
 }
 
 async function loadCurriculaConfig() {
+  // v7.11: curricula 与 data/trees 一起以 teachany-courseware 为权威源，避免主站旧配置继续引用旧树。
   try {
-    const resp = await fetch('data/curricula.json?v=' + Date.now(), { cache: 'no-store' });
-    if (resp.ok) CURRICULA = await resp.json();
+    const canonicalUrl = TREE_CANONICAL_BASE + 'data/curricula.json?v=' + Date.now();
+    const resp = await fetch(canonicalUrl, { cache: 'no-store' });
+    if (resp.ok) {
+      CURRICULA = await resp.json();
+      console.log('[KnowledgeMap] ✅ curricula via canonical courseware');
+    }
   } catch (e) {
-    console.warn('[KnowledgeMap] curricula.json 加载失败，使用内置 cn-national 兜底:', e.message);
+    console.warn('[KnowledgeMap] canonical curricula 加载失败，尝试本地兜底:', e.message);
+  }
+  if (!CURRICULA) {
+    try {
+      const resp = await fetch('data/curricula.json?v=' + Date.now(), { cache: 'no-store' });
+      if (resp.ok) CURRICULA = await resp.json();
+    } catch (e) {
+      console.warn('[KnowledgeMap] local curricula.json 加载失败，使用内置 cn-national 兜底:', e.message);
+    }
   }
   if (!CURRICULA) {
     // 兜底：仅中国课标
