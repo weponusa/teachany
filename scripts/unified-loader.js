@@ -31,11 +31,13 @@
 })();
 
 /* ─── 常量 ───────────────────────────────────── */
-const REGISTRY_URL = './registry.json';
+// v3.17: registry 权威源也统一到 teachany-courseware；主站 registry 只做本地/旧部署兜底。
+const REGISTRY_URL = 'https://weponusa.github.io/teachany-courseware/registry.json';
+const REGISTRY_FALLBACK_URL = './registry.json';
 const COMMUNITY_INDEX_URL = 'https://weponusa.github.io/teachany-courseware/community/index.json';
 const COURSEWARE_BASE_URL = 'https://weponusa.github.io/teachany-courseware'; // 真实课件实体统一在课件仓库
 const SELF_BASE_URL = 'https://weponusa.github.io/teachany';                  // 主站入口与 hero fallback
-const CACHE_KEY = 'teachany_registry_v3_16'; // v3.16: fix status override from community index (active→official|community)
+const CACHE_KEY = 'teachany_registry_v3_17'; // v3.17: registry reads from teachany-courseware canonical source
 
 function resolveCoursewareUrl(path) {
   if (!path) return COURSEWARE_BASE_URL + '/';
@@ -217,10 +219,16 @@ async function loadRegistry() {
     }
   }
 
-  // 2. 从主站 registry + courseware community/index 合并加载
-  console.log('[TeachAny] 从服务器加载 registry + courseware community index...');
+  async function fetchRegistryWithFallback() {
+    const primary = await fetchOptionalJson(REGISTRY_URL);
+    if (primary.courses && primary.courses.length) return primary;
+    return fetchOptionalJson(REGISTRY_FALLBACK_URL);
+  }
+
+  // 2. 从 courseware 权威 registry + courseware community/index 合并加载
+  console.log('[TeachAny] 从 courseware registry + community index 加载...');
   const [registryData, communityData] = await Promise.all([
-    fetchOptionalJson(REGISTRY_URL),
+    fetchRegistryWithFallback(),
     fetchOptionalJson(COMMUNITY_INDEX_URL),
   ]);
 
