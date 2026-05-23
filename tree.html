@@ -494,6 +494,8 @@ const TREE_API_BASE = 'https://api.github.com/repos/weponusa/teachany/contents/'
 const TREE_RAW_BASE = 'https://raw.githubusercontent.com/weponusa/teachany/main/';
 // v7.11: 知识树权威源迁到 teachany-courseware，主站只负责展示，避免两套 tree 分叉。
 const TREE_CANONICAL_BASE = 'https://weponusa.github.io/teachany-courseware/';
+// v7.11.1: other tree 更新后 GitHub Pages CDN 可能 max-age=600，raw main 用作即时权威源。
+const TREE_COURSEWARE_RAW_BASE = 'https://raw.githubusercontent.com/weponusa/teachany-courseware/main/';
 const IS_GITHUB_PAGES = location.hostname.includes('github.io');
 
 /**
@@ -503,6 +505,20 @@ const IS_GITHUB_PAGES = location.hostname.includes('github.io');
  * tree 页面与 data 文件同源部署，优先读相对路径最稳定，也不会在控制台刷 403。
  */
 async function fetchTreeJSON(relativePath) {
+  // 策略 0："其他知识"优先读 courseware main raw，绕开 GitHub Pages CDN 旧缓存。
+  if (relativePath === 'data/trees/other/user-generated.json') {
+    try {
+      const rawCoursewareUrl = TREE_COURSEWARE_RAW_BASE + relativePath + '?v=' + Date.now();
+      const resp = await fetch(rawCoursewareUrl, { cache: 'no-store' });
+      if (resp.ok) {
+        console.log('[KnowledgeMap] ✅ other tree via courseware raw main');
+        return resp.json();
+      }
+    } catch (e) {
+      console.warn('[KnowledgeMap] courseware raw other tree error:', e.message);
+    }
+  }
+
   // 策略 1：权威源 teachany-courseware（主站不再维护第二套 data/trees）
   try {
     const canonicalUrl = TREE_CANONICAL_BASE + relativePath.replace(/^\/+/, '') + '?v=' + Date.now();
