@@ -309,6 +309,7 @@ function renderCourseCard(course) {
     'ib-dp':        { zh: 'IB DP', en: 'IB Diploma', flag: '🎓' },
     'cambridge-al': { zh: 'A-Level', en: 'Cambridge A-Level', flag: '🇬🇧' },
     'ap':           { zh: 'AP', en: 'Advanced Placement', flag: '🇺🇸' },
+    'other':        { zh: '课标外', en: 'Outside Curriculum', flag: '🧩' },
   };
   const currKey = course.curriculum || 'cn-national';
   const currInfo = curriculumLabels[currKey];
@@ -449,7 +450,7 @@ async function initGallery() {
       } else if (otherCourseIds.has(c.id)) {
         // 只要属于权威 other/user-generated.json，才归入“其他知识”。
         // 不再用 status=course 兜底，否则课标内节点（如古典诗词）会被误放入“其他知识”。
-        other.push(c);
+        other.push({ ...c, curriculum: 'other' });
       } else {
         community.push(c);
       }
