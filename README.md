@@ -174,7 +174,7 @@ TeachAny 不是提示词模板，而是一套完整的 **AI 课件教学设计�
 
 ### 方式一：作为 AI Skill 使用（推荐） · AI Skill
 
-TeachAny 可以作为 AI 编程助手的 Skill 使用（推荐 CodeBuddy，也兼容 Cursor、Windsurf、Claude Code 等）：
+TeachAny 可以作为 AI 编程助手的 Skill 使用（**推荐 [WorkBuddy](https://workbuddy.tencent.com/)**，也兼容 CodeBuddy、Cursor、Claude Code 等）：
 
 1. 按上文稀疏克隆安装 TeachAny，并把 `skill/` 软链接到你的 AI 工具 Skill 目录。
 2. 开始对话，例如：

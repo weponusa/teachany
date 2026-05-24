@@ -138,7 +138,7 @@ Level 1：给模板填空 → Level 2：只给提示 → Level 3：独立完成�
 
 ### 方式一：作为 AI Skill 使用（推荐）
 
-TeachAny 可以作为 **Skill** 嵌入 AI 编程助手（**推荐使用 [WorkBuddy](https://workbuddy.tencent.com/)**，也支持 CodeBuddy、Cursor、Windsurf、Claude 等）：
+TeachAny 可以作为 **Skill** 嵌入 AI 编程助手（**推荐使用 [WorkBuddy](https://workbuddy.tencent.com/)**，也兼容 CodeBuddy、Cursor、Claude Code 等）：
 
 1. 将 `skill/SKILL_CN.md`（中文）或 `skill/SKILL.md`（英文）复制到你的 AI 助手的 skill 目录
 2. 将 `data/` 目录一同复制——其中包含 9 学科的知识树、练习题库、易错点、概念图谱等知识附件
