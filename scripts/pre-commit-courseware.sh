@@ -61,8 +61,8 @@ for DIR in $CHANGED_DIRS; do
   # v7.10.4：旧课件迁移后的轻量 redirect stub 不是课件本体，不跑四项课件质检。
   # 判定标准：跳转页 index.html 明确跳转到 teachany-courseware；manifest 可保留用于 registry 重建。
   if [ -f "$DIR/index.html" ] \
-    && grep -q "TeachAny 课件已迁移" "$DIR/index.html" \
-    && grep -q "weponusa.github.io/teachany-courseware" "$DIR/index.html"; then
+    && grep -q "weponusa.github.io/teachany-courseware" "$DIR/index.html" \
+    && grep -Eq "http-equiv=\"refresh\"|location\.replace" "$DIR/index.html"; then
     echo "  ↪️  $DIR 是旧 URL 轻量跳转页，跳过课件四项质检"
     continue
   fi
