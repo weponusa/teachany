@@ -2,53 +2,54 @@
   <img src="docs/assets/logo.svg" width="120" alt="TeachAny Logo">
 </p>
 
-<h1 align="center">🎓 TeachAny</h1>
+<h1 align="center">🎓 TeachAny（教我学）</h1>
 
 <p align="center">
-  <strong>Every school, every teacher, every parent — build your own Khan Academy for every child, at zero cost.</strong><br>
-  Turn any K-12 topic into an interactive, evidence-based learning experience — in minutes, with AI.
+  <strong>把任意知识点变成一节能讲、能玩、能练的互动课。</strong><br>
+  中文为主、英文辅助，面向中国教师、家长和学生；也支持国际课程与英文学习场景。<br>
+  <em>Turn any K-12 topic into an interactive lesson with explanation, practice, feedback, and learning paths.</em>
 </p>
 
 <p align="center">
-  <a href="#-quick-start"><img src="https://img.shields.io/badge/Quick_Start-30s-brightgreen?style=flat-square" alt="Quick Start"></a>
-  <a href="#-live-gallery"><img src="https://img.shields.io/badge/Live_Gallery-420+_courses-blue?style=flat-square" alt="Gallery"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL--3.0%20%2B%20Commercial-blue?style=flat-square" alt="Dual License"></a>
-  <a href="docs/TRADEMARK.md"><img src="https://img.shields.io/badge/TeachAny-trademark%20protected-orange?style=flat-square" alt="Trademark Policy"></a>
-  <a href="README_CN.md"><img src="https://img.shields.io/badge/中文文档-点击查看-red?style=flat-square" alt="Chinese README"></a>
+  <a href="#-快速开始--quick-start"><img src="https://img.shields.io/badge/快速开始-30秒-brightgreen?style=flat-square" alt="快速开始"></a>
+  <a href="#-在线课件库--live-gallery"><img src="https://img.shields.io/badge/在线课件库-420+课件-blue?style=flat-square" alt="在线课件库"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/授权-AGPL--3.0%20%2B%20商业授权-blue?style=flat-square" alt="双授权"></a>
+  <a href="docs/TRADEMARK.md"><img src="https://img.shields.io/badge/TeachAny-商标保护-orange?style=flat-square" alt="商标政策"></a>
+  <a href="README_CN.md"><img src="https://img.shields.io/badge/中文文档-点击查看-red?style=flat-square" alt="中文 README"></a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/weponusa/teachany/blob/main/README_CN.md">简体中文</a> ·
-  <a href="#-live-gallery">Live Gallery</a> ·
-  <a href="docs/getting-started.md">Getting Started</a> ·
-  <a href="docs/methodology.md">Methodology</a> ·
-  <a href="docs/TRADEMARK.md">Trademark</a> ·
-  <a href="CONTRIBUTING.md">Contributing</a>
+  <a href="#-在线课件库--live-gallery">在线课件库 Gallery</a> ·
+  <a href="#-快速开始--quick-start">快速开始 Quick Start</a> ·
+  <a href="docs/getting-started.md">安装指南 Getting Started</a> ·
+  <a href="docs/methodology.md">方法论 Methodology</a> ·
+  <a href="docs/TRADEMARK.md">商标政策 Trademark</a> ·
+  <a href="CONTRIBUTING.md">参与共建 Contributing</a>
 </p>
 
-> ⚖️ **Trademark Notice**: **TeachAny™** and **教我学™** are trademarks of the TeachAny project author, in continuous public use since 2026-04-07. These marks are **unregistered** but actively asserted under prior-use rights. Forks must rename; see [TRADEMARK.md](docs/TRADEMARK.md) for full policy.
+> ⚖️ **商标说明 · Trademark Notice**：**TeachAny™** 和 **教我学™** 是项目作者持续公开使用的项目标识，自 2026-04-07 起使用。标识尚未注册，但作者保留在先使用权益。Fork 或二次发行请更名；完整规则见 [TRADEMARK.md](docs/TRADEMARK.md)。
 
 ---
 
-## 🚀 One-Click Install
+## 🚀 快速开始 · Quick Start
 
-### ⚡ Recommended · Sparse Clone (Standard Preset)
+### ⚡ 推荐方式：稀疏克隆（标准预设） · Sparse Clone
 
-The standard preset includes the Skill core, all knowledge trees, curriculum-aligned KP data, and geography/history map assets (~110 MB working directory):
+标准预设包含 TeachAny Skill 核心、知识树、课标知识点数据，以及地理/历史地图资产（工作目录约 110 MB）。适合教师、家长和开发者快速开始：
 
 ```bash
 git clone --filter=blob:none --sparse https://github.com/weponusa/teachany.git
 cd teachany
 git sparse-checkout set --from-file .sparse-checkout-presets/standard.txt
 
-# Link skill to your AI tool
+# 将 TeachAny Skill 连接到你的 AI 工具
 ln -sfn "$PWD/skill" ~/.codebuddy/skills/teachany   # CodeBuddy
 ln -sfn "$PWD/skill" ~/.agents/skills/teachany      # Claude Code / Cursor / Codex CLI
 ```
 
-> 💡 **Why sparse clone?** The full repo is ~1.6 GB (including 420+ community courseware with audio/video assets). The standard preset gives you everything needed for courseware creation without downloading community courseware.
+> 💡 **为什么推荐稀疏克隆？** 完整仓库约 1.6 GB，包含 420+ 社区课件及音视频资产。标准预设已经足够用于制作课件，不需要下载全部社区课件。
 
-### Alternative · Full Clone (for contributors)
+### 备选方式：完整克隆（适合贡献者） · Full Clone
 
 ```bash
 git clone https://github.com/weponusa/teachany.git
@@ -56,12 +57,12 @@ cd teachany
 ln -sfn "$PWD/skill" ~/.codebuddy/skills/teachany
 ```
 
-> 🌐 **Browse without cloning**: All 420+ community courses are live on GitHub Pages — browse them directly at **https://weponusa.github.io/teachany/**. No local clone needed.
+> 🌐 **不克隆也能用**：所有 420+ 课件都已发布到 GitHub Pages，可直接访问 **https://weponusa.github.io/teachany/** 在线浏览。
 
-> 🧠 **AI users** see: [skill/README.md](./skill/README.md) — the Skill is modular: `skill/SKILL.md` (157 lines) is the entry point; heavy chapters load from `skill/references/`, `skill/guides/`, `skill/phases/` on demand.
+> 🧠 **AI 工具用户**：见 [skill/README.md](./skill/README.md)。TeachAny Skill 采用模块化设计，`skill/SKILL.md` 是入口，复杂章节会按需从 `skill/references/`、`skill/guides/`、`skill/phases/` 加载。
 
-### For Chinese Users 🇨🇳 (Gitee Mirror)
-**国内用户请使用 Gitee 镜像（无需翻墙，高速访问）：**
+### 国内用户 🇨🇳 · Gitee Mirror
+**国内访问 GitHub 不稳定时，可使用 Gitee 镜像：**
 ```bash
 git clone https://gitee.com/weponusa/teachany.git
 ```
@@ -70,13 +71,13 @@ git clone https://gitee.com/weponusa/teachany.git
 - 🌐 国际用户：See [Getting Started](docs/getting-started.md)
 - 🇨🇳 国内用户：查看 [一键安装指南](INSTALL_CN_SIMPLE.md)（推荐）
 
-> **What's included**: 14 subjects (Math, Physics, Chemistry, Biology, History, Geography, Chinese, English, Science, Info-Tech, Economics, CS, Humanities, Inquiry), 420+ courseware aligned with multiple curriculum standards.
+> **包含内容 · What's included**：覆盖数学、物理、化学、生物、历史、地理、语文、英语、科学、信息技术等 14+ 学科；420+ 互动课件；支持中国课标、IB、Cambridge、AP 等多套课程体系。
 
 ---
 
-## 🤔 The Problem
+## 🤔 我们要解决什么问题 · The Problem
 
-Most AI-generated educational content looks like this:
+现在很多 AI 生成的教学内容，看起来往往是这样：
 
 ```
 📝 Here are 5 key points about quadratic functions...
@@ -84,62 +85,62 @@ Most AI-generated educational content looks like this:
    A) (1, 0)   B) (-1, 0)   C) (0, 1)   D) (-1, 1)
 ```
 
-**Flat. Lifeless. No pedagogy.** Students get a wall of text with a multiple-choice quiz slapped on the end. No motivation, no scaffolding, no error diagnosis, no learning loop.
+**问题不在“内容不够多”，而在“没有教学设计”。** 学生看到的是一堵文字墙，最后再配几道选择题；缺少问题情境、认知脚手架、错误诊断和完整学习闭环。
 
-## ✨ The TeachAny Approach
+## ✨ TeachAny 怎么做 · The TeachAny Approach
 
-TeachAny is not a prompt template — it's a **complete instructional design system** that embeds 6+ learning science theories into AI-generated courseware:
+TeachAny 不是提示词模板，而是一套完整的 **AI 课件教学设计系统**。它把 6+ 学习科学理论嵌入到课件结构里，让 AI 生成的不只是“内容”，而是一节真正可学、可练、可反馈的课：
 
-| Dimension | Generic AI | TeachAny |
-|:----------|:-----------|:---------|
-| **Lesson Structure** | Random bullet points | ABT Narrative (And-But-Therefore) |
-| **Assessment** | "Correct ✓ / Wrong ✗" | Per-option error diagnosis ("You flipped the sign of h") |
-| **Difficulty** | One-size-fits-all | 3-level scaffolding (full → partial → none) |
-| **Subject Adaptation** | Same template for everything | 9 subject-specific frameworks |
-| **Theoretical Foundation** | None | 6+ learning science theories |
-| **Interaction** | Click next → read more | Canvas simulations, drag-and-drop, concept tests |
-| **PBL Decomposition** | "Here's a project idea, good luck" | Auto-decompose any PBL project into a systematic knowledge network mapped to curriculum standards |
+| 维度 Dimension | 普通 AI 内容 Generic AI | TeachAny |
+|:--|:--|:--|
+| **课程结构 Lesson Structure** | 随机列知识点 | ABT 叙事：已知 → 冲突 → 为什么要学 |
+| **练习反馈 Assessment** | “对了/错了” | 每个错误选项都有具体诊断 |
+| **难度设计 Difficulty** | 一刀切 | 三层脚手架：完整示范 → 部分提示 → 独立完成 |
+| **学科适配 Subject Adaptation** | 所有学科套同一模板 | 按学科定制互动方式、讲解逻辑和评价策略 |
+| **理论基础 Theoretical Foundation** | 基本没有 | 6+ 学习科学理论内置到课件结构 |
+| **互动方式 Interaction** | 点下一页、读更多 | Canvas 仿真、拖拽、概念测验、实时反馈 |
+| **PBL 拆解 PBL Decomposition** | 给一个项目建议就结束 | 自动拆成知识网络，映射课标节点并生成学习路径 |
 
-### 🧠 Built on Learning Science
+### 🧠 基于学习科学 · Built on Learning Science
 
 <table>
 <tr>
 <td width="33%">
 
-**ABT Narrative Structure**
-Every module opens with *And* (what you know) → *But* (the gap) → *Therefore* (why this lesson matters).
+**ABT 叙事结构 · Narrative**
+每个模块都从“已知事实”开始，制造认知冲突，再说明为什么这节课值得学。
 
 </td>
 <td width="33%">
 
-**Bloom's Taxonomy**
-Exercises span all 6 cognitive levels: Remember → Understand → Apply → Analyze → Evaluate → Create.
+**布鲁姆目标分类 · Bloom**
+练习覆盖记忆、理解、应用、分析、评价、创造等不同认知层级。
 
 </td>
 <td width="33%">
 
-**ConcepTest (Mazur)**
-Concept-check questions designed for 30-70% accuracy — the sweet spot for peer discussion.
+**概念测验 · ConcepTest**
+用关键问题暴露误解，既能自测，也适合课堂讨论和同伴互评。
 
 </td>
 </tr>
 <tr>
 <td>
 
-**Cognitive Load Theory (Sweller)**
-~75 words per card. One core question per module. New concept → immediate example.
+**认知负荷理论 · Cognitive Load**
+控制每张卡片的信息量，一个模块聚焦一个核心问题，新概念立刻配例子。
 
 </td>
 <td>
 
-**Mayer's Multimedia Principles**
-Contiguity, signaling, segmenting, pre-training — applied to every layout decision.
+**梅耶多媒体学习原则 · Mayer**
+把邻近、提示、分段、预训练等原则落实到页面布局和讲解节奏里。
 
 </td>
 <td>
 
-**Scaffolding Strategy**
-Level 1: template/fill-in → Level 2: hints only → Level 3: independent work.
+**脚手架策略 · Scaffolding**
+从模板填空，到只给提示，再到独立完成，逐步撤掉帮助。
 
 </td>
 </tr>
@@ -147,86 +148,87 @@ Level 1: template/fill-in → Level 2: hints only → Level 3: independent work.
 
 ---
 
-## 🖼️ Live Gallery
+## 🖼️ 在线课件库 · Live Gallery
 
-Browse and experience all courseware live at **[TeachAny Gallery](https://weponusa.github.io/teachany/)**.
+所有课件都可以直接在线打开体验：**[TeachAny 课件库](https://weponusa.github.io/teachany/)**。
 
-Featured official courseware:
+官方精选课件 · Featured official courseware:
 
-| Course | Subject | Grade | Highlights |
-|:-------|:--------|:------|:-----------|
-| [📐 Quadratic Functions](community/math-quadratic-function/) | Math | Grade 9 | Canvas graphing, vertex dragging, step-by-step derivation |
-| [📏 Linear Functions](community/math-linear-function/) | Math | Grade 8 | Slope/intercept sliders, real-time graph |
-| [📚 Congruent Triangles](community/math-congruent-triangles/) | Math | Grade 8 | SVG geometry, theorem comparison, proof scaffolding |
-| [🧬 Bio: Photosynthesis](community/bio-photosynthesis/) | Biology | Grade 7 | Canvas animation, drag-and-drop equation, TTS narration |
-| [⚡ Ohm's Law](community/phy-ohms-law/) | Physics | Grade 9 | Virtual circuit lab, V-I graphing, formula derivation |
-| [🌍 Global Monsoon](community/geo-monsoon/) | Geography | Grade 10 | Leaflet map, wind pattern visualization |
-| [🔬 Chem: Daily Life](community/chem-daily-life/) | Chemistry | Grade 9 | PhET simulation, Canvas animation, resource links |
-| [📖 Classical Poetry](community/course-classical-poetry/) | Chinese | Grade 7 | Close reading, annotation, writing scaffolding |
-| [🏛️ Industrial Revolution](community/hist-m-industrial-revolution/) | History | Grade 9 | Source analysis, timeline, multi-perspective comparison |
+| 课件 Course | 学科 Subject | 年级 Grade | 亮点 Highlights |
+|:--|:--|:--|:--|
+| [📐 二次函数 · Quadratic Functions](community/math-quadratic-function/) | 数学 Math | 九年级 Grade 9 | Canvas 作图、顶点拖拽、逐步推导 |
+| [📏 一次函数 · Linear Functions](community/math-linear-function/) | 数学 Math | 八年级 Grade 8 | 斜率/截距滑杆、实时函数图像 |
+| [📚 全等三角形 · Congruent Triangles](community/math-congruent-triangles/) | 数学 Math | 八年级 Grade 8 | SVG 几何、定理比较、证明脚手架 |
+| [🧬 光合作用 · Photosynthesis](community/bio-photosynthesis/) | 生物 Biology | 七年级 Grade 7 | Canvas 动画、拖拽方程、TTS 讲解 |
+| [⚡ 欧姆定律 · Ohm's Law](community/phy-ohms-law/) | 物理 Physics | 九年级 Grade 9 | 虚拟电路、V-I 图像、公式推导 |
+| [🌍 全球季风 · Global Monsoon](community/geo-monsoon/) | 地理 Geography | 高一 Grade 10 | Leaflet 地图、风带可视化 |
+| [🔬 生活中的化学 · Chem in Daily Life](community/chem-daily-life/) | 化学 Chemistry | 九年级 Grade 9 | PhET 仿真、Canvas 动画、资源链接 |
+| [📖 古典诗词 · Classical Poetry](community/course-classical-poetry/) | 语文 Chinese | 七年级 Grade 7 | 精读批注、意象分析、写作脚手架 |
+| [🏛️ 工业革命 · Industrial Revolution](community/hist-m-industrial-revolution/) | 历史 History | 九年级 Grade 9 | 史料分析、时间线、多视角比较 |
 
-> **420+ courseware** across 14 subjects, 33 official + 390+ community. All are **single-file HTML** — no build step, no dependencies. Open in any browser.
-
----
-
-## 🚀 Quick Start
-
-### Option 1: Use as an AI Skill (Recommended)
-
-TeachAny works as a **Skill** for AI coding assistants (CodeBuddy recommended; also works with Cursor, Windsurf, Claude Code, etc.):
-
-1. Install TeachAny via sparse clone (see above) and symlink `skill/` to your AI tool's skill directory
-2. Start a conversation:
-   ```
-   Create an interactive courseware for "Photosynthesis" (Grade 7 Biology)
-   ```
-3. The AI will follow TeachAny's methodology to produce a complete, interactive HTML courseware
-
-> **Note**: The skill only needs `skill/` + `data/`. Community coursewares are on the [TeachAny Gallery](https://weponusa.github.io/teachany/) — they are NOT bundled with the skill install.
-
-> **Note**: Since v6.0, TeachAny ships with built-in validation, packing, and community-sharing workflows inside the base skill. A separate "admin" skill and `GITHUB_TOKEN` are no longer required.
-
-### Option 2: Browse and Remix
-
-1. Visit the [Live Gallery](https://weponusa.github.io/teachany/)
-2. Open any courseware you like
-3. View source or clone the repo to modify for your own lesson
+> **420+ 课件**，覆盖 14+ 学科，包含官方示范课与社区共创课件。课件以 HTML 形式发布，浏览器打开即可学习，也方便教师二次改造。
 
 ---
 
-## 📖 How It Works
+## 🚀 使用方式 · How to Use
 
-TeachAny follows a structured 4-phase workflow:
+### 方式一：作为 AI Skill 使用（推荐） · AI Skill
+
+TeachAny 可以作为 AI 编程助手的 Skill 使用（推荐 CodeBuddy，也兼容 Cursor、Windsurf、Claude Code 等）：
+
+1. 按上文稀疏克隆安装 TeachAny，并把 `skill/` 软链接到你的 AI 工具 Skill 目录。
+2. 开始对话，例如：
+   ```
+   为“光合作用”（七年级生物）做一个互动课件。
+   Create an interactive courseware for "Photosynthesis" (Grade 7 Biology).
+   ```
+3. AI 会按 TeachAny 的教学设计流程，生成完整的互动 HTML 课件。
+
+> **说明**：Skill 安装只需要 `skill/` + `data/`。社区课件已在线发布在 [TeachAny 课件库](https://weponusa.github.io/teachany/)，不需要全部打包进 Skill。
+
+> **说明**：从 v6.0 起，TeachAny 基础 Skill 已内置验证、打包和社区分享流程，不再需要单独的 admin skill 或 `GITHUB_TOKEN`。
+
+### 方式二：浏览并改造 · Browse and Remix
+
+1. 打开 [在线课件库](https://weponusa.github.io/teachany/)
+2. 选择一个接近你教学目标的课件
+3. 查看源码或克隆仓库，改成自己的课堂版本
+
+---
+
+## 📖 它如何工作 · How It Works
+
+TeachAny 采用结构化的 4 阶段流程，从教学目标出发，逐步生成可交互、可评估、可发布的课件：
 
 ```
-Phase 0: Define          Phase 1: Design          Phase 2: Adapt          Phase 3: Build
+阶段 0：定义目标        阶段 1：教学设计        阶段 2：学科适配        阶段 3：构建发布
+Phase 0: Define      Phase 1: Design      Phase 2: Adapt      Phase 3: Build
 ┌─────────────┐    ┌──────────────────┐    ┌──────────────────┐    ┌────────────────┐
-│ Answer the   │    │ ABT narrative    │    │ Subject-specific │    │ HTML/CSS/JS    │
-│ 6 Questions  │───▶│ Content audit    │───▶│ framework        │───▶│ Interactive    │
-│ (who, what,  │    │ Prerequisite     │    │ Five-lens method │    │ courseware     │
-│  why, how)   │    │ chain            │    │ Scaffolding      │    │ + Assessment   │
+│ 回答 6 个问题 │    │ ABT 叙事结构       │    │ 学科专属框架       │    │ HTML/CSS/JS    │
+│ 学生/目标/场景│───▶│ 内容审查          │───▶│ 五镜头方法         │───▶│ 互动课件        │
+│ 难点/验证方式 │    │ 先备知识链        │    │ 脚手架设计        │    │ 练习与反馈      │
 └─────────────┘    └──────────────────┘    └──────────────────┘    └────────────────┘
 ```
 
-### The 6 Pre-Design Questions
+### 课前 6 问 · The 6 Pre-Design Questions
 
-Before any code is written, TeachAny requires answering:
+写代码之前，TeachAny 会先把教学问题问清楚：
 
-| # | Question | Purpose |
-|:-:|:---------|:--------|
-| 1 | **Who are the students?** | Determines difficulty and language |
-| 2 | **What prerequisites?** | Decides if pre-test is needed |
-| 3 | **What should they be able to DO?** | Turns "knowing" into observable tasks |
-| 4 | **What real-world scenario?** | Provides learning motivation |
-| 5 | **Where do students get stuck?** | Drives error diagnosis design |
-| 6 | **How to verify they learned?** | Determines assessment strategy |
+| # | 问题 Question | 作用 Purpose |
+|:-:|:--|:--|
+| 1 | **学生是谁？ Who are the students?** | 决定语言、难度和例子 |
+| 2 | **需要哪些先备知识？ What prerequisites?** | 判断是否需要前测和补缺 |
+| 3 | **学完要会做什么？ What should they do?** | 把“知道”变成可观察任务 |
+| 4 | **真实情境是什么？ What scenario?** | 提供学习动机和应用场景 |
+| 5 | **学生容易卡在哪里？ Where do they get stuck?** | 决定错误诊断和提示设计 |
+| 6 | **如何验证学会了？ How to verify learning?** | 决定练习、反馈和评价方式 |
 
-### Subject-Specific Frameworks
+### 学科专属框架 · Subject-Specific Frameworks
 
-TeachAny doesn't use one-size-fits-all. Each subject has its own:
+TeachAny 不用一套模板打天下。不同学科有不同的讲解方式、互动形态和评价方式：
 
-| Subject | Teaching Approach | Interaction Type | Assessment Style |
-|:--------|:-----------------|:-----------------|:-----------------|
+| 学科 Subject | 教学思路 Teaching Approach | 互动方式 Interaction | 评价方式 Assessment |
+|:--|:--|:--|:--|
 | **Math** | Visual intuition + algebraic reasoning + generalization | Graphing, dragging, step-by-step derivation | Standard + explanation questions |
 | **Physics** | Observation + modeling + quantitative analysis | Parameter sliders, experiment prediction | Prediction + calculation + explanation |
 | **Biology** | Structure → process → function | Labeling, sorting, flowchart puzzles | Diagram + process explanation |
@@ -237,31 +239,31 @@ TeachAny doesn't use one-size-fits-all. Each subject has its own:
 | **Chemistry** | Macro phenomenon → micro explanation → symbolic representation | Experiment flow, equation balancing | Experiment explanation + structured response |
 | **IT** | Task-driven + step-by-step demo + debugging | Click operations, flowcharts, code execution | Task completion + process check |
 
-### The Five-Lens Method
+### 五镜头方法 · The Five-Lens Method
 
-For any difficult concept, select 2-3 lenses:
+遇到难概念时，从下面 5 个角度中选 2-3 个来设计讲解：
 
 ```
-👁️ See It      → Observe phenomena, examples, data
-🔧 Break It    → Decompose structure, steps, components
-💡 Explain It  → Clarify cause, mechanism, rules
-⚖️ Compare It  → Contrast with similar/opposite/wrong examples
-🎯 Transfer It → Apply to new contexts to verify understanding
+👁️ 看见它 See It      → 观察现象、例子和数据
+🔧 拆开它 Break It    → 拆结构、步骤和组成部分
+💡 解释它 Explain It  → 讲清原因、机制和规则
+⚖️ 比较它 Compare It  → 和相似/相反/错误例子对照
+🎯 迁移它 Transfer It → 换个情境应用，验证是否真懂
 ```
 
-### 🧩 PBL Project Decomposition
+### 🧩 PBL 项目拆解 · Project Decomposition
 
-TeachAny can automatically decompose any **Project-Based Learning** goal into a systematic knowledge network:
+TeachAny 可以把任意 PBL 项目目标，自动拆成系统化的知识网络：
 
-- Input: a project description (e.g., "Design a smart greenhouse", "Build a weather App")
-- Output: a complete learning path mapped to curriculum standards (CN / AP / Cambridge / IB / US CCSS)
-- Philosophy: **PBL becomes the teaching subject** — not a supplement to disciplinary learning, but the core vehicle that drives knowledge acquisition
+- 输入：一个项目描述，例如“设计智能温室”“制作天气 App”
+- 输出：映射到课标的完整学习路径，支持中国课标、AP、Cambridge、IB、US CCSS 等体系
+- 理念：**PBL 不只是学科学习的补充，而可以成为教学主体**，用真实项目反向组织知识学习
 
-This makes it possible to start from a real-world project and work backward to identify exactly which knowledge nodes students need, in what order, across which subjects.
+这样教师可以从真实项目出发，倒推学生需要补哪些知识节点、按什么顺序学、涉及哪些学科。
 
 ---
 
-## 🏗️ Project Structure
+## 🏗️ 项目结构 · Project Structure
 
 ```
 teachany/
@@ -342,7 +344,7 @@ teachany/
 
 ---
 
-## 🎨 Design System
+## 🎨 设计系统 · Design System
 
 All TeachAny courseware shares a consistent visual language:
 
@@ -364,7 +366,7 @@ All TeachAny courseware shares a consistent visual language:
 
 ---
 
-## 📚 Documentation
+## 📚 文档入口 · Documentation
 
 | Document | Description |
 |:---------|:------------|
@@ -375,7 +377,7 @@ All TeachAny courseware shares a consistent visual language:
 
 ---
 
-## 🤝 Contributing
+## 🤝 参与共建 · Contributing
 
 We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
@@ -389,7 +391,7 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ---
 
-## 💡 Original Contributions
+## 💡 原创贡献 · Original Contributions
 
 The following frameworks and methods are **original creations** of the TeachAny project:
 
@@ -407,7 +409,7 @@ The following frameworks and methods are **original creations** of the TeachAny 
 
 ---
 
-## 📄 Academic References
+## 📄 学术参考 · Academic References
 
 TeachAny's methodology is grounded in peer-reviewed learning science:
 
@@ -422,7 +424,7 @@ TeachAny's methodology is grounded in peer-reviewed learning science:
 
 ---
 
-## 📜 License & Trademark
+## 📜 授权与商标 · License & Trademark
 
 **Dual License**:
 - 🟢 **Non-commercial use** (personal, public schools, academic research, open-source forks): free under [AGPL-3.0](LICENSE) — see [license.html](license.html) for an illustrated summary.
