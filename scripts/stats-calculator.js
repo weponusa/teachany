@@ -52,12 +52,25 @@ class StatsCalculator {
   }
 
   /* ─── Load curricula + all trees ─── */
+  // v5.36: 权威源在 teachany-courseware；主站 data/trees/ 已清空，优先读 courseware。
   async loadAllTrees() {
-    try {
-      const res = await fetch('./data/curricula.json?t=' + Date.now());
-      this.curricula = await res.json();
-    } catch (e) {
-      console.warn('[Stats] curricula.json load failed, using fallback:', e);
+    const COURSEWARE_BASE = 'https://weponusa.github.io/teachany-courseware/';
+
+    // 1. 优先从 courseware 权威源读取 curricula.json
+    let curriculaLoaded = false;
+    for (const url of [COURSEWARE_BASE + 'data/curricula.json', './data/curricula.json']) {
+      try {
+        const res = await fetch(url + '?t=' + Date.now());
+        if (!res.ok) continue;
+        this.curricula = await res.json();
+        curriculaLoaded = true;
+        console.log('[Stats] curricula loaded from', url);
+        break;
+      } catch (e) {
+        console.warn('[Stats] curricula.json load failed:', url, e);
+      }
+    }
+    if (!curriculaLoaded) {
       this.curricula = { curricula: [] };
     }
 
@@ -70,25 +83,29 @@ class StatsCalculator {
 
     let totalNodes = 0;
     const loadPromises = treeFiles.map(async (meta) => {
-      try {
-        const res = await fetch('./' + meta.file + '?t=' + Date.now());
-        if (!res.ok) return null;
-        const tree = await res.json();
-        let nodeCount = 0;
-        for (const d of (tree.domains || [])) {
-          nodeCount += (d.nodes || []).length;
+      // 2. 优先从 courseware 权威源读取 tree 文件
+      for (const base of [COURSEWARE_BASE, './']) {
+        try {
+          const res = await fetch(base + meta.file + '?t=' + Date.now());
+          if (!res.ok) continue;
+          const tree = await res.json();
+          let nodeCount = 0;
+          for (const d of (tree.domains || [])) {
+            nodeCount += (d.nodes || []).length;
+          }
+          return {
+            file: meta.file,
+            curriculum: meta.curriculum,
+            subject: tree.subject || '',
+            domainCount: (tree.domains || []).length,
+            nodeCount,
+          };
+        } catch (e) {
+          // try next base
         }
-        return {
-          file: meta.file,
-          curriculum: meta.curriculum,
-          subject: tree.subject || '',
-          domainCount: (tree.domains || []).length,
-          nodeCount,
-        };
-      } catch (e) {
-        console.warn('[Stats] tree load failed:', meta.file, e);
-        return null;
       }
+      console.warn('[Stats] tree load failed:', meta.file);
+      return null;
     });
 
     const results = (await Promise.all(loadPromises)).filter(Boolean);
