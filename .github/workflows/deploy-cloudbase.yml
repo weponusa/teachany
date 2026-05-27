@@ -45,6 +45,7 @@ jobs:
           COURSEWARE_ROOT: ${{ github.workspace }}/teachany-courseware
           DEPLOY_SHA: ${{ github.sha }}
         run: |
+          set -euo pipefail
           bash scripts/build-cloudbase-dist.sh
           cat dist/cloudbase/DEPLOY_SHA.txt
 
@@ -62,13 +63,14 @@ jobs:
           TCB_SECRET_ID: ${{ secrets.TCB_SECRET_ID }}
           TCB_SECRET_KEY: ${{ secrets.TCB_SECRET_KEY }}
         run: |
+          set -euo pipefail
           if [[ -z "${TCB_SECRET_ID:-}" || -z "${TCB_SECRET_KEY:-}" ]]; then
             echo "::warning::TCB_SECRET_ID / TCB_SECRET_KEY 未配置，跳过 CloudBase 部署"
             echo "请在 GitHub → Settings → Secrets 添加腾讯云 API 密钥"
             exit 0
           fi
-          tcb login --apiKeyId "$TCB_SECRET_ID" --apiKey "$TCB_SECRET_KEY" --tokenFile /tmp/tcb_token
-          tcb hosting deploy dist/cloudbase -e ai-native-d8g706ji7cd5f763c
+          tcb login --apiKeyId "$TCB_SECRET_ID" --apiKey "$TCB_SECRET_KEY"
+          tcb hosting deploy dist/cloudbase --env-id ai-native-d8g706ji7cd5f763c
 
       - name: Verify dual CDN sync
         working-directory: teachany-opensource
