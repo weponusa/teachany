@@ -30,14 +30,27 @@
   } catch(e) { /* ignore */ }
 })();
 
-/* ─── 常量 ───────────────────────────────────── */
-// v3.17: registry 权威源也统一到 teachany-courseware；主站 registry 只做本地/旧部署兜底。
-const REGISTRY_URL = 'https://weponusa.github.io/teachany-courseware/registry.json';
+/* ─── CDN 基址（GitHub Pages / CloudBase 双端） ─── */
+function isCloudBaseHost() {
+  return /tcloudbaseapp\.com$/i.test(location.hostname);
+}
+
+function getCoursewareBaseUrl() {
+  if (isCloudBaseHost()) return location.origin + '/teachany-courseware';
+  return 'https://weponusa.github.io/teachany-courseware';
+}
+
+function getSelfBaseUrl() {
+  if (isCloudBaseHost()) return location.origin + '/teachany';
+  return 'https://weponusa.github.io/teachany';
+}
+
+const COURSEWARE_BASE_URL = getCoursewareBaseUrl();
+const SELF_BASE_URL = getSelfBaseUrl();
+const REGISTRY_URL = COURSEWARE_BASE_URL + '/registry.json';
 const REGISTRY_FALLBACK_URL = './registry.json';
-const COMMUNITY_INDEX_URL = 'https://weponusa.github.io/teachany-courseware/community/index.json';
-const COURSEWARE_BASE_URL = 'https://weponusa.github.io/teachany-courseware'; // 真实课件实体统一在课件仓库
-const SELF_BASE_URL = 'https://weponusa.github.io/teachany';                  // 主站入口与 hero fallback
-const CACHE_KEY = 'teachany_registry_v3_18'; // v3.18: Other Knowledge only follows canonical other tree
+const COMMUNITY_INDEX_URL = COURSEWARE_BASE_URL + '/community/index.json';
+const CACHE_KEY = 'teachany_registry_v3_19'; // v3.19: dual CDN base URL
 
 function resolveCoursewareUrl(path) {
   if (!path) return COURSEWARE_BASE_URL + '/';
