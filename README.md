@@ -57,15 +57,14 @@ cd teachany
 ln -sfn "$PWD/skill" ~/.codebuddy/skills/teachany
 ```
 
-> 🌐 **不克隆也能用**：所有 420+ 课件都已发布到 GitHub Pages，可直接访问 **https://weponusa.github.io/teachany/** 在线浏览。
+> 🌐 **不克隆也能用**：所有课件都已发布到 **https://www.teachany.cn/**，可直接在线浏览。
 
 > 🧠 **AI 工具用户**：见 [skill/README.md](./skill/README.md)。TeachAny Skill 采用模块化设计，`skill/SKILL.md` 是入口，复杂章节会按需从 `skill/references/`、`skill/guides/`、`skill/phases/` 加载。
 
-### 国内用户 🇨🇳 · Gitee Mirror
-**国内访问 GitHub 不稳定时，可使用 Gitee 镜像：**
-```bash
-git clone https://gitee.com/weponusa/teachany.git
-```
+### 国内用户 🇨🇳 · TeachAny.cn
+**国内访问请直接使用正式站点：**
+
+https://www.teachany.cn/
 
 **详细安装指南**：
 - 🌐 国际用户：See [Getting Started](docs/getting-started.md)
@@ -150,7 +149,7 @@ TeachAny 不是提示词模板，而是一套完整的 **AI 课件教学设计�
 
 ## 🖼️ 在线课件库 · Live Gallery
 
-所有课件都可以直接在线打开体验：**[TeachAny 课件库](https://weponusa.github.io/teachany/)**。
+所有课件都可以直接在线打开体验：**[TeachAny 课件库](https://www.teachany.cn/)**。
 
 官方精选课件 · Featured official courseware:
 
@@ -184,13 +183,13 @@ TeachAny 可以作为 AI 编程助手的 Skill 使用（**推荐 [WorkBuddy](htt
    ```
 3. AI 会按 TeachAny 的教学设计流程，生成完整的互动 HTML 课件。
 
-> **说明**：Skill 安装只需要 `skill/` + `data/`。社区课件已在线发布在 [TeachAny 课件库](https://weponusa.github.io/teachany/)，不需要全部打包进 Skill。
+> **说明**：Skill 安装只需要 `skill/` + `data/`。社区课件已在线发布在 [TeachAny 课件库](https://www.teachany.cn/)，不需要全部打包进 Skill。
 
 > **说明**：从 v6.0 起，TeachAny 基础 Skill 已内置验证、打包和社区分享流程，不再需要单独的 admin skill 或 `GITHUB_TOKEN`。
 
 ### 方式二：浏览并改造 · Browse and Remix
 
-1. 打开 [在线课件库](https://weponusa.github.io/teachany/)
+1. 打开 [在线课件库](https://www.teachany.cn/)
 2. 选择一个接近你教学目标的课件
 3. 查看源码或克隆仓库，改成自己的课堂版本
 
