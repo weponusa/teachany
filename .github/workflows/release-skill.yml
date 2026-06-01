@@ -1,0 +1,70 @@
+name: Release Skill
+
+# 轻量 skill 发布：本仓库已与课件分离，只打包 teachany/ 目录。
+# 地图等大资源运行时按「本地 → teachany.cn → GitHub」自动获取，不随包下载。
+on:
+  push:
+    tags:
+      - 'skill-v*'        # 推送 skill-v7.14.1 之类标签时建 Release
+  workflow_dispatch:       # 手动触发仅产出 artifact，不建 Release
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine version
+        id: ver
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/skill-v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/skill-v}"
+          else
+            VERSION="$(grep -m1 '^version:' teachany/SKILL.md | sed -E 's/^version:[[:space:]]*//; s/["'\'' ]//g')"
+            [ -z "$VERSION" ] && VERSION="dev-$(date +%Y%m%d)"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Skill version: ${VERSION}"
+
+      - name: Package skill (teachany/)
+        run: |
+          mkdir -p dist
+          ZIP="dist/teachany-skill-v${{ steps.ver.outputs.version }}.zip"
+          zip -rq "$ZIP" teachany \
+            -x '*/.DS_Store' -x '*/__pycache__/*' -x '*.pyc' -x '*/.git/*'
+          ls -lh dist/
+          echo "Zipped: $ZIP"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: teachany-skill
+          path: dist/*.zip
+          retention-days: 30
+
+      - name: Publish GitHub Release (only on skill-v* tag)
+        if: startsWith(github.ref, 'refs/tags/skill-v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip
+          name: "TeachAny Skill ${{ github.ref_name }}"
+          body: |
+            ## TeachAny Skill · ${{ github.ref_name }}
+
+            纯 skill 包（已与课件分离，轻量）。地图等大资源在运行时按
+            **本地 → teachany.cn → GitHub** 顺序自动获取，无需随包下载。
+
+            ### 安装
+            1. 下载下方 `teachany-skill-v*.zip`
+            2. 解压得到 `teachany/`，放到 `~/.agents/skills/teachany/`（覆盖已有目录）
+            3. 重启 CodeBuddy / WorkBuddy 即可
+
+            ### 说明
+            - 历史/地理课件用 `data-teachany-map` 声明式标准模块即可，地图资源走双平台 CDN。
+            - 课件成品与站点见 teachany-courseware 仓库 / https://www.teachany.cn/
+          draft: false
+          prerelease: false
