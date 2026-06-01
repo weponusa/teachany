@@ -3,7 +3,7 @@
 
 Subcommands:
 - audit: inspect completeness/readiness of the knowledge layer
-- lookup: return compact graph-first topic context for courseware generation
+- lookup: return KCP (knowledge context pack) for courseware generation
 - find-node: find the best-matching tree node for a given node_id or name
 - link: link a courseware to its tree node (update status + courses path)
 
@@ -25,6 +25,11 @@ ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
 NODE_INDEX_PATH = ROOT / "data" / "node-index.json"
 MD_DIR = ROOT / "skill" / "data" / "kp-md"
+
+_SCRIPTS_DIR = Path(__file__).resolve().parent
+if str(_SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS_DIR))
+from knowledge_context import build_kcp, emit_kcp_file, print_kcp_human
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -985,12 +990,14 @@ def build_parser() -> argparse.ArgumentParser:
     audit.add_argument("--subject", help="Restrict to one subject, e.g. math / 数学")
     audit.add_argument("--json", action="store_true", help="Print JSON report")
 
-    lookup = sub.add_parser("lookup", help="Lookup compact topic context from the knowledge layer")
-    lookup.add_argument("--topic", required=True, help="Topic keyword, e.g. 一次函数 / photosynthesis")
+    lookup = sub.add_parser("lookup", help="Lookup knowledge context pack (KCP) for courseware generation")
+    lookup.add_argument("--node-id", help="Exact node_id (preferred; use with course manifest)")
+    lookup.add_argument("--topic", help="Topic keyword when node_id unknown, e.g. 一次函数")
     lookup.add_argument("--subject", help="Optional subject filter")
     lookup.add_argument("--top", type=int, default=3, help="Maximum number of matches to return")
     lookup.add_argument("--errors", type=int, default=3, help="Max error items per node")
-    lookup.add_argument("--exercises", type=int, default=3, help="Max exercise items per node")
+    lookup.add_argument("--exercises", type=int, default=6, help="Max exercise items per node")
+    lookup.add_argument("--emit-kcp", metavar="PATH", help="Write knowledge-context.json to PATH")
     lookup.add_argument("--json", action="store_true", help="Print JSON result")
 
     find_node = sub.add_parser("find-node", help="Find the best-matching tree node for a node_id or name")
@@ -1022,32 +1029,94 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 0
 
     if args.command == "lookup":
-        # 方案 Y+：优先使用基于 node-index.json + MD 的 v2 lookup
-        v2 = lookup_v2(args.topic, subject=args.subject, top=args.top)
-        if v2 and v2.get("match_count", 0) > 0:
-            if args.json:
-                print(json.dumps(v2, ensure_ascii=False, indent=2))
-            else:
-                print_lookup_v2_human(v2)
-            return 0
-        # v2 无结果时，回退到旧 bundles 路径（保留兼容）
-        matches = find_matches(bundles, topic=args.topic, subject=args.subject)
-        node_index, node_home = build_global_indices(bundles)
-        compact = [
-            compact_node_summary(bundle, node, node_index, node_home, args.errors, args.exercises)
-            for _, bundle, node in matches[: args.top]
-        ]
-        payload = {
-            "topic": args.topic,
-            "subject": resolve_subject(args.subject) if args.subject else None,
-            "match_count": len(matches),
-            "matches": compact,
-            "_source": "legacy-bundles",
-        }
+        if not args.node_id and not args.topic:
+            parser.error("lookup requires --node-id or --topic")
+
+        if args.node_id:
+            kcp = build_kcp(
+                args.node_id,
+                topic=args.topic,
+                subject=args.subject,
+                max_exercises=args.exercises,
+                max_errors=args.errors,
+            )
+            payload = {
+                "topic": args.topic or kcp.get("topic"),
+                "subject": args.subject,
+                "match_count": 1,
+                "matches": [kcp],
+                "_source": "kcp",
+            }
+        else:
+            payload = None
+            v2 = lookup_v2(args.topic, subject=args.subject, top=args.top)
+            if v2 and v2.get("match_count", 0) > 0:
+                kcp_matches = []
+                for m in v2.get("matches", [])[: args.top]:
+                    nid = m.get("node_id")
+                    if nid:
+                        kcp_matches.append(
+                            build_kcp(
+                                nid,
+                                topic=args.topic,
+                                subject=args.subject or m.get("subject"),
+                                max_exercises=args.exercises,
+                                max_errors=args.errors,
+                            )
+                        )
+                payload = {
+                    "topic": args.topic,
+                    "subject": args.subject,
+                    "match_count": v2.get("match_count", 0),
+                    "matches": kcp_matches or v2.get("matches"),
+                    "_source": "kcp+v2" if kcp_matches else "node-index-v2",
+                }
+            if payload is None:
+                matches = find_matches(bundles, topic=args.topic, subject=args.subject)
+                node_index, node_home = build_global_indices(bundles)
+                compact = [
+                    compact_node_summary(bundle, node, node_index, node_home, args.errors, args.exercises)
+                    for _, bundle, node in matches[: args.top]
+                ]
+                kcp_matches = []
+                for item in compact:
+                    nid = (item.get("node") or {}).get("id")
+                    if nid:
+                        kcp_matches.append(
+                            build_kcp(
+                                nid,
+                                topic=args.topic,
+                                subject=args.subject,
+                                max_exercises=args.exercises,
+                                max_errors=args.errors,
+                            )
+                        )
+                payload = {
+                    "topic": args.topic,
+                    "subject": resolve_subject(args.subject) if args.subject else None,
+                    "match_count": len(matches),
+                    "matches": kcp_matches or compact,
+                    "_source": "kcp+legacy-bundles" if kcp_matches else "legacy-bundles",
+                }
+
+        if args.emit_kcp:
+            out = Path(args.emit_kcp)
+            if not out.is_absolute():
+                out = ROOT / out
+            primary = (payload.get("matches") or [{}])[0]
+            if isinstance(primary, dict) and primary.get("node_id"):
+                emit_kcp_file(primary, out)
+
         if args.json:
             print(json.dumps(payload, ensure_ascii=False, indent=2))
         else:
-            print_lookup_human(compact, args.topic)
+            for i, m in enumerate(payload.get("matches") or [], 1):
+                if isinstance(m, dict) and m.get("curriculum_excerpts") is not None:
+                    if i > 1:
+                        print()
+                    print_kcp_human(m)
+                elif i == 1:
+                    print_lookup_v2_human(payload) if payload.get("_source", "").endswith("v2") else print_lookup_human([m], args.topic)
         return 0
 
     if args.command == "find-node":

@@ -17,9 +17,33 @@
 - **禁止**把 K12 常规课、探究课（`inquiry-project`）挂进「其他知识」；探究课应挂到已存在的课标 `node_id`（如 `math-m-linear-function`）。
 - 跑 `python3 scripts/preflight-check.py` 检查 Python/Git/Node/ffmpeg/TTS。
 
+## Phase 0.5：知识层注入（强制 · P0）
+
+目标：课件内容必须来自可审计的知识层数据，而不是仅凭模型记忆。
+
+在 Phase 1 之前**必须**完成：
+
+```bash
+# 在 teachany-courseware 根目录执行（已确认 node_id 后）
+python3 scripts/knowledge_layer.py lookup \
+  --node-id <node_id> \
+  --subject <history|math|physics|...> \
+  --emit-kcp community/<course-id>/knowledge-context.json
+```
+
+1. 将输出的 `knowledge-context.json` 保存到课件目录。
+2. 在 `PLAN.md` 增加 **「知识层引用」** 表：列出使用的 `cp-*` / `ex-*` / `q-*` / `err-*` 编号。
+3. Phase 1 教学骨架中的**前测/例题讲解/后测题干**须能对应 KCP 中的条目 ID。
+4. 若 `gaps` 含 `exercises<1` 或 `common_errors<1`：  
+   - 优先从 KCP 课标摘录设计题干；  
+   - 仍不足时 **必须** `web_search` 补充，并在 PLAN 标注 `source: web_fallback`；  
+   - 禁止把 `[待补充]` 写进面向学生的正文。
+
+详细标准见 `teachany/docs/content-richness-standards.md`。
+
 ## Phase 1：教学骨架
 
-输出一个可执行教学计划：
+输出一个可执行教学计划（**须引用 Phase 0.5 的 KCP**）：
 - 课型：`new-concept` / `review` / `experiment` / `special-topic` / `inquiry-project`。
 - 问题锚点：学生一进入页面先选择/输入要解决的问题。
 - ABT 叙事：And（已有经验）→ But（冲突/困惑）→ Therefore（本课任务）。

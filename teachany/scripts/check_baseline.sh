@@ -334,10 +334,10 @@ if [ "$is_geo_course" = true ]; then
     warn "未检测到本地 GeoJSON 资源；发布前需复制到 assets/maps/"
   fi
 
-  if [ -f "$COURSE_DIR/assets/maps/hillshade.jpg" ] || grep -qE "hillshade\.jpg|hillshade" "$HTML"; then
-    pass "地图配置包含本地 hillshade 地形底图"
-  else
-    warn "未检测到 hillshade.jpg；地理/历史地图建议使用本地地形底图"
+  if grep -qE '"hillshade"\s*:' "$HTML"; then
+    fail "地图 config 含废弃 hillshade（与 GeoJSON 错位 · 见 topics/historical-maps-projection.md）"
+  elif grep -qE "data-teachany-map=|teachany-historical-map\.js" "$HTML"; then
+    pass "地形由标准模块 Web Mercator XYZ 瓦片提供（Carto + Esri Shaded Relief）"
   fi
 
   if grep -qE "L\.tileLayer\s*\(|DataV|datav|amap|map\.baidu|lbs\.qq\.com|tianditu|openstreetmap|cartodb|esri" "$HTML"; then
@@ -462,6 +462,63 @@ elif $has_audio_ctl; then
   warn "只有 TTS 控制，无 AI 学伴"
 else
   warn "未检测到 AI 学伴/TTS 控制按钮"
+fi
+echo ""
+
+# ─── B-20～B-24 · 知识层 / 内容丰富度（v2 课件 FAIL，v1 WARN）────
+echo "[B-20] 知识上下文包 (knowledge-context.json)"
+KCP_FILE="$COURSE_DIR/knowledge-context.json"
+PLAN_FILE="$COURSE_DIR/PLAN.md"
+kcp_fail() { if $is_v2; then fail "$1"; else warn "$1"; fi; }
+kcp_pass() { pass "$1"; }
+
+if [ -f "$KCP_FILE" ]; then
+  kcp_pass "knowledge-context.json 存在"
+  excerpt_count=$(python3 -c "
+import json
+k=json.load(open('$KCP_FILE',encoding='utf-8'))
+print(len(k.get('curriculum_excerpts') or []))
+" 2>/dev/null || echo 0)
+  ex_count=$(python3 -c "
+import json
+k=json.load(open('$KCP_FILE',encoding='utf-8'))
+print(len(k.get('exercises') or []))
+" 2>/dev/null || echo 0)
+  err_count=$(python3 -c "
+import json
+k=json.load(open('$KCP_FILE',encoding='utf-8'))
+print(len(k.get('common_errors') or []))
+" 2>/dev/null || echo 0)
+  if [ "${excerpt_count:-0}" -ge 2 ]; then
+    kcp_pass "课标摘录 ${excerpt_count} 条 (≥2)"
+  else
+    kcp_fail "课标摘录仅 ${excerpt_count} 条 (需 ≥2，见 content-richness-standards)"
+  fi
+  if [ "${ex_count:-0}" -ge 1 ]; then
+    kcp_pass "KCP 例题 ${ex_count} 道"
+  else
+    kcp_fail "KCP 无预置例题 (需 ≥1 或 PLAN 标注 web_fallback)"
+  fi
+  if [ "${err_count:-0}" -ge 1 ]; then
+    kcp_pass "KCP 易错点 ${err_count} 条"
+  else
+    kcp_fail "KCP 无易错点 (需 ≥1)"
+  fi
+  if [ -f "$PLAN_FILE" ] && grep -q '知识层引用' "$PLAN_FILE"; then
+    kcp_pass "PLAN.md 含「知识层引用」小节"
+  elif $is_v2; then
+    kcp_fail "PLAN.md 缺少「知识层引用」小节"
+  else
+    warn "PLAN.md 建议补充「知识层引用」"
+  fi
+else
+  kcp_fail "缺少 knowledge-context.json — 运行: python3 scripts/knowledge_layer.py lookup --node-id <id> --emit-kcp $KCP_FILE"
+fi
+
+if grep -q '\[待补充\]' "$HTML" 2>/dev/null; then
+  kcp_fail "HTML 含 [待补充] 面向学生可见 (B-24)"
+else
+  kcp_pass "正文无 [待补充] 占位 (B-24)"
 fi
 echo ""
 

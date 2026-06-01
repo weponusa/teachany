@@ -32,7 +32,7 @@
 - **#18** TTS 走 `scripts/tts-engine.py` 或标准 narrator；不要在课件内手写 Web Speech 控制器。
 - **#19** Hero 图必须是知识结构图，不是纯装饰图；无生图能力时用 `gen-hero-svg.py` 兜底。
 - **#20** 历史/地理地图先查 `find-map.py`，优先复用仓库/远端地图库。
-- **#21** 地图使用标准模块和本地/远端资源；禁止在线瓦片硬依赖和自造投影逻辑。
+- **#21** 历史/地理地图必须用 `data-teachany-map` + `teachany-historical-map.js`；投影与对齐以 `topics/historical-maps-projection.md` 为准：**EPSG:3857 Web Mercator + `L.tileLayer` XYZ 底图**；**禁止** `config.hillshade` 与 `L.imageOverlay` 全球等距圆柱 JPG；疆域 GeoJSON 为 WGS84 `[lng,lat]`，城市 `cities` 为 `[lat,lng,…]`，`fitBounds` 为 `[[南纬,西经],[北纬,东经]]`；禁止课件内手写 Leaflet/ECharts graphic 铺底。
 
 ## E. 知识树与发布
 

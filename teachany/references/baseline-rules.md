@@ -28,6 +28,18 @@ TeachAny 只有一套标准：所有课件必须完整包含以下 19 项基线�
 18. 问题锚点模块（学生进入即选择/输入要解决的问题）。
 19. 移动端与小程序 web-view 准备（375px 可用，按钮 ≥44px，无 hover-only 核心功能）。
 
+## 内容丰富度基线（B-20～B-24 · P0 起）
+
+与 Phase 0.5 知识层注入配套，详见 `teachany/docs/content-richness-standards.md`。
+
+20. **知识上下文包**：`community/<course-id>/knowledge-context.json` 存在，由 `knowledge_layer.py lookup --node-id ... --emit-kcp` 生成。
+21. **课标摘录**：KCP 中 `curriculum_excerpts` ≥ 2 条（或有效文本合计 ≥ 300 字）。
+22. **例题依据**：KCP 中 `exercises` ≥ 1 道，且习题讲解或测验页引用其 `id`。
+23. **易错点**：KCP 中 `common_errors` ≥ 1 条，出现在互动反馈或易错提示中。
+24. **禁止占位**：面向学生的 HTML 正文不得含 `[待补充]` 字样。
+
+存量课件：B-20～B-24 在 `check_baseline.sh` 中暂为 WARN；**新制作课件**应按 FAIL 处理。
+
 ## 关键禁令
 
 - 禁止用静态图伪装互动。
@@ -59,7 +71,8 @@ python3 scripts/rebuild-index.py
 | 全文讲解无操作 | 每个核心概念至少一个可操作点 |
 | AI 学伴只放 FAB | 正文靠前加导师卡片 |
 | 图谱手写 SVG | 用 `data-teachany-kg` 标准模块 |
-| 地图手写 Leaflet | 用 TeachAny 地图模块和 `find-map.py` |
+| 地图手写 Leaflet | 用 `data-teachany-map` + `find-map.py`；必读 `topics/historical-maps-projection.md` |
+| config 写 `hillshade` | 删除；用 Web Mercator XYZ（模块默认 `terrain`） |
 | TTS 用 <5KB 静音 MP3 | 用 `tts-engine.py` 生成真实语音 |
 | 图片用 <5KB 纯色占位 PNG | 生成真实 Hero SVG 或教学示意图 |
 | Hero 后堆叠裸 `<img>` 标签 | 图片嵌入对应 section 内部或用 `<figure>` 包裹 |

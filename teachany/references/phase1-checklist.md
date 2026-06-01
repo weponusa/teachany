@@ -56,7 +56,7 @@
 | Canvas 参数滑块 | 函数、物理、数据变化 | 参数、实时图像、结论反馈 |
 | SVG 拖拽/匹配 | 结构、流程、分类 | 拖拽目标、判定规则、错因反馈 |
 | ConcepTest | 概念误区 | 题干、正确项、3 个干扰项、诊断 |
-| Leaflet 标准地图 | 历史/地理 | `data-teachany-map` 配置、本地 GeoJSON、hillshade |
+| Leaflet 标准地图 | 历史/地理 | `data-teachany-map`、GeoJSON、**无 hillshade**；必读 `topics/historical-maps-projection.md` |
 | 记录单/反思单 | 探究课/PBL | 假设、证据、结论、反思 |
 
 判定要求：交互不能只是装饰，必须改变学生判断或产生诊断反馈。

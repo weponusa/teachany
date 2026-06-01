@@ -78,7 +78,8 @@ Phase 4  发布注册：执行 Git/Registry/Gallery 流程，验证线上 URL（
 3. **标准模块优先**：AI 学伴、导师卡片、TTS narrator、section hints、知识图谱优先用标准模块 API，不重复手写。
 4. **真实互动**：标题写"互动/实验/探究/地图/画布"就必须可操作；静态图不能伪装互动。
 5. **知识图谱入树**：优先匹配官方课标 `node_id` 并挂到对应学科树；PBL 路径拆解产生的**课标外**知识点使用 `ext-{8位hex}`（与 `pbl-path.js` 一致），`manifest.node_id` 与 `<meta name="teachany-node">` 必须同为该 ext id，课件进入 `data/trees/other/user-generated.json`（Gallery「其他知识」）。探究课/常规 K12 课**不得**占用「其他知识」；`free_mode` 不能代替 ext 挂树。
-6. **地图库优先 + 双平台资源**：历史/地理先用 `scripts/find-map.py` 查 bundled map library，再考虑外部数据或生成。
+6. **地图库优先 + 双平台资源 + 投影对齐**：历史/地理先用 `scripts/find-map.py` 查 bundled map library，再考虑外部数据或生成。
+   - **制作地图前必读** `topics/historical-maps-projection.md`：底图仅 Web Mercator XYZ 瓦片；**禁止** `hillshade` JPG + `imageOverlay`（与 GeoJSON 错位）；`fitBounds` / `cities` 坐标格式见该文。
    - 无需全量下载地图包：`scripts/apply-historical-maps.py` 把图层引用统一写成相对 manifest 路径，
      运行时 `teachany-historical-map.js` 按 **本地 → teachany.cn → GitHub** 顺序回退获取。
    - teachany.cn（Cloudflare）国内外均可访问，作为首选远程源；GitHub（jsDelivr/raw）为备份，互为冗余。
@@ -110,6 +111,7 @@ Phase 4  发布注册：执行 Git/Registry/Gallery 流程，验证线上 URL（
 | 数学/科学仿真 | `tech/math-animations.md`（数学课件**必读**）, `tech/science-simulations.md`（物理/化学/生物课件**必读**） |
 | **可嵌入 iframe 资源总目录** | `tech/iframe-resources.md`（**数理化必读**，PhET/GeoGebra/Desmos/3Dmol/LearningApps 等完整清单） |
 | 地图 / 3D / PPTX | `topics/maps-and-3d.md` |
+| **历史地图投影与对齐（必读）** | `topics/historical-maps-projection.md` |
 | 示例 | `guides/examples.md` |
 
 ## 常用脚本
