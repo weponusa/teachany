@@ -57,8 +57,8 @@ fi
 # 可用 TEACHANY_MAP_REMOTE_BASE 覆盖首选源。
 remote_bases=(
   "${TEACHANY_MAP_REMOTE_BASE:-https://www.teachany.cn/assets/maps}"
-  "https://cdn.jsdelivr.net/gh/weponusa/teachany@main/assets/maps"
-  "https://raw.githubusercontent.com/weponusa/teachany/main/assets/maps"
+  "https://cdn.jsdelivr.net/gh/weponusa/teachany-courseware@main/assets/maps"
+  "https://raw.githubusercontent.com/weponusa/teachany-courseware/main/assets/maps"
 )
 
 if command -v curl >/dev/null 2>&1; then

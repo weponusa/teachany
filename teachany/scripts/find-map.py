@@ -42,8 +42,8 @@ LOCAL_MAP_ROOTS = [
 REMOTE_MAP_BASES = [
     (__import__("os").environ.get("TEACHANY_MAP_REMOTE_BASE", "").rstrip("/")
      or "https://www.teachany.cn/assets/maps"),
-    "https://cdn.jsdelivr.net/gh/weponusa/teachany@main/assets/maps",
-    "https://raw.githubusercontent.com/weponusa/teachany/main/assets/maps",
+    "https://cdn.jsdelivr.net/gh/weponusa/teachany-courseware@main/assets/maps",
+    "https://raw.githubusercontent.com/weponusa/teachany-courseware/main/assets/maps",
 ]
 # 向后兼容：旧代码可能引用单数 REMOTE_MAP_BASE
 REMOTE_MAP_BASE = REMOTE_MAP_BASES[0]

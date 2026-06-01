@@ -38,8 +38,8 @@ MAP_SOURCE_MODE = os.environ.get("TEACHANY_MAP_SOURCE", "auto").strip().lower()
 # 双平台远程基址：teachany.cn 优先（国内外均可访问），GitHub 作为备份
 REMOTE_BASES = [
     os.environ.get("TEACHANY_MAP_REMOTE_BASE", "").rstrip("/") or "https://www.teachany.cn/assets/maps",
-    "https://cdn.jsdelivr.net/gh/weponusa/teachany@main/assets/maps",
-    "https://raw.githubusercontent.com/weponusa/teachany/main/assets/maps",
+    "https://cdn.jsdelivr.net/gh/weponusa/teachany-courseware@main/assets/maps",
+    "https://raw.githubusercontent.com/weponusa/teachany-courseware/main/assets/maps",
 ]
 
 LEAFLET_CSS = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">'

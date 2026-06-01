@@ -4,9 +4,12 @@ name: Release Skill
 # 地图等大资源运行时按「本地 → teachany.cn → GitHub」自动获取，不随包下载。
 on:
   push:
+    branches: [main]       # skill 一有变动即滚动发布 skill-latest
+    paths:
+      - 'teachany/**'
     tags:
-      - 'skill-v*'        # 推送 skill-v7.14.1 之类标签时建 Release
-  workflow_dispatch:       # 手动触发仅产出 artifact，不建 Release
+      - 'skill-v*'         # 推送 skill-v7.14.1 之类标签时建正式版本 Release
+  workflow_dispatch:        # 手动触发仅产出 artifact，不建 Release
 
 permissions:
   contents: write
@@ -46,7 +49,8 @@ jobs:
           path: dist/*.zip
           retention-days: 30
 
-      - name: Publish GitHub Release (only on skill-v* tag)
+      # A) 正式版本发布：仅在 skill-v* 标签推送时
+      - name: Publish versioned Release (on skill-v* tag)
         if: startsWith(github.ref, 'refs/tags/skill-v')
         uses: softprops/action-gh-release@v2
         with:
@@ -56,15 +60,34 @@ jobs:
             ## TeachAny Skill · ${{ github.ref_name }}
 
             纯 skill 包（已与课件分离，轻量）。地图等大资源在运行时按
-            **本地 → teachany.cn → GitHub** 顺序自动获取，无需随包下载。
+            **本地 → teachany.cn → GitHub(teachany-courseware)** 顺序自动获取，无需随包下载。
 
             ### 安装
             1. 下载下方 `teachany-skill-v*.zip`
             2. 解压得到 `teachany/`，放到 `~/.agents/skills/teachany/`（覆盖已有目录）
             3. 重启 CodeBuddy / WorkBuddy 即可
-
-            ### 说明
-            - 历史/地理课件用 `data-teachany-map` 声明式标准模块即可，地图资源走双平台 CDN。
-            - 课件成品与站点见 teachany-courseware 仓库 / https://www.teachany.cn/
           draft: false
           prerelease: false
+
+      # B) 滚动最新发布：push 到 main 且改动了 teachany/ 时，自动刷新 skill-latest
+      - name: Publish rolling latest (on push to main)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip
+          tag_name: skill-latest
+          name: "TeachAny Skill (latest · v${{ steps.ver.outputs.version }})"
+          body: |
+            ## TeachAny Skill · 最新滚动版（v${{ steps.ver.outputs.version }}）
+
+            随 main 改动自动更新。纯 skill 包，地图资源运行时按
+            **本地 → teachany.cn → GitHub(teachany-courseware)** 自动获取。
+
+            > 需要可追溯的固定版本请用 `skill-v*` 标签发布的版本化 Release。
+
+            ### 安装
+            1. 下载 `teachany-skill-v*.zip`，解压得到 `teachany/`
+            2. 放到 `~/.agents/skills/teachany/`（覆盖），重启 CodeBuddy / WorkBuddy
+          draft: false
+          prerelease: false
+          make_latest: false

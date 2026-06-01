@@ -2,7 +2,7 @@
 
 ## 地图资源
 
-地图库不再打包进 skill。优先从仓库根 `assets/maps/` 或远端 `weponusa/teachany/main/assets/maps` 按需读取。
+地图库不再打包进 skill（已迁至 teachany-courseware 仓库）。运行时按「本地 → teachany.cn → GitHub(teachany-courseware)」双平台获取；制作时可用 `scripts/find-map.py` 按需下载。
 
 ```bash
 python3 "$TEACHANY_SKILL/scripts/find-map.py" 唐
