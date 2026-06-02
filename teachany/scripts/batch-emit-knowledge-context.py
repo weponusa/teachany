@@ -26,13 +26,21 @@ def load_registry() -> list[dict]:
     return data.get("courses") or []
 
 
+def load_kp_index() -> dict[str, str]:
+    if not (ROOT / "data/kp/_index.json").is_file():
+        return {}
+    return json.loads((ROOT / "data/kp/_index.json").read_text(encoding="utf-8")).get("kps", {})
+
+
 def course_dirs(
     *,
     subject: str | None,
     stage: str | None,
     node_ids: list[str] | None,
+    all_with_kp: bool = False,
 ) -> list[tuple[str, Path]]:
     rows: list[tuple[str, Path]] = []
+    kp_index = load_kp_index() if all_with_kp else {}
     if node_ids:
         for nid in node_ids:
             d = COMMUNITY / nid
@@ -46,6 +54,8 @@ def course_dirs(
             continue
         nid = entry.get("node_id") or entry.get("id")
         if not nid:
+            continue
+        if all_with_kp and nid not in kp_index:
             continue
         if subject and entry.get("subject") != subject:
             continue
@@ -106,6 +116,7 @@ def main() -> int:
     parser.add_argument("--subject", help="Filter registry by subject, e.g. history")
     parser.add_argument("--stage", help="high | middle (when registry lacks stage)")
     parser.add_argument("--node-id", action="append", dest="node_ids")
+    parser.add_argument("--all-with-kp", action="store_true", help="All community courses with kp satellite")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -113,6 +124,7 @@ def main() -> int:
         subject=args.subject,
         stage=args.stage,
         node_ids=args.node_ids,
+        all_with_kp=args.all_with_kp,
     )
     if not targets:
         print("No matching community courses.", file=sys.stderr)
