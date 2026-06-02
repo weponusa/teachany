@@ -142,7 +142,10 @@ node "$TEACHANY_SKILL/scripts/validate-courseware.cjs" "$COURSE_DIR"
 **发布课件（Agent Phase 4 默认入口）**：
 
 ```bash
+# Phase 3.5a：先问教师反馈密码 → set-feedback-password.py 写入 manifest
+# Phase 3.5b：再问是否上传 → 用户同意后：
 export TEACHANY_COURSEWARE_REPO=~/CodeBuddy/一次函数/teachany-courseware
+export TEACHANY_UPLOAD_CONFIRMED=1
 bash "$TEACHANY_SKILL/scripts/teachany-publish.sh" <course-id>
 ```
 
