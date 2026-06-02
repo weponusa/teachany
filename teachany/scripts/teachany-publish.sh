@@ -39,6 +39,15 @@ if [ -z "$COURSE_ID" ]; then
   exit 1
 fi
 
+if [ "${TEACHANY_UPLOAD_CONFIRMED:-}" != "1" ]; then
+  echo ""
+  echo "❌ Phase 3.5b：发布前必须征得用户同意上传。"
+  echo "   请先完成 phases/phase3-5-gates.md 中的询问，再执行："
+  echo "   TEACHANY_UPLOAD_CONFIRMED=1 bash \"$0\" $COURSE_ID"
+  echo ""
+  exit 3
+fi
+
 can_push() {
   if [ -n "${GH_TOKEN:-}" ]; then return 0; fi
   ssh -T git@github.com -o BatchMode=yes -o ConnectTimeout=8 2>&1 | grep -qi "successfully authenticated" && return 0

@@ -53,6 +53,16 @@ if [ -z "$COURSE_ID" ]; then
   exit 1
 fi
 
+if [ "${TEACHANY_UPLOAD_CONFIRMED:-}" != "1" ]; then
+  echo ""
+  echo "❌ Phase 3.5b：未确认上传。"
+  echo "   须先询问用户是否上传，同意后再执行："
+  echo "   TEACHANY_UPLOAD_CONFIRMED=1 bash \"$0\" $COURSE_ID"
+  echo "   详见: phases/phase3-5-gates.md"
+  echo ""
+  exit 3
+fi
+
 TARGET_DIR="$COURSEWARE_REPO/community/$COURSE_ID"
 SOURCE_DIR="$SOURCE_REPO/community/$COURSE_ID"
 
@@ -99,6 +109,15 @@ fi
 for f in index.html manifest.json; do
   [ -f "$TARGET_DIR/$f" ] || { echo "❌ 缺少 $f"; exit 1; }
 done
+
+echo "[0/8] Phase 3.5a feedback manifest..."
+FB_SCRIPT="$SCRIPT_DIR/set-feedback-password.py"
+[ -f "$FB_SCRIPT" ] || FB_SCRIPT="$COURSEWARE_REPO/scripts/set-feedback-password.py"
+if [ -f "$FB_SCRIPT" ]; then
+  python3 "$FB_SCRIPT" --check "$TARGET_DIR/manifest.json" || exit 1
+else
+  echo "  ⚠️  未找到 set-feedback-password.py，跳过 feedback 校验"
+fi
 
 NODE_ID="$(python3 -c "
 import re, pathlib

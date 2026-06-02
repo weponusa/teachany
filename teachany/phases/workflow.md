@@ -116,25 +116,41 @@ python3 "$TEACHANY_SKILL/scripts/check_node_id.py" <node_id>
 
 19 项基线全部通过后才进入 Phase 3.5。
 
-## Phase 3.5：询问是否上传（强制）
+## Phase 3.5：交付闸门（强制 · 两步缺一不可）
 
-Phase 3 验证通过后，**必须先问用户**，再决定是否进入 Phase 4。不要默认上传，也不要在未询问时直接 `git push`。
+Phase 3 验证通过后、**任何发布脚本之前**，必须完成 **3.5a 反馈密码** 与 **3.5b 是否上传**。完整话术与命令见 **`phases/phase3-5-gates.md`**。
 
-**标准话术（可略改，意思不变）**：
+**Agent 禁止行为**：
+- 禁止课件做完后直接 `git push` / `auto-publish` / `teachany-publish`
+- 禁止未询问就替教师设置或留空反馈密码
+- 禁止在用户未同意上传时声称「已上线」「已发布」
 
-> 课件已在本地制作并通过质检，目录：`community/<course-id>/`。  
-> 是否上传到 TeachAny 社区并挂入知识树（Gallery + teachany.cn）？  
-> - 回复 **上传** / **发布** / **是** → 执行 Phase 4  
-> - 回复 **不上传** / **仅本地** / **拒绝** → 结束，交付本地路径与自检摘要，不跑发布脚本
+### 3.5a 反馈密码（必须先问教师）
 
-**判定规则**：
+询问教师设置课堂反馈口令（及可选提示），写入 `manifest.json`：
+
+```bash
+python3 "$TEACHANY_SKILL/scripts/set-feedback-password.py" \
+  "$COURSE_DIR/manifest.json" --password '<口令>' --hint '<提示>'
+# 教师明确不要：--decline
+python3 "$TEACHANY_SKILL/scripts/set-feedback-password.py" --check "$COURSE_DIR/manifest.json"
+```
+
+### 3.5b 是否上传（必须先问用户）
+
+用户同意上传后：
+
+```bash
+export TEACHANY_UPLOAD_CONFIRMED=1
+bash "$TEACHANY_SKILL/scripts/teachany-publish.sh" <course-id>
+```
 
 | 用户回复 | Agent 行为 |
 |----------|------------|
-| 明确同意上传 | 进入 Phase 4，跑发布脚本，验证 URL + 挂树 |
-| 明确拒绝 / 仅本地 | **不**调用 `publish_course.sh` / `auto-publish.sh`；交付说明标「仅本地，未上传」 |
-| 未表态就要求「完成」 | 先完成 Phase 3 交付摘要，并再次询问是否上传 |
-| 上下文已明确「制作并发布」 | 可视为已同意，直接进入 Phase 4（须在交付中注明依据） |
+| 明确同意上传 | `TEACHANY_UPLOAD_CONFIRMED=1` → Phase 4 → 验证 URL + 挂树 |
+| 明确拒绝 / 仅本地 | **不**调用任何发布脚本；交付标「仅本地，未上传」 |
+| 未表态就要求「完成」 | 给出本地验收摘要，**再次询问** 3.5a + 3.5b |
+| 上下文已明确「制作并发布」 | 可视为已同意上传（交付中注明依据）；**仍须完成 3.5a 反馈密码询问** |
 
 **本地制作完成 ≠ 发布完成**：拒绝上传时，课件算「制作交付完成」，不算「线上发布完成」。
 

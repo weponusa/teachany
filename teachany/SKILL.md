@@ -66,8 +66,9 @@ Phase 0  定义与检索：学生/学段/主题/课型，定位 node_id
 Phase 1  教学骨架：问题锚点 + ABT 叙事 + 互动/评估设计（必须完整，不可跳过）
 Phase 2  构建页面：复制模板，填内容，接入标准模块与资源
 Phase 3  验证交付：运行质量检查，浏览器/命令闭环验证
-Phase 3.5 询问上传：问用户是否拒绝上传；未拒绝才进入 Phase 4
-Phase 4  发布注册：**必须**走 `teachany-publish.sh`（自动选直推或 Worker PR），验证 **teachany.cn** 200 + 知识树挂树（仅用户同意后）
+Phase 3.5a 反馈密码：**必须询问**教师并写入 manifest（`set-feedback-password.py`）；见 `phases/phase3-5-gates.md`
+Phase 3.5b 询问上传：**必须询问**是否发布；同意则 `TEACHANY_UPLOAD_CONFIRMED=1` 再进 Phase 4
+Phase 4  发布注册：**必须**走 `teachany-publish.sh`（自动选直推或 Worker PR），验证 **teachany.cn** 200 + 知识树挂树
 ```
 
 完整细节见 `phases/workflow.md`；发布细节见 `phases/packaging.md`。
@@ -92,7 +93,7 @@ Phase 4  发布注册：**必须**走 `teachany-publish.sh`（自动选直推或
 11. **闭环验证**：说"完成/修复/可用"前必须跑命令或浏览器验证，并给出关键输出。URL 未返回 200 不得声称发布完成。
 12. **一类问题一起扫**：修一个模块或模式后，检查同类文件、模板、courseware/opensource 双仓是否同步。
 13. **图片资产必须真实**：禁止在 hero/header 后面堆叠裸 `<img>` 标签；禁止 assets/ 下放 <5KB 的占位图（webp/png/jpg）。概念图、示意图必须嵌入对应教学 section 内部。如果图片资源暂未生成，不引用、不放文件——宁缺勿占。
-14. **上传须用户确认**：Phase 3 通过后必须询问是否上传到社区并挂树；用户明确拒绝则不得调用 `publish_course.sh` / `auto-publish.sh`；用户同意或上下文已要求「制作并发布」时再执行 Phase 4。
+14. **Phase 3.5 双闸门（强制）**：① **必须询问**反馈密码并写入 manifest（`set-feedback-password.py`，见 `phases/phase3-5-gates.md`）；② **必须询问**是否上传。禁止未询问就 `teachany-publish` / `auto-publish` / `git push`。上传须 `TEACHANY_UPLOAD_CONFIRMED=1`（用户同意或任务已写明「制作并发布」）。
 
 完整硬规则、基线清单与反模式：按需读 `references/baseline-rules.md`、`RULES.md`。
 
@@ -102,6 +103,8 @@ Phase 4  发布注册：**必须**走 `teachany-publish.sh`（自动选直推或
 | --- | --- |
 | 完整 Phase 细节 | `phases/workflow.md` |
 | 打包、Registry、Gallery、Git 发布 | `phases/packaging.md` |
+| Phase 3.5 反馈密码 + 上传确认 | `phases/phase3-5-gates.md` |
+| 学生反馈密码字段说明 | 课件仓 `FEEDBACK_SETUP.md` |
 | 动画工具分层选择 | `tech/animation-toolchain.md` |
 | TTS、视频音频 | `phases/video-audio.md` |
 | 19 项基线与反模式 | `references/baseline-rules.md` |

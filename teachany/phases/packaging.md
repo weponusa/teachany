@@ -16,10 +16,19 @@ python3 "$COURSEWARE_REPO/scripts/validate-courseware.py" <course-id>
 node "$TEACHANY_SKILL/scripts/validate-courseware.cjs" "$COURSE_DIR"
 ```
 
+## Phase 3.5 闸门（先于 Phase 4 · 强制）
+
+发布脚本**不会**代替 Agent 询问用户。必须先完成：
+
+1. **3.5a 反馈密码**：问教师口令 → `set-feedback-password.py` 写入 manifest → `--check` 通过。详见 `phases/phase3-5-gates.md`。
+2. **3.5b 是否上传**：问用户是否上传；仅同意后 `export TEACHANY_UPLOAD_CONFIRMED=1`。
+
+未设置 `TEACHANY_UPLOAD_CONFIRMED=1` 时，`auto-publish.sh` / `teachany-publish.sh` **将拒绝执行**。
+
 ## Agent Phase 4 铁律
 
-1. 课件制作完成且验证通过后，**必须执行发布脚本**，不得只留本地文件。
-2. **默认入口**：`teachany-publish.sh <course-id>`（自动检测凭据）。
+1. **仅当 3.5a + 3.5b 完成后**才执行发布脚本；不得只留本地却声称已上线。
+2. **默认入口**：`TEACHANY_UPLOAD_CONFIRMED=1 teachany-publish.sh <course-id>`（自动检测凭据）。
 3. **禁止**在未跑 `rebuild-index.py` 的情况下 `git add -A && git push`（会导致线上不挂树）。
 4. **禁止**单课发布时用 `git add -A` 把无关未跟踪 KCP/报告一并推上去；用 `auto-publish.sh` 默认的限定暂存。
 5. 声称「已上线」前必须：`curl -sI https://www.teachany.cn/community/<course-id>/` 返回 **200**，且知识树节点 **status=active**、**courses 含该 id**。
