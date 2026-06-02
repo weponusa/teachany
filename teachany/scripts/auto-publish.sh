@@ -1,147 +1,261 @@
 #!/usr/bin/env bash
 # ============================================================
-# TeachAny Auto-Publish · v2.1 (双仓库版)
+# TeachAny Auto-Publish · v3.0
 # ============================================================
-# 维护者直推流程：
-#   1. 从主仓库或指定目录读取课件
-#   2. 同步真实课件到 teachany-courseware/community/<course-id>/
-#   3. 在 teachany-courseware 跑 rebuild-index（注册 + 索引）
-#   4. git add / commit / push
-#   5. 验证 courseware Pages 实体 URL
+# 维护者直推（本地 Mac + SSH/GH_TOKEN）：
+#   验证 → rebuild-index（挂树+registry+kg）→ sync node-index
+#   → 限定范围 git commit/push → 验证 teachany.cn + 远端树节点
+#
+# 用法:
+#   bash auto-publish.sh <course-id> [--all-changes] [--no-verify] [--dry-run]
+#   bash auto-publish.sh chn-h-red-chamber
+#
+# 环境:
+#   TEACHANY_COURSEWARE_REPO  课件仓路径（默认 ~/CodeBuddy/一次函数/teachany-courseware）
+#   TEACHANY_REPO             主仓（仅当课件需从 opensource 复制时）
+#   GH_TOKEN                  无 SSH 时用 HTTPS push
 # ============================================================
 
-set -e
+set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 _CONFIG="$HOME/.teachany/config"
-if [ -f "$_CONFIG" ]; then
-  # shellcheck source=/dev/null
-  source "$_CONFIG"
-fi
+[ -f "$_CONFIG" ] && source "$_CONFIG"
 
-COURSE_ID="${1:-}"
-COURSEWARE_REPO="${2:-${TEACHANY_COURSEWARE_REPO:-$HOME/CodeBuddy/一次函数/teachany-courseware}}"
-SOURCE_REPO="${3:-${TEACHANY_REPO:-$HOME/CodeBuddy/一次函数/teachany-opensource}}"
+COURSE_ID=""
+FLAG_ALL=0
+FLAG_NO_VERIFY=0
+FLAG_DRY_RUN=0
+
+for arg in "$@"; do
+  case "$arg" in
+    --all-changes) FLAG_ALL=1 ;;
+    --no-verify)   FLAG_NO_VERIFY=1 ;;
+    --dry-run)     FLAG_DRY_RUN=1 ;;
+    -h|--help)
+      sed -n '2,20p' "$0"
+      exit 0
+      ;;
+    *)
+      [ -z "$COURSE_ID" ] && COURSE_ID="$arg"
+      ;;
+  esac
+done
+
+COURSEWARE_REPO="${TEACHANY_COURSEWARE_REPO:-$HOME/CodeBuddy/一次函数/teachany-courseware}"
+SOURCE_REPO="${TEACHANY_REPO:-$HOME/CodeBuddy/一次函数/teachany-opensource}"
+SITE_COURSE_URL="https://www.teachany.cn/community/${COURSE_ID}/"
+GITHUB_COURSE_URL="https://weponusa.github.io/teachany-courseware/community/${COURSE_ID}/"
+TREE_URL="https://www.teachany.cn/tree.html"
 
 if [ -z "$COURSE_ID" ]; then
-  echo "用法: $0 <course-id> [courseware-repo] [source-repo]"
-  echo "例:   $0 hist-m-greece-rome"
+  echo "用法: $0 <course-id> [--all-changes] [--no-verify] [--dry-run]"
   exit 1
 fi
 
 TARGET_DIR="$COURSEWARE_REPO/community/$COURSE_ID"
 SOURCE_DIR="$SOURCE_REPO/community/$COURSE_ID"
-COURSE_URL="https://weponusa.github.io/teachany-courseware/community/$COURSE_ID/"
-GALLERY_URL="https://weponusa.github.io/teachany/"
 
 echo "═══════════════════════════════════════════════"
-echo "  TeachAny Auto-Publish v2.1 · 双仓库"
+echo "  TeachAny Auto-Publish v3.0"
 echo "═══════════════════════════════════════════════"
-echo "  Course ID:       $COURSE_ID"
-echo "  Courseware repo: $COURSEWARE_REPO"
-echo "  Source repo:     $SOURCE_REPO"
-echo "  Target:          $TARGET_DIR"
+echo "  Course ID:    $COURSE_ID"
+echo "  Courseware:   $COURSEWARE_REPO"
+echo "  线上课件:     $SITE_COURSE_URL"
 echo
+
+# ── 0. Push 凭据检测 ──
+can_push() {
+  if [ -n "${GH_TOKEN:-}" ]; then return 0; fi
+  ssh -T git@github.com -o BatchMode=yes -o ConnectTimeout=8 2>&1 | grep -qi "successfully authenticated" && return 0
+  return 1
+}
+
+if ! can_push; then
+  echo "❌ 当前环境无法 push 到 GitHub（无 SSH 且无 GH_TOKEN）"
+  echo "   Agent/CI 请改用: bash \"$SCRIPT_DIR/publish_course.sh\" \"$TARGET_DIR\" \"$COURSE_ID\""
+  exit 2
+fi
 
 if [ ! -d "$COURSEWARE_REPO/.git" ]; then
-  echo "❌ 课件仓库不存在或不是 Git 仓库: $COURSEWARE_REPO"
+  echo "❌ 课件仓库不存在: $COURSEWARE_REPO"
   exit 1
 fi
 
-# Step 1: 确保真实课件在 courseware 仓库
+# ── 1. 确保课件目录存在 ──
 if [ ! -d "$TARGET_DIR" ]; then
   if [ -d "$SOURCE_DIR" ]; then
-    echo "[1/5] 从主仓库同步课件到 courseware..."
+    echo "[1/8] 从主仓复制课件 → courseware/community/..."
     mkdir -p "$COURSEWARE_REPO/community"
     cp -R "$SOURCE_DIR" "$TARGET_DIR"
-    echo "  ✅ 已复制: $SOURCE_DIR → $TARGET_DIR"
   else
-    echo "❌ 找不到课件目录："
-    echo "   - $TARGET_DIR"
-    echo "   - $SOURCE_DIR"
+    echo "❌ 找不到课件: $TARGET_DIR 或 $SOURCE_DIR"
     exit 1
   fi
 else
-  echo "[1/5] 课件已在 courseware 仓库"
+  echo "[1/8] 课件目录已存在"
 fi
 
-MISSING=""
-[ ! -f "$TARGET_DIR/index.html" ] && MISSING="$MISSING index.html"
-[ ! -f "$TARGET_DIR/manifest.json" ] && MISSING="$MISSING manifest.json"
-if [ -n "$MISSING" ]; then
-  echo "❌ 缺少必要文件:$MISSING"
-  exit 1
-fi
+for f in index.html manifest.json; do
+  [ -f "$TARGET_DIR/$f" ] || { echo "❌ 缺少 $f"; exit 1; }
+done
 
-if grep -q "location.replace" "$TARGET_DIR/index.html" 2>/dev/null; then
-  HTML_SIZE=$(wc -c < "$TARGET_DIR/index.html")
-  if [ "$HTML_SIZE" -lt 2000 ]; then
-    echo "❌ index.html 是 redirect 页面，不是真实课件内容"
-    exit 1
-  fi
-fi
+NODE_ID="$(python3 -c "
+import re, pathlib
+h = pathlib.Path('$TARGET_DIR/index.html').read_text(encoding='utf-8')
+for pat in [r'teachany-node', r'course-id']:
+    m = re.search(rf'name=[\"\']{pat}[\"\'][^>]*content=[\"\']([^\"\']+)', h, re.I)
+    if m: print(m.group(1).strip()); break
+else:
+    import json
+    print(json.load(open('$TARGET_DIR/manifest.json')).get('node_id','') or '$COURSE_ID')
+" 2>/dev/null || echo "$COURSE_ID")"
+echo "  node_id: $NODE_ID"
 
-echo "  ✅ 课件实体校验通过"
-echo
-
-# Step 2: rebuild-index
+# ── 2. 课件质检 ──
+echo "[2/8] validate-courseware..."
 cd "$COURSEWARE_REPO"
-echo "[2/5] rebuild-index（注册课件 + 更新索引）..."
-if python3 scripts/rebuild-index.py 2>&1 | tee /tmp/rebuild_out.txt | tail -12 | sed 's/^/    /'; then
-  echo "  ✅ rebuild-index 完成"
+if [ -f scripts/validate-courseware.py ]; then
+  python3 scripts/validate-courseware.py "$COURSE_ID" || exit 1
+elif [ -f "$SCRIPT_DIR/validate-courseware.cjs" ]; then
+  node "$SCRIPT_DIR/validate-courseware.cjs" "$TARGET_DIR" || exit 1
 else
-  echo "  ❌ rebuild-index 失败"
-  exit 1
+  echo "  ⚠️  跳过：未找到 validator"
 fi
 
-echo
-
-echo "[3/5] 防 404 链接校验..."
-if python3 scripts/check-courseware-links.py --id "$COURSE_ID" 2>&1 | sed 's/^/    /'; then
-  echo "  ✅ 链接校验通过"
+# ── 3. KCP（可选）──
+if [ ! -f "$TARGET_DIR/knowledge-context.json" ] && [ -f scripts/knowledge_layer.py ]; then
+  echo "[3/8] emit knowledge-context.json..."
+  python3 scripts/knowledge_layer.py lookup --node-id "$NODE_ID" \
+    --emit-kcp "community/$COURSE_ID/knowledge-context.json" 2>/dev/null || true
 else
-  echo "  ❌ 链接校验失败"
-  exit 1
+  echo "[3/8] KCP 已存在或跳过"
 fi
 
-echo
-
-echo "[4/5] git commit + push..."
-if [ -z "$(git status --short)" ]; then
-  echo "  ⏭️  没有变更，跳过推送"
+# ── 4. rebuild-index（挂树 + registry + kg manifest）──
+echo "[4/8] rebuild-index.py..."
+if [ "$FLAG_DRY_RUN" = 1 ]; then
+  echo "  [dry-run] 跳过 rebuild-index"
 else
+  python3 scripts/rebuild-index.py 2>&1 | tail -20 | sed 's/^/    /'
+fi
+
+# ── 5. 链接检查 ──
+echo "[5/8] check-courseware-links..."
+if [ "$FLAG_DRY_RUN" = 1 ]; then
+  echo "  [dry-run] 跳过"
+else
+  python3 scripts/check-courseware-links.py --id "$COURSE_ID" 2>&1 | sed 's/^/    /' || exit 1
+fi
+
+# ── 6. Git：限定范围提交（默认不 git add -A）──
+echo "[6/8] git commit（限定范围）..."
+cd "$COURSEWARE_REPO"
+
+stage_publish_files() {
+  git add "community/$COURSE_ID"
+  local index_files=(
+    registry.json registry-v2.json community/index.json
+    data/node-index.json data/nodes-metadata.json data/nodes-selector.json
+    assets/scripts/teachany-kg-manifest.json scripts/teachany-kg-manifest.json
+  )
+  for f in "${index_files[@]}"; do
+    [ -f "$f" ] && git add -u "$f" 2>/dev/null || true
+  done
+  git add -u data/trees 2>/dev/null || true
+}
+
+if [ "$FLAG_ALL" = 1 ]; then
+  echo "  ⚠️  --all-changes：暂存全部变更（维护者批量发布）"
   git add -A
-  CHANGES=$(git status --cached --short | wc -l | tr -d ' ')
-  echo "  📝 $CHANGES 个文件变更"
-  git commit -m "feat: 新增课件 $COURSE_ID"
+else
+  stage_publish_files
+fi
 
-  if ! git push origin main 2>&1; then
-    echo "  🔄 push 失败，尝试 pull --rebase..."
-    git pull origin main --rebase
-    git push origin main
-  fi
-  echo "  ✅ origin 推送成功"
+if [ -z "$(git status --short)" ]; then
+  echo "  ⏭️  无变更，跳过 commit/push"
+else
+  if [ "$FLAG_DRY_RUN" = 1 ]; then
+    echo "  [dry-run] 将提交:"
+    git status --short | sed 's/^/    /'
+  else
+    git commit -m "$(cat <<EOF
+feat(courseware): publish $COURSE_ID
 
-  if git remote get-url gitee >/dev/null 2>&1; then
-    echo "  📤 push gitee（可选）..."
-    git push gitee main 2>&1 | tail -2 || echo "  ⚠️ gitee 推送失败，不影响 GitHub Pages"
+- register community course and mount on knowledge tree (node $NODE_ID)
+- rebuild registry, kg-manifest, node-index
+
+EOF
+)"
+    echo "  📤 push origin main..."
+    if ! git push origin main 2>&1; then
+      echo "  🔄 pull --rebase 后重试..."
+      git pull origin main --rebase
+      git push origin main
+    fi
+    echo "  ✅ 已推送 origin/main"
   fi
 fi
 
-echo
+# ── 7. 挂树自检（本地树 = 已 push 内容）──
+echo "[7/8] 验证知识树挂载..."
+if [ "$FLAG_DRY_RUN" = 1 ]; then
+  echo "  [dry-run] 跳过"
+else
+  TREE_CHECK="$(python3 -c "
+import json
+from pathlib import Path
+nid = '$NODE_ID'
+for p in Path('data/trees').rglob('*.json'):
+    if p.name.startswith('_'): continue
+    d = json.loads(p.read_text(encoding='utf-8'))
+    for dom in d.get('domains') or []:
+        for node in dom.get('nodes') or []:
+            if node.get('id') == nid:
+                print(node.get('status','?'), node.get('courses',[]))
+                raise SystemExit(0)
+print('NOT_FOUND')
+raise SystemExit(1)
+" 2>/dev/null || echo "CHECK_FAILED")"
+  echo "  树节点: $TREE_CHECK"
+  if echo "$TREE_CHECK" | grep -q "active"; then
+    echo "  ✅ status=active（push 后 teachany.cn/tree.html 应显示 ✅）"
+  else
+    echo "  ⚠️  节点未 active，请检查 manifest.node_id 与 rebuild-index"
+  fi
+fi
 
-echo "[5/5] 验证线上 URL..."
-echo "  ⏳ 等待 GitHub Pages 部署（60秒）..."
-sleep 60
-CODE=$(curl -sI -L --max-time 10 "$COURSE_URL" 2>/dev/null | head -1 | grep -oE "[0-9]{3}" | head -1)
+# ── 8. 线上 URL（teachany.cn 优先）──
+echo "[8/8] 验证线上 URL..."
+if [ "$FLAG_NO_VERIFY" = 1 ] || [ "$FLAG_DRY_RUN" = 1 ]; then
+  echo "  跳过 URL 轮询"
+else
+  echo "  ⏳ 等待 Pages 部署（最多 8 分钟）..."
+  ok=0
+  for attempt in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16; do
+    sleep 30
+    code_cn=$(curl -sI -L --max-time 12 "$SITE_COURSE_URL" 2>/dev/null | head -1 | grep -oE '[0-9]{3}' | head -1)
+    code_gh=$(curl -sI -L --max-time 12 "$GITHUB_COURSE_URL" 2>/dev/null | head -1 | grep -oE '[0-9]{3}' | head -1)
+    echo "  ⏳ ${attempt}×30s: teachany.cn=$code_cn github.io=$code_gh"
+    if [ "$code_cn" = "200" ] || [ "$code_gh" = "200" ]; then
+      ok=1
+      break
+    fi
+    if [ "$attempt" = "6" ]; then
+      echo "  🔧 尝试 empty commit 触发 Pages..."
+      git commit --allow-empty -m "chore: trigger pages redeploy for $COURSE_ID" 2>/dev/null || true
+      git push origin main 2>/dev/null | tail -2 || true
+    fi
+  done
+  if [ "$ok" != 1 ]; then
+    echo "  ⚠️  8 分钟内未收到 HTTP 200，勿声称发布完成"
+  fi
+fi
 
 echo
 echo "═══════════════════════════════════════════════"
-if [ "$CODE" = "200" ]; then
-  echo "  ✅ 发布完成！课件实体已上线 (HTTP 200)"
-else
-  echo "  ⏳ 已推送，Pages 仍在部署中 (HTTP $CODE)"
-  echo "  ⚠️ URL 返回 200 前不得声称发布完成。"
-fi
-echo "  📚 课件 URL: $COURSE_URL"
-echo "  📋 Gallery: $GALLERY_URL"
+echo "  发布流程结束"
+echo "  📚 课件: $SITE_COURSE_URL"
+echo "  🗺️  知识地图: $TREE_URL （高中/初中语文 → 对应节点应显示 ✅）"
+echo "  📋 node_id: $NODE_ID"
 echo "═══════════════════════════════════════════════"

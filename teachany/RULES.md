@@ -28,7 +28,9 @@
 
 ## D. 媒体与资源
 
-- **#16** 所有课件必须包含 TTS、Hero 知识结构图、真实互动；Remotion/视频按课型和用户要求补齐。没有"快速模式"，不允许以任何理由跳过基线项并声称"后续升级"。
+- **#16** 所有课件必须包含 TTS、Hero 知识结构图、真实互动；教学动画/视频按课型和用户要求补齐。没有"快速模式"，不允许以任何理由跳过基线项并声称"后续升级"。
+- **#16a** 动画工具必须分层选择：算法/流程优先 Motion Canvas，数学推导优先 Manim，科学实验优先 PhET/GeoGebra/3Dmol/Matter.js，页面实时互动用 Canvas/SVG，装饰动效用 CSS/Lottie/Rive，复杂 3D 用 Blender/Three.js；Remotion 只在需要 React 视频合成时使用。制作动画前必须查 `tech/animation-toolchain.md`。
+- **#16b** 禁止用 `ffmpeg testsrc`、纯色块、随机几何运动、静态图缩放或纯标题飞入冒充教学动画；MP4 必须有明确教学过程和 audio stream。
 - **#18** TTS 走 `scripts/tts-engine.py` 或标准 narrator；不要在课件内手写 Web Speech 控制器。
 - **#19** Hero 图必须是知识结构图，不是纯装饰图；无生图能力时用 `gen-hero-svg.py` 兜底。
 - **#20** 历史/地理地图先查 `find-map.py`，优先复用仓库/远端地图库。
@@ -40,7 +42,7 @@
 - **#23** 优先匹配官方课标 `node_id`；PBL 课标外知识点仅用 `ext-{8位hex}`（`manifest` + `teachany-node` 一致），由 `rebuild-index.py` 写入 `data/trees/other/user-generated.json`。K12/探究课不得进入「其他知识」；勿用 `free_mode` 代替 ext 挂树。
 - **#24** 不手改 `registry.json`、`community/index.json`、`teachany-kg-manifest.json`；由 `rebuild-index.py` 生成。
 - **#24a** Phase 3 通过后**必须先问用户是否上传**；用户拒绝则不得发布；同意或任务已含「发布」再执行 Phase 4。
-- **#25** 发布必须走 `auto-publish.sh`（维护者）或 `publish_course.sh`（社区）。**严禁直接 `git add && git commit && git push` 跳过 `rebuild-index.py`**——这会导致课件不挂知识树、registry 不更新、nodes-metadata 断链。如果手动发布，必须先 `python3 scripts/rebuild-index.py` 再 commit。
+- **#25** Phase 4 必须走 `teachany-publish.sh`（或 `auto-publish.sh` / `publish_course.sh`）。**严禁**跳过 `rebuild-index.py` 直接 push。单课发布**严禁** `git add -A` 夹带无关未跟踪文件；用 `auto-publish.sh` 默认限定暂存。维护者本地有 SSH 时 Agent **必须**尝试自动推送，不得只交付本地路径。
 - **#25a** **发布路径自动选择（强制）**：在执行发布前，**必须先运行凭据检测**（`ssh -T git@github.com` 或检查 `GH_TOKEN` 环境变量）。若无 GitHub 推送权限 → **只能用 `publish_course.sh`**（走 Worker API，零凭据）；禁止 `git commit` 后发现推不上去再告诉用户"需要 token"。批量升级多门课件后同样适用此规则——逐门跑 `publish_course.sh`，不要试图一次 git push 全部。
 - **#26** full HTML 放 `weponusa/teachany-courseware` 仓库的 `community/<course-id>/`；`weponusa/teachany` 只保留主站、Skill 和轻量索引。
 - **#27** 自动发布前先检测远端、权限、分支和用户是否要求跳过。

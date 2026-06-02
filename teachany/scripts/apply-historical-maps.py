@@ -14,6 +14,8 @@ v7.11.0 批量为历史/地理课件注入 Leaflet 历史地图模块（双平�
   TEACHANY_MAP_REMOTE_BASE                覆盖默认远程 MANIFEST 基址
 
 幂等：检测 data-teachany-map 已存在则跳过 HTML 注入；本地文件一致则跳过复制。
+
+投影（强制）：不向 config 写入 hillshade；默认 terrain:true。详见 topics/historical-maps-projection.md。
 """
 import json
 import os
@@ -47,7 +49,7 @@ LEAFLET_JS = '<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></sc
 MODULE_CSS = '<link rel="stylesheet" href="../../assets/scripts/teachany-historical-map.css">'
 MODULE_JS = '<script src="../../assets/scripts/teachany-historical-map.js" defer></script>'
 
-HILLSHADE_RELPATH = "physical/hillshade/global-color-hillshade-2k.jpg"
+# hillshade JPG 为等距圆柱投影，禁止写入课件 config（见 topics/historical-maps-projection.md）
 
 DRY_RUN = False
 _MANIFEST_INDEX = None
@@ -178,10 +180,11 @@ def copy_overlay_files(course_dir, overlays):
     return copied
 
 
-def set_hillshade(course_dir, cfg):
-    """hillshade 统一写相对路径；本地有则复制，运行时按 本地→teachany.cn→GitHub 回退。"""
-    _copy_local_if_present(HILLSHADE_RELPATH, course_dir)
-    cfg["hillshade"] = HILLSHADE_RELPATH
+def ensure_map_projection_defaults(cfg):
+    """Web Mercator 瓦片底图；禁止向 config 注入 hillshade（与 GeoJSON 错位）。"""
+    cfg.pop("hillshade", None)
+    if cfg.get("terrain") is None:
+        cfg["terrain"] = True
 
 
 def inject_head(html):
@@ -222,8 +225,8 @@ def build_section(course_id, cfg):
     }
     if cfg.get("overlays"):
         config_dict["overlays"] = cfg["overlays"]
-    if cfg.get("hillshade"):
-        config_dict["hillshade"] = cfg["hillshade"]
+    if cfg.get("terrain") is not False:
+        config_dict["terrain"] = cfg.get("terrain", True)
     config_json = json.dumps(config_dict, ensure_ascii=False, indent=2)
     map_id = "thm-" + re.sub(r"[^a-z0-9-]+", "-", course_id.lower())[:40]
     return f'''
@@ -296,7 +299,7 @@ def process(course_rel_path, cfg):
 
     cfg_runtime = json.loads(json.dumps(cfg))  # 可写副本，避免污染 manifest
     copied = copy_geojson_files(course_dir, cfg_runtime.get("scope", "china"), cfg_runtime["eras"])
-    set_hillshade(course_dir, cfg_runtime)
+    ensure_map_projection_defaults(cfg_runtime)
     overlay_copied = copy_overlay_files(course_dir, cfg_runtime.get("overlays", []))
     html = inject_head(html)
     html = inject_script_bottom(html)

@@ -152,7 +152,7 @@
 
 ## 五、Manim（高级，渲染为 mp4 走基线 ②）
 
-Manim 是 3Blue1Brown 的数学动画引擎。**不直接嵌入课件**，而是先渲染成 mp4 放入 `<课件>/assets/video/`，作为基线 ② Remotion 视频的**补充来源**（但基线 ② 本身要求 Remotion 渲染至少 1 段，Manim 只能作为额外加分项）。
+Manim 是 3Blue1Brown 的数学动画引擎。**不直接嵌入课件**，而是先渲染成 mp4 放入 `<课件>/assets/video/`。按 `tech/animation-toolchain.md`，数学/几何/公式推导场景中 Manim 是首选视频动画工具；Remotion 仅在需要 React 视频合成时使用。
 
 ```bash
 pip install manim
@@ -169,7 +169,7 @@ manim -pqh script.py SceneName  # 高质量最终渲染 1920x1080@30fps
 | 基线条目 | 与本文档关系 |
 |:---|:---|
 | ③ Canvas 互动组件 | GeoGebra applet / Desmos calc / p5.js canvas **均算合规** |
-| ② Remotion 视频 | **补充来源**：Manim 渲染的 mp4 可作为 Remotion 视频的片段叠加 |
+| ② 教学视频 | Manim 渲染的 mp4 可直接作为数学推导视频；若另需 React 合成再使用 Remotion |
 | ⑦ 知识图谱 | 数学课件的"函数图像"模块可作为知识图谱节点的跳转目标 |
 | ⑪ TTS 悬浮播放器 | 在 GeoGebra 旁加 `<p data-tts>讲解步骤...</p>` 配合操作 |
 

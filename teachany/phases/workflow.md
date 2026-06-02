@@ -103,7 +103,7 @@ v2 模板特性：
 5. 从 v2 内容区块模板选择片段，填充主体教学页面（≥12 页）。
 6. **必须有一页完整的习题讲解**（解题步骤+思路+关键技巧）。
 7. 确保 `{{SLIDE_COUNT}}` 设为实际总页数。
-8. 补齐 Hero（`gen-hero-svg.py`）、TTS（`tts-engine.py`）、视频/地图等资源。
+8. 补齐 Hero（`gen-hero-svg.py`）、TTS（`tts-engine.py`）、视频/地图等资源。若涉及教学动画/互动动画，先按 `tech/animation-toolchain.md` 选型：算法/流程用 Motion Canvas，数学推导用 Manim，实验探究用 PhET/GeoGebra/3Dmol/Matter.js，页面实时操作用 Canvas/SVG；不得用占位视频冒充教学动画。
 
 ## Phase 3：验证
 

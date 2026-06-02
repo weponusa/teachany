@@ -21,6 +21,8 @@
 
 适用：过程性概念、实验变化、历史演变、函数变换。
 
+制作前先按 `tech/animation-toolchain.md` 选择工具：算法/流程优先 Motion Canvas，数学推导优先 Manim，科学实验优先 PhET/GeoGebra/3Dmol/Matter.js，页面实时互动用 Canvas/SVG；Remotion 只在需要 React 视频合成时使用。
+
 要求：
 - 画面信息与旁白同步；
 - 有至少 3 个动态 beat；

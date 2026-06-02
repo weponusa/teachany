@@ -201,7 +201,7 @@ viewer.addSurface($3Dmol.SurfaceType.VDW, { opacity: 0.7, color: 'white' });
 | ③ Canvas 互动组件 | PhET / 3Dmol / Matter.js 均可**算作**合规 Canvas 组件（它们最终都渲染到 `<canvas>`） |
 | ⑩ 历史地图 | 无关，但科学史课件可两者结合（如"伽利略斜面实验"用 Matter.js + 历史地图标注比萨） |
 | ④ AI 生图 | **互补**：AI 生图做情境引入，PhET/3Dmol 做交互探究 |
-| ② Remotion 视频 | **互补**：Remotion 做过程性讲解，PhET 做自由探究 |
+| ② 教学视频 | **互补**：按 `animation-toolchain.md` 选 Motion Canvas / Manim / Remotion 等做过程性讲解，PhET 做自由探究 |
 
 ---
 

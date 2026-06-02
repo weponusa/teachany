@@ -1,6 +1,6 @@
 ---
 name: TeachAny
-version: 7.14.1
+version: 7.15.0
 description: "K-12 interactive courseware creation. Use for school-subject lesson pages, animations, AI tutor, TTS, knowledge graph, PBL learning paths, or TeachAny publishing."
 description_zh: "K12 互动课件开发技能：用于制作或优化学科课件、教学动画、AI 学伴、TTS、知识图谱、PBL 学习路径与 TeachAny 发布。"
 allowed-tools: Read,Write,Edit,Bash,Glob,Grep
@@ -29,9 +29,10 @@ TeachAny 的目标不是把知识堆进页面，而是把一节课做成**有问
 1. 查 `node_id`：`python3 scripts/find_nodes.py "浮力"`。
 2. 复制 `templates/course-skeleton-v2.html` 和 `templates/manifest-template.json`。
 3. 用"为什么沉浮不同？"做问题锚点，加入拖拽物体/液体密度的 Canvas 互动。
-4. 接入五件套：AI 学伴、TTS、section hints、知识图谱、导师卡片。
-5. 生成 Hero 知识结构图（`gen-hero-svg.py`）。
-6. 本地验证通过后走发布流程。
+4. 按 `tech/animation-toolchain.md` 选择动画工具：算法/流程优先 Motion Canvas，数学推导优先 Manim，实验探究优先 PhET/GeoGebra/3Dmol/Matter.js，页面实时操作用 Canvas/SVG。
+5. 接入五件套：AI 学伴、TTS、section hints、知识图谱、导师卡片。
+6. 生成 Hero 知识结构图（`gen-hero-svg.py`）。
+7. 本地验证通过后走发布流程。
 
 ## 模式说明
 
@@ -66,7 +67,7 @@ Phase 1  教学骨架：问题锚点 + ABT 叙事 + 互动/评估设计（必须
 Phase 2  构建页面：复制模板，填内容，接入标准模块与资源
 Phase 3  验证交付：运行质量检查，浏览器/命令闭环验证
 Phase 3.5 询问上传：问用户是否拒绝上传；未拒绝才进入 Phase 4
-Phase 4  发布注册：执行 Git/Registry/Gallery 流程，验证线上 URL（仅用户同意后）
+Phase 4  发布注册：**必须**走 `teachany-publish.sh`（自动选直推或 Worker PR），验证 **teachany.cn** 200 + 知识树挂树（仅用户同意后）
 ```
 
 完整细节见 `phases/workflow.md`；发布细节见 `phases/packaging.md`。
@@ -84,13 +85,14 @@ Phase 4  发布注册：执行 Git/Registry/Gallery 流程，验证线上 URL（
      运行时 `teachany-historical-map.js` 按 **本地 → teachany.cn → GitHub** 顺序回退获取。
    - teachany.cn（Cloudflare）国内外均可访问，作为首选远程源；GitHub（jsDelivr/raw）为备份，互为冗余。
    - 模式开关：`TEACHANY_MAP_SOURCE=auto|local|remote`；首选源可用 `TEACHANY_MAP_REMOTE_BASE` 覆盖。
-7. **数理化必须加载仿真工具文档**：制作**数学/物理/化学/生物**课件时，**在 Phase 2 开始前必须先读** `tech/iframe-resources.md`，按学科-工具快查表选择并嵌入至少 1 个外部交互工具（PhET / GeoGebra / Desmos / 3Dmol.js 等）。不得用纯静态图或简单 Canvas 代替已有成熟工具的场景。
-8. **发布先检测环境**：没有目标仓库、权限或远端不可达时，不要假设 `weponusa/*` 可写；先提示 fork/跳过发布/本地交付。
-9. **依赖豁免须有证据**：某项外部资源无法连接，必须给出具体报错（curl 输出或 HTTP 状态码）、已重试次数，才允许该单项豁免；不得以"可能慢"或"先跳过"为由省略。
-10. **闭环验证**：说"完成/修复/可用"前必须跑命令或浏览器验证，并给出关键输出。URL 未返回 200 不得声称发布完成。
-11. **一类问题一起扫**：修一个模块或模式后，检查同类文件、模板、courseware/opensource 双仓是否同步。
-12. **图片资产必须真实**：禁止在 hero/header 后面堆叠裸 `<img>` 标签；禁止 assets/ 下放 <5KB 的占位图（webp/png/jpg）。概念图、示意图必须嵌入对应教学 section 内部。如果图片资源暂未生成，不引用、不放文件——宁缺勿占。
-13. **上传须用户确认**：Phase 3 通过后必须询问是否上传到社区并挂树；用户明确拒绝则不得调用 `publish_course.sh` / `auto-publish.sh`；用户同意或上下文已要求「制作并发布」时再执行 Phase 4。
+7. **分层动画工具优先**：制作任何教学动画/互动动画前，必须先读 `tech/animation-toolchain.md` 并按教学目标选工具；算法/流程优先 Motion Canvas，数学推导优先 Manim，实验探究优先 PhET/GeoGebra/3Dmol/Matter.js，页面实时互动用 Canvas/SVG。Remotion 只在需要 React 视频合成时作为选项，不再一刀切默认。
+8. **数理化必须加载仿真工具文档**：制作**数学/物理/化学/生物**课件时，**在 Phase 2 开始前必须先读** `tech/iframe-resources.md`，按学科-工具快查表选择并嵌入至少 1 个外部交互工具（PhET / GeoGebra / Desmos / 3Dmol.js 等）。不得用纯静态图或简单 Canvas 代替已有成熟工具的场景。
+9. **发布先检测环境**：没有目标仓库、权限或远端不可达时，不要假设 `weponusa/*` 可写；先提示 fork/跳过发布/本地交付。
+10. **依赖豁免须有证据**：某项外部资源无法连接，必须给出具体报错（curl 输出或 HTTP 状态码）、已重试次数，才允许该单项豁免；不得以"可能慢"或"先跳过"为由省略。
+11. **闭环验证**：说"完成/修复/可用"前必须跑命令或浏览器验证，并给出关键输出。URL 未返回 200 不得声称发布完成。
+12. **一类问题一起扫**：修一个模块或模式后，检查同类文件、模板、courseware/opensource 双仓是否同步。
+13. **图片资产必须真实**：禁止在 hero/header 后面堆叠裸 `<img>` 标签；禁止 assets/ 下放 <5KB 的占位图（webp/png/jpg）。概念图、示意图必须嵌入对应教学 section 内部。如果图片资源暂未生成，不引用、不放文件——宁缺勿占。
+14. **上传须用户确认**：Phase 3 通过后必须询问是否上传到社区并挂树；用户明确拒绝则不得调用 `publish_course.sh` / `auto-publish.sh`；用户同意或上下文已要求「制作并发布」时再执行 Phase 4。
 
 完整硬规则、基线清单与反模式：按需读 `references/baseline-rules.md`、`RULES.md`。
 
@@ -100,7 +102,8 @@ Phase 4  发布注册：执行 Git/Registry/Gallery 流程，验证线上 URL（
 | --- | --- |
 | 完整 Phase 细节 | `phases/workflow.md` |
 | 打包、Registry、Gallery、Git 发布 | `phases/packaging.md` |
-| TTS、Remotion、视频音频 | `phases/video-audio.md` |
+| 动画工具分层选择 | `tech/animation-toolchain.md` |
+| TTS、视频音频 | `phases/video-audio.md` |
 | 19 项基线与反模式 | `references/baseline-rules.md` |
 | Phase 1 问卷 | `references/phase1-checklist.md` |
 | 互动形态 | `guides/interaction-patterns.md` |
@@ -109,6 +112,7 @@ Phase 4  发布注册：执行 Git/Registry/Gallery 流程，验证线上 URL（
 | 页面结构与 CSS | `tech/page-structure.md`, `tech/design-system.md` |
 | v2 分页模板 | `templates/course-skeleton-v2.html`, `templates/content-section-templates-v2.html` |
 | 数学/科学仿真 | `tech/math-animations.md`（数学课件**必读**）, `tech/science-simulations.md`（物理/化学/生物课件**必读**） |
+| 教学动画/互动动画选型 | `tech/animation-toolchain.md`（**动画类任务必读**） |
 | **可嵌入 iframe 资源总目录** | `tech/iframe-resources.md`（**数理化必读**，PhET/GeoGebra/Desmos/3Dmol/LearningApps 等完整清单） |
 | 地图 / 3D / PPTX | `topics/maps-and-3d.md` |
 | **历史地图投影与对齐（必读）** | `topics/historical-maps-projection.md` |
@@ -132,17 +136,25 @@ python3 "$TEACHANY_SKILL/scripts/apply-historical-maps.py"
 node "$TEACHANY_SKILL/scripts/validate-courseware.cjs" "$COURSE_DIR"
 ```
 
-**发布课件（两种路径）**：
+**发布课件（Agent Phase 4 默认入口）**：
 
 ```bash
-# ① 普通用户 / 社区投稿 — 走 Cloudflare Worker，无需 GitHub token
-bash "$TEACHANY_SKILL/scripts/publish_course.sh" "$COURSE_DIR" <course-id>
-
-# ② 仓库维护者直推 — 需要 SSH 或 GH_TOKEN
-bash "$TEACHANY_SKILL/scripts/auto-publish.sh" <course-id>
+export TEACHANY_COURSEWARE_REPO=~/CodeBuddy/一次函数/teachany-courseware
+bash "$TEACHANY_SKILL/scripts/teachany-publish.sh" <course-id>
 ```
 
-**默认走 ① `publish_course.sh`**：课件提交到 `teachany-community.pages.dev` Worker，Worker 自动走 PR 质检流程合并到仓库，用户无需任何 GitHub 凭据。
+编排逻辑：
+- **有 SSH 或 `GH_TOKEN`** → `auto-publish.sh` v3：质检 → rebuild-index → **限定范围 commit**（不 `git add -A`）→ push → 验证 **teachany.cn** + 远端树 `active`
+- **无 push 权限**（Agent/CI）→ `publish_course.sh`：Worker PR，禁止裸 `git push`
+
+维护者也可直接：
+
+```bash
+bash "$TEACHANY_SKILL/scripts/auto-publish.sh" <course-id>
+bash "$TEACHANY_SKILL/scripts/auto-publish.sh" <course-id> --all-changes
+```
+
+**线上验收以 teachany.cn 为准**（`https://www.teachany.cn/community/<course-id>/`）。
 
 `auto-publish.sh` 仅供仓库维护者使用，完成：验证目录 → `rebuild-index.py`（注册+挂树）→ `git commit/push` → 验证线上 URL。
 
@@ -169,4 +181,4 @@ bash "$TEACHANY_SKILL/scripts/auto-publish.sh" <course-id>
 
 ## 版本说明
 
-当前执行摘要版本：`7.14.0`。历史变更不放入主文件，避免污染执行上下文；需要考古时查 Git 历史或仓库发布记录。
+当前执行摘要版本：`7.15.0`。本版新增分层互动动画工具规范（`tech/animation-toolchain.md`），不再把 Remotion 作为所有教学动画的默认方案。历史变更不放入主文件，避免污染执行上下文；需要考古时查 Git 历史或仓库发布记录。

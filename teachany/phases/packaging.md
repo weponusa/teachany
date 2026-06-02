@@ -1,90 +1,100 @@
 # TeachAny Packaging & Publishing（精简版）
 
-## ⚠️ 发布路径选择（强制，任何发布前必读）
-
-```
-发布前先跑凭据检测 ──→ 有 SSH/GH_TOKEN ──→ auto-publish.sh（维护者直推）
-                     └─→ 无凭据 ──→ publish_course.sh（Worker API，零配置）
-```
-
-**硬规则**：
-- **先检测，再发布**。不要先 `git commit` 再发现推不上去。
-- **无凭据环境（CI / agent / 远程服务器）只能用 `publish_course.sh`**。
-- **批量升级 N 门课件后**：逐门跑 `publish_course.sh`，不要试图一次 `git push` 全部。
-- 违反以上规则会导致：commit 卡在本地无法推送，课件永久丢失，无补救手段。
-
 ## 仓库说明
 
 `weponusa/teachany` 是轻量主站与 Skill 仓库；真实课件统一放入 `weponusa/teachany-courseware`（本地路径：`~/CodeBuddy/一次函数/teachany-courseware`）。
 
 - 课件目录：`community/<course-id>/index.html`、`manifest.json`、`PLAN.md`、`assets/`
-- GitHub Pages 地址：`https://weponusa.github.io/teachany-courseware/community/<course-id>/`
-
-## 用户确认（Phase 3.5，先于一切发布命令）
-
-制作与质检完成后，**先问用户**是否上传到 TeachAny 并挂树。用户拒绝 → 不执行下文任何发布命令。
-
-用户同意（或任务已写明「制作并发布」）后，再选下面路径之一。
+- **线上主域名**：`https://www.teachany.cn/community/<course-id>/`
+- GitHub Pages 镜像：`https://weponusa.github.io/teachany-courseware/community/<course-id>/`
 
 ## 发布前检查
 
 ```bash
+python3 "$COURSEWARE_REPO/scripts/validate-courseware.py" <course-id>
+# 或
 node "$TEACHANY_SKILL/scripts/validate-courseware.cjs" "$COURSE_DIR"
-python3 "$TEACHANY_SKILL/scripts/check_node_id.py" "$COURSE_DIR"
 ```
 
-## 发布路径（二选一）
+## Agent Phase 4 铁律
 
-### ① 普通用户 / 社区投稿（默认，零配置）
+1. 课件制作完成且验证通过后，**必须执行发布脚本**，不得只留本地文件。
+2. **默认入口**：`teachany-publish.sh <course-id>`（自动检测凭据）。
+3. **禁止**在未跑 `rebuild-index.py` 的情况下 `git add -A && git push`（会导致线上不挂树）。
+4. **禁止**单课发布时用 `git add -A` 把无关未跟踪 KCP/报告一并推上去；用 `auto-publish.sh` 默认的限定暂存。
+5. 声称「已上线」前必须：`curl -sI https://www.teachany.cn/community/<course-id>/` 返回 **200**，且知识树节点 **status=active**、**courses 含该 id**。
 
-**不需要 GitHub 账号或 token**，走 Cloudflare Worker 自动 PR 流程：
+## 发布路径（编排器自动选择）
+
+### 入口（推荐）
 
 ```bash
-# 单个课件
-bash "$TEACHANY_SKILL/scripts/publish_course.sh" "$COURSE_DIR" <course-id>
-
-# 批量发布
-for id in <id1> <id2> <id3>; do
-  bash "$TEACHANY_SKILL/scripts/publish_course.sh" "$REPO/community/$id" "$id"
-done
+export TEACHANY_COURSEWARE_REPO=~/CodeBuddy/一次函数/teachany-courseware
+bash "$TEACHANY_SKILL/scripts/teachany-publish.sh" <course-id>
 ```
 
-课件提交到 `teachany-community.pages.dev`，Worker 验证后自动合并到仓库并部署。
-
-> ⚠️ **在 CI / agent / 远程服务器等无 GitHub 凭据的环境中，必须且只能使用此路径。**
-> 禁止在这类环境中使用 `auto-publish.sh`——它需要 SSH key 或 GH_TOKEN，缺失时 commit 卡在本地，课件永久丢失，没有任何补救手段。
-
-### ② 仓库维护者直推（仅限本地 Mac，已配置 SSH）
-
-需要 SSH 或 GH_TOKEN，一条命令完成注册 + 挂树 + 推送：
+### ① 维护者直推（本地 Mac + SSH / GH_TOKEN）
 
 ```bash
 bash "$TEACHANY_SKILL/scripts/auto-publish.sh" <course-id>
 ```
 
-等价手动步骤：
-```bash
-cd ~/CodeBuddy/一次函数/teachany-courseware
-python3 scripts/rebuild-index.py
-git add -A
-git commit -m "feat: 新增课件 <course-id>"
-git push origin main
-```
+`auto-publish.sh` v3 流程：
 
-GitHub Actions 自动部署，约 1-2 分钟后可访问：
-`https://weponusa.github.io/teachany-courseware/community/<course-id>/`
+| 步骤 | 动作 |
+|------|------|
+| 1 | 确认 `community/<course-id>/` 存在 |
+| 2 | `validate-courseware.py` |
+| 3 | 缺则 `knowledge_layer.py --emit-kcp` |
+| 4 | **`rebuild-index.py`**（registry + 树 status/courses + kg-manifest + **sync-node-index-courses**） |
+| 5 | `check-courseware-links.py --id <course-id>` |
+| 6 | **限定 `git add`**：`community/<id>` + 索引文件 + `data/trees` 变更（非 `-A`） |
+| 7 | `git push origin main`（失败则 pull --rebase） |
+| 8 | 验证 teachany.cn HTTP 200 + 远端树节点 active |
 
-## 凭据检测（在发布前运行）
+可选：`--all-changes` 全量暂存；`--dry-run` 只跑检查不 push；`--no-verify` 跳过 URL 轮询。
 
-```bash
-# 检测当前环境是否有 GitHub push 权限
-ssh -T git@github.com -o ConnectTimeout=5 2>&1 | grep -q "successfully" && echo "✅ SSH OK" || echo "❌ 无 SSH，请用 publish_course.sh"
-```
-
-若无 SSH 且无 GH_TOKEN → 只能用 `publish_course.sh`，不要尝试其他路径。
-
-## Gitee 同步（可选，维护者）
+### ② 无 push 权限（Agent / CI / 社区用户）
 
 ```bash
-GIT_SSH_COMMAND='ssh -p 22 -o BatchMode=yes -o ConnectTimeout=20' git push gitee main
+bash "$TEACHANY_SKILL/scripts/publish_course.sh" "$COURSE_DIR" <course-id>
 ```
+
+走 Cloudflare Worker → PR → 合并后部署。**禁止**在无凭据环境调用 `auto-publish.sh`。
+
+## 凭据检测
+
+```bash
+ssh -T git@github.com -o BatchMode=yes -o ConnectTimeout=8 2>&1 | grep -qi successfully && echo "✅ 用 auto-publish" || echo "❌ 用 publish_course"
+# 或
+[ -n "$GH_TOKEN" ] && echo "✅ 用 auto-publish（HTTPS）"
+```
+
+## 挂树验收（线上）
+
+```bash
+# 1. 课件可访问
+curl -sI "https://www.teachany.cn/community/<course-id>/" | head -1
+
+# 2. 本地树文件（push 后应与线上一致）
+python3 -c "
+import json
+from pathlib import Path
+nid='<node_id>'
+for p in Path('data/trees').rglob('*.json'):
+    d=json.loads(p.read_text())
+    for dom in d.get('domains',[]):
+        for n in dom.get('nodes',[]):
+            if n.get('id')==nid:
+                print(p, n.get('status'), n.get('courses'))
+"
+
+# 3. node-index（path 用）
+python3 scripts/sync-node-index-courses.py --dry-run
+```
+
+浏览器：打开 `https://www.teachany.cn/tree.html` → 中国课标 → 对应学科 → 节点 **✅**。
+
+## Gitee
+
+默认不推 Gitee；仅 GitHub `origin main` → teachany.cn。

@@ -80,11 +80,11 @@
 - 间距：模块间 `margin: 40-46px 0`，卡片间 `margin-bottom: 16-20px`
 - 全部支持移动端响应式（`@media max-width: 600px`）
 
-**Remotion 动画规范**（v6.9 强制，非"如需要"）：
+**教学动画规范（v7.15 起按工具分层，不再一律 Remotion）**：
 
-> ⚠️ **v6.9 变更**：Remotion 动画从"可选增强"升级为**基线必选**。每个课件必须交付 ≥1 段 Remotion 渲染的 mp4，且必须三轨合一（画面 + TTS 语音 + 音效/配乐）。
+> ⚠️ **v7.15 变更**：动画工具必须按 `tech/animation-toolchain.md` 选择。算法/流程优先 Motion Canvas，数学推导优先 Manim，科学实验优先 PhET/GeoGebra/3Dmol/Matter.js，页面实时互动用 Canvas/SVG。Remotion 仅在需要 React 组件视频合成时使用。下面的 Remotion 参数只适用于“已明确选择 Remotion”的场景。
 
-**基础技术参数**：
+**基础技术参数（Remotion 场景适用）**：
 - 分辨率 1920×1080，帧率 30fps
 - 单 Composition 600-900 帧（20-30 秒）
 - 动画风格：`interpolate` + `spring`，渐入渐出，禁止生硬瞬切
