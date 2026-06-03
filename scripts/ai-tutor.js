@@ -25,7 +25,7 @@
   'use strict';
 
   // 版本标识 - 加载时立即打印到 console，方便排查浏览器缓存问题
-  console.log('%c[TeachAnyTutor] v7.5.0 loaded - default: OpenRouter free (key required, 1-min signup)', 'color:#10b981;font-weight:bold;');
+  console.log('%c[TeachAnyTutor] v7.5.1 loaded - default: Pollinations free no-key (auto-retry on 429)', 'color:#10b981;font-weight:bold;');
 
   // ───────────────────────────────────────────────────────
   // 1. 配置与默认值
@@ -41,8 +41,17 @@
   // 每个预设包含 baseUrl + 推荐模型 + 该服务商的可选模型列表
   const PRESETS = [
     {
+      id: 'pollinations',
+      name: '🆓 Pollinations（免费免 Key · 默认）',
+      baseUrl: 'https://text.pollinations.ai/openai?referrer=teachany',
+      model: 'openai',
+      models: ['openai', 'gpt-oss-20b'],
+      keyHint: '免费免 Key，开箱即用。匿名用户每 15 秒限 1 次，遇到等待提示请稍候。',
+      noAuth: true
+    },
+    {
       id: 'openrouter-free',
-      name: '🆓 OpenRouter（免费模型 · 推荐）',
+      name: '🆓 OpenRouter（免费模型 · 需注册 Key）',
       baseUrl: 'https://openrouter.ai/api/v1',
       model: 'openai/gpt-oss-120b:free',
       models: [
@@ -56,15 +65,6 @@
         'google/gemma-4-26b-a4b-it:free'
       ],
       keyHint: '去 openrouter.ai/keys 注册免费拿 Key（1 分钟搞定，送免费额度）'
-    },
-    {
-      id: 'pollinations',
-      name: '🆓 Pollinations（免费免 Key · 备选 · 可能限流）',
-      baseUrl: 'https://text.pollinations.ai/openai?referrer=teachany',
-      model: 'openai',
-      models: ['openai', 'gpt-oss-20b'],
-      keyHint: '免费免 Key，但高峰期经常限流（429 错误）。建议优先用 OpenRouter。',
-      noAuth: true
     },
     {
       id: 'deepseek',
@@ -185,7 +185,7 @@
       contextLabel: '当前学习：',
       contextLoading: '定位中...',
       configTitle: '🎓 启用你的 AI 学伴',
-      configSubtitle: '默认使用 OpenRouter 免费模型（需注册免费 Key，1 分钟搞定）。也可以切换到 Pollinations（免 Key 但可能限流）、DeepSeek 等服务商。',
+      configSubtitle: '默认免费免 Key，开箱即用（每 15 秒限 1 次）。遇到等待提示请稍候，或切换到 OpenRouter/DeepSeek 等服务商获得更快响应。',
       presetLabel: '① 选择 AI 服务商（已预填 Base URL 和模型列表）',
       baseUrlLabel: 'API Base URL（高级，一般无需修改）',
       apiKeyLabel: '③ API Key（默认服务商免填）',
@@ -195,7 +195,7 @@
       customModelTitle: '改用自定义模型名',
       customModelOption: '✏️ 自定义模型名…',
       advancedLabel: '⚙️ 高级设置（修改 Base URL）',
-      privacy: '🔒 API Key 仅保存在此浏览器的 localStorage，TeachAny 不会收集或上传。去 openrouter.ai/keys 注册免费拿 Key。',
+      privacy: '🔒 默认免 Key，不保存任何密钥。若你切换到其他服务商，API Key 仅保存在此浏览器的 localStorage。TeachAny 不会收集或上传你的 Key。',
       cancel: '取消',
       save: '保存并开始对话',
       settings: '⚙️',
@@ -218,7 +218,7 @@
       contextLabel: 'Studying: ',
       contextLoading: 'Locating...',
       configTitle: '🎓 Set Up Your AI Tutor',
-      configSubtitle: 'Default: OpenRouter free models (requires a free key — 1-min signup at openrouter.ai/keys). You can also switch to Pollinations (no key but may rate-limit), DeepSeek, or others.',
+      configSubtitle: 'Default: free no-key, works out of the box (1 request per 15s). Wait if rate-limited, or switch to OpenRouter/DeepSeek for faster response.',
       presetLabel: '① Choose AI Provider (Base URL & model list pre-filled)',
       baseUrlLabel: 'API Base URL (advanced, usually no need to change)',
       apiKeyLabel: '③ API Key (not needed for default provider)',
@@ -228,7 +228,7 @@
       customModelTitle: 'Switch to custom model name',
       customModelOption: '✏️ Custom model name…',
       advancedLabel: '⚙️ Advanced (change Base URL)',
-      privacy: '🔒 Your API key is stored only in this browser\'s localStorage. TeachAny never collects or uploads it. Get a free key at openrouter.ai/keys.',
+      privacy: '🔒 The default provider needs no API key. If you switch providers, your key is stored only in this browser\'s localStorage. TeachAny never collects or uploads it.',
       cancel: 'Cancel',
       save: 'Save & Start',
       settings: '⚙️',
@@ -779,7 +779,7 @@
   // ───────────────────────────────────────────────────────
   // 7. API 调用（OpenAI 兼容，支持流式）
   // ───────────────────────────────────────────────────────
-  async function callChatAPI(cfg, messages, onDelta) {
+  async function callChatAPI(cfg, messages, onDelta, retried = false) {
     // 防御：apiKey 含全角空格、Base URL 含中文等都会导致 fetch 抛 TypeError
     const cleanKey = String(cfg.apiKey || '').trim().replace(/[\u3000\s]+/g, '');
     const cleanBaseUrl = String(cfg.baseUrl || '').trim().replace(/\/$/, '');
@@ -873,6 +873,20 @@
 
     if (!resp.ok) {
       clearTimeout(overallTimeout);
+
+      // ── 429 自动重试（Pollinations 匿名用户每 15 秒限 1 次）────────
+      if (resp.status === 429 && !retried) {
+        const waitSec = 16;
+        const waitMsg = getLang() === 'en'
+          ? `⏳ Rate limited — auto-retrying in ${waitSec}s...`
+          : `⏳ 请求太快，${waitSec} 秒后自动重试...`;
+        try { onChunk(waitMsg); } catch (e) { /* ignore */ }
+        await new Promise(r => setTimeout(r, waitSec * 1000));
+        // 递归重试一次
+        return callChatAPI(cfg, messages, onDelta, true);
+      }
+      // ──────────────────────────────────────────────────────────────────
+
       let errText = (getLang() === 'en' ? 'Request failed (' : '请求失败（') + resp.status + (getLang() === 'en' ? ')' : '）');
       try {
         const errJson = await resp.json();

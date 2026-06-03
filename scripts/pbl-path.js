@@ -14,7 +14,11 @@ class PBLPathBuilder {
 
     // LLM 服务商预设（复用 AI 学伴架构）
     this.providers = [
-      { id: 'openrouter-free', name: 'OpenRouter（免费模型 · 推荐）', baseUrl: 'https://openrouter.ai/api/v1', model: 'openai/gpt-oss-120b:free', models: [
+      { id: 'pollinations', name: 'Pollinations（免费免 Key · 默认）', baseUrl: 'https://text.pollinations.ai/openai?referrer=teachany', model: 'openai', noAuth: true, models: [
+        'openai',
+        'gpt-oss-20b'
+      ] },
+      { id: 'openrouter-free', name: 'OpenRouter（免费模型 · 需注册 Key）', baseUrl: 'https://openrouter.ai/api/v1', model: 'openai/gpt-oss-120b:free', models: [
         'openai/gpt-oss-120b:free',
         'openai/gpt-oss-20b:free',
         'google/gemma-4-31b-it:free',
@@ -23,10 +27,6 @@ class PBLPathBuilder {
         'qwen/qwen3-next-80b-a3b-instruct:free',
         'deepseek/deepseek-chat-v3.1:free',
         'google/gemma-4-26b-a4b-it:free'
-      ] },
-      { id: 'pollinations', name: 'Pollinations（免费免 Key · 备选 · 可能限流）', baseUrl: 'https://text.pollinations.ai/openai?referrer=teachany', model: 'openai', noAuth: true, models: [
-        'openai',
-        'gpt-oss-20b'
       ] },
       { id: 'deepseek', name: 'DeepSeek', baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-chat', models: ['deepseek-chat','deepseek-reasoner'] },
       { id: 'moonshot', name: '月之暗面 Kimi', baseUrl: 'https://api.moonshot.cn/v1', model: 'moonshot-v1-8k', models: ['moonshot-v1-8k','moonshot-v1-32k','moonshot-v1-128k','kimi-latest'] },
@@ -366,10 +366,10 @@ class PBLPathBuilder {
 
   // ─── LLM 配置管理 ─────────────────────────────
 
-  // 默认 OpenRouter 免费模型（需注册免费 Key，1 分钟搞定）
+  // 默认 Pollinations 免费模型（免 Key，匿名每 15 秒限 1 次）
   static BUILTIN_KEY = '';
-  static BUILTIN_MODEL = 'openai/gpt-oss-120b:free';
-  static BUILTIN_BASE_URL = 'https://openrouter.ai/api/v1';
+  static BUILTIN_MODEL = 'openai';
+  static BUILTIN_BASE_URL = 'https://text.pollinations.ai/openai?referrer=teachany';
 
   _loadLLMConfig() {
     try {
@@ -387,9 +387,9 @@ class PBLPathBuilder {
         }
       }
     } catch (e) { /* ignore */ }
-    // 默认配置：OpenRouter 免费模型（需注册免费 Key）
+    // 默认配置：Pollinations 免费免 Key（匿名每 15 秒限 1 次）
     this._llmConfig = {
-      providerId: 'openrouter-free',
+      providerId: 'pollinations',
       apiKey: PBLPathBuilder.BUILTIN_KEY,
       model: PBLPathBuilder.BUILTIN_MODEL,
       baseUrl: PBLPathBuilder.BUILTIN_BASE_URL
@@ -419,7 +419,7 @@ class PBLPathBuilder {
 
   // ─── LLM 调用 ──────────────────────────────────
 
-  async callLLM(messages, options = {}) {
+  async callLLM(messages, options = {}, retried = false) {
     const cfg = this.getLLMConfig();
     if (!cfg.noAuth && !cfg.apiKey) throw new Error('请先配置 API Key（点击右上角 ⚙️ 设置）');
 
@@ -459,6 +459,17 @@ class PBLPathBuilder {
       });
 
       if (!resp.ok) {
+        // 429 限流自动重试（Pollinations 匿名用户每 15 秒限 1 次）
+        if (resp.status === 429 && !retried) {
+          const waitSec = 16;
+          const lang = this._getLang ? this._getLang() : 'zh';
+          const waitMsg = lang === 'en'
+            ? `⏳ Rate limited — auto-retrying in ${waitSec}s...`
+            : `⏳ 请求太快，${waitSec} 秒后自动重试...`;
+          this._showToast ? this._showToast(waitMsg, 'info') : console.log(waitMsg);
+          await new Promise(r => setTimeout(r, waitSec * 1000));
+          return this.callLLM(messages, options, true);
+        }
         const errText = await resp.text().catch(() => '');
         throw new Error(`API ${resp.status}: ${errText.slice(0, 200)}`);
       }
