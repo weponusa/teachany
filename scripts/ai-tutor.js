@@ -3,7 +3,8 @@
  *
  * 特性：
  *   - 独立模块，不依赖特定课件
- *   - 默认使用 Pollinations 免费免 Key OpenAI 兼容接口
+ *   - 默认使用 OpenRouter 免费模型（需注册免费 Key，1 分钟搞定）
+ *   - Pollinations 免费免 Key 接口作为备选（高峰期可能限流）
  *   - 配置弹窗：服务商一键切换 → 模型下拉选择（每个服务商列出推荐模型 + 自定义）
  *   - 也支持用户填自己的 OpenAI 兼容 API Key（OpenRouter/DeepSeek/Kimi 等）
  *   - 仅当所选服务商需要 Key 时才要求用户配置
@@ -24,7 +25,7 @@
   'use strict';
 
   // 版本标识 - 加载时立即打印到 console，方便排查浏览器缓存问题
-  console.log('%c[TeachAnyTutor] v7.4.0 loaded - default: Pollinations free no-key model', 'color:#10b981;font-weight:bold;');
+  console.log('%c[TeachAnyTutor] v7.5.0 loaded - default: OpenRouter free (key required, 1-min signup)', 'color:#10b981;font-weight:bold;');
 
   // ───────────────────────────────────────────────────────
   // 1. 配置与默认值
@@ -33,42 +34,37 @@
   const HISTORY_KEY = 'teachany_tutor_history';
   const LANG_KEY = 'teachany_tutor_lang';
 
-  // 默认配置：Pollinations 免费免 Key OpenAI 兼容接口
-  const DEFAULTS = {
-    baseUrl: 'https://text.pollinations.ai/openai?referrer=teachany',
-    apiKey: '',
-    model: 'openai',
-    noAuth: true
-  };
+  // 默认配置：OpenRouter 免费模型（需注册免费 Key）
+  const DEFAULTS = {\n    baseUrl: 'https://openrouter.ai/api/v1',\n    apiKey: '',\n    model: 'openai/gpt-oss-120b:free',\n    noAuth: false\n  };
 
   // 服务商预设（配置弹窗一键填表）
   // 每个预设包含 baseUrl + 推荐模型 + 该服务商的可选模型列表
   const PRESETS = [
     {
-      id: 'pollinations',
-      name: '🆓 Pollinations（免费免 Key · 默认）',
-      baseUrl: 'https://text.pollinations.ai/openai?referrer=teachany',
-      model: 'openai',
-      models: ['openai', 'gpt-oss-20b'],
-      keyHint: '免费免 Key，可直接使用；高峰期可能较慢。',
-      noAuth: true
-    },
-    {
       id: 'openrouter-free',
-      name: '🆓 OpenRouter（免费模型 · 需 Key）',
+      name: '🆓 OpenRouter（免费模型 · 推荐）',
       baseUrl: 'https://openrouter.ai/api/v1',
       model: 'openai/gpt-oss-120b:free',
       models: [
         'openai/gpt-oss-120b:free',
         'openai/gpt-oss-20b:free',
-        'meta-llama/llama-3.3-70b-instruct:free',
-        'deepseek/deepseek-chat-v3.1:free',
+        'google/gemma-4-31b-it:free',
+        'moonshotai/kimi-k2.6:free',
+        'nvidia/nemotron-3-super-120b-a12b:free',
         'qwen/qwen3-next-80b-a3b-instruct:free',
-        'google/gemma-3-27b-it:free',
-        'z-ai/glm-4.5-air:free',
-        'tencent/hy3-preview:free'
+        'deepseek/deepseek-chat-v3.1:free',
+        'google/gemma-4-26b-a4b-it:free'
       ],
       keyHint: '去 openrouter.ai/keys 注册免费拿 Key（1 分钟搞定，送免费额度）'
+    },
+    {
+      id: 'pollinations',
+      name: '🆓 Pollinations（免费免 Key · 备选 · 可能限流）',
+      baseUrl: 'https://text.pollinations.ai/openai?referrer=teachany',
+      model: 'openai',
+      models: ['openai', 'gpt-oss-20b'],
+      keyHint: '免费免 Key，但高峰期经常限流（429 错误）。建议优先用 OpenRouter。',
+      noAuth: true
     },
     {
       id: 'deepseek',
@@ -189,7 +185,7 @@
       contextLabel: '当前学习：',
       contextLoading: '定位中...',
       configTitle: '🎓 启用你的 AI 学伴',
-      configSubtitle: '默认使用免费免 Key 接口，可直接对话。也可以切换到 OpenRouter、DeepSeek 等服务商并填写自己的 Key。',
+      configSubtitle: '默认使用 OpenRouter 免费模型（需注册免费 Key，1 分钟搞定）。也可以切换到 Pollinations（免 Key 但可能限流）、DeepSeek 等服务商。',
       presetLabel: '① 选择 AI 服务商（已预填 Base URL 和模型列表）',
       baseUrlLabel: 'API Base URL（高级，一般无需修改）',
       apiKeyLabel: '③ API Key（默认服务商免填）',
@@ -199,7 +195,7 @@
       customModelTitle: '改用自定义模型名',
       customModelOption: '✏️ 自定义模型名…',
       advancedLabel: '⚙️ 高级设置（修改 Base URL）',
-      privacy: '🔒 默认免 Key，不会保存密钥。若你切换到其他服务商，API Key 仅保存在此浏览器的 localStorage。TeachAny 不会收集或上传你的 Key。',
+      privacy: '🔒 API Key 仅保存在此浏览器的 localStorage，TeachAny 不会收集或上传。去 openrouter.ai/keys 注册免费拿 Key。',
       cancel: '取消',
       save: '保存并开始对话',
       settings: '⚙️',
@@ -222,7 +218,7 @@
       contextLabel: 'Studying: ',
       contextLoading: 'Locating...',
       configTitle: '🎓 Set Up Your AI Tutor',
-      configSubtitle: 'The default free no-key provider works out of the box. You can still switch to OpenRouter, DeepSeek, or a custom provider with your own key.',
+      configSubtitle: 'Default: OpenRouter free models (requires a free key — 1-min signup at openrouter.ai/keys). You can also switch to Pollinations (no key but may rate-limit), DeepSeek, or others.',
       presetLabel: '① Choose AI Provider (Base URL & model list pre-filled)',
       baseUrlLabel: 'API Base URL (advanced, usually no need to change)',
       apiKeyLabel: '③ API Key (not needed for default provider)',
@@ -232,7 +228,7 @@
       customModelTitle: 'Switch to custom model name',
       customModelOption: '✏️ Custom model name…',
       advancedLabel: '⚙️ Advanced (change Base URL)',
-      privacy: '🔒 The default provider needs no API key. If you switch providers, your key is stored only in this browser\'s localStorage. TeachAny never collects or uploads your key.',
+      privacy: '🔒 Your API key is stored only in this browser\'s localStorage. TeachAny never collects or uploads it. Get a free key at openrouter.ai/keys.',
       cancel: 'Cancel',
       save: 'Save & Start',
       settings: '⚙️',

@@ -14,19 +14,19 @@ class PBLPathBuilder {
 
     // LLM 服务商预设（复用 AI 学伴架构）
     this.providers = [
-      { id: 'pollinations', name: 'Pollinations（免费免 Key · 默认）', baseUrl: 'https://text.pollinations.ai/openai?referrer=teachany', model: 'openai', noAuth: true, models: [
-        'openai',
-        'gpt-oss-20b'
-      ] },
-      { id: 'openrouter-free', name: 'OpenRouter（免费模型 · 需 Key）', baseUrl: 'https://openrouter.ai/api/v1', model: 'openai/gpt-oss-120b:free', models: [
+      { id: 'openrouter-free', name: 'OpenRouter（免费模型 · 推荐）', baseUrl: 'https://openrouter.ai/api/v1', model: 'openai/gpt-oss-120b:free', models: [
         'openai/gpt-oss-120b:free',
         'openai/gpt-oss-20b:free',
+        'google/gemma-4-31b-it:free',
+        'moonshotai/kimi-k2.6:free',
+        'nvidia/nemotron-3-super-120b-a12b:free',
         'qwen/qwen3-next-80b-a3b-instruct:free',
-        'meta-llama/llama-3.3-70b-instruct:free',
-        'z-ai/glm-4.5-air:free',
-        'google/gemma-3-27b-it:free',
         'deepseek/deepseek-chat-v3.1:free',
-        'tencent/hy3-preview:free'
+        'google/gemma-4-26b-a4b-it:free'
+      ] },
+      { id: 'pollinations', name: 'Pollinations（免费免 Key · 备选 · 可能限流）', baseUrl: 'https://text.pollinations.ai/openai?referrer=teachany', model: 'openai', noAuth: true, models: [
+        'openai',
+        'gpt-oss-20b'
       ] },
       { id: 'deepseek', name: 'DeepSeek', baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-chat', models: ['deepseek-chat','deepseek-reasoner'] },
       { id: 'moonshot', name: '月之暗面 Kimi', baseUrl: 'https://api.moonshot.cn/v1', model: 'moonshot-v1-8k', models: ['moonshot-v1-8k','moonshot-v1-32k','moonshot-v1-128k','kimi-latest'] },
@@ -366,10 +366,10 @@ class PBLPathBuilder {
 
   // ─── LLM 配置管理 ─────────────────────────────
 
-  // 默认 Pollinations 免费模型（免 Key，OpenAI 兼容接口）
+  // 默认 OpenRouter 免费模型（需注册免费 Key，1 分钟搞定）
   static BUILTIN_KEY = '';
-  static BUILTIN_MODEL = 'openai';
-  static BUILTIN_BASE_URL = 'https://text.pollinations.ai/openai?referrer=teachany';
+  static BUILTIN_MODEL = 'openai/gpt-oss-120b:free';
+  static BUILTIN_BASE_URL = 'https://openrouter.ai/api/v1';
 
   _loadLLMConfig() {
     try {
@@ -387,9 +387,9 @@ class PBLPathBuilder {
         }
       }
     } catch (e) { /* ignore */ }
-    // 默认配置：Pollinations 免费免 Key，开箱即用
+    // 默认配置：OpenRouter 免费模型（需注册免费 Key）
     this._llmConfig = {
-      providerId: 'pollinations',
+      providerId: 'openrouter-free',
       apiKey: PBLPathBuilder.BUILTIN_KEY,
       model: PBLPathBuilder.BUILTIN_MODEL,
       baseUrl: PBLPathBuilder.BUILTIN_BASE_URL
