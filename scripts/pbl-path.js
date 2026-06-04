@@ -547,6 +547,86 @@ class PBLPathBuilder {
 
   // ─── PBL 路径分析核心 ──────────────────────────
 
+  static PBL_MAX_GRAPH_NODES = 20;
+  static PBL_MAX_MATCHED_COMPLEX = 12;
+
+  /** 复杂 PBL：跨学科/系统级/长描述项目，需精简图谱、去掉过基础知识点 */
+  _isComplexPBLGoal(goal) {
+    const g = String(goal || '').trim();
+    if (g.length >= 72) return true;
+    const advanced = /系统|平台|模型|算法|传感器|物联网|智能|仿真|优化|数据分析|机器学习|人工智能|开发|App|API|控制|工程|跨学科|综合性|自动化|闭环/i;
+    let signals = 0;
+    if (advanced.test(g)) signals += 1;
+    if (/设计|制作|构建|实现|分析|研究|探究|搭建/.test(g)) signals += 1;
+    if ((g.match(/[，,、;；]/g) || []).length >= 2) signals += 1;
+    if (/\d+/.test(g) && g.length >= 40) signals += 1;
+    return signals >= 2;
+  }
+
+  _basicKnowledgeNamePatterns() {
+    return [
+      /图形(的认识|与几何)|认识图形|观察物体|平面图形|立体图形|长方体|正方体|圆柱|球的认识/,
+      /统计|数据的(收集|整理|表示|分析)|分类与整理|象形统计|条形统计|折线统计|扇形统计|平均数|可能性/,
+      /数的认识|20以内|100以内|比大小|分与合|数一数|比一比/,
+      /认识(毫米|厘米|分米|米|千米|质量|时间|钟表|人民币)/,
+      /加(减)法|乘(除)法|混合运算|口算|笔算|运算律/
+    ];
+  }
+
+  /** 过基础：小学几何识图、数据统计入门等（复杂项目图谱中剔除） */
+  _isTooBasicKnowledge(node) {
+    if (!node) return false;
+    const name = String(node.name || '').trim();
+    if (!name) return false;
+    const basicRe = this._basicKnowledgeNamePatterns();
+    const nameIsBasic = basicRe.some(re => re.test(name));
+    const grade = parseInt(node.grade, 10) || 0;
+    const layer = node.layer || 'matched';
+
+    if (layer === 'matched' || layer === 'external') {
+      return nameIsBasic && grade > 0 && grade <= 6;
+    }
+    if (grade > 0 && grade <= 5) return true;
+    return nameIsBasic;
+  }
+
+  _filterMatchedForComplexProject(matched = []) {
+    const list = matched
+      .filter(n => !this._isTooBasicKnowledge({ ...n, layer: 'matched' }))
+      .sort((a, b) => (b.confidence || 0) - (a.confidence || 0));
+    return list.slice(0, PBLPathBuilder.PBL_MAX_MATCHED_COMPLEX);
+  }
+
+  _capGraphNodes(graphData, maxNodes = PBLPathBuilder.PBL_MAX_GRAPH_NODES) {
+    const nodes = graphData.nodes || [];
+    if (nodes.length <= maxNodes) return graphData;
+    const layerScore = { matched: 1000, external: 800, advanced: 500, parallel: 400, prerequisite: 100 };
+    const scored = nodes.map(n => ({
+      n,
+      score: (layerScore[n.layer] || 50) + (n.confidence || 0) * 50 - (this._isTooBasicKnowledge(n) ? 300 : 0)
+    }));
+    scored.sort((a, b) => b.score - a.score);
+    const kept = scored.slice(0, maxNodes).map(s => s.n);
+    const keptIds = new Set(kept.map(n => n.id));
+    const links = (graphData.links || []).filter(l => {
+      const src = typeof l.source === 'object' ? l.source.id : l.source;
+      const tgt = typeof l.target === 'object' ? l.target.id : l.target;
+      return keptIds.has(src) && keptIds.has(tgt);
+    });
+    return { nodes: kept, links };
+  }
+
+  _finalizePBLGraph(goal, matched, external, activeSystems) {
+    const complex = this._isComplexPBLGoal(goal);
+    let core = matched;
+    if (complex) core = this._filterMatchedForComplexProject(matched);
+    let graphData = this._buildPathGraph(core, external, activeSystems, { complex });
+    if (complex) graphData = this._capGraphNodes(graphData, PBLPathBuilder.PBL_MAX_GRAPH_NODES);
+    const graphMatched = graphData.nodes.filter(n => n.layer === 'matched');
+    const graphExternal = graphData.nodes.filter(n => n.layer === 'external');
+    return { complex, matched: graphMatched.length ? graphMatched : core, external: graphExternal, graphData };
+  }
+
   async analyzePBLGoal(goal, selectedSystems = ['all']) {
     // 1. 确保索引已加载
     await this.loadUnifiedIndex();
@@ -573,26 +653,25 @@ class PBLPathBuilder {
 
     // 5. 第二阶段 LLM：精确匹配 + 外部知识点推荐
     const stage2 = await this._llmMatchStage(goal, stage1.filteredCandidates);
-
-    // 6. 构建路径图
-    const graphData = this._buildPathGraph(stage2.matched, stage2.external, activeSystems);
+    const finalized = this._finalizePBLGraph(goal, stage2.matched, stage2.external, activeSystems);
     const techRoute = (stage2.techRoute || '').trim()
-      || this._buildFallbackTechRoute(goal, stage2.matched, stage2.external);
+      || this._buildFallbackTechRoute(goal, finalized.matched, finalized.external);
 
     return {
       goal,
       systems: activeSystems,
-      matched: stage2.matched,
-      external: stage2.external,
+      matched: finalized.matched,
+      external: finalized.external,
       techRoute,
-      graphData,
+      graphData: finalized.graphData,
+      complexProject: finalized.complex,
       stats: {
         totalCandidates: candidates.length,
         filteredCandidates: stage1.filteredCandidates.length,
-        matchedCount: stage2.matched.length,
-        externalCount: stage2.external.length,
-        graphNodes: graphData.nodes.length,
-        graphLinks: graphData.links.length
+        matchedCount: finalized.matched.length,
+        externalCount: finalized.external.length,
+        graphNodes: finalized.graphData.nodes.length,
+        graphLinks: finalized.graphData.links.length
       }
     };
   }
@@ -678,6 +757,11 @@ ${summaryList}
   }
 
   async _llmMatchStage(goal, candidates) {
+    const complex = this._isComplexPBLGoal(goal);
+    const complexHint = complex
+      ? `\n【复杂项目】本项目较复杂：请勿纳入过于基础的知识点（如小学图形认识、数据统计入门、认数比大小等）；matched 只保留与项目直接相关的核心知识，建议不超过 ${PBLPathBuilder.PBL_MAX_MATCHED_COMPLEX} 个；优先高年级、高置信度条目。`
+      : '';
+
     // 构建知识点候选列表文本（极简表示，减少 token 消耗避免超时）
     const candidateList = candidates.map((n, i) => {
       const prefix = n.systemTag;
@@ -715,7 +799,7 @@ ${candidateList}
 - 只选 confidence >= 0.5 的知识点
 - external 为候选列表中没有但对项目有用的外部知识点，最多3个
 - 每个外部知识点需给出 name、reason、prerequisites（前置知识名称列表）
-- techRoute 为结合匹配知识点的技术路线分析，500字以内，需具体到知识点名称，说明学习顺序和实施路径`
+- techRoute 为结合匹配知识点的技术路线分析，500字以内，需具体到知识点名称，说明学习顺序和实施路径${complexHint}`
       }
     ];
 
@@ -782,7 +866,11 @@ ${candidateList}
 
   // ─── 路径图构建 ─────────────────────────────────
 
-  _buildPathGraph(matchedNodes, externalNodes, activeSystems) {
+  _buildPathGraph(matchedNodes, externalNodes, activeSystems, options = {}) {
+    const complex = options.complex === true;
+    const maxPreDepth = complex ? 2 : 5;
+    const maxExtDepth = complex ? 1 : 2;
+    const traceOpts = { complex };
     const nodes = new Map();   // id -> node
     const links = [];          // { source, target, type }
 
@@ -798,18 +886,20 @@ ${candidateList}
 
     // 3. 对每个匹配节点，沿 prerequisites 递归溯源（绿色 = 基础前置）
     matchedNodes.forEach(n => {
-      this._tracePrerequisites(n.id, nodes, links, 0, 5);
+      this._tracePrerequisites(n.id, nodes, links, 0, maxPreDepth, traceOpts);
     });
 
     // 4. 对每个匹配节点，沿 extends 前探（紫色 = 扩展高级）
     matchedNodes.forEach(n => {
-      this._traceExtends(n.id, nodes, links, 0, 2);
+      this._traceExtends(n.id, nodes, links, 0, maxExtDepth);
     });
 
-    // 5. 沿 parallel 关联
-    matchedNodes.forEach(n => {
-      this._traceParallel(n.id, nodes, links);
-    });
+    // 5. 沿 parallel 关联（复杂项目跳过，避免图谱膨胀）
+    if (!complex) {
+      matchedNodes.forEach(n => {
+        this._traceParallel(n.id, nodes, links);
+      });
+    }
 
     // 6. 外部节点的前置关联（虚线连接）
     externalNodes.forEach(ext => {
@@ -842,7 +932,7 @@ ${candidateList}
     };
   }
 
-  _tracePrerequisites(nodeId, nodes, links, depth, maxDepth) {
+  _tracePrerequisites(nodeId, nodes, links, depth, maxDepth, options = {}) {
     if (depth >= maxDepth) return;
     const node = this.unifiedIndex.get(nodeId);
     if (!node) return;
@@ -850,13 +940,14 @@ ${candidateList}
     (node.prerequisites || []).forEach(preId => {
       const preNode = this.unifiedIndex.get(preId);
       if (!preNode) return;
+      if (options.complex && this._isTooBasicKnowledge({ ...preNode, layer: 'prerequisite' })) return;
 
       if (!nodes.has(preId)) {
         nodes.set(preId, { ...preNode, layer: 'prerequisite' });
       }
 
       links.push({ source: preId, target: nodeId, type: 'prerequisite' });
-      this._tracePrerequisites(preId, nodes, links, depth + 1, maxDepth);
+      this._tracePrerequisites(preId, nodes, links, depth + 1, maxDepth, options);
     });
   }
 
@@ -984,23 +1075,23 @@ ${candidateList}
 
     matched.sort((a, b) => b.confidence - a.confidence);
     const topMatched = matched.slice(0, 15);
-
-    const graphData = this._buildPathGraph(topMatched, [], activeSystems);
+    const finalized = this._finalizePBLGraph(goal, topMatched, [], activeSystems);
 
     return {
       goal,
       systems: activeSystems,
-      matched: topMatched,
-      external: [],
-      techRoute: this._buildFallbackTechRoute(goal, topMatched, []),
-      graphData,
+      matched: finalized.matched,
+      external: finalized.external,
+      techRoute: this._buildFallbackTechRoute(goal, finalized.matched, finalized.external),
+      graphData: finalized.graphData,
+      complexProject: finalized.complex,
       stats: {
         totalCandidates: this.unifiedIndex.size,
         filteredCandidates: this.unifiedIndex.size,
-        matchedCount: topMatched.length,
-        externalCount: 0,
-        graphNodes: graphData.nodes.length,
-        graphLinks: graphData.links.length
+        matchedCount: finalized.matched.length,
+        externalCount: finalized.external.length,
+        graphNodes: finalized.graphData.nodes.length,
+        graphLinks: finalized.graphData.links.length
       },
       fallback: true
     };
