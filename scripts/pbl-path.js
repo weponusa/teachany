@@ -548,41 +548,62 @@ class PBLPathBuilder {
   // ─── PBL 路径分析核心 ──────────────────────────
 
   static PBL_MAX_GRAPH_NODES = 20;
-  static PBL_MAX_MATCHED_COMPLEX = 12;
+  static PBL_MAX_MATCHED_COMPLEX = 10;
+  static PBL_MIN_GRADE_COMPLEX = 7;
 
-  /** 复杂 PBL：跨学科/系统级/长描述项目，需精简图谱、去掉过基础知识点 */
-  _isComplexPBLGoal(goal) {
+  _getPBLGoalProfile(goal) {
     const g = String(goal || '').trim();
-    if (g.length >= 72) return true;
-    const advanced = /系统|平台|模型|算法|传感器|物联网|智能|仿真|优化|数据分析|机器学习|人工智能|开发|App|API|控制|工程|跨学科|综合性|自动化|闭环/i;
+    const advanced = /系统|平台|模型|算法|传感器|物联网|智能|仿真|优化|数据分析|机器学习|人工智能|开发|App|API|控制|工程|跨学科|综合性|自动化|闭环|原型|调试/i;
     let signals = 0;
+    if (g.length >= 60) signals += 1;
     if (advanced.test(g)) signals += 1;
-    if (/设计|制作|构建|实现|分析|研究|探究|搭建/.test(g)) signals += 1;
+    if (/设计|制作|构建|实现|分析|研究|探究|搭建|部署/.test(g)) signals += 1;
     if ((g.match(/[，,、;；]/g) || []).length >= 2) signals += 1;
-    if (/\d+/.test(g) && g.length >= 40) signals += 1;
-    return signals >= 2;
+    const complex = signals >= 2 || (g.length >= 45 && advanced.test(g));
+    return {
+      complex,
+      minGrade: complex ? PBLPathBuilder.PBL_MIN_GRADE_COMPLEX : 1,
+      maxMatched: complex ? PBLPathBuilder.PBL_MAX_MATCHED_COMPLEX : 14
+    };
+  }
+
+  _isComplexPBLGoal(goal) {
+    return this._getPBLGoalProfile(goal).complex;
   }
 
   _basicKnowledgeNamePatterns() {
     return [
-      /图形(的认识|与几何)|认识图形|观察物体|平面图形|立体图形|长方体|正方体|圆柱|球的认识/,
-      /统计|数据的(收集|整理|表示|分析)|分类与整理|象形统计|条形统计|折线统计|扇形统计|平均数|可能性/,
-      /数的认识|20以内|100以内|比大小|分与合|数一数|比一比/,
+      /图形(的认识|与几何)|认识图形|观察物体|平面图形|立体图形|长方体|正方体|圆柱|球的认识|周长|面积(的认识|计算)/,
+      /统计|数据的(收集|整理|表示)|分类与整理|象形统计|条形统计|折线统计|扇形统计|平均数|可能性/,
+      /数的认识|20以内|100以内|比大小|分与合|数一数|比一比|分数的初步|小数的意义/,
       /认识(毫米|厘米|分米|米|千米|质量|时间|钟表|人民币)/,
-      /加(减)法|乘(除)法|混合运算|口算|笔算|运算律/
+      /加(减)法|乘(除)法|混合运算|口算|笔算|运算律|倍的认识/,
+      /简单机械|杠杆|滑轮|浮力|磁铁|植物|动物|天气|四季|太阳|月亮|影子|声音的产生|光的传播/,
+      /物质的三态|溶解|蒸发|电路元件|简单电路|串联|并联(电路)?$/
     ];
   }
 
-  /** 过基础：小学几何识图、数据统计入门等（复杂项目图谱中剔除） */
-  _isTooBasicKnowledge(node) {
+  /** 复杂项目应排除：小学数学/科学/物理启蒙、识图统计、与交付物无关的泛基础 */
+  _excludeForComplexProject(node) {
+    if (!node) return true;
+    const name = String(node.name || '').trim();
+    const grade = parseInt(node.grade, 10) || 0;
+    const label = `${node.gradeLabel || ''} ${node.stageLabel || ''} ${name}`;
+    if (/小学|一年级|二年级|三年级|四年级|五年级|六年级/.test(label)) return true;
+    if (grade > 0 && grade < PBLPathBuilder.PBL_MIN_GRADE_COMPLEX) return true;
+    const elemSubjects = ['math', 'physics', 'science', 'chemistry', 'biology'];
+    if (grade > 0 && grade <= 6 && elemSubjects.includes(node.subject)) return true;
+    return this._basicKnowledgeNamePatterns().some(re => re.test(name));
+  }
+
+  _isTooBasicKnowledge(node, { complex = false } = {}) {
     if (!node) return false;
+    if (complex) return this._excludeForComplexProject(node);
     const name = String(node.name || '').trim();
     if (!name) return false;
-    const basicRe = this._basicKnowledgeNamePatterns();
-    const nameIsBasic = basicRe.some(re => re.test(name));
+    const nameIsBasic = this._basicKnowledgeNamePatterns().some(re => re.test(name));
     const grade = parseInt(node.grade, 10) || 0;
     const layer = node.layer || 'matched';
-
     if (layer === 'matched' || layer === 'external') {
       return nameIsBasic && grade > 0 && grade <= 6;
     }
@@ -592,9 +613,67 @@ class PBLPathBuilder {
 
   _filterMatchedForComplexProject(matched = []) {
     const list = matched
-      .filter(n => !this._isTooBasicKnowledge({ ...n, layer: 'matched' }))
+      .filter(n => !this._excludeForComplexProject(n))
       .sort((a, b) => (b.confidence || 0) - (a.confidence || 0));
     return list.slice(0, PBLPathBuilder.PBL_MAX_MATCHED_COMPLEX);
+  }
+
+  /** PBL 核心提示词在服务端 /api/pbl/analyze，前端不下发 */
+  _getPBLAnalyzeUrl() {
+    if (typeof location !== 'undefined' && location.origin && /^https?:/.test(location.protocol)) {
+      return `${location.origin}/api/pbl/analyze`;
+    }
+    return 'https://www.teachany.cn/api/pbl/analyze';
+  }
+
+  async _callPBLAnalyzeStage(stage, payload) {
+    const cfg = this.getLLMConfig();
+    const isProxy = cfg.baseUrl && (cfg.baseUrl.includes('llm-proxy') || cfg.baseUrl.includes('/api/llm'));
+    const body = { stage, ...payload };
+    if (!isProxy && cfg.apiKey && !cfg.noAuth) {
+      body.clientLlm = {
+        baseUrl: cfg.baseUrl,
+        apiKey: cfg.apiKey,
+        model: cfg.model,
+        noAuth: false
+      };
+    }
+    const ac = new AbortController();
+    const timeout = setTimeout(() => ac.abort(), 90000);
+    try {
+      const resp = await fetch(this._getPBLAnalyzeUrl(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: ac.signal,
+        body: JSON.stringify(body)
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        throw new Error(data.error || `PBL API ${resp.status}`);
+      }
+      if (!data.content) throw new Error('PBL API 返回为空');
+      return data.content;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  _basicMentionRegex() {
+    return /分数[、，]?小数|百分数互化|四则运算|认识图形|图形的认识|周长(和|与)?面积|圆的周长|简单统计|认识(钟表|人民币|时间)|个位十位|加减乘除|口算|笔算|小学(数学|科学|阶段)/;
+  }
+
+  /** 清洗 techRoute：删掉提及小学基础内容的句子，避免出现"先学分数小数"这类内容 */
+  _sanitizeTechRoute(text) {
+    if (!text) return '';
+    const re = this._basicMentionRegex();
+    const kept = String(text)
+      .split(/\n+/)
+      .map(line => line
+        .split(/(?<=[。；;])/)
+        .filter(seg => !re.test(seg))
+        .join(''))
+      .filter(line => line.replace(/[【】①②③④⑤\s]/g, '').length > 0);
+    return kept.join('\n').trim();
   }
 
   _capGraphNodes(graphData, maxNodes = PBLPathBuilder.PBL_MAX_GRAPH_NODES) {
@@ -603,7 +682,8 @@ class PBLPathBuilder {
     const layerScore = { matched: 1000, external: 800, advanced: 500, parallel: 400, prerequisite: 100 };
     const scored = nodes.map(n => ({
       n,
-      score: (layerScore[n.layer] || 50) + (n.confidence || 0) * 50 - (this._isTooBasicKnowledge(n) ? 300 : 0)
+      score: (layerScore[n.layer] || 50) + (n.confidence || 0) * 50
+        - (this._excludeForComplexProject(n) ? 400 : 0)
     }));
     scored.sort((a, b) => b.score - a.score);
     const kept = scored.slice(0, maxNodes).map(s => s.n);
@@ -616,15 +696,85 @@ class PBLPathBuilder {
     return { nodes: kept, links };
   }
 
-  _finalizePBLGraph(goal, matched, external, activeSystems) {
-    const complex = this._isComplexPBLGoal(goal);
-    let core = matched;
-    if (complex) core = this._filterMatchedForComplexProject(matched);
-    let graphData = this._buildPathGraph(core, external, activeSystems, { complex });
+  _finalizePBLGraph(goal, matched, external, activeSystems, meta = {}) {
+    const profile = this._getPBLGoalProfile(goal);
+    const complex = profile.complex;
+    let core = complex ? this._filterMatchedForComplexProject(matched) : matched;
+    let graphData = complex
+      ? this._buildProjectPathGraph(core, external, meta.pathOrderIds || [])
+      : this._buildPathGraph(core, external, activeSystems, { complex: false });
     if (complex) graphData = this._capGraphNodes(graphData, PBLPathBuilder.PBL_MAX_GRAPH_NODES);
     const graphMatched = graphData.nodes.filter(n => n.layer === 'matched');
     const graphExternal = graphData.nodes.filter(n => n.layer === 'external');
     return { complex, matched: graphMatched.length ? graphMatched : core, external: graphExternal, graphData };
+  }
+
+  _buildProjectPathGraph(matchedNodes, externalNodes, pathOrderIds = []) {
+    const byId = new Map(matchedNodes.map(n => [n.id, n]));
+    const ordered = [];
+    (pathOrderIds || []).forEach(id => {
+      if (byId.has(id) && !ordered.find(o => o.id === id)) ordered.push(byId.get(id));
+    });
+    matchedNodes
+      .sort((a, b) => (b.confidence || 0) - (a.confidence || 0))
+      .forEach(n => {
+        if (!ordered.find(o => o.id === n.id)) ordered.push(n);
+      });
+
+    const nodes = [];
+    const links = [];
+    ordered.forEach((n, idx) => {
+      nodes.push({ ...n, layer: 'matched', pathStep: idx + 1 });
+    });
+    for (let i = 0; i < ordered.length - 1; i++) {
+      links.push({ source: ordered[i].id, target: ordered[i + 1].id, type: 'path-step' });
+    }
+    externalNodes.forEach(ext => {
+      nodes.push({ ...ext, layer: 'external' });
+      const related = this._findMostRelated(ext, ordered);
+      if (related) {
+        links.push({ source: related.id, target: ext.id, type: 'external-related' });
+      }
+    });
+    return { nodes, links: this._deduplicateLinks(links) };
+  }
+
+  _buildTechRouteFromGraph(goal, matched = [], external = [], projectPhases = []) {
+    const allNames = [...matched, ...external].map(n => String(n.name || ''));
+    const basicRe = this._basicMentionRegex();
+    // 只允许引用图谱中真实存在、且非小学基础的节点名
+    const validName = (name) => {
+      const s = String(name || '').replace(/[「」]/g, '').trim();
+      if (!s || basicRe.test(s)) return null;
+      const hit = allNames.find(n => n === s || n.includes(s) || s.includes(n));
+      return hit ? `「${hit}」` : null;
+    };
+    const nameList = (arr) => arr.map(n => `「${n.name}」`).filter(x => !basicRe.test(x)).join('、');
+
+    if (Array.isArray(projectPhases) && projectPhases.length) {
+      let text = `围绕「${String(goal || '').slice(0, 100)}」的项目实施路线：\n\n`;
+      projectPhases.slice(0, 4).forEach((p, i) => {
+        const steps = (Array.isArray(p.steps) ? p.steps : [p.task || p.desc || ''])
+          .filter(s => s && !basicRe.test(s)).join('；');
+        let kn = (Array.isArray(p.knowledgeNames) ? p.knowledgeNames : [])
+          .map(validName).filter(Boolean).join('、');
+        if (!kn) kn = nameList(matched.slice(i * 2, i * 2 + 3)) || '（见图谱核心节点）';
+        text += `【阶段${i + 1}】${p.phase || p.name || '实施阶段'}\n`;
+        text += `任务：${steps || '完成本阶段拆解、建模与实现'}\n`;
+        text += `知识支撑：${kn}\n`;
+        text += `产出：${p.deliverable || p.output || '阶段原型/数据/报告'}\n\n`;
+      });
+      return this._sanitizeTechRoute(text).slice(0, 600);
+    }
+
+    const ordered = [...matched].sort((a, b) => (a.pathStep || 99) - (b.pathStep || 99));
+    let text = `围绕「${String(goal || '').slice(0, 100)}」，按真实施工顺序推进：\n\n`;
+    text += `① 原理理解：${nameList(ordered.slice(0, 2)) || '核心原理节点'}——搞清项目背后的科学/工程原理。\n`;
+    text += `② 建模与计算：${nameList(ordered.slice(2, 4)) || '建模相关节点'}——用模型/公式量化关键指标。\n`;
+    text += `③ 搭建与实现：${nameList(ordered.slice(4, 7)) || '实现相关节点'}——完成原型、程序或实验装置。\n`;
+    text += `④ 测试与迭代：依据指标做对比测试并优化${external.length ? '，可引入 ' + nameList(external) : ''}。\n`;
+    text += `\n红色节点上的序号即推荐实施先后，按 pathStep 逐段完成课件与动手任务。`;
+    return this._sanitizeTechRoute(text).slice(0, 600);
   }
 
   async analyzePBLGoal(goal, selectedSystems = ['all']) {
@@ -653,9 +803,21 @@ class PBLPathBuilder {
 
     // 5. 第二阶段 LLM：精确匹配 + 外部知识点推荐
     const stage2 = await this._llmMatchStage(goal, stage1.filteredCandidates);
-    const finalized = this._finalizePBLGraph(goal, stage2.matched, stage2.external, activeSystems);
-    const techRoute = (stage2.techRoute || '').trim()
-      || this._buildFallbackTechRoute(goal, finalized.matched, finalized.external);
+    const finalized = this._finalizePBLGraph(goal, stage2.matched, stage2.external, activeSystems, {
+      pathOrderIds: stage2.pathOrderIds
+    });
+    // 复杂项目一律由图谱重建技术路线（不信任 LLM 自由文本，避免混入小学基础与套话）；
+    // 简单项目先清洗 LLM 文本，若清洗后过短再重建。
+    let techRoute;
+    if (finalized.complex) {
+      techRoute = this._buildTechRouteFromGraph(goal, finalized.matched, finalized.external, stage2.projectPhases);
+    } else {
+      techRoute = this._sanitizeTechRoute((stage2.techRoute || '').trim());
+      if (techRoute.replace(/\s/g, '').length < 40) {
+        techRoute = this._buildTechRouteFromGraph(goal, finalized.matched, finalized.external, stage2.projectPhases);
+      }
+    }
+    techRoute = techRoute || this._buildFallbackTechRoute(goal, finalized.matched, finalized.external);
 
     return {
       goal,
@@ -677,6 +839,8 @@ class PBLPathBuilder {
   }
 
   async _llmFilterStage(goal, candidates) {
+    const profile = this._getPBLGoalProfile(goal);
+
     // 按学科+课标体系分组统计
     const subjectSummary = {};
     candidates.forEach(n => {
@@ -692,50 +856,33 @@ class PBLPathBuilder {
       .map(s => `${s.tag}/${s.subject}: ${s.count}个知识点`)
       .join('\n');
 
-    const messages = [
-      {
-        role: 'system',
-        content: `你是一个教育知识图谱专家。你需要根据PBL项目目标，判断该项目涉及的学科领域和课标体系。只返回JSON，不要其他内容。`
-      },
-      {
-        role: 'user',
-        content: `PBL项目目标：${goal}
-
-可用的知识体系：
-${summaryList}
-
-请判断该项目最可能涉及的学科和课标体系，返回JSON格式：
-{
-  "subjects": ["math", "physics"],
-  "systems": ["cn", "ap"],
-  "grades": [8, 9, 10],
-  "reasoning": "简要说明判断理由"
-}
-
-注意：
-- subjects 用英文标识（math/physics/chemistry/biology/chinese/english/history/geography/info-tech）
-- systems 用英文标识（cn/ap/cambridge/ib/us）
-- grades 是建议的年级范围
-- 最多选3个学科和3个课标体系`
-      }
-    ];
-
-    const response = await this.callLLM(messages);
+    const response = await this._callPBLAnalyzeStage('filter', {
+      goal,
+      summaryList,
+      complex: profile.complex
+    });
     const jsonStr = this._extractJsonObject(response);
     const filter = JSON.parse(jsonStr);
 
     // 根据筛选条件过滤候选集
+    const minGrade = profile.complex ? PBLPathBuilder.PBL_MIN_GRADE_COMPLEX : 1;
     const filteredCandidates = candidates.filter(n => {
       const subjectMatch = !filter.subjects || filter.subjects.length === 0 || filter.subjects.includes(n.subject);
       const systemMatch = !filter.systems || filter.systems.length === 0 || filter.systems.includes(n.system);
-      const gradeMatch = !filter.grades || filter.grades.length === 0 || filter.grades.some(g => Math.abs(n.grade - g) <= 2);
-      return subjectMatch && systemMatch && gradeMatch;
+      const grade = parseInt(n.grade, 10) || 0;
+      const gradeMatch = !filter.grades || filter.grades.length === 0
+        || filter.grades.some(g => Math.abs(grade - g) <= 2);
+      const notElementary = grade === 0 || grade >= minGrade;
+      if (profile.complex && this._excludeForComplexProject(n)) return false;
+      return subjectMatch && systemMatch && gradeMatch && notElementary;
     });
 
-    // 限制候选数量：免费模型处理 30+ 候选会超时
-    // 用关键词匹配预排序，只发最相关的 20 个给 LLM
-    const MAX_STAGE2_CANDIDATES = 20;
-    const pool = filteredCandidates.length > 0 ? filteredCandidates : candidates;
+    const MAX_STAGE2_CANDIDATES = profile.complex ? 24 : 20;
+    const pool = filteredCandidates.length > 0 ? filteredCandidates : candidates.filter(n => {
+      if (!profile.complex) return true;
+      const g = parseInt(n.grade, 10) || 0;
+      return (g === 0 || g >= minGrade) && !this._excludeForComplexProject(n);
+    });
     const goalTerms = goal.toLowerCase().replace(/[，。、！？：；""''（）\[\]{}]/g, ' ').split(/\s+/).filter(w => w.length >= 2);
     const scored = pool.map(n => {
       let score = 0;
@@ -747,8 +894,10 @@ ${summaryList}
         if (defLower.includes(term)) score += 1;
         if (concepts.includes(term)) score += 2;
       });
-      // 同学科加分
       if (filter.subjects && filter.subjects.includes(n.subject)) score += 1;
+      const grade = parseInt(n.grade, 10) || 0;
+      if (profile.complex && grade >= 7) score += 2;
+      if (profile.complex && grade > 0 && grade < 7) score -= 8;
       return { ...n, _score: score };
     });
     scored.sort((a, b) => b._score - a._score);
@@ -757,67 +906,53 @@ ${summaryList}
   }
 
   async _llmMatchStage(goal, candidates) {
-    const complex = this._isComplexPBLGoal(goal);
-    const complexHint = complex
-      ? `\n【复杂项目】本项目较复杂：请勿纳入过于基础的知识点（如小学图形认识、数据统计入门、认数比大小等）；matched 只保留与项目直接相关的核心知识，建议不超过 ${PBLPathBuilder.PBL_MAX_MATCHED_COMPLEX} 个；优先高年级、高置信度条目。`
-      : '';
+    const profile = this._getPBLGoalProfile(goal);
+    const complex = profile.complex;
+    const minConf = complex ? 0.68 : 0.52;
+    const candidatesLite = candidates.map(n => ({
+      name: n.name,
+      grade: n.grade,
+      gradeLabel: n.gradeLabel,
+      subject: n.subject,
+      systemTag: n.systemTag
+    }));
 
-    // 构建知识点候选列表文本（极简表示，减少 token 消耗避免超时）
-    const candidateList = candidates.map((n, i) => {
-      const prefix = n.systemTag;
-      const gradeStr = n.gradeLabel || (n.grade ? `G${n.grade}` : '');
-      return `[${i}] ${n.name} | ${gradeStr} | ${prefix}`;
-    }).join('\n');
-
-    const messages = [
-      {
-        role: 'system',
-        content: `你是一个教育知识图谱专家。你需要从给定的知识点候选列表中，找出完成PBL项目所需掌握的知识点，并给出技术路线分析。只返回JSON，不要其他内容。`
-      },
-      {
-        role: 'user',
-        content: `PBL项目目标：${goal}
-
-候选知识点列表：
-${candidateList}
-
-请找出完成该项目需要掌握的知识点，并给出技术路线分析，返回JSON格式：
-{
-  "matched": [
-    {"index": 0, "confidence": 0.9, "reason": "核心概念"},
-    {"index": 5, "confidence": 0.8, "reason": "基础前置"}
-  ],
-  "external": [
-    {"name": "PID控制算法", "reason": "温控系统核心算法", "prerequisites": ["数学微积分基础", "反馈控制概念"]}
-  ],
-  "techRoute": "基于上述知识点，本项目的实施路线为：首先掌握XXX基础概念，然后学习YYY核心原理，最后通过ZZZ技术实现项目目标。关键技术点包括……整体建议采用……的方法论，分阶段推进。"
-}
-
-要求：
-- matched 中的 index 对应候选列表中的序号
-- confidence 范围 0-1，0.8以上为核心必需，0.5-0.8为相关参考
-- 只选 confidence >= 0.5 的知识点
-- external 为候选列表中没有但对项目有用的外部知识点，最多3个
-- 每个外部知识点需给出 name、reason、prerequisites（前置知识名称列表）
-- techRoute 为结合匹配知识点的技术路线分析，500字以内，需具体到知识点名称，说明学习顺序和实施路径${complexHint}`
-      }
-    ];
-
-    const response = await this.callLLM(messages, { maxTokens: 4000, temperature: 0.2 });
+    const response = await this._callPBLAnalyzeStage('match', {
+      goal,
+      candidates: candidatesLite,
+      complex,
+      maxMatched: profile.maxMatched,
+      minConf
+    });
     const jsonStr = this._extractJsonObject(response);
     const result = JSON.parse(jsonStr);
 
-    // 解析匹配结果
     const matched = (result.matched || [])
-      .filter(m => m.confidence >= 0.5 && m.index >= 0 && m.index < candidates.length)
+      .filter(m => (m.confidence || 0) >= minConf && m.index >= 0 && m.index < candidates.length)
+      .filter(m => !complex || !this._excludeForComplexProject(candidates[m.index]))
       .map(m => ({
         ...candidates[m.index],
         confidence: m.confidence,
-        matchReason: m.reason
-      }));
+        matchReason: m.reason || m.role || '',
+        pblRole: m.role || 'core'
+      }))
+      .sort((a, b) => (b.confidence || 0) - (a.confidence || 0))
+      .slice(0, profile.maxMatched);
+
+    const pathOrderIds = (result.pathOrder || result.learningSequence || [])
+      .filter(i => Number.isInteger(i) && i >= 0 && i < candidates.length)
+      .map(i => candidates[i].id)
+      .filter(id => matched.some(m => m.id === id));
+
+    const projectPhases = (result.projectPhases || result.phases || []).map(p => ({
+      phase: p.phase || p.name || '',
+      steps: p.steps || (p.tasks ? (Array.isArray(p.tasks) ? p.tasks : [p.tasks]) : []),
+      knowledgeNames: p.knowledgeNames || p.knowledge || [],
+      deliverable: p.deliverable || p.output || ''
+    }));
 
     // 解析外部知识点
-    const external = (result.external || []).map((ext, i) => ({
+    const external = (result.external || []).slice(0, complex ? 2 : 3).map((ext, i) => ({
       id: `ext-${this._hash8(ext.name + i)}`,
       name: ext.name,
       name_en: '',
@@ -840,28 +975,22 @@ ${candidateList}
       matchReason: ext.reason
     }));
 
-    const techRoute = (result.techRoute || '').trim()
-      || this._buildFallbackTechRoute(goal, matched, external);
-    return { matched, external, techRoute };
+    const techRoute = (result.techRoute || '').trim();
+    return { matched, external, techRoute, pathOrderIds, projectPhases };
   }
 
   _buildFallbackTechRoute(goal, matched = [], external = []) {
-    const core = matched.filter(m => (m.confidence || 0) >= 0.75).slice(0, 6);
-    const related = matched.filter(m => (m.confidence || 0) < 0.75).slice(0, 5);
-    const label = (arr) => arr.map(n => `「${n.name}」`).join('、') || '相关课标节点';
-    const extLabel = external.map(n => `「${n.name}」`).join('、');
-    let text = `围绕项目目标「${String(goal || '').slice(0, 120)}」，建议按「基础前置 → 核心匹配 → 拓展应用」三阶段推进。\n\n`;
-    if (core.length) {
-      text += `第一阶段（核心必需，约 ${core.length} 项）：重点掌握 ${label(core)}，建立与项目直接对应的概念、方法与操作能力。\n`;
+    const complex = this._isComplexPBLGoal(goal);
+    if (complex) {
+      return this._buildTechRouteFromGraph(goal, matched, external, []);
     }
-    if (related.length) {
-      text += `第二阶段（相关支撑）：衔接学习 ${label(related)}，补全知识链条，避免「只会做项目、不懂原理」。\n`;
-    }
-    if (extLabel) {
-      text += `第三阶段（课标外补充）：引入 ${extLabel}，用于拓展方案或高阶实现。\n`;
-    }
-    text += `\n实施路径：每阶段配合 TeachAny 对应课件与练习，完成阶段小结后再进入下一层；图谱中绿色为前置、红色为核心、紫色为拓展、黄色为外部补充。`;
-    return text.slice(0, 500);
+    const basicRe = this._basicMentionRegex();
+    const ordered = [...matched].sort((a, b) => (a.pathStep || 99) - (b.pathStep || 99));
+    const label = (arr) => arr.map(n => `「${n.name}」`).filter(x => !basicRe.test(x)).join('、') || '相关课标节点';
+    let text = `围绕「${String(goal || '').slice(0, 100)}」：\n\n`;
+    text += `① 准备：${label(ordered.slice(0, 3))}\n② 探究与实现：${label(ordered.slice(3, 7))}\n`;
+    if (external.length) text += `③ 拓展：${label(external)}\n`;
+    return this._sanitizeTechRoute(text).slice(0, 500);
   }
 
   // ─── 路径图构建 ─────────────────────────────────
@@ -940,7 +1069,7 @@ ${candidateList}
     (node.prerequisites || []).forEach(preId => {
       const preNode = this.unifiedIndex.get(preId);
       if (!preNode) return;
-      if (options.complex && this._isTooBasicKnowledge({ ...preNode, layer: 'prerequisite' })) return;
+      if (options.complex && this._excludeForComplexProject({ ...preNode, layer: 'prerequisite' })) return;
 
       if (!nodes.has(preId)) {
         nodes.set(preId, { ...preNode, layer: 'prerequisite' });
@@ -1257,10 +1386,10 @@ class PBLGraphRenderer {
       .data(links)
       .join('line')
       .attr('class', d => `link link-${d.type}`)
-      .attr('stroke', d => d.type.includes('external') ? this.colors.external : d.type === 'extends' ? this.colors.advanced : d.type === 'parallel' ? this.colors.parallel : 'rgba(148,163,184,0.3)')
-      .attr('stroke-opacity', 0.5)
-      .attr('stroke-width', d => d.type === 'prerequisite' ? 2 : 1.5)
-      .attr('stroke-dasharray', d => d.type.includes('external') ? '6 3' : d.type === 'parallel' ? '3 3' : d.type === 'extends' ? '6 3' : 'none')
+      .attr('stroke', d => d.type === 'path-step' ? this.colors.matched : d.type.includes('external') ? this.colors.external : d.type === 'extends' ? this.colors.advanced : d.type === 'parallel' ? this.colors.parallel : 'rgba(148,163,184,0.3)')
+      .attr('stroke-opacity', d => d.type === 'path-step' ? 0.85 : 0.5)
+      .attr('stroke-width', d => d.type === 'path-step' ? 2.5 : d.type === 'prerequisite' ? 2 : 1.5)
+      .attr('stroke-dasharray', d => d.type.includes('external') ? '6 3' : d.type === 'parallel' ? '3 3' : d.type === 'extends' ? '6 3' : d.type === 'path-step' ? 'none' : 'none')
       .attr('marker-end', d => `url(#arrow-${d.type})`);
 
     // 节点组（与 tree.html 同样式：circle + status icon + label + label-en + grade）
@@ -1608,6 +1737,7 @@ class PBLGraphRenderer {
     legend.style.cssText = 'display:flex;gap:16px;flex-wrap:wrap;padding:12px 16px;margin-bottom:12px;background:rgba(30,41,59,0.8);border-radius:10px;border:1px solid rgba(148,163,184,0.15);';
 
     const items = [
+      { label: '实施顺序', color: this.colors.matched, dash: false, icon: '➡️' },
       { label: '基础前置', color: this.colors.prerequisite, dash: false, icon: '📝' },
       { label: '核心必需', color: this.colors.matched, dash: false, icon: '✅' },
       { label: '扩展高级', color: this.colors.advanced, dash: false, icon: '📝' },
