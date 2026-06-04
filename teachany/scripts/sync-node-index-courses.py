@@ -19,17 +19,21 @@ import os
 
 def _find_courseware_root() -> Path:
     env = os.environ.get("TEACHANY_COURSEWARE_REPO", "").strip()
-    if env:
-        p = Path(env).expanduser()
-        if (p / "data" / "node-index.json").is_file():
+    for p in [
+        Path(env).expanduser() if env else None,
+        Path.cwd(),
+        Path.home() / ".cache/teachany-courseware",
+        Path.home() / "CodeBuddy/一次函数/teachany-courseware",
+    ]:
+        if p and (p / "data" / "node-index.json").is_file():
             return p
-    cwd = Path.cwd()
-    if (cwd / "data" / "node-index.json").is_file():
-        return cwd
-    default = Path.home() / "CodeBuddy/一次函数/teachany-courseware"
-    if (default / "data" / "node-index.json").is_file():
-        return default
-    raise SystemExit("找不到 teachany-courseware（设置 TEACHANY_COURSEWARE_REPO 或在仓库根执行）")
+    if os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN"):
+        from github_courseware import ensure_shallow_clone
+        return ensure_shallow_clone(Path.home() / ".cache/teachany-courseware")
+    raise SystemExit(
+        "找不到 teachany-courseware。请 TEACHANY_COURSEWARE_REPO、在 courseware 根执行，"
+        "或 GH_TOKEN + hang_tree.py rebuild --push"
+    )
 
 ROOT = _find_courseware_root()
 

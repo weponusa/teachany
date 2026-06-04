@@ -41,9 +41,9 @@
 - **#22** `manifest.json.course_id`、`node_id`、HTML meta 必须一致。
 - **#23** 优先匹配官方课标 `node_id`；PBL 课标外知识点仅用 `ext-{8位hex}`（`manifest` + `teachany-node` 一致），由 `rebuild-index.py` 写入 `data/trees/other/user-generated.json`。K12/探究课不得进入「其他知识」；勿用 `free_mode` 代替 ext 挂树。
 - **#24** 不手改 `registry.json`、`community/index.json`、`teachany-kg-manifest.json`；由 `rebuild-index.py` 生成。
-- **#24a** Phase 3.5b **必须询问**是否上传；Agent **禁止**未询问即调用 `teachany-publish.sh` / `auto-publish.sh` / `publish_course.sh` 或 `git push`。用户同意后设 `TEACHANY_UPLOAD_CONFIRMED=1` 再发布；拒绝则不得发布。
+- **#24a** Phase 3.5b **必须询问**是否上传；Agent **禁止**未询问即调用 `hang_tree.py publish` / `teachany-publish.sh` / `auto-publish.sh` / `publish_course.sh` 或裸 `git push`。用户同意后设 `TEACHANY_UPLOAD_CONFIRMED=1` 再发布；拒绝则不得发布。
 - **#24b** Phase 3.5a **必须询问**授课教师设置学生反馈密码并写入 `manifest.feedback`（`set-feedback-password.py`）；禁止未询问就发布。教师明确不启用时用 `--decline` 记录；禁止明文密码入库（仅 `password_sha256`）。
-- **#25** Phase 4 必须走 `teachany-publish.sh`（或 `auto-publish.sh` / `publish_course.sh`）。**严禁**跳过 `rebuild-index.py` 直接 push。单课发布**严禁** `git add -A` 夹带无关未跟踪文件；用 `auto-publish.sh` 默认限定暂存。维护者本地有 SSH 时 Agent **必须**尝试自动推送，不得只交付本地路径。
+- **#25** Phase 4 必须走 `hang_tree.py publish`（或等价 `teachany-publish.sh`）。**严禁**跳过 `rebuild-index.py` 直接 push。挂树/发布不必事先 full clone（`GH_TOKEN` 浅克隆或 Worker PR→CI rebuild）。单课发布**严禁** `git add -A`；用 `auto-publish.sh` 限定暂存。有 SSH/`GH_TOKEN` 时 Agent **必须**尝试发布挂树。
 - **#25a** **发布路径自动选择（强制）**：在执行发布前，**必须先运行凭据检测**（`ssh -T git@github.com` 或检查 `GH_TOKEN` 环境变量）。若无 GitHub 推送权限 → **只能用 `publish_course.sh`**（走 Worker API，零凭据）；禁止 `git commit` 后发现推不上去再告诉用户"需要 token"。批量升级多门课件后同样适用此规则——逐门跑 `publish_course.sh`，不要试图一次 git push 全部。
 - **#26** full HTML 放 `weponusa/teachany-courseware` 仓库的 `community/<course-id>/`；`weponusa/teachany` 只保留主站、Skill 和轻量索引。
 - **#27** 自动发布前先检测远端、权限、分支和用户是否要求跳过。

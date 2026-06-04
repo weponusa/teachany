@@ -5,9 +5,10 @@ register_node.py · v6.5
 在指定学科树里新增一个 placeholder 节点。
 新节点 status=placeholder，一旦有课件（node_id 匹配）上传就会被反向挂载并 status→active。
 
-用法：
+用法（推荐等价命令：python3 hang_tree.py register ...）：
   python3 register_node.py --node-id <id> --subject <学科> --stage <学段> \
       [--domain <领域>] [--name <名>] [--grade <年级>]
+  无本地 courseware 且有 GH_TOKEN 时自动转调 hang_tree.py（GitHub API 直写树文件）。
 """
 import argparse
 import json

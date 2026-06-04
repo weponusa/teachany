@@ -103,10 +103,10 @@ def require_courseware_repo() -> Path:
         raise SystemExit(
             "❌ 未找到本地 teachany-courseware，但远程课标数据可用。\n"
             "   只读查询请直接运行 find_nodes.py / check_node_id.py（已支持 HTTP）。\n"
-            "   写入挂树/发布仍须 clone 并在本地执行 rebuild-index.py。"
+            "   挂树/发布请用: python3 hang_tree.py publish|register|rebuild（见 teachany/SKILL.md）"
         )
     raise SystemExit(
         "❌ 未找到 teachany-courseware，且无法访问远程 data/（teachany.cn / jsDelivr）。\n"
-        "   请 clone: https://github.com/weponusa/teachany-courseware\n"
-        "   或检查网络后重试。"
+        "   发布/挂树: python3 hang_tree.py publish <id> --course-dir <path>\n"
+        "   或设置 GH_TOKEN 后重试；只读查询仅需公网。"
     )

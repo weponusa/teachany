@@ -159,7 +159,7 @@ def main():
             print("✋ 建议：优先改用上面某个现有 node_id（一致性更好）")
         print()
         print("🆕 或者注册新节点，在对应学科树里新增：")
-        print(f"   python3 ~/.codebuddy/skills/teachany/scripts/register_node.py \\")
+        print("   python3 hang_tree.py register \\")
         print(f"     --node-id {nid} --subject <学科> --stage <学段> \\")
         print(f"     --domain <领域id> --name '<节点中文名>'")
         sys.exit(1)

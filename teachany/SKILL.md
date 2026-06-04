@@ -68,8 +68,7 @@ python3 "$TEACHANY_SKILL/scripts/check_node_id.py" --node-id phy-m-liquid-pressu
 
 标准输出路径：
 
-1. 查 `node_id`（在 **courseware** 仓或已设置 `TEACHANY_COURSEWARE_REPO` 时）：
-   `python3 scripts/find_nodes.py --stage middle --subject physics --keyword "浮力"`。
+1. 查 `node_id`：`python3 scripts/find_nodes.py --stage middle --subject physics --keyword "浮力"`（远程课标，无需 clone）。
 2. 复制 `templates/course-skeleton-v2.html` 和 `templates/manifest-template.json`。
 3. 用"为什么沉浮不同？"做问题锚点，加入拖拽物体/液体密度的 Canvas 互动。
 4. 按 `tech/animation-toolchain.md` 选择动画工具：算法/流程优先 Motion Canvas，数学推导优先 Manim，实验探究优先 PhET/GeoGebra/3Dmol/Matter.js，页面实时操作用 Canvas/SVG。
@@ -111,7 +110,7 @@ Phase 2  构建页面：复制模板，填内容，接入标准模块与资源
 Phase 3  验证交付：运行质量检查，浏览器/命令闭环验证
 Phase 3.5a 反馈密码：**必须询问**教师并写入 manifest（`set-feedback-password.py`）；见 `phases/phase3-5-gates.md`
 Phase 3.5b 询问上传：**必须询问**是否发布；同意则 `TEACHANY_UPLOAD_CONFIRMED=1` 再进 Phase 4
-Phase 4  发布注册：**必须**走 `teachany-publish.sh`（自动选直推或 Worker PR），验证 **teachany.cn** 200 + 知识树挂树
+Phase 4  发布注册：**必须**走 `hang_tree.py publish`（或等价的 `teachany-publish.sh`），验证 **teachany.cn** 200 + 知识树挂树
 ```
 
 完整细节见 `phases/workflow.md`；发布细节见 `phases/packaging.md`。
@@ -136,7 +135,7 @@ Phase 4  发布注册：**必须**走 `teachany-publish.sh`（自动选直推或
 11. **闭环验证**：说"完成/修复/可用"前必须跑命令或浏览器验证，并给出关键输出。URL 未返回 200 不得声称发布完成。
 12. **一类问题一起扫**：修一个模块或模式后，检查同类文件、模板、courseware/opensource 双仓是否同步。
 13. **图片资产必须真实**：禁止在 hero/header 后面堆叠裸 `<img>` 标签；禁止 assets/ 下放 <5KB 的占位图（webp/png/jpg）。概念图、示意图必须嵌入对应教学 section 内部。如果图片资源暂未生成，不引用、不放文件——宁缺勿占。
-14. **Phase 3.5 双闸门（强制）**：① **必须询问**反馈密码并写入 manifest（`set-feedback-password.py`，见 `phases/phase3-5-gates.md`）；② **必须询问**是否上传。禁止未询问就 `teachany-publish` / `auto-publish` / `git push`。上传须 `TEACHANY_UPLOAD_CONFIRMED=1`（用户同意或任务已写明「制作并发布」）。
+14. **Phase 3.5 双闸门（强制）**：① **必须询问**反馈密码并写入 manifest（`set-feedback-password.py`，见 `phases/phase3-5-gates.md`）；② **必须询问**是否上传。禁止未询问就 `hang_tree publish` / `teachany-publish` / `auto-publish` / `git push`。上传须 `TEACHANY_UPLOAD_CONFIRMED=1`（用户同意或任务已写明「制作并发布」）。
 
 完整硬规则、基线清单与反模式：按需读 `references/baseline-rules.md`、`RULES.md`。
 
@@ -172,7 +171,7 @@ Phase 4  发布注册：**必须**走 `teachany-publish.sh`（自动选直推或
 
 ```bash
 export TEACHANY_SKILL=/path/to/teachany/skill
-export COURSE_DIR=~/CodeBuddy/一次函数/teachany-courseware/community/<course-id>
+export COURSE_DIR=./community/<course-id>   # 任意路径均可，不必在 courseware 仓内
 python3 "$TEACHANY_SKILL/scripts/preflight-check.py"
 python3 "$TEACHANY_SKILL/scripts/find_nodes.py" --stage middle --subject math --keyword "一次函数"
 python3 "$TEACHANY_SKILL/scripts/find-hero.py" <course-id>
@@ -184,30 +183,28 @@ python3 "$TEACHANY_SKILL/scripts/apply-historical-maps.py"
 node "$TEACHANY_SKILL/scripts/validate-courseware.cjs" "$COURSE_DIR"
 ```
 
-**发布课件（Agent Phase 4 默认入口）**：
+**挂树 / 发布（Agent Phase 4 默认入口）**：
 
 ```bash
-# Phase 3.5a：先问教师反馈密码 → set-feedback-password.py 写入 manifest
-# Phase 3.5b：再问是否上传 → 用户同意后：
-export TEACHANY_COURSEWARE_REPO=~/CodeBuddy/一次函数/teachany-courseware
+# Phase 3.5a：反馈密码 → set-feedback-password.py
+# Phase 3.5b：用户同意上传后：
 export TEACHANY_UPLOAD_CONFIRMED=1
-bash "$TEACHANY_SKILL/scripts/teachany-publish.sh" <course-id>
+python3 "$TEACHANY_SKILL/scripts/hang_tree.py" publish <course-id> --course-dir <任意路径>/community/<course-id>
+
+# 课标树尚无节点时（需 GH_TOKEN）：
+python3 "$TEACHANY_SKILL/scripts/hang_tree.py" register --node-id <id> --subject <学科> --stage middle --name "<名>"
+
+# 仅重建全站索引（需 GH_TOKEN）：
+python3 "$TEACHANY_SKILL/scripts/hang_tree.py" rebuild --dispatch
 ```
 
-编排逻辑：
-- **有 SSH 或 `GH_TOKEN`** → `auto-publish.sh` v3：质检 → rebuild-index → **限定范围 commit**（不 `git add -A`）→ push → 验证 **teachany.cn** + 远端树 `active`
-- **无 push 权限**（Agent/CI）→ `publish_course.sh`：Worker PR，禁止裸 `git push`
+编排逻辑（**不必事先 clone courseware**）：
+- **有 `GH_TOKEN`/SSH** → 自动浅克隆 `~/.cache/teachany-courseware` → `auto-publish.sh`（`rebuild-index` 挂树 + push）
+- **无凭据** → `publish_course.sh` → Worker PR → 合并后 CI `rebuild-index` 挂树
 
-维护者也可直接：
-
-```bash
-bash "$TEACHANY_SKILL/scripts/auto-publish.sh" <course-id>
-bash "$TEACHANY_SKILL/scripts/auto-publish.sh" <course-id> --all-changes
-```
+兼容入口：`bash "$TEACHANY_SKILL/scripts/teachany-publish.sh" <course-id> --course-dir <path>`（行为与 `hang_tree publish` 相同）。
 
 **线上验收以 teachany.cn 为准**（`https://www.teachany.cn/community/<course-id>/`）。
-
-`auto-publish.sh` 仅供仓库维护者使用，完成：验证目录 → `rebuild-index.py`（注册+挂树）→ `git commit/push` → 验证线上 URL。
 
 **认证说明（`auto-publish.sh` 专用，普通用户忽略）**：
 - SSH 已配置（本地 Mac 默认走 SSH，无需额外操作）

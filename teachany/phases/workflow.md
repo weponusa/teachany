@@ -121,7 +121,7 @@ python3 "$TEACHANY_SKILL/scripts/check_node_id.py" <node_id>
 Phase 3 验证通过后、**任何发布脚本之前**，必须完成 **3.5a 反馈密码** 与 **3.5b 是否上传**。完整话术与命令见 **`phases/phase3-5-gates.md`**。
 
 **Agent 禁止行为**：
-- 禁止课件做完后直接 `git push` / `auto-publish` / `teachany-publish`
+- 禁止课件做完后直接 `git push`；须 `hang_tree publish` / `teachany-publish`（内含 rebuild-index 挂树）
 - 禁止未询问就替教师设置或留空反馈密码
 - 禁止在用户未同意上传时声称「已上线」「已发布」
 
@@ -142,7 +142,7 @@ python3 "$TEACHANY_SKILL/scripts/set-feedback-password.py" --check "$COURSE_DIR/
 
 ```bash
 export TEACHANY_UPLOAD_CONFIRMED=1
-bash "$TEACHANY_SKILL/scripts/teachany-publish.sh" <course-id>
+python3 "$TEACHANY_SKILL/scripts/hang_tree.py" publish <course-id> --course-dir "$COURSE_DIR"
 ```
 
 | 用户回复 | Agent 行为 |
@@ -179,13 +179,14 @@ bash "$TEACHANY_SKILL/scripts/publish_course.sh" "$COURSE_DIR" <course-id>
 脚本完成：打包课件 → 提交到 Worker → Worker 发起 PR → 合并后自动部署。
 约 2-10 分钟后可访问：`https://weponusa.github.io/teachany-courseware/community/<course-id>/`
 
-### ② 仓库维护者直推（需要 SSH 或 GH_TOKEN）
+### ② 仓库维护者直推（需要 SSH 或 GH_TOKEN，无事先 clone）
 
 ```bash
-bash "$TEACHANY_SKILL/scripts/auto-publish.sh" <course-id>
+TEACHANY_UPLOAD_CONFIRMED=1 python3 "$TEACHANY_SKILL/scripts/hang_tree.py" publish <course-id> --course-dir "$COURSE_DIR"
+# 或：bash "$TEACHANY_SKILL/scripts/auto-publish.sh" <course-id> --course-dir "$COURSE_DIR"
 ```
 
-脚本自动完成：验证目录 → `rebuild-index.py`（注册+挂树+更新 nodes-metadata） → `git commit/push` → 验证线上 URL。
+无本地 courseware 时会浅克隆到 `~/.cache/teachany-courseware`，再 `rebuild-index.py` 挂树 → push → 验证 teachany.cn。
 
 如果不用脚本手动发布，**必须**按此顺序：
 

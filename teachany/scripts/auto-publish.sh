@@ -11,7 +11,8 @@
 #   bash auto-publish.sh chn-h-red-chamber
 #
 # 环境:
-#   TEACHANY_COURSEWARE_REPO  课件仓路径（默认 ~/CodeBuddy/一次函数/teachany-courseware）
+#   TEACHANY_COURSEWARE_REPO  课件仓路径（默认 ~/.cache/teachany-courseware，无仓则浅克隆）
+#   --course-dir PATH         课件源目录（任意路径，不必在 courseware 仓内）
 #   TEACHANY_REPO             主仓（仅当课件需从 opensource 复制时）
 #   GH_TOKEN                  无 SSH 时用 HTTPS push
 # ============================================================
@@ -19,30 +20,35 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=_defaults.sh
+source "$SCRIPT_DIR/_defaults.sh" 2>/dev/null || true
 _CONFIG="$HOME/.teachany/config"
 [ -f "$_CONFIG" ] && source "$_CONFIG"
 
 COURSE_ID=""
+COURSE_DIR_ARG=""
 FLAG_ALL=0
 FLAG_NO_VERIFY=0
 FLAG_DRY_RUN=0
 
-for arg in "$@"; do
-  case "$arg" in
-    --all-changes) FLAG_ALL=1 ;;
-    --no-verify)   FLAG_NO_VERIFY=1 ;;
-    --dry-run)     FLAG_DRY_RUN=1 ;;
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --course-dir) COURSE_DIR_ARG="$2"; shift 2 ;;
+    --all-changes) FLAG_ALL=1; shift ;;
+    --no-verify)   FLAG_NO_VERIFY=1; shift ;;
+    --dry-run)     FLAG_DRY_RUN=1; shift ;;
     -h|--help)
-      sed -n '2,20p' "$0"
+      sed -n '2,22p' "$0"
       exit 0
       ;;
     *)
-      [ -z "$COURSE_ID" ] && COURSE_ID="$arg"
+      [ -z "$COURSE_ID" ] && COURSE_ID="$1"
+      shift
       ;;
   esac
 done
 
-COURSEWARE_REPO="${TEACHANY_COURSEWARE_REPO:-$HOME/CodeBuddy/一次函数/teachany-courseware}"
+COURSEWARE_REPO="${TEACHANY_COURSEWARE_REPO:-$HOME/.cache/teachany-courseware}"
 SOURCE_REPO="${TEACHANY_REPO:-$HOME/CodeBuddy/一次函数/teachany-opensource}"
 SITE_COURSE_URL="https://www.teachany.cn/community/${COURSE_ID}/"
 GITHUB_COURSE_URL="https://weponusa.github.io/teachany-courseware/community/${COURSE_ID}/"
@@ -110,16 +116,29 @@ fi
 
 # ── 1. 确保课件目录存在 ──
 if [ ! -d "$TARGET_DIR" ]; then
-  if [ -d "$SOURCE_DIR" ]; then
-    echo "[1/8] 从主仓复制课件 → courseware/community/..."
+  COPY_FROM=""
+  if [ -n "$COURSE_DIR_ARG" ] && [ -d "$COURSE_DIR_ARG" ]; then
+    COPY_FROM="$COURSE_DIR_ARG"
+  elif [ -d "$SOURCE_DIR" ]; then
+    COPY_FROM="$SOURCE_DIR"
+  fi
+  if [ -n "$COPY_FROM" ]; then
+    echo "[1/8] 复制课件 $COPY_FROM → courseware/community/$COURSE_ID ..."
     mkdir -p "$COURSEWARE_REPO/community"
-    cp -R "$SOURCE_DIR" "$TARGET_DIR"
+    cp -R "$COPY_FROM" "$TARGET_DIR"
   else
-    echo "❌ 找不到课件: $TARGET_DIR 或 $SOURCE_DIR"
+    echo "❌ 找不到课件: $TARGET_DIR"
+    echo "   请用 --course-dir 指定课件目录，或先制作 community/$COURSE_ID"
     exit 1
   fi
 else
   echo "[1/8] 课件目录已存在"
+  if [ -n "$COURSE_DIR_ARG" ] && [ -d "$COURSE_DIR_ARG" ]; then
+    echo "  ↻ 用 --course-dir 覆盖同步到 courseware/community/..."
+    rm -rf "$TARGET_DIR"
+    mkdir -p "$COURSEWARE_REPO/community"
+    cp -R "$COURSE_DIR_ARG" "$TARGET_DIR"
+  fi
 fi
 
 for f in index.html manifest.json; do

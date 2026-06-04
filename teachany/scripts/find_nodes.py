@@ -25,7 +25,7 @@ find_nodes.py · v6.6
 输出：节点 id + 中文名 + 年级 + 所在 domain，按相关性排序
 退出码：
   0  找到节点
-  1  学科有树但没匹配的节点（建议用 register_node.py 新建）
+  1  学科有树但没匹配的节点（建议 hang_tree.py register 或 register_node.py）
   2  学段+学科组合无树（标注为 free_mode 或先建树）
   3  参数错误
 """

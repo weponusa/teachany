@@ -2,7 +2,7 @@
 
 ## 仓库说明
 
-`weponusa/teachany` 是轻量主站与 Skill 仓库；真实课件统一放入 `weponusa/teachany-courseware`（本地路径：`~/CodeBuddy/一次函数/teachany-courseware`）。
+`weponusa/teachany` 是轻量主站与 Skill 仓库；真实课件统一放入 `weponusa/teachany-courseware`（线上数据）。**Agent 不必事先 full clone**——发布时自动浅克隆到 `~/.cache/teachany-courseware`，或走 Worker PR。
 
 - 课件目录：`community/<course-id>/index.html`、`manifest.json`、`PLAN.md`、`assets/`
 - **线上主域名**：`https://www.teachany.cn/community/<course-id>/`
@@ -23,23 +23,24 @@ node "$TEACHANY_SKILL/scripts/validate-courseware.cjs" "$COURSE_DIR"
 1. **3.5a 反馈密码**：问教师口令 → `set-feedback-password.py` 写入 manifest → `--check` 通过。详见 `phases/phase3-5-gates.md`。
 2. **3.5b 是否上传**：问用户是否上传；仅同意后 `export TEACHANY_UPLOAD_CONFIRMED=1`。
 
-未设置 `TEACHANY_UPLOAD_CONFIRMED=1` 时，`auto-publish.sh` / `teachany-publish.sh` **将拒绝执行**。
+未设置 `TEACHANY_UPLOAD_CONFIRMED=1` 时，`hang_tree.py publish` / `teachany-publish.sh` / `auto-publish.sh` **将拒绝执行**。
 
 ## Agent Phase 4 铁律
 
-1. **仅当 3.5a + 3.5b 完成后**才执行发布脚本；不得只留本地却声称已上线。
-2. **默认入口**：`TEACHANY_UPLOAD_CONFIRMED=1 teachany-publish.sh <course-id>`（自动检测凭据）。
-3. **禁止**在未跑 `rebuild-index.py` 的情况下 `git add -A && git push`（会导致线上不挂树）。
-4. **禁止**单课发布时用 `git add -A` 把无关未跟踪 KCP/报告一并推上去；用 `auto-publish.sh` 默认的限定暂存。
-5. 声称「已上线」前必须：`curl -sI https://www.teachany.cn/community/<course-id>/` 返回 **200**，且知识树节点 **status=active**、**courses 含该 id**。
+1. **仅当 3.5a + 3.5b 完成后**才执行发布；不得只留本地却声称已上线。
+2. **默认入口**：`TEACHANY_UPLOAD_CONFIRMED=1 python3 hang_tree.py publish <course-id> --course-dir <path>`（课件可在任意目录）。
+3. **禁止**在未跑 `rebuild-index.py`（或 PR 合并触发的 CI rebuild）的情况下裸 `git push`（会导致不挂树）。
+4. **禁止**单课发布 `git add -A` 夹带无关文件；用 `auto-publish.sh` 限定暂存。
+5. 声称「已上线」前：`curl -sI https://www.teachany.cn/community/<course-id>/` 为 **200**，节点 **active** 且 **courses** 含该 id。
 
 ## 发布路径（编排器自动选择）
 
-### 入口（推荐）
+### 入口（推荐 · 无需事先 clone）
 
 ```bash
-export TEACHANY_COURSEWARE_REPO=~/CodeBuddy/一次函数/teachany-courseware
-bash "$TEACHANY_SKILL/scripts/teachany-publish.sh" <course-id>
+export TEACHANY_UPLOAD_CONFIRMED=1
+python3 "$TEACHANY_SKILL/scripts/hang_tree.py" publish <course-id> --course-dir ./community/<course-id>
+# 等价：bash "$TEACHANY_SKILL/scripts/teachany-publish.sh" <course-id> --course-dir ./community/<course-id>
 ```
 
 ### ① 维护者直推（本地 Mac + SSH / GH_TOKEN）

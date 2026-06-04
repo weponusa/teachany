@@ -46,25 +46,26 @@ ln -s <work-dir>/teachany-src/skill <your-skill-dir>/teachany
 
 ### 普通用户 / 社区投稿 — 无需任何配置
 
-课件做好后直接发布，走 Cloudflare Worker 中转，**不需要 GitHub 账号或 token**：
+课件做好后发布（**不必 clone teachany-courseware**）：
 
 ```bash
-bash "$TEACHANY_SKILL/scripts/publish_course.sh" "$COURSE_DIR" <course-id>
+export TEACHANY_UPLOAD_CONFIRMED=1
+python3 "$TEACHANY_SKILL/scripts/hang_tree.py" publish <course-id> --course-dir "$COURSE_DIR"
 ```
 
-Worker 地址：`https://teachany-community.pages.dev/api/submit`，自动走 PR 质检流程。
+无 `GH_TOKEN` 时自动走 Worker PR；合并后 CI 执行 `rebuild-index` 完成挂树。
 
-### 仓库维护者（weponusa）— 运行 setup.sh 一次
+### 维护者直推 — 可选 setup.sh + GH_TOKEN
 
-如果你是仓库维护者，需要直推权限，运行一次 setup.sh 配置 GitHub Token：
+需要直推 `teachany-courseware` 时，配置一次 Token（写入 `~/.teachany/config` 或 `export GH_TOKEN=...`）：
 
 ```bash
-bash ~/.codebuddy/skills/teachany/scripts/setup.sh
+bash "$TEACHANY_SKILL/scripts/setup.sh"   # 可选引导
 ```
 
-脚本引导：检测 SSH → 粘贴 GitHub Fine-grained Token → 写入 `~/.teachany/config`，之后 `auto-publish.sh` 自动读取。
+之后 `hang_tree.py publish` 会在 `~/.cache/teachany-courseware` **自动浅克隆** 再挂树推送。
 
-> 创建 Token：https://github.com/settings/tokens/new → Fine-grained → Repository: weponusa/teachany → Contents: Read and write
+> Token 需对 **weponusa/teachany-courseware** 有 Contents: Read and write（及 Actions 若用 `rebuild --dispatch`）
 
 ## 四、首次验证
 
@@ -93,7 +94,7 @@ AI 会自动：
 3. 按 `templates/course-skeleton.html` + `templates/manifest-template.json` 搭建课件
 4. 从 `templates/content-section-templates.html` 选择主体内容片段填充 `{{CONTENT_SECTIONS}}`
 5. 跑 `node "$TEACHANY_SKILL/scripts/validate-courseware.cjs" "$COURSE_DIR" --phase2` 和 `$TEACHANY_SKILL/scripts/check_baseline.sh` 自检
-6. （如配置 TeachAny 社区账号）`$TEACHANY_SKILL/scripts/publish_course.sh` 发布
+6. 用户同意上传后：`TEACHANY_UPLOAD_CONFIRMED=1 python3 hang_tree.py publish <course-id> --course-dir "$COURSE_DIR"`（自动挂树）
 
 详见：
 
@@ -122,22 +123,23 @@ TeachAny 采用双仓库架构：
 
 | 仓库 | 用途 |
 | :--- | :--- |
-| **weponusa/teachany** | Skill 主仓、Gallery、知识树、Registry、脚本、轻量入口 |
-| **weponusa/teachany-courseware** | 真实课件实体仓库（community/<course-id>/） |
+| **weponusa/teachany** | Skill、轻量站点、脚本（**不含**完整 `data/trees`） |
+| **weponusa/teachany-courseware** | 课件实体 + 课标树 + registry（线上 CDN 可读，发布时浅克隆或 PR） |
 
-做课件 → 发布到 `weponusa/teachany-courseware` 的 `community/<course-id>/`；发布课件：
-- **普通用户**：`bash "$TEACHANY_SKILL/scripts/publish_course.sh" "$COURSE_DIR" <course-id>`（零配置，走 Worker）
-- **维护者**：`bash "$TEACHANY_SKILL/scripts/auto-publish.sh" <course-id>`（需 SSH 或 GH_TOKEN）
+发布课件（课件目录可在任意路径）：
+- **推荐**：`hang_tree.py publish`（自动选 Worker PR 或 GH_TOKEN 直推）
+- **兼容**：`teachany-publish.sh`、`publish_course.sh`
 
 ## 九、普通用户如何提交课件
 
-普通用户无需 GitHub 写权限。推荐使用：
+无需事先 clone courseware：
 
 ```bash
-bash "$TEACHANY_SKILL/scripts/publish_course.sh" "$COURSE_DIR" <course-id>
+export TEACHANY_UPLOAD_CONFIRMED=1
+python3 "$TEACHANY_SKILL/scripts/hang_tree.py" publish <course-id> --course-dir "$COURSE_DIR"
 ```
 
-脚本会提交到 TeachAny Community API，在 `weponusa/teachany-courseware` 自动开 PR；质检通过后自动合并、解包、重建索引并部署。
+Worker 在 `weponusa/teachany-courseware` 开 PR → 合并后 CI `rebuild-index` 挂树并部署。
 
 ## 十、手机与小程序适配
 

@@ -1,6 +1,6 @@
 ---
 name: TeachAny
-version: 7.16.0
+version: 7.17.0
 description: "K-12 interactive courseware creation for lesson pages, animations, AI tutor, TTS, knowledge graph, PBL paths, and TeachAny publishing."
 allowed-tools: Read,Write,Edit,Bash,Glob,Grep
 ---
@@ -19,7 +19,7 @@ Load only when needed:
 - `./skill/phases/packaging.md` — publish / registry / Gallery
 - `./skill/references/baseline-rules.md` and `./skill/RULES.md` — complete baseline and hard rules
 - `./skill/templates/` — courseware skeletons
-- `./skill/scripts/` — validation, TTS, map, hero, publishing utilities
+- `./skill/scripts/` — validation, TTS, map, hero, **`hang_tree.py`** (挂树/发布，无需事先 clone courseware)
 
 Existing full courseware is hosted in the courseware repository:
 

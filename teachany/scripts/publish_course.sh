@@ -95,7 +95,7 @@ fi
 if [ -f "$SKILL_SCRIPTS/check_node_id.py" ] && [ -f "$SRC_DIR/index.html" ]; then
   echo ""
   echo "[1.2/5] 校验 node_id 存在于知识树"
-  export TEACHANY_COURSEWARE_REPO="${TEACHANY_COURSEWARE_REPO:-$HOME/CodeBuddy/一次函数/teachany-courseware}"
+  export TEACHANY_COURSEWARE_REPO="${TEACHANY_COURSEWARE_REPO:-$HOME/.cache/teachany-courseware}"
   if ! python3 "$SKILL_SCRIPTS/check_node_id.py" "$SRC_DIR" > /tmp/node_check.log 2>&1; then
     echo "  ❌ node_id 不在知识树里（上传后无法在 Gallery/知识图谱显示）"
     cat /tmp/node_check.log | head -20
@@ -463,7 +463,7 @@ if [ $STATUS -eq 0 ]; then
     if [ "$attempt" = "6" ] && [ "$PAGES_KICKED" = "0" ] && [ "$code" != "200" ]; then
       echo ""
       echo "  🔧 已等 3 分钟 URL 仍 404，检查是否为 Pages 未触发问题..."
-      REPO_DIR="${TEACHANY_COURSEWARE_REPO:-$HOME/CodeBuddy/一次函数/teachany-courseware}"
+      REPO_DIR="${TEACHANY_COURSEWARE_REPO:-$HOME/.cache/teachany-courseware}"
       if [ -d "$REPO_DIR/.git" ]; then
         pushd "$REPO_DIR" > /dev/null
         git fetch origin main --quiet 2>&1

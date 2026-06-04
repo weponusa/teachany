@@ -108,9 +108,14 @@ def cmd_publish(args: argparse.Namespace) -> int:
         print("❌ 请先 TEACHANY_UPLOAD_CONFIRMED=1（Phase 3.5b 用户同意上传）", file=sys.stderr)
         return 3
     publish_sh = SCRIPT_DIR / "teachany-publish.sh"
+    course_dir = args.course_dir
+    if not course_dir:
+        cwd_course = Path.cwd() / "community" / args.course_id
+        if cwd_course.is_dir():
+            course_dir = str(cwd_course)
     cmd = ["bash", str(publish_sh), args.course_id]
-    if args.course_dir:
-        cmd.extend(["--course-dir", args.course_dir])
+    if course_dir:
+        cmd.extend(["--course-dir", course_dir])
     return subprocess.call(cmd)
 
 

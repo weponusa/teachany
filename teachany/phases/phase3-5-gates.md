@@ -45,7 +45,7 @@ python3 "$TEACHANY_SKILL/scripts/set-feedback-password.py" --check "$COURSE_DIR/
 
 ```bash
 export TEACHANY_UPLOAD_CONFIRMED=1
-bash "$TEACHANY_SKILL/scripts/teachany-publish.sh" <course-id>
+python3 "$TEACHANY_SKILL/scripts/hang_tree.py" publish <course-id> --course-dir "$COURSE_DIR"
 ```
 
 | 用户回复 | Agent 行为 |

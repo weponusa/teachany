@@ -55,10 +55,11 @@ TeachAny 只有一套标准：所有课件必须完整包含以下 19 项基线�
 
 ```bash
 node "$TEACHANY_SKILL/scripts/validate-courseware.cjs" "$COURSE_DIR"
-python3 "$TEACHANY_SKILL/scripts/find_nodes.py" "知识点"
+python3 "$TEACHANY_SKILL/scripts/find_nodes.py" --stage middle --subject math --keyword "一次函数"
+python3 "$TEACHANY_SKILL/scripts/hang_tree.py" publish <course-id> --course-dir "$COURSE_DIR"   # 需 TEACHANY_UPLOAD_CONFIRMED=1
 python3 "$TEACHANY_SKILL/scripts/find-map.py" 唐
 python3 scripts/find-hero.py <course-id>
-python3 scripts/rebuild-index.py
+python3 "$TEACHANY_SKILL/scripts/hang_tree.py" rebuild --dispatch   # 或维护者在 courseware 仓内 rebuild-index.py
 ```
 
 ## 反模式速查
@@ -67,7 +68,7 @@ python3 scripts/rebuild-index.py
 |---|---|
 | "先做简版再补" | 直接做完整版，不存在简版 |
 | "用户没说要发布，先本地看看" | Phase 3.5b **必须询问**是否上传；未同意不得发布 |
-| 做完课件直接 push | 先 3.5a 反馈密码 + 3.5b 上传确认，再 `TEACHANY_UPLOAD_CONFIRMED=1` 发布 |
+| 做完课件直接 push | 先 3.5a + 3.5b，再 `TEACHANY_UPLOAD_CONFIRMED=1 hang_tree.py publish`（自动挂树） |
 | 未设反馈密码就发布 | Phase 3.5a 用 `set-feedback-password.py` 写入或 `--decline` |
 | 先写漂亮页面再补教学 | 先问题锚点和学习闭环 |
 | 全文讲解无操作 | 每个核心概念至少一个可操作点 |
