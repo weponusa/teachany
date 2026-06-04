@@ -666,14 +666,45 @@ class PBLPathBuilder {
   _sanitizeTechRoute(text) {
     if (!text) return '';
     const re = this._basicMentionRegex();
-    const kept = String(text)
+    const original = String(text);
+    const kept = original
       .split(/\n+/)
       .map(line => line
         .split(/(?<=[。；;])/)
         .filter(seg => !re.test(seg))
         .join(''))
       .filter(line => line.replace(/[【】①②③④⑤\s]/g, '').length > 0);
-    return kept.join('\n').trim();
+    const cleaned = kept.join('\n').trim();
+    // 避免清洗过猛导致整块「路径说明」消失
+    if (cleaned.replace(/\s/g, '').length >= 80) return cleaned;
+    if (original.replace(/\s/g, '').length >= 80) return original.slice(0, 600);
+    return cleaned;
+  }
+
+  /** 解析/重建项目实施路径说明（供 pbl.html 展示与历史恢复） */
+  resolveTechRouteText(result) {
+    if (!result) return '';
+    let routeText = (result.techRoute || '').trim();
+    if (routeText.replace(/\s/g, '').length >= 40) return routeText;
+
+    const nodes = (result.graphData && result.graphData.nodes) ? result.graphData.nodes : [];
+    const matched = result.matched || nodes.filter(n => n.layer === 'matched');
+    const external = result.external || nodes.filter(n => n.layer === 'external');
+    const phases = result.projectPhases || [];
+    const goal = result.goal || '';
+
+    routeText = this._buildTechRouteFromGraph(goal, matched, external, phases);
+    if (routeText.replace(/\s/g, '').length < 40) {
+      routeText = this._buildFallbackTechRoute(goal, matched, external);
+    }
+    if (routeText.replace(/\s/g, '').length < 20 && nodes.length) {
+      const steps = matched.filter(n => n.pathStep).sort((a, b) => a.pathStep - b.pathStep);
+      const hint = steps.length
+        ? `按图谱序号 ${steps.map(n => n.pathStep).join('→')} 推进：${steps.slice(0, 5).map(n => n.name).join('、')}${steps.length > 5 ? '…' : ''}。`
+        : `共 ${nodes.length} 个节点，请先完成核心（红色）节点课件与动手任务。`;
+      routeText = `围绕「${String(goal).slice(0, 80)}」的实施路径：${hint}`;
+    }
+    return routeText;
   }
 
   _capGraphNodes(graphData, maxNodes = PBLPathBuilder.PBL_MAX_GRAPH_NODES) {
@@ -819,12 +850,22 @@ class PBLPathBuilder {
     }
     techRoute = techRoute || this._buildFallbackTechRoute(goal, finalized.matched, finalized.external);
 
+    techRoute = this.resolveTechRouteText({
+      goal,
+      techRoute,
+      matched: finalized.matched,
+      external: finalized.external,
+      projectPhases: stage2.projectPhases || [],
+      graphData: finalized.graphData
+    });
+
     return {
       goal,
       systems: activeSystems,
       matched: finalized.matched,
       external: finalized.external,
       techRoute,
+      projectPhases: stage2.projectPhases || [],
       graphData: finalized.graphData,
       complexProject: finalized.complex,
       stats: {
@@ -1206,12 +1247,19 @@ class PBLPathBuilder {
     const topMatched = matched.slice(0, 15);
     const finalized = this._finalizePBLGraph(goal, topMatched, [], activeSystems);
 
+    const techRoute = this.resolveTechRouteText({
+      goal,
+      matched: finalized.matched,
+      external: finalized.external,
+      graphData: finalized.graphData
+    });
+
     return {
       goal,
       systems: activeSystems,
       matched: finalized.matched,
       external: finalized.external,
-      techRoute: this._buildFallbackTechRoute(goal, finalized.matched, finalized.external),
+      techRoute,
       graphData: finalized.graphData,
       complexProject: finalized.complex,
       stats: {
