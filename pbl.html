@@ -301,6 +301,47 @@ body {
 
 /* ─── PBL Graph Container ─────────────────────── */
 #pbl-graph-container {
+  min-height: 420px;
+  border-radius: 12px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+/* PBL 技术路线分析 */
+#pblTechRoute {
+  margin: 16px 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(139,92,246,0.08));
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.pbl-tech-route-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  user-select: none;
+  transition: background 0.2s;
+}
+.pbl-tech-route-header:hover { background: rgba(148,163,184,0.06); }
+.pbl-tech-route-toggle { font-size: 12px; color: var(--dim); font-weight: 400; }
+#pblTechRoute.collapsed .pbl-tech-route-body { display: none; }
+#pblTechRoute.collapsed .pbl-tech-route-toggle::after { content: '展开 ▼'; }
+#pblTechRoute:not(.collapsed) .pbl-tech-route-toggle::after { content: '收起 ▲'; }
+.pbl-tech-route-toggle::after { content: '收起 ▲'; }
+.pbl-tech-route-body {
+  padding: 0 20px 18px;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--dim);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
   min-height: 600px;
   max-height: 85vh;
   position: relative;
@@ -631,6 +672,15 @@ body {
     <div class="pbl-stats" id="pblStats"></div>
   </div>
 
+  <!-- PBL 技术路线分析 -->
+  <div id="pblTechRoute" style="display:none">
+    <div class="pbl-tech-route-header" onclick="this.parentElement.classList.toggle('collapsed')">
+      <span>🛠️ 技术路线分析</span>
+      <span class="pbl-tech-route-toggle">收起 ▲</span>
+    </div>
+    <div class="pbl-tech-route-body" id="pblTechRouteBody"></div>
+  </div>
+
   <!-- PBL 知识图谱容器 -->
   <div id="pbl-graph-container"></div>
 </div>
@@ -661,9 +711,9 @@ body {
   </div>
 </div>
 
-<script src="./scripts/courseware-hub.js"></script>
-<script src="./scripts/pbl-path.js?v=20260520-fix-invalid-links"></script>
-<script src="./scripts/history-tracker.js" defer></script>
+<script src="./assets/scripts/courseware-hub.js"></script>
+<script src="./assets/scripts/pbl-path.js?v=20260604-tech-route-fix"></script>
+<script src="./assets/scripts/history-tracker.js" defer></script>
 <script>
 // ─── 全局状态 ──────────────────────────────────
 let pblRenderer = null;
@@ -784,7 +834,7 @@ async function analyzePBLGoal() {
       if (window.TeachAnyHistory && typeof window.TeachAnyHistory.recordPBL === 'function') {
         const cfg = (builder && typeof builder.getLLMConfig === 'function') ? builder.getLLMConfig() : {};
         const providers = { providerName: cfg.providerName || cfg.providerId || '', model: cfg.model || '' };
-        window.TeachAnyHistory.recordPBL(goal, { ...result.graphData, systems: result.systems }, providers);
+        window.TeachAnyHistory.recordPBL(goal, { ...result.graphData, systems: result.systems, techRoute: result.techRoute || '' }, providers);
       }
     } catch (_e) { /* ignore */ }
 
@@ -848,6 +898,7 @@ async function restorePBLRunFromHistory(id) {
   const result = {
     goal: run.goal || '',
     systems: run.systems || [],
+    techRoute: run.techRoute || '',
     graphData,
     matched: graphData.nodes.filter(n => n.layer === 'matched'),
     external: graphData.nodes.filter(n => n.layer === 'external'),
@@ -885,6 +936,28 @@ function renderPBLStats(result) {
     <div class="pbl-stat-card"><div class="val">${layerCounts.external}</div><div class="lbl">外部补充</div></div>
     <div class="pbl-stat-card"><div class="val">${result.graphData.links.length}</div><div class="lbl">关联路径</div></div>
   `;
+
+  // 渲染技术路线分析
+  const techRouteEl = document.getElementById('pblTechRoute');
+  const techRouteBody = document.getElementById('pblTechRouteBody');
+  let routeText = (result.techRoute || '').trim();
+  if (!routeText && window.PBLPathBuilder) {
+    try {
+      const b = new window.PBLPathBuilder();
+      routeText = b._buildFallbackTechRoute(
+        result.goal || '',
+        result.matched || (result.graphData && result.graphData.nodes ? result.graphData.nodes.filter(n => n.layer === 'matched') : []),
+        result.external || (result.graphData && result.graphData.nodes ? result.graphData.nodes.filter(n => n.layer === 'external') : [])
+      );
+    } catch (_e) { /* ignore */ }
+  }
+  if (routeText) {
+    techRouteBody.textContent = routeText;
+    techRouteEl.style.display = 'block';
+    techRouteEl.classList.remove('collapsed');
+  } else {
+    techRouteEl.style.display = 'none';
+  }
 }
 
 function renderPBLGraph(result) {
@@ -958,7 +1031,7 @@ function onPBLNodeClick(node) {
             const hit = TeachAnyHub.getCourseById(cid);
             if (hit && hit.url) url = hit.url;
           }
-          if (!url && isStr) url = cid.startsWith('examples/') || cid.startsWith('community/') ? `https://weponusa.github.io/teachany-courseware/${cid}/index.html` : `https://weponusa.github.io/teachany-courseware/community/${cid}/index.html`;
+          if (!url && isStr) url = cid.startsWith('examples/') || cid.startsWith('community/') ? `/teachany-courseware/${cid}/index.html` : `/teachany-courseware/community/${cid}/index.html`;
           return `<a href="${url}" target="_blank" style="display:block;padding:6px 12px;margin:3px 0;border-radius:6px;font-size:13px;color:var(--text);text-decoration:none;background:rgba(148,163,184,0.08);">📋 ${isStr ? cid.split('/').pop() : cid}</a>`;
         }).join('') + `</div>`;
     }
