@@ -24,9 +24,25 @@ EXT_NODE_RE = re.compile(r'^ext-[a-f0-9]{6,12}$', re.I)
 
 
 def find_repo():
-    """知识树权威源：teachany-courseware/data/trees（非 weponusa/teachany GitHub 轻量仓）。"""
+    """知识树权威源：本地 courseware 优先；无本地时返回 None（走远程 node-index）。"""
     from repo_paths import find_courseware_repo
     return find_courseware_repo()
+
+
+def load_all_nodes_remote():
+    from repo_paths import fetch_remote_json
+    idx = fetch_remote_json('node-index.json', timeout=90)
+    result = {}
+    if not isinstance(idx, dict):
+        return result
+    nodes = idx.get('nodes') or {}
+    for nid, n in nodes.items():
+        if not nid:
+            continue
+        sub = n.get('subject') or ''
+        stg = n.get('stage') or ''
+        result[nid] = (sub, stg, n.get('name_zh') or n.get('name') or '', 'remote:node-index')
+    return result
 
 def load_all_nodes(repo):
     """返回 {node_id: (subject, stage, name, tree_file)}"""
@@ -68,11 +84,14 @@ def main():
 
     repo = find_repo()
     if not repo:
-        from repo_paths import require_courseware_repo
-        require_courseware_repo()
-        return
-
-    all_nodes = load_all_nodes(repo)
+        from repo_paths import remote_data_available, require_courseware_repo
+        if not remote_data_available():
+            require_courseware_repo()
+            return
+        print('📡 使用远程 node-index.json', file=sys.stderr)
+        all_nodes = load_all_nodes_remote()
+    else:
+        all_nodes = load_all_nodes(repo)
 
     # Mode: list
     if args.list_subject:

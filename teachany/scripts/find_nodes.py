@@ -32,7 +32,13 @@ find_nodes.py · v6.6
 import json, sys, argparse, re, difflib
 from pathlib import Path
 
-from repo_paths import find_courseware_repo, require_courseware_repo
+from repo_paths import (
+    find_courseware_repo,
+    fetch_remote_json,
+    list_trees_via_remote,
+    remote_data_available,
+    require_courseware_repo,
+)
 
 CURRICULUM_ALIASES = {
     'cn': 'cn', 'china': 'cn', 'cn-national': 'cn',
@@ -61,6 +67,10 @@ def find_repo() -> Path | None:
     return find_courseware_repo()
 
 
+def use_remote_data() -> bool:
+    return find_repo() is None and remote_data_available()
+
+
 def normalize(s: str, mapping: dict) -> str:
     if not s:
         return ''
@@ -68,8 +78,10 @@ def normalize(s: str, mapping: dict) -> str:
     return mapping.get(s, s)
 
 
-def list_all_trees(repo: Path):
+def list_all_trees(repo: Path | None):
     """返回所有 (curriculum, stage, subject, file)"""
+    if repo is None or not (repo / 'data' / 'trees').exists():
+        return list_trees_via_remote()
     out = []
     for f in (repo / 'data' / 'trees').rglob('*.json'):
         try:
@@ -89,11 +101,16 @@ def list_all_trees(repo: Path):
     return out
 
 
-def load_tree(repo: Path, curriculum: str, stage: str, subject: str):
-    p = repo / 'data' / 'trees' / curriculum / stage / f'{subject}.json'
-    if not p.exists():
-        return None, None
-    return json.load(open(p, encoding='utf-8')), p
+def load_tree(repo: Path | None, curriculum: str, stage: str, subject: str):
+    rel = f'trees/{curriculum}/{stage}/{subject}.json'
+    if repo and (repo / 'data' / 'trees').exists():
+        p = repo / 'data' / 'trees' / curriculum / stage / f'{subject}.json'
+        if p.exists():
+            return json.load(open(p, encoding='utf-8')), p
+    data = fetch_remote_json(rel)
+    if isinstance(data, dict) and 'domains' in data:
+        return data, f'data/trees/{rel}'
+    return None, None
 
 
 def score_node(node: dict, domain: dict, keyword: str) -> float:
@@ -134,9 +151,11 @@ def main():
     args = ap.parse_args()
 
     repo = find_repo()
-    if not repo:
+    if not repo and not remote_data_available():
         require_courseware_repo()
         return
+    if use_remote_data():
+        print('📡 使用远程课标数据（teachany.cn / teachany-courseware CDN）', file=sys.stderr)
 
     # --list-trees 模式
     if args.list_trees:

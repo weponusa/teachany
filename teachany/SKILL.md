@@ -28,16 +28,28 @@ TeachAny 的目标不是把知识堆进页面，而是把一节课做成**有问
 | **teachany**（本地常叫 teachany-opensource） | [weponusa/teachany](https://github.com/weponusa/teachany) | ❌ 轻量 | Skill、`pbl.html` / `path.html`；**无**完整课标 JSON |
 | ~~teachany-opensource~~ | **不存在此独立仓库** | — | 勿 clone；会 404 |
 
-Agent 制作课件前**必须**能访问 `teachany-courseware`：
+### 只读 vs 写入（能否不 clone？）
+
+| 能力 | 不 clone，能访问公网即可？ | 数据/API 来源 |
+| --- | --- | --- |
+| **学习路径图谱** `path.html` | ✅ | `nodes-metadata.json` + `registry.json`（`teachany-data-fetch.js`） |
+| **知识地图** `tree.html` | ✅ | `teachany-courseware` GitHub Pages / raw |
+| **PBL 匹配** `pbl.html` | ✅ | 课标树 CDN + `POST https://www.teachany.cn/api/pbl/analyze` |
+| **查 node_id** `find_nodes.py` | ✅ | 远程 `data/trees/...`（`repo_paths.fetch_remote_json`） |
+| **校验 node_id** `check_node_id.py` | ✅ | 远程 `node-index.json` |
+| **课件内知识图谱模块** | ✅ | 课件页加载 `teachany-knowledge-graph.js`（在 courseware 社区页） |
+| **挂树 / rebuild-index / register_node** | ❌ 需本地 courseware | 改写 `data/trees`、`registry.json` |
+
+只读示例（**无需** `TEACHANY_COURSEWARE_REPO`）：
 
 ```bash
-export TEACHANY_COURSEWARE_REPO=~/CodeBuddy/一次函数/teachany-courseware   # 按本机路径调整
 python3 "$TEACHANY_SKILL/scripts/find_nodes.py" --stage middle --subject physics --keyword "浮力"
+python3 "$TEACHANY_SKILL/scripts/check_node_id.py" --node-id phy-m-liquid-pressure-buoyancy
 ```
 
-静态站（含 [GitHub Pages PBL](https://weponusa.github.io/teachany/pbl.html)）通过 `teachany-data-fetch.js` 从 `www.teachany.cn` / `teachany-courseware` CDN 拉取 `data/*`；**不能**只在 `weponusa/teachany` 仓内找 `data/trees`。
+写入挂树仍须 clone 并在 courseware 根目录执行 `rebuild-index.py` / `register_node.py`。
 
-`rebuild-index.py`、`register_node.py` 请在 **courseware 根目录**执行（会改写 `data/trees` 与 `registry.json`）。
+静态站（[GitHub Pages](https://weponusa.github.io/teachany/pbl.html)）通过 `teachany-data-fetch.js` 拉取 `data/*`；**不能**只在 `weponusa/teachany` 仓内找 `data/trees`。
 
 ## Quick Start
 
