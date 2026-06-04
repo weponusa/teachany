@@ -51,6 +51,16 @@ class PBLPathBuilder {
     this._loadLLMConfig();
   }
 
+  async _fetchDataJson(relativePath) {
+    if (window.TeachAnyDataFetch) {
+      return window.TeachAnyDataFetch.fetchDataJson(relativePath);
+    }
+    const url = String(relativePath).startsWith('./') ? relativePath : './data/' + relativePath;
+    const resp = await fetch(url + '?t=' + Date.now());
+    if (!resp.ok) throw new Error(`Fetch ${url}: HTTP ${resp.status}`);
+    return resp.json();
+  }
+
   // ─── 多课标知识点索引 ──────────────────────────
 
   async loadUnifiedIndex() {
@@ -184,8 +194,7 @@ class PBLPathBuilder {
     if (sysId === 'cn') {
       // 中国课标直接从 nodes-metadata 过滤 cn/ 路径，避免旧 fallback 把 IB/AP 等国际节点误标为 CN。
       try {
-        const resp = await fetch('./data/nodes-metadata.json?t=' + Date.now());
-        const data = await resp.json();
+        const data = await this._fetchDataJson('nodes-metadata.json');
         (data.nodes || [])
           .filter(n => String(n.graph_path || n.tree_file || '').startsWith('cn/'))
           .forEach(n => allNodes.push({
@@ -203,8 +212,7 @@ class PBLPathBuilder {
         const files = await this._discoverTreeFiles(dir);
         const filePromises = files.map(async file => {
           try {
-            const resp = await fetch(file + '?t=' + Date.now());
-            const tree = await resp.json();
+            const tree = await this._fetchDataJson(file.replace(/^\.\/data\//, ''));
             return this._extractNodesFromTree(tree, sysId, file);
           } catch (e) {
             return [];

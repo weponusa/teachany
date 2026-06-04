@@ -12,15 +12,7 @@ register_node.py · v6.5
 import json, argparse, sys
 from pathlib import Path
 
-def find_repo():
-    for c in [
-        Path.home() / 'CodeBuddy' / '一次函数' / 'teachany-opensource',
-        Path.home() / 'teachany-opensource',
-        Path.home() / 'CodeBuddy' / 'teachany-opensource',
-    ]:
-        if (c / 'data' / 'trees').exists():
-            return c
-    return None
+from repo_paths import find_courseware_repo, require_courseware_repo
 
 def main():
     ap = argparse.ArgumentParser()
@@ -33,10 +25,10 @@ def main():
     ap.add_argument('--curriculum', default='cn', choices=['cn','international','international-alt'])
     args = ap.parse_args()
 
-    repo = find_repo()
+    repo = find_courseware_repo()
     if not repo:
-        print("❌ 未找到 teachany-opensource", file=sys.stderr)
-        sys.exit(2)
+        require_courseware_repo()
+        return
 
     tree_file = repo / 'data' / 'trees' / args.curriculum / args.stage / f'{args.subject}.json'
     if not tree_file.exists():

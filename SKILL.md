@@ -1,6 +1,6 @@
 ---
 name: TeachAny
-version: 7.14.1
+version: 7.16.0
 description: "K-12 interactive courseware creation for lesson pages, animations, AI tutor, TTS, knowledge graph, PBL paths, and TeachAny publishing."
 allowed-tools: Read,Write,Edit,Bash,Glob,Grep
 ---

@@ -32,6 +32,8 @@ find_nodes.py · v6.6
 import json, sys, argparse, re, difflib
 from pathlib import Path
 
+from repo_paths import find_courseware_repo, require_courseware_repo
+
 CURRICULUM_ALIASES = {
     'cn': 'cn', 'china': 'cn', 'cn-national': 'cn',
     'us': 'us', 'usa': 'us', 'us-ccss': 'us',
@@ -55,15 +57,8 @@ STAGE_ALIASES = {
 }
 
 
-def find_repo() -> Path:
-    for c in [
-        Path.home() / 'CodeBuddy' / '一次函数' / 'teachany-opensource',
-        Path.home() / 'teachany-opensource',
-        Path.home() / 'CodeBuddy' / 'teachany-opensource',
-    ]:
-        if (c / 'data' / 'trees').exists():
-            return c
-    return None
+def find_repo() -> Path | None:
+    return find_courseware_repo()
 
 
 def normalize(s: str, mapping: dict) -> str:
@@ -140,8 +135,8 @@ def main():
 
     repo = find_repo()
     if not repo:
-        print("❌ 未找到 teachany-opensource 仓库", file=sys.stderr)
-        sys.exit(3)
+        require_courseware_repo()
+        return
 
     # --list-trees 模式
     if args.list_trees:

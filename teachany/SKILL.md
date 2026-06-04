@@ -1,6 +1,6 @@
 ---
 name: TeachAny
-version: 7.15.0
+version: 7.16.0
 description: "K-12 interactive courseware creation. Use for school-subject lesson pages, animations, AI tutor, TTS, knowledge graph, PBL learning paths, or TeachAny publishing."
 description_zh: "K12 互动课件开发技能：用于制作或优化学科课件、教学动画、AI 学伴、TTS、知识图谱、PBL 学习路径与 TeachAny 发布。"
 allowed-tools: Read,Write,Edit,Bash,Glob,Grep
@@ -20,13 +20,33 @@ TeachAny 的目标不是把知识堆进页面，而是把一节课做成**有问
 
 不要使用：企业培训、成人职业技能课、通用网站/App、纯 PPT/Word 格式转换、非 K12 展览页。
 
+## 知识图谱 / 课标数据在哪？（必读，避免 404）
+
+| 仓库 | GitHub | 含 `data/trees/` | 用途 |
+| --- | --- | --- | --- |
+| **teachany-courseware** | [weponusa/teachany-courseware](https://github.com/weponusa/teachany-courseware) | ✅ 权威 | 知识树、`node-index.json`、`nodes-metadata.json`、`rebuild-index.py` |
+| **teachany**（本地常叫 teachany-opensource） | [weponusa/teachany](https://github.com/weponusa/teachany) | ❌ 轻量 | Skill、`pbl.html` / `path.html`；**无**完整课标 JSON |
+| ~~teachany-opensource~~ | **不存在此独立仓库** | — | 勿 clone；会 404 |
+
+Agent 制作课件前**必须**能访问 `teachany-courseware`：
+
+```bash
+export TEACHANY_COURSEWARE_REPO=~/CodeBuddy/一次函数/teachany-courseware   # 按本机路径调整
+python3 "$TEACHANY_SKILL/scripts/find_nodes.py" --stage middle --subject physics --keyword "浮力"
+```
+
+静态站（含 [GitHub Pages PBL](https://weponusa.github.io/teachany/pbl.html)）通过 `teachany-data-fetch.js` 从 `www.teachany.cn` / `teachany-courseware` CDN 拉取 `data/*`；**不能**只在 `weponusa/teachany` 仓内找 `data/trees`。
+
+`rebuild-index.py`、`register_node.py` 请在 **courseware 根目录**执行（会改写 `data/trees` 与 `registry.json`）。
+
 ## Quick Start
 
 用户：`我儿子初二搞不懂浮力，做个能玩的页面。`
 
 标准输出路径：
 
-1. 查 `node_id`：`python3 scripts/find_nodes.py "浮力"`。
+1. 查 `node_id`（在 **courseware** 仓或已设置 `TEACHANY_COURSEWARE_REPO` 时）：
+   `python3 scripts/find_nodes.py --stage middle --subject physics --keyword "浮力"`。
 2. 复制 `templates/course-skeleton-v2.html` 和 `templates/manifest-template.json`。
 3. 用"为什么沉浮不同？"做问题锚点，加入拖拽物体/液体密度的 Canvas 互动。
 4. 按 `tech/animation-toolchain.md` 选择动画工具：算法/流程优先 Motion Canvas，数学推导优先 Manim，实验探究优先 PhET/GeoGebra/3Dmol/Matter.js，页面实时操作用 Canvas/SVG。
@@ -111,6 +131,7 @@ Phase 4  发布注册：**必须**走 `teachany-publish.sh`（自动选直推或
 | Phase 1 问卷 | `references/phase1-checklist.md` |
 | 互动形态 | `guides/interaction-patterns.md` |
 | PBL/探究课 | `guides/project-based.md` |
+| **知识数据 / 双仓边界** | 上文「知识图谱 / 课标数据在哪」；`scripts/repo_paths.py` |
 | 练习评估 | `guides/assessment.md` |
 | 页面结构与 CSS | `tech/page-structure.md`, `tech/design-system.md` |
 | v2 分页模板 | `templates/course-skeleton-v2.html`, `templates/content-section-templates-v2.html` |
@@ -129,7 +150,7 @@ Phase 4  发布注册：**必须**走 `teachany-publish.sh`（自动选直推或
 export TEACHANY_SKILL=/path/to/teachany/skill
 export COURSE_DIR=~/CodeBuddy/一次函数/teachany-courseware/community/<course-id>
 python3 "$TEACHANY_SKILL/scripts/preflight-check.py"
-python3 "$TEACHANY_SKILL/scripts/find_nodes.py" "一次函数"
+python3 "$TEACHANY_SKILL/scripts/find_nodes.py" --stage middle --subject math --keyword "一次函数"
 python3 "$TEACHANY_SKILL/scripts/find-hero.py" <course-id>
 python3 "$TEACHANY_SKILL/scripts/gen-hero-svg.py" "$COURSE_DIR"
 python3 "$TEACHANY_SKILL/scripts/tts-engine.py" --text "讲解文本" --voice zh-CN-XiaoxiaoNeural --output "$COURSE_DIR/tts/s01.mp3"
@@ -187,4 +208,4 @@ bash "$TEACHANY_SKILL/scripts/auto-publish.sh" <course-id> --all-changes
 
 ## 版本说明
 
-当前执行摘要版本：`7.15.0`。本版新增分层互动动画工具规范（`tech/animation-toolchain.md`），不再把 Remotion 作为所有教学动画的默认方案。历史变更不放入主文件，避免污染执行上下文；需要考古时查 Git 历史或仓库发布记录。
+当前执行摘要版本：`7.16.0`。v7.16 明确知识树仅在 `teachany-courseware`，修正 `find_nodes` 仓库解析与 GitHub Pages 数据回退说明。本版新增分层互动动画工具规范（`tech/animation-toolchain.md`），不再把 Remotion 作为所有教学动画的默认方案。历史变更不放入主文件，避免污染执行上下文；需要考古时查 Git 历史或仓库发布记录。

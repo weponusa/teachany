@@ -24,21 +24,9 @@ EXT_NODE_RE = re.compile(r'^ext-[a-f0-9]{6,12}$', re.I)
 
 
 def find_repo():
-    """优先 teachany-courseware（线上权威知识树），再 fallback opensource。"""
-    env = Path(os.environ['TEACHANY_COURSEWARE_REPO']) if os.environ.get('TEACHANY_COURSEWARE_REPO') else None
-    candidates = [
-        env,
-        Path.home() / 'CodeBuddy' / '一次函数' / 'teachany-courseware',
-        Path.home() / 'teachany-courseware',
-        Path.cwd(),
-        Path.home() / 'CodeBuddy' / '一次函数' / 'teachany-opensource',
-        Path.home() / 'teachany-opensource',
-        Path.home() / 'CodeBuddy' / 'teachany-opensource',
-    ]
-    for c in candidates:
-        if c and (c / 'data' / 'trees').exists():
-            return c
-    return None
+    """知识树权威源：teachany-courseware/data/trees（非 weponusa/teachany GitHub 轻量仓）。"""
+    from repo_paths import find_courseware_repo
+    return find_courseware_repo()
 
 def load_all_nodes(repo):
     """返回 {node_id: (subject, stage, name, tree_file)}"""
@@ -80,8 +68,9 @@ def main():
 
     repo = find_repo()
     if not repo:
-        print("❌ 未找到 teachany-opensource 仓库", file=sys.stderr)
-        sys.exit(2)
+        from repo_paths import require_courseware_repo
+        require_courseware_repo()
+        return
 
     all_nodes = load_all_nodes(repo)
 

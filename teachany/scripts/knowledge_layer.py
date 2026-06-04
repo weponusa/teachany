@@ -22,9 +22,25 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 ROOT = Path(__file__).resolve().parents[1]
-DATA_DIR = ROOT / "data"
-NODE_INDEX_PATH = ROOT / "data" / "node-index.json"
-MD_DIR = ROOT / "skill" / "data" / "kp-md"
+
+def _resolve_data_dir() -> Path:
+    try:
+        from repo_paths import find_courseware_repo
+        cw = find_courseware_repo()
+        if cw:
+            return cw / "data"
+    except Exception:
+        pass
+    if (ROOT / "data" / "node-index.json").is_file():
+        return ROOT / "data"
+    return ROOT / "data"
+
+
+DATA_DIR = _resolve_data_dir()
+NODE_INDEX_PATH = DATA_DIR / "node-index.json"
+MD_DIR = ROOT / "data" / "kp-md"
+if not MD_DIR.is_dir():
+    MD_DIR = ROOT / "skill" / "data" / "kp-md"
 
 _SCRIPTS_DIR = Path(__file__).resolve().parent
 if str(_SCRIPTS_DIR) not in sys.path:
