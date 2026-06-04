@@ -1,6 +1,6 @@
 ---
 name: TeachAny
-version: 7.16.0
+version: 7.17.0
 description: "K-12 interactive courseware creation. Use for school-subject lesson pages, animations, AI tutor, TTS, knowledge graph, PBL learning paths, or TeachAny publishing."
 description_zh: "K12 互动课件开发技能：用于制作或优化学科课件、教学动画、AI 学伴、TTS、知识图谱、PBL 学习路径与 TeachAny 发布。"
 allowed-tools: Read,Write,Edit,Bash,Glob,Grep
@@ -38,16 +38,27 @@ TeachAny 的目标不是把知识堆进页面，而是把一节课做成**有问
 | **查 node_id** `find_nodes.py` | ✅ | 远程 `data/trees/...`（`repo_paths.fetch_remote_json`） |
 | **校验 node_id** `check_node_id.py` | ✅ | 远程 `node-index.json` |
 | **课件内知识图谱模块** | ✅ | 课件页加载 `teachany-knowledge-graph.js`（在 courseware 社区页） |
-| **挂树 / rebuild-index / register_node** | ❌ 需本地 courseware | 改写 `data/trees`、`registry.json` |
+| **挂树 / 发布** | ✅ 见下方 `hang_tree.py` | `GH_TOKEN` 或 Worker PR；**不必**事先 clone |
 
-只读示例（**无需** `TEACHANY_COURSEWARE_REPO`）：
+### 挂树与发布（Skill 一站式，无需事先 clone）
+
+| 步骤 | 命令 | 凭据 |
+| --- | --- | --- |
+| 注册课标节点 | `python3 hang_tree.py register --node-id ... --subject ... --stage ...` | `GH_TOKEN`（写 courseware） |
+| 发布课件+挂树 | `TEACHANY_UPLOAD_CONFIRMED=1 python3 hang_tree.py publish <course-id> --course-dir <path>` | 有 token → 浅克隆+`auto-publish`；无 token → `publish_course` Worker PR |
+| 全量重建索引 | `python3 hang_tree.py rebuild --dispatch` | `GH_TOKEN` 触发 [rebuild-index workflow](https://github.com/weponusa/teachany-courseware/actions) |
+| 本地重建并 push | `python3 hang_tree.py rebuild --push` | `GH_TOKEN`（自动浅克隆到 `~/.cache/teachany-courseware`） |
+
+`register_node.py` 在无本地仓时会自动转调 `hang_tree.py register`。`auto-publish.sh` 在无本地仓时会 **浅克隆** courseware 再执行 `rebuild-index.py`。
+
+无 `GH_TOKEN` 时仍可 `teachany-publish.sh` → Worker 开 PR → 合并后 CI 自动 `rebuild-index` 挂树。
+
+只读示例（**无需** token / clone）：
 
 ```bash
 python3 "$TEACHANY_SKILL/scripts/find_nodes.py" --stage middle --subject physics --keyword "浮力"
 python3 "$TEACHANY_SKILL/scripts/check_node_id.py" --node-id phy-m-liquid-pressure-buoyancy
 ```
-
-写入挂树仍须 clone 并在 courseware 根目录执行 `rebuild-index.py` / `register_node.py`。
 
 静态站（[GitHub Pages](https://weponusa.github.io/teachany/pbl.html)）通过 `teachany-data-fetch.js` 拉取 `data/*`；**不能**只在 `weponusa/teachany` 仓内找 `data/trees`。
 
@@ -144,6 +155,7 @@ Phase 4  发布注册：**必须**走 `teachany-publish.sh`（自动选直推或
 | 互动形态 | `guides/interaction-patterns.md` |
 | PBL/探究课 | `guides/project-based.md` |
 | **知识数据 / 双仓边界** | 上文「知识图谱 / 课标数据在哪」；`scripts/repo_paths.py` |
+| **挂树 / 发布** | `scripts/hang_tree.py`、`scripts/github_courseware.py` |
 | 练习评估 | `guides/assessment.md` |
 | 页面结构与 CSS | `tech/page-structure.md`, `tech/design-system.md` |
 | v2 分页模板 | `templates/course-skeleton-v2.html`, `templates/content-section-templates-v2.html` |
@@ -220,4 +232,4 @@ bash "$TEACHANY_SKILL/scripts/auto-publish.sh" <course-id> --all-changes
 
 ## 版本说明
 
-当前执行摘要版本：`7.16.0`。v7.16 明确知识树仅在 `teachany-courseware`，修正 `find_nodes` 仓库解析与 GitHub Pages 数据回退说明。本版新增分层互动动画工具规范（`tech/animation-toolchain.md`），不再把 Remotion 作为所有教学动画的默认方案。历史变更不放入主文件，避免污染执行上下文；需要考古时查 Git 历史或仓库发布记录。
+当前执行摘要版本：`7.17.0`。v7.17 新增 `hang_tree.py`：挂树/发布无需事先 clone（GH_TOKEN 浅克隆或 GitHub API + workflow_dispatch）。本版新增分层互动动画工具规范（`tech/animation-toolchain.md`），不再把 Remotion 作为所有教学动画的默认方案。历史变更不放入主文件，避免污染执行上下文；需要考古时查 Git 历史或仓库发布记录。

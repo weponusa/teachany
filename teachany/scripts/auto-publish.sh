@@ -88,8 +88,24 @@ if ! can_push; then
 fi
 
 if [ ! -d "$COURSEWARE_REPO/.git" ]; then
-  echo "❌ 课件仓库不存在: $COURSEWARE_REPO"
-  exit 1
+  if can_push; then
+    echo "[0/8] 无本地 courseware → 浅克隆到 $COURSEWARE_REPO ..."
+    mkdir -p "$(dirname "$COURSEWARE_REPO")"
+    RM_REPO=0
+    [ -d "$COURSEWARE_REPO" ] && RM_REPO=1
+    [ "$RM_REPO" = 1 ] && rm -rf "$COURSEWARE_REPO"
+    if [ -n "${GH_TOKEN:-}" ]; then
+      git clone --depth 1 --branch main \
+        "https://x-access-token:${GH_TOKEN}@github.com/weponusa/teachany-courseware.git" \
+        "$COURSEWARE_REPO"
+    else
+      git clone --depth 1 --branch main git@github.com:weponusa/teachany-courseware.git "$COURSEWARE_REPO"
+    fi
+  else
+    echo "❌ 课件仓库不存在且无 push 凭据: $COURSEWARE_REPO"
+    echo "   请设置 GH_TOKEN，或: bash \"$SCRIPT_DIR/publish_course.sh\" ..."
+    exit 1
+  fi
 fi
 
 # ── 1. 确保课件目录存在 ──

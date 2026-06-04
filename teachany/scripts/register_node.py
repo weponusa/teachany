@@ -9,10 +9,14 @@ register_node.py · v6.5
   python3 register_node.py --node-id <id> --subject <学科> --stage <学段> \
       [--domain <领域>] [--name <名>] [--grade <年级>]
 """
-import json, argparse, sys
+import argparse
+import json
+import os
+import subprocess
+import sys
 from pathlib import Path
 
-from repo_paths import find_courseware_repo, require_courseware_repo
+from repo_paths import find_courseware_repo, remote_data_available, require_courseware_repo
 
 def main():
     ap = argparse.ArgumentParser()
@@ -27,6 +31,18 @@ def main():
 
     repo = find_courseware_repo()
     if not repo:
+        if remote_data_available() and (os.environ.get('GH_TOKEN') or os.environ.get('GITHUB_TOKEN')):
+            print('📡 无本地仓 → 通过 hang_tree.py register（GitHub API）', file=sys.stderr)
+            cmd = [
+                sys.executable, str(Path(__file__).parent / 'hang_tree.py'), 'register',
+                '--node-id', args.node_id, '--subject', args.subject, '--stage', args.stage,
+                '--curriculum', args.curriculum, '--domain', args.domain,
+            ]
+            if args.name:
+                cmd.extend(['--name', args.name])
+            if args.grade:
+                cmd.extend(['--grade', str(args.grade)])
+            raise SystemExit(subprocess.call(cmd))
         require_courseware_repo()
         return
 
