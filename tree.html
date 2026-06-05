@@ -262,6 +262,22 @@ svg { width: 100%; height: 100%; display: block; }
   pointer-events: auto;
 }
 .tooltip .course-link:hover { filter: brightness(1.15); }
+.tooltip .tree-make-course-btn {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--success), #059669);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  pointer-events: auto;
+  text-align: center;
+}
+.tooltip .tree-make-course-btn:hover { filter: brightness(1.08); }
 .tooltip .gap-msg {
   margin-top: 8px;
   padding: 6px 10px;
@@ -486,8 +502,11 @@ svg { width: 100%; height: 100%; display: block; }
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous"></script>
+<script src="./scripts/teachany-data-fetch.js?v=20260604-hub"></script>
 <script src="./scripts/courseware-importer.js"></script>
-<script src="./scripts/courseware-hub.js"></script>
+<script src="./scripts/courseware-hub.js?v=20260604-hub"></script>
+<script src="./assets/scripts/history-tracker.js" defer></script>
+<script src="./scripts/teachany-make-course.js"></script>
 <script>
 /* ─── 数据源配置 ─── */
 const TREE_API_BASE = 'https://api.github.com/repos/weponusa/teachany/contents/';
@@ -1610,6 +1629,8 @@ function showTooltip(event, d) {
     html += `</div>`;
   }
 
+  html += `<button type="button" class="tree-make-course-btn" data-tree-make-course="${escapeHtml(d.id)}">✨ 制作课件</button>`;
+
   tooltip.innerHTML = html;
 
   // 为有用户课件的节点或 gap 节点添加上传按钮
@@ -1694,6 +1715,28 @@ tooltip.addEventListener('mouseleave', function() {
       activeNodeData = null;
     }
   }, 400);
+});
+
+tooltip.addEventListener('click', function(event) {
+  const btn = event.target && event.target.closest ? event.target.closest('[data-tree-make-course]') : null;
+  if (!btn) return;
+  event.preventDefault();
+  event.stopPropagation();
+  const nodeId = btn.getAttribute('data-tree-make-course');
+  const nodeName = activeNodeData && activeNodeData.name ? activeNodeData.name : nodeId;
+  const meta = activeNodeData ? {
+    subject: activeNodeData.subject || activeNodeData.domain || '',
+    grade: activeNodeData.grade
+  } : {};
+  if (window.TeachAnyMakeCourse && typeof TeachAnyMakeCourse.open === 'function') {
+    TeachAnyMakeCourse.open({ nodeId, nodeName, source: 'tree', meta });
+  } else if (typeof window.generateCourseware === 'function') {
+    window.generateCourseware(nodeId, nodeName);
+  }
+  tooltipLocked = false;
+  clearTimeout(tooltip._hideTimer);
+  tooltip.classList.remove('visible');
+  activeNodeData = null;
 });
 
 // ── TeachAny 导航白名单 ──
