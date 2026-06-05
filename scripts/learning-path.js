@@ -88,6 +88,17 @@ class LearningPathSystem {
       }
     } catch (e) { /* localStorage 不可用，忽略 */ }
 
+    if (window.TeachAnyDataFetch) {
+      const rel = url.replace(/^\.\//, '');
+      const data = rel.startsWith('data/')
+        ? await window.TeachAnyDataFetch.fetchDataJson(rel)
+        : await window.TeachAnyDataFetch.fetchSiteJson(rel);
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data }));
+      } catch (e) { /* ignore */ }
+      return data;
+    }
+
     const response = await fetch(url);
     if (!response.ok) throw new Error(`Fetch ${url}: HTTP ${response.status}`);
     const data = await response.json();
