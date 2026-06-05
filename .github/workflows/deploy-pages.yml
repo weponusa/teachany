@@ -1,0 +1,65 @@
+name: Deploy Portal to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tree.html'
+      - 'path.html'
+      - 'pbl.html'
+      - 'index.html'
+      - 'my.html'
+      - 'gallery/**'
+      - 'assets/**'
+      - 'scripts/**'
+      - '.github/workflows/deploy-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages-teachany
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Checkout gh-pages
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Sync portal files from main
+        run: |
+          set -euo pipefail
+          for f in tree.html path.html pbl.html index.html my.html imported-course.html commercial-license.html license.html hero-review.html 404.html; do
+            [ -f "$f" ] && cp "$f" "gh-pages/$f"
+          done
+          rsync -a assets/ gh-pages/assets/
+          mkdir -p gh-pages/scripts
+          rsync -a scripts/ gh-pages/scripts/ \
+            --include='*.js' --include='*.css' --exclude='*.py' --exclude='__pycache__/***' --exclude='*'
+          touch gh-pages/.nojekyll
+          echo "Synced portal files:"
+          ls -la gh-pages/tree.html gh-pages/pbl.html gh-pages/assets/scripts/teachany-make-course.js gh-pages/scripts/teachany-make-course.js 2>/dev/null || true
+
+      - name: Push to gh-pages
+        run: |
+          cd gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No changes to deploy"
+            exit 0
+          fi
+          git commit -m "deploy: sync portal from main (${GITHUB_SHA:0:7})"
+          git push origin HEAD:gh-pages
