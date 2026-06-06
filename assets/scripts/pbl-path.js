@@ -560,7 +560,8 @@ class PBLPathBuilder {
       '化学', '燃烧', '氧化', '流体', '压强', '热值', '内能', '气动',
       '材料', '结构', '设计', '制作', '模型', '搭建', '探究', '温室', '天气',
       '新能源', '光伏', '太阳能', '风电', '风能', '储能', '电池', '锂电', '充电',
-      '发电', '电能', '电动', '能源', '碳中和', '并网', '逆变', '电磁', '电路'
+      '发电', '电能', '电动', '能源', '碳中和', '并网', '逆变', '电磁', '电路',
+      '购车', '买车', '选车', '燃油', '油耗', '混动', '对比', '家用', '成本', '预算'
     ];
     lex.forEach(w => { if (g.includes(w)) terms.add(w); });
     // 领域词典命中足够时不再用二字随机切分，避免「设计并」等噪声匹配无关课标
@@ -571,9 +572,64 @@ class PBLPathBuilder {
     return [...terms].filter(t => t.length >= 2).slice(0, 32);
   }
 
+  /** 消费决策/调查对比类（购车选型、方案比选），非工程研发 */
+  _isConsumerDecisionGoal(goal) {
+    const g = String(goal || '');
+    if (/购车|买车|选车|用车方案|消费决策|方案比选|比选|选型|性价比|家用.*车|家庭.*(购车|买车|选车|用车)/.test(g)) return true;
+    if (/对比|比较/.test(g) && /购|买|选|家用|家庭/.test(g) && /新能源|燃油|电动|混动|汽油|柴油/.test(g)) return true;
+    if (/哪个更|哪种更|怎么选|如何选择/.test(g) && /车|新能源|燃油|电动/.test(g)) return true;
+    return false;
+  }
+
+  _isEnergyEngineeringGoal(goal) {
+    const g = String(goal || '');
+    if (this._isConsumerDecisionGoal(g)) return false;
+    if (/对比|比较|选购|购车|买车|选车|家用|家庭/.test(g) && !/设计|制作|研发|装置|系统开发|搭建|发电|储能|并网|逆变/.test(g)) {
+      if (/新能源|电动|燃油|混动|光伏|储能/.test(g)) return false;
+    }
+    return /新能源|光伏|太阳能|风电|风力|储能|电池|锂电|充电|发电|电能|清洁能源|碳中和|能源车|并网|逆变/.test(g)
+      && /设计|制作|研发|装置|系统|搭建|工程|发电|储能|模型|实验|探究/.test(g);
+  }
+
+  /** 消费决策类应排除的研发/装置课节点 */
+  _isRdEngineeringNodeName(name, goal) {
+    const n = String(name || '');
+    if (!this._isConsumerDecisionGoal(goal)) return false;
+    return /电解池|原电池|程序控制|电磁感应|电池温度|传感器|数据采集|算法概念|模块化|物联网|闭环控制|电解(?!质)|逆变|并网装置/.test(n);
+  }
+
   /** 工程子系统拆解（与服务端 pbl-prompts inferProjectDomains 对齐） */
   _inferProjectDomains(goal) {
     const g = String(goal || '');
+    if (this._isConsumerDecisionGoal(g)) {
+      return [
+        {
+          id: 'needs', label: '需求与场景调研',
+          keywords: ['调查', '数据', '统计', '问卷', '需求', '分析', '收集', '整理', '图表'],
+          subjects: ['math', 'chinese']
+        },
+        {
+          id: 'cost', label: '成本与数据建模',
+          keywords: ['函数', '一次函数', '计算', '统计', '数据', '平均数', '费用', '成本', '百分比', '方程'],
+          subjects: ['math']
+        },
+        {
+          id: 'energy_compare', label: '动力与能耗差异（科普）',
+          keywords: ['内燃机', '热机', '效率', '电能', '化学能', '能量', '热值', '做功', '机械能', '内能'],
+          subjects: ['physics', 'chemistry']
+        },
+        {
+          id: 'environment', label: '环保与可持续',
+          keywords: ['环境', '污染', '排放', '碳', '气候', '资源', '可持续', '温室'],
+          subjects: ['geography', 'chemistry']
+        },
+        {
+          id: 'decision', label: '决策论证与报告',
+          keywords: ['说明', '报告', '论证', '写作', '分析', '比较', '调查', '实用'],
+          subjects: ['chinese', 'math']
+        }
+      ];
+    }
     if (/火箭|导弹|发射|弹道|模型火箭|航天/.test(g)) {
       return [
         {
@@ -611,7 +667,7 @@ class PBLPathBuilder {
         { id: 'control', label: '控制算法', keywords: ['控制', '反馈', '编程', '算法'], subjects: ['info-tech', 'math'] }
       ];
     }
-    if (/新能源|光伏|太阳能|风电|风力|储能|电池|锂电|充电|发电|电能|清洁能源|碳中和|电动|能源车|并网|逆变/.test(g)) {
+    if (this._isEnergyEngineeringGoal(g)) {
       return [
         {
           id: 'energy', label: '能量转换与守恒',
@@ -644,7 +700,7 @@ class PBLPathBuilder {
   }
 
   _isEnergyProjectGoal(goal) {
-    return /新能源|光伏|太阳能|风电|风力|储能|电池|锂电|充电|发电|电能|清洁能源|碳中和|电动|能源车|并网|逆变/.test(String(goal || ''));
+    return this._isEnergyEngineeringGoal(goal);
   }
 
   _isBiologyNodeName(name) {
@@ -721,11 +777,13 @@ class PBLPathBuilder {
 
   _isEngineeringGoal(goal) {
     const g = String(goal || '');
+    if (this._isConsumerDecisionGoal(g)) return false;
     return /火箭|导弹|发射|弹道|模型|制作|搭建|设计|机器人|温控|电路|传感|原型|工程/.test(g)
       || this._isEnergyProjectGoal(g);
   }
 
   _isStemProjectGoal(goal) {
+    if (this._isConsumerDecisionGoal(goal)) return false;
     return this._isEngineeringGoal(goal) || this._isEnergyProjectGoal(goal);
   }
 
@@ -737,6 +795,13 @@ class PBLPathBuilder {
     const name = String(node.name || '');
     const text = this._nodeSearchText(node);
     const stemGoal = this._isStemProjectGoal(g);
+    const consumerGoal = this._isConsumerDecisionGoal(g);
+
+    if (consumerGoal) {
+      if (this._isRdEngineeringNodeName(name, g)) return false;
+      if (this._isBiologyNodeName(name)) return false;
+      if (/比热容/.test(name) && !/热|环境/.test(text)) return false;
+    }
 
     if (stemGoal) {
       const badName = /作文|写作|任务驱动|实用类文本|地形|等高线|经纬|有机合成|官能团|烃的|弧长|扇形面积|几何图形初步|诗词|文言|议论文结构|世界地形/;
@@ -803,6 +868,11 @@ class PBLPathBuilder {
     if (complex && grade > 0 && grade < 7) score -= 8;
     if (goal && (domains?.length || this._isStemProjectGoal(goal))) {
       score += this._stemBreadthScoreAdjust(node, goal);
+    }
+    if (goal && this._isConsumerDecisionGoal(goal)) {
+      if (this._isRdEngineeringNodeName(node.name, goal)) score -= 20;
+      if (['math', 'geography', 'chinese'].includes(node.subject)) score += 3;
+      if (/内燃机|热机|效率|统计|函数|环境|排放|污染/.test(node.name || '')) score += 4;
     }
     return score;
   }
@@ -1384,7 +1454,85 @@ class PBLPathBuilder {
     }));
   }
 
+  _sanitizeBlueprintForGoal(blueprint, goal) {
+    if (!blueprint || !this._isConsumerDecisionGoal(goal)) return blueprint;
+    const bp = { ...blueprint, schemes: (blueprint.schemes || []).map(s => ({ ...s })) };
+    bp.projectType = 'consumer-decision';
+    if (!bp.deliverable || /原型|研发|装置|系统开发|数据采集系统|温度控制/.test(bp.deliverable)) {
+      bp.deliverable = '家庭/个人消费决策报告（含调研表、对比测算表与推荐结论）';
+    }
+    const rdRe = /新能源装置|电池温度|电解池|研发|数据采集系统|充放电过程|制作任务|搭建原型/;
+    bp.schemes.forEach(s => {
+      if (s.phases) {
+        s.phases = s.phases.map(p => {
+          const phase = String(p.phase || '');
+          const steps = (p.steps || []).map(st => String(st));
+          if (rdRe.test(phase) || rdRe.test(steps.join(''))) {
+            return {
+              ...p,
+              phase: phase.replace(/新能源装置|电池与新能源装置/, '方案对比'),
+              steps: steps.map(st => st
+                .replace(/研究电池充放电|学习电解质与离子反应|电池温度控制|程序设计基础/g, '查阅资料并记录对比数据')
+                .replace(/实验或制作/g, '调研与测算')),
+              knowledgeHints: (p.knowledgeHints || []).filter(h => !/电解池|原电池|程序|比热容|传感器/.test(h))
+            };
+          }
+          return p;
+        });
+      }
+    });
+    return bp;
+  }
+
   _fallbackDecomposeBlueprint(goal) {
+    if (this._isConsumerDecisionGoal(goal)) {
+      return this._sanitizeBlueprintForGoal({
+        projectSummary: String(goal || '').slice(0, 160),
+        deliverable: '家庭购车对比决策报告（含调研表、全成本测算表与推荐结论）',
+        projectType: 'consumer-decision',
+        constraints: ['基于公开参数与合理假设', '结论需有数据支撑'],
+        subsystems: [
+          { id: 'needs', name: '家庭需求调研', description: '梳理用车场景、里程、预算、充电/加油条件' },
+          { id: 'compare', name: '对比维度设计', description: '确定购置价、能耗、保险维保、残值、环保等政策维度' },
+          { id: 'model', name: '全成本测算', description: '用表格与函数估算 3–5 年持有成本' },
+          { id: 'science', name: '科学原理支撑', description: '从科普层面理解燃油与电动的能量与排放差异' },
+          { id: 'decision', name: '决策与答辩', description: '给出推荐车型及理由，回应家长关切' }
+        ],
+        schemes: [
+          {
+            id: 'A',
+            name: '问卷调研 + 全成本对比表（推荐）',
+            summary: '先调研家庭真实需求，再用数据对比新能源与燃油车全生命周期成本',
+            pros: ['贴近生活', '数学物理跨学科', '结论可落地'],
+            cons: ['需查阅真实参数'],
+            phases: [
+              { phase: '家庭需求调研', steps: ['设计简易问卷', '汇总用车场景与预算'], deliverable: '需求调研小结', subsystemIds: ['needs'], knowledgeHints: ['统计', '数据', '调查', '整理'] },
+              { phase: '建立对比指标', steps: ['列出购置/能耗/维保/环保维度', '选取两款代表车型'], deliverable: '对比指标表', subsystemIds: ['compare'], knowledgeHints: ['函数', '比较', '分析'] },
+              { phase: '科学原理补课', steps: ['了解内燃机效率与电动驱动差异', '了解排放与碳足迹概念'], deliverable: '原理笔记', subsystemIds: ['science'], knowledgeHints: ['内燃机', '效率', '能量', '排放', '环境'] },
+              { phase: '全成本测算', steps: ['估算油费/电费与保养', '计算多年总成本'], deliverable: '成本测算表', subsystemIds: ['model'], knowledgeHints: ['一次函数', '计算', '统计', '百分比'] },
+              { phase: '购车建议报告', steps: ['撰写对比结论', '班级答辩'], deliverable: '家庭购车建议报告', subsystemIds: ['decision'], knowledgeHints: ['说明文', '报告', '论证'] }
+            ]
+          },
+          {
+            id: 'B',
+            name: '案例深潜 + 辩论会',
+            summary: '选定具体车型案例，从环保政策与使用体验两派立场辩论',
+            pros: ['思辨性强', '适合综合实践'],
+            cons: ['对资料检索要求高'],
+            phases: [
+              { phase: '案例资料收集', steps: ['检索车型参数与政策补贴'], deliverable: '案例资料卡', knowledgeHints: ['调查', '数据', '环境'] },
+              { phase: '正反观点整理', steps: ['列出燃油/电动各自优劣'], deliverable: '辩论提纲', knowledgeHints: ['比较', '分析', '论证'] },
+              { phase: '量化佐证', steps: ['用简单模型估算使用成本'], deliverable: '测算附录', knowledgeHints: ['函数', '统计', '效率'] },
+              { phase: '辩论与反思', steps: ['开展辩论', '反思决策依据'], deliverable: '反思日记', knowledgeHints: ['写作', '价值观'] }
+            ]
+          }
+        ],
+        recommendedSchemeId: 'A',
+        knowledgeChain: '需求调研 → 对比框架 → 科学原理 → 成本测算 → 购车建议',
+        fallback: true
+      }, goal);
+    }
+
     const domains = this._inferProjectDomains(goal);
     const subsystems = domains.length
       ? domains.map(d => ({ id: d.id, name: d.label, description: `完成「${d.label}」相关设计与验证` }))
@@ -1394,7 +1542,7 @@ class PBLPathBuilder {
         { id: 'build', name: '制作实现', description: '搭建原型并完成分步测试' },
         { id: 'test', name: '测试迭代', description: '采集数据、对比指标并优化' }
       ];
-    const mkPhases = (prefix) => subsystems.map((s, i) => {
+    const mkPhases = (prefix) => subsystems.map((s) => {
       const dom = domains.find(d => d.id === s.id);
       return {
         phase: s.name,
@@ -1446,7 +1594,7 @@ class PBLPathBuilder {
       if (!data.recommendedSchemeId && data.schemes[0]) {
         data.recommendedSchemeId = data.schemes[0].id;
       }
-      return data;
+      return this._sanitizeBlueprintForGoal(data, goal);
     } catch (e) {
       console.warn('[PBL] decompose JSON 解析失败，使用本地蓝图回退:', e.message);
       return this._fallbackDecomposeBlueprint(goal);
@@ -1853,8 +2001,12 @@ class PBLPathBuilder {
     const filter = JSON.parse(jsonStr);
     const domains = this._inferProjectDomains(goal);
 
+    if (this._isConsumerDecisionGoal(goal)) {
+      filter.subjects = ['math', 'physics', 'chemistry', 'geography', 'chinese'];
+    }
+
     // STEM/工程类：锁定主线学科，禁止 biology/geography/chinese 渗入候选池
-    if ((domains.length || this._isStemProjectGoal(goal)) && profile.complex) {
+    if ((domains.length || this._isStemProjectGoal(goal)) && profile.complex && !this._isConsumerDecisionGoal(goal)) {
       if (/火箭|导弹|发射|弹道|模型火箭/.test(goal)) {
         filter.subjects = ['physics', 'chemistry', 'math', 'info-tech'];
       } else if (this._isEnergyProjectGoal(goal)) {
@@ -1893,15 +2045,17 @@ class PBLPathBuilder {
       if (mainlinePool.length >= 8) pool = mainlinePool;
     }
     const goalTerms = this._tokenizeGoalTerms(goal);
-    const defaultSubjects = domains.length
-      ? ['physics', 'chemistry', 'math', 'info-tech']
-      : ['math', 'physics', 'chemistry', 'biology', 'info-tech'];
+    const defaultSubjects = this._isConsumerDecisionGoal(goal)
+      ? ['math', 'physics', 'chemistry', 'geography', 'chinese']
+      : (domains.length
+        ? ['physics', 'chemistry', 'math', 'info-tech']
+        : ['math', 'physics', 'chemistry', 'biology', 'info-tech']);
     const scored = pool.map(n => ({
       ...n,
       _score: this._scoreNodeForGoal(n, goalTerms, filter.subjects, profile.complex, domains, goal)
     }));
     const subjectList = filter.subjects && filter.subjects.length ? filter.subjects : defaultSubjects;
-    const topCandidates = domains.length && profile.complex
+    const topCandidates = domains.length && (profile.complex || this._isConsumerDecisionGoal(goal))
       ? this._pickDomainAwareCandidates(scored, MAX_STAGE2_CANDIDATES, domains, goal)
       : this._pickDiverseCandidates(scored, MAX_STAGE2_CANDIDATES, subjectList);
     return { filter, filteredCandidates: topCandidates, domains };
