@@ -557,15 +557,79 @@ class PBLPathBuilder {
       '牛顿', '动量', '力学', '受力', '运动', '加速度', '能量', '守恒', '冲量',
       '传感', '控制', '电路', '编程', '算法', '物联', '智能', '温度', '湿度',
       '函数', '三角', '矢量', '向量', '建模', '实验', '数据', '分析',
-      '化学', '燃烧', '氧化', '材料', '结构', '设计', '制作', '模型', '搭建', '探究', '温室', '天气'
+      '化学', '燃烧', '氧化', '流体', '压强', '热值', '内能', '气动',
+      '材料', '结构', '设计', '制作', '模型', '搭建', '探究', '温室', '天气'
     ];
     lex.forEach(w => { if (g.includes(w)) terms.add(w); });
-    const cjk = g.replace(/[^\u4e00-\u9fff]/g, '');
-    for (let i = 0; i < cjk.length - 1; i++) terms.add(cjk.slice(i, i + 2));
+    // 领域词典命中足够时不再用二字随机切分，避免「设计并」等噪声匹配无关课标
+    if (terms.size < 4) {
+      const cjk = g.replace(/[^\u4e00-\u9fff]/g, '');
+      for (let i = 0; i < cjk.length - 1; i++) terms.add(cjk.slice(i, i + 2));
+    }
     return [...terms].filter(t => t.length >= 2).slice(0, 32);
   }
 
-  _scoreNodeForGoal(node, goalTerms, filterSubjects, complex) {
+  /** 工程子系统拆解（与服务端 pbl-prompts inferProjectDomains 对齐） */
+  _inferProjectDomains(goal) {
+    const g = String(goal || '');
+    if (/火箭|导弹|发射|弹道|模型火箭|航天/.test(g)) {
+      return [
+        {
+          id: 'propulsion', label: '推进与燃料',
+          keywords: ['燃烧', '氧化', '燃料', '热值', '内能', '化学能', '能量', '推进', '反应', '热机'],
+          subjects: ['chemistry', 'physics']
+        },
+        {
+          id: 'aerodynamics', label: '空气动力与弹道',
+          keywords: ['抛体', '流体', '压强', '流速', '气动', '弹道', '抛物', '飞行', '大气'],
+          subjects: ['physics', 'math']
+        },
+        {
+          id: 'dynamics', label: '运动学与动力学',
+          keywords: ['牛顿', '动量', '冲量', '受力', '加速度', '机械能', '守恒', '运动', '力学'],
+          subjects: ['physics', 'math']
+        },
+        {
+          id: 'structure', label: '结构与材料',
+          keywords: ['结构', '材料', '强度', '压强', '设计', '稳定'],
+          subjects: ['physics', 'chemistry']
+        },
+        {
+          id: 'control', label: '控制、传感与测试',
+          keywords: ['控制', '传感', '电路', '编程', '算法', '数据', '实验', '误差', '测试', '采集'],
+          subjects: ['info-tech', 'physics']
+        }
+      ];
+    }
+    if (/温控|温室|温度|加热|散热|PID|闭环/.test(g)) {
+      return [
+        { id: 'modeling', label: '数学建模', keywords: ['函数', '方程', '建模', '图像'], subjects: ['math'] },
+        { id: 'physics', label: '热学原理', keywords: ['热传导', '温度', '内能', '热量'], subjects: ['physics'] },
+        { id: 'hardware', label: '传感与电路', keywords: ['传感器', '电路', '采集'], subjects: ['physics', 'info-tech'] },
+        { id: 'control', label: '控制算法', keywords: ['控制', '反馈', '编程', '算法'], subjects: ['info-tech', 'math'] }
+      ];
+    }
+    return [];
+  }
+
+  _nodeSearchText(node) {
+    return `${node.name || ''} ${node.definition || node.description || ''} ${(node.key_concepts || []).join(' ')}`.toLowerCase();
+  }
+
+  _scoreNodeForDomains(node, domains) {
+    if (!domains || !domains.length) return 0;
+    let score = 0;
+    const text = this._nodeSearchText(node);
+    domains.forEach(d => {
+      (d.keywords || []).forEach(kw => {
+        if (text.includes(String(kw).toLowerCase())) score += 6;
+      });
+      if (d.subjects && d.subjects.includes(node.subject)) score += 2;
+    });
+    return score;
+  }
+
+  _scoreNodeForGoal(node, goalTerms, filterSubjects, complex, domains) {
     let score = 0;
     const nameLower = (node.name || '').toLowerCase();
     const defLower = (node.definition || node.description || '').toLowerCase();
@@ -575,11 +639,44 @@ class PBLPathBuilder {
       if (concepts.includes(term)) score += 2;
       if (defLower.includes(term)) score += 1;
     });
+    if (domains && domains.length) score += this._scoreNodeForDomains(node, domains);
     if (filterSubjects && filterSubjects.includes(node.subject)) score += 1;
     const grade = parseInt(node.grade, 10) || 0;
     if (complex && grade >= 7) score += 1;
     if (complex && grade > 0 && grade < 7) score -= 8;
     return score;
+  }
+
+  _pickDomainAwareCandidates(scored, maxCount, domains, subjects) {
+    const sorted = [...scored].sort((a, b) => (b._score || 0) - (a._score || 0));
+    const picked = [];
+    const seen = new Set();
+    const perDomain = Math.max(3, Math.floor(maxCount / Math.max(domains.length, 3)));
+    domains.forEach(domain => {
+      sorted
+        .filter(n => !seen.has(n.id))
+        .map(n => ({ n, ds: this._scoreNodeForDomains(n, [domain]) }))
+        .filter(x => x.ds > 0)
+        .sort((a, b) => b.ds - a.ds)
+        .slice(0, perDomain)
+        .forEach(x => {
+          seen.add(x.n.id);
+          picked.push(x.n);
+        });
+    });
+    const subjList = (subjects || []).filter(Boolean);
+    const perSubject = Math.max(2, Math.floor((maxCount - picked.length) / Math.max(subjList.length, 2)));
+    subjList.forEach(subj => {
+      sorted.filter(n => n.subject === subj && !seen.has(n.id)).slice(0, perSubject).forEach(n => {
+        seen.add(n.id);
+        picked.push(n);
+      });
+    });
+    sorted.forEach(n => {
+      if (picked.length >= maxCount) return;
+      if (!seen.has(n.id)) { seen.add(n.id); picked.push(n); }
+    });
+    return picked.slice(0, maxCount);
   }
 
   _pickDiverseCandidates(scored, maxCount, subjects) {
@@ -628,8 +725,9 @@ class PBLPathBuilder {
   _rescueCandidatesFromPool(goal, candidates, limit) {
     const goalTerms = this._tokenizeGoalTerms(goal);
     const complex = this._isComplexPBLGoal(goal);
+    const domains = this._inferProjectDomains(goal);
     const scored = candidates
-      .map(n => ({ n, s: this._scoreNodeForGoal(n, goalTerms, null, complex) }))
+      .map(n => ({ n, s: this._scoreNodeForGoal(n, goalTerms, null, complex, domains) }))
       .filter(x => x.s > 0)
       .sort((a, b) => b.s - a.s);
     const bySubject = new Map();
@@ -1178,6 +1276,16 @@ class PBLPathBuilder {
     });
     const jsonStr = this._extractJsonObject(response);
     const filter = JSON.parse(jsonStr);
+    const domains = this._inferProjectDomains(goal);
+
+    // 火箭/发射类：兜底确保 filter 含 physics + chemistry/info-tech，避免只剩泛数学
+    if (domains.length && profile.complex) {
+      const subj = new Set(filter.subjects || []);
+      subj.add('physics');
+      if (/火箭|发射|燃料|燃烧|推进/.test(goal)) subj.add('chemistry');
+      if (/控制|传感|编程|数据|电路/.test(goal)) subj.add('info-tech');
+      filter.subjects = [...subj];
+    }
 
     // 根据筛选条件过滤候选集
     const minGrade = profile.complex ? PBLPathBuilder.PBL_MIN_GRADE_COMPLEX : 1;
@@ -1192,23 +1300,25 @@ class PBLPathBuilder {
       return subjectMatch && systemMatch && gradeMatch && notElementary;
     });
 
-    const MAX_STAGE2_CANDIDATES = profile.complex ? 30 : 22;
+    const MAX_STAGE2_CANDIDATES = profile.complex ? 40 : 22;
     const pool = filteredCandidates.length > 0 ? filteredCandidates : candidates.filter(n => {
       if (!profile.complex) return true;
       const g = parseInt(n.grade, 10) || 0;
       return (g === 0 || g >= minGrade) && !this._excludeForComplexProject(n);
     });
     const goalTerms = this._tokenizeGoalTerms(goal);
+    const defaultSubjects = domains.length
+      ? ['physics', 'chemistry', 'math', 'info-tech']
+      : ['math', 'physics', 'chemistry', 'biology', 'info-tech'];
     const scored = pool.map(n => ({
       ...n,
-      _score: this._scoreNodeForGoal(n, goalTerms, filter.subjects, profile.complex)
+      _score: this._scoreNodeForGoal(n, goalTerms, filter.subjects, profile.complex, domains)
     }));
-    const topCandidates = this._pickDiverseCandidates(
-      scored,
-      MAX_STAGE2_CANDIDATES,
-      filter.subjects && filter.subjects.length ? filter.subjects : ['math', 'physics', 'chemistry', 'biology', 'info-tech']
-    );
-    return { filter, filteredCandidates: topCandidates };
+    const subjectList = filter.subjects && filter.subjects.length ? filter.subjects : defaultSubjects;
+    const topCandidates = domains.length && profile.complex
+      ? this._pickDomainAwareCandidates(scored, MAX_STAGE2_CANDIDATES, domains, subjectList)
+      : this._pickDiverseCandidates(scored, MAX_STAGE2_CANDIDATES, subjectList);
+    return { filter, filteredCandidates: topCandidates, domains };
   }
 
   async _llmMatchStage(goal, candidates) {
@@ -1228,7 +1338,8 @@ class PBLPathBuilder {
       candidates: candidatesLite,
       complex,
       maxMatched: profile.maxMatched,
-      minConf
+      minConf,
+      domainHints: this._inferProjectDomains(goal)
     });
     let result = { matched: [], pathOrder: [], projectPhases: [], external: [], techRoute: '' };
     try {
