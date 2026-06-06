@@ -856,6 +856,171 @@ class PBLPathBuilder {
     return rows.map(([k, v]) => `${k}：${v}`).join('；');
   }
 
+  static PATH_STEP_CIRCLED = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩', '⑪', '⑫'];
+
+  _pathStepCircled(step) {
+    const i = (step || 1) - 1;
+    return PBLPathBuilder.PATH_STEP_CIRCLED[i] || String(step);
+  }
+
+  /** 图谱主线：带 pathStep 的实施节点（绿/紫/红均算） */
+  _getMainlinePath(graphData) {
+    return (graphData?.nodes || [])
+      .filter(n => n.pathStep)
+      .sort((a, b) => a.pathStep - b.pathStep);
+  }
+
+  _inferNodeRole(n) {
+    if (n.pblRole) return n.pblRole;
+    if (n.layer === 'prerequisite') return 'foundation';
+    if (n.layer === 'advanced') return 'bridge';
+    return 'core';
+  }
+
+  _rolePhaseTitle(role, corePart, coreTotal) {
+    const map = { foundation: '基础准备', bridge: '原理探究', core: '动手实现' };
+    if (role === 'core' && coreTotal > 1) return `动手实现（${corePart === 1 ? '上' : '下'}）`;
+    return map[role] || '实施阶段';
+  }
+
+  _defaultDeliverable(role) {
+    return ({
+      foundation: '概念图 / 知识准备笔记',
+      bridge: '原理分析报告或验证实验方案',
+      core: '可运行原型、测试数据或阶段作品'
+    })[role] || '阶段成果物';
+  }
+
+  _groupMainlineIntoPhases(mainline) {
+    if (!mainline.length) return [];
+    const blocks = [];
+    let cur = { role: null, nodes: [] };
+    mainline.forEach(n => {
+      const role = this._inferNodeRole(n);
+      if (cur.role && role !== cur.role && cur.nodes.length) {
+        blocks.push({ ...cur });
+        cur = { role, nodes: [n] };
+      } else {
+        if (!cur.role) cur.role = role;
+        cur.nodes.push(n);
+      }
+    });
+    if (cur.nodes.length) blocks.push(cur);
+
+    const expanded = [];
+    blocks.forEach(b => {
+      if (b.role === 'core' && b.nodes.length > 3) {
+        const mid = Math.ceil(b.nodes.length / 2);
+        expanded.push({ role: 'core', nodes: b.nodes.slice(0, mid), part: 1 });
+        expanded.push({ role: 'core', nodes: b.nodes.slice(mid), part: 2 });
+      } else {
+        expanded.push(b);
+      }
+    });
+    while (expanded.length > 5 && expanded.length > 1) {
+      const tail = expanded.pop();
+      expanded[expanded.length - 1].nodes.push(...tail.nodes);
+    }
+
+    const coreBlocks = expanded.filter(b => b.role === 'core');
+    let coreSeen = 0;
+    return expanded.map((b, i) => {
+      if (b.role === 'core') coreSeen += 1;
+      return {
+        phaseIndex: i + 1,
+        role: b.role,
+        phase: b.part
+          ? this._rolePhaseTitle('core', b.part, coreBlocks.length)
+          : this._rolePhaseTitle(b.role, coreSeen, coreBlocks.length),
+        nodes: b.nodes,
+        pathSteps: b.nodes.map(n => n.pathStep),
+        knowledgeNames: b.nodes.map(n => n.name),
+        nodeIds: b.nodes.map(n => n.id)
+      };
+    });
+  }
+
+  _literacyFromLlmPhase(p) {
+    if (!p) return {};
+    if (p.literacy) return p.literacy;
+    return {
+      knowledge: p.knowledgeLiteracy || p.knowledge || '',
+      method: p.methodLiteracy || p.method || '',
+      ability: p.abilityLiteracy || p.ability || '',
+      attitude: p.attitudeLiteracy || p.attitude || '',
+      emotion: p.emotionLiteracy || p.emotion || '',
+      values: p.valuesLiteracy || p.values || ''
+    };
+  }
+
+  /**
+   * 路径拆解模式：以图谱 pathStep 为主线，合并 LLM 阶段任务/素养/产出
+   */
+  _buildPathPlan({ goal, graphData, projectPhases = [], knowledgeChain = '', external = [] }) {
+    const mainline = this._getMainlinePath(graphData);
+    const groups = this._groupMainlineIntoPhases(mainline);
+    const llm = projectPhases || [];
+    const phases = groups.map((g, i) => {
+      const lp = llm[i] || {};
+      const steps = Array.isArray(lp.steps) && lp.steps.length
+        ? lp.steps
+        : g.nodes.map(n => `完成图谱${this._pathStepCircled(n.pathStep)}「${n.name}」课件与配套练习`);
+      return {
+        phaseIndex: g.phaseIndex,
+        phase: lp.phase || lp.name || g.phase,
+        role: g.role,
+        pathSteps: g.pathSteps,
+        pathStepLabels: g.pathSteps.map(s => this._pathStepCircled(s)),
+        graphRef: g.pathSteps.map(s => this._pathStepCircled(s)).join(''),
+        nodeIds: g.nodeIds,
+        knowledgeNames: g.knowledgeNames,
+        steps,
+        deliverable: lp.deliverable || lp.output || this._defaultDeliverable(g.role),
+        literacy: this._literacyFromLlmPhase(lp)
+      };
+    });
+    const chain = knowledgeChain || mainline.map(n => n.name).join(' → ');
+    return {
+      mode: 'graph-aligned',
+      goal: String(goal || ''),
+      knowledgeChain: chain,
+      mainlineCount: mainline.length,
+      phases,
+      external: (external || []).map(n => (typeof n === 'string' ? n : n.name)).filter(Boolean)
+    };
+  }
+
+  buildPathPlanFromResult(result) {
+    if (!result) return null;
+    if (result.pathPlan?.phases?.length) return result.pathPlan;
+    return this._buildPathPlan({
+      goal: result.goal,
+      graphData: result.graphData,
+      projectPhases: result.projectPhases,
+      knowledgeChain: result.knowledgeChain,
+      external: result.external
+    });
+  }
+
+  _buildTechRouteFromPathPlan(pathPlan) {
+    if (!pathPlan?.phases?.length) return '';
+    let text = `围绕「${pathPlan.goal.slice(0, 100)}」的实施路径（阶段与图谱序号一一对应）\n\n`;
+    text += `知识链：${pathPlan.knowledgeChain}\n\n`;
+    pathPlan.phases.forEach(p => {
+      const kn = (p.knowledgeNames || []).map(n => `「${n}」`).join('、');
+      text += `【阶段${p.phaseIndex} · 图谱 ${p.graphRef || p.pathStepLabels?.join('') || ''}】${p.phase}\n`;
+      text += `知识点：${kn}\n`;
+      text += `任务：${(p.steps || []).join('；')}\n`;
+      const literacy = this._formatPhaseLiteracy(p);
+      if (literacy) text += `素养指引：${literacy}\n`;
+      text += `产出：${p.deliverable}\n\n`;
+    });
+    if (pathPlan.external?.length) {
+      text += `拓展参考：${pathPlan.external.map(n => `「${n}」`).join('、')}\n`;
+    }
+    return this._sanitizeTechRoute(text).slice(0, 1200);
+  }
+
   _subjectLabel(subject) {
     const map = {
       math: '数学', physics: '物理', chemistry: '化学', biology: '生物', science: '科学',
@@ -1004,24 +1169,26 @@ class PBLPathBuilder {
   /** 解析/重建项目实施路径说明（供 pbl.html 展示与历史恢复） */
   resolveTechRouteText(result) {
     if (!result) return '';
-    let routeText = (result.techRoute || '').trim();
-    if (routeText.replace(/\s/g, '').length >= 40) return routeText;
+    const pathPlan = this.buildPathPlanFromResult(result);
+    if (pathPlan?.phases?.length) {
+      return this._buildTechRouteFromPathPlan(pathPlan);
+    }
 
     const nodes = (result.graphData && result.graphData.nodes) ? result.graphData.nodes : [];
-    const matched = result.matched || nodes.filter(n => n.layer === 'matched');
+    const mainline = this._getMainlinePath(result.graphData);
+    const matched = mainline.length ? mainline : (result.matched || nodes.filter(n => n.layer === 'matched'));
     const external = result.external || nodes.filter(n => n.layer === 'external');
     const phases = result.projectPhases || [];
     const goal = result.goal || '';
 
-    routeText = this._buildTechRouteFromGraph(goal, matched, external, phases);
+    let routeText = this._buildTechRouteFromGraph(goal, matched, external, phases);
     if (routeText.replace(/\s/g, '').length < 40) {
       routeText = this._buildFallbackTechRoute(goal, matched, external);
     }
     if (routeText.replace(/\s/g, '').length < 20 && nodes.length) {
-      const steps = matched.filter(n => n.pathStep).sort((a, b) => a.pathStep - b.pathStep);
-      const hint = steps.length
-        ? `按图谱序号 ${steps.map(n => n.pathStep).join('→')} 推进：${steps.slice(0, 5).map(n => n.name).join('、')}${steps.length > 5 ? '…' : ''}。`
-        : `共 ${nodes.length} 个节点，请先完成核心（红色）节点课件与动手任务。`;
+      const hint = mainline.length
+        ? `按图谱序号 ${mainline.map(n => n.pathStep).join('→')} 推进：${mainline.slice(0, 5).map(n => n.name).join('、')}${mainline.length > 5 ? '…' : ''}。`
+        : `共 ${nodes.length} 个节点，请按图谱序号完成各节点课件与动手任务。`;
       routeText = `围绕「${String(goal).slice(0, 80)}」的实施路径：${hint}`;
     }
     return routeText;
@@ -1080,7 +1247,8 @@ class PBLPathBuilder {
       external.slice(0, 1)
     );
     graphData = this._capGraphNodes(graphData, PBLPathBuilder.PBL_MAX_GRAPH_NODES);
-    return { complex, matched: core, external: external.slice(0, 1), graphData };
+    const mainline = this._getMainlinePath(graphData);
+    return { complex, matched: mainline.length ? mainline : core, external: external.slice(0, 1), graphData };
   }
 
   /**
@@ -1241,30 +1409,23 @@ class PBLPathBuilder {
       dependsOnLinks: stage2.dependsOnLinks || [],
       candidatePool: stage1.filteredCandidates
     });
-    // 复杂项目一律由图谱重建技术路线（不信任 LLM 自由文本，避免混入小学基础与套话）；
-    // 简单项目先清洗 LLM 文本，若清洗后过短再重建。
-    let techRoute;
-    if (finalized.complex) {
-      techRoute = this._buildTechRouteFromGraph(goal, finalized.matched, finalized.external, stage2.projectPhases);
-    } else {
-      techRoute = this._sanitizeTechRoute((stage2.techRoute || '').trim());
-      if (techRoute.replace(/\s/g, '').length < 40) {
-        techRoute = this._buildTechRouteFromGraph(goal, finalized.matched, finalized.external, stage2.projectPhases);
-      }
-    }
-    techRoute = techRoute || this._buildFallbackTechRoute(goal, finalized.matched, finalized.external);
-    if (stage2.knowledgeChain) {
-      techRoute = `知识链：${stage2.knowledgeChain}\n\n${techRoute}`;
-    }
-
-    techRoute = this.resolveTechRouteText({
+    const pathPlan = this._buildPathPlan({
       goal,
-      techRoute,
-      matched: finalized.matched,
-      external: finalized.external,
+      graphData: finalized.graphData,
       projectPhases: stage2.projectPhases || [],
-      graphData: finalized.graphData
+      knowledgeChain: stage2.knowledgeChain || '',
+      external: finalized.external
     });
+    const techRoute = this._buildTechRouteFromPathPlan(pathPlan)
+      || this.resolveTechRouteText({
+        goal,
+        graphData: finalized.graphData,
+        matched: finalized.matched,
+        external: finalized.external,
+        projectPhases: pathPlan.phases,
+        knowledgeChain: pathPlan.knowledgeChain,
+        pathPlan
+      });
 
     return {
       goal,
@@ -1272,7 +1433,9 @@ class PBLPathBuilder {
       matched: finalized.matched,
       external: finalized.external,
       techRoute,
-      projectPhases: stage2.projectPhases || [],
+      projectPhases: pathPlan.phases,
+      pathPlan,
+      knowledgeChain: pathPlan.knowledgeChain,
       graphData: finalized.graphData,
       complexProject: finalized.complex,
       stats: {
@@ -2382,10 +2545,23 @@ class PBLGraphRenderer {
     return div.innerHTML;
   }
 
+  highlightPathSteps(pathSteps) {
+    const set = new Set((pathSteps || []).filter(Boolean));
+    this._highlightSteps = set;
+    if (!this.svg) return;
+    const active = set.size > 0;
+    this.svg.selectAll('.node-group').select('.node-circle')
+      .attr('stroke-width', d => (active && set.has(d.pathStep) ? 4 : 2.5))
+      .attr('opacity', d => (!active || set.has(d.pathStep) ? 1 : 0.28));
+    this.svg.selectAll('.node-group').select('.node-label')
+      .attr('opacity', d => (!active || set.has(d.pathStep) ? 1 : 0.35));
+  }
+
   destroy() {
     if (this.simulation) this.simulation.stop();
     const container = document.getElementById(this.containerId);
     if (container) container.innerHTML = '';
+    this.svg = null;
   }
 }
 
