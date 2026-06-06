@@ -632,18 +632,111 @@ class PBLPathBuilder {
       .map(n => ({ n, s: this._scoreNodeForGoal(n, goalTerms, null, complex) }))
       .filter(x => x.s > 0)
       .sort((a, b) => b.s - a.s);
-    return scored.slice(0, limit).map((x, i) => ({
+    const bySubject = new Map();
+    scored.forEach(x => {
+      const subj = x.n.subject || 'other';
+      if (!bySubject.has(subj)) bySubject.set(subj, []);
+      bySubject.get(subj).push(x);
+    });
+    const picked = [];
+    const seen = new Set();
+    const perSubject = Math.max(2, Math.ceil(limit / Math.max(bySubject.size, 2)));
+    bySubject.forEach(arr => {
+      arr.slice(0, perSubject).forEach(x => {
+        if (seen.has(x.n.id)) return;
+        seen.add(x.n.id);
+        picked.push(x);
+      });
+    });
+    scored.forEach(x => {
+      if (picked.length >= limit) return;
+      if (seen.has(x.n.id)) return;
+      seen.add(x.n.id);
+      picked.push(x);
+    });
+    return picked.slice(0, limit).map((x, i) => ({
       ...x.n,
       confidence: Math.max(0.55, 0.88 - i * 0.03),
       matchReason: '目标关键词回退匹配',
-      pblRole: i < 2 ? 'foundation' : (i < 5 ? 'bridge' : 'core')
+      pblRole: i < 2 ? 'foundation' : (i < 6 ? 'bridge' : 'core')
     }));
+  }
+
+  _ensureCrossSubjectMatched(matched, goal, candidatePool, limit) {
+    const list = [...matched];
+    const subjects = new Set(list.map(n => n.subject).filter(Boolean));
+    if (subjects.size >= 2 || !candidatePool.length) return list.slice(0, limit);
+    const extras = this._rescueCandidatesFromPool(goal, candidatePool, limit)
+      .filter(n => n.subject && !subjects.has(n.subject) && !list.some(m => m.id === n.id));
+    extras.slice(0, Math.max(2, 4 - subjects.size)).forEach(n => list.push(n));
+    return list.slice(0, limit);
+  }
+
+  _buildDependsOnLinks(result, candidates) {
+    const links = [];
+    (result.matched || []).forEach(m => {
+      const tgtIdx = this._parseMatchIndex(m, candidates.length);
+      if (tgtIdx < 0) return;
+      const tgtId = candidates[tgtIdx].id;
+      (m.dependsOn || []).forEach(dep => {
+        let srcIdx = typeof dep === 'string' ? parseInt(dep, 10) : dep;
+        if (!Number.isInteger(srcIdx) || srcIdx < 0 || srcIdx >= candidates.length) return;
+        links.push({ source: candidates[srcIdx].id, target: tgtId, type: 'prerequisite' });
+      });
+    });
+    return links;
+  }
+
+  _applyPathOrderToGraph(graphData, matchedNodes, pathOrderIds = []) {
+    const nodeMap = new Map(graphData.nodes.map(n => [n.id, n]));
+    const byId = new Map(matchedNodes.map(n => [n.id, n]));
+    const ordered = [];
+    (pathOrderIds || []).forEach(id => {
+      if (byId.has(id) && !ordered.find(o => o.id === id)) ordered.push(byId.get(id));
+    });
+    matchedNodes.forEach(n => {
+      if (!ordered.find(o => o.id === n.id)) ordered.push(n);
+    });
+    ordered.forEach((n, idx) => {
+      const gNode = nodeMap.get(n.id);
+      if (gNode) gNode.pathStep = idx + 1;
+    });
+    const links = [...graphData.links];
+    for (let i = 0; i < ordered.length - 1; i++) {
+      const a = ordered[i].id;
+      const b = ordered[i + 1].id;
+      if (nodeMap.has(a) && nodeMap.has(b)) {
+        links.push({ source: a, target: b, type: 'path-step' });
+      }
+    }
+    return { nodes: graphData.nodes, links: this._deduplicateLinks(links) };
+  }
+
+  _formatPhaseLiteracy(phase) {
+    const lit = phase.literacy || {};
+    const rows = [
+      ['知识', lit.knowledge || phase.knowledge],
+      ['方法', lit.method || phase.method],
+      ['能力', lit.ability || phase.ability],
+      ['态度', lit.attitude || phase.attitude],
+      ['情感', lit.emotion || phase.emotion],
+      ['价值观', lit.values || phase.values]
+    ].filter(([, v]) => v && String(v).trim());
+    return rows.map(([k, v]) => `${k}：${v}`).join('；');
+  }
+
+  _subjectLabel(subject) {
+    const map = {
+      math: '数学', physics: '物理', chemistry: '化学', biology: '生物', science: '科学',
+      'info-tech': '信息技术', chinese: '语文', english: '英语', history: '历史', geography: '地理'
+    };
+    return map[subject] || subject || '';
   }
 
   // ─── PBL 路径分析核心 ──────────────────────────
 
-  static PBL_MAX_GRAPH_NODES = 20;
-  static PBL_MAX_MATCHED_COMPLEX = 10;
+  static PBL_MAX_GRAPH_NODES = 32;
+  static PBL_MAX_MATCHED_COMPLEX = 12;
   static PBL_MIN_GRADE_COMPLEX = 7;
 
   _getPBLGoalProfile(goal) {
@@ -805,10 +898,13 @@ class PBLPathBuilder {
   _capGraphNodes(graphData, maxNodes = PBLPathBuilder.PBL_MAX_GRAPH_NODES) {
     const nodes = graphData.nodes || [];
     if (nodes.length <= maxNodes) return graphData;
-    const layerScore = { matched: 1000, external: 800, advanced: 500, parallel: 400, prerequisite: 100 };
+    const layerScore = { matched: 1000, external: 800, advanced: 500, parallel: 400, prerequisite: 350 };
+    const roleBonus = { foundation: 120, bridge: 180, core: 80 };
     const scored = nodes.map(n => ({
       n,
       score: (layerScore[n.layer] || 50) + (n.confidence || 0) * 50
+        + (roleBonus[n.pblRole] || 0)
+        + (n.pathStep ? 60 : 0)
         - (this._excludeForComplexProject(n) ? 400 : 0)
     }));
     scored.sort((a, b) => b.score - a.score);
@@ -833,10 +929,19 @@ class PBLPathBuilder {
         .sort((a, b) => (b.confidence || 0) - (a.confidence || 0))
         .slice(0, PBLPathBuilder.PBL_MAX_MATCHED_COMPLEX);
     }
-    let graphData = complex
-      ? this._buildProjectPathGraph(core, external, meta.pathOrderIds || [])
-      : this._buildPathGraph(core, external, activeSystems, { complex: false });
-    if (complex) graphData = this._capGraphNodes(graphData, PBLPathBuilder.PBL_MAX_GRAPH_NODES);
+    core = this._ensureCrossSubjectMatched(
+      core,
+      goal,
+      meta.candidatePool || [],
+      profile.maxMatched
+    );
+    // 复杂项目也用完整图谱（溯源 prerequisites + 桥梁层），不再只用线性 path 图
+    let graphData = this._buildPathGraph(core, external, activeSystems, { complex });
+    graphData = this._applyPathOrderToGraph(graphData, core, meta.pathOrderIds || []);
+    if (meta.dependsOnLinks && meta.dependsOnLinks.length) {
+      graphData.links = this._deduplicateLinks([...graphData.links, ...meta.dependsOnLinks]);
+    }
+    graphData = this._capGraphNodes(graphData, PBLPathBuilder.PBL_MAX_GRAPH_NODES);
     const graphMatched = graphData.nodes.filter(n => n.layer === 'matched');
     const graphExternal = graphData.nodes.filter(n => n.layer === 'external');
     return { complex, matched: graphMatched.length ? graphMatched : core, external: graphExternal, graphData };
@@ -889,19 +994,25 @@ class PBLPathBuilder {
     }
 
     if (Array.isArray(projectPhases) && projectPhases.length) {
+      const subjSet = [...new Set(matched.map(n => n.subject).filter(Boolean))];
       let text = `围绕「${String(goal || '').slice(0, 100)}」的项目实施路线：\n\n`;
-      projectPhases.slice(0, 4).forEach((p, i) => {
+      if (subjSet.length >= 2) {
+        text += `跨学科融合：${subjSet.map(s => this._subjectLabel(s)).filter(Boolean).join(' × ')}\n\n`;
+      }
+      projectPhases.slice(0, 5).forEach((p, i) => {
         const steps = (Array.isArray(p.steps) ? p.steps : [p.task || p.desc || ''])
           .filter(s => s && !basicRe.test(s)).join('；');
         let kn = (Array.isArray(p.knowledgeNames) ? p.knowledgeNames : [])
           .map(validName).filter(Boolean).join('、');
         if (!kn) kn = nameList(matched.slice(i * 2, i * 2 + 3)) || '（见图谱核心节点）';
+        const literacy = this._formatPhaseLiteracy(p);
         text += `【阶段${i + 1}】${p.phase || p.name || '实施阶段'}\n`;
         text += `任务：${steps || '完成本阶段拆解、建模与实现'}\n`;
         text += `知识支撑：${kn}\n`;
+        if (literacy) text += `素养指引：${literacy}\n`;
         text += `产出：${p.deliverable || p.output || '阶段原型/数据/报告'}\n\n`;
       });
-      return this._sanitizeTechRoute(text).slice(0, 600);
+      return this._sanitizeTechRoute(text).slice(0, 900);
     }
 
     const ordered = [...matched].sort((a, b) => (a.pathStep || 99) - (b.pathStep || 99));
@@ -941,7 +1052,9 @@ class PBLPathBuilder {
     // 5. 第二阶段 LLM：精确匹配 + 外部知识点推荐
     const stage2 = await this._llmMatchStage(goal, stage1.filteredCandidates);
     const finalized = this._finalizePBLGraph(goal, stage2.matched, stage2.external, activeSystems, {
-      pathOrderIds: stage2.pathOrderIds
+      pathOrderIds: stage2.pathOrderIds,
+      dependsOnLinks: stage2.dependsOnLinks || [],
+      candidatePool: stage1.filteredCandidates
     });
     // 复杂项目一律由图谱重建技术路线（不信任 LLM 自由文本，避免混入小学基础与套话）；
     // 简单项目先清洗 LLM 文本，若清洗后过短再重建。
@@ -955,6 +1068,9 @@ class PBLPathBuilder {
       }
     }
     techRoute = techRoute || this._buildFallbackTechRoute(goal, finalized.matched, finalized.external);
+    if (stage2.knowledgeChain) {
+      techRoute = `知识链：${stage2.knowledgeChain}\n\n${techRoute}`;
+    }
 
     techRoute = this.resolveTechRouteText({
       goal,
@@ -1024,7 +1140,7 @@ class PBLPathBuilder {
       return subjectMatch && systemMatch && gradeMatch && notElementary;
     });
 
-    const MAX_STAGE2_CANDIDATES = profile.complex ? 24 : 20;
+    const MAX_STAGE2_CANDIDATES = profile.complex ? 30 : 22;
     const pool = filteredCandidates.length > 0 ? filteredCandidates : candidates.filter(n => {
       if (!profile.complex) return true;
       const g = parseInt(n.grade, 10) || 0;
@@ -1083,17 +1199,29 @@ class PBLPathBuilder {
       matched = this._rescueCandidatesFromPool(goal, candidates, profile.maxMatched);
       console.warn('[PBL] LLM matched 为空，已用候选池关键词回退:', matched.map(n => n.name).join('、'));
     }
+    matched = this._ensureCrossSubjectMatched(matched, goal, candidates, profile.maxMatched);
 
     const pathOrderIds = (result.pathOrder || result.learningSequence || [])
+      .map(i => (typeof i === 'string' ? parseInt(i, 10) : i))
       .filter(i => Number.isInteger(i) && i >= 0 && i < candidates.length)
       .map(i => candidates[i].id)
       .filter(id => matched.some(m => m.id === id));
+
+    const dependsOnLinks = this._buildDependsOnLinks(result, candidates);
 
     const projectPhases = (result.projectPhases || result.phases || []).map(p => ({
       phase: p.phase || p.name || '',
       steps: p.steps || (p.tasks ? (Array.isArray(p.tasks) ? p.tasks : [p.tasks]) : []),
       knowledgeNames: p.knowledgeNames || p.knowledge || [],
-      deliverable: p.deliverable || p.output || ''
+      deliverable: p.deliverable || p.output || '',
+      literacy: p.literacy || {
+        knowledge: p.knowledgeLiteracy || p.knowledge_dim || '',
+        method: p.methodLiteracy || p.method || '',
+        ability: p.abilityLiteracy || p.ability || '',
+        attitude: p.attitudeLiteracy || p.attitude || '',
+        emotion: p.emotionLiteracy || p.emotion || '',
+        values: p.valuesLiteracy || p.values || ''
+      }
     }));
 
     // 解析外部知识点
@@ -1121,7 +1249,8 @@ class PBLPathBuilder {
     }));
 
     const techRoute = (result.techRoute || '').trim();
-    return { matched, external, techRoute, pathOrderIds, projectPhases };
+    const knowledgeChain = (result.knowledgeChain || '').trim();
+    return { matched, external, techRoute, pathOrderIds, projectPhases, dependsOnLinks, knowledgeChain };
   }
 
   _buildFallbackTechRoute(goal, matched = [], external = []) {
@@ -1142,7 +1271,7 @@ class PBLPathBuilder {
 
   _buildPathGraph(matchedNodes, externalNodes, activeSystems, options = {}) {
     const complex = options.complex === true;
-    const maxPreDepth = complex ? 2 : 5;
+    const maxPreDepth = complex ? 3 : 5;
     const maxExtDepth = complex ? 1 : 2;
     const traceOpts = { complex };
     const nodes = new Map();   // id -> node

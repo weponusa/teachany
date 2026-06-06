@@ -299,16 +299,7 @@ body {
   margin-top: 4px;
 }
 
-/* ─── PBL Graph Container ─────────────────────── */
-#pbl-graph-container {
-  min-height: 420px;
-  border-radius: 12px;
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  overflow: hidden;
-}
-
-/* PBL 项目实施路径说明 */
+/* PBL 技术路线分析 */
 .pbl-tech-route-panel,
 #pblTechRoute {
   margin: 16px 0 0;
@@ -352,12 +343,17 @@ body {
   min-height: 48px;
   white-space: pre-wrap;
   word-break: break-word;
-  word-break: break-word;
 }
+
+/* ─── PBL Graph Container ─────────────────────── */
+#pbl-graph-container {
   min-height: 600px;
   max-height: 85vh;
   position: relative;
   overflow: hidden;
+  border-radius: 12px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
 }
 
 /* ─── Node Detail Panel ───────────────────────── */
@@ -660,7 +656,7 @@ body {
       <span class="ex-chip" onclick="fillPBLExample(this)" data-key="solar-system" data-goal="构建一个太阳系模拟器，用物理引擎模拟行星轨道运动，展示开普勒定律和万有引力">🪐 太阳系模拟器</span>
     </div>
     <div class="pbl-actions">
-      <button class="pbl-analyze-btn" id="pblAnalyzeBtn" onclick="analyzePBLGoal()">🔍 分析学习路径</button>
+      <button class="pbl-analyze-btn" id="pblAnalyzeBtn" onclick="analyzePBLGoal()">🔍 拆解项目路径</button>
       <div class="pbl-system-tags">
         <span class="tag-label">课标体系：</span>
         <span class="pbl-sys-tag active" data-system="all" onclick="toggleSystemTag(this)">全部</span>
@@ -679,18 +675,18 @@ body {
     <span class="status-text" id="pblStatusText">正在分析项目目标...</span>
   </div>
 
-  <!-- PBL 统计卡片 -->
+  <!-- PBL 统计 -->
   <div id="pblStatsContainer" style="display:none">
     <div class="pbl-stats" id="pblStats"></div>
   </div>
 
-  <!-- 项目实施路径说明（独立区块） -->
+  <!-- 项目实施路径说明（独立区块，避免被统计区折叠遮挡） -->
   <div id="pblTechRoute" class="pbl-tech-route-panel" style="display:none" aria-live="polite">
     <div class="pbl-tech-route-header" onclick="this.parentElement.classList.toggle('collapsed')">
       <span>🛤️ 项目实施路径说明</span>
       <span class="pbl-tech-route-toggle">收起 ▲</span>
     </div>
-    <p class="pbl-tech-route-hint">约 500 字 · 按阶段说明「学什么、做什么、产出什么」，并对应下方图谱序号</p>
+    <p class="pbl-tech-route-hint">按阶段说明跨学科「学什么、做什么、产出什么」，并涵盖知识 / 方法 / 能力 / 态度 / 情感 / 价值观六维素养指引；红色序号对应下方图谱学习路径</p>
     <div class="pbl-tech-route-body" id="pblTechRouteBody"></div>
   </div>
 
@@ -724,9 +720,8 @@ body {
   </div>
 </div>
 
-<script src="./assets/scripts/teachany-data-fetch.js?v=20260604-kg-data"></script>
-<script src="./assets/scripts/courseware-hub.js?v=20260604-hub"></script>
-<script src="./assets/scripts/pbl-path.js?v=20260604-kg-data"></script>
+<script src="./assets/scripts/courseware-hub.js"></script>
+<script src="./assets/scripts/pbl-path.js?v=20260604-pbl-route-fix"></script>
 <script src="./assets/scripts/history-tracker.js" defer></script>
 <script src="./assets/scripts/teachany-make-course.js"></script>
 <script>
@@ -760,7 +755,7 @@ function getSelectedSystems() {
 
 function markPBLGoalDirty() {
   const btn = document.getElementById('pblAnalyzeBtn');
-  if (btn) btn.textContent = '🔍 分析学习路径';
+  if (btn) btn.textContent = '🔍 拆解项目路径';
 }
 
 async function fillPBLExample(el) {
@@ -788,6 +783,7 @@ async function fillPBLExample(el) {
       renderPBLStats(result);
       renderPBLGraph(result);
       statusEl.style.display = 'none';
+
       scrollToPBLOutput();
       return;
     }
@@ -909,10 +905,11 @@ async function restorePBLRunFromHistory(id) {
   const graphData = enrichPBLGraphData(run.graphData || { nodes: run.nodes || [], links: run.links || [] });
   if (!graphData.nodes || !graphData.nodes.length) return false;
   const builder = window.PBLPathBuilder;
+  let techRoute = run.techRoute || '';
   const result = {
     goal: run.goal || '',
     systems: run.systems || [],
-    techRoute: run.techRoute || '',
+    techRoute,
     projectPhases: run.projectPhases || [],
     graphData,
     matched: graphData.nodes.filter(n => n.layer === 'matched'),
@@ -1252,7 +1249,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       const statusEl = document.getElementById('pblStatus');
       if (statusEl && statusText) {
         statusEl.style.display = 'block';
-        statusText.textContent = '未找到这条 PBL 历史图谱，请重新点击"分析学习路径"。';
+        statusText.textContent = '未找到这条 PBL 历史图谱，请重新点击「拆解项目路径」。';
       }
     }
   }
