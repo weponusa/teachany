@@ -866,7 +866,7 @@ class PBLPathBuilder {
 
   // ─── PBL 路径分析核心 ──────────────────────────
 
-  static PBL_MAX_GRAPH_NODES = 16;
+  static PBL_MAX_GRAPH_NODES = 22;
   static PBL_MAX_MATCHED_COMPLEX = 10;
   static PBL_MIN_MATCHED_COMPLEX = 5;
   static PBL_MIN_GRADE_COMPLEX = 7;
@@ -1030,13 +1030,13 @@ class PBLPathBuilder {
   _capGraphNodes(graphData, maxNodes = PBLPathBuilder.PBL_MAX_GRAPH_NODES) {
     const nodes = graphData.nodes || [];
     if (nodes.length <= maxNodes) return graphData;
-    const layerScore = { matched: 1000, external: 800, advanced: 500, parallel: 400, prerequisite: 350 };
-    const roleBonus = { foundation: 120, bridge: 180, core: 80 };
+    const layerScore = { matched: 1000, external: 850, advanced: 750, parallel: 400, prerequisite: 600 };
+    const roleBonus = { foundation: 100, bridge: 140, core: 80 };
     const scored = nodes.map(n => ({
       n,
       score: (layerScore[n.layer] || 50) + (n.confidence || 0) * 50
         + (roleBonus[n.pblRole] || 0)
-        + (n.pathStep ? 60 : 0)
+        + (n.pathStep ? 120 : 0)
         - (this._excludeForComplexProject(n) ? 400 : 0)
     }));
     scored.sort((a, b) => b.score - a.score);
@@ -1071,9 +1071,65 @@ class PBLPathBuilder {
       );
       core = this._filterMainlineNodes(core, goal);
     }
-    // 图谱只展示核心主线（红色 pathStep 链），不展开前置/平行/跨学科噪声节点
-    const graphData = this._buildProjectPathGraph(core, [], meta.pathOrderIds || []);
+    // 主线 pathStep 链 + 角色分层着色 + 一层主线相关前置（不展开平行/跨学科噪声）
+    let graphData = this._buildRichMainlineGraph(
+      core,
+      meta.pathOrderIds || [],
+      goal,
+      meta.dependsOnLinks || [],
+      external.slice(0, 1)
+    );
+    graphData = this._capGraphNodes(graphData, PBLPathBuilder.PBL_MAX_GRAPH_NODES);
     return { complex, matched: core, external: external.slice(0, 1), graphData };
+  }
+
+  /**
+   * 主线加密图谱：pathStep 实施链 + 角色三色 + 一层课标前置（经主线过滤）
+   * - foundation → 绿色 prerequisite
+   * - bridge → 紫色 advanced
+   * - core → 红色 matched
+   */
+  _buildRichMainlineGraph(matchedNodes, pathOrderIds, goal, dependsOnLinks, externalNodes) {
+    const base = this._buildProjectPathGraph(matchedNodes, externalNodes || [], pathOrderIds || []);
+    const nodeMap = new Map(base.nodes.map(n => [n.id, n]));
+    const links = [...base.links];
+    const domains = this._inferProjectDomains(goal);
+    const complex = this._isComplexPBLGoal(goal);
+
+    base.nodes.forEach(n => {
+      if (!n.pathStep) return;
+      const role = n.pblRole || 'core';
+      if (role === 'foundation') n.layer = 'prerequisite';
+      else if (role === 'bridge') n.layer = 'advanced';
+      else n.layer = 'matched';
+    });
+
+    const matchedIds = new Set(matchedNodes.map(n => n.id));
+    matchedNodes.forEach(n => {
+      const kg = this.unifiedIndex.get(n.id);
+      if (!kg) return;
+      (kg.prerequisites || []).slice(0, 5).forEach(preId => {
+        if (matchedIds.has(preId) || nodeMap.has(preId)) return;
+        const preNode = this.unifiedIndex.get(preId);
+        if (!preNode) return;
+        if (complex && this._excludeForComplexProject(preNode)) return;
+        if (domains.length && !this._isMainlineRelevant(preNode, goal, domains)) return;
+        const enriched = { ...preNode, layer: 'prerequisite' };
+        base.nodes.push(enriched);
+        nodeMap.set(preId, enriched);
+        links.push({ source: preId, target: n.id, type: 'prerequisite' });
+      });
+    });
+
+    (dependsOnLinks || []).forEach(l => {
+      const src = typeof l.source === 'object' ? l.source.id : l.source;
+      const tgt = typeof l.target === 'object' ? l.target.id : l.target;
+      if (nodeMap.has(src) && nodeMap.has(tgt)) {
+        links.push({ source: src, target: tgt, type: l.type || 'depends-on' });
+      }
+    });
+
+    return { nodes: base.nodes, links: this._deduplicateLinks(links) };
   }
 
   _buildProjectPathGraph(matchedNodes, externalNodes, pathOrderIds = []) {
@@ -1948,6 +2004,18 @@ class PBLGraphRenderer {
       .attr('font-weight', '700')
       .attr('fill', d => this.colors[d.layer] || '#94a3b8')
       .text(d => d.systemTag);
+
+    // ─── 实施顺序序号（主线节点） ───
+    node.filter(d => d.pathStep)
+      .append('text')
+      .attr('x', 16)
+      .attr('y', 14)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', '10px')
+      .attr('font-weight', '800')
+      .attr('fill', d => this.colors.matched)
+      .attr('pointer-events', 'none')
+      .text(d => d.pathStep);
 
     // ─── 点击事件 ───
     if (onNodeClick) {
