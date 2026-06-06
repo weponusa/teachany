@@ -341,6 +341,71 @@ body {
   line-height: 1.8;
   color: var(--text);
   min-height: 48px;
+}
+.pbl-path-chain {
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  background: rgba(15,23,42,0.35);
+  font-size: 13px;
+  color: var(--dim);
+}
+.pbl-path-phases { display: flex; flex-direction: column; gap: 10px; }
+.pbl-path-phase {
+  border: 1px solid rgba(148,163,184,0.18);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: rgba(15,23,42,0.25);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.pbl-path-phase:hover, .pbl-path-phase.active {
+  border-color: rgba(59,130,246,0.55);
+  background: rgba(59,130,246,0.08);
+}
+.pbl-path-phase header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.pbl-phase-idx {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.pbl-phase-graph { display: inline-flex; gap: 4px; }
+.pbl-step-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 4px;
+  border-radius: 999px;
+  border: 1.5px solid var(--primary);
+  font-size: 12px;
+  font-weight: 800;
+  color: #f8fafc;
+  background: rgba(239,68,68,0.15);
+}
+.pbl-phase-title { font-weight: 700; font-size: 15px; }
+.pbl-phase-row { margin: 4px 0; font-size: 13px; line-height: 1.65; }
+.pbl-phase-row .lbl {
+  display: inline-block;
+  min-width: 52px;
+  color: var(--dim);
+  margin-right: 6px;
+}
+.pbl-phase-literacy {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(139,92,246,0.08);
+  font-size: 12px;
+  color: var(--dim);
+  line-height: 1.55;
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -686,7 +751,7 @@ body {
       <span>🛤️ 项目实施路径说明</span>
       <span class="pbl-tech-route-toggle">收起 ▲</span>
     </div>
-    <p class="pbl-tech-route-hint">按阶段说明跨学科「学什么、做什么、产出什么」，并涵盖知识 / 方法 / 能力 / 态度 / 情感 / 价值观六维素养指引；红色序号对应下方图谱学习路径</p>
+    <p class="pbl-tech-route-hint">路径按图谱序号 ①②③… 分阶段拆解：每阶段列出对应知识点、任务与产出；点击阶段可高亮图谱节点</p>
     <div class="pbl-tech-route-body" id="pblTechRouteBody"></div>
   </div>
 
@@ -721,7 +786,7 @@ body {
 </div>
 
 <script src="./assets/scripts/courseware-hub.js"></script>
-<script src="./assets/scripts/pbl-path.js?v=20260606-pbl-demos"></script>
+<script src="./assets/scripts/pbl-path.js?v=20260606-pathplan"></script>
 <script src="./assets/scripts/history-tracker.js" defer></script>
 <script src="./assets/scripts/teachany-make-course.js"></script>
 <script>
@@ -861,8 +926,14 @@ async function analyzePBLGoal() {
 
 function renderPBLResult(result) {
   pblResult = result;
+  if (window.PBLPathBuilder && typeof window.PBLPathBuilder.buildPathPlanFromResult === 'function') {
+    result.pathPlan = window.PBLPathBuilder.buildPathPlanFromResult(result);
+    if (result.pathPlan && result.pathPlan.phases) result.projectPhases = result.pathPlan.phases;
+  }
   renderPBLStats(result);
   renderPBLGraph(result);
+  const activePhase = document.querySelector('.pbl-path-phase.active') || document.querySelector('.pbl-path-phase');
+  if (activePhase) highlightPBLPhase(activePhase);
 }
 
 function getStoredPBLRun(id) {
@@ -944,14 +1015,71 @@ function resolvePBLTechRouteText(result) {
   return (result && result.techRoute) ? String(result.techRoute).trim() : '';
 }
 
+function escapePBLHtml(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function formatPBLLiteracyRows(lit) {
+  if (!lit) return '';
+  const rows = [
+    ['知识', lit.knowledge], ['方法', lit.method], ['能力', lit.ability],
+    ['态度', lit.attitude], ['情感', lit.emotion], ['价值观', lit.values]
+  ].filter(([, v]) => v && String(v).trim());
+  return rows.map(([k, v]) => `${k}：${escapePBLHtml(v)}`).join('；');
+}
+
+function renderPBLPathPlanHTML(pathPlan) {
+  if (!pathPlan || !pathPlan.phases || !pathPlan.phases.length) return '';
+  const roleColor = { foundation: '#10b981', bridge: '#8b5cf6', core: '#ef4444' };
+  let html = `<div class="pbl-path-chain"><strong>知识链</strong>：${escapePBLHtml(pathPlan.knowledgeChain)}</div><div class="pbl-path-phases">`;
+  pathPlan.phases.forEach((p, idx) => {
+    const color = roleColor[p.role] || '#ef4444';
+    const badges = (p.pathStepLabels || []).map(l =>
+      `<span class="pbl-step-badge" style="border-color:${color}">${l}</span>`).join('');
+    const kn = (p.knowledgeNames || []).map(n => `「${escapePBLHtml(n)}」`).join('、');
+    const steps = (p.steps || []).map(s => escapePBLHtml(s)).join('；');
+    const lit = formatPBLLiteracyRows(p.literacy);
+    html += `<article class="pbl-path-phase${idx === 0 ? ' active' : ''}" data-steps="${(p.pathSteps || []).join(',')}" onclick="highlightPBLPhase(this)">`;
+    html += `<header><span class="pbl-phase-idx">阶段 ${p.phaseIndex}</span>`;
+    html += `<span class="pbl-phase-graph">${badges}</span>`;
+    html += `<span class="pbl-phase-title">${escapePBLHtml(p.phase)}</span></header>`;
+    html += `<div class="pbl-phase-row"><span class="lbl">知识点</span>${kn}</div>`;
+    html += `<div class="pbl-phase-row"><span class="lbl">任务</span>${steps}</div>`;
+    if (lit) html += `<div class="pbl-phase-literacy"><span class="lbl">素养</span>${lit}</div>`;
+    html += `<div class="pbl-phase-row"><span class="lbl">产出</span>${escapePBLHtml(p.deliverable)}</div></article>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+function highlightPBLPhase(el) {
+  if (!el) return;
+  document.querySelectorAll('.pbl-path-phase').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  const steps = (el.dataset.steps || '').split(',').map(n => parseInt(n, 10)).filter(n => Number.isInteger(n) && n > 0);
+  if (pblRenderer && typeof pblRenderer.highlightPathSteps === 'function') {
+    pblRenderer.highlightPathSteps(steps);
+  }
+}
+
 function showPBLTechRoute(result) {
   const techRouteEl = document.getElementById('pblTechRoute');
   const techRouteBody = document.getElementById('pblTechRouteBody');
   if (!techRouteEl || !techRouteBody) return;
   const nodeCount = result && result.graphData && result.graphData.nodes ? result.graphData.nodes.length : 0;
+  const builder = window.PBLPathBuilder;
+  const pathPlan = builder && typeof builder.buildPathPlanFromResult === 'function'
+    ? builder.buildPathPlanFromResult(result) : null;
   const routeText = resolvePBLTechRouteText(result);
+  if (pathPlan && pathPlan.phases && pathPlan.phases.length) {
+    result.pathPlan = pathPlan;
+    techRouteBody.innerHTML = renderPBLPathPlanHTML(pathPlan);
+    techRouteEl.style.display = 'block';
+    techRouteEl.classList.remove('collapsed');
+    return;
+  }
   if (routeText || nodeCount > 0) {
-    techRouteBody.textContent = routeText || '请按下方知识图谱中的红色序号（pathStep）依次完成各节点课件与阶段任务。';
+    techRouteBody.textContent = routeText || '请按下方知识图谱序号依次完成各节点课件与阶段任务。';
     techRouteEl.style.display = 'block';
     techRouteEl.classList.remove('collapsed');
   } else {
