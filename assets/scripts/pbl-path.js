@@ -775,7 +775,15 @@ class PBLPathBuilder {
     const domains = this._inferProjectDomains(goal);
     if (!domains.length && !this._isStemProjectGoal(goal)) return matched;
     const filtered = matched.filter(n => this._isMainlineRelevant(n, goal, domains));
-    return filtered.length ? filtered : [];
+    if (filtered.length) return filtered;
+    if (matched.length && this._isStemProjectGoal(goal)) {
+      return matched.filter(n => {
+        const name = String(n.name || '');
+        if (this._isBiologyNodeName(name) || n.subject === 'biology') return false;
+        return !/作文|地形|有机合成|弧长|扇形面积/.test(name);
+      });
+    }
+    return [];
   }
 
   _scoreNodeForGoal(node, goalTerms, filterSubjects, complex, domains, goal = '') {
@@ -1212,6 +1220,32 @@ class PBLPathBuilder {
   buildPathPlanFromResult(result) {
     if (!result) return null;
     if (result.pathPlan?.phases?.length) return result.pathPlan;
+    const graphNodes = result.graphData?.nodes?.length || 0;
+    if (!graphNodes && result.projectBlueprint) {
+      const phases = this._blueprintProjectPhases(result.projectBlueprint);
+      if (phases.length) {
+        return {
+          mode: 'blueprint-only',
+          goal: String(result.goal || ''),
+          knowledgeChain: result.projectBlueprint.knowledgeChain || phases.map(p => p.phase).join(' → '),
+          mainlineCount: 0,
+          phases: phases.map((p, i) => ({
+            phaseIndex: i + 1,
+            phase: p.phase,
+            role: 'core',
+            pathSteps: [],
+            pathStepLabels: [],
+            graphRef: '',
+            nodeIds: [],
+            knowledgeNames: p.knowledgeNames || [],
+            steps: p.steps || [],
+            deliverable: p.deliverable || '',
+            literacy: p.literacy || {}
+          })),
+          external: []
+        };
+      }
+    }
     return this._buildPathPlan({
       goal: result.goal,
       graphData: result.graphData,
@@ -1322,12 +1356,115 @@ class PBLPathBuilder {
     return list.slice(0, PBLPathBuilder.PBL_MAX_MATCHED_COMPLEX);
   }
 
-  /** PBL 核心提示词在服务端 /api/pbl/analyze，前端不下发 */
+  /** PBL 核心提示词在服务端 /api/pbl/analyze；GitHub Pages 等静态站统一走 teachany.cn */
   _getPBLAnalyzeUrl() {
-    if (typeof location !== 'undefined' && location.origin && /^https?:/.test(location.protocol)) {
+    const host = typeof location !== 'undefined' ? String(location.hostname || '') : '';
+    if (host === 'teachany.cn' || host === 'www.teachany.cn') {
       return `${location.origin}/api/pbl/analyze`;
     }
     return 'https://www.teachany.cn/api/pbl/analyze';
+  }
+
+  _getRecommendedScheme(blueprint) {
+    if (!blueprint) return null;
+    const schemes = blueprint.schemes || [];
+    return schemes.find(s => s.id === blueprint.recommendedSchemeId) || schemes[0] || null;
+  }
+
+  _blueprintProjectPhases(blueprint) {
+    const scheme = this._getRecommendedScheme(blueprint);
+    if (!scheme) return [];
+    return (scheme.phases || []).map(p => ({
+      phase: p.phase || p.name || '',
+      steps: p.steps || [],
+      knowledgeNames: p.knowledgeHints || p.knowledgeNames || [],
+      deliverable: p.deliverable || p.output || '',
+      literacy: p.literacy || {},
+      subsystemIds: p.subsystemIds || []
+    }));
+  }
+
+  _fallbackDecomposeBlueprint(goal) {
+    const domains = this._inferProjectDomains(goal);
+    const subsystems = domains.length
+      ? domains.map(d => ({ id: d.id, name: d.label, description: `完成「${d.label}」相关设计与验证` }))
+      : [
+        { id: 'principle', name: '原理探究', description: '理解项目背后的科学/工程原理' },
+        { id: 'design', name: '方案设计', description: '确定技术路线、分工与器材清单' },
+        { id: 'build', name: '制作实现', description: '搭建原型并完成分步测试' },
+        { id: 'test', name: '测试迭代', description: '采集数据、对比指标并优化' }
+      ];
+    const mkPhases = (prefix) => subsystems.map((s, i) => {
+      const dom = domains.find(d => d.id === s.id);
+      return {
+        phase: s.name,
+        steps: [`${prefix}${s.name}需求`, `完成${s.name}实验或制作任务`],
+        deliverable: `${s.name}阶段成果`,
+        subsystemIds: [s.id],
+        knowledgeHints: (dom?.keywords || []).slice(0, 5)
+      };
+    });
+    return {
+      projectSummary: String(goal || '').slice(0, 160),
+      deliverable: '可展示的项目原型、实验报告或系统演示',
+      constraints: ['课堂可实施', '注意安全与器材可得性'],
+      subsystems,
+      schemes: [
+        {
+          id: 'A',
+          name: '递进式实施（推荐）',
+          summary: '按子系统由原理到实现逐步推进，适合大多数 PBL 课堂',
+          pros: ['阶段清晰', '便于评价', '与课标主线易对齐'],
+          cons: ['周期较长'],
+          phases: mkPhases('拆解')
+        },
+        {
+          id: 'B',
+          name: '原型驱动迭代',
+          summary: '先搭最小可行原型，再按测试反馈回补原理与优化',
+          pros: ['学生成就感强', '适合工程社团'],
+          cons: ['需更多指导'],
+          phases: [
+            { phase: '快速原型', steps: ['确定最小功能', '搭建雏形'], deliverable: 'MVP 原型', knowledgeHints: (domains[0]?.keywords || []).slice(0, 4), subsystemIds: [subsystems[0]?.id] },
+            { phase: '测试与诊断', steps: ['设计测试指标', '记录问题清单'], deliverable: '测试记录表', knowledgeHints: ['实验', '数据采集', '误差'], subsystemIds: ['test'] },
+            { phase: '原理补强', steps: ['针对问题查原理', '补学关键概念'], deliverable: '原理笔记', knowledgeHints: domains.flatMap(d => d.keywords).slice(0, 6), subsystemIds: subsystems.map(s => s.id) },
+            { phase: '优化交付', steps: ['改进原型', '准备展示'], deliverable: '终版作品', knowledgeHints: ['效率', '优化', '测试'], subsystemIds: ['build', 'test'] }
+          ]
+        }
+      ],
+      recommendedSchemeId: 'A',
+      knowledgeChain: subsystems.map(s => s.name).join(' → '),
+      fallback: true
+    };
+  }
+
+  _parseDecomposeResult(raw, goal) {
+    try {
+      const jsonStr = this._extractJsonObject(raw);
+      const data = JSON.parse(jsonStr);
+      if (!data.schemes?.length) return this._fallbackDecomposeBlueprint(goal);
+      if (!data.recommendedSchemeId && data.schemes[0]) {
+        data.recommendedSchemeId = data.schemes[0].id;
+      }
+      return data;
+    } catch (e) {
+      console.warn('[PBL] decompose JSON 解析失败，使用本地蓝图回退:', e.message);
+      return this._fallbackDecomposeBlueprint(goal);
+    }
+  }
+
+  async _llmDecomposeStage(goal) {
+    const profile = this._getPBLGoalProfile(goal);
+    try {
+      const response = await this._callPBLAnalyzeStage('decompose', {
+        goal,
+        complex: profile.complex
+      });
+      return this._parseDecomposeResult(response, goal);
+    } catch (e) {
+      console.warn('[PBL] decompose 阶段失败，使用本地蓝图:', e.message);
+      return this._fallbackDecomposeBlueprint(goal);
+    }
   }
 
   async _callPBLAnalyzeStage(stage, payload) {
@@ -1457,6 +1594,10 @@ class PBLPathBuilder {
       );
       core = this._filterMainlineNodes(core, goal);
       core = this._rebalanceStemMatched(core, goal, meta.candidatePool || [], profile.maxMatched);
+    }
+    if (!core.length && meta.candidatePool?.length) {
+      core = this._rescueCandidatesFromPool(goal, meta.candidatePool, profile.maxMatched);
+      console.warn('[PBL] 主线为空，已用候选池回退:', core.map(n => n.name).join('、'));
     }
     // 主线 pathStep 链 + 角色分层着色 + 一层主线相关前置（不展开平行/跨学科噪声）
     let graphData = this._buildRichMainlineGraph(
@@ -1598,8 +1739,13 @@ class PBLPathBuilder {
     return this._sanitizeTechRoute(text).slice(0, 600);
   }
 
-  async analyzePBLGoal(goal, selectedSystems = ['all']) {
+  _reportPBLStatus(onStatus, msg) {
+    if (typeof onStatus === 'function') onStatus(msg);
+  }
+
+  async analyzePBLGoal(goal, selectedSystems = ['all'], onStatus = null) {
     // 1. 确保索引已加载
+    this._reportPBLStatus(onStatus, '正在加载多课标知识点索引...');
     await this.loadUnifiedIndex();
 
     // 2. 筛选课标体系
@@ -1619,21 +1765,30 @@ class PBLPathBuilder {
       throw new Error('未找到任何知识点，请检查课标体系选择');
     }
 
-    // 4. 第一阶段 LLM：判断学科+学段+课标体系（压缩候选集）
-    const stage1 = await this._llmFilterStage(goal, candidates);
+    // 4. 第零阶段：全链路拆解可行方案（不选课标）
+    this._reportPBLStatus(onStatus, '第 1/3 步：全链路拆解可行方案...');
+    const projectBlueprint = await this._llmDecomposeStage(goal);
+    const blueprintPhases = this._blueprintProjectPhases(projectBlueprint);
 
-    // 5. 第二阶段 LLM：精确匹配 + 外部知识点推荐
-    const stage2 = await this._llmMatchStage(goal, stage1.filteredCandidates);
+    // 5. 第一阶段 LLM：判断学科+学段+课标体系（压缩候选集）
+    this._reportPBLStatus(onStatus, '第 2/3 步：筛选课标学科与候选池...');
+    const stage1 = await this._llmFilterStage(goal, candidates, projectBlueprint);
+
+    // 6. 第二阶段 LLM：按蓝图阶段精确匹配课标
+    this._reportPBLStatus(onStatus, '第 3/3 步：按蓝图阶段匹配课标知识点...');
+    const stage2 = await this._llmMatchStage(goal, stage1.filteredCandidates, projectBlueprint);
     const finalized = this._finalizePBLGraph(goal, stage2.matched, stage2.external, activeSystems, {
       pathOrderIds: stage2.pathOrderIds,
       dependsOnLinks: stage2.dependsOnLinks || [],
       candidatePool: stage1.filteredCandidates
     });
+    const mergedPhases = (stage2.projectPhases?.length ? stage2.projectPhases : blueprintPhases)
+      .map((p, i) => ({ ...blueprintPhases[i], ...p }));
     const pathPlan = this._buildPathPlan({
       goal,
       graphData: finalized.graphData,
-      projectPhases: stage2.projectPhases || [],
-      knowledgeChain: stage2.knowledgeChain || '',
+      projectPhases: mergedPhases.length ? mergedPhases : blueprintPhases,
+      knowledgeChain: stage2.knowledgeChain || projectBlueprint.knowledgeChain || '',
       external: finalized.external
     });
     const techRoute = this._buildTechRouteFromPathPlan(pathPlan)
@@ -1650,6 +1805,7 @@ class PBLPathBuilder {
     return {
       goal,
       systems: activeSystems,
+      projectBlueprint,
       matched: finalized.matched,
       external: finalized.external,
       techRoute,
@@ -1669,7 +1825,7 @@ class PBLPathBuilder {
     };
   }
 
-  async _llmFilterStage(goal, candidates) {
+  async _llmFilterStage(goal, candidates, projectBlueprint = null) {
     const profile = this._getPBLGoalProfile(goal);
 
     // 按学科+课标体系分组统计
@@ -1690,7 +1846,8 @@ class PBLPathBuilder {
     const response = await this._callPBLAnalyzeStage('filter', {
       goal,
       summaryList,
-      complex: profile.complex
+      complex: profile.complex,
+      projectBlueprint
     });
     const jsonStr = this._extractJsonObject(response);
     const filter = JSON.parse(jsonStr);
@@ -1732,7 +1889,8 @@ class PBLPathBuilder {
       return (g === 0 || g >= minGrade) && !this._excludeForComplexProject(n);
     });
     if (domains.length && profile.complex) {
-      pool = pool.filter(n => this._isMainlineRelevant(n, goal, domains));
+      const mainlinePool = pool.filter(n => this._isMainlineRelevant(n, goal, domains));
+      if (mainlinePool.length >= 8) pool = mainlinePool;
     }
     const goalTerms = this._tokenizeGoalTerms(goal);
     const defaultSubjects = domains.length
@@ -1749,10 +1907,11 @@ class PBLPathBuilder {
     return { filter, filteredCandidates: topCandidates, domains };
   }
 
-  async _llmMatchStage(goal, candidates) {
+  async _llmMatchStage(goal, candidates, projectBlueprint = null) {
     const profile = this._getPBLGoalProfile(goal);
     const complex = profile.complex;
     const minConf = complex ? 0.58 : 0.52;
+    const blueprintPhases = this._blueprintProjectPhases(projectBlueprint);
     const candidatesLite = candidates.map(n => ({
       name: n.name,
       grade: n.grade,
@@ -1767,7 +1926,8 @@ class PBLPathBuilder {
       complex,
       maxMatched: profile.maxMatched,
       minConf,
-      domainHints: this._inferProjectDomains(goal)
+      domainHints: this._inferProjectDomains(goal),
+      projectBlueprint
     });
     let result = { matched: [], pathOrder: [], projectPhases: [], external: [], techRoute: '' };
     try {
@@ -1815,7 +1975,7 @@ class PBLPathBuilder {
 
     const dependsOnLinks = this._buildDependsOnLinks(result, candidates);
 
-    const projectPhases = (result.projectPhases || result.phases || []).map(p => ({
+    let projectPhases = (result.projectPhases || result.phases || []).map(p => ({
       phase: p.phase || p.name || '',
       steps: p.steps || (p.tasks ? (Array.isArray(p.tasks) ? p.tasks : [p.tasks]) : []),
       knowledgeNames: p.knowledgeNames || p.knowledge || [],
@@ -1829,6 +1989,9 @@ class PBLPathBuilder {
         values: p.valuesLiteracy || p.values || ''
       }
     }));
+    if (!projectPhases.length && blueprintPhases.length) {
+      projectPhases = blueprintPhases;
+    }
 
     // 解析外部知识点
     const external = (result.external || []).slice(0, complex ? 2 : 3).map((ext, i) => ({
@@ -2097,18 +2260,23 @@ class PBLPathBuilder {
       });
       topMatched = this._rescueCandidatesFromPool(goal, pool, 15);
     }
-    const finalized = this._finalizePBLGraph(goal, topMatched, [], activeSystems);
+    const projectBlueprint = this._fallbackDecomposeBlueprint(goal);
+    const finalized = this._finalizePBLGraph(goal, topMatched, [], activeSystems, {
+      candidatePool: topMatched
+    });
 
     const techRoute = this.resolveTechRouteText({
       goal,
       matched: finalized.matched,
       external: finalized.external,
-      graphData: finalized.graphData
+      graphData: finalized.graphData,
+      projectBlueprint
     });
 
     return {
       goal,
       systems: activeSystems,
+      projectBlueprint,
       matched: finalized.matched,
       external: finalized.external,
       techRoute,
