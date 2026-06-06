@@ -299,6 +299,53 @@ body {
   margin-top: 4px;
 }
 
+/* PBL 项目拆解蓝图 */
+.pbl-decompose-panel {
+  margin: 16px 0 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(245,158,11,0.12), rgba(59,130,246,0.1));
+  border: 1px solid rgba(245,158,11,0.35);
+  overflow: hidden;
+}
+.pbl-decompose-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+}
+.pbl-decompose-body { padding: 0 20px 18px; font-size: 14px; line-height: 1.75; }
+#pblDecompose.collapsed .pbl-decompose-body { display: none; }
+.pbl-decompose-summary { color: var(--dim); font-size: 13px; margin-bottom: 12px; }
+.pbl-scheme-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+.pbl-scheme-card {
+  border: 1px solid rgba(148,163,184,0.2);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: rgba(15,23,42,0.28);
+}
+.pbl-scheme-card.recommended { border-color: rgba(245,158,11,0.55); background: rgba(245,158,11,0.08); }
+.pbl-scheme-card h4 { font-size: 14px; margin-bottom: 6px; }
+.pbl-scheme-tag {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(245,158,11,0.2);
+  color: var(--accent);
+  margin-left: 6px;
+}
+.pbl-subsystem-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.pbl-subsystem-chip {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(59,130,246,0.35);
+  color: var(--dim);
+}
+
 /* PBL 技术路线分析 */
 .pbl-tech-route-panel,
 #pblTechRoute {
@@ -745,6 +792,15 @@ body {
     <div class="pbl-stats" id="pblStats"></div>
   </div>
 
+  <!-- 项目全链路拆解（方案 → 阶段，先于课标匹配） -->
+  <div id="pblDecompose" class="pbl-decompose-panel" style="display:none" aria-live="polite">
+    <div class="pbl-decompose-header" onclick="this.parentElement.classList.toggle('collapsed')">
+      <span>🧩 项目结构化拆解（可行方案）</span>
+      <span class="pbl-tech-route-toggle">收起 ▲</span>
+    </div>
+    <div class="pbl-decompose-body" id="pblDecomposeBody"></div>
+  </div>
+
   <!-- 项目实施路径说明（独立区块，避免被统计区折叠遮挡） -->
   <div id="pblTechRoute" class="pbl-tech-route-panel" style="display:none" aria-live="polite">
     <div class="pbl-tech-route-header" onclick="this.parentElement.classList.toggle('collapsed')">
@@ -786,7 +842,7 @@ body {
 </div>
 
 <script src="./assets/scripts/courseware-hub.js"></script>
-<script src="./assets/scripts/pbl-path.js?v=20260606-stem-breadth"></script>
+<script src="./assets/scripts/pbl-path.js?v=20260606-decompose"></script>
 <script src="./assets/scripts/history-tracker.js" defer></script>
 <script src="./assets/scripts/teachany-make-course.js"></script>
 <script>
@@ -887,15 +943,20 @@ async function analyzePBLGoal() {
 
     const cfg = builder.getLLMConfig();
 
-    statusText.textContent = '正在分析项目目标（第一阶段：学科判断）...';
-    
+    statusText.textContent = '第 1/3 步：全链路拆解可行方案...';
+
     let result;
     try {
-      result = await builder.analyzePBLGoal(goal, systems);
+      result = await builder.analyzePBLGoal(goal, systems, (msg) => {
+        if (statusText && msg) statusText.textContent = msg;
+      });
     } catch (llmError) {
       console.warn('[PBL] LLM 调用失败，降级为关键词搜索:', llmError.message);
       statusText.textContent = 'LLM 不可用，降级为关键词搜索...';
       result = await builder.searchByKeywords(goal, systems);
+      if (builder._fallbackDecomposeBlueprint) {
+        result.projectBlueprint = builder._fallbackDecomposeBlueprint(goal);
+      }
     }
 
     pblResult = result;
@@ -1028,6 +1089,51 @@ function formatPBLLiteracyRows(lit) {
   return rows.map(([k, v]) => `${k}：${escapePBLHtml(v)}`).join('；');
 }
 
+function renderPBLDecomposeHTML(blueprint) {
+  if (!blueprint) return '';
+  const schemes = blueprint.schemes || [];
+  const recId = blueprint.recommendedSchemeId;
+  let html = `<div class="pbl-decompose-summary">`;
+  html += `<div><strong>交付物</strong>：${escapePBLHtml(blueprint.deliverable || '—')}</div>`;
+  html += `<div>${escapePBLHtml(blueprint.projectSummary || '')}</div></div>`;
+  if ((blueprint.subsystems || []).length) {
+    html += `<div class="pbl-subsystem-list">`;
+    blueprint.subsystems.forEach(s => {
+      html += `<span class="pbl-subsystem-chip">${escapePBLHtml(s.name)}</span>`;
+    });
+    html += `</div>`;
+  }
+  html += `<div class="pbl-scheme-grid">`;
+  schemes.forEach(s => {
+    const rec = s.id === recId;
+    html += `<div class="pbl-scheme-card${rec ? ' recommended' : ''}">`;
+    html += `<h4>${escapePBLHtml(s.name)}${rec ? '<span class="pbl-scheme-tag">推荐</span>' : ''}</h4>`;
+    html += `<p>${escapePBLHtml(s.summary || '')}</p>`;
+    if (s.pros?.length) html += `<p><strong>优点</strong>：${s.pros.map(x => escapePBLHtml(x)).join('；')}</p>`;
+    if (s.phases?.length) {
+      html += `<ol style="margin:8px 0 0 18px;font-size:13px;color:var(--dim)">`;
+      s.phases.slice(0, 5).forEach(p => {
+        html += `<li>${escapePBLHtml(p.phase)} → ${escapePBLHtml(p.deliverable || '')}</li>`;
+      });
+      html += `</ol>`;
+    }
+    html += `</div>`;
+  });
+  html += `</div>`;
+  return html;
+}
+
+function showPBLDecompose(result) {
+  const el = document.getElementById('pblDecompose');
+  const body = document.getElementById('pblDecomposeBody');
+  if (!el || !body) return;
+  const html = renderPBLDecomposeHTML(result.projectBlueprint);
+  if (!html) { el.style.display = 'none'; return; }
+  body.innerHTML = html;
+  el.style.display = 'block';
+  el.classList.remove('collapsed');
+}
+
 function renderPBLPathPlanHTML(pathPlan) {
   if (!pathPlan || !pathPlan.phases || !pathPlan.phases.length) return '';
   const roleColor = { foundation: '#10b981', bridge: '#8b5cf6', core: '#ef4444' };
@@ -1088,6 +1194,11 @@ function showPBLTechRoute(result) {
 }
 
 function scrollToPBLOutput() {
+  const deco = document.getElementById('pblDecompose');
+  if (deco && deco.style.display !== 'none') {
+    deco.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
   const tech = document.getElementById('pblTechRoute');
   if (tech && tech.style.display !== 'none') {
     tech.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1105,10 +1216,16 @@ function scrollToPBLOutput() {
 function renderPBLStats(result) {
   const container = document.getElementById('pblStatsContainer');
   const statsEl = document.getElementById('pblStats');
-  container.style.display = 'block';
+  const nodes = (result.graphData && result.graphData.nodes) ? result.graphData.nodes : [];
+  container.style.display = nodes.length ? 'block' : 'none';
+  showPBLDecompose(result);
 
   const layerCounts = { prerequisite: 0, matched: 0, advanced: 0, parallel: 0, external: 0 };
-  result.graphData.nodes.forEach(n => { layerCounts[n.layer] = (layerCounts[n.layer] || 0) + 1; });
+  nodes.forEach(n => { layerCounts[n.layer] = (layerCounts[n.layer] || 0) + 1; });
+  if (!nodes.length) {
+    showPBLTechRoute(result);
+    return;
+  }
 
   statsEl.innerHTML = `
     <div class="pbl-stat-card"><div class="val">${result.graphData.nodes.length}</div><div class="lbl">知识点总数</div></div>
@@ -1123,7 +1240,15 @@ function renderPBLStats(result) {
 }
 
 function renderPBLGraph(result) {
+  const container = document.getElementById('pbl-graph-container');
   if (pblRenderer) pblRenderer.destroy();
+  const nodes = (result.graphData && result.graphData.nodes) ? result.graphData.nodes : [];
+  if (!nodes.length) {
+    if (container) {
+      container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--dim)">课标匹配为空，但上方「项目结构化拆解」仍可指导实施；请重试或写清学科/年级/交付物。</div>';
+    }
+    return;
+  }
   pblRenderer = new window.PBLGraphRenderer('pbl-graph-container');
   result.graphData = enrichPBLGraphData(result.graphData);
   pblRenderer.render(result.graphData, onPBLNodeClick);
