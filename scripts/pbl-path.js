@@ -672,6 +672,50 @@ class PBLPathBuilder {
     return list.slice(0, limit);
   }
 
+  /** LLM 常只返回 2～3 个终点节点；从候选池补齐 foundation/bridge/core 链条 */
+  _ensureMinimumMatched(matched, goal, candidatePool, limit, complex) {
+    const min = PBLPathBuilder.PBL_MIN_MATCHED_COMPLEX;
+    if (!complex || matched.length >= min || !candidatePool.length) {
+      return matched.slice(0, limit);
+    }
+    const list = [...matched];
+    const seen = new Set(list.map(n => n.id));
+    const roleTargets = { foundation: 2, bridge: 3, core: 3 };
+    const roleCount = { foundation: 0, bridge: 0, core: 0 };
+    list.forEach(n => {
+      const r = n.pblRole || 'core';
+      if (roleCount[r] != null) roleCount[r]++;
+    });
+    const nextRole = () => {
+      if (roleCount.foundation < roleTargets.foundation) return 'foundation';
+      if (roleCount.bridge < roleTargets.bridge) return 'bridge';
+      return 'core';
+    };
+    const subjects = new Set(list.map(n => n.subject).filter(Boolean));
+    const rescued = this._rescueCandidatesFromPool(goal, candidatePool, limit * 2)
+      .filter(n => !seen.has(n.id) && !this._excludeForComplexProject(n))
+      .sort((a, b) => {
+        const aNew = a.subject && !subjects.has(a.subject) ? 1 : 0;
+        const bNew = b.subject && !subjects.has(b.subject) ? 1 : 0;
+        return bNew - aNew;
+      });
+    rescued.forEach(n => {
+      if (list.length >= Math.min(min, limit)) return;
+      if (seen.has(n.id)) return;
+      seen.add(n.id);
+      const role = nextRole();
+      roleCount[role]++;
+      if (n.subject) subjects.add(n.subject);
+      list.push({
+        ...n,
+        confidence: Math.max(n.confidence || 0.6, 0.62),
+        matchReason: n.matchReason || '知识链自动补齐',
+        pblRole: role
+      });
+    });
+    return list.slice(0, limit);
+  }
+
   _buildDependsOnLinks(result, candidates) {
     const links = [];
     (result.matched || []).forEach(m => {
@@ -737,6 +781,7 @@ class PBLPathBuilder {
 
   static PBL_MAX_GRAPH_NODES = 32;
   static PBL_MAX_MATCHED_COMPLEX = 12;
+  static PBL_MIN_MATCHED_COMPLEX = 8;
   static PBL_MIN_GRADE_COMPLEX = 7;
 
   _getPBLGoalProfile(goal) {
@@ -934,6 +979,13 @@ class PBLPathBuilder {
       goal,
       meta.candidatePool || [],
       profile.maxMatched
+    );
+    core = this._ensureMinimumMatched(
+      core,
+      goal,
+      meta.candidatePool || [],
+      profile.maxMatched,
+      complex
     );
     // 复杂项目也用完整图谱（溯源 prerequisites + 桥梁层），不再只用线性 path 图
     let graphData = this._buildPathGraph(core, external, activeSystems, { complex });
@@ -1200,12 +1252,25 @@ class PBLPathBuilder {
       console.warn('[PBL] LLM matched 为空，已用候选池关键词回退:', matched.map(n => n.name).join('、'));
     }
     matched = this._ensureCrossSubjectMatched(matched, goal, candidates, profile.maxMatched);
+    matched = this._ensureMinimumMatched(matched, goal, candidates, profile.maxMatched, complex);
 
-    const pathOrderIds = (result.pathOrder || result.learningSequence || [])
+    let pathOrderIds = (result.pathOrder || result.learningSequence || [])
       .map(i => (typeof i === 'string' ? parseInt(i, 10) : i))
       .filter(i => Number.isInteger(i) && i >= 0 && i < candidates.length)
       .map(i => candidates[i].id)
       .filter(id => matched.some(m => m.id === id));
+    if (pathOrderIds.length < matched.length) {
+      const byRole = (role) => matched.filter(m => (m.pblRole || 'core') === role).map(m => m.id);
+      const synth = [...byRole('foundation'), ...byRole('bridge'), ...byRole('core'),
+        ...matched.filter(m => !['foundation', 'bridge', 'core'].includes(m.pblRole)).map(m => m.id)];
+      const seen = new Set(pathOrderIds);
+      synth.forEach(id => {
+        if (!seen.has(id)) {
+          seen.add(id);
+          pathOrderIds.push(id);
+        }
+      });
+    }
 
     const dependsOnLinks = this._buildDependsOnLinks(result, candidates);
 
