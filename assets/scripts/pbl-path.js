@@ -629,6 +629,48 @@ class PBLPathBuilder {
     return score;
   }
 
+  _isEngineeringGoal(goal) {
+    return /火箭|导弹|发射|弹道|模型|制作|搭建|设计|机器人|温控|电路|传感|原型|工程/.test(String(goal || ''));
+  }
+
+  /** 主线相关性：工程类项目宁缺毋滥，拒绝语文/地理等凑跨学科 */
+  _isMainlineRelevant(node, goal, domains) {
+    if (!node) return false;
+    const g = String(goal || '');
+    const domainList = domains && domains.length ? domains : this._inferProjectDomains(g);
+    const name = String(node.name || '');
+    const text = this._nodeSearchText(node);
+
+    if (this._isEngineeringGoal(g)) {
+      const badName = /作文|写作|任务驱动|实用类文本|地形|等高线|经纬|有机合成|官能团|烃的|弧长|扇形面积|几何图形初步|诗词|文言|议论文结构|世界地形/;
+      if (badName.test(name)) return false;
+      const humanities = ['chinese', 'english', 'history', 'geography'];
+      if (humanities.includes(node.subject)) {
+        const need = {
+          chinese: /语文|作文|写作|阅读/,
+          english: /英语/,
+          history: /历史/,
+          geography: /地理|地形|地图/
+        };
+        if (!need[node.subject]?.test(g)) return false;
+      }
+      const allowedStem = new Set(['physics', 'chemistry', 'math', 'info-tech', 'science']);
+      if (domainList.length && !allowedStem.has(node.subject)) return false;
+    }
+
+    if (!domainList.length) return true;
+    if (this._scoreNodeForDomains(node, domainList) >= 4) return true;
+    const goalTerms = this._tokenizeGoalTerms(g);
+    return goalTerms.some(t => t.length >= 2 && name.includes(t));
+  }
+
+  _filterMainlineNodes(matched, goal) {
+    const domains = this._inferProjectDomains(goal);
+    if (!domains.length) return matched;
+    const filtered = matched.filter(n => this._isMainlineRelevant(n, goal, domains));
+    return filtered.length ? filtered : matched.slice(0, 5);
+  }
+
   _scoreNodeForGoal(node, goalTerms, filterSubjects, complex, domains) {
     let score = 0;
     const nameLower = (node.name || '').toLowerCase();
@@ -647,11 +689,12 @@ class PBLPathBuilder {
     return score;
   }
 
-  _pickDomainAwareCandidates(scored, maxCount, domains, subjects) {
-    const sorted = [...scored].sort((a, b) => (b._score || 0) - (a._score || 0));
+  _pickDomainAwareCandidates(scored, maxCount, domains, goal) {
+    const relevant = scored.filter(n => this._isMainlineRelevant(n, goal, domains));
+    const sorted = [...relevant].sort((a, b) => (b._score || 0) - (a._score || 0));
     const picked = [];
     const seen = new Set();
-    const perDomain = Math.max(3, Math.floor(maxCount / Math.max(domains.length, 3)));
+    const perDomain = Math.max(2, Math.floor(maxCount / Math.max(domains.length, 3)));
     domains.forEach(domain => {
       sorted
         .filter(n => !seen.has(n.id))
@@ -663,14 +706,6 @@ class PBLPathBuilder {
           seen.add(x.n.id);
           picked.push(x.n);
         });
-    });
-    const subjList = (subjects || []).filter(Boolean);
-    const perSubject = Math.max(2, Math.floor((maxCount - picked.length) / Math.max(subjList.length, 2)));
-    subjList.forEach(subj => {
-      sorted.filter(n => n.subject === subj && !seen.has(n.id)).slice(0, perSubject).forEach(n => {
-        seen.add(n.id);
-        picked.push(n);
-      });
     });
     sorted.forEach(n => {
       if (picked.length >= maxCount) return;
@@ -727,88 +762,42 @@ class PBLPathBuilder {
     const complex = this._isComplexPBLGoal(goal);
     const domains = this._inferProjectDomains(goal);
     const scored = candidates
+      .filter(n => this._isMainlineRelevant(n, goal, domains))
       .map(n => ({ n, s: this._scoreNodeForGoal(n, goalTerms, null, complex, domains) }))
       .filter(x => x.s > 0)
       .sort((a, b) => b.s - a.s);
-    const bySubject = new Map();
-    scored.forEach(x => {
-      const subj = x.n.subject || 'other';
-      if (!bySubject.has(subj)) bySubject.set(subj, []);
-      bySubject.get(subj).push(x);
-    });
-    const picked = [];
-    const seen = new Set();
-    const perSubject = Math.max(2, Math.ceil(limit / Math.max(bySubject.size, 2)));
-    bySubject.forEach(arr => {
-      arr.slice(0, perSubject).forEach(x => {
-        if (seen.has(x.n.id)) return;
-        seen.add(x.n.id);
-        picked.push(x);
-      });
-    });
-    scored.forEach(x => {
-      if (picked.length >= limit) return;
-      if (seen.has(x.n.id)) return;
-      seen.add(x.n.id);
-      picked.push(x);
-    });
-    return picked.slice(0, limit).map((x, i) => ({
+    return scored.slice(0, limit).map((x, i) => ({
       ...x.n,
       confidence: Math.max(0.55, 0.88 - i * 0.03),
-      matchReason: '目标关键词回退匹配',
-      pblRole: i < 2 ? 'foundation' : (i < 6 ? 'bridge' : 'core')
+      matchReason: '主线关键词回退匹配',
+      pblRole: i < 1 ? 'foundation' : (i < 3 ? 'bridge' : 'core')
     }));
   }
 
-  _ensureCrossSubjectMatched(matched, goal, candidatePool, limit) {
-    const list = [...matched];
-    const subjects = new Set(list.map(n => n.subject).filter(Boolean));
-    if (subjects.size >= 2 || !candidatePool.length) return list.slice(0, limit);
-    const extras = this._rescueCandidatesFromPool(goal, candidatePool, limit)
-      .filter(n => n.subject && !subjects.has(n.subject) && !list.some(m => m.id === n.id));
-    extras.slice(0, Math.max(2, 4 - subjects.size)).forEach(n => list.push(n));
-    return list.slice(0, limit);
-  }
-
-  /** LLM 常只返回 2～3 个终点节点；从候选池补齐 foundation/bridge/core 链条 */
+  /** 主线节点不足时，仅按领域得分补齐，不凑跨学科 */
   _ensureMinimumMatched(matched, goal, candidatePool, limit, complex) {
     const min = PBLPathBuilder.PBL_MIN_MATCHED_COMPLEX;
     if (!complex || matched.length >= min || !candidatePool.length) {
       return matched.slice(0, limit);
     }
+    const domains = this._inferProjectDomains(goal);
     const list = [...matched];
     const seen = new Set(list.map(n => n.id));
-    const roleTargets = { foundation: 2, bridge: 3, core: 3 };
-    const roleCount = { foundation: 0, bridge: 0, core: 0 };
-    list.forEach(n => {
-      const r = n.pblRole || 'core';
-      if (roleCount[r] != null) roleCount[r]++;
-    });
-    const nextRole = () => {
-      if (roleCount.foundation < roleTargets.foundation) return 'foundation';
-      if (roleCount.bridge < roleTargets.bridge) return 'bridge';
-      return 'core';
-    };
-    const subjects = new Set(list.map(n => n.subject).filter(Boolean));
     const rescued = this._rescueCandidatesFromPool(goal, candidatePool, limit * 2)
       .filter(n => !seen.has(n.id) && !this._excludeForComplexProject(n))
-      .sort((a, b) => {
-        const aNew = a.subject && !subjects.has(a.subject) ? 1 : 0;
-        const bNew = b.subject && !subjects.has(b.subject) ? 1 : 0;
-        return bNew - aNew;
-      });
+      .filter(n => !domains.length || this._scoreNodeForDomains(n, domains) >= 6)
+      .sort((a, b) => this._scoreNodeForDomains(b, domains) - this._scoreNodeForDomains(a, domains));
+    let roleIdx = 0;
+    const roles = ['foundation', 'bridge', 'bridge', 'core', 'core'];
     rescued.forEach(n => {
       if (list.length >= Math.min(min, limit)) return;
       if (seen.has(n.id)) return;
       seen.add(n.id);
-      const role = nextRole();
-      roleCount[role]++;
-      if (n.subject) subjects.add(n.subject);
       list.push({
         ...n,
         confidence: Math.max(n.confidence || 0.6, 0.62),
-        matchReason: n.matchReason || '知识链自动补齐',
-        pblRole: role
+        matchReason: n.matchReason || '主线自动补齐',
+        pblRole: roles[roleIdx++] || 'core'
       });
     });
     return list.slice(0, limit);
@@ -877,9 +866,9 @@ class PBLPathBuilder {
 
   // ─── PBL 路径分析核心 ──────────────────────────
 
-  static PBL_MAX_GRAPH_NODES = 32;
-  static PBL_MAX_MATCHED_COMPLEX = 12;
-  static PBL_MIN_MATCHED_COMPLEX = 8;
+  static PBL_MAX_GRAPH_NODES = 16;
+  static PBL_MAX_MATCHED_COMPLEX = 10;
+  static PBL_MIN_MATCHED_COMPLEX = 5;
   static PBL_MIN_GRADE_COMPLEX = 7;
 
   _getPBLGoalProfile(goal) {
@@ -1065,36 +1054,26 @@ class PBLPathBuilder {
     const profile = this._getPBLGoalProfile(goal);
     const complex = profile.complex;
     let core = complex ? this._filterMatchedForComplexProject(matched) : matched;
-    // v2.0 提示词会引导模型多选 foundation/基础概念层；复杂项目过滤后 core 可能被清空，
-    // 导致只剩实施路径、没有知识图谱。此处回退为按置信度取前 N 个原始匹配，保证图谱不消失。
+    core = this._filterMainlineNodes(core, goal);
     if (complex && core.length === 0 && matched.length) {
-      core = [...matched]
-        .sort((a, b) => (b.confidence || 0) - (a.confidence || 0))
-        .slice(0, PBLPathBuilder.PBL_MAX_MATCHED_COMPLEX);
+      core = this._filterMainlineNodes(
+        [...matched].sort((a, b) => (b.confidence || 0) - (a.confidence || 0)),
+        goal
+      );
     }
-    core = this._ensureCrossSubjectMatched(
-      core,
-      goal,
-      meta.candidatePool || [],
-      profile.maxMatched
-    );
-    core = this._ensureMinimumMatched(
-      core,
-      goal,
-      meta.candidatePool || [],
-      profile.maxMatched,
-      complex
-    );
-    // 复杂项目也用完整图谱（溯源 prerequisites + 桥梁层），不再只用线性 path 图
-    let graphData = this._buildPathGraph(core, external, activeSystems, { complex });
-    graphData = this._applyPathOrderToGraph(graphData, core, meta.pathOrderIds || []);
-    if (meta.dependsOnLinks && meta.dependsOnLinks.length) {
-      graphData.links = this._deduplicateLinks([...graphData.links, ...meta.dependsOnLinks]);
+    if (complex) {
+      core = this._ensureMinimumMatched(
+        core,
+        goal,
+        meta.candidatePool || [],
+        profile.maxMatched,
+        complex
+      );
+      core = this._filterMainlineNodes(core, goal);
     }
-    graphData = this._capGraphNodes(graphData, PBLPathBuilder.PBL_MAX_GRAPH_NODES);
-    const graphMatched = graphData.nodes.filter(n => n.layer === 'matched');
-    const graphExternal = graphData.nodes.filter(n => n.layer === 'external');
-    return { complex, matched: graphMatched.length ? graphMatched : core, external: graphExternal, graphData };
+    // 图谱只展示核心主线（红色 pathStep 链），不展开前置/平行/跨学科噪声节点
+    const graphData = this._buildProjectPathGraph(core, [], meta.pathOrderIds || []);
+    return { complex, matched: core, external: external.slice(0, 1), graphData };
   }
 
   _buildProjectPathGraph(matchedNodes, externalNodes, pathOrderIds = []) {
@@ -1147,7 +1126,7 @@ class PBLPathBuilder {
       const subjSet = [...new Set(matched.map(n => n.subject).filter(Boolean))];
       let text = `围绕「${String(goal || '').slice(0, 100)}」的项目实施路线：\n\n`;
       if (subjSet.length >= 2) {
-        text += `跨学科融合：${subjSet.map(s => this._subjectLabel(s)).filter(Boolean).join(' × ')}\n\n`;
+        text += `涉及学科：${subjSet.map(s => this._subjectLabel(s)).filter(Boolean).join('、')}\n\n`;
       }
       projectPhases.slice(0, 5).forEach((p, i) => {
         const steps = (Array.isArray(p.steps) ? p.steps : [p.task || p.desc || ''])
@@ -1278,13 +1257,18 @@ class PBLPathBuilder {
     const filter = JSON.parse(jsonStr);
     const domains = this._inferProjectDomains(goal);
 
-    // 火箭/发射类：兜底确保 filter 含 physics + chemistry/info-tech，避免只剩泛数学
+    // 工程类：锁定 STEM 主线学科，禁止 geography/chinese 等渗入候选池
     if (domains.length && profile.complex) {
-      const subj = new Set(filter.subjects || []);
-      subj.add('physics');
-      if (/火箭|发射|燃料|燃烧|推进/.test(goal)) subj.add('chemistry');
-      if (/控制|传感|编程|数据|电路/.test(goal)) subj.add('info-tech');
-      filter.subjects = [...subj];
+      if (/火箭|导弹|发射|弹道|模型火箭/.test(goal)) {
+        filter.subjects = ['physics', 'chemistry', 'math', 'info-tech'];
+      } else {
+        const subj = ['physics'];
+        if (/燃料|燃烧|化学|材料|氧化/.test(goal)) subj.push('chemistry');
+        if (/模型|函数|计算|数据|弹道|抛体/.test(goal)) subj.push('math');
+        if (/控制|传感|编程|电路|数据|算法/.test(goal)) subj.push('info-tech');
+        if (subj.length === 1) subj.push('math');
+        filter.subjects = subj;
+      }
     }
 
     // 根据筛选条件过滤候选集
@@ -1300,12 +1284,15 @@ class PBLPathBuilder {
       return subjectMatch && systemMatch && gradeMatch && notElementary;
     });
 
-    const MAX_STAGE2_CANDIDATES = profile.complex ? 40 : 22;
-    const pool = filteredCandidates.length > 0 ? filteredCandidates : candidates.filter(n => {
+    const MAX_STAGE2_CANDIDATES = profile.complex ? 28 : 22;
+    let pool = filteredCandidates.length > 0 ? filteredCandidates : candidates.filter(n => {
       if (!profile.complex) return true;
       const g = parseInt(n.grade, 10) || 0;
       return (g === 0 || g >= minGrade) && !this._excludeForComplexProject(n);
     });
+    if (domains.length && profile.complex) {
+      pool = pool.filter(n => this._isMainlineRelevant(n, goal, domains));
+    }
     const goalTerms = this._tokenizeGoalTerms(goal);
     const defaultSubjects = domains.length
       ? ['physics', 'chemistry', 'math', 'info-tech']
@@ -1316,7 +1303,7 @@ class PBLPathBuilder {
     }));
     const subjectList = filter.subjects && filter.subjects.length ? filter.subjects : defaultSubjects;
     const topCandidates = domains.length && profile.complex
-      ? this._pickDomainAwareCandidates(scored, MAX_STAGE2_CANDIDATES, domains, subjectList)
+      ? this._pickDomainAwareCandidates(scored, MAX_STAGE2_CANDIDATES, domains, goal)
       : this._pickDiverseCandidates(scored, MAX_STAGE2_CANDIDATES, subjectList);
     return { filter, filteredCandidates: topCandidates, domains };
   }
@@ -1362,8 +1349,9 @@ class PBLPathBuilder {
       matched = this._rescueCandidatesFromPool(goal, candidates, profile.maxMatched);
       console.warn('[PBL] LLM matched 为空，已用候选池关键词回退:', matched.map(n => n.name).join('、'));
     }
-    matched = this._ensureCrossSubjectMatched(matched, goal, candidates, profile.maxMatched);
+    matched = this._filterMainlineNodes(matched, goal);
     matched = this._ensureMinimumMatched(matched, goal, candidates, profile.maxMatched, complex);
+    matched = this._filterMainlineNodes(matched, goal);
 
     let pathOrderIds = (result.pathOrder || result.learningSequence || [])
       .map(i => (typeof i === 'string' ? parseInt(i, 10) : i))
