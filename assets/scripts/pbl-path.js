@@ -739,6 +739,13 @@ class PBLPathBuilder {
     const profile = this._getPBLGoalProfile(goal);
     const complex = profile.complex;
     let core = complex ? this._filterMatchedForComplexProject(matched) : matched;
+    // v2.0 提示词会引导模型多选 foundation/基础概念层；复杂项目过滤后 core 可能被清空，
+    // 导致只剩实施路径、没有知识图谱。此处回退为按置信度取前 N 个原始匹配，保证图谱不消失。
+    if (complex && core.length === 0 && matched.length) {
+      core = [...matched]
+        .sort((a, b) => (b.confidence || 0) - (a.confidence || 0))
+        .slice(0, PBLPathBuilder.PBL_MAX_MATCHED_COMPLEX);
+    }
     let graphData = complex
       ? this._buildProjectPathGraph(core, external, meta.pathOrderIds || [])
       : this._buildPathGraph(core, external, activeSystems, { complex: false });

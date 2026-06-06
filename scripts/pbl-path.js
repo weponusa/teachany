@@ -51,16 +51,6 @@ class PBLPathBuilder {
     this._loadLLMConfig();
   }
 
-  async _fetchDataJson(relativePath) {
-    if (window.TeachAnyDataFetch) {
-      return window.TeachAnyDataFetch.fetchDataJson(relativePath);
-    }
-    const url = String(relativePath).startsWith('./') ? relativePath : './data/' + relativePath;
-    const resp = await fetch(url + '?t=' + Date.now());
-    if (!resp.ok) throw new Error(`Fetch ${url}: HTTP ${resp.status}`);
-    return resp.json();
-  }
-
   // ─── 多课标知识点索引 ──────────────────────────
 
   async loadUnifiedIndex() {
@@ -194,7 +184,8 @@ class PBLPathBuilder {
     if (sysId === 'cn') {
       // 中国课标直接从 nodes-metadata 过滤 cn/ 路径，避免旧 fallback 把 IB/AP 等国际节点误标为 CN。
       try {
-        const data = await this._fetchDataJson('nodes-metadata.json');
+        const resp = await fetch('./data/nodes-metadata.json?t=' + Date.now());
+        const data = await resp.json();
         (data.nodes || [])
           .filter(n => String(n.graph_path || n.tree_file || '').startsWith('cn/'))
           .forEach(n => allNodes.push({
@@ -212,7 +203,8 @@ class PBLPathBuilder {
         const files = await this._discoverTreeFiles(dir);
         const filePromises = files.map(async file => {
           try {
-            const tree = await this._fetchDataJson(file.replace(/^\.\/data\//, ''));
+            const resp = await fetch(file + '?t=' + Date.now());
+            const tree = await resp.json();
             return this._extractNodesFromTree(tree, sysId, file);
           } catch (e) {
             return [];
@@ -739,6 +731,13 @@ class PBLPathBuilder {
     const profile = this._getPBLGoalProfile(goal);
     const complex = profile.complex;
     let core = complex ? this._filterMatchedForComplexProject(matched) : matched;
+    // v2.0 提示词会引导模型多选 foundation/基础概念层；复杂项目过滤后 core 可能被清空，
+    // 导致只剩实施路径、没有知识图谱。此处回退为按置信度取前 N 个原始匹配，保证图谱不消失。
+    if (complex && core.length === 0 && matched.length) {
+      core = [...matched]
+        .sort((a, b) => (b.confidence || 0) - (a.confidence || 0))
+        .slice(0, PBLPathBuilder.PBL_MAX_MATCHED_COMPLEX);
+    }
     let graphData = complex
       ? this._buildProjectPathGraph(core, external, meta.pathOrderIds || [])
       : this._buildPathGraph(core, external, activeSystems, { complex: false });
@@ -926,7 +925,7 @@ class PBLPathBuilder {
       return subjectMatch && systemMatch && gradeMatch && notElementary;
     });
 
-    const MAX_STAGE2_CANDIDATES = profile.complex ? 24 : 20;
+    const MAX_STAGE2_CANDIDATES = profile.complex ? 35 : 30;
     const pool = filteredCandidates.length > 0 ? filteredCandidates : candidates.filter(n => {
       if (!profile.complex) return true;
       const g = parseInt(n.grade, 10) || 0;
@@ -976,15 +975,30 @@ class PBLPathBuilder {
     const jsonStr = this._extractJsonObject(response);
     const result = JSON.parse(jsonStr);
 
-    const matched = (result.matched || [])
+    // v2.0: 解析带 dependsOn 的 matched 结果，保留知识角色和依赖关系
+    const rawMatched = (result.matched || [])
       .filter(m => (m.confidence || 0) >= minConf && m.index >= 0 && m.index < candidates.length)
-      .filter(m => !complex || !this._excludeForComplexProject(candidates[m.index]))
-      .map(m => ({
-        ...candidates[m.index],
-        confidence: m.confidence,
-        matchReason: m.reason || m.role || '',
-        pblRole: m.role || 'core'
-      }))
+      .filter(m => !complex || !this._excludeForComplexProject(candidates[m.index]));
+
+    // 建立 index→matched 映射，用于解析 dependsOn
+    const indexToMatchedPos = new Map();
+    rawMatched.forEach((m, pos) => { indexToMatchedPos.set(m.index, pos); });
+
+    const matched = rawMatched
+      .map(m => {
+        // 解析 dependsOn：将候选 index 转为实际知识点 id
+        const dependsOnIds = (m.dependsOn || [])
+          .filter(depIdx => Number.isInteger(depIdx) && indexToMatchedPos.has(depIdx))
+          .map(depIdx => candidates[depIdx].id);
+
+        return {
+          ...candidates[m.index],
+          confidence: m.confidence,
+          matchReason: m.reason || m.role || '',
+          pblRole: m.role || 'core',           // foundation / bridge / core
+          pblDependsOn: dependsOnIds           // v2.0: LLM 声明的知识依赖
+        };
+      })
       .sort((a, b) => (b.confidence || 0) - (a.confidence || 0))
       .slice(0, profile.maxMatched);
 
@@ -1025,7 +1039,9 @@ class PBLPathBuilder {
     }));
 
     const techRoute = (result.techRoute || '').trim();
-    return { matched, external, techRoute, pathOrderIds, projectPhases };
+    const knowledgeChain = (result.knowledgeChain || '').trim();
+
+    return { matched, external, techRoute, pathOrderIds, projectPhases, knowledgeChain };
   }
 
   _buildFallbackTechRoute(goal, matched = [], external = []) {
@@ -1046,13 +1062,13 @@ class PBLPathBuilder {
 
   _buildPathGraph(matchedNodes, externalNodes, activeSystems, options = {}) {
     const complex = options.complex === true;
-    const maxPreDepth = complex ? 2 : 5;
+    const maxPreDepth = complex ? 2 : 3;
     const maxExtDepth = complex ? 1 : 2;
     const traceOpts = { complex };
     const nodes = new Map();   // id -> node
     const links = [];          // { source, target, type }
 
-    // 1. 加入匹配节点（红色 = 直接匹配）
+    // 1. 加入匹配节点（根据 pblRole 分层着色）
     matchedNodes.forEach(n => {
       nodes.set(n.id, { ...n, layer: 'matched' });
     });
@@ -1062,9 +1078,25 @@ class PBLPathBuilder {
       nodes.set(n.id, { ...n, layer: 'external' });
     });
 
-    // 3. 对每个匹配节点，沿 prerequisites 递归溯源（绿色 = 基础前置）
+    // 2.5 v2.0: 利用 LLM 声明的 pblDependsOn 构建知识链连接
+    // 这些连接表达的是"学习顺序依赖"而非课标树中的静态前置关系
     matchedNodes.forEach(n => {
-      this._tracePrerequisites(n.id, nodes, links, 0, maxPreDepth, traceOpts);
+      if (n.pblDependsOn && Array.isArray(n.pblDependsOn)) {
+        n.pblDependsOn.forEach(depId => {
+          if (nodes.has(depId) && depId !== n.id) {
+            links.push({ source: depId, target: n.id, type: 'knowledge-chain' });
+          }
+        });
+      }
+    });
+
+    // 3. 对每个匹配节点，沿 prerequisites 递归溯源（绿色 = 基础前置）
+    // v2.0: 只对没有 pblDependsOn 的节点做静态溯源（有 LLM 依赖的优先用 LLM 链条）
+    matchedNodes.forEach(n => {
+      const hasLLMDeps = n.pblDependsOn && n.pblDependsOn.length > 0;
+      if (!hasLLMDeps) {
+        this._tracePrerequisites(n.id, nodes, links, 0, maxPreDepth, traceOpts);
+      }
     });
 
     // 4. 对每个匹配节点，沿 extends 前探（紫色 = 扩展高级）
@@ -1308,7 +1340,9 @@ class PBLGraphRenderer {
     // PBL 层颜色（节点描边用，内部填充用层颜色的半透明）
     this.colors = {
       prerequisite: '#10b981',  // 绿色 - 基础前置
-      matched: '#ef4444',       // 红色 - 直接匹配
+      matched: '#ef4444',       // 红色 - 直接匹配（core）
+      'matched-bridge': '#f97316', // 橙色 - 桥梁知识（bridge）
+      'matched-foundation': '#06b6d4', // 青色 - 必要基础（foundation）
       advanced: '#8b5cf6',      // 紫色 - 扩展高级
       parallel: '#3b82f6',      // 蓝色 - 平行关联
       external: '#eab308'       // 黄色 - 外部补充
@@ -1316,7 +1350,9 @@ class PBLGraphRenderer {
 
     this.layerLabels = {
       prerequisite: '基础前置',
-      matched: '核心必需',
+      matched: '项目核心',
+      'matched-bridge': '桥梁知识',
+      'matched-foundation': '必要基础',
       advanced: '扩展高级',
       parallel: '平行关联',
       external: '外部补充'
@@ -1442,10 +1478,10 @@ class PBLGraphRenderer {
       .data(links)
       .join('line')
       .attr('class', d => `link link-${d.type}`)
-      .attr('stroke', d => d.type === 'path-step' ? this.colors.matched : d.type.includes('external') ? this.colors.external : d.type === 'extends' ? this.colors.advanced : d.type === 'parallel' ? this.colors.parallel : 'rgba(148,163,184,0.3)')
-      .attr('stroke-opacity', d => d.type === 'path-step' ? 0.85 : 0.5)
-      .attr('stroke-width', d => d.type === 'path-step' ? 2.5 : d.type === 'prerequisite' ? 2 : 1.5)
-      .attr('stroke-dasharray', d => d.type.includes('external') ? '6 3' : d.type === 'parallel' ? '3 3' : d.type === 'extends' ? '6 3' : d.type === 'path-step' ? 'none' : 'none')
+      .attr('stroke', d => d.type === 'path-step' ? this.colors.matched : d.type === 'knowledge-chain' ? '#f97316' : d.type.includes('external') ? this.colors.external : d.type === 'extends' ? this.colors.advanced : d.type === 'parallel' ? this.colors.parallel : 'rgba(148,163,184,0.3)')
+      .attr('stroke-opacity', d => d.type === 'path-step' ? 0.85 : d.type === 'knowledge-chain' ? 0.75 : 0.5)
+      .attr('stroke-width', d => d.type === 'path-step' ? 2.5 : d.type === 'knowledge-chain' ? 2.2 : d.type === 'prerequisite' ? 2 : 1.5)
+      .attr('stroke-dasharray', d => d.type.includes('external') ? '6 3' : d.type === 'parallel' ? '3 3' : d.type === 'extends' ? '6 3' : d.type === 'path-step' ? 'none' : d.type === 'knowledge-chain' ? 'none' : 'none')
       .attr('marker-end', d => `url(#arrow-${d.type})`);
 
     // 节点组（与 tree.html 同样式：circle + status icon + label + label-en + grade）
@@ -1465,12 +1501,12 @@ class PBLGraphRenderer {
       .attr('class', 'node-circle')
       .attr('r', d => this._nodeHasAnyCourse(d) ? 22 : 18)
       .attr('fill', d => {
-        const layerColor = this.colors[d.layer] || '#64748b';
+        const layerColor = this._getNodeColor(d);
         if (this._nodeHasAnyCourse(d)) return this._hexToRgba(layerColor, 0.25);
         return this._hexToRgba(layerColor, 0.08);
       })
       .attr('stroke', d => {
-        const layerColor = this.colors[d.layer] || '#64748b';
+        const layerColor = this._getNodeColor(d);
         if (this._nodeHasAnyCourse(d)) return layerColor;
         return this._hexToRgba(layerColor, 0.55);
       })
@@ -1532,7 +1568,7 @@ class PBLGraphRenderer {
       .attr('cx', -14)
       .attr('cy', -14)
       .attr('r', 5)
-      .attr('fill', d => this.colors[d.layer] || '#64748b')
+      .attr('fill', d => this._getNodeColor(d))
       .attr('stroke', '#0f172a')
       .attr('stroke-width', 1.5);
 
@@ -1544,7 +1580,7 @@ class PBLGraphRenderer {
       .attr('text-anchor', 'middle')
       .attr('font-size', '8px')
       .attr('font-weight', '700')
-      .attr('fill', d => this.colors[d.layer] || '#94a3b8')
+      .attr('fill', d => this._getNodeColor(d))
       .text(d => d.systemTag);
 
     // ─── 点击事件 ───
@@ -1616,10 +1652,9 @@ class PBLGraphRenderer {
   // ─── Tooltip 内容（与 tree.html showTooltip 同结构） ───
 
   _showTooltip(tooltip, container, event, d) {
-    const layerColors = this.colors;
     const layerLabels = this.layerLabels;
-    const layerColor = layerColors[d.layer] || '#64748b';
-    const layerLabel = layerLabels[d.layer] || '';
+    const layerColor = this._getNodeColor(d);
+    const layerLabel = this._getNodeLabel(d);
 
     let html = `<h3 style="font-size:15px;margin:0 0 6px;">${d.name}</h3>`;
     html += `<div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">${this._escapeHtml(this._metaLine(d))}</div>`;
@@ -1793,11 +1828,12 @@ class PBLGraphRenderer {
     legend.style.cssText = 'display:flex;gap:16px;flex-wrap:wrap;padding:12px 16px;margin-bottom:12px;background:rgba(30,41,59,0.8);border-radius:10px;border:1px solid rgba(148,163,184,0.15);';
 
     const items = [
-      { label: '实施顺序', color: this.colors.matched, dash: false, icon: '➡️' },
-      { label: '基础前置', color: this.colors.prerequisite, dash: false, icon: '📝' },
-      { label: '核心必需', color: this.colors.matched, dash: false, icon: '✅' },
+      { label: '项目核心', color: this.colors.matched, dash: false, icon: '🎯' },
+      { label: '桥梁知识', color: this.colors['matched-bridge'], dash: false, icon: '🔗' },
+      { label: '必要基础', color: this.colors['matched-foundation'], dash: false, icon: '📐' },
+      { label: '知识链', color: '#f97316', dash: false, icon: '➡️' },
+      { label: '静态前置', color: this.colors.prerequisite, dash: false, icon: '📝' },
       { label: '扩展高级', color: this.colors.advanced, dash: false, icon: '📝' },
-      { label: '平行关联', color: this.colors.parallel, dash: true, icon: '📝' },
       { label: '外部补充', color: this.colors.external, dash: true, icon: '💡' }
     ];
 
@@ -1821,6 +1857,29 @@ class PBLGraphRenderer {
   }
 
   // ─── 工具方法 ───
+
+  /** v2.0: 根据节点的 pblRole 和 layer 决定显示颜色 */
+  _getNodeColor(d) {
+    if (!d) return '#64748b';
+    // 对 matched 层节点，根据 pblRole 细化颜色
+    if (d.layer === 'matched' && d.pblRole) {
+      if (d.pblRole === 'foundation') return this.colors['matched-foundation'] || '#06b6d4';
+      if (d.pblRole === 'bridge') return this.colors['matched-bridge'] || '#f97316';
+      // core 或其他 → 使用默认 matched 红色
+    }
+    return this.colors[d.layer] || '#64748b';
+  }
+
+  /** v2.0: 根据节点的 pblRole 和 layer 决定显示标签 */
+  _getNodeLabel(d) {
+    if (!d) return '';
+    if (d.layer === 'matched' && d.pblRole) {
+      if (d.pblRole === 'foundation') return this.layerLabels['matched-foundation'] || '必要基础';
+      if (d.pblRole === 'bridge') return this.layerLabels['matched-bridge'] || '桥梁知识';
+      return this.layerLabels['matched'] || '项目核心';
+    }
+    return this.layerLabels[d.layer] || '';
+  }
 
   _metaLine(d) {
     return [d.curriculumLabel || d.systemLabel, d.stageLabel, d.gradeLabel, d.subject, d.domain]
