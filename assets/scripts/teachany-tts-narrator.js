@@ -1,35 +1,26 @@
 /* ==================================================================
- * TeachAny · 标准 TTS 朗读悬浮控制器（v7.7.4）
+ * TeachAny · 标准 TTS 朗读悬浮控制器（v8.0.0）
+ *
+ * v8 变更：默认播放 Edge Neural 预录 mp3（data-teachany-audio-playlist），
+ * 禁止浏览器 Web Speech 金属音；仅开发调试可设 data-tts-mode="webspeech"。
  *
  * 功能：
  *  - 自动发现 `[data-tts]` 段落（按文档顺序收集）
- *  - 点击 ▶️ 依次朗读每一段，朗读时该段用 .tts-narrator-active 高亮并 scrollIntoView
- *  - 可选加载 `./narration.json`，以 key 对应段落 data-tts 值，提供高质量文稿
- *  - 零音频文件、零配置即可启用；自动插入右下角悬浮控制器
- *  - 与标准 `teachany-audio-player` 模块协同：检测到底部音频条播放时，TTS 控制器
- *    上移 80px 避让
+ *  - 有预录 mp3 时播放高质量音频；朗读时段落高亮并 scrollIntoView
+ *  - 与 `teachany-audio-player` 共用 playlist（track.section / ttsKey 映射 data-tts）
  *  - 支持 0.85×/1.0×/1.15×/1.3× 语速循环切换
- *  - 支持折叠（长按 ⏸ 两秒或双击状态栏）
  *
- * 使用：
- *  <link rel="stylesheet" href="../../scripts/teachany-tts-narrator.css">
- *  <script src="../../scripts/teachany-tts-narrator.js" defer></script>
- * 在 `<body>` 底部可选放：<div data-teachany-tts></div>（不放也会自动插入到 body 末尾）
- * 在需要朗读的段落上加：<div data-tts="section-key">…</div>
- * 可选根目录同级提供 narration.json：{"section-key":"精修朗读文稿..."}
- *
- * 配置（可选，通过 script 标签的 data-tts-* 属性）：
- *   data-tts-lang="zh-CN"   朗读语言，默认 zh-CN
- *   data-tts-rate="0.95"    初始语速，默认 0.95
- *   data-tts-narration="./narration.json"  文稿地址，默认 ./narration.json
- *   data-tts-disabled="true" 禁用（只初始化气泡不插入控件）
+ * 配置（script 标签 data-tts-* 属性）：
+ *   data-tts-mode="mp3"       默认；有 playlist 时强制 mp3
+ *   data-tts-mode="webspeech" 仅本地调试，交付课件禁止
+ *   data-tts-disabled="true"  禁用控件
  * ================================================================== */
 
 (function () {
   "use strict";
 
   if (typeof window === "undefined" || typeof document === "undefined") return;
-  if (window.__teachanyTtsNarrator) return; // idempotent
+  if (window.__teachanyTtsNarrator) return;
   window.__teachanyTtsNarrator = true;
 
   var SCRIPT_SEL = 'script[src*="teachany-tts-narrator"]';
@@ -39,6 +30,7 @@
     rate: parseFloat((scriptEl && scriptEl.dataset.ttsRate) || "0.95"),
     narrationUrl:
       (scriptEl && scriptEl.dataset.ttsNarration) || "./narration.json",
+    mode: (scriptEl && scriptEl.dataset.ttsMode) || "mp3",
     disabled: !!(scriptEl && scriptEl.dataset.ttsDisabled === "true"),
   };
 
@@ -48,8 +40,11 @@
     playing: false,
     paused: false,
     rate: cfg.rate,
-    sections: [], // [{key, el}]
-    narration: {}, // {key: text}
+    sections: [],
+    narration: {},
+    audioMap: {},
+    useMp3: false,
+    audio: null,
     utter: null,
     host: null,
     statusEl: null,
@@ -57,7 +52,31 @@
     rateBtn: null,
   };
 
-  // ---------- 1. 收集段落 ----------
+  function readPlaylist() {
+    var host = document.querySelector("[data-teachany-audio]");
+    if (!host) return [];
+    var script = host.querySelector(
+      "script[type='application/json'][data-teachany-audio-playlist]"
+    );
+    if (!script) return [];
+    try {
+      return JSON.parse(script.textContent.trim());
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function buildAudioMap(playlist) {
+    var map = {};
+    playlist.forEach(function (track) {
+      if (!track || !track.src) return;
+      var key =
+        track.section || track.ttsKey || track.tts || track.id || track.sectionId;
+      if (key) map[key] = { src: track.src, title: track.title || key };
+    });
+    return map;
+  }
+
   function collectSections() {
     var nodes = Array.prototype.slice.call(
       document.querySelectorAll("[data-tts]")
@@ -68,12 +87,17 @@
       if (pos & Node.DOCUMENT_POSITION_PRECEDING) return 1;
       return 0;
     });
-    state.sections = nodes.map(function (el) {
+    var sections = nodes.map(function (el) {
       return { key: el.getAttribute("data-tts"), el: el };
     });
+    if (state.useMp3) {
+      sections = sections.filter(function (s) {
+        return state.audioMap[s.key];
+      });
+    }
+    state.sections = sections;
   }
 
-  // ---------- 2. 加载 narration.json（失败静默） ----------
   function loadNarration() {
     if (!cfg.narrationUrl) return Promise.resolve();
     return fetch(cfg.narrationUrl)
@@ -84,12 +108,9 @@
       .then(function (j) {
         if (j && typeof j === "object") state.narration = j;
       })
-      .catch(function () {
-        /* 静默 */
-      });
+      .catch(function () {});
   }
 
-  // ---------- 3. 悬浮控件 ----------
   function buildHost() {
     var existing = document.querySelector(
       "[data-teachany-tts],.tts-narrator-host"
@@ -130,10 +151,8 @@
     mid.appendChild(nextBtn);
     mid.appendChild(statusEl);
     mid.appendChild(rateBtn);
-
     host.appendChild(mid);
 
-    // 双击状态栏折叠
     statusEl.addEventListener("dblclick", function () {
       host.classList.toggle("collapsed");
     });
@@ -142,7 +161,6 @@
     state.statusEl = statusEl;
     state.playBtn = playBtn;
     state.rateBtn = rateBtn;
-
     updateUI();
   }
 
@@ -157,8 +175,12 @@
     return b;
   }
 
-  // ---------- 4. 朗读核心 ----------
-  function stopSpeech() {
+  function stopPlayback() {
+    if (state.audio) {
+      state.audio.pause();
+      state.audio.onended = null;
+      state.audio.onerror = null;
+    }
     try {
       window.speechSynthesis.cancel();
     } catch (_) {}
@@ -167,20 +189,86 @@
   }
 
   function clearHighlights() {
-    document
-      .querySelectorAll(".tts-narrator-active")
-      .forEach(function (e) {
-        e.classList.remove("tts-narrator-active");
+    document.querySelectorAll(".tts-narrator-active").forEach(function (e) {
+      e.classList.remove("tts-narrator-active");
+    });
+  }
+
+  function onSegmentEnd() {
+    if (!state.playing) return;
+    if (state.index < state.sections.length - 1) {
+      state.index += 1;
+      playCurrent();
+    } else {
+      state.playing = false;
+      clearHighlights();
+      updateUI();
+    }
+  }
+
+  function playMp3(item) {
+    var track = state.audioMap[item.key];
+    if (!track) {
+      gotoRelative(1);
+      return;
+    }
+    if (!state.audio) state.audio = new Audio();
+    stopPlayback();
+    state.audio.src = track.src;
+    state.audio.playbackRate = state.rate;
+    state.audio.onended = onSegmentEnd;
+    state.audio.onerror = function () {
+      state.playing = false;
+      if (state.statusEl) state.statusEl.textContent = "音频加载失败";
+      updateUI();
+    };
+    state.playing = true;
+    state.paused = false;
+    var p = state.audio.play();
+    if (p && p.catch) {
+      p.catch(function () {
+        state.playing = false;
+        updateUI();
       });
+    }
+    updateUI();
+  }
+
+  function playWebSpeech(item) {
+    if (!("speechSynthesis" in window)) {
+      if (state.statusEl) state.statusEl.textContent = "当前浏览器不支持 TTS";
+      return;
+    }
+    var text =
+      (state.narration && state.narration[item.key]) || item.el.textContent;
+    text = (text || "").trim().replace(/\s+/g, " ");
+    if (!text) {
+      gotoRelative(1);
+      return;
+    }
+    stopPlayback();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = cfg.lang;
+    u.rate = state.rate;
+    u.onend = onSegmentEnd;
+    u.onerror = function () {
+      state.playing = false;
+      updateUI();
+    };
+    state.utter = u;
+    state.playing = true;
+    state.paused = false;
+    window.speechSynthesis.speak(u);
+    updateUI();
   }
 
   function playCurrent() {
-    if (!("speechSynthesis" in window)) {
-      state.statusEl.textContent = "当前浏览器不支持 TTS";
-      return;
-    }
     if (state.sections.length === 0) {
-      state.statusEl.textContent = "无可朗读段落";
+      if (state.statusEl) {
+        state.statusEl.textContent = state.useMp3
+          ? "无预录朗读段落"
+          : "无可朗读段落";
+      }
       return;
     }
     if (state.index >= state.sections.length) state.index = 0;
@@ -198,50 +286,33 @@
       item.el.scrollIntoView({ behavior: "smooth", block: "center" });
     } catch (_) {}
 
-    var text = (state.narration && state.narration[item.key]) || item.el.textContent;
-    text = (text || "").trim().replace(/\s+/g, " ");
-    if (!text) {
-      gotoRelative(1);
-      return;
-    }
-
-    stopSpeech();
-    var u = new SpeechSynthesisUtterance(text);
-    u.lang = cfg.lang;
-    u.rate = state.rate;
-    u.onend = function () {
-      if (!state.playing) return; // 被打断
-      // 自动进入下一段
-      if (state.index < state.sections.length - 1) {
-        state.index += 1;
-        playCurrent();
-      } else {
-        state.playing = false;
-        clearHighlights();
-        updateUI();
-      }
-    };
-    u.onerror = function () {
-      state.playing = false;
-      updateUI();
-    };
-    state.utter = u;
-    state.playing = true;
-    state.paused = false;
-    window.speechSynthesis.speak(u);
-    updateUI();
+    if (state.useMp3) playMp3(item);
+    else playWebSpeech(item);
   }
 
   function toggle() {
-    if (state.playing && !state.paused) {
+    if (state.useMp3 && state.audio) {
+      if (state.playing && !state.paused) {
+        state.audio.pause();
+        state.paused = true;
+        updateUI();
+        return;
+      }
+      if (state.playing && state.paused) {
+        var p = state.audio.play();
+        if (p && p.catch) p.catch(function () {});
+        state.paused = false;
+        updateUI();
+        return;
+      }
+    } else if (state.playing && !state.paused) {
       try {
         window.speechSynthesis.pause();
       } catch (_) {}
       state.paused = true;
       updateUI();
       return;
-    }
-    if (state.playing && state.paused) {
+    } else if (state.playing && state.paused) {
       try {
         window.speechSynthesis.resume();
       } catch (_) {}
@@ -253,7 +324,7 @@
   }
 
   function gotoRelative(delta) {
-    stopSpeech();
+    stopPlayback();
     clearHighlights();
     state.index = Math.max(
       0,
@@ -266,10 +337,13 @@
     var i = RATES.indexOf(state.rate);
     i = (i + 1) % RATES.length;
     state.rate = RATES[i];
-    // 即时应用到当前朗读
     if (state.playing) {
-      stopSpeech();
-      playCurrent();
+      if (state.useMp3 && state.audio) {
+        state.audio.playbackRate = state.rate;
+      } else {
+        stopPlayback();
+        playCurrent();
+      }
     }
     updateUI();
   }
@@ -282,10 +356,12 @@
     }
     if (state.rateBtn) state.rateBtn.textContent = state.rate.toFixed(2) + "×";
     if (state.statusEl) {
+      var modeTag = state.useMp3 ? "Neural" : "Web";
       if (state.sections.length === 0) {
         state.statusEl.textContent = "无朗读段落";
       } else if (!state.playing) {
-        state.statusEl.textContent = "就绪 · " + state.sections.length + " 段";
+        state.statusEl.textContent =
+          "就绪 · " + state.sections.length + " 段 · " + modeTag;
       } else if (state.paused) {
         state.statusEl.textContent =
           "已暂停：" + (state.sections[state.index]?.key || "");
@@ -296,26 +372,32 @@
     }
   }
 
-  // ---------- 5. 页面卸载时停止朗读 ----------
-  window.addEventListener("beforeunload", stopSpeech);
+  window.addEventListener("beforeunload", stopPlayback);
   document.addEventListener("visibilitychange", function () {
     if (document.hidden && state.playing) {
-      try {
-        window.speechSynthesis.pause();
-      } catch (_) {}
+      if (state.useMp3 && state.audio) {
+        state.audio.pause();
+      } else {
+        try {
+          window.speechSynthesis.pause();
+        } catch (_) {}
+      }
       state.paused = true;
       updateUI();
     }
   });
 
-  // ---------- 6. 启动 ----------
   function init() {
     if (cfg.disabled) return;
+
+    var playlist = readPlaylist();
+    state.audioMap = buildAudioMap(playlist);
+    var hasMp3 = Object.keys(state.audioMap).length > 0;
+    state.useMp3 = cfg.mode !== "webspeech" && hasMp3;
+
     collectSections();
-    if (state.sections.length === 0) {
-      // 没有 data-tts 段落就不插入任何 UI
-      return;
-    }
+    if (state.sections.length === 0) return;
+
     buildHost();
     loadNarration().then(updateUI);
   }
@@ -326,12 +408,11 @@
     init();
   }
 
-  // 暴露命名空间供调试/扩展
   window.TeachAnyTTSNarrator = {
     state: state,
     cfg: cfg,
     play: playCurrent,
-    stop: stopSpeech,
+    stop: stopPlayback,
     next: function () {
       gotoRelative(1);
     },

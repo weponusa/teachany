@@ -30,31 +30,29 @@
   } catch(e) { /* ignore */ }
 })();
 
-/* ─── CDN 基址（GitHub Pages / CloudBase 双端） ─── */
-function isCloudBaseHost() {
-  return /tcloudbaseapp\.com$/i.test(location.hostname);
-}
+/* ─── 常量 ───────────────────────────────────── */
+// github.io/teachany = 轻量仓（无 registry）；github.io/teachany-courseware = 课件仓
+const IS_GITHUB_PAGES = location.hostname.endsWith('github.io');
+const IS_LIGHT_GH_SITE = IS_GITHUB_PAGES && /\/teachany\//.test(location.pathname) && !/\/teachany-courseware\//.test(location.pathname);
+const SITE_BASE_PATH = IS_GITHUB_PAGES && !IS_LIGHT_GH_SITE ? '/teachany-courseware' : '';
+const SITE_BASE_URL = location.origin + SITE_BASE_PATH;
+const COURSEWARE_BASE_URL = IS_LIGHT_GH_SITE ? 'https://www.teachany.cn' : SITE_BASE_URL;
+const SELF_BASE_URL = SITE_BASE_URL;
+const REGISTRY_URL = SITE_BASE_URL + '/registry.json';
+const COMMUNITY_INDEX_URL = SITE_BASE_URL + '/community/index.json';
+const CACHE_KEY = 'teachany_registry_v3_20'; // v3.20: normalize GitHub course links to current domain
 
-function getCoursewareBaseUrl() {
-  if (isCloudBaseHost()) return location.origin + '/teachany-courseware';
-  return 'https://weponusa.github.io/teachany-courseware';
+function normalizeCoursewareUrl(url) {
+  if (!url) return '';
+  let value = String(url).trim();
+  value = value.replace(/^https:\/\/weponusa\.github\.io\/teachany-courseware\/?/i, COURSEWARE_BASE_URL + '/');
+  value = value.replace(/\/index\.html([?#].*)?$/i, '/$1');
+  return value;
 }
-
-function getSelfBaseUrl() {
-  if (isCloudBaseHost()) return location.origin + '/teachany';
-  return 'https://weponusa.github.io/teachany';
-}
-
-const COURSEWARE_BASE_URL = getCoursewareBaseUrl();
-const SELF_BASE_URL = getSelfBaseUrl();
-const REGISTRY_URL = COURSEWARE_BASE_URL + '/registry.json';
-const REGISTRY_FALLBACK_URL = './registry.json';
-const COMMUNITY_INDEX_URL = COURSEWARE_BASE_URL + '/community/index.json';
-const CACHE_KEY = 'teachany_registry_v3_19'; // v3.19: dual CDN base URL
 
 function resolveCoursewareUrl(path) {
   if (!path) return COURSEWARE_BASE_URL + '/';
-  if (/^https?:\/\//i.test(path)) return path;
+  if (/^https?:\/\//i.test(path)) return normalizeCoursewareUrl(path);
   return COURSEWARE_BASE_URL + '/' + String(path).replace(/^\/+/, '');
 }
 
@@ -73,9 +71,10 @@ function resolveHeroUrl(course, heroImage) {
 
 // 课件点击链接：统一直指 teachany-courseware 实体仓库，主仓库只做轻量入口/索引
 function resolveCourseUrl(course) {
-  if (course && course.url) return course.url;
+  if (course && course.url) return normalizeCoursewareUrl(course.url);
+  if (course && course.download_url) return normalizeCoursewareUrl(course.download_url);
   if (course && course.path) {
-    const path = course.path.replace(/\/$/, '') + '/index.html';
+    const path = course.path.replace(/\/$/, '') + '/';
     return COURSEWARE_BASE_URL + '/' + path.replace(/^\/+/, '');
   }
   return COURSEWARE_BASE_URL + '/';
@@ -232,17 +231,23 @@ async function loadRegistry() {
     }
   }
 
-  async function fetchRegistryWithFallback() {
-    const primary = await fetchOptionalJson(REGISTRY_URL);
-    if (primary.courses && primary.courses.length) return primary;
-    return fetchOptionalJson(REGISTRY_FALLBACK_URL);
+  async function fetchHubJson(relPath) {
+    if (window.TeachAnyDataFetch) {
+      try {
+        return await window.TeachAnyDataFetch.fetchSiteJson(relPath);
+      } catch (e) {
+        console.warn('[TeachAny] TeachAnyDataFetch 失败:', relPath, e.message);
+      }
+    }
+    const url = (IS_LIGHT_GH_SITE ? COURSEWARE_BASE_URL + '/' : SITE_BASE_URL + '/') + relPath;
+    return fetchOptionalJson(url);
   }
 
-  // 2. 从 courseware 权威 registry + courseware community/index 合并加载
-  console.log('[TeachAny] 从 courseware registry + community index 加载...');
+  // 2. 从主站 registry + courseware community/index 合并加载
+  console.log('[TeachAny] 从服务器加载 registry + courseware community index...');
   const [registryData, communityData] = await Promise.all([
-    fetchRegistryWithFallback(),
-    fetchOptionalJson(COMMUNITY_INDEX_URL),
+    IS_LIGHT_GH_SITE ? fetchHubJson('registry.json') : fetchOptionalJson(REGISTRY_URL),
+    IS_LIGHT_GH_SITE ? fetchHubJson('community/index.json') : fetchOptionalJson(COMMUNITY_INDEX_URL),
   ]);
 
   const byId = new Map();
@@ -419,10 +424,10 @@ function renderCourses(grid, courses, addCard = null) {
 /* ─── 加载"其他知识"图谱，提取课程ID ─── */
 async function loadOtherTreeCourseIds() {
   const urls = [
-    // raw main 优先，绕开 GitHub Pages CDN 旧缓存。
+    // 本地开发优先读本地；线上如果 Pages CDN 未刷新，再用 raw main 兜底。
+    './data/trees/other/user-generated.json',
     'https://raw.githubusercontent.com/weponusa/teachany-courseware/main/data/trees/other/user-generated.json',
-    'https://weponusa.github.io/teachany-courseware/data/trees/other/user-generated.json',
-    './data/trees/other/user-generated.json'
+    'https://www.teachany.cn/data/trees/other/user-generated.json'
   ];
   for (const url of urls) {
     try {

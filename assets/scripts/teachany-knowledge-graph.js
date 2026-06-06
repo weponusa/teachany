@@ -16,7 +16,6 @@
 
   var SVG_NS = "http://www.w3.org/2000/svg";
   var BASE_PATH_CANDIDATES = [
-    "https://weponusa.github.io/teachany-courseware/scripts/teachany-kg-manifest.json",
     "../../assets/scripts/teachany-kg-manifest.json",
     "../../scripts/teachany-kg-manifest.json",
     "../assets/scripts/teachany-kg-manifest.json",
@@ -24,7 +23,9 @@
     "scripts/teachany-kg-manifest.json",
     "/teachany-courseware/assets/scripts/teachany-kg-manifest.json",
     "/teachany/scripts/teachany-kg-manifest.json",
-    "/scripts/teachany-kg-manifest.json"
+    "/scripts/teachany-kg-manifest.json",
+    "https://www.teachany.cn/assets/scripts/teachany-kg-manifest.json",
+    "https://cdn.jsdelivr.net/gh/weponusa/teachany-courseware@main/assets/scripts/teachany-kg-manifest.json"
   ];
 
   var manifestPromise = null;
@@ -49,7 +50,7 @@
     return "rgba(" + r + "," + g + "," + b + "," + alpha + ")";
   }
 
-  var COURSEWARE_BASE_URL = "https://weponusa.github.io/teachany-courseware";
+  var COURSEWARE_BASE_URL = "https://www.teachany.cn";
 
   function coursewareUrl(course) {
     if (!course || !course.path) return null;

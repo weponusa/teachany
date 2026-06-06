@@ -1,4 +1,4 @@
-/*! TeachAny Standard Historical Map · v2.0 (Leaflet based)
+/*! TeachAny Standard Historical Map · v2.7 (Leaflet · Web Mercator)
  * ─────────────────────────────────────────────────────────
  * 参考稳定实现：community/history-medieval-europe
  * 特点：真 Leaflet 地图引擎 + 本地 geojson + 朝代切换 + 城市标注 + 暗色主题
@@ -42,10 +42,12 @@
  *     </script>
  *   </div>
  *
- * 注意：
- *   - geojson 文件路径相对于课件目录的 `assets/maps/<file>` 或全局 `/skill/assets/historical-{scope}/<file>`
- *   - scope 可选：china / world / custom
- *   - hillshade 可选：`assets/maps/hillshade.jpg`（有则自动叠加）
+ * 投影与对齐（强制，详见 skill topics/historical-maps-projection.md）：
+ *   - CRS：Leaflet 默认 EPSG:3857（Web Mercator）
+ *   - 底图：仅 L.tileLayer XYZ；禁止 L.imageOverlay 全球等距圆柱 JPG（cfg.hillshade 已废弃）
+ *   - 疆域 GeoJSON：WGS84，坐标 [lng, lat]；城市 cities：[lat, lng, …]
+ *   - fitBounds：[[南纬, 西经], [北纬, 东经]]，如中国 [[18,72],[52,140]]
+ *   - 地形：cfg.terrain !== false 时叠加 Esri World_Shaded_Relief（同为 Web Mercator）
  */
 (function () {
   "use strict";
@@ -57,20 +59,32 @@
     return;
   }
 
+  // 双平台远程地图源：teachany.cn 优先（国内外均可访问，Cloudflare），
+  // GitHub（jsDelivr / raw）作为备份。任一可用即可，互为冗余。
+  var REMOTE_MAP_BASES = [
+    "https://www.teachany.cn/assets/maps/",
+    "https://cdn.jsdelivr.net/gh/weponusa/teachany-courseware@main/assets/maps/",
+    "https://raw.githubusercontent.com/weponusa/teachany-courseware/main/assets/maps/"
+  ];
+
   var GEOJSON_SEARCH_PATHS = function (scope, file) {
-    // file 可能是 'qin-dynasty.geojson' 或 '009-ce-500.geojson' 或完整路径
+    // file 可能是 'qin-dynasty.geojson'、'chrono-cn/010-tang-dynasty.geojson' 或完整 URL
     if (file.startsWith("http") || file.startsWith("/") || file.startsWith("./") || file.startsWith("../")) {
       return [file];
     }
     var bases = [];
-    // 优先课件本地 assets/maps/
+    // 1) 优先课件本地 assets/maps/（裸名或相对分类路径都支持）
     bases.push("./assets/maps/" + file);
     bases.push("assets/maps/" + file);
-    // 回退到 skill 仓库（相对路径）
+    // 2) 回退到 skill 仓库（相对路径，历史兼容）
     var scopeDir = scope === "world" ? "historical-world" : scope === "china" ? "historical-china" : "historical-" + scope;
     bases.push("../../skill/assets/" + scopeDir + "/" + file);
     bases.push("../skill/assets/" + scopeDir + "/" + file);
     bases.push("/teachany/skill/assets/" + scopeDir + "/" + file);
+    // 3) 双平台远程回退（teachany.cn 优先，再 GitHub）。
+    //    仅当 file 为相对分类路径（如 chrono-cn/010-xxx.geojson）时才能命中远端；
+    //    裸名命中失败会被自动跳过，无副作用。
+    REMOTE_MAP_BASES.forEach(function (b) { bases.push(b + file); });
     return bases;
   };
 
@@ -181,38 +195,60 @@
       attributionControl: false
     });
 
-    if (cfg.fitBounds) {
-      try { map.fitBounds(cfg.fitBounds); } catch (e) {}
+    if (cfg.hillshade) {
+      console.warn(
+        "[TeachAny Map] cfg.hillshade 已废弃（等距圆柱 JPG 与 Web Mercator 错位，疆域会对不齐）。" +
+        "请从 data-teachany-map-config 删除 hillshade。见 topics/historical-maps-projection.md"
+      );
     }
 
-    // v2.3: 瓦片底图 + hillshade 叠加层
-    // 默认使用 CartoDB DarkMatter 瓦片作为地理参考底图
-    // 可选叠加 hillshade 影像增强地形感
-    var tileLayer = L.tileLayer(
+    var refitTimer = null;
+
+    function refitMap() {
+      try { map.invalidateSize(true); } catch (e) { map.invalidateSize(); }
+      if (currentEraLayer) {
+        try {
+          var b = currentEraLayer.getBounds();
+          if (b && b.isValid && b.isValid()) {
+            map.fitBounds(b.pad(0.08));
+            return;
+          }
+        } catch (e) {}
+      }
+      if (cfg.fitBounds) {
+        try { map.fitBounds(L.latLngBounds(cfg.fitBounds), { padding: [24, 24] }); } catch (e) {}
+      }
+    }
+
+    function scheduleRefit() {
+      clearTimeout(refitTimer);
+      refitTimer = setTimeout(refitMap, 160);
+    }
+
+    // v2.7: Web Mercator XYZ 底图（与 WGS84 GeoJSON 同 CRS 链，Leaflet 自动对齐）
+    L.tileLayer(
       "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",
       {
         subdomains: "abcd",
         maxZoom: 19,
-        opacity: 0.7,
+        opacity: 0.72,
         attribution: "© CARTO © OSM contributors"
       }
     ).addTo(map);
 
-    // hillshade 叠加层（可选，默认关闭，cfg.hillshade=true 时开启）
-    if (cfg.hillshade === true || cfg.hillshade) {
-      var hillsrc = typeof cfg.hillshade === "string" ? cfg.hillshade : "./assets/maps/hillshade.jpg";
-      var img = new Image();
-      img.onload = function () {
-        L.imageOverlay(hillsrc, [[-90, -180], [90, 180]], {
-          opacity: 0.35,
-          interactive: false,
-          zIndex: 200
-        }).addTo(map);
-      };
-      img.onerror = function () {
-        // 静默降级
-      };
-      img.src = hillsrc;
+    if (cfg.terrain !== false) {
+      var terrainOpacity = 0.42;
+      if (cfg.terrain && typeof cfg.terrain === "object" && cfg.terrain.opacity != null) {
+        terrainOpacity = cfg.terrain.opacity;
+      }
+      L.tileLayer(
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}",
+        { maxZoom: 13, opacity: terrainOpacity, attribution: "© Esri" }
+      ).addTo(map);
+    }
+
+    if (cfg.fitBounds) {
+      try { map.fitBounds(L.latLngBounds(cfg.fitBounds), { padding: [24, 24] }); } catch (e) {}
     }
 
     // attribution 自定义
@@ -364,6 +400,7 @@
                 });
               }
             }).addTo(map);
+            scheduleRefit();
           })
           .catch(function (err) {
             console.error("[TeachAnyMap] geojson 加载失败：", era.file, err);
@@ -402,6 +439,7 @@
         cityGroup.addTo(map);
         currentCityLayer = cityGroup;
       }
+      scheduleRefit();
     }
 
     // 初始加载
@@ -409,13 +447,19 @@
     // v2.2: 一次性渲染 CHGIS 细节叠加层（与朝代独立）
     renderOverlays();
 
-    // 响应容器 resize
+    // 响应容器 resize / 分页切换后重算尺寸（修复 slide-v2 播放模式底图错位）
     if ("ResizeObserver" in window) {
-      var ro = new ResizeObserver(function () {
-        setTimeout(function () { map.invalidateSize(); }, 150);
-      });
+      var ro = new ResizeObserver(function () { scheduleRefit(); });
       ro.observe(mapEl);
     }
+    if ("IntersectionObserver" in window) {
+      var io = new IntersectionObserver(function (entries) {
+        if (entries[0] && entries[0].isIntersecting) scheduleRefit();
+      }, { threshold: 0.15 });
+      io.observe(mapEl);
+    }
+    document.addEventListener("teachany-slide-change", scheduleRefit);
+    map.whenReady(scheduleRefit);
   }
 
   function init() {
@@ -424,5 +468,5 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
 
-  window.TeachAnyHistoricalMap = { __version: "2.4-fix-crs", mount: mount };
+  window.TeachAnyHistoricalMap = { __version: "2.6-slide-refit", mount: mount };
 })();
