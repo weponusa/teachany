@@ -558,7 +558,9 @@ class PBLPathBuilder {
       '传感', '控制', '电路', '编程', '算法', '物联', '智能', '温度', '湿度',
       '函数', '三角', '矢量', '向量', '建模', '实验', '数据', '分析',
       '化学', '燃烧', '氧化', '流体', '压强', '热值', '内能', '气动',
-      '材料', '结构', '设计', '制作', '模型', '搭建', '探究', '温室', '天气'
+      '材料', '结构', '设计', '制作', '模型', '搭建', '探究', '温室', '天气',
+      '新能源', '光伏', '太阳能', '风电', '风能', '储能', '电池', '锂电', '充电',
+      '发电', '电能', '电动', '能源', '碳中和', '并网', '逆变', '电磁', '电路'
     ];
     lex.forEach(w => { if (g.includes(w)) terms.add(w); });
     // 领域词典命中足够时不再用二字随机切分，避免「设计并」等噪声匹配无关课标
@@ -609,20 +611,108 @@ class PBLPathBuilder {
         { id: 'control', label: '控制算法', keywords: ['控制', '反馈', '编程', '算法'], subjects: ['info-tech', 'math'] }
       ];
     }
+    if (/新能源|光伏|太阳能|风电|风力|储能|电池|锂电|充电|发电|电能|清洁能源|碳中和|电动|能源车|并网|逆变/.test(g)) {
+      return [
+        {
+          id: 'energy', label: '能量转换与守恒',
+          keywords: ['能量转化', '能量转换', '机械能', '内能', '电能', '化学能', '热值', '效率', '功率', '做功'],
+          subjects: ['physics', 'chemistry']
+        },
+        {
+          id: 'electrochem', label: '电化学与电池',
+          keywords: ['电池', '原电池', '电解', '电解池', '氧化还原', '电极', '电化学', '充放电', '蓄电', '储能', '燃料电池'],
+          subjects: ['chemistry', 'physics']
+        },
+        {
+          id: 'circuit', label: '电路与电磁',
+          keywords: ['电路', '电流', '电压', '电阻', '电磁', '感应', '并联', '串联', '磁场', '电磁感应', '发电机'],
+          subjects: ['physics']
+        },
+        {
+          id: 'renewable', label: '新能源装置',
+          keywords: ['光伏', '太阳能', '风能', '风电', '发电', '新能源', '涡轮', '光能', '光电', '太阳能电池'],
+          subjects: ['physics', 'chemistry']
+        },
+        {
+          id: 'system', label: '系统测试与控制',
+          keywords: ['控制', '传感', '传感器', '采集', '实验', '测试', '反馈', '调试', '数据采集', '误差'],
+          subjects: ['info-tech', 'physics']
+        }
+      ];
+    }
     return [];
+  }
+
+  _isEnergyProjectGoal(goal) {
+    return /新能源|光伏|太阳能|风电|风力|储能|电池|锂电|充电|发电|电能|清洁能源|碳中和|电动|能源车|并网|逆变/.test(String(goal || ''));
+  }
+
+  _isBiologyNodeName(name) {
+    return /细胞|细胞膜|细胞器|细胞核|细胞壁|细胞呼吸|线粒体|叶绿体|有丝分裂|减数分裂|DNA|基因表达|遗传|光合作用|酶|蛋白质合成|生物膜/.test(String(name || ''));
   }
 
   _nodeSearchText(node) {
     return `${node.name || ''} ${node.definition || node.description || ''} ${(node.key_concepts || []).join(' ')}`.toLowerCase();
   }
 
+  _stemGenericKeywords() {
+    return new Set(['能量', '守恒', '定律', '运动', '计算', '函数', '方程']);
+  }
+
+  _isQuantitativeCalcNode(node) {
+    const t = `${node.name || ''} ${node.definition || node.description || ''}`;
+    return /计算|求解|方程式|列式|综合计算|根据化学方程式|定量|数值(计算|求解)|运算求|计算器|求.*大小|求.*值/.test(t);
+  }
+
+  _isConservationLawNode(node) {
+    return /守恒定律|机械能守恒|能量守恒|动量守恒/.test(String(node.name || ''));
+  }
+
+  /** 节点知识形态：用于 STEM 广度均衡，避免全是定律/计算 */
+  _stemKnowledgeKind(node) {
+    const name = String(node.name || '');
+    const text = this._nodeSearchText(node);
+    if (this._isQuantitativeCalcNode(node)) return 'calculation';
+    if (/守恒定律/.test(name)) return 'law';
+    if (/实验|探究|测量|观测|验证|设计实验|控制变量/.test(text)) return 'experiment';
+    if (/装置|结构|原理|工作|组成|机制|原电池|发电机|光伏|太阳能电池|电解|电解池|传感器|逆变|并网|电路元件|电磁感应|串联|并联/.test(text)) return 'apparatus';
+    if (node.subject === 'math' || /函数|方程|建模|算法|三角函数/.test(name)) return 'modeling';
+    return 'principle';
+  }
+
+  _stemKindPreference(node, goal) {
+    const k = this._stemKnowledgeKind(node);
+    if (k === 'calculation') return -4;
+    if (k === 'law') return -2;
+    if (k === 'apparatus') return 5;
+    if (k === 'experiment') return 5;
+    if (k === 'principle') return 4;
+    if (k === 'modeling') return /建模|控制|算法|数据|App|程序/.test(String(goal || '')) ? 2 : -1;
+    return 0;
+  }
+
+  _stemBreadthScoreAdjust(node, goal) {
+    if (!this._isStemProjectGoal(goal)) return 0;
+    let adj = this._stemKindPreference(node, goal) * 2;
+    if (node.subject === 'chemistry') adj += 5;
+    if (node.subject === 'info-tech') adj += 4;
+    if (node.subject === 'physics') adj += 1;
+    if (node.subject === 'math') adj -= 3;
+    if (this._isQuantitativeCalcNode(node)) adj -= 10;
+    if (this._isConservationLawNode(node)) adj -= 3;
+    return adj;
+  }
+
   _scoreNodeForDomains(node, domains) {
     if (!domains || !domains.length) return 0;
     let score = 0;
     const text = this._nodeSearchText(node);
+    const generic = this._stemGenericKeywords();
     domains.forEach(d => {
       (d.keywords || []).forEach(kw => {
-        if (text.includes(String(kw).toLowerCase())) score += 6;
+        const k = String(kw).toLowerCase();
+        if (!text.includes(k)) return;
+        score += generic.has(kw) ? 2 : 6;
       });
       if (d.subjects && d.subjects.includes(node.subject)) score += 2;
     });
@@ -630,20 +720,29 @@ class PBLPathBuilder {
   }
 
   _isEngineeringGoal(goal) {
-    return /火箭|导弹|发射|弹道|模型|制作|搭建|设计|机器人|温控|电路|传感|原型|工程/.test(String(goal || ''));
+    const g = String(goal || '');
+    return /火箭|导弹|发射|弹道|模型|制作|搭建|设计|机器人|温控|电路|传感|原型|工程/.test(g)
+      || this._isEnergyProjectGoal(g);
   }
 
-  /** 主线相关性：工程类项目宁缺毋滥，拒绝语文/地理等凑跨学科 */
+  _isStemProjectGoal(goal) {
+    return this._isEngineeringGoal(goal) || this._isEnergyProjectGoal(goal);
+  }
+
+  /** 主线相关性：STEM/工程项目宁缺毋滥，拒绝语文/地理/无关生物等 */
   _isMainlineRelevant(node, goal, domains) {
     if (!node) return false;
     const g = String(goal || '');
     const domainList = domains && domains.length ? domains : this._inferProjectDomains(g);
     const name = String(node.name || '');
     const text = this._nodeSearchText(node);
+    const stemGoal = this._isStemProjectGoal(g);
 
-    if (this._isEngineeringGoal(g)) {
+    if (stemGoal) {
       const badName = /作文|写作|任务驱动|实用类文本|地形|等高线|经纬|有机合成|官能团|烃的|弧长|扇形面积|几何图形初步|诗词|文言|议论文结构|世界地形/;
       if (badName.test(name)) return false;
+      if (this._isBiologyNodeName(name) && !/生物|细胞|生态|光合|发酵|酶|遗传/.test(g)) return false;
+      if (node.subject === 'biology' && !/生物|细胞|生态|光合|发酵|酶|遗传|植物|动物/.test(g)) return false;
       const humanities = ['chinese', 'english', 'history', 'geography'];
       if (humanities.includes(node.subject)) {
         const need = {
@@ -658,20 +757,28 @@ class PBLPathBuilder {
       if (domainList.length && !allowedStem.has(node.subject)) return false;
     }
 
-    if (!domainList.length) return true;
+    if (!domainList.length) {
+      if (stemGoal) {
+        if (this._isBiologyNodeName(name) || node.subject === 'biology') return false;
+        const goalTerms = this._tokenizeGoalTerms(g);
+        return goalTerms.some(t => t.length >= 2 && (name.includes(t) || text.includes(t)));
+      }
+      return true;
+    }
     if (this._scoreNodeForDomains(node, domainList) >= 4) return true;
     const goalTerms = this._tokenizeGoalTerms(g);
-    return goalTerms.some(t => t.length >= 2 && name.includes(t));
+    if (goalTerms.some(t => t.length >= 2 && name.includes(t))) return true;
+    return stemGoal && goalTerms.some(t => t.length >= 3 && text.includes(t));
   }
 
   _filterMainlineNodes(matched, goal) {
     const domains = this._inferProjectDomains(goal);
-    if (!domains.length) return matched;
+    if (!domains.length && !this._isStemProjectGoal(goal)) return matched;
     const filtered = matched.filter(n => this._isMainlineRelevant(n, goal, domains));
-    return filtered.length ? filtered : matched.slice(0, 5);
+    return filtered.length ? filtered : [];
   }
 
-  _scoreNodeForGoal(node, goalTerms, filterSubjects, complex, domains) {
+  _scoreNodeForGoal(node, goalTerms, filterSubjects, complex, domains, goal = '') {
     let score = 0;
     const nameLower = (node.name || '').toLowerCase();
     const defLower = (node.definition || node.description || '').toLowerCase();
@@ -686,32 +793,141 @@ class PBLPathBuilder {
     const grade = parseInt(node.grade, 10) || 0;
     if (complex && grade >= 7) score += 1;
     if (complex && grade > 0 && grade < 7) score -= 8;
+    if (goal && (domains?.length || this._isStemProjectGoal(goal))) {
+      score += this._stemBreadthScoreAdjust(node, goal);
+    }
     return score;
+  }
+
+  /** STEM 候选均衡：子系统覆盖 + 学科/形态多样，压制定律/计算堆砌 */
+  _pickStemBalancedCandidates(pool, maxCount, domains, goal) {
+    const stem = this._isStemProjectGoal(goal) && domains && domains.length;
+    if (!stem) {
+      return [...pool]
+        .sort((a, b) => (b._score || 0) - (a._score || 0))
+        .slice(0, maxCount);
+    }
+
+    const ranked = pool.map(n => ({
+      n,
+      score: (n._score || 0) + this._stemBreadthScoreAdjust(n, goal)
+    })).sort((a, b) => b.score - a.score);
+
+    const picked = [];
+    const seen = new Set();
+    const subjectCount = {};
+    const kindCount = {};
+    const maxMath = Math.max(1, Math.floor(maxCount * 0.22));
+    const maxCalc = Math.max(0, Math.floor(maxCount * 0.15));
+    const maxLaw = Math.max(1, Math.floor(maxCount * 0.25));
+
+    const canAdd = (n) => {
+      if (!n || seen.has(n.id)) return false;
+      const subj = n.subject || '';
+      if (subj === 'math' && (subjectCount.math || 0) >= maxMath) return false;
+      if (this._isQuantitativeCalcNode(n) && (kindCount.calculation || 0) >= maxCalc) return false;
+      if (this._isConservationLawNode(n) && (kindCount.law || 0) >= maxLaw) return false;
+      return true;
+    };
+    const add = (n) => {
+      if (!canAdd(n)) return false;
+      seen.add(n.id);
+      picked.push(n);
+      subjectCount[n.subject] = (subjectCount[n.subject] || 0) + 1;
+      const kind = this._stemKnowledgeKind(n);
+      kindCount[kind] = (kindCount[kind] || 0) + 1;
+      return true;
+    };
+    const rankForDomain = (domain) => ranked
+      .filter(x => !seen.has(x.n.id) && this._scoreNodeForDomains(x.n, [domain]) > 0)
+      .sort((a, b) => (b.score + this._stemKindPreference(b.n, goal) * 3)
+        - (a.score + this._stemKindPreference(a.n, goal) * 3));
+
+    domains.forEach(domain => {
+      const candidates = rankForDomain(domain);
+      const preferred = candidates.find(x => canAdd(x.n) && !this._isQuantitativeCalcNode(x.n));
+      if (preferred) add(preferred.n);
+      else if (candidates[0]) add(candidates[0].n);
+    });
+
+    const mustHave = [
+      n => n.subject === 'chemistry',
+      n => n.subject === 'info-tech',
+      n => this._stemKnowledgeKind(n) === 'experiment',
+      n => this._stemKnowledgeKind(n) === 'apparatus'
+    ];
+    mustHave.forEach(test => {
+      if (picked.some(test)) return;
+      const hit = ranked.find(x => canAdd(x.n) && test(x.n));
+      if (hit) add(hit.n);
+    });
+
+    ranked.forEach(x => {
+      if (picked.length >= maxCount) return;
+      add(x.n);
+    });
+    return picked.slice(0, maxCount);
   }
 
   _pickDomainAwareCandidates(scored, maxCount, domains, goal) {
     const relevant = scored.filter(n => this._isMainlineRelevant(n, goal, domains));
-    const sorted = [...relevant].sort((a, b) => (b._score || 0) - (a._score || 0));
-    const picked = [];
-    const seen = new Set();
-    const perDomain = Math.max(2, Math.floor(maxCount / Math.max(domains.length, 3)));
-    domains.forEach(domain => {
-      sorted
-        .filter(n => !seen.has(n.id))
-        .map(n => ({ n, ds: this._scoreNodeForDomains(n, [domain]) }))
-        .filter(x => x.ds > 0)
-        .sort((a, b) => b.ds - a.ds)
-        .slice(0, perDomain)
-        .forEach(x => {
-          seen.add(x.n.id);
-          picked.push(x.n);
-        });
+    return this._pickStemBalancedCandidates(relevant, maxCount, domains, goal);
+  }
+
+  _rebalanceStemMatched(matched, goal, candidatePool, limit) {
+    const domains = this._inferProjectDomains(goal);
+    if (!domains.length || !this._isStemProjectGoal(goal) || !matched.length) return matched;
+
+    let list = [...matched];
+    const maxCalc = Math.max(0, Math.floor(list.length * 0.15));
+    const maxLaw = Math.max(1, Math.floor(list.length * 0.25));
+    const maxMath = Math.max(1, Math.floor(list.length * 0.22));
+    const count = (fn) => list.filter(fn).length;
+    const seen = () => new Set(list.map(n => n.id));
+
+    const replaceOne = (predicate) => {
+      const idx = list.findIndex(predicate);
+      if (idx < 0) return;
+      const pool = candidatePool
+        .filter(n => !seen().has(n.id))
+        .map(n => ({
+          ...n,
+          _score: this._scoreNodeForGoal(n, this._tokenizeGoalTerms(goal), null, true, domains, goal)
+        }));
+      const alt = this._pickStemBalancedCandidates(pool, 1, domains, goal)[0];
+      if (!alt) return;
+      list.splice(idx, 1, alt);
+    };
+
+    while (count(n => this._isQuantitativeCalcNode(n)) > maxCalc) {
+      replaceOne(n => this._isQuantitativeCalcNode(n));
+      if (!candidatePool.length) break;
+    }
+    while (count(n => this._isConservationLawNode(n)) > maxLaw) {
+      replaceOne(n => this._isConservationLawNode(n));
+      if (!candidatePool.length) break;
+    }
+    while (count(n => n.subject === 'math') > maxMath) {
+      replaceOne(n => n.subject === 'math');
+      if (!candidatePool.length) break;
+    }
+    ['chemistry', 'info-tech'].forEach(subj => {
+      if (list.some(n => n.subject === subj)) return;
+      const pool = candidatePool
+        .filter(n => !seen().has(n.id) && n.subject === subj)
+        .map(n => ({
+          ...n,
+          _score: this._scoreNodeForGoal(n, this._tokenizeGoalTerms(goal), null, true, domains, goal)
+        }));
+      const alt = this._pickStemBalancedCandidates(pool, 1, domains, goal)[0];
+      if (!alt) return;
+      let dropIdx = list.findIndex(n => this._isConservationLawNode(n));
+      if (dropIdx < 0) dropIdx = list.findIndex(n => this._isQuantitativeCalcNode(n));
+      if (dropIdx < 0 && list.length >= limit) dropIdx = list.length - 1;
+      if (dropIdx >= 0) list[dropIdx] = alt;
+      else list.push(alt);
     });
-    sorted.forEach(n => {
-      if (picked.length >= maxCount) return;
-      if (!seen.has(n.id)) { seen.add(n.id); picked.push(n); }
-    });
-    return picked.slice(0, maxCount);
+    return list.slice(0, limit);
   }
 
   _pickDiverseCandidates(scored, maxCount, subjects) {
@@ -761,13 +977,16 @@ class PBLPathBuilder {
     const goalTerms = this._tokenizeGoalTerms(goal);
     const complex = this._isComplexPBLGoal(goal);
     const domains = this._inferProjectDomains(goal);
-    const scored = candidates
+    const withScore = candidates
       .filter(n => this._isMainlineRelevant(n, goal, domains))
-      .map(n => ({ n, s: this._scoreNodeForGoal(n, goalTerms, null, complex, domains) }))
-      .filter(x => x.s > 0)
-      .sort((a, b) => b.s - a.s);
-    return scored.slice(0, limit).map((x, i) => ({
-      ...x.n,
+      .map(n => ({
+        ...n,
+        _score: this._scoreNodeForGoal(n, goalTerms, null, complex, domains, goal)
+      }))
+      .filter(n => n._score > 0);
+    const picked = this._pickStemBalancedCandidates(withScore, limit, domains, goal);
+    return picked.map((n, i) => ({
+      ...n,
       confidence: Math.max(0.55, 0.88 - i * 0.03),
       matchReason: '主线关键词回退匹配',
       pblRole: i < 1 ? 'foundation' : (i < 3 ? 'bridge' : 'core')
@@ -1237,6 +1456,7 @@ class PBLPathBuilder {
         complex
       );
       core = this._filterMainlineNodes(core, goal);
+      core = this._rebalanceStemMatched(core, goal, meta.candidatePool || [], profile.maxMatched);
     }
     // 主线 pathStep 链 + 角色分层着色 + 一层主线相关前置（不展开平行/跨学科噪声）
     let graphData = this._buildRichMainlineGraph(
@@ -1476,14 +1696,16 @@ class PBLPathBuilder {
     const filter = JSON.parse(jsonStr);
     const domains = this._inferProjectDomains(goal);
 
-    // 工程类：锁定 STEM 主线学科，禁止 geography/chinese 等渗入候选池
-    if (domains.length && profile.complex) {
+    // STEM/工程类：锁定主线学科，禁止 biology/geography/chinese 渗入候选池
+    if ((domains.length || this._isStemProjectGoal(goal)) && profile.complex) {
       if (/火箭|导弹|发射|弹道|模型火箭/.test(goal)) {
+        filter.subjects = ['physics', 'chemistry', 'math', 'info-tech'];
+      } else if (this._isEnergyProjectGoal(goal)) {
         filter.subjects = ['physics', 'chemistry', 'math', 'info-tech'];
       } else {
         const subj = ['physics'];
-        if (/燃料|燃烧|化学|材料|氧化/.test(goal)) subj.push('chemistry');
-        if (/模型|函数|计算|数据|弹道|抛体/.test(goal)) subj.push('math');
+        if (/燃料|燃烧|化学|材料|氧化|电池|电化学/.test(goal)) subj.push('chemistry');
+        if (/模型|函数|计算|数据|弹道|抛体|效率/.test(goal)) subj.push('math');
         if (/控制|传感|编程|电路|数据|算法/.test(goal)) subj.push('info-tech');
         if (subj.length === 1) subj.push('math');
         filter.subjects = subj;
@@ -1518,7 +1740,7 @@ class PBLPathBuilder {
       : ['math', 'physics', 'chemistry', 'biology', 'info-tech'];
     const scored = pool.map(n => ({
       ...n,
-      _score: this._scoreNodeForGoal(n, goalTerms, filter.subjects, profile.complex, domains)
+      _score: this._scoreNodeForGoal(n, goalTerms, filter.subjects, profile.complex, domains, goal)
     }));
     const subjectList = filter.subjects && filter.subjects.length ? filter.subjects : defaultSubjects;
     const topCandidates = domains.length && profile.complex
@@ -1571,6 +1793,7 @@ class PBLPathBuilder {
     matched = this._filterMainlineNodes(matched, goal);
     matched = this._ensureMinimumMatched(matched, goal, candidates, profile.maxMatched, complex);
     matched = this._filterMainlineNodes(matched, goal);
+    matched = this._rebalanceStemMatched(matched, goal, candidates, profile.maxMatched);
 
     let pathOrderIds = (result.pathOrder || result.learningSequence || [])
       .map(i => (typeof i === 'string' ? parseInt(i, 10) : i))

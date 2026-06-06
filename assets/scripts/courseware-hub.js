@@ -91,17 +91,6 @@ async function fetchJSON(url) {
   return resp.json();
 }
 
-async function fetchHubSiteJson(relPath) {
-  if (window.TeachAnyDataFetch) {
-    try {
-      return await window.TeachAnyDataFetch.fetchSiteJson(relPath);
-    } catch (e) {
-      console.warn('[CoursewareHub] TeachAnyDataFetch:', relPath, e.message);
-    }
-  }
-  return fetchJSON('./' + relPath.replace(/^\.\//, ''));
-}
-
 /* ─── 初始化 ──────────────────────────────────── */
 async function init() {
   if (_initialized) return;
@@ -124,8 +113,8 @@ async function _doInit() {
     } else {
       // 2. 并行加载两个数据源
       const [regResult, comResult] = await Promise.allSettled([
-        fetchHubSiteJson('registry.json'),
-        fetchHubSiteJson('community/index.json'),
+        fetchJSON(HUB_REGISTRY_URL),
+        fetchJSON(HUB_COMMUNITY_URL),
       ]);
       registryData = regResult.status === 'fulfilled' ? regResult.value : { courses: [] };
       communityData = comResult.status === 'fulfilled' ? comResult.value : { courses: [] };
