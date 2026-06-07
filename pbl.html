@@ -755,7 +755,7 @@ body {
       用于项目式学习的个性化路径设计。只需描述你的项目目标，AI 将自动从全球课标体系中匹配所需知识点，生成完整的学习路径图谱。<br>
       覆盖 <b>中国课标 / AP / Cambridge / IB / US CCSS</b> 五大体系，支持 K12 及以外的知识点。图谱中的每个知识点均可一键生成个性化课件。
     </div>
-    <textarea id="pblGoalInput" class="pbl-textarea" placeholder="描述你的项目目标，如：设计一个智能家居温度控制系统、制作一个天气预报App、分析城市交通拥堵问题..."></textarea>
+    <textarea id="pblGoalInput" class="pbl-textarea" placeholder="描述你的项目目标，如：家庭购车方案对比、策划班级研学、阳台种菜记录、设计智能温室…"></textarea>
     <div class="pbl-examples">
       <span class="ex-label">示范项目：</span>
       <span class="ex-chip" onclick="fillPBLExample(this)" data-key="smart-home-temp" data-goal="设计一个智能家居温度控制系统，利用传感器实时监测室温，自动调节空调或暖气，实现节能恒温">🏠 智能家居温控</span>
@@ -766,6 +766,13 @@ body {
       <span class="ex-chip" onclick="fillPBLExample(this)" data-key="water-quality" data-goal="分析本地河流水质，采集pH值、溶解氧、浊度数据，评估污染程度并提出治理建议">💧 河流水质分析</span>
       <span class="ex-chip" onclick="fillPBLExample(this)" data-key="encryption-tool" data-goal="设计一个简易加密通信工具，实现凯撒密码和RSA加密，理解对称加密与非对称加密的原理">🔐 加密通信工具</span>
       <span class="ex-chip" onclick="fillPBLExample(this)" data-key="solar-system" data-goal="构建一个太阳系模拟器，用物理引擎模拟行星轨道运动，展示开普勒定律和万有引力">🪐 太阳系模拟器</span>
+      <span class="ex-chip" onclick="fillPBLExample(this)" data-key="car-purchase" data-goal="家庭购车方案，对比新能源和传统燃油，从需求、全成本、环保等维度给出购车建议">🚙 家庭购车对比</span>
+      <span class="ex-chip" onclick="fillPBLExample(this)" data-key="study-trip" data-goal="设计一次班级研学旅行路线和预算，包含日程安排、费用测算与安全预案">🎒 研学路线规划</span>
+      <span class="ex-chip" onclick="fillPBLExample(this)" data-key="balcony-garden" data-goal="在阳台种植蔬菜并记录生长过程，观察光照和浇水对植物的影响，形成种植日记">🥬 阳台种菜日记</span>
+      <span class="ex-chip" onclick="fillPBLExample(this)" data-key="charity-fair" data-goal="策划一次校园义卖活动，完成市场调研、成本定价、宣传推广和复盘总结">🎪 校园义卖策划</span>
+      <span class="ex-chip" onclick="fillPBLExample(this)" data-key="eye-care" data-goal="制定一份班级近视防控方案，调查同学用眼习惯，提出可执行的护眼计划并评估效果">👁️ 近视防控方案</span>
+      <span class="ex-chip" onclick="fillPBLExample(this)" data-key="hometown-poems" data-goal="为校园写一组以家乡为主题的现代诗并编成诗集，完成立意选材、写作修改与朗诵展示">📖 家乡诗集创作</span>
+      <span class="ex-chip" onclick="fillPBLExample(this)" data-key="garbage-survey" data-goal="调查社区垃圾分类现状并提出改进建议，设计问卷、统计数据并撰写调查报告">♻️ 垃圾分类调查</span>
     </div>
     <div class="pbl-actions">
       <button class="pbl-analyze-btn" id="pblAnalyzeBtn" onclick="analyzePBLGoal()">🔍 拆解项目路径</button>
@@ -884,39 +891,37 @@ async function fillPBLExample(el) {
   const key = el.dataset.key;
   document.getElementById('pblGoalInput').value = goal;
 
-  // 尝试加载预制分析结果
-  const demoUrl = `./data/pbl-demos/${key}.json`;
-  const statusEl = document.getElementById('pblStatus');
-  const statusText = document.getElementById('pblStatusText');
+  if (key) {
+    const demoUrl = `./data/pbl-demos/${key}.json`;
+    const statusEl = document.getElementById('pblStatus');
+    const statusText = document.getElementById('pblStatusText');
 
-  try {
-    statusEl.style.display = 'block';
-    statusText.textContent = '加载示范案例分析结果...';
+    try {
+      statusEl.style.display = 'block';
+      statusText.textContent = '加载示范案例分析结果...';
 
-    const resp = await fetch(demoUrl);
-    if (resp.ok) {
-      const result = await resp.json();
-      // 加载统一索引以补全节点信息
-      const builder = window.PBLPathBuilder;
-      try { await builder.loadUnifiedIndex(); } catch (_e) {}
-      if (window.PBLPathBuilder && typeof window.PBLPathBuilder.resolveTechRouteText === 'function') {
-        result.techRoute = window.PBLPathBuilder.resolveTechRouteText(result);
+      const resp = await fetch(demoUrl);
+      if (resp.ok) {
+        const result = await resp.json();
+        const builder = window.PBLPathBuilder;
+        try { await builder.loadUnifiedIndex(); } catch (_e) {}
+        if (window.PBLPathBuilder && typeof window.PBLPathBuilder.resolveTechRouteText === 'function') {
+          result.techRoute = window.PBLPathBuilder.resolveTechRouteText(result);
+        }
+        pblResult = result;
+        statusText.textContent = '渲染知识路径图谱...';
+        renderPBLResult(result);
+        statusEl.style.display = 'none';
+        scrollToPBLOutput();
+        return;
       }
-      pblResult = result;
-      statusText.textContent = '渲染知识路径图谱...';
-      renderPBLResult(result);
-      statusEl.style.display = 'none';
-
-      scrollToPBLOutput();
-      return;
+    } catch (_e) {
+      console.warn('[PBL] 预制结果加载失败，回退到实时分析:', _e.message);
     }
-  } catch (_e) {
-    console.warn('[PBL] 预制结果加载失败，回退到实时分析:', _e.message);
+    statusEl.style.display = 'none';
   }
 
-  // 回退：预制不存在则用按钮文案提示用户点击分析
-  statusEl.style.display = 'none';
-  markPBLGoalDirty();
+  await analyzePBLGoal();
 }
 
 async function analyzePBLGoal() {
