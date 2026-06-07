@@ -659,7 +659,30 @@ class PBLPathBuilder {
     if (/低空经济|低空飞行|低空空域|空域管理|通航产业|城市空中交通|eVTOL|低空物流|通用航空/.test(g)) return 'industry-innovation';
     if (/太空馆|天文馆|航天馆|科技馆|博物馆|展厅|展陈|太空.*馆|天文.*馆/.test(g) || (/馆|展厅|展览/.test(g + subject) && /重塑|改造|整治|升级|策展|布展|失控|翻新|重建|优化/.test(g))) return 'exhibition-redesign';
     if (/探寻|探索|研究|调研/.test(g) && /创新|产业|经济|行业/.test(g)) return 'industry-innovation';
+    if (/种植|栽培|养花|月季|花卉|玫瑰|蔬菜|种菜|盆栽|园艺|养殖|养蚕|花坛|绿化|阳台种/.test(g)) return 'planting-cultivation';
     return 'subject-anchored';
+  }
+
+  _plantingCropLabel(goal) {
+    const g = String(goal || '');
+    const m = g.match(/月季|玫瑰|番茄|黄瓜|辣椒|白菜|菠菜|多肉|薰衣草|向日葵|郁金香|菊花|荷花|草莓|葡萄|玉米|小麦|蚕|百合|牡丹/);
+    return m ? m[0] : '植物';
+  }
+
+  _plantingCultivationDomains(goal) {
+    const crop = this._plantingCropLabel(goal);
+    const subject = this._parseGoalSubject(goal);
+    return [
+      { id: 'taxonomy', label: '植物识别与分类', keywords: [crop, subject, '植物', '分类', '特征', '结构', '器官', '绿色'], subjects: ['science', 'biology'] },
+      { id: 'growth', label: '生长与环境条件', keywords: [crop, '生长', '光合', '呼吸', '种子', '萌发', '根', '蒸腾', '环境', '水分'], subjects: ['science', 'biology'] },
+      { id: 'cultivate', label: '栽培实操', keywords: [crop, '种植', '栽培', '土壤', '浇水', '施肥', '扦插', '移栽', '步骤', '养护'], subjects: ['science', 'biology'] },
+      { id: 'observe', label: '生长观察记录', keywords: [crop, '观察', '记录', '测量', '数据', '图表', '变化', '高度', '叶片'], subjects: ['science', 'math', 'biology'] },
+      { id: 'share', label: '种植日记与分享', keywords: [crop, '日记', '报告', '总结', '分享', '说明', '写作'], subjects: ['chinese'] },
+    ];
+  }
+
+  _isPlantingCultivationGoal(goal) {
+    return this._inferTopicKind(String(goal || ''), this._parseGoalSubject(goal)) === 'planting-cultivation';
   }
 
   _buildTopicKeywords(goal, subject, kind) {
@@ -670,6 +693,9 @@ class PBLPathBuilder {
     if (/低空|空域|通航|无人机/.test(g + subject)) base.push('低空经济', '空域', '无人机', '飞行');
     if (kind === 'exhibition-redesign') base.push('调查', '方案', '说明', '统计', '设计', '展示');
     if (kind === 'industry-innovation') base.push('产业', '创新', '调研', '政策', '可行性');
+    if (kind === 'planting-cultivation' || /种植|栽培|月季|花卉|蔬菜|盆栽|园艺|养殖|养蚕/.test(g + subject)) {
+      base.push('植物', '分类', '生长', '光合', '种子', '萌发', '栽培', '根系', '蒸腾', '观察', '记录');
+    }
     for (let i = 0; i < subject.length - 1; i++) {
       const w = subject.slice(i, i + 2);
       if (w.length === 2 && !/[的与及了在]$/.test(w)) base.push(w);
@@ -680,6 +706,7 @@ class PBLPathBuilder {
   _inferDeliverableHint(goal, subject, kind) {
     if (kind === 'exhibition-redesign') return `「${subject}」改造方案册（现状诊断表+展陈设计图+整改实施清单+开放验收表）`;
     if (kind === 'industry-innovation') return `「${subject}」创新方案报告（场景调研+政策要点+可行性论证）`;
+    if (kind === 'planting-cultivation') return `「${subject}」种植观察日记（植物分类笔记+栽培记录表+生长数据图表+总结）`;
     if (/报告|调查|论文|倡议|方案/.test(goal)) return `「${subject}」专题报告（含调研数据与可检查结论）`;
     if (/设计|制作|开发|建造/.test(goal)) return `可展示的「${subject}」作品+过程记录+说明文档`;
     return `「${subject}」项目成果包（可展示交付物+过程记录+说明）`;
@@ -704,7 +731,7 @@ class PBLPathBuilder {
     }
     const subject = this._parseGoalSubject(g);
     const kind = this._inferTopicKind(g, subject);
-    const banCommon = ['原型驱动迭代', 'MVP', '快速原型', '递进式实施', '环境搭建', '工程设计思维', '招生简章', '现代物流管理', '智慧城市'];
+    const banCommon = ['原型驱动迭代', 'MVP', '快速原型', '递进式实施', '浸润式场景', '硬件准备', '环境搭建', '工程设计思维', '招生简章', '现代物流管理', '智慧城市'];
     if (kind === 'industry-innovation') {
       const core = /低空经济/.test(g) ? '低空经济' : (g.match(/(?:.+?经济|.+?产业|.+?行业)/)?.[0]?.slice(0, 24) || subject);
       return {
@@ -721,6 +748,16 @@ class PBLPathBuilder {
         definition: `对「${subject}」进行现状诊断、主题策划、展陈设计与整改实施，交付可验收的改造方案`,
         keywords: this._buildTopicKeywords(g, subject, kind),
         banInSteps: [...banCommon, '程序设计', '电解池', '搭建原型'],
+        deliverableHint: this._inferDeliverableHint(g, subject, kind),
+      };
+    }
+    if (kind === 'planting-cultivation') {
+      const crop = this._plantingCropLabel(g);
+      return {
+        rawGoal: g, matched: true, coreTopic: subject, kind, crop,
+        definition: `围绕「${subject}」学习植物分类与生长原理，完成${crop}栽培并持续观察记录`,
+        keywords: this._buildTopicKeywords(g, subject, kind),
+        banInSteps: [...banCommon, '程序设计', '牛顿', '化学方程式', '电解池'],
         deliverableHint: this._inferDeliverableHint(g, subject, kind),
       };
     }
@@ -761,7 +798,8 @@ class PBLPathBuilder {
     if (/诗歌|诗集|现代诗|诗词|写诗|小说|剧本|散文|绘本|故事集|演讲|辩论|文学|翻译|双语|新闻稿|采访稿|写一[篇组]|作文|征文|朗诵|文集|杂志|读后感|书评|话剧|文章/.test(g)) return 'humanities-literary';
     if (/创业|商业计划|营销|市场推广|运营|理财|零花钱|压岁钱|市场调研|义卖|跳蚤市场|店铺|定价|商业模式|经济效益|盈利|众筹|招商|品牌策划/.test(g)) return 'business-economics';
     if (/健康|营养|饮食|食谱|减脂|减肥|健身|锻炼|运动会?|近视|视力|护眼|睡眠|作息|心理|情绪|压力|安全|急救|防溺水|防火|防疫|卫生|疾病|人体|体重|身高/.test(g)) return 'health-life';
-    if (/种植|种菜|盆栽|养护|养殖|养蚕|园艺|烹饪|烘焙|美食|菜谱|料理|手工|编织|缝纫|收纳|整理|维修|清洁|打扫|劳动/.test(g)) return 'labor-practice';
+    if (this._isPlantingCultivationGoal(g)) return 'planting-cultivation';
+    if (/烹饪|烘焙|美食|菜谱|料理|手工|编织|缝纫|收纳|整理|维修|清洁|打扫|劳动/.test(g)) return 'labor-practice';
     if (/活动策划|策划.{0,6}(活动|晚会|联欢|运动会|典礼|节|比赛)|联欢会|晚会|文艺汇演|毕业典礼|生日会|出游|旅行|研学|游学|路线规划|时间管理|班级布置|布置教室|嘉年华|游园/.test(g)) return 'life-planning';
     if (/田野|问卷|访谈|社区|民俗|传统文化|非遗|人口|城乡|社会现象|调研报告|公众.{0,4}认知|居民|乡土|口述史/.test(g)) return 'social-inquiry';
     if (this._isExhibitionRedesignGoal(g)) return 'exhibition-redesign';
@@ -819,6 +857,13 @@ class PBLPathBuilder {
         { id: 'plan', label: '计划制定', keywords: ['计划', '方案', '目标', '食谱', '作息', '锻炼'], subjects: ['chinese', 'math'] },
         { id: 'assess', label: '实践与评估', keywords: ['记录', '评估', '对比', '反馈', '改进', '报告', '宣传', '倡议'], subjects: ['chinese', 'math'] },
       ],
+      'planting-cultivation': [
+        { id: 'taxonomy', label: '植物识别与分类', keywords: ['植物', '分类', '特征', '结构', '器官', '绿色'], subjects: ['science', 'biology'] },
+        { id: 'growth', label: '生长与环境', keywords: ['生长', '光合', '呼吸', '种子', '萌发', '根', '蒸腾'], subjects: ['science', 'biology'] },
+        { id: 'cultivate', label: '栽培实操', keywords: ['种植', '栽培', '土壤', '浇水', '施肥', '移栽', '养护'], subjects: ['science', 'biology'] },
+        { id: 'observe', label: '观察记录', keywords: ['观察', '记录', '测量', '数据', '图表', '变化'], subjects: ['science', 'math', 'biology'] },
+        { id: 'share', label: '种植日记', keywords: ['日记', '报告', '总结', '分享', '说明'], subjects: ['chinese'] },
+      ],
       'labor-practice': [
         { id: 'prepare', label: '认识与准备', keywords: ['认识', '准备', '材料', '工具', '原理', '步骤'], subjects: ['science', 'biology', 'chinese'] },
         { id: 'practice', label: '操作实践', keywords: ['操作', '制作', '种植', '养护', '烹饪', '步骤', '工艺'], subjects: ['science', 'biology'] },
@@ -856,6 +901,9 @@ class PBLPathBuilder {
       return this._getChemistryAnalysisProfile(g).mixed
         ? this._mixedSolutionChemistryDomains()
         : this._directSolutionChemistryDomains();
+    }
+    if (this._isPlantingCultivationGoal(g)) {
+      return this._plantingCultivationDomains(g);
     }
     if (this._isExhibitionRedesignGoal(g)) {
       const subject = this._parseGoalSubject(g);
@@ -1160,6 +1208,7 @@ class PBLPathBuilder {
       lowAltitude: topic.kind === 'industry-innovation' && topic.coreTopic === '低空经济',
       industry: topic.kind === 'industry-innovation',
       exhibition: topic.kind === 'exhibition-redesign',
+      planting: topic.kind === 'planting-cultivation',
     };
 
     const mismatchRes = [];
@@ -1168,6 +1217,9 @@ class PBLPathBuilder {
     }
     if (domains.exhibition) {
       mismatchRes.push(/原型驱动迭代|快速原型|MVP|环境搭建|程序设计|电解池|招生简章|现代物流|智慧城市|工程设计思维/);
+    }
+    if (domains.planting) {
+      mismatchRes.push(/原型驱动迭代|浸润式场景|快速原型|MVP|硬件准备|程序设计|牛顿定律|化学方程式|电解池|机械玩具|机器人/);
     }
     if (topic.matched) {
       mismatchRes.push(/递进式实施|原型驱动迭代|可展示的项目原型/);
@@ -1238,6 +1290,25 @@ class PBLPathBuilder {
     const verb = verbs[stepIdx % verbs.length];
     const blob = `${phaseName} ${ctx.subsystems.join(' ')} ${rawStep || ''}`;
 
+    if (profile.domains.planting || /植物|种植|栽培|园艺|光合|萌发|月季|花卉/.test(blob)) {
+      const crop = profile.topic?.crop || this._plantingCropLabel(goal);
+      if (/分类|识别|特征|结构|器官/.test(blob)) {
+        return `辨认「${artifact}」中的${crop}：绘制植物结构简图并标注根/茎/叶/花，填写分类特征表（≥4项可观察特征）`;
+      }
+      if (/生长|光合|萌发|环境|水分|根|蒸腾/.test(blob)) {
+        return `学习${crop}生长原理：查阅资料说明光合/根系吸收/萌发条件，制作「${artifact}」生长条件对照表（光照/水分/温度各1列）`;
+      }
+      if (/栽培|种植|土壤|浇水|施肥|移栽|扦插|养护/.test(blob)) {
+        return `完成「${artifact}」${crop}栽培实操：按步骤记录挖穴→定植→浇透水，填写栽培日志（日期/操作/天气/问题各1条）`;
+      }
+      if (/观察|记录|测量|数据|图表|变化/.test(blob)) {
+        return `每周2次测量「${artifact}」${crop}株高/叶片数，录入表格并绘制折线图（至少4个数据点）`;
+      }
+      if (/日记|报告|总结|分享/.test(blob)) {
+        return `撰写「${artifact}」种植观察日记（≥300字）：含分类认识、栽培过程、生长变化与1条改进建议`;
+      }
+      return `围绕「${artifact}」完成${phaseName}：结合 ${hints} 整理${crop}种植资料并填写可核查记录表`;
+    }
     if (profile.domains.exhibition || /馆|展厅|展陈|太空|天文|科普/.test(blob)) {
       if (/诊断|现状|问题|失控|隐患/.test(blob)) {
         return `走访「${artifact}」并填写现状诊断表：拍摄≥5张问题点位照片，列出≥8条失控/安全隐患（附整改优先级）`;
@@ -2742,6 +2813,27 @@ class PBLPathBuilder {
       });
       return this._concretizeBlueprint(goal, bp, this._resolvedArchetype);
     }
+    if (this._isPlantingCultivationGoal(goal)) {
+      let pbp = bp ? JSON.parse(JSON.stringify(bp)) : null;
+      if (!pbp?.schemes?.length) pbp = this._buildPlantingCultivationBlueprint(goal);
+      pbp.projectType = 'planting-cultivation';
+      const topic = this._extractTopicProfile(goal);
+      const badRe = /原型驱动迭代|浸润式场景|快速原型|MVP|硬件准备|递进式实施|可展示的项目原型/;
+      if (!pbp.deliverable || badRe.test(pbp.deliverable)) pbp.deliverable = topic.deliverableHint;
+      if (!pbp.projectSummary || pbp.projectSummary.length < 12) {
+        pbp.projectSummary = `围绕「${topic.coreTopic}」开展植物分类学习、${topic.crop || '植物'}栽培与生长观察`;
+      }
+      pbp.schemes = (pbp.schemes || []).slice(0, 1).map(s => ({
+        ...s,
+        name: String(s.name || '').replace(/浸润式场景|原型驱动迭代|递进式实施/, `「${topic.coreTopic}」种植`),
+        phases: (s.phases || []).map(p => ({
+          ...p,
+          steps: (p.steps || []).filter(st => !badRe.test(String(st))),
+          knowledgeHints: [...new Set([...(p.knowledgeHints || []), '植物', '分类', '光合', '种子', '萌发', '栽培', '生长', topic.crop || '月季'].filter(Boolean)])].slice(0, 6),
+        })).filter(p => (p.steps || []).length > 0),
+      }));
+      return this._concretizeBlueprint(goal, pbp, this._resolvedArchetype);
+    }
     if (this._isExhibitionRedesignGoal(goal)) {
       let ebp = bp ? JSON.parse(JSON.stringify(bp)) : null;
       if (!ebp?.schemes?.length) ebp = this._buildExhibitionRedesignBlueprint(goal);
@@ -2834,7 +2926,7 @@ class PBLPathBuilder {
         ...(s.phases || []).flatMap(p => [p.phase, ...(p.steps || []), p.deliverable, ...(p.knowledgeHints || [])]),
       ]),
     ].join(' ');
-    const genericRe = /递进式实施|原型驱动迭代|可展示的项目原型|MVP\s*原型|快速原型/;
+    const genericRe = /递进式实施|原型驱动迭代|浸润式场景|可展示的项目原型|MVP\s*原型|快速原型|硬件准备/;
     if (genericRe.test(blob)) return false;
     const hit = tokens.filter(t => t.length >= 2 && blob.includes(t)).length;
     return hit >= Math.min(2, tokens.length) || blob.includes(topic.coreTopic);
@@ -2884,6 +2976,12 @@ class PBLPathBuilder {
     return this._buildSubjectAnchoredBlueprint(goal, `「${this._parseGoalSubject(goal)}」展陈改造方案`);
   }
 
+  _buildPlantingCultivationBlueprint(goal) {
+    const topic = this._extractTopicProfile(goal);
+    const crop = topic.crop || this._plantingCropLabel(goal);
+    return this._buildSubjectAnchoredBlueprint(goal, `「${topic.coreTopic}」${crop}种植实施方案`);
+  }
+
   _buildIndustryInnovationBlueprint(goal) {
     const topic = this._extractTopicProfile(goal);
     const topicName = topic.coreTopic || '低空经济';
@@ -2925,6 +3023,9 @@ class PBLPathBuilder {
   }
 
   _fallbackDecomposeBlueprint(goal) {
+    if (this._isPlantingCultivationGoal(goal)) {
+      return this._sanitizeBlueprintForGoal(this._buildPlantingCultivationBlueprint(goal), goal);
+    }
     if (this._isExhibitionRedesignGoal(goal)) {
       return this._sanitizeBlueprintForGoal(this._buildExhibitionRedesignBlueprint(goal), goal);
     }
