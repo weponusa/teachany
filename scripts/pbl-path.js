@@ -1154,6 +1154,131 @@ class PBLPathBuilder {
     return out;
   }
 
+  _mapExternalEntries(entries) {
+    return (entries || [])
+      .filter(ext => ext && (ext.name || ext.title))
+      .slice(0, PBLPathBuilder.PBL_MAX_EXTERNAL)
+      .map((ext, i) => {
+        const name = String(ext.name || ext.title || '').trim();
+        const reason = String(ext.reason || ext.definition || '课标未单独覆盖，但项目实施必需').trim();
+        return {
+          id: `ext-${this._hash8(name + i)}`,
+          name,
+          name_en: '',
+          subject: '',
+          domain: '',
+          grade: 0,
+          difficulty: 0,
+          definition: reason,
+          key_concepts: [],
+          prerequisites: [],
+          extends: [],
+          parallel: [],
+          system: 'external',
+          systemTag: '💡',
+          systemLabel: '课标外补充',
+          treePath: '',
+          isExternal: true,
+          layer: 'external',
+          extPrerequisites: ext.prerequisites || [],
+          confidence: 0.62,
+          matchReason: reason
+        };
+      });
+  }
+
+  /** 按项目类型提供课标外知识点候选池（LLM 未返回时回退） */
+  _fallbackExternalPool(goal) {
+    const pools = {
+      'consumer-decision': [
+        { name: '全生命周期用车成本（TCO）', reason: '课标未系统讲授购车全成本模型，但家庭选车决策必需' },
+        { name: '新能源汽车购置补贴与税费政策', reason: '政策直接影响购车成本，需查阅课外政策资料' },
+        { name: '车辆保值率与残值评估', reason: '二手残值是选车重要维度，课本通常不涉及' },
+      ],
+      'engineering': [
+        { name: '工程安全与操作规范', reason: '实验/制作环节的安全规程，课标无专项条目但落地必需' },
+        { name: '原型测试与故障排查', reason: '工程迭代调试方法超出课本但项目实施必需' },
+        { name: '用户需求访谈与场景分析', reason: '以用户为中心的设计方法，课本较少展开' },
+      ],
+      'scientific-inquiry': [
+        { name: '实验伦理与数据真实性', reason: '科学探究中的伦理与记录规范，课标提及较少' },
+        { name: '不确定度与误差传播', reason: '测量结果可信度评估，超出常规课标深度' },
+        { name: '科学论文式报告结构', reason: '规范撰写探究报告，需课外方法论补充' },
+      ],
+      'social-inquiry': [
+        { name: '问卷信效度检验', reason: '调查工具质量保障，课标较少系统讲授' },
+        { name: '访谈伦理与知情同意', reason: '田野调查伦理要求，需课外补充' },
+        { name: '数据可视化叙事', reason: '用图表讲故事的技能，超出常规统计课标' },
+      ],
+      'humanities-literary': [
+        { name: '文学批评与互文阅读', reason: '深化文本解读的批评视角，课标外拓展' },
+        { name: '朗诵与舞台表现技巧', reason: '口头展示与情感表达，课本较少展开' },
+        { name: '版权与引用规范', reason: '创作与发表中的版权意识，需课外补充' },
+      ],
+      'creative-media': [
+        { name: '版式与视觉层次设计', reason: '专业排版原则，课标信息技术较少深入' },
+        { name: '受众分析与传播策略', reason: '面向受众的创意传播，课本较少涉及' },
+        { name: '数字作品版权与授权', reason: '发布作品时的版权合规，需课外了解' },
+      ],
+      'business-economics': [
+        { name: '市场调研抽样方法', reason: '商业调研中的抽样设计，课标外但实践必需' },
+        { name: '盈亏平衡与现金流', reason: '简易商业测算模型，课本通常不单独讲授' },
+        { name: '品牌定位与卖点提炼', reason: '营销策划中的定位方法，需课外补充' },
+      ],
+      'life-planning': [
+        { name: '行程风险与应急预案', reason: '活动策划中的风险管理，课标无专项条目' },
+        { name: '团队协作与分工机制', reason: '项目分工与协作方法，课本较少系统讲授' },
+        { name: '时间管理与里程碑', reason: '项目进度管控，课外项目管理常识' },
+      ],
+      'health-life': [
+        { name: '健康行为改变模型', reason: '行为干预的理论框架，超出常规健康课标' },
+        { name: '可穿戴设备与健康监测', reason: '数字化健康追踪工具，课本较少涉及' },
+        { name: '健康传播与同伴影响', reason: '健康倡议的传播策略，需课外补充' },
+      ],
+      'labor-practice': [
+        { name: '工具安全与操作规范', reason: '劳动实践中的安全要点，需专项课外指导' },
+        { name: '过程记录与反思日志', reason: '劳动教育中的反思性记录方法' },
+        { name: '成果评价量规（Rubric）', reason: '评价劳动成果的标准化工具，课标外常用' },
+      ],
+      'general': [
+        { name: '跨学科资料检索与引用', reason: '整合多来源信息并规范引用，课标较少系统讲授' },
+        { name: '项目迭代与复盘方法', reason: 'PDCA 式改进流程，指导落地但课标外' },
+        { name: '成果展示与答辩表达', reason: '公开汇报技巧，PBL 展示必需但课标外' },
+      ],
+    };
+    return pools[this._classifyProjectType(goal)] || pools.general;
+  }
+
+  /** 保证图谱含 1-3 个课标外知识点 */
+  _ensureExternalNodes(external, goal, matched, projectBlueprint) {
+    const max = PBLPathBuilder.PBL_MAX_EXTERNAL;
+    const min = PBLPathBuilder.PBL_MIN_EXTERNAL;
+    let list = this._mapExternalEntries(external);
+    const seen = new Set(list.map(e => String(e.name).toLowerCase()));
+
+    const addItem = (item) => {
+      if (list.length >= max || !item) return;
+      const name = String(item.name || '').trim();
+      if (!name || seen.has(name.toLowerCase())) return;
+      const mapped = this._mapExternalEntries([item]);
+      if (!mapped.length) return;
+      list.push(mapped[0]);
+      seen.add(name.toLowerCase());
+    };
+
+    this._fallbackExternalPool(goal).forEach(addItem);
+
+    if (list.length < min) {
+      [
+        { name: '跨学科资料检索与引用规范', reason: '整合多来源信息并规范引用，课标较少系统讲授' },
+        { name: '项目迭代与复盘方法', reason: 'PDCA/迭代改进流程，指导项目实施但课标外' },
+        { name: '成果展示与答辩表达', reason: '公开汇报与答辩技巧，课标外但对 PBL 展示必需' },
+      ].forEach(addItem);
+    }
+
+    return list.slice(0, max);
+  }
+
   _rescueCandidatesFromPool(goal, candidates, limit) {
     const goalTerms = this._tokenizeGoalTerms(goal);
     const complex = this._isComplexPBLGoal(goal);
@@ -1458,6 +1583,8 @@ class PBLPathBuilder {
   // ─── PBL 路径分析核心 ──────────────────────────
 
   static PBL_MAX_GRAPH_NODES = 22;
+  static PBL_MIN_EXTERNAL = 1;
+  static PBL_MAX_EXTERNAL = 3;
   static PBL_MAX_MATCHED_COMPLEX = 10;
   static PBL_MIN_MATCHED_COMPLEX = 5;
   static PBL_MIN_GRADE_COMPLEX = 7;
@@ -1804,9 +1931,12 @@ class PBLPathBuilder {
   _capGraphNodes(graphData, maxNodes = PBLPathBuilder.PBL_MAX_GRAPH_NODES) {
     const nodes = graphData.nodes || [];
     if (nodes.length <= maxNodes) return graphData;
+    const extKeep = nodes.filter(n => n.layer === 'external').slice(0, PBLPathBuilder.PBL_MAX_EXTERNAL);
+    const others = nodes.filter(n => n.layer !== 'external');
+    const budget = Math.max(maxNodes - extKeep.length, Math.floor(maxNodes * 0.75));
     const layerScore = { matched: 1000, external: 850, advanced: 750, parallel: 400, prerequisite: 600 };
     const roleBonus = { foundation: 100, bridge: 140, core: 80 };
-    const scored = nodes.map(n => ({
+    const scored = others.map(n => ({
       n,
       score: (layerScore[n.layer] || 50) + (n.confidence || 0) * 50
         + (roleBonus[n.pblRole] || 0)
@@ -1814,7 +1944,7 @@ class PBLPathBuilder {
         - (this._excludeForComplexProject(n) ? 400 : 0)
     }));
     scored.sort((a, b) => b.score - a.score);
-    const kept = scored.slice(0, maxNodes).map(s => s.n);
+    const kept = [...scored.slice(0, budget).map(s => s.n), ...extKeep];
     const keptIds = new Set(kept.map(n => n.id));
     const links = (graphData.links || []).filter(l => {
       const src = typeof l.source === 'object' ? l.source.id : l.source;
@@ -1857,11 +1987,12 @@ class PBLPathBuilder {
       meta.pathOrderIds || [],
       goal,
       meta.dependsOnLinks || [],
-      external.slice(0, 1)
+      external.slice(0, PBLPathBuilder.PBL_MAX_EXTERNAL)
     );
     graphData = this._capGraphNodes(graphData, PBLPathBuilder.PBL_MAX_GRAPH_NODES);
     const mainline = this._getMainlinePath(graphData);
-    return { complex, matched: mainline.length ? mainline : core, external: external.slice(0, 1), graphData };
+    const extOut = external.slice(0, PBLPathBuilder.PBL_MAX_EXTERNAL);
+    return { complex, matched: mainline.length ? mainline : core, external: extOut, graphData };
   }
 
   /**
@@ -2271,29 +2402,7 @@ class PBLPathBuilder {
       projectPhases = blueprintPhases;
     }
 
-    // 解析外部知识点
-    const external = (result.external || []).slice(0, complex ? 2 : 3).map((ext, i) => ({
-      id: `ext-${this._hash8(ext.name + i)}`,
-      name: ext.name,
-      name_en: '',
-      subject: '',
-      domain: '',
-      grade: 0,
-      difficulty: 0,
-      definition: ext.reason,
-      key_concepts: [],
-      prerequisites: [],
-      extends: [],
-      parallel: [],
-      system: 'external',
-      systemTag: '💡',
-      systemLabel: '外部补充',
-      treePath: '',
-      isExternal: true,
-      extPrerequisites: ext.prerequisites || [],
-      confidence: 0.6,
-      matchReason: ext.reason
-    }));
+    const external = this._ensureExternalNodes(result.external || [], goal, matched, projectBlueprint);
 
     const techRoute = (result.techRoute || '').trim();
     const knowledgeChain = (result.knowledgeChain || '').trim();
@@ -2539,7 +2648,8 @@ class PBLPathBuilder {
       topMatched = this._rescueCandidatesFromPool(goal, pool, 15);
     }
     const projectBlueprint = this._fallbackDecomposeBlueprint(goal);
-    const finalized = this._finalizePBLGraph(goal, topMatched, [], activeSystems, {
+    const external = this._ensureExternalNodes([], goal, topMatched, projectBlueprint);
+    const finalized = this._finalizePBLGraph(goal, topMatched, external, activeSystems, {
       candidatePool: topMatched
     });
 
