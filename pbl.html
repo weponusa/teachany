@@ -792,9 +792,9 @@ body {
 </div>
 
 <script src="./assets/scripts/courseware-hub.js"></script>
-<script src="./assets/scripts/pbl-bloom.js?v=20260608-product"></script>
-<script src="./assets/scripts/pbl-archetypes.js?v=20260608-product"></script>
-<script src="./assets/scripts/pbl-path.js?v=20260608-product"></script>
+<script src="./assets/scripts/pbl-bloom.js?v=20260608-actionable"></script>
+<script src="./assets/scripts/pbl-archetypes.js?v=20260608-actionable"></script>
+<script src="./assets/scripts/pbl-path.js?v=20260608-actionable"></script>
 <script src="./assets/scripts/history-tracker.js" defer></script>
 <script src="./assets/scripts/teachany-make-course.js"></script>
 <script>
@@ -1065,10 +1065,19 @@ function renderPBLDecomposeHTML(blueprint) {
     if (s.phases?.length) {
       html += `<ol class="pbl-decompose-phases" style="margin:8px 0 0 18px;font-size:13px;color:var(--dim)">`;
       s.phases.slice(0, 5).forEach(p => {
-        html += `<li><strong>${escapePBLHtml(p.phase)}</strong> → ${escapePBLHtml(p.deliverable || '')}`;
+        html += `<li><strong>${escapePBLHtml(p.phase)}</strong>`;
+        html += `<div style="margin:4px 0;color:var(--accent)">产出：${escapePBLHtml(p.deliverable || '')}</div>`;
+        if (p.tools?.length) {
+          html += `<div style="font-size:12px;color:var(--dimmer)">工具：${p.tools.map(t => escapePBLHtml(t)).join('、')}</div>`;
+        }
         if (p.steps?.length) {
-          html += `<ul style="margin:4px 0 0 16px;padding:0">`;
-          p.steps.slice(0, 4).forEach(st => { html += `<li>${escapePBLHtml(st)}</li>`; });
+          html += `<ul class="pbl-task-checklist" style="margin:6px 0 0 16px;padding:0;list-style:decimal">`;
+          p.steps.slice(0, 4).forEach(st => { html += `<li style="margin-bottom:6px;line-height:1.6">${escapePBLHtml(st)}</li>`; });
+          html += `</ul>`;
+        }
+        if (p.acceptance?.length) {
+          html += `<ul style="margin:4px 0 0 16px;padding:0;font-size:12px;color:var(--success)">`;
+          p.acceptance.slice(0, 3).forEach(a => { html += `<li>${escapePBLHtml(a)}</li>`; });
           html += `</ul>`;
         }
         html += `</li>`;
@@ -1105,14 +1114,18 @@ function renderPBLPathPlanHTML(pathPlan) {
     const badges = (p.pathStepLabels || []).map(l =>
       `<span class="pbl-step-badge" style="border-color:${color}">${l}</span>`).join('');
     const kn = (p.knowledgeNames || []).map(n => `「${escapePBLHtml(n)}」`).join('、');
-    const steps = (p.steps || []).map(s => escapePBLHtml(s)).join('；');
+    const stepsHtml = (p.steps || []).map((s, si) =>
+      `<li style="margin-bottom:6px"><span style="color:var(--accent);font-weight:600">${si + 1}.</span> ${escapePBLHtml(s)}</li>`
+    ).join('');
     const lit = formatPBLLiteracyRows(p.literacy);
+    const tools = (p.tools || []).map(t => escapePBLHtml(t)).join('、');
     html += `<article class="pbl-path-phase${idx === 0 ? ' active' : ''}" data-steps="${(p.pathSteps || []).join(',')}" onclick="highlightPBLPhase(this)">`;
     html += `<header><span class="pbl-phase-idx">阶段 ${p.phaseIndex}</span>`;
     html += `<span class="pbl-phase-graph">${badges}</span>`;
     html += `<span class="pbl-phase-title">${escapePBLHtml(p.phase)}</span></header>`;
     html += `<div class="pbl-phase-row"><span class="lbl">知识点</span>${kn}</div>`;
-    html += `<div class="pbl-phase-row"><span class="lbl">任务</span>${steps}</div>`;
+    if (tools) html += `<div class="pbl-phase-row"><span class="lbl">工具</span>${tools}</div>`;
+    html += `<div class="pbl-phase-row"><span class="lbl">任务</span><ol style="margin:0;padding-left:18px">${stepsHtml}</ol></div>`;
     if (lit) html += `<div class="pbl-phase-literacy"><span class="lbl">素养</span>${lit}</div>`;
     html += `<div class="pbl-phase-row"><span class="lbl">产出</span>${escapePBLHtml(p.deliverable)}</div></article>`;
   });

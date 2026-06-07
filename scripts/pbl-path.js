@@ -656,7 +656,8 @@ class PBLPathBuilder {
     if (/种植|种菜|盆栽|养护|养殖|养蚕|园艺|烹饪|烘焙|美食|菜谱|料理|手工|编织|缝纫|收纳|整理|维修|清洁|打扫|劳动/.test(g)) return 'labor-practice';
     if (/活动策划|策划.{0,6}(活动|晚会|联欢|运动会|典礼|节|比赛)|联欢会|晚会|文艺汇演|毕业典礼|生日会|出游|旅行|研学|游学|路线规划|时间管理|班级布置|布置教室|嘉年华|游园/.test(g)) return 'life-planning';
     if (/田野|问卷|访谈|社区|民俗|传统文化|非遗|人口|城乡|社会现象|调研报告|公众.{0,4}认知|居民|乡土|口述史/.test(g)) return 'social-inquiry';
-    if (/火箭|导弹|发射|机器人|无人机|电路|机械|硬件|装置|App|应用程序|小程序|网站|系统开发|3D打印|传感|智能|温控|储能|光伏|发电|搭建|制作|工程|发明|物联网|编程实现/.test(g)) return 'engineering';
+    if (/工坊|鲁班|榫卯|古典.*风格|木结构|建筑模型|微缩|传统建筑|斗拱|飞檐/.test(g)) return 'maker-workshop';
+    if (/火箭|导弹|发射|机器人|无人机|物流机器人|医院.*机器人|电路|机械|硬件|装置|App|应用程序|小程序|网站|系统开发|3D打印|传感|智能|温控|储能|光伏|发电|搭建|制作|工程|发明|物联网|编程实现|原型/.test(g)) return 'engineering';
     if (this._isChemistryInquiryGoal(g)) return 'scientific-inquiry';
     if (/探究|实验|观察|测量|验证|影响因素|变量|检测|成分|对照实验|科学问题|浓度|溶液|溶解/.test(g)) return 'scientific-inquiry';
     return 'general';
@@ -758,6 +759,15 @@ class PBLPathBuilder {
           keywords: ['说明', '报告', '论证', '写作', '分析', '比较', '调查', '实用'],
           subjects: ['chinese', 'math']
         }
+      ];
+    }
+    if (/工坊|鲁班|榫卯|古典.*风格|木结构|建筑模型|微缩|传统建筑|斗拱|飞檐/.test(g)) {
+      return [
+        { id: 'survey', label: '调研与风格定义', keywords: ['调研', '风格', '古典', '建筑', '参考', '测量', '场地'], subjects: ['history', 'chinese', 'art'] },
+        { id: 'design', label: '方案与图纸', keywords: ['设计', '草图', '立面', '平面', '尺寸', '比例', 'BOM'], subjects: ['math', 'info-tech', 'art'] },
+        { id: 'material', label: '材料与工艺', keywords: ['材料', '木材', '榫卯', '胶合', '工具', '安全', '工艺'], subjects: ['science', 'physics'] },
+        { id: 'build', label: '搭建与装饰', keywords: ['搭建', '组装', '切割', '打磨', '装饰', '斗拱', '结构'], subjects: ['science', 'physics'] },
+        { id: 'accept', label: '验收与展示', keywords: ['验收', '测试', '展示', '报告', '量规', '改进'], subjects: ['chinese', 'math'] },
       ];
     }
     if (/火箭|导弹|发射|弹道|模型火箭|航天/.test(g)) {
@@ -941,36 +951,220 @@ class PBLPathBuilder {
 
   _isHollowStep(step) {
     const s = String(step || '').trim();
-    if (!s || s.length < 10) return true;
+    if (!s || s.length < 12) return true;
     if (PBLPathBuilder.HOLLOW_STEP_RE.test(s)) return true;
     if (/^运用[①②③④⑤⑥⑦⑧⑨⑩\d]+「/.test(s) && /完成本阶段|探究任务/.test(s)) return true;
+    if (/^(选择|确定|调研|了解|学习|掌握|认识|编写基础|配置|安装).{0,12}(组件|框架|逻辑|特点|风格|方案|软件|环境)$/.test(s)) return true;
+    if (/进行.{0,6}(测试|调研|研究|探究|活动)$/.test(s)) return true;
+    if (this._stepActionabilityScore(s) < 3) return true;
     return false;
+  }
+
+  _stepActionabilityScore(step) {
+    const s = String(step || '');
+    if (!s || s.length < 8) return 0;
+    let score = 0;
+    if (/\d+(\.\d+)?\s*(cm|mm|m|ml|g|kg|℃|°|分钟|小时|天|次|人|题|页|张|帧|行|列)/.test(s)) score += 3;
+    if (/\d+[\-–~至]\d+/.test(s)) score += 2;
+    if (/≥|≤|不少于|不超过|精确到|至少|至多/.test(s)) score += 2;
+    if (/表格|清单|记录表|草图|立面|平面|BOM|问卷|提纲|甘特|量规|检查表|数据表|照片|截图|附录/.test(s)) score += 2;
+    if (/填写|绘制|称量|测量|焊接|切割|打磨|组装|编程|调试|访谈|统计|撰写|标注|拍照|导出|打印/.test(s)) score += 1;
+    if (PBLPathBuilder.HOLLOW_STEP_RE.test(s)) score -= 4;
+    if (/^(选择|确定|了解|学习|掌握|认识|编写基础)/.test(s)) score -= 2;
+    return score;
   }
 
   _areHollowSteps(steps) {
     if (!Array.isArray(steps) || !steps.length) return true;
     const hollow = steps.filter(s => this._isHollowStep(s)).length;
-    return hollow >= Math.ceil(steps.length * 0.6);
+    if (hollow >= Math.ceil(steps.length * 0.5)) return true;
+    const avg = steps.reduce((a, s) => a + this._stepActionabilityScore(s), 0) / steps.length;
+    return avg < 2.5;
   }
 
   _pickConcreteSteps(llmSteps, bpSteps, contextual) {
-    const pick = (steps) => {
+    const normalize = (steps) => {
       if (!Array.isArray(steps) || !steps.length) return null;
       const good = steps.filter(s => !this._isHollowStep(s));
-      return good.length ? good.slice(0, 4) : null;
+      if (!good.length) return null;
+      const score = good.reduce((a, s) => a + this._stepActionabilityScore(s), 0);
+      return { steps: good.slice(0, 4), score };
     };
     const ranked = [
-      { steps: pick(contextual), w: 3 },
-      { steps: pick(bpSteps), w: 2 },
-      { steps: pick(llmSteps), w: 1 },
+      { ...normalize(contextual), w: 4, src: contextual },
+      { ...normalize(bpSteps), w: 3 },
+      { ...normalize(llmSteps), w: 2 },
     ].filter(x => x.steps?.length);
     if (ranked.length) {
-      ranked.sort((a, b) => b.w - a.w);
+      ranked.sort((a, b) => (b.score + b.w * 2) - (a.score + a.w * 2));
       return ranked[0].steps;
     }
     if (contextual?.length) return contextual.slice(0, 4);
     if (bpSteps?.length) return bpSteps.slice(0, 4);
     return (llmSteps || []).slice(0, 4);
+  }
+
+  _concretizeDeliverable(goal, phaseName, role, fallback = '') {
+    const phase = String(phaseName || '');
+    const g = String(goal || '').slice(0, 40);
+    const map = [
+      [/调研|勘测|现场|需求/, `《${g}》调研记录表（含照片/尺寸/问题清单）`],
+      [/风格|定义|立意|参考/, `参考图集 + 风格要素标注页（斗拱/色彩/比例各 1 条）`],
+      [/设计|方案|草图|蓝图/, `A3 设计草图（标注关键尺寸，比例 1:10~1:20）+ 材料 BOM 表`],
+      [/材料|采购|物料|BOM/, `材料采购清单（品名/规格/数量/预算/供应商）`],
+      [/搭建|结构|制作|组装|原型/, `可展示实体原型 + 装配过程照片（≥6 张）`],
+      [/装饰|装修|修缮|涂装/, `装饰完成件 + 前后对比照片 2 组`],
+      [/软件|编程|控制|算法/, `可运行程序/控制逻辑说明 + 测试日志`],
+      [/测试|验收|交付|展示/, `验收检查表（逐项打勾）+ 3 分钟展示稿`],
+    ];
+    for (const [re, out] of map) {
+      if (re.test(phase)) return out;
+    }
+    return this._pickConcreteDeliverable({ deliverable: fallback }, { deliverable: fallback }, role, goal);
+  }
+
+  _concreteStepsForPhase(goal, phase, phaseIndex, totalPhases, archetype = null) {
+    const name = String(phase?.phase || phase?.name || `阶段${phaseIndex + 1}`);
+    const shortGoal = String(goal || '').slice(0, 56);
+    const hints = (phase?.knowledgeHints || []).join('、') || '本阶段课标';
+    const type = this._classifyProjectType(goal);
+    const blob = name;
+
+    if (/调研|勘测|现场|需求/.test(blob)) {
+      return [
+        `用卷尺/手机测距记录场地或展示台尺寸（长×宽×高，cm 级），拍照 3 张并编号存档`,
+        `围绕「${shortGoal}」列出 5 条可验证需求，制成优先级表（P0/P1/P2）`,
+        `检索 3 份同类案例（各写 50 字摘要+来源链接），标注可借鉴的结构/工艺`,
+      ].slice(0, 3);
+    }
+    if (/风格|定义|参考|立意/.test(blob)) {
+      return [
+        `收集 3 张风格参考图（标注斗拱/飞檐/色彩/比例等 2 处特征）`,
+        `写 150 字风格说明：目标受众、核心视觉元素、禁止项（如不宜使用的材料）`,
+        `用 ${hints} 完成 1 页「风格—结构要素」对照表`,
+      ].slice(0, 3);
+    }
+    if (/设计|方案|草图|蓝图|规划/.test(blob)) {
+      return [
+        `在 A3 纸绘制立面+平面草图（比例 1:10~1:20），标注 5 处关键尺寸（mm/cm）`,
+        `列出功能分区与动线：人员/物料如何进出，标注在草图上`,
+        `填写材料 BOM 初稿：木材/板材/胶水/五金件（名称、规格、预估数量）`,
+      ].slice(0, 3);
+    }
+    if (/材料|采购|物料|成本|预算/.test(blob)) {
+      return [
+        `完善 BOM 表并询价：每项注明规格、单价、数量、小计，预算总额≤设定上限`,
+        `检查工具清单（锯/锉/砂纸/夹具/胶枪/护目镜），缺项 24h 内补齐`,
+        `按安全规范标注「危险操作」2 条及防护措施（佩戴/通风/成人监护）`,
+      ].slice(0, 3);
+    }
+    if (/搭建|结构|制作|组装|加工|原型|开发/.test(blob)) {
+      if (type === 'maker-workshop' || /工坊|鲁班|榫卯|古典/.test(goal)) {
+        return [
+          `按草图下料：主要构件切割误差≤2mm，榫头/卯眼试装 1 次并记录修整点`,
+          `完成主体框架组装，用角尺检查垂直度，拍照记录关键节点（≥4 张）`,
+          `安装斗拱/装饰构件，填写《工序检查表》：牢固度、对称性、表面平整度`,
+        ].slice(0, 3);
+      }
+      if (type === 'engineering' || /机器人|物流|传感|控制/.test(goal)) {
+        return [
+          `按系统框图连接核心模块（电源/驱动/传感/控制），通电前完成线路复查表`,
+          `编写/配置基础控制逻辑（如循迹/避障/启停），记录首次运行日志（时间+现象）`,
+          `进行功能测试 ≥3 次：记录成功率、故障点，每次附 1 张状态照片`,
+        ].slice(0, 3);
+      }
+      return [
+        `按分工表完成本阶段核心制作任务，每项打勾并记录耗时（分钟）`,
+        `首次组装/试运行并填写《问题清单》（现象/可能原因/改法）`,
+        `根据问题清单完成 1 轮修改，附修改前后对比照片`,
+      ].slice(0, 3);
+    }
+    if (/装饰|装修|修缮|涂装|美化/.test(blob)) {
+      return [
+        `确定装饰方案（颜色/纹样/材质），在小样板上试做 10cm×10cm 效果片`,
+        `按小样标准完成主体装饰，边缘收口误差≤3mm`,
+        `拍摄装饰完成全景 + 细节 2 张，写入工艺说明（材料、步骤、耗时）`,
+      ].slice(0, 3);
+    }
+    if (/软件|编程|控制|算法|电路/.test(blob)) {
+      return [
+        `搭建开发环境并跑通示例程序，截图保存版本号与依赖清单`,
+        `实现本阶段最小功能（输入→处理→输出），附测试用例 3 条及预期结果`,
+        `记录调试日志：错误现象、定位方法、最终修复方案各 1 条`,
+      ].slice(0, 3);
+    }
+    if (/测试|验收|交付|展示|复盘/.test(blob)) {
+      return [
+        `按验收量规逐项自评（功能/安全/美观/文档），未达标项列出改期计划`,
+        `整理交付包：成品、设计图、BOM、过程照片、300 字说明各 1 份`,
+        `准备 3 分钟展示：问题—方案—数据/实物—改进点，附 2 个预设问答`,
+      ].slice(0, 3);
+    }
+
+    const mod = archetype?.modules?.[phaseIndex % (archetype?.modules?.length || 1)];
+    if (mod) {
+      return [
+        `围绕「${mod.label}」用 ${(mod.hints || []).slice(0, 3).join('、')} 完成 1 份记录表（含数据/照片）`,
+        `将 ${hints} 与本阶段产出对齐：写出 3 条「知识点→具体操作」映射`,
+        `提交本阶段检查物：${this._concretizeDeliverable(goal, name, 'core', mod.label)}`,
+      ].slice(0, 3);
+    }
+
+    const part = phaseIndex + 1;
+    return [
+      `拆解「${shortGoal}」第 ${part}/${totalPhases} 步：列出 3 个可检查子任务与负责人`,
+      `完成子任务并填写过程记录表（时间、工具、数据/照片编号）`,
+      `对照阶段产出标准自评，未通过项 24h 内补做并签字确认`,
+    ].slice(0, 3);
+  }
+
+  _concretizeBlueprint(goal, blueprint, archetype = null) {
+    if (!blueprint?.schemes?.length) return blueprint;
+    const type = this._classifyProjectType(goal);
+    const bp = JSON.parse(JSON.stringify(blueprint));
+    if (!bp.deliverable || /素养|能力|精神|原型$|阶段成果/.test(bp.deliverable) || bp.deliverable.length < 8) {
+      bp.deliverable = ({
+        'maker-workshop': '古典风格工坊实体模型 + 设计图册 + 材料BOM + 验收检查表',
+        engineering: '可运行工程原型 + 测试数据表 + 结构/电路说明 + 展示稿',
+        'social-inquiry': '调查报告（含问卷、统计图、结论与建议）+ 答辩要点',
+        'consumer-decision': '对比决策报告（调研表 + 测算表 + 推荐结论）',
+      })[type] || `「${String(goal).slice(0, 32)}」可展示成果包（作品+过程记录+说明）`;
+    }
+    bp.schemes = bp.schemes.map(scheme => {
+      const phases = (scheme.phases || []).map((p, i, arr) => {
+        const role = i === 0 ? 'foundation' : (i < arr.length - 1 ? 'bridge' : 'core');
+        const needReplace = this._areHollowSteps(p.steps);
+        const steps = needReplace
+          ? this._concreteStepsForPhase(goal, p, i, arr.length, archetype)
+          : this._pickConcreteSteps([], p.steps, this._concreteStepsForPhase(goal, p, i, arr.length, archetype));
+        const deliverable = (!p.deliverable || p.deliverable.length < 6 || /阶段成果|探究任务/.test(p.deliverable))
+          ? this._concretizeDeliverable(goal, p.phase, role, p.deliverable)
+          : p.deliverable;
+        const tools = p.tools || this._inferPhaseTools(goal, p.phase, type);
+        const acceptance = p.acceptance || steps.map((st, j) => `□ 任务${j + 1}完成且有记录：${String(st).slice(0, 36)}…`);
+        return { ...p, steps, deliverable, tools, acceptance };
+      });
+      const rec = scheme.id === bp.recommendedSchemeId;
+      const summary = rec && (!scheme.summary || scheme.summary.length < 20 || /逐步推进|适合大多数/.test(scheme.summary))
+        ? `按 ${phases.map(p => p.phase).join(' → ')} 交付可检查实物，每阶段有表格/照片/数据验收`
+        : scheme.summary;
+      return { ...scheme, phases, summary };
+    });
+    return bp;
+  }
+
+  _inferPhaseTools(goal, phaseName, type) {
+    const phase = String(phaseName || '');
+    if (/调研|勘测/.test(phase)) return ['卷尺/测距App', '相机', '记录表模板'];
+    if (/设计|草图/.test(phase)) return ['A3纸/绘图纸', '铅笔尺规', 'CAD或手绘工具'];
+    if (/材料|采购/.test(phase)) return ['BOM表模板', '询价记录', '计算器'];
+    if (/搭建|制作|组装/.test(phase)) {
+      if (type === 'maker-workshop') return ['手锯/砂纸', '木工胶', '角尺', '护目镜'];
+      if (type === 'engineering') return ['螺丝刀/电烙铁', '万用表', '调试线'];
+      return ['常用工具套装', '安全防护用品'];
+    }
+    if (/测试|验收/.test(phase)) return ['验收量规', '相机', '展示PPT模板'];
+    return ['记录表', '相机'];
   }
 
   _pickConcreteDeliverable(lp, bp, role, goal) {
@@ -1887,19 +2081,36 @@ class PBLPathBuilder {
       };
       return mk(map[role] || map.core);
     }
+    if (type === 'maker-workshop') {
+      const map = {
+        foundation: [
+          `测绘展示场地尺寸（cm）并拍照 3 张，列出 5 条可验证需求优先级`,
+          `收集 3 张古典/工坊参考图，标注斗拱/飞檐/色彩 2 处特征`,
+        ],
+        bridge: [
+          `绘制 A3 立面+平面草图（1:10~1:20），标注 5 处关键尺寸`,
+          `填写材料 BOM：木材规格、数量、胶水/五金件、预算小计`,
+        ],
+        core: [
+          `按草图下料组装主体，榫卯试装误差≤2mm，拍照记录关键节点≥4张`,
+          `完成装饰与验收量规自评，整理交付包（模型+图册+BOM+说明）`,
+        ],
+      };
+      return mk(map[role] || map.core);
+    }
     if (type === 'engineering') {
       const map = {
         foundation: [
-          `画出系统框图，标注输入/输出/关键部件与工作原理`,
-          `用 ${knRef} 列出器材清单、安全注意事项与测试指标`,
+          `画出系统框图，标注输入/输出/关键部件、电源与信号走向`,
+          `用 ${knRef} 列出器材清单（型号/数量）、安全注意事项与 3 项测试指标`,
         ],
         bridge: [
-          `搭建原型并记录首次测试数据（照片+数据表）`,
-          `根据测试失败点修改 1 处结构或参数，记录前后对比`,
+          `完成核心模块接线/结构组装，通电前填写线路复查表并签字`,
+          `首次功能测试记录日志（时间/现象/故障点），修改 1 处并附对比照片`,
         ],
         core: [
-          `完成稳定性/功能测试 ≥3 次，计算平均值与误差`,
-          `撰写工程报告：原理、结构、测试数据、改进方向`,
+          `稳定性测试 ≥3 次，记录成功率与误差，计算平均值`,
+          `撰写工程报告：原理、结构、测试数据表、改进计划（各 1 页）`,
         ],
       };
       return mk(map[role] || map.core);
@@ -2054,6 +2265,8 @@ class PBLPathBuilder {
         knowledgeNames: g.knowledgeNames,
         steps,
         deliverable: this._pickConcreteDeliverable(lp, bp, g.role, goal),
+        tools: bp.tools || lp.tools || this._inferPhaseTools(goal, lp.phase || bp.phase || g.phase, this._classifyProjectType(goal)),
+        acceptance: bp.acceptance || lp.acceptance || [],
         literacy: this._literacyFromLlmPhase(lp)
       };
     });
@@ -2137,7 +2350,7 @@ class PBLPathBuilder {
   // ─── PBL 路径分析核心 ──────────────────────────
 
   static GENERIC_TRANSVERSAL_RE = /批判性思维|创新思维|创新能力|团队协作|团队合作|项目管理|项目管理能力|沟通能力|沟通表达|问题解决|解决问题能力|时间管理|领导力|学习能力|核心素养|综合素养|信息素养|媒体素养|科学精神|人文素养|劳动素养|审辨性思维|审辨思维|元认知|学会学习|责任担当|社会责任|公民素养|国际理解/;
-  static HOLLOW_STEP_RE = /^(完成|进行|开展|落实|实施|贯彻|培养|提升|增强|锻炼|学习|掌握|了解|认识|运用).{0,8}(探究|调研|学习|任务|活动|阶段|工作|研究|分析|讨论|探索|实践|制作|设计|总结|反思|课件|练习)$|完成本阶段|进行调研|开展研究|完成探究|运用.*完成本阶段|培养.*素养|提升.*能力/;
+  static HOLLOW_STEP_RE = /^(完成|进行|开展|落实|实施|贯彻|培养|提升|增强|锻炼|学习|掌握|了解|认识|运用|选择|确定|调研|编写|配置|安装).{0,10}(探究|调研|学习|任务|活动|阶段|工作|研究|分析|讨论|探索|实践|制作|设计|总结|反思|课件|练习|组件|框架|逻辑|特点|风格|方案|软件|环境)$|完成本阶段|进行调研|开展研究|完成探究|运用.*完成本阶段|培养.*素养|提升.*能力|环境搭建|编写基础/;
   static PBL_MAX_GRAPH_NODES = 22;
   static PBL_MIN_EXTERNAL = 1;
   static PBL_MAX_EXTERNAL = 3;
@@ -2292,8 +2505,60 @@ class PBLPathBuilder {
     };
   }
 
+  _buildMakerWorkshopBlueprint(goal) {
+    const short = String(goal || '').slice(0, 48);
+    return {
+      projectSummary: short,
+      deliverable: '古典风格工坊实体模型 + A3设计图册 + 材料BOM表 + 验收检查表',
+      projectType: 'maker-workshop',
+      constraints: ['课堂/社团可实施', '注意木工工具安全', '预算与材料需提前清单化'],
+      subsystems: [
+        { id: 'survey', name: '调研与风格定义', description: '测绘场地、收集古典建筑参考、明确风格要素' },
+        { id: 'design', name: '方案与图纸', description: '立面平面草图、功能分区、关键尺寸标注' },
+        { id: 'material', name: '材料与采购', description: 'BOM清单、询价预算、工具与安全准备' },
+        { id: 'build', name: '搭建与装饰', description: '下料组装、榫卯工艺、装饰收口' },
+        { id: 'accept', name: '验收与展示', description: '量规自评、交付包整理、展示答辩' },
+      ],
+      schemes: [
+        {
+          id: 'A',
+          name: '测绘—图纸—木作—验收（推荐）',
+          summary: '按调研→设计→采购→搭建→验收顺序交付可检查实物，每步有表格与照片',
+          pros: ['工序清晰', '适合劳动+美术+数学跨学科', '成果可展示'],
+          cons: ['需木工工具与场地'],
+          phases: [
+            { phase: '现场调研', subsystemIds: ['survey'], knowledgeHints: ['调研', '测量', '古典', '建筑'], steps: [], deliverable: '' },
+            { phase: '风格与方案设计', subsystemIds: ['design'], knowledgeHints: ['设计', '草图', '比例', '尺寸'], steps: [], deliverable: '' },
+            { phase: '材料采购准备', subsystemIds: ['material'], knowledgeHints: ['材料', '预算', '工具', '安全'], steps: [], deliverable: '' },
+            { phase: '结构搭建与装饰', subsystemIds: ['build'], knowledgeHints: ['搭建', '榫卯', '结构', '装饰'], steps: [], deliverable: '' },
+            { phase: '验收交付展示', subsystemIds: ['accept'], knowledgeHints: ['验收', '展示', '报告', '量规'], steps: [], deliverable: '' },
+          ],
+        },
+        {
+          id: 'B',
+          name: '数字建模先行 + 简化木作',
+          summary: '先用CAD/手绘精模验证比例，再按简化工艺制作展示件',
+          pros: ['降低木作难度', '设计迭代快'],
+          cons: ['对建模工具要求较高'],
+          phases: [
+            { phase: '风格研究与数字草模', subsystemIds: ['survey', 'design'], knowledgeHints: ['建模', '比例', '古典'], steps: [], deliverable: '' },
+            { phase: '简化BOM与试制', subsystemIds: ['material', 'build'], knowledgeHints: ['材料', '试制', '组装'], steps: [], deliverable: '' },
+            { phase: '展示与工艺说明', subsystemIds: ['accept'], knowledgeHints: ['展示', '说明', '工艺'], steps: [], deliverable: '' },
+          ],
+        },
+      ],
+      recommendedSchemeId: 'A',
+      knowledgeChain: '现场调研 → 风格定义 → 方案设计 → 材料采购 → 结构搭建 → 装饰修缮 → 验收交付',
+      fallback: true,
+    };
+  }
+
   _sanitizeBlueprintForGoal(blueprint, goal) {
-    if (blueprint && this._isChemistryInquiryGoal(goal) && this._getChemistryAnalysisProfile(goal).mixed) {
+    let bp = blueprint;
+    if (this._classifyProjectType(goal) === 'maker-workshop' && (!bp?.schemes?.length || bp.fallback)) {
+      bp = this._buildMakerWorkshopBlueprint(goal);
+    }
+    if (bp && this._isChemistryInquiryGoal(goal) && this._getChemistryAnalysisProfile(goal).mixed) {
       const cap = this._getChemistryAnalysisProfile(goal);
       const bp = { ...blueprint, schemes: (blueprint.schemes || []).map(s => ({ ...s, phases: (s.phases || []).map(p => ({ ...p })) })) };
       const naiveRe = /称量溶解|直接称量|质量分数.*配制|配制.*盐水|称量.*溶解/;
@@ -2316,10 +2581,12 @@ class PBLPathBuilder {
           }
         });
       });
-      return bp;
+      return this._concretizeBlueprint(goal, bp, this._resolvedArchetype);
     }
-    if (!blueprint || !this._isConsumerDecisionGoal(goal)) return blueprint;
-    const bp = { ...blueprint, schemes: (blueprint.schemes || []).map(s => ({ ...s })) };
+    if (!bp || !this._isConsumerDecisionGoal(goal)) {
+      return this._concretizeBlueprint(goal, bp || blueprint, this._resolvedArchetype);
+    }
+    bp = { ...bp, schemes: (bp.schemes || []).map(s => ({ ...s })) };
     bp.projectType = 'consumer-decision';
     if (!bp.deliverable || /原型|研发|装置|系统开发|数据采集系统|温度控制/.test(bp.deliverable)) {
       bp.deliverable = '家庭/个人消费决策报告（含调研表、对比测算表与推荐结论）';
@@ -2344,10 +2611,13 @@ class PBLPathBuilder {
         });
       }
     });
-    return bp;
+    return this._concretizeBlueprint(goal, bp, this._resolvedArchetype);
   }
 
   _fallbackDecomposeBlueprint(goal) {
+    if (this._classifyProjectType(goal) === 'maker-workshop') {
+      return this._concretizeBlueprint(goal, this._buildMakerWorkshopBlueprint(goal), this._resolvedArchetype);
+    }
     if (this._isConsumerDecisionGoal(goal)) {
       return this._sanitizeBlueprintForGoal({
         projectSummary: String(goal || '').slice(0, 160),
@@ -2439,17 +2709,20 @@ class PBLPathBuilder {
         { id: 'build', name: '制作实现', description: '搭建原型并完成分步测试' },
         { id: 'test', name: '测试迭代', description: '采集数据、对比指标并优化' }
       ];
-    const mkPhases = (prefix) => subsystems.map((s) => {
+    const mkPhases = (prefix) => subsystems.map((s, i) => {
       const dom = domains.find(d => d.id === s.id);
+      const stub = { phase: s.name, knowledgeHints: (dom?.keywords || []).slice(0, 5) };
+      const steps = this._concreteStepsForPhase(goal, stub, i, subsystems.length, this._resolvedArchetype);
       return {
         phase: s.name,
-        steps: [`${prefix}${s.name}需求`, `完成${s.name}实验或制作任务`],
-        deliverable: `${s.name}阶段成果`,
+        steps,
+        deliverable: this._concretizeDeliverable(goal, s.name, i === 0 ? 'foundation' : (i < subsystems.length - 1 ? 'bridge' : 'core')),
         subsystemIds: [s.id],
-        knowledgeHints: (dom?.keywords || []).slice(0, 5)
+        knowledgeHints: (dom?.keywords || []).slice(0, 5),
+        tools: this._inferPhaseTools(goal, s.name, this._classifyProjectType(goal)),
       };
     });
-    return {
+    const bp = {
       projectSummary: String(goal || '').slice(0, 160),
       deliverable: '可展示的项目原型、实验报告或系统演示',
       constraints: ['课堂可实施', '注意安全与器材可得性'],
@@ -2481,6 +2754,7 @@ class PBLPathBuilder {
       knowledgeChain: subsystems.map(s => s.name).join(' → '),
       fallback: true
     };
+    return this._concretizeBlueprint(goal, bp, this._resolvedArchetype);
   }
 
   _parseDecomposeResult(raw, goal) {
@@ -2491,7 +2765,8 @@ class PBLPathBuilder {
       if (!data.recommendedSchemeId && data.schemes[0]) {
         data.recommendedSchemeId = data.schemes[0].id;
       }
-      return this._sanitizeBlueprintForGoal(data, goal);
+      const sanitized = this._sanitizeBlueprintForGoal(data, goal);
+      return this._concretizeBlueprint(goal, sanitized, this._resolvedArchetype);
     } catch (e) {
       console.warn('[PBL] decompose JSON 解析失败，使用本地蓝图回退:', e.message);
       return this._fallbackDecomposeBlueprint(goal);
@@ -2830,6 +3105,7 @@ class PBLPathBuilder {
     let projectBlueprint = await this._llmDecomposeStage(goal);
     let archetype = this._resolveArchetype(goal, projectBlueprint);
     if (archetype) projectBlueprint = this._alignBlueprintModules(projectBlueprint, archetype);
+    projectBlueprint = this._concretizeBlueprint(goal, projectBlueprint, archetype);
     const blueprintPhases = this._blueprintProjectPhases(projectBlueprint);
     const bloomProfile = this._inferBloomProfile(projectBlueprint);
 
