@@ -333,6 +333,11 @@ body {
   color: var(--dimmer);
   margin-top: 4px;
 }
+.pbl-stat-card.quality-a .val { background: linear-gradient(135deg, #10b981, #3b82f6); -webkit-background-clip: text; }
+.pbl-stat-card.quality-b .val { background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; }
+.pbl-stat-card.quality-c .val { background: linear-gradient(135deg, #f59e0b, #ef4444); -webkit-background-clip: text; }
+.pbl-stat-card.quality-d .val { background: linear-gradient(135deg, #ef4444, #dc2626); -webkit-background-clip: text; }
+.pbl-quality-hint { font-size: 11px; color: var(--dimmer); margin-top: 6px; grid-column: 1 / -1; text-align: center; }
 
 /* PBL 项目拆解蓝图 */
 .pbl-decompose-panel {
@@ -707,6 +712,8 @@ body {
     <textarea id="pblGoalInput" class="pbl-textarea" placeholder="描述你的项目目标，如：家庭购车方案对比、策划班级研学、阳台种菜记录、设计智能温室…"></textarea>
     <div class="pbl-examples">
       <span class="ex-label">示范项目：</span>
+      <span class="ex-chip" onclick="fillPBLExample(this)" data-key="water-rocket" data-goal="设计一款水火箭，完成箭体制作、推进测试与安全发射">🚀 水火箭设计</span>
+      <span class="ex-chip" onclick="fillPBLExample(this)" data-key="canteen-soup" data-goal="食堂菜汤的盐含量测定，比较滴定法与电导率法并撰写报告">🥣 食堂汤水测定</span>
       <span class="ex-chip" onclick="fillPBLExample(this)" data-key="smart-home-temp" data-goal="设计一个智能家居温度控制系统，利用传感器实时监测室温，自动调节空调或暖气，实现节能恒温">🏠 智能家居温控</span>
       <span class="ex-chip" onclick="fillPBLExample(this)" data-key="weather-app" data-goal="制作一个天气预报App，从公开API获取气象数据，展示温度、湿度、风速，并用图表展示7天趋势">🌤️ 天气预报App</span>
       <span class="ex-chip" onclick="fillPBLExample(this)" data-key="traffic-analysis" data-goal="分析城市交通拥堵问题，收集高峰期车流量数据，建立拥堵模型，提出优化方案">🚗 城市交通分析</span>
@@ -785,9 +792,9 @@ body {
 </div>
 
 <script src="./assets/scripts/courseware-hub.js"></script>
-<script src="./assets/scripts/pbl-bloom.js?v=20260608-archetype"></script>
-<script src="./assets/scripts/pbl-archetypes.js?v=20260608-archetype"></script>
-<script src="./assets/scripts/pbl-path.js?v=20260608-archetype"></script>
+<script src="./assets/scripts/pbl-bloom.js?v=20260608-product"></script>
+<script src="./assets/scripts/pbl-archetypes.js?v=20260608-product"></script>
+<script src="./assets/scripts/pbl-path.js?v=20260608-product"></script>
 <script src="./assets/scripts/history-tracker.js" defer></script>
 <script src="./assets/scripts/teachany-make-course.js"></script>
 <script>
@@ -1173,7 +1180,9 @@ function renderPBLExportNodeTableHTML(nodes) {
   const rows = nodes.map((n, i) => {
     const layer = PBL_LAYER_LABELS[n.layer] || n.layer || '';
     const meta = [n.systemTag || n.systemLabel || '', n.subject || '', n.gradeLabel || n.grade || ''].filter(Boolean).join(' · ');
-    const reason = n.matchReason || n.definition || '';
+    const mod = n._moduleLabel ? `【${n._moduleLabel}】` : '';
+    const task = (n.layer === 'external' && n.taskSnippet) ? ` 任务：${n.taskSnippet}` : '';
+    const reason = mod + (n.matchReason || n.definition || '') + task;
     return `<tr><td>${i + 1}</td><td>${escapePBLHtml(n.name || '')}</td><td>${escapePBLHtml(layer)}</td><td>${escapePBLHtml(meta)}</td><td>${escapePBLHtml(reason)}</td></tr>`;
   }).join('');
   return `<table class="pbl-export-node-table"><thead><tr><th>#</th><th>知识点</th><th>层级</th><th>体系/学科</th><th>本阶段怎么用</th></tr></thead><tbody>${rows}</tbody></table>`;
@@ -1334,14 +1343,30 @@ function renderPBLStats(result) {
     return;
   }
 
-  statsEl.innerHTML = `
+  const q = result.quality || {};
+  const qScore = q.score ?? result.stats?.qualityScore;
+  const qGrade = q.grade ?? result.stats?.qualityGrade ?? '';
+  const qClass = qGrade ? `quality-${qGrade.toLowerCase()}` : '';
+  const archetypeLbl = result.archetype?.label || '';
+  let html = '';
+  if (qScore != null) {
+    html += `<div class="pbl-stat-card ${qClass}"><div class="val">${qScore}</div><div class="lbl">质量分${qGrade ? ' · ' + qGrade : ''}</div></div>`;
+  }
+  if (archetypeLbl) {
+    html += `<div class="pbl-stat-card"><div class="val" style="font-size:15px;line-height:1.3;padding-top:6px">${escapePBLHtml(archetypeLbl)}</div><div class="lbl">项目原型</div></div>`;
+  }
+  html += `
     <div class="pbl-stat-card"><div class="val">${result.graphData.nodes.length}</div><div class="lbl">知识点总数</div></div>
     <div class="pbl-stat-card"><div class="val">${layerCounts.prerequisite}</div><div class="lbl">基础前置（需先学）</div></div>
     <div class="pbl-stat-card"><div class="val">${layerCounts.matched}</div><div class="lbl">核心必需</div></div>
     <div class="pbl-stat-card"><div class="val">${layerCounts.advanced}</div><div class="lbl">扩展高级</div></div>
-    <div class="pbl-stat-card"><div class="val">${layerCounts.external}</div><div class="lbl">外部补充</div></div>
+    <div class="pbl-stat-card"><div class="val">${layerCounts.external}</div><div class="lbl">课外补充</div></div>
     <div class="pbl-stat-card"><div class="val">${result.graphData.links.length}</div><div class="lbl">关联路径</div></div>
   `;
+  if (q.breakdown?.length) {
+    html += `<div class="pbl-quality-hint">待改进：${q.breakdown.map(b => b.label).join('、')}</div>`;
+  }
+  statsEl.innerHTML = html;
 
   showPBLTechRoute(result);
 }
@@ -1454,7 +1479,9 @@ function onPBLNodeClick(node) {
       ${node.confidence ? `<span class="meta-tag" style="background:rgba(245,158,11,0.15);color:var(--accent)">置信度 ${(node.confidence * 100).toFixed(0)}%</span>` : ''}
       ${hasCourseware ? '<span class="meta-tag" style="background:rgba(16,185,129,0.15);color:var(--success)">✅ 有课件</span>' : '<span class="meta-tag" style="background:rgba(239,68,68,0.15);color:#f87171">📝 待创建</span>'}
     </div>
+    ${node._moduleLabel ? `<p style="font-size:13px;color:var(--secondary);margin-top:10px">模块主线：${node._moduleLabel}</p>` : ''}
     ${node.matchReason ? `<p style="font-size:13px;color:var(--accent);margin-top:10px">匹配理由：${node.matchReason}</p>` : ''}
+    ${node.taskSnippet ? `<p style="font-size:13px;color:var(--success);margin-top:8px">可执行任务：${node.taskSnippet}</p>` : ''}
     ${node.definition ? `<p class="definition">${node.definition}</p>` : ''}
     ${curriculumHtml}
     ${node.prerequisites && node.prerequisites.length > 0 ? `

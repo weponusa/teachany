@@ -72,6 +72,104 @@ class PBLPathBuilder {
     return out;
   }
 
+  _alignBlueprintModules(blueprint, archetype) {
+    if (!blueprint || !archetype?.modules?.length) return blueprint;
+    const mods = archetype.modules;
+    const schemes = (blueprint.schemes || []).map(s => ({
+      ...s,
+      phases: (s.phases || []).map((p, i) => {
+        const hasIds = (p.subsystemIds || []).length;
+        const mod = mods[i % mods.length];
+        return hasIds ? p : { ...p, subsystemIds: [mod.id] };
+      }),
+    }));
+    return { ...blueprint, schemes, knowledgeChain: blueprint.knowledgeChain || this._archetypeEngine?.moduleChain(archetype, blueprint) };
+  }
+
+  _validateBlueprint(blueprint, goal, archetype) {
+    if (this._archetypeEngine?.validateBlueprint) {
+      return this._archetypeEngine.validateBlueprint(blueprint, archetype);
+    }
+    const issues = [];
+    if (!blueprint?.schemes?.length) issues.push('缺少可行方案');
+    if (!blueprint?.deliverable) issues.push('缺少交付物');
+    return { valid: issues.length === 0, issues };
+  }
+
+  computeQualityScore(payload = {}) {
+    const {
+      goal = '', matched = [], external = [], projectBlueprint = null,
+      archetype = null, graphData = null, pathPlan = null,
+    } = payload;
+    let score = 100;
+    const breakdown = [];
+
+    const minM = archetype?.minMatched || 4;
+    if (matched.length < minM) {
+      const pen = Math.min(25, (minM - matched.length) * 6);
+      score -= pen;
+      breakdown.push({ key: 'matched', label: '课标匹配不足', delta: -pen });
+    }
+
+    const banned = matched.filter(n => this._isGenericTransversalNode(n.name, goal));
+    if (banned.length) {
+      const pen = Math.min(15, banned.length * 5);
+      score -= pen;
+      breakdown.push({ key: 'ban', label: '泛素养节点', delta: -pen });
+    }
+
+    const phases = pathPlan?.phases || projectBlueprint?.schemes?.find(s => s.id === projectBlueprint?.recommendedSchemeId)?.phases || [];
+    let hollow = 0;
+    phases.forEach(p => {
+      (p.steps || []).forEach(st => { if (this._isHollowStep(st)) hollow++; });
+    });
+    if (hollow >= 2) {
+      const pen = Math.min(20, hollow * 4);
+      score -= pen;
+      breakdown.push({ key: 'hollow', label: '空话步骤', delta: -pen });
+    }
+
+    const bpVal = this._validateBlueprint(projectBlueprint, goal, archetype);
+    if (!bpVal.valid) {
+      const pen = Math.min(12, bpVal.issues.length * 4);
+      score -= pen;
+      breakdown.push({ key: 'blueprint', label: '蓝图待完善', delta: -pen });
+    }
+
+    if (archetype?.modules?.length) {
+      const covered = new Set(matched.map(n => n._moduleId).filter(Boolean));
+      const ratio = covered.size / archetype.modules.length;
+      if (ratio < 0.5) {
+        const pen = Math.round((0.5 - ratio) * 20);
+        score -= pen;
+        breakdown.push({ key: 'modules', label: '模块覆盖偏低', delta: -pen });
+      }
+    }
+
+    const extWithTask = (external || []).filter(e => e.taskSnippet || e.matchReason?.includes('任务：'));
+    if (!extWithTask.length && external?.length) {
+      score -= 5;
+      breakdown.push({ key: 'ext', label: '课外缺任务片段', delta: -5 });
+    }
+
+    const nodes = graphData?.nodes || [];
+    if (nodes.length && matched.length) {
+      const mainline = nodes.filter(n => n.pathStep);
+      if (mainline.length < Math.min(3, matched.length)) {
+        score -= 8;
+        breakdown.push({ key: 'path', label: '实施链不完整', delta: -8 });
+      }
+    }
+
+    return {
+      score: Math.max(0, Math.min(100, Math.round(score))),
+      grade: score >= 85 ? 'A' : score >= 70 ? 'B' : score >= 55 ? 'C' : 'D',
+      breakdown,
+      blueprintValid: bpVal.valid,
+      blueprintIssues: bpVal.issues || [],
+    };
+  }
+
   // ─── 多课标知识点索引 ──────────────────────────
 
   async loadUnifiedIndex() {
@@ -2516,13 +2614,21 @@ class PBLPathBuilder {
   _finalizePBLGraph(goal, matched, external, activeSystems, meta = {}) {
     const profile = this._getPBLGoalProfile(goal);
     const complex = profile.complex;
+    const archetype = meta.archetype || null;
     let core = complex ? this._filterMatchedForComplexProject(matched) : matched;
     core = this._purgeBiologyNoise(core, goal);
-    core = this._filterMainlineNodes(core, goal);
+    core = this._filterMainlineNodes(core, goal, archetype);
     if (complex && core.length === 0 && matched.length) {
       core = this._filterMainlineNodes(
         [...matched].sort((a, b) => (b.confidence || 0) - (a.confidence || 0)),
-        goal
+        goal,
+        archetype
+      );
+    }
+    if (archetype && this._archetypeEngine) {
+      core = this._archetypeEngine.tagMatchedModules(
+        core, archetype, meta.projectBlueprint,
+        (n, m) => this._archetypeEngine.scoreForModule(n, m, this._tokenizeGoalTerms(goal))
       );
     }
     if (complex) {
@@ -2533,7 +2639,7 @@ class PBLPathBuilder {
         profile.maxMatched,
         complex
       );
-      core = this._filterMainlineNodes(core, goal);
+      core = this._filterMainlineNodes(core, goal, archetype);
       core = this._rebalanceStemMatched(core, goal, meta.candidatePool || [], profile.maxMatched);
     }
     if (!core.length && meta.candidatePool?.length) {
@@ -2721,9 +2827,10 @@ class PBLPathBuilder {
 
     // 4. 第零阶段：全链路拆解可行方案（不选课标）
     this._reportPBLStatus(onStatus, '第 1/4 步：全链路拆解可行方案...');
-    const projectBlueprint = await this._llmDecomposeStage(goal);
+    let projectBlueprint = await this._llmDecomposeStage(goal);
+    let archetype = this._resolveArchetype(goal, projectBlueprint);
+    if (archetype) projectBlueprint = this._alignBlueprintModules(projectBlueprint, archetype);
     const blueprintPhases = this._blueprintProjectPhases(projectBlueprint);
-    const archetype = this._resolveArchetype(goal, projectBlueprint);
     const bloomProfile = this._inferBloomProfile(projectBlueprint);
 
     // 5. 第一阶段 LLM：判断学科+学段+课标体系（压缩候选集）
@@ -2784,6 +2891,15 @@ class PBLPathBuilder {
         knowledgeChain: moduleChain || pathPlan.knowledgeChain,
         pathPlan
       });
+    const quality = this.computeQualityScore({
+      goal,
+      matched: finalized.matched,
+      external: finalized.external,
+      projectBlueprint,
+      archetype,
+      graphData: finalized.graphData,
+      pathPlan,
+    });
 
     return {
       goal,
@@ -2799,13 +2915,16 @@ class PBLPathBuilder {
       knowledgeChain: moduleChain || pathPlan.knowledgeChain,
       graphData: finalized.graphData,
       complexProject: finalized.complex,
+      quality,
       stats: {
         totalCandidates: candidates.length,
         filteredCandidates: stage1.filteredCandidates.length,
         matchedCount: finalized.matched.length,
         externalCount: finalized.external.length,
         graphNodes: finalized.graphData.nodes.length,
-        graphLinks: finalized.graphData.links.length
+        graphLinks: finalized.graphData.links.length,
+        qualityScore: quality.score,
+        qualityGrade: quality.grade,
       }
     };
   }
@@ -2995,7 +3114,7 @@ class PBLPathBuilder {
       );
     }
     matched = this._ensureMinimumMatched(matched, goal, candidates, profile.maxMatched, complex);
-    matched = this._filterMainlineNodes(matched, goal);
+    matched = this._filterMainlineNodes(matched, goal, archetype);
     matched = this._purgeBiologyNoise(matched, goal);
     matched = this._rebalanceStemMatched(matched, goal, candidates, profile.maxMatched);
     matched = this._purgeBiologyNoise(matched, goal);
