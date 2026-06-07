@@ -1,0 +1,105 @@
+/* ==================================================================
+ * TeachAny · 右下角/左下角悬浮模块布局（v1.0）
+ * 必须在五件套 CSS 之后、课件自定义样式之前加载。
+ *
+ * 分区（禁止课件再写 position:fixed 右下角学伴/气泡）：
+ *   左下：AI 学伴 FAB → 段落提示 → 学习反馈浮钮
+ *   中下：连续音频条 .tap-bar
+ *   右下（自下而上）：TTS 朗读器 → 播放模式 FAB
+ * ================================================================== */
+
+:root {
+  --ta-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --ta-dock-right: 20px;
+  --ta-dock-left: 24px;
+  --ta-dock-gap: 12px;
+  --ta-dock-tts-h: 46px;
+  --ta-dock-fab-h: 48px;
+  --ta-bar-lift: 0px;
+  --ta-toolbar-lift: 0px;
+}
+
+body.tap-bar-on,
+body.audio-playing {
+  --ta-bar-lift: 84px;
+}
+
+body.play-mode {
+  --ta-toolbar-lift: 56px;
+}
+
+/* 右下堆叠基准线：音频条与 slide 工具栏取较大抬升 */
+.tts-narrator-host,
+.play-mode-fab {
+  right: var(--ta-dock-right);
+}
+
+.tts-narrator-host {
+  bottom: calc(
+    16px + max(var(--ta-bar-lift), var(--ta-toolbar-lift)) + var(--ta-safe-bottom)
+  );
+  z-index: 9996;
+}
+
+.play-mode-fab {
+  bottom: calc(
+    16px + var(--ta-dock-tts-h) + var(--ta-dock-gap) +
+    max(var(--ta-bar-lift), var(--ta-toolbar-lift)) + var(--ta-safe-bottom)
+  );
+  z-index: 9995;
+}
+
+/* 学习反馈：放左栏，勿与右下 TTS 抢位 */
+[data-teachany-feedback-float] {
+  left: var(--ta-dock-left) !important;
+  right: auto !important;
+  bottom: calc(96px + var(--ta-bar-lift) + var(--ta-safe-bottom)) !important;
+  z-index: 9993 !important;
+}
+
+body.play-mode [data-teachany-feedback-float] {
+  bottom: calc(
+    96px + max(var(--ta-bar-lift), var(--ta-toolbar-lift)) + var(--ta-safe-bottom)
+  ) !important;
+}
+
+/* 左下 AI 学伴：音频条出现时上移 */
+body.tap-bar-on .ai-tutor-fab,
+body.audio-playing .ai-tutor-fab {
+  bottom: calc(100px + var(--ta-safe-bottom));
+}
+
+body.play-mode.tap-bar-on .ai-tutor-fab,
+body.play-mode.audio-playing .ai-tutor-fab {
+  bottom: calc(100px + var(--ta-safe-bottom));
+}
+
+/* 段落提示：跟在学伴右侧 */
+body.tap-bar-on .teachany-section-hint,
+body.audio-playing .teachany-section-hint {
+  bottom: calc(114px + var(--ta-safe-bottom));
+}
+
+@media (max-width: 640px) {
+  :root {
+    --ta-dock-right: 12px;
+    --ta-dock-left: 12px;
+  }
+
+  .tts-narrator-host {
+    bottom: calc(
+      12px + max(var(--ta-bar-lift), var(--ta-toolbar-lift)) + var(--ta-safe-bottom)
+    );
+  }
+
+  .play-mode-fab {
+    bottom: calc(
+      12px + var(--ta-dock-tts-h) + 8px +
+      max(var(--ta-bar-lift), var(--ta-toolbar-lift)) + var(--ta-safe-bottom)
+    );
+  }
+
+  [data-teachany-feedback-float] {
+    bottom: calc(168px + var(--ta-bar-lift) + var(--ta-safe-bottom)) !important;
+  }
+}

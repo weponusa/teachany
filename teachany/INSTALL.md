@@ -20,7 +20,7 @@
 mkdir -p ~/.codebuddy/skills
 cd ~/.codebuddy/skills
 git clone https://github.com/weponusa/teachany.git teachany-src
-ln -s "$PWD/teachany-src/skill" teachany
+ln -s "$PWD/teachany-src/teachany" teachany
 ```
 
 ### 2.2 安装到 Claude Code（~/.agents/skills）
@@ -29,7 +29,7 @@ ln -s "$PWD/teachany-src/skill" teachany
 mkdir -p ~/.agents/skills
 cd ~/.agents/skills
 git clone https://github.com/weponusa/teachany.git teachany-src
-ln -s "$PWD/teachany-src/skill" teachany
+ln -s "$PWD/teachany-src/teachany" teachany
 ```
 
 ### 2.3 通用路径（自选）
@@ -126,7 +126,7 @@ TeachAny 采用双仓库架构：
 | **weponusa/teachany** | Skill、轻量站点、脚本（**不含**完整 `data/trees`；Gallery/PBL/路径经 `teachany-data-fetch.js` 拉 teachany.cn） |
 | **weponusa/teachany-courseware** | 课件实体 + 课标树 + registry（线上 CDN 可读，发布时浅克隆或 PR） |
 
-GitHub Pages 轻量入口 [weponusa.github.io/teachany](https://weponusa.github.io/teachany/) 与 [www.teachany.cn](https://www.teachany.cn/) 能力对照见 `teachany/SKILL.md`「轻量 GH Pages vs 线上主站」。
+完整网站见 [www.teachany.cn](https://www.teachany.cn/)；`github.io/teachany` 仅跳转到主站。详见 `teachany/SKILL.md`。
 
 发布课件（课件目录可在任意路径）：
 - **推荐**：`hang_tree.py publish`（自动选 Worker PR 或 GH_TOKEN 直推）

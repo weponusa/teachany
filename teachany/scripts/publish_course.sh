@@ -500,8 +500,8 @@ if [ $STATUS -eq 0 ]; then
     echo ""
     echo "  📚 课件地址: $COURSE_URL"
     NODE_ID_FINAL=$(python3 -c "import json; print(json.load(open('$MANIFEST')).get('node_id',''))" 2>/dev/null || true)
-    echo "  🗺️  知识图谱: https://weponusa.github.io/teachany/path.html?node=$NODE_ID_FINAL"
-    echo "  📋 Gallery:  https://weponusa.github.io/teachany/index.html"
+    echo "  🗺️  知识图谱: https://www.teachany.cn/path.html?node=$NODE_ID_FINAL"
+    echo "  📋 Gallery:  https://www.teachany.cn/"
     [ -n "$PR_URL" ] && echo "  🔀 PR:       $PR_URL"
     exit 0
   else

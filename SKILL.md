@@ -7,21 +7,21 @@ allowed-tools: Read,Write,Edit,Bash,Glob,Grep
 
 # TeachAny – K12 Interactive Courseware Skill
 
-This repository root file is a lightweight pointer. The executable skill lives in `./skill/`.
+This repository root file is a lightweight pointer. The executable skill lives in `./teachany/`.
 
 Read first:
 
-- `./skill/SKILL.md` — concise execution summary and routing table
+- `./teachany/SKILL.md` — concise execution summary and routing table
 
 Load only when needed:
 
-- `./skill/phases/workflow.md` — full workflow
-- `./skill/phases/packaging.md` — publish / registry / Gallery
-- `./skill/references/baseline-rules.md` and `./skill/RULES.md` — complete baseline and hard rules
-- `./skill/templates/` — courseware skeletons
-- `./skill/scripts/` — validation, TTS, map, hero, **`hang_tree.py`** (挂树/发布，无需事先 clone courseware)
+- `./teachany/phases/workflow.md` — full workflow
+- `./teachany/phases/packaging.md` — publish / registry / Gallery
+- `./teachany/references/baseline-rules.md` and `./teachany/RULES.md` — complete baseline and hard rules
+- `./teachany/templates/` — courseware skeletons
+- `./teachany/scripts/` — validation, TTS, map, hero, **`hang_tree.py`** (挂树/发布，无需事先 clone courseware)
 
-Existing full courseware is hosted in the courseware repository:
+Full website (Gallery, PBL, knowledge map, APIs) lives in the courseware repository:
 
 - Repo: https://github.com/weponusa/teachany-courseware
-- Gallery: https://weponusa.github.io/teachany-courseware/
+- Site: https://www.teachany.cn/

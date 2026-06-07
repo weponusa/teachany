@@ -8,12 +8,12 @@ TeachAny 是面向 K12 互动课件的 AI Agent skill。当前唯一主入口是
 # CodeBuddy
 mkdir -p ~/.codebuddy/skills && cd ~/.codebuddy/skills
 git clone https://github.com/weponusa/teachany.git teachany-src
-ln -s "$PWD/teachany-src/skill" teachany
+ln -s "$PWD/teachany-src/teachany" teachany
 
 # Claude Code / 其他 Agent
 mkdir -p ~/.agents/skills && cd ~/.agents/skills
 git clone https://github.com/weponusa/teachany.git teachany-src
-ln -s "$PWD/teachany-src/skill" teachany
+ln -s "$PWD/teachany-src/teachany" teachany
 ```
 
 安装后让 AI 读取 `~/.codebuddy/skills/teachany/SKILL.md` 或 `~/.agents/skills/teachany/SKILL.md`。

@@ -43,8 +43,8 @@ cd teachany
 git sparse-checkout set --from-file .sparse-checkout-presets/standard.txt
 
 # 将 TeachAny Skill 连接到你的 AI 工具
-ln -sfn "$PWD/skill" ~/.codebuddy/skills/teachany   # CodeBuddy
-ln -sfn "$PWD/skill" ~/.agents/skills/teachany      # Claude Code / Cursor / Codex CLI
+ln -sfn "$PWD/teachany" ~/.codebuddy/skills/teachany   # CodeBuddy
+ln -sfn "$PWD/teachany" ~/.agents/skills/teachany      # Claude Code / Cursor / Codex CLI
 ```
 
 > 💡 **为什么推荐稀疏克隆？** 完整仓库约 1.6 GB，包含 420+ 社区课件及音视频资产。标准预设已经足够用于制作课件，不需要下载全部社区课件。
@@ -54,12 +54,12 @@ ln -sfn "$PWD/skill" ~/.agents/skills/teachany      # Claude Code / Cursor / Cod
 ```bash
 git clone https://github.com/weponusa/teachany.git
 cd teachany
-ln -sfn "$PWD/skill" ~/.codebuddy/skills/teachany
+ln -sfn "$PWD/teachany" ~/.codebuddy/skills/teachany
 ```
 
 > 🌐 **不克隆也能用**：所有课件都已发布到 **https://www.teachany.cn/**，可直接在线浏览。
 
-> 🧠 **AI 工具用户**：见 [skill/README.md](./skill/README.md)。TeachAny Skill 采用模块化设计，`skill/SKILL.md` 是入口，复杂章节会按需从 `skill/references/`、`skill/guides/`、`skill/phases/` 加载。
+> 🧠 **AI 工具用户**：见 [teachany/SKILL.md](./teachany/SKILL.md)。本仓库**仅含 Skill**；完整网站在 [teachany-courseware](https://github.com/weponusa/teachany-courseware) → [www.teachany.cn](https://www.teachany.cn/)。
 
 ### 国内用户 🇨🇳 · TeachAny.cn
 **国内访问请直接使用正式站点：**

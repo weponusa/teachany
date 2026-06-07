@@ -1,0 +1,417 @@
+/* TeachAny Standard Knowledge Graph Module · v2.1
+   --------------------------------------------------
+   视觉规范：复用知识地图 tree.html
+   · 深色底 + 同域配色 + 有课件实心高亮 / 无课件虚线
+   · 悬停放大 + tooltip
+   · 风格跟随课件：通过 CSS 变量覆盖
+   v2.1 修复：蓝底黑字（强制浅色文字+文字描边）、对比度增强
+*/
+
+.tkg-root {
+  --tkg-bg: var(--kg-bg, rgba(15, 23, 42, 0.96));
+  --tkg-card: var(--kg-card, rgba(30, 41, 59, 0.85));
+  --tkg-border: var(--kg-border, rgba(148, 163, 184, 0.22));
+  --tkg-text: var(--kg-text, #f8fafc);
+  --tkg-dim: var(--kg-dim, #94a3b8);
+  --tkg-muted: var(--kg-muted, #64748b);
+  --tkg-primary: var(--kg-primary, #3b82f6);
+  --tkg-accent: var(--kg-accent, #f59e0b);
+  --tkg-success: var(--kg-success, #10b981);
+  --tkg-danger: var(--kg-danger, #ef4444);
+  --tkg-radius: var(--kg-radius, 18px);
+
+  display: block;
+  color: var(--tkg-text);
+  background: var(--tkg-bg);
+  border: 1px solid var(--tkg-border);
+  border-radius: calc(var(--tkg-radius) + 6px);
+  padding: 22px;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.tkg-root *, .tkg-root *::before, .tkg-root *::after { box-sizing: border-box; }
+
+.tkg-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.tkg-title {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0;
+  color: var(--tkg-text);
+}
+.tkg-title small {
+  font-weight: 600;
+  color: var(--tkg-dim);
+  margin-left: 8px;
+  font-size: 13px;
+}
+.tkg-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.tkg-tools input[type="search"] {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--tkg-border);
+  background: var(--tkg-card);
+  color: var(--tkg-text);
+  font-size: 14px;
+  min-width: 200px;
+}
+.tkg-tools input[type="search"]::placeholder { color: var(--tkg-muted); }
+.tkg-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--tkg-border);
+  background: var(--tkg-card);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tkg-dim);
+  transition: transform .15s, border-color .15s, color .15s, background .15s;
+}
+.tkg-filter:hover { transform: translateY(-1px); color: var(--tkg-text); }
+.tkg-filter.active {
+  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--tkg-primary), var(--tkg-accent));
+}
+
+.tkg-body {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+  gap: 16px;
+}
+@media (max-width: 860px) { .tkg-body { grid-template-columns: 1fr; } }
+
+/* ─── SVG 画布：v2.1 加深背景色，强制内部文字为浅色 ─── */
+.tkg-canvas {
+  position: relative;
+  width: 100%;
+  min-height: 420px;
+  height: 420px;
+  border-radius: var(--tkg-radius);
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  overflow: hidden;
+}
+.tkg-canvas svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  /* v2.1: SVG内文字强制浅色，不受外部CSS污染 */
+  color: #f8fafc;
+}
+.tkg-canvas-hint {
+  position: absolute;
+  left: 12px;
+  top: 10px;
+  font-size: 12px;
+  color: rgba(148, 163, 184, 0.6);
+  pointer-events: none;
+  user-select: none;
+}
+.tkg-canvas-stat {
+  position: absolute;
+  right: 12px;
+  top: 10px;
+  display: flex;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--tkg-muted);
+}
+.tkg-canvas-stat span {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--tkg-border);
+}
+
+/* ─── 节点：完全对齐 tree.html，v2.3 去除 transform transition（避免坐标变化时视觉跳动） ─── */
+.tkg-node-group {
+  cursor: pointer;
+  /* v2.3: 不再对 transform 做 transition，只保留 opacity 动画 */
+  transition: opacity 0.2s ease;
+}
+.tkg-node-group:hover .tkg-node-circle {
+  stroke-width: 4;
+  /* v2.3: 去除 drop-shadow（放大 filter 在大数据量下会闪） */
+}
+.tkg-node-circle {
+  stroke-width: 2.5;
+  /* v2.3: 不再 transition all（fill/stroke/r 变化瞬时完成，避免闪）*/
+  transition: stroke-width 0.15s ease;
+}
+.tkg-node-group.selected .tkg-node-circle {
+  stroke-width: 4;
+}
+/* v2.1: 强制浅色文字 + 文字描边，确保深色背景下清晰可读 */
+.tkg-node-label {
+  font-size: 12px;
+  font-family: 'PingFang SC', sans-serif;
+  fill: #f8fafc !important;
+  text-anchor: middle;
+  pointer-events: none;
+  /* 文字描边增强对比度 */
+  paint-order: stroke fill;
+  stroke: rgba(15, 23, 42, 0.85);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.tkg-node-label-en {
+  font-size: 10px;
+  font-style: italic;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  fill: rgba(248, 250, 252, 0.75) !important;
+  text-anchor: middle;
+  pointer-events: none;
+  paint-order: stroke fill;
+  stroke: rgba(15, 23, 42, 0.7);
+  stroke-width: 2px;
+  stroke-linejoin: round;
+}
+.tkg-node-grade {
+  font-size: 10px;
+  fill: rgba(148, 163, 184, 0.9) !important;
+  text-anchor: middle;
+  pointer-events: none;
+  paint-order: stroke fill;
+  stroke: rgba(15, 23, 42, 0.6);
+  stroke-width: 2px;
+  stroke-linejoin: round;
+}
+.tkg-node-status-icon {
+  font-size: 14px;
+  text-anchor: middle;
+  pointer-events: none;
+}
+.tkg-node-group.dim { opacity: 0.3; transition: opacity .25s ease; }
+.tkg-node-group.no-course { cursor: default; }
+
+/* ─── 连接线 ─── */
+.tkg-link {
+  fill: none;
+  stroke: rgba(148, 163, 184, 0.3);
+  stroke-width: 2;
+  transition: stroke-opacity .2s;
+}
+.tkg-link.link-prereq { stroke: rgba(148, 163, 184, 0.3); stroke-width: 2; }
+.tkg-link.link-next { stroke: rgba(59, 130, 246, 0.45); stroke-width: 2; }
+.tkg-link.link-sibling { stroke: rgba(245, 158, 11, 0.3); stroke-dasharray: 3 3; }
+.tkg-link.link-extend { stroke: rgba(139, 92, 246, 0.35); stroke-dasharray: 6 3; }
+.tkg-link.dim { stroke-opacity: 0.1; }
+
+/* ─── Tooltip：对齐 tree.html。v2.4: 允许鼠标移入并点击跳转链接 ─── */
+.tkg-tooltip {
+  position: absolute;
+  background: rgba(30, 41, 59, 0.96);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 12px;
+  padding: 14px 16px;
+  max-width: 320px;
+  max-height: 60vh;
+  overflow-y: auto;
+  /* v2.4: 关键——tooltip 隐藏时 pointer-events:none 避免拦截背景鼠标，
+     显示时 pointer-events:auto 允许点击跳转按钮；切换由 .visible 类控制 */
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+  z-index: 10;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  color: #f8fafc;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.tkg-tooltip.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.tkg-tooltip h3 { font-size: 15px; margin: 0 0 6px; color: #f8fafc; }
+.tkg-tooltip .meta { font-size: 12px; color: #94a3b8; margin-bottom: 8px; }
+.tkg-tooltip .status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.tkg-tooltip .badge-active { background: rgba(16, 185, 129, 0.22); color: #10b981; }
+.tkg-tooltip .badge-gap { background: rgba(239, 68, 68, 0.22); color: #ef4444; }
+.tkg-tooltip .chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+.tkg-tooltip .chip {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--tkg-border);
+  color: #94a3b8;
+}
+.tkg-tooltip .course-link {
+  display: block;
+  margin-top: 10px;
+  padding: 7px 12px;
+  background: linear-gradient(135deg, var(--tkg-primary), var(--tkg-accent));
+  color: #fff;
+  border-radius: 8px;
+  text-align: center;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+  pointer-events: auto;
+}
+.tkg-tooltip button.course-link {
+  width: 100%;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+.tkg-tooltip .course-link:hover { filter: brightness(1.1); }
+.tkg-make-course-btn {
+  width: 100%;
+  min-height: 40px;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, var(--tkg-primary), var(--tkg-accent));
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.tkg-make-course-btn.secondary {
+  width: auto;
+  min-height: 36px;
+  padding: 8px 12px;
+  background: rgba(59, 130, 246, 0.18);
+  color: #dbeafe;
+}
+.tkg-make-course-btn:hover { filter: brightness(1.08); }
+.tkg-make-course-box {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(59, 130, 246, 0.32);
+  background: rgba(59, 130, 246, 0.08);
+}
+.tkg-make-course-box p { margin: 0; color: #94a3b8; font-size: 12px; line-height: 1.6; }
+.tkg-prompt {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.82);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  color: #e2e8f0;
+  font-size: 12px;
+  line-height: 1.65;
+  word-break: break-all;
+}
+.tkg-make-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.tkg-copy-feedback { opacity: 0; color: var(--tkg-success); font-size: 12px; transition: opacity .2s; }
+.tkg-copy-feedback.visible { opacity: 1; }
+.tkg-tooltip .gap-msg {
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  font-size: 12px;
+}
+
+/* ─── 详情面板 ─── */
+.tkg-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-radius: var(--tkg-radius);
+  background: var(--tkg-card);
+  border: 1px solid var(--tkg-border);
+  min-height: 420px;
+  color: #f8fafc;
+}
+.tkg-panel h3 { margin: 0; font-size: 17px; font-weight: 800; color: #f8fafc; }
+.tkg-panel .meta { color: #94a3b8; font-size: 12px; font-weight: 600; }
+.tkg-panel ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.tkg-panel ul li { font-size: 12.5px; line-height: 1.6; color: #94a3b8; }
+
+.tkg-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tkg-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid var(--tkg-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: #f8fafc;
+  text-decoration: none;
+  cursor: pointer;
+}
+.tkg-tag:hover { background: rgba(59, 130, 246, 0.12); }
+.tkg-tag.layer-prereq { border-color: rgba(16, 185, 129, 0.6); color: #10b981; }
+.tkg-tag.layer-next { border-color: rgba(59, 130, 246, 0.6); color: #3b82f6; }
+.tkg-tag.layer-sibling { border-color: rgba(245, 158, 11, 0.5); color: #f59e0b; }
+.tkg-tag.layer-extend { border-color: rgba(139, 92, 246, 0.5); color: #c084fc; }
+.tkg-tag.has-course::after { content: '📚'; margin-left: 2px; }
+.tkg-tag.no-course { opacity: 0.7; cursor: default; }
+.tkg-tag.no-course:hover { background: rgba(255, 255, 255, 0.04); }
+
+.tkg-panel-links { display: grid; gap: 8px; }
+.tkg-link-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--tkg-border);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 13px;
+  color: #f8fafc;
+  text-decoration: none;
+  transition: border-color .2s, transform .2s, background .2s;
+}
+.tkg-link-card:hover {
+  border-color: var(--tkg-primary);
+  transform: translateY(-1px);
+  background: rgba(59, 130, 246, 0.08);
+}
+.tkg-link-card strong { font-size: 14px; }
+.tkg-link-card em { font-style: normal; color: #64748b; font-size: 11.5px; }
+
+.tkg-empty {
+  padding: 16px;
+  border-radius: var(--tkg-radius);
+  background: rgba(255, 255, 255, 0.03);
+  color: #94a3b8;
+  font-size: 14px;
+  text-align: center;
+}
+
+.tkg-footer {
+  margin-top: 14px;
+  font-size: 12px;
+  color: #64748b;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.tkg-legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: #94a3b8; }
+.tkg-legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+
+/* v7.7.5: .tkg-probe 学习足迹模块已移除 */
+
+/* v2.1: 移除了 @media (prefers-color-scheme: light) 对 --tkg-text 的覆盖
+   原来的 override 导致浅色系统偏好下 --tkg-text: inherit，
+   使深蓝背景上的文字变成深色（蓝底黑字），现在强制始终保持浅色 */

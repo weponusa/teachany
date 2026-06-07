@@ -25,29 +25,29 @@ TeachAny 的目标不是把知识堆进页面，而是把一节课做成**有问
 | 仓库 | GitHub | 含 `data/trees/` | 用途 |
 | --- | --- | --- | --- |
 | **teachany-courseware** | [weponusa/teachany-courseware](https://github.com/weponusa/teachany-courseware) | ✅ 权威 | 知识树、`node-index.json`、`nodes-metadata.json`、`rebuild-index.py` |
-| **teachany**（本地常叫 teachany-opensource） | [weponusa/teachany](https://github.com/weponusa/teachany) | ❌ 轻量 | Skill、`pbl.html` / `path.html`；**无**完整课标 JSON |
+| **teachany**（本仓库） | [weponusa/teachany](https://github.com/weponusa/teachany) | ❌ 轻量 | 仅 Skill 安装包（`teachany/`）；**无**门户页与完整课标 JSON |
 | ~~teachany-opensource~~ | **不存在此独立仓库** | — | 勿 clone；会 404 |
 
 ### 只读 vs 写入（能否不 clone？）
 
 | 能力 | 不 clone，能访问公网即可？ | 数据/API 来源 |
 | --- | --- | --- |
-| **学习路径图谱** `path.html` | ✅ | `nodes-metadata.json` + `registry.json`（`teachany-data-fetch.js`） |
-| **知识地图** `tree.html` | ✅ | `teachany-courseware` GitHub Pages / raw |
-| **PBL 匹配** `pbl.html` | ✅ | 课标树 CDN + `POST https://www.teachany.cn/api/pbl/analyze` |
+| **学习路径图谱** | ✅ | [www.teachany.cn/path.html](https://www.teachany.cn/path.html) |
+| **知识地图** | ✅ | [www.teachany.cn/knowledge-map.html](https://www.teachany.cn/knowledge-map.html) |
+| **PBL 匹配** | ✅ | [www.teachany.cn/pbl.html](https://www.teachany.cn/pbl.html) + `POST /api/pbl/analyze` |
 | **查 node_id** `find_nodes.py` | ✅ | 远程 `data/trees/...`（`repo_paths.fetch_remote_json`） |
 | **校验 node_id** `check_node_id.py` | ✅ | 远程 `node-index.json` |
 | **课件内知识图谱模块** | ✅ | `assets/scripts/teachany-knowledge-graph.js`（轻量仓已同步；manifest 走 teachany.cn CDN） |
-| **Gallery 首页** `index.html` | ✅ | `teachany-data-fetch.js` + `unified-loader.js`（轻量 GH Pages 拉 teachany.cn 索引） |
+| **Gallery 首页** | ✅ | [www.teachany.cn](https://www.teachany.cn/) |
 | **挂树 / 发布** | ✅ 见下方 `hang_tree.py` | `GH_TOKEN` 或 Worker PR；**不必**事先 clone |
 
-### 轻量 GH Pages vs 线上主站（避免误判）
+### 网站入口（避免误判）
 
-| 入口 | 适合 |
+| 入口 | 用途 |
 | --- | --- |
-| [github.io/teachany](https://weponusa.github.io/teachany/) | Skill 演示、PBL/路径/知识地图；**无**本地 `registry.json`，靠 CDN 回退 |
-| [www.teachany.cn](https://www.teachany.cn/) | 完整 Gallery、课件实体、API、最新 `registry` |
-| [github.io/teachany-courseware](https://weponusa.github.io/teachany-courseware/) | 与 teachany.cn 同源的静态课件与 `data/` |
+| [www.teachany.cn](https://www.teachany.cn/) | **唯一主站**：Gallery、PBL、知识地图、API、`data/` |
+| [weponusa/teachany](https://github.com/weponusa/teachany) | **仅 Skill 安装**；`github.io/teachany` 仅跳转到主站 |
+| [weponusa/teachany-courseware](https://github.com/weponusa/teachany-courseware) | 网站源码仓（部署到 Cloudflare Pages） |
 
 裸域 `teachany.cn` 若 TLS 失败，请用 **`www.teachany.cn`**。
 
@@ -71,7 +71,7 @@ python3 "$TEACHANY_SKILL/scripts/find_nodes.py" --stage middle --subject physics
 python3 "$TEACHANY_SKILL/scripts/check_node_id.py" --node-id phy-m-liquid-pressure-buoyancy
 ```
 
-静态站（[GitHub Pages](https://weponusa.github.io/teachany/pbl.html)）通过 `teachany-data-fetch.js` 拉取 `data/*`；**不能**只在 `weponusa/teachany` 仓内找 `data/trees`。
+门户与 `data/trees` 均在 **teachany-courseware / www.teachany.cn**；**不能**只在 `weponusa/teachany` 仓内找课标 JSON。
 
 ## Quick Start
 

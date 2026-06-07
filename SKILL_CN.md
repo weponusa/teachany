@@ -9,9 +9,9 @@ allowed-tools: Read,Write,Edit,Bash,Glob,Grep
 
 本文件是仓库根入口。真正的技能执行摘要在：
 
-- `./skill/SKILL.md`
+- `./teachany/SKILL.md`
 
-不要再一次性加载旧版 `SKILL_CN.md`、`RULES.md`、全部 `phases/` 和 `tech/`。执行时先读 `./skill/SKILL.md`，再按任务场景读取对应卫星文档。
+不要再一次性加载旧版 `SKILL_CN.md`、`RULES.md`、全部 `phases/` 和 `tech/`。执行时先读 `./teachany/SKILL.md`，再按任务场景读取对应卫星文档。
 
 既有课件资产位于：
 

@@ -1,0 +1,224 @@
+/* TeachAny v2 slide / play-mode — shared across official courseware */
+.slide-container { position: relative; }
+
+body.play-mode .slide-container {
+  scroll-snap-type: y mandatory;
+  overflow-y: auto;
+  height: 100dvh;
+  -webkit-overflow-scrolling: touch;
+}
+
+body.play-mode .slide-page {
+  min-height: 100dvh;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  padding: 24px;
+  padding-bottom: calc(24px + 56px);
+  box-sizing: border-box;
+}
+
+body.play-mode .slide-page > .section,
+body.play-mode .slide-page > .ta-standard-section,
+body.play-mode .slide-page > .hero,
+body.play-mode .slide-page > section {
+  max-width: 920px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.slide-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #3b82f6, #06b6d4);
+  z-index: 201;
+  transition: width 0.3s;
+  border-radius: 0 2px 2px 0;
+  pointer-events: none;
+  width: 0;
+}
+
+.slide-toolbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+}
+
+body.play-mode .slide-toolbar,
+body.toolbar-visible .slide-toolbar {
+  transform: translateY(0);
+}
+
+.toolbar-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  transition: all 0.2s;
+}
+
+.toolbar-btn:hover { background: #e2e8f0; color: #1e293b; }
+.toolbar-btn.active { color: #3b82f6; }
+.toolbar-btn svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.toolbar-progress {
+  flex: 1;
+  max-width: 200px;
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  cursor: pointer;
+  position: relative;
+}
+
+.toolbar-progress-fill {
+  height: 100%;
+  background: #3b82f6;
+  border-radius: 2px;
+  transition: width 0.3s;
+  width: 0;
+}
+
+.toolbar-page-info {
+  font-size: 12px;
+  color: #64748b;
+  min-width: 50px;
+  text-align: center;
+}
+
+.play-mode-fab {
+  position: fixed;
+  /* 位置由 teachany-floating-dock.css 堆叠在 TTS 之上 */
+  bottom: 80px;
+  right: 20px;
+  z-index: 101;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: #3b82f6;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transition: all 0.3s;
+}
+
+.play-mode-fab:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+.play-mode-fab svg { width: 22px; height: 22px; fill: currentColor; stroke: none; }
+
+.slide-sidenav {
+  position: fixed;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 8px 4px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+body.play-mode .slide-sidenav,
+body.toolbar-visible .slide-sidenav { opacity: 1; }
+
+.sidenav-dot {
+  width: 24px;
+  height: 4px;
+  border-radius: 2px;
+  background: #e2e8f0;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.sidenav-dot.active { width: 32px; background: #3b82f6; }
+.sidenav-dot:hover { background: #3b82f6; opacity: 0.7; }
+
+.sidenav-counter {
+  font-size: 10px;
+  color: #64748b;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+body.play-mode .nav-bar,
+body.play-mode .progress-bar:not(.slide-progress-bar) { display: none; }
+
+/* Legacy compatibility: some older pages wrapped dark inline cards into slide pages.
+   Their text may inherit a dark page color, becoming invisible on #1e293b/#0f172a cards. */
+.slide-container [style*="background:#1e293b"],
+.slide-container [style*="background: #1e293b"],
+.slide-container [style*="background:#0f172a"],
+.slide-container [style*="background: #0f172a"] {
+  color: #e5edf8 !important;
+}
+.slide-container [style*="background:#1e293b"] p,
+.slide-container [style*="background: #1e293b"] p,
+.slide-container [style*="background:#0f172a"] p,
+.slide-container [style*="background: #0f172a"] p,
+.slide-container [style*="background:#1e293b"] li,
+.slide-container [style*="background: #1e293b"] li,
+.slide-container [style*="background:#0f172a"] li,
+.slide-container [style*="background: #0f172a"] li {
+  color: #e5edf8 !important;
+}
+.slide-container [style*="background:#1e293b"] strong,
+.slide-container [style*="background: #1e293b"] strong,
+.slide-container [style*="background:#0f172a"] strong,
+.slide-container [style*="background: #0f172a"] strong {
+  color: #ffffff !important;
+}
+
+@media (max-width: 768px) {
+  .slide-sidenav { right: 6px; gap: 2px; padding: 6px 3px; }
+  .sidenav-dot { width: 20px; height: 3px; }
+  body.play-mode .slide-page { padding: 16px; padding-bottom: calc(16px + 56px); }
+}
