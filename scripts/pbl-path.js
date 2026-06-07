@@ -578,12 +578,16 @@ class PBLPathBuilder {
     if (/购车|买车|选车|用车方案|消费决策|方案比选|比选|选型|性价比|家用.*车|家庭.*(购车|买车|选车|用车)/.test(g)) return true;
     if (/对比|比较/.test(g) && /购|买|选|家用|家庭/.test(g) && /新能源|燃油|电动|混动|汽油|柴油/.test(g)) return true;
     if (/哪个更|哪种更|怎么选|如何选择/.test(g) && /车|新能源|燃油|电动/.test(g)) return true;
+    if (/新.{0,2}旧.{0,2}能源|油电混合|油电对比|燃油车|电动车|电车|混动车/.test(g) && /车|汽车|选|购|买|方案|对比|比较/.test(g)) return true;
+    if (/(车|汽车|轿车|SUV)/.test(g) && /新能源|燃油|电动|混动|油电|汽油|柴油/.test(g) && /选|购|买|对比|比较|方案|推荐|决策|建议/.test(g)) return true;
+    if (/选.{0,4}(车|汽车)/.test(g) || /(车|汽车).{0,4}选/.test(g)) return true;
     return false;
   }
 
   _isEnergyEngineeringGoal(goal) {
     const g = String(goal || '');
     if (this._isConsumerDecisionGoal(g)) return false;
+    if (/(车|汽车|轿车|SUV|用车)/.test(g) && /新能源|燃油|电动|混动|油电/.test(g) && !/设计|制作|研发|装置|系统开发|搭建|发明|工程化|发电|储能装置/.test(g)) return false;
     if (/对比|比较|选购|购车|买车|选车|家用|家庭/.test(g) && !/设计|制作|研发|装置|系统开发|搭建|发电|储能|并网|逆变/.test(g)) {
       if (/新能源|电动|燃油|混动|光伏|储能/.test(g)) return false;
     }
@@ -784,6 +788,22 @@ class PBLPathBuilder {
     return /细胞|细胞膜|细胞器|细胞核|细胞壁|细胞呼吸|线粒体|叶绿体|有丝分裂|减数分裂|DNA|基因表达|遗传|光合作用|酶|蛋白质合成|生物膜/.test(String(name || ''));
   }
 
+  /** 购车/能耗比选等非生物项目：硬性剔除生物噪声（避免「新能源」误配细胞） */
+  _shouldPurgeBiologyForGoal(goal) {
+    if (this._isConsumerDecisionGoal(goal)) return true;
+    const g = String(goal || '');
+    return /(车|汽车)/.test(g) && /新能源|燃油|电动|混动|油电/.test(g) && !/生物|细胞|生态|光合|酶|遗传|植物|动物/.test(g);
+  }
+
+  _purgeBiologyNoise(nodes, goal) {
+    if (!this._shouldPurgeBiologyForGoal(goal) || !Array.isArray(nodes)) return nodes;
+    return nodes.filter(n => {
+      if (n.subject === 'biology') return false;
+      if (this._isBiologyNodeName(n.name)) return false;
+      return true;
+    });
+  }
+
   _nodeSearchText(node) {
     return `${node.name || ''} ${node.definition || node.description || ''} ${(node.key_concepts || []).join(' ')}`.toLowerCase();
   }
@@ -917,18 +937,21 @@ class PBLPathBuilder {
 
   _filterMainlineNodes(matched, goal) {
     const domains = this._inferProjectDomains(goal);
-    if (!domains.length && !this._isStemProjectGoal(goal)) return matched;
-    const filtered = matched.filter(n => this._isMainlineRelevant(n, goal, domains));
-    if (filtered.length) return filtered;
+    let pool = matched;
+    if (domains.length || this._isStemProjectGoal(goal)) {
+      pool = matched.filter(n => this._isMainlineRelevant(n, goal, domains));
+    }
+    pool = this._purgeBiologyNoise(pool, goal);
+    if (pool.length) return pool;
     if (matched.length && this._isStemProjectGoal(goal)) {
-      return matched.filter(n => {
+      return this._purgeBiologyNoise(matched.filter(n => {
         const name = String(n.name || '');
         if (this._isBiologyNodeName(name) || n.subject === 'biology') return false;
         return !/作文|地形|有机合成|弧长|扇形面积/.test(name);
-      });
+      }), goal);
     }
-    // 非 STEM 项目：宁可保留原匹配，也不要整组清空
-    return this._isStemProjectGoal(goal) ? [] : matched;
+    // 非 STEM 项目：宁可保留原匹配，也不要整组清空；购车类须剔除生物噪声
+    return this._isStemProjectGoal(goal) ? [] : this._purgeBiologyNoise(matched, goal);
   }
 
   _scoreNodeForGoal(node, goalTerms, filterSubjects, complex, domains, goal = '') {
@@ -1805,6 +1828,7 @@ class PBLPathBuilder {
     const profile = this._getPBLGoalProfile(goal);
     const complex = profile.complex;
     let core = complex ? this._filterMatchedForComplexProject(matched) : matched;
+    core = this._purgeBiologyNoise(core, goal);
     core = this._filterMainlineNodes(core, goal);
     if (complex && core.length === 0 && matched.length) {
       core = this._filterMainlineNodes(
@@ -1886,7 +1910,18 @@ class PBLPathBuilder {
       }
     });
 
-    return { nodes: base.nodes, links: this._deduplicateLinks(links) };
+    let nodes = base.nodes;
+    if (this._shouldPurgeBiologyForGoal(goal)) {
+      const kept = new Set(this._purgeBiologyNoise(nodes, goal).map(n => n.id));
+      nodes = nodes.filter(n => kept.has(n.id));
+    }
+    const keptIds = new Set(nodes.map(n => n.id));
+    const prunedLinks = links.filter(l => {
+      const src = typeof l.source === 'object' ? l.source.id : l.source;
+      const tgt = typeof l.target === 'object' ? l.target.id : l.target;
+      return keptIds.has(src) && keptIds.has(tgt);
+    });
+    return { nodes, links: this._deduplicateLinks(prunedLinks) };
   }
 
   _buildProjectPathGraph(matchedNodes, externalNodes, pathOrderIds = []) {
@@ -2194,7 +2229,9 @@ class PBLPathBuilder {
     matched = this._filterMainlineNodes(matched, goal);
     matched = this._ensureMinimumMatched(matched, goal, candidates, profile.maxMatched, complex);
     matched = this._filterMainlineNodes(matched, goal);
+    matched = this._purgeBiologyNoise(matched, goal);
     matched = this._rebalanceStemMatched(matched, goal, candidates, profile.maxMatched);
+    matched = this._purgeBiologyNoise(matched, goal);
 
     let pathOrderIds = (result.pathOrder || result.learningSequence || [])
       .map(i => (typeof i === 'string' ? parseInt(i, 10) : i))
