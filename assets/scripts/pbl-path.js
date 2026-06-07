@@ -12,43 +12,11 @@ class PBLPathBuilder {
     this.loaded = false;
     this._loadPromise = null;
 
-    // LLM 服务商预设（复用 AI 学伴架构）
-    // 内置 PBL 专用 Key（Paratera 并行超算 GLM-4-Flash，非推理模型，快速）
-    // 拆分存储以绕过 GitHub Push Protection 扫描
-    this._builtinKey = ['sk-Ye5gT','EaDbjlXaM2BlZ','Gcjg'].join('');
-
-    this.providers = [
-      { id: 'proxy', name: '🆓 TeachAny 代理（默认 · 免费 · 无需配置）', baseUrl: PBLPathBuilder.PROXY_URL, model: 'GLM-4-Flash', noAuth: true, builtinKey: 'proxy', models: [
-        'GLM-4-Flash', 'z-ai/glm-4.5-air:free'
-      ] },
-      { id: 'openrouter-free', name: '🆓 OpenRouter 免费模型（推理慢）', baseUrl: 'https://openrouter.ai/api/v1', model: 'z-ai/glm-4.5-air:free', noAuth: false, models: [
-        'z-ai/glm-4.5-air:free',
-        'meta-llama/llama-3.3-70b-instruct:free',
-        'qwen/qwen3-next-80b-a3b-instruct:free',
-        'tencent/hy3-preview:free'
-      ] },
-      { id: 'pollinations', name: 'Pollinations（免费免 Key · 不稳定）', baseUrl: 'https://text.pollinations.ai/openai?referrer=teachany', model: 'openai', noAuth: true, models: [
-        'openai',
-        'gpt-oss-20b'
-      ] },
-      { id: 'deepseek', name: 'DeepSeek', baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-chat', models: ['deepseek-chat','deepseek-reasoner'] },
-      { id: 'moonshot', name: '月之暗面 Kimi', baseUrl: 'https://api.moonshot.cn/v1', model: 'moonshot-v1-8k', models: ['moonshot-v1-8k','moonshot-v1-32k','moonshot-v1-128k','kimi-latest'] },
-      { id: 'qwen', name: '通义千问', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen-plus', models: ['qwen-plus','qwen-turbo','qwen-max','qwen-long','qwq-32b'] },
-      { id: 'zhipu', name: '智谱 AI', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', model: 'glm-4-flash', models: ['glm-4-flash','glm-4-air','glm-4-plus','glm-4-long','glm-4v-plus','glm-4v'] },
-      { id: 'openrouter', name: 'OpenRouter（付费模型）', baseUrl: 'https://openrouter.ai/api/v1', model: 'anthropic/claude-3.5-sonnet', models: ['anthropic/claude-3.5-sonnet','openai/gpt-4o','google/gemini-2.5-flash-preview','deepseek/deepseek-chat-v3-0324','meta-llama/llama-4-maverick','qwen/qwen3-235b-a22b'] },
-      { id: 'openai', name: 'OpenAI', baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini', models: ['gpt-4o-mini','gpt-4o','gpt-4.1-mini','gpt-4.1'] },
-      { id: 'gemini', name: 'Google Gemini', baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-2.0-flash', models: ['gemini-2.0-flash','gemini-2.5-flash-preview','gemini-2.5-pro-preview'] },
-      { id: 'siliconflow', name: '硅基流动', baseUrl: 'https://api.siliconflow.cn/v1', model: 'Qwen/Qwen2.5-7B-Instruct', models: ['Qwen/Qwen2.5-7B-Instruct','Qwen/Qwen2.5-72B-Instruct','deepseek-ai/DeepSeek-V3','Pro/deepseek-ai/DeepSeek-R1','THUDM/GLM-4-9B-0414','Qwen/Qwen3-235B-A22B'] },
-      { id: 'paratera-full', name: '并行超算（全量模型）', baseUrl: 'https://llmapi.paratera.com/v1', model: 'DeepSeek-V3.2', models: ['DeepSeek-V3.2','DeepSeek-R1','Qwen3-235B-A22B-Instruct-2507','GLM-4.7','GLM-5','Kimi-K2','ERNIE-5.0-Thinking-Preview'] },
-      { id: 'custom', name: '自定义 API', baseUrl: '', model: '', models: [] }
-    ];
-
     // Tooltip 延迟隐藏：允许鼠标从节点移动到弹窗内点击课程链接
     this._tooltipHideTimer = null;
     this._tooltipHovered = false;
 
-    // 加载已保存的 LLM 配置
-    this._loadLLMConfig();
+    try { localStorage.removeItem('teachany_pbl_config'); } catch (e) { /* ignore */ }
   }
 
   // ─── 多课标知识点索引 ──────────────────────────
@@ -372,169 +340,6 @@ class PBLPathBuilder {
     return [d.curriculumLabel || d.systemLabel, d.stageLabel, d.gradeLabel, d.subject, d.domain]
       .filter(Boolean)
       .join(' · ');
-  }
-
-  // ─── LLM 配置管理 ─────────────────────────────
-
-  // Cloudflare Pages Function 代理（API Key 存在环境变量，前端不暴露）
-  // 2026-06-04: 从硬编码 Key 改为 CF Pages Function 代理，解决免费 Key 不稳定问题
-  // 优先用 teachany.cn 域名（CDN 缓存+SSL 正常），回退到 workers.dev
-  static PROXY_URL = 'https://www.teachany.cn/api/llm';
-  static PROXY_URL_FALLBACK = 'https://llm-proxy.weponusa.workers.dev/v1';
-  static BUILTIN_KEY = 'proxy';  // 代理模式不需要真实 Key
-  static BUILTIN_MODEL = 'GLM-4-Flash';
-  static BUILTIN_BASE_URL = PBLPathBuilder.PROXY_URL;
-
-  _loadLLMConfig() {
-    try {
-      const saved = localStorage.getItem('teachany_pbl_config');
-      if (saved) {
-        const cfg = JSON.parse(saved);
-        const savedProvider = this.providers.find(p => p.id === cfg.providerId || p.baseUrl === cfg.baseUrl);
-        // 迁移旧配置：硬编码 Key / 旧 Pollinations / 旧 Paratera 直接调用
-        if (cfg.apiKey && (String(cfg.apiKey).startsWith('sk-or-v1-a4d900') || String(cfg.apiKey).startsWith('sk-or-v1-1dd402'))) {
-          localStorage.removeItem('teachany_pbl_config');
-        } else if (cfg.baseUrl && cfg.baseUrl.includes('pollinations.ai')) {
-          localStorage.removeItem('teachany_pbl_config');
-        } else if (cfg.model === 'DeepSeek-V3.2' && cfg.baseUrl && cfg.baseUrl.includes('paratera')) {
-          localStorage.removeItem('teachany_pbl_config');
-        } else if (cfg.baseUrl && cfg.baseUrl.includes('llmapi.paratera.com') && cfg.providerId === 'paratera') {
-          // 旧版直接调用 Paratera → 迁移到代理
-          localStorage.removeItem('teachany_pbl_config');
-        } else if (!cfg.apiKey && !(savedProvider && savedProvider.noAuth)) {
-          localStorage.removeItem('teachany_pbl_config');
-        } else {
-          this._llmConfig = cfg;
-          return;
-        }
-      }
-    } catch (e) { /* ignore */ }
-    // 默认配置：TeachAny 代理（免费，无需 Key）
-    this._llmConfig = {
-      providerId: 'proxy',
-      apiKey: PBLPathBuilder.BUILTIN_KEY,
-      model: PBLPathBuilder.BUILTIN_MODEL,
-      baseUrl: PBLPathBuilder.BUILTIN_BASE_URL
-    };
-  }
-
-  _saveLLMConfig() {
-    localStorage.setItem('teachany_pbl_config', JSON.stringify(this._llmConfig));
-  }
-
-  getLLMConfig() {
-    const provider = this.providers.find(p => p.id === this._llmConfig.providerId) || this.providers[0];
-    return {
-      baseUrl: this._llmConfig.baseUrl || provider.baseUrl || PBLPathBuilder.BUILTIN_BASE_URL,
-      apiKey: this._llmConfig.apiKey || PBLPathBuilder.BUILTIN_KEY,
-      model: this._llmConfig.model || provider.model || PBLPathBuilder.BUILTIN_MODEL,
-      providerId: this._llmConfig.providerId || provider.id,
-      providerName: provider.name,
-      noAuth: !!provider.noAuth
-    };
-  }
-
-  setLLMConfig(cfg) {
-    Object.assign(this._llmConfig, cfg);
-    this._saveLLMConfig();
-  }
-
-  // ─── LLM 调用 ──────────────────────────────────
-
-  // 429/503 自动降级模型列表（按优先级）
-  static FALLBACK_MODELS = [
-    'z-ai/glm-4.5-air:free',
-    'meta-llama/llama-3.3-70b-instruct:free',
-    'qwen/qwen3-next-80b-a3b-instruct:free',
-    'tencent/hy3-preview:free'
-  ];
-
-  async callLLM(messages, options = {}, retried = false) {
-    const cfg = this.getLLMConfig();
-    const isProxy = cfg.baseUrl && (cfg.baseUrl.includes('llm-proxy') || cfg.baseUrl.includes('/api/llm'));
-    // 代理模式不需要前端传 Key
-    if (!isProxy && !cfg.noAuth && !cfg.apiKey) throw new Error('请先配置 API Key（点击右上角 ⚙️ 设置）');
-
-    const cleanBaseUrl = String(cfg.baseUrl || '').replace(/\/$/, '');
-    const endpoint = /\/(openai|chat\/completions)(?:\?.*)?$/i.test(cleanBaseUrl)
-      ? cleanBaseUrl
-      : cleanBaseUrl + '/chat/completions';
-    const headers = {
-      'Content-Type': 'application/json'
-    };
-
-    // 代理模式：用 X-Backend 头选择后端，不传 Authorization
-    if (isProxy) {
-      // 根据 model 决定后端
-      const backend = cfg.model === 'z-ai/glm-4.5-air:free' ? 'openrouter' : 'paratera';
-      headers['X-Backend'] = backend;
-    } else if (!cfg.noAuth && cfg.apiKey) {
-      headers['Authorization'] = 'Bearer ' + cfg.apiKey;
-    }
-
-    // OpenRouter 专属 header（非代理模式）
-    if (!isProxy && cleanBaseUrl.includes('openrouter.ai')) {
-      headers['HTTP-Referer'] = location.origin || 'https://teachany.app';
-      headers['X-Title'] = 'TeachAny PBL Path Builder';
-    }
-
-    const body = {
-      model: cfg.model,
-      messages,
-      stream: false,
-      temperature: options.temperature || 0.3,
-      // 非推理模型 4000 token 足够，推理模型会被 thinking 占满
-      max_tokens: options.maxTokens || 4000
-    };
-
-    const ac = new AbortController();
-    const timeout = setTimeout(() => ac.abort(), 90000); // 90s 超时
-
-    try {
-      const resp = await fetch(endpoint, {
-        method: 'POST',
-        headers,
-        signal: ac.signal,
-        body: JSON.stringify(body)
-      });
-
-      if (!resp.ok) {
-        let errJson;
-        try { errJson = JSON.parse(await resp.text().catch(() => '{}')); } catch (e) {}
-
-        // 429/503 自动重试 + 后端降级
-        if ((resp.status === 429 || resp.status === 503) && !retried) {
-          const retryAfter = (isProxy ? 8 : errJson?.error?.metadata?.retry_after_seconds) || 16;
-          const currentModel = cfg.model || PBLPathBuilder.BUILTIN_MODEL;
-          const nextModel = PBLPathBuilder.FALLBACK_MODELS.find(m => m !== currentModel) || PBLPathBuilder.FALLBACK_MODELS[0];
-
-          console.warn(`[PBL] ${resp.status}, retrying in ${retryAfter}s with model ${nextModel}`);
-          await new Promise(r => setTimeout(r, Math.min(retryAfter, 20) * 1000));
-          // 代理模式：切换后端
-          if (isProxy) {
-            headers['X-Backend'] = nextModel.includes('/') ? 'openrouter' : 'paratera';
-            body.model = nextModel;
-          }
-          const retryCfg = isProxy ? { ...cfg, model: nextModel } : { ...cfg, model: nextModel };
-          // 临时覆盖 config
-          const origConfig = this._llmConfig;
-          this._llmConfig = retryCfg;
-          try { return await this.callLLM(messages, options, true); }
-          finally { this._llmConfig = origConfig; }
-        }
-
-        throw new Error(`API ${resp.status}: ${(errJson?.error?.message || JSON.stringify(errJson || {}).slice(0, 200))}`);
-      }
-
-      const data = await resp.json();
-      if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
-
-      const message = data.choices?.[0]?.message || {};
-      const content = message.content || message.reasoning || message.reasoning_content || '';
-      return content;
-    } finally {
-      clearTimeout(timeout);
-    }
   }
 
   _extractJsonObject(text) {
@@ -2155,17 +1960,7 @@ class PBLPathBuilder {
   }
 
   async _callPBLAnalyzeStage(stage, payload) {
-    const cfg = this.getLLMConfig();
-    const isProxy = cfg.baseUrl && (cfg.baseUrl.includes('llm-proxy') || cfg.baseUrl.includes('/api/llm'));
     const body = { stage, ...payload };
-    if (!isProxy && cfg.apiKey && !cfg.noAuth) {
-      body.clientLlm = {
-        baseUrl: cfg.baseUrl,
-        apiKey: cfg.apiKey,
-        model: cfg.model,
-        noAuth: false
-      };
-    }
     const ac = new AbortController();
     const timeout = setTimeout(() => ac.abort(), 90000);
     try {
