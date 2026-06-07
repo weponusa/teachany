@@ -72,6 +72,104 @@ class PBLPathBuilder {
     return out;
   }
 
+  _alignBlueprintModules(blueprint, archetype) {
+    if (!blueprint || !archetype?.modules?.length) return blueprint;
+    const mods = archetype.modules;
+    const schemes = (blueprint.schemes || []).map(s => ({
+      ...s,
+      phases: (s.phases || []).map((p, i) => {
+        const hasIds = (p.subsystemIds || []).length;
+        const mod = mods[i % mods.length];
+        return hasIds ? p : { ...p, subsystemIds: [mod.id] };
+      }),
+    }));
+    return { ...blueprint, schemes, knowledgeChain: blueprint.knowledgeChain || this._archetypeEngine?.moduleChain(archetype, blueprint) };
+  }
+
+  _validateBlueprint(blueprint, goal, archetype) {
+    if (this._archetypeEngine?.validateBlueprint) {
+      return this._archetypeEngine.validateBlueprint(blueprint, archetype);
+    }
+    const issues = [];
+    if (!blueprint?.schemes?.length) issues.push('缺少可行方案');
+    if (!blueprint?.deliverable) issues.push('缺少交付物');
+    return { valid: issues.length === 0, issues };
+  }
+
+  computeQualityScore(payload = {}) {
+    const {
+      goal = '', matched = [], external = [], projectBlueprint = null,
+      archetype = null, graphData = null, pathPlan = null,
+    } = payload;
+    let score = 100;
+    const breakdown = [];
+
+    const minM = archetype?.minMatched || 4;
+    if (matched.length < minM) {
+      const pen = Math.min(25, (minM - matched.length) * 6);
+      score -= pen;
+      breakdown.push({ key: 'matched', label: '课标匹配不足', delta: -pen });
+    }
+
+    const banned = matched.filter(n => this._isGenericTransversalNode(n.name, goal));
+    if (banned.length) {
+      const pen = Math.min(15, banned.length * 5);
+      score -= pen;
+      breakdown.push({ key: 'ban', label: '泛素养节点', delta: -pen });
+    }
+
+    const phases = pathPlan?.phases || projectBlueprint?.schemes?.find(s => s.id === projectBlueprint?.recommendedSchemeId)?.phases || [];
+    let hollow = 0;
+    phases.forEach(p => {
+      (p.steps || []).forEach(st => { if (this._isHollowStep(st)) hollow++; });
+    });
+    if (hollow >= 2) {
+      const pen = Math.min(20, hollow * 4);
+      score -= pen;
+      breakdown.push({ key: 'hollow', label: '空话步骤', delta: -pen });
+    }
+
+    const bpVal = this._validateBlueprint(projectBlueprint, goal, archetype);
+    if (!bpVal.valid) {
+      const pen = Math.min(12, bpVal.issues.length * 4);
+      score -= pen;
+      breakdown.push({ key: 'blueprint', label: '蓝图待完善', delta: -pen });
+    }
+
+    if (archetype?.modules?.length) {
+      const covered = new Set(matched.map(n => n._moduleId).filter(Boolean));
+      const ratio = covered.size / archetype.modules.length;
+      if (ratio < 0.5) {
+        const pen = Math.round((0.5 - ratio) * 20);
+        score -= pen;
+        breakdown.push({ key: 'modules', label: '模块覆盖偏低', delta: -pen });
+      }
+    }
+
+    const extWithTask = (external || []).filter(e => e.taskSnippet || e.matchReason?.includes('任务：'));
+    if (!extWithTask.length && external?.length) {
+      score -= 5;
+      breakdown.push({ key: 'ext', label: '课外缺任务片段', delta: -5 });
+    }
+
+    const nodes = graphData?.nodes || [];
+    if (nodes.length && matched.length) {
+      const mainline = nodes.filter(n => n.pathStep);
+      if (mainline.length < Math.min(3, matched.length)) {
+        score -= 8;
+        breakdown.push({ key: 'path', label: '实施链不完整', delta: -8 });
+      }
+    }
+
+    return {
+      score: Math.max(0, Math.min(100, Math.round(score))),
+      grade: score >= 85 ? 'A' : score >= 70 ? 'B' : score >= 55 ? 'C' : 'D',
+      breakdown,
+      blueprintValid: bpVal.valid,
+      blueprintIssues: bpVal.issues || [],
+    };
+  }
+
   // ─── 多课标知识点索引 ──────────────────────────
 
   async loadUnifiedIndex() {
@@ -547,6 +645,114 @@ class PBLPathBuilder {
     return /电解池|原电池|程序控制|电磁感应|电池温度|传感器|数据采集|算法概念|模块化|物联网|闭环控制|电解(?!质)|逆变|并网装置/.test(n);
   }
 
+  _parseGoalSubject(goal) {
+    const g = String(goal || '').trim();
+    let subject = g;
+    const m = g.match(/^(?:设计|制作|开发|建造|完成|策划|撰写|探究|调查|分析|探寻|探索|研究|调研|重塑|改造|优化|重建|更新|升级|整治|组织|开展|修复|翻新)(?:一个|一款|一份|一组|一次)?\s*(.+)$/);
+    if (m) subject = m[1].trim();
+    subject = subject.replace(/^(?:关于|围绕|有关)\s*/, '').replace(/[，。；].*$/, '').slice(0, 36);
+    return subject || g.slice(0, 36);
+  }
+
+  _inferTopicKind(goal, subject) {
+    const g = String(goal || '');
+    if (/低空经济|低空飞行|低空空域|空域管理|通航产业|城市空中交通|eVTOL|低空物流|通用航空/.test(g)) return 'industry-innovation';
+    if (/太空馆|天文馆|航天馆|科技馆|博物馆|展厅|展陈|太空.*馆|天文.*馆/.test(g) || (/馆|展厅|展览/.test(g + subject) && /重塑|改造|整治|升级|策展|布展|失控|翻新|重建|优化/.test(g))) return 'exhibition-redesign';
+    if (/探寻|探索|研究|调研/.test(g) && /创新|产业|经济|行业/.test(g)) return 'industry-innovation';
+    return 'subject-anchored';
+  }
+
+  _buildTopicKeywords(goal, subject, kind) {
+    const g = String(goal || '');
+    const base = [subject];
+    if (/太空|天文|航天|行星|月球|宇宙/.test(g + subject)) base.push('太阳系', '天文', '太空', '月球', '科学');
+    if (/馆|展厅|展览|展陈/.test(g + subject)) base.push('展览', '展陈', '科普', '布局', '设计');
+    if (/低空|空域|通航|无人机/.test(g + subject)) base.push('低空经济', '空域', '无人机', '飞行');
+    if (kind === 'exhibition-redesign') base.push('调查', '方案', '说明', '统计', '设计', '展示');
+    if (kind === 'industry-innovation') base.push('产业', '创新', '调研', '政策', '可行性');
+    for (let i = 0; i < subject.length - 1; i++) {
+      const w = subject.slice(i, i + 2);
+      if (w.length === 2 && !/[的与及了在]$/.test(w)) base.push(w);
+    }
+    return [...new Set(base)].slice(0, 12);
+  }
+
+  _inferDeliverableHint(goal, subject, kind) {
+    if (kind === 'exhibition-redesign') return `「${subject}」改造方案册（现状诊断表+展陈设计图+整改实施清单+开放验收表）`;
+    if (kind === 'industry-innovation') return `「${subject}」创新方案报告（场景调研+政策要点+可行性论证）`;
+    if (/报告|调查|论文|倡议|方案/.test(goal)) return `「${subject}」专题报告（含调研数据与可检查结论）`;
+    if (/设计|制作|开发|建造/.test(goal)) return `可展示的「${subject}」作品+过程记录+说明文档`;
+    return `「${subject}」项目成果包（可展示交付物+过程记录+说明）`;
+  }
+
+  /** 从用户目标提取核心主题（与服务端 extractTopicProfile 对齐，任何题目都必须锚定） */
+  _extractTopicProfile(goal) {
+    const g = String(goal || '').trim();
+    const presets = [
+      {
+        test: /低空经济|低空飞行|低空空域|空域管理|通航产业|城市空中交通|UAM|eVTOL|低空物流|通用航空/,
+        coreTopic: '低空经济',
+        definition: '指在约1000–3000米低空空域内，以无人机物流配送、低空出行、应急救援、农业植保、巡检等飞行活动带动的新兴产业',
+        keywords: ['低空经济', '低空', '空域', '通航', '无人机', '低空物流', '飞行', '航空', '交通', '应急救援', '植保', '政策', '法规', '安全', '产业'],
+        banInSteps: ['现代物流管理', '智慧城市', '工程设计思维', '环境搭建', '硬件组件', '一般物流', '原型驱动迭代', 'MVP'],
+        deliverableHint: '低空经济创新方案报告（场景调研+政策/空域要点+技术可行性+试点建议）',
+        kind: 'industry-innovation',
+      },
+    ];
+    for (const p of presets) {
+      if (p.test.test(g)) return { ...p, rawGoal: g, matched: true };
+    }
+    const subject = this._parseGoalSubject(g);
+    const kind = this._inferTopicKind(g, subject);
+    const banCommon = ['原型驱动迭代', 'MVP', '快速原型', '递进式实施', '环境搭建', '工程设计思维', '招生简章', '现代物流管理', '智慧城市'];
+    if (kind === 'industry-innovation') {
+      const core = /低空经济/.test(g) ? '低空经济' : (g.match(/(?:.+?经济|.+?产业|.+?行业)/)?.[0]?.slice(0, 24) || subject);
+      return {
+        rawGoal: g, matched: true, coreTopic: core, kind,
+        definition: `围绕「${core}」开展创新探究，须结合真实产业场景、政策或技术应用`,
+        keywords: this._buildTopicKeywords(g, core, kind),
+        banInSteps: [...banCommon, '硬件组件', '一般物流'],
+        deliverableHint: this._inferDeliverableHint(g, core, kind),
+      };
+    }
+    if (kind === 'exhibition-redesign') {
+      return {
+        rawGoal: g, matched: true, coreTopic: subject, kind,
+        definition: `对「${subject}」进行现状诊断、主题策划、展陈设计与整改实施，交付可验收的改造方案`,
+        keywords: this._buildTopicKeywords(g, subject, kind),
+        banInSteps: [...banCommon, '程序设计', '电解池', '搭建原型'],
+        deliverableHint: this._inferDeliverableHint(g, subject, kind),
+      };
+    }
+    return {
+      rawGoal: g, matched: true, coreTopic: subject, kind: 'subject-anchored',
+      definition: `本项目必须围绕「${subject}」展开，不得替换为其他主题`,
+      keywords: this._buildTopicKeywords(g, subject, kind),
+      banInSteps: banCommon,
+      deliverableHint: this._inferDeliverableHint(g, subject, kind),
+    };
+  }
+
+  _isIndustryInnovationGoal(goal) {
+    return this._extractTopicProfile(goal).kind === 'industry-innovation';
+  }
+
+  _isExhibitionRedesignGoal(goal) {
+    return this._extractTopicProfile(goal).kind === 'exhibition-redesign';
+  }
+
+  _industryInnovationDomains(goal) {
+    const t = this._extractTopicProfile(goal);
+    const topic = t.coreTopic || '产业创新';
+    return [
+      { id: 'background', label: `${topic}背景与政策`, keywords: [topic, '产业', '政策', '法规', '空域', '发展', '规划', '经济'], subjects: ['geography', 'history', 'chinese'] },
+      { id: 'scenarios', label: '应用场景调研', keywords: [topic, '物流', '出行', '应急', '植保', '巡检', '配送', '应用', '场景', '需求'], subjects: ['geography', 'chinese', 'math'] },
+      { id: 'tech', label: '技术原理支撑', keywords: ['飞行', '航空', '无人机', '导航', '通信', '动力', '电池', '抛体', '牛顿', '安全'], subjects: ['physics', 'info-tech', 'science'] },
+      { id: 'analysis', label: '数据与可行性分析', keywords: ['统计', '数据', '调查', '成本', '效益', '比较', '分析', '图表', '百分比'], subjects: ['math', 'chinese'] },
+      { id: 'proposal', label: '创新方案与报告', keywords: ['方案', '创新', '建议', '报告', '论证', '说明', '可行性', '试点'], subjects: ['chinese', 'geography'] },
+    ];
+  }
+
   /** 项目类型分类（与服务端 classifyProjectType 对齐） */
   _classifyProjectType(goal) {
     const g = String(goal || '');
@@ -558,7 +764,11 @@ class PBLPathBuilder {
     if (/种植|种菜|盆栽|养护|养殖|养蚕|园艺|烹饪|烘焙|美食|菜谱|料理|手工|编织|缝纫|收纳|整理|维修|清洁|打扫|劳动/.test(g)) return 'labor-practice';
     if (/活动策划|策划.{0,6}(活动|晚会|联欢|运动会|典礼|节|比赛)|联欢会|晚会|文艺汇演|毕业典礼|生日会|出游|旅行|研学|游学|路线规划|时间管理|班级布置|布置教室|嘉年华|游园/.test(g)) return 'life-planning';
     if (/田野|问卷|访谈|社区|民俗|传统文化|非遗|人口|城乡|社会现象|调研报告|公众.{0,4}认知|居民|乡土|口述史/.test(g)) return 'social-inquiry';
-    if (/火箭|导弹|发射|机器人|无人机|电路|机械|硬件|装置|App|应用程序|小程序|网站|系统开发|3D打印|传感|智能|温控|储能|光伏|发电|搭建|制作|工程|发明|物联网|编程实现/.test(g)) return 'engineering';
+    if (this._isExhibitionRedesignGoal(g)) return 'exhibition-redesign';
+    if (this._isIndustryInnovationGoal(g)) return 'industry-innovation';
+    if (/工坊|鲁班|榫卯|古典.*风格|木结构|建筑模型|微缩|传统建筑|斗拱|飞檐/.test(g)) return 'maker-workshop';
+    if (/火箭|导弹|发射|机器人|物流机器人|医院.*机器人|电路|机械|硬件|装置|App|应用程序|小程序|网站|系统开发|3D打印|传感|智能|温控|储能|光伏|发电|搭建|制作|工程|发明|物联网|编程实现/.test(g)) return 'engineering';
+    if (/无人机|原型/.test(g) && /设计|制作|研发|装置|系统|搭建|开发/.test(g)) return 'engineering';
     if (this._isChemistryInquiryGoal(g)) return 'scientific-inquiry';
     if (/探究|实验|观察|测量|验证|影响因素|变量|检测|成分|对照实验|科学问题|浓度|溶液|溶解/.test(g)) return 'scientific-inquiry';
     return 'general';
@@ -615,6 +825,20 @@ class PBLPathBuilder {
         { id: 'record', label: '观察与记录', keywords: ['观察', '记录', '测量', '数据', '变化', '统计'], subjects: ['science', 'math', 'biology'] },
         { id: 'share', label: '成果与分享', keywords: ['成果', '分享', '展示', '总结', '报告', '改进'], subjects: ['chinese'] },
       ],
+      'exhibition-redesign': [
+        { id: 'diagnose', label: '现状诊断', keywords: ['问题', '调查', '记录', '失控', '隐患', '现状'], subjects: ['chinese', 'math'] },
+        { id: 'theme', label: '主题策划', keywords: ['主题', '天文', '太阳系', '月球', '太空', '科普', '内容'], subjects: ['science', 'chinese'] },
+        { id: 'design', label: '展陈设计', keywords: ['布局', '动线', '展板', '设计', '模型', '互动', '展陈'], subjects: ['info-tech', 'chinese', 'math'] },
+        { id: 'implement', label: '实施整改', keywords: ['整改', '布置', '预算', '分工', '安全', '清单', '实施'], subjects: ['math', 'chinese'] },
+        { id: 'launch', label: '开放验收', keywords: ['验收', '讲解', '宣传', '说明', '展示', '反馈', '开放'], subjects: ['chinese', 'science'] },
+      ],
+      'industry-innovation': [
+        { id: 'background', label: '产业背景与政策', keywords: ['产业', '政策', '法规', '空域', '经济', '交通', '区域', '发展'], subjects: ['geography', 'history', 'chinese'] },
+        { id: 'scenarios', label: '应用场景调研', keywords: ['调查', '统计', '数据', '问卷', '场景', '应用', '需求', '物流', '应急'], subjects: ['math', 'chinese', 'geography'] },
+        { id: 'tech', label: '技术原理支撑', keywords: ['飞行', '航空', '无人机', '抛体', '牛顿', '运动', '安全'], subjects: ['physics', 'science'] },
+        { id: 'analysis', label: '数据可行性分析', keywords: ['统计', '图表', '比较', '分析', '成本', '效益', '数据'], subjects: ['math'] },
+        { id: 'proposal', label: '创新方案报告', keywords: ['方案', '创新', '报告', '论证', '说明', '建议'], subjects: ['chinese', 'geography'] },
+      ],
       'general': [
         { id: 'define', label: '调研与定义', keywords: ['调研', '需求', '定义', '背景', '分析'], subjects: ['chinese', 'math', 'science'] },
         { id: 'design', label: '方案设计', keywords: ['方案', '设计', '规划', '分工'], subjects: ['math', 'science', 'chinese'] },
@@ -632,6 +856,19 @@ class PBLPathBuilder {
       return this._getChemistryAnalysisProfile(g).mixed
         ? this._mixedSolutionChemistryDomains()
         : this._directSolutionChemistryDomains();
+    }
+    if (this._isExhibitionRedesignGoal(g)) {
+      const subject = this._parseGoalSubject(g);
+      return [
+        { id: 'diagnose', label: '现状诊断', keywords: [subject, '问题', '调查', '记录', '失控', '隐患', '现状'], subjects: ['chinese', 'math'] },
+        { id: 'theme', label: '主题策划', keywords: [subject, '主题', '天文', '太阳系', '月球', '太空', '科普', '内容'], subjects: ['science', 'chinese'] },
+        { id: 'design', label: '展陈设计', keywords: [subject, '布局', '动线', '展板', '设计', '模型', '互动', '展陈'], subjects: ['info-tech', 'chinese', 'math'] },
+        { id: 'implement', label: '实施整改', keywords: [subject, '整改', '布置', '预算', '分工', '安全', '清单', '实施'], subjects: ['math', 'chinese'] },
+        { id: 'launch', label: '开放验收', keywords: [subject, '验收', '讲解', '宣传', '说明', '展示', '反馈', '开放'], subjects: ['chinese', 'science'] },
+      ];
+    }
+    if (this._isIndustryInnovationGoal(g)) {
+      return this._industryInnovationDomains(g);
     }
     if (this._isConsumerDecisionGoal(g)) {
       return [
@@ -660,6 +897,15 @@ class PBLPathBuilder {
           keywords: ['说明', '报告', '论证', '写作', '分析', '比较', '调查', '实用'],
           subjects: ['chinese', 'math']
         }
+      ];
+    }
+    if (/工坊|鲁班|榫卯|古典.*风格|木结构|建筑模型|微缩|传统建筑|斗拱|飞檐/.test(g)) {
+      return [
+        { id: 'survey', label: '调研与风格定义', keywords: ['调研', '风格', '古典', '建筑', '参考', '测量', '场地'], subjects: ['history', 'chinese', 'art'] },
+        { id: 'design', label: '方案与图纸', keywords: ['设计', '草图', '立面', '平面', '尺寸', '比例', 'BOM'], subjects: ['math', 'info-tech', 'art'] },
+        { id: 'material', label: '材料与工艺', keywords: ['材料', '木材', '榫卯', '胶合', '工具', '安全', '工艺'], subjects: ['science', 'physics'] },
+        { id: 'build', label: '搭建与装饰', keywords: ['搭建', '组装', '切割', '打磨', '装饰', '斗拱', '结构'], subjects: ['science', 'physics'] },
+        { id: 'accept', label: '验收与展示', keywords: ['验收', '测试', '展示', '报告', '量规', '改进'], subjects: ['chinese', 'math'] },
       ];
     }
     if (/火箭|导弹|发射|弹道|模型火箭|航天/.test(g)) {
@@ -843,36 +1089,299 @@ class PBLPathBuilder {
 
   _isHollowStep(step) {
     const s = String(step || '').trim();
-    if (!s || s.length < 10) return true;
+    if (!s || s.length < 12) return true;
     if (PBLPathBuilder.HOLLOW_STEP_RE.test(s)) return true;
     if (/^运用[①②③④⑤⑥⑦⑧⑨⑩\d]+「/.test(s) && /完成本阶段|探究任务/.test(s)) return true;
+    if (/^(选择|确定|调研|了解|学习|掌握|认识|编写基础|配置|安装).{0,12}(组件|框架|逻辑|特点|风格|方案|软件|环境)$/.test(s)) return true;
+    if (/进行.{0,6}(测试|调研|研究|探究|活动)$/.test(s)) return true;
+    if (this._stepActionabilityScore(s) < 3) return true;
     return false;
+  }
+
+  _stepActionabilityScore(step) {
+    const s = String(step || '');
+    if (!s || s.length < 8) return 0;
+    let score = 0;
+    if (/\d+(\.\d+)?\s*(cm|mm|m|ml|g|kg|℃|°|分钟|小时|天|次|人|题|页|张|帧|行|列)/.test(s)) score += 3;
+    if (/\d+[\-–~至]\d+/.test(s)) score += 2;
+    if (/≥|≤|不少于|不超过|精确到|至少|至多/.test(s)) score += 2;
+    if (/表格|清单|记录表|草图|立面|平面|BOM|问卷|提纲|甘特|量规|检查表|数据表|照片|截图|附录/.test(s)) score += 2;
+    if (/填写|绘制|称量|测量|焊接|切割|打磨|组装|编程|调试|访谈|统计|撰写|标注|拍照|导出|打印/.test(s)) score += 1;
+    if (PBLPathBuilder.HOLLOW_STEP_RE.test(s)) score -= 4;
+    if (/^(选择|确定|了解|学习|掌握|认识|编写基础)/.test(s)) score -= 2;
+    return score;
   }
 
   _areHollowSteps(steps) {
     if (!Array.isArray(steps) || !steps.length) return true;
     const hollow = steps.filter(s => this._isHollowStep(s)).length;
-    return hollow >= Math.ceil(steps.length * 0.6);
+    if (hollow >= Math.ceil(steps.length * 0.5)) return true;
+    const avg = steps.reduce((a, s) => a + this._stepActionabilityScore(s), 0) / steps.length;
+    return avg < 2.5;
   }
 
   _pickConcreteSteps(llmSteps, bpSteps, contextual) {
-    const pick = (steps) => {
+    const normalize = (steps) => {
       if (!Array.isArray(steps) || !steps.length) return null;
       const good = steps.filter(s => !this._isHollowStep(s));
-      return good.length ? good.slice(0, 4) : null;
+      if (!good.length) return null;
+      const score = good.reduce((a, s) => a + this._stepActionabilityScore(s), 0);
+      return { steps: good.slice(0, 4), score };
     };
     const ranked = [
-      { steps: pick(contextual), w: 3 },
-      { steps: pick(bpSteps), w: 2 },
-      { steps: pick(llmSteps), w: 1 },
+      { ...normalize(contextual), w: 4, src: contextual },
+      { ...normalize(bpSteps), w: 3 },
+      { ...normalize(llmSteps), w: 2 },
     ].filter(x => x.steps?.length);
     if (ranked.length) {
-      ranked.sort((a, b) => b.w - a.w);
+      ranked.sort((a, b) => (b.score + b.w * 2) - (a.score + a.w * 2));
       return ranked[0].steps;
     }
     if (contextual?.length) return contextual.slice(0, 4);
     if (bpSteps?.length) return bpSteps.slice(0, 4);
     return (llmSteps || []).slice(0, 4);
+  }
+
+  /** 从用户输入提取交付物锚点 — 一切任务步骤必须围绕此展开，禁止套其他项目模板 */
+  _goalProfile(goal, blueprint = null) {
+    const g = String(goal || '').trim();
+    let artifact = g;
+    const lead = g.match(/^(?:设计|制作|开发|建造|完成|策划|撰写|探究|调查|分析|探寻|探索|研究|调研|重塑|改造|优化|重建|更新|升级|整治)(?:一个|一款|一份|一组|一次)?\s*(.+)$/);
+    if (lead) artifact = lead[1].trim();
+    artifact = artifact.replace(/[，。；].*$/, '').slice(0, 72);
+
+    const topic = this._extractTopicProfile(g);
+    const domains = {
+      woodwork: /工坊|鲁班|榫卯|木结构|古典|斗拱|飞檐|建筑模型|微缩|木作/.test(g),
+      robot: (/机器人|物流机器人|循迹|机械臂|自动驾驶/.test(g) || (/无人机/.test(g) && /设计|制作|研发|搭建|开发|装置/.test(g))) && !topic.matched,
+      software: /App|程序|软件|系统开发|小程序|网站|编程|算法/.test(g),
+      writing: /作文|倡议|报告|诗|文章|演讲|说明文|创新/.test(g),
+      survey: /调查|问卷|访谈|统计|探寻|探索|调研/.test(g),
+      lowAltitude: topic.kind === 'industry-innovation' && topic.coreTopic === '低空经济',
+      industry: topic.kind === 'industry-innovation',
+      exhibition: topic.kind === 'exhibition-redesign',
+    };
+
+    const mismatchRes = [];
+    if (domains.lowAltitude || domains.industry) {
+      mismatchRes.push(/现代物流管理|智慧城市|工程设计思维|环境搭建|硬件组件|编写.*控制|榫卯|斗拱|焊接|搭建原型|MVP|快速原型|程序设计|电解池/);
+    }
+    if (domains.exhibition) {
+      mismatchRes.push(/原型驱动迭代|快速原型|MVP|环境搭建|程序设计|电解池|招生简章|现代物流|智慧城市|工程设计思维/);
+    }
+    if (topic.matched) {
+      mismatchRes.push(/递进式实施|原型驱动迭代|可展示的项目原型/);
+    }
+    if (domains.woodwork && !domains.robot && !domains.software) {
+      mismatchRes.push(/硬件组件|环境搭建|编写.*控制逻辑|基础控制|配置.*框架|安装.*软件|电机驱动|传感器模块|接口协议|部署上线/);
+    }
+    if (domains.robot && !domains.woodwork) {
+      mismatchRes.push(/斗拱|飞檐|榫卯|木工锯|刨子|古典建筑纹样/);
+    }
+    if (domains.writing && !domains.robot && !domains.software) {
+      mismatchRes.push(/焊接|电路|传感器|电机|BOM表|下料/);
+    }
+
+    return {
+      raw: g,
+      artifact,
+      domains,
+      mismatchRes,
+      topic,
+      blueprintDeliverable: blueprint?.deliverable || '',
+    };
+  }
+
+  _stepDomainMismatch(step, profile) {
+    const s = String(step || '');
+    if (!s || !profile?.mismatchRes?.length) return false;
+    return profile.mismatchRes.some(re => re.test(s));
+  }
+
+  _goalTokens(artifact) {
+    const t = String(artifact || '').replace(/\s/g, '');
+    const tokens = [];
+    if (t.length >= 4) tokens.push(t.slice(0, 4));
+    for (let i = 0; i < t.length - 1; i++) {
+      const w = t.slice(i, i + 2);
+      if (w.length === 2 && !/[的与及了在]$/.test(w)) tokens.push(w);
+    }
+    return [...new Set(tokens)].slice(0, 8);
+  }
+
+  _stepAnchoredToGoal(step, profile) {
+    const s = String(step || '');
+    if (!s) return false;
+    if (s.includes(profile.artifact)) return true;
+    const tokens = this._goalTokens(profile.artifact);
+    return tokens.some(t => t.length >= 2 && s.includes(t));
+  }
+
+  _phaseContext(phase, blueprint) {
+    const subIds = phase?.subsystemIds || [];
+    const subs = (blueprint?.subsystems || []).filter(s => subIds.includes(s.id));
+    return {
+      phaseName: String(phase?.phase || phase?.name || '').trim(),
+      deliverable: String(phase?.deliverable || '').trim(),
+      hints: (phase?.knowledgeHints || []).slice(0, 4),
+      subsystems: subs.map(s => s.name).filter(Boolean),
+      subDesc: subs.map(s => s.description).filter(Boolean).join('；'),
+    };
+  }
+
+  _expandStepAnchoredToGoal(rawStep, goal, phase, profile, ctx, stepIdx) {
+    const artifact = profile.artifact;
+    const hints = ctx.hints.join('、') || '本阶段相关知识';
+    const phaseName = ctx.phaseName || `阶段${stepIdx + 1}`;
+    const outName = ctx.deliverable || `${artifact}·${phaseName}产出`;
+    const verbs = ['记录', '完成', '制作', '撰写', '测量', '绘制'];
+    const verb = verbs[stepIdx % verbs.length];
+    const blob = `${phaseName} ${ctx.subsystems.join(' ')} ${rawStep || ''}`;
+
+    if (profile.domains.exhibition || /馆|展厅|展陈|太空|天文|科普/.test(blob)) {
+      if (/诊断|现状|问题|失控|隐患/.test(blob)) {
+        return `走访「${artifact}」并填写现状诊断表：拍摄≥5张问题点位照片，列出≥8条失控/安全隐患（附整改优先级）`;
+      }
+      if (/主题|策划|内容|天文|太空/.test(blob)) {
+        return `为「${artifact}」策划展陈主题：确定1条主线+3个分区主题，各写100字科普文案并标注对应课标知识点`;
+      }
+      if (/设计|布局|动线|展板|展陈/.test(blob)) {
+        return `绘制「${artifact}」展陈平面图（A3）：标注参观动线、3处互动点位尺寸与材料，附展板草图2张`;
+      }
+      if (/整改|实施|布置|预算/.test(blob)) {
+        return `编制「${artifact}」整改实施清单：列10项任务（负责人/工期/预算/安全注意），合计经费并附物资表`;
+      }
+      if (/验收|开放|讲解|宣传|展示/.test(blob)) {
+        return `完成「${artifact}」开放验收：按检查表逐项打勾，录制3分钟讲解视频或撰写300字宣传稿`;
+      }
+      return `围绕「${artifact}」完成${phaseName}：结合 ${hints} 整理展陈资料并产出可核查记录表`;
+    }
+    if (profile.domains.lowAltitude || profile.domains.industry || /产业|政策|空域|低空|场景/.test(blob)) {
+      if (/政策|背景|产业|空域|法规/.test(blob)) {
+        return `围绕「${artifact}」梳理${phaseName}：检索≥3条权威政策/行业资料并摘录要点，制成对照表（来源/日期/与项目关系各1列）`;
+      }
+      if (/场景|调研|问卷|需求|应用/.test(blob)) {
+        return `围绕「${artifact}」开展${phaseName}：选定1个低空应用场景并设计10题问卷，回收≥20份有效答卷并制成统计图表`;
+      }
+      if (/技术|飞行|安全|原理|参数/.test(blob)) {
+        return `为「${artifact}」整理${phaseName}：查阅飞行高度/载重/续航三类参数并制对比表，附起降安全距离估算示意图1张`;
+      }
+      if (/方案|创新|可行|论证|报告/.test(blob)) {
+        return `撰写「${artifact}」${phaseName}：提出1个创新点子（200字场景描述）+成本效益简表+2条落地障碍与对策`;
+      }
+      return `围绕「${artifact}」完成${phaseName}：结合 ${hints} 整理产业资料并产出可核查记录表（≥5条要点+来源标注）`;
+    }
+    if (/调研|勘测|现场|需求|资料/.test(blob)) {
+      return `围绕「${artifact}」开展${phaseName}：列出 5 条可验证需求并制成优先级表，附 3 张现场/参考照片（文件命名 P${stepIdx + 1}-01~03）`;
+    }
+    if (/设计|方案|草图|图纸|规划|风格|定义/.test(blob)) {
+      return `为「${artifact}」绘制${phaseName}草图（A3 或 CAD 均可），标注 ≥5 处关键尺寸，并结合 ${hints} 写 150 字方案说明`;
+    }
+    if (/材料|采购|物料|预算|成本|BOM/.test(blob)) {
+      return `编制「${artifact}」${phaseName}物料清单（名称/规格/数量/单价/小计），合计预算并注明 2 条安全注意事项`;
+    }
+    if (/搭建|制作|组装|加工|实施|原型|开发|结构|装饰|修缮/.test(blob)) {
+      return `${verb}「${artifact}」${phaseName}核心工序：按方案操作并填写过程记录表（时间、工具、问题各 ≥1 条），拍照 ≥3 张`;
+    }
+    if (/软件|编程|控制|算法|电路|调试/.test(blob)) {
+      return `实现「${artifact}」${phaseName}功能点 1 个，附测试用例 3 条（输入/预期/实测），保存调试日志截图`;
+    }
+    if (/测试|验收|交付|展示|复盘|答辩/.test(blob)) {
+      return `按检查表验收「${artifact}」${phaseName}成果：逐项打勾，整理交付包（${outName} + 过程记录 + 300 字说明）`;
+    }
+    if (ctx.subDesc) {
+      return `${verb}「${artifact}」${phaseName}：${ctx.subDesc.slice(0, 80)}，产出「${outName}」并附可核查记录`;
+    }
+    return `${verb}「${artifact}」${phaseName}任务（结合 ${hints}），交付「${outName}」并附 1 份签字确认的过程记录表`;
+  }
+
+  _concretizePhaseSteps(goal, phase, phaseIndex, totalPhases, archetype, blueprint) {
+    const profile = this._goalProfile(goal, blueprint);
+    const ctx = this._phaseContext(phase, blueprint);
+    const raw = Array.isArray(phase?.steps) ? phase.steps : [];
+    const seen = new Set();
+    const steps = [];
+
+    raw.forEach((st, i) => {
+      const s = String(st || '').trim();
+      if (!s) return;
+      let out = s;
+      const needsRewrite = this._isHollowStep(s) || this._stepDomainMismatch(s, profile)
+        || (!this._stepAnchoredToGoal(s, profile) && this._stepActionabilityScore(s) < 4);
+      if (needsRewrite) {
+        out = this._expandStepAnchoredToGoal(s, goal, phase, profile, ctx, i);
+      }
+      if (!seen.has(out)) {
+        seen.add(out);
+        steps.push(out);
+      }
+    });
+
+    let idx = steps.length;
+    while (steps.length < 2) {
+      const filler = this._expandStepAnchoredToGoal('', goal, phase, profile, ctx, idx++);
+      if (!seen.has(filler)) {
+        seen.add(filler);
+        steps.push(filler);
+      } else break;
+    }
+    return steps.slice(0, 4);
+  }
+
+  _concretizeDeliverable(goal, phaseName, role, fallback, blueprint) {
+    const profile = this._goalProfile(goal, blueprint);
+    const phase = String(phaseName || '');
+    const art = profile.artifact;
+    if (fallback && fallback.length >= 8 && !/阶段成果|探究任务|素养|能力/.test(fallback)) return fallback;
+    if (/调研|勘测|现场|需求/.test(phase)) return `「${art}」调研记录表（需求清单+照片编号）`;
+    if (/设计|方案|草图|图纸|风格/.test(phase)) return `「${art}」${phase}图册（标注尺寸的方案稿）`;
+    if (/材料|采购|物料|预算/.test(phase)) return `「${art}」材料/经费清单（含规格与合计）`;
+    if (/测试|验收|交付|展示/.test(phase)) return `「${art}」验收检查表 + 展示说明（可现场核查）`;
+    if (/搭建|制作|组装|原型|装饰|实施/.test(phase)) return `「${art}」${phase}实物/模型 + 过程照片（≥3 张）`;
+    return profile.blueprintDeliverable || `「${art}」阶段成果（可展示、可打分）`;
+  }
+
+  _concretizeBlueprint(goal, blueprint, archetype = null) {
+    if (!blueprint?.schemes?.length) return blueprint;
+    const profile = this._goalProfile(goal, blueprint);
+    const bp = JSON.parse(JSON.stringify(blueprint));
+
+    if (!bp.deliverable || /素养|能力|精神|阶段成果$/.test(bp.deliverable) || bp.deliverable.length < 8) {
+      bp.deliverable = profile.blueprintDeliverable || `可交付的「${profile.artifact}」成果包（作品+记录+说明）`;
+    }
+
+    bp.schemes = bp.schemes.map(scheme => ({
+      ...scheme,
+      phases: (scheme.phases || []).map((p, i, arr) => {
+        const role = i === 0 ? 'foundation' : (i < arr.length - 1 ? 'bridge' : 'core');
+        const steps = this._concretizePhaseSteps(goal, p, i, arr.length, archetype, bp);
+        const deliverable = this._concretizeDeliverable(goal, p.phase, role, p.deliverable, bp);
+        const tools = p.tools || this._inferPhaseTools(goal, p.phase, profile);
+        const acceptance = steps.map((st, j) => `□ ${String(st).slice(0, 48)}${String(st).length > 48 ? '…' : ''}（有记录/照片/签字）`);
+        return { ...p, steps, deliverable, tools, acceptance };
+      }),
+    }));
+    return bp;
+  }
+
+  _inferPhaseTools(goal, phaseName, profileOrType) {
+    const phase = String(phaseName || '');
+    const profile = profileOrType?.artifact ? profileOrType : this._goalProfile(goal);
+    const g = profile.raw || goal;
+    if (/调研|勘测/.test(phase)) return ['记录表模板', '相机/手机', profile.domains.woodwork ? '卷尺' : '数据来源清单'];
+    if (/设计|草图|图纸|风格/.test(phase)) {
+      return profile.domains.software ? ['绘图/CAD 或设计工具', '尺寸标注规范'] : ['A3纸或绘图纸', '铅笔尺规', '标注笔'];
+    }
+    if (/材料|采购|预算/.test(phase)) return ['物料清单模板', '计算器', '询价记录表'];
+    if (/搭建|制作|组装|结构|装饰/.test(phase)) {
+      if (profile.domains.robot) return ['螺丝刀/扳手', '万用表', '调试线', '安全防护'];
+      if (profile.domains.woodwork) return ['手锯/砂纸', '木工胶', '角尺', '护目镜'];
+      return ['分工表', '过程记录表', '相机'];
+    }
+    if (/软件|编程|控制|电路/.test(phase) || profile.domains.software) return ['开发环境', '版本记录', '测试用例表'];
+    if (/测试|验收|展示/.test(phase)) return ['验收量规', '展示稿模板', '相机'];
+    if (/撰写|报告|作文|倡议/.test(phase) || profile.domains.writing) return ['文稿模板', '修改痕迹记录', '格式规范'];
+    return ['过程记录表', '相机'];
   }
 
   _pickConcreteDeliverable(lp, bp, role, goal) {
@@ -1792,16 +2301,16 @@ class PBLPathBuilder {
     if (type === 'engineering') {
       const map = {
         foundation: [
-          `画出系统框图，标注输入/输出/关键部件与工作原理`,
-          `用 ${knRef} 列出器材清单、安全注意事项与测试指标`,
+          `画出系统框图，标注输入/输出/关键部件、电源与信号走向`,
+          `用 ${knRef} 列出器材清单（型号/数量）、安全注意事项与 3 项测试指标`,
         ],
         bridge: [
-          `搭建原型并记录首次测试数据（照片+数据表）`,
-          `根据测试失败点修改 1 处结构或参数，记录前后对比`,
+          `完成核心模块接线/结构组装，通电前填写线路复查表并签字`,
+          `首次功能测试记录日志（时间/现象/故障点），修改 1 处并附对比照片`,
         ],
         core: [
-          `完成稳定性/功能测试 ≥3 次，计算平均值与误差`,
-          `撰写工程报告：原理、结构、测试数据、改进方向`,
+          `稳定性测试 ≥3 次，记录成功率与误差，计算平均值`,
+          `撰写工程报告：原理、结构、测试数据表、改进计划（各 1 页）`,
         ],
       };
       return mk(map[role] || map.core);
@@ -1956,6 +2465,8 @@ class PBLPathBuilder {
         knowledgeNames: g.knowledgeNames,
         steps,
         deliverable: this._pickConcreteDeliverable(lp, bp, g.role, goal),
+        tools: bp.tools || lp.tools || this._inferPhaseTools(goal, lp.phase || bp.phase || g.phase, this._classifyProjectType(goal)),
+        acceptance: bp.acceptance || lp.acceptance || [],
         literacy: this._literacyFromLlmPhase(lp)
       };
     });
@@ -2039,7 +2550,7 @@ class PBLPathBuilder {
   // ─── PBL 路径分析核心 ──────────────────────────
 
   static GENERIC_TRANSVERSAL_RE = /批判性思维|创新思维|创新能力|团队协作|团队合作|项目管理|项目管理能力|沟通能力|沟通表达|问题解决|解决问题能力|时间管理|领导力|学习能力|核心素养|综合素养|信息素养|媒体素养|科学精神|人文素养|劳动素养|审辨性思维|审辨思维|元认知|学会学习|责任担当|社会责任|公民素养|国际理解/;
-  static HOLLOW_STEP_RE = /^(完成|进行|开展|落实|实施|贯彻|培养|提升|增强|锻炼|学习|掌握|了解|认识|运用).{0,8}(探究|调研|学习|任务|活动|阶段|工作|研究|分析|讨论|探索|实践|制作|设计|总结|反思|课件|练习)$|完成本阶段|进行调研|开展研究|完成探究|运用.*完成本阶段|培养.*素养|提升.*能力/;
+  static HOLLOW_STEP_RE = /^(完成|进行|开展|落实|实施|贯彻|培养|提升|增强|锻炼|学习|掌握|了解|认识|运用|选择|确定|调研|编写|配置|安装).{0,10}(探究|调研|学习|任务|活动|阶段|工作|研究|分析|讨论|探索|实践|制作|设计|总结|反思|课件|练习|组件|框架|逻辑|特点|风格|方案|软件|环境)$|完成本阶段|进行调研|开展研究|完成探究|运用.*完成本阶段|培养.*素养|提升.*能力|环境搭建|编写基础/;
   static PBL_MAX_GRAPH_NODES = 22;
   static PBL_MIN_EXTERNAL = 1;
   static PBL_MAX_EXTERNAL = 3;
@@ -2195,7 +2706,18 @@ class PBLPathBuilder {
   }
 
   _sanitizeBlueprintForGoal(blueprint, goal) {
-    if (blueprint && this._isChemistryInquiryGoal(goal) && this._getChemistryAnalysisProfile(goal).mixed) {
+    let bp = blueprint;
+    if (bp?.schemes?.length) {
+      const profile = this._goalProfile(goal, bp);
+      bp = JSON.parse(JSON.stringify(bp));
+      bp.schemes.forEach(s => {
+        s.phases = (s.phases || []).map(p => ({
+          ...p,
+          steps: (p.steps || []).filter(st => !this._stepDomainMismatch(st, profile)),
+        }));
+      });
+    }
+    if (bp && this._isChemistryInquiryGoal(goal) && this._getChemistryAnalysisProfile(goal).mixed) {
       const cap = this._getChemistryAnalysisProfile(goal);
       const bp = { ...blueprint, schemes: (blueprint.schemes || []).map(s => ({ ...s, phases: (s.phases || []).map(p => ({ ...p })) })) };
       const naiveRe = /称量溶解|直接称量|质量分数.*配制|配制.*盐水|称量.*溶解/;
@@ -2218,10 +2740,61 @@ class PBLPathBuilder {
           }
         });
       });
-      return bp;
+      return this._concretizeBlueprint(goal, bp, this._resolvedArchetype);
     }
-    if (!blueprint || !this._isConsumerDecisionGoal(goal)) return blueprint;
-    const bp = { ...blueprint, schemes: (blueprint.schemes || []).map(s => ({ ...s })) };
+    if (this._isExhibitionRedesignGoal(goal)) {
+      let ebp = bp ? JSON.parse(JSON.stringify(bp)) : null;
+      if (!ebp?.schemes?.length) ebp = this._buildExhibitionRedesignBlueprint(goal);
+      ebp.projectType = 'exhibition-redesign';
+      const topic = this._extractTopicProfile(goal);
+      const engRe = /原型驱动迭代|快速原型|MVP|环境搭建|程序设计|招生简章|递进式实施|可展示的项目原型/;
+      if (!ebp.deliverable || engRe.test(ebp.deliverable)) ebp.deliverable = topic.deliverableHint;
+      if (!ebp.projectSummary || ebp.projectSummary.length < 12) {
+        ebp.projectSummary = `围绕「${topic.coreTopic}」开展展陈空间诊断、主题策划与整改实施`;
+      }
+      ebp.schemes.forEach(s => {
+        s.name = String(s.name || '').replace(/递进式实施|原型驱动迭代/, `「${topic.coreTopic}」改造`);
+        s.phases = (s.phases || []).map(p => ({
+          ...p,
+          steps: (p.steps || []).filter(st => !engRe.test(String(st))),
+        })).filter(p => (p.steps || []).length > 0);
+      });
+      return this._concretizeBlueprint(goal, ebp, this._resolvedArchetype);
+    }
+    if (this._isIndustryInnovationGoal(goal)) {
+      let ibp = bp ? JSON.parse(JSON.stringify(bp)) : null;
+      if (!ibp?.schemes?.length) ibp = this._buildIndustryInnovationBlueprint(goal);
+      ibp.projectType = 'industry-innovation';
+      const topic = this._extractTopicProfile(goal);
+      const topicName = topic.coreTopic || '低空经济';
+      const engRe = /工程设计思维|环境搭建|硬件组件|现代物流管理|智慧城市|搭建原型|MVP|程序设计|电解池|制作实现|快速原型/;
+      if (!ibp.deliverable || engRe.test(ibp.deliverable) || /原型|装置|系统开发/.test(ibp.deliverable)) {
+        ibp.deliverable = topic.deliverableHint || `${topicName}创新方案报告（场景调研+政策要点+可行性论证）`;
+      }
+      if (!ibp.projectSummary || ibp.projectSummary.length < 12) {
+        ibp.projectSummary = `围绕「${topicName}」开展产业场景调研与创新方案设计：${String(goal).slice(0, 80)}`;
+      }
+      ibp.schemes.forEach(s => {
+        s.phases = (s.phases || []).map(p => {
+          const blob = [p.phase, ...(p.steps || []), ...(p.knowledgeHints || [])].join(' ');
+          if (engRe.test(blob)) {
+            const phase = String(p.phase || '').replace(/工程设计|制作实现|快速原型|搭建/, '创新方案');
+            return {
+              ...p,
+              phase,
+              steps: (p.steps || []).filter(st => !engRe.test(String(st))),
+              knowledgeHints: [...new Set([...(p.knowledgeHints || []), topicName, '空域', '无人机', '政策', '统计', '说明文'])].slice(0, 6),
+            };
+          }
+          return p;
+        }).filter(p => (p.steps || []).length > 0 || (p.phase && !engRe.test(p.phase)));
+      });
+      return this._concretizeBlueprint(goal, ibp, this._resolvedArchetype);
+    }
+    if (!bp || !this._isConsumerDecisionGoal(goal)) {
+      return this._concretizeBlueprint(goal, bp || blueprint, this._resolvedArchetype);
+    }
+    bp = { ...bp, schemes: (bp.schemes || []).map(s => ({ ...s })) };
     bp.projectType = 'consumer-decision';
     if (!bp.deliverable || /原型|研发|装置|系统开发|数据采集系统|温度控制/.test(bp.deliverable)) {
       bp.deliverable = '家庭/个人消费决策报告（含调研表、对比测算表与推荐结论）';
@@ -2246,10 +2819,118 @@ class PBLPathBuilder {
         });
       }
     });
-    return bp;
+    return this._concretizeBlueprint(goal, bp, this._resolvedArchetype);
+  }
+
+  _blueprintAnchoredToGoal(blueprint, goal) {
+    if (!blueprint?.schemes?.length) return false;
+    const topic = this._extractTopicProfile(goal);
+    const tokens = this._goalTokens(topic.coreTopic || this._parseGoalSubject(goal));
+    const blob = [
+      blueprint.projectSummary,
+      blueprint.deliverable,
+      ...(blueprint.schemes || []).flatMap(s => [
+        s.name, s.summary,
+        ...(s.phases || []).flatMap(p => [p.phase, ...(p.steps || []), p.deliverable, ...(p.knowledgeHints || [])]),
+      ]),
+    ].join(' ');
+    const genericRe = /递进式实施|原型驱动迭代|可展示的项目原型|MVP\s*原型|快速原型/;
+    if (genericRe.test(blob)) return false;
+    const hit = tokens.filter(t => t.length >= 2 && blob.includes(t)).length;
+    return hit >= Math.min(2, tokens.length) || blob.includes(topic.coreTopic);
+  }
+
+  _buildSubjectAnchoredBlueprint(goal, schemeName) {
+    const topic = this._extractTopicProfile(goal);
+    const subject = topic.coreTopic;
+    const domains = this._inferProjectDomains(goal);
+    const subsystems = domains.map(d => ({
+      id: d.id,
+      name: d.label,
+      description: `围绕「${subject}」完成${d.label}`,
+    }));
+    const mkPhase = (dom, i) => {
+      const stub = { phase: dom.label, knowledgeHints: dom.keywords.slice(0, 5), subsystemIds: [dom.id] };
+      const bpStub = { subsystems, deliverable: topic.deliverableHint || '' };
+      return {
+        phase: dom.label,
+        steps: this._concretizePhaseSteps(goal, stub, i, domains.length, this._resolvedArchetype, bpStub),
+        deliverable: this._concretizeDeliverable(goal, dom.label, i === domains.length - 1 ? 'core' : 'bridge', '', bpStub),
+        subsystemIds: [dom.id],
+        knowledgeHints: dom.keywords.slice(0, 5),
+      };
+    };
+    return {
+      projectSummary: `围绕「${subject}」：${String(goal).slice(0, 100)}`,
+      deliverable: topic.deliverableHint,
+      projectType: this._classifyProjectType(goal),
+      constraints: ['紧扣题目关键词', '每阶段产出可检查', '禁止套用无关模板'],
+      subsystems,
+      schemes: [{
+        id: 'A',
+        name: schemeName || `「${subject}」主题实施方案`,
+        summary: `按模块推进「${subject}」项目，阶段名与任务均锚定题目`,
+        pros: ['贴合题目', '阶段可评价'],
+        cons: ['需按实际条件微调'],
+        phases: domains.map((d, i) => mkPhase(d, i)),
+      }],
+      recommendedSchemeId: 'A',
+      knowledgeChain: domains.map(d => d.label).join(' → '),
+      fallback: true,
+    };
+  }
+
+  _buildExhibitionRedesignBlueprint(goal) {
+    return this._buildSubjectAnchoredBlueprint(goal, `「${this._parseGoalSubject(goal)}」展陈改造方案`);
+  }
+
+  _buildIndustryInnovationBlueprint(goal) {
+    const topic = this._extractTopicProfile(goal);
+    const topicName = topic.coreTopic || '低空经济';
+    const domains = this._industryInnovationDomains(goal);
+    const subsystems = domains.map(d => ({
+      id: d.id,
+      name: d.label,
+      description: `完成「${topicName}」${d.label}相关调研与分析`,
+    }));
+    const mkPhase = (dom, i) => {
+      const stub = { phase: dom.label, knowledgeHints: dom.keywords.slice(0, 5), subsystemIds: [dom.id] };
+      const bpStub = { subsystems, deliverable: topic.deliverableHint || '' };
+      return {
+        phase: dom.label,
+        steps: this._concretizePhaseSteps(goal, stub, i, domains.length, this._resolvedArchetype, bpStub),
+        deliverable: this._concretizeDeliverable(goal, dom.label, i === domains.length - 1 ? 'core' : 'bridge', '', bpStub),
+        subsystemIds: [dom.id],
+        knowledgeHints: dom.keywords.slice(0, 5),
+      };
+    };
+    return {
+      projectSummary: `围绕「${topicName}」开展产业场景调研与创新方案设计`,
+      deliverable: topic.deliverableHint || `${topicName}创新方案报告`,
+      projectType: 'industry-innovation',
+      constraints: ['资料须标注权威来源', '方案须考虑空域安全与合规', '禁止虚构政策条文'],
+      subsystems,
+      schemes: [{
+        id: 'A',
+        name: '政策—场景—原理—方案（推荐）',
+        summary: `从${topicName}政策背景入手，调研应用场景，补足技术原理，提出创新方案`,
+        pros: ['贴合新兴产业议题', '跨地理/物理/语文/数学', '交付物为可答辩报告'],
+        cons: ['需检索行业资料'],
+        phases: domains.map((d, i) => mkPhase(d, i)),
+      }],
+      recommendedSchemeId: 'A',
+      knowledgeChain: `${topicName}政策背景 → 应用场景调研 → 技术原理支撑 → 数据可行性 → 创新方案报告`,
+      fallback: true,
+    };
   }
 
   _fallbackDecomposeBlueprint(goal) {
+    if (this._isExhibitionRedesignGoal(goal)) {
+      return this._sanitizeBlueprintForGoal(this._buildExhibitionRedesignBlueprint(goal), goal);
+    }
+    if (this._isIndustryInnovationGoal(goal)) {
+      return this._sanitizeBlueprintForGoal(this._buildIndustryInnovationBlueprint(goal), goal);
+    }
     if (this._isConsumerDecisionGoal(goal)) {
       return this._sanitizeBlueprintForGoal({
         projectSummary: String(goal || '').slice(0, 160),
@@ -2332,57 +3013,20 @@ class PBLPathBuilder {
       };
     }
 
+    const topic = this._extractTopicProfile(goal);
+    const subject = topic.coreTopic;
+    const isEng = this._classifyProjectType(goal) === 'engineering' || this._isEnergyProjectGoal(goal);
+    if (!isEng) {
+      return this._sanitizeBlueprintForGoal(
+        this._buildSubjectAnchoredBlueprint(goal, `「${subject}」主题实施方案`),
+        goal
+      );
+    }
     const domains = this._inferProjectDomains(goal);
-    const subsystems = domains.length
-      ? domains.map(d => ({ id: d.id, name: d.label, description: `完成「${d.label}」相关设计与验证` }))
-      : [
-        { id: 'principle', name: '原理探究', description: '理解项目背后的科学/工程原理' },
-        { id: 'design', name: '方案设计', description: '确定技术路线、分工与器材清单' },
-        { id: 'build', name: '制作实现', description: '搭建原型并完成分步测试' },
-        { id: 'test', name: '测试迭代', description: '采集数据、对比指标并优化' }
-      ];
-    const mkPhases = (prefix) => subsystems.map((s) => {
-      const dom = domains.find(d => d.id === s.id);
-      return {
-        phase: s.name,
-        steps: [`${prefix}${s.name}需求`, `完成${s.name}实验或制作任务`],
-        deliverable: `${s.name}阶段成果`,
-        subsystemIds: [s.id],
-        knowledgeHints: (dom?.keywords || []).slice(0, 5)
-      };
-    });
-    return {
-      projectSummary: String(goal || '').slice(0, 160),
-      deliverable: '可展示的项目原型、实验报告或系统演示',
-      constraints: ['课堂可实施', '注意安全与器材可得性'],
-      subsystems,
-      schemes: [
-        {
-          id: 'A',
-          name: '递进式实施（推荐）',
-          summary: '按子系统由原理到实现逐步推进，适合大多数 PBL 课堂',
-          pros: ['阶段清晰', '便于评价', '与课标主线易对齐'],
-          cons: ['周期较长'],
-          phases: mkPhases('拆解')
-        },
-        {
-          id: 'B',
-          name: '原型驱动迭代',
-          summary: '先搭最小可行原型，再按测试反馈回补原理与优化',
-          pros: ['学生成就感强', '适合工程社团'],
-          cons: ['需更多指导'],
-          phases: [
-            { phase: '快速原型', steps: ['确定最小功能', '搭建雏形'], deliverable: 'MVP 原型', knowledgeHints: (domains[0]?.keywords || []).slice(0, 4), subsystemIds: [subsystems[0]?.id] },
-            { phase: '测试与诊断', steps: ['设计测试指标', '记录问题清单'], deliverable: '测试记录表', knowledgeHints: ['实验', '数据采集', '误差'], subsystemIds: ['test'] },
-            { phase: '原理补强', steps: ['针对问题查原理', '补学关键概念'], deliverable: '原理笔记', knowledgeHints: domains.flatMap(d => d.keywords).slice(0, 6), subsystemIds: subsystems.map(s => s.id) },
-            { phase: '优化交付', steps: ['改进原型', '准备展示'], deliverable: '终版作品', knowledgeHints: ['效率', '优化', '测试'], subsystemIds: ['build', 'test'] }
-          ]
-        }
-      ],
-      recommendedSchemeId: 'A',
-      knowledgeChain: subsystems.map(s => s.name).join(' → '),
-      fallback: true
-    };
+    const subsystems = domains.map(d => ({ id: d.id, name: d.label, description: `完成「${subject}」${d.label}` }));
+    const bp = this._buildSubjectAnchoredBlueprint(goal, `「${subject}」工程实施方案`);
+    bp.deliverable = `可展示的「${subject}」工程作品+测试数据+说明文档`;
+    return this._sanitizeBlueprintForGoal(bp, goal);
   }
 
   _parseDecomposeResult(raw, goal) {
@@ -2393,7 +3037,12 @@ class PBLPathBuilder {
       if (!data.recommendedSchemeId && data.schemes[0]) {
         data.recommendedSchemeId = data.schemes[0].id;
       }
-      return this._sanitizeBlueprintForGoal(data, goal);
+      if (!this._blueprintAnchoredToGoal(data, goal)) {
+        console.warn('[PBL] LLM 蓝图未锚定题目，使用主题蓝图回退');
+        return this._fallbackDecomposeBlueprint(goal);
+      }
+      const sanitized = this._sanitizeBlueprintForGoal(data, goal);
+      return this._concretizeBlueprint(goal, sanitized, this._resolvedArchetype);
     } catch (e) {
       console.warn('[PBL] decompose JSON 解析失败，使用本地蓝图回退:', e.message);
       return this._fallbackDecomposeBlueprint(goal);
@@ -2516,13 +3165,21 @@ class PBLPathBuilder {
   _finalizePBLGraph(goal, matched, external, activeSystems, meta = {}) {
     const profile = this._getPBLGoalProfile(goal);
     const complex = profile.complex;
+    const archetype = meta.archetype || null;
     let core = complex ? this._filterMatchedForComplexProject(matched) : matched;
     core = this._purgeBiologyNoise(core, goal);
-    core = this._filterMainlineNodes(core, goal);
+    core = this._filterMainlineNodes(core, goal, archetype);
     if (complex && core.length === 0 && matched.length) {
       core = this._filterMainlineNodes(
         [...matched].sort((a, b) => (b.confidence || 0) - (a.confidence || 0)),
-        goal
+        goal,
+        archetype
+      );
+    }
+    if (archetype && this._archetypeEngine) {
+      core = this._archetypeEngine.tagMatchedModules(
+        core, archetype, meta.projectBlueprint,
+        (n, m) => this._archetypeEngine.scoreForModule(n, m, this._tokenizeGoalTerms(goal))
       );
     }
     if (complex) {
@@ -2533,7 +3190,7 @@ class PBLPathBuilder {
         profile.maxMatched,
         complex
       );
-      core = this._filterMainlineNodes(core, goal);
+      core = this._filterMainlineNodes(core, goal, archetype);
       core = this._rebalanceStemMatched(core, goal, meta.candidatePool || [], profile.maxMatched);
     }
     if (!core.length && meta.candidatePool?.length) {
@@ -2721,9 +3378,11 @@ class PBLPathBuilder {
 
     // 4. 第零阶段：全链路拆解可行方案（不选课标）
     this._reportPBLStatus(onStatus, '第 1/4 步：全链路拆解可行方案...');
-    const projectBlueprint = await this._llmDecomposeStage(goal);
+    let projectBlueprint = await this._llmDecomposeStage(goal);
+    let archetype = this._resolveArchetype(goal, projectBlueprint);
+    if (archetype) projectBlueprint = this._alignBlueprintModules(projectBlueprint, archetype);
+    projectBlueprint = this._concretizeBlueprint(goal, projectBlueprint, archetype);
     const blueprintPhases = this._blueprintProjectPhases(projectBlueprint);
-    const archetype = this._resolveArchetype(goal, projectBlueprint);
     const bloomProfile = this._inferBloomProfile(projectBlueprint);
 
     // 5. 第一阶段 LLM：判断学科+学段+课标体系（压缩候选集）
@@ -2784,6 +3443,15 @@ class PBLPathBuilder {
         knowledgeChain: moduleChain || pathPlan.knowledgeChain,
         pathPlan
       });
+    const quality = this.computeQualityScore({
+      goal,
+      matched: finalized.matched,
+      external: finalized.external,
+      projectBlueprint,
+      archetype,
+      graphData: finalized.graphData,
+      pathPlan,
+    });
 
     return {
       goal,
@@ -2799,13 +3467,16 @@ class PBLPathBuilder {
       knowledgeChain: moduleChain || pathPlan.knowledgeChain,
       graphData: finalized.graphData,
       complexProject: finalized.complex,
+      quality,
       stats: {
         totalCandidates: candidates.length,
         filteredCandidates: stage1.filteredCandidates.length,
         matchedCount: finalized.matched.length,
         externalCount: finalized.external.length,
         graphNodes: finalized.graphData.nodes.length,
-        graphLinks: finalized.graphData.links.length
+        graphLinks: finalized.graphData.links.length,
+        qualityScore: quality.score,
+        qualityGrade: quality.grade,
       }
     };
   }
@@ -2995,7 +3666,7 @@ class PBLPathBuilder {
       );
     }
     matched = this._ensureMinimumMatched(matched, goal, candidates, profile.maxMatched, complex);
-    matched = this._filterMainlineNodes(matched, goal);
+    matched = this._filterMainlineNodes(matched, goal, archetype);
     matched = this._purgeBiologyNoise(matched, goal);
     matched = this._rebalanceStemMatched(matched, goal, candidates, profile.maxMatched);
     matched = this._purgeBiologyNoise(matched, goal);
