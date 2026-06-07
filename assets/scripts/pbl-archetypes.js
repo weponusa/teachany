@@ -109,7 +109,7 @@
       return true;
     }
 
-    scoreForModule(node, mod, goalTerms) {
+    scoreForModule(node, mod, goalTerms, archetype) {
       if (!mod) return 0;
       let score = 0;
       const t = textOf(node).toLowerCase();
@@ -123,7 +123,25 @@
         if (term.length >= 2 && (name.includes(term) || t.includes(term))) score += 2;
       });
       if ((mod.subjects || []).includes(node.subject)) score += 3;
+      (archetype?.preferNamePatterns || []).forEach(p => {
+        if (name.includes(String(p).toLowerCase())) score += 6;
+      });
       return score;
+    }
+
+    _moduleNodeOk(archetype, mod, node) {
+      const t = textOf(node);
+      const name = norm(node.name);
+      if (archetype?.id === 'mixed-solution-chemistry') {
+        if (mod.id === 'conductivity' && node.subject === 'physics') return false;
+        if (mod.id === 'titration' && node.subject === 'chemistry' && !/滴定|硝酸银|沉淀|物质的量|离子|摩尔/.test(t)) return false;
+      }
+      if (archetype?.id === 'water-rocket' && mod.id === 'test' && node.subject === 'info-tech') return false;
+      if (archetype?.id === 'consumer-decision' && node.subject === 'chinese' && !this._passesChinese(node, archetype)) return false;
+      if (archetype?.id === 'water-rocket' && /程序|算法|物联网/.test(name)) return false;
+      if (archetype?.id === 'mixed-solution-chemistry' && mod.id === 'calc' && !/统计|概率|误差|计算|数据|方程/.test(t)) return false;
+      if (archetype?.id === 'consumer-decision' && /线性规划|空间向量|立体几何|三角恒等|恒等变换|排列组合|二项式/.test(name)) return false;
+      return true;
     }
 
     pickCandidates(pool, archetype, blueprint, maxCount, goalTerms, opts = {}) {
@@ -140,9 +158,9 @@
           .filter(n => !isBanned || !isBanned(n))
           .filter(n => !meetsGrade || meetsGrade(n))
           .filter(n => !mod.subjects?.length || mod.subjects.includes(n.subject))
+          .filter(n => this._moduleNodeOk(archetype, mod, n))
           .map(n => {
-            let s = scoreForModule(n, mod, goalTerms);
-            prefer.forEach(p => { if (norm(n.name).includes(p)) s += 6; });
+            const s = (scoreForModule || ((a, b, c) => this.scoreForModule(a, b, c, archetype)))(n, mod, goalTerms);
             return { n, s };
           })
           .filter(x => x.s > 0)
