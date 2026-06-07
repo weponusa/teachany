@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TeachAny 全科知识地图</title>
+<link rel="icon" href="data:,">
+<style>
+:root {
+  --bg: #0a0e1a;
+  --bg2: #131a2e;
+  --card: rgba(20, 30, 55, 0.92);
+  --border: rgba(100, 120, 160, 0.2);
+  --text: #e8ecf4;
+  --dim: #8b99b0;
+  --dimmer: #5a6880;
+  --primary: #4f8fff;
+  --secondary: #a855f7;
+  --accent: #f59e0b;
+  --success: #10b981;
+  --radius: 10px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'PingFang SC', 'Noto Sans SC', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Top bar */
+.top-bar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: 48px; display: flex; align-items: center; padding: 0 20px; gap: 16px;
+  background: linear-gradient(180deg, rgba(10,14,26,0.97), rgba(10,14,26,0.85));
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.top-bar h1 { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; white-space: nowrap; }
+.top-bar h1 span { color: var(--dim); font-weight: 400; margin-left: 8px; font-size: 12px; }
+.top-bar .nav-links { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.top-bar .nav-links a {
+  color: var(--dim); text-decoration: none; font-size: 12px; padding: 4px 8px;
+  border-radius: 6px; transition: color 0.2s, background 0.2s; white-space: nowrap;
+}
+.top-bar .nav-links a:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+.top-bar .nav-links a.active { color: var(--primary); background: rgba(79,143,255,0.12); }
+.top-bar .nav-link {
+  margin-left: 24px; color: var(--dim); text-decoration: none; font-size: 13px;
+  transition: color 0.2s;
+}
+.top-bar .nav-link:hover { color: var(--text); }
+
+/* Stats bar */
+.stats-bar {
+  position: fixed; top: 48px; left: 0; right: 0; z-index: 90;
+  height: 36px; display: flex; align-items: center; gap: 16px; padding: 0 20px;
+  background: var(--bg2); border-bottom: 1px solid var(--border);
+  font-size: 12px; color: var(--dim);
+}
+.stat-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 10px; border-radius: 20px;
+  background: rgba(79, 143, 255, 0.08); border: 1px solid rgba(79, 143, 255, 0.15);
+}
+.stat-chip b { color: var(--text); font-weight: 600; }
+
+/* Controls panel */
+.controls {
+  position: fixed; top: 96px; left: 16px; z-index: 80;
+  width: 280px; padding: 16px;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  backdrop-filter: blur(16px);
+  max-height: calc(100vh - 120px); overflow-y: auto;
+}
+.controls::-webkit-scrollbar { width: 4px; }
+.controls::-webkit-scrollbar-thumb { background: var(--dimmer); border-radius: 2px; }
+
+.ctrl-section { margin-bottom: 16px; }
+.ctrl-section:last-child { margin-bottom: 0; }
+.ctrl-label { font-size: 11px; color: var(--dimmer); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+
+/* Search */
+.search-box {
+  width: 100%; padding: 8px 12px; border-radius: 6px;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  color: var(--text); font-size: 13px; outline: none;
+  transition: border-color 0.2s;
+}
+.search-box:focus { border-color: var(--primary); }
+.search-box::placeholder { color: var(--dimmer); }
+
+/* Subject filters */
+.subject-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.subject-chip {
+  padding: 4px 10px; border-radius: 14px; font-size: 11px; font-weight: 500;
+  cursor: pointer; transition: all 0.2s; border: 1px solid transparent;
+  user-select: none;
+}
+.subject-chip.active { border-color: currentColor; }
+.subject-chip.inactive { opacity: 0.35; }
+
+/* Grade slider */
+.grade-range {
+  display: flex; align-items: center; gap: 8px;
+}
+.grade-range input[type=range] {
+  flex: 1; appearance: none; height: 4px; border-radius: 2px;
+  background: rgba(255,255,255,0.1); outline: none;
+}
+.grade-range input[type=range]::-webkit-slider-thumb {
+  appearance: none; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--primary); cursor: pointer;
+}
+.grade-val { font-size: 12px; color: var(--text); min-width: 50px; text-align: center; }
+
+/* Node detail panel */
+.detail-panel {
+  position: fixed; top: 96px; right: 16px; z-index: 80;
+  width: 320px; padding: 20px;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  backdrop-filter: blur(16px);
+  display: none; max-height: calc(100vh - 120px); overflow-y: auto;
+}
+.detail-panel.visible { display: block; }
+.detail-panel::-webkit-scrollbar { width: 4px; }
+.detail-panel::-webkit-scrollbar-thumb { background: var(--dimmer); border-radius: 2px; }
+.detail-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.detail-subtitle { font-size: 12px; color: var(--dim); margin-bottom: 12px; }
+.detail-section { margin-bottom: 12px; }
+.detail-section-title { font-size: 11px; color: var(--dimmer); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
+.detail-text { font-size: 13px; color: var(--dim); line-height: 1.5; }
+.detail-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.detail-tag {
+  padding: 2px 8px; border-radius: 10px; font-size: 11px;
+  background: rgba(79,143,255,0.1); color: var(--primary);
+}
+.detail-prereq {
+  padding: 3px 8px; border-radius: 6px; font-size: 12px; cursor: pointer;
+  background: rgba(168,85,247,0.1); color: #c084fc; margin: 2px;
+  display: inline-block; transition: background 0.2s;
+}
+.detail-prereq:hover { background: rgba(168,85,247,0.2); }
+.close-detail {
+  position: absolute; top: 12px; right: 12px; width: 24px; height: 24px;
+  border: none; background: rgba(255,255,255,0.05); border-radius: 50%;
+  color: var(--dim); cursor: pointer; font-size: 14px; line-height: 24px; text-align: center;
+}
+.close-detail:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+
+/* Canvas */
+#graphCanvas {
+  position: fixed; top: 84px; left: 0; right: 0; bottom: 0;
+  width: 100%; height: calc(100vh - 84px);
+  cursor: grab;
+}
+#graphCanvas:active { cursor: grabbing; }
+
+/* Legend */
+.legend {
+  position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 80;
+  display: flex; gap: 12px; padding: 8px 16px;
+  background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+  backdrop-filter: blur(12px);
+}
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--dim); }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+/* Loading */
+.loading-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px;
+  background: var(--bg);
+}
+.loading-spinner {
+  width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--primary);
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { color: var(--dim); font-size: 13px; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .controls { width: 240px; left: 8px; top: 90px; padding: 12px; }
+  .detail-panel { width: 260px; right: 8px; }
+  .legend { gap: 8px; padding: 6px 12px; }
+}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">加载知识图谱数据...</div>
+</div>
+
+<div class="top-bar">
+  <h1>
+    <img src="assets/teachany-logo.png" alt="TeachAny" style="width:32px;height:32px;border-radius:8px;vertical-align:middle;margin-right:8px;">
+    TeachAny
+  </h1>
+  <div class="nav-links">
+    <a href="index.html">📋 Gallery / 课件库</a>
+    <a href="tree.html">🗺️ Knowledge Map / 知识地图</a>
+    <a href="knowledge-map.html" class="active">🧬 全科图谱</a>
+    <a href="path.html">🛤️ Learning Path / 学习路径</a>
+    <a href="pbl.html">🧩 PBL 项目拆解</a>
+    <a href="my.html">👤 我的</a>
+    <a href="commercial-license.html">💼 商业授权</a>
+  </div>
+</div>
+
+<div class="stats-bar" id="statsBar">
+  <span class="stat-chip">📊 节点 <b id="statNodes">-</b></span>
+  <span class="stat-chip">🔗 边 <b id="statEdges">-</b></span>
+  <span class="stat-chip">📚 学科 <b id="statSubjects">-</b></span>
+  <span class="stat-chip">👁️ 可见 <b id="statVisible">-</b></span>
+</div>
+
+<div class="controls">
+  <div class="ctrl-section">
+    <div class="ctrl-label">🔍 搜索节点</div>
+    <input type="text" class="search-box" id="searchInput" placeholder="输入知识点名称...">
+  </div>
+
+  <div class="ctrl-section">
+    <div class="ctrl-label">📚 学科筛选 <span style="opacity:0.6">(点击切换)</span></div>
+    <div class="subject-chips" id="subjectChips"></div>
+  </div>
+
+  <div class="ctrl-section">
+    <div class="ctrl-label">📏 年级范围</div>
+    <div class="grade-range">
+      <input type="range" id="gradeMin" min="1" max="12" value="1">
+      <span class="grade-val" id="gradeLabel">1年级 – 12年级</span>
+      <input type="range" id="gradeMax" min="1" max="12" value="12">
+    </div>
+    <label style="display:flex;align-items:center;gap:4px;font-size:12px;margin-top:4px;cursor:pointer;">
+      <input type="checkbox" id="includeUni" checked> 包含大学知识点
+    </label>
+  </div>
+
+  <div class="ctrl-section">
+    <div class="ctrl-label">⚙️ 布局</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="subject-chip active" onclick="setLayout('force')" id="btnForce" style="color:var(--primary);background:rgba(79,143,255,0.1);">力导向</button>
+      <button class="subject-chip" onclick="setLayout('radial')" id="btnRadial" style="color:var(--secondary);background:rgba(168,85,247,0.1);">径向分组</button>
+      <button class="subject-chip" onclick="setLayout('grid')" id="btnGrid" style="color:var(--success);background:rgba(16,185,129,0.1);">网格</button>
+    </div>
+  </div>
+</div>
+
+<canvas id="graphCanvas"></canvas>
+
+<div class="detail-panel" id="detailPanel">
+  <button class="close-detail" onclick="closeDetail()">✕</button>
+  <div class="detail-title" id="detailTitle"></div>
+  <div class="detail-subtitle" id="detailSubtitle"></div>
+  <div class="detail-section">
+    <div class="detail-section-title">定义</div>
+    <div class="detail-text" id="detailDef"></div>
+  </div>
+  <div class="detail-section" id="detailSkillsSection" style="display:none">
+    <div class="detail-section-title">技能</div>
+    <div class="detail-tags" id="detailSkills"></div>
+  </div>
+  <div class="detail-section" id="detailPrereqSection" style="display:none">
+    <div class="detail-section-title">先修知识</div>
+    <div id="detailPrereqs"></div>
+  </div>
+  <div class="detail-section" id="detailNextSection" style="display:none">
+    <div class="detail-section-title">后续知识</div>
+    <div id="detailNext"></div>
+  </div>
+</div>
+
+<div class="legend" id="legend"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════════
+// DATA & CONFIG
+// ═══════════════════════════════════════════════════════════════
+
+const SUBJECT_CONFIG = {
+  // === 基础理科 ===
+  math:              { label: '数学', color: '#3b82f6', emoji: '📐', group: 'stem-basic' },
+  physics:           { label: '物理', color: '#f59e0b', emoji: '⚡', group: 'stem-basic' },
+  chemistry:         { label: '化学', color: '#10b981', emoji: '🧪', group: 'stem-basic' },
+  biology:           { label: '生物', color: '#22c55e', emoji: '🧬', group: 'stem-basic' },
+  science:           { label: '科学', color: '#14b8a6', emoji: '🔬', group: 'stem-basic' },
+  // === 高等理科 ===
+  'advanced-math':   { label: '高等数学', color: '#2563eb', emoji: '∫', group: 'stem-adv' },
+  'advanced-physics':{ label: '大学物理', color: '#d97706', emoji: '⚛️', group: 'stem-adv' },
+  'advanced-chemistry':{ label: '大学化学', color: '#059669', emoji: '⚗️', group: 'stem-adv' },
+  'advanced-biology':{ label: '大学生物', color: '#16a34a', emoji: '🦠', group: 'stem-adv' },
+  'earth-space':     { label: '地球与空间', color: '#0ea5e9', emoji: '🌏', group: 'stem-adv' },
+  'formal-sciences': { label: '形式科学', color: '#7c3aed', emoji: '∀', group: 'stem-adv' },
+  // === 工程与计算机 ===
+  engineering:       { label: '工程', color: '#f97316', emoji: '🔧', group: 'engineering' },
+  'civil-engineering':{ label: '土木建筑', color: '#78716c', emoji: '🏗️', group: 'engineering' },
+  'chemical-engineering':{ label: '化学工程', color: '#0d9488', emoji: '🏭', group: 'engineering' },
+  'aerospace-engineering':{ label: '航空航天', color: '#0284c7', emoji: '🚀', group: 'engineering' },
+  'nuclear-engineering':{ label: '核工程', color: '#dc2626', emoji: '☢️', group: 'engineering' },
+  'naval-engineering':{ label: '船舶海洋', color: '#1e40af', emoji: '🚢', group: 'engineering' },
+  'hydraulic-engineering':{ label: '水利工程', color: '#0891b2', emoji: '🌊', group: 'engineering' },
+  'agricultural-engineering':{ label: '农业工程', color: '#65a30d', emoji: '🌾', group: 'engineering' },
+  'computer-science':{ label: '计算机', color: '#6366f1', emoji: '🖥️', group: 'engineering' },
+  'info-tech':       { label: '信息技术', color: '#06b6d4', emoji: '💻', group: 'engineering' },
+  // === 人文 ===
+  chinese:           { label: '语文', color: '#ef4444', emoji: '📖', group: 'humanities' },
+  english:           { label: '英语', color: '#ec4899', emoji: '🌐', group: 'humanities' },
+  history:           { label: '历史', color: '#a855f7', emoji: '📜', group: 'humanities' },
+  geography:         { label: '地理', color: '#84cc16', emoji: '🌍', group: 'humanities' },
+};
+
+// Domain 中文名映射
+const DOMAIN_LABELS = {"pinyin":"小学·拼音","literacy":"小学·识字与写字","vocabulary":"小学·词汇","sentence-grammar":"小学·句子与标点","reading":"小学·阅读理解","writing":"小学·写作","oral-communication":"小学·口语交际","classical-literature":"小学·古诗文","language-use":"初中·语言文字运用","modern-reading":"初中·现代文阅读","classical-chinese":"初中·古诗文阅读","writing-middle":"初中·写作","famous-works":"初中·整本书阅读与名著导读","language-use-h":"高中·语言文字运用","modern-reading-h":"高中·现代文阅读","classical-chinese-h":"高中·古诗文阅读","writing-h":"高中·写作","famous-works-h":"高中·整本书阅读","amath-abstract-algebra":"抽象代数","amath-algebraic-topology":"代数拓扑","amath-calculus-1":"微积分I","amath-calculus-2":"微积分II","amath-commutative-algebra":"交换代数","amath-complex-analysis":"复分析","amath-differential-equations":"微分方程","amath-differential-geometry":"微分几何","amath-discrete-math":"离散数学","amath-graph-theory-and-combinatorics":"图论与组合数学","amath-linear-algebra":"线性代数","amath-measure-theory-and-functional-analysis":"测度论与泛函分析","amath-methods-of-proof":"证明方法","amath-multivariable-calculus":"多元微积分","amath-number-theory":"数论","amath-numerical-analysis":"数值分析","amath-partial-differential-equations":"偏微分方程","amath-prealgebra":"初等代数","amath-precalculus":"预备微积分","amath-probability-and-mathematical-statistics":"概率与数理统计","amath-probability-and-statistics":"概率与统计","amath-real-analysis":"实分析","amath-representation-theory":"表示论","amath-stochastic-processes":"随机过程","amath-topology":"拓扑学","cs-programming":"编程基础","cs-dsa":"数据结构与算法","cs-databases":"数据库","cs-networking":"计算机网络","cs-os":"操作系统","cs-arch":"计算机体系结构","cs-ai":"人工智能","cs-ml":"机器学习","cs-crypto":"密码学","cs-distributed":"分布式系统","cs-compilers":"编译原理","cs-theory":"计算理论","cs-formal":"形式化方法","cs-info-theory":"信息论","cs-adv-algo":"高级算法","cs-quantum":"量子计算","es-astronomy":"天文学","es-climate-science":"气候科学","es-earth-and-weather":"地球与天气","es-earth-science":"地球科学","es-geochemistry":"地球化学","es-geology":"地质学","es-geophysics":"地球物理学","es-meteorology-and-climate":"气象与气候","es-oceanography":"海洋学","es-planetary-science":"行星科学","es-remote-sensing-and-gis":"遥感与GIS","number-algebra":"小学·数与代数","geometry":"小学·图形与几何","statistics-probability":"小学·统计与概率","practical-application":"小学·综合与实践","m-number-algebra":"初中·数与代数","m-geometry":"初中·图形与几何","statistics":"初中·统计与概率","sets-logic":"高中·预备知识","functions":"高中·函数","trigonometry":"高中·三角函数","vectors-h":"高中·向量","sequences":"高中·数列","solid-geometry":"高中·立体几何","analytic-geometry":"高中·解析几何","probability-stats":"高中·概率与统计","calculus":"高中·导数与微积分初步","abio-biochemistry":"生物化学","abio-cell-biology":"细胞生物学","abio-developmental-biology":"发育生物学","abio-ecology-and-evolution":"生态与进化","abio-evolutionary-biology":"进化生物学","abio-genetics-and-molecular-biology":"遗传与分子生物学","abio-genomics-and-bioinformatics":"基因组学与生物信息学","abio-immunology":"免疫学","abio-microbiology":"微生物学","abio-neuroscience":"神经科学","abio-physiology":"生理学","abio-structural-biology":"结构生物学","abio-systems-biology":"系统生物学","achem-analytical-chemistry":"分析化学","achem-general-chemistry":"普通化学","achem-inorganic-chemistry":"无机化学","achem-materials-chemistry":"材料化学","achem-organic-chemistry":"有机化学","achem-physical-chemistry":"物理化学","phonetics":"小学·语音与音标","listening":"小学·听力","speaking":"小学·口语","reading-en":"小学·阅读","words-phrases":"小学·词汇","writing-en":"小学·书写","m-phonetics":"初中·语音","m-vocabulary":"初中·词汇与语法","m-reading":"初中·阅读","m-writing":"初中·写作","m-listening-speaking":"初中·听说","h-vocabulary":"高中·词汇与语法","h-reading":"高中·阅读","h-writing":"高中·写作","h-listening-speaking":"高中·听说","ancient-china":"初中·中国古代史","modern-china":"初中·中国近现代史","world-ancient":"初中·世界古代史","world-modern":"初中·世界近现代史","ancient-china-h":"高中·中国古代史","modern-china-h":"高中·中国近现代史","world-ancient-h":"高中·世界古代史","world-modern-h":"高中·世界近现代史","m-earth":"初中·地球与地图","m-world":"初中·世界地理","m-china":"初中·中国地理","m-local":"初中·乡土地理","h-nature":"高中·自然地理","h-human":"高中·人文地理","h-regional":"高中·区域地理","h-geo-tech":"高中·地理信息技术","biosphere":"初中·生物与环境","cell-basis":"初中·细胞基础","organism":"初中·生物体结构与功能","inheritance-evolution":"初中·遗传与进化","human-health":"初中·人体健康","animal-microbe":"初中·动物、微生物与健康","biodiversity":"初中·生物多样性与跨学科实践","molecular-cell":"高中·分子与细胞","heredity":"高中·遗传与进化","stability":"高中·稳态与调节","ecology":"高中·生态","bio-tech":"高中·生物技术","bio-engineering":"高中·生物工程","matter-structure":"初中·物质结构","change-properties":"初中·物质变化与性质","acid-base-salt":"初中·酸碱盐与氧化物","chemical-experiment":"初中·化学实验","life-chemistry":"初中·化学与生活","atomic-structure-periodic":"高中·原子结构与周期律","chemical-bond":"高中·化学键与分子结构","chemical-reaction":"高中·化学反应","organic-chemistry":"高中·有机化学","experiment-inquiry":"高中·实验与探究","acoustics":"初中·声现象","optics":"初中·光现象","thermodynamics":"初中·热现象","mechanics":"初中·运动和力","electricity":"初中·电现象与电路","electromagnetism":"初中·电与磁","kinematics":"高中·运动学","forces":"高中·相互作用与牛顿定律","energy":"高中·功与能","momentum":"高中·动量","electrostatics":"高中·静电场","circuits":"高中·直流电路","h-electromagnetism":"高中·电磁场与电磁感应","vibration-wave":"高中·机械振动与波、光学","h-thermodynamics":"高中·热学","modern-physics":"高中·近代物理","programming":"高中·程序设计与数据结构","algorithms":"高中·算法","network-security":"高中·网络与信息安全","matter-science":"小学·物质科学","life-science":"小学·生命科学","earth-space-science":"小学·地球与宇宙科学","tech-engineering":"小学·技术与工程","amath-functional-analysis":"泛函分析","amath-graph-theory":"图论","amath-mathematical-logic":"数理逻辑","amath-measure-theory":"测度论","amath-optimization":"最优化","amath-set-theory":"集合论","amath-category-theory":"范畴论","amath-algebraic-geometry":"代数几何","amath-combinatorics":"组合数学","amath-harmonic-analysis":"调和分析","aphy-classical-mechanics":"经典力学","aphy-computational-physics":"计算物理","aphy-condensed-matter":"凝聚态物理","aphy-electrodynamics":"电动力学","aphy-mathematical-physics":"数学物理","aphy-nuclear-physics":"核物理","aphy-optics":"光学","aphy-particle-physics":"粒子物理","aphy-plasma-physics":"等离子体物理","aphy-quantum-mechanics":"量子力学","aphy-relativity":"相对论","aphy-statistical-mechanics":"统计力学","aphy-thermodynamics":"热力学","cs-ai-ml":"人工智能与机器学习","cs-algorithms-data-structures":"算法与数据结构","cs-cloud-distributed":"云计算与分布式","cs-computer-architecture":"计算机体系结构","cs-computer-networks":"计算机网络","cs-cybersecurity":"网络安全","cs-database-systems":"数据库系统","cs-hci":"人机交互","cs-operating-systems":"操作系统","cs-programming-languages":"编程语言","cs-software-engineering":"软件工程","cs-theory-of-computation":"计算理论","eng-biomedical":"生物医学工程","eng-chemical":"化学工程","eng-civil-structural":"土木与结构工程","eng-control-systems":"控制系统","eng-electrical":"电气工程","eng-electronics":"电子工程","eng-environmental":"环境工程","eng-manufacturing":"制造工程","eng-materials-science":"材料科学","eng-mechanical":"机械工程","eng-robotics-mechatronics":"机器人与机电一体化","eng-signal-processing":"信号处理","eng-systems-engineering":"系统工程","eng-telecommunications":"通信工程","eng-thermofluids":"热流体工程","ess-atmospheric-science":"大气科学","ess-biogeochemistry":"生物地球化学","ess-earth-materials":"地球物质","ess-geophysics":"地球物理","ess-hydrology-oceanography":"水文与海洋学","ess-planetary-science":"行星科学","ess-structural-geology":"构造地质学","ess-surface-processes":"地表过程","fs-automata-formal-langs":"自动机与形式语言","fs-category-theory":"范畴论","fs-computability-complexity":"可计算性与复杂性","fs-formal-logic":"形式逻辑","fs-information-theory":"信息论","fs-type-theory":"类型论","fml-automata-and-formal-languages":"自动机与形式语言","fml-graph-theory-and-combinatorics":"图论与组合","fml-information-and-coding-theory":"信息与编码论","fml-mathematical-logic":"数理逻辑","fml-propositional-and-predicate-logic":"命题与谓词逻辑","fml-reasoning-and-proof":"推理与证明","fml-set-theory":"集合论","fml-category-theory":"范畴论","fml-computability-and-complexity":"可计算性与复杂性","ce-structural":"结构工程","ce-geotechnical":"岩土工程","ce-materials":"建筑材料","ce-construction":"施工技术与管理","ce-transportation":"道路与桥梁工程","ce-architecture":"建筑设计","ce-hydraulics":"水力学与给排水","cheme-transport":"传递过程","cheme-separation":"分离工程","cheme-reaction":"化学反应工程","cheme-thermo":"化工热力学","cheme-process":"化工工艺与设计","cheme-control-safety":"过程控制与安全","cheme-industry":"工业化学与工艺","aero-aerodynamics":"空气动力学","aero-structures":"飞行器结构","aero-propulsion":"航空航天推进","aero-flight-mechanics":"飞行力学与控制","aero-orbital":"轨道力学与航天","aero-avionics":"航空电子与导航","nuke-physics":"核物理基础","nuke-reactor":"反应堆工程","nuke-thermal-hydraulics":"核热工水力","nuke-safety":"核安全与防护","nuke-fusion":"核聚变与前沿","naval-hydro":"船舶流体力学","naval-structures":"船舶结构","naval-marine-systems":"船舶动力与系统","naval-ocean":"海洋工程","naval-design":"船舶设计与建造","hydro-mechanics":"水力学","hydro-structures":"水工结构","hydro-hydrology":"工程水文学","hydro-river":"河流工程","hydro-water-resources":"水资源与灌溉","ageng-machinery":"农业机械","ageng-irrigation":"农田水利","ageng-post-harvest":"农产品加工与储藏","ageng-structures-env":"农业建筑与环境","ageng-precision":"精准农业与智能化","ageng-land-soil":"土地整治与水土保持"};
+
+// 获取 domain 的中文显示名
+function getDomainLabel(domainId) {
+  return DOMAIN_LABELS[domainId] || domainId;
+}
+
+let graphData = { nodes: [], edges: [] };
+let simulation = null;
+let currentLayout = 'force';
+let activeSubjects = new Set(Object.keys(SUBJECT_CONFIG));
+let gradeRange = [1, 12];
+let includeUni = true;
+let searchQuery = '';
+let selectedNode = null;
+let hoveredNode = null;
+let transform = d3.zoomIdentity;
+
+// Node lookup
+const nodeMap = new Map();
+const edgesByTarget = new Map();
+const edgesBySource = new Map();
+
+// Canvas & rendering
+let canvas, ctx, width, height;
+let dpr = window.devicePixelRatio || 1;
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+
+async function loadDomainLabels() {
+  try {
+    const resp = await fetch('./data/knowledge-map-domain-labels.json?v=20260608');
+    if (!resp.ok) return;
+    const data = await resp.json();
+    Object.assign(DOMAIN_LABELS, data.labels || {});
+  } catch (e) { /* 使用内置 DOMAIN_LABELS 回退 */ }
+}
+
+async function init() {
+  await loadDomainLabels();
+  try {
+    const resp = await fetch('./data/knowledge-map-data.json?v=20260608');
+    graphData = await resp.json();
+  } catch (e) {
+    document.getElementById('loading').innerHTML = '<div style="color:#ef4444">加载失败: ' + e.message + '</div>';
+    return;
+  }
+
+  // Build lookups
+  graphData.nodes.forEach(n => {
+    n.vx = 0; n.vy = 0;
+    nodeMap.set(n.id, n);
+  });
+  graphData.edges.forEach(e => {
+    if (!edgesByTarget.has(e.target)) edgesByTarget.set(e.target, []);
+    edgesByTarget.get(e.target).push(e.source);
+    if (!edgesBySource.has(e.source)) edgesBySource.set(e.source, []);
+    edgesBySource.get(e.source).push(e.target);
+  });
+
+  setupCanvas();
+  setupControls();
+  updateStats();
+  startSimulation();
+  document.getElementById('loading').style.display = 'none';
+  requestAnimationFrame(renderLoop);
+}
+
+function setupCanvas() {
+  canvas = document.getElementById('graphCanvas');
+  ctx = canvas.getContext('2d');
+  resize();
+  window.addEventListener('resize', resize);
+
+  // Zoom & pan
+  const zoom = d3.zoom()
+    .scaleExtent([0.1, 8])
+    .on('zoom', (event) => {
+      transform = event.transform;
+    });
+  d3.select(canvas).call(zoom);
+
+  // Click & hover
+  canvas.addEventListener('mousemove', onMouseMove);
+  canvas.addEventListener('click', onClick);
+}
+
+function resize() {
+  width = window.innerWidth;
+  height = window.innerHeight - 84;
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+  canvas.style.width = width + 'px';
+  canvas.style.height = height + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SIMULATION
+// ═══════════════════════════════════════════════════════════════
+
+function startSimulation() {
+  const visibleNodes = getVisibleNodes();
+  const visibleIds = new Set(visibleNodes.map(n => n.id));
+  const visibleEdges = graphData.edges.filter(e => visibleIds.has(e.source) && visibleIds.has(e.target));
+
+  if (simulation) simulation.stop();
+
+  // 大图优化：7000+ 节点时降低精度加快收敛
+  const isLargeGraph = visibleNodes.length > 2000;
+  const linkObjs = visibleEdges.slice(0, isLargeGraph ? 5000 : visibleEdges.length)
+    .map(e => ({ source: nodeMap.get(e.source), target: nodeMap.get(e.target) }))
+    .filter(e => e.source && e.target);
+
+  if (currentLayout === 'force') {
+    simulation = d3.forceSimulation(visibleNodes)
+      .force('link', d3.forceLink(linkObjs)
+        .distance(isLargeGraph ? 25 : 40).strength(isLargeGraph ? 0.15 : 0.3))
+      .force('charge', d3.forceManyBody().strength(isLargeGraph ? -15 : -30).distanceMax(isLargeGraph ? 200 : 300))
+      .force('center', d3.forceCenter(width / 2, height / 2))
+      .force('collide', d3.forceCollide(isLargeGraph ? 4 : 8))
+      .force('x', d3.forceX(n => getSubjectX(n.subject)).strength(isLargeGraph ? 0.2 : 0.12))
+      .force('y', d3.forceY(n => getGradeY(n.grade)).strength(isLargeGraph ? 0.12 : 0.08))
+      .alphaDecay(isLargeGraph ? 0.04 : 0.02)
+      .velocityDecay(isLargeGraph ? 0.5 : 0.4);
+  } else if (currentLayout === 'radial') {
+    // Radial: group by subject, spread by grade
+    const subjects = [...new Set(visibleNodes.map(n => n.subject))];
+    const angleStep = (2 * Math.PI) / subjects.length;
+    const baseRadius = Math.min(width, height) * 0.25;
+    visibleNodes.forEach(n => {
+      const idx = subjects.indexOf(n.subject);
+      const angle = idx * angleStep - Math.PI / 2;
+      const effectiveGrade = n.grade === 0 ? 13 : n.grade;
+      const radius = baseRadius + (effectiveGrade - 1) * 18 + (Math.random() - 0.5) * 30;
+      n.x = width / 2 + Math.cos(angle) * radius + (Math.random() - 0.5) * 40;
+      n.y = height / 2 + Math.sin(angle) * radius + (Math.random() - 0.5) * 40;
+    });
+    simulation = d3.forceSimulation(visibleNodes)
+      .force('collide', d3.forceCollide(isLargeGraph ? 3 : 7))
+      .force('link', d3.forceLink(linkObjs).distance(20).strength(0.1))
+      .alphaDecay(0.05)
+      .velocityDecay(0.5);
+  } else {
+    // Grid: by subject columns, grade rows
+    const subjects = [...activeSubjects].filter(s => visibleNodes.some(n => n.subject === s));
+    const colWidth = width / (subjects.length + 1);
+    const rowHeight = height / 15;
+    visibleNodes.forEach(n => {
+      const col = subjects.indexOf(n.subject);
+      const effectiveGrade = n.grade === 0 ? 13 : n.grade;
+      const nodesInCell = visibleNodes.filter(m => m.subject === n.subject && m.grade === n.grade);
+      const cellIdx = nodesInCell.indexOf(n);
+      n.x = colWidth * (col + 1) + (cellIdx % 8 - 4) * 10;
+      n.y = rowHeight * (effectiveGrade + 0.5) + Math.floor(cellIdx / 8) * 10;
+    });
+    simulation = d3.forceSimulation(visibleNodes)
+      .force('collide', d3.forceCollide(isLargeGraph ? 3 : 6))
+      .alphaDecay(0.08)
+      .velocityDecay(0.6);
+  }
+}
+
+function getSubjectX(subject) {
+  const subjects = Object.keys(SUBJECT_CONFIG);
+  const idx = subjects.indexOf(subject);
+  if (idx < 0) return width / 2;
+  const cols = subjects.length;
+  return (width / (cols + 1)) * (idx + 1);
+}
+
+function getGradeY(grade) {
+  const g = grade === 0 ? 13 : grade; // university nodes at bottom
+  return (height / 15) * (g + 0.5);
+}
+
+function getVisibleNodes() {
+  return graphData.nodes.filter(n => {
+    if (!activeSubjects.has(n.subject)) return false;
+    if (n.grade === 0) { if (!includeUni) return false; }
+    else if (n.grade < gradeRange[0] || n.grade > gradeRange[1]) return false;
+    if (searchQuery && !n.name.toLowerCase().includes(searchQuery) && !n.id.includes(searchQuery) && !(DOMAIN_LABELS[n.domain] || '').includes(searchQuery)) return false;
+    return true;
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER LOOP (Canvas)
+// ═══════════════════════════════════════════════════════════════
+
+function renderLoop() {
+  render();
+  requestAnimationFrame(renderLoop);
+}
+
+function render() {
+  ctx.save();
+  ctx.clearRect(0, 0, width, height);
+  ctx.translate(transform.x, transform.y);
+  ctx.scale(transform.k, transform.k);
+
+  const visibleNodes = getVisibleNodes();
+  const visibleIds = new Set(visibleNodes.map(n => n.id));
+
+  // Draw edges (performance: limit edge count at low zoom)
+  const maxEdges = transform.k > 1 ? 13000 : transform.k > 0.5 ? 6000 : 2000;
+  let edgeCount = 0;
+  ctx.globalAlpha = visibleIds.size > 3000 ? 0.06 : 0.12;
+  ctx.strokeStyle = '#6b7fa8';
+  ctx.lineWidth = 0.4;
+  ctx.beginPath();
+  for (const e of graphData.edges) {
+    if (edgeCount >= maxEdges) break;
+    const s = nodeMap.get(e.source);
+    const t = nodeMap.get(e.target);
+    if (!s || !t || !visibleIds.has(s.id) || !visibleIds.has(t.id)) continue;
+    if (s.x == null || t.x == null) continue;
+    ctx.moveTo(s.x, s.y);
+    ctx.lineTo(t.x, t.y);
+    edgeCount++;
+  }
+  ctx.stroke();
+
+  // Highlight edges for selected/hovered node
+  const highlightId = selectedNode?.id || hoveredNode?.id;
+  if (highlightId) {
+    ctx.globalAlpha = 0.6;
+    ctx.lineWidth = 1.5;
+    const prereqs = edgesByTarget.get(highlightId) || [];
+    const nexts = edgesBySource.get(highlightId) || [];
+    // Prerequisites (incoming) - purple
+    ctx.strokeStyle = '#a855f7';
+    prereqs.forEach(srcId => {
+      const s = nodeMap.get(srcId);
+      const t = nodeMap.get(highlightId);
+      if (s && t && s.x != null && t.x != null) {
+        ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(t.x, t.y); ctx.stroke();
+      }
+    });
+    // Next steps (outgoing) - cyan
+    ctx.strokeStyle = '#06b6d4';
+    nexts.forEach(tgtId => {
+      const s = nodeMap.get(highlightId);
+      const t = nodeMap.get(tgtId);
+      if (s && t && s.x != null && t.x != null) {
+        ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(t.x, t.y); ctx.stroke();
+      }
+    });
+  }
+
+  // Draw nodes
+  ctx.globalAlpha = 1;
+  const nodeRadius = Math.max(3, 5 / Math.sqrt(transform.k));
+  visibleNodes.forEach(n => {
+    if (n.x == null) return;
+    const cfg = SUBJECT_CONFIG[n.subject] || { color: '#666' };
+    const isHighlighted = highlightId && (n.id === highlightId ||
+      (edgesByTarget.get(highlightId) || []).includes(n.id) ||
+      (edgesBySource.get(highlightId) || []).includes(n.id));
+    const isSelected = selectedNode?.id === n.id;
+    const isSearchHit = searchQuery && n.name.toLowerCase().includes(searchQuery);
+
+    let r = nodeRadius;
+    let alpha = 0.7;
+
+    if (isSelected) { r = nodeRadius * 2; alpha = 1; }
+    else if (isHighlighted) { r = nodeRadius * 1.5; alpha = 1; }
+    else if (searchQuery && !isSearchHit) { alpha = 0.15; }
+    else if (highlightId && !isHighlighted) { alpha = 0.15; }
+
+    ctx.globalAlpha = alpha;
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = cfg.color;
+    ctx.fill();
+
+    if (isSelected) {
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    // Label at zoom
+    if (transform.k > 1.5 || isHighlighted || isSelected || (isSearchHit && searchQuery)) {
+      ctx.globalAlpha = alpha * 0.9;
+      ctx.fillStyle = '#e8ecf4';
+      ctx.font = `${Math.max(9, 11 / transform.k)}px -apple-system, PingFang SC, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(n.name, n.x, n.y - r - 4);
+    }
+  });
+
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INTERACTION
+// ═══════════════════════════════════════════════════════════════
+
+function onMouseMove(event) {
+  const rect = canvas.getBoundingClientRect();
+  const mx = (event.clientX - rect.left - transform.x) / transform.k;
+  const my = (event.clientY - rect.top - transform.y) / transform.k;
+
+  const visibleNodes = getVisibleNodes();
+  let closest = null;
+  let minDist = 20 / transform.k;
+
+  for (const n of visibleNodes) {
+    if (n.x == null) continue;
+    const dx = n.x - mx, dy = n.y - my;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < minDist) { minDist = dist; closest = n; }
+  }
+
+  if (closest !== hoveredNode) {
+    hoveredNode = closest;
+    canvas.style.cursor = closest ? 'pointer' : 'grab';
+  }
+}
+
+function onClick(event) {
+  if (hoveredNode) {
+    selectedNode = hoveredNode;
+    showDetail(selectedNode);
+  } else {
+    selectedNode = null;
+    closeDetail();
+  }
+}
+
+function showDetail(node) {
+  const panel = document.getElementById('detailPanel');
+  const cfg = SUBJECT_CONFIG[node.subject] || { label: node.subject, emoji: '📌', color: '#666' };
+
+  document.getElementById('detailTitle').textContent = node.name;
+  const enLine = node.name_en ? `<div style="font-size:11px;color:var(--dimmer);margin-top:4px">${node.name_en}</div>` : '';
+  document.getElementById('detailSubtitle').innerHTML =
+    `<span style="color:${cfg.color}">${cfg.emoji} ${cfg.label}</span> · ${node.grade === 0 ? '大学' : node.grade + '年级'} · ${getDomainLabel(node.domain)}${enLine}`;
+  document.getElementById('detailDef').textContent = node.definition || '暂无定义';
+
+  // Skills
+  const skillsSection = document.getElementById('detailSkillsSection');
+  const skillsDiv = document.getElementById('detailSkills');
+  if (node.skills && node.skills.length) {
+    skillsDiv.innerHTML = node.skills.map(s => `<span class="detail-tag">${s}</span>`).join('');
+    skillsSection.style.display = 'block';
+  } else {
+    skillsSection.style.display = 'none';
+  }
+
+  // Prerequisites
+  const prereqSection = document.getElementById('detailPrereqSection');
+  const prereqsDiv = document.getElementById('detailPrereqs');
+  const prereqs = edgesByTarget.get(node.id) || [];
+  if (prereqs.length) {
+    prereqsDiv.innerHTML = prereqs.map(id => {
+      const pn = nodeMap.get(id);
+      return pn ? `<span class="detail-prereq" onclick="focusNode('${id}')">${pn.name}</span>` : '';
+    }).join('');
+    prereqSection.style.display = 'block';
+  } else {
+    prereqSection.style.display = 'none';
+  }
+
+  // Next steps
+  const nextSection = document.getElementById('detailNextSection');
+  const nextDiv = document.getElementById('detailNext');
+  const nexts = edgesBySource.get(node.id) || [];
+  if (nexts.length) {
+    nextDiv.innerHTML = nexts.map(id => {
+      const nn = nodeMap.get(id);
+      return nn ? `<span class="detail-prereq" onclick="focusNode('${id}')" style="background:rgba(6,182,212,0.1);color:#22d3ee;">${nn.name}</span>` : '';
+    }).join('');
+    nextSection.style.display = 'block';
+  } else {
+    nextSection.style.display = 'none';
+  }
+
+  panel.classList.add('visible');
+}
+
+function closeDetail() {
+  document.getElementById('detailPanel').classList.remove('visible');
+  selectedNode = null;
+}
+
+function focusNode(id) {
+  const node = nodeMap.get(id);
+  if (!node || node.x == null) return;
+  selectedNode = node;
+  hoveredNode = node;
+  showDetail(node);
+
+  // Pan to node
+  const targetX = width / 2 - node.x * transform.k;
+  const targetY = height / 2 - node.y * transform.k;
+  transform = d3.zoomIdentity.translate(targetX, targetY).scale(transform.k);
+  d3.select(canvas).transition().duration(500).call(
+    d3.zoom().transform, transform
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CONTROLS
+// ═══════════════════════════════════════════════════════════════
+
+function setupControls() {
+  // Subject chips
+  const chipsDiv = document.getElementById('subjectChips');
+  Object.entries(SUBJECT_CONFIG).forEach(([id, cfg]) => {
+    const chip = document.createElement('span');
+    chip.className = 'subject-chip active';
+    chip.style.color = cfg.color;
+    chip.style.background = cfg.color + '18';
+    chip.textContent = cfg.emoji + ' ' + cfg.label;
+    chip.dataset.subject = id;
+    chip.onclick = () => toggleSubject(id, chip);
+    chipsDiv.appendChild(chip);
+  });
+
+  // Search
+  document.getElementById('searchInput').addEventListener('input', (e) => {
+    searchQuery = e.target.value.trim().toLowerCase();
+    updateStats();
+  });
+
+  // Grade range
+  const gradeMin = document.getElementById('gradeMin');
+  const gradeMax = document.getElementById('gradeMax');
+  const gradeLabel = document.getElementById('gradeLabel');
+  const updateGrade = () => {
+    gradeRange = [parseInt(gradeMin.value), parseInt(gradeMax.value)];
+    if (gradeRange[0] > gradeRange[1]) {
+      [gradeRange[0], gradeRange[1]] = [gradeRange[1], gradeRange[0]];
+    }
+    gradeLabel.textContent = `${gradeRange[0]}年级 – ${gradeRange[1]}年级`;
+    restartSimulation();
+  };
+  gradeMin.addEventListener('input', updateGrade);
+  gradeMax.addEventListener('input', updateGrade);
+
+  const includeUniCb = document.getElementById('includeUni');
+  includeUniCb.addEventListener('change', () => { includeUni = includeUniCb.checked; restartSimulation(); });
+
+  // Legend
+  buildLegend();
+}
+
+function toggleSubject(id, chip) {
+  if (activeSubjects.has(id)) {
+    activeSubjects.delete(id);
+    chip.classList.remove('active');
+    chip.classList.add('inactive');
+  } else {
+    activeSubjects.add(id);
+    chip.classList.add('active');
+    chip.classList.remove('inactive');
+  }
+  restartSimulation();
+}
+
+function setLayout(layout) {
+  currentLayout = layout;
+  document.querySelectorAll('.controls button[id^=btn]').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn' + layout.charAt(0).toUpperCase() + layout.slice(1)).classList.add('active');
+  restartSimulation();
+}
+
+function restartSimulation() {
+  startSimulation();
+  updateStats();
+}
+
+function updateStats() {
+  const visible = getVisibleNodes();
+  document.getElementById('statNodes').textContent = graphData.nodes.length;
+  document.getElementById('statEdges').textContent = graphData.edges.length;
+  document.getElementById('statSubjects').textContent = Object.keys(SUBJECT_CONFIG).length;
+  document.getElementById('statVisible').textContent = visible.length;
+}
+
+function buildLegend() {
+  const legend = document.getElementById('legend');
+  // Show STEM subjects in legend (skip humanities)
+  const stemSubjects = Object.entries(SUBJECT_CONFIG).filter(([,cfg]) => cfg.group !== 'humanities');
+  legend.innerHTML = stemSubjects.slice(0, 10).map(([id, cfg]) =>
+    `<div class="legend-item"><div class="legend-dot" style="background:${cfg.color}"></div>${cfg.label}</div>`
+  ).join('') + (stemSubjects.length > 10 ? `<div class="legend-item" style="opacity:0.6">+${stemSubjects.length - 10}</div>` : '');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// START
+// ═══════════════════════════════════════════════════════════════
+
+init();
+</script>
+</body>
+</html>
