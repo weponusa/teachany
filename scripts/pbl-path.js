@@ -1004,167 +1004,199 @@ class PBLPathBuilder {
     return (llmSteps || []).slice(0, 4);
   }
 
-  _concretizeDeliverable(goal, phaseName, role, fallback = '') {
-    const phase = String(phaseName || '');
-    const g = String(goal || '').slice(0, 40);
-    const map = [
-      [/调研|勘测|现场|需求/, `《${g}》调研记录表（含照片/尺寸/问题清单）`],
-      [/风格|定义|立意|参考/, `参考图集 + 风格要素标注页（斗拱/色彩/比例各 1 条）`],
-      [/设计|方案|草图|蓝图/, `A3 设计草图（标注关键尺寸，比例 1:10~1:20）+ 材料 BOM 表`],
-      [/材料|采购|物料|BOM/, `材料采购清单（品名/规格/数量/预算/供应商）`],
-      [/搭建|结构|制作|组装|原型/, `可展示实体原型 + 装配过程照片（≥6 张）`],
-      [/装饰|装修|修缮|涂装/, `装饰完成件 + 前后对比照片 2 组`],
-      [/软件|编程|控制|算法/, `可运行程序/控制逻辑说明 + 测试日志`],
-      [/测试|验收|交付|展示/, `验收检查表（逐项打勾）+ 3 分钟展示稿`],
-    ];
-    for (const [re, out] of map) {
-      if (re.test(phase)) return out;
+  /** 从用户输入提取交付物锚点 — 一切任务步骤必须围绕此展开，禁止套其他项目模板 */
+  _goalProfile(goal, blueprint = null) {
+    const g = String(goal || '').trim();
+    let artifact = g;
+    const lead = g.match(/^(?:设计|制作|开发|建造|完成|策划|撰写|探究|调查|分析)(?:一个|一款|一份|一组)?\s*(.+)$/);
+    if (lead) artifact = lead[1].trim();
+    artifact = artifact.replace(/[，。；].*$/, '').slice(0, 72);
+
+    const domains = {
+      woodwork: /工坊|鲁班|榫卯|木结构|古典|斗拱|飞檐|建筑模型|微缩|木作/.test(g),
+      robot: /机器人|无人机|物流|循迹|机械臂|自动驾驶/.test(g),
+      software: /App|程序|软件|系统开发|小程序|网站|编程|算法/.test(g),
+      writing: /作文|倡议|报告|诗|文章|演讲|说明文/.test(g),
+      survey: /调查|问卷|访谈|统计/.test(g),
+    };
+
+    const mismatchRes = [];
+    if (domains.woodwork && !domains.robot && !domains.software) {
+      mismatchRes.push(/硬件组件|环境搭建|编写.*控制逻辑|基础控制|配置.*框架|安装.*软件|电机驱动|传感器模块|接口协议|部署上线/);
     }
-    return this._pickConcreteDeliverable({ deliverable: fallback }, { deliverable: fallback }, role, goal);
+    if (domains.robot && !domains.woodwork) {
+      mismatchRes.push(/斗拱|飞檐|榫卯|木工锯|刨子|古典建筑纹样/);
+    }
+    if (domains.writing && !domains.robot && !domains.software) {
+      mismatchRes.push(/焊接|电路|传感器|电机|BOM表|下料/);
+    }
+
+    return {
+      raw: g,
+      artifact,
+      domains,
+      mismatchRes,
+      blueprintDeliverable: blueprint?.deliverable || '',
+    };
   }
 
-  _concreteStepsForPhase(goal, phase, phaseIndex, totalPhases, archetype = null) {
-    const name = String(phase?.phase || phase?.name || `阶段${phaseIndex + 1}`);
-    const shortGoal = String(goal || '').slice(0, 56);
-    const hints = (phase?.knowledgeHints || []).join('、') || '本阶段课标';
-    const type = this._classifyProjectType(goal);
-    const blob = name;
+  _stepDomainMismatch(step, profile) {
+    const s = String(step || '');
+    if (!s || !profile?.mismatchRes?.length) return false;
+    return profile.mismatchRes.some(re => re.test(s));
+  }
 
-    if (/调研|勘测|现场|需求/.test(blob)) {
-      return [
-        `用卷尺/手机测距记录场地或展示台尺寸（长×宽×高，cm 级），拍照 3 张并编号存档`,
-        `围绕「${shortGoal}」列出 5 条可验证需求，制成优先级表（P0/P1/P2）`,
-        `检索 3 份同类案例（各写 50 字摘要+来源链接），标注可借鉴的结构/工艺`,
-      ].slice(0, 3);
+  _goalTokens(artifact) {
+    const t = String(artifact || '').replace(/\s/g, '');
+    const tokens = [];
+    if (t.length >= 4) tokens.push(t.slice(0, 4));
+    for (let i = 0; i < t.length - 1; i++) {
+      const w = t.slice(i, i + 2);
+      if (w.length === 2 && !/[的与及了在]$/.test(w)) tokens.push(w);
     }
-    if (/风格|定义|参考|立意/.test(blob)) {
-      return [
-        `收集 3 张风格参考图（标注斗拱/飞檐/色彩/比例等 2 处特征）`,
-        `写 150 字风格说明：目标受众、核心视觉元素、禁止项（如不宜使用的材料）`,
-        `用 ${hints} 完成 1 页「风格—结构要素」对照表`,
-      ].slice(0, 3);
+    return [...new Set(tokens)].slice(0, 8);
+  }
+
+  _stepAnchoredToGoal(step, profile) {
+    const s = String(step || '');
+    if (!s) return false;
+    if (s.includes(profile.artifact)) return true;
+    const tokens = this._goalTokens(profile.artifact);
+    return tokens.some(t => t.length >= 2 && s.includes(t));
+  }
+
+  _phaseContext(phase, blueprint) {
+    const subIds = phase?.subsystemIds || [];
+    const subs = (blueprint?.subsystems || []).filter(s => subIds.includes(s.id));
+    return {
+      phaseName: String(phase?.phase || phase?.name || '').trim(),
+      deliverable: String(phase?.deliverable || '').trim(),
+      hints: (phase?.knowledgeHints || []).slice(0, 4),
+      subsystems: subs.map(s => s.name).filter(Boolean),
+      subDesc: subs.map(s => s.description).filter(Boolean).join('；'),
+    };
+  }
+
+  _expandStepAnchoredToGoal(rawStep, goal, phase, profile, ctx, stepIdx) {
+    const artifact = profile.artifact;
+    const hints = ctx.hints.join('、') || '本阶段相关知识';
+    const phaseName = ctx.phaseName || `阶段${stepIdx + 1}`;
+    const outName = ctx.deliverable || `${artifact}·${phaseName}产出`;
+    const verbs = ['记录', '完成', '制作', '撰写', '测量', '绘制'];
+    const verb = verbs[stepIdx % verbs.length];
+    const blob = `${phaseName} ${ctx.subsystems.join(' ')} ${rawStep || ''}`;
+
+    if (/调研|勘测|现场|需求|资料/.test(blob)) {
+      return `围绕「${artifact}」开展${phaseName}：列出 5 条可验证需求并制成优先级表，附 3 张现场/参考照片（文件命名 P${stepIdx + 1}-01~03）`;
     }
-    if (/设计|方案|草图|蓝图|规划/.test(blob)) {
-      return [
-        `在 A3 纸绘制立面+平面草图（比例 1:10~1:20），标注 5 处关键尺寸（mm/cm）`,
-        `列出功能分区与动线：人员/物料如何进出，标注在草图上`,
-        `填写材料 BOM 初稿：木材/板材/胶水/五金件（名称、规格、预估数量）`,
-      ].slice(0, 3);
+    if (/设计|方案|草图|图纸|规划|风格|定义/.test(blob)) {
+      return `为「${artifact}」绘制${phaseName}草图（A3 或 CAD 均可），标注 ≥5 处关键尺寸，并结合 ${hints} 写 150 字方案说明`;
     }
-    if (/材料|采购|物料|成本|预算/.test(blob)) {
-      return [
-        `完善 BOM 表并询价：每项注明规格、单价、数量、小计，预算总额≤设定上限`,
-        `检查工具清单（锯/锉/砂纸/夹具/胶枪/护目镜），缺项 24h 内补齐`,
-        `按安全规范标注「危险操作」2 条及防护措施（佩戴/通风/成人监护）`,
-      ].slice(0, 3);
+    if (/材料|采购|物料|预算|成本|BOM/.test(blob)) {
+      return `编制「${artifact}」${phaseName}物料清单（名称/规格/数量/单价/小计），合计预算并注明 2 条安全注意事项`;
     }
-    if (/搭建|结构|制作|组装|加工|原型|开发/.test(blob)) {
-      if (type === 'maker-workshop' || /工坊|鲁班|榫卯|古典/.test(goal)) {
-        return [
-          `按草图下料：主要构件切割误差≤2mm，榫头/卯眼试装 1 次并记录修整点`,
-          `完成主体框架组装，用角尺检查垂直度，拍照记录关键节点（≥4 张）`,
-          `安装斗拱/装饰构件，填写《工序检查表》：牢固度、对称性、表面平整度`,
-        ].slice(0, 3);
+    if (/搭建|制作|组装|加工|实施|原型|开发|结构|装饰|修缮/.test(blob)) {
+      return `${verb}「${artifact}」${phaseName}核心工序：按方案操作并填写过程记录表（时间、工具、问题各 ≥1 条），拍照 ≥3 张`;
+    }
+    if (/软件|编程|控制|算法|电路|调试/.test(blob)) {
+      return `实现「${artifact}」${phaseName}功能点 1 个，附测试用例 3 条（输入/预期/实测），保存调试日志截图`;
+    }
+    if (/测试|验收|交付|展示|复盘|答辩/.test(blob)) {
+      return `按检查表验收「${artifact}」${phaseName}成果：逐项打勾，整理交付包（${outName} + 过程记录 + 300 字说明）`;
+    }
+    if (ctx.subDesc) {
+      return `${verb}「${artifact}」${phaseName}：${ctx.subDesc.slice(0, 80)}，产出「${outName}」并附可核查记录`;
+    }
+    return `${verb}「${artifact}」${phaseName}任务（结合 ${hints}），交付「${outName}」并附 1 份签字确认的过程记录表`;
+  }
+
+  _concretizePhaseSteps(goal, phase, phaseIndex, totalPhases, archetype, blueprint) {
+    const profile = this._goalProfile(goal, blueprint);
+    const ctx = this._phaseContext(phase, blueprint);
+    const raw = Array.isArray(phase?.steps) ? phase.steps : [];
+    const seen = new Set();
+    const steps = [];
+
+    raw.forEach((st, i) => {
+      const s = String(st || '').trim();
+      if (!s) return;
+      let out = s;
+      const needsRewrite = this._isHollowStep(s) || this._stepDomainMismatch(s, profile)
+        || (!this._stepAnchoredToGoal(s, profile) && this._stepActionabilityScore(s) < 4);
+      if (needsRewrite) {
+        out = this._expandStepAnchoredToGoal(s, goal, phase, profile, ctx, i);
       }
-      if (type === 'engineering' || /机器人|物流|传感|控制/.test(goal)) {
-        return [
-          `按系统框图连接核心模块（电源/驱动/传感/控制），通电前完成线路复查表`,
-          `编写/配置基础控制逻辑（如循迹/避障/启停），记录首次运行日志（时间+现象）`,
-          `进行功能测试 ≥3 次：记录成功率、故障点，每次附 1 张状态照片`,
-        ].slice(0, 3);
+      if (!seen.has(out)) {
+        seen.add(out);
+        steps.push(out);
       }
-      return [
-        `按分工表完成本阶段核心制作任务，每项打勾并记录耗时（分钟）`,
-        `首次组装/试运行并填写《问题清单》（现象/可能原因/改法）`,
-        `根据问题清单完成 1 轮修改，附修改前后对比照片`,
-      ].slice(0, 3);
-    }
-    if (/装饰|装修|修缮|涂装|美化/.test(blob)) {
-      return [
-        `确定装饰方案（颜色/纹样/材质），在小样板上试做 10cm×10cm 效果片`,
-        `按小样标准完成主体装饰，边缘收口误差≤3mm`,
-        `拍摄装饰完成全景 + 细节 2 张，写入工艺说明（材料、步骤、耗时）`,
-      ].slice(0, 3);
-    }
-    if (/软件|编程|控制|算法|电路/.test(blob)) {
-      return [
-        `搭建开发环境并跑通示例程序，截图保存版本号与依赖清单`,
-        `实现本阶段最小功能（输入→处理→输出），附测试用例 3 条及预期结果`,
-        `记录调试日志：错误现象、定位方法、最终修复方案各 1 条`,
-      ].slice(0, 3);
-    }
-    if (/测试|验收|交付|展示|复盘/.test(blob)) {
-      return [
-        `按验收量规逐项自评（功能/安全/美观/文档），未达标项列出改期计划`,
-        `整理交付包：成品、设计图、BOM、过程照片、300 字说明各 1 份`,
-        `准备 3 分钟展示：问题—方案—数据/实物—改进点，附 2 个预设问答`,
-      ].slice(0, 3);
-    }
+    });
 
-    const mod = archetype?.modules?.[phaseIndex % (archetype?.modules?.length || 1)];
-    if (mod) {
-      return [
-        `围绕「${mod.label}」用 ${(mod.hints || []).slice(0, 3).join('、')} 完成 1 份记录表（含数据/照片）`,
-        `将 ${hints} 与本阶段产出对齐：写出 3 条「知识点→具体操作」映射`,
-        `提交本阶段检查物：${this._concretizeDeliverable(goal, name, 'core', mod.label)}`,
-      ].slice(0, 3);
+    let idx = steps.length;
+    while (steps.length < 2) {
+      const filler = this._expandStepAnchoredToGoal('', goal, phase, profile, ctx, idx++);
+      if (!seen.has(filler)) {
+        seen.add(filler);
+        steps.push(filler);
+      } else break;
     }
+    return steps.slice(0, 4);
+  }
 
-    const part = phaseIndex + 1;
-    return [
-      `拆解「${shortGoal}」第 ${part}/${totalPhases} 步：列出 3 个可检查子任务与负责人`,
-      `完成子任务并填写过程记录表（时间、工具、数据/照片编号）`,
-      `对照阶段产出标准自评，未通过项 24h 内补做并签字确认`,
-    ].slice(0, 3);
+  _concretizeDeliverable(goal, phaseName, role, fallback, blueprint) {
+    const profile = this._goalProfile(goal, blueprint);
+    const phase = String(phaseName || '');
+    const art = profile.artifact;
+    if (fallback && fallback.length >= 8 && !/阶段成果|探究任务|素养|能力/.test(fallback)) return fallback;
+    if (/调研|勘测|现场|需求/.test(phase)) return `「${art}」调研记录表（需求清单+照片编号）`;
+    if (/设计|方案|草图|图纸|风格/.test(phase)) return `「${art}」${phase}图册（标注尺寸的方案稿）`;
+    if (/材料|采购|物料|预算/.test(phase)) return `「${art}」材料/经费清单（含规格与合计）`;
+    if (/测试|验收|交付|展示/.test(phase)) return `「${art}」验收检查表 + 展示说明（可现场核查）`;
+    if (/搭建|制作|组装|原型|装饰|实施/.test(phase)) return `「${art}」${phase}实物/模型 + 过程照片（≥3 张）`;
+    return profile.blueprintDeliverable || `「${art}」阶段成果（可展示、可打分）`;
   }
 
   _concretizeBlueprint(goal, blueprint, archetype = null) {
     if (!blueprint?.schemes?.length) return blueprint;
-    const type = this._classifyProjectType(goal);
+    const profile = this._goalProfile(goal, blueprint);
     const bp = JSON.parse(JSON.stringify(blueprint));
-    if (!bp.deliverable || /素养|能力|精神|原型$|阶段成果/.test(bp.deliverable) || bp.deliverable.length < 8) {
-      bp.deliverable = ({
-        'maker-workshop': '古典风格工坊实体模型 + 设计图册 + 材料BOM + 验收检查表',
-        engineering: '可运行工程原型 + 测试数据表 + 结构/电路说明 + 展示稿',
-        'social-inquiry': '调查报告（含问卷、统计图、结论与建议）+ 答辩要点',
-        'consumer-decision': '对比决策报告（调研表 + 测算表 + 推荐结论）',
-      })[type] || `「${String(goal).slice(0, 32)}」可展示成果包（作品+过程记录+说明）`;
+
+    if (!bp.deliverable || /素养|能力|精神|阶段成果$/.test(bp.deliverable) || bp.deliverable.length < 8) {
+      bp.deliverable = profile.blueprintDeliverable || `可交付的「${profile.artifact}」成果包（作品+记录+说明）`;
     }
-    bp.schemes = bp.schemes.map(scheme => {
-      const phases = (scheme.phases || []).map((p, i, arr) => {
+
+    bp.schemes = bp.schemes.map(scheme => ({
+      ...scheme,
+      phases: (scheme.phases || []).map((p, i, arr) => {
         const role = i === 0 ? 'foundation' : (i < arr.length - 1 ? 'bridge' : 'core');
-        const needReplace = this._areHollowSteps(p.steps);
-        const steps = needReplace
-          ? this._concreteStepsForPhase(goal, p, i, arr.length, archetype)
-          : this._pickConcreteSteps([], p.steps, this._concreteStepsForPhase(goal, p, i, arr.length, archetype));
-        const deliverable = (!p.deliverable || p.deliverable.length < 6 || /阶段成果|探究任务/.test(p.deliverable))
-          ? this._concretizeDeliverable(goal, p.phase, role, p.deliverable)
-          : p.deliverable;
-        const tools = p.tools || this._inferPhaseTools(goal, p.phase, type);
-        const acceptance = p.acceptance || steps.map((st, j) => `□ 任务${j + 1}完成且有记录：${String(st).slice(0, 36)}…`);
+        const steps = this._concretizePhaseSteps(goal, p, i, arr.length, archetype, bp);
+        const deliverable = this._concretizeDeliverable(goal, p.phase, role, p.deliverable, bp);
+        const tools = p.tools || this._inferPhaseTools(goal, p.phase, profile);
+        const acceptance = steps.map((st, j) => `□ ${String(st).slice(0, 48)}${String(st).length > 48 ? '…' : ''}（有记录/照片/签字）`);
         return { ...p, steps, deliverable, tools, acceptance };
-      });
-      const rec = scheme.id === bp.recommendedSchemeId;
-      const summary = rec && (!scheme.summary || scheme.summary.length < 20 || /逐步推进|适合大多数/.test(scheme.summary))
-        ? `按 ${phases.map(p => p.phase).join(' → ')} 交付可检查实物，每阶段有表格/照片/数据验收`
-        : scheme.summary;
-      return { ...scheme, phases, summary };
-    });
+      }),
+    }));
     return bp;
   }
 
-  _inferPhaseTools(goal, phaseName, type) {
+  _inferPhaseTools(goal, phaseName, profileOrType) {
     const phase = String(phaseName || '');
-    if (/调研|勘测/.test(phase)) return ['卷尺/测距App', '相机', '记录表模板'];
-    if (/设计|草图/.test(phase)) return ['A3纸/绘图纸', '铅笔尺规', 'CAD或手绘工具'];
-    if (/材料|采购/.test(phase)) return ['BOM表模板', '询价记录', '计算器'];
-    if (/搭建|制作|组装/.test(phase)) {
-      if (type === 'maker-workshop') return ['手锯/砂纸', '木工胶', '角尺', '护目镜'];
-      if (type === 'engineering') return ['螺丝刀/电烙铁', '万用表', '调试线'];
-      return ['常用工具套装', '安全防护用品'];
+    const profile = profileOrType?.artifact ? profileOrType : this._goalProfile(goal);
+    const g = profile.raw || goal;
+    if (/调研|勘测/.test(phase)) return ['记录表模板', '相机/手机', profile.domains.woodwork ? '卷尺' : '数据来源清单'];
+    if (/设计|草图|图纸|风格/.test(phase)) {
+      return profile.domains.software ? ['绘图/CAD 或设计工具', '尺寸标注规范'] : ['A3纸或绘图纸', '铅笔尺规', '标注笔'];
     }
-    if (/测试|验收/.test(phase)) return ['验收量规', '相机', '展示PPT模板'];
-    return ['记录表', '相机'];
+    if (/材料|采购|预算/.test(phase)) return ['物料清单模板', '计算器', '询价记录表'];
+    if (/搭建|制作|组装|结构|装饰/.test(phase)) {
+      if (profile.domains.robot) return ['螺丝刀/扳手', '万用表', '调试线', '安全防护'];
+      if (profile.domains.woodwork) return ['手锯/砂纸', '木工胶', '角尺', '护目镜'];
+      return ['分工表', '过程记录表', '相机'];
+    }
+    if (/软件|编程|控制|电路/.test(phase) || profile.domains.software) return ['开发环境', '版本记录', '测试用例表'];
+    if (/测试|验收|展示/.test(phase)) return ['验收量规', '展示稿模板', '相机'];
+    if (/撰写|报告|作文|倡议/.test(phase) || profile.domains.writing) return ['文稿模板', '修改痕迹记录', '格式规范'];
+    return ['过程记录表', '相机'];
   }
 
   _pickConcreteDeliverable(lp, bp, role, goal) {
@@ -2081,23 +2113,6 @@ class PBLPathBuilder {
       };
       return mk(map[role] || map.core);
     }
-    if (type === 'maker-workshop') {
-      const map = {
-        foundation: [
-          `测绘展示场地尺寸（cm）并拍照 3 张，列出 5 条可验证需求优先级`,
-          `收集 3 张古典/工坊参考图，标注斗拱/飞檐/色彩 2 处特征`,
-        ],
-        bridge: [
-          `绘制 A3 立面+平面草图（1:10~1:20），标注 5 处关键尺寸`,
-          `填写材料 BOM：木材规格、数量、胶水/五金件、预算小计`,
-        ],
-        core: [
-          `按草图下料组装主体，榫卯试装误差≤2mm，拍照记录关键节点≥4张`,
-          `完成装饰与验收量规自评，整理交付包（模型+图册+BOM+说明）`,
-        ],
-      };
-      return mk(map[role] || map.core);
-    }
     if (type === 'engineering') {
       const map = {
         foundation: [
@@ -2505,58 +2520,17 @@ class PBLPathBuilder {
     };
   }
 
-  _buildMakerWorkshopBlueprint(goal) {
-    const short = String(goal || '').slice(0, 48);
-    return {
-      projectSummary: short,
-      deliverable: '古典风格工坊实体模型 + A3设计图册 + 材料BOM表 + 验收检查表',
-      projectType: 'maker-workshop',
-      constraints: ['课堂/社团可实施', '注意木工工具安全', '预算与材料需提前清单化'],
-      subsystems: [
-        { id: 'survey', name: '调研与风格定义', description: '测绘场地、收集古典建筑参考、明确风格要素' },
-        { id: 'design', name: '方案与图纸', description: '立面平面草图、功能分区、关键尺寸标注' },
-        { id: 'material', name: '材料与采购', description: 'BOM清单、询价预算、工具与安全准备' },
-        { id: 'build', name: '搭建与装饰', description: '下料组装、榫卯工艺、装饰收口' },
-        { id: 'accept', name: '验收与展示', description: '量规自评、交付包整理、展示答辩' },
-      ],
-      schemes: [
-        {
-          id: 'A',
-          name: '测绘—图纸—木作—验收（推荐）',
-          summary: '按调研→设计→采购→搭建→验收顺序交付可检查实物，每步有表格与照片',
-          pros: ['工序清晰', '适合劳动+美术+数学跨学科', '成果可展示'],
-          cons: ['需木工工具与场地'],
-          phases: [
-            { phase: '现场调研', subsystemIds: ['survey'], knowledgeHints: ['调研', '测量', '古典', '建筑'], steps: [], deliverable: '' },
-            { phase: '风格与方案设计', subsystemIds: ['design'], knowledgeHints: ['设计', '草图', '比例', '尺寸'], steps: [], deliverable: '' },
-            { phase: '材料采购准备', subsystemIds: ['material'], knowledgeHints: ['材料', '预算', '工具', '安全'], steps: [], deliverable: '' },
-            { phase: '结构搭建与装饰', subsystemIds: ['build'], knowledgeHints: ['搭建', '榫卯', '结构', '装饰'], steps: [], deliverable: '' },
-            { phase: '验收交付展示', subsystemIds: ['accept'], knowledgeHints: ['验收', '展示', '报告', '量规'], steps: [], deliverable: '' },
-          ],
-        },
-        {
-          id: 'B',
-          name: '数字建模先行 + 简化木作',
-          summary: '先用CAD/手绘精模验证比例，再按简化工艺制作展示件',
-          pros: ['降低木作难度', '设计迭代快'],
-          cons: ['对建模工具要求较高'],
-          phases: [
-            { phase: '风格研究与数字草模', subsystemIds: ['survey', 'design'], knowledgeHints: ['建模', '比例', '古典'], steps: [], deliverable: '' },
-            { phase: '简化BOM与试制', subsystemIds: ['material', 'build'], knowledgeHints: ['材料', '试制', '组装'], steps: [], deliverable: '' },
-            { phase: '展示与工艺说明', subsystemIds: ['accept'], knowledgeHints: ['展示', '说明', '工艺'], steps: [], deliverable: '' },
-          ],
-        },
-      ],
-      recommendedSchemeId: 'A',
-      knowledgeChain: '现场调研 → 风格定义 → 方案设计 → 材料采购 → 结构搭建 → 装饰修缮 → 验收交付',
-      fallback: true,
-    };
-  }
-
   _sanitizeBlueprintForGoal(blueprint, goal) {
     let bp = blueprint;
-    if (this._classifyProjectType(goal) === 'maker-workshop' && (!bp?.schemes?.length || bp.fallback)) {
-      bp = this._buildMakerWorkshopBlueprint(goal);
+    if (bp?.schemes?.length) {
+      const profile = this._goalProfile(goal, bp);
+      bp = JSON.parse(JSON.stringify(bp));
+      bp.schemes.forEach(s => {
+        s.phases = (s.phases || []).map(p => ({
+          ...p,
+          steps: (p.steps || []).filter(st => !this._stepDomainMismatch(st, profile)),
+        }));
+      });
     }
     if (bp && this._isChemistryInquiryGoal(goal) && this._getChemistryAnalysisProfile(goal).mixed) {
       const cap = this._getChemistryAnalysisProfile(goal);
@@ -2615,9 +2589,6 @@ class PBLPathBuilder {
   }
 
   _fallbackDecomposeBlueprint(goal) {
-    if (this._classifyProjectType(goal) === 'maker-workshop') {
-      return this._concretizeBlueprint(goal, this._buildMakerWorkshopBlueprint(goal), this._resolvedArchetype);
-    }
     if (this._isConsumerDecisionGoal(goal)) {
       return this._sanitizeBlueprintForGoal({
         projectSummary: String(goal || '').slice(0, 160),
@@ -2712,11 +2683,13 @@ class PBLPathBuilder {
     const mkPhases = (prefix) => subsystems.map((s, i) => {
       const dom = domains.find(d => d.id === s.id);
       const stub = { phase: s.name, knowledgeHints: (dom?.keywords || []).slice(0, 5) };
-      const steps = this._concreteStepsForPhase(goal, stub, i, subsystems.length, this._resolvedArchetype);
+      const phaseStub = { phase: s.name, knowledgeHints: (dom?.keywords || []).slice(0, 5), subsystemIds: [s.id] };
+      const bpStub = { subsystems, deliverable: '' };
+      const steps = this._concretizePhaseSteps(goal, phaseStub, i, subsystems.length, this._resolvedArchetype, bpStub);
       return {
         phase: s.name,
         steps,
-        deliverable: this._concretizeDeliverable(goal, s.name, i === 0 ? 'foundation' : (i < subsystems.length - 1 ? 'bridge' : 'core')),
+        deliverable: this._concretizeDeliverable(goal, s.name, i === 0 ? 'foundation' : (i < subsystems.length - 1 ? 'bridge' : 'core'), '', bpStub),
         subsystemIds: [s.id],
         knowledgeHints: (dom?.keywords || []).slice(0, 5),
         tools: this._inferPhaseTools(goal, s.name, this._classifyProjectType(goal)),
