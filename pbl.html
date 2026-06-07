@@ -785,8 +785,9 @@ body {
 </div>
 
 <script src="./assets/scripts/courseware-hub.js"></script>
-<script src="./assets/scripts/pbl-bloom.js?v=20260607-verify"></script>
-<script src="./assets/scripts/pbl-path.js?v=20260607-verify"></script>
+<script src="./assets/scripts/pbl-bloom.js?v=20260608-archetype"></script>
+<script src="./assets/scripts/pbl-archetypes.js?v=20260608-archetype"></script>
+<script src="./assets/scripts/pbl-path.js?v=20260608-archetype"></script>
 <script src="./assets/scripts/history-tracker.js" defer></script>
 <script src="./assets/scripts/teachany-make-course.js"></script>
 <script>
@@ -1033,6 +1034,12 @@ function renderPBLDecomposeHTML(blueprint) {
   const recId = blueprint.recommendedSchemeId;
   let html = `<div class="pbl-decompose-summary">`;
   html += `<div><strong>交付物</strong>：${escapePBLHtml(blueprint.deliverable || '—')}</div>`;
+  if (blueprint.archetypeLabel) {
+    html += `<div><strong>项目原型</strong>：${escapePBLHtml(blueprint.archetypeLabel)}</div>`;
+  }
+  if (blueprint.moduleChain) {
+    html += `<div><strong>模块主线</strong>：${escapePBLHtml(blueprint.moduleChain)}</div>`;
+  }
   html += `<div>${escapePBLHtml(blueprint.projectSummary || '')}</div></div>`;
   if ((blueprint.subsystems || []).length) {
     html += `<div class="pbl-subsystem-list">`;
@@ -1071,7 +1078,10 @@ function showPBLDecompose(result) {
   const el = document.getElementById('pblDecompose');
   const body = document.getElementById('pblDecomposeBody');
   if (!el || !body) return;
-  const html = renderPBLDecomposeHTML(result.projectBlueprint);
+  const bp = result.projectBlueprint ? { ...result.projectBlueprint } : null;
+  if (bp && result.archetype) bp.archetypeLabel = result.archetype.label;
+  if (bp && result.moduleChain) bp.moduleChain = result.moduleChain;
+  const html = renderPBLDecomposeHTML(bp);
   if (!html) { el.style.display = 'none'; return; }
   body.innerHTML = html;
   el.style.display = 'block';
@@ -1081,7 +1091,8 @@ function showPBLDecompose(result) {
 function renderPBLPathPlanHTML(pathPlan) {
   if (!pathPlan || !pathPlan.phases || !pathPlan.phases.length) return '';
   const roleColor = { foundation: '#10b981', bridge: '#8b5cf6', core: '#ef4444' };
-  let html = `<div class="pbl-path-chain"><strong>知识链</strong>：${escapePBLHtml(pathPlan.knowledgeChain)}</div><div class="pbl-path-phases">`;
+  const chainLabel = pathPlan.knowledgeChain || '';
+  let html = `<div class="pbl-path-chain"><strong>模块主线 / 知识链</strong>：${escapePBLHtml(chainLabel)}</div><div class="pbl-path-phases">`;
   pathPlan.phases.forEach((p, idx) => {
     const color = roleColor[p.role] || '#ef4444';
     const badges = (p.pathStepLabels || []).map(l =>

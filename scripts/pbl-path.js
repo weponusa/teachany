@@ -17,6 +17,59 @@ class PBLPathBuilder {
     this._tooltipHovered = false;
 
     try { localStorage.removeItem('teachany_pbl_config'); } catch (e) { /* ignore */ }
+    this._archetypeEngine = null;
+    this._resolvedArchetype = null;
+  }
+
+  async _ensureArchetypeData() {
+    if (typeof PBLArchetypeEngine === 'undefined') return null;
+    if (!this._archetypeEngine) this._archetypeEngine = new PBLArchetypeEngine();
+    try {
+      await this._archetypeEngine.load('./data/pbl/');
+    } catch (e) {
+      console.warn('[PBL] 原型层数据加载失败，将使用规则回退:', e.message);
+    }
+    return this._archetypeEngine;
+  }
+
+  _resolveArchetype(goal, blueprint) {
+    if (!this._archetypeEngine?.archetypeData) return null;
+    const a = this._archetypeEngine.resolve(
+      goal,
+      blueprint,
+      g => this._classifyProjectType(g),
+      g => this._getChemistryAnalysisProfile(g)
+    );
+    this._resolvedArchetype = a;
+    return a;
+  }
+
+  _isArchetypeBanned(node, archetype) {
+    if (!archetype || !this._archetypeEngine) return false;
+    if (this._archetypeEngine.isBanned(node, archetype)) return true;
+    if (this._isGenericTransversalNode(node.name, '')) return true;
+    return false;
+  }
+
+  _meetsArchetypeGrade(node, archetype) {
+    if (!archetype || !this._archetypeEngine) return true;
+    if (!this._archetypeEngine.meetsGrade(node, archetype)) return false;
+    if (archetype.minGrade >= 7 && this._excludeForComplexProject(node)) return false;
+    return true;
+  }
+
+  _applyArchetypePoolRules(pool, archetype, activeSystems) {
+    if (!archetype) return pool;
+    let out = pool.filter(n => this._meetsArchetypeGrade(n, archetype));
+    out = out.filter(n => !this._isArchetypeBanned(n, archetype));
+    if (this._archetypeEngine) {
+      out = this._archetypeEngine.applySystemLock(out, archetype, activeSystems);
+    }
+    if (archetype.subjects?.length) {
+      const subjFiltered = out.filter(n => archetype.subjects.includes(n.subject));
+      if (subjFiltered.length >= Math.min(6, out.length * 0.4)) out = subjFiltered;
+    }
+    return out;
   }
 
   // ─── 多课标知识点索引 ──────────────────────────
@@ -898,11 +951,14 @@ class PBLPathBuilder {
     return subjectOk && goalTerms.some(t => t.length >= 2 && text.includes(t));
   }
 
-  _filterMainlineNodes(matched, goal) {
+  _filterMainlineNodes(matched, goal, archetype = null) {
     const domains = this._inferProjectDomains(goal);
     let pool = matched;
+    if (archetype) {
+      pool = matched.filter(n => !this._isArchetypeBanned(n, archetype));
+    }
     if (domains.length || this._isStemProjectGoal(goal)) {
-      pool = matched.filter(n => this._isMainlineRelevant(n, goal, domains));
+      pool = pool.filter(n => this._isMainlineRelevant(n, goal, domains));
     }
     pool = this._purgeBiologyNoise(pool, goal);
     if (pool.length) return pool;
@@ -1115,16 +1171,19 @@ class PBLPathBuilder {
     return idx;
   }
 
-  _mapMatchedEntries(result, candidates, complex, minConf, goal = '') {
+  _mapMatchedEntries(result, candidates, complex, minConf, goal = '', archetype = null) {
     const out = [];
     (result.matched || []).forEach(m => {
       const idx = this._parseMatchIndex(m, candidates.length);
       if (idx < 0) return;
       if ((m.confidence || 0) < minConf) return;
-      if (complex && this._excludeForComplexProject(candidates[idx])) return;
-      if (this._isGenericTransversalNode(candidates[idx].name, goal)) return;
+      const node = candidates[idx];
+      if (complex && this._excludeForComplexProject(node)) return;
+      if (this._isGenericTransversalNode(node.name, goal)) return;
+      if (archetype && this._isArchetypeBanned(node, archetype)) return;
+      if (archetype && !this._meetsArchetypeGrade(node, archetype)) return;
       out.push({
-        ...candidates[idx],
+        ...node,
         confidence: m.confidence,
         matchReason: m.reason || m.role || '',
         pblRole: m.role || 'core'
@@ -1243,47 +1302,78 @@ class PBLPathBuilder {
     return pools[this._classifyProjectType(goal)] || pools.general;
   }
 
-  /** 保证图谱含 1-3 个课标外知识点 */
-  _ensureExternalNodes(external, goal, matched, projectBlueprint) {
+  /** 课标外知识点：优先工程注册表按模块绑定，禁止通用套话兜底 */
+  _ensureExternalNodes(external, goal, matched, projectBlueprint, archetype = null) {
     const max = PBLPathBuilder.PBL_MAX_EXTERNAL;
-    const min = PBLPathBuilder.PBL_MIN_EXTERNAL;
     let list = this._mapExternalEntries(external);
     const seen = new Set(list.map(e => String(e.name).toLowerCase()));
+    const matchedNames = matched.map(n => n.name);
 
     const addItem = (item) => {
       if (list.length >= max || !item) return;
       const name = String(item.name || '').trim();
       if (!name || seen.has(name.toLowerCase())) return;
-      const mapped = this._mapExternalEntries([item]);
+      const mapped = this._mapExternalEntries([{
+        name: item.name,
+        reason: item.reason || item.definition || '',
+        prerequisites: item.prerequisites || [],
+        moduleId: item.moduleId,
+        taskSnippet: item.taskSnippet,
+      }]);
       if (!mapped.length) return;
-      list.push(mapped[0]);
+      const node = mapped[0];
+      if (item.moduleId) {
+        node.moduleId = item.moduleId;
+        node.matchReason = `模块：${item.moduleId}。${item.reason || ''}${item.taskSnippet ? `；任务：${item.taskSnippet}` : ''}`;
+      }
+      list.push(node);
       seen.add(name.toLowerCase());
     };
 
-    this._fallbackExternalPool(goal).forEach(addItem);
+    if (archetype && this._archetypeEngine) {
+      this._archetypeEngine.getRegistryExternals(archetype, projectBlueprint, matchedNames, max)
+        .forEach(addItem);
+    }
 
-    if (list.length < min) {
-      [
-        { name: '跨学科资料检索与引用规范', reason: '整合多来源信息并规范引用，课标较少系统讲授' },
-        { name: '项目迭代与复盘方法', reason: 'PDCA/迭代改进流程，指导项目实施但课标外' },
-        { name: '成果展示与答辩表达', reason: '公开汇报与答辩技巧，课标外但对 PBL 展示必需' },
-      ].forEach(addItem);
+    if (!list.length) {
+      this._fallbackExternalPool(goal).forEach(addItem);
     }
 
     return list.slice(0, max);
   }
 
-  _rescueCandidatesFromPool(goal, candidates, limit) {
+  _rescueCandidatesFromPool(goal, candidates, limit, archetype = null, blueprint = null) {
     const goalTerms = this._tokenizeGoalTerms(goal);
     const complex = this._isComplexPBLGoal(goal);
     const domains = this._inferProjectDomains(goal);
+    if (archetype && this._archetypeEngine) {
+      const pool = candidates.filter(n => this._isMainlineRelevant(n, goal, domains));
+      const picked = this._archetypeEngine.pickCandidates(
+        pool, archetype, blueprint, Math.min(limit, archetype.maxMatched || limit), goalTerms,
+        {
+          isBanned: n => this._isArchetypeBanned(n, archetype),
+          meetsGrade: n => this._meetsArchetypeGrade(n, archetype),
+          scoreForModule: (n, m) => this._archetypeEngine.scoreForModule(n, m, goalTerms),
+        }
+      );
+      if (picked.length >= Math.min(3, archetype.minMatched || 3)) {
+        return picked.map((n, i) => ({
+          ...n,
+          confidence: Math.max(0.58, 0.85 - i * 0.04),
+          matchReason: n._moduleLabel ? `模块：${n._moduleLabel}。原型层检索匹配` : '原型层模块检索',
+          pblRole: i < 1 ? 'foundation' : (i < 3 ? 'bridge' : 'core'),
+        }));
+      }
+    }
+    const minScore = archetype ? 8 : 4;
     const withScore = candidates
       .filter(n => this._isMainlineRelevant(n, goal, domains))
+      .filter(n => !archetype || !this._isArchetypeBanned(n, archetype))
       .map(n => ({
         ...n,
         _score: this._scoreNodeForGoal(n, goalTerms, null, complex, domains, goal)
       }))
-      .filter(n => n._score > 0);
+      .filter(n => n._score >= minScore);
     const picked = this._pickStemBalancedCandidates(withScore, limit, domains, goal);
     return picked.map((n, i) => ({
       ...n,
@@ -2447,8 +2537,8 @@ class PBLPathBuilder {
       core = this._rebalanceStemMatched(core, goal, meta.candidatePool || [], profile.maxMatched);
     }
     if (!core.length && meta.candidatePool?.length) {
-      core = this._rescueCandidatesFromPool(goal, meta.candidatePool, profile.maxMatched);
-      console.warn('[PBL] 主线为空，已用候选池回退:', core.map(n => n.name).join('、'));
+      core = this._rescueCandidatesFromPool(goal, meta.candidatePool, profile.maxMatched, meta.archetype, meta.projectBlueprint);
+      console.warn('[PBL] 主线为空，已用原型层回退:', core.map(n => n.name).join('、'));
     }
     // 主线 pathStep 链 + 角色分层着色 + 一层主线相关前置（不展开平行/跨学科噪声）
     let graphData = this._buildRichMainlineGraph(
@@ -2610,6 +2700,7 @@ class PBLPathBuilder {
     // 1. 确保索引已加载
     this._reportPBLStatus(onStatus, '正在加载多课标知识点索引...');
     await this.loadUnifiedIndex();
+    await this._ensureArchetypeData();
 
     // 2. 筛选课标体系
     const activeSystems = selectedSystems.includes('all')
@@ -2632,15 +2723,18 @@ class PBLPathBuilder {
     this._reportPBLStatus(onStatus, '第 1/4 步：全链路拆解可行方案...');
     const projectBlueprint = await this._llmDecomposeStage(goal);
     const blueprintPhases = this._blueprintProjectPhases(projectBlueprint);
+    const archetype = this._resolveArchetype(goal, projectBlueprint);
     const bloomProfile = this._inferBloomProfile(projectBlueprint);
 
     // 5. 第一阶段 LLM：判断学科+学段+课标体系（压缩候选集）
-    this._reportPBLStatus(onStatus, '第 2/4 步：筛选课标学科与候选池（Bloom 层级）...');
-    const stage1 = await this._llmFilterStage(goal, candidates, projectBlueprint, bloomProfile);
+    this._reportPBLStatus(onStatus, archetype
+      ? `第 2/4 步：按原型「${archetype.label}」分模块检索候选...`
+      : '第 2/4 步：筛选课标学科与候选池（Bloom 层级）...');
+    const stage1 = await this._llmFilterStage(goal, candidates, projectBlueprint, bloomProfile, archetype, activeSystems);
 
     // 6. 第二阶段 LLM：按蓝图阶段精确匹配课标
     this._reportPBLStatus(onStatus, '第 3/4 步：按蓝图阶段匹配课标知识点...');
-    let stage2 = await this._llmMatchStage(goal, stage1.filteredCandidates, projectBlueprint, stage1.bloomProfile);
+    let stage2 = await this._llmMatchStage(goal, stage1.filteredCandidates, projectBlueprint, stage1.bloomProfile, archetype);
 
     // 7. 第三阶段：dependsOn 方向性验证
     this._reportPBLStatus(onStatus, '第 4/4 步：校验知识依赖方向...');
@@ -2650,7 +2744,9 @@ class PBLPathBuilder {
     const finalized = this._finalizePBLGraph(goal, stage2.matched, stage2.external, activeSystems, {
       pathOrderIds: stage2.pathOrderIds,
       dependsOnLinks: stage2.dependsOnLinks || [],
-      candidatePool: stage1.filteredCandidates
+      candidatePool: stage1.filteredCandidates,
+      archetype,
+      projectBlueprint,
     });
     const llmPhases = stage2.projectPhases || [];
     const phaseLen = Math.max(blueprintPhases.length, llmPhases.length);
@@ -2666,14 +2762,18 @@ class PBLPathBuilder {
         literacy: lp.literacy || bp.literacy,
       };
     }) : blueprintPhases;
+    const moduleChainPre = archetype && this._archetypeEngine
+      ? this._archetypeEngine.moduleChain(archetype, projectBlueprint)
+      : '';
     const pathPlan = this._buildPathPlan({
       goal,
       graphData: finalized.graphData,
       projectPhases: mergedPhases.length ? mergedPhases : blueprintPhases,
       blueprintPhases,
-      knowledgeChain: stage2.knowledgeChain || projectBlueprint.knowledgeChain || '',
+      knowledgeChain: moduleChainPre || stage2.knowledgeChain || projectBlueprint.knowledgeChain || '',
       external: finalized.external
     });
+    const moduleChain = moduleChainPre;
     const techRoute = this._buildTechRouteFromPathPlan(pathPlan)
       || this.resolveTechRouteText({
         goal,
@@ -2681,20 +2781,22 @@ class PBLPathBuilder {
         matched: finalized.matched,
         external: finalized.external,
         projectPhases: pathPlan.phases,
-        knowledgeChain: pathPlan.knowledgeChain,
+        knowledgeChain: moduleChain || pathPlan.knowledgeChain,
         pathPlan
       });
 
     return {
       goal,
       systems: activeSystems,
+      archetype: archetype ? { id: archetype.id, label: archetype.label } : null,
+      moduleChain,
       projectBlueprint,
       matched: finalized.matched,
       external: finalized.external,
       techRoute,
       projectPhases: pathPlan.phases,
       pathPlan,
-      knowledgeChain: pathPlan.knowledgeChain,
+      knowledgeChain: moduleChain || pathPlan.knowledgeChain,
       graphData: finalized.graphData,
       complexProject: finalized.complex,
       stats: {
@@ -2708,9 +2810,13 @@ class PBLPathBuilder {
     };
   }
 
-  async _llmFilterStage(goal, candidates, projectBlueprint = null, bloomProfile = null) {
+  async _llmFilterStage(goal, candidates, projectBlueprint = null, bloomProfile = null, archetype = null, activeSystems = []) {
     const profile = this._getPBLGoalProfile(goal);
     const ruleBloom = bloomProfile || this._inferBloomProfile(projectBlueprint);
+    if (archetype) {
+      profile.maxMatched = archetype.maxMatched || profile.maxMatched;
+      if (archetype.minGrade >= 7) profile.complex = true;
+    }
 
     // 按学科+课标体系分组统计
     const subjectSummary = {};
@@ -2744,7 +2850,10 @@ class PBLPathBuilder {
 
     const projectType = this._classifyProjectType(goal);
 
-    if (this._isConsumerDecisionGoal(goal)) {
+    if (archetype?.subjects?.length) {
+      filter.subjects = archetype.subjects;
+      if (archetype.primarySystem) filter.systems = [archetype.primarySystem, ...(archetype.extensionSystems || [])];
+    } else if (this._isConsumerDecisionGoal(goal)) {
       filter.subjects = ['math', 'physics', 'chemistry', 'geography', 'chinese'];
     } else if (this._isChemistryInquiryGoal(goal)) {
       filter.subjects = this._getChemistryAnalysisProfile(goal).mixed
@@ -2773,24 +2882,29 @@ class PBLPathBuilder {
     // 根据筛选条件过滤候选集
     const minGrade = profile.complex ? PBLPathBuilder.PBL_MIN_GRADE_COMPLEX : 1;
     const bloomCeiling = mergedBloom.ceiling || 3;
+    const minGradeArchetype = archetype?.minGrade || (profile.complex ? PBLPathBuilder.PBL_MIN_GRADE_COMPLEX : 1);
     const filteredCandidates = candidates.filter(n => {
       const subjectMatch = !filter.subjects || filter.subjects.length === 0 || filter.subjects.includes(n.subject);
       const systemMatch = !filter.systems || filter.systems.length === 0 || filter.systems.includes(n.system);
       const grade = parseInt(n.grade, 10) || 0;
       const gradeMatch = !filter.grades || filter.grades.length === 0
         || filter.grades.some(g => Math.abs(grade - g) <= 2);
-      const notElementary = grade === 0 || grade >= minGrade;
-      if (profile.complex && this._excludeForComplexProject(n)) return false;
+      const notElementary = grade === 0 || grade >= Math.max(minGrade, minGradeArchetype);
+      if ((profile.complex || archetype) && this._excludeForComplexProject(n)) return false;
+      if (archetype && this._isArchetypeBanned(n, archetype)) return false;
       if (this._isNodeAboveBloomCeiling(n, bloomCeiling)) return false;
       return subjectMatch && systemMatch && gradeMatch && notElementary;
     });
 
-    const MAX_STAGE2_CANDIDATES = profile.complex ? 28 : 22;
+    const MAX_STAGE2_CANDIDATES = archetype ? 24 : (profile.complex ? 28 : 22);
     let pool = filteredCandidates.length > 0 ? filteredCandidates : candidates.filter(n => {
-      if (!profile.complex) return true;
       const g = parseInt(n.grade, 10) || 0;
-      return (g === 0 || g >= minGrade) && !this._excludeForComplexProject(n);
+      if (archetype || profile.complex) {
+        return (g === 0 || g >= minGradeArchetype) && !this._excludeForComplexProject(n);
+      }
+      return true;
     });
+    pool = this._applyArchetypePoolRules(pool, archetype, activeSystems);
     if (domains.length && profile.complex) {
       const mainlinePool = pool.filter(n => this._isMainlineRelevant(n, goal, domains));
       if (mainlinePool.length >= 8) pool = mainlinePool;
@@ -2809,16 +2923,29 @@ class PBLPathBuilder {
       _score: this._scoreNodeForGoal(n, goalTerms, filter.subjects, profile.complex, domains, goal)
     }));
     const subjectList = filter.subjects && filter.subjects.length ? filter.subjects : defaultSubjects;
-    const topCandidates = domains.length && (profile.complex || this._isConsumerDecisionGoal(goal) || this._isChemistryInquiryGoal(goal))
-      ? this._pickDomainAwareCandidates(scored, MAX_STAGE2_CANDIDATES, domains, goal)
-      : this._pickDiverseCandidates(scored, MAX_STAGE2_CANDIDATES, subjectList);
-    return { filter, filteredCandidates: topCandidates, domains, bloomProfile: mergedBloom };
+    let topCandidates;
+    if (archetype && this._archetypeEngine) {
+      topCandidates = this._archetypeEngine.pickCandidates(
+        scored, archetype, projectBlueprint, MAX_STAGE2_CANDIDATES, goalTerms,
+        {
+          isBanned: n => this._isArchetypeBanned(n, archetype),
+          meetsGrade: n => this._meetsArchetypeGrade(n, archetype),
+          scoreForModule: (n, m) => this._archetypeEngine.scoreForModule(n, m, goalTerms),
+        }
+      );
+    } else if (domains.length && (profile.complex || this._isConsumerDecisionGoal(goal) || this._isChemistryInquiryGoal(goal))) {
+      topCandidates = this._pickDomainAwareCandidates(scored, MAX_STAGE2_CANDIDATES, domains, goal);
+    } else {
+      topCandidates = [...scored].sort((a, b) => (b._score || 0) - (a._score || 0)).slice(0, MAX_STAGE2_CANDIDATES);
+    }
+    return { filter, filteredCandidates: topCandidates, domains, bloomProfile: mergedBloom, archetype };
   }
 
-  async _llmMatchStage(goal, candidates, projectBlueprint = null, bloomProfile = null) {
+  async _llmMatchStage(goal, candidates, projectBlueprint = null, bloomProfile = null, archetype = null) {
     const profile = this._getPBLGoalProfile(goal);
-    const complex = profile.complex;
-    const minConf = complex ? 0.58 : 0.52;
+    const complex = profile.complex || !!archetype;
+    const minConf = archetype ? 0.55 : (complex ? 0.58 : 0.52);
+    if (archetype) profile.maxMatched = archetype.maxMatched || profile.maxMatched;
     const blueprintPhases = this._blueprintProjectPhases(projectBlueprint);
     const candidatesLite = candidates.map(n => this._enrichCandidateForMatch(n));
 
@@ -2831,6 +2958,7 @@ class PBLPathBuilder {
       domainHints: this._inferProjectDomains(goal),
       projectBlueprint,
       bloomProfile: bloomProfile || this._inferBloomProfile(projectBlueprint),
+      archetypeId: archetype?.id || null,
     });
     let result = { matched: [], pathOrder: [], projectPhases: [], external: [], techRoute: '' };
     try {
@@ -2840,20 +2968,32 @@ class PBLPathBuilder {
       console.warn('[PBL] match JSON 解析失败，将使用关键词回退:', e.message);
     }
 
-    let matched = this._mapMatchedEntries(result, candidates, complex, minConf, goal)
+    let matched = this._mapMatchedEntries(result, candidates, complex, minConf, goal, archetype)
       .sort((a, b) => (b.confidence || 0) - (a.confidence || 0))
       .slice(0, profile.maxMatched);
 
     if (!matched.length) {
-      matched = this._mapMatchedEntries(result, candidates, complex, 0.45, goal)
+      matched = this._mapMatchedEntries(result, candidates, complex, 0.48, goal, archetype)
         .sort((a, b) => (b.confidence || 0) - (a.confidence || 0))
         .slice(0, profile.maxMatched);
     }
-    if (!matched.length && candidates.length) {
-      matched = this._rescueCandidatesFromPool(goal, candidates, profile.maxMatched);
-      console.warn('[PBL] LLM matched 为空，已用候选池关键词回退:', matched.map(n => n.name).join('、'));
+    if (matched.length < (archetype?.minMatched || 3) && candidates.length) {
+      const rescued = this._rescueCandidatesFromPool(goal, candidates, profile.maxMatched, archetype, projectBlueprint);
+      const seen = new Set(matched.map(n => n.id));
+      rescued.forEach(n => {
+        if (matched.length >= profile.maxMatched || seen.has(n.id)) return;
+        seen.add(n.id);
+        matched.push(n);
+      });
+      if (rescued.length) console.warn('[PBL] 原型层模块检索补齐:', rescued.map(n => n.name).join('、'));
     }
-    matched = this._filterMainlineNodes(matched, goal);
+    matched = this._filterMainlineNodes(matched, goal, archetype);
+    if (archetype && this._archetypeEngine) {
+      matched = this._archetypeEngine.tagMatchedModules(
+        matched, archetype, projectBlueprint,
+        (n, m) => this._archetypeEngine.scoreForModule(n, m, this._tokenizeGoalTerms(goal))
+      );
+    }
     matched = this._ensureMinimumMatched(matched, goal, candidates, profile.maxMatched, complex);
     matched = this._filterMainlineNodes(matched, goal);
     matched = this._purgeBiologyNoise(matched, goal);
@@ -2898,7 +3038,7 @@ class PBLPathBuilder {
       projectPhases = blueprintPhases;
     }
 
-    const external = this._ensureExternalNodes(result.external || [], goal, matched, projectBlueprint);
+    const external = this._ensureExternalNodes(result.external || [], goal, matched, projectBlueprint, archetype);
 
     const techRoute = (result.techRoute || '').trim();
     const knowledgeChain = (result.knowledgeChain || '').trim();
@@ -3119,6 +3259,7 @@ class PBLPathBuilder {
 
   async searchByKeywords(goal, selectedSystems = ['all']) {
     await this.loadUnifiedIndex();
+    await this._ensureArchetypeData();
 
     const activeSystems = selectedSystems.includes('all')
       ? Array.from(this.systemIndex.keys())
