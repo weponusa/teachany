@@ -598,9 +598,88 @@ class PBLPathBuilder {
   /** 化学溶液/浓度/厨房化学等探究类（以 chemistry 为主线） */
   _isChemistryInquiryGoal(goal) {
     const g = String(goal || '');
-    return /浓度|溶液|溶解度|溶质|溶剂|饱和溶液|质量分数|体积分数|物质的溶解|配制溶液/.test(g)
+    return /浓度|溶液|溶解度|溶质|溶剂|饱和溶液|质量分数|体积分数|物质的溶解|配制溶液|混合溶液/.test(g)
       || /食盐|盐水|醋酸|苏打|洁厕|电解水|酸碱|中和|化学变化|物质的变化|离子反应/.test(g)
-      || (/厨房|餐桌|调味|烹饪/.test(g) && /盐|酸|碱|醋|化学|浓度|溶液|溶解/.test(g));
+      || /滴定|硝酸银|电导率|莫尔法|沉淀滴定|标准溶液|物质的量浓度/.test(g)
+      || /食堂|菜汤|汤水|汤汁|汤品|卤水/.test(g)
+      || (/厨房|餐桌|调味|烹饪|汤/.test(g) && /盐|酸|碱|醋|化学|浓度|溶液|溶解|测|含量/.test(g));
+  }
+
+  /**
+   * 混合溶液/真实样品浓度测定：无法直接称量分离溶质 → 滴定法或电导率法等间接测定
+   */
+  _getChemistryAnalysisProfile(goal) {
+    const g = String(goal || '');
+    const mixed = /混合溶液|食堂|菜汤|汤水|汤汁|汤品|卤水|景区水|河水|废水|不能直接|无法.*分离|不能.*称量|不能.*称重/.test(g)
+      || (/汤/.test(g) && /食堂|餐厅|厨房|测定|检测|含量|浓度|盐/.test(g))
+      || /滴定|硝酸银|电导率|间接测定/.test(g);
+    const wantsTitration = /滴定|硝酸银|AgNO|莫尔|沉淀滴定|氯离子|Cl⁻|Cl-/.test(g);
+    const wantsConductivity = /电导率|电导|导电率|电解质.*导电/.test(g);
+    const methods = [];
+    if (wantsTitration) methods.push('titration');
+    if (wantsConductivity) methods.push('conductivity');
+    if (mixed && !methods.length) methods.push('titration', 'conductivity');
+    return {
+      mixed,
+      methods,
+      primary: methods[0] || (mixed ? 'titration' : 'direct'),
+      sampleLabel: /食堂|菜汤|汤水/.test(g) ? '食堂汤水' : (/混合溶液/.test(g) ? '混合溶液' : '样品溶液')
+    };
+  }
+
+  _mixedSolutionChemistryDomains() {
+    return [
+      {
+        id: 'constraint', label: '测定约束与方案选型',
+        keywords: ['混合溶液', '无法分离', '间接测定', '取样', '稀释', '方案', '比较', '滴定', '电导率'],
+        subjects: ['chemistry']
+      },
+      {
+        id: 'titration', label: '硝酸银滴定法',
+        keywords: ['滴定', '硝酸银', '沉淀', '氯离子', '银离子', '物质的量浓度', '标准溶液', '终点'],
+        subjects: ['chemistry']
+      },
+      {
+        id: 'conductivity', label: '电导率法',
+        keywords: ['电导率', '电解质', '导电', '离子浓度', '标准曲线', '溶液'],
+        subjects: ['chemistry', 'physics']
+      },
+      {
+        id: 'calc', label: '数据处理与换算',
+        keywords: ['物质的量', '浓度', '计算', '误差', '统计', '平行', '换算', '摩尔'],
+        subjects: ['math', 'chemistry']
+      },
+      {
+        id: 'report', label: '结论与应用',
+        keywords: ['报告', '分析', '比较', '结论', '安全', '标准', '含量'],
+        subjects: ['chemistry', 'chinese', 'math']
+      }
+    ];
+  }
+
+  _directSolutionChemistryDomains() {
+    return [
+      {
+        id: 'solution', label: '溶液与浓度概念',
+        keywords: ['溶液', '溶质', '溶剂', '浓度', '质量分数', '溶解', '饱和', '配制', '氯化钠', '溶解度'],
+        subjects: ['chemistry']
+      },
+      {
+        id: 'experiment', label: '实验设计与测量',
+        keywords: ['实验', '变量', '对照', '量取', '称量', '配制', '测量', '滴定', '观察'],
+        subjects: ['chemistry', 'science']
+      },
+      {
+        id: 'data', label: '数据处理与表达',
+        keywords: ['数据', '统计', '图表', '计算', '误差', '记录', '百分比', '平均数'],
+        subjects: ['math']
+      },
+      {
+        id: 'application', label: '生活情境与结论',
+        keywords: ['厨房', '食盐', '应用', '安全', '生活', '结论', '报告', '分析', '比较'],
+        subjects: ['chemistry', 'science', 'chinese']
+      }
+    ];
   }
 
   /** 消费决策类应排除的研发/装置课节点 */
@@ -692,28 +771,9 @@ class PBLPathBuilder {
   _inferProjectDomains(goal) {
     const g = String(goal || '');
     if (this._isChemistryInquiryGoal(g)) {
-      return [
-        {
-          id: 'solution', label: '溶液与浓度概念',
-          keywords: ['溶液', '溶质', '溶剂', '浓度', '质量分数', '溶解', '饱和', '配制', '氯化钠', '溶解度'],
-          subjects: ['chemistry']
-        },
-        {
-          id: 'experiment', label: '实验设计与测量',
-          keywords: ['实验', '变量', '对照', '量取', '称量', '配制', '测量', '滴定', '观察'],
-          subjects: ['chemistry', 'science']
-        },
-        {
-          id: 'data', label: '数据处理与表达',
-          keywords: ['数据', '统计', '图表', '计算', '误差', '记录', '百分比', '平均数'],
-          subjects: ['math']
-        },
-        {
-          id: 'application', label: '生活情境与结论',
-          keywords: ['厨房', '食盐', '应用', '安全', '生活', '结论', '报告', '分析', '比较'],
-          subjects: ['chemistry', 'science', 'chinese']
-        }
-      ];
+      return this._getChemistryAnalysisProfile(g).mixed
+        ? this._mixedSolutionChemistryDomains()
+        : this._directSolutionChemistryDomains();
     }
     if (this._isConsumerDecisionGoal(g)) {
       return [
@@ -936,6 +996,10 @@ class PBLPathBuilder {
       if (/人体.*器官|器官系统|循环.*系统|消化.*系统|呼吸.*系统|神经.*系统/.test(name)) return false;
       if (/饮食.*健康|营养.*均衡|食物.*营养/.test(name) && !/钠|盐|矿物|离子|化学/.test(text)) return false;
       if (node.subject === 'biology' && this._isBiologyNodeName(name)) return false;
+      if (this._getChemistryAnalysisProfile(g).mixed) {
+        if (/^(数据收集|数据的描述|统计图的认识)$/.test(name)) return false;
+        if (/质量分数|配制溶液/.test(name) && !/滴定|物质的量|离子|摩尔|电导/.test(text)) return false;
+      }
     }
 
     if (stemGoal) {
@@ -1019,9 +1083,17 @@ class PBLPathBuilder {
       if (/内燃机|热机|效率|统计|函数|环境|排放|污染/.test(node.name || '')) score += 4;
     }
     if (goal && this._isChemistryInquiryGoal(goal)) {
+      const cap = this._getChemistryAnalysisProfile(goal);
       if (node.subject === 'chemistry') score += 8;
-      if (/溶液|浓度|溶解|溶质|溶剂|质量分数|配制|氯化钠/.test(node.name || '')) score += 6;
-      if (node.subject === 'math' && /数据|统计|图表|百分比/.test(node.name || '')) score += 3;
+      if (cap.mixed) {
+        if (/滴定|硝酸银|沉淀|离子反应|物质的量|摩尔|化学方程式|电解质|电离|氯离子/.test(node.name || '')) score += 9;
+        if (/电导|导电|电阻率|电解质溶液/.test(node.name || '')) score += 7;
+        if (/质量分数|配制溶液|称量溶解/.test(node.name || '') && !/滴定|物质的量|离子/.test(node.name || '')) score -= 10;
+      } else {
+        if (/溶液|浓度|溶解|溶质|溶剂|质量分数|配制|氯化钠/.test(node.name || '')) score += 6;
+      }
+      if (node.subject === 'math' && /数据|统计|图表|百分比|计算/.test(node.name || '')) score += 3;
+      if (node.subject === 'physics' && cap.mixed && /电导|导电|电解质/.test(node.name || '')) score += 5;
       if (node.subject === 'info-tech') score -= 18;
       if (/器官系统|程序设计|程序控制|饮食.*健康|营养.*均衡/.test(node.name || '')) score -= 22;
     }
@@ -1238,6 +1310,14 @@ class PBLPathBuilder {
   /** 按项目类型提供课标外知识点候选池（LLM 未返回时回退） */
   _fallbackExternalPool(goal) {
     if (this._isChemistryInquiryGoal(goal)) {
+      if (this._getChemistryAnalysisProfile(goal).mixed) {
+        return [
+          { name: '滴定管/移液管读数与润洗规范', reason: '定量滴定操作的器皿使用细节，课标实验较少展开' },
+          { name: '硝酸银标准溶液的配制与保存', reason: '沉淀滴定实验的关键试剂准备，需课外实验指导' },
+          { name: '电导率仪温度补偿与校准', reason: '电导率法测定须控制温度影响，仪器操作超出课本' },
+          { name: '食堂/汤水取样卫生与代表性', reason: '真实样品取样规范，食品安全与数据代表性需额外说明' },
+        ];
+      }
       return [
         { name: '厨房化学实验安全操作', reason: '加热、称量、取用调味品的安全要点，课标较少单独讲授' },
         { name: '家用电子秤读数与误差', reason: '厨房称量工具的使用与读数规则，实践必需但课标外' },
@@ -1465,6 +1545,14 @@ class PBLPathBuilder {
 
   _defaultDeliverable(role, goal = '') {
     if (this._isChemistryInquiryGoal(goal)) {
+      const cap = this._getChemistryAnalysisProfile(goal);
+      if (cap.mixed) {
+        return ({
+          foundation: '混合溶液测定约束分析 / 滴定法与电导率法方案比选表',
+          bridge: '取样预处理方案 + 硝酸银滴定或电导率标定实验记录表',
+          core: '浓度换算结果、平行测定误差分析与结论报告'
+        })[role] || '间接测定阶段成果';
+      }
       return ({
         foundation: '溶液与浓度概念图 / 公式推导笔记',
         bridge: '厨房食盐溶液探究实验方案与记录表',
@@ -1483,6 +1571,29 @@ class PBLPathBuilder {
     const kn = nodes.map(n => n.name).filter(Boolean);
     const knRef = kn.map(n => `「${n}」`).join('、') || '相关知识';
     if (this._isChemistryInquiryGoal(goal)) {
+      const cap = this._getChemistryAnalysisProfile(goal);
+      if (cap.mixed) {
+        const sample = cap.sampleLabel;
+        const byRole = {
+          foundation: [
+            `说明${sample}为何属于混合溶液、无法直接称量分离溶质，比较硝酸银滴定法与电导率法的适用条件`,
+            `结合 ${knRef} 理解：沉淀滴定（Ag⁺+Cl⁻→AgCl↓）或电解质导电与离子浓度的关系`,
+          ],
+          bridge: [
+            `设计${sample}取样与预处理（澄清、定容稀释、平行样）方案`,
+            cap.methods.includes('titration')
+              ? '准备滴定装置：硝酸银标准溶液、滴定管/移液管，确定终点判断方式并设计记录表'
+              : '配制系列标准盐溶液，测定电导率并绘制标准曲线',
+          ],
+          core: [
+            cap.methods.includes('titration')
+              ? '实施硝酸银滴定，记录消耗体积，换算样品中 Cl⁻/NaCl 含量'
+              : '测定样品电导率并由标准曲线读出等效浓度',
+            '进行平行测定，计算平均值与相对误差，与另一方法或参考标准对比讨论',
+          ],
+        };
+        return (byRole[group.role] || [`围绕 ${knRef} 完成${sample}间接测定与数据分析`]).slice(0, 3);
+      }
       const byRole = {
         foundation: [
           `用 ${knRef} 解释：食盐溶于水时溶质、溶剂、溶液分别是什么`,
@@ -1771,7 +1882,84 @@ class PBLPathBuilder {
     }));
   }
 
+  _buildMixedSolutionChemistryBlueprint(goal) {
+    const cap = this._getChemistryAnalysisProfile(goal);
+    const sample = cap.sampleLabel;
+    return {
+      projectSummary: String(goal || '').slice(0, 160),
+      deliverable: `${sample}盐/电解质含量测定报告（硝酸银滴定法与电导率法对比分析）`,
+      projectType: 'scientific-inquiry',
+      constraints: [
+        '样品为混合溶液，无法直接称量分离溶质',
+        '须说明取样、澄清、稀释与平行测定方案',
+        '滴定/电导率操作注意安全与器皿洁净'
+      ],
+      subsystems: [
+        { id: 'constraint', name: '测定约束与方案选型', description: '分析混合溶液为何不能直接测质量分数' },
+        { id: 'titration', name: '硝酸银滴定法', description: '利用 Ag⁺ 与 Cl⁻ 沉淀反应间接测定盐含量' },
+        { id: 'conductivity', name: '电导率法', description: '通过电导率与离子浓度关系建立标准曲线' },
+        { id: 'calc', name: '数据处理', description: '由滴定体积或电导率换算浓度并评估误差' }
+      ],
+      schemes: [
+        {
+          id: 'A',
+          name: '硝酸银滴定法（推荐）',
+          summary: `取样澄清后，用硝酸银标准溶液滴定氯离子，换算${sample}盐分含量`,
+          pros: ['化学原理清晰', '适合测 Cl⁻/食盐', '高中实验可操作'],
+          cons: ['需配制或标定 AgNO₃ 溶液', '终点判断需练习'],
+          phases: [
+            { phase: '问题与方案选型', steps: ['说明混合溶液不能直接称量的原因', '比较滴定法与电导率法优劣', '确定取样与稀释方案'], deliverable: '方案论证小结', subsystemIds: ['constraint'], knowledgeHints: ['溶液', '离子', '氯离子', '物质的量浓度', '滴定'] },
+            { phase: '滴定原理与准备', steps: ['复习 AgNO₃ 与 Cl⁻ 沉淀反应', '准备滴定管、锥形瓶与终点判断方法'], deliverable: '原理笔记与器材清单', subsystemIds: ['titration'], knowledgeHints: ['硝酸银', '沉淀反应', '离子反应', '化学方程式'] },
+            { phase: '取样与滴定', steps: ['取样澄清、定容稀释', '平行滴定并记录读数'], deliverable: '滴定原始记录表', subsystemIds: ['titration'], knowledgeHints: ['滴定', '实验', '测量', '记录'] },
+            { phase: '计算与结论', steps: ['由消耗 AgNO₃ 体积换算 n(Cl⁻) 及 c(NaCl)', '与标准或另一方法对比并讨论误差'], deliverable: '测定报告', subsystemIds: ['calc'], knowledgeHints: ['物质的量', '计算', '浓度', '误差', '统计'] }
+          ]
+        },
+        {
+          id: 'B',
+          name: '电导率法',
+          summary: '配制标准盐溶液测电导率建立曲线，再测样品电导率反推浓度',
+          pros: ['测定快速', '适合批量筛查'],
+          cons: ['受温度与杂质离子干扰', '需标定曲线'],
+          phases: [
+            { phase: '原理与标定设计', steps: ['理解电解质导电与离子浓度关系', '设计标准溶液系列'], deliverable: '标定方案', subsystemIds: ['conductivity'], knowledgeHints: ['电解质', '电导率', '离子', '溶液'] },
+            { phase: '建立标准曲线', steps: ['测定标准溶液电导率并绘图'], deliverable: '标准曲线图', subsystemIds: ['conductivity'], knowledgeHints: ['数据', '图表', '浓度', '函数'] },
+            { phase: '样品测定', steps: ['测样品电导率', '由曲线读出等效浓度'], deliverable: '样品数据表', subsystemIds: ['conductivity'], knowledgeHints: ['测量', '电导', '换算'] },
+            { phase: '对比分析', steps: ['与滴定结果或参考值对比', '讨论误差来源'], deliverable: '对比分析报告', subsystemIds: ['calc'], knowledgeHints: ['分析', '误差', '报告'] }
+          ]
+        }
+      ],
+      recommendedSchemeId: 'A',
+      knowledgeChain: '测定约束 → 滴定/电导率原理 → 取样测定 → 浓度换算 → 结论',
+      fallback: true
+    };
+  }
+
   _sanitizeBlueprintForGoal(blueprint, goal) {
+    if (blueprint && this._isChemistryInquiryGoal(goal) && this._getChemistryAnalysisProfile(goal).mixed) {
+      const cap = this._getChemistryAnalysisProfile(goal);
+      const bp = { ...blueprint, schemes: (blueprint.schemes || []).map(s => ({ ...s, phases: (s.phases || []).map(p => ({ ...p })) })) };
+      const naiveRe = /称量溶解|直接称量|质量分数.*配制|配制.*盐水|称量.*溶解/;
+      if (!bp.deliverable || naiveRe.test(bp.deliverable)) {
+        bp.deliverable = `${cap.sampleLabel}盐含量测定报告（硝酸银滴定法/电导率法）`;
+      }
+      bp.schemes.forEach(s => {
+        (s.phases || []).forEach((p, idx) => {
+          const blob = [p.phase, ...(p.steps || []), ...(p.knowledgeHints || [])].join(' ');
+          if (naiveRe.test(blob) && !/滴定|硝酸银|电导率|间接|AgNO|氯离子/.test(blob)) {
+            s.phases[idx] = {
+              ...p,
+              steps: [
+                `说明${cap.sampleLabel}为混合溶液，须间接测定而非直接称量`,
+                '比较硝酸银滴定法与电导率法并确定本阶段操作要点',
+                ...(p.steps || []).map(st => String(st).replace(/称量溶解|直接称量配制/g, '取样澄清后滴定或测电导率'))
+              ].slice(0, 4),
+              knowledgeHints: [...new Set([...(p.knowledgeHints || []), '滴定', '硝酸银', '离子反应', '物质的量浓度', '电导率'])].slice(0, 6)
+            };
+          }
+        });
+      });
+      return bp;
+    }
     if (!blueprint || !this._isConsumerDecisionGoal(goal)) return blueprint;
     const bp = { ...blueprint, schemes: (blueprint.schemes || []).map(s => ({ ...s })) };
     bp.projectType = 'consumer-decision';
@@ -1851,6 +2039,9 @@ class PBLPathBuilder {
     }
 
     if (this._isChemistryInquiryGoal(goal)) {
+      if (this._getChemistryAnalysisProfile(goal).mixed) {
+        return this._buildMixedSolutionChemistryBlueprint(goal);
+      }
       return {
         projectSummary: String(goal || '').slice(0, 160),
         deliverable: '厨房食盐溶液浓度探究报告（含实验方案、数据记录表、浓度计算与生活应用分析）',
@@ -2370,7 +2561,9 @@ class PBLPathBuilder {
     if (this._isConsumerDecisionGoal(goal)) {
       filter.subjects = ['math', 'physics', 'chemistry', 'geography', 'chinese'];
     } else if (this._isChemistryInquiryGoal(goal)) {
-      filter.subjects = ['chemistry', 'science', 'math'];
+      filter.subjects = this._getChemistryAnalysisProfile(goal).mixed
+        ? ['chemistry', 'physics', 'math']
+        : ['chemistry', 'science', 'math'];
     } else if (this._isStemProjectGoal(goal) && profile.complex) {
       // STEM/工程/科学探究类：锁定主线学科，禁止人文学科渗入候选池
       if (/火箭|导弹|发射|弹道|模型火箭/.test(goal)) {
