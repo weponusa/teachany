@@ -3,7 +3,7 @@
  * 与 data/pbl/archetypes.json + engineering-registry.json + node-pbl-tags.json 同步
  */
 (function (global) {
-  const CACHE_KEY = 'teachany_pbl_archetypes_v5';
+  const CACHE_KEY = 'teachany_pbl_archetypes_v7';
 
   function norm(s) {
     return String(s || '').trim();
@@ -62,20 +62,50 @@
       return this;
     }
 
-    resolve(goal, blueprint, classifyFn, chemistryProfileFn) {
-      const g = norm(goal);
-      const list = this.archetypeData?.archetypes || [];
-      for (const a of list) {
-        if (a.id === 'general-practice') continue;
-        if ((a.matchPatterns || []).some(p => new RegExp(p, 'i').test(g))) return a;
+    /** 不再按题目关键词/typeFallback 套原型；模块与课标检索以 LLM 拆解蓝图为准 */
+    resolve() {
+      return null;
+    }
+
+    blueprintModules(blueprint) {
+      if (!blueprint) return [];
+      const subs = blueprint.subsystems || [];
+      if (subs.length) {
+        return subs.map((s, i) => ({
+          id: s.id || `sub-${i}`,
+          label: norm(s.name) || s.id || `模块${i + 1}`,
+          hints: [
+            ...(Array.isArray(s.keywords) ? s.keywords : []),
+            ...(Array.isArray(s.knowledgeHints) ? s.knowledgeHints : []),
+            s.name,
+            s.description,
+          ].filter(Boolean).map(x => norm(x)).filter(Boolean),
+          subjects: s.subjects || [],
+          topK: 2,
+        }));
       }
-      if (chemistryProfileFn && chemistryProfileFn(g)?.mixed) {
-        return list.find(x => x.id === 'mixed-solution-chemistry') || null;
-      }
-      const type = classifyFn ? classifyFn(g) : 'general';
-      const fb = this.archetypeData?.typeFallback?.[type];
-      if (fb) return list.find(x => x.id === fb) || null;
-      return list.find(x => x.id === 'general-practice') || null;
+      const scheme = (blueprint.schemes || []).find(s => s.id === blueprint.recommendedSchemeId)
+        || (blueprint.schemes || [])[0];
+      const phases = scheme?.phases || [];
+      if (!phases.length) return [];
+      return phases.map((p, i) => ({
+        id: p.subsystemIds?.[0] || `bp-${i}`,
+        label: norm(p.phase || p.subsystemIds?.[0] || `阶段${i + 1}`).replace(/系统$/g, ''),
+        hints: [
+          ...(p.knowledgeHints || []),
+          ...String((p.steps || []).join(' ')).match(/[\u4e00-\u9fff]{2,8}/g) || [],
+          p.phase,
+          p.deliverable,
+        ].filter(Boolean).map(x => norm(x)).filter(Boolean),
+        subjects: [],
+        topK: 2,
+      }));
+    }
+
+    moduleChainFromBlueprint(blueprint) {
+      const kc = norm(blueprint?.knowledgeChain);
+      if (kc) return kc;
+      return this.blueprintModules(blueprint).map(m => m.label).join(' → ');
     }
 
     isGloballyBanned(node) {
@@ -195,6 +225,8 @@
       if (archetype?.id === 'water-rocket' && mod.id === 'test' && node.subject === 'info-tech') return false;
       if (archetype?.id === 'consumer-decision' && node.subject === 'chinese' && !this._passesChinese(node, archetype)) return false;
       if (archetype?.id === 'water-rocket' && /程序|算法|物联网/.test(name)) return false;
+      if (archetype?.id === 'environmental-filtration' && /火箭|反冲|抛体|弹道|发射/.test(name)) return false;
+      if (archetype?.id === 'environmental-filtration' && mod.id === 'filtration' && !/过滤|沉淀|吸附|溶液|颗粒|环境|污染|实验|分散/.test(t)) return false;
       if (archetype?.id === 'mixed-solution-chemistry' && mod.id === 'calc' && !/统计|概率|误差|计算|数据|方程/.test(t)) return false;
       if (archetype?.id === 'consumer-decision' && /线性规划|空间向量|立体几何|三角恒等|恒等变换|排列组合|二项式/.test(name)) return false;
       if (archetype?.id === 'humanities-writing' && /应用文|说明文|调查报告/.test(name) && !/诗|散文|小说|文学/.test(t)) return false;
@@ -205,11 +237,14 @@
 
     pickCandidates(pool, archetype, blueprint, maxCount, goalTerms, opts = {}) {
       const { isBanned, meetsGrade, scoreForModule } = opts;
-      const modules = this._modulesFor(archetype, blueprint);
+      const modules = archetype
+        ? this._modulesFor(archetype, blueprint)
+        : this.blueprintModules(blueprint);
+      if (!modules.length) return [];
       const picked = [];
       const seen = new Set();
-      const prefer = archetype.preferNamePatterns || [];
-      const banFn = isBanned || (n => this.isBanned(n, archetype));
+      const prefer = archetype?.preferNamePatterns || [];
+      const banFn = isBanned || (n => (archetype ? this.isBanned(n, archetype) : this.isGloballyBanned(n)));
 
       modules.forEach(mod => {
         const topK = mod.topK || 2;
@@ -232,7 +267,7 @@
         });
       });
 
-      if (picked.length < (archetype.minMatched || 4)) {
+      if (picked.length < (archetype?.minMatched || 4)) {
         pool
           .map(n => {
             let s = 0;
@@ -257,11 +292,24 @@
     _modulesFor(archetype, blueprint) {
       const scheme = (blueprint?.schemes || []).find(s => s.id === blueprint?.recommendedSchemeId)
         || (blueprint?.schemes || [])[0];
-      const fromBlueprint = (scheme?.phases || [])
-        .map(p => p.subsystemIds?.[0])
-        .filter(Boolean);
+      const phases = scheme?.phases || [];
+      const fromBlueprint = phases.map(p => p.subsystemIds?.[0]).filter(Boolean);
       const mods = archetype.modules || [];
       if (!fromBlueprint.length) return mods;
+
+      const matched = fromBlueprint.filter(id => mods.some(m => m.id === id));
+      if (fromBlueprint.length >= 3 && matched.length < fromBlueprint.length * 0.5) {
+        return phases
+          .filter(p => p.subsystemIds?.[0] || p.phase)
+          .map((p, i) => ({
+            id: p.subsystemIds?.[0] || `bp-${i}`,
+            label: String(p.phase || p.subsystemIds?.[0] || '').replace(/系统$/g, '').slice(0, 24),
+            hints: [...(p.knowledgeHints || []), ...String((p.steps || []).join(' ')).match(/[\u4e00-\u9fff]{2,8}/g) || []].slice(0, 10),
+            subjects: archetype.subjects,
+            topK: 2,
+          }));
+      }
+
       const ordered = [];
       fromBlueprint.forEach(id => {
         const m = mods.find(x => x.id === id);
@@ -310,7 +358,10 @@
     }
 
     tagMatchedModules(matched, archetype, blueprint, scoreFn) {
-      const modules = this._modulesFor(archetype, blueprint);
+      const modules = archetype
+        ? this._modulesFor(archetype, blueprint)
+        : this.blueprintModules(blueprint);
+      if (!modules.length) return matched;
       return matched.map(n => {
         if (n._moduleId) return n;
         let best = null;
@@ -324,6 +375,7 @@
     }
 
     moduleChain(archetype, blueprint) {
+      if (!archetype) return this.moduleChainFromBlueprint(blueprint);
       return this._modulesFor(archetype, blueprint).map(m => m.label).join(' → ');
     }
 

@@ -207,16 +207,9 @@ class PBLPathBuilder {
     return this._archetypeEngine;
   }
 
-  _resolveArchetype(goal, blueprint) {
-    if (!this._archetypeEngine?.archetypeData) return null;
-    const a = this._archetypeEngine.resolve(
-      goal,
-      blueprint,
-      g => this._classifyProjectType(g),
-      g => this._getChemistryAnalysisProfile(g)
-    );
-    this._resolvedArchetype = a;
-    return a;
+  _resolveArchetype() {
+    this._resolvedArchetype = null;
+    return null;
   }
 
   _isArchetypeBanned(node, archetype) {
@@ -3585,9 +3578,9 @@ class PBLPathBuilder {
         archetype
       );
     }
-    if (archetype && this._archetypeEngine) {
+    if (this._archetypeEngine && meta.projectBlueprint) {
       core = this._archetypeEngine.tagMatchedModules(
-        core, archetype, meta.projectBlueprint,
+        core, null, meta.projectBlueprint,
         (n, m) => this._archetypeEngine.scoreForModule(n, m, this._tokenizeGoalTerms(goal))
       );
     }
@@ -3604,7 +3597,7 @@ class PBLPathBuilder {
     }
     if (!core.length && meta.candidatePool?.length) {
       core = this._rescueCandidatesFromPool(goal, meta.candidatePool, profile.maxMatched, meta.archetype, meta.projectBlueprint);
-      console.warn('[PBL] 主线为空，已用原型层回退:', core.map(n => n.name).join('、'));
+      console.warn('[PBL] 主线为空，已用蓝图模块回退:', core.map(n => n.name).join('、'));
     }
     // 主线 pathStep 链 + 角色分层着色 + 一层主线相关前置（不展开平行/跨学科噪声）
     let graphData = this._buildRichMainlineGraph(
@@ -3826,16 +3819,13 @@ class PBLPathBuilder {
     // 4. 第零阶段：全链路拆解可行方案（不选课标）
     this._reportPBLStatus(onStatus, '第 1/4 步：全链路拆解可行方案...');
     let projectBlueprint = await this._llmDecomposeStage(goal);
-    let archetype = this._resolveArchetype(goal, projectBlueprint);
-    if (archetype) projectBlueprint = this._alignBlueprintModules(projectBlueprint, archetype);
-    projectBlueprint = this._concretizeBlueprint(goal, projectBlueprint, archetype);
+    const archetype = null;
+    projectBlueprint = this._concretizeBlueprint(goal, projectBlueprint, null);
     const blueprintPhases = this._blueprintProjectPhases(projectBlueprint);
     const bloomProfile = this._inferBloomProfile(projectBlueprint);
 
     // 5. 第一阶段 LLM：判断学科+学段+课标体系（压缩候选集）
-    this._reportPBLStatus(onStatus, archetype
-      ? `第 2/4 步：按原型「${archetype.label}」分模块检索候选...`
-      : '第 2/4 步：筛选课标学科与候选池（Bloom 层级）...');
+    this._reportPBLStatus(onStatus, '第 2/4 步：按拆解蓝图筛选课标候选（Bloom 层级）...');
     const stage1 = await this._llmFilterStage(goal, candidates, projectBlueprint, bloomProfile, archetype, activeSystems);
 
     // 6. 第二阶段 LLM：按蓝图阶段精确匹配课标
@@ -3868,9 +3858,9 @@ class PBLPathBuilder {
         literacy: lp.literacy || bp.literacy,
       };
     }) : blueprintPhases;
-    const moduleChainPre = archetype && this._archetypeEngine
-      ? this._archetypeEngine.moduleChain(archetype, projectBlueprint)
-      : '';
+    const moduleChainPre = this._archetypeEngine
+      ? this._archetypeEngine.moduleChainFromBlueprint(projectBlueprint)
+      : (projectBlueprint.knowledgeChain || '');
     const pathPlan = this._buildPathPlan({
       goal,
       graphData: finalized.graphData,
