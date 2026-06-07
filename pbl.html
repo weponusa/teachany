@@ -232,21 +232,6 @@ body {
   border-color: var(--accent);
   color: var(--accent);
 }
-.pbl-settings-btn {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--bg2);
-  color: var(--dim);
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.pbl-settings-btn:hover { border-color: var(--accent); color: var(--text); }
-
 /* ─── PBL Status ──────────────────────────────── */
 .pbl-status {
   text-align: center;
@@ -609,91 +594,6 @@ body {
   box-shadow: 0 4px 16px rgba(16,185,129,0.3);
 }
 
-/* ─── Settings Modal ──────────────────────────── */
-.settings-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  z-index: 2000;
-  display: none;
-  align-items: center;
-  justify-content: center;
-}
-.settings-overlay.open { display: flex; }
-.settings-modal {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 32px;
-  width: 480px;
-  max-width: 90vw;
-  max-height: 80vh;
-  overflow-y: auto;
-}
-.settings-modal h2 {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 20px;
-}
-.settings-modal label {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--dim);
-  margin-bottom: 6px;
-  margin-top: 16px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.settings-modal select,
-.settings-modal input {
-  width: 100%;
-  padding: 10px 14px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text);
-  font-size: 14px;
-  outline: none;
-}
-.settings-modal select:focus,
-.settings-modal input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(245,158,11,0.1);
-}
-.settings-modal .btn-row {
-  display: flex;
-  gap: 12px;
-  margin-top: 24px;
-}
-.settings-modal .btn-row button {
-  flex: 1;
-  padding: 10px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.settings-modal .btn-save {
-  background: var(--accent);
-  color: white;
-  border: none;
-}
-.settings-modal .btn-save:hover { background: #d97706; }
-.settings-modal .btn-cancel {
-  background: var(--bg);
-  color: var(--dim);
-  border: 1px solid var(--border);
-}
-.settings-modal .btn-cancel:hover { color: var(--text); }
-.settings-modal .hint {
-  font-size: 12px;
-  color: var(--dimmer);
-  margin-top: 4px;
-}
-
 /* ─── How it works ────────────────────────────── */
 .how-it-works {
   display: grid;
@@ -800,7 +700,6 @@ body {
   <!-- PBL 项目式学习路径发现 -->
   <div class="pbl-section">
     <div class="pbl-title">🧭 PBL 项目式学习路径发现</div>
-    <button class="pbl-settings-btn" onclick="toggleSettings()">⚙️ API 设置</button>
     <div class="pbl-desc">
       用于项目式学习的个性化路径设计。只需描述你的项目目标，AI 将自动从全球课标体系中匹配所需知识点，生成完整的学习路径图谱。<br>
       覆盖 <b>中国课标 / AP / Cambridge / IB / US CCSS</b> 五大体系，支持 K12 及以外的知识点。图谱中的每个知识点均可一键生成个性化课件。
@@ -885,28 +784,8 @@ body {
   <div id="nodeDetailContent"></div>
 </div>
 
-<!-- API 设置弹窗 -->
-<div class="settings-overlay" id="settingsOverlay">
-  <div class="settings-modal">
-    <h2>⚙️ API 服务商设置</h2>
-    <label for="providerSelect">服务商</label>
-    <select id="providerSelect" onchange="onProviderChange()"></select>
-    <label for="modelSelect">模型</label>
-    <select id="modelSelect"></select>
-    <label for="apiKeyInput">API Key（默认服务商免填）</label>
-    <input type="password" id="apiKeyInput" placeholder="默认 Pollinations 免 Key；其他服务商填 sk-..." />
-    <div class="hint" id="keyHint"></div>
-    <label for="baseUrlInput">Base URL（自定义时填写）</label>
-    <input type="text" id="baseUrlInput" placeholder="https://api.example.com/v1" />
-    <div class="btn-row">
-      <button class="btn-cancel" onclick="toggleSettings()">取消</button>
-      <button class="btn-save" onclick="saveSettings()">💾 保存</button>
-    </div>
-  </div>
-</div>
-
 <script src="./assets/scripts/courseware-hub.js"></script>
-<script src="./assets/scripts/pbl-path.js?v=20260607-mixed-solution"></script>
+<script src="./assets/scripts/pbl-path.js?v=20260607-server-llm"></script>
 <script src="./assets/scripts/history-tracker.js" defer></script>
 <script src="./assets/scripts/teachany-make-course.js"></script>
 <script>
@@ -1003,8 +882,6 @@ async function analyzePBLGoal() {
     statusText.textContent = '正在加载多课标知识点索引（1300+ 节点）...';
     await builder.loadUnifiedIndex();
 
-    const cfg = builder.getLLMConfig();
-
     statusText.textContent = '第 1/3 步：全链路拆解可行方案...';
 
     let result;
@@ -1031,9 +908,7 @@ async function analyzePBLGoal() {
     // ── TeachAny 历史上报 ──
     try {
       if (window.TeachAnyHistory && typeof window.TeachAnyHistory.recordPBL === 'function') {
-        const cfg = (builder && typeof builder.getLLMConfig === 'function') ? builder.getLLMConfig() : {};
-        const providers = { providerName: cfg.providerName || cfg.providerId || '', model: cfg.model || '' };
-        window.TeachAnyHistory.recordPBL(goal, { ...result.graphData, systems: result.systems, techRoute: result.techRoute || '' }, providers);
+        window.TeachAnyHistory.recordPBL(goal, { ...result.graphData, systems: result.systems, techRoute: result.techRoute || '' }, { providerName: 'TeachAny 服务端', model: 'preset' });
       }
     } catch (_e) { /* ignore */ }
 
@@ -1597,86 +1472,6 @@ function closeNodeDetail() {
 
 // generateCourseware / TeachAnyMakeCourse 见 assets/scripts/teachany-make-course.js
 
-// ─── 设置面板 ────────────────────────────────────
-
-function toggleSettings() {
-  const overlay = document.getElementById('settingsOverlay');
-  const isOpen = overlay.classList.contains('open');
-  if (isOpen) {
-    overlay.classList.remove('open');
-  } else {
-    populateSettingsForm();
-    overlay.classList.add('open');
-  }
-}
-
-function populateSettingsForm() {
-  const builder = window.PBLPathBuilder;
-  const cfg = builder.getLLMConfig();
-  const providers = builder.providers;
-
-  const providerSel = document.getElementById('providerSelect');
-  providerSel.innerHTML = providers.map(p => 
-    `<option value="${p.id}" ${p.id === cfg.providerId ? 'selected' : ''}>${p.name}</option>`
-  ).join('');
-
-  onProviderChange();
-
-  document.getElementById('apiKeyInput').value = cfg.apiKey || '';
-  document.getElementById('baseUrlInput').value = cfg.baseUrl || '';
-}
-
-function onProviderChange() {
-  const builder = window.PBLPathBuilder;
-  const providerId = document.getElementById('providerSelect').value;
-  const provider = builder.providers.find(p => p.id === providerId) || builder.providers[0];
-
-  const modelSel = document.getElementById('modelSelect');
-  if (provider.models && provider.models.length > 0) {
-    modelSel.innerHTML = provider.models.map(m => 
-      `<option value="${m}" ${m === provider.model ? 'selected' : ''}>${m}</option>`
-    ).join('');
-    modelSel.style.display = 'block';
-  } else {
-    modelSel.innerHTML = '<option value="">输入自定义模型名</option>';
-    modelSel.style.display = 'block';
-  }
-
-  document.getElementById('baseUrlInput').value = provider.baseUrl || '';
-
-  const hints = {
-    'pollinations': '默认免费免 Key 接口，可直接分析；如服务临时拥堵，可切换其他服务商。',
-    'openrouter-free': 'OpenRouter 免费模型仍需注册 Key。',
-    'deepseek': '最便宜，中文理解好。去 platform.deepseek.com 注册。',
-    'openrouter': '聚合多个付费模型。去 openrouter.ai 注册。',
-    'openai': '需要 OpenAI API Key。',
-    'custom': '填写任何 OpenAI 兼容 API 的 Base URL 和 Key。'
-  };
-  const keyInput = document.getElementById('apiKeyInput');
-  keyInput.required = !provider.noAuth;
-  keyInput.disabled = !!provider.noAuth;
-  keyInput.placeholder = provider.noAuth ? '默认服务商免 Key' : 'sk-...';
-  if (provider.noAuth) keyInput.value = '';
-  document.getElementById('keyHint').textContent = hints[providerId] || '';
-}
-
-function saveSettings() {
-  const builder = window.PBLPathBuilder;
-  const providerId = document.getElementById('providerSelect').value;
-  const model = document.getElementById('modelSelect').value;
-  const apiKey = document.getElementById('apiKeyInput').value.trim();
-  const baseUrl = document.getElementById('baseUrlInput').value.trim();
-
-  builder.setLLMConfig({
-    providerId,
-    model,
-    apiKey,
-    baseUrl
-  });
-
-  toggleSettings();
-}
-
 // ─── 页面初始化 ─────────────────────────────────
 const urlParams = new URLSearchParams(window.location.search);
 const pblIdFromURL = urlParams.get('pbl');
@@ -1691,11 +1486,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('pblGoalInput').value = pblGoalFromURL;
     markPBLGoalDirty();
   }
-
-  // 点击设置弹窗外部关闭
-  document.getElementById('settingsOverlay').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) toggleSettings();
-  });
 
   // 点击图谱外部关闭详情面板
   document.addEventListener('mousedown', (e) => {
