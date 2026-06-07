@@ -273,6 +273,56 @@ body {
 }
 
 /* ─── PBL Stats Cards ─────────────────────────── */
+.pbl-export-bar {
+  display: none;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.pbl-export-bar.visible { display: flex; }
+.pbl-export-label { font-size: 13px; color: var(--dim); margin-right: auto; }
+.pbl-export-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.pbl-export-btn:hover { background: rgba(59, 130, 246, 0.22); }
+.pbl-export-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.pbl-export-preview {
+  position: fixed;
+  left: -99999px;
+  top: 0;
+  width: 1200px;
+  background: #0f172a;
+  color: #f8fafc;
+  padding: 24px;
+  z-index: -1;
+}
+.pbl-export-preview .pbl-export-header h1 { font-size: 28px; margin-bottom: 8px; }
+.pbl-export-preview .pbl-export-header .goal { font-size: 15px; color: #94a3b8; margin-bottom: 6px; }
+.pbl-export-preview .pbl-export-section { margin-top: 20px; }
+.pbl-export-preview .pbl-export-section h2 { font-size: 18px; margin-bottom: 10px; color: #f8fafc; }
+.pbl-export-preview .pbl-export-graph svg { max-width: 100%; height: auto; }
+.pbl-export-node-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.pbl-export-node-table th, .pbl-export-node-table td {
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+.pbl-export-node-table th { background: rgba(59, 130, 246, 0.15); }
+
 .pbl-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -794,6 +844,13 @@ body {
     <span class="status-text" id="pblStatusText">正在分析项目目标...</span>
   </div>
 
+  <!-- 导出 -->
+  <div id="pblExportBar" class="pbl-export-bar" aria-live="polite">
+    <span class="pbl-export-label">拆解结果可离线保存或分享</span>
+    <button type="button" class="pbl-export-btn" id="pblExportHtmlBtn" onclick="exportPBLAsHtml()">💾 保存为网页</button>
+    <button type="button" class="pbl-export-btn" id="pblExportImgBtn" onclick="exportPBLAsImage()">🖼️ 保存为长图</button>
+  </div>
+
   <!-- PBL 统计 -->
   <div id="pblStatsContainer" style="display:none">
     <div class="pbl-stats" id="pblStats"></div>
@@ -849,7 +906,7 @@ body {
 </div>
 
 <script src="./assets/scripts/courseware-hub.js"></script>
-<script src="./assets/scripts/pbl-path.js?v=20260607-alltypes"></script>
+<script src="./assets/scripts/pbl-path.js?v=20260607-consumer-export"></script>
 <script src="./assets/scripts/history-tracker.js" defer></script>
 <script src="./assets/scripts/teachany-make-course.js"></script>
 <script>
@@ -1198,6 +1255,155 @@ function showPBLTechRoute(result) {
   }
 }
 
+function togglePBLExportBar(show) {
+  const bar = document.getElementById('pblExportBar');
+  if (!bar) return;
+  bar.classList.toggle('visible', !!show);
+}
+
+function pblExportSlug(text) {
+  const s = String(text || 'pbl').trim().slice(0, 40).replace(/[^\w\u4e00-\u9fa5]+/g, '-').replace(/^-+|-+$/g, '');
+  return s || 'pbl-report';
+}
+
+function getPBLExportStyles() {
+  const styleEl = document.querySelector('style');
+  return styleEl ? styleEl.textContent : '';
+}
+
+const PBL_LAYER_LABELS = {
+  prerequisite: '基础前置', matched: '核心必需', advanced: '扩展高级', parallel: '平行关联', external: '外部补充'
+};
+
+function renderPBLExportNodeTableHTML(nodes) {
+  if (!nodes || !nodes.length) return '';
+  const rows = nodes.map((n, i) => {
+    const layer = PBL_LAYER_LABELS[n.layer] || n.layer || '';
+    const meta = [n.systemTag || n.systemLabel || '', n.subject || '', n.gradeLabel || n.grade || ''].filter(Boolean).join(' · ');
+    const reason = n.matchReason || n.definition || '';
+    return `<tr><td>${i + 1}</td><td>${escapePBLHtml(n.name || '')}</td><td>${escapePBLHtml(layer)}</td><td>${escapePBLHtml(meta)}</td><td>${escapePBLHtml(reason)}</td></tr>`;
+  }).join('');
+  return `<table class="pbl-export-node-table"><thead><tr><th>#</th><th>知识点</th><th>层级</th><th>体系/学科</th><th>说明</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function collectPBLExportSections() {
+  const goal = (pblResult && pblResult.goal) || document.getElementById('pblGoalInput').value.trim();
+  const sections = [];
+  sections.push(`<header class="pbl-export-header"><h1>🧩 PBL 项目拆解报告</h1><p class="goal"><strong>项目目标</strong>：${escapePBLHtml(goal)}</p><p class="goal" style="font-size:13px">导出时间：${escapePBLHtml(new Date().toLocaleString('zh-CN'))} · TeachAny PBL</p></header>`);
+
+  const stats = document.getElementById('pblStats');
+  if (stats && stats.innerHTML.trim()) {
+    sections.push(`<section class="pbl-export-section"><h2>📊 统计概览</h2><div class="pbl-stats">${stats.innerHTML}</div></section>`);
+  }
+
+  const decoBody = document.getElementById('pblDecomposeBody');
+  if (decoBody && decoBody.innerHTML.trim()) {
+    sections.push(`<section class="pbl-export-section"><h2>🧩 项目结构化拆解</h2>${decoBody.innerHTML}</section>`);
+  }
+
+  const routeBody = document.getElementById('pblTechRouteBody');
+  if (routeBody && routeBody.innerHTML.trim()) {
+    sections.push(`<section class="pbl-export-section"><h2>🛤️ 项目实施路径</h2>${routeBody.innerHTML}</section>`);
+  }
+
+  const svg = document.querySelector('#pbl-graph-container svg');
+  if (svg) {
+    const clone = svg.cloneNode(true);
+    const bbox = svg.getBoundingClientRect();
+    if (bbox.width) clone.setAttribute('width', String(Math.ceil(bbox.width)));
+    if (bbox.height) clone.setAttribute('height', String(Math.ceil(bbox.height)));
+    sections.push(`<section class="pbl-export-section"><h2>🗺️ 知识路径图谱</h2><div class="pbl-export-graph">${clone.outerHTML}</div></section>`);
+  }
+
+  const nodes = pblResult && pblResult.graphData && pblResult.graphData.nodes ? pblResult.graphData.nodes : [];
+  if (nodes.length) {
+    sections.push(`<section class="pbl-export-section"><h2>📋 知识点清单</h2>${renderPBLExportNodeTableHTML(nodes)}</section>`);
+  }
+  return { goal, html: sections.join('\n') };
+}
+
+function buildPBLExportHtmlDocument() {
+  const { goal, html } = collectPBLExportSections();
+  const css = getPBLExportStyles();
+  return `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PBL 拆解报告 - ${escapePBLHtml(goal).slice(0, 60)}</title>
+<style>${css}</style>
+</head>
+<body style="background:#0f172a;color:#f8fafc;padding:24px;max-width:1200px;margin:0 auto">
+${html}
+<footer style="margin-top:32px;padding-top:16px;border-top:1px solid rgba(148,163,184,0.2);font-size:12px;color:#64748b">由 <a href="https://www.teachany.cn/pbl" style="color:#3b82f6">TeachAny PBL</a> 导出</footer>
+</body>
+</html>`;
+}
+
+function exportPBLAsHtml() {
+  if (!pblResult) { alert('请先完成项目拆解'); return; }
+  const doc = buildPBLExportHtmlDocument();
+  const blob = new Blob([doc], { type: 'text/html;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${pblExportSlug(pblResult.goal)}.html`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+function loadHtml2Canvas() {
+  if (window.html2canvas) return Promise.resolve(window.html2canvas);
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+    s.onload = () => resolve(window.html2canvas);
+    s.onerror = () => reject(new Error('html2canvas 加载失败'));
+    document.head.appendChild(s);
+  });
+}
+
+async function exportPBLAsImage() {
+  if (!pblResult) { alert('请先完成项目拆解'); return; }
+  const btn = document.getElementById('pblExportImgBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ 生成长图...'; }
+  try {
+    const html2canvas = await loadHtml2Canvas();
+    const { html } = collectPBLExportSections();
+    const preview = document.createElement('div');
+    preview.className = 'pbl-export-preview';
+    preview.innerHTML = html;
+    document.body.appendChild(preview);
+    const canvas = await html2canvas(preview, {
+      backgroundColor: '#0f172a',
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      width: preview.scrollWidth,
+      height: preview.scrollHeight,
+      windowWidth: preview.scrollWidth,
+      windowHeight: preview.scrollHeight
+    });
+    document.body.removeChild(preview);
+    const goal = pblResult.goal || 'pbl';
+    await new Promise((resolve, reject) => {
+      canvas.toBlob(blob => {
+        if (!blob) { reject(new Error('图片生成失败')); return; }
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${pblExportSlug(goal)}.png`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+        resolve();
+      }, 'image/png');
+    });
+  } catch (e) {
+    console.error('[PBL] 长图导出失败:', e);
+    alert('长图导出失败：' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🖼️ 保存为长图'; }
+  }
+}
+
 function scrollToPBLOutput() {
   const deco = document.getElementById('pblDecompose');
   if (deco && deco.style.display !== 'none') {
@@ -1222,7 +1428,10 @@ function renderPBLStats(result) {
   const container = document.getElementById('pblStatsContainer');
   const statsEl = document.getElementById('pblStats');
   const nodes = (result.graphData && result.graphData.nodes) ? result.graphData.nodes : [];
+  const hasDecompose = !!(result.projectBlueprint && (result.projectBlueprint.schemes || []).length);
+  const hasOutput = nodes.length > 0 || hasDecompose;
   container.style.display = nodes.length ? 'block' : 'none';
+  togglePBLExportBar(hasOutput);
   showPBLDecompose(result);
 
   const layerCounts = { prerequisite: 0, matched: 0, advanced: 0, parallel: 0, external: 0 };
