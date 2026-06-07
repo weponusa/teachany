@@ -598,6 +598,83 @@ class PBLPathBuilder {
     return /电解池|原电池|程序控制|电磁感应|电池温度|传感器|数据采集|算法概念|模块化|物联网|闭环控制|电解(?!质)|逆变|并网装置/.test(n);
   }
 
+  /** 项目类型分类（与服务端 classifyProjectType 对齐） */
+  _classifyProjectType(goal) {
+    const g = String(goal || '');
+    if (this._isConsumerDecisionGoal(g)) return 'consumer-decision';
+    if (/海报|短视频|微电影|动画|漫画|插画|绘画|展览|策展|广告|品牌|视觉|游戏设计|作曲|音乐创作|手工艺|表演|舞台|摄影|logo|标志设计|文创|周边设计/.test(g)) return 'creative-media';
+    if (/诗歌|诗集|现代诗|诗词|写诗|小说|剧本|散文|绘本|故事集|演讲|辩论|文学|翻译|双语|新闻稿|采访稿|写一[篇组]|作文|征文|朗诵|文集|杂志|读后感|书评|话剧|文章/.test(g)) return 'humanities-literary';
+    if (/创业|商业计划|营销|市场推广|运营|理财|零花钱|压岁钱|市场调研|义卖|跳蚤市场|店铺|定价|商业模式|经济效益|盈利|众筹|招商|品牌策划/.test(g)) return 'business-economics';
+    if (/健康|营养|饮食|食谱|减脂|减肥|健身|锻炼|运动会?|近视|视力|护眼|睡眠|作息|心理|情绪|压力|安全|急救|防溺水|防火|防疫|卫生|疾病|人体|体重|身高/.test(g)) return 'health-life';
+    if (/种植|种菜|盆栽|养护|养殖|养蚕|园艺|烹饪|烘焙|美食|菜谱|料理|手工|编织|缝纫|收纳|整理|维修|清洁|打扫|劳动/.test(g)) return 'labor-practice';
+    if (/活动策划|策划.{0,6}(活动|晚会|联欢|运动会|典礼|节|比赛)|联欢会|晚会|文艺汇演|毕业典礼|生日会|出游|旅行|研学|游学|路线规划|时间管理|班级布置|布置教室|嘉年华|游园/.test(g)) return 'life-planning';
+    if (/田野|问卷|访谈|社区|民俗|传统文化|非遗|人口|城乡|社会现象|调研报告|公众.{0,4}认知|居民|乡土|口述史/.test(g)) return 'social-inquiry';
+    if (/火箭|导弹|发射|机器人|无人机|电路|机械|硬件|装置|App|应用程序|小程序|网站|系统开发|3D打印|传感|智能|温控|储能|光伏|发电|搭建|制作|工程|发明|物联网|编程实现/.test(g)) return 'engineering';
+    if (/探究|实验|观察|测量|验证|影响因素|变量|检测|成分|对照实验|科学问题/.test(g)) return 'scientific-inquiry';
+    return 'general';
+  }
+
+  /** 非特定 STEM 类型的通用模块（与服务端 genericDomainsForType 对齐） */
+  _genericDomainsForType(id) {
+    const map = {
+      'scientific-inquiry': [
+        { id: 'question', label: '问题与假设', keywords: ['问题', '假设', '猜想', '现象', '原理'], subjects: ['science', 'physics', 'chemistry', 'biology'] },
+        { id: 'design', label: '变量与实验设计', keywords: ['变量', '实验', '控制变量', '对照', '方案', '测量'], subjects: ['physics', 'chemistry', 'biology', 'science'] },
+        { id: 'data', label: '数据采集与处理', keywords: ['数据', '测量', '记录', '统计', '误差', '图表'], subjects: ['math', 'info-tech', 'science'] },
+        { id: 'conclusion', label: '分析与结论', keywords: ['分析', '结论', '解释', '规律', '报告'], subjects: ['science', 'math', 'chinese'] },
+      ],
+      'social-inquiry': [
+        { id: 'topic', label: '选题与调查设计', keywords: ['选题', '调查', '问卷', '访谈', '抽样', '样本'], subjects: ['chinese', 'math'] },
+        { id: 'collect', label: '资料与数据收集', keywords: ['资料', '数据', '收集', '记录', '文献', '实地'], subjects: ['geography', 'history', 'chinese'] },
+        { id: 'analyze', label: '整理与统计分析', keywords: ['统计', '整理', '图表', '分析', '百分比', '平均数'], subjects: ['math'] },
+        { id: 'report', label: '结论与报告', keywords: ['结论', '报告', '建议', '论证', '写作', '说明'], subjects: ['chinese'] },
+      ],
+      'humanities-literary': [
+        { id: 'theme', label: '立意与选材', keywords: ['立意', '主题', '选材', '构思', '观点'], subjects: ['chinese', 'english'] },
+        { id: 'read', label: '阅读与素材积累', keywords: ['阅读', '素材', '文本', '名著', '积累', '鉴赏'], subjects: ['chinese', 'english', 'history'] },
+        { id: 'express', label: '结构与表达', keywords: ['结构', '表达', '修辞', '语言', '写作', '叙述', '议论'], subjects: ['chinese', 'english'] },
+        { id: 'revise', label: '修改与展示', keywords: ['修改', '评议', '朗诵', '展示', '演讲', '发表'], subjects: ['chinese'] },
+      ],
+      'creative-media': [
+        { id: 'idea', label: '创意构思', keywords: ['创意', '构思', '主题', '灵感', '受众'], subjects: ['chinese', 'info-tech'] },
+        { id: 'design', label: '设计与草案', keywords: ['设计', '草图', '分镜', '排版', '色彩', '构图'], subjects: ['info-tech', 'chinese'] },
+        { id: 'make', label: '制作与实现', keywords: ['制作', '剪辑', '绘制', '编辑', '工具', '技术'], subjects: ['info-tech'] },
+        { id: 'show', label: '展示与评议', keywords: ['展示', '评议', '反馈', '发布', '优化'], subjects: ['chinese'] },
+      ],
+      'business-economics': [
+        { id: 'research', label: '需求与市场调研', keywords: ['需求', '市场', '调研', '调查', '数据', '用户'], subjects: ['math', 'chinese'] },
+        { id: 'plan', label: '方案与产品设计', keywords: ['方案', '产品', '设计', '策划', '创意'], subjects: ['chinese', 'info-tech'] },
+        { id: 'cost', label: '成本与定价测算', keywords: ['成本', '定价', '利润', '预算', '函数', '百分比', '统计'], subjects: ['math'] },
+        { id: 'operate', label: '运营与复盘', keywords: ['运营', '推广', '复盘', '反馈', '报告'], subjects: ['chinese', 'math'] },
+      ],
+      'life-planning': [
+        { id: 'goal', label: '需求与目标', keywords: ['需求', '目标', '调查', '问卷', '场景', '人数'], subjects: ['chinese', 'math'] },
+        { id: 'plan', label: '方案与日程', keywords: ['方案', '计划', '日程', '安排', '路线', '流程', '行程'], subjects: ['chinese', 'geography', 'math'] },
+        { id: 'budget', label: '预算与分工', keywords: ['预算', '成本', '费用', '统计', '函数', '分工', '百分比', '比例'], subjects: ['math'] },
+        { id: 'review', label: '执行与复盘', keywords: ['执行', '记录', '反馈', '复盘', '总结', '报告', '通知'], subjects: ['chinese'] },
+      ],
+      'health-life': [
+        { id: 'status', label: '现状了解', keywords: ['现状', '调查', '统计', '数据', '测量', '记录'], subjects: ['math', 'biology', 'science'] },
+        { id: 'knowledge', label: '健康知识', keywords: ['健康', '营养', '饮食', '运动', '睡眠', '安全', '疾病', '人体', '视力'], subjects: ['biology', 'science'] },
+        { id: 'plan', label: '计划制定', keywords: ['计划', '方案', '目标', '食谱', '作息', '锻炼'], subjects: ['chinese', 'math'] },
+        { id: 'assess', label: '实践与评估', keywords: ['记录', '评估', '对比', '反馈', '改进', '报告', '宣传', '倡议'], subjects: ['chinese', 'math'] },
+      ],
+      'labor-practice': [
+        { id: 'prepare', label: '认识与准备', keywords: ['认识', '准备', '材料', '工具', '原理', '步骤'], subjects: ['science', 'biology', 'chinese'] },
+        { id: 'practice', label: '操作实践', keywords: ['操作', '制作', '种植', '养护', '烹饪', '步骤', '工艺'], subjects: ['science', 'biology'] },
+        { id: 'record', label: '观察与记录', keywords: ['观察', '记录', '测量', '数据', '变化', '统计'], subjects: ['science', 'math', 'biology'] },
+        { id: 'share', label: '成果与分享', keywords: ['成果', '分享', '展示', '总结', '报告', '改进'], subjects: ['chinese'] },
+      ],
+      'general': [
+        { id: 'define', label: '调研与定义', keywords: ['调研', '需求', '定义', '背景', '分析'], subjects: ['chinese', 'math', 'science'] },
+        { id: 'design', label: '方案设计', keywords: ['方案', '设计', '规划', '分工'], subjects: ['math', 'info-tech', 'chinese'] },
+        { id: 'make', label: '实施制作', keywords: ['实施', '制作', '搭建', '实验', '执行'], subjects: ['science', 'info-tech'] },
+        { id: 'test', label: '测试与展示', keywords: ['测试', '评估', '展示', '优化', '报告'], subjects: ['math', 'chinese'] },
+      ],
+    };
+    return map[id] || [];
+  }
+
   /** 工程子系统拆解（与服务端 pbl-prompts inferProjectDomains 对齐） */
   _inferProjectDomains(goal) {
     const g = String(goal || '');
@@ -696,7 +773,7 @@ class PBLPathBuilder {
         }
       ];
     }
-    return [];
+    return this._genericDomainsForType(this._classifyProjectType(g));
   }
 
   _isEnergyProjectGoal(goal) {
@@ -776,15 +853,12 @@ class PBLPathBuilder {
   }
 
   _isEngineeringGoal(goal) {
-    const g = String(goal || '');
-    if (this._isConsumerDecisionGoal(g)) return false;
-    return /火箭|导弹|发射|弹道|模型|制作|搭建|设计|机器人|温控|电路|传感|原型|工程/.test(g)
-      || this._isEnergyProjectGoal(g);
+    return this._classifyProjectType(goal) === 'engineering' || this._isEnergyProjectGoal(goal);
   }
 
+  /** STEM 严格门禁仅用于工程/科学探究类（避免把生活化/人文项目当 STEM 过滤） */
   _isStemProjectGoal(goal) {
-    if (this._isConsumerDecisionGoal(goal)) return false;
-    return this._isEngineeringGoal(goal) || this._isEnergyProjectGoal(goal);
+    return ['engineering', 'scientific-inquiry'].includes(this._classifyProjectType(goal));
   }
 
   /** 主线相关性：STEM/工程项目宁缺毋滥，拒绝语文/地理/无关生物等 */
@@ -830,10 +904,15 @@ class PBLPathBuilder {
       }
       return true;
     }
-    if (this._scoreNodeForDomains(node, domainList) >= 4) return true;
     const goalTerms = this._tokenizeGoalTerms(g);
-    if (goalTerms.some(t => t.length >= 2 && name.includes(t))) return true;
-    return stemGoal && goalTerms.some(t => t.length >= 3 && text.includes(t));
+    // 非 STEM（生活化/人文/社科/创意/商业等）：节点学科须落在项目模块取向内，
+    // 避免「有机合成路线设计」靠「设计/路线」等通用词混入研学/文创等项目
+    const domainSubjects = new Set(domainList.flatMap(d => d.subjects || []));
+    const subjectOk = stemGoal || domainSubjects.size === 0 || domainSubjects.has(node.subject);
+    if (subjectOk && this._scoreNodeForDomains(node, domainList) >= 4) return true;
+    if (subjectOk && goalTerms.some(t => t.length >= 2 && name.includes(t))) return true;
+    if (stemGoal) return goalTerms.some(t => t.length >= 3 && text.includes(t));
+    return subjectOk && goalTerms.some(t => t.length >= 2 && text.includes(t));
   }
 
   _filterMainlineNodes(matched, goal) {
@@ -848,7 +927,8 @@ class PBLPathBuilder {
         return !/作文|地形|有机合成|弧长|扇形面积/.test(name);
       });
     }
-    return [];
+    // 非 STEM 项目：宁可保留原匹配，也不要整组清空
+    return this._isStemProjectGoal(goal) ? [] : matched;
   }
 
   _scoreNodeForGoal(node, goalTerms, filterSubjects, complex, domains, goal = '') {
@@ -2001,12 +2081,12 @@ class PBLPathBuilder {
     const filter = JSON.parse(jsonStr);
     const domains = this._inferProjectDomains(goal);
 
+    const projectType = this._classifyProjectType(goal);
+
     if (this._isConsumerDecisionGoal(goal)) {
       filter.subjects = ['math', 'physics', 'chemistry', 'geography', 'chinese'];
-    }
-
-    // STEM/工程类：锁定主线学科，禁止 biology/geography/chinese 渗入候选池
-    if ((domains.length || this._isStemProjectGoal(goal)) && profile.complex && !this._isConsumerDecisionGoal(goal)) {
+    } else if (this._isStemProjectGoal(goal) && profile.complex) {
+      // STEM/工程/科学探究类：锁定主线学科，禁止人文学科渗入候选池
       if (/火箭|导弹|发射|弹道|模型火箭/.test(goal)) {
         filter.subjects = ['physics', 'chemistry', 'math', 'info-tech'];
       } else if (this._isEnergyProjectGoal(goal)) {
@@ -2016,9 +2096,13 @@ class PBLPathBuilder {
         if (/燃料|燃烧|化学|材料|氧化|电池|电化学/.test(goal)) subj.push('chemistry');
         if (/模型|函数|计算|数据|弹道|抛体|效率/.test(goal)) subj.push('math');
         if (/控制|传感|编程|电路|数据|算法/.test(goal)) subj.push('info-tech');
+        if (projectType === 'scientific-inquiry') { subj.push('chemistry', 'biology', 'science', 'math'); }
         if (subj.length === 1) subj.push('math');
-        filter.subjects = subj;
+        filter.subjects = [...new Set(subj)];
       }
+    } else if (domains.length && !filter.subjects?.length) {
+      // 生活化/人文/社科/创意/商业等：学科取项目模块的并集，不强行套理科
+      filter.subjects = [...new Set(domains.flatMap(d => d.subjects || []))];
     }
 
     // 根据筛选条件过滤候选集
@@ -2045,11 +2129,14 @@ class PBLPathBuilder {
       if (mainlinePool.length >= 8) pool = mainlinePool;
     }
     const goalTerms = this._tokenizeGoalTerms(goal);
+    const domainSubjectUnion = [...new Set(domains.flatMap(d => d.subjects || []))];
     const defaultSubjects = this._isConsumerDecisionGoal(goal)
       ? ['math', 'physics', 'chemistry', 'geography', 'chinese']
-      : (domains.length
+      : (this._isStemProjectGoal(goal)
         ? ['physics', 'chemistry', 'math', 'info-tech']
-        : ['math', 'physics', 'chemistry', 'biology', 'info-tech']);
+        : (domainSubjectUnion.length
+          ? domainSubjectUnion
+          : ['math', 'physics', 'chemistry', 'biology', 'chinese', 'info-tech']));
     const scored = pool.map(n => ({
       ...n,
       _score: this._scoreNodeForGoal(n, goalTerms, filter.subjects, profile.complex, domains, goal)
