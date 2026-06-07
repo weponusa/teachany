@@ -3,7 +3,7 @@
  * 与 data/pbl/archetypes.json + engineering-registry.json + node-pbl-tags.json 同步
  */
 (function (global) {
-  const CACHE_KEY = 'teachany_pbl_archetypes_v2';
+  const CACHE_KEY = 'teachany_pbl_archetypes_v4';
 
   function norm(s) {
     return String(s || '').trim();
