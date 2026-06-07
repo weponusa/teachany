@@ -785,7 +785,7 @@ body {
 </div>
 
 <script src="./assets/scripts/courseware-hub.js"></script>
-<script src="./assets/scripts/pbl-path.js?v=20260607-server-llm"></script>
+<script src="./assets/scripts/pbl-path.js?v=20260607-actionable"></script>
 <script src="./assets/scripts/history-tracker.js" defer></script>
 <script src="./assets/scripts/teachany-make-course.js"></script>
 <script>
@@ -1048,9 +1048,15 @@ function renderPBLDecomposeHTML(blueprint) {
     html += `<p>${escapePBLHtml(s.summary || '')}</p>`;
     if (s.pros?.length) html += `<p><strong>优点</strong>：${s.pros.map(x => escapePBLHtml(x)).join('；')}</p>`;
     if (s.phases?.length) {
-      html += `<ol style="margin:8px 0 0 18px;font-size:13px;color:var(--dim)">`;
+      html += `<ol class="pbl-decompose-phases" style="margin:8px 0 0 18px;font-size:13px;color:var(--dim)">`;
       s.phases.slice(0, 5).forEach(p => {
-        html += `<li>${escapePBLHtml(p.phase)} → ${escapePBLHtml(p.deliverable || '')}</li>`;
+        html += `<li><strong>${escapePBLHtml(p.phase)}</strong> → ${escapePBLHtml(p.deliverable || '')}`;
+        if (p.steps?.length) {
+          html += `<ul style="margin:4px 0 0 16px;padding:0">`;
+          p.steps.slice(0, 4).forEach(st => { html += `<li>${escapePBLHtml(st)}</li>`; });
+          html += `</ul>`;
+        }
+        html += `</li>`;
       });
       html += `</ol>`;
     }
@@ -1158,7 +1164,7 @@ function renderPBLExportNodeTableHTML(nodes) {
     const reason = n.matchReason || n.definition || '';
     return `<tr><td>${i + 1}</td><td>${escapePBLHtml(n.name || '')}</td><td>${escapePBLHtml(layer)}</td><td>${escapePBLHtml(meta)}</td><td>${escapePBLHtml(reason)}</td></tr>`;
   }).join('');
-  return `<table class="pbl-export-node-table"><thead><tr><th>#</th><th>知识点</th><th>层级</th><th>体系/学科</th><th>说明</th></tr></thead><tbody>${rows}</tbody></table>`;
+  return `<table class="pbl-export-node-table"><thead><tr><th>#</th><th>知识点</th><th>层级</th><th>体系/学科</th><th>本阶段怎么用</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 function collectPBLExportSections() {
