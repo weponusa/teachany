@@ -595,6 +595,14 @@ class PBLPathBuilder {
       && /设计|制作|研发|装置|系统|搭建|工程|发电|储能|模型|实验|探究/.test(g);
   }
 
+  /** 化学溶液/浓度/厨房化学等探究类（以 chemistry 为主线） */
+  _isChemistryInquiryGoal(goal) {
+    const g = String(goal || '');
+    return /浓度|溶液|溶解度|溶质|溶剂|饱和溶液|质量分数|体积分数|物质的溶解|配制溶液/.test(g)
+      || /食盐|盐水|醋酸|苏打|洁厕|电解水|酸碱|中和|化学变化|物质的变化|离子反应/.test(g)
+      || (/厨房|餐桌|调味|烹饪/.test(g) && /盐|酸|碱|醋|化学|浓度|溶液|溶解/.test(g));
+  }
+
   /** 消费决策类应排除的研发/装置课节点 */
   _isRdEngineeringNodeName(name, goal) {
     const n = String(name || '');
@@ -614,7 +622,8 @@ class PBLPathBuilder {
     if (/活动策划|策划.{0,6}(活动|晚会|联欢|运动会|典礼|节|比赛)|联欢会|晚会|文艺汇演|毕业典礼|生日会|出游|旅行|研学|游学|路线规划|时间管理|班级布置|布置教室|嘉年华|游园/.test(g)) return 'life-planning';
     if (/田野|问卷|访谈|社区|民俗|传统文化|非遗|人口|城乡|社会现象|调研报告|公众.{0,4}认知|居民|乡土|口述史/.test(g)) return 'social-inquiry';
     if (/火箭|导弹|发射|机器人|无人机|电路|机械|硬件|装置|App|应用程序|小程序|网站|系统开发|3D打印|传感|智能|温控|储能|光伏|发电|搭建|制作|工程|发明|物联网|编程实现/.test(g)) return 'engineering';
-    if (/探究|实验|观察|测量|验证|影响因素|变量|检测|成分|对照实验|科学问题/.test(g)) return 'scientific-inquiry';
+    if (this._isChemistryInquiryGoal(g)) return 'scientific-inquiry';
+    if (/探究|实验|观察|测量|验证|影响因素|变量|检测|成分|对照实验|科学问题|浓度|溶液|溶解/.test(g)) return 'scientific-inquiry';
     return 'general';
   }
 
@@ -671,8 +680,8 @@ class PBLPathBuilder {
       ],
       'general': [
         { id: 'define', label: '调研与定义', keywords: ['调研', '需求', '定义', '背景', '分析'], subjects: ['chinese', 'math', 'science'] },
-        { id: 'design', label: '方案设计', keywords: ['方案', '设计', '规划', '分工'], subjects: ['math', 'info-tech', 'chinese'] },
-        { id: 'make', label: '实施制作', keywords: ['实施', '制作', '搭建', '实验', '执行'], subjects: ['science', 'info-tech'] },
+        { id: 'design', label: '方案设计', keywords: ['方案', '设计', '规划', '分工'], subjects: ['math', 'science', 'chinese'] },
+        { id: 'make', label: '实施制作', keywords: ['实施', '制作', '搭建', '实验', '执行'], subjects: ['science', 'chemistry', 'physics'] },
         { id: 'test', label: '测试与展示', keywords: ['测试', '评估', '展示', '优化', '报告'], subjects: ['math', 'chinese'] },
       ],
     };
@@ -682,6 +691,30 @@ class PBLPathBuilder {
   /** 工程子系统拆解（与服务端 pbl-prompts inferProjectDomains 对齐） */
   _inferProjectDomains(goal) {
     const g = String(goal || '');
+    if (this._isChemistryInquiryGoal(g)) {
+      return [
+        {
+          id: 'solution', label: '溶液与浓度概念',
+          keywords: ['溶液', '溶质', '溶剂', '浓度', '质量分数', '溶解', '饱和', '配制', '氯化钠', '溶解度'],
+          subjects: ['chemistry']
+        },
+        {
+          id: 'experiment', label: '实验设计与测量',
+          keywords: ['实验', '变量', '对照', '量取', '称量', '配制', '测量', '滴定', '观察'],
+          subjects: ['chemistry', 'science']
+        },
+        {
+          id: 'data', label: '数据处理与表达',
+          keywords: ['数据', '统计', '图表', '计算', '误差', '记录', '百分比', '平均数'],
+          subjects: ['math']
+        },
+        {
+          id: 'application', label: '生活情境与结论',
+          keywords: ['厨房', '食盐', '应用', '安全', '生活', '结论', '报告', '分析', '比较'],
+          subjects: ['chemistry', 'science', 'chinese']
+        }
+      ];
+    }
     if (this._isConsumerDecisionGoal(g)) {
       return [
         {
@@ -897,6 +930,14 @@ class PBLPathBuilder {
       if (/比热容/.test(name) && !/热|环境/.test(text)) return false;
     }
 
+    if (this._isChemistryInquiryGoal(g)) {
+      if (node.subject === 'info-tech') return false;
+      if (/程序|编程|算法|循环结构|分支结构|变量和数据类型|模块化|物联网/.test(name)) return false;
+      if (/人体.*器官|器官系统|循环.*系统|消化.*系统|呼吸.*系统|神经.*系统/.test(name)) return false;
+      if (/饮食.*健康|营养.*均衡|食物.*营养/.test(name) && !/钠|盐|矿物|离子|化学/.test(text)) return false;
+      if (node.subject === 'biology' && this._isBiologyNodeName(name)) return false;
+    }
+
     if (stemGoal) {
       const badName = /作文|写作|任务驱动|实用类文本|地形|等高线|经纬|有机合成|官能团|烃的|弧长|扇形面积|几何图形初步|诗词|文言|议论文结构|世界地形/;
       if (badName.test(name)) return false;
@@ -976,6 +1017,13 @@ class PBLPathBuilder {
       if (this._isRdEngineeringNodeName(node.name, goal)) score -= 20;
       if (['math', 'geography', 'chinese'].includes(node.subject)) score += 3;
       if (/内燃机|热机|效率|统计|函数|环境|排放|污染/.test(node.name || '')) score += 4;
+    }
+    if (goal && this._isChemistryInquiryGoal(goal)) {
+      if (node.subject === 'chemistry') score += 8;
+      if (/溶液|浓度|溶解|溶质|溶剂|质量分数|配制|氯化钠/.test(node.name || '')) score += 6;
+      if (node.subject === 'math' && /数据|统计|图表|百分比/.test(node.name || '')) score += 3;
+      if (node.subject === 'info-tech') score -= 18;
+      if (/器官系统|程序设计|程序控制|饮食.*健康|营养.*均衡/.test(node.name || '')) score -= 22;
     }
     return score;
   }
@@ -1189,6 +1237,13 @@ class PBLPathBuilder {
 
   /** 按项目类型提供课标外知识点候选池（LLM 未返回时回退） */
   _fallbackExternalPool(goal) {
+    if (this._isChemistryInquiryGoal(goal)) {
+      return [
+        { name: '厨房化学实验安全操作', reason: '加热、称量、取用调味品的安全要点，课标较少单独讲授' },
+        { name: '家用电子秤读数与误差', reason: '厨房称量工具的使用与读数规则，实践必需但课标外' },
+        { name: '食品包装标签上的钠/盐含量解读', reason: '联系生活情境理解浓度标注，课本通常不展开' },
+      ];
+    }
     const pools = {
       'consumer-decision': [
         { name: '全生命周期用车成本（TCO）', reason: '课标未系统讲授购车全成本模型，但家庭选车决策必需' },
@@ -1408,12 +1463,43 @@ class PBLPathBuilder {
     return map[role] || '实施阶段';
   }
 
-  _defaultDeliverable(role) {
+  _defaultDeliverable(role, goal = '') {
+    if (this._isChemistryInquiryGoal(goal)) {
+      return ({
+        foundation: '溶液与浓度概念图 / 公式推导笔记',
+        bridge: '厨房食盐溶液探究实验方案与记录表',
+        core: '浓度计算结果、对比分析与生活应用小结'
+      })[role] || '化学探究阶段成果';
+    }
     return ({
       foundation: '概念图 / 知识准备笔记',
       bridge: '原理分析报告或验证实验方案',
       core: '可运行原型、测试数据或阶段作品'
     })[role] || '阶段成果物';
+  }
+
+  _suggestPhaseSteps(goal, group) {
+    const nodes = group.nodes || [];
+    const kn = nodes.map(n => n.name).filter(Boolean);
+    const knRef = kn.map(n => `「${n}」`).join('、') || '相关知识';
+    if (this._isChemistryInquiryGoal(goal)) {
+      const byRole = {
+        foundation: [
+          `用 ${knRef} 解释：食盐溶于水时溶质、溶剂、溶液分别是什么`,
+          '写出溶质质量分数公式，并举例说明厨房场景下可测量的量',
+        ],
+        bridge: [
+          '设计厨房食盐溶液浓度测定或配制实验：明确变量、对照与数据记录表',
+          `结合 ${kn[0] || '溶液'} 列出实验步骤、器材与安全注意事项`,
+        ],
+        core: [
+          '按方案称量、溶解并记录溶质质量与溶液质量（或体积）',
+          '计算质量分数，与包装标签或经验浓度对比并分析误差原因',
+        ],
+      };
+      return (byRole[group.role] || [`围绕 ${knRef} 完成探究记录与数据分析`]).slice(0, 3);
+    }
+    return null;
   }
 
   _groupMainlineIntoPhases(mainline) {
@@ -1487,9 +1573,10 @@ class PBLPathBuilder {
     const llm = projectPhases || [];
     const phases = groups.map((g, i) => {
       const lp = llm[i] || {};
-      const steps = Array.isArray(lp.steps) && lp.steps.length
+      const contextual = this._suggestPhaseSteps(goal, g);
+      const steps = Array.isArray(lp.steps) && lp.steps.length && !/完成图谱\d|课件与配套练习/.test(lp.steps.join(''))
         ? lp.steps
-        : g.nodes.map(n => `完成图谱${this._pathStepCircled(n.pathStep)}「${n.name}」课件与配套练习`);
+        : (contextual || g.nodes.map(n => `运用${this._pathStepCircled(n.pathStep)}「${n.name}」完成本阶段探究任务与记录`));
       return {
         phaseIndex: g.phaseIndex,
         phase: lp.phase || lp.name || g.phase,
@@ -1500,7 +1587,7 @@ class PBLPathBuilder {
         nodeIds: g.nodeIds,
         knowledgeNames: g.knowledgeNames,
         steps,
-        deliverable: lp.deliverable || lp.output || this._defaultDeliverable(g.role),
+        deliverable: lp.deliverable || lp.output || this._defaultDeliverable(g.role, goal),
         literacy: this._literacyFromLlmPhase(lp)
       };
     });
@@ -1761,6 +1848,37 @@ class PBLPathBuilder {
         knowledgeChain: '需求调研 → 对比框架 → 科学原理 → 成本测算 → 购车建议',
         fallback: true
       }, goal);
+    }
+
+    if (this._isChemistryInquiryGoal(goal)) {
+      return {
+        projectSummary: String(goal || '').slice(0, 160),
+        deliverable: '厨房食盐溶液浓度探究报告（含实验方案、数据记录表、浓度计算与生活应用分析）',
+        projectType: 'scientific-inquiry',
+        constraints: ['使用安全可得的厨房材料', '计算需有数据支撑'],
+        subsystems: [
+          { id: 'solution', name: '溶液与浓度概念', description: '理解溶质/溶剂/溶液与质量分数' },
+          { id: 'experiment', name: '实验设计与测量', description: '设计配制或测定食盐溶液浓度的实验' },
+          { id: 'data', name: '数据处理', description: '记录数据并用统计图表呈现' },
+          { id: 'application', name: '生活应用', description: '联系厨房情境解释结果并撰写报告' }
+        ],
+        schemes: [{
+          id: 'A',
+          name: '配制—计算—对比（推荐）',
+          summary: '在厨房情境中配制食盐溶液，计算质量分数并与标签/经验值对比',
+          pros: ['贴近生活', '化学主线清晰', '兼顾统计表达'],
+          cons: ['需规范称量'],
+          phases: [
+            { phase: '概念准备', steps: ['辨析溶质溶剂溶液', '写出质量分数公式'], deliverable: '概念笔记', knowledgeHints: ['溶液', '溶质', '溶剂', '质量分数', '浓度'] },
+            { phase: '实验设计', steps: ['确定称量方案', '设计记录表'], deliverable: '实验方案', knowledgeHints: ['实验', '变量', '测量', '配制'] },
+            { phase: '动手探究', steps: ['称量溶解并记录数据'], deliverable: '实验数据表', knowledgeHints: ['溶解', '配制', '数据', '记录'] },
+            { phase: '计算与报告', steps: ['计算浓度并制图分析', '撰写生活应用小结'], deliverable: '探究报告', knowledgeHints: ['统计', '图表', '计算', '报告'] }
+          ]
+        }],
+        recommendedSchemeId: 'A',
+        knowledgeChain: '溶液概念 → 实验设计 → 数据记录 → 浓度计算 → 生活应用',
+        fallback: true
+      };
     }
 
     const domains = this._inferProjectDomains(goal);
@@ -2251,6 +2369,8 @@ class PBLPathBuilder {
 
     if (this._isConsumerDecisionGoal(goal)) {
       filter.subjects = ['math', 'physics', 'chemistry', 'geography', 'chinese'];
+    } else if (this._isChemistryInquiryGoal(goal)) {
+      filter.subjects = ['chemistry', 'science', 'math'];
     } else if (this._isStemProjectGoal(goal) && profile.complex) {
       // STEM/工程/科学探究类：锁定主线学科，禁止人文学科渗入候选池
       if (/火箭|导弹|发射|弹道|模型火箭/.test(goal)) {
@@ -2308,7 +2428,7 @@ class PBLPathBuilder {
       _score: this._scoreNodeForGoal(n, goalTerms, filter.subjects, profile.complex, domains, goal)
     }));
     const subjectList = filter.subjects && filter.subjects.length ? filter.subjects : defaultSubjects;
-    const topCandidates = domains.length && (profile.complex || this._isConsumerDecisionGoal(goal))
+    const topCandidates = domains.length && (profile.complex || this._isConsumerDecisionGoal(goal) || this._isChemistryInquiryGoal(goal))
       ? this._pickDomainAwareCandidates(scored, MAX_STAGE2_CANDIDATES, domains, goal)
       : this._pickDiverseCandidates(scored, MAX_STAGE2_CANDIDATES, subjectList);
     return { filter, filteredCandidates: topCandidates, domains };
