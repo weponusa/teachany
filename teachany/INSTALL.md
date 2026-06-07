@@ -39,7 +39,7 @@ Skill 文件结构固定，**目录名必须叫 `teachany`**，因为脚本里�
 
 ```bash
 git clone https://github.com/weponusa/teachany.git <work-dir>/teachany-src
-ln -s <work-dir>/teachany-src/skill <your-skill-dir>/teachany
+ln -s <work-dir>/teachany-src/teachany <your-skill-dir>/teachany
 ```
 
 ## 三、首次配置（一次性）
