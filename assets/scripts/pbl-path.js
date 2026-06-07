@@ -1322,6 +1322,166 @@ class PBLPathBuilder {
     return list.slice(0, limit);
   }
 
+  _resolvePrerequisiteNames(node) {
+    return (node.prerequisites || []).map(pid => {
+      const pre = this.unifiedIndex.get(pid);
+      return pre?.name || pid;
+    }).filter(Boolean);
+  }
+
+  _enrichCandidateForMatch(node) {
+    return {
+      name: node.name,
+      grade: node.grade,
+      gradeLabel: node.gradeLabel,
+      subject: node.subject,
+      systemTag: node.systemTag,
+      definition: node.definition || (node.curriculum_points || []).join(' ').slice(0, 120),
+      prerequisiteNames: this._resolvePrerequisiteNames(node),
+    };
+  }
+
+  _inferBloomProfile(projectBlueprint) {
+    if (typeof PBLBloom !== 'undefined' && PBLBloom.inferBloomFromBlueprint) {
+      return PBLBloom.inferBloomFromBlueprint(projectBlueprint);
+    }
+    return { ceiling: 3, ceilingLabel: 'apply', evidence: [], actionVerbs: [] };
+  }
+
+  _isNodeAboveBloomCeiling(node, ceiling) {
+    if (typeof PBLBloom !== 'undefined' && PBLBloom.isNodeAboveBloomCeiling) {
+      return PBLBloom.isNodeAboveBloomCeiling(node, ceiling);
+    }
+    return false;
+  }
+
+  _mergeBloomProfile(ruleBloom, llmFilter) {
+    const ceiling = Math.min(
+      ruleBloom?.ceiling || 6,
+      parseInt(llmFilter?.bloomCeiling, 10) || ruleBloom?.ceiling || 6
+    );
+    return {
+      ceiling,
+      ceilingLabel: ruleBloom?.ceilingLabel || 'apply',
+      evidence: [...(ruleBloom?.evidence || []), ...(llmFilter?.bloomEvidence || [])].slice(0, 4),
+      actionVerbs: [...new Set([...(ruleBloom?.actionVerbs || []), ...(llmFilter?.actionVerbs || [])])].slice(0, 8),
+    };
+  }
+
+  _ruleCheckDepEdge(source, target) {
+    const srcRole = source.role || source.pblRole || '';
+    const tgtRole = target.role || target.pblRole || '';
+    if (source.index === target.index) return 'invalid';
+    if (tgtRole === 'foundation' && (srcRole === 'core' || srcRole === 'bridge')) return 'reversed';
+    if (srcRole === 'core' && tgtRole === 'foundation') return 'invalid';
+    const tgtOfficial = target.officialPrereqs || [];
+    const srcOfficial = source.officialPrereqs || [];
+    if (tgtOfficial.includes(source.name)) return 'valid';
+    if (srcOfficial.includes(target.name)) return 'reversed';
+    return null;
+  }
+
+  _buildDepEdgesForVerify(matchResult, candidates, matched) {
+    const idToMatched = new Map();
+    matched.forEach((n, i) => idToMatched.set(n.id, { ...n, matchIndex: i }));
+    const indexToCandidate = new Map(candidates.map((n, i) => [i, n]));
+    const edges = [];
+    (matchResult.matched || []).forEach(m => {
+      const tgtIdx = this._parseMatchIndex(m, candidates.length);
+      if (tgtIdx < 0) return;
+      const tgtNode = candidates[tgtIdx];
+      const tgtMatched = idToMatched.get(tgtNode.id);
+      if (!tgtMatched) return;
+      (m.dependsOn || []).forEach(dep => {
+        const srcIdx = typeof dep === 'string' ? parseInt(dep, 10) : dep;
+        if (!Number.isInteger(srcIdx) || srcIdx < 0 || srcIdx >= candidates.length) return;
+        const srcNode = indexToCandidate.get(srcIdx);
+        if (!srcNode) return;
+        const edgeId = `e${srcIdx}-${tgtIdx}`;
+        const srcMatched = matched.find(x => x.id === srcNode.id);
+        edges.push({
+          id: edgeId,
+          sourceIndex: srcIdx,
+          targetIndex: tgtIdx,
+          sourceName: srcNode.name,
+          sourceRole: srcMatched?.pblRole || 'node',
+          targetName: tgtNode.name,
+          targetRole: m.role || tgtMatched.pblRole || 'node',
+          officialPrereqs: this._resolvePrerequisiteNames(tgtNode),
+          sourceOfficialPrereqs: this._resolvePrerequisiteNames(srcNode),
+        });
+      });
+    });
+    return edges;
+  }
+
+  _applyDepVerification(matchResult, verification, candidates) {
+    const verdictMap = new Map((verification?.edges || []).map(e => [e.id, e]));
+    const patched = (matchResult.matched || []).map(m => ({
+      ...m,
+      dependsOn: [...(m.dependsOn || [])],
+    }));
+    patched.forEach(m => {
+      const tgtIdx = this._parseMatchIndex(m, candidates.length);
+      if (tgtIdx < 0) return;
+      const kept = [];
+      (m.dependsOn || []).forEach(dep => {
+        const srcIdx = typeof dep === 'string' ? parseInt(dep, 10) : dep;
+        if (!Number.isInteger(srcIdx)) return;
+        const edgeId = `e${srcIdx}-${tgtIdx}`;
+        const v = verdictMap.get(edgeId);
+        if (!v || v.verdict === 'valid') {
+          kept.push(srcIdx);
+        } else if (v.verdict === 'reversed') {
+          const srcMatch = patched.find(x => this._parseMatchIndex(x, candidates.length) === srcIdx);
+          if (srcMatch && !srcMatch.dependsOn.includes(tgtIdx)) {
+            srcMatch.dependsOn.push(tgtIdx);
+          }
+        }
+      });
+      m.dependsOn = [...new Set(kept)];
+    });
+    return { ...matchResult, matched: patched };
+  }
+
+  async _llmVerifyDepsStage(goal, matchResult, candidates, matched) {
+    const edges = this._buildDepEdgesForVerify(matchResult, candidates, matched);
+    if (!edges.length) return matchResult;
+
+    const ruleResolved = edges.map(e => {
+      const rule = this._ruleCheckDepEdge(
+        { name: e.sourceName, role: e.sourceRole, index: e.sourceIndex, officialPrereqs: e.sourceOfficialPrereqs },
+        { name: e.targetName, role: e.targetRole, index: e.targetIndex, officialPrereqs: e.officialPrereqs }
+      );
+      return { ...e, ruleVerdict: rule };
+    });
+    const needLlm = ruleResolved.filter(e => !e.ruleVerdict);
+    let llmVerdicts = { edges: [] };
+
+    if (needLlm.length) {
+      try {
+        const response = await this._callPBLAnalyzeStage('verify-deps', {
+          goal,
+          edges: needLlm.map(({ id, sourceName, sourceRole, targetName, targetRole, officialPrereqs }) => ({
+            id, sourceName, sourceRole, targetName, targetRole, officialPrereqs,
+          })),
+        });
+        const jsonStr = this._extractJsonObject(response);
+        llmVerdicts = JSON.parse(jsonStr);
+      } catch (e) {
+        console.warn('[PBL] verify-deps 失败，保留规则校验结果:', e.message);
+      }
+    }
+
+    const allVerdicts = [
+      ...ruleResolved.filter(e => e.ruleVerdict).map(e => ({
+        id: e.id, verdict: e.ruleVerdict, reason: '规则校验',
+      })),
+      ...(llmVerdicts.edges || []),
+    ];
+    return this._applyDepVerification(matchResult, { edges: allVerdicts }, candidates);
+  }
+
   _buildDependsOnLinks(result, candidates) {
     const links = [];
     (result.matched || []).forEach(m => {
@@ -2469,17 +2629,24 @@ class PBLPathBuilder {
     }
 
     // 4. 第零阶段：全链路拆解可行方案（不选课标）
-    this._reportPBLStatus(onStatus, '第 1/3 步：全链路拆解可行方案...');
+    this._reportPBLStatus(onStatus, '第 1/4 步：全链路拆解可行方案...');
     const projectBlueprint = await this._llmDecomposeStage(goal);
     const blueprintPhases = this._blueprintProjectPhases(projectBlueprint);
+    const bloomProfile = this._inferBloomProfile(projectBlueprint);
 
     // 5. 第一阶段 LLM：判断学科+学段+课标体系（压缩候选集）
-    this._reportPBLStatus(onStatus, '第 2/3 步：筛选课标学科与候选池...');
-    const stage1 = await this._llmFilterStage(goal, candidates, projectBlueprint);
+    this._reportPBLStatus(onStatus, '第 2/4 步：筛选课标学科与候选池（Bloom 层级）...');
+    const stage1 = await this._llmFilterStage(goal, candidates, projectBlueprint, bloomProfile);
 
     // 6. 第二阶段 LLM：按蓝图阶段精确匹配课标
-    this._reportPBLStatus(onStatus, '第 3/3 步：按蓝图阶段匹配课标知识点...');
-    const stage2 = await this._llmMatchStage(goal, stage1.filteredCandidates, projectBlueprint);
+    this._reportPBLStatus(onStatus, '第 3/4 步：按蓝图阶段匹配课标知识点...');
+    let stage2 = await this._llmMatchStage(goal, stage1.filteredCandidates, projectBlueprint, stage1.bloomProfile);
+
+    // 7. 第三阶段：dependsOn 方向性验证
+    this._reportPBLStatus(onStatus, '第 4/4 步：校验知识依赖方向...');
+    const verifiedResult = await this._llmVerifyDepsStage(goal, stage2.rawMatchResult, stage1.filteredCandidates, stage2.matched);
+    stage2.dependsOnLinks = this._buildDependsOnLinks(verifiedResult, stage1.filteredCandidates);
+
     const finalized = this._finalizePBLGraph(goal, stage2.matched, stage2.external, activeSystems, {
       pathOrderIds: stage2.pathOrderIds,
       dependsOnLinks: stage2.dependsOnLinks || [],
@@ -2541,8 +2708,9 @@ class PBLPathBuilder {
     };
   }
 
-  async _llmFilterStage(goal, candidates, projectBlueprint = null) {
+  async _llmFilterStage(goal, candidates, projectBlueprint = null, bloomProfile = null) {
     const profile = this._getPBLGoalProfile(goal);
+    const ruleBloom = bloomProfile || this._inferBloomProfile(projectBlueprint);
 
     // 按学科+课标体系分组统计
     const subjectSummary = {};
@@ -2563,10 +2731,15 @@ class PBLPathBuilder {
       goal,
       summaryList,
       complex: profile.complex,
-      projectBlueprint
+      projectBlueprint,
+      bloomProfile: ruleBloom,
     });
     const jsonStr = this._extractJsonObject(response);
     const filter = JSON.parse(jsonStr);
+    const mergedBloom = this._mergeBloomProfile(ruleBloom, filter);
+    filter.bloomCeiling = mergedBloom.ceiling;
+    filter.bloomEvidence = mergedBloom.evidence;
+    filter.actionVerbs = mergedBloom.actionVerbs;
     const domains = this._inferProjectDomains(goal);
 
     const projectType = this._classifyProjectType(goal);
@@ -2599,6 +2772,7 @@ class PBLPathBuilder {
 
     // 根据筛选条件过滤候选集
     const minGrade = profile.complex ? PBLPathBuilder.PBL_MIN_GRADE_COMPLEX : 1;
+    const bloomCeiling = mergedBloom.ceiling || 3;
     const filteredCandidates = candidates.filter(n => {
       const subjectMatch = !filter.subjects || filter.subjects.length === 0 || filter.subjects.includes(n.subject);
       const systemMatch = !filter.systems || filter.systems.length === 0 || filter.systems.includes(n.system);
@@ -2607,6 +2781,7 @@ class PBLPathBuilder {
         || filter.grades.some(g => Math.abs(grade - g) <= 2);
       const notElementary = grade === 0 || grade >= minGrade;
       if (profile.complex && this._excludeForComplexProject(n)) return false;
+      if (this._isNodeAboveBloomCeiling(n, bloomCeiling)) return false;
       return subjectMatch && systemMatch && gradeMatch && notElementary;
     });
 
@@ -2637,21 +2812,15 @@ class PBLPathBuilder {
     const topCandidates = domains.length && (profile.complex || this._isConsumerDecisionGoal(goal) || this._isChemistryInquiryGoal(goal))
       ? this._pickDomainAwareCandidates(scored, MAX_STAGE2_CANDIDATES, domains, goal)
       : this._pickDiverseCandidates(scored, MAX_STAGE2_CANDIDATES, subjectList);
-    return { filter, filteredCandidates: topCandidates, domains };
+    return { filter, filteredCandidates: topCandidates, domains, bloomProfile: mergedBloom };
   }
 
-  async _llmMatchStage(goal, candidates, projectBlueprint = null) {
+  async _llmMatchStage(goal, candidates, projectBlueprint = null, bloomProfile = null) {
     const profile = this._getPBLGoalProfile(goal);
     const complex = profile.complex;
     const minConf = complex ? 0.58 : 0.52;
     const blueprintPhases = this._blueprintProjectPhases(projectBlueprint);
-    const candidatesLite = candidates.map(n => ({
-      name: n.name,
-      grade: n.grade,
-      gradeLabel: n.gradeLabel,
-      subject: n.subject,
-      systemTag: n.systemTag
-    }));
+    const candidatesLite = candidates.map(n => this._enrichCandidateForMatch(n));
 
     const response = await this._callPBLAnalyzeStage('match', {
       goal,
@@ -2660,7 +2829,8 @@ class PBLPathBuilder {
       maxMatched: profile.maxMatched,
       minConf,
       domainHints: this._inferProjectDomains(goal),
-      projectBlueprint
+      projectBlueprint,
+      bloomProfile: bloomProfile || this._inferBloomProfile(projectBlueprint),
     });
     let result = { matched: [], pathOrder: [], projectPhases: [], external: [], techRoute: '' };
     try {
@@ -2732,7 +2902,16 @@ class PBLPathBuilder {
 
     const techRoute = (result.techRoute || '').trim();
     const knowledgeChain = (result.knowledgeChain || '').trim();
-    return { matched, external, techRoute, pathOrderIds, projectPhases, dependsOnLinks, knowledgeChain };
+    return {
+      matched,
+      external,
+      techRoute,
+      pathOrderIds,
+      projectPhases,
+      dependsOnLinks,
+      knowledgeChain,
+      rawMatchResult: result,
+    };
   }
 
   _buildFallbackTechRoute(goal, matched = [], external = []) {
