@@ -232,6 +232,111 @@ body {
   border-color: var(--accent);
   color: var(--accent);
 }
+.pbl-settings-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  color: var(--dim);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pbl-settings-btn:hover { border-color: var(--accent); color: var(--text); }
+
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.settings-overlay.open { display: flex; }
+.settings-modal {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  width: 480px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.settings-modal h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 20px;
+}
+.settings-modal label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dim);
+  margin-bottom: 6px;
+  margin-top: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.settings-modal select,
+.settings-modal input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+}
+.settings-modal select:focus,
+.settings-modal input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(245,158,11,0.1);
+}
+.settings-modal .btn-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+.settings-modal .btn-row button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.settings-modal .btn-save {
+  background: var(--accent);
+  color: white;
+  border: none;
+}
+.settings-modal .btn-save:hover { background: #d97706; }
+.settings-modal .btn-cancel {
+  background: var(--bg);
+  color: var(--dim);
+  border: 1px solid var(--border);
+}
+.settings-modal .btn-cancel:hover { color: var(--text); }
+.settings-modal .hint {
+  font-size: 12px;
+  color: var(--dimmer);
+  margin-top: 4px;
+}
+.settings-modal .custom-model-row { display: none; margin-top: 8px; }
+.settings-modal .custom-model-row.visible { display: block; }
+
 /* ─── PBL Status ──────────────────────────────── */
 .pbl-status {
   text-align: center;
@@ -705,6 +810,7 @@ body {
   <!-- PBL 项目式学习路径发现 -->
   <div class="pbl-section">
     <div class="pbl-title">🧭 PBL 项目式学习路径发现</div>
+    <button type="button" class="pbl-settings-btn" id="pblSettingsBtn" onclick="toggleSettings()" title="配置 LLM 模型">⚙️ API 设置</button>
     <div class="pbl-desc">
       用于项目式学习的个性化路径设计。只需描述你的项目目标，AI 将自动从全球课标体系中匹配所需知识点，生成完整的学习路径图谱。<br>
       覆盖 <b>中国课标 / AP / Cambridge / IB / US CCSS</b> 五大体系，支持 K12 及以外的知识点。图谱中的每个知识点均可一键生成个性化课件。
@@ -791,10 +897,36 @@ body {
   <div id="nodeDetailContent"></div>
 </div>
 
+<!-- API 设置弹窗 -->
+<div class="settings-overlay" id="settingsOverlay">
+  <div class="settings-modal">
+    <h2>⚙️ LLM 模型设置</h2>
+    <label for="providerSelect">服务商</label>
+    <select id="providerSelect" onchange="onProviderChange()"></select>
+    <label for="modelSelect">模型</label>
+    <select id="modelSelect" onchange="onModelSelectChange()"></select>
+    <div class="custom-model-row" id="customModelRow">
+      <label for="customModelInput">自定义模型名</label>
+      <input type="text" id="customModelInput" placeholder="如 deepseek-ai/DeepSeek-V3 或 gpt-4o-mini" />
+    </div>
+    <div id="customApiFields">
+      <label for="apiKeyInput">API Key</label>
+      <input type="password" id="apiKeyInput" placeholder="sk-..." />
+      <div class="hint" id="keyHint"></div>
+      <label for="baseUrlInput">Base URL</label>
+      <input type="text" id="baseUrlInput" placeholder="https://api.example.com/v1" />
+    </div>
+    <div class="btn-row">
+      <button type="button" class="btn-cancel" onclick="toggleSettings()">取消</button>
+      <button type="button" class="btn-save" onclick="saveSettings()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
 <script src="./assets/scripts/courseware-hub.js"></script>
 <script src="./assets/scripts/pbl-bloom.js?v=20260608-goal-anchored"></script>
 <script src="./assets/scripts/pbl-archetypes.js?v=20260608-planting"></script>
-<script src="./assets/scripts/pbl-path.js?v=20260608-planting"></script>
+<script src="./assets/scripts/pbl-path.js?v=20260608-model-picker"></script>
 <script src="./assets/scripts/history-tracker.js" defer></script>
 <script src="./assets/scripts/teachany-make-course.js"></script>
 <script>
@@ -917,7 +1049,11 @@ async function analyzePBLGoal() {
     // ── TeachAny 历史上报 ──
     try {
       if (window.TeachAnyHistory && typeof window.TeachAnyHistory.recordPBL === 'function') {
-        window.TeachAnyHistory.recordPBL(goal, { ...result.graphData, systems: result.systems, techRoute: result.techRoute || '' }, { providerName: 'TeachAny 服务端', model: 'preset' });
+        const llmCfg = builder.getLLMConfig();
+        window.TeachAnyHistory.recordPBL(goal, { ...result.graphData, systems: result.systems, techRoute: result.techRoute || '' }, {
+          providerName: llmCfg.providerName,
+          model: llmCfg.model || 'auto',
+        });
       }
     } catch (_e) { /* ignore */ }
 
@@ -1530,6 +1666,138 @@ function closeNodeDetail() {
 
 // generateCourseware / TeachAnyMakeCourse 见 assets/scripts/teachany-make-course.js
 
+// ─── 设置面板 ────────────────────────────────────
+
+function updateModelBadge() {
+  const btn = document.getElementById('pblSettingsBtn');
+  const builder = window.PBLPathBuilder;
+  if (!btn || !builder?.getLLMConfig) return;
+  const cfg = builder.getLLMConfig();
+  const label = cfg.model ? cfg.model : '自动';
+  btn.textContent = `⚙️ ${label}`;
+  btn.title = `${cfg.providerName} · ${label}`;
+}
+
+function toggleSettings() {
+  const overlay = document.getElementById('settingsOverlay');
+  const isOpen = overlay.classList.contains('open');
+  if (isOpen) {
+    overlay.classList.remove('open');
+  } else {
+    populateSettingsForm();
+    overlay.classList.add('open');
+  }
+}
+
+function populateSettingsForm() {
+  const builder = window.PBLPathBuilder;
+  const cfg = builder.getLLMConfig();
+  const saved = builder._llmConfig || {};
+
+  const providerSel = document.getElementById('providerSelect');
+  providerSel.innerHTML = builder.providers.map(p =>
+    `<option value="${p.id}" ${p.id === cfg.providerId ? 'selected' : ''}>${p.name}</option>`
+  ).join('');
+
+  onProviderChange();
+
+  const provider = builder.providers.find(p => p.id === cfg.providerId);
+  const modelVal = saved.model ?? cfg.model ?? '';
+
+  if (provider?.clientLlm) {
+    document.getElementById('customModelInput').value = modelVal || saved.customModel || '';
+  } else if (saved.model === '__custom__' || (modelVal && !(provider?.models || []).includes(modelVal))) {
+    document.getElementById('modelSelect').value = '__custom__';
+    document.getElementById('customModelInput').value = saved.customModel || modelVal || '';
+  } else if (modelVal !== undefined) {
+    const modelSel = document.getElementById('modelSelect');
+    if ([...modelSel.options].some(o => o.value === modelVal)) {
+      modelSel.value = modelVal;
+    }
+  }
+
+  document.getElementById('apiKeyInput').value = saved.apiKey || '';
+  document.getElementById('baseUrlInput').value = saved.baseUrl || '';
+  onModelSelectChange();
+}
+
+function onProviderChange() {
+  const builder = window.PBLPathBuilder;
+  const providerId = document.getElementById('providerSelect').value;
+  const provider = builder.providers.find(p => p.id === providerId) || builder.providers[0];
+
+  const modelSel = document.getElementById('modelSelect');
+  const customApiFields = document.getElementById('customApiFields');
+
+  if (provider.clientLlm) {
+    modelSel.innerHTML = '<option value="">在下方填写模型名</option>';
+    modelSel.style.display = 'none';
+    customApiFields.style.display = 'block';
+    document.getElementById('customModelRow').classList.add('visible');
+    document.getElementById('baseUrlInput').value = provider.baseUrl || document.getElementById('baseUrlInput').value;
+    document.getElementById('keyHint').textContent = '填写 OpenAI 兼容 API 的 Base URL、Key 与模型名；提示词仍由 TeachAny 服务端生成。';
+  } else {
+    modelSel.style.display = 'block';
+    customApiFields.style.display = 'none';
+    const models = provider.models || [];
+    modelSel.innerHTML = models.map(m => {
+      const label = m === '' ? '自动（DeepSeek-V4 → GLM 兜底）' : (m === '__custom__' ? '自定义模型名…' : m);
+      const selected = m === provider.model ? 'selected' : '';
+      return `<option value="${m}" ${selected}>${label}</option>`;
+    }).join('');
+    const hints = {
+      preset: 'TeachAny 服务端 Key，无需填写 API Key；可选指定模型或留空走默认链。',
+      siliconflow: '通过 TeachAny 服务端调用硅基流动；可选列表内模型或自定义模型名。',
+      paratera: '通过 TeachAny 服务端调用并行超算。',
+      openrouter: '通过 TeachAny 服务端调用 OpenRouter。',
+    };
+    document.getElementById('keyHint').textContent = hints[providerId] || '';
+  }
+
+  onModelSelectChange();
+}
+
+function onModelSelectChange() {
+  const model = document.getElementById('modelSelect').value;
+  const row = document.getElementById('customModelRow');
+  const providerId = document.getElementById('providerSelect').value;
+  const isCustomProvider = providerId === 'custom';
+  if (model === '__custom__' || isCustomProvider) {
+    row.classList.add('visible');
+  } else {
+    row.classList.remove('visible');
+  }
+}
+
+function saveSettings() {
+  const builder = window.PBLPathBuilder;
+  const providerId = document.getElementById('providerSelect').value;
+  const model = document.getElementById('modelSelect').value;
+  const customModel = document.getElementById('customModelInput').value.trim();
+  const apiKey = document.getElementById('apiKeyInput').value.trim();
+  const baseUrl = document.getElementById('baseUrlInput').value.trim();
+
+  if (providerId === 'custom') {
+    if (!baseUrl) { alert('请填写 Base URL'); return; }
+    if (!apiKey) { alert('请填写 API Key'); return; }
+    if (!customModel) { alert('请填写模型名称'); return; }
+  } else if (model === '__custom__' && !customModel) {
+    alert('请填写自定义模型名');
+    return;
+  }
+
+  builder.setLLMConfig({
+    providerId,
+    model: providerId === 'custom' ? customModel : model,
+    customModel,
+    apiKey,
+    baseUrl,
+  });
+
+  updateModelBadge();
+  toggleSettings();
+}
+
 // ─── 页面初始化 ─────────────────────────────────
 const urlParams = new URLSearchParams(window.location.search);
 const pblIdFromURL = urlParams.get('pbl');
@@ -1538,6 +1806,12 @@ const makeNodeFromURL = urlParams.get('make');
 const makeNameFromURL = urlParams.get('name');
 
 window.addEventListener('DOMContentLoaded', async () => {
+  updateModelBadge();
+
+  document.getElementById('settingsOverlay').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) toggleSettings();
+  });
+
   // PBL 输入监听
   document.getElementById('pblGoalInput').addEventListener('input', markPBLGoalDirty);
   if (pblGoalFromURL) {

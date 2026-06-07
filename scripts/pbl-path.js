@@ -12,13 +12,188 @@ class PBLPathBuilder {
     this.loaded = false;
     this._loadPromise = null;
 
+    // 全科图谱增强：跨学科边关系图
+    this.graphEdges = [];              // [{source, target}] 全科图谱边
+    this.graphNeighbors = new Map();   // nodeId -> { parents: Set, children: Set }
+    this.graphLoaded = false;
+
     // Tooltip 延迟隐藏：允许鼠标从节点移动到弹窗内点击课程链接
     this._tooltipHideTimer = null;
     this._tooltipHovered = false;
 
-    try { localStorage.removeItem('teachany_pbl_config'); } catch (e) { /* ignore */ }
+    // LLM 服务商：服务端预设 + 可选模型；custom 走客户端自带 Key
+    this.providers = [
+      {
+        id: 'preset',
+        name: 'TeachAny 默认（DeepSeek-V4-Flash）',
+        serverPreset: true,
+        model: '',
+        models: ['', 'deepseek-ai/DeepSeek-V4-Flash', 'GLM-4-Flash', 'qwen/qwen3-next-80b-a3b-instruct:free'],
+      },
+      {
+        id: 'siliconflow',
+        name: '硅基流动',
+        serverBacked: true,
+        model: 'deepseek-ai/DeepSeek-V4-Flash',
+        models: ['deepseek-ai/DeepSeek-V4-Flash', 'deepseek-ai/DeepSeek-V3', 'Qwen/Qwen3-235B-A22B', 'THUDM/GLM-4-9B-0414', '__custom__'],
+      },
+      {
+        id: 'paratera',
+        name: '并行超算',
+        serverBacked: true,
+        model: 'GLM-4-Flash',
+        models: ['GLM-4-Flash', 'DeepSeek-V3.2', 'DeepSeek-R1', 'GLM-4.7', 'GLM-5', '__custom__'],
+      },
+      {
+        id: 'openrouter',
+        name: 'OpenRouter',
+        serverBacked: true,
+        model: 'qwen/qwen3-next-80b-a3b-instruct:free',
+        models: ['qwen/qwen3-next-80b-a3b-instruct:free', 'meta-llama/llama-3.3-70b-instruct:free', 'anthropic/claude-3.5-sonnet', '__custom__'],
+      },
+      {
+        id: 'custom',
+        name: '自定义 API（自带 Key）',
+        clientLlm: true,
+        baseUrl: '',
+        model: '',
+        models: [],
+      },
+    ];
+    this._loadLLMConfig();
+
     this._archetypeEngine = null;
     this._resolvedArchetype = null;
+  }
+
+  _loadLLMConfig() {
+    try {
+      const saved = localStorage.getItem('teachany_pbl_config');
+      if (saved) {
+        const cfg = JSON.parse(saved);
+        if (this.providers.some(p => p.id === cfg.providerId)) {
+          this._llmConfig = cfg;
+          return;
+        }
+      }
+    } catch (e) { /* ignore */ }
+    this._llmConfig = {
+      providerId: 'preset',
+      model: '',
+      apiKey: '',
+      baseUrl: '',
+      customModel: '',
+    };
+  }
+
+  _saveLLMConfig() {
+    try {
+      localStorage.setItem('teachany_pbl_config', JSON.stringify(this._llmConfig));
+    } catch (e) { /* ignore */ }
+  }
+
+  getLLMConfig() {
+    const provider = this.providers.find(p => p.id === this._llmConfig.providerId) || this.providers[0];
+    let model = this._llmConfig.model ?? provider.model ?? '';
+    if (model === '__custom__') {
+      model = String(this._llmConfig.customModel || '').trim();
+    }
+    return {
+      providerId: provider.id,
+      providerName: provider.name,
+      model,
+      apiKey: this._llmConfig.apiKey || '',
+      baseUrl: this._llmConfig.baseUrl || provider.baseUrl || '',
+      serverBacked: !!provider.serverBacked,
+      serverPreset: !!provider.serverPreset,
+      clientLlm: !!provider.clientLlm,
+    };
+  }
+
+  setLLMConfig(cfg) {
+    Object.assign(this._llmConfig, cfg);
+    this._saveLLMConfig();
+  }
+
+  _llmStageOptions(stage) {
+    const map = {
+      decompose: { maxTokens: 4500, temperature: 0.35 },
+      filter: { maxTokens: 1200, temperature: 0.25 },
+      match: { maxTokens: 8000, temperature: 0.15 },
+      'verify-deps': { maxTokens: 2500, temperature: 0.08 },
+    };
+    return map[stage] || { maxTokens: 4000, temperature: 0.2 };
+  }
+
+  async callLLM(messages, options = {}) {
+    const cfg = this.getLLMConfig();
+    if (!cfg.baseUrl) throw new Error('请先配置 Base URL（点击右上角 ⚙️ 设置）');
+    if (!cfg.apiKey) throw new Error('请先配置 API Key（点击右上角 ⚙️ 设置）');
+    if (!cfg.model) throw new Error('请先配置模型名称');
+
+    const cleanBaseUrl = String(cfg.baseUrl).replace(/\/$/, '');
+    const endpoint = /\/chat\/completions/i.test(cleanBaseUrl)
+      ? cleanBaseUrl
+      : `${cleanBaseUrl}/chat/completions`;
+
+    const headers = {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${cfg.apiKey}`,
+    };
+    if (cleanBaseUrl.includes('openrouter.ai')) {
+      headers['HTTP-Referer'] = location.origin || 'https://www.teachany.cn';
+      headers['X-Title'] = 'TeachAny PBL';
+    }
+
+    const body = {
+      model: cfg.model,
+      messages,
+      stream: false,
+      temperature: options.temperature ?? 0.2,
+      max_tokens: options.maxTokens ?? 4000,
+    };
+
+    const ac = new AbortController();
+    const timeout = setTimeout(() => ac.abort(), 90000);
+    try {
+      const resp = await fetch(endpoint, {
+        method: 'POST',
+        headers,
+        signal: ac.signal,
+        body: JSON.stringify(body),
+      });
+      const text = await resp.text();
+      if (!resp.ok) {
+        let errMsg = text.slice(0, 300);
+        try { errMsg = JSON.parse(text)?.error?.message || errMsg; } catch (_e) { /* ignore */ }
+        throw new Error(`API ${resp.status}: ${errMsg}`);
+      }
+      const data = JSON.parse(text);
+      const message = data.choices?.[0]?.message || {};
+      return message.content || message.reasoning || message.reasoning_content || '';
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  async _fetchPBLMessages(stage, payload) {
+    const body = { stage, ...payload, messagesOnly: true };
+    const ac = new AbortController();
+    const timeout = setTimeout(() => ac.abort(), 60000);
+    try {
+      const resp = await fetch(this._getPBLAnalyzeUrl(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: ac.signal,
+        body: JSON.stringify(body),
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(data.error || `PBL API ${resp.status}`);
+      if (!Array.isArray(data.messages)) throw new Error('PBL API 未返回 messages');
+      return data.messages;
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 
   async _ensureArchetypeData() {
@@ -200,6 +375,8 @@ class PBLPathBuilder {
           });
           this.loaded = true;
           console.log(`[PBL] ✅ 从缓存恢复: ${this.unifiedIndex.size} 节点, ${this.systemIndex.size} 课标体系`);
+          // 异步加载全科图谱（即使走缓存也需要）
+          this._loadKnowledgeGraph();
           return this.unifiedIndex;
         }
       }
@@ -284,6 +461,9 @@ class PBLPathBuilder {
     const elapsed = (performance.now() - t0).toFixed(0);
     console.log(`[PBL] ✅ 统一索引就绪: ${totalNodes} 节点, ${elapsed}ms`);
 
+    // 异步加载全科图谱边数据（不阻塞主流程）
+    this._loadKnowledgeGraph();
+
     // 写入缓存
     try {
       const CACHE_KEY = 'teachany_pbl_unified_index_v8';
@@ -294,6 +474,124 @@ class PBLPathBuilder {
     } catch (e) { /* 存储满了忽略 */ }
     return this.unifiedIndex;
   }
+
+  // ─── 全科图谱增强：加载跨学科边数据 ──────────────────────────
+
+  async _loadKnowledgeGraph() {
+    if (this.graphLoaded) return;
+    try {
+      const t0 = performance.now();
+      const resp = await fetch('./data/knowledge-map-data.json?t=' + Date.now());
+      const data = await resp.json();
+
+      // 构建邻接表（双向索引）
+      const neighbors = this.graphNeighbors;
+      (data.edges || []).forEach(e => {
+        const src = e.source, tgt = e.target;
+        if (!neighbors.has(src)) neighbors.set(src, { parents: new Set(), children: new Set() });
+        if (!neighbors.has(tgt)) neighbors.set(tgt, { parents: new Set(), children: new Set() });
+        neighbors.get(src).children.add(tgt);
+        neighbors.get(tgt).parents.add(src);
+      });
+
+      // 补充 unifiedIndex 中缺失的大学节点（grade=0）
+      let uniAdded = 0;
+      (data.nodes || []).forEach(n => {
+        if (n.grade === 0 && !this.unifiedIndex.has(n.id)) {
+          this.unifiedIndex.set(n.id, {
+            id: n.id,
+            name: n.name || n.id,
+            name_en: n.name_en || '',
+            subject: n.subject || '',
+            domain: n.domain || '',
+            domainColor: '#6366f1',
+            grade: 0,
+            difficulty: 0,
+            definition: n.definition || '',
+            key_concepts: [],
+            prerequisites: [],
+            extends: [],
+            parallel: [],
+            status: 'active',
+            courses: [],
+            curriculum_points: [],
+            system: 'cn',
+            systemTag: 'CN',
+            systemLabel: '大学',
+            curriculumLabel: '大学课程',
+            stageLabel: '大学',
+            gradeLabel: '大学',
+            treePath: '',
+            isExternal: false,
+            isUniversity: true
+          });
+          uniAdded++;
+        }
+      });
+
+      this.graphEdges = data.edges || [];
+      this.graphLoaded = true;
+      const elapsed = (performance.now() - t0).toFixed(0);
+      console.log(`[PBL] 🧬 全科图谱就绪: ${this.graphEdges.length} 条边, ${neighbors.size} 节点邻接, ${uniAdded} 大学节点补充, ${elapsed}ms`);
+    } catch (e) {
+      console.warn('[PBL] 全科图谱加载失败（降级为无跨学科增强）:', e.message);
+    }
+  }
+
+  /**
+   * 获取节点的图谱邻居（跨学科前置+后续）
+   * @param {string} nodeId
+   * @param {number} depth - 遍历深度（1=直接邻居, 2=两层）
+   * @returns {{ parents: string[], children: string[], crossSubject: string[] }}
+   */
+  getGraphNeighbors(nodeId, depth = 1) {
+    if (!this.graphLoaded) return { parents: [], children: [], crossSubject: [] };
+    const visited = new Set([nodeId]);
+    let currentLayer = [nodeId];
+    const allParents = new Set();
+    const allChildren = new Set();
+
+    for (let d = 0; d < depth; d++) {
+      const nextLayer = [];
+      currentLayer.forEach(id => {
+        const nb = this.graphNeighbors.get(id);
+        if (!nb) return;
+        nb.parents.forEach(p => { if (!visited.has(p)) { allParents.add(p); nextLayer.push(p); visited.add(p); } });
+        nb.children.forEach(c => { if (!visited.has(c)) { allChildren.add(c); nextLayer.push(c); visited.add(c); } });
+      });
+      currentLayer = nextLayer;
+    }
+
+    // 识别跨学科邻居
+    const selfNode = this.unifiedIndex.get(nodeId);
+    const selfSubject = selfNode ? selfNode.subject : '';
+    const crossSubject = [];
+    [...allParents, ...allChildren].forEach(id => {
+      const n = this.unifiedIndex.get(id);
+      if (n && n.subject && n.subject !== selfSubject) crossSubject.push(id);
+    });
+
+    return { parents: [...allParents], children: [...allChildren], crossSubject };
+  }
+
+  /**
+   * 查找 K12 终端节点到大学节点的桥接路径
+   * @param {string} k12NodeId - K12 节点 ID
+   * @returns {string[]} 可达的大学节点 ID 列表
+   */
+  getUniversityBridges(k12NodeId) {
+    if (!this.graphLoaded) return [];
+    const nb = this.graphNeighbors.get(k12NodeId);
+    if (!nb) return [];
+    const bridges = [];
+    nb.children.forEach(childId => {
+      const child = this.unifiedIndex.get(childId);
+      if (child && (child.grade === 0 || child.isUniversity)) bridges.push(childId);
+    });
+    return bridges;
+  }
+
+  // ─── 原有方法 ──────────────────────────
 
   async _loadSystemTrees(sysId, sysInfo) {
     // 获取该体系下所有子目录
@@ -2829,7 +3127,7 @@ class PBLPathBuilder {
         phases: (s.phases || []).map(p => ({
           ...p,
           steps: (p.steps || []).filter(st => !badRe.test(String(st))),
-          knowledgeHints: [...new Set([...(p.knowledgeHints || []), '植物', '分类', '光合', '种子', '萌发', '栽培', '生长', topic.crop || '月季'].filter(Boolean)])].slice(0, 6),
+          knowledgeHints: [...new Set([...(p.knowledgeHints || []), '植物', '分类', '光合', '种子', '萌发', '栽培', '生长', topic.crop || '月季'].filter(Boolean))].slice(0, 6),
         })).filter(p => (p.steps || []).length > 0),
       }));
       return this._concretizeBlueprint(goal, pbp, this._resolvedArchetype);
@@ -3165,7 +3463,17 @@ class PBLPathBuilder {
   }
 
   async _callPBLAnalyzeStage(stage, payload) {
+    const cfg = this.getLLMConfig();
+    const llmOpts = this._llmStageOptions(stage);
+
+    if (cfg.clientLlm) {
+      const messages = await this._fetchPBLMessages(stage, payload);
+      return this.callLLM(messages, llmOpts);
+    }
+
     const body = { stage, ...payload };
+    if (cfg.model) body.model = cfg.model;
+
     const ac = new AbortController();
     const timeout = setTimeout(() => ac.abort(), 90000);
     try {
@@ -3173,7 +3481,7 @@ class PBLPathBuilder {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: ac.signal,
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
       });
       const data = await resp.json().catch(() => ({}));
       if (!resp.ok) {
@@ -3337,6 +3645,7 @@ class PBLPathBuilder {
     matchedNodes.forEach(n => {
       const kg = this.unifiedIndex.get(n.id);
       if (!kg) return;
+      // 原有：展开课标内 prerequisites
       (kg.prerequisites || []).slice(0, 5).forEach(preId => {
         if (matchedIds.has(preId) || nodeMap.has(preId)) return;
         const preNode = this.unifiedIndex.get(preId);
@@ -3348,6 +3657,43 @@ class PBLPathBuilder {
         nodeMap.set(preId, enriched);
         links.push({ source: preId, target: n.id, type: 'prerequisite' });
       });
+
+      // 全科图谱增强：展开跨学科前置和大学延伸节点
+      if (this.graphLoaded) {
+        const graphNb = this.graphNeighbors.get(n.id);
+        if (graphNb) {
+          // 跨学科前置（来自图谱边的 parents，且不在 prerequisites 中）
+          const existingPrereqs = new Set(kg.prerequisites || []);
+          let crossAdded = 0;
+          graphNb.parents.forEach(parentId => {
+            if (crossAdded >= 3) return; // 每节点最多 3 个跨学科前置
+            if (existingPrereqs.has(parentId) || matchedIds.has(parentId) || nodeMap.has(parentId)) return;
+            const parentNode = this.unifiedIndex.get(parentId);
+            if (!parentNode) return;
+            if (parentNode.subject === kg.subject) return; // 同学科跳过（已由 prerequisites 覆盖）
+            if (complex && this._excludeForComplexProject(parentNode)) return;
+            const enriched = { ...parentNode, layer: 'prerequisite', crossSubject: true };
+            base.nodes.push(enriched);
+            nodeMap.set(parentId, enriched);
+            links.push({ source: parentId, target: n.id, type: 'cross-prerequisite' });
+            crossAdded++;
+          });
+
+          // 大学延伸节点（来自图谱边的 children 中 grade=0 的大学节点）
+          let uniAdded = 0;
+          graphNb.children.forEach(childId => {
+            if (uniAdded >= 2) return; // 每节点最多 2 个大学延伸
+            if (matchedIds.has(childId) || nodeMap.has(childId)) return;
+            const childNode = this.unifiedIndex.get(childId);
+            if (!childNode || childNode.grade !== 0) return;
+            const enriched = { ...childNode, layer: 'advanced', isUniversity: true };
+            base.nodes.push(enriched);
+            nodeMap.set(childId, enriched);
+            links.push({ source: n.id, target: childId, type: 'university-bridge' });
+            uniAdded++;
+          });
+        }
+      }
     });
 
     (dependsOnLinks || []).forEach(l => {
@@ -4129,7 +4475,8 @@ class PBLGraphRenderer {
       matched: '#ef4444',       // 红色 - 直接匹配
       advanced: '#8b5cf6',      // 紫色 - 扩展高级
       parallel: '#3b82f6',      // 蓝色 - 平行关联
-      external: '#eab308'       // 黄色 - 外部补充
+      external: '#eab308',      // 黄色 - 外部补充
+      university: '#6366f1'     // 靛蓝 - 大学延伸
     };
 
     this.layerLabels = {
@@ -4137,7 +4484,8 @@ class PBLGraphRenderer {
       matched: '核心必需',
       advanced: '扩展高级',
       parallel: '平行关联',
-      external: '外部补充'
+      external: '外部补充',
+      university: '大学延伸'
     };
   }
 
@@ -4236,7 +4584,14 @@ class PBLGraphRenderer {
         isExternal: !!n.isExternal
       };
     };
-    const nodes = graphData.nodes.map(enrichNode);
+    const nodes = graphData.nodes.map(n => {
+      const enriched = enrichNode(n);
+      // 大学延伸节点用独立 layer 颜色
+      if (enriched.isUniversity || enriched.grade === 0) enriched.layer = 'university';
+      // 跨学科前置节点加标记
+      if (enriched.crossSubject) enriched.layerSuffix = '(跨学科)';
+      return enriched;
+    });
     const links = graphData.links.map(l => ({ ...l }));
 
     // 箭头标记
@@ -4260,10 +4615,25 @@ class PBLGraphRenderer {
       .data(links)
       .join('line')
       .attr('class', d => `link link-${d.type}`)
-      .attr('stroke', d => d.type === 'path-step' ? this.colors.matched : d.type.includes('external') ? this.colors.external : d.type === 'extends' ? this.colors.advanced : d.type === 'parallel' ? this.colors.parallel : 'rgba(148,163,184,0.3)')
+      .attr('stroke', d => {
+        if (d.type === 'path-step') return this.colors.matched;
+        if (d.type === 'university-bridge') return this.colors.university;
+        if (d.type === 'cross-prerequisite') return '#f59e0b'; // 琥珀色-跨学科
+        if (d.type.includes('external')) return this.colors.external;
+        if (d.type === 'extends') return this.colors.advanced;
+        if (d.type === 'parallel') return this.colors.parallel;
+        return 'rgba(148,163,184,0.3)';
+      })
       .attr('stroke-opacity', d => d.type === 'path-step' ? 0.85 : 0.5)
-      .attr('stroke-width', d => d.type === 'path-step' ? 2.5 : d.type === 'prerequisite' ? 2 : 1.5)
-      .attr('stroke-dasharray', d => d.type.includes('external') ? '6 3' : d.type === 'parallel' ? '3 3' : d.type === 'extends' ? '6 3' : d.type === 'path-step' ? 'none' : 'none')
+      .attr('stroke-width', d => d.type === 'path-step' ? 2.5 : d.type === 'prerequisite' ? 2 : d.type === 'cross-prerequisite' ? 2 : d.type === 'university-bridge' ? 2 : 1.5)
+      .attr('stroke-dasharray', d => {
+        if (d.type === 'university-bridge') return '4 2 1 2'; // 点划线
+        if (d.type === 'cross-prerequisite') return '8 4'; // 长虚线
+        if (d.type.includes('external')) return '6 3';
+        if (d.type === 'parallel') return '3 3';
+        if (d.type === 'extends') return '6 3';
+        return 'none';
+      })
       .attr('marker-end', d => `url(#arrow-${d.type})`);
 
     // 节点组（与 tree.html 同样式：circle + status icon + label + label-en + grade）
@@ -4628,7 +4998,9 @@ class PBLGraphRenderer {
       { label: '核心必需', color: this.colors.matched, dash: false, icon: '✅' },
       { label: '扩展高级', color: this.colors.advanced, dash: false, icon: '📝' },
       { label: '平行关联', color: this.colors.parallel, dash: true, icon: '📝' },
-      { label: '外部补充', color: this.colors.external, dash: true, icon: '💡' }
+      { label: '外部补充', color: this.colors.external, dash: true, icon: '💡' },
+      { label: '跨学科', color: '#f59e0b', dash: true, icon: '🔗' },
+      { label: '大学延伸', color: this.colors.university, dash: true, icon: '🎓' }
     ];
 
     items.forEach(item => {
