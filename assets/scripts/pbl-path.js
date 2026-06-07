@@ -779,12 +779,65 @@ class PBLPathBuilder {
     return ['engineering', 'scientific-inquiry'].includes(this._classifyProjectType(goal));
   }
 
+  /** 跨学科泛素养节点（批判性思维、团队协作等），除非题目明确要求 */
+  _isGenericTransversalNode(name, goal) {
+    const n = String(name || '').trim();
+    if (!n || !PBLPathBuilder.GENERIC_TRANSVERSAL_RE.test(n)) return false;
+    const g = String(goal || '');
+    if (/团队|协作|合作|分工|沟通|管理|领导|批判|创新思维|问题解决|生涯|素养培养/.test(g)) return false;
+    return true;
+  }
+
+  _isHollowStep(step) {
+    const s = String(step || '').trim();
+    if (!s || s.length < 10) return true;
+    if (PBLPathBuilder.HOLLOW_STEP_RE.test(s)) return true;
+    if (/^运用[①②③④⑤⑥⑦⑧⑨⑩\d]+「/.test(s) && /完成本阶段|探究任务/.test(s)) return true;
+    return false;
+  }
+
+  _areHollowSteps(steps) {
+    if (!Array.isArray(steps) || !steps.length) return true;
+    const hollow = steps.filter(s => this._isHollowStep(s)).length;
+    return hollow >= Math.ceil(steps.length * 0.6);
+  }
+
+  _pickConcreteSteps(llmSteps, bpSteps, contextual) {
+    const pick = (steps) => {
+      if (!Array.isArray(steps) || !steps.length) return null;
+      const good = steps.filter(s => !this._isHollowStep(s));
+      return good.length ? good.slice(0, 4) : null;
+    };
+    const ranked = [
+      { steps: pick(contextual), w: 3 },
+      { steps: pick(bpSteps), w: 2 },
+      { steps: pick(llmSteps), w: 1 },
+    ].filter(x => x.steps?.length);
+    if (ranked.length) {
+      ranked.sort((a, b) => b.w - a.w);
+      return ranked[0].steps;
+    }
+    if (contextual?.length) return contextual.slice(0, 4);
+    if (bpSteps?.length) return bpSteps.slice(0, 4);
+    return (llmSteps || []).slice(0, 4);
+  }
+
+  _pickConcreteDeliverable(lp, bp, role, goal) {
+    const vague = d => !d || /素养|能力|精神|品格|阶段成果物?$|阶段原型|探究任务/.test(String(d)) || String(d).length < 6;
+    const lpD = lp?.deliverable || lp?.output || '';
+    const bpD = bp?.deliverable || '';
+    if (!vague(lpD)) return lpD;
+    if (!vague(bpD)) return bpD;
+    return this._defaultDeliverable(role || 'core', goal);
+  }
+
   /** 主线相关性：STEM/工程项目宁缺毋滥，拒绝语文/地理/无关生物等 */
   _isMainlineRelevant(node, goal, domains) {
     if (!node) return false;
     const g = String(goal || '');
     const domainList = domains && domains.length ? domains : this._inferProjectDomains(g);
     const name = String(node.name || '');
+    if (this._isGenericTransversalNode(name, g)) return false;
     const text = this._nodeSearchText(node);
     const stemGoal = this._isStemProjectGoal(g);
     const consumerGoal = this._isConsumerDecisionGoal(g);
@@ -1062,13 +1115,14 @@ class PBLPathBuilder {
     return idx;
   }
 
-  _mapMatchedEntries(result, candidates, complex, minConf) {
+  _mapMatchedEntries(result, candidates, complex, minConf, goal = '') {
     const out = [];
     (result.matched || []).forEach(m => {
       const idx = this._parseMatchIndex(m, candidates.length);
       if (idx < 0) return;
       if ((m.confidence || 0) < minConf) return;
       if (complex && this._excludeForComplexProject(candidates[idx])) return;
+      if (this._isGenericTransversalNode(candidates[idx].name, goal)) return;
       out.push({
         ...candidates[idx],
         confidence: m.confidence,
@@ -1371,10 +1425,154 @@ class PBLPathBuilder {
     })[role] || '阶段成果物';
   }
 
-  _suggestPhaseSteps(goal, group) {
+  _suggestPhaseSteps(goal, group, blueprintPhase = null) {
+    if (blueprintPhase?.steps?.length && !this._areHollowSteps(blueprintPhase.steps)) {
+      return blueprintPhase.steps.slice(0, 4);
+    }
     const nodes = group.nodes || [];
     const kn = nodes.map(n => n.name).filter(Boolean);
-    const knRef = kn.map(n => `「${n}」`).join('、') || '相关知识';
+    const knRef = kn.map(n => `「${n}」`).join('、') || '本阶段课标知识点';
+    const shortGoal = String(goal || '').slice(0, 48);
+    const role = group.role || 'core';
+    const type = this._classifyProjectType(goal);
+    const mk = arr => arr.slice(0, 4);
+
+    if (type === 'social-inquiry') {
+      const map = {
+        foundation: [
+          `围绕「${shortGoal}」写出 1 句可验证的调查问题，确定调查对象与样本量（如本班抽样 20 人）`,
+          `设计 8–10 题问卷或访谈提纲（3 道选择题 + 2 道开放题），注明发放渠道与回收截止日`,
+        ],
+        bridge: [
+          `回收问卷并整理为统计表，标注缺失值与 2 份异常答卷的处理方式`,
+          `用 ${knRef} 绘制至少 2 种统计图，写出 3 条基于数据的发现（附图表编号）`,
+        ],
+        core: [
+          `归纳 2–3 条结论，每条对应 1 张图表或 1 组原始数据`,
+          `撰写 800 字调查报告（摘要/方法/发现/建议），准备 3 分钟答辩要点清单`,
+        ],
+      };
+      return mk(map[role] || map.core);
+    }
+    if (type === 'humanities-literary') {
+      const map = {
+        foundation: [
+          `确定作品主题与读者对象，列出 3 篇参考文本并各写 50 字摘抄+批注`,
+          `用 ${knRef} 完成立意提纲：中心句、3 个分论点、2 个生活/阅读例证`,
+        ],
+        bridge: [
+          `完成初稿（不少于 600 字或 12 节诗），标注待改的段落编号`,
+          `按结构/语言/修辞三项自评表修改 1 轮，记录修改前后对照`,
+        ],
+        core: [
+          `定稿并排版（标题、作者、目录/分节），附 200 字创作说明`,
+          `准备朗诵/展示稿与 2 个听众可能提问的回答要点`,
+        ],
+      };
+      return mk(map[role] || map.core);
+    }
+    if (type === 'consumer-decision') {
+      const map = {
+        foundation: [
+          `列出家庭用车 5 条真实需求（预算、里程、充电/加油便利性等），制成需求优先级表`,
+          `确定 3 个对比维度（5 年总成本、使用场景、环保排放），用 ${knRef} 说明各维度数据来源`,
+        ],
+        bridge: [
+          `收集 2 款候选车型参数，制作 5 年用车成本测算表（购置+能耗+保养）`,
+          `用统计图对比两车在目标场景下的关键指标，标注假设条件`,
+        ],
+        core: [
+          `撰写决策报告：推荐车型 + 3 条证据 + 1 条风险与备选方案`,
+          `制作 1 页对比海报或答辩幻灯（含图表与结论句）`,
+        ],
+      };
+      return mk(map[role] || map.core);
+    }
+    if (type === 'business-economics') {
+      const map = {
+        foundation: [
+          `描述目标用户与 3 个痛点，完成 10 人迷你访谈或问卷并汇总`,
+          `用 ${knRef} 列出产品/服务核心功能与竞品差异表`,
+        ],
+        bridge: [
+          `制作成本表（材料/人工/推广），用百分比或函数估算盈亏平衡点`,
+          `设计 1 页商业计划摘要：定价、渠道、首月运营动作`,
+        ],
+        core: [
+          `模拟运营 1 周并记录收支，更新测算表与改进点`,
+          `撰写复盘报告：数据、问题、下一步 3 条行动`,
+        ],
+      };
+      return mk(map[role] || map.core);
+    }
+    if (type === 'life-planning') {
+      const map = {
+        foundation: [
+          `明确活动目标、参与人数、日期与场地约束，写成 1 页需求说明`,
+          `用 ${knRef} 列出任务分工表（角色/负责人/截止日）`,
+        ],
+        bridge: [
+          `制作日程甘特图或流程表，含物料清单与预算明细`,
+          `完成关键物料准备（通知、路线、安全预案）并勾选检查表`,
+        ],
+        core: [
+          `按方案执行并拍照/签到记录，当天填写执行日志`,
+          `撰写 500 字总结：亮点、问题、费用决算与改进建议`,
+        ],
+      };
+      return mk(map[role] || map.core);
+    }
+    if (type === 'creative-media') {
+      const map = {
+        foundation: [
+          `确定作品主题、受众与风格参考（2 个范例），写 100 字创意简报`,
+          `用 ${knRef} 完成分镜/草图 3 帧，标注尺寸与配色方案`,
+        ],
+        bridge: [
+          `制作半成品并收集 3 人反馈，记录修改清单`,
+          `按反馈迭代 1 轮，导出可展示版本（图片/视频/海报）`,
+        ],
+        core: [
+          `完成终稿并附制作说明（工具、素材来源、时长/尺寸）`,
+          `布置展示位或线上发布，准备 1 分钟作品介绍词`,
+        ],
+      };
+      return mk(map[role] || map.core);
+    }
+    if (type === 'engineering') {
+      const map = {
+        foundation: [
+          `画出系统框图，标注输入/输出/关键部件与工作原理`,
+          `用 ${knRef} 列出器材清单、安全注意事项与测试指标`,
+        ],
+        bridge: [
+          `搭建原型并记录首次测试数据（照片+数据表）`,
+          `根据测试失败点修改 1 处结构或参数，记录前后对比`,
+        ],
+        core: [
+          `完成稳定性/功能测试 ≥3 次，计算平均值与误差`,
+          `撰写工程报告：原理、结构、测试数据、改进方向`,
+        ],
+      };
+      return mk(map[role] || map.core);
+    }
+    if (type === 'general') {
+      const map = {
+        foundation: [
+          `收集「${shortGoal}」相关 3 条背景资料（各 50 字摘要+来源）`,
+          `用 ${knRef} 明确 1 个可检查交付物与 3 条验收标准（谁检查、看什么）`,
+        ],
+        bridge: [
+          `绘制实施流程图：步骤、负责人、工具、中间产出文件`,
+          `完成 1 次小范围试做/预调查，记录问题清单与修订计划`,
+        ],
+        core: [
+          `按方案执行并每日更新过程记录（数据/照片/草稿）`,
+          `整理最终成果并逐条对照验收标准自评打勾`,
+        ],
+      };
+      return mk(map[role] || map.core);
+    }
     if (this._isChemistryInquiryGoal(goal)) {
       const cap = this._getChemistryAnalysisProfile(goal);
       if (cap.mixed) {
@@ -1483,19 +1681,23 @@ class PBLPathBuilder {
   /**
    * 路径拆解模式：以图谱 pathStep 为主线，合并 LLM 阶段任务/素养/产出
    */
-  _buildPathPlan({ goal, graphData, projectPhases = [], knowledgeChain = '', external = [] }) {
+  _buildPathPlan({ goal, graphData, projectPhases = [], knowledgeChain = '', external = [], blueprintPhases = [] }) {
     const mainline = this._getMainlinePath(graphData);
     const groups = this._groupMainlineIntoPhases(mainline);
     const llm = projectPhases || [];
     const phases = groups.map((g, i) => {
       const lp = llm[i] || {};
-      const contextual = this._suggestPhaseSteps(goal, g);
-      const steps = Array.isArray(lp.steps) && lp.steps.length && !/完成图谱\d|课件与配套练习/.test(lp.steps.join(''))
-        ? lp.steps
-        : (contextual || g.nodes.map(n => `运用${this._pathStepCircled(n.pathStep)}「${n.name}」完成本阶段探究任务与记录`));
+      const bp = blueprintPhases[i] || {};
+      const contextual = this._suggestPhaseSteps(goal, g, bp);
+      const steps = this._pickConcreteSteps(lp.steps, bp.steps, contextual)
+        || contextual
+        || g.nodes.map(n => {
+          const circ = this._pathStepCircled(n.pathStep);
+          return `阅读${circ}「${n.name}」要点，完成 1 份与本阶段产出相关的记录或计算（附数据/例证）`;
+        });
       return {
         phaseIndex: g.phaseIndex,
-        phase: lp.phase || lp.name || g.phase,
+        phase: lp.phase || bp.phase || lp.name || g.phase,
         role: g.role,
         pathSteps: g.pathSteps,
         pathStepLabels: g.pathSteps.map(s => this._pathStepCircled(s)),
@@ -1503,7 +1705,7 @@ class PBLPathBuilder {
         nodeIds: g.nodeIds,
         knowledgeNames: g.knowledgeNames,
         steps,
-        deliverable: lp.deliverable || lp.output || this._defaultDeliverable(g.role, goal),
+        deliverable: this._pickConcreteDeliverable(lp, bp, g.role, goal),
         literacy: this._literacyFromLlmPhase(lp)
       };
     });
@@ -1551,6 +1753,7 @@ class PBLPathBuilder {
       goal: result.goal,
       graphData: result.graphData,
       projectPhases: result.projectPhases,
+      blueprintPhases: result.projectBlueprint ? this._blueprintProjectPhases(result.projectBlueprint) : [],
       knowledgeChain: result.knowledgeChain,
       external: result.external
     });
@@ -1585,6 +1788,8 @@ class PBLPathBuilder {
 
   // ─── PBL 路径分析核心 ──────────────────────────
 
+  static GENERIC_TRANSVERSAL_RE = /批判性思维|创新思维|创新能力|团队协作|团队合作|项目管理|项目管理能力|沟通能力|沟通表达|问题解决|解决问题能力|时间管理|领导力|学习能力|核心素养|综合素养|信息素养|媒体素养|科学精神|人文素养|劳动素养|审辨性思维|审辨思维|元认知|学会学习|责任担当|社会责任|公民素养|国际理解/;
+  static HOLLOW_STEP_RE = /^(完成|进行|开展|落实|实施|贯彻|培养|提升|增强|锻炼|学习|掌握|了解|认识|运用).{0,8}(探究|调研|学习|任务|活动|阶段|工作|研究|分析|讨论|探索|实践|制作|设计|总结|反思|课件|练习)$|完成本阶段|进行调研|开展研究|完成探究|运用.*完成本阶段|培养.*素养|提升.*能力/;
   static PBL_MAX_GRAPH_NODES = 22;
   static PBL_MIN_EXTERNAL = 1;
   static PBL_MAX_EXTERNAL = 3;
@@ -2280,12 +2485,25 @@ class PBLPathBuilder {
       dependsOnLinks: stage2.dependsOnLinks || [],
       candidatePool: stage1.filteredCandidates
     });
-    const mergedPhases = (stage2.projectPhases?.length ? stage2.projectPhases : blueprintPhases)
-      .map((p, i) => ({ ...blueprintPhases[i], ...p }));
+    const llmPhases = stage2.projectPhases || [];
+    const phaseLen = Math.max(blueprintPhases.length, llmPhases.length);
+    const mergedPhases = phaseLen ? Array.from({ length: phaseLen }, (_, i) => {
+      const bp = blueprintPhases[i] || {};
+      const lp = llmPhases[i] || {};
+      const stubGroup = { role: bp.role || 'core', nodes: [] };
+      return {
+        phase: lp.phase || bp.phase || `阶段 ${i + 1}`,
+        steps: this._pickConcreteSteps(lp.steps, bp.steps, this._suggestPhaseSteps(goal, stubGroup, bp)),
+        knowledgeNames: lp.knowledgeNames?.length ? lp.knowledgeNames : bp.knowledgeNames,
+        deliverable: this._pickConcreteDeliverable(lp, bp, bp.role, goal),
+        literacy: lp.literacy || bp.literacy,
+      };
+    }) : blueprintPhases;
     const pathPlan = this._buildPathPlan({
       goal,
       graphData: finalized.graphData,
       projectPhases: mergedPhases.length ? mergedPhases : blueprintPhases,
+      blueprintPhases,
       knowledgeChain: stage2.knowledgeChain || projectBlueprint.knowledgeChain || '',
       external: finalized.external
     });
@@ -2452,12 +2670,12 @@ class PBLPathBuilder {
       console.warn('[PBL] match JSON 解析失败，将使用关键词回退:', e.message);
     }
 
-    let matched = this._mapMatchedEntries(result, candidates, complex, minConf)
+    let matched = this._mapMatchedEntries(result, candidates, complex, minConf, goal)
       .sort((a, b) => (b.confidence || 0) - (a.confidence || 0))
       .slice(0, profile.maxMatched);
 
     if (!matched.length) {
-      matched = this._mapMatchedEntries(result, candidates, complex, 0.45)
+      matched = this._mapMatchedEntries(result, candidates, complex, 0.45, goal)
         .sort((a, b) => (b.confidence || 0) - (a.confidence || 0))
         .slice(0, profile.maxMatched);
     }
