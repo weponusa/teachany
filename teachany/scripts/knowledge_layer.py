@@ -42,6 +42,39 @@ MD_DIR = ROOT / "data" / "kp-md"
 if not MD_DIR.is_dir():
     MD_DIR = ROOT / "skill" / "data" / "kp-md"
 
+_NODE_INDEX_REMOTE_CACHE: Optional[Dict[str, Any]] = None
+
+
+def _fetch_remote_data_json(rel_path: str) -> Optional[Any]:
+    try:
+        from repo_paths import fetch_remote_json
+
+        return fetch_remote_json(rel_path)
+    except Exception:
+        return None
+
+
+def _fetch_remote_text(rel_path: str) -> Optional[str]:
+    import urllib.error
+    import urllib.request
+
+    try:
+        from repo_paths import REMOTE_DATA_BASES
+    except Exception:
+        return None
+    rel = str(rel_path).replace("\\", "/").lstrip("/")
+    if rel.startswith("data/"):
+        rel = rel[5:]
+    for base in REMOTE_DATA_BASES:
+        url = base.rstrip("/") + "/" + rel
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "TeachAny-Skill/7.18"})
+            with urllib.request.urlopen(req, timeout=45) as resp:
+                return resp.read().decode("utf-8")
+        except (urllib.error.URLError, TimeoutError, UnicodeDecodeError):
+            continue
+    return None
+
 _SCRIPTS_DIR = Path(__file__).resolve().parent
 if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
@@ -54,14 +87,21 @@ from knowledge_context import build_kcp, emit_kcp_file, print_kcp_human
 # ═══════════════════════════════════════════════════════════════
 
 def load_node_index_v2() -> Optional[Dict[str, Any]]:
-    if not NODE_INDEX_PATH.exists():
-        return None
-    try:
-        data = json.load(open(NODE_INDEX_PATH, encoding='utf-8'))
-        if isinstance(data, dict) and isinstance(data.get("nodes"), dict):
-            return data
-    except Exception:
-        pass
+    global _NODE_INDEX_REMOTE_CACHE
+    if _NODE_INDEX_REMOTE_CACHE is not None:
+        return _NODE_INDEX_REMOTE_CACHE
+    if NODE_INDEX_PATH.is_file():
+        try:
+            data = json.load(open(NODE_INDEX_PATH, encoding="utf-8"))
+            if isinstance(data, dict) and isinstance(data.get("nodes"), dict):
+                _NODE_INDEX_REMOTE_CACHE = data
+                return data
+        except Exception:
+            pass
+    remote = _fetch_remote_data_json("node-index.json")
+    if isinstance(remote, dict) and isinstance(remote.get("nodes"), dict):
+        _NODE_INDEX_REMOTE_CACHE = remote
+        return remote
     return None
 
 
@@ -98,9 +138,23 @@ def lookup_v2(topic: str, subject: Optional[str] = None, top: int = 3) -> Option
         md_sections = []
         md_path = node.get("md_path")
         if md_path:
-            abs_md = ROOT / md_path
-            if abs_md.exists():
-                md_text = abs_md.read_text(encoding='utf-8')
+            md_text = ""
+            for abs_md in (
+                ROOT / md_path,
+                DATA_DIR.parent / md_path,
+                MD_DIR / Path(md_path).name,
+            ):
+                if abs_md.is_file():
+                    md_text = abs_md.read_text(encoding="utf-8")
+                    break
+            if not md_text:
+                rel = str(md_path).replace("\\", "/").lstrip("/")
+                if rel.startswith("skill/"):
+                    rel = rel[6:]
+                fname = Path(rel).name
+                if fname.endswith(".md"):
+                    md_text = _fetch_remote_text(f"kp-md/{fname}") or ""
+            if md_text:
                 md_sections = re.findall(r'^##\s+([^\n]+)', md_text, re.M)
                 # 提取「课标原文」部分作为 excerpt preview
                 mm = re.search(

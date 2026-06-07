@@ -31,8 +31,12 @@
 - **#16** 所有课件必须包含 TTS、Hero 知识结构图、真实互动；教学动画/视频按课型和用户要求补齐。没有"快速模式"，不允许以任何理由跳过基线项并声称"后续升级"。
 - **#16a** 动画工具必须分层选择：算法/流程优先 Motion Canvas，数学推导优先 Manim，科学实验优先 PhET/GeoGebra/3Dmol/Matter.js，页面实时互动用 Canvas/SVG，装饰动效用 CSS/Lottie/Rive，复杂 3D 用 Blender/Three.js；Remotion 只在需要 React 视频合成时使用。制作动画前必须查 `tech/animation-toolchain.md`。
 - **#16b** 禁止用 `ffmpeg testsrc`、纯色块、随机几何运动、静态图缩放或纯标题飞入冒充教学动画；MP4 必须有明确教学过程和 audio stream。
-- **#18** TTS 走 `scripts/tts-engine.py` 或标准 narrator；不要在课件内手写 Web Speech 控制器。
-- **#19** Hero 图必须是知识结构图，不是纯装饰图；无生图能力时用 `gen-hero-svg.py` 兜底。
+- **#18** TTS 走 `scripts/tts-engine.py`（Edge Neural，唯一合格来源）+ `teachany-tts-narrator.js` v8（播放预录 mp3）；**禁止**课件内手写 Web Speech / `speechSynthesis`；**禁止** macOS say / pyttsx3 / 浏览器金属音兜底。
+- **#19** Hero 图必须是知识结构图，不是纯装饰图；**先** `find-hero.py "$COURSE_DIR" --cdn`（L1 `image-registry.json` / L2 CDN），未命中再用 `gen-hero-svg.py` 兜底。
+- **#19a** **学段视觉三分法（强制）**：小学 `teachany-elementary`（暖白糖果色）、初中 `teachany-middle`（浅灰天蓝）、高中 `teachany-high`（深色学术）。详见 `tech/visual-stage-modes.md`；禁止跨学段套壳。
+- **#19b** TTS 必须可播放：`tts/*.mp3` ≥3 且 ≥5KB（`tts-engine.py`）；playlist 每条须带 `section` 映射 `data-tts`；**禁止** `data-tts-disabled="true"` 或 `data-tts-mode="webspeech"` 交付。
+- **#19c** **音色规范**：小学默认 `zh-CN-XiaoyiNeural`（语速 `-8%`），初中 `zh-CN-XiaoxiaoNeural`，高中 `zh-CN-YunxiNeural`；朗读器与底部音频条共用同一批 mp3。
+- **#19d** **悬浮坞**：必须加载 `teachany-floating-dock.css`；禁止课件内右下角自定义 fixed 学伴/气泡；左下=学伴+反馈，右下=TTS+播放模式 FAB（见 `tech/visual-stage-modes.md`）。
 - **#20** 历史/地理地图先查 `find-map.py`，优先复用仓库/远端地图库。
 - **#21** 历史/地理地图必须用 `data-teachany-map` + `teachany-historical-map.js`；投影与对齐以 `topics/historical-maps-projection.md` 为准：**EPSG:3857 Web Mercator + `L.tileLayer` XYZ 底图**；**禁止** `config.hillshade` 与 `L.imageOverlay` 全球等距圆柱 JPG；疆域 GeoJSON 为 WGS84 `[lng,lat]`，城市 `cities` 为 `[lat,lng,…]`，`fitBounds` 为 `[[南纬,西经],[北纬,东经]]`；禁止课件内手写 Leaflet/ECharts graphic 铺底。
 

@@ -39,6 +39,8 @@ LINKS = [
     ('<link rel="stylesheet" href="../../assets/scripts/teachany-tts-narrator.css">', "teachany-tts-narrator.css"),
     ('<link rel="stylesheet" href="../../assets/scripts/teachany-section-hints.css">', "teachany-section-hints.css"),
     ('<link rel="stylesheet" href="../../assets/scripts/teachany-knowledge-graph.css">', "teachany-knowledge-graph.css"),
+    ('<link rel="stylesheet" href="../../assets/scripts/teachany-audio-player.css">', "teachany-audio-player.css"),
+    ('<link rel="stylesheet" href="../../assets/scripts/teachany-floating-dock.css">', "teachany-floating-dock.css"),
 ]
 
 SCRIPTS = [

@@ -1,6 +1,6 @@
 ---
 name: TeachAny
-version: 7.17.0
+version: 7.18.0
 description: "K-12 interactive courseware creation. Use for school-subject lesson pages, animations, AI tutor, TTS, knowledge graph, PBL learning paths, or TeachAny publishing."
 description_zh: "K12 互动课件开发技能：用于制作或优化学科课件、教学动画、AI 学伴、TTS、知识图谱、PBL 学习路径与 TeachAny 发布。"
 allowed-tools: Read,Write,Edit,Bash,Glob,Grep
@@ -37,8 +37,19 @@ TeachAny 的目标不是把知识堆进页面，而是把一节课做成**有问
 | **PBL 匹配** `pbl.html` | ✅ | 课标树 CDN + `POST https://www.teachany.cn/api/pbl/analyze` |
 | **查 node_id** `find_nodes.py` | ✅ | 远程 `data/trees/...`（`repo_paths.fetch_remote_json`） |
 | **校验 node_id** `check_node_id.py` | ✅ | 远程 `node-index.json` |
-| **课件内知识图谱模块** | ✅ | 课件页加载 `teachany-knowledge-graph.js`（在 courseware 社区页） |
+| **课件内知识图谱模块** | ✅ | `assets/scripts/teachany-knowledge-graph.js`（轻量仓已同步；manifest 走 teachany.cn CDN） |
+| **Gallery 首页** `index.html` | ✅ | `teachany-data-fetch.js` + `unified-loader.js`（轻量 GH Pages 拉 teachany.cn 索引） |
 | **挂树 / 发布** | ✅ 见下方 `hang_tree.py` | `GH_TOKEN` 或 Worker PR；**不必**事先 clone |
+
+### 轻量 GH Pages vs 线上主站（避免误判）
+
+| 入口 | 适合 |
+| --- | --- |
+| [github.io/teachany](https://weponusa.github.io/teachany/) | Skill 演示、PBL/路径/知识地图；**无**本地 `registry.json`，靠 CDN 回退 |
+| [www.teachany.cn](https://www.teachany.cn/) | 完整 Gallery、课件实体、API、最新 `registry` |
+| [github.io/teachany-courseware](https://weponusa.github.io/teachany-courseware/) | 与 teachany.cn 同源的静态课件与 `data/` |
+
+裸域 `teachany.cn` 若 TLS 失败，请用 **`www.teachany.cn`**。
 
 ### 挂树与发布（Skill 一站式，无需事先 clone）
 
@@ -73,8 +84,11 @@ python3 "$TEACHANY_SKILL/scripts/check_node_id.py" --node-id phy-m-liquid-pressu
 3. 用"为什么沉浮不同？"做问题锚点，加入拖拽物体/液体密度的 Canvas 互动。
 4. 按 `tech/animation-toolchain.md` 选择动画工具：算法/流程优先 Motion Canvas，数学推导优先 Manim，实验探究优先 PhET/GeoGebra/3Dmol/Matter.js，页面实时操作用 Canvas/SVG。
 5. 接入五件套：AI 学伴、TTS、section hints、知识图谱、导师卡片。
-6. 生成 Hero 知识结构图（`gen-hero-svg.py`）。
-7. 本地验证通过后走发布流程。
+6. **学段视觉（强制）**：Phase 2 前读 `tech/visual-stage-modes.md`；`body` 用 `teachany-elementary` / `teachany-middle` / `teachany-high`，配色与练习气质不得混用（**禁止**把初中深色壳套到小学课）。
+7. **Hero（CDN 优先）**：先 `find-hero.py "$COURSE_DIR" --cdn`；L1/L2 命中则引用 CDN，并**本地落盘** `assets/*-hero.png` 作回退。未命中再 `gen-hero-svg.py`。
+8. **TTS（强制）**：`tts-engine.py`（Edge Neural）生成 ≥3 个 `tts/*.mp3`（每个 ≥5KB）；`data-teachany-audio-playlist` 每条带 `section` 映射 `data-tts`；`teachany-tts-narrator.js` v8 播放预录 mp3，**禁止** Web Speech 金属音、`data-tts-disabled` 或 `data-tts-mode="webspeech"` 交付。
+9. **悬浮坞（强制）**：五件套 CSS 后加载 `teachany-floating-dock.css`；**禁止**课件内 `position:fixed` 右下角自定义学伴/气泡（与 TTS、播放模式 FAB、学习反馈抢位）。学伴只用 `ai-tutor.js`。
+10. 本地验证通过后走发布流程。
 
 ## 模式说明
 
@@ -134,8 +148,10 @@ Phase 4  发布注册：**必须**走 `hang_tree.py publish`（或等价的 `tea
 10. **依赖豁免须有证据**：某项外部资源无法连接，必须给出具体报错（curl 输出或 HTTP 状态码）、已重试次数，才允许该单项豁免；不得以"可能慢"或"先跳过"为由省略。
 11. **闭环验证**：说"完成/修复/可用"前必须跑命令或浏览器验证，并给出关键输出。URL 未返回 200 不得声称发布完成。
 12. **一类问题一起扫**：修一个模块或模式后，检查同类文件、模板、courseware/opensource 双仓是否同步。
-13. **图片资产必须真实**：禁止在 hero/header 后面堆叠裸 `<img>` 标签；禁止 assets/ 下放 <5KB 的占位图（webp/png/jpg）。概念图、示意图必须嵌入对应教学 section 内部。如果图片资源暂未生成，不引用、不放文件——宁缺勿占。
-14. **Phase 3.5 双闸门（强制）**：① **必须询问**反馈密码并写入 manifest（`set-feedback-password.py`，见 `phases/phase3-5-gates.md`）；② **必须询问**是否上传。禁止未询问就 `hang_tree publish` / `teachany-publish` / `auto-publish` / `git push`。上传须 `TEACHANY_UPLOAD_CONFIRMED=1`（用户同意或任务已写明「制作并发布」）。
+13. **学段视觉必须匹配**：小学/初中/高中三套模式见 `tech/visual-stage-modes.md`；`teachany-stage` meta、`body` class、`:root` 配色三者一致。
+14. **图片资产必须真实**：禁止在 hero/header 后面堆叠裸 `<img>` 标签；禁止 assets/ 下放 <5KB 的占位图（webp/png/jpg）。概念图、示意图必须嵌入对应教学 section 内部。如果图片资源暂未生成，不引用、不放文件——宁缺勿占。
+15. **TTS 不得静默禁用**：交付课件须有可播放的 `tts/*.mp3`；不得以「后续再录」为由在 HTML 写 `data-tts-disabled`。
+16. **Phase 3.5 双闸门（强制）**：① **必须询问**反馈密码并写入 manifest（`set-feedback-password.py`，见 `phases/phase3-5-gates.md`）；② **必须询问**是否上传。禁止未询问就 `hang_tree publish` / `teachany-publish` / `auto-publish` / `git push`。上传须 `TEACHANY_UPLOAD_CONFIRMED=1`（用户同意或任务已写明「制作并发布」）。
 
 完整硬规则、基线清单与反模式：按需读 `references/baseline-rules.md`、`RULES.md`。
 
@@ -157,6 +173,7 @@ Phase 4  发布注册：**必须**走 `hang_tree.py publish`（或等价的 `tea
 | **挂树 / 发布** | `scripts/hang_tree.py`、`scripts/github_courseware.py` |
 | 练习评估 | `guides/assessment.md` |
 | 页面结构与 CSS | `tech/page-structure.md`, `tech/design-system.md` |
+| **学段视觉模式（小初高 · 必读）** | `tech/visual-stage-modes.md` |
 | v2 分页模板 | `templates/course-skeleton-v2.html`, `templates/content-section-templates-v2.html` |
 | 数学/科学仿真 | `tech/math-animations.md`（数学课件**必读**）, `tech/science-simulations.md`（物理/化学/生物课件**必读**） |
 | 教学动画/互动动画选型 | `tech/animation-toolchain.md`（**动画类任务必读**） |
@@ -174,9 +191,10 @@ export TEACHANY_SKILL=/path/to/teachany/skill
 export COURSE_DIR=./community/<course-id>   # 任意路径均可，不必在 courseware 仓内
 python3 "$TEACHANY_SKILL/scripts/preflight-check.py"
 python3 "$TEACHANY_SKILL/scripts/find_nodes.py" --stage middle --subject math --keyword "一次函数"
-python3 "$TEACHANY_SKILL/scripts/find-hero.py" <course-id>
-python3 "$TEACHANY_SKILL/scripts/gen-hero-svg.py" "$COURSE_DIR"
-python3 "$TEACHANY_SKILL/scripts/tts-engine.py" --text "讲解文本" --voice zh-CN-XiaoxiaoNeural --output "$COURSE_DIR/tts/s01.mp3"
+python3 "$TEACHANY_SKILL/scripts/find-hero.py" "$COURSE_DIR" --cdn   # L1 image-registry → L2 CDN 命名；命中则用返回 url
+python3 "$TEACHANY_SKILL/scripts/gen-hero-svg.py" "$COURSE_DIR"      # 仅 find-hero 未命中时
+# 维护者：teachany-courseware 仓内 python3 scripts/build-image-registry.py --write-opensource
+python3 "$TEACHANY_SKILL/scripts/tts-engine.py" --text "讲解文本" --voice zh-CN-XiaoyiNeural --rate "-8%" --output "$COURSE_DIR/tts/s01.mp3"
 python3 "$TEACHANY_SKILL/scripts/apply-standard-modules.py" --only "$COURSE_DIR/index.html"
 python3 "$TEACHANY_SKILL/scripts/find-map.py" 唐
 python3 "$TEACHANY_SKILL/scripts/apply-historical-maps.py"
@@ -229,4 +247,4 @@ python3 "$TEACHANY_SKILL/scripts/hang_tree.py" rebuild --dispatch
 
 ## 版本说明
 
-当前执行摘要版本：`7.17.0`。v7.17 新增 `hang_tree.py`：挂树/发布无需事先 clone（GH_TOKEN 浅克隆或 GitHub API + workflow_dispatch）。本版新增分层互动动画工具规范（`tech/animation-toolchain.md`），不再把 Remotion 作为所有教学动画的默认方案。历史变更不放入主文件，避免污染执行上下文；需要考古时查 Git 历史或仓库发布记录。
+当前执行摘要版本：`7.18.0`。v7.18：轻量站补齐 Gallery/PBL 远程数据链（`teachany-data-fetch` + `unified-loader` 轻量 GH 模式）、`courseware-hub` 远程索引、`knowledge_layer lookup` 远程 `node-index`、`submit-to-community` 转 courseware/ `publish_course.sh`。v7.17 起 `hang_tree.py` 挂树/发布无需事先 full clone。历史变更不放入主文件；需要考古时查 Git 历史或仓库发布记录。

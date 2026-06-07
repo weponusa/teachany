@@ -96,14 +96,14 @@ v2 模板特性：
 
 ### 构建步骤
 
-1. 复制 v2 模板到课件目录。
+1. 复制 v2 模板到课件目录；**先读** `tech/visual-stage-modes.md`，按学段设置 `body` class 与 `:root` 配色（小初高不得混用）。
 2. **删除模板头部注释块**：`<head>` 内 `<meta charset>` 之后的 `<!-- ... -->` 注释（占位符文档）必须删除，不得保留在最终课件中。
 3. 填 `course-id`、`node_id`、学科、年级、先修/后续知识。
 4. 保留标准模块挂载，不重复手写平台代码。
 5. 从 v2 内容区块模板选择片段，填充主体教学页面（≥12 页）。
 6. **必须有一页完整的习题讲解**（解题步骤+思路+关键技巧）。
 7. 确保 `{{SLIDE_COUNT}}` 设为实际总页数。
-8. 补齐 Hero（`gen-hero-svg.py`）、TTS（`tts-engine.py`）、视频/地图等资源。若涉及教学动画/互动动画，先按 `tech/animation-toolchain.md` 选型：算法/流程用 Motion Canvas，数学推导用 Manim，实验探究用 PhET/GeoGebra/3Dmol/Matter.js，页面实时操作用 Canvas/SVG；不得用占位视频冒充教学动画。
+8. 补齐 Hero + TTS + 媒体：**先读** `tech/visual-stage-modes.md` 设学段视觉；`find-hero.py --cdn`（CDN + 本地 hero 回退）；`tts-engine.py` 生成 ≥3 个 mp3 并**启用** narrator（禁止 `data-tts-disabled`）。再补视频/地图。动画按 `tech/animation-toolchain.md` 选型。
 
 ## Phase 3：验证
 

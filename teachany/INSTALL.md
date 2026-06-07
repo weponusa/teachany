@@ -123,8 +123,10 @@ TeachAny 采用双仓库架构：
 
 | 仓库 | 用途 |
 | :--- | :--- |
-| **weponusa/teachany** | Skill、轻量站点、脚本（**不含**完整 `data/trees`） |
+| **weponusa/teachany** | Skill、轻量站点、脚本（**不含**完整 `data/trees`；Gallery/PBL/路径经 `teachany-data-fetch.js` 拉 teachany.cn） |
 | **weponusa/teachany-courseware** | 课件实体 + 课标树 + registry（线上 CDN 可读，发布时浅克隆或 PR） |
+
+GitHub Pages 轻量入口 [weponusa.github.io/teachany](https://weponusa.github.io/teachany/) 与 [www.teachany.cn](https://www.teachany.cn/) 能力对照见 `teachany/SKILL.md`「轻量 GH Pages vs 线上主站」。
 
 发布课件（课件目录可在任意路径）：
 - **推荐**：`hang_tree.py publish`（自动选 Worker PR 或 GH_TOKEN 直推）

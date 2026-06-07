@@ -4,15 +4,18 @@
 
 所有课件必须包含：
 - `[data-tts]` 段落；
-- `teachany-tts-narrator.js` 标准模块；
-- 如有音频列表，使用标准 audio player。
+- `teachany-tts-narrator.js` v8（**播放预录 mp3**，**禁止** Web Speech 金属音）；
+- `tts/*.mp3` ≥ 3 个，每个 ≥ 5KB（`tts-engine.py` / Edge Neural TTS，禁止 macOS say / pyttsx3）；
+- `data-teachany-audio-playlist`：每条含 `section`（对应 `data-tts` 键）+ `src`，与底部音频条共用。
+
+**音色**：小学 `zh-CN-XiaoyiNeural --rate "-8%"`；初中 `zh-CN-XiaoxiaoNeural`；高中 `zh-CN-YunxiNeural`。
 
 ## TTS 生成流程
 
 1. 写旁白 JSON：`scripts/narration_zh.json` 或课件目录内 `narration.json`。
 2. 生成音频：
    ```bash
-   python3 scripts/tts-engine.py --text "讲解文本" --voice zh-CN-XiaoxiaoNeural --output tts/s01.mp3
+   python3 scripts/tts-engine.py --text "讲解文本" --voice zh-CN-XiaoyiNeural --rate "-8%" --output tts/s01.mp3
    ```
 3. 检查文件大小和可播放性。
 4. HTML 中用标准 audio/TTS 模块引用。

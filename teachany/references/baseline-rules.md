@@ -12,7 +12,8 @@ TeachAny 只有一套标准：所有课件必须完整包含以下 19 项基线�
 2. 至少一个教学动画/视频（课型需要时）。
 3. Canvas/SVG/iframe 真实互动（非弹窗、非纯点击）。
 4. 学科插图或场景图（`assets/` 目录，≥1 张真实内容图片，≥5KB）。
-5. Hero 知识结构图（`assets/hero-infographic.svg` 或 `hero-infographic.png`）。
+5. Hero 知识结构图（优先 `find-hero.py --cdn` 的 L1/L2 URL + 本地回退；否则 `assets/hero-infographic.svg` / `hero-infographic.png`）。
+5a. **学段视觉**：`body` class 与 `teachany-stage` 匹配（`teachany-elementary` / `teachany-middle` / `teachany-high`），见 `tech/visual-stage-modes.md`。
 6. 音频播放器或连续讲解入口（标准 TTS narrator 或 ai-tutor.js）。
 7. 标准知识图谱模块（`data-teachany-kg` 属性 + `<section id="knowledge-graph">`）。
 8. 标准 AI 学伴入口卡片（正文靠前位置可见，不只依赖 FAB）。
@@ -58,7 +59,8 @@ node "$TEACHANY_SKILL/scripts/validate-courseware.cjs" "$COURSE_DIR"
 python3 "$TEACHANY_SKILL/scripts/find_nodes.py" --stage middle --subject math --keyword "一次函数"
 python3 "$TEACHANY_SKILL/scripts/hang_tree.py" publish <course-id> --course-dir "$COURSE_DIR"   # 需 TEACHANY_UPLOAD_CONFIRMED=1
 python3 "$TEACHANY_SKILL/scripts/find-map.py" 唐
-python3 scripts/find-hero.py <course-id>
+python3 scripts/find-hero.py "$COURSE_DIR" --cdn
+python3 scripts/gen-hero-svg.py "$COURSE_DIR"   # 仅 find-hero 未命中
 python3 "$TEACHANY_SKILL/scripts/hang_tree.py" rebuild --dispatch   # 或维护者在 courseware 仓内 rebuild-index.py
 ```
 

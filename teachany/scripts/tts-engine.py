@@ -70,11 +70,16 @@ def _file_ok(path: str | Path) -> bool:
 
 
 def _try_edge_tts(text: str, voice: str, output: str,
-                   env: dict | None = None, timeout: int = EDGE_TIMEOUT) -> bool:
+                   env: dict | None = None, timeout: int = EDGE_TIMEOUT,
+                   rate: str = "+0%", pitch: str = "+0Hz") -> bool:
     """调用 edge-tts 生成音频。**关键**：必须验证文件大小，0 字节视为失败。"""
     if not shutil.which("edge-tts"):
         return False
-    cmd = ["edge-tts", "--voice", voice, "--text", text, "--write-media", output]
+    cmd = [
+        "edge-tts", "--voice", voice, "--text", text,
+        "--rate", rate, "--pitch", pitch,
+        "--write-media", output,
+    ]
     try:
         # 删除旧文件，避免误判
         if os.path.exists(output):
@@ -215,7 +220,8 @@ def _generate_silent(output: str, duration: float = 1.0) -> bool:
 
 def synthesize(text: str, voice: str, output: str,
                allow_silent_fallback: bool = True,
-               verbose: bool = False) -> tuple[bool, str]:
+               verbose: bool = False,
+               rate: str = "+0%", pitch: str = "+0Hz") -> tuple[bool, str]:
     """
     生成 TTS 音频，按引擎优先级自动回退。
 
@@ -226,7 +232,7 @@ def synthesize(text: str, voice: str, output: str,
 
     # ---- L0: edge-tts 直连 ----
     for attempt in range(RETRY + 1):
-        if _try_edge_tts(text, voice, output):
+        if _try_edge_tts(text, voice, output, rate=rate, pitch=pitch):
             if verbose:
                 print(f"  ✅ edge-tts 直连成功（尝试 #{attempt+1}）")
             return True, "edge-tts"
@@ -251,7 +257,8 @@ def synthesize(text: str, voice: str, output: str,
         env = os.environ.copy()
         env["HTTPS_PROXY"] = proxy
         env["HTTP_PROXY"] = proxy
-        if _try_edge_tts(text, voice, output, env=env, timeout=EDGE_PROXY_TIMEOUT):
+        if _try_edge_tts(text, voice, output, env=env, timeout=EDGE_PROXY_TIMEOUT,
+                         rate=rate, pitch=pitch):
             if verbose:
                 print(f"  ✅ edge-tts 通过代理 {proxy} 成功")
             return True, f"edge-tts-proxy({proxy})"
@@ -290,6 +297,8 @@ def main():
     p = argparse.ArgumentParser(description="TeachAny 多引擎 TTS")
     p.add_argument("--text", required=False, help="要朗读的文本")
     p.add_argument("--voice", default="zh-CN-XiaoxiaoNeural", help="Edge TTS voice 名")
+    p.add_argument("--rate", default="+0%", help="语速，如 -8%% 或 +5%%")
+    p.add_argument("--pitch", default="+0Hz", help="音调，如 -2Hz 或 +5Hz")
     p.add_argument("--output", required=False, help="输出 mp3 路径")
     p.add_argument("--probe", action="store_true", help="只做 edge-tts wss 连通性探针")
     p.add_argument("--no-silent-fallback", action="store_true",
@@ -308,7 +317,9 @@ def main():
     ok, engine = synthesize(
         args.text, args.voice, args.output,
         allow_silent_fallback=not args.no_silent_fallback,
-        verbose=args.verbose
+        verbose=args.verbose,
+        rate=args.rate,
+        pitch=args.pitch,
     )
     if ok:
         size = os.path.getsize(args.output)
