@@ -60,7 +60,9 @@ python3 "$TEACHANY_SKILL/scripts/find_nodes.py" --stage middle --subject math --
 python3 "$TEACHANY_SKILL/scripts/hang_tree.py" publish <course-id> --course-dir "$COURSE_DIR"   # 需 TEACHANY_UPLOAD_CONFIRMED=1
 python3 "$TEACHANY_SKILL/scripts/find-map.py" 唐
 python3 scripts/find-hero.py "$COURSE_DIR" --cdn
-python3 scripts/gen-hero-svg.py "$COURSE_DIR"   # 仅 find-hero 未命中
+python3 scripts/agnes-image-gen.py --course-id <id> --quota   # 服务端中转，每课件≤3张，无需用户 Key
+python3 scripts/agnes-image-gen.py --course-id <id> --prompt "..." --out "$COURSE_DIR/assets/hero.png" --slot hero
+python3 scripts/gen-hero-svg.py "$COURSE_DIR"   # 中转不可用或额度用尽
 python3 "$TEACHANY_SKILL/scripts/hang_tree.py" rebuild --dispatch   # 或维护者在 courseware 仓内 rebuild-index.py
 ```
 

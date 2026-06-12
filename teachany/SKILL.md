@@ -85,7 +85,7 @@ python3 "$TEACHANY_SKILL/scripts/check_node_id.py" --node-id phy-m-liquid-pressu
 4. 按 `tech/animation-toolchain.md` 选择动画工具：算法/流程优先 Motion Canvas，数学推导优先 Manim，实验探究优先 PhET/GeoGebra/3Dmol/Matter.js，页面实时操作用 Canvas/SVG。
 5. 接入五件套：AI 学伴、TTS、section hints、知识图谱、导师卡片。
 6. **学段视觉（强制）**：Phase 2 前读 `tech/visual-stage-modes.md`；`body` 用 `teachany-elementary` / `teachany-middle` / `teachany-high`，配色与练习气质不得混用（**禁止**把初中深色壳套到小学课）。
-7. **Hero（CDN 优先）**：先 `find-hero.py "$COURSE_DIR" --cdn`；L1/L2 命中则引用 CDN，并**本地落盘** `assets/*-hero.png` 作回退。未命中再 `gen-hero-svg.py`。
+7. **Hero（CDN 优先）**：先 `find-hero.py "$COURSE_DIR" --cdn`；L1/L2 命中则引用 CDN，并**本地落盘** `assets/*-hero.png` 作回退。未命中 → **`agnes-image-gen.py`（服务端中转，用户无 Key，每课件≤3张）** → 仍无则 `gen-hero-svg.py`。
 8. **TTS（强制）**：`tts-engine.py`（Edge Neural）生成 ≥3 个 `tts/*.mp3`（每个 ≥5KB）；`data-teachany-audio-playlist` 每条带 `section` 映射 `data-tts`；`teachany-tts-narrator.js` v8 播放预录 mp3，**禁止** Web Speech 金属音、`data-tts-disabled` 或 `data-tts-mode="webspeech"` 交付。
 9. **悬浮坞（强制）**：五件套 CSS 后加载 `teachany-floating-dock.css`；**禁止**课件内 `position:fixed` 右下角自定义学伴/气泡（与 TTS、播放模式 FAB、学习反馈抢位）。学伴只用 `ai-tutor.js`。
 10. 本地验证通过后走发布流程。
@@ -192,7 +192,9 @@ export COURSE_DIR=./community/<course-id>   # 任意路径均可，不必在 cou
 python3 "$TEACHANY_SKILL/scripts/preflight-check.py"
 python3 "$TEACHANY_SKILL/scripts/find_nodes.py" --stage middle --subject math --keyword "一次函数"
 python3 "$TEACHANY_SKILL/scripts/find-hero.py" "$COURSE_DIR" --cdn   # L1 image-registry → L2 CDN 命名；命中则用返回 url
-python3 "$TEACHANY_SKILL/scripts/gen-hero-svg.py" "$COURSE_DIR"      # 仅 find-hero 未命中时
+python3 "$TEACHANY_SKILL/scripts/agnes-image-gen.py" --course-id <id> --quota   # 查生图额度（每课件 3 张）
+python3 "$TEACHANY_SKILL/scripts/agnes-image-gen.py" --course-id <id> --prompt "..." --out "$COURSE_DIR/assets/hero.png" --slot hero
+python3 "$TEACHANY_SKILL/scripts/gen-hero-svg.py" "$COURSE_DIR"      # 中转不可用或额度用尽时
 # 维护者：teachany-courseware 仓内 python3 scripts/build-image-registry.py --write-opensource
 python3 "$TEACHANY_SKILL/scripts/tts-engine.py" --text "讲解文本" --voice zh-CN-XiaoyiNeural --rate "-8%" --output "$COURSE_DIR/tts/s01.mp3"
 python3 "$TEACHANY_SKILL/scripts/apply-standard-modules.py" --only "$COURSE_DIR/index.html"
