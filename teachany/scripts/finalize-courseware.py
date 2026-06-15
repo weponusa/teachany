@@ -46,6 +46,59 @@ VOICE_BY_SUBJECT = {
 }
 DEFAULT_VOICE = "zh-CN-XiaoxiaoNeural"
 
+# 标准模块文件（self-contained 时复制到课件 assets/scripts/，确保挂树后必可加载）
+STANDARD_MODULES = [
+    "ai-tutor.css", "ai-tutor.js",
+    "teachany-tutor-card.css", "teachany-tutor-card.js",
+    "teachany-tts-narrator.css", "teachany-tts-narrator.js",
+    "teachany-section-hints.css", "teachany-section-hints.js",
+    "teachany-knowledge-graph.css", "teachany-knowledge-graph.js",
+    "teachany-audio-player.css", "teachany-audio-player.js",
+    "teachany-floating-dock.css",
+]
+
+
+def find_module_source(course_dir: Path) -> Path | None:
+    """定位标准模块源目录（courseware 仓根 assets/scripts）。"""
+    cands = [
+        course_dir.parent.parent / "assets" / "scripts",   # community/<id> → repo/assets/scripts
+        Path.cwd() / "assets" / "scripts",
+        Path.home() / "CodeBuddy" / "一次函数" / "teachany-courseware" / "assets" / "scripts",
+    ]
+    for c in cands:
+        if (c / "ai-tutor.js").is_file():
+            return c.resolve()
+    return None
+
+
+def make_self_contained(course_dir: Path, html: str) -> tuple[str, dict]:
+    """把标准模块复制进课件 assets/scripts/，并将 ../../assets/scripts/ 引用改为 ./assets/scripts/。
+
+    这是挂树发布后模块「必定可加载」的唯一可靠方式（不依赖仓根相对路径与部署布局）。
+    """
+    report = {"copied": [], "missing_source": False, "rewrote": 0}
+    src = find_module_source(course_dir)
+    if not src:
+        report["missing_source"] = True
+        return html, report
+
+    dest = course_dir / "assets" / "scripts"
+    dest.mkdir(parents=True, exist_ok=True)
+    import shutil
+    for name in STANDARD_MODULES:
+        s = src / name
+        d = dest / name
+        if not s.is_file():
+            continue
+        if (not d.exists()) or d.stat().st_size != s.stat().st_size:
+            shutil.copy2(s, d)
+            report["copied"].append(name)
+
+    # 引用路径统一改为课件本地 ./assets/scripts/
+    new_html, n = re.subn(r'(?:\.\./)+assets/scripts/', './assets/scripts/', html)
+    report["rewrote"] = n
+    return new_html, report
+
 
 def _load_apply_modules():
     """以 importlib 加载 apply-standard-modules.py（文件名带连字符，不能直接 import）。"""
@@ -204,7 +257,7 @@ def generate_audio(course_dir: Path, manifest: dict, html: str) -> dict:
     return report
 
 
-def finalize(course_dir: Path, do_audio: bool = True) -> dict:
+def finalize(course_dir: Path, do_audio: bool = True, self_contained: bool = True) -> dict:
     index = course_dir / "index.html"
     if not index.exists():
         return {"ok": False, "error": "缺少 index.html"}
@@ -247,17 +300,24 @@ def finalize(course_dir: Path, do_audio: bool = True) -> dict:
     html, audio_action = asm.ensure_audio_config(html, course_dir)
     actions["audio_config"] = audio_action
 
+    # self-contained：复制模块副本进课件目录 + 把 ../../assets/scripts/ 改为 ./assets/scripts/
+    sc_report = {"copied": [], "missing_source": False, "rewrote": 0}
+    if self_contained:
+        html, sc_report = make_self_contained(course_dir, html)
+    actions["self_contained"] = sc_report
+
     changed = html != original
     if changed:
         index.write_text(html, encoding="utf-8")
 
-    ok = not audio_report["failed"]
+    ok = not audio_report["failed"] and not (self_contained and sc_report["missing_source"])
     return {
         "ok": ok,
         "course": course_dir.name,
         "changed": changed,
         "actions": actions,
         "audio": audio_report,
+        "self_contained": sc_report,
     }
 
 
@@ -265,6 +325,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("course_dir")
     ap.add_argument("--no-audio", action="store_true", help="只补模块，不生成音频")
+    ap.add_argument("--shared", action="store_true",
+                    help="用共享根 assets（../../assets/scripts/），不复制副本（不推荐，挂树后易失效）")
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
 
@@ -273,7 +335,7 @@ def main() -> int:
         print(f"❌ 课件目录不存在: {course}", file=sys.stderr)
         return 2
 
-    report = finalize(course, do_audio=not args.no_audio)
+    report = finalize(course, do_audio=not args.no_audio, self_contained=not args.shared)
     if args.json:
         print(json.dumps(report, ensure_ascii=False, indent=2))
         return 0 if report.get("ok") else 1
@@ -303,6 +365,11 @@ def main() -> int:
             print(f"     ❌ {f}")
     if a.get("audio_config") and a["audio_config"] != "unchanged":
         print(f"  ✚ 音频播放列表：{a['audio_config']}")
+    sc = report.get("self_contained") or {}
+    if sc.get("missing_source"):
+        print("  ⚠️  未找到模块源（仓根 assets/scripts），无法 self-contained — 模块挂树后可能失效")
+    elif sc.get("copied") or sc.get("rewrote"):
+        print(f"  📦 self-contained：复制 {len(sc.get('copied', []))} 个模块副本，重写 {sc.get('rewrote', 0)} 处引用为 ./assets/scripts/")
     print()
     if report["ok"]:
         print("✅ 定稿完成：AI 学伴 / 音频 / 知识图谱 三模块齐全")
