@@ -456,6 +456,13 @@ def main():
 
     for tree_file in tree_files:
         tree_data = load_tree(tree_file)
+        # 守卫：跳过非标准结构的 tree 文件（顶层应为含 domains 的 dict）
+        if not isinstance(tree_data, dict):
+            print(f'  ⚠️  跳过非 dict 结构的 tree 文件: {tree_file} (type={type(tree_data).__name__})')
+            continue
+        if 'domains' not in tree_data:
+            print(f'  ⚠️  跳过无 domains 的 tree 文件: {tree_file}')
+            continue
         tree_subject = tree_data.get('subject', '')
         tree_name = tree_file.stem
         is_other_tree = 'other' in tree_file.parts
@@ -499,9 +506,24 @@ def main():
             current_courses = node.get('courses', [])
 
             # ⭐ 归一化：剥离 "examples/" 前缀（防止污染，参见 v5.34.5 fix）
+            #   并修复历史脏数据：courses 里混入 dict（如 {"id": "..."}）会导致后续
+            #   `c in courses` 抛 "unhashable type: dict"，这里统一转成 id 字符串。
             normalized_current = []
             for c in current_courses:
-                if isinstance(c, str) and c.startswith('examples/'):
+                if isinstance(c, dict):
+                    cid = c.get('id') or c.get('course_id') or c.get('node_id')
+                    if cid:
+                        print(f'  🧹 {tree_name}/{node_id}: courses 中的 dict 归一化 → "{cid}"')
+                        normalized_current.append(cid)
+                    else:
+                        print(f'  🗑️  {tree_name}/{node_id}: 丢弃无 id 的 dict course 项')
+                    modified = True
+                    continue
+                if not isinstance(c, str):
+                    print(f'  🗑️  {tree_name}/{node_id}: 丢弃非字符串 course 项 {c!r}')
+                    modified = True
+                    continue
+                if c.startswith('examples/'):
                     stripped = c.split('/', 1)[1]
                     print(f'  🧹 {tree_name}/{node_id}: 归一化 "{c}" → "{stripped}"')
                     normalized_current.append(stripped)
@@ -904,6 +926,7 @@ def main():
         'build-teachany-kg-manifest.py',
         'build-nodes-selector.py',
         'build-nodes-metadata.py',
+        'sync-node-index-courses.py',
     ]:
         helper_path = Path('scripts') / helper
         if not helper_path.exists():
@@ -928,10 +951,18 @@ def main():
     for tf in Path('data/trees').rglob('*.json'):
         td = load_tree(tf)
         def collect(n):
-            if 'courses' in n and n['courses']:
-                tree_courses.update(n['courses'])
+            if not isinstance(n, dict):
+                return
+            if n.get('courses'):
+                for c in n['courses']:
+                    if isinstance(c, str):
+                        tree_courses.add(c)
+                    elif isinstance(c, dict):
+                        cid = c.get('id') or c.get('course_id') or c.get('node_id')
+                        if cid:
+                            tree_courses.add(cid)
             for k in ['children', 'nodes', 'domains']:
-                if k in n:
+                if isinstance(n.get(k), list):
                     for c in n[k]:
                         collect(c)
         collect(td)
