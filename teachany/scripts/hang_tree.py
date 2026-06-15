@@ -25,6 +25,14 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 
 
 def cmd_register(args: argparse.Namespace) -> int:
+    import re
+    if re.match(r"^ext-[a-f0-9]{6,12}$", args.node_id, re.I):
+        print("❌ ext-* 节点禁止 register 到课标树", file=sys.stderr)
+        print("   PBL 课标外补充：保持 manifest.node_id=ext-{hash}，直接：", file=sys.stderr)
+        print("   TEACHANY_UPLOAD_CONFIRMED=1 hang_tree.py publish <course-id> --course-dir <path>", file=sys.stderr)
+        print("   rebuild-index 会自动写入 data/trees/other/user-generated.json（其他知识）", file=sys.stderr)
+        return 1
+
     from repo_paths import fetch_remote_json
     from github_courseware import get_file_content, put_file_content
 
@@ -107,12 +115,23 @@ def cmd_publish(args: argparse.Namespace) -> int:
     if os.environ.get("TEACHANY_UPLOAD_CONFIRMED") != "1":
         print("❌ 请先 TEACHANY_UPLOAD_CONFIRMED=1（Phase 3.5b 用户同意上传）", file=sys.stderr)
         return 3
-    publish_sh = SCRIPT_DIR / "teachany-publish.sh"
     course_dir = args.course_dir
     if not course_dir:
         cwd_course = Path.cwd() / "community" / args.course_id
         if cwd_course.is_dir():
             course_dir = str(cwd_course)
+    if course_dir:
+        preflight = SCRIPT_DIR / "preflight-publish.py"
+        if preflight.is_file():
+            print("[preflight] 发布前闸门...")
+            r = subprocess.run(
+                [sys.executable, str(preflight), course_dir],
+                cwd=str(SCRIPT_DIR.parent.parent) if (SCRIPT_DIR.parent.parent / "community").is_dir() else None,
+            )
+            if r.returncode != 0:
+                print("❌ preflight-publish 未通过，已中止 publish（避免 PR/挂树失败）", file=sys.stderr)
+                return r.returncode
+    publish_sh = SCRIPT_DIR / "teachany-publish.sh"
     cmd = ["bash", str(publish_sh), args.course_id]
     if course_dir:
         cmd.extend(["--course-dir", course_dir])

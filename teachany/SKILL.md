@@ -88,7 +88,8 @@ python3 "$TEACHANY_SKILL/scripts/check_node_id.py" --node-id phy-m-liquid-pressu
 7. **Hero（CDN 优先）**：先 `find-hero.py "$COURSE_DIR" --cdn`；L1/L2 命中则引用 CDN，并**本地落盘** `assets/*-hero.png` 作回退。未命中 → **`agnes-image-gen.py`（服务端中转，用户无 Key，每课件≤3张）** → 仍无则 `gen-hero-svg.py`。
 8. **TTS（强制）**：`tts-engine.py`（Edge Neural）生成 ≥3 个 `tts/*.mp3`（每个 ≥5KB）；`data-teachany-audio-playlist` 每条带 `section` 映射 `data-tts`；`teachany-tts-narrator.js` v8 播放预录 mp3，**禁止** Web Speech 金属音、`data-tts-disabled` 或 `data-tts-mode="webspeech"` 交付。
 9. **悬浮坞（强制）**：五件套 CSS 后加载 `teachany-floating-dock.css`；**禁止**课件内 `position:fixed` 右下角自定义学伴/气泡（与 TTS、播放模式 FAB、学习反馈抢位）。学伴只用 `ai-tutor.js`。
-10. 本地验证通过后走发布流程。
+10. **定稿（强制收尾）**：`python3 scripts/finalize-courseware.py "$COURSE_DIR"` — 自动补齐 AI 学伴（卡片+config）、知识图谱、连续音频播放器，并为每个 `data-tts` 段落生成真实分段 mp3。即便前面漏写，此步也会补全；漏装 tts 引擎才会报错。
+11. 本地验证通过后走发布流程（`preflight-publish.py` 会再跑一次 finalize 并对三模块硬校验）。
 
 ## 模式说明
 
@@ -190,6 +191,7 @@ Phase 4  发布注册：**必须**走 `hang_tree.py publish`（或等价的 `tea
 export TEACHANY_SKILL=/path/to/teachany/skill
 export COURSE_DIR=./community/<course-id>   # 任意路径均可，不必在 courseware 仓内
 python3 "$TEACHANY_SKILL/scripts/preflight-check.py"
+python3 "$TEACHANY_SKILL/scripts/preflight-publish.py" "$COURSE_DIR"   # Phase 4 前（publish 会自动跑）
 python3 "$TEACHANY_SKILL/scripts/find_nodes.py" --stage middle --subject math --keyword "一次函数"
 python3 "$TEACHANY_SKILL/scripts/find-hero.py" "$COURSE_DIR" --cdn   # L1 image-registry → L2 CDN 命名；命中则用返回 url
 python3 "$TEACHANY_SKILL/scripts/agnes-image-gen.py" --course-id <id> --quota   # 查生图额度（每课件 3 张）
@@ -197,6 +199,7 @@ python3 "$TEACHANY_SKILL/scripts/agnes-image-gen.py" --course-id <id> --prompt "
 python3 "$TEACHANY_SKILL/scripts/gen-hero-svg.py" "$COURSE_DIR"      # 中转不可用或额度用尽时
 # 维护者：teachany-courseware 仓内 python3 scripts/build-image-registry.py --write-opensource
 python3 "$TEACHANY_SKILL/scripts/tts-engine.py" --text "讲解文本" --voice zh-CN-XiaoyiNeural --rate "-8%" --output "$COURSE_DIR/tts/s01.mp3"
+python3 "$TEACHANY_SKILL/scripts/finalize-courseware.py" "$COURSE_DIR"   # Phase 3 收尾：强制补 AI 学伴/音频/知识图谱 + 生成分段 TTS
 python3 "$TEACHANY_SKILL/scripts/apply-standard-modules.py" --only "$COURSE_DIR/index.html"
 python3 "$TEACHANY_SKILL/scripts/find-map.py" 唐
 python3 "$TEACHANY_SKILL/scripts/apply-historical-maps.py"
@@ -207,11 +210,12 @@ node "$TEACHANY_SKILL/scripts/validate-courseware.cjs" "$COURSE_DIR"
 
 ```bash
 # Phase 3.5a：反馈密码 → set-feedback-password.py
+# Phase 3.5c：发布前闸门 → preflight-publish.py（hang_tree publish 内已自动调用）
 # Phase 3.5b：用户同意上传后：
 export TEACHANY_UPLOAD_CONFIRMED=1
 python3 "$TEACHANY_SKILL/scripts/hang_tree.py" publish <course-id> --course-dir <任意路径>/community/<course-id>
 
-# 课标树尚无节点时（需 GH_TOKEN）：
+# 课标树尚无节点时（需 GH_TOKEN；ext-* 禁止 register，直接 publish）：
 python3 "$TEACHANY_SKILL/scripts/hang_tree.py" register --node-id <id> --subject <学科> --stage middle --name "<名>"
 
 # 仅重建全站索引（需 GH_TOKEN）：
@@ -237,6 +241,7 @@ python3 "$TEACHANY_SKILL/scripts/hang_tree.py" rebuild --dispatch
 
 **制作交付**（Phase 0–3，含用户拒绝上传时）：
 
+- **已跑 `finalize-courseware.py`**：AI 学伴（卡片+`__TEACHANY_TUTOR_CONFIG__`）、连续音频播放器（`data-teachany-audio-playlist` + ≥3 真实 mp3）、知识图谱（`data-teachany-kg`）三模块齐全
 - 通过 `validate-courseware.cjs` 质检
 - 关键资源存在：index.html、manifest.json、PLAN.md、assets/、tts/（或豁免记录）
 - 控制台无错误，核心互动可用，移动端不崩
@@ -249,4 +254,4 @@ python3 "$TEACHANY_SKILL/scripts/hang_tree.py" rebuild --dispatch
 
 ## 版本说明
 
-当前执行摘要版本：`7.18.0`。v7.18：轻量站补齐 Gallery/PBL 远程数据链（`teachany-data-fetch` + `unified-loader` 轻量 GH 模式）、`courseware-hub` 远程索引、`knowledge_layer lookup` 远程 `node-index`、`submit-to-community` 转 courseware/ `publish_course.sh`。v7.17 起 `hang_tree.py` 挂树/发布无需事先 full clone。历史变更不放入主文件；需要考古时查 Git 历史或仓库发布记录。
+当前执行摘要版本：`7.20.0`。v7.20：新增 `finalize-courseware.py` 课件定稿器——发布前强制补齐 AI 学伴（卡片+`__TEACHANY_TUTOR_CONFIG__`）、连续音频播放器、知识图谱，并为每个 `data-tts` 段落自动生成真实分段 mp3；`preflight-publish.py` 启动即调用 finalize 并对三模块硬校验；`apply-standard-modules.py` 补 `teachany-audio-player.js` + tutor-config + audio-config 注入；修复 course-skeleton-v2 模板 CSS bug。v7.19：新增 `preflight-publish.py` 发布前闸门（反馈密码/node_id 一致性/ext 挂树规则/validate 预检）；`hang_tree register` 禁止 ext-*。

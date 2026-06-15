@@ -143,7 +143,10 @@ def main():
         print(f"✅ node_id '{nid}' 已存在")
         print(f"   学科: {sub} · 学段: {stg}")
         print(f"   节点名: {name}")
-        print(f"   所在树: {tree_file.relative_to(repo)}")
+        if repo:
+            print(f"   所在树: {tree_file.relative_to(repo)}")
+        else:
+            print(f"   所在树: {tree_file}")
         print(f"   → 课件可直接提交，前端会自动反向挂载")
         sys.exit(0)
     else:

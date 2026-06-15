@@ -154,6 +154,16 @@ else
   echo "  ⚠️  未找到 set-feedback-password.py，跳过 feedback 校验"
 fi
 
+PREFLIGHT="$SCRIPT_DIR/preflight-publish.py"
+[ -f "$PREFLIGHT" ] || PREFLIGHT="$COURSEWARE_REPO/scripts/preflight-publish.py"
+if [ -f "$PREFLIGHT" ]; then
+  echo "[0.5/8] preflight-publish（发布前闸门）..."
+  if ! python3 "$PREFLIGHT" "$TARGET_DIR"; then
+    echo "❌ preflight-publish 未通过，已中止 auto-publish"
+    exit 1
+  fi
+fi
+
 NODE_ID="$(python3 -c "
 import re, pathlib
 h = pathlib.Path('$TARGET_DIR/index.html').read_text(encoding='utf-8')

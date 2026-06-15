@@ -78,6 +78,19 @@ if [ -f "$SKILL_SCRIPTS/check_baseline.sh" ]; then
   echo "  ✅ 基线通过（$pass_count PASS）"
 fi
 
+# ─── 1.05. 发布前闸门（node_id / 反馈密码 / 挂树风险）─────
+PREFLIGHT="$SKILL_SCRIPTS/preflight-publish.py"
+if [ -f "$PREFLIGHT" ]; then
+  echo ""
+  echo "[1.05/5] 发布前闸门 preflight-publish"
+  if ! python3 "$PREFLIGHT" "$SRC_DIR" > /tmp/preflight_publish.log 2>&1; then
+    echo "  ❌ 发布前检查未通过（常见：反馈密码未写、node_id 不一致、ext free_mode）"
+    tail -30 /tmp/preflight_publish.log
+    exit 1
+  fi
+  echo "  ✅ 发布前闸门通过"
+fi
+
 # ─── 1.1. v7.3 反空壳教学质量闸门 ─────────────────
 QUALITY_GATE="$SKILL_SCRIPTS/../../assets/scripts/validate-teaching-quality.py"
 if [ -f "$QUALITY_GATE" ]; then

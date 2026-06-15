@@ -49,6 +49,8 @@ SCRIPTS = [
     ('<script src="../../assets/scripts/teachany-tts-narrator.js" defer></script>', "teachany-tts-narrator.js"),
     ('<script src="../../assets/scripts/teachany-section-hints.js" defer></script>', "teachany-section-hints.js"),
     ('<script src="../../assets/scripts/teachany-knowledge-graph.js" defer></script>', "teachany-knowledge-graph.js"),
+    # v7.20: 音频播放器脚本此前缺失，导致已生成 mp3 也不出连续播放器 → 课件被判"无音频 UI"
+    ('<script src="../../assets/scripts/teachany-audio-player.js" defer></script>', "teachany-audio-player.js"),
 ]
 
 TUTOR_CARD_SECTION_MARK = "teachany-ai-tutor-card"
@@ -145,6 +147,100 @@ def ensure_tail_scripts(html: str) -> tuple[str, list[str]]:
     return html, added
 
 
+def ensure_tutor_config(html: str, manifest: dict, course_id: str, node_id: str | None) -> tuple[str, bool]:
+    """确保 window.__TEACHANY_TUTOR_CONFIG__ 存在（AI 学伴必需，否则 validate #45 不过）。"""
+    if "__TEACHANY_TUTOR_CONFIG__" in html:
+        return html, False
+    title = (manifest.get("name") or course_id).replace("\\", "").replace('"', "'")
+    subject = manifest.get("subject") or "general"
+    grade = manifest.get("grade") or ""
+    lesson_type = manifest.get("lesson_type") or "standard"
+    block = (
+        "\n<script>\n"
+        "/* v7.20 标准 AI 学伴配置（apply-standard-modules 自动补齐） */\n"
+        "window.__TEACHANY_TUTOR_CONFIG__ = window.__TEACHANY_TUTOR_CONFIG__ || {\n"
+        f"  courseId: {json.dumps(course_id, ensure_ascii=False)},\n"
+        f"  courseTitle: {json.dumps(title, ensure_ascii=False)},\n"
+        f"  subject: {json.dumps(subject, ensure_ascii=False)},\n"
+        f"  grade: {json.dumps(str(grade), ensure_ascii=False)},\n"
+        f"  nodeId: {json.dumps(node_id or course_id, ensure_ascii=False)},\n"
+        f"  lessonType: {json.dumps(lesson_type, ensure_ascii=False)},\n"
+        "  getLearnerQuestion: function () { return window.__TEACHANY_LEARNER_QUESTION__ || ''; },\n"
+        "  getContext: function () { return (document.body && document.body.innerText || '').slice(0, 3000); }\n"
+        "};\n"
+        "</script>\n"
+    )
+    if "</body>" in html:
+        return html.replace("</body>", block + "</body>", 1), True
+    return html + block, True
+
+
+def list_tts_files(course_dir: Path) -> list[Path]:
+    files: list[Path] = []
+    for sub in ("tts", "assets/tts"):
+        d = course_dir / sub
+        if d.is_dir():
+            files += sorted(p for p in d.glob("*.mp3") if p.stat().st_size >= 5 * 1024)
+    return files
+
+
+def ensure_audio_config(html: str, course_dir: Path) -> tuple[str, str]:
+    """确保 data-teachany-audio-playlist 配置块存在。
+
+    若已有播放列表则不动；否则根据 tts/*.mp3 + tts/manifest.json 生成。
+    返回 (新 html, 动作)：'unchanged' | 'added' | 'no-audio'
+    """
+    if "data-teachany-audio-playlist" in html:
+        return html, "unchanged"
+
+    mp3s = list_tts_files(course_dir)
+    if not mp3s:
+        return html, "no-audio"
+
+    # 优先用 tts/manifest.json 的 section/label 映射
+    entries = []
+    tts_manifest = course_dir / "tts" / "manifest.json"
+    rel_prefix = "./tts/"
+    if not (course_dir / "tts").is_dir() and (course_dir / "assets" / "tts").is_dir():
+        rel_prefix = "./assets/tts/"
+    if tts_manifest.exists():
+        try:
+            tm = json.loads(tts_manifest.read_text(encoding="utf-8"))
+            for it in tm.get("tts_files", []):
+                fname = it.get("file")
+                if not fname:
+                    continue
+                entries.append({
+                    "id": it.get("id") or it.get("section") or Path(fname).stem,
+                    "section": it.get("section") or "",
+                    "src": rel_prefix + fname,
+                    "label": it.get("label") or it.get("section") or "讲解",
+                })
+        except Exception:
+            entries = []
+    if not entries:
+        for i, p in enumerate(mp3s, 1):
+            entries.append({
+                "id": p.stem,
+                "section": "",
+                "src": rel_prefix + p.name,
+                "label": f"讲解 {i}",
+            })
+
+    playlist_json = json.dumps(entries, ensure_ascii=False, indent=2)
+    block = (
+        "\n<!-- v7.20 标准连续音频配置（apply-standard-modules 自动补齐） -->\n"
+        '<div id="audio-config" data-teachany-audio hidden>\n'
+        '  <script type="application/json" data-teachany-audio-playlist>\n'
+        f"{playlist_json}\n"
+        "  </script>\n"
+        "</div>\n"
+    )
+    if "</body>" in html:
+        return html.replace("</body>", block + "</body>", 1), "added"
+    return html + block, "added"
+
+
 def ensure_tutor_card_section(html: str) -> tuple[str, bool]:
     if TUTOR_CARD_SECTION_MARK in html or "data-teachany-tutor-card" in html:
         return html, False
@@ -191,6 +287,10 @@ def ensure_kg_section(html: str, node_id: str, heading: str) -> tuple[str, str]:
 
     返回 (新 html, 动作)：'added' | 'replaced' | 'unchanged'
     """
+    # 已有标准 data-teachany-kg 挂载（任意位置，含分页模板的 slide-page）→ 不重复插入
+    if f'data-teachany-kg="{node_id}"' in html or f"data-teachany-kg='{node_id}'" in html:
+        return html, "unchanged"
+
     block = (
         '\n<!-- v7.7.4 标准知识图谱模块 -->\n'
         f'<section class="section" id="knowledge-graph" style="max-width:1080px;margin:24px auto;padding:0 20px;">\n'
@@ -248,6 +348,13 @@ def process_course(course_dir: Path, dry: bool = False) -> dict:
     heading = manifest.get("name") or course_dir.name
     if not node_id:
         node_id, _src = resolve_node_id(course_dir, manifest)
+
+    html, cfg_added = ensure_tutor_config(html, manifest, course_dir.name, node_id)
+    report["tutor_config"] = cfg_added
+
+    html, audio_action = ensure_audio_config(html, course_dir)
+    report["audio"] = audio_action
+
     if node_id:
         html, action = ensure_kg_section(html, node_id, heading)
         report["kg"] = action
@@ -305,6 +412,10 @@ def main():
             action_parts.append(f"scripts+{len(r['scripts_added'])}")
         if r["tutor_card"]:
             action_parts.append("tutor-card")
+        if r.get("tutor_config"):
+            action_parts.append("tutor-config")
+        if r.get("audio") and r["audio"] not in ("unchanged",):
+            action_parts.append(f"audio={r['audio']}")
         if r["kg"]:
             action_parts.append(f"kg={r['kg']}")
             kg_stats[r["kg"]] = kg_stats.get(r["kg"], 0) + 1

@@ -70,8 +70,8 @@ echo
 
 if can_push; then
   echo "✅ 检测到 GitHub push 权限 → auto-publish（浅克隆 courseware + rebuild-index 挂树）"
-  exec bash "$SCRIPT_DIR/auto-publish.sh" "$COURSE_ID" --course-dir "$COURSE_DIR" "${EXTRA[@]}"
+  exec bash "$SCRIPT_DIR/auto-publish.sh" "$COURSE_ID" --course-dir "$COURSE_DIR" "${EXTRA[@]:-}"
 else
   echo "ℹ️  无 push 权限 → publish_course（Worker PR，合并后 CI 自动挂树）"
-  exec bash "$SCRIPT_DIR/publish_course.sh" "$COURSE_DIR" "$COURSE_ID" "${EXTRA[@]}"
+  exec bash "$SCRIPT_DIR/publish_course.sh" "$COURSE_DIR" "$COURSE_ID" "${EXTRA[@]:-}"
 fi

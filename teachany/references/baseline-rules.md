@@ -55,6 +55,8 @@ TeachAny 只有一套标准：所有课件必须完整包含以下 19 项基线�
 ## 常用验证
 
 ```bash
+python3 "$TEACHANY_SKILL/scripts/finalize-courseware.py" "$COURSE_DIR"  # Phase 3 收尾：强制补 AI学伴/音频/知识图谱
+python3 "$TEACHANY_SKILL/scripts/preflight-publish.py" "$COURSE_DIR"   # Phase 4 前强制（内部再跑一次 finalize + 三模块硬校验）
 node "$TEACHANY_SKILL/scripts/validate-courseware.cjs" "$COURSE_DIR"
 python3 "$TEACHANY_SKILL/scripts/find_nodes.py" --stage middle --subject math --keyword "一次函数"
 python3 "$TEACHANY_SKILL/scripts/hang_tree.py" publish <course-id> --course-dir "$COURSE_DIR"   # 需 TEACHANY_UPLOAD_CONFIRMED=1
@@ -74,6 +76,11 @@ python3 "$TEACHANY_SKILL/scripts/hang_tree.py" rebuild --dispatch   # 或维护�
 | "用户没说要发布，先本地看看" | Phase 3.5b **必须询问**是否上传；未同意不得发布 |
 | 做完课件直接 push | 先 3.5a + 3.5b，再 `TEACHANY_UPLOAD_CONFIRMED=1 hang_tree.py publish`（自动挂树） |
 | 未设反馈密码就发布 | Phase 3.5a 用 `set-feedback-password.py` 写入或 `--decline` |
+| ext-* 用 `hang_tree register` 挂课标树 | 直接 `publish`；rebuild-index 写入「其他知识」 |
+| ext-* 设 `free_mode=true` | 必须 `free_mode=false` 且 node_id=ext-{hash} |
+| 跳过 preflight 直接 publish | 先 `preflight-publish.py`（publish 脚本已自动调用） |
+| AI 学伴/音频/知识图谱漏写 | Phase 3 收尾跑 `finalize-courseware.py` 自动补齐 + 生成分段 mp3 |
+| 音频用 Web Speech / 静音占位 | finalize 用 `tts-engine.py` 生成真实 mp3（≥5KB/段，≥3 段） |
 | 先写漂亮页面再补教学 | 先问题锚点和学习闭环 |
 | 全文讲解无操作 | 每个核心概念至少一个可操作点 |
 | AI 学伴只放 FAB | 正文靠前加导师卡片 |
