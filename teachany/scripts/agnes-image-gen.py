@@ -15,7 +15,7 @@ TeachAny · Agnes 课件生图（服务端中转，用户无感）
   python3 agnes-image-gen.py \\
     --course-id math-linear-function \\
     --prompt "coordinate plane with linear function, slope triangle, flat educational style" \\
-    --out community/math-linear-function/assets/hero.png \\
+    --out community/math-linear-function/assets/hero.webp \\
     --slot hero
 
   # 批量（JSON 内每项可有 name/prompt/size/slot）
@@ -94,6 +94,29 @@ def download_image(url: str, out_path: Path, timeout: int = 120) -> int:
     if len(data) < MIN_BYTES:
         raise RuntimeError(f'下载文件过小 ({len(data)} B)，可能无效')
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    # 若输出要求 .webp 但源数据为 PNG/JPEG，自动转换
+    if out_path.suffix.lower() == '.webp' and not data[:4].startswith(b'RIFF'):
+        try:
+            from PIL import Image
+            import io
+            img = Image.open(io.BytesIO(data))
+            buf = io.BytesIO()
+            img.save(buf, format='WEBP', quality=85)
+            data = buf.getvalue()
+        except ImportError:
+            # Pillow 不可用时尝试 cwebp
+            import subprocess, tempfile
+            with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
+                tmp.write(data)
+                tmp_path = tmp.name
+            try:
+                subprocess.run(['cwebp', '-q', '85', tmp_path, '-o', str(out_path)],
+                               check=True, capture_output=True)
+                return out_path.stat().st_size
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                pass  # 均失败则原样保存
+            finally:
+                Path(tmp_path).unlink(missing_ok=True)
     out_path.write_bytes(data)
     return len(data)
 
@@ -188,7 +211,7 @@ def main():
             print(f'[{i}/{len(tasks)}] {name}')
             try:
                 result = gen_with_retry(course_id, prompt, size=size, slot=slot)
-                out_path = out_dir / f'{name}.png'
+                out_path = out_dir / f'{name}.webp'
                 download_image(result['url'], out_path)
                 print(f'   ✅ {out_path.name} · 剩余额度 {result.get("remaining")}')
                 ok += 1

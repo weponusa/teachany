@@ -31,11 +31,11 @@ else
   echo "❌ B-3a FAIL（需 ≥3 张图片 + HTML 引用 ≥3 次）"
   echo ""
   echo "建议立即用 image_gen 生成 3 张图：" 
-  echo "  1) Hero 知识结构信息图 → assets/hero-infographic.png"
-  echo "  2) 核心概念可视化 → assets/concept-visualization.png"
-  echo "  3) 拓展插图 → assets/extension-illustration.png"
+  echo "  1) Hero 知识结构信息图 → assets/hero-infographic.webp"
+  echo "  2) 核心概念可视化 → assets/concept-visualization.webp"
+  echo "  3) 拓展插图 → assets/extension-illustration.webp"
   echo ""
   echo "然后在 HTML 对应 section 里插入："
-  echo "  <img src=\"assets/xxx.png\" alt=\"描述\" style=\"width:100%;border-radius:12px\">"
+  echo "  <img src=\"assets/xxx.webp\" alt=\"描述\" style=\"width:100%;border-radius:12px\">"
   exit 1
 fi

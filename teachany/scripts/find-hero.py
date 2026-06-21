@@ -220,7 +220,7 @@ def extract_keywords(course_id: str, title: str) -> list[str]:
 def build_cdn_url(subject: str, keyword: str) -> str:
     """构造 CDN URL"""
     subj_dir = subject_to_dirname(subject)
-    return f"{CDN_BASE}/{subj_dir}/{keyword}-hero.png"
+    return f"{CDN_BASE}/{subj_dir}/{keyword}-hero.webp"
 
 
 # ─── L1：image-registry.json 索引查找 ────────────────────
@@ -331,8 +331,8 @@ def find_l2_cdn_probe(subject: str, keywords: list[str]) -> dict | None:
     # 尝试每个关键词
     for kw in keywords:
         kw_slug = kw.lower().replace(' ', '-')
-        url = f"{CDN_BASE}/{subj_dir}/{kw_slug}-hero.png"
-        file_path = f"{subj_dir}/{kw_slug}-hero.png"
+        url = f"{CDN_BASE}/{subj_dir}/{kw_slug}-hero.webp"
+        file_path = f"{subj_dir}/{kw_slug}-hero.webp"
 
         return {
             'level': 'L2',
@@ -371,7 +371,7 @@ def generate_l3_hint(course_dir: Path, meta: dict) -> dict:
     subj_dir = subject_to_dirname(subject)
     keywords = extract_keywords(course_id, title)
     keyword_slug = keywords[0] if keywords else node_id
-    target_cdn_file = f"{subj_dir}/{keyword_slug}-hero.png"
+    target_cdn_file = f"{subj_dir}/{keyword_slug}-hero.webp"
     target_cdn_url = f"{CDN_BASE}/{target_cdn_file}"
 
     return {
@@ -478,13 +478,26 @@ def find_local_hero(course_dir: Path) -> dict | None:
 
 
 def download_cdn_to_local(cdn_url: str, course_dir: Path, course_id: str) -> dict | None:
-    """将 CDN 图片下载到课件本地 assets/（--local 模式用）"""
+    """将 CDN 图片下载到课件本地 assets/（--local 模式用），自动转 WebP"""
     try:
         import urllib.request
         assets_dir = course_dir / 'assets'
         assets_dir.mkdir(parents=True, exist_ok=True)
-        target = assets_dir / f"{course_id}-hero.png"
-        urllib.request.urlretrieve(cdn_url, str(target))
+        target = assets_dir / f"{course_id}-hero.webp"
+        # 下载原始数据
+        data = urllib.request.urlopen(cdn_url, timeout=60).read()
+        # 若源数据非 WebP（RIFF 头），用 Pillow 转换
+        if not data[:4].startswith(b'RIFF'):
+            try:
+                from PIL import Image
+                import io
+                img = Image.open(io.BytesIO(data))
+                buf = io.BytesIO()
+                img.save(buf, format='WEBP', quality=85)
+                data = buf.getvalue()
+            except ImportError:
+                pass  # Pillow 不可用时原样保存
+        target.write_bytes(data)
         return {
             'action': 'downloaded',
             'local_path': str(target.relative_to(course_dir)),
