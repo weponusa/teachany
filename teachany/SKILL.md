@@ -85,7 +85,7 @@ python3 "$TEACHANY_SKILL/scripts/check_node_id.py" --node-id phy-m-liquid-pressu
 4. 按 `tech/animation-toolchain.md` 选择动画工具：算法/流程优先 Motion Canvas，数学推导优先 Manim，实验探究优先 PhET/GeoGebra/3Dmol/Matter.js，页面实时操作用 Canvas/SVG。
 5. 接入五件套：AI 学伴、TTS、section hints、知识图谱、导师卡片。
 6. **学段视觉（强制）**：Phase 2 前读 `tech/visual-stage-modes.md`；`body` 用 `teachany-elementary` / `teachany-middle` / `teachany-high`，配色与练习气质不得混用（**禁止**把初中深色壳套到小学课）。
-7. **Hero（CDN 优先）**：先 `find-hero.py "$COURSE_DIR" --cdn`；L1/L2 命中则引用 CDN，并**本地落盘** `assets/*-hero.png` 作回退。未命中 → **`agnes-image-gen.py`（服务端中转，用户无 Key，每课件≤3张）** → 仍无则 `gen-hero-svg.py`。
+7. **Hero（Agnes 生图，禁止 SVG 画图）**：先 `find-hero.py "$COURSE_DIR" --cdn`；L1/L2 命中则引用 CDN，并**本地落盘** `assets/*-hero.webp` 作回退。未命中 → **必须**用 `agnes-image-gen.py`（Agnes / 服务端中转，用户无 Key）生成知识结构 Hero，prompt 要求**中文标注**知识点卡片/公式/流程（如「玻意耳定律」「pV=nRT」）。**禁止**用 `gen-hero-svg.py` / 手写 SVG 充当 Hero；额度用尽或中转失败时在交付说明中注明，不得用 SVG 伪图顶替。
 8. **TTS（强制）**：`tts-engine.py`（Edge Neural）生成 ≥3 个 `tts/*.mp3`（每个 ≥5KB）；`data-teachany-audio-playlist` 每条带 `section` 映射 `data-tts`；`teachany-tts-narrator.js` v8 播放预录 mp3，**禁止** Web Speech 金属音、`data-tts-disabled` 或 `data-tts-mode="webspeech"` 交付。
 9. **悬浮坞（强制）**：五件套 CSS 后加载 `teachany-floating-dock.css`；**禁止**课件内 `position:fixed` 右下角自定义学伴/气泡（与 TTS、播放模式 FAB、学习反馈抢位）。学伴只用 `ai-tutor.js`。
 10. **定稿（强制收尾）**：`python3 scripts/finalize-courseware.py "$COURSE_DIR"` — 自动补齐 AI 学伴（卡片+config）、知识图谱、连续音频播放器，并为每个 `data-tts` 段落生成真实分段 mp3。即便前面漏写，此步也会补全；漏装 tts 引擎才会报错。
@@ -153,6 +153,7 @@ Phase 4  发布注册：**必须**走 `hang_tree.py publish`（或等价的 `tea
 14. **图片资产必须真实**：禁止在 hero/header 后面堆叠裸 `<img>` 标签；禁止 assets/ 下放 <5KB 的占位图（webp/png/jpg）。概念图、示意图必须嵌入对应教学 section 内部。如果图片资源暂未生成，不引用、不放文件——宁缺勿占。
 15. **TTS 不得静默禁用**：交付课件须有可播放的 `tts/*.mp3`；不得以「后续再录」为由在 HTML 写 `data-tts-disabled`。
 16. **Phase 3.5 双闸门（强制）**：① **必须询问**反馈密码并写入 manifest（`set-feedback-password.py`，见 `phases/phase3-5-gates.md`）；② **必须询问**是否上传。禁止未询问就 `hang_tree publish` / `teachany-publish` / `auto-publish` / `git push`。上传须 `TEACHANY_UPLOAD_CONFIRMED=1`（用户同意或任务已写明「制作并发布」）。
+17. **资源引用禁止 `/assets/` 绝对路径（Pages 404 · 2026-07 全站修复）**：课件 HTML 引用共享脚本/样式/图片，必须用相对路径 `../../assets/...`（`community/<id>/` → 仓库根 `assets/`），**禁止** `src="/assets/..."` / `href="/assets/..."` 绝对路径；`drafts/`（3 级）用 `../../../assets/`。根因：GitHub Pages 项目站点根为 `/teachany-courseware/`，`/assets/` 被解析到域名根 `weponusa.github.io/assets/` 全部 404，导致知识图谱/AI 学伴/音频/TTS/section-hints 等标准模块静默失效；本地服务器根=仓库根时 `/assets/` 恰好可用，故本地测不出、线上才暴露。`validate-courseware.py` 已加硬校验（8b2 节），生成/批处理脚本产出若含 `/assets/` 绝对路径将被质检拦截为错误。
 
 完整硬规则、基线清单与反模式：按需读 `references/baseline-rules.md`、`RULES.md`。
 
@@ -195,8 +196,8 @@ python3 "$TEACHANY_SKILL/scripts/preflight-publish.py" "$COURSE_DIR"   # Phase 4
 python3 "$TEACHANY_SKILL/scripts/find_nodes.py" --stage middle --subject math --keyword "一次函数"
 python3 "$TEACHANY_SKILL/scripts/find-hero.py" "$COURSE_DIR" --cdn   # L1 image-registry → L2 CDN 命名；命中则用返回 url
 python3 "$TEACHANY_SKILL/scripts/agnes-image-gen.py" --course-id <id> --quota   # 查生图额度（每课件 3 张）
-python3 "$TEACHANY_SKILL/scripts/agnes-image-gen.py" --course-id <id> --prompt "..." --out "$COURSE_DIR/assets/hero.png" --slot hero
-python3 "$TEACHANY_SKILL/scripts/gen-hero-svg.py" "$COURSE_DIR"      # 中转不可用或额度用尽时
+python3 "$TEACHANY_SKILL/scripts/agnes-image-gen.py" --course-id <id> --prompt "教育信息图，深色背景，中文标注：…" --out "$COURSE_DIR/assets/hero-infographic.webp" --slot hero
+# 禁止：gen-hero-svg.py / 手绘 SVG 充当 Hero（用户明确要求 Agnes 生图 + 中文标注）
 # 维护者：teachany-courseware 仓内 python3 scripts/build-image-registry.py --write-opensource
 python3 "$TEACHANY_SKILL/scripts/tts-engine.py" --text "讲解文本" --voice zh-CN-XiaoyiNeural --rate "-8%" --output "$COURSE_DIR/tts/s01.mp3"
 python3 "$TEACHANY_SKILL/scripts/finalize-courseware.py" "$COURSE_DIR"   # Phase 3 收尾：强制补 AI 学伴/音频/知识图谱 + 生成分段 TTS

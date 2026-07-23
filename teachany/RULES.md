@@ -58,6 +58,7 @@
 - **#29** 关键资源存在性需验证：HTML、manifest、assets、TTS/视频、Hero、知识图谱节点。
 - **#30** 浏览器验证至少检查：控制台无错误、核心互动可用、AI 学伴入口可见、知识图谱 tooltip 可点击。
 - **#31** 线上发布后用 `curl` 或 raw/GitHub Pages URL 验证可访问。
+- **#31a** **资源引用禁止 `/assets/` 绝对路径（Pages 404 · 2026-07 全站修复）**：课件 HTML 引用共享脚本/样式/图片，必须用 `../../assets/...` 相对路径（`community/<id>/` → 仓库根 `assets/`；`drafts/` 用 `../../../assets/`）；**禁止** `src="/assets/..."` / `href="/assets/..."`。根因：GitHub Pages 项目站点根为 `/teachany-courseware/`，`/assets/` 解析到域名根 `weponusa.github.io/assets/` 全部 404，导致知识图谱/AI 学伴/音频/TTS/section-hints 静默失效；本地服务器根=仓库根时恰好可用、线上才暴露。发布前跑 `validate-courseware.py`（8b2 硬校验）确认无 `/assets/` 残留；生成/批处理脚本产出含 `/assets/` 绝对路径即判错误。
 
 ## G. 用户体验
 
