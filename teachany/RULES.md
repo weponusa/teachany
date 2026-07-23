@@ -39,6 +39,7 @@
 - **#19d** **悬浮坞**：必须加载 `teachany-floating-dock.css`；禁止课件内右下角自定义 fixed 学伴/气泡；左下=学伴+反馈，右下=TTS+播放模式 FAB（见 `tech/visual-stage-modes.md`）。
 - **#20** 历史/地理地图先查 `find-map.py`，优先复用仓库/远端地图库。
 - **#21** 历史/地理地图必须用 `data-teachany-map` + `teachany-historical-map.js`；投影与对齐以 `topics/historical-maps-projection.md` 为准：**EPSG:3857 Web Mercator + `L.tileLayer` XYZ 底图**；**禁止** `config.hillshade` 与 `L.imageOverlay` 全球等距圆柱 JPG；疆域 GeoJSON 为 WGS84 `[lng,lat]`，城市 `cities` 为 `[lat,lng,…]`，`fitBounds` 为 `[[南纬,西经],[北纬,东经]]`；禁止课件内手写 Leaflet/ECharts graphic 铺底。
+- **#21a** **现代中国地图优先用自带地形底图+省界（v2.8 起）**：地理课件做现代中国地图时，`basemap` 配仓库自带地形瓦片 `../../assets/maps/physical/terrain-tiles/{z}/{x}/{y}.png`（zoom4-6，11MB，离线/国内可访问），配 `minNativeZoom:4, maxNativeZoom:6`（稀疏瓦片集自动拉伸，否则地图 zoom<4 时底图空白）+ `bounds:[[16,70],[56,138]]`（404噪音→0）+ `terrain:false`（不再叠 Esri 在线地形）；省界用 `../../assets/maps/political/china-modern/provinces.geojson`（35 个省级要素），era 设 `fillOpacity:0.05~0.12` 让地形纹理透出；课件专属要素（铁路/路线等）写本地 GeoJSON 用 `overlays` 叠加。参考实现：`community/geo-m-china-transportation/`。
 
 ## E. 知识树与发布
 
