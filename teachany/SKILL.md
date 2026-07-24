@@ -1,6 +1,6 @@
 ---
 name: TeachAny
-version: 7.18.0
+version: 7.21.0
 description: "K-12 interactive courseware creation. Use for school-subject lesson pages, animations, AI tutor, TTS, knowledge graph, PBL learning paths, or TeachAny publishing."
 description_zh: "K12 互动课件开发技能：用于制作或优化学科课件、教学动画、AI 学伴、TTS、知识图谱、PBL 学习路径与 TeachAny 发布。"
 allowed-tools: Read,Write,Edit,Bash,Glob,Grep
@@ -256,4 +256,4 @@ python3 "$TEACHANY_SKILL/scripts/hang_tree.py" rebuild --dispatch
 
 ## 版本说明
 
-当前执行摘要版本：`7.20.0`。v7.20：新增 `finalize-courseware.py` 课件定稿器——发布前强制补齐 AI 学伴（卡片+`__TEACHANY_TUTOR_CONFIG__`）、连续音频播放器、知识图谱，并为每个 `data-tts` 段落自动生成真实分段 mp3；`preflight-publish.py` 启动即调用 finalize 并对三模块硬校验；`apply-standard-modules.py` 补 `teachany-audio-player.js` + tutor-config + audio-config 注入；修复 course-skeleton-v2 模板 CSS bug。v7.19：新增 `preflight-publish.py` 发布前闸门（反馈密码/node_id 一致性/ext 挂树规则/validate 预检）；`hang_tree register` 禁止 ext-*。
+当前执行摘要版本：`7.21.0`。v7.21：新增互动引擎层——实验探究类互动采用"中央引擎 + JSON 配置"模式（`tech/interactive-engines.md` 决策枢纽 + `tech/interactive-engines/` 深度文档组）；内置三个已验证引擎（function-lab 函数图像 / circuit-lab 电路探究 / equilibrium-lab 化学平衡，源码在 `templates/engines/`）；课件 = 瘦壳 + `courseware.config.json`，引擎集中部署于 courseware 仓库 `assets/engines/`（符合 #31a）；选型优先级：TeachAny 引擎 → PhET/GeoGebra 等 iframe → 手写 Canvas；新增硬规则 #31b。v7.20：新增 `finalize-courseware.py` 课件定稿器——发布前强制补齐 AI 学伴（卡片+`__TEACHANY_TUTOR_CONFIG__`）、连续音频播放器、知识图谱，并为每个 `data-tts` 段落自动生成真实分段 mp3；`preflight-publish.py` 启动即调用 finalize 并对三模块硬校验；`apply-standard-modules.py` 补 `teachany-audio-player.js` + tutor-config + audio-config 注入；修复 course-skeleton-v2 模板 CSS bug。v7.19：新增 `preflight-publish.py` 发布前闸门（反馈密码/node_id 一致性/ext 挂树规则/validate 预检）；`hang_tree register` 禁止 ext-*。
