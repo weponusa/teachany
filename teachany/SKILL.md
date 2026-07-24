@@ -82,7 +82,7 @@ python3 "$TEACHANY_SKILL/scripts/check_node_id.py" --node-id phy-m-liquid-pressu
 1. 查 `node_id`：`python3 scripts/find_nodes.py --stage middle --subject physics --keyword "浮力"`（远程课标，无需 clone）。
 2. 复制 `templates/course-skeleton-v2.html` 和 `templates/manifest-template.json`。
 3. 用"为什么沉浮不同？"做问题锚点，加入拖拽物体/液体密度的 Canvas 互动。
-4. 按 `tech/animation-toolchain.md` 选择动画工具：算法/流程优先 Motion Canvas，数学推导优先 Manim，实验探究优先 PhET/GeoGebra/3Dmol/Matter.js，页面实时操作用 Canvas/SVG。
+4. 按 `tech/animation-toolchain.md` 选择动画工具：算法/流程优先 Motion Canvas，数学推导优先 Manim；**实验探究类互动先查 `tech/interactive-engines.md` 的引擎清单**（function-lab/circuit-lab/equilibrium-lab，命中则引擎+配置，免写交互代码），未覆盖再用 PhET/GeoGebra/3Dmol/Matter.js，页面实时操作用 Canvas/SVG。
 5. 接入五件套：AI 学伴、TTS、section hints、知识图谱、导师卡片。
 6. **学段视觉（强制）**：Phase 2 前读 `tech/visual-stage-modes.md`；`body` 用 `teachany-elementary` / `teachany-middle` / `teachany-high`，配色与练习气质不得混用（**禁止**把初中深色壳套到小学课）。
 7. **Hero（Agnes 生图，禁止 SVG 画图）**：先 `find-hero.py "$COURSE_DIR" --cdn`；L1/L2 命中则引用 CDN，并**本地落盘** `assets/*-hero.webp` 作回退。未命中 → **必须**用 `agnes-image-gen.py`（Agnes / 服务端中转，用户无 Key）生成知识结构 Hero，prompt 要求**中文标注**知识点卡片/公式/流程（如「玻意耳定律」「pV=nRT」）。**禁止**用 `gen-hero-svg.py` / 手写 SVG 充当 Hero；额度用尽或中转失败时在交付说明中注明，不得用 SVG 伪图顶替。
@@ -166,6 +166,7 @@ Phase 4  发布注册：**必须**走 `hang_tree.py publish`（或等价的 `tea
 | Phase 3.5 反馈密码 + 上传确认 | `phases/phase3-5-gates.md` |
 | 学生反馈密码字段说明 | 课件仓 `FEEDBACK_SETUP.md` |
 | 动画工具分层选择 | `tech/animation-toolchain.md` |
+| **互动引擎（实验探究区 · 必读）** | `tech/interactive-engines.md`（深度文档：`tech/interactive-engines/`；模板：`templates/engines/`、`templates/engine-*`） |
 | TTS、视频音频 | `phases/video-audio.md` |
 | 19 项基线与反模式 | `references/baseline-rules.md` |
 | Phase 1 问卷 | `references/phase1-checklist.md` |

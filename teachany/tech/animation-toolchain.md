@@ -10,7 +10,7 @@
 | L1 页面内实时互动 | 学生拖动、点击、试错、即时反馈 | 原生 Canvas / SVG / p5.js | HTML 内交互组件 | 二分查找、递归树、参数滑块、拖拽分类 |
 | L2 算法/流程教学动画 | 展示程序执行、状态转移、调用栈、排序过程 | **Motion Canvas** | `assets/video/*.mp4` + `assets/animation-source/*.ts(x)` | 递归、分治、图算法、协议流程、状态机 |
 | L3 数学/几何/公式推导 | 严谨公式、坐标、几何构造、函数图像 | **Manim Community** | `assets/video/*.mp4` + `assets/animation-source/*.py` | 函数变换、导数、几何证明、概率分布 |
-| L4 科学仿真/实验探究 | 自由调参、实验模拟、真实科学模型 | PhET / GeoGebra / Desmos / 3Dmol / Matter.js | iframe / Canvas / 外部工具嵌入 | 物理实验、化学分子、函数图像、生物过程 |
+| L4 科学仿真/实验探究 | 自由调参、实验模拟、真实科学模型 | **TeachAny 互动引擎**（命中时首选，`tech/interactive-engines.md`）→ PhET / GeoGebra / Desmos / 3Dmol / Matter.js | 引擎+配置 / iframe / Canvas / 外部工具嵌入 | 物理实验、化学分子、函数图像、生物过程 |
 | L5 轻量装饰动效 | 氛围、图标、微交互，不承载核心教学 | CSS / Lottie / Rive | CSS/JSON/wasm/canvas | 封面动效、状态反馈、按钮过渡 |
 | L6 3D/复杂空间动画 | 立体结构、器件装配、复杂视角 | Blender / Three.js | MP4 / glTF / WebGL | 分子结构、机械结构、天体/地形 |
 | L7 React 视频合成 | 需要把 React 页面/组件剪成视频 | Remotion | MP4 + React source | 页面级宣传片、多镜头合成、已有 React 组件复用 |
