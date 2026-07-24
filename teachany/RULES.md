@@ -60,6 +60,9 @@
 - **#30** 浏览器验证至少检查：控制台无错误、核心互动可用、AI 学伴入口可见、知识图谱 tooltip 可点击。
 - **#31** 线上发布后用 `curl` 或 raw/GitHub Pages URL 验证可访问。
 - **#31a** **资源引用禁止 `/assets/` 绝对路径（Pages 404 · 2026-07 全站修复）**：课件 HTML 引用共享脚本/样式/图片，必须用 `../../assets/...` 相对路径（`community/<id>/` → 仓库根 `assets/`；`drafts/` 用 `../../../assets/`）；**禁止** `src="/assets/..."` / `href="/assets/..."`。根因：GitHub Pages 项目站点根为 `/teachany-courseware/`，`/assets/` 解析到域名根 `weponusa.github.io/assets/` 全部 404，导致知识图谱/AI 学伴/音频/TTS/section-hints 静默失效；本地服务器根=仓库根时恰好可用、线上才暴露。发布前跑 `validate-courseware.py`（8b2 硬校验）确认无 `/assets/` 残留；生成/批处理脚本产出含 `/assets/` 绝对路径即判错误。
+- **#31b** **manifest.curriculum 只写标准值（2026-07 归一化修复）**：中国课标课件写 `"curriculum":"cn-national"`（或留空缺省）；国际体系才写 `ib`/`ib-dp`/`ap`/`cambridge` 等并在 node_id 用国际 infix（`-ib-dp-`/`-cam-al-`/`-ap-`）。**禁止**写 `cn`、`义务教育课程标准（2022年版）·××`、`人教版××` 等变体——质检按"是否国际体系"分流，变体曾被误判为国际体系走最小校验，导致 233 个课件完整校验（地图/前后测/图谱/资源/教学质量）全部漏检。课标版本信息放 `manifest.standards` 或 description，不占 curriculum 字段。
+
+- **#31b** **互动引擎课件（引擎+配置）规范**：实验探究类互动先查 `tech/interactive-engines.md` 引擎清单（function-lab/circuit-lab/equilibrium-lab）；命中则课件**必须**引用中央引擎 `../../assets/engines/<id>/v<N>/engine.js`（相对路径，符合 #31a）+ `courseware.config.json` 驱动，**禁止**把引擎代码复制进课件目录修改（引擎 bug 修中央、课件零改动）；manifest 必须含 `engine:{id,version,entry,config}` 字段；引擎契约变更必须升 `v<N>` 目录共存、不得原地破坏旧版本；未被引擎覆盖的互动仍按 animation-toolchain 选 PhET/手写 Canvas，不得强套引擎凑数。
 
 ## G. 用户体验
 
