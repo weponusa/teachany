@@ -83,6 +83,10 @@ echo
 # ── 0. Push 凭据检测 ──
 can_push() {
   if [ -n "${GH_TOKEN:-}" ]; then return 0; fi
+  if [ -n "${GITHUB_TOKEN:-}" ]; then
+    export GH_TOKEN="$GITHUB_TOKEN"  # 兼容：GITHUB_TOKEN → GH_TOKEN
+    return 0
+  fi
   ssh -T git@github.com -o BatchMode=yes -o ConnectTimeout=8 2>&1 | grep -qi "successfully authenticated" && return 0
   return 1
 }

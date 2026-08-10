@@ -9,7 +9,7 @@ TeachAny 只有一套标准：所有课件必须完整包含以下 19 项基线�
 ## 19 项基线
 
 1. TTS 旁白音频（`tts/` 目录，≥1 个有声 MP3，单个 ≥5KB）。
-2. 至少一个教学动画/视频（课型需要时）。
+2. 教学动画/视频为**可选增强项，不强制注入**：仅当课型确实需要或用户明确要求时制作；未启用视频的课件不视为缺项（质检 #21 按 N/A 通过）。
 3. Canvas/SVG/iframe 真实互动（非弹窗、非纯点击）；实验探究类优先 TeachAny 互动引擎（`tech/interactive-engines.md`，引擎+配置即满足本项，规则 #31b）。
 4. 学科插图或场景图（`assets/` 目录，≥1 张真实内容图片，≥5KB）。
 5. Hero 知识结构图（优先 `find-hero.py --cdn` 的 L1/L2 URL + 本地回退；否则 `assets/hero-infographic.svg` / `hero-infographic.png`）。

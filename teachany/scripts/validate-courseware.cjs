@@ -47,11 +47,14 @@ function resolveLocalRef(dir, ref) {
 
 function findMissingLocalAssets(dir, html) {
   const repoRoot = path.resolve(__dirname, '..');
+  // 内联 JS（含模板字面量 ${...}）中的 src/href 赋值不是静态资源引用，
+  // 剔除 <script> 内容后再扫描；保留 application/json 配置块（地图 manifest 等仍校验）。
+  const htmlForScan = html.replace(/<script\b(?![^>]*type=["']application\/json["'])[^>]*>[\s\S]*?<\/script>/gi, '');
   const re = /(?:\b(?:src|href|poster)\s*=\s*['"]([^'"]+)['"]|url\(\s*['"]?([^'")]+)['"]?\s*\))/gi;
   const missing = [];
   const seen = new Set();
   let m;
-  while ((m = re.exec(html)) !== null) {
+  while ((m = re.exec(htmlForScan)) !== null) {
     const raw = (m[1] || m[2] || '').trim();
     if (shouldSkipAssetRef(raw)) continue;
     let clean;
@@ -219,9 +222,20 @@ const CHECKS = [
       let longCards = 0;
       let maxLen = 0;
       cardMatches.forEach(card => {
-        const text = card.replace(/<[^>]+>/g, '').replace(/\s+/g, '');
-        if (text.length > maxLen) maxLen = text.length;
-        if (text.length > 200) longCards++; // 200字作为单卡片上限
+        // 容器卡片（内部还嵌套 class 含 card 的子卡片/section）跳过，由子卡片各自计量
+        const innerHtml = card.replace(/^<div[^>]*>/i, '');
+        if (/class="[^"]*card/i.test(innerHtml)) return;
+        const text = card
+          .replace(/<(script|style|svg|textarea|template|table|details|button)\b[\s\S]*?<\/\1>/gi, '')
+          .replace(/<(details|table)\b(?![\s\S]*?<\/\1>)[\s\S]*$/gi, '') // 截断匹配中未闭合的折叠/表格块
+          .replace(/<[^>]+>/g, '')
+          .replace(/\s+/g, '');
+        // 中英文混排公平计字：每个 CJK 字计 1，每段连续拉丁字母/数字计 1 词
+        const cjkCount = (text.match(/[\u4e00-\u9fff]/g) || []).length;
+        const wordCount = (text.replace(/[\u4e00-\u9fff]/g, ' ').match(/[A-Za-z0-9]+/g) || []).length;
+        const textLen = cjkCount + wordCount;
+        if (textLen > maxLen) maxLen = textLen;
+        if (textLen > 200) longCards++; // 200字作为单卡片上限
       });
       return {
         pass: longCards === 0,
@@ -316,7 +330,7 @@ const CHECKS = [
     desc: '仅用户明确要求双语时才需要 index_en.html',
     check: (html, meta, dir) => {
       const hasEn = fs.existsSync(path.join(dir, 'index_en.html'));
-      const wantsBilingual = /output_formats[\s\S]*index_en|双语|英文版|bilingual/i.test(html);
+      const wantsBilingual = /output_formats[\s\S]*index_en|双语版?(课件|版本)|英文版(课件|版本)|bilingual\s*(courseware|version)/i.test(html);
       return {
         pass: !wantsBilingual || hasEn,
         detail: hasEn ? '英文版 index_en.html 存在' : '未声明双语需求，中文单版本通过',
@@ -403,20 +417,23 @@ const CHECKS = [
   },
   {
     id: 21,
-    name: '视频模块可见可控',
-    desc: '已有 mp4 必须嵌入 video 标签，且有 controls 与真实文件',
+    name: '视频模块可见可控（可选）',
+    desc: '视频为可选模块，不强制注入；已嵌入的 mp4 必须有 controls 与真实文件',
     check: (html, meta, dir) => {
       const refs = [...html.matchAll(/<(?:video|source)[^>]+src=["']([^"']+\.mp4)["']/gi)].map(m => m[1]);
+      const videoTags = [...html.matchAll(/<video\b[^>]*>/gi)].map(m => m[0]);
+      if (refs.length === 0 && videoTags.length === 0) {
+        return { pass: true, detail: 'N/A（视频为可选模块，本课件未启用）', fix: '' };
+      }
       const valid = refs.filter(ref => {
         const target = resolveLocalRef(dir, ref);
         return target && fs.existsSync(target) && fs.statSync(target).size >= 20 * 1024;
       });
-      const videoTags = [...html.matchAll(/<video\b[^>]*>/gi)].map(m => m[0]);
       const controlsOk = videoTags.length > 0 && videoTags.every(v => /controls/i.test(v) && /playsinline/i.test(v));
       return {
         pass: valid.length >= 1 && controlsOk,
         detail: `有效 mp4 ${valid.length}/${refs.length}；video controls/playsinline ${controlsOk ? '✅' : '❌'}`,
-        fix: '把 Remotion/教学 mp4 用 <video controls preload="metadata" playsinline><source ...> 嵌入对应知识模块',
+        fix: '课型确实需要视频时，把教学 mp4 用 <video controls preload="metadata" playsinline><source ...> 嵌入对应知识模块；否则移除残留 video 标签',
       };
     },
   },

@@ -39,14 +39,40 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent
 
 
+def _get_courseware_repo() -> Path:
+    """获取 teachany-courseware 仓库路径（支持环境变量和常见默认位置）。"""
+    env = os.environ.get("TEACHANY_COURSEWARE_REPO", "").strip()
+    if env:
+        p = Path(env).expanduser()
+        if p.is_dir():
+            return p
+    # 常见默认位置
+    for candidate in (
+        Path.home() / ".cache" / "teachany-courseware",
+        Path.home() / "CodeBuddy" / "一次函数" / "teachany-courseware",
+        REPO_ROOT.parent.parent / "teachany-courseware",  # 相对于 skill 仓的同级
+    ):
+        if candidate.is_dir():
+            return candidate
+    return Path()  # 空 Path，后续 is_dir 检查会 False
+
+
 def locate_course(target: str) -> Path | None:
     p = Path(target)
     if p.is_dir():
         return p.resolve()
+    # 在 skill 仓内搜索
     for base in (REPO_ROOT / "community", REPO_ROOT / "community" / "drafts", REPO_ROOT / "examples"):
         cand = base / target
         if cand.is_dir():
             return cand.resolve()
+    # 在 teachany-courseware 仓库搜索（双仓库架构兼容）
+    cw_repo = _get_courseware_repo()
+    if cw_repo.is_dir():
+        for base in (cw_repo / "community", cw_repo / "community" / "drafts"):
+            cand = base / target
+            if cand.is_dir():
+                return cand.resolve()
     return None
 
 
@@ -255,9 +281,22 @@ def check_publish_readiness(course_dir: Path, finalize: bool = True) -> dict:
     else:
         warns.append("未找到 check_node_id.py，跳过 node_id 树校验")
 
+    # 查找 validate-courseware.py：先本目录，再 courseware 仓 scripts/
     validator = SCRIPT_DIR / "validate-courseware.py"
-    if validator.exists() and (REPO_ROOT / "community").is_dir():
-        code, out = run_script(validator, [course_dir.name], timeout=300)
+    validator_cwd = REPO_ROOT if (REPO_ROOT / "community").is_dir() else None
+    if not validator.exists():
+        cw_repo = _get_courseware_repo()
+        cw_validator = cw_repo / "scripts" / "validate-courseware.py"
+        if cw_validator.exists():
+            validator = cw_validator
+            validator_cwd = cw_repo
+    if validator.exists() and validator_cwd and Path(validator_cwd).is_dir():
+        r = subprocess.run(
+            [sys.executable, str(validator), course_dir.name],
+            capture_output=True, text=True, timeout=300,
+            cwd=str(validator_cwd),
+        )
+        code, out = r.returncode, (r.stdout or "") + (r.stderr or "")
         if code != 0:
             errors.append("validate-courseware.py 未通过（见下方明细）")
             for line in out.splitlines():
