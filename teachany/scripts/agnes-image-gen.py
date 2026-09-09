@@ -88,9 +88,17 @@ def generate_remote(course_id: str, prompt: str, *, size: str = DEFAULT_SIZE, sl
 
 
 def download_image(url: str, out_path: Path, timeout: int = 120) -> int:
-    req = urllib.request.Request(url, headers={'User-Agent': 'TeachAny/1.0'})
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        data = resp.read()
+    if url.startswith('data:'):
+        # OpenRouter 兜底返回 data URL（data:image/png;base64,...），直接解码
+        import base64
+        header, _, b64 = url.partition(',')
+        if ';base64' not in header or not b64:
+            raise RuntimeError('无法解析 data URL（缺少 base64 数据）')
+        data = base64.b64decode(b64)
+    else:
+        req = urllib.request.Request(url, headers={'User-Agent': 'TeachAny/1.0'})
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = resp.read()
     if len(data) < MIN_BYTES:
         raise RuntimeError(f'下载文件过小 ({len(data)} B)，可能无效')
     out_path.parent.mkdir(parents=True, exist_ok=True)
