@@ -48,6 +48,7 @@ DEFAULT_VOICE = "zh-CN-XiaoxiaoNeural"
 
 # 标准模块文件（self-contained 时复制到课件 assets/scripts/，确保挂树后必可加载）
 STANDARD_MODULES = [
+    "courseware-shell.css",
     "ai-tutor.css", "ai-tutor.js",
     "teachany-tutor-card.css", "teachany-tutor-card.js",
     "teachany-tts-narrator.css", "teachany-tts-narrator.js",
@@ -55,6 +56,7 @@ STANDARD_MODULES = [
     "teachany-knowledge-graph.css", "teachany-knowledge-graph.js",
     "teachany-audio-player.css", "teachany-audio-player.js",
     "teachany-floating-dock.css",
+    "teachany-quiz-binding.js", "ta-interactions.js",
 ]
 
 
@@ -203,7 +205,9 @@ def generate_audio(course_dir: Path, manifest: dict, html: str) -> dict:
     """
     report = {"generated": [], "reused": [], "failed": [], "sections": 0, "skipped": False}
 
-    has_playlist = "data-teachany-audio-playlist" in html
+    # 注意：v2 模板的 debug 自检 JS 里也含 "data-teachany-audio-playlist]" 字样，
+    # 必须匹配真实配置块（属性名后跟 ">"），否则模板课件永远被误判为"已有音频"而跳过生成。
+    has_playlist = "data-teachany-audio-playlist>" in html
     existing = count_real_mp3(course_dir)
     if has_playlist or existing >= 3:
         report["skipped"] = True
@@ -287,7 +291,7 @@ def finalize(course_dir: Path, do_audio: bool = True, self_contained: bool = Tru
     actions.update(links_added=links, scripts_added=scripts, tutor_card=card, tutor_config=cfg)
 
     if node_id:
-        html, kg = asm.ensure_kg_section(html, node_id, heading)
+        html, kg = asm.ensure_kg_section(html, node_id, heading, course_dir)
         actions["kg"] = kg
     else:
         actions["kg"] = "skipped-no-node-id"

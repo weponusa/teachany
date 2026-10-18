@@ -83,10 +83,6 @@ echo
 # ── 0. Push 凭据检测 ──
 can_push() {
   if [ -n "${GH_TOKEN:-}" ]; then return 0; fi
-  if [ -n "${GITHUB_TOKEN:-}" ]; then
-    export GH_TOKEN="$GITHUB_TOKEN"  # 兼容：GITHUB_TOKEN → GH_TOKEN
-    return 0
-  fi
   ssh -T git@github.com -o BatchMode=yes -o ConnectTimeout=8 2>&1 | grep -qi "successfully authenticated" && return 0
   return 1
 }
@@ -158,8 +154,16 @@ else
   echo "  ⚠️  未找到 set-feedback-password.py，跳过 feedback 校验"
 fi
 
-PREFLIGHT="$SCRIPT_DIR/preflight-publish.py"
-[ -f "$PREFLIGHT" ] || PREFLIGHT="$COURSEWARE_REPO/scripts/preflight-publish.py"
+# 课件在 courseware 仓内时优先用仓内 preflight-publish.py：
+# skill 版在 skill 目录残留旧 community/ 副本时会把 cwd 定到 skill 目录，导致 node 校验读旧树误报。
+PREFLIGHT=""
+REPO_PREFLIGHT="$COURSEWARE_REPO/scripts/preflight-publish.py"
+if [ -f "$REPO_PREFLIGHT" ] && [[ "$TARGET_DIR" == "$COURSEWARE_REPO"/* ]]; then
+  PREFLIGHT="$REPO_PREFLIGHT"
+else
+  [ -f "$SCRIPT_DIR/preflight-publish.py" ] && PREFLIGHT="$SCRIPT_DIR/preflight-publish.py"
+  [ -z "$PREFLIGHT" ] && [ -f "$REPO_PREFLIGHT" ] && PREFLIGHT="$REPO_PREFLIGHT"
+fi
 if [ -f "$PREFLIGHT" ]; then
   echo "[0.5/8] preflight-publish（发布前闸门）..."
   if ! python3 "$PREFLIGHT" "$TARGET_DIR"; then

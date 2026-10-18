@@ -50,6 +50,7 @@
 - **#24b** Phase 3.5a **必须询问**授课教师设置学生反馈密码并写入 `manifest.feedback`（`set-feedback-password.py`）；禁止未询问就发布。教师明确不启用时用 `--decline` 记录；禁止明文密码入库（仅 `password_sha256`）。
 - **#25** Phase 4 必须走 `hang_tree.py publish`（或等价 `teachany-publish.sh`）。**严禁**跳过 `rebuild-index.py` 直接 push。挂树/发布不必事先 full clone（`GH_TOKEN` 浅克隆或 Worker PR→CI rebuild）。单课发布**严禁** `git add -A`；用 `auto-publish.sh` 限定暂存。有 SSH/`GH_TOKEN` 时 Agent **必须**尝试发布挂树。
 - **#25a** **发布路径自动选择（强制）**：在执行发布前，**必须先运行凭据检测**（`ssh -T git@github.com` 或检查 `GH_TOKEN` 环境变量）。若无 GitHub 推送权限 → **只能用 `publish_course.sh`**（走 Worker API，零凭据）；禁止 `git commit` 后发现推不上去再告诉用户"需要 token"。批量升级多门课件后同样适用此规则——逐门跑 `publish_course.sh`，不要试图一次 git push 全部。
+- **#25b** **身份分叉（2026-09 新增）**：凭据检测后按身份走不同路径，**有权限的管理员/维护者** → 直接提交：`hang_tree.py publish` → `auto-publish.sh`（注册 + 挂树 + push，无需送审）；**普通用户（无凭据）** → 投稿：课件已「发布为应用」拿到在线链接时优先 `submit-link-to-community.py`（只传链接，服务端只留元数据 JSON），否则 `publish_course.sh` 上传 `.teachany` 包。两者都需先过 3.5b 询问（#24a）；用户点头一次即自动跑完，不要反复追问。
 - **#26** full HTML 放 `weponusa/teachany-courseware` 仓库的 `community/<course-id>/`；`weponusa/teachany` 只保留主站、Skill 和轻量索引。
 - **#27** 自动发布前先检测远端、权限、分支和用户是否要求跳过。
 
@@ -70,3 +71,11 @@
 - **#33** 技术维护/批量任务直接走维护模式，不套课件制作长流程。
 - **#34** 输出要说明"已做什么、如何验证、还有什么增强项"。
 - **#35** 不要把内部历史补丁、失败考古、长表格暴露给用户。
+
+## H. 发布壳层标准（2026-10 统一，preflight-publish.py 强制）
+
+- **#36** **品牌顶栏**：`<body>` 顶部必须有 `<div class="teachany-brand-bar">`（全库统一 sticky 深色毛玻璃条）。markup 标准：logo/名称链 `https://www.teachany.cn/`，图标 `https://www.teachany.cn/assets/teachany-icon.png`，右侧「Gallery」+ `brand-version` 胶囊填「学科·学段」（从 teachany-subject/teachany-grade meta 生成，如「初中生物 · 七年级」）。**禁止**链接 weponusa.github.io。禁止再造旧版「教我学」导航（`class="nav-brand"`）或无函数定义的 goTo 按钮。
+- **#37** **样式单源与缓存**：顶栏样式单源在 `assets/scripts/courseware-shell.css`（骨架已内联一份等价规则做兜底）。课件链接共享 CSS **必须带版本参数** `courseware-shell.css?v=YYYYMMDD`——Cloudflare 边缘会长期缓存无参数 URL，改样式不 bump 版本号 = 改动对用户不可见。每次修改 assets/ 下共享 CSS/JS，必须同步 bump 全库引用版本号。
+- **#38** **结构卫生**：div/section 必须配平（发布前跑 preflight 的配平警告不得无视）；不允许多套互相冲突的 `:root` 主题块；不残留 `.ta-figure-labeled` 死类与「（无字）」旧 alt；page-nav 用标准 `teachany-page-nav`。
+- **#39** **hero 主图**：必须有 hero 引用（`assets/<course-id>-hero.png`，1536×1024 有字生图：中央主题大字 + 四分支中文标注），文件 ≥150KB（极简风 webp 可放宽至 ≥100KB）。引用文件名变体（hero-act1.png / hero-infographic.webp）合法，但同一张图不得在一页出现两次。
+- **#40** **听力类音频**：题目依赖「录音/广播」的，页面必须内嵌可播放的 `<audio>`（音频走 `https://audio.teachany.cn/<course>/tts/`，经 `sync-audio-cdn.py`/wrangler 发布到 teachany-audio 项目），并在题后附听力原文折叠块；主站不直服 `community/*/tts/`。

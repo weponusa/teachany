@@ -1,9 +1,13 @@
 ---
-name: TeachAny
-version: 7.21.0
+name: teachany
+version: 7.23.3
 description: "K-12 interactive courseware creation. Use for school-subject lesson pages, animations, AI tutor, TTS, knowledge graph, PBL learning paths, or TeachAny publishing."
 description_zh: "K12 互动课件开发技能：用于制作或优化学科课件、教学动画、AI 学伴、TTS、知识图谱、PBL 学习路径与 TeachAny 发布。"
 allowed-tools: Read,Write,Edit,Bash,Glob,Grep
+display_name: "TeachAny"
+display_name_en: "TeachAny"
+description_en: "Create K-12 interactive lesson pages, animations, AI tutor, TTS, knowledge graphs & PBL paths for TeachAny"
+visibility: "public"
 ---
 
 # TeachAny：K12 互动课件执行摘要
@@ -72,6 +76,57 @@ python3 "$TEACHANY_SKILL/scripts/check_node_id.py" --node-id phy-m-liquid-pressu
 ```
 
 门户与 `data/trees` 均在 **teachany-courseware / www.teachany.cn**；**不能**只在 `weponusa/teachany` 仓内找课标 JSON。
+
+## 用户知识库外链投稿（免审直推）
+
+外部作者把课件放在**自己的资料库/服务器**上，只提交一个 URL。**不经 PR、不经人工审核**——"能打开就允许"。
+
+| 环节 | 做法 |
+| --- | --- |
+| 投稿接口 | `POST https://teachany-community.pages.dev/api/submit-link`，必填 `url` / `name` / `node_id` / `subject` |
+| 唯一闸门 | 服务端 probe 一次该 URL，HTTP 200 即写库；**没有 pending 目录、没有人工合并、没有 PR** |
+| 落库 | `data/trees/cn/{stage}/{subject}.json` 的 `node.courses[]`；同一 commit 同步 `registry.json` + `community/index.json` |
+| 点赞 | `GET\|POST https://teachany-community.pages.dev/api/like`；计数存**单个** KV 键 `likes:v1` |
+
+> ⚠️ 旧的 `community/pending-links/<id>.json` + `scripts/approve-link-submission.py` 审核链路已废弃。外链落地页由投稿接口直接生成。
+
+### 服务端如何读懂投稿页
+
+投稿页必须自带 meta，服务端用 **GET 流式读**（凑够 80KB 即 cancel）：
+
+`teachany-node` / `teachany-title` / `teachany-subject` / `teachany-grade` / `teachany-author` / `teachany-description`
+
+> ⚠️ 不能改用 HEAD —— **HEAD 没有 body，读不到 meta**。
+
+### 展示规则（改 tree.html / pbl.html 时必须遵守）
+
+外链条目带 `hosting: "external-link"` + `source_url`，Hub 标准化时透传 `is_external`。前端**不能**把外链混进本地课件列表：
+
+- `tree.html` / `pbl.html`：外链从「课件列表」里拆出，在**下方**单独渲染「🔗 用户知识库」区块。原列表的**顺序、👑、来源统计**都只看本地课件 —— 这是"不打乱原有展示"的硬约束。
+- `tree.html` 的导航白名单 `TEACHANY_NAV_WHITELIST` 会拦掉非 TeachAny 域名 → 外链必须走独立的 `externalLinkAttrs()`（只校验 `http/https`，带 `noopener noreferrer nofollow`）。
+- **副本漂移坑**：`courseware-hub.js` 有两份 —— `tree.html` 读 `scripts/`，`pbl/knowledge-map/path` 读 `assets/scripts/`。只改一份 = 改动不生效（已踩过）。`build-publish-site.sh` 的 4c 步会做一致性检查。
+- 提交前用 `git show origin/main:<file>` 与工作区比对 sha：本仓工作区常驻近千条脏改动且本地 HEAD 可能落后远端，直接 `git add -A` 会回退远端内容。
+- ⚠️ **`git fetch` 在沙箱里走不通**：`github.com:443` 被阻断（直连 `SSL_ERROR_SYSCALL`、走代理 `HTTP2 framing layer`、换 HTTP/1.1 无效），`raw.githubusercontent.com` 也不通，**只有 `api.github.com` 放行**。此时**不要放弃比对**，改用 API 比 blob sha（blob sha 即内容哈希，相等 = 逐字节一致）：
+
+  | 目的 | 调用 |
+  | --- | --- |
+  | 判断是否分叉 | `GET /repos/weponusa/teachany-courseware/compare/<本地共同祖先或远端sha>...<远端sha>`，看 `status`（`ahead` = 纯快进）/ `ahead_by` / `merge_base_commit` |
+  | 比单个文件内容 | 本地 `git rev-parse HEAD:<path>` ↔ 远端 `GET /repos/.../contents/<path>?ref=<sha>` 返回的 `.sha` |
+  | 看远端提交列表 | `GET /repos/.../commits?sha=main&per_page=10` |
+
+  坑：`git/trees/<sha>?recursive=1` 对本仓库 **HTTP 500**（太大，拿不到完整树）；`compare` 的 `files[]` **上限 300 条会静默截断**；未认证限流 **60/h**（先查 `/rate_limit`）。本地无独有内容时不要 `git push --force`，只需在网络放行的环境 `git fetch && git reset --soft origin/main`（工作区脏改动保留）。
+
+### 怎么验（在线上真页面里验，不要只看代码）
+
+上线后（`https://weponusa.github.io/teachany-courseware/tree.html`），用 `agent-browser` 直接调**页面自身**的渲染函数复现 tooltip —— 比折腾 UI 导航（切学段/学科去找那个节点）快得多，而且验的就是同一份线上代码：
+
+1. `open` 线上 tree.html，等 5–6s 让 Hub 初始化。先 `TeachAnyHub.getStats()` 看 `coveredNodes` / `totalCourses`；再遍历 `getAllCoveredNodeIds()` + `getAllCoursesForNode(id)` 把含 `is_external` 的节点捞出来（全站外链通常只有个位数，务必先扫一遍拿到 node id，别猜）。
+2. 直接 `showTooltip({clientX:120,clientY:120}, d)`。**`d` 必须补全字段**，否则报 `Cannot read properties of undefined (reading 'length')` —— `showTooltip` 会读 `d.prerequisites`。最小可用：
+   `d = {id, name, domain, grade, courses: [], prerequisites: [], x: 0, y: 0}`
+3. 读 `document.getElementById('tooltip').innerText` 验分区文本（本地课件在前、虚线分隔、`🔗 用户知识库（用户自己托管）：`在后；统计行应分区计数）。再读其中的 `<a>` 验属性：本地链接 `rel="noopener noreferrer"`，外链 `rel="noopener noreferrer nofollow"`，href 不是 `#`。
+4. **必须**再抽一个纯本地节点同样跑一遍，确认 `hasLibSection === false` —— 这才是"没影响原来展示"的证据。
+
+> 截图注意：`showTooltip` 内部有延迟定位，**同一步 eval 里设的 `left/top` 会被覆盖**。要分两步 —— 先 `showTooltip`，`sleep 2`，再单独一步设 `position:fixed` + `!important`，然后 `screenshot`。
 
 ## Quick Start
 
@@ -152,8 +207,12 @@ Phase 4  发布注册：**必须**走 `hang_tree.py publish`（或等价的 `tea
 13. **学段视觉必须匹配**：小学/初中/高中三套模式见 `tech/visual-stage-modes.md`；`teachany-stage` meta、`body` class、`:root` 配色三者一致。
 14. **图片资产必须真实**：禁止在 hero/header 后面堆叠裸 `<img>` 标签；禁止 assets/ 下放 <5KB 的占位图（webp/png/jpg）。概念图、示意图必须嵌入对应教学 section 内部。如果图片资源暂未生成，不引用、不放文件——宁缺勿占。
 15. **TTS 不得静默禁用**：交付课件须有可播放的 `tts/*.mp3`；不得以「后续再录」为由在 HTML 写 `data-tts-disabled`。
-16. **Phase 3.5 双闸门（强制）**：① **必须询问**反馈密码并写入 manifest（`set-feedback-password.py`，见 `phases/phase3-5-gates.md`）；② **必须询问**是否上传。禁止未询问就 `hang_tree publish` / `teachany-publish` / `auto-publish` / `git push`。上传须 `TEACHANY_UPLOAD_CONFIRMED=1`（用户同意或任务已写明「制作并发布」）。
-17. **资源引用禁止 `/assets/` 绝对路径（Pages 404 · 2026-07 全站修复）**：课件 HTML 引用共享脚本/样式/图片，必须用相对路径 `../../assets/...`（`community/<id>/` → 仓库根 `assets/`），**禁止** `src="/assets/..."` / `href="/assets/..."` 绝对路径；`drafts/`（3 级）用 `../../../assets/`。根因：GitHub Pages 项目站点根为 `/teachany-courseware/`，`/assets/` 被解析到域名根 `weponusa.github.io/assets/` 全部 404，导致知识图谱/AI 学伴/音频/TTS/section-hints 等标准模块静默失效；本地服务器根=仓库根时 `/assets/` 恰好可用，故本地测不出、线上才暴露。`validate-courseware.py` 已加硬校验（8b2 节），生成/批处理脚本产出若含 `/assets/` 绝对路径将被质检拦截为错误。
+16. **Phase 3.5 双闸门（强制）**：① **必须询问**反馈密码并写入 manifest（`set-feedback-password.py`，见 `phases/phase3-5-gates.md`）；② **必须询问**是否上传/投稿。禁止未询问就 `hang_tree publish` / `teachany-publish` / `auto-publish` / `submit-link-to-community.py` / `git push`。上传须 `TEACHANY_UPLOAD_CONFIRMED=1`（用户同意或任务已写明「制作并发布」）。**用户点头一次即可自动跑完投稿**，不要反复追问细节。
+17. **发布路径按身份分叉**：先检测凭据（`GH_TOKEN` / SSH / 仓库可写）。
+   - **管理员 / 维护者** → 直接提交：`hang_tree publish` → `auto-publish.sh`（注册 + 挂树 + push），无需送审
+   - **普通用户** → 投稿：有在线链接走 `submit-link-to-community.py`（推荐）；只有本地目录走 `publish_course.sh` 上传包
+   - 不得在管理员环境里走投稿通道，也不得在用户环境里假设 `weponusa/*` 可写（见规则 #9）
+18. **资源引用禁止 `/assets/` 绝对路径（Pages 404 · 2026-07 全站修复）**：课件 HTML 引用共享脚本/样式/图片，必须用相对路径 `../../assets/...`（`community/<id>/` → 仓库根 `assets/`），**禁止** `src="/assets/..."` / `href="/assets/..."` 绝对路径；`drafts/`（3 级）用 `../../../assets/`。根因：GitHub Pages 项目站点根为 `/teachany-courseware/`，`/assets/` 被解析到域名根 `weponusa.github.io/assets/` 全部 404，导致知识图谱/AI 学伴/音频/TTS/section-hints 等标准模块静默失效；本地服务器根=仓库根时 `/assets/` 恰好可用，故本地测不出、线上才暴露。`validate-courseware.py` 已加硬校验（8b2 节），生成/批处理脚本产出若含 `/assets/` 绝对路径将被质检拦截为错误。
 
 完整硬规则、基线清单与反模式：按需读 `references/baseline-rules.md`、`RULES.md`。
 
@@ -174,6 +233,8 @@ Phase 4  发布注册：**必须**走 `hang_tree.py publish`（或等价的 `tea
 | PBL/探究课 | `guides/project-based.md` |
 | **知识数据 / 双仓边界** | 上文「知识图谱 / 课标数据在哪」；`scripts/repo_paths.py` |
 | **挂树 / 发布** | `scripts/hang_tree.py`、`scripts/github_courseware.py` |
+| **无仓库权限 · 链接投稿** | `scripts/submit-link-to-community.py`；网页表单 https://teachany-community.pages.dev/submit-link |
+| **维护者 · 审核入库** | `scripts/approve-link-submission.py`（pending-links → 落地页 + registry + index.json） |
 | 练习评估 | `guides/assessment.md` |
 | 页面结构与 CSS | `tech/page-structure.md`, `tech/design-system.md` |
 | **学段视觉模式（小初高 · 必读）** | `tech/visual-stage-modes.md` |
@@ -225,8 +286,53 @@ python3 "$TEACHANY_SKILL/scripts/hang_tree.py" rebuild --dispatch
 ```
 
 编排逻辑（**不必事先 clone courseware**）：
-- **有 `GH_TOKEN`/SSH** → 自动浅克隆 `~/.cache/teachany-courseware` → `auto-publish.sh`（`rebuild-index` 挂树 + push）
-- **无凭据** → `publish_course.sh` → Worker PR → 合并后 CI `rebuild-index` 挂树
+- **管理员 / 维护者（有 `GH_TOKEN` 或 SSH 写权限）** → **直接提交**：自动浅克隆 `~/.cache/teachany-courseware` → `auto-publish.sh`（`rebuild-index` 挂树 + push），无需人工审核
+- **普通用户（无凭据）** → 投稿，二选一：
+  - 课件已发布成在线链接（WorkBuddy「发布为应用」）→ `submit-link-to-community.py`（**推荐**：只传链接，服务端只留元数据 JSON）
+  - 只有本地课件目录 → `publish_course.sh` → Worker PR（上传 .teachany 包）→ 合并后 CI `rebuild-index` 挂树
+
+**链接投稿（普通用户默认路径）**：
+
+```bash
+# 3.5b 已问过用户并同意后：
+export TEACHANY_UPLOAD_CONFIRMED=1
+python3 "$TEACHANY_SKILL/scripts/submit-link-to-community.py" \
+  --course-dir "$COURSE_DIR" \
+  --url <WorkBuddy 发布后的在线链接>
+```
+
+- 名称 / `node_id` / 学科 / 年级从 `manifest.json` 自动带出，可用 `--name --node-id --subject --grade --author` 覆盖
+- `--dry-run` 先预览将要提交的内容；确认无误再真发
+- 提交后打印送审编号与 PR 链接
+- 服务端会校验链接公网可达（8 秒超时；HTTP ≥400 拒收），内网 / 非 http 地址直接拒绝
+
+**审核入库（维护者动作 · 只合并 PR 不会进 Gallery）**：
+
+待审投稿躺在 `community/pending-links/<course-id>.json`。**合并不是终点**——社区索引
+`community/index.json` 由 `sync-community-index.py` 从 `registry.json` 生成，且有硬条件
+「`community/<path>/index.html` 必须存在」，纯外链投稿没有仓库内资产，塞进 index.json 也会被下次 sync 冲掉。
+所以审核通过必须跑：
+
+```bash
+cd <courseware 仓>
+python3 scripts/approve-link-submission.py --list                  # 看待审清单
+python3 scripts/approve-link-submission.py <course-id> --dry-run   # 预览将创建什么
+python3 scripts/approve-link-submission.py <course-id>             # 落库 + 自动刷新 index.json
+```
+
+它做四件事：① 生成 `community/<course-id>/index.html` 落地页（介绍 + 跳转真实托管地址，5 秒自动跳）
+② 生成对齐标准课件的 `manifest.json` ③ 登记 `registry.json` ④ 删除 pending 文件并跑 sync。
+入库后该条目在 `index.json` 里带 `hosting: "external-link"` 与 `source_url`；
+`download_url` 仍指向站内落地页（`sync` 的 URL 合法性校验只认 `https://www.teachany.cn/` 前缀，别改成外链）。
+
+落地页 id 由投稿接口生成（`<node>-<ts>`），与课件原 `node_id` 不同，不会覆盖已有条目。
+同一条外链重复投稿会被拦下（按 `node_id + source_url` 判重），确认要重投加 `--force`。
+审核完记得 `gh pr close <编号>` 并注明「已由维护者直推落库」，不要把 `community/pending-links/` 合并进 main。
+
+**验证上线别只看 gh-pages 分支**：workflow 把内容镜像到 `gh-pages` 后，GitHub Pages 还要跑一次
+`build and deployment`（大仓库约 3–6 分钟），CDN 才生效。判据是
+`gh api repos/<owner>/<repo>/pages/builds/latest --jq .status` 变成 `built`，
+在此之前 `https://www.teachany.cn/community/<新条目>/` 仍会 404。带 `?ts=` 绕缓存。
 
 兼容入口：`bash "$TEACHANY_SKILL/scripts/teachany-publish.sh" <course-id> --course-dir <path>`（行为与 `hang_tree publish` 相同）。
 
@@ -248,6 +354,7 @@ python3 "$TEACHANY_SKILL/scripts/hang_tree.py" rebuild --dispatch
 - 关键资源存在：index.html、manifest.json、PLAN.md、assets/、tts/（或豁免记录）
 - 控制台无错误，核心互动可用，移动端不崩
 - 交付摘要中说明：用户是否同意上传；若拒绝，给出本地路径与 `node_id`
+- **用户同意上传但无仓库权限** → 走链接投稿（`submit-link-to-community.py`）：先把课件「发布为应用」拿到在线链接，再提交；回报送审编号与 PR 链接
 
 **发布交付**（仅 Phase 4 执行后）：
 
@@ -256,4 +363,4 @@ python3 "$TEACHANY_SKILL/scripts/hang_tree.py" rebuild --dispatch
 
 ## 版本说明
 
-当前执行摘要版本：`7.21.0`。v7.21：新增互动引擎层——实验探究类互动采用"中央引擎 + JSON 配置"模式（`tech/interactive-engines.md` 决策枢纽 + `tech/interactive-engines/` 深度文档组）；内置三个已验证引擎（function-lab 函数图像 / circuit-lab 电路探究 / equilibrium-lab 化学平衡，源码在 `templates/engines/`）；课件 = 瘦壳 + `courseware.config.json`，引擎集中部署于 courseware 仓库 `assets/engines/`（符合 #31a）；选型优先级：TeachAny 引擎 → PhET/GeoGebra 等 iframe → 手写 Canvas；新增硬规则 #31b。v7.20：新增 `finalize-courseware.py` 课件定稿器——发布前强制补齐 AI 学伴（卡片+`__TEACHANY_TUTOR_CONFIG__`）、连续音频播放器、知识图谱，并为每个 `data-tts` 段落自动生成真实分段 mp3；`preflight-publish.py` 启动即调用 finalize 并对三模块硬校验；`apply-standard-modules.py` 补 `teachany-audio-player.js` + tutor-config + audio-config 注入；修复 course-skeleton-v2 模板 CSS bug。v7.19：新增 `preflight-publish.py` 发布前闸门（反馈密码/node_id 一致性/ext 挂树规则/validate 预检）；`hang_tree register` 禁止 ext-*。
+当前执行摘要版本：`7.23.2`。v7.23.2：补**沙箱网络事实与分叉诊断法** —— `github.com:443` 被阻断（`git fetch`/`push` 均不可用），只有 `api.github.com` 放行；改用它比 blob sha 判断本地是否有独有内容（`git rev-parse HEAD:<path>` ↔ contents API 的 `.sha`）。v7.23.1：为「用户知识库外链投稿」补**线上验收方法** —— 用 `agent-browser` 直接调页面自身的 `showTooltip` 复现 tooltip（比切 UI 导航找节点快得多，且验的就是线上那份代码）；构造 `d` 必须补 `prerequisites`，截图要分两步设样式。v7.23：链接投稿改为**免审直推** —— `POST /api/submit-link` 服务端 probe 一次 URL，200 即写库（`data/trees/**` 的 `node.courses[]` + `registry.json` + `community/index.json` 同 commit 落地），**无 pending 目录、无 PR、无人工审核**；同时确立用户知识库外链在 `tree.html` / `pbl.html` 的**单独成区**展示规则，以及 `courseware-hub.js` 双副本一致性检查（`build-publish-site.sh` 4c）。> ⛔ **已废弃**：`community/pending-links/` + `scripts/approve-link-submission.py` 的审核链路（即 v7.23 曾描述过的方案，已被免审直推取代，不要再用）。v7.22：新增链接投稿通道 `scripts/submit-link-to-community.py`（普通用户把 WorkBuddy「发布为应用」的在线链接投给社区，元信息自动取自 manifest，服务端只留元数据 JSON 开 PR 送审）；发布路径按身份分叉（新增硬规则 #17：管理员直推 `hang_tree publish`→`auto-publish.sh`，普通用户投稿），原 #17 顺延为 #18。v7.21：新增互动引擎层——实验探究类互动采用"中央引擎 + JSON 配置"模式（`tech/interactive-engines.md` 决策枢纽 + `tech/interactive-engines/` 深度文档组）；内置三个已验证引擎（function-lab 函数图像 / circuit-lab 电路探究 / equilibrium-lab 化学平衡，源码在 `templates/engines/`）；课件 = 瘦壳 + `courseware.config.json`，引擎集中部署于 courseware 仓库 `assets/engines/`（符合 #31a）；选型优先级：TeachAny 引擎 → PhET/GeoGebra 等 iframe → 手写 Canvas；新增硬规则 #31b。v7.20：新增 `finalize-courseware.py` 课件定稿器——发布前强制补齐 AI 学伴（卡片+`__TEACHANY_TUTOR_CONFIG__`）、连续音频播放器、知识图谱，并为每个 `data-tts` 段落自动生成真实分段 mp3；`preflight-publish.py` 启动即调用 finalize 并对三模块硬校验；`apply-standard-modules.py` 补 `teachany-audio-player.js` + tutor-config + audio-config 注入；修复 course-skeleton-v2 模板 CSS bug。v7.19：新增 `preflight-publish.py` 发布前闸门（反馈密码/node_id 一致性/ext 挂树规则/validate 预检）；`hang_tree register` 禁止 ext-*。

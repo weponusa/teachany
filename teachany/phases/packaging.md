@@ -21,9 +21,17 @@ node "$TEACHANY_SKILL/scripts/validate-courseware.cjs" "$COURSE_DIR"
 发布脚本**不会**代替 Agent 询问用户。必须先完成：
 
 1. **3.5a 反馈密码**：问教师口令 → `set-feedback-password.py` 写入 manifest → `--check` 通过。详见 `phases/phase3-5-gates.md`。
-2. **3.5b 是否上传**：问用户是否上传；仅同意后 `export TEACHANY_UPLOAD_CONFIRMED=1`。
+2. **3.5b 是否上传**：问用户是否上传；仅同意后 `export TEACHANY_UPLOAD_CONFIRMED=1`。**问一次即可**，用户点头后自动跑完，不要反复追问细节。
 
-未设置 `TEACHANY_UPLOAD_CONFIRMED=1` 时，`hang_tree.py publish` / `teachany-publish.sh` / `auto-publish.sh` **将拒绝执行**。
+未设置 `TEACHANY_UPLOAD_CONFIRMED=1` 时，`hang_tree.py publish` / `teachany-publish.sh` / `auto-publish.sh` / `submit-link-to-community.py` **将拒绝执行**。
+
+### 路径按身份分叉（先跑凭据检测）
+
+| 身份 | 判定 | 路径 |
+|---|---|---|
+| 管理员 / 维护者 | `GH_TOKEN` 或 `ssh -T git@github.com` 通过 | **直接提交**：`hang_tree.py publish` → `auto-publish.sh`（注册 + 挂树 + push），无需送审 |
+| 普通用户 | 无推送权限 | **链接投稿**（推荐）：课件「发布为应用」后 `submit-link-to-community.py --course-dir <dir> --url <链接>` |
+| 普通用户 | 无推送权限且未发布在线链接 | **包投稿**：`publish_course.sh` 上传 `.teachany` 包 |
 
 ## Agent Phase 4 铁律
 

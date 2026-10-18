@@ -285,7 +285,9 @@ if grep -qE "L\.CRS\.EPSG4326|L\.map|leaflet|echarts.*registerMap" "$HTML" 2>/de
 fi
 
 # B-3 · 游戏化动画
-if grep -qE "requestAnimationFrame|lottie|gsap|d3\.select|<canvas\b|sort-game|drag.*drop" "$HTML" 2>/dev/null; then
+# 注意：<canvas\b 的 \b 在 macOS BSD grep -E 下不生效（永远 0 命中），
+# 改用字符类 <canvas[ >] 兼容 BSD/GNU 双端。
+if grep -qE "requestAnimationFrame|lottie|gsap|d3\.select|<canvas[ >]|sort-game|drag.*drop" "$HTML" 2>/dev/null; then
   pass "✓ 包含游戏化/动画逻辑"
   multi_count=$((multi_count+1))
 fi
@@ -309,8 +311,10 @@ echo ""
 # ─── B-4 · 历史/地理课件用本地地图 ─────────────
 echo "[B-4] 历史/地理课件强制使用本地地图资源"
 # 通过文件名关键字判断是否历史/地理课件
+# 注意：只保留中文关键词；英文 "map"/"history"/"geography" 会子串命中普通 JS 代码
+# （如 Array.map()、history API），导致任何学科的课件都被误判为历史/地理课件。
 is_geo_course=false
-for kw in history geography 历史 地理 dynasty 朝代 map 地图 疆域 文明; do
+for kw in 历史 地理 dynasty 朝代 地图 疆域 文明 data-teachany-map historical-map; do
   if [[ "$COURSE_DIR" == *"$kw"* ]] || grep -qE "$kw" "$HTML"; then
     is_geo_course=true; break
   fi

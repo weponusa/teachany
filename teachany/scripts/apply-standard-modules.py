@@ -190,7 +190,9 @@ def ensure_audio_config(html: str, course_dir: Path) -> tuple[str, str]:
     若已有播放列表则不动；否则根据 tts/*.mp3 + tts/manifest.json 生成。
     返回 (新 html, 动作)：'unchanged' | 'added' | 'no-audio'
     """
-    if "data-teachany-audio-playlist" in html:
+    # 注意：v2 模板的 debug 自检 JS 里含 "[data-teachany-audio-playlist]" 选择器字样，
+    # 纯子串匹配会误判为"已有播放列表"而跳过注入；必须匹配真实配置块（属性名后跟 ">"）。
+    if "data-teachany-audio-playlist>" in html:
         return html, "unchanged"
 
     mp3s = list_tts_files(course_dir)
@@ -282,7 +284,7 @@ def find_kg_container_bounds(html: str) -> tuple[int, int] | None:
     return None
 
 
-def ensure_kg_section(html: str, node_id: str, heading: str) -> tuple[str, str]:
+def ensure_kg_section(html: str, node_id: str, heading: str, course_dir: Path | None = None) -> tuple[str, str]:
     """确保 KG section 存在且使用标准 data-teachany-kg。
 
     返回 (新 html, 动作)：'added' | 'replaced' | 'unchanged'
@@ -290,6 +292,25 @@ def ensure_kg_section(html: str, node_id: str, heading: str) -> tuple[str, str]:
     # 已有标准 data-teachany-kg 挂载（任意位置，含分页模板的 slide-page）→ 不重复插入
     if f'data-teachany-kg="{node_id}"' in html or f"data-teachany-kg='{node_id}'" in html:
         return html, "unchanged"
+
+    # v7.23.3: 已挂载的节点若在图谱清单里（如 ext 课指向父节点/前置节点），保持不动——
+    # 自身 node_id 往往不在清单（ext-*），强行重置会让图谱渲染空白。
+    existing_m = re.search(r'data-teachany-kg=["\']([^"\']+)["\']', html)
+    if existing_m:
+        kg_manifest = None
+        for cand in ((course_dir or ROOT) / "../../assets/scripts/teachany-kg-manifest.json",
+                     ROOT / "assets" / "scripts" / "teachany-kg-manifest.json"):
+            cand = cand.resolve()
+            if cand.exists():
+                kg_manifest = cand
+                break
+        if kg_manifest and kg_manifest.exists():
+            try:
+                kg_nodes = json.loads(kg_manifest.read_text(encoding="utf-8")).get("nodes") or {}
+                if existing_m.group(1) in kg_nodes:
+                    return html, "unchanged"
+            except Exception:
+                pass
 
     block = (
         '\n<!-- v7.7.4 标准知识图谱模块 -->\n'
@@ -356,7 +377,7 @@ def process_course(course_dir: Path, dry: bool = False) -> dict:
     report["audio"] = audio_action
 
     if node_id:
-        html, action = ensure_kg_section(html, node_id, heading)
+        html, action = ensure_kg_section(html, node_id, heading, course_dir)
         report["kg"] = action
     else:
         report["kg"] = "skipped-no-node-id"

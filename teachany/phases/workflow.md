@@ -9,7 +9,7 @@
 最少确认：
 1. 学生年级/学段；
 2. 知识点或问题；
-3. 是否需要 TTS、PBL、地图等增强项（TTS 默认启用）；**视频为可选模块，默认不注入**，仅当课型确实需要或用户明确要求时才制作。
+3. 是否需要 TTS、视频、PBL、地图等增强项（默认全部启用）。
 
 操作：
 - 查 `node_id`：`python3 scripts/find_nodes.py "主题"`。
@@ -103,7 +103,7 @@ v2 模板特性：
 5. 从 v2 内容区块模板选择片段，填充主体教学页面（≥12 页）。
 6. **必须有一页完整的习题讲解**（解题步骤+思路+关键技巧）。
 7. 确保 `{{SLIDE_COUNT}}` 设为实际总页数。
-8. 补齐 Hero + TTS + 媒体：**先读** `tech/visual-stage-modes.md` 设学段视觉；`find-hero.py --cdn`（CDN + 本地 hero 回退）；`tts-engine.py` 生成 ≥3 个 mp3 并**启用** narrator（禁止 `data-tts-disabled`）。**视频不强制注入**——课型确实需要（或用户明确要求）时才按 `tech/animation-toolchain.md` 选型制作；地图按课题需要接入。
+8. 补齐 Hero + TTS + 媒体：**先读** `tech/visual-stage-modes.md` 设学段视觉；`find-hero.py --cdn`（CDN + 本地 hero 回退）；`tts-engine.py` 生成 ≥3 个 mp3 并**启用** narrator（禁止 `data-tts-disabled`）。再补视频/地图。动画按 `tech/animation-toolchain.md` 选型。
 
 ## Phase 3：验证
 

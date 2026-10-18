@@ -39,40 +39,14 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent
 
 
-def _get_courseware_repo() -> Path:
-    """获取 teachany-courseware 仓库路径（支持环境变量和常见默认位置）。"""
-    env = os.environ.get("TEACHANY_COURSEWARE_REPO", "").strip()
-    if env:
-        p = Path(env).expanduser()
-        if p.is_dir():
-            return p
-    # 常见默认位置
-    for candidate in (
-        Path.home() / ".cache" / "teachany-courseware",
-        Path.home() / "CodeBuddy" / "一次函数" / "teachany-courseware",
-        REPO_ROOT.parent.parent / "teachany-courseware",  # 相对于 skill 仓的同级
-    ):
-        if candidate.is_dir():
-            return candidate
-    return Path()  # 空 Path，后续 is_dir 检查会 False
-
-
 def locate_course(target: str) -> Path | None:
     p = Path(target)
     if p.is_dir():
         return p.resolve()
-    # 在 skill 仓内搜索
     for base in (REPO_ROOT / "community", REPO_ROOT / "community" / "drafts", REPO_ROOT / "examples"):
         cand = base / target
         if cand.is_dir():
             return cand.resolve()
-    # 在 teachany-courseware 仓库搜索（双仓库架构兼容）
-    cw_repo = _get_courseware_repo()
-    if cw_repo.is_dir():
-        for base in (cw_repo / "community", cw_repo / "community" / "drafts"):
-            cand = base / target
-            if cand.is_dir():
-                return cand.resolve()
     return None
 
 
@@ -152,6 +126,64 @@ def run_finalizer(course_dir: Path, skill_scripts: Path) -> list[str]:
     return notes
 
 
+def check_shell_standard(course_dir: Path, html: str) -> tuple[list[str], list[str]]:
+    """壳层标准硬校验（2026-10 统一规范）。
+
+    阻断项：品牌顶栏缺失/指向错误、courseware-shell.css 未版本化引用、
+    hero 图缺失、旧版「教我学」导航（class="nav-brand"）。
+    警告项：div/section 配平、死 goTo 按钮。
+    """
+    errs: list[str] = []
+    warns: list[str] = []
+
+    # ① 品牌顶栏（必须检测 markup 本身，CSS 里的类名字符串不算）
+    if '<div class="teachany-brand-bar"' not in html:
+        errs.append("缺品牌顶栏 markup（<div class=\"teachany-brand-bar\">，全库统一壳层，见 RULES.md 壳层标准）")
+    else:
+        bar_m = re.search(r'<div class="teachany-brand-bar">[\s\S]*?</div>', html)
+        bar = bar_m.group(0) if bar_m else ""
+        if "weponusa.github.io" in bar:
+            errs.append("品牌顶栏链接指向 weponusa.github.io，须改为 https://www.teachany.cn/")
+        if ".teachany-brand-bar{" not in html and ".teachany-brand-bar {" not in html:
+            # 无内联样式 → 必须链 courseware-shell.css 且带版本参数（否则顶栏裸奔）
+            m = re.search(r'href="([^"]*courseware-shell\.css[^"]*)"', html)
+            if not m:
+                errs.append("顶栏样式缺失：既无内联 .teachany-brand-bar 规则，也未链 courseware-shell.css")
+            elif "?v=" not in m.group(1):
+                errs.append("courseware-shell.css 引用未带版本参数（?v=YYYYMMDD）——CDN 会缓存旧样式导致顶栏裸奔")
+
+    # ② hero 图
+    hero_refs = sorted(set(re.findall(r'src="([^"]*hero[^"]*\.(?:png|webp|jpg))"', html)))
+    if not hero_refs:
+        errs.append("缺 hero 主图引用（assets/<course>-hero.png，含中央主题大字 + 四分支标注）")
+    else:
+        import os as _os
+        for rel in hero_refs[:1]:
+            p = course_dir / rel.lstrip("./")
+            if not p.exists():
+                errs.append(f"hero 图文件缺失: {rel}")
+            elif p.stat().st_size < 100 * 1024 and not rel.endswith(".svg"):
+                warns.append(f"hero 图体积偏小（{p.stat().st_size}B），确认不是占位图: {rel}")
+
+    # ③ 旧版导航（阻断）
+    if 'class="nav-brand"' in html:
+        errs.append("存在旧版「教我学」导航（class=nav-brand）——须转为标准 teachany-page-nav 或删除")
+    # 死 goTo 按钮（警告）
+    if not re.search(r"function\s+goTo\s*\(", html) and not re.search(r"(?:const|let|var)\s+goTo\s*=", html):
+        n_dead = len(re.findall(r"<button[^>]*>[^<]*</button>", html))
+        dead = [m for m in re.finditer(r"<button[^>]*>[^<]*</button>", html)
+                if re.search(r"goTo\('", m.group(0))]
+        if dead:
+            errs.append(f"存在 {len(dead)} 个 goTo 死按钮（无 goTo 函数定义）——删除或补函数")
+
+    # ④ 配平（警告）
+    dd = len(re.findall(r"<div\b", html)) - html.count("</div>")
+    ds = len(re.findall(r"<section\b", html)) - html.count("</section>")
+    if dd or ds:
+        warns.append(f"div/section 配平偏差（div{dd:+d} sec{ds:+d}）——浏览器自动纠错可能引发布局漂移")
+    return errs, warns
+
+
 def check_three_modules(course_dir: Path, html: str) -> list[str]:
     """三大高频缺失模块硬校验：AI 学伴 / 高质量音频 / 知识图谱。"""
     errs: list[str] = []
@@ -206,6 +238,11 @@ def check_publish_readiness(course_dir: Path, finalize: bool = True) -> dict:
     # 0.5 三模块硬校验（finalize 后仍缺即阻断）
     for e in check_three_modules(course_dir, html):
         errors.append(e)
+
+    # 0.6 壳层标准校验（品牌顶栏 / hero / 旧导航 / 配平）
+    shell_errs, shell_warns = check_shell_standard(course_dir, html)
+    errors.extend(shell_errs)
+    warns.extend(shell_warns)
 
     node_manifest = str(manifest.get("node_id") or "").strip()
     node_html = read_meta(html, "teachany-node", "teachany:node_id", "course-node")
@@ -281,22 +318,9 @@ def check_publish_readiness(course_dir: Path, finalize: bool = True) -> dict:
     else:
         warns.append("未找到 check_node_id.py，跳过 node_id 树校验")
 
-    # 查找 validate-courseware.py：先本目录，再 courseware 仓 scripts/
     validator = SCRIPT_DIR / "validate-courseware.py"
-    validator_cwd = REPO_ROOT if (REPO_ROOT / "community").is_dir() else None
-    if not validator.exists():
-        cw_repo = _get_courseware_repo()
-        cw_validator = cw_repo / "scripts" / "validate-courseware.py"
-        if cw_validator.exists():
-            validator = cw_validator
-            validator_cwd = cw_repo
-    if validator.exists() and validator_cwd and Path(validator_cwd).is_dir():
-        r = subprocess.run(
-            [sys.executable, str(validator), course_dir.name],
-            capture_output=True, text=True, timeout=300,
-            cwd=str(validator_cwd),
-        )
-        code, out = r.returncode, (r.stdout or "") + (r.stderr or "")
+    if validator.exists() and (REPO_ROOT / "community").is_dir():
+        code, out = run_script(validator, [course_dir.name], timeout=300)
         if code != 0:
             errors.append("validate-courseware.py 未通过（见下方明细）")
             for line in out.splitlines():

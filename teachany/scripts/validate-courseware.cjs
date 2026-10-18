@@ -402,8 +402,18 @@ const CHECKS = [
     name: '连续音频质量',
     desc: '至少三段真实 mp3，并挂载标准连续音频播放器',
     check: (html, meta, dir) => {
-      const refs = [...html.matchAll(/["']([^"']+\.mp3)["']/gi)].map(m => m[1]).filter(r => !shouldSkipAssetRef(r));
+      const refs = [...html.matchAll(/["']([^"']+\.mp3)["']/gi)].map(m => m[1]).filter(r => (!shouldSkipAssetRef(r) || /audio\.teachany\.cn\//i.test(r)));
+      // 音频发布架构：课件引用 CDN（audio.teachany.cn/<course>/tts/xx.mp3），本地 tts/ 或 assets/tts/ 必须有同
+      // 名源文件（发布前经 sync-audio-cdn.py 上传）。校验按「本地同源文件」判定，不再把 CDN 引用误判为死链。
       const valid = refs.filter(ref => {
+        if (/^https?:\/\/audio\.teachany\.cn\//i.test(ref)) {
+          const base = ref.split('/').pop().split('?')[0];
+          for (const sub of ['tts', 'assets/tts']) {
+            const p = path.join(dir, sub, base);
+            if (fs.existsSync(p) && fs.statSync(p).size >= 20 * 1024) return true;
+          }
+          return false;
+        }
         const target = resolveLocalRef(dir, ref);
         return target && fs.existsSync(target) && fs.statSync(target).size >= 20 * 1024;
       });
@@ -441,14 +451,25 @@ const CHECKS = [
     id: 22,
     name: 'Canvas 真实互动',
     desc: 'Canvas 不得只是空白或静态图，必须有绘制逻辑、事件和学生控件',
-    check: (html) => {
-      const hasCanvas = /<canvas\b/i.test(html);
-      const hasDraw = /getContext\s*\(|draw\w*\s*\(/i.test(html);
-      const hasEvent = /addEventListener\s*\(\s*["'](?:pointer|mouse|touch|click|input|change)/i.test(html);
-      const hasControl = /<(?:input|select|button)\b/i.test(html);
+    check: (html, meta, dir) => {
+      // 外部本地组件脚本（如 teachany-geo-lab.js 共享组件）一并纳入绘制/事件检测
+      let ext = '';
+      for (const m of html.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)) {
+        const src = m[1];
+        if (/^(?:https?:)?\/\//i.test(src)) continue;
+        const t = resolveLocalRef(dir, src);
+        if (t && fs.existsSync(t) && fs.statSync(t).size < 1024 * 1024) {
+          try { ext += '\n' + fs.readFileSync(t, 'utf8'); } catch { /* 忽略读取失败 */ }
+        }
+      }
+      const hay = html + ext;
+      const hasCanvas = /<canvas\b/i.test(hay);
+      const hasDraw = /getContext\s*\(|draw\w*\s*\(/i.test(hay);
+      const hasEvent = /addEventListener\s*\(\s*["'](?:pointer|mouse|touch|click|input|change)/i.test(hay);
+      const hasControl = /<(?:input|select|button)\b/i.test(hay) || /createElement\(\s*["'](?:input|select|button)/i.test(hay);
       return {
         pass: hasCanvas && hasDraw && hasEvent && hasControl,
-        detail: [hasCanvas ? 'canvas ✅' : 'canvas ❌', hasDraw ? '绘制逻辑 ✅' : '绘制逻辑 ❌', hasEvent ? '事件 ✅' : '事件 ❌', hasControl ? '控件 ✅' : '控件 ❌'].join(' | '),
+        detail: [hasCanvas ? 'canvas ✅' : 'canvas ❌', hasDraw ? '绘制逻辑 ✅' : '绘制逻辑 ❌', hasEvent ? '事件 ✅' : '事件 ❌', hasControl ? '控件 ✅' : '控件 ❌'].join(' | ') + (ext ? ' | 含外部组件脚本' : ''),
         fix: '补充 getContext/draw、pointer/click/input/change 事件，以及学生可操作的按钮/滑块/选择器',
       };
     },

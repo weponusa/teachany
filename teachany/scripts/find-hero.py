@@ -1,28 +1,31 @@
 #!/usr/bin/env python3
 """
-find-hero.py — TeachAny Hero 图查找工具（CDN 优先；正式交付禁止 SVG）
+find-hero.py — TeachAny Hero 图查找工具（CDN 优先版 + v7.9.12 SVG 兜底）
 
 按优先级查找课件可用的 hero 封面图，返回 CDN URL 或本地文件：
   L1: image-registry.json 索引 → CDN URL
   L2: CDN 命名规则探测（{subject}/{keyword}-hero.png）
-  L3: agnes-image-gen.py（Agnes 生图，要求中文标注知识点）
+  L3-a: image_gen 兜底（需会话有此工具）→ 生成后上传图床 → 返回 CDN URL
+  L3-b: gen-hero-svg.py SVG 兜底（v7.9.12 新增，永不降级）→ 生成 assets/<id>-hero.svg
 
-v7.20+ 硬规则：Hero **禁止**用 gen-hero-svg.py / 手绘 SVG 顶替。
-`--gen-svg` 仅调试保留；正式课件必须 Agnes（或 CDN 命中）+ 中文标注。
+v7.9.12 更新：Hero 图永不降级。L1/L2 未命中且会话无 image_gen 工具时，
+使用 `--gen-svg` 参数直接调用 gen-hero-svg.py 生成 SVG 知识结构图兜底。
+
+不再复制图片到课件本地 assets/，HTML 直接引用 CDN URL（L1/L2）或本地 SVG（L3-b）。
+离线/导出场景由 export-pptx.py 等脚本按需下载。
 
 用法:
   python3 scripts/find-hero.py <课件目录>
   python3 scripts/find-hero.py <课件目录> --subject math --grade 8
+  python3 scripts/find-hero.py <课件目录> --gen-svg      # L1/L2 未命中时直接生成 SVG 兜底
   python3 scripts/find-hero.py community/ --batch
-  python3 scripts/find-hero.py <课件目录> --cdn
-  python3 scripts/find-hero.py <课件目录> --local
-  # --gen-svg 已废弃，正式交付勿用
+  python3 scripts/find-hero.py <课件目录> --cdn         # 默认模式，返回 CDN URL
+  python3 scripts/find-hero.py <课件目录> --local        # 兼容模式，下载到本地 assets/
 
 输出: JSON 格式 {level, source, url, action}
 """
-# NOTE: SVG fallback kept in code for emergency debug only; agents must not use it for delivery.
+
 import argparse
-import sys
 import json
 import os
 import re
@@ -558,7 +561,6 @@ def find_hero_for_course(course_dir: Path, subject_override: str = '',
 
         # L3-b: gen-hero-svg.py SVG 兜底（v7.9.12，--gen-svg 时自动走）
         if gen_svg:
-            print('[find-hero] WARNING: --gen-svg is deprecated; use Agnes + Chinese labels', file=sys.stderr)
             l3_svg = generate_l3_svg(course_dir, meta)
             result['hero'] = l3_svg
             result['hero']['status'] = 'svg_generated' if l3_svg.get('action') == 'svg_generated' else 'error'
@@ -620,7 +622,7 @@ def main():
     parser.add_argument('--dry-run', action='store_true', help='仅查找不下载')
     parser.add_argument('--cdn', action='store_true', default=True, help='CDN 模式（默认）')
     parser.add_argument('--local', action='store_true', help='本地模式：下载 CDN 图片到 assets/')
-    parser.add_argument('--gen-svg', action='store_true', help='DEPRECATED：正式交付禁止 SVG Hero；请用 agnes-image-gen.py + 中文标注')
+    parser.add_argument('--gen-svg', action='store_true', help='v7.9.12：L1/L2 未命中时自动调用 gen-hero-svg.py 生 SVG 兜底（永不降级）')
     parser.add_argument('--json', action='store_true', help='输出 JSON 格式')
     args = parser.parse_args()
 

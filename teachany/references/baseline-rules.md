@@ -9,7 +9,7 @@ TeachAny 只有一套标准：所有课件必须完整包含以下 19 项基线�
 ## 19 项基线
 
 1. TTS 旁白音频（`tts/` 目录，≥1 个有声 MP3，单个 ≥5KB）。
-2. 教学动画/视频为**可选增强项，不强制注入**：仅当课型确实需要或用户明确要求时制作；未启用视频的课件不视为缺项（质检 #21 按 N/A 通过）。
+2. 至少一个教学动画/视频（课型需要时）。
 3. Canvas/SVG/iframe 真实互动（非弹窗、非纯点击）；实验探究类优先 TeachAny 互动引擎（`tech/interactive-engines.md`，引擎+配置即满足本项，规则 #31b）。
 4. 学科插图或场景图（`assets/` 目录，≥1 张真实内容图片，≥5KB）。
 5. Hero 知识结构图（优先 `find-hero.py --cdn` 的 L1/L2 URL + 本地回退；否则 `assets/hero-infographic.svg` / `hero-infographic.png`）。
@@ -59,7 +59,8 @@ python3 "$TEACHANY_SKILL/scripts/finalize-courseware.py" "$COURSE_DIR"  # Phase 
 python3 "$TEACHANY_SKILL/scripts/preflight-publish.py" "$COURSE_DIR"   # Phase 4 前强制（内部再跑一次 finalize + 三模块硬校验）
 node "$TEACHANY_SKILL/scripts/validate-courseware.cjs" "$COURSE_DIR"
 python3 "$TEACHANY_SKILL/scripts/find_nodes.py" --stage middle --subject math --keyword "一次函数"
-python3 "$TEACHANY_SKILL/scripts/hang_tree.py" publish <course-id> --course-dir "$COURSE_DIR"   # 需 TEACHANY_UPLOAD_CONFIRMED=1
+python3 "$TEACHANY_SKILL/scripts/hang_tree.py" publish <course-id> --course-dir "$COURSE_DIR"   # 需 TEACHANY_UPLOAD_CONFIRMED=1（管理员/维护者）
+python3 "$TEACHANY_SKILL/scripts/submit-link-to-community.py" --course-dir "$COURSE_DIR" --url <在线链接>  # 无凭据用户：链接投稿
 python3 "$TEACHANY_SKILL/scripts/find-map.py" 唐
 python3 scripts/find-hero.py "$COURSE_DIR" --cdn
 python3 scripts/agnes-image-gen.py --course-id <id> --quota   # 服务端中转，每课件≤3张，无需用户 Key
@@ -75,6 +76,7 @@ python3 "$TEACHANY_SKILL/scripts/hang_tree.py" rebuild --dispatch   # 或维护�
 | "先做简版再补" | 直接做完整版，不存在简版 |
 | "用户没说要发布，先本地看看" | Phase 3.5b **必须询问**是否上传；未同意不得发布 |
 | 做完课件直接 push | 先 3.5a + 3.5b，再 `TEACHANY_UPLOAD_CONFIRMED=1 hang_tree.py publish`（自动挂树） |
+| 不检测凭据就选发布路径 | 先凭据检测：有权限 → `hang_tree publish` 直推；无权限 → `submit-link-to-community.py`（有在线链接）或 `publish_course.sh`（传包） |
 | 未设反馈密码就发布 | Phase 3.5a 用 `set-feedback-password.py` 写入或 `--decline` |
 | ext-* 用 `hang_tree register` 挂课标树 | 直接 `publish`；rebuild-index 写入「其他知识」 |
 | ext-* 设 `free_mode=true` | 必须 `free_mode=false` 且 node_id=ext-{hash} |

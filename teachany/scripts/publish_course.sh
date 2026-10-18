@@ -79,7 +79,14 @@ if [ -f "$SKILL_SCRIPTS/check_baseline.sh" ]; then
 fi
 
 # ─── 1.05. 发布前闸门（node_id / 反馈密码 / 挂树风险）─────
+# 课件在 courseware 仓内时优先用仓内 preflight-publish.py：
+# 仓内版能找到仓内 validate-courseware.py（无视频课件不会被 cjs #21 误报卡死），
+# 且 skill 目录若残留旧 community/ 副本，skill 版会把 cwd 定到 skill 目录导致 node 校验读旧树误报。
 PREFLIGHT="$SKILL_SCRIPTS/preflight-publish.py"
+REPO_PREFLIGHT="$(dirname "$(dirname "$SRC_DIR")")/scripts/preflight-publish.py"
+if [ -f "$REPO_PREFLIGHT" ]; then
+  PREFLIGHT="$REPO_PREFLIGHT"
+fi
 if [ -f "$PREFLIGHT" ]; then
   echo ""
   echo "[1.05/5] 发布前闸门 preflight-publish"
@@ -158,11 +165,12 @@ locate_repo() {
     [ -f "$c/scripts/submit-to-community.py" ] && { echo "$c"; return; }
   done
   # ⭐ find 可能因参数不存在返回非零，暂关 set -e
+  # 注意：绝不对裸 $HOME 做 find —— 用户 home 有数十万文件会挂住十几分钟；
+  # 找不到就返回空，交给下方 sparse clone 兜底（约 40MB，秒级完成）。
   set +e
   local search_roots=()
   [ -d "$HOME/CodeBuddy" ] && search_roots+=("$HOME/CodeBuddy")
   [ -d "$HOME/WorkBuddy" ] && search_roots+=("$HOME/WorkBuddy")
-  search_roots+=("$HOME")
   local found=""
   if [ "${#search_roots[@]}" -gt 0 ]; then
     found=$(find "${search_roots[@]}" -maxdepth 5 -name "submit-to-community.py" 2>/dev/null | head -1)
@@ -339,6 +347,10 @@ else:
 print(f"  ✅ <title> → {new_title}")
 
 # 3. 删旧 teachany-* meta + 重新插入完整 8 条
+# ⭐ teachany-template-version（v2 分页模板声明）不在固定 8 条内，但基线 checker
+#   靠它区分 v2 课件；先捕获旧值，删完 meta 后原样回插，否则每轮发布都被抹掉。
+tv_match = re.search(r'<meta\s+name=["\']teachany-template-version["\']\s+content=["\']([^"\']+)["\']', html, re.IGNORECASE)
+tv_value = tv_match.group(1) if tv_match else ""
 required = {
     "teachany-id": course_id,
     "teachany-name": title,
@@ -350,12 +362,14 @@ required = {
     "teachany-curriculum": "cn-national",
 }
 html = re.sub(r'\s*<meta\s+[^>]*name=["\']teachany-[^"\']+["\'][^>]*>\s*', "\n  ", html, flags=re.IGNORECASE)
+if tv_value:
+    required["teachany-template-version"] = tv_value
 new_metas = "\n  " + "\n  ".join(f'<meta name="{k}" content="{v}">' for k, v in required.items())
 if "</head>" in html:
     html = html.replace("</head>", new_metas + "\n</head>", 1)
 elif re.search(r"<head[^>]*>", html, re.IGNORECASE):
     html = re.sub(r"(<head[^>]*>)", r"\1" + new_metas, html, count=1, flags=re.IGNORECASE)
-print(f"  ✅ teachany-* meta: 8 条已就位")
+print(f"  ✅ teachany-* meta: {len(required)} 条已就位" + (f"（含 template-version={tv_value}）" if tv_value else ""))
 
 # 4. 统一当前双仓架构路径：logo 用 courseware 最新资源；标准运行时用 courseware 根级 assets/scripts。
 #    这样即便课件来自旧模板，也不会继续引用已失效的 /teachany/assets 或顶层 /scripts。
@@ -382,20 +396,31 @@ fi
 # ─── 4. 拷贝到 community/drafts/ ───────────────
 echo ""
 echo "[4/5] 拷贝到 community/drafts/$COURSE_ID"
-DRAFT_DIR="$REPO/community/drafts/$COURSE_ID"
-mkdir -p "$REPO/community/drafts"
+# ⭐ drafts 必须落在 courseware 仓（v7.14：真实课件统一发布到 teachany-courseware，
+#   community-publish.yml 在 courseware 仓解包部署）。之前误用 $REPO（opensource 仓），
+#   与第 5 步 submit 的 cwd（courseware 仓）不一致 → "找不到课件目录"。
+COURSEWARE_ROOT="$TEACHANY_COURSEWARE_REPO"
+if [ -z "$COURSEWARE_ROOT" ]; then
+  COURSEWARE_ROOT="$(dirname "$(dirname "$SRC_DIR")")"
+fi
+DRAFT_DIR="$COURSEWARE_ROOT/community/drafts/$COURSE_ID"
+mkdir -p "$COURSEWARE_ROOT/community/drafts"
 if [ -d "$DRAFT_DIR" ]; then
   echo "  ⚠️  已存在，覆盖"
   rm -rf "$DRAFT_DIR"
 fi
 cp -R "$SRC_DIR" "$DRAFT_DIR"
 SIZE=$(du -sh "$DRAFT_DIR" | awk '{print $1}')
-echo "  ✅ 已拷入 community/drafts/$COURSE_ID ($SIZE)"
+echo "  ✅ 已拷入 community/drafts/$COURSE_ID ($SIZE)（courseware 仓）"
 
 # ─── 5. 调用官方 submit 脚本 ─────────────────
 echo ""
 echo "[5/5] 提交到 TeachAny Community"
 cd "$REPO"
+# ⭐ 显式指定 courseware 仓：SRC_DIR 在 courseware 仓内，向上两级即仓根。
+#   不设此变量时 find_courseware_repo 会先命中 cwd（opensource 仓，也有 data/trees），
+#   导致 legacy 转发器解析到它自己 → 进程无限 fork。
+export TEACHANY_COURSEWARE_REPO="$(dirname "$(dirname "$SRC_DIR")")"
 
 # 5.0 预检：Worker 是否可达（curl 可能返回非零，禁 set -e）
 WORKER_URL="${TEACHANY_WORKER_URL:-https://teachany-community.pages.dev/api/submit}"
@@ -428,12 +453,19 @@ STATUS=0
 
 case "$USE_MODE" in
   worker|direct)
-    if python3 scripts/submit-to-community.py "${SUBMIT_ARGS[@]}" 2>&1 | tee /tmp/submit.log; then
-      if grep -q "⛔\|❌" /tmp/submit.log; then
-        STATUS=1
-      fi
-    else
-      STATUS=$?
+    # ⭐ 真正的提交脚本在 courseware 仓，且它用相对路径 community/drafts/ 定位课件。
+    #   之前在 cd "$REPO"（opensource 仓）后调 scripts/submit-to-community.py，
+    #   实际走 legacy 转发器 → 转发后的子进程 cwd 仍在 opensource 仓 → 找不到 drafts 目录。
+    #   直接在 courseware 仓根调 courseware 仓的脚本，绕开转发器，cwd 正确。
+    SUBMIT_SCRIPT="$TEACHANY_COURSEWARE_REPO/scripts/submit-to-community.py"
+    pushd "$TEACHANY_COURSEWARE_REPO" > /dev/null
+    python3 -u "$SUBMIT_SCRIPT" "${SUBMIT_ARGS[@]}" > /tmp/submit.log 2>&1
+    STATUS=$?
+    popd > /dev/null
+    cat /tmp/submit.log
+    # BSD grep 用 -E 交替语法；管道 tee 会吞退出码，所以改成先落盘再取 $?（上方）
+    if [ $STATUS -eq 0 ] && grep -qE "⛔|❌" /tmp/submit.log; then
+      STATUS=1
     fi
     ;;
   drafts-only)
@@ -465,11 +497,15 @@ if [ $STATUS -eq 0 ]; then
   PAGES_KICKED=0  # 是否已主动触发过 Pages
   for attempt in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
     sleep 30
-    code=$(curl -sI --max-time 10 "${COURSE_URL}?_=$(date +%s)" 2>/dev/null | head -1 | grep -oE "[0-9]{3}")
-    if [ "$code" = "200" ]; then
-      echo "  ✅ 第 ${attempt} 次检查 (${attempt}*30s)：HTTP 200，课件已上线"
+    # ⭐ 不能只看 HTTP 状态码：Worker 对任意路径都会回 200（返回 API 说明页）。
+    #   必须同时验证响应内容里真的包含课件 course-id，才算上线。
+    code=$(curl -s --max-time 10 "${COURSE_URL}?_=$(date +%s)" -o /tmp/urlcheck.html -w "%{http_code}" 2>/dev/null)
+    if [ "$code" = "200" ] && grep -qF "$COURSE_ID" /tmp/urlcheck.html 2>/dev/null; then
+      echo "  ✅ 第 ${attempt} 次检查 (${attempt}*30s)：HTTP 200 且内容含 $COURSE_ID，课件已上线"
       break
-    fi
+    elif [ "$code" = "200" ]; then
+      echo "  ⏳ 第 ${attempt} 次检查 (${attempt}*30s)：HTTP 200 但内容不含课件（软 200），继续等..."
+    else
     echo "  ⏳ 第 ${attempt} 次检查 (${attempt}*30s)：HTTP $code，继续等..."
 
     # v6.8: 第 6 次（3 分钟）还 404 且 main 里已有课件目录 → 主动触发 Pages
@@ -502,10 +538,16 @@ if [ $STATUS -eq 0 ]; then
         echo "  ⚠️  未找到本地 teachany-courseware 仓库，无法主动触发 Pages；继续等..."
       fi
     fi
+    fi
   done
 
-  # 最终一锤验证
-  FINAL_CODE=$(curl -sI --max-time 10 "${COURSE_URL}?_=$(date +%s)" 2>/dev/null | head -1 | grep -oE "[0-9]{3}")
+  # 最终一锤验证（同样验证内容，防软 200）
+  curl -s --max-time 10 "${COURSE_URL}?_=$(date +%s)" -o /tmp/urlcheck.html 2>/dev/null
+  if grep -qF "$COURSE_ID" /tmp/urlcheck.html 2>/dev/null; then
+    FINAL_CODE=200
+  else
+    FINAL_CODE=404
+  fi
   echo ""
   echo "================================================"
   if [ "$FINAL_CODE" = "200" ]; then

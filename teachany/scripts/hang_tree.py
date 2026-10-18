@@ -121,12 +121,18 @@ def cmd_publish(args: argparse.Namespace) -> int:
         if cwd_course.is_dir():
             course_dir = str(cwd_course)
     if course_dir:
-        preflight = SCRIPT_DIR / "preflight-publish.py"
+        # 课件在 courseware 仓内时优先用仓内 preflight-publish.py：
+        # 仓内版能找到 scripts/validate-courseware.py（validator 分支，无视频课件不会被 cjs #21 误报卡死）；
+        # 且 skill 目录若残留旧 community/ 副本，skill 版 preflight 会把 cwd 定到 skill 目录，
+        # 导致 check_node_id 读到旧知识树而误报"节点不存在"。
+        course_path = Path(course_dir).resolve()
+        repo_preflight = course_path.parents[1] / "scripts" / "preflight-publish.py"
+        preflight = repo_preflight if repo_preflight.is_file() else SCRIPT_DIR / "preflight-publish.py"
         if preflight.is_file():
-            print("[preflight] 发布前闸门...")
+            print(f"[preflight] 发布前闸门（{preflight}）...")
             r = subprocess.run(
                 [sys.executable, str(preflight), course_dir],
-                cwd=str(SCRIPT_DIR.parent.parent) if (SCRIPT_DIR.parent.parent / "community").is_dir() else None,
+                cwd=str(preflight.parent.parent) if (preflight.parent.parent / "community").is_dir() else None,
             )
             if r.returncode != 0:
                 print("❌ preflight-publish 未通过，已中止 publish（避免 PR/挂树失败）", file=sys.stderr)
